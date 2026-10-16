@@ -190,12 +190,13 @@ def paired_selection(http):
     other = service.create_project({'slug': 'other', 'name': 'Other'}, idempotency_key='other')['id']
     media(service, other, generation='other-g', variant='other-v')
     service.select_project('connector-reader', project)
-    token, _ = server.credentials.provision_connector('connector-reader', ['projects:read'],
+    token, _ = server.credentials.provision_connector('connector-reader', ['handshake', 'projects:read'],
         connector_id='connector', realm_id=service.realm['id'], expires_at=time.time() + 1200)
     context = dict(pair_id='selection-session', connector_id='connector', realm_id=service.realm['id'],
                    generation=1, expires_at=int((time.time() + 600) * 1000))
     headers = {'X-Reigh-Paired-Session': json.dumps(context)}
     caller = api(server, token)
+    caller.request('GET', '/v1/handshake', headers=headers)
     return service, project, other, server, token, context, headers, caller, ProjectGrantAuthority
 
 
@@ -368,7 +369,9 @@ def test_canonical_schema_and_operation_are_exact():
     route = contract['paths']['/v1/projects/{project_id}/media-selection']['get']
     assert route['operationId'] == 'getProjectMediaSelection'
     assert route['x-required-scopes'] == ['projects:read']
-    assert {p['name'] for p in route['parameters'] if p.get('in') == 'query'} == set(SELECTORS)
+    assert {p['name'] for p in route['parameters'] if p.get('in') == 'query'} == {
+        *SELECTORS, 'association_id', 'object_id', 'version'
+    }
     assert route['responses']['200']['content']['application/json']['schema']['$ref'] == './schemas/project-media-selection.json'
     assert SCHEMA['additionalProperties'] is False
     assert set(SCHEMA['required']) == {*SELECTORS, 'object_id', 'catalog_digest'}

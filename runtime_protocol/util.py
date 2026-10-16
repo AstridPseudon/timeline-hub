@@ -39,3 +39,19 @@ def durable_json_bytes(value) -> bytes:
 def atomic_json_write(path: Path, value, *, identity=None) -> None:
     """Atomically publish JSON below a retained parent directory descriptor."""
     _atomic_json_write(path, durable_json_bytes(value), identity=identity)
+
+
+MANAGED_OUTPUT_ASSOCIATION_KEY = "runtime_managed_output_association_id"
+
+
+def reject_managed_output_association_input(value):
+    """Only settlement may author the catalog's association binding."""
+    from .errors import ValidationError
+    if isinstance(value, dict):
+        if MANAGED_OUTPUT_ASSOCIATION_KEY in value:
+            raise ValidationError(MANAGED_OUTPUT_ASSOCIATION_KEY + " is Runtime-owned")
+        for child in value.values():
+            reject_managed_output_association_input(child)
+    elif isinstance(value, list):
+        for child in value:
+            reject_managed_output_association_input(child)

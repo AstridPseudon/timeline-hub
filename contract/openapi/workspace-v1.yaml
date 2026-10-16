@@ -760,13 +760,18 @@ paths:
   /v1/projects/{project_id}/media-selection:
     get:
       operationId: getProjectMediaSelection
-      description: Read one exact managed completed generation/variant selection using the canonical commit digest. Requires projects:read; paired sessions remain bound to this project. Exactly one nonempty occurrence of each query selector is required, with no additional selectors. No media bytes or locations are returned.
+      x-client-alias: getProjectMediaSelectionForOutput
+      x-selector-forms: [[asset, generation_id, variant_id], [association_id, object_id, version]]
+      description: Read one exact managed completed generation/variant selection using the canonical commit digest. Requires projects:read; paired sessions remain bound to this project. Exactly one complete selector form is required (asset + generation_id + variant_id, or association_id + object_id + version), with no mixed, duplicate or unknown selectors. Output selection returns the exact registered variant ID as asset and binds the captured lifecycle version. No media bytes or locations are returned.
       x-required-scopes: [projects:read]
       parameters:
         - { $ref: '#/components/parameters/ProjectId' }
-        - { name: asset, in: query, required: true, schema: { type: string, minLength: 1, pattern: '\S' } }
-        - { name: generation_id, in: query, required: true, schema: { type: string, minLength: 1, pattern: '\S' } }
-        - { name: variant_id, in: query, required: true, schema: { type: string, minLength: 1, pattern: '\S' } }
+        - { name: asset, in: query, required: false, schema: { type: string, minLength: 1, pattern: '\S' } }
+        - { name: generation_id, in: query, required: false, schema: { type: string, minLength: 1, pattern: '\S' } }
+        - { name: variant_id, in: query, required: false, schema: { type: string, minLength: 1, pattern: '\S' } }
+        - { name: association_id, in: query, required: false, schema: { type: string, minLength: 1, pattern: '\S' } }
+        - { name: object_id, in: query, required: false, schema: { type: string, pattern: '^sha256:[0-9a-f]{64}$' } }
+        - { name: version, in: query, required: false, schema: { type: integer, minimum: 1 } }
       responses:
         '200': { description: Exact five-field selection; later selected record changes are rejected by commit acceptance, content: { application/json: { schema: { $ref: './schemas/project-media-selection.json' } } } }
         '400': { description: Missing, duplicate, unknown or malformed selectors }
@@ -774,7 +779,7 @@ paths:
         '403': { description: Paired session or project grant denied }
         '422': { description: Invalid selected media metadata }
         '404': { description: Missing generation/variant or unmanaged/cross-project object }
-        '409': { description: Generation is not completed }
+        '409': { description: Incomplete or ineligible output, ambiguous registration, or captured identity/version changed }
   /v1/projects/{project_id}/generations:
     get:
       operationId: listGenerations

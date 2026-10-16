@@ -13,7 +13,8 @@ from .store import (
     public_task_spec,
 )
 from .util import atomic_json_write
-from .util import canonical_json, durable_json_bytes, new_id, now, sha256_bytes
+from .util import (canonical_json, durable_json_bytes, new_id, now, sha256_bytes,
+                   reject_managed_output_association_input)
 from .idempotency import command_result, compact_result
 import hashlib
 import json
@@ -8118,6 +8119,7 @@ class RuntimeService(TimelineCommitAcceptance):
 
     def _stage_outputs(self, attempt_id, outputs, *, project_id=None, attempt_row=None, task_row=None, lease_body=None, verified_objects=None):
         """Validate and stage every output without making it globally reachable."""
+        reject_managed_output_association_input(outputs)
         if not isinstance(outputs, list):
             raise ValidationError("outputs must be a list")
         stage_dir = self.store.attempt_staging_dir(attempt_id)

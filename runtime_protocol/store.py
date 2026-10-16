@@ -21,7 +21,8 @@ from pathlib import Path
 from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestError, LeaseError, NotFoundError, OwnerBusyError, RealmAdmissionError, ValidationError
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .dirfd import remove_tree_at
-from .util import canonical_json, new_id, now
+from .util import (canonical_json, new_id, now, MANAGED_OUTPUT_ASSOCIATION_KEY,
+                   reject_managed_output_association_input)
 from .visual_seam import load_closure, admit_closure
 from .idempotency import command_result, compact_result, expired_result, EXPIRED, RESULT_WINDOW_SECONDS
 
@@ -3147,6 +3148,7 @@ class RealmStore:
     def _validate_settlement_effect(self, effect, *, project_id=None, result=None, input_object_ids=None):
         if not isinstance(effect, dict):
             raise ValidationError("settlement effect must be an object")
+        reject_managed_output_association_input(effect)
         kind = effect.get("effect_type")
         if kind == "generation.publish_v1":
             return self._validate_generation_publish_v1_effect(
@@ -4047,6 +4049,8 @@ class RealmStore:
                         "regeneration": output.get("regeneration"),
                         "coverage": output.get("coverage"),
                     }
+                    if output.get("duration_seconds") is not None:
+                        variant_metadata["duration_seconds"] = output["duration_seconds"]
                     thumbnail_descriptor = group.get("thumbnails", {}).get(output["digest"])
                     thumbnail = (
                         self._thumbnail_metadata_descriptor(thumbnail_descriptor, output["digest"])
@@ -4173,6 +4177,8 @@ class RealmStore:
                 "media_type": output.get("media_type"),
                 "size": output.get("size"),
             }
+            if output.get("duration_seconds") is not None:
+                variant_metadata["duration_seconds"] = output["duration_seconds"]
             thumbnail = (
                 self._thumbnail_metadata_descriptor(plan["thumbnail"], output["digest"])
                 if plan["thumbnail"] is not None else None
@@ -4196,6 +4202,9 @@ class RealmStore:
                 "variant_id": variant_id,
                 "generation_id": generation_id,
                 "object_id": output["digest"],
+                "_association_overrides": {self._generation_publish_output_key(output): {
+                    "generation_id": generation_id, "variant_id": variant_id,
+                }},
                 "variant_type": payload["variant_type"],
                 "metadata": variant_metadata,
                 "created_at": timestamp,
@@ -4313,6 +4322,8 @@ class RealmStore:
                             (canonical_json(variant_metadata), row["id"]),
                         )
                 metadata["is_primary"] = True
+            if output.get("duration_seconds") is not None:
+                metadata["duration_seconds"] = output["duration_seconds"]
             thumbnail = (
                 self._thumbnail_metadata_descriptor(plan["variant_thumbnail"], output["digest"])
                 if plan["variant_thumbnail"] is not None else None
@@ -4336,6 +4347,9 @@ class RealmStore:
                 "variant_id": variant_id,
                 "generation_id": str(effect["target_id"]),
                 "object_id": output["digest"],
+                "_association_overrides": {self._generation_publish_output_key(output): {
+                    "generation_id": str(effect["target_id"]), "variant_id": variant_id,
+                }},
                 "variant_type": payload["variant_type"],
                 "metadata": metadata,
                 "created_at": timestamp,
@@ -4448,7 +4462,7 @@ class RealmStore:
                 manifest_digest = str(manifest_output["digest"]).removeprefix("sha256:")
         associations = []
         publish_overrides = {}
-        if isinstance(applied_effect, dict) and applied_effect.get("effect_type") == "generation.publish_v1":
+        if isinstance(applied_effect, dict):
             publish_overrides = applied_effect.get("_association_overrides") or {}
         for output in result.get("outputs", []):
             if not isinstance(output, dict) or output.get("kind") != "object":
@@ -4459,11 +4473,10 @@ class RealmStore:
             variant_key = output.get("variant_key", str(output.get("ordinal", 0)))
             ordinal = int(output.get("ordinal", 0))
             publish_key = (output_port, group_key, variant_key, ordinal)
+            publish_override = publish_overrides.get(publish_key) or {}
             if isinstance(applied_effect, dict) and applied_effect.get("effect_type") == "generation.publish_v1":
-                publish_override = publish_overrides.get(publish_key) or {}
                 generation_id = publish_override.get("generation_id")
             elif isinstance(applied_effect, dict):
-                publish_override = {}
                 generation_id = applied_effect.get("generation_id")
             else:
                 # Producer-supplied generation IDs are never authoritative;
@@ -4524,6 +4537,23 @@ class RealmStore:
                     timestamp,
                 ),
             )
+            variant_id = publish_override.get("variant_id")
+            if variant_id is not None:
+                if role in {"thumbnail", "manifest", "recoverable_snapshot"}:
+                    raise ConflictError("auxiliary output cannot bind a creative variant")
+                variant = self.conn.execute(
+                    "SELECT v.metadata_json FROM generation_variants v JOIN generations g ON g.id=v.generation_id "
+                    "WHERE v.id=? AND v.generation_id=? AND v.object_id=? AND g.project_id=?",
+                    (variant_id, generation_id, digest, project_id),
+                ).fetchone()
+                if variant is None:
+                    raise ConflictError("applied output variant identity is unavailable")
+                metadata = json.loads(variant["metadata_json"])
+                if MANAGED_OUTPUT_ASSOCIATION_KEY in metadata:
+                    raise ConflictError("creative variant already has an output association")
+                metadata[MANAGED_OUTPUT_ASSOCIATION_KEY] = association_id
+                self.conn.execute("UPDATE generation_variants SET metadata_json=? WHERE id=?",
+                                  (canonical_json(metadata), variant_id))
             lifecycle_state = "temporary" if durability == "temporary" else "available"
             self.conn.execute(
                 "INSERT OR IGNORE INTO managed_output_lifecycle(association_id, state, version, expires_at, pinned_at, lease_id, lease_owner, lease_expires_at, updated_at, created_at) VALUES (?, ?, 1, NULL, NULL, NULL, NULL, NULL, ?, ?)",
@@ -4742,7 +4772,8 @@ class RealmStore:
                     elif effect.get("effect_type") == "generation.thumbnail.attach":
                         result["generation_thumbnail"] = applied_effect
                     else:
-                        result["generation_variant"] = applied_effect
+                        result["generation_variant"] = {key: value for key, value in applied_effect.items()
+                                                        if not key.startswith("_")}
                 managed_outputs = self._associate_managed_outputs(
                     result,
                     task_id=task_id,

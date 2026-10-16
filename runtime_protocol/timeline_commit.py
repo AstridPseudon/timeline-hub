@@ -16,7 +16,7 @@ from .narration import (narration_lines, narration_projection, request_take_refs
                         validate_take_refs, validate_artifacts, validate_line_take,
                         NarrationTakeRefs, VerifiedNarrationTake)
 from .errors import ForbiddenError, AuthorizationError, ConflictError, NotFoundError, ValidationError
-from .util import canonical_json, now
+from .util import canonical_json, now, MANAGED_OUTPUT_ASSOCIATION_KEY
 
 KIND = "timeline.commit"
 PROVIDER_INTERFACE_VERSION = 1
@@ -204,21 +204,92 @@ def result_template(request, request_hash):
 
 
 class TimelineCommitAcceptance:
-    def get_project_media_selection(self, project_id, *, asset, generation_id, variant_id):
+    def get_project_media_selection(self, project_id, *, asset=None, generation_id=None, variant_id=None,
+                                    association_id=None, object_id=None, version=None):
         """Read the five-field selection using the commit authority projection.
 
         HTTP authentication and paired project binding are supplied by the
-        existing projects:read route. No caller object/digest is admitted here.
+        existing projects:read route. Caller output identity is checked exactly.
         """
-        selection = dict(asset=asset, generation_id=generation_id, variant_id=variant_id)
-        for value in (project_id, *selection.values()):
-            if not isinstance(value, str) or not value.strip():
-                raise ValidationError("media selection selectors must be nonempty strings")
+        if not isinstance(project_id, str) or not project_id.strip():
+            raise ValidationError("media selection project must be a nonempty string")
+        legacy = (asset, generation_id, variant_id)
+        output = (association_id, object_id, version)
         with self.store._mutex:
+            if all(v is not None for v in output) and all(v is None for v in legacy):
+                if (not isinstance(association_id, str) or not association_id.strip()
+                        or not isinstance(object_id, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", object_id)
+                        or type(version) is not int or version < 1):
+                    raise ValidationError("output selection requires exact association, object and positive version")
+                association, variant = self._output_selection_binding(project_id, association_id)
+                if association["object_id"] != object_id or association["lifecycle"]["version"] != version:
+                    raise ConflictError("captured output object or version changed")
+                selection = dict(asset=variant["id"], generation_id=variant["generation_id"],
+                                 variant_id=variant["id"], object_id=object_id)
+            elif all(isinstance(v, str) and v.strip() for v in legacy) and all(v is None for v in output):
+                selection = dict(asset=asset, generation_id=generation_id, variant_id=variant_id)
+            else:
+                raise ValidationError("exactly one complete media selection selector form is required")
             record = self._selected_project_media(project_id, selection)
             return {key: record[key] for key in (
                 "asset", "generation_id", "variant_id", "object_id", "catalog_digest",
             )}
+
+    def _output_selection_binding(self, project_id, association_id):
+        """Resolve an exact Runtime-authored binding without reading bytes or writing."""
+        if not isinstance(association_id, str) or not association_id.strip():
+            raise ValidationError("invalid Runtime output association binding")
+        association = self.store.get_managed_output(association_id)
+        if association["project_id"] != project_id:
+            raise NotFoundError("output association is outside the selected project")
+        if (association["durability"] != "durable"
+                or association["role"] in {"thumbnail", "manifest", "recoverable_snapshot"}
+                or association["lifecycle"]["state"] not in {"available", "promoted"}):
+            raise ConflictError("selected output is not an eligible durable creative output")
+        variants = self.store.conn.execute(
+            "SELECT v.id, v.generation_id, v.object_id, g.project_id FROM generation_variants v "
+            "JOIN generations g ON g.id=v.generation_id WHERE "
+            "CASE WHEN json_valid(v.metadata_json) THEN json_extract(v.metadata_json, ?) END=?",
+            ("$." + MANAGED_OUTPUT_ASSOCIATION_KEY, association_id),
+        ).fetchall()
+        if not variants:
+            raise NotFoundError("output has no authoritative registered variant")
+        if len(variants) != 1:
+            raise ConflictError("output has ambiguous registered variants")
+        variant = variants[0]
+        if (variant["project_id"] != project_id or variant["generation_id"] != association["generation_id"]
+                or "sha256:" + str(variant["object_id"]) != association["object_id"]):
+            raise ConflictError("output association and registered variant identity changed")
+        task = self.store.conn.execute("SELECT r.project_id, t.status, t.result_json, t.attempt_id, t.capability FROM tasks t "
+                                       "JOIN runs r ON r.id=t.run_id WHERE t.id=?",
+                                       (association["task_id"],)).fetchone()
+        attempt = self.store.conn.execute("SELECT task_id, settled, executor_id, fence, runtime_epoch, lease_id FROM attempts WHERE id=?",
+                                          (association["attempt_id"],)).fetchone()
+        try:
+            outputs = json.loads(task["result_json"] or "{}").get("outputs", []) if task else []
+            matches = [v for v in outputs if isinstance(v, dict)
+                       and self.store._generation_publish_output_key(v) == (
+                           association["output_port"], association["group_key"],
+                           association["variant_key"], association["ordinal"])]
+            valid = (len(matches) == 1 and matches[0].get("kind") == "object"
+                     and matches[0].get("digest") == association["object_id"]
+                     and matches[0].get("size") == association["size"]
+                     and matches[0].get("media_type") == association["media_type"]
+                     and matches[0].get("role", "output") == association["role"])
+        except (ValueError, TypeError, AttributeError) as exc:
+            raise ConflictError("selected output settlement identity is malformed") from exc
+        if (not task or task["project_id"] != project_id or task["status"] != "completed"
+                or not attempt or attempt["task_id"] != association["task_id"] or not attempt["settled"] or not valid):
+            raise ConflictError("selected output is not an exact completed settlement")
+        provenance = association["provenance"]
+        if (task["attempt_id"] != association["attempt_id"] or not attempt["lease_id"]
+                or not isinstance(provenance, dict) or any(provenance.get(key) != expected for key, expected in (
+                    ("task_id", association["task_id"]), ("attempt_id", association["attempt_id"]),
+                    ("capability_id", task["capability"]), ("executor_id", attempt["executor_id"]),
+                    ("fence", attempt["fence"]), ("runtime_epoch", attempt["runtime_epoch"]),
+                ))):
+            raise ConflictError("selected output historical attempt identity changed")
+        return association, variant
 
     def _selected_project_media(self, project_id, selection):
         """Reconstruct one record from managed authority; caller owns the mutex.
@@ -287,6 +358,21 @@ class TimelineCommitAcceptance:
                                      "metadata": _media_metadata(generation_metadata)},
                       "variant": {"variant_type": row["variant_type"], "metadata": _media_metadata(variant_metadata)},
                       "entry": entry}
+            if MANAGED_OUTPUT_ASSOCIATION_KEY in variant_metadata:
+                association, variant = self._output_selection_binding(
+                    project_id, variant_metadata[MANAGED_OUTPUT_ASSOCIATION_KEY])
+                if (variant["id"] != selection["variant_id"]
+                        or association["size"] != entry["size"] or association["media_type"] != entry["media_type"]):
+                    raise ConflictError("selected media output identity changed")
+                if entry["media_type"].startswith("video/") and "duration_seconds" not in entry:
+                    raise ValueError("selected video output requires intrinsic duration")
+                # Include the captured lifecycle version in the existing digest.
+                # A later read/retry never silently advances this capture.
+                record["variant"]["managed_output"] = {k: association[k] for k in (
+                    "association_id", "task_id", "attempt_id", "project_id", "generation_id",
+                    "object_id", "output_port", "group_key", "variant_key", "ordinal", "role",
+                    "size", "media_type", "filename", "durability", "lifecycle", "provenance",
+                )}
             record["catalog_digest"] = digest(record)
         except (ValueError, TypeError, OverflowError) as exc:
             raise ValidationError("invalid selected media metadata") from exc

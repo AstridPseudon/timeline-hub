@@ -614,10 +614,14 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     query = parse_qs(raw_query, keep_blank_values=True, strict_parsing=True, errors="strict")
                 except (ValueError, UnicodeError) as exc:
                     raise ProtocolError("invalid media selection query encoding") from exc
-                if set(query) != {"asset", "generation_id", "variant_id"} or any(
+                if set(query) not in ({"asset", "generation_id", "variant_id"}, {"association_id", "object_id", "version"}) or any(
                     len(values) != 1 or not values[0].strip() for values in query.values()
                 ):
-                    raise ProtocolError("one nonempty asset, generation_id and variant_id are required; no other selectors")
+                    raise ProtocolError("exactly one complete media selection selector form is required")
+                if "version" in query:
+                    if not re.fullmatch(r"[1-9][0-9]*", query["version"][0]):
+                        raise ProtocolError("output version must be a positive integer")
+                    query["version"] = [int(query["version"][0])]
                 return self._send(200, self.runtime.get_project_media_selection(
                     selector, **{key: values[0] for key, values in query.items()},
                 ))

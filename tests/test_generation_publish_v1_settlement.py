@@ -65,11 +65,12 @@ def _effect(project_id: str, *, policy: str = "reject", groups: list[dict] | Non
     }
 
 
-def _fixture(tmp_path, *, effect_factory=_effect, slug="publish"):
+def _fixture(tmp_path, *, effect_factory=_effect, slug="publish", with_input=False):
     root = tmp_path / slug
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
     digest = _digest(CAPABILITY.encode())
+    service.register_capability({"capability_id": CAPABILITY, "definition_digest": digest})
     service.register_executor(
         {"executor_id": f"{slug}-worker", "capabilities": [CAPABILITY]},
         idempotency_key=f"{slug}-executor",
@@ -78,14 +79,16 @@ def _fixture(tmp_path, *, effect_factory=_effect, slug="publish"):
         {"slug": slug, "name": slug.title()}, idempotency_key=f"{slug}-project"
     )
     effect = effect_factory(project["id"])
+    inputs = [service.ingest(project["id"], b"synthetic input", idempotency_key="input")["data"]["object_id"]] if with_input else []
     task = service.create_task(
         {
             "capability_id": CAPABILITY,
             "capability_digest": digest,
             "project": project["id"],
             "settlement_effect": effect,
+            "input_object_ids": inputs,
             "idempotency_key": f"{slug}-task",
-        }
+        }, _host_owned=True,
     )
     attempt = service.claim_next(
         {

@@ -9,6 +9,7 @@ manifest as well.  The Python client is rendered from the tracked template;
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -75,6 +76,75 @@ def operation_index(manifest_path: Path = MANIFEST) -> list[str]:
     manifest = json.loads(_regular(manifest_path, "schema manifest"))
     text = (ROOT / "contract" / manifest["openapi"]).read_text(encoding="utf-8")
     return [line.split(":", 1)[1].strip() for line in text.splitlines() if re.match(r"^\s+operationId:", line)]
+
+
+def client_operation_index(manifest_path: Path = MANIFEST) -> list[str]:
+    """Project public client helpers, including the one supported selector alias.
+
+    ``operation_index`` remains the wire-operation index. This projection admits
+    only the output-selection helper on the media-selection GET and fails closed
+    if the contract changes its selector forms or parameter names.
+    """
+    operations = operation_index(manifest_path)
+    manifest = json.loads(_regular(manifest_path, "schema manifest"))
+    contract = _regular(ROOT / "contract" / manifest["openapi"], "OpenAPI contract").decode("utf-8")
+    alias_lines = re.findall(r"^\s+x-client-alias:\s*([^\n]+?)\s*$", contract, re.MULTILINE)
+    form_lines = re.findall(r"^\s+x-selector-forms:\s*([^\n]+?)\s*$", contract, re.MULTILINE)
+    blocks = re.finditer(
+        r"^  (?P<path>/[^\n]+):\n    (?P<method>\w+):\n"
+        r"(?P<body>.*?)(?=^  \S|^    \S|\Z)",
+        contract,
+        re.MULTILINE | re.DOTALL,
+    )
+    projections = []
+    for block in blocks:
+        body = block.group("body")
+        alias = re.findall(r"^      x-client-alias:\s*([^\n]+?)\s*$", body, re.MULTILINE)
+        forms = re.findall(r"^      x-selector-forms:\s*([^\n]+?)\s*$", body, re.MULTILINE)
+        if alias or forms:
+            if len(alias) != 1 or len(forms) != 1:
+                raise SystemExit("unsupported client selector alias projection")
+            operation = re.search(r"^      operationId:\s*([^\n]+?)\s*$", body, re.MULTILINE)
+            parameter_names = re.findall(r"\{ name: (\w+), in: query,", body)
+            if (
+                (block.group("path"), block.group("method"), operation.group(1) if operation else None, alias[0])
+                != (
+                    "/v1/projects/{project_id}/media-selection",
+                    "get",
+                    "getProjectMediaSelection",
+                    "getProjectMediaSelectionForOutput",
+                )
+                or re.sub(r"\s+", "", forms[0])
+                != "[[asset,generation_id,variant_id],[association_id,object_id,version]]"
+                or parameter_names
+                != ["asset", "generation_id", "variant_id", "association_id", "object_id", "version"]
+            ):
+                raise SystemExit("unsupported client selector alias projection")
+            projections.append(alias[0])
+    if len(alias_lines) != len(projections) or len(form_lines) != len(projections):
+        raise SystemExit("unsupported client selector alias projection")
+    methods = [*operations, *projections]
+    if len(methods) != len(set(methods)):
+        raise SystemExit("client operation projection must be unique")
+    return methods
+
+
+def validate_python_client(source: str, manifest_path: Path = MANIFEST) -> None:
+    module = ast.parse(source)
+    client = next(node for node in module.body if isinstance(node, ast.ClassDef) and node.name == "WorkspaceClient")
+    methods = {
+        node.name for node in client.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_")
+    }
+    expected = {
+        re.sub(r"(?<!^)(?=[A-Z])", "_", operation).lower()
+        for operation in client_operation_index(manifest_path)
+    } | {"update_timeline_document"}
+    if methods != expected:
+        raise SystemExit(
+            f"Python client operation projection drifted; missing={sorted(expected - methods)}"
+            f"; extra={sorted(methods - expected)}"
+        )
 
 
 # One source, explicitly selected for isolated source tuples. No editable Runtime copy.
@@ -432,6 +502,7 @@ def render_python_client(manifest_path: Path = MANIFEST) -> str:
     rendered = rendered.replace("__COMMIT_TYPES__", commit_types("python"))
     rendered = rendered.replace("__MEDIA_SELECTION_TYPES__", media_selection_types("python"))
     rendered = rendered.replace("__COMMIT_ROUTE__", commit_route().replace("{project_id}", "{_path_part(body['project_id'])}").replace("{timeline_id}", "{_path_part(body['timeline_id'])}"))
+    validate_python_client(rendered, manifest_path)
     return rendered
 
 
@@ -459,11 +530,17 @@ def render_media_selection_typescript(source: str) -> str:
     else:
         anchor = next(line for line in source.splitlines() if line.startswith("  async listGenerations("))
         source = source.replace(anchor, method + "\n" + anchor, 1)
+    output_method = '  async getProjectMediaSelectionForOutput(projectId: string, selectors: { association_id: string; object_id: string; version: number }): Promise<ProjectMediaSelection> { if (!Number.isSafeInteger(selectors.version) || selectors.version < 1) throw new Error("output version must be a positive integer"); const query = `association_id=${encodeURIComponent(selectors.association_id)}&object_id=${encodeURIComponent(selectors.object_id)}&version=${selectors.version}`; return this.json<ProjectMediaSelection>((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/media-selection?${query}`)).body) }'
+    if "  async getProjectMediaSelectionForOutput(" in source:
+        source = re.sub(r"^  async getProjectMediaSelectionForOutput\([^\n]*", lambda _: output_method, source, count=1, flags=re.M)
+    else:
+        source = source.replace(method, method + "\n" + output_method, 1)
     return source
 
 
 def render_typescript_client() -> str:
     """Render the source-frame thumbnail operations into the typed TS client."""
+    client_operation_index()
     source = render_media_selection_typescript(render_commit_typescript(_regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")))
     child_authority_types = (
         'export interface ChildAuthorityChild { child_id: string; capability_id: string; capability_digest: string }\n'
@@ -506,7 +583,7 @@ def render_typescript_client() -> str:
     return source.replace(anchor, anchor + "\n" + get_method + "\n" + ensure_method, 1)
 
 
-def validate_typescript_client(manifest_path: Path = MANIFEST) -> None:
+def validate_typescript_client(manifest_path: Path = MANIFEST, source: str | None = None) -> None:
     """Fail closed when the typed product projection drifts from OpenAPI.
 
     The TypeScript client remains a typed repository source rather than a
@@ -514,9 +591,10 @@ def validate_typescript_client(manifest_path: Path = MANIFEST) -> None:
     canonical operation projection and asserts the execution binding fields
     whose types cannot be inferred by the small metadata renderer.
     """
-    source = _regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")
+    if source is None:
+        source = _regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")
     methods = set(re.findall(r"^  async (\w+)\(", source, re.MULTILINE))
-    expected = set(operation_index(manifest_path)) | {"updateTimelineDocument"}
+    expected = set(client_operation_index(manifest_path)) | {"updateTimelineDocument"}
     if methods != expected:
         missing = sorted(expected - methods)
         extra = sorted(methods - expected)

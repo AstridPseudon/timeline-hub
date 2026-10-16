@@ -1366,6 +1366,14 @@ class WorkspaceClient:
         ))
         return cast(ProjectMediaSelection, self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/media-selection?{query}")[2]))
 
+    def get_project_media_selection_for_output(self, project_id: str, *, association_id: str, object_id: str, version: int) -> ProjectMediaSelection:
+        if type(version) is not int or version < 1:
+            raise ValueError("output version must be a positive integer")
+        query = "&".join(f"{key}={_path_part(str(value))}" for key, value in (
+            ("association_id", association_id), ("object_id", object_id), ("version", version),
+        ))
+        return cast(ProjectMediaSelection, self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/media-selection?{query}")[2]))
+
     def list_generations(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> tuple[list[Generation], str | None]:
         query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "")
         value = self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/generations" + query)[2])
