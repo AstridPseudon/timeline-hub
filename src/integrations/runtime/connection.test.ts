@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // The origin is module state set once per page, so each case loads a fresh module.
@@ -175,5 +177,33 @@ describe('set once', () => {
     connection.setRuntimeOrigin({});
     expect(() => connection.setRuntimeOrigin({ VITE_RUNTIME_ORIGIN: GATEWAY })).toThrow(/already set/);
     expectSameOrigin(connection);
+  });
+});
+
+describe('RUNTIME_QUERY_ROOTS', () => {
+  // The list is the single source for the on-connect invalidation, so a root that no query uses is a dead
+  // entry and a Runtime-reading root missing from it is a stale read. Each root is pinned to a real key here.
+  function sourceFiles(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) return sourceFiles(full);
+      return /\.(ts|tsx)$/.test(entry.name) && !/\.test\./.test(entry.name) && !/__tests__/.test(full) ? [full] : [];
+    });
+  }
+
+  it('names a query key root that exists in src, for every entry', () => {
+    const sources = sourceFiles(join(process.cwd(), 'src')).map((file) => readFileSync(file, 'utf8'));
+    for (const root of connection.RUNTIME_QUERY_ROOTS) {
+      const asFirstElement = new RegExp(`\\[\\s*['"]${root}['"]\\s*[,\\]]`);
+      expect(sources.some((text) => asFirstElement.test(text)), `no query key starts with '${root}'`).toBe(true);
+    }
+  });
+
+  it('covers the Runtime read roots, and matches by root only', () => {
+    for (const root of ['runtime', 'runtime-editor', 'runtime-tasks', 'runtime-final-videos', 'astrid-bridge']) {
+      expect(connection.isRuntimeQueryKey([root, 'p1'])).toBe(true);
+    }
+    expect(connection.isRuntimeQueryKey(['shots', 'p1'])).toBe(false);
+    expect(connection.isRuntimeQueryKey([])).toBe(false);
   });
 });

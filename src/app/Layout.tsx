@@ -23,6 +23,9 @@ import { isVideoEditorRoute, useVideoEditorRouteState } from '@/app/hooks/useVid
 import { SocialIcons } from './components/SocialIcons';
 
 import { useAuth } from '@/shared/contexts/AuthContext';
+import { RuntimeConnectionGate } from '@/integrations/runtime/RuntimeConnectionProvider';
+import { RuntimeConnectionPanel } from '@/shared/components/RuntimeConnection/RuntimeConnectionPanel.tsx';
+import { RuntimeConnectionPill } from '@/shared/components/RuntimeConnection/RuntimeConnectionPill.tsx';
 import { APP_ENTRY_PATH, prefersAppEntry } from './entryClassification.ts';
 import { useSplitViewScroll } from './hooks/useSplitViewScroll';
 import { useGlobalPaneShortcuts } from './hooks/useGlobalPaneShortcuts';
@@ -50,7 +53,18 @@ function ScrollToTop() {
   return null;
 }
 
-export const Layout: React.FC = () => {
+/** The app shell, behind the Runtime boot gate: on the hosted build nothing below it mounts (no hook, no query)
+ * until the local Runtime is connected; the gate shows the connection panel instead. Same-origin builds pass straight through. */
+export const Layout: React.FC = () => (
+  <RuntimeConnectionGate
+    panel={(connection) => <RuntimeConnectionPanel connection={connection} />}
+    pill={(connection) => <RuntimeConnectionPill connection={connection} />}
+  >
+    <LayoutShell />
+  </RuntimeConnectionGate>
+);
+
+const LayoutShell: React.FC = () => {
   const { pathname, search } = useLocation();
   const editorOnlyRedirectTarget = astridEditorOnlyRedirectTarget(pathname, search);
   const isAstridEditorOnlyApp = isAstridEditorOnlyWorkspace();
@@ -110,7 +124,9 @@ export const Layout: React.FC = () => {
     return <Navigate to={editorOnlyRedirectTarget} replace />;
   }
 
-  // Redirect unauthenticated users to home page
+  // Redirect unauthenticated users to home page (same-origin builds only: on the hosted
+  // build `RuntimeConnectionGate` above has already held the shell until the Runtime
+  // answered, and a connected gate is an authenticated session, so this never fires there).
   // Use /home instead of / to avoid redirect loops in non-WEB environments
   // where / is inside Layout.
   //

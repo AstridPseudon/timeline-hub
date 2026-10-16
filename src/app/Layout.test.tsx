@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Layout } from './Layout';
+import { RuntimeConnectionProvider } from '@/integrations/runtime/RuntimeConnectionProvider';
+
+const { globalPaneShortcutsMock } = vi.hoisted(() => ({ globalPaneShortcutsMock: vi.fn() }));
 
 const state = {
   isVideoEditorShellActive: false,
@@ -72,7 +75,7 @@ vi.mock('./hooks/useSplitViewScroll', () => ({
   useSplitViewScroll: () => ({ splitViewWrapperRef: { current: null } }),
 }));
 vi.mock('./hooks/useGlobalPaneShortcuts', () => ({
-  useGlobalPaneShortcuts: () => undefined,
+  useGlobalPaneShortcuts: globalPaneShortcutsMock,
 }));
 vi.mock('./hooks/useSettingsModal', () => ({
   useSettingsModal: () => ({
@@ -107,11 +110,34 @@ vi.mock('react-router-dom', async () => {
 
 function renderLayout() {
   return render(
-    <MemoryRouter initialEntries={['/tools/travel-between-images']}>
-      <Layout />
-    </MemoryRouter>,
+    <RuntimeConnectionProvider>
+      <MemoryRouter initialEntries={['/tools/travel-between-images']}>
+        <Layout />
+      </MemoryRouter>
+    </RuntimeConnectionProvider>,
   );
 }
+
+describe('Layout on the hosted build', () => {
+  it('holds the shell behind the Runtime gate: LayoutShell hooks never run while the Runtime is unreachable', async () => {
+    globalPaneShortcutsMock.mockClear();
+    const permissions = { query: vi.fn(async () => ({ state: 'granted', onchange: null })) };
+    const fetchImpl = vi.fn(async () => {
+      throw new TypeError('Failed to fetch');
+    });
+    render(
+      <RuntimeConnectionProvider gated permissions={permissions} fetchImpl={fetchImpl as unknown as typeof fetch}>
+        <MemoryRouter initialEntries={['/tools/travel-between-images']}>
+          <Layout />
+        </MemoryRouter>
+      </RuntimeConnectionProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'cant_reach'));
+    expect(globalPaneShortcutsMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('tools-pane')).not.toBeInTheDocument();
+  });
+});
 
 describe('Layout route access', () => {
   afterEach(() => {

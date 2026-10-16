@@ -106,7 +106,7 @@ export function isRuntimeMode(apiBaseUrl: string | null | undefined): boolean {
 }
 
 /** Why the gateway answered but the Runtime cannot serve yet (a 503 from the gateway). */
-export type RuntimeNotReadyReason = 'starting' | 'runtime_stopped' | 'realm_changed';
+export type RuntimeNotReadyReason = 'starting' | 'runtime_stopped' | 'realm_changed' | 'identity_mismatch' | 'unknown';
 
 /** The boot gate's view of the connection (design D3); the panel renders one sentence per status. */
 export type RuntimeConnectionState =
@@ -117,3 +117,26 @@ export type RuntimeConnectionState =
   /** The browser's local-network permission is denied. */
   | { status: 'blocked' }
   | { status: 'not_ready'; reason: RuntimeNotReadyReason };
+
+/**
+ * Query-key roots that read the Runtime through the gateway. The boot gate invalidates them when the
+ * connection comes up, so nothing cached from before it (an error, an empty read) is served as current.
+ */
+export const RUNTIME_QUERY_ROOTS: readonly string[] = [
+  'runtime',
+  'runtime-editor',
+  'runtime-tasks',
+  'runtime-final-videos',
+  'astrid-bridge',
+  'timeline-agent-sessions',
+  'timeline-agent-session',
+  'project-agent-chat',
+  'project-agent-chat-unassigned',
+  'project-agent-task-links',
+  'agent-linked-task-results',
+];
+
+/** True for a query key whose root is one of `RUNTIME_QUERY_ROOTS`. */
+export function isRuntimeQueryKey(queryKey: readonly unknown[]): boolean {
+  return typeof queryKey[0] === 'string' && RUNTIME_QUERY_ROOTS.includes(queryKey[0]);
+}
