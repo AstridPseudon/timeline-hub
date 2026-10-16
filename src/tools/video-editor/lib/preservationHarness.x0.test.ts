@@ -277,6 +277,10 @@ describe.skipIf(!fixtureRoot)('X0-EDITOR admitted preservation harness', () => {
       const serialized = await runAppSerializer(parent);
       const actual = { config: serialized.config, registry: serialized.registry } as JsonRecord;
       const missing = missingPreservationPaths(actual, serializerPaths);
+      // A finding denotes a loss; keep the original empty-findings assertion
+      // meaningful once every path survives, and check each snapshot directly.
+      expect(missing, case2.B2.transactions[index]!.gesture).toEqual([]);
+      if (missing.length === 0) continue;
       findings.push({ gesture: case2.B2.transactions[index]!.gesture, missing });
     }
 
