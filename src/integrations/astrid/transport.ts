@@ -29,6 +29,7 @@ import {
   type BridgeErrorCategory,
 } from '@/tools/video-editor/data/bridgeContract.ts';
 import type { z } from 'zod';
+import { astridBase } from '@/integrations/runtime/connection.ts';
 
 /**
  * A failed bridge route: HTTP status, the raw wire error code, and its
@@ -109,7 +110,7 @@ export function classifyRouteError(status: number, code: string | undefined): Br
 }
 
 export type AstridBridgeTransportOptions = {
-  /** Same-origin base (default `/api/astrid`); must travel the injecting proxy. */
+  /** Base for the bridge routes. Default: `astridBase()`, read per request (Plan A F1). */
   baseUrl?: string;
   timeoutMs?: number;
 };
@@ -145,13 +146,18 @@ function assertRequestBodyMode(request: BridgeRequestInit): void {
 }
 
 export class AstridBridgeTransport {
-  readonly baseUrl: string;
+  private readonly explicitBaseUrl: string | undefined;
 
   private readonly timeoutMs: number;
 
   constructor(options: AstridBridgeTransportOptions = {}) {
-    this.baseUrl = (options.baseUrl ?? '/api/astrid').replace(/\/+$/, '');
+    this.explicitBaseUrl = options.baseUrl?.replace(/\/+$/, '');
     this.timeoutMs = options.timeoutMs ?? BRIDGE_REQUEST_TIMEOUT_MS;
+  }
+
+  /** Read per request, so a transport built before the origin is set still reaches the configured one. */
+  get baseUrl(): string {
+    return (this.explicitBaseUrl ?? astridBase()).replace(/\/+$/, '');
   }
 
   url(path: string): string {

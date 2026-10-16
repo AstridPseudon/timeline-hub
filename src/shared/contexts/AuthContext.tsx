@@ -12,7 +12,7 @@ interface AuthContextType {
 }
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/** Boot/auth seam: one `/api/astrid` health probe per boot IS the session
+/** Boot/auth seam: one health probe of the Astrid bridge (`astridBase()`) per boot IS the session
  * (doc 27 §local-trust). A healthy bridge resolves the fixed local user;
  * failure degrades to alive-but-unauthenticated with exactly one probe.
  * The per-boot request token lives at the vite-proxy layer and never

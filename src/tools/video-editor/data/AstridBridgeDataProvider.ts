@@ -63,6 +63,7 @@ import {
   ShotCompositionUnavailableError,
   type ShotCompositionPort,
 } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import { astridBase } from '@/integrations/runtime/connection.ts';
 
 /**
  * The provider's internal view of a timeline payload. Deliberately looser than
@@ -99,7 +100,6 @@ export type AstridBridgeRequestObservation = Readonly<{
   errorClass?: 'bridge.timeout' | 'bridge.http_error' | 'bridge.invalid_response';
 }>;
 
-const DEFAULT_API_BASE_URL = '/api/astrid';
 const DEFAULT_BRIDGE_PORT = '17333';
 const LOCAL_DROP_DIRECTORY_NAME = 'local-drops';
 const LOCAL_PROJECT_ROOT_HANDLE_PREFIX = 'astrid-project-root';
@@ -321,7 +321,7 @@ export class AstridBridgeDataProvider implements DataProvider {
   private readonly onBridgeRequest: AstridBridgeDataProviderOptions['onBridgeRequest'];
 
   constructor(options: AstridBridgeDataProviderOptions) {
-    this.apiBaseUrl = trimTrailingSlash(options.apiBaseUrl ?? DEFAULT_API_BASE_URL);
+    this.apiBaseUrl = trimTrailingSlash(options.apiBaseUrl ?? astridBase());
     this.transport = new AstridBridgeTransport({ baseUrl: this.apiBaseUrl });
     // Media asset URLs must travel the same (proxied) base as config/registry
     // requests so <video>/<img>/<audio> fetches are same-origin and reach the

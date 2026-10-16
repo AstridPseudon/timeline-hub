@@ -115,7 +115,7 @@ export const Layout: React.FC = () => {
   // where / is inside Layout.
   //
   // Auth is decided by the bridge probe alone (`useAuth`): a healthy
-  // `/api/astrid` resolves the fixed local user, so this gate passes on the
+  // bridge (`astridBase()`) resolves the fixed local user, so this gate passes on the
   // probe and never depends on URL params or stored credentials. When the
   // probe fails the user is sent to the public home page — one hop, no loop:
   // `/` outside Layout does not re-enter this gate (and in WEB env `/` is

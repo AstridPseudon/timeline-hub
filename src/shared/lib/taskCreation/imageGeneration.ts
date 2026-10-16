@@ -9,6 +9,7 @@ import {
   bridgeTaskAdmissionRequestSchema,
 } from '@/tools/video-editor/data/bridgeContract.ts';
 import type { TaskCreationRequest } from './types';
+import { astridBase } from '@/integrations/runtime/connection.ts';
 
 export const IMAGE_GENERATION_CAPABILITY_ID = 'generation.generate_image';
 export const IMAGE_I2I_CAPABILITY_ID = 'generation.generate_image_cloud_i2i';
@@ -24,7 +25,6 @@ const MAX_SEED = 2_147_483_647;
 const MAX_STEPS = 1_000;
 const MAX_CLOUD_I2I_SOURCE_BYTES = 512_000;
 const BOUNDED_CLOUD_I2I_SIZE = '1024x1024';
-const IMAGE_COMPOSE_ROUTE = '/api/astrid/generation/compose';
 const MAX_COMPOSE_RESPONSE_BYTES = 256 * 1024;
 
 export interface ImageToImageTaskOptions {
@@ -61,7 +61,7 @@ async function composeCreativeImageAdmission(
 ): Promise<TaskCreationRequest> {
   let response: Response;
   try {
-    response = await fetch(IMAGE_COMPOSE_ROUTE, {
+    response = await fetch(`${astridBase()}/generation/compose`, {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
