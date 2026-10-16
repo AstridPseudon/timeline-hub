@@ -86,6 +86,10 @@ def replay(target: Path, steps: list[Path], current: str, *, redo: bool, owner: 
         name = f"{sequence:020d}-{journal.document_digest(current)[7:23]}.json"
         entries.append({"source": step.name, "destination": name, "label": label, "state": current})
         current = _serialize(retain_cut_reservations(json.loads(state), json.loads(current)))
+        # Validate every restored snapshot before writing the replay WAL. The
+        # accepted old/new closure stays request-owned across undo and redo.
+        from astrid.sdk.timeline.checkout import Checkout
+        Checkout(json.loads(current), transcript_dependencies=getattr(owner, "_transcript_dependencies", ()))._word_list()
     kind = "redo" if redo else "undo"
     label = "; ".join(entry["label"] for entry in entries)[:160]
     audit = {"id": uuid.uuid4().hex, "project": str(owner.bundle.get("project_id") or "local"),

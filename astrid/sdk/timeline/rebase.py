@@ -122,6 +122,7 @@ def _rewrite(call, id_map):
             cut = "cut:" + moment.cut if moment.cut else None
             return replace(moment, cut=id_map.get(cut, cut)[4:] if cut else None,
                            clip=id_map.get(moment.clip, moment.clip) if moment.clip else None,
+                           source=(*moment.source[:3], id_map.get(moment.source[3], moment.source[3]), moment.source[4]) if moment.source else None,
                            base=visit(moment.base) if moment.base else None)
         original = mo.parse(text)
         mapped = visit(original)
@@ -211,7 +212,7 @@ def _rewrite(call, id_map):
     return commands.EditCommand.coerce(rewritten)
 
 
-def rebase(calls, onto, *, id_map=None, narration_takes=None):
+def rebase(calls, onto, *, id_map=None, narration_takes=None, transcript_dependencies=()):
     """Replay recorded calls through the runner, preserving guards and anchor IDs.
 
     The map is supplied by a real identity producer; ordinary occurrence edits
@@ -224,7 +225,7 @@ def rebase(calls, onto, *, id_map=None, narration_takes=None):
             if any(getattr(call, field) is None for field in ("expect", "bindings", "created", "authorship")):
                 raise commands.CommandError("Rebase requires a runner-recorded OpCall, including original preconditions")
         used = _mapping(recorded, copy.deepcopy(dict(id_map or {})))
-        tl = Checkout(copy.deepcopy(onto))
+        tl = Checkout(copy.deepcopy(onto), transcript_dependencies=transcript_dependencies)
         if narration_takes is not None:
             tl._narration_takes = copy.deepcopy(narration_takes)
         require_writable_candidate(tl.document())

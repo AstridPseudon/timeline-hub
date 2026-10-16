@@ -151,7 +151,11 @@ def _validate_dependencies(tl):
                 deps = references(land, first)
             elif isinstance(land, Mapping):  # retained {word, text} fit form
                 try:
-                    word = tl._as_word(str(land.get('word') or '')) or tl.word(str(land.get('text')))
+                    if "source" in land:
+                        from astrid.sdk.timeline.transcript_binding import resolve_source_word
+                        word = resolve_source_word(land, words)
+                    else:
+                        word = tl._as_word(str(land.get('word') or '')) or tl.word(str(land.get('text')))
                 except TimelineEditError:
                     pass  # leave the existing lookup failure to the evaluator
                 else:
@@ -182,7 +186,14 @@ def _validate_dependencies(tl):
                 if expr.get('as', 'clip_seconds') != 'timeline_seconds':
                     link(target, start)
             elif 'word' in expr:
-                word = next((w for w in words if w.id == expr['word']), None)
+                from astrid.sdk.timeline.transcript_binding import resolve_source_word
+                if "source" in expr:
+                    try:
+                        word = resolve_source_word(expr, words)
+                    except TimelineEditError:
+                        word = None  # evaluator preserves its accepted orphan cache
+                else:
+                    word = next((w for w in words if w.source is None and w.id == expr['word']), None)
                 if word and (word.shot_id, word.clip_id) in by_word:
                     link(target, node(by_word[word.shot_id, word.clip_id], 'start'))
 
@@ -213,7 +224,7 @@ def _validate_dependencies(tl):
 # Only timing state crosses the boundary. Transaction/journal objects, clients,
 # paths, save state and open edits belong to the caller, never to a compiler copy.
 _STATE = (
-    "_narration_takes",
+    "_narration_takes", "_transcript_dependencies",
     "bundle", "fps", "notes", "report", "_mcache", "_music", "_keep_inside",
     "_kept", "_outside", "_scope", "_music_pending", "_orphan_reason", "_orphan_cuts", "_moved_ends",
 )
@@ -322,6 +333,7 @@ def compile_timing(inputs: TimingInputs | Mapping[str, Any], commands: Sequence 
     workspace._scope = _records(workspace._scope, identities)
     workspace._edit_depth = 1  # journal ownership stays with the calling checkout
     workspace._command_depth = 1  # compiler evaluator calls stay below the outer EditCommand boundary
+    workspace._word_list()  # reject missing/altered frozen transcript inputs before materialization
     from astrid.sdk.timeline import music_beds
     music_beds.prepare(workspace)
     music_beds.validate(workspace)

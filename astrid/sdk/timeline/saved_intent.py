@@ -216,7 +216,8 @@ def _read_saved_calls_locked(checkout, target, path):
             replay_document["source_mapping"]["pinned_transcripts"] = verify_pinned_entries(
                 project, imports[0]["transcripts"])
         document, _plan, _direct = RuntimeCommitService._apply(
-            replay_document, saved, narration_takes=getattr(checkout, "_narration_takes", None))
+            replay_document, saved, narration_takes=getattr(checkout, "_narration_takes", None),
+            transcript_dependencies=getattr(checkout, "_transcript_dependencies", ()))
         replay = Checkout(document)
         replay._sync_film_length()  # the existing final save normalization
         if journal.digest(_serialize(replay._annotated())) != row["after"]:

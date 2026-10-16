@@ -14,6 +14,8 @@ The grammar (one line, used by the sheet, the CLI, the API and the stored form):
     end of c30   c30.end       a cut ends (where the next cut starts)
     clip-start "occurrence:opening/clip:title"  that exact authored clip starts
     clip-end "parent/clip:bed"  that exact authored clip ends
+    source-word "doc" "lineage" "revision" "occurrence:opening/clip:vo" "digest" "id"
+                               that exact source word in that frozen occurrence
     end                        the end of the clip's own cut (with no clip: the end of the film)
     +0.8s   -3f                an offset; alone, it is relative to the clip's own cut start
     "viral" +2f                any of the above, then an offset
@@ -25,6 +27,7 @@ Pure: no runtime, no pack imports. ``resolve`` takes a small context object.
 """
 from __future__ import annotations
 
+import json
 import math
 import re
 from dataclasses import dataclass, replace
@@ -33,7 +36,7 @@ from typing import Any, Iterable, Protocol, Sequence
 CUT_ID_RE = re.compile(r"^c\d+[a-z]?$")
 _CUT_END_RE = re.compile(r"^(c\d+[a-z]?)\.end$")
 FRAME_EPSILON = 0.02  # frames: times arrive through ms placements, so allow ~0.6 ms of rounding
-_TOKEN_RE = re.compile(r'"[^"]*"|“[^”]*”|#\d+|[+-]\d+(?:\.\d+)?[fs]\b|[^\s"]+')
+_TOKEN_RE = re.compile(r'"(?:\\.|[^"\\])*"|“[^”]*”|#\d+|[+-]\d+(?:\.\d+)?[fs]\b|[^\s"]+')
 _OFFSET_RE = re.compile(r"^([+-])(\d+(?:\.\d+)?)([fs])$")
 
 
@@ -54,6 +57,9 @@ class Moment:
     offset_s: float = 0.0
     offset_frames: int = 0
     clip: str | None = None        # exact authored ScopedId, kind clip_start / clip_end
+
+    source: tuple[str, str, str, str, str] | None = None  # document, lineage, revision, exact clip ScopedId, snapshot digest
+    word_id: str | None = None  # opaque source identity, independent of spelling
 
     def with_offset(self, *, seconds: float = 0.0, frames: int = 0) -> "Moment":
         return replace(self, offset_s=round(self.offset_s + seconds, 6), offset_frames=self.offset_frames + frames)
@@ -98,7 +104,7 @@ def parse(text: Any) -> Moment:
             raise MomentError('clip-start/clip-end require an exact quoted clip ScopedId followed only by offsets')
         return _parse_offsets(Moment(match[1].lower().replace('-', '_'), clip=match[2]), match[3].split(), raw)
     tokens = _TOKEN_RE.findall(raw)
-    if any(t.lower() in {"clip-start", "clip-end"} for t in tokens):
+    if any(t.lower() in {"clip-start", "clip-end", "source-word"} for t in tokens):
         # The permissive speech tokenizer skips stray quote characters. Reserved
         # forms must account for every non-whitespace character, also in beat bases.
         tail = 0
@@ -119,6 +125,14 @@ def _parse_core(tokens: list[str], raw: str) -> tuple[Moment, list[str]]:
     head = tokens[0].lower()
     if _OFFSET_RE.match(tokens[0]):
         return Moment("cut_start"), tokens
+    if head == "source-word":
+        try:
+            values = tuple(json.loads(token) for token in tokens[1:7])
+        except (ValueError, TypeError):
+            raise MomentError("source-word requires six exact quoted identities") from None
+        if len(values) != 6 or any(not isinstance(v, str) or not v for v in values):
+            raise MomentError("source-word requires document, lineage, revision, clip, snapshot and word identities")
+        return Moment("word", source=values[:5], word_id=values[5]), tokens[7:]
     if head in ("clip-start", "clip-end"):
         # Also used for a beat's nested base; run the same strict parser.
         if len(tokens) < 2:
@@ -178,7 +192,10 @@ def _parse_offsets(moment: Moment, rest: list[str], raw: str) -> Moment:
 
 
 def format_moment(m: Moment) -> str:
-    if m.kind == "word":
+    if m.kind == "word" and m.source is not None:
+        core = "source-word " + " ".join(json.dumps(v, ensure_ascii=False) for v in (*m.source, m.word_id))
+        core = ("after " if m.edge == "end" else "") + core
+    elif m.kind == "word":
         core = f'"{m.text}"' + (f" in {m.line}" if m.line else "") + (f" #{m.n}" if m.n else "")
         core = ("after " if m.edge == "end" else "") + core
     elif m.kind in ("beat", "downbeat"):
@@ -225,11 +242,21 @@ def _norm(text: str) -> str:
     return re.sub(r"[^\w']", "", str(text).lower())
 
 
+def bound_word(moment: Moment) -> Moment | None:
+    """Identity-bearing word at the base of a TimeRef, if present."""
+    while moment.base is not None:
+        moment = moment.base
+    return moment if moment.source is not None else None
+
+
 def find_words(moment: Moment, words: Sequence[Word], *, tokenizer=None) -> list[list[Word]]:
     """Every consecutive same-line match; optional whole-word tokenizer for copy consumers.
 
     The default retains TimeRef's historical normalization exactly.
     """
+    if moment.source is not None:
+        return [[w] for w in words if getattr(w, "source", None) == moment.source
+                and getattr(w, "id", None) == moment.word_id]
     if tokenizer is None:
         want = [_norm(t) for t in moment.text.split() if _norm(t)]
         pool = [w for w in words if moment.line is None or w.segment == moment.line]
@@ -272,7 +299,7 @@ def resolve(moment: Moment | str, ctx: Context, *, in_point: bool = False) -> fl
         if m.n is not None and not 1 <= m.n <= len(hits):
             raise MomentError(f'"{m.text}" is spoken {len(hits)} time(s){" in " + m.line if m.line else ""}; #{m.n} does not exist')
         run = hits[(m.n or 1) - 1]
-        if in_point and m.edge == "start" and run[0].index == 0 and not m.offset_s and not m.offset_frames:
+        if m.source is None and in_point and m.edge == "start" and run[0].index == 0 and not m.offset_s and not m.offset_frames:
             t = ctx.line_in_point(run[0].segment)
             if t is not None:
                 return t
@@ -309,6 +336,8 @@ def floor_frame(seconds: float, fps: float) -> float:
 def _missing(m: Moment, words: Sequence[Word]) -> str:
     import difflib
 
+    if m.source is not None:
+        return f"ORPHAN: source word {m.word_id!r} is unavailable in {m.source!r}"
     scope = [w for w in words if m.line is None or w.segment == m.line]
     close = difflib.get_close_matches(_norm(m.text), sorted({_norm(w.text) for w in scope}), n=4)
     where = f" in line {m.line}" if m.line else ""
@@ -317,6 +346,8 @@ def _missing(m: Moment, words: Sequence[Word]) -> str:
 
 def word_moment(word: Word, words: Sequence[Word], *, edge: str = "start") -> Moment:
     """The shortest moment that names exactly this word: "viral", "tool" in v20a, or "tool" in v20a #2."""
+    if getattr(word, "source", None) is not None:
+        return Moment("word", source=word.source, word_id=word.id, edge=edge)
     film = [w for w in words if _norm(w.text) == _norm(word.text)]
     if len(film) == 1:
         return Moment("word", text=word.text.strip(".,;:!?…\"“”"), edge=edge)

@@ -48,3 +48,12 @@
   card: CUTS
   reason: "Adds optional visuals=orphan|remove; the existing segment argument, music policy, and default orphan behavior remain accepted (spec-timing 6.3)."
   alias: "sdk:Checkout.remove_line"
+
+- feature: "sdk:Checkout"
+  card: TIMING-FIXES
+  reason: "Retains bundle/path construction and adds optional detached transcript_dependencies for exact accepted offline compiler inputs; no resolver or persisted dependency schema is added."
+  alias: "sdk:Checkout"
+- feature: "sdk:Checkout.word"
+  card: REPAIRS-REST
+  reason: "Retains text/n/after/near lookup and adds optional exact source identity to distinguish the same opaque word ID across frozen source revisions and target occurrences."
+  alias: "sdk:Checkout.word"

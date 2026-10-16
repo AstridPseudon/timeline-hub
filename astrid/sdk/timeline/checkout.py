@@ -34,9 +34,10 @@ from astrid.sdk.timeline.transaction import edit_transaction
 class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixin, _Suggest):
     """A complete, editable copy of one timeline head (parent → shots → internal timelines)."""
 
-    def __init__(self, bundle: dict[str, Any], *, path: Path | None = None):
+    def __init__(self, bundle: dict[str, Any], *, path: Path | None = None, transcript_dependencies=()):
         intent.migrate(bundle)  # a working copy holds Astrid intent under app.astrid only (old places move in; reads stay dual)
         self.bundle = bundle
+        self._transcript_dependencies = copy.deepcopy(tuple(transcript_dependencies))
         self.path = path
         self.fps = bundle_fps(bundle) or 30.0
         self.notes: list[str] = []

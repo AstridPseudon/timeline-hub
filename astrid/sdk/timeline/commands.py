@@ -97,6 +97,10 @@ def _plain(value):
         return {str(k): _plain(v) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
         return [_plain(v) for v in value]
+    from astrid.core.timeline import moments
+    from astrid.sdk.timeline.model import Word
+    if isinstance(value, Word) and value.source is not None:
+        return moments.format_moment(moments.word_moment(value, (value,)))
     # SDK views are serialized by stable identity, not repr/memory address.
     if hasattr(value, "id"):
         return str(value.id)
@@ -1064,7 +1068,7 @@ def capture_binding(tl, text, clip, bindings, *, film_end=None):
         word = tl.word(text.strip())
         if word.id != text.strip():
             raise CommandError(f"Unavailable exact word identity {text!r}")
-        anchor = f"word:{word.segment}:{word.index}"
+        anchor = word.source[3] if word.source is not None else f"word:{word.segment}:{word.index}"
         if text in bindings and bindings[text] != anchor:
             raise SemanticConflict("dependent", "parent", "bindings", bindings[text], anchor, text)
         bindings[text] = anchor
@@ -1078,7 +1082,7 @@ def capture_binding(tl, text, clip, bindings, *, film_end=None):
             hits = mo.find_words(moment, ctx.words())
             run = hits[(moment.n or 1) - 1]
             word = run[-1] if moment.edge == "end" else run[0]
-            anchor = f"word:{word.segment}:{word.index}"
+            anchor = word.source[3] if word.source is not None else f"word:{word.segment}:{word.index}"
         elif moment.kind in {"beat", "downbeat"}:
             beats = list(ctx.beats(moment.kind))
             at = resolved_time - moment.offset_s - moment.offset_frames / tl.fps

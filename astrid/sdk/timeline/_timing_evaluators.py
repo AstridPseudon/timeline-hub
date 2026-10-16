@@ -396,6 +396,31 @@ class _TimingEvaluators:
         moved: dict[int, tuple[str, float, float]] = {}
         self._moved_ends: dict[str, tuple[float, float]] = {}
         self._mcache = None
+        # Freeze a lost bound span before moving either edge. The same word
+        # lookup/resolver supplies identity; no text/time continuity is inferred.
+        words = self.words()
+        for clip in self.clips():
+            fit = intent.sequence_fit(clip.data) or {}
+            for text in (intent.on(clip.data), intent.until(clip.data), fit.get("land")):
+                if isinstance(text, Mapping) and "source" in text:
+                    from astrid.sdk.timeline.transcript_binding import resolve_source_word
+                    try:
+                        resolve_source_word(text, words)
+                    except TimelineEditError as exc:
+                        for mate in clip._sequence_mates():
+                            intent.set_orphan(mate.data, str(exc))
+                    continue
+                if isinstance(text, Mapping):
+                    text = text.get("moment")
+                if not isinstance(text, str):
+                    continue
+                try:
+                    base = mo.bound_word(mo.parse(text))
+                except mo.MomentError:
+                    continue  # retain existing malformed legacy diagnostics
+                if base is not None and len(mo.find_words(base, words)) != 1:
+                    for mate in clip._sequence_mates():
+                        intent.set_orphan(mate.data, f"ORPHAN: {text} lost its bound source word")
         groups = self.cut_index.groups(self)
         orphan_cuts: set[str] = set()
         sequences: dict[str, list[Clip]] = {}
@@ -464,6 +489,8 @@ class _TimingEvaluators:
                     start = t
             elif cut and not intent.fixed_start(clip.data) and not is_picture and not later_step and not clip.is_audio and cut in cut_span:
                 start = cut_span[cut][0]
+            if intent.orphan(clip.data):
+                continue
             end = None
             if until:
                 end = self._resolve_note(until, clip, start=start, film_end=intent.until_film_end(clip.data))
@@ -473,6 +500,8 @@ class _TimingEvaluators:
                 end = cut_span[cut][1]
                 if end is None and cut in picture_of:  # the last cut has no next cut: it runs to its picture's end
                     end = picture_of[cut].end
+            if intent.orphan(clip.data):
+                continue
             if seq is not None:  # a sequence's steps were laid out as one unit (1b): never one by one
                 start, end = clip.start, None
             self._place(clip, start, end, moved)
@@ -530,6 +559,8 @@ class _TimingEvaluators:
             if clip.is_audio or abs(clip.end - end) >= frame - _EPS:
                 continue
             seq = intent.sequence(clip.data)
+            if intent.orphan(clip.data):
+                continue
             if seq is not None:  # a sequence is laid out as one unit: its first step carries the end
                 clip = min(clip._sequence_mates(), key=lambda m: intent.sequence(m.data)[1])
             if id(clip.data) not in seen:
@@ -575,7 +606,19 @@ class _TimingEvaluators:
         if text.lower().startswith(("until ", "on ")):
             text = text.split(" ", 1)[1]
         try:
-            return mo.format_moment(mo.parse(text))
+            moment = mo.parse(text)
+            base = moment.base if moment.base is not None else moment
+            if base.kind == "word" and base.source is None:
+                hits = mo.find_words(base, self.words())
+                if base.n is not None:
+                    hits = hits[base.n - 1:base.n] if base.n > 0 else []
+                if len(hits) == 1:
+                    w = hits[0][-1] if base.edge == "end" else hits[0][0]
+                    if w.source is not None:
+                        from dataclasses import replace
+                        bound = replace(base, text="", line=None, n=None, source=w.source, word_id=w.id)
+                        moment = replace(moment, base=bound) if moment.base is not None else bound
+            return mo.format_moment(moment)
         except mo.MomentError as exc:
             raise TimelineEditError(str(exc)) from None
 
@@ -591,6 +634,14 @@ class _TimingEvaluators:
         try:
             return self._moment_time(text, clip, in_point=in_point, film_end=film_end)
         except TimelineEditError as exc:
+            try:
+                moment = mo.parse(text)
+            except mo.MomentError:
+                moment = None
+            if moment is not None and mo.bound_word(moment) is not None:
+                for mate in clip._sequence_mates():
+                    intent.set_orphan(mate.data, f"ORPHAN: {text} lost its bound source word")
+                return None
             pinned = self._pin_nearest(text, clip)
             if pinned is not None:
                 field = "on" if intent.on(clip.data) == text else "until"
@@ -616,7 +667,7 @@ class _TimingEvaluators:
             if base.n is not None or base.line is not None:
                 return None
             hits = mo.find_words(base, self.words())
-            if len(hits) < 2:
+            if len(hits) < 2 or any(w.source is not None for run in hits for w in run):
                 return None
             earlier = [r for r in hits if r[0].start <= clip.start + 1e-6] or hits
             run = max(earlier, key=lambda r: r[0].start)
@@ -625,10 +676,12 @@ class _TimingEvaluators:
             pinned_base = mo.parse(_phrase_address(self, base, run))
             return mo.format_moment(mo.Moment(moment.kind, n=moment.n, direction=moment.direction, base=pinned_base,
                                               offset_s=moment.offset_s, offset_frames=moment.offset_frames))
+        if mo.bound_word(moment) is not None:
+            return None
         if moment.kind != "word" or moment.n is not None:
             return None
         hits = mo.find_words(moment, self.words())
-        if len(hits) < 2:
+        if len(hits) < 2 or any(w.source is not None for run in hits for w in run):
             return None
         anchor_t = (at if at is not None else clip.start) - moment.offset_s - moment.offset_frames / self.fps
         run = min(hits, key=lambda r: abs((r[-1].end if moment.edge == "end" else r[0].start) - anchor_t))
@@ -797,7 +850,16 @@ class _TimingEvaluators:
                     continue
                 land_name = spec
             else:  # older form {word, text}
-                land = self._as_word(str((spec or {}).get("word") or "")) or self.word(str((spec or {}).get("text")))
+                if "source" in (spec or {}):
+                    from astrid.sdk.timeline.transcript_binding import resolve_source_word
+                    try:
+                        land = resolve_source_word(spec, self.words())
+                    except TimelineEditError as exc:
+                        for mate in steps[0]._sequence_mates():
+                            intent.set_orphan(mate.data, str(exc))
+                        continue
+                else:
+                    land = self._as_word(str((spec or {}).get("word") or "")) or self.word(str((spec or {}).get("text")))
                 land_t, land_name = land.start, repr(land.text)
             life = int(round((land_t - start) * self.fps)) + int(fit.get("offset_frames") or 0)
             if not any(k in fit for k in ("lead", "race", "cycle", "then")):
@@ -888,7 +950,7 @@ class _TimingEvaluators:
         changes = [f"{cid}: start {old:.3f} → {new:.3f} s (anchored to its word)" for cid, old, new in self.retime()]
         changes += self._fit_sequences()
         words = self.words()
-        by_id = {w.id: w for w in words}
+        by_id = {w.id: w for w in words if w.source is None}
         # Resolving formulas reads slots; creating an empty authored declaration
         # here would replace an explicit parent write after its guard was taken.
         from astrid.core.timeline import astrid_ns as ns
@@ -906,6 +968,16 @@ class _TimingEvaluators:
                 try:
                     value = self._evaluate(clip, expr, by_id, words, slots, path)
                 except (TimelineEditError, mo.MomentError, ValueError, KeyError, TypeError) as exc:
+                    bound = isinstance(expr, Mapping) and "source" in expr
+                    if isinstance(expr, Mapping) and expr.get("moment"):
+                        try:
+                            bound = bound or mo.bound_word(mo.parse(expr["moment"])) is not None
+                        except mo.MomentError:
+                            pass  # retain malformed legacy formula diagnostics
+                    if bound:
+                        intent.set_formula(clip.data, path, {**expr, "orphan": f"ORPHAN: {exc}"})
+                        self.notes.append(f"{clip.address}.{path}: {exc} (kept its last value)")
+                        continue
                     previous_at = None  # a param's moment: pin to the occurrence nearest where the param was
                     current = _get_path(clip.data, path)
                     if isinstance(expr, Mapping) and isinstance(current, (int, float)) and not isinstance(current, bool):
@@ -960,8 +1032,12 @@ class _TimingEvaluators:
                 value = round(value * self.fps) / self.fps
             return _r(_post(value, expr))
         if "word" in expr:
-            word = by_id.get(str(expr["word"]))
-            if word is None or (expr.get("text") and _norm(word.text) != _norm(expr["text"])):
+            from astrid.sdk.timeline.transcript_binding import resolve_source_word
+            bound = "source" in expr
+            if not bound and any(w.source is not None and w.id == str(expr["word"]) for w in words):
+                raise TimelineEditError("bound word formula requires exact source/occurrence identity")
+            word = resolve_source_word(expr, words) if bound else by_id.get(str(expr["word"]))
+            if not bound and (word is None or (expr.get("text") and _norm(word.text) != _norm(expr["text"]))):
                 same = [w for w in words if _norm(w.text) == _norm(expr.get("text"))]
                 if not same:
                     raise TimelineEditError(f"word {expr.get('text')!r} is no longer spoken")
