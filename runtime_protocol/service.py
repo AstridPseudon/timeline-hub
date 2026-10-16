@@ -1971,13 +1971,18 @@ class RuntimeService(TimelineCommitAcceptance):
         )
 
     @_durable_mutation
-    def create_timeline(self, project_id, timeline_id, *, idempotency_key=None):
+    def create_timeline(self, project_id, timeline_id, *, idempotency_key=None, duplicate_source=None, identity=None):
         if not isinstance(timeline_id, str) or not timeline_id:
             raise ValidationError("timeline_id is required")
         project = self.store.get_project(project_id)
-        request_hash = hashlib.sha256(canonical_json({
-            "project_id": project["id"], "timeline_id": timeline_id,
-        }).encode()).hexdigest()
+        request = {"project_id": project["id"], "timeline_id": timeline_id}
+        if duplicate_source is not None:
+            if (not isinstance(identity, dict) or not identity.get("_credential_binding")
+                    or not ({"admin", "projects:write"} & set(identity.get("scopes", [])))):
+                raise AuthorizationError("authenticated duplicate creator required")
+            request["duplicate_source"] = duplicate_source
+            request["actor"] = identity.get("actor") if isinstance(identity, dict) else None
+        request_hash = hashlib.sha256(canonical_json(request).encode()).hexdigest()
         # A create request has no pre-existing aggregate, so keep its key in
         # one operation namespace and bind project/timeline identity in the
         # request hash. Reusing a key for any changed request is a conflict;
@@ -1987,16 +1992,23 @@ class RuntimeService(TimelineCommitAcceptance):
             return replay
         if self.store.conn.execute("SELECT 1 FROM timelines WHERE id=?", (timeline_id,)).fetchone():
             raise ConflictError("timeline already exists", details={"timeline_id": timeline_id})
+        duplicate_evidence = None
+        if duplicate_source is not None:
+            from .timeline_retention import source_provenance
+            duplicate_evidence = source_provenance(self, project["id"], timeline_id, duplicate_source, identity)
         timestamp = now()
         self.store.conn.execute("INSERT INTO timelines(id, project_id, version, created_at, archived_at) VALUES (?, ?, 1, ?, NULL)", (timeline_id, project["id"], timestamp))
         resource = self._timeline_resource(timeline_id)
         self._record_timeline_revision(timeline_id, resource)
         self._record_legacy_timeline_revision(timeline_id, resource)
         event_id = self.store._append_timeline_event(timeline_id, "timeline.created", {"project_id": project["id"]})
+        event_ids = [event_id]
+        if duplicate_evidence is not None:
+            event_ids.append(self.store._append_timeline_event(timeline_id, "timeline.duplicate_created", duplicate_evidence))
         event_seq = self.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
         return self._command_record(
             "timeline.create", "timelines", idempotency_key, request_hash,
-            resource, project_id=project["id"], event_ids=(event_id,),
+            resource, project_id=project["id"], event_ids=event_ids,
             primary_stream_id=timeline_id, resulting_stream_seq=event_seq,
         )
 
@@ -2095,7 +2107,7 @@ class RuntimeService(TimelineCommitAcceptance):
         """Expose the canonical receipt facts committed with the mutation."""
         if row is None or row["txn_id"] is None:
             return None
-        result = command_result(row["result_json"], kind=row["command_kind"], created_at=None if row["command_kind"] in {"object.ingest", "media.import", "parent_composition.publish", "timeline.commit"} else row["created_at"], connection=self.store.conn)
+        result = command_result(row["result_json"], kind=row["command_kind"], created_at=None if row["command_kind"] in {"object.ingest", "media.import", "parent_composition.publish", "timeline.commit", "timeline.purge"} else row["created_at"], connection=self.store.conn)
         return {
             "receipt_id": row["txn_id"],
             "command_kind": row["command_kind"],
@@ -2146,7 +2158,7 @@ class RuntimeService(TimelineCommitAcceptance):
             if kind == "timeline.commit":
                 raise ConflictError("idempotency key was already used with different input", details={"code": "RequestIdConflict", "stored_request_hash": prior["request_hash"]})
             raise ConflictError("idempotency key was already used with different input")
-        result = command_result(prior["result_json"], kind=kind, created_at=None if kind in {"object.ingest", "media.import", "parent_composition.publish", "timeline.commit"} else prior["created_at"], connection=self.store.conn)
+        result = command_result(prior["result_json"], kind=kind, created_at=None if kind in {"object.ingest", "media.import", "parent_composition.publish", "timeline.commit", "timeline.purge"} else prior["created_at"], connection=self.store.conn)
         if project_id is not None and with_receipt:
             result = {"data": result, "receipt": self._receipt_payload(prior, project_id=project_id)}
         return True, result
@@ -3490,6 +3502,7 @@ class RuntimeService(TimelineCommitAcceptance):
             else:
                 self.store.conn.execute("INSERT INTO internal_timeline_revisions(id, project_id, timeline_id, payload_json, content_digest, created_at) VALUES (?, ?, ?, ?, ?, ?)", (value["revision_id"], project["id"], value["timeline_id"], canonical_json(value["payload"]), value["content_digest"], timestamp))
         shot_lookup = {}
+        duplicate_projection_births = []
         for value in resolved_shots.values():
             if value.get("existing"):
                 self._validate_published_shot_payload(value)
@@ -3507,6 +3520,8 @@ class RuntimeService(TimelineCommitAcceptance):
                     raise ConflictError("shot revision identity was reused with different bytes", details={"revision_id": value["revision_id"]})
                 value["existing"] = True
             else:
+                if not self.store.conn.execute("SELECT 1 FROM project_shots WHERE id=?", (value["shot_id"],)).fetchone():
+                    duplicate_projection_births.append(value["shot_id"])
                 self._apply_published_shot_projection(project["id"], value, timestamp)
                 self.store.conn.execute("INSERT INTO shot_revisions(id, project_id, shot_id, internal_timeline_revision_id, payload_json, content_digest, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", (value["revision_id"], project["id"], value["shot_id"], value["internal_timeline_revision_id"], canonical_json(value["payload"]), value["content_digest"], timestamp))
             shot_lookup[(value["shot_id"], value["revision_id"])] = value
@@ -3550,6 +3565,13 @@ class RuntimeService(TimelineCommitAcceptance):
         changed = self.store.conn.execute("UPDATE parent_composition_heads SET revision_id=?, updated_at=? WHERE timeline_id=? AND project_id=? AND revision_id IS ?", (parent_revision_id, timestamp, timeline_id, project["id"], expected_head)).rowcount
         if changed != 1:
             raise ConflictError("parent composition head is stale", details={"expected_head": expected_head})
+        if duplicate_projection_births:
+            from .timeline_retention import provenance as duplicate_provenance
+            if duplicate_provenance(self, timeline_id):
+                self.store._append_timeline_event(timeline_id, "timeline.duplicate_projections_created", {
+                    "project_id": project["id"], "timeline_id": timeline_id,
+                    "project_shot_ids": sorted(duplicate_projection_births),
+                })
         event_payload = {"project_id": project["id"], "timeline_id": timeline_id, "old_head": expected_head, "new_head": parent_revision_id, "content_digest": parent_digest, "dependency_manifest": manifest}
         event_id = self.store._append_timeline_event(timeline_id, "parent.composition.published", event_payload)
         event_seq = self.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
@@ -4227,11 +4249,16 @@ class RuntimeService(TimelineCommitAcceptance):
         return {"timeline_id": timeline_id, "from_version": int(from_version), "to_version": int(to_version), "changes": {"shots": self._diff_items(before["shots"], after["shots"], "shot_id"), "references": self._diff_items(before["references"], after["references"], "reference_id")}}
 
     @_durable_mutation
-    def archive_timeline(self, timeline_id, body, *, idempotency_key=None):
+    def archive_timeline(self, timeline_id, body, *, idempotency_key=None, identity=None):
         self._require_object_body(body)
         expected = self._expected_version(body)
         current = self._timeline_resource(timeline_id)
         project_id = str(current["project_id"])
+        if "withdraw_publication" in body:
+            from .timeline_retention import owner, provenance
+            owner(identity)
+            if not provenance(self, timeline_id):
+                raise ConflictError("validated duplicate provenance required for withdrawal")
         request_hash = hashlib.sha256(canonical_json({"timeline_id": timeline_id, "body": body, "action": "archive"}).encode()).hexdigest()
         replay = self._command_replay("timeline.archive", timeline_id, idempotency_key, request_hash, project_id=project_id)
         if replay is not None:
@@ -4239,6 +4266,16 @@ class RuntimeService(TimelineCommitAcceptance):
         if current["version"] != expected:
             raise ConflictError("timeline version conflict", details={"expected": expected, "actual": current["version"]})
         with self.store._transaction():
+            if "withdraw_publication" in body:
+                withdrawal = body["withdraw_publication"]
+                if (not isinstance(withdrawal, dict) or set(withdrawal) != {"expected_revision_id", "expected_publication_id"}
+                        or not all(isinstance(v, str) and v for v in withdrawal.values())):
+                    raise ValidationError("withdraw_publication requires exact current publication")
+                head = self.store.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads WHERE timeline_id=?", (timeline_id,)).fetchone()
+                if (not head or head[0] != withdrawal["expected_revision_id"] or head[1] != withdrawal["expected_publication_id"]):
+                    raise ConflictError("publication changed before withdrawal")
+                self.store.conn.execute("DELETE FROM parent_composition_heads WHERE timeline_id=?", (timeline_id,))
+                self.store._append_timeline_event(timeline_id, "parent.composition.withdrawn", {"project_id": project_id, "actor": identity["actor"], **withdrawal})
             self.store.conn.execute("UPDATE timelines SET archived_at=?, version=? WHERE id=?", (now(), expected + 1, timeline_id))
             resource = self._timeline_resource(timeline_id)
             self._record_timeline_revision(timeline_id, resource)
@@ -4246,6 +4283,38 @@ class RuntimeService(TimelineCommitAcceptance):
             event_id = self.store._append_timeline_event(timeline_id, "timeline.archived", {"project_id": project_id, "version": resource["version"]})
             event_seq = self.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
             return self._command_record("timeline.archive", timeline_id, idempotency_key, request_hash, resource, project_id=project_id, event_ids=(event_id,), primary_stream_id=timeline_id, resulting_stream_seq=event_seq)
+
+    def plan_timeline_purge(self, project_id, body):
+        from .timeline_retention import build_plan
+        if not isinstance(body, dict) or set(body) != {"targets"}:
+            raise ValidationError("purge plan requires exact targets")
+        with self.store._mutex, self.store._transaction():
+            return build_plan(self, project_id, body)[0]
+
+    @_durable_mutation
+    def execute_timeline_purge(self, project_id, body, *, idempotency_key=None, identity=None):
+        from .timeline_retention import build_plan, delete_plan, owner, validate_targets
+        owner(identity)
+        idempotency_key = require_idempotency_key(idempotency_key)
+        if not isinstance(body, dict) or set(body) != {"targets", "plan_digest"} or not isinstance(body["plan_digest"], str):
+            raise ValidationError("purge execution requires exact targets and plan_digest")
+        targets = validate_targets(body)
+        project = self.store.get_project(project_id)
+        request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "targets": targets,
+            "plan_digest": body["plan_digest"], "actor": identity["actor"]}).encode()).hexdigest()
+        replay = self._command_replay("timeline.purge", project["id"], idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        plan, snapshot = build_plan(self, project["id"], {"targets": targets})
+        if not plan["eligible"] or plan["plan_digest"] != body["plan_digest"]:
+            if plan["plan_digest"] != body["plan_digest"]:
+                plan["blockers"].append({"code": "stale_plan"})
+            raise ConflictError("exact purge set is no longer eligible", details={"plan": plan})
+        delete_plan(self, snapshot)
+        result = {"project_id": project["id"], "realm_id": self.realm["id"], "target_ids": [t["timeline_id"] for t in targets],
+                  "plan_digest": plan["plan_digest"], "deletion_counts": plan["deletion_counts"],
+                  "reclaimed_payload_bytes": plan["reclaimable_payload_bytes"], "actor": identity["actor"], "status": "purged"}
+        return self._command_record("timeline.purge", project["id"], idempotency_key, request_hash, result, project_id=project["id"])
 
     @_durable_mutation
     def recover_timeline(self, timeline_id, body, *, idempotency_key=None):

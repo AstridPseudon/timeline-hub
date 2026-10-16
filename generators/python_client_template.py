@@ -779,8 +779,8 @@ class WorkspaceClient:
         if kind is not None: payload["kind"] = kind
         return self._mutation_json(self._request("PATCH", f"/v1/projects/{_path_part(project_id)}/documents/{_path_part(document_id)}", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
 
-    def create_timeline(self, project_id: str, timeline_id: str, *, idempotency_key: str) -> MutationResult:
-        value = self._json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines", body=json.dumps({"timeline_id": timeline_id}, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
+    def create_timeline(self, project_id: str, timeline_id: str, *, idempotency_key: str, duplicate_source: Mapping[str, Any] | None = None) -> MutationResult:
+        value = self._json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines", body=json.dumps({"timeline_id": timeline_id, **({"duplicate_source": dict(duplicate_source)} if duplicate_source is not None else {})}, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
         if isinstance(value, dict) and "data" in value and "receipt" in value:
             result = MutationResult(value["data"], value["receipt"])
             return result
@@ -919,9 +919,19 @@ class WorkspaceClient:
         path = f"/v1/timelines/{_path_part(timeline_id)}/diff?from_version={int(from_version)}&to_version={int(to_version)}"
         return self._json(self._request("GET", path)[2])
 
-    def archive_timeline(self, timeline_id: str, *, expected_version: int, idempotency_key: str) -> MutationResult:
+    def archive_timeline(self, timeline_id: str, *, expected_version: int, idempotency_key: str, withdraw_publication: Mapping[str, Any] | None = None) -> MutationResult:
         payload = {"expected_version": expected_version}
+        if withdraw_publication is not None:
+            payload["withdraw_publication"] = dict(withdraw_publication)
         return self._mutation_json(self._request("POST", f"/v1/timelines/{_path_part(timeline_id)}/archive", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
+
+    def plan_timeline_purge(self, project_id: str, targets: list[Mapping[str, Any]]) -> Mapping[str, Any]:
+        payload = {"targets": [dict(target) for target in targets]}
+        return self._json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timeline-purge/plan", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json"})[2])
+
+    def execute_timeline_purge(self, project_id: str, targets: list[Mapping[str, Any]], *, plan_digest: str, idempotency_key: str) -> MutationResult:
+        payload = {"targets": [dict(target) for target in targets], "plan_digest": plan_digest}
+        return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timeline-purge/execute", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
 
     def recover_timeline(self, timeline_id: str, *, expected_version: int, version: int, idempotency_key: str) -> MutationResult:
         payload = {"expected_version": expected_version, "version": version}

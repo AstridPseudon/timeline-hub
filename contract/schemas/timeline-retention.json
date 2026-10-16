@@ -1,0 +1,372 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banodoco.dev/workspace/v1/schemas/timeline-retention.json",
+  "title": "Exact-set project timeline retention",
+  "$defs": {
+    "DuplicateSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timeline_id",
+        "expected_revision_id",
+        "expected_publication_id"
+      ],
+      "properties": {
+        "timeline_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_publication_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "Withdrawal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_revision_id",
+        "expected_publication_id"
+      ],
+      "properties": {
+        "expected_revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_publication_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "Target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timeline_id",
+        "expected_version",
+        "expected_revision_id",
+        "expected_publication_id"
+      ],
+      "properties": {
+        "timeline_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "expected_revision_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "expected_publication_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
+      }
+    },
+    "PlanRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targets"
+      ],
+      "properties": {
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Target"
+          }
+        }
+      }
+    },
+    "ExecuteRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targets",
+        "plan_digest"
+      ],
+      "properties": {
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Target"
+          }
+        },
+        "plan_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "ArchiveRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_version"
+      ],
+      "properties": {
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "withdraw_publication": {
+          "$ref": "#/$defs/Withdrawal"
+        }
+      }
+    },
+    "CreationProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "actor",
+        "project_id",
+        "timeline_id",
+        "realm_id"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/DuplicateSource"
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeline_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "realm_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "ObservedTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timeline_id",
+        "expected_version",
+        "expected_revision_id",
+        "expected_publication_id",
+        "archived_at",
+        "creation_provenance"
+      ],
+      "properties": {
+        "timeline_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_version": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "expected_revision_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expected_publication_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "archived_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "creation_provenance": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/CreationProvenance"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "Blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "not_archived",
+            "state_changed",
+            "current_publication",
+            "duplicate_provenance_missing",
+            "external_reference",
+            "malformed_reference_data",
+            "stale_plan"
+          ]
+        },
+        "timeline_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "table": {
+          "type": "string",
+          "minLength": 1
+        },
+        "row_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "PlanResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "realm_id",
+        "targets",
+        "plan_digest",
+        "eligible",
+        "blockers",
+        "deletion_counts",
+        "reclaimable_payload_bytes"
+      ],
+      "properties": {
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "realm_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ObservedTarget"
+          }
+        },
+        "plan_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "blockers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Blocker"
+          }
+        },
+        "deletion_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "reclaimable_payload_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "ExecuteResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "realm_id",
+        "target_ids",
+        "plan_digest",
+        "deletion_counts",
+        "reclaimed_payload_bytes",
+        "actor",
+        "status"
+      ],
+      "properties": {
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "realm_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "plan_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "deletion_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "reclaimed_payload_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actor": {
+          "const": "owner"
+        },
+        "status": {
+          "const": "purged"
+        }
+      }
+    }
+  }
+}

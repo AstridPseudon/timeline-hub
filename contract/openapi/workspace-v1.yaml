@@ -263,6 +263,20 @@ paths:
       operationId: listTimelines
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' } ]
       responses: { '200': { description: Timelines, content: { application/json: { schema: { $ref: '#/components/schemas/TimelinePage' } } } } }
+  /v1/projects/{project_id}/timeline-purge/plan:
+    post:
+      operationId: planTimelinePurge
+      description: Plan the exact target set without admitting deletion authority.
+      parameters: [ { $ref: '#/components/parameters/ProjectId' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '../schemas/timeline-retention.json#/$defs/PlanRequest' } } } }
+      responses: { '200': { description: Exact states, provenance, blockers, deletion counts and UTF-8 payload estimate, content: { application/json: { schema: { $ref: '../schemas/timeline-retention.json#/$defs/PlanResult' } } } } }
+  /v1/projects/{project_id}/timeline-purge/execute:
+    post:
+      operationId: executeTimelinePurge
+      description: Authenticated local owner only. Recheck and delete the whole exact set atomically; preserve terminal command receipt.
+      parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '../schemas/timeline-retention.json#/$defs/ExecuteRequest' } } } }
+      responses: { '200': { description: Purged identities and reclaim counts with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '403': { description: Local owner required }, '409': { $ref: '#/components/responses/Conflict' } }
   /v1/projects/{project_id}/timelines/{timeline_id}:
     get:
       operationId: getProjectTimeline
@@ -370,7 +384,7 @@ paths:
     post:
       operationId: archiveTimeline
       parameters: [ { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ExpectedVersion' } } } }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '../schemas/timeline-retention.json#/$defs/ArchiveRequest' } } } }
       responses: { '200': { description: Archived timeline with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
   /v1/timelines/{timeline_id}/recover:
     post:
@@ -1122,7 +1136,9 @@ components:
       type: object
       additionalProperties: false
       required: [timeline_id]
-      properties: { timeline_id: { type: string, minLength: 1 } }
+      properties:
+        timeline_id: { type: string, minLength: 1 }
+        duplicate_source: { $ref: '../schemas/timeline-retention.json#/$defs/DuplicateSource' }
     CreateTimelineDocument:
       type: object
       additionalProperties: false

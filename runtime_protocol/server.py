@@ -429,16 +429,25 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             aggregate_id = f"{identity['actor']}:{value['scope']}"
             return self._send(200, {"data": value, "receipt": self.runtime.committed_receipt("project.select", aggregate_id, key, project_id=project_id)})
         if len(path) == 4 and path[:2] == ["v1", "projects"] and path[3] == "timelines":
-            self._identity("projects:read" if method == "GET" else "projects:write")
+            identity = self._identity("projects:read" if method == "GET" else "projects:write")
             if method == "POST":
                 body = self._project_mutation_body()
                 key = self.headers.get("Idempotency-Key")
                 if not key:
                     raise ProtocolError("Idempotency-Key header is required")
-                return self._send(201, self.runtime.create_timeline(path[2], body.get("timeline_id", ""), idempotency_key=key))
+                return self._send(201, self.runtime.create_timeline(path[2], body.get("timeline_id", ""), idempotency_key=key,
+                    duplicate_source=body.get("duplicate_source"), identity=identity))
             if method == "GET":
                 query = parse_qs(urlsplit(self.path).query)
                 return self._send(200, self.runtime.list_timelines(path[2], cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0]))
+        if len(path) == 5 and path[:2] == ["v1", "projects"] and path[3] == "timeline-purge" and method == "POST":
+            identity = self._identity("projects:read" if path[4] == "plan" else "admin")
+            body = self._project_mutation_body()
+            if path[4] == "plan":
+                return self._send(200, self.runtime.plan_timeline_purge(path[2], body))
+            if path[4] == "execute":
+                return self._send(200, self.runtime.execute_timeline_purge(path[2], body,
+                    idempotency_key=self._idempotency_key(), identity=identity))
         if len(path) == 5 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and method == "GET":
             self._identity("projects:read")
             return self._send(200, self.runtime.get_project_timeline(path[2], path[4]))
@@ -501,10 +510,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 raise ProtocolError("from_version and to_version are required")
             return self._send(200, self.runtime.diff_timeline(path[2], query["from_version"][0], query["to_version"][0]))
         if len(path) == 4 and path[:2] == ["v1", "timelines"] and path[3] in ("archive", "recover") and method == "POST":
-            self._identity("projects:write")
+            identity = self._identity("projects:write")
             body = self._body()
             if path[3] == "archive":
-                return self._send(200, self.runtime.archive_timeline(path[2], body, idempotency_key=self._idempotency_key()))
+                return self._send(200, self.runtime.archive_timeline(path[2], body, idempotency_key=self._idempotency_key(), identity=identity))
             return self._send(200, self.runtime.recover_timeline(path[2], body, idempotency_key=self._idempotency_key()))
         if len(path) == 3 and path[:2] == ["v1", "shots"] and method == "GET":
             self._identity("projects:read"); return self._send(200, self.runtime.get_shot(path[2]))
