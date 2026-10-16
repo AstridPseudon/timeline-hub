@@ -32,6 +32,8 @@ def _identities(call):
             identities.add(anchor.rsplit(":", 1)[0])
     if call.op == "timeline.adopt" and call.args.get("sources"):
         identities.update(call.args["sources"])
+    if call.op == "clip.set-transition" and "from_clip" in call.args:
+        identities.add(call.args["from_clip"])
     for key, state in call.expect.items():
         _, prop = commands.write_target(key, call.resolved)
         if prop == "music_bed" and state.get("state") == "present":
@@ -176,6 +178,8 @@ def _rewrite(call, id_map):
             rewritten = replace(rewritten, args={**rewritten.args, "track": {**rewritten.args["track"], "id": tracks[0].rsplit(":", 1)[1]}})
     if call.op == "timeline.add" and "from" in rewritten.args:
         rewritten = replace(rewritten, args={**rewritten.args, "from": identity(rewritten.args["from"])})
+    if call.op == "clip.set-transition" and "from_clip" in rewritten.args:
+        rewritten = replace(rewritten, args={**rewritten.args, "from_clip": identity(rewritten.args["from_clip"])})
     if call.op == "timeline.adopt" and call.args.get("sources"):
         rewritten = replace(rewritten, args={**rewritten.args,
             "sources": [identity(sid) for sid in call.args["sources"]],

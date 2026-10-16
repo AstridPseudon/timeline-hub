@@ -520,11 +520,16 @@ Checkout.copy_lint = copy_lint
 # Every public document mutator enters the command runner. Lifecycle and I/O
 # (save, undo, redo, publish, draft/discard) keep their existing storage boundaries.
 from astrid.sdk.timeline import commands as _commands
+from astrid.sdk.timeline.composite_effects import set_fade, set_transition  # noqa: E402
+from astrid.sdk.timeline.music_beds import source_edit as _composite_source_edit  # noqa: E402
+
+Clip.set_fade = _composite_source_edit(set_fade)
+Clip.set_transition = _composite_source_edit(set_transition)
 
 _commands.register(Clip, "clip", (
     "on", "until", "enter_at", "nudge", "hold_for", "for_", "set_duration", "trim", "slip", "extend", "end_at",
     "declare_quotes", "set", "set_param", "clear", "set_track", "clear_asset", "swap_asset", "set_beats", "keyframe_at",
-    "remove", "remove_layer", "keep", "set_look", "tag", "move_to_cut"))
+    "remove", "remove_layer", "keep", "set_look", "set_fade", "set_transition", "tag", "move_to_cut"))
 _commands.register(Checkout, "timeline", (
     "add", "ripple_delete", "close_gap", "insert_time", "insert_line", "remove_line", "apply_script",
     "fill_slot", "fill_standins", "declare_gaps", "adopt", "add_cut", "set_cut_note", "replace_asset",

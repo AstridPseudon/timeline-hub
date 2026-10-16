@@ -6,7 +6,8 @@
 # Stored units: opacity and crop are fractions 0..1; speed and volume are
 # multipliers (volume is linear gain, 1.0 = unchanged); every animation or fade
 # duration is SECONDS (a human "8f" is converted at the clip's fps); transition
-# durations are integer durationFrames.
+# legacy durations are integer durationFrames. Revisioned App transitions keep
+# authored duration SECONDS; explicit frame requests convert once at source fps.
 #
 # render: one entry per clip kind the field applies to. Kinds: element (any am-*
 # or other effect clip), media (visual media), audio (audio clip). A kind that is
@@ -223,9 +224,15 @@ fields:
     values: {crossfade: cross-fade, dip: fade, cut: null}
     schema:
       type: [object, "null"]
-      required: [id]
+      anyOf:
+        - required: [id]
+        - required: [type, duration, revision]
       properties:
         id: {type: string}
+        type: {type: string}
+        duration: {type: number, exclusiveMinimum: 0}
+        revision: {type: string, minLength: 1}
+        params: {type: [object, "null"]}
         durationFrames: {type: integer, exclusiveMinimum: 0}
     render:
       element: {status: works, since: "0.0.7"}
