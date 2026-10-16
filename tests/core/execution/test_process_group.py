@@ -845,7 +845,7 @@ def test_termination_passes_existing_total_deadline_without_extension(monkeypatc
     calls = []
     monkeypatch.setattr(groups, "_terminate_tree", lambda process, **kw: calls.append(kw))
     groups.terminate_tree(process, grace_seconds=1.0)
-    assert calls == [{"grace_seconds": 1.0, "cleanup_deadline": 12.0}]
+    assert calls == [{"grace_seconds": 1.0, "cleanup_deadline": 10.0 + 1.0 + groups._CLEANUP_FLOOR_SECONDS}]
 
 
 @pytest.mark.parametrize("role", ["command", "renderer", "lookalike-command"])

@@ -502,6 +502,11 @@ def _verify_tree_absent(process: subprocess.Popen, *, deadline: float | None = N
                 raise CleanupUncertainError("owned group members remain")
 
 
+# Floor of the cleanup budget beyond the grace period. It caps the wait, so a healthy
+# cleanup is no slower; on a loaded host a census holding the custody lock can take
+# over a second, and a 1 s floor turned Ctrl+C into a CustodyError.
+_CLEANUP_FLOOR_SECONDS = 5.0
+
 def terminate_tree(process: subprocess.Popen, *, grace_seconds: float = 1.0) -> None:
     """Stop a birth/ancestry-fenced tree, descendants before the leader.
 
@@ -509,7 +514,7 @@ def terminate_tree(process: subprocess.Popen, *, grace_seconds: float = 1.0) -> 
     Ownership is remembered during execution, not recovered by name/path after
     a parent exits. Success certifies observed identities absent.
     """
-    deadline = time.monotonic() + max(0.0, grace_seconds) + max(1.0, grace_seconds)
+    deadline = time.monotonic() + max(0.0, grace_seconds) + max(_CLEANUP_FLOOR_SECONDS, grace_seconds)
     try:
         _terminate_tree(process, grace_seconds=grace_seconds, cleanup_deadline=deadline)
     except BaseException as exc:
@@ -576,7 +581,7 @@ def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: flo
 def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
                     cleanup_deadline: float | None = None) -> None:
     if cleanup_deadline is None:
-        cleanup_deadline = time.monotonic() + max(0.0, grace_seconds) + max(1.0, grace_seconds)
+        cleanup_deadline = time.monotonic() + max(0.0, grace_seconds) + max(_CLEANUP_FLOOR_SECONDS, grace_seconds)
     custody = getattr(process, "_astrid_custody", None)
     observation_options = ({"deadline": cleanup_deadline}
                            if isinstance(custody, ProcessCustody) and sys.platform == "darwin" else {})
@@ -601,7 +606,7 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
         signal.SIGKILL, strict=True,
         **({"cleanup_deadline": cleanup_deadline} if observation_options else {}),
     )
-    kill_deadline = min(cleanup_deadline, time.monotonic() + max(1.0, grace_seconds))
+    kill_deadline = min(cleanup_deadline, time.monotonic() + max(_CLEANUP_FLOOR_SECONDS, grace_seconds))
     _signal_valid_tree_members(process, {process.pid: known[process.pid]}, signal.SIGTERM,
                               strict=True, cleanup_deadline=kill_deadline)
     # Wait only on the original child, reserving half the root budget for KILL.
