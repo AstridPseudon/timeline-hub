@@ -72,12 +72,13 @@ class _TimingEvaluators:
     @property
     def lines(self) -> Selection:
         """The VO lines in order (a Selection: ``tl.lines()`` is all, ``tl.lines(text="viral")`` filters)."""
+        from astrid.sdk.timeline.model import _voice_in_scope
         seen = {}
         for clip, words in self._pieces():
             seg = intent.line(clip.data) or clip.id
             key = (seg, clip.shot_id, clip.id) if intent.line_take(clip.data) else (seg, None, None)
             seen.setdefault(key, words[0].start)
-        return Selection((Voice(self, key[0], shot_id=key[1], clip_id=key[2])
+        return Selection((_voice_in_scope(self, key[0], key[1], key[2])
                           for key, _t in sorted(seen.items(), key=lambda item: item[1])),
                          kind="line", tl=self)
 

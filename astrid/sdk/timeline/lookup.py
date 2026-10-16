@@ -219,7 +219,8 @@ class _LookupMixin:
             clip = recorded_owner(self, EditCommand("clip.set", segment, {}, resolved=(segment,)), "clip")
             if not intent.line(clip.data):
                 raise TimelineEditError("selected clip is not a narration line")
-            return Voice(self, intent.line(clip.data), shot_id=clip.shot_id, clip_id=clip.id)
+            from astrid.sdk.timeline.model import _voice_in_scope
+            return _voice_in_scope(self, intent.line(clip.data), clip.shot_id, clip.id)
         return Voice(self, segment)
 
     def at(self, when: Any) -> dict[str, Any]:

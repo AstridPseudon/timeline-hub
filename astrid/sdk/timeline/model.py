@@ -1215,10 +1215,10 @@ def _follow_occurrences(tl: "Checkout", segment: str, said_before: Sequence[Any]
 class Voice(_Suggest):
     """One VO line (all its audio clips), with its words and the silence declared after it."""
 
-    def __init__(self, tl: "Checkout", segment: str, *, shot_id=None, clip_id=None):  # noqa: F821
+    def __init__(self, tl: "Checkout", segment: str):  # noqa: F821
         self._tl = tl
         self.segment = segment
-        self._shot_id, self._clip_id = shot_id, clip_id
+        self._shot_id, self._clip_id = None, None
 
     @property
     def clips(self) -> list[Clip]:
@@ -1300,6 +1300,13 @@ class Voice(_Suggest):
         if reflow:
             self._tl.reflow()
         return self
+
+
+def _voice_in_scope(tl, segment, shot_id, clip_id):
+    """Keep occurrence context private without changing Voice's public API."""
+    voice = Voice(tl, segment)
+    voice._shot_id, voice._clip_id = shot_id, clip_id
+    return voice
 
 
 class _MomentContext:
