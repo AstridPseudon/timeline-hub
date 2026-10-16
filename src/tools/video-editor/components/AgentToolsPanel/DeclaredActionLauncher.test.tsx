@@ -75,7 +75,9 @@ const digest = async (value: unknown): Promise<string> => {
 const estimator = { id: 'synthetic.plan', version: 1, implementation_digest: `sha256:${'b'.repeat(64)}` };
 async function reply(input: Record<string, unknown>) {
   const binding = {
-    request: { ...input, storage_estimate: { scratch_bytes: 37, output_bytes: 103 } },
+    capability_id: input.capability_id, capability_digest: input.capability_digest,
+    schema_version: 1, spec: input.spec, input_facts: [],
+    storage_estimate: { scratch_bytes: 37, output_bytes: 103 },
     estimator, spec_digest: await digest(input.spec), source_digest: `sha256:${'c'.repeat(64)}`,
   };
   return preparedDeclaredActionSchema.parse({ ...binding, preparation_digest: await digest(binding) });
@@ -136,13 +138,13 @@ describe('DeclaredActionLauncher', () => {
 
   it('prepares the actual generic form request and admits the exact canonical request and pair', async () => {
     mocks.catalogGet.mockResolvedValue({ ...readyChiptuneCapability(), storage_estimate: { mode: 'request_estimated', estimator } });
-    let prepared: Awaited<ReturnType<typeof reply>>;
-    mocks.prepare.mockImplementation(async (input) => { prepared = await reply(input); return prepared; });
+    let expected: Record<string, unknown>;
+    mocks.prepare.mockImplementation(async (input) => { expected = input; return await reply(input); });
     mocks.createTask.mockResolvedValue({ task_id: 'prepared-task', status: 'queued' });
     await submitForm();
     await screen.findByText('Task prepared-task submitted (queued).');
     expect(mocks.prepare).toHaveBeenCalledTimes(1);
-    expect(mocks.createTask).toHaveBeenCalledWith(prepared!.request, { capabilityCatalogVersion: 2 });
+    expect(mocks.createTask).toHaveBeenCalledWith({ ...expected!, storage_estimate: { scratch_bytes: 37, output_bytes: 103 } }, { capabilityCatalogVersion: 2 });
     expect(mocks.createTask.mock.calls[0][0].storage_estimate).toEqual({ scratch_bytes: 37, output_bytes: 103 });
   });
 
@@ -151,23 +153,23 @@ describe('DeclaredActionLauncher', () => {
     mocks.prepare.mockImplementation(async (input) => {
       const prepared = await reply(input);
       if (tamper === 'estimator') prepared.estimator.version++;
-      if (tamper === 'schema') Object.assign(prepared.request, { schema_version: 1 });
+      if (tamper === 'schema') Object.assign(prepared, { schema_version: '1' });
       if (tamper === 'spec-digest') prepared.spec_digest = `sha256:${'d'.repeat(64)}`;
-      if (tamper === 'pair') prepared.request.storage_estimate.output_bytes++;
-      if (tamper === 'missing-pair') Reflect.deleteProperty(prepared.request, 'storage_estimate');
-      if (tamper === 'inputs') prepared.request.input_object_ids.push(`sha256:${'e'.repeat(64)}`);
-      if (tamper === 'params') prepared.request.spec.params.raw_extra = 'changed';
-      if (tamper === 'capability') prepared.request.capability_digest = `sha256:${'e'.repeat(64)}`;
-      if (tamper === 'project') prepared.request.project = 'foreign';
+      if (tamper === 'pair') prepared.storage_estimate.output_bytes++;
+      if (tamper === 'missing-pair') Reflect.deleteProperty(prepared, 'storage_estimate');
+      if (tamper === 'inputs') Object.assign(prepared, { input_facts: [{ object_id: `sha256:${'e'.repeat(64)}`, size_bytes: 1 }] });
+      if (tamper === 'params') prepared.spec.params.raw_extra = 'changed';
+      if (tamper === 'capability') prepared.capability_digest = `sha256:${'e'.repeat(64)}`;
+      if (tamper === 'project') Object.assign(prepared, { project: 'foreign' });
       if (tamper === 'source') prepared.source_digest = `sha256:${'e'.repeat(64)}`;
       if (tamper === 'missing-estimator') Reflect.deleteProperty(prepared, 'estimator');
-      if (tamper === 'missing-schema') Reflect.deleteProperty(prepared.request, 'schema_version');
+      if (tamper === 'missing-schema') Reflect.deleteProperty(prepared, 'schema_version');
       if (tamper === 'missing-spec-digest') Reflect.deleteProperty(prepared, 'spec_digest');
       if (tamper === 'missing-estimator-digest') Reflect.deleteProperty(prepared.estimator, 'implementation_digest');
       if (tamper === 'missing-estimator-version') Reflect.deleteProperty(prepared.estimator, 'version');
       if (tamper === 'missing-estimator-id') Reflect.deleteProperty(prepared.estimator, 'id');
-      if (tamper === 'output-policy') prepared.request.spec.output_policy.destination = 'caller-path';
-      if (tamper === 'overflow') prepared.request.storage_estimate.output_bytes = Number.MAX_SAFE_INTEGER;
+      if (tamper === 'output-policy') prepared.spec.output_policy.destination = 'caller-path';
+      if (tamper === 'overflow') prepared.storage_estimate.output_bytes = Number.MAX_SAFE_INTEGER;
       if (tamper === 'unknown-field') Object.assign(prepared, { unknown: true });
       return prepared;
     });
@@ -180,7 +182,7 @@ describe('DeclaredActionLauncher', () => {
     mocks.catalogGet.mockResolvedValue({ ...readyChiptuneCapability(), storage_estimate: { mode: 'request_estimated', estimator } });
     mocks.prepare.mockImplementation(async (input) => {
       const prepared = await reply(input);
-      Object.assign(prepared.request.storage_estimate, { scratch_bytes: bytes });
+      Object.assign(prepared.storage_estimate, { scratch_bytes: bytes });
       return prepared;
     });
     await submitForm();

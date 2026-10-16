@@ -97,20 +97,19 @@ export async function prepareDeclaredActionTaskRequest(
   const expected = structuredClone(declaredActionInput(project, actionId, capability, values));
   // The adapter cannot mutate the comparison snapshot or the returned request later.
   const prepared = preparedDeclaredActionSchema.parse(structuredClone(await adapter.prepare(structuredClone(expected))));
-  const actual = declaredActionPreparationRequestSchema.parse(
-    Object.fromEntries(Object.entries(prepared.request).filter(([key]) => key !== 'storage_estimate')),
-  );
   const matches = async (left: unknown, right: unknown) =>
     await adapter.digest(left) === await adapter.digest(right);
-  if (!await matches(actual, expected) || !await matches(prepared.estimator, expectedEstimator)) {
+  if (expected.input_object_ids.length !== 0 || prepared.capability_id !== expected.capability_id
+    || prepared.capability_digest !== expected.capability_digest
+    || !await matches(prepared.spec, expected.spec) || !await matches(prepared.estimator, expectedEstimator)) {
     throw new Error('Typed action preparation request or estimator identity mismatch.');
   }
-  if (await adapter.digest(prepared.request.spec) !== prepared.spec_digest) {
+  if (await adapter.digest(prepared.spec) !== prepared.spec_digest) {
     throw new Error('Typed action preparation spec digest mismatch.');
   }
   const { preparation_digest, ...binding } = prepared;
   if (await adapter.digest(binding) !== preparation_digest) {
     throw new Error('Typed action preparation binding or storage pair mismatch.');
   }
-  return prepared.request;
+  return { ...expected, storage_estimate: prepared.storage_estimate };
 }
