@@ -14,6 +14,7 @@ import argparse
 import ast
 import hashlib
 import json
+import math
 import os
 import stat
 import sys
@@ -25,6 +26,7 @@ from typing import Any, Mapping, Sequence
 from astrid.core import timeline
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 from astrid.core.foundation.paths import REPO_ROOT
+from astrid.core.media import ffprobe_metadata_strict
 from astrid.core.rendering.errors import RendererException
 from astrid.core.rendering.contracts import RenderRequest, SCHEMA_VERSION
 from astrid.core.rendering.delivery_audio import METADATA_KEY as DELIVERY_AUDIO_KEY, DeliveryAudioTarget
@@ -248,9 +250,18 @@ def _write_render_manifest(output: Path, *, timeline_path: Path, selector: str) 
         # preserving the renderer's existing error boundary for malformed
         # service results and test doubles.
         return
+    # Probe the delivered bytes, never the planned timeline or a sidecar.
+    probe = ffprobe_metadata_strict(output)
+    duration = probe.duration_seconds
+    if (not probe.has_video_stream or isinstance(duration, bool)
+            or not isinstance(duration, (int, float))
+            or not math.isfinite(duration) or duration <= 0):
+        raise ValueError("final video requires a finite positive intrinsic duration_seconds")
     outputs: list[dict[str, Any]] = [
         {
             "name": "video",
+            "ordinal": 0,
+            "duration_seconds": duration,
             "path": output.name,
             "type": "file",
             "artifact_type": "clip/visual",
@@ -263,6 +274,7 @@ def _write_render_manifest(output: Path, *, timeline_path: Path, selector: str) 
         outputs.append(
             {
                 "name": "provenance",
+                "ordinal": 1,
                 "path": provenance.name,
                 "type": "file",
                 "artifact_type": "metadata/provenance",

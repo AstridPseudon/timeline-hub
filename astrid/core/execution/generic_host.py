@@ -19,6 +19,7 @@ import io
 import ipaddress
 import json
 import logging
+import math
 import mimetypes
 import os
 import queue
@@ -203,6 +204,7 @@ _ACTIVATION_DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 _ACTIVATION_FRAME_LIMIT = 64 * 1024
 
 _SETTLEMENT_OUTPUT_METADATA_FIELDS = (
+    "metadata",
     "role",
     "is_primary",
     "producer",
@@ -7399,6 +7401,14 @@ class GenericPackHost:
             seen_identities.add(identity)
 
             if is_generation_result:
+                if getattr(record.definition, "id", None) == "rendering.render":
+                    duration = harvested.get("duration_seconds")
+                    if (isinstance(duration, bool) or not isinstance(duration, (int, float))
+                            or not math.isfinite(duration) or duration <= 0):
+                        raise HostError(
+                            "final video requires a finite positive intrinsic duration_seconds"
+                        )
+                    output["metadata"] = {"duration_seconds": duration}
                 ordinal_matches = [
                     declaration
                     for declaration in declarations

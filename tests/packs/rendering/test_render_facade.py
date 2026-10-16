@@ -71,8 +71,12 @@ def test_render_delegates_to_service_with_default_selector(fake_service: _FakeSe
 
 
 def test_render_writes_universal_result_manifest(
-    fake_service: _FakeService, tmp_path: Path
+    fake_service: _FakeService, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    from astrid.core.media import MediaProbe
+    monkeypatch.setattr(render_run, "ffprobe_metadata_strict", lambda path: MediaProbe(
+        duration_seconds=2.5, video_stream_present=True
+    ))
     timeline, assets, out = _inputs(tmp_path)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(b"fake-mp4")
@@ -88,6 +92,8 @@ def test_render_writes_universal_result_manifest(
     assert [item["name"] for item in receipt["outputs"]] == ["video", "provenance"]
     assert receipt["outputs"][0]["path"] == out.name
     assert receipt["outputs"][0]["is_primary"] is True
+    assert receipt["outputs"][0]["ordinal"] == 0
+    assert receipt["outputs"][0]["duration_seconds"] == 2.5
     assert receipt["outputs"][1]["role"] == "auxiliary"
 
 

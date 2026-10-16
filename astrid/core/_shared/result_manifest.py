@@ -835,6 +835,7 @@ def _collect_manifest_files(
                     for field in (
                         "output_port", "group_key", "variant_key", "selector",
                         "producer", "provenance", "durability", "regeneration", "coverage",
+                        "duration_seconds",
                     )
                     if field in entry
                 },

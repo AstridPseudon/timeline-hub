@@ -1019,6 +1019,10 @@ actions:
       runtime_entrypoint: main
       runtime_file: actions/render/run.py
       runtime_module: astrid.packs.rendering.actions.render.run
+      generation_publication:
+        version: 1
+        modality: video
+        output_port: video
     name: Render
     outputs:
     - description: ''
