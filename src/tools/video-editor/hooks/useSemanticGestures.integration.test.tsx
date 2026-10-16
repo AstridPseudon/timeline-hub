@@ -1839,8 +1839,8 @@ describe('WRITERS tiny-clip context-menu writer', () => {
     expect(h.requests).toHaveLength(0);
     h.unmount();
   });
-  it('keeps a tiny hold with an authored end relation on its explicit fallback', async () => {
-    const base = await relationData({ on: 'beat 2', until: 'beat 4' });
+  it('keeps a tiny hold with an unsupported end relation on its explicit fallback', async () => {
+    const base = await relationData({ on: 'beat 2', until: { unsupported: true } });
     const initial = await buildTimelineData({ ...base.config, clips: base.config.clips.map((clip) => clip.id === 'clip-1' ? { ...clip, hold: 0.2 } : clip) }, base.registry, undefined, 1, undefined, base.head);
     const h = await setup(undefined, false, initial);
     act(() => expandTinyClip(h.result.current.dataRef, h.result.current.applyEdit, 'clip-1'));
@@ -3254,4 +3254,247 @@ describe('ordinary overlap relation resize native history', () => {
     expect(h.savedSeqRef.current).toBe(0); expect(h.result.current.data!.config).toEqual(initial.config);
     expect(h.compatibilityRequests).toEqual([]); h.unmount();
   });
+});
+
+async function tinyTiedHoldData(intent: Record<string, unknown> = {}) {
+  const base = await initialData();
+  return buildTimelineData({ ...base.config, clips: [
+    { id: 'clip-1', at: 1, hold: 0.2, clipType: 'hold', track: 'V1',
+      params: { data: null, literal: { op: 'clear' }, absentLike: { $absent: true } },
+      app: { opaque: { keep: [null, false, ''] }, astrid: {
+        until: 'clip-start "parent/clip:clip-2"', opaque: { keep: null }, ...intent,
+      } } },
+    { id: 'clip-2', at: 1.2, hold: 1, clipType: 'hold', track: 'V1' },
+  ] }, base.registry, undefined, 1, undefined, base.head);
+}
+describe('W42 tiny tied hold public expansion', () => {
+  it.each(['detach', 'adjust-offset', 're-anchor'])('submits one exact parent %s duration command without a local patch', async (choice) => {
+    const initial = await tinyTiedHoldData();
+    const h = await setup(undefined, false, initial);
+    const prompt = vi.spyOn(window, 'prompt').mockReturnValueOnce(choice);
+    if (choice === 're-anchor') prompt.mockReturnValueOnce('clip-end "parent/clip:clip-2"');
+    if (choice !== 'detach') prompt.mockReturnValueOnce('-0.125').mockReturnValueOnce('9');
+    const before = structuredClone(initial.config);
+    const history = vi.fn(); h.eventBus.on('beforeCommit', history);
+    act(() => expandTinyClip(h.result.current.dataRef, h.result.current.applyEdit, 'clip-1'));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    const selected = { target: 'parent/clip:clip-1', edge: 'end', choice,
+      ...(choice === 're-anchor' ? { anchor: 'clip-end "parent/clip:clip-2"' } : {}),
+      ...(choice !== 'detach' ? { offset_seconds: -0.125, offset_frames: 9 } : {}) };
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request).toMatchObject({ source: { via: 'app' }, base_revision_id: 'parent-r1' });
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-duration', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { seconds: 0.5, relation_choices: [selected] },
+      expect: { '': { state: 'present', value: before.clips[0] },
+        at: { state: 'present', value: 1 }, hold: { state: 'present', value: 0.2 },
+        'app.astrid.on': { state: 'absent' }, 'app.astrid.until': { state: 'present', value: 'clip-start "parent/clip:clip-2"' },
+        'app.astrid.for': { state: 'absent' }, 'app.astrid.fixed_start': { state: 'absent' } },
+    }] });
+    expect(h.result.current.data!.config).toEqual(before);
+    expect(h.result.current.editSeqRef.current).toBe(1);
+    expect(history).toHaveBeenCalledTimes(1);
+    expect(history.mock.calls[0]).toEqual([initial, expect.objectContaining({ semantic: true, transactionId: expect.any(String) })]);
+    expect(h.compatibilityRequests).toEqual([]);
+    if (choice === 'detach' && process.env.E_W42_WIRE_EVIDENCE_PATH) {
+      writeFileSync(process.env.E_W42_WIRE_EVIDENCE_PATH, JSON.stringify(h.requests[0].request, null, 2) + '\n');
+    }
+    h.unmount();
+  });
+  it.each([
+    ['keep'], [null], ['cancel'], [''], ['unknown'], ['detach '],
+    ['re-anchor', null], ['re-anchor', ' '], ['adjust-offset', null],
+    ['adjust-offset', ''], ['adjust-offset', 'Infinity'], ['adjust-offset', '0', null],
+    ['adjust-offset', '0', ''], ['adjust-offset', '0', '0.5'], ['adjust-offset', '0', 'NaN'],
+    ['re-anchor', 'clip-end "parent/clip:clip-2"', '0', '9007199254740992'],
+  ])('keep/cancel/unfinished/invalid %j makes no write', async (...answers) => {
+    const initial = await tinyTiedHoldData();
+    const h = await setup(undefined, false, initial);
+    const prompt = vi.spyOn(window, 'prompt');
+    for (const answer of answers) prompt.mockReturnValueOnce(answer);
+    const draft = vi.spyOn(draftStorage, 'saveTimelineDraft');
+    const history = vi.fn(); h.eventBus.on('beforeCommit', history);
+    act(() => expandTinyClip(h.result.current.dataRef, h.result.current.applyEdit, 'clip-1'));
+    expect(h.result.current.data).toBe(initial);
+    expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.requests).toHaveLength(0); expect(h.compatibilityRequests).toEqual([]);
+    expect(draft).not.toHaveBeenCalled(); expect(history).not.toHaveBeenCalled();
+    h.unmount();
+  });
+  it('preserves present-null, absence and opaque clear-shaped values in the captured source', async () => {
+    const initial = await tinyTiedHoldData({ on: null, for: null, fixed_start: null });
+    const h = await setup(undefined, false, initial);
+    vi.spyOn(window, 'prompt').mockReturnValue('detach');
+    act(() => expandTinyClip(h.result.current.dataRef, h.result.current.applyEdit, 'clip-1'));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests[0].request.change).toMatchObject({ commands: [{
+      expect: { 'app.astrid.on': { state: 'present', value: null },
+        'app.astrid.for': { state: 'present', value: null }, 'app.astrid.fixed_start': { state: 'present', value: null },
+        '': { state: 'present', value: initial.config.clips[0] } },
+    }] });
+    expect(h.result.current.data!.config).toEqual(initial.config);
+    h.unmount();
+  });
+  it.each(['duplicate-source', 'duplicate-action', 'occurrence', 'malformed-occurrence', 'scoped-alias', 'occurrence-alias', 'missing-head', 'stale-prompt-head', 'stale-prompt-config'] as const)(
+    'refuses %s without local writes or compatibility publication', async (kind) => {
+      const initial = await tinyTiedHoldData();
+      if (kind === 'duplicate-source') initial.config.clips.push(structuredClone(initial.config.clips[0]));
+      if (kind === 'duplicate-action') initial.rows[0].actions.push({ ...initial.rows[0].actions[0] });
+      if (kind === 'occurrence') initial.config.clips[0].app!.canonical = {
+        projectId: 'gesture-project', parentDocumentId: 'gesture-timeline', headRevisionId: 'parent-r1',
+        occurrenceId: 'occ-A', shotId: 'shot-A', revisionId: 'shot-r1', internalTimelineRevisionId: 'internal-r1',
+        sourceClipId: 'source-1', outputIdentity: 'output-A', sourceClip: { ...initial.config.clips[0], id: 'source-1' },
+      };
+      if (kind === 'malformed-occurrence') initial.config.clips[0].app!.canonical = { occurrenceId: 'occ-A', headRevisionId: 'stale' };
+      if (kind === 'occurrence-alias') {
+        initial.config.clips[0].id = 'occurrence:unknown'; initial.rows[0].actions[0].id = 'occurrence:unknown';
+      }
+      if (kind === 'scoped-alias') {
+        initial.config.clips[0].id = 'parent/clip:clip-1';
+        initial.rows[0].actions[0].id = 'parent/clip:clip-1';
+      }
+      const h = await setup(undefined, false, initial);
+      if (kind === 'missing-head') h.result.current.dataRef.current!.head = undefined;
+      const prompt = vi.spyOn(window, 'prompt').mockImplementation(() => {
+        if (kind === 'stale-prompt-head') h.result.current.dataRef.current!.head!.headRevisionId = 'new-head';
+        if (kind === 'stale-prompt-config') h.result.current.dataRef.current!.config.clips[0].hold = 0.3;
+        return 'detach';
+      });
+      const history = vi.fn(); h.eventBus.on('beforeCommit', history);
+      const draft = vi.spyOn(draftStorage, 'saveTimelineDraft');
+      act(() => expandTinyClip(h.result.current.dataRef, h.result.current.applyEdit, kind === 'scoped-alias' ? 'parent/clip:clip-1' : kind === 'occurrence-alias' ? 'occurrence:unknown' : 'clip-1'));
+      expect(h.requests).toHaveLength(0); expect(h.compatibilityRequests).toEqual([]);
+      expect(h.result.current.editSeqRef.current).toBe(0);
+      expect(history).not.toHaveBeenCalled(); expect(draft).not.toHaveBeenCalled();
+      expect(prompt).toHaveBeenCalledTimes(kind.startsWith('stale-prompt') ? 1 : 0);
+      h.unmount();
+    });
+  it.each(['media', 'nonunit', 'sequence', 'pinned', 'bed', 'relation-object', 'blank-relation'] as const)(
+    'keeps %s on the explicit existing fallback', async (kind) => {
+      const initial = await tinyTiedHoldData();
+      const clip = initial.config.clips[0];
+      if (kind === 'media') { clip.clipType = 'media'; clip.from = 0; clip.to = 0.2; }
+      if (kind === 'nonunit') clip.speed = 2;
+      if (kind === 'sequence') (clip.app!.astrid as Record<string, unknown>).sequence = { id: 'seq' };
+      if (kind === 'pinned') initial.config.pinnedShotGroups = [{ shotId: 's', trackId: 'V1', clipIds: ['clip-1'], mode: 'images' }];
+      if (kind === 'bed') initial.config.app!.astrid = { v: 2, music_beds: { 'parent/clip:clip-1': { source: structuredClone(clip) } } };
+      if (kind === 'relation-object') (clip.app!.astrid as Record<string, unknown>).until = { anchor: 'unsupported' };
+      if (kind === 'blank-relation') (clip.app!.astrid as Record<string, unknown>).until = ' ';
+      const h = await setup(undefined, false, initial);
+      const prompt = vi.spyOn(window, 'prompt');
+      act(() => expandTinyClip(h.result.current.dataRef, h.result.current.applyEdit, 'clip-1'));
+      expect(h.result.current.editSeqRef.current).toBe(1);
+      expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
+      expect(h.requests).toHaveLength(0); expect(prompt).not.toHaveBeenCalled();
+      h.unmount();
+    });
+  it.each(['refused', 'rejected', 'stale'] as const)('a Runtime %s preserves the whole local authored graph', async (outcome) => {
+    const initial = await tinyTiedHoldData();
+    const h = await setup(async () => outcome, false, initial);
+    vi.spyOn(window, 'prompt').mockReturnValue('detach');
+    act(() => expandTinyClip(h.result.current.dataRef, h.result.current.applyEdit, 'clip-1'));
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+    expect(h.requests).toHaveLength(1); expect(h.savedSeqRef.current).toBe(0);
+    expect(h.result.current.data!.config).toEqual(initial.config);
+    expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  });
+});
+
+describe('W42 tiny tied hold native history', () => {
+  it('waits for its receipt, adopts a canonical result and uses one native Undo/Redo', async () => {
+    const initial = await tinyTiedHoldData();
+    // A task-owned accepted Runtime result can exercise this same public App
+    // history seam. Ordinary repository runs retain the deterministic wire fixture.
+    const runtimePath = process.env.E_W42_RUNTIME_RESULT_PATH;
+    const acceptedRuntime = runtimePath ? JSON.parse(readFileSync(runtimePath, 'utf8')) as CommitResult : undefined;
+    if (acceptedRuntime) expect(acceptedRuntime.status).toBe('accepted');
+    const directWrites: CommitResult['change']['direct_writes'] = acceptedRuntime?.change.direct_writes ?? [
+      { id: 'parent/clip:clip-1', path: 'intent.until', before: { state: 'present', value: 'clip-start "parent/clip:clip-2"' }, after: { state: 'absent' } },
+      { id: 'parent/clip:clip-1', path: 'intent.for', before: { state: 'absent' }, after: { state: 'present', value: 0.5 } },
+    ];
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    const h = await setup(async (request, call) => {
+      if (call === 1) await held;
+      const command = (request.change as { commands: Array<{ op: string; args: { writes?: typeof directWrites } }> }).commands[0];
+      return { directWrites: command.op === 'timeline.inverse' ? command.args.writes! : directWrites };
+    }, false, initial);
+    const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(VideoEditorRuntimeProvider, {
+      value: { provider: h.provider, timelineId: 'gesture-timeline', project: { projectId: 'gesture-project' },
+        toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() } } as unknown as VideoEditorRuntimeContextValue, children,
+    });
+    const history = renderHook(() => {
+      const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+      useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]);
+      useEffect(() => h.eventBus.on('remoteCommit', state.onRemoteData), [state.onRemoteData]);
+      return state;
+    }, { wrapper });
+    vi.spyOn(window, 'prompt').mockReturnValue('detach');
+    act(() => expandTinyClip(h.result.current.dataRef, h.result.current.applyEdit, 'clip-1'));
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    expect(history.result.current.canUndo).toBe(false);
+    act(() => history.result.current.undo()); expect(h.requests).toHaveLength(1);
+    release(); await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    const acceptedParent = (acceptedRuntime?.canonical_document as { parent?: {
+      config: TimelineData['config']; clips: TimelineData['config']['clips']; registry: TimelineData['registry'];
+    } } | null | undefined)?.parent;
+    if (acceptedRuntime) expect(acceptedParent).toBeDefined();
+    const canonical = acceptedParent
+      ? await buildTimelineData({ ...acceptedParent.config, clips: acceptedParent.clips }, acceptedParent.registry,
+        undefined, 2, undefined, h.headRevisionRef.current)
+      : await buildTimelineData({ ...initial.config, clips: initial.config.clips.map((clip) => {
+      if (clip.id !== 'clip-1') return clip;
+      const { until: _until, ...astrid } = clip.app!.astrid as Record<string, unknown>;
+      return { ...clip, hold: 0.5, app: { ...clip.app, astrid: { ...astrid, for: 0.5 } } };
+    }) }, initial.registry, undefined, 2, undefined, h.headRevisionRef.current);
+    act(() => h.eventBus.emit('remoteCommit', h.result.current.data!, canonical));
+    act(() => h.result.current.commitData(canonical, { save: false, skipHistory: true, updateLastSavedSignature: true }));
+    expect(h.result.current.data!.config).toEqual(canonical.config);
+    if (acceptedParent) expect(h.result.current.data!.config.clips).toEqual(acceptedParent.clips);
+    expect(h.result.current.editSeqRef.current).toBe(1);
+    expect(history.result.current.canUndo).toBe(true);
+    act(() => history.result.current.undo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(2));
+    expect(h.requests).toHaveLength(2);
+    expect(h.requests[1].request.change).toEqual({ commands: [{ op: 'timeline.inverse', select: null,
+      args: { publication: 'pub-parent-r2', writes: directWrites.map((write) => ({ ...write, before: write.after, after: write.before })) } }] });
+    expect(h.result.current.data!.config).toEqual(canonical.config);
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    act(() => history.result.current.redo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(3));
+    expect(h.requests).toHaveLength(3);
+    expect(h.requests[2].request.change).toEqual({ commands: [{ op: 'timeline.inverse', select: null, args: { publication: 'pub-parent-r3', writes: directWrites } }] });
+    expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  });
+});
+
+describe('W42 tiny tied hold receipt boundaries', () => {
+  it.each(['foreign-owner', 'consequence', 'occurrence', 'duplicate', 'malformed-state', 'empty'] as const)(
+    'never enables snapshot Undo for an unsupported %s receipt', async (kind) => {
+      const initial = await tinyTiedHoldData();
+      const write = { id: 'parent/clip:clip-1', path: 'intent.until',
+        before: { state: 'present', value: 'clip-start "parent/clip:clip-2"' }, after: { state: 'absent' } };
+      let writes: unknown[] = [write];
+      if (kind === 'foreign-owner') write.id = 'parent/clip:clip-2';
+      if (kind === 'consequence') write.path = 'hold';
+      if (kind === 'occurrence') write.id = 'occurrence:occ-A/clip:clip-1';
+      if (kind === 'duplicate') writes = [write, write];
+      if (kind === 'malformed-state') writes = [{ ...write, after: { state: 'absent', value: null } }];
+      if (kind === 'empty') writes = [];
+      const h = await setup(async () => ({ directWrites: writes as CommitResult['change']['direct_writes'] }), false, initial);
+      const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(VideoEditorRuntimeProvider, {
+        value: { provider: h.provider, timelineId: 'gesture-timeline', project: { projectId: 'gesture-project' },
+          toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() } } as unknown as VideoEditorRuntimeContextValue, children,
+      });
+      const history = renderHook(() => {
+        const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+        useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]);
+        return state;
+      }, { wrapper });
+      vi.spyOn(window, 'prompt').mockReturnValue('detach');
+      act(() => expandTinyClip(h.result.current.dataRef, h.result.current.applyEdit, 'clip-1'));
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+      expect(history.result.current.canUndo).toBe(false);
+      act(() => history.result.current.undo());
+      expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
+      history.unmount(); h.unmount();
+    });
 });

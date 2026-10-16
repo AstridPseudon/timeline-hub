@@ -1,6 +1,7 @@
 import { isCapturedShotMetadataCommand } from '@/tools/video-editor/data/canonicalShotMetadata.ts';
 import { RuntimeCommitSession, browserCommitSessionStorage, type CommitSessionStorage } from './commitSession.ts';
 import { assetRegistrationCommand, assetRegistrationInverse, isAssetRegistrationCommand, isAssetRegistrationInverse } from '@/tools/video-editor/commands/assetRegistration.ts';
+import { tiedHoldExpansionInverse } from '@/tools/video-editor/commands/tiedHoldExpansionHistory.ts';
 import { overlapTrimInverse } from '@/tools/video-editor/commands/overlapTrimHistory.ts';
 import type { TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { ApiError, type ByteResponse, type MediaImportOperation as MediaImport, type RequestBody, type CommitRequest, type CommitResult, type EditCommand } from './generated.ts';
@@ -900,7 +901,7 @@ export class RuntimeDataProvider implements DataProvider {
     const registryNoChange = result.status === 'no_change' && registryCommands.length === 1
       && (isAssetRegistrationCommand(registryCommands[0]) || isAssetRegistrationInverse(registryCommands[0]));
     const commandInverse = registryNoChange ? null : assetRegistrationInverse(registryCommands, result)
-      ?? overlapTrimInverse(registryCommands, result);
+      ?? overlapTrimInverse(registryCommands, result) ?? tiedHoldExpansionInverse(registryCommands, result);
     return { configVersion: version, head: this.timelineHead(timelineId, head),
       ...(commandInverse !== undefined ? { commandInverse } : {}) };
   }

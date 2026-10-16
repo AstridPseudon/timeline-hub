@@ -7,6 +7,7 @@ import { getClipTimelineDuration } from '../lib/config-utils.ts';
 import type { AstridElementHost } from '../runtime/astrid-element-host.ts';
 import { addTrackGestureCommands } from './trackGestures.ts';
 import { isAssetRegistrationCommand, isAssetRegistrationInverse } from './assetRegistration.ts';
+import { isTiedHoldExpansionInverse } from './tiedHoldExpansionHistory.ts';
 import { isOverlapTrimInverse } from './overlapTrimHistory.ts';
 
 /** Intent is attached by the handler, never inferred from the resulting document. */
@@ -89,7 +90,7 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
   let context: TimelineOccurrenceContext | undefined;
   let parent = false;
   const aggregateBatch = commands.length > 0 && commands.every((command) =>
-    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command));
+    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command));
   for (const command of commands) {
     if (typeof command.select !== 'string') {
       if (command.select !== null || (!aggregateBatch && source.config.clips.some((clip) => clip.app?.canonical))) return;

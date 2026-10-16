@@ -9,6 +9,7 @@ import {
 } from '@/tools/video-editor/commands/index.ts';
 import type { TimelineEventBus } from './useTimelineEventBus.ts';
 import { isAssetRegistrationInverse } from '../commands/assetRegistration.ts';
+import { isTiedHoldExpansionCommand, isTiedHoldExpansionInverse } from '../commands/tiedHoldExpansionHistory.ts';
 import { isOverlapTrimCommand, isOverlapTrimInverse } from '../commands/overlapTrimHistory.ts';
 import { gestureCommandsFor } from '../commands/semanticGestures.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
@@ -244,7 +245,7 @@ export function useTimelineHistory({
       syncHistoryState();
       return;
     }
-    if (!isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse)) return;
+    if (!isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse) && !isTiedHoldExpansionInverse(inverse)) return;
     for (const entry of [...undoStackRef.current, ...redoStackRef.current]) {
       if (entry.nativeRegistration?.owner === owner) entry.nativeRegistration.inverse = structuredClone(inverse);
     }
@@ -329,7 +330,7 @@ export function useTimelineHistory({
     // Never turn an unacknowledged edit or missing receipt into a snapshot publication.
     const inverse = entry.nativeRegistration?.inverse;
     if (entry.nativeRegistration && !inverse) return false;
-    const nextData = entry.nativeRegistration && (isOverlapTrimInverse(inverse))
+    const nextData = entry.nativeRegistration && (isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse))
       ? { ...current } : preserveUploadingClips(current, applyHistoryEntry(current, entry, direction));
     if (entry.nativeRegistration) entry.nativeRegistration = { owner: nextData };
     // Same protection every applyEdit path has: history snapshots never contain
@@ -440,15 +441,16 @@ export function useTimelineHistory({
       return;
     }
 
-    // The overlap trim has no optimistic snapshot to restore. Its acknowledged
-    // native inverse carries Runtime expectations and remains safe over a poll
+    // These relation edits have no optimistic snapshot to restore. Their native
+    // inverses carry Runtime expectations and remain safe over a poll
     // or another head: Runtime alone accepts or refuses that inverse.
-    const nativeTrim = (entry: UndoEntry) => {
+    const nativeRelation = (entry: UndoEntry) => {
       const command = entry.nativeRegistration && gestureCommandsFor(entry.nativeRegistration.owner)?.[0];
-      return isOverlapTrimCommand(command) || isOverlapTrimInverse(command);
+      return isOverlapTrimCommand(command) || isOverlapTrimInverse(command)
+        || isTiedHoldExpansionCommand(command) || isTiedHoldExpansionInverse(command);
     };
-    undoStackRef.current = undoStackRef.current.filter(nativeTrim);
-    redoStackRef.current = redoStackRef.current.filter(nativeTrim);
+    undoStackRef.current = undoStackRef.current.filter(nativeRelation);
+    redoStackRef.current = redoStackRef.current.filter(nativeRelation);
     // A subsequent untransacted edit must start a fresh entry rather than try
     // to collapse into a top-of-stack entry that no longer exists.
     lastUntransactedEditAtRef.current = null;

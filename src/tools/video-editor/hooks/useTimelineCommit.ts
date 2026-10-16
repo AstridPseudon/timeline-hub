@@ -1,6 +1,7 @@
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
 import { attachGestureCommands, gestureCommandsFor } from '../commands/semanticGestures.ts';
 import { assetRegistrationCommand, isAssetRegistrationCommand } from '../commands/assetRegistration.ts';
+import { isTiedHoldExpansionCommand } from '../commands/tiedHoldExpansionHistory.ts';
 import { isOverlapTrimCommand } from '../commands/overlapTrimHistory.ts';
 import {
   useCallback,
@@ -368,7 +369,7 @@ export function useTimelineCommit({
         transactionId: options?.transactionId,
         semantic: options?.semantic,
         commandHistory: options?.commandHistory,
-        ...(options?.editCommands?.length === 1 && (isAssetRegistrationCommand(options.editCommands[0]) || isOverlapTrimCommand(options.editCommands[0]))
+        ...(options?.editCommands?.length === 1 && (isAssetRegistrationCommand(options.editCommands[0]) || isOverlapTrimCommand(options.editCommands[0]) || isTiedHoldExpansionCommand(options.editCommands[0]))
           ? { nativeRegistrationOwner: nextData } : {}),
       });
     }
