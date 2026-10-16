@@ -67,12 +67,17 @@ describe('bootstrap.renderApp', () => {
     expect(mockRender).toHaveBeenCalledTimes(1);
   }, 15_000);
 
-  it('initializes dark mode when no preference exists', async () => {
+  it('paints the night theme at night when no preference exists', async () => {
     const { initializeAppEnvironment } = await import('@/app/bootstrap');
-
-    initializeAppEnvironment();
-
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    // With no stored choice the theme follows the local time of day, so pin the clock.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date(2026, 0, 15, 23, 0));
+      initializeAppEnvironment();
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
     expect(initializeProjectSelectionStoreMock.mock.calls.length).toBeGreaterThanOrEqual(1);
     expect(initializePreloadingServiceMock.mock.calls.length).toBeGreaterThanOrEqual(1);
     expect(initializeToolSettingsWriteRuntimeMock.mock.calls.length).toBeGreaterThanOrEqual(1);
