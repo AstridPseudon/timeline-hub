@@ -306,7 +306,8 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
     from astrid.packs.timeline.cli import _editing_navigation
 
     edit = _editing_navigation(project=project, timeline=timeline)
-    lines.append(f"edit: {edit['commands']['checkout']}   (guide: {edit['guide']})")
+    lines.append(f"edit: {edit['commands']['checkout']}   (guide: {edit['timeline_guide']})")
+    lines.append(f"edit JSON guide: {edit['guide']}")
     lines.append("per-track layer rows: --layers · SDK envelope (complete): --json")
     if provenance_target is not None and getattr(provenance_target, "clip", None) is not None:
         from astrid.sdk.timeline_views import render_asset_provenance

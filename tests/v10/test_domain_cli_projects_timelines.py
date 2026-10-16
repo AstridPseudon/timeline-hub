@@ -1065,7 +1065,8 @@ def test_timelines_show_defaults_to_readable_authored_rows(capsys) -> None:
     assert "source playback segments use a separate media clock" in output
     assert "visualize: python3 -m astrid timelines visualize" in output
     assert "controls: python3 -m astrid timelines visualize --help" in output
-    assert "edit guide:" in output
+    assert f"edit guide: {Path(__file__).resolve().parents[2] / 'astrid/packs/timeline/docs/SKILL.md'}" in output
+    assert f"edit JSON guide: {Path(__file__).resolve().parents[2] / 'astrid/packs/rendering/docs/references/document-checkout.md'}" in output
     assert "edit JSON (current head): python3 -m astrid.packs.rendering.docs.scripts.timeline_document checkout" in output
 
 
@@ -1094,6 +1095,12 @@ def test_timeline_navigation_preserves_resolved_scope_and_editing_resources() ->
     assert "--revision-id rev-42" in shown["commands"]["visualize"]
     assert shown["editing"]["workflow"] == ["checkout", "edit", "check", "publish"]
     assert shown["editing"]["checkout_revision"].startswith("current Runtime head")
+    assert Path(shown["editing"]["timeline_guide"]).resolve() == (
+        Path(__file__).resolve().parents[2] / "astrid/packs/timeline/docs/SKILL.md"
+    )
+    assert Path(shown["editing"]["guide"]).resolve() == (
+        Path(__file__).resolve().parents[2] / "astrid/packs/rendering/docs/references/document-checkout.md"
+    )
     assert Path(shown["editing"]["guide"]).is_file()
     assert Path(shown["editing"]["script"]).is_file()
 
@@ -1106,6 +1113,12 @@ def test_timeline_navigation_preserves_resolved_scope_and_editing_resources() ->
     assert "main-final" in visual["commands"]["show"]
     assert "--revision-id rev-42" in visual["commands"]["show"]
     assert "--frame FRAME" in visual["commands"]["exact_frame"]
+    assert Path(visual["editing"]["timeline_guide"]).resolve() == (
+        Path(__file__).resolve().parents[2] / "astrid/packs/timeline/docs/SKILL.md"
+    )
+    assert Path(visual["editing"]["guide"]).resolve() == (
+        Path(__file__).resolve().parents[2] / "astrid/packs/rendering/docs/references/document-checkout.md"
+    )
     assert visual["editing"]["commands"]["check"].endswith("--file /tmp/timeline-edit.json")
 
 
@@ -1124,7 +1137,8 @@ def test_visualization_human_navigation_footer_is_compact(capsys) -> None:
                     "exact_frame": "python3 -m astrid timelines visualize --frame FRAME",
                 },
                 "editing": {
-                    "guide": "/tmp/document-checkout.md",
+                    "guide": "/repo/astrid/packs/rendering/docs/references/document-checkout.md",
+                    "timeline_guide": "/repo/astrid/packs/timeline/docs/SKILL.md",
                     "commands": {
                         "checkout": "python3 -m astrid.packs.rendering.docs.scripts.timeline_document checkout",
                     },
@@ -1135,6 +1149,8 @@ def test_visualization_human_navigation_footer_is_compact(capsys) -> None:
     output = capsys.readouterr().out
     assert "show: python3 -m astrid timelines show" in output
     assert "controls: python3 -m astrid timelines visualize --help" in output
+    assert "edit guide: /repo/astrid/packs/timeline/docs/SKILL.md" in output
+    assert "edit JSON guide: /repo/astrid/packs/rendering/docs/references/document-checkout.md" in output
     assert "edit JSON (current head):" in output
     assert "visualize: python3 -m astrid timelines visualize" not in output
     assert "exact frame:" not in output

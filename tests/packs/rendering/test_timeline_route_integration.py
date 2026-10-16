@@ -199,6 +199,12 @@ def test_show_and_visualize_preserve_one_normalized_occurrence_target(capsys) ->
     assert "timelines visualize" in show_to_visualize
     assert "--revision-id head-1" in show_to_visualize
     assert "--occurrence occ-b" in show_to_visualize
+    assert shown["navigation"]["editing"]["timeline_guide"].endswith(
+        "/astrid/packs/timeline/docs/SKILL.md"
+    )
+    assert shown["navigation"]["editing"]["guide"].endswith(
+        "/astrid/packs/rendering/docs/references/document-checkout.md"
+    )
 
     visualize_args = parser.parse_args(
         ["visualize", "main", "--project", "demo", "--occurrence", "occ-b", "--json"]
@@ -208,6 +214,12 @@ def test_show_and_visualize_preserve_one_normalized_occurrence_target(capsys) ->
     assert client.visualize_inputs["occurrence"] == shown["query"]["occurrence"]
     assert "timelines show" in visualized["navigation"]["commands"]["show"]
     assert "--revision-id head-1" in visualized["navigation"]["commands"]["show"]
+    assert visualized["navigation"]["editing"]["timeline_guide"].endswith(
+        "/astrid/packs/timeline/docs/SKILL.md"
+    )
+    assert visualized["navigation"]["editing"]["guide"].endswith(
+        "/astrid/packs/rendering/docs/references/document-checkout.md"
+    )
 
 
 def test_show_visualize_round_trip_keeps_saved_revision_after_newer_head(capsys) -> None:
