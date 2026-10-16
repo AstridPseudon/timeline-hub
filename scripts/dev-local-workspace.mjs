@@ -27,12 +27,7 @@ const astridCheckout = configuredAstridCheckout
   || (existsSync(resolve(siblingAstridCheckout, '.astrid-data', 'runtime', 'discovery.json'))
     ? siblingAstridCheckout
     : null);
-const vendoredAstridPublicCheckout = resolve(process.cwd(), 'vendor', 'astrid-build-inputs', 'public');
 const configuredAstridPublicCheckout = process.env.ASTRID_PUBLIC_CHECKOUT?.trim();
-const astridPublicCheckout = configuredAstridPublicCheckout
-  || (existsSync(resolve(vendoredAstridPublicCheckout, 'astrid'))
-    ? vendoredAstridPublicCheckout
-    : null);
 let discoveryPath;
 try {
   discoveryPath = resolveWorkspaceDiscoveryPath({
@@ -299,7 +294,7 @@ function waitForPort(portValue, timeoutMs = 3000) {
 const env = {
   ...process.env,
   ...(astridCheckout ? { ASTRID_CHECKOUT: astridCheckout } : {}),
-  ...(astridPublicCheckout ? { ASTRID_PUBLIC_CHECKOUT: astridPublicCheckout } : {}),
+  ...(configuredAstridPublicCheckout ? { ASTRID_PUBLIC_CHECKOUT: configuredAstridPublicCheckout } : {}),
   PORT: port,
   VITE_ASTRID_WORKSPACE_V1: '1',
   VITE_ASTRID_BRIDGE_PORT: runtimeProxyPort,

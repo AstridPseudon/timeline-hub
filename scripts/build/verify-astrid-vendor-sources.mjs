@@ -71,9 +71,9 @@ const extra = onDisk.filter((f) => !(f in provenance.files) && f !== 'provenance
 if (extra.length) throw new Error(`vendor/astrid-browser has files missing from provenance.json: ${extra.join(', ')}`);
 process.stdout.write(`Verified ${recorded.length} vendor/astrid-browser files from Astrid ${provenance.astrid_commit}.\n`);
 
-// The development launcher aliases @astrid-public to this pinned public source.
-// Keep the public host's imports in agreement with the vendored tree.
-const publicRoot = path.join(closureRoot, 'public', 'astrid');
+// The build's default @astrid-public alias points to vendor/astrid-browser/astrid.
+// Keep the public host's imports in agreement with the source the build resolves.
+const publicRoot = path.join(browserRoot, 'astrid');
 const publicHostPath = path.join(projectRoot, 'src/pages/Home/astrid-public-host.tsx');
 const publicHost = await readFile(publicHostPath, 'utf8');
 const publicImports = [...publicHost.matchAll(/(?:from\s*|import\s*)['"]@astrid-public\/([^'"]+)['"]/g)];

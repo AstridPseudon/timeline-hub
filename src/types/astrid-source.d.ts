@@ -111,31 +111,31 @@ declare module '@astrid/packs/local/rendering/elements/effects/frame-overlay/ass
   export default assetUrl;
 }
 
-declare module '@astrid-public/packs/local/elements/effects/end-spanning-layer/assets/card-0.png?url' {
+declare module '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0.png?url' {
   const assetUrl: string;
   export default assetUrl;
 }
-declare module '@astrid-public/packs/local/elements/effects/end-spanning-layer/assets/card-1.png?url' {
+declare module '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-1.png?url' {
   const assetUrl: string;
   export default assetUrl;
 }
-declare module '@astrid-public/packs/local/elements/effects/end-spanning-layer/assets/card-2.png?url' {
+declare module '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-2.png?url' {
   const assetUrl: string;
   export default assetUrl;
 }
-declare module '@astrid-public/packs/local/elements/effects/end-spanning-layer/assets/card-3.png?url' {
+declare module '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-3.png?url' {
   const assetUrl: string;
   export default assetUrl;
 }
-declare module '@astrid-public/packs/local/elements/effects/end-spanning-layer/assets/card-4.png?url' {
+declare module '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4.png?url' {
   const assetUrl: string;
   export default assetUrl;
 }
-declare module '@astrid-public/packs/local/elements/effects/end-spanning-layer/assets/card-5.png?url' {
+declare module '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5.png?url' {
   const assetUrl: string;
   export default assetUrl;
 }
-declare module '@astrid-public/packs/local/elements/effects/frame-overlay/assets/frame.png?url' {
+declare module '@astrid-public/packs/local/rendering/elements/effects/frame-overlay/assets/frame.png?url' {
   const assetUrl: string;
   export default assetUrl;
 }
