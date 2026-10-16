@@ -128,8 +128,8 @@ The 11 W2 cases: `opening the hosted origin connects to the local Runtime with n
 
 | Item | Harness Chromium 141.0.7390.37 (16 Oct) | Chrome stable |
 |---|---|---|
-| Name accepted by `navigator.permissions.query` | `local-network-access` (`local-network`, `loopback-network` throw) | |
-| Fresh profile / after Playwright's grant | `prompt` / `granted` | |
-| After CDP `Browser.setPermission` | `denied` with the context id; no effect without it | |
-| Denied fetch versus nothing listening | | |
-| `targetAddressSpace` needed | | |
+| Name accepted by `navigator.permissions.query` | `local-network-access` (`local-network`, `loopback-network` throw) | pending A3.C (manual) |
+| Fresh profile / after Playwright's grant | `prompt` / `granted` | pending A3.C (manual) |
+| After CDP `Browser.setPermission` | `denied` with the context id; no effect without it | pending A3.C (manual) |
+| Denied fetch versus nothing listening | Indistinguishable from script: both reject with `TypeError: Failed to fetch`, whether a gateway is listening or not. Only the console differs (denied: "blocked by CORS policy: Permission was denied for this request to access the `unknown` address space"; nothing listening: `net::ERR_CONNECTION_REFUSED`). So the gate must read the permission state, not infer it from a failed fetch. In `prompt`, a fetch to a listening gateway stays pending (headless never answers the prompt; 5 s race timed out) while a closed port still fails at once with `TypeError` | pending A3.C (manual) |
+| `targetAddressSpace` needed | No. Granted: a fetch to the listening loopback gateway succeeds with or without `{targetAddressSpace: 'loopback'}` (the gateway answers the preflight with `Access-Control-Allow-Private-Network: true`). Denied and `prompt` outcomes are the same with and without it | pending A3.C (manual) |
