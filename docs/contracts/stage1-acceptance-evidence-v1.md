@@ -21,7 +21,7 @@ Each receipt is one `*.json` file with:
   "category": "cold_launch",
   "status": "pass",
   "observed_at": "2026-09-01T12:00:00Z",
-  "command": ["pytest", "tests/stage1/test_final_cold_launch_matrix_luna.py"],
+  "command": ["pytest", "tests/stage1/test_runtime_client_cutover.py"],
   "observations": {"evidence_mode": "live", "owner_count": 1},
   "checks": [
     {

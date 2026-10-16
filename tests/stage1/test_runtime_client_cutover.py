@@ -4,6 +4,8 @@ import hashlib
 import io
 import json
 import os
+import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -96,6 +98,7 @@ def RuntimeDaemon(root, *args, **kwargs):
 from astrid.core.gateway import dispatch  # noqa: E402
 from astrid.core.gateway import main as gateway_main
 from astrid.sdk.client import AstridClient  # noqa: E402
+from banodoco_workspace_client import ApiError, WorkspaceClient  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -610,6 +613,15 @@ def test_remote_reads_are_scoped_and_unsupported_operations_fail_honestly(tmp_pa
         source.write_bytes(b"scoped")
         imported = client.media.import_file(project="scoped", path=source, idempotency_key="m")
         assert imported.ok
+        # The managed copy, not the caller's file, is the durable object: with
+        # the source gone the generated client still reads the exact bytes and
+        # an exact byte range from the realm's CAS.
+        source.unlink()
+        generated = WorkspaceClient(daemon.endpoint, daemon.token)
+        assert generated.get_object(imported.data["object_id"]).data == b"scoped"
+        ranged = generated.get_object(imported.data["object_id"], byte_range=(0, 3))
+        assert ranged.status == 206 and ranged.data == b"scop"
+        assert generated.head_object(imported.data["object_id"]).etag
         listed = client.media.list("scoped")
         assert listed.ok and any(item.get("digest") == imported.data["digest"] for item in listed.data[0])
         verified = client.media.verify("scoped", imported.data["digest"])
@@ -811,6 +823,15 @@ def test_editor_domain_reads_and_media_relations_use_generated_operations(tmp_pa
         shot, reference = shot_result.data, reference_result.data
         assert client.shots.list(project_id).data[0][0]["shot_id"] == shot["shot_id"]
         assert client.references.list(project_id).data[0][0]["reference_id"] == reference["reference_id"]
+        shown_shot = client.shots.show(project_id, shot["shot_id"])
+        assert shown_shot.ok and shown_shot.data["shot_id"] == shot["shot_id"] and shown_shot.data["name"] == "Shot"
+        shown_reference = client.references.show(project_id, reference["reference_id"])
+        assert shown_reference.ok and shown_reference.data["reference_id"] == reference["reference_id"]
+        assert shown_reference.data["name"] == "Reference"
+        # A stale expected_version is the runtime's 409; Astrid must surface it as 'conflict'.
+        stale = client.shots.update(project_id, shot["shot_id"], expected_version=shown_shot.data["version"] + 7, name="Stale", idempotency_key="shot-stale-update")
+        assert stale.ok is False and stale.error.code == "conflict"
+        assert client.shots.show(project_id, shot["shot_id"]).data["name"] == "Shot"
         assert client.shots.update(project_id, shot["shot_id"], name="Shot 2", idempotency_key="shot-update").ok
         assert client.shots.archive(project_id, shot["shot_id"], idempotency_key="shot-archive").ok
         assert client.shots.recover(project_id, shot["shot_id"], idempotency_key="shot-recover").ok
@@ -862,5 +883,423 @@ def test_operational_gateway_uses_typed_runtime_backup_and_lifecycle(tmp_path, m
         restored = client.restore_backup(str(backup_path), str(restored_path))
         assert restored["destination"] == str(restored_path)
         assert restored["verification"]["realm"]["id"] == backup["manifest"]["realm"]["id"]
+    finally:
+        daemon.stop()
+
+
+def test_daemon_binds_loopback_only_and_keeps_credentials_private(tmp_path, monkeypatch):
+    with pytest.raises(ValueError, match="runtime daemon only binds to loopback"):
+        _RuntimeDaemon(tmp_path / "public-realm", host="0.0.0.0")
+
+    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    try:
+        assert daemon.endpoint.startswith("http://127.0.0.1:")
+        credentials = tmp_path / "support" / "credentials"
+        assert stat.S_IMODE(credentials.stat().st_mode) == 0o700
+        owner_token, worker_token = Path(daemon.credential_path), Path(daemon.worker_credential_path)
+        assert owner_token == credentials / "owner.token" and worker_token.parent == credentials
+        for token_file in (owner_token, worker_token):
+            assert stat.S_IMODE(token_file.stat().st_mode) == 0o600
+        owner_secret = owner_token.read_text(encoding="utf-8").strip()
+        worker_secret = worker_token.read_text(encoding="utf-8").strip()
+        assert owner_secret and worker_secret and owner_secret != worker_secret
+        # Discovery names the credential files, never their bearer values.
+        discovery_file = tmp_path / "support" / "discovery.json"
+        assert stat.S_IMODE(discovery_file.stat().st_mode) == 0o600
+        discovery = json.loads(discovery_file.read_text(encoding="utf-8"))
+        assert discovery["endpoint"] == daemon.endpoint
+        assert discovery["credential_file"] == str(owner_token)
+        assert discovery["worker_credential_file"] == str(worker_token)
+        assert owner_secret not in discovery_file.read_text(encoding="utf-8")
+        assert worker_secret not in discovery_file.read_text(encoding="utf-8")
+    finally:
+        daemon.stop()
+
+
+def test_empty_timeline_opens_as_composition_on_real_daemon(tmp_path, monkeypatch):
+    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    try:
+        client = _open_client(daemon)
+        project_id = client.projects.create(slug="composition", name="Composition", idempotency_key="project").data["project_id"]
+        created = client.timelines.create_empty(
+            project=project_id,
+            timeline_id="main-timeline",
+            config={"tracks": []},
+            idempotency_key="timeline",
+        )
+        assert created.ok
+        assert created.data["timeline_id"] == "main-timeline"
+        assert created.data["project_id"] == project_id
+        revision_id = created.data["head_revision_id"]
+        assert revision_id
+        opened = client.timelines.open_composition(project_id, "main-timeline", revision_id=revision_id)
+        assert opened.ok and isinstance(opened.data, dict)
+        assert client.timelines.show(project_id, "main-timeline").ok
+        listed = client.timelines.list(project_id)
+        assert [item["timeline_id"] for item in listed.data[0]] == ["main-timeline"]
+        missing = client.timelines.open_composition(project_id, "no-such-timeline", revision_id=revision_id)
+        assert not missing.ok and missing.error.code == "not_found"
+    finally:
+        daemon.stop()
+
+
+def test_promote_candidate_receipt_replay_and_foreign_provenance_rejection(tmp_path, monkeypatch):
+    """Astrid's recipe reaches the runtime-owned atomic promotion; 422 surfaces as validation_error."""
+    from astrid.packs.generation.actions.generate_image.task_adapter import validate_shot_generation_recipe
+
+    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    try:
+        astrid = _open_client(daemon)
+        project_id = astrid.projects.create(slug="promotion", name="Promotion", idempotency_key="project").data["project_id"]
+        shot_id = "shot-generation-bridge"
+        assert astrid.shots.create(project=project_id, shot={"shot_id": shot_id, "name": "Generation Bridge"}, idempotency_key="shot").ok
+
+        def ingest(name: str, content: bytes) -> str:
+            path = tmp_path / name
+            path.write_bytes(content)
+            result = astrid.media.import_file(project=project_id, path=path, idempotency_key=f"media-{name.replace('.', '-')}")
+            assert result.ok
+            return result.data["object_id"]
+
+        def bare(media_id: str) -> str:
+            return media_id.removeprefix("sha256:")
+
+        old_media = ingest("old.png", b"old-primary")
+        candidate_media = ingest("candidate.png", b"generated-candidate")
+        plate_media = ingest("plate.png", b"derived-plate")
+        proxy_media = ingest("proxy.png", b"derived-proxy")
+        prompt_media = ingest("prompt.txt", b"a precise generated candidate")
+        reference_media = ingest("reference.png", b"reference-input")
+        recipe = {
+            "schema": "astrid.shot-generation-recipe/v1",
+            "project_id": project_id,
+            "shot_id": shot_id,
+            "target_role": "primary_visual",
+            "prompt_binding": {"id": "binding-generation-bridge", "head": 1, "media_id": prompt_media, "content_sha256": bare(prompt_media)},
+            "generator": {"capability_id": "generation.generate_image", "model": "z-image", "backend": "cloud", "mode": "t2i", "settings": {"seed": 42}},
+            "inputs": [{"ordinal": 0, "role": "style", "reference_id": "reference-generation-bridge", "media_id": reference_media, "content_sha256": bare(reference_media)}],
+            "parent_media_id": old_media,
+            "parent_content_sha256": bare(old_media),
+        }
+        assert validate_shot_generation_recipe(
+            recipe, project_id=project_id, model="z-image", mode="t2i", execution="cloud", resolved_settings={"seed": 42},
+        ) == recipe
+
+        def add_item(media_id: str, metadata: dict, key: str):
+            added = astrid.shots.add_item(project_id, shot_id, media_id=media_id, metadata=metadata, idempotency_key=key)
+            assert added.ok
+            return added, next(item for item in added.data["items"] if item["media_id"] == bare(media_id))
+
+        _primary, primary_item = add_item(old_media, {"role": "primary_visual", "status": "primary"}, "primary")
+        _plate, plate_item = add_item(plate_media, {
+            "kind": "plate", "source_item_id": primary_item["item_id"],
+            "source_media_id": old_media, "source_content_sha256": bare(old_media),
+        }, "plate")
+        _proxy, proxy_item = add_item(proxy_media, {
+            "kind": "proxy", "source_item_id": plate_item["item_id"],
+            "source_media_id": plate_media, "source_content_sha256": bare(plate_media),
+        }, "proxy")
+        candidate, candidate_item = add_item(candidate_media, {
+            "role": "primary_visual", "status": "candidate", "content_sha256": bare(candidate_media), "recipe": recipe,
+            "provenance": {"project_id": project_id, "shot_id": shot_id, "target_role": "primary_visual", "media_id": candidate_media},
+        }, "candidate")
+        timeline_assets = [{
+            "id": "timeline-generation-bridge",
+            "metadata": {"source_item_id": primary_item["item_id"], "source_media_id": old_media, "source_content_sha256": bare(old_media)},
+        }]
+
+        def promote():
+            return astrid.shots.promote_candidate(
+                project_id, shot_id, candidate_item["item_id"],
+                expected_head_seq=candidate.data["version"], timeline_assets=timeline_assets,
+                idempotency_key="promotion-command",
+            )
+
+        promoted = promote()
+        assert promoted.ok and promoted.receipt is not None
+        assert promoted.receipt.command_kind == "shot.promote_candidate"
+        assert promoted.receipt.result == promoted.data
+        assert promoted.data["promotion"]["primary_item_id"] == candidate_item["item_id"]
+        stale = {entry.get("item_id") or entry.get("asset_id") for entry in promoted.data["invalidation"]["stale"]}
+        assert stale >= {plate_item["item_id"], proxy_item["item_id"], "timeline-generation-bridge"}
+
+        replay = promote()
+        assert replay.ok and replay.data == promoted.data
+        assert replay.receipt is not None and replay.receipt.to_json() == promoted.receipt.to_json()
+        primary_items = [
+            item for item in astrid.shots.show(project_id, shot_id).data["items"]
+            if item["metadata"].get("role") == "primary_visual"
+        ]
+        assert sum(item["metadata"].get("status") == "primary" for item in primary_items) == 1
+        assert any(
+            item["item_id"] == primary_item["item_id"] and item["metadata"].get("status") == "superseded"
+            for item in primary_items
+        )
+
+        foreign_media = ingest("foreign.png", b"foreign-provenance-candidate")
+        foreign, foreign_item = add_item(foreign_media, {
+            "role": "primary_visual", "status": "candidate",
+            "provenance": {"project_id": "foreign-project", "shot_id": shot_id, "target_role": "primary_visual", "media_id": foreign_media},
+        }, "foreign-candidate")
+        rejected = astrid.shots.promote_candidate(
+            project_id, shot_id, foreign_item["item_id"],
+            expected_head_seq=foreign.data["version"], idempotency_key="foreign-command",
+        )
+        assert not rejected.ok and rejected.error.code == "validation_error"
+        unchanged = astrid.shots.show(project_id, shot_id)
+        assert unchanged.data["version"] == foreign.data["version"]
+        assert next(item for item in unchanged.data["items"] if item["item_id"] == foreign_item["item_id"])["metadata"]["status"] == "candidate"
+    finally:
+        daemon.stop()
+
+
+def _write_cpu_executor(pack: Path, *, capability_id: str, argv: list[str], outputs: list[dict]) -> None:
+    pack.mkdir()
+    (pack / "executor.yaml").write_text(
+        json.dumps({
+            "schema_version": 1,
+            "id": capability_id,
+            "name": capability_id,
+            "kind": "external",
+            "version": "1.0",
+            "command": {"argv": argv},
+            "outputs": outputs,
+            "metadata": {"adapter_family": "cpu", "resource_keys": ["cpu"]},
+        }),
+        encoding="utf-8",
+    )
+
+
+def test_generic_host_cpu_route_claims_settles_and_fences_stale_attempt_across_restart(tmp_path, monkeypatch):
+    """Shared generic-host route: discover, register, claim, subprocess, CAS settle, restart, stale fence."""
+    from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
+
+    pack = tmp_path / "cpu-pack"
+    _write_cpu_executor(
+        pack,
+        capability_id="acceptance.cold_echo",
+        argv=["{python_exec}", "-c", "from pathlib import Path; Path('{out}/answer.txt').write_text('cold worker')"],
+        outputs=[{"name": "answer", "type": "file", "path_template": "{out}/answer.txt", "artifact_type": "text/plain"}],
+    )
+    support = tmp_path / "support"
+    daemon = RuntimeDaemon(tmp_path / "realm", support_root=support).start()
+    try:
+        client = _open_client(daemon)
+        project_id = client.projects.create(slug="cpu-route", name="CPU Route", idempotency_key="project").data["project_id"]
+        seed = tmp_path / "seed.txt"
+        seed.write_text("cold input", encoding="utf-8")
+        seed_id = client.media.import_file(project=project_id, path=seed, idempotency_key="seed").data["object_id"]
+
+        host = GenericPackHost(
+            pack_roots=[pack],
+            client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+            executor_id="astrid-pack-host",
+            attempt_root=tmp_path / "attempt",
+        )
+        record = host.discover()[0]
+        assert record.id == "acceptance.cold_echo"
+        assert host.preflight(record.id)[0].ready is True
+        assert host.register(deliberate=True)["registration"].executor_id == "astrid-pack-host"
+        generated = WorkspaceClient(daemon.endpoint, daemon.token)
+        registered = {item.capability_id: item for item in generated.list_capabilities()[0]}
+        assert registered[record.id].definition_digest == record.capability_digest
+
+        admitted = client.tasks.create(project_id=project_id, capability=record.id, spec={}, input_manifest=[seed_id], idempotency_key="task")
+        assert admitted.ok
+        settled = host.run(once=True)
+        assert len(settled) == 1 and settled[0].state == "succeeded"
+        assert client.tasks.show(admitted.data["task_id"]).data["state"] == "succeeded"
+        assert generated.get_run(admitted.data["run_id"])["task_ids"] == [admitted.data["task_id"]]
+        event_page, event_cursor = generated.list_run_events(admitted.data["run_id"])
+        assert event_cursor is None
+        assert {event.event_type for event in event_page} >= {"task.admitted", "task.completed"}
+        output_digest = "sha256:" + hashlib.sha256(b"cold worker").hexdigest()
+        assert host.client.generated.get_object(output_digest).data == b"cold worker"
+
+        # Cancel and retry travel the same admission route with exact states.
+        probe = client.tasks.create(project_id=project_id, capability=record.id, spec={}, idempotency_key="cancel-probe")
+        probe_id = probe.data["task_id"]
+        assert client.tasks.cancel(probe_id, idempotency_key="cancel").data["state"] == "cancelled"
+        assert client.tasks.retry(probe_id, idempotency_key="retry").data["state"] == "queued"
+        assert client.tasks.cancel(probe_id, idempotency_key="cancel-again").data["state"] == "cancelled"
+
+        # Claim without settling, then restart the real daemon: the old attempt is
+        # fenced by the new runtime epoch and a fresh host resumes the work.
+        recovery = client.tasks.create(project_id=project_id, capability=record.id, spec={}, input_manifest=[seed_id], idempotency_key="recovery")
+        assert recovery.ok
+        old_epoch = int(host.client.health()["runtime_epoch"])
+        claim = host.client.claim_next(executor_id="astrid-pack-host", capability_ids=[record.id], idempotency_key="recovery-claim")
+        assert claim is not None and claim.task_id == recovery.data["task_id"]
+
+        daemon.stop()
+        daemon = RuntimeDaemon(tmp_path / "realm", support_root=support).start()
+        restarted = WorkspaceClient(daemon.endpoint, daemon.worker_token)
+        assert int(restarted.health()["runtime_epoch"]) > old_epoch
+        with pytest.raises(ApiError) as fenced:
+            restarted.settle_attempt(
+                claim.attempt_id,
+                {"lease_id": claim.lease_id, "fence": claim.fence, "runtime_epoch": old_epoch, "outputs": []},
+                idempotency_key="stale-settlement",
+            )
+        assert (fenced.value.status, fenced.value.code) == (409, "lease_fenced")
+        assert restarted.get_task(recovery.data["task_id"]).state != "succeeded"
+
+        resumed_host = GenericPackHost(
+            pack_roots=[pack],
+            client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+            executor_id="astrid-pack-host",
+            attempt_root=tmp_path / "attempt-restarted",
+        )
+        resumed_host.discover()
+        resumed_host.register(deliberate=True)
+        resumed = resumed_host.run(once=True)
+        assert len(resumed) == 1 and resumed[0].state == "succeeded"
+        assert restarted.get_task(recovery.data["task_id"]).state == "succeeded"
+        assert restarted.get_object(output_digest).data == b"cold worker"
+    finally:
+        daemon.stop()
+
+
+def test_generic_host_render_route_runs_real_ffmpeg_and_settles_boot_manifest_provenance(tmp_path, monkeypatch):
+    """Render-family route on a real daemon: real FFmpeg child, CAS-published outputs, stamped provenance."""
+    from astrid.core._shared.boot_manifest import load_boot_manifest_hash
+    from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
+    from astrid.core.gateway.dispatch import compose_profile_handoff
+
+    ffmpeg, ffprobe = shutil.which("ffmpeg"), shutil.which("ffprobe")
+    assert ffmpeg and ffprobe, "the render-family proof requires ffmpeg and ffprobe"
+    render_code = (
+        "from pathlib import Path; import hashlib, json, subprocess; "
+        "out=Path('{out}'); video=out/'render.mp4'; "
+        f"subprocess.run([{ffmpeg!r}, '-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=blue:s=160x90:r=10:d=1', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', str(video)], check=True); "
+        "provenance=out/'render.mp4.provenance.json'; "
+        "provenance.write_text(json.dumps({'renderer':'ffmpeg','sha256':hashlib.sha256(video.read_bytes()).hexdigest()})); "
+        "(out/'manifest.json').write_text(json.dumps({'outputs':["
+        "{'name':'render','path':'render.mp4','artifact_type':'video/mp4','content_hash':'sha256:'+hashlib.sha256(video.read_bytes()).hexdigest(),'bytes':video.stat().st_size,'ordinal':0,'role':'result','is_primary':True},"
+        "{'name':'provenance','path':'render.mp4.provenance.json','artifact_type':'application/json','content_hash':'sha256:'+hashlib.sha256(provenance.read_bytes()).hexdigest(),'bytes':provenance.stat().st_size,'ordinal':1,'role':'auxiliary','is_primary':False}"
+        "]}, sort_keys=True))"
+    )
+    pack = tmp_path / "ffmpeg-pack"
+    _write_cpu_executor(
+        pack,
+        capability_id="acceptance.cold_ffmpeg",
+        argv=[sys.executable, "-c", render_code],
+        outputs=[
+            {"name": "render", "type": "file", "path_template": "{out}/render.mp4", "artifact_type": "video/mp4"},
+            {"name": "provenance", "type": "file", "path_template": "{out}/render.mp4.provenance.json", "artifact_type": "application/json"},
+        ],
+    )
+    support = tmp_path / "support"
+    daemon = RuntimeDaemon(tmp_path / "realm", support_root=support).start()
+    try:
+        client = _open_client(daemon)
+        project_id = client.projects.create(slug="render-route", name="Render Route", idempotency_key="project").data["project_id"]
+        boot_manifest = support / "astrid-host" / "boot-manifest.json"
+        compose_profile_handoff(boot_manifest, support_root=support)
+        boot_hash = load_boot_manifest_hash(boot_manifest, support_root=support)
+        attempt_root = tmp_path / "render-attempt"
+        host = GenericPackHost(
+            pack_roots=[pack],
+            client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+            executor_id="astrid-pack-host",
+            attempt_root=attempt_root,
+            boot_manifest_path=boot_manifest,
+            boot_manifest_hash=boot_hash,
+        )
+        record = host.discover()[0]
+        assert host.preflight(record.id)[0].ready is True
+        host.register()
+        admitted = client.tasks.create(project_id=project_id, capability=record.id, spec={}, idempotency_key="render-task")
+        assert admitted.ok
+        results = host.run(once=True)
+        assert len(results) == 1 and results[0].state == "succeeded"
+
+        video = next(attempt_root.rglob("render.mp4"))
+        provenance = next(attempt_root.rglob("render.mp4.provenance.json"))
+        probe = subprocess.run(
+            [ffprobe, "-v", "error", "-show_entries", "format=format_name", "-of", "default=nw=1:nk=1", str(video)],
+            check=True, capture_output=True, text=True,
+        )
+        assert "mp4" in probe.stdout
+        generated = WorkspaceClient(daemon.endpoint, daemon.token)
+        for artifact in (video, provenance):
+            digest = "sha256:" + hashlib.sha256(artifact.read_bytes()).hexdigest()
+            assert generated.get_object(digest).data == artifact.read_bytes()
+        assert json.loads(provenance.read_text(encoding="utf-8"))["renderer"] == "ffmpeg"
+
+        task = generated.get_task(admitted.data["task_id"])
+        assert task.state == "succeeded"
+        completion = task.result
+        assert completion["adapter_family"] == "cpu"
+        assert completion["capability_digest"] == record.capability_digest
+        assert completion["source_digest"] == record.source_digest
+        assert completion["dependency_digest"] == record.dependency_digest
+        assert completion["provenance"] == {"kind": "astrid.boot_manifest", "sha256": boot_hash}
+        evidence = completion["process_evidence"]
+        assert evidence["child_boundary"] == "subprocess" and evidence["returncode"] == 0 and evidence["attempt_id"]
+    finally:
+        daemon.stop()
+
+
+def test_shot_items_and_reference_associations_use_versioned_routes_and_survive_restart(tmp_path, monkeypatch):
+    support = tmp_path / "support"
+    daemon = RuntimeDaemon(tmp_path / "realm", support_root=support).start()
+    try:
+        astrid = _open_client(daemon)
+        project_id = astrid.projects.create(slug="items", name="Items", idempotency_key="project").data["project_id"]
+        other_id = astrid.projects.create(slug="items-other", name="Items Other", idempotency_key="other").data["project_id"]
+
+        def ingest(name: str, content: bytes) -> str:
+            path = tmp_path / name
+            path.write_bytes(content)
+            result = astrid.media.import_file(project=project_id, path=path, idempotency_key=f"media-{name}")
+            assert result.ok
+            return result.data["object_id"]
+
+        first_media, second_media = ingest("first.bin", b"items-media"), ingest("second.bin", b"items-media-2")
+        shot_args = {"project": project_id, "shot": {"shot_id": "item-shot", "name": "Item Shot"}, "idempotency_key": "shot"}
+        created = astrid.shots.create(**shot_args)
+        reference = astrid.references.create(project=project_id, reference_id="item-ref", kind="character", name="Item", media_id=first_media, idempotency_key="reference")
+        assert created.ok and reference.ok
+        # Replaying the same idempotency key returns the original result.
+        replayed = astrid.shots.create(**shot_args)
+        assert replayed.ok and replayed.data == created.data
+        assert [item["shot_id"] for item in astrid.shots.list(project_id).data[0]] == ["item-shot"]
+        assert astrid.shots.list(other_id).data[0] == []
+
+        added_first = astrid.shots.add_item(project_id, "item-shot", media_id=first_media, position=0, idempotency_key="item-1")
+        added_second = astrid.shots.add_item(project_id, "item-shot", media_id=second_media, position=1, idempotency_key="item-2")
+        assert added_first.ok and added_second.ok
+        item_ids = [item["item_id"] for item in added_second.data["items"]]
+        assert len(item_ids) == 2
+        reordered = astrid.shots.reorder(project_id, "item-shot", item_ids=list(reversed(item_ids)), expected_version=added_second.data["version"], idempotency_key="reorder")
+        assert reordered.ok and [item["item_id"] for item in reordered.data["items"]] == list(reversed(item_ids))
+        removed = astrid.shots.remove_item(project_id, "item-shot", item_ids[0], expected_version=reordered.data["version"], idempotency_key="remove")
+        assert removed.ok and [item["item_id"] for item in removed.data["items"]] == [item_ids[1]]
+
+        stale = astrid.shots.update(project_id, "item-shot", expected_version=1, name="Stale", idempotency_key="stale-update")
+        assert stale.ok is False and stale.error.code == "conflict"
+        updated = astrid.shots.update(project_id, "item-shot", expected_version=removed.data["version"], name="Item Updated", idempotency_key="update")
+        assert updated.ok and updated.data["name"] == "Item Updated"
+        archived = astrid.shots.archive(project_id, "item-shot", expected_version=updated.data["version"], idempotency_key="archive")
+        recovered = astrid.shots.recover(project_id, "item-shot", expected_version=archived.data["version"], idempotency_key="recover")
+        assert archived.ok and archived.data["archived"] is True
+        assert recovered.ok and recovered.data["archived"] is False
+
+        association = astrid.references.associate(project_id, "item-ref", media_id=second_media, role="depicts", idempotency_key="associate")
+        assert association.ok
+        association_id = association.data["media_references"][-1]["association_id"]
+        secondary = astrid.references.create(project=project_id, reference_id="item-ref-2", kind="object", name="Prop", media_id=first_media, idempotency_key="reference-2")
+        primary = astrid.references.set_primary(project_id, "item-ref", association_id=association_id, expected_version=association.data["version"], idempotency_key="primary")
+        link = astrid.references.link(project=project_id, from_reference_id="item-ref", to_reference_id="item-ref-2", kind="associated_with", idempotency_key="link")
+        assert secondary.ok and primary.ok and link.ok
+
+        daemon.stop()
+        daemon = RuntimeDaemon(tmp_path / "realm", support_root=support).start()
+        reopened = _open_client(daemon)
+        shown = reopened.shots.show(project_id, "item-shot")
+        assert shown.ok and shown.data["name"] == "Item Updated" and shown.data["archived"] is False
+        assert [item["item_id"] for item in shown.data["items"]] == [item_ids[1]]
+        assert reopened.references.show(project_id, "item-ref").ok
     finally:
         daemon.stop()

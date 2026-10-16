@@ -45,8 +45,8 @@ RUNTIME_PYTHON = RUNTIME_CHECKOUT / "packages" / "python"
 FAMILY_PROOFS: dict[str, dict[str, str]] = {
     "cpu": {
         "kind": "family_representative",
-        "selector": "tests/stage1/test_final_cold_launch_matrix_luna.py::test_final_cold_launch_matrix_no_mocks",
-        "rationale": "cold matrix proves generic CPU discovery, registration, claim, subprocess execution, CAS settlement, restart, and fencing",
+        "selector": "tests/stage1/test_runtime_client_cutover.py::test_generic_host_cpu_route_claims_settles_and_fences_stale_attempt_across_restart",
+        "rationale": "the cutover test proves generic CPU discovery, registration, claim, subprocess execution, CAS settlement, restart, and stale-attempt fencing on a real daemon",
     },
     "provider": {
         "kind": "family_representative",
@@ -55,8 +55,8 @@ FAMILY_PROOFS: dict[str, dict[str, str]] = {
     },
     "render": {
         "kind": "family_representative",
-        "selector": "tests/stage1/test_final_cold_launch_matrix_luna.py::test_final_cold_launch_matrix_no_mocks",
-        "rationale": "cold matrix proves the shared render-family host route with real FFmpeg; canonical Remotion rendering is direct-proof gated below",
+        "selector": "tests/stage1/test_runtime_client_cutover.py::test_generic_host_render_route_runs_real_ffmpeg_and_settles_boot_manifest_provenance",
+        "rationale": "the cutover test proves the shared render-family host route with real FFmpeg and boot-manifest provenance on a real daemon; canonical Remotion rendering is direct-proof gated below",
     },
     "local_generation": {
         "kind": "family_representative",
