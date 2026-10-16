@@ -453,7 +453,10 @@ export function createShotTimelineDataProvider(
           headRevisionId: captured.receipt.head.headRevisionId!,
         });
         projectCanonicalBase(acknowledged);
-        adoptCanonicalBase(acknowledged, true);
+        // A native receipt advances canonical authority, not the mounted
+        // editor's still-captured gesture pins. Its query must adopt H1 before
+        // another gesture can pass the displayed-head gate.
+        adoptCanonicalBase(acknowledged);
         // The clean-baseline gate advances the query identity. An ACK must
         // not replace a mounted editor that contains a newer local draft.
         timelineConfig = canonicalTimelineConfig;
