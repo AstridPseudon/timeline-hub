@@ -22,7 +22,7 @@ export function bindTranscriptPanelVideo(
   const transcript = createTranscriptPanelAdapter({
     getData: () => store.getState().data.dataRef.current,
     getTransientItems: () => store.getState().dataKindItemsHost?.readTransient(TRANSCRIPT_SCHEMA_REF) ?? EMPTY_DATA_KIND_ITEMS,
-    assets: createEditorAssetSurface(() => store.getState().data.dataRef.current),
+    assets: createEditorAssetSurface(() => store.getState().data.dataRef.current, undefined, playedRegistry),
     subscribe: (listener) => {
       let host = store.getState().ops.transcriptHost;
       let stop = host?.subscribe(listener);

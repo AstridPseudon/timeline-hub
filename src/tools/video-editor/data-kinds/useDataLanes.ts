@@ -22,7 +22,7 @@ import { useTimelineStoreApiSafe } from '@/tools/video-editor/hooks/timelineStor
 import type { SourceFrozenDataItem } from '@/tools/video-editor/data/typed/envelope.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { getClipAssetMediaType } from '@/tools/video-editor/clip-types/runtime.ts';
-import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { TimelineData, TranscriptSegment } from '@/tools/video-editor/lib/timeline-data.ts';
 import { createEditorAssetSurface, loadEditorAssetProfile } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
 import {
   assembleDataLanes,
@@ -96,7 +96,17 @@ export function useDataLanePlane({ base, kinds, loadSegments }: UseDataLanesArgs
     if (!runtime) return undefined;
     const assets = createEditorAssetSurface(() => null, (assetId) =>
       loadEditorAssetProfile(runtime.assetResolver, assetId, runtime.timelineId));
-    return async (assetId: string) => (await assets.loadProfile(assetId))?.transcript?.segments ?? [];
+    return async (assetId: string) => {
+      const transcript = (await assets.loadProfile(assetId))?.transcript;
+      if (!transcript || typeof transcript !== 'object' || Array.isArray(transcript)) return [];
+      const segments = (transcript as Record<string, unknown>).segments;
+      if (!Array.isArray(segments)) return [];
+      return segments.filter((segment): segment is TranscriptSegment =>
+        !!segment && typeof segment === 'object'
+        && typeof segment.start === 'number'
+        && typeof segment.end === 'number'
+        && typeof segment.text === 'string');
+    };
   }, [runtime]);
   const effectiveLoader = loadSegments !== undefined ? loadSegments : defaultLoader;
   // Store bootstrap and isolated host surfaces can briefly expose a data

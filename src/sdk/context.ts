@@ -117,7 +117,7 @@ export interface CreativeAssetReadSurface extends AssetReadSurface {
     readonly file?: string;
     readonly kind?: string;
   }) | undefined;
-  loadProfile(assetKey: string): Promise<{ transcript?: { segments?: Array<{ start: number; end: number; text: string }> }; [key: string]: unknown } | null>;
+  loadProfile(assetKey: string): Promise<Readonly<Record<string, unknown>> | null>;
 }
 
 /** Reserved creative context members — each becomes live in its owning milestone. */

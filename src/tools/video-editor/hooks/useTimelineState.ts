@@ -4,6 +4,7 @@ import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKin
 import { createPendingWorkRegistry } from '@/tools/video-editor/runtime/pendingWorkRegistry.ts';
 import { transcriptRepositoryFromDocuments } from '@/tools/video-editor/data/typed/projectTranscript.ts';
 import { createEditorAssetSurface, loadEditorAssetProfile } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
+import { playedAssetRegistry, playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { isTabletHardware, useIsMobile, useIsTablet, useViewportWidth } from '@/shared/hooks/mobile/index.ts';
@@ -552,6 +553,8 @@ function useTimelinePlaybackContextValue({
 
 export function useTimelineState(services: TimelineHostServiceHooks, initialTimelineData?: TimelineData): UseTimelineStateResult {
   const runtime = useVideoEditorRuntime();
+  const runtimeRef = useRef(runtime);
+  runtimeRef.current = runtime;
   const finalVideoMap = services.useFinalVideoMap();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -1071,6 +1074,10 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const transcriptAssets = useMemo(() => createEditorAssetSurface(
     () => save.dataRef.current,
     (assetId) => loadEditorAssetProfile(runtime.assetResolver, assetId, runtime.timelineId),
+    () => playedAssetRegistry(
+      playedShotComposition(runtimeRef.current.userId, runtimeRef.current.shots),
+      save.dataRef.current?.resolvedConfig,
+    ),
   ), [runtime.assetResolver, runtime.timelineId, save.dataRef]);
   const transcriptPendingWork = useMemo(() => ({
     report: (state: import('@/sdk/context.ts').ExtensionPendingWorkState) =>

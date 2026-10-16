@@ -208,6 +208,22 @@ describe("canonical project transcript consistency", () => {
     expect((row.payload as any).words[0].id).toBe("w-one");
     expect(r.create).toHaveBeenCalledTimes(1);
   });
+  it('looks up media inside a played shot through the supplied registry', async () => {
+    const { r } = repository();
+    const document = await r.create({
+      schema: 'media.transcript/v1',
+      media_id: media,
+      source_id: 'astrid.narration',
+      segments: [{ id: 'shot-segment', start: 0, end: 1, text: 'shot narration' }],
+    }, 'shot-narration');
+    const { host } = await editor(r);
+
+    expect(await host.listProjectSources('shot-only', {
+      assets: { 'shot-only': { media_id: media, file: 'shot.wav', type: 'audio/wav' } },
+    })).toEqual([{ documentId: document.document_id, sourceId: 'astrid.narration', version: 1 }]);
+    expect(r.listForMedia).toHaveBeenCalledWith(media);
+  });
+
   it("projects an unassociated narration transcript as a read-only default", async () => {
     const { r } = repository();
     const narration = await r.create(

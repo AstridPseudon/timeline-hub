@@ -31,6 +31,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObjec
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
 import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { createEditorAssetSurface } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
+import { playedAssetRegistry } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import {
   createTimelineViewStore,
   type TimelineViewStoreApi,
@@ -793,12 +794,13 @@ export function useEditorRuntimeSync({
       assets: createEditorAssetSurface(
         () => store.getState().data.data,
         loadAssetProfile,
+        () => playedAssetRegistry(shotComposition?.() ?? null, store.getState().data.data?.resolvedConfig),
       ),
       proposals: proposals as unknown as CreativeContext['proposals'],
       timelineView: timelineViewStoreRef.current as unknown as CreativeContext['timelineView'],
       projectObjects,
     };
-  }, [documents, loadAssetProfile, projectObjects, timelineReader, timelineViewStoreRef, store]);
+  }, [documents, loadAssetProfile, projectObjects, shotComposition, timelineReader, timelineViewStoreRef, store]);
 
   useEffect(() => {
     const host = lifecycleHostRef.current;
