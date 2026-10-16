@@ -18,8 +18,9 @@
     "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/component.tsx": "sha256:aa1dce0476fde244281bd532368dece6408b9c9275bc5fd74b19f91475bd6af6",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/element.yaml": "sha256:c9c2b6c5a26f692f19d4c4a646a86d7bca16714f7de9e761ea83b8866332a431",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/flap.tsx": "sha256:aa7bf8827547c357824047b57a2e1fda4eaee452e0ac97781f9d52958476b087",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx": "sha256:b043cd596052e2b56265e0b160f8884221da97fdbd208a1f5527547d7998ff14",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/element.yaml": "sha256:b151dce10ce98a318e77ad72c81fa5ea118daa65ec2727bd52b3862653bb0d2b",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx": "sha256:6e70d9bd341cf77d5c6e99e106f9e84d1451a109cb354ed0fca54aa998967937",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/element.yaml": "sha256:a7c4d86719331bc76ca580c4ae9e220c6a5ef93cbf8e258dff529f6a9a72aeab",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/volume.ts": "sha256:b5fc7040551c6ef8e3e7d83afee7b431fc93ac70bd64ae6ddf9a3fa35ebc6ce6",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/component.tsx": "sha256:e294619aaedbbe76320539a8f279ce1b78b7bb2d4e0d6e0457247d4c058f82d5",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/element.yaml": "sha256:529c0a5dbeb8c412b66fdbbce538a27e8945507ecdecc462aed03d762a3e1bb9",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-orgchart/component.tsx": "sha256:6d108507a9504a4666af165730c50ff9ccd31c67f0154c20a996e7b046c957a1",
@@ -46,7 +47,7 @@
     "astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/element.yaml": "sha256:1e05df27df1ccf82d76d62cf2085dea7551018da6dc62fbfe9a6f42edbaa89a6",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/component.tsx": "sha256:b889f7d0dd95d945deebec74e825b9f168f0b6d8f5ea6457f9464d04871d4d2b",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/element.yaml": "sha256:be1a09967880f5f2e3fcb91eed17317a73bbe34eaf13f433907c5a0eeb9744f5",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx": "sha256:281c8bcec76d8e0b12b5834ee530815e61dd39ff87402cb2557fe330b67b1305",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx": "sha256:bc8270ba7c506d3bdf2ccc8041cb8fa0ae3c3293f1c1bfdf5bc02d96985f186c",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-type/element.yaml": "sha256:fab87dca9d9c4032bfd4715459f08e561b843edc39a2e456308ed674d1d1c84e",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx": "sha256:8e1219af8d926dd352507d6cdb2dddba1b876bfbe95ac5c580c6d0644f7a8b90",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/element.yaml": "sha256:e7281271f6a17d75100e5266877330501198f328c0f2972f281e1d0a5c109ae8",
@@ -154,5 +155,5 @@
     "remotion/src/fonts.ts": "sha256:5292071414d67cfaeee2eb7c04724d030809f5ef0ed6a3fbaaff58cde98d9bdb"
   },
   "producer": "astrid-agent",
-  "version": "sha256:da70f94bf7b1c21098c38c24fe075f4d0ae9480a209a382237f4ff4f7de9d238"
+  "version": "sha256:2ad849635dc732958ee6b2d9c4dfa3716d4fbdbaf0359905f2dc4586b9b85b7b"
 }
