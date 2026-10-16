@@ -241,9 +241,8 @@ tmp_path_retention_policy = "failed"
 # indefinitely. This is what stops one bad test from hanging CI, the megaplan
 # `finalize` test-baseline capture, or a human's local run for ~an hour.
 #
-# 120s is generous: it tolerates the slowest legitimate integration test
-# (subprocess/LLM/ffmpeg spawn) while still catching a genuinely wedged
-# (infinite) test fast. Override per-test with @pytest.mark.timeout(N) (the
+# 600s is many times the slowest legitimate test, even on a loaded machine
+# (testing plan R-10: durations never fail a run; only a genuine hang does). Override per-test with @pytest.mark.timeout(N) (the
 # `timeout` marker is registered below); set timeout(0) to disable for a
 # specific deliberately-long test.
 #
@@ -257,8 +256,11 @@ tmp_path_retention_policy = "failed"
 # main thread, which matches how pytest runs tests on CI/macOS/Linux.) A test
 # that legitimately runs longer should raise its own bound with
 # @pytest.mark.timeout(N), as tests/concurrency/test_ci_sandbox_isolation.py does.
-timeout = 120
+timeout = 600
 timeout_method = "signal"
+# Lanes (testing plan R-2): the default run leaves out tests that need another repo,
+# macOS, credentials or explicit opt-in; tests/lanes.py documents the nightly lane.
+addopts = "-m 'not integration and not darwin_native and not live and not opt_in'"
 # Scope collection to Astrid's own tests; exclude vendored upstream test trees
 # (e.g. any pack's `ai_toolkit/upstream` submodule, which targets the upstream
 # project, needs heavy deps like torch, and is not part of Astrid's suite).

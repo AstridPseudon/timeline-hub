@@ -83,7 +83,16 @@ When all three layers are green, the main things work together. When one is red,
 
 Re-measured 16 Oct 2026 in a clean Linux container (4 cores, Python 3.11, Node 22), at Astrid `54095b4`, Runtime `9780b59` and App `c986308`.
 
-_The measured table lands with the Wave 0 results (in progress)._
+| | Astrid | Runtime | App |
+|---|---|---|---|
+| Collected | 11,887 tests | 1,944 tests | 19,081 tests (4,532 suites) |
+| Collection errors | 29 files | 1 file (i06), plus 4 more from undeclared test deps (`jsonschema`, `PyYAML`) | — |
+| Red in a full run | ~850 (one full pass, 16 Oct; ~600 triaged so far) | **88 failed / 1,853 passed** | **264 failed / 18,815 passed** (95 files) |
+| Main cause of the reds | Tests not updated for 71d43e00 (packs moved `executors/` → `actions/`, schema v3 `pack.yaml`) | Tests not updated for 9ba7b1c (task-spec dedup) and 9d2b5df (remote activation order) | Mocks and fixtures drifted from the product's current exports |
+| Real product bugs found | training schemas root missing; editorial `arrange` imports a removed function; first-party pack list stale; custody race on Linux | remote-worker drain broken by merge 5053297; TS conformance client stale against the contract | pack commands use the retired task envelope; seam admission refuses popup edits; recovery draft dropped by the poll gate; 22 ungoverned SDK exports |
+| Tests that rewrite tracked files | `remotion/src/types.generated.ts` | `egg-info/SOURCES.txt`, the generator test | — |
+
+**Progress (16 Oct):** Runtime's default run is green (1,914 passed, 3 known failures). The App's default run is green apart from tests that were timing out under load, which are now fixed (19,050 passed, 7 known-failure entries). Astrid is in progress.
 
 **Copies between the products (15 Oct, checked):**
 - Astrid's Python client exactly matches Runtime's, but by hand-copied hashes.
@@ -137,7 +146,8 @@ _The measured table lands with the Wave 0 results (in progress)._
 | **R-4** | A fake is trusted only for operations whose real-daemon responses (including errors) it reproduces from recorded fixtures. Anything else fails loudly. No universal fake. |
 | **R-5** | Runtime never imports Astrid or the App. Cross-product tests live in the consumer and record the producer versions. |
 | **R-6** | Red is never normal. `known_failures.txt` (id, owner, expiry) is applied as strict xfail and may only shrink. While a repo's burn-down card is open it may be longer than 10; when the card closes it is at most 10. An import or collection error fails the run. `importorskip` is allowed locally but fails in a required lane. |
-| **R-7** | Delete before adding. A test pinned to a removed design is deleted, with a `removed.yaml` line, not fixed. No new framework. |
+| **R-7** | Delete before adding. A test pinned to a removed design is deleted, with a `removed.yaml` line, not fixed. No new framework. A test of a deliberately *changed* design is updated to assert the new behaviour. |
+| **R-13** | **Small product fixes ride with the test that exposes them.** The plan is testing-only, but a test that exposes a small, unambiguous product defect (a wrong path, a stale generated file, a broken import) gets the fix in the same commit. Anything larger becomes a known failure with an owner and a reason naming file:line. |
 | **R-8** | Tests assert behaviour and identity, not private attributes or proxies. Examples: "the output is revision R", not "a render finished"; "the killed task ended in state X", not "the next render works". |
 | **R-9** | Every suite reaps what it starts and fails on leftovers. Required lanes fail when prerequisites are missing. Heavy local runs go through `otto-heavy` when it is present; nothing requires it. |
 | **R-10** | Every journey phase reports success, failure or hung, with its duration and the machine load. Durations never fail a run. Hang ceilings are many times the usual duration. Provider failures are reported separately and never replaced by a fixture. |
