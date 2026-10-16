@@ -54,7 +54,16 @@ def test_absence_null_clear_and_opaque_values_remain_distinct():
     assert len({json.dumps(validate_edit_command(v), sort_keys=True) for v in values}) == 4
     assert 'version' not in cases['CMD-ABSENT']
     assert cases['CMD-EXPLICIT-NULL-OUTPUT']['version'] is None
-    assert validate_edit_command(cases['CMD-EXECUTED'])['resolved'] == ['c1.rocket']
+    assert validate_edit_command(cases['CMD-EXECUTED'])['resolved'] == ['parent/clip:c1.rocket']
+
+
+def test_resolved_scoped_id_rejects_bare_identifier():
+    bare = {'op': 'clip.set', 'select': 'c1.rocket', 'args': {'opacity': 0.75}, 'resolved': ['c1.rocket']}
+    scoped = copy.deepcopy(bare)
+    scoped['resolved'] = ['parent/clip:c1.rocket']
+    with pytest.raises(ValueError):
+        validate_edit_command(bare)
+    assert validate_edit_command(scoped) is scoped
 
 
 @pytest.mark.parametrize('exchange', FIXTURE['exchanges'], ids=lambda c: c['id'])
