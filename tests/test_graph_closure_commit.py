@@ -114,3 +114,106 @@ def test_direct_shot_stale_internal_pin_is_refused_without_mutation(fixture):
     with pytest.raises(ConflictError, match='pin mismatch'):
         port.revision_closure(ref)
     assert snapshot(s) == before
+
+
+def duplicate_request(s, p, *, batch=False):
+    from test_timeline_retention import duplicate
+    pin = duplicate(s, p)
+    initial = dict(project_id=p, timeline_id='dup', expected_head=None,
+                   parent_composition=dict(config={}, registry={}, clips=[], occurrences=[]),
+                   shot_revisions=[], internal_timeline_revisions=[])
+    s.publish_parent_composition(p, 'dup', initial, idempotency_key='bootstrap')
+    head = s.head(p, 'dup')
+    request = wire(p)
+    request.update(timeline_id='dup', base_revision_id=head['revision_id'], base_publication_id=head['publication_id'])
+    ref = dict(timeline_id='main', parent_revision_id=pin['expected_revision_id'], publication_id=pin['expected_publication_id'])
+    operation = dict(op='timeline.duplicate', args=dict(source=ref, bootstrap_revision_id=head['revision_id'], identities=[]))
+    request['change']['commands'] = [dict(op='timeline.batch', args=dict(commands=[operation]))] if batch else [operation]
+    return request, ref
+
+
+@pytest.mark.parametrize('batch', [False, True])
+def test_duplicate_parent_capability_exact_declared_and_consumed(fixture, batch):  # noqa: F811 - shared fixture
+    s, p = fixture
+    request, ref = duplicate_request(s, p, batch=batch)
+    port = s._request_commit_port(request, IDENTITY)
+    closure = port.revision_closure(ref)
+    assert closure['parent_revision']['timeline_id'] == 'main'
+    assert len(closure['shot_revisions']) == len(closure['internal_timeline_revisions']) == 1
+    with pytest.raises(AuthorizationError):
+        port.revision_closure('parent-1')  # foreign parent never becomes a destination read
+    with pytest.raises(AuthorizationError):
+        port.revision_closure(dict(ref, publication_id='other'))
+    # A newer source head does not change the captured exact selection.
+    s.accept(acceptance(s, p, key='source-moves'), identity=IDENTITY)
+    assert port.revision_closure(ref) == closure
+    # Destination head is still independent of source head movement.
+    assert s.head(p, 'dup')['revision_id'] == request['base_revision_id']
+
+
+@pytest.mark.parametrize('damage', ['parent', 'shot', 'internal', 'publication', 'provenance', 'project'])
+def test_duplicate_parent_capability_refuses_changed_dependencies(fixture, damage):  # noqa: F811 - shared fixture
+    s, p = fixture
+    request, ref = duplicate_request(s, p)
+    port = s._request_commit_port(request, IDENTITY)
+    closure = port.revision_closure(ref)
+    if damage in {'parent', 'shot', 'internal'}:
+        table, row = {'parent': ('parent_composition_revisions', closure['parent_revision']),
+                      'shot': ('shot_revisions', closure['shot_revisions'][0]),
+                      'internal': ('internal_timeline_revisions', closure['internal_timeline_revisions'][0])}[damage]
+        payload = dict(row['payload'], opaque_changed=True)
+        mutate(s, 'UPDATE '+table+' SET payload_json=?, content_digest=? WHERE id=?',
+               (json.dumps(payload), digest(payload), row['revision_id']))
+    elif damage == 'publication':
+        mutate(s, 'UPDATE parent_composition_publications SET publication_id=? WHERE publication_id=?', ('changed', ref['publication_id']))
+    elif damage == 'provenance':
+        mutate(s, "UPDATE timeline_events SET payload_json='{}' WHERE timeline_id='dup' AND kind='timeline.duplicate_created'", ())
+    else:
+        other = s.create_project(dict(slug='other', name='Other'), idempotency_key='other')['id']
+        mutate(s, "UPDATE timelines SET project_id=? WHERE id='main'", (other,))
+    before = snapshot(s)
+    with pytest.raises((ConflictError, AuthorizationError)):
+        port.revision_closure(ref)
+    assert snapshot(s) == before
+
+
+def duplicate_acceptance(s, p, request):
+    value = acceptance(s, p, request=request)
+    value.update(timeline_id='dup', expected_head_revision_id=request['base_revision_id'])
+    value['result']['rebased_onto'] = request['base_revision_id']
+    return value
+
+
+def test_duplicate_source_must_be_consumed_before_accept(fixture):  # noqa: F811 - shared fixture
+    s, p = fixture
+    request, ref = duplicate_request(s, p)
+    port = s._request_commit_port(request, IDENTITY)
+    before = snapshot(s)
+    with pytest.raises(ValidationError, match='must be read'):
+        port.accept(duplicate_acceptance(s, p, request))
+    assert snapshot(s) == before
+
+
+@pytest.mark.parametrize('damage', ['parent', 'shot', 'internal'])
+def test_duplicate_source_rechecked_atomically_at_accept(fixture, monkeypatch, damage):  # noqa: F811 - shared fixture
+    s, p = fixture
+    request, ref = duplicate_request(s, p)
+    port = s._request_commit_port(request, IDENTITY)
+    closure = port.revision_closure(ref)
+    prepared = duplicate_acceptance(s, p, request)
+    table, row = {'parent': ('parent_composition_revisions', closure['parent_revision']),
+                  'shot': ('shot_revisions', closure['shot_revisions'][0]),
+                  'internal': ('internal_timeline_revisions', closure['internal_timeline_revisions'][0])}[damage]
+    payload = dict(row['payload'], changed_after_capture=True)
+    mutate(s, 'UPDATE '+table+' SET payload_json=?, content_digest=? WHERE id=?',
+           (json.dumps(payload), digest(payload), row['revision_id']))
+    before = snapshot(s)
+    original = s._commit_revision_closure
+    def checked(*args, **kwargs):
+        assert s.store.conn.in_transaction
+        return original(*args, **kwargs)
+    monkeypatch.setattr(s, '_commit_revision_closure', checked)
+    with pytest.raises(ConflictError, match='changed before acceptance'):
+        port.accept(prepared)
+    assert snapshot(s) == before
+    assert s.lookup_request(p, 'dup', request['request_id']) is None

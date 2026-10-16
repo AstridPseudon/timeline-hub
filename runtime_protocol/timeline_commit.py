@@ -799,6 +799,27 @@ class TimelineCommitAcceptance:
                 })
             return value
 
+        if isinstance(revision_id, dict) and "timeline_id" in revision_id:
+            from .timeline_retention import provenance
+            ref = revision_id
+            if (set(ref) != {"timeline_id", "parent_revision_id", "publication_id"}
+                    or any(not isinstance(v, str) or not v or '/' in v for v in ref.values())
+                    or ref["timeline_id"] == timeline):
+                raise ValidationError("duplicate source requires distinct timeline and exact revision/publication")
+            recorded = provenance(self, timeline)
+            expected = dict(timeline_id=ref["timeline_id"], expected_revision_id=ref["parent_revision_id"],
+                            expected_publication_id=ref["publication_id"])
+            if not recorded or recorded["project_id"] != project or recorded["source"] != expected:
+                raise AuthorizationError("duplicate source differs from recorded destination provenance")
+            row = self.store.conn.execute(
+                "SELECT t.project_id, t.archived_at FROM timelines t JOIN parent_composition_publications p "
+                "ON p.timeline_id=t.id AND p.project_id=t.project_id WHERE t.id=? AND p.revision_id=? AND p.publication_id=?",
+                (ref["timeline_id"], ref["parent_revision_id"], ref["publication_id"])).fetchone()
+            if not row or row["project_id"] != project or row["archived_at"] is not None:
+                raise ConflictError("duplicate source exact publication is unavailable")
+            return self._commit_revision_closure(project, ref["timeline_id"], ref["parent_revision_id"],
+                                                 _internal_reader=_internal_reader)
+
         if isinstance(revision_id, dict):
             ref = revision_id
             if set(ref) != {"shot_id", "shot_revision_id", "internal_revision_id"} or any(not isinstance(v, str) or not v for v in ref.values()):
@@ -897,6 +918,19 @@ class TimelineCommitAcceptance:
                 args = command["args"]
                 if command.get("op") == "timeline.batch":
                     yield from declared(args.get("commands", []))
+                if command.get("op") == "timeline.duplicate":
+                    ref = args.get("source")
+                    if (not isinstance(ref, dict) or set(ref) != {"timeline_id", "parent_revision_id", "publication_id"}
+                            or any(not isinstance(v, str) or not v or '/' in v for v in ref.values())):
+                        raise ValidationError("duplicate source requires exact closed pins")
+                    bootstrap = self.store.conn.execute(
+                        "SELECT previous_revision_id FROM parent_composition_publications "
+                        "WHERE project_id=? AND timeline_id=? AND revision_id=? AND publication_id=?",
+                        (project, timeline, original["base_revision_id"], original.get("base_publication_id"))).fetchone()
+                    if (args.get("bootstrap_revision_id") != original["base_revision_id"]
+                            or not bootstrap or bootstrap["previous_revision_id"] is not None):
+                        raise AuthorizationError("duplicate requires its exact empty bootstrap publication")
+                    yield ref
                 if command.get("op") in {"shot.set", "occurrence.set", "occurrence.add"}:
                     for name in ("source", "replacement"):
                         if isinstance(args.get(name), dict):
@@ -906,8 +940,8 @@ class TimelineCommitAcceptance:
                         if isinstance(write, dict) and isinstance(write.get("source"), dict):
                             yield write["source"]
         declared_sources = list(declared(original["change"].get("commands", [])))
-        declared_revision_ids = {ref["parent_revision_id"] for ref in declared_sources if isinstance(ref.get("parent_revision_id"), str)}
-        declared_shots = {digest(ref): copy.deepcopy(ref) for ref in declared_sources if "parent_revision_id" not in ref}
+        declared_revision_ids = {ref["parent_revision_id"] for ref in declared_sources if "timeline_id" not in ref and isinstance(ref.get("parent_revision_id"), str)}
+        declared_shots = {digest(ref): copy.deepcopy(ref) for ref in declared_sources if "parent_revision_id" not in ref or "timeline_id" in ref}
         permitted_revisions.update(declared_revision_ids)
         take_refs = list(request_take_refs(original["change"]))
         captured_takes = {}
