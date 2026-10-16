@@ -1,6 +1,7 @@
 import { useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act } from 'react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest';
 import type { ReactNode } from 'react';
@@ -38,6 +39,18 @@ let __editorPreferences: Record<string, any> = {
 let __chromeOverrides: Record<string, unknown> = {};
 /** Interaction mode reported by the mocked timeline store. */
 let __interactionMode: 'browse' | 'select' | 'move' | 'trim' | 'precision' = 'browse';
+const __seek = vi.fn();
+const __previewRef = { current: { togglePlayPause: vi.fn(), seek: __seek } };
+let __playback = {
+  currentTime: 0,
+  previewRef: __previewRef,
+  formatTime: (time: number) => `${time.toFixed(1)}s`,
+};
+const __playbackListeners = new Set<() => void>();
+function __setPlaybackTime(currentTime: number) {
+  __playback = { ...__playback, currentTime };
+  __playbackListeners.forEach((listener) => listener());
+}
 
 /** Stable op spies, so tests can assert what a rendered control actually calls. */
 const __editorOps = {
@@ -62,61 +75,70 @@ const __editorOps = {
 
 const __liveInspectorTarget = { value: { kind: 'timeline' as const } };
 
-vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
-  useTimelineEditorData: () => ({
-    dataRef: { current: null },
-    data: null,
-    selectedClipIds: __selectedClipIds,
-    selectedDataItems: __selectedDataItems,
-    selectedTrackId: __selectedTrackId,
-    preferences: __editorPreferences,
-    resolvedConfig: null,
-    deviceClass: __deviceClass,
-    precisionEnabled: false,
-    interactionMode: __interactionMode,
-    gestureOwner: null,
-    // Live store value; tests mutate `__liveInspectorTarget.value` to prove
-    // the shell's snap-back guard (groken LIVE-1).
-    get inspectorTarget() {
-      return __liveInspectorTarget.value;
+vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
+  const React = await vi.importActual<typeof import('react')>('react');
+  return ({
+    useTimelineEditorData: () => ({
+      dataRef: { current: null },
+      data: null,
+      selectedClipIds: __selectedClipIds,
+      selectedDataItems: __selectedDataItems,
+      selectedTrackId: __selectedTrackId,
+      preferences: __editorPreferences,
+      resolvedConfig: null,
+      deviceClass: __deviceClass,
+      precisionEnabled: false,
+      interactionMode: __interactionMode,
+      gestureOwner: null,
+      // Live store value; tests mutate `__liveInspectorTarget.value` to prove
+      // the shell's snap-back guard (groken LIVE-1).
+      get inspectorTarget() {
+        return __liveInspectorTarget.value;
+      },
+    }),
+    useTimelineEditorOps: () => __editorOps,
+    useTimelineChromeContext: () => ({
+      saveStatus: 'saved' as const,
+      isConflictExhausted: false,
+      retrySaveAfterConflict: vi.fn(),
+      reloadFromServer: vi.fn(),
+      recoveryDraft: null,
+      retryRecoveredDraft: vi.fn(),
+      discardRecoveredDraft: vi.fn(),
+      undo: vi.fn(),
+      redo: vi.fn(),
+      canUndo: false,
+      canRedo: false,
+      checkpoints: [],
+      jumpToCheckpoint: vi.fn(),
+      createManualCheckpoint: vi.fn(),
+      timelineName: 'Test Timeline',
+      setScaleWidth: vi.fn(),
+      startRender: __startRender,
+      renderStatus: 'idle' as const,
+      renderProgress: null,
+      renderResultUrl: null,
+      renderResultFilename: null,
+      renderDirty: false,
+      loadError: null,
+      retryLoad: vi.fn(),
+      ...__chromeOverrides,
+    }),
+    useTimelinePlaybackSelector: (selector: (playback: typeof __playback) => unknown) => {
+      return React.useSyncExternalStore(
+        (listener: () => void) => {
+          __playbackListeners.add(listener);
+          return () => __playbackListeners.delete(listener);
+        },
+        () => selector(__playback),
+        () => selector(__playback),
+      );
     },
-  }),
-  useTimelineEditorOps: () => __editorOps,
-  useTimelineChromeContext: () => ({
-    saveStatus: 'saved' as const,
-    isConflictExhausted: false,
-    retrySaveAfterConflict: vi.fn(),
-    reloadFromServer: vi.fn(),
-    recoveryDraft: null,
-    retryRecoveredDraft: vi.fn(),
-    discardRecoveredDraft: vi.fn(),
-    undo: vi.fn(),
-    redo: vi.fn(),
-    canUndo: false,
-    canRedo: false,
-    checkpoints: [],
-    jumpToCheckpoint: vi.fn(),
-    createManualCheckpoint: vi.fn(),
-    timelineName: 'Test Timeline',
-    setScaleWidth: vi.fn(),
-    startRender: __startRender,
-    renderStatus: 'idle' as const,
-    renderProgress: null,
-    renderResultUrl: null,
-    renderResultFilename: null,
-    renderDirty: false,
-    loadError: null,
-    retryLoad: vi.fn(),
-    ...__chromeOverrides,
-  }),
-  useTimelinePlaybackContext: () => ({
-    currentTime: 0,
-    previewRef: { current: { togglePlayPause: vi.fn(), seek: vi.fn() } },
-    formatTime: (t: number) => `${t.toFixed(1)}s`,
-  }),
-  useProposalRuntimeFromStoreSafe: () => null,
-  useProposalImportDiagnosticsFromStoreSafe: () => null,
-}));
+    useTimelineStoreApi: () => ({ getState: () => ({ playback: __playback }) }),
+    useProposalRuntimeFromStoreSafe: () => null,
+    useProposalImportDiagnosticsFromStoreSafe: () => null,
+  });
+});
 
 vi.mock('@/tools/video-editor/components/ProposalPanel/ProposalPanel.tsx', () => ({
   ProposalPanel: ({ proposalRuntime, proposalImportDiagnostics }: any) =>
@@ -307,6 +329,7 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
 // ---------------------------------------------------------------------------
 
 import { TimelineEditorShellCore } from '@/tools/video-editor/components/TimelineEditorShellCore';
+import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -323,6 +346,8 @@ describe('TimelineEditorShellCore surface slots', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    __playback = { ...__playback, currentTime: 0 };
+    __playbackListeners.clear();
     __clearSlotRenderers();
     __clearRuntimeContext();
     __deviceClass = 'desktop';
@@ -332,6 +357,22 @@ describe('TimelineEditorShellCore surface slots', () => {
       rightPanelLayoutSlotsByPanelId: {},
       showDataLanes: false,
     };
+  });
+
+  it('keeps playhead updates in time leaves and seeks from the latest time', () => {
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    vi.mocked(useRenderDiagnostic).mockClear();
+
+    act(() => {
+      for (let step = 1; step <= 5; step += 1) __setPlaybackTime(step * 0.5);
+    });
+
+    expect(useRenderDiagnostic).not.toHaveBeenCalled();
+    expect(screen.getByText('2.5s')).toBeTruthy();
+
+    const options = vi.mocked(useKeyboardShortcuts).mock.calls.at(-1)![0];
+    options.seekRelative(1);
+    expect(__seek).toHaveBeenCalledWith(3.5);
   });
 
   // ---- Shell grid row alignment ---------------------------------------------

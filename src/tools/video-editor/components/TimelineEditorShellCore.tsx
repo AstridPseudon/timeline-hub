@@ -31,7 +31,8 @@ import {
   useTimelineChromeContext,
   useTimelineEditorData,
   useTimelineEditorOps,
-  useTimelinePlaybackContext,
+  useTimelinePlaybackSelector,
+  useTimelineStoreApi,
   useProposalRuntimeFromStoreSafe,
   useProposalImportDiagnosticsFromStoreSafe,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
@@ -74,6 +75,27 @@ import {
   AppHeader,
   type AppHeaderNavigationMode,
 } from '@/shared/components/AppHeader.tsx';
+
+function PlaybackTimecode() {
+  const currentTime = useTimelinePlaybackSelector((playback) => playback.currentTime);
+  const formatTime = useTimelinePlaybackSelector((playback) => playback.formatTime);
+  return <>{formatTime(currentTime)}</>;
+}
+
+function PlaybackSlider({ max }: { max: number }) {
+  const currentTime = useTimelinePlaybackSelector((playback) => playback.currentTime);
+  const previewRef = useTimelinePlaybackSelector((playback) => playback.previewRef);
+
+  return (
+    <Slider
+      value={[currentTime]}
+      min={0}
+      max={max}
+      step={0.05}
+      onValueChange={(value) => previewRef.current?.seek(value)}
+    />
+  );
+}
 
 export interface TimelineEditorShellCoreProps {
   timelineId: string;
@@ -155,7 +177,8 @@ function TimelineEditorShellCoreComponent({
   const editorData = useTimelineEditorData();
   const editorOps = useTimelineEditorOps();
   const chrome = useTimelineChromeContext();
-  const playback = useTimelinePlaybackContext();
+  const previewRef = useTimelinePlaybackSelector((playback) => playback.previewRef);
+  const timelineStore = useTimelineStoreApi();
   const isPhone = editorData.deviceClass === 'phone';
   const isTablet = editorData.deviceClass === 'tablet';
   /** M1: Extension activity region status events (placeholder state). */
@@ -274,8 +297,11 @@ function TimelineEditorShellCoreComponent({
     undo: chrome.undo,
     redo: chrome.redo,
     selectAllClips: () => editorReplaceTimelineSelection(Object.keys(editorData.data?.meta ?? {}), runtime.agentSelectionOwner),
-    togglePlayPause: () => playback.previewRef.current?.togglePlayPause(),
-    seekRelative: (deltaSeconds) => playback.previewRef.current?.seek(Math.max(0, playback.currentTime + deltaSeconds)),
+    togglePlayPause: () => previewRef.current?.togglePlayPause(),
+    seekRelative: (deltaSeconds) => previewRef.current?.seek(Math.max(
+      0,
+      timelineStore.getState().playback.currentTime + deltaSeconds,
+    )),
     toggleMute: () => { if (!editorData.selectedDataItems?.length) editorOps.handleToggleMuteClips([...editorData.selectedClipIds]); },
     splitSelectedClip: () => { if (!editorData.selectedDataItems?.length) editorOps.handleSplitSelectedClip(); },
     deleteSelectedClip: handleKeyboardDelete,
@@ -590,7 +616,7 @@ function TimelineEditorShellCoreComponent({
           </div>
         )}
         <span className="shrink-0 rounded bg-background/70 px-1.5 py-0.5 font-mono text-[11px] tracking-[0.08em] text-muted-foreground backdrop-blur-sm">
-          {playback.formatTime(playback.currentTime)}
+          <PlaybackTimecode />
         </span>
       </div>
       <div className="pointer-events-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
@@ -813,13 +839,7 @@ function TimelineEditorShellCoreComponent({
                 <PreviewPanel surface={previewSurface} />
               </div>
               <div className="rounded-xl border border-border bg-card/80 px-3 py-2">
-                <Slider
-                  value={[playback.currentTime]}
-                  min={0}
-                  max={Math.max(1, totalSeconds)}
-                  step={0.05}
-                  onValueChange={(value) => playback.previewRef.current?.seek(value)}
-                />
+                <PlaybackSlider max={Math.max(1, totalSeconds)} />
               </div>
             </div>
 
@@ -884,13 +904,7 @@ function TimelineEditorShellCoreComponent({
                   <div ref={previewSurface.slotRef} className="flex h-full w-full min-h-0 items-center justify-center" />
                 </div>
                 <div className="border-t border-border px-3 py-2">
-                  <Slider
-                    value={[playback.currentTime]}
-                    min={0}
-                    max={Math.max(1, totalSeconds)}
-                    step={0.05}
-                    onValueChange={(value) => playback.previewRef.current?.seek(value)}
-                  />
+                  <PlaybackSlider max={Math.max(1, totalSeconds)} />
                 </div>
               </div>
               <div
