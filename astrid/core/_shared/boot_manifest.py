@@ -8,7 +8,6 @@ discovers profiles.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import tempfile
@@ -17,7 +16,7 @@ from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any
 
-from astrid.core.receipts.canonical import canonical_json
+from astrid.core.foundation.hash import canonical_json_digest
 
 BOOT_MANIFEST_FILENAME = "boot-manifest.json"
 BOOT_MANIFEST_SCHEMA_VERSION = 1
@@ -61,10 +60,6 @@ def _json_value(value: Any) -> Any:
     if isinstance(value, set):
         return sorted(_json_value(item) for item in value)
     return value
-
-
-def _sha256(value: Any) -> str:
-    return hashlib.sha256(canonical_json(_json_value(value)).encode("utf-8")).hexdigest()
 
 
 def _entry_identity(entry: Any) -> dict[str, Any]:
@@ -115,7 +110,7 @@ def registry_scope(registry: Mapping[str, Any]) -> dict[str, Any]:
 
 def fixture_digest(fixture: Any) -> str:
     """Hash one complete profile fixture, including its accepted evidence."""
-    return _sha256(fixture)
+    return canonical_json_digest(_json_value(fixture))
 
 
 def _fixture_id(fixture: Any) -> str:
@@ -141,12 +136,12 @@ def fixture_scope(fixtures: Iterable[Any]) -> dict[str, str]:
 
 def compute_registry_digest(registry: Mapping[str, Any], fixtures: Iterable[Any]) -> str:
     """Hash registry admission identity and fixture identity together."""
-    return _sha256({"registry": registry_scope(registry), "fixtures": fixture_scope(fixtures)})
+    return canonical_json_digest({"registry": registry_scope(registry), "fixtures": fixture_scope(fixtures)})
 
 
 def compute_conformance_digest(fixtures: Iterable[Any]) -> str:
     """Hash the fixture scope independently for evidence and diagnostics."""
-    return _sha256(fixture_scope(fixtures))
+    return canonical_json_digest(fixture_scope(fixtures))
 
 
 def _fixture_file_digests(fixtures: Iterable[Any]) -> dict[str, str]:
@@ -220,7 +215,7 @@ def build_manifest(
 
 def manifest_hash(manifest: Mapping[str, Any]) -> str:
     """Return the canonical hash carried by completion provenance."""
-    return _sha256(dict(manifest))
+    return canonical_json_digest(_json_value(dict(manifest)))
 
 
 def normalize_sha256_digest(value: str, *, label: str = "digest") -> str:
