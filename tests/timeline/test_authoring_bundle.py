@@ -337,7 +337,8 @@ def test_compact_producer_public_http_digests_and_refusals(tmp_path):
             stale[kind][0]["content_digest"] = "sha256:" + "0" * 64
             with pytest.raises(ApiError, match="content digest mismatch"):
                 client.publish_parent_composition(project_id, "main", stale, idempotency_key=kind)
-            assert client.get_project_timeline(project_id, "main").get("head_revision_id") is None
+            with pytest.raises(ApiError, match="timeline has no parent composition revision"):
+                client.inspect_timeline(project_id, "main")
         stale_parent = copy.deepcopy(publication)
         stale_parent["content_digest"] = "sha256:" + "0" * 64
         with pytest.raises(ApiError, match="parent composition content digest mismatch"):
@@ -352,7 +353,7 @@ def test_compact_producer_public_http_digests_and_refusals(tmp_path):
             client.publish_parent_composition(project_id, "main", malformed, idempotency_key="malformed")
         accepted = client.publish_parent_composition(project_id, "main", publication, idempotency_key="accepted")
         fresh = WorkspaceClient(daemon.endpoint, daemon.token)
-        assert fresh.get_project_timeline(project_id, "main")["head_revision_id"] == publication["parent_revision_id"]
+        assert fresh.inspect_timeline(project_id, "main")["head_revision_id"] == publication["parent_revision_id"]
         assert accepted["content_digest"] == publication["content_digest"]
         for row in publication["internal_timeline_revisions"]:
             read = fresh.get_project_timeline_revision(project_id, row["timeline_id"], row["revision_id"])
