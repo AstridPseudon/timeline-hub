@@ -4,18 +4,28 @@ from __future__ import annotations
 
 import copy
 import json
+from types import SimpleNamespace
 
 import pytest
 import yaml
 
 from tests.editing_conformance.runner import (
+    PathResult,
     ScenarioError,
     classify,
-    evaluate,
     load_scenario,
     parse_scenario,
     run_case,
     run_scenario,
+)
+from tests.editing_conformance.test_conformance import (
+    _authored_restoration_matches,
+    _cut_ids,
+    _reservation_invariant_error,
+    _reservation_state,
+)
+from tests.editing_conformance.test_conformance import (
+    reservation_aware_evaluate as evaluate,
 )
 
 ROCKET = {
@@ -49,6 +59,75 @@ def test_clean_scenario_has_no_failures_on_all_three_paths():
     scenario = _scenario()
     assert scenario.runnable() == ["cli", "sheet", "python"]
     assert _failures(scenario) == {}
+
+
+def test_reservation_comparison_still_fails_on_planted_authored_state_loss():
+    from tests.editing_conformance.runner import canon
+
+    base = {
+        "parent": {"config": {"app": {"astrid": {"author_note": {"keep": True}}}}},
+        "shots": {"A": {"internal_timeline": {"clips": [
+            {"id": "picture", "app": {"cut": "c1"}, "params": {"x": 60}},
+        ]}}},
+    }
+    after = copy.deepcopy(base)
+    after["shots"]["A"]["internal_timeline"]["clips"][0]["params"]["x"] = 120
+    undone = copy.deepcopy(base)
+    del undone["shots"]["A"]["internal_timeline"]["clips"][0]["params"]["x"]
+    reservation = {"number": 2, "suffixes": {}}
+    for document in (after, undone):
+        document["parent"]["config"]["app"]["astrid"]["cut_id_high_water"] = copy.deepcopy(reservation)
+
+    scenario = _scenario(check=None)
+    result = PathResult(
+        name="python", exit_codes=[], stdout="", stderr="", error=None,
+        base=canon(base), after=canon(after), undone=canon(undone), redone=canon(after),
+        new_steps=1, undo_error=None, redo_error=None, checks={},
+        records=[{"calls": [{"op": "clip.set"}]}],
+    )
+    failures = evaluate(scenario, {"python": result})
+    assert ("python", "undo") in failures
+    assert "params" in failures[("python", "undo")]
+    assert ("python", "reservation") not in failures
+    assert result.undone == canon(undone)  # comparison leaves the captured raw document untouched
+    assert not _authored_restoration_matches(result.base, result.undone)
+
+
+def test_multi_undo_preserves_cut_reservations_and_allocates_a_fresh_identity():
+    from astrid.sdk.timeline import Checkout
+    from tests.editing_conformance.runner import _checkout, _document, _fresh
+
+    with _fresh("tiny"):
+        _checkout()
+        base = _document()
+        timeline = Checkout.draft("p", "t")
+        with timeline.edit("first cut split", check=False, quiet=True):
+            first = timeline.cut("c1").split('"went"')
+
+        timeline = Checkout.draft("p", "t")
+        with timeline.edit("second cut split", check=False, quiet=True):
+            second = timeline.cut("c1a").split('"viral"')
+        second_document = _document()
+        assert (first.id, second.id) == ("c1a", "c1b")
+
+        timeline = Checkout.draft("p", "t")
+        timeline.undo(2)
+        undone = _document()
+        assert _authored_restoration_matches(base, undone)
+        stacked = SimpleNamespace(base=base, after=second_document, undone=undone, redone=undone)
+        assert _reservation_invariant_error(stacked) is None
+
+        timeline = Checkout.draft("p", "t")
+        with timeline.edit("allocate after multi-undo", check=False, quiet=True):
+            next_cut = timeline.cut("c1").split('"went"')
+        final = _document()
+        assert next_cut.id == "c1c"
+        final_result = SimpleNamespace(base=undone, after=final, undone=final, redone=final)
+        assert _reservation_invariant_error(final_result) is None
+        assert _reservation_state(second_document)["suffixes"]["1"] == 2
+        assert _reservation_state(undone)["suffixes"]["1"] == 2
+        assert _reservation_state(final)["suffixes"]["1"] == 3
+        assert {"c1a", "c1b"}.isdisjoint(_cut_ids(final))
 
 
 def test_python_setting_a_different_value_is_caught_as_a_mismatch():
