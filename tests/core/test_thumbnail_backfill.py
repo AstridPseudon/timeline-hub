@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from PIL import Image
@@ -14,6 +16,11 @@ from astrid.core.execution.thumbnail_backfill import (
 from astrid.core.receipts.canonical import canonical_json
 
 SOURCE = "sha256:" + "a" * 64
+# The Runtime's recorded responses (tests/fixtures/runtime-responses, vendored under a lock): the fake builds its
+# task and admission receipt from them, so it cannot lack or invent a wire field.
+_RESPONSES = Path(__file__).resolve().parents[1] / "fixtures" / "runtime-responses"
+_RECORDED_TASK = json.loads((_RESPONSES / "task_read_200.json").read_text())["body"]
+_RECORDED_ADMISSION = json.loads((_RESPONSES / "task_admission_201.json").read_text())["body"]
 
 
 class VersionConflictError(RuntimeError):
@@ -46,7 +53,8 @@ class FakeRuntime:
         self.cancelled_tasks: list[str] = []
         self.retried_tasks: list[dict[str, Any]] = []
         self._claims: dict[str, dict[str, Any]] = {}
-        self._tasks: dict[str, dict[str, Any]] = {}
+        self._tasks: dict[str, dict[str, Any]] = {}  # wire-shaped, like the Runtime's task resource
+        self._meta: dict[str, dict[str, Any]] = {}  # fake-only bookkeeping, kept off the wire body
         self._admission_tasks: dict[str, str] = {}
         self._attempt_tasks: dict[str, str] = {}
         self.fail_upload = False
@@ -99,36 +107,40 @@ class FakeRuntime:
         generation_id = kwargs["settlement_effect"]["target_id"]
         admission_key = kwargs["idempotency_key"]
         if admission_key in self._admission_tasks:
-            return {"data": dict(self._tasks[self._admission_tasks[admission_key]])}
+            return self._admitted(self._admission_tasks[admission_key])
         ordinal = 1 + sum(
-            task["generation_id"] == generation_id for task in self._tasks.values()
+            meta["generation_id"] == generation_id for meta in self._meta.values()
         )
         task_id = f"task-{generation_id}" if ordinal == 1 else f"task-{generation_id}-{ordinal}"
         task = {
+            **_RECORDED_TASK,
             "task_id": task_id,
             "run_id": f"run-{generation_id}-{ordinal}",
             "project_id": "project-1",
             "state": "queued",
             "version": 1,
-            "generation_id": generation_id,
             "input_object_ids": list(kwargs["input_object_ids"]),
             "spec": dict(kwargs["spec"]),
             "expected_effect": dict(kwargs["settlement_effect"]),
-            "attempt_count": 0,
         }
+        self._meta[task_id] = {"generation_id": generation_id, "attempt_count": 0}
         self._tasks[task_id] = task
         self._admission_tasks[admission_key] = task_id
         self._queue_claim(task_id)
-        return {"data": dict(task)}
+        return self._admitted(task_id)
+
+    def _admitted(self, task_id: str) -> dict[str, Any]:
+        return {"data": dict(self._tasks[task_id]), "receipt": dict(_RECORDED_ADMISSION["receipt"])}
 
     def _queue_claim(self, task_id: str) -> None:
         task = self._tasks[task_id]
-        task["attempt_count"] += 1
-        attempt_count = task["attempt_count"]
+        meta = self._meta[task_id]
+        meta["attempt_count"] += 1
+        attempt_count = meta["attempt_count"]
         attempt_id = (
-            f"attempt-{task['generation_id']}"
+            f"attempt-{meta['generation_id']}"
             if attempt_count == 1
-            else f"attempt-{task['generation_id']}-{attempt_count}"
+            else f"attempt-{meta['generation_id']}-{attempt_count}"
         )
         self._attempt_tasks[attempt_id] = task_id
         self._claims[task_id] = {
@@ -136,7 +148,7 @@ class FakeRuntime:
             "task_id": task_id,
             "run_id": task["run_id"],
             "project_id": "project-1",
-            "lease_id": f"lease-{task['generation_id']}-{attempt_count}",
+            "lease_id": f"lease-{meta['generation_id']}-{attempt_count}",
             "fence": attempt_count,
             "runtime_epoch": 3,
             "input_object_ids": list(task["input_object_ids"]),

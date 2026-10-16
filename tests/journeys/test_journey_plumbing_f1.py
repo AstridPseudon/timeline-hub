@@ -387,10 +387,25 @@ def _restart_journey(tmp_path: Path, server: FakeRuntime, *, app_render: bool = 
     return j, runner
 
 
+def _recorded(case: str) -> dict:
+    """The Runtime's recorded response body (tests/fixtures/runtime-responses, vendored under a lock)."""
+    return json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "runtime-responses" / f"{case}.json").read_text())["body"]
+
+
 def _runtime_routes(state: str) -> dict:
+    def admitted(path, body):
+        recorded = _recorded("task_admission_201")
+        recorded["data"]["task_id"] = "t9"
+        return 201, recorded
+
+    def task(path, body):
+        recorded = {**_recorded("task_read_200"), "task_id": "t9", "state": state}
+        if state != "queued":  # the Runtime reports a result only once the task has one
+            recorded["result"] = {"why": "x"}
+        return 200, recorded
+
     return {("GET", "/v1/capabilities"): lambda p, b: (200, {"items": [CAPABILITY], "next_cursor": None}),
-            ("POST", "/v1/tasks"): lambda p, b: (201, {"data": {"task_id": "t9"}, "receipt": {}}),
-            ("GET", "/v1/tasks/t9"): lambda p, b: (200, {"task_id": "t9", "state": state, "result": {"why": "x"}})}
+            ("POST", "/v1/tasks"): admitted, ("GET", "/v1/tasks/t9"): task}
 
 
 def test_runtime_restart_restarts_then_admits_the_apps_request_and_waits(tmp_path: Path, runtime_server) -> None:

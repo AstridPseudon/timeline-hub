@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -25,6 +27,11 @@ PLACEMENT = {
 }
 
 
+_RECORDED_TASK = json.loads(
+    (Path(__file__).resolve().parents[2] / "fixtures" / "runtime-responses" / "task_read_200.json").read_text()
+)["body"]
+
+
 class FakeRuntime:
     def __init__(self):
         self.epoch = 3
@@ -40,9 +47,11 @@ class FakeRuntime:
 
     def get_task(self, task_id):
         assert task_id == "task-a"
-        return SimpleNamespace(task_id=task_id, run_id="run-a", state=self.state,
-                               execution_request={"target": TARGET},
-                               execution_binding={"effective_target": self.target})
+        # The recorded wire task (tests/fixtures/runtime-responses, vendored under a lock) with only the fields this
+        # test reads overridden, so the fake cannot lack or invent a field.
+        return SimpleNamespace(**{**_RECORDED_TASK, "task_id": task_id, "run_id": "run-a", "state": self.state,
+                                  "execution_request": {"target": TARGET},
+                                  "execution_binding": {"effective_target": self.target}})
 
     def _reply(self, action, value):
         self.calls.append(action)
