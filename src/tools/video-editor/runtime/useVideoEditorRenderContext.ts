@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import * as astridCatalog from '@astrid/packs/rendering/editor/catalog';
+import { contributedTimelineViewPanels } from './ContributedTimelineViews';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import {
   useTimelineChromeContext,
@@ -14,6 +16,8 @@ import type {
   VideoEditorRuntimeSlices,
 } from '@/tools/video-editor/runtime/extensionSurface.ts';
 import { resolveVideoEditorPanelRegistry } from '@/tools/video-editor/runtime/extensionSurface.ts';
+
+const declaredViewPanels = contributedTimelineViewPanels(astridCatalog as { readonly ASTRID_TIMELINE_VIEW_CATALOG?: unknown });
 
 export function buildVideoEditorRenderContext(
   runtime: ReturnType<typeof useVideoEditorRuntime>,
@@ -86,7 +90,7 @@ export function useResolvedVideoEditorPanelRegistry(): ResolvedVideoEditorPanelR
   const renderContext = useVideoEditorRenderContext();
 
   return useMemo(
-    () => resolveVideoEditorPanelRegistry(registry, renderContext),
+    () => resolveVideoEditorPanelRegistry({ ...registry, panels: [...registry.panels, ...declaredViewPanels] }, renderContext),
     [registry, renderContext],
   );
 }

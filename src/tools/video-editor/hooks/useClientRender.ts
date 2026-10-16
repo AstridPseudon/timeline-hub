@@ -47,6 +47,9 @@ interface WebRendererModule {
 }
 
 const FREE_LICENSE_KEY = 'free-license';
+// The Web Renderer's medium default loses fine detail during transitions.
+// Use the same quality for capability admission and the actual encoder.
+const VIDEO_BITRATE = 'very-high';
 
 let webRendererCache: WebRendererModule | null = null;
 
@@ -241,6 +244,7 @@ export function useClientRender({
         width,
         height,
         videoCodec: 'h264',
+        videoBitrate: VIDEO_BITRATE,
         audioCodec: 'aac',
       } satisfies Record<string, unknown>;
 
@@ -275,6 +279,7 @@ export function useClientRender({
         },
         licenseKey: FREE_LICENSE_KEY,
         videoCodec: resolvedVideoCodec,
+        videoBitrate: VIDEO_BITRATE,
         audioCodec: resolvedAudioCodec,
         // Keep host exports aligned with Astrid's canonical 44.1 kHz stereo
         // audio fixtures instead of relying on the Web Renderer default of

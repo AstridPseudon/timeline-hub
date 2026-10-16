@@ -1938,6 +1938,23 @@ describe('RuntimeDataProvider commit save routing', () => {
       commitSessionStorage: storage, commitRouting: { enabled: true } });
   }
 
+  it('W09 returns a native history inverse only after the accepted exact revision readback', async () => {
+    const write = { id: 'parent', path: 'registry.assets', before: { state: 'absent' }, after: { state: 'present', value: { registered: null } } };
+    const fixture = commitFixture(async (body) => ({ ...result(body), status: 'accepted', accepted_revision_id: 'registered-head', accepted_publication_id: 'pub-registration', change: { ...result(body).change, direct_writes: [write] } }));
+    const provider = nativeProvider(fixture);
+    const save = vi.spyOn(provider, 'saveTimelineAtHead');
+    await provider.registerAsset(TIMELINE_ID, 'registered', { media_id: 'sha256:' + 'a'.repeat(64), type: 'image/png' });
+    const receipt = await save.mock.results[0].value;
+    expect(receipt).toMatchObject({ head: { headRevisionId: 'registered-head' }, commandInverse: { op: 'timeline.inverse', select: null, args: { publication: 'pub-registration', writes: [{ ...write, before: write.after, after: write.before }] } } });
+  });
+
+  it('W09 marks an authenticated no-change registration receipt explicitly without inventing an inverse', async () => {
+    const fixture = commitFixture(async (body) => result(body));
+    const provider = nativeProvider(fixture); const save = vi.spyOn(provider, 'saveTimelineAtHead');
+    await provider.registerAsset(TIMELINE_ID, 'registered', { media_id: 'sha256:' + 'a'.repeat(64) });
+    expect((await save.mock.results[0].value).commandInverse).toBeNull();
+  });
+
   it('W09 routes explicit managed registerAsset through the captured native command and exact retry identity', async () => {
     const fixture = commitFixture(async (body, call) => result(body, call === 1));
     const provider = nativeProvider(fixture);

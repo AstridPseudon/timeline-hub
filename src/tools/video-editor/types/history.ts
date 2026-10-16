@@ -11,6 +11,11 @@ export type UndoSnapshot = {
 };
 
 export type UndoEntry = {
+  /** In-memory ownership only; an unacknowledged native edit has no snapshot save fallback. */
+  nativeRegistration?: {
+    owner: import('../lib/timeline-data.ts').TimelineData;
+    inverse?: import('@/integrations/runtime/generated.ts').EditCommand;
+  };
   snapshot: UndoSnapshot;
   timestamp: string;
   label?: string;

@@ -48,6 +48,8 @@ export interface TimelineOccurrenceContext {
 }
 
 export interface TimelineSaveReceipt {
+  /** Native receipt inverse; null explicitly acknowledges a registration with no authored change. */
+  commandInverse?: EditCommand | null;
   configVersion: number;
   head: TimelineHeadRevision;
 }
