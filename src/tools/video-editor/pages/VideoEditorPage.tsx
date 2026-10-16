@@ -81,10 +81,8 @@ import { ApiError } from "@/integrations/runtime/generated.ts";
 import { generateUUID } from "@/shared/lib/taskCreation/ids.ts";
 import { AppHeader } from "@/shared/components/AppHeader.tsx";
 import { WorkspaceConnectionRecovery } from "@/tools/video-editor/components/WorkspaceConnectionRecovery.tsx";
-import {
-  LOCAL_BRIDGE_BASE_URL,
-  useAstridBridgeDiscovery,
-} from "@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts";
+import { astridBase } from "@/integrations/runtime/connection.ts";
+import { useAstridBridgeDiscovery } from "@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts";
 import { RuntimeDataProvider } from "@/integrations/runtime/dataProvider.ts";
 import type { SaveStatus } from "@/tools/video-editor/hooks/useTimelinePersistence.ts";
 import {
@@ -189,7 +187,7 @@ async function fetchBridgeJson<Schema extends ZodType>(
   schema: Schema,
   what: string,
 ): Promise<z.infer<Schema>> {
-  const response = await fetch(`${LOCAL_BRIDGE_BASE_URL}${path}`, {
+  const response = await fetch(`${astridBase()}${path}`, {
     signal: AbortSignal.timeout(BRIDGE_REQUEST_TIMEOUT_MS),
   });
   if (!response.ok) {

@@ -12,10 +12,10 @@ vi.hoisted(() => {
 });
 
 import {
-  BRIDGE_PROBE_BASE_URL,
   LOCAL_USER_ID,
   probeBridgeSession,
 } from '../bridgeSession';
+import { astridBase } from '@/integrations/runtime/connection.ts';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -38,7 +38,7 @@ describe('probeBridgeSession', () => {
 
     expect(result).toEqual({ ok: true, userId: LOCAL_USER_ID });
     expect(fetchMock).toHaveBeenCalledWith(
-      `${BRIDGE_PROBE_BASE_URL}/v1/health`,
+      `${astridBase()}/v1/health`,
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });

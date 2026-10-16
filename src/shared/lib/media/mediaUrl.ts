@@ -1,5 +1,18 @@
+import { astridBase, runtimeApiBase } from '@/integrations/runtime/connection.ts';
+
 const FULL_URL_PATTERN = /^(https?:|blob:|data:)/;
-const MANAGED_MEDIA_PATH_PATTERN = /^\/api\/(?:astrid|runtime)(?:\/|$)/;
+
+/**
+ * Managed media is a path under the Runtime or Astrid media base, read now: `/api/...` same-origin,
+ * or the gateway's absolute base (those arrive as full URLs and pass through above). Anything
+ * else is an unmanaged path, and only that goes to `VITE_API_TARGET_URL`.
+ */
+const isManagedMediaPath = (path: string): boolean =>
+  [astridBase(), runtimeApiBase()].some((base) => {
+    if (!path.startsWith(base)) return false;
+    const next = path.charAt(base.length);
+    return next === '' || next === '/' || next === '?' || next === '#';
+  });
 
 const withCacheBust = (url: string): string => {
   const hashIndex = url.indexOf('#');
@@ -39,10 +52,10 @@ export const getDisplayUrl = (
     return forceRefresh ? withCacheBust(relativePath) : relativePath;
   }
 
-  // bridgeMediaUrl already resolved managed media to a same-origin byte route.
+  // bridgeMediaUrl already resolved managed media to a byte route under the media base.
   // Keep that route intact so display normalization does not send it to the
   // development API target, which may be a different service.
-  if (MANAGED_MEDIA_PATH_PATTERN.test(relativePath)) {
+  if (isManagedMediaPath(relativePath)) {
     return forceRefresh ? withCacheBust(relativePath) : relativePath;
   }
 

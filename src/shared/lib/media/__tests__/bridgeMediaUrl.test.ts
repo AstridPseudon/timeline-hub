@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bridgeMediaUrl } from '../bridgeMediaUrl';
 import { FIXTURE_PROJECT } from '@/test/bridgeFixtures.mjs';
 
@@ -34,5 +34,45 @@ describe('bridgeMediaUrl', () => {
   it('hands raw references back when no project scope is known', () => {
     expect(bridgeMediaUrl(null, 'media01')).toBe('media01');
     expect(bridgeMediaUrl(undefined, 'media01')).toBe('media01');
+  });
+});
+
+describe('bridgeMediaUrl on the hosted build (gateway origin)', () => {
+  const GATEWAY = 'http://127.0.0.1:17340';
+
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  async function withGateway() {
+    const connection = await import('@/integrations/runtime/connection.ts');
+    // Loaded first, as the App does: the origin arrives after the helper module exists.
+    const media = await import('../bridgeMediaUrl');
+    connection.setRuntimeOrigin({ VITE_RUNTIME_ORIGIN: GATEWAY });
+    return media.bridgeMediaUrl;
+  }
+
+  it('addresses a managed media id under the gateway', async () => {
+    const bridgeMediaUrl = await withGateway();
+    expect(bridgeMediaUrl('demo-project', 'media01'))
+      .toBe(`${GATEWAY}/api/astrid/projects/demo-project/media/media01/content`);
+  });
+
+  it('addresses a content digest under the gateway', async () => {
+    const bridgeMediaUrl = await withGateway();
+    expect(bridgeMediaUrl('demo-project', 'sha256:abc'))
+      .toBe(`${GATEWAY}/api/astrid/v1/objects/sha256%3Aabc`);
+  });
+
+  it('still honors an explicit base, passes absolute and rooted references through, and keeps placeholders', async () => {
+    const bridgeMediaUrl = await withGateway();
+    expect(bridgeMediaUrl('demo-project', 'media01', 'http://127.0.0.1:17333/'))
+      .toBe('http://127.0.0.1:17333/projects/demo-project/media/media01/content');
+    expect(bridgeMediaUrl('demo-project', `${GATEWAY}/api/astrid/v1/objects/sha256%3Aabc`))
+      .toBe(`${GATEWAY}/api/astrid/v1/objects/sha256%3Aabc`);
+    expect(bridgeMediaUrl('demo-project', '/api/astrid/projects/demo-project/media/media01/content'))
+      .toBe('/api/astrid/projects/demo-project/media/media01/content');
+    expect(bridgeMediaUrl('demo-project', null)).toBe('/placeholder.svg');
+    expect(bridgeMediaUrl(null, 'media01')).toBe('media01');
   });
 });

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { taskReferencesGeneration } from '@/shared/hooks/tasks/usePendingGenerationTasks.ts';
 import { TASK_STATUS, type Task } from '@/types/tasks.ts';
 import { useBridgeTaskSnapshot } from '@/shared/hooks/tasks/useBridgeTaskSnapshot.ts';
-import { RUNTIME_BASE_URL } from '@/integrations/runtime/client.ts';
+import { isRuntimeMode as isRuntimeApiBase } from '@/integrations/runtime/connection.ts';
 import type { Task as RuntimeTask } from '@/integrations/runtime/generated.ts';
 import {
   runtimeTaskType,
@@ -154,7 +154,7 @@ export function selectActiveRuntimeTasks(tasks: readonly RuntimeTask[]): ActiveT
 export function useActiveTaskClips({ registry }: UseActiveTaskClipsArgs): UseActiveTaskClipsReturn {
   const runtime = useVideoEditorRuntime();
   const selectedProjectId = runtime.project.projectId;
-  const isRuntimeMode = (runtime.provider as { apiBaseUrl?: string }).apiBaseUrl === RUNTIME_BASE_URL;
+  const isRuntimeMode = isRuntimeApiBase((runtime.provider as { apiBaseUrl?: string }).apiBaseUrl);
   const taskSnapshot = useBridgeTaskSnapshot(isRuntimeMode ? [] : selectedProjectId ? [selectedProjectId] : []);
   const runtimeTasks = useRuntimeTasks(isRuntimeMode ? selectedProjectId : null);
   const optimisticActiveAssetKeys = useSyncExternalStore(
