@@ -20,6 +20,7 @@
     "dev:editor:bridge": "node tests/e2e/timeline/astrid-bridge-stub.mjs",
     "dev:custom-shell-demo": "vite --config examples/embed-demo/vite.config.ts",
     "build": "vite build --config config/vite/vite.config.ts",
+    "build:hosted": "VITE_ASTRID_WORKSPACE_V1=1 VITE_RUNTIME_ORIGIN=http://127.0.0.1:17340 VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID= VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID= VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID= vite build --config config/vite/vite.config.ts",
     "build:custom-shell-demo": "vite build --config examples/embed-demo/vite.config.ts",
     "build:dev": "vite build --mode development --config config/vite/vite.config.ts",
     "verify:extension-ship": "node scripts/release/verify-extension-ship.mjs",
