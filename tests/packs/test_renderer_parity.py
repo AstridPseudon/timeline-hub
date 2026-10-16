@@ -752,17 +752,24 @@ def test_public_facade_standalone_and_attached_run_ownership(
     assert (result.run_root / output_name).is_file()
 
 
-def test_remotion_typecheck_is_blocking_when_dependencies_are_installed() -> None:
+def test_remotion_typecheck_is_blocking_when_dependencies_are_installed(tmp_path: Path) -> None:
     if not (REMOTION / "node_modules").is_dir():
         return
     assert shutil.which("node") is not None, "remotion/node_modules exists but node is missing"
     assert shutil.which("npm") is not None, "remotion/node_modules exists but npm is missing"
+    # Never write the tracked types file from a test: regenerate into tmp_path and
+    # require it to match the committed file (drift check), then typecheck the committed file.
+    generated = tmp_path / "types.generated.ts"
     subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "gen_remotion_types.py")],
+        [sys.executable, str(ROOT / "scripts" / "gen_remotion_types.py"), str(generated)],
         cwd=ROOT,
         check=True,
         capture_output=True,
         text=True,
+    )
+    committed = (REMOTION / "src" / "types.generated.ts").read_text(encoding="utf-8")
+    assert generated.read_text(encoding="utf-8") == committed, (
+        "remotion/src/types.generated.ts is stale; regenerate with scripts/gen_remotion_types.py"
     )
     completed = subprocess.run(
         ["npm", "run", "typecheck"],
