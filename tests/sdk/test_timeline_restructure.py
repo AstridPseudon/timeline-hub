@@ -9,7 +9,7 @@ from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.store import three_way
 from astrid.sdk.timeline_checkout import Checkout
-from astrid.sdk.timeline_restructure import STRUCTURE_KEY, assert_equivalent, differences, flatten, is_split, plan, split, walls_of
+from astrid.sdk.timeline_restructure import STRUCTURE_KEY, _stable_id, assert_equivalent, differences, flatten, is_split, plan, split, walls_of
 
 TRACKS = [{"id": "type", "kind": "visual"}, {"id": "sprite", "kind": "visual"}, {"id": "plate", "kind": "visual"},
           {"id": "vo", "kind": "audio"}, {"id": "music", "kind": "audio"}]
@@ -69,6 +69,85 @@ def published(stored):
 
 def clip_ids(shot):
     return {c["id"] for c in shot["internal_timeline"]["clips"]}
+
+
+def four_chapter_film(*, repeated: bool = False):
+    flat = flat_film()
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(plate("p4", 12.0, 4.0, "c4"))
+    flat["placements"][0]["duration_ms"] = 16000
+    next(c for c in flat["shots"]["film"]["internal_timeline"]["clips"] if c["id"] == "bed")["to"] = 16.0
+    intent.set_chapters(flat, [{"name": "A", "from": "c1"}, {"name": "B", "from": "c2"},
+                               {"name": "C", "from": "c3"}, {"name": "B" if repeated else "D", "from": "c4"}])
+    return flat
+
+
+def test_repeated_nonconsecutive_chapter_refused_by_restructure_and_publish_split():
+    flat = four_chapter_film(repeated=True)
+    error = 'chapter "B" appears twice (4.000 s at c2, 12.000 s at c4); rename or remove one label'
+    with pytest.raises(TimelineEditError, match="chapter.*B.*appears twice") as exc:
+        split(flat)
+    assert str(exc.value) == error
+    with pytest.raises(TimelineEditError, match="chapter.*B.*appears twice"):
+        Checkout(flat).stored_document(restructure=True)
+
+    stored = published(split(four_chapter_film()))
+    tl = Checkout(stored)
+    intent.set_chapters(tl.bundle, [{"name": "A", "from": "c1"}, {"name": "B", "from": "c2"},
+                                    {"name": "C", "from": "c3"}, {"name": "B", "from": "c4"}])
+    with pytest.raises(TimelineEditError, match="chapter.*B.*appears twice"):
+        tl.stored_document()  # an already split film also splits at ordinary publish time
+
+
+def test_consecutive_labels_with_the_same_name_remain_one_chapter():
+    flat = flat_film()
+    intent.set_chapters(flat, [{"name": "A", "from": "c1"}, {"name": "A", "from": "c2"},
+                               {"name": "B", "from": "c3"}])
+    assert [c.name for c in plan(flat).chapters] == ["A", "B"]
+
+
+def test_flatten_keeps_existing_distinct_shots_with_repeated_names():
+    stored = published(split(four_chapter_film()))
+    last = stored["placements"][-1]["shot_id"]
+    stored["shots"][last]["payload"]["name"] = "B"
+    intent.set_chapters(stored, [{"name": "A", "from": "c1"}, {"name": "B", "from": "c2"},
+                                 {"name": "C", "from": "c3"}, {"name": "B", "from": "c4"}])
+    flat = flatten(stored)
+    assert STRUCTURE_KEY in flat
+    clips = flat["shots"][flat["placements"][0]["shot_id"]]["internal_timeline"]["clips"]
+    assert {c["id"] for c in clips} >= {"p1", "p2", "p3", "p4"}
+    assert {c.id for c in Checkout(stored).clips()} >= {"p1", "p2", "p3", "p4"}
+
+
+def test_checkout_keeps_stored_shots_readable_after_an_extra_label_run():
+    stored = published(split(four_chapter_film()))
+    third = stored["placements"][2]["shot_id"]
+    stored["shots"][third]["internal_timeline"]["clips"].append(plate("p3b", 2.0, 0.2, "c3b"))
+    intent.set_chapters(stored, [{"name": "A", "from": "c1"}, {"name": "B", "from": "c2"},
+                                 {"name": "C", "from": "c3"}, {"name": "B", "from": "c3b"},
+                                 {"name": "D", "from": "c4"}])
+    assert is_split(stored)
+    tl = Checkout(stored)
+    assert len(tl.bundle["placements"]) == 1
+    assert {c.id for c in tl.clips()} >= {"p1", "p2", "p3", "p3b", "p4"}
+    with pytest.raises(TimelineEditError, match="chapter.*B.*appears twice"):
+        tl.stored_document()
+    without_film_clips = copy.deepcopy(stored)
+    without_film_clips["parent"]["clips"] = []
+    assert is_split(without_film_clips)
+
+
+def test_split_fallback_id_does_not_overwrite_an_existing_shot():
+    flat = flat_film()
+    occupied = _stable_id("chapter-shot", flat["timeline_id"], "02 TWO")
+    flat["placements"][0]["shot_id"] = occupied
+    flat["shots"] = {occupied: flat["shots"].pop("film")}
+    flat["shots"][occupied]["shot_id"] = occupied
+    original = copy.deepcopy(flat["shots"][occupied])
+    stored = split(flat)
+    assert len({r["shot_id"] for r in stored["placements"]}) == 3
+    assert occupied not in {r["shot_id"] for r in stored["placements"]}
+    assert stored["shots"][occupied] == original
+    assert_equivalent(flat, stored)
 
 
 def test_split_stores_chapters_as_shots_and_music_and_crossers_on_the_film():

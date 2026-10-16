@@ -73,7 +73,20 @@ def is_split(bundle: Mapping[str, Any]) -> bool:
         return False
     names = [_shot_name(shots[str(r["shot_id"])]) for r in rows]
     if names != [r["name"] for r in runs]:
-        return False
+        # A later label edit can add a run inside an already stored shot. Keep that
+        # shot closure readable; split will refuse the repeated name on publish.
+        if len(rows) < 2 or len(set(names)) != len(names):
+            return False
+        cut_starts: dict[str, int] = {}
+        for row in rows:
+            start = _row_start(row)
+            for clip in (shots[str(row["shot_id"])].get("internal_timeline") or {}).get("clips") or []:
+                cut = intent.cut_of(clip)
+                if cut:
+                    cut_starts.setdefault(str(cut), start + int(round(_num(clip.get("at")) * 1000)))
+        if not all(any(run["name"] == name and abs(cut_starts.get(run["from"], -10**9) - _row_start(row)) <= 1
+                       for run in runs) for name, row in zip(names, rows)):
+            return False
     parent = bundle.get("parent") or {}
     config = parent.get("config") or {}
     return len(rows) >= 2 or bool(parent.get("clips") or config.get("clips"))
@@ -278,6 +291,15 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
     if start0:
         raise TimelineEditError("the film's shot must start at 0 to be split into chapters")
     walls = _walls(tl, runs, end_ms)
+    occurrences: dict[str, list[tuple[int, str]]] = {}
+    for run, wall in zip(runs, walls):
+        occurrences.setdefault(run["name"], []).append((wall, run["from"]))
+    for name, starts in occurrences.items():
+        if len(starts) > 1:
+            locations = ", ".join(f"{wall / 1000:.3f} s at {cut}" for wall, cut in starts)
+            count = "twice" if len(starts) == 2 else f"{len(starts)} times"
+            raise TimelineEditError(f"chapter {json.dumps(name, ensure_ascii=False)} appears {count} "
+                                    f"({locations}); rename or remove one label")
     chapters = [Chapter(r["name"], w, (walls[i + 1] if i + 1 < len(walls) else end_ms)) for i, (r, w) in enumerate(zip(runs, walls))]
     end_s = end_ms / 1000.0
     internal = tl.bundle["shots"][sid]["internal_timeline"]
@@ -366,7 +388,14 @@ def split(flat: Mapping[str, Any]) -> dict[str, Any]:
     used_ids: set[str] = set()
     for index, chapter in enumerate(planned.chapters):
         prior = by_name.get(chapter.name)
-        sid = str(prior["shot_id"]) if prior and str(prior["shot_id"]) not in used_ids else _stable_id("chapter-shot", timeline_id, chapter.name)
+        if prior and str(prior["shot_id"]) not in used_ids:
+            sid = str(prior["shot_id"])
+        else:
+            sid = _stable_id("chapter-shot", timeline_id, chapter.name)
+            salt = 0
+            while sid in used_ids or sid in out["shots"]:
+                salt += 1
+                sid = _stable_id("chapter-shot", timeline_id, chapter.name, chapter.start_ms, salt)
         used_ids.add(sid)
         used_tracks = {str(c.get("track")) for c in chapter.clips}
         tracks = [copy.deepcopy(t) for t in planned.tracks if str(t.get("id")) in used_tracks]
