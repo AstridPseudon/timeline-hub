@@ -22,15 +22,16 @@ The kernel is reused exactly as declared by `CORE_MIGRATIONS`
 (`astrid/core/migrations/catalog.py`); no kernel table is added, renamed, or
 dropped, and no kernel table is given a pack-specific meaning through DDL.
 
-## 2. Kernel inventory (locked by the factoring check)
+## 2. Kernel inventory
 
-The composition reuses the audited 14-table kernel. Its kernel inventory is
-transcribed verbatim from `CORE_MIGRATIONS` and locked by
-`scripts/reshape/check_pack_factoring.py`: the check parses the block below,
-derives the audited inventory from `CORE_MIGRATIONS`, and fails if the sketch
-adds or omits any kernel table. The sketch therefore **cannot silently add a
-kernel table** (for example a pack-specific foreign-key target, a new asset
-table beside `media`, or a domain column-shaped table).
+The composition reuses the audited 14-table kernel. The inventory below is
+transcribed from the kernel migrations as they stood when this sketch was
+written. It is illustrative and no longer machine-checked: the former
+`check_pack_factoring.py` was removed, and the schema boundary is now pinned
+by `tests/stage1/test_schema_authority_cutover_luna.py` and the authority
+lint (`tests/v10/test_authority_lint.py`). A pack must still never add,
+rename, or repurpose a kernel table (for example a pack-specific foreign-key
+target, a new asset table beside `media`, or a domain column-shaped table).
 
 Kernel inventory (reused unchanged from CORE_MIGRATIONS):
 
@@ -103,24 +104,20 @@ a new kernel table. Pack-specific state stays in pack tables.
   separate composition; they are never registered in the Astrid standard
   tuple and never imported by kernel code.
 
-## 7. How the check enforces it
+## 7. How the boundary is enforced
 
-`scripts/reshape/check_pack_factoring.py` verifies on every run that
+This sketch is documentation only; no script reads it. The invariants it
+relies on are enforced elsewhere, in the default pytest lane:
 
-1. the sketch's declared kernel inventory (section 2 above) equals exactly the
-   inventory derived from `CORE_MIGRATIONS` -- any added table fails as
-   "sketch adds kernel table(s) not declared by CORE_MIGRATIONS" and any
-   omitted table fails as "sketch omits kernel table(s)";
-2. the sketch names its own in-tree packs (`workspace`, `changeset`,
-   `review`) and they are disjoint from the Astrid standard packs;
-3. the check itself remains a read-only source-composition proof: no
-   database is opened, no glob-based discovery runs, and no loader or
-   install/uninstall machinery exists.
-
-The focused tests in `tests/v10/test_pack_factoring.py` exercise the positive
-binding and the negative controls (an injected extra kernel table and a
-dropped kernel table both fail), so the sketch cannot silently grow the
-kernel.
+1. Astrid carries no local schema host, `schema-pack.yaml`, or migration
+   directory, and the neutral runtime owns the domain tables
+   (`tests/stage1/test_schema_authority_cutover_luna.py`);
+2. no kernel-to-pack or pack-to-pack imports, SQLite writers outside the
+   kernel store, or cross-pack foreign keys exist
+   (`tests/v10/test_authority_lint.py`, which also runs the lint over the
+   live tree);
+3. the sketch's packs (`workspace`, `changeset`, `review`) are a separate
+   composition and are never registered as Astrid packs.
 
 ## 8. Packaged artifact-root proof (m8 GA gate)
 

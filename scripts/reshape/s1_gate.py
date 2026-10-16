@@ -2,11 +2,11 @@
 
 Plan Step 23 (task T42): a fresh-root gate script that selects the
 manifest, catalog, migration, registry, receipt, replay, crash,
-contention, conformance, lint, bridge, and provider lanes, runs them
+conformance, lint, bridge, and provider lanes, runs them
 hermetically against a fresh temp root, and emits durable machine-readable
 evidence: a JSON summary plus per-lane logs and JUnit XML.
 
-The gate deliberately selects only the twelve focused lane suites; it never
+The gate deliberately selects only the eleven focused lane suites; it never
 re-runs the broad default pytest suite, which the harness owns.
 
 Usage::
@@ -62,7 +62,8 @@ class Lane:
     selectors: tuple[str, ...]
 
 
-# The twelve focused S1 lanes. A lane selects whole test files (never
+# The eleven focused S1 lanes (the former `contention` lane selected only the
+# deleted CI-mirror sandbox test, which the default marker filter deselected). A lane selects whole test files (never
 # individual test functions), and files may be shared across lanes because
 # one file often proves several plan dimensions (e.g. test_registry.py
 # carries both the strict 11-field manifest contract and the frozen
@@ -76,7 +77,6 @@ LANES: tuple[Lane, ...] = (
     Lane("receipt", ("tests/stage1/test_events_runtime_cutover.py",)),
     Lane("replay", ("tests/stage1/test_events_runtime_cutover.py",)),
     Lane("crash", ("tests/core/util/test_atomic_io.py",)),
-    Lane("contention", ("tests/concurrency/test_ci_sandbox_isolation.py",)),
     Lane("conformance", ("tests/test_recoverability_conformance.py",)),
     Lane(
         "lint",
@@ -181,7 +181,7 @@ def _parse_junit(junit_path: Path) -> tuple[int, int, int]:
     errors = int(suite.get("errors", 0))
     skipped = int(suite.get("skipped", 0))
     # JUnit's ``tests`` count includes skipped cases; passed is what remains
-    # (the same SD1 rule run_ci_checks.sh uses for its lane counts).
+    # (passed = tests - failures - errors - skipped).
     return tests - failures - errors - skipped, failures + errors, skipped
 
 
@@ -257,7 +257,7 @@ def _run_lane(
         passed, failed, skipped = _parse_junit(junit_path)
     else:
         # pytest itself crashed before writing JUnit XML (e.g. collection
-        # error); fall back to the exit code like run_ci_checks.sh does.
+        # error); fall back to the exit code.
         if completed.returncode == 0:
             passed, failed, skipped = 1, 0, 0
         else:
@@ -416,7 +416,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--lanes",
-        help="Comma-separated lane subset to run (default: all twelve lanes).",
+        help="Comma-separated lane subset to run (default: all eleven lanes).",
     )
     return parser
 

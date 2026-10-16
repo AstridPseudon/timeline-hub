@@ -83,3 +83,27 @@
 - test: tests/stage1/test_iteration_video_runtime_e2e.py::test_runtime_execution_imports_do_not_reach_retired_project_run
   reason: "Guarded that importing the runtime executor and orchestrator runners never loaded astrid.core.project.run or astrid.core.contracts.run_record. Commits 02d2ec2b and 16418571 deleted both modules, so neither can be imported and the assertion can only pass; the file's other test is already recorded above. Removed under testing-plan TIDY."
   removed_by: "02d2ec2b"
+- test: tests/reshape/test_ci_changed_selection.py::test_ci_changed_selection_includes_mapped_test
+  reason: "Removed with the local CI mirror (testing-plan TIDY). Tested the --changed fast-lane test-selection heuristic (changed astrid/ module -> mapped tests/ file) inside scripts/reshape/run_ci_checks.sh."
+  removed_by: "tidy"
+- test: tests/reshape/test_ci_changed_selection.py::test_ci_changed_selection_excludes_unrelated_when_only_structure_changes
+  reason: "Removed with the local CI mirror (testing-plan TIDY). Tested that the --changed fast lane of scripts/reshape/run_ci_checks.sh excludes unrelated tests."
+  removed_by: "tidy"
+- test: tests/reshape/test_ci_changed_selection.py::test_ci_changed_json_fixture_maps_to_owner_without_pytest_json_target
+  reason: "Removed with the local CI mirror (testing-plan TIDY). Tested that the --changed fast lane of scripts/reshape/run_ci_checks.sh maps a changed fixture to its owning Python test."
+  removed_by: "tidy"
+- test: tests/reshape/test_ci_changed_selection.py::test_ci_changed_without_tests_falls_back_without_passing_data_to_pytest
+  reason: "Removed with the local CI mirror (testing-plan TIDY). Tested the --changed fast lane fallback to TARGETED_BLOCKING_TESTS in scripts/reshape/run_ci_checks.sh."
+  removed_by: "tidy"
+- test: tests/reshape/test_ci_json.py::test_ci_json_stdout_is_pure_json_and_contract_matches
+  reason: "Removed with the local CI mirror (testing-plan TIDY). Tested the --json lane-summary wire contract (seven stable lane keys, exit/ok invariant) of scripts/reshape/run_ci_checks.sh."
+  removed_by: "tidy"
+- test: tests/reshape/test_ci_lane_manifest.py::test_ci_lane_manifest_targets_current_release_tests
+  reason: "Removed with the local CI mirror (testing-plan TIDY). Grepped scripts/reshape/run_ci_checks.sh for its TARGETED_BLOCKING_TESTS manifest and that the listed paths exist; the manifest is gone with the script, and every listed test file is collected by the default lane."
+  removed_by: "tidy"
+- test: tests/reshape/test_ci_lane_manifest.py::test_ci_json_attributes_renderer_parity_to_blocking_lane
+  reason: "Removed with the local CI mirror (testing-plan TIDY). Grepped scripts/reshape/run_ci_checks.sh to check that the Remotion install/parity commands are attributed to its blocking JSON lane; the remotion_gate install and parity commands are now the make remotion-install and make renderer-parity targets."
+  removed_by: "tidy"
+- test: tests/concurrency/test_ci_sandbox_isolation.py::test_ci_sandbox_isolation
+  reason: "Removed with the local CI mirror (testing-plan TIDY). Launched two concurrent run_ci_checks.sh instances to check their mktemp ASTRID_HOME sandboxes differ and never touch ~/.astrid. The script is gone; the default lane sandboxes ASTRID_HOME and the projects root per test through the autouse _sandboxed_home_and_projects fixture in tests/conftest.py. The test was marked integration and opt_in, so it never ran."
+  removed_by: "tidy"

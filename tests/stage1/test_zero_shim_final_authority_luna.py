@@ -85,9 +85,6 @@ def test_environment_reference_renderer_table_has_header() -> None:
     )[0]
     assert "| Constant | Env var | Who sets | Who reads | Effect |" in section
     assert "| `ASTRID_REMOTION_PROJECT_DIR` |" in section
-    assert "session.identity" not in (
-        root / "docs/guides/ci-lanes.md"
-    ).read_text()
 
 
 def test_retired_thread_api_and_builtin_shell_are_absent() -> None:

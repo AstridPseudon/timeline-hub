@@ -1113,3 +1113,14 @@ def test_new_surface_mutations_fail_the_whole_authority_lint(
         "cross-pack FK from media_references to 'shots' (pack 'shots')"
         in joined
     )
+
+
+def test_live_repository_tree_passes_authority_lint() -> None:
+    """The committed tree is clean under the full authority lint (home of the live-tree gate)."""
+    repo_root = Path(__file__).resolve().parents[2]
+
+    report = run_authority_lint(repo_root)
+
+    assert report.mode == "source"
+    assert report.errors == ()
+    assert report.ok

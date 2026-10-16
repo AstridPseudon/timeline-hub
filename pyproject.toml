@@ -255,7 +255,7 @@ tmp_path_retention_policy = "failed"
 # megaplan baseline capture for ~an hour. SIGALRM is Unix-only and fires on the
 # main thread, which matches how pytest runs tests on CI/macOS/Linux.) A test
 # that legitimately runs longer should raise its own bound with
-# @pytest.mark.timeout(N), as tests/concurrency/test_ci_sandbox_isolation.py does.
+# @pytest.mark.timeout(N).
 timeout = 600
 timeout_method = "signal"
 # Lanes (testing plan R-2): the default run leaves out tests that need another repo,
