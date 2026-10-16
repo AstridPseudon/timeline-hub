@@ -568,13 +568,16 @@ export class RuntimeDataProvider implements DataProvider {
       assertRevisionIdentity(shot, revisionId, 'shot revision');
       if (shot.shot_id !== shotId) throw new Error(`Runtime shot revision identity mismatch: requested ${shotId}, got ${String(shot.shot_id)}`);
       const internalRevisionId = requiredString(shot.internal_timeline_revision_id, `shot revision ${revisionId}.internal_timeline_revision_id`);
-      // The shot revision may carry the canonical immutable timeline scope;
-      // otherwise the parent timeline is the only admitted scope. A missing
-      // revision is a hard availability failure. Do not probe synthetic
-      // `shot:<id>` scopes, which can revive the retired child-timeline path.
-      const internalTimelineScope = typeof shot.timeline_id === 'string' && shot.timeline_id.length > 0
-        ? shot.timeline_id
-        : timelineId;
+      // Runtime resolves this scope from the immutable child revision. The
+      // parent timeline is not a child scope; never probe another timeline.
+      const internalTimelineScope = requiredString(
+        shot.internal_timeline_id, `shot revision ${revisionId}.internal_timeline_id`,
+      );
+      if (shot.timeline_id !== undefined && shot.timeline_id !== internalTimelineScope) {
+        throw new ShotCompositionUnavailableError(
+          `Workspace Runtime canonical internal timeline revision ${internalRevisionId} has conflicting timeline scopes`,
+        );
+      }
       let internal: RuntimeRecord;
       try {
         internal = await this.client.getProjectTimelineRevision(projectId, internalTimelineScope, internalRevisionId);

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
 import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
 import { RuntimeDataProvider } from './dataProvider.ts';
+import { RUNTIME_CLIENT_SCOPES } from './client.ts';
 import type { RequestBody } from './generated.ts';
 import {
   RUNTIME_SCHEMA_DIGEST,
@@ -65,6 +66,7 @@ function runtimeResponses(options: {
       project_id: PROJECT_ID,
       shot_id: revision.shot_id,
       internal_timeline_revision_id: revision.internal_timeline_revision.revision_id,
+      internal_timeline_id: TIMELINE_ID,
       content_digest: revision.content_digest,
       payload: {
         assets: revision.shot_id === 'shot-alpha' && options.manifestAudioAsset
@@ -127,7 +129,7 @@ function fixtureTransport(options: {
       : undefined;
     requests.push({ method, path, headers, ...(parsedBody ? { body: parsedBody } : {}) });
     if (path === '/v1/health') return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1 }) };
-    if (path === '/v1/handshake') return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session', actor_id: 'owner', realm_id: 'realm', scopes: ['projects:read', 'projects:write'], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
+    if (path === '/v1/handshake') return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session', actor_id: 'reigh-product-connector', realm_id: 'realm', scopes: [...RUNTIME_CLIENT_SCOPES], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
     if (path === '/v1/realm') return { status: 200, headers: {}, body: json({ realm_id: 'realm', display_name: 'fixture', version: 1, created_at: '2026-09-19T00:00:00Z' }) };
     if (method === 'POST' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/inspect`) {
       return {
@@ -205,6 +207,7 @@ function fixtureTransport(options: {
               project_id: PROJECT_ID,
               shot_id: raw.shot_id,
               internal_timeline_revision_id: raw.internal_timeline_revision_id,
+              internal_timeline_id: (parsedBody?.internal_timeline_revisions as Array<Record<string, unknown>>).find((row) => row.revision_id === raw.internal_timeline_revision_id)?.timeline_id ?? TIMELINE_ID,
               content_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
               payload: raw.payload,
               created_at: '2026-09-19T00:00:00Z',
@@ -305,6 +308,66 @@ describe('Runtime shot-composition port', () => {
     ]));
     expect(fixtureRuntime.requests.some(({ method, path }) => method === 'GET' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`)).toBe(false);
     expect(fixtureRuntime.requests.some(({ path }) => path.includes('/documents/'))).toBe(false);
+  });
+
+  function scopedClosure(mode: 'valid' | 'missing' | 'ambiguous' | 'conflict' | 'foreign-project' | 'wrong-revision' | 'unavailable') {
+    const base = fixtureTransport();
+    const requests: string[] = [];
+    const transport = async (...args: Parameters<typeof base.transport>) => {
+      const [method, path, headers, body] = args;
+      requests.push(path);
+      const match = path.match(/\/timelines\/child-([^/]+)\/revisions\/([^/]+)$/);
+      if (match) {
+        expect(match[1]).toBe(match[2]);
+        if (mode === 'unavailable') return { status: 404, headers: {}, body: json({ code: 'not_found', message: 'exact child unavailable' }) };
+        const response = await base.transport(method, path.replace('/timelines/child-'+match[1]+'/', '/timelines/'+TIMELINE_ID+'/'), headers, body);
+        const value = JSON.parse(new TextDecoder().decode(response.body));
+        value.timeline_id = 'child-'+match[1];
+        if (mode === 'foreign-project') value.project_id = 'foreign';
+        if (mode === 'wrong-revision') value.revision_id = 'foreign-revision';
+        return { ...response, body: json(value) };
+      }
+      const response = await base.transport(...args);
+      if (path.includes('/shots/')) {
+        const value = JSON.parse(new TextDecoder().decode(response.body));
+        value.internal_timeline_id = 'child-'+value.internal_timeline_revision_id;
+        if (mode === 'missing') delete value.internal_timeline_id;
+        if (mode === 'ambiguous') value.internal_timeline_id = ['child-a', 'child-b'];
+        if (mode === 'conflict') value.timeline_id = 'conflicting-envelope-scope';
+        return { ...response, body: json(value) };
+      }
+      return response;
+    };
+    return { transport, requests };
+  }
+
+  it('resolves distinct child scopes from the authenticated shot envelopes without probing the parent timeline', async () => {
+    const scoped = scopedClosure('valid');
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: scoped.transport });
+    const loaded = await provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID });
+    expect(loaded).toMatchObject({ project: { project_id: PROJECT_ID, document_id: TIMELINE_ID } });
+    const reads = scoped.requests.filter((path) => /\/timelines\/[^/]+\/revisions\//.test(path));
+    expect(reads.length).toBeGreaterThan(0);
+    expect(reads.every((path) => path.includes('/timelines/child-'))).toBe(true);
+    expect(new Set(reads).size).toBe(reads.length);
+  });
+
+  it.each(['missing', 'ambiguous', 'conflict'] as const)('refuses %s child scope identities before internal revision reads', async (mode) => {
+    const scoped = scopedClosure(mode);
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: scoped.transport });
+    await expect(provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }))
+      .rejects.toThrow(/internal_timeline_id|conflicting timeline scopes/);
+    expect(scoped.requests.filter((path) => /\/timelines\/[^/]+\/revisions\//.test(path))).toEqual([]);
+  });
+
+  it.each(['foreign-project', 'wrong-revision', 'unavailable'] as const)('refuses %s at the admitted child scope without alternate timeline reads', async (mode) => {
+    const scoped = scopedClosure(mode);
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: scoped.transport });
+    await expect(provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID })).rejects.toThrow();
+    const reads = scoped.requests.filter((path) => /\/timelines\/[^/]+\/revisions\//.test(path));
+    expect(reads.length).toBeGreaterThan(0);
+    expect(reads.every((path) => path.includes('/timelines/child-'))).toBe(true);
+    expect(new Set(reads).size).toBe(reads.length);
   });
 
   it('fails closed on a non-canonical inspection without consulting the mutable timeline resource', async () => {
