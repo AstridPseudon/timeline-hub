@@ -15,6 +15,10 @@
  * is `not_ready` with the gateway's reason. Once connected the state is sticky for the page's life: a Runtime that
  * stops later is `client.ts`'s restart message with Reload, and unmounting the editor under unsaved work is worse.
  *
+ * The first connection also marks this browser as one that chose the app (`rememberAppEntryPreference`), so the next
+ * visit to the bare domain skips the landing page. The gate only exists on the hosted build, so a same-origin build
+ * never sets it.
+ *
  * Same-origin builds (no `VITE_RUNTIME_ORIGIN`: local dev, Plan B's relay) are not gated. `gated` is false, nothing
  * is probed, and the gate renders its children at once.
  *
@@ -23,6 +27,7 @@
  */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { requireContextValue } from '@/shared/contexts/contextGuard';
+import { rememberAppEntryPreference } from '@/app/entryClassification';
 import {
   queryLocalNetworkPermission,
   watchLocalNetworkPermission,
@@ -261,6 +266,9 @@ export function RuntimeConnectionProvider({
   useEffect(() => {
     if (!isConnected) return;
     writeConnectedBefore();
+    // A visitor who has reached their Runtime from this browser goes straight into the app the next time they open
+    // the bare domain (`resolveReturningAppEntry`); the landing page stays for first visits and /home.
+    rememberAppEntryPreference();
     setConnectedBefore(true);
     onConnectedRef.current?.();
   }, [isConnected]);

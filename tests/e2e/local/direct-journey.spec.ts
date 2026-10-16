@@ -220,6 +220,40 @@ test.describe('zero-click connection (App)', () => {
   });
 });
 
+// The bare domain keeps its two faces: the public landing page for a first visit, the app for someone who has connected
+// before (src/app/entryClassification.ts). Connecting to the Runtime for the first time is what makes a visitor a returning one.
+test.describe('the bare domain (App)', () => {
+  test('a first visit to the bare domain shows the landing page and sends nothing to the gateway', async ({ page, harness }) => {
+    const gatewayRequests: string[] = [];
+    page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${GATEWAY_PORT}/`)) gatewayRequests.push(`${request.method()} ${request.url()}`); });
+    const auditedBefore = harness.audit().length;
+    await page.goto(`${harness.origin}/`);
+    await expect(page.getByRole('heading', { level: 1, name: /creative limits/i })).toBeVisible();
+    await page.waitForLoadState('load');
+    expect(new URL(page.url()).pathname).toBe('/');
+    await expect(page.locator(UI.panel)).toHaveCount(0);
+    await expect(page.locator(UI.status)).toHaveCount(0);
+    expect(gatewayRequests, 'the landing page does not talk to the local Runtime').toEqual([]);
+    expect(harness.audit().length, 'the gateway saw nothing').toBe(auditedBefore);
+  });
+
+  test('a returning visitor at the bare domain goes straight into the app and connects with no click', async ({ page, harness }) => {
+    // Connecting once is what marks this browser as one that chose the app; the context (and its localStorage) is the same for both visits.
+    await openApp(page, harness);
+    await expectConnected(page);
+
+    await page.goto(`${harness.origin}/`);
+    await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected');
+    // Nothing is asked of the visitor: not the landing page, not the panel, no demo project that this Runtime does not have.
+    await expect(page.getByRole('heading', { level: 1, name: /creative limits/i })).toHaveCount(0);
+    await expect(page.locator(UI.panel)).toHaveCount(0);
+    await openSeededTimeline(page, harness);
+    await expect(page.getByText('Project not found')).toHaveCount(0);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    expectBareUrl(page, harness);
+  });
+});
+
 test.describe('first time and returning panels (App)', () => {
   test('a fresh profile shows "Set up Reigh on this computer", and after one connection the same profile shows "Reigh isn\'t running"', async ({ page, harness }) => {
     // Same context for both phases, so localStorage carries over; the fixture context is fresh, so nothing is remembered at the start.
@@ -467,7 +501,7 @@ test.describe('core journey', () => {
 test.describe('media', () => {
   const objectUrl = (harness: DirectHarness, objectId: string) => `${harness.gatewayBase}/v1/objects/${encodeURIComponent(objectId)}`;
 
-  test('an image element loads with crossorigin=anonymous (Origin), and without it only with an explicit referrer policy', async ({ page, harness }) => {
+  test('an image element loads with crossorigin=anonymous (Origin), and without it is refused', async ({ page, harness }) => {
     await openHostedPage(page, harness);
     const src = objectUrl(harness, harness.seed.image.objectId);
     const load = (variant: 'cors' | 'plain' | 'referrer-origin') => page.evaluate(({ src, variant }) => new Promise<number[] | string>((resolve) => {
@@ -479,14 +513,37 @@ test.describe('media', () => {
       image.src = `${src}?${variant}=1`;
     }), { src, variant });
     expect(await load('cors'), 'crossorigin=anonymous').toEqual([64, 48]);
-    // Finding for Plan A D5: the default referrer policy sends no Referer on https -> http, so the gateway's
-    // Referer fallback (reigh-loopback-gateway.ts:73-77) does not rescue a plain element. Media must say crossorigin.
+    // Plan A D5: the default referrer policy sends no Referer on https -> http, and the gateway accepts no Referer in
+    // place of Origin (A3.R removed that fallback), so media must say crossorigin; even a Referer sent on purpose is refused.
     expect(await load('plain'), 'no crossorigin attribute, default referrer policy').toBe('error');
-    expect(await load('referrer-origin'), 'no crossorigin attribute, referrerpolicy=origin').toEqual([64, 48]);
-    const served = await waitForAudit(harness, (entry) => entry.path === `/v1/objects/${harness.seed.image.objectId}` && entry.status === 200);
+    expect(await load('referrer-origin'), 'no crossorigin attribute, referrerpolicy=origin').toBe('error');
+    const objectPath = `/v1/objects/${harness.seed.image.objectId}`;
+    const served = await waitForAudit(harness, (entry) => entry.path === objectPath && entry.status === 200);
     expect(served.some((entry) => entry.origin === harness.origin)).toBe(true); // browser sent Origin
-    expect(served.some((entry) => entry.origin === null)).toBe(true); // Referer accepted
-    expect(harness.audit().some((entry) => entry.path === `/v1/objects/${harness.seed.image.objectId}` && entry.origin === null && entry.status === 403)).toBe(true); // the plain one
+    expect(served.every((entry) => entry.origin === harness.origin), 'every success carried the hosted Origin').toBe(true);
+    const refused = harness.audit().filter((entry) => entry.path === objectPath && entry.origin === null && entry.status === 403);
+    expect(refused.length, 'the plain and the referrer-policy requests').toBe(2);
+  });
+
+  test('a video poster follows the video\'s crossorigin: with it the gateway sees Origin, without it the poster is refused', async ({ page, harness }) => {
+    await openHostedPage(page, harness);
+    const src = objectUrl(harness, harness.seed.image.objectId);
+    const objectPath = `/v1/objects/${harness.seed.image.objectId}`;
+    // The poster is an image the video element fetches, so the video's attribute decides whether it sends Origin.
+    // Each variant is a fresh URL, and the gateway's audit entry for it is the one new request on this object.
+    const posterRequest = async (variant: 'cors' | 'plain') => {
+      const before = harness.audit().length;
+      await page.evaluate(({ src, variant }) => {
+        const video = document.createElement('video');
+        if (variant === 'cors') video.crossOrigin = 'anonymous';
+        video.poster = `${src}?poster-${variant}=1`;
+        document.body.append(video);
+      }, { src, variant });
+      await expect.poll(() => harness.audit().slice(before).filter((entry) => entry.path === objectPath).length, { message: `the ${variant} poster reached the gateway` }).toBe(1);
+      return harness.audit().slice(before).find((entry) => entry.path === objectPath)!;
+    };
+    expect(await posterRequest('cors'), 'poster of a video with crossorigin=anonymous').toMatchObject({ origin: harness.origin, status: 200 });
+    expect(await posterRequest('plain'), 'poster of a video without crossorigin').toMatchObject({ origin: null, status: 403 });
   });
 
   test('a video loads, and seeking it is a 206 Range read', async ({ page, harness }) => {
@@ -579,34 +636,6 @@ test.describe('media', () => {
     const stored = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(result.digest)}`, { method: 'HEAD' });
     expect(stored.status).toBe(200);
     expect(stored.headers.get('content-length')).toBe(String(BIG_UPLOAD_BYTES));
-  });
-});
-
-// Revision 3 (D4): media elements need crossorigin="anonymous" so the browser sends the hosted Origin; the helper that
-// adds it is A3.M, applied to each element by A3.MA.
-test.describe('media (App)', () => {
-  // known-failure: reigh-app | 2026-10-30 | the App now connects and opens the seeded timeline (A2.S), but no <img src=/v1/objects/...> is on that screen yet and the thumbnails set no crossOrigin, so the gateway would refuse them without an Origin (reigh-loopback-gateway.ts:73-78); A3.M + A3.MA add mediaCrossOrigin on each element and point this case at the screen that shows the seeded media
-  test.fail('App: the seeded image and video thumbnail render from the gateway', async ({ page, harness }) => {
-    const { image, video } = harness.seed;
-    await openApp(page, harness);
-    await expectConnected(page);
-    await openSeededTimeline(page, harness);
-    const gatewayObject = (objectId: string) => `/v1/objects/${encodeURIComponent(objectId)}`;
-
-    const thumbnail = page.locator(`img[src*="${gatewayObject(image.objectId)}"]`).first();
-    await expect(thumbnail).toBeVisible();
-    await expect.poll(() => thumbnail.evaluate((element: HTMLImageElement) => [element.naturalWidth, element.naturalHeight])).toEqual([64, 48]);
-    const imageAudit = await waitForAudit(harness, (entry) => entry.path === gatewayObject(image.objectId) && entry.status === 200 && entry.origin === harness.origin);
-    expect(imageAudit.length, 'the browser sent the hosted Origin for the image').toBeGreaterThan(0);
-
-    // The fallback MP4 cannot be decoded by stock Chromium when ffmpeg is missing (the same limit as the video case in "media").
-    if (video.decodable) {
-      const clip = page.locator(`video[src*="${gatewayObject(video.objectId)}"]`).first();
-      await expect(clip).toBeAttached();
-      await expect.poll(() => clip.evaluate((element: HTMLVideoElement) => element.videoWidth)).toBeGreaterThan(0);
-      const videoAudit = await waitForAudit(harness, (entry) => entry.path === gatewayObject(video.objectId) && [200, 206].includes(entry.status) && entry.origin === harness.origin);
-      expect(videoAudit.length, 'the browser sent the hosted Origin for the video').toBeGreaterThan(0);
-    }
   });
 });
 
@@ -797,9 +826,10 @@ test.describe('security', () => {
     const withCookie = await harness.gatewayRequest('/v1/health', { headers: { Cookie: 'a=b' } });
     expect(withCookie.status).toBe(403);
 
-    // A media-style request without Origin is accepted only from the hosted origin's Referer.
+    // A media-style request without Origin is refused, whatever its Referer: the hosted one included.
     const asMedia = (referer?: string) => harness.gatewayRequest(`/v1/objects/${encodeURIComponent(harness.seed.image.objectId)}`, { origin: null, headers: referer ? { Referer: referer } : {} });
-    expect((await asMedia(`${harness.origin}/`)).status).toBe(200);
+    expect((await asMedia(`${harness.origin}/`)).status).toBe(403);
+    expect((await asMedia(`${harness.origin}/tools/video-editor`)).status).toBe(403);
     expect((await asMedia(`${harness.otherOrigin}/`)).status).toBe(403);
     expect((await asMedia()).status).toBe(403);
     expect((await harness.gatewayRequest('/v1/projects', { origin: null, method: 'POST', headers: { Referer: `${harness.origin}/`, 'Content-Type': 'application/json' }, body: '{"name":"x"}' })).status).toBe(403);
@@ -829,7 +859,127 @@ test.describe('security', () => {
 });
 
 // ---------------------------------------------------------------------------------------------
-// 6. Speed table (reported, never judged)
+// 6. Pack extensions on the hosted build (design D5a)
+
+/**
+ * The second timeline the harness seeds for the pack extensions (made here, after the cases that open the seeded timeline,
+ * so none of them sees a second timeline). Opened by URL: the hosted workspace route takes the project slug and timeline id.
+ */
+async function openSeededTimelineByUrl(page: Page, harness: DirectHarness, seed: { projectSlug: string; timelineId: string }) {
+  const gatewayRequests: string[] = [];
+  page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${GATEWAY_PORT}/`)) gatewayRequests.push(`${request.method()} ${request.url()}`); });
+  await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?localProject=${encodeURIComponent(seed.projectSlug)}&localTimeline=${encodeURIComponent(seed.timelineId)}`);
+  await expectConnected(page);
+  await expect(firstTrackName(page)).toBeVisible();
+  return { seed, gatewayRequests };
+}
+
+async function openExtensionsTimeline(page: Page, harness: DirectHarness) {
+  return openSeededTimelineByUrl(page, harness, await harness.seedExtensions());
+}
+
+test.describe('pack extensions (App)', () => {
+  test('extensions: the transcript lane renders its words from the gateway', async ({ page, harness }) => {
+    harness.extensionsConfig = 'on';
+    const { seed } = await openExtensionsTimeline(page, harness);
+    // The lane is the bundled transcript extension's (config on): one chip per segment of the bundle read from the Runtime.
+    const lane = page.locator('[data-lane-kind="reigh.transcript"]');
+    await expect(lane).toBeVisible();
+    const chips = lane.getByTestId('transcript-lane-occurrence');
+    await expect(chips).toHaveCount(seed.transcriptTexts.length);
+    for (const text of seed.transcriptTexts) {
+      await expect(lane.getByLabel(`Transcript segment: ${text}`, { exact: false })).toHaveCount(1);
+    }
+    // The words came through the gateway with the hosted Origin: the timeline's composition read is in its audit.
+    const reads = await waitForAudit(harness, (entry) => entry.method === 'GET' && entry.path.includes(`/timelines/${seed.timelineId}/composition-revisions`) && entry.status === 200 && entry.origin === harness.origin);
+    expect(reads.length, 'the composition (with its transcript bundle) was read through the gateway with the hosted Origin').toBeGreaterThan(0);
+  });
+
+  test('extensions: a live scene previews from a Runtime object in its sandboxed iframe', async ({ page, harness }) => {
+    harness.extensionsConfig = 'on';
+    const { seed } = await openExtensionsTimeline(page, harness);
+    // The clip's package is a Runtime project object: the Runtime holds those exact bytes under the object id the clip names.
+    const stored = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(seed.scenePackage.objectId)}`);
+    expect(stored.status).toBe(200);
+    expect(sha256Hex(new Uint8Array(await stored.arrayBuffer()))).toBe(seed.scenePackage.digest);
+
+    const entry = page.getByTestId('astrid-live-scene-entry');
+    await expect(entry).toHaveAttribute('data-phase', 'ready', { timeout: 30_000 });
+    await expect(entry).toHaveAttribute('data-revision', seed.scenePackage.digest);
+    const iframe = page.locator('iframe[title^="Live scene"][data-scene-role="displayed"]');
+    await expect(iframe).toHaveCount(1);
+    // Scripts run, but in an opaque origin: allow-scripts alone, never allow-same-origin.
+    await expect(iframe).toHaveAttribute('sandbox', 'allow-scripts');
+    const frame = await (await iframe.elementHandle())!.contentFrame();
+    expect(frame, 'the scene frame is reachable').not.toBeNull();
+    await expect(frame!.locator('#scene')).toContainText(seed.sceneMarker);
+    // From inside the frame: no network (the document's CSP is connect-src 'none') and no reach into the hosting page.
+    const inside = await frame!.evaluate(async (gatewayBase) => {
+      const network = await fetch(`${gatewayBase}/v1/health`).then(() => 'reached', () => 'blocked');
+      let parentAccess = 'blocked';
+      try { void (window.parent.document.title); parentAccess = 'reached'; } catch { /* cross-origin */ }
+      let storage = 'blocked';
+      try { void window.localStorage.length; storage = 'reached'; } catch { /* opaque origin */ }
+      return { network, parentAccess, storage };
+    }, harness.gatewayBase);
+    expect(inside).toEqual({ network: 'blocked', parentAccess: 'blocked', storage: 'blocked' });
+    expect(harness.audit().filter((entry) => entry.origin === 'null'), 'the scene frame sent nothing to the gateway').toEqual([]);
+  });
+
+  test('extensions: with the config missing, the editor still loads and extensions are off', async ({ page, harness }) => {
+    harness.extensionsConfig = 'missing';
+    try {
+      const configResponses: number[] = [];
+      page.on('response', (response) => { if (new URL(response.url()).pathname === '/runtime-config/v1/extensions.json') configResponses.push(response.status()); });
+      const { seed } = await openExtensionsTimeline(page, harness);
+      // The page asked for the config and got nothing, the closed posture: no pack UI is drawn, and nothing else is hurt.
+      expect(configResponses).toEqual([404]);
+      // Wait until the editor has drawn the seeded clips (the ordinary ones, which need no extension), so the absences below are not just "not yet".
+      await expect(page.locator(`[data-clip-id="${seed.sceneClipId}"]`).first()).toBeVisible();
+      await expect(page.locator(`[data-clip-id="${seed.speechClipId}"]`).first()).toBeVisible();
+      await expect(page.locator('[data-lane-kind="reigh.transcript"]')).toHaveCount(0);
+      await expect(page.getByTestId('astrid-live-scene-entry')).toHaveCount(0);
+      await expect(page.locator('iframe[title^="Live scene"]')).toHaveCount(0);
+      // The timeline itself is intact: the same composition was read through the gateway, so it is the extensions that are off.
+      const reads = await waitForAudit(harness, (entry) => entry.method === 'GET' && entry.path.includes(`/timelines/${seed.timelineId}/composition-revisions`) && entry.status === 200);
+      expect(reads.length).toBeGreaterThan(0);
+      await expectConnected(page);
+    } finally { harness.extensionsConfig = 'on'; }
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// 6b. Media on the hosted build (design D4)
+
+// Media elements need crossorigin="anonymous" so the browser sends the hosted Origin (`mediaCrossOrigin`, applied on each element).
+// The seeded timeline has no clips, so this case opens the harness's media timeline (an image clip and a video clip, both Runtime objects).
+test.describe('media (App)', () => {
+  test('App: the seeded image and video thumbnail render from the gateway', async ({ page, harness }) => {
+    const { image, video } = harness.seed;
+    const { seed } = await openSeededTimelineByUrl(page, harness, await harness.seedMedia());
+    const gatewayObject = (objectId: string) => `/v1/objects/${encodeURIComponent(objectId)}`;
+    // The audit records the decoded path (the id's colon is not escaped).
+    const auditPath = (objectId: string) => `/v1/objects/${objectId}`;
+
+    // The image clip's thumbnail is an <img> on the gateway URL; it decodes only if the gateway answered the hosted Origin.
+    const thumbnail = page.locator(`[data-clip-id="${seed.imageClipId}"] img[src*="${gatewayObject(image.objectId)}"]`).first();
+    await expect(thumbnail).toBeVisible();
+    await expect(thumbnail).toHaveAttribute('crossorigin', 'anonymous');
+    await expect.poll(() => thumbnail.evaluate((element: HTMLImageElement) => [element.naturalWidth, element.naturalHeight])).toEqual([64, 48]);
+    const imageAudit = await waitForAudit(harness, (entry) => entry.path === auditPath(image.objectId) && entry.status === 200 && entry.origin === harness.origin);
+    expect(imageAudit.length, 'the browser sent the hosted Origin for the image').toBeGreaterThan(0);
+
+    // The video clip is drawn too (it has no thumbnail of its own). The fallback MP4 cannot be decoded by stock Chromium when ffmpeg is missing (the same limit as the video case in "media").
+    await expect(page.locator(`[data-clip-id="${seed.videoClipId}"]`).first()).toBeVisible();
+    if (video.decodable) {
+      const videoAudit = await waitForAudit(harness, (entry) => entry.path === auditPath(video.objectId) && [200, 206].includes(entry.status) && entry.origin === harness.origin);
+      expect(videoAudit.length, 'the browser sent the hosted Origin for the video').toBeGreaterThan(0);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// 7. Speed table (reported, never judged)
 
 test('speed table: each step through the gateway against the Runtime directly', async ({ harness }, testInfo) => {
   test.setTimeout(300_000);

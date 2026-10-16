@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   classifyBrowserEntry,
   isRecognizedOAuthCallbackUrl,
@@ -94,5 +94,18 @@ describe('browser entry classification', () => {
       new URL('https://astrid.test/#access_token=a&refresh_token=b'),
       true,
     )).toBeNull();
+  });
+
+  it('opens the Runtime\'s own projects on the hosted build, where the demo project does not exist', async () => {
+    vi.stubEnv('VITE_RUNTIME_ORIGIN', 'http://127.0.0.1:17340');
+    try {
+      vi.resetModules();
+      const hosted = await import('./entryClassification.ts');
+      expect(hosted.APP_ENTRY_PATH).toBe('/tools/video-editor');
+      expect(hosted.resolveReturningAppEntry(new URL('https://astrid.test/'), true)).toBe('/tools/video-editor');
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
   });
 });

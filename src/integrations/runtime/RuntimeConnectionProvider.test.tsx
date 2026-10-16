@@ -198,6 +198,43 @@ describe('granted', () => {
   });
 });
 
+describe('app entry preference', () => {
+  const PREFERENCE_KEY = 'astrid:prefers-app';
+
+  it('is remembered once the gate connects, so the next visit to the bare domain goes straight in', async () => {
+    const gateway = fakeGateway();
+    renderProvider(gateway, fakePermissions('granted').permissions);
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(window.localStorage.getItem(PREFERENCE_KEY)).toBe('1');
+  });
+
+  it('is not remembered while the Runtime cannot be reached, or before Connect is pressed', async () => {
+    const gateway = fakeGateway();
+    gateway.down();
+    const { unmount } = renderProvider(gateway, fakePermissions('granted').permissions);
+    await waitFor(() => expect(status()).toBe('cant_reach'));
+    expect(window.localStorage.getItem(PREFERENCE_KEY)).toBeNull();
+    unmount();
+
+    renderProvider(fakeGateway(), fakePermissions('prompt').permissions);
+    await waitFor(() => expect(latest.awaitingConnect).toBe(true));
+    expect(window.localStorage.getItem(PREFERENCE_KEY)).toBeNull();
+  });
+
+  it('is not set by a same-origin build, which has no gate', async () => {
+    const { RuntimeConnectionProvider: Provider } = await import('./RuntimeConnectionProvider.tsx');
+    render(<Provider permissions={{ query: vi.fn() }}><div /></Provider>);
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 20)); });
+    expect(window.localStorage.getItem(PREFERENCE_KEY)).toBeNull();
+  });
+
+  it('still connects when storage refuses the write', async () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
+    renderProvider(fakeGateway(), fakePermissions('granted').permissions);
+    await waitFor(() => expect(status()).toBe('connected'));
+  });
+});
+
 describe('prompt', () => {
   it('sends nothing until connect(), then connects', async () => {
     const gateway = fakeGateway();
