@@ -36,6 +36,10 @@ capabilities:
   - repair_speech
   - search_gifs
   - download_remote_media
+documents:
+  transcript:
+    format_version: 1
+    schema: schemas/transcript-v1.json
 documentation:
   kind: skill
   path: docs/SKILL.md

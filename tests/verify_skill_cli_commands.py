@@ -11,7 +11,6 @@ import sys
 from pathlib import Path
 from urllib.parse import unquote
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_PATHS = [
     ROOT / "astrid/packs/timeline/docs/SKILL.md",
@@ -137,10 +136,76 @@ def check_timeline_scenarios(path: Path, commands: list[tuple[int, list[str]]]) 
         if not scenario.is_file() or ROOT / "tests/editing_scenarios" not in scenario.parents:
             raise ValueError(f"{path.relative_to(ROOT)}: invalid editing-scenario link {scenario}")
 
+    recipe_section = text.split("## Change things: one command per recipe", 1)
+    if len(recipe_section) != 2:
+        raise ValueError(f"{path.relative_to(ROOT)}: missing edit-recipe section")
+    recipe_section = recipe_section[1].split("## Look before publishing", 1)
+    if len(recipe_section) != 2:
+        raise ValueError(f"{path.relative_to(ROOT)}: missing end of edit-recipe section")
+    recipe_rows = [
+        line for line in recipe_section[0].splitlines()
+        if line.startswith("|") and not line.startswith("| Want ")
+        and not re.fullmatch(r"\|[-| :]+\|?", line)
+    ]
+    references = dict(re.findall(r"(?m)^\[([^]]+)\]:\s+(\S+\.ya?ml)(?:\s|$)", text))
+    for row in recipe_rows:
+        hrefs = [
+            references[label]
+            for label in re.findall(r"\[[^]]+\]\[([^]]+)\]", row)
+            if label in references
+        ]
+        hrefs.extend(re.findall(r"\[[^]]+\]\(([^)]+\.ya?ml)(?:#[^)]*)?\)", row))
+        if not hrefs:
+            raise ValueError(f"{path.relative_to(ROOT)}: edit recipe has no scenario YAML: {row}")
+        for href in hrefs:
+            scenario = (path.parent / unquote(href.split("#", 1)[0])).resolve()
+            if not scenario.is_file() or ROOT / "tests/editing_scenarios" not in scenario.parents:
+                raise ValueError(f"{path.relative_to(ROOT)}: invalid edit-recipe scenario link {scenario}")
+    if not recipe_rows:
+        raise ValueError(f"{path.relative_to(ROOT)}: found no edit recipe rows")
+    print(f"Verified {len(recipe_rows)} edit recipe rows have scenario YAML links.")
+
+
+def check_timeline_skill_limit_and_routes() -> None:
+    timeline = ROOT / "astrid/packs/timeline/docs/SKILL.md"
+    line_count = len(timeline.read_text(encoding="utf-8").splitlines())
+    if line_count > 150:
+        raise ValueError(f"{timeline.relative_to(ROOT)}: {line_count} lines exceeds the 150-line limit")
+
+    routes = [
+        (ROOT / "AGENTS.md", "timeline skill", "astrid/packs/timeline/docs/SKILL.md"),
+        (ROOT / "astrid/packs/_core/docs/SKILL.md", "Timeline editing", "../../timeline/docs/SKILL.md"),
+        (ROOT / "astrid/packs/_core/docs/creative-work/SKILL.md", "timeline editing", "../../../timeline/docs/SKILL.md"),
+        (ROOT / "astrid/packs/_core/docs/pack-builder/SKILL.md", "Timeline editing skill", "../../../timeline/docs/SKILL.md"),
+        (ROOT / "astrid/packs/video_editing/docs/SKILL.md", "timeline editing skill", "../../timeline/docs/SKILL.md"),
+        (ROOT / "astrid/packs/rendering/docs/SKILL.md", "timeline editing skill", "../../timeline/docs/SKILL.md"),
+    ]
+    for source, label, href in routes:
+        link = f"[{label}]({href})"
+        if link not in source.read_text(encoding="utf-8"):
+            raise ValueError(f"{source.relative_to(ROOT)}: missing timeline route {link}")
+        target = (source.parent / unquote(href)).resolve()
+        if not target.is_file():
+            raise ValueError(f"{source.relative_to(ROOT)}: route target does not exist: {target}")
+
+    rendering = ROOT / "astrid/packs/rendering/docs/SKILL.md"
+    reference_link = "[document checkout reference](references/document-checkout.md)"
+    if reference_link not in rendering.read_text(encoding="utf-8"):
+        raise ValueError(f"{rendering.relative_to(ROOT)}: missing JSON checkout reference")
+    reference = rendering.parent / "references/document-checkout.md"
+    reference_text = reference.read_text(encoding="utf-8")
+    if "authoring bundle" not in reference_text or "--revision-id <summary.new_head>" not in reference_text:
+        raise ValueError(f"{reference.relative_to(ROOT)}: missing current JSON checkout or exact-revision guidance")
+    print(f"Verified timeline skill limit ({line_count}/150), route links, root AGENTS pointer, and rendering reference.")
+
 
 def main() -> int:
     errors: list[str] = []
     total = 0
+    try:
+        check_timeline_skill_limit_and_routes()
+    except (OSError, ValueError) as exc:
+        errors.append(str(exc))
     for skill in SKILL_PATHS:
         if not skill.is_file():
             errors.append(f"missing skill: {skill.relative_to(ROOT)}")

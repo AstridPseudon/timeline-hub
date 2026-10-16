@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "media.transcript/v1",
+  "title": "media.transcript/v1",
+  "description": "Flat, immutable-identity transcript source document on the media-seconds clock.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "subject",
+    "source",
+    "clock",
+    "words",
+    "segments"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "media_object_id",
+        "media_sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "media_object_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "media_sha256": {
+          "type": "string",
+          "pattern": "^(?:sha256:)?[a-f0-9]{64}$"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "producer_id",
+        "source_id",
+        "lineage_id",
+        "revision_id",
+        "producer_digest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "producer_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "lineage_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "revision_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "producer_digest": {
+          "type": "string",
+          "pattern": "^(?:sha256:)?[a-f0-9]{64}$"
+        },
+        "parent_revision_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      }
+    },
+    "clock": {
+      "type": "object",
+      "required": [
+        "kind",
+        "unit",
+        "origin_seconds"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "media"
+        },
+        "unit": {
+          "const": "seconds"
+        },
+        "origin_seconds": {
+          "type": "integer",
+          "const": 0
+        }
+      }
+    },
+    "words": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "start_s",
+          "end_s"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "start_s": {
+            "type": "number",
+            "minimum": 0
+          },
+          "end_s": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "word_ids"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "word_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional opaque producer metadata preserved as JSON.",
+      "additionalProperties": true
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Optional opaque source provenance preserved as JSON.",
+      "additionalProperties": true
+    }
+  }
+}

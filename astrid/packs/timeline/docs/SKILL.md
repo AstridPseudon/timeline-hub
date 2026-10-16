@@ -11,7 +11,7 @@ Follow **find → show → edit → check → publish**. The first edit creates 
 
 Use the address returned by `find` in every step:
 
-1. Find: `python3 -m astrid timelines find main "went" --project demo`
+1. Find: `python3 -m astrid timelines find main rocket --project demo`
 2. Show: `python3 -m astrid timelines show main c1.rocket --project demo`
 3. Edit: `python3 -m astrid timelines edit main --project demo --draft working --clip c1.rocket --on '"went"'`
 4. Check: `python3 -m astrid timelines check main --project demo --draft working`
@@ -21,11 +21,11 @@ Use the address returned by `find` in every step:
 
 | Address | Meaning |
 |---|---|
-| `c1` · `c1.rocket` | A cut and one layer in it. |
-| `"went"` · `"went" in s1` | Spoken word or word scoped to narration line `s1`. |
-| `after "went"` · `beat 2 after "went"` | A word boundary or a beat relative to it. |
-| `2.4` · `1:02.4` · `+8f` | Seconds, m:ss, or eight frames later. |
-| `c1..c2` · `"went".."now"` · `1..3` | Cut, word, or time range. |
+| `c1` · `c1.rocket` · `c1.rocket.x` · `a-rocket` · `a-rock` | Cut, layer, parameter, exact clip id, or id prefix. |
+| `"went"` · `"went viral"` · `"went" in s1 #2` | Word or phrase; scope to a line and choose a repeated occurrence. |
+| `after "went" +8f` · `beat 2 after "went"` | Word boundary plus frame offset, or a beat relative to a word. |
+| `2.4` · `1:02.4` · `@93.5` · `c1..c2` · `"went".."now"` · `1..3` | Seconds, m:ss, explicit time, or cut/word/time range. |
+| `rocket` · `R` · `"Live."` | Bare layer, asset key, or on-screen text. |
 
 `--on` and `--until` take a moment. Lengths accept seconds (`0.6`, `0.6s`) or frames (`18f`). Prefer word anchors when speech should carry a layer through re-recording.
 
@@ -38,15 +38,15 @@ Use the address returned by `find` in every step:
 | Nudge by frames | `timelines edit main --project demo --draft working --clip c1.rocket --nudge-frames -3` | [timing.nudge-frames.rocket][sc-nudge] |
 | Set a parameter or look | `--clip c1.rocket --set x=120` · `--clip c1.rocket --opacity 0.6` | [look.set.rocket-x][sc-set] · [look.opacity.rocket-60][sc-look] |
 | Clear a parameter | `--clip c1.rocket --clear x` | [look.clear.rocket-x](../../../../tests/editing_scenarios/look/look.clear.rocket-x.yaml) |
-| Swap one picture | `--clip c1.rocket --swap-asset P` | [look.swap-asset.rocket][sc-swap] |
-| Add a layer from shown values | `--command '{"op":"timeline.add","select":null,"args":{"element":"am-sprite","at":"\"now\"","layer":"pin","hold":1.5,"asset":"R","params":{"x":600,"y":300}}}'` | [look.add.sprite][sc-add] |
+| Swap one picture or every use of its key | `--clip c1.rocket --swap-asset P` · `--replace-asset R=task:replace-fixture/sprites#0` | [look.swap-asset.rocket][sc-swap] · [look.replace-asset.everywhere][sc-replace] |
+| Add a layer like another | `--command '{"op":"timeline.add","select":null,"args":{"from":"occurrence:occ-B/clip:b-type","at":"now","clip_id":"b-type-copy","relation_choices":[{"target":"occurrence:occ-B/clip:b-type","edge":"start","choice":"re-anchor","anchor":"now","offset_seconds":0.0},{"target":"occurrence:occ-B/clip:b-type","edge":"end","choice":"keep"}]}}'` | [look.add-like.card][sc-add-like] |
 | Add music or an effect | `--add-media Q --track vo --on '"viral"' --for 0.3 --id blip` | [audio.add.sfx-viral][sc-sfx] · [audio.add.media-bed][sc-music] |
 | Remove a layer | `--clip c2.card --remove` | [look.remove.card][sc-remove] |
 | Split a cut | `--split c1 --on '"went"'` | [structure.split.c1-went][sc-split] |
 | Crossfade two audio clips | `--crossfade A B --over 0.5` | [audio.crossfade.music][sc-crossfade] |
 | Apply many sheet edits together | `timelines apply main edits.sheet --project demo --draft working` | [code.skill.batch-edit][sc-sheet] |
 
-For one clip, `--swap-asset` changes its picture; `--replace-asset KEY=HANDLE` changes the media behind a key across clips. `timelines edit --help-all` lists the full option set.
+The CLI has no operation to reposition one existing cut: `cut.duplicate` copies but leaves the source, `--cut --on` stores a re-flow moment without moving it (see `structure.cut-on.c2-now.yaml`), and `clip.move-to-cut` only re-homes a non-picture layer. `timelines edit --help-all` lists the full option set.
 
 ## Look before publishing
 
@@ -117,9 +117,9 @@ tl.publish("Move rocket to went")
 
 ## Reference and extending
 
-See the [generated flag-to-operation reference](references/edit-command-flags.md). For a new edit, register one operation and its check, add a scenario YAML, then expose its canonical CLI flag; the generated table records that mapping. Use `timelines edit --help` for the compact routine list (≤40 lines); `--help-all` shows every option.
+Add an SDK mutator in `astrid/sdk/timeline/checkout.py` and its `_commands.register(...)` tuple; `astrid/sdk/timeline/commands.py` owns that registry and `EDIT_FLAG_OPERATIONS`. Add the CLI flag in `astrid/packs/timeline/cli.py`; `tests/sdk/test_timeline_commands.py` checks the flag mapping. Update `tests/parity/edit-command-flags.json`, regenerate the [flag-to-operation table](references/edit-command-flags.md) with `python3 -m tools.parity.edit_flag_reference`, and verify it in `tests/sdk/test_edit_command_contract.py`. For a lint check, follow `astrid/packs/rendering/docs/references/visualize-extend.md`: export `CHECK = Check(...)` from `astrid/packs/<pack>/rendering/visualize_layers/<name>.py`; discovery and `register_check` live in `astrid/packs/rendering/actions/timeline_visualize/layers/base.py`. The guide pattern is tested by `test_the_guide_examples_register_and_run` in `tests/packs/rendering/test_timeline_visualize_motion_views.py` and listed by `python3 -m astrid timelines lint --list-checks`. Add an editing scenario under `tests/editing_scenarios/` and cover it in `tests/editing_conformance/test_conformance.py`. `timelines edit --help` is the compact routine list (≤40 lines); `--help-all` shows every option.
 
-The batch scenario previews before applying; both commands are one transaction and one undo step. A failed batch rolls back. The [preview scenario][sc-sheet] and [apply scenario](../../../../tests/editing_scenarios/code/code.skill.batch-edit.yaml) execute these exact commands.
+The batch scenario previews before applying; both commands are one transaction and one undo step. A failed batch rolls back. The [preview scenario][sc-sheet] and [apply scenario](../../../../tests/editing_scenarios/code/code.skill.batch-edit.yaml) execute these exact commands. A single structured edit can preview without writing; the [structured-edit scenario](../../../../tests/editing_scenarios/code/code.skill.structured-edit.yaml) covers it.
 
 ```bash
 python3 -m astrid timelines checkout main --project demo --draft working
@@ -128,8 +128,6 @@ python3 -m astrid timelines edit main --project demo --draft working --command '
 python3 -m astrid timelines check main --project demo --draft working
 python3 -m astrid timelines visualize main --project demo --draft working --mode inputs --plan
 ```
-
-A single structured edit can preview without writing; the [structured-edit scenario](../../../../tests/editing_scenarios/code/code.skill.structured-edit.yaml) covers it.
 
 ```bash
 python3 -m astrid timelines edit main --project demo --draft working --command '{"op":"clip.set","select":"c1.rocket","args":{"x":120}}' --dry-run
@@ -141,7 +139,9 @@ python3 -m astrid timelines edit main --project demo --draft working --command '
 [sc-set]: ../../../../tests/editing_scenarios/look/look.set.rocket-x.yaml
 [sc-look]: ../../../../tests/editing_scenarios/look/look.opacity.rocket-60.yaml
 [sc-swap]: ../../../../tests/editing_scenarios/look/look.swap-asset.rocket.yaml
+[sc-replace]: ../../../../tests/editing_scenarios/look/look.replace-asset.everywhere.yaml
 [sc-add]: ../../../../tests/editing_scenarios/look/look.add.sprite.yaml
+[sc-add-like]: ../../../../tests/editing_scenarios/look/look.add-like.card.yaml
 [sc-sfx]: ../../../../tests/editing_scenarios/audio/audio.add.sfx-viral.yaml
 [sc-music]: ../../../../tests/editing_scenarios/audio/audio.add.media-bed.yaml
 [sc-crossfade]: ../../../../tests/editing_scenarios/audio/audio.crossfade.music.yaml
