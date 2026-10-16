@@ -6,18 +6,18 @@
     "schema_version": 1,
     "helper": {
       "owner": "D",
-      "import_path": "astrid.sdk.media_transcript",
-      "call": "transcript_document_id(project_id, subject, source)",
-      "status": "pending_join_pin",
-      "actual_document_id": null,
-      "join_pin_required": true,
-      "join_pin_requirement": "A must run the actual D helper on the joined source, pin its literal outputs here, then assert the declared equalities and distinctness.",
+      "import_path": "astrid.sdk.managed_transcript",
+      "call": "transcript_document_id(project, subject, source)",
+      "status": "joined_source_verified",
+      "actual_document_id": "document:79d4944d-ddc0-5b05-9b45-36b9c11b91a1",
+      "join_pin_required": false,
+      "join_pin_requirement": "Pinned outputs were produced by the actual D helper and asserted by tests/test_transcript_identity_fixture.py.",
       "manual_hash_or_codec": "forbidden"
     },
     "claims": {
-      "schema_validation": "not_claimed",
-      "document_id_execution": "not_claimed",
-      "test_pass": "not_claimed"
+      "schema_validation": "actual_D_validator_executed_on_joined_source",
+      "document_id_execution": "actual_D_helper_executed_on_joined_source",
+      "test_pass": "asserted_by_test_transcript_identity_fixture"
     }
   },
   "logical_key_contract": {
@@ -57,7 +57,6 @@
   },
   "records": {
     "base_r1": {
-      "kind": "media.transcript/v1",
       "schema_version": 1,
       "subject": {
         "media_object_id": "synthetic-media-object-alpha",
@@ -109,7 +108,6 @@
       }
     },
     "correction_r2": {
-      "kind": "media.transcript/v1",
       "schema_version": 1,
       "subject": {
         "media_object_id": "synthetic-media-object-alpha",
@@ -162,7 +160,6 @@
       }
     },
     "segmentation_r3": {
-      "kind": "media.transcript/v1",
       "schema_version": 1,
       "subject": {
         "media_object_id": "synthetic-media-object-alpha",
@@ -252,7 +249,7 @@
         }
       },
       "expected_relation": "baseline",
-      "actual_document_id": null
+      "actual_document_id": "document:79d4944d-ddc0-5b05-9b45-36b9c11b91a1"
     },
     {
       "case_id": "correction_same_document",
@@ -288,7 +285,7 @@
         ],
         "other_prior_ids_retained": false
       },
-      "actual_document_id": null
+      "actual_document_id": "document:79d4944d-ddc0-5b05-9b45-36b9c11b91a1"
     },
     {
       "case_id": "segmentation_only_same_document",
@@ -317,7 +314,7 @@
           "word-003"
         ]
       },
-      "actual_document_id": null
+      "actual_document_id": "document:79d4944d-ddc0-5b05-9b45-36b9c11b91a1"
     },
     {
       "case_id": "occurrence_a_same_document",
@@ -337,7 +334,7 @@
         }
       },
       "expected_relation": "equal_to:base_r1",
-      "actual_document_id": null
+      "actual_document_id": "document:79d4944d-ddc0-5b05-9b45-36b9c11b91a1"
     },
     {
       "case_id": "occurrence_b_same_document",
@@ -357,7 +354,7 @@
         }
       },
       "expected_relation": "equal_to:base_r1",
-      "actual_document_id": null
+      "actual_document_id": "document:79d4944d-ddc0-5b05-9b45-36b9c11b91a1"
     },
     {
       "case_id": "new_take_distinct_document",
@@ -376,7 +373,7 @@
         }
       },
       "expected_relation": "distinct_from:base_r1",
-      "actual_document_id": null,
+      "actual_document_id": "document:6b4c630c-45ce-5184-b292-d5562b5a35a1",
       "record_overrides": [
         {
           "path": "/source/source_id",
@@ -409,7 +406,7 @@
         }
       },
       "expected_relation": "distinct_from:base_r1",
-      "actual_document_id": null,
+      "actual_document_id": "document:97e946ab-5c56-534f-aa5b-d5037aeaf029",
       "record_overrides": [
         {
           "path": "/source/producer_id",
@@ -434,7 +431,7 @@
         }
       },
       "expected_relation": "distinct_from:base_r1",
-      "actual_document_id": null,
+      "actual_document_id": "document:8fc2c6c4-aef7-58a5-91bc-f5fed93d55fa",
       "record_overrides": [
         {
           "path": "/subject/media_object_id",
@@ -463,7 +460,7 @@
         }
       },
       "expected_relation": "distinct_from:base_r1",
-      "actual_document_id": null
+      "actual_document_id": "document:b431b1db-31c3-5a0e-912f-0cf4909caacd"
     }
   ],
   "record_variant_materialization": "A key-case record_overrides entry substitutes the named JSON Pointer in its record_ref. This is fixture notation only, not a media.transcript/v1 field."
