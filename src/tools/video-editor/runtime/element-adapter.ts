@@ -1,7 +1,7 @@
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { TimelineVersionConflictError, type TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
-import { propertyGestureCommands } from '../commands/semanticGestures.ts';
+import { fadeGestureCommand, propertyGestureCommands } from '../commands/semanticGestures.ts';
 import type { AssetRegistry, TimelineClip, TimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { getClipTimelineDuration } from '@/tools/video-editor/lib/config-utils.ts';
 import {
@@ -547,13 +547,21 @@ export class AstridElementOperationAdapter {
       operation,
     );
     const nextConfig = this.attachDraftSource(nextConfigBeforeSources, operation);
-    // Only parameter-only updates have an admitted command with identical
-    // semantics. Ref/source/transition/overlay mutations remain explicit fallback.
-    const editCommands = operation.name === 'timeline.update_element' && !operation.element && operation.params
+    // These producers preserve the complete operation, including the coupled
+    // effects/entrance/exit fade state. Legacy effects arrays have no matching
+    // fade command and retain the whole-operation compatibility path.
+    let editCommands = operation.name === 'timeline.update_element' && !operation.element && operation.params
       ? propertyGestureCommands({ config: asTimelineConfig(document.config) }, operation.clip_id, {
           params: operation.params,
         }, { mergeParams: true })
       : undefined;
+    if (operation.name === 'timeline.set_clip_fade') {
+      const fade = fadeGestureCommand({ config: asTimelineConfig(document.config) }, operation.clip_id, {
+        ...(operation.fade_in === undefined ? {} : { fade_in: operation.fade_in }),
+        ...(operation.fade_out === undefined ? {} : { fade_out: operation.fade_out }),
+      });
+      editCommands = fade ? [fade] : undefined;
+    }
     const saved = await this.routes.save(operation.timeline, {
       config: nextConfig,
       registry: asAssetRegistry(document.registry),

@@ -54,7 +54,8 @@ import { ClipTransitionSection } from '@/tools/video-editor/components/Propertie
 // fixture acknowledgements establish App adaptation only, never Runtime acceptance.
 const json = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
 type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'unavailable' | 'failed' | 'rejected' | 'refused'>;
-function wireFixture(initial: TimelineData, reply?: FixtureReply) {
+const catalogFadeFallback = 'W13: legacy effects array has no clip.set-fade producer; retain the whole catalog operation';
+function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typeof catalogFadeFallback) {
   const requests: Array<{ request: CommitRequest; bytes: string; headers: Record<string, string> }> = [];
   const compatibilityRequests: string[] = [];
   const readbackHeads: string[] = [];
@@ -63,8 +64,11 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply) {
   let acceptanceSequence = 1;
   const acceptedHeads = new Map<string, string>();
   const transport: Transport = async (method, path, headers, body) => {
-    if (method === 'POST' && (/\/(?:publish-document|publish|composition-revisions)(?:$|\?)/.test(path))) {
+    const posted = method === 'POST' && body ? JSON.parse(new TextDecoder().decode(body as Uint8Array)) : undefined;
+    if (method === 'POST' && (/\/(?:publish-document|publish|composition-revisions)(?:$|\?)/.test(path)
+      || posted?.change?.adapter === 'app-save')) {
       compatibilityRequests.push(path);
+      if (fallback) throw new Error(`Marked census fallback ${fallback}`);
       throw new Error(`Unmarked census writer used compatibility publication: ${path}`);
     }
     if (path === '/v1/health') return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1 }) };
@@ -1496,6 +1500,97 @@ describe('WRITERS census converted handlers and route intercept', () => {
     expect(h.compatibilityRequests).toEqual([]);
     expect(h.result.current.editSeqRef.current).toBe(0);
     h.unmount();
+  });
+});
+
+describe('WRITERS W13 catalog fade census', () => {
+  function catalogAdapter(initial: TimelineData, fixture: ReturnType<typeof wireFixture>, authority = () => {}) {
+    return new AstridElementOperationAdapter(buildReighAgentElementContext({}), createElementTimelineRoutes({
+      loadTimeline: async () => ({ config: initial.config, configVersion: 1, head: initial.head }),
+      loadAssetRegistry: async () => initial.registry,
+      saveTimeline: fixture.provider.saveTimeline.bind(fixture.provider),
+      saveTimelineAtHead: fixture.provider.saveTimelineAtHead.bind(fixture.provider),
+    }, authority), 'gesture-project');
+  }
+  const fadeOperation = {
+    name: 'timeline.set_clip_fade' as const, project: 'gesture-project', timeline: 'gesture-timeline',
+    expected_version: 1, clip_id: 'clip-1',
+  };
+  it.each([
+    { fade_in: 0 }, { fade_out: 0.4 }, { fade_in: 0.2, fade_out: 0.3 },
+  ])('W13 sends one coupled command with captured base and expect: %j', async (args) => {
+    const initial = await initialData();
+    const clip = initial.config.clips[0];
+    clip.effects = { fade_in: 0.1, opaque: { preserved: true } };
+    clip.entrance = { type: 'fade', duration: 0.1 };
+    clip.exit = { type: 'slide-out', duration: 0.6 };
+    const before = structuredClone(initial.config);
+    const fixture = wireFixture(initial);
+    const result = await catalogAdapter(initial, fixture).execute({ ...fadeOperation, ...args });
+    expect(fixture.requests).toHaveLength(1);
+    expect(fixture.compatibilityRequests).toEqual([]);
+    expect(fixture.requests[0].request.base_revision_id).toBe('parent-r1');
+    expect(fixture.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-fade', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'], args,
+      expect: {
+        entrance: { state: 'present', value: before.clips[0].entrance },
+        effects: { state: 'present', value: before.clips[0].effects },
+        exit: { state: 'present', value: before.clips[0].exit },
+      },
+    }] });
+    expect(result.config!.clips[0]).toEqual({ ...before.clips[0],
+      effects: { ...before.clips[0].effects, ...args },
+      ...(args.fade_in === undefined ? {} : { entrance: { type: 'fade', duration: args.fade_in } }),
+      ...(args.fade_out === undefined ? {} : { exit: { type: 'fade-out', duration: args.fade_out } }),
+    });
+    expect(result.config!.clips[1]).toEqual(before.clips[1]);
+    expect(initial.config).toEqual(before);
+  });
+  it.each(['absent', 'null'] as const)('W13 keeps %s effects distinct in expect', async (state) => {
+    const initial = await initialData();
+    if (state === 'null') Object.assign(initial.config.clips[0], { effects: null });
+    const fixture = wireFixture(initial);
+    await catalogAdapter(initial, fixture).execute({ ...fadeOperation, fade_in: 0.5 });
+    expect(fixture.requests).toHaveLength(1);
+    expect(fixture.requests[0].request.change).toMatchObject({ commands: [{ expect: {
+      effects: state === 'null' ? { state: 'present', value: null } : { state: 'absent' },
+      entrance: { state: 'absent' }, exit: { state: 'absent' },
+    } }] });
+  });
+  it('W13 explicitly marks the legacy effects-array compatibility request without a partial command', async () => {
+    const initial = await initialData();
+    Object.assign(initial.config.clips[0], { effects: [{ type: 'legacy-effect' }] });
+    const fixture = wireFixture(initial, undefined, catalogFadeFallback);
+    await expect(catalogAdapter(initial, fixture).execute({ ...fadeOperation, fade_in: 0.5 }))
+      .rejects.toThrow(`Marked census fallback ${catalogFadeFallback}`);
+    expect(fixture.requests).toHaveLength(0);
+    expect(fixture.compatibilityRequests).toEqual(['/v1/projects/gesture-project/timelines/gesture-timeline/composition-revisions']);
+  });
+  it.each(['refused', 'rejected'] as const)('W13 %s never retries as a snapshot', async (outcome) => {
+    const initial = await initialData();
+    const fixture = wireFixture(initial, async () => outcome);
+    await expect(catalogAdapter(initial, fixture).execute({ ...fadeOperation, fade_in: 0.5 })).rejects.toThrow();
+    expect(fixture.requests).toHaveLength(1);
+    expect(fixture.compatibilityRequests).toEqual([]);
+    expect(fixture.getCurrentHead()).toBe('parent-r1');
+  });
+  it.each(['read-only', 'stale-version', 'invalid-fade'] as const)('W13 %s refuses before publication', async (kind) => {
+    const initial = await initialData();
+    const fixture = wireFixture(initial);
+    const adapter = catalogAdapter(initial, fixture, () => { if (kind === 'read-only') throw new Error('read-only'); });
+    await expect(adapter.execute({ ...fadeOperation,
+      expected_version: kind === 'stale-version' ? 2 : 1, fade_in: kind === 'invalid-fade' ? -1 : 0.5,
+    })).rejects.toThrow();
+    expect(fixture.requests).toHaveLength(0);
+    expect(fixture.compatibilityRequests).toEqual([]);
+  });
+  it('the unmarked-writer intercept rejects app-save even on the commit endpoint', async () => {
+    const fixture = wireFixture(await initialData());
+    const endpoint = '/v1/projects/gesture-project/timelines/gesture-timeline/commit';
+    await expect(fixture.transport('POST', endpoint, {}, json({ change: { document: {}, adapter: 'app-save' } })))
+      .rejects.toThrow('Unmarked census writer');
+    expect(fixture.compatibilityRequests).toEqual([endpoint]);
+    expect(fixture.requests).toHaveLength(0);
   });
 });
 
