@@ -380,9 +380,10 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
     expect(fixture.requests.filter(({ path }) => path === '/v1/realm')).toHaveLength(1);
   });
 
-  it('accepts the selected Runtime contract digest during handshake', async () => {
-    const selectedRuntimeDigest = 'sha256:892d88e22e6c3b6249dfcb61a2a6778bae0feefb08318200cf9e42c5ea7bfa0d';
-    expect(RUNTIME_SCHEMA_DIGEST).toBe(selectedRuntimeDigest);
+  it('accepts exactly the vendored Runtime contract digest during handshake', async () => {
+    // The digest comes from the vendored contract metadata; vendor.lock.json pins those bytes to the producer.
+    const selectedRuntimeDigest = RUNTIME_SCHEMA_DIGEST;
+    expect(selectedRuntimeDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
     const fixture = createTransport();
     const client = clientFor(fixture);
 

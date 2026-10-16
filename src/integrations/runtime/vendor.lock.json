@@ -1,0 +1,16 @@
+{
+  "files": {
+    "src/integrations/runtime/generated-contract-metadata.ts": {
+      "from": "packages/typescript/src/contract-metadata.ts",
+      "sha256": "sha256:fb1a2518bf472952e1545a67616667823bf9e4e854fd55980149c0083df0c7ee"
+    },
+    "src/integrations/runtime/generated.ts": {
+      "from": "packages/typescript/src/generated.ts",
+      "sha256": "sha256:15e3c084dd877b6302cf3cb6dada4518106ab41e62b46e4a6add3acbae2f1ef9"
+    }
+  },
+  "manifest": "contract/artifacts.json",
+  "producer": "banodoco-workspace-runtime",
+  "producer_version": "sha256:40c273aee7affb47d454914cd53857ed16b9af644b5443a6a5b6a12c89a9fa21",
+  "source_commit": "5215217b63ff630e1ec5236ae2e942e4ea775ffa"
+}
