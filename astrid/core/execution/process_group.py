@@ -583,7 +583,7 @@ def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: flo
                              first_error: str) -> None:
     """Best effort on retained capabilities; never certifies tree cleanup."""
     custody = getattr(process, "_astrid_custody", None)
-    report = {"status": "UNCERTAIN_RETAINED_HANDLES_ONLY", "first_error": first_error,
+    report: dict[str, Any] = {"status": "UNCERTAIN_RETAINED_HANDLES_ONLY", "first_error": first_error,
               "complete_descendant_history": "UNPROVED", "signals": [], "errors": [],
               "original_wait": None, "deadline": cleanup_deadline}
     process._astrid_retained_containment = report
@@ -625,7 +625,7 @@ def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: flo
         report["errors"].append({"stage": "original-final-wait", "error_type": type(exc).__name__})
     try:
         custody.release_pidfds(only_exited=True)  # Exited incarnations need no capability.
-    except BaseException as exc:
+    except BaseException as exc:  # noqa: BLE001 - like every stage here, containment must still write its report
         report["errors"].append({"stage": "release-exited-pidfds", "error_type": type(exc).__name__})
     report["deadline_expired"] = time.monotonic() > cleanup_deadline
     try:

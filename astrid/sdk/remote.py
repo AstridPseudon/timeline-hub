@@ -355,7 +355,8 @@ class _RemoteFamily:
             elif operation == "create_media_relation": value = self._client.create_media_relation(*args, **kwargs)
             elif operation == "create_project": value = self._client.create_project(*args, **kwargs)
             elif operation == "create_timeline": value = self._client.create_timeline(*args, **kwargs)
-            elif operation == "rename_timeline": value = self._client.rename_timeline(*args, **kwargs)
+            elif operation == "rename_timeline":
+                value = self._client.rename_timeline(*args, **kwargs)
             elif operation == "create_project_reference": value = self._client.create_project_reference(*args, **kwargs)
             elif operation == "create_project_shot": value = self._client.create_project_shot(*args, **kwargs)
             elif operation == "create_variant": value = self._client.create_variant(*args, **kwargs)

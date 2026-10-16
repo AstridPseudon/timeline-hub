@@ -7,6 +7,7 @@ lifting lives in ``astrid.packs.pixel.actions._common``.
 
 from __future__ import annotations
 
+from astrid.core.cli_choices import add_choice_arg
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
 
 guard_canonical_entrypoint("pixel.snap")
@@ -17,7 +18,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
-from astrid.core.cli_choices import add_choice_arg
 from astrid.core.contracts.errors import AstridError
 from astrid.packs.pixel.actions import _common as px
 

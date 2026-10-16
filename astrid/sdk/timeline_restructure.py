@@ -16,7 +16,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -303,7 +303,7 @@ def _strings(value: Any):
             yield from _strings(v)
 
 
-def _used(clips: list[Mapping[str, Any]], keys: Mapping[str, Any]) -> set[str]:
+def _used(clips: Iterable[Mapping[str, Any]], keys: Mapping[str, Any]) -> set[str]:
     return {s for clip in clips for s in _strings(clip) if s in keys}
 
 

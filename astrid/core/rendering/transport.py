@@ -516,7 +516,7 @@ def _release_failed_launch(error: BaseException) -> None:
     """
     _close_pipes(getattr(error, "process", None))
     custody = getattr(error, "custody", None)
-    if hasattr(custody, "release_pidfds"):
+    if custody is not None and hasattr(custody, "release_pidfds"):
         custody.release_pidfds(only_exited=True)
 
 

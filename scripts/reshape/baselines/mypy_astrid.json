@@ -15,7 +15,7 @@
     "--no-pretty",
     "--show-error-codes"
   ],
-  "finding_count": 2152,
+  "finding_count": 2122,
   "code_counts": {
     "arg-type": 437,
     "assignment": 163,
@@ -24,7 +24,7 @@
     "call-overload": 39,
     "dict-item": 34,
     "func-returns-value": 1,
-    "has-type": 134,
+    "has-type": 129,
     "import-untyped": 24,
     "index": 163,
     "list-item": 5,
@@ -39,8 +39,8 @@
     "str-bytes-safe": 1,
     "type-var": 2,
     "typeddict-item": 6,
-    "union-attr": 374,
+    "union-attr": 350,
     "valid-type": 17,
-    "var-annotated": 60
+    "var-annotated": 59
   }
 }
