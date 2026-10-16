@@ -30,6 +30,7 @@ import type { ShotFinalVideo } from '@/tools/video-editor/hooks/useFinalVideoAva
 import { useAssetManagement } from './useAssetManagement.ts';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { useTimelinePersistence } from './useTimelinePersistence.ts';
+import { useTimelineHistory } from './useTimelineHistory.ts';
 import { useClipResize } from './useClipResize.ts';
 import { usePollSync } from './usePollSync.ts';
 import { useClipEditing } from './useClipEditing.ts';
@@ -46,6 +47,7 @@ import { createTimelineReader } from '../lib/timeline-reader.ts';
 import { AstridElementOperationAdapter, createElementTimelineRoutes } from '../runtime/element-adapter.ts';
 import { buildReighAgentElementContext } from '../runtime/element-contract.ts';
 import { readAudioLanePresentation } from '../data/audioLanePresentation.ts';
+import type { CanonicalClipIdentity } from '../data/shotCompositionProjection.ts';
 import { planClipDrag } from '../lib/clip-drag-planner.ts';
 import { createTimelineEditability } from '../lib/timeline-editability.ts';
 import { ClipEntranceEffectField } from '@/tools/video-editor/components/PropertiesPanel/ClipEntranceEffectField.tsx';
@@ -54,7 +56,7 @@ import { ClipTransitionSection } from '@/tools/video-editor/components/Propertie
 // This transport is a wire recorder, not an Astrid operation executor. Successful
 // fixture acknowledgements establish App adaptation only, never Runtime acceptance.
 const json = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
-type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'unavailable' | 'failed' | 'rejected' | 'refused'>;
+type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'unavailable' | 'failed' | 'rejected' | 'refused' | 'stale' | { directWrites: CommitResult['change']['direct_writes'] }>;
 const catalogFadeFallback = 'W13: legacy effects array has no clip.set-fade producer; retain the whole catalog operation';
 function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typeof catalogFadeFallback) {
   const requests: Array<{ request: CommitRequest; bytes: string; headers: Record<string, string> }> = [];
@@ -94,7 +96,9 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
       const failed = outcome === 'failed';
       const rejected = outcome === 'rejected';
       const refused = outcome === 'refused';
-      if (!unavailable && !failed && !rejected && !refused && !request.dry_run && !acceptedHeads.has(request.request_id)) {
+      const stale = outcome === 'stale';
+      const nativeWrites = outcome && typeof outcome === 'object' ? outcome.directWrites : undefined;
+      if (!unavailable && !failed && !rejected && !refused && !stale && !request.dry_run && !acceptedHeads.has(request.request_id)) {
         currentHead = `parent-r${++acceptanceSequence}`;
         acceptedHeads.set(request.request_id, currentHead);
         if ('commands' in request.change) {
@@ -133,13 +137,13 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
         }
       }
       const response: CommitResult = {
-        status: unavailable || failed || rejected ? 'error' : refused ? 'refused' : request.dry_run ? 'preview' : 'accepted', request_id: request.request_id, request_hash: 'fixture',
-        base_revision_id: request.base_revision_id, accepted_revision_id: unavailable || failed || rejected || refused || request.dry_run ? null : acceptedHeads.get(request.request_id)!,
-        accepted_publication_id: null, previous_revision_id: request.base_revision_id, rebased_onto: request.dry_run ? currentHead : null,
+        status: stale ? 'conflict' : unavailable || failed || rejected ? 'error' : refused ? 'refused' : request.dry_run ? 'preview' : 'accepted', request_id: request.request_id, request_hash: 'fixture',
+        base_revision_id: request.base_revision_id, accepted_revision_id: unavailable || failed || rejected || refused || stale || request.dry_run ? null : acceptedHeads.get(request.request_id)!,
+        accepted_publication_id: nativeWrites ? `pub-${currentHead}` : null, previous_revision_id: request.base_revision_id, rebased_onto: request.dry_run ? currentHead : null,
         canonical_document: null, projection_version: 1, document_digest: null, id_map: {},
         change: { changes: [], commands: request.dry_run && 'commands' in request.change
-          ? structuredClone(request.change.commands) : [], direct_writes: [], consequences: [], affected: [] },
-        conflicts: [], choices: [], provenance: null, evidence: null, schema_report: null, runtime_receipt: null, error: unavailable ? { code: 'runtime_unavailable', message: 'fixture unavailable', hint: 'retry', next_action: 'retry' } : failed ? { code: 'validation_error', message: 'fixture refused batch', hint: 'invalid batch', next_action: 'fix' } : rejected ? { code: 'invalid_command', message: 'fixture rejected acceptance', hint: 'fix the command', next_action: 'fix' } : refused ? { code: 'bad_request', message: 'fixture refusal', hint: 'inspect the refused command', next_action: 'inspect' } : null,
+          ? structuredClone(request.change.commands) : [], direct_writes: nativeWrites ?? [], consequences: [], affected: [] },
+        conflicts: stale ? [{ id: 'parent/clip:clip-2', path: 'intent.on', kind: 'dependent', base: 'captured relation', theirs: 'changed relation', ours: null }] : [], choices: [], provenance: null, evidence: null, schema_report: null, runtime_receipt: null, error: unavailable ? { code: 'runtime_unavailable', message: 'fixture unavailable', hint: 'retry', next_action: 'retry' } : failed ? { code: 'validation_error', message: 'fixture refused batch', hint: 'invalid batch', next_action: 'fix' } : rejected ? { code: 'invalid_command', message: 'fixture rejected acceptance', hint: 'fix the command', next_action: 'fix' } : refused ? { code: 'bad_request', message: 'fixture refusal', hint: 'inspect the refused command', next_action: 'inspect' } : null,
       };
       return { status: unavailable ? 503 : 200, headers: {}, body: json(response) };
     }
@@ -3070,5 +3074,184 @@ describe('E-SHOT-GROUP-022 mounted callbacks through the parent commit route', (
     expect(h.getCurrentConfig()).toEqual(before);
     expect(h.compatibilityRequests).toEqual([]);
     h.unmount();
+  });
+});
+
+async function overlapRelationData(occurrence = false) {
+  const base = await initialData();
+  const prefix = occurrence ? 'occurrence:occ-A' : 'parent';
+  const clips = [
+    { id: 'clip-1', at: 0, clipType: 'media' as const, asset: 'audio', from: 0, to: 2, speed: 1, track: 'A1',
+      app: { opaque: { null: null, array: [0, false, ''], literal: { op: 'clear' } } } },
+    { id: 'clip-2', at: 3, clipType: 'media' as const, asset: 'audio', from: 0, to: 1, speed: 1, track: 'A1',
+      app: { opaque: { preserved: true }, astrid: { on: `clip-end "${prefix}/clip:clip-1" +1s`, opaque: { keep: null } } } },
+  ];
+  return buildTimelineData({ ...base.config, tracks: [{ id: 'A1', kind: 'audio', label: 'Audio' }], clips: clips.map((source) => occurrence
+    ? { ...source, id: `projected-${source.id}`, app: { ...source.app, canonical: {
+      projectId: 'gesture-project', parentDocumentId: 'gesture-timeline', headRevisionId: 'parent-r1',
+      occurrenceId: 'occ-A', shotId: 'shot-A', revisionId: 'shot-r1', internalTimelineRevisionId: 'internal-r1',
+      sourceClipId: source.id, outputIdentity: 'output-A', sourceClip: source,
+    } } } : source) }, { assets: { audio: { file: 'fixture.wav', type: 'audio', duration: 10 } } }, undefined, 1, undefined, base.head);
+}
+function resizeOverlap(h: Awaited<ReturnType<typeof setup>>, opts: { occurrence?: boolean; cancelled?: boolean; afterStart?: () => void } = {}) {
+  const row = h.result.current.data!.rows[0];
+  const clipId = opts.occurrence ? 'projected-clip-1' : 'clip-1';
+  const action = row.actions.find((candidate) => candidate.id === clipId)!;
+  act(() => h.result.current.resize.onActionResizeStart({ action, row, dir: 'right' }));
+  opts.afterStart?.();
+  act(() => h.result.current.resize.onClipEdgeResizeEnd({
+    session: { pointerId: 1, rowId: 'A1', clipId, edge: 'right', cursorOffsetPx: 0, initialBoundaryTime: 2,
+      context: { kind: 'free', clipId, initialStart: 0, initialEnd: 2 }, siblingTimes: [] },
+    updates: [{ clipId, start: 0, end: 3.5 }], cancelled: opts.cancelled ?? false,
+  }));
+}
+
+describe('ordinary overlap relation resize', () => {
+  it.each([false, true])('sends exact scoped clip.trim and adjacent relation choices (occurrence=%s)', async (occurrence) => {
+    for (const choice of ['keep', 'detach', 'adjust-offset', 're-anchor']) {
+      const prompt = vi.spyOn(window, 'prompt').mockReturnValueOnce(choice);
+      const prefix = occurrence ? 'occurrence:occ-A' : 'parent';
+      if (choice === 're-anchor') prompt.mockReturnValueOnce(`clip-start "${prefix}/clip:clip-1"`);
+      if (choice === 'adjust-offset' || choice === 're-anchor') prompt.mockReturnValueOnce('-0.125').mockReturnValueOnce('9');
+      const initial = await overlapRelationData(occurrence);
+      const before = structuredClone(initial.config);
+      const h = await setup(undefined, false, initial);
+      const history = vi.fn(); h.eventBus.on('beforeCommit', history);
+      resizeOverlap(h, { occurrence });
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+      expect(prompt.mock.calls[0][0]).toContain(`clip-end "${prefix}/clip:clip-1" +1s`);
+      expect(h.requests).toHaveLength(1);
+      const relation = { target: `${prefix}/clip:clip-2`, edge: 'start', choice,
+        ...(choice === 're-anchor' ? { anchor: `clip-start "${prefix}/clip:clip-1"` } : {}),
+        ...(['adjust-offset', 're-anchor'].includes(choice) ? { offset_seconds: -0.125, offset_frames: 9 } : {}) };
+      const source = occurrence ? (initial.config.clips[0].app!.canonical as CanonicalClipIdentity).sourceClip : before.clips[0];
+      expect(h.requests[0].request).toMatchObject({ base_revision_id: 'parent-r1', source: { via: 'app' }, change: {
+        commands: [{ op: 'clip.trim', select: `${prefix}/clip:clip-1`, resolved: [`${prefix}/clip:clip-1`],
+          args: { out_s: 3, relation_choices: [relation] }, expect: { '': { state: 'present', value: source } } }],
+      } });
+      const wire = h.requests[0].request.change as { commands: Array<{ args: Record<string, unknown> }> };
+      expect(wire.commands).toHaveLength(1);
+      expect(wire.commands[0].args).not.toHaveProperty('relation_affected');
+      expect(h.result.current.data!.config).toEqual(before);
+      expect(history).toHaveBeenCalledTimes(1);
+      expect(history.mock.calls[0]).toEqual([initial, expect.objectContaining({ semantic: true, transactionId: expect.any(String) })]);
+      expect(h.result.current.editSeqRef.current).toBe(1);
+      expect(h.compatibilityRequests).toEqual([]);
+      if (occurrence) expect(h.requests[0].request.scope).toMatchObject({ target: 'occurrence:occ-A' });
+      const evidence = process.env.E_W40_WIRE_EVIDENCE_PATH;
+      if (evidence && !occurrence && choice === 'detach') writeFileSync(evidence, JSON.stringify(h.requests[0].request, null, 2));
+      h.unmount(); prompt.mockRestore();
+    }
+  });
+  it.each(['cancel', null, 'unknown', 're-anchor', 'adjust-offset'])('cancelled/unfinished choice %s creates no draft, request or history', async (choice) => {
+    const prompt = vi.spyOn(window, 'prompt').mockReturnValueOnce(choice).mockReturnValue(null);
+    const initial = await overlapRelationData(); const h = await setup(undefined, false, initial);
+    const history = vi.fn(); h.eventBus.on('beforeCommit', history);
+    const draft = vi.spyOn(draftStorage, 'saveTimelineDraft');
+    resizeOverlap(h);
+    expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]);
+    expect(h.result.current.data).toBe(initial); expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(history).not.toHaveBeenCalled(); expect(draft).not.toHaveBeenCalled();
+    expect(prompt).toHaveBeenCalled(); h.unmount();
+  });
+  it('pointer cancel does not prompt or create a partial trim', async () => {
+    const prompt = vi.spyOn(window, 'prompt'); const initial = await overlapRelationData();
+    const h = await setup(undefined, false, initial); resizeOverlap(h, { cancelled: true });
+    expect(prompt).not.toHaveBeenCalled(); expect(h.requests).toEqual([]);
+    expect(h.result.current.data).toBe(initial); expect(h.result.current.editSeqRef.current).toBe(0); h.unmount();
+  });
+  it.each(['before prompt', 'during prompt'])('refuses a stale captured head %s', async (when) => {
+    const initial = await overlapRelationData(); const h = await setup(undefined, false, initial);
+    const stale = () => { h.result.current.dataRef.current = { ...initial, head: { ...initial.head!, headRevisionId: 'new-head' } }; };
+    const prompt = vi.spyOn(window, 'prompt').mockImplementation(() => { stale(); return 'detach'; });
+    resizeOverlap(h, { afterStart: when === 'before prompt' ? stale : undefined });
+    expect(prompt).toHaveBeenCalledTimes(when === 'before prompt' ? 0 : 1);
+    expect(h.requests).toEqual([]); expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(initial.config.clips[0].to).toBe(2); h.unmount();
+  });
+  it.each(['duplicate source', 'duplicate adjacent', 'stale occurrence'])('refuses %s identity without fallback', async (kind) => {
+    const initial = await overlapRelationData(kind === 'stale occurrence');
+    if (kind === 'stale occurrence') initial.config.clips[1].app!.canonical = { ...(initial.config.clips[1].app!.canonical as CanonicalClipIdentity), headRevisionId: 'old' };
+    else initial.config.clips.push(structuredClone(initial.config.clips[kind === 'duplicate source' ? 0 : 1]));
+    const prompt = vi.spyOn(window, 'prompt'); const h = await setup(undefined, false, initial);
+    resizeOverlap(h, { occurrence: kind === 'stale occurrence' });
+    expect(prompt).not.toHaveBeenCalled(); expect(h.requests).toEqual([]);
+    expect(h.compatibilityRequests).toEqual([]); expect(h.result.current.editSeqRef.current).toBe(0); h.unmount();
+  });
+  it.each(['rejected', 'refused', 'unavailable'] as const)('late %s retains the complete authored base', async (outcome) => {
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    vi.spyOn(window, 'prompt').mockReturnValue('detach');
+    const initial = await overlapRelationData(); const before = structuredClone(initial.config);
+    const h = await setup(async () => { await held; return outcome; }, false, initial);
+    resizeOverlap(h); await waitFor(() => expect(h.requests).toHaveLength(1));
+    expect(h.result.current.data!.config).toEqual(before); release();
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe(outcome === 'unavailable' ? 'retrying' : 'error'));
+    expect(h.savedSeqRef.current).toBe(0); expect(h.result.current.data!.config).toEqual(before);
+    expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  });
+  it('an adjacent screen overlap without the authored clip relation stays on its existing path', async () => {
+    const initial = await overlapRelationData(); delete initial.config.clips[1].app!.astrid;
+    const h = await setup(undefined, false, initial); const prompt = vi.spyOn(window, 'prompt');
+    resizeOverlap(h); expect(prompt).not.toHaveBeenCalled(); expect(h.result.current.data!.config.clips[0].to).toBe(3);
+    expect(h.result.current.data!.config).not.toEqual(initial.config); h.unmount();
+  });
+});
+
+describe('ordinary overlap relation resize native history', () => {
+  it.each([false, true])('waits for the authenticated inverse, keeps it across canonical adoption, and uses one native Undo/Redo (occurrence=%s)', async (occurrence) => {
+    const initial = await overlapRelationData(occurrence);
+    const prefix = occurrence ? 'occurrence:occ-A' : 'parent';
+    const directWrites: CommitResult['change']['direct_writes'] = [
+      { id: `${prefix}/clip:clip-1`, path: 'hold', before: { state: 'absent' }, after: { state: 'present', value: 3 } },
+      { id: `${prefix}/clip:clip-1`, path: 'to', before: { state: 'present', value: 2 }, after: { state: 'present', value: 3 } },
+      { id: `${prefix}/clip:clip-2`, path: 'intent.fixed_start', before: { state: 'absent' }, after: { state: 'present', value: true } },
+      { id: `${prefix}/clip:clip-2`, path: 'intent.on', before: { state: 'present', value: `clip-end "${prefix}/clip:clip-1" +1s` }, after: { state: 'absent' } },
+    ];
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    const h = await setup(async (request, call) => {
+      if (call === 1) await held;
+      const command = (request.change as { commands: Array<{ op: string; args: { writes?: typeof directWrites } }> }).commands[0];
+      return { directWrites: command.op === 'timeline.inverse' ? command.args.writes! : directWrites };
+    }, false, initial);
+    const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(VideoEditorRuntimeProvider, {
+      value: { provider: h.provider, timelineId: 'gesture-timeline', project: { projectId: 'gesture-project' },
+        toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() } } as unknown as VideoEditorRuntimeContextValue, children,
+    });
+    const history = renderHook(() => {
+      const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+      useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]);
+      useEffect(() => h.eventBus.on('remoteCommit', state.onRemoteData), [state.onRemoteData]);
+      return state;
+    }, { wrapper });
+    vi.spyOn(window, 'prompt').mockReturnValue('detach');
+    resizeOverlap(h, { occurrence }); await waitFor(() => expect(h.requests).toHaveLength(1));
+    expect(history.result.current.canUndo).toBe(false); act(() => history.result.current.undo()); expect(h.requests).toHaveLength(1);
+    release(); await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    const canonical = await buildTimelineData({ ...initial.config, clips: initial.config.clips.map((clip) => {
+      if (clip.id.endsWith('clip-1')) return { ...clip, to: 3 };
+      const { on: _on, ...astrid } = clip.app!.astrid as Record<string, unknown>;
+      return { ...clip, at: 3, app: { ...clip.app, astrid: { ...astrid, fixed_start: true } } };
+    }) }, initial.registry, undefined, 2, undefined, h.headRevisionRef.current);
+    act(() => h.result.current.commitData(canonical, { save: false, skipHistory: true, updateLastSavedSignature: true }));
+    expect(history.result.current.canUndo).toBe(true);
+    act(() => history.result.current.undo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(2));
+    expect(h.requests).toHaveLength(2);
+    const undo = h.requests[1].request.change as { commands: Array<{ op: string; args: unknown }> };
+    expect(undo.commands).toEqual([{ op: 'timeline.inverse', select: null, args: { publication: 'pub-parent-r2',
+      writes: directWrites.map((write) => ({ ...write, before: write.after, after: write.before })) } }]);
+    expect(h.result.current.data!.config).toEqual(canonical.config);
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    act(() => history.result.current.redo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(3));
+    expect(h.requests).toHaveLength(3);
+    expect(h.requests[2].request.change).toMatchObject({ commands: [{ op: 'timeline.inverse', args: { publication: 'pub-parent-r3', writes: directWrites } }] });
+    expect(h.compatibilityRequests).toEqual([]); history.unmount();h.unmount();
+  });
+  it('stale dependent expectations produce a conflict with no optimistic trim', async () => {
+    const initial = await overlapRelationData(); const h = await setup(async () => 'stale', false, initial);
+    vi.spyOn(window, 'prompt').mockReturnValue('detach'); resizeOverlap(h);
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+    expect(h.savedSeqRef.current).toBe(0); expect(h.result.current.data!.config).toEqual(initial.config);
+    expect(h.compatibilityRequests).toEqual([]); h.unmount();
   });
 });
