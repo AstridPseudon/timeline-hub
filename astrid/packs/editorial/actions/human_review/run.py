@@ -704,24 +704,22 @@ def _managed_receiver_path(out_path: Path) -> Path | None:
         return None
     from astrid.sdk._child_bridge import ChildBridge
 
-    if not isinstance(bridge, ChildBridge) or bridge._closed or bridge._channel.fileno() < 0:
+    if not isinstance(bridge, ChildBridge) or not bridge._is_open():
         raise HumanReviewInputError("managed review requires its live inherited bridge")
-    raw = os.environ.get("ASTRID_PROGRESS_PATH", "")
-    progress = Path(raw)
-    if (not raw or not progress.is_absolute() or progress.name != ".astrid-progress.json"
-            or progress != progress.resolve(strict=False)
+    # The confined launcher supplies its private write root as TMPDIR. It
+    # deliberately strips ASTRID_PROGRESS_PATH and denies attempt-root writes.
+    raw = os.environ.get("TMPDIR", "")
+    private = Path(raw)
+    if (not raw or not private.is_absolute() or private.name != "outputs"
+            or private != private.resolve(strict=False)
             or not out_path.is_absolute() or out_path != out_path.resolve(strict=False)
-            or out_path.parent != progress.parent / "outputs"):
+            or out_path.parent != private):
         raise HumanReviewInputError("managed review paths do not match the admitted attempt")
-    for directory in (progress.parent, out_path.parent):
+    for directory in (private.parent, private):
         info = directory.lstat()
         if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o022:
             raise HumanReviewInputError("managed review directory is not owner controlled")
-    if progress.exists() or progress.is_symlink():
-        info = progress.lstat()
-        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1:
-            raise HumanReviewInputError("managed review progress path is not a private regular file")
-    return progress.parent / _RECEIVER_SESSION_NAME
+    return private / _RECEIVER_SESSION_NAME
 
 
 def _publish_receiver_session(path: Path, url: str) -> tuple[Path, int, int, bytes]:
@@ -1219,7 +1217,12 @@ def main(argv: list[str] | None = None) -> int:
                     recovery_command="provide a state file valid under the admitted schema bundle",
                 ) from exc
 
-        port = args.port if args.port else _pick_free_port()
+        inherited_listener = None
+        if receiver_path is not None:
+            inherited_listener = _inherited_bridge()._take_review_listener(args.out)
+            port = inherited_listener.getsockname()[1]
+        else:
+            port = args.port if args.port else _pick_free_port()
         token = secrets.token_hex(16)
         shutdown_event = threading.Event()
         handler = make_handler_class(
@@ -1234,7 +1237,15 @@ def main(argv: list[str] | None = None) -> int:
             state_validator=state_validator,
             state_result_path=args.out.parent / _STATE_RESULT_FILENAME,
         )
-        server = ThreadingHTTPServer(("127.0.0.1", port), handler)
+        if inherited_listener is None:
+            server = ThreadingHTTPServer(("127.0.0.1", port), handler)
+        else:
+            server = ThreadingHTTPServer(("127.0.0.1", port), handler, bind_and_activate=False)
+            server.socket.close()
+            server.socket = inherited_listener
+            server.server_address = ("127.0.0.1", port)
+            server.server_name = "localhost"
+            server.server_port = port
         url = f"http://127.0.0.1:{port}/?token={token}"
 
         server_thread = threading.Thread(target=server.serve_forever, daemon=True)

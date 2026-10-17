@@ -1407,13 +1407,25 @@ def _terminate_process_group(process: subprocess.Popen, *, grace_seconds: float 
 _REVIEW_SESSION_NAME = ".astrid-human-review-session.json"
 
 
+def _owned_review_session_path(attempt: Path) -> Path:
+    path = attempt / "outputs" / _REVIEW_SESSION_NAME
+    if attempt != attempt.resolve(strict=False) or path.parent != path.parent.resolve(strict=False):
+        raise HostError("review receiver attempt alias")
+    return path
+
+
 def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
-                                  previous: tuple[int, int, bytes] | None = None
+                                  previous: tuple[int, int, bytes] | None = None,
+                                  expected_listener: Any = None
                                   ) -> tuple[int, int, bytes] | None:
     """Retain exact private bytes while the original action owner is observable."""
-    path = attempt / _REVIEW_SESSION_NAME
-    if attempt != attempt.resolve(strict=False):
-        raise HostError("review receiver attempt alias")
+    path = _owned_review_session_path(attempt)
+    expected_port = None
+    if expected_listener is not None:
+        from ._review_listener import _RetainedReviewListener
+        if type(expected_listener) is not _RetainedReviewListener:
+            raise HostError("review receiver requires its original retained listener")
+        expected_port = expected_listener.endpoint()
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except FileNotFoundError:
@@ -1439,6 +1451,7 @@ def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
                  and bool(row["process_birth_id"])
                  and _process_birth_identity(process.pid) == row["process_birth_id"]
                  and url.scheme == "http" and url.hostname == "127.0.0.1" and bool(url.port)
+                 and (expected_port is None or url.port == expected_port)
                  and url.path == "/" and not url.fragment and not url.username and not url.password
                  and re.fullmatch(r"token=[0-9a-f]{32}", url.query) is not None)
     except (ValueError, TypeError, KeyError, AttributeError):
@@ -1450,7 +1463,7 @@ def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
 
 def _retire_owned_review_session(attempt: Path, snapshot: tuple[int, int, bytes] | None) -> None:
     """Use only a previously retained observation, after positive child cleanup."""
-    path = attempt / _REVIEW_SESSION_NAME
+    path = _owned_review_session_path(attempt)
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except FileNotFoundError:
@@ -1953,6 +1966,7 @@ class _ConfinementPolicy:
     renderer_transport: Any = None
     renderer_reads: Any = None
     excluded_python_roots: tuple[Path, ...] = ()
+    review_listener: Any = None
 
 
 @dataclass(frozen=True)
@@ -2164,6 +2178,7 @@ class _ConfinedLaunchPlan:
     retained_process_only: bool = False
     child_bridge_launch: Any = None
     renderer_profile: Any = None
+    review_listener: Any = None
 
     def subprocess_options(self) -> dict[str, Any]:
         if self.renderer_profile is not None:
@@ -2176,6 +2191,11 @@ class _ConfinedLaunchPlan:
                 "close_fds": True, "pass_fds": self.pass_fds,
                 "stdin": subprocess.PIPE, "stdout": subprocess.PIPE,
                 "stderr": subprocess.PIPE}
+        if self.review_listener is not None:
+            from ._review_listener import _RetainedReviewListener
+            if type(self.review_listener) is not _RetainedReviewListener:
+                raise HostError("review listener requires its original Host owner")
+            options["stdin"] = self.review_listener.consume()
         if self.child_bridge_launch is not None:
             options["pass_fds"] = ()
             options["_child_bridge_launch"] = self.child_bridge_launch
@@ -2202,6 +2222,19 @@ def _wan_creation_control_launch_plan(
         argv, policy=replace(policy, workload_process_creation=False),
         parent_environment=parent_environment,
     )
+
+
+def _renderer_browser_read_rules(browser: Path, quote: Callable[[Path], str]) -> list[str]:
+    """Project the already signature-qualified browser's installed code closure."""
+    contents = browser.parent.parent
+    return [
+        # NSBundle inspects the app directory itself before reading Contents.
+        # Ancestors need metadata, never directory listings or recursive data.
+        *(f'(allow file-read-metadata (literal "{quote(p)}"))' for p in contents.parents),
+        f'(allow file-read* (literal "{quote(contents.parent)}"))',
+        f'(allow file-read* (subpath "{quote(contents)}"))',
+        f'(allow file-map-executable (subpath "{quote(contents)}"))',
+    ]
 
 
 def _confined_launch_plan(
@@ -2412,6 +2445,12 @@ def _confined_launch_plan(
         rules.extend(f'(allow file-read* (subpath "{quote(p)}"))' for p in qualified_roots)
         rules.extend(f'(allow file-map-executable (subpath "{quote(p)}"))' for p in qualified_roots)
         rules.extend(f'(allow file-read* (literal "{quote(p)}"))' for p in qualified_literals)
+    if policy.review_listener is not None:
+        from ._review_listener import _RetainedReviewListener
+        if type(policy.review_listener) is not _RetainedReviewListener or not policy.workload_process_creation:
+            raise HostError("review listener requires its original Host launch")
+        port = policy.review_listener.validate(policy)
+        rules.extend((f'(allow network-inbound (local tcp4 "localhost:{port}"))', '(deny network-bind)'))
     if policy.renderer_transport is not None:
         from .renderer_transport import RetainedRendererTransport
 
@@ -2422,9 +2461,7 @@ def _confined_launch_plan(
         if browser is not None:
             # Signature-qualified installed app closure; never a task path or
             # implicit Remotion browser download/cache.
-            browser_root = browser.parent.parent
-            rules.append(f'(allow file-read* (subpath "{quote(browser_root)}"))')
-            rules.append(f'(allow file-map-executable (subpath "{quote(browser_root)}"))')
+            rules.extend(_renderer_browser_read_rules(browser, quote))
         # Inbound permits adopting/accepting the already-listening socket.
         # Bind stays denied, including wildcard bind on these same ports.
         rules.extend(f'(allow network-inbound (local tcp4 "localhost:{port}"))' for port in ports[:1])
@@ -2458,7 +2495,8 @@ def _confined_launch_plan(
                                    renderer_profile=retained)
     return _ConfinedLaunchPlan((sandbox, "-p", profile, str(executable), *argv[1:]),
                                working, tuple(sorted(env.items())), descriptors,
-                               retained_process_only=not policy.workload_process_creation)
+                               retained_process_only=not policy.workload_process_creation,
+                               review_listener=policy.review_listener)
 
 
 def _filesystem_sandbox_profile(policy: _FilesystemSandboxPolicy, attempt: Path) -> str:
@@ -5973,7 +6011,7 @@ class GenericPackHost:
     def _workload_launch_plan(
         self, argv: Sequence[str], *, attempt: Path, cwd: Path | None,
         environment: Mapping[str, str], inherited_fds: tuple[int, ...],
-        broker_endpoint: str | None, child_bridge: Any = None,
+        broker_endpoint: str | None, child_bridge: Any = None, review_port: int | None = None,
     ) -> _ConfinedLaunchPlan:
         policy = self._required_confinement_policy(attempt)
         if self._attempt_claim_authority is not None:
@@ -5989,13 +6027,23 @@ class GenericPackHost:
             if policy.pass_fds:
                 raise HostError("child bridge cannot add caller-selected descriptors")
             bridge_launch = child_bridge.launch_binding()
+            if review_port is not None:
+                from ._review_listener import _RetainedReviewListener
+                record = self.capabilities.get("editorial.human_review")
+                bridge_launch.review_listener = _RetainedReviewListener(bridge_launch, policy, record, review_port)
+                policy = replace(policy, review_listener=bridge_launch.review_listener)
             policy = replace(policy, pass_fds=bridge_launch.descriptors)
             self._confinement_policy = policy
             inherited_fds = bridge_launch.descriptors
-        plan = _confined_launch_plan(
-            argv, policy=policy, cwd=cwd, parent_environment=environment,
-            broker_endpoint=broker_endpoint or None,
-        )
+        try:
+            plan = _confined_launch_plan(
+                argv, policy=policy, cwd=cwd, parent_environment=environment,
+                broker_endpoint=broker_endpoint or None,
+            )
+        except BaseException:
+            if bridge_launch is not None and bridge_launch.review_listener is not None:
+                bridge_launch.review_listener.close()
+            raise
         if set(inherited_fds) != set(policy.pass_fds):
             raise HostError("worker descriptors differ from host confinement policy")
         if bridge_launch is not None:
@@ -9000,6 +9048,7 @@ class GenericPackHost:
             plan = self._workload_launch_plan(
                 argv, attempt=attempt, cwd=cwd, environment=env,
                 inherited_fds=inherited_fds, broker_endpoint=broker_endpoint, child_bridge=child_bridge,
+                review_port=values.get("port", 0) if record.id == "editorial.human_review" and child_bridge is not None else None,
             )
             process = popen_owned_group(list(plan.argv), **plan.subprocess_options(), text=True)
             self._track_process(process)
@@ -9015,6 +9064,10 @@ class GenericPackHost:
                     raise HostError("child pipe bootstrap failed: " + self._scrub_secret_text(
                         (diagnostic or "")[-3500:], secret_values)) from error
         except BaseException:
+            if child_bridge is not None and child_bridge._launch_binding is not None:
+                listener = child_bridge._launch_binding.review_listener
+                if listener is not None:
+                    listener.close()
             if remotion_lease is not None:
                 remotion_lease.close()
             raise
@@ -9079,7 +9132,7 @@ class GenericPackHost:
                     remotion_bridge.check()
                 observe_tree(process)
                 if review_session:
-                    review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot)
+                    review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot, plan.review_listener)
                 # Storage, evidence and Runtime-state checks walk the attempt
                 # tree and call the Runtime; sample them at a bounded rate.
                 if time.monotonic() >= guards_due:
@@ -9169,7 +9222,7 @@ class GenericPackHost:
                 observation_error = None
                 if review_session:
                     try:
-                        review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot)
+                        review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot, plan.review_listener)
                     except Exception as exc:
                         observation_error = exc
                 _terminate_process_group(process)
@@ -9181,6 +9234,10 @@ class GenericPackHost:
                 self._latch_cleanup_uncertainty(str(exc))
                 raise HostError(f"owned command cleanup uncertain: {exc}") from exc
             finally:
+                if child_bridge is not None and child_bridge._launch_binding is not None:
+                    listener = child_bridge._launch_binding.review_listener
+                    if listener is not None:
+                        listener.close()
                 self._untrack_process(process)
                 if remotion_lease is not None:
                     try:

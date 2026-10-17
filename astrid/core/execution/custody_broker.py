@@ -79,8 +79,9 @@ def _validate_pipe_binding(value: object) -> tuple[int, int]:
 
 
 def _validate_child_bridge_binding(value, *, role='command', argv=None, run_id=None):
-    if (type(value) is not dict or set(value) != {
-            'purpose', 'role', 'endpoints', 'argv_digest', 'owner_epoch', 'run_id', 'claim_digest'}
+    if (type(value) is not dict or set(value) not in ({
+            'purpose', 'role', 'endpoints', 'argv_digest', 'owner_epoch', 'run_id', 'claim_digest'}, {
+            'purpose', 'role', 'endpoints', 'argv_digest', 'owner_epoch', 'run_id', 'claim_digest', 'review_listener'})
             or value['purpose'] != 'child_bridge' or value['role'] != role or role != 'command'
             or type(value['run_id']) is not str or not 0 < len(value['run_id']) <= 128
             or run_id is not None and value['run_id'] != run_id
@@ -92,6 +93,24 @@ def _validate_child_bridge_binding(value, *, role='command', argv=None, run_id=N
             or type(value['owner_epoch']) is not str
             or re.fullmatch(r'(?:sha256:)?[0-9a-f]{64}', value['owner_epoch']) is None):
         raise CustodyError('child bridge bootstrap differs from matched command launch')
+    if 'review_listener' in value:
+        selected = value['review_listener']
+        if (type(selected) is not dict or set(selected) != {
+                'fd', 'device', 'inode', 'host', 'port', 'attempt',
+                'capability_id', 'capability_digest', 'source_digest', 'socket_digest'}
+                or type(selected['fd']) is not int or selected['fd'] != 0
+                or selected['host'] != '127.0.0.1'
+                or type(selected['port']) is not int or not 1 <= selected['port'] <= 65535
+                or any(type(selected[k]) is not int or selected[k] < 0 for k in ('device', 'inode'))
+                or type(selected['socket_digest']) is not str
+                or re.fullmatch(r'[0-9a-f]{64}', selected['socket_digest']) is None
+                or selected['capability_id'] != 'editorial.human_review'
+                or any(type(selected[k]) is not str
+                       or re.fullmatch(r'(?:sha256:)?[0-9a-f]{64}', selected[k]) is None
+                       for k in ('capability_digest', 'source_digest'))
+                or type(selected['attempt']) is not str or not Path(selected['attempt']).is_absolute()
+                or str(Path(selected['attempt']).resolve(strict=True)) != selected['attempt']):
+            raise CustodyError('review listener differs from matched command launch')
     return _validate_pipe_binding(value['endpoints'])
 
 
@@ -3172,6 +3191,19 @@ def child_exec_from_environment() -> int:
             raise CustodyError('child bridge cannot inherit custody control pipes')
         bridge_fds = _validate_child_bridge_binding(child_bridge, role=role, argv=argv,
             run_id=os.environ.get('ASTRID_RUNTIME_CUSTODY_RUN_ID'))
+        if 'review_listener' in child_bridge:
+            selected = child_bridge['review_listener']
+            listener = socket.socket(fileno=0)
+            try:
+                info = os.fstat(0)
+                if (listener.family != socket.AF_INET
+                        or listener.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE) != socket.SOCK_STREAM
+                        or listener.getsockname() != ('127.0.0.1', selected['port'])
+                        or (info.st_dev, info.st_ino) != (selected['device'], selected['inode'])):
+                    raise CustodyError('review listener inherited endpoint changed')
+            finally:
+                listener.detach()
+
     if (bool(pipe_fds) != (role == 'engine' or command_channel)
             or (command_channel and role not in {'command', 'host'})
             or _COMMAND_INVENTORY_FD in os.environ or 'ASTRID_ENGINE_CONTROL_FD' in os.environ):
