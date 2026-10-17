@@ -851,10 +851,6 @@ def current_process_audit_token(pid: int) -> dict[str, object]:
     task_self = ctypes.c_uint32.in_dll(library, "mach_task_self_").value
     task_name = ctypes.c_uint32(0)
     result = int(library.task_name_for_pid(task_self, int(pid), ctypes.byref(task_name)))
-    if result != 0:
-        raise NativeTokenCaptureError(f"final-ready Runtime task-name port is unavailable (substage=task_name_for_pid, kern_return={result}, candidate_pid={pid})",
-                                      substage="task_name_for_pid", kern_return=result,
-                                      port_acquired=bool(task_name.value))
 
     def read_token(substage: str) -> list[int]:
         token = _AuditToken()
@@ -873,6 +869,10 @@ def current_process_audit_token(pid: int) -> dict[str, object]:
 
     primary_error = None
     try:
+        if result != 0 or not task_name.value:
+            raise NativeTokenCaptureError(f"final-ready Runtime task-name port is unavailable (substage=task_name_for_pid, kern_return={result}, candidate_pid={pid})",
+                                          substage="task_name_for_pid", kern_return=result,
+                                          port_acquired=bool(task_name.value))
         first = read_token("task_info_first")
         bound_pid = ctypes.c_int(0)
         result = int(library.pid_for_task(task_name.value, ctypes.byref(bound_pid)))
@@ -888,8 +888,8 @@ def current_process_audit_token(pid: int) -> dict[str, object]:
         primary_error = error
         raise
     finally:
-        result = int(library.mach_port_deallocate(task_self, task_name.value))
-        if type(primary_error) is NativeTokenCaptureError:
+        result = int(library.mach_port_deallocate(task_self, task_name.value)) if task_name.value else 0
+        if type(primary_error) is NativeTokenCaptureError and task_name.value:
             primary_error.capture_failure["port_release_succeeded"] = result == 0
         if result != 0:
             release_error = NativeTokenCaptureError(f"final-ready Runtime task-name port release failed (substage=mach_port_deallocate, kern_return={result}, candidate_pid={pid})",
@@ -2417,6 +2417,11 @@ class RoleBoundCustodyBroker:
         # Preserve the validated lexical venv executable for exec. Resolving a
         # venv symlink here would silently leave its installed environment.
         normalized = [lexical_executable, *list(argv[1:])]
+        executable_stat = resolved.stat()
+        self._post_exec_executable = {
+            "path": str(resolved), "device": executable_stat.st_dev,
+            "inode": executable_stat.st_ino,
+        }
         if self.role not in {'command', 'engine', 'engine_listener', 'host', 'relay'}:
             raise CustodyError('custody role has no matched exec consumer')
         hosted_launch = getattr(self, 'hosted_launch', None)
@@ -2700,6 +2705,84 @@ class RoleBoundCustodyBroker:
         self.chain_head = str(event["event_digest"])
         _atomic_owner_json(self.ledger_path, {**snapshot, "chain_digest": self.chain_head})
 
+    def _post_exec_executable_identity(self, pid: int, anchor: Mapping[str, int]) -> dict[str, object]:
+        # This observation only fences reacquisition; it never grants token authority.
+        if _start_anchor(_darwin_process_start(pid)) != anchor:
+            raise CustodyError("bootstrap incarnation changed before executable observation")
+        library = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+        library.proc_pidpath.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32]
+        library.proc_pidpath.restype = ctypes.c_int
+        path = ctypes.create_string_buffer(4096)
+        if library.proc_pidpath(pid, path, len(path)) <= 0:
+            raise CustodyError("post-exec executable identity is unavailable")
+        resolved = Path(os.fsdecode(path.value)).resolve(strict=True)
+        observed_stat = resolved.stat()
+        observed = {"path": str(resolved), "device": observed_stat.st_dev, "inode": observed_stat.st_ino}
+        if (observed != self._post_exec_executable
+                or _start_anchor(_darwin_process_start(pid)) != anchor):
+            raise CustodyError("post-exec executable or bootstrap incarnation changed")
+        return observed
+
+    def _capture_post_exec_token(self, pid, anchor, pre, deadline):
+        first_failure = None
+        executable = None
+        try:
+            while time.monotonic() < deadline:
+                if first_failure is not None:
+                    if self._post_exec_executable_identity(pid, anchor) != executable:
+                        raise CustodyError("post-exec executable changed before reacquisition")
+                if time.monotonic() >= deadline:
+                    break
+                try:
+                    candidate = _bootstrap_anchored_token(pid, anchor)
+                except NativeTokenCaptureError as error:
+                    # SETEXEC may invalidate a task-name port between task_info
+                    # and pid_for_task. Only this observed failure is retryable,
+                    # and only after the old port has been successfully released.
+                    if first_failure is None:
+                        first_failure = error
+                        self.registration["post_exec_capture_failure"] = {
+                            **error.capture_failure,
+                            "error_type": type(error).__name__,
+                            "message": str(error),
+                            **({"port_release_failure": dict(error.port_release_error.capture_failure)}
+                               if hasattr(error, "port_release_error") else {}),
+                        }
+                        self._persist("registration_post_exec_capture_failed")
+                    failure = error.capture_failure
+                    if (type(error) is not NativeTokenCaptureError
+                            or failure.get("substage") != "pid_for_task"
+                            or type(failure.get("kern_return")) is not int
+                            or failure["kern_return"] != 5
+                            or failure.get("port_acquired") is not True
+                            or failure.get("port_release_succeeded") is not True
+                            or hasattr(error, "port_release_error")):
+                        raise
+                    observed = self._post_exec_executable_identity(pid, anchor)
+                    if executable is not None and observed != executable:
+                        raise CustodyError("post-exec executable changed during reacquisition")
+                    executable = observed
+                else:
+                    _validated_token(candidate, anchor)
+                    if first_failure is not None:
+                        if self._post_exec_executable_identity(pid, anchor) != executable:
+                            raise CustodyError("post-exec executable changed during reacquisition")
+                    version = candidate.get("pidversion")
+                    if type(version) is not int:
+                        raise CustodyError("post-exec audit token pidversion is invalid")
+                    if version != pre["pidversion"]:
+                        # XNU allocates exec pidversions from a global counter;
+                        # a valid transition changes it, not necessarily by one.
+                        if time.monotonic() >= deadline:
+                            raise CustodyError("post-exec audit token capture exceeded its deadline")
+                        return candidate
+                time.sleep(min(0.005, max(0.0, deadline - time.monotonic())))
+            raise CustodyError("post-exec audit token did not bind the registered process")
+        except BaseException as error:
+            if first_failure is not None and error is not first_failure:
+                raise error from first_failure
+            raise
+
     def _serve(self) -> None:
         connection: socket.socket | None = None
         try:
@@ -2789,17 +2872,7 @@ class RoleBoundCustodyBroker:
             _send_frame(connection, self.ack)
             self._observation_phase = "post-exec-token"
             deadline = time.monotonic() + self.timeout
-            post: dict[str, object] | None = None
-            while time.monotonic() < deadline:
-                # The socket closes in trusted bootstrap. Fresh task-token
-                # capture stays inside its authenticated exec-stable birth fence.
-                candidate = _bootstrap_anchored_token(int(frame['pid']), bootstrap_anchor)
-                if candidate["pidversion"] != pre["pidversion"]:
-                    post = candidate
-                    break
-                time.sleep(0.005)
-            if post is None or post["pid"] != frame["pid"] or post["uid"] != os.getuid():
-                raise CustodyError("post-exec audit token did not bind the registered process")
+            post = self._capture_post_exec_token(int(frame['pid']), bootstrap_anchor, pre, deadline)
             self._observation_phase = "post-exec-identity"
             after = self.identity_provider(int(frame["pid"]))
             if after is None or any(after.get(k) != before.get(k) for k in ("pid", "birth_id", "uid")):
