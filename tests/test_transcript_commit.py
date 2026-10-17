@@ -11,6 +11,7 @@ import pytest
 
 from runtime_protocol.errors import AuthorizationError, ConflictError, NotFoundError, ValidationError
 from test_timeline_accept import fixture, wire  # noqa: F401
+from test_authoring_scene import bound  # noqa: F401 - shared narrow scene transport fixture
 from test_selected_media_commit import snapshot, mutate
 
 
@@ -18,13 +19,12 @@ IDENTITY = dict(actor="fixture-writer", scopes=["projects:write", "projects:read
 
 
 @pytest.fixture(autouse=True)
-def synthetic_scene(monkeypatch):
-    from astrid.core.timeline import scene_answers
+def synthetic_scene(monkeypatch, bound):
+    # Retain real request-port/session/evaluation completion. Only the private
+    # renderer transport/source observation is synthetic, as named by bound.
     from astrid.sdk.timeline.checkout import Checkout
-    class Client:
-        def query_scene(self, *, revision_digest, scene, frames):
-            return [dict(frame=f, coverage="COVERED", content="CONTENT", findings=[], layers=[]) for f in frames]
-    monkeypatch.setattr(scene_answers, "_client", lambda: Client())
+    bound.s._timeline_commit_provider = None
+    monkeypatch.setitem(IDENTITY, "_credential_binding", bound.identity["_credential_binding"])
     monkeypatch.setattr(Checkout, "_native_outline_integrity", lambda *a: None)
 
 

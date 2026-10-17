@@ -29,7 +29,9 @@ def validate_timeline_commit_provider(provider):
     if (type(getattr(provider, "interface_version", None)) is not int
             or provider.interface_version != PROVIDER_INTERFACE_VERSION
             or getattr(provider, "contract_digest", None) != SCHEMA_DIGEST
-            or not callable(getattr(provider, "commit", None))):
+            or not callable(getattr(provider, "commit", None))
+            or (getattr(provider, "provider_id", None) == "astrid-v1"
+                and getattr(provider, "requires_scene_evaluation", None) is not True)):
         raise ValidationError("timeline commit provider interface/contract mismatch")
 
 
@@ -40,15 +42,17 @@ class RuntimeCommitPort:
     this boundary.
     There is no service, store, connection, or caller-selected authority field.
     """
-    __slots__ = ("__lookup", "__head", "__revision", "__revision_closure", "__revisions", "__evidence", "__accept", "__selected_media", "__narration_take", "__transcript_source")
+    __slots__ = ("__lookup", "__head", "__revision", "__revision_closure", "__revisions", "__evidence", "__accept", "__selected_media", "__narration_take", "__transcript_source", "__scene_evaluator", "__close", "__validate_scene")
 
-    def __init__(self, *, lookup, head, revision, revision_closure, revisions, evidence, accept, selected_media, narration_take, transcript_source):
+    def __init__(self, *, lookup, head, revision, revision_closure, revisions, evidence, accept, selected_media, narration_take, transcript_source, scene_evaluator=None, close=lambda: None, validate_scene=None):
         self.__lookup, self.__head, self.__revision = lookup, head, revision
         self.__revision_closure = revision_closure
         self.__revisions, self.__evidence, self.__accept = revisions, evidence, accept
         self.__selected_media = selected_media
         self.__narration_take = narration_take
         self.__transcript_source = transcript_source
+        self.__scene_evaluator, self.__close = scene_evaluator, close
+        self.__validate_scene = validate_scene
 
     def lookup_request(self): return self.__lookup()
     def head(self): return self.__head()
@@ -61,6 +65,15 @@ class RuntimeCommitPort:
         return self.__narration_take(refs)
     def resolve_transcript_source(self, request, selection):
         return self.__transcript_source(request, selection)
+    def scene_evaluator(self, candidate):
+        if self.__scene_evaluator is None:
+            raise AuthorizationError("authoring scene owner is unavailable")
+        return self.__scene_evaluator(candidate)
+    def validate_scene(self, candidate):
+        if self.__validate_scene is None:
+            raise AuthorizationError("missing scene validation")
+        self.__validate_scene({"result": {"canonical_document": candidate}})
+    def close(self): self.__close()
     def accept(self, request): return self.__accept(request)
 
 
@@ -512,7 +525,7 @@ class TimelineCommitAcceptance:
                 values = values[index + 1:]
             return values[:limit]
 
-    def accept(self, request, *, identity, _selected_media=(), _narration_takes=(), _revision_closures=(), _transcript_check=None):
+    def accept(self, request, *, identity, _selected_media=(), _narration_takes=(), _revision_closures=(), _transcript_check=None, _scene_check=None):
         """Accept an internal COMMIT result. No HTTP caller can supply this template.
 
         A single outer transaction includes nested existing publication, evidence,
@@ -634,6 +647,8 @@ class TimelineCommitAcceptance:
                     _object(publication, ("parent_composition", "shot_revisions", "internal_timeline_revisions"))
                 candidate = before_payload if publication is None else publication["parent_composition"]
                 self._require_writable_composition(before_payload, candidate)
+                if _scene_check is not None:
+                    _scene_check(request)
                 revision_id = publication_id = None
                 if publication is not None:
                     published = self.publish_parent_composition(project_id, timeline_id, {
@@ -692,6 +707,8 @@ class TimelineCommitAcceptance:
                     restored_from_revision_id=None, accepted_at=timestamp, source=request["source"],
                     asserted_actor=request.get("asserted_actor"), publisher=publisher,
                     label=request.get("label"), evidence_digest=evidence_digest)
+                if _scene_check is not None:
+                    _scene_check(request)
                 self._command_record(KIND, aggregate, key, request["request_hash"],
                                      {"result": result, "evidence": evidence, "summary": summary,
                                       "label": request.get("label"), "reason": request.get("reason"),
@@ -907,6 +924,23 @@ class TimelineCommitAcceptance:
                      if isinstance(identity, dict) else copy.deepcopy(identity))
         project, timeline, key = original["project_id"], original["timeline_id"], original["request_id"]
         request_hash = digest(original)
+        scene_invocation = None
+        def scene_evaluator(candidate):
+            nonlocal scene_invocation
+            from .authoring_scene import RequestSceneEvaluation
+            if scene_invocation is None:
+                scene_invocation = RequestSceneEvaluation(self, original, principal)
+            return scene_invocation.evaluator(candidate)
+
+        def check_scene(prepared):
+            if scene_invocation is None:
+                raise AuthorizationError("missing request-scoped scene evaluation")
+            scene_invocation.accept(prepared)
+
+        def close_scene():
+            if scene_invocation is not None:
+                scene_invocation.close()
+
         selections = []
         for command in _command_leaves(original["change"].get("commands", [])):
             if command.get("op") in {"timeline.add", "shot-group.set"} and isinstance(command.get("args"), dict) and "media" in command["args"]:
@@ -1158,7 +1192,9 @@ class TimelineCommitAcceptance:
                                              _selected_media=dependencies,
                                              _narration_takes=copy.deepcopy(list(captured_takes.values())),
                                              _revision_closures=copy.deepcopy(list(captured_closures.values())),
-                                             _transcript_check=check_transcripts))
+                                             _transcript_check=check_transcripts,
+                                             _scene_check=check_scene if getattr(getattr(self, "_timeline_commit_provider", None),
+                                                 "requires_scene_evaluation", False) or scene_invocation is not None else None))
             accepted_revision = accepted["stored_result"].get("accepted_revision_id")
             if accepted_revision:
                 permitted_revisions.add(accepted_revision)
@@ -1171,7 +1207,7 @@ class TimelineCommitAcceptance:
             revision_closure=revision_closure,
             revisions=lambda options: read(lambda: self.revisions(project, timeline, copy.deepcopy(options))),
             evidence=evidence, accept=accept, selected_media=selected_media, narration_take=narration_take,
-            transcript_source=transcript_source,
+            transcript_source=transcript_source, scene_evaluator=scene_evaluator, close=close_scene, validate_scene=check_scene,
         )
 
     def commit_timeline(self, project_id, timeline_id, request, *, idempotency_key, identity):
@@ -1205,6 +1241,9 @@ class TimelineCommitAcceptance:
         port = self._request_commit_port(request, identity)
         try:
             prepared = provider.commit(copy.deepcopy(request), port)
+            if (getattr(provider, "requires_scene_evaluation", False) and isinstance(prepared, dict)
+                    and prepared.get("status") == "preview"):
+                port.validate_scene(prepared["canonical_document"])
         except (AuthorizationError, ForbiddenError):
             raise
         except (ConnectionError, TimeoutError):
@@ -1213,6 +1252,8 @@ class TimelineCommitAcceptance:
             result["error"] = dict(code="runtime_unavailable", message="Astrid commit provider failed; outcome may be unknown",
                                    hint="Acceptance may already be durable", next_action="Retry the original request id unchanged")
             return result
+        finally:
+            port.close()
         if not isinstance(prepared, dict):
             raise ValidationError("commit provider must return CommitResult")
         _object(prepared, set(result_template(request, request_hash)), ("shot_groups",))

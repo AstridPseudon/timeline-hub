@@ -830,7 +830,21 @@ class RuntimeDaemon:
                     runtime_instance_id=self.instance_id,
                     credential_file=self.worker_credential_path,
                 )
-            return self.local_worker_launcher.start(profile_id, expected_workspace_uuid)
+            result = self.local_worker_launcher.start(profile_id, expected_workspace_uuid)
+            if self.authoring_profile == "astrid":
+                from .authoring_scene import SelectedHostScene
+                handle = self.local_worker_preparer.current_handle()
+                profile = self.local_worker_profiles[profile_id]
+                with self.service.store._mutex:
+                    old = getattr(self.service, "_authoring_scene_selection", None)
+                    if old is None or old.handle is not handle:
+                        relay = getattr(self.service, "_authoring_scene_relay", None)
+                        if relay is not None:
+                            relay.close()
+                        self.service._authoring_scene_relay = None
+                        self.service._authoring_scene_selection = SelectedHostScene(
+                            self.service, self.local_worker_preparer, profile, handle)
+            return result
 
     def _cleanup_exact_remote_credential(self, task_id, activation_id):
         """Reconcile interrupted file deletion using committed, secret-free hashes.

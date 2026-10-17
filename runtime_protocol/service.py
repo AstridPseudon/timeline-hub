@@ -615,6 +615,8 @@ class RuntimeService(TimelineCommitAcceptance):
         self._task_authority_owner = None
         self._task_credentials = None
         self._preparation_relay = None
+        self._authoring_scene_relay = None
+        self._authoring_scene_selection = None
         self.runtime_instance_id = None
         self._verified = False
         self._admission_failure = None
@@ -673,6 +675,11 @@ class RuntimeService(TimelineCommitAcceptance):
     def close(self):
         with self.store._mutex:
             self._preparation_relay = None
+            relay = self._authoring_scene_relay
+            self._authoring_scene_relay = None
+            self._authoring_scene_selection = None
+            if relay is not None:
+                relay.close()
         provider = getattr(self, "_timeline_commit_provider", None)
         self._timeline_commit_provider = None
         try:
