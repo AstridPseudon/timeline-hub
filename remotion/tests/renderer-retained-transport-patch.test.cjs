@@ -51,3 +51,20 @@ test('wrong package version refuses before mutation', async (t) => {
   assert.throws(() => apply(temporary), /requires/);
   for (const entry of manifest.files) assert.equal(hash(fs.readFileSync(path.join(renderer, entry.path))), entry.before_sha256);
 });
+test('actual dependency rejects retained metadata before compositor setup', async () => {
+  const {serveStatic} = require(path.join(reference, 'node_modules/@remotion/renderer/dist/serve-static.js'));
+  const previous = process.env.ASTRID_REMOTION_RETAINED_ENDPOINT;
+  try {
+    // Invalid cache options also refuse before compositor birth. The retained
+    // guard must precede that setup entirely, including its option validation.
+    process.env.ASTRID_REMOTION_RETAINED_ENDPOINT = JSON.stringify({fd: 1, host: '127.0.0.1', port: 42, binding: '1'.repeat(64)});
+    await assert.rejects(serveStatic(null, {port: 42, offthreadVideoCacheSizeInBytes: -1}), /Invalid retained renderer endpoint/);
+    process.env.ASTRID_REMOTION_RETAINED_ENDPOINT = JSON.stringify({fd: 0, host: '127.0.0.1', port: 43, binding: '1'.repeat(64)});
+    await assert.rejects(serveStatic(null, {port: 42, offthreadVideoCacheSizeInBytes: -1}), /Retained renderer port differs/);
+    process.env.ASTRID_REMOTION_RETAINED_ENDPOINT = '{';
+    await assert.rejects(serveStatic(null, {port: 42, offthreadVideoCacheSizeInBytes: -1}), SyntaxError);
+  } finally {
+    if (previous === undefined) delete process.env.ASTRID_REMOTION_RETAINED_ENDPOINT;
+    else process.env.ASTRID_REMOTION_RETAINED_ENDPOINT = previous;
+  }
+});
