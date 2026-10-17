@@ -70,9 +70,13 @@ const AstridElementHostContext = createContext<AstridElementHost | null>(null);
 // Authored beat loops consume this frame; their pose keys keep the local clock.
 const MotionGlobalFrameContext = createContext<number | undefined>(undefined);
 const useAstridElementHost = () => requireAstridElementHost(useContext(AstridElementHostContext));
-const resolveHostComponent = (host: AstridElementHost, ref: NonNullable<ResolvedTimelineClip['elementRef']>) => (
-  ref.packId ? host.resolveComponent(ref.id, ref.kind, ref.packId) : host.resolveComponent(ref.id, ref.kind)
-);
+const hostElementKind = (kind: NonNullable<ResolvedTimelineClip['elementRef']>['kind']) =>
+  kind === 'transitions' ? 'transition' : kind;
+
+const resolveHostComponent = (host: AstridElementHost, ref: NonNullable<ResolvedTimelineClip['elementRef']>) => {
+  const kind = hostElementKind(ref.kind);
+  return ref.packId ? host.resolveComponent(ref.id, kind, ref.packId) : host.resolveComponent(ref.id, kind);
+};
 
 // Phase 4d (Sprint 5): EFFECT_REGISTRY dispatch.
 //
@@ -490,8 +494,9 @@ const AstridEffectPreviewSequence: FC<{
   const durationInFrames = getClipDurationInFrames(clip, fps);
   if (!Component) return null;
   const ref = clip.elementRef;
-  const owner = ref && host.descriptors.find(candidate => candidate.id === ref.id && candidate.kind === ref.kind
-    && candidate.packId === ref.packId && candidate.revision === ref.revision);
+  const owner = ref && host.descriptors.find(candidate => candidate.id === ref.id
+    && candidate.kind === hostElementKind(ref.kind) && candidate.packId === ref.packId
+    && candidate.revision === ref.revision);
   const params = owner?.packId === 'local' && owner.kind === 'effect' && owner.id === 'end-spanning-layer'
     ? resolveEndSpanningLayerPreviewParams(clip.params, resolvedAssets) : clip.params ?? {};
   return (

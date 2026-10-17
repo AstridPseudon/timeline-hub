@@ -2,6 +2,8 @@ import {
   declareAppTransition,
   prepareScene,
   prepareDeclaredTrack,
+  TransitionAdmissionError,
+  type AppTransition,
   type TransitionDeclaration,
   type PreparedScene,
   type TransitionSpec,
@@ -79,8 +81,19 @@ export const preparePlayerTrack = (
       if (outgoing) legacyTiming.add(index - 1);
       continue;
     }
+    if (incoming.transition.params === null && contributed) {
+      throw new TransitionAdmissionError('transition/invalid-params', 'Contributed transition params must be an object.',
+        'Supply only the pinned supported parameters.');
+    }
+    // Keep explicit null on the source clip. The built-in planner treats null and
+    // absent params alike here, while contributed transitions reject null.
+    const {params, ...transitionInput} = incoming.transition;
+    const declarationTransition: AppTransition = {
+      ...transitionInput,
+      ...(params === null || params === undefined ? {} : {params}),
+    };
     const declaration = declareAppTransition(track.id, outgoing.id,
-      incoming.transition, fps, 'timeline-composition', binding);
+      declarationTransition, fps, 'timeline-composition', binding);
     declarations.push(declaration);
     transitions[index - 1] = declaration.spec;
   }
