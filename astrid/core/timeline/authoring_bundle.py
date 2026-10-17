@@ -1116,7 +1116,7 @@ def _compile_physical_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
     base_parent = _mapping(root.get("base_parent"), "candidate.base_parent")
     expected_head = _string(base_parent.get("revision_id"), "candidate.base_parent.revision_id")
     _string(base_parent.get("content_digest"), "candidate.base_parent.content_digest")
-    _mapping(root.get("base_parent_payload"), "candidate.base_parent_payload")
+    base_parent_payload = _mapping(root.get("base_parent_payload"), "candidate.base_parent_payload")
     parent_payload = _mapping(root.get("parent"), "candidate.parent")
     if "occurrences" in parent_payload:
         raise UnsupportedAuthoringEditError(
@@ -1409,6 +1409,25 @@ def _compile_physical_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
     final_parent = _copy(dict(parent_payload))
     for key, default in {"config": {}, "registry": {}, "clips": []}.items():
         final_parent.setdefault(key, default)
+    if (
+        "clips" in parent_payload
+        and isinstance(final_parent["config"], Mapping)
+        and "clips" in final_parent["config"]
+    ):
+        base_config = _mapping(base_parent_payload.get("config", {}), "candidate.base_parent_payload.config")
+        base_has_mirror = "clips" in base_parent_payload and "clips" in base_config
+        if base_has_mirror and (
+            _canonical_json(base_parent_payload["clips"]) != _canonical_json(base_config["clips"])
+        ):
+            raise AuthoringBundleError("baseline parent clips and config.clips disagree")
+        alternate_clips = _canonical_json(final_parent["config"]["clips"])
+        if _canonical_json(final_parent["clips"]) != alternate_clips:
+            # Commands author the top-level view. Only an untouched duplicate
+            # of the consistent pinned baseline may follow that edit; never
+            # discard an independently authored or initially divergent copy.
+            if not base_has_mirror or alternate_clips != _canonical_json(base_config["clips"]):
+                raise AuthoringBundleError("candidate parent clips and config.clips disagree")
+            final_parent["config"]["clips"] = _copy(final_parent["clips"])
     final_parent["occurrences"] = compiled_occurrences
     parent_digest = _digest(final_parent)
     parent_revision_id = _identity(

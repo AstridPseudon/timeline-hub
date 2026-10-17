@@ -262,6 +262,100 @@ def test_compile_materializes_shared_identity_and_keeps_untouched_content():
     }
 
 
+def _parent_clear_bundle(*, duplicate):
+    parent, _, _ = _closure(shared=False)
+    parent["payload"]["occurrences"] = []
+    opaque = {"null": None, "false": False, "empty": "", "array": [],
+              "object": {}, "literal": {"op": "clear"}}
+    clips = [
+        {"id": "before", "at": 0, "hold": 2, "track": "picture", "clipType": "hold"},
+        {"id": "after", "at": 2, "hold": 2, "track": "picture", "clipType": "hold",
+         "opacity": 0.7, "params": {"sibling": copy.deepcopy(opaque)},
+         "app": {"sentinel": copy.deepcopy(opaque)}, "opaqueUnknown": copy.deepcopy(opaque),
+         "transition": {"type": "cross-fade", "revision": "sha256:transition-r1",
+                        "duration": 0.5, "params": {}},
+         "elementRef": {"id": "cross-fade", "revision": "sha256:transition-r1",
+                        "kind": "transition", "packId": "rendering"}},
+    ]
+    parent["payload"]["clips"] = clips
+    if duplicate:
+        parent["payload"]["config"]["clips"] = copy.deepcopy(clips)
+    else:
+        parent["payload"]["config"].pop("clips")
+    parent["content_digest"] = _digest(parent["payload"])
+    return open_authoring_bundle(
+        parent, shot_revisions=[], internal_timeline_revisions=[]
+    )
+
+
+@pytest.mark.parametrize("duplicate", [True, False], ids=["duplicate-view", "one-view"])
+@pytest.mark.parametrize("present", [("transition", "elementRef"), ("transition",),
+                                    ("elementRef",), ()])
+def test_compile_parent_transition_clear_preserves_exact_siblings(duplicate, present):
+    from astrid.sdk.timeline import commands
+    from astrid.sdk.timeline.checkout import Checkout
+
+    bundle = _parent_clear_bundle(duplicate=duplicate)
+    for parent in (bundle["parent"], bundle["base_parent_payload"]):
+        for clips in [parent["clips"], *([parent["config"]["clips"]] if duplicate else [])]:
+            for field in {"transition", "elementRef"} - set(present):
+                clips[1].pop(field)
+    before = copy.deepcopy(bundle)
+    baseline = compile_authoring_candidate(bundle).publication["parent_composition"]
+    selected = bundle["parent"]["clips"][1]
+    # Preserved App request shape, including explicit absent property guards.
+    expect = {
+        key: {"state": "present", "value": copy.deepcopy(selected[key])}
+        if key in selected else {"state": "absent"}
+        for key in ("track", "at", "hold", "from", "to", "speed", "clipType",
+                    "app.astrid.on", "app.astrid.until", "app.astrid.for",
+                    "transition", "elementRef")
+    }
+    expect["parent/track:picture::kind"] = {"state": "present", "value": "visual"}
+    checkout = Checkout(copy.deepcopy(bundle))
+    commands.execute(checkout, {
+        "op": "clip.set-transition", "select": "parent/clip:after",
+        "resolved": ["parent/clip:after"], "args": {"clear": True}, "expect": expect,
+    })
+    candidate = checkout.document()
+    authored = copy.deepcopy(candidate)
+    compiled = compile_authoring_candidate(candidate).publication
+    expected = copy.deepcopy(baseline)
+    for clips in [expected["clips"], *([expected["config"]["clips"]] if duplicate else [])]:
+        for field in ("transition", "elementRef"):
+            clips[1].pop(field, None)
+    assert compiled["parent_composition"] == expected
+    assert ("clips" in compiled["parent_composition"]["config"]) is duplicate
+    if duplicate:
+        actual = compiled["parent_composition"]
+        assert actual["clips"] == actual["config"]["clips"]
+    assert compiled["content_digest"] == _digest(expected)
+    assert compiled["shot_revisions"] == compiled["internal_timeline_revisions"] == []
+    assert candidate == authored
+    assert bundle == before
+
+
+@pytest.mark.parametrize("divergence", ["baseline", "alternate", "both", "new-mirror", "scalar-type"])
+def test_compile_parent_clip_mirror_refuses_independent_divergence(divergence):
+    bundle = _parent_clear_bundle(duplicate=divergence != "new-mirror")
+    if divergence == "baseline":
+        bundle["base_parent_payload"]["config"]["clips"][0]["opaque"] = "different"
+    else:
+        alternate = bundle["parent"]["config"].setdefault(
+            "clips", copy.deepcopy(bundle["parent"]["clips"])
+        )
+        if divergence == "scalar-type":
+            alternate[0]["at"] = False  # Python equality must not conflate false and 0.
+        else:
+            alternate[0]["opaque"] = "independent edit"
+        if divergence == "both":
+            bundle["parent"]["clips"][1].pop("transition")
+    before = copy.deepcopy(bundle)
+    with pytest.raises(AuthoringBundleError, match="clip.*disagree"):
+        compile_authoring_candidate(bundle)
+    assert bundle == before
+
+
 def test_compact_children_hash_the_complete_publication_without_mutating_authored_bytes():
     parent, shots, timelines = _closure(shared=True)
     candidate = open_authoring_bundle(
