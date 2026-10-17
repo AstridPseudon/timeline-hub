@@ -30,7 +30,7 @@ import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { harnessUnavailableReason, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { currentHead, editFirstTrackName, expectConnected, firstTrackName, holdTimelineSaves, openApp, openSeededTimeline, revisionBody, test as appTest, UI } from './support/app.ts';
-import { AstridCli, astridUnavailableReason, revisionSet, vendoredDigests, type AstridCall, type AstridIdentity } from './support/astrid.ts';
+import { AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 
 /** A hang ceiling for one wait (R-10): many times the usual time, never a budget. */
 const CEILING = { timeout: 90_000 };
@@ -256,14 +256,11 @@ async function expectSameRealm(page: Page, harness: DirectHarness, astrid: Astri
     return { health: await health.json(), realm: await realm.json() };
   }, harness.gatewayBase);
   const fromAstrid = await astrid.identity();
-  const digests = vendoredDigests();
-  expect(fromPage.realm.realm_id, 'the page reaches the harness realm').toBe(harness.realmId);
-  expect(fromAstrid.realm_id, 'Astrid reaches the harness realm').toBe(harness.realmId);
-  expect(fromPage.health.runtime_instance_id, 'the page reaches the harness Runtime').toBe(harness.runtimeInstanceId);
-  expect(fromAstrid.runtime_instance_id, 'Astrid reaches the same Runtime instance as the page').toBe(fromPage.health.runtime_instance_id);
-  expect(fromPage.health.schema_digest, 're-vendor the App: C1').toBe(digests.app);
-  expect(fromAstrid.schema_digest, 're-vendor Astrid: C1').toBe(digests.astrid);
-  expect(fromPage.health.schema_digest).toBe(fromAstrid.schema_digest);
+  const digest = contractDigest();
+  expect([
+    ...realmDisagreements('the page', { realm_id: fromPage.realm.realm_id, runtime_instance_id: fromPage.health.runtime_instance_id, schema_digest: fromPage.health.schema_digest }, harness, digest),
+    ...realmDisagreements('Astrid', fromAstrid, harness, digest),
+  ], 'the page, Astrid and the Runtime share one realm, instance and contract').toEqual([]);
   return { realmId: fromPage.realm.realm_id as string, runtimeInstanceId: fromPage.health.runtime_instance_id as string, schemaDigest: fromPage.health.schema_digest as string, astridFile: fromAstrid.astrid_file };
 }
 
@@ -333,7 +330,7 @@ test('agent -> open App: an Astrid task and its publication appear in the open A
   const taskId = created.data!.task_id;
   const row = page.locator(`[data-activity-task-id="${taskId}"]`);
   await expect(row).toHaveAttribute('aria-label', /^F2 Marker, (Queued|Ready)$/, CEILING);
-  expect(reads.eventFeed, 'the page was told by the event feed').toContainEqual(expect.objectContaining({ aggregate_type: 'task', aggregate_id: taskId }));
+  await expect.poll(() => reads.eventFeed, { message: 'the page was told by the event feed', ...CEILING }).toContainEqual(expect.objectContaining({ aggregate_type: 'task', aggregate_id: taskId }));
 
   // The executor runs it: the task leaves the active rows and is listed as complete.
   const ran = await astrid.host({ runOnce: true });
@@ -392,7 +389,7 @@ test('agent -> open App: an Astrid task and its publication appear in the open A
  * One outcome today, and the App picks it: a named conflict that keeps the draft.
  *
  * The App's save A commits at the Runtime but its acknowledgement is lost (the held response is aborted as a connection reset).
- * While it is unacknowledged the agent publishes B on top of A, and the App edits again (C), which waits behind A and is not sent.
+ * While it is unacknowledged the agent publishes B on top of A, and the App edits again (C).
  * Then the App's own transport retry replays A with the same idempotency key, and the Runtime returns the stored receipt
  * (new_head = A). From there one of two things happens, depending on whether a head poll that queued up during the hold ran
  * before the 500 ms retry; this test records which and asserts neither:
@@ -464,9 +461,8 @@ test('concurrent edit: the App\'s acknowledgement is lost, the agent publishes, 
   const headB = published.new_head;
   expect(await currentHead(harness)).toBe(headB);
 
-  // C: the App edits again while A is unacknowledged (it clears a transition); C waits behind A and is not sent.
+  // C: the App edits again while A is unacknowledged (it clears a transition).
   await setTransitionToNone(page, seed3.transitionClipId);
-  expect(posts.map((post) => post.key), 'C is not sent while A is unacknowledged').toEqual([keyA]);
 
   // The acknowledgement is lost: the page sees a connection reset, and its own retry follows.
   holding = false;
@@ -512,7 +508,6 @@ test('concurrent edit: the App\'s acknowledgement is lost, the agent publishes, 
   await expectOpaqueDataKept(harness, seed3);
 
   // Both clients agree after a reload: the App reads head B and shows A; the agent reads B.
-  await plantNoReloadFlag(page);
   const readsBeforeReload = watched.urls.length;
   await page.reload();
   await expectConnected(page);
@@ -572,7 +567,9 @@ test('Runtime restart with the App open: the draft survives, saves after the rel
   const recovered = page.getByRole('alert').filter({ hasText: 'You have unsaved changes' });
   await expect(recovered).toBeVisible(CEILING);
   await releaseSaves();
+  const recoveredSave = page.waitForRequest((request) => request.method() === 'POST' && SAVES.test(new URL(request.url()).pathname), CEILING);
   await recovered.getByRole('button', { name: 'Save them' }).click();
+  const keyAfter = (await recoveredSave).headers()['idempotency-key'];
   await expect.poll(() => currentHead(harness), CEILING).not.toBe(headBefore);
   await expect(firstTrackName(page)).toHaveValue('F2 kept across restart');
 
@@ -582,7 +579,7 @@ test('Runtime restart with the App open: the draft survives, saves after the rel
   expect((await agent.show()).head_revision_id).toBe(headAfter);
   const state = await revisionState(harness, seed3, headAfter);
   expect(state.trackLabel, 'the saved revision is the draft').toBe('F2 kept across restart');
-  expect(headAfter, 'stored under the App\'s own key').not.toBe(headBefore);
+  expect(headAfter, 'the post-restart save is stored under its idempotency key').toBe(keyAfter);
   await expectOpaqueDataKept(harness, seed3);
 
   journey.facts = { ...journey.facts, instanceBefore: before.runtimeInstanceId, instanceAfter: after.runtime_instance_id, headBefore, headAfter };

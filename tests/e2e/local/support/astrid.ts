@@ -219,24 +219,47 @@ export class AstridCli {
    * harness's realm and Runtime instance, and the App, Astrid and the Runtime agree on the schema digest. Each failure names its cause.
    */
   async preflight(): Promise<AstridIdentity> {
-    const digests = vendoredDigests();
-    if (digests.app !== digests.astrid) {
-      throw new Error(`contract mismatch: the App vendors schema ${digests.app} but Astrid vendors ${digests.astrid}; re-vendor the older one (card C1)`);
-    }
+    const digest = contractDigest();
     const health = await fetch(`${this.harness.runtimeUrl}/v1/health`).then((response) => response.json()) as { schema_digest?: string };
-    if (health.schema_digest !== digests.app) {
-      throw new Error(`contract mismatch: the Runtime serves schema ${health.schema_digest} but the App and Astrid vendor ${digests.app}; re-vendor the clients from this Runtime (card C1)`);
+    if (health.schema_digest !== digest) {
+      throw new Error(`contract mismatch: the Runtime serves schema ${health.schema_digest} but the App and Astrid vendor ${digest}; re-vendor the clients from this Runtime (card C1)`);
     }
     const identity = await this.identity();
     const checkout = realpathSync(ASTRID_CHECKOUT);
     if (!identity.astrid_file.startsWith(checkout + path.sep)) {
       throw new Error(`the wrong Astrid ran: ${identity.astrid_file} is not under ${checkout}; its venv's editable install points elsewhere, so PYTHONPATH must come first`);
     }
-    if (identity.realm_id !== this.harness.realmId) throw new Error(`Astrid is connected to realm ${identity.realm_id}, not the harness's ${this.harness.realmId}`);
-    if (identity.runtime_instance_id !== this.harness.runtimeInstanceId) throw new Error(`Astrid reached Runtime instance ${identity.runtime_instance_id}, not the harness's ${this.harness.runtimeInstanceId}`);
-    if (identity.schema_digest !== digests.app) throw new Error(`Astrid's handshake reports schema ${identity.schema_digest}, not ${digests.app}`);
+    const disagreements = realmDisagreements('Astrid', identity, this.harness, digest);
+    if (disagreements.length) throw new Error(disagreements.join('; '));
     return identity;
   }
+}
+
+/** The one contract digest the App and Astrid both vendor; throws, naming the older client to re-vendor, when they differ. */
+export function contractDigest(): string {
+  const digests = vendoredDigests();
+  if (digests.app !== digests.astrid) {
+    throw new Error(`contract mismatch: the App vendors schema ${digests.app} but Astrid vendors ${digests.astrid}; re-vendor the older one (card C1)`);
+  }
+  return digests.app;
+}
+
+/**
+ * Where what a product saw (its realm, the Runtime instance it reached, the schema digest it reports) differs from the harness's
+ * realm and instance and from the contract digest. Empty when it agrees; each entry names the product and the cause. The single
+ * comparison behind both the preflight and the journey's per-case "same realm" check.
+ */
+export function realmDisagreements(
+  who: string,
+  seen: { realm_id?: string; runtime_instance_id?: string; schema_digest?: string },
+  harness: Pick<DirectHarness, 'realmId' | 'runtimeInstanceId'>,
+  digest: string,
+): string[] {
+  const problems: string[] = [];
+  if (seen.realm_id !== harness.realmId) problems.push(`${who} is connected to realm ${seen.realm_id}, not the harness's ${harness.realmId}`);
+  if (seen.runtime_instance_id !== harness.runtimeInstanceId) problems.push(`${who} reached Runtime instance ${seen.runtime_instance_id}, not the harness's ${harness.runtimeInstanceId}`);
+  if (seen.schema_digest !== digest) problems.push(`${who} reports schema ${seen.schema_digest}, not ${digest}; re-vendor (C1)`);
+  return problems;
 }
 
 function parseEnvelope<T>(args: string[], run: AstridRun): AstridEnvelope<T> {
