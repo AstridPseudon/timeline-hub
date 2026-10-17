@@ -321,10 +321,16 @@ describe('useClipEditing pinned group guards', () => {
       type: 'rows',
       rows: [{ id: 'V1', actions: [] }],
       metaDeletes: ['clip-1', 'clip-2'],
-    }, { semantic: true, editCommands: dataRef.current.config.clips.map((clip) => ({
-      op: 'clip.remove', select: `parent/clip:${clip.id}`, resolved: [`parent/clip:${clip.id}`],
-      args: {}, expect: { '': { state: 'present', value: clip } },
-    })) });
+    }, { semantic: true, editCommands: [{
+      op: 'shot-group.remove', select: null,
+      args: { group: { shotId: 'shot-1', trackId: 'V1' }, remove_clip_ids: ['parent/clip:clip-1', 'parent/clip:clip-2'] },
+      expect: {
+        'parent/shot-group:WyJzaG90LTEiLCJWMSJd::': { state: 'present', value: dataRef.current.config.pinnedShotGroups![0] },
+        'parent/shot-group:WyJzaG90LTEiLCJWMSJd::group_order': { state: 'present', value: ['parent/shot-group:WyJzaG90LTEiLCJWMSJd'] },
+        'parent/clip:clip-1::clip_order': { state: 'present', value: ['parent/clip:clip-1', 'parent/clip:clip-2'] },
+        ...Object.fromEntries(dataRef.current.config.clips.map(clip => [`parent/clip:${clip.id}::`, { state: 'present', value: clip }])),
+      },
+    }] });
     expect(applyEdit).toHaveBeenCalledOnce();
   });
 

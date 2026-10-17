@@ -1,12 +1,48 @@
 import { describe, expect, it } from 'vitest';
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
-import { clipStructureInverse, isClipStructureBatch, isClipStructureInverse } from './clipStructureHistory.ts';
+import { clipStructureInverse, isClipStructureBatch, isClipStructureInverse, shotGroupIdentity } from './clipStructureHistory.ts';
 
 const source = { id: 'a', at: 1, from: 2, to: 6 };
 const split: EditCommand = { op: 'timeline.split', select: 'parent/clip:a', args: { at: 2 }, created: ['parent/clip:b'], expect: { 'parent/clip:a::': { state: 'present', value: source } } };
 const root = { id: 'parent/clip:b', path: '', before: { state: 'absent' }, after: { state: 'present', value: { ...source, id: 'b', at: 2, from: 4 } } };
 const edge = { id: 'parent/clip:a', path: 'to', before: { state: 'present', value: 6 }, after: { state: 'present', value: 4 } };
 const receipt = (writes: unknown[] = [edge, root]) => ({ status: 'accepted', accepted_publication_id: 'actual-publication', change: { direct_writes: writes } });
+
+describe('pinned group deletion receipt ownership', () => {
+  const groupId = shotGroupIdentity('shot', 'V1');
+  const group = { shotId: 'shot', trackId: 'V1', clipIds: ['a', 'b'], opaque: { nil: null, op: 'clear' } };
+  const clips = [{ ...source, track: 'V1' }, { ...source, id: 'b', track: 'V1' }];
+  const order = ['parent/clip:before', 'parent/clip:a', 'parent/clip:b'];
+  const call: EditCommand = { op: 'shot-group.remove', select: null, args: { group: { shotId: 'shot', trackId: 'V1' }, remove_clip_ids: ['parent/clip:a', 'parent/clip:b'] }, expect: {
+    [`${groupId}::`]: { state: 'present', value: group }, [`${groupId}::group_order`]: { state: 'present', value: [shotGroupIdentity('before', 'V1'), groupId, shotGroupIdentity('after', 'V1')] },
+    'parent/clip:a::clip_order': { state: 'present', value: order },
+    ...Object.fromEntries(clips.map(clip => [`parent/clip:${clip.id}::`, { state: 'present', value: clip }])),
+  } };
+  const writes = [...clips.map(clip => ({ id: `parent/clip:${clip.id}`, path: '', before: { state: 'present', value: clip }, after: { state: 'absent' } })),
+    { id: groupId, path: '', before: { state: 'present', value: group }, after: { state: 'absent' } }];
+  it('requires complete exact roots and carries captured collection orders through accepted Undo and Redo', () => {
+    expect(isClipStructureBatch([call])).toBe(true);
+    const inverse = clipStructureInverse([call], receipt(writes))!;
+    expect(isClipStructureInverse(inverse)).toBe(true);
+    expect(inverse.args.writes.map(write => write.order)).toEqual([order, order, call.expect![`${groupId}::group_order`].value]);
+    const undone = writes.map(write => ({ ...write, before: write.after, after: write.before }));
+    const redo = clipStructureInverse([inverse], { ...receipt(undone), accepted_publication_id: 'accepted-undo' })!;
+    expect(redo.args.publication).toBe('accepted-undo'); expect(redo.args.writes.map(write => write.order)).toEqual(inverse.args.writes.map(write => write.order));
+    expect(clipStructureInverse([inverse], receipt(undone))).toBeUndefined();
+  });
+  it.each(['missing', 'extra', 'duplicate', 'foreign', 'malformed', 'wrong prior', 'wrong after', 'aggregate', 'missing publication'] as const)('refuses %s receipt without admitting history', kind => {
+    const changed: unknown[] = structuredClone(writes);
+    if (kind === 'missing') changed.pop();
+    if (kind === 'extra') changed.push({ ...writes[0], id: 'parent/clip:other' });
+    if (kind === 'duplicate') changed[1] = changed[0];
+    if (kind === 'foreign') changed[0] = { ...writes[0], id: 'parent/clip:other' };
+    if (kind === 'malformed') changed[0] = { ...writes[0], before: { value: clips[0] } };
+    if (kind === 'wrong prior') changed[0] = { ...writes[0], before: { state: 'present', value: { ...clips[0], hold: 99 } } };
+    if (kind === 'wrong after') changed[0] = { ...writes[0], after: { state: 'present', value: clips[0] } };
+    if (kind === 'aggregate') changed[0] = { ...writes[0], id: 'parent', path: 'clips' };
+    expect(clipStructureInverse([call], { ...receipt(changed), ...(kind === 'missing publication' ? { accepted_publication_id: null } : {}) })).toBeUndefined();
+  });
+});
 
 describe('bounded structural publication inverse', () => {
   it('uses only the split source edge and allocated child root', () => {

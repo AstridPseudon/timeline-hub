@@ -8,7 +8,7 @@ import { shaderSlotInverse } from '@/tools/video-editor/commands/shaderSlotHisto
 import { clipParamsHistoryInverse } from '@/tools/video-editor/commands/clipParamsHistory.ts';
 import { transitionAssignmentInverse } from '@/tools/video-editor/commands/transitionAssignmentHistory.ts';
 import { trackHistoryInverse } from '@/tools/video-editor/commands/trackHistory.ts';
-import { clipStructureInverse } from '@/tools/video-editor/commands/clipStructureHistory.ts';
+import { clipStructureInverse, isShotGroupDeletionBatch, isShotGroupDeletionInverse } from '@/tools/video-editor/commands/clipStructureHistory.ts';
 import { clipPlacementInverse, isShotGroupTransferBatch } from '@/tools/video-editor/commands/clipPlacementHistory.ts';
 import { transcriptCaptionInverse } from '@/tools/video-editor/commands/transcriptCaptionHistory.ts';
 import { isTranscriptCaptionBatch, transcriptBindTarget } from '@/tools/video-editor/commands/transcriptCaptions.ts';
@@ -1079,6 +1079,11 @@ export class RuntimeDataProvider implements DataProvider {
     const continuousOwner = isContinuousHistoryBatch(continuousCommands)
       || continuousCommands.length === 1 && isContinuousHistoryInverse(continuousCommands[0]);
     const continuousInverse = continuousHistoryInverse(continuousCommands, result);
+    const structureInverse = clipStructureInverse(continuousCommands, result);
+    if ((isShotGroupDeletionBatch(continuousCommands) || continuousCommands.length === 1 && isShotGroupDeletionInverse(continuousCommands[0]))
+      && structureInverse === undefined) {
+      throw new TimelineSchemaIncompatibleError('Runtime group deletion receipt does not cover this exact atomic command.');
+    }
     if (continuousOwner && continuousInverse === undefined) {
       throw new TimelineSchemaIncompatibleError('Runtime continuous receipt does not cover this exact atomic command batch.');
     }
@@ -1112,7 +1117,7 @@ export class RuntimeDataProvider implements DataProvider {
     // null means this owner explicitly had no change; it must not fall through.
     const commandInverse = registryNoChange ? null : [manualTextInverse(registryCommands, result), shaderSlotInverse(registryCommands, result), transitionAssignmentInverse(registryCommands, result), continuousInverse, keyframeInverse, captionInverse, assetRegistrationInverse(registryCommands, result),
       overlapInverse, tiedHoldExpansionInverse(registryCommands, result), clipPlacementInverse(registryCommands, result),
-      clipStructureInverse(registryCommands, result), trackHistoryInverse(registryCommands, result), fadeHistoryInverse(registryCommands, result), clipLookStyleInverse(registryCommands, result), clipParamsHistoryInverse(registryCommands, result), positionResetInverse(registryCommands, result)]
+      structureInverse, trackHistoryInverse(registryCommands, result), fadeHistoryInverse(registryCommands, result), clipLookStyleInverse(registryCommands, result), clipParamsHistoryInverse(registryCommands, result), positionResetInverse(registryCommands, result)]
       .find(inverse => inverse !== undefined);
     return { configVersion: version, head: this.timelineHead(timelineId, head),
       ...(commandInverse !== undefined ? { commandInverse } : {}) };

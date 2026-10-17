@@ -3,6 +3,7 @@ import { occurrenceIdentityFor } from './semanticGestures.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
 import type { ShotFinalVideo } from '@/tools/video-editor/hooks/useFinalVideoAvailable.ts';
 import { readSelectedProjectMediaIdentity } from './selectedProjectMedia.ts';
+import { shotGroupIdentity } from './clipStructureHistory.ts';
 
 export type ShotGroupIdentity = { shotId: string; trackId: string };
 export type ShotGroupSelection = ShotGroupIdentity & { clipIds: string[] };
@@ -121,7 +122,37 @@ export function buildDeleteShotGroupCommand(
   if (removeClipIds.some((clipId) => clipId === null) || new Set(removeClipIds).size !== removeClipIds.length) return null;
   const stored = storedGroup(data, group);
   if (!stored || group.clipIds.some((clipId) => !stored.clipIds.includes(clipId))) return null;
-  return groupCommand('shot-group.remove', group, { remove_clip_ids: removeClipIds as string[] });
+  const command = groupCommand('shot-group.remove', group, { remove_clip_ids: removeClipIds as string[] });
+  if (!command) return null;
+  const members = stored.clipIds.map(id => scopedMember(data, id, group.trackId));
+  if (!members.length || members.some(id => id === null)
+    || new Set(members.map(id => id!.split('/clip:')[0])).size !== 1) return null;
+  const scope = members[0]!.split('/clip:')[0];
+  if (stored.ownerOccurrenceId != null && scope !== `occurrence:${stored.ownerOccurrenceId}`
+    || scope !== 'parent' && (!stored.memberSelectors || stored.ownerOccurrenceId == null)
+    || stored.memberSelectors && (stored.memberSelectors.length !== members.length || new Set(stored.memberSelectors).size !== members.length
+      || members.some(id => !stored.memberSelectors!.includes(id!)))) return null;
+  for (const id of stored.clipIds) {
+    const identity = occurrenceIdentityFor(data, id);
+    if (identity && (identity.projectId !== data.head?.projectId || identity.parentDocumentId !== data.head?.timelineId
+      || identity.headRevisionId !== data.head?.headRevisionId)) return null;
+  }
+  const sourceId = (id: string) => occurrenceIdentityFor(data, id)?.sourceClipId ?? id;
+  const row = { ...stored, clipIds: stored.clipIds.map(sourceId) };
+  const sid = shotGroupIdentity(group.shotId, group.trackId);
+  command.expect = {
+    [`${sid}::`]: { state: 'present', value: row },
+    [`${sid}::group_order`]: { state: 'present', value: data.config.pinnedShotGroups!.map(row => shotGroupIdentity(row.shotId, row.trackId)) },
+    [`${members[0]}::clip_order`]: { state: 'present', value: data.config.clips.flatMap(clip => {
+      const identity = occurrenceIdentityFor(data, clip.id);
+      const owner = identity ? `occurrence:${identity.occurrenceId}` : 'parent';
+      return owner === scope ? [`${scope}/clip:${sourceId(clip.id)}`] : [];
+    }) },
+    ...Object.fromEntries(stored.clipIds.map((id, index) => [`${members[index]}::`, {
+      state: 'present', value: occurrenceIdentityFor(data, id)?.sourceClip ?? data.config.clips.find(clip => clip.id === id)!,
+    }])),
+  };
+  return command;
 }
 
 export function buildRestoreShotGroupImagesCommand(data: TimelineData | null, group: ShotGroupIdentity): EditCommand | null {

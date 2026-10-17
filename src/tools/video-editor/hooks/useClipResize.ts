@@ -1,4 +1,4 @@
-import { leftResizeGestureCommands, groupRightResizeGestureCommands, rightResizeGestureCommands, tiedEndResizeGesture, legacyTiedEndResizeGesture, overlapTrimGesture } from '../commands/semanticGestures.ts';
+import { leftResizeGestureCommands, groupLeftResizeGestureCommands, groupRightResizeGestureCommands, rightResizeGestureCommands, tiedEndResizeGesture, legacyTiedEndResizeGesture, overlapTrimGesture } from '../commands/semanticGestures.ts';
 import { useCallback, useContext, useRef } from 'react';
 import { VideoEditorRuntimeContext } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { buildRowTrackPatches } from '@/tools/video-editor/lib/coordinate-utils.ts';
@@ -315,6 +315,14 @@ export function useClipResize({
     }
 
     if (session.context.kind === 'group') {
+      if (semanticEndChoices && session.edge === 'left') {
+        const captured = resizeBaseRef.current[session.clipId];
+        if (!captured || captured.config !== JSON.stringify(current.config) || captured.head !== JSON.stringify(current.head)
+          || captured.fps !== current.output.fps || session.context.groupClipIds.some(clipId =>
+            !editability.check({ clipId, sourceTrackId: session.rowId, targetTrackId: session.rowId }).allowed)) {
+          clearResizeTracking(session.clipId); return;
+        }
+      }
       const updatedRows = applyActionUpdates(current.rows, session.rowId, snappedUpdates);
       let nextRows = ensureGroupContiguity(updatedRows, current.config.pinnedShotGroups);
 
@@ -369,8 +377,8 @@ export function useClipResize({
           perClipMetaUpdates,
         ),
       }, { transactionId,
-        editCommands: session.edge === 'right' && Object.keys(overlapMetaPatches).length === 0
-          ? groupRightResizeGestureCommands(current, session.context.groupClipIds, nextRows, perClipMetaUpdates)
+        editCommands: Object.keys(overlapMetaPatches).length === 0
+          ? (session.edge === 'right' ? groupRightResizeGestureCommands : groupLeftResizeGestureCommands)(current, session.context.groupClipIds, nextRows, perClipMetaUpdates)
           : undefined,
       });
 

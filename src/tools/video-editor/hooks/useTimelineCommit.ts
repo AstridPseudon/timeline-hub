@@ -9,7 +9,7 @@ import { isClipLookStyleBatch } from '../commands/clipLookStyleHistory.ts';
 import { isClipParamsHistoryBatch } from '../commands/clipParamsHistory.ts';
 import { isTransitionAssignmentBatch } from '../commands/transitionAssignmentHistory.ts';
 import { isTrackHistoryBatch } from '../commands/trackHistory.ts';
-import { isSelectedMediaCreation, isClipStructureBatch } from '../commands/clipStructureHistory.ts';
+import { isSelectedMediaCreation, isClipStructureBatch, isShotGroupDeletionBatch } from '../commands/clipStructureHistory.ts';
 import { isClipPlacementBatch } from '../commands/clipPlacementHistory.ts';
 import { bindProposalSave } from '../lib/proposal-command-binding.ts';
 import { isTranscriptCaptionBatch } from '../commands/transcriptCaptions.ts';
@@ -406,12 +406,13 @@ export function useTimelineCommit({
             targetTrackId: command.select!.slice('parent/track:'.length) }).allowed) return;
         }
       }
-      if (currentData && isClipPlacementBatch(options.editCommands) && editability) {
+      if (currentData && (isClipPlacementBatch(options.editCommands) || isShotGroupDeletionBatch(options.editCommands)) && editability) {
         if (editability.checkTimeline && !editability.checkTimeline().allowed) return;
         for (const command of options.editCommands) {
           if (command.op === 'timeline.add') continue;
           const transfer = command.op === 'shot-group.set' && command.args.intent === 'transfer';
-          const selectors = transfer ? command.args.members as string[] : [command.select];
+          const selectors = transfer ? command.args.members as string[]
+            : command.op === 'shot-group.remove' ? command.args.remove_clip_ids as string[] : [command.select];
           for (const select of selectors) {
             const clip = currentData.config.clips.find((clip) => {
               if (select === `parent/clip:${clip.id}`) return true;

@@ -2,6 +2,8 @@ import { ClipContinuousEffectField } from '../components/PropertiesPanel/ClipCon
 import { ClipEffectsTab } from '../components/PropertiesPanel/ClipEffectsTab.tsx';
 import { BulkClipPanelBody } from '../components/PropertiesPanel/BulkClipPanelBody.tsx';
 import { continuousParameterPatch } from '../commands/continuousHistory.ts';
+import { ShotGroupContextMenu } from '../components/TimelineEditor/ShotGroupContextMenu.tsx';
+import { applyClipEdgeMove, type GroupClipEdgeResizeContext } from '../lib/resize-math.ts';
 vi.mock('@/tools/video-editor/components/EffectCreatorPanel.tsx', () => ({
   EffectCreatorPanel: ({ onSaved }: { onSaved: (id: string, category: string, params: Record<string, unknown>) => void }) =>
     <button onClick={() => onSaved('orbit', 'continuous', { enabled: true })}>Save W27 effect</button>,
@@ -77,7 +79,6 @@ import { readAudioLanePresentation } from '../data/audioLanePresentation.ts';
 import type { CanonicalClipIdentity } from '../data/shotCompositionProjection.ts';
 import { planClipDrag } from '../lib/clip-drag-planner.ts';
 import { createTimelineEditability } from '../lib/timeline-editability.ts';
-import { ClipEffectsTab } from '@/tools/video-editor/components/PropertiesPanel/ClipEffectsTab.tsx';
 import { ClipEntranceEffectField } from '@/tools/video-editor/components/PropertiesPanel/ClipEntranceEffectField.tsx';
 import { createVideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
 import { ClipTransitionSection } from '@/tools/video-editor/components/PropertiesPanel/ClipTransitionSection.tsx';
@@ -2992,17 +2993,23 @@ describe('E-SHOT-GROUP-022 mounted callbacks through the parent commit route', (
   });
 
   it('selectively deletes only verified selected group members', async () => {
-    const h = await setup(undefined, false, await shotGroupData());
+    const initial = await transferGroupData();
+    let proof!: ReturnType<typeof groupDeleteSource>;
+    const h = await setup(async request => {
+      proof = groupDeleteSource(initial, [request]); return { acceptedResult: proof.result };
+    }, false, initial);
     act(() => h.result.current.groupHandlers.handleDeleteShotGroup({ shotId: 'shot-1', trackId: 'V1', clipIds: ['clip-2'] }));
-    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
-    expect(h.requests[0].request.change).toEqual({ commands: [{
-      op: 'shot-group.remove', select: null,
-      args: { group: { shotId: 'shot-1', trackId: 'V1' }, remove_clip_ids: ['parent/clip:clip-2'] },
-    }] });
-    expect(h.getCurrentConfig().clips.map((clip) => clip.id)).toContain('clip-1');
+    const commands = gestureCommandsFor(h.result.current.data!)!;
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expect(h.requests[0].request.change).toEqual({ commands });
+    expect(commands).toEqual([{ op: 'shot-group.remove', select: null,
+      args: { group: { shotId: 'shot-1', trackId: 'V1' }, remove_clip_ids: ['parent/clip:clip-2'] }, expect: expect.any(Object) }]);
+    expect(proof.result.canonical_document!.parent!.clips!.map(clip => clip.id)).toEqual(['clip-1']);
+    expect(h.getCurrentConfig().clips.map(clip => clip.id)).toEqual(['clip-1']);
+    expect(h.getCurrentConfig().pinnedShotGroups).toEqual([initial.config.pinnedShotGroups![0], initial.config.pinnedShotGroups![2]]);
     expect(h.compatibilityRequests).toEqual([]);
-    h.unmount();
-  });
+    writeGroupDeleteProof('selective-member', { request: h.requests[0].request, proof }); h.unmount();
+  }, 90_000);
 
   it('switches back to retained images without sending a caller snapshot', async () => {
     const h = await setup(undefined, false, await shotGroupData('video'));
@@ -6619,6 +6626,227 @@ function mountBulkTransitionRemove(h: Awaited<ReturnType<typeof setup>>, initial
     onResetPosition={vi.fn()} onToggleMute={vi.fn()} onClose={vi.fn()}
   />, { wrapper: h.wrapper });
 }
+
+function groupDeleteSource(initial: TimelineData, requests: CommitRequest[]) {
+  return JSON.parse(execFileSync(process.env.ASTRID_TEST_PYTHON!, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/shotGroupDelete.fixture.py')], {
+    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests }), encoding: 'utf8', env: process.env,
+  })) as ReturnType<typeof groupTransferSource> & { persisted_documents: Array<{ parent: { config: TimelineData['config']; clips: TimelineData['config']['clips'] } }>;
+    document?: unknown; attempted_accept_count?: number };
+}
+
+function writeGroupDeleteProof(name: string, value: unknown) {
+  if (process.env.E_GROUP_DELETE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_GROUP_DELETE_EVIDENCE_DIR, `${name}.json`), JSON.stringify(value, null, 2));
+}
+
+describe('full pinned group deletion SDK caller history', () => {
+  it.each(['shot menu', 'explicit clip deletion', 'occurrence shot menu', 'shot menu video'] as const)('%s deletes every member with exact saved readback and receipt-derived Undo Redo', async caller => {
+    const occurrence = caller.startsWith('occurrence');
+    const base = await transferGroupData(occurrence, caller === 'shot menu video');
+    const initial = occurrence ? base : await buildTimelineData({ ...base.config, clips: [...base.config.clips,
+      { id: 'retained', at: 7, track: 'V2', clipType: 'hold', hold: 1, app: { opaque: { nil: null, values: [1, 'keep'] } } }],
+    }, base.registry, undefined, 1, undefined, base.head);
+    const requests: CommitRequest[] = []; let proof!: ReturnType<typeof groupDeleteSource>;
+    const h = await setup(async request => {
+      requests.push(request); proof = groupDeleteSource(initial, requests);
+      writeGroupDeleteProof(`${caller.replaceAll(' ', '-')}-chain`, { requests, proof });
+      return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = bulkHistory(h);
+    const acknowledgements: unknown[] = [];
+    h.eventBus.on('nativeRegistrationAccepted', (_owner, inverse) => acknowledgements.push(inverse));
+    const group = initial.config.pinnedShotGroups![1];
+    if (caller.includes('shot menu')) {
+      const menu = render(<ShotGroupContextMenu menu={{ ...group, x: 1, y: 1, shotName: 'Delete this shot', rowId: 'V1', hasFinalVideo: false, hasStaleVideo: false }}
+        menuRef={{ current: null }} closeMenu={vi.fn()} onDeleteShot={h.result.current.groupHandlers.handleDeleteShotGroup} />);
+      fireEvent.click(screen.getByText('Delete shot'));
+      menu.unmount();
+    } else act(() => h.result.current.editing.handleDeleteClips(group.clipIds, { allowPinnedGroupDelete: true }));
+    expect(history.result.current.canUndo).toBe(false);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    const expected = structuredClone(proof.before) as unknown as typeof proof.persisted_documents[number] & { shots: Record<string, { internal_timeline: { clips: TimelineData['config']['clips'] } }> };
+    const deleted = group.clipIds.map(id => occurrence ? (initial.config.clips.find(clip => clip.id === id)!.app!.canonical as CanonicalClipIdentity).sourceClipId : id);
+    const content = occurrence ? expected.shots.A.internal_timeline : expected.parent;
+    content.clips = content.clips.filter(clip => !deleted.includes(clip.id));
+    expected.parent.config.pinnedShotGroups = expected.parent.config.pinnedShotGroups!.filter(row => row.shotId !== group.shotId);
+    expect(proof.result.canonical_document).toEqual(expected);
+    expect(proof.persisted_documents).toEqual([expected]);
+    expect(h.getCurrentConfig()).toEqual({ ...expected.parent.config, clips: expected.parent.clips });
+    expect(requests).toHaveLength(1);
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    expect(proof.result.canonical_document).toEqual(proof.before);
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    expect(history.result.current.canUndo).toBe(false);
+    act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(proof.result.canonical_document).toEqual(expected);
+    expect(proof.persisted_documents).toEqual([expected, proof.before, expected]);
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(requests.slice(1).map(request => 'commands' in request.change && request.change.commands.map(call => call.op))).toEqual([['timeline.inverse'], ['timeline.inverse']]);
+    expect('commands' in requests[2].change && requests[2].change.commands[0].args.publication).toBe(proof.results[1].accepted_publication_id);
+    expect(proof.accept_counts).toEqual([1, 1, 1]);
+    expect(h.readbackHeads).toEqual(['parent-r2', 'parent-r3', 'parent-r4']);
+    expect(acknowledgements).toHaveLength(3);
+    expect(h.compatibilityRequests).toEqual([]);
+    writeGroupDeleteProof(`${caller.replaceAll(' ', '-')}-final`, { requests, proof, readback: h.getCurrentConfig(), acknowledgements, readbackHeads: h.readbackHeads });
+    history.unmount(); h.unmount();
+  }, 180_000);
+
+  it.each([false, true])('stale late group member occurrence=%s refuses atomically before acceptance or history', async occurrence => {
+    const initial = await transferGroupData(occurrence);
+    const server = { ...initial, config: structuredClone(initial.config) };
+    const late = server.config.clips[1];
+    if (occurrence) (late.app!.canonical as CanonicalClipIdentity).sourceClip.hold = 1.2;
+    else late.hold = 1.2;
+    let proof!: ReturnType<typeof groupDeleteSource>; let completed = false;
+    const h = await setup(async request => {
+      proof = groupDeleteSource(server, [request]); completed = true;
+      writeGroupDeleteProof(`stale-${occurrence}`, { request, proof });
+      return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = bulkHistory(h); const accepted = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', accepted);
+    const group = initial.config.pinnedShotGroups![1];
+    act(() => h.result.current.groupHandlers.handleDeleteShotGroup(group));
+    await waitFor(() => expect(completed).toBe(true), { timeout: 60_000 });
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+    expect(proof.result.status).toBe('refused');
+    expect(proof.attempted_accept_count).toBe(0); expect(proof.result.change.direct_writes).toEqual([]);
+    expect(proof.document).toEqual(proof.before); expect(proof.persisted_documents).toEqual([]);
+    expect(h.savedSeqRef.current).toBe(0); expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    expect(accepted).not.toHaveBeenCalled(); expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
+    act(() => { history.result.current.undo(); history.result.current.redo(); });
+    expect(h.requests).toHaveLength(1); history.unmount(); h.unmount();
+  }, 90_000);
+});
+
+describe('pinned group deletion caller guards', () => {
+  it.each(['stale occurrence', 'mixed scope', 'malformed identity', 'stale selectors', 'wrong owner', 'missing member', 'read-only', 'locked member'] as const)(
+    '%s refuses before local edits, save, or history', async kind => {
+      const occurrence = ['stale occurrence', 'mixed scope', 'malformed identity', 'wrong owner'].includes(kind);
+      const initial = await transferGroupData(occurrence); const group = initial.config.pinnedShotGroups![1];
+      const identity = initial.config.clips[1].app!.canonical as CanonicalClipIdentity;
+      if (kind === 'stale occurrence') identity.headRevisionId = 'stale-head';
+      if (kind === 'mixed scope') identity.occurrenceId = 'foreign-occurrence';
+      if (kind === 'malformed identity') delete (identity as Partial<CanonicalClipIdentity>).sourceClipId;
+      if (kind === 'stale selectors') group.memberSelectors = ['parent/clip:foreign'];
+      if (kind === 'wrong owner') group.ownerOccurrenceId = 'foreign-occurrence';
+      if (kind === 'missing member') initial.config.clips.pop();
+      const editability = createTimelineEditability(kind === 'read-only' ? { readOnly: true }
+        : kind === 'locked member' ? { lockedClipIds: ['clip-2'] } : {});
+      const h = await setup(undefined, false, initial, 1, editability); const before = vi.fn(); h.eventBus.on('beforeCommit', before);
+      act(() => h.result.current.groupHandlers.handleDeleteShotGroup(group));
+      expect(h.result.current.data).toBe(initial); expect(h.result.current.editSeqRef.current).toBe(0);
+      expect(h.requests).toEqual([]); expect(before).not.toHaveBeenCalled(); h.unmount();
+    });
+});
+
+function resizePinnedGroupLeft(h: Awaited<ReturnType<typeof setup>>, cancelled = false, afterStart?: () => void) {
+  const data = h.result.current.data!; const row = data.rows.find(row => row.id === 'V1')!;
+  const group = data.config.pinnedShotGroups!.find(group => group.shotId === 'shot-1')!;
+  const children = row.actions.filter(action => group.clipIds.includes(action.id));
+  const action = children[1];
+  const context: GroupClipEdgeResizeContext = { kind: 'group', shotId: group.shotId, trackId: group.trackId,
+    draggedClipId: action.id, draggedIndex: 1, groupClipIds: children.map(action => action.id),
+    groupChildrenSnapshot: children.map(action => ({ clipId: action.id, start: action.start, end: action.end })) };
+  act(() => h.result.current.resize.onActionResizeStart({ action, row, dir: 'left' }));
+  afterStart?.();
+  act(() => h.result.current.resize.onClipEdgeResizeEnd({
+    session: { pointerId: 1, rowId: row.id, clipId: action.id, edge: 'left', started: true, startClientX: 0,
+      startLocalX: 0, startTime: action.start, lastStart: action.start + 0.5, lastEnd: action.end, snapTargets: [], context },
+    updates: applyClipEdgeMove(context, 'left', action.start + 0.5).updates, cancelled,
+  }));
+}
+
+async function leftHoldGroupData() {
+  const base = await transferGroupData();
+  // Ordinary hold fixtures omit source-range fields, just like persisted holds.
+  // transferGroupData deliberately retains undefined media projection fields.
+  const clips = base.config.clips.map(clip => {
+    const copy = { ...clip }; delete copy.from; delete copy.to; delete copy.speed; return copy;
+  });
+  return buildTimelineData({ ...base.config, clips }, base.registry, undefined, 1, undefined, base.head);
+}
+
+describe('W40 pinned hold group left resize', () => {
+  it('emits the supported group left moves and duration from one captured base', async () => {
+    const initial = await leftHoldGroupData(); const h = await setup(undefined, false, initial);
+    resizePinnedGroupLeft(h);
+    const calls = gestureCommandsFor(h.result.current.data!);
+    expect(calls?.map(call => [call.op, call.select, call.args])).toEqual([
+      ['clip.nudge', 'parent/clip:clip-1', { frames: 15 }],
+      ['clip.nudge', 'parent/clip:clip-2', { frames: 15 }],
+      ['clip.set-duration', 'parent/clip:clip-2', { seconds: 0.5 }],
+    ]);
+    h.unmount();
+  });
+  it('persists one atomic caller operation and exact saved whole-document Undo and receipt-derived Redo', async () => {
+    const initial = await leftHoldGroupData(); const requests: CommitRequest[] = []; let proof!: ReturnType<typeof groupDeleteSource>;
+    const h = await setup(async request => {
+      requests.push(request); proof = groupDeleteSource(initial, requests);
+      writeGroupDeleteProof('w40-left-chain', { requests, proof }); return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = bulkHistory(h); resizePinnedGroupLeft(h);
+    expect(history.result.current.canUndo).toBe(false);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    const expected = structuredClone(proof.before) as unknown as typeof proof.persisted_documents[number];
+    expected.parent.clips[0].at = 1.5; expected.parent.clips[1].at = 3.5; expected.parent.clips[1].hold = 0.5;
+    expect(proof.result.canonical_document).toEqual(expected); expect(proof.persisted_documents).toEqual([expected]);
+    expect(h.getCurrentConfig()).toEqual({ ...expected.parent.config, clips: expected.parent.clips });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    expect(proof.result.canonical_document).toEqual(proof.before);
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(proof.result.canonical_document).toEqual(expected); expect(proof.persisted_documents).toEqual([expected, proof.before, expected]);
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(requests.slice(1).map(request => 'commands' in request.change && request.change.commands[0].op)).toEqual(['timeline.inverse', 'timeline.inverse']);
+    expect('commands' in requests[2].change && requests[2].change.commands[0].args.publication).toBe(proof.results[1].accepted_publication_id);
+    expect(proof.accept_counts).toEqual([1, 1, 1]); expect(h.readbackHeads).toEqual(['parent-r2', 'parent-r3', 'parent-r4']);
+    expect(h.compatibilityRequests).toEqual([]);
+    writeGroupDeleteProof('w40-left-final', { requests, proof, readback: h.getCurrentConfig(), readbackHeads: h.readbackHeads });
+    history.unmount(); h.unmount();
+  }, 180_000);
+  it.each(['media source edge', 'relation', 'cancelled'] as const)('%s retains its existing fallback or refusal', async kind => {
+    const initial = await leftHoldGroupData();
+    if (kind === 'media source edge') { delete initial.config.clips[0].hold; Object.assign(initial.config.clips[0], { from: 0, to: 2, speed: 1 }); }
+    if (kind === 'relation') initial.config.clips[0].app!.astrid = { on: '"viral"' };
+    const h = await setup(undefined, false, initial); resizePinnedGroupLeft(h, kind === 'cancelled');
+    expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined(); expect(h.requests).toEqual([]);
+    if (kind === 'cancelled') expect(h.result.current.data).toBe(initial);
+    h.unmount();
+  });
+  it.each(['changed base', 'locked sibling'] as const)('%s refuses the left gesture before any local mutation or history', async kind => {
+    const initial = await leftHoldGroupData();
+    const h = await setup(undefined, false, initial, 1, createTimelineEditability(kind === 'locked sibling' ? { lockedClipIds: ['clip-1'] } : {}));
+    const before = vi.fn(); h.eventBus.on('beforeCommit', before);
+    resizePinnedGroupLeft(h, false, kind === 'changed base' ? () => {
+      h.result.current.dataRef.current = { ...initial, head: { ...initial.head!, headRevisionId: 'new-head' } };
+    } : undefined);
+    expect(h.result.current.editSeqRef.current).toBe(0); expect(before).not.toHaveBeenCalled(); expect(h.requests).toEqual([]);
+    h.unmount();
+  });
+  it('a stale late duration expectation refuses the complete group resize without partial effects or history', async () => {
+    const initial = await leftHoldGroupData(); const server = { ...initial, config: structuredClone(initial.config) };
+    server.config.clips[1].hold = 1.2;
+    let proof!: ReturnType<typeof groupDeleteSource>; let completed = false;
+    const h = await setup(async request => {
+      proof = groupDeleteSource(server, [request]); completed = true;
+      writeGroupDeleteProof('w40-left-stale', { request, proof }); return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = bulkHistory(h); const accepted = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', accepted);
+    resizePinnedGroupLeft(h);
+    await waitFor(() => expect(completed).toBe(true), { timeout: 60_000 });
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+    expect(proof.result.status).toBe('refused'); expect(proof.attempted_accept_count).toBe(0);
+    expect(proof.result.change.direct_writes).toEqual([]); expect(proof.document).toEqual(proof.before); expect(proof.persisted_documents).toEqual([]);
+    expect(h.savedSeqRef.current).toBe(0); expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    expect(accepted).not.toHaveBeenCalled(); expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
+    history.unmount(); h.unmount();
+  }, 90_000);
+});
 
 describe('W29 mounted bulk Remove SDK receipt history', () => {
   async function capturedData(reference: ReturnType<typeof transitionReference>) {

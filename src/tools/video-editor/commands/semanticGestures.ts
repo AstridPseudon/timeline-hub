@@ -7,7 +7,7 @@ import { isPositionResetInverse } from './positionReset.ts';
 import { isFadeHistoryInverse } from './fadeHistory.ts';
 import { isTransitionAssignmentBatch } from './transitionAssignmentHistory.ts';
 import { isTrackHistoryInverse } from './trackHistory.ts';
-import { isClipStructureInverse } from './clipStructureHistory.ts';
+import { isClipStructureInverse, isShotGroupDeletionBatch } from './clipStructureHistory.ts';
 import { isClipPlacementInverse, isShotGroupTransferBatch } from './clipPlacementHistory.ts';
 import { isTranscriptCaptionInverse } from './transcriptCaptionHistory.ts';
 import { isTranscriptCaptionBatch, transcriptBindTarget } from './transcriptCaptions.ts';
@@ -40,6 +40,7 @@ const isScopedGroupClipId = (value: unknown): value is string => (
 
 /** Parent aggregate commands stay in the parent request even when their exact members are occurrence clips. */
 function isShotGroupAggregateCommand(command: EditCommand): boolean {
+  if (isShotGroupDeletionBatch([command])) return true;
   if (command.select !== null || !hasExactKeys(command as unknown as Record<string, unknown>, ['op', 'select', 'args'])) return false;
   const args = command.args;
   if (!isRecord(args) || !isRecord(args.group)
@@ -1101,6 +1102,17 @@ export function groupMoveGesture(
  * The planner still owns geometry. No relations, overlap trims, membership or
  * source-edge changes can be disguised as an ordinary duration/move batch.
  */
+export function groupLeftResizeGestureCommands(
+  data: TimelineData, ids: readonly string[], rows: TimelineData['rows'], patches: Record<string, Partial<ClipMeta>>,
+): EditCommand[] | undefined {
+  // Holds have no source-in edge to trim. Their existing left-edge geometry is
+  // exactly the same explicit move/duration vocabulary as a right-edge resize.
+  const selected = new Set(ids);
+  if (ids.some(id => typeof data.config.clips.find(clip => clip.id === id)?.hold !== 'number')
+    || data.config.pinnedShotGroups?.filter(group => group.clipIds.length === selected.size && group.clipIds.every(id => selected.has(id))).length !== 1) return undefined;
+  return groupRightResizeGestureCommands(data, ids, rows, patches);
+}
+
 export function groupRightResizeGestureCommands(
   data: TimelineData,
   ids: readonly string[],
