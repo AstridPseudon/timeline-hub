@@ -8699,7 +8699,7 @@ class GenericPackHost:
             uploaded.append(uploaded_row)
         return uploaded
 
-    def _run_command_definition(self, record: CapabilityRecord, inputs: Mapping[str, Any], output_root: Path, attempt: Path, *, cancelled=None, authority_context: Mapping[str, Any] | None = None, admission: Mapping[str, Any] | None = None, network_broker: _NetworkBrokerContext | None = None, storage_estimate: Mapping[str, int] | None = None, child_bridge: Any | None = None, allow_runtime_connection: bool = True) -> Any:
+    def _run_command_definition(self, record: CapabilityRecord, inputs: Mapping[str, Any], output_root: Path, attempt: Path, *, cancelled=None, authority_context: Mapping[str, Any] | None = None, admission: Mapping[str, Any] | None = None, network_broker: _NetworkBrokerContext | None = None, storage_estimate: Mapping[str, int] | None = None, child_bridge: Any | None = None, allow_runtime_connection: bool = True, managed_token: AdmissionToken | None = None) -> Any:
         """Run a manifest command without importing Astrid's project authority.
 
         Built-in pipeline steps and command capabilities are both runnable from
@@ -8711,22 +8711,43 @@ class GenericPackHost:
         attempt_output_root = (attempt / "outputs").resolve()
         if admission is not None:
             _verify_admitted_source(admission)
-        # Checkout-server VibeComfy is intentionally bound to the manager's
-        # HC-03 output root. Keep the task's generated spool inside that
-        # attested root instead of handing the child an arbitrary attempt
-        # directory, which the adapter must correctly reject.
+        # A checkout-server command shares the same attempt-local spool as its
+        # confinement and collection. A profile-shaped environment value does
+        # not authorize a second write location outside that attempt.
         if record.id == "vibecomfy.run":
             profile = _read_readiness_profile_document()
-            launch = profile.get("launch") if isinstance(profile, Mapping) else None
-            profile_output_root = launch.get("output_root") if isinstance(launch, Mapping) else None
-            if isinstance(profile_output_root, str) and profile_output_root:
-                managed_root = Path(profile_output_root).expanduser().resolve()
-                if managed_root.is_symlink() or not managed_root.is_absolute():
-                    raise HostError("HC-03 VibeComfy output_root must be an absolute non-symlink path")
-                task_label = str(inputs.get("task_identity") or attempt.name)
-                safe_label = "".join(char if char.isalnum() or char in "-_." else "_" for char in task_label)
-                output_root = managed_root / "astrid-tasks" / safe_label / "outputs"
-                output_root.mkdir(parents=True, exist_ok=True)
+            manager = self.managed_tool_session
+            if (isinstance(manager.current_adapter, _ManagedVibeSessionAdapter)
+                    or isinstance(profile, Mapping) and "vibecomfy_session" in profile):
+                policy = self._required_confinement_policy(attempt)
+                authority = self._attempt_claim_authority
+                if managed_token is None or type(authority) is not _AuthenticatedAttempt:
+                    raise HostError("HC-03 command requires its authenticated attempt and session token")
+                fields = dict(authority.fields)
+                invocation = f"{fields.get('task_id')}:{fields.get('attempt_id')}:{fields.get('fence')}"
+                adapter = manager.adapter_for(managed_token)
+                if (type(adapter) is not _ManagedVibeSessionAdapter
+                        or adapter.residency_identity() is None
+                        or managed_token.capability_id != record.id
+                        or managed_token.invocation_id != invocation
+                        or adapter.backend._invocation_identity != invocation
+                        or adapter.backend._host_profile != profile):
+                    raise HostError("HC-03 command session or attempt binding changed")
+                adapter.backend._revalidate_host_session()
+                launch = profile.get("launch") if isinstance(profile, Mapping) else None
+                root = launch.get("output_root") if isinstance(launch, Mapping) else None
+                managed_root = adapter.backend._output_root
+                if (not isinstance(managed_root, Path) or not managed_root.is_absolute()
+                        or root != str(managed_root) or managed_root.resolve() != managed_root
+                        or not managed_root.is_dir() or attempt.resolve() != attempt
+                        or output_root != attempt / "outputs"
+                        or attempt_output_root != output_root
+                        or policy.private_write_root != output_root):
+                    raise HostError("HC-03 command output root is not canonical and attempt-owned")
+                if not attempt_output_root.is_relative_to(managed_root):
+                    raise HostError("HC-03 command attempt output escaped its selected output root")
+                manager.adapter_for(managed_token, begin=True)
+                output_root = attempt_output_root
         # Never interpret a previous command rejection as this attempt.
         (output_root / PROVIDER_FAILURE_FILE).unlink(missing_ok=True)
         values = {**inputs, "out": str(output_root), "run_root": str(attempt), "python_exec": sys.executable}
@@ -10667,6 +10688,7 @@ class GenericPackHost:
                         storage_estimate=storage_estimate,
                         child_bridge=child_bridge,
                         allow_runtime_connection=not private_runtime_context,
+                        managed_token=managed_token,
                     )
                     # Checkout-server VibeComfy commands run inside the
                     # attested HC-03 output root. Carry that effective root

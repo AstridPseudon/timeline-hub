@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from astrid.core.execution import generic_host as _generic_host
 from astrid.core.execution.generic_host import GenericPackHost, HostCancelled, HostError
 from astrid.core.execution.executor.runner import ExecutorRunRequest, run_executor
 from astrid.core.execution.executor.registry import ExecutorRegistry
@@ -188,6 +189,7 @@ def _sdk_cpu_session_fixture(tmp_path, monkeypatch):
     from types import SimpleNamespace
     from urllib.parse import urlsplit
     import vibecomfy.runtime.session as session_module
+    from astrid.core.execution import custody_broker
     from astrid.core.generation.backends import vibecomfy as backend_module
     from astrid.core.generation.model_root import canonical_model_inventory_digest
 
@@ -204,7 +206,9 @@ def _sdk_cpu_session_fixture(tmp_path, monkeypatch):
     session = root / "session"
     session.mkdir()
     daemon, child = 1900001, 1900002
-    birth, child_birth = "fixture-daemon-birth", "fixture-child-birth"
+    start_seconds = {daemon: 1700000000, child: 1700000010}
+    birth, child_birth = (custody_broker._ps_lstart_birth(start_seconds[pid]).removeprefix("ps-lstart:")
+                          for pid in (daemon, child))
     url, token = "http://127.0.0.1:18188", "fixture-launch-token"
     revision, content = "a" * 40, "sha256:" + hashlib.sha256(b"unit source fixture").hexdigest()
     config = json.dumps({"output_directory": str(output)}, sort_keys=True).encode()
@@ -237,7 +241,28 @@ def _sdk_cpu_session_fixture(tmp_path, monkeypatch):
     monkeypatch.setattr(session_module, "_process_start_identity", observed_birth)
     monkeypatch.setattr(session_module, "_process_commandline", lambda pid: ("python", "--launch-token", token))
     monkeypatch.setattr(session_module, "_process_parent_pid", lambda pid: observations["parent"])
-    monkeypatch.setattr(session_module, "_listener_owner_pid", lambda endpoint: observations["listener"])
+    # Preserve the source-pinned ownership/listener predicates. Darwin's real
+    # SelectedCompositeObserver brackets native records rather than invoking
+    # the module's portable birth/parent helpers.
+    original_records = custody_broker._darwin_process_records
+    def observed_records(pid=None):
+        if pid not in start_seconds:
+            return original_records(pid)
+        observed_birth(pid)
+        expected = birth if pid == daemon else child_birth
+        key = "birth" if pid == daemon else "child_birth"
+        return [{"pid": pid, "uid": os.getuid(), "parent_pid": observations["parent"] if pid == child else 1,
+                 "pgid": daemon, "start_sec": start_seconds[pid] + int(observations[key] != expected),
+                 "start_usec": 0, "status": 2}]
+    monkeypatch.setattr(custody_broker, "_darwin_process_records", observed_records)
+    original_subprocess = session_module.subprocess
+    class OwnerProbe:
+        def __getattr__(self, name): return getattr(original_subprocess, name)
+        def run(self, argv, **kwargs):
+            assert argv in (["lsof", "-nP", "-t", "-a", "-iTCP:18188", "-sTCP:LISTEN"],
+                            ["lsof", "-O", "-nP", "-t", "-a", "-iTCP:18188", "-sTCP:LISTEN"])
+            return subprocess.CompletedProcess(argv, 0, str(observations["listener"]) + "\n", "")
+    monkeypatch.setattr(session_module, "subprocess", OwnerProbe())
     original_kill = os.kill
     def observed_kill(pid, sig):
         if pid in (daemon, child):
@@ -297,6 +322,7 @@ def _sdk_cpu_handoff_fixture(tmp_path, monkeypatch):
 
 
 def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_path, monkeypatch):
+    """Legacy command/finally with activated output layout; no V3/GPU claim."""
     import ast
     import hashlib
     import inspect
@@ -312,6 +338,11 @@ def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_
                 and any(isinstance(target, ast.Name) and target.id == "argv" for target in node.targets))
     flags = {node.value for node in ast.walk(argv) if isinstance(node, ast.Constant) and isinstance(node.value, str)}
     assert "--register" in flags and not flags.intersection({"--host-control-fd", "--activation-fd", "--activation-socket"})
+    startup = ast.parse(inspect.getsource(module._cli))
+    producer_base = ast.dump(ast.parse("str(Path(output_root) / 'attempts')", mode="eval").body)
+    assert any(isinstance(node, ast.Assign) and ast.dump(node.value) == producer_base
+               and any(ast.unparse(target) == "args.attempt_base" for target in node.targets)
+               for node in ast.walk(startup))
     f = _sdk_cpu_session_fixture(tmp_path, monkeypatch)
     profile_path = tmp_path / "readiness.json"
     profile_path.write_text(json.dumps(f.profile))
@@ -342,7 +373,12 @@ def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_
         (path / "executor.yaml").write_text(json.dumps(definition))
     runtime = FakeRuntime()
     runtime.get_object = objects.__getitem__
-    host = GenericPackHost(pack_roots=[packs], client=runtime, attempt_base=tmp_path / "attempts")
+    runtime.confirm_claim_authority = lambda **fields: module._AuthenticatedAttempt(
+        tuple(sorted(fields.items()))
+    )
+    attempt_base = Path(f.profile["launch"]["output_root"]) / "attempts"
+    host = GenericPackHost(pack_roots=[packs], client=runtime, attempt_base=attempt_base)
+    host._attempt_policy_factory = module._AttemptPolicyFactory(host._executable_admission)
     host._native_engine_graph = None
     host.discover()
     host.preflight()
@@ -368,7 +404,89 @@ def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_
     assert {p.name: p.read_bytes() for p in f.session.iterdir()} == before
     assert all(sig == 0 for _, sig in f.signals)
     assert host._native_engine_graph is None and not host.managed_tool_session.occupied
+    assert [row["data"] for row in runtime.uploaded_objects.values() if row["filename"] == "result.txt"] == [b"settled"]
+    assert list(attempt_base.iterdir()) == [] and host.last_cleanup_receipt["status"] == "deleted"
+    assert not (Path(f.profile["launch"]["output_root"]) / "astrid-tasks").exists()
     assert all(getattr(host, name) is None for name in ("_vibecomfy_warmth_hint", "_vibecomfy_current_warmth_hint", "_vibecomfy_requested_warmth_hint"))
+
+
+@pytest.mark.parametrize("fault", ["default", "outside", "missing_session", "foreign_session",
+                                   "root", "root_alias", "parent_alias", "claim", "source", "session", "token"])
+def test_legacy_hc03_command_output_refuses_before_spawn_or_external_writes(tmp_path, monkeypatch, fault):
+    import hashlib
+    import shutil
+    from astrid.core.execution import generic_host as module
+    from astrid.core.execution.managed_tool_session import CapabilityDescriptor, ManagedToolSessionError, SessionBinding
+
+    f = _sdk_cpu_session_fixture(tmp_path, monkeypatch)
+    pack_root = tmp_path / "legacy-command"
+    pack_root.mkdir()
+    manifest = pack_root / "executor.yaml"
+    manifest.write_text(json.dumps({"schema_version": 1, "id": "vibecomfy.run", "name": "legacy",
+        "kind": "external", "version": "1.0", "command": {"argv": ["{python_exec}", "-c", "raise AssertionError('must never launch')"]},
+        "inputs": [], "outputs": [], "metadata": {"adapter_family": "local_generation", "resource_keys": ["gpu"]}}))
+    runtime = FakeRuntime()
+    runtime.confirm_claim_authority = lambda **fields: module._AuthenticatedAttempt(tuple(sorted(fields.items())))
+    managed_root = Path(f.profile["launch"]["output_root"])
+    base = None if fault == "default" else tmp_path / "outside" if fault == "outside" else managed_root / "attempts"
+    host = GenericPackHost(pack_roots=[pack_root], client=runtime, attempt_base=base)
+    host.discover()
+    host.preflight()
+    _, admission = host.admit(capability_kind="executor", capability_id="vibecomfy.run")
+    record = host.capabilities["vibecomfy.run"]
+    attempt = host._allocate_attempt_root("vibe", "vibe-attempt")
+    fields = dict(task_id="vibe", attempt_id="vibe-attempt", lease_id="unit-lease", fence=1,
+                  runtime_epoch=1, project_id="unit-project", operation=record.id, executor_id=host.executor_id)
+    host._attempt_claim_authority = _install_attempt_policy(host, attempt, record, fields=fields)
+    adapter = module._ManagedVibeSessionAdapter.from_host_session(hc03_profile=f.profile,
+        model_id="fixture-model", template_id="fixture-template", invocation_identity="vibe:vibe-attempt:1")
+    s = f.profile["vibecomfy_session"]
+    binding = SessionBinding(s["session_dir"], f.profile["runtime"]["runtime_instance_id"], s["process_birth_id"],
+                            s["server_url"], s["source_revision"], s["config_digest"], engine_birth_id=s["comfy_process_birth_id"])
+    host.managed_tool_session.open(capability=CapabilityDescriptor(record.id), binding=binding, adapter=adapter)
+    token = host.managed_tool_session.admit(capability_id=record.id, invocation_id="vibe:vibe-attempt:1")
+    profile_path = tmp_path / "readiness.json"
+    profile_path.write_text(json.dumps(f.profile))
+    monkeypatch.setenv("ASTRID_HOST_READINESS_PROFILE_PATH", str(profile_path))
+    monkeypatch.setenv("ASTRID_HOST_READINESS_PROFILE_HASH", "sha256:" + hashlib.sha256(profile_path.read_bytes()).hexdigest())
+    def forbidden_spawn(*args, **kwargs): raise AssertionError("refused HC03 command must not spawn")
+    monkeypatch.setattr(module, "popen_owned_group", forbidden_spawn)
+    if fault == "missing_session":
+        monkeypatch.delenv("ASTRID_HOST_READINESS_PROFILE_PATH")
+    elif fault == "foreign_session":
+        foreign_parent = tmp_path / "foreign"
+        foreign_parent.mkdir()
+        foreign = _sdk_cpu_session_fixture(foreign_parent, monkeypatch)
+        host.managed_tool_session._active.adapter = module._ManagedVibeSessionAdapter.from_host_session(
+            hc03_profile=foreign.profile, model_id="fixture-model", template_id="fixture-template",
+            invocation_identity="vibe:vibe-attempt:1")
+    elif fault == "root":
+        adapter.backend._output_root = tmp_path
+    elif fault in {"root_alias", "parent_alias"}:
+        selected = managed_root if fault == "root_alias" else f.root
+        moved = selected.with_name(selected.name + "-real")
+        selected.rename(moved)
+        selected.symlink_to(moved, target_is_directory=True)
+    elif fault == "claim":
+        def changed_claim(**fields): raise HostError("authenticated claim authority binding mismatch")
+        runtime.confirm_claim_authority = changed_claim
+    elif fault == "source":
+        manifest.write_text(manifest.read_text() + "\n")
+    elif fault == "session":
+        (f.session / "source_revision").write_text("b" * 40)
+    elif fault == "token":
+        from dataclasses import replace
+        token = replace(token, generation=token.generation + 1)
+    try:
+        with pytest.raises((HostError, ValueError, ManagedToolSessionError)):
+            host._run_command_definition(record, {}, attempt / "outputs", attempt,
+                                         admission=admission, managed_token=token)
+        assert not (managed_root / "astrid-tasks").exists()
+        assert list((attempt / "outputs").iterdir()) == []
+        assert runtime.settlements == [] and runtime.failures == [] and f.controls == []
+        assert all(sig == 0 for _, sig in f.signals)
+    finally:
+        if fault == "default": shutil.rmtree(attempt)
 
 
 @pytest.mark.parametrize("field", ["session", "profile", "model", "template", "runtime", "fingerprint", "backend", "lost_binding", "invocation"])
@@ -668,6 +786,12 @@ from types import ModuleType
 source,case,foreign,checkout,product_roots=sys.argv[1:]
 # Ordinary source tests bind their known product roots explicitly. Qualified
 # installed tests supply no roots, retaining the interpreter's true -I origins.
+if product_roots != '[]':
+    import sysconfig
+    # -S skips editable .pth hooks, which may expose an unrelated VibeComfy
+    # checkout even under -I. Use the real installed dependency directories
+    # without executing site startup or changing the installed environment.
+    sys.path.extend(dict.fromkeys(sysconfig.get_path(name) for name in ('purelib','platlib')))
 sys.path.extend(json.loads(product_roots))
 spec=importlib.util.spec_from_file_location('astrid.core.execution.generic_host',source)
 module=importlib.util.module_from_spec(spec)
@@ -700,7 +824,8 @@ else:
     assert products=={name:importlib.util.find_spec(name).origin for name in products}
     print(json.dumps({'rejected':False,'product_origins_unchanged':True}))
 '''
-    result = subprocess.run([python, "-I", "-B", "-c", script, host_module.__file__, case,
+    isolation = ["-I", "-B"] if retained else ["-I", "-S", "-B"]
+    result = subprocess.run([python, *isolation, "-c", script, host_module.__file__, case,
                              str(foreign), checkout, json.dumps(products)], env=env, cwd=tmp_path,
                             capture_output=True, text=True, timeout=20)
     assert result.returncode == 0, result.stderr
@@ -721,6 +846,66 @@ def isolated(monkeypatch, tmp_path):
     monkeypatch.delenv("ASTRID_PACKS_PATH", raising=False)
 
 
+def _install_attempt_policy(host, attempt, record, *, fields=None):
+    """Build the same source-bound policy used by a claimed task attempt."""
+    from astrid.core.execution import generic_host
+
+    attempt = Path(attempt).resolve()
+    attempt.mkdir(parents=True, exist_ok=True, mode=0o700)
+    authority = generic_host._AuthenticatedAttempt(tuple(sorted(
+        (fields or {"project_id": "demo"}).items()
+    )))
+    factory = host._attempt_policy_factory or generic_host._AttemptPolicyFactory(
+        host._executable_admission
+    )
+    host._confinement_policy = factory.build(authority, attempt=attempt, record=record)
+    return authority
+
+
+def _host_child_bridge(host, runtime, attempt, record, *, task_id):
+    """Create a real child bridge bound to a synthetic, exact attempt claim."""
+    from astrid.core.execution._child_bridge import HostChildBridge
+
+    if not callable(getattr(runtime, "confirm_claim_authority", None)):
+        runtime.confirm_claim_authority = lambda **fields: _generic_host._AuthenticatedAttempt(
+            tuple(sorted(fields.items()))
+        )
+    attempt_id = f"{task_id}-attempt"
+    fields = {
+        "task_id": task_id,
+        "run_id": f"{task_id}-run",
+        "project_id": "demo",
+        "attempt_id": attempt_id,
+        "lease_id": f"{task_id}-lease",
+        "fence": 1,
+        "runtime_epoch": 1,
+        "operation": record.id,
+        "executor_id": host.executor_id,
+    }
+    authority = _install_attempt_policy(host, attempt, record, fields=fields)
+    host._attempt_claim_authority = authority
+    task = {
+        "id": task_id,
+        "run_id": fields["run_id"],
+        "project_id": fields["project_id"],
+        "attempt_id": attempt_id,
+        "state": "running",
+        "runtime_epoch": 1,
+        "spec": {"child_delegation": {"limits": {}}},
+    }
+    runtime.tasks[task_id] = {"task": task}
+    return HostChildBridge(
+        host,
+        task,
+        attempt_id=attempt_id,
+        lease_id=fields["lease_id"],
+        fence=1,
+        runtime_epoch=1,
+        output_root=Path(attempt) / "outputs",
+        cancelled=lambda: False,
+    )
+
+
 def pack(tmp_path, *, code="def run(value='default'):\n    return value\n", path="actions/hello.py", inputs=None, outputs=None, conditions=None):
     root = tmp_path / "nested repo" / "unrelated"
     source = root / path
@@ -737,10 +922,16 @@ def pack(tmp_path, *, code="def run(value='default'):\n    return value\n", path
         declaration["conditions"] = conditions
     (root / "pack.yaml").write_text(yaml.safe_dump({"schema_version": 3, "id": "unrelated", "name": "Unrelated", "version": "1.0.0", "actions": {"calculate": declaration}}))
     runtime = FakeRuntime()
+    runtime.confirm_claim_authority = lambda **fields: _generic_host._AuthenticatedAttempt(
+        tuple(sorted(fields.items()))
+    )
     host = GenericPackHost(pack_roots=[root], client=runtime)
+    host._attempt_policy_factory = _generic_host._AttemptPolicyFactory(host._executable_admission)
     records = host.discover()
     assert [r.id for r in records] == ["unrelated.calculate"]
     definition, admission = host.admit(capability_kind="executor", capability_id="unrelated.calculate")
+    host._test_policy_records = dict(host.capabilities)
+    _install_attempt_policy(host, tmp_path / "attempt", host.capabilities[definition["id"]])
     return root, host, runtime, definition, admission
 
 
@@ -808,6 +999,10 @@ def test_startup_probes_keep_explicit_undeclared_credential_rejection(tmp_path):
 
 def invoke(tmp_path, host, definition, admission, *, inputs=None, dry_run=False, cancelled=None):
     attempt = tmp_path / "attempt"
+    record = host.capabilities.get(definition["id"])
+    if record is None:
+        record = host._test_policy_records[definition["id"]]
+    _install_attempt_policy(host, attempt, record)
     return host.invoke_capability(capability_kind="executor", capability_id="unrelated.calculate",
                                   request={"inputs": inputs or {}, "out": str(attempt / "outputs"),
                                            "project": "demo", "project_was_auto_resolved": True,
@@ -818,7 +1013,7 @@ def invoke(tmp_path, host, definition, admission, *, inputs=None, dry_run=False,
 
 
 def test_static_discover_admit_dry_run_and_owned_child(tmp_path):
-    sentinel = tmp_path / "imported"
+    sentinel = tmp_path / "attempt" / "outputs" / "imported"
     root, host, runtime, definition, admission = pack(tmp_path, code=f"from pathlib import Path\nPath({str(sentinel)!r}).write_text('entry')\ndef run(value):\n    return {{'value': value, 'pid': __import__('os').getpid()}}\n")
     (root / "__init__.py").write_text(f"from pathlib import Path\nPath({str(sentinel)!r}).write_text('initializer')\n")
     # Refresh after deliberate initializer addition, which invalidates admission.
@@ -841,72 +1036,55 @@ def test_python_action_receives_original_host_bridge_before_import(tmp_path):
     code = """from astrid.sdk import _child_bridge
 import os
 assert _child_bridge._bridge is not None
-assert not os.get_inheritable(_child_bridge._bridge._channel.fileno())
+assert not os.get_inheritable(_child_bridge._bridge._channel.read_fd)
+assert not os.get_inheritable(_child_bridge._bridge._channel.write_fd)
 def run(value):
     return value
 """
-    _, host, _, definition, admission = pack(tmp_path, code=code)
-    parent, inherited = socket.socketpair()
-    launched = []
-
-    class OriginalBridge:
-        def inherited_fd(self):
-            return inherited.fileno()
-
-        def launched(self):
-            launched.append(True)
-
+    _, host, runtime, definition, admission = pack(tmp_path, code=code)
+    attempt = tmp_path / "attempt"
+    bridge = _host_child_bridge(
+        host, runtime, attempt, host.capabilities[definition["id"]], task_id="bridge-before-import"
+    )
     try:
-        attempt = tmp_path / "attempt"
         result = host.invoke_capability(
             capability_kind="executor", capability_id="unrelated.calculate",
             request={"inputs": {}, "out": str(attempt / "outputs"),
                      "project": "demo", "project_was_auto_resolved": True,
                      "python_exec": sys.executable, "invocation": "runtime"},
             attempt=attempt, definition=definition, admission=admission,
-            child_bridge=OriginalBridge())
+            child_bridge=bridge)
         assert result.ok and result.payload["action_result"] == "default"
-        assert launched == [True]
-        inherited.close()
-        parent.settimeout(2)
-        assert parent.recv(1) == b""  # Worker closed the original stream.
+        assert bridge._launched
     finally:
-        inherited.close()
-        parent.close()
+        bridge.revoke()
 
 
 @pytest.mark.parametrize("form", ["-c", "-m", "script"])
-def test_private_child_command_preserves_entrypoint_and_original_bridge(tmp_path, form):
-    code = """from astrid.sdk import _child_bridge
-import os, sys, __main__
-assert _child_bridge._bridge is not None
-assert not os.get_inheritable(_child_bridge._bridge._channel.fileno())
-assert sys.argv[1:] == ['bound-argument']
-main_value = 42
-assert __main__.main_value == 42
-print('original-bridge-bound')
-"""
+def test_private_child_command_refuses_without_custody_bootstrap(tmp_path, form):
+    marker = tmp_path / "command-executed"
+    code = f"from pathlib import Path; Path({str(marker)!r}).write_text('executed')"
     script = tmp_path / "private_probe.py"
     script.write_text(code)
-    args = [form, code if form == "-c" else "private_probe", "bound-argument"]
+    args = [form, code if form == "-c" else "private_probe"]
     if form == "script":
-        args = [str(script), "bound-argument"]
-    parent, inherited = socket.socketpair()
+        args = [str(script)]
+    read_fd, write_fd = os.pipe()
     env = dict(os.environ, PYTHONPATH=os.pathsep.join((str(Path(__file__).resolve().parents[3]), str(tmp_path))))
     try:
+        from astrid.core.execution.custody_broker import _CHILD_BRIDGE_CONSUMER
+        env.pop(_CHILD_BRIDGE_CONSUMER, None)
         result = subprocess.run(
             [sys.executable, "-m", "astrid.core.execution.generic_host_worker",
-             "--child-command", str(inherited.fileno()), json.dumps(args)],
-            cwd=tmp_path, env=env, pass_fds=(inherited.fileno(),),
+             "--child-command", json.dumps([read_fd, write_fd]), json.dumps(args)],
+            cwd=tmp_path, env=env, pass_fds=(read_fd, write_fd),
             capture_output=True, text=True, timeout=15)
-        assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == "original-bridge-bound"
-        inherited.close()
-        parent.settimeout(2)
-        assert parent.recv(1) == b""
+        assert result.returncode == 1
+        assert "child pipe lacks custody bootstrap" in result.stderr
+        assert not marker.exists()
     finally:
-        inherited.close()
-        parent.close()
+        os.close(read_fd)
+        os.close(write_fd)
 
 
 @pytest.mark.parametrize("args", [[], ["-c"], ["-m"], ["-I", "work.py"], [7], {"command": "work.py"}])
@@ -914,15 +1092,17 @@ def test_private_child_command_rejects_invalid_controls_before_bridge_install(mo
     from astrid.core.execution import generic_host_worker as worker
     def forbidden(fd):
         pytest.fail("malformed controls reached inherited authority")
-    monkeypatch.setattr(worker, "_install_inherited_bridge", forbidden)
+    monkeypatch.setattr(worker, "_install_pipe_bridge", forbidden)
     with pytest.raises(ValueError):
-        worker._run_child_command("invalid-fd", json.dumps(args))
+        worker._run_child_command(json.dumps(args), "invalid-fd")
 
 
-def test_inherited_bridge_rejects_absent_original_descriptor():
+def test_private_child_command_requires_custody_bootstrap_before_descriptor_use(monkeypatch):
     from astrid.core.execution import generic_host_worker as worker
-    with pytest.raises(OSError):
-        worker._install_inherited_bridge("2147483647")
+    from astrid.core.execution.custody_broker import _CHILD_BRIDGE_CONSUMER
+    monkeypatch.delenv(_CHILD_BRIDGE_CONSUMER, raising=False)
+    with pytest.raises(ValueError, match="child pipe lacks custody bootstrap"):
+        worker._run_child_command(json.dumps(["-c", "pass"]), "2147483647")
 
 
 @pytest.mark.parametrize("value", [None, False, 0, "", [], [1, False], {"ok": False, "outputs": [{"path": "/fake"}], "returncode": 99}])
@@ -953,7 +1133,7 @@ def test_output_schema_validates_return_without_file_ports(tmp_path):
 
 
 def test_input_schema_before_import_and_only_effective_kwargs(tmp_path):
-    sentinel = tmp_path / "imported"
+    sentinel = tmp_path / "attempt" / "outputs" / "imported"
     schema = {"type": "object", "properties": {"value": {"type": "integer", "minimum": 1, "default": 3}}, "additionalProperties": False}
     _, host, _, definition, admission = pack(tmp_path, code=f"from pathlib import Path\nPath({str(sentinel)!r}).touch()\ndef run(**kwargs):\n    return kwargs\n", inputs=schema)
     with pytest.raises(HostError, match="minimum"):
@@ -1058,6 +1238,10 @@ def test_command_action_and_v2_command_harvest(tmp_path):
     _write_manifest(tmp_path / "legacy")
     runtime = FakeRuntime()
     host = GenericPackHost(pack_roots=[root, tmp_path / "legacy"], client=runtime)
+    runtime.confirm_claim_authority = lambda **fields: _generic_host._AuthenticatedAttempt(
+        tuple(sorted(fields.items()))
+    )
+    host._attempt_policy_factory = _generic_host._AttemptPolicyFactory(host._executable_admission)
     host.discover()
     assert set(host.capabilities) == {"unrelated.calculate", "test.echo"}
     host.register()
@@ -1086,11 +1270,12 @@ def test_runtime_cancellation_contains_owned_action_without_terminal_ack(tmp_pat
     import threading
     from astrid.core.execution.process_group import verify_tree_absent
 
-    entered = tmp_path / "entered"
+    entered = tmp_path / "attempt" / "outputs" / "entered"
     _, host, runtime, _, _ = pack(tmp_path, code=(
         "from pathlib import Path\nimport time\n"
         f"def run(value):\n    Path({str(entered)!r}).write_text('entered')\n"
         "    time.sleep(30)\n    return value\n"))
+    host.attempt_root = tmp_path / "attempt"
     host.register()
     admitted = task_for(runtime)
     original_task = runtime.tasks["python-task"]
@@ -1099,7 +1284,9 @@ def test_runtime_cancellation_contains_owned_action_without_terminal_ack(tmp_pat
     def current_task(task_id):
         assert task_id == "python-task"
         pump = threading.current_thread().name.startswith("astrid-heartbeat-")
-        current_state = state if entered.exists() and (not pump_only or pump) else "running"
+        policy = host._confinement_policy
+        entered = policy.private_write_root / "entered" if policy is not None else None
+        current_state = state if entered is not None and entered.exists() and (not pump_only or pump) else "running"
         observed.append(current_state)
         if shape == "typed":
             return SimpleNamespace(state=current_state)
@@ -1119,6 +1306,7 @@ def test_runtime_cancellation_contains_owned_action_without_terminal_ack(tmp_pat
 
     monkeypatch.setattr(host, "_track_process", track_original)
     result = host.run_task(admitted, lease_token="lease")
+    entered = host._confinement_policy.private_write_root / "entered"
     assert result["cancelled"] is True and state in observed
     assert entered.read_text() == "entered" and len(owned) == 1
     assert owned[0].returncode is not None
@@ -1169,7 +1357,7 @@ def test_python_return_settles_with_trusted_evidence_and_no_files(tmp_path):
 def test_python_declared_files_require_real_attempt_output(tmp_path, creates_file):
     code = "def run(value):\n"
     if creates_file:
-        code += "    from pathlib import Path\n    Path('outputs').mkdir(exist_ok=True)\n    Path('outputs/answer.txt').write_text(value)\n"
+        code += "    from pathlib import Path\n    Path('answer.txt').write_text(value)\n"
     code += "    return {'outputs': [{'path': '/fake'}]}\n"
     _, host, runtime, _, _ = pack(tmp_path, code=code, outputs=[{"name": "answer", "type": "file", "mode": "create", "path_template": "{out}/answer.txt", "artifact_type": "text/plain"}])
     host.register()
@@ -1183,7 +1371,7 @@ def test_python_declared_files_require_real_attempt_output(tmp_path, creates_fil
 
 
 def test_private_imports_add_no_repository_or_pack_pythonpath(tmp_path):
-    root, host, _, definition, admission = pack(tmp_path, code="import os, sys\ndef run(value):\n    return {'sys_path': sys.path, 'pythonpath': os.environ['PYTHONPATH']}\n")
+    root, host, _, definition, admission = pack(tmp_path, code="import os, sys\ndef run(value):\n    return {'sys_path': sys.path, 'pythonpath': os.environ.get('PYTHONPATH', '')}\n")
     returned = invoke(tmp_path, host, definition, admission).payload["action_result"]
     assert str(root) not in returned["sys_path"] and str(root.parent) not in returned["sys_path"]
     assert str(root) not in returned["pythonpath"].split(os.pathsep)
@@ -1195,6 +1383,7 @@ def test_legacy_child_command_and_ancestor_import_fence(tmp_path):
     host = GenericPackHost(pack_roots=[tmp_path / "legacy"])
     definition, admission = host.admit("executor", "test.echo")
     attempt = tmp_path / "legacy-attempt"
+    _install_attempt_policy(host, attempt, host.capabilities[definition["id"]])
     request = {"inputs": {}, "out": str(attempt / "outputs"), "project": "demo", "project_was_auto_resolved": True, "python_exec": sys.executable, "invocation": "runtime"}
     escaped = dict(admission, python_path_roots=[str(tmp_path)])
     with pytest.raises(HostError, match="outside the source fence"):
@@ -1213,7 +1402,7 @@ def test_schema_required_value_preserves_json_semantics(tmp_path, value):
 
 def test_cancellation_after_child_result_blocks_success(tmp_path):
     _, host, runtime, definition, admission = pack(tmp_path)
-    result_path = tmp_path / "attempt/.astrid-capability-result.json"
+    result_path = tmp_path / "attempt/outputs/.astrid-capability-result.json"
     observed = []
     def cancelled():
         if result_path.exists():
@@ -1248,6 +1437,16 @@ def test_legacy_orchestrator_child_command_route(tmp_path):
     host = GenericPackHost(pack_roots=[source])
     definition, admission = host.admit("orchestrator", "legacy.compose")
     attempt = tmp_path / "orchestrator-attempt"
+    from types import SimpleNamespace
+    from astrid.core.execution.generic_host import _attach_pack_metadata
+    from astrid.core.execution.orchestrator.folder import load_folder_orchestrator
+    typed_definition = _attach_pack_metadata(load_folder_orchestrator(source), source)
+    policy_record = SimpleNamespace(
+        id=typed_definition.id, definition=typed_definition, matrix={},
+        adapter=SimpleNamespace(required_binaries=()), executable_bindings=(),
+        source_digest=admission["source_digest"], source_root=Path(admission["source_root"]),
+    )
+    _install_attempt_policy(host, attempt, policy_record)
     result = host.invoke_capability(capability_kind="orchestrator", capability_id="legacy.compose", request={"inputs": {}, "out": str(attempt / "outputs"), "project": "demo", "project_was_auto_resolved": True, "python_exec": sys.executable, "invocation": "runtime"}, attempt=attempt, definition=definition, admission=admission)
     assert result.ok and result.returncode == 0
 
@@ -1451,12 +1650,11 @@ def test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift(t
     _, admission = host.admit(capability_kind='executor', capability_id='editorial.human_review')
     record = host.capabilities['editorial.human_review']
     attempt = tmp_path.resolve()/'review-attempt'; (attempt/'outputs').mkdir(parents=True)
-    (attempt/'inputs.html').write_text('<html>review</html>'); (attempt/'data.json').write_text('{}')
+    input_root = attempt/'inputs'; input_root.mkdir()
+    html_input = input_root/'inputs.html'; html_input.write_text('<html>review</html>')
+    data_input = input_root/'data.json'; data_input.write_text('{}')
     path = attempt/module._REVIEW_SESSION_NAME
-    parent, inherited = socket.socketpair()
-    class OriginalBridge:
-        def inherited_fd(self):return inherited.fileno()
-        def launched(self):pass
+    bridge = _host_child_bridge(host, host.client, attempt, record, task_id='managed-review-cancel')
     observed = []
     started = time.monotonic()
     def cancelled():
@@ -1473,9 +1671,10 @@ def test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift(t
     try:
         expected = HostError if drift else HostCancelled
         with pytest.raises(expected):
-            host._run_command_definition(record, {'html':str(attempt/'inputs.html'),
-                'data':str(attempt/'data.json'), 'no_open':True, 'timeout':10}, attempt/'outputs', attempt,
-                cancelled=cancelled, admission=admission, child_bridge=OriginalBridge())
+            host._run_command_definition(record, {'html':str(html_input),
+                'data':str(data_input), 'no_open':True, 'timeout':10}, attempt/'outputs', attempt,
+                cancelled=cancelled, admission=admission, child_bridge=bridge)
+        bridge.revoke()
         assert len(observed)==1 and not host._active_processes
         with pytest.raises((urllib.error.URLError, ConnectionError, TimeoutError)):
             urllib.request.urlopen(observed[0], timeout=1)
@@ -1494,7 +1693,7 @@ def test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift(t
                 assert not attempt.exists()
         assert host.client.heartbeat_progress == []
     finally:
-        inherited.close(); parent.close()
+        bridge.revoke()
 
 
 @pytest.mark.parametrize('field,value', [('process_pid', -1), ('process_birth_id', 'foreign'),
@@ -1727,10 +1926,9 @@ def test_cpu_shutdown_waits_for_real_original_attempt_release(tmp_path, monkeypa
     from astrid.core.execution.generic_host import _ManagedTaskAdapter
     from astrid.core.execution.process_group import verify_tree_absent
 
-    entered = tmp_path / "shutdown-entered"
     _, coordinator, runtime, _, _ = pack(tmp_path, code=(
         "from pathlib import Path\nimport time\n"
-        f"def run(value):\n    Path({str(entered)!r}).write_text('entered')\n"
+        "def run(value):\n    Path('shutdown-entered').write_text('entered')\n"
         "    time.sleep(30)\n    return value\n"))
     coordinator.register()
     if shared_accounting:
@@ -1753,10 +1951,15 @@ def test_cpu_shutdown_waits_for_real_original_attempt_release(tmp_path, monkeypa
     worker = threading.Thread(target=serve)
     worker.start()
     try:
+        entered = None
         deadline = time.monotonic() + 10
-        while not entered.exists() and worker.is_alive() and time.monotonic() < deadline:
+        while worker.is_alive() and time.monotonic() < deadline:
+            policy = host._confinement_policy
+            entered = policy.private_write_root / "shutdown-entered" if policy is not None else None
+            if entered is not None and entered.exists():
+                break
             time.sleep(.01)
-        assert entered.exists()
+        assert entered is not None and entered.exists()
         assert isinstance(host.managed_tool_session.current_adapter, _ManagedTaskAdapter)
         assert coordinator.handoff_quiescence()["active_attempts"] == 1
         host.shutdown()
@@ -1779,10 +1982,9 @@ def test_cpu_shutdown_cannot_close_unproved_real_attempt(tmp_path, monkeypatch, 
     import time
     from astrid.core.execution.process_group import CleanupUncertainError, verify_tree_absent
 
-    entered = tmp_path / "uncertain-shutdown-entered"
     _, host, runtime, _, _ = pack(tmp_path, code=(
         "from pathlib import Path\nimport time\n"
-        f"def run(value):\n    Path({str(entered)!r}).write_text('entered')\n"
+        "def run(value):\n    Path('uncertain-shutdown-entered').write_text('entered')\n"
         "    time.sleep(30)\n    return value\n"))
     host.register()
     owned, failures = [], []
@@ -1799,10 +2001,15 @@ def test_cpu_shutdown_cannot_close_unproved_real_attempt(tmp_path, monkeypatch, 
     worker = threading.Thread(target=serve)
     worker.start()
     try:
+        entered = None
         deadline = time.monotonic() + 10
-        while not entered.exists() and worker.is_alive() and time.monotonic() < deadline:
+        while worker.is_alive() and time.monotonic() < deadline:
+            policy = host._confinement_policy
+            entered = policy.private_write_root / "uncertain-shutdown-entered" if policy is not None else None
+            if entered is not None and entered.exists():
+                break
             time.sleep(.01)
-        assert entered.exists()
+        assert entered is not None and entered.exists()
         if uncertainty == "observation":
             host._handoff_observation_known = False
         else:
@@ -1959,6 +2166,15 @@ def test_cli_startup_phase_orders_real_consumer_boundaries(tmp_path, monkeypatch
     elif fault == 'registration':
         assert module._cli() == 1
         assert json.loads(ready.read_text())['status'] == 'failed'
+    elif fault in ('discovery', 'preflight'):
+        assert module._cli() == 1
+        marker = json.loads(ready.read_text())
+        assert marker['status'] == 'failed' and marker['terminal'] is True
+        assert marker['error'] == {
+            'code': 'host_discovery_failed',
+            'request_id': '',
+            'message': str(original),
+        }
     elif fault:
         with pytest.raises(HostError) as error: module._cli()
         assert error.value is original
@@ -2354,7 +2570,8 @@ def test_native_engine_graph_listener_commands_keep_platform_timeout_and_parsing
     (root / "config.json").write_bytes(config)
     (root / "launch.json").write_text(json.dumps({"launch_token":"nonce", "pid":910001, "url":"http://127.0.0.1:8188", "process_start_identity":birth}))
     reference = {"generation":1,"target":{"pid":910001}}
-    broker = SimpleNamespace(state="ready-bound", channel=None, role_authority=SimpleNamespace(reference=lambda:reference))
+    broker = SimpleNamespace(state="ready-bound", channel=None, operation_channel=None,
+                             role_authority=SimpleNamespace(reference=lambda:reference))
     graph = gh._NativeEngineGraph.__new__(gh._NativeEngineGraph)
     graph.process = SimpleNamespace(pid=910001, _astrid_process_birth=birth, poll=lambda:0, wait=lambda timeout:0)
     graph.profile = {"engine_endpoint":"http://127.0.0.1:8188", "session_config_digest":digest,
