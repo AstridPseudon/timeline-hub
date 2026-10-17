@@ -23,6 +23,9 @@ _RUNTIME_WORKER_SCOPES = (
 def test_host_bootstrap_binds_manifest_in_argv_and_reuses_exact_binding(
     tmp_path: Path, monkeypatch, validation_mode
 ) -> None:
+    # Each synthetic launch reuses the same fake PID/birth; keep its retained
+    # obligation local even if pytest reuses a truncated temporary pathname.
+    monkeypatch.setattr(host_bootstrap, "_RETAINED_HOSTS", {})
     support = tmp_path / "support"
     credentials = support / "credentials"
     credentials.mkdir(parents=True)
@@ -180,6 +183,7 @@ def test_host_bootstrap_binds_manifest_in_argv_and_reuses_exact_binding(
 
 
 def test_parked_host_validation_failure_precedes_socket_and_host_creation(tmp_path, monkeypatch):
+    monkeypatch.delenv("__CF_USER_TEXT_ENCODING", raising=False)
     import pytest
     import socket
     from astrid.core.rendering.remotion_runtime import RemotionValidationError
@@ -210,6 +214,7 @@ def test_parked_host_validation_failure_precedes_socket_and_host_creation(tmp_pa
 
 
 def test_parked_host_carries_owned_validation_reference_and_launch_argument(tmp_path, monkeypatch):
+    monkeypatch.delenv("__CF_USER_TEXT_ENCODING", raising=False)
     import socket
     source = tmp_path / 'source'
     source.mkdir()
