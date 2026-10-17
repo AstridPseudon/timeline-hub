@@ -1003,7 +1003,7 @@ class _TimingEvaluators:
                 continue
             for path, expr in formulas.items():
                 if isinstance(expr, Mapping) and expr.get("orphan"):
-                    self.notes.append(f"{clip.address}.{path}: {expr['orphan']} (kept its last value)")
+                    self._note_orphan(f"{clip.address}.{path}: {expr['orphan']} (kept its last value)")
                     continue
                 try:
                     value = self._evaluate(clip, expr, by_id, words, slots, path)
@@ -1016,7 +1016,7 @@ class _TimingEvaluators:
                             pass  # retain malformed legacy formula diagnostics
                     if bound:
                         intent.set_formula(clip.data, path, {**expr, "orphan": f"ORPHAN: {exc}"})
-                        self.notes.append(f"{clip.address}.{path}: {exc} (kept its last value)")
+                        self._note_orphan(f"{clip.address}.{path}: {exc} (kept its last value)")
                         continue
                     self.notes.append(f"{clip.address}.{path.removeprefix('params.')}: {exc} (kept its last value)")
                     continue

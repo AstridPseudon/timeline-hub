@@ -1272,7 +1272,7 @@ def _follow_occurrences(tl: "Checkout", segment: str, said_before: Sequence[Any]
                     reason = f"ORPHAN: {text} lost its spoken word in the new take"
                     for mate in clip._sequence_mates():
                         intent.set_orphan(mate.data, reason)
-                    tl.notes.append(f"{clip.address}: {reason} (kept its last value)")
+                    tl._note_orphan(f"{clip.address}: {reason} (kept its last value)")
                 elif mo.format_moment(new) != text:
                     write(clip.data, mo.format_moment(new))
                     note(clip, "", text, mo.format_moment(new))
@@ -1288,7 +1288,7 @@ def _follow_occurrences(tl: "Checkout", segment: str, said_before: Sequence[Any]
                     reason = f"ORPHAN: fit land {land} lost its spoken word in the new take"
                     for mate in clip._sequence_mates():
                         intent.set_orphan(mate.data, reason)
-                    tl.notes.append(f"{clip.address}: {reason} (kept its last value)")
+                    tl._note_orphan(f"{clip.address}: {reason} (kept its last value)")
                 else:
                     value = new["moment"] if isinstance(land, str) else new
                     if value != land:
@@ -1304,7 +1304,7 @@ def _follow_occurrences(tl: "Checkout", segment: str, said_before: Sequence[Any]
             if new is None:
                 reason = f"ORPHAN: {expr.get('moment') or expr.get('word')} lost its spoken word in the new take"
                 intent.set_formula(clip.data, path, {**expr, "orphan": reason})
-                tl.notes.append(f"{clip.address}.{path}: {reason} (kept its last value)")
+                tl._note_orphan(f"{clip.address}.{path}: {reason} (kept its last value)")
             elif new != expr:
                 intent.set_formula(clip.data, path, new)
                 note(clip, f".{path}", expr.get("moment") or expr.get("word"), new.get("moment") or new.get("word"))
