@@ -493,6 +493,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 if activation is not None: activation.close()
                 if broker is not None: broker.abort_before_spawn()
             else:
+                if handle.inspection_owner is not None and not handle.inspection_owner.released.is_set():
+                    handle.inspection_owner.abort_before_release()
                 try: self.abort(handle)
                 except BaseException as cleanup:
                     self.cleanup_uncertain = "host-only startup cleanup unresolved"
@@ -581,24 +583,27 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     handle.original_host_wait = handle.retained.poll()
                 except BaseException as wait_error:
                     record(wait_error)
+            inspection_error = None
             if handle.inspection_owner is not None:
                 try:
                     handle.inspection_owner.finish(cancel=True, timeout=max(0.0, deadline - time.monotonic()))
                 except BaseException as exc:
                     record(exc)
-                    self.cleanup_uncertain = "host-only original inspection owner unresolved"
-                    raise ConflictError(self.cleanup_uncertain) from exc
+                    inspection_error = exc
             outcome = {"operation_id_sha256": hashlib.sha256(bound["operation_id"].encode()).hexdigest(),
                 "child_cleanup_acknowledged": handle.cleanup_acknowledged,
                 "original_host_wait": handle.original_host_wait,
-                "complete_graph": handle.cleanup_acknowledged and handle.original_host_wait is not None,
+                "complete_graph": handle.cleanup_acknowledged and handle.original_host_wait is not None and inspection_error is None,
                 "secondary_error_classes": handle.cleanup_errors}
+            if handle.inspection_owner is not None:
+                outcome["inspection_owner_settled"] = inspection_error is None
             _LOGGER.warning("host-only cleanup outcome: %s", json.dumps(outcome, sort_keys=True))
             if handle.original_host_wait is not None:
                 handle.control.close()
                 handle.activation.close()
             if not outcome["complete_graph"]:
-                self.cleanup_uncertain = ("host-only child cleanup acknowledgement unresolved" if not handle.cleanup_acknowledged
+                self.cleanup_uncertain = ("host-only original inspection owner unresolved" if inspection_error is not None else
+                    "host-only child cleanup acknowledgement unresolved" if not handle.cleanup_acknowledged
                     else "host-only original Host wait unresolved")
                 raise ConflictError(self.cleanup_uncertain)
             handle.closed = True
