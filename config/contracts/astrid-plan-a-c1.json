@@ -1056,8 +1056,7 @@
         "decision": "Current source_setup and machine contract win over old default-packs plan pin 50ff509240c5582a7335dc71920533b59be7792c; publication remains unproved.",
         "evidenceRefs": [
           "default-sources",
-          "hivemind-contract",
-          "stale-default-plan"
+          "hivemind-contract"
         ]
       },
       {
@@ -1214,13 +1213,6 @@
       "repository": "Astrid",
       "path": "astrid/sdk/execution_request.py",
       "sha256": "9cd8bc5749f587575d979d2eca361341e8b6840f5e6d64c5cdee4220c0e4dfc8",
-      "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
-    },
-    {
-      "id": "stale-default-plan",
-      "repository": "Astrid",
-      "path": "docs/plans/astrid-default-packs-and-skills/PLAN.md",
-      "sha256": "691fae1c0e267eedae068111aa7bc6555f0bf34b609ee6d4d19dd02fac635229",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {

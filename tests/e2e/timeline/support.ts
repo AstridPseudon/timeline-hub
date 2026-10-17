@@ -82,7 +82,7 @@ export function browserEvidencePath(testInfo: TestInfo, relativePath: string): s
   const tracked = process.env.PLAYWRIGHT_REFRESH_TRACKED_EVIDENCE === '1';
   const externalRoot = process.env.PLAYWRIGHT_EVIDENCE_ROOT;
   const destination = tracked
-    ? resolve(process.cwd(), 'docs/extensions/evidence', relativePath)
+    ? resolve(process.cwd(), 'docs/extensions/ship-evidence', relativePath)
     : externalRoot
       ? resolve(externalRoot, relativePath)
       : testInfo.outputPath(relativePath);

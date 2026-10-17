@@ -1226,12 +1226,12 @@ identity.
 
 ### Visual evidence and release progression must be immutable
 
-- RC6 visual provenance binds the exact six-image inventory, old/new source
+- Archived RC6 visual provenance bound the exact six-image inventory, old/new source
   commits, source-file hashes, browser/tool versions, viewport/config metadata,
   image hashes and metrics, human/agent review metadata, and the three retained
   red diff-mask PNGs. The verifier decodes pixels and checks each mask, so a
   plausible screenshot or missing state cannot silently enter the ledger
-  (`docs/extensions/evidence/releases/extension-ship-quality-rc6/`).
+  (the superseded RC6 evidence archive, removed during the App history cleanup).
 - Failed candidates remain historical: RC1–RC5 tags/receipts are not retagged,
   and RC6 is the current integration cycle with no RC6 tag or signed 23/23
   ledger. A source fix invalidates any future freeze and requires a new clean
@@ -2733,7 +2733,7 @@ fresh console collection.
   verified task-owned pytest/Astrid temporary roots, confirm at least 11 GiB
   free before retrying, and recheck the volume around heavyweight phases;
   do not touch user caches, active browser data, worktrees, or live servers.
-  Evidence: `docs/extensions/evidence/releases/extension-ship-quality-rc6/late-friction-addendum.md`
+  Evidence: the superseded RC6 late-friction addendum, removed during the App history cleanup.
   and `docs/extensions/extension-release-next-steps.md` (Phase 2).
 - The capability census reports tasks, generations, and media, but does not
   census the timeline-document route. A green boot census therefore does not

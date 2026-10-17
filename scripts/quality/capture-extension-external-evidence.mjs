@@ -284,7 +284,7 @@ function capture(options) {
   const document = readJson(input);
   assertValid(document);
   const outputRelative = relative(REPO_ROOT, requestedOutput);
-  const requiredRoot = `docs/extensions/evidence/releases/${document.release}/`;
+  const requiredRoot = `docs/extensions/ship-evidence/releases/${document.release}/`;
   if (!outputRelative.startsWith(requiredRoot) || outputRelative.length <= requiredRoot.length) {
     throw new Error(`captured evidence output must be under ${requiredRoot}`);
   }

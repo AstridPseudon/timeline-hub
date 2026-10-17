@@ -158,8 +158,8 @@ export function buildOperatorCommands({ release, astridCommit }) {
       extra: ` --slot ${slot}`,
     }, safeRelease)),
     'npm run extension:evidence -- validate --artifact /tmp/REPLACE_WITH_COMPLETED_DRAFT.json',
-    'npm run extension:evidence -- capture --input /tmp/REPLACE_WITH_COMPLETED_DRAFT.json --output docs/extensions/evidence/releases/REPLACE_WITH_MANIFEST_RELEASE/REPLACE_WITH_UNIQUE_EVIDENCE_PATH.json',
-    'npm run extension:evidence -- receipt --artifact docs/extensions/evidence/releases/REPLACE_WITH_MANIFEST_RELEASE/REPLACE_WITH_UNIQUE_EVIDENCE_PATH.json --workstream REPLACE_WITH_WORKSTREAM_NUMBER --id REPLACE_WITH_UNIQUE_RECEIPT_ID',
+    'npm run extension:evidence -- capture --input /tmp/REPLACE_WITH_COMPLETED_DRAFT.json --output docs/extensions/ship-evidence/releases/REPLACE_WITH_MANIFEST_RELEASE/REPLACE_WITH_UNIQUE_EVIDENCE_PATH.json',
+    'npm run extension:evidence -- receipt --artifact docs/extensions/ship-evidence/releases/REPLACE_WITH_MANIFEST_RELEASE/REPLACE_WITH_UNIQUE_EVIDENCE_PATH.json --workstream REPLACE_WITH_WORKSTREAM_NUMBER --id REPLACE_WITH_UNIQUE_RECEIPT_ID',
     'npm run extension:evidence -- verify-keys',
     'npm run check:extension-ship-evidence -- --audit',
   ];

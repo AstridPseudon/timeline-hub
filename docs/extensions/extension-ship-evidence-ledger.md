@@ -44,7 +44,7 @@ path must be one of this code-owned allowlist:
   candidate pins, workstream statuses, blockers, and receipts;
 - `config/releases/extension-ship-quality.json`, where the only permitted
   semantic change is exactly `status: integration` to `status: frozen`; or
-- `docs/extensions/evidence/releases/<release>/`, the release-specific root for
+- `docs/extensions/ship-evidence/releases/<release>/`, the release-specific root for
   committed evidence artifacts.
 
 No source, script, package/lock file, runbook, checklist, or other configuration
@@ -123,18 +123,18 @@ copy under the release evidence root; `capture` refuses to overwrite a file:
 npm run extension:evidence -- validate --artifact /tmp/rollout-stage.json
 npm run extension:evidence -- capture \
   --input /tmp/rollout-stage.json \
-  --output "docs/extensions/evidence/releases/$RELEASE_ID/rollout/stage-0.json"
+  --output "docs/extensions/ship-evidence/releases/$RELEASE_ID/rollout/stage-0.json"
 ```
 
 Generate the unsigned receipt for review, or append it without changing status:
 
 ```sh
 npm run extension:evidence -- receipt \
-  --artifact "docs/extensions/evidence/releases/$RELEASE_ID/rollout/stage-0.json" \
+  --artifact "docs/extensions/ship-evidence/releases/$RELEASE_ID/rollout/stage-0.json" \
   --workstream 19 --id rollout-stage-0
 
 npm run extension:evidence -- receipt \
-  --artifact "docs/extensions/evidence/releases/$RELEASE_ID/rollout/stage-0.json" \
+  --artifact "docs/extensions/ship-evidence/releases/$RELEASE_ID/rollout/stage-0.json" \
   --workstream 19 --id rollout-stage-0 --append-ledger
 ```
 

@@ -1,6 +1,6 @@
 # Reigh
 
-AI-powered image and video generation studio. **For usage, go to [reigh.art](https://reigh.art/)** — this repo is for development only.
+AI-powered image and video generation studio. **For usage, go to [astrid.haus](https://astrid.haus/)** — this repo is for development only.
 
 ---
 
@@ -27,8 +27,6 @@ npm run dev                   # Vite on http://localhost:2222
 **Timeline only?** `npm run dev:editor` boots the video-editor timeline with demo
 clips against a committed local bridge stub — no Docker, no Supabase, no sign-in.
 It prints the editor URL; open it and the timeline is there.
-
-GPU task processing requires **[Reigh-Worker](https://github.com/banodoco/Reigh-Worker)** running separately. Worker and API orchestration is managed by **[Reigh-Worker-Orchestrator](https://github.com/banodoco/Reigh-Worker-Orchestrator)**.
 
 ## Governance Contracts
 
