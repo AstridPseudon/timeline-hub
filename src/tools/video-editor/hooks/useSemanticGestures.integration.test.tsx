@@ -7574,6 +7574,8 @@ describe('W30 manual text consumer', () => {
       onMoveTrackUp: vi.fn(), onMoveTrackDown: vi.fn(), onSetInteractionMode: vi.fn(), onSetPrecisionEnabled: vi.fn(), compositionWidth: 1920, compositionHeight: 1080,
       registry: {}, activeTab: 'text', setActiveTab: vi.fn(), effectResources: catalog }));
     fireEvent.change(view.container.querySelector('textarea')!, { target: { value: 'Selected SDK edit ✨' } });
+    expect(gestureCommandsFor(h.result.current.data!)?.map(call => call.op)).toEqual(['clip.set-text']);
+    expect(gestureCommandsFor(h.result.current.data!)?.[0].args).toMatchObject({ text: { content: 'Selected SDK edit ✨' } });
     await manualTextRun(h, () => proof, history);
     expect(requests[0].change.commands).toHaveLength(1);
     expect(requests[0].change.commands[0]).toMatchObject({ op: 'clip.set-text', select: 'parent/clip:clip-1', args: { text: {
