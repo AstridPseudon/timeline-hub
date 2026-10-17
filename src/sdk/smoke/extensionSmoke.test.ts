@@ -86,20 +86,20 @@ describe('getExtensionSmokeExtension — absent trigger', () => {
 // ---------------------------------------------------------------------------
 
 describe('getExtensionSmokeExtension — active trigger (?extensionSmoke=1)', () => {
-  it('returns a AstridExtension when extensionSmoke=1 via URLSearchParams', () => {
+  it('returns an AstridExtension when extensionSmoke=1 via URLSearchParams', () => {
     const sp = makeSearchParams({ [EXTENSION_SMOKE_QUERY_PARAM]: EXTENSION_SMOKE_ACTIVE_VALUE });
     const ext = getExtensionSmokeExtension(sp);
     expect(ext).not.toBeNull();
     expect(ext!.manifest.id).toBe('haus.astrid.smoke.extension-smoke');
   });
 
-  it('returns a AstridExtension when extensionSmoke=1 via raw query string (without ?)', () => {
+  it('returns an AstridExtension when extensionSmoke=1 via raw query string (without ?)', () => {
     const ext = getExtensionSmokeExtension(`${EXTENSION_SMOKE_QUERY_PARAM}=${EXTENSION_SMOKE_ACTIVE_VALUE}`);
     expect(ext).not.toBeNull();
     expect(ext!.manifest.id).toBe('haus.astrid.smoke.extension-smoke');
   });
 
-  it('returns a AstridExtension when extensionSmoke=1 via raw query string (with ?)', () => {
+  it('returns an AstridExtension when extensionSmoke=1 via raw query string (with ?)', () => {
     const ext = getExtensionSmokeExtension(`?${EXTENSION_SMOKE_QUERY_PARAM}=${EXTENSION_SMOKE_ACTIVE_VALUE}`);
     expect(ext).not.toBeNull();
     expect(ext!.manifest.id).toBe('haus.astrid.smoke.extension-smoke');

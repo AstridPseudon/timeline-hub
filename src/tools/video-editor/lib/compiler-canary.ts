@@ -527,7 +527,7 @@ export function createCompilerCanary(
 }
 
 /**
- * Create a AstridExtension that wraps the compiler canary.
+ * Create an AstridExtension that wraps the compiler canary.
  *
  * This is the standard defineExtension() shape consumed by the host
  * extension lifecycle.  The activate() function receives the live

@@ -108,7 +108,7 @@ function makeExtensionWithId(id: string, overrides?: Partial<ExtensionManifest>)
 }
 
 /**
- * Create a AstridExtension with a potentially invalid manifest without going
+ * Create an AstridExtension with a potentially invalid manifest without going
  * through defineExtension (which validates IDs and throws on invalid ones).
  */
 function rawExtension(manifest: Record<string, unknown>): AstridExtension {

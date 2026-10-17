@@ -44,10 +44,10 @@ Native Astrid needs its own browser-based authentication handoff, such as a supp
 
 ```mermaid
 flowchart TD
-  PERSON[User] --> Astrid App[Astrid App app on any device]
-  Astrid App -->|Choose Cloud and sign in| AUTH[Supabase Auth / Discord OAuth]
+  PERSON[User] --> APP[Astrid App on any device]
+  APP -->|Choose Cloud and sign in| AUTH[Supabase Auth / Discord OAuth]
   AUTH -->|Supabase user UUID| GATEWAY[Trusted Cloud gateway]
-  Astrid App -->|Project and conversation reads| GATEWAY
+  APP -->|Project and conversation reads| GATEWAY
   NATIVE[Native Astrid client] -->|Scoped Cloud profile| GATEWAY
   HOSTED[Hosted OMP / Astrid session] -->|Short-lived scoped grant| GATEWAY
 

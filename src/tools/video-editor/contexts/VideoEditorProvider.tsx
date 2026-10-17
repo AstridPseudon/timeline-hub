@@ -2,7 +2,7 @@ import { admittedCatalogEntries, getAdmittedElementSelection, subscribeAdmittedE
 import type { ExtensionPendingWorkState } from '@/sdk/context.ts';
 import { useEffects } from '@/tools/video-editor/hooks/useEffects.ts';
 /**
- * Internal host-only provider wiring for the Astrid App app shell.
+ * Internal host-only provider wiring for the Astrid App shell.
  * Not part of the supported public SDK surface.
  *
  * Runtime assembly (registries, extension lifecycle, proposal runtime,

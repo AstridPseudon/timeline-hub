@@ -166,7 +166,7 @@ function Tinkerer() {
 }
 
 /**
- * The old saying, struck through, and the idea Astrid is built on beneath it. Each part rises in with the
+ * The old saying, struck through, and the idean Astrid is built on beneath it. Each part rises in with the
  * page's shared reveal, a beat apart as in the other sections; the strike draws across once the quote
  * is in place.
  */
