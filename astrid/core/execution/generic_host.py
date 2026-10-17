@@ -12232,6 +12232,10 @@ class LocalExecutionPreparation:
         self._admission_abort_ack: dict[str, Any] | None = None
         self._abort_dispatch_lock = threading.Lock()
         self.control_error: BaseException | None = None
+        self.control_diagnostics: list[dict[str, Any]] = []
+        self._pending_host_request: dict[str, Any] | None = None
+        self._host_only_phase = "parked"
+        self._abort_started = False
         self._lock = threading.RLock()
         self._prepare_done = threading.Event()
         self._prepare_done.set()
@@ -12254,6 +12258,42 @@ class LocalExecutionPreparation:
         self._handoff_journal_path: Path | None = None
         self._handoff_lock_fd: int | None = None
         self._handoff_journal_ready = False
+
+    def _record_control_error(self, exc: BaseException) -> None:
+        # Never serialize arbitrary exception text, locals, credentials or paths.
+        import traceback
+        safe_reasons = {
+            "host-only selected profile shape is invalid", "host-only launch selection is invalid",
+            "host-only concurrency must be explicitly bounded", "host-only launch configuration digest differs",
+            "host-only preparation is not from original Runtime peer", "host-only selected artifact identity is invalid",
+            "host-only selected interpreter differs", "host-only boot input differs",
+            "host-only admitted import closure differs", "host-only custody scope is unresolved",
+            "hosted preparation differs from authenticated launch", "hosted generation or process designation differs",
+            "host-only preparation replay conflicts", "host-only cleanup remains unresolved",
+        }
+        reason = str(exc) if type(exc) in (HostError, CleanupUncertainError) and str(exc) in safe_reasons else "detail withheld"
+        diagnostic = {"exception_class": type(exc).__name__[:80], "reason": reason,
+            "frames": [{"file": Path(f.filename).name[:80], "function": f.name[:80], "line": f.lineno}
+                       for f in traceback.extract_tb(exc.__traceback__)[-4:]]}
+        with self._lock:
+            primary = self.control_error is None
+            if primary:
+                self.control_error = exc
+            if len(self.control_diagnostics) < 5:
+                self.control_diagnostics.append(diagnostic)
+        _LOGGER.error("local preparation %s: %s", "first cause" if primary else "secondary", json.dumps(diagnostic, sort_keys=True))
+
+    def construct_claim_host(self, factory: Callable) -> "GenericPackHost":
+        # The constructor can create obligations before attach_claim_host. Keep
+        # that entire interval serialized with abort, and retain a failed phase.
+        with self._lock:
+            if self._abort_started or self._aborted:
+                raise HostError("local preparation has been aborted")
+            self._host_only_phase = "claim_constructing"
+            host = factory()
+            self._claim_host = host
+            self._host_only_phase = "claim_owned"
+            return host
 
     def _acquire_handoff_journal(self, scope: Path) -> bool:
         if self._handoff_lock_fd is not None:
@@ -12295,9 +12335,12 @@ class LocalExecutionPreparation:
         if self._request is not None:
             journal_ready = self._acquire_handoff_journal(Path(str(self._request["custody_scope"])))
         with self._lock:
+            if self._abort_started or self._aborted:
+                raise HostError("local preparation has been aborted")
             if self._claim_host is not None and self._claim_host is not host:
                 raise HostError("local execution control already has a claim owner")
             self._claim_host = host
+            self._host_only_phase = "claim_owned"
             if not journal_ready:
                 with host._handoff_condition:
                     host._handoff_claim_gate_closed = True
@@ -12327,6 +12370,9 @@ class LocalExecutionPreparation:
             raise HostError("accepted activation grant cannot be retained for handoff")
         accepted = json.loads(json.dumps(dict(grant), sort_keys=True, allow_nan=False))
         with self._lock:
+            if self._abort_started or self._aborted:
+                raise HostError("local preparation has been aborted")
+            self._host_only_phase = "activated"
             if self._activation_grant is not None and self._activation_grant != accepted:
                 raise HostError("retained activation grant changed")
             self._activation_grant = accepted
@@ -13283,21 +13329,25 @@ class LocalExecutionPreparation:
             raise CleanupUncertainError("host-only custody scope is unresolved")
         intent = _canonical_digest(dict(request))
         with self._lock:
-            if self._aborted or (self._intent is not None and self._intent != intent):
+            if self._abort_started or self._aborted or (self._intent is not None and self._intent != intent):
                 raise HostError("host-only preparation replay conflicts")
+            if self._intent == intent and self.result is not None:
+                return json.loads(json.dumps(self.result))
             self._intent = intent; self._request = json.loads(json.dumps(dict(request)))
             result = {"version": _LOCAL_PREPARATION_VERSION, "status": "prepared",
                 "execution_mode": "host_only_cpu", "operation_id": self.operation_id, "channel_id": self.channel_id,
                 "owner_epoch": request["owner_epoch"], "session_config_digest": profile["session_config_digest"],
                 "processes": {"host": {"pid": os.getpid(), "birth_id": process_birth_identity()}}}
             self.result = result
+            self._host_only_phase = "prepared"
             return json.loads(json.dumps(result))
 
     def _dispatch_host_only(self, request: Mapping[str, Any]) -> dict[str, Any]:
-        if self._request is None:
+        retained_request = self._request or self._pending_host_request
+        if retained_request is None:
             raise HostError("host-only control has no retained preparation")
         bound = {"version": _LOCAL_PREPARATION_VERSION, "operation_id": self.operation_id,
-            "channel_id": self.channel_id, "owner_epoch": self._request["owner_epoch"]}
+            "channel_id": self.channel_id, "owner_epoch": retained_request["owner_epoch"]}
         if any(request.get(k) != v for k, v in bound.items()):
             raise HostError("host-only control owner binding differs")
         command = request.get("command")
@@ -13307,9 +13357,9 @@ class LocalExecutionPreparation:
             return json.loads(json.dumps(self.result))
         if command != "abort_local_execution":
             raise HostError("host-only nonchild/handoff control is unsupported")
-        selected = self._request["profile"]
+        selected = retained_request["profile"]
         abort_bound = {**bound, "profile_digest": selected["profile_digest"],
-            "profile_binding_digest": _handoff_digest(selected), "custody_scope": self._request["custody_scope"]}
+            "profile_binding_digest": _handoff_digest(selected), "custody_scope": retained_request["custody_scope"]}
         capabilities = request.get("custody_capabilities")
         if set(request) != {*abort_bound, "command", "custody_capabilities"} or any(request.get(k) != v for k, v in abort_bound.items()) or not isinstance(capabilities, Mapping) or set(capabilities) != {"host"}:
             raise HostError("host-only cleanup request differs from retained binding")
@@ -13326,27 +13376,27 @@ class LocalExecutionPreparation:
             if self._abort_intent is not None and self._abort_intent != intent:
                 raise HostError("host-only cleanup replay conflicts")
             self._abort_intent = intent
+            self._abort_started = True
             if self._abort_ack is not None:
                 return json.loads(json.dumps(self._abort_ack))
         try:
-            if self._claim_host is not None:
-                self._claim_host.shutdown()
+            with self._lock:
+                if self._claim_host is not None:
+                    self._claim_host.shutdown()
+                elif self._host_only_phase not in {"parked", "prepared", "activated"}:
+                    raise CleanupUncertainError("host-only cleanup remains unresolved")
             # Positive acknowledgement follows actual owned-child, bridge and
             # managed-session cleanup. No root exit is treated as this proof.
             reply = {**abort_bound, "custody_capabilities": dict(capabilities), "status": "cleaned",
                      "cleanup": {"host_children": "absent"}}
             with self._lock:
-                self._aborted = True; self._abort_ack = reply
+                self._aborted = True; self._abort_ack = reply; self._host_only_phase = "cleaned"
             return json.loads(json.dumps(reply))
         except BaseException as exc:
-            self.control_error = exc
+            self._record_control_error(exc)
             return {**abort_bound, "custody_capabilities": dict(capabilities), "status": "unresolved", "error_code": "cleanup_unresolved"}
 
     def prepare_local_execution(self, request: Mapping[str, Any]) -> dict[str, Any]:
-        if getattr(self, '_hosted_binding', None) is not None:
-            from astrid.core.execution import hosted_contract, custody_broker
-            hosted_contract.verify_preparation(self._hosted_binding, request,
-                custody_broker.RoleCustodyAuthority(Path(self._hosted_binding['scope']), 'host'), actor=self._retained_relay_actor)
         required = {"version", "command", "operation_id", "channel_id", "owner_epoch", "runtime_owner", "profile", "custody_scope"}
         if (set(request) != required or request.get("version") != _LOCAL_PREPARATION_VERSION
                 or request.get("command") != "prepare_local_execution"
@@ -13362,8 +13412,24 @@ class LocalExecutionPreparation:
             raise HostError("local preparation has a stale or invalid Runtime owner epoch")
         if not isinstance(request["profile"], Mapping):
             raise HostError("local preparation profile must be an object")
+        if getattr(self, '_hosted_binding', None) is not None:
+            from astrid.core.execution import hosted_contract, custody_broker
+            hosted_contract.verify_preparation(self._hosted_binding, request,
+                custody_broker.RoleCustodyAuthority(Path(self._hosted_binding['scope']), 'host'), actor=self._retained_relay_actor)
+        if request["profile"].get("execution_mode") == "host_only_cpu" and getattr(self, '_hosted_binding', None) is not None:
+            peer = self._retained_relay_actor
+            if peer is None or any(peer.verify().get(k) != owner.get(k) for k in ("pid", "uid", "birth_id")):
+                raise HostError("host-only preparation is not from original Runtime peer")
+            pending = json.loads(json.dumps(dict(request), allow_nan=False))
+            with self._lock:
+                if self._abort_started or self._aborted or (self._pending_host_request is not None and self._pending_host_request != pending):
+                    raise HostError("host-only preparation replay conflicts")
+                self._pending_host_request = pending
         if request["profile"].get("execution_mode") == "host_only_cpu":
-            return self._prepare_host_only(request)
+            with self._lock:
+                if self._abort_started or self._aborted:
+                    raise HostError("host-only preparation replay conflicts")
+                return self._prepare_host_only(request)
         profile = _validate_local_engine_profile(request["profile"])
         scope = Path(str(request["custody_scope"]))
         if not scope.is_absolute() or scope.is_symlink():
@@ -13417,8 +13483,12 @@ class LocalExecutionPreparation:
                 if self._aborted:
                     return
                 graph = self.graph
-            if (self._request or {}).get("profile", {}).get("execution_mode") == "host_only_cpu" and self._claim_host is not None:
-                self._claim_host.shutdown()
+                self._abort_started = True
+                if (self._request or self._pending_host_request or {}).get("profile", {}).get("execution_mode") == "host_only_cpu":
+                    if self._claim_host is not None:
+                        self._claim_host.shutdown()
+                    elif self._host_only_phase not in {"parked", "prepared", "activated", "cleaned"}:
+                        raise CleanupUncertainError("host-only cleanup remains unresolved")
             if graph is not None:
                 graph.abort()
             with self._lock:
@@ -13532,7 +13602,7 @@ class LocalExecutionPreparation:
                 self._admission_abort_ack = json.loads(_handoff_canonical(reply))
             return json.loads(_handoff_canonical(reply))
         except BaseException as exc:
-            self.control_error = exc
+            self._record_control_error(exc)
             try:
                 current = self.known_custody_capabilities()
             except BaseException:
@@ -13623,7 +13693,7 @@ class LocalExecutionPreparation:
                 self._current_abort_ack = json.loads(_handoff_canonical(reply))
             return json.loads(_handoff_canonical(reply))
         except BaseException as exc:
-            self.control_error = exc
+            self._record_control_error(exc)
             try:
                 roles = self.known_custody_capabilities()
             except BaseException:
@@ -13666,7 +13736,7 @@ class LocalExecutionPreparation:
             self._abort_dispatch_lock.release()
 
     def _dispatch_bound(self, request: Mapping[str, Any]) -> dict[str, Any]:
-        if (self._request or {}).get("profile", {}).get("execution_mode") == "host_only_cpu":
+        if (self._request or self._pending_host_request or {}).get("profile", {}).get("execution_mode") == "host_only_cpu":
             if request.get("command") == "prepare_local_execution":
                 return self.prepare_local_execution(request)
             return self._dispatch_host_only(request)
@@ -13733,7 +13803,7 @@ class LocalExecutionPreparation:
         except BaseException as exc:
             # A response preserves every actual obligation, including ones the
             # relay had not yet received. It makes no exit or cleanup claim.
-            self.control_error = exc
+            self._record_control_error(exc)
             return {**abort_bound, "status": "unresolved", "custody_capabilities": self.known_custody_capabilities(),
                     "error_code": "cleanup_unresolved"}
 
@@ -13754,7 +13824,7 @@ class LocalExecutionPreparation:
                     try:
                         reply = self.dispatch(frame)
                     except BaseException as exc:
-                        self.control_error = exc
+                        self._record_control_error(exc)
                         command = frame.get("command")
                         if command not in {"prepare_local_execution", "report_local_execution"}:
                             raise
@@ -13763,9 +13833,15 @@ class LocalExecutionPreparation:
                                  "owner_epoch": (self._request or frame).get("owner_epoch"),
                                  "error_code": "preparation_unresolved" if command == "prepare_local_execution" else "report_unresolved",
                                  "custody_capabilities": self.known_custody_capabilities()}
-                    _send_activation_frame(control, reply)
+                    with self._lock:
+                        if reply.get("status") == "prepared" and self._abort_started:
+                            reply = {"version": _LOCAL_PREPARATION_VERSION, "status": "unresolved",
+                                "operation_id": self.operation_id, "channel_id": self.channel_id,
+                                "owner_epoch": (self._request or self._pending_host_request or frame).get("owner_epoch"),
+                                "error_code": "preparation_unresolved", "custody_capabilities": {}}
+                        _send_activation_frame(control, reply)
             except BaseException as exc:
-                self.control_error = exc
+                self._record_control_error(exc)
             finally:
                 control.close()
         thread = threading.Thread(target=serve, name="astrid-host-control", daemon=True)
@@ -14217,7 +14293,7 @@ def _retain_unresolved_owner(preparation: LocalExecutionPreparation) -> None:
         try:
             preparation.abort()
         except BaseException as exc:
-            preparation.control_error = exc
+            preparation._record_control_error(exc)
             time.sleep(1)
 
 
@@ -14540,7 +14616,7 @@ def _cli() -> int:
             try:
                 preparation.abort()
             except BaseException as exc:
-                preparation.control_error = exc
+                preparation._record_control_error(exc)
                 return  # Unresolved custody keeps this designated owner alive.
             raise SystemExit(128 + signum)
         signal.signal(signal.SIGTERM, parked_shutdown)
@@ -14577,7 +14653,7 @@ def _cli() -> int:
                 try:
                     preparation.abort()
                 except BaseException as cleanup_error:
-                    preparation.control_error = cleanup_error
+                    preparation._record_control_error(cleanup_error)
                     _retain_unresolved_owner(preparation)
             parser.error(str(exc))
     if preparation is not None and preparation.graph is not None:
@@ -14759,7 +14835,8 @@ def _cli() -> int:
 
     _emit_startup_phase("host_constructor_begin")
     _install_host_vibecomfy_import_root()
-    host = GenericPackHost(
+    def create_host():
+        return GenericPackHost(
         pack_roots=args.pack_root,
         client=client,
         executor_id=args.executor_id,
@@ -14771,6 +14848,7 @@ def _cli() -> int:
         boot_manifest_path=boot_manifest,
         boot_manifest_hash=boot_manifest_hash,
     )
+    host = preparation.construct_claim_host(create_host) if preparation is not None else create_host()
     _emit_startup_phase("host_constructor_done")
     host._native_engine_graph = preparation.graph if preparation is not None else None
     if preparation is not None:
