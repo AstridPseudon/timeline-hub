@@ -1,4 +1,5 @@
 """Host lifetime checks without Chrome, Runtime, or a detached owner."""
+import base64
 import io
 import json
 import os
@@ -53,6 +54,42 @@ def owner(tmp_path):
     return host.HostRemotionSession(track=lambda p: events.append(("track", p)),
                                    untrack=lambda p: events.append(("untrack", p)),
                                    root_parent=str(tmp_path)), events
+
+
+def test_failed_original_pipe_capture_is_bounded_and_has_no_lifecycle_authority(tmp_path, monkeypatch):
+    manager, events = owner(tmp_path)
+    read_fd, write_fd = os.pipe()
+    original_stdout = os.fdopen(read_fd, 'rb', buffering=0)
+    process = Process()
+    process.pid = 42
+    process.stdout = original_stdout
+    manager.process = process
+    manager._stderr.extend(b'e' * 70000)
+    snapshots = []
+    monkeypatch.setattr(manager, '_persist_input_state', lambda: snapshots.append(manager._failed_original_output.copy()))
+    try:
+        os.write(write_fd, b'original failed renderer reply\n')
+        manager._capture_failed_original_output(RuntimeError('private refusal'))
+        record = snapshots[-1]
+        assert record['authority'] == 'NONE'
+        assert record['root_pid'] == 42 and record['original_returncode'] is None
+        assert base64.b64decode(record['stdout_base64']) == b'original failed renderer reply\n'
+        assert base64.b64decode(record['stderr_base64']) == b'e' * 65536
+        assert os.get_blocking(read_fd)
+        assert not process.waited and events == []
+        assert 'private refusal' not in json.dumps(record)
+        # An empty later read retains the original bytes. Persistence failure
+        # stays diagnostic and cannot replace the primary operation refusal.
+        def unavailable():
+            raise OSError('unavailable')
+        monkeypatch.setattr(manager, '_persist_input_state', unavailable)
+        manager._capture_failed_original_output(ValueError('later refusal'))
+        assert manager._failed_original_output['stdout_base64'] == record['stdout_base64']
+        assert manager._failed_original_output['persistence_error_class'] == 'OSError'
+        assert not process.waited and events == []
+    finally:
+        os.close(write_fd)
+        original_stdout.close()
 
 
 class Process:

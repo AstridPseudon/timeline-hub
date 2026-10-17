@@ -5,6 +5,7 @@ executor inherits it, and the host fixes the executable and helper directory.
 """
 from __future__ import annotations
 
+import base64
 import ctypes
 import errno
 import hashlib
@@ -233,6 +234,7 @@ class HostRemotionSession:
         self._timer = None
         self._stderr = bytearray()
         self._stderr_thread = None
+        self._failed_original_output = None
         self._idle_seconds = 45.0
         self.frame_owner = RemotionFrameOwner.for_host_session(self)
 
@@ -277,7 +279,46 @@ class HostRemotionSession:
             "custody_failure": reason(self.custody_unresolved),
             "failed_snapshot": getattr(self.execution_invalidated, "input_facts", None),
             "cleanup_settled": self._cleanup_settled,
+            "failed_original_output": getattr(self, "_failed_original_output", None),
         })
+
+    def _capture_failed_original_output(self, error):
+        """Keep already available original-pipe bytes after execution is fenced.
+
+        This is diagnostic data, never child authority, an exit proof, a retry
+        disposition or permission to consume a failed result.
+        """
+        process = self.process
+        if process is None:
+            return
+        data = bytearray()
+        record = {'authority': 'NONE', 'root_pid': getattr(process, 'pid', None),
+                  'original_returncode': getattr(process, 'returncode', None),
+                  'exception_class': type(error).__name__[:80]}
+        try:
+            fd = process.stdout.fileno()
+            blocking = os.get_blocking(fd)
+            try:
+                os.set_blocking(fd, False)
+                while len(data) < 65536 and select.select([fd], [], [], 0)[0]:
+                    part = os.read(fd, 65536 - len(data))
+                    if not part:
+                        break
+                    data.extend(part)
+            finally:
+                os.set_blocking(fd, blocking)
+        except Exception as capture:
+            record['capture_error_class'] = type(capture).__name__[:80]
+        record.update(stdout_base64=base64.b64encode(data).decode(),
+                      stderr_base64=base64.b64encode(bytes(self._stderr[-65536:])).decode())
+        previous = getattr(self, '_failed_original_output', None)
+        if previous is not None and not data:
+            record['stdout_base64'] = previous.get('stdout_base64', '')
+        self._failed_original_output = record
+        try:
+            self._persist_input_state()
+        except Exception as persistence:
+            record['persistence_error_class'] = type(persistence).__name__[:80]
 
     def _validate_inputs(self, lease):
         observed = {}
@@ -564,6 +605,7 @@ class HostRemotionSession:
                 tree_error = getattr(self.process, "_astrid_tree_uncertain", None)
                 if custody_error is not None or tree_error is not None:
                     self.custody_unresolved = self.custody_unresolved or custody_error or RuntimeError(tree_error)
+                self._capture_failed_original_output(error)
                 raise
 
     def release(self, lease):
@@ -614,6 +656,7 @@ class HostRemotionSession:
             self._cleanup_settled = True
         except BaseException as error:
             self.uncertain = self.uncertain or error
+            self._capture_failed_original_output(error)
             try:
                 self._persist_input_state()
             except (OSError, RuntimeError, ValueError) as persistence_error:
