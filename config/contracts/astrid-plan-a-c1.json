@@ -4,7 +4,7 @@
   "revision": "C1",
   "issuedOn": "2026-09-23",
   "status": "frozen-semantics-pending-ack",
-  "digest": "sha256:3319e76d69cd00141f62a314619ab713d6b5eeea80bc7d8e4fa30955087fd8bb",
+  "digest": "sha256:bce45d851aa4c92fe3abcf53379e5401d8180f8be10209acb69a5f4484c92e66",
   "scope": {
     "owner": "CF",
     "consumers": [
@@ -1247,7 +1247,7 @@
       "id": "runtime-autobootstrap",
       "repository": "astrid-agent",
       "path": "astrid/sdk/autobootstrap.py",
-      "sha256": "8f4f3fda98eb2dd678c1b3f958fc33d9345a3a3dc2af15ad201a65ccf27ccb07",
+      "sha256": "21bf61f4c0e8b59b6b9cf37dfaeb73c3dfc526d9267afa4fd82af1159c1d735b",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
@@ -1436,7 +1436,7 @@
       "id": "pack-wan2gp",
       "repository": "astrid-agent",
       "path": "astrid/packs/wan2gp/pack.yaml",
-      "sha256": "3fa43b2d495d95dff87023a7a25857c4346d735eb52238cd4923d39f203b6783",
+      "sha256": "e8802ebbe56ab04554b3f6d9aad5577df94eced660a462e8e1571fce7b21a4e3",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
