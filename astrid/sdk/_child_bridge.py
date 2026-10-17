@@ -312,6 +312,7 @@ class ChildBridge:
         self._lock = threading.Lock()
         self._sequence = 0
         self._closed = False
+        self._review_listener = None
 
     def _is_open(self) -> bool:
         """Local transport availability, never peer or task completion evidence."""
@@ -323,8 +324,15 @@ class ChildBridge:
             return self._channel.is_open()
         return isinstance(self._channel, socket.socket) and self._channel.fileno() >= 0
 
+    def _take_review_listener(self, out_path):
+        if not self._is_open() or self._review_listener is None:
+            raise ValueError("managed review requires its inherited listener")
+        return self._review_listener.consume(out_path)
+
     def close(self) -> None:
         self._closed = True
+        if self._review_listener is not None:
+            self._review_listener.close()
         try:
             self._channel.shutdown(socket.SHUT_RDWR)
         except OSError:

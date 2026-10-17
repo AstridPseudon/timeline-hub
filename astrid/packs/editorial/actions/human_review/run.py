@@ -1217,7 +1217,12 @@ def main(argv: list[str] | None = None) -> int:
                     recovery_command="provide a state file valid under the admitted schema bundle",
                 ) from exc
 
-        port = args.port if args.port else _pick_free_port()
+        inherited_listener = None
+        if receiver_path is not None:
+            inherited_listener = _inherited_bridge()._take_review_listener(args.out)
+            port = inherited_listener.getsockname()[1]
+        else:
+            port = args.port if args.port else _pick_free_port()
         token = secrets.token_hex(16)
         shutdown_event = threading.Event()
         handler = make_handler_class(
@@ -1232,7 +1237,15 @@ def main(argv: list[str] | None = None) -> int:
             state_validator=state_validator,
             state_result_path=args.out.parent / _STATE_RESULT_FILENAME,
         )
-        server = ThreadingHTTPServer(("127.0.0.1", port), handler)
+        if inherited_listener is None:
+            server = ThreadingHTTPServer(("127.0.0.1", port), handler)
+        else:
+            server = ThreadingHTTPServer(("127.0.0.1", port), handler, bind_and_activate=False)
+            server.socket.close()
+            server.socket = inherited_listener
+            server.server_address = ("127.0.0.1", port)
+            server.server_name = "localhost"
+            server.server_port = port
         url = f"http://127.0.0.1:{port}/?token={token}"
 
         server_thread = threading.Thread(target=server.serve_forever, daemon=True)

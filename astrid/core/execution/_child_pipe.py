@@ -204,6 +204,7 @@ class _ChildBridgeLaunchBinding:
         self.wire = None
         self.actor = None
         self.selection = None
+        self.review_listener = None
 
     def select(self, argv, cwd, environment, descriptors):
         # Called only by the original host's confinement-plan producer. Keep
@@ -225,6 +226,10 @@ class _ChildBridgeLaunchBinding:
         import subprocess
 
         self.verify()
+        if self.review_listener is not None:
+            self.review_listener.validate(self.review_listener.policy)
+            if not self.review_listener.consumed:
+                raise ValueError("review listener was not selected for this launch")
         if (
             self.selection is None
             or self.prepared
@@ -233,7 +238,8 @@ class _ChildBridgeLaunchBinding:
             or str(options.get("cwd")) != self.selection[1]
             or options.get("env") != dict(self.selection[2])
             or options.get("close_fds") is not True
-            or any(options.get(name) != subprocess.PIPE for name in ("stdin", "stdout", "stderr"))
+            or any(options.get(name) != subprocess.PIPE for name in ("stdout", "stderr"))
+            or options.get("stdin") is not (self.review_listener.socket if self.review_listener is not None else subprocess.PIPE)
         ):
             raise ValueError(
                 "child pipe launch differs from admitted executable, policy or environment"
@@ -255,6 +261,10 @@ class _ChildBridgeLaunchBinding:
         return tuple(row["fd"] for row in self.endpoints)
 
     def verify(self):
+        if self.review_listener is not None:
+            from ._review_listener import _RetainedReviewListener
+            if type(self.review_listener) is not _RetainedReviewListener or self.review_listener.launch is not self:
+                raise ValueError("child pipe requires its original typed review listener")
         bridge = self.bridge
         if (
             bridge._launch_binding is not self
@@ -310,6 +320,8 @@ class _ChildBridgeLaunchBinding:
             run_id=custody._launch_broker.run_id,
             claim_digest=hashlib.sha256(encode([self.context, self.claim])).hexdigest(),
         )
+        if self.review_listener is not None:
+            self.wire["review_listener"] = self.review_listener.metadata()
         return self.wire
 
 
@@ -352,7 +364,22 @@ def install_bridge(encoded_descriptors):
         channel.sendall(encode({"ready": digest}))
         if read_frame(channel) != {"accepted": digest}:
             raise ValueError("child pipe launch acceptance differs")
-        return _install_child_bridge(channel)
+        bridge = _install_child_bridge(channel)
+        if "review_listener" in wire:
+            import socket
+
+            from ._review_listener import _InheritedReviewListener
+            # Python's sys.stdin owns fd0. Give the server one scoped duplicate
+            # and atomically restore inert stdin, avoiding two Python owners of
+            # the same FD number or a spare listening copy after server close.
+            listener = _InheritedReviewListener(socket.fromfd(0, socket.AF_INET, socket.SOCK_STREAM), wire["review_listener"])
+            bridge._review_listener = listener
+            null = os.open("/dev/null", os.O_RDONLY)
+            try:
+                os.dup2(null, 0)
+            finally:
+                os.close(null)
+        return bridge
     except BaseException:
         channel.close()
         raise

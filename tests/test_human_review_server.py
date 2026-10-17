@@ -509,6 +509,12 @@ def _receiver_bridge(monkeypatch, tmp_path, *, transport="socket"):
     monkeypatch.setattr(_child_bridge, '_bridge', bridge)
     attempt = tmp_path.resolve() / 'task-attempt'
     (attempt / 'outputs').mkdir(parents=True)
+    from astrid.core.execution._review_listener import _InheritedReviewListener, listener_identity
+    listener = socket.socket()
+    listener.bind(('127.0.0.1', 0))
+    listener.listen(128)
+    bridge._review_listener = _InheritedReviewListener(listener,
+        {**listener_identity(listener), 'attempt': str(attempt)})
     monkeypatch.setenv('TMPDIR', str(attempt / 'outputs'))
     monkeypatch.setenv('ASTRID_PROGRESS_PATH', str(attempt / '.astrid-progress.json'))
     return review, bridge, parent, attempt
