@@ -12,7 +12,7 @@ MODULE = ROOT / "remotion" / "webpack-alias.mjs"
 
 
 @pytest.mark.parametrize('format', ['yaml', 'json'])
-@pytest.mark.parametrize('fault', [None, 'undeclared', 'escape', 'different-directory', 'symlink'])
+@pytest.mark.parametrize('fault', [None, 'undeclared', 'escape', 'different-directory', 'symlink', 'ambiguous'])
 def test_live_scene_support_uses_declared_selected_pack_resources(tmp_path, format, fault):
     pack = tmp_path/'selected-rendering'; directory = pack/'ui/live-scenes'
     directory.mkdir(parents=True)
@@ -21,11 +21,14 @@ def test_live_scene_support_uses_declared_selected_pack_resources(tmp_path, form
     surface = 'ui/live-scenes/SceneSurface.tsx'
     runtime = 'ui/live-scenes/runtime.ts'
     if fault == 'escape': surface = '../outside/SceneSurface.tsx'
-    if fault == 'different-directory': runtime = 'other/runtime.ts'
+    if fault == 'different-directory':
+        runtime = 'other/runtime.ts'
+        (pack/'other').mkdir();(pack/runtime).write_text('export type SceneStatus = unknown;')
     if fault == 'symlink':
         outside = tmp_path/'outside.tsx'; outside.write_text('unadmitted')
         (directory/'SceneSurface.tsx').unlink(); (directory/'SceneSurface.tsx').symlink_to(outside)
     resources = [] if fault == 'undeclared' else [dict(kind='support',path=surface),dict(kind='support',path=runtime)]
+    if fault == 'ambiguous':resources.append(dict(kind='support',path=surface))
     manifest = dict(id='rendering',rendering={},ui={'live-scenes':dict(type='editor',resources=resources)})
     if format == 'json': (pack/'pack.json').write_text(json.dumps(manifest))
     else:
