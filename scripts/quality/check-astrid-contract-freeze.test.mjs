@@ -130,23 +130,23 @@ test('composition retains all nineteen packs, experimental labels and declared p
 test('explicit external root verifies observed bytes and rejects source drift', (t) => {
   const directory = temporary(t);
   const contract = clone();
-  fixtureSources(contract, directory, 'Astrid');
+  fixtureSources(contract, directory, 'astrid-agent');
   seal(contract);
-  assert.deepEqual(validateContract(contract, { repoRoots: { Astrid: directory } }), []);
-  const source = contract.sourceEvidence.find((entry) => entry.repository === 'Astrid');
+  assert.deepEqual(validateContract(contract, { repoRoots: { 'astrid-agent': directory } }), []);
+  const source = contract.sourceEvidence.find((entry) => entry.repository === 'astrid-agent');
   writeFileSync(path.join(directory, source.path), 'changed source');
-  assert.match(validateContract(contract, { repoRoots: { Astrid: directory } }).join('\n'), /source SHA-256 mismatch/);
+  assert.match(validateContract(contract, { repoRoots: { 'astrid-agent': directory } }).join('\n'), /source SHA-256 mismatch/);
 });
 
 test('explicit source roots reject a symlink escape', (t) => {
   const directory = temporary(t);
   const contract = clone();
-  fixtureSources(contract, directory, 'Astrid');
-  const source = contract.sourceEvidence.find((entry) => entry.repository === 'Astrid');
+  fixtureSources(contract, directory, 'astrid-agent');
+  const source = contract.sourceEvidence.find((entry) => entry.repository === 'astrid-agent' && entry.id === 'engine-profile');
   const filename = path.join(directory, source.path);
   rmSync(filename);
   symlinkSync(path.join(root, 'package.json'), filename);
-  assert.match(validateContract(seal(contract), { repoRoots: { Astrid: directory } }).join('\n'), /escapes repository root/);
+  assert.match(validateContract(seal(contract), { repoRoots: { 'astrid-agent': directory } }).join('\n'), /escapes repository root/);
 });
 
 function diagnostic() {
