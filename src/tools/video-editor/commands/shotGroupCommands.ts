@@ -59,6 +59,59 @@ export function buildUnpinShotGroupCommand(data: TimelineData | null, group: Sho
   return groupCommand('shot-group.remove', group, { remove_clip_ids: [] });
 }
 
+/** Transfer the complete stored group. Display IDs supply lookup only; canonical
+ * identities and the stored member selectors supply occurrence ownership.
+ */
+export function buildTransferShotGroupCommand(
+  data: TimelineData,
+  group: ShotGroupSelection,
+  targetTrackId: string,
+): EditCommand | null {
+  const stored = storedGroup(data, group);
+  if (!stored || !nonempty(targetTrackId) || targetTrackId.includes('/') || targetTrackId === group.trackId
+    || !['images', 'video'].includes(stored.mode ?? 'images')
+    || (stored.mode === 'video' && stored.clipIds.length !== 1)
+    || group.clipIds.length !== stored.clipIds.length || new Set(group.clipIds).size !== group.clipIds.length
+    || group.clipIds.some((id) => !stored.clipIds.includes(id))
+    || data.config.pinnedShotGroups?.some((row) => row !== stored && row.clipIds.some((id) => group.clipIds.includes(id)))
+    || data.config.pinnedShotGroups?.some((row) => row.shotId === group.shotId && row.trackId === targetTrackId)
+    || [group.trackId, targetTrackId].some((id) => {
+      const tracks = data.config.tracks?.filter((track) => track.id === id) ?? [];
+      return tracks.length !== 1 || tracks[0].kind !== 'visual';
+    })) return null;
+  const members = group.clipIds.map((id) => scopedMember(data, id, group.trackId));
+  if (members.some((id) => id === null) || new Set(members).size !== members.length) return null;
+  const scopes = new Set(members.map((id) => id!.split('/clip:')[0]));
+  if (scopes.size !== 1) return null;
+  const scope = [...scopes][0];
+  if (stored.ownerOccurrenceId != null && scope !== `occurrence:${stored.ownerOccurrenceId}`) return null;
+  if (scope !== 'parent' && (!stored.memberSelectors || stored.ownerOccurrenceId == null)) return null;
+  if (stored.memberSelectors && (stored.memberSelectors.length !== members.length
+    || new Set(stored.memberSelectors).size !== members.length
+    || members.some((id) => !stored.memberSelectors!.includes(id!)))) return null;
+  let capturedIdentity: ReturnType<typeof occurrenceIdentityFor>;
+  for (const id of group.clipIds) {
+    const identity = occurrenceIdentityFor(data, id);
+    const source = identity?.sourceClip ?? data.config.clips.find((clip) => clip.id === id)!;
+    if (identity && (identity.projectId !== data.head?.projectId || identity.parentDocumentId !== data.head?.timelineId
+      || identity.headRevisionId !== data.head?.headRevisionId)) return null;
+    if (identity && capturedIdentity && ['projectId', 'parentDocumentId', 'headRevisionId', 'occurrenceId', 'shotId',
+      'revisionId', 'internalTimelineRevisionId', 'outputIdentity'].some((key) =>
+        Reflect.get(identity, key) !== Reflect.get(capturedIdentity!, key))) return null;
+    capturedIdentity = identity;
+    const app = source.app as Record<string, unknown> | undefined;
+    const intent = app?.astrid as Record<string, unknown> | undefined;
+    // Relation/sequence/bed and source-edge choices remain with their existing
+    // producers. A literal transfer must not normalize authored relationships.
+    if (source.track !== group.trackId || typeof source.at !== 'number' || !Number.isFinite(source.at)
+      || ['on', 'until', 'for', 'cut', 'sequence', 'sequence_fit', 'segment', 'formulas', 'loop', 'orphan']
+        .some((key) => Object.prototype.hasOwnProperty.call(app ?? {}, key) || Object.prototype.hasOwnProperty.call(intent ?? {}, key))
+      || ['keyframes', 'modifiers', 'keyframeOrigin'].some((key) => Object.prototype.hasOwnProperty.call(source, key))) return null;
+  }
+  if ((data.config.app?.astrid as Record<string, unknown> | undefined)?.music_beds != null) return null;
+  return groupCommand('shot-group.set', group, { intent: 'transfer', target: `${scope}/track:${targetTrackId}`, members });
+}
+
 export function buildDeleteShotGroupCommand(
   data: TimelineData | null,
   group: ShotGroupSelection,

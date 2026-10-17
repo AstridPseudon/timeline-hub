@@ -1,6 +1,6 @@
 import { trackHistoryInverse } from '@/tools/video-editor/commands/trackHistory.ts';
 import { clipStructureInverse } from '@/tools/video-editor/commands/clipStructureHistory.ts';
-import { clipPlacementInverse } from '@/tools/video-editor/commands/clipPlacementHistory.ts';
+import { clipPlacementInverse, isShotGroupTransferBatch } from '@/tools/video-editor/commands/clipPlacementHistory.ts';
 import { transcriptCaptionInverse } from '@/tools/video-editor/commands/transcriptCaptionHistory.ts';
 import { isTranscriptCaptionBatch, transcriptBindTarget } from '@/tools/video-editor/commands/transcriptCaptions.ts';
 import { createProjectTranscriptReader } from './projectTranscriptReader.ts';
@@ -764,7 +764,8 @@ export class RuntimeDataProvider implements DataProvider {
             && command.resolved?.length === 1 && command.resolved[0] === command.select)))) {
       throw new TimelineSchemaIncompatibleError('Semantic occurrence gestures require one captured owner and exact pins.');
     }
-    if (!occurrence && save.editCommands?.some((command) => command.select?.startsWith('occurrence:'))) {
+    if (!occurrence && !isShotGroupTransferBatch(save.editCommands ?? [])
+      && save.editCommands?.some((command) => command.select?.startsWith('occurrence:'))) {
       throw new TimelineSchemaIncompatibleError('Semantic occurrence gestures require their captured context.');
     }
     const session = this.commitSession.next();

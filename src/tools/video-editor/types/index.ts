@@ -440,6 +440,9 @@ export type CustomEffectEntry = {
 export type PinnedShotImageClipSnapshot = {
   clipId: string;
   assetKey?: string;
+  /** Retained SDK provenance; transfer changes only the explicit track fields. */
+  track?: string;
+  authoring?: { selector: string; clip: TimelineClip; order: string[] };
   start?: number;
   end?: number;
   meta: {

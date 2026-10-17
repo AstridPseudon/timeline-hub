@@ -1,6 +1,6 @@
 import { isTrackHistoryInverse } from './trackHistory.ts';
 import { isClipStructureInverse } from './clipStructureHistory.ts';
-import { isClipPlacementInverse } from './clipPlacementHistory.ts';
+import { isClipPlacementInverse, isShotGroupTransferBatch } from './clipPlacementHistory.ts';
 import { isTranscriptCaptionInverse } from './transcriptCaptionHistory.ts';
 import { isTranscriptCaptionBatch, transcriptBindTarget } from './transcriptCaptions.ts';
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
@@ -55,6 +55,13 @@ function isShotGroupAggregateCommand(command: EditCommand): boolean {
       && (args.name === undefined || (typeof args.name === 'string' && args.name.length > 0));
   }
   if (args.intent === 'images') return hasExactKeys(args, ['group', 'intent']);
+  if (args.intent === 'transfer') {
+    return hasExactKeys(args, ['group', 'intent', 'target', 'members'])
+      && Array.isArray(args.members) && args.members.length > 0
+      && args.members.every(isScopedGroupClipId) && new Set(args.members).size === args.members.length
+      && typeof args.target === 'string' && /^(?:parent|occurrence:[^/]+)\/track:[^/]+$/.test(args.target)
+      && args.members.every((member) => member.split('/clip:')[0] === (args.target as string).split('/track:')[0]);
+  }
   if (args.intent === 'video' || args.intent === 'replace-video') {
     const video = args.intent === 'video';
     const expectedKeys = video ? ['group', 'intent', 'media', 'identities'] : ['group', 'intent', 'media'];
@@ -94,6 +101,7 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
   authoredOccurrences.delete(data);
   let context: TimelineOccurrenceContext | undefined;
   let parent = false;
+  const transferBatch = isShotGroupTransferBatch(commands);
   const aggregateBatch = commands.length > 0 && commands.every((command) =>
     isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command));
   const captionTarget = isTranscriptCaptionBatch(commands) ? transcriptBindTarget(commands[0]) : undefined;
@@ -103,7 +111,7 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
   const scopedCommands = captionSelector ? [{ ...commands[0]!, select: captionSelector, resolved: [captionSelector] }] : commands;
   for (const command of scopedCommands) {
     if (typeof command.select !== 'string') {
-      if (command.select !== null || (!aggregateBatch && source.config.clips.some((clip) => clip.app?.canonical))) return;
+      if (command.select !== null || (!aggregateBatch && !transferBatch && source.config.clips.some((clip) => clip.app?.canonical))) return;
       parent = true;
       continue;
     }
@@ -140,8 +148,8 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
       parent = true;
     }
   }
-  if (context && parent) return;
-  if (context) authoredOccurrences.set(data, structuredClone(context));
+  if (context && parent && !transferBatch) return;
+  if (context && !transferBatch) authoredOccurrences.set(data, structuredClone(context));
   authoredCommands.set(data, structuredClone(commands));
 }
 export function gestureCommandsFor(data: TimelineData): readonly EditCommand[] | undefined {

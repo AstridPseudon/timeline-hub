@@ -1264,7 +1264,12 @@ describe('useClipDrag', () => {
         clipIds: ['clip-1', 'clip-2'],
         mode: 'images',
       })]);
-      expect(options).toMatchObject({ transactionId: expect.any(String) });
+      expect(options).toMatchObject({ transactionId: expect.any(String), editCommands: [
+        { op: 'shot-group.set', select: null, args: { group: { shotId: 'shot-1', trackId: 'V1' },
+          intent: 'transfer', target: 'parent/track:V2', members: ['parent/clip:clip-1', 'parent/clip:clip-2'] } },
+        expect.objectContaining({ op: 'clip.nudge', select: 'parent/clip:clip-1', args: { frames: 30 } }),
+        expect.objectContaining({ op: 'clip.nudge', select: 'parent/clip:clip-2', args: { frames: 30 } }),
+      ] });
       expect(selectionMocks.userSelectTimelineClips).toHaveBeenCalledWith(['clip-1', 'clip-2'], { additive: false });
     } finally {
       cleanup();
@@ -1344,7 +1349,9 @@ describe('useClipDrag', () => {
       });
 
       expect(applyEdit).toHaveBeenCalledTimes(1);
-      const [edit] = applyEdit.mock.calls[0];
+      const [edit, options] = applyEdit.mock.calls[0];
+      expect(options.editCommands.map((call: { op: string }) => call.op)).toEqual(['timeline.add', 'shot-group.set', 'clip.nudge', 'clip.nudge']);
+      expect(options.editCommands[1]).toEqual({ op: 'shot-group.set', select: null, args: { group: { shotId: 'shot-1', trackId: 'V1' }, intent: 'transfer', target: 'parent/track:V3', members: ['parent/clip:clip-1', 'parent/clip:clip-2'] } });
       expect(edit.type).toBe('config');
       expect(edit.pinnedShotGroupsOverride).toEqual([expect.objectContaining({
         shotId: 'shot-1',

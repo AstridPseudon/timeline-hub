@@ -378,14 +378,21 @@ export function useTimelineCommit({
         }
       }
       if (currentData && isClipPlacementBatch(options.editCommands) && editability) {
+        if (editability.checkTimeline && !editability.checkTimeline().allowed) return;
         for (const command of options.editCommands) {
-          const clip = currentData.config.clips.find((clip) => {
-            if (command.select === `parent/clip:${clip.id}`) return true;
-            const identity = occurrenceIdentityFor(currentData, clip.id);
-            return identity && command.select === `occurrence:${identity.occurrenceId}/clip:${identity.sourceClipId}`;
-          });
-          if (!clip || !editability.check({ clipId: clip.id, sourceTrackId: clip.track,
-            targetTrackId: command.op === 'clip.set-track' ? String(command.args.track) : clip.track }).allowed) return;
+          if (command.op === 'timeline.add') continue;
+          const transfer = command.op === 'shot-group.set' && command.args.intent === 'transfer';
+          const selectors = transfer ? command.args.members as string[] : [command.select];
+          for (const select of selectors) {
+            const clip = currentData.config.clips.find((clip) => {
+              if (select === `parent/clip:${clip.id}`) return true;
+              const identity = occurrenceIdentityFor(currentData, clip.id);
+              return identity && select === `occurrence:${identity.occurrenceId}/clip:${identity.sourceClipId}`;
+            });
+            if (!clip || !editability.check({ clipId: clip.id, sourceTrackId: clip.track,
+              targetTrackId: transfer ? String(command.args.target).split('/track:')[1]
+                : command.op === 'clip.set-track' ? String(command.args.track) : clip.track }).allowed) return;
+          }
         }
       }
     }

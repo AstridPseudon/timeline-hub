@@ -319,6 +319,9 @@ const clonePinnedShotImageSnapshots = (
 export const clonePinnedShotGroups = (
   pinnedShotGroups: TimelineConfig['pinnedShotGroups'],
 ): TimelineConfig['pinnedShotGroups'] => pinnedShotGroups?.map((group) => ({
+  // The tagged group is document-owned. Keep opaque siblings when commands
+  // migrate its key instead of projecting it through a second group schema.
+  ...structuredClone(group),
   ...(group.ownerOccurrenceId ? { ownerOccurrenceId: group.ownerOccurrenceId } : {}),
   ...(group.memberSelectors ? { memberSelectors: [...group.memberSelectors] } : {}),
   shotId: group.shotId,
