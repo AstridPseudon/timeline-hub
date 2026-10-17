@@ -1,3 +1,4 @@
+import { continuousHistoryInverse, isContinuousHistoryBatch, isContinuousHistoryInverse } from '@/tools/video-editor/commands/continuousHistory.ts';
 import { fadeHistoryInverse } from '@/tools/video-editor/commands/fadeHistory.ts';
 import { clipLookStyleInverse } from '@/tools/video-editor/commands/clipLookStyleHistory.ts';
 import { clipParamsHistoryInverse } from '@/tools/video-editor/commands/clipParamsHistory.ts';
@@ -895,6 +896,13 @@ export class RuntimeDataProvider implements DataProvider {
   private async readCommittedTimeline(
     timelineId: string, request: CommitRequest, result: CommitResult,
   ): Promise<TimelineSaveReceipt> {
+    const continuousCommands = 'commands' in request.change ? request.change.commands : [];
+    const continuousOwner = isContinuousHistoryBatch(continuousCommands)
+      || continuousCommands.length === 1 && isContinuousHistoryInverse(continuousCommands[0]);
+    const continuousInverse = continuousHistoryInverse(continuousCommands, result);
+    if (continuousOwner && continuousInverse === undefined) {
+      throw new TimelineSchemaIncompatibleError('Runtime continuous receipt does not cover this exact atomic command batch.');
+    }
     const head = result.accepted_revision_id ?? (result.status === 'no_change' ? result.base_revision_id : null);
     if (!head) throw new TimelineSchemaIncompatibleError('Runtime commit omitted its accepted revision.');
     // Resolve the exact immutable Runtime revision, never infer publication shape
@@ -917,7 +925,7 @@ export class RuntimeDataProvider implements DataProvider {
     const captionInverse = transcriptCaptionInverse(registryCommands, result);
     const overlapInverse = overlapTrimInverse(registryCommands, result);
     // null means this owner explicitly had no change; it must not fall through.
-    const commandInverse = registryNoChange ? null : [captionInverse, assetRegistrationInverse(registryCommands, result),
+    const commandInverse = registryNoChange ? null : [continuousInverse, captionInverse, assetRegistrationInverse(registryCommands, result),
       overlapInverse, tiedHoldExpansionInverse(registryCommands, result), clipPlacementInverse(registryCommands, result),
       clipStructureInverse(registryCommands, result), trackHistoryInverse(registryCommands, result), fadeHistoryInverse(registryCommands, result), clipLookStyleInverse(registryCommands, result), clipParamsHistoryInverse(registryCommands, result)]
       .find(inverse => inverse !== undefined);

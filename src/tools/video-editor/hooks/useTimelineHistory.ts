@@ -1,3 +1,4 @@
+import { isContinuousHistoryBatch, isContinuousHistoryInverse } from '../commands/continuousHistory.ts';
 import { isFadeHistoryBatch, isFadeHistoryInverse } from '../commands/fadeHistory.ts';
 import { isClipLookStyleInverse } from '../commands/clipLookStyleHistory.ts';
 import { isClipParamsHistoryBatch, isClipParamsHistoryInverse } from '../commands/clipParamsHistory.ts';
@@ -253,7 +254,7 @@ export function useTimelineHistory({
       syncHistoryState();
       return;
     }
-    if (!isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse) && !isTiedHoldExpansionInverse(inverse) && !isTranscriptCaptionInverse(inverse) && !isClipPlacementInverse(inverse) && !isClipStructureInverse(inverse) && !isTrackHistoryInverse(inverse) && !isFadeHistoryInverse(inverse) && !isClipLookStyleInverse(inverse) && !isClipParamsHistoryInverse(inverse)) return;
+    if (!isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse) && !isTiedHoldExpansionInverse(inverse) && !isTranscriptCaptionInverse(inverse) && !isClipPlacementInverse(inverse) && !isClipStructureInverse(inverse) && !isTrackHistoryInverse(inverse) && !isFadeHistoryInverse(inverse) && !isClipLookStyleInverse(inverse) && !isClipParamsHistoryInverse(inverse) && !isContinuousHistoryInverse(inverse)) return;
     for (const entry of [...undoStackRef.current, ...redoStackRef.current]) {
       if (entry.nativeRegistration?.owner === owner) entry.nativeRegistration.inverse = structuredClone(inverse);
     }
@@ -338,7 +339,7 @@ export function useTimelineHistory({
     // Never turn an unacknowledged edit or missing receipt into a snapshot publication.
     const inverse = entry.nativeRegistration?.inverse;
     if (entry.nativeRegistration && !inverse) return false;
-    const nextData = entry.nativeRegistration && (isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse) || isTranscriptCaptionInverse(inverse) || isClipPlacementInverse(inverse) || isClipStructureInverse(inverse) || isTrackHistoryInverse(inverse) || isFadeHistoryInverse(inverse) || isClipLookStyleInverse(inverse) || isClipParamsHistoryInverse(inverse))
+    const nextData = entry.nativeRegistration && (isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse) || isTranscriptCaptionInverse(inverse) || isClipPlacementInverse(inverse) || isClipStructureInverse(inverse) || isTrackHistoryInverse(inverse) || isFadeHistoryInverse(inverse) || isClipLookStyleInverse(inverse) || isClipParamsHistoryInverse(inverse) || isContinuousHistoryInverse(inverse))
       ? { ...current } : preserveUploadingClips(current, applyHistoryEntry(current, entry, direction));
     const mediaReplay = entry.nativeRegistration?.mediaReplay;
     const reorderReplay = entry.nativeRegistration?.reorderReplay;
@@ -412,7 +413,10 @@ export function useTimelineHistory({
     const mediaReplay = commands?.length === 1 && isSelectedMediaCreation(commands[0]) ? structuredClone(commands[0]) : undefined;
     const reorderReplay = commands?.length === 1 && commands[0].op === 'timeline.reorder' && isTrackHistoryBatch(commands)
       ? structuredClone(commands[0]) : undefined;
-    const paramsReplay = commands && isClipParamsHistoryBatch(commands) ? structuredClone([...commands]) : undefined;
+    // Occurrence Redo stays receipt-only: the original display pins cannot
+    // be retargeted to the newer accepted head. Parent batches can replay
+    // their exact original commands after the Undo receipt qualifies them.
+    const paramsReplay = commands && (isClipParamsHistoryBatch(commands) || isContinuousHistoryBatch(commands) && commands.every(command => command.select?.startsWith('parent/clip:'))) ? structuredClone([...commands]) : undefined;
     const nextEntry: UndoEntry = {
       snapshot: buildSnapshot(currentData),
       timestamp: new Date(now).toISOString(),
@@ -466,7 +470,7 @@ export function useTimelineHistory({
     const nativeRelation = (entry: UndoEntry) => {
       const nativeCommands = entry.nativeRegistration && gestureCommandsFor(entry.nativeRegistration.owner);
       const command = nativeCommands?.[0];
-      return isClipParamsHistoryBatch(nativeCommands ?? []) || isClipParamsHistoryInverse(command) || isClipParamsHistoryInverse(entry.nativeRegistration?.inverse) || isFadeHistoryBatch(nativeCommands ?? []) || isFadeHistoryInverse(command) || isFadeHistoryInverse(entry.nativeRegistration?.inverse) || isTrackHistoryBatch(nativeCommands ?? []) || isTrackHistoryInverse(command) || isTrackHistoryInverse(entry.nativeRegistration?.inverse) || isClipStructureBatch(nativeCommands ?? []) || isClipStructureInverse(command) || isClipStructureInverse(entry.nativeRegistration?.inverse) || isClipPlacementBatch(nativeCommands ?? []) || isClipPlacementInverse(command) || isOverlapTrimBatch(nativeCommands ?? []) || isOverlapTrimInverse(command)
+      return isContinuousHistoryBatch(nativeCommands ?? []) || isContinuousHistoryInverse(command) || isContinuousHistoryInverse(entry.nativeRegistration?.inverse) || isClipParamsHistoryBatch(nativeCommands ?? []) || isClipParamsHistoryInverse(command) || isClipParamsHistoryInverse(entry.nativeRegistration?.inverse) || isFadeHistoryBatch(nativeCommands ?? []) || isFadeHistoryInverse(command) || isFadeHistoryInverse(entry.nativeRegistration?.inverse) || isTrackHistoryBatch(nativeCommands ?? []) || isTrackHistoryInverse(command) || isTrackHistoryInverse(entry.nativeRegistration?.inverse) || isClipStructureBatch(nativeCommands ?? []) || isClipStructureInverse(command) || isClipStructureInverse(entry.nativeRegistration?.inverse) || isClipPlacementBatch(nativeCommands ?? []) || isClipPlacementInverse(command) || isOverlapTrimBatch(nativeCommands ?? []) || isOverlapTrimInverse(command)
         || isTiedHoldExpansionCommand(command) || isTiedHoldExpansionInverse(command)
         || isTranscriptCaptionBatch(nativeCommands ?? []) || isTranscriptCaptionInverse(command)
         || isTranscriptCaptionInverse(entry.nativeRegistration?.inverse) || isClipPlacementInverse(entry.nativeRegistration?.inverse);

@@ -15,7 +15,7 @@ export type UndoEntry = {
   nativeRegistration?: {
     owner: import('../lib/timeline-data.ts').TimelineData;
     inverse?: import('@/integrations/runtime/generated.ts').EditCommand;
-    /** W64 original admitted ordered params transaction; Redo uses the current head. */
+    /** W64/W27 original admitted ordered parent transaction; Redo uses the current head. */
     paramsReplay?: import('@/integrations/runtime/generated.ts').EditCommand[];
     /** Exact original selected-media add only; Redo repeats authority validation. */
     mediaReplay?: import('@/integrations/runtime/generated.ts').EditCommand;

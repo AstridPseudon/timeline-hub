@@ -1,3 +1,4 @@
+import { continuousParameterIntent, isContinuousHistoryBatch, isContinuousHistoryInverse, sameContinuous, validContinuous } from './continuousHistory.ts';
 import { isFadeHistoryInverse } from './fadeHistory.ts';
 import { isTrackHistoryInverse } from './trackHistory.ts';
 import { isClipStructureInverse } from './clipStructureHistory.ts';
@@ -19,7 +20,7 @@ import { isOverlapTrimInverse } from './overlapTrimHistory.ts';
 /** Intent is attached by the handler, never inferred from the resulting document. */
 const authoredCommands = new WeakMap<TimelineData, readonly EditCommand[]>();
 const authoredOccurrences = new WeakMap<TimelineData, TimelineOccurrenceContext>();
-const occurrenceOps = new Set(['clip.nudge', 'clip.set-track', 'clip.set-duration', 'clip.set-look', 'clip.set-param', 'clip.set-fade', 'clip.set-transition', 'clip.clear', 'transcript.bind']);
+const occurrenceOps = new Set(['clip.nudge', 'clip.set-track', 'clip.set-duration', 'clip.set-look', 'clip.set-param', 'clip.set-fade', 'clip.set-transition', 'clip.set-continuous', 'clip.clear', 'transcript.bind']);
 const selectedMediaFields = ['asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'];
 const isRecord = (value: unknown): value is Record<string, unknown> => (
   value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -104,7 +105,7 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
   let parent = false;
   const transferBatch = isShotGroupTransferBatch(commands);
   const aggregateBatch = commands.length > 0 && commands.every((command) =>
-    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command) || isFadeHistoryInverse(command));
+    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command) || isFadeHistoryInverse(command) || isContinuousHistoryInverse(command));
   const captionTarget = isTranscriptCaptionBatch(commands) ? transcriptBindTarget(commands[0]) : undefined;
   // Routing reads the handler's explicit args.target. The submitted registered
   // timeline-level bind retains select:null; this local view only captures custody.
@@ -385,6 +386,50 @@ export function catalogTransitionGestureCommands(
   }];
 }
 
+/** The real inspector patch is a whole slot value, except for an explicitly
+ * recorded shallow parameter edit whose full UI value matches that operation. */
+export function continuousEffectGestureCommands(
+  data: Pick<TimelineData, 'config'>, id: string, patch: ClipEditorPatch,
+): CompositeGestureResult {
+  if (!hasOwn(patch, 'continuous')) return { handled: false };
+  if (Object.keys(patch).length !== 1) return { handled: true };
+  const target = gestureTarget(data, id);
+  if (!target) return { handled: true };
+  const clip = gestureSource(data, id), value = patch.continuous;
+  const before = state(clip.continuous, hasOwn(clip, 'continuous'));
+  let args: EditCommand['args'];
+  if (value === undefined) args = { clear: true };
+  else {
+    // Optional undefined params are the original UI's omitted JSON property.
+    // Reject every other non-JSON value rather than normalize opaque payloads.
+    if (!isRecord(value)) return { handled: true };
+    const full = { ...value };
+    if (hasOwn(full, 'params') && full.params === undefined) delete full.params;
+    if (!validContinuous(full)) return { handled: true };
+    const params = continuousParameterIntent(value);
+    const merged = validContinuous(clip.continuous) && params
+      ? { ...clip.continuous, params: { ...clip.continuous.params as object, ...params } } : undefined;
+    args = merged && sameContinuous(merged, full) ? { params } : { continuous: full };
+  }
+  const next = command(target, 'clip.set-continuous', structuredClone(args), { continuous: before });
+  if (!isContinuousHistoryBatch([next])) return { handled: true };
+  const probe = { ...data } as TimelineData;
+  attachGestureCommands(probe, [next], data as TimelineData);
+  return gestureCommandsFor(probe) ? { handled: true, commands: [next] } : { handled: true };
+}
+
+/** The existing provider has one occurrence context per request. A bulk edit
+ * that cannot retain every member's owner stays wholly on compatibility. */
+export function continuousBatchGestureCommands(data: TimelineData, groups: Array<EditCommand[] | undefined>): EditCommand[] | undefined {
+  if (!groups.every(group => group !== undefined)) return undefined;
+  const commands = groups.flat();
+  if (!commands.some(c => c.op === 'clip.set-continuous')) return commands;
+  if (!isContinuousHistoryBatch(commands)) return undefined;
+  const probe = { ...data };
+  attachGestureCommands(probe, commands, data);
+  return gestureCommandsFor(probe) ? commands : undefined;
+}
+
 /** Convert only the mounted clip-inspector fade and transition edits. Generic
  * patch/proposal writers continue using propertyGestureCommands unchanged. */
 export function compositeEffectGestureCommands(
@@ -393,6 +438,8 @@ export function compositeEffectGestureCommands(
   patch: ClipEditorPatch,
   options: { elementHost?: AstridElementHost | null } = {},
 ): CompositeGestureResult {
+  const continuous = continuousEffectGestureCommands(data, id, patch);
+  if (continuous.handled) return continuous;
   const entries = Object.entries(patch);
   const hasTransition = entries.some(([key]) => key === 'transition' || key === 'elementRef');
   if (hasTransition) {

@@ -1,8 +1,16 @@
+import { ClipContinuousEffectField } from '../components/PropertiesPanel/ClipContinuousEffectField.tsx';
+import { ClipEffectsTab } from '../components/PropertiesPanel/ClipEffectsTab.tsx';
+import { BulkClipPanelBody } from '../components/PropertiesPanel/BulkClipPanelBody.tsx';
+import { continuousParameterPatch } from '../commands/continuousHistory.ts';
+vi.mock('@/tools/video-editor/components/EffectCreatorPanel.tsx', () => ({
+  EffectCreatorPanel: ({ onSaved }: { onSaved: (id: string, category: string, params: Record<string, unknown>) => void }) =>
+    <button onClick={() => onSaved('orbit', 'continuous', { enabled: true })}>Save W27 effect</button>,
+}));
 import { reorderTrackGestureCommands } from '../commands/trackGestures.ts';
 import { trimClipToMediaEnd } from '../lib/trim-to-media-end.ts';
 // @vitest-environment jsdom
 import React, { useEffect } from 'react';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -6019,4 +6027,256 @@ describe('W64 mounted params native history', () => {
     history.unmount(); h.unmount();
   });
 
+});
+
+
+// W27 has its own selectors. The cheap caller group never invokes Python; the
+// SDK group must only run during A's controlled compiler/publication window.
+const w27Effect = { type: 'custom:orbit', intensity: 0.731, params: { enabled: false, opaque: [null, { literal: { $absent: true } }] }, opaque: { retained: null } };
+const w27Catalog = {
+  effects: [{ id: 'orbit', name: 'Orbit', category: 'continuous', parameterSchema: [{ name: 'enabled', label: 'Enabled parameter', type: 'boolean', default: true }] }],
+  entrance: [], exit: [], continuous: [], canCreateEffect: true, canUpdateEffect: true,
+};
+w27Catalog.continuous = w27Catalog.effects as never;
+async function w27Data(prior: 'absent' | 'null' | 'object' | 'mixed' = 'object', occurrence = false) {
+  const base = await initialData();
+  const clips = base.config.clips.map((clip, index) => {
+    const source = { ...clip, ...(prior === 'absent' || prior === 'mixed' && index === 0 ? {} : { continuous: prior === 'null' ? null : { ...structuredClone(w27Effect), intensity: index ? 0.25 : 0.731 } }) };
+    return occurrence ? { ...source, id: `projected-${clip.id}`, app: { ...source.app, canonical: {
+      projectId: 'gesture-project', parentDocumentId: 'gesture-timeline', headRevisionId: 'parent-r1', occurrenceId: 'occ-A',
+      shotId: 'A', revisionId: 'shot-r1', internalTimelineRevisionId: 'internal-r1', sourceClipId: clip.id, outputIdentity: 'output-A', sourceClip: source,
+    } } } : source;
+  });
+  return buildTimelineData({ ...base.config, clips } as never, base.registry, undefined, 1, undefined, base.head);
+}
+type W27Action = 'type' | 'default' | 'params' | 'remove' | 'none' | 'saved' | 'intensity' | 'bulk type' | 'bulk clear';
+async function w27Action(h: Awaited<ReturnType<typeof setup>>, action: W27Action) {
+  const user = userEvent.setup();
+  const initial = h.result.current.data!;
+  const clip = initial.config.clips[0];
+  const onChange = (patch: Parameters<typeof h.result.current.editing.handleSelectedClipChange>[0]) => h.result.current.editing.handleSelectedClipChange(patch);
+  if (action === 'intensity') {
+    // Neither mounted panel exposes an intensity widget. Preserve the supported
+    // callback payload without manufacturing another UI control.
+    act(() => onChange({ continuous: { ...clip.continuous!, intensity: 0.625 } }));
+    return;
+  }
+  if (action.startsWith('bulk')) {
+    const ids = initial.config.clips.map(c => c.id).reverse();
+    render(<BulkClipPanelBody {...{
+      clips: initial.config.clips, visibleTabs: ['effects'], activeTab: 'effects', setActiveTab: vi.fn(),
+      compositionWidth: 1920, compositionHeight: 1080, sharedContinuous: null, sharedContinuousType: null,
+      sharedEntranceType: null, sharedExitType: null, sharedTransitionType: null, sharedTransitionDuration: null,
+      onChange: (patch: never) => h.result.current.editing.handleUpdateClips(ids, patch),
+      onChangeDeep: (fn: never) => h.result.current.editing.handleUpdateClipsDeep(ids, fn),
+      onClose: vi.fn(), onResetPosition: vi.fn(), onToggleMute: vi.fn(), effectResources: w27Catalog,
+    } as never} />);
+    const trigger = screen.getByText('Continuous').parentElement!.querySelector('[role="combobox"]')!;
+    await user.click(trigger);
+    await user.click(await screen.findByRole('option', { name: action === 'bulk clear' ? 'None' : 'Orbit' }));
+    return;
+  }
+  if (action === 'saved') {
+    render(<ClipEffectsTab clip={clip as never} onChange={onChange} effectResources={w27Catalog as never}
+      clipDescriptor={{ paramsSchema: { kind: 'opaque' } } as never} clipTypeResolution={{ status: 'unavailable' } as never} isEffectLayer={true}
+      isSequenceClip={false} registry={{} as never} currentTime={0} creatorOpen={true} setCreatorOpen={vi.fn()}
+      editingEffect={null} setEditingEffect={vi.fn()} />);
+    await user.click(await screen.findByRole('button', { name: 'Save W27 effect' }));
+    return;
+  }
+  render(<ClipContinuousEffectField clip={clip as never} onChange={onChange} effectResources={w27Catalog as never}
+    canEditEffects={false} setEditingEffect={vi.fn()} setCreatorOpen={vi.fn()} />);
+  if (action === 'type' || action === 'none') {
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByRole('option', { name: action === 'none' ? 'None' : 'Orbit' }));
+  } else if (action === 'params') await user.click(screen.getByTestId('schema-form-widget-enabled'));
+  else await user.click(screen.getByRole('button', { name: action === 'remove' ? 'Remove' : 'Reset defaults' }));
+}
+const w27Actions: W27Action[] = ['type', 'default', 'params', 'remove', 'none', 'saved', 'intensity', 'bulk type', 'bulk clear'];
+describe('W27 pure actual caller mapping', () => {
+  it.each(w27Actions)('%s emits original caller intent without claiming synthetic acceptance', async action => {
+    const initial = await w27Data(action === 'bulk type' ? 'mixed' : action === 'type' ? 'null' : 'object');
+    const h = await setup(async () => 'refused', false, initial, 1, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h);
+    await w27Action(h, action);
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    const commands = (h.requests[0].request.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands;
+    const clips = action.startsWith('bulk') ? [...initial.config.clips].reverse() : [initial.config.clips[0]];
+    expect(commands.map(c => c.select)).toEqual(clips.map(c => `parent/clip:${c.id}`));
+    expect(commands.every(c => c.op === 'clip.set-continuous')).toBe(true);
+    expect(commands.map(c => c.expect!.continuous)).toEqual(clips.map(c => Object.prototype.hasOwnProperty.call(c, 'continuous') ? { state: 'present', value: c.continuous } : { state: 'absent' }));
+    if (action === 'params') expect(commands[0].args).toEqual({ params: { enabled: true } });
+    else if (['remove', 'none', 'bulk clear'].includes(action)) expect(commands.every(c => c.args.clear === true)).toBe(true);
+    else {
+      expect(commands.every(c => c.args.continuous)).toBe(true);
+      if (action === 'default') expect(commands[0].args.continuous).toEqual({ ...w27Effect, params: { enabled: true } });
+      if (action === 'intensity') expect(commands[0].args.continuous).toEqual({ ...w27Effect, intensity: 0.625 });
+      if (action === 'type' || action === 'saved') expect(commands[0].args.continuous).toEqual({ type: 'custom:orbit', intensity: action === 'type' ? 0.5 : 0.731, params: { enabled: true } });
+      if (action === 'bulk type') expect(commands.map(c => c.args.continuous)).toEqual([{ type: 'custom:orbit', intensity: 0.25, params: { enabled: true } }, { type: 'custom:orbit', intensity: 0.5, params: { enabled: true } }]);
+    }
+    expect(h.savedSeqRef.current).toBe(0); expect(history.result.current.canUndo).toBe(false);
+    expect(h.compatibilityRequests).toEqual([]);
+    history.unmount(); h.unmount();
+  });
+  it.each(['missing', 'extra', 'duplicate', 'foreign', 'malformed'] as const)('%s synthetic receipt leaves acknowledgement and native history pending', async kind => {
+    const initial = await w27Data();
+    const h = await setup(async request => {
+      const commands = (request.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands;
+      const writes = commands.map(c => ({ id: c.select!, path: 'continuous', before: c.expect!.continuous, after: { state: 'absent' as const } }));
+      if (kind === 'missing') writes.pop();
+      if (kind === 'extra') writes.push({ ...writes[0], id: 'parent/clip:extra' });
+      if (kind === 'duplicate') writes[1] = writes[0];
+      if (kind === 'foreign') writes[1].id = 'occurrence:other/clip:clip-1';
+      if (kind === 'malformed') writes[1].before = {} as never;
+      return { directWrites: writes };
+    }, false, initial);
+    const history = mountFadeHistory(h); await w27Action(h, 'bulk clear');
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+    expect(h.savedSeqRef.current).toBe(0); expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    act(() => history.result.current.undo()); expect(h.requests).toHaveLength(1); history.unmount(); h.unmount();
+  });
+  it('adapts complete synthetic receipts to native Undo and the original ordered parent Redo batch', async () => {
+    const initial = await w27Data();
+    const h = await setup(async request => {
+      const commands = (request.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands;
+      return { directWrites: commands[0].op === 'timeline.inverse' ? commands[0].args.writes as CommitResult['change']['direct_writes']
+        : commands.map(c => ({ id: c.select!, path: 'continuous', before: c.expect!.continuous, after: { state: 'absent' as const } })) };
+    }, false, initial);
+    const history = mountFadeHistory(h); await w27Action(h, 'bulk clear');
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true)); act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2));
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true)); act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3));
+    expect(h.requests[2].request.change).toEqual(h.requests[0].request.change);
+    expect(h.requests.map(r => r.request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  });
+  it('keeps the complete bulk operation on fallback when a later value cannot map', async () => {
+    const initial = await w27Data();
+    const h = await setup(async () => 'refused', false, initial);
+    act(() => h.result.current.editing.handleUpdateClipsDeep(['clip-2', 'clip-1'], meta => ({ continuous: meta.continuous?.intensity === 0.25 ? { ...w27Effect, intensity: 0.9 } : null } as never)));
+    expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
+    h.unmount();
+  });
+});
+async function w27Source(initial: TimelineData, requests: CommitRequest[], variant?: 'stale' | 'refused') {
+  const input = JSON.stringify({ config: initial.config, registry: initial.registry, requests, variant });
+  const digest = createHash('sha256').update(input).digest('hex');
+  w27Evidence(`sdk-input-${digest}`, { input, source: process.env.ASTRID_CHECKOUT });
+  const stdout = await new Promise<string>((resolve, reject) => {
+    const child = execFile(process.env.ASTRID_TEST_PYTHON!, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/continuousHistory.fixture.py')], {
+      encoding: 'utf8', env: process.env,
+    }, (error, stdout, stderr) => {
+      w27Evidence(`sdk-output-${digest}`, { stdout, stderr, error: error?.message });
+      if (error) reject(error); else resolve(stdout);
+    });
+    child.stdin!.end(input);
+  });
+  return JSON.parse(stdout) as ReturnType<typeof fadeSource> & { readback: ReturnType<typeof fadeSource>['before'] };
+}
+function w27Evidence(name: string, value: unknown) {
+  if (process.env.E_W27_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W27_EVIDENCE_DIR, `${name.replaceAll(' ', '-')}.json`), JSON.stringify(value, null, 2));
+}
+describe('W27 SDK actual callers native chain', () => {
+  it.each(w27Actions)('%s accepts one batch, receipt acknowledgement, whole-document Undo and original batch Redo', async action => {
+    const initial = await w27Data(action === 'bulk type' ? 'mixed' : action === 'type' ? 'null' : 'object');
+    const requests: CommitRequest[] = []; let proof!: Awaited<ReturnType<typeof w27Source>>;
+    const h = await setup(async request => {
+      requests.push(request); proof = await w27Source(initial, requests); w27Evidence(action, { requests, proof });
+      return { acceptedResult: proof.result, readbackConfig: fadeReadback(initial, proof) };
+    }, false, initial, 1, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h);
+    await w27Action(h, action);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expect(proof.result.status).toBe('accepted');
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof));
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    expect(requests[1].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null, args: {
+      publication: proof.results[0].accepted_publication_id,
+      writes: proof.results[0].change.direct_writes.map(w => ({ ...w, before: w.after, after: w.before })),
+    } }] });
+    act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(requests[2].change).toEqual(requests[0].change);
+    expect(requests.map(r => r.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(proof.results[1].canonical_document).toEqual(proof.before);
+    expect(proof.results[2].canonical_document).toEqual(proof.results[0].canonical_document);
+    expect(proof.readback).toEqual(proof.results[2].canonical_document);
+    expect(proof.accept_counts).toEqual([1, 1, 1]); expect(h.compatibilityRequests).toEqual([]);
+    history.unmount(); h.unmount();
+  }, 180_000);
+  it.each(['absent', 'null', 'object'] as const)('preserves %s occurrence source values through acceptance and native history', async prior => {
+    const initial = await w27Data(prior, true); const requests: CommitRequest[] = []; let proof!: Awaited<ReturnType<typeof w27Source>>;
+    const h = await setup(async request => { requests.push(request); proof = await w27Source(initial, requests);
+      w27Evidence(`occurrence-${prior}`, { requests, proof }); return { acceptedResult: proof.result, readbackConfig: fadeReadback(initial, proof) };
+    }, false, initial, 1, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h);
+    act(() => h.result.current.editing.handleSelectedClipChange({ continuous: { ...w27Effect, intensity: 0.625 } }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expect((requests[0].change as {commands: Array<{select: string}>}).commands[0].select).toBe('occurrence:occ-A/clip:clip-1');
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true)); act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true)); act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(requests[2].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null, args: {
+      publication: proof.results[1].accepted_publication_id,
+      writes: proof.results[1].change.direct_writes.map(w => ({ ...w, before: w.after, after: w.before })),
+    } }] });
+    expect(proof.results[1].canonical_document).toEqual(proof.before);
+    expect(proof.readback).toEqual(proof.results[0].canonical_document); history.unmount(); h.unmount();
+  }, 180_000);
+  it('qualifies a real no-change receipt without creating native history', async () => {
+    const initial = await w27Data(); let proof!: Awaited<ReturnType<typeof w27Source>>;
+    const h = await setup(async request => { proof = await w27Source(initial, [request]); w27Evidence('no-change', {request, proof}); return { acceptedResult: proof.result }; }, false, initial);
+    const history = mountFadeHistory(h);
+    act(() => h.result.current.editing.handleSelectedClipChange(continuousParameterPatch(initial.config.clips[0].continuous!, { enabled: false })));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expect(proof.result.status).toBe('no_change'); expect(proof.result.change.direct_writes).toEqual([]);
+    expect(proof.readback).toEqual(proof.before); expect(history.result.current.canUndo).toBe(false); history.unmount(); h.unmount();
+  }, 90_000);
+  it('refuses an Undo acknowledgement that reuses the forward publication', async () => {
+    const initial = await w27Data(); const requests: CommitRequest[] = []; let proof!: Awaited<ReturnType<typeof w27Source>>;
+    const h = await setup(async request => { requests.push(request); proof = await w27Source(initial, requests); const returned = structuredClone(proof.result);
+      if (requests.length === 2) returned.accepted_publication_id = proof.results[0].accepted_publication_id;
+      w27Evidence('wrong-publication', {requests, proof, returned}); return { acceptedResult: returned };
+    }, false, initial);
+    const history = mountFadeHistory(h); await w27Action(h, 'bulk clear');
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true)); act(() => history.result.current.undo());
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'), { timeout: 60_000 });
+    expect(h.savedSeqRef.current).toBe(1); expect(history.result.current.canRedo).toBe(false); history.unmount(); h.unmount();
+  }, 120_000);
+  it('rolls back the first bulk change when the late member has a stale full prior', async () => {
+    const initial = await w27Data(); let proof!: Awaited<ReturnType<typeof w27Source>>;
+    const h = await setup(async request => { proof = await w27Source(initial, [request], 'stale'); w27Evidence('bulk-stale', {request, proof}); return { acceptedResult: proof.result }; }, false, initial);
+    const history = mountFadeHistory(h);
+    act(() => h.result.current.editing.handleUpdateClipsDeep(['clip-1', 'clip-2'], meta => ({ continuous: { ...meta.continuous!, intensity: 0.8 } })));
+    await waitFor(() => expect(proof).toBeDefined(), { timeout: 60_000 });
+    expect(proof.result.status).toBe('refused'); expect(proof.result.change.direct_writes).toEqual([]);
+    expect(proof.accept_counts).toEqual([0]); expect(proof.readback).toEqual(proof.before);
+    expect(h.savedSeqRef.current).toBe(0); expect(history.result.current.canUndo).toBe(false); history.unmount(); h.unmount();
+  }, 90_000);
+  it.each(['missing', 'extra', 'duplicate', 'foreign', 'malformed', 'no_change', 'no publication', 'refused'] as const)(
+    '%s receipt cannot acknowledge a partial bulk edit or enable history', async kind => {
+      const initial = await w27Data(); let proof!: Awaited<ReturnType<typeof w27Source>>;
+      const h = await setup(async request => {
+        proof = await w27Source(initial, [request]); const returned = structuredClone(proof.result), writes = returned.change.direct_writes;
+        if (kind === 'missing') writes.pop();
+        if (kind === 'extra') writes.push({ ...writes[0], id: 'parent/clip:foreign' });
+        if (kind === 'duplicate') writes[1] = structuredClone(writes[0]);
+        if (kind === 'foreign') writes[1].id = 'occurrence:foreign/clip:clip-1';
+        if (kind === 'malformed') writes[1].after = { state: 'present' } as never;
+        if (kind === 'no_change' || kind === 'refused') returned.status = kind;
+        if (kind === 'no publication') returned.accepted_publication_id = null;
+        w27Evidence(`bulk-${kind}`, { request, proof, returned }); return { acceptedResult: returned };
+      }, false, initial);
+      const history = mountFadeHistory(h); await w27Action(h, 'bulk clear');
+      await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'), { timeout: 60_000 });
+      expect(h.savedSeqRef.current).toBe(0); expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+      act(() => history.result.current.undo()); expect(h.requests).toHaveLength(1); history.unmount(); h.unmount();
+    }, 90_000);
 });
