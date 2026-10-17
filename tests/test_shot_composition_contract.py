@@ -14,7 +14,7 @@ SCHEMA_PATH = ROOT / "contract" / "schemas" / "shot-composition.json"
 MATRIX_PATH = ROOT / "conformance" / "fixtures" / "shot-composition-compatibility.json"
 TIMELINE_SCHEMA_PATH = ROOT / "contract" / "schemas" / "timeline-config.schema.json"
 TIMELINE_SCHEMA_PROVENANCE_PATH = ROOT / "contract" / "schemas" / "timeline-config.schema.provenance.json"
-TIMELINE_SCHEMA_URI = "https://banodoco.dev/workspace/v1/schemas/timeline-config.schema.json"
+TIMELINE_SCHEMA_URI = "https://astrid.haus/workspace/v1/schemas/timeline-config.schema.json"
 
 
 def _schema() -> dict:
@@ -77,19 +77,19 @@ def test_schema_declares_two_owner_boundary_without_a_second_timeline_schema() -
     schema = _schema()
     Draft202012Validator.check_schema(schema)
 
-    assert schema["x-banodoco-owner"] == "workspace-runtime"
-    assert schema["x-banodoco-canonical-timeline-owner"] == "@banodoco/timeline-schema"
+    assert schema["x-astrid-runtime-owner"] == "astrid-runtime"
+    assert schema["x-astrid-runtime-canonical-timeline-owner"] == "@banodoco/timeline-schema"
     config = schema["$defs"]["ParentComposition"]["properties"]["config"]
     assert config["$ref"] == "timeline-config.schema.json"
-    assert config["x-banodoco-schema-owner"] == "@banodoco/timeline-schema#TimelineConfig"
-    assert config["x-banodoco-schema-sha256"] == hashlib.sha256(TIMELINE_SCHEMA_PATH.read_bytes()).hexdigest()
+    assert config["x-astrid-runtime-schema-owner"] == "@banodoco/timeline-schema#TimelineConfig"
+    assert config["x-astrid-runtime-schema-sha256"] == hashlib.sha256(TIMELINE_SCHEMA_PATH.read_bytes()).hexdigest()
     registry = schema["$defs"]["ParentComposition"]["properties"]["registry"]
-    assert registry["x-banodoco-schema-owner"] == "workspace-runtime#ManagedMediaRegistry"
+    assert registry["x-astrid-runtime-schema-owner"] == "astrid-runtime#ManagedMediaRegistry"
     assert "outside the canonical TimelineConfig" in registry["description"]
     assert registry["additionalProperties"] is True
     internal = schema["$defs"]["InternalTimelineRevisionInput"]["properties"]["payload"]
     assert internal["$ref"] == "timeline-config.schema.json"
-    assert internal["x-banodoco-schema-owner"] == "@banodoco/timeline-schema#TimelineConfig"
+    assert internal["x-astrid-runtime-schema-owner"] == "@banodoco/timeline-schema#TimelineConfig"
     assert "TimelineConfig" not in schema["$defs"]
     assert "TimelineClip" not in schema["$defs"]
 
@@ -150,8 +150,8 @@ def test_materialized_timeline_schema_provenance_tracks_role_extension_and_neste
     assert provenance["sha256"] == digest
     assert provenance["role_extension"]["source_commit"] == "3bd1d019715de79cd54aa208cf26de10427c29d5"
     assert provenance["role_extension"]["source_artifact_sha256"] == digest
-    assert parent_config["x-banodoco-schema-sha256"] == digest
-    assert internal_payload["x-banodoco-schema-sha256"] == digest
+    assert parent_config["x-astrid-runtime-schema-sha256"] == digest
+    assert internal_payload["x-astrid-runtime-schema-sha256"] == digest
 
 
 def test_supported_silent_voiceover_legacy_audio_and_extension_payloads_validate() -> None:

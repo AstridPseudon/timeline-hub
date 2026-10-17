@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://banodoco.local/schemas/object-location.json",
+  "$id": "https://astrid.haus/schemas/object-location.json",
   "type": "object",
   "additionalProperties": false,
   "required": ["object_id", "digest", "size", "media_type", "local_path", "storage", "verified"],

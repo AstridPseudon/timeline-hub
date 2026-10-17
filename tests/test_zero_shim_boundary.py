@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from banodoco_local import cli
-from banodoco_local.bootstrap import SourceProfile
-from banodoco_local.runtime_boundary import LocalRuntimeBoundary
+from astrid_runtime import cli
+from astrid_runtime.bootstrap import SourceProfile
+from astrid_runtime.runtime_boundary import LocalRuntimeBoundary
 from runtime_protocol.backup import verify_backup
 
 
@@ -53,7 +53,7 @@ def test_connect_uses_installed_client_without_mutating_import_path(monkeypatch)
             self.endpoint = endpoint
             self.credential = credential
 
-    monkeypatch.setitem(sys.modules, "banodoco_workspace_client", type("M", (), {"WorkspaceClient": FakeClient}))
+    monkeypatch.setitem(sys.modules, "astrid_runtime_client", type("M", (), {"WorkspaceClient": FakeClient}))
     boundary = LocalRuntimeBoundary()
     boundary.configure_source(
         SourceProfile(
@@ -87,7 +87,7 @@ def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path):
         return FakeProcess()
 
     boundary = LocalRuntimeBoundary()
-    monkeypatch.setattr("banodoco_local.runtime_boundary.subprocess.Popen", fake_popen)
+    monkeypatch.setattr("astrid_runtime.runtime_boundary.subprocess.Popen", fake_popen)
     monkeypatch.setattr(boundary, "_wait_endpoint", lambda _support, _process: "http://127.0.0.1:1")
     monkeypatch.setattr(boundary, "_read_discovery", lambda _support: {"process_birth_id": "birth"})
     source_checkout = tmp_path / "product-source"

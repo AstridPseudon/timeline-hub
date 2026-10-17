@@ -1,6 +1,6 @@
-# Banodoco Workspace Runtime
+# Astrid Runtime
 
-Independent neutral runtime and protocol repository for the Astrid Stage 1 beta and later REIGH integration.
+Independent neutral runtime and protocol repository for the Astrid Stage 1 beta and later Astrid App integration.
 
 The repository contains the first independently runnable neutral-runtime slice. It is dependency-free Python and can be exercised without any product checkout or hosted service. The daemon owns one realm's canonical SQLite database, append-only SHA-256 CAS, task/event ledger, credentials, and loopback HTTP boundary. Realm creation is explicit; startup and doctor never migrate or repair an existing root.
 
@@ -8,7 +8,7 @@ The repository contains the first independently runnable neutral-runtime slice. 
 
 - Initial branch: `main`
 - No remote is configured by the seed operation.
-- The Stage 1 oracle worktree is `../banodoco-workspace-runtime-oracle` on `megado/astrid-stage1-beta`.
+- The Stage 1 oracle worktree is `../astrid-runtime-oracle` on `megado/astrid-stage1-beta`.
 - The exact Astrid source baseline and frozen roadmap inputs are recorded in the external Phase 0 custody receipt and in the oracle worktree.
 
 ## Development boundary
@@ -18,9 +18,9 @@ The runtime owns durable structured state, task/lease semantics, capability regi
 ## Run it
 
 The local launcher accepts an absolute `--data-root` support directory on
-lifecycle commands, or `BANODOCO_LOCAL_DATA_ROOT`. This directory directly
+lifecycle commands, or `ASTRID_RUNTIME_DATA_ROOT`. This directory directly
 contains the installation's `runtime/` and `credentials/` trees.
-`banodoco-local relocate --data-root /old/support --destination /new/support --plan`
+`astrid-runtime relocate --data-root /old/support --destination /new/support --plan`
 previews a same-filesystem move of that complete support tree. Execution uses
 `--confirm "RELOCATE <realm-id>"`, verifies the owner before stopping it,
 cold-starts at the new location, and restores the old tree if cutover fails.

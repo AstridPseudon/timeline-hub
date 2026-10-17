@@ -36,7 +36,7 @@ def _execution_wire_validators() -> tuple[Draft202012Validator, Draft202012Valid
     )
     document = yaml.safe_load((ROOT / "contract/openapi/workspace-v1.yaml").read_text())
     admission = Draft202012Validator(
-        {"$id": "https://banodoco.dev/workspace/v1/workspace-v1.yaml",
+        {"$id": "https://astrid.haus/workspace/v1/workspace-v1.yaml",
          **document["components"]["schemas"]["AdmitTask"]},
         registry=registry,
     )

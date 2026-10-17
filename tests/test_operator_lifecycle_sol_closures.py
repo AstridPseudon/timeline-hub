@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from banodoco_local.bootstrap import BootstrapConfig, BootstrapError, SourceProfile, doctor, restart
-from banodoco_local.paths import RuntimePaths
-from banodoco_local.runtime_boundary import LocalRuntimeBoundary
+from astrid_runtime.bootstrap import BootstrapConfig, BootstrapError, SourceProfile, doctor, restart
+from astrid_runtime.paths import RuntimePaths
+from astrid_runtime.runtime_boundary import LocalRuntimeBoundary
 from runtime_protocol.backup import verify_backup
 from runtime_protocol.errors import ConflictError
 from runtime_protocol.service import RuntimeService

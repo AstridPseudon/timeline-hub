@@ -110,10 +110,10 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path
     wheelhouse = environment.parent / "wheelhouse"
     generated = (
         root / "build",
-        root / "banodoco_workspace_runtime.egg-info",
-        root / "banodoco_workspace_client.egg-info",
+        root / "astrid_runtime.egg-info",
+        root / "astrid_runtime_client.egg-info",
         root / "packages" / "python" / "build",
-        root / "packages" / "python" / "banodoco_workspace_client.egg-info",
+        root / "packages" / "python" / "astrid_runtime_client.egg-info",
     )
     existed = {path: path.exists() for path in generated}
     try:

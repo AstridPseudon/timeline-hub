@@ -26,7 +26,7 @@ def sha256(path: Path) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
-    parser.add_argument("--source", type=Path, default=Path(os.environ.get("BANODOCO_TIMELINE_SCHEMA_ROOT", DEFAULT_SOURCE)))
+    parser.add_argument("--source", type=Path, default=Path(os.environ.get("TIMELINE_SCHEMA_SOURCE_ROOT", DEFAULT_SOURCE)))
     args = parser.parse_args()
     source = args.source.resolve()
     schema_source = source / SCHEMA_RELATIVE

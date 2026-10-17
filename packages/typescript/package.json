@@ -1,5 +1,5 @@
 {
-  "name": "@banodoco/workspace-client",
+  "name": "@astrid/runtime-client",
   "version": "0.1.0",
   "private": false,
   "type": "module",

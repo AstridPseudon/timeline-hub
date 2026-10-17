@@ -11,8 +11,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
-from banodoco_local.bootstrap import BootstrapError, SourceProfile
-from banodoco_local.runtime_boundary import ADMISSION_TIMEOUT_ENV, LocalRuntimeBoundary
+from astrid_runtime.bootstrap import BootstrapError, SourceProfile
+from astrid_runtime.runtime_boundary import ADMISSION_TIMEOUT_ENV, LocalRuntimeBoundary
 
 
 class _Response:
@@ -81,8 +81,8 @@ def test_invalid_startup_admission_budget_fails_closed(monkeypatch):
 
 
 def test_pid_liveness_treats_permission_denied_as_alive(monkeypatch):
-    from banodoco_local import runtime_boundary as module
-    from banodoco_local.custody_broker import CustodyError
+    from astrid_runtime import runtime_boundary as module
+    from astrid_runtime.custody_broker import CustodyError
     def deny_signal(_pid, _signal):
         raise PermissionError("operation not permitted")
 
@@ -93,8 +93,8 @@ def test_pid_liveness_treats_permission_denied_as_alive(monkeypatch):
 
 
 def test_validate_owner_uses_daemon_identity_when_birth_probe_is_unavailable(tmp_path, monkeypatch):
-    from banodoco_local import runtime_boundary as module
-    from banodoco_local.custody_broker import CustodyError
+    from astrid_runtime import runtime_boundary as module
+    from astrid_runtime.custody_broker import CustodyError
     boundary = LocalRuntimeBoundary()
     owner = tmp_path / "instance.lock"
     owner.write_text(json.dumps({"pid": 12345, "runtime_instance_id": "instance", "process_birth_id": "birth"}))
@@ -186,7 +186,7 @@ class _CustodyChild:
 
 
 def _stub_owner_broker(monkeypatch, child, *, exit_during_signal=False):
-    from banodoco_local import runtime_boundary as boundary_module
+    from astrid_runtime import runtime_boundary as boundary_module
 
     class Broker:
         error = None
@@ -248,7 +248,7 @@ def test_unowned_handle_does_not_infer_termination_from_poll(monkeypatch):
 
 
 def test_runtime_spawn_retains_owner_and_wires_escrow_before_seal(tmp_path, monkeypatch):
-    from banodoco_local import runtime_boundary as boundary_module
+    from astrid_runtime import runtime_boundary as boundary_module
     child = _CustodyChild()
     facts = {}
 
@@ -281,8 +281,8 @@ def test_runtime_spawn_retains_owner_and_wires_escrow_before_seal(tmp_path, monk
 
 
 def _runtime_handoff_fixture(tmp_path, monkeypatch):
-    from banodoco_local import custody_broker as custody
-    from banodoco_local import runtime_boundary as module
+    from astrid_runtime import custody_broker as custody
+    from astrid_runtime import runtime_boundary as module
     uid = os.getuid()
     identities = {pid: {"pid": pid, "uid": uid, "birth_id": f"birth-{pid}"} for pid in (101, 102, 103)}
     tokens = {pid: {"pid": pid, "uid": uid, "pidversion": pid + 1,
@@ -314,7 +314,7 @@ def test_boundary_lost_relinquish_ack_advances_only_from_durable_readback(tmp_pa
 
 
 def test_boundary_unknown_commit_retains_controller_and_child(tmp_path, monkeypatch):
-    from banodoco_local.bootstrap import BootstrapCustodyUncertain
+    from astrid_runtime.bootstrap import BootstrapCustodyUncertain
     module, authority, actors, _, _ = _runtime_handoff_fixture(tmp_path, monkeypatch)
     boundary = module.LocalRuntimeBoundary()
     child = _CustodyChild()
@@ -331,7 +331,7 @@ def test_boundary_unknown_commit_retains_controller_and_child(tmp_path, monkeypa
 
 
 def _detached_runtime(tmp_path, monkeypatch, *, release=True):
-    from banodoco_local.bootstrap import SourceProfile
+    from astrid_runtime.bootstrap import SourceProfile
     module, authority, actors, identities, sealed = _runtime_handoff_fixture(tmp_path, monkeypatch)
     if release:
         authority.relinquish(actor=actors[101], generation=1, transition_id="initial-release", owner_epoch="runtime-A")
@@ -380,7 +380,7 @@ def test_detached_down_claims_before_signal_and_reports_only_nonchild_absence(tm
 
 
 def test_detached_presignal_failure_relinquishes_for_next_authenticated_claim(tmp_path, monkeypatch):
-    from banodoco_local import custody_broker as custody
+    from astrid_runtime import custody_broker as custody
     module, boundary, authority, actors, identities, sealed, _, kwargs = _detached_runtime(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "signal_sealed_capability", lambda *a, **kw: (_ for _ in ()).throw(custody.CustodyError("load failed")))
     monkeypatch.setattr(module, "signal_audit_token", lambda *_: pytest.fail("no signal attempted"))
@@ -405,8 +405,8 @@ def test_detached_live_target_after_escalation_releases_and_reports_uncertainty(
 
 
 def test_detached_unknown_release_retains_named_controller(tmp_path, monkeypatch):
-    from banodoco_local import custody_broker as custody
-    from banodoco_local.bootstrap import BootstrapCustodyUncertain
+    from astrid_runtime import custody_broker as custody
+    from astrid_runtime.bootstrap import BootstrapCustodyUncertain
     module, boundary, authority, _, _, _, _, kwargs = _detached_runtime(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "signal_sealed_capability", lambda *a, **kw: (_ for _ in ()).throw(custody.CustodyError("load failed")))
     commit = boundary._commit_owner_transition
@@ -507,8 +507,8 @@ def test_postterm_escalation_allows_withdrawal_but_rejects_replacement(tmp_path,
 
 @pytest.mark.parametrize("outcome", ["live", "absent", "unknown"])
 def test_darwin_boundary_birth_reuses_shared_identity_without_subprocess(monkeypatch, outcome):
-    from banodoco_local import runtime_boundary as module
-    from banodoco_local.custody_broker import CustodyError
+    from astrid_runtime import runtime_boundary as module
+    from astrid_runtime.custody_broker import CustodyError
     monkeypatch.setattr(module.sys, "platform", "darwin")
     calls = []
     def observe(pid):
@@ -522,7 +522,7 @@ def test_darwin_boundary_birth_reuses_shared_identity_without_subprocess(monkeyp
 
 
 def test_non_darwin_boundary_birth_keeps_proc_start_ticks(monkeypatch):
-    from banodoco_local import runtime_boundary as module
+    from astrid_runtime import runtime_boundary as module
     monkeypatch.setattr(module.sys, "platform", "linux")
     monkeypatch.setattr(module.Path, "read_text", lambda *a, **k: "123 (name with spaces) " + " ".join(str(i) for i in range(25)))
     monkeypatch.setattr(module.subprocess, "run", lambda *a, **k: pytest.fail("proc marker fell through"))
@@ -530,7 +530,7 @@ def test_non_darwin_boundary_birth_keeps_proc_start_ticks(monkeypatch):
 
 
 def test_non_darwin_boundary_birth_keeps_ps_fallback(monkeypatch):
-    from banodoco_local import runtime_boundary as module
+    from astrid_runtime import runtime_boundary as module
     monkeypatch.setattr(module.sys, "platform", "linux")
     def missing(*a, **k):raise FileNotFoundError
     monkeypatch.setattr(module.Path, "read_text", missing)
@@ -562,7 +562,7 @@ def test_workspace_inspection_forwards_selected_admission_budget_without_changin
         observed["argv"] = argv
         return SimpleNamespace(returncode=0 if healthy else 1, stdout=json.dumps(report))
 
-    monkeypatch.setattr("banodoco_local.runtime_boundary.subprocess.run", fake_run)
+    monkeypatch.setattr("astrid_runtime.runtime_boundary.subprocess.run", fake_run)
     assert LocalRuntimeBoundary().inspect(realm_root=root) == report
     assert observed["argv"] == [
         __import__("sys").executable, "-m", "runtime_protocol", "doctor",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://banodoco.dev/workspace/v1/schemas/health.json",
+  "$id": "https://astrid.haus/workspace/v1/schemas/health.json",
   "title": "Health response",
   "type": "object", "additionalProperties": false,
   "required": ["status", "protocol", "schema_digest", "runtime_epoch", "runtime_session_id", "runtime_instance_id"],

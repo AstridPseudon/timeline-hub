@@ -12,7 +12,7 @@ from pathlib import Path
 import os
 
 
-DATA_ROOT_ENV = "BANODOCO_LOCAL_DATA_ROOT"
+DATA_ROOT_ENV = "ASTRID_RUNTIME_DATA_ROOT"
 
 
 @dataclass(frozen=True)
@@ -38,7 +38,7 @@ class RuntimePaths:
         """Resolve support paths without coupling them to the process cwd.
 
         ``home`` retains its original meaning: a macOS home directory whose
-        support tree is ``Library/Application Support/Banodoco``.  A data
+        support tree is ``Library/Application Support/Astrid Runtime``.  A data
         root is an explicit installation-owned support root and is used as
         supplied, so passing ``Astrid/.astrid-data`` cannot create a nested
         ``Library/Application Support`` tree below the checkout.
@@ -50,7 +50,7 @@ class RuntimePaths:
             if not app_support.is_absolute():
                 raise ValueError(f"{DATA_ROOT_ENV} must be an absolute path")
         else:
-            app_support = home_path / "Library" / "Application Support" / "Banodoco"
+            app_support = home_path / "Library" / "Application Support" / "Astrid Runtime"
         runtime = app_support / "runtime"
         return cls(
             home=home_path,
@@ -70,7 +70,7 @@ class RuntimePaths:
         """An injectable current-Mac-shaped filesystem rooted at ``root``."""
 
         home = Path(root)
-        return cls.current_mac(home, data_root=home / "Library" / "Application Support" / "Banodoco")
+        return cls.current_mac(home, data_root=home / "Library" / "Application Support" / "Astrid Runtime")
 
     def ensure_support_dirs(self) -> None:
         for directory in (

@@ -1,6 +1,6 @@
 """Neutral, process-owned local workspace runtime.
 
-This package intentionally has no dependency on Astrid, REIGH, or worker
+This package intentionally has no dependency on Astrid, Astrid App, or worker
 checkouts.  Clients communicate through the versioned HTTP protocol.
 """
 

@@ -23,7 +23,7 @@ is checked against the shared vectors.
 `openapi/workspace-v1.yaml` is the canonical HTTP contract for the neutral
 workspace runtime.  The schemas under `schemas/` are the closed JSON Schema
 definitions referenced by the OpenAPI document.  They intentionally contain no
-Astrid, REIGH, or product-specific types.
+Astrid, Astrid App, or product-specific types.
 
 The protocol uses a clean, digest-pinned version (`workspace.v1`).  A client
 must complete the handshake before using any non-health operation.  Every
@@ -44,7 +44,7 @@ Astrid binds a typed task family, project identity, ordered CAS/input
 references, and idempotency key to a Runtime-owned workspace task and run.
 Workers claim and settle that work through the Runtime contract. Settlement,
 output provenance, receipts, and event history remain Runtime-owned and are
-the canonical readback surface for Reigh's gallery and timeline consumers.
+the canonical readback surface for Astrid App's gallery and timeline consumers.
 Product clients must not bypass this boundary with a direct database client or
 legacy task-table fallback.
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://banodoco.dev/workspace/v1/schemas/generation.json",
+  "$id": "https://astrid.haus/workspace/v1/schemas/generation.json",
   "title": "Minimal neutral generation and variant records",
   "type": "object", "additionalProperties": false,
   "definitions": {

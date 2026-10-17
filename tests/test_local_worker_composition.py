@@ -473,7 +473,7 @@ def test_relay_retained_reconnect_requires_exact_receipt_and_incarnation(tmp_pat
     write_protected(scope / "activation-record.json", {"evidence_digest": receipt["evidence_digest"], "executor_incarnation": "incarnation", "custody_capabilities": caps, "original_owner_epoch": "A", "credential_generation": generation})
     live = copy.deepcopy(caps)
     current = request["binding"]["source_owner"]
-    monkeypatch.setattr("banodoco_local.custody_broker.AuthenticatedCleanupActor.current", lambda: SimpleNamespace(verify=lambda: current))
+    monkeypatch.setattr("astrid_runtime.custody_broker.AuthenticatedCleanupActor.current", lambda: SimpleNamespace(verify=lambda: current))
     class Authority:
         def __init__(self, scope, role):
             self.role = role
@@ -481,7 +481,7 @@ def test_relay_retained_reconnect_requires_exact_receipt_and_incarnation(tmp_pat
             if ref != live[self.role]:
                 raise ConflictError("kernel incarnation changed")
             return ref
-    monkeypatch.setattr("banodoco_local.custody_broker.RoleCustodyAuthority", Authority)
+    monkeypatch.setattr("astrid_runtime.custody_broker.RoleCustodyAuthority", Authority)
     handle = SimpleNamespace(relay=True, activated=True, closed=False, owner_epoch="A", custody_scope=str(scope), retained=SimpleNamespace(verify=lambda: caps["relay"]["target"]))
     preparer._active = handle
     preparer._generation_verifier = (handle, lambda: _credential_commit_generation(credentials, "actor"))
@@ -618,7 +618,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     from test_local_worker import host_only_profile_case
     from runtime_protocol import local_worker_composition as module
     from runtime_protocol import verified_host_launch, local_execution_supervisor
-    import banodoco_local.custody_broker as custody
+    import astrid_runtime.custody_broker as custody
     original=SimpleNamespace(pid=4242)
     identity={'pid':4242,'birth_id':'original','uid':os.getuid()}
     selected=host_only_profile_case()
@@ -626,7 +626,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     config={**profile.host_launch,'runtime_endpoint':'http://127.0.0.1:1','runtime_instance_id':'epoch',
         'credential_file':str(tmp_path/'credential'),'ready_file':str(tmp_path/'ready')}
     captures={};read_done=threading.Event()
-    for key in ('PYTHONPATH','PYTHONHOME','PYTHONDONTWRITEBYTECODE','BANODOCO_LOCAL_DATA_ROOT','BANODOCO_RUNTIME_OWNER_TOKEN','ASTRID_OUTPUT_ROOT','ASTRID_EXECUTION_TARGET_JSON'):
+    for key in ('PYTHONPATH','PYTHONHOME','PYTHONDONTWRITEBYTECODE','ASTRID_RUNTIME_DATA_ROOT','ASTRID_RUNTIME_OWNER_TOKEN','ASTRID_OUTPUT_ROOT','ASTRID_EXECUTION_TARGET_JSON'):
         monkeypatch.setenv(key,'unadmitted-ambient')
     class Verifier:
         def __init__(self,**kwargs):pass
@@ -679,8 +679,8 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         assert set(handle.report_value['processes'])=={'host'}
         env=captures['environment']
         assert env['ASTRID_OUTPUT_ROOT']==str(profile.support_root/'host-output')
-        assert env['BANODOCO_LOCAL_DATA_ROOT']==str(profile.realm_root)
-        assert not set(env)&{'PYTHONPATH','PYTHONHOME','PYTHONDONTWRITEBYTECODE','BANODOCO_RUNTIME_OWNER_TOKEN','ASTRID_EXECUTION_TARGET_JSON'}
+        assert env['ASTRID_RUNTIME_DATA_ROOT']==str(profile.realm_root)
+        assert not set(env)&{'PYTHONPATH','PYTHONHOME','PYTHONDONTWRITEBYTECODE','ASTRID_RUNTIME_OWNER_TOKEN','ASTRID_EXECUTION_TARGET_JSON'}
     finally:
         handle.control.close();handle.activation.close()
 
@@ -693,7 +693,7 @@ def test_host_only_observation_rejects_missing_original_handle():
 
 def test_host_only_custody_scope_is_private_before_real_authority_open(tmp_path):
     from runtime_protocol.local_worker_composition import _create_host_custody_scope
-    from banodoco_local.custody_broker import _open_authority_scope_lock
+    from astrid_runtime.custody_broker import _open_authority_scope_lock
     scope=tmp_path/'new-parent'/'operation'
     _create_host_custody_scope(scope)
     assert scope.stat().st_mode & 0o777 == 0o700

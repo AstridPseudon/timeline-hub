@@ -6,7 +6,7 @@ import threading
 
 import pytest
 
-from banodoco_local import custody_broker as custody
+from astrid_runtime import custody_broker as custody
 
 
 @pytest.fixture
@@ -450,7 +450,7 @@ def test_non_darwin_process_identity_retains_existing_ps_parser(monkeypatch, ret
 def test_actual_darwin_self_identity_and_boundary_use_native_shared_marker(monkeypatch):
     import os
     import sys
-    from banodoco_local.runtime_boundary import LocalRuntimeBoundary
+    from astrid_runtime.runtime_boundary import LocalRuntimeBoundary
     assert sys.platform == "darwin", "this native proof requires its admitted Darwin venue"
     monkeypatch.setattr(custody.subprocess, "run", lambda *a, **k: pytest.fail("native observation spawned ps"))
     actual = custody.default_process_identity(os.getpid())

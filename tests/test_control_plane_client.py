@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
-from banodoco_workspace_client import WorkspaceClient
+from astrid_runtime_client import WorkspaceClient
 
 
 TASK = {"task_id": "t", "run_id": "r", "state": "queued", "version": 1, "capability_id": "render.basic", "capability_digest": "sha256:" + "b" * 64, "idempotency_key": "i", "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z", "attempt_id": None, "runtime_epoch": 1}

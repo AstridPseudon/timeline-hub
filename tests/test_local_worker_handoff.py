@@ -15,7 +15,7 @@ import sys
 
 import pytest
 
-from banodoco_local import custody_broker as custody
+from astrid_runtime import custody_broker as custody
 from runtime_protocol import local_worker_handoff as handoff
 from runtime_protocol.errors import ConflictError
 from runtime_protocol.local_execution_handoff import (
@@ -26,7 +26,7 @@ from test_local_execution_supervisor import _handoff_case
 
 CHILD = r'''
 import json, socket, sys
-from banodoco_local.custody_broker import AuthenticatedCleanupActor
+from astrid_runtime.custody_broker import AuthenticatedCleanupActor
 from runtime_protocol.local_worker_handoff import connect_fresh_successor, send_frame
 actor = AuthenticatedCleanupActor.current().verify()
 print(json.dumps(actor), flush=True)

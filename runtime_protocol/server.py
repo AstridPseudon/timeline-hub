@@ -24,7 +24,7 @@ class RuntimeHTTPServer(ThreadingHTTPServer):
 
 
 class RuntimeHandler(BaseHTTPRequestHandler):
-    server_version = "BanodocoRuntime/0.1"
+    server_version = "AstridRuntime/0.1"
     # Bound abandoned request bodies and clients that stop consuming responses.
     timeout = 30
     MAX_BODY_BYTES = 64 * 1024 * 1024

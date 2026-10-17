@@ -11,7 +11,7 @@ import sys
 import tempfile
 import unittest
 
-from banodoco_local.bootstrap import (
+from astrid_runtime.bootstrap import (
     BootstrapConfig,
     BootstrapError,
     CompatibilityError,
@@ -25,7 +25,7 @@ from banodoco_local.bootstrap import (
     doctor,
     restart,
 )
-from banodoco_local.paths import RuntimePaths
+from astrid_runtime.paths import RuntimePaths
 from runtime_protocol.store import RealmStore
 
 
@@ -383,7 +383,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(len(self.boundary.starts), 1)
 
     def test_connect_is_side_effect_free_when_stopped(self):
-        with self.assertRaisesRegex(Exception, "banodoco-local up --profile astrid"):
+        with self.assertRaisesRegex(Exception, "astrid-runtime up --profile astrid"):
             connect(self.paths, self.boundary, self.config)
         self.assertFalse(self.paths.runtime_support.exists())
 
@@ -538,7 +538,7 @@ def test_precommit_release_failure_uses_original_owned_rollback():
 
 def test_unknown_release_keeps_all_metadata_and_named_controller():
     import pytest
-    from banodoco_local.bootstrap import BootstrapCustodyUncertain
+    from astrid_runtime.bootstrap import BootstrapCustodyUncertain
     case = BootstrapTests()
     case.setUp()
     try:
@@ -562,7 +562,7 @@ def test_unknown_release_keeps_all_metadata_and_named_controller():
 
 def test_uncertain_stop_preserves_entire_bootstrap_state():
     import pytest
-    from banodoco_local.bootstrap import BootstrapCustodyUncertain
+    from astrid_runtime.bootstrap import BootstrapCustodyUncertain
     case = BootstrapTests()
     case.setUp()
     try:
@@ -650,7 +650,7 @@ def test_pack_public_down_uncertainty_preserves_discovery_lock(tmp_path):
 def test_pack_bootstrap_probe_does_not_replace_boundary_uncertainty(monkeypatch):
     import pytest
     from types import SimpleNamespace
-    from banodoco_local.bootstrap import _pid_alive
+    from astrid_runtime.bootstrap import _pid_alive
     def unknown(_pid):
         raise BootstrapError("fixture uncertainty")
     def forbidden_fallback(*_args):
@@ -662,7 +662,7 @@ def test_pack_bootstrap_probe_does_not_replace_boundary_uncertainty(monkeypatch)
 def test_pack_bootstrap_boundaryless_probe_only_esrch_is_absence(monkeypatch):
     import errno
     import pytest
-    from banodoco_local.bootstrap import _pid_alive
+    from astrid_runtime.bootstrap import _pid_alive
     for error, result in [(PermissionError(errno.EPERM, "denied"), True),
                           (ProcessLookupError(errno.ESRCH, "absent"), False)]:
         def fail(*_args, error=error):

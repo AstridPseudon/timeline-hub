@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://banodoco.dev/workspace/v1/schemas/managed-output.json",
+  "$id": "https://astrid.haus/workspace/v1/schemas/managed-output.json",
   "title": "Runtime managed output association",
   "type": "object",
   "additionalProperties": false,

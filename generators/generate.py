@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "contract" / "manifest.json"
 COMPONENT_MANIFEST = ROOT / "contract" / "component-manifest.json"
 PYTHON_CLIENT_TEMPLATE = ROOT / "generators" / "python_client_template.py"
-PYTHON_CLIENT_OUTPUT = ROOT / "packages" / "python" / "banodoco_workspace_client" / "generated.py"
+PYTHON_CLIENT_OUTPUT = ROOT / "packages" / "python" / "astrid_runtime_client" / "generated.py"
 TYPESCRIPT_CLIENT_OUTPUT = ROOT / "packages" / "typescript" / "src" / "generated.ts"
 
 
@@ -187,7 +187,7 @@ def render(manifest_path: Path = MANIFEST, component_path: Path = COMPONENT_MANI
     # standalone Python/TypeScript client artifacts and fixture bundle are
     # emitted by their language-specific conformance generators.
     _ = component
-    return {"packages/python/banodoco_workspace_client/contract_metadata.py": py, "packages/typescript/src/contract-metadata.ts": ts, "runtime_protocol/contract_metadata.py": runtime}
+    return {"packages/python/astrid_runtime_client/contract_metadata.py": py, "packages/typescript/src/contract-metadata.ts": ts, "runtime_protocol/contract_metadata.py": runtime}
 
 
 def main() -> int:
@@ -197,10 +197,10 @@ def main() -> int:
     parser.add_argument("--python-output", default=str(PYTHON_CLIENT_OUTPUT), help="Python client output path (for isolated checks)")
     args = parser.parse_args()
     generated = render(component_path=Path(args.component_manifest).expanduser())
-    generated["packages/python/banodoco_workspace_client/generated.py"] = render_python_client()
+    generated["packages/python/astrid_runtime_client/generated.py"] = render_python_client()
     generated["packages/typescript/src/generated.ts"] = render_typescript_client()
     for relative, content in generated.items():
-        path = Path(args.python_output).expanduser().resolve() if relative == "packages/python/banodoco_workspace_client/generated.py" else ROOT / relative
+        path = Path(args.python_output).expanduser().resolve() if relative == "packages/python/astrid_runtime_client/generated.py" else ROOT / relative
         if args.check:
             if not path.exists() or path.read_text(encoding="utf-8") != content:
                 print(f"stale generated file: {relative}")

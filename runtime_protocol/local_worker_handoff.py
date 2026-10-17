@@ -446,7 +446,7 @@ class FreshSuccessorPeer:
 
 def authenticate_fresh_successor(channel, request, *, binding, sealed_record_digest):
     """Pin the actual peer at the endpoint consuming B's authority."""
-    from banodoco_local.custody_broker import AuthenticatedCleanupActor
+    from astrid_runtime.custody_broker import AuthenticatedCleanupActor
     from .local_execution_handoff import digest, validate_request
     validate_request(request)
     if request["command"] != "handoff_adopt" or request["binding"] != binding:
@@ -464,7 +464,7 @@ class HandoffSuccessorListener:
     authorize B; every accept pins the exact selected kernel incarnation.
     """
     def __init__(self, binding, sealed_record_digest, *, timeout=5.0):
-        from banodoco_local.custody_broker import _create_compact_socket_root
+        from astrid_runtime.custody_broker import _create_compact_socket_root
         from .local_execution_handoff import digest, write_protected
         self.binding = dict(binding); self.sealed_record_digest = sealed_record_digest
         self.root = _create_compact_socket_root(); self.path = self.root / "s"
@@ -506,7 +506,7 @@ class HandoffSuccessorListener:
 
 
 def connect_fresh_successor(binding, sealed_record_digest, *, timeout=5.0):
-    from banodoco_local.custody_broker import AuthenticatedCleanupActor
+    from astrid_runtime.custody_broker import AuthenticatedCleanupActor
     from .local_execution_handoff import digest, exact, read_protected
     manifest = read_protected(Path(binding["custody_scope"]) / "successor-transport.json")
     exact(manifest, ("version", "path", "binding_digest", "sealed_record_digest", "successor", "relay"))
@@ -601,7 +601,7 @@ def receive_bound_authority_transfer(channel, *, binding, sealed_record_digest, 
 
     These FDs do not authenticate B; B still needs its fresh relay connection.
     """
-    from banodoco_local.custody_broker import AuthenticatedCleanupActor
+    from astrid_runtime.custody_broker import AuthenticatedCleanupActor
     from .local_execution_handoff import digest, exact
     if AuthenticatedCleanupActor.private_peer(channel).verify() != binding["source_owner"]:
         raise ConflictError("authority export peer incarnation differs")

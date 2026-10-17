@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from banodoco_local import RuntimePaths
-from banodoco_local.cli import parser
+from astrid_runtime import RuntimePaths
+from astrid_runtime.cli import parser
 
 
 def test_explicit_data_root_is_used_without_mac_support_suffix(tmp_path):
@@ -29,7 +29,7 @@ def test_lifecycle_commands_accept_data_root(tmp_path):
 
 def test_environment_data_root_and_explicit_precedence_are_isolated(tmp_path, monkeypatch):
     configured = tmp_path / "configured"
-    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(configured))
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(configured))
     assert RuntimePaths.current_mac().app_support == configured
     assert RuntimePaths.current_mac(data_root=tmp_path / "explicit").app_support == tmp_path / "explicit"
     assert RuntimePaths.sandbox(tmp_path / "sandbox").app_support != configured

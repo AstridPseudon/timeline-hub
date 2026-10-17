@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://banodoco.dev/workspace/v1/schemas/media-relation.json",
+  "$id": "https://astrid.haus/workspace/v1/schemas/media-relation.json",
   "title": "Project-scoped managed-media relation",
   "type": "object", "additionalProperties": false,
   "required": ["project_id", "from_object_id", "to_object_id", "kind", "ordinal", "metadata", "created_at"],

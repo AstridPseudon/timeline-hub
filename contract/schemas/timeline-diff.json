@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://banodoco.dev/workspace/v1/schemas/timeline-diff.json",
+  "$id": "https://astrid.haus/workspace/v1/schemas/timeline-diff.json",
   "title": "Deterministic timeline revision diff",
   "type": "object", "additionalProperties": false,
   "required": ["timeline_id", "from_version", "to_version", "changes"],

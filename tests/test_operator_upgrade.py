@@ -8,10 +8,10 @@ import sqlite3
 
 import pytest
 
-from banodoco_local.bootstrap import BootstrapConfig, BootstrapError, SourceProfile
-from banodoco_local.operator_upgrade import OperatorUpgradeError, upgrade_workspace
-from banodoco_local.paths import RuntimePaths
-from banodoco_local.runtime_boundary import LocalRuntimeBoundary
+from astrid_runtime.bootstrap import BootstrapConfig, BootstrapError, SourceProfile
+from astrid_runtime.operator_upgrade import OperatorUpgradeError, upgrade_workspace
+from astrid_runtime.paths import RuntimePaths
+from astrid_runtime.runtime_boundary import LocalRuntimeBoundary
 from runtime_protocol.store import SCHEMA_VERSION, RealmStore
 from runtime_protocol.upgrade import inspect_canonical_schema
 
@@ -121,16 +121,16 @@ def test_operator_upgrade_current_realm_is_single_idempotent_workflow(tmp_path, 
         target_paths.instance_lock_path.write_text(json.dumps({**discovery, "realm_id": "realm-1"}), encoding="utf-8")
         return SimpleNamespace(endpoint=discovery["endpoint"], pid=1235, runtime_instance_id="instance-2")
 
-    monkeypatch.setattr("banodoco_local.operator_upgrade._bootstrap_locked", fake_start)
+    monkeypatch.setattr("astrid_runtime.operator_upgrade._bootstrap_locked", fake_start)
     monkeypatch.setattr(
-        "banodoco_local.operator_upgrade.migrate_canonical_to_current",
+        "astrid_runtime.operator_upgrade.migrate_canonical_to_current",
         lambda *args, **kwargs: (
             migration_calls.append((args, kwargs))
             or {"ok": True, "source_schema_version": 25, "target_schema_version": SCHEMA_VERSION}
         ),
     )
     monkeypatch.setattr(
-        "banodoco_local.operator_upgrade.migrate_historical_managed_outputs",
+        "astrid_runtime.operator_upgrade.migrate_historical_managed_outputs",
         lambda *args, **kwargs: pytest.fail("v25 upgrade must not run historical output migration"),
         raising=False,
     )
@@ -186,8 +186,8 @@ def test_operator_upgrade_failure_before_activation_restarts_original_and_journa
     def fail_migration(*_args, **_kwargs):
         raise RuntimeError("validation failed")
 
-    monkeypatch.setattr("banodoco_local.operator_upgrade._bootstrap_locked", fake_start)
-    monkeypatch.setattr("banodoco_local.operator_upgrade.migrate_canonical_to_current", fail_migration)
+    monkeypatch.setattr("astrid_runtime.operator_upgrade._bootstrap_locked", fake_start)
+    monkeypatch.setattr("astrid_runtime.operator_upgrade.migrate_canonical_to_current", fail_migration)
     with pytest.raises(OperatorUpgradeError, match="validation failed"):
         upgrade_workspace(paths, boundary, BootstrapConfig(source_profile=profile))
     assert started == [True]
@@ -224,7 +224,7 @@ def test_operator_upgrade_current_schema_uses_read_only_schema_noop(tmp_path, mo
         target_paths.instance_lock_path.write_text(json.dumps({**discovery, "realm_id": "realm-1"}), encoding="utf-8")
         return SimpleNamespace(endpoint=discovery["endpoint"], pid=1235, runtime_instance_id="instance-2")
 
-    monkeypatch.setattr("banodoco_local.operator_upgrade._bootstrap_locked", fake_start)
+    monkeypatch.setattr("astrid_runtime.operator_upgrade._bootstrap_locked", fake_start)
     result = upgrade_workspace(paths, boundary, BootstrapConfig(source_profile=profile))
     assert result["schema_before"] == f"v{SCHEMA_VERSION}"
     assert result["migration"]["changed"] is False

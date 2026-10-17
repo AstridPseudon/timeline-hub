@@ -136,7 +136,7 @@ def _owner_record(paths: RuntimePaths, realm_id: str, realm_root: Path, boundary
         marker = _read_support_json(paths.instance_lock_path)
         if marker and int(marker.get("pid", 0) or 0) > 0:
             if boundary.is_pid_alive(int(marker["pid"])):
-                raise OperatorUpgradeError("runtime owner identity is incomplete; use banodoco-local restart before upgrading")
+                raise OperatorUpgradeError("runtime owner identity is incomplete; use astrid-runtime restart before upgrading")
         return None
     if str(discovery.get("active_realm")) != realm_id:
         raise OperatorUpgradeError("runtime discovery does not match the selected realm")
