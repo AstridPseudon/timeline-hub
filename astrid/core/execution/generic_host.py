@@ -14893,6 +14893,8 @@ def _cli() -> int:
         try:
             registration = host.register() if args.register else {"capabilities": [record.manifest() for record in host.capabilities.values()]}
         except Exception as exc:
+            if preparation is not None:
+                preparation._record_control_error(exc)
             code = str(getattr(exc, "code", "host_registration_failed"))[:128]
             request_id = str(getattr(exc, "request_id", ""))[:128]
             raw_message = getattr(exc, "message", None)
@@ -14917,6 +14919,19 @@ def _cli() -> int:
             if ready_path is not None:
                 _write_ready_marker(ready_path, failure)
             print(json.dumps(failure, sort_keys=True), file=sys.stderr, flush=True)
+            if preparation is not None:
+                # A constructed claim owner can carry obligations even when
+                # registration fails. Keep its original control receiver until
+                # Runtime has consumed the existing, bound child-cleanup ACK.
+                try:
+                    preparation.abort()
+                except BaseException as cleanup_error:
+                    preparation._record_control_error(cleanup_error)
+                    _retain_unresolved_owner(preparation)
+                while preparation._abort_ack is None:
+                    time.sleep(0.05)
+            else:
+                host.shutdown()
             return 1
         _emit_startup_phase("registration_done")
         # One line per start: the full registration (every capability's definition, ~0.6 MB) is in
