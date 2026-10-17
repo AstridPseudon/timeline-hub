@@ -19,6 +19,8 @@ import type { EffectResource, VideoEditorEffectCatalog } from '@/tools/video-edi
 import type { ClipTab } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
 import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { ResolvedTimelineClip, ClipTransition } from '@/tools/video-editor/types/index.ts';
+import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import type { AstridElementDescriptor, AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
 import {
   useOptionalTransitionRegistryContext,
   type TransitionRegistryRecord,
@@ -176,6 +178,49 @@ function getTransitionBlockedRoutes(record: TransitionRegistryRecord): string[] 
     .map((cap) => cap.route);
 }
 
+function resolveDeclaredTransition(
+  record: TransitionRegistryRecord | undefined,
+  snapshot: ReturnType<typeof createTransitionSnapshot>,
+  host: AstridElementHost | undefined,
+): AstridElementDescriptor | undefined {
+  if (!record || record.status !== 'active' || !host) return undefined;
+  const matches = host.descriptors.filter((descriptor) => descriptor.kind === 'transition'
+    && descriptor.revision.length > 0
+    && descriptor.componentPath.length > 0
+    && resolveTransition(descriptor.id, snapshot) === record
+    && Boolean(host.resolveComponent(descriptor.id, 'transition', descriptor.packId)));
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+function hasDefaults(defaults: Readonly<Record<string, unknown>>): boolean {
+  return Object.keys(defaults).length > 0;
+}
+
+function withTransitionDefaults(
+  params: ClipTransition['params'],
+  defaults: Readonly<Record<string, unknown>>,
+): ClipTransition['params'] {
+  if (!hasDefaults(defaults)) return params;
+  return { ...(params ?? {}), ...defaults };
+}
+
+function elementReference(
+  existing: ClipMeta['elementRef'],
+  descriptor: AstridElementDescriptor,
+): NonNullable<ClipMeta['elementRef']> {
+  const captured = existing && typeof existing === 'object' && !Array.isArray(existing)
+    ? existing as Record<string, unknown>
+    : {};
+  const { id: _id, revision: _revision, kind: _kind, packId: _packId, ...opaqueSiblings } = captured;
+  return {
+    ...opaqueSiblings,
+    id: descriptor.id,
+    revision: descriptor.revision,
+    kind: 'transition',
+    ...(descriptor.packId ? { packId: descriptor.packId } : {}),
+  };
+}
+
 export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: VideoEditorEffectCatalog}) {
   const {
     clips,
@@ -183,7 +228,6 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
     compositionWidth,
     compositionHeight,
     sharedText,
-    sharedTransition,
     sharedEntranceType,
     sharedExitType,
     sharedContinuousType,
@@ -203,6 +247,7 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
   const [drafts, setDrafts] = useState<BulkDrafts>(() => buildDrafts(props));
 
   // Transition registry (T12: bulk transition controls)
+  const elementHost = useOptionalVideoEditorRuntime()?.astridElementHost;
   const transitionRegistryContext = useOptionalTransitionRegistryContext();
   const mergedTransitionSnapshot = useMemo(
     () => createTransitionSnapshot(transitionRegistryContext?.snapshot),
@@ -545,15 +590,22 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
                       return;
                     }
                     const record = resolveTransition(value, mergedTransitionSnapshot);
+                    const descriptor = resolveDeclaredTransition(record, mergedTransitionSnapshot, elementHost);
+                    if (!record || !descriptor) return;
                     const defaults = record?.schema
                       ? materializeTransitionDefaults(record.schema)
                       : undefined;
                     onChangeDeep((meta) => ({
                       transition: {
-                        type: value,
+                        ...(meta.transition ?? {}),
+                        type: descriptor.id,
                         duration: meta.transition?.duration ?? sharedTransitionDuration ?? 0.5,
-                        params: defaults && Object.keys(defaults).length > 0 ? defaults : undefined,
+                        revision: descriptor.revision,
+                        ...(defaults && hasDefaults(defaults)
+                          ? { params: withTransitionDefaults(meta.transition?.params, defaults) }
+                          : {}),
                       },
+                      elementRef: elementReference(meta.elementRef, descriptor),
                     }));
                   }}
                 >
@@ -570,7 +622,7 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
                         <SelectItem
                           key={record.transitionId}
                           value={record.transitionId}
-                          disabled={error}
+                          disabled={error || !resolveDeclaredTransition(record, mergedTransitionSnapshot, elementHost)}
                         >
                           <span className="flex items-center gap-1.5">
                             {error && <AlertTriangle className="h-3 w-3 shrink-0 text-destructive" />}
@@ -639,13 +691,9 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
                       step={0.05}
                       onChange={(value) => {
                         if (value !== null) {
-                          onChangeDeep((meta) => ({
-                            transition: {
-                              type: sharedTransitionType!,
-                              duration: value,
-                              params: meta.transition?.params ?? sharedTransition?.params,
-                            },
-                          }));
+                          onChangeDeep((meta) => meta.transition?.type === sharedTransitionType
+                            ? { transition: { ...meta.transition, duration: value } }
+                            : {});
                         }
                       }}
                     />
@@ -672,13 +720,15 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
                         className="h-6 gap-1 text-xs"
                         onClick={() => {
                           if (!sharedTransitionType || !resolvedTransitionRecord?.schema) return;
-                          onChangeDeep(() => ({
-                            transition: {
-                              type: sharedTransitionType,
-                              duration: sharedTransitionDuration ?? 0.5,
-                              params: materializeTransitionDefaults(resolvedTransitionRecord.schema),
-                            },
-                          }));
+                          const defaults = materializeTransitionDefaults(resolvedTransitionRecord.schema);
+                          onChangeDeep((meta) => meta.transition?.type === sharedTransitionType
+                            ? {
+                                transition: {
+                                  ...meta.transition,
+                                  params: withTransitionDefaults(meta.transition.params, defaults),
+                                },
+                              }
+                            : {});
                         }}
                       >
                         <RefreshCw className="h-3 w-3" /> Reset defaults
