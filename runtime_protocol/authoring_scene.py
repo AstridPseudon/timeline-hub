@@ -13,6 +13,30 @@ from .errors import AuthorizationError, ConflictError, ValidationError
 from .timeline_commit import digest, _publisher
 
 
+def _scene_cas_projection(scene):
+    """Adapt the checkout's display registry to the closed private CAS wire.
+
+    A display file may repeat an immutable ID, never select a location. The
+    original candidate digest remains bound separately to this invocation.
+    """
+    from astrid.core.execution import authoring_scene_protocol as wire
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    value = copy.deepcopy(scene)
+    for key, entry in value['assets']['assets'].items():
+        if type(entry) is not dict:
+            raise FrameOwnerError('asset_identity_invalid')
+        refs = [entry[k] for k in ('media_id', 'object_id', 'content_sha256') if k in entry]
+        if not refs or not all(wire.sha(v) and v == refs[0] for v in refs):
+            raise FrameOwnerError('asset_identity_invalid')
+        if 'file' in entry and entry['file'] != refs[0]:
+            raise FrameOwnerError('asset_location_forbidden')
+        if 'type' in entry and entry['type'] not in ('image', 'video', 'audio'):
+            raise FrameOwnerError('asset_location_forbidden')
+        value['assets']['assets'][key] = {k: v for k, v in entry.items() if k not in ('file', 'type')}
+    wire.assets(value)  # Unknown fields, paths/URLs and divergent IDs still refuse.
+    return value
+
+
 def _session(principal):
     grant = principal.get("_paired_session")
     if grant is not None:
@@ -234,6 +258,7 @@ class CandidateEvaluator:
             scene = copy.deepcopy(scene)
             if revision_digest != wire.digest(scene)[7:]:
                 raise FrameOwnerError("scene_digest_mismatch")
+            scene = _scene_cas_projection(scene)
             dependencies = {}
             service = self.invocation.service
             with service.store._mutex:

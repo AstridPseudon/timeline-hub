@@ -19,6 +19,29 @@ def projection():
                 assets={'assets': {}}, fps=24, width=320, height=180, roles={})
 
 
+@pytest.mark.parametrize('edge', [None, 'path', 'url', 'extra', 'type', 'divergent', 'identity'])
+def test_checkout_display_registry_is_projected_to_strict_cas_without_location_authority(edge):
+    from astrid.core.execution import authoring_scene_protocol as wire
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    value = projection(); oid = 'sha256:' + 'a' * 64
+    entry = dict(media_id=oid, file=oid, type='video', width=16, height=16)
+    if edge == 'path': entry['file'] = '/unadmitted/location'
+    elif edge == 'url': entry['file'] = 'https://unadmitted.invalid/media'
+    elif edge == 'extra': entry['url'] = oid
+    elif edge == 'type': entry['type'] = 'callback'
+    elif edge == 'divergent': entry['object_id'] = 'sha256:' + 'b' * 64
+    elif edge == 'identity': entry['media_id'] = 'not-cas'
+    value['assets']['assets']['picture'] = entry
+    original = copy.deepcopy(value)
+    if edge is not None:
+        with pytest.raises(FrameOwnerError): scene._scene_cas_projection(value)
+    else:
+        projected = scene._scene_cas_projection(value)
+        assert wire.assets(projected) == {oid}
+        assert projected['assets']['assets']['picture'] == dict(media_id=oid, width=16, height=16)
+    assert value == original
+
+
 @pytest.fixture
 def bound(fixture, tmp_path, monkeypatch):
     from astrid.core.execution import authoring_scene_protocol as protocol
