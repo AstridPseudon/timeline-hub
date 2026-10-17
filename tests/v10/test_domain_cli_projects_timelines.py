@@ -719,7 +719,10 @@ def test_visualize_comparison_routes_are_distinct_in_help_skill_and_parse() -> N
     parser = build_parser(_FakeClient())
     visualize = parser._subparsers._group_actions[0].choices["visualize"]
     help_text = " ".join(visualize.format_help().split())
+    assert "--compare {published,changed-cuts,document}" in help_text
     assert "--compare published" in help_text
+    assert "--compare changed-cuts" in help_text
+    assert "--compare document" in help_text
     assert "same selected cuts" in help_text
     assert "--preset compare" in help_text and "changed-cuts page" in help_text
     assert "--view diff" in help_text and "immutable before/after revision view" in help_text
@@ -730,21 +733,220 @@ def test_visualize_comparison_routes_are_distinct_in_help_skill_and_parse() -> N
     changed_cuts = parser.parse_args([
         "visualize", "main", "--project", "demo", "--preset", "compare", "--from", "before-rev", "--to", "after-rev",
     ])
+    canonical_changed_cuts = parser.parse_args([
+        "visualize", "main", "--project", "demo", "--compare", "changed-cuts", "--from", "before-rev",
+    ])
     exact_diff = parser.parse_args([
         "visualize", "main", "--project", "demo", "--view", "diff",
         "--before-revision-id", "before-rev", "--after-revision-id", "after-rev",
+    ])
+    canonical_document = parser.parse_args([
+        "visualize", "main", "--project", "demo", "--compare", "document",
+        "--from", "before-rev", "--to", "after-rev",
     ])
     assert (published.compare_with, published.preset, published.view) == ("published", None, None)
     assert (changed_cuts.preset, changed_cuts.from_revision, changed_cuts.to_revision) == (
         "compare", "before-rev", "after-rev",
     )
+    assert (canonical_changed_cuts.compare_with, canonical_changed_cuts.preset) == ("changed-cuts", None)
     assert (exact_diff.view, exact_diff.before_revision_id, exact_diff.after_revision_id) == (
         "diff", "before-rev", "after-rev",
     )
+    assert (canonical_document.compare_with, canonical_document.view) == ("document", None)
 
     skill = (Path(__file__).parents[2] / "astrid/packs/timeline/docs/SKILL.md").read_text(encoding="utf-8")
-    for spelling in ("--compare published", "--preset compare", "--view diff"):
+    for spelling in ("--compare published", "--compare changed-cuts", "--compare document",
+                     "--preset compare", "--view diff"):
         assert spelling in skill
+
+
+def test_visualize_compare_modes_match_legacy_routes(monkeypatch, capsys) -> None:
+    from pathlib import Path
+
+    from astrid.packs.timeline import cli, cli_visualize
+    from astrid.packs.rendering.actions.timeline_visualize.motion import diffview
+
+    report = {
+        "before_cuts": 2,
+        "after_cuts": 2,
+        "changed_before": [1],
+        "changed_after": [1],
+        "rows": [],
+        "findings": [],
+        "intervals": [],
+    }
+    monkeypatch.setattr(diffview, "compare", lambda before, after, edited: report)
+    monkeypatch.setattr(diffview, "window_frames_of", lambda root: ["injected-frame"])
+    monkeypatch.setattr(diffview, "compose_compare", lambda *args, **kwargs: Path("/tmp/injected-compare.png"))
+    monkeypatch.setattr(cli_visualize, "_visualize_working_copy", lambda parsed: None)
+
+    class _VisualizeClient:
+        def __init__(self):
+            self.calls = []
+            self.timelines = SimpleNamespace(open_bundle=self.open_bundle, visualize=self.visualize)
+
+        def open_bundle(self, project, ref, revision_id=None):
+            self.calls.append(("open_bundle", project, ref, revision_id))
+            selected = revision_id or "head-rev"
+            return DomainResult.success({"revision_id": selected, "bundle": {"revision_id": selected}})
+
+        def visualize(self, project, ref, *, mode="auto", options=None, revision_id=None, out=None):
+            options = dict(options or {})
+            self.calls.append(("visualize", project, ref, mode, options, revision_id))
+            if options.get("view") == "diff":
+                return DomainResult.success({"pages": [], "primary_page": None, "timing": {}, "findings": []})
+            return SimpleNamespace(ok=True, data={"pack_root": f"/scratch/{revision_id}"})
+
+    def run(args):
+        client = _VisualizeClient()
+        parser = cli.build_parser(None)
+        parsed = parser.parse_args(["visualize", "main", "--project", "demo", *args])
+        parsed.client = client
+        code = parsed.handler(parsed)
+        captured = capsys.readouterr()
+        return code, captured.out, captured.err, client.calls
+
+    no_capture_new = run([
+        "--compare", "changed-cuts", "--from", "before-rev", "--no-capture", "--json",
+    ])
+    no_capture_legacy = run([
+        "--preset", "compare", "--from", "before-rev", "--no-capture", "--json",
+    ])
+    assert no_capture_new == no_capture_legacy
+    assert no_capture_new[0] == 0
+    assert no_capture_new[3] == [
+        ("open_bundle", "demo", "main", "before-rev"),
+        ("open_bundle", "demo", "main", None),
+    ]
+    assert json.loads(no_capture_new[1])["data"]["to"] == "head-rev"
+
+    capture_new = run([
+        "--compare", "changed-cuts", "--preset", "compare", "--from", "before-rev", "--to", "after-rev",
+        "--range", "0..1", "--json",
+    ])
+    capture_legacy = run([
+        "--preset", "compare", "--from", "before-rev", "--to", "after-rev", "--range", "0..1", "--json",
+    ])
+    assert capture_new == capture_legacy
+    assert capture_new[0] == 0
+    assert json.loads(capture_new[1])["data"]["page"] == "/tmp/injected-compare.png"
+    assert capture_new[3][2:] == [
+        ("visualize", "demo", "main", "auto",
+         {"view": "motion", "preset": "scan", "formats": ["png"], "range": "0..1",
+          "revision_id": "before-rev"}, "before-rev"),
+        ("visualize", "demo", "main", "auto",
+         {"view": "motion", "preset": "scan", "formats": ["png"], "range": "0..1",
+          "revision_id": "after-rev"}, "after-rev"),
+    ]
+
+    document_default_new = run([
+        "--compare", "document", "--view", "diff", "--from", "before-rev", "--no-capture", "--json",
+    ])
+    document_default_legacy = run([
+        "--view", "diff", "--from", "before-rev", "--no-capture", "--json",
+    ])
+    assert document_default_new == document_default_legacy
+    assert document_default_new[0] == 0
+    assert document_default_new[3] == [
+        ("open_bundle", "demo", "main", None),
+        ("visualize", "demo", "main", "auto",
+         {"formats": ["png", "md"], "view": "diff", "before_revision_id": "before-rev", "after_revision_id": "head-rev",
+          "timeline_slug": "main"}, None),
+    ]
+
+    document_explicit_new = run([
+        "--compare", "document", "--before-revision-id", "before-rev", "--after-revision-id", "after-rev",
+        "--json",
+    ])
+    document_explicit_legacy = run([
+        "--view", "diff", "--before-revision-id", "before-rev", "--after-revision-id", "after-rev", "--json",
+    ])
+    assert document_explicit_new == document_explicit_legacy
+    assert document_explicit_new[0] == 0
+    assert document_explicit_new[3] == [
+        ("visualize", "demo", "main", "auto",
+         {"formats": ["png", "md"], "view": "diff", "before_revision_id": "before-rev", "after_revision_id": "after-rev",
+          "timeline_slug": "main"}, None),
+    ]
+
+
+def test_visualize_new_compare_modes_refuse_contradictory_routes_before_effects(capsys) -> None:
+    from astrid.packs.timeline import cli
+
+    class _NoEffectsClient:
+        def __init__(self):
+            self.calls = []
+            self.timelines = SimpleNamespace(
+                open_bundle=lambda *args, **kwargs: self.calls.append((args, kwargs)),
+                visualize=lambda *args, **kwargs: self.calls.append((args, kwargs)),
+            )
+
+    for args in (
+        ["--compare", "changed-cuts", "--view", "diff", "--from", "before-rev"],
+        ["--compare", "document", "--preset", "compare", "--from", "before-rev"],
+    ):
+        client = _NoEffectsClient()
+        parser = cli.build_parser(None)
+        parsed = parser.parse_args(["visualize", "main", "--project", "demo", *args])
+        parsed.client = client
+        assert parsed.handler(parsed) == 2
+        captured = capsys.readouterr()
+        assert "conflicts with" in captured.err
+        assert client.calls == []
+
+
+def test_compare_published_keeps_working_and_no_working_copy_behavior(monkeypatch, capsys) -> None:
+    from astrid.packs.timeline import cli, cli_visualize
+    from astrid.sdk.timeline_checkout import Checkout
+    from astrid.core.timeline import authoring_bundle
+
+    class _VisualizeClient:
+        def __init__(self):
+            self.calls = []
+            self.timelines = SimpleNamespace(visualize=self.visualize)
+
+        def visualize(self, project, ref, *, mode="auto", options=None, revision_id=None, out=None):
+            self.calls.append((mode, dict(options or {}), revision_id))
+            return DomainResult.success({"pages": [], "primary_page": None, "timing": {}, "findings": []})
+
+    def run(client, args):
+        parser = cli.build_parser(None)
+        parsed = parser.parse_args(["visualize", "main", "--project", "demo", *args])
+        parsed.client = client
+        code = parsed.handler(parsed)
+        return code, capsys.readouterr()
+
+    no_copy_client = _VisualizeClient()
+    monkeypatch.setattr(cli_visualize, "_visualize_working_copy", lambda parsed: None)
+    code, no_copy_output = run(no_copy_client, ["--compare", "published"])
+    assert code == 0 and "no working copy: nothing to compare" in no_copy_output.out
+    assert len(no_copy_client.calls) == 1
+
+    class _Draft:
+        def edits(self):
+            return {"changes": [{"clip_id": "c1"}]}
+
+        def check(self):
+            return SimpleNamespace(changed_cuts=[1])
+
+        def changed_cut_ids(self):
+            return ["c1"]
+
+        def document(self):
+            return {"draft": True}
+
+    draft = _Draft()
+    working = {"draft": "/scratch/draft.json", "base_revision": "base-rev", "edits": 1, "changed_cuts": [1]}
+    monkeypatch.setattr(cli_visualize, "_visualize_working_copy",
+                        lambda parsed: None if parsed.published else working)
+    monkeypatch.setattr(Checkout, "load", classmethod(lambda cls, path: draft))
+    monkeypatch.setattr(authoring_bundle, "preview_authoring_candidate", lambda document: {})
+    copy_client = _VisualizeClient()
+    code, copy_output = run(copy_client, ["--draft", "working", "--compare", "published"])
+    assert code == 0 and "PUBLISHED" in copy_output.out and "WORKING COPY" in copy_output.out
+    assert len(copy_client.calls) == 2
+    assert copy_client.calls[0][0] == "auto"
+    assert copy_client.calls[1][0] == "composed"
 
 
 def test_timelines_render_help_includes_copyable_flat_profile(capsys) -> None:

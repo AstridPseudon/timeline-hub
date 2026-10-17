@@ -2512,8 +2512,8 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
             "motion curves, word/beat/sfx sync, stillness, lip-sync and findings (<= 60 frames at 480x270). "
             "diff: immutable before/after revision view of the cuts an edit changed, with the SCOPE condition; "
             "select revisions with --before-revision-id/--after-revision-id (or --from/--to; --to defaults to "
-            "the current head). This view is separate from --preset compare's changed-cuts page and "
-            "--compare published's working-copy comparison. "
+            "the current head). Use --compare document for this route; legacy --view diff remains supported. "
+            "It is separate from --compare changed-cuts and --compare published. "
             "A full timeline.view/<pack>.<key> from --list-views prints its schema-driven read-only projection."
         ),
     )
@@ -2524,8 +2524,9 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
             "2 fps, 8 per row, up to 30 s); motion (<= 3 s at every 2nd frame, big 640x360 frames, 3 per row, onion "
             "skins + curves); beat (a frame at each word onset, music hit and sfx, labelled); frame (one exact "
             "frame, 1280x720, with --at or --frame); cut (a cut's motion sheet, with --cut); compare (--from REV: "
-            "a before/after page for changed cuts, with --to REV optional and defaulting to the current head; separate "
-            "from --compare published and --view diff). Defaults: no window -> overview, --range -> scan, --at -> frame, "
+            "a before/after page for changed cuts, with --to REV optional and defaulting to the current head; use "
+            "--compare changed-cuts (legacy --preset compare remains supported). Separate from --compare published "
+            "and --compare document. Defaults: no window -> overview, --range -> scan, --at -> frame, "
             "--cut -> cut."
         ),
     )

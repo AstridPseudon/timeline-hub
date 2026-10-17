@@ -67,3 +67,15 @@
   card: VOCAB
   reason: "Retains the timeline positional and its current-project lookup; makes it optional only when an explicit --file Checkout supplies the input. No-file lines still requires a timeline."
   alias: "command:timelines.lines"
+- feature: "deliberate: tests/v10/test_domain_cli_projects_timelines.py::test_timelines_parser_has_visualize_and_no_aliases"
+  card: VISUALIZE
+  reason: "Replace the obsolete exact command/no-alias expectation with the explicit current command inventory and the sole undo/revert alias; retain every prior command, visualize's no-alias assertion, and rejection of unregistered visualization. No preset, view, layer, command or alias is removed."
+  alias: "command:timelines.visualize"
+- feature: "deliberate: tests/sdk/test_timeline_show_views.py::test_show_sheet_script_frame_index_and_revision_diff_agree_without_rendering"
+  card: SHOW
+  reason: "This strengthens derived formatted time/frame assertions across the shared no-render views and removes no behavior or coverage."
+  alias: "command:timelines.show"
+- feature: "flag:timelines.visualize:--compare"
+  card: VOCAB
+  reason: "Extends the canonical --compare choices with changed-cuts and document while retaining published and mapping the new values to the existing comparison routes. The legacy --preset compare and --view diff selectors remain available."
+  alias: "--compare"
