@@ -704,7 +704,7 @@ def _managed_receiver_path(out_path: Path) -> Path | None:
         return None
     from astrid.sdk._child_bridge import ChildBridge
 
-    if not isinstance(bridge, ChildBridge) or bridge._closed or bridge._channel.fileno() < 0:
+    if not isinstance(bridge, ChildBridge) or not bridge._is_open():
         raise HumanReviewInputError("managed review requires its live inherited bridge")
     raw = os.environ.get("ASTRID_PROGRESS_PATH", "")
     progress = Path(raw)

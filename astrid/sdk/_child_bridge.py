@@ -313,6 +313,16 @@ class ChildBridge:
         self._sequence = 0
         self._closed = False
 
+    def _is_open(self) -> bool:
+        """Local transport availability, never peer or task completion evidence."""
+        from astrid.core.execution._child_pipe import _ChildPipeChannel
+
+        if self._closed:
+            return False
+        if isinstance(self._channel, _ChildPipeChannel):
+            return self._channel.is_open()
+        return isinstance(self._channel, socket.socket) and self._channel.fileno() >= 0
+
     def close(self) -> None:
         self._closed = True
         try:

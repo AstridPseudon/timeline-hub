@@ -32,6 +32,25 @@ class _ChildPipeChannel(_PipeChannel):
         self._io_lock = threading.RLock()
         self._creator_pid = os.getpid()
         super().__init__(read_fd, write_fd)
+        self._endpoint_identities = (
+            pipe_identity(read_fd, os.O_RDONLY), pipe_identity(write_fd, os.O_WRONLY),
+        )
+
+    def is_open(self) -> bool:
+        """Observe only this creator's original local endpoints, under I/O custody.
+
+        This does not establish peer liveness, task authority or settlement.
+        """
+        with self._io_lock:
+            if os.getpid() != self._creator_pid:
+                return False
+            try:
+                return self._endpoint_identities == (
+                    pipe_identity(self.read_fd, os.O_RDONLY),
+                    pipe_identity(self.write_fd, os.O_WRONLY),
+                )
+            except (OSError, ValueError):
+                return False
 
     def recv(self, size, flags=0):
         with self._io_lock:

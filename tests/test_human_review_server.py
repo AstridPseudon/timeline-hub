@@ -496,11 +496,15 @@ def test_state_static_range_and_submit_compatibility(tmp_path: Path) -> None:
     assert json.loads(out_path.read_text(encoding="utf-8")) == {"ok": True}
 
 
-def _receiver_bridge(monkeypatch, tmp_path):
+def _receiver_bridge(monkeypatch, tmp_path, *, transport="socket"):
     import socket
     from astrid.sdk import _child_bridge
     from astrid.packs.editorial.actions.human_review import run as review
-    parent, channel = socket.socketpair()
+    if transport == "pipe":
+        from astrid.core.execution._child_pipe import pipe_pair
+        parent, channel = pipe_pair()
+    else:
+        parent, channel = socket.socketpair()
     bridge = _child_bridge.ChildBridge(channel)
     monkeypatch.setattr(_child_bridge, '_bridge', bridge)
     attempt = tmp_path.resolve() / 'task-attempt'
@@ -544,6 +548,105 @@ def test_managed_receiver_rejects_path_and_closed_bridge(tmp_path, monkeypatch):
             review._managed_receiver_path(attempt / 'outputs' / 'decisions.json')
     finally:
         bridge.close(); parent.close()
+
+
+
+@pytest.mark.parametrize("case", ["live", "bridge_close", "channel_close", "read_close", "write_close",
+                                   "read_replaced", "write_replaced", "read_rebound", "write_rebound"])
+def test_managed_pipe_receiver_requires_both_original_open_endpoints(tmp_path, monkeypatch, case):
+    import os
+    review, bridge, parent, attempt = _receiver_bridge(monkeypatch, tmp_path, transport="pipe")
+    channel = bridge._channel
+    closed_endpoint = None
+    try:
+        if case == "bridge_close":
+            bridge.close()
+        elif case == "channel_close":
+            channel.close()
+        elif case.endswith("_close"):
+            closed_endpoint = case.split("_")[0] + "_fd"
+            os.close(getattr(channel, closed_endpoint))
+        elif case.endswith("_replaced"):
+            replacement = os.open(attempt / "replacement", os.O_CREAT | os.O_RDWR, 0o600)
+            try:
+                os.dup2(replacement, getattr(channel, case.split("_")[0] + "_fd"))
+            finally:
+                os.close(replacement)
+        elif case.endswith("_rebound"):
+            from astrid.core.execution._child_pipe import pipe_pair
+            other_parent, other_channel = pipe_pair()
+            endpoint = case.split("_")[0] + "_fd"
+            try:
+                os.dup2(getattr(other_channel, endpoint), getattr(channel, endpoint))
+            finally:
+                other_channel.close()
+                other_parent.close()
+        if case == "live":
+            assert review._managed_receiver_path(attempt / "outputs/decisions.json") == attempt / review._RECEIVER_SESSION_NAME
+        else:
+            with pytest.raises(review.HumanReviewInputError, match="live inherited"):
+                review._managed_receiver_path(attempt / "outputs/decisions.json")
+        assert not (attempt / review._RECEIVER_SESSION_NAME).exists()
+    finally:
+        if closed_endpoint is not None:
+            setattr(channel, closed_endpoint, -1)
+        bridge.close()
+        parent.close()
+
+
+
+def test_managed_pipe_receiver_serializes_endpoint_check_with_close(tmp_path, monkeypatch):
+    import threading
+    review, bridge, parent, attempt = _receiver_bridge(monkeypatch, tmp_path, transport="pipe")
+    entered, finished = threading.Event(), threading.Event()
+    outcomes = []
+
+    def observe():
+        entered.set()
+        try:
+            review._managed_receiver_path(attempt / "outputs/decisions.json")
+            outcomes.append("open")
+        except review.HumanReviewInputError:
+            outcomes.append("closed")
+        finally:
+            finished.set()
+
+    worker = threading.Thread(target=observe)
+    try:
+        with bridge._channel._io_lock:
+            worker.start()
+            assert entered.wait(1)
+            assert not finished.wait(.05)
+            bridge._channel.close()
+        worker.join(timeout=1)
+        assert not worker.is_alive() and outcomes == ["closed"]
+    finally:
+        worker.join(timeout=1)
+        bridge.close()
+        parent.close()
+
+
+def test_managed_pipe_receiver_cannot_be_adopted_by_fork(tmp_path, monkeypatch):
+    import os
+    review, bridge, parent, attempt = _receiver_bridge(monkeypatch, tmp_path, transport="pipe")
+    try:
+        child = os.fork()
+        if child == 0:
+            result = 2
+            try:
+                review._managed_receiver_path(attempt / "outputs/decisions.json")
+                result = 1
+            except review.HumanReviewInputError:
+                result = 0
+            finally:
+                os._exit(result)
+        _, status = os.waitpid(child, 0)
+        assert os.waitstatus_to_exitcode(status) == 0
+        # Refusal in the child leaves the original parent's channel and path usable.
+        assert review._managed_receiver_path(attempt / "outputs/decisions.json") == attempt / review._RECEIVER_SESSION_NAME
+    finally:
+        bridge.close()
+        parent.close()
 
 
 def test_unmanaged_receiver_never_uses_caller_progress_path(tmp_path, monkeypatch):
