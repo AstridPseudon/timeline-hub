@@ -438,6 +438,69 @@ def layer():
         role='picture', fullFrame=True, coverage='covered', findings=[], dip=False)
 
 
+def absent_layer():
+    item = layer()
+    unknown = dict(status='unknown', reason='Absent hold has no media geometry')
+    item.update(visible=False, opacity=0, fullFrame=False, coverage='unknown',
+                bounds=copy.deepcopy(unknown), targetBounds=copy.deepcopy(unknown))
+    return item
+
+
+@pytest.mark.parametrize('change', [None, 'visible', 'opacity', 'null-opacity', 'bool-opacity',
+                                  'full-frame', 'dip', 'findings', 'coverage', 'reason',
+                                  'extra-bounds', 'unknown-frame'])
+def test_only_zero_contributing_absent_layers_keep_unknown_geometry(change):
+    value = answers([0])
+    item = absent_layer()
+    value[0]['layers'] = [item]
+    if change == 'visible':
+        item['visible'] = True
+    elif change == 'opacity':
+        item['opacity'] = .01
+    elif change == 'null-opacity':
+        item['opacity'] = None
+    elif change == 'bool-opacity':
+        item['opacity'] = False
+    elif change == 'full-frame':
+        item['fullFrame'] = True
+    elif change == 'dip':
+        item['dip'] = True
+    elif change == 'findings':
+        item['findings'] = [{'code': 'unknown-component-internals'}]
+    elif change == 'coverage':
+        item['coverage'] = 'partial'
+    elif change == 'reason':
+        item['bounds']['reason'] = None
+    elif change == 'extra-bounds':
+        item['bounds']['callback'] = 'untrusted'
+    elif change == 'unknown-frame':
+        value[0]['coverage'] = 'UNKNOWN'
+    if change is None:
+        assert wire.validate_evaluation(value, [0]) == value
+        assert item['bounds']['status'] == 'unknown' and item['visible'] is False
+    else:
+        with pytest.raises(FrameOwnerError):
+            wire.validate_evaluation(value, [0])
+
+
+def test_absent_hold_roundtrip_preserves_unknown_bounds_without_claiming_pixels(private_host, monkeypatch):
+    w = private_host
+    original = w.manager._exchange
+    expected = answers([0, 1])
+    for value in expected:
+        item = absent_layer()
+        item.update(ownFrame=value['frame'], drawLocalFrame=value['frame'])
+        value['layers'] = [item]
+    def exchange(req, **kwargs):
+        response = original(req, **kwargs)
+        if req['type'] == 'evaluate':
+            response['evaluation'] = copy.deepcopy(expected)
+        return response
+    monkeypatch.setattr(w.manager, '_exchange', exchange)
+    assert w.relay.exchange(request(), guard=lambda: None, cancelled=threading.Event()) == expected
+    assert len(w.processes) == 1 and not w.manager._leases
+
+
 @pytest.mark.parametrize('change', [None, 'unknown', 'bounds', 'opacity', 'z', 'extra', 'visible', 'width'])
 def test_strict_renderer_layer_shape(change):
     value = answers([0])

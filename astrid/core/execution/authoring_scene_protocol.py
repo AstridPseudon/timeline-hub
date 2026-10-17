@@ -281,6 +281,16 @@ def validate_evaluation(value, batch):
                 or layer.get("findings") != []
             ):
                 raise FrameOwnerError("evaluation_incomplete")
+            # The canonical evaluator retains absent layers for provenance.
+            # Their unknown geometry cannot contribute pixels or establish
+            # coverage. Preserve that shape without admitting active unknowns.
+            inactive = (
+                layer['visible'] is False
+                and type(layer.get('opacity')) in (int, float)
+                and layer['opacity'] == 0
+                and layer.get('fullFrame') is False
+                and layer.get('dip') is False
+            )
             if (
                 any(type(layer[k]) is not str or not layer[k] for k in ("track", "role"))
                 or type(layer["clipIndex"]) is not int
@@ -292,20 +302,32 @@ def validate_evaluation(value, batch):
                 )
                 or not 0 <= layer["transitionOpacity"] <= 1
                 or any(type(layer[k]) is not bool for k in ("fullFrame", "dip"))
-                or layer["coverage"] not in {"covered", "partial"}
+                or (layer["coverage"] not in {"covered", "partial"}
+                    and not (inactive and layer["coverage"] == "unknown"))
             ):
                 raise FrameOwnerError("evaluation_invalid")
             bounds = layer.get("bounds")
-            if type(bounds) is not dict or bounds.get("status") != "known":
+            if type(bounds) is not dict:
                 raise FrameOwnerError("evaluation_incomplete")
-            rect = bounds.get("rect")
-            closed(rect, {"x", "y", "width", "height"})
             if (
-                any(type(v) not in (int, float) or not math.isfinite(v) for v in rect.values())
-                or rect["width"] < 0
-                or rect["height"] < 0
+                bounds.get('status') == 'unknown'
+                and inactive
+                and layer['coverage'] == 'unknown'
             ):
-                raise FrameOwnerError("evaluation_invalid")
+                closed(bounds, {'status', 'reason'})
+                if type(bounds['reason']) is not str or not bounds['reason']:
+                    raise FrameOwnerError('evaluation_invalid')
+            else:
+                if bounds.get("status") != "known":
+                    raise FrameOwnerError("evaluation_incomplete")
+                rect = bounds.get("rect")
+                closed(rect, {"x", "y", "width", "height"})
+                if (
+                    any(type(v) not in (int, float) or not math.isfinite(v) for v in rect.values())
+                    or rect["width"] < 0
+                    or rect["height"] < 0
+                ):
+                    raise FrameOwnerError("evaluation_invalid")
             opacity = layer.get("opacity")
             if opacity is not None and (
                 type(opacity) not in (int, float)
