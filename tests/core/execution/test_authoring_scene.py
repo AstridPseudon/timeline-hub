@@ -238,6 +238,8 @@ def test_only_verified_cas_dependencies_are_staged_in_host_scratch(private_host,
     value['scene_digest'] = wire.digest(value['scene'])
     w.relay.exchange(value, guard=lambda: None, cancelled=threading.Event())
     staged = w.exchanges[0]['scene']['assets']['assets']['x']['local_path']
+    assert w.exchanges[0]['scene']['assets']['assets']['x']['file'] == staged
+    assert w.exchanges[0]['scene']['assets']['assets']['x']['type'] == 'image'
     assert Path(staged).is_relative_to(w.config.socket_path.parent)
     assert not Path(staged).exists()  # request scratch released
     value['dependencies'][oid]['bytes'] = base64.b64encode(b'changed').decode()

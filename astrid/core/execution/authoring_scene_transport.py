@@ -290,6 +290,10 @@ class AuthoringSceneListener:
                     entry[k] for k in ("media_id", "object_id", "content_sha256") if k in entry
                 )
                 entry["local_path"] = str(scratch / oid[7:])
+                # Only verified bytes staged by this Host supply the renderer's
+                # display location/type. No caller file or URL crossed the wire.
+                entry["file"] = entry["local_path"]
+                entry["type"] = request["dependencies"][oid]["media_type"].split("/", 1)[0]
             session = self.host._authoring_scene_session(self.environment)
             generation = session.frame_owner.generation
             if generation != self.config.binding["owner_generation"]:
