@@ -31,6 +31,7 @@ from .paths import DATA_ROOT_ENV, RuntimePaths
 from .runtime_boundary import LocalRuntimeBoundary
 from .workspace import configure_workspace, inspect_workspace
 from runtime_protocol.upgrade import DEFAULT_UPGRADE_TIMEOUT_SECONDS
+from runtime_protocol.errors import RuntimeErrorBase
 
 
 class UnconfiguredBoundary:
@@ -56,6 +57,15 @@ def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(prog="banodoco-local", description="Neutral Banodoco local workspace bootstrap")
     root.add_argument("--version", action="version", version=__version__)
     sub = root.add_subparsers(dest="command")
+    provision = sub.add_parser("provision-host-profile", help="provision an installed CPU Host profile without starting Runtime or Host")
+    _read_args(provision)
+    provision.add_argument("--workspace-uuid", required=True)
+    provision.add_argument("--realm-root", type=Path, required=True)
+    provision.add_argument("--max-concurrency", type=int, required=True)
+    matrix = provision.add_mutually_exclusive_group(required=True)
+    matrix.add_argument("--capability-matrix", type=Path)
+    matrix.add_argument("--no-capability-matrix", action="store_true")
+    provision.add_argument("--additional-pack-root", type=Path, action="append", default=[])
     up = sub.add_parser("up", help="start or reconnect the selected runtime")
     _profile_args(up)
     connect_cmd = sub.add_parser("connect", help="connect to the selected live runtime without starting one")
@@ -282,6 +292,22 @@ def _load_state(raw: str) -> Mapping[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     paths = _paths(args)
+    if args.command == "provision-host-profile":
+        try:
+            source = SourceProfile.provision_host_only(
+                worker_profile=paths.runtime_support / "host-profiles" / "astrid.json",
+                source_manifest=paths.source_profiles_dir / "astrid.json",
+                workspace_uuid=args.workspace_uuid, realm_root=args.realm_root,
+                support_root=paths.runtime_support, max_concurrency=args.max_concurrency,
+                capability_matrix=args.capability_matrix,
+                additional_pack_roots=tuple(args.additional_pack_root),
+            )
+            _emit({"ok": True, "source_profile": source.as_dict(),
+                   "source_manifest": str(paths.source_profiles_dir / "astrid.json")}, json_mode=args.json)
+            return 0
+        except (BootstrapError, OSError, ValueError, RuntimeError, RuntimeErrorBase, ImportError) as exc:
+            _emit({"ok": False, "error": str(exc)}, json_mode=True)
+            return 1
     if args.command == "workspace":
         try:
             boundary = LocalRuntimeBoundary()

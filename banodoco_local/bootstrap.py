@@ -132,6 +132,12 @@ class SourceProfile:
     lock_digest: str = ""
 
     @classmethod
+    def provision_host_only(cls, **selections: Any) -> "SourceProfile":
+        """Provision an installed CPU Host selection without launching it."""
+        from .host_only_profile import provision_host_only_profile
+        return provision_host_only_profile(**selections)
+
+    @classmethod
     def from_mapping(cls, value: Mapping[str, Any], *, expected_profile: str = "astrid") -> "SourceProfile":
         if not isinstance(value, Mapping):
             raise BootstrapError("Source profile manifest must contain an object.")
