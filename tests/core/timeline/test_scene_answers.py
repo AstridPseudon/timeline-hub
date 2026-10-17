@@ -88,6 +88,7 @@ def test_labels_and_unknown_coverage_are_exact_shared_answers(owner):
     layers = labels_for(CONFIG, 3, 10, CANVAS)
     assert layers[0].address == 'c01.picture'
     assert layers[0].opacity is None and layers[0].bounds is None
+    assert layers[0].opaque_support == 'unknown'
     assert addresses_at(CONFIG, 3, 10, CANVAS) == ['c01.picture']
     spans = scene.coverage(CONFIG, 10, CANVAS, {}, start_frame=0, end_frame=241)
     assert len(spans) == 1 and spans[0].cls == 'UNKNOWN'
@@ -95,6 +96,28 @@ def test_labels_and_unknown_coverage_are_exact_shared_answers(owner):
     assert spans[0].end_frame == 241
     calls = owner[1]
     assert [len(props['frames']) for _, props in calls][-3:] == [120, 120, 1]
+
+
+def test_known_full_frame_bounds_do_not_become_opaque_support(owner, monkeypatch):
+    client = owner[0]
+    original = client._client.request
+
+    def nonopaque_answer(identity, request, parser):
+        response = original(identity, request, parser)
+        for value in response['evaluation']:
+            value.update(coverage='GAP', content=None, findings=[])
+            value['layers'][0].update(
+                visible=True, opacity=1, fullFrame=True, opaqueSupport='none', findings=[],
+                bounds={'status': 'known', 'rect': {'x': 0, 'y': 0, 'width': 200, 'height': 100}},
+            )
+        return response
+
+    monkeypatch.setattr(client._client, 'request', nonopaque_answer)
+    value = scene.visible_at(CONFIG, 0, 10, CANVAS)[0]
+    assert value.bounds == (0, 0, 200, 100) and value.full_frame is True
+    assert value.opacity == 1 and value.opaque_support == 'none'
+    spans = scene.coverage(CONFIG, 10, CANVAS, {}, start_frame=0, end_frame=1)
+    assert len(spans) == 1 and spans[0].cls == 'GAP' and spans[0].content is None
 
 
 def test_owner_unavailable_is_explicit_unknown_and_pure_roles_still_work(monkeypatch):

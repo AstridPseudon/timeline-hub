@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import threading
+from typing import Literal
 
 from .roles import element_coverage, role_of
 from .astrid_ns import read_app
@@ -28,6 +29,8 @@ class Visible:
     bounds_source: str
     full_frame: bool
     findings: tuple[str, ...] = ()
+    # full_frame describes the bounds, not an opaque glyph/pixel rectangle.
+    opaque_support: Literal['rect', 'none', 'unknown'] = 'unknown'
 
 
 @dataclass(frozen=True)
@@ -121,7 +124,8 @@ def visible_at(config, frame, fps, canvas, elements=None):
         bounds = (rect['x'], rect['y'], rect['x'] + rect['width'], rect['y'] + rect['height']) if rect else None
         result.append(Visible(layer['clipId'], address, layer['track'], layer['z'], layer['role'], layer['opacity'],
             bounds, 'full' if layer['fullFrame'] else 'declared' if bounds is not None else 'unknown', layer['fullFrame'],
-            _findings({'findings': layer.get('findings', [])})))
+            _findings({'findings': layer.get('findings', [])}),
+            opaque_support=layer.get('opaqueSupport', 'unknown')))
     return sorted(result, key=lambda layer: layer.z)
 
 

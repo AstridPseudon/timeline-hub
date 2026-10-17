@@ -269,6 +269,7 @@ def validate_evaluation(value, batch):
                     "bounds",
                     "role",
                     "fullFrame",
+                    "opaqueSupport",
                     "coverage",
                     "findings",
                     "dip",
@@ -279,6 +280,8 @@ def validate_evaluation(value, batch):
                 or type(layer.get("clipId")) is not str
                 or type(layer.get("visible")) is not bool
                 or layer.get("findings") != []
+                or type(layer.get("opaqueSupport")) is not str
+                or layer["opaqueSupport"] not in {"rect", "none"}
             ):
                 raise FrameOwnerError("evaluation_incomplete")
             # The canonical evaluator retains absent layers for provenance.
@@ -290,6 +293,7 @@ def validate_evaluation(value, batch):
                 and layer['opacity'] == 0
                 and layer.get('fullFrame') is False
                 and layer.get('dip') is False
+                and layer['opaqueSupport'] == 'none'
             )
             if (
                 any(type(layer[k]) is not str or not layer[k] for k in ("track", "role"))
@@ -306,6 +310,8 @@ def validate_evaluation(value, batch):
                     and not (inactive and layer["coverage"] == "unknown"))
             ):
                 raise FrameOwnerError("evaluation_invalid")
+            if layer['coverage'] == 'covered' and layer['opaqueSupport'] != 'rect':
+                raise FrameOwnerError('evaluation_invalid')
             bounds = layer.get("bounds")
             if type(bounds) is not dict:
                 raise FrameOwnerError("evaluation_incomplete")

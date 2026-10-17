@@ -435,20 +435,20 @@ def layer():
     bounds = dict(status='known', rect=dict(x=0, y=0, width=320, height=180))
     return dict(clipId='clip', track='video', clipIndex=0, z=0, drawLocalFrame=0, ownFrame=0,
         transitionOpacity=1, opacity=1, visible=True, targetBounds=copy.deepcopy(bounds), bounds=bounds,
-        role='picture', fullFrame=True, coverage='covered', findings=[], dip=False)
+        role='picture', fullFrame=True, opaqueSupport='rect', coverage='covered', findings=[], dip=False)
 
 
 def absent_layer():
     item = layer()
     unknown = dict(status='unknown', reason='Absent hold has no media geometry')
-    item.update(visible=False, opacity=0, fullFrame=False, coverage='unknown',
+    item.update(visible=False, opacity=0, fullFrame=False, opaqueSupport='none', coverage='unknown',
                 bounds=copy.deepcopy(unknown), targetBounds=copy.deepcopy(unknown))
     return item
 
 
 @pytest.mark.parametrize('change', [None, 'visible', 'opacity', 'null-opacity', 'bool-opacity',
                                   'full-frame', 'dip', 'findings', 'coverage', 'reason',
-                                  'extra-bounds', 'unknown-frame'])
+                                  'extra-bounds', 'unknown-frame', 'opaque-rect', 'opaque-unknown'])
 def test_only_zero_contributing_absent_layers_keep_unknown_geometry(change):
     value = answers([0])
     item = absent_layer()
@@ -475,6 +475,10 @@ def test_only_zero_contributing_absent_layers_keep_unknown_geometry(change):
         item['bounds']['callback'] = 'untrusted'
     elif change == 'unknown-frame':
         value[0]['coverage'] = 'UNKNOWN'
+    elif change == 'opaque-rect':
+        item['opaqueSupport'] = 'rect'
+    elif change == 'opaque-unknown':
+        item['opaqueSupport'] = 'unknown'
     if change is None:
         assert wire.validate_evaluation(value, [0]) == value
         assert item['bounds']['status'] == 'unknown' and item['visible'] is False
@@ -499,6 +503,48 @@ def test_absent_hold_roundtrip_preserves_unknown_bounds_without_claiming_pixels(
     monkeypatch.setattr(w.manager, '_exchange', exchange)
     assert w.relay.exchange(request(), guard=lambda: None, cancelled=threading.Event()) == expected
     assert len(w.processes) == 1 and not w.manager._leases
+
+
+@pytest.mark.parametrize('support', ['none', 'unknown', True, None, {}, []])
+def test_nonopaque_bounds_do_not_claim_opaque_picture_coverage(support):
+    value = answers([0])
+    item = layer()
+    item['opaqueSupport'] = support
+    value[0]['layers'] = [item]
+    with pytest.raises(FrameOwnerError):
+        wire.validate_evaluation(value, [0])
+    if support == 'none':
+        item['coverage'] = 'partial'
+        assert wire.validate_evaluation(value, [0]) == value
+
+
+@pytest.mark.parametrize('field', ['mediaEvidence', 'rendererIdentity', 'fontDigests'])
+def test_caller_cannot_select_host_scene_capability_facts(field):
+    value = request()
+    value['scene'][field] = {'claimed': 'trusted'}
+    value['scene_digest'] = wire.digest(value['scene'])
+    with pytest.raises(FrameOwnerError):
+        wire.validate_request(value, context())
+
+
+def test_caller_registry_cannot_mint_media_evidence():
+    value = request()
+    value['scene']['assets']['assets']['media'] = {
+        'media_id': 'sha256:' + 'a' * 64,
+        'mediaEvidence': {'version': 1, 'opaqueSupport': 'rect'},
+    }
+    value['scene_digest'] = wire.digest(value['scene'])
+    with pytest.raises(FrameOwnerError, match='asset_location_forbidden'):
+        wire.validate_request(value, context())
+
+
+def test_missing_opaque_support_does_not_receive_a_legacy_opaque_default():
+    value = answers([0])
+    item = layer()
+    del item['opaqueSupport']
+    value[0]['layers'] = [item]
+    with pytest.raises(FrameOwnerError):
+        wire.validate_evaluation(value, [0])
 
 
 @pytest.mark.parametrize('change', [None, 'unknown', 'bounds', 'opacity', 'z', 'extra', 'visible', 'width'])
