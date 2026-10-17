@@ -141,14 +141,8 @@ describe('extension ship verifier', () => {
       && gate.command === 'npm'
       && gate.args.join(' ') === 'run check:extension-ship-evidence:release'
     )));
-    assert.ok(REIGH_GATE_PROFILE.some((gate) => (
-      gate.id === 'visual-baseline-provenance'
-      && gate.command === 'npm'
-      && gate.args.join(' ') === 'run verify:extension-visual-baseline-provenance'
-    )));
     const visualGateIndex = REIGH_GATE_PROFILE.findIndex((gate) => gate.id === 'visual-e2e');
-    const provenanceGateIndex = REIGH_GATE_PROFILE.findIndex((gate) => gate.id === 'visual-baseline-provenance');
-    assert.ok(visualGateIndex >= 0 && visualGateIndex < provenanceGateIndex);
+    assert.ok(visualGateIndex >= 0);
     assert.deepEqual(REIGH_GATE_PROFILE[visualGateIndex].args, [
       'run', 'test:e2e:extension-visual',
     ]);

@@ -205,7 +205,7 @@ describe('Reigh release candidate provenance', () => {
       }), /strict evidence-only descendant/);
       assert.equal(
         isAllowedReleaseEvidencePath(
-          `docs/extensions/evidence/releases/${RELEASE}-lookalike/receipt.txt`,
+          `docs/extensions/ship-evidence/releases/${RELEASE}-lookalike/receipt.txt`,
           RELEASE,
         ),
         false,

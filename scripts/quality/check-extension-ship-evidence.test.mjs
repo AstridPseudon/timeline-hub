@@ -35,8 +35,8 @@ const release = checkedInManifest.release;
 const fixtureRepo = mkdtempSync(resolve(tmpdir(), 'extension-ship-evidence-'));
 const signerDirectory = resolve(fixtureRepo, 'signers');
 mkdirSync(signerDirectory, { recursive: true });
-const evidencePath = `docs/extensions/evidence/releases/${release}/receipt.txt`;
-const largeCommittedEvidencePath = `docs/extensions/evidence/releases/${release}/large.bin`;
+const evidencePath = `docs/extensions/ship-evidence/releases/${release}/receipt.txt`;
+const largeCommittedEvidencePath = `docs/extensions/ship-evidence/releases/${release}/large.bin`;
 const reighCommit = 'a'.repeat(40);
 const astridCommit = 'b'.repeat(40);
 const controllerCommit = 'c'.repeat(40);
@@ -98,7 +98,7 @@ function commonDocument(evidenceType, record) {
 }
 
 function writeTypedEvidence(name, document) {
-  const path = `docs/extensions/evidence/releases/${release}/typed/${name}.json`;
+  const path = `docs/extensions/ship-evidence/releases/${release}/typed/${name}.json`;
   mkdirSync(resolve(fixtureRepo, path, '..'), { recursive: true });
   writeFileSync(resolve(fixtureRepo, path), `${JSON.stringify(document, null, 2)}\n`);
   const artifact = {

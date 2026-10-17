@@ -42,7 +42,7 @@ ordinary or release-gate run from mutating tracked evidence. To retain a run
 under another untracked root, set `PLAYWRIGHT_EVIDENCE_ROOT=/tmp/...`. Refresh
 the committed evidence ledger only as an explicit action with
 `PLAYWRIGHT_REFRESH_TRACKED_EVIDENCE=1`; that opt-in writes the project-named
-captures under `docs/extensions/evidence/cross-browser/`. Failure screenshots
+captures under `docs/extensions/ship-evidence/cross-browser/`. Failure screenshots
 and traces remain in the Playwright artifact directory.
 
 ## Browser contract

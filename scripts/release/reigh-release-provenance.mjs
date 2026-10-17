@@ -118,7 +118,7 @@ function assertSafeTag(releaseTag) {
 
 export function releaseEvidenceDirectory(release) {
   assertSafeRelease(release);
-  return `docs/extensions/evidence/releases/${release}/`;
+  return `docs/extensions/ship-evidence/releases/${release}/`;
 }
 
 export function isAllowedReleaseEvidencePath(path, release) {
