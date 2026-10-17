@@ -188,10 +188,18 @@ export function selectReleaseEnabledExtensions(
   return Object.freeze(extensions.filter((extension) => {
     const id = extension.manifest.id as string;
     if (!REVIEWED_PRODUCTION_EXTENSION_ID_SET.has(id)) return false;
-    if (id === TRANSCRIPT_RELEASE_EXTENSION_ID) return flags.transcriptCaptionFoundryEnabled;
-    if (id === RUNAWAY_RELEASE_EXTENSION_ID) return flags.runawayTypedTimelineEnabled;
-    return true;
+    return isExtensionReleaseEnabled(id, flags);
   }));
+}
+
+/** Resolve a reviewed extension's child rollout gate by extension ID. */
+export function isExtensionReleaseEnabled(extensionId: string, flags: ExtensionReleaseFlags): boolean {
+  if (!flags.extensionHostEnabled) return false;
+  const rolloutByExtensionId: Readonly<Record<string, boolean>> = {
+    [TRANSCRIPT_RELEASE_EXTENSION_ID]: flags.transcriptCaptionFoundryEnabled,
+    [RUNAWAY_RELEASE_EXTENSION_ID]: flags.runawayTypedTimelineEnabled,
+  };
+  return rolloutByExtensionId[extensionId] ?? true;
 }
 
 export const EXTENSION_OPERATIONAL_EVENT_NAMES = Object.freeze([

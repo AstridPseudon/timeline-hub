@@ -88,6 +88,7 @@ export interface RuntimeDataProviderOptions {
  */
 export class RuntimeDataProvider implements DataProvider {
   readonly projectTranscripts: ProjectTranscriptRepository;
+  readonly documents: NonNullable<DataProvider['documents']>;
   readonly persistenceEnabled = true;
   readonly supportsEditorSync = false;
   readonly supportsDirectAssetUpload = true;
@@ -357,9 +358,38 @@ export class RuntimeDataProvider implements DataProvider {
   constructor(options: RuntimeDataProviderOptions) {
     this.projectId = options.projectId;
     this.client = new ReighRuntimeClient({ baseUrl: options.baseUrl, token: options.token, transport: options.transport });
+    const documentListeners = new Set<() => void>();
+    const notifyDocumentsChanged = () => {
+      for (const listener of [...documentListeners]) listener();
+    };
+    this.documents = {
+      list: async (kind, page) => this.client.listDocuments(
+        this.projectId, page?.cursor, page?.limit ?? 50, kind,
+      ),
+      get: (id) => this.client.getDocument(this.projectId, id),
+      create: async (kind, content, documentId) => {
+        const id = documentId ?? `document:${generateUUID()}`;
+        const result = await this.client.createDocument(
+          this.projectId, id, kind, content, `document-create:${id}`,
+        );
+        notifyDocumentsChanged();
+        return result;
+      },
+      update: async (id, content, expectedVersion) => {
+        const result = await this.client.updateDocument(
+          this.projectId, id, expectedVersion, content, generateUUID(),
+        );
+        notifyDocumentsChanged();
+        return result;
+      },
+      onChange: (listener) => {
+        documentListeners.add(listener);
+        return () => documentListeners.delete(listener);
+      },
+    };
     this.projectTranscripts = {
       projectId: this.projectId,
-      listForMedia: async (mediaId) => {
+      listAll: async () => {
         const documents = [];
         let cursor: string | undefined;
         const cursors = new Set<string>();
@@ -372,7 +402,7 @@ export class RuntimeDataProvider implements DataProvider {
           );
           for (const d of page.items) {
             const parsed = await parseProjectTranscriptDocument(d, this.projectId);
-            if (parsed.content.media_id === mediaId) documents.push(parsed);
+            documents.push(parsed);
           }
           cursor = page.next_cursor ?? undefined;
           if (cursor && cursors.has(cursor))
@@ -381,6 +411,8 @@ export class RuntimeDataProvider implements DataProvider {
         } while (cursor);
         return documents;
       },
+      listForMedia: async (mediaId) =>
+        (await this.projectTranscripts.listAll()).filter((doc) => doc.content.media_id === mediaId),
       get: async (id) =>
         parseProjectTranscriptDocument(
           await this.client.getDocument(this.projectId, id),

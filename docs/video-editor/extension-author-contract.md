@@ -107,6 +107,27 @@ This contract is backed by the [supported/deferred matrix](./extension-platform-
 | Creative context (timeline reader/patch, source map, proposal runtime) | `ctx.creative` | S-030–S-040 |
 | Timeline view store (playback, selection, viewport, geometry — renderer-independent) | `ctx.creative.timelineView` | S-171 |
 
+Project documents use `ctx.creative.documents.list(kind, { cursor?, limit? })`,
+`get(id)`, `create(kind, content, documentId?)`, and
+`update(id, content, expectedVersion)`. `onChange(listener)` returns an
+unsubscribe function and fires after writes by this editor client. There is no
+remote document event feed; extensions can poll for other clients' writes.
+`ctx.creative.assets.get(assetKey)` reads live registry identity (`media_id`,
+`content_sha256`), file label and kind. `loadProfile(assetKey)` reads legacy
+profile data. `ctx.creative.reader.subscribe(listener)` fires on timeline data
+replacement, including edit, undo and reload. `ctx.creative.pendingWork.report({
+writing, unsaved })` blocks navigation during writes and requests confirmation
+for drafts or conflicts.
+
+For a declared data kind, `ctx.dataKinds.readPersisted(kindId)` returns the
+kind's saved source items. `replacePersisted(kindId, items)` commits a
+replacement through normal timeline save and undo. `replaceTransient(kindId,
+items)` replaces memory-only source projections without save or history. Every
+item must use the kind's declared `schemaRef`. The SDK helpers
+`sourceToTimelineTime(clip, sourceTime)` and
+`timelineToSourceTime(clip, timelineTime)` provide only trim and speed
+arithmetic; each kind chooses its own clipping and interpretation rules.
+
 ### 2.7 Render-backed contributions (timeline overlays)
 
 `timelineOverlay` is the platform's render-backed contribution: the manifest declares a **required non-empty `render` id** (no `when` clause is accepted), and the extension binds the renderer imperatively through `ctx.ui.registerRenderer(renderId, renderer)` during `activate()`.
@@ -341,6 +362,32 @@ Three data providers are supported (S-140–S-143):
 | Astrid Bridge | Partial M3 support, local filesystem + bridge API | S-142 |
 
 Extension authors must not assume a specific provider. Use the public `TimelineReader.snapshot()` and `TimelineOps.apply()` interfaces — they abstract over provider differences.
+
+Editor extensions can access active-project Runtime documents through
+`ctx.creative.documents`. `list(kind, { cursor, limit })` returns one page,
+`get(id)` reads one document, `create(kind, content, documentId?)` creates a document, and
+`update(id, content, expectedVersion)` performs a version-checked update. The
+`onChange(listener)` subscription fires after successful writes made through
+that client; Runtime does not publish document-change events from other clients,
+so consumers that need cross-client freshness must poll. Documents are filtered
+by kind only; filter document content in the extension when needed.
+
+`ctx.creative.assets` is a live read surface over the current timeline registry.
+Its `get(key)` result includes registry identity fields (`media_id`,
+`content_sha256`, `file`, and `kind`) alongside asset metadata. `keys()`, `has()`,
+and `search()` read the current registry, and `loadProfile(key)` reads the
+provider's legacy asset profile when supported.
+
+`ctx.creative.reader.subscribe(listener)` can observe replacement of the timeline
+data document, including edits, undo, reload, and adopted updates. It returns an
+unsubscribe function. A save acknowledgement that only advances the version does
+not count as a data replacement. The method is optional on static reader mocks.
+
+Extensions with drafts or writes that affect project switching can report
+`ctx.creative.pendingWork.report({ writing, unsaved })`. `writing` blocks
+navigation while work is being persisted; `unsaved` asks for confirmation before
+navigation. Report the current state when it changes, including clearing both
+flags when the work is settled.
 
 ---
 

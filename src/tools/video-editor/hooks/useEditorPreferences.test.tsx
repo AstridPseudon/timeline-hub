@@ -5,12 +5,22 @@ import { defaultPreferences, useEditorPreferences } from './useEditorPreferences
 
 describe('useEditorPreferences right panel state', () => {
   beforeEach(() => {
+    const values = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value); },
+      removeItem: (key: string) => { values.delete(key); },
+      clear: () => values.clear(),
+    };
+    vi.stubGlobal('localStorage', storage);
+    Object.defineProperty(window, 'localStorage', { configurable: true, value: storage });
     localStorage.clear();
     vi.useFakeTimers();
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('migrates older timeline records and persists panel, slot, and lane choices', () => {
@@ -75,6 +85,16 @@ describe('useEditorPreferences right panel state', () => {
     act(() => result.current.setShowTranscriptLane(false));
     expect(result.current.preferences.showDataLanes).toBe(false);
     expect(result.current.preferences.showTranscriptLane).toBe(false);
+  });
+
+  it('migrates legacy transcript visibility into per-kind visibility and supports new kinds', () => {
+    localStorage.setItem('video-editor:preferences:per-kind', JSON.stringify({ ...defaultPreferences,
+      showTranscriptLane: false, showDataLanes: true }));
+    const { result } = renderHook(() => useEditorPreferences('per-kind'));
+    expect(result.current.preferences.showDataLanesByKind?.['reigh.transcript']).toBe(false);
+    act(() => result.current.setDataKindLaneVisible('reigh.marker', false));
+    expect(result.current.preferences.showDataLanesByKind?.['reigh.marker']).toBe(false);
+    expect(result.current.preferences.showDataLanesByKind?.['reigh.transcript']).toBe(false);
   });
 
 });

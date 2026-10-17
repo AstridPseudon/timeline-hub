@@ -1,7 +1,7 @@
 import { useNativeEditorRecovery } from '../hooks/useNativeEditorRecovery.ts';
 import { assertNativeEditorConnection } from "@/integrations/astrid/nativeEditorConnection.ts";
 import { dispatchAppEvent } from "@/shared/lib/typedEvents.ts";
-import type { TranscriptProjectState } from "@/sdk/video/transcript.ts";
+import type { ExtensionPendingWorkState } from "@/sdk/context.ts";
 import {
   useRuntimeEditorDiscovery,
   chooseRuntimeTimeline,
@@ -953,14 +953,14 @@ export default function VideoEditorPage() {
     setMountedSaveStatus("saved");
   }, [providerSelection?.remountKey]);
 
-  const [transcriptNavigation, setTranscriptNavigation] = useState<{
+  const [extensionPendingWork, setExtensionPendingWork] = useState<{
     scope: string;
-    state: TranscriptProjectState;
+    state: ExtensionPendingWorkState;
   } | null>(null);
   const scope = providerSelection?.remountKey ?? "";
-  const onTranscriptNavigationStateChange = useCallback(
-    (state: TranscriptProjectState) =>
-      setTranscriptNavigation((previous) =>
+  const onPendingWorkChange = useCallback(
+    (state: ExtensionPendingWorkState) =>
+      setExtensionPendingWork((previous) =>
         previous?.scope === scope &&
         JSON.stringify(previous.state) === JSON.stringify(state)
           ? previous
@@ -968,20 +968,14 @@ export default function VideoEditorPage() {
       ),
     [scope],
   );
-  const sourceNavigation =
-    transcriptNavigation?.scope === scope ? transcriptNavigation.state : null;
-  const sourceSaving =
-    sourceNavigation?.inFlight ||
-    (sourceNavigation?.sources.some((source) => source.status === "saving") ??
-      false);
-  const sourceDraft =
-    sourceNavigation?.sources.some(
-      (source) => source.hasDraft || source.status === "conflict",
-    ) ?? false;
+  const extensionWork =
+    extensionPendingWork?.scope === scope ? extensionPendingWork.state : null;
+  const extensionWriting = extensionWork?.writing ?? false;
+  const extensionUnsaved = extensionWork?.unsaved ?? false;
   const isSwitchBlockedBySave =
     mountedSaveStatus === "saving" ||
     mountedSaveStatus === "retrying" ||
-    sourceSaving;
+    extensionWriting;
   const confirmEditorRemount = useCallback(() => {
     if (!providerSelection) {
       return true;
@@ -991,12 +985,12 @@ export default function VideoEditorPage() {
     if (
       mountedSaveStatus === "saving" ||
       mountedSaveStatus === "retrying" ||
-      sourceSaving
+      extensionWriting
     ) {
       return false;
     }
     if (
-      sourceDraft &&
+      extensionUnsaved &&
       !window.confirm(
         "You have an unsaved project transcript draft or conflict. Your draft will remain available for this source. Switch editors?",
       )
@@ -1013,7 +1007,7 @@ export default function VideoEditorPage() {
       );
     }
     return true;
-  }, [mountedSaveStatus, providerSelection, sourceSaving, sourceDraft]);
+  }, [mountedSaveStatus, providerSelection, extensionWriting, extensionUnsaved]);
 
   const handleSelectRuntimeProject = useCallback(
     (id: string) => {
@@ -1583,7 +1577,7 @@ export default function VideoEditorPage() {
     discovery.healthQuery.isLoading,
     discovery.bridgeDown,
     isSwitchBlockedBySave,
-    sourceDraft,
+    extensionUnsaved,
     mountedSaveStatus,
   ]);
   function localProjectNameForHeader() {
@@ -1658,9 +1652,7 @@ export default function VideoEditorPage() {
               timelineName={providerSelection.timelineName}
               userId={providerSelection.userId}
               onSaveStatusChange={setMountedSaveStatus}
-              onTranscriptNavigationStateChange={
-                onTranscriptNavigationStateChange
-              }
+              onPendingWorkChange={onPendingWorkChange}
               extensions={resolvedExtensions}
               timelineOverlaysEnabled={timelineOverlaysEnabled}
               extensionHostEnabled={extensionReleaseFlags.extensionHostEnabled}
@@ -1817,9 +1809,7 @@ export default function VideoEditorPage() {
               timelineName={providerSelection.timelineName}
               userId={providerSelection.userId}
               onSaveStatusChange={setMountedSaveStatus}
-              onTranscriptNavigationStateChange={
-                onTranscriptNavigationStateChange
-              }
+              onPendingWorkChange={onPendingWorkChange}
               extensions={resolvedExtensions}
               timelineOverlaysEnabled={timelineOverlaysEnabled}
               extensionHostEnabled={extensionReleaseFlags.extensionHostEnabled}

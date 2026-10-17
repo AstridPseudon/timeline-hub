@@ -412,13 +412,18 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   const mountedEditorData = useTimelineEditorDataSafe();
   const { data: laneData, resolved: lanePlaneResolved } = useDataLanePlane({ base: mountedEditorData?.data ?? null });
   const showDataLanes = mountedEditorData?.preferences?.showDataLanes ?? false;
-  const showTranscriptLane = mountedEditorData?.preferences?.showTranscriptLane ?? true;
+  const legacyTranscriptLaneVisible = mountedEditorData?.preferences?.showTranscriptLane ?? true;
+  const kindVisibility = mountedEditorData?.preferences?.showDataLanesByKind;
+  const showDataLanesByKind = useMemo<Record<string, boolean>>(() => ({
+    'reigh.transcript': legacyTranscriptLaneVisible,
+    ...kindVisibility,
+  }), [legacyTranscriptLaneVisible, kindVisibility]);
   const laneDataForDisplay = useMemo(() => laneData ? {
     ...laneData,
     dataLanes: (laneData.dataLanes ?? [])
-      .filter((lane) => lane.kindId === 'reigh.transcript' ? showTranscriptLane : showDataLanes)
+      .filter((lane) => showDataLanesByKind[lane.kindId] ?? showDataLanes)
       .map((lane) => ({ ...lane, height: resolveTimelineLaneHeight(lane, rowHeight) })),
-  } : null, [laneData, rowHeight, showTranscriptLane, showDataLanes]);
+  } : null, [laneData, rowHeight, showDataLanes, showDataLanesByKind]);
   const { dataRef, selectedClipIdsRef, ops, previewRef } = useTimelineMutableAdapters();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const latestScrollMetricsRef = useRef({ scrollLeft: 0, scrollTop: 0, viewportWidth: 0 });
@@ -588,13 +593,13 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     const selected = mountedEditorData?.selectedDataItems ?? [];
     if (!selected.length) return;
     const hidden = new Set((laneData?.dataLanes ?? []).filter((lane) =>
-      lane.kindId === 'reigh.transcript' ? !showTranscriptLane : !showDataLanes).map((lane) => lane.laneId));
+      !(showDataLanesByKind[lane.kindId] ?? showDataLanes)).map((lane) => lane.laneId));
     const valid = lanePlaneResolved
       ? (laneDataForDisplay?.dataLanes ?? []).flatMap((lane) => lane.items.map((view) => ({ laneId: lane.laneId, itemId: view.item.id })))
       : selected.filter((ref) => !hidden.has(ref.laneId));
     systemPruneTimelineDataItems(valid, runtime?.agentSelectionOwner);
     if (!valid.length && !(mountedEditorData?.selectedClipIds?.size)) ops?.clearSelection?.();
-  }, [lanePlaneResolved, laneDataForDisplay, laneData, mountedEditorData?.selectedDataItems, runtime?.agentSelectionOwner, showTranscriptLane, showDataLanes, mountedEditorData?.selectedClipIds?.size, ops]);
+  }, [lanePlaneResolved, laneDataForDisplay, laneData, mountedEditorData?.selectedDataItems, runtime?.agentSelectionOwner, showDataLanesByKind, showDataLanes, mountedEditorData?.selectedClipIds?.size, ops]);
 
   const scrollContentHeight = rowLayout.totalHeight + rowHeight;
   const maxClipEnd = useMemo(() => rows.reduce((currentMax, row) => row.actions.reduce(

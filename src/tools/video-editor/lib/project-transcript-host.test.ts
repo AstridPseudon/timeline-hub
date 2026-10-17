@@ -6,6 +6,7 @@ import {
 } from "./project-transcript-host.ts";
 import { buildTimelineData } from "./timeline-data.ts";
 import { buildDataFromSnapshot } from "./timeline-save-utils.ts";
+import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
 import {
   normalizeTranscriptSource,
   TRANSCRIPT_SCHEMA_REF,
@@ -46,6 +47,7 @@ function repository() {
   const documents = new Map<string, ProjectTranscriptDocument>();
   const r: ProjectTranscriptRepository = {
     projectId: "p",
+    listAll: vi.fn(async () => [...documents.values()]),
     listForMedia: vi.fn(async (id) =>
       [...documents.values()].filter((d) => d.content.media_id === id),
     ),
@@ -95,6 +97,7 @@ async function editor(
   r?: ProjectTranscriptRepository,
   alias = "alias",
   flush = vi.fn(async () => undefined),
+  withItemChannels = false,
 ) {
   const cfg = {
     ...config,
@@ -117,14 +120,16 @@ async function editor(
   const commitData = vi.fn((next) => {
     dataRef.current = next;
   });
+  const items = withItemChannels ? createDataKindItemsHost({ dataRef, commitData }) : undefined;
   const host = createProjectTranscriptHost({
     repository: r,
     dataRef,
     commitData,
+    items,
     flushPendingSave: flush,
   });
   hosts.push(host);
-  return { host, dataRef, commitData, flush };
+  return { host, dataRef, commitData, flush, items };
 }
 const docId = (receipt: { documentId?: string }) => receipt.documentId!;
 const edit = (text: string) => ({
@@ -138,6 +143,19 @@ afterEach(() => {
   hosts.splice(0).forEach((h) => h.dispose());
 });
 describe("canonical project transcript consistency", () => {
+  it('uses the memory-only item channel for document projections', async () => {
+    const { r } = repository();
+    const { host, dataRef, commitData, items } = await editor(r, 'alias', vi.fn(async () => undefined), true);
+    await host.importTranscript({ document: handoff, associationAssetId: 'alias' });
+    expect(items?.readTransient(TRANSCRIPT_SCHEMA_REF)).toHaveLength(1);
+    expect(dataRef.current.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF] ?? []).toHaveLength(0);
+    expect(commitData).toHaveBeenCalledTimes(1);
+    expect(commitData.mock.calls[0][1]).toMatchObject({ save: true, semantic: true });
+    const result = await host.editText(edit('corrected'));
+    expect(result.ok).toBe(true);
+    expect((items?.readTransient(TRANSCRIPT_SCHEMA_REF)[0].payload as { words: { text: string }[] }).words[0].text).toBe('corrected');
+    expect(commitData).toHaveBeenCalledTimes(1);
+  });
   it("consumes the shared Python/TypeScript identity fixtures including Unicode", async () => {
     const fixture = identityFixtures;
     for (const c of fixture.cases)
@@ -190,6 +208,118 @@ describe("canonical project transcript consistency", () => {
     expect(row.sourceArtifactRef.assetId).toBe("other-local-key");
     expect((row.payload as any).words[0].id).toBe("w-one");
     expect(r.create).toHaveBeenCalledTimes(1);
+  });
+  it('looks up media inside a played shot through the supplied registry', async () => {
+    const { r } = repository();
+    const document = await r.create({
+      schema: 'media.transcript/v1',
+      media_id: media,
+      source_id: 'astrid.narration',
+      segments: [{ id: 'shot-segment', start: 0, end: 1, text: 'shot narration' }],
+    }, 'shot-narration');
+    const { host } = await editor(r);
+
+    expect(await host.listProjectSources('shot-only', {
+      assets: { 'shot-only': { media_id: media, file: 'shot.wav', type: 'audio/wav' } },
+    })).toEqual([{ documentId: document.document_id, sourceId: 'astrid.narration', version: 1 }]);
+    expect(r.listAll).toHaveBeenCalledOnce();
+  });
+
+  it('shares one kind listing across concurrent media choices and coalesces fallback projection', async () => {
+    const { r } = repository();
+    const otherMedia = 'sha256:' + 'b'.repeat(64);
+    const first = await r.create({
+      schema: 'media.transcript/v1', media_id: media, source_id: 'astrid.narration',
+      segments: [{ id: 'first', start: 0, end: 1, text: 'first line' }],
+    }, 'first');
+    const second = await r.create({
+      schema: 'media.transcript/v1', media_id: otherMedia, source_id: 'astrid.narration',
+      segments: [{ id: 'second', start: 0, end: 1, text: 'second line' }],
+    }, 'second');
+    const { host, items } = await editor(r, 'alias', vi.fn(async () => undefined), true);
+    const notify = vi.fn();
+    host.subscribe(notify);
+    const choices = await Promise.all([
+      host.listProjectSources('alias'),
+      host.listProjectSources('shot-only', { assets: {
+        'shot-only': { media_id: otherMedia, file: 'shot.wav', type: 'audio/wav' },
+      } }),
+    ]);
+    expect(choices).toEqual([
+      [{ documentId: first.document_id, sourceId: 'astrid.narration', version: 1 }],
+      [{ documentId: second.document_id, sourceId: 'astrid.narration', version: 1 }],
+    ]);
+    expect(r.listAll).toHaveBeenCalledOnce();
+    expect(notify).toHaveBeenCalledOnce();
+    expect(items?.readTransient(TRANSCRIPT_SCHEMA_REF)).toHaveLength(2);
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledOnce();
+    await host.refreshSources();
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledTimes(2);
+    await host.importTranscript({ document: handoff, associationAssetId: 'alias' });
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledTimes(3);
+    expect((await host.editText(edit('changed'))).ok).toBe(true);
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledTimes(4);
+  });
+
+  it('invalidates the kind snapshot when the document surface reports a write', async () => {
+    const { r } = repository();
+    let changed = () => {};
+    r.onChange = (listener) => { changed = listener; return () => {}; };
+    const { host } = await editor(r);
+    host.start();
+    await host.listProjectSources('alias');
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledOnce();
+    changed();
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledTimes(2);
+  });
+
+  it("projects an unassociated narration transcript as a read-only default", async () => {
+    const { r } = repository();
+    const narration = await r.create(
+      {
+        schema: "media.transcript/v1",
+        media_id: media,
+        source_id: "astrid.narration",
+        segments: [{ id: "narration-segment", start: 1, end: 2, text: "spoken words", words: [{ id: "narration-word", start: 1, end: 2, text: "spoken" }] }],
+      },
+      "narration",
+    );
+    await r.create(
+      {
+        schema: "media.transcript/v1",
+        media_id: media,
+        source_id: "other-source",
+        segments: [{ id: "other-segment", start: 1, end: 2, text: "other words" }],
+      },
+      "other",
+    );
+    const a = await editor(r);
+
+    expect(await a.host.listProjectSources("alias")).toHaveLength(2);
+    expect(a.dataRef.current.transcriptReferences).toBeUndefined();
+    expect(a.dataRef.current.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "narration-segment",
+          sourceArtifactRef: { assetId: "alias" },
+          payload: expect.objectContaining({
+            sourceId: "astrid.narration",
+            documentId: narration.document_id,
+            text: "spoken words",
+            words: [expect.objectContaining({ text: "spoken" })],
+          }),
+        }),
+      ]),
+    );
+    expect(a.dataRef.current.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF]).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "other-segment" })]),
+    );
   });
   it("source corrections converge in two timelines without timeline save/head/history changes", async () => {
     const { r } = repository(),

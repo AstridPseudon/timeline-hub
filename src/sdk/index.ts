@@ -55,7 +55,7 @@ export type { SettingsSnapshot, LifecycleEvent, StateRepository } from './contra
 export { createLifecycleEvent } from './contracts';
 
 // context
-export { type ExtensionI18nService, type ExtensionDiagnosticsService, type CreativeContext, type ExtensionCommandService, type ExtensionContext, createCreativeContext, createCreativeContextStubs, disposeExtensionContextServices, CONTEXT_DISPOSE_SYMBOL, ExtensionNotImplementedError, CREATIVE_MEMBER_MILESTONE } from './context';
+export { type ExtensionI18nService, type ExtensionDiagnosticsService, type CreativeContext, type CreativeProjectDocument, type CreativeDocumentPage, type ProjectDocumentSurface, type CreativeAssetReadSurface, type ExtensionPendingWorkState, type ExtensionPendingWorkService, type ExtensionCommandService, type ExtensionContext, createCreativeContext, createCreativeContextStubs, disposeExtensionContextServices, CONTEXT_DISPOSE_SYMBOL, ExtensionNotImplementedError, CREATIVE_MEMBER_MILESTONE } from './context';
 
 // ui renderer contracts
 export { type ExtensionRenderer, type ExtensionUiService, type PanelRenderProps, type PanelVideoAdapter } from './ui';
@@ -111,7 +111,8 @@ export type { AgentToolContribution, AgentToolInputSchema, AgentToolInputPropert
 export type { ProcessSpawnConfig, ProcessManifestEntry, ProcessEnvFieldSpec, ProcessLiveSourceValueShape, ProcessLiveSourceDeclaration, ProcessLiveSourceBinding, ProcessOperationSpec, ProcessContribution } from './video/families/processes';
 export type { ShaderPassKind, ShaderColorSpace, ShaderFallbackBehavior, ShaderTextureSourceKind, ShaderTextureFilter, ShaderTextureWrap, ShaderInlineSource, ShaderModuleSource, ShaderSourceDescriptor, ShaderPassDescriptor, ShaderUniformType, ShaderUniformEnumOption, ShaderTextureRef, ShaderUniformDefaultValue, ShaderUniformDefinition, ShaderUniformSchema, ShaderTextureDefinition, ShaderTextureSchema, ShaderMaterializerDescriptor, ShaderContribution, ShaderRegistrationOptions, ShaderRegistrationService } from './video/families/shaders';
 // dataKind family: duration-neutral typed-data lanes ([CONVERGE-WITH-M1] vocabularies)
-export type { DataKindContribution, DataShape, DataCoordinateDomain, DataLaneRenderItem, DataLaneRendererProps, DataLaneActionDescriptor, DataItemInspectorProps, DataKindRegistrationOptions, DataKindRegistrationService } from './video/families/dataKind';
+export type { DataKindContribution, DataShape, DataCoordinateDomain, DataLaneRenderItem, DataLaneRendererProps, DataLaneActionDescriptor, DataItemInspectorProps, DataKindRegistrationOptions, DataKindRegistrationService, DataKindSourceItem } from './video/families/dataKind';
+export { sourceToTimelineTime, timelineToSourceTime } from './video/timeline/sourceTime';
 export type { TimelineOverlayManifestContribution, TimelineOverlayDescriptor, ResolvedTimelineOverlayDescriptor, TimelineOverlayGeometryInput, TimelineOverlayGeometry, TimelineViewportSnapshot, TimelineViewportStore, TimelinePlayheadSnapshot, TimelinePlayheadStore, TimelineOverlaySelection, TimelineOverlayRenderProps, TimelinePointMarker, TimelineMarkerChange, TimelineMarkerLayerOptions, TimelineOverlayPrimitives } from './video/families/timelineOverlays';
 export { createTimelineOverlayGeometry } from './video/families/timelineOverlays';
 export type { TimelineViewSnapshot, TimelineViewStore } from './video/timeline/viewState';

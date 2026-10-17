@@ -1,5 +1,5 @@
 import { admittedCatalogEntries, getAdmittedElementSelection, subscribeAdmittedElements, setAdmittedElementScope, refreshAdmittedElements } from '../runtime/admitted-elements';
-import type { TranscriptProjectState } from '@/sdk/video/transcript.ts';
+import type { ExtensionPendingWorkState } from '@/sdk/context.ts';
 import { useEffects } from '@/tools/video-editor/hooks/useEffects.ts';
 /**
  * Internal host-only provider wiring for the Reigh app shell.
@@ -24,6 +24,8 @@ import type {
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { VideoEditorLightboxOverlay } from '@/tools/video-editor/components/VideoEditorLightboxOverlay.tsx';
 import { useReighShotsHost } from '@/tools/video-editor/adapters/reigh/useReighShotsHost.ts';
+import { playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
+import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import {
@@ -375,7 +377,7 @@ function InnerProvider({
   effectCatalog,
   sequenceComponentCatalog,
   onSaveStatusChange,
-  onTranscriptNavigationStateChange,
+  onPendingWorkChange,
   operationalEmitter,
   assembly,
   initialTimelineData,
@@ -384,13 +386,17 @@ function InnerProvider({
   effectCatalog?: VideoEditorEffectCatalog | null;
   sequenceComponentCatalog?: VideoEditorSequenceComponentCatalog | null;
   onSaveStatusChange?: (status: SaveStatus) => void;
-  onTranscriptNavigationStateChange?: (state: TranscriptProjectState) => void;
+  onPendingWorkChange?: (state: ExtensionPendingWorkState) => void;
   operationalEmitter?: HostOwnedExtensionOperationalEmitter;
   assembly: EditorRuntimeAssembly;
   initialTimelineData?: TimelineData;
 }) {
   useRenderDiagnostic('VideoEditorProvider');
   const runtime = useVideoEditorRuntime();
+  // The reader lives for the provider; it reads the composition the preview plays now.
+  const playedCompositionRef = useRef<PreparedShotComposition | null>(null);
+  playedCompositionRef.current = playedShotComposition(runtime.userId, runtime.shots);
+  const readPlayedComposition = useCallback(() => playedCompositionRef.current, []);
 
   // ── M3: Provider-backed proposal persistence bridge ─────────────────────
   // App-shell strategy: resolved synchronously on first render, without the
@@ -423,10 +429,11 @@ function InnerProvider({
     proposalPersistenceProvider: proposalPersistenceRef.current,
     eagerProposalRetry: true,
     initialTimelineData,
+    shotComposition: readPlayedComposition,
   });
   return (
     <VideoEditorRuntimeContent assembly={assembly} sync={sync}
-      onSaveStatusChange={onSaveStatusChange} onTranscriptNavigationStateChange={onTranscriptNavigationStateChange} operationalEmitter={operationalEmitter}>
+      onSaveStatusChange={onSaveStatusChange} onPendingWorkChange={onPendingWorkChange} operationalEmitter={operationalEmitter}>
       {children}
     </VideoEditorRuntimeContent>
   );
@@ -434,23 +441,25 @@ function InnerProvider({
 
 /** Shared routed/editor content; the caller owns the one runtime assembly and store. */
 export function VideoEditorRuntimeContent({
-  children, assembly, sync, onSaveStatusChange, onTranscriptNavigationStateChange, operationalEmitter, operationsEnabled = true,
+  children, assembly, sync, onSaveStatusChange, onPendingWorkChange, operationalEmitter, operationsEnabled = true,
 }: {
   children: React.ReactNode;
   assembly: EditorRuntimeAssembly;
   sync: ReturnType<typeof useEditorRuntimeSync>;
   onSaveStatusChange?: (status: SaveStatus) => void;
-  onTranscriptNavigationStateChange?: (state: TranscriptProjectState) => void;
+  onPendingWorkChange?: (state: ExtensionPendingWorkState) => void;
   operationalEmitter?: HostOwnedExtensionOperationalEmitter;
   operationsEnabled?: boolean;
 }) {
   const runtime = useVideoEditorRuntime();
   const { store, editor, chrome, transcriptHost } = sync;
-  useEffect(()=>{
-    if(!transcriptHost||!onTranscriptNavigationStateChange)return;
-    const notify=()=>onTranscriptNavigationStateChange(transcriptHost.getProjectState());
-    notify();return transcriptHost.subscribe(notify);
-  },[transcriptHost,onTranscriptNavigationStateChange]);
+  useEffect(() => {
+    const pending = store.getState().pendingWorkRegistry;
+    if (!pending || !onPendingWorkChange) return;
+    const notify = () => onPendingWorkChange(pending.snapshot());
+    notify();
+    return pending.subscribe(notify);
+  }, [store, onPendingWorkChange]);
 
 
   useEffect(() => {
@@ -841,7 +850,7 @@ export interface VideoEditorProviderProps {
   effectCatalog?: VideoEditorEffectCatalog | null;
   sequenceComponentCatalog?: VideoEditorSequenceComponentCatalog | null;
   onSaveStatusChange?: (status: SaveStatus) => void;
-  onTranscriptNavigationStateChange?: (state: TranscriptProjectState) => void;
+  onPendingWorkChange?: (state: ExtensionPendingWorkState) => void;
   extensions?: readonly ReighExtension[];
   /** Package-state inventory entries propagated from the loader (M5). */
   packageStateEntries?: readonly import('@/tools/video-editor/runtime/extensionSurface').PackageStateInventoryEntry[];
@@ -884,7 +893,7 @@ function VideoEditorProviderInstance({
   effectCatalog,
   sequenceComponentCatalog,
   onSaveStatusChange,
-  onTranscriptNavigationStateChange,
+  onPendingWorkChange,
   extensions,
   packageStateEntries,
   processManager: hostProcessManager,
@@ -957,6 +966,8 @@ function VideoEditorProviderInstance({
 
   const assembly = useEditorRuntimeAssembly({
     extensions,
+    documents: dataProvider.documents,
+    loadAssetProfile: dataProvider.loadAssetProfile?.bind(dataProvider),
     packageStateEntries,
     hostProcessManager,
     // App-shell feedback channel: registry violations surface as toasts.
@@ -1132,7 +1143,7 @@ function VideoEditorProviderInstance({
       <InnerProvider
         effectCatalog={effectCatalog}
         sequenceComponentCatalog={sequenceComponentCatalog}
-        onSaveStatusChange={onSaveStatusChange} onTranscriptNavigationStateChange={onTranscriptNavigationStateChange}
+        onSaveStatusChange={onSaveStatusChange} onPendingWorkChange={onPendingWorkChange}
         operationalEmitter={extensionHostEnabled ? operationalEmitter : undefined}
         assembly={assembly}
         initialTimelineData={initialTimelineData}

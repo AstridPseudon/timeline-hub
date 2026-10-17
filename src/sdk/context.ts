@@ -66,16 +66,71 @@ export interface ExtensionDiagnosticsService {
   readonly diagnostics: readonly ExtensionDiagnostic[];
 }
 
+/** Pending extension work used by the editor when changing projects. */
+export interface ExtensionPendingWorkState {
+  /** A write is in flight and navigation must wait. */
+  writing: boolean;
+  /** Draft or conflict state requires confirmation before navigation. */
+  unsaved: boolean;
+}
+
+/** Host-owned signal for an extension's current pending work. */
+export interface ExtensionPendingWorkService {
+  /** Publish the extension's current pending work state. */
+  report(state: ExtensionPendingWorkState): void;
+}
+
 // ---------------------------------------------------------------------------
 // Creative context (reserved stubs)
 // ---------------------------------------------------------------------------
+/** Versioned Runtime project document. */
+export interface CreativeProjectDocument {
+  readonly document_id: string;
+  readonly project_id: string;
+  readonly kind: string;
+  readonly content: unknown;
+  readonly version: number;
+  readonly created_at: string;
+  readonly updated_at: string;
+}
+
+export interface CreativeDocumentPage {
+  readonly items: readonly CreativeProjectDocument[];
+  readonly next_cursor: string | null;
+}
+
+/** Project document access available to editor extensions. */
+export interface ProjectDocumentSurface {
+  list(kind: string, page?: { cursor?: string; limit?: number }): Promise<CreativeDocumentPage>;
+  get(id: string): Promise<CreativeProjectDocument>;
+  create(kind: string, content: unknown, documentId?: string): Promise<CreativeProjectDocument>;
+  update(id: string, content: unknown, expectedVersion: number): Promise<CreativeProjectDocument>;
+  /** Fires after a successful create or update made through this surface. */
+  onChange(listener: () => void): () => void;
+}
+
+/** Registry identity fields plus the legacy asset profile read. */
+export interface CreativeAssetReadSurface extends AssetReadSurface {
+  get(assetKey: string): (Readonly<import('@/sdk/video/assets/metadata.ts').AssetMetadata> & {
+    readonly media_id?: string;
+    readonly content_sha256?: string;
+    readonly file?: string;
+    readonly kind?: string;
+  }) | undefined;
+  loadProfile(assetKey: string): Promise<Readonly<Record<string, unknown>> | null>;
+}
+
 /** Reserved creative context members — each becomes live in its owning milestone. */
 export interface CreativeContext {
   readonly project: unknown;
+  /** Runtime project documents, scoped to the active project. */
+  readonly documents: ProjectDocumentSurface;
   /** Public mutation surface for atomic timeline operations (M3). */
   readonly timeline: TimelineOps;
   /** Read-only snapshot projection of the current timeline state (M3). */
   readonly reader: TimelineReader;
+  /** Report writing and unsaved work that affects project navigation. */
+  readonly pendingWork: ExtensionPendingWorkService;
   /**
    * Provider-owned live view of timeline UX state (playback, selection,
    * viewport, geometry). Renderer-independent: available from commands,
@@ -85,8 +140,8 @@ export interface CreativeContext {
   readonly timelineView: TimelineViewStore;
   /** Provider-scoped proposal lifecycle manager (M3). */
   readonly proposals: ProposalRuntime;
-  /** Read-only asset metadata surface (M6). */
-  readonly assets: AssetReadSurface;
+  /** Live registry asset identity and legacy profile reads. */
+  readonly assets: CreativeAssetReadSurface;
   /** Read-only material metadata surface (M6). */
   readonly materials: MaterialReadSurface;
   /** Live data sessions service for source/channel/bake/steering operations (M11). */
@@ -105,8 +160,10 @@ export interface CreativeContext {
 /** The milestone that activates each creative context member. */
 export const CREATIVE_MEMBER_MILESTONE: Record<keyof CreativeContext, string> = {
   project: 'M2',
+  documents: 'M6',
   timeline: 'M3',
   reader: 'M3',
+  pendingWork: 'M2',
   timelineView: 'M2',
   proposals: 'M3',
   assets: 'M6',

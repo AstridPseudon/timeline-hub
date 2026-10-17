@@ -28,6 +28,31 @@ async function document(
 }
 afterEach(() => vi.restoreAllMocks());
 describe('Runtime project transcript repository', () => {
+  it('exposes generic kind-filtered documents with own-write notifications', async () => {
+    const d = await document();
+    const list = vi.spyOn(ReighRuntimeClient.prototype, 'listDocuments').mockResolvedValue({
+      items: [d], next_cursor: null,
+    });
+    vi.spyOn(ReighRuntimeClient.prototype, 'getDocument').mockResolvedValue(d);
+    vi.spyOn(ReighRuntimeClient.prototype, 'createDocument').mockResolvedValue({ ...d, receipt: {} as any });
+    vi.spyOn(ReighRuntimeClient.prototype, 'updateDocument').mockResolvedValue({ ...d, version: 2, receipt: {} as any });
+    const docs = new RuntimeDataProvider({ projectId: 'p' }).documents;
+    const create = vi.spyOn(ReighRuntimeClient.prototype, 'createDocument').mockResolvedValue({ ...d, receipt: {} as any });
+    const changed = vi.fn();
+    const unsubscribe = docs.onChange(changed);
+    expect(await docs.list('media.transcript', { limit: 12 })).toMatchObject({ items: [d], next_cursor: null });
+    expect(list).toHaveBeenCalledWith('p', undefined, 12, 'media.transcript');
+    expect(await docs.get(d.document_id)).toEqual(d);
+    expect(changed).not.toHaveBeenCalled();
+    await docs.create('media.transcript', content, d.document_id);
+    expect(create.mock.calls[0]?.slice(0, 4)).toEqual(['p', d.document_id, 'media.transcript', content]);
+    await docs.update(d.document_id, content, 1);
+    expect(changed).toHaveBeenCalledTimes(2);
+    unsubscribe();
+    await docs.update(d.document_id, content, 2);
+    expect(changed).toHaveBeenCalledTimes(2);
+  });
+
   it('uses kind-filtered pagination and validates every returned canonical document', async () => {
     const a = await document(),
       b = await document('other');

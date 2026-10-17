@@ -3,6 +3,7 @@ import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl.ts';
 import type { TimelineShotGroupView } from '@/tools/video-editor/lib/timeline-domain.ts';
 import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
 import type { CanonicalShotOccurrence, ShotPlacement } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import { shotNameForOccurrence } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import {
   isActiveTimelineClip,
   timelineOccurrenceContentExtentMs,
@@ -335,22 +336,4 @@ export function useShotGroups(
 
 function shotNameFromSlug(shotId: string): string {
   return shotId.replace(/[-_]+/g, ' ').trim();
-}
-
-function shotNameForOccurrence(occurrence: CanonicalShotOccurrence): string {
-  const canonicalName = occurrence.revision.name;
-  if (typeof canonicalName === 'string' && canonicalName.trim()) return canonicalName;
-  const provenance = occurrence.revision.provenance;
-  if (provenance && typeof provenance === 'object' && !Array.isArray(provenance)) {
-    const value = provenance as Record<string, unknown>;
-    if (typeof value.name === 'string' && value.name.trim()) return value.name;
-    if (typeof value.title === 'string' && value.title.trim()) return value.title;
-  }
-  const metadata = occurrence.revision.metadata;
-  if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
-    const value = metadata as Record<string, unknown>;
-    if (typeof value.name === 'string' && value.name.trim()) return value.name;
-    if (typeof value.title === 'string' && value.title.trim()) return value.title;
-  }
-  return occurrence.shotId;
 }

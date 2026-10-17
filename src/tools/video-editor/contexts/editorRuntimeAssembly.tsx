@@ -29,6 +29,9 @@ import { useOwnedResourceDisposal } from '@/tools/video-editor/hooks/useOwnedRes
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
+import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import { createEditorAssetSurface } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
+import { playedAssetRegistry } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import {
   createTimelineViewStore,
   type TimelineViewStoreApi,
@@ -244,6 +247,8 @@ function publishSettingsPersistenceDiagnostic(
 
 export interface UseEditorRuntimeAssemblyOptions {
   extensions?: readonly ReighExtension[];
+  documents?: import('@/sdk/context.ts').ProjectDocumentSurface;
+  loadAssetProfile?: (assetKey: string) => Promise<import('@/tools/video-editor/data/AssetResolver.ts').AssetProfile | null>;
   /** Package-state inventory entries propagated from the loader (M5). */
   packageStateEntries?: readonly PackageStateInventoryEntry[];
   /** M6b: Host-provided process manager override. When absent, a default
@@ -268,6 +273,8 @@ export interface UseEditorRuntimeAssemblyOptions {
 }
 
 export interface EditorRuntimeAssembly {
+  documents?: import('@/sdk/context.ts').ProjectDocumentSurface;
+  loadAssetProfile?: (assetKey: string) => Promise<import('@/tools/video-editor/data/AssetResolver.ts').AssetProfile | null>;
   shellRootRef: MutableRefObject<HTMLElement | null>;
   agentSelectionOwner: symbol;
   extensionRuntime: ExtensionRuntime;
@@ -303,6 +310,8 @@ export interface EditorRuntimeAssembly {
 
 export function useEditorRuntimeAssembly({
   extensions,
+  documents,
+  loadAssetProfile,
   packageStateEntries,
   hostProcessManager,
   enableMutationServices = true,
@@ -498,6 +507,8 @@ export function useEditorRuntimeAssembly({
   );
 
   return {
+    documents,
+    loadAssetProfile,
     shellRootRef,
     agentSelectionOwner,
     extensionRuntime,
@@ -571,6 +582,9 @@ export interface UseEditorRuntimeSyncOptions {
   };
   /** Synchronously seed a host-owned timeline projection before provider I/O. */
   initialTimelineData?: TimelineData;
+  /** Live getter for the shot composition the timeline plays; feeds the
+   *  reader's `shots` so extensions can read what each placed shot contains. */
+  shotComposition?: () => PreparedShotComposition | null;
 }
 
 export interface EditorRuntimeSync {
@@ -598,8 +612,11 @@ export function useEditorRuntimeSync({
   eagerProposalRetry = false,
   settings,
   initialTimelineData,
+  shotComposition,
 }: UseEditorRuntimeSyncOptions): EditorRuntimeSync {
   const {
+    documents,
+    loadAssetProfile,
     extensionRuntime,
     lifecycleHostRef,
     commandRegistryRef,
@@ -631,6 +648,22 @@ export function useEditorRuntimeSync({
     () => new Set(extensionRuntime.extensions.map((ext) => ext.manifest.id as string)),
     [extensionRuntime.extensions],
   );
+  useEffect(() => {
+    const host = lifecycleHostRef.current;
+    if (!host) return;
+    const handle = host.onLifecycleDisposed((extensionId) => {
+      store.getState().pendingWorkRegistry?.clear(extensionId);
+      // Projections belong to the extension activation that supplied them.
+      const items = store.getState().dataKindItemsHost;
+      for (const contribution of extensionRuntime.extensions
+        .find((extension) => extension.manifest.id === extensionId)?.manifest.contributions ?? []) {
+        if (contribution.kind === 'dataKind' && contribution.schemaRef) {
+          items?.replaceTransient(contribution.schemaRef, []);
+        }
+      }
+    });
+    return () => handle.dispose();
+  }, [extensionRuntime.extensions, lifecycleHostRef, store]);
 
   // ---- M3: live creative context for extensions ----------------------------
   // Create stable TimelineReader from the data ref (always reads latest data).
@@ -647,13 +680,25 @@ export function useEditorRuntimeSync({
           }
           return data;
         },
+        subscribeData: (listener) => {
+          let previous = store.getState().data.data;
+          return store.subscribe(() => {
+            const next = store.getState().data.data;
+            if (next !== previous) {
+              previous = next;
+              listener();
+            }
+          });
+        },
         configVersion: () => store.getState().configVersion,
         projectId,
         timelineId,
         extensionRequirements: extensionRuntime.requirements,
+        shotComposition,
       }),
-    [store, projectId, timelineId, extensionRuntime.requirements],
+    [store, projectId, timelineId, extensionRuntime.requirements, shotComposition],
   );
+  if (store.getState().timelineReader !== timelineReader) store.setState?.({ timelineReader });
   assembly.liveSceneOperationPort.setReader(timelineReader);
 
   // One ProposalRuntime per provider mount, stable for the provider lifetime.
@@ -745,11 +790,17 @@ export function useEditorRuntimeSync({
     return {
       timeline: ops as unknown as CreativeContext['timeline'],
       reader: timelineReader,
+      ...(documents ? { documents } : {}),
+      assets: createEditorAssetSurface(
+        () => store.getState().data.data,
+        loadAssetProfile,
+        () => playedAssetRegistry(shotComposition?.() ?? null, store.getState().data.data?.resolvedConfig),
+      ),
       proposals: proposals as unknown as CreativeContext['proposals'],
       timelineView: timelineViewStoreRef.current as unknown as CreativeContext['timelineView'],
       projectObjects,
     };
-  }, [projectObjects, timelineReader, timelineViewStoreRef, store]);
+  }, [documents, loadAssetProfile, projectObjects, shotComposition, timelineReader, timelineViewStoreRef, store]);
 
   useEffect(() => {
     const host = lifecycleHostRef.current;
@@ -843,6 +894,7 @@ export function useEditorRuntimeSync({
               extension: ext,
               dataKindRegistry,
               diagnosticsService,
+              itemsHost: store.getState().dataKindItemsHost,
             })
           : undefined;
         // Create per-extension agent tools service backed by the shared AgentToolRegistry.
@@ -864,12 +916,14 @@ export function useEditorRuntimeSync({
             }
           : undefined;
         const liveRegistry = liveDataRegistryRef.current;
-        const creativeOverrides = liveRegistry
-          ? {
-              ...liveCreativeOverrides,
-              sessions: createExtensionLiveSessions(liveRegistry, extId),
-            }
-          : liveCreativeOverrides;
+        const creativeOverrides = {
+          ...liveCreativeOverrides,
+          ...(liveRegistry ? { sessions: createExtensionLiveSessions(liveRegistry, extId) } : {}),
+          pendingWork: {
+            report: (state: import('@/sdk/context.ts').ExtensionPendingWorkState) =>
+              store.getState().pendingWorkRegistry?.report(extId, state),
+          },
+        };
         // T9: Build settings service options when repository is available
         const settingsOptions: CreateExtensionSettingsServiceOptions | undefined =
           settingsRepository && !settingsRepository.isDisposed

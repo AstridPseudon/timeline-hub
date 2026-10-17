@@ -81,6 +81,7 @@ import type {
   DataItemInspectorProps,
   DataKindRegistrationOptions,
   DataKindRegistrationService,
+  DataKindSourceItem,
   DataLaneRendererProps,
 } from '@/sdk/video/families/dataKind';
 
@@ -581,6 +582,13 @@ export function createExtensionContext(
         message: `Cannot register data kind "${_kindId}" — the DataKindRegistry has not been wired by the host provider.`,
       });
       return { dispose() {} };
+    },
+    readPersisted: () => [],
+    replacePersisted: (_kindId: string, _items: readonly DataKindSourceItem[]) => {
+      throw new Error('Data-kind items are not wired by the host provider.');
+    },
+    replaceTransient: (_kindId: string, _items: readonly DataKindSourceItem[]) => {
+      throw new Error('Data-kind items are not wired by the host provider.');
     },
   };
 

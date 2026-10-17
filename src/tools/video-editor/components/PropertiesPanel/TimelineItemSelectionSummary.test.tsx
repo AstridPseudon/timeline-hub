@@ -3,6 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 import { TimelineItemSelectionSummary } from './TimelineItemSelectionSummary.tsx';
+import { VideoEditorRuntimeProvider } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 
 afterEach(cleanup);
 
@@ -13,6 +14,20 @@ const lane = (laneId: string, kindId: string, label: string) => ({
 }) as DataLaneView;
 
 describe('TimelineItemSelectionSummary', () => {
+  it('uses the owning data-kind contribution label from the manifest', () => {
+    const runtime = { extensionRuntime: { extensions: [{ manifest: {
+      id: 'example.editor', label: 'Editor Tools', contributions: [{
+        kind: 'dataKind', kindId: 'example.lyrics', label: 'Lyrics',
+      }],
+    } }] } } as never;
+    render(<VideoEditorRuntimeProvider value={runtime}>
+      <TimelineItemSelectionSummary clipCount={0}
+        dataItems={[{ laneId: 'lyrics', itemId: 'one' }]}
+        lanes={[lane('lyrics', 'example.lyrics', 'Stale lane label')]} />
+    </VideoEditorRuntimeProvider>);
+    expect(screen.getByRole('status')).toHaveTextContent('1 lyrics item selected');
+    expect(screen.getByRole('status')).toHaveTextContent('Lyrics · 1');
+  });
   it('renders no summary when nothing is selected', () => {
     const { container } = render(
       <TimelineItemSelectionSummary clipCount={0} dataItems={[]} lanes={[]} />,

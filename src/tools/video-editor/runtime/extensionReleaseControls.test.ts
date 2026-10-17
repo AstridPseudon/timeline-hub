@@ -6,6 +6,7 @@ import {
   createPrivacySafeExtensionTelemetryHost,
   EXTENSION_RELEASE_RUNTIME_CONFIG_TIMEOUT_MS,
   getExtensionReleaseFlags,
+  isExtensionReleaseEnabled,
   initializeExtensionReleaseFlags,
   loadExtensionReleaseFlags,
   operationalCountBucket,
@@ -214,6 +215,15 @@ describe('extension release controls', () => {
       'com.reigh.scene-phase-markers',
       RUNAWAY_TIMELINE_EXTENSION_ID,
     ]);
+  });
+
+  it('resolves child rollout admission through extension IDs', () => {
+    const flags = { extensionHostEnabled: true, transcriptCaptionFoundryEnabled: false,
+      runawayTypedTimelineEnabled: true, configurationRevision: 'r1' };
+    expect(isExtensionReleaseEnabled(TRANSCRIPT_RELEASE_EXTENSION_ID, flags)).toBe(false);
+    expect(isExtensionReleaseEnabled(RUNAWAY_RELEASE_EXTENSION_ID, flags)).toBe(true);
+    expect(isExtensionReleaseEnabled('com.reigh.scene-phase-markers', flags)).toBe(true);
+    expect(isExtensionReleaseEnabled('com.reigh.scene-phase-markers', { ...flags, extensionHostEnabled: false })).toBe(false);
   });
 
   it('keeps disable and downgrade scope bounded to the host and reviewed children', () => {

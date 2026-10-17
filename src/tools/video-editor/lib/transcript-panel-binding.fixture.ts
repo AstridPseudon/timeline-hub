@@ -56,6 +56,7 @@ export async function setupTranscriptHost() {
   const documents = new Map<string, ProjectTranscriptDocument>();
   const repository: ProjectTranscriptRepository = {
     projectId: 'fixture-project',
+    listAll: async () => [...documents.values()],
     get: async (id) => {
       const d = documents.get(id);
       if (!d) throw Object.assign(new Error('missing'), { status: 404 });

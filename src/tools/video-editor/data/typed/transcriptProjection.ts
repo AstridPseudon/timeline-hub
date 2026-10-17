@@ -1,6 +1,7 @@
 /** Shared transcript read projection. Source records remain the only document owner. */
 import type { PanelVideoAdapter } from '@/sdk/ui.ts';
-import { getCanonicalClipPlaybackRate, getConfigTimelineClipSourceDuration } from '@/tools/video-editor/lib/timeline-domain.ts';
+import { getConfigTimelineClipSourceDuration } from '@/tools/video-editor/lib/timeline-domain.ts';
+import { sourceToTimelineTime } from '@/sdk/video/timeline/sourceTime.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { TRANSCRIPT_SCHEMA_REF } from './adaptTranscript.ts';
 import type { SourceFrozenDataItem } from './envelope.ts';
@@ -32,8 +33,7 @@ export function projectTranscriptOccurrence(sourceItem: SourceFrozenDataItem, cl
   const visibleStart = Math.max(start, from);
   const visibleEnd = Math.min(end, sourceEnd);
   if (visibleEnd <= visibleStart) return null;
-  const speed = getCanonicalClipPlaybackRate(clip.speed);
-  const toTimeline = (time: number): number => clip.at + (time - from) / speed;
+  const toTimeline = (time: number): number => sourceToTimelineTime(clip, time);
   const payload = record(sourceItem.payload);
   const words = Array.isArray(payload.words) ? payload.words : [];
   return Object.freeze({

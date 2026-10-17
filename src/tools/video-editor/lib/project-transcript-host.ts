@@ -2,8 +2,10 @@ import type {
   TranscriptPanelAdapter,
   TranscriptPanelImportReceipt,
   TranscriptPanelTextEditResult,
+  TranscriptProjectSourceChoice,
   TranscriptProjectState,
 } from '@/sdk/video/transcript.ts';
+import type { AssetRegistry } from '../types/index.ts';
 import {
   TRANSCRIPT_SCHEMA_REF,
   type TranscriptSourceSegment,
@@ -18,7 +20,7 @@ import {
 import {
   projectTranscriptSchema,
   projectTranscriptItems,
-  transcriptMediaId,
+  transcriptMediaIdFromAsset,
   transcriptDocumentId,
   sameTranscript,
   type ProjectTranscriptContent,
@@ -30,6 +32,10 @@ import type { TimelineData } from './timeline-data.ts';
 import type { CommitDataOptions } from '../hooks/useTimelineCommit.ts';
 import type { TimelineEditability } from './timeline-editability.ts';
 import type { SourceFrozenDataItem } from '../data/typed/envelope.ts';
+import type { CreativeAssetReadSurface, ExtensionPendingWorkService } from '@/sdk/context.ts';
+import type { DataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
+import { preparePersistedDataKindItems } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
+import { createEditorAssetSurface } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
 
 // Narrow document invalidation between mounted transcript hosts; polling covers other tabs.
 const observers = new Set<(id: string) => void>();
@@ -37,6 +43,8 @@ type Draft = { baseVersion: number; content: ProjectTranscriptContent };
 type Entry = {
   document?: ProjectTranscriptDocument;
   assetId: string;
+  /** Read-only default source projected for an unassociated asset. */
+  fallback?: boolean;
   status: 'clean' | 'saving' | 'conflict' | 'error';
   message?: string;
   draft?: Draft;
@@ -47,6 +55,9 @@ export interface ProjectTranscriptHostInput {
   dataRef: { current: TimelineData | null };
   commitData(next: TimelineData, options?: CommitDataOptions): void;
   repository?: ProjectTranscriptRepository;
+  assets?: CreativeAssetReadSurface;
+  items?: DataKindItemsHost;
+  pendingWork?: ExtensionPendingWorkService;
   flushPendingSave?: () => Promise<unknown>;
   editability?: TimelineEditability;
   getTimelineLaneVisible?: () => boolean;
@@ -61,7 +72,6 @@ export type ProjectTranscriptHost = Required<
     | 'editText'
     | 'importTranscript'
     | 'getProjectState'
-    | 'listProjectSources'
     | 'selectProjectSource'
     | 'promoteSource'
     | 'undoSource'
@@ -70,6 +80,11 @@ export type ProjectTranscriptHost = Required<
     | 'refreshSources'
   >
 > & {
+  /** `playedRegistry` resolves media that only plays inside placed shots; the timeline's own registry wins. */
+  listProjectSources(
+    assetId: string,
+    playedRegistry?: AssetRegistry,
+  ): Promise<readonly TranscriptProjectSourceChoice[]>;
   subscribe(listener: () => void): () => void;
   start(): void;
   dispose(): void;
@@ -150,12 +165,67 @@ export function createProjectTranscriptHost(
   const entries = new Map<string, Entry>(),
     listeners = new Set<() => void>();
   const repo = input.repository;
+  const assets = input.assets ?? createEditorAssetSurface(() => input.dataRef.current);
+  const mediaId = (assetId: string): string => transcriptMediaIdFromAsset(assets.get(assetId));
   let pendingOperations = 0;
   let generation = 0;
   let disposed = false,
     refreshing = false,
     selection = 0;
   let timer: ReturnType<typeof setInterval> | undefined;
+  let stopDocuments: (() => void) | undefined;
+  let documentIndex: ReadonlyMap<string, readonly ProjectTranscriptDocument[]> | undefined;
+  let documentListing: Promise<ReadonlyMap<string, readonly ProjectTranscriptDocument[]>> | undefined;
+  let documentEpoch = 0;
+  const invalidateDocuments = () => {
+    documentEpoch++;
+    documentIndex = undefined;
+    documentListing = undefined;
+  };
+  const documentsForMedia = async (mediaId: string): Promise<readonly ProjectTranscriptDocument[]> => {
+    for (;;) {
+      if (documentIndex) return documentIndex.get(mediaId) ?? [];
+      const epoch = documentEpoch;
+      if (!documentListing) {
+        const listing = repo!.listAll().then((documents) => {
+          const index = new Map<string, ProjectTranscriptDocument[]>();
+          for (const document of documents) {
+            const id = document.content.media_id;
+            const group = index.get(id) ?? [];
+            group.push(document);
+            index.set(id, group);
+          }
+          if (epoch === documentEpoch) documentIndex = index;
+          return index;
+        });
+        documentListing = listing;
+        void listing.finally(() => {
+          if (documentListing === listing) documentListing = undefined;
+        }).catch(() => undefined);
+      }
+      const index = await documentListing;
+      if (epoch === documentEpoch) return index.get(mediaId) ?? [];
+    }
+  };
+  const fallbackProjections = new Set<string>();
+  let fallbackProjectionQueued = false;
+  const queueFallbackProjection = (id: string) => {
+    fallbackProjections.add(id);
+    if (fallbackProjectionQueued) return;
+    fallbackProjectionQueued = true;
+    queueMicrotask(() => {
+      fallbackProjectionQueued = false;
+      if (disposed) return;
+      const ids = [...fallbackProjections];
+      fallbackProjections.clear();
+      if (input.items) {
+        if (ids.length) project(ids[0]); // This channel projects all current entries together.
+      } else {
+        for (const fallbackId of ids) project(fallbackId);
+      }
+      emit();
+    });
+  };
   let state: TranscriptProjectState = {
     supported: !!repo,
     ...(!repo
@@ -197,6 +267,10 @@ export function createProjectTranscriptHost(
         }));
       }),
     };
+    input.pendingWork?.report({
+      writing: !!state.inFlight || state.sources.some((source) => source.status === 'saving'),
+      unsaved: state.sources.some((source) => source.hasDraft || source.status === 'conflict'),
+    });
     for (const l of listeners) l();
   };
   const key = (id: string) => `reigh:transcript-draft:${repo?.projectId}:${id}`;
@@ -245,7 +319,9 @@ export function createProjectTranscriptHost(
     edit: Parameters<NonNullable<TranscriptPanelAdapter['stageTextDraft']>>[0],
   ) => {
     const matches = (
-      current().sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF] ?? []
+      input.items
+        ? [...input.items.readTransient(TRANSCRIPT_SCHEMA_REF), ...input.items.readPersisted(TRANSCRIPT_SCHEMA_REF)]
+        : current().sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF] ?? []
     ).filter(
       (i) =>
         i.id === edit.sourceItemId &&
@@ -265,10 +341,27 @@ export function createProjectTranscriptHost(
     const data = input.dataRef.current,
       e = entries.get(id);
     if (!data || !e?.document) return;
+    if (input.items) {
+      const projected = [...entries].flatMap(([documentId, entry]) => {
+        if (!entry.document) return [];
+        const refs = data.transcriptReferences?.associations ?? [];
+        const assetIds = refs.filter((ref) => ref.documentId === documentId).map((ref) => ref.assetId);
+        if (!assetIds.length && entry.fallback && !refs.some((ref) => ref.assetId === entry.assetId)) assetIds.push(entry.assetId);
+        return assetIds.flatMap((assetId) => projectTranscriptItems(entry.document!, assetId));
+      });
+      input.items.replaceTransient(TRANSCRIPT_SCHEMA_REF, projected);
+      return;
+    }
     const refs = data.transcriptReferences?.associations ?? [];
     const assetIds = new Set(
       refs.filter((r) => r.documentId === id).map((r) => r.assetId),
     );
+    if (
+      !assetIds.size &&
+      e.fallback &&
+      !refs.some((r) => r.assetId === e.assetId)
+    )
+      assetIds.add(e.assetId);
     if (!assetIds.size) return;
     const existing = data.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF] ?? [];
     // All source rows for an associated asset are supplied by the chosen document.
@@ -314,7 +407,7 @@ export function createProjectTranscriptHost(
     }
     if (
       document.content.media_id !==
-      transcriptMediaId(current().registry, assetId)
+      mediaId(assetId)
     )
       throw new Error(
         'Project transcript does not belong to the selected source media.',
@@ -341,6 +434,7 @@ export function createProjectTranscriptHost(
       e.document = document;
     }
     e.assetId = assetId;
+    e.fallback = false;
     project(id);
     emit();
     return e;
@@ -361,13 +455,16 @@ export function createProjectTranscriptHost(
     return adopt(id, document, assetId);
   };
   const refreshSources = async () => {
+    invalidateDocuments();
     if (disposed || !repo || refreshing) return;
     refreshing = true;
     try {
       const refs =
         input.dataRef.current?.transcriptReferences?.associations ?? [];
       const active = new Set(refs.map((r) => r.documentId));
-      for (const id of entries.keys()) if (!active.has(id)) entries.delete(id);
+      for (const [id, entry] of entries)
+        if (!active.has(id) && !entry.fallback) entries.delete(id);
+      if (input.items && entries.size === 0) input.items.replaceTransient(TRANSCRIPT_SCHEMA_REF, []);
       await Promise.all(
         refs.map(async (r) => {
           try {
@@ -450,6 +547,7 @@ export function createProjectTranscriptHost(
         before.version,
         crypto.randomUUID(),
       );
+      invalidateDocuments();
       if (disposed || session !== generation)
         return fail(
           'source_session_changed',
@@ -505,7 +603,7 @@ export function createProjectTranscriptHost(
     previousItems?: readonly SourceFrozenDataItem[],
   ): Promise<TranscriptPanelImportReceipt> => {
     const data = current();
-    if (transcriptMediaId(data.registry, assetId) !== document.content.media_id)
+    if (mediaId(assetId) !== document.content.media_id)
       throw new Error(
         'The selected transcript belongs to different source media.',
       );
@@ -527,7 +625,12 @@ export function createProjectTranscriptHost(
       assetId,
       document.content.source_id,
     );
-    const next = buildDataFromCurrentRegistry(config, data, {
+    const next = input.items ? preparePersistedDataKindItems(data, TRANSCRIPT_SCHEMA_REF,
+      old.filter((item) => item.sourceArtifactRef.assetId !== assetId ||
+        (item.provenance.adapterId !== 'reigh.projectTranscript' && payloadOf(item).sourceId !== document.content.source_id)), {
+        config,
+        transcriptReferences: { schema: 'media.transcript.references/v1', associations },
+      }) : buildDataFromCurrentRegistry(config, data, {
       transcriptReferences: {
         schema: 'media.transcript.references/v1',
         associations,
@@ -576,6 +679,7 @@ export function createProjectTranscriptHost(
     start: () => {
       disposed = false;
       observers.add(invalidation);
+      stopDocuments = repo?.onChange?.(() => void refreshSources());
       if (!timer) timer = setInterval(() => void refreshSources(), 2000);
     },
     subscribe: (l) => {
@@ -584,11 +688,16 @@ export function createProjectTranscriptHost(
     },
     dispose: () => {
       disposed = true;
+      invalidateDocuments();
       generation++;
       selection++;
       clearInterval(timer);
       timer = undefined;
       observers.delete(invalidation);
+      stopDocuments?.();
+      stopDocuments = undefined;
+      input.items?.replaceTransient(TRANSCRIPT_SCHEMA_REF, []);
+      input.pendingWork?.report({ writing: false, unsaved: false });
       listeners.clear();
     },
     getTimelineLaneVisible: () => input.getTimelineLaneVisible?.() ?? false,
@@ -598,10 +707,38 @@ export function createProjectTranscriptHost(
     },
     getProjectState: () => state,
     refreshSources,
-    listProjectSources: async (assetId) => {
-      const r = supported();
-      const media = transcriptMediaId(current().registry, assetId);
-      return (await r.listForMedia(media)).map((d) => ({
+    listProjectSources: async (assetId, playedRegistry) => {
+      supported();
+      const media = transcriptMediaIdFromAsset(assets.get(assetId) ?? playedRegistry?.assets[assetId]);
+      const documents = await documentsForMedia(media);
+      const associated = (current().transcriptReferences?.associations ?? []).some(
+        (ref) => ref.assetId === assetId,
+      );
+      if (!associated) {
+        const fallback =
+          documents.find((d) => d.content.source_id === 'astrid.narration') ??
+          (documents.length === 1 ? documents[0] : undefined);
+        if (fallback) {
+          let entry = entries.get(fallback.document_id);
+          if (!entry) {
+            entry = {
+              assetId,
+              fallback: true,
+              document: fallback,
+              status: 'clean',
+              undo: [],
+              redo: [],
+            };
+            entries.set(fallback.document_id, entry);
+          } else {
+            entry.fallback = true;
+            entry.assetId = assetId;
+            entry.document = fallback;
+          }
+          queueFallbackProjection(fallback.document_id);
+        }
+      }
+      return documents.map((d) => ({
         documentId: d.document_id,
         sourceId: d.content.source_id,
         version: d.version,
@@ -626,7 +763,7 @@ export function createProjectTranscriptHost(
         associationAssetId,
       );
       assertRegisteredTranscriptMedia(data, assetId);
-      const media = transcriptMediaId(data.registry, assetId);
+      const media = mediaId(assetId);
       if (parsed.mediaId && parsed.mediaId !== media)
         throw new Error(
           'Transcript media_id does not match the selected project source media.',
@@ -669,6 +806,7 @@ export function createProjectTranscriptHost(
         }
       } else {
         d = await r.create(content, `reigh.transcript-create.${id.slice('transcript:'.length)}`);
+        invalidateDocuments();
         current();
       }
       if (operation !== selection)
@@ -683,16 +821,16 @@ export function createProjectTranscriptHost(
       return associate(
         d,
         assetId,
-        data.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF],
+        input.items?.readPersisted(TRANSCRIPT_SCHEMA_REF) ?? data.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF],
       );
     },
     promoteSource: async ({ assetId, sourceId }) => {
       const operation = ++selection;
       const r = supported(),
         data = current(),
-        media = transcriptMediaId(data.registry, assetId);
+        media = mediaId(assetId);
       const items = (
-        data.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF] ?? []
+        input.items?.readPersisted(TRANSCRIPT_SCHEMA_REF) ?? data.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF] ?? []
       ).filter(
         (i) =>
           i.sourceArtifactRef.assetId === assetId &&

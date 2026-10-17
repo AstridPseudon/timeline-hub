@@ -1,5 +1,10 @@
 import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
 import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
+import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
+import { createPendingWorkRegistry } from '@/tools/video-editor/runtime/pendingWorkRegistry.ts';
+import { transcriptRepositoryFromDocuments } from '@/tools/video-editor/data/typed/projectTranscript.ts';
+import { createEditorAssetSurface, loadEditorAssetProfile } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
+import { playedAssetRegistry, playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { isTabletHardware, useIsMobile, useIsTablet, useViewportWidth } from '@/shared/hooks/mobile/index.ts';
@@ -548,6 +553,8 @@ function useTimelinePlaybackContextValue({
 
 export function useTimelineState(services: TimelineHostServiceHooks, initialTimelineData?: TimelineData): UseTimelineStateResult {
   const runtime = useVideoEditorRuntime();
+  const runtimeRef = useRef(runtime);
+  runtimeRef.current = runtime;
   const finalVideoMap = services.useFinalVideoMap();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -604,6 +611,19 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const [contextTarget, setContextTarget] = useState(initialInteractionPolicyRef.current.contextTarget);
   const [inspectorTarget, setInspectorTarget] = useState(initialInteractionPolicyRef.current.inspectorTarget);
   const save = useTimelineSave(queries, runtime.provider, interactionStateRef, store, initialTimelineData);
+  const pendingWorkRegistry = useMemo(createPendingWorkRegistry, []);
+  if (store.getState().pendingWorkRegistry !== pendingWorkRegistry) {
+    store.setState({ pendingWorkRegistry });
+  }
+  const itemCommitRef = useRef(save.commitData);
+  itemCommitRef.current = save.commitData;
+  const dataKindItemsHost = useMemo(() => createDataKindItemsHost({
+    dataRef: save.dataRef,
+    commitData: (next, options) => itemCommitRef.current(next, options),
+  }), [save.dataRef]);
+  if (store.getState().dataKindItemsHost !== dataKindItemsHost) {
+    store.setState({ dataKindItemsHost });
+  }
   const history = useTimelineHistory({
     dataRef: save.dataRef,
     commitData: save.commitData,
@@ -850,9 +870,19 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   });
 
   const canonicalShotTrackIds = useMemo(
-    () => new Set((runtime.shots?.canonicalOccurrences ?? [])
-      .map((occurrence) => occurrence.trackId)
-      .filter((trackId): trackId is string => typeof trackId === 'string' && trackId.length > 0)),
+    () => {
+      const ids = new Set<string>();
+      for (const occurrence of runtime.shots?.canonicalOccurrences ?? []) {
+        if (typeof occurrence.trackId === 'string' && occurrence.trackId.length > 0) ids.add(occurrence.trackId);
+        const internal = occurrence.revision.internal_timeline_revision as { timeline?: { clips?: unknown[] } } | undefined;
+        for (const raw of internal?.timeline?.clips ?? []) {
+          if (raw && typeof raw === 'object' && typeof (raw as { track?: unknown }).track === 'string') {
+            ids.add((raw as { track: string }).track);
+          }
+        }
+      }
+      return ids;
+    },
     [runtime.shots?.canonicalOccurrences],
   );
   // The tracks the clear-unused count protects arrive with the canonical shots. Until
@@ -1048,13 +1078,31 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
 
   const transcriptPreferencesRef = useRef(preferences);
   transcriptPreferencesRef.current = preferences;
+  const transcriptDocuments = useMemo(() => runtime.provider.documents && selectedProjectId
+    ? transcriptRepositoryFromDocuments(runtime.provider.documents, selectedProjectId)
+    : undefined, [runtime.provider.documents, selectedProjectId]);
+  const transcriptAssets = useMemo(() => createEditorAssetSurface(
+    () => save.dataRef.current,
+    (assetId) => loadEditorAssetProfile(runtime.assetResolver, assetId, runtime.timelineId),
+    () => playedAssetRegistry(
+      playedShotComposition(runtimeRef.current.userId, runtimeRef.current.shots),
+      save.dataRef.current?.resolvedConfig,
+    ),
+  ), [runtime.assetResolver, runtime.timelineId, save.dataRef]);
+  const transcriptPendingWork = useMemo(() => ({
+    report: (state: import('@/sdk/context.ts').ExtensionPendingWorkState) =>
+      pendingWorkRegistry.report('com.reigh.transcript-lane', state),
+  }), [pendingWorkRegistry]);
   const transcriptHost = useProjectTranscriptHost({
     dataRef: save.dataRef,
     commitData: save.commitData,
     editability: runtime.timelineEditability,
-    repository: runtime.provider.projectTranscripts,
-    getTimelineLaneVisible: () => transcriptPreferencesRef.current.preferences.showTranscriptLane ?? true,
-    setTimelineLaneVisible: (visible) => transcriptPreferencesRef.current.setShowTranscriptLane(visible),
+    repository: transcriptDocuments,
+    assets: transcriptAssets,
+    items: dataKindItemsHost,
+    pendingWork: transcriptPendingWork,
+    getTimelineLaneVisible: () => transcriptPreferencesRef.current.preferences.showDataLanesByKind?.['reigh.transcript'] ?? true,
+    setTimelineLaneVisible: (visible) => transcriptPreferencesRef.current.setDataKindLaneVisible('reigh.transcript', visible),
     flushPendingSave: save.flushPendingSave,
   }, runtime.provider, runtime.timelineId);
   useEffect(() => { void transcriptHost.refreshSources(); }, [transcriptHost, save.data?.transcriptReferences]);

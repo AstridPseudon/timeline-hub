@@ -17,6 +17,9 @@ export function useProjectTranscriptHost(
       createProjectTranscriptHost({
         dataRef: input.dataRef,
         repository: input.repository,
+        assets: input.assets,
+        items: input.items,
+        pendingWork: input.pendingWork,
         commitData: (...args) => latest.current.commitData(...args),
         flushPendingSave: () =>
           latest.current.flushPendingSave?.() ?? Promise.resolve(),
@@ -33,7 +36,7 @@ export function useProjectTranscriptHost(
       }),
     // A provider may reuse its repository across timeline sessions.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [input.dataRef, input.repository, owner, timelineId],
+    [input.dataRef, input.repository, input.assets, input.items, input.pendingWork, owner, timelineId],
   );
   useEffect(() => {
     host.start();

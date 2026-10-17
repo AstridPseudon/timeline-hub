@@ -15,6 +15,11 @@ import {
   type VideoEditorRuntimeContextValue,
 } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { resetLaneAssemblyAuthorityForTests } from './dataLaneAssemblyAuthority.ts';
+import shotFixture from '@/tools/video-editor/data/shotComposition.fixture.json';
+import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import { playedTimelineClips } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
+import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import { freezeSourceDataItem } from '@/tools/video-editor/data/typed/envelope.ts';
 
 const SEGMENT: TranscriptSegment = { start: 2, end: 4, text: 'hello' };
 
@@ -53,6 +58,37 @@ const transcriptKind = (overrides: Partial<DataKindSnapshotRecord> = {}): DataKi
 });
 
 describe('useDataLanes', () => {
+  it('maps transcript lane items onto clips inside played shots at film time', async () => {
+    const composition = createShotCompositionAdapter({ load: async () => shotFixture }).prepare(shotFixture);
+    const base = await buildTimelineData(
+      { output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' }, tracks: [], clips: [] },
+      { assets: {} },
+    );
+    const child = playedTimelineClips(composition, base.resolvedConfig)!.find((clip) =>
+      clip.id.includes('alpha-audio'))!;
+    expect(child).toBeDefined();
+    const start = child.from ?? 0;
+    const source = freezeSourceDataItem({
+      id: 'shot-line', shape: 'interval', domain: 'source_seconds',
+      extent: { start, end: start + 0.5 }, schemaRef: TRANSCRIPT_SCHEMA_REF,
+      sourceArtifactRef: { assetId: child.asset! },
+      provenance: { adapterId: 'reigh.projectTranscript', adapterVersion: '1' },
+      payload: { sourceId: 'astrid.narration', segmentId: 'shot-line', text: 'inside shot' },
+    });
+    const withSource = { ...base, sourceItemsBySchemaRef: { [TRANSCRIPT_SCHEMA_REF]: [source] } };
+    const runtime = {
+      userId: null,
+      shots: { shotComposition: {}, canonicalComposition: composition },
+      timelineId: 'shot-lane',
+    } as unknown as VideoEditorRuntimeContextValue;
+    const { result } = renderHook(() => useDataLanes({ base: withSource, kinds: [transcriptKind()], loadSegments: null }), {
+      wrapper: ({ children }) => <VideoEditorRuntimeProvider value={runtime}>{children}</VideoEditorRuntimeProvider>,
+    });
+    await waitFor(() => expect(result.current?.dataLanes[0]?.items.some((item) => item.clipId === child.id)).toBe(true));
+    const item = result.current!.dataLanes[0].items.find((view) => view.clipId === child.id)!;
+    expect(item.timelineStart).toBe(child.at);
+    expect(item.timelineEnd).toBe(child.at + 0.5 / (child.speed ?? 1));
+  });
   it('merges stub-loaded segments into a patched TimelineData carrying the expected DataLaneView[]', async () => {
     const loadSegments: LoadDataSegments = vi.fn(async () => [SEGMENT]);
     const base = buildBase([VIDEO_CLIP]);

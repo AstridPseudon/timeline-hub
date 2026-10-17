@@ -276,35 +276,43 @@ function tracksFor(
   // Keep parent-owned lanes (frame overlays, FX, terminal activity, VO, etc.)
   // alongside the projected shot child lanes. The canonical graph owns shot
   // content, but it does not replace unrelated parent timeline content.
-  const tracks = new Map<string, TrackDefinition>(
-    (baseConfig?.tracks ?? []).map((track) => [track.id, track]),
-  );
+  const tracks = [...(baseConfig?.tracks ?? [])];
+  const trackIds = new Set(tracks.map((track) => track.id));
   for (const occurrence of occurrences) {
     const timeline = outputTimeline(childTimeline(occurrence));
     const rawTracks = Array.isArray(timeline.tracks) ? timeline.tracks : [];
     for (const rawTrack of rawTracks) {
       const track = record(rawTrack);
       const id = text(track?.id);
-      if (!id || tracks.has(id)) continue;
+      if (!id || trackIds.has(id)) continue;
       if (trackRole({
         id,
         role: track?.role as TrackDefinition['role'],
       }) === 'source') continue;
       const kind = track?.kind === 'audio' ? 'audio' : 'visual';
-      tracks.set(id, {
-        id,
-        kind,
-        label: text(track?.label) ?? id,
-        ...(track?.role === 'source' ? { role: 'source' as const } : {}),
-        ...(typeof track?.muted === 'boolean' ? { muted: track.muted } : {}),
-        ...(typeof track?.volume === 'number' ? { volume: track.volume } : {}),
-      });
+      const definition = { ...track, id, kind, label: text(track?.label) ?? id } as TrackDefinition;
+      const shotTrackOrder = rawTracks.map((raw) => text(record(raw)?.id)).filter((value): value is string => Boolean(value));
+      const position = shotTrackOrder.indexOf(id);
+      let insertAt = tracks.length;
+      for (let previous = position - 1; previous >= 0; previous--) {
+        const sharedIndex = tracks.findIndex((entry) => entry.id === shotTrackOrder[previous]);
+        if (sharedIndex >= 0) { insertAt = sharedIndex + 1; break; }
+      }
+      if (position >= 0 && !shotTrackOrder.slice(0, position).some((priorId) => tracks.some((entry) => entry.id === priorId))) {
+        const nextShared = shotTrackOrder.slice(position + 1).find((nextId) => tracks.some((entry) => entry.id === nextId));
+        if (nextShared) insertAt = tracks.findIndex((entry) => entry.id === nextShared);
+      }
+      if (position >= 0 && !shotTrackOrder.slice(position + 1).some((nextId) => tracks.some((entry) => entry.id === nextId))) {
+        insertAt = tracks.length;
+      }
+      tracks.splice(insertAt, 0, definition);
+      trackIds.add(id);
     }
   }
-  if (tracks.size === 0) {
-    tracks.set('video', { id: 'video', kind: 'visual', label: 'Video' });
+  if (tracks.length === 0) {
+    tracks.push({ id: 'video', kind: 'visual', label: 'Video' });
   }
-  return [...tracks.values()];
+  return tracks;
 }
 
 function projectClip(

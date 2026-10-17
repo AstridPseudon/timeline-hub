@@ -38,21 +38,23 @@ it('binds the rendering pack panel at the existing app host boundary with live i
   const seek = vi.fn();
   host.store.getState().syncOpsSlice({ ...host.store.getState().ops, onClickTimeArea: seek });
   const view = render(<TranscriptSurfaceHarness />);
-  fireEvent.change(view.getByLabelText('Transcript source'), { target: { value: 'media:media' } });
-  await waitFor(() => expect(view.getByText('No saved transcript for Interview.mp4.')).toBeTruthy());
+  await waitFor(() => expect(view.getByText('No transcript for the media on this timeline yet.')).toBeTruthy());
   fireEvent.click(view.getByRole('button', { name: 'Import transcript…' }));
   await waitFor(() => expect(view.getByRole('dialog', { name: 'Transcript settings' })).toBeVisible());
+  // Two recordings on this timeline: the file names neither, so the import is matched by hand.
+  fireEvent.change(view.getByLabelText('Match to video or audio'), { target: { value: 'media' } });
   fireEvent.click(view.getByRole('button', { name: 'Import transcript…' }));
   fireEvent.change(view.getByLabelText('Import transcript JSON'), { target: { files: [{ text: async () => JSON.stringify({ segments: [{ start: 0, end: 4, text: 'Hello' }] }) }] } });
-  await waitFor(() => expect(view.getByText('Hello')).toBeTruthy());
+  // The recording plays twice on the timeline, so the whole-film reading says it twice.
+  await waitFor(() => expect(view.getAllByText('Hello')).toHaveLength(2));
   expect(host.commitData).toHaveBeenCalledTimes(1);
-  fireEvent.click(view.getByText('Hello'));
+  fireEvent.click(view.getAllByText('Hello')[0]);
   fireEvent.click(view.getByRole('button', { name: 'Seek segment' }));
   expect(seek).toHaveBeenCalledWith(0);
   fireEvent.click(view.getByRole('button', { name: 'Edit segment' }));
   fireEvent.change(view.getByRole('textbox'), { target: { value: 'Corrected' } });
   fireEvent.click(view.getByRole('button', { name: 'Save correction' }));
-  await waitFor(() => expect(view.getByText('Corrected')).toBeTruthy());
+  await waitFor(() => expect(view.getAllByText('Corrected')).toHaveLength(2));
   expect(host.commitData).toHaveBeenCalledTimes(2);
   view.rerender(<TranscriptSurfaceHarness activePanelKey={null} />);
   expect(view.getByTestId('astrid-transcript-panel')).not.toBeVisible();

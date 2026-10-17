@@ -35,6 +35,7 @@ describe("project transcript React session lifetime", () => {
     const documents = new Map<string, ProjectTranscriptDocument>();
     const repository: ProjectTranscriptRepository = {
       projectId: "project",
+      listAll: async () => [...documents.values()],
       listForMedia: async () => [],
       get: async (id) => {
         if (!documents.has(id))
@@ -109,9 +110,12 @@ describe("project transcript React session lifetime", () => {
     await expect(live.listProjectSources("asset")).rejects.toThrow(
       "no longer active",
     );
+    // The replacement owner reads the transcript the replaced owner imported.
     await expect(
       view.result.current.listProjectSources("asset"),
-    ).resolves.toEqual([]);
+    ).resolves.toEqual([
+      { documentId: [...documents.keys()][0], sourceId: "default", version: 1 },
+    ]);
     const replacement = view.result.current;
     view.unmount();
     await expect(replacement.listProjectSources("asset")).rejects.toThrow(
