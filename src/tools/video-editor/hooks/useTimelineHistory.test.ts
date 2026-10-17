@@ -16,6 +16,9 @@ import { useTimelineHistory } from './useTimelineHistory';
 import { TimelineEventBus } from './useTimelineEventBus';
 import type { Checkpoint } from '../types/history';
 import type { TimelineEditability } from '../lib/timeline-editability';
+import { attachGestureCommands } from '../commands/semanticGestures.ts';
+import { trackHistoryInverse } from '../commands/trackHistory.ts';
+import type { EditCommand } from '@/integrations/runtime/generated.ts';
 
 type CommitCall = {
   nextData: TimelineData;
@@ -754,6 +757,34 @@ describe('useTimelineHistory — upload pause gate', () => {
     });
     expect(commitCalls.length).toBe(commitsBefore + 1);
   });
+});
+
+it('W48 retains only the acknowledged order inverse and replays its captured command across a refresh', () => {
+  const { result, dataRef, commitCalls, eventBus } = setup();
+  const owner = makeTimelineData(1);
+  const before = ['parent/track:V1', 'parent/track:A1']; const after = [...before].reverse();
+  const command: EditCommand = { op: 'timeline.reorder', select: before[0], args: { expected_order: before, order: after },
+    expect: { [`${before[0]}::track_order`]: { state: 'present', value: before } } };
+  attachGestureCommands(owner, [command]);
+  const write = { id: before[0], path: 'track_order', before: { state: 'present', value: before }, after: { state: 'present', value: after } };
+  const inverse = trackHistoryInverse([command], { status: 'accepted', accepted_publication_id: 'reorder-publication', change: { direct_writes: [write] } })!;
+  act(() => { result.current.onBeforeCommit(dataRef.current, { nativeRegistrationOwner: owner }); dataRef.current = owner; });
+  expect(result.current.canUndo).toBe(false);
+  act(() => eventBus.emit('nativeRegistrationAccepted', makeTimelineData(1), inverse));
+  expect(result.current.canUndo).toBe(false);
+  act(() => eventBus.emit('nativeRegistrationAccepted', owner, inverse));
+  const refreshed = makeTimelineData(2);
+  act(() => { result.current.onRemoteData(owner, refreshed); dataRef.current = refreshed; });
+  expect(result.current.canUndo).toBe(true);
+  act(() => result.current.undo());
+  expect(commitCalls[0].nextData.config).toEqual(refreshed.config);
+  expect(commitCalls[0].options).toMatchObject({ editCommands: [inverse], skipHistory: true, save: true });
+  act(() => result.current.redo()); expect(commitCalls).toHaveLength(1);
+  const undoInverse = trackHistoryInverse([inverse], { status: 'accepted', accepted_publication_id: 'undo-publication', change: { direct_writes: inverse.args.writes } })!;
+  act(() => eventBus.emit('nativeRegistrationAccepted', commitCalls[0].nextData, undoInverse));
+  expect(result.current.canRedo).toBe(true);
+  act(() => result.current.redo());
+  expect(commitCalls[1].options).toMatchObject({ editCommands: [command] });
 });
 
 it('W09 native registration undo/redo waits for its exact acknowledged owner and never saves a snapshot fallback', () => {

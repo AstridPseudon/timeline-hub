@@ -338,8 +338,10 @@ export function useTimelineHistory({
     const nextData = entry.nativeRegistration && (isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse) || isTranscriptCaptionInverse(inverse) || isClipPlacementInverse(inverse) || isClipStructureInverse(inverse) || isTrackHistoryInverse(inverse))
       ? { ...current } : preserveUploadingClips(current, applyHistoryEntry(current, entry, direction));
     const mediaReplay = entry.nativeRegistration?.mediaReplay;
-    const historyCommands = direction === 'redo' && mediaReplay ? [structuredClone(mediaReplay)] : inverse ? [inverse] : undefined;
-    if (entry.nativeRegistration) entry.nativeRegistration = { owner: nextData, ...(mediaReplay ? { mediaReplay } : {}) };
+    const reorderReplay = entry.nativeRegistration?.reorderReplay;
+    const replay = mediaReplay ?? reorderReplay;
+    const historyCommands = direction === 'redo' && replay ? [structuredClone(replay)] : inverse ? [inverse] : undefined;
+    if (entry.nativeRegistration) entry.nativeRegistration = { owner: nextData, ...(mediaReplay ? { mediaReplay } : {}), ...(reorderReplay ? { reorderReplay } : {}) };
     // Same protection every applyEdit path has: history snapshots never contain
     // transient `uploading-*` skeletons (rowsToConfig drops them from config),
     // so a restore during an in-flight upload would silently delete the
@@ -403,12 +405,14 @@ export function useTimelineHistory({
 
     const commands = options.nativeRegistrationOwner && gestureCommandsFor(options.nativeRegistrationOwner);
     const mediaReplay = commands?.length === 1 && isSelectedMediaCreation(commands[0]) ? structuredClone(commands[0]) : undefined;
+    const reorderReplay = commands?.length === 1 && commands[0].op === 'timeline.reorder' && isTrackHistoryBatch(commands)
+      ? structuredClone(commands[0]) : undefined;
     const nextEntry: UndoEntry = {
       snapshot: buildSnapshot(currentData),
       timestamp: new Date(now).toISOString(),
       transactionId: options.transactionId,
       command: buildCommandHistoryEntry(options.commandHistory),
-      ...(options.nativeRegistrationOwner ? { nativeRegistration: { owner: options.nativeRegistrationOwner, ...(mediaReplay ? { mediaReplay } : {}) } } : {}),
+      ...(options.nativeRegistrationOwner ? { nativeRegistration: { owner: options.nativeRegistrationOwner, ...(mediaReplay ? { mediaReplay } : {}), ...(reorderReplay ? { reorderReplay } : {}) } } : {}),
     };
 
     if (!options.nativeRegistrationOwner && !topUndoEntry?.nativeRegistration
