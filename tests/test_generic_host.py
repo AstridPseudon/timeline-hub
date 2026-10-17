@@ -2722,6 +2722,7 @@ def test_v3_render_command_selects_host_command_bridge_from_declared_descriptor(
     launch_argv = launched["popen_argv"]
     assert launch_argv[:5] == [sys.executable, "-I", "-S", "-B", "-c"]
     assert "install_render_command_client" in launch_argv[5]
+    assert "sys.path.extend(json.loads(sys.argv[1]))" in launch_argv[5]
     assert launch_argv[7:9] == [definition["command"]["argv"][2], "--timeline"]
     assert launch_argv[9] == str(timeline)
     assert "--renderer-command-stdio" not in launch_argv

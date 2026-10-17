@@ -8596,7 +8596,7 @@ class GenericPackHost:
                     )
                 )
                 startup = (
-                    "import json,runpy,sys; sys.path[:0]=json.loads(sys.argv[1]); "
+                    "import json,runpy,sys; sys.path.extend(json.loads(sys.argv[1])); "
                     "from astrid.core.execution.render_command_pipe import install_render_command_client; "
                     "install_render_command_client(); sys.argv=sys.argv[2:]; "
                     "runpy.run_module(sys.argv.pop(0),run_name='__main__',alter_sys=True)"
