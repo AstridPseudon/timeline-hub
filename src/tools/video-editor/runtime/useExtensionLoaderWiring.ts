@@ -251,7 +251,6 @@ export interface UseExtensionLoaderWiringOptions {
    * M1-LOCKED: Direct host-supplied extensions that bypass the loader are
    * excluded from the manager's package-state inventory.  Only installed
    * packs that pass through the loader populate PackageStateInventoryEntry[].
-   * See docs/extensions/extension-layer-foundation-assessment.md §2.3.
    */
   repository?: ExtensionStateRepository | null;
 
