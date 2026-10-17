@@ -1,4 +1,4 @@
-import { compositeEffectGestureCommands, propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
+import { attachGestureCommands, gestureCommandsFor, compositeEffectGestureCommands, propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
@@ -172,11 +172,21 @@ export function useClipEditing({
       return;
     }
 
+    const keyframeEdit = Object.prototype.hasOwnProperty.call(patch, 'keyframes') || Object.prototype.hasOwnProperty.call(patch, 'keyframeOrigin');
+    const pairs = keyframeEdit ? validClipIds.map(id => compositeEffectGestureCommands(current, id, patch)) : undefined;
+    // This API's explicit common replacement still captures each owner's own
+    // before pair. Any unsupported member/pair refuses before optimistic writes.
+    if (pairs && (validClipIds.length !== new Set(clipIds).size || pairs.some(pair => pair.refused || !pair.commands))) return;
+    if (pairs) {
+      const captured = { ...current };
+      attachGestureCommands(captured, pairs.flatMap(pair => pair.commands!), current);
+      if (!gestureCommandsFor(captured)) return;
+    }
     const metaUpdates = Object.fromEntries(
-      validClipIds.map((clipId) => [clipId, patch]),
+      validClipIds.map((clipId) => [clipId, keyframeEdit ? structuredClone(patch) : patch]),
     ) as Record<string, Partial<ClipMeta>>;
 
-    const commandGroups = validClipIds.map((id) => propertyGestureCommands(current, id, patch));
+    const commandGroups = pairs ? pairs.map(pair => pair.commands) : validClipIds.map((id) => propertyGestureCommands(current, id, patch));
     const editCommands = commandGroups.every((commands) => commands !== undefined) ? commandGroups.flat() : undefined;
     if (!patchAffectsDuration(patch)) {
       applyRowsEdit(current.rows, metaUpdates, undefined, undefined, { editCommands });
@@ -228,14 +238,26 @@ export function useClipEditing({
         continue;
       }
 
-      metaUpdates[clipId] = patchFn(existing);
+      // Give the transform a private member snapshot; it cannot mutate the
+      // guards or another selected member while the batch is being captured.
+      const patch = patchFn(structuredClone(existing));
+      metaUpdates[clipId] = Object.prototype.hasOwnProperty.call(patch, 'keyframes') || Object.prototype.hasOwnProperty.call(patch, 'keyframeOrigin')
+        ? structuredClone(patch) : patch;
     }
 
     if (Object.keys(metaUpdates).length === 0) {
       return;
     }
 
-    const groups = Object.entries(metaUpdates).map(([id, patch]) => propertyGestureCommands(current, id, patch));
+    const keyframeEdit = Object.values(metaUpdates).some(patch => Object.prototype.hasOwnProperty.call(patch, 'keyframes') || Object.prototype.hasOwnProperty.call(patch, 'keyframeOrigin'));
+    const pairs = keyframeEdit ? validClipIds.map(id => compositeEffectGestureCommands(current, id, metaUpdates[id])) : undefined;
+    if (pairs && (validClipIds.length !== new Set(clipIds).size || pairs.some(pair => pair.refused || !pair.commands))) return;
+    if (pairs) {
+      const captured = { ...current };
+      attachGestureCommands(captured, pairs.flatMap(pair => pair.commands!), current);
+      if (!gestureCommandsFor(captured)) return;
+    }
+    const groups = pairs ? pairs.map(pair => pair.commands) : Object.entries(metaUpdates).map(([id, patch]) => propertyGestureCommands(current, id, patch));
     applyRowsEdit(current.rows, metaUpdates, undefined, undefined, {
       editCommands: groups.every((commands) => commands !== undefined) ? groups.flat() : undefined,
     });

@@ -29,6 +29,36 @@ describe('W26 receipt qualification', () => {
       if (kind === 'no-publication') result.accepted_publication_id = '';
       expect(appKeyframeHistoryInverse([call()], result)).toBeUndefined();
     });
+  it('captures distinct member pairs and retains selection order through receipt-derived Undo and Redo', () => {
+    const first = { ...call(), select: 'parent/clip:z', resolved: ['parent/clip:z'] };
+    const second = call(); second.args.keyframes = { other: [{ id: 'second-only', time: -0.125, value: 3, interpolation: 'hold' }] };
+    second.expect!.keyframes = { state: 'absent' }; second.expect!.keyframeOrigin = { state: 'absent' };
+    const calls = [first, second];
+    const rows = calls.flatMap(command => ['keyframes', 'keyframeOrigin'].map(path => ({ id: command.select!, path,
+      before: command.expect![path], after: { state: 'present', value: command.args[path] } })));
+    // SDK may return owners in a different order. Command order stays captured.
+    const result = { ...receipt(), change: { direct_writes: [...rows].reverse() } };
+    expect(isAppKeyframeHistoryBatch(calls)).toBe(true);
+    const undo = appKeyframeHistoryInverse(calls, result)!;
+    expect((undo.args.writes as typeof rows).map(row => row.id)).toEqual(['parent/clip:z', 'parent/clip:z', 'parent/clip:c', 'parent/clip:c']);
+    const undoRows = (undo.args.writes as typeof rows).filter(row => JSON.stringify(row.before) !== JSON.stringify(row.after));
+    const redo = appKeyframeHistoryInverse([undo], { ...result, accepted_publication_id: 'undo-bulk', change: { direct_writes: [...undoRows].reverse() } })!;
+    expect((redo.args.writes as typeof rows).map(row => row.id)).toEqual(['parent/clip:z', 'parent/clip:c', 'parent/clip:c']);
+    for (const row of redo.args.writes as typeof rows) expect(rows).toContainEqual(row);
+    expect(appKeyframeHistoryInverse(calls, { ...result, change: { direct_writes: rows.slice(1) } })).toBeUndefined();
+    expect(appKeyframeHistoryInverse(calls, { ...result, change: { direct_writes: [rows[0], rows[1], rows[2], rows[2]] } })).toBeUndefined();
+    expect(isAppKeyframeHistoryBatch([first, first])).toBe(false);
+  });
+  it('retains the historical consequence-only Undo refusal without treating it as accepted Redo', () => {
+    const forward = call(); forward.expect!.keyframeOrigin = { state: 'absent' };
+    const accepted = receipt(); accepted.change.direct_writes[1].before = { state: 'absent' };
+    const undo = appKeyframeHistoryInverse([forward], accepted)!;
+    const writes = accepted.change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before }));
+    const result = { status: 'accepted', accepted_publication_id: 'historical-incomplete-undo', change: {
+      direct_writes: writes.slice(1), consequences: [{ ...writes[0], path: 'keyframes.literal.key[0]' }],
+    } };
+    expect(appKeyframeHistoryInverse([undo], result)).toBeUndefined();
+  });
   it('acknowledges only the complete equal paired no-change receipt without an inverse', () => {
     const c = call(); c.expect = Object.fromEntries(Object.entries(c.args).map(([path, value]) => [path, { state: 'present', value }]));
     const result = receipt(); result.status = 'no_change'; result.accepted_publication_id = null as never;
@@ -39,12 +69,12 @@ describe('W26 receipt qualification', () => {
   it('rejects no-change for an actual changed pair', () => expect(appKeyframeHistoryInverse([call()], {
     status: 'no_change', accepted_publication_id: null, change: { direct_writes: [] },
   })).toBeUndefined());
-  it.each(['missing-pair', 'extra-field', 'batch', 'wrong-scope'])(
+  it.each(['missing-pair', 'extra-field', 'unresolved-member', 'wrong-scope'])(
     'does not register unsupported %s shapes', kind => {
       const c = call(); const calls = [c];
       if (kind === 'missing-pair') delete c.args.keyframeOrigin;
       if (kind === 'extra-field') c.args.speed = 2;
-      if (kind === 'batch') calls.push({ ...call(), select: 'parent/clip:other' });
+      if (kind === 'unresolved-member') calls.push({ ...call(), select: 'parent/clip:other' });
       if (kind === 'wrong-scope') c.select = 'clip:c';
       expect(isAppKeyframeHistoryBatch(calls)).toBe(false);
     });

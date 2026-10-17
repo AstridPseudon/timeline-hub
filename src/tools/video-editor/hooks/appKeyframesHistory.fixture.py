@@ -41,6 +41,9 @@ if occurrence:
     if value.get('variant') == 'refused':
         fixture['source_mapping']['shots']['A']['revision_id'] = 'different-pinned-revision'
     clips = []
+if value.get('variant') == 'stale-second-origin':
+    second_id = value['requests'][0]['change']['commands'][1]['select'].split('/clip:')[1]
+    next(clip for clip in clips if clip['id'] == second_id)['keyframeOrigin'] = 123.125
 if value.get('variant') == 'stale-origin':
     clips[0]['keyframeOrigin'] = 123.125
 if value.get('variant') == 'stale':
@@ -81,21 +84,26 @@ for request in value['requests']:
         replays.append(True)
         continue
     port = CallerPort(request)
-    port.current = request['base_revision_id']
+    port.current = 'advanced-head' if value.get('variant') == 'stale-base' else request['base_revision_id']
     result = service.commit(request, port)
     assert result['status'] in {'accepted', 'no_change', 'refused', 'conflict'}, result
     assert service.commit(request, port) == result, 'exact replay changed receipt'
     assert len(port.accepts) == (1 if result['status'] in {'accepted', 'no_change'} else 0), result
     if result['status'] == 'accepted':
         calls = request['change']['commands']
-        if len(calls) == 1 and calls[0]['op'] == 'clip.set':
+        if calls and all(call['op'] == 'clip.set' for call in calls):
             # Full-document expectation for this exact caller pair, not a diff writer.
             expected = copy.deepcopy(document)
-            target = commands.recorded_owner(Checkout(expected), commands.EditCommand.coerce(calls[0]), 'clip')
-            target.data.update(copy.deepcopy(calls[0]['args']))
+            for call in calls:
+                target = commands.recorded_owner(Checkout(expected), commands.EditCommand.coerce(call), 'clip')
+                target.data.update(copy.deepcopy(call['args']))
             assert result['canonical_document'] == expected, 'W26 changed an unowned document field'
-            assert result['change']['commands'][0]['args'] == calls[0]['args']
-            assert result['change']['commands'][0]['expect'] == calls[0]['expect']
+            assert len(result['change']['commands']) == len(calls)
+            for captured, call in zip(result['change']['commands'], calls):
+                # SDK adds version/bindings/created/authorship metadata; all
+                # caller-owned fields must remain exact and in command order.
+                for field in ('op', 'select', 'resolved', 'args', 'expect'):
+                    assert captured[field] == call[field]
         document = copy.deepcopy(result['canonical_document'])
     before_ids = {sid for sid in commands.entity_states(Checkout(before)) if '/clip:' in sid}
     after_ids = {sid for sid in commands.entity_states(Checkout(document)) if '/clip:' in sid}
