@@ -1027,6 +1027,11 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
         return fade_paths(selected[0], args, before[selected[0]])
     if entry.op == "clip.set-transition":
         return {(selected[0], path) for path in ("transition", "elementRef")}
+    if entry.op == "clip.detach-audio":
+        # The handler authors the allocated child, including its complete copied
+        # payload. The enclosing clips array remains a storage consequence.
+        return {(selected[0], "volume")} | {
+            (sid, "") for sid in set(after) - set(before) if "/clip:" in sid}
     if entry.op == "clip.remove" and selected and "music_bed" in before.get(selected[0], {}):
         return {(selected[0], ""), (selected[0], "music_bed")}
     if entry.op == "timeline.inverse":
@@ -1318,6 +1323,19 @@ def finish_recording(tl, tx, entry):
                 direct.append(write)
         else:
             consequences.append({**write, "cause": cause})
+    # Track order is a synthetic authored property: entity_states preserves
+    # collection iteration order, but changed_paths only sees stored payloads.
+    # Use the executed call's explicit authorship, never its aggregate config
+    # consequence, to include the complete guarded permutation in the receipt.
+    for call in tx.calls:
+        for key, kind in (call.authorship or {}).items():
+            sid, path = write_target(key, call.resolved)
+            if kind != "direct" or path != "track_order" or "/track:" not in sid:
+                continue
+            old, new = state_at(original, sid, path), state_at(final, sid, path)
+            write = dict(id=sid, path=path, before=old, after=new)
+            if not _same_value(old, new) and write not in direct:
+                direct.append(write)
     tx.direct_writes, tx.consequences = direct, consequences
 
 
