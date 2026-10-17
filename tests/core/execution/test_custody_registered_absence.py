@@ -27,12 +27,18 @@ def test_post_registration_absence_retains_only_the_exact_acquired_handle(tmp_pa
     before = {100: row(100, 'root', 1), 102: row(102, 'parent', 100),
               103: row(103, 'child', 102)}
     after = {k: dict(v) for k, v in before.items() if k != 103}
-    if change == 'reused-child': after[103] = row(103, 'other', 102)
-    elif change == 'unknown-grandchild': after[104] = row(104, 'new-child', 103)
-    elif change == 'missing-root': after.pop(100)
-    elif change == 'reused-root': after[100]['birth_id'] = 'other'
-    elif change == 'zombie-root': after[100]['status'] = 5
-    elif change == 'empty-census': after = {}
+    if change == 'reused-child':
+        after[103] = row(103, 'other', 102)
+    elif change == 'unknown-grandchild':
+        after[104] = row(104, 'new-child', 103)
+    elif change == 'missing-root':
+        after.pop(100)
+    elif change == 'reused-root':
+        after[100]['birth_id'] = 'other'
+    elif change == 'zombie-root':
+        after[100]['status'] = 5
+    elif change == 'empty-census':
+        after = {}
     samples = iter((before, after))
     def fresh():
         value = next(samples)
@@ -42,7 +48,8 @@ def test_post_registration_absence_retains_only_the_exact_acquired_handle(tmp_pa
     registered = []
     def register(pid, birth, **kwargs):
         registered.append((pid, birth))
-        if change != 'missing-captured-handle': owner._handles[pid] = captured
+        if change != 'missing-captured-handle':
+            owner._handles[pid] = captured
     # Synthetic acquired handles exercise this caller's post-registration
     # control only. This test creates no native authority or exit certificate.
     owner.register = register
