@@ -181,10 +181,18 @@ def test_network_bootstrap_keeps_interpreter_paths_first(tmp_path, corruption):
 
 def test_render_backend_bootstrap_exact_path_order(bootstrap, monkeypatch):
     from astrid.core.execution import render_command_pipe as relay
+    from astrid.core.execution.renderer_transport import QualifiedRendererReads
 
     f = bootstrap
     owner = relay.HostRenderCommandBridge.__new__(relay.HostRenderCommandBridge)
     owner.policy, owner.environment = f.policy, {}
+    owner.closure = object()
+    # This fixture stops before a renderer launch and owns only startup/path
+    # assertions. Real renderer admission has its separate closure controls.
+    def admitted_reads(cls, *, closure, environment, policy):
+        assert closure is owner.closure and policy is f.policy
+        return None
+    monkeypatch.setattr(QualifiedRendererReads, 'admit', classmethod(admitted_reads))
     owner.imports = [str(f.checkout), str(f.purelib),
                      host.sysconfig.get_path('platlib'), str(f.dependency)]
     captured = []
