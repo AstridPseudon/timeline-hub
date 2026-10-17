@@ -4,7 +4,7 @@
   "revision": "C2",
   "issuedOn": "2026-09-24",
   "status": "frozen-local-contract",
-  "digest": "sha256:7973ca8a3d5296ad3e802d2089a6d80a6947017564dd365a70f83cdb25668dfe",
+  "digest": "sha256:b287294dd19846792fcb40f8b121bf338c7569b1021d795e3e12f48d0927eedc",
   "predecessor": {
     "path": "config/contracts/astrid-plan-a-c1.json",
     "revision": "C1",
@@ -130,7 +130,7 @@
   "sourceApplicability": [
     {
       "repository": "astrid-app",
-      "head": "60ffd54223d94b41981993381168248704db0681",
+      "head": "a062e825ed3b335a6eb4175c0bf2a020e036120c",
       "path": "config/contracts/astrid-plan-a-c1.json",
       "sha256": "a4d0b272e8535fd0d2f29e5d8cf2a666e011731006847a0285dbc634bea045d6",
       "role": "immutable-predecessor",
@@ -138,7 +138,7 @@
     },
     {
       "repository": "astrid-app",
-      "head": "60ffd54223d94b41981993381168248704db0681",
+      "head": "a062e825ed3b335a6eb4175c0bf2a020e036120c",
       "path": "scripts/quality/check-astrid-contract-freeze.mjs",
       "sha256": "e0bb65543bcd1f42de0c18dd63089d374ec9394b670b74cfaffd299bd7f5ffbd",
       "role": "C1-validator-and-C2-gap-source",
