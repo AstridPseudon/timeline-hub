@@ -1413,6 +1413,43 @@ def test_registration_timeout_diagnostic_retains_launch_pid_and_phase():
         broker.wait_until_sealed()
 
 
+@pytest.mark.parametrize('deferred', [False, True])
+def test_host_accept_budget_starts_after_preparation_without_extending_handshake(tmp_path, graph, monkeypatch, deferred):
+    # Real private socket/thread with a synthetic actor; no child or native
+    # authority is created by this ordering control.
+    _, actors, identities, _ = graph
+    monkeypatch.setattr(custody.AuthenticatedCleanupActor, 'current', classmethod(lambda cls: actors[101]))
+    broker = custody.RoleBoundCustodyBroker(role='host', identity_provider=identities.get,
+        ledger_root=tmp_path/'broker-ledger', timeout=0.02, retain_channel=True,
+        **({'defer_accept': True} if deferred else {}))
+    try:
+        if deferred:
+            assert not broker._ready.wait(0.06)
+            assert broker.socket_path.exists()
+            broker.start_accept()
+            with pytest.raises(custody.CustodyError, match='already started'):
+                broker.start_accept()
+        assert broker._ready.wait(2)
+        broker._thread.join(2)
+        assert isinstance(broker.error, TimeoutError)
+        assert not broker.socket_path.exists()
+        with pytest.raises(custody.CustodyError, match='stage=accept'):
+            broker.wait_until_sealed()
+    finally:
+        broker.abort_before_spawn()
+
+
+@pytest.mark.parametrize('role,retain,deferred', [('command',True,True), ('host',False,True), ('host',True,'true')])
+def test_deferred_accept_is_only_the_existing_retained_host_mode(tmp_path, monkeypatch, role, retain, deferred):
+    monkeypatch.setattr(custody.sys, 'platform', 'darwin')
+    monkeypatch.setattr(custody.AuthenticatedCleanupActor, 'current', classmethod(
+        lambda cls: pytest.fail('invalid mode reached custody reservation')))
+    with pytest.raises(custody.CustodyError, match='retained Host'):
+        custody.RoleBoundCustodyBroker(role=role, retain_channel=retain, defer_accept=deferred,
+            identity_provider=lambda pid: None, ledger_root=tmp_path/'never-reserved')
+    assert not (tmp_path/'never-reserved').exists()
+
+
 def _ordinary_census_fixture(observed_descendant):
     owner, _, identities, _ = observed_descendant
     broker = object.__new__(custody.RoleBoundCustodyBroker)

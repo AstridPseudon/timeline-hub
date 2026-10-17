@@ -2383,6 +2383,7 @@ class RoleBoundCustodyBroker:
         owner_epoch: str | None = None,
         launch_parent: Any = None,
         retain_channel: bool = False,
+        defer_accept: bool = False,
     ) -> None:
         if not role or any(c not in "abcdefghijklmnopqrstuvwxyz0123456789_-" for c in role):
             raise CustodyError("custody role is invalid")
@@ -2390,6 +2391,8 @@ class RoleBoundCustodyBroker:
             raise CustodyError("Darwin audit-token custody is unavailable")
         if type(retain_channel) is not bool or (retain_channel and role not in {'command', 'engine', 'host'}):
             raise CustodyError('post-exec custody role has no matched pipe consumer')
+        if type(defer_accept) is not bool or (defer_accept and (role != 'host' or not retain_channel)):
+            raise CustodyError('deferred acceptance requires the retained Host consumer')
         self.launch_parent = launch_parent
         self.retain_channel = retain_channel
         self.channel: socket.socket | None = None
@@ -2491,6 +2494,17 @@ class RoleBoundCustodyBroker:
                 self.abort_before_spawn()
                 raise
         self._thread = threading.Thread(target=self._serve, daemon=True)
+        self._accept_started = False
+        if not defer_accept:
+            self.start_accept()
+
+    def start_accept(self) -> None:
+        """Arm the unchanged handshake bound after trusted launch preparation."""
+        if self._accept_started:
+            raise CustodyError('custody acceptance already started')
+        if self.state != 'accepting' or self.error is not None or self._ready.is_set() or self.listener.fileno() < 0:
+            raise CustodyError('custody acceptance is no longer available')
+        self._accept_started = True
         try:
             self._thread.start()
         except BaseException:
