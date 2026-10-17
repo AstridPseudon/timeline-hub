@@ -13,8 +13,10 @@ to installed pack-owned skills; the runtime receives the same validated roots.
 Hivemind owns its skill and all seven executors. Discovery and skill sync stay
 offline and do not install code.
 
-Start by reading [source-state.json](source-state.json) and inspecting current
-diffs. Preserve unrelated user changes and the approved skill reorganization.
+Inspect the current source checkout and diffs before implementation. Preserve
+unrelated user changes and the approved skill reorganization. The former
+machine-local source-state snapshot is historical and is not an input to this
+handoff.
 Remove only the superseded Hivemind-copy/default-selection prototype identified
 in the plan. Fix the canonical external manifest, then pin its valid revision.
 Do not substitute the personal Hivemind skill, bundle copied executors into
