@@ -1532,11 +1532,15 @@ def _darwin_process_identity(pid: int, *, timeout: float) -> dict[str, object] |
         raise CustodyError("process identity observation deadline expired")
     if first != second:
         raise CustodyError("native process identity changed during observation")
+    # Match the existing Host's fixed English UTC ps-lstart representation.
+    # The native double observation and full audit-token checks remain exact;
+    # observer locale/timezone cannot select a different identity for one PID.
     try:
-        # Preserve the durable legacy ps-lstart spelling, local zone and %e padding.
-        birth = "ps-lstart:" + time.strftime(
-            "%a %b %e %H:%M:%S %Y", time.localtime(first["start_sec"])
-        )
+        value = time.gmtime(first["start_sec"])
+        weekdays = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+        months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+        birth = (f"ps-lstart:{weekdays[value.tm_wday]} {months[value.tm_mon - 1]} "
+                 f"{value.tm_mday:2d} {value.tm_hour:02d}:{value.tm_min:02d}:{value.tm_sec:02d} {value.tm_year:04d}")
     except (OverflowError, OSError, ValueError) as exc:
         raise CustodyError("native process birth identity was malformed") from exc
     return {"pid": first["pid"], "uid": first["uid"],

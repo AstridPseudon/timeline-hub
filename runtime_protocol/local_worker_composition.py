@@ -112,7 +112,7 @@ def _preparation_diagnostic(received, expected):
         return value if isinstance(value, str) and value in allowed else {"sha256": digest(value)}
     return {"frame_sha256": digest(received),
         "status": disposition("status", {"prepared", "unresolved", "cleaned"}),
-        "version": disposition("version", {"runtime.local-execution-preparation/v1"}),
+        "version": disposition("version", {"runtime.local-execution-host/v1", "runtime.local-execution-preparation/v1"}),
         "error_code": disposition("error_code", {"preparation_unresolved", "report_unresolved", "cleanup_unresolved", "binding_conflict"}),
         "missing_fields": sorted(name(k) for k in expected.keys() - received.keys())[:32],
         "extra_fields": sorted(name(k) for k in received.keys() - expected.keys())[:32],
@@ -881,7 +881,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             # operation is itself positive control-channel activity.
             return True
         try:
-            if self._birth(handle.worker.pid) != handle.birth_id:
+            observed_birth = handle.retained.verify()["birth_id"] if handle.host_only else self._birth(handle.worker.pid)
+            if observed_birth != handle.birth_id:
                 return False
             readable, _, exceptional = select.select([handle.control], [], [handle.control], 0)
             if exceptional or readable:
@@ -1122,7 +1123,12 @@ class OSProcessInspector:
     def _identity(self, pid: int, birth: str, executable: Path, digest: str, *, parent_pid: int | None, session_owner: bool) -> ProcessIdentity:
         if pid <= 0:
             raise ConflictError("observed process PID is invalid")
-        observed_birth = process_birth_identity(pid)
+        if _host_only(self.profile):
+            from banodoco_local.custody_broker import default_process_identity
+            observed = default_process_identity(pid)
+            observed_birth = observed["birth_id"] if observed is not None else None
+        else:
+            observed_birth = process_birth_identity(pid)
         if not observed_birth or observed_birth != birth:
             raise ConflictError("independent process birth identity disagrees with Worker report")
         observed_parent = int(_ps(pid, "ppid"))
