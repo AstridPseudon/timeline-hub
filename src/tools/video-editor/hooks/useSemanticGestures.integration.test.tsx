@@ -5534,6 +5534,20 @@ function fadeReadback(initial: TimelineData, proof: ReturnType<typeof fadeSource
   return { ...parent.config, clips };
 }
 
+function appKeyframeParentConfig(document: unknown): TimelineData['config'] {
+  const parent = (document as { parent?: {
+    config: TimelineData['config'];
+    clips: TimelineData['config']['clips'];
+    tracks?: TimelineData['config']['tracks'];
+  } } | null)?.parent;
+  if (!parent) throw new Error('SDK canonical readback has no parent document');
+  return {
+    ...parent.config,
+    clips: structuredClone(parent.clips),
+    ...(parent.tracks ? { tracks: structuredClone(parent.tracks) } : {}),
+  };
+}
+
 function mountFadeHistory(h: Awaited<ReturnType<typeof setup>>) {
   return renderHook(() => {
     const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
@@ -6994,6 +7008,10 @@ describe('W26 actual provider guards', () => {
     await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
     await waitFor(() => expect(history.result.current.canUndo).toBe(true));
     const forward = structuredClone(proof.result.canonical_document);
+    const forwardOccurrenceView = structuredClone(fadeReadback(initial, proof));
+    expect(proof.readback).toEqual(forward);
+    // The SDK fixture stores parent bytes here; occurrence clips are projected from its shot graph.
+    expect(h.getCurrentConfig()).toEqual(appKeyframeParentConfig(proof.readback));
     expect(requests[0].change.commands).toEqual([{ op: 'clip.set', select: 'occurrence:occ-A/clip:clip-1',
       resolved: ['occurrence:occ-A/clip:clip-1'], args: { keyframes: { ...w26Keys, opacity: w26Keys.opacity.filter((_, index) => index !== 1) }, keyframeOrigin: -2.375 },
       expect: { keyframes: { state: 'present', value: w26Keys }, keyframeOrigin: { state: 'absent' } } }]);
@@ -7010,7 +7028,8 @@ describe('W26 actual provider guards', () => {
     expect(proof.results[1].change.direct_writes.map(write => [write.id, write.path])).toEqual([
       ['occurrence:occ-A/clip:clip-1', 'keyframeOrigin'], ['occurrence:occ-A/clip:clip-1', 'keyframes'],
     ]);
-    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof));
+    expect(h.getCurrentConfig()).toEqual(appKeyframeParentConfig(proof.readback));
+    expect(fadeReadback(initial, proof).clips).toEqual(initial.config.clips);
     act(() => history.result.current.redo());
     await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
     expect(requests).toHaveLength(3); expect(proof.results.map(result => result.status)).toEqual(['accepted', 'accepted', 'accepted']);
@@ -7019,7 +7038,8 @@ describe('W26 actual provider guards', () => {
       args: { publication: proof.results[index].accepted_publication_id,
         writes: proof.results[index].change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })) } }] });
     expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
-    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof)); expect(h.compatibilityRequests).toEqual([]);
+    expect(h.getCurrentConfig()).toEqual(appKeyframeParentConfig(proof.readback));
+    expect(fadeReadback(initial, proof)).toEqual(forwardOccurrenceView); expect(h.compatibilityRequests).toEqual([]);
     ui.unmount(); history.unmount(); h.unmount();
   }, 180_000);
 });
