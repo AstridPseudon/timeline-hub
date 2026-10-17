@@ -2069,8 +2069,15 @@ class _ConfinedLaunchPlan:
     pass_fds: tuple[int, ...]
     retained_process_only: bool = False
     child_bridge_launch: Any = None
+    renderer_profile: Any = None
 
     def subprocess_options(self) -> dict[str, Any]:
+        if self.renderer_profile is not None:
+            from .renderer_transport import RetainedRendererProfile
+
+            if type(self.renderer_profile) is not RetainedRendererProfile:
+                raise HostError("renderer profile requires its retained Host owner")
+            self.renderer_profile.validate()
         options: dict[str, Any] = {"cwd": str(self.cwd), "env": dict(self.environment),
                 "close_fds": True, "pass_fds": self.pass_fds,
                 "stdin": subprocess.PIPE, "stdout": subprocess.PIPE,
@@ -2332,6 +2339,14 @@ def _confined_launch_plan(
     rules.extend(f'(allow file-write* (subpath "{quote(p)}"))' for p in (*writes, private))
     rules.extend(f'(allow network-outbound (remote tcp "{p}"))' for p in dict.fromkeys(network))
     profile = "\n".join(rules) + "\n"
+    if policy.renderer_reads is not None or policy.renderer_transport is not None:
+        from .renderer_transport import RetainedRendererProfile
+
+        retained = RetainedRendererProfile.create(profile, policy)
+        return _ConfinedLaunchPlan((sandbox, "-f", str(retained.path), str(executable), *argv[1:]),
+                                   working, tuple(sorted(env.items())), descriptors,
+                                   retained_process_only=not policy.workload_process_creation,
+                                   renderer_profile=retained)
     return _ConfinedLaunchPlan((sandbox, "-p", profile, str(executable), *argv[1:]),
                                working, tuple(sorted(env.items())), descriptors,
                                retained_process_only=not policy.workload_process_creation)

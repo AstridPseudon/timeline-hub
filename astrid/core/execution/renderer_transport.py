@@ -10,11 +10,73 @@ import hashlib
 import json
 import os
 import socket
+import stat
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
 from astrid.core.rendering.assets import InvocationAssetServer
+
+
+@dataclass(frozen=True)
+class RetainedRendererProfile:
+    """Exact Seatbelt bytes held outside every workload-writable scope.
+
+    This is a Host-produced launch resource, never a task-selected profile.
+    The enclosing attempt owns cleanup after its original children settle.
+    """
+
+    path: Path
+    identity: tuple
+    directory_identity: tuple
+    sha256: str
+
+    @classmethod
+    def create(cls, profile: str, policy):
+        attempt = policy.attempt_root.resolve(strict=True)
+        directory = Path(tempfile.mkdtemp(prefix=".renderer-policy-", dir=attempt))
+        # A workload must never be able to replace the policy before sandbox-exec
+        # consumes it. Project writes and scratch are separate admitted scopes.
+        writable = (*policy.project.write_roots, policy.private_write_root)
+        if any(directory.is_relative_to(root.resolve(strict=True)) for root in writable):
+            directory.rmdir()
+            raise ValueError("renderer policy overlaps workload writes")
+        path = directory / "profile.sb"
+        payload = profile.encode("utf-8")
+        try:
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o400)
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
+                metadata = os.fstat(stream.fileno())
+            owner = directory.stat()
+            retained = cls(path, (metadata.st_dev, metadata.st_ino),
+                           (owner.st_dev, owner.st_ino), hashlib.sha256(payload).hexdigest())
+            retained.validate()
+            return retained
+        except BaseException:
+            path.unlink(missing_ok=True)
+            directory.rmdir()
+            raise
+
+    def validate(self):
+        directory = self.path.parent
+        owner = directory.lstat()
+        if (not stat.S_ISDIR(owner.st_mode) or owner.st_uid != os.getuid()
+                or stat.S_IMODE(owner.st_mode) != 0o700
+                or (owner.st_dev, owner.st_ino) != self.directory_identity
+                or directory.resolve(strict=True) != directory):
+            raise ValueError("renderer policy directory changed")
+        fd = os.open(self.path, os.O_RDONLY | os.O_NOFOLLOW)
+        with os.fdopen(fd, "rb") as stream:
+            metadata = os.fstat(stream.fileno())
+            if (not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid()
+                    or stat.S_IMODE(metadata.st_mode) != 0o400 or metadata.st_nlink != 1
+                    or (metadata.st_dev, metadata.st_ino) != self.identity
+                    or hashlib.file_digest(stream, "sha256").hexdigest() != self.sha256):
+                raise ValueError("renderer policy file changed")
 
 
 @dataclass(frozen=True)
