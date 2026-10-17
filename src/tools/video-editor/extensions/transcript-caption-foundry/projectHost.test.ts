@@ -23,7 +23,7 @@ const pin: PinnedTranscriptRead = {
 function fixture(occurrence = false) {
   vi.stubGlobal('crypto', webcrypto);
   const sourceClip = { id: 'clip', clipType: 'media', track: 'video', asset: 'media', at: 0, hold: 1 };
-  let current = { configVersion: 7, registry: { assets: { media: { file: media, media_id: media } } }, config: {
+  let current = { configVersion: 7, head: { projectId: 'project', timelineId: 'parent', headRevisionId: 'head' }, registry: { assets: { media: { file: media, media_id: media } } }, config: {
     clips: [{ ...sourceClip, ...(occurrence ? { id: 'projected', app: { canonical: {
       projectId: 'project', parentDocumentId: 'parent', headRevisionId: 'head', occurrenceId: 'occ', shotId: 'shot',
       revisionId: 'shot-rev', internalTimelineRevisionId: 'internal', outputIdentity: 'out', sourceClipId: 'clip', sourceClip,
@@ -89,6 +89,52 @@ describe('mounted project transcript host', () => {
       expect(f.choose).toHaveBeenCalledOnce();
       expect(Object.keys(f.host.documents)).toEqual(['read']);
       expect(Object.keys(f.host).sort()).toEqual(['buildCaptionCommands', 'completeSelection', 'documents', 'selectTranscript']);
+    } finally { mounted.dispose(); }
+  });
+
+  it('retries only the original save barrier after source advance or offline reads, retaining one history submission', async () => {
+    const f = fixture(); const mounted = mount(f.host);
+    mounted.flush.mockRejectedValueOnce(new Error('save acknowledgement lost'));
+    try {
+      await expect(mounted.invoke()).rejects.toThrow('acknowledgement lost');
+      const original = structuredClone(mounted.submit.mock.calls[0]);
+      const reads = f.reader.read.mock.calls.length;
+      f.reader.read.mockRejectedValue(new Error('source advanced or offline'));
+      f.setData({ ...f.data(), configVersion: 8, head: { projectId: 'project', timelineId: 'parent', headRevisionId: 'polled-head' } });
+      await mounted.invoke();
+      expect(f.reader.read).toHaveBeenCalledTimes(reads);
+      expect(f.choose).toHaveBeenCalledOnce();
+      expect(mounted.submit).toHaveBeenCalledOnce();
+      expect(mounted.submit.mock.calls[0]).toEqual(original);
+      expect(mounted.flush).toHaveBeenCalledTimes(2);
+    } finally { mounted.dispose(); }
+  });
+
+  it('refuses a different timeline object with the same numeric version during final source verification', async () => {
+    const f = fixture(); const mounted = mount(f.host);
+    try {
+      f.reader.read.mockResolvedValueOnce(structuredClone(pin)).mockImplementationOnce(async () => {
+        f.setData({ ...f.data(), head: { projectId: 'project', timelineId: 'other', headRevisionId: 'other-head' } });
+        return structuredClone(pin);
+      });
+      await expect(mounted.invoke()).rejects.toThrow('timeline changed while verifying');
+      expect(mounted.submit).not.toHaveBeenCalled();
+      expect(mounted.flush).not.toHaveBeenCalled();
+    } finally { mounted.dispose(); }
+  });
+
+  it.each(['document', 'version', 'content', 'snapshotDigest'] as const)('refuses a changed exact %s pin on final verification', async (field) => {
+    const f = fixture(); const mounted = mount(f.host);
+    const changed = structuredClone(pin);
+    if (field === 'document') (changed.document as { id: string }).id = 'foreign-document';
+    if (field === 'version') (changed.document as { version: number }).version++;
+    if (field === 'content') (changed.document as { content_digest: string }).content_digest = 'foreign-content';
+    if (field === 'snapshotDigest') (changed.snapshot as { sha256: string }).sha256 = 'foreign-snapshot-digest';
+    f.reader.read.mockResolvedValueOnce(structuredClone(pin)).mockResolvedValueOnce(changed);
+    try {
+      await expect(mounted.invoke()).rejects.toThrow('selected snapshot changed');
+      expect(mounted.submit).not.toHaveBeenCalled();
+      expect(mounted.flush).not.toHaveBeenCalled();
     } finally { mounted.dispose(); }
   });
 

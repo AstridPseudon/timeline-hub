@@ -158,7 +158,7 @@ export interface TranscriptCaptionFoundryResult {
 // A failed durable flush leaves the original persistence attempt in charge of
 // retry identity. Reinvoking its retained choice must not enqueue another edit
 // or create another undo entry. Both host and selection keys have weak lifetime.
-const submittedSelections = new WeakMap<object, WeakMap<ExplicitTranscriptSelection, Promise<void>>>();
+const submittedSelections = new WeakMap<object, WeakMap<ExplicitTranscriptSelection, Promise<TranscriptCaptionFoundryResult>>>();
 
 const isRecord = (value: unknown): value is Record<string, unknown> => (
   value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -316,30 +316,6 @@ export async function runTranscriptCaptionFoundry(
   }
 
   const selection = validateSelection(await host.selectTranscript(items));
-  const matches = await host.documents.read({
-    project_id: selection.project_id,
-    kind: TRANSCRIPT_DOCUMENT_KIND,
-    document: selection.document,
-    snapshot: selection.snapshot,
-    subject: selection.subject,
-    source: selection.source,
-    source_receipt: selection.source_receipt,
-  });
-  if (matches.length !== 1) {
-    throw new Error(`Transcript consumer refused: expected one exact source, received ${matches.length}.`);
-  }
-
-  const transcript = matches[0]!;
-  const binding = validatePinnedRead(transcript, selection);
-  const captionBatch = host.buildCaptionCommands({ selection, transcript, binding });
-  const captionCommands = captionBatch.commands;
-  if (!Array.isArray(captionCommands) || captionCommands.length === 0 || captionCommands.some((command) => (
-    command.op === 'transcript.bind' || command.op.startsWith('transcript.')
-  )) || !Array.isArray(captionBatch.correspondence)) {
-    throw new Error('Transcript consumer refused: caption producer returned no ordinary caption commands.');
-  }
-  const bind = transcriptBindCommand(selection, binding, transcript.source_receipt, captionBatch.correspondence);
-  const commands = [bind, ...captionCommands];
   let submissions = submittedSelections.get(host);
   if (!submissions) {
     submissions = new WeakMap();
@@ -347,17 +323,47 @@ export async function runTranscriptCaptionFoundry(
   }
   let submission = submissions.get(selection);
   if (!submission) {
-    submission = Promise.resolve().then(() => commandTimeline.submitCommandTransaction!(commands, {
-      transactionId: selection.request_id,
-      semantic: true,
-    }));
+    // Resolve and build once, before entering the existing save/history path.
+    // Once submitted, only that path owns retries: an advanced source document
+    // or an unavailable reader must not invalidate the already-pinned batch.
+    submission = Promise.resolve().then(async () => {
+      const matches = await host.documents.read({
+        project_id: selection.project_id,
+        kind: TRANSCRIPT_DOCUMENT_KIND,
+        document: selection.document,
+        snapshot: selection.snapshot,
+        subject: selection.subject,
+        source: selection.source,
+        source_receipt: selection.source_receipt,
+      });
+      if (matches.length !== 1) {
+        throw new Error(`Transcript consumer refused: expected one exact source, received ${matches.length}.`);
+      }
+
+      const transcript = matches[0]!;
+      const binding = validatePinnedRead(transcript, selection);
+      const captionBatch = host.buildCaptionCommands({ selection, transcript, binding });
+      const captionCommands = captionBatch.commands;
+      if (!Array.isArray(captionCommands) || captionCommands.length === 0 || captionCommands.some((command) => (
+        command.op === 'transcript.bind' || command.op.startsWith('transcript.')
+      )) || !Array.isArray(captionBatch.correspondence)) {
+        throw new Error('Transcript consumer refused: caption producer returned no ordinary caption commands.');
+      }
+      const bind = transcriptBindCommand(selection, binding, transcript.source_receipt, captionBatch.correspondence);
+      const commands = [bind, ...captionCommands];
+      await commandTimeline.submitCommandTransaction!(commands, {
+        transactionId: selection.request_id,
+        semantic: true,
+      });
+      return { binding, commands, transactionId: selection.request_id };
+    });
     submissions.set(selection, submission);
     // Failure before the transaction entered the editor permits resubmission.
     // A later flush failure deliberately retains the successful submission.
     void submission.catch(() => submissions!.delete(selection));
   }
-  await submission;
+  const result = await submission;
   await commandTimeline.flush();
   host.completeSelection?.(selection);
-  return { binding, commands, transactionId: selection.request_id };
+  return result;
 }

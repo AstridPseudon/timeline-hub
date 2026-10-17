@@ -1988,6 +1988,76 @@ describe('RuntimeDataProvider commit save routing', () => {
     expect(fixture.commits).toHaveLength(priorCount);
   });
 
+  it('Caption Foundry keeps pinned commands across durable draft reload, exact retry, and receipt-based undo/redo (protocol fixture)', async () => {
+    resetFakeIndexedDB(); vi.stubGlobal('indexedDB', createFakeIndexedDB());
+    const binding = { schema_version: 1 as const,
+      document: { id: 'synthetic-transcript', version: 2, content_digest: `sha256:${'a'.repeat(64)}` },
+      snapshot: { object_id: `sha256:${'a'.repeat(64)}`, sha256: 'a'.repeat(64) },
+      subject: { media_object_id: `sha256:${'b'.repeat(64)}`, media_sha256: 'b'.repeat(64) },
+      source: { producer_id: 'synthetic', source_id: 'take', lineage_id: 'line', revision_id: 'revision', producer_digest: 'c'.repeat(64) },
+      clock: { kind: 'media' as const, unit: 'seconds' as const, origin_seconds: 0 as const },
+      occurrence_id: null, word_ids: ['opaque-word'] };
+    const selection = { explicit: true as const, request_id: 'caption-durable-request', project_id: PROJECT_ID,
+      ...binding, target: { clip_id: 'source', occurrence_id: null, selector: 'parent/clip:source' },
+      prior_binding: { state: 'absent' as const } };
+    const transcript = { ...binding, words: [{ id: 'opaque-word', text: 'Hello', start_s: 0.2, end_s: 0.5 }] };
+    const commands: EditCommand[] = [{ op: 'transcript.bind', select: null, args: {
+      target: { clip_id: 'source', occurrence_id: null }, expect: { binding: selection.prior_binding }, next: binding, correspondence: [],
+    } }, ...buildTranscriptCaptionCommands({ selection, transcript, binding, trackId: 'type' }).commands];
+    const absent = { state: 'absent' as const };
+    const writes = [
+      { id: 'parent/clip:source', path: 'app.transcript.binding', before: absent, after: { state: 'present' as const, value: binding } },
+      { id: 'parent/clip:source', path: 'app.transcript.v', before: absent, after: { state: 'present' as const, value: 1 } },
+      { id: commands[1].created![0], path: '', before: absent, after: { state: 'present' as const,
+        value: { id: commands[1].args.clip_id, clipType: 'am-type', text: 'Hello', app: { astrid: { on: commands[1].args.at } } } } },
+      { id: commands[1].created![0], path: 'intent.until', before: absent, after: { state: 'present' as const, value: commands[2].args.moment } },
+    ];
+    const fixture = commitFixture(async (body, call) => {
+      if (call === 1) return result(body, true);
+      const sent = body.change.commands;
+      return { ...result(body), status: 'accepted', accepted_revision_id: `caption-head-${call}`,
+        accepted_publication_id: `caption-publication-${call}`,
+        change: { ...result(body).change, direct_writes: sent[0].op === 'timeline.inverse'
+          ? sent[0].args.writes as never : writes } };
+    });
+    const storage = tabStorage(); const provider = nativeProvider(fixture, storage);
+    const loaded = await provider.loadTimeline(TIMELINE_ID);
+    const metadata = provider.getTimelineDraftRecoveryMetadata(TIMELINE_ID);
+    const original = structuredClone(commands);
+    // The lightweight IndexedDB fixture stores object references; supply the
+    // structured clone that the browser's IDB put boundary normally creates.
+    await saveTimelineDraft(TIMELINE_ID, { config: loaded.config, editCommands: structuredClone(commands) }, 1, {
+      ...metadata, ownerId: 'caption-owner', draftIdentity: selection.request_id,
+      baseHeadProjectId: PROJECT_ID, baseHeadTimelineId: TIMELINE_ID, baseHeadRevisionId: loaded.head!.headRevisionId,
+    });
+    const recreated = nativeProvider(fixture, storage); await recreated.loadTimeline(TIMELINE_ID);
+    expect(recreated.getTimelineDraftRecoveryMetadata(TIMELINE_ID)).toEqual(metadata);
+    expect(await loadTimelineDraft(metadata.recoveryKey!)).toMatchObject({ draftIdentity: selection.request_id,
+      baseHeadProjectId: PROJECT_ID, baseHeadTimelineId: TIMELINE_ID, baseHeadRevisionId: loaded.head!.headRevisionId,
+      draft: { editCommands: original } });
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, commands))
+      .rejects.toMatchObject({ code: 'runtime_unavailable' });
+    // Mutating a builder input after transport cannot change the reserved request.
+    commands[0].args.next = { ...binding, document: { ...binding.document, version: 99 } };
+    const accepted = await provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, commands);
+    expect(fixture.commits[1]).toEqual(fixture.commits[0]);
+    expect(JSON.parse(fixture.commits[1].bytes).change.commands).toEqual(original);
+    expect(fixture.commits[1].headers['Idempotency-Key']).toBe(JSON.parse(fixture.commits[0].bytes).request_id);
+    expect(accepted.commandInverse).toMatchObject({ op: 'timeline.inverse', args: { publication: 'caption-publication-2' } });
+    const undo = await provider.saveTimelineAtHead(TIMELINE_ID, structuredClone(loaded.config), accepted.head,
+      undefined, undefined, [accepted.commandInverse as EditCommand]);
+    const redo = await provider.saveTimelineAtHead(TIMELINE_ID, structuredClone(loaded.config), undo.head,
+      undefined, undefined, [undo.commandInverse as EditCommand]);
+    const redoRequest = JSON.parse(fixture.commits[3].bytes);
+    expect(redoRequest.change.commands[0].args.writes).toEqual(writes);
+    expect(redo.commandInverse).toMatchObject({ args: { publication: 'caption-publication-4' } });
+    expect(fixture.commits.map(({ bytes }) => JSON.parse(bytes).base_revision_id))
+      .toEqual(['parent-r1', 'parent-r1', 'caption-head-2', 'caption-head-3']);
+    expect(fixture.requests.some(({ path }) => path.includes('/documents/') || path.includes('/composition-revisions') && !path.includes('parent-r1'))).toBe(false);
+    expect((await loadTimelineDraft(metadata.recoveryKey!))?.draft.editCommands).toEqual(original);
+    await clearTimelineDraft(metadata.recoveryKey!, 'caption-owner');
+  });
+
   it('W09 returns a native history inverse only after the accepted exact revision readback', async () => {
     const write = { id: 'parent', path: 'registry.assets', before: { state: 'absent' }, after: { state: 'present', value: { registered: null } } };
     const fixture = commitFixture(async (body) => ({ ...result(body), status: 'accepted', accepted_revision_id: 'registered-head', accepted_publication_id: 'pub-registration', change: { ...result(body).change, direct_writes: [write] } }));

@@ -267,13 +267,8 @@ describe('mounted read-only transcript consumer', () => {
       await mounted.action.invoke(laneItems);
       await mounted.action.invoke(laneItems);
 
-      expect(project.documents.read).toHaveBeenCalledTimes(2);
+      expect(project.documents.read).toHaveBeenCalledOnce();
       expect(project.documents.read).toHaveBeenNthCalledWith(1, expect.objectContaining({
-        document: selection.document,
-        snapshot: selection.snapshot,
-        source_receipt: selection.source_receipt,
-      }));
-      expect(project.documents.read).toHaveBeenNthCalledWith(2, expect.objectContaining({
         document: selection.document,
         snapshot: selection.snapshot,
         source_receipt: selection.source_receipt,
@@ -291,6 +286,17 @@ describe('mounted read-only transcript consumer', () => {
     } finally {
       mounted.dispose();
     }
+  });
+
+  it('shares one pinned read, command build and history submission for concurrent invocations of the same choice', async () => {
+    const project = host();
+    const mounted = mountedAction(project);
+    try {
+      await Promise.all([mounted.action.invoke(laneItems), mounted.action.invoke(laneItems)]);
+      expect(project.documents.read).toHaveBeenCalledOnce();
+      expect(project.buildCaptionCommands).toHaveBeenCalledOnce();
+      expect(mounted.submitCommandTransaction).toHaveBeenCalledOnce();
+    } finally { mounted.dispose(); }
   });
 
   it('does not expose transcript source mutation methods on the consumer port', () => {

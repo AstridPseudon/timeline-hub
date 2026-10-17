@@ -61,7 +61,7 @@ export function createTranscriptCaptionProjectHost(options: {
 }): TranscriptCaptionFoundryHost & { dispose(): void } {
   const lifetime = new AbortController();
   const selections = new WeakMap<ExplicitTranscriptSelection, { transcript: PinnedTranscriptRead; trackId: string }>();
-  let pending: { version: number; clips: string; selection: ExplicitTranscriptSelection } | undefined;
+  let pending: { data: TimelineData; version: number; clips: string; selection: ExplicitTranscriptSelection } | undefined;
   const data = () => {
     const current = options.data();
     if (lifetime.signal.aborted || !current || options.reader.projectId !== options.projectId) {
@@ -78,7 +78,9 @@ export function createTranscriptCaptionProjectHost(options: {
       const clipIds = [...new Set(items.map((item) => item.clipId).filter(Boolean))];
       if (clipIds.length > 1) throw new Error('Transcript consumer refused: ambiguous target clips.');
       const itemKey = JSON.stringify(clipIds);
-      if (pending?.version === before.configVersion && pending.clips === itemKey) return pending.selection;
+      // A submitted attempt owns retry identity until its save acknowledgement,
+      // even if canonical polling has advanced the timeline in the meantime.
+      if (pending?.clips === itemKey) return pending.selection;
       const documents = await options.reader.list();
       const choices: TranscriptChoice[] = [];
       for (const clip of before.config.clips) {
@@ -129,36 +131,46 @@ export function createTranscriptCaptionProjectHost(options: {
           ? { state: 'present', value: structuredClone(ns.binding) as TranscriptBinding } : { state: 'absent' },
       };
       selections.set(selection, { transcript, trackId: choice.trackId });
-      pending = { version: before.configVersion, clips: itemKey, selection };
+      pending = { data: before, version: before.configVersion, clips: itemKey, selection };
       return selection;
     },
     documents: Object.freeze({
       async read(request) {
         const selection = pending?.selection;
-        if (!selection || data().configVersion !== pending?.version || request.project_id !== options.projectId || request.kind !== 'media.transcript/v1'
+        if (!selection || request.project_id !== options.projectId || request.kind !== 'media.transcript/v1'
           || request.document !== selection.document || request.snapshot !== selection.snapshot
           || request.subject !== selection.subject || request.source !== selection.source) {
           throw new Error('Transcript consumer refused: read is outside the host selection.');
         }
-        // Refresh only the explicit exact pin; an advanced document refuses.
-        let fresh: PinnedTranscriptRead;
+        if (data() !== pending?.data || data().configVersion !== pending?.version) {
+          pending = undefined;
+          throw new Error('Transcript consumer refused: timeline changed before source verification.');
+        }
+        // Verify the explicit pin before submission; submitted retries are
+        // handled by the consumer's retained batch and the ordinary save path.
         try {
-          fresh = await options.reader.read({ document_id: selection.document.id, version: selection.document.version });
+          const fresh = await options.reader.read({ document_id: selection.document.id, version: selection.document.version });
+          if (data() !== pending?.data || data().configVersion !== pending?.version) {
+            throw new Error('Transcript consumer refused: timeline changed while verifying the source.');
+          }
+          if (fresh.document.id !== selection.document.id
+            || fresh.document.version !== selection.document.version
+            || fresh.document.content_digest !== selection.document.content_digest
+            || fresh.snapshot.object_id !== selection.snapshot.object_id
+            || fresh.snapshot.sha256 !== selection.snapshot.sha256) {
+            throw new Error('Transcript consumer refused: selected snapshot changed.');
+          }
         } catch (error) {
-          // A source read failed before submission. A new invocation must offer
-          // an explicit choice instead of trapping the user on an invalid pin.
+          // Before submission, a failed read releases the invalid choice.
           if (pending?.selection === selection) pending = undefined;
           throw error;
         }
         const saved = selections.get(selection)!;
-        if (fresh.snapshot.object_id !== saved.transcript.snapshot.object_id) {
-          throw new Error('Transcript consumer refused: selected snapshot changed.');
-        }
         return [saved.transcript];
       },
     }),
     buildCaptionCommands(input) {
-      if (data().configVersion !== pending?.version) throw new Error('Transcript consumer refused: timeline changed before submission.');
+      if (data() !== pending?.data || data().configVersion !== pending?.version) throw new Error('Transcript consumer refused: timeline changed before submission.');
       const saved = selections.get(input.selection);
       if (!saved || input.transcript !== saved.transcript) throw new Error('Transcript consumer refused: foreign source projection.');
       return buildTranscriptCaptionCommands({ ...input, trackId: saved.trackId });
