@@ -23,7 +23,7 @@ import type {
 } from '@/domains/media-lightbox/types.ts';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { VideoEditorLightboxOverlay } from '@/tools/video-editor/components/VideoEditorLightboxOverlay.tsx';
-import { useAstridShotsHost } from '@/tools/video-editor/adapters/astrid/useAstridShotsHost.ts';
+import { useAstridShotsHost } from '@/tools/video-editor/adapters/app/useAstridShotsHost.ts';
 import { playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
