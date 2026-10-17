@@ -467,3 +467,307 @@ def test_actual_distinct_child_identity_read_and_later_publication(runtime, empt
     assert read() == before
     assert s.get_project_timeline_revision(p, "inside", internal["revision_id"]) == exact
     assert reads == [(p, "inside", internal["revision_id"])] * 2
+
+
+class OfflinePublicationClient:
+    """In-process resource facade over the existing disposable Runtime fixture.
+
+    No server, provider, Pack Host or real credential is used. Only health and
+    handshake are boundary doubles; take reads, COMMIT, history and closures use
+    the actual fixture service and its request-bound acceptor.
+    """
+    def __init__(self, service):
+        from test_timeline_saved_publish import RuntimeFixture
+        self.service = service
+        boundary = RuntimeFixture()
+        boundary.principal = identity_for(service)["actor"]
+        self.boundary = boundary.client()
+        self.timelines = self
+        self.calls = []
+        self.lose = False
+
+    def health(self):
+        return self.boundary.health()
+
+    def handshake(self, *args):
+        return self.boundary.handshake(*args)
+
+    def get_managed_output(self, association):
+        return self.service.managed_output(association)
+
+    def get_object(self, object_id):
+        return {"data": self.service.cas.path_for(object_id[7:]).read_bytes()}
+
+    def get_project_parent_composition_revision(self, *args):
+        return self.service.get_project_parent_composition_revision(*args)
+
+    def get_project_shot_revision(self, *args):
+        return self.service.get_project_shot_revision(*args)
+
+    def get_project_timeline_revision(self, *args):
+        return self.service.get_project_timeline_revision(*args)
+
+    def list_project_parent_composition_revisions(self, *args, **kwargs):
+        page = self.service.list_project_parent_composition_revisions(*args, **kwargs)
+        return page["items"], page["next_cursor"]
+
+    def list_parent_composition_revisions(self, *args, **kwargs):
+        return DomainResult.success(self.list_project_parent_composition_revisions(*args, **kwargs))
+
+    def head(self, project, timeline):
+        return self.service.head(project, timeline)
+
+    def commit_timeline(self, body):
+        self.calls.append(copy.deepcopy(body))
+        result = commit(self.service, body["project_id"], body)
+        if self.lose and not body["dry_run"] and result["status"] == "accepted":
+            self.lose = False
+            raise TimeoutError("offline accepted response deliberately lost")
+        return result
+
+
+def publication_draft(service, project, monkeypatch):
+    from astrid.sdk.timeline import saved_publish, store
+    from astrid.sdk.timeline.checkout import Checkout
+    data_root = service.store.root.parent / "sdk-data"
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(data_root))
+    client = OfflinePublicationClient(service)
+    monkeypatch.setattr(Checkout, "SAY_SAVED", False)
+    monkeypatch.setattr(store, "resolve_ids", lambda *_a, **_kw:
+        (project, "main", service.head(project, "main")["revision_id"]))
+    monkeypatch.setattr(store, "fetch_bundle", lambda *_a, revision_id=None, **_kw:
+        saved_publish._exact(client, dict(project_id=project, timeline_id="main"),
+            revision_id or service.head(project, "main")["revision_id"]))
+    draft = Checkout.draft(project, "main")
+    assert draft.path.is_relative_to(data_root)
+    return draft, client
+
+
+@pytest.mark.parametrize("edit_kind", ["timing", "remove", "replace"])
+def test_offline_prepared_publication_undo_reapply_exact_closure(runtime, monkeypatch, edit_kind):
+    from astrid.sdk.timeline.checkout import Checkout
+    s, p = runtime
+    refs, _, _ = managed_take(s, p)
+    draft, client = publication_draft(s, p, monkeypatch)
+    old_bytes = {ref["object_id"]: client.get_object(ref["object_id"])["data"] for ref in refs.values()}
+    # Preparation uses settled managed bytes, not a private verified-take field.
+    narration.apply_managed_script(draft, script(refs)["args"]["spec"], client=client,
+                                   preparation_id="offline-original", allow_generation=False)
+    original = draft.publish("offline original", client=client, idempotency_key="offline-original")
+    assert original["status"] == "accepted", original
+    original_revision = original["accepted_revision_id"]
+    original_closure = s._commit_revision_closure(p, "main", original_revision)
+    changed = script(refs)["args"]["spec"]
+    if edit_kind == "timing":
+        changed["lines"][0]["gap_after_s"] = .8
+    elif edit_kind == "remove":
+        changed = dict(version=1, lines=[], remove=["occurrence:occurrence-1/clip:voice"])
+    elif edit_kind == "replace":
+        # Reuse the supported settlement helper with distinct public task keys;
+        # the synthetic audio bytes deliberately make no acoustic assertion.
+        class AnotherAttempt:
+            def __getattr__(self, name):
+                return getattr(s, name)
+
+            def create_task(self, body, **kwargs):
+                return s.create_task(dict(body, idempotency_key=body["idempotency_key"] + "-replacement"), **kwargs)
+
+            def claim_next(self, body, *, idempotency_key):
+                return s.claim_next(body, idempotency_key=idempotency_key + "-replacement")
+
+            def settle_attempt(self, attempt, body, *, idempotency_key, **kwargs):
+                return s.settle_attempt(attempt, body, idempotency_key=idempotency_key + "-replacement", **kwargs)
+
+        def replacement_words(_manifest, words):
+            words["words"] = [dict(word="Replacement", start_s=0.0, end_s=.4),
+                              dict(word="line.", start_s=.5, end_s=1.2)]
+        new_refs, _, _ = managed_take(AnotherAttempt(), p, text="Replacement line.", bad=replacement_words)
+        changed["lines"][0].update(text="Replacement line.", take=new_refs)
+    narration.apply_managed_script(draft, changed, client=client,
+                                   preparation_id="offline-edit", allow_generation=False)
+    edited = draft.publish("offline edit", client=client, idempotency_key="offline-edit")
+    assert edited["status"] == "accepted", edited
+    edited_closure = s._commit_revision_closure(p, "main", edited["accepted_revision_id"])
+    monkeypatch.setattr("astrid.sdk.invocation.invoke", lambda *_a, **_kw: pytest.fail("inverse generated speech"))
+    draft = Checkout.load(draft.path)
+    before_stage, calls = snapshot(s), len(client.calls)
+    draft.undo(client=client, publication=edited["accepted_publication_id"])
+    assert snapshot(s) == before_stage and len(client.calls) == calls
+    if edit_kind == "replace":
+        from astrid.sdk.timeline import commands
+        from astrid.sdk.timeline.inverse import inverse_command
+        from astrid.sdk.timeline.rebase import rebase
+        from astrid.sdk.timeline.saved_intent import read_saved_calls
+        staged = read_saved_calls(draft)
+        writes = staged[0]["args"]["writes"]
+        assert any(w["path"] == "app.astrid" and w["after"]["value"]["take"] == refs for w in writes)
+        # A complete typed restore stays guarded; unrelated ordinary params can
+        # rebase, while changing a sibling in the atomic narration value refuses.
+        onto = Checkout(copy.deepcopy(edited["canonical_document"]))
+        onto.clip("voice").data["params"]["opaque"] = "preserve"
+        rebased = rebase(staged, onto.document())
+        assert not rebased.conflicts
+        assert Checkout(rebased.document).clip("voice").params["opaque"] == "preserve"
+        onto.clip("voice").data["app"]["astrid"]["opaque"] = "later narration sibling"
+        assert rebase(staged, onto.document()).conflicts
+        forged = copy.deepcopy(edited["change"]["commands"])
+        key = next(k for k in forged[0]["authorship"] if "take." in k and "association_id" in k)
+        forged[0]["expect"][key] = dict(state="present", value="forged-prior-association")
+        with pytest.raises(commands.CommandError, match="does not reconstruct"):
+            inverse_command(forged, original["canonical_document"], edited["canonical_document"],
+                            edited["accepted_publication_id"], consequences=edited["change"]["consequences"])
+    client.lose = True
+    with pytest.raises(TimeoutError, match="response deliberately lost"):
+        unexpected = draft.publish("offline undo", client=client, idempotency_key="offline-undo")
+        pytest.fail("inverse publish returned: " + json.dumps(unexpected, sort_keys=True))
+    accepted_snapshot = snapshot(s)
+    with monkeypatch.context() as replay_only:
+        replay_only.setattr(client, "get_managed_output", lambda *_: pytest.fail("retry read take before replay"))
+        undone = Checkout.load(draft.path).publish(client=client)
+    assert snapshot(s) == accepted_snapshot and client.calls[-1] == client.calls[-2]
+    assert undone["status"] == "accepted", undone
+    restored = s._commit_revision_closure(p, "main", undone["accepted_revision_id"])
+
+    def same_content(left, right):
+        assert left["parent_revision"]["payload"] == right["parent_revision"]["payload"], json.dumps(dict(restored=left, original=right), sort_keys=True, indent=2)
+        assert left["parent_revision"]["content_digest"] == right["parent_revision"]["content_digest"]
+        assert left["shot_revisions"] == right["shot_revisions"]
+        assert left["internal_timeline_revisions"] == right["internal_timeline_revisions"]
+        assert narration_projection(left) == narration_projection(right)
+
+    same_content(restored, original_closure)
+    state = undone["runtime_receipt"]["narration_state"]
+    assert state["parent_revision_id"] == undone["accepted_revision_id"]
+    assert state["projection"] == narration_projection(original_closure)
+    assert state["digest"] == "sha256:" + narration.digest(state["projection"])
+    assert s.head(p, "main")["revision_id"] == undone["accepted_revision_id"]
+    # Undoing the inverse is the same guarded publication path, with no synthesis.
+    draft = Checkout.load(draft.path)
+    draft.undo(client=client, publication=undone["accepted_publication_id"])
+    redone = draft.publish("offline reapply", client=client, idempotency_key="offline-reapply")
+    assert redone["status"] == "accepted", redone
+    same_content(s._commit_revision_closure(p, "main", redone["accepted_revision_id"]), edited_closure)
+    assert s._commit_revision_closure(p, "main", original_revision) == original_closure
+    assert s._commit_revision_closure(p, "main", edited["accepted_revision_id"]) == edited_closure
+    assert all(client.get_object(object_id)["data"] == data for object_id, data in old_bytes.items())
+    if edit_kind == "replace":
+        # Intent aliases must overlap the physical namespace even after a later
+        # narration value changes and returns to the expected value (ABA).
+        draft = Checkout.load(draft.path)
+        for key, gap in (("aba-first", .8), ("aba-last", .3)):
+            changed["lines"][0]["gap_after_s"] = gap
+            narration.apply_managed_script(draft, changed, client=client,
+                                           preparation_id=key, allow_generation=False)
+            later = draft.publish(key, client=client, idempotency_key=key)
+            assert later["status"] == "accepted", later
+        assert draft.clip("voice").data["app"]["astrid"] == Checkout(
+            redone["canonical_document"]).clip("voice").data["app"]["astrid"]
+        from astrid.sdk.timeline import journal
+        from astrid.sdk.timeline._common import TimelineEditError
+        log = journal.journal_path(p, "main")
+        untouched = snapshot(s), draft.path.read_bytes(), log.read_bytes(), len(client.calls)
+        with pytest.raises(TimelineEditError, match="same-property") as caught:
+            draft.undo(client=client, publication=redone["accepted_publication_id"])
+        assert later["accepted_publication_id"] in str(caught.value)
+        assert untouched == (snapshot(s), draft.path.read_bytes(), log.read_bytes(), len(client.calls))
+    print(json.dumps(dict(case=edit_kind, project_id=p, refs=refs, original_revision=original_revision,
+        edited_revision=edited["accepted_revision_id"], edited_publication=edited["accepted_publication_id"],
+        undone_revision=undone["accepted_revision_id"], undone_publication=undone["accepted_publication_id"],
+        redone_revision=redone["accepted_revision_id"], redone_publication=redone["accepted_publication_id"],
+        restored_state=state, edited_state=edited["runtime_receipt"]["narration_state"],
+        old_closure_sha256=narration.digest(original_closure), edited_closure_sha256=narration.digest(edited_closure),
+        exact_content_restored=True, old_bytes_unchanged=True, exact_retry=True)))
+
+
+def test_offline_publication_inverse_refuses_unverified_or_unrelated_takes_before_effects(runtime, monkeypatch):
+    from astrid.sdk.timeline import commands, journal
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.timeline.checkout import Checkout
+    s, p = runtime
+    refs, _, _ = managed_take(s, p)
+    draft, client = publication_draft(s, p, monkeypatch)
+    raw = script(refs)["args"]["spec"]
+    untouched = draft.document()
+    with pytest.raises(TimelineEditError, match="no verified request-bound take"):
+        commands.run(draft, script(refs))
+    assert draft.document() == untouched and client.calls == []
+    for object_id in ("not-a-managed-object", "sha256:" + "f" * 64):
+        bad = copy.deepcopy(raw)
+        bad["lines"][0]["take"]["speech"]["object_id"] = object_id
+        with pytest.raises(TimelineEditError):
+            narration.apply_managed_script(draft, bad, client=client,
+                                           preparation_id="offline-forged", allow_generation=False)
+        assert draft.document() == untouched and client.calls == []
+    narration.apply_managed_script(draft, raw, client=client,
+                                   preparation_id="offline-valid", allow_generation=False)
+    accepted = draft.publish("offline valid", client=client, idempotency_key="offline-valid")
+    assert accepted["status"] == "accepted", accepted
+    draft = Checkout.load(draft.path)
+    log = journal.journal_path(p, "main")
+    before = snapshot(s), draft.path.read_bytes(), log.read_bytes(), len(client.calls)
+    read = client.get_managed_output
+    for fault in ("unrelated-project", "forged-object", "unsettled", "mixed-attempt", "corrupt-bytes"):
+        with monkeypatch.context() as bad:
+            def output(association):
+                value = copy.deepcopy(read(association))
+                if fault == "unrelated-project":
+                    value["project_id"] = "unrelated-project"
+                elif fault == "forged-object":
+                    value["object_id"] = "sha256:" + "f" * 64
+                elif fault == "unsettled":
+                    value["lifecycle"]["state"] = "reclaimed"
+                elif fault == "mixed-attempt" and value["output_port"] == "speech_words":
+                    value["attempt_id"] = "another-settled-attempt"
+                return value
+            bad.setattr(client, "get_managed_output", output)
+            if fault == "corrupt-bytes":
+                bad.setattr(client, "get_object", lambda *_: {"data": b"forged managed bytes"})
+            with pytest.raises(TimelineEditError):
+                draft.undo(client=client, publication=accepted["accepted_publication_id"])
+        assert before == (snapshot(s), draft.path.read_bytes(), log.read_bytes(), len(client.calls))
+    print(json.dumps(dict(case="retained-refusals", publication=accepted["accepted_publication_id"],
+        refused=["unprepared", "malformed-ref", "forged-ref", "unrelated-project", "forged-object",
+                 "unsettled", "mixed-attempt", "corrupt-bytes"], no_mutation=True, no_commit=True)))
+
+
+def test_offline_narration_publication_inverse_rebases_disjoint_edit_and_refuses_overlap(runtime, monkeypatch):
+    from astrid.sdk.timeline import commands, journal
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.timeline.checkout import Checkout
+    s, p = runtime
+    refs, _, _ = managed_take(s, p)
+    draft, client = publication_draft(s, p, monkeypatch)
+    raw = script(refs)["args"]["spec"]
+    narration.apply_managed_script(draft, raw, client=client,
+                                   preparation_id="original", allow_generation=False)
+    original = draft.publish("offline original", client=client, idempotency_key="original")
+    assert original["status"] == "accepted", original
+    old_voice = copy.deepcopy(narration.line_clips(draft)["occurrence:occurrence-1/clip:voice"].data)
+    raw["lines"][0]["gap_after_s"] = .8
+    narration.apply_managed_script(draft, raw, client=client,
+                                   preparation_id="edit", allow_generation=False)
+    edited = draft.publish("offline edit", client=client, idempotency_key="edit")
+    assert edited["status"] == "accepted", edited
+    other = Checkout.draft(p, "main", name="other")
+    commands.run(other, dict(op="clip.set", select="occurrence:occurrence-1/clip:picture",
+                             args=dict(opaque="keep disjoint edit", _allow_new=True)))
+    later = other.publish("offline disjoint edit", client=client, idempotency_key="disjoint")
+    assert later["status"] == "accepted", later
+    draft = Checkout.load(draft.path)
+    draft.undo(client=client, publication=edited["accepted_publication_id"])
+    undone = draft.publish("offline rebased undo", client=client, idempotency_key="rebased-undo")
+    assert undone["status"] == "accepted", undone
+    assert undone["rebased_onto"] == later["accepted_revision_id"]
+    final = Checkout.load(draft.path)
+    assert narration.line_clips(final)["occurrence:occurrence-1/clip:voice"].data == old_voice
+    assert final.clip("picture").params["opaque"] == "keep disjoint edit"
+    # The now-intervening narration inverse is a conflicting authored write;
+    # reapplying the first undo must never borrow the newer base silently.
+    log = journal.journal_path(p, "main")
+    before = snapshot(s), final.path.read_bytes(), log.read_bytes(), len(client.calls)
+    with pytest.raises(TimelineEditError, match="same-property"):
+        final.undo(client=client, publication=edited["accepted_publication_id"])
+    assert before == (snapshot(s), final.path.read_bytes(), log.read_bytes(), len(client.calls))
+    print(json.dumps(dict(case="guarded-rebase", publication=edited["accepted_publication_id"],
+        later_publication=later["accepted_publication_id"], undone_publication=undone["accepted_publication_id"],
+        rebased_onto=undone["rebased_onto"], disjoint_preserved=True, overlap_refused_before_effects=True)))
