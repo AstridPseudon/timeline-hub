@@ -1,4 +1,4 @@
-import { compositeEffectGestureCommands, propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
+import { bulkTransitionGestureCommands, compositeEffectGestureCommands, propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
@@ -172,12 +172,15 @@ export function useClipEditing({
       return;
     }
 
-    const metaUpdates = Object.fromEntries(
+    const transitionBatch = validClipIds.length === clipIds.length
+      ? bulkTransitionGestureCommands(current, validClipIds.map(id => ({ id, patch })), { elementHost })
+      : undefined;
+    const metaUpdates = transitionBatch?.metaUpdates ?? Object.fromEntries(
       validClipIds.map((clipId) => [clipId, patch]),
     ) as Record<string, Partial<ClipMeta>>;
 
     const commandGroups = validClipIds.map((id) => propertyGestureCommands(current, id, patch));
-    const editCommands = commandGroups.every((commands) => commands !== undefined) ? commandGroups.flat() : undefined;
+    const editCommands = transitionBatch?.commands ?? (commandGroups.every((commands) => commands !== undefined) ? commandGroups.flat() : undefined);
     if (!patchAffectsDuration(patch)) {
       applyRowsEdit(current.rows, metaUpdates, undefined, undefined, { editCommands });
       return;
@@ -204,7 +207,7 @@ export function useClipEditing({
     }));
 
     applyRowsEdit(nextRows, metaUpdates, undefined, undefined, { editCommands });
-  }, [applyRowsEdit, dataRef, getValidClipIds]);
+  }, [applyRowsEdit, dataRef, elementHost, getValidClipIds]);
 
   const handleUpdateClipsDeep = useCallback((
     clipIds: string[],
@@ -235,11 +238,14 @@ export function useClipEditing({
       return;
     }
 
+    const transitionBatch = validClipIds.length === clipIds.length
+      ? bulkTransitionGestureCommands(current, validClipIds.map(id => ({ id, patch: metaUpdates[id] })), { elementHost })
+      : undefined;
     const groups = Object.entries(metaUpdates).map(([id, patch]) => propertyGestureCommands(current, id, patch));
-    applyRowsEdit(current.rows, metaUpdates, undefined, undefined, {
-      editCommands: groups.every((commands) => commands !== undefined) ? groups.flat() : undefined,
+    applyRowsEdit(current.rows, transitionBatch?.metaUpdates ?? metaUpdates, undefined, undefined, {
+      editCommands: transitionBatch?.commands ?? (groups.every((commands) => commands !== undefined) ? groups.flat() : undefined),
     });
-  }, [applyRowsEdit, dataRef, getValidClipIds]);
+  }, [applyRowsEdit, dataRef, elementHost, getValidClipIds]);
 
   const handleSelectedClipChange = useCallback((patch: ClipEditorPatch) => {
     const current = dataRef.current;

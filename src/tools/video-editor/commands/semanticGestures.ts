@@ -1,3 +1,4 @@
+import { isTransitionAssignmentBatch } from './transitionAssignmentHistory.ts';
 import { isTrackHistoryInverse } from './trackHistory.ts';
 import { isClipStructureInverse } from './clipStructureHistory.ts';
 import { isClipPlacementInverse, isShotGroupTransferBatch } from './clipPlacementHistory.ts';
@@ -380,6 +381,24 @@ export function catalogTransitionGestureCommands(
     args: { ...value.args, ...(patch.transition ? { from_clip: predecessor.target } : {}) },
     expect: transitionExpectation(data, toId, destination, predecessor),
   }];
+}
+
+/** Preserve the caller's ordered selection as one transition transaction. A
+ * single unsupported member keeps the entire original batch on compatibility.
+ * In particular, legacy bulk UI patches without a pinned binding stay there.
+ */
+export function bulkTransitionGestureCommands(
+  data: Pick<TimelineData, 'config' | 'tracks'>,
+  patches: readonly { id: string; patch: Partial<ClipMeta> }[],
+  options: { elementHost?: AstridElementHost | null } = {},
+): { commands: EditCommand[]; metaUpdates: Record<string, Partial<ClipMeta>> } | undefined {
+  const groups = patches.map(({ id, patch }) => compositeEffectGestureCommands(data, id, patch, options));
+  if (groups.some(group => !group.commands?.length || !group.localPatch)) return undefined;
+  const commands = groups.flatMap(group => group.commands!);
+  // This admits only W29 assignment/update; clear/null/occurrences and other
+  // composite families retain their existing bulk behavior.
+  if (!isTransitionAssignmentBatch(commands)) return undefined;
+  return { commands, metaUpdates: Object.fromEntries(patches.map(({ id }, index) => [id, groups[index].localPatch!])) };
 }
 
 /** Convert only the mounted clip-inspector fade and transition edits. Generic

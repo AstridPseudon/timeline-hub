@@ -2,7 +2,7 @@ import { isTransitionAssignmentBatch, transitionAssignmentInverse } from '../com
 import { trimClipToMediaEnd } from '../lib/trim-to-media-end.ts';
 // @vitest-environment jsdom
 import React, { useEffect } from 'react';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -62,6 +62,8 @@ import type { CanonicalClipIdentity } from '../data/shotCompositionProjection.ts
 import { planClipDrag } from '../lib/clip-drag-planner.ts';
 import { createTimelineEditability } from '../lib/timeline-editability.ts';
 import { ClipEntranceEffectField } from '@/tools/video-editor/components/PropertiesPanel/ClipEntranceEffectField.tsx';
+import { createVideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
+import { BulkClipPanelBody } from '@/tools/video-editor/components/PropertiesPanel/BulkClipPanelBody.tsx';
 import { ClipTransitionSection } from '@/tools/video-editor/components/PropertiesPanel/ClipTransitionSection.tsx';
 
 // This transport is a wire recorder, not an Astrid operation executor. Successful
@@ -5448,12 +5450,18 @@ describe('W29 direct transition receipt history', () => {
   });
 });
 
-function transitionSource(initial: TimelineData, requests: CommitRequest[]) {
+async function transitionSource(initial: TimelineData, requests: CommitRequest[], trackAuthority?: 'flat' | 'dual') {
   const python = process.env.ASTRID_TEST_PYTHON;
   if (!python) throw new Error('Set ASTRID_TEST_PYTHON to the qualified SDK test interpreter');
-  return JSON.parse(execFileSync(python, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/transitionAssignment.fixture.py')], {
-    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests }), encoding: 'utf8', env: process.env,
-  })) as ReturnType<typeof groupTransferSource>;
+  // Keep Vitest's worker responsive while the exact SDK runs; synchronous
+  // commits can starve its RPC acknowledgements even when every assertion passes.
+  const output = await new Promise<string>((resolve, reject) => {
+    const child = execFile(python, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/transitionAssignment.fixture.py')], {
+      encoding: 'utf8', env: process.env, maxBuffer: 16 * 1024 * 1024,
+    }, (error, stdout, stderr) => error ? reject(new Error(`${error.message}\n${stderr}`)) : resolve(stdout));
+    child.stdin!.end(JSON.stringify({ config: initial.config, registry: initial.registry, requests, track_authority: trackAuthority }));
+  });
+  return JSON.parse(output) as ReturnType<typeof groupTransferSource>;
 }
 
 function transitionReference() {
@@ -5470,15 +5478,17 @@ function pinnedTransitionHost(reference: ReturnType<typeof transitionReference>)
 }
 
 describe('W29 actual inspector SDK receipt Undo Redo', () => {
-  it.each(['absent assignment', 'null assignment', 'pinned update'] as const)('%s retains exact SDK state and only admits receipt-backed history', async kind => {
+  it.each(['absent assignment', 'null assignment', 'pinned update', 'legacy absent assignment', 'legacy null assignment'] as const)('%s retains exact SDK state and only admits receipt-backed history', async variant => {
+    const legacy = variant.startsWith('legacy ');
+    const kind = variant.replace('legacy ', '');
     const reference = { ...transitionReference(), opaqueReference: { keep: null } };
     const prior = { type: reference.id, revision: reference.revision, duration: 0.5, params: null, opaqueTransition: { keep: true } };
     const initial = await adjacentTransitionData(kind === 'absent assignment' ? {}
       : kind === 'null assignment' ? { transition: null, elementRef: null } : { transition: prior, elementRef: reference });
-    const requests: CommitRequest[] = []; let proof!: ReturnType<typeof transitionSource>;
+    const requests: CommitRequest[] = []; let proof!: Awaited<ReturnType<typeof transitionSource>>;
     const h = await setup(async request => {
-      requests.push(request); proof = transitionSource(initial, requests);
-      if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `w29-${kind.replaceAll(' ', '-')}.json`), JSON.stringify({ requests, proof }, null, 2));
+      requests.push(request); proof = await transitionSource(initial, requests, legacy ? 'flat' : undefined);
+      if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `w29-${variant.replaceAll(' ', '-')}.json`), JSON.stringify({ requests, proof }, null, 2));
       return { acceptedResult: proof.result };
     }, false, initial, 1, undefined, pinnedTransitionHost(reference), 'after');
     const history = renderHook(() => {
@@ -5496,7 +5506,7 @@ describe('W29 actual inspector SDK receipt Undo Redo', () => {
     act(() => h.result.current.editing.handleSelectedClipChange({ transition: next, ...(kind === 'pinned update' ? {} : { elementRef: reference }) }));
     expect(isTransitionAssignmentBatch(gestureCommandsFor(h.result.current.data!) ?? [])).toBe(true);
     await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
-    if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `w29-ack-${kind.replaceAll(' ', '-')}.json`), JSON.stringify({ acknowledgements, registrations }, null, 2));
+    if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `w29-ack-${variant.replaceAll(' ', '-')}.json`), JSON.stringify({ acknowledgements, registrations }, null, 2));
     expect(acknowledgements).toHaveLength(1);
     const forward = (requests[0].change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands;
     expect(proof.result.status, JSON.stringify(proof.result.error)).toBe('accepted');
@@ -5511,18 +5521,9 @@ describe('W29 actual inspector SDK receipt Undo Redo', () => {
     act(() => history.result.current.undo());
     await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
     if (kind === 'pinned update') {
-      // D156 accepts this exact inverse, but labels the nested duration write a
-      // consequence and emits no direct receipt. Keep Redo closed; do not infer
-      // a new inverse from consequence rows or the canonical document.
-      expect(proof.results[1].canonical_document).toEqual(proof.before);
-      expect(proof.results[1].status).toBe('accepted');
-      expect(proof.results[1].change.direct_writes).toEqual([]);
-      expect(history.result.current.canRedo).toBe(false);
-      act(() => history.result.current.redo());
-      expect(requests).toHaveLength(2);
-      expect([...__getSelectionStateForTests().timeline.selectedClipIds]).toEqual(selected);
-      expect(h.compatibilityRequests).toEqual([]);
-      history.unmount(); h.unmount(); return;
+      // e9 includes W13's complete parent inverse promotion. Never derive this
+      // from consequences or a document diff; require the exact direct receipt.
+      expect(proof.results[1].change.direct_writes).toEqual(('commands' in requests[1].change ? requests[1].change.commands[0].args.writes : undefined));
     }
     await waitFor(() => expect(history.result.current.canRedo).toBe(true));
     act(() => history.result.current.redo());
@@ -5534,7 +5535,7 @@ describe('W29 actual inspector SDK receipt Undo Redo', () => {
       writes: proof.results[0].change.direct_writes.map(row => ({ ...row, before: row.after, after: row.before })) } }] });
     expect(requests[2].change).toEqual(requests[0].change);
     expect(proof.accept_counts).toEqual([1, 1, 1]);
-    if (kind === 'absent assignment') {
+    if (kind === 'absent assignment' && !legacy) {
       const stale = structuredClone(requests[0]);
       (stale.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands[0].expect!.transition = { state: 'present', value: null };
       const wrongPublication = structuredClone(requests[1]);
@@ -5544,7 +5545,7 @@ describe('W29 actual inspector SDK receipt Undo Redo', () => {
       for (const [name, candidate, priorRequests] of [
         ['stale expectation', stale, []], ['wrong publication', wrongPublication, [requests[0]]], ['late batch refusal', late, []],
       ] as const) {
-        const refused = transitionSource(initial, [...priorRequests, candidate]);
+        const refused = await transitionSource(initial, [...priorRequests, candidate]);
         expect(['conflict', 'refused']).toContain(refused.result.status);
         expect(refused.result.accepted_publication_id).toBeNull();
         expect(refused.result.change.direct_writes).toEqual([]);
@@ -5599,13 +5600,286 @@ describe('W29 actual inspector receipt refusal boundaries', () => {
     });
   it('existing bulk transition caller keeps its unsupported payload and fallback', async () => {
     const h = await setup(undefined, false, await adjacentTransitionData(), 1, undefined, transitionHost(), 'after');
-    // This existing bulk API does not emit the selected inspector's typed family.
-    // Do not change its payload/route as part of this receipt-only assignment.
+    // The second clip has no predecessor: the whole operation must retain
+    // compatibility even though its first member can map to the typed family.
     act(() => h.result.current.editing.handleUpdateClips(['after', 'before'], {
       transition: { type: 'crossfade', revision: 'sha256:crossfade-r1', duration: 0.5 },
       elementRef: { id: 'crossfade', revision: 'sha256:crossfade-r1', kind: 'transition', packId: 'rendering' },
     }));
     expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
     h.unmount();
+  });
+});
+
+
+async function bulkTransitionData(reference: ReturnType<typeof transitionReference>, update = false) {
+  const base = await initialData();
+  return buildTimelineData({ ...base.config, clips: ['V1', 'V2'].flatMap((track, index) => [
+    { id: `before-${index}`, at: 0, hold: 2, clipType: 'hold' as const, track, app: { predecessor: index } },
+    { id: `after-${index}`, at: 2, hold: 2, clipType: 'hold' as const, track,
+      params: { opaqueClip: { index, nullValue: null } }, app: { retained: index },
+      ...(update ? {
+        transition: { type: reference.id, revision: reference.revision, duration: 0.4 + index * 0.1,
+          params: index ? null : {}, opaqueTransition: { index } },
+        elementRef: { ...reference, opaqueReference: { index } },
+      } : index ? { transition: null, elementRef: null } : {}),
+    },
+  ]) }, base.registry, undefined, 1, undefined, base.head);
+}
+
+const bulkSelection = ['after-1', 'after-0'];
+function bulkHistory(h: Awaited<ReturnType<typeof setup>>) {
+  return renderHook(() => {
+    const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+    useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]);
+    return state;
+  }, { wrapper: overlapHistoryWrapper(h) });
+}
+function writeW29Proof(name: string, value: unknown) {
+  if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `w29-bulk-${name}.json`), JSON.stringify(value, null, 2));
+}
+
+describe('W29 actual bulk caller SDK receipt history', () => {
+  it.each(['assignment', 'deep update', 'flat assignment'] as const)('%s is one ordered transaction with whole-document receipt-only Undo and original-command Redo', async kind => {
+    const reference = { ...transitionReference(), opaqueReference: { keep: null } };
+    const initial = await bulkTransitionData(reference, kind === 'deep update');
+    const requests: CommitRequest[] = []; let proof!: Awaited<ReturnType<typeof transitionSource>>;
+    const h = await setup(async request => {
+      requests.push(request); proof = await transitionSource(initial, requests, kind === 'flat assignment' ? 'flat' : undefined);
+      writeW29Proof(kind.replaceAll(' ', '-'), { requests, proof });
+      return { acceptedResult: proof.result };
+    }, false, initial, 1, undefined, pinnedTransitionHost(reference), 'after-1');
+    const history = bulkHistory(h);
+    const acknowledgements: unknown[] = [];
+    h.eventBus.on('nativeRegistrationAccepted', (_owner, inverse) => acknowledgements.push(inverse));
+    act(() => editorReplaceTimelineSelection(bulkSelection));
+    const selected = [...__getSelectionStateForTests().timeline.selectedClipIds];
+    const next = { type: reference.id, revision: reference.revision, duration: 0.731, params: null, opaqueTransition: { keep: true } };
+    act(() => {
+      if (kind === 'deep update') h.result.current.editing.handleUpdateClipsDeep(selected,
+        meta => ({ transition: { ...meta.transition!, duration: 0.731 } }));
+      else h.result.current.editing.handleUpdateClips(selected, { transition: next, elementRef: reference });
+    });
+    expect(history.result.current.canUndo).toBe(false);
+    const commands = gestureCommandsFor(h.result.current.data!)!;
+    expect(isTransitionAssignmentBatch(commands)).toBe(true);
+    expect(commands.map(command => command.select)).toEqual(selected.map(id => `parent/clip:${id}`));
+    for (const [index, command] of commands.entries()) {
+      const prior = initial.config.clips.find(clip => clip.id === selected[index])!;
+      expect(command.expect!.transition).toEqual(Object.hasOwn(prior, 'transition') ? { state: 'present', value: prior.transition } : { state: 'absent' });
+      expect(command.expect!.elementRef).toEqual(Object.hasOwn(prior, 'elementRef') ? { state: 'present', value: prior.elementRef } : { state: 'absent' });
+      expect(command.expect![`parent/track:${prior.track}::kind`]).toEqual({ state: 'present', value: 'visual' });
+      expect(command.args).toEqual(kind === 'deep update'
+        ? { transition: { ...prior.transition, duration: 0.731 }, elementRef: prior.elementRef }
+        : { transition: next, elementRef: reference, from_clip: `parent/clip:before-${1 - index}` });
+    }
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 90_000 });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    expect(requests).toHaveLength(1);
+    expect(requests[0].change).toEqual({ commands });
+    expect(acknowledgements).toHaveLength(1);
+    expect(proof.results[0].change.direct_writes).toHaveLength(kind === 'deep update' ? 2 : 4);
+    // Assert the complete authored result explicitly, not only roundtrip equality.
+    const expectedDocument = structuredClone(proof.before);
+    const parent = (expectedDocument as unknown as { parent: { clips: TimelineData['config']['clips'] } }).parent;
+    for (const command of commands) Object.assign(parent.clips.find(clip => `parent/clip:${clip.id}` === command.select)!, {
+      transition: command.args.transition, elementRef: command.args.elementRef,
+    });
+    expect(proof.results[0].canonical_document).toEqual(expectedDocument);
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 90_000 });
+    expect(proof.results[1].canonical_document).toEqual(proof.before);
+    expect(proof.results[1].change.direct_writes).toEqual('commands' in requests[1].change ? requests[1].change.commands[0].args.writes : undefined);
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 90_000 });
+    expect(proof.results[2].canonical_document).toEqual(expectedDocument);
+    expect(requests[2].change).toEqual(requests[0].change);
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(proof.accept_counts).toEqual([1, 1, 1]);
+    expect(h.readbackHeads).toEqual(['parent-r2', 'parent-r3', 'parent-r4']);
+    expect([...__getSelectionStateForTests().timeline.selectedClipIds]).toEqual(selected);
+    expect(h.result.current.data!.config.clips.map(clip => clip.id)).toEqual(initial.config.clips.map(clip => clip.id));
+    expect(h.result.current.data!.config.tracks).toEqual(initial.config.tracks);
+    for (const command of commands) expect(h.result.current.data!.config.clips.find(clip => command.select === `parent/clip:${clip.id}`)).toEqual(parent.clips.find(clip => command.select === `parent/clip:${clip.id}`));
+    expect(acknowledgements).toHaveLength(3);
+    expect(h.compatibilityRequests).toEqual([]);
+    history.unmount(); h.unmount();
+  }, 240_000);
+});
+
+describe('W29 actual bulk caller provider atomic refusals', () => {
+  it.each(['missing', 'extra', 'duplicate', 'foreign', 'malformed', 'no_change', 'refused'] as const)(
+    '%s direct receipt never admits any member to Undo or Redo', async kind => {
+      const reference = { ...transitionReference(), opaqueReference: { keep: null } };
+      const initial = await bulkTransitionData(reference);
+      let proof!: Awaited<ReturnType<typeof transitionSource>>; let completed = false;
+      const h = await setup(async request => {
+        proof = await transitionSource(initial, [request]);
+        const returned = structuredClone(proof.result);
+        if (kind === 'missing') returned.change.direct_writes.pop();
+        if (kind === 'extra') returned.change.direct_writes.push({ ...returned.change.direct_writes[0], path: 'params' });
+        if (kind === 'duplicate') returned.change.direct_writes.push(returned.change.direct_writes[0]);
+        if (kind === 'foreign') returned.change.direct_writes[0].id = 'parent/clip:before-0';
+        if (kind === 'malformed') returned.change.direct_writes[0].before = { state: 'absent', value: null } as never;
+        completed = true;
+        writeW29Proof(`receipt-${kind}`, { request, proof, returned, syntheticTransportCorruption: true });
+        // The refusal/no-change answers are explicit transport doubles; the
+        // unmodified real SDK accepted result is retained separately above.
+        if (kind === 'no_change' || kind === 'refused') return kind;
+        return { acceptedResult: returned };
+      }, false, initial, 1, undefined, pinnedTransitionHost(reference), 'after-1');
+      const history = bulkHistory(h);
+      act(() => editorReplaceTimelineSelection(bulkSelection));
+      const selected = [...__getSelectionStateForTests().timeline.selectedClipIds];
+      act(() => h.result.current.editing.handleUpdateClips(selected, {
+        transition: { type: reference.id, revision: reference.revision, duration: 0.731, params: null }, elementRef: reference,
+      }));
+      expect(history.result.current.canUndo).toBe(false);
+      await waitFor(() => expect(completed).toBe(true), { timeout: 90_000 });
+      if (kind !== 'refused') await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+      await act(async () => { await Promise.resolve(); });
+      expect(history.result.current.canUndo).toBe(false);
+      expect(history.result.current.canRedo).toBe(false);
+      act(() => { history.result.current.undo(); history.result.current.redo(); });
+      expect(h.requests).toHaveLength(1);
+      expect(proof.accept_counts).toEqual([1]);
+      expect(proof.results[0].change.direct_writes).toHaveLength(4);
+      expect([...__getSelectionStateForTests().timeline.selectedClipIds]).toEqual(selected);
+      expect(h.compatibilityRequests).toEqual([]);
+      history.unmount(); h.unmount();
+    }, 120_000);
+  it.each(['stale first', 'late second', 'dual tracks'] as const)(
+    '%s SDK refusal crosses the real bulk caller and provider without partial acceptance', async kind => {
+      const reference = transitionReference();
+      const initial = await bulkTransitionData(reference);
+      const server = { ...initial, config: structuredClone(initial.config) };
+      if (kind !== 'dual tracks') {
+        const target = server.config.clips.find(clip => clip.id === (kind === 'stale first' ? 'after-1' : 'after-0'))!;
+        target.transition = { type: reference.id, revision: reference.revision, duration: 0.3 };
+      }
+      let completed = false; let proof!: Awaited<ReturnType<typeof transitionSource>>;
+      const h = await setup(async request => {
+        proof = await transitionSource(server, [request], kind === 'dual tracks' ? 'dual' : undefined);
+        writeW29Proof(`sdk-${kind.replaceAll(' ', '-')}`, { request, proof });
+        completed = true;
+        return { acceptedResult: proof.result };
+      }, false, initial, 1, undefined, pinnedTransitionHost(reference), 'after-1');
+      const history = bulkHistory(h);
+      act(() => h.result.current.editing.handleUpdateClips(bulkSelection, {
+        transition: { type: reference.id, revision: reference.revision, duration: 0.731 }, elementRef: reference,
+      }));
+      await waitFor(() => expect(completed).toBe(true), { timeout: 90_000 });
+      await act(async () => { await Promise.resolve(); });
+      expect(['conflict', 'refused']).toContain(proof.result.status);
+      expect(proof.result.canonical_document).toBeNull();
+      expect(proof.result.accepted_revision_id).toBeNull();
+      expect(proof.result.accepted_publication_id).toBeNull();
+      expect(proof.result.change.direct_writes).toEqual([]);
+      expect(proof.accept_counts).toEqual([]);
+      expect((proof as unknown as { document: unknown; attempted_accept_count: number }).document).toEqual(proof.before);
+      expect((proof as unknown as { attempted_accept_count: number }).attempted_accept_count).toBe(0);
+      expect(h.getCurrentConfig()).toEqual(initial.config);
+      expect(h.savedSeqRef.current).toBe(0);
+      expect(history.result.current.canUndo).toBe(false);
+      expect(history.result.current.canRedo).toBe(false);
+      act(() => { history.result.current.undo(); history.result.current.redo(); });
+      expect(h.requests).toHaveLength(1);
+      expect(h.compatibilityRequests).toEqual([]);
+      history.unmount(); h.unmount();
+    }, 120_000);
+  it('wrong publication on actual bulk Undo preserves the complete accepted document and cannot fabricate Redo', async () => {
+    const reference = transitionReference(); const initial = await bulkTransitionData(reference);
+    const requests: CommitRequest[] = []; let completed = false; let proof!: Awaited<ReturnType<typeof transitionSource>>;
+    const h = await setup(async request => {
+      requests.push(request);
+      const submitted = structuredClone(request);
+      if (requests.length === 2 && 'commands' in submitted.change) submitted.change.commands[0].args.publication = 'foreign-publication';
+      proof = await transitionSource(initial, requests.length === 1 ? [submitted] : [requests[0], submitted]);
+      writeW29Proof('wrong-publication', { requests, submitted, proof, syntheticPublicationCorruption: true });
+      completed = requests.length === 2;
+      return { acceptedResult: proof.result };
+    }, false, initial, 1, undefined, pinnedTransitionHost(reference), 'after-1');
+    const history = bulkHistory(h);
+    act(() => h.result.current.editing.handleUpdateClips(bulkSelection, {
+      transition: { type: reference.id, revision: reference.revision, duration: 0.731 }, elementRef: reference,
+    }));
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true), { timeout: 90_000 });
+    const acceptedConfig = h.getCurrentConfig();
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(completed).toBe(true), { timeout: 90_000 });
+    await act(async () => { await Promise.resolve(); });
+    expect(proof.result.status).toBe('conflict');
+    expect(proof.result.conflicts).toEqual([expect.objectContaining({ path: 'publication ancestry/evidence unavailable', kind: 'dependent' })]);
+    expect(proof.result.change.direct_writes).toEqual([]);
+    expect(proof.accept_counts).toEqual([1]);
+    expect((proof as unknown as { document: unknown }).document).toEqual(proof.results[0].canonical_document);
+    expect(h.getCurrentConfig()).toEqual(acceptedConfig);
+    expect(history.result.current.canRedo).toBe(false);
+    act(() => history.result.current.redo());
+    expect(requests).toHaveLength(2);
+    expect(h.compatibilityRequests).toEqual([]);
+    history.unmount(); h.unmount();
+  }, 180_000);
+});
+
+
+describe('W29 bulk whole-operation compatibility', () => {
+  it.each(['unbound member', 'mixed field', 'null', 'clear', 'duplicate selection', 'missing selection', 'occurrence'] as const)(
+    '%s retains the original bulk patches without partially converting', async kind => {
+      const reference = { id: 'crossfade', revision: 'sha256:crossfade-r1', kind: 'transition' as const, packId: 'rendering' };
+      const initial = kind === 'occurrence' ? await occurrenceTransitionData() : await bulkTransitionData(reference, true);
+      const h = await setup(undefined, false, initial, 1, undefined, transitionHost(), 'after-1');
+      const selected = kind === 'occurrence' ? ['occ-after', 'occ-before']
+        : kind === 'duplicate selection' ? ['after-1', 'after-1']
+        : kind === 'missing selection' ? ['after-1', 'missing'] : bulkSelection;
+      const patches: Partial<import('../lib/timeline-data.ts').ClipMeta>[] = [];
+      act(() => h.result.current.editing.handleUpdateClipsDeep(selected, meta => {
+        const patch = kind === 'null' ? { transition: null }
+          : kind === 'clear' ? { transition: undefined }
+          : kind === 'mixed field' ? { transition: { ...meta.transition!, duration: 0.731 }, opacity: 0.4 }
+          : kind === 'unbound member' && patches.length === 1 ? { transition: { type: reference.id, duration: 0.731 } }
+          : { transition: { ...meta.transition!, duration: 0.731 } };
+        patches.push(patch as Partial<import('../lib/timeline-data.ts').ClipMeta>);
+        return patch as Partial<import('../lib/timeline-data.ts').ClipMeta>;
+      }));
+      if (kind === 'clear') expect(gestureCommandsFor(h.result.current.data!)?.map(command => command.op)).toEqual(['clip.clear', 'clip.clear']);
+      else expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
+      expect(patches.length).toBeGreaterThan(0);
+      writeW29Proof(`fallback-${kind.replaceAll(' ', '-')}`, { selected, patches, commands: gestureCommandsFor(h.result.current.data!) ?? null });
+      h.unmount();
+    });
+  it('mounted bulk panel duration callback stays explicit compatibility when its payload omits the pin and reference', async () => {
+    const reference = { id: 'crossfade', revision: 'sha256:crossfade-r1', kind: 'transition' as const, packId: 'rendering' };
+    const initial = await bulkTransitionData(reference, true);
+    const h = await setup(undefined, false, initial, 1, undefined, transitionHost(), 'after-1');
+    const prior = initial.config.clips.find(clip => clip.id === 'after-0')!.transition!;
+    const patches: unknown[] = [];
+    const panel = render(<BulkClipPanelBody
+      clips={initial.resolvedConfig.clips.filter(clip => bulkSelection.includes(clip.id))}
+      effectResources={createVideoEditorEffectCatalog({ effects: [] })} visibleTabs={['effects']} activeTab="effects" setActiveTab={vi.fn()}
+      compositionWidth={1920} compositionHeight={1080}
+      sharedEntrance={null} sharedExit={null} sharedContinuous={null} sharedText={null}
+      sharedEntranceType={null} sharedExitType={null} sharedContinuousType={null}
+      sharedTransition={prior} sharedTransitionType={reference.id} sharedTransitionDuration={0.5}
+      sharedSpeed={null} sharedFrom={null} sharedTo={null} sharedX={null} sharedY={null}
+      sharedWidth={null} sharedHeight={null} sharedOpacity={null} sharedVolume={null}
+      sharedFontSize={null} sharedTextColor={null}
+      onChange={patch => h.result.current.editing.handleUpdateClips(bulkSelection, patch)}
+      onChangeDeep={patchFn => h.result.current.editing.handleUpdateClipsDeep(bulkSelection, meta => {
+        const patch = patchFn(meta); patches.push(patch); return patch;
+      })} onResetPosition={vi.fn()} onToggleMute={vi.fn()} onClose={vi.fn()}
+    />, { wrapper: overlapHistoryWrapper(h) });
+    const input = screen.getByText('Duration (seconds)').parentElement!.querySelector('input')!;
+    fireEvent.change(input, { target: { value: '0.731' } });
+    expect(patches).toHaveLength(2);
+    for (const patch of patches as { transition: Record<string, unknown> }[]) {
+      expect(patch.transition).not.toHaveProperty('revision');
+      expect(patch).not.toHaveProperty('elementRef');
+      expect(patch.transition).not.toHaveProperty('opaqueTransition');
+    }
+    expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
+    writeW29Proof('mounted-panel-fallback', { patches, reason: 'Existing UI callback omits exact pinned revision/reference and opaque siblings; no UI or intent rewrite authorized.' });
+    panel.unmount(); h.unmount();
   });
 });
