@@ -267,7 +267,7 @@ class _InspectionAdmission:
 
 
 class _InspectionTool:
-    """Non-spawning system developer selection; no PATH/DEVELOPER_DIR override."""
+    """Pin the selected developer reader without launching its tool shim."""
 
     def __init__(self):
         if sys.platform != "darwin":
@@ -277,9 +277,12 @@ class _InspectionTool:
         self.developer = Path("/var/db/xcode_select_link")
         base, self.selection_identity = self._developer_selection()
         self.base = base
-        self.executable = FilePin.measure(base / "usr/bin/otool")
+        # The selected otool/llvm-otool is a launcher around this reader.
+        # Keep the system alias as selection provenance, while executing only
+        # the fixed, separately pinned reader through the original owner.
+        self.executable = FilePin.measure(base / "usr/bin/otool-classic")
         if not os.access(self.executable.path, os.X_OK):
-            raise ExecutableAdmissionError("selected platform otool is not executable")
+            raise ExecutableAdmissionError("selected platform otool-classic is not executable")
 
     def _developer_selection(self):
         if self.developer.exists() or self.developer.is_symlink():

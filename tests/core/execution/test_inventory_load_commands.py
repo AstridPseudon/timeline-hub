@@ -461,6 +461,8 @@ def test_actual_platform_tool_original_owner_channel_and_waits(tmp_path):
     env.pop("ASTRID_SOURCE_STATE", None)
     env["INSPECTION_TEST_NAMES"] = json.dumps(names)
     launch = cb._HostInspectionLaunch((pack,), tmp_path, env)
+    launch.tool.verify()
+    assert launch.tool.executable.path == launch.tool.base / 'usr/bin/otool-classic'
     script = """
 from astrid.core.execution.declared_executables import ExecutableAdmission
 from astrid.core.execution import custody_broker as cb
@@ -470,7 +472,12 @@ print(json.dumps({'names':[b.name for b in bindings],'channel':cb._COMMAND_INVEN
 for client in cb._COMMAND_CLIENTS.values():client.channel.close()
 """
     process = None
-    record = {"helpers": [], "settlement": "UNPROVED"}
+    record = {"helpers": [], "settlement": "UNPROVED",
+              "executed_tool": {"path": str(launch.tool.executable.path),
+                                "resolved": str(launch.tool.executable.resolved),
+                                "sha256": launch.tool.executable.sha256,
+                                "aliases": list(map(str, launch.tool.executable.aliases))},
+              "system_selection_alias": str(launch.tool.alias.path)}
     try:
         process = pg.popen_owned_group(
             [sys.executable, "-B", "-c", script],
@@ -488,14 +495,27 @@ for client in cb._COMMAND_CLIENTS.values():client.channel.close()
         record["root_pid"] = process.pid
         record["root_wait"] = process.wait(timeout=0)
         owner = process._astrid_custody._inventory_owner
+        admitted_images = {str(pin.resolved)
+                           for images in launch.inspection.images.values()
+                           for pin, _ in images.values()}
+        admitted_commands = {
+            cb._digest_bytes(cb._canonical([str(launch.tool.executable.path), '-l', image])):
+                [str(launch.tool.executable.path), '-l', image]
+            for image in admitted_images}
         for operation, helper in owner.helpers.items():
             broker = helper._astrid_custody._launch_broker
             registration = broker.registration or {}
+            assert registration['argv_digest'] in admitted_commands
+            assert broker._post_exec_authority_validated
+            assert broker._post_exec_executable['path'] == str(launch.tool.executable.resolved)
             record["helpers"].append(
                 {
                     "operation": operation,
                     "pid": helper.pid,
                     "original_wait": helper.returncode,
+                    "registered_target_command": admitted_commands[registration['argv_digest']],
+                    "registered_argv_digest": registration['argv_digest'],
+                    "post_exec_authority_validated": broker._post_exec_authority_validated,
                     "identity": registration.get("identity"),
                     "native_start": registration.get("bootstrap_start_anchor"),
                     "audit_token_sha256": registration.get("audit_token_sha256"),
@@ -515,6 +535,7 @@ for client in cb._COMMAND_CLIENTS.values():client.channel.close()
             assert len(launch.inspection.images["ffprobe"]) > 1
         owner.finish()
         pg.verify_tree_absent(process)
+        launch.tool.verify()
         assert not owner.accepting and owner.pending is None and owner.error is None
         assert not (tmp_path / "no-state").exists()
         record["settlement"] = "VERIFIED"
@@ -617,6 +638,76 @@ def test_platform_tool_selection_and_alias_are_pins(inspection, tmp_path, monkey
         )
     else:
         monkeypatch.setattr(de.os, "uname", lambda: ("other",))
+    with pytest.raises(de.ExecutableAdmissionError):
+        binding.verify()
+
+
+@pytest.fixture
+def classic_selection(tmp_path, monkeypatch):
+    """Real file pins with test-owned developer selection; no process launch."""
+    developer = tmp_path / 'developer'
+    binary_dir = developer / 'usr/bin'
+    binary_dir.mkdir(parents=True)
+    reader = binary_dir / 'reader-image'
+    reader.write_bytes(b'classic unit artifact')
+    reader.chmod(0o700)
+    classic = binary_dir / 'otool-classic'
+    classic.symlink_to(reader)
+    shim = binary_dir / 'otool'
+    shim.write_bytes(b'launcher unit artifact')
+    shim.chmod(0o700)
+    alias = tmp_path / 'system-otool'
+    alias.symlink_to(shim)
+    original_measure = de.FilePin.measure.__func__
+
+    def measure(cls, path):
+        return original_measure(cls, alias if path == Path('/usr/bin/otool') else path)
+
+    monkeypatch.setattr(de.FilePin, 'measure', classmethod(measure))
+    monkeypatch.setattr(de._InspectionTool, '_developer_selection',
+                        lambda self: (developer, ('test-owned-selection',)))
+    return developer, classic, reader, shim, alias
+
+
+def test_fixed_classic_selection_ignores_environment_and_never_spawns(classic_selection, monkeypatch):
+    developer, classic, reader, shim, alias = classic_selection
+    for key in ['PATH', 'DEVELOPER_DIR', 'OTOOL_PATH']:
+        monkeypatch.setenv(key, '/untrusted/tool-override')
+    monkeypatch.setattr(subprocess, 'run', lambda *a, **kw: pytest.fail('spawning selection'))
+    monkeypatch.setattr(subprocess, 'Popen', lambda *a, **kw: pytest.fail('spawning selection'))
+    binding = de._InspectionTool()
+    assert binding.executable.path == classic and binding.executable.resolved == reader
+    assert set(binding.executable.aliases) == {classic, reader}
+    assert binding.alias.path == alias and binding.alias.resolved == shim
+    assert binding.base == developer
+    binding.verify()
+
+
+@pytest.mark.parametrize('fault', ['missing', 'not-executable'])
+def test_classic_selection_refuses_without_falling_back_to_shim(classic_selection, fault):
+    _, classic, reader, shim, _ = classic_selection
+    if fault == 'missing':
+        classic.unlink()
+    else:
+        reader.chmod(0o600)
+    assert shim.is_file()
+    with pytest.raises(de.ExecutableAdmissionError):
+        de._InspectionTool()
+
+
+@pytest.mark.parametrize('fault', ['reader-bytes', 'reader-alias', 'selection-alias'])
+def test_classic_and_selection_alias_pins_refuse_replacement(classic_selection, tmp_path, fault):
+    _, classic, reader, _, alias = classic_selection
+    binding = de._InspectionTool()
+    if fault == 'reader-bytes':
+        reader.write_bytes(b'replaced classic')
+    else:
+        replacement = tmp_path / 'replacement'
+        replacement.write_bytes(reader.read_bytes())
+        replacement.chmod(0o700)
+        path = classic if fault == 'reader-alias' else alias
+        path.unlink()
+        path.symlink_to(replacement)
     with pytest.raises(de.ExecutableAdmissionError):
         binding.verify()
 
