@@ -585,6 +585,7 @@ class _LocalInstallationObservation:
     def __init__(self, profile, launcher, layout=None):
         self._layout = layout
         self._renderer = profile.get("host_launch", {}).get("renderer_selection")
+        self._renderer_binding = None
         self._pins = [(profile["host_executable"], profile["host_artifact_digest"][7:]),
                       (launcher["path"], launcher["sha256"])]
         if "host_os_executable" in profile:
@@ -595,7 +596,7 @@ class _LocalInstallationObservation:
         if self._renderer is not None:
             from astrid.core.execution.host_renderer_selection import validate_renderer_selection
             try:
-                validate_renderer_selection(self._renderer)
+                self._renderer_binding = validate_renderer_selection(self._renderer, retained=self._renderer_binding)
             except (ValueError, OSError) as exc:
                 raise HostLaunchError("selected renderer closure changed") from exc
         for path, pin in self._pins:
