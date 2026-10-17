@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
@@ -43,7 +43,8 @@ export function RuntimeConnectionPill({
   const cardShowing = connection.isConnected && restart !== 'ok';
 
   // The editor's own technical messages about the same failure stay quiet while the card is the one thing to read.
-  useEffect(() => {
+  // A layout effect, so the flag flips in the same commit that shows the card: no frame shows both.
+  useLayoutEffect(() => {
     setRecoveryCardShowing(cardShowing);
     return () => setRecoveryCardShowing(false);
   }, [cardShowing]);
