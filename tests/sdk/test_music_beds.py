@@ -8,6 +8,7 @@ import sys
 import pytest
 
 from astrid.core.timeline.music_bed import canonical_basis, move_point
+from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline.compiler import compile_timing
 from astrid.sdk.timeline.music_beds import MusicBedError, collection, materialize
 from astrid.sdk.timeline_checkout import Checkout, TimelineEditError
@@ -568,6 +569,7 @@ def test_actual_concurrent_same_bed_edits_conflict_without_concatenating_basis(t
 
 def repeated(*, closed=True):
     tl = tiny()
+    intent.set_on(tl.clip('a-rocket').data, '"viral" #1')
     tl._registry('A')['Q']['duration'] = 20.
     row = copy.deepcopy(tl.bundle['placements'][0])
     row['occurrence_id'] = 'repeat-A'

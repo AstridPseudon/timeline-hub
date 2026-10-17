@@ -293,8 +293,15 @@ def resolve(moment: Moment | str, ctx: Context, *, in_point: bool = False) -> fl
         if not hits:
             raise MomentError(_missing(m, ctx.words()))
         if m.n is None and len(hits) > 1:
-            where = "; ".join(f'"{m.text}" in {h[0].segment}' + (f" #{k}" if sum(1 for x in hits if x[0].segment == h[0].segment) > 1 else "")
-                              + f" at {h[0].start:.2f} s" for k, h in enumerate(hits, 1))
+            seen, choices = {}, []
+            for h in hits:
+                line = h[0].segment
+                seen[line] = seen.get(line, 0) + 1
+                choice = f'"{m.text}" in {line}'
+                if sum(1 for x in hits if x[0].segment == line) > 1:
+                    choice += f" #{seen[line]}"
+                choices.append(choice + f" at {h[0].start:.2f} s")
+            where = "; ".join(choices)
             raise MomentError(f'"{m.text}" is spoken {len(hits)} times: {where}. Say which (add in <line> or #n).')
         if m.n is not None and not 1 <= m.n <= len(hits):
             raise MomentError(f'"{m.text}" is spoken {len(hits)} time(s){" in " + m.line if m.line else ""}; #{m.n} does not exist')

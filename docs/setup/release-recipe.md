@@ -2,6 +2,35 @@
 
 Status: **maintained recipe; final release inputs pending producer handoff**.
 
+## Deliberate timing changes: REPAIRS-STRUCT
+
+The shared timing compiler refuses music/film feedback and self-cycles with a
+complete directed `CYCLE` path before adopting a result. Film end follows the
+last shot's picture endpoints. An imported terminal `until="end"` (including
+cut-end aliases) keeps its literal extent as a compatibility basis; terminal
+sequence spans and `land="end"` keep their authored members and metadata.
+Only a film-end command that changes a music bed's ripple basis adds that
+bed's dependency on the new picture end. Existing numeric bases remain inputs,
+and a `plays_on` override keeps its existing behavior.
+
+Existing ambiguous word references now refuse with `AMBIGUOUS_REFERENCE`,
+the original reference and explicit `in <line>` / `#n` choices. Reflow never
+rewrites timing notes or parameter formulas to the nearest occurrence. This
+also covers nested beat bases, retained sequence declarations and fit lands.
+Explicit occurrence references, validated take mappings, frozen transcript
+bindings and ORPHAN caches retain their existing identity rules.
+Diagnostic occurrence numbers are local to the displayed line, so every
+suggested scoped choice resolves to the occurrence named beside it.
+
+The reflow golden scenario for change descriptions now first asserts refusal
+of ambiguous `"work"`, then makes the explicit `"work" in s3 #2` choice and
+retains its original change-description assertion. No golden fixture bytes
+or CHARACTERIZE assertions are updated for these repairs.
+The within-bar music-seam scenario and shared-occurrence music fixture now
+spell their unrelated rocket anchor as `"viral" #1`; their existing music
+assertions are unchanged. Those edits make the intended occurrence explicit
+when a split or repeated placement introduces another spoken match.
+
 This is the one setup recipe for the current Astrid publication tuple. It is
 an artifact manifest plus operator instructions, not a new installer or
 registry. It belongs to I11 and supplies the existing I03/I08/I09/I11 rows:
