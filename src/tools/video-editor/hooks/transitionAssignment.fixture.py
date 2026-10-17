@@ -34,16 +34,19 @@ config = copy.deepcopy(value['config'])
 fixture = json.loads((sdk / 'tests/fixtures/timeline_editing/tiny_publishable.json').read_text())
 # Retain the admitted synthetic film's picture duration and shot closure.
 clips = config.pop('clips')
-# Preserve one track authority. Historical D156 selectors use the supported
-# flat-parent form; current-producer requalification can select canonical
-# parent.config.tracks without creating a second collection.
-if value.get('track_authority') == 'canonical':
-    fixture['parent'] = dict(config=config, clips=clips, registry=value['registry'])
-else:
-    fixture['parent'] = dict(config=config, clips=clips, tracks=config.pop('tracks'), registry=value['registry'])
+# Exercise the real canonical authority by default. Legacy flat-only and
+# rejected dual authorities are explicit test inputs, never synthesized repairs.
+fixture['parent'] = dict(config=config, clips=clips, registry=value['registry'])
+if value.get('track_authority') == 'flat':
+    fixture['parent']['tracks'] = config.pop('tracks')
+elif value.get('track_authority') == 'dual':
+    fixture['parent']['tracks'] = copy.deepcopy(config['tracks'])
 retain_cut_reservations(fixture)
 tl = Checkout(fixture)
-tl.resolve()
+# Invalid dual-authority input must reach the commit service intact; resolving
+# it locally first would throw outside the provider's returned refusal boundary.
+if value.get('track_authority') != 'dual':
+    tl.resolve()
 before = copy.deepcopy(tl.document())
 document = before
 results = []
@@ -78,7 +81,7 @@ for request in value['requests']:
     port.current = request['base_revision_id']
     result = service.commit(request, port)
     if result['status'] != 'accepted':
-        print(json.dumps(dict(before=before, results=results, result=result, replay=replays, accept_counts=ports, source=str(sdk))))
+        print(json.dumps(dict(before=before, results=results, result=result, replay=replays, accept_counts=ports, document=document, attempted_accept_count=len(port.accepts), source=str(sdk))))
         sys.exit(0)
     assert service.commit(request, port) == result, 'exact replay changed receipt'
     assert len(port.accepts) == 1

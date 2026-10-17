@@ -1,5 +1,4 @@
-import { continuousBatchGestureCommands, continuousEffectGestureCommands, compositeEffectGestureCommands, propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
-import { useCallback, useLayoutEffect, useRef } from 'react';
+import { bulkTransitionGestureCommands, continuousBatchGestureCommands, continuousEffectGestureCommands, compositeEffectGestureCommands, propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
 import type { SelectClipOptions } from '@/shared/state/selectionStore.ts';
@@ -172,7 +171,10 @@ export function useClipEditing({
       return;
     }
 
-    const metaUpdates = Object.fromEntries(
+    const transitionBatch = validClipIds.length === clipIds.length
+      ? bulkTransitionGestureCommands(current, validClipIds.map(id => ({ id, patch })), { elementHost })
+      : undefined;
+    const metaUpdates = transitionBatch?.metaUpdates ?? Object.fromEntries(
       validClipIds.map((clipId) => [clipId, patch]),
     ) as Record<string, Partial<ClipMeta>>;
 
@@ -180,7 +182,7 @@ export function useClipEditing({
       const continuous = continuousEffectGestureCommands(current, id, patch);
       return continuous.handled ? (validClipIds.length === clipIds.length ? continuous.commands : undefined) : propertyGestureCommands(current, id, patch);
     });
-    const editCommands = continuousBatchGestureCommands(current, commandGroups);
+    const editCommands = transitionBatch?.commands ?? continuousBatchGestureCommands(current, commandGroups);
     if (!patchAffectsDuration(patch)) {
       applyRowsEdit(current.rows, metaUpdates, undefined, undefined, { editCommands });
       return;
@@ -207,7 +209,7 @@ export function useClipEditing({
     }));
 
     applyRowsEdit(nextRows, metaUpdates, undefined, undefined, { editCommands });
-  }, [applyRowsEdit, dataRef, getValidClipIds]);
+  }, [applyRowsEdit, dataRef, elementHost, getValidClipIds]);
 
   const handleUpdateClipsDeep = useCallback((
     clipIds: string[],
@@ -238,16 +240,19 @@ export function useClipEditing({
       return;
     }
 
+    const transitionBatch = validClipIds.length === clipIds.length
+      ? bulkTransitionGestureCommands(current, validClipIds.map(id => ({ id, patch: metaUpdates[id] })), { elementHost })
+      : undefined;
     const groups = validClipIds.map(id => {
       const patch = metaUpdates[id];
       if (!patch) return undefined;
       const continuous = continuousEffectGestureCommands(current, id, patch);
       return continuous.handled ? (validClipIds.length === clipIds.length ? continuous.commands : undefined) : propertyGestureCommands(current, id, patch);
     });
-    applyRowsEdit(current.rows, metaUpdates, undefined, undefined, {
-      editCommands: continuousBatchGestureCommands(current, groups),
+    applyRowsEdit(current.rows, transitionBatch?.metaUpdates ?? metaUpdates, undefined, undefined, {
+      editCommands: transitionBatch?.commands ?? continuousBatchGestureCommands(current, groups),
     });
-  }, [applyRowsEdit, dataRef, getValidClipIds]);
+  }, [applyRowsEdit, dataRef, elementHost, getValidClipIds]);
 
   const handleSelectedClipChange = useCallback((patch: ClipEditorPatch) => {
     const current = dataRef.current;
