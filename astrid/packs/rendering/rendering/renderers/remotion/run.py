@@ -1875,6 +1875,7 @@ def support(request: RenderRequest, *, workspace: Path) -> SupportReport:
                 assets_path,
                 materialized_objects=request.materialized_objects,
                 materialized_root=request.materialized_root,
+                staging_parent=workspace,
                 allow_derived_files=request.materialized_root is not None,
             ):
                 pass
