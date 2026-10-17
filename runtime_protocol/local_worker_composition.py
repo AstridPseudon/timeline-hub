@@ -1301,6 +1301,24 @@ def _pack_inventory(value):
     return rows
 
 
+def _installed_record_bytes(distribution):
+    """Read the installer RECORD as bytes, retaining its newline encoding."""
+    entries = [entry for entry in distribution.files or ()
+               if str(entry).endswith(".dist-info/RECORD")]
+    if len(entries) != 1:
+        raise ConflictError("host-only installed release has no unique RECORD")
+    path = _path(str(distribution.locate_file(entries[0])), "installed RECORD", directory=False)
+    if not path.is_relative_to(Path(sys.prefix).resolve()):
+        raise ConflictError("installed RECORD escapes selected environment")
+    content = path.read_bytes()
+    text = distribution.read_text("RECORD")
+    if not content or not text:
+        raise ConflictError("host-only installed release has no RECORD")
+    if content.decode("utf-8").splitlines() != text.splitlines():
+        raise ConflictError("RECORD metadata differs from installed bytes")
+    return content
+
+
 def _verify_installed_host_records(profile, config):
     """Observe current installation bytes against selected release RECORD pins."""
     import base64, csv, importlib.metadata, sysconfig
@@ -1311,9 +1329,9 @@ def _verify_installed_host_records(profile, config):
         distribution = importlib.metadata.distribution(package)
         if Path(distribution.locate_file("")).resolve() != source:
             raise ConflictError("host-only release is outside current installed root")
-        record = distribution.read_text("RECORD")
-        if not record: raise ConflictError("host-only installed release has no RECORD")
-        records[package] = hashlib.sha256(record.encode()).hexdigest()
+        record_bytes = _installed_record_bytes(distribution)
+        record = record_bytes.decode("utf-8")
+        records[package] = hashlib.sha256(record_bytes).hexdigest()
         for relative, checksum, size in csv.reader(record.splitlines()):
             if not checksum: continue
             target = Path(distribution.locate_file(relative)).resolve()

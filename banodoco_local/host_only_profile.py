@@ -21,7 +21,7 @@ from .bootstrap import BootstrapError, SourceProfile, _validate_source_profile
 from .io import atomic_write_json
 from runtime_protocol.local_worker import _selected_profile_payload
 from runtime_protocol.local_worker_composition import (
-    _actual_executable, _owner_machine_id, _pack_inventory,
+    _actual_executable, _owner_machine_id, _pack_inventory, _installed_record_bytes,
     _verify_installed_host_records, load_local_worker_composition,
 )
 from runtime_protocol.verified_host_launch import (
@@ -64,7 +64,6 @@ def _installed_inputs() -> tuple[Path, dict[str, str]]:
         record = dist.read_text("RECORD")
         if not record:
             raise BootstrapError("installed package has no RECORD")
-        records[name] = hashlib.sha256(record.encode()).hexdigest()
         rows = {str(Path(dist.locate_file(row[0])).resolve()): row[1]
                 for row in csv.reader(record.splitlines())}
         if name == "astrid":
@@ -87,6 +86,7 @@ def _installed_inputs() -> tuple[Path, dict[str, str]]:
                 if file.is_file() and "__pycache__" not in file.parts and file.suffix not in {".pyc", ".pyo"}:
                     if not rows.get(str(file), "").startswith("sha256="):
                         raise BootstrapError("installed package file is missing from RECORD")
+        records[name] = hashlib.sha256(_installed_record_bytes(dist)).hexdigest()
     return root, records
 
 

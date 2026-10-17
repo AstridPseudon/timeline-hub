@@ -33,6 +33,22 @@ def test_setup_rejects_alias_before_writing(tmp_path):
     assert list(target.iterdir()) == []
 
 
+def test_record_pin_retains_installer_newline_bytes(monkeypatch, tmp_path):
+    import hashlib
+    import sys
+    from types import SimpleNamespace
+    from runtime_protocol.local_worker_composition import _installed_record_bytes
+    path = tmp_path / "sample.dist-info/RECORD"
+    path.parent.mkdir()
+    payload = b"module.py,sha256=test,1\r\nsample.dist-info/RECORD,,\r\n"
+    path.write_bytes(payload)
+    distribution = SimpleNamespace(files=[Path("sample.dist-info/RECORD")],
+        locate_file=lambda relative: tmp_path / relative, read_text=lambda name: path.read_text())
+    monkeypatch.setattr(sys, "prefix", str(tmp_path))
+    assert _installed_record_bytes(distribution) == payload
+    assert hashlib.sha256(payload).hexdigest() != hashlib.sha256(distribution.read_text("RECORD").encode()).hexdigest()
+
+
 def test_cli_provisions_existing_source_route_without_runtime(monkeypatch, tmp_path, capsys):
     captured = {}
     def provision(**kwargs):
@@ -135,6 +151,7 @@ else:
     if case in {"missing_record", "changed_record", "missing_record_entry", "missing_schema_record_entry", "mixed_metadata_root", "editable_origin"}:
         class Distribution:
             def __init__(self, original): self.original = original
+            def __getattr__(self, name): return getattr(self.original, name)
             def locate_file(self, value):
                 return root if case == "mixed_metadata_root" and value == "" else self.original.locate_file(value)
             def read_text(self, name):
@@ -187,11 +204,17 @@ else:
         assert profile.worker_executable is None and profile.engine_launch is None
         assert str(profile.host_executable) == os.path.abspath(sys.executable)
         _selected_profile_payload(profile)
+        actual_records = {}
+        for package in ("astrid", "banodoco-workspace-runtime"):
+            distribution = original_distribution(package)
+            entry = next(p for p in distribution.files if str(p).endswith(".dist-info/RECORD"))
+            actual_records[package] = hashlib.sha256(distribution.locate_file(entry).read_bytes()).hexdigest()
+        assert profile.release_digest == "sha256:" + raw_digest(actual_records)
     except AssertionError: raise
     except Exception as exc:
         assert case != "roundtrip"
         expected = {
-            "missing_record": "no RECORD", "changed_record": "release digest differs",
+            "missing_record": "no RECORD", "changed_record": "RECORD metadata differs",
             "missing_record_entry": "missing from RECORD", "changed_record_file": "differs from RECORD",
             "missing_schema_record_entry": "resource is missing from RECORD",
             "missing_record_file": "file escapes selected environment",
