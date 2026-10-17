@@ -2204,6 +2204,19 @@ def _wan_creation_control_launch_plan(
     )
 
 
+def _renderer_browser_read_rules(browser: Path, quote: Callable[[Path], str]) -> list[str]:
+    """Project the already signature-qualified browser's installed code closure."""
+    contents = browser.parent.parent
+    return [
+        # NSBundle inspects the app directory itself before reading Contents.
+        # Ancestors need metadata, never directory listings or recursive data.
+        *(f'(allow file-read-metadata (literal "{quote(p)}"))' for p in contents.parents),
+        f'(allow file-read* (literal "{quote(contents.parent)}"))',
+        f'(allow file-read* (subpath "{quote(contents)}"))',
+        f'(allow file-map-executable (subpath "{quote(contents)}"))',
+    ]
+
+
 def _confined_launch_plan(
     argv: Sequence[str], *, policy: _ConfinementPolicy | None = None,
     cwd: Path | None = None, parent_environment: Mapping[str, str] | None = None,
@@ -2422,9 +2435,7 @@ def _confined_launch_plan(
         if browser is not None:
             # Signature-qualified installed app closure; never a task path or
             # implicit Remotion browser download/cache.
-            browser_root = browser.parent.parent
-            rules.append(f'(allow file-read* (subpath "{quote(browser_root)}"))')
-            rules.append(f'(allow file-map-executable (subpath "{quote(browser_root)}"))')
+            rules.extend(_renderer_browser_read_rules(browser, quote))
         # Inbound permits adopting/accepting the already-listening socket.
         # Bind stays denied, including wildcard bind on these same ports.
         rules.extend(f'(allow network-inbound (local tcp4 "localhost:{port}"))' for port in ports[:1])
