@@ -6864,6 +6864,7 @@ class GenericPackHost:
         return self._preflight(capability_id, full_remotion=True)
 
     def _preflight(self, capability_id: str | None = None, *, full_remotion: bool) -> tuple[CapabilityRecord, ...]:
+        from .custody_broker import CustodyError
         selected = [self.capabilities[capability_id]] if capability_id else list(self.capabilities.values())
         updated: dict[str, CapabilityRecord] = dict(self.capabilities)
         remotion_context = self._remotion_idle_context() if any(record.adapter.requires_remotion for record in selected) else None
@@ -6881,6 +6882,15 @@ class GenericPackHost:
                 except ExecutableAdmissionError as exc:
                     missing.append(binary)
                     binary_errors.append(str(exc))
+                except CustodyError as exc:
+                    # A Host-only launch has no command-inventory grant. This
+                    # exact pre-request refusal makes only that binary-dependent
+                    # capability unavailable; it grants no helper execution.
+                    # Actual transport/child cleanup uncertainty stays fatal.
+                    if str(exc) != "command inventory inspection requires its original owner":
+                        raise
+                    missing.append(binary)
+                    binary_errors.append("declared executable original-owner inspection unavailable")
             checks["binaries"] = {"ok": not missing, "bindings": [b.evidence() for b in bindings]}
             if missing:
                 checks["binaries"].update(missing=missing, reasons=binary_errors)
@@ -12262,6 +12272,7 @@ class LocalExecutionPreparation:
     def _record_control_error(self, exc: BaseException) -> None:
         # Never serialize arbitrary exception text, locals, credentials or paths.
         import traceback
+        from .custody_broker import CustodyError
         safe_reasons = {
             "host-only selected profile shape is invalid", "host-only launch selection is invalid",
             "host-only concurrency must be explicitly bounded", "host-only launch configuration digest differs",
@@ -12272,8 +12283,9 @@ class LocalExecutionPreparation:
             "host-only preparation replay conflicts", "host-only cleanup remains unresolved",
             "custody designation differs from selected owner/reference",
             "custody designation has unavailable or changed kernel identity",
+            "command inventory inspection requires its original owner",
         }
-        reason = str(exc) if str(exc) in safe_reasons else "detail withheld"
+        reason = str(exc) if type(exc) in (HostError, CleanupUncertainError, CustodyError) and str(exc) in safe_reasons else "detail withheld"
         diagnostic = {"exception_class": type(exc).__name__[:80], "reason": reason,
             "frames": [{"file": Path(f.filename).name[:80], "function": f.name[:80], "line": f.lineno}
                        for f in traceback.extract_tb(exc.__traceback__)[-4:]]}
