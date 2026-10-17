@@ -50,6 +50,7 @@ import { createAgentToolInvocationService } from '../runtime/agentToolInvocation
 import type { ProposalTimelineOps } from '../lib/proposal-command-binding.ts';
 import type { TimelinePatch, TimelineProposal } from '@/sdk/index';
 import { createTimelineReader } from '../lib/timeline-reader.ts';
+import { compileTimelinePatch, validateTimelinePatch } from '../lib/timeline-patch.ts';
 import { AstridElementOperationAdapter, createElementTimelineRoutes } from '../runtime/element-adapter.ts';
 import { buildReighAgentElementContext } from '../runtime/element-contract.ts';
 import { readAudioLanePresentation } from '../data/audioLanePresentation.ts';
@@ -4084,6 +4085,95 @@ describe('REVIEW ordered proposal commands', () => {
     fireEvent.click(screen.getByRole('button', { name: new RegExp(source) }));
     return panel;
   };
+  it.each([1, 2])('refuses a valid %i-operation no-op proposal through the production panel without scheduling any write', async (count) => {
+    const h = await reviewSetup();
+    const noop: TimelinePatch = { version: 1, operations: Array.from({ length: count }, () => ({
+      op: 'extension.noop', target: 'com.review.ext', payload: { trace: 'review' },
+    })) };
+    expect(validateTimelinePatch(noop).valid).toBe(true);
+    const compiled = compileTimelinePatch(noop, h.initial);
+    expect(compiled.valid).toBe(true);
+    expect(compiled.diff.entries).toHaveLength(count);
+    expect(compiled.nextData?.config).toEqual(h.initial.config);
+    expect(compiled.nextData?.registry).toEqual(h.initial.registry);
+    const proposal = await h.produce('review-noop', noop);
+    expect(proposal.commandBinding).toBeUndefined();
+    await waitFor(() => expect(h.rows.some((row) => row.payload.source === proposal.source)).toBe(true));
+    // Include the real persistence/reload route, which also has no command binding.
+    const runtime = count === 2
+      ? createProposalRuntime({ timelineOps: h.result.current.ops, reader: h.reader, persistenceProvider: h.persistence })
+      : h.runtime;
+    await waitFor(() => expect(runtime.list().some((entry) => entry.source === proposal.source)).toBe(true));
+    const proposalId = runtime.list().find((entry) => entry.source === proposal.source)!.id;
+    expect(runtime.get(proposalId)?.patch).toEqual(noop);
+    const before = h.result.current.dataRef.current;
+    const bytes = JSON.stringify(before);
+    const scheduled = vi.fn(); const unsubscribe = h.eventBus.on('scheduleSave', scheduled);
+    const panel = show(runtime, proposal.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Preview proposal from ' + proposal.source }));
+    expect(runtime.get(proposalId)?.previewDiff?.entries).toHaveLength(count);
+    expect(h.result.current.dataRef.current).toBe(before);
+    expect(scheduled).not.toHaveBeenCalled(); expect(h.journal).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    expect(h.journal).not.toHaveBeenCalled(); expect(scheduled).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByText(/only no-op operations/i)).toBeTruthy());
+    expect(() => runtime.accept(proposalId)).toThrow(/only no-op operations/i);
+    expect(runtime.get(proposalId)?.state).toBe('pending');
+    expect(h.result.current.dataRef.current).toBe(before); expect(JSON.stringify(before)).toBe(bytes);
+    expect(h.getCurrentHead()).toBe('parent-r1'); expect(h.headRevisionRef.current).toEqual(h.initial.head);
+    expect(h.result.current.editSeqRef.current).toBe(0); expect(h.savedSeqRef.current).toBe(0);
+    expect(h.history.result.current.canUndo).toBe(false); expect(h.history.result.current.canRedo).toBe(false);
+    expect(scheduled).not.toHaveBeenCalled(); expect(h.journal).not.toHaveBeenCalled(); expect(h.saves).not.toHaveBeenCalled();
+    expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]); expect(h.acceptedCount()).toBe(0);
+    unsubscribe(); panel.unmount(); h.close();
+  });
+  it('preserves established compatibility acceptance for a real edit mixed with a no-op', async () => {
+    const h = await reviewSetup();
+    const proposal = await h.produce('review-compatible', { version: 1, operations: [
+      { op: 'extension.noop', target: 'com.review.ext' },
+      { op: 'app.update', target: 'com.review.ext', payload: { reviewed: true } },
+    ] });
+    expect(proposal.commandBinding).toBeUndefined();
+    const panel = show(h.runtime, proposal.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    await waitFor(() => expect(h.runtime.get(proposal.id)?.state).toBe('accepted'));
+    expect(h.result.current.dataRef.current?.config.app?.['com.review.ext']).toEqual({ reviewed: true });
+    expect(h.journal).toHaveBeenCalledTimes(1); expect(h.result.current.editSeqRef.current).toBe(1);
+    expect(h.history.result.current.canUndo).toBe(true);
+    panel.unmount(); h.close();
+  });
+  it('preserves general TimelineOps.apply trace-only behavior outside proposal acceptance', async () => {
+    const h = await reviewSetup();
+    let diff;
+    act(() => { diff = h.result.current.ops.apply({ version: 1, operations: [{ op: 'extension.noop', target: 'com.review.ext' }] }); });
+    expect(diff!.entries).toMatchObject([{ op: 'extension.noop', after: { noop: true } }]);
+    expect(h.result.current.dataRef.current?.config).toEqual(h.initial.config);
+    expect(h.journal).toHaveBeenCalledTimes(1); expect(h.result.current.editSeqRef.current).toBe(1);
+    expect(h.history.result.current.canUndo).toBe(true);
+    h.close();
+  });
+  it.each([
+    ['unknown operation', { op: 'extension.unknown' as never, target: 'com.review.ext' }, 'validation'],
+    ['malformed no-op', { op: 'extension.noop' as const, target: 'bad id' }, 'validation'],
+    ['duplicate clip', { op: 'clip.add' as const, target: 'clip-1', payload: { track: 'V1', at: 0, clipType: 'hold', hold: 1 } }, 'compilation'],
+  ] as const)('keeps %s refusal on authoritative TimelineOps validation/compilation with no effect', async (_kind, operation, stage) => {
+    const h = await reviewSetup();
+    const proposal = await h.produce('review-invalid', { version: 1, operations: [operation] });
+    expect(proposal.commandBinding).toBeUndefined();
+    const before = h.result.current.dataRef.current; const bytes = JSON.stringify(before);
+    const scheduled = vi.fn(); const unsubscribe = h.eventBus.on('scheduleSave', scheduled);
+    const panel = show(h.runtime, proposal.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    await waitFor(() => expect(screen.getByText(new RegExp('TimelineOps.apply: patch ' + stage + ' failed'))).toBeTruthy());
+    expect(h.runtime.get(proposal.id)?.state).toBe('pending');
+    expect(h.result.current.dataRef.current).toBe(before); expect(JSON.stringify(before)).toBe(bytes);
+    expect(h.headRevisionRef.current).toEqual(h.initial.head); expect(h.getCurrentHead()).toBe('parent-r1');
+    expect(h.result.current.editSeqRef.current).toBe(0); expect(h.savedSeqRef.current).toBe(0);
+    expect(h.history.result.current.canUndo).toBe(false); expect(h.history.result.current.canRedo).toBe(false);
+    expect(scheduled).not.toHaveBeenCalled(); expect(h.journal).not.toHaveBeenCalled(); expect(h.saves).not.toHaveBeenCalled();
+    expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]); expect(h.acceptedCount()).toBe(0);
+    unsubscribe(); panel.unmount(); h.close();
+  });
   it('rejects one production proposal without changing document/head/history/save and accepts one captured ordered batch after acknowledgement', async () => {
     let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
     const h = await reviewSetup(async () => { await held; });
