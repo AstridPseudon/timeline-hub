@@ -47,7 +47,7 @@ RELATION_CHOICE_SCHEMA = {
 
 OPERATIONS = {'clip.on', 'clip.nudge', 'clip.until', 'clip.enter-at', 'clip.end-at',
               'clip.trim', 'clip.set-duration', 'clip.hold-for', 'clip.for', 'clip.extend',
-              'clip.clear', 'sequence.fit', 'timeline.add', 'timeline.insert-time', 'timeline.ripple-delete'}
+              'clip.clear', 'clip.overhang-to-hold', 'sequence.fit', 'timeline.add', 'timeline.insert-time', 'timeline.ripple-delete'}
 
 
 def validate(value):
