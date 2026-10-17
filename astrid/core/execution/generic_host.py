@@ -9767,6 +9767,9 @@ class GenericPackHost:
             "version": record.definition.version,
             "source_root": str(record.source_root),
             "source_roots": [str(root) for root in _admitted_source_roots(record.source_root, record.definition)],
+            "python_path_roots": [
+                str(root) for root in _admitted_python_roots(record.source_root, record.definition)
+            ],
             "network_nonce": secrets_module.token_urlsafe(24),
             "allowed_routes": list((_network_policy(record) or {}).get("allowed_routes", (_network_policy(record) or {}).get("allowed_destinations", ()))),
         }
