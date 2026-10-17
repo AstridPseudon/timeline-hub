@@ -1578,12 +1578,12 @@ def _fixed_worker_environment(record: "CapabilityRecord", explicit_env: Mapping[
     return explicit
 
 
-def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment: Mapping[str, str],
-                                     capability_matrix: Path | None = None) -> list[dict[str, str]]:
-    """Project only fixed launch-known inputs; never expand task placeholders."""
-    from astrid.core.rendering.remotion_runtime import _NODE_ENV_KEYS, _UNSUPPORTED_PYTHON_STARTUP, _REGISTRY_SELECTORS
-    from astrid.core.subprocess_env import _SAFE_BASE_ENV, _is_secret_name, _normalize_secret_names
-    from astrid.core.execution.executor.folder import discover_folder_executor_roots, load_folder_executor
+def _launch_static_records(pack_roots: tuple[Path, ...], capability_matrix: Path | None = None):
+    """Read only the explicit launch sources; no Git or executable inspection."""
+    from astrid.core.execution.executor.folder import (
+        discover_folder_executor_roots,
+        load_folder_executor,
+    )
     from astrid.core.execution.executor.schema import ExecutorValidationError
     matrix = GenericPackHost._load_matrix(capability_matrix)
     records: dict[str, CapabilityRecord] = {}
@@ -1599,12 +1599,16 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
                 source_root=executor_root, matrix=matrix.get(definition.id, {}))
     # Match host discovery's strict V3 projection and exact source roots. A
     # local orchestration action is deliberately not a host worker definition.
-    from astrid.core.pack.discovery import discover_pack_metadata
+    from astrid.core.pack.discovery import DiscoveredPack
+    from astrid.core.pack.loader import load_pack_manifest, scan_packs
     from astrid.sdk.actions import action_executor_definition
-    for discovered_pack in discover_pack_metadata(
-        project_root=pack_roots[0] if pack_roots else Path.cwd(),
-        extra_pack_roots=tuple(str(root) for root in pack_roots),
-    ):
+    def packs(root):
+        if (root / 'pack.yaml').is_file():
+            return (load_pack_manifest(root / 'pack.yaml'),)
+        return scan_packs(root, strict=False).packs
+    explicit = (DiscoveredPack(pack, 'extra', index)
+                for index, root in enumerate(pack_roots) for pack in packs(root))
+    for discovered_pack in explicit:
         pack = discovered_pack.pack
         pack_root = pack.root.resolve()
         if not any(pack_root == root or pack_root.is_relative_to(root) for root in pack_roots):
@@ -1617,6 +1621,15 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
             records[definition.id] = CapabilityRecord(
                 definition=definition, capability_digest='', source_digest='',
                 source_root=pack_root, matrix=matrix.get(definition.id, {}))
+    return records
+
+
+def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment: Mapping[str, str],
+                                     capability_matrix: Path | None = None) -> list[dict[str, str]]:
+    """Project only fixed launch-known inputs; never expand task placeholders."""
+    from astrid.core.rendering.remotion_runtime import _NODE_ENV_KEYS, _UNSUPPORTED_PYTHON_STARTUP, _REGISTRY_SELECTORS
+    from astrid.core.subprocess_env import _SAFE_BASE_ENV, _is_secret_name, _normalize_secret_names
+    records = _launch_static_records(pack_roots, capability_matrix)
     # The SDK caller can carry import paths removed from the installed host
     # launch. Qualify the explicit host mapping, not that caller's ambient env.
     dependencies = dependency_pythonpath(environment)
@@ -4646,7 +4659,16 @@ def _vcs_revision(root: Path) -> str:
     if checkout is None:
         return "unversioned"
     try:
-        from .custody_broker import _NamedHelperObservation, _stop_diagnostics_enabled
+        from .custody_broker import (
+            _NamedHelperObservation,
+            _stop_diagnostics_enabled,
+            command_inventory_git,
+        )
+        result = command_inventory_git(['-C', str(checkout), 'rev-parse', 'HEAD'])
+        if result is not None:
+            if result.returncode:
+                return "unknown"
+            return result.stdout.strip() or "unknown"
         if not _stop_diagnostics_enabled():
             result = subprocess.run(
                 ["git", "-C", str(checkout), "rev-parse", "HEAD"],

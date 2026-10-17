@@ -870,11 +870,10 @@ def test_private_stop_diagnostics_persist_on_existing_containment(tmp_path, monk
     assert (tmp_path / 'observed-containment.json').stat().st_mode & 0o777 == 0o600
 
 
-@pytest.mark.parametrize('site', ['otool', 'vcs', 'hivemind'])
+@pytest.mark.parametrize('site', ['vcs', 'hivemind'])
 @pytest.mark.parametrize('outcome', ['positive', 'timeout', 'failure'])
 def test_private_named_helper_sites_preserve_result_and_redact(tmp_path, monkeypatch, capsys, site, outcome):
     import json
-    from astrid.core.execution import declared_executables as declared
     from astrid.core.execution import generic_host as host
     monkeypatch.setenv('ASTRID_CUSTODY_STOP_DIAGNOSTICS', '1')
     (tmp_path / '.git').mkdir()
@@ -901,13 +900,7 @@ def test_private_named_helper_sites_preserve_result_and_redact(tmp_path, monkeyp
     monkeypatch.setattr(subprocess, 'Popen', Child)
     monkeypatch.setattr(custody._NamedHelperObservation, 'bind', lambda self, child: (
         setattr(self, 'process', child), self.record.update({'child_pid': child.pid})))
-    if site == 'otool':
-        if outcome == 'failure':
-            with pytest.raises(declared.ExecutableAdmissionError):
-                declared._load_commands(tmp_path / 'SECRET_ARG')
-        else:
-            assert declared._load_commands(tmp_path / 'SECRET_ARG') == ((), ())
-    elif site == 'vcs':
+    if site == 'vcs':
         assert host._vcs_revision(tmp_path) == ('revision' if outcome == 'positive' else 'unknown')
     else:
         record = SimpleNamespace(definition=SimpleNamespace(metadata={'source_pack': 'hivemind', 'pack_root': str(tmp_path)}))

@@ -212,6 +212,11 @@ def popen_owned_process(argv: list[str], *, custody_root: CustodyRootBinding | N
     options = dict(kwargs)
     new_session = bool(options.pop("start_new_session", False))
     delegate_inventory = options.pop("_delegate_inventory", True)
+    inspection_launch = options.pop("_inspection_launch", None)
+    if inspection_launch is not None:
+        from .custody_broker import _HostInspectionLaunch
+        if type(inspection_launch) is not _HostInspectionLaunch or not delegate_inventory:
+            raise CleanupUncertainError("inspection requires an explicit trusted Host launch")
     if type(delegate_inventory) is not bool:
         raise CleanupUncertainError("inventory launch selection must be explicit")
     if _child_bridge_launch is not None:
@@ -231,6 +236,8 @@ def popen_owned_process(argv: list[str], *, custody_root: CustodyRootBinding | N
         raise CleanupUncertainError('unmatched inherited channels require an admitted pipe consumer')
     custody = ProcessCustody(custody_root=custody_root) if custody_root is not None else ProcessCustody()
     context = {"environment": dict(os.environ if options.get("env") is None else options["env"]), "cwd": str(options.get("cwd") or os.getcwd())} if delegate_inventory else None
+    if context is not None and inspection_launch is not None:
+        context["inspection"] = inspection_launch
     try:
         if _child_bridge_launch is None:
             wrapped, registration_env = custody.prepare_launch(argv, start_new_session=new_session, inventory_context=context)

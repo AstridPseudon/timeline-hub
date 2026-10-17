@@ -257,6 +257,28 @@ def test_host_selection_survives_ambient_path_change(selected, tmp_path, monkeyp
 @pytest.mark.skipif(sys.platform != "darwin", reason="actual confined helper requires macOS")
 def test_actual_confined_music_level_uses_declared_ffmpeg(tmp_path, monkeypatch):
     pack = Path(host.__file__).resolve().parents[2] / "packs/music"
+    from astrid.core.execution import custody_broker as custody
+    from astrid.core.execution import process_group as groups
+    if custody._COMMAND_INVENTORY_FD not in os.environ:
+        import subprocess
+        source = Path(host.__file__).resolve().parents[3]
+        environment = dict(os.environ, PYTHONPATH=str(source), PYTHONDONTWRITEBYTECODE='1',
+                           XDG_STATE_HOME=str(tmp_path / 'state'))
+        environment.pop('ASTRID_SOURCE_STATE', None)
+        launch = custody._HostInspectionLaunch((pack,), source, environment)
+        process = groups.popen_owned_group([sys.executable, '-B', '-m', 'pytest', '-q',
+            'tests/core/execution/test_declared_executable_confinement.py::test_actual_confined_music_level_uses_declared_ffmpeg'],
+            cwd=str(source), env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            _inspection_launch=launch)
+        try:
+            stdout, stderr = process.communicate(timeout=90)
+            assert process.wait(timeout=0) == 0, (stdout + stderr).decode()
+        finally:
+            if process.poll() is None:
+                groups.terminate_tree(process)
+            process.wait(timeout=5)
+            groups.verify_tree_absent(process)
+        return
     h = host.GenericPackHost(pack_roots=[pack])
     h.discover()
     record = h.preflight("music.level")[0]

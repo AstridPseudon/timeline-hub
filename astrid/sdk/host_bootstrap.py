@@ -34,6 +34,7 @@ from astrid.core.execution.process_group import (
     terminate_group,
 )
 from astrid.core.execution.host_log import rotate_if_needed
+from astrid.core.execution.custody_broker import _HostInspectionLaunch
 from astrid.core.generation.vibecomfy_dependency import (
     VibeComfyDependencyError,
     dependency_pythonpath,
@@ -794,6 +795,11 @@ class _ParkedPackHostPreparer:
         validation_launch = _prepare_render_validation(
             reference.source_checkout, env, Path(reference.support_root), str(launch.argv[0]),
             tuple(Path(root) for root in reference.pack_roots))
+        inspection_launch = None
+        if sys.platform == 'darwin':
+            matrix = Path(reference.source_checkout) / 'config/astrid-beta-capabilities.json'
+            inspection_launch = _HostInspectionLaunch(tuple(Path(p) for p in reference.pack_roots),
+                Path(reference.source_checkout), env, matrix if matrix.is_file() else None)
         parent, child = socket.socketpair()
         operation_id, channel_id = secrets.token_hex(16), secrets.token_hex(16)
         launch_argv = list(launch.argv)
@@ -814,6 +820,7 @@ class _ParkedPackHostPreparer:
                 os.fchmod(log.fileno(), 0o600)
                 process = popen_owned_group(
                     argv, cwd=str(reference.support_root if origins else launch.cwd), env=env, stdin=subprocess.DEVNULL,
+                    _inspection_launch=inspection_launch,
                     stdout=log, stderr=log, close_fds=True, pass_fds=(child.fileno(),),
                 )
         except Exception:
@@ -1387,12 +1394,15 @@ def ensure_pack_host(
         if validation_launch is not None:
             argv.extend(("--remotion-validation-launch-id", validation_launch))
         launch_digest = _launch_argv_digest(argv)
+        inspection_launch = (_HostInspectionLaunch((pack_root, *managed_inventory.roots), source_path,
+            child_env, matrix if matrix.is_file() else None) if sys.platform == 'darwin' else None)
         try:
             log = log_path.open("ab")
             process = popen_owned_group(
                 argv,
                 cwd=str(runtime_support if execution_origins else source_path),
                 env=child_env,
+                _inspection_launch=inspection_launch,
                 stdin=subprocess.DEVNULL,
                 stdout=log,
                 stderr=log,
