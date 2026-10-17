@@ -135,3 +135,68 @@ ensureBrowser({browserExecutable:selected.value,logLevel:'error',onBrowserDownlo
         assert not observed['called']
         assert observed['selected'] == {'source': 'cli', 'value': str(_DARWIN_BROWSER)}
         assert observed['result'] == {'path': str(_DARWIN_BROWSER), 'type': 'user-defined-path'}
+
+
+@pytest.mark.parametrize('key', ['BROWSERSLIST_CONFIG', 'BROWSERSLIST'])
+def test_caller_cannot_select_build_configuration(browser_command, key):
+    owner, request, _, selections, launches = browser_command
+    request['render_environment'][key] = '/untrusted/package.json'
+    with pytest.raises(ValueError, match='unsupported Remotion invocation environment'):
+        owner._cli(request)
+    assert not selections and not launches
+
+
+@pytest.mark.parametrize('remove_host_config', [False, True])
+def test_installed_webpack_uses_only_selected_project_config(browser_command, remove_host_config):
+    """Real webpack defaults/Browserslist, with ancestor reads stopped before IO."""
+    raw_project = os.environ.get('ASTRID_REMOTION_PROJECT_DIR')
+    raw_node = os.environ.get('ASTRID_NODE_EXECUTABLE')
+    if not raw_project or not raw_node:
+        pytest.skip('requires explicitly admitted local Remotion/Node fixtures')
+    project = Path(raw_project)
+    assert 'browserslist' not in json.loads((project / 'package.json').read_text())
+    owner, request, _, _, launches = browser_command
+    # Use the real selected root while retaining the fixture's pre-spawn stop.
+    fixture_project = owner.closure.project
+    owner.closure.project = project
+    owner.closure.validate = lambda _: Path(request['argv'][1])
+    request['cwd'] = str(project)
+    with pytest.raises(LaunchBoundary):
+        owner._cli(request)
+    assert fixture_project != project
+    environment = dict(launches[0][1]['_cli_environment'])
+    if remove_host_config:
+        environment.pop('BROWSERSLIST_CONFIG', None)
+    code = r"""
+const [root,raw]=process.argv.slice(1);
+const webpack=require(root+'/node_modules/webpack');
+const fs=require('node:fs');const path=require('node:path');
+for(const key of Object.keys(process.env))if(key.startsWith('BROWSERSLIST'))delete process.env[key];
+Object.assign(process.env,JSON.parse(raw));
+const stat=fs.statSync;let blocked=false;
+fs.statSync=function(file,...args){
+ const resolved=path.resolve(String(file));
+ if(['package.json','.browserslistrc','browserslist'].includes(path.basename(resolved))
+   && resolved!==root && !resolved.startsWith(root+path.sep)){
+  blocked=true;throw new Error('unit-ancestor-config-barrier-before-read');
+ }
+ return stat.call(this,file,...args);
+};
+try{
+ const compiler=webpack({context:root,mode:'production',entry:{}});
+ const target=compiler.options.target;
+ compiler.close(error=>{if(error)throw error;console.log(JSON.stringify({target,blocked}));});
+}catch(error){
+ if(error.message!=='unit-ancestor-config-barrier-before-read'){console.error(error);process.exitCode=1;}
+ else console.log(JSON.stringify({blocked}));
+}
+"""
+    result = subprocess.run([raw_node, '-e', code, str(project), json.dumps(environment)],
+                            cwd=project, text=True, capture_output=True, check=False)
+    assert result.returncode == 0, result.stderr
+    observed = json.loads(result.stdout)
+    if remove_host_config:
+        assert observed == {'blocked': True}
+    else:
+        assert observed == {'target': 'web', 'blocked': False}
+        assert environment['BROWSERSLIST_CONFIG'] == str(project / 'package.json')
