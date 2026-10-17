@@ -319,9 +319,11 @@ class AuthoringSceneListener:
                 )
                 guard()
                 response = wire.reply(request, answer)
-                channel.sendall(wire.encoded(response) + b"\n")
             finally:
                 lease.close()
+        # Release the lease and staged CAS scratch before success is visible.
+        guard()
+        channel.sendall(wire.encoded(response) + b"\n")
 
     def _serve(self):
         while not self._stop.is_set():
@@ -336,10 +338,20 @@ class AuthoringSceneListener:
                     self._active = channel
                 try:
                     self._handle(channel)
-                except Exception:  # noqa: BLE001 - isolate an invalid private invocation.
+                except Exception as exc:  # noqa: BLE001 - isolate an invalid private invocation.
                     # EOF is the only failure reply. Never emit a success shape
                     # or reflect unauthenticated exception/path/credential text.
-                    pass
+                    import json
+                    import sys
+                    import traceback
+                    try:
+                        print(json.dumps({'event': 'authoring_scene_request_refused',
+                            'exception_class': type(exc).__name__[:80],
+                            'frames': [{'file': Path(f.filename).name[:80], 'function': f.name[:80], 'line': f.lineno}
+                                       for f in traceback.extract_tb(exc.__traceback__)[-6:]]}),
+                            file=sys.stderr, flush=True)
+                    except Exception:
+                        pass  # Optional diagnostics never replace the refusal.
                 finally:
                     with self._lock:
                         self._active = None

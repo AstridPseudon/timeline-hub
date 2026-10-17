@@ -153,6 +153,17 @@ def test_native_private_transport_reuses_real_host_owner_boundary(private_host):
     assert not list(w.config.socket_path.parent.glob('scene-*'))
 
 
+def test_private_host_refusal_diagnostic_does_not_reflect_exception_text(private_host, monkeypatch, capsys):
+    w = private_host
+    def failed(channel): raise ValueError('secret-credential /private/untrusted-path')
+    monkeypatch.setattr(w.listener, '_handle', failed)
+    with pytest.raises((EOFError, OSError, ValueError, FrameOwnerError)):
+        w.relay.exchange(request(), guard=lambda: None, cancelled=threading.Event())
+    captured = capsys.readouterr().err
+    assert 'ValueError' in captured and 'test_authoring_scene.py' in captured
+    assert 'secret-credential' not in captured and '/private/untrusted-path' not in captured
+
+
 @pytest.mark.parametrize('private_host', [True], indirect=True)
 def test_long_selected_support_keeps_same_authenticated_scene_and_owned_cleanup(private_host):
     w = private_host
