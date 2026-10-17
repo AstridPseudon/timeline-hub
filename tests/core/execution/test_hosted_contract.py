@@ -114,7 +114,11 @@ def test_actual_trampoline_refuses_before_generic_host_entry(tmp_path,mutation):
         selected.close()
         if forged is not None:forged.close()
         for fd in extra:os.close(fd)
-        broker.abort_before_spawn()
+        # These negatives deliberately exported a launch and waited their
+        # actual rejected child. They cannot claim never-spawned retirement.
+        with pytest.raises(custody.CustodyError, match="never-exported"):
+            broker.abort_before_spawn()
+        broker._release_authority_scope()
 
 
 @pytest.mark.skipif(sys.platform!='darwin',reason='native process incarnation is Darwin only')
