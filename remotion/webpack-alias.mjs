@@ -34,19 +34,23 @@ const unquote = (value) => value.trim().replace(/^(['"])(.*)\1$/, '$2');
 const parseYamlManifest = (text) => {
   const id = text.match(/^id:\s*(['"]?)([A-Za-z0-9_-]+)\1\s*$/m)?.[2];
   const rendering = {};
-  let inRendering = false;
+  const ui = {};
+  let section = null;
   let current = null;
+  let resource = null;
   for (const line of text.split(/\r?\n/)) {
     if (/^\S/.test(line)) {
-      inRendering = /^rendering:\s*$/.test(line);
+      section = /^rendering:\s*$/.test(line) ? rendering : /^ui:\s*$/.test(line) ? ui : null;
       current = null;
+      resource = null;
       continue;
     }
-    if (!inRendering) continue;
-    const key = line.match(/^  ([^:#]+):\s*$/)?.[1]?.trim();
+    if (!section) continue;
+    const key = line.match(/^  (\S[^:#]*):\s*$/)?.[1]?.trim();
     if (key) {
-      current = {key, type: undefined, path: undefined};
-      rendering[key] = current;
+      current = {key, type: undefined, path: undefined, resources: []};
+      section[key] = current;
+      resource = null;
       continue;
     }
     if (!current) continue;
@@ -54,8 +58,14 @@ const parseYamlManifest = (text) => {
     if (type) current.type = unquote(type);
     const declaredPath = line.match(/^    path:\s*([^#]+?)\s*(?:#.*)?$/)?.[1];
     if (declaredPath) current.path = unquote(declaredPath);
+    if (section === ui) {
+      const kind = line.match(/^    - kind:\s*([^#]+?)\s*(?:#.*)?$/)?.[1];
+      if (kind) { resource = {kind: unquote(kind)}; current.resources.push(resource); }
+      const resourcePath = line.match(/^      path:\s*([^#]+?)\s*(?:#.*)?$/)?.[1];
+      if (resource && resourcePath) resource.path = unquote(resourcePath);
+    }
   }
-  return {id, rendering};
+  return {id, rendering, ui};
 };
 
 const readPackManifest = (packRoot) => {
@@ -64,7 +74,7 @@ const readPackManifest = (packRoot) => {
     if (text === null) continue;
     try {
       const json = JSON.parse(text);
-      return {id: json.id, rendering: json.rendering ?? {}};
+      return {id: json.id, rendering: json.rendering ?? {}, ui: json.ui ?? {}};
     } catch {
       return parseYamlManifest(text);
     }
@@ -143,6 +153,21 @@ const collectDeclaredPackElementAliases = (packRoots) => {
   for (const packRoot of packRoots) {
     const manifest = readPackManifest(packRoot);
     const packId = manifest.id || path.basename(packRoot);
+    // Reuse the same selected pack and its V3 support declarations. A detached
+    // renderer project has no adjacent Astrid checkout to import this UI from.
+    const live = manifest.ui?.['live-scenes'];
+    if (packId === 'rendering' && live?.type === 'editor' && Array.isArray(live.resources)) {
+      try {
+        const support = ['SceneSurface.tsx', 'runtime.ts'].map((name) => {
+          const entries = live.resources.filter((r) => r.kind === 'support' && typeof r.path === 'string' && path.basename(r.path) === name);
+          if (entries.length !== 1) throw new Error('live scene support is not unique');
+          const file = resolveDeclaredResource(packRoot, entries[0].path);
+          if (!fs.statSync(file).isFile() || !isWithin(fs.realpathSync(packRoot), fs.realpathSync(file))) throw new Error('live scene support escapes its pack');
+          return file;
+        });
+        if (path.dirname(support[0]) === path.dirname(support[1])) aliases['@pack-rendering-live-scenes'] = path.dirname(support[0]);
+      } catch { /* Missing or escaping declarations never gain an alias. */ }
+    }
     for (const [rawKey, declaration] of Object.entries(manifest.rendering ?? {})) {
       if (!declaration || declaration.type !== 'element' || typeof declaration.path !== 'string') continue;
       const rawKind = rawKey.split('/', 1)[0];

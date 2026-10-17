@@ -4,10 +4,40 @@ import json
 import os
 import subprocess
 from pathlib import Path
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[3]
 MODULE = ROOT / "remotion" / "webpack-alias.mjs"
+
+
+@pytest.mark.parametrize('format', ['yaml', 'json'])
+@pytest.mark.parametrize('fault', [None, 'undeclared', 'escape', 'different-directory', 'symlink'])
+def test_live_scene_support_uses_declared_selected_pack_resources(tmp_path, format, fault):
+    pack = tmp_path/'selected-rendering'; directory = pack/'ui/live-scenes'
+    directory.mkdir(parents=True)
+    (directory/'SceneSurface.tsx').write_text('export const SceneSurface = 1;')
+    (directory/'runtime.ts').write_text('export type SceneStatus = unknown;')
+    surface = 'ui/live-scenes/SceneSurface.tsx'
+    runtime = 'ui/live-scenes/runtime.ts'
+    if fault == 'escape': surface = '../outside/SceneSurface.tsx'
+    if fault == 'different-directory': runtime = 'other/runtime.ts'
+    if fault == 'symlink':
+        outside = tmp_path/'outside.tsx'; outside.write_text('unadmitted')
+        (directory/'SceneSurface.tsx').unlink(); (directory/'SceneSurface.tsx').symlink_to(outside)
+    resources = [] if fault == 'undeclared' else [dict(kind='support',path=surface),dict(kind='support',path=runtime)]
+    manifest = dict(id='rendering',rendering={},ui={'live-scenes':dict(type='editor',resources=resources)})
+    if format == 'json': (pack/'pack.json').write_text(json.dumps(manifest))
+    else:
+        import yaml
+        (pack/'pack.yaml').write_text(yaml.safe_dump(manifest,sort_keys=False))
+    result = _node_json("""
+      import {pathToFileURL} from 'node:url';
+      const mod=await import(pathToFileURL(process.argv[2]).href);
+      console.log(JSON.stringify(mod.packElementAliases({astridDir:process.argv[1],env:{ASTRID_PACKS_PATH:process.argv[3]}})));
+    """,str(tmp_path/'no-adjacent-checkout'),str(MODULE),str(pack))
+    if fault is None: assert result['@pack-rendering-live-scenes'] == str(directory)
+    else: assert '@pack-rendering-live-scenes' not in result
 
 
 def _node_json(script: str, *args: str) -> object:

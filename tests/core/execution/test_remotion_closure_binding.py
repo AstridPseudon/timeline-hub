@@ -13,6 +13,22 @@ from astrid.core.execution import remotion_host_session as host
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+@pytest.mark.parametrize('change', ['bytes','added','removed','escape'])
+def test_root_config_import_helpers_are_in_the_selected_closure(roots,tmp_path,change):
+    project,_,_,args=roots
+    helper=project/'webpack-alias.mjs';helper.write_text('// selected helper')
+    binding=closure.RemotionClosureBinding.admit(**args)
+    assert dict(binding.files).get(helper)==sha(helper)
+    if change=='bytes':helper.write_text('// changed helper')
+    elif change=='added':(project/'new-helper.mjs').write_text('// unadmitted helper')
+    elif change=='removed':helper.unlink()
+    else:
+        outside=tmp_path/'outside.mjs';outside.write_text('// selected helper')
+        helper.unlink();helper.symlink_to(outside)
+    with pytest.raises(ValueError,match='changed|escaping'):
+        binding.validate(project)
+
+
 @pytest.fixture
 def roots(tmp_path,monkeypatch):
     (tmp_path/'artifact-scratch').mkdir()

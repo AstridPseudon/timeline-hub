@@ -24,6 +24,17 @@ _RETAINED_TRANSPORT_PATCHES = {
 
 
 _SHA_CACHE = {}
+_ROOT_SOURCE_SUFFIXES = frozenset({'.js', '.mjs', '.cjs', '.ts', '.tsx', '.json'})
+
+
+def _root_sources(project):
+    files = set()
+    for path in project.iterdir():
+        if path.suffix in _ROOT_SOURCE_SUFFIXES and path.is_file():
+            if not path.resolve(strict=True).is_relative_to(project):
+                raise ValueError('renderer root source contains an escaping file link')
+            files.add(path)
+    return files
 
 
 def _sha(path):
@@ -141,10 +152,10 @@ class RemotionClosureBinding:
                     if not path.resolve(strict=True).is_relative_to(project):
                         raise ValueError('renderer source contains an escaping file link')
                     files[path] = _sha(path)
-        for name in ('remotion.config.ts', 'tsconfig.json'):
-            path = project/name
-            if path.is_file():
-                files[path] = _sha(path)
+        # The config imports root helpers such as webpack-alias.mjs. Their
+        # admitted code and inventory are part of the same renderer closure.
+        for path in sorted(_root_sources(project)):
+            files[path] = _sha(path)
         binding = cls(project, installed, receipt, receipt_sha256, manifest_sha256, lock_sha256,
                       tuple(sorted(files.items(), key=lambda item: str(item[0]))))
         binding.validate(project)
@@ -159,6 +170,9 @@ class RemotionClosureBinding:
         actual_modules = {path for path in modules.rglob('*') if path.is_file()}
         if actual_modules != expected_modules:
             raise ValueError('admitted renderer installation file inventory changed')
+        expected_root = {p for p, _ in self.files if p.parent == project and p.suffix in _ROOT_SOURCE_SUFFIXES}
+        if _root_sources(project) != expected_root:
+            raise ValueError('admitted renderer root source inventory changed')
         for directory in ('src', 'vendor/timeline-composition'):
             root = self.project/directory
             expected_source = {p for p, _ in self.files if p.is_relative_to(root)}

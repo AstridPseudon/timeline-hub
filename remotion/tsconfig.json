@@ -16,6 +16,7 @@
     //   their own .tsx sources, and skipLibCheck only skips .d.ts.
     "baseUrl": ".",
     "paths": {
+      "@pack-rendering-live-scenes/*": ["../astrid/packs/rendering/ui/live-scenes/*"],
       "@astrid-component-bindings": ["src/component-bindings.ts"],
       "@theme-elements-effects/*": ["_active_theme/elements/effects/*"],
       "@theme-effects/*": ["_active_theme/effects/*"],

@@ -1,7 +1,7 @@
 import {useCallback, useEffect, useMemo} from 'react';
 import {cancelRender, continueRender, delayRender} from 'remotion';
-import {SceneSurface} from '../../astrid/packs/rendering/editor/live-scenes/SceneSurface';
-import type {SceneStatus} from '../../astrid/packs/rendering/editor/live-scenes/runtime';
+import {SceneSurface} from '@pack-rendering-live-scenes/SceneSurface';
+import type {SceneStatus} from '@pack-rendering-live-scenes/runtime';
 
 /** Uses the existing Remotion frame gate and capture; no second export clock. */
 export function LiveSceneClip({source, sourceTime, width, height}: {
