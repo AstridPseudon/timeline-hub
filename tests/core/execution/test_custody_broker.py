@@ -2576,7 +2576,14 @@ def test_optional_failure_metadata_attachment_preserves_original_capture_and_jou
 
 def test_mandatory_failure_journal_error_retains_original_capture_chain_and_uncertainty(observed_descendant, monkeypatch):
     owner, census, birth, _ = _failed_command_fixture(observed_descendant, monkeypatch)
-    monkeypatch.setattr(owner, "_write_observed_containment", lambda: (_ for _ in ()).throw(OSError("private journal error")))
+    original_write = owner._write_observed_containment
+    def failed_capture_journal():
+        # Fail the mandatory capture-failure journal, after the original
+        # capture error exists; retain real initial census persistence.
+        if getattr(owner, '_capture_failure_observations', None):
+            raise OSError('private journal error')
+        return original_write()
+    monkeypatch.setattr(owner, '_write_observed_containment', failed_capture_journal)
     with pytest.raises(custody.CustodyError, match="diagnostic persistence failed") as caught:
         owner.observe_census({100: census[100]["birth_id"], 103: birth}, census=census,
                              fresh_census=lambda: pytest.fail("journal failure reconciled"))
@@ -3354,6 +3361,11 @@ else:
             trace['pre_capture_observation'] = first
             with monkeypatch.context() as scoped:
                 scoped.setattr(groups, '_process_snapshot', snapshot_and_record)
+                start = custody._darwin_process_start(target['pid'])
+                assert all(start[key] == first['native'][key]
+                           for key in ('pid', 'uid', 'start_sec', 'start_usec'))
+                expected_anchor = custody._start_anchor(start)
+                trace['expected_live_start_anchor'] = expected_anchor
                 scoped.setattr(custody.ctypes, 'CDLL', instrumented_cdll)
                 scoped.setattr(custody, 'current_process_audit_token', capture_and_record)
                 groups.observe_tree(process)
@@ -3365,8 +3377,13 @@ else:
             assert target['pid'] in owner._handles and owner._uncertain is None
             assert target['pid'] not in owner._unadmitted_absent
             authority, reference = owner._handles[target['pid']][1]
-            assert authority._live_start_anchor is None
+            # A genuine pre-capture native witness enrolls this still-live
+            # IPC-held child. Verify its exact exec-stable birth and owner.
+            assert authority._live_start_anchor == expected_anchor
+            assert authority._anchor_actor is owner.actor
             assert reference['target']['pid'] == target['pid']
+            assert reference['target']['uid'] == first['identity']['uid']
+            assert reference['target']['birth_id'] == target['birth']
             records = [r for r in owner._capture_failure_observations if r['pid'] == target['pid']]
             assert len(records) == 1
             assert records[0]['observations']['pre']['outcome'] == records[0]['observations']['post']['outcome'] == 'LIVE'
