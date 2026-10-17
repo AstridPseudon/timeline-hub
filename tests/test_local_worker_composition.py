@@ -611,7 +611,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         from astrid.core.execution import host_renderer_selection
         launch={**profile.host_launch, "renderer_selection":{"node_executable":str(Path(sys.executable).resolve())}}
         profile=replace(profile,host_launch=launch,session_config_digest=_digest(launch))
-        monkeypatch.setattr(host_renderer_selection,"validate_renderer_selection",lambda value:None)
+        monkeypatch.setattr(host_renderer_selection,"renderer_selection_payload",lambda value:None)
     config={**profile.host_launch,'runtime_endpoint':'http://127.0.0.1:1','runtime_instance_id':'epoch',
         'credential_file':str(tmp_path/'credential'),'ready_file':str(tmp_path/'ready')}
     captures={};read_done=threading.Event()

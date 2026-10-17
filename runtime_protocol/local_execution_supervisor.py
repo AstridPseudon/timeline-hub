@@ -163,9 +163,9 @@ def validate_selected_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
                 if not isinstance(relative, str) or not relative or Path(relative).is_absolute() or ".." in Path(relative).parts or not isinstance(pin, str) or not re.fullmatch(r"[0-9a-f]{64}", pin):
                     raise RelayError("host-only additional pack inventory is invalid")
         if "renderer_selection" in launch:
-            from astrid.core.execution.host_renderer_selection import validate_renderer_selection
+            from astrid.core.execution.host_renderer_selection import renderer_selection_payload
             try:
-                validate_renderer_selection(launch["renderer_selection"])
+                renderer_selection_payload(launch["renderer_selection"])
             except (ValueError, OSError) as exc:
                 raise RelayError("host-only renderer selection differs") from exc
         if digest(launch) != profile["session_config_digest"]:
