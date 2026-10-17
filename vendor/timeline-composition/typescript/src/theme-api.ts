@@ -63,11 +63,12 @@ export type {KeyframeClock} from './lib/keyframe-origin';
 export {loopPhase, positiveModulo, spriteSheetIndex} from './lib/beat-loop';
 export type {ResolvedLoop} from './lib/beat-loop';
 
-export {MODIFIER_REGISTRY, composeModifiers, declareModifier, ModifierAdmissionError} from './modifiers';
+export {MODIFIER_REGISTRY, composeModifiers, declareModifier, ModifierAdmissionError,
+  modifierParameterAddress, parseModifierParameterAddress, resolveModifierKeyframes, hasModifierKeyframes} from './modifiers';
 export {mediaModifierBounds} from './lib/modifier-bounds';
 export type {
   ClipModifierReference, ModifierBounds, ModifierContext, ModifierDeclaration,
-  ModifierDefinition, ModifierFinding, ModifierProps, ModifierRegistry,
+  ModifierDefinition, ModifierFinding, ModifierProps, ModifierRegistry, ModifierParameterBinding,
 } from './modifier-types';
 
 export {interpolateKeyframeInterval} from './lib/keyframe-easing';

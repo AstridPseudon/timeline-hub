@@ -13,7 +13,7 @@ import { resolveTransitionReference } from './lib/transitions';
 import { prepareScene, querySceneFrame, } from './evaluation';
 import { TransitionLayer } from './TransitionLayer';
 import { mediaModifierBounds } from './lib/modifier-bounds';
-import { ModifierAdmissionError } from './modifiers';
+import { ModifierAdmissionError, hasModifierKeyframes } from './modifiers';
 const sortClipsByAt = (clips) => {
     return [...clips].sort((left, right) => left.at - right.at);
 };
@@ -32,7 +32,7 @@ const getAssetEntry = (clip, assets) => {
 };
 export const renderVisualClipContent = (track, clip, assets, fps, theme, globalFrame, modifiers) => {
     if (clip.clipType === 'effect-layer') {
-        if (clip.modifiers?.length)
+        if (clip.modifiers?.length || hasModifierKeyframes(clip))
             throw new ModifierAdmissionError('unsupported-host', 'Effect layers are not owning visual clip subtrees');
         return null;
     }
@@ -126,7 +126,7 @@ const renderVisualTrack = (track, clips, assets, fps, theme, globalFrame, modifi
 };
 export const renderAudioTrack = (track, clips, assets, fps) => {
     return sortClipsByAt(clips).map((clip) => {
-        if (clip.modifiers?.length)
+        if (clip.modifiers?.length || hasModifierKeyframes(clip))
             throw new ModifierAdmissionError('unsupported-host', 'Audio tracks do not support visual modifiers');
         const assetEntry = getAssetEntry(clip, assets);
         return (_jsx(Sequence, { from: Math.round(clip.at * fps), durationInFrames: getClipDurationInFrames(clip, fps), children: _jsx(AudioTrack, { clip: clip, track: track, assetEntry: assetEntry, fps: fps }) }, clip.id));

@@ -16,7 +16,7 @@ export { composeAnimations, normalizeAnimationReferences, resolveAnimationRefere
 export { ThemeProvider, useTheme, DEFAULT_THEME, } from "./ThemeContext";
 export { keyframeOrigin, timelineKeyframeTime, spriteKeyframeFrame, declareKeyframeOrigin } from './lib/keyframe-origin';
 export { loopPhase, positiveModulo, spriteSheetIndex } from './lib/beat-loop';
-export { MODIFIER_REGISTRY, composeModifiers, declareModifier, ModifierAdmissionError } from './modifiers';
+export { MODIFIER_REGISTRY, composeModifiers, declareModifier, ModifierAdmissionError, modifierParameterAddress, parseModifierParameterAddress, resolveModifierKeyframes, hasModifierKeyframes } from './modifiers';
 export { mediaModifierBounds } from './lib/modifier-bounds';
 export { interpolateKeyframeInterval } from './lib/keyframe-easing';
 export { motionCurveName, motionCurveProgress, motionCurveInverse } from './lib/motion-curves.generated';

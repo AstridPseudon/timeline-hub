@@ -27,7 +27,7 @@ import {
 import {TransitionLayer} from './TransitionLayer';
 import {mediaModifierBounds} from './lib/modifier-bounds';
 import type {ModifierRegistry, ModifierFinding, ModifierBounds} from './modifier-types';
-import {ModifierAdmissionError} from './modifiers';
+import {ModifierAdmissionError, hasModifierKeyframes} from './modifiers';
 import type {
   AssetRegistryEntry,
   HypeCompositionProps,
@@ -77,7 +77,7 @@ export const renderVisualClipContent = (
   modifiers: ModifierHostOptions,
 ): ReactElement | null => {
   if (clip.clipType === 'effect-layer') {
-    if (clip.modifiers?.length) throw new ModifierAdmissionError('unsupported-host', 'Effect layers are not owning visual clip subtrees');
+    if (clip.modifiers?.length || hasModifierKeyframes(clip)) throw new ModifierAdmissionError('unsupported-host', 'Effect layers are not owning visual clip subtrees');
     return null;
   }
 
@@ -258,7 +258,7 @@ export const renderAudioTrack = (
   fps: number,
 ): ReactElement[] => {
   return sortClipsByAt(clips).map((clip) => {
-    if (clip.modifiers?.length) throw new ModifierAdmissionError('unsupported-host', 'Audio tracks do not support visual modifiers');
+    if (clip.modifiers?.length || hasModifierKeyframes(clip)) throw new ModifierAdmissionError('unsupported-host', 'Audio tracks do not support visual modifiers');
     const assetEntry = getAssetEntry(clip, assets);
     return (
       <Sequence

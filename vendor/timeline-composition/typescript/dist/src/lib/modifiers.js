@@ -1,5 +1,6 @@
 import { createElement } from 'react';
 import { admitModifiers, ModifierAdmissionError } from './modifier-admission';
+import { resolveModifierKeyframes } from './modifier-keyframes';
 export { ModifierAdmissionError } from './modifier-admission';
 // The component is a child-content subtype, never an EffectComponent/overlay.
 export const declareModifier = (definition) => ({
@@ -9,6 +10,7 @@ export const declareModifier = (definition) => ({
     bounds: definition.bounds,
     alpha: definition.alpha,
     support: definition.support,
+    parameters: definition.parameters,
     wrap: (instance, context, children) => createElement(definition.component, {
         key: instance.id,
         instanceId: instance.id,
@@ -18,9 +20,10 @@ export const declareModifier = (definition) => ({
     }),
 });
 export const composeModifiers = ({ instances, registry, context, content, host = 'composition', onFinding }) => {
+    const declarations = admitModifiers(instances, registry, host);
+    const evaluated = resolveModifierKeyframes(instances, declarations, context.clip.keyframes, context.keyframeTime);
     if (instances.length === 0)
         return content;
-    const declarations = admitModifiers(instances, registry, host);
     if (context.bounds.status === 'unknown') {
         onFinding?.({ code: 'unknown-target-bounds', clipId: context.clip.id, reason: context.bounds.reason });
         throw new ModifierAdmissionError('unknown-target-bounds', `Cannot apply modifiers to ${context.clip.id}: ${context.bounds.reason}`);
@@ -40,5 +43,5 @@ export const composeModifiers = ({ instances, registry, context, content, host =
             });
     });
     // Authored [A, B] is B(A(content)); no animation-hook grouping or reversal.
-    return instances.reduce((children, instance, index) => declarations[index].wrap(instance, context, children), content);
+    return evaluated.reduce((children, instance, index) => declarations[index].wrap(instance, context, children), content);
 };

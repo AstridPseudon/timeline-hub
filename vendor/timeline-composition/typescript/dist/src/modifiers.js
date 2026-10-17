@@ -2,3 +2,4 @@
 // admitted yet. Unknown entries refuse; consumers bind admitted declarations.
 export const MODIFIER_REGISTRY = Object.freeze({});
 export { composeModifiers, declareModifier, ModifierAdmissionError } from './lib/modifiers';
+export { modifierParameterAddress, parseModifierParameterAddress, resolveModifierKeyframes, hasModifierKeyframes } from './lib/modifier-keyframes';
