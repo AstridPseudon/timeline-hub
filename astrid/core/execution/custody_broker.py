@@ -2731,6 +2731,8 @@ class RoleBoundCustodyBroker:
                 if first_failure is not None:
                     if self._post_exec_executable_identity(pid, anchor) != executable:
                         raise CustodyError("post-exec executable changed before reacquisition")
+                if time.monotonic() >= deadline:
+                    break
                 try:
                     candidate = _bootstrap_anchored_token(pid, anchor)
                 except NativeTokenCaptureError as error:

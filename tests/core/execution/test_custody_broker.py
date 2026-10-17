@@ -4707,3 +4707,24 @@ def test_postexec_valid_pidversion_is_native_changed_value(postexec_broker, monk
     assert broker.error is None and broker.state == "sealed"
     assert broker.registration["audit_token_pidversion"] == version
     assert authority == ["pending", "target", "anchor"]
+
+
+def test_postexec_executable_observation_cannot_extend_capture_deadline(postexec_broker, monkeypatch):
+    broker, _, _, _, authority = postexec_broker
+    clock, captures, observations = [0.0], [], []
+    first = _postexec_capture_failure()
+    monkeypatch.setattr(custody.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(custody.time, "sleep", lambda seconds: None)
+    def capture(_):
+        captures.append(1)
+        raise first
+    def executable(*_):
+        observations.append(1)
+        if len(observations) == 2:
+            clock[0] = broker.timeout + .001
+        return {"inode": 1}
+    monkeypatch.setattr(custody, "current_process_audit_token", capture)
+    monkeypatch.setattr(broker, "_post_exec_executable_identity", executable)
+    broker._serve()
+    assert captures == [1] and broker.error.__cause__ is first
+    assert broker.state != "sealed" and authority == ["pending"]
