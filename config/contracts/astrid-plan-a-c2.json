@@ -4,7 +4,7 @@
   "revision": "C2",
   "issuedOn": "2026-09-24",
   "status": "frozen-local-contract",
-  "digest": "sha256:04b31b6478c0cdee8b34d72a2b75f034bfd0e29e026964310d2294bd22b06466",
+  "digest": "sha256:55eee689e2cce9e7fb64cec900d404cc6de94d26bbd33dca9b41985f79c94ca0",
   "predecessor": {
     "path": "config/contracts/astrid-plan-a-c1.json",
     "revision": "C1",
@@ -18,7 +18,6 @@
     "runtimeWireOwner": "astrid-runtime",
     "publicProjectionOwner": "astrid-agent",
     "appConsumerOwner": "astrid-app",
-    "workerPlacementOwner": "astrid-worker",
     "rules": [
       "C2 is a projection contract and never a Runtime wire schema, task store, binding store, queue, or supervisor.",
       "Runtime remains sole workspace, admission, attempt, fence, event, cancellation, retry, and settlement authority.",
@@ -175,14 +174,6 @@
       "sha256": "ea323e1f1c24323f9b28e8609108cb7e265e5fa3d54675f503b1c5d3642521a3",
       "role": "Runtime-execution-authority",
       "status": "held-primary-overlay-pending-I-04-I-05"
-    },
-    {
-      "repository": "astrid-worker",
-      "head": "c2c6eca79f474033bfaedc6a8fa80f70940b057f",
-      "path": "source/runtime/entrypoints/worker.py",
-      "sha256": "1de77313553fb338e4044eae265ec26a067912c52a92c7f6ce56b764f586cf59",
-      "role": "worker-placement-producer-boundary",
-      "status": "no-C2-projection-change-I-06-proof-required"
     }
   ],
   "generatedClientCompatibility": {
@@ -221,10 +212,6 @@
       {
         "repository": "astrid-app",
         "status": "typed-task-route-adapter-is-lane-input-not-generated-authority"
-      },
-      {
-        "repository": "astrid-worker",
-        "status": "wire-producer-consumer-not-generated-client-owner"
       }
     ]
   },

@@ -291,7 +291,6 @@ function main(argv) {
     '--app-root': 'astrid-app',
     '--astrid-root': 'astrid-agent',
     '--runtime-root': 'astrid-runtime',
-    '--worker-root': 'astrid-worker',
   };
   try {
     for (let index = 0; index < argv.length; index += 1) {

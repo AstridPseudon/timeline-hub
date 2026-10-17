@@ -112,7 +112,7 @@ export const MANUAL_SETUP_INTRO: Record<SetupPlatform, string> = {
 export const PLATFORM_VALIDATED: Record<SetupPlatform, boolean> = { unix: true, windows: false };
 
 // The Runtime revision ASTRID_SETUP_REF's guide pins; update it with the guide.
-const RUNTIME_PIN = 'bc74a4b2179de83ace55c35fa6371f10e1e58610';
+const RUNTIME_PIN = '3b21334366fa8124f1a7b0d371cc4295821616f5';
 const SOURCE_PROFILE = "import json, pathlib; r = pathlib.Path.cwd().resolve(); (r / 'astrid-source-profile.json').write_text(json.dumps({'profile': 'astrid', 'source_checkout': str(r / 'Astrid'), 'runtime_checkout': str(r / 'Runtime'), 'runtime_environment': str(r / '.venv')}, indent=2))";
 
 /** Mirrors ASTRID_SETUP_REF's docs/setup/README.md, step for step, in each platform's shell. */
@@ -128,7 +128,7 @@ export const MANUAL_SETUP_STEPS: Record<SetupPlatform, readonly ManualSetupStep[
       detail: 'In a new folder. The Runtime is pinned to the revision this version of Astrid was tested with.',
       command: [
         'mkdir ~/astrid-local && cd ~/astrid-local',
-        'git clone https://github.com/peteromallet/astrid-agent.git',
+        'git clone https://github.com/peteromallet/astrid-agent.git Astrid',
         'git clone https://github.com/banodoco/astrid-runtime.git Runtime',
         `git -C Runtime checkout ${RUNTIME_PIN}`,
         'python3 -m venv .venv && source .venv/bin/activate',
@@ -173,7 +173,7 @@ export const MANUAL_SETUP_STEPS: Record<SetupPlatform, readonly ManualSetupStep[
       detail: 'In a new folder. The Runtime is pinned to the revision this version of Astrid was tested with.',
       command: [
         'mkdir ~\\astrid-local; cd ~\\astrid-local',
-        'git clone https://github.com/peteromallet/astrid-agent.git',
+        'git clone https://github.com/peteromallet/astrid-agent.git Astrid',
         'git clone https://github.com/banodoco/astrid-runtime.git Runtime',
         `git -C Runtime checkout ${RUNTIME_PIN}`,
         'py -3.11 -m venv .venv; .\\.venv\\Scripts\\Activate.ps1',
