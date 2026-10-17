@@ -22,9 +22,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-# Portable keys that define the generation contract.  Mirrors a subset of
-# reigh-worker/source/task_handlers/tasks/task_conversion.py param_whitelist
-# that the managed Wan2GP runtime understands for video generation.
 PORTABLE_KEYS: tuple[str, ...] = (
     "prompt",
     "negative_prompt",

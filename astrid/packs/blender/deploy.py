@@ -388,7 +388,7 @@ def cmd_runpod(args: argparse.Namespace) -> int:
     except Exception as exc:  # noqa: BLE001
         raise SystemExit(
             f"runpod-lifecycle not importable: {exc}. "
-            "Install: pip install -e /Users/peteromalley/Documents/reigh-workspace/runpod-lifecycle"
+            "Install the runpod_lifecycle package into the active Python environment."
         )
 
     api_key = _load_runpod_api_key()
