@@ -14,6 +14,8 @@ from astrid.core.timeline import copy_sync as core
 from astrid.core.timeline.cuts import clip_duration
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline.doc import _read_words, _row_start
+from astrid.sdk.timeline.narration import take_key, validate_speech_boundary
+from astrid.sdk.timeline_editing import source_to_timeline_time
 
 
 def _documents(bundle):
@@ -41,9 +43,11 @@ def _support(clip, offset):
 def source_context(bundle):
     """Pinned local script AND actual word-producer evidence from the same bundle.
 
-    Missing binding identity is unavailable, not replaced by an invented binding.
+    Legacy text bindings and managed take references retain their own identities.
     No media, live heads or independent transcript endpoints are read.
     """
+    from astrid.sdk.timeline.transcript_binding import binding_of
+
     base = bundle.get("base_parent") or {}
     revision = base.get("revision_id") or (bundle.get("parent") or {}).get("revision_id")
     result = {"revision_id": revision, "snapshot_digest": core.digest(bundle),
@@ -51,16 +55,12 @@ def source_context(bundle):
               "status": "available" if revision else "unavailable"}
     oids = [r.get("occurrence_id") for r in bundle.get("placements") or []]
     for oid, sid, offset, document in _documents(bundle):
-        if sid is None:
-            continue
-        shot = bundle["shots"].get(sid) or {}
+        shot = (bundle.get("shots") or {}).get(sid) or {}
         bindings = [b for b in (shot.get("payload") or {}).get("text_bindings", [])
                     if b.get("kind") == "voiceover_script"]
         valid = (revision and oid and oids.count(oid) == 1 and len(bindings) == 1
                  and all(isinstance(bindings[0].get(k), str) and bindings[0][k]
                          for k in ("binding_id", "content_hash")))
-        if not valid:
-            result["coverage"].append({"occurrence_id": oid, "reason": "missing or ambiguous pinned script/occurrence identity"})
         binding = bindings[0] if len(bindings) == 1 else {}
         tracks = {t["id"]: t for t in document.get("tracks") or []}
         occurrence_lines = []
@@ -78,36 +78,68 @@ def source_context(bundle):
             authored_script = intent.line_text(clip)
             pending_script = (authored_script is not None and core.normalized(authored_script) !=
                               core.normalized(" ".join(spoken_by_segment.get(segment, []))))
-            raw = _read_words({"words": intent.words(clip)}, relative=True)
+            take = intent.line_take(clip)
+            managed = bool(take)
+            line_valid = valid
+            assets = document.get("registry") or document.get("assets") or {}
+            assets = assets.get("assets", assets)
+            if managed:
+                pending_script = False  # exact per-clip boundary validation below
+                try:
+                    take_key(take)
+                    validate_speech_boundary(authored_script, intent.words(clip))
+                    line_valid = bool(revision and (sid is None or (oid and oids.count(oid) == 1))
+                                      and assets.get(clip.get("asset"), {}).get("object_id") == take["speech"]["object_id"])
+                except (ValueError, TypeError):
+                    line_valid = False
+            # A typed transcript binding owns its cache. This detached adapter
+            # never substitutes that cache for an unavailable pinned snapshot.
+            if binding_of(clip) is not None:
+                line_valid = False
+            raw_rows = intent.words(clip)
+            raw = _read_words({"words": raw_rows}, relative=True)
             words = []
             for index, (start, end, text) in enumerate(raw):
-                words.append({"id": f"{segment}:{index}", "text": text,
-                              "start": offset + float(clip.get("at") or 0) + start,
-                              "end": offset + float(clip.get("at") or 0) + end})
-            assets = document.get("assets") or {}
-            assets = assets.get("assets", assets)
+                raw_row = raw_rows[index]
+                wid = (raw_row[3] if isinstance(raw_row, list) and len(raw_row) == 4
+                       else raw_row.get("id") if isinstance(raw_row, Mapping) else None)
+                at = offset + float(clip.get("at") or 0)
+                if managed:
+                    source_in = float(clip.get("from") or 0)
+                    if not source_in <= start < float(clip.get("to", float("inf"))):
+                        continue
+                    clock = dict(source_start=source_in, timeline_start=at, speed=float(clip.get("speed") or 1))
+                    start = float(source_to_timeline_time(start, **clock))
+                    end = float(source_to_timeline_time(end, **clock))
+                else:
+                    start, end = at + start, at + end
+                words.append({"id": wid or f"{segment}:{len(words)}", "text": text, "start": start, "end": end})
+            if len({w["id"] for w in words}) != len(words):
+                line_valid = False
             producer = {"clip": _scoped(oid, clip), "words_digest": core.digest(intent.words(clip)),
                         "lexical_digest": core.digest([core.normalized(w["text"]) for w in words]),
                         "asset": clip.get("asset"), "asset_dependency": copy.deepcopy(assets.get(clip.get("asset")))}
             source = {"revision_id": revision, "snapshot_digest": result["snapshot_digest"],
                       "snapshot_kind": result["snapshot_kind"], "occurrence_id": oid,
-                      "binding_id": binding.get("binding_id"), "content_hash": binding.get("content_hash"),
                       "clip": _scoped(oid, clip), "segment": segment, "word_producer": producer}
+            source.update({"take": copy.deepcopy(take)} if managed else
+                          {"binding_id": binding.get("binding_id"), "content_hash": binding.get("content_hash")})
             occurrence_lines.append({**source, "words": words, "interval": [min(w["start"] for w in words), max(w["end"] for w in words)] if words else None,
-                                    "status": "available" if valid and not pending_script else "unavailable"})
+                                    "status": "available" if line_valid and not pending_script else "unavailable"})
             if pending_script:
                 result["coverage"].append({"source": source["clip"], "reason": "authored script text differs from word producer; narration pending"})
-            if not valid:
+            if not line_valid:
                 result["coverage"].append({"source": source["clip"], "reason": "missing or ambiguous pinned script/occurrence identity"})
         # F's segment:index generator, applied to the actual occurrence's word
         # read (not the legacy lookup that collapses repeated placement clocks).
         counters = {}
-        ordered = [(w, line["segment"], i) for line in occurrence_lines for i, w in enumerate(line["words"])]
+        ordered = [(w, line["segment"], i, "take" in line) for line in occurrence_lines for i, w in enumerate(line["words"])]
         ordered.sort(key=lambda item: (item[0]["start"], item[1], item[2]))
-        for word, segment, _i in ordered:
-            index = counters.get(segment, 0)
-            counters[segment] = index + 1
-            word["id"] = f"{segment}:{index}"
+        for word, segment, _i, managed in ordered:
+            if not managed:
+                index = counters.get(segment, 0)
+                counters[segment] = index + 1
+                word["id"] = f"{segment}:{index}"
         result["lines"].extend(occurrence_lines)
     if not result["lines"]:
         result["coverage"].append({"reason": "no admitted word producers"})
@@ -202,10 +234,7 @@ def inventory(checkout, *, context=None, evaluated_support=None):
                         if line["status"] != "available":
                             continue
                         for hit in core.runs(text, line):
-                            source = {k: copy.deepcopy(line[k]) for k in (
-                                "revision_id", "snapshot_digest", "snapshot_kind", "occurrence_id", "binding_id",
-                                "content_hash", "clip", "segment", "word_producer")}
-                            source["words"] = hit
+                            source = _source_at(line, hit)
                             matches.append({"source": source,
                                             "tokens": [{"token": t["token"], "word_id": w["id"], "source_range": t["range"]}
                                                        for w in hit for t in core.tokens(w["text"])],
@@ -253,11 +282,19 @@ def _association(quote, row, current, *, before=None, tracking=None):
                           or x.get("occurrence_id") == selected["occurrence_id"] for x in current["coverage"])
             code = "COPY_SOURCE_UNAVAILABLE" if current["status"] != "available" or missing else "COPY_STALE"
             reasons.append({"code": code, "reason": "source occurrence/line missing"})
+        elif len({w["id"] for w in line["words"]}) != len(line["words"]):
+            reasons.append({"code": "COPY_STALE", "reason": "ambiguous source correspondence: duplicate word identities"})
         elif line["status"] != "available":
             reasons.append({"code": "COPY_SOURCE_UNAVAILABLE", "reason": "pinned source binding unavailable"})
         else:
             old_line = _line(before, selected) if before else None
-            if selected.get("word_producer", {}).get("lexical_digest") == line["word_producer"]["lexical_digest"]:
+            if (old_line is not None and old_line["status"] == "available"
+                  and selected.get("word_producer") == old_line["word_producer"]
+                  and selected.get("content_hash") == old_line.get("content_hash")
+                  and selected.get("take") == old_line.get("take")):
+                mapped, error = core.correspondence(old_line["words"], line["words"], selected["words"])
+            elif (selected.get("word_producer", {}).get("lexical_digest") == line["word_producer"]["lexical_digest"]
+                  and selected.get("take") == line.get("take")):
                 # Whole-line lexical identity also covers timing-only and raw-case edits.
                 baseline = copy.deepcopy(line["words"])
                 by_id = {w["id"]: w for w in selected["words"]}
@@ -265,20 +302,17 @@ def _association(quote, row, current, *, before=None, tracking=None):
                     if word["id"] in by_id and core.normalized(word["text"]) == core.normalized(by_id[word["id"]]["text"]):
                         word["text"] = by_id[word["id"]]["text"]
                 mapped, error = core.correspondence(baseline, line["words"], selected["words"])
-            elif (old_line is not None and old_line["status"] == "available"
-                  and selected.get("word_producer") == old_line["word_producer"]
-                  and selected.get("content_hash") == old_line["content_hash"]):
-                mapped, error = core.correspondence(old_line["words"], line["words"], selected["words"])
             else:
                 mapped, error = None, "source changed without a complete correspondence chain; explicit rebinding required"
             if error:
                 reasons.append({"code": "COPY_STALE", "reason": error})
             else:
-                new_source = _source_at(line, mapped)
-                if _plain_words(mapped) != selected["words"]:
-                    # Index shifts are provenance, not a lexical mismatch.
-                    if [w["text"] for w in mapped] != [w["text"] for w in selected["words"]]:
-                        reasons.append({"code": "COPY_RAW_CHANGE", "reason": "raw source changed; normalized words equal"})
+                new_source = (_source_at(line, mapped) if any(selected.get(k) != line.get(k)
+                              for k in ("word_producer", "content_hash", "take")) else selected)
+                # Tracking advances correspondence; the declaration retains the
+                # authored raw basis until an explicit reconfirmation.
+                if [w["text"] for w in mapped] != [w["text"] for w in source["words"]]:
+                    reasons.append({"code": "COPY_RAW_CHANGE", "reason": "raw source changed; normalized words equal"})
     display = quote["display"]
     actual = row.get("text")
     if actual != display["text"]:
@@ -356,7 +390,7 @@ def format_findings(findings):
             for f in findings]
 
 
-def after_script(checkout, before_bundle):
+def after_script(checkout, before_bundle, *, refuse_ambiguous=False):
     """Timing-workspace hook: carry correspondence/invalidation evidence, never rebind.
 
     Evidence is namespaced and saved with the command so deleted runs cannot
@@ -377,8 +411,12 @@ def after_script(checkout, before_bundle):
             except (ValueError, TypeError, KeyError, ValidationError):
                 continue  # lint below reports malformed persisted declarations explicitly
             key = core.digest(quote)
-            _, state = _association(quote, row, current, before=old_context, tracking=prior.get(key))
-            states.setdefault(row["layer"], {})[key] = state
+            found, state = _association(quote, row, current, before=old_context, tracking=prior.get(key))
+            if refuse_ambiguous and any("ambiguous source correspondence" in r["reason"] for r in found):
+                from astrid.sdk.timeline._common import TimelineEditError
+                raise TimelineEditError("ambiguous source correspondence for " + row["layer"] + "; explicit rebinding required")
+            if prior.get(key) is not None or state["status"] != "current" or state["source"] != quote["source"]:
+                states.setdefault(row["layer"], {})[key] = state
     findings = lint(checkout, before=before)
     for layer, state in states.items():
         intent.set_copy_quote_tracking(clips[layer], state)
