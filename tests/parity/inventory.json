@@ -4230,6 +4230,8 @@
         {
           "action": "_StoreAction",
           "choices": [
+            "changed-cuts",
+            "document",
             "published"
           ],
           "default": null,

@@ -585,10 +585,11 @@ def add_visualize_flags(subparser: argparse.ArgumentParser) -> None:
                            help="Which working copy (default: the current one, last checked out).")
     subparser.add_argument("--every-cut", dest="all_cuts", action="store_true", default=False,
                            help="With a working copy and no cut/range selection: every cut, not only the cuts you changed.")
-    subparser.add_argument("--compare", dest="compare_with", choices=("published",), default=None,
-                           help=("With a working copy: pair the published head and working copy for the same selected cuts. "
-                                 "This is separate from --preset compare (changed cuts between revisions) and "
-                                 "--view diff (the immutable revision-diff view)."))
+    subparser.add_argument("--compare", dest="compare_with",
+                           choices=("published", "changed-cuts", "document"), default=None,
+                           help=("Choose a comparison: published pairs the head with a working copy for the same selected cuts; changed-cuts "
+                                 "uses the before/after changed-cuts page; document selects the immutable revision "
+                                 "diff. Legacy --preset compare and --view diff remain supported."))
     subparser.add_argument("--highlight", default=None, metavar="ADDRESS",
                            help="Outline one layer over the frames (c41.tool-16; implies --layer bounds); "
                                 "with no window, the frames are taken inside it.")
@@ -630,6 +631,30 @@ def _layer_names(parsed: argparse.Namespace) -> list[str]:
 
 def cmd_visualize(parsed: argparse.Namespace) -> int:
     """Resolve what was asked, run it through the one SDK call, and say what came out."""
+    compare_mode = getattr(parsed, "compare_with", None)
+    if compare_mode == "changed-cuts":
+        if getattr(parsed, "preset", None) not in (None, "compare"):
+            print("error validation_error: --compare changed-cuts conflicts with the selected --preset",
+                  file=sys.stderr)
+            return 2
+        if getattr(parsed, "view", None) is not None:
+            print("error validation_error: --compare changed-cuts conflicts with the selected --view",
+                  file=sys.stderr)
+            return 2
+        parsed.preset = "compare"
+        parsed.compare_with = None
+    elif compare_mode == "document":
+        if getattr(parsed, "preset", None) is not None:
+            print("error validation_error: --compare document conflicts with the selected --preset",
+                  file=sys.stderr)
+            return 2
+        if getattr(parsed, "view", None) not in (None, "diff"):
+            print("error validation_error: --compare document conflicts with the selected --view",
+                  file=sys.stderr)
+            return 2
+        parsed.view = "diff"
+        parsed.compare_with = None
+
     from astrid.sdk.contracts import DomainResult, ErrorObject
     from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import inspection_options
 

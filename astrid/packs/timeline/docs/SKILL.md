@@ -70,13 +70,13 @@ remains `timelines edit --file checkout.json --from-script managed.json`;
 | A cut | `timelines visualize main --project demo --draft working --preset cut --cut c1` |
 | Whole film | `timelines visualize main --project demo --draft working --preset overview` |
 | Published vs working copy | `timelines visualize main --project demo --draft working --compare published` pairs the published head and working copy for the same selected cuts. |
-| Changed-cuts comparison | `timelines visualize main --project demo --preset compare --from before-rev --to after-rev` makes the existing before/after page for changed cuts. |
-| Immutable revision diff | `timelines visualize main --project demo --view diff --before-revision-id before-rev --after-revision-id after-rev` selects the exact before/after revision view. |
+| Changed-cuts comparison | `timelines visualize main --project demo --compare changed-cuts --from before-rev --to after-rev` makes the existing before/after page for changed cuts. |
+| Immutable revision diff | `timelines visualize main --project demo --compare document --before-revision-id before-rev --after-revision-id after-rev` selects the exact before/after revision view. |
 | Will it render? | `timelines visualize main --project demo --draft working --mode composed --at '"went"'` |
 
 `visualize` uses the shared scene for previews; `--mode inputs --plan` inspects the declared placement without capturing frames. `timelines render` produces a managed output; open the returned artifact path in your media viewer.
 
-These three comparison routes have separate meanings: `--compare published` pairs the published head with a working copy, `--preset compare` makes a page for changed cuts between revisions, and `--view diff` selects the immutable revision-diff view.
+These three comparison routes have separate meanings: `--compare published` pairs the published head with a working copy, `--compare changed-cuts` makes a page for changed cuts between revisions, and `--compare document` selects the immutable revision-diff view. The legacy `--preset compare` and `--view diff` selectors remain available for compatibility.
 
 ## Narration and re-flow
 
