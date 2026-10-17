@@ -381,7 +381,7 @@ def test_darwin_native_identity_preserves_uid_parent_and_canonical_utc_birth_wit
     monkeypatch.setattr(custody.subprocess, "run", lambda *a, **k: pytest.fail("Darwin ps invoked"))
     assert custody.default_process_identity(123) == {
         "pid": 123, "uid": uid, "parent_pid": 41,
-        "birth_id": "ps-lstart:Fri Oct  9 18:21:21 2026",
+        "birth_id": "ps-lstart:Fri Oct  9 16:21:21 2026",
     }
 
 
@@ -441,7 +441,7 @@ def test_non_darwin_process_identity_retains_existing_ps_parser(monkeypatch, ret
         with pytest.raises(custody.CustodyError):custody.default_process_identity(123, timeout=0.25)
     else:
         value = custody.default_process_identity(123, timeout=0.25)
-        assert value == (None if expected == "absent" else {"pid": 123, "uid": 501, "parent_pid": 41, "birth_id": "ps-lstart:Fri Oct  9 18:21:21 2026"})
+        assert value == (None if expected == "absent" else {"pid": 123, "uid": 501, "parent_pid": 41, "birth_id": "ps-lstart:Fri Oct  9 16:21:21 2026"})
     assert observed[0][0] == ["/bin/ps", "-ww", "-o", "uid=", "-o", "ppid=", "-o", "lstart=", "-p", "123"]
     assert observed[0][1]["timeout"] == 0.25
 
