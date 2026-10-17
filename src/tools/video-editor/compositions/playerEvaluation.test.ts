@@ -25,6 +25,31 @@ describe('Player shared scene boundary', () => {
     expect(a.assetEntry!.file).toBe(`${a.id}.jpg`);
   });
 
+  it('projects a managed media id and content digest without promoting the display URL to identity', () => {
+    const mediaId = 'sha256:fcb72dba4b5dea6761e5426b8bafeac73dd7d6cbf7c1c277957b20f4dd96173b';
+    const contentSha256 = mediaId.slice('sha256:'.length);
+    const mediaClip = clip('media-clip', 0, {assetEntry: {
+      file: 'stale-local-copy.mp4',
+      src: '/api/astrid/projects/project-001/media/sha256%3Afcb72dba4b5dea6761e5426b8bafeac73dd7d6cbf7c1c277957b20f4dd96173b/content',
+      media_id: mediaId,
+      content_sha256: contentSha256,
+      type: 'video/mp4',
+      resolution: '16x16',
+    }});
+
+    const {scene, clips} = prepare([mediaClip]);
+    expect(scene.assets.assets['media-clip']).toMatchObject({
+      file: mediaClip.assetEntry!.src,
+      media_id: mediaId,
+      content_sha256: contentSha256,
+      type: 'video/mp4',
+      resolution: '16x16',
+    });
+    expect(scene).not.toHaveProperty('mediaEvidence');
+    expect(clips[0]).toBe(mediaClip);
+    expect(mediaClip.assetEntry!.file).toBe('stale-local-copy.mp4');
+  });
+
   it.each(['crossfade', 'cross-fade', 'fade'])('converts incoming %s to one outgoing shared boundary', type => {
     const a = clip('outgoing', 0), b = clip('incoming', 2, {transition: {type, duration: 1}});
     const {scene, legacyTiming} = prepare([b, a]);
@@ -101,8 +126,9 @@ describe('Player shared scene boundary', () => {
   });
 
   it('keeps text and card identities and unknown component support separate', () => {
-    const {scene, clips} = prepare([clip('text',0,{clipType:'text',text:{content:'Legacy'}}),
-      clip('card',0,{clipType:'text-card',params:{content:'Card'}})]);
+    const {scene, clips} = prepare([clip('text',0,{clipType:'text',text:{content:'Legacy'},
+      params:{opaqueSupport:'rect', bounds:{x:0,y:0,width:1280,height:720}}}),
+      clip('card',0,{clipType:'text-card',params:{content:'Card',opaqueSupport:'rect'}})]);
     expect(clips.map(clip => clip.clipType)).toEqual(['text','text-card']);
     const layers = querySceneFrame(scene,10).layers;
     expect(layers.map(layer => layer.clipId)).toEqual(['text','card']);
