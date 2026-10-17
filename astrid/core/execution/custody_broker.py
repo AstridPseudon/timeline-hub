@@ -4535,6 +4535,7 @@ class ProcessCustody:
                                    actor, previously_admitted, census_round, new_absences,
                                    fresh_census=None, retry_admissions=None, _capture_retry=False,
                                    _retry_expected=None, _collected_observation=None):
+        ancestry_absence = None
         try:
             observation = (_collected_observation if _collected_observation is not None
                            else ordinary_candidate_observation(pid)) if pid not in self._handles else None
@@ -4553,10 +4554,30 @@ class ProcessCustody:
                     self._collect_census_candidates({}, ancestry_census)
                     original, current = census.get(pid), ancestry_census.get(pid)
                     fields = ("pid", "uid", "birth_id", "parent_pid", "pgid", "start_sec", "start_usec")
-                    if (not isinstance(current, Mapping)
-                            or any(original.get(k) != current.get(k) for k in fields)):
+                    if current is None and not _capture_retry and isinstance(native, Mapping):
+                        # The same ordinary observer can establish pre-capture
+                        # absence. Never turn a missing census row into native
+                        # evidence, an acquired handle, or a terminal proof.
+                        if (type(native.get('status')) is not int or native['status'] not in {1, 2, 3, 4}
+                                or native['start_sec'] <= 0 or original.get('birth_id') != birth
+                                or _ps_lstart_birth(native['start_sec']) != birth
+                                or not 0 <= native['start_usec'] < 1000000):
+                            raise CustodyError('ancestry recheck lacks precise live candidate evidence')
+                        absent = ordinary_candidate_observation(pid)
+                        if absent.get('outcome') == 'OBSERVATION_ERROR':
+                            raise absent['error']
+                        if (absent.get('outcome') != 'ABSENT' or absent.get('identity') is not None
+                                or absent.get('native') is not None):
+                            raise CustodyError('live candidate ancestry or incarnation changed')
+                        ancestry_absence = dict(census=ancestry_census,
+                            pre=_candidate_observation_evidence(observation),
+                            post=_candidate_observation_evidence(absent))
+                        observation = absent
+                    elif (not isinstance(current, Mapping)
+                          or any(original.get(k) != current.get(k) for k in fields)):
                         raise CustodyError("live candidate ancestry or incarnation changed")
-                self._validate_candidate_chain(pid, birth, ancestry_census)
+                if ancestry_absence is None:
+                    self._validate_candidate_chain(pid, birth, ancestry_census)
             if _capture_retry:
                 native = observation.get('native') if isinstance(observation, Mapping) else None
                 precise = ('pid', 'uid', 'parent_pid', 'pgid', 'start_sec', 'start_usec')
@@ -4786,7 +4807,8 @@ class ProcessCustody:
                 "admitted_ancestry_anchor": {"pid": parent, "birth_id": anchor},
                 "root": {"pid": root_pid, "birth_id": root_handle[0]},
                 "observer": {key: actor[key] for key in ("pid", "uid", "birth_id")},
-                "stage": ("post-token-no-authority-absence" if post_token_terminal and captured_absent else
+                "stage": ("ancestry-recheck-no-authority-absence" if ancestry_absence is not None else
+                          "post-token-no-authority-absence" if post_token_terminal and captured_absent else
                           "post-token-identity" if post_token_terminal else
                           "token-capture-no-authority-absence" if captured_absent else
                           "token-capture" if captured_zombie else "initial-identity"),
@@ -4799,21 +4821,27 @@ class ProcessCustody:
                 "terminal_observation": native,
                 "absence_observed": not terminal,
             }
-            if captured_absent:
+            if captured_absent or ancestry_absence is not None:
                 # Successful absence is not a terminal certificate. Retain the
                 # exact original ancestry for fresh, live revalidation before
                 # completing this never-acquired disposition.
                 record = self._unadmitted_absent[pid]
                 record["reconciliation_ancestry"] = [dict(census[root_pid]),
                     *ancestry, *([] if parent == root_pid else [dict(census[parent])])]
-                self._revalidate_post_absence(census, [pid], actor, root_pid, root_handle)
+                current_census = ancestry_absence['census'] if ancestry_absence is not None else census
+                if ancestry_absence is not None:
+                    self._check_unadmitted_census(current_census)
+                self._revalidate_post_absence(current_census, [pid], actor, root_pid, root_handle)
+                if ancestry_absence is not None:
+                    record['ancestry_recheck'] = {key: ancestry_absence[key] for key in ('pre', 'post')}
             self._write_observed_containment()
             new_absences.append(pid)
 
     def _revalidate_post_absence(self, census, candidates, actor, root_pid, root_handle):
         records = [self._unadmitted_absent[pid] for pid in candidates
                    if self._unadmitted_absent[pid]["stage"] in {
-                       "token-capture-no-authority-absence", "post-token-no-authority-absence"}]
+                       "token-capture-no-authority-absence", "post-token-no-authority-absence",
+                       "ancestry-recheck-no-authority-absence"}]
         if not records:
             return
         if self.actor.verify() != actor or self._handles.get(root_pid) != root_handle:
