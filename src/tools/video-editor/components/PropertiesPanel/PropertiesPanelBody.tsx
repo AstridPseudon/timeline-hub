@@ -1,3 +1,4 @@
+import { TimelineShaderSection } from './TimelineShaderSection.tsx';
 import { memo, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { BulkClipPanelBody, type BulkClipPanelProps } from '@/tools/video-editor/components/PropertiesPanel/BulkClipPanelBody.tsx';
@@ -575,14 +576,19 @@ function PropertiesPanelComponent({
       </div>
       {!readOnly && selectedClipIds.size === 1 && (
         <ShaderInspector
+          head={data?.head}
           clip={selectedClip}
           resolvedConfig={resolvedConfig}
           shaderSnapshot={shaderSnapshot}
           applyEdit={applyEdit}
         />
       )}
+      {!readOnly && selectedClipIds.size === 0 && !selectedTrackId && resolvedConfig && (
+        <TimelineShaderSection config={resolvedConfig} applyEdit={applyEdit} />
+      )}
       {!readOnly && selectedPostprocessShader && (
         <ShaderInspector
+          head={data?.head}
           clip={null}
           postprocessShader={selectedPostprocessShader}
           resolvedConfig={resolvedConfig}

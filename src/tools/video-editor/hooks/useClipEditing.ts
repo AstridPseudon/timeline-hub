@@ -1,3 +1,6 @@
+import { shaderClipOwner } from '../commands/shaderClipOwner.ts';
+import { shaderSlotCommand, equal, object } from '../commands/shaderSlots.ts';
+import { useShaderEffectRegistrySnapshot } from '../shaders/registry/ShaderEffectRegistryContext.tsx';
 import { compositeEffectGestureCommands, propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
@@ -74,6 +77,7 @@ export function useClipEditing({
   setSelectedTrackId,
   applyEdit,
 }: UseClipEditingArgs): UseClipEditingResult {
+  const shaderSnapshot = useShaderEffectRegistrySnapshot();
   const currentTimeRef = useRef(currentTime);
   const elementHost = useOptionalVideoEditorRuntime()?.astridElementHost;
 
@@ -253,6 +257,25 @@ export function useClipEditing({
     }
 
     const { at: _at, ...metaPatch } = patch;
+    if (Object.keys(metaPatch).length === 1 && object(metaPatch.app)
+      && (Object.prototype.hasOwnProperty.call(metaPatch.app, 'shader')
+        || Object.prototype.hasOwnProperty.call(current.config.clips.find(clip => clip.id === selectedClipId)?.app ?? {}, 'shader'))) {
+      const captured = current.config.clips.filter(clip => clip.id === selectedClipId);
+      const clip = captured.length === 1 ? captured[0] : undefined;
+      if (clip && object(metaPatch.app)) {
+        const { shader: _old, ...oldSiblings } = clip.app ?? {};
+        const { shader: next, ...nextSiblings } = metaPatch.app;
+        if (equal(oldSiblings, nextSiblings)) {
+          const owner = shaderClipOwner(current, clip.id);
+          if (!owner) return;
+          const command = shaderSlotCommand(owner,
+            Object.prototype.hasOwnProperty.call(metaPatch.app, 'shader') ? next : null, shaderSnapshot);
+          if (!command) return;
+          applyRowsEdit(current.rows, { [clip.id]: metaPatch as Partial<ClipMeta> }, undefined, undefined, { editCommands: [command] });
+          return;
+        }
+      }
+    }
     const composite = compositeEffectGestureCommands(current, selectedClipId, metaPatch, { elementHost });
     if (composite.refused) return;
     const effectivePatch = composite.commands?.length && composite.localPatch ? composite.localPatch : metaPatch;
@@ -298,7 +321,7 @@ export function useClipEditing({
     applyRowsEdit(nextRows, { [selectedClipId]: effectivePatch as Partial<ClipMeta> }, undefined, undefined, {
       editCommands: properties && movement ? [...movement, ...properties] : undefined,
     });
-  }, [applyRowsEdit, dataRef, elementHost, selectedClipId]);
+  }, [applyRowsEdit, dataRef, elementHost, selectedClipId, shaderSnapshot]);
 
   const clipEditingContext: ClipEditingContext = {
     dataRef,

@@ -1,3 +1,10 @@
+import { ShaderEffectRegistryProvider, useShaderEffectRegistryContext } from '../shaders/registry/ShaderEffectRegistryContext.tsx';
+import type { ShaderEffectRegistryRecord } from '../shaders/registry/types.ts';
+import { createShaderEffectRegistry } from '../shaders/registry/ShaderEffectRegistry.ts';
+import { createTimelineClipShaderMetadata, createTimelinePostprocessShaderMetadata } from '../lib/shader-catalog.ts';
+import { ClipShaderSection } from '../components/PropertiesPanel/ClipShaderSection.tsx';
+import { TimelineShaderSection } from '../components/PropertiesPanel/TimelineShaderSection.tsx';
+import { ShaderInspector } from '../components/ShaderInspector/ShaderInspector.tsx';
 import { reorderTrackGestureCommands } from '../commands/trackGestures.ts';
 import { isTransitionAssignmentBatch, transitionAssignmentInverse } from '../commands/transitionAssignmentHistory.ts';
 import { trimClipToMediaEnd } from '../lib/trim-to-media-end.ts';
@@ -278,7 +285,7 @@ async function occurrenceTransitionData() {
   }, base.registry, undefined, 1, undefined, base.head);
 }
 
-async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1', finalVideoMap: Map<string, ShotFinalVideo> = new Map(), outputSelector?: Parameters<typeof useSwitchToFinalVideo>[0]['getProjectMediaSelectionForOutput'], proposalCommands = false, fallback?: typeof catalogFadeFallback) {
+async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1', finalVideoMap: Map<string, ShotFinalVideo> = new Map(), outputSelector?: Parameters<typeof useSwitchToFinalVideo>[0]['getProjectMediaSelectionForOutput'], proposalCommands = false, fallback?: typeof catalogFadeFallback, shaderRecords: ShaderEffectRegistryRecord[] = []) {
   const initial = providedInitial ?? await initialData(media);
   const fixture = wireFixture(initial, reply, fallback);
   const eventBus = new TimelineEventBus();
@@ -289,7 +296,7 @@ async function setup(reply?: FixtureReply, media = false, providedInitial?: Time
   const interactionStateRef = { current: createInteractionState() };
   const query = new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
   const wrapper = ({ children }: { children: React.ReactNode }) => {
-    const queryChildren = React.createElement(QueryClientProvider, { client: query }, children);
+    const queryChildren = React.createElement(QueryClientProvider, { client: query }, React.createElement(ShaderEffectRegistryProvider, null, React.createElement(W28RegistrySeed, { records: shaderRecords }, children)));
     return React.createElement(VideoEditorRuntimeProvider, {
       value: { provider: fixture.provider, timelineId: 'gesture-timeline', ...(elementHost ? { astridElementHost: elementHost } : {}) } as VideoEditorRuntimeContextValue,
       children: queryChildren,
@@ -297,6 +304,7 @@ async function setup(reply?: FixtureReply, media = false, providedInitial?: Time
   };
   const selectClip = vi.fn();
   const hook = renderHook(() => {
+    const shaderRegistry = useShaderEffectRegistryContext();
     const commit = useTimelineCommit({ eventBus, lastSavedSignatureRef, initialData: initial, editability });
     const persistence = useTimelinePersistence({ provider: fixture.provider, assetResolver: fixture.provider, timelineId: 'gesture-timeline', eventBus, ...commit, savedSeqRef, configVersionRef, headRevisionRef, lastSavedSignatureRef, interactionStateRef });
     useEffect(() => eventBus.on('scheduleSave', persistence.scheduleSave), [persistence.scheduleSave]);
@@ -324,9 +332,9 @@ async function setup(reply?: FixtureReply, media = false, providedInitial?: Time
       setVideoModalShowImages: vi.fn(),
       semanticCommands: true,
     });
-    return { ...commit, editing, tracks, resize, persistence, ops, groupPins, groupHandlers, groupSwitches };
+    return { ...commit, editing, tracks, resize, persistence, ops, groupPins, groupHandlers, groupSwitches, shaderRegistry };
   }, { wrapper });
-  return { ...hook, ...fixture, initial, savedSeqRef, interactionStateRef, eventBus, selectClip, configVersionRef, headRevisionRef, lastSavedSignatureRef };
+  return { ...hook, ...fixture, wrapper, initial, savedSeqRef, interactionStateRef, eventBus, selectClip, configVersionRef, headRevisionRef, lastSavedSignatureRef };
 }
 beforeEach(() => { vi.stubGlobal('indexedDB', createFakeIndexedDB()); __resetSelectionStoreForTests(); __resetOverlayStackForTests(); });
 afterEach(() => { resetFakeIndexedDB(); vi.restoreAllMocks(); });
@@ -6277,4 +6285,114 @@ describe('W29 actual inspector receipt refusal boundaries', () => {
     expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
     h.unmount();
   });
+});
+
+function W28RegistrySeed({ records, children }: { records: ShaderEffectRegistryRecord[]; children: React.ReactNode }) {
+  const { registry } = useShaderEffectRegistryContext();
+  React.useLayoutEffect(() => { const handles = records.map(record => registry.register(record)); return () => handles.forEach(handle => handle.dispose()); }, [registry, records]);
+  return <>{children}</>;
+}
+function w28Record(scope: 'clip' | 'postprocess'): ShaderEffectRegistryRecord {
+  return { shaderId: 'wash', contributionId: 'wash-contribution', ownerExtensionId: 'shader-extension', label: 'W28 Wash', pass: scope,
+    source: { kind: 'inline', fragment: 'void main() { gl_FragColor = vec4(1.0); }' }, status: 'active', provenance: 'bundled-extension',
+    uniforms: [{ name: 'intensity', label: 'Intensity', type: 'float', default: 0.5, min: 0, max: 1, step: 0.01 }],
+    renderability: { determinism: 'preview-only', capabilities: [] } };
+}
+function w28Source(initial: TimelineData, requests: CommitRequest[]) {
+  return JSON.parse(execFileSync(process.env.ASTRID_TEST_PYTHON!, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/shaderSlots.fixture.py')], {
+    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests }), encoding: 'utf8', env: process.env,
+  })) as ReturnType<typeof clipParamsSource>;
+}
+async function w28Data(scope: 'clip' | 'postprocess', assigned: 'absent' | 'null' | 'edit' | 'orphan' = 'absent') {
+  const base = await selectedMoveData();
+  const shader = scope === 'clip' ? createTimelineClipShaderMetadata(w28Record(scope)) : createTimelinePostprocessShaderMetadata(w28Record(scope));
+  const value = assigned === 'orphan' ? { unknownLegacy: [null, { op: 'clear' }] } : assigned === 'null' ? null : {
+    ...shader, sourceHash: 'literal:retained descriptor', uniforms: { intensity: 0.25, opaqueUniform: { keep: null } },
+    metadata: { ...shader.metadata, opaque: [null, { $absent: true }] }, unknownLegacy: { keep: true },
+  };
+  const slot = scope === 'clip' ? 'shader' : 'shaderPostprocess'; const app = { keep: [null, { op: 'clear' }], ...(assigned === 'absent' ? {} : { [slot]: value }) };
+  const config = { ...base.config, ...(scope === 'postprocess' ? { app } : {}), clips: base.config.clips.map((clip, i) => i === 0 && scope === 'clip' ? { ...clip, app } : clip) };
+  return buildTimelineData(config as never, base.registry, undefined, 1, undefined, base.head);
+}
+function w28Inspector(h: Awaited<ReturnType<typeof setup>>, scope: 'clip' | 'postprocess', snapshot = h.result.current.shaderRegistry.snapshot) {
+  return <ShaderInspector head={h.result.current.data?.head} clip={scope === 'clip' ? h.result.current.data!.resolvedConfig.clips[0] : null}
+    postprocessShader={scope === 'postprocess' ? h.result.current.data!.resolvedConfig.app?.shaderPostprocess : undefined}
+    resolvedConfig={h.result.current.data!.resolvedConfig} shaderSnapshot={snapshot} applyEdit={h.result.current.applyEdit} />;
+}
+describe('W28 mounted shader consumers', () => {
+  it.each(['clip', 'postprocess'] as const)('%s real picker captures constructor value and exact base before queueing', async scope => {
+    const initial = await w28Data(scope, 'null');
+    const h = await setup(undefined, false, initial, 1, undefined, undefined, 'clip-1', undefined, undefined, false, undefined, [w28Record(scope)]);
+    const mounted = render(scope === 'clip' ? <ClipShaderSection clip={initial.resolvedConfig.clips[0]} onChange={h.result.current.editing.handleSelectedClipChange} />
+      : <TimelineShaderSection config={initial.resolvedConfig} applyEdit={h.result.current.applyEdit} />, { wrapper: h.wrapper });
+    if (scope === 'postprocess') fireEvent.change(screen.getByLabelText('Timeline postprocess shader'), { target: { value: JSON.stringify(['shader-extension', 'wash-contribution', 'wash']) } });
+    else { const user = userEvent.setup(); await user.click(screen.getByRole('combobox')); await user.click(screen.getByRole('option', { name: /W28 Wash/ })); }
+    act(() => h.result.current.shaderRegistry.registry.unregister('wash', 'shader-extension'));
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    const request = h.requests[0].request; const id = scope === 'clip' ? 'parent/clip:clip-1' : 'parent'; const slot = scope === 'clip' ? 'app.shader' : 'config.app.shaderPostprocess';
+    expect(request.base_revision_id).toBe('parent-r1');
+    expect(request.change).toMatchObject({ commands: [{ select: scope === 'clip' ? id : null, expect: { [`${id}::${slot}`]: { state: 'present', value: null } } }] });
+    expect(request.change.commands[0].args.shader).toEqual(scope === 'clip' ? createTimelineClipShaderMetadata(w28Record(scope)) : createTimelinePostprocessShaderMetadata(w28Record(scope)));
+    expect(h.compatibilityRequests).toEqual([]); mounted.unmount(); h.unmount();
+  });
+  it('occurrence picker captures the existing source identity and parent head without targeting a projected clip', async () => {
+    const initial = await occurrenceTransitionData();
+    const h = await setup(undefined, false, initial, 1, undefined, undefined, 'occ-after', undefined, undefined, false, undefined, [w28Record('clip')]);
+    const mounted = render(<ClipShaderSection clip={initial.resolvedConfig.clips[1]} onChange={h.result.current.editing.handleSelectedClipChange} />, { wrapper: h.wrapper });
+    const user = userEvent.setup(); await user.click(screen.getByRole('combobox')); await user.click(screen.getByRole('option', { name: /W28 Wash/ }));
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    expect(h.requests[0].request).toMatchObject({ base_revision_id: 'parent-r1', scope: { target: 'occurrence:occ-A', content: 'this-occurrence', shot_id: 'shot-A', shot_revision_id: 'shot-r1', internal_revision_id: 'internal-r1' },
+      change: { commands: [{ op: 'clip.set-shader', select: 'occurrence:occ-A/clip:source-after', resolved: ['occurrence:occ-A/clip:source-after'],
+        expect: { 'occurrence:occ-A/clip:source-after::app.shader': { state: 'absent' }, 'occurrence:occ-A/clip:source-after::app': { state: 'absent' } } }] } });
+    expect(h.compatibilityRequests).toEqual([]); mounted.unmount(); h.unmount();
+  });
+  it.each(['clip', 'postprocess'] as const)('%s inspector refuses wrong contribution/pass/status/missing and clears orphan without registry', async scope => {
+    const initial = await w28Data(scope, 'edit'); const h = await setup(undefined, false, initial);
+    for (const change of [{ contributionId: 'wrong' }, { pass: scope === 'clip' ? 'postprocess' : 'clip' }, { status: 'inactive' }, { ownerExtensionId: 'wrong' }]) {
+      const registry = createShaderEffectRegistry(); registry.register({ ...w28Record(scope), ...change } as ShaderEffectRegistryRecord);
+      const mounted = render(w28Inspector(h, scope, registry.getSnapshot()));
+      expect(screen.getByTestId('shader-inspector-compare-bypass')).toBeDisabled(); fireEvent.click(screen.getByTestId('shader-inspector-compare-bypass'));
+      expect(h.result.current.editSeqRef.current).toBe(0); mounted.unmount();
+    }
+    const orphan = await w28Data(scope, 'orphan'); h.unmount();
+    const o = await setup(undefined, false, orphan); const mounted = render(w28Inspector(o, scope));
+    fireEvent.click(screen.getByText('Remove shader'));
+    await waitFor(() => expect(o.requests).toHaveLength(1));
+    expect(o.requests[0].request.change.commands[0].args).toEqual({ shader: null }); expect(o.compatibilityRequests).toEqual([]);
+    mounted.unmount(); o.unmount();
+  });
+});
+
+describe.skipIf(!process.env.ASTRID_W28_SDK)('W28 SDK caller receipt history', () => {
+  it.each((['clip', 'postprocess'] as const).flatMap(scope => (['set-absent', 'set-null', 'edit', 'orphan'] as const).map(mode => ({ scope, mode }))))('$scope $mode actual caller preserves accepted receipt Undo/Redo and frozen retry', async ({ scope, mode }) => {
+      const initial = await w28Data(scope, mode === 'set-absent' ? 'absent' : mode === 'set-null' ? 'null' : mode); const requests: CommitRequest[] = []; let proof!: ReturnType<typeof w28Source>;
+      const h = await setup(async request => {
+        requests.push(request); proof = w28Source(initial, requests);
+        writeFileSync(path.join(process.env.E_W28_EVIDENCE_DIR!, `${scope}-${mode}-sdk.json`), JSON.stringify({ requests, proof }, null, 2));
+        return { acceptedResult: proof.result, ...(mode === 'edit' && requests.length === 1 ? { loseSuccess: true } : {}) };
+      }, false, initial, 1, undefined, undefined, 'clip-1', undefined, undefined, false, undefined, mode !== 'orphan' ? [w28Record(scope)] : []);
+      const history = w64History(h);
+      const mounted = mode.startsWith('set') ? render(scope === 'clip'
+        ? <ClipShaderSection clip={initial.resolvedConfig.clips[0]} onChange={h.result.current.editing.handleSelectedClipChange} />
+        : <TimelineShaderSection config={initial.resolvedConfig} applyEdit={h.result.current.applyEdit} />, { wrapper: h.wrapper })
+        : render(w28Inspector(h, scope));
+      if (mode.startsWith('set')) {
+        if (scope === 'postprocess') fireEvent.change(screen.getByLabelText('Timeline postprocess shader'), { target: { value: JSON.stringify(['shader-extension', 'wash-contribution', 'wash']) } });
+        else { const user = userEvent.setup(); await user.click(screen.getByRole('combobox')); await user.click(screen.getByRole('option', { name: /W28 Wash/ })); }
+      } else fireEvent.click(mode === 'edit' ? screen.getByTestId('shader-inspector-compare-bypass') : screen.getByText('Remove shader'));
+      act(() => h.result.current.shaderRegistry.registry.unregister('wash', 'shader-extension'));
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+      await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+      if (mode === 'edit') { expect(h.requests[1].bytes).toBe(h.requests[0].bytes); expect(h.requests[1].headers['Idempotency-Key']).toBe(h.requests[0].headers['Idempotency-Key']); }
+      act(() => history.result.current.undo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+      await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+      act(() => history.result.current.redo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+      const unique = requests.filter((r,i) => requests.findIndex(q => q.request_id === r.request_id) === i);
+      expect(unique).toHaveLength(3); expect(unique[1].change.commands[0].op).toBe('timeline.inverse'); expect(unique[2].change.commands[0].op).toBe('timeline.inverse');
+      expect(unique[2].change.commands[0].args.publication).toBe(proof.results[1].accepted_publication_id);
+      expect(proof.results[1].canonical_document).toEqual(proof.before); expect(proof.readback).toEqual(proof.results[0].canonical_document);
+      expect(proof.accept_counts).toEqual([1,1,1]); expect(h.compatibilityRequests).toEqual([]);
+      if (mode === 'edit') { const shader = unique[0].change.commands[0].args.shader as Record<string, unknown>; expect(shader.sourceHash).toBe('literal:retained descriptor'); expect(shader.unknownLegacy).toEqual({ keep: true }); expect(shader.uniforms).toMatchObject({ opaqueUniform: { keep: null } }); }
+      mounted.unmount(); history.unmount(); h.unmount();
+  }, 120_000);
 });
