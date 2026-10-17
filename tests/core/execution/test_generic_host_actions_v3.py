@@ -189,6 +189,7 @@ def _sdk_cpu_session_fixture(tmp_path, monkeypatch):
     from types import SimpleNamespace
     from urllib.parse import urlsplit
     import vibecomfy.runtime.session as session_module
+    from astrid.core.execution import custody_broker
     from astrid.core.generation.backends import vibecomfy as backend_module
     from astrid.core.generation.model_root import canonical_model_inventory_digest
 
@@ -205,7 +206,9 @@ def _sdk_cpu_session_fixture(tmp_path, monkeypatch):
     session = root / "session"
     session.mkdir()
     daemon, child = 1900001, 1900002
-    birth, child_birth = "fixture-daemon-birth", "fixture-child-birth"
+    start_seconds = {daemon: 1700000000, child: 1700000010}
+    birth, child_birth = (custody_broker._ps_lstart_birth(start_seconds[pid]).removeprefix("ps-lstart:")
+                          for pid in (daemon, child))
     url, token = "http://127.0.0.1:18188", "fixture-launch-token"
     revision, content = "a" * 40, "sha256:" + hashlib.sha256(b"unit source fixture").hexdigest()
     config = json.dumps({"output_directory": str(output)}, sort_keys=True).encode()
@@ -238,7 +241,28 @@ def _sdk_cpu_session_fixture(tmp_path, monkeypatch):
     monkeypatch.setattr(session_module, "_process_start_identity", observed_birth)
     monkeypatch.setattr(session_module, "_process_commandline", lambda pid: ("python", "--launch-token", token))
     monkeypatch.setattr(session_module, "_process_parent_pid", lambda pid: observations["parent"])
-    monkeypatch.setattr(session_module, "_listener_owner_pid", lambda endpoint: observations["listener"])
+    # Preserve the source-pinned ownership/listener predicates. Darwin's real
+    # SelectedCompositeObserver brackets native records rather than invoking
+    # the module's portable birth/parent helpers.
+    original_records = custody_broker._darwin_process_records
+    def observed_records(pid=None):
+        if pid not in start_seconds:
+            return original_records(pid)
+        observed_birth(pid)
+        expected = birth if pid == daemon else child_birth
+        key = "birth" if pid == daemon else "child_birth"
+        return [{"pid": pid, "uid": os.getuid(), "parent_pid": observations["parent"] if pid == child else 1,
+                 "pgid": daemon, "start_sec": start_seconds[pid] + int(observations[key] != expected),
+                 "start_usec": 0, "status": 2}]
+    monkeypatch.setattr(custody_broker, "_darwin_process_records", observed_records)
+    original_subprocess = session_module.subprocess
+    class OwnerProbe:
+        def __getattr__(self, name): return getattr(original_subprocess, name)
+        def run(self, argv, **kwargs):
+            assert argv in (["lsof", "-nP", "-t", "-a", "-iTCP:18188", "-sTCP:LISTEN"],
+                            ["lsof", "-O", "-nP", "-t", "-a", "-iTCP:18188", "-sTCP:LISTEN"])
+            return subprocess.CompletedProcess(argv, 0, str(observations["listener"]) + "\n", "")
+    monkeypatch.setattr(session_module, "subprocess", OwnerProbe())
     original_kill = os.kill
     def observed_kill(pid, sig):
         if pid in (daemon, child):
@@ -669,6 +693,12 @@ from types import ModuleType
 source,case,foreign,checkout,product_roots=sys.argv[1:]
 # Ordinary source tests bind their known product roots explicitly. Qualified
 # installed tests supply no roots, retaining the interpreter's true -I origins.
+if product_roots != '[]':
+    import sysconfig
+    # -S skips editable .pth hooks, which may expose an unrelated VibeComfy
+    # checkout even under -I. Use the real installed dependency directories
+    # without executing site startup or changing the installed environment.
+    sys.path.extend(dict.fromkeys(sysconfig.get_path(name) for name in ('purelib','platlib')))
 sys.path.extend(json.loads(product_roots))
 spec=importlib.util.spec_from_file_location('astrid.core.execution.generic_host',source)
 module=importlib.util.module_from_spec(spec)
@@ -701,7 +731,8 @@ else:
     assert products=={name:importlib.util.find_spec(name).origin for name in products}
     print(json.dumps({'rejected':False,'product_origins_unchanged':True}))
 '''
-    result = subprocess.run([python, "-I", "-B", "-c", script, host_module.__file__, case,
+    isolation = ["-I", "-B"] if retained else ["-I", "-S", "-B"]
+    result = subprocess.run([python, *isolation, "-c", script, host_module.__file__, case,
                              str(foreign), checkout, json.dumps(products)], env=env, cwd=tmp_path,
                             capture_output=True, text=True, timeout=20)
     assert result.returncode == 0, result.stderr
