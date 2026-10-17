@@ -245,7 +245,7 @@ class LocalRuntimeBoundary:
                         f"{candidate}"
                     )
                 python = str(candidate)
-            argv = [python, "-m", "runtime_protocol", "start"]
+            argv = [python, "-m", "runtime_protocol", "start", "--authoring-profile", "astrid"]
         replacements = {
             "{realm_id}": realm_id,
             "{realm_root}": str(realm_root),

@@ -6,6 +6,7 @@ import threading
 import time
 import signal
 import subprocess
+import sys
 from types import SimpleNamespace
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -59,6 +60,67 @@ def test_startup_admission_budget_is_validated_and_forwarded(tmp_path, monkeypat
     )
     flag = argv.index("--admission-timeout")
     assert argv[flag + 1] == "120.0"
+
+
+@pytest.mark.parametrize("installed_environment", [False, True])
+def test_launch_argv_selects_only_fixed_installed_astrid_provider(tmp_path, monkeypatch, installed_environment):
+    from runtime_protocol.cli import _parser
+
+    monkeypatch.setenv("RUNTIME_AUTHORING_PROFILE", "caller.module")
+    monkeypatch.setenv("ASTRID_AUTHORING_PROFILE", "caller.module")
+    python = sys.executable
+    environment = None
+    if installed_environment:
+        environment = tmp_path / "environment"
+        executable = environment / "bin" / "python"
+        executable.parent.mkdir(parents=True)
+        executable.write_text("#!/bin/sh\n")
+        executable.chmod(0o700)
+        python = str(executable)
+    profile = SourceProfile.from_mapping({
+        "profile": "astrid",
+        "runtime_checkout": str(tmp_path),
+        "source_checkout": str(tmp_path),
+        "runtime_environment": str(environment) if environment else None,
+    })
+    argv = LocalRuntimeBoundary()._argv(
+        profile, realm_id="realm", realm_root=tmp_path / "realm",
+        support_root=tmp_path / "support", display_name="Astrid Workspace",
+        owner_lock=tmp_path / "support" / "instance.lock",
+        token_file=tmp_path / "support" / "bootstrap-token",
+    )
+
+    assert argv[:6] == [python, "-m", "runtime_protocol", "start", "--authoring-profile", "astrid"]
+    assert argv.count("--authoring-profile") == 1
+    args = _parser().parse_args(argv[3:])
+    assert args.authoring_profile == "astrid"
+    assert args.root == str(tmp_path / "realm")
+    assert args.support_root == str(tmp_path / "support")
+    assert args.owner_lock == str(tmp_path / "support" / "instance.lock")
+    assert args.bootstrap_token_file == str(tmp_path / "support" / "bootstrap-token")
+    assert args.realm_id == "realm"
+
+
+@pytest.mark.parametrize("override", [
+    {"runtime_command": ["python", "-m", "caller.module"]},
+    {"profile": "caller.module"},
+    {"authoring_profile": "caller.module"},
+    {"provider_module": "caller.module"},
+])
+def test_launch_profile_cannot_override_fixed_provider(tmp_path, override):
+    value = {"profile": "astrid", "runtime_checkout": str(tmp_path), "source_checkout": str(tmp_path)}
+    value.update(override)
+    with pytest.raises(BootstrapError):
+        SourceProfile.from_mapping(value)
+
+
+def test_runtime_cli_rejects_nonfixed_authoring_profile(tmp_path):
+    from runtime_protocol.cli import _parser
+
+    with pytest.raises(SystemExit) as refused:
+        _parser().parse_args(["start", "--root", str(tmp_path / "realm"), "--authoring-profile", "caller.module"])
+    assert refused.value.code == 2
+    assert not (tmp_path / "realm").exists()
 
 
 def test_worker_profile_is_validated_through_installed_source_boundary(tmp_path):

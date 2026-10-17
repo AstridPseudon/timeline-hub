@@ -25,25 +25,50 @@ def test_real_installed_authoring_registers_before_first_http(tmp_path):
 import json, os, urllib.request
 from pathlib import Path
 from runtime_protocol.daemon import RuntimeDaemon
+from runtime_protocol.cli import _parser
 from runtime_protocol.store import RealmStore
 from runtime_protocol.contract_metadata import SCHEMA_DIGEST
 from astrid.sdk.timeline.commit import RuntimeCommitService
+from banodoco_local.bootstrap import SourceProfile
+from banodoco_local.runtime_boundary import LocalRuntimeBoundary
 root = Path(os.environ["CASE_ROOT"])
 RealmStore.initialize(root / "realm").close()
-d = RuntimeDaemon(root / "realm", support_root=root / "support", authoring_profile="astrid").start()
+profile = SourceProfile.from_mapping({
+    "profile": "astrid", "runtime_checkout": str(Path(__import__("runtime_protocol").__file__).parent.parent),
+    "source_checkout": str(Path(__import__("astrid").__file__).parent.parent),
+})
+argv = LocalRuntimeBoundary()._argv(
+    profile, realm_id="realm", realm_root=root / "realm", support_root=root / "support",
+    display_name="Astrid Workspace", owner_lock=root / "support" / "instance.lock",
+    token_file=root / "support" / "bootstrap-token",
+)
+args = _parser().parse_args(argv[3:])
+d = RuntimeDaemon(args.root, support_root=args.support_root, authoring_profile=args.authoring_profile).start()
 try:
     assert type(d.service._timeline_commit_provider) is RuntimeCommitService
     assert d.service._timeline_commit_provider.contract_digest == SCHEMA_DIGEST
+    request = urllib.request.Request(d.endpoint + "/v1/projects", headers={"Authorization": "Bearer " + d.token})
+    with urllib.request.urlopen(request, timeout=5) as r:
+        assert r.status == 200
+        json.load(r)
     with urllib.request.urlopen(d.endpoint + "/v1/health", timeout=5) as r:
         health = json.load(r)
     assert health["schema_digest"] == SCHEMA_DIGEST
-    print(json.dumps({"registered": True, "http_health": health}))
 finally:
     d.stop()
 assert d.thread is None or not d.thread.is_alive()
+assert d.httpd is None and d.service is None
+assert not (root / "support" / "discovery.json").exists()
+print(json.dumps({"registered": True, "first_authenticated_request": 200,
+                  "http_health": health, "argv": argv[:6], "pid": os.getpid(), "settled": True}))
 ''')
     assert result.returncode == 0, result.stdout + result.stderr
-    assert json.loads(result.stdout)["registered"] is True
+    proof = json.loads(result.stdout)
+    assert proof["registered"] is True
+    assert proof["first_authenticated_request"] == 200
+    assert proof["settled"] is True
+    assert proof["argv"][4:] == ["--authoring-profile", "astrid"]
+    print(result.stdout.strip())
 
 
 def test_actual_stale_installed_provider_refused_before_persistence(tmp_path):
