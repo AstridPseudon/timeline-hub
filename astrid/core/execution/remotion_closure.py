@@ -16,7 +16,7 @@ _PATCHES = {
 }
 
 _RETAINED_TRANSPORT_PATCHES = {
-    'serve-static.js': 'e59985477742f74a48d4c83221371e9135288b333c8611bcdeccca868b2de440',
+    'serve-static.js': '94b7c486a0f646a95b297e4bd4eaec7244bef836a28ac6e0e89ff79d7b9e09c9',
     'prepare-server.js': '4bde104699dd7481469b2a7a48645a726e2f8c83b06f1177e5f7e808bacbeb04',
     'open-browser.js': '0dc0ebc6479feaf5db1b6e978c94fefd9efdc279868b859bf2c4d0699f2722a8',
     'browser/BrowserRunner.js': '74b5799aaf2bc9c141e678d0a2ceb90260552b401f123c0df832e96a87100092',

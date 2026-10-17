@@ -16,15 +16,13 @@ import pytest
 import yaml
 
 from astrid.core.execution.executor.actions import action_orchestrator_definition
-from astrid.core.execution.executor.registry import _discover_executor_packs
-from astrid.core.execution.executor.registry import load_default_registry
+from astrid.core.execution.executor.registry import _discover_executor_packs, load_default_registry
 from astrid.core.execution.executor.runner import ExecutorRunRequest, build_executor_command
 from astrid.core.execution.orchestrator.registry import OrchestratorRegistry
 from astrid.core.execution.orchestrator.runner import (
     OrchestratorRunRequest,
     build_orchestrator_command,
 )
-
 
 ROOT = Path(__file__).resolve().parents[2]
 PACKS_ROOT = ROOT / "astrid" / "packs"
@@ -579,4 +577,3 @@ def test_default_mapping_rows_cover_every_declared_default(
     assert len(_default_mapping_rows) == 262
     assert actual == expected
     assert len(actual) == len(_default_mapping_rows)
-
