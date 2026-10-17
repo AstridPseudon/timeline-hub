@@ -116,8 +116,8 @@ describe('ShaderInspector', () => {
     expect(nextShader.uniforms).toEqual({ intensity: 0.75 });
     expect(nextShader.metadata.uniformPreset).toBe('custom');
     expect(nextShader.metadata.inspectorCompareMode).toBe('shader');
-    expect(nextShader.sourceHash).toContain('void main()');
-    expect(applyEdit.mock.calls[0][1]).toEqual({ selectedClipId: 'clip-1' });
+    expect(nextShader).not.toHaveProperty('sourceHash');
+    expect(applyEdit.mock.calls[0][1]).toMatchObject({ selectedClipId: 'clip-1', editCommands: [{ op: 'clip.set-shader' }] });
   });
 
   it('resets and persists uniform defaults as a defaults preset', () => {

@@ -1,5 +1,6 @@
 import { isAppKeyframeHistoryBatch } from '../commands/appKeyframeHistory.ts';
 import { isContinuousHistoryBatch } from '../commands/continuousHistory.ts';
+import { isShaderSlotBatch } from '../commands/shaderSlotHistory.ts';
 import { isFadeHistoryBatch } from '../commands/fadeHistory.ts';
 import { isClipLookStyleBatch } from '../commands/clipLookStyleHistory.ts';
 import { isClipParamsHistoryBatch } from '../commands/clipParamsHistory.ts';
@@ -417,7 +418,8 @@ export function useTimelineCommit({
           isTranscriptCaptionBatch(options.editCommands)
           || isOverlapTrimBatch(options.editCommands)
           || (semanticCommandSaving && (
-            isTransitionAssignmentBatch(options.editCommands)
+            isShaderSlotBatch(options.editCommands)
+            || isTransitionAssignmentBatch(options.editCommands)
             || isClipPlacementBatch(options.editCommands)
             || isClipStructureBatch(options.editCommands)
             || isTrackHistoryBatch(options.editCommands)

@@ -2,6 +2,7 @@ import { isAppKeyframeHistoryBatch, isAppKeyframeHistoryInverse } from '../comma
 import { isContinuousHistoryBatch, isContinuousHistoryInverse } from '../commands/continuousHistory.ts';
 import { isFadeHistoryBatch, isFadeHistoryInverse } from '../commands/fadeHistory.ts';
 import { isClipLookStyleInverse } from '../commands/clipLookStyleHistory.ts';
+import { isShaderSlotBatch, isShaderSlotInverse } from '../commands/shaderSlotHistory.ts';
 import { isClipParamsHistoryBatch, isClipParamsHistoryInverse } from '../commands/clipParamsHistory.ts';
 import { isTransitionAssignmentBatch, isTransitionAssignmentInverse } from '../commands/transitionAssignmentHistory.ts';
 import { isTrackHistoryBatch, isTrackHistoryInverse } from '../commands/trackHistory.ts';
@@ -256,7 +257,7 @@ export function useTimelineHistory({
       syncHistoryState();
       return;
     }
-    if (!isTransitionAssignmentInverse(inverse) && !isContinuousHistoryInverse(inverse) && !isAppKeyframeHistoryInverse(inverse) && !isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse) && !isTiedHoldExpansionInverse(inverse) && !isTranscriptCaptionInverse(inverse) && !isClipPlacementInverse(inverse) && !isClipStructureInverse(inverse) && !isTrackHistoryInverse(inverse) && !isFadeHistoryInverse(inverse) && !isClipLookStyleInverse(inverse) && !isClipParamsHistoryInverse(inverse)) return;
+    if (!isShaderSlotInverse(inverse) && !isTransitionAssignmentInverse(inverse) && !isContinuousHistoryInverse(inverse) && !isAppKeyframeHistoryInverse(inverse) && !isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse) && !isTiedHoldExpansionInverse(inverse) && !isTranscriptCaptionInverse(inverse) && !isClipPlacementInverse(inverse) && !isClipStructureInverse(inverse) && !isTrackHistoryInverse(inverse) && !isFadeHistoryInverse(inverse) && !isClipLookStyleInverse(inverse) && !isClipParamsHistoryInverse(inverse)) return;
     for (const entry of [...undoStackRef.current, ...redoStackRef.current]) {
       if (entry.nativeRegistration?.owner === owner) entry.nativeRegistration.inverse = structuredClone(inverse);
     }
@@ -341,7 +342,7 @@ export function useTimelineHistory({
     // Never turn an unacknowledged edit or missing receipt into a snapshot publication.
     const inverse = entry.nativeRegistration?.inverse;
     if (entry.nativeRegistration && !inverse) return false;
-    const nextData = entry.nativeRegistration && (isTransitionAssignmentInverse(inverse) || isContinuousHistoryInverse(inverse) || isAppKeyframeHistoryInverse(inverse) || isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse) || isTranscriptCaptionInverse(inverse) || isClipPlacementInverse(inverse) || isClipStructureInverse(inverse) || isTrackHistoryInverse(inverse) || isFadeHistoryInverse(inverse) || isClipLookStyleInverse(inverse) || isClipParamsHistoryInverse(inverse))
+    const nextData = entry.nativeRegistration && (isShaderSlotInverse(inverse) || isTransitionAssignmentInverse(inverse) || isContinuousHistoryInverse(inverse) || isAppKeyframeHistoryInverse(inverse) || isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse) || isTranscriptCaptionInverse(inverse) || isClipPlacementInverse(inverse) || isClipStructureInverse(inverse) || isTrackHistoryInverse(inverse) || isFadeHistoryInverse(inverse) || isClipLookStyleInverse(inverse) || isClipParamsHistoryInverse(inverse))
       ? { ...current } : preserveUploadingClips(current, applyHistoryEntry(current, entry, direction));
     const transitionReplay = entry.nativeRegistration?.transitionReplay;
     const mediaReplay = entry.nativeRegistration?.mediaReplay;
@@ -475,7 +476,8 @@ export function useTimelineHistory({
     const nativeRelation = (entry: UndoEntry) => {
       const nativeCommands = entry.nativeRegistration && gestureCommandsFor(entry.nativeRegistration.owner);
       const command = nativeCommands?.[0];
-      return isTransitionAssignmentBatch(nativeCommands ?? []) || isTransitionAssignmentInverse(command) || isTransitionAssignmentInverse(entry.nativeRegistration?.inverse)
+      return isShaderSlotBatch(nativeCommands ?? []) || isShaderSlotInverse(command) || isShaderSlotInverse(entry.nativeRegistration?.inverse)
+        || isTransitionAssignmentBatch(nativeCommands ?? []) || isTransitionAssignmentInverse(command) || isTransitionAssignmentInverse(entry.nativeRegistration?.inverse)
         || isContinuousHistoryBatch(nativeCommands ?? []) || isContinuousHistoryInverse(command) || isContinuousHistoryInverse(entry.nativeRegistration?.inverse)
         || isAppKeyframeHistoryBatch(nativeCommands ?? []) || isAppKeyframeHistoryInverse(command) || isAppKeyframeHistoryInverse(entry.nativeRegistration?.inverse)
         || isClipParamsHistoryBatch(nativeCommands ?? []) || isClipParamsHistoryInverse(command) || isClipParamsHistoryInverse(entry.nativeRegistration?.inverse)

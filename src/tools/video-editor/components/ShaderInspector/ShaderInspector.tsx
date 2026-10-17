@@ -1,9 +1,11 @@
+import { shaderClipOwner } from '../../commands/shaderClipOwner.ts';
+import type { TimelineData } from '../../lib/timeline-data.ts';
+import { selectedShaderRecord, shaderSlotCommand } from '../../commands/shaderSlots.ts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Switch } from '@/shared/components/ui/switch.tsx';
 import { SchemaForm } from '@/tools/video-editor/components/SchemaForm/SchemaForm.tsx';
 import { updateClipInConfig } from '@/tools/video-editor/lib/editor-utils.ts';
-import { getTimelineClipShader } from '@/tools/video-editor/lib/timeline-domain.ts';
 import type { TimelineEditorOpsContextValue } from '@/tools/video-editor/hooks/useTimelineState.types.ts';
 import type {
   ResolvedTimelineClip,
@@ -16,7 +18,7 @@ import type {
   TimelineShaderUniformValues,
 } from '@/tools/video-editor/types/index.ts';
 import type { ShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/registry/types.ts';
-import type { ExtensionDiagnostic, ShaderSourceDescriptor, ShaderUniformDefinition } from '@reigh/editor-sdk';
+import type { ExtensionDiagnostic, ShaderUniformDefinition } from '@reigh/editor-sdk';
 
 type ShaderInspectorCompareMode = 'shader' | 'bypass';
 
@@ -26,6 +28,7 @@ export interface ShaderInspectorProps {
   resolvedConfig: ResolvedTimelineConfig | null;
   shaderSnapshot: ShaderEffectRegistrySnapshot;
   applyEdit: TimelineEditorOpsContextValue['applyEdit'];
+  head?: TimelineData['head'];
 }
 
 export const SHADER_INSPECTOR_SPLIT_VIEW_DEFERRED_MESSAGE =
@@ -109,14 +112,6 @@ function getShaderTextureDefaults(
     .map((uniform) => [uniform.name, getTextureRefDefault(uniform)]));
 }
 
-function createSourceHash(source: ShaderSourceDescriptor): string {
-  if (source.kind === 'inline') {
-    return `inline:${source.vertex ?? ''}:${source.fragment}`;
-  }
-
-  return `module:${source.specifier}:${source.exportName ?? 'default'}`;
-}
-
 function hasDiagnosticError(diagnostics: readonly ExtensionDiagnostic[] | undefined): boolean {
   return diagnostics?.some((diagnostic) => diagnostic.severity === 'error') ?? false;
 }
@@ -181,8 +176,9 @@ export function ShaderInspector({
   resolvedConfig,
   shaderSnapshot,
   applyEdit,
+  head,
 }: ShaderInspectorProps) {
-  const shader = clip ? getTimelineClipShader(clip) : postprocessShader ?? undefined;
+  const shader = clip ? clip.app?.shader : postprocessShader ?? undefined;
   const record = shader
     ? shaderSnapshot.get(shader.shaderId, shader.extensionId)
     : undefined;
@@ -192,7 +188,8 @@ export function ShaderInspector({
   const textureRefDiagnostics = shader
     ? collectTextureRefDiagnostics(shader, record?.uniforms)
     : [];
-  const registryError = (record?.status === 'error') || hasDiagnosticError(diagnostics);
+  const editableRecord = selectedShaderRecord(shader, clip ? 'clip' : 'postprocess', shaderSnapshot);
+  const registryError = !editableRecord || (record?.status === 'error') || hasDiagnosticError(diagnostics);
   const defaultUniforms = useMemo(
     () => getShaderUniformDefaults(record?.uniforms),
     [record?.uniforms],
@@ -258,25 +255,27 @@ export function ShaderInspector({
     nextEnabled = enabled,
     nextCompareMode = compareMode,
   ) => {
-    if (!record) {
+    if (!record || !editableRecord || hasErrors) {
       return;
     }
 
     const nextShader: EditableShaderMetadata = {
       ...shader,
       label: shader.label ?? record.label,
-      uniforms: nextUniforms,
+      uniforms: { ...(shader.uniforms ?? {}), ...nextUniforms },
       ...((Object.keys(defaultTextures).length > 0 || shader.textures)
         ? { textures: { ...defaultTextures, ...(shader.textures ?? {}) } }
         : {}),
       enabled: nextEnabled,
-      sourceHash: createSourceHash(record.source),
       metadata: {
         ...(shader.metadata ?? {}),
         uniformPreset: preset,
         inspectorCompareMode: nextCompareMode,
       },
     };
+    const owner = clip ? shaderClipOwner({ config: resolvedConfig, head }, clip.id) : { id: 'parent', value: resolvedConfig };
+    const command = owner && shaderSlotCommand(owner, nextShader, shaderSnapshot);
+    if (!command) return;
     if (nextShader.scope === 'clip') {
       const nextConfig = updateClipInConfig(resolvedConfig, clip!.id, (currentClip) => ({
         ...currentClip,
@@ -286,7 +285,7 @@ export function ShaderInspector({
         },
       }));
 
-      applyEdit({ type: 'config', resolvedConfig: nextConfig }, { selectedClipId: clip!.id });
+      applyEdit({ type: 'config', resolvedConfig: nextConfig }, { selectedClipId: clip!.id, editCommands: [command] });
       return;
     }
 
@@ -298,7 +297,7 @@ export function ShaderInspector({
       },
     };
 
-    applyEdit({ type: 'config', resolvedConfig: nextConfig }, { selectedClipId: null, selectedTrackId: null });
+    applyEdit({ type: 'config', resolvedConfig: nextConfig }, { selectedClipId: null, selectedTrackId: null, editCommands: [command] });
   };
 
   const setEnabled = (nextEnabled: boolean) => {
@@ -332,7 +331,7 @@ export function ShaderInspector({
           <Switch
             checked={enabled}
             onCheckedChange={setEnabled}
-            disabled={missingRecord}
+            disabled={hasErrors}
             data-testid="shader-inspector-enabled"
           />
         </div>
@@ -374,7 +373,7 @@ export function ShaderInspector({
               variant={compareMode === 'bypass' ? 'secondary' : 'outline'}
               size="sm"
               onClick={() => persist(values, getUniformPreset(shader), false, 'bypass')}
-              disabled={missingRecord}
+              disabled={hasErrors}
               aria-pressed={compareMode === 'bypass'}
               data-testid="shader-inspector-compare-bypass"
             >
@@ -385,7 +384,7 @@ export function ShaderInspector({
               variant={compareMode === 'shader' ? 'secondary' : 'outline'}
               size="sm"
               onClick={() => persist(values, getUniformPreset(shader), true, 'shader')}
-              disabled={missingRecord}
+              disabled={hasErrors}
               aria-pressed={compareMode === 'shader'}
               data-testid="shader-inspector-compare-shader"
             >
@@ -423,6 +422,15 @@ export function ShaderInspector({
       )}
 
       <div className="flex flex-wrap justify-end gap-2">
+        <Button type="button" variant="outline" onClick={() => {
+          const owner = clip ? shaderClipOwner({ config: resolvedConfig, head }, clip.id) : { id: 'parent', value: resolvedConfig };
+          const command = owner && shaderSlotCommand(owner, null);
+          if (!command) return;
+          const nextConfig = clip ? updateClipInConfig(resolvedConfig, clip.id, current => {
+            const app = { ...current.app }; delete app.shader; return { ...current, app };
+          }) : (() => { const app = { ...resolvedConfig.app }; delete app.shaderPostprocess; return { ...resolvedConfig, app }; })();
+          applyEdit({ type: 'config', resolvedConfig: nextConfig }, { selectedClipId: clip?.id ?? null, ...(clip ? {} : { selectedTrackId: null }), editCommands: [command] });
+        }}>Remove shader</Button>
         <Button
           type="button"
           variant="outline"

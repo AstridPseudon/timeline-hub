@@ -2,6 +2,7 @@ import { appKeyframeHistoryInverse, isAppKeyframeHistoryBatch, isAppKeyframeHist
 import { continuousHistoryInverse, isContinuousHistoryBatch, isContinuousHistoryInverse } from '@/tools/video-editor/commands/continuousHistory.ts';
 import { fadeHistoryInverse } from '@/tools/video-editor/commands/fadeHistory.ts';
 import { clipLookStyleInverse } from '@/tools/video-editor/commands/clipLookStyleHistory.ts';
+import { shaderSlotInverse } from '@/tools/video-editor/commands/shaderSlotHistory.ts';
 import { clipParamsHistoryInverse } from '@/tools/video-editor/commands/clipParamsHistory.ts';
 import { transitionAssignmentInverse } from '@/tools/video-editor/commands/transitionAssignmentHistory.ts';
 import { trackHistoryInverse } from '@/tools/video-editor/commands/trackHistory.ts';
@@ -1107,7 +1108,7 @@ export class RuntimeDataProvider implements DataProvider {
     const captionInverse = transcriptCaptionInverse(registryCommands, result);
     const overlapInverse = overlapTrimInverse(registryCommands, result);
     // null means this owner explicitly had no change; it must not fall through.
-    const commandInverse = registryNoChange ? null : [transitionAssignmentInverse(registryCommands, result), continuousInverse, keyframeInverse, captionInverse, assetRegistrationInverse(registryCommands, result),
+    const commandInverse = registryNoChange ? null : [shaderSlotInverse(registryCommands, result), transitionAssignmentInverse(registryCommands, result), continuousInverse, keyframeInverse, captionInverse, assetRegistrationInverse(registryCommands, result),
       overlapInverse, tiedHoldExpansionInverse(registryCommands, result), clipPlacementInverse(registryCommands, result),
       clipStructureInverse(registryCommands, result), trackHistoryInverse(registryCommands, result), fadeHistoryInverse(registryCommands, result), clipLookStyleInverse(registryCommands, result), clipParamsHistoryInverse(registryCommands, result)]
       .find(inverse => inverse !== undefined);

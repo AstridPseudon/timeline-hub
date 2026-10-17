@@ -1,3 +1,4 @@
+import { selectedShaderRecord } from '../../commands/shaderSlots.ts';
 import { useMemo, useState } from 'react';
 import { AlertTriangle, Globe, Monitor, Server, Trash2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -106,6 +107,7 @@ export function ClipShaderSection({
           }
 
           const nextShader = createTimelineClipShaderMetadata(entry.record);
+          if (!selectedShaderRecord(nextShader, 'clip', shaderRegistryContext?.snapshot)) return;
           if (clipShader && !sameTimelineShaderIdentity(clipShader, nextShader)) {
             setShaderDiagnostic(timelineShaderScopeOccupiedMessage(
               'clip',
