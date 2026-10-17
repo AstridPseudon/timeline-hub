@@ -317,8 +317,7 @@ def _remotion_mux_profile(profile: RenderProfile, *, alpha: bool = False) -> Ren
     --pixel-format=yuva444p10le --image-format=png``) which the host probed
     emits as ``yuva444p12le`` -- a REAL alpha plane (vp9/webm in remotion
     4.0.509 muxes plain yuv420p and is a dead path).  The audio/time_base
-    fields below are pinned from a real probed ProRes artifact (see
-    .oracle/findings/batch-4-rework-exec.txt).
+    fields below are pinned from a real probed ProRes artifact.
     """
     if alpha:
         return replace(
