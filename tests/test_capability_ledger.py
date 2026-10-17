@@ -10,14 +10,12 @@ def test_shipped_ledger_reconciles_historical_capability_sets():
     sources = ledger["sources"]
 
     assert sources["counts"]["pack_labels"] == 107
-    assert sources["counts"]["historical_pack_labels"] == 112
-    assert sources["counts"]["executor_inventory"] == 92
-    assert sources["counts"]["legacy_ids"] == 19
+    assert sources["counts"]["historical_pack_labels"] == 108
+    assert sources["counts"]["executor_inventory"] == 88
     assert all(section["complete"] for section in sources["coverage"].values())
     assert not sources["coverage"]["source_labels"]["missing"]
     assert sources["coverage"]["historical_source_labels"]["complete"]
     assert not sources["coverage"]["executor_inventory"]["missing"]
-    assert not sources["coverage"]["legacy_ids"]["missing"]
     assert not {
         row["pack"]
         for row in sources["pack_labels"]
@@ -90,16 +88,12 @@ def test_historical_executor_rows_are_explicitly_not_installed():
 
     assert set(absent) == {
         "iteration.prepare",
-        "reigh.open_in_reigh",
-        "reigh.publish",
-        "reigh.reigh_data",
-        "reigh.spatial_audio_page",
         "training.asset_cache",
     }
     external = {row["id"]: row for row in absent.values() if row["id"].split(".", 1)[0] in {"discord_local", "hivemind", "seedance_local"}}
     historical = {row["id"]: row for row in absent.values() if row["id"] not in external}
     assert external == {}
-    assert {row["disposition"] for row in historical.values()} == {"retired", "unsupported"}
+    assert {row["disposition"] for row in historical.values()} == {"retired"}
     assert {row["discovery_status"] for row in historical.values()} == {"historical_only"}
     assert all(row["executable"] is False for row in historical.values())
 
@@ -111,39 +105,7 @@ def test_historical_source_labels_preserve_retirements_and_replacement():
     assert rows["iteration.collect_thread_provenance"]["disposition"] == "replaced"
     assert rows["iteration.collect_thread_provenance"]["equivalent_to"] == "iteration.collect_runtime_provenance"
     assert rows["iteration.collect_thread_provenance"]["executable"] is False
-    assert rows["reigh.publish_timeline"]["disposition"] == "unsupported"
     assert rows["typed_timeline.typed_timeline.render"]["disposition"] == "retired"
-
-
-def test_removed_reigh_registry_is_historical_and_inert():
-    ledger = load_capability_ledger(Path("config/astrid-beta-capabilities.json"))
-    rows = ledger["sources"]["legacy_ids"]
-
-    assert len(rows) == 19
-    assert {row["id"] for row in rows} == {
-        "reigh.wan_2_2_t2i",
-        "reigh.qwen_image",
-        "reigh.qwen_image_style",
-        "reigh.qwen_image_2512",
-        "reigh.z_image_turbo",
-        "reigh.image_upscale",
-        "reigh.individual_travel_segment",
-        "reigh.join_clips_orchestrator",
-        "reigh.video_enhance",
-        "reigh.z_image_turbo_i2i",
-        "reigh.qwen_image_edit",
-        "reigh.image_inpaint",
-        "reigh.annotated_image_edit",
-        "reigh.travel_orchestrator",
-        "reigh.wan_2_2_i2v",
-        "reigh.travel_stitch",
-        "reigh.edit_video_orchestrator",
-        "reigh.animate_character",
-        "reigh.flux_klein_edit",
-    }
-    assert {row["disposition"] for row in rows} == {"retired"}
-    assert {row["discovery_status"] for row in rows} == {"historical_only"}
-    assert all(row["executable"] is False for row in rows)
 
 
 def test_hivemind_census_keeps_the_external_contract_without_claiming_installation():
