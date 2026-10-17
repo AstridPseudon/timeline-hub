@@ -139,4 +139,4 @@ Two halves; the hosted half holds no Runtime credential.
 
 ## Security note
 
-`README.md` links `reigh.art`. That domain was re-registered on 23 Sep 2026 and now 302-redirects to an unrelated Korean site. The live product is `astrid.haus`. Fix the link or recover the domain.
+The product URL is `https://astrid.haus`; the former domain reference was removed after it changed ownership.

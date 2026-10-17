@@ -44,7 +44,7 @@
 
 ```typescript
 // useReferralTracking hook (runs on page load)
-// Detects: reigh.art?from=alice
+// Detects: astrid.haus?from=alice
 // Stores: referralCode, referralTimestamp, referralSessionId, referralFingerprint in localStorage
 useReferralTracking();
 ```

@@ -66,8 +66,8 @@ temp/
 !docs/extensions/validation/*.md
 !docs/extensions/validation/artifacts/*.log
 !docs/extensions/validation/artifacts/*.txt
-!docs/extensions/evidence/releases/
-!docs/extensions/evidence/releases/**
+!docs/extensions/ship-evidence/releases/
+!docs/extensions/ship-evidence/releases/**
 /vendor/timeline-schema/python/build/
 !tasks/*.md
 !CLAUDE.md

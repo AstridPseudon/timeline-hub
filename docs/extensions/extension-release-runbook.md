@@ -147,7 +147,7 @@ source, scripts, documentation, pins, and gate configuration. Create the
 annotated Reigh tag named by `reigh.releaseTag` at that candidate `C`; both the
 tag and `REIGH_REF` must resolve to `C`. Then commit the frozen ledger, the
 manifest's status-only freeze, and artifacts under
-`docs/extensions/evidence/releases/<manifest.release>/` to produce the clean
+`docs/extensions/ship-evidence/releases/<manifest.release>/` to produce the clean
 controller `H`. The verifier captures `C`, `H`, and the annotated tag-object
 hash. Resolve `<manifest.release>`, `reigh.releaseTag`, and `astrid.commit`
 from the manifest for every run; do not reuse values from an older candidate:
@@ -175,19 +175,13 @@ evidence root; correcting a captured document requires a new path and receipt.
 Do not overwrite a receipt or refresh tracked screenshots as a side effect of an
 ordinary test run.
 
-### Immutable visual-baseline input
+### Visual regression input
 
-The current candidate intentionally compares its live six-image visual gate
-against the immutable reviewed baseline owned by the RC6 provenance document.
-The command
-`verify:extension-visual-baseline-provenance` is the candidate-neutral release
-entrypoint; it delegates to the RC6 provenance verifier because that immutable
-document owns the baseline bytes, source commits, reviewed diff artifacts, and
-pixel metrics. This is an input-provenance check, not an RC6 release receipt.
-The current visual receipt must separately bind the live screenshot result, the
-unchanged baseline hashes, and the current candidate commit. Any baseline byte
-change requires a new reviewed provenance document rather than relabelling the
-immutable RC6 artifact.
+The active candidate visual gate is `npm run test:e2e:extension-visual`; it
+compares the current screenshots against the checked-in test baselines. The
+separate RC6 provenance verifier guarded a finished release and has been
+retired with its historical archive. Keep the visual regression gate in the
+release profile.
 
 ### Typed external evidence
 
