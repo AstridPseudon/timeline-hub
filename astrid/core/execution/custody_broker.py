@@ -2935,11 +2935,13 @@ class RoleBoundCustodyBroker:
                 try:
                     candidate = _bootstrap_anchored_token(pid, anchor)
                 except NativeTokenCaptureError as error:
-                    # SETEXEC may invalidate a task-name port between task_info
-                    # and pid_for_task. Only this observed failure is retryable,
-                    # and only after the old port has been successfully released.
+                    # A failed query of an acquired task-name right permits a
+                    # fresh acquisition, never authority. Keep the same deadline
+                    # and require the entire successful capture sequence below.
                     if first_failure is None:
                         first_failure = error
+                        if type(error.capture_failure) is not dict:
+                            raise
                         self.registration["post_exec_capture_failure"] = {
                             **error.capture_failure,
                             "error_type": type(error).__name__,
@@ -2950,9 +2952,19 @@ class RoleBoundCustodyBroker:
                         self._persist("registration_post_exec_capture_failed")
                     failure = error.capture_failure
                     if (type(error) is not NativeTokenCaptureError
-                            or failure.get("substage") != "pid_for_task"
+                            or type(failure) is not dict
+                            or set(failure) != {"substage", "kern_return", "port_acquired",
+                                                    "count", "port_release_succeeded"}
+                            or type(failure.get("substage")) is not str
+                            or failure["substage"] not in {
+                                "task_info_first", "pid_for_task", "task_info_second"}
                             or type(failure.get("kern_return")) is not int
-                            or failure["kern_return"] != 5
+                            or failure["kern_return"] == 0
+                            or (failure["substage"] == "pid_for_task"
+                                and failure.get("count") is not None)
+                            or (failure["substage"] != "pid_for_task"
+                                and (type(failure.get("count")) is not int
+                                     or failure["count"] != TASK_AUDIT_TOKEN_COUNT))
                             or failure.get("port_acquired") is not True
                             or failure.get("port_release_succeeded") is not True
                             or hasattr(error, "port_release_error")):

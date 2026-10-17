@@ -4445,20 +4445,25 @@ def postexec_broker(tmp_path, monkeypatch):
     return broker, token, start, events, authority
 
 
-def _postexec_capture_failure(*, release=True):
+def _postexec_capture_failure(*, release=True, substage="pid_for_task", kern_return=5):
     error = custody.NativeTokenCaptureError(
-        "controlled pid_for_task kernel5",
-        substage="pid_for_task",
-        kern_return=5,
+        f"controlled {substage} kernel{kern_return}",
+        substage=substage,
+        kern_return=kern_return,
         port_acquired=True,
+        count=custody.TASK_AUDIT_TOKEN_COUNT if substage.startswith("task_info_") else None,
     )
     error.capture_failure["port_release_succeeded"] = release
     return error
 
 
-def test_postexec_reacquisition_seals_only_fresh_complete_authority(postexec_broker, monkeypatch):
+@pytest.mark.parametrize("substage", ["task_info_first", "pid_for_task", "task_info_second"])
+@pytest.mark.parametrize("kern_return", [5, 0x10000003, 9])
+def test_postexec_reacquisition_seals_only_fresh_complete_authority(
+    postexec_broker, monkeypatch, substage, kern_return
+):
     broker, token, _, events, authority = postexec_broker
-    first = _postexec_capture_failure()
+    first = _postexec_capture_failure(substage=substage, kern_return=kern_return)
     calls = []
 
     def capture(_):
@@ -4558,6 +4563,15 @@ def test_postexec_reacquisition_rejects_exact_anchor_drift(
         "other-stage",
         "wrong-kernel",
         "not-acquired",
+        "bool-kernel",
+        "string-kernel",
+        "wrong-count",
+        "bool-count",
+        "missing-count",
+        "unexpected-count",
+        "unexpected-field",
+        "bool-acquired",
+        "string-release",
     ],
 )
 def test_postexec_unqualified_failure_never_retries(postexec_broker, monkeypatch, defect):
@@ -4570,11 +4584,29 @@ def test_postexec_unqualified_failure_never_retries(postexec_broker, monkeypatch
             "release failed", substage="mach_port_deallocate", kern_return=3, port_acquired=True
         )
     if defect == "other-stage":
-        first.capture_failure["substage"] = "task_info_first"
+        first.capture_failure["substage"] = "task_name_for_pid"
     if defect == "wrong-kernel":
-        first.capture_failure["kern_return"] = 9
+        # A successful query with contradictory identity is never retryable.
+        first.capture_failure["kern_return"] = 0
     if defect == "not-acquired":
         first.capture_failure["port_acquired"] = False
+    if defect == "bool-kernel":
+        first.capture_failure["kern_return"] = True
+    if defect == "string-kernel":
+        first.capture_failure["kern_return"] = "5"
+    if defect in {"wrong-count", "bool-count", "missing-count"}:
+        first.capture_failure["substage"] = "task_info_first"
+        first.capture_failure["count"] = True if defect == "bool-count" else 7
+        if defect == "missing-count":
+            first.capture_failure.pop("count")
+    if defect == "unexpected-count":
+        first.capture_failure["count"] = 8
+    if defect == "unexpected-field":
+        first.capture_failure["unexpected"] = True
+    if defect == "bool-acquired":
+        first.capture_failure["port_acquired"] = 1
+    if defect == "string-release":
+        first.capture_failure["port_release_succeeded"] = "true"
     calls = []
 
     def capture(_):
@@ -4738,3 +4770,83 @@ def test_postexec_executable_observation_cannot_extend_capture_deadline(postexec
     broker._serve()
     assert captures == [1] and broker.error.__cause__ is first
     assert broker.state != "sealed" and authority == ["pending"]
+
+
+def test_postexec_repeated_query_failures_and_preexec_token_keep_original_deadline(
+    postexec_broker, monkeypatch
+):
+    broker, token, _, events, authority = postexec_broker
+    clock = [0.0]
+    monkeypatch.setattr(custody.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(custody.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0] + seconds))
+    failures = [_postexec_capture_failure(substage=stage, kern_return=0x10000003)
+                for stage in ("task_info_first", "pid_for_task", "task_info_second")]
+    sequence = iter([*failures, token(10), token(11)])
+    calls = []
+
+    def capture(_):
+        assert authority == ["pending"] and not broker._post_exec_authority_validated
+        calls.append(clock[0])
+        result = next(sequence)
+        if isinstance(result, BaseException):
+            raise result
+        return result
+
+    monkeypatch.setattr(custody, "current_process_audit_token", capture)
+    broker._serve()
+    assert broker.error is None and broker.state == "sealed" and len(calls) == 5
+    assert calls[-1] < broker.timeout and broker.registration["audit_token_pidversion"] == 11
+    assert broker.registration["post_exec_capture_failure"]["message"] == str(failures[0])
+    assert [name for name, _ in events].count("registration_post_exec_capture_failed") == 1
+    assert authority == ["pending", "target", "anchor"]
+
+
+@pytest.mark.parametrize("substage", ["task_info_first", "pid_for_task", "task_info_second"])
+def test_postexec_classified_persistent_failure_exhausts_same_budget(
+    postexec_broker, monkeypatch, substage
+):
+    broker, _, _, _, authority = postexec_broker
+    clock = [0.0]
+    monkeypatch.setattr(custody.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(custody.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0] + seconds))
+    first = _postexec_capture_failure(substage=substage, kern_return=0x10000003)
+    calls = []
+
+    def capture(_):
+        calls.append(clock[0])
+        raise first
+
+    monkeypatch.setattr(custody, "current_process_audit_token", capture)
+    broker._serve()
+    assert broker.error.__cause__ is first and authority == ["pending"]
+    assert all(at < broker.timeout for at in calls) and clock[0] == broker.timeout
+    assert not broker._post_exec_authority_validated and broker.state != "sealed"
+
+
+@pytest.mark.parametrize("defect", ["record", "subclass", "unrelated"])
+def test_postexec_retry_does_not_catch_unstructured_or_other_failures(
+    postexec_broker, monkeypatch, defect
+):
+    broker, _, _, _, authority = postexec_broker
+    first = _postexec_capture_failure()
+    if defect == "record":
+        first.capture_failure = []
+    elif defect == "subclass":
+        class OtherFailure(custody.NativeTokenCaptureError):
+            pass
+        other = OtherFailure("not exact native failure", substage="pid_for_task", kern_return=5,
+                             port_acquired=True)
+        other.capture_failure["port_release_succeeded"] = True
+        first = other
+    else:
+        first = custody.CustodyError("unrelated failure")
+    calls = []
+
+    def capture(_):
+        calls.append(1)
+        raise first
+
+    monkeypatch.setattr(custody, "current_process_audit_token", capture)
+    broker._serve()
+    assert broker.error is first and calls == [1] and authority == ["pending"]
+    assert not broker._post_exec_authority_validated and broker.state != "sealed"
