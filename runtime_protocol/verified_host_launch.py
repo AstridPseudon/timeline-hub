@@ -828,6 +828,11 @@ def launch_from_binding(payload):
     if "selected_python" in payload:
         module.__dict__["_RETAINED_SELECTED_PYTHON"] = json.loads(canonical(payload["selected_python"]))
     sys.modules['__main__'] = module
+    # Host collaborators import the canonical name. Keep one execution and one
+    # retained owner binding while preserving the CLI's __main__ entry point.
+    # Both names refer to the same source already admitted by this mapping.
+    sys.modules[HOST_MODULE] = module
+    setattr(sys.modules[module.__package__], HOST_MODULE.rsplit('.', 1)[1], module)
     sys.argv[:] = [item["path"], *payload["host_argv"]]
     _SourceLoader(item, trusted_local=payload["mode"] == TRUSTED_LOCAL_MODE).exec_module(module)
 

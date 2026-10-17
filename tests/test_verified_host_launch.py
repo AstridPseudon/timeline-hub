@@ -99,6 +99,10 @@ def test_cold_launch_binds_metadata_after_exact_importer_without_parser_preload(
         "astrid/core/__init__.py": "",
         "astrid/core/execution/__init__.py": "",
         "astrid/core/execution/generic_host.py":
+            "import sys\n"
+            "from astrid.core.execution import generic_host as retained_host\n"
+            "assert retained_host is sys.modules['__main__'], 'Host executed twice'\n"
+            "assert retained_host._RETAINED_SELECTED_PYTHON is _RETAINED_SELECTED_PYTHON\n"
             "import astrid, email.parser, email.feedparser, email.policy\n"
             "from importlib.metadata import distribution\n"
             "assert distribution('astrid').read_text('top_level.txt')=='astrid\\n'\n"
@@ -124,7 +128,8 @@ def test_cold_launch_binds_metadata_after_exact_importer_without_parser_preload(
         (metadata / "METADATA").write_text("Name: astrid\nVersion: forged\n")
     payload = {"schema_version": 1, "mode": gate.TRUSTED_LOCAL_MODE,
                "module": gate.HOST_MODULE, "mapping": mapping,
-               "distribution_metadata": rows, "host_argv": []}
+               "distribution_metadata": rows, "host_argv": [],
+               "selected_python": gate.selected_python_layout(root)}
     manifest = tmp_path / "cold-binding.json"
     manifest.write_text(json.dumps(payload))
     program = """
