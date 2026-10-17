@@ -556,6 +556,10 @@ _commands.REGISTRY["timeline.remove"] = _commands.Operation("timeline.remove", "
 _commands.REGISTRY["timeline.set"] = _commands.Operation("timeline.set", "track", "set", _commands.set_track)
 _commands.REGISTRY["timeline.reorder"] = _commands.Operation("timeline.reorder", "track", "reorder", _commands.reorder_tracks)
 
+from astrid.sdk.timeline.overhang import convert as _convert_overhang  # noqa: E402
+
+_commands.REGISTRY["clip.overhang-to-hold"] = _commands.Operation("clip.overhang-to-hold", "clip", "overhang_to_hold", _convert_overhang)
+
 # Preserve A's admitted canonical publication inverse adapter.
 from astrid.sdk.timeline.inverse import apply_inverse as _apply_inverse  # noqa: E402
 

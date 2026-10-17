@@ -294,6 +294,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     if entry.op in {"shot-group.set", "shot-group.remove"}:
         from astrid.sdk.timeline.shot_groups import guard
         command = guard(tl, command)
+    if entry.op == "clip.overhang-to-hold":
+        from astrid.sdk.timeline.overhang import guard
+        command = guard(tl, command, owner, before_entities)
     if entry.kind == "track":
         command = guard_track_call(tl, command, owner)
     from astrid.sdk.timeline import relations
@@ -352,7 +355,12 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     for key, value in bound.arguments.items():
         if key in {"self", "client"}:
             continue
-        if sig.parameters[key].kind == inspect.Parameter.VAR_KEYWORD:
+        if entry.op == "timeline.inverse" and key == "writes":
+            # Recorded tagged states are literal authored JSON, not numeric
+            # command arguments. Redo must retain opaque values and 6.0/6.
+            # Keep _plain and the operation/request digest contracts unchanged.
+            canonical[key] = copy.deepcopy(value)
+        elif sig.parameters[key].kind == inspect.Parameter.VAR_KEYWORD:
             canonical.update(_plain(value))
         else:
             canonical[key] = _plain(value)
@@ -405,7 +413,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         getattr(recording_owner, "id", None) or getattr(recording_owner, "segment", None) or getattr(recording_owner, "seq_id", None) or command.select)
     if entry.kind == "track":
         selector = owner.scoped_id
-    if entry.op in {"clip.set-fade", "clip.set-transition"}:
+    if entry.op in {"clip.set-fade", "clip.set-transition", "clip.overhang-to-hold"}:
         selector = selected[0]
     recorded = replace(command, select=selector, args=canonical, version=command.version or TOOL_VERSION,
                        resolved=resolved)
@@ -459,6 +467,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             result = entry.handler(owner, *sdk_args[0], **sdk_args[1]) if sdk_args is not None else entry.handler(owner, *positional, **args)
         if relation_state:
             relations.finish(tl, relation_state)
+        if entry.op == "clip.overhang-to-hold":
+            from astrid.sdk.timeline.overhang import validate_result
+            validate_result(owner, result, canonical)
         tl._active_relation_choices = []
         if entry.op == "timeline.inverse":
             undo_media_registry_consequences(tl, before_entities)
@@ -1034,6 +1045,14 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
         # payload. The enclosing clips array remains a storage consequence.
         return {(selected[0], "volume")} | {
             (sid, "") for sid in set(after) - set(before) if "/clip:" in sid}
+    if entry.op == "clip.overhang-to-hold":
+        return {(selected[0], "to"), (args["child"], "")} | {
+            (selected[0], path) for path in ("hold", "intent.for")
+            if state_at(before, selected[0], path) != state_at(after, selected[0], path)} | {
+            # Detach authors an absolute start even when 7 -> 7.0 compares
+            # equal. Its inverse needs the original literal cached clock too.
+            (row["target"], "at") for row in args.get("relation_choices", [])
+            if row["choice"] == "detach" and row["edge"] in {"start", "sequence"}}
     if entry.op == "clip.remove" and selected and "music_bed" in before.get(selected[0], {}):
         return {(selected[0], ""), (selected[0], "music_bed")}
     if entry.op == "timeline.inverse":
