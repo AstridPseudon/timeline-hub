@@ -141,7 +141,7 @@ def test_factory_is_fixed_and_has_no_startup_io(monkeypatch):
     service = create_runtime_commit_service()
     assert service.provider_id == "astrid-v1"
     assert type(service.interface_version) is int and service.interface_version == 1
-    assert service.contract_digest == "sha256:cd87ac6ee5d4d2ee1723b0eec9fe19145136a0daef4fffa06c174a4df5f6f6cd"
+    assert service.contract_digest == "sha256:a0aef27ca984208da810b49c95a6d70dbdbe78da8b05574999c9a0288efc651d"
     assert callable(service.commit)
 
 
