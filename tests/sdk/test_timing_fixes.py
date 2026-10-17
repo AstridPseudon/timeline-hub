@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -38,6 +39,20 @@ def sequence(*, racing=False):
 def take(tl, text):
     words = [[i * .2 + .1, i * .2 + .2, word] for i, word in enumerate(text.split())]
     tl.voice('s1').replace('Q', words=words, ripple=False)
+
+
+def take_with_matching_script(tl, text):
+    words = [[i * .2 + .1, i * .2 + .2, word] for i, word in enumerate(text.split())]
+    tl.voice('s1').replace('Q', words=words, ripple=False, text=text)
+
+
+def authored_clip_state(clip):
+    keys = ('id', 'clipType', 'track', 'asset', 'at', 'from', 'to', 'hold', 'params', 'app')
+    return {key: copy.deepcopy(clip.data.get(key)) for key in keys}
+
+
+def orphan_notes(tl):
+    return [note for note in tl.notes if 'ORPHAN:' in note and 'kept its last value' in note]
 
 
 def test_sdk_fit_uses_the_compiler_and_orphan_checks_single_land_store():
@@ -275,6 +290,119 @@ def test_word_orphan_survives_save_reload_and_a_take_that_says_the_word_again(tm
     clip = tl.clip('a-rocket')
     assert any('ORPHAN' in note for note in tl.orphans())
     assert (clip.start, clip.end, clip.params) == before
+
+
+def test_sdk_orphan_notes_are_once_per_successful_save_batch(tmp_path):
+    tl = tiny()
+    target = tl.clip('a-rocket')
+    bound_moment = '"viral"'
+    target.on(bound_moment)
+    tl.resolve()
+
+    take_with_matching_script(tl, 'and share and build')
+    tl.resolve()
+    warning = next(note for note in orphan_notes(tl) if note.startswith(f'{target.address}:'))
+    assert isinstance(tl.notes, list)
+    assert all(isinstance(note, str) for note in tl.notes)
+    assert tl.notes.count(warning) == 1
+
+    take_with_matching_script(tl, 'and share viral build')
+    target.on(bound_moment)
+    tl.resolve()
+    assert not tl.orphans()
+
+    take_with_matching_script(tl, 'and share and build')
+    tl.resolve()
+    assert tl.notes.count(warning) == 1
+    orphan_line = tl.orphans()[0]
+    report = tl.check()
+    assert report.problems.count(warning) == 1
+    assert report.blocking.count(f'orphan  {orphan_line}') == 1
+
+    expected_state = authored_clip_state(target)
+    path = tmp_path / 'orphan-batch.checkout.json'
+    tl.save(path, quiet=True)
+    fresh = Checkout.load(path)
+    assert authored_clip_state(fresh.clip('a-rocket')) == expected_state
+    assert fresh.orphans() == [orphan_line]
+    assert fresh.notes == []
+
+    # A later successful save batch can report the same warning once again.
+    take_with_matching_script(tl, 'and share viral build')
+    target.on(bound_moment)
+    tl.resolve()
+    take_with_matching_script(tl, 'and share and build')
+    tl.resolve()
+    assert tl.notes.count(warning) == 2
+    tl.save(path, quiet=True)
+    assert tl.notes.count(warning) == 2
+
+
+def test_sdk_orphan_note_batch_preserves_distinct_reasons():
+    tl = tiny()
+    target = tl.clip('a-rocket')
+    target.on('"viral"')
+    unrelated = 'an unrelated SDK notice'
+    tl.notes.append(unrelated)
+    intent.set_formula(target.data, 'params.delay', {
+        'moment': '"went"', 'as': 'timeline_seconds',
+    })
+    tl.resolve()
+
+    take_with_matching_script(tl, 'and share and build')
+    tl.resolve()
+
+    notes = orphan_notes(tl)
+    assert len(notes) == 2
+    assert len(set(notes)) == 2
+    assert all(tl.notes.count(note) == 1 for note in notes)
+    assert any('ORPHAN: "viral"' in note for note in notes)
+    assert any('ORPHAN: "went"' in note for note in notes)
+    assert tl.notes.count(unrelated) == 1
+    assert intent.formulas(target.data)['params.delay']['orphan'].startswith('ORPHAN:')
+    assert len(tl.orphans()) == 1
+    report = tl.check()
+    assert all(report.problems.count(note) == 1 for note in notes)
+    assert len(report.blocking) == 1
+    assert all(tl.notes.count(note) == 1 for note in notes)
+    assert tl.notes.count(unrelated) == 1
+
+
+def test_failed_save_does_not_consume_pending_orphan_note_batch(tmp_path, monkeypatch):
+    tl = tiny()
+    target = tl.clip('a-rocket')
+    target.on('"viral"')
+    intent.set_formula(target.data, 'params.delay', {
+        'moment': '"went"', 'as': 'timeline_seconds',
+    })
+    tl.resolve()
+    take_with_matching_script(tl, 'and share and build')
+    tl.resolve()
+
+    warning = next(note for note in orphan_notes(tl) if '.params.delay:' in note)
+    assert tl.notes.count(warning) == 1
+    path = tmp_path / 'failed-orphan-batch.checkout.json'
+    real_replace = os.replace
+
+    def fail_checkout_write(src, dst, *args, **kwargs):
+        if Path(dst) == path:
+            raise OSError('simulated: the working copy could not be written')
+        return real_replace(src, dst, *args, **kwargs)
+
+    monkeypatch.setattr(os, 'replace', fail_checkout_write)
+    with pytest.raises(OSError, match='simulated: the working copy could not be written'):
+        tl.save(path, quiet=True)
+    assert not path.exists()
+    assert tl.notes.count(warning) == 1
+
+    # Resolving an already-orphaned formula emits the same diagnostic again;
+    # the failed attempt must leave that warning pending for the retry.
+    tl.resolve()
+    assert tl.notes.count(warning) == 1
+    monkeypatch.setattr(os, 'replace', real_replace)
+    tl.save(path, quiet=True)
+    assert tl.notes.count(warning) == 1
+    assert Checkout.load(path).orphans()
 
 
 @pytest.mark.parametrize('position', [0, 2])

@@ -30,6 +30,18 @@ from astrid.sdk.timeline.reflow import _ReflowMixin
 from astrid.sdk.timeline.transaction import edit_transaction
 
 
+class _OrphanSaveNote(str):
+    """A string note that remembers whether its save batch is still pending."""
+
+    def __new__(cls, value: str, pending: bool = True):
+        note = super().__new__(cls, value)
+        note._pending = bool(pending)
+        return note
+
+    def __reduce__(self):
+        return type(self), (str(self), self._pending)
+
+
 # ------------------------------------------------------------------ checkout
 
 class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixin, _Suggest):
@@ -65,6 +77,13 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         self.fps = bundle_fps(self.bundle) or 30.0
         self._mcache = None
         self.__dict__.pop('_derived_cut_index', None)
+
+    def _note_orphan(self, note: str) -> None:
+        """Record one copy of an orphan notice until its pending save succeeds."""
+        if any(isinstance(existing, _OrphanSaveNote) and existing._pending and existing == note
+               for existing in self.notes):
+            return
+        self.notes.append(_OrphanSaveNote(note))
 
     # ---- open / save ------------------------------------------------------
     @classmethod
@@ -212,6 +231,9 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                                              clips=tuple(clips), cuts=tuple(cuts), undo_step=undo_step, calls=tuple(pending_calls), evidence=evidence)
             except Exception as exc:  # noqa: BLE001 - the save is committed; only its journal record is missing
                 _journal.note_failure(self, exc)
+        for note in self.notes:
+            if isinstance(note, _OrphanSaveNote):
+                note._pending = False
         return target
 
     def _merge_writer(self, target: Path, now: str, *, force: bool) -> None:
