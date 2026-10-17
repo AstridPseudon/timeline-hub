@@ -1280,7 +1280,7 @@ describe('ProposalPanel', () => {
       expect(status.textContent).toContain('Preview');
     });
 
-    it('shows timed status feedback after accept button click', () => {
+    it('shows timed status feedback after accept button click', async () => {
       const runtime = createMockProposalRuntime({
         proposals: [
           mockProposal({ id: 'p1', source: 'ext', state: 'pending' }),
@@ -1296,7 +1296,7 @@ describe('ProposalPanel', () => {
       fireEvent.click(acceptBtn);
 
       // Status message should appear
-      const status = screen.getByRole('status');
+      const status = await screen.findByRole('status');
       expect(status).toBeDefined();
       expect(status.textContent).toContain('Accepted');
     });

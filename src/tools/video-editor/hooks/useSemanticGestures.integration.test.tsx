@@ -43,7 +43,12 @@ import { buildDuplicateClipEdit } from '../lib/duplicate-clip.ts';
 import { createTimelineCommands } from './useTimelineCommandsService.ts';
 import type { TimelineStoreApi } from './timelineStore.ts';
 import { useTimelineOps } from './useTimelineOps.ts';
-import { createProposalRuntime } from '../lib/proposal-runtime.ts';
+import { createProposalRuntime, createProposalPersistenceBridge, type ProposalServiceBridge } from '../lib/proposal-runtime.ts';
+import { ProposalPanel } from '../components/ProposalPanel/ProposalPanel.tsx';
+import { createAgentToolRegistry } from '../runtime/agentToolRegistry.ts';
+import { createAgentToolInvocationService } from '../runtime/agentToolInvocationService.ts';
+import type { ProposalTimelineOps } from '../lib/proposal-command-binding.ts';
+import type { TimelinePatch, TimelineProposal } from '@/sdk/index';
 import { createTimelineReader } from '../lib/timeline-reader.ts';
 import { AstridElementOperationAdapter, createElementTimelineRoutes } from '../runtime/element-adapter.ts';
 import { buildReighAgentElementContext } from '../runtime/element-contract.ts';
@@ -57,7 +62,7 @@ import { ClipTransitionSection } from '@/tools/video-editor/components/Propertie
 // This transport is a wire recorder, not an Astrid operation executor. Successful
 // fixture acknowledgements establish App adaptation only, never Runtime acceptance.
 const json = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
-type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'unavailable' | 'failed' | 'rejected' | 'refused' | 'stale' | { directWrites: CommitResult['change']['direct_writes'] }>;
+type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'unavailable' | 'failed' | 'rejected' | 'refused' | 'stale' | 'no_change' | { directWrites?: CommitResult['change']['direct_writes']; previewCommands?: import('@/integrations/runtime/generated.ts').EditCommand[]; loseSuccess?: boolean }>;
 const catalogFadeFallback = 'W13: legacy effects array has no clip.set-fade producer; retain the whole catalog operation';
 function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typeof catalogFadeFallback) {
   const requests: Array<{ request: CommitRequest; bytes: string; headers: Record<string, string> }> = [];
@@ -93,13 +98,14 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
       const request = JSON.parse(bytes) as CommitRequest;
       requests.push({ request, bytes, headers: { ...headers } });
       const outcome = await reply?.(request, requests.length);
-      const unavailable = outcome === 'unavailable';
+      let unavailable = outcome === 'unavailable';
       const failed = outcome === 'failed';
       const rejected = outcome === 'rejected';
       const refused = outcome === 'refused';
       const stale = outcome === 'stale';
+      const noChange = outcome === 'no_change';
       const nativeWrites = outcome && typeof outcome === 'object' ? outcome.directWrites : undefined;
-      if (!unavailable && !failed && !rejected && !refused && !stale && !request.dry_run && !acceptedHeads.has(request.request_id)) {
+      if (!unavailable && !failed && !rejected && !refused && !stale && !noChange && !request.dry_run && !acceptedHeads.has(request.request_id)) {
         currentHead = `parent-r${++acceptanceSequence}`;
         acceptedHeads.set(request.request_id, currentHead);
         if ('commands' in request.change) {
@@ -137,13 +143,14 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
           }
         }
       }
+      if (outcome && typeof outcome === 'object' && outcome.loseSuccess) unavailable = true;
       const response: CommitResult = {
-        status: stale ? 'conflict' : unavailable || failed || rejected ? 'error' : refused ? 'refused' : request.dry_run ? 'preview' : 'accepted', request_id: request.request_id, request_hash: 'fixture',
-        base_revision_id: request.base_revision_id, accepted_revision_id: unavailable || failed || rejected || refused || stale || request.dry_run ? null : acceptedHeads.get(request.request_id)!,
+        status: noChange ? 'no_change' : stale ? 'conflict' : unavailable || failed || rejected ? 'error' : refused ? 'refused' : request.dry_run ? 'preview' : 'accepted', request_id: request.request_id, request_hash: 'fixture',
+        base_revision_id: request.base_revision_id, accepted_revision_id: unavailable || failed || rejected || refused || stale || noChange || request.dry_run ? null : acceptedHeads.get(request.request_id)!,
         accepted_publication_id: nativeWrites ? `pub-${currentHead}` : null, previous_revision_id: request.base_revision_id, rebased_onto: request.dry_run ? currentHead : null,
         canonical_document: null, projection_version: 1, document_digest: null, id_map: {},
         change: { changes: [], commands: request.dry_run && 'commands' in request.change
-          ? structuredClone(request.change.commands) : [], direct_writes: nativeWrites ?? [], consequences: [], affected: [] },
+          ? (outcome && typeof outcome === 'object' && outcome.previewCommands) || structuredClone(request.change.commands) : [], direct_writes: nativeWrites ?? [], consequences: [], affected: [] },
         conflicts: stale ? [{ id: 'parent/clip:clip-2', path: 'intent.on', kind: 'dependent', base: 'captured relation', theirs: 'changed relation', ours: null }] : [], choices: [], provenance: null, evidence: null, schema_report: null, runtime_receipt: null, error: unavailable ? { code: 'runtime_unavailable', message: 'fixture unavailable', hint: 'retry', next_action: 'retry' } : failed ? { code: 'validation_error', message: 'fixture refused batch', hint: 'invalid batch', next_action: 'fix' } : rejected ? { code: 'invalid_command', message: 'fixture rejected acceptance', hint: 'fix the command', next_action: 'fix' } : refused ? { code: 'bad_request', message: 'fixture refusal', hint: 'inspect the refused command', next_action: 'inspect' } : null,
       };
       return { status: unavailable ? 503 : 200, headers: {}, body: json(response) };
@@ -159,6 +166,7 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
     requests,
     compatibilityRequests,
     readbackHeads,
+    acceptedCount: () => acceptedHeads.size,
     getCurrentConfig: () => structuredClone(currentConfig),
     getCurrentHead: () => currentHead,
     transport,
@@ -243,7 +251,7 @@ async function occurrenceTransitionData() {
   }, base.registry, undefined, 1, undefined, base.head);
 }
 
-async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1', finalVideoMap: Map<string, ShotFinalVideo> = new Map(), outputSelector?: Parameters<typeof useSwitchToFinalVideo>[0]['getProjectMediaSelectionForOutput']) {
+async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1', finalVideoMap: Map<string, ShotFinalVideo> = new Map(), outputSelector?: Parameters<typeof useSwitchToFinalVideo>[0]['getProjectMediaSelectionForOutput'], proposalCommands = false) {
   const initial = providedInitial ?? await initialData(media);
   const fixture = wireFixture(initial, reply);
   const eventBus = new TimelineEventBus();
@@ -270,7 +278,7 @@ async function setup(reply?: FixtureReply, media = false, providedInitial?: Time
     const editing = useClipEditing({ ...commit, selectedClipId, selectedTrack: initial.tracks[0], currentTime, selectClip, resolvedConfig: commit.data?.resolvedConfig ?? null });
     const tracks = useTimelineTrackManagement({ ...commit, resolvedConfig: commit.data?.resolvedConfig ?? null, eventBus, editability });
     const resize = useClipResize({ ...commit, semanticCommandSaving: fixture.provider.semanticCommandSaving });
-    const ops = useTimelineOps({ ...commit, createManualCheckpoint: vi.fn(), jumpToCheckpoint: vi.fn(), checkpoints: [], editability });
+    const ops = useTimelineOps({ ...commit, ...(proposalCommands ? { semanticCommandSaving: fixture.provider.semanticCommandSaving, getConfigVersion: () => configVersionRef.current, captureSaveTarget: persistence.captureSaveTarget, flushSaveTarget: persistence.flushSaveTarget } : {}), createManualCheckpoint: vi.fn(), jumpToCheckpoint: vi.fn(), checkpoints: [], editability });
     const groupPins = usePinnedShotGroups({ dataRef: commit.dataRef, applyEdit: commit.applyEdit, enabled: true, semanticCommands: true });
     const groupSwitches = useSwitchToFinalVideo({ applyEdit: commit.applyEdit, dataRef: commit.dataRef, finalVideoMap, semanticCommands: true, projectId: initial.head?.projectId, getProjectMediaSelectionForOutput: outputSelector });
     const groupHandlers = useShotGroupHandlers({
@@ -3094,7 +3102,7 @@ async function overlapRelationData(occurrence = false) {
       sourceClipId: source.id, outputIdentity: 'output-A', sourceClip: source,
     } } } : source) }, { assets: { audio: { file: 'fixture.wav', type: 'audio', duration: 10 } } }, undefined, 1, undefined, base.head);
 }
-function resizeOverlap(h: Awaited<ReturnType<typeof setup>>, opts: { occurrence?: boolean; cancelled?: boolean; afterStart?: () => void } = {}) {
+function resizeOverlap(h: Awaited<ReturnType<typeof setup>>, opts: { occurrence?: boolean; cancelled?: boolean; group?: boolean; multiple?: boolean; afterStart?: () => void } = {}) {
   const row = h.result.current.data!.rows[0];
   const clipId = opts.occurrence ? 'projected-clip-1' : 'clip-1';
   const action = row.actions.find((candidate) => candidate.id === clipId)!;
@@ -3102,8 +3110,9 @@ function resizeOverlap(h: Awaited<ReturnType<typeof setup>>, opts: { occurrence?
   opts.afterStart?.();
   act(() => h.result.current.resize.onClipEdgeResizeEnd({
     session: { pointerId: 1, rowId: 'A1', clipId, edge: 'right', cursorOffsetPx: 0, initialBoundaryTime: 2,
-      context: { kind: 'free', clipId, initialStart: 0, initialEnd: 2 }, siblingTimes: [] },
-    updates: [{ clipId, start: 0, end: 3.5 }], cancelled: opts.cancelled ?? false,
+      context: opts.group ? { kind: 'group', clipId, groupClipIds: [clipId, 'clip-2'], initialStart: 0, initialEnd: 2 } as never
+        : { kind: 'free', clipId, initialStart: 0, initialEnd: 2 }, siblingTimes: [] },
+    updates: [{ clipId, start: 0, end: 3.5 }, ...(opts.multiple ? [{ clipId: 'clip-2', start: 3, end: 4 }] : [])], cancelled: opts.cancelled ?? false,
   }));
 }
 
@@ -3222,7 +3231,7 @@ function resizeLeftOverlap(h: Awaited<ReturnType<typeof setup>>, options: { canc
 
 // Run the actual handler wire on the admitted SDK, including the history-emitted
 // inverse. No App-side diff or fake command interpreter supplies these writes.
-function leftResizeSource(initial: TimelineData, forward: CommitRequest, inverse?: CommitRequest, redo?: CommitRequest) {
+function overlapResizeSource(initial: TimelineData, forward: CommitRequest, inverse?: CommitRequest, redo?: CommitRequest) {
   const python = process.env.ASTRID_TEST_PYTHON;
   if (!python) throw new Error('Set ASTRID_TEST_PYTHON to the qualified SDK test interpreter');
   const output = execFileSync(python, ['-B', '-c', `
@@ -3232,24 +3241,25 @@ sys.path.insert(0,os.environ['ASTRID_CHECKOUT'])
 from astrid.sdk.timeline.checkout import Checkout
 from astrid.sdk.timeline import commands,relations
 value=json.load(sys.stdin)
+left=len(value['forward']['change']['commands'])==2
 fixture=json.loads((Path(os.environ['ASTRID_CHECKOUT'])/'tests/fixtures/timeline_editing/tiny_publishable.json').read_text())
 fixture['shots']={};fixture['placements']=[]
 fixture['parent']={'config':{'output':value['config']['output'],'tracks':value['config']['tracks']},'clips':value['config']['clips'],'registry':value['registry']}
 tl=Checkout(fixture);before=copy.deepcopy(tl.document())
 closure=relations.affected(tl,['parent/clip:clip-1'])
 expected=[dict(target='parent/clip:'+clip['id'],edge='start',relation=clip['app']['astrid']['on'])
- for clip in value['config']['clips'] if clip.get('app',{}).get('astrid',{}).get('on','').startswith('clip-start "parent/clip:clip-1"')]
+ for clip in value['config']['clips'] if clip.get('app',{}).get('astrid',{}).get('on','').startswith(('clip-start' if left else 'clip-end')+' "parent/clip:clip-1"')]
 assert closure==sorted(expected,key=lambda row:(row['target'],row['edge']))
 try:
- with tl.edit('left resize',quiet=True) as tx:
+ with tl.edit('overlap resize',quiet=True) as tx:
   for call in value['forward']['change']['commands']: commands.execute(tl,call)
 except commands.SemanticConflict:
- assert any(choice['choice']=='keep' for choice in value['forward']['change']['commands'][1]['args']['relation_choices'])
+ assert any(choice['choice']=='keep' for choice in value['forward']['change']['commands'][-1]['args']['relation_choices'])
  assert tl.document()==before and not tl._journal
  print(json.dumps({'writes':[],'calls':value['forward']['change']['commands'],'clips':before['parent']['clips'],'refused':True,'closure':closure,'journal':len(tl._journal)}))
  sys.exit(0)
-assert [call.op for call in tx.plan.calls]==['clip.trim','clip.nudge']
-assert tx.plan.calls[1].args['relation_affected']==closure
+assert [call.op for call in tx.plan.calls]==(['clip.trim','clip.nudge'] if left else ['clip.trim'])
+assert tx.plan.calls[-1].args['relation_affected']==closure
 assert len(tl._journal)==1
 writes=tx.plan.direct_writes
 after=copy.deepcopy(tl.document())
@@ -3291,7 +3301,7 @@ describe('left overlap relation resize', () => {
     ] } });
     const wire = h.requests[0].request.change as { commands: unknown[] };
     expect(wire.commands).toHaveLength(2);
-    const source = leftResizeSource(initial, h.requests[0].request);
+    const source = overlapResizeSource(initial, h.requests[0].request);
     expect(source.calls).toHaveLength(2); expect(source.refused ?? false).toBe(choice === 'keep');
     expect(history).toHaveBeenCalledTimes(1); expect(history.mock.calls[0][1]).toMatchObject({ semantic: true, transactionId: expect.any(String) });
     expect(h.result.current.editSeqRef.current).toBe(1); expect(h.result.current.data!.config).toEqual(initial.config);
@@ -3325,10 +3335,10 @@ describe('left overlap relation resize', () => {
     const initial = await leftOverlapRelationData(); let forward!: CommitRequest;
     let writes!: CommitResult['change']['direct_writes']; let restored: unknown[] | undefined;
     const h = await setup(async (request, call) => {
-      if (call === 1) { forward = request; writes = leftResizeSource(initial, request).writes; return { directWrites: writes }; }
+      if (call === 1) { forward = request; writes = overlapResizeSource(initial, request).writes; return { directWrites: writes }; }
       const command = (request.change as { commands: Array<{ args: { writes: typeof writes } }> }).commands[0];
       if (call === 2) {
-        const source = leftResizeSource(initial, forward, request); restored = source.clips;
+        const source = overlapResizeSource(initial, forward, request); restored = source.clips;
         if (process.env.E_W40_LEFT_EVIDENCE_PATH) writeFileSync(process.env.E_W40_LEFT_EVIDENCE_PATH,
           JSON.stringify({ forward, inverse: request, writes, source, original: initial.config.clips }, null, 2));
       }
@@ -3383,9 +3393,9 @@ const overlapHistoryWrapper = (h: Awaited<ReturnType<typeof setup>>) => ({ child
 
 describe('multiple left overlap relation resize', () => {
   it.each(['keep', 'adjust-offset'])('allows distinct sibling choices and atomically handles a later %s', async (lastChoice) => {
-    const initial = await multiLeftOverlapData(); let source: ReturnType<typeof leftResizeSource> | undefined;
+    const initial = await multiLeftOverlapData(); let source: ReturnType<typeof overlapResizeSource> | undefined;
     const h = await setup(async (request) => {
-      source = leftResizeSource(initial, request);
+      source = overlapResizeSource(initial, request);
       return source.refused ? 'refused' : { directWrites: source.writes };
     }, false, initial);
     vi.spyOn(window, 'prompt').mockReturnValueOnce('detach').mockReturnValueOnce(lastChoice).mockReturnValueOnce('-0.8').mockReturnValueOnce('0');
@@ -3407,9 +3417,9 @@ describe('multiple left overlap relation resize', () => {
   }, 20_000);
 
   it.each(['keep', 'detach', 'adjust-offset', 're-anchor'])('prompts each exact sibling and runs the SDK for %s', async (choice) => {
-    const initial = await multiLeftOverlapData(); let source: ReturnType<typeof leftResizeSource> | undefined;
+    const initial = await multiLeftOverlapData(); let source: ReturnType<typeof overlapResizeSource> | undefined;
     const h = await setup(async (request) => {
-      source = leftResizeSource(initial, request);
+      source = overlapResizeSource(initial, request);
       return source.refused ? 'refused' : { directWrites: source.writes };
     }, false, initial);
     const prompt = vi.spyOn(window, 'prompt');
@@ -3453,11 +3463,11 @@ describe('multiple left overlap relation resize', () => {
   it.each([2, 3])('restores all %i dependents through actual SDK inverse and native Undo/Redo', async (count) => {
     const initial = await multiLeftOverlapData(count);
     let forward!: CommitRequest; let inverse!: CommitRequest;
-    let accepted!: ReturnType<typeof leftResizeSource>; let restored!: ReturnType<typeof leftResizeSource>; let redone!: ReturnType<typeof leftResizeSource>;
+    let accepted!: ReturnType<typeof overlapResizeSource>; let restored!: ReturnType<typeof overlapResizeSource>; let redone!: ReturnType<typeof overlapResizeSource>;
     const h = await setup(async (request, call) => {
-      if (call === 1) { forward = request; accepted = leftResizeSource(initial, request); return { directWrites: accepted.writes }; }
-      if (call === 2) { inverse = request; restored = leftResizeSource(initial, forward, request); return { directWrites: restored.inverse_writes }; }
-      redone = leftResizeSource(initial, forward, inverse, request);
+      if (call === 1) { forward = request; accepted = overlapResizeSource(initial, request); return { directWrites: accepted.writes }; }
+      if (call === 2) { inverse = request; restored = overlapResizeSource(initial, forward, request); return { directWrites: restored.inverse_writes }; }
+      redone = overlapResizeSource(initial, forward, inverse, request);
       if (process.env.E_W40_MULTI_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W40_MULTI_EVIDENCE_DIR, `sdk-history-${count}.json`),
         JSON.stringify({ forward, inverse, redo: request, accepted, restored, redone, original: initial.config.clips }, null, 2));
       return { directWrites: redone.redo_writes };
@@ -3536,6 +3546,191 @@ describe('multiple left overlap relation resize', () => {
     release(); await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
     expect(h.savedSeqRef.current).toBe(0); expect(h.result.current.data!.config).toEqual(initial.config);
     expect(h.getCurrentHead()).toBe('parent-r1'); expect(history.result.current.canUndo).toBe(false);
+    expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  });
+});
+
+async function multiRightOverlapData(count = 2) {
+  const base = await overlapRelationData();
+  return buildTimelineData({ ...base.config, clips: [
+    ...base.config.clips,
+    ...Array.from({ length: count - 1 }, (_, index) => ({
+      ...structuredClone(base.config.clips[1]), id: `clip-${index + 3}`, at: (96 + index * 3) / 30,
+      app: { opaque: { distinct: index, absent: null, values: [false, 0, ''] }, astrid: {
+        on: index === 0 ? 'clip-end "parent/clip:clip-1" +1.3s -3f' : `clip-end "parent/clip:clip-1" +1.2s +${index * 3}f`, opaque: { retain: [null] },
+      } },
+    })),
+    { ...structuredClone(base.config.clips[0]), id: 'opaque-sibling', at: 7, from: 0, to: 1, speed: 1 },
+  ] }, base.registry, undefined, 1, undefined, base.head);
+}
+
+describe('multiple right overlap relation resize', () => {
+  it.each(['keep', 'adjust-offset'])('allows distinct sibling choices and atomically handles a later %s', async (lastChoice) => {
+    const initial = await multiRightOverlapData(); let source: ReturnType<typeof overlapResizeSource> | undefined;
+    const h = await setup(async (request) => {
+      source = overlapResizeSource(initial, request);
+      return source.refused ? 'refused' : { directWrites: source.writes };
+    }, false, initial);
+    vi.spyOn(window, 'prompt').mockReturnValueOnce('detach').mockReturnValueOnce(lastChoice).mockReturnValueOnce('1.2').mockReturnValueOnce('0');
+    resizeOverlap(h);
+    await waitFor(() => expect(source).toBeDefined());
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe(lastChoice === 'keep' ? 'error' : 'saved'));
+    const commands = (h.requests[0].request.change as { commands: Array<{ args: Record<string, unknown> }> }).commands;
+    expect(commands[0].args.relation_choices).toEqual([
+      { target: 'parent/clip:clip-2', edge: 'start', choice: 'detach' },
+      { target: 'parent/clip:clip-3', edge: 'start', choice: lastChoice, ...(lastChoice === 'adjust-offset' ? { offset_seconds: 1.2, offset_frames: 0 } : {}) },
+    ]);
+    expect(source!.journal).toBe(lastChoice === 'keep' ? 0 : 1);
+    if (lastChoice === 'keep') {
+      expect(source!.clips).toEqual(initial.config.clips); expect(source!.writes).toEqual([]);
+      expect(h.savedSeqRef.current).toBe(0); expect(h.getCurrentHead()).toBe('parent-r1');
+    }
+    expect(h.requests).toHaveLength(1); expect(h.result.current.data!.config).toEqual(initial.config);
+    expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  }, 20_000);
+
+  it.each(['keep', 'detach', 'adjust-offset', 're-anchor'])('prompts each exact sibling and runs the SDK for %s', async (choice) => {
+    const initial = await multiRightOverlapData(); let source: ReturnType<typeof overlapResizeSource> | undefined;
+    const h = await setup(async (request) => {
+      source = overlapResizeSource(initial, request);
+      return source.refused ? 'refused' : { directWrites: source.writes };
+    }, false, initial);
+    const prompt = vi.spyOn(window, 'prompt');
+    for (const seconds of ['1', '1.2']) {
+      prompt.mockReturnValueOnce(choice);
+      if (choice === 're-anchor') prompt.mockReturnValueOnce('clip-end "parent/clip:clip-1"');
+      if (choice === 'adjust-offset' || choice === 're-anchor') prompt.mockReturnValueOnce(seconds).mockReturnValueOnce('0');
+    }
+    resizeOverlap(h);
+    await waitFor(() => expect(source).toBeDefined());
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe(choice === 'keep' ? 'error' : 'saved'));
+    const prompts = prompt.mock.calls.filter(([text]) => String(text).startsWith('The start of'));
+    expect(prompts.map(([text]) => text)).toEqual([
+      expect.stringContaining('clip-2 is tied to clip-end "parent/clip:clip-1" +1s'),
+      expect.stringContaining('clip-3 is tied to clip-end "parent/clip:clip-1" +1.3s -3f'),
+    ]);
+    expect(h.requests).toHaveLength(1);
+    const calls = (h.requests[0].request.change as { commands: Array<{ op: string; args: Record<string, unknown>; expect: Record<string, unknown> }> }).commands;
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toEqual({ op: 'clip.trim', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { out_s: 3, relation_choices: initial.config.clips.slice(1, 3).map((clip, index) => ({
+        target: `parent/clip:${clip.id}`, edge: 'start', choice,
+        ...(choice === 're-anchor' ? { anchor: 'clip-end "parent/clip:clip-1"' } : {}),
+        ...(['adjust-offset', 're-anchor'].includes(choice) ? { offset_seconds: index ? 1.2 : 1, offset_frames: 0 } : {}),
+      })) }, expect: { '': { state: 'present', value: initial.config.clips[0] }, at: { state: 'present', value: 0 },
+        ...Object.fromEntries(initial.config.clips.slice(1, 3).flatMap((clip) => [
+          [`parent/clip:${clip.id}::intent.on`, { state: 'present', value: clip.app!.astrid!.on }],
+          [`parent/clip:${clip.id}::at`, { state: 'present', value: clip.at }],
+          [`parent/clip:${clip.id}::hold`, { state: 'absent' }],
+          [`parent/clip:${clip.id}::intent.fixed_start`, { state: 'absent' }],
+        ])),
+      } });
+    expect(calls[0].args).not.toHaveProperty('relation_affected');
+    expect(source!.closure).toEqual(initial.config.clips.slice(1, 3).map((clip) => ({ target: `parent/clip:${clip.id}`, edge: 'start', relation: clip.app!.astrid!.on })));
+    expect(source!.journal).toBe(choice === 'keep' ? 0 : 1);
+    expect(h.savedSeqRef.current).toBe(choice === 'keep' ? 0 : 1);
+    expect(h.getCurrentHead()).toBe(choice === 'keep' ? 'parent-r1' : 'parent-r2');
+    expect(h.result.current.data!.config).toEqual(initial.config);
+    expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  }, 20_000);
+
+  it.each([2, 3])('restores all %i dependents through actual SDK inverse and native Undo/Redo', async (count) => {
+    const initial = await multiRightOverlapData(count);
+    let forward!: CommitRequest; let inverse!: CommitRequest;
+    let accepted!: ReturnType<typeof overlapResizeSource>; let restored!: ReturnType<typeof overlapResizeSource>; let redone!: ReturnType<typeof overlapResizeSource>;
+    const h = await setup(async (request, call) => {
+      if (call === 1) { forward = request; accepted = overlapResizeSource(initial, request); return { directWrites: accepted.writes }; }
+      if (call === 2) { inverse = request; restored = overlapResizeSource(initial, forward, request); return { directWrites: restored.inverse_writes }; }
+      redone = overlapResizeSource(initial, forward, inverse, request);
+      if (process.env.E_W40_MULTI_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W40_MULTI_EVIDENCE_DIR, `sdk-right-history-${count}.json`),
+        JSON.stringify({ forward, inverse, redo: request, accepted, restored, redone, original: initial.config.clips }, null, 2));
+      return { directWrites: redone.redo_writes };
+    }, false, initial);
+    const history = renderHook(() => {
+      const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+      useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]);
+      useEffect(() => h.eventBus.on('remoteCommit', state.onRemoteData), [state.onRemoteData]);
+      return state;
+    }, { wrapper: overlapHistoryWrapper(h) });
+    vi.spyOn(window, 'prompt').mockReturnValue('detach'); resizeOverlap(h);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1)); await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    expect(new Set(accepted.writes.map((write) => write.id))).toEqual(new Set(initial.config.clips.slice(0, count + 1).map((clip) => `parent/clip:${clip.id}`)));
+    expect(accepted.writes.map((write) => write.path).sort()).toEqual(['to', 'hold', ...Array.from({ length: count }, () => ['intent.on', 'intent.fixed_start']).flat()].sort());
+    const adopted = await buildTimelineData(initial.config, initial.registry, undefined, 2, undefined, h.headRevisionRef.current);
+    act(() => h.result.current.commitData(adopted, { save: false, skipHistory: true, updateLastSavedSignature: true }));
+    expect(history.result.current.canUndo).toBe(true);
+    act(() => history.result.current.undo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(2));
+    expect(restored.clips).toEqual(initial.config.clips);
+    expect(restored.inverse_writes).toEqual(accepted.writes.map((write) => ({ ...write, before: write.after, after: write.before })));
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true)); act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3));
+    expect(redone.clips).toEqual(accepted.after); expect(redone.redo_writes).toEqual(accepted.writes);
+    expect(redone.journal).toBe(3); expect(h.requests).toHaveLength(3);
+    expect(h.requests.map(({ request }) => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  }, 60_000);
+
+  it.each([null, 'unknown', 're-anchor', 'adjust-offset', 'invalid seconds', 'fractional frames'])('later sibling cancellation/invalid %s is atomic', async (answer) => {
+    const initial = await multiRightOverlapData(); const h = await setup(undefined, false, initial);
+    const history = vi.fn(); h.eventBus.on('beforeCommit', history); const draft = vi.spyOn(draftStorage, 'saveTimelineDraft');
+    const prompt = vi.spyOn(window, 'prompt').mockReturnValueOnce('detach');
+    if (answer === 'invalid seconds') prompt.mockReturnValueOnce('adjust-offset').mockReturnValueOnce('NaN').mockReturnValueOnce('0');
+    else if (answer === 'fractional frames') prompt.mockReturnValueOnce('adjust-offset').mockReturnValueOnce('0').mockReturnValueOnce('0.5');
+    else prompt.mockReturnValueOnce(answer).mockReturnValue(null);
+    resizeOverlap(h);
+    expect(prompt.mock.calls[1][0]).toContain('clip-3 is tied to');
+    expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]);
+    expect(h.result.current.data).toBe(initial); expect(h.result.current.editSeqRef.current).toBe(0); expect(h.savedSeqRef.current).toBe(0);
+    expect(h.getCurrentConfig()).toEqual(initial.config); expect(h.getCurrentHead()).toBe('parent-r1');
+    expect(history).not.toHaveBeenCalled(); expect(draft).not.toHaveBeenCalled(); h.unmount();
+  });
+
+  it.each(['geometry', 'word', 'music', 'other clip', 'ambiguous grammar', 'duplicate identity', 'group', 'multiple selected', 'primary end tie', 'nonoverlapping dependency', 'transitive dependency', 'hold dependent', 'occurrence', 'pointer cancel', 'stale head', 'stale config', 'stale fps', 'stale at later prompt'])('refuses multi %s without a command or fallback write', async (kind) => {
+    const initial = await multiRightOverlapData();
+    if (kind === 'geometry') delete initial.config.clips[2].app!.astrid;
+    if (kind === 'word') initial.config.clips[2].app!.astrid!.on = '"hello"';
+    if (kind === 'music') initial.config.clips[2].app!.astrid!.on = 'beat 4';
+    if (kind === 'other clip') initial.config.clips[2].app!.astrid!.on = 'clip-end "parent/clip:clip-2"';
+    if (kind === 'ambiguous grammar') initial.config.clips[2].app!.astrid!.on += ' +1';
+    if (kind === 'duplicate identity') initial.config.clips.push(structuredClone(initial.config.clips[2]));
+    if (kind === 'primary end tie') initial.config.clips[0].app!.astrid = { until: 'end' };
+    if (kind === 'nonoverlapping dependency') initial.config.clips[3].app!.astrid = { on: 'clip-end "parent/clip:clip-1" +5s' };
+    if (kind === 'transitive dependency') initial.config.clips[3].app!.astrid = { on: 'clip-end "parent/clip:clip-2" +3s' };
+    if (kind === 'hold dependent') initial.config.clips[2].clipType = 'hold';
+    if (kind === 'occurrence') initial.config.clips.forEach((clip) => {
+      clip.app = { ...clip.app, canonical: { projectId: 'gesture-project', parentDocumentId: 'gesture-timeline', headRevisionId: 'parent-r1',
+        occurrenceId: 'occ-A', shotId: 'shot-A', revisionId: 'shot-r1', internalTimelineRevisionId: 'internal-r1',
+        sourceClipId: clip.id, outputIdentity: 'output-A', sourceClip: structuredClone(clip) } };
+    });
+    const h = await setup(undefined, false, initial); const prompt = vi.spyOn(window, 'prompt').mockReturnValue('detach');
+    const stale = () => { h.result.current.dataRef.current = { ...initial, head: { ...initial.head!, headRevisionId: 'changed' } }; };
+    if (kind === 'stale at later prompt') prompt.mockReturnValueOnce('detach').mockImplementationOnce(() => { stale(); return 'detach'; });
+    resizeOverlap(h, { group: kind === 'group', multiple: kind === 'multiple selected', cancelled: kind === 'pointer cancel', afterStart: () => {
+      if (kind === 'stale head') stale();
+      if (kind === 'stale config') h.result.current.dataRef.current = { ...initial, config: { ...initial.config, clips: initial.config.clips.slice(0, 3) } };
+      if (kind === 'stale fps') h.result.current.dataRef.current = { ...initial, output: { ...initial.output, fps: 60 } };
+    } });
+    expect(prompt).toHaveBeenCalledTimes(kind === 'stale at later prompt' ? 2 : 0);
+    expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]); expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.result.current.data!.config).toEqual(initial.config); expect(h.getCurrentHead()).toBe('parent-r1'); h.unmount();
+  });
+
+  it.each(['rejected', 'refused', 'stale', 'no_change'] as const)('multi late %s preserves graph/head and creates no native history entry', async (outcome) => {
+    const initial = await multiRightOverlapData(); let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    const h = await setup(async () => { await held; return outcome; }, false, initial);
+    const history = renderHook(() => {
+      const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+      useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]);
+      return state;
+    }, { wrapper: overlapHistoryWrapper(h) });
+    const native = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', native);
+    vi.spyOn(window, 'prompt').mockReturnValue('detach'); resizeOverlap(h);
+    await waitFor(() => expect(h.requests).toHaveLength(1)); expect(h.result.current.data!.config).toEqual(initial.config);
+    release(); await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe(outcome === 'no_change' ? 'saved' : 'error'));
+    expect(h.savedSeqRef.current).toBe(outcome === 'no_change' ? 1 : 0); expect(h.result.current.data!.config).toEqual(initial.config);
+    expect(h.getCurrentHead()).toBe('parent-r1'); expect(history.result.current.canUndo).toBe(false);
+    if (outcome === 'no_change') expect(native).toHaveBeenCalledExactlyOnceWith(expect.anything(), null);
+    else expect(native).not.toHaveBeenCalled();
     expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
   });
 });
@@ -3840,4 +4035,262 @@ describe('W42 tiny tied hold receipt boundaries', () => {
       expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
       history.unmount(); h.unmount();
     });
+});
+
+// UI actions call the actual production tool -> runtime -> TimelineOps adapter.
+// Transport receipts below prove App/SDK adaptation, not mounted public Host acceptance.
+describe('REVIEW ordered proposal commands', () => {
+  const patch = (): TimelinePatch => ({ version: 1, operations: [
+    { op: 'clip.update', target: 'clip-1', payload: { opacity: 0.4 } },
+    { op: 'clip.update', target: 'clip-1', payload: { opacity: 0.6 } },
+    { op: 'track.update', target: 'V1', payload: { label: 'Reviewed' } },
+  ] });
+  async function reviewSetup(reply?: FixtureReply, initial?: TimelineData) {
+    const h = await setup(reply, false, initial, 1, undefined, undefined, 'clip-1', new Map(), undefined, true);
+    const reader = createTimelineReader({ data: () => h.result.current.dataRef.current!, configVersion: () => h.configVersionRef.current });
+    const rows: Array<Awaited<ReturnType<NonNullable<ProposalServiceBridge['queryProposals']>>>[number]> = [];
+    const transitions = vi.fn();
+    const service: ProposalServiceBridge = { capabilities: { proposals: true },
+      async createProposal(record) { const id = 'db-' + (rows.length + 1);
+        rows.push({ ...record, id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); return id; },
+      async updateProposalStatus(id, status) { transitions(id, status); const row = rows.find((entry) => entry.id === id); if (!row) throw new Error('Unknown persistence identity'); row.status = status; },
+      async queryProposals() { return rows.filter((row) => row.status === 'pending'); },
+    };
+    const persistence = createProposalPersistenceBridge(service);
+    const runtime = createProposalRuntime({ timelineOps: h.result.current.ops, reader, persistenceProvider: persistence });
+    const registry = createAgentToolRegistry();
+    async function produce(source: string, value = patch()) {
+      registry.ingestAgentToolContribution('review-extension', { id: source, kind: 'agentTool', toolId: source, label: source, description: source, order: 0 });
+      registry.registerTool('review-extension', source, async () => ({ family: 'mutation/proposal', patches: [value] }));
+      const toolService = createAgentToolInvocationService({ registry, proposalRuntime: runtime });
+      const result = await toolService.invokeTool({ toolId: source, extensionId: 'review-extension', contributionId: source });
+      expect(result?.family).toBe('ui/summary');
+      return runtime.list().find((proposal) => proposal.source === source)!;
+    }
+    const historyWrapper = ({ children }: { children: React.ReactNode }) => React.createElement(VideoEditorRuntimeProvider, {
+      value: { provider: h.provider, timelineId: 'gesture-timeline', project: { projectId: 'gesture-project' }, toast: vi.fn() } as unknown as VideoEditorRuntimeContextValue, children });
+    const history = renderHook(() => {
+      const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+      useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]);
+      return state;
+    }, { wrapper: historyWrapper });
+    const journal = vi.fn(); h.eventBus.on('beforeCommit', journal);
+    const saves = vi.spyOn(h.provider, 'saveTimelineAtHead');
+    return { ...h, reader, persistence, runtime, produce, rows, history, journal, saves, transitions,
+      close() { history.unmount(); h.unmount(); } };
+  }
+  const show = (runtime: ReturnType<typeof createProposalRuntime>, source: string) => {
+    const panel = render(<ProposalPanel proposalRuntime={runtime} />);
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(source) }));
+    return panel;
+  };
+  it('rejects one production proposal without changing document/head/history/save and accepts one captured ordered batch after acknowledgement', async () => {
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    const h = await reviewSetup(async () => { await held; });
+    const rejected = await h.produce('review-reject'); const before = h.result.current.data;
+    const rejectedPanel = show(h.runtime, rejected.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Reject proposal from ' + rejected.source }));
+    expect(h.runtime.get(rejected.id)?.state).toBe('rejected');
+    expect(h.runtime.get(rejected.id)?.commandBinding).toEqual(rejected.commandBinding);
+    expect(h.result.current.data).toBe(before); expect(h.getCurrentHead()).toBe('parent-r1');
+    expect(h.journal).not.toHaveBeenCalled(); expect(h.saves).not.toHaveBeenCalled(); expect(h.requests).toHaveLength(0);
+    expect(h.history.result.current.canUndo).toBe(false); expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(() => h.runtime.accept(rejected.id)).toThrow('rejected'); rejectedPanel.unmount();
+
+    const accepted = await h.produce('review-accept');
+    expect(accepted.commandBinding).toMatchObject({ source: 'review-accept', proposalId: accepted.id,
+      base: before!.head, baseVersion: 1, transactionId: 'proposal:' + accepted.id });
+    expect(accepted.commandBinding!.commands.map((command) => command.op)).toEqual(['clip.set-look', 'clip.set-look', 'timeline.set']);
+    expect(accepted.commandBinding!.commands[1].expect).toEqual({ opacity: { state: 'present', value: 0.4 } });
+    const panel = show(h.runtime, accepted.source);
+    const lifecycleWrites = h.transitions.mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: 'Preview proposal from ' + accepted.source }));
+    await act(async () => { await Promise.resolve(); });
+    expect(h.transitions).toHaveBeenCalledTimes(lifecycleWrites);
+    expect(h.result.current.data).toBe(before); expect(h.requests).toHaveLength(0); expect(h.journal).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + accepted.source }));
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    expect(h.runtime.get(accepted.id)?.state).toBe('pending'); expect(h.journal).not.toHaveBeenCalled();
+    expect(() => h.runtime.reject(accepted.id)).toThrow('submitted');
+    expect(h.requests[0].request).toMatchObject({ base_revision_id: 'parent-r1', source: { via: 'app' }, change: { commands: accepted.commandBinding!.commands } });
+    release();
+    await waitFor(() => expect(h.runtime.get(accepted.id)?.state).toBe('accepted'));
+    expect(h.headRevisionRef.current?.headRevisionId).toBe('parent-r2'); expect(h.acceptedCount()).toBe(1);
+    expect(h.journal).toHaveBeenCalledTimes(1); expect(h.journal.mock.calls[0][1]).toMatchObject({ transactionId: accepted.commandBinding!.transactionId, semantic: true });
+    expect(h.runtime.get(accepted.id)?.diagnostics?.find((d) => d.code === 'timeline-patch/proposal-command-binding')?.detail).toMatchObject({ proposalId: accepted.id, source: accepted.source, base: before!.head });
+    expect(h.history.result.current.canUndo).toBe(true); expect(h.saves).toHaveBeenCalledTimes(1);
+    expect(h.rows.find((row) => row.payload.proposalId === accepted.id)?.payload.commandBinding).toEqual(accepted.commandBinding);
+    await waitFor(() => expect(h.rows.find((row) => row.payload.proposalId === accepted.id)?.status).toBe('accepted'));
+    expect(() => h.runtime.accept(accepted.id)).toThrow('accepted');
+    expect(h.compatibilityRequests).toEqual([]); panel.unmount(); h.close();
+  });
+
+
+  it('binds an existing version-zero producer to the host exact base without giving the payload revision authority', async () => {
+    const h = await reviewSetup();
+    const proposal = await h.produce('review-zero', { ...patch(), version: 0 });
+    expect(proposal.patch.version).toBe(0); expect(proposal.baseVersion).toBe(1);
+    expect(proposal.commandBinding).toMatchObject({ base: h.initial.head, baseVersion: 1 });
+    const panel = show(h.runtime, proposal.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    await waitFor(() => expect(h.runtime.get(proposal.id)?.state).toBe('accepted'));
+    expect(h.requests).toHaveLength(1); expect(h.requests[0].request.base_revision_id).toBe('parent-r1');
+    expect(h.compatibilityRequests).toEqual([]); panel.unmount(); h.close();
+  });
+  it('refuses a retained runtime after its provider session closes before any edit/save/history mutation', async () => {
+    const h = await reviewSetup(); const proposal = await h.produce('review-closed');
+    const before = h.result.current.dataRef.current;
+    h.close();
+    expect(() => h.runtime.accept(proposal.id)).toThrow('closed');
+    expect(h.result.current.dataRef.current).toBe(before); expect(h.requests).toEqual([]); expect(h.journal).not.toHaveBeenCalled();
+    expect(h.saves).not.toHaveBeenCalled(); expect(h.runtime.get(proposal.id)?.state).toBe('pending');
+  });
+  it('refuses a production tool result if the document context changes during execution', async () => {
+    const h = await reviewSetup();
+    const registry = createAgentToolRegistry();
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    registry.ingestAgentToolContribution('review-extension', { id: 'delayed', kind: 'agentTool', toolId: 'delayed', label: 'Delayed', description: 'Delayed', order: 0 });
+    registry.registerTool('review-extension', 'delayed', async () => { await held; return { family: 'mutation/proposal', patches: [patch()] }; });
+    const service = createAgentToolInvocationService({ registry, proposalRuntime: h.runtime });
+    const result = service.invokeTool({ toolId: 'delayed', extensionId: 'review-extension', contributionId: 'delayed' });
+    h.result.current.dataRef.current = { ...h.initial, head: { ...h.initial.head!, projectId: 'foreign-project' } };
+    release();
+    await expect(result).rejects.toThrow('source context changed');
+    expect(h.runtime.list()).toEqual([]); expect(h.saves).not.toHaveBeenCalled(); expect(h.requests).toEqual([]); expect(h.journal).not.toHaveBeenCalled();
+    h.close();
+  });
+  it('preserves bound pending proposal bytes on actual persistence-bridge reload and rejects changed persisted commands/source/base/context', async () => {
+    const h = await reviewSetup(); const proposal = await h.produce('review-reload');
+    await waitFor(() => expect(h.rows).toHaveLength(1));
+    const reload = () => createProposalRuntime({ timelineOps: h.result.current.ops, reader: h.reader, persistenceProvider: h.persistence });
+    const restored = reload(); await waitFor(() => expect(restored.get(proposal.id)).toBeDefined());
+    expect(restored.get(proposal.id)?.commandBinding).toEqual(proposal.commandBinding);
+    const original = structuredClone(h.rows[0].payload);
+    for (const field of ['source', 'commands', 'base', 'context'] as const) {
+      const changed = structuredClone(original);
+      const binding = changed.commandBinding as unknown as Record<string, unknown>;
+      if (field === 'source') changed.source = 'foreign';
+      if (field === 'commands') binding.commands = [{ op: 7 }];
+      if (field === 'base') binding.base = { ...proposal.commandBinding!.base, headRevisionId: 'foreign-revision' };
+      if (field === 'context') binding.base = { ...proposal.commandBinding!.base, projectId: 'foreign-project' };
+      h.rows[0].payload = changed;
+      const refused = reload(); await act(async () => { await Promise.resolve(); });
+      expect(refused.list()).toEqual([]);
+    }
+    expect(h.requests).toHaveLength(0); expect(h.saves).not.toHaveBeenCalled(); expect(h.journal).not.toHaveBeenCalled();
+    h.close();
+  });
+  it.each(['version', 'head', 'project', 'timeline', 'document'] as const)('refuses a changed captured %s without a save or history owner', async (change) => {
+    const h = await reviewSetup(); const proposal = await h.produce('review-changed');
+    const before = h.result.current.data!;
+    if (change === 'version') h.configVersionRef.current = 2;
+    else if (change === 'document') h.result.current.dataRef.current = await buildTimelineData({ ...before.config, clips: before.config.clips.map((clip) => ({ ...clip, opacity: 0.1 })) }, before.registry, undefined, 1, undefined, before.head);
+    else h.result.current.dataRef.current = { ...before, head: { ...before.head!, ...(change === 'head' ? { headRevisionId: 'foreign-head' } : change === 'project' ? { projectId: 'foreign-project' } : { timelineId: 'foreign-timeline' }) } };
+    await act(async () => { try { await h.runtime.accept(proposal.id); } catch { /* expected */ } });
+    expect(h.requests).toHaveLength(0); expect(h.saves).not.toHaveBeenCalled(); expect(h.journal).not.toHaveBeenCalled();
+    expect(h.runtime.get(proposal.id)?.state).not.toBe('accepted'); expect(h.getCurrentHead()).toBe('parent-r1');
+    h.close();
+  });
+  it.each(['refused', 'stale', 'failed'] as const)('a %s/failed expectation response restores content without head/history/fallback publication', async (outcome) => {
+    const h = await reviewSetup(async () => outcome); const before = h.result.current.data;
+    const proposal = await h.produce('review-refusal'); const panel = show(h.runtime, proposal.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Accept failed'));
+    expect(h.result.current.data).toBe(before); expect(h.getCurrentHead()).toBe('parent-r1'); expect(h.headRevisionRef.current?.headRevisionId).toBe('parent-r1');
+    expect(h.journal).not.toHaveBeenCalled(); expect(h.history.result.current.canUndo).toBe(false);
+    expect(h.acceptedCount()).toBe(0); expect(h.compatibilityRequests).toEqual([]); expect(h.requests).toHaveLength(1);
+    panel.unmount(); h.close();
+  });
+
+  it('uses actual SDK rebase results on a moved head, preserving returned commands rather than reconstructing the optimistic diff', async () => {
+    const base = await initialData();
+    const initial = await buildTimelineData({ ...base.config, clips: base.config.clips.map((clip) => ({ ...clip, app: { clipSentinel: true } })) },
+      base.registry, undefined, 1, undefined, base.head);
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    let authoritative!: import('@/integrations/runtime/generated.ts').EditCommand[];
+    const h = await reviewSetup(async (request, call) => {
+      if (call === 1) { await held; return; }
+      if (request.dry_run) {
+        const python = process.env.ASTRID_TEST_PYTHON!;
+        const output = execFileSync(python, ['-B', '-c', [
+          'import copy,json,os,sys',
+          'from pathlib import Path',
+          'sys.path.insert(0,os.environ["ASTRID_CHECKOUT"])',
+          'from astrid.sdk.timeline.checkout import Checkout',
+          'from astrid.sdk.timeline import commands',
+          'from astrid.sdk.timeline.rebase import rebase',
+          'v=json.load(sys.stdin)',
+          'fixture=json.loads((Path(os.environ["ASTRID_CHECKOUT"])/"tests/fixtures/timeline_editing/tiny_publishable.json").read_text())',
+          'fixture["parent"]={"config":{"output":v["config"]["output"],"tracks":v["config"]["tracks"]},"clips":v["config"]["clips"],"registry":v["registry"]}',
+          'tl=Checkout(copy.deepcopy(fixture))',
+          'with tl.edit("record proposal",quiet=True) as tx:',
+          ' for call in v["calls"]: commands.execute(tl,call)',
+          'recorded=[call.to_json() for call in tx.plan.calls]',
+          'onto=copy.deepcopy(fixture);onto["parent"]["clips"][0]["volume"]=0.7',
+          'result=rebase(recorded,onto)',
+          'assert not result.conflicts, result.conflicts',
+          'assert result.document["parent"]["clips"][0]["volume"]==0.7',
+          'assert result.document["parent"]["clips"][0]["opacity"]==0.6',
+          'assert result.document["parent"]["config"]["tracks"][0]["label"]=="Reviewed"',
+          'assert onto["parent"]["clips"][0]["opacity"]==0.9',
+          'bad=copy.deepcopy(onto);bad["parent"]["clips"][0]["opacity"]=0.2',
+          'refused=rebase(recorded,bad)',
+          'assert refused.conflicts and refused.document is None and bad["parent"]["clips"][0]["opacity"]==0.2',
+          'print(json.dumps({"commands":[call.to_json() for call in result.plan.calls],"writes":result.plan.direct_writes,"document":result.document,"journal":len(tl._journal),"failed_expectations":refused.conflicts}))',
+        ].join('\n')], { input: JSON.stringify({ config: initial.config, registry: initial.registry, calls: (request.change as { commands: unknown[] }).commands }), encoding: 'utf8' });
+        const sdk = JSON.parse(output);
+        authoritative = sdk.commands;
+        expect(sdk.journal).toBe(1); expect(sdk.writes.length).toBeGreaterThan(0);
+        if (process.env.E_REVIEW_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_REVIEW_EVIDENCE_DIR, 'sdk-rebase.json'), JSON.stringify({ request, ...sdk }, null, 2));
+        return { previewCommands: authoritative };
+      }
+      expect((request.change as { commands: unknown[] }).commands).toEqual(authoritative);
+    }, initial);
+    act(() => h.result.current.editing.handleSelectedClipChange({ volume: 0.7 }));
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    const proposal = await h.produce('review-rebase'); const panel = show(h.runtime, proposal.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    expect(proposal.commandBinding!.base.headRevisionId).toBe('parent-r1');
+    release();
+    await waitFor(() => expect(h.runtime.get(proposal.id)?.state).toBe('accepted'), { timeout: 10000 });
+    expect(h.requests).toHaveLength(3);
+    const preview = h.requests[1].request; const commit = h.requests[2].request;
+    expect(preview).toMatchObject({ dry_run: true, base_revision_id: 'parent-r1', change: { commands: proposal.commandBinding!.commands } });
+    expect(commit).toMatchObject({ dry_run: false, base_revision_id: 'parent-r2', change: { commands: authoritative } });
+    expect(authoritative).not.toEqual(proposal.commandBinding!.commands);
+    expect(commit.request_id).not.toBe(preview.request_id);
+    expect(h.headRevisionRef.current?.headRevisionId).toBe('parent-r3'); expect(h.acceptedCount()).toBe(2);
+    expect(h.journal).toHaveBeenCalledTimes(2); expect(h.journal.mock.calls[1][1].transactionId).toBe(proposal.commandBinding!.transactionId);
+    expect(h.compatibilityRequests).toEqual([]);
+    panel.unmount(); h.close();
+  }, 20000);
+  it('refuses malformed commands/bindings and unsupported reserved shapes without a fallback write', async () => {
+    const h = await reviewSetup(); const proposal = await h.produce('review-unsupported');
+    const forged = structuredClone(proposal);
+    forged.id = 'forged'; forged.commandBinding!.commands[0] = { op: 7 } as never;
+    expect(h.runtime.importProposal(forged)).toBe('rejected');
+    const unsupported: TimelineProposal = { ...structuredClone(proposal), id: 'unsupported', source: 'reserved',
+      commandBinding: undefined, patch: { version: 1, operations: [{ op: 'clip.split' as never, target: 'clip-1', payload: {} }] } };
+    expect(h.runtime.importProposal(unsupported)).toBe('imported');
+    expect(() => h.runtime.accept('unsupported')).toThrow();
+    expect(h.requests).toHaveLength(0); expect(h.journal).not.toHaveBeenCalled(); expect(h.saves).not.toHaveBeenCalled();
+    expect(h.result.current.data).toBe(h.initial); expect(h.compatibilityRequests).toEqual([]); h.close();
+  });
+  it('recovers a lost successful response with the same key/base/bytes and one publication/history owner', async () => {
+    const h = await reviewSetup(async (_request, call) => call === 1 ? { loseSuccess: true } : undefined);
+    const proposal = await h.produce('review-retry'); const panel = show(h.runtime, proposal.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 5000 });
+    // The first flush reports uncertainty; retry resolves the retained save target.
+    if (h.runtime.get(proposal.id)?.state === 'pending') {
+      fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    }
+    await waitFor(() => expect(h.runtime.get(proposal.id)?.state).toBe('accepted'));
+    expect(h.requests).toHaveLength(2); expect(h.requests[1].bytes).toBe(h.requests[0].bytes);
+    expect(h.requests[1].headers).toEqual(h.requests[0].headers);
+    expect(h.requests[0].headers['Idempotency-Key']).toBe(h.requests[0].request.request_id);
+    expect(h.acceptedCount()).toBe(1); expect(h.journal).toHaveBeenCalledTimes(1);
+    expect(h.result.current.editSeqRef.current).toBe(1); expect(h.history.result.current.canUndo).toBe(true);
+    expect(h.compatibilityRequests).toEqual([]); panel.unmount(); h.close();
+  });
 });

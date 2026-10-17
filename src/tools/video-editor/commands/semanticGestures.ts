@@ -606,7 +606,7 @@ export function legacyTiedEndResizeGesture(data: TimelineData, id: string, durat
 
 /** An ordinary audio overlap resize with direct authored start dependents.
  * Left trims admit multiple siblings and use source-in trim followed by a frame
- * nudge. Right trims retain one sibling and use the clamped end. This is a UI
+ * nudge. Right trims use one trim at the clamped end. This is a UI
  * eligibility check, not an affected-set/rebase planner: Astrid records and
  * guards the complete dependency set. No projected rows are persisted here.
  */
@@ -617,8 +617,8 @@ export function overlapTrimGesture(data: TimelineData, id: string, rowId: string
   if (actions.length !== 1 || data.tracks.find((track) => track.id === rowId)?.kind !== 'audio') return undefined;
   const action = actions[0];
   const overlaps = row!.actions.filter((other) => other.id !== id && requestedStart < other.end && requestedEnd > other.start);
-  if (!overlaps.length || (edge === 'right' && overlaps.length !== 1)) return undefined;
-  if (edge === 'right' ? requestedStart !== action.start || end !== overlaps[0].start
+  if (!overlaps.length) return undefined;
+  if (edge === 'right' ? requestedStart !== action.start || end !== Math.min(...overlaps.map((other) => other.start))
     || end <= action.start || end === action.end || end >= requestedEnd
     : requestedEnd !== action.end || requestedStart === action.start || requestedStart < 0
       || requestedStart >= requestedEnd) return undefined;
@@ -633,6 +633,7 @@ export function overlapTrimGesture(data: TimelineData, id: string, rowId: string
   const select = scopedGestureClipId(target!);
   const adjacentSelects = adjacentTargets.map((value) => scopedGestureClipId(value!));
   if (edge === 'left' && !select.startsWith('parent/')) return undefined;
+  if (edge === 'right' && overlaps.length > 1 && !select.startsWith('parent/')) return undefined;
   if (new Set([select, ...adjacentSelects]).size !== targets.length) return null;
   if (adjacentSelects.some((value) => value.split('/')[0] !== select.split('/')[0])) return undefined;
   for (const clipId of [id, ...overlaps.map((neighbour) => neighbour.id)]) {
@@ -645,6 +646,11 @@ export function overlapTrimGesture(data: TimelineData, id: string, rowId: string
   const dependents = overlaps.map((neighbour, index) => ({
     neighbour, select: adjacentSelects[index], source: gestureSource(data, neighbour.id),
   }));
+  if (edge === 'right' && overlaps.length > 1 && (!Number.isFinite(data.output.fps) || data.output.fps <= 0
+    || dependents.some(({ neighbour, source: adjacent }) => adjacent.clipType !== 'media'
+      || ![adjacent.from ?? 0, adjacent.to, adjacent.speed ?? 1].every((value) => typeof value === 'number' && Number.isFinite(value))
+      || (adjacent.from ?? 0) < 0 || (adjacent.speed ?? 1) <= 0 || typeof adjacent.hold === 'number'
+      || Math.abs((adjacent.to! - (adjacent.from ?? 0)) / (adjacent.speed ?? 1) - (neighbour.end - neighbour.start)) > 1e-7))) return undefined;
   const anchor = `clip-${edge === 'left' ? 'start' : 'end'} "${select}"`;
   // Geometry establishes overlap only. Each choice must name an exact authored
   // dependency in the SDK grammar; mixed or ambiguous sets retain their fallback.
@@ -701,12 +707,14 @@ export function overlapTrimGesture(data: TimelineData, id: string, rowId: string
     expectations[`${adjacentSelect}::intent.on`] = state(relation, true);
     expectations[`${adjacentSelect}::at`] = state(adjacent.at, hasOwn(adjacent, 'at'));
     expectations[`${adjacentSelect}::hold`] = state(adjacent.hold, hasOwn(adjacent, 'hold'));
+    if (edge === 'right') expectations[`${adjacentSelect}::intent.fixed_start`] = state(
+      adjacent.app!.astrid!.fixed_start, hasOwn(adjacent.app!.astrid!, 'fixed_start'));
   }
   if (edge === 'left') return { commands: [
     command(target!, 'clip.trim', { in_s: input, out_s: to }, { '': state(source, true) }),
     command(target!, 'clip.nudge', { frames: deltaFrames, relation_choices: choices }, expectations),
   ] };
-  return { commands: [command(target!, 'clip.trim', { out_s: out, relation_choices: choices }, { '': state(source, true) })] };
+  return { commands: [command(target!, 'clip.trim', { out_s: out, relation_choices: choices }, { '': state(source, true), ...expectations })] };
 }
 
 /** Existing hold-end choice UI. Astrid alone parses/resolves Moments and discovers

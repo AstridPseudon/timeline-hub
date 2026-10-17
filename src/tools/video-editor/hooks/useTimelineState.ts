@@ -640,6 +640,10 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const timelineOps = useTimelineOps({
     commitData: save.commitData,
     applyEdit: save.applyEdit,
+    semanticCommandSaving: runtime.provider.semanticCommandSaving,
+    getProposalSourceContext: () => runtime.provider.getTimelineDraftRecoveryMetadata?.(runtime.timelineId).recoveryKey,
+    captureSaveTarget: save.registrationOwner.captureSaveTarget,
+    flushSaveTarget: save.registrationOwner.flushSaveTarget,
     dataRef: save.dataRef,
     getConfigVersion,
     flushPendingSave: save.flushPendingSave,

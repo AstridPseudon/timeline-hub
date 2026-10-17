@@ -261,9 +261,9 @@ export function ProposalPanel({
   );
 
   const handleAccept = useCallback(
-    (proposalId: string) => {
+    async (proposalId: string) => {
       try {
-        proposalRuntime.accept(proposalId);
+        await proposalRuntime.accept(proposalId);
         setActionStatus({
           proposalId,
           message: 'Proposal accepted and applied.',
@@ -335,9 +335,9 @@ export function ProposalPanel({
   );
 
   const handleAcceptTimed = useCallback(
-    (id: string) => {
+    async (id: string) => {
       try {
-        const diff = proposalRuntime.accept(id);
+        const diff = await proposalRuntime.accept(id);
         setTimedStatus({
           proposalId: id,
           message: `Accepted — ${diff.entries.length} changes applied.`,

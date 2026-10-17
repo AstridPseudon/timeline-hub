@@ -60,6 +60,8 @@ export interface TimelineProposal {
   state: ProposalState;
   /** The patch to apply if accepted. */
   patch: TimelinePatch;
+  /** Host-captured ordered intent and source/base binding, retained on reload. */
+  commandBinding?: import('../../../tools/video-editor/lib/proposal-command-binding.ts').ProposalCommandBinding;
   /**
    * The baseVersion the proposal was created against.
    * If the current reader version differs at acceptance time, the proposal
@@ -133,11 +135,13 @@ export interface ProposalRuntime {
    * Accept a pending proposal. Revalidates baseVersion against the current
    * reader snapshot; if stale, the proposal is marked stale and the call
    * fails with a diagnostic. On success, applies the patch through
-   * TimelineOps and marks the proposal accepted.
+   * TimelineOps and marks the proposal accepted. Command-backed acceptance
+   * returns a Promise and waits for the existing durable save target; callers
+   * should await the result. Other patch families retain their synchronous API.
    *
    * Throws on stale baseVersion or if the proposal is not in 'pending' state.
    */
-  accept(proposalId: string): TimelineDiff;
+  accept(proposalId: string): TimelineDiff | Promise<TimelineDiff>;
 
   /**
    * Reject a pending proposal, moving it to 'rejected' state.
@@ -159,6 +163,9 @@ export interface ProposalRuntime {
    * Get the current reader snapshot version for baseVersion comparisons.
    */
   readonly currentVersion: number;
+
+  /** Opaque host context identity for detecting a changed document while a tool runs. */
+  readonly currentContext?: string;
 
   /**
    * Scan pending proposals and transition any whose TTL has elapsed

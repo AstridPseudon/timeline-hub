@@ -1,3 +1,4 @@
+import { bindProposalSave } from '../lib/proposal-command-binding.ts';
 import { isTranscriptCaptionBatch } from '../commands/transcriptCaptions.ts';
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
 import { attachGestureCommands, gestureCommandsFor } from '../commands/semanticGestures.ts';
@@ -63,6 +64,7 @@ export type CommitHistoryOptions = {
 };
 
 export type CommitDataOptions = {
+  proposalBase?: import('../data/DataProvider.ts').TimelineHeadRevision;
   editCommands?: readonly EditCommand[];
   save?: boolean;
   selectedClipId?: string | null;
@@ -366,13 +368,15 @@ export function useTimelineCommit({
     }
 
     if (shouldSave && !options?.skipHistory && currentData) {
-      eventBus.emit('beforeCommit', currentData, {
+      const recordHistory = () => eventBus.emit('beforeCommit', currentData, {
         transactionId: options?.transactionId,
         semantic: options?.semantic,
         commandHistory: options?.commandHistory,
         ...((options?.editCommands && (isTranscriptCaptionBatch(options.editCommands) || isOverlapTrimBatch(options.editCommands))) || (options?.editCommands?.length === 1 && (isAssetRegistrationCommand(options.editCommands[0]) || isTiedHoldExpansionCommand(options.editCommands[0])))
           ? { nativeRegistrationOwner: nextData } : {}),
       });
+      if (options?.proposalBase) bindProposalSave(nextData, options.proposalBase, recordHistory);
+      else recordHistory();
     }
 
     // `skipHistory` + `updateLastSavedSignature` is the signature of a
