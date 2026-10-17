@@ -581,6 +581,17 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
     for (sid, path), state in desired.items():
         if not commands._same_value(commands.state_at(original, sid, path), state):
             raise commands.CommandError(f"recorded inverse precondition does not reconstruct {sid}.{path}")
+    # A replaced take must remain a complete typed slot in the inverse request.
+    # Leaf association/object writes cannot authorize the old triple on the
+    # request-bound Runtime port. Restore the immutable narration namespace as
+    # one guarded value, after validating every recorded leaf above. Its exact
+    # post-publication precondition also fences later sibling edits.
+    take_owners = {sid for sid, path in desired if path.startswith(("intent.take.", "app.astrid.take."))
+                   or path in {"intent.take", "app.astrid.take"}}
+    for sid in take_owners:
+        desired = {(owner, path): state for (owner, path), state in desired.items()
+                   if owner != sid or not (path == "app.astrid" or path.startswith(("intent.", "app.astrid.")))}
+        desired[(sid, "app.astrid")] = copy.deepcopy(commands.state_at(original, sid, "app.astrid"))
     # Reservation maxima belong to IDENTITY, not reversible authored content.
     desired = {(sid, path): state for (sid, path), state in desired.items() if not (
         sid == "parent" and path.startswith("config.app.astrid.cut_id_high_water"))}
@@ -663,7 +674,13 @@ def stage(checkout, *, client, publication=None):
     if pinned_transcripts:
         after["source_mapping"]["pinned_transcripts"] = copy.deepcopy(pinned_transcripts)
     actual_calls = result["change"]["commands"]
-    replay, _, _ = RuntimeCommitService._apply(before, actual_calls)
+    from astrid.sdk.timeline.narration import capture_takes
+    # Exact closure reads authorize the old base refs; recorded commands name
+    # the prepared refs. Resolve both through the ordinary managed-output
+    # reader before replay, just as a fresh saved publication does. Journal
+    # metadata alone is never a verified take.
+    takes = capture_takes(_ClosurePort(workspace, project, timeline), before, actual_calls)
+    replay, _, _ = RuntimeCommitService._apply(before, actual_calls, narration_takes=takes)
     def payload(document):
         return compile_authoring_candidate(document).publication["parent_composition"]
     if payload(replay) != payload(after):
@@ -745,6 +762,10 @@ def authored_paths(calls):
 def overlaps(left, right):
     sid, path = left
     other_sid, other = right
+    # Recorder intent aliases and physical narration namespace writes name the
+    # same properties, including intervening writes whose values returned (ABA).
+    path = "app.astrid." + path[7:] if path.startswith("intent.") else path
+    other = "app.astrid." + other[7:] if other.startswith("intent.") else other
     return sid == other_sid and (not path or not other or path == other or
         path.startswith((other + ".", other + "[")) or other.startswith((path + ".", path + "[")))
 
