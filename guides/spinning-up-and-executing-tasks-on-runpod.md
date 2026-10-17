@@ -837,14 +837,12 @@ billing; claim, queue, and runtime timeouts are not pod-lifetime limits.
 The 2026-09-21 bounded transport test passed: upload -> execute -> fetch ->
 SHA-256 verification, returncode 0, terminated false, and provider-side
 confirmation that the same pod remained RUNNING on backup. It ran no inference
-and admitted no Astrid task. Evidence:
-[practical-path review](../docs/projects/astrid-unified-execution/runpod-practical-path-review-20260921.md).
+and admitted no Astrid task. Supporting evidence is retained in Git history.
 
 That historical transport result does not establish H3 readiness. The current
 claim helper checks provider/SSH custody and mounted Python paths; prepared-worker
 software checks are CPU/control-plane-only. Live CUDA/GPU qualification is outside
 this project and is not implied by its evidence.
 
-The [remote task-manager build brief](../docs/projects/astrid-unified-execution/runpod-task-execution-build-brief.md)
-is an optional future integration for scheduler-enforced placement and remote
-worker settlement. It is not a prerequisite for the practical path above.
+An optional future integration for scheduler-enforced placement and remote
+worker settlement is not a prerequisite for the practical path above.

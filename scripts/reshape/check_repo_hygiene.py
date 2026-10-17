@@ -68,11 +68,10 @@ LEGACY_ROOT_CLUTTER = {
 
 # Approved top-level directories.
 ROOT_DIR_ALLOWLIST = {
-    # Durable convergence evidence; runtime state remains classified below.
+    # Stage 1 acceptance output; runtime state remains classified below.
     ".astrid-convergence",
     ".github",
     ".megaplan",
-    ".oracle",
     ".vscode",
     "astrid",
     "artifacts",
@@ -137,18 +136,8 @@ TRACKED_PATH_ALLOWLISTS = (
     "tests/core/util/test_secrets.py",
     "tests/sdk/test_zero_secret_smoke.py",
     "tests/v10/test_m6_secret_sink.py",
-    # Durable megaplan source; runtime event/state files remain detectable.
-    ".megaplan/initiatives/astrid-first/NORTHSTAR.md",
-    ".megaplan/initiatives/astrid-first/README.md",
-    ".megaplan/initiatives/astrid-first/briefs/*.md",
-    ".megaplan/initiatives/astrid-first/chain.yaml",
-    ".megaplan/initiatives/astrid-first/cloud.yaml",
-    ".megaplan/initiatives/astrid-first/docs/*.md",
-    # Frozen acceptance evidence retained by the committed astrid-first plan.
-    ".megaplan/initiatives/astrid-first/.process_adapter_wbc/cloud_wrapper_adapter/.megaplan-event-store/epics/wrapper_acceptance_gate/events.jsonl",
-    ".megaplan/initiatives/astrid-first/.process_adapter_wbc/cloud_wrapper_adapter/wrapper_acceptance_gate/.events.projection.seq",
-    ".megaplan/initiatives/astrid-first/.process_adapter_wbc/cloud_wrapper_adapter/wrapper_acceptance_gate/.events.seq",
-    ".megaplan/initiatives/astrid-first/.process_adapter_wbc/cloud_wrapper_adapter/wrapper_acceptance_gate/events.ndjson",
+    # M7 finalizer inputs are pinned by the release gate; runtime state stays
+    # detectable below.
     ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/plan_v1.meta.json",
     ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/plan_v2.md",
     ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/plan_v2.meta.json",

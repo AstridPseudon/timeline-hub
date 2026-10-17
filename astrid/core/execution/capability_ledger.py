@@ -23,7 +23,6 @@ CENSUS_SECTIONS: tuple[str, ...] = (
     "source_labels",
     "historical_source_labels",
     "executor_inventory",
-    "legacy_ids",
 )
 APPROVE_COMMAND = "python -m astrid.core.execution.capability_ledger approve"
 
@@ -128,10 +127,8 @@ def capability_execution_admission(
     }
 
 
-# These rows are deliberately data, not importable capability definitions.  The
-# source manifests and the Reigh admission registry were retired, but their
-# historical occurrences remain part of the B9 census and must not disappear
-# merely because the executable routes were removed.
+# These rows are deliberately data, not importable capability definitions.
+# Retired labels remain part of the B9 census and cannot be admitted as routes.
 _HISTORICAL_SOURCE_LABELS: tuple[dict[str, Any], ...] = (
     {
         "pack": "iteration",
@@ -152,46 +149,6 @@ _HISTORICAL_SOURCE_LABELS: tuple[dict[str, Any], ...] = (
         "equivalent_to": None,
         "executable": False,
         "reason": "Retired with the thread/sidecar iteration preparation authority.",
-    },
-    {
-        "pack": "reigh",
-        "label": "build_spatial_audio_page",
-        "source": "historical: astrid/packs/reigh/pack.yaml",
-        "canonical_id": None,
-        "disposition": "unsupported",
-        "equivalent_to": None,
-        "executable": False,
-        "reason": "Reigh integration pack is not shipped in the current checkout.",
-    },
-    {
-        "pack": "reigh",
-        "label": "fetch_reigh_data",
-        "source": "historical: astrid/packs/reigh/pack.yaml",
-        "canonical_id": None,
-        "disposition": "unsupported",
-        "equivalent_to": None,
-        "executable": False,
-        "reason": "Reigh integration pack is not shipped in the current checkout.",
-    },
-    {
-        "pack": "reigh",
-        "label": "open_in_reigh",
-        "source": "historical: astrid/packs/reigh/pack.yaml",
-        "canonical_id": None,
-        "disposition": "unsupported",
-        "equivalent_to": None,
-        "executable": False,
-        "reason": "Reigh bridge authority was retired and is not shipped.",
-    },
-    {
-        "pack": "reigh",
-        "label": "publish_timeline",
-        "source": "historical: astrid/packs/reigh/pack.yaml",
-        "canonical_id": None,
-        "disposition": "unsupported",
-        "equivalent_to": None,
-        "executable": False,
-        "reason": "Reigh publishing authority was retired and is not shipped.",
     },
     {
         "pack": "training",
@@ -231,42 +188,6 @@ _HISTORICAL_EXECUTOR_ROWS: tuple[dict[str, Any], ...] = (
         "source": "historical: astrid/core/contracts/output_result_exemptions.json",
     },
     {
-        "id": "reigh.open_in_reigh",
-        "result_contract": "exempted",
-        "disposition": "unsupported",
-        "discovery_status": "historical_only",
-        "executable": False,
-        "reason": "Retired Reigh bridge executor; external integration is not shipped.",
-        "source": "historical: astrid/core/contracts/output_result_exemptions.json",
-    },
-    {
-        "id": "reigh.publish",
-        "result_contract": "exempted",
-        "disposition": "unsupported",
-        "discovery_status": "historical_only",
-        "executable": False,
-        "reason": "Retired Reigh publishing executor; external integration is not shipped.",
-        "source": "historical: astrid/core/contracts/output_result_exemptions.json",
-    },
-    {
-        "id": "reigh.reigh_data",
-        "result_contract": "exempted",
-        "disposition": "unsupported",
-        "discovery_status": "historical_only",
-        "executable": False,
-        "reason": "Retired Reigh data executor; external integration is not shipped.",
-        "source": "historical: astrid/core/contracts/output_result_exemptions.json",
-    },
-    {
-        "id": "reigh.spatial_audio_page",
-        "result_contract": "manifest",
-        "disposition": "unsupported",
-        "discovery_status": "historical_only",
-        "executable": False,
-        "reason": "Retired Reigh spatial-audio executor; external integration is not shipped.",
-        "source": "historical: astrid/core/contracts/output_result_exemptions.json",
-    },
-    {
         "id": "training.asset_cache",
         "result_contract": "exempted",
         "disposition": "retired",
@@ -276,29 +197,6 @@ _HISTORICAL_EXECUTOR_ROWS: tuple[dict[str, Any], ...] = (
         "source": "historical: astrid/core/contracts/output_result_exemptions.json",
     },
 )
-
-_LEGACY_REIGH_IDS: tuple[tuple[str, str], ...] = (
-    ("reigh.wan_2_2_t2i", "wgp"),
-    ("reigh.qwen_image", "vibecomfy"),
-    ("reigh.qwen_image_style", "vibecomfy"),
-    ("reigh.qwen_image_2512", "vibecomfy"),
-    ("reigh.z_image_turbo", "vibecomfy"),
-    ("reigh.image_upscale", "vibecomfy"),
-    ("reigh.individual_travel_segment", "wgp"),
-    ("reigh.join_clips_orchestrator", "wgp"),
-    ("reigh.video_enhance", "vibecomfy"),
-    ("reigh.z_image_turbo_i2i", "vibecomfy"),
-    ("reigh.qwen_image_edit", "vibecomfy"),
-    ("reigh.image_inpaint", "vibecomfy"),
-    ("reigh.annotated_image_edit", "vibecomfy"),
-    ("reigh.travel_orchestrator", "wgp"),
-    ("reigh.wan_2_2_i2v", "wgp"),
-    ("reigh.travel_stitch", "wgp"),
-    ("reigh.edit_video_orchestrator", "wgp"),
-    ("reigh.animate_character", "vibecomfy"),
-    ("reigh.flux_klein_edit", "vibecomfy"),
-)
-
 
 def _repo_root_for_matrix(path: Path) -> Path | None:
     candidate = path.expanduser().resolve().parent.parent
@@ -442,23 +340,6 @@ def _executor_inventory(repo_root: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def _legacy_ids(repo_root: Path) -> list[dict[str, Any]]:
-    """Return the exact pre-cutover Reigh registry as inert historical data."""
-    source = "historical: astrid/core/integrations/reigh/capabilities.py"
-    return [
-        {
-            "id": capability_id,
-            "binding": binding,
-            "disposition": "retired",
-            "discovery_status": "historical_only",
-            "executable": False,
-            "source": source,
-            "reason": "Removed legacy Reigh registry entry; retained for census only.",
-        }
-        for capability_id, binding in _LEGACY_REIGH_IDS
-    ]
-
-
 def _model_inventory(repo_root: Path) -> tuple[list[dict[str, Any]], list[str]]:
     source = repo_root / "astrid" / "core" / "model_catalog" / "models.yaml"
     raw = _load_manifest_payload(source)
@@ -520,7 +401,6 @@ def _census_sets(repo_root: Path) -> dict[str, Any]:
     historical_labels.sort(key=lambda row: (row["pack"], row["label"]))
     aliases = _aliases(repo_root, excluded=excluded)
     executors = _executor_inventory(repo_root)
-    legacy = _legacy_ids(repo_root)
     quarantined_rows = [
         {"pack": pack, "label": label}
         for pack, declared in sorted(quarantined_by_pack.items())
@@ -530,7 +410,6 @@ def _census_sets(repo_root: Path) -> dict[str, Any]:
         "source_labels": {f"{row['pack']}.{row['label']}" for row in labels},
         "historical_source_labels": {f"{row['pack']}.{row['label']}" for row in historical_labels},
         "executor_inventory": {str(row["id"]) for row in executors},
-        "legacy_ids": {str(row["id"]) for row in legacy},
     }
     quarantined = {
         "source_labels": {f"{row['pack']}.{row['label']}" for row in quarantined_rows},
@@ -538,14 +417,12 @@ def _census_sets(repo_root: Path) -> dict[str, Any]:
             f"{row['pack']}.{row['label']}" for row in quarantined_rows if _historical_projection(row)
         },
         "executor_inventory": set(),
-        "legacy_ids": set(),
     }
     return {
         "labels": labels,
         "historical_labels": historical_labels,
         "aliases": aliases,
         "executors": executors,
-        "legacy": legacy,
         "current": current,
         "quarantined": quarantined,
         "quarantined_records": quarantined_records,
@@ -559,7 +436,6 @@ def _reconcile_sources(repo_root: Path, capabilities: list[Mapping[str, Any]]) -
     quarantined_records = census["quarantined_records"]
     aliases = census["aliases"]
     executors = census["executors"]
-    legacy = census["legacy"]
     models, model_backends = _model_inventory(repo_root)
     rendering_backends = _render_backend_inventory(repo_root)
     current_ids = {str(row.get("id")) for row in capabilities}
@@ -611,7 +487,6 @@ def _reconcile_sources(repo_root: Path, capabilities: list[Mapping[str, Any]]) -
         "historical_pack_labels": historical_labels,
         "aliases": aliases,
         "executor_inventory": executors,
-        "legacy_ids": legacy,
         "providers": _provider_inventory(capabilities),
         "models": models,
         "generation_backends": model_backends,
@@ -629,7 +504,7 @@ def _reconcile_sources(repo_root: Path, capabilities: list[Mapping[str, Any]]) -
             },
         },
         "coverage": coverage,
-        "counts": {"pack_labels": len(labels), "historical_pack_labels": len(historical_labels), "executor_inventory": len(executors), "legacy_ids": len(legacy), "aliases": len(aliases), "models": len(models), "rendering_backends": len(rendering_backends)},
+        "counts": {"pack_labels": len(labels), "historical_pack_labels": len(historical_labels), "executor_inventory": len(executors), "aliases": len(aliases), "models": len(models), "rendering_backends": len(rendering_backends)},
     }
 
 

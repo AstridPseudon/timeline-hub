@@ -59,9 +59,9 @@ def test_intentional_tracked_root_directories_are_allowed(
 def test_convergence_evidence_root_is_allowed_but_unknown_root_is_not(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The committed convergence packet is durable evidence, not root drift."""
+    """The stage1 output root is allowed, but unknown roots remain drift."""
     tracked_paths = [
-        ".astrid-convergence/astrid-loose-thread-classification.md",
+        ".astrid-convergence/stage1-acceptance/acceptance.json",
         "unapproved-evidence/report.md",
     ]
     for relpath in tracked_paths:
@@ -184,8 +184,6 @@ def test_durable_megaplan_assets_are_allowed_but_runtime_state_is_not(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     durable = [
-        ".megaplan/initiatives/astrid-first/README.md",
-        ".megaplan/initiatives/astrid-first/briefs/m1.md",
         ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/plan_v2.md",
         ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/state.json",
     ]

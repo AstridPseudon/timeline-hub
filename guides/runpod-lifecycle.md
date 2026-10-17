@@ -252,8 +252,7 @@ The following describes the worker-backed acceptance contract, not a working
 automatic pod-attach command in the inspected checkout. `execution_request`
 is currently stored as task metadata; it does not attach a pod or enforce
 placement. Do not block ordinary `runpod.exec`/lifecycle jobs on implementing
-this integration. See the [practical operator path](spinning-up-and-executing-tasks-on-runpod.md)
-and the separate [build brief](../docs/projects/astrid-unified-execution/runpod-task-execution-build-brief.md).
+this integration. See the [practical operator path](spinning-up-and-executing-tasks-on-runpod.md).
 
 For worker-backed generation, submit through Runtime's task queue rather than
 calling Comfy's `/prompt` endpoint directly. Carry the exact capability digest,
