@@ -70,6 +70,7 @@ import { readAudioLanePresentation } from '../data/audioLanePresentation.ts';
 import type { CanonicalClipIdentity } from '../data/shotCompositionProjection.ts';
 import { planClipDrag } from '../lib/clip-drag-planner.ts';
 import { createTimelineEditability } from '../lib/timeline-editability.ts';
+import { ClipEffectsTab } from '@/tools/video-editor/components/PropertiesPanel/ClipEffectsTab.tsx';
 import { ClipEntranceEffectField } from '@/tools/video-editor/components/PropertiesPanel/ClipEntranceEffectField.tsx';
 import { createVideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
 import { ClipTransitionSection } from '@/tools/video-editor/components/PropertiesPanel/ClipTransitionSection.tsx';
@@ -6807,4 +6808,404 @@ describe('W29 bulk whole-operation compatibility', () => {
     writeW29Proof('mounted-panel-fallback', { patches, reason: 'Existing UI callback omits exact pinned revision/reference and opaque siblings; no UI or intent rewrite authorized.' });
     panel.unmount(); h.unmount();
   });
+});
+
+// W26 uses the existing synthetic SDK acceptance port, never a JS evaluator.
+function appKeyframeSource(initial: TimelineData, requests: CommitRequest[], variant?: 'stale' | 'stale-origin' | 'stale-second-origin' | 'stale-base' | 'refused') {
+  return JSON.parse(execFileSync(process.env.ASTRID_TEST_PYTHON!, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/appKeyframesHistory.fixture.py')], {
+    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests, variant }), encoding: 'utf8', env: process.env,
+  })) as ReturnType<typeof groupTransferSource> & { readback: unknown; revision_reads: string[]; base_revision_id: string;
+    head_revision_before: string; head_revision_after: string; head_document_before: unknown; head_document_after: unknown;
+    advanced_head_document: unknown };
+}
+const w26Keys = {
+  opacity: [
+    { time: 7.125, value: 0.7, interpolation: 'linear', easing: 'ease-in', opaque: { siblings: [null, false, { retain: 1.125 }] } },
+    { time: 0.25, value: 0.2, interpolation: 'hold' },
+    { time: 7.125, value: 0.3, interpolation: 'hold', duplicate: true },
+  ],
+  'custom.param[0]': [{ time: -0.25, value: 'exact', interpolation: 'hold', opaque: null }],
+};
+async function appKeyframeData(prior: 'absent' | 'null' | 'object' | 'declared', occurrence = false, authoredKeys = w26Keys) {
+  const base = await fadeHistoryData(occurrence, 'absent');
+  const clips = base.config.clips.map((clip, index) => {
+    if (index !== 0) return clip;
+    const source = { ...(clip.app?.canonical?.sourceClip ?? clip), at: 2.375, from: 1.125, to: 3.625, speed: 1.25,
+      ...(prior === 'absent' ? {} : { keyframes: prior === 'null' ? null : structuredClone(authoredKeys) }),
+      ...(prior === 'declared' ? { keyframeOrigin: -1.375 } : {}),
+    };
+    return occurrence ? { ...source, id: clip.id, app: { ...source.app, canonical: { ...clip.app!.canonical!, sourceClip: source } } } : source;
+  });
+  return buildTimelineData({ ...base.config, clips } as never, base.registry, undefined, 1, undefined, base.head);
+}
+function mountAppKeyframes(h: Awaited<ReturnType<typeof setup>>, onChange = h.result.current.editing.handleSelectedClipChange) {
+  const clip = h.result.current.data!.resolvedConfig.clips[0];
+  return render(<ClipEffectsTab clip={clip} onChange={onChange} effectResources={{ effects: [], entrance: [], exit: [], continuous: [], canCreateEffect: false, canUpdateEffect: false } as never}
+    clipDescriptor={{ paramsSchema: { kind: 'editor', params: [{ name: 'opacity', label: 'Opacity', type: 'number', default: 0.5 }] } } as never}
+    clipTypeResolution={{ status: 'unavailable' } as never} isEffectLayer={false} isSequenceClip={false}
+    registry={{}} currentTime={3.125} creatorOpen={false} setCreatorOpen={vi.fn()} editingEffect={null} setEditingEffect={vi.fn()} />);
+}
+function captureW26(name: string, data: unknown) {
+  if (process.env.E_W26_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W26_EVIDENCE_DIR, name + '.json'), JSON.stringify(data, null, 2));
+}
+describe('W26 actual inspector SDK native history', () => {
+  it.each(['absent', 'null'] as const)('%s add uses the actual inspector pair and accepted whole-document Undo/receipt-only Redo', async prior => {
+    const initial = await appKeyframeData(prior); const requests: CommitRequest[] = []; let proof!: ReturnType<typeof appKeyframeSource>;
+    let release!: () => void; const pending = new Promise<void>(resolve => { release = resolve; });
+    const h = await setup(async request => { requests.push(request); if (requests.length === 1) await pending;
+      proof = appKeyframeSource(initial, requests); captureW26('w26-add-' + prior, { initial, requests, proof });
+      return { acceptedResult: proof.result, readbackConfig: fadeReadback(initial, proof) };
+    }, false, initial);
+    const history = mountFadeHistory(h); const ui = mountAppKeyframes(h);
+    fireEvent.click(screen.getByRole('button', { name: 'Add keyframe at 3.13s' }));
+    expect(history.result.current.canUndo).toBe(false); act(() => history.result.current.undo()); release();
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    expect(requests[0].change).toEqual({ commands: [{ op: 'clip.set', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { keyframes: { opacity: [{ time: 3.125, value: 0.5, interpolation: 'linear' }] }, keyframeOrigin: -2.375 },
+      expect: { keyframes: prior === 'absent' ? { state: 'absent' } : { state: 'present', value: null }, keyframeOrigin: { state: 'absent' } },
+    }] });
+    const forward = structuredClone(proof.results[0].canonical_document);
+    act(() => history.result.current.onRemoteData(initial, h.result.current.data!));
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    expect(proof.results[1].canonical_document).toEqual(proof.before); expect(proof.readback).toEqual(proof.before);
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof));
+    act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(requests).toHaveLength(3); expect(proof.results.map(result => result.status)).toEqual(['accepted', 'accepted', 'accepted']);
+    expect(proof.results[2].canonical_document).toEqual(forward); expect(proof.readback).toEqual(forward);
+    for (let index = 0; index < 2; index++) expect(requests[index + 1].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null,
+      args: { publication: proof.results[index].accepted_publication_id,
+        writes: proof.results[index].change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })) } }] });
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof)); expect(proof.accept_counts).toEqual([1, 1, 1]);
+    expect(h.compatibilityRequests).toEqual([]); ui.unmount(); history.unmount(); h.unmount();
+  }, 180_000);
+  it.each(['add', 'edit', 'remove'] as const)('%s preserves authored arrays through accepted whole-document Undo and third-request Redo', async operation => {
+    const authoredKeys = { ...w26Keys, opacity: w26Keys.opacity.map((key, index) => ({ ...key, id: 'authored-key-' + index })) };
+    const initial = await appKeyframeData('declared', false, authoredKeys); const requests: CommitRequest[] = []; let proof!: ReturnType<typeof appKeyframeSource>;
+    let emitted!: import('../lib/timeline-data.ts').ClipEditorPatch;
+    const h = await setup(async request => { requests.push(request); proof = appKeyframeSource(initial, requests); captureW26('w26-history-' + operation, { initial, requests, proof, emitted });
+      return { acceptedResult: proof.result, readbackConfig: fadeReadback(initial, proof) }; }, false, initial);
+    const history = mountFadeHistory(h); const ui = mountAppKeyframes(h, patch => { emitted = patch; h.result.current.editing.handleSelectedClipChange(patch); });
+    if (operation === 'add') fireEvent.click(screen.getByRole('button', { name: 'Add keyframe at 2.13s' }));
+    if (operation === 'remove') fireEvent.click(screen.getByRole('button', { name: 'Remove keyframe at index 1' }));
+    if (operation === 'edit') { const input = screen.getAllByTestId('keyframe-row')[0].querySelector('input')!;
+      fireEvent.change(input, { target: { value: '9.125' } }); }
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expect(proof.result.status).toBe('accepted'); expect(history.result.current.canUndo).toBe(true);
+    const keys = structuredClone(authoredKeys);
+    if (operation === 'add') keys.opacity.push({ time: 2.125, value: expect.any(Number), interpolation: 'linear' } as never);
+    if (operation === 'remove') keys.opacity.splice(1, 1);
+    if (operation === 'edit') keys.opacity[0].time = 9.125;
+    expect(emitted).toEqual({ keyframes: keys, keyframeOrigin: -1.375 });
+    expect(requests[0].change).toEqual({ commands: [{ op: 'clip.set', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: emitted, expect: { keyframes: { state: 'present', value: authoredKeys }, keyframeOrigin: { state: 'present', value: -1.375 } } }] });
+    const forward = structuredClone(proof.result.canonical_document);
+    expect(proof.readback).toEqual(forward);
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    expect(proof.results[1].canonical_document).toEqual(proof.before); expect(proof.readback).toEqual(proof.before);
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof));
+    act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(requests).toHaveLength(3); expect(proof.results.map(result => result.status)).toEqual(['accepted', 'accepted', 'accepted']);
+    expect(proof.accept_counts).toEqual([1, 1, 1]); expect(proof.readback).toEqual(forward);
+    expect(proof.results[2].canonical_document).toEqual(forward); expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof));
+    for (let index = 0; index < 2; index++) expect(requests[index + 1].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null,
+      args: { publication: proof.results[index].accepted_publication_id,
+        writes: proof.results[index].change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })) } }] });
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(h.compatibilityRequests).toEqual([]); ui.unmount(); history.unmount(); h.unmount();
+  }, 180_000);
+});
+
+describe('W26 actual provider guards', () => {
+  it.each(['missing', 'extra', 'duplicate', 'foreign', 'malformed'] as const)('%s direct receipt refuses acknowledgement and history', async kind => {
+    const initial = await appKeyframeData('object'); let proof!: ReturnType<typeof appKeyframeSource>; let returned!: CommitResult;
+    const h = await setup(async request => {
+      proof = appKeyframeSource(initial, [request]); returned = structuredClone(proof.result);
+      if (kind === 'missing') returned.change.direct_writes.pop();
+      if (kind === 'extra') returned.change.direct_writes.push({ ...returned.change.direct_writes[0], path: 'params.keyframes' });
+      if (kind === 'duplicate') returned.change.direct_writes[1] = returned.change.direct_writes[0];
+      if (kind === 'foreign') returned.change.direct_writes[0].id = 'parent/clip:clip-2';
+      if (kind === 'malformed') delete (returned.change.direct_writes[0].before as Record<string, unknown>).state;
+      captureW26('w26-receipt-' + kind, { initial, request, proof, returned });
+      return { acceptedResult: returned };
+    }, false, initial);
+    const history = mountFadeHistory(h); const ui = mountAppKeyframes(h);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove keyframe at index 1' }));
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'), { timeout: 60_000 });
+    expect(proof.result.status).toBe('accepted'); expect(h.savedSeqRef.current).toBe(0);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    act(() => { history.result.current.undo(); history.result.current.redo(); });
+    expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
+    ui.unmount(); history.unmount(); h.unmount();
+  }, 90_000);
+  it.each(['stale', 'stale-origin', 'refused', 'no_change'] as const)('%s uses the actual caller and never leaves usable history', async kind => {
+    const initial = await appKeyframeData(kind === 'no_change' ? 'declared' : 'object', kind === 'refused');
+    let proof!: ReturnType<typeof appKeyframeSource>;
+    const h = await setup(async request => { proof = appKeyframeSource(initial, [request], kind === 'no_change' ? undefined : kind);
+      captureW26('w26-boundary-' + kind, { initial, request, proof }); return { acceptedResult: proof.result }; }, false, initial, 1, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h);
+    if (kind === 'no_change') act(() => h.result.current.editing.handleSelectedClipChange({ keyframes: structuredClone(w26Keys) as never, keyframeOrigin: -1.375 }));
+    else { const ui = mountAppKeyframes(h); fireEvent.click(screen.getByRole('button', { name: 'Remove keyframe at index 1' })); ui.unmount(); }
+    await waitFor(() => expect(proof).toBeDefined(), { timeout: 60_000 });
+    expect(proof.result.status).toBe(kind === 'no_change' ? 'no_change' : 'refused');
+    if (kind === 'no_change') await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    else { await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error')); expect(h.savedSeqRef.current).toBe(0); expect(proof.accept_counts).toEqual([0]); expect(proof.readback).toEqual(proof.before); }
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    act(() => { history.result.current.undo(); history.result.current.redo(); }); expect(h.requests).toHaveLength(1);
+    expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  }, 90_000);
+  it('existing-map occurrence remove accepts whole-document Undo and receipt-only Redo as the third request', async () => {
+    // Same caller/edit as the retained D6a9 negative. Its historical JSON stays
+    // untouched; the composed producer must now return the complete Undo receipt.
+    const initial = await appKeyframeData('object', true); const requests: CommitRequest[] = []; let proof!: ReturnType<typeof appKeyframeSource>;
+    const h = await setup(async request => { requests.push(request); proof = appKeyframeSource(initial, requests);
+      captureW26('w26-existing-map-accepted-history', { initial, requests, proof });
+      return { acceptedResult: proof.result, readbackConfig: fadeReadback(initial, proof) }; }, false, initial, 1, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h); const ui = mountAppKeyframes(h);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove keyframe at index 1' }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    const forward = structuredClone(proof.result.canonical_document);
+    expect(requests[0].change.commands).toEqual([{ op: 'clip.set', select: 'occurrence:occ-A/clip:clip-1',
+      resolved: ['occurrence:occ-A/clip:clip-1'], args: { keyframes: { ...w26Keys, opacity: w26Keys.opacity.filter((_, index) => index !== 1) }, keyframeOrigin: -2.375 },
+      expect: { keyframes: { state: 'present', value: w26Keys }, keyframeOrigin: { state: 'absent' } } }]);
+    expect(requests[0].scope).toEqual({ target: 'occurrence:occ-A', content: 'this-occurrence', shot_id: 'A',
+      shot_revision_id: initial.config.clips[0].app!.canonical!.revisionId,
+      internal_revision_id: initial.config.clips[0].app!.canonical!.internalTimelineRevisionId, complete: ['clips', 'tracks'], projection_version: 1 });
+    expect(proof.results[0].change.direct_writes.map(write => [write.id, write.path])).toEqual([
+      ['occurrence:occ-A/clip:clip-1', 'keyframeOrigin'], ['occurrence:occ-A/clip:clip-1', 'keyframes'],
+    ]);
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    expect(proof.results[1].canonical_document).toEqual(proof.before); expect(proof.readback).toEqual(proof.before);
+    expect(proof.results[1].change.direct_writes.map(write => [write.id, write.path])).toEqual([
+      ['occurrence:occ-A/clip:clip-1', 'keyframeOrigin'], ['occurrence:occ-A/clip:clip-1', 'keyframes'],
+    ]);
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof));
+    act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(requests).toHaveLength(3); expect(proof.results.map(result => result.status)).toEqual(['accepted', 'accepted', 'accepted']);
+    expect(proof.accept_counts).toEqual([1, 1, 1]); expect(proof.results[2].canonical_document).toEqual(forward); expect(proof.readback).toEqual(forward);
+    for (let index = 0; index < 2; index++) expect(requests[index + 1].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null,
+      args: { publication: proof.results[index].accepted_publication_id,
+        writes: proof.results[index].change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })) } }] });
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof)); expect(h.compatibilityRequests).toEqual([]);
+    ui.unmount(); history.unmount(); h.unmount();
+  }, 180_000);
+});
+
+describe('W26 publication and caller refusal', () => {
+  it('actual native Undo rejects a wrong publication and never creates Redo', async () => {
+    const initial = await appKeyframeData('absent'); const requests: CommitRequest[] = []; let proof!: ReturnType<typeof appKeyframeSource>;
+    const h = await setup(async request => {
+      const submitted = structuredClone(request);
+      if (requests.length === 1) (submitted.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands[0].args.publication = 'foreign-publication';
+      requests.push(submitted); proof = appKeyframeSource(initial, requests);
+      captureW26('w26-wrong-publication', { initial, requests, actualAppRequests: h.requests, proof });
+      return { acceptedResult: proof.result, ...(proof.result.status === 'accepted' ? { readbackConfig: fadeReadback(initial, proof) } : {}) };
+    }, false, initial);
+    const history = mountFadeHistory(h); const ui = mountAppKeyframes(h);
+    fireEvent.click(screen.getByRole('button', { name: 'Add keyframe at 3.13s' }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true)); act(() => history.result.current.undo());
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'), { timeout: 60_000 });
+    expect(proof.results[1].status).toBe('conflict'); expect(proof.accept_counts).toEqual([1, 0]);
+    expect(proof.readback).toEqual(proof.results[0].canonical_document);
+    expect(history.result.current.canRedo).toBe(false); act(() => history.result.current.redo()); expect(h.requests).toHaveLength(2);
+    expect(h.compatibilityRequests).toEqual([]); ui.unmount(); history.unmount(); h.unmount();
+  }, 180_000);
+  it.each(['origin mismatch', 'nonfinite key', 'invalid key value'] as const)('%s refuses the actual selected operation before local or provider mutation', async kind => {
+    const initial = await appKeyframeData('object'); const h = await setup(undefined, false, initial); const history = mountFadeHistory(h);
+    const keyframes = structuredClone(w26Keys);
+    if (kind === 'nonfinite key') keyframes.opacity[0].time = NaN;
+    if (kind === 'invalid key value') keyframes.opacity[0].value = null as never;
+    act(() => h.result.current.editing.handleSelectedClipChange({ keyframes: keyframes as never, keyframeOrigin: kind === 'origin mismatch' ? 0 : -2.375 }));
+    expect(h.result.current.editSeqRef.current).toBe(0); expect(h.result.current.data).toBe(initial);
+    expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    history.unmount(); h.unmount();
+  });
+});
+
+describe('W26 whole-operation compatibility boundary', () => {
+  it.each(['missing pair', 'mixed property', 'mixed movement'] as const)('%s retains the entire existing fallback without a partial typed command', async kind => {
+    const initial = await appKeyframeData('object'); const h = await setup(undefined, false, initial);
+    const patch = { keyframes: structuredClone(w26Keys), ...(kind === 'missing pair' ? {} : { keyframeOrigin: -2.375 }),
+      ...(kind === 'mixed property' ? { opacity: 0.4 } : {}), ...(kind === 'mixed movement' ? { at: 2.5 } : {}) };
+    act(() => h.result.current.editing.handleSelectedClipChange(patch as never));
+    expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined(); expect(h.result.current.editSeqRef.current).toBe(1);
+    await waitFor(() => expect(h.compatibilityRequests).toHaveLength(1));
+    expect(['error', 'retrying']).toContain(h.result.current.persistence.saveStatus);
+    expect(h.requests).toEqual([]); expect(h.savedSeqRef.current).toBe(0);
+    captureW26('w26-fallback-' + kind.replaceAll(' ', '-'), { compatibility: h.compatibilityRequests, typed: h.requests, patch });
+    h.unmount();
+  });
+});
+
+
+async function appBulkKeyframeData(noChange = false) {
+  const base = await appKeyframeData('declared');
+  const first = { ...base.config.clips[0], label: 'One' };
+  const second = { ...base.config.clips[1], label: 'Two', ...(noChange ? { keyframes: {}, keyframeOrigin: -5 } : {}) };
+  const third = { ...base.config.clips[1], id: 'clip-3', at: 7, label: 'Three', keyframes: noChange ? {} : null, keyframeOrigin: -0.5 };
+  return buildTimelineData({ ...base.config, clips: [first, second, third] } as never, base.registry, undefined, 1, undefined, base.head);
+}
+function appBulkKeyframePatch(meta: import('../lib/timeline-data.ts').ClipMeta) {
+  const time = meta.label === 'One' ? 2.375 : meta.label === 'Two' ? 5 : 7;
+  return { keyframes: { ...structuredClone(meta.keyframes ?? {}), opacity: [
+    ...(structuredClone(meta.keyframes?.opacity ?? [])),
+    { id: 'new-' + meta.label, time: 0.375, value: meta.label === 'One' ? 0.1 : 0.8, interpolation: 'hold' as const, opaque: { owner: meta.label } },
+  ] }, keyframeOrigin: meta.keyframeOrigin === undefined ? -time : meta.keyframeOrigin };
+}
+const w26BulkOrder = ['clip-2', 'clip-1', 'clip-3'];
+
+describe('W26 existing bulk API capture', () => {
+  it('captures every own pair in original selection order before optimistic mutation', async () => {
+    const initial = await appBulkKeyframeData(); const before = structuredClone(initial.config);
+    const h = await setup(undefined, false, initial);
+    const snapshots: unknown[] = [];
+    act(() => h.result.current.editing.handleUpdateClipsDeep(w26BulkOrder, meta => {
+      snapshots.push(structuredClone(meta)); return appBulkKeyframePatch(meta);
+    }));
+    const commands = gestureCommandsFor(h.result.current.data!)!;
+    expect(commands.map(command => command.select)).toEqual(w26BulkOrder.map(id => 'parent/clip:' + id));
+    for (const [index, id] of w26BulkOrder.entries()) {
+      const clip = before.clips.find(clip => clip.id === id)!;
+      expect(commands[index].args).toEqual(appBulkKeyframePatch(initial.meta[id]));
+      expect(commands[index].expect).toEqual(Object.fromEntries(['keyframes', 'keyframeOrigin'].map(field => [field,
+        Object.prototype.hasOwnProperty.call(clip, field) ? { state: 'present', value: Reflect.get(clip, field) } : { state: 'absent' }])));
+    }
+    expect(snapshots).toEqual(w26BulkOrder.map(id => initial.meta[id])); expect(initial.config).toEqual(before);
+    expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  });
+  it('common replacement captures each member before-state without borrowing another member pair', async () => {
+    const base = await appBulkKeyframeData();
+    const initial = await buildTimelineData({ ...base.config, clips: base.config.clips.map(clip => ({ ...clip, keyframeOrigin: -0.5 })) }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial); const patch = { keyframes: {}, keyframeOrigin: -0.5 };
+    act(() => h.result.current.editing.handleUpdateClips(w26BulkOrder, patch));
+    const commands = gestureCommandsFor(h.result.current.data!)!;
+    expect(commands.map(command => command.select)).toEqual(w26BulkOrder.map(id => 'parent/clip:' + id));
+    expect(commands.map(command => command.expect!.keyframes)).toEqual([
+      { state: 'absent' }, { state: 'present', value: w26Keys }, { state: 'present', value: null },
+    ]);
+    expect(commands.map(command => command.args)).toEqual([patch, patch, patch]);
+    patch.keyframeOrigin = 123;
+    expect(commands.every(command => command.args.keyframeOrigin === -0.5)).toBe(true);
+    expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  });
+  it.each(['invalid-second', 'missing-pair', 'missing-target', 'mixed-field', 'mixed-owner'] as const)('%s refuses the whole bulk operation before local/provider mutation', async kind => {
+    let initial = await appBulkKeyframeData();
+    if (kind === 'mixed-owner') {
+      const occurrence = await appKeyframeData('declared', true);
+      initial = await buildTimelineData({ ...initial.config, clips: [occurrence.config.clips[0], ...initial.config.clips.slice(1)] }, initial.registry, undefined, 1, undefined, initial.head);
+    }
+    const h = await setup(undefined, false, initial); const history = mountFadeHistory(h);
+    const ids = kind === 'mixed-owner' ? ['clip-2', initial.config.clips[0].id] : kind === 'missing-target' ? ['clip-2', 'missing'] : w26BulkOrder;
+    let member = 0;
+    act(() => h.result.current.editing.handleUpdateClipsDeep(ids, meta => {
+      const patch = appBulkKeyframePatch(meta); member++;
+      if (member === 2 && kind === 'invalid-second') patch.keyframeOrigin = 999;
+      if (member === 2 && kind === 'missing-pair') return { keyframes: patch.keyframes };
+      return kind === 'mixed-field' ? { ...patch, opacity: 0.2 } : patch;
+    }));
+    expect(h.result.current.data).toBe(initial); expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    history.unmount(); h.unmount();
+  });
+  it('common replacement refuses a second member with a different captured time origin', async () => {
+    const initial = await appBulkKeyframeData(); const h = await setup(undefined, false, initial);
+    act(() => h.result.current.editing.handleUpdateClips(w26BulkOrder, { keyframes: {}, keyframeOrigin: -5 }));
+    expect(h.result.current.data).toBe(initial); expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  });
+});
+
+describe('W26 existing bulk API SDK accepted history', () => {
+  it.each(['deep-transform', 'common-replacement'] as const)('%s retains captured pairs/order through atomic forward, whole-document Undo and third accepted Redo', async route => {
+    let initial = await appBulkKeyframeData();
+    if (route === 'common-replacement') initial = await buildTimelineData({ ...initial.config,
+      clips: initial.config.clips.map(clip => ({ ...clip, keyframeOrigin: -0.5 })) }, initial.registry, undefined, 1, undefined, initial.head);
+    const requests: CommitRequest[] = []; let proof!: ReturnType<typeof appKeyframeSource>;
+    const h = await setup(async request => { requests.push(request); proof = appKeyframeSource(initial, requests);
+      captureW26('w26-bulk-' + route, { initial, requests, proof });
+      return { acceptedResult: proof.result, readbackConfig: fadeReadback(initial, proof) }; }, false, initial);
+    const history = mountFadeHistory(h);
+    act(() => route === 'deep-transform' ? h.result.current.editing.handleUpdateClipsDeep(w26BulkOrder, appBulkKeyframePatch)
+      : h.result.current.editing.handleUpdateClips(w26BulkOrder, { keyframes: { opacity: [{ id: 'explicit-replacement', time: 0.125, value: 0.4, interpolation: 'hold' }] }, keyframeOrigin: -0.5 }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    const forward = structuredClone(proof.result.canonical_document);
+    const commands = (requests[0].change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands;
+    expect(commands.map(command => command.select)).toEqual(w26BulkOrder.map(id => 'parent/clip:' + id));
+    expect(proof.result.change.direct_writes).toHaveLength(6);
+    for (const command of commands) for (const field of ['keyframes', 'keyframeOrigin']) expect(proof.result.change.direct_writes).toContainEqual({
+      id: command.select, path: field, before: command.expect![field], after: { state: 'present', value: command.args[field] },
+    });
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    expect(proof.results[1].canonical_document).toEqual(proof.before); expect(proof.readback).toEqual(proof.before);
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof));
+    act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(requests).toHaveLength(3); expect(proof.results.map(result => result.status)).toEqual(['accepted', 'accepted', 'accepted']);
+    expect(proof.accept_counts).toEqual([1, 1, 1]); expect(proof.results[2].canonical_document).toEqual(forward); expect(proof.readback).toEqual(forward);
+    for (let index = 0; index < 2; index++) {
+      const writes = w26BulkOrder.flatMap(id => proof.results[index].change.direct_writes.filter(write => write.id === 'parent/clip:' + id));
+      expect(requests[index + 1].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null, args: {
+        publication: proof.results[index].accepted_publication_id, writes: writes.map(write => ({ ...write, before: write.after, after: write.before })),
+      } }] });
+    }
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof)); expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  }, 180_000);
+  it.each(['stale-second-origin', 'stale-base', 'no_change'] as const)('%s preserves whole-batch atomicity and explicit no-change history behavior', async kind => {
+    const initial = await appBulkKeyframeData(kind === 'no_change'); let proof!: ReturnType<typeof appKeyframeSource>; let capturedRequest!: CommitRequest;
+    const h = await setup(async request => { capturedRequest = structuredClone(request); proof = appKeyframeSource(initial, [request], kind === 'no_change' ? undefined : kind);
+      captureW26('w26-bulk-' + kind, { initial, request, proof }); return { acceptedResult: proof.result }; }, false, initial);
+    const history = mountFadeHistory(h);
+    act(() => h.result.current.editing.handleUpdateClipsDeep(w26BulkOrder, kind === 'no_change'
+      ? meta => ({ keyframes: structuredClone(meta.keyframes!), keyframeOrigin: meta.keyframeOrigin }) : appBulkKeyframePatch));
+    await waitFor(() => expect(proof).toBeDefined(), { timeout: 60_000 });
+    expect(proof.result.status).toBe(kind === 'no_change' ? 'no_change' : kind === 'stale-base' ? 'conflict' : 'refused');
+    if (kind === 'no_change') { await waitFor(() => expect(h.savedSeqRef.current).toBe(1)); expect(proof.result.change.direct_writes).toHaveLength(6); }
+    else { await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error')); expect(h.savedSeqRef.current).toBe(0); expect(proof.accept_counts).toEqual([0]); }
+    if (kind === 'stale-base') {
+      const commands = (capturedRequest.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands;
+      expect(proof.base_revision_id).toBe('parent-r1');
+      expect(proof.revision_reads).toContain('parent-r1'); expect(proof.revision_reads).toContain('advanced-head');
+      expect(proof.head_revision_before).toBe('advanced-head'); expect(proof.head_revision_after).toBe('advanced-head');
+      expect(proof.advanced_head_document).not.toEqual(proof.before);
+      expect(proof.advanced_head_document).toMatchObject({ parent: { clips: expect.arrayContaining([
+        expect.objectContaining({ id: 'clip-1', keyframes: expect.objectContaining({ opacity: expect.arrayContaining([
+          expect.objectContaining({ time: 7.125, value: 0.71 }),
+        ]) }) }),
+      ]) } });
+      expect(commands.map(command => command.select)).toEqual(w26BulkOrder.map(id => 'parent/clip:' + id));
+      expect(commands[1].select).toBe('parent/clip:clip-1');
+      expect(commands[1].expect?.keyframes).toEqual({ state: 'present', value: w26Keys });
+      expect(proof.result.conflicts).toContainEqual(expect.objectContaining({ id: commands[1].select, path: 'keyframes',
+        base: commands[1].expect?.keyframes, theirs: { state: 'present', value: expect.objectContaining({ opacity: expect.arrayContaining([
+          expect.objectContaining({ time: 7.125, value: 0.71 }),
+        ]) }) } }));
+      expect(proof.result.change.direct_writes).toEqual([]);
+      expect(proof.result.accepted_revision_id).toBeNull(); expect(proof.result.accepted_publication_id).toBeNull();
+      expect(proof.readback).toEqual(proof.head_document_before);
+      expect(proof.head_document_after).toEqual(proof.head_document_before);
+    } else expect(proof.readback).toEqual(proof.before);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    act(() => { history.result.current.undo(); history.result.current.redo(); }); expect(h.requests).toHaveLength(1);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  }, 90_000);
 });

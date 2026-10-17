@@ -1,4 +1,14 @@
-import { bulkTransitionGestureCommands, continuousBatchGestureCommands, continuousEffectGestureCommands, compositeEffectGestureCommands, propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';import { useCallback, useLayoutEffect, useRef } from 'react';
+import {
+  attachGestureCommands,
+  bulkTransitionGestureCommands,
+  continuousBatchGestureCommands,
+  continuousEffectGestureCommands,
+  compositeEffectGestureCommands,
+  gestureCommandsFor,
+  moveGestureCommands,
+  propertyGestureCommands,
+} from '../commands/semanticGestures.ts';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
 import type { SelectClipOptions } from '@/shared/state/selectionStore.ts';
@@ -171,14 +181,24 @@ export function useClipEditing({
       return;
     }
 
+    const keyframeEdit = Object.prototype.hasOwnProperty.call(patch, 'keyframes') || Object.prototype.hasOwnProperty.call(patch, 'keyframeOrigin');
+    const pairs = keyframeEdit ? validClipIds.map(id => compositeEffectGestureCommands(current, id, patch)) : undefined;
+    // This API's explicit common replacement still captures each owner's own
+    // before pair. Any unsupported member/pair refuses before optimistic writes.
+    if (pairs && (validClipIds.length !== new Set(clipIds).size || pairs.some(pair => pair.refused || !pair.commands))) return;
+    if (pairs) {
+      const captured = { ...current };
+      attachGestureCommands(captured, pairs.flatMap(pair => pair.commands!), current);
+      if (!gestureCommandsFor(captured)) return;
+    }
     const transitionBatch = validClipIds.length === clipIds.length
       ? bulkTransitionGestureCommands(current, validClipIds.map(id => ({ id, patch })), { elementHost })
       : undefined;
     const metaUpdates = transitionBatch?.metaUpdates ?? Object.fromEntries(
-      validClipIds.map((clipId) => [clipId, patch]),
+      validClipIds.map((clipId) => [clipId, keyframeEdit ? structuredClone(patch) : patch]),
     ) as Record<string, Partial<ClipMeta>>;
 
-    const commandGroups = validClipIds.map((id) => {
+    const commandGroups = pairs ? pairs.map(pair => pair.commands) : validClipIds.map((id) => {
       const continuous = continuousEffectGestureCommands(current, id, patch);
       return continuous.handled ? (validClipIds.length === clipIds.length ? continuous.commands : undefined) : propertyGestureCommands(current, id, patch);
     });
@@ -233,17 +253,29 @@ export function useClipEditing({
         continue;
       }
 
-      metaUpdates[clipId] = patchFn(existing);
+      // Give the transform a private member snapshot; it cannot mutate the
+      // guards or another selected member while the batch is being captured.
+      const patch = patchFn(structuredClone(existing));
+      metaUpdates[clipId] = Object.prototype.hasOwnProperty.call(patch, 'keyframes') || Object.prototype.hasOwnProperty.call(patch, 'keyframeOrigin')
+        ? structuredClone(patch) : patch;
     }
 
     if (Object.keys(metaUpdates).length === 0) {
       return;
     }
 
+    const keyframeEdit = Object.values(metaUpdates).some(patch => Object.prototype.hasOwnProperty.call(patch, 'keyframes') || Object.prototype.hasOwnProperty.call(patch, 'keyframeOrigin'));
+    const pairs = keyframeEdit ? validClipIds.map(id => compositeEffectGestureCommands(current, id, metaUpdates[id])) : undefined;
+    if (pairs && (validClipIds.length !== new Set(clipIds).size || pairs.some(pair => pair.refused || !pair.commands))) return;
+    if (pairs) {
+      const captured = { ...current };
+      attachGestureCommands(captured, pairs.flatMap(pair => pair.commands!), current);
+      if (!gestureCommandsFor(captured)) return;
+    }
     const transitionBatch = validClipIds.length === clipIds.length
       ? bulkTransitionGestureCommands(current, validClipIds.map(id => ({ id, patch: metaUpdates[id] })), { elementHost })
       : undefined;
-    const groups = validClipIds.map(id => {
+    const groups = pairs ? pairs.map(pair => pair.commands) : validClipIds.map(id => {
       const patch = metaUpdates[id];
       if (!patch) return undefined;
       const continuous = continuousEffectGestureCommands(current, id, patch);
@@ -266,7 +298,11 @@ export function useClipEditing({
     }
 
     const { at: _at, ...metaPatch } = patch;
-    const composite = compositeEffectGestureCommands(current, selectedClipId, metaPatch, { elementHost });
+    // A keyframe command owns only the inspector pair. Keep mixed movement or
+    // property patches on the existing whole-operation compatibility route.
+    const compositePatch = Object.prototype.hasOwnProperty.call(metaPatch, 'keyframes')
+      || Object.prototype.hasOwnProperty.call(metaPatch, 'keyframeOrigin') ? patch : metaPatch;
+    const composite = compositeEffectGestureCommands(current, selectedClipId, compositePatch, { elementHost });
     if (composite.refused) return;
     const effectivePatch = composite.commands?.length && composite.localPatch ? composite.localPatch : metaPatch;
     const affectsDuration = patchAffectsDuration(effectivePatch as Partial<ClipMeta>);

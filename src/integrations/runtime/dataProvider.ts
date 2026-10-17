@@ -1,3 +1,4 @@
+import { appKeyframeHistoryInverse, isAppKeyframeHistoryBatch, isAppKeyframeHistoryInverse } from '@/tools/video-editor/commands/appKeyframeHistory.ts';
 import { continuousHistoryInverse, isContinuousHistoryBatch, isContinuousHistoryInverse } from '@/tools/video-editor/commands/continuousHistory.ts';
 import { fadeHistoryInverse } from '@/tools/video-editor/commands/fadeHistory.ts';
 import { clipLookStyleInverse } from '@/tools/video-editor/commands/clipLookStyleHistory.ts';
@@ -1089,6 +1090,12 @@ export class RuntimeDataProvider implements DataProvider {
     const current = this.canonicalTimelineState.get(timelineId);
     const advanced = current && current.headRevisionId !== request.base_revision_id && current.headRevisionId !== head;
     const version = current?.headRevisionId === head || advanced ? current!.version : (current?.version ?? 0) + 1;
+    const keyframeCommands = 'commands' in request.change ? request.change.commands : [];
+    const keyframeInverse = appKeyframeHistoryInverse(keyframeCommands, result);
+    if ((isAppKeyframeHistoryBatch(keyframeCommands) || (keyframeCommands.length === 1 && isAppKeyframeHistoryInverse(keyframeCommands[0])))
+      && keyframeInverse === undefined) {
+      throw new TimelineSchemaIncompatibleError('App keyframe receipt does not match the complete authored operation.');
+    }
     const registry = normalizeRegistry(parentComposition.registry);
     if (!advanced) {
       this.canonicalTimelineState.set(timelineId, { headRevisionId: head, parentComposition, version });
@@ -1100,7 +1107,7 @@ export class RuntimeDataProvider implements DataProvider {
     const captionInverse = transcriptCaptionInverse(registryCommands, result);
     const overlapInverse = overlapTrimInverse(registryCommands, result);
     // null means this owner explicitly had no change; it must not fall through.
-    const commandInverse = registryNoChange ? null : [transitionAssignmentInverse(registryCommands, result), continuousInverse, captionInverse, assetRegistrationInverse(registryCommands, result),
+    const commandInverse = registryNoChange ? null : [transitionAssignmentInverse(registryCommands, result), continuousInverse, keyframeInverse, captionInverse, assetRegistrationInverse(registryCommands, result),
       overlapInverse, tiedHoldExpansionInverse(registryCommands, result), clipPlacementInverse(registryCommands, result),
       clipStructureInverse(registryCommands, result), trackHistoryInverse(registryCommands, result), fadeHistoryInverse(registryCommands, result), clipLookStyleInverse(registryCommands, result), clipParamsHistoryInverse(registryCommands, result)]
       .find(inverse => inverse !== undefined);

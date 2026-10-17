@@ -1,3 +1,4 @@
+import { isAppKeyframeHistoryBatch } from '../commands/appKeyframeHistory.ts';
 import { isContinuousHistoryBatch } from '../commands/continuousHistory.ts';
 import { isFadeHistoryBatch } from '../commands/fadeHistory.ts';
 import { isClipLookStyleBatch } from '../commands/clipLookStyleHistory.ts';
@@ -421,6 +422,7 @@ export function useTimelineCommit({
             || isClipStructureBatch(options.editCommands)
             || isTrackHistoryBatch(options.editCommands)
             || isFadeHistoryBatch(options.editCommands)
+            || isAppKeyframeHistoryBatch(options.editCommands)
             || isContinuousHistoryBatch(options.editCommands)
             || isClipLookStyleBatch(options.editCommands)
             || isClipParamsHistoryBatch(options.editCommands)
