@@ -809,7 +809,7 @@ class RelayHandoffEndpoint:
 
 
 def _native_handoff_endpoint(channel, session, preparation, binding):
-    from banodoco_local.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority, _read_owner_file
+    from astrid_runtime.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority, _read_owner_file
     from .local_execution_handoff import HandoffJournal, decode, read_protected, validate_fence, digest
     peer = AuthenticatedCleanupActor.private_peer(channel)
     relay_actor = AuthenticatedCleanupActor.current()
@@ -911,7 +911,7 @@ class RetainedProcess:
         self.actor = None
 
     def bind_actor(self):
-        from banodoco_local.custody_broker import AuthenticatedCleanupActor
+        from astrid_runtime.custody_broker import AuthenticatedCleanupActor
         with self.guard:
             self.actor = AuthenticatedCleanupActor.retained_child(self.child, reap_guard=self.guard)
         return self.actor
@@ -986,7 +986,7 @@ class NativeHostSession:
         self.launch_verifier = launch_verifier if launch_verifier is not None else HostLaunchVerifier()
         self.verified_launch = None
         self.binding_file = None
-        from banodoco_local.custody_broker import RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv
+        from astrid_runtime.custody_broker import RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv
         self.timeout = timeout
         self.preparation = preparation
         self.config = dict(config)
@@ -1396,7 +1396,7 @@ def serve_control(channel, *, session_factory=NativeHostSession.create, referenc
     waiter must prove. Capability recovery/handoff are intentionally rejected
     until their separate continuation is implemented.
     """
-    from banodoco_local.custody_broker import RoleCustodyAuthority, default_process_identity
+    from astrid_runtime.custody_broker import RoleCustodyAuthority, default_process_identity
     preparation = None
     session = None
     prepare_input = None

@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Banodoco Workspace Runtime
+  title: Astrid Runtime
   version: 1.0.0
   description: Product-neutral local workspace protocol.
   x-protocol-id: workspace.v1
@@ -1112,7 +1112,7 @@ components:
           then:
             properties:
               document_id: { type: string, pattern: '^transcript:[0-9a-f]{64}$' }
-              content: { $ref: 'https://banodoco.dev/workspace/v1/schemas/document.json#/$defs/MediaTranscript' }
+              content: { $ref: 'https://astrid.haus/workspace/v1/schemas/document.json#/$defs/MediaTranscript' }
         - if: { properties: { document_id: { pattern: '^transcript:' } }, required: [document_id] }
           then: { properties: { kind: { const: media.transcript } } }
     UpdateDocument:
@@ -1121,7 +1121,7 @@ components:
       properties: { expected_version: { type: integer, minimum: 1 }, kind: { type: string }, content: {} }
       allOf:
         - if: { properties: { kind: { const: media.transcript } }, required: [kind] }
-          then: { properties: { content: { $ref: 'https://banodoco.dev/workspace/v1/schemas/document.json#/$defs/MediaTranscript' } } }
+          then: { properties: { content: { $ref: 'https://astrid.haus/workspace/v1/schemas/document.json#/$defs/MediaTranscript' } } }
     UpdateTimeline:
       type: object
       required: [expected_version]

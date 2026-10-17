@@ -157,7 +157,7 @@ def test_new_admission_reuses_space_from_expired_terminal_spec(tmp_path):
 
 
 def test_configured_retention_window_applies_to_admission_and_compaction(tmp_path, monkeypatch):
-    monkeypatch.setenv("BANODOCO_RUNTIME_SPEC_RETENTION_DAYS", "60")
+    monkeypatch.setenv("ASTRID_RUNTIME_SPEC_RETENTION_DAYS", "60")
     root = tmp_path / "realm"
     store = RealmStore.initialize(root)
     realm_id = store.realm["id"]

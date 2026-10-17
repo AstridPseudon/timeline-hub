@@ -11,7 +11,7 @@ import pytest
 from runtime_protocol.errors import ConflictError, LeaseError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
-from banodoco_workspace_client import WorkspaceClient
+from astrid_runtime_client import WorkspaceClient
 
 
 def _digest(name: str) -> str:

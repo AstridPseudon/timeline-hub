@@ -694,7 +694,7 @@ def test_g1b_native_session_fake_launch_preserves_v1_or_consumes_closed_gate(tmp
         def wait_until_sealed(self):broker_calls.append('seal')
         def abort_before_spawn(self):broker_calls.append('abort')
     custody=SimpleNamespace(RoleBoundCustodyBroker=FakeBroker,default_process_identity=lambda p:None,custody_wrapper_argv=lambda p:[p,'fake-wrapper'])
-    monkeypatch.setitem(sys.modules,'banodoco_local.custody_broker',custody)
+    monkeypatch.setitem(sys.modules,'astrid_runtime.custody_broker',custody)
     monkeypatch.setattr('subprocess.Popen',lambda *a,**k:fake_child)
     class FakeRetained:
         def __init__(self,child):self.child=child
@@ -730,7 +730,7 @@ def test_g1b_native_session_unverified_request_never_spawns_or_sends_v2(tmp_path
     class FakeBroker:
         def __init__(self,**kw):pass
         def abort_before_spawn(self):calls.append('abort-before-spawn')
-    monkeypatch.setitem(sys.modules,'banodoco_local.custody_broker',SimpleNamespace(RoleBoundCustodyBroker=FakeBroker,default_process_identity=lambda p:None,custody_wrapper_argv=lambda p:[]))
+    monkeypatch.setitem(sys.modules,'astrid_runtime.custody_broker',SimpleNamespace(RoleBoundCustodyBroker=FakeBroker,default_process_identity=lambda p:None,custody_wrapper_argv=lambda p:[]))
     monkeypatch.setattr('subprocess.Popen',lambda *a,**k:pytest.fail('unverified request launched'))
     retained=[]
     with pytest.raises(HostLaunchError):supervisor.NativeHostSession.create(preparation,config,retain=retained.append)

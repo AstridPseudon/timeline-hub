@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
-from banodoco_workspace_client import ApiError, WorkspaceClient
+from astrid_runtime_client import ApiError, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
 from runtime_protocol.service import RuntimeService
@@ -89,7 +89,7 @@ def _publish_with_explicit_media(service, project_id, *, parent_revision_id="par
 def _explicit_media_publication(project_id, scene, audio, *, parent_revision_id="parent-media"):
     body = _publication(project_id, parent_revision_id=parent_revision_id)
     body["parent_composition"]["config"]["clips"] = [{
-        "clipType": "com.reigh.astrid.liveScene",
+        "clipType": "haus.astrid.liveScene",
         "app": {"liveScene": {"revision": scene, "source": {"objectId": scene, "revision": scene}}},
     }]
     body["dependency_manifest"] = {"media": [

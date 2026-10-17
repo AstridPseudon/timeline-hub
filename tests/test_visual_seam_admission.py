@@ -160,8 +160,8 @@ def test_opaque_owner_activation_is_known_without_claiming_internal_phase_timing
 
 
 def test_opaque_primary_picture_owner_is_represented_by_the_cut_not_auxiliary_activation():
-    clips = [{"id": "a", "clipType": "com.reigh.astrid.liveScene", "track": "v", "at": 0, "hold": 1},
-             {"id": "b", "clipType": "com.reigh.astrid.liveScene", "track": "v", "at": 1, "hold": 1}]
+    clips = [{"id": "a", "clipType": "haus.astrid.liveScene", "track": "v", "at": 0, "hold": 1},
+             {"id": "b", "clipType": "haus.astrid.liveScene", "track": "v", "at": 1, "hold": 1}]
     report = _normalized(clips)
     assert not report["blocked"]
     assert report["boundaries"][0]["opaquePaths"] == [["parent", "t", "clip", "b"]]

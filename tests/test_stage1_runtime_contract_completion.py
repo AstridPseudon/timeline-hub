@@ -7,13 +7,13 @@ import urllib.request
 
 import pytest
 
-from banodoco_local.bootstrap import BootstrapConfig, BootstrapError, SourceProfile, bootstrap
-from banodoco_local.paths import RuntimePaths
+from astrid_runtime.bootstrap import BootstrapConfig, BootstrapError, SourceProfile, bootstrap
+from astrid_runtime.paths import RuntimePaths
 from runtime_protocol.errors import AuthorizationError, ConflictError, LeaseError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.daemon import RuntimeDaemon
-from banodoco_workspace_client import WorkspaceClient
+from astrid_runtime_client import WorkspaceClient
 
 
 def test_targeted_mutations_replay_the_same_committed_receipt(tmp_path: Path) -> None:
@@ -121,7 +121,7 @@ def test_bootstrap_rolls_back_new_realm_after_handoff_failure(tmp_path: Path) ->
             self.stopped = True
 
     boundary = FailingBoundary()
-    from banodoco_local.workspace import configure_workspace
+    from astrid_runtime.workspace import configure_workspace
     root = paths.realms_dir / "explicit-realm"
     configure_workspace(
         paths, boundary, BootstrapConfig(source_profile=profile), mode="create",

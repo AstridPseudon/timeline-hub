@@ -8,7 +8,7 @@ import pytest
 from runtime_protocol.errors import InvalidRequestError
 from runtime_protocol.service import RuntimeService, _page_cursor, _page_rows
 from runtime_protocol.store import RealmStore
-from banodoco_workspace_client.generated import ApiError, WorkspaceClient
+from astrid_runtime_client.generated import ApiError, WorkspaceClient
 
 
 def test_projects_and_events_are_complete_keyset_pages(tmp_path: Path) -> None:

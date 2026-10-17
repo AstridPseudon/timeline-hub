@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://banodoco.dev/workspace/v1/schemas/handshake.json",
+  "$id": "https://astrid.haus/workspace/v1/schemas/handshake.json",
   "title": "Scoped actor handshake",
   "type": "object", "additionalProperties": false,
   "required": ["protocol", "client_name", "client_version", "requested_scopes"],

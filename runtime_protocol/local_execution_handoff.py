@@ -247,12 +247,12 @@ def validate_fence(value):
 
 
 def read_protected(path):
-    from banodoco_local.custody_broker import _read_owner_file
+    from astrid_runtime.custody_broker import _read_owner_file
     return decode(_read_owner_file(Path(path))[0])
 
 
 def write_protected(path, value):
-    from banodoco_local.custody_broker import _atomic_owner_json
+    from astrid_runtime.custody_broker import _atomic_owner_json
     _atomic_owner_json(Path(path), decode(canonical(value)))
 
 

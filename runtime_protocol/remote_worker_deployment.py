@@ -880,7 +880,7 @@ def project_launch(reference: DeploymentReference) -> ProjectedLaunch:
         "ASTRID_OUTPUT_ROOT": str(reference.output_root),
         "ASTRID_CREDENTIAL_REF": reference.credential_ref,
         "ASTRID_SOURCE_CLOSURE_DIGEST": reference.source_closure_digest,
-        "BANODOCO_LOCAL_DATA_ROOT": str(reference.data_root),
+        "ASTRID_RUNTIME_DATA_ROOT": str(reference.data_root),
     }
     if reference.execution_target is not None:
         env["ASTRID_EXECUTION_TARGET_JSON"] = json.dumps(

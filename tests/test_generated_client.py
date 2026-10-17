@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
-from banodoco_workspace_client import ApiError, Capability, ClaimWaiting, WorkspaceClient
+from astrid_runtime_client import ApiError, Capability, ClaimWaiting, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
 
@@ -114,7 +114,7 @@ def test_acquisition_selected_python_renderer_parity(tmp_path):
     isolated = tmp_path / "selected-generated.py"
     isolated.write_text(renderer.render_python_client())
     assert f'SCHEMA_DIGEST = "{renderer.contract_digest()}"' in isolated.read_text()
-    assert isolated.read_bytes() == (root / "packages/python/banodoco_workspace_client/generated.py").read_bytes()
+    assert isolated.read_bytes() == (root / "packages/python/astrid_runtime_client/generated.py").read_bytes()
 
 
 def test_generated_client_smoke_and_scoped_handshake() -> None:
@@ -715,7 +715,7 @@ def test_python_client_source_is_tracked_and_generated_check_is_not_self_referen
     component = json.loads((root / "contract" / "component-manifest.json").read_text())
     python_component = next(item for item in component["clients"] if item["generator"] == "GENERATOR-PYTHON-INREPO")
     template = root / "generators" / "python_client_template.py"
-    output = root / "packages" / "python" / "banodoco_workspace_client" / "generated.py"
+    output = root / "packages" / "python" / "astrid_runtime_client" / "generated.py"
     assert (root / python_component["source"]).is_file()
     assert (root / python_component["output"]).resolve() == output.resolve()
     assert template.is_file()
@@ -739,7 +739,7 @@ def _preference_fixture(name: str = "preferences-user.json") -> dict:
 
 
 def test_preferences_generated_client_typed_user_result_and_encoded_project_selector() -> None:
-    from banodoco_workspace_client import PreferenceMutationResult, PreferenceResource
+    from astrid_runtime_client import PreferenceMutationResult, PreferenceResource
 
     resource = _preference_fixture()
     calls = []

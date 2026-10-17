@@ -40,7 +40,7 @@ from .local_worker import (
 )
 
 
-CONTROL_VERSION = "reigh.local-worker-control/v1"
+CONTROL_VERSION = "workspace.local-worker-control/v1"
 CONTROL_FRAME_LIMIT = 64 * 1024
 PROFILE_FIELDS = (
     "profile_id", "workspace_uuid", "realm_root", "support_root", "machine_id",
@@ -316,7 +316,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
     def _prepare_host_only(self, profile, *, operation_id, channel_id):
         from .local_execution_supervisor import host_prepare_request, RetainedProcess
         from .verified_host_launch import TrustedLocalHostLaunchVerifier, canonical
-        from banodoco_local.custody_broker import RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv
+        from astrid_runtime.custody_broker import RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv
         if self._active is not None:
             self.abort(self._active)
         if self._prepare_cancel.is_set():
@@ -367,7 +367,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 raise ConflictError("host-only selected environment contains unapproved fields")
             environment.update(selected_environment)
             # Fixed product roots are owner-selected, not ambient authority.
-            environment.update(ASTRID_OUTPUT_ROOT=str(profile.support_root / "host-output"), BANODOCO_LOCAL_DATA_ROOT=str(profile.realm_root))
+            environment.update(ASTRID_OUTPUT_ROOT=str(profile.support_root / "host-output"), ASTRID_RUNTIME_DATA_ROOT=str(profile.realm_root))
             Path(environment["ASTRID_OUTPUT_ROOT"]).mkdir(parents=True, exist_ok=True)
             verifier = TrustedLocalHostLaunchVerifier(installed_release=_installed_host_release(profile, self.config))
             verified = verifier.verify(preparation=request, config=self.config, host_argv=argv, environment=environment)
@@ -394,7 +394,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             identity = retained.verify(); handle.birth_id = identity["birth_id"]
             verifier.bind_child(verified, child=process, identity=identity)
             binding_parent.sendall(binding); binding_parent.close()
-            from banodoco_local.custody_broker import _atomic_owner_json
+            from astrid_runtime.custody_broker import _atomic_owner_json
             _atomic_owner_json(handle.owner_session_config_path, profile.host_launch)
             # The private preparation channel reports no engine allocation.
             _frame_send(parent, request)
@@ -455,7 +455,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
 
     def _prepare_relay(self, profile, *, operation_id, channel_id):
         from .local_execution_supervisor import host_prepare_request, RetainedProcess
-        from banodoco_local.custody_broker import RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv
+        from astrid_runtime.custody_broker import RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv
         if self._active is not None:
             self.abort(self._active)
         if self._prepare_cancel.is_set():
@@ -810,7 +810,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         return handle if response.get("reconnected") is True else None
 
     def _verify_retained_relay_receipt(self, handle, receipt):
-        from banodoco_local.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority, _read_owner_file
+        from astrid_runtime.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority, _read_owner_file
         from .local_execution_handoff import decode, read_protected
         if (handle is not self._active or not handle.relay or handle.closed or not handle.activated
                 or receipt.get("version") != "runtime.local-worker-receipt/v4"
@@ -874,7 +874,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
     def _adopted_handoff_command(self, handle, request):
         from .local_execution_supervisor import CONTROL_VERSION as relay_version
         from .local_execution_handoff import validate_reply
-        from banodoco_local.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority
+        from astrid_runtime.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority
         if handle is not self._adopted_handoff or request["binding"] != handle.binding:
             raise ConflictError("adopted handoff control binding differs")
         with handle.rpc_lock:
@@ -1035,7 +1035,7 @@ class OSProcessInspector:
 
     def observe(self, handle: _PreparedWorker) -> LocalWorkerObservation:
         if _host_only(self.profile):
-            from banodoco_local.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority
+            from astrid_runtime.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority
             from .local_worker import _digest
             if not isinstance(handle, _PreparedWorker) or not handle.host_only or handle.closed:
                 raise ConflictError("host-only observation lacks original retained handle")
@@ -1052,7 +1052,7 @@ class OSProcessInspector:
             machine = _owner_machine_id()
             if machine != self.profile.machine_id:
                 raise ConflictError("host-only machine identity differs")
-            from banodoco_local.custody_broker import _read_owner_file
+            from astrid_runtime.custody_broker import _read_owner_file
             raw, _ = _read_owner_file(handle.owner_session_config_path)
             if _digest(json.loads(raw)) != self.profile.session_config_digest:
                 raise ConflictError("host-only retained launch configuration differs")
@@ -1103,7 +1103,7 @@ class OSProcessInspector:
             raise ConflictError("Worker session configuration claim disagrees with owner observation")
         custody = None
         if self.profile.engine_launch is not None:
-            from banodoco_local.custody_broker import RoleCustodyAuthority, current_process_audit_token, default_process_identity, _incarnation
+            from astrid_runtime.custody_broker import RoleCustodyAuthority, current_process_audit_token, default_process_identity, _incarnation
             from .local_execution_supervisor import validate_role_reference
             custody = report.get("custody_capabilities")
             if not handle.relay or not isinstance(custody, Mapping) or set(custody) != {"relay", "host", "engine", "engine_listener"} or report.get("owner_epoch") != handle.owner_epoch or report.get("custody_scope") != handle.custody_scope:
@@ -1296,7 +1296,7 @@ def _verify_installed_host_records(profile, config):
     from .verified_host_launch import raw_digest
     source = Path(config["source_checkout"])
     records = {}
-    for package in ("astrid", "banodoco-workspace-runtime"):
+    for package in ("astrid", "astrid-runtime"):
         distribution = importlib.metadata.distribution(package)
         if Path(distribution.locate_file("")).resolve() != source:
             raise ConflictError("host-only release is outside current installed root")

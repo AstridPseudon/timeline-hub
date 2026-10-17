@@ -1,4 +1,4 @@
-"""The intentionally thin ``banodoco-local`` command surface."""
+"""The intentionally thin ``astrid-runtime`` command surface."""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ class UnconfiguredBoundary:
     """Prevent accidental authority creation when no generated client is wired."""
 
     def start(self, **kwargs):
-        raise BootstrapError("No runtime client is configured. Set BANODOCO_LOCAL_SOURCE_MANIFEST and provide the runtime client.")
+        raise BootstrapError("No runtime client is configured. Set ASTRID_RUNTIME_SOURCE_MANIFEST and provide the runtime client.")
 
     def connect(self, **kwargs):
         raise BootstrapError("No runtime client is configured.")
@@ -54,7 +54,7 @@ class UnconfiguredBoundary:
 
 
 def parser() -> argparse.ArgumentParser:
-    root = argparse.ArgumentParser(prog="banodoco-local", description="Neutral Banodoco local workspace bootstrap")
+    root = argparse.ArgumentParser(prog="astrid-runtime", description="Neutral Astrid Runtime workspace bootstrap")
     root.add_argument("--version", action="version", version=__version__)
     sub = root.add_subparsers(dest="command")
     up = sub.add_parser("up", help="start or reconnect the selected runtime")
@@ -193,14 +193,14 @@ def _emit(value: Any, *, json_mode: bool) -> None:
 
 
 def _paths(args: argparse.Namespace) -> RuntimePaths:
-    home = args.home if getattr(args, "home", None) else os.environ.get("BANODOCO_LOCAL_HOME")
+    home = args.home if getattr(args, "home", None) else os.environ.get("ASTRID_RUNTIME_HOME")
     return RuntimePaths.current_mac(home, data_root=getattr(args, "data_root", None))
 
 
 def _config(args: argparse.Namespace, paths: RuntimePaths) -> BootstrapConfig:
     manifest = getattr(args, "source_manifest", None)
     if manifest is None:
-        configured = os.environ.get("BANODOCO_LOCAL_SOURCE_MANIFEST")
+        configured = os.environ.get("ASTRID_RUNTIME_SOURCE_MANIFEST")
         manifest = Path(configured) if configured else None
     return BootstrapConfig(profile=getattr(args, "profile", "astrid"), display_name=getattr(args, "display_name", "Astrid Workspace"), source_manifest=manifest)
 
@@ -217,7 +217,7 @@ def _credential(paths: RuntimePaths) -> str:
     except OSError:
         token = ""
     if not token:
-        raise BootstrapError("No runtime owner credential is available; run banodoco-local up --profile astrid.")
+        raise BootstrapError("No runtime owner credential is available; run astrid-runtime up --profile astrid.")
     return token
 
 
@@ -228,11 +228,11 @@ def _client(paths: RuntimePaths, *, timeout: float | None = None):
     _validate_support_paths(paths)
     discovery = _read_support_json(paths.discovery_path)
     if not discovery or not discovery.get("endpoint"):
-        raise BootstrapError("No runtime discovery is available; run banodoco-local up --profile astrid.")
+        raise BootstrapError("No runtime discovery is available; run astrid-runtime up --profile astrid.")
     try:
-        from banodoco_workspace_client import WorkspaceClient
+        from astrid_runtime_client import WorkspaceClient
     except ImportError as exc:
-        raise BootstrapError("The installed generated workspace client is unavailable; install banodoco-workspace-client.") from exc
+        raise BootstrapError("The installed generated workspace client is unavailable; install astrid-runtime-client.") from exc
     kwargs = {} if timeout is None else {"timeout": timeout}
     return WorkspaceClient(_validate_loopback_endpoint(str(discovery["endpoint"])), _credential(paths), **kwargs)
 
@@ -246,7 +246,7 @@ def _start_local_worker(paths: RuntimePaths, *, profile_id: str, expected_worksp
     _validate_support_paths(paths)
     discovery = _read_support_json(paths.discovery_path)
     if not discovery or not discovery.get("endpoint"):
-        raise BootstrapError("No runtime discovery is available; run banodoco-local up --profile astrid.")
+        raise BootstrapError("No runtime discovery is available; run astrid-runtime up --profile astrid.")
     endpoint = _validate_loopback_endpoint(str(discovery["endpoint"])).rstrip("/")
     payload = json.dumps({
         "profile_id": profile_id,
@@ -350,7 +350,7 @@ def main(argv: list[str] | None = None) -> int:
             realm = next((item for item in catalog.get("realms", []) if str(item.get("realm_id")) == realm_id), None)
             discovery = _read_support_json(paths.discovery_path) or {}
             if not realm or not discovery.get("pid"):
-                raise BootstrapError("No selected runtime owner to restart; run banodoco-local up --profile astrid.")
+                raise BootstrapError("No selected runtime owner to restart; run astrid-runtime up --profile astrid.")
             boundary.prepare_restart(source_profile=source, realm_id=realm_id, realm_root=Path(str(realm["data_root"])), support_root=paths.runtime_support, pid=int(discovery["pid"]))
             result = restart(paths, boundary, config) if args.command == "restart" else down(paths, boundary)
             _emit(result, json_mode=args.json)
@@ -414,8 +414,8 @@ def main(argv: list[str] | None = None) -> int:
             _emit(value, json_mode=args.json)
             return 0
         if args.command == "reboot":
-            if args.reboot_command == "reboot" and os.environ.get("BANODOCO_LOCAL_ENABLE_REAL_REBOOT") != "1":
-                raise BootstrapError("real reboot is safe-disabled; set BANODOCO_LOCAL_ENABLE_REAL_REBOOT=1 in an explicitly configured test/host environment")
+            if args.reboot_command == "reboot" and os.environ.get("ASTRID_RUNTIME_ENABLE_REAL_REBOOT") != "1":
+                raise BootstrapError("real reboot is safe-disabled; set ASTRID_RUNTIME_ENABLE_REAL_REBOOT=1 in an explicitly configured test/host environment")
             value = _client(paths).request_reboot(checkpoint_id=args.checkpoint_id, nonce=args.nonce, authorization=args.authorization, runtime_epoch=args.runtime_epoch, command=args.reboot_command)
             _emit(value, json_mode=args.json)
             return 0
@@ -436,7 +436,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     except Exception as exc:
         # Generated clients expose typed ApiError; keep that import lazy so
-        # ``banodoco-local doctor`` remains usable without client installation.
+        # ``astrid-runtime doctor`` remains usable without client installation.
         _emit({"ok": False, "error": str(exc)}, json_mode=True)
         return 1
     parser().print_help()

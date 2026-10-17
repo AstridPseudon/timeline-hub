@@ -46,11 +46,11 @@ SPEC_RETENTION_DAYS = 30
 
 def configured_spec_retention_days() -> int:
     try:
-        days = int(os.environ.get("BANODOCO_RUNTIME_SPEC_RETENTION_DAYS", str(SPEC_RETENTION_DAYS)))
+        days = int(os.environ.get("ASTRID_RUNTIME_SPEC_RETENTION_DAYS", str(SPEC_RETENTION_DAYS)))
     except ValueError as exc:
-        raise ValidationError("BANODOCO_RUNTIME_SPEC_RETENTION_DAYS must be an integer") from exc
+        raise ValidationError("ASTRID_RUNTIME_SPEC_RETENTION_DAYS must be an integer") from exc
     if days < 2:
-        raise ValidationError("BANODOCO_RUNTIME_SPEC_RETENTION_DAYS must be at least 2")
+        raise ValidationError("ASTRID_RUNTIME_SPEC_RETENTION_DAYS must be at least 2")
     return days
 
 
@@ -869,7 +869,7 @@ class RealmStore:
                     raise OSError(f"realm SQLite component is not a regular file: {path.name}")
                 identities[path] = (metadata.st_dev, metadata.st_ino, metadata.st_size, metadata.st_mtime_ns)
                 components.append(path)
-            with tempfile.TemporaryDirectory(prefix="banodoco-realm-preflight-") as temporary:
+            with tempfile.TemporaryDirectory(prefix="astrid-runtime-realm-preflight-") as temporary:
                 snapshot_root = Path(temporary)
                 for source in components:
                     cls._copy_admission_file(source, snapshot_root / source.name, deadline)
@@ -1556,7 +1556,7 @@ class RealmStore:
         scene_objects = []
         verified = {}
         for clip in config.get("clips", []):
-            if not isinstance(clip, dict) or clip.get("clipType") != "com.reigh.astrid.liveScene":
+            if not isinstance(clip, dict) or clip.get("clipType") != "haus.astrid.liveScene":
                 continue
             app = clip.get("app")
             scene = app.get("liveScene") if isinstance(app, dict) else None
@@ -2416,7 +2416,7 @@ class RealmStore:
                 if not preflight["ok"]:
                     realm_id = self.conn.execute("SELECT id FROM realm LIMIT 1").fetchone()[0]
                     command = (
-                        f"banodoco-runtime compact --root {shlex.quote(str(self.root))} "
+                        f"astrid-runtime-protocol compact --root {shlex.quote(str(self.root))} "
                         f"--confirm {shlex.quote('COMPACT IDEMPOTENCY ' + realm_id)}"
                     )
                     raise ConflictError(
@@ -3427,11 +3427,11 @@ class RealmStore:
         required = scratch_bytes + output_bytes
         available = int(shutil.disk_usage(self.root).free)
         try:
-            floor = int(os.environ.get("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", str(4 * 1024**3)))
+            floor = int(os.environ.get("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", str(4 * 1024**3)))
         except ValueError as exc:
-            raise ValidationError("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES must be an integer") from exc
+            raise ValidationError("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES must be an integer") from exc
         if floor < 0:
-            raise ValidationError("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES must be nonnegative")
+            raise ValidationError("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES must be nonnegative")
         ok = available - required >= floor
         return {"ok": ok, "required_bytes": required, "available_bytes": available, "floor_bytes": floor, "scratch_bytes": scratch_bytes, "output_bytes": output_bytes, "estimate_source": source, "reason": None if ok else "insufficient_storage"}
 
@@ -6448,7 +6448,7 @@ class RealmStore:
             catalog = json.loads(Path(catalog_check["path"]).read_text(encoding="utf-8"))
             row = next(item for item in catalog.get("realms", []) if item.get("realm_id") == self.realm["id"])
             # A bare RuntimeDaemon may be launched without the optional
-            # banodoco-local activation layer.  In that mode catalog
+            # astrid-runtime activation layer.  In that mode catalog
             # registration is still authoritative, but activation is not
             # configured and therefore cannot be called broken.
             if not row.get("activation_manifest"):

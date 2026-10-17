@@ -22,7 +22,7 @@ def test_pack_host_credential_is_scoped_distinct_and_rotated_for_new_owner(tmp_p
         "objects:read",
         "objects:write",
     )
-    from banodoco_local.bootstrap import WORKER_SCOPES as BOOTSTRAP_WORKER_SCOPES
+    from astrid_runtime.bootstrap import WORKER_SCOPES as BOOTSTRAP_WORKER_SCOPES
 
     root = tmp_path / "realm"
     support = tmp_path / "support"

@@ -7,7 +7,7 @@ import urllib.request
 
 import pytest
 
-from banodoco_workspace_client import WorkspaceClient
+from astrid_runtime_client import WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
 from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError

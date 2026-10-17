@@ -52,8 +52,8 @@ def _set_package(fixture, body):
 
 def _publication(fixture, *, revision="parent-1", expected_head=None):
     clips = [
-        {"id": "scene-a", "clipType": "com.reigh.astrid.liveScene", "at": 0, "from": 55, "to": 65, "speed": 2, "track": "visual", "app": {"liveScene": copy.deepcopy(fixture["envelope"]), "opaque": {"keep": True}}},
-        {"id": "scene-b", "clipType": "com.reigh.astrid.liveScene", "at": 5, "from": 65, "to": 75, "speed": 1, "track": "visual", "app": {"liveScene": copy.deepcopy(fixture["envelope"])}},
+        {"id": "scene-a", "clipType": "haus.astrid.liveScene", "at": 0, "from": 55, "to": 65, "speed": 2, "track": "visual", "app": {"liveScene": copy.deepcopy(fixture["envelope"]), "opaque": {"keep": True}}},
+        {"id": "scene-b", "clipType": "haus.astrid.liveScene", "at": 5, "from": 65, "to": 75, "speed": 1, "track": "visual", "app": {"liveScene": copy.deepcopy(fixture["envelope"])}},
         {"id": "music", "clipType": "media", "at": 0, "from": 0, "to": 15, "track": "audio", "asset": "music"},
     ]
     return {

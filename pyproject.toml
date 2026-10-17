@@ -3,16 +3,16 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "banodoco-workspace-runtime"
+name = "astrid-runtime"
 version = "0.1.0"
 description = "Independent neutral local workspace runtime and bootstrap"
 requires-python = ">=3.11"
 dependencies = []
 
 [project.scripts]
-banodoco-runtime = "runtime_protocol.cli:main"
-banodoco-local = "banodoco_local.cli:main"
-astrid-runtime = "banodoco_local.cli:main"
+astrid-runtime-protocol = "runtime_protocol.cli:main"
+astrid-runtime = "astrid_runtime.cli:main"
+astrid-runtime = "astrid_runtime.cli:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["tests"]
@@ -20,5 +20,5 @@ testpaths = ["tests"]
 addopts = "-ra"
 
 [tool.setuptools.packages.find]
-include = ["runtime_protocol*", "banodoco_local*"]
+include = ["runtime_protocol*", "astrid_runtime*"]
 exclude = ["build*", "tests*"]

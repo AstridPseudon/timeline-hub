@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://banodoco.dev/workspace/v1/schemas/timeline-inspection-result.json",
+  "$id": "https://astrid.haus/workspace/v1/schemas/timeline-inspection-result.json",
   "title": "Canonical current-head timeline inspection",
   "type": "object",
   "additionalProperties": false,

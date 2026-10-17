@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from packages.python.banodoco_workspace_client.generated import ApiError, WorkspaceClient
+from packages.python.astrid_runtime_client.generated import ApiError, WorkspaceClient
 from runtime_protocol.errors import AuthorizationError, ConflictError, NotFoundError, RuntimeErrorBase, ValidationError
 from runtime_protocol.server import RuntimeHandler
 from runtime_protocol.service import OBJECT_MAX_BYTES, RuntimeService

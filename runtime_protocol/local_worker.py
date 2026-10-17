@@ -52,7 +52,7 @@ def _credential_commit_generation(credentials: CredentialStore, actor: str) -> s
     The owner path may validate the token; this helper never uses or publishes
     bearer bytes as identity. All reads occur under the existing owner lock.
     """
-    from banodoco_local.custody_broker import _read_owner_file
+    from astrid_runtime.custody_broker import _read_owner_file
     with credentials._lock:
         path = credentials.path_for(actor).with_suffix(".commit")
         before, before_stat = _read_owner_file(path)
@@ -893,7 +893,7 @@ class LocalWorkerLauncher:
             # Fencing and enablement share the lifecycle lock. A failed durable
             # revoke therefore cannot be followed by a stale enable operation.
             if self._active_profile is not None and _secure_profile(self._active_profile):
-                from banodoco_local.custody_broker import _read_owner_file
+                from astrid_runtime.custody_broker import _read_owner_file
                 with self.credentials._lock:
                     record = json.loads(_read_owner_file(Path(self._active_identity["custody_scope"]) / "activation-record.json")[0])
                     commit = self.credentials.path_for(self.actor).with_suffix(".commit")
@@ -1002,7 +1002,7 @@ class LocalWorkerLauncher:
 
     def verify_retained_handoff_binding(self, binding):
         """Validate immutable launch evidence separately from current custody."""
-        from banodoco_local.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority, _read_owner_file
+        from astrid_runtime.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority, _read_owner_file
         from .local_execution_handoff import decode
         with self._state_lock:
             receipt = self._active_receipt
@@ -1070,7 +1070,7 @@ class LocalWorkerLauncher:
             return response if request["command"] == "handoff_report" else journal.finish(request, response)
 
     def _verify_adopted_handoff(self, binding):
-        from banodoco_local.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority
+        from astrid_runtime.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority
         handle = self._adopted_handoff_control
         if self._shutdown.is_set() or handle is None or handle.binding != binding:
             raise ConflictError("adopted handoff has no retained exact control")
@@ -1088,7 +1088,7 @@ class LocalWorkerLauncher:
     def adopt_retained_handoff(self, request, receipt):
         """Adopt fresh B control without publishing an active/ready generation."""
         from .local_execution_handoff import validate_request, HandoffJournal, digest
-        from banodoco_local.custody_broker import AuthenticatedCleanupActor, _read_owner_file
+        from astrid_runtime.custody_broker import AuthenticatedCleanupActor, _read_owner_file
         validate_request(request); b = request["binding"]
         profile = self.profiles.get(receipt.get("profile_id"))
         if (request["command"] != "handoff_adopt" or profile is None or profile.engine_launch is None
@@ -1737,7 +1737,7 @@ class LocalWorkerLauncher:
 
     def _activation_acceptor(self, *, handle, profile, report, identity, receipt, grant, credential_path):
         """Return the one Runtime-owned durable receipt publisher for a launch."""
-        from banodoco_local.custody_broker import _read_owner_file, _atomic_owner_json
+        from astrid_runtime.custody_broker import _read_owner_file, _atomic_owner_json
         expected_request = {
             "version": "astrid.local-worker-activation-request/v1",
             "operation_id": grant["operation_id"], "channel_id": grant["channel_id"],

@@ -17,7 +17,7 @@ from runtime_protocol.cas import ContentAddressedStore
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
 from runtime_protocol.errors import ConflictError, OwnerBusyError, ValidationError
-from banodoco_workspace_client import ApiError, WorkspaceClient
+from astrid_runtime_client import ApiError, WorkspaceClient
 from http_helpers import Api
 
 

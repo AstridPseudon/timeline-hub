@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from banodoco_local.bootstrap import BootstrapConfig, BootstrapError, SourceProfile, bootstrap
-from banodoco_local.paths import RuntimePaths
-from banodoco_local.workspace import configure_workspace, inspect_workspace
+from astrid_runtime.bootstrap import BootstrapConfig, BootstrapError, SourceProfile, bootstrap
+from astrid_runtime.paths import RuntimePaths
+from astrid_runtime.workspace import configure_workspace, inspect_workspace
 from runtime_protocol.store import RealmStore
 
 
@@ -147,7 +147,7 @@ def _configured_live_owner(tmp_path):
 
 def test_configured_inspection_reuses_same_verified_discovery_snapshot(tmp_path, monkeypatch):
     import importlib
-    bootstrap_module = importlib.import_module("banodoco_local.bootstrap")
+    bootstrap_module = importlib.import_module("astrid_runtime.bootstrap")
 
     paths, root, boundary, discovery = _configured_live_owner(tmp_path)
     original = bootstrap_module._read_support_json
@@ -208,7 +208,7 @@ def test_explicit_candidate_still_gets_full_inspection_even_with_live_owner(tmp_
 
 def test_missing_boundary_cannot_promote_pid_only_doctor_to_live_inspection(tmp_path, monkeypatch):
     import importlib
-    bootstrap_module = importlib.import_module("banodoco_local.bootstrap")
+    bootstrap_module = importlib.import_module("astrid_runtime.bootstrap")
     paths, _root, _boundary, _discovery = _configured_live_owner(tmp_path)
     def forbidden(*_args, **_kwargs):
         raise AssertionError("PID-only support diagnostics cannot authorize the fast path")

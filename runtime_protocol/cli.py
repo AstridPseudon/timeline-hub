@@ -39,10 +39,10 @@ def _positive_admission_seconds(value):
 
 
 def _parser():
-    parser = argparse.ArgumentParser(prog="banodoco-runtime", description="Neutral loopback workspace runtime")
+    parser = argparse.ArgumentParser(prog="astrid-runtime-protocol", description="Neutral loopback workspace runtime")
     sub = parser.add_subparsers(dest="command", required=True)
     start = sub.add_parser("start", help="start the loopback daemon")
-    start.add_argument("--root", default=os.environ.get("BANODOCO_RUNTIME_ROOT", ".runtime"))
+    start.add_argument("--root", default=os.environ.get("ASTRID_RUNTIME_ROOT", ".runtime"))
     start.add_argument("--support-root")
     start.add_argument("--export-root", help="existing absolute directory for exact managed-output exports")
     start.add_argument("--host", default="127.0.0.1")
@@ -58,7 +58,7 @@ def _parser():
     create.add_argument("--display-name", default="Workspace")
     create.add_argument("--realm-id")
     doctor = sub.add_parser("doctor", help="read-only runtime health check")
-    doctor.add_argument("--root", default=os.environ.get("BANODOCO_RUNTIME_ROOT", ".runtime"))
+    doctor.add_argument("--root", default=os.environ.get("ASTRID_RUNTIME_ROOT", ".runtime"))
     doctor.add_argument("--json", action="store_true")
     doctor.add_argument("--support-root")
     doctor.add_argument(
@@ -99,7 +99,7 @@ def _parser():
     compact.add_argument("--confirm", required=True)
     compact.add_argument("--retention-days", type=int)
     backup = sub.add_parser("backup", help="create a verified self-contained realm backup")
-    backup.add_argument("--root", default=os.environ.get("BANODOCO_RUNTIME_ROOT", ".runtime"))
+    backup.add_argument("--root", default=os.environ.get("ASTRID_RUNTIME_ROOT", ".runtime"))
     backup.add_argument("--support-root")
     backup.add_argument("--destination", required=True)
     restore = sub.add_parser("restore", help="restore a backup into a new inactive realm")
@@ -113,14 +113,14 @@ def _parser():
     replace.add_argument("--realm-id")
     replace.add_argument("--retain-superseded", action="store_true", help="retain the replaced realm after activation")
     export = sub.add_parser("export", help="export structured realm state")
-    export.add_argument("--root", default=os.environ.get("BANODOCO_RUNTIME_ROOT", ".runtime"))
+    export.add_argument("--root", default=os.environ.get("ASTRID_RUNTIME_ROOT", ".runtime"))
     export.add_argument("--destination")
     export.add_argument("--json", action="store_true")
     audit = sub.add_parser(
         "audit-timelines",
         help="read-only audit of active canonical timeline heads and legacy shells",
     )
-    audit.add_argument("--root", default=os.environ.get("BANODOCO_RUNTIME_ROOT", ".runtime"))
+    audit.add_argument("--root", default=os.environ.get("ASTRID_RUNTIME_ROOT", ".runtime"))
     audit.add_argument("--project-id")
     purge = sub.add_parser("purge", help="irreversibly remove a tombstoned realm (offline only)")
     purge.add_argument("--root", required=True)
@@ -170,7 +170,7 @@ def main(argv=None):
             deep=args.deep,
         )
         if result.get("state") == "uninitialized":
-            result["next_action"] = "banodoco-runtime create --root <realm>"
+            result["next_action"] = "astrid-runtime-protocol create --root <realm>"
         print(json.dumps(result, sort_keys=True))
         return 0 if result.get("ok") else 1
     if args.command == "audit-timelines":

@@ -10,9 +10,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT / "packages" / "python"))
-from banodoco_workspace_client.generated import OPERATIONS as PYTHON_OPERATIONS  # noqa: E402
-from banodoco_workspace_client.generated import PROTOCOL as PYTHON_PROTOCOL  # noqa: E402
-from banodoco_workspace_client.generated import SCHEMA_DIGEST as PYTHON_SCHEMA_DIGEST  # noqa: E402
+from astrid_runtime_client.generated import OPERATIONS as PYTHON_OPERATIONS  # noqa: E402
+from astrid_runtime_client.generated import PROTOCOL as PYTHON_PROTOCOL  # noqa: E402
+from astrid_runtime_client.generated import SCHEMA_DIGEST as PYTHON_SCHEMA_DIGEST  # noqa: E402
 
 
 def _operation_ids() -> list[str]:
@@ -31,7 +31,7 @@ def _typescript_operations() -> list[str]:
 
 
 def _python_methods() -> set[str]:
-    source = (ROOT / "packages" / "python" / "banodoco_workspace_client" / "generated.py").read_text()
+    source = (ROOT / "packages" / "python" / "astrid_runtime_client" / "generated.py").read_text()
     module = ast.parse(source)
     client = next(node for node in module.body if isinstance(node, ast.ClassDef) and node.name == "WorkspaceClient")
     return {
@@ -59,7 +59,7 @@ def test_product_clients_match_canonical_contract_projection() -> None:
     assert "{ name: kind, in: query, schema: { type: string } }" in openapi_source
 
     assert manifest["protocol"] == component["protocol"] == "workspace.v1"
-    assert manifest["generated"]["python"] == "packages/python/banodoco_workspace_client/generated.py"
+    assert manifest["generated"]["python"] == "packages/python/astrid_runtime_client/generated.py"
     assert manifest["generated"]["typescript"] == "packages/typescript/src/generated.ts"
     assert list(PYTHON_OPERATIONS) == operation_ids
     assert _typescript_operations() == operation_ids
@@ -96,7 +96,7 @@ def test_product_clients_match_canonical_contract_projection() -> None:
 
 def test_recoverable_snapshot_client_projection_is_canonical() -> None:
     typescript = (ROOT / "packages/typescript/src/generated.ts").read_text()
-    python = (ROOT / "packages/python/banodoco_workspace_client/generated.py").read_text()
+    python = (ROOT / "packages/python/astrid_runtime_client/generated.py").read_text()
     assert "publishRecoverableSnapshot" in _operation_ids()
     assert "publish_recoverable_snapshot" in _python_methods()
     assert "body: RecoverableSnapshotRequest" in typescript
