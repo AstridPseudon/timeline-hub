@@ -137,6 +137,9 @@ astrid = [
     "packs/**/actions/**/*.md",
     "packs/**/actions/**/*.txt",
     "packs/**/requirements.txt",
+    # Dotted extension directories are loaded as declared file resources,
+    # rather than importable Python packages discovered by setuptools.
+    "packs/rendering/extensions/timeline.check/damaged_art.py",
     "packs/**/rendering/**/*.md",
     "packs/**/AGENTS.md",
     "packs/**/README.md",
