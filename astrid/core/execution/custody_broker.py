@@ -2399,7 +2399,7 @@ class RoleBoundCustodyBroker:
             raise CustodyError("custody role is invalid")
         if sys.platform != "darwin":
             raise CustodyError("Darwin audit-token custody is unavailable")
-        if type(retain_channel) is not bool or (retain_channel and role not in {'command', 'engine'}):
+        if type(retain_channel) is not bool or (retain_channel and role not in {'command', 'engine', 'host'}):
             raise CustodyError('post-exec custody role has no matched pipe consumer')
         self.launch_parent = launch_parent
         self.retain_channel = retain_channel
