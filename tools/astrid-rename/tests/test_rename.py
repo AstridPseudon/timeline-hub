@@ -300,4 +300,3 @@ def test_real_map_keeps_community_names_and_rewrites_agent_url() -> None:
         check=False,
     )
     assert kept.returncode == 0, kept.stdout + kept.stderr
-

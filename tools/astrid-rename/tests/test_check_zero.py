@@ -186,4 +186,3 @@ def test_local_profile_requires_path_and_scans_with_every_pattern(tmp_path: Path
     result = run_check(tool_dir, "--path", str(root), "--profile", "local")
     assert result.returncode == 1
     assert "BANODOCO_LOCAL" in result.stdout
-

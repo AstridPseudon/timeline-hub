@@ -27,6 +27,11 @@ token	reigh-browser	astrid-browser	all	Runtime handshake actor; App client.ts:34
 token	reigh-v3	astrid-app-v3	all	section 5 product identity or collision rule
 token	reigh-workspace	astrid-app-workspace	all	section 5 product identity or collision rule
 regex	(?<=github\.com/peteromallet/)Astrid(?:-agent)?	astrid-agent	all	GitHub URL only: current repo and old redirect
+token	"peteromallet/Astrid"	"peteromallet/astrid-agent"	astrid:astrid/core/release_identity.py	live Astrid repository identity; URL uses existing regex
+token	"peteromallet/Astrid"	"peteromallet/astrid-agent"	astrid:tests/test_release_identity.py	release identity expectation; URL uses existing regex
+token	"peteromallet/Astrid"	"peteromallet/astrid-agent"	astrid:tests/test_remote_targets.py	remote target identity expectation; URL uses existing regex
+token	"peteromallet/Astrid"	"peteromallet/astrid-agent"	runtime:runtime_protocol/release_identity.py	Runtime release identity registry; URL uses existing regex
+token	repository: peteromallet/Astrid	repository: peteromallet/astrid-agent	app:.github/workflows/bridge-latency.yml	GitHub checkout repository identity; bare YAML value is outside the existing URL regex
 token	com.reigh.astrid	haus.astrid	all	section 5 extension id, including escaped and stutter forms
 token	com\.reigh\.astrid	haus\.astrid	all	section 5 extension id, including escaped and stutter forms
 token	com\\.reigh\\.astrid	haus\\.astrid	all	section 5 extension id, including escaped and stutter forms

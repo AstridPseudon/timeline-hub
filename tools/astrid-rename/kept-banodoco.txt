@@ -60,10 +60,11 @@ Banodoco's webpack # vendor timeline package setup notes
 Banodoco timeline Remotion composition # community package metadata
 Banodoco shell # shared community composition shell
 Banodoco's CLI render path # community composition CLI path
-Reigh and Banodoco agree # shared vendor/editor timeline types (Reigh part maps separately)
-Reigh and Banodoco accept # shared vendor/editor registry policy (Reigh part maps separately)
+\b(?:Reigh|Astrid App) and Banodoco agree at\b # shared community timeline-schema boundary
+\b(?:Reigh|Astrid) and Banodoco accept that\b # community timeline-composition registry policy
 Banodoco 2RP # community 2RP theme branding
 Banodoco-arrangement # shared vendor timeline arrangement provenance, not Runtime ownership
+^src/tools/video-editor/testing/banodoco-stubs/(?:registry\.generated\.ts|theme-api\.tsx|timeline-schema\.ts)$ # test doubles for retained @banodoco/timeline-* community packages
 Banodoco CLI # community timeline package CLI
 Banodoco/Reigh # community/editor comparison in vendored timeline schema
 banodoco-(?:effects|animations|transitions) # vendored community composition primitive directories in App aliases
