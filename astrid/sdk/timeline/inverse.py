@@ -146,11 +146,12 @@ def _root(tl, write):
     sid, state = write["id"], write["after"]
     if sid.startswith("cut:"):
         from astrid.sdk import timeline_intent as intent
-        notes = intent._film_w(tl.bundle).setdefault("cut_notes", {})
         if state["state"] == "absent":
-            notes.pop(sid[4:], None)
+            # A generated cut need not have authored notes. Undoing its root
+            # must not manufacture an empty notes container in that case.
+            intent._film(tl.bundle).get("cut_notes", {}).pop(sid[4:], None)
         elif state["value"]:
-            notes[sid[4:]] = copy.deepcopy(state["value"])
+            intent._film_w(tl.bundle).setdefault("cut_notes", {})[sid[4:]] = copy.deepcopy(state["value"])
         return  # cut existence is owned by its explicitly recorded clip members
     if sid.startswith("occurrence:") and "/" not in sid:
         oid = sid.split(":", 1)[1]
