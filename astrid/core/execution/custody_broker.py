@@ -3184,12 +3184,14 @@ def child_exec_from_environment() -> int:
         bridge_fds = _validate_child_bridge_binding(child_bridge, role=role, argv=argv,
             run_id=os.environ.get('ASTRID_RUNTIME_CUSTODY_RUN_ID'))
     if (bool(pipe_fds) != (role == 'engine' or command_channel)
-            or (command_channel and role != 'command')
+            or (command_channel and role not in {'command', 'host'})
             or _COMMAND_INVENTORY_FD in os.environ or 'ASTRID_ENGINE_CONTROL_FD' in os.environ):
         raise CustodyError('post-exec pipe selection is absent or unsupported')
     hosted = None
     if os.environ.get('ASTRID_RUNTIME_CUSTODY_ROLE') in {'host', 'relay'}:
         hosted = hosted_contract.bootstrap(os.environ, argv)
+        if pipe_binding != hosted[0].get('inspection_pipes', []):
+            raise CustodyError('Host inspection pipes differ from authenticated launch')
     elif any(key in os.environ for key in (hosted_contract.FD_KEY, hosted_contract.DIGEST_KEY,
                                            hosted_contract.CONSUMER_FD, hosted_contract.CONSUMER_DIGEST)):
         raise CustodyError('hosted descriptors cannot enter another role')
@@ -3271,7 +3273,7 @@ class _HostInspectionLaunch:
     """Explicit composition-root input, never reconstructed from environment."""
 
     def __init__(self, pack_roots: tuple[Path, ...], source_checkout: Path,
-                 environment: Mapping[str, str], capability_matrix: Path | None = None):
+                 environment: Mapping[str, str], capability_matrix: Path | None = None, *, node_executable: Path | None = None):
         from .declared_executables import FilePin, _InspectionAdmission, _InspectionTool
         from .generic_host import _binary_requirements, _launch_static_records
 
@@ -3304,6 +3306,14 @@ class _HostInspectionLaunch:
                                if alias.is_relative_to(p)), alias.parent.parent)
                 if prefix != Path('/'):
                     roots.add(prefix.resolve(strict=True))
+        if node_executable is not None:
+            pin = FilePin.measure(node_executable)
+            if pin.path != pin.resolved:
+                raise CustodyError('renderer Node must be canonical')
+            selections['node'] = pin
+            prefix = next((p for p in (Path('/opt/homebrew'), Path('/usr/local'))
+                           if pin.path.is_relative_to(p)), pin.path.parent.parent)
+            roots.add(prefix.resolve(strict=True))
         self.inspection = _InspectionAdmission(selections, tuple(sorted(roots)))
         self.tool = _InspectionTool()  # File pins only; no recursive inspection.
 

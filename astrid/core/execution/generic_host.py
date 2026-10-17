@@ -13319,7 +13319,7 @@ class LocalExecutionPreparation:
         if set(profile) - required - {"host_os_executable", "host_os_artifact_digest"} or not required <= set(profile):
             raise HostError("host-only selected profile shape is invalid")
         launch = profile["host_launch"]
-        if not isinstance(launch, Mapping) or set(launch) - {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "additional_pack_roots", "max_concurrency"} or not {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "max_concurrency"} <= set(launch):
+        if not isinstance(launch, Mapping) or set(launch) - {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "additional_pack_roots", "max_concurrency", "renderer_selection"} or not {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "max_concurrency"} <= set(launch):
             raise HostError("host-only launch selection is invalid")
         if type(launch["max_concurrency"]) is not int or not 1 <= launch["max_concurrency"] <= 16:
             raise HostError("host-only concurrency must be explicitly bounded")
@@ -13353,6 +13353,9 @@ class LocalExecutionPreparation:
                 or protocol["version"] != CURRENT_ROLES_VERSION or protocol["module"] != "astrid.core.execution.generic_host"
                 or protocol["source_closure_digest"] != closure):
             raise HostError("host-only admitted import closure differs")
+        if "renderer_selection" in launch:
+            from .host_renderer_selection import validate_renderer_selection
+            validate_renderer_selection(launch["renderer_selection"])
         scope = Path(str(request["custody_scope"]))
         if not scope.is_absolute() or scope.is_symlink() or not self._acquire_handoff_journal(scope):
             raise CleanupUncertainError("host-only custody scope is unresolved")
@@ -14862,6 +14865,34 @@ def _cli() -> int:
             parser.error(f"host-only attempt directory is not writable: {exc}")
         args.attempt_base = str(owned_attempts)
 
+    remotion_closure_binding = None
+    if (preparation is not None and preparation.result is not None
+            and not preparation._aborted and preparation._activation_grant == activation
+            and activation is not None):
+        launch = preparation._request["profile"].get("host_launch") or {}
+        selection = launch.get("renderer_selection")
+        if selection is not None:
+            from .host_renderer_selection import activate_renderer_selection
+            remotion_closure_binding = activate_renderer_selection(selection)
+            # Derive renderer configuration only from the authenticated selection.
+            # A foreign validation reference is never imported into this launch.
+            from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
+            from astrid.core.subprocess_env import build_child_subprocess_env
+            for key in tuple(os.environ):
+                if key.startswith("ASTRID_REMOTION_VALIDATION_"):
+                    os.environ.pop(key)
+            os.environ.update(ASTRID_REMOTION_PROJECT_DIR=selection["project"],
+                              ASTRID_NODE_EXECUTABLE=selection["node_executable"],
+                              ASTRID_TIMELINE_SCHEMA_PYTHONPATH=launch["source_checkout"])
+            environment = dict(os.environ)
+            reference = prepare_remotion_validation(
+                artifact_directory=support_root / "remotion-validation",
+                host_environment=environment, python_executable=sys.executable,
+                launch_id=__import__("secrets").token_hex(16),
+                contexts={"host": environment,
+                          "worker": _launch_worker_probe_environments(tuple(Path(p) for p in args.pack_root),
+                                      environment, Path(args.capability_matrix) if args.capability_matrix else None)})
+            os.environ.update(reference)
     _emit_startup_phase("host_constructor_begin")
     _install_host_vibecomfy_import_root()
     def create_host():
@@ -14876,6 +14907,7 @@ def _cli() -> int:
         source_inventory_identity=args.source_inventory_identity,
         boot_manifest_path=boot_manifest,
         boot_manifest_hash=boot_manifest_hash,
+        remotion_closure_binding=remotion_closure_binding,
     )
     host = preparation.construct_claim_host(create_host) if preparation is not None else create_host()
     _emit_startup_phase("host_constructor_done")

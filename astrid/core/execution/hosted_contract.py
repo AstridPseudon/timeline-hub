@@ -146,7 +146,7 @@ def birth_fence(process):
 def validate(value, *, role, argv=None):
     fields = {'version', 'purpose', 'role', 'run_id', 'owner_epoch', 'generation', 'operation_id',
               'channel_id', 'profile_digest', 'scope', 'argv_digest', 'sockets', 'launch_binding'}
-    if (not isinstance(value, dict) or set(value) != fields or value['version'] != VERSION
+    if (not isinstance(value, dict) or set(value) - fields - {'inspection_pipes'} or not fields <= set(value) or value['version'] != VERSION
             or role not in {'host', 'relay'} or value['role'] != role
             or value['purpose'] != 'runtime-' + role + '-control/v1'
             or type(value['generation']) is not int or value['generation'] < 1
@@ -160,6 +160,11 @@ def validate(value, *, role, argv=None):
         if not isinstance(item, dict) or socket_identity(item['fd']) != item:
             raise HostedContractError('hosted socket descriptor identity differs')
         fds.append(item['fd'])
+    if 'inspection_pipes' in value:
+        if role != 'host':
+            raise HostedContractError('inspection pipes require the selected Host')
+        from .custody_broker import _validate_pipe_binding
+        fds.extend(_validate_pipe_binding(value['inspection_pipes']))
     binding = value['launch_binding']
     if binding is not None:
         if role != 'host' or set(binding) != {'identity', 'digest'} or file_identity(binding['identity']['fd']) != binding['identity']:
@@ -225,6 +230,11 @@ class HostedLaunch:
             'sockets': {name: socket_identity(channel.fileno()) for name, channel in self.children.items()},
             'launch_binding': None if launch_binding is None else {
                 'identity': file_identity(launch_binding.fileno()), 'digest': digest(os.pread(launch_binding.fileno(), LIMIT + 1, 0))}}
+        if getattr(broker, 'child_pipe_binding', None):
+            if (broker.role != 'host' or profile.get('execution_mode') != 'host_only_cpu'
+                    or not profile.get('host_launch', {}).get('renderer_selection')):
+                raise HostedContractError('inspection requires an authenticated renderer selection')
+            self.value['inspection_pipes'] = broker.child_pipe_binding
         validate(self.value, role=broker.role, argv=argv)
         data = canonical(self.value)
         self.binding = readonly_payload(data)
@@ -272,6 +282,8 @@ def publish_consumer(value, process):
         os.set_inheritable(item['fd'], True)
     if value['launch_binding'] is not None:
         os.set_inheritable(value['launch_binding']['identity']['fd'], True)
+    for item in value.get('inspection_pipes', []):
+        os.set_inheritable(item['fd'], True)
     return proof, {CONSUMER_FD: str(proof.fileno()), CONSUMER_DIGEST: digest(proof.read())}
 
 
@@ -288,8 +300,15 @@ def consume(role, sockets):
     validate(copied, role=role)
     if (set(proof) != {'binding', 'process'} or proof['process'] != incarnation(os.getpid())
             or {name: item['fd'] for name, item in value['sockets'].items()} != sockets
-            or descriptor_set() != set(sockets.values())):
+            or descriptor_set() != set(sockets.values()) | {p['fd'] for p in value.get('inspection_pipes', [])}):
         raise HostedContractError('hosted consumer role, descriptors or process incarnation differs')
+    if value.get('inspection_pipes'):
+        from .custody_broker import _COMMAND_INVENTORY_FD, _validate_pipe_binding
+        selected = json.loads(os.environ.get(_COMMAND_INVENTORY_FD, 'null'))
+        if selected != value['inspection_pipes']:
+            raise HostedContractError('inspection consumer descriptor binding differs')
+        for descriptor in _validate_pipe_binding(selected):
+            os.set_inheritable(descriptor, False)
     for descriptor in sockets.values():
         os.set_inheritable(descriptor, False)
     return value
