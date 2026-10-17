@@ -7586,6 +7586,8 @@ describe('W30 manual text consumer', () => {
     }, false, initial);
     const history = lookStyleHistory(h);
     act(() => h.result.current.editing.handleUpdateClips(['clip-1', 'clip-2'], { text: { content: 'Common SDK edit ✨' } }));
+    expect(h.result.current.data!.config.clips.map(clip => clip.text?.content)).toEqual(['Common SDK edit ✨', 'Common SDK edit ✨']);
+    expect(gestureCommandsFor(h.result.current.data!)?.map(call => call.op)).toEqual(['clip.set-text', 'clip.set-text']);
     await manualTextRun(h, () => proof, history);
     expect(requests[0].change.commands.map(call => call.op)).toEqual(['clip.set-text', 'clip.set-text']);
     expect(requests[0].change.commands.map(call => call.select)).toEqual(['parent/clip:clip-1', 'parent/clip:clip-2']);

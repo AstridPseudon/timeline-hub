@@ -221,10 +221,9 @@ export function useClipEditing({
     if (textEdit && Object.values(metaUpdates).some(update => update === undefined)) return;
 
     const commandGroups = pairs ? pairs.map(pair => pair.commands) : validClipIds.map((id) => {
-      const memberPatch = textEdit ? metaUpdates[id] : patch;
-      if (!memberPatch) return undefined;
-      const continuous = continuousEffectGestureCommands(current, id, memberPatch);
-      return continuous.handled ? (validClipIds.length === clipIds.length ? continuous.commands : undefined) : propertyGestureCommands(current, id, memberPatch);
+      if (textEdit) return propertyGestureCommands(current, id, patch);
+      const continuous = continuousEffectGestureCommands(current, id, patch);
+      return continuous.handled ? (validClipIds.length === clipIds.length ? continuous.commands : undefined) : propertyGestureCommands(current, id, patch);
     });
     const manualTextCommands = commandGroups.every(commands => commands !== undefined) ? commandGroups.flat() : undefined;
     const editCommands = transitionBatch?.commands ?? (textEdit ? manualTextCommands : continuousBatchGestureCommands(current, commandGroups));
@@ -274,6 +273,7 @@ export function useClipEditing({
     const capturedSignature = canonicalJsonStringify(current.config);
     const capturedSelection = liveSelectedClipId.current;
     const metaUpdates: Record<string, Partial<ClipMeta>> = {};
+    const textCommandPatches: Record<string, Partial<ClipMeta>> = {};
 
     for (const clipId of validClipIds) {
       const existing = current.meta[clipId];
@@ -286,6 +286,7 @@ export function useClipEditing({
       const patch = patchFn(structuredClone(existing));
       metaUpdates[clipId] = Object.prototype.hasOwnProperty.call(patch, 'keyframes') || Object.prototype.hasOwnProperty.call(patch, 'keyframeOrigin')
         ? structuredClone(patch) : patch;
+      if (Object.prototype.hasOwnProperty.call(patch, 'text')) textCommandPatches[clipId] = { text: structuredClone(patch.text) };
     }
 
     if (Object.keys(metaUpdates).length === 0) {
@@ -319,6 +320,7 @@ export function useClipEditing({
     const groups = pairs ? pairs.map(pair => pair.commands) : validClipIds.map(id => {
       const patch = metaUpdates[id];
       if (!patch) return undefined;
+      if (textEdit) return propertyGestureCommands(current, id, textCommandPatches[id]);
       const continuous = continuousEffectGestureCommands(current, id, patch);
       return continuous.handled ? (validClipIds.length === clipIds.length ? continuous.commands : undefined) : propertyGestureCommands(current, id, patch);
     });
