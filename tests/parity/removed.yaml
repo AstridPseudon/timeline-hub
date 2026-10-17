@@ -57,3 +57,8 @@
   card: REPAIRS-REST
   reason: "Retains text/n/after/near lookup and adds optional exact source identity to distinguish the same opaque word ID across frozen source revisions and target occurrences."
   alias: "sdk:Checkout.word"
+
+- feature: "flag:timelines.edit:--takes"
+  card: SCRIPT-EDIT
+  reason: "Retains the single take-folder spelling and extends it to multiple folders and repeated options; later folders override earlier fallbacks."
+  alias: "--takes"

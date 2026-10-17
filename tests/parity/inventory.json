@@ -1467,10 +1467,11 @@
           "required": false
         },
         {
-          "action": "_StoreAction",
+          "action": "_AppendAction",
           "default": null,
           "dest": "takes",
-          "nargs": null,
+          "metavar": "DIR",
+          "nargs": "+",
           "options": [
             "--takes"
           ],
@@ -2008,6 +2009,17 @@
         {
           "action": "_StoreAction",
           "default": null,
+          "dest": "from_script",
+          "metavar": "PATH",
+          "nargs": null,
+          "options": [
+            "--from-script"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
           "dest": "line",
           "metavar": "ID",
           "nargs": null,
@@ -2033,6 +2045,39 @@
           "nargs": 0,
           "options": [
             "--published"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "script_gaps",
+          "nargs": 0,
+          "options": [
+            "--gaps",
+            "--script-gaps"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "takes",
+          "metavar": "DIR",
+          "nargs": "+",
+          "options": [
+            "--takes"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "text",
+          "metavar": "TEXT",
+          "nargs": null,
+          "options": [
+            "--text"
           ],
           "required": false
         }
@@ -5653,6 +5698,10 @@
         "set_gap_after": {
           "kind": "callable",
           "signature": "(self, seconds: 'float', *, reflow: 'bool' = True) -> \"'Voice'\""
+        },
+        "set_text": {
+          "kind": "callable",
+          "signature": "(self, text: 'str') -> \"'Voice'\""
         },
         "speech_end": {
           "kind": "property"
