@@ -16,6 +16,7 @@ import stat
 import time
 import uuid
 
+from banodoco_local import custody_broker as custody
 from banodoco_local.custody_broker import (AuthenticatedCleanupActor, CustodyError,
     current_process_audit_token, default_process_identity, _incarnation)
 from .errors import CapabilityUnavailableError, ConflictError, ValidationError
@@ -149,8 +150,14 @@ class LocalPreparationRelay:
                 raise unavailable("endpoint_path_invalid")
         root = Path(b["support_root"])
         for key in ("socket_path", "readiness_record_path"):
-            if not Path(b[key]).is_relative_to(root) or Path(b[key]) == root:
-                raise unavailable("endpoint_not_contained")
+            path = Path(b[key])
+            if not path.is_relative_to(root) or path == root:
+                compact = path.parent
+                if (key != "socket_path" or path.name != "s"
+                        or compact.parent != custody.DARWIN_CUSTODY_SOCKET_PARENT
+                        or not compact.name.startswith("runtime-cb-")
+                        or compact.resolve(strict=True) != compact):
+                    raise unavailable("endpoint_not_contained")
         if b["socket_path"] == b["readiness_record_path"]:
             raise unavailable("endpoint_path_invalid")
 
@@ -204,7 +211,8 @@ class LocalPreparationRelay:
                 info = part.lstat()
                 if stat.S_ISLNK(info.st_mode):
                     raise unavailable("endpoint_symlink")
-                if part == root or root in part.parents:
+                private_root = (p.parent if key == "socket_path" and not p.is_relative_to(root) else root)
+                if part == private_root or private_root in part.parents:
                     if info.st_uid != os.getuid() or info.st_mode & 0o077:
                         raise unavailable("endpoint_not_private")
                     if part != p and not stat.S_ISDIR(info.st_mode):
@@ -371,6 +379,24 @@ def bind_selected_host(daemon, profile, handle):
             else:
                 binding = None
         if binding is not None:
+            readiness = Path(binding["readiness_record_path"])
+            try:
+                fd = os.open(readiness, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            except FileNotFoundError:
+                pass
+            else:
+                try:
+                    facts = os.fstat(fd)
+                    if (not stat.S_ISREG(facts.st_mode) or facts.st_uid != os.getuid()
+                            or facts.st_mode & 0o077):
+                        raise unavailable("readiness_not_private")
+                    raw = os.read(fd, FRAME_LIMIT + 1)
+                    if len(raw) > FRAME_LIMIT:
+                        raise unavailable("readiness_oversized")
+                    startup = decode(raw)
+                    binding["socket_path"] = startup.get("socket_path", binding["socket_path"])
+                finally:
+                    os.close(fd)
             relay = LocalPreparationRelay(binding)
             try:
                 relay._paths()

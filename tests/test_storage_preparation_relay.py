@@ -603,3 +603,49 @@ def test_v2_catalog_requires_matching_usable_preparation_binding(runtime, tmp_pa
     assert rows[CAP]["status"] == "unavailable"
     assert rows["static.zero"]["status"] == "ready"
     assert rows["static.zero"]["storage_estimate"] == {"mode": "static", "scratch_bytes": 0, "output_bytes": 0}
+
+
+@pytest.mark.parametrize("tamper", [None, "record", "permissions", "symlink"])
+def test_compact_kernel_address_keeps_selected_readiness_binding(runtime, tmp_path, tamper):
+    """Real endpoint/inode checks; native-peer exchange is outside this unit scope."""
+    from runtime_protocol import local_preparation_relay as transport
+    d, _ = runtime
+    root = tmp_path / "selected-support"
+    root.mkdir(mode=0o700)
+    compact = transport.custody._create_compact_socket_root()
+    listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    binding = binding_for(d, root)
+    binding["socket_path"] = str(compact / "s")
+    listener.bind(binding["socket_path"])
+    os.chmod(binding["socket_path"], 0o600)
+    relay = LocalPreparationRelay(binding)
+    record = Path(binding["readiness_record_path"])
+    record.write_bytes(canonical(relay.readiness_record()))
+    record.chmod(0o600)
+    try:
+        relay._paths()
+        if tamper == "record":
+            changed = relay.readiness_record()
+            changed["source_digest"] = "sha256:" + "0" * 64
+            record.write_bytes(canonical(changed))
+        elif tamper == "permissions":
+            compact.chmod(0o755)
+        elif tamper == "symlink":
+            alias = compact.parent / (compact.name + "-link")
+            alias.symlink_to(compact, target_is_directory=True)
+            try:
+                with pytest.raises(RuntimeErrorBase):
+                    LocalPreparationRelay({**binding, "socket_path": str(alias / "s")})
+            finally:
+                alias.unlink()
+            return
+        if tamper:
+            with pytest.raises(RuntimeErrorBase):
+                relay._paths()
+        else:
+            assert Path(relay.binding["readiness_record_path"]).is_relative_to(root)
+            assert not Path(relay.binding["socket_path"]).is_relative_to(root)
+    finally:
+        listener.close()
+        (compact / "s").unlink()
+        compact.rmdir()
