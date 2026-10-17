@@ -17,7 +17,7 @@ import stat
 import sys
 import threading
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 from . import custody_broker as custody
@@ -80,12 +80,18 @@ class StoragePreparationConfig:
     runtime_epoch: int
     executor_source_digest: str
     executor_dependency_digest: str
+    socket_root: Path | None = None
 
     def __post_init__(self):
         if (not isinstance(self.support_root, Path)
                 or not self.support_root.is_absolute()
                 or type(self.host_peer) is not ProcessIdentity
                 or type(self.runtime_peer) is not ProcessIdentity):
+            raise PreparationTransportError("invalid_config")
+        if self.socket_root is not None and (
+                self.socket_root.parent != custody.DARWIN_CUSTODY_SOCKET_PARENT
+                or not self.socket_root.name.startswith("runtime-cb-")
+                or self.socket_root.resolve(strict=True) != self.socket_root):
             raise PreparationTransportError("invalid_config")
         for key in ("host_instance_id", "runtime_realm_id", "runtime_instance_id",
                     "runtime_session_id", "executor_id", "source_epoch", "capability_id", "estimator_id"):
@@ -118,11 +124,11 @@ class StoragePreparationConfig:
 
     @property
     def socket_path(self):
-        return self.support_root / "storage-preparation" / "s"
+        return (self.socket_root or self.support_root / "storage-preparation") / "s"
 
     @property
     def readiness_path(self):
-        return self.socket_path.parent / "ready.json"
+        return self.support_root / "storage-preparation" / "ready.json"
 
 
 def validate_host_binding(host, config):
@@ -238,6 +244,8 @@ class StoragePreparationListener:
         self._listener = None
         self._thread = None
         self._root_fd = None
+        self._socket_fd = None
+        self._compact_root = None
         self._owned = {}
         self.error = None
 
@@ -264,12 +272,19 @@ class StoragePreparationListener:
                     os.mkdir("storage-preparation", mode=0o700, dir_fd=support_fd)
                 except FileExistsError:
                     pass
-                self._root_fd = _directory(config.socket_path.parent)
+                self._root_fd = _directory(config.readiness_path.parent)
             finally:
                 os.close(support_fd)
             self._root_identity = _inode(os.fstat(self._root_fd))
+            if config.socket_root is not None:
+                raise PreparationTransportError("invalid_config")
             if len(os.fsencode(config.socket_path)) > custody.DARWIN_UNIX_SOCKET_PATH_MAX_BYTES:
-                raise PreparationTransportError("unsafe_endpoint")
+                # Same authenticated receiver/readiness; only its kernel address
+                # uses the existing original-owner compact custody directory.
+                self._compact_root = custody._create_compact_socket_root()
+                self.config = config = replace(config, socket_root=self._compact_root)
+            self._socket_fd = _directory(config.socket_path.parent)
+            self._socket_identity = _inode(os.fstat(self._socket_fd))
             listener = self._listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             listener.bind(str(config.socket_path))  # Never unlink/reuse an existing endpoint.
             self._owned["s"] = _inode(os.lstat(config.socket_path))
@@ -311,15 +326,23 @@ class StoragePreparationListener:
                 raise PreparationTransportError("stale_endpoint")
         finally:
             os.close(support_fd)
-        fd = _directory(self.config.socket_path.parent)
+        socket_fd = _directory(self.config.socket_path.parent)
+        try:
+            facts = os.stat("s", dir_fd=socket_fd, follow_symlinks=False)
+            if (_inode(os.fstat(socket_fd)) != self._socket_identity
+                    or not stat.S_ISSOCK(facts.st_mode) or facts.st_uid != os.getuid()
+                    or stat.S_IMODE(facts.st_mode) != 0o600 or _inode(facts) != self._owned["s"]):
+                raise PreparationTransportError("unsafe_endpoint")
+        finally:
+            os.close(socket_fd)
+        fd = _directory(self.config.readiness_path.parent)
         try:
             if _inode(os.fstat(fd)) != self._root_identity:
                 raise PreparationTransportError("stale_endpoint")
-            for name, kind in (("s", stat.S_ISSOCK), ("ready.json", stat.S_ISREG)):
-                facts = os.stat(name, dir_fd=fd, follow_symlinks=False)
-                if (not kind(facts.st_mode) or facts.st_uid != os.getuid()
-                        or stat.S_IMODE(facts.st_mode) != 0o600 or _inode(facts) != self._owned[name]):
-                    raise PreparationTransportError("unsafe_endpoint")
+            facts = os.stat("ready.json", dir_fd=fd, follow_symlinks=False)
+            if (not stat.S_ISREG(facts.st_mode) or facts.st_uid != os.getuid()
+                    or stat.S_IMODE(facts.st_mode) != 0o600 or _inode(facts) != self._owned["ready.json"]):
+                raise PreparationTransportError("unsafe_endpoint")
             record_fd = os.open("ready.json", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
             try:
                 if _inode(os.fstat(record_fd)) != self._owned["ready.json"]:
@@ -445,12 +468,13 @@ class StoragePreparationListener:
             self._remove_owned("ready.json")
 
     def _remove_owned(self, name):
-        if self._root_fd is None or name not in self._owned:
+        fd = self._socket_fd if name == "s" else self._root_fd
+        if fd is None or name not in self._owned:
             return
         try:
-            facts = os.stat(name, dir_fd=self._root_fd, follow_symlinks=False)
+            facts = os.stat(name, dir_fd=fd, follow_symlinks=False)
             if _inode(facts) == self._owned[name]:
-                os.unlink(name, dir_fd=self._root_fd)
+                os.unlink(name, dir_fd=fd)
         except FileNotFoundError:
             pass
 
@@ -473,3 +497,12 @@ class StoragePreparationListener:
         if self._root_fd is not None:
             os.close(self._root_fd)
             self._root_fd = None
+        if self._socket_fd is not None:
+            # Refuse replacement; only remove our original empty compact root.
+            if self._compact_root is not None:
+                if _inode(os.lstat(self._compact_root)) != self._socket_identity:
+                    raise PreparationTransportError("stale_endpoint")
+                os.rmdir(self._compact_root)
+                self._compact_root = None
+            os.close(self._socket_fd)
+            self._socket_fd = None

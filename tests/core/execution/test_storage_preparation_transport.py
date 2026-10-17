@@ -249,7 +249,7 @@ def test_readiness_and_endpoint_tamper_refuses(world, fault):
     assert not w.calls
 
 
-@pytest.mark.parametrize("fault", ["noncanonical", "symlink", "permissions", "missing", "stale_socket", "stale_record", "long_path"])
+@pytest.mark.parametrize("fault", ["noncanonical", "symlink", "permissions", "missing", "stale_socket", "stale_record"])
 def test_bad_startup_endpoint_never_becomes_ready(world, fault, monkeypatch):
     w = world
     config = w.config
@@ -263,8 +263,6 @@ def test_bad_startup_endpoint_never_becomes_ready(world, fault, monkeypatch):
         config.support_root.chmod(0o755)
     elif fault == "missing":
         config = replace(config, support_root=config.support_root / "absent")
-    elif fault == "long_path":
-        monkeypatch.setattr(custody, "DARWIN_UNIX_SOCKET_PATH_MAX_BYTES", 103)
     else:
         config.socket_path.parent.mkdir(mode=0o700)
         target = config.socket_path if fault == "stale_socket" else config.readiness_path
@@ -486,3 +484,21 @@ def test_estimator_failure_keeps_public_refusal_and_bounded_internal_diagnostic(
     assert event["exception"] == "HostError"
     assert len(event["message"]) == 512
     assert "spec" not in event and "request" not in event
+
+
+def test_long_selected_support_uses_owned_compact_socket(world, monkeypatch):
+    """Same operation/readiness under selected support; only kernel address is short."""
+    w = world
+    compact = w.config.support_root.parent / "runtime-cb-storage"
+    compact.mkdir(mode=0o700)
+    monkeypatch.setattr(custody, "DARWIN_UNIX_SOCKET_PATH_MAX_BYTES", 103)
+    monkeypatch.setattr(custody, "DARWIN_CUSTODY_SOCKET_PARENT", compact.parent)
+    monkeypatch.setattr(custody, "_create_compact_socket_root", lambda: compact)
+    listener = w.host.start_storage_preparation(w.config)
+    assert listener.config.socket_path == compact / "s"
+    assert listener.config.readiness_path == w.config.readiness_path
+    assert json.loads(w.config.readiness_path.read_bytes())["socket_path"] == str(compact / "s")
+    assert exchange(w)["preparation"]["storage_estimate"] == {"scratch_bytes": 123, "output_bytes": 456}
+    listener.close()
+    assert not compact.exists()
+    assert not w.config.readiness_path.exists()

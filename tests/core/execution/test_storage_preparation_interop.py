@@ -201,3 +201,28 @@ def test_real_host_reader_rejects_duplicate_and_trailing_frames(raw):
     finally:
         a.close()
         b.close()
+
+
+def test_long_support_host_record_binds_runtime_compact_receiver(world, monkeypatch):
+    """Actual writer/reader/correlation, synthetic native identities as above."""
+    from astrid.core.execution import custody_broker as custody
+    w = world
+    compact = w.config.support_root.parent / "runtime-cb-interop"
+    compact.mkdir(mode=0o700)
+    monkeypatch.setattr(custody, "DARWIN_UNIX_SOCKET_PATH_MAX_BYTES", 103)
+    monkeypatch.setattr(custody, "DARWIN_CUSTODY_SOCKET_PARENT", compact.parent)
+    monkeypatch.setattr(runtime.custody, "DARWIN_CUSTODY_SOCKET_PARENT", compact.parent)
+    monkeypatch.setattr(custody, "_create_compact_socket_root", lambda: compact)
+    original = w.host.prepare_storage_estimate
+    w.host.prepare_storage_estimate = lambda request: replace(original(request), spec_digest=runtime.digest(request.spec))
+    listener = w.host.start_storage_preparation(w.config)
+    relay = runtime.LocalPreparationRelay(binding(listener.config))
+    relay._paths()
+    envelope = relay.request_envelope(w.frame["request"], "compact-cross-package")
+    reply = exchange(w, raw=runtime.canonical(envelope) + b"\n")
+    value = relay.validate_response(runtime.decode(host._encoded(reply)), envelope)
+    assert value == reply["preparation"]
+    assert len(w.calls) == 1
+    assert listener._record == relay.readiness_record()
+    listener.close()
+    assert not compact.exists() and not w.config.readiness_path.exists()
