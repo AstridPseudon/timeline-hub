@@ -143,6 +143,22 @@ class RuntimeFixture:
             def head(self):
                 return dict(revision_id=runtime.current, publication_id="current-fixture", updated_at="fixture")
 
+            def scene_evaluator(self, candidate):
+                from astrid.core.timeline import scene_answers
+
+                client = scene_answers._client()
+
+                class Evaluator:
+                    query_scene = staticmethod(client.query_scene)
+
+                    def complete(self, *, empty=False):
+                        pass
+
+                    def close(self):
+                        pass
+
+                return Evaluator()
+
             def revision_closure(self, rid):
                 return runtime.closure(rid)
 
