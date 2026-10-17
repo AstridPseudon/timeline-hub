@@ -1925,6 +1925,8 @@ class _ConfinementPolicy:
     bootstrap_search_roots: tuple[Path, ...] = ()
     executable_bindings: tuple[ExecutableBinding, ...] = ()
     executable_directory: Path | None = None
+    renderer_transport: Any = None
+    renderer_reads: Any = None
 
 
 @dataclass(frozen=True)
@@ -1976,8 +1978,13 @@ def _python_runtime_library(prefix: Path) -> Path | None:
 class _AttemptPolicyFactory:
     """Trusted code/bootstrap configuration shared by slots, never a policy."""
 
-    def __init__(self, executables: ExecutableAdmission):
+    def __init__(self, executables: ExecutableAdmission, *, remotion_closure_binding=None):
+        from .remotion_closure import RemotionClosureBinding
+
+        if remotion_closure_binding is not None and type(remotion_closure_binding) is not RemotionClosureBinding:
+            raise HostError("renderer closure must be a trusted host binding")
         self.executables = executables
+        self.remotion_closure_binding = remotion_closure_binding
 
     def build(self, authority, *, attempt: Path, record) -> _ConfinementPolicy:
         if type(authority) is not _AuthenticatedAttempt:
@@ -2018,6 +2025,16 @@ class _AttemptPolicyFactory:
                  Path("/System/Library/Frameworks/CoreServices.framework"),
                  Path("/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld"),
                  Path("/System/Volumes/Preboot/Cryptexes/OS/usr/lib"))
+        if record.id == "rendering.render" and self.remotion_closure_binding is not None:
+            # This is host composition, never a task/environment-selected path.
+            # Project the already admitted installation into read-only bootstrap
+            # scope; all project writes, network and claim guards stay intact.
+            binding = self.remotion_closure_binding
+            try:
+                binding.validate(binding.project)
+            except (OSError, ValueError) as exc:
+                raise HostError("admitted renderer closure changed before policy projection") from exc
+            roots = (*roots, binding.project)
         # Existing installed platform artifacts only. Unsupported hosts are
         # refused by the same required backend check before any workload spawn.
         binary_directory = None
@@ -2272,6 +2289,37 @@ def _confined_launch_plan(
     # monotonic birth fence handles exec token changes during live custody.
     # No mach-lookup, IPC, socket, process-fork or broad process grant is added.
     rules = ["(version 1)", "(deny default)", *process_rules, "(allow sysctl-read)"]
+    if policy.renderer_reads is not None:
+        from .renderer_transport import QualifiedRendererReads
+
+        if type(policy.renderer_reads) is not QualifiedRendererReads:
+            raise HostError("renderer read closure requires completed launch validation")
+        qualified_roots, qualified_literals = policy.renderer_reads.validate(policy)
+        for resource in (*qualified_roots, *qualified_literals):
+            rules.extend(f'(allow file-read-metadata (literal "{quote(p)}"))' for p in resource.parents)
+        rules.extend(f'(allow file-read* (subpath "{quote(p)}"))' for p in qualified_roots)
+        rules.extend(f'(allow file-map-executable (subpath "{quote(p)}"))' for p in qualified_roots)
+        rules.extend(f'(allow file-read* (literal "{quote(p)}"))' for p in qualified_literals)
+    if policy.renderer_transport is not None:
+        from .renderer_transport import RetainedRendererTransport
+
+        if type(policy.renderer_transport) is not RetainedRendererTransport or not policy.workload_process_creation:
+            raise HostError("renderer transport requires its retained Host owner")
+        ports = policy.renderer_transport.validate(policy)
+        browser = policy.renderer_transport.browser
+        if browser is not None:
+            # Signature-qualified installed app closure; never a task path or
+            # implicit Remotion browser download/cache.
+            browser_root = browser.parent.parent
+            rules.append(f'(allow file-read* (subpath "{quote(browser_root)}"))')
+            rules.append(f'(allow file-map-executable (subpath "{quote(browser_root)}"))')
+        # Inbound permits adopting/accepting the already-listening socket.
+        # Bind stays denied, including wildcard bind on these same ports.
+        rules.extend(f'(allow network-inbound (local tcp4 "localhost:{port}"))' for port in ports[:1])
+        rules.extend(f'(allow network-outbound (remote tcp4 "localhost:{port}"))' for port in ports)
+        # macOS inbound permission otherwise also admits a wildcard bind on
+        # that port. An explicit bind deny preserves inherited listen/accept.
+        rules.append('(deny network-bind)')
     # Nonrecursive bootstrap metadata exceptions, shared with the spike model.
     ancestors = sorted({p for resource in (*reads, *writes, private, *bootstrap_roots, *file_aliases)
                         for p in resource.parents}, key=str)
@@ -5617,7 +5665,9 @@ class GenericPackHost:
         self._confinement_policy = confinement_policy
         # Captured from trusted host startup, never a request's PATH/env.
         self._executable_admission = ExecutableAdmission(os.environ.get("PATH", os.defpath))
-        self._attempt_policy_factory = _AttemptPolicyFactory(self._executable_admission) if isinstance(client, RuntimeProtocolClient) else None
+        self._attempt_policy_factory = _AttemptPolicyFactory(
+            self._executable_admission, remotion_closure_binding=remotion_closure_binding,
+        ) if isinstance(client, RuntimeProtocolClient) else None
         self._attempt_claim_authority = None
         # Provider route grants are intentionally scoped to this host process;
         # their signing key never crosses into a child or runtime payload.
@@ -8636,11 +8686,15 @@ class GenericPackHost:
                         ]
                     )
                 )
+                # Confinement drops the ambient runner marker. Restore it only
+                # after the admitted pipe handshake, retaining the module as
+                # argv[0] so runpy does not overwrite the first pack argument.
                 startup = (
-                    "import json,runpy,sys; sys.path.extend(json.loads(sys.argv[1])); "
+                    "import json,os,runpy,sys; sys.path.extend(json.loads(sys.argv[1])); "
                     "from astrid.core.execution.render_command_pipe import install_render_command_client; "
-                    "install_render_command_client(); sys.argv=sys.argv[2:]; "
-                    "runpy.run_module(sys.argv.pop(0),run_name='__main__',alter_sys=True)"
+                    "install_render_command_client(); "
+                    "os.environ['ASTRID_INTERNAL_INVOCATION']='1'; sys.argv=sys.argv[2:]; "
+                    "runpy.run_module(sys.argv[0],run_name='__main__',alter_sys=True)"
                 )
                 argv = [
                     sys.executable,

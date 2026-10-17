@@ -28,7 +28,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import ModuleType
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from astrid.core import timeline
 from astrid.core.audit import AuditContext
@@ -1052,6 +1052,8 @@ def _stage_effect_assets_for_timeline(
     render_hash: str,
     composition_clip_types: frozenset[str] = frozenset(),
     asset_registry: Mapping[str, Any] | None = None,
+    staging_root: Path | None = None,
+    url_for_asset: Callable[[Path], str] | None = None,
 ) -> dict[str, Any]:
     # Resolve one immutable element registry for this render. Effects and
     # animation/transition references must agree even if the filesystem pack
@@ -1113,18 +1115,26 @@ def _stage_effect_assets_for_timeline(
     if not used_effects:
         return {"root": None, "effects": [], **resolved_elements}
 
-    public_root = project_dir / "public" / "astrid-effects" / render_hash
+    if staging_root is None or url_for_asset is None:
+        raise ValueError("effect assets require invocation-private staging and URL resolution")
+    public_root = Path(staging_root).resolve()
+    if public_root == project_dir.resolve() or public_root.is_relative_to(project_dir.resolve()):
+        raise ValueError("effect staging must remain outside the installed renderer project")
     staged_by_effect: dict[tuple[str, str], dict[str, str]] = {}
     for key, element in sorted(used_effects.items()):
         staged_assets: dict[str, str] = {}
         for asset in element.assets:
             source = (element.root / asset.path).resolve()
+            if not source.is_relative_to(element.root.resolve()):
+                raise ValueError("effect asset escapes its admitted element root")
             # Different owners of the same ID must never share asset targets.
             relative_target = Path(key[0]) / element.id / asset.path
-            target = public_root / relative_target
+            target = (public_root / relative_target).resolve()
+            if not target.is_relative_to(public_root):
+                raise ValueError("effect asset escapes its invocation-private staging root")
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
-            staged_assets[asset.name] = f"astrid-effects/{render_hash}/{relative_target.as_posix()}"
+            staged_assets[asset.name] = url_for_asset(target)
         staged_by_effect[key] = staged_assets
 
     for index, key in clip_effects.items():
@@ -1341,15 +1351,29 @@ def _execute_remotion_locked(
     _validate_renderer_effect_registry(project_dir, timeline_data)
     registry_state = _effective_registry_state(theme_path)
     _require_free_space(provenance_out_path.parent, min_free_gb)
-    remotion_port = _available_remotion_port()
-    remotion_origin = f"http://localhost:{remotion_port}"
+    from astrid.core.execution.render_command_pipe import command_client
+    from astrid.core.execution.renderer_transport import RelayInvocationAssetServer
+
+    render_client = command_client()
+    if render_client is not None:
+        endpoint = render_client.request('renderer_endpoint', {})
+        remotion_port = endpoint['port']
+        remotion_origin = f"http://127.0.0.1:{remotion_port}"
+    else:
+        remotion_port = _available_remotion_port()
+        remotion_origin = f"http://localhost:{remotion_port}"
+
+    def invocation_asset_server(root, *, allowed_origin):
+        if render_client is not None:
+            return RelayInvocationAssetServer(render_client, root, allowed_origin=allowed_origin)
+        return InvocationAssetServer(root, allowed_origin=allowed_origin)
     props_path = (provenance_out_path.parent / ".remotion-props.json").resolve()
     render_hash = _render_asset_stage_hash(
         timeline_path,
         assets_path,
         provenance_out_path,
     )
-    staged_public_root = project_dir / "public" / "astrid-effects" / render_hash
+    staged_public_root = None
     with ExitStack() as asset_lifecycle:
         try:
             temp_parent = (staging_parent or provenance_out_path.parent).resolve()
@@ -1363,6 +1387,7 @@ def _execute_remotion_locked(
             component_stage = stage_render_components(
                 timeline_data, output=remotion_temp_root / "components",
             )
+            staged_public_root = remotion_temp_root / "effects" / render_hash
             materializer = asset_lifecycle.enter_context(
                 AssetMaterializer(
                     assets_path,
@@ -1377,7 +1402,7 @@ def _execute_remotion_locked(
             if materializer.needs_server:
                 try:
                     asset_server = asset_lifecycle.enter_context(
-                        InvocationAssetServer(
+                        invocation_asset_server(
                             materializer.serving_root,
                             allowed_origin=remotion_origin,
                         )
@@ -1446,6 +1471,16 @@ def _execute_remotion_locked(
                 # resolved theme dict is built fresh for this render.
                 theme_color = merged_props["theme"].setdefault("visual", {}).setdefault("color", {})
                 theme_color["bg"] = "transparent"
+            effect_server = None
+
+            def effect_asset_url(path: Path) -> str:
+                nonlocal effect_server
+                if effect_server is None:
+                    effect_server = asset_lifecycle.enter_context(
+                        invocation_asset_server(staged_public_root, allowed_origin=remotion_origin)
+                    )
+                return effect_server.local_url(path)
+
             stage_summary = _stage_effect_assets_for_timeline(
                 merged_props["timeline"],
                 project_dir=project_dir,
@@ -1453,6 +1488,8 @@ def _execute_remotion_locked(
                 render_hash=render_hash,
                 composition_clip_types=composition_clip_types,
                 asset_registry=resolved_registry,
+                staging_root=staged_public_root,
+                url_for_asset=effect_asset_url,
             )
             staged_video.parent.mkdir(parents=True, exist_ok=True)
             props_path.write_text(json.dumps(merged_props), encoding="utf-8")
@@ -1569,9 +1606,10 @@ def _execute_remotion_locked(
                 remotion_args.append(f"--scale={render_scale:.15g}")
             diagnostic_acceptance = any(clip.get('app', {}).get('liveScene', {}).get('__l1bTrace') is True for clip in merged_props['timeline'].get('clips', []))
             diagnostic_trace = diagnostic_acceptance or any('<!-- astrid-l1b-diagnostic -->' in str(clip.get('app', {}).get('liveScene', {}).get('html', '')) for clip in merged_props['timeline'].get('clips', []))
-            diagnostic_root = project_dir.parent / '.otto' / 'l1b-fixtures'
+            diagnostic_root = provenance_out_path.parent / '.remotion-diagnostics'
             diagnostic_label = 'acceptance' if diagnostic_acceptance else 'trace'
             if diagnostic_trace:
+                diagnostic_root.mkdir(exist_ok=True)
                 remotion_args.append('--log=verbose')
                 (diagnostic_root / f'render-{diagnostic_label}-command.json').write_text(json.dumps({'args': remotion_args, 'cwd': str(project_dir)}))
             if frame_mode and frame_session is not None:
@@ -1665,10 +1703,8 @@ def _execute_remotion_locked(
             )
         finally:
             props_path.unlink(missing_ok=True)
-            # The external owner has finished consuming the staged request
-            # before it replies. Always remove invocation-scoped media after
-            # the response; retaining it would leak one public root per task.
-            shutil.rmtree(staged_public_root, ignore_errors=True)
+            # ExitStack closes the invocation servers before removing their
+            # private temporary stages. The installed project stays read-only.
 
 
 def capture_remotion_frames(

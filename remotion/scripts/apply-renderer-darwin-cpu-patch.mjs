@@ -2,6 +2,7 @@ import {createHash, randomUUID} from 'node:crypto';
 import {readFileSync, renameSync, statSync, unlinkSync, writeFileSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {applyRendererRetainedTransportPatch} from './apply-renderer-retained-transport-patch.mjs';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(readFileSync(path.join(projectRoot, 'patches/renderer-4.0.509-darwin-cpu.json'), 'utf8'));
@@ -46,5 +47,5 @@ export function applyRendererDarwinCpuPatch(root = projectRoot) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  console.log(JSON.stringify(applyRendererDarwinCpuPatch()));
+  console.log(JSON.stringify({cpu: applyRendererDarwinCpuPatch(), transport: applyRendererRetainedTransportPatch()}));
 }

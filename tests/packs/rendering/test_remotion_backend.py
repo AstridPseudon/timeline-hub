@@ -1836,14 +1836,17 @@ def test_card_staging_overrides_only_exact_local_owner(tmp_path, monkeypatch, ow
     monkeypatch.setattr(remotion, "load_default_registry", lambda **_: ElementRegistry([element]))
     clip = {"id": "c", "clipType": "effect-layer", "elementRef": {"packId": owner, "kind": "effect", "id": "end-spanning-layer"},
         "params": {"cardAssets": {"card0": "override"}}}
+    stage = tmp_path / "private-effects"
     summary = remotion._stage_effect_assets_for_timeline({"clips": [clip]}, project_dir=tmp_path / "project",
-        theme_path=None, render_hash="generation", asset_registry={"assets": {"override": {"file": "astrid-media/bound/override.png"}}})
-    expected = "astrid-media/bound/override.png" if owner == "local" else "astrid-effects/generation/other-pack/end-spanning-layer/default.png"
+        theme_path=None, render_hash="generation", asset_registry={"assets": {"override": {"file": "astrid-media/bound/override.png"}}},
+        staging_root=stage, url_for_asset=lambda path: "http://127.0.0.1:1234/" + path.relative_to(stage).as_posix())
+    expected = "astrid-media/bound/override.png" if owner == "local" else "http://127.0.0.1:1234/other-pack/end-spanning-layer/default.png"
     assert clip["params"]["__astridAssets"]["card0"] == expected
     assert clip["params"]["cardAssets"] == {"card0": "override"}
     assert summary["effects"][0]["source_pack_id"] == owner
-    staged = tmp_path / "project/public/astrid-effects/generation" / owner / "end-spanning-layer/default.png"
+    staged = stage / owner / "end-spanning-layer/default.png"
     assert staged.read_bytes() == b"canonical-card"
+    assert not (tmp_path / "project").exists()
 
 
 def test_frame_owner_failed_reply_retains_primary_and_cleanup_details(capsys):
