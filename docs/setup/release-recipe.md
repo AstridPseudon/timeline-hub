@@ -2,6 +2,37 @@
 
 Status: **maintained recipe; final release inputs pending producer handoff**.
 
+## Deliberate timing changes: REPAIRS-REST
+
+Resolved ends now resize source-trimmed visual media and explicit audio
+`until`/`for` spans. Source in-points stay fixed; `to` and any stored
+`hold` follow the same speed-aware source window. A media duration edit
+also keeps `to` and `hold` consistent when both are present.
+
+`trim` stores the exact requested source-window length in `hold`, so
+playback speed is applied once. `slip` derives an omitted source out-point
+through the shared source/timeline clock and checks the resulting file bounds.
+Starts, clip identity, opaque metadata and existing relation-choice conflicts
+are preserved.
+
+Beat/downbeat references use the authored music bed covering their resolved
+base. The latest authored start owns an overlap; equal starts use lexical
+occurrence/clip ScopedId order. Coverage is half-open, so a boundary belongs
+to its incoming bed and a gap has no owner. Counts remain on that owner's
+grid across generated segments, following existing `split_from` ancestry
+and managed materialization; coincident crossfade beats count once. Source
+trim/speed conversion uses the shared clock.
+The compiler dependency graph uses that same owner, so an unrelated bed's
+end no longer creates a false beat-feedback cycle.
+
+The independent scenarios are in `tests/sdk/test_timing_repairs_rest.py`:
+moving-word visual/audio ends, literal/cut ends, duration/trim/slip at slow
+and fast speeds, source-bound refusal and rollback, overlap ties, gaps,
+half-open boundaries, nested split ancestry, generated crossfade counts,
+and stored on/formula consumers. Existing golden fixtures and CHARACTERIZE
+assertions are unchanged. Immutable transcript snapshots, validated word
+mapping/orphans and source-clock bindings retain their existing contract.
+
 ## Deliberate timing changes: REPAIRS-STRUCT
 
 The shared timing compiler refuses music/film feedback and self-cycles with a

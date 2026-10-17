@@ -315,7 +315,10 @@ def resolve(moment: Moment | str, ctx: Context, *, in_point: bool = False) -> fl
         t = ctx.clip_edge(m.clip, m.kind.split("_")[1])
     elif m.kind in ("beat", "downbeat"):
         base = resolve(m.base, ctx) if m.base else 0.0
-        beats = list(ctx.beats(m.kind))
+        # A checkout can select the authored bed covering the resolved base.
+        # Standalone contexts already supply a single grid.
+        scoped = getattr(ctx, "beats_at", None)
+        beats = list(scoped(m.kind, base) if scoped is not None else ctx.beats(m.kind))
         # a beat on the base's own frame is ON it, not after (or before) it: count from the next one
         near = 0.5 / float(ctx.fps or 30)
         pool = [b for b in beats if b > base + near] if m.direction == "after" else [b for b in reversed(beats) if b < base - near]

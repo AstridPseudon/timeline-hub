@@ -771,8 +771,9 @@ class _TimingEvaluators:
             changed = True
         # Audio never inherits a cut's end in retime(); a supplied end is its
         # explicit until/for relation, which must refresh the cached hold too.
-        # Source windows retain their existing trim semantics.
-        if end is not None and "from" not in clip.data:
+        # The shared length setter maps this timeline span to source seconds,
+        # retaining the in-point for source-trimmed media too.
+        if end is not None:
             length = self._frame(end + 1e-6) - clip.start
             if length > 0.5 / self.fps and round(length * self.fps) != round(clip.duration * self.fps):
                 _set_length(clip.data, length)

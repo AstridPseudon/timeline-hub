@@ -25,6 +25,7 @@ from astrid.sdk.timeline._common import (TIME_RE, TimelineEditError, _Suggest, _
 from astrid.sdk.timeline.selection import ROLE_VOCABULARY, Selection
 from astrid.sdk.timeline.doc import (_get_path, _read_words, _set_length, _set_path)
 from astrid.sdk.timeline.units import (element_units, formula_from_spec, from_canvas, param_unit, parse_formula_value, parse_moment_value, to_canvas)
+from astrid.sdk.timeline_editing import source_to_timeline_time, timeline_to_source_time
 
 
 # ----------------------------------------------------------------------- views
@@ -453,7 +454,7 @@ class Clip(_Suggest):
         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
         speed = _num(self.data.get("speed"), 1.0) or 1.0
-        length = self._tl.quantize((source_out - source_in) / speed)
+        length = self._tl.quantize(float(source_to_timeline_time(source_out, source_start=source_in, speed=speed)))
         explicit_end = any(r["target"] == _identity_commands.scoped_clip(self._tl, self) and r["edge"] == "end"
                            for r in getattr(self._tl, "_active_relation_choices", []))
         if not explicit_end and (intent.until(self.data) or intent.for_s(self.data) is not None) and abs(length - self.duration) > 0.5 / self._tl.fps:
@@ -462,7 +463,9 @@ class Clip(_Suggest):
                                    intent.until(self.data) or intent.for_s(self.data), length,
                                    "trim needs an explicit end relation choice")
         self.data["from"], self.data["to"] = _r(source_in), _r(source_out)
-        self.data["hold"] = _r(length)
+        # hold, like to/from, is measured in source seconds; duration divides
+        # it by speed exactly once. Preserve the editor's source endpoints.
+        self.data["hold"] = _r(source_out - source_in)
         self._tl._mcache = None
         return self
 
@@ -474,7 +477,9 @@ class Clip(_Suggest):
         limit = self._source_duration()
         original_in = _num(self.data.get("from"))
         source_in = original_in + shift
-        source_out = _num(self.data.get("to"), original_in + self.duration) + shift
+        speed = _num(self.data.get("speed"), 1.0) or 1.0
+        fallback_out = float(timeline_to_source_time(self.duration, source_start=original_in, speed=speed))
+        source_out = _num(self.data.get("to"), fallback_out) + shift
         if source_in < 0 or source_out > limit:
             raise TimelineEditError(f"{self.address}: slipping {shift:g} s gives source range {source_in:g}–{source_out:g} s; "
                                     f"the file limit is 0–{limit:g} s")
@@ -1405,30 +1410,77 @@ class _MomentContext:
             cache["words"] = self.tl.words()
         return cache["words"]
 
-    def beats(self, kind: str, *, bed: str | None = None):
-        out = []
+    def _beat_beds(self, kind: str):
+        """Read the existing authored owners and their current sounding pieces."""
+        from astrid.sdk.timeline import music_beds
+
         clips = list(self.tl.clips(audio=True))
-        selected = {bed} if bed is not None else None
-        if selected is not None:
-            # Music edits already retain their source bed through split_from.
-            # Follow that ancestry; never infer bed membership from asset/BPM.
-            while True:
-                more = {c.id for c in clips if intent._app(c.data).get('split_from') in selected}
-                if more <= selected:
-                    break
-                selected.update(more)
+        by_id = {(c.shot_id, c.id): c for c in clips}
+        groups = {}
         for clip in clips:
-            if selected is not None and clip.id not in selected:
+            owned = music_beds.entry_for(clip)
+            if owned:
+                owner, entry = owned
+                if owner in groups:
+                    continue
+                sid, _ = music_beds.locate(self.tl, owner, entry["source"])
+                # Use the same projection as compile/project, including adopted
+                # arrangements and shared seams. The carrier is never rewritten.
+                output, _, _ = music_beds._materialize_entry(self.tl, owner, entry)
+                source_data = music_beds._resolved_source(self.tl, owner, entry["source"])
+                groups[owner] = (Clip(self.tl, sid, source_data),
+                                 [Clip(self.tl, sid, data) for data in output])
                 continue
-            if clip.track != "music" and not intent.beat_sources(clip.data):
+            source, seen = clip, set()
+            while source.id not in seen:
+                seen.add(source.id)
+                parent = intent._app(source.data).get("split_from")
+                ancestor = by_id.get((source.shot_id, parent))
+                if ancestor is None:
+                    break
+                source = ancestor
+            owner = music_beds.owner_for(self.tl, source)
+            if owner not in groups:
+                groups[owner] = (source, [])
+            groups[owner][1].append(clip)
+        return {owner: (source, pieces) for owner, (source, pieces) in groups.items()
+                if any(intent.beat_sources(c.data, kind) for c in pieces)}
+
+    def _beat_owner(self, kind: str, base: float, groups=None):
+        """The latest authored start owns an overlap; ScopedId breaks ties."""
+        groups = self._beat_beds(kind) if groups is None else groups
+        candidates = [(owner, source) for owner, (source, pieces) in groups.items()
+                      if any(c.start - 1e-6 <= base < c.end - 1e-6 for c in pieces)]
+        if not candidates:
+            return None
+        owner, _ = min(candidates, key=lambda item: (-item[1].start, item[0]))
+        return owner
+
+    def beats_at(self, kind: str, base: float):
+        groups = self._beat_beds(kind)
+        owner = self._beat_owner(kind, base, groups)
+        if owner is None:
+            return []
+        return self.beats(kind, bed=owner, _groups=groups)
+
+    def beats(self, kind: str, *, bed: str | None = None, _groups=None):
+        # Keep the existing optional selector, now fed by the resolver with an
+        # exact authored owner. Legacy split_from ancestry is occurrence-local.
+        groups = self._beat_beds(kind) if _groups is None else _groups
+        out = []
+        for owner, (source, pieces) in groups.items():
+            if bed is not None and bed not in {owner, source.id, *(c.id for c in pieces)}:
                 continue
-            speed = _num(clip.data.get("speed"), 1.0) or 1.0
-            src0 = _num(clip.data.get("from"))
-            for b in intent.beat_sources(clip.data, kind):
-                t = clip.start + (b - src0) / speed
-                if clip.start - 1e-6 <= t < clip.end - 1e-6:
-                    out.append(t)
-        return sorted(out)
+            for clip in pieces:
+                speed = _num(clip.data.get("speed"), 1.0) or 1.0
+                src0 = _num(clip.data.get("from"))
+                for b in intent.beat_sources(clip.data, kind):
+                    t = float(source_to_timeline_time(b, source_start=src0,
+                                                     timeline_start=clip.start, speed=speed))
+                    if clip.start - 1e-6 <= t < clip.end - 1e-6:
+                        out.append(t)
+        # A crossfade may expose the same beat in both pieces of one owner.
+        return sorted(set(out)) if bed is not None else sorted(out)
 
     def clip_edge(self, scoped_id: str, edge: str) -> float:
         from astrid.sdk.timeline import commands

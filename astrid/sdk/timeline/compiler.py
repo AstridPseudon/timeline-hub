@@ -141,7 +141,21 @@ def _validate_dependencies(tl, *, music_end_owners=()):
                         if (w.shot_id, w.clip_id) in by_word}
             if m.kind in ('beat', 'downbeat'):
                 deps = visit(m.base) if m.base else set()
-                for bed in clips:
+                from astrid.sdk.timeline.model import _MomentContext
+                from astrid.sdk.timeline import music_beds
+                ctx = _MomentContext(tl, clip, film_end=film_end)
+                try:
+                    base = mo.resolve(m.base, ctx) if m.base else 0.
+                    beds = ctx._beat_beds(m.kind)
+                    owner = ctx._beat_owner(m.kind, base, beds)
+                    pieces = {id(c.data) for c in beds[owner][1]} if owner is not None else set()
+                    selected = [bed for bed in clips if id(bed.data) in pieces
+                                or (owner is not None and music_beds.owner_for(tl, bed) == owner)]
+                except (mo.MomentError, TimelineEditError):
+                    # A missing base retains the conservative graph until the
+                    # existing resolver can supply its diagnostic/ORPHAN.
+                    selected = clips
+                for bed in selected:
                     if bed.is_audio and (bed.track == 'music' or intent.beat_sources(bed.data)) \
                             and intent.beat_sources(bed.data, m.kind):
                         deps.update((node(bed, 'start'), node(bed, 'end')))
