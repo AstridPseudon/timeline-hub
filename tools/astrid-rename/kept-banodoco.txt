@@ -1,4 +1,18 @@
 # Python regex<TAB># reason. Each match is a community, org, or external package use.
+banodoco-(?:worker|pool) # community worker-pool contract, not the Runtime render route
+banodoco_(?:timeline_generate|render_timeline|pool|\\_%|\*) # community task-type contract and SQL LIKE prefix
+v_is_banodoco_pool # community worker-pool SQL predicate
+(?i:(?:non-|the )?banodoco (?:worker|poller|pool)) # prose naming the community worker and pool
+(?i:(?:Non-|non-)banodoco(?:-pool)?) # prose distinction from the community worker pool
+['\"]banodoco['\"] # quoted community worker_pool wire value and community export route
+['\"]BANODOCO['\"] # community worker-pool log label in claim-next-task
+(?:project|task)-banodoco # community worker-pool test fixture IDs
+(?:delegateToBanodocoAgent|executeDelegateToBanodocoAgent|enqueueBanodocoTask|pollBanodocoTaskStatus|DelegateToBanodocoAgentArgs|BanodocoTaskPayload|BanodocoTaskStatusSnapshot) # retired community worker delegation contract and fail-closed stub
+banodoco-delegation # retired community worker delegation test surface
+(?i:(?:Legacy|retired) Banodoco delegation|Banodoco-poller-facing) # retired community worker delegation prose
+banodoco\\+_% # community task-type SQL LIKE prefix with escaped underscore
+banodoco_(?=['\"*]) # quoted or wildcard community task-type prefix in SQL comments
+(?i:Banodoco pipeline|not banodoco|e.g. banodoco) # community worker pipeline and pool prose
 github\.com/banodoco/ # GitHub organization; renamed repository component is mapped separately
 @banodoco\b # npm organization scope, including constructed package paths
 @banodoco/timeline-[A-Za-z0-9_-]* # community timeline packages keep their npm scope
