@@ -1,0 +1,4 @@
+docs/plans/astrid-naming/
+tools/astrid-rename/
+src/migrations/astridRenameBrowserMigration.ts
+src/migrations/astridRenameBrowserMigration.test.ts

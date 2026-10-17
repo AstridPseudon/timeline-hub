@@ -1,0 +1,2 @@
+src/migrations/astridRenameBrowserMigration.ts
+src/migrations/astridRenameBrowserMigration.test.ts
