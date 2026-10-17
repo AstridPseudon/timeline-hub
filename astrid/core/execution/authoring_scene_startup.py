@@ -11,6 +11,7 @@ from . import custody_broker as custody
 from .authoring_scene_transport import AuthoringSceneConfig
 from .remotion_frame_owner import FrameOwnerError
 from .storage_preparation_transport import ProcessIdentity
+from astrid.core.rendering.remotion_runtime import _validation_timing
 
 
 def provider_digest():
@@ -19,6 +20,7 @@ def provider_digest():
     return "sha256:" + hashlib.sha256(Path(commit.__file__).read_bytes()).hexdigest()
 
 
+@_validation_timing('authoring_renderer_binding')
 def renderer_closure(host, environment):
     from astrid.packs.rendering.actions.timeline_visualize.composed_frame import (
         renderer_environment_identity,
@@ -61,6 +63,7 @@ def renderer_closure(host, environment):
     return wire.digest([renderer_environment_identity(), selected])
 
 
+@_validation_timing('authoring_host_binding')
 def validate_host(host, config, environment):
     from .generic_host import (
         _admitted_source_roots,

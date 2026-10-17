@@ -27,6 +27,17 @@ def test_inventory_keeps_hidden_and_linked_files_without_traversing_directory_li
     assert set(closure._tree_files(root)) == {first, second, alias}
 
 
+@pytest.mark.parametrize('replacement', ['missing', 'directory'])
+def test_retained_receipt_must_remain_a_regular_file(roots, replacement):
+    project, _, receipt, args = roots
+    binding = closure.RemotionClosureBinding.admit(**args)
+    receipt.unlink()
+    if replacement == 'directory':
+        receipt.mkdir()
+    with pytest.raises(ValueError, match='admitted renderer closure input changed'):
+        binding.validate(project)
+
+
 @pytest.mark.parametrize('change', ['bytes','added','removed','escape'])
 def test_root_config_import_helpers_are_in_the_selected_closure(roots,tmp_path,change):
     project,_,_,args=roots

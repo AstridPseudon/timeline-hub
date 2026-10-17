@@ -4,10 +4,12 @@ Never decode this binding from executor payloads or environment. A receipt is
 not authority: the host composition supplies its independently admitted digest.
 """
 from dataclasses import dataclass
+from functools import cached_property
 import hashlib
 import json
 import os
 from pathlib import Path
+import stat
 
 _PATCHES = {
     '@remotion/renderer/dist/get-cpu-count.js': 'd89ef6b67068fb8f1c0e2f21781a37205b4beb1a8f7ff7997ba82b49c835c2bb',
@@ -40,33 +42,45 @@ def _root_sources(project):
 
 def _tree_files(root):
     """Match rglob's file inventory without restatting every directory entry."""
-    if not root.is_dir():
-        return
-    with os.scandir(root) as entries:
-        for entry in entries:
-            path = root / entry.name
-            # rglob does not traverse directory symlinks. File symlinks still
-            # participate and retain the existing byte validation below.
-            if entry.is_dir(follow_symlinks=False):
-                yield from _tree_files(path)
-            elif entry.is_file():
-                yield path
+    pending = [root]
+    while pending:
+        directory = pending.pop()
+        if not directory.is_dir():
+            continue
+        with os.scandir(directory) as entries:
+            for entry in entries:
+                path = directory / entry.name
+                # rglob does not traverse directory symlinks. File symlinks
+                # still participate in the byte validation below.
+                if entry.is_dir(follow_symlinks=False):
+                    pending.append(path)
+                elif entry.is_file():
+                    yield path
 
 
-def _sha(path):
+def _sha(path, *, require_regular=False):
     # Binding snapshots already hold immutable Paths. Reconstructing each
     # deep path reparses its parts on every guard without changing its identity.
     if not isinstance(path, Path):
         path = Path(path)
-    def signature():
-        value = path.stat()
+    def signature(value):
         return (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
-    before = signature()
+    try:
+        observed = path.stat()
+    except (FileNotFoundError, NotADirectoryError) as error:
+        if require_regular:
+            raise ValueError('admitted renderer closure input changed') from error
+        raise
+    # The same current metadata observation supplies both the regular-file
+    # predicate and the hash-cache signature. Do not stat every pin twice.
+    if require_regular and not stat.S_ISREG(observed.st_mode):
+        raise ValueError('admitted renderer closure input changed')
+    before = signature(observed)
     cached = _SHA_CACHE.get(path)
     if cached is not None and cached[0] == before:
         return cached[1]
     value = hashlib.sha256(path.read_bytes()).hexdigest()
-    if signature() != before:
+    if signature(path.stat()) != before:
         raise ValueError('renderer closure input changed while hashing')
     if len(_SHA_CACHE) >= 32768:
         _SHA_CACHE.clear()
@@ -180,34 +194,42 @@ class RemotionClosureBinding:
         binding.validate(project)
         return binding
 
+    @cached_property
+    def _expected_inventories(self):
+        # Only derive expected sets from this frozen admitted file tuple once.
+        # Actual filesystem inventories and every pin are checked on each call.
+        module_prefix = (self.installed_project / 'node_modules').parts
+        project_parts = self.project.parts
+        modules = frozenset(path for path, _ in self.files
+                            if path.parts[:len(module_prefix)] == module_prefix)
+        root_sources = frozenset(path for path, _ in self.files
+                                 if path.parts[:-1] == project_parts
+                                 and path.suffix in _ROOT_SOURCE_SUFFIXES)
+        sources = []
+        for directory in ('src', 'vendor/timeline-composition'):
+            root = self.project / directory
+            prefix = root.parts
+            sources.append((root, frozenset(path for path, _ in self.files
+                                             if path.parts[:len(prefix)] == prefix)))
+        return modules, root_sources, tuple(sources)
+
     def validate(self, project):
         project = Path(project)
         if project != self.project or (project/'node_modules').resolve(strict=True) != self.installed_project/'node_modules':
             raise ValueError('renderer project or dependency root changed after admission')
         modules = self.installed_project/'node_modules'
-        # These admitted paths and roots are absolute. Compare their lexical
-        # parts directly: Path.is_relative_to reparses the same deep root for
-        # every file, even though it does not inspect the filesystem. Current
-        # inventories and every existing file/hash check below still run.
-        module_prefix = modules.parts
-        expected_modules = {path for path, _ in self.files
-                            if path.parts[:len(module_prefix)] == module_prefix}
+        expected_modules, expected_root, source_inventories = self._expected_inventories
         actual_modules = set(_tree_files(modules))
         if actual_modules != expected_modules:
             raise ValueError('admitted renderer installation file inventory changed')
-        expected_root = {p for p, _ in self.files if p.parent == project and p.suffix in _ROOT_SOURCE_SUFFIXES}
         if _root_sources(project) != expected_root:
             raise ValueError('admitted renderer root source inventory changed')
-        for directory in ('src', 'vendor/timeline-composition'):
-            root = self.project/directory
-            source_prefix = root.parts
-            expected_source = {p for p, _ in self.files
-                               if p.parts[:len(source_prefix)] == source_prefix}
+        for root, expected_source in source_inventories:
             actual_source = set(_tree_files(root))
             if actual_source != expected_source:
                 raise ValueError('admitted renderer source file inventory changed')
         for path, expected in self.files:
-            if not path.is_file() or _sha(path) != expected:
+            if _sha(path, require_regular=True) != expected:
                 raise ValueError('admitted renderer closure input changed')
         return self.installed_project/'node_modules/@remotion/cli/remotion-cli.js'
 
