@@ -1,6 +1,7 @@
 import { isAppKeyframeHistoryBatch } from '../commands/appKeyframeHistory.ts';
 import { isContinuousHistoryBatch } from '../commands/continuousHistory.ts';
 import { isShaderSlotBatch } from '../commands/shaderSlotHistory.ts';
+import { isPositionResetBatch } from '../commands/positionReset.ts';
 import { isFadeHistoryBatch } from '../commands/fadeHistory.ts';
 import { isClipLookStyleBatch } from '../commands/clipLookStyleHistory.ts';
 import { isClipParamsHistoryBatch } from '../commands/clipParamsHistory.ts';
@@ -424,6 +425,7 @@ export function useTimelineCommit({
             || isClipStructureBatch(options.editCommands)
             || isTrackHistoryBatch(options.editCommands)
             || isFadeHistoryBatch(options.editCommands)
+            || isPositionResetBatch(options.editCommands)
             || isAppKeyframeHistoryBatch(options.editCommands)
             || isContinuousHistoryBatch(options.editCommands)
             || isClipLookStyleBatch(options.editCommands)

@@ -7324,4 +7324,175 @@ describe.skipIf(!process.env.ASTRID_W28_SDK)('W28 SDK caller receipt history', (
       if (mode === 'edit') { const shader = unique[0].change.commands[0].args.shader as Record<string, unknown>; expect(shader.sourceHash).toBe('literal:retained descriptor'); expect(shader.unknownLegacy).toEqual({ keep: true }); expect(shader.uniforms).toMatchObject({ opaqueUniform: { keep: null } }); }
       mounted.unmount(); history.unmount(); h.unmount();
   }, 120_000);
+// W32 uses the original selected/bulk reset handlers mounted with the real
+// commit, persistence, provider and shared native history hooks above.
+async function positionResetData(presence: 'value' | 'null' | 'mixed' | 'absent' = 'mixed', occurrence = false) {
+  const base = await selectedMoveData(false, occurrence);
+  const fields = ['x', 'y', 'width', 'height', 'cropTop', 'cropBottom', 'cropLeft', 'cropRight'];
+  const values = [12, 0, 720, 480, 0.1, 0.2, 0.3, 0.4];
+  return buildTimelineData({ ...base.config, clips: base.config.clips.map(clip => {
+    const next = structuredClone(clip) as typeof clip & Record<string, unknown>;
+    const apply = (owner: Record<string, unknown>) => fields.forEach((field, index) => {
+      delete owner[field];
+      if (presence !== 'absent' && !(presence === 'mixed' && index % 3 === 0)) owner[field] = presence === 'null' || presence === 'mixed' && index % 3 === 1 ? null : values[index];
+    });
+    next.rotation = 23; next.transform = { opaque: [null, false, '雪'] };
+    apply(next);
+    if (next.app?.canonical) apply(next.app.canonical.sourceClip as unknown as Record<string, unknown>);
+    return next;
+  }) }, base.registry, undefined, 1, undefined, base.head);
+}
+const resetPaths = ['x', 'y', 'width', 'height', 'cropTop', 'cropBottom', 'cropLeft', 'cropRight'];
+const resetKeys = ['position_x', 'position_y', 'position_width', 'position_height', 'crop_top', 'crop_bottom', 'crop_left', 'crop_right'];
+
+describe('W32 original mounted reset callers', () => {
+  it.each(['value', 'null', 'mixed', 'absent'] as const)('selected %s captures all eight guards before mutation', async presence => {
+    const initial = await positionResetData(presence); const before = structuredClone(initial.config);
+    const h = await setup(undefined, false, initial);
+    act(() => h.result.current.editing.handleResetClipPosition());
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    const calls = h.requests[0].request.change.commands;
+    expect(calls).toHaveLength(1); expect(calls[0]).toMatchObject({ op: 'clip.clear', select: 'parent/clip:clip-1', args: { keys: resetKeys } });
+    expect(calls[0].expect).toEqual(Object.fromEntries(resetPaths.map(path => [path, Object.hasOwn(before.clips[0], path)
+      ? { state: 'present', value: (before.clips[0] as unknown as Record<string, unknown>)[path] } : { state: 'absent' }])));
+    expect(h.requests[0].request.base_revision_id).toBe(initial.head!.headRevisionId);
+    expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  });
+  it.each([false, true])('bulk preserves ordered deduplicated selection and captured occurrence=%s', async occurrence => {
+    const initial = await positionResetData('mixed', occurrence); const h = await setup(undefined, false, initial);
+    const ids = initial.config.clips.map(clip => clip.id).reverse();
+    act(() => h.result.current.editing.handleResetClipsPosition([...ids, ids[0], 'uploading-placeholder']));
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    const calls = h.requests[0].request.change.commands;
+    expect(calls.map(call => call.select)).toEqual(ids.map(id => {
+      const identity = initial.config.clips.find(clip => clip.id === id)!.app?.canonical;
+      return identity ? `occurrence:${identity.occurrenceId}/clip:${identity.sourceClipId}` : `parent/clip:${id}`;
+    }));
+    for (const call of calls) { expect(call.args).toEqual({ keys: resetKeys }); expect(Object.keys(call.expect!)).toEqual(resetPaths); }
+    expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  });
+  it('selected occurrence captures the original scoped member and pinned base before mutation', async () => {
+    const initial = await positionResetData('mixed', true); const id = initial.config.clips[0].id;
+    const h = await setup(undefined, false, initial, 1, undefined, undefined, id);
+    act(() => h.result.current.editing.handleResetClipPosition());
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    expect(h.requests[0].request.change.commands[0]).toMatchObject({ op: 'clip.clear', select: 'occurrence:occ-A/clip:clip-1', args: { keys: resetKeys } });
+    expect(h.requests[0].request.scope).toMatchObject({ target: 'occurrence:occ-A', shot_revision_id: 'shot-r1', internal_revision_id: 'internal-r1' });
+    expect(h.requests[0].request.base_revision_id).toBe('parent-r1');
+    expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  });
+  it.each(['missing member', 'unsupported final field', 'audio final member', 'invalid occurrence'])('%s refuses before any partial mutation/history', async mode => {
+    const base = await positionResetData(); const config = structuredClone(base.config);
+    if (mode === 'unsupported final field') (config.clips[1] as unknown as Record<string, unknown>).cropRight = { opaque: true };
+    if (mode === 'audio final member') { config.tracks!.push({ id: 'A1', kind: 'audio', label: 'audio' }); config.clips[1].track = 'A1'; }
+    if (mode === 'invalid occurrence') config.clips[1].app = { canonical: {} } as never;
+    const initial = await buildTimelineData(config, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial); const history = lookStyleHistory(h);
+    const before = h.result.current.data;
+    act(() => h.result.current.editing.handleResetClipsPosition(mode === 'missing member' ? ['clip-1', 'missing'] : ['clip-1', 'clip-2']));
+    expect(h.result.current.data).toBe(before); expect(h.requests).toEqual([]); expect(history.result.current.canUndo).toBe(false);
+    expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  });
+});
+
+async function clickPositionReset(h: Awaited<ReturnType<typeof setup>>, bulk: boolean) {
+  const clips = h.initial.resolvedConfig.clips;
+  const common = { compositionWidth: 1920, compositionHeight: 1080, activeTab: 'position' as const,
+    setActiveTab: vi.fn(), onClose: vi.fn(), onToggleMute: vi.fn() };
+  const ids = h.initial.config.clips.map(clip => clip.id).reverse();
+  let mounted: ReturnType<typeof render>;
+  if (bulk) {
+    const { BulkClipPanelBody } = await import('../components/PropertiesPanel/BulkClipPanelBody.tsx');
+    mounted = render(<BulkClipPanelBody {...common} clips={[...clips].reverse()} visibleTabs={['position']}
+      sharedEntrance={null} sharedExit={null} sharedContinuous={null} sharedText={null} sharedTransition={null}
+      sharedEntranceType={null} sharedExitType={null} sharedContinuousType={null} sharedTransitionType={null}
+      sharedSpeed={1} sharedFrom={null} sharedTo={null} sharedX={null} sharedY={null} sharedWidth={null} sharedHeight={null}
+      sharedOpacity={1} sharedVolume={1} sharedFontSize={null} sharedTextColor={null} sharedTransitionDuration={null}
+      onChange={vi.fn()} onChangeDeep={vi.fn()} onResetPosition={() => h.result.current.editing.handleResetClipsPosition(ids)} />);
+  } else {
+    const { ClipPanelBody } = await import('../components/PropertiesPanel/ClipPanelBody.tsx');
+    mounted = render(<ClipPanelBody {...common} readOnly={false} clip={clips[0]} track={h.initial.tracks[0]}
+      deviceClass="desktop" interactionMode="move" precisionEnabled={false} hasPredecessor={false}
+      onChange={vi.fn()} onResetPosition={h.result.current.editing.handleResetClipPosition} onSplitAtPlayhead={vi.fn()}
+      onMoveTrackUp={vi.fn()} onMoveTrackDown={vi.fn()} onSetInteractionMode={vi.fn()} onSetPrecisionEnabled={vi.fn()}
+      registry={{}} effectResources={{ canCreateEffect: false, canUpdateEffect: false, effects: [] }} />);
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'Reset position' }));
+  return mounted;
+}
+
+describe('W32 mounted position panel buttons', () => {
+  it.each([false, true])('actual %s bulk button submits one ordered complete transaction', async bulk => {
+    const initial = await positionResetData(); const h = await setup(undefined, false, initial);
+    const mounted = await clickPositionReset(h, bulk);
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    expect(h.requests[0].request.change.commands.map(command => command.select)).toEqual(bulk ? ['parent/clip:clip-2', 'parent/clip:clip-1'] : ['parent/clip:clip-1']);
+    for (const command of h.requests[0].request.change.commands) expect(command.args).toEqual({ keys: resetKeys });
+    expect(h.compatibilityRequests).toEqual([]); mounted.unmount(); h.unmount();
+  });
+});
+function positionResetSource(initial: TimelineData, requests: CommitRequest[], mode = 'positive') {
+  return JSON.parse(execFileSync(process.env.ASTRID_TEST_PYTHON!, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/positionReset.fixture.py')], {
+    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests, mode }), encoding: 'utf8', env: process.env,
+  })) as ReturnType<typeof lookStyleSource>;
+}
+describe('W32 reset SDK', () => {
+  it.each([{ bulk: false, presence: 'value' }, { bulk: false, presence: 'null' }, { bulk: true, presence: 'mixed' }] as const)(
+    '$presence bulk=$bulk actual panel receipt Undo and receipt-only Redo preserve the whole document', async ({ bulk, presence }) => {
+      const initial = await positionResetData(presence); const requests: CommitRequest[] = [];
+      let proof!: ReturnType<typeof positionResetSource>;
+      let release!: () => void; const held = new Promise<void>(resolve => { release = resolve; });
+      const h = await setup(async request => {
+        requests.push(request); proof = positionResetSource(initial, requests);
+        if (process.env.E_W32_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W32_EVIDENCE_DIR, `sdk-${presence}-${bulk}.json`), JSON.stringify({ requests, proof }, null, 2));
+        if (requests.length === 1) await held;
+        return { acceptedResult: proof.result };
+      }, false, initial);
+      const history = lookStyleHistory(h); const native = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', native);
+      const mounted = await clickPositionReset(h, bulk);
+      await waitFor(() => expect(requests).toHaveLength(1), { timeout: 60_000 });
+      expect(history.result.current.canUndo).toBe(false); expect(native).not.toHaveBeenCalled(); expect(h.savedSeqRef.current).toBe(0);
+      act(() => release()); await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+      expect(proof.result.change.direct_writes).toHaveLength(bulk ? 16 : 8);
+      await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+      act(() => history.result.current.undo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+      await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+      act(() => history.result.current.redo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+      expect(proof.accept_counts).toEqual([1, 1, 1]); expect(requests).toHaveLength(3);
+      expect(proof.results[1].canonical_document).toEqual(proof.before);
+      expect(proof.readback).toEqual(proof.results[0].canonical_document);
+      for (const index of [1, 2]) expect(requests[index].change.commands).toEqual([{ op: 'timeline.inverse', select: null, args: {
+        publication: proof.results[index - 1].accepted_publication_id,
+        writes: proof.results[index - 1].change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })),
+      } }]);
+      const before = proof.before as { parent: { clips: Array<Record<string, unknown>> } };
+      const after = proof.readback as typeof before;
+      for (let i = 0; i < before.parent.clips.length; i++) {
+        const expected = structuredClone(before.parent.clips[i]); if (bulk || i === 0) resetPaths.forEach(path => delete expected[path]);
+        expect(after.parent.clips[i]).toEqual(expected);
+      }
+      expect(h.compatibilityRequests).toEqual([]); mounted.unmount(); history.unmount(); h.unmount();
+    }, 180_000);
+  it.each([false, true])('bulk=%s all absent stays guarded no-change without usable history', async bulk => {
+    const initial = await positionResetData('absent'); let proof!: ReturnType<typeof positionResetSource>;
+    const h = await setup(async request => { proof = positionResetSource(initial, [request]); return { acceptedResult: proof.result }; }, false, initial);
+    const history = lookStyleHistory(h); const mounted = await clickPositionReset(h, bulk);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expect(proof.result.status).toBe('no_change'); expect(proof.result.accepted_publication_id).toBeNull();
+    expect(proof.result.change.direct_writes).toHaveLength(bulk ? 16 : 8); expect(proof.readback).toEqual(proof.before);
+    expect(history.result.current.canUndo).toBe(false); act(() => history.result.current.undo()); expect(h.requests).toHaveLength(1);
+    if (process.env.E_W32_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W32_EVIDENCE_DIR, `sdk-no-change-${bulk}.json`), JSON.stringify(proof, null, 2));
+    mounted.unmount(); history.unmount(); h.unmount();
+  }, 60_000);
+  it.each([{ bulk: false, mode: 'stale' }, { bulk: true, mode: 'stale' }, { bulk: true, mode: 'unsupported' }])(
+    '$mode final field/member bulk=$bulk refuses the entire batch without acceptance/history', async ({ bulk, mode }) => {
+      const initial = await positionResetData(); let proof!: ReturnType<typeof positionResetSource>;
+      const h = await setup(async request => { proof = positionResetSource(initial, [request], mode); return { acceptedResult: proof.result }; }, false, initial);
+      const history = lookStyleHistory(h); const mounted = await clickPositionReset(h, bulk);
+      await waitFor(() => expect(proof?.result.status).toBe('refused'), { timeout: 60_000 });
+      expect(proof.readback).toEqual(proof.before); expect(proof.accept_counts).toEqual([]); expect(proof.result.change.direct_writes).toEqual([]);
+      expect(history.result.current.canUndo).toBe(false); expect(h.savedSeqRef.current).toBe(0); expect(h.compatibilityRequests).toEqual([]);
+      if (process.env.E_W32_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W32_EVIDENCE_DIR, `sdk-${mode}-${bulk}.json`), JSON.stringify(proof, null, 2));
+      mounted.unmount(); history.unmount(); h.unmount();
+    }, 60_000);
 });

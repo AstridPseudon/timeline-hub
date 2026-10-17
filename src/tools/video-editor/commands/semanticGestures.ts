@@ -1,6 +1,7 @@
 import { isAppKeyframeHistoryBatch, isAppKeyframeHistoryInverse, isAppKeyframePayload } from './appKeyframeHistory.ts';
 import { continuousParameterIntent, isContinuousHistoryBatch, isContinuousHistoryInverse, sameContinuous, validContinuous } from './continuousHistory.ts';
 import { isShaderSlotBatch, isShaderSlotInverse } from './shaderSlotHistory.ts';
+import { isPositionResetInverse } from './positionReset.ts';
 import { isFadeHistoryInverse } from './fadeHistory.ts';
 import { isTransitionAssignmentBatch } from './transitionAssignmentHistory.ts';
 import { isTrackHistoryInverse } from './trackHistory.ts';
@@ -108,7 +109,7 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
   let parent = false;
   const transferBatch = isShotGroupTransferBatch(commands);
   const aggregateBatch = commands.length > 0 && commands.every((command) =>
-    isShotGroupAggregateCommand(command) || isShaderSlotBatch([command]) || isShaderSlotInverse(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command) || isFadeHistoryInverse(command) || isContinuousHistoryInverse(command) || isAppKeyframeHistoryInverse(command));
+    isShotGroupAggregateCommand(command) || isShaderSlotBatch([command]) || isShaderSlotInverse(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command) || isFadeHistoryInverse(command) || isPositionResetInverse(command) || isContinuousHistoryInverse(command) || isAppKeyframeHistoryInverse(command));
   const captionTarget = isTranscriptCaptionBatch(commands) ? transcriptBindTarget(commands[0]) : undefined;
   // Routing reads the handler's explicit args.target. The submitted registered
   // timeline-level bind retains select:null; this local view only captures custody.
