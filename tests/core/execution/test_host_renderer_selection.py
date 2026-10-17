@@ -112,3 +112,12 @@ def test_scene_rechecks_admitted_node_dependency_before_evaluation(selection, tm
     host = SimpleNamespace(_host_renderer_selection=bound, _remotion_closure_binding=selection.closure)
     with pytest.raises(FrameOwnerError, match="renderer_selection_unavailable"):
         authoring_scene_startup.renderer_closure(host, environment)
+
+
+def test_identity_payload_survives_byte_drift_so_original_cleanup_can_bind(selection):
+    value = selection.payload()
+    before = selected.renderer_selection_payload(value)
+    selection.closure.receipt.write_text('changed')
+    assert selected.renderer_selection_payload(value) == before
+    with pytest.raises(ValueError, match="receipt changed"):
+        selected.validate_renderer_selection(value)

@@ -50,7 +50,7 @@ class HostRendererSelection:
                 'node_admission_sha256': _digest(self.node.evidence())}
 
 
-def validate_renderer_selection(value):
+def renderer_selection_payload(value):
     fields = {'version', 'project', 'installed_project', 'verification_receipt', 'receipt_sha256',
               'manifest_sha256', 'lock_sha256', 'closure_sha256', 'node_executable', 'node_admission_sha256', 'node_sha256'}
     if not isinstance(value, dict) or set(value) != fields or value['version'] != 'astrid.host-renderer-selection/v1':
@@ -58,6 +58,16 @@ def validate_renderer_selection(value):
     for name in fields - {'version', 'project', 'installed_project', 'verification_receipt', 'node_executable'}:
         if not isinstance(value[name], str) or re.fullmatch('[0-9a-f]{64}', value[name]) is None:
             raise ValueError('renderer selection digest is invalid')
+    for name in ('project', 'installed_project', 'verification_receipt', 'node_executable'):
+        raw = value[name]
+        if (not isinstance(raw, str) or not raw or "\0" in raw or not Path(raw).is_absolute()
+                or ".." in Path(raw).parts or str(Path(raw)) != raw):
+            raise ValueError('renderer selection path is invalid')
+    return json.loads(json.dumps(value))
+
+
+def validate_renderer_selection(value):
+    value = renderer_selection_payload(value)
     for name in ('project', 'installed_project', 'verification_receipt', 'node_executable'):
         _path(value[name])
     binding = RemotionClosureBinding.admit(**{k: value[k] for k in (
