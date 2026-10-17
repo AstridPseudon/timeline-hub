@@ -613,6 +613,11 @@ export function createProposalRuntime(
     if (validation.diagnostics.some((diagnostic) => diagnostic.code === 'timeline-patch/reserved-op')) {
       throw new Error('Proposal contains invalid or unsupported operations.');
     }
+    // Trace-only operations emit diff entries but must not create an accepted
+    // proposal/history/save owner. Mixed batches keep their compatibility route.
+    if (validation.valid && proposal.patch.operations.every((operation) => operation.op === 'extension.noop')) {
+      throw new Error('Proposal contains only no-op operations and cannot be accepted.');
+    }
 
     // ── Apply through TimelineOps ──────────────────────────────────────
     const diff = timelineOps.apply(proposal.patch);
