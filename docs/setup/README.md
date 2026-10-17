@@ -29,7 +29,7 @@ The current publication destinations are:
 | Component | Current destination |
 | --- | --- |
 | Astrid client/toolkit | `https://github.com/peteromallet/astrid-agent.git` |
-| Workspace Runtime | `https://github.com/banodoco/astrid-runtime.git` |
+| Astrid Runtime | `https://github.com/banodoco/astrid-runtime.git` |
 | App consumer | `https://github.com/banodoco/astrid-app.git` |
 
 These are current publication destinations, not a request to rename a

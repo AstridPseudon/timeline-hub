@@ -132,7 +132,7 @@ discovers 59 executable in-tree executor manifests. Historical external rows
 `unavailable_external` when their source pack is not installed, never as ready
 local capabilities. The host re-runs preflight before each runtime claim, so
 the capability IDs offered for admission are exactly the capabilities that
-are currently ready. The projection also retains 19 retired pre-cutover Astrid App
+are currently ready. The projection also retains 19 retired pre-cutover App capability
 IDs. Hivemind's v2 executor and contributor-operation coverage is maintained
 in the Astrid-side [external-pack contract](hivemind-pack-contract.md). The
 delivery configuration carries a full immutable source pin; setup does not

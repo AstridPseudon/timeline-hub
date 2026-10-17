@@ -21,7 +21,6 @@ keywords:
   - video
   - generation
   - gpu
-  - astrid
 capabilities:
   - generate_video
   - validate_settings

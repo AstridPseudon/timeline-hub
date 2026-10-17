@@ -39,7 +39,7 @@ current schema supports editor entries), and timeline visuals or render
 infrastructure under `rendering`. A UI entry is not yet a pack-level Widget
 contract, and an editor extension need not be modeled as one. Timeline effects,
 animations, and transitions remain rendering elements, not interface Widgets.
-The current frontend uses Astrid Tools and editor slots, panels, and dialogs;
+The current Astrid App frontend uses Astrid Tools and editor slots, panels, and dialogs;
 the proposed Tool/Widget contract and host adapter are not implemented.
 
 Use [the current pack guide](create-a-pack.md) and

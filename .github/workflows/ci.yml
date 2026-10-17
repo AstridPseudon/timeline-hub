@@ -57,7 +57,7 @@ jobs:
       - name: Check out pinned C12 CPU dependencies
         run: |
           git init "$ASTRID_RUNTIME_CHECKOUT"
-          git -C "$ASTRID_RUNTIME_CHECKOUT" fetch --depth 1 https://github.com/banodoco/astrid-runtime.git a278cd460018976940ae21fc2cad563a29a29649
+          git -C "$ASTRID_RUNTIME_CHECKOUT" fetch --depth 1 https://github.com/banodoco/astrid-runtime.git 3b21334366fa8124f1a7b0d371cc4295821616f5
           git -C "$ASTRID_RUNTIME_CHECKOUT" checkout --detach FETCH_HEAD
 
       - name: Set up Python
@@ -212,7 +212,7 @@ jobs:
       - name: Check out pinned C12 CPU dependencies
         run: |
           git init "$ASTRID_RUNTIME_CHECKOUT"
-          git -C "$ASTRID_RUNTIME_CHECKOUT" fetch --depth 1 https://github.com/banodoco/astrid-runtime.git a278cd460018976940ae21fc2cad563a29a29649
+          git -C "$ASTRID_RUNTIME_CHECKOUT" fetch --depth 1 https://github.com/banodoco/astrid-runtime.git 3b21334366fa8124f1a7b0d371cc4295821616f5
           git -C "$ASTRID_RUNTIME_CHECKOUT" checkout --detach FETCH_HEAD
 
       - name: Set up Python

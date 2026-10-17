@@ -33,7 +33,7 @@ PRELIVE_SEED_COUNT = len(PRELIVE_SEEDS)
 EVIDENCE_ARTIFACT_FIELDS = ("schema_version", "artifact_id", "artifact_kind", "producer_id", "governance_binding", "input_bindings", "canonical_content_base64", "byte_length", "content_sha256", "media_type", "detail_schema_id")
 GENERATOR_ROW_FIELDS = ("schema_version", "row_kind", "generator_id", "component_id", "entrypoint_component_id", "entrypoint_path", "entrypoint_sha256", "interpreter_tool_id", "argv_formula_id", "sandbox_policy_id", "generator_definition_sha256", "input_schema_ids", "input_digests", "declared_output_roots", "tool_ids", "output_paths", "output_digests", "tool_rows", "run_ordinal", "argv_carrier", "argv_sha256", "clean_checkout_id", "changed_paths", "undeclared_changed_paths", "started_at", "finished_at", "exit_code", "stop_class", "first_run_receipt_sha256", "second_run_receipt_sha256", "run_receipt_evidence_rows", "provenance_input_bindings", "producer_id")
 GENERATOR_RECEIPT_FIELDS = ("schema_version", "artifact_kind", "generator_id", "run_ordinal", "argv", "argv_sha256", "output_rows", "exit_code")
-RECEIPT_ROOT_ENVIRONMENTS = ("ASTRID_RELEASE_RECEIPT_ROOT", "ASTRID_RELEASE_RECEIPT_ROOT", "RELEASE_RECEIPT_ROOT")
+RECEIPT_ROOT_ENVIRONMENTS = ("ASTRID_RELEASE_RECEIPT_ROOT", "RELEASE_RECEIPT_ROOT")
 
 class ReleaseIdentityError(ValueError):
     """A release identity cannot be produced or verified safely."""

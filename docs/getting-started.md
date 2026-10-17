@@ -36,7 +36,7 @@ client owner. I08/I09 must verify the installed import origin and generated
 client/schema digest for the final tuple.
 
 Current publication destinations are the Astrid-agent client repository,
-Astrid Runtime repository, and Astrid App app consumer repository:
+astrid-agent, astrid-runtime and astrid-app repositories:
 
 ```text
 https://github.com/peteromallet/astrid-agent.git
