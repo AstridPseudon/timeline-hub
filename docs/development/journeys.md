@@ -77,4 +77,6 @@ point). The journey deliberately has no shim for this: it would test a launcher 
 the render but does not remove the Remotion requirement from the Runtime (the `doctor` phase still wants a usable renderer Node). Until the launcher has a Linux custody provider,
 the end-to-end run stays on the reference Mac; Linux CI can run the plumbing tests only.
 
+The three-product thin slice (F2) is not a phase here. It is an App Playwright spec, `reigh-app/tests/e2e/local/three-products.spec.ts`, run by `npm run test:e2e:three-products` and by the nightly `three-products` job in `reigh-app/.github/workflows/direct-journey.yml`; it runs on Linux and drives this package's `astrid` CLI and `astrid.core.dev.cross_client` against a throwaway Runtime. `astrid dev journey --tier full` folds it in with card F2-L2.
+
 The wider cross-repo testing plan (what the journeys gate, and the other layers) is in `testing-plan.md`.
