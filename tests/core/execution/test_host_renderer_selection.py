@@ -121,3 +121,13 @@ def test_identity_payload_survives_byte_drift_so_original_cleanup_can_bind(selec
     assert selected.renderer_selection_payload(value) == before
     with pytest.raises(ValueError, match="receipt changed"):
         selected.validate_renderer_selection(value)
+
+
+def test_installed_pack_revision_never_uses_an_enclosing_repository(tmp_path, monkeypatch):
+    from astrid.core.execution import generic_host, custody_broker
+    outer=tmp_path/"unselected-repo";(outer/".git").mkdir(parents=True)
+    installed=outer/"venv/lib/python3.11/site-packages";pack=installed/"astrid/packs/rendering"
+    pack.mkdir(parents=True)
+    monkeypatch.setattr(generic_host,"_retained_python_boundary",lambda:({"installed-packages":installed},()))
+    monkeypatch.setattr(custody_broker,"command_inventory_git",lambda *args:pytest.fail("ambient enclosing Git is not authority"))
+    assert generic_host._vcs_revision(pack) == "unversioned"

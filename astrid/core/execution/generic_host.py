@@ -4814,6 +4814,11 @@ def _verify_admitted_source(admission: Mapping[str, Any]) -> None:
 
 def _vcs_revision(root: Path) -> str:
     """Return the checked-out revision for source-epoch invalidation."""
+    boundary = _retained_python_boundary()
+    if boundary is not None and Path(root).is_relative_to(boundary[0]["installed-packages"]):
+        # Installed RECORD/source identity owns this namespace. An enclosing
+        # repository containing the venv is not a selected pack checkout.
+        return "unversioned"
     checkout = next((candidate for candidate in (root, *root.parents) if (candidate / ".git").exists()), None)
     if checkout is None:
         return "unversioned"
@@ -14938,15 +14943,60 @@ def _cli() -> int:
             "source_closure_digest": identity_attestation["source"].get("closure_digest"),
             "ready_file": str(ready_path) if ready_path is not None else None,
         }
-    _emit_startup_phase("discovery_begin")
-    host.discover()
-    _emit_startup_phase("discovery_done")
-    if not args.register:
-        # Registered startup performs its mandatory full preflight inside the
-        # registration fence; an eager copy here repeats the same validation.
-        _emit_startup_phase("preflight_begin")
-        host.preflight()
-        _emit_startup_phase("preflight_done")
+    def fail_startup(exc, *, phase):
+        if preparation is not None:
+            preparation._record_control_error(exc)
+        code = str(getattr(exc, "code", f"host_{phase}_failed"))[:128]
+        request_id = str(getattr(exc, "request_id", ""))[:128]
+        raw_message = getattr(exc, "message", None)
+        message = (
+            str(raw_message)
+            if raw_message
+            else (str(exc) if isinstance(exc, HostError) else f"executor {phase} failed")
+        )[:512]
+        if credential:
+            message = message.replace(credential, "[redacted]")
+        failure = {
+            "status": "failed",
+            "terminal": True,
+            "pid": os.getpid(),
+            "process_birth_id": process_birth_identity(),
+            "error": {
+                "code": code,
+                "request_id": request_id,
+                "message": message,
+            },
+        }
+        if ready_path is not None:
+            _write_ready_marker(ready_path, failure)
+        print(json.dumps(failure, sort_keys=True), file=sys.stderr, flush=True)
+        if preparation is not None:
+            # A constructed claim owner can carry obligations even when
+            # registration fails. Keep its original control receiver until
+            # Runtime has consumed the existing, bound child-cleanup ACK.
+            try:
+                preparation.abort()
+            except BaseException as cleanup_error:
+                preparation._record_control_error(cleanup_error)
+                _retain_unresolved_owner(preparation)
+            while preparation._abort_ack is None:
+                time.sleep(0.05)
+        else:
+            host.shutdown()
+        return 1
+
+    try:
+        _emit_startup_phase("discovery_begin")
+        host.discover()
+        _emit_startup_phase("discovery_done")
+        if not args.register:
+            # Registered startup performs its mandatory full preflight inside the
+            # registration fence; an eager copy here repeats the same validation.
+            _emit_startup_phase("preflight_begin")
+            host.preflight()
+            _emit_startup_phase("preflight_done")
+    except Exception as exc:
+        return fail_startup(exc, phase="discovery")
 
     def handle_shutdown(_signum, _frame):
         host.shutdown()
@@ -14967,46 +15017,7 @@ def _cli() -> int:
         try:
             registration = host.register() if args.register else {"capabilities": [record.manifest() for record in host.capabilities.values()]}
         except Exception as exc:
-            if preparation is not None:
-                preparation._record_control_error(exc)
-            code = str(getattr(exc, "code", "host_registration_failed"))[:128]
-            request_id = str(getattr(exc, "request_id", ""))[:128]
-            raw_message = getattr(exc, "message", None)
-            message = (
-                str(raw_message)
-                if raw_message
-                else (str(exc) if isinstance(exc, HostError) else "executor registration failed")
-            )[:512]
-            if credential:
-                message = message.replace(credential, "[redacted]")
-            failure = {
-                "status": "failed",
-                "terminal": True,
-                "pid": os.getpid(),
-                "process_birth_id": process_birth_identity(),
-                "error": {
-                    "code": code,
-                    "request_id": request_id,
-                    "message": message,
-                },
-            }
-            if ready_path is not None:
-                _write_ready_marker(ready_path, failure)
-            print(json.dumps(failure, sort_keys=True), file=sys.stderr, flush=True)
-            if preparation is not None:
-                # A constructed claim owner can carry obligations even when
-                # registration fails. Keep its original control receiver until
-                # Runtime has consumed the existing, bound child-cleanup ACK.
-                try:
-                    preparation.abort()
-                except BaseException as cleanup_error:
-                    preparation._record_control_error(cleanup_error)
-                    _retain_unresolved_owner(preparation)
-                while preparation._abort_ack is None:
-                    time.sleep(0.05)
-            else:
-                host.shutdown()
-            return 1
+            return fail_startup(exc, phase="registration")
         _emit_startup_phase("registration_done")
         # One line per start: the full registration (every capability's definition, ~0.6 MB) is in
         # the ready file; printing it made each host start add megabytes to generic-host.log.
