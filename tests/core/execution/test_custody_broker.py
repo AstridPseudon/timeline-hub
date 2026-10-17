@@ -2943,9 +2943,15 @@ def test_command_inventory_reply_failure_is_bound_to_completed_original_operatio
     assert "private response channel" not in json.dumps(rows)
 
 
+def _synthetic_candidate_start_unavailable(pid):
+    # These capture controls use synthetic PIDs, never host kernel identities.
+    raise custody.DarwinProcessExitedError("synthetic candidate has no native start anchor")
+
+
 @pytest.mark.parametrize('phase', ['task_name_for_pid', 'task_info_first', 'task_info_second', 'pid_for_task'])
 @pytest.mark.parametrize('outcome', ['ABSENT', 'ZOMBIE'])
 def test_capture_substage_terminal_with_clean_release_retains_zero_authority(observed_descendant, monkeypatch, phase, outcome):
+    monkeypatch.setattr(custody, "_darwin_process_start", _synthetic_candidate_start_unavailable)
     owner, census, native, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
     pre = {'outcome': 'LIVE', 'native': {**native, 'status': 2},
            'identity': {'pid': 103, 'uid': 501, 'parent_pid': 100, 'birth_id': birth}}
@@ -2977,8 +2983,11 @@ def test_capture_substage_terminal_with_clean_release_retains_zero_authority(obs
 
 @pytest.mark.parametrize('defect', ['missing-release', 'failed-release', 'release-error', 'token-consistency', 'zero-kern-pid', 'partial-task-name'])
 def test_capture_substage_release_or_identity_failure_stays_sticky(observed_descendant, monkeypatch, defect):
+    monkeypatch.setattr(custody, "_darwin_process_start", _synthetic_candidate_start_unavailable)
     owner, census, _, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
-    def capture(_):
+    captures = []
+    def capture(pid):
+        captures.append(pid)
         phase = 'token_consistency' if defect == 'token-consistency' else ('pid_for_task' if defect == 'zero-kern-pid' else ('task_name_for_pid' if defect == 'partial-task-name' else 'task_info_first'))
         error = custody.NativeTokenCaptureError('controlled sticky failure', substage=phase,
             kern_return=0 if defect in {'token-consistency', 'zero-kern-pid'} else 4, port_acquired=True)
@@ -2990,6 +2999,7 @@ def test_capture_substage_release_or_identity_failure_stays_sticky(observed_desc
     with pytest.raises(custody.CustodyError):
         owner.observe_census({pid: row['birth_id'] for pid, row in census.items()}, census=census,
             fresh_census=lambda: pytest.fail('sticky capture was reconciled'))
+    assert captures == [103]  # A pre-capture fixture failure must not pass this control.
     assert owner._uncertain is not None and 103 not in owner._handles and not owner._unadmitted_absent
 
 
