@@ -227,8 +227,21 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         if any(cancelled(c) for c in command.args.get("commands", [])):
             tl._open_edit.cancelled = True
             return []
-    selected = selected_ids(tl, owner, entry.kind)
-    if command.resolved and entry.kind != "timeline" and not (entry.op == "timeline.add" and "media" in command.args) and selected != command.resolved:
+    recording_entry, recording_owner = entry, owner
+    if entry.op == "timeline.add-cut":
+        # add_cut is the native split convenience. Establish its source-cut
+        # context before guards and authorship, while retaining its handler's
+        # validation (including after=) and return value. A timeline-wide entry
+        # must not claim the generated cut/picture/reservation as direct edits.
+        if "on" not in command.args:
+            raise CommandError("timeline.add-cut: missing required argument: 'on'")
+        moment = tl._split_moment(command.args["on"], None)
+        source = tl._cut_on_screen(tl._moment_time(moment, None, in_point=True))
+        if source is None:
+            raise CommandError("no named cut is on screen to split")
+        recording_entry, recording_owner = REGISTRY["cut.split"], tl.cut(source)
+    selected = selected_ids(tl, recording_owner, recording_entry.kind)
+    if command.resolved and recording_entry.kind != "timeline" and not (entry.op == "timeline.add" and "media" in command.args) and selected != command.resolved:
         raise SemanticConflict("delete-vs-edit", command.select or "", "resolved",
                                list(command.resolved), list(selected), None)
     from astrid.sdk.timeline.identity import cut_reservations, retain_cut_reservation_mark
@@ -381,8 +394,8 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         if not any(accepts(expected) for expected in options):
             raise CommandError(f"{entry.op}: {key} must be {annotation}")
     resolved = selected
-    selector = None if entry.kind == "timeline" else str(
-        getattr(owner, "id", None) or getattr(owner, "segment", None) or getattr(owner, "seq_id", None) or command.select)
+    selector = None if recording_entry.kind == "timeline" else str(
+        getattr(recording_owner, "id", None) or getattr(recording_owner, "segment", None) or getattr(recording_owner, "seq_id", None) or command.select)
     if entry.kind == "track":
         selector = owner.scoped_id
     if entry.op in {"clip.set-fade", "clip.set-transition"}:
@@ -409,7 +422,6 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     index = len(tl._open_edit.calls)
     if entry.op not in {"timeline.batch", "timeline.edit-flags"}:
         tl._open_edit.calls.append(recorded)
-    split_source = None
     tl._command_depth = getattr(tl, "_command_depth", 0) + 1
     try:
         relation_state = []
@@ -418,8 +430,6 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         tl._active_relation_choices = relation_choices or []
         if duplicate_source is not None and relation_choices is not None:
             args["relation_choices"] = relation_choices
-        if entry.op == "timeline.add-cut":
-            split_source = tl._cut_on_screen(tl._moment_time(tl._split_moment(canonical["on"], None)))
         if entry.op == "timeline.close-gap":
             from astrid.core.timeline import moments
             canonical["before"] = moments.format_moment(moments.parse(str(canonical["before"])))
@@ -450,10 +460,10 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         if entry.op in {"timeline.batch", "timeline.edit-flags"}:
             pass
         elif entry.op in {"timeline.add-cut", "cut.split"}:
-            source = split_source if entry.op == "timeline.add-cut" else str(owner.id)
+            source = str(recording_owner.id)
             split_args = {"on": tl._split_moment(canonical["on"], source),
                           "id": result.id, "picture": result.picture.asset if result.picture else None}
-            tl._open_edit.calls[index] = replace(recorded, op="cut.split", select=source, args=split_args, resolved=selected_ids(tl, tl.cut(source), "cut"))
+            tl._open_edit.calls[index] = replace(recorded, op="cut.split", select=source, args=split_args)
         elif entry.op == "cut.duplicate":
             tl._open_edit.calls[index] = replace(recorded, args={**canonical, "id": result.id})
         elif relation_choices is None and entry.op in {"clip.extend", "clip.hold-for", "clip.for", "clip.set-duration"}:
@@ -503,7 +513,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
                     raise CommandError("created identity collides with a retained image snapshot")
             if command.created is not None and not set(created) <= set(command.created):
                 raise CommandError(f"Replay changed created identities: expected {command.created}, got {created}")
-            paths = direct_paths(tl, entry, owner, canonical, before_entities, after_entities, selected)
+            paths = direct_paths(tl, recording_entry, recording_owner, canonical, before_entities, after_entities, selected)
             if relation_choices is not None and duplicate_source is None:
                 paths = set(paths)
                 paths.update((row["target"], relations.path(row["edge"])) for row in relation_choices)
@@ -520,7 +530,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
                          ((intent.on(after_entities.get(sid, {})) and path == "at") or
                           ((intent.until(after_entities.get(sid, {})) or intent.for_s(after_entities.get(sid, {})) is not None)
                            and path == "hold")))}
-            if entry.kind == "timeline" and entry.op != "timeline.add":
+            if recording_entry.kind == "timeline" and entry.op != "timeline.add":
                 hit = tuple(sorted({sid for sid, _ in paths if is_scoped_id(sid)}))
                 if command.authorship is not None and hit != command.resolved:
                     raise CommandError(f"Replay changed resolved direct targets: expected {command.resolved}, got {hit}")
@@ -544,7 +554,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
                                             state_at(before_entities, sid, basis))
             from astrid.sdk.timeline.music_beds import adopted
             bed = adopted(tl)
-            if bed is not None and (entry.kind == "timeline" or
+            if bed is not None and (recording_entry.kind == "timeline" or
                     any(sid in {a["owner"] for a in bed["arrangements"]} for sid in selected)):
                 basis = "music_bed.ripple_basis"
                 expectations.setdefault(write_key(bed["owner"], basis, call.resolved),
@@ -1126,9 +1136,9 @@ def capture_binding(tl, text, clip, bindings, *, film_end=None):
 
 
 def capture_argument_bindings(tl, call, owner, bindings):
+    from astrid.core.timeline import moments as mo
     from astrid.sdk.timeline._common import TIME_RE
     from astrid.sdk.timeline.model import Clip
-    from astrid.core.timeline import moments as mo
     clip = (owner if isinstance(owner, Clip) else owner.steps[0] if call.op == "sequence.fit" else
             owner.picture if call.op == "cut.move" else None)
     for key in ("moment", "on", "until", "at", "when", "before", "land"):
