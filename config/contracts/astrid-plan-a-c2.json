@@ -4,7 +4,7 @@
   "revision": "C2",
   "issuedOn": "2026-09-24",
   "status": "frozen-local-contract",
-  "digest": "sha256:b287294dd19846792fcb40f8b121bf338c7569b1021d795e3e12f48d0927eedc",
+  "digest": "sha256:04b31b6478c0cdee8b34d72a2b75f034bfd0e29e026964310d2294bd22b06466",
   "predecessor": {
     "path": "config/contracts/astrid-plan-a-c1.json",
     "revision": "C1",
@@ -146,7 +146,7 @@
     },
     {
       "repository": "astrid-agent",
-      "head": "7195213d966dcf4fba49787ebeee628428fb08de",
+      "head": "b887b4cbcb8b19d4389a77d78e7ef42c42dd7a1a",
       "path": "astrid/core/gateway/dispatch.py",
       "sha256": "3ce0eb8fbc14712c5402493ebe8aa7998f2f4e64d33defa54bc7703b34074f11",
       "role": "public-doctor-consumer",
@@ -154,7 +154,7 @@
     },
     {
       "repository": "astrid-agent",
-      "head": "7195213d966dcf4fba49787ebeee628428fb08de",
+      "head": "b887b4cbcb8b19d4389a77d78e7ef42c42dd7a1a",
       "path": "astrid/sdk/workspace_client.py",
       "sha256": "d088d220ec239f545bba5403321093b74e840f6cfe873779f53fcbb429e08a08",
       "role": "Runtime-client-consumer",
@@ -162,7 +162,7 @@
     },
     {
       "repository": "astrid-runtime",
-      "head": "228e965d087d4bcbbd770aa7685110ca12cd259b",
+      "head": "f7ed05a0507c314b59f53136ca325a296709aff5",
       "path": "contract/schemas/doctor.json",
       "sha256": "d0caac9e7bf6a81d68abb52e757b321f7a45d4f2afff43bd4880089ea8dcc243",
       "role": "Runtime-doctor-wire",
@@ -170,7 +170,7 @@
     },
     {
       "repository": "astrid-runtime",
-      "head": "228e965d087d4bcbbd770aa7685110ca12cd259b",
+      "head": "f7ed05a0507c314b59f53136ca325a296709aff5",
       "path": "runtime_protocol/service.py",
       "sha256": "ea323e1f1c24323f9b28e8609108cb7e265e5fa3d54675f503b1c5d3642521a3",
       "role": "Runtime-execution-authority",
