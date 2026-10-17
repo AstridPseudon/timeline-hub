@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import {
   composeModifiers,
+  hasModifierKeyframes,
   ModifierAdmissionError,
   spriteKeyframeFrame,
   timelineKeyframeTime,
@@ -24,7 +25,7 @@ export const AppModifierHostProvider = AppModifierHostContext.Provider;
 export const useAppModifierHost = () => useContext(AppModifierHostContext);
 
 export function admitAppModifierTarget(clip: ResolvedTimelineClip, nativeMedia: boolean): void {
-  if (clip.modifiers?.length && !nativeMedia) {
+  if ((clip.modifiers?.length || hasModifierKeyframes(clip)) && !nativeMedia) {
     throw new ModifierAdmissionError('unsupported-app-target',
       `App modifier geometry/placement is unavailable for clip ${clip.id} (${clip.clipType ?? 'media'})`);
   }
@@ -42,10 +43,10 @@ export function composeAppClipModifiers({ clip, content, frame, fps, bounds, hos
   bounds: ModifierBounds;
   host: AppModifierHost | undefined;
 }): ReactNode {
-  if (!clip.modifiers?.length) return content;
+  if (!clip.modifiers?.length && !hasModifierKeyframes(clip)) return content;
   if (!host) throw new ModifierAdmissionError('missing-app-host', 'App clip modifiers require an explicit modifier host');
   return composeModifiers({
-    instances: clip.modifiers,
+    instances: clip.modifiers ?? [],
     registry: host.registry,
     context: {
       clip, fps, frame,
