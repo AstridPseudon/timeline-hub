@@ -58,7 +58,7 @@ def _tree_files(root):
                     yield path
 
 
-def _sha(path, *, require_regular=False):
+def _sha(path, *, require_regular=False, observed=None):
     # Binding snapshots already hold immutable Paths. Reconstructing each
     # deep path reparses its parts on every guard without changing its identity.
     if not isinstance(path, Path):
@@ -66,7 +66,8 @@ def _sha(path, *, require_regular=False):
     def signature(value):
         return (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
     try:
-        observed = path.stat()
+        if observed is None:
+            observed = path.stat()
     except (FileNotFoundError, NotADirectoryError) as error:
         if require_regular:
             raise ValueError('admitted renderer closure input changed') from error
@@ -214,23 +215,63 @@ class RemotionClosureBinding:
                                              if path.parts[:len(prefix)] == prefix)))
         return modules, root_sources, tuple(sources)
 
+    @cached_property
+    def _validation_trees(self):
+        modules, _, sources = self._expected_inventories
+        pins = dict(self.files)
+        groups = [(self.installed_project / 'node_modules', modules,
+                   'admitted renderer installation file inventory changed')]
+        groups.extend((root, paths, 'admitted renderer source file inventory changed')
+                      for root, paths in sources)
+        return tuple((root, {os.fspath(path): (path, pins[path]) for path in paths}, message)
+                     for root, paths, message in groups)
+
+    @cached_property
+    def _validation_remaining(self):
+        covered = {path for _, paths, _ in self._validation_trees for path in paths}
+        return tuple((path, digest) for path, digest in self.files if os.fspath(path) not in covered)
+
     def validate(self, project):
         project = Path(project)
         if project != self.project or (project/'node_modules').resolve(strict=True) != self.installed_project/'node_modules':
             raise ValueError('renderer project or dependency root changed after admission')
         modules = self.installed_project/'node_modules'
         expected_modules, expected_root, source_inventories = self._expected_inventories
-        actual_modules = set(_tree_files(modules))
-        if actual_modules != expected_modules:
-            raise ValueError('admitted renderer installation file inventory changed')
         if _root_sources(project) != expected_root:
             raise ValueError('admitted renderer root source inventory changed')
-        for root, expected_source in source_inventories:
-            actual_source = set(_tree_files(root))
-
-            if actual_source != expected_source:
-                raise ValueError('admitted renderer source file inventory changed')
-        for path, expected in self.files:
+        # Every current inventory and pin is still checked on every call. Reuse
+        # immutable admitted Path objects and each scan's fresh stat, rather
+        # than reparsing 22k deep paths then statting them again in a second pass.
+        for root, expected, message in self._validation_trees:
+            seen = set()
+            pending = [os.fspath(root)]
+            while pending:
+                directory = pending.pop()
+                if not os.path.isdir(directory):
+                    continue
+                with os.scandir(directory) as entries:
+                    for entry in entries:
+                        if entry.is_dir(follow_symlinks=False):
+                            pending.append(entry.path)
+                        elif entry.is_file():
+                            selected = expected.get(entry.path)
+                            if selected is None:
+                                raise ValueError(message)
+                            path, digest = selected
+                            if entry.is_symlink():
+                                if not path.resolve(strict=True).is_relative_to(root):
+                                    raise ValueError('admitted renderer installation contains an escaping file link')
+                                # is_file() may cache a followed symlink stat;
+                                # take the same fresh target observation as before.
+                                observed = path.stat()
+                            else:
+                                observed = entry.stat(follow_symlinks=False)
+                            if _sha(path, require_regular=True, observed=observed) != digest:
+                                raise ValueError('admitted renderer closure input changed')
+                            seen.add(entry.path)
+            if seen != expected.keys():
+                raise ValueError(message)
+        for path, expected in self._validation_remaining:
             if _sha(path, require_regular=True) != expected:
                 raise ValueError('admitted renderer closure input changed')
         return self.installed_project/'node_modules/@remotion/cli/remotion-cli.js'

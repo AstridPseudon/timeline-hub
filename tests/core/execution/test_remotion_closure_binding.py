@@ -202,3 +202,26 @@ def test_original_owner_rechecks_admitted_closure_for_evaluation_and_cache(roots
     finally:
         lease.close()
         owner.close()
+
+
+@pytest.mark.parametrize("change", ["same_size_restored_mtime", "removed", "escaping_link"])
+def test_one_pass_retained_closure_rechecks_warm_byte_pins(roots, tmp_path, change):
+    import os
+    project, installed, _, args = roots
+    binding = closure.RemotionClosureBinding.admit(**args)
+    selected = installed / "node_modules/@remotion/cli/remotion-cli.js"
+    binding.validate(project)  # Warm byte cache, not permission to reuse stale facts.
+    before = selected.stat()
+    data = selected.read_bytes()
+    if change == "same_size_restored_mtime":
+        selected.write_bytes(bytes([data[0] ^ 1]) + data[1:])
+        os.utime(selected, ns=(before.st_atime_ns, before.st_mtime_ns))
+    elif change == "removed":
+        selected.unlink()
+    else:
+        other = tmp_path / "outside-cli"
+        other.write_bytes(data)
+        selected.unlink()
+        selected.symlink_to(other)
+    with pytest.raises(ValueError):
+        binding.validate(project)
