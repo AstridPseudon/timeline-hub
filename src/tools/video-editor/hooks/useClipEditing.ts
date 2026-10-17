@@ -254,6 +254,7 @@ export function useClipEditing({
 
     const { at: _at, ...metaPatch } = patch;
     const composite = compositeEffectGestureCommands(current, selectedClipId, metaPatch, { elementHost });
+    if (composite.refused) return;
     const effectivePatch = composite.commands?.length && composite.localPatch ? composite.localPatch : metaPatch;
     const affectsDuration = patchAffectsDuration(effectivePatch as Partial<ClipMeta>);
     const nextRows = current.rows.map((row) => {

@@ -1,3 +1,4 @@
+import { isFadeHistoryBatch } from '../commands/fadeHistory.ts';
 import { isTrackHistoryBatch } from '../commands/trackHistory.ts';
 import { isSelectedMediaCreation, isClipStructureBatch } from '../commands/clipStructureHistory.ts';
 import { isClipPlacementBatch } from '../commands/clipPlacementHistory.ts';
@@ -407,7 +408,7 @@ export function useTimelineCommit({
         transactionId: options?.transactionId,
         semantic: options?.semantic,
         commandHistory: options?.commandHistory,
-        ...((options?.editCommands && (isTranscriptCaptionBatch(options.editCommands) || isOverlapTrimBatch(options.editCommands) || (semanticCommandSaving && (isClipPlacementBatch(options.editCommands) || isClipStructureBatch(options.editCommands) || isTrackHistoryBatch(options.editCommands))))) || (options?.editCommands?.length === 1 && (isAssetRegistrationCommand(options.editCommands[0]) || isTiedHoldExpansionCommand(options.editCommands[0])))
+        ...((options?.editCommands && (isTranscriptCaptionBatch(options.editCommands) || isOverlapTrimBatch(options.editCommands) || (semanticCommandSaving && (isClipPlacementBatch(options.editCommands) || isClipStructureBatch(options.editCommands) || isTrackHistoryBatch(options.editCommands) || isFadeHistoryBatch(options.editCommands))))) || (options?.editCommands?.length === 1 && (isAssetRegistrationCommand(options.editCommands[0]) || isTiedHoldExpansionCommand(options.editCommands[0])))
           ? { nativeRegistrationOwner: nextData } : {}),
       });
       if (options?.proposalBase) bindProposalSave(nextData, options.proposalBase, recordHistory);

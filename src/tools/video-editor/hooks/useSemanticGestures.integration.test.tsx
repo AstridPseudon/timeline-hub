@@ -66,7 +66,7 @@ import { ClipTransitionSection } from '@/tools/video-editor/components/Propertie
 // This transport is a wire recorder, not an Astrid operation executor. Successful
 // fixture acknowledgements establish App adaptation only, never Runtime acceptance.
 const json = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
-type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'unavailable' | 'failed' | 'rejected' | 'refused' | 'stale' | 'no_change' | { acceptedResult?: CommitResult; directWrites?: CommitResult['change']['direct_writes']; previewCommands?: import('@/integrations/runtime/generated.ts').EditCommand[]; loseSuccess?: boolean }>;
+type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'unavailable' | 'failed' | 'rejected' | 'refused' | 'stale' | 'no_change' | { acceptedResult?: CommitResult; directWrites?: CommitResult['change']['direct_writes']; previewCommands?: import('@/integrations/runtime/generated.ts').EditCommand[]; loseSuccess?: boolean; readbackConfig?: TimelineData['config'] }>;
 const catalogFadeFallback = 'W13: legacy effects array has no clip.set-fade producer; retain the whole catalog operation';
 function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typeof catalogFadeFallback) {
   const requests: Array<{ request: CommitRequest; bytes: string; headers: Record<string, string> }> = [];
@@ -104,6 +104,7 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
       const outcome = await reply?.(request, requests.length);
       if (outcome && typeof outcome === 'object' && outcome.acceptedResult) {
         const result = outcome.acceptedResult;
+        if (outcome.readbackConfig) Object.assign(currentConfig, structuredClone(outcome.readbackConfig));
         currentHead = result.accepted_revision_id ?? currentHead;
         // Acceptance completed, but no response bytes reach the caller.
         if (outcome.loseSuccess) throw new TypeError('Connection closed after durable acceptance');
@@ -262,9 +263,9 @@ async function occurrenceTransitionData() {
   }, base.registry, undefined, 1, undefined, base.head);
 }
 
-async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1', finalVideoMap: Map<string, ShotFinalVideo> = new Map(), outputSelector?: Parameters<typeof useSwitchToFinalVideo>[0]['getProjectMediaSelectionForOutput'], proposalCommands = false) {
+async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1', finalVideoMap: Map<string, ShotFinalVideo> = new Map(), outputSelector?: Parameters<typeof useSwitchToFinalVideo>[0]['getProjectMediaSelectionForOutput'], proposalCommands = false, fallback?: typeof catalogFadeFallback) {
   const initial = providedInitial ?? await initialData(media);
-  const fixture = wireFixture(initial, reply);
+  const fixture = wireFixture(initial, reply, fallback);
   const eventBus = new TimelineEventBus();
   const lastSavedSignatureRef = { current: initial.stableSignature };
   const headRevisionRef = { current: initial.head };
@@ -5403,5 +5404,249 @@ describe('pinned group transfer guards', () => {
     transferGroupDrag(h);
     expect(h.result.current.data).toBe(initial); expect(h.requests).toEqual([]); expect(h.result.current.editSeqRef.current).toBe(0);
     expect(history).not.toHaveBeenCalled(); h.unmount();
+  });
+});
+
+
+describe('W13 fade native history', () => {
+  it('keeps Undo unavailable until a genuine receipt arrives', async () => {
+    let release!: () => void;
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    const h = await setup(async () => { await pending; return 'no_change'; });
+    const history = renderHook(() => {
+      const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+      useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]); return state;
+    }, { wrapper: overlapHistoryWrapper(h) });
+    try {
+      act(() => h.result.current.editing.handleSelectedClipChange({ entrance: { type: 'fade', duration: 0.4 } }));
+      expect(history.result.current.canUndo).toBe(false);
+      expect(history.result.current.canRedo).toBe(false);
+    } finally {
+      release();
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+      history.unmount(); h.unmount();
+    }
+  });
+});
+
+function fadeSource(initial: TimelineData, requests: CommitRequest[], variant?: 'stale' | 'refused') {
+  return JSON.parse(execFileSync(process.env.ASTRID_TEST_PYTHON!, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/fadeHistory.fixture.py')], {
+    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests, variant }), encoding: 'utf8',
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  })) as ReturnType<typeof groupTransferSource>;
+}
+
+async function fadeHistoryData(occurrence: boolean, effects: 'absent' | 'null' | 'object', phaseObject = false) {
+  const base = await initialData();
+  const clips = base.config.clips.map(clip => {
+    const source = { ...clip, app: { clipSentinel: true },
+      ...(clip.id === 'clip-1' ? {
+        ...(effects === 'absent' ? {} : { effects: effects === 'null' ? null : { fade_in: null, fade_out: 0.2, opaque: { nested: [null, {}] } } }),
+        ...(effects === 'object' ? { entrance: phaseObject ? { type: 'fade', duration: 0.4, opaque: { keep: null } } : null, exit: { type: 'slide', duration: 0.2, opaque: [null, {}] } } : {}),
+      } : {}),
+    };
+    if (!occurrence) return source;
+    return { ...source, id: `projected-${clip.id}`, app: { ...source.app, canonical: {
+      projectId: 'gesture-project', parentDocumentId: 'gesture-timeline', headRevisionId: 'parent-r1',
+      occurrenceId: 'occ-A', shotId: 'A', revisionId: 'shot-r1', internalTimelineRevisionId: 'internal-r1',
+      sourceClipId: clip.id, outputIdentity: 'output-A', sourceClip: source,
+    } } };
+  });
+  return buildTimelineData({ ...base.config, clips } as never, base.registry, undefined, 1, undefined, base.head);
+}
+
+function fadeReadback(initial: TimelineData, proof: ReturnType<typeof fadeSource>): TimelineData['config'] {
+  const document = proof.result.canonical_document as unknown as typeof proof.before;
+  const parent = document.parent as { config: TimelineData['config']; clips: TimelineData['config']['clips'] };
+  const clips = initial.config.clips.map(clip => {
+    const identity = clip.app?.canonical as CanonicalClipIdentity | undefined;
+    if (!identity) return parent.clips.find(row => row.id === clip.id)!;
+    const source = ((document as unknown as { shots: Record<string, { internal_timeline: { clips: TimelineData['config']['clips'] } }> }).shots.A.internal_timeline.clips).find(row => row.id === identity.sourceClipId)!;
+    return { ...source, id: clip.id, app: { ...source.app, canonical: { ...identity, sourceClip: source } } };
+  });
+  return { ...parent.config, clips };
+}
+
+function mountFadeHistory(h: Awaited<ReturnType<typeof setup>>) {
+  return renderHook(() => {
+    const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+    useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]); return state;
+  }, { wrapper: overlapHistoryWrapper(h) });
+}
+
+describe('W13 fade SDK native chain', () => {
+  it.each([
+    ['parent absent', false, 'absent', 'set'], ['parent null', false, 'null', 'set'],
+    ['parent object clear', false, 'object', 'clear'], ['occurrence object', true, 'object', 'set'],
+    ['occurrence null', true, 'null', 'set'], ['parent both', false, 'absent', 'both'],
+  ] as const)('%s accepts actual App forward Undo Redo requests with exact authored readback', async (name, occurrence, effects, mode) => {
+    const initial = await fadeHistoryData(occurrence, effects, mode === 'clear');
+    const requests: CommitRequest[] = []; let proof!: ReturnType<typeof fadeSource>;
+    let release!: () => void;
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    const h = await setup(async request => {
+      requests.push(request);
+      if (requests.length === 1) await pending;
+      if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `fade-attempt-${name.replaceAll(' ', '-')}.json`), JSON.stringify({initial, requests}, null, 2));
+      proof = fadeSource(initial, requests);
+      return { acceptedResult: proof.result, readbackConfig: fadeReadback(initial, proof) };
+    }, false, initial, 1, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h);
+    const patch = mode === 'clear' ? { entrance: undefined } : { entrance: { type: 'fade', duration: 0.37 },
+      ...(mode === 'both' ? { exit: null } : {}) };
+    act(() => h.result.current.editing.handleSelectedClipChange(patch));
+    expect(history.result.current.canUndo).toBe(false);
+    act(() => history.result.current.undo());
+    release();
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    const select = occurrence ? 'occurrence:occ-A/clip:clip-1' : 'parent/clip:clip-1';
+    expect(requests[0].change).toEqual({ commands: [{ op: 'clip.set-fade', select, resolved: [select],
+      args: mode === 'clear' ? { clear: ['fade_in'] } : { fade_in: 0.37, ...(mode === 'both' ? { fade_out: null } : {}) },
+      expect: gestureCommandsFor(h.result.current.data!)![0].expect,
+    }] });
+    expect(proof.results[0].status).toBe('accepted');
+    expect(proof.results[0].change.direct_writes.every(write => write.id === select && ['effects', 'effects.fade_in', 'effects.fade_out', 'entrance', 'exit'].includes(write.path))).toBe(true);
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof));
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    // A poll/remote update must retain receipt-owned history, including while
+    // Undo/Redo changes the owner. Runtime still checks the inverse publication.
+    act(() => history.result.current.onRemoteData(initial, h.result.current.data!));
+    expect(history.result.current.canUndo).toBe(true);
+    act(() => history.result.current.undo());
+    expect(history.result.current.canRedo).toBe(false);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    expect(proof.results[1].canonical_document).toEqual(proof.before);
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof));
+    act(() => history.result.current.onRemoteData(initial, h.result.current.data!));
+    expect(history.result.current.canRedo).toBe(true);
+    act(() => history.result.current.redo());
+    expect(history.result.current.canUndo).toBe(false);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    expect(proof.results[2].canonical_document).toEqual(proof.results[0].canonical_document);
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof));
+    for (const [index, previous] of proof.results.slice(0, 2).entries()) {
+      expect(requests[index + 1].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null,
+        args: { publication: previous.accepted_publication_id,
+          writes: previous.change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })) },
+      }] });
+    }
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(proof.accept_counts).toEqual([1, 1, 1]);
+    expect(h.readbackHeads).toEqual(['parent-r2', 'parent-r3', 'parent-r4']);
+    expect(h.compatibilityRequests).toEqual([]);
+    if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `fade-${name.replaceAll(' ', '-')}.json`), JSON.stringify({ requests: h.requests, proof, readback: h.getCurrentConfig() }, null, 2));
+    history.unmount(); h.unmount();
+  }, 180_000);
+});
+
+describe('W13 fade history guards', () => {
+  it.each(['refused', 'stale', 'no_change', 'unacknowledged', 'wrong clip', 'extra path', 'duplicate path'] as const)('%s never arms history or submits a snapshot inverse', async kind => {
+    const initial = await fadeHistoryData(false, 'absent');
+    const h = await setup(async request => {
+      if (kind === 'refused' || kind === 'stale' || kind === 'no_change') return kind;
+      if (kind === 'unacknowledged') return;
+      const proof = fadeSource(initial, [request]);
+      expect(proof.result.status).toBe('accepted');
+      const result = structuredClone(proof.result);
+      const writes = result.change.direct_writes;
+      if (kind === 'wrong clip') writes[0].id = 'parent/clip:clip-2';
+      if (kind === 'extra path') writes.push({ ...writes[0], path: 'opacity' });
+      if (kind === 'duplicate path') writes.push(structuredClone(writes[0]));
+      if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `fade-tamper-source-${kind.replaceAll(' ', '-')}.json`), JSON.stringify({ request, proof, forged: result }, null, 2));
+      return { acceptedResult: result, readbackConfig: fadeReadback(initial, proof) };
+    });
+    const history = mountFadeHistory(h);
+    act(() => h.result.current.editing.handleSelectedClipChange({ entrance: { type: 'fade', duration: 0.37 } }));
+    if (kind === 'refused' || kind === 'stale') await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+    else await waitFor(() => expect(h.savedSeqRef.current === 1 || h.result.current.persistence.saveStatus === 'error').toBe(true), { timeout: 60_000 });
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    act(() => history.result.current.undo()); act(() => history.result.current.redo());
+    expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
+    history.unmount(); h.unmount();
+  }, 60_000);
+});
+
+describe('W13 fade actual SDK boundaries', () => {
+  it.each(['no_change', 'refused', 'stale'] as const)('%s uses the actual SDK result and creates no usable history', async kind => {
+    let initial = await fadeHistoryData(kind === 'refused', 'absent');
+    if (kind === 'no_change') initial = await buildTimelineData({ ...initial.config, clips: initial.config.clips.map((clip, index) => index ? clip : {
+      ...clip, entrance: { type: 'fade', duration: 0.37 }, effects: { fade_in: 0.37 },
+    }) }, initial.registry, undefined, 1, undefined, initial.head);
+    let proof!: ReturnType<typeof fadeSource>;
+    const h = await setup(async request => {
+      proof = fadeSource(initial, [request], kind === 'no_change' ? undefined : kind);
+      return { acceptedResult: proof.result, ...(kind === 'no_change' ? { readbackConfig: fadeReadback(initial, proof) } : {}) };
+    }, false, initial, 1, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h);
+    act(() => h.result.current.editing.handleSelectedClipChange({ entrance: { type: 'fade', duration: 0.37 } }));
+    if (kind === 'no_change') await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    else await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'), { timeout: 60_000 });
+    expect(proof.result.status).toBe(kind === 'stale' ? 'refused' : kind);
+    expect(proof.result.accepted_publication_id).toBeNull(); expect(proof.result.change.direct_writes).toEqual([]);
+    expect(proof.accept_counts).toEqual([kind === 'no_change' ? 1 : 0]);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    act(() => history.result.current.undo()); act(() => history.result.current.redo());
+    expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
+    if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `fade-sdk-${kind}.json`), JSON.stringify({ requests: h.requests, proof }, null, 2));
+    history.unmount(); h.unmount();
+  }, 90_000);
+
+  it('holds Redo when D156 omits an object-valued entrance direct write from the accepted Undo receipt', async () => {
+    const initial = await fadeHistoryData(true, 'object', true);
+    const requests: CommitRequest[] = []; let proof!: ReturnType<typeof fadeSource>;
+    const h = await setup(async request => {
+      requests.push(request); proof = fadeSource(initial, requests);
+      return { acceptedResult: proof.result, readbackConfig: fadeReadback(initial, proof) };
+    }, false, initial, 1, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h);
+    act(() => h.result.current.editing.handleSelectedClipChange({ entrance: { type: 'fade', duration: 0.37 } }));
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true), { timeout: 60_000 });
+    expect(proof.results[0].change.direct_writes.map(write => write.path)).toEqual(['effects.fade_in', 'entrance']);
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    expect(proof.results[1].canonical_document).toEqual(proof.before);
+    expect(proof.results[1].change.direct_writes.map(write => write.path)).toEqual(['effects.fade_in']);
+    expect(history.result.current.canRedo).toBe(false);
+    act(() => history.result.current.redo()); expect(h.requests).toHaveLength(2);
+    expect(h.compatibilityRequests).toEqual([]);
+    if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, 'fade-sdk-incomplete-phase-receipt.json'), JSON.stringify({ requests: h.requests, proof }, null, 2));
+    history.unmount(); h.unmount();
+  }, 120_000);
+});
+
+describe('W13 fade malformed caller', () => {
+  it.each(['NaN', 'negative', 'wrong type', 'stale occurrence', 'malformed occurrence'] as const)('%s edits nothing and creates no history', async kind => {
+    const initial = await fadeHistoryData(kind.includes('occurrence'), 'absent');
+    if (kind === 'stale occurrence') (initial.config.clips[0].app!.canonical as CanonicalClipIdentity).headRevisionId = 'old';
+    if (kind === 'malformed occurrence') delete (initial.config.clips[0].app!.canonical as Partial<CanonicalClipIdentity>).sourceClipId;
+    const h = await setup(undefined, false, initial, 1, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h);
+    act(() => h.result.current.editing.handleSelectedClipChange({ entrance: { type: 'fade', duration:
+      kind === 'NaN' ? Number.NaN : kind === 'negative' ? -1 : kind === 'wrong type' ? true as unknown as number : 0.37 } }));
+    expect(h.result.current.data).toBe(initial); expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]);
+    history.unmount(); h.unmount();
+  });
+});
+
+
+describe('W13 fade legacy callback fallback', () => {
+  it('preserves the whole legacy effects-array operation without a partial native fade', async () => {
+    const base = await initialData();
+    const initial = await buildTimelineData({ ...base.config, clips: base.config.clips.map((clip, index) => index ? clip : {
+      ...clip, effects: [{ type: 'legacy-effect', opaque: { keep: null } }],
+    }) } as never, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial, 1, undefined, undefined, 'clip-1', new Map(), undefined, false, catalogFadeFallback);
+    const history = vi.fn(); const off = h.eventBus.on('beforeCommit', history);
+    act(() => h.result.current.editing.handleSelectedClipChange({ entrance: { type: 'fade', duration: 0.4 } }));
+    await waitFor(() => expect(h.compatibilityRequests).toHaveLength(1));
+    expect(h.requests).toEqual([]);
+    expect(h.result.current.data!.config.clips[0].effects).toEqual(initial.config.clips[0].effects);
+    expect(h.result.current.data!.config.clips[0].entrance).toEqual({ type: 'fade', duration: 0.4 });
+    expect(history).toHaveBeenCalledTimes(1); expect(history.mock.calls[0][1].nativeRegistrationOwner).toBeUndefined();
+    off(); h.unmount();
   });
 });
