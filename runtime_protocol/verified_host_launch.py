@@ -19,6 +19,7 @@ from pathlib import Path
 import re
 import stat
 import sys
+import sysconfig
 import threading
 
 CURRENT_ROLES_VERSION = "runtime.local-execution-current-roles/v1"
@@ -81,9 +82,14 @@ def _no_alias(path):
 
 def read_source(path, expected):
     """Read once with no-follow and stable inode, returning the verified bytes."""
-    path = _absolute(str(path)); _no_alias(path)
     if not _raw(expected):
         raise HostLaunchError("import source pin is invalid")
+    return _bounded_source(path, expected)
+
+
+def _bounded_source(path, expected=None):
+    """Shared bounded measurement; only the producer may omit an expected pin."""
+    path = _absolute(str(path)); _no_alias(path)
     descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     try:
         before = os.fstat(descriptor)
@@ -100,7 +106,7 @@ def read_source(path, expected):
         if identity(before) != identity(after) or identity(after) != identity(current):
             raise HostLaunchError("import source changed while being read")
         data = bytes(data)
-        if hashlib.sha256(data).hexdigest() != expected:
+        if expected is not None and hashlib.sha256(data).hexdigest() != expected:
             raise HostLaunchError("import source differs from its reviewed pin")
         return data
     finally:
@@ -286,6 +292,9 @@ class HostLaunchVerifier:
                 or any(not isinstance(v, str) or "\0" in v for v in environment.values())):
             raise HostLaunchError("isolated host environment contains import overrides or invalid values")
 
+    def _validate_inventory_selection(self, record, profile, config):
+        return None
+
     def verify(self, *, preparation, config, host_argv, environment):
         profile = preparation["profile"]
         protocol = validate_host_protocol(profile.get("host_protocol"))
@@ -304,6 +313,7 @@ class HostLaunchVerifier:
         # The independently retained release/profile equality above still comes
         # first; this check cannot establish launch authority by itself.
         self._validate_environment(profile, config, environment)
+        selected_python = self._validate_inventory_selection(record, profile, config)
         binding = record["import_binding"]
         if (not isinstance(binding, dict) or set(binding) != {"schema_version", "mode", "launcher", "python_runtime_inventory_digest", "import_roots"}
                 or type(binding["schema_version"]) is not int or binding["schema_version"] != 1 or binding["mode"] != self._mode
@@ -352,6 +362,8 @@ class HostLaunchVerifier:
         payload = {"schema_version": 1, "mode": self._mode, "module": HOST_MODULE, "mapping": mapping, "host_argv": argv_tail}
         if self._mode == TRUSTED_LOCAL_MODE:
             payload["distribution_metadata"] = _distribution_metadata(binding["import_roots"], inventories)
+            if selected_python is not None:
+                payload["selected_python"] = selected_python
         if len(canonical(payload)) > LIMIT: raise HostLaunchError("retained launcher binding exceeds its bound")
         context = {"preparation": preparation, "config": config, "host_argv": host_argv, "environment": environment}
         lease.verify()
@@ -414,7 +426,76 @@ def _local_read(path, expected):
     return read_source(_absolute(str(Path(path).resolve(strict=True))), expected)
 
 
-def installed_inventory(root):
+def _python_path_binding(path):
+    pending = [path]; aliases = {}; visited = set()
+    while pending:
+        current = pending.pop()
+        for candidate in (current, *current.parents):
+            if candidate in visited: continue
+            visited.add(candidate)
+            if candidate.is_symlink():
+                target = os.readlink(candidate); aliases[str(candidate)] = target
+                pending.append(Path(os.path.abspath(candidate.parent / target)))
+    return {"lexical": str(path), "resolved": str(path.resolve(strict=True)),
+            "aliases": [{"path": p, "target": target} for p, target in sorted(aliases.items())]}
+
+
+def selected_python_layout(source):
+    """Trusted current interpreter facts, never caller-selected exclusions.
+
+    Python 3.11's -S child may report the base prefix. Capture the installed
+    package root in the owner, before that launch, and retain it explicitly.
+    """
+    base = Path(sys.base_prefix).resolve(strict=True)
+    paths = sysconfig.get_paths(vars={"base": str(base), "platbase": str(base),
+        "installed_base": str(base), "installed_platbase": str(base)})
+    exclusions = sorted({str(_absolute(paths[name])) for name in ("purelib", "platlib")})
+    roots = {"installed-packages": str(_absolute(str(source))), "python-runtime": str(base),
+        "python-stdlib": str(_absolute(sysconfig.get_path("stdlib"))),
+        "python-extensions": str(_absolute(sysconfig.get_config_var("DESTSHARED")))}
+    if any(Path(roots[role]).resolve().is_relative_to(Path(p).resolve())
+           for role in roots for p in exclusions):
+        raise HostLaunchError("selected Python root aliases into excluded ambient packages")
+    boundaries = []
+    for raw in exclusions:
+        path = Path(raw)
+        kind = "symlink" if path.is_symlink() else "directory" if path.is_dir() else "absent" if not path.exists() else "file"
+        boundaries.append({"path": raw, "kind": kind,
+            "target": os.readlink(path) if kind == "symlink" else None,
+            "resolved": str(path.resolve())})
+    # Bind absence too: a newly appearing zip is new bootstrap authority.
+    startup = {}
+    for path in dict.fromkeys((Path(sys.prefix) / "pyvenv.cfg", base / "pyvenv.cfg",
+                              Path(roots["python-stdlib"]).parent / f"python{sys.version_info.major}{sys.version_info.minor}.zip")):
+        if path.is_symlink() and not path.exists():
+            raise HostLaunchError("selected Python startup alias is broken")
+        if path.exists():
+            resolved = path.resolve(strict=True)
+            if (any(resolved.is_relative_to(Path(p).resolve()) for p in exclusions)
+                    or not any(resolved.is_relative_to(root) for root in (base, Path(sys.prefix).resolve()))):
+                raise HostLaunchError("selected Python startup file escapes admitted runtime")
+            startup[str(path)] = {"binding": _python_path_binding(path),
+                "sha256": hashlib.sha256(_bounded_source(resolved)).hexdigest()}
+        else:
+            startup[str(path)] = None
+    executable = Path(os.path.abspath(sys.executable))
+    return {"version": 1, "roots": roots, "excluded_roots": boundaries, "startup_files": startup,
+            "interpreter": _python_path_binding(executable),
+            "root_bindings": {role: _python_path_binding(Path(raw)) for role, raw in roots.items()}}
+
+
+def _selected_inventory_policy(root, role, layout):
+    if type(role) is not str or role not in layout["roots"] or str(root) != layout["roots"][role]:
+        raise HostLaunchError("unknown selected Python inventory role or root")
+    return {"role": role, "layout": layout}
+
+
+def _excluded(path, layout):
+    return any(path.is_relative_to(Path(row["path"])) or
+               path.is_relative_to(Path(row["resolved"])) for row in layout["excluded_roots"])
+
+
+def installed_inventory(root, *, python_role=None, selected_source=None):
     """Exact installed non-bytecode inventory, for trusted caller review.
 
     Bytecode is excluded because the isolated launcher never uses it. .pth and
@@ -422,28 +503,62 @@ def installed_inventory(root):
     Calling this measurement does not adopt the resulting record.
     """
     root = _absolute(str(root))
+    layout = selected_python_layout(selected_source) if python_role is not None else None
+    policy = _selected_inventory_policy(root, python_role, layout) if layout is not None else None
     files = {}; aliases = {}
-    for path in sorted(root.rglob("*")):
+    def walk(directory):
+        for path in sorted(directory.iterdir()):
+            if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}:
+                continue
+            # Structural pruning happens before enumerating or reading the
+            # subtree. A different alias may never re-admit excluded code.
+            if layout is not None and _excluded(path, layout):
+                continue
+            if path.is_symlink():
+                resolved = path.resolve(strict=True)
+                if layout is not None and (_excluded(resolved, layout) or
+                        not any(resolved.is_relative_to(Path(p).resolve()) for p in layout["roots"].values())):
+                    raise HostLaunchError("selected Python alias escapes admitted roots")
+                yield path
+            elif path.is_dir():
+                yield from walk(path)
+            else:
+                yield path
+    for path in walk(root):
         if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}:
             continue
         if path.is_symlink():
             aliases[str(path.relative_to(root))] = {"target": os.readlink(path),
                 "kind": "file" if path.is_file() else "directory" if path.is_dir() else "broken"}
         if path.is_file():
-            files[str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
+            files[str(path.relative_to(root))] = hashlib.sha256(_bounded_source(path.resolve(strict=True))).hexdigest()
     # rglob does not traverse directory aliases. Record their literal targets,
     # but never silently make their contents an import root. -S omits the
     # stdlib's ordinary aliased site directory in favor of the explicit roots.
     result = {"root": str(root), "files": files}
     if aliases: result["aliases"] = aliases
+    if policy is not None: result["selection"] = policy
     return result
 
 
 def _local_inventory(value):
     if (not isinstance(value, dict) or not {"root", "files"} <= set(value)
-            or set(value) - {"root", "files", "aliases"}):
+            or set(value) - {"root", "files", "aliases", "selection"}):
         raise HostLaunchError("installed inventory shape is invalid")
     root = _absolute(value["root"])
+    selection = value.get("selection")
+    role = source = None
+    if selection is not None:
+        if not isinstance(selection, dict) or set(selection) != {"role", "layout"}:
+            raise HostLaunchError("selected Python inventory selection is invalid")
+        role = selection["role"]
+        try:
+            source = selection["layout"]["roots"]["installed-packages"]
+            layout = selected_python_layout(source)
+        except (KeyError, TypeError) as exc:
+            raise HostLaunchError("selected Python inventory layout is invalid") from exc
+        if selection != _selected_inventory_policy(root, role, layout):
+            raise HostLaunchError("selected Python inventory boundary changed")
     if "aliases" in value and not isinstance(value["aliases"], dict):
         raise HostLaunchError("installed alias inventory is invalid")
     if not isinstance(value["files"], dict) or not value["files"] or len(value["files"]) > 200000:
@@ -454,20 +569,28 @@ def _local_inventory(value):
                 or str(path) != relative or "__pycache__" in path.parts
                 or path.suffix in {".pyc", ".pyo"} or not _raw(pin)):
             raise HostLaunchError("installed inventory has an unsupported file representation")
+        if selection is not None and (_excluded(root / relative, layout) or _excluded((root / relative).resolve(), layout)):
+            raise HostLaunchError("selected Python inventory includes excluded ambient code")
+        if selection is not None and not any((root / relative).resolve().is_relative_to(Path(p).resolve())
+                                             for p in layout["roots"].values()):
+            raise HostLaunchError("selected Python file escapes admitted roots")
         _local_read(root / relative, pin)
-    if installed_inventory(root) != value:
+    if installed_inventory(root, python_role=role, selected_source=source) != value:
         raise HostLaunchError("installed inventory has missing, changed or unexpected files")
     return json.loads(canonical(value))
 
 
 class _LocalInstallationObservation:
     """Retained launch observation; deliberately offers no protection lease."""
-    def __init__(self, profile, launcher):
+    def __init__(self, profile, launcher, layout=None):
+        self._layout = layout
         self._pins = [(profile["host_executable"], profile["host_artifact_digest"][7:]),
                       (launcher["path"], launcher["sha256"])]
         if "host_os_executable" in profile:
             self._pins.append((profile["host_os_executable"], profile["host_os_artifact_digest"][7:]))
     def verify(self):
+        if self._layout is not None and selected_python_layout(self._layout["roots"]["installed-packages"]) != self._layout:
+            raise HostLaunchError("selected Python startup or inclusion boundary changed")
         for path, pin in self._pins:
             _local_read(path, pin)
 
@@ -505,7 +628,38 @@ class TrustedLocalHostLaunchVerifier(HostLaunchVerifier):
         return super()._validate_environment(profile, config, {k: v for k, v in environment.items() if k not in expected})
 
     def _observation(self, record, profile):
-        return _LocalInstallationObservation(profile, record["import_binding"]["launcher"])
+        layout = selected_python_layout(record["source_checkout"]) if profile.get("execution_mode") == "host_only_cpu" else None
+        return _LocalInstallationObservation(profile, record["import_binding"]["launcher"], layout)
+
+    def _validate_inventory_selection(self, record, profile, config):
+        if profile.get("execution_mode") != "host_only_cpu":
+            return None
+        layout = selected_python_layout(config["source_checkout"])
+        if profile["host_executable"] != layout["interpreter"]["lexical"]:
+            raise HostLaunchError("selected Python interpreter differs from current owner")
+        roles = {}
+        if not isinstance(record["inventories"], dict):
+            raise HostLaunchError("host-only selected inventories are invalid")
+        for pin, inventory in record["inventories"].items():
+            if not isinstance(inventory, dict) or "root" not in inventory:
+                raise HostLaunchError("host-only selected inventory is invalid")
+            selection = inventory.get("selection")
+            if not isinstance(selection, dict) or set(selection) != {"role", "layout"}:
+                raise HostLaunchError("host-only inventory lacks selected Python role")
+            role = selection["role"]
+            if selection != _selected_inventory_policy(Path(inventory["root"]), role, layout) or role in roles:
+                raise HostLaunchError("host-only inventory has changed or duplicate selection")
+            roles[role] = pin
+        if set(roles) != set(layout["roots"]):
+            raise HostLaunchError("host-only inventory selection is incomplete")
+        imports = []
+        for role in ("installed-packages", "python-stdlib", "python-extensions"):
+            entry = {"path": layout["roots"][role], "inventory_digest": roles[role]}
+            if not any(e["path"] == entry["path"] for e in imports): imports.append(entry)
+        binding = record["import_binding"]
+        if binding["import_roots"] != imports or binding["python_runtime_inventory_digest"] != roles["python-runtime"]:
+            raise HostLaunchError("host-only import roots differ from selected Python roles")
+        return layout
 
     def _runtime_relative(self, interpreter, runtime):
         selected = interpreter.resolve(strict=True)
@@ -637,6 +791,8 @@ def launch_from_binding(payload):
     fields = {"schema_version", "mode", "module", "mapping", "host_argv"}
     if isinstance(payload, dict) and payload.get("mode") == TRUSTED_LOCAL_MODE:
         fields.add("distribution_metadata")
+        if "selected_python" in payload:
+            fields.add("selected_python")
     if (not isinstance(payload, dict) or set(payload) != fields
             or type(payload["schema_version"]) is not int or payload["schema_version"] != 1
             or payload["mode"] not in (MODE, TRUSTED_LOCAL_MODE) or payload["module"] != HOST_MODULE
@@ -660,6 +816,10 @@ def launch_from_binding(payload):
     module = type(sys)("__main__")
     module.__package__ = HOST_MODULE.rpartition('.')[0]
     module.__spec__ = importlib.util.spec_from_file_location(HOST_MODULE, item["path"], loader=_SourceLoader(item))
+    # Private retained owner input for the existing confined-child factory.
+    # It cannot be selected by Host CLI, task arguments, CWD or environment.
+    if "selected_python" in payload:
+        module.__dict__["_RETAINED_SELECTED_PYTHON"] = json.loads(canonical(payload["selected_python"]))
     sys.modules['__main__'] = module
     sys.argv[:] = [item["path"], *payload["host_argv"]]
     _SourceLoader(item, trusted_local=payload["mode"] == TRUSTED_LOCAL_MODE).exec_module(module)

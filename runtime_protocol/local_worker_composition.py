@@ -1347,16 +1347,18 @@ def _verify_installed_host_records(profile, config):
 
 def _installed_host_release(profile, config):
     """Trusted local owner supplies the existing verifier's installed record."""
-    import sysconfig
-    from .verified_host_launch import installed_inventory, raw_digest, source_checkout_closure
+    from .verified_host_launch import installed_inventory, raw_digest, source_checkout_closure, selected_python_layout
     _verify_installed_host_records(profile, config)
     source = Path(config["source_checkout"])
-    roots = [source, Path(sys.base_prefix), Path(sysconfig.get_path("stdlib")), Path(sysconfig.get_config_var("DESTSHARED"))]
-    inventories = {}; entries = []
-    for root in dict.fromkeys(roots):
-        inventory = installed_inventory(root)
+    layout = selected_python_layout(source)
+    inventories = {}; entries = []; runtime_identity = None
+    for role, root in layout["roots"].items():
+        inventory = installed_inventory(root, python_role=role, selected_source=source)
         identity = raw_digest(inventory); inventories[identity] = inventory
-        entries.append({"path": str(root), "inventory_digest": identity})
+        if role == "python-runtime":
+            runtime_identity = identity
+        elif not any(e["path"] == str(root) for e in entries):
+            entries.append({"path": str(root), "inventory_digest": identity})
     closure = source_checkout_closure(source)
     launcher = Path(__file__).with_name("verified_host_launch.py")
     return {"selected_profile_digest": raw_digest(_selected_profile_payload(profile)), "profile_digest": profile.profile_digest,
@@ -1364,7 +1366,7 @@ def _installed_host_release(profile, config):
         "source_components": closure["components"], "inventories": inventories,
         "import_binding": {"schema_version": 1, "mode": "trusted-local-isolated-source/v1",
             "launcher": {"path": str(launcher), "sha256": hashlib.sha256(launcher.read_bytes()).hexdigest()},
-            "python_runtime_inventory_digest": entries[1]["inventory_digest"], "import_roots": entries}}
+            "python_runtime_inventory_digest": runtime_identity, "import_roots": entries}}
 
 
 def _load_host_only_composition(raw, *, workspace_uuid, realm_root, support_root, runtime_instance_id):

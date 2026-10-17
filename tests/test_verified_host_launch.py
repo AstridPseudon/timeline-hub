@@ -4,6 +4,7 @@ import copy
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import pickle
 import sys
@@ -30,7 +31,8 @@ def test_mapped_distribution_metadata_real_version_with_empty_sys_path(tmp_path,
     finder=gate.MappedImports({},trusted_local=True,distribution_metadata=rows)
     monkeypatch.setattr(sys,'meta_path',[finder]);monkeypatch.setattr(sys,'path',[])
     assert gate.importlib.metadata.version('Astrid')=='7.2'
-    version_path=Path(__file__).parents[2]/'Astrid--integration-reconciled/astrid/version.py'
+    source=Path(os.environ.get('HOST_LAUNCH_TEST_ASTRID_SOURCE', Path(__file__).parents[2]/'Astrid--integration-reconciled'))
+    version_path=source/'astrid/version.py'
     item={'path':str(version_path),'sha256':hashlib.sha256(version_path.read_bytes()).hexdigest(),'package':False}
     selected_version=ModuleType('selected_version')
     gate._SourceLoader(item,trusted_local=True).exec_module(selected_version)
@@ -106,8 +108,13 @@ def test_cold_launch_binds_metadata_after_exact_importer_without_parser_preload(
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content)
+    (root / 'unexecuted.pth').write_text('import sys; sys.exit("PTH EXECUTED")\n')
+    ambient = tmp_path / 'ambient-cwd'
+    ambient.mkdir()
+    (ambient / 'email.py').write_text('raise RuntimeError("ambient shadow")\n')
+    (ambient / 'sitecustomize.py').write_text('raise RuntimeError("ambient startup")\n')
     stdlib = Path(sysconfig.get_path("stdlib")).resolve()
-    inventories = [gate.installed_inventory(root), gate.installed_inventory(stdlib)]
+    inventories = [gate.installed_inventory(root), gate.installed_inventory(stdlib, python_role='python-stdlib', selected_source=root)]
     pins = {gate.raw_digest(i): i for i in inventories}
     import_roots = [{"path": i["root"], "inventory_digest": gate.raw_digest(i)} for i in inventories]
     mapping = gate._mapping(import_roots, pins, inventories[1], trusted_local=True)
@@ -128,7 +135,9 @@ assert 'email.parser' not in sys.modules, 'parser unexpectedly preloaded'
 with open(sys.argv[2]) as stream: payload=json.load(stream)
 gate.launch_from_binding(payload)
 """
-    result = subprocess.run([sys.executable, "-I", "-S", "-c", program, gate.__file__, str(manifest)],
+    result = subprocess.run([sys.executable, "-I", "-S", "-B", "-c", program, gate.__file__, str(manifest)],
+                            cwd=ambient, env={**os.environ, 'PYTHONPATH':str(ambient),
+                                'PYTHONUSERBASE':str(ambient), 'PYTHONSTARTUP':str(ambient/'sitecustomize.py')},
                             capture_output=True, text=True, timeout=30)
     if edge == "valid":
         assert result.returncode == 0, result.stderr
@@ -317,7 +326,8 @@ def test_native_extensions_require_protected_runtime_inventory(tmp_path):
 
 def test_nine_component_measurement_parity_without_importing_astrid(tmp_path):
     f=fixture_authority(tmp_path)
-    host=Path(__file__).resolve().parents[2]/'Astrid--integration/astrid/core/execution/generic_host.py'
+    source=Path(os.environ.get('HOST_LAUNCH_TEST_ASTRID_SOURCE', Path(__file__).resolve().parents[2]/'Astrid--integration'))
+    host=source/'astrid/core/execution/generic_host.py'
     tree=ast.parse(host.read_bytes());names={'_canonical_digest','_source_digest','source_checkout_closure'}
     nodes=[n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in names]
     # Only measurement functions, not any host package/module import or startup.
@@ -355,6 +365,30 @@ def local_fixture(tmp_path):
     f.record['import_binding']['mode'] = gate.TRUSTED_LOCAL_MODE
     f.verifier = gate.TrustedLocalHostLaunchVerifier(installed_release=f.record)
     return f
+
+
+@pytest.mark.parametrize('reader', [gate.read_source, gate._local_read])
+def test_selected_import_file_keeps_64_mib_bound_before_read(tmp_path, monkeypatch, reader):
+    oversized = tmp_path / 'selected.py'
+    with oversized.open('wb') as stream:
+        stream.truncate(64 * 1024 * 1024 + 1)
+    assert gate.LIMIT == 67_108_864
+    def unexpected_read(*args):
+        pytest.fail('oversized selected file must be refused before reading bytes')
+    monkeypatch.setattr(gate.os, 'read', unexpected_read)
+    with pytest.raises(gate.HostLaunchError, match='bounded regular file'):
+        reader(oversized, '0' * 64)
+
+
+def test_trusted_local_selected_file_replacement_refuses_retained_pin(tmp_path):
+    selected = tmp_path / 'selected.py'
+    selected.write_bytes(b'VALUE=1\n')
+    inventory = gate.installed_inventory(tmp_path)
+    replacement = tmp_path / 'replacement'
+    replacement.write_bytes(b'VALUE=2\n')
+    replacement.replace(selected)
+    with pytest.raises(gate.HostLaunchError, match='differs from its reviewed pin'):
+        gate._local_inventory(inventory)
 
 
 def test_trusted_local_explicit_constructor_keeps_default_closed_and_record_private(tmp_path):
@@ -500,13 +534,9 @@ def test_resource_reader_keeps_strict_and_nonpackage_behavior_closed(tmp_path):
     assert gate._SourceLoader({**item,'package':False},trusted_local=True).get_resource_reader('fake') is None
 
 
-def test_host_only_trusted_local_variant_still_requires_owner_record_and_original_child(tmp_path):
-    f=fixture_authority(tmp_path)
-    profile=f.args['preparation']['profile']
-    profile.update(execution_mode='host_only_cpu',support_root=f.args['config']['support_root'],realm_root=str(tmp_path/'realm'))
-    f.args['environment'].update(ASTRID_OUTPUT_ROOT=str(tmp_path/'support/host-output'),BANODOCO_LOCAL_DATA_ROOT=str(tmp_path/'realm'))
-    f.record['selected_profile_digest']=gate.raw_digest(profile)
-    f.record['import_binding']['mode']=gate.TRUSTED_LOCAL_MODE
+def test_host_only_trusted_local_variant_still_requires_owner_record_and_original_child(tmp_path, monkeypatch):
+    from test_selected_python_inventory import selected_case
+    f=selected_case(tmp_path, monkeypatch)
     verifier=gate.TrustedLocalHostLaunchVerifier(installed_release=f.record)
     proof=verifier.verify(**f.args)
     argv,payload=verifier.claim(proof,**f.args,binding_fd=31)
