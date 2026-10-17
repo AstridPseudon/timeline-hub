@@ -375,7 +375,7 @@ def _native_test_reader(monkeypatch, *, pid=123, uid=501, ppid=41, count=None, e
 
 
 @pytest.mark.parametrize("uid", [501, 0])
-def test_darwin_native_identity_preserves_uid_parent_and_legacy_birth_without_ps(monkeypatch, uid):
+def test_darwin_native_identity_preserves_uid_parent_and_canonical_utc_birth_without_ps(monkeypatch, uid):
     monkeypatch.setattr(custody.sys, "platform", "darwin")
     _native_test_reader(monkeypatch, uid=uid)
     monkeypatch.setattr(custody.subprocess, "run", lambda *a, **k: pytest.fail("Darwin ps invoked"))
