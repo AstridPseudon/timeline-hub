@@ -25,6 +25,7 @@
     "@remotion/renderer": "4.0.509",
     "@remotion/three": "4.0.509",
     "@types/three": "0.185.4",
+    "ajv": "8.18.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "remotion": "4.0.509",
