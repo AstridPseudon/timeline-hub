@@ -141,23 +141,39 @@ def stop_pack_host(data_root: str | Path) -> Mapping[str, Any]:
         ready = host_bootstrap._read_object(ready_path)
         markers = tuple(marker for marker in (state, ready) if marker)
         candidate = state or ready
-        if not candidate:
+        try:
+            retained = host_bootstrap._retained_hosts_for_support(support)
+        except Exception as exc:
+            raise UpgradeError(f"generic Astrid pack host could not be stopped: {exc}") from exc
+        if not candidate and not retained:
+            if any(path.exists() or path.is_symlink() for path in (state_path, ready_path)):
+                raise UpgradeError("generic Astrid pack host markers are unreadable; cleanup custody is unresolved")
             return {"host_status": "absent"}
+        if len(retained) != 1:
+            raise UpgradeError("generic Astrid pack host cleanup custody is unresolved")
+        process, record = retained[0]
+        expected = record[2]
+        # Markers can refuse retirement but cannot supply a missing owner.
+        if any(marker.get("pid") != expected.get("pid")
+               or marker.get("process_birth_id") != expected.get("process_birth_id")
+               for marker in markers):
+            raise UpgradeError("generic Astrid pack host markers differ from retained owner")
         live_markers = [marker for marker in markers if host_bootstrap._host_pid_alive(marker.get("pid"))]
         if len({str(marker.get("pid")) for marker in live_markers}) > 1:
             raise UpgradeError("generic Astrid pack host markers identify multiple live owners")
-        pid = (live_markers[0] if live_markers else candidate).get("pid")
-        if live_markers:
-            if not state or not host_bootstrap._host_identity_matches(state):
+        pid = expected["pid"]
+        if live_markers or host_bootstrap._host_pid_alive(pid):
+            if not host_bootstrap._host_identity_matches(expected):
                 raise UpgradeError("existing generic Astrid pack host cannot be verified safely")
             if host_bootstrap._descendant_snapshot(int(pid)):
                 raise UpgradeError("generic Astrid pack host has active child work; upgrade refused")
-            try:
-                host_bootstrap._terminate_old_host(state)
-            except Exception as exc:
-                raise UpgradeError(f"generic Astrid pack host could not be stopped: {exc}") from exc
-        state_path.unlink(missing_ok=True)
-        ready_path.unlink(missing_ok=True)
+        try:
+            if getattr(process, "_astrid_host_registration", None) is not None:
+                host_bootstrap._retire_owned_host_locked(expected)
+            else:
+                host_bootstrap._retire_failed_host_locked(process, record)
+        except Exception as exc:
+            raise UpgradeError(f"generic Astrid pack host could not be stopped: {exc}") from exc
         return {"host_status": "stopped", "host_pid": int(pid) if str(pid).isdigit() else None}
 
 
