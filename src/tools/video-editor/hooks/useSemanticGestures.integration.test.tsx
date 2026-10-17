@@ -5775,3 +5775,125 @@ describe('W48 malformed direct receipts never register native history', () => {
     } finally { history.unmount(); h.unmount(); }
   });
 });
+
+
+describe('W63 style-only native history', () => {
+  it('actual updateClip waits for its accepted style inverse', async () => {
+    const initial = await initialData();
+    const h = await setup(async () => ({ directWrites: [{ id: 'parent/clip:clip-1', path: 'opacity', before: { state: 'present', value: 0.9 }, after: { state: 'present', value: 0 } }] }), false, initial);
+    const native = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', native);
+    const before = vi.fn(); h.eventBus.on('beforeCommit', before);
+    act(() => expect(mountedCommandsFor(h).updateClip({ clipId: 'clip-1', patch: { opacity: 0 } }).ok).toBe(true));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change.commands).toMatchObject([{ op: 'clip.set-look', args: { opacity: 0 } }]);
+    expect(before.mock.calls[0][1].nativeRegistrationOwner).toBeDefined();
+    expect(native).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ op: 'timeline.inverse' }));
+    h.unmount();
+  });
+});
+
+function lookStyleSource(initial: TimelineData, requests: CommitRequest[], stale = false) {
+  return JSON.parse(execFileSync(process.env.ASTRID_TEST_PYTHON!, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/clipLookStyle.fixture.py')], {
+    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests, stale }), encoding: 'utf8', env: process.env,
+  })) as { before: unknown; results: CommitResult[]; result: CommitResult; readback: unknown; accept_counts: number[] };
+}
+function lookStyleHistory(h: Awaited<ReturnType<typeof setup>>) {
+  return renderHook(() => {
+    const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+    useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]); return state;
+  }, { wrapper: overlapHistoryWrapper(h) });
+}
+async function lookStyleData() {
+  const base = await selectedMoveData();
+  return buildTimelineData({ ...base.config, clips: base.config.clips.map((clip, index) => index ? clip : { ...clip, cropTop: 0.1 }) }, base.registry, undefined, 1, undefined, base.head);
+}
+const lookStylePatch = { opacity: 0, volume: 0, cropTop: 0, cropBottom: 0.2, cropLeft: 0.3, cropRight: 0.4 };
+
+describe('W63 style-only SDK history chain', () => {
+  it('ordered six-field update is one receipt-owned action with exact Undo Redo and SDK replay/readback', async () => {
+    const initial = await lookStyleData(); const requests: CommitRequest[] = [];
+    let proof!: ReturnType<typeof lookStyleSource>;
+    let release!: () => void; const held = new Promise<void>(resolve => { release = resolve; });
+    const h = await setup(async request => {
+      requests.push(request); proof = lookStyleSource(initial, requests);
+      if (requests.length === 1) await held;
+      if (process.env.E_W63_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W63_EVIDENCE_DIR, 'sdk-chain.json'), JSON.stringify({ requests, proof }, null, 2));
+      return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = lookStyleHistory(h); const native = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', native);
+    const before = vi.fn(); h.eventBus.on('beforeCommit', before);
+    act(() => expect(mountedCommandsFor(h).updateClip({ clipId: 'clip-1', patch: lookStylePatch }).ok).toBe(true));
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(history.result.current.canUndo).toBe(false); expect(native).not.toHaveBeenCalled();
+    act(() => release()); await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    const forward = requests[0].change.commands;
+    expect(forward.map(call => call.op)).toEqual(Array(6).fill('clip.set-look'));
+    expect(forward.map(call => call.args)).toEqual([{ opacity: 0 }, { volume: 0 }, { crop_top: 0 }, { crop_bottom: 0.2 }, { crop_left: 0.3 }, { crop_right: 0.4 }]);
+    expect(before).toHaveBeenCalledOnce();
+    expect(proof.result.change.direct_writes).toHaveLength(6);
+    expect(proof.result.change.direct_writes).toContainEqual({ id: 'parent/clip:clip-1', path: 'cropBottom', before: { state: 'absent' }, after: { state: 'present', value: 0.2 } });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    act(() => history.result.current.undo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    act(() => history.result.current.redo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(requests).toHaveLength(3); expect(proof.accept_counts).toEqual([1, 1, 1]);
+    expect(proof.results[1].canonical_document).toEqual(proof.before);
+    expect(proof.readback).toEqual(proof.results[0].canonical_document);
+    expect(requests[1].change.commands).toEqual([{ op: 'timeline.inverse', select: null, args: {
+      publication: proof.results[0].accepted_publication_id,
+      writes: proof.results[0].change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })),
+    } }]);
+    expect(requests[2].change.commands[0].args.publication).toBe(proof.results[1].accepted_publication_id);
+    const beforeDocument = proof.before as { parent: { clips: Array<Record<string, unknown>> } };
+    const afterDocument = proof.readback as typeof beforeDocument;
+    expect(afterDocument.parent.clips[1]).toEqual(beforeDocument.parent.clips[1]);
+    expect(afterDocument.parent.clips[0].app).toEqual(beforeDocument.parent.clips[0].app);
+    expect(afterDocument.parent.clips[0].params).toEqual(beforeDocument.parent.clips[0].params);
+    expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  }, 180_000);
+
+  it('one stale expectation rejects the entire six-field SDK transaction', async () => {
+    const initial = await lookStyleData(); let proof!: ReturnType<typeof lookStyleSource>;
+    const h = await setup(async request => {
+      proof = lookStyleSource(initial, [request], true);
+      if (process.env.E_W63_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W63_EVIDENCE_DIR, 'sdk-stale.json'), JSON.stringify(proof, null, 2));
+      return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = lookStyleHistory(h);
+    act(() => expect(mountedCommandsFor(h).updateClip({ clipId: 'clip-1', patch: lookStylePatch }).ok).toBe(true));
+    await waitFor(() => expect(proof?.result.status).toBe('refused'), { timeout: 60_000 });
+    expect(proof.readback).toEqual(proof.before); expect(proof.result.change.direct_writes).toEqual([]);
+    expect(history.result.current.canUndo).toBe(false); expect(h.savedSeqRef.current).toBe(0);
+    history.unmount(); h.unmount();
+  }, 60_000);
+
+  it('SDK no-change removes its native owner without usable Undo', async () => {
+    const initial = await lookStyleData(); let proof!: ReturnType<typeof lookStyleSource>;
+    const h = await setup(async request => { proof = lookStyleSource(initial, [request]); return { acceptedResult: proof.result }; }, false, initial);
+    const history = lookStyleHistory(h);
+    act(() => expect(mountedCommandsFor(h).updateClip({ clipId: 'clip-1', patch: { opacity: 0.9 } }).ok).toBe(true));
+    await waitFor(() => expect(proof?.result.status).toBe('no_change'), { timeout: 60_000 });
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(history.result.current.canUndo).toBe(false); expect(proof.result.accepted_publication_id).toBeNull();
+    history.unmount(); h.unmount();
+  }, 60_000);
+
+  it.each(['missing', 'extra', 'malformed', 'wrong before', 'wrong after', 'duplicate'] as const)('%s receipt never enables native Undo', async kind => {
+    const initial = await lookStyleData();
+    const write = { id: 'parent/clip:clip-1', path: 'opacity', before: { state: 'present', value: 0.9 }, after: { state: 'present', value: 0 } };
+    const writes: unknown[] = kind === 'missing' ? [] : kind === 'extra' ? [write, { ...write, path: 'volume' }]
+      : kind === 'malformed' ? [{ ...write, before: { state: 'absent', value: null } }]
+      : kind === 'wrong before' ? [{ ...write, before: { state: 'absent' } }]
+      : kind === 'wrong after' ? [{ ...write, after: { state: 'present', value: 0.5 } }]
+      : [write, write];
+    const h = await setup(async () => ({ directWrites: writes as CommitResult['change']['direct_writes'] }), false, initial);
+    const history = lookStyleHistory(h);
+    act(() => expect(mountedCommandsFor(h).updateClip({ clipId: 'clip-1', patch: { opacity: 0 } }).ok).toBe(true));
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(history.result.current.canUndo).toBe(false);
+    act(() => history.result.current.undo()); expect(h.requests).toHaveLength(1);
+    history.unmount(); h.unmount();
+  });
+});

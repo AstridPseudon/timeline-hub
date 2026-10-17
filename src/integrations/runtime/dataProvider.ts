@@ -1,4 +1,5 @@
 import { fadeHistoryInverse } from '@/tools/video-editor/commands/fadeHistory.ts';
+import { clipLookStyleInverse } from '@/tools/video-editor/commands/clipLookStyleHistory.ts';
 import { trackHistoryInverse } from '@/tools/video-editor/commands/trackHistory.ts';
 import { clipStructureInverse } from '@/tools/video-editor/commands/clipStructureHistory.ts';
 import { clipPlacementInverse, isShotGroupTransferBatch } from '@/tools/video-editor/commands/clipPlacementHistory.ts';
@@ -917,7 +918,7 @@ export class RuntimeDataProvider implements DataProvider {
     // null means this owner explicitly had no change; it must not fall through.
     const commandInverse = registryNoChange ? null : [captionInverse, assetRegistrationInverse(registryCommands, result),
       overlapInverse, tiedHoldExpansionInverse(registryCommands, result), clipPlacementInverse(registryCommands, result),
-      clipStructureInverse(registryCommands, result), trackHistoryInverse(registryCommands, result), fadeHistoryInverse(registryCommands, result)]
+      clipStructureInverse(registryCommands, result), trackHistoryInverse(registryCommands, result), fadeHistoryInverse(registryCommands, result), clipLookStyleInverse(registryCommands, result)]
       .find(inverse => inverse !== undefined);
     return { configVersion: version, head: this.timelineHead(timelineId, head),
       ...(commandInverse !== undefined ? { commandInverse } : {}) };

@@ -1,4 +1,5 @@
 import { isFadeHistoryBatch, isFadeHistoryInverse } from '../commands/fadeHistory.ts';
+import { isClipLookStyleInverse } from '../commands/clipLookStyleHistory.ts';
 import { isTrackHistoryBatch, isTrackHistoryInverse } from '../commands/trackHistory.ts';
 import { isSelectedMediaCreation, isClipStructureBatch, isClipStructureInverse } from '../commands/clipStructureHistory.ts';
 import { isClipPlacementBatch, isClipPlacementInverse } from '../commands/clipPlacementHistory.ts';
@@ -251,7 +252,7 @@ export function useTimelineHistory({
       syncHistoryState();
       return;
     }
-    if (!isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse) && !isTiedHoldExpansionInverse(inverse) && !isTranscriptCaptionInverse(inverse) && !isClipPlacementInverse(inverse) && !isClipStructureInverse(inverse) && !isTrackHistoryInverse(inverse) && !isFadeHistoryInverse(inverse)) return;
+    if (!isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse) && !isTiedHoldExpansionInverse(inverse) && !isTranscriptCaptionInverse(inverse) && !isClipPlacementInverse(inverse) && !isClipStructureInverse(inverse) && !isTrackHistoryInverse(inverse) && !isFadeHistoryInverse(inverse) && !isClipLookStyleInverse(inverse)) return;
     for (const entry of [...undoStackRef.current, ...redoStackRef.current]) {
       if (entry.nativeRegistration?.owner === owner) entry.nativeRegistration.inverse = structuredClone(inverse);
     }
@@ -336,7 +337,7 @@ export function useTimelineHistory({
     // Never turn an unacknowledged edit or missing receipt into a snapshot publication.
     const inverse = entry.nativeRegistration?.inverse;
     if (entry.nativeRegistration && !inverse) return false;
-    const nextData = entry.nativeRegistration && (isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse) || isTranscriptCaptionInverse(inverse) || isClipPlacementInverse(inverse) || isClipStructureInverse(inverse) || isTrackHistoryInverse(inverse) || isFadeHistoryInverse(inverse))
+    const nextData = entry.nativeRegistration && (isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse) || isTranscriptCaptionInverse(inverse) || isClipPlacementInverse(inverse) || isClipStructureInverse(inverse) || isTrackHistoryInverse(inverse) || isFadeHistoryInverse(inverse) || isClipLookStyleInverse(inverse))
       ? { ...current } : preserveUploadingClips(current, applyHistoryEntry(current, entry, direction));
     const mediaReplay = entry.nativeRegistration?.mediaReplay;
     const reorderReplay = entry.nativeRegistration?.reorderReplay;
