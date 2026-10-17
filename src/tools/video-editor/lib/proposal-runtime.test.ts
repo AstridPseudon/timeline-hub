@@ -2226,3 +2226,33 @@ describe('ProposalRuntime', () => {
     });
   });
 });
+
+
+describe('durable pending proposal correlation', () => {
+  it('hydrates an unresolved submitted binding as pending and prevents replacement/rejection/expiry until its exact retry resolves', async () => {
+    const reader = await makeReader(undefined, 99);
+    const patch: TimelinePatch = { version: 1, operations: [{ op: 'track.update', target: 'A1', payload: { muted: true } }] };
+    const binding = { proposalId: 'submitted-A', source: 'review', transactionId: 'proposal:submitted-A',
+      base: { projectId: 'p', timelineId: 't', headRevisionId: 'base' }, baseVersion: 1, providerContext: 'scope', signature: 'signature',
+      patch, commands: [], preview: makeEmptyPreviewResult(1) };
+    const persistence = createMockPersistenceProvider([{ id: 'row', proposalId: binding.proposalId,
+      source: binding.source, commandBinding: binding, state: 'pending', patch, baseVersion: 1,
+      createdAt: 1, updatedAt: 1, expiresAt: 2 }]);
+    let resolve!: (diff: TimelineDiff) => void;
+    const acceptProposal = vi.fn(() => new Promise<TimelineDiff>((done) => { resolve = done; }));
+    const previewProposal = vi.fn(() => { throw new Error('stale current head'); });
+    const ops = { ...createMockTimelineOps(), proposalSubmitted: () => true, previewProposal, acceptProposal };
+    const runtime = createProposalRuntime({ timelineOps: ops, reader, persistenceProvider: persistence });
+    await vi.waitFor(() => expect(runtime.get(binding.proposalId)).toBeDefined());
+    expect(runtime.get(binding.proposalId)?.state).toBe('pending');
+    expect(previewProposal).not.toHaveBeenCalled();
+    expect(() => runtime.reject(binding.proposalId)).toThrow('submitted');
+    expect(() => runtime.create({ source: 'review', patch, baseVersion: 99 })).toThrow('acknowledgement');
+    runtime.expireStale(0);
+    expect(runtime.get(binding.proposalId)?.state).toBe('pending');
+    const retry = runtime.accept(binding.proposalId);
+    expect(acceptProposal).toHaveBeenCalledExactlyOnceWith(binding);
+    resolve(makeEmptyDiff(1)); await retry;
+    expect(runtime.get(binding.proposalId)?.state).toBe('accepted');
+  });
+});

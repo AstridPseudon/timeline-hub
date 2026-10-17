@@ -9,8 +9,9 @@ import { RuntimeCommitSession, browserCommitSessionStorage, type CommitSessionSt
 import { assetRegistrationCommand, assetRegistrationInverse, isAssetRegistrationCommand, isAssetRegistrationInverse } from '@/tools/video-editor/commands/assetRegistration.ts';
 import { tiedHoldExpansionInverse } from '@/tools/video-editor/commands/tiedHoldExpansionHistory.ts';
 import { overlapTrimInverse } from '@/tools/video-editor/commands/overlapTrimHistory.ts';
-import type { TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
-import { ApiError, type ByteResponse, type MediaImportOperation as MediaImport, type RequestBody, type CommitRequest, type CommitResult, type EditCommand } from './generated.ts';
+import { loadTimelineDraft, reserveTimelineDraftCommit, clearTimelineDraftCommit,
+  type PendingTimelineDraftCommit, type TimelineDraftRecord, type TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
+import { ApiError, validateEditCommand, type ByteResponse, type MediaImportOperation as MediaImport, type RequestBody, type CommitRequest, type CommitResult, type EditCommand } from './generated.ts';
 import {
   ReighRuntimeClient,
   RuntimeAuthenticationError,
@@ -90,6 +91,8 @@ export type ImmutableCommitRequest = Immutable<CommitRequest>;
 
 /** A producer supplies explicit commands and captured identity; routing never derives intent. */
 export interface TimelineCommitSaveContext {
+  readonly draftOwnerId?: string;
+  readonly proposalTransactionId?: string;
   readonly occurrenceContext?: Immutable<TimelineOccurrenceContext>;
   readonly timelineId: string;
   readonly expectedHead: Immutable<TimelineHeadRevision>;
@@ -125,6 +128,10 @@ interface PendingTimelineCommit {
   readonly settled: Promise<void>;
   readonly release: () => void;
   flight?: Promise<TimelineSaveReceipt>;
+  authored: TimelineCommitSaveContext;
+  recoveryKey: string | null;
+  durable?: PendingTimelineDraftCommit;
+  preview?: PendingTimelineDraftCommit['preview'];
 }
 
 export interface RuntimeDataProviderOptions {
@@ -366,6 +373,7 @@ export class RuntimeDataProvider implements DataProvider {
     target: 'parent', complete: Object.freeze(['clips', 'tracks'] as const), projection_version: 1,
   });
   private readonly pendingCommits = new Map<string, PendingTimelineCommit>();
+  private readonly pendingProposalTransactions = new Map<string, string>();
   private readonly assetRegistrationAttempts = new WeakMap<AssetRegistryEntry, Map<string, Promise<{
     config: TimelineConfig; registry: AssetRegistry; head: TimelineHeadRevision; commands: EditCommand[];
   }>>>();
@@ -712,6 +720,7 @@ export class RuntimeDataProvider implements DataProvider {
     bundle?: TimelineBundleEnvelope | null,
     editCommands?: readonly EditCommand[],
     occurrenceContext?: TimelineOccurrenceContext,
+    commitOwner?: { id: string; proposalTransactionId?: string },
   ): Promise<TimelineSaveReceipt> {
     if (expectedHead?.projectId !== this.projectId || expectedHead.timelineId !== timelineId
       || !(expectedHead.headRevisionId === null || (typeof expectedHead.headRevisionId === 'string' && expectedHead.headRevisionId.length > 0))) {
@@ -719,8 +728,12 @@ export class RuntimeDataProvider implements DataProvider {
     }
     const base = { ...expectedHead };
     if (this.commitRouting?.enabled && (editCommands !== undefined || this.commitRouting.requestForSave)) {
+      if (commitOwner && (typeof commitOwner.id !== 'string' || !commitOwner.id)) {
+        throw new TimelineSchemaIncompatibleError('Semantic COMMIT requires a captured draft owner.');
+      }
       // Capture before waiting: subsequent editor/producer mutations cannot alter this save.
-      const save = freezeCommitValue(structuredClone({ timelineId, expectedHead: base, config, registry, bundle, editCommands, occurrenceContext }));
+      const save = freezeCommitValue(structuredClone({ timelineId, expectedHead: base, config, registry, bundle, editCommands, occurrenceContext,
+        draftOwnerId: commitOwner?.id ?? generateUUID(), proposalTransactionId: commitOwner?.proposalTransactionId }));
       return this.saveCommitAtHead(save, { config, registry, bundle, headRevisionId: base.headRevisionId });
     }
     return this.withTimelineOperation(timelineId, () =>
@@ -740,13 +753,42 @@ export class RuntimeDataProvider implements DataProvider {
       || !this.commitSession.recoverable || this.commitRouting?.requestForSave) {
       return { recoveryKey: null };
     }
-    return { recoveryKey: JSON.stringify([
+    return { preservePendingCommit: true, ...(this.pendingProposalTransactions.has(timelineId)
+      ? { pendingProposalTransactionId: this.pendingProposalTransactions.get(timelineId) } : {}), recoveryKey: JSON.stringify([
       'runtime-timeline-draft-v1', this.recoveryRealmId, this.projectId,
       timelineId, this.commitScope, this.commitSession.id,
     ]) };
   }
 
-  private requestForGestureSave(save: TimelineCommitSaveContext): ImmutableCommitRequest {
+  async recoverTimelineCommit(timelineId: string, proposal?: {
+    transactionId: string; commands: readonly EditCommand[]; base: TimelineHeadRevision;
+  }): Promise<TimelineSaveReceipt | null> {
+    const key = this.getTimelineDraftRecoveryMetadata(timelineId).recoveryKey;
+    if (!key) throw new Error('The pending COMMIT recovery scope is unavailable.');
+    const record = await loadTimelineDraft(key);
+    const pending = record?.pendingCommit;
+    if (!pending) {
+      if (proposal) throw new Error('The submitted proposal reservation is unavailable.');
+      return null;
+    }
+    this.validatePendingDraft(record!, key, timelineId);
+    if (proposal && (pending.proposalTransactionId !== proposal.transactionId
+      || stableJson(pending.authored.editCommands) !== stableJson(proposal.commands)
+      || stableJson(pending.authored.expectedHead) !== stableJson(proposal.base))) {
+      throw new Error('The submitted proposal does not match its pending COMMIT.');
+    }
+    const save = pending.authored;
+    const active = this.pendingCommits.get(timelineId);
+    if (active) {
+      if (JSON.stringify(active.request) !== pending.requestBytes) throw new Error('Pending COMMIT identity changed.');
+      return this.saveCommitAtHead(active.authored, active.owner);
+    }
+    return this.saveCommitAtHead(save, { config: save.config as TimelineConfig,
+      registry: save.registry as AssetRegistry | undefined, bundle: save.bundle as TimelineBundleEnvelope | null | undefined,
+      headRevisionId: save.expectedHead.headRevisionId });
+  }
+
+  private requestForGestureSave(save: TimelineCommitSaveContext, reserved?: { id: string; sequence: number; requestId: string }): ImmutableCommitRequest {
     if (!save.expectedHead.headRevisionId) {
       throw new TimelineSchemaIncompatibleError('Semantic gestures require an existing exact revision.');
     }
@@ -754,7 +796,8 @@ export class RuntimeDataProvider implements DataProvider {
     const shotMetadata = save.editCommands?.some((command) => command.op === 'shot.set');
     if (occurrence && (occurrence.projectId !== this.projectId || occurrence.parentDocumentId !== save.timelineId
       || occurrence.headRevisionId !== save.expectedHead.headRevisionId
-      || ![occurrence.occurrenceId, occurrence.shotId, occurrence.shotRevisionId, occurrence.internalRevisionId].every(Boolean)
+      || ![occurrence.occurrenceId, occurrence.shotId, occurrence.shotRevisionId, occurrence.internalRevisionId]
+        .every((pin) => typeof pin === 'string' && pin.length > 0)
       || !save.editCommands?.length || save.editCommands.some((command) =>
         !(shotMetadata
           ? save.editCommands?.length === 1 && isCapturedShotMetadataCommand(command as EditCommand, occurrence)
@@ -767,10 +810,10 @@ export class RuntimeDataProvider implements DataProvider {
     if (!occurrence && save.editCommands?.some((command) => command.select?.startsWith('occurrence:'))) {
       throw new TimelineSchemaIncompatibleError('Semantic occurrence gestures require their captured context.');
     }
-    const session = this.commitSession.next();
+    const session = reserved ?? this.commitSession.next();
     return {
       api_version: 1, project_id: this.projectId, timeline_id: save.timelineId,
-      request_id: generateUUID(), session_id: session.id,
+      request_id: reserved?.requestId ?? generateUUID(), session_id: session.id,
       session_sequence: session.sequence,
       base_revision_id: save.expectedHead.headRevisionId, base_publication_id: null,
       scope: occurrence ? { target: `occurrence:${occurrence.occurrenceId}`, content: 'this-occurrence',
@@ -782,10 +825,103 @@ export class RuntimeDataProvider implements DataProvider {
     };
   }
 
-  private saveCommitAtHead(
+  private validatePendingCommit(envelope: PendingTimelineDraftCommit, recoveryKey: string, timelineId: string): CommitRequest {
+    const invalid = () => new TimelineSchemaIncompatibleError('Stored pending COMMIT has untrusted scope, owner, base, pins or commands.');
+    try {
+      if (envelope.version !== 1 || envelope.recoveryKey !== recoveryKey || typeof envelope.ownerId !== 'string' || !envelope.ownerId
+        || envelope.authored.draftOwnerId !== envelope.ownerId
+        || envelope.proposalTransactionId !== envelope.authored.proposalTransactionId
+        || (envelope.proposalTransactionId !== undefined
+          && (typeof envelope.proposalTransactionId !== 'string' || !envelope.proposalTransactionId))
+        || envelope.authored.timelineId !== timelineId
+        || envelope.authored.expectedHead.projectId !== this.projectId
+        || envelope.authored.expectedHead.timelineId !== timelineId
+        || typeof envelope.authored.expectedHead.headRevisionId !== 'string'
+        || !envelope.authored.expectedHead.headRevisionId) throw invalid();
+      const request = JSON.parse(envelope.requestBytes) as CommitRequest;
+      if (!Array.isArray(envelope.authored.editCommands) || !('commands' in request.change)
+        || !Array.isArray(request.change.commands)) throw invalid();
+      envelope.authored.editCommands.forEach(validateEditCommand);
+      request.change.commands.forEach(validateEditCommand);
+      const source = envelope.preview ? JSON.parse(envelope.preview.requestBytes) as CommitRequest : request;
+      this.commitSession.assertReserved(request.session_id, request.session_sequence);
+      this.commitSession.assertReserved(source.session_id, source.session_sequence);
+      const expected = this.requestForGestureSave(envelope.authored, {
+        id: source.session_id, sequence: source.session_sequence, requestId: source.request_id,
+      });
+      if (typeof request.request_id !== 'string' || !request.request_id
+        || typeof source.request_id !== 'string' || !source.request_id
+        || typeof request.base_revision_id !== 'string' || !request.base_revision_id || request.dry_run !== false
+        || JSON.stringify(request) !== envelope.requestBytes
+        || stableJson(source) !== stableJson({ ...expected, dry_run: Boolean(envelope.preview) })) throw invalid();
+      if (envelope.preview) {
+        const preview = envelope.preview.result;
+        this.validateCommitResponse(source, preview);
+        if (preview.status !== 'preview' || preview.accepted_revision_id !== null
+          || preview.accepted_publication_id !== null || preview.schema_report !== null
+          || !Array.isArray(preview.change?.commands)
+          || request.session_sequence <= source.session_sequence
+          || stableJson(request) !== stableJson({ ...expected,
+            request_id: request.request_id, session_sequence: request.session_sequence,
+            base_revision_id: preview.rebased_onto ?? preview.base_revision_id,
+            change: { commands: preview.change.commands }, dry_run: false })) throw invalid();
+      }
+      return freezeCommitValue(request);
+    } catch { throw invalid(); }
+  }
+
+  private validatePendingDraft(record: TimelineDraftRecord, key: string, timelineId: string): CommitRequest {
+    const pending = record.pendingCommit!;
+    if (record.key !== key || record.timelineId !== timelineId
+      || record.baseHeadProjectId !== this.projectId || record.baseHeadTimelineId !== timelineId
+      || typeof record.ownerId !== 'string' || !record.ownerId
+      || typeof record.draftIdentity !== 'string' || !record.draftIdentity
+      || typeof record.baseHeadRevisionId !== 'string' || !record.baseHeadRevisionId
+      || (record.ownerId === pending.ownerId && (
+        record.baseHeadRevisionId !== pending.authored.expectedHead.headRevisionId
+        || stableJson(JSON.parse(JSON.stringify(record.draft.config))) !== stableJson(pending.authored.config)
+        || stableJson(record.draft.editCommands) !== stableJson(pending.authored.editCommands)
+        || stableJson(record.draft.occurrenceContext) !== stableJson(pending.authored.occurrenceContext)
+        || record.draft.proposalTransactionId !== pending.proposalTransactionId))) {
+      throw new TimelineSchemaIncompatibleError('Pending COMMIT does not match its scoped authored draft owner.');
+    }
+    return this.validatePendingCommit(pending, key, timelineId);
+  }
+
+  private async saveCommitAtHead(
     save: TimelineCommitSaveContext, owner: TimelineCommitAttemptOwner,
   ): Promise<TimelineSaveReceipt> {
     const { timelineId } = save;
+    if (!this.recoveryRealmId && !this.commitRouting?.requestForSave) await this.initializeRecoveryIdentity();
+    const recoveryKey = this.getTimelineDraftRecoveryMetadata(timelineId).recoveryKey ?? null;
+    if (!this.commitRouting?.requestForSave && recoveryKey === null) {
+      throw new Error('Semantic COMMIT requires its durable scoped draft and session before sending.');
+    }
+    // Read before allocating any new identity. A may be unrelated to the latest
+    // unsent draft B, which must wait for A's exact authoritative resolution.
+    if (!this.pendingCommits.has(timelineId) && recoveryKey !== null) {
+      const record = await loadTimelineDraft(recoveryKey);
+      if (!this.pendingCommits.has(timelineId) && record?.pendingCommit) {
+        const durable = freezeCommitValue(structuredClone(record.pendingCommit));
+        const request = this.validatePendingDraft({ ...record, pendingCommit: durable }, recoveryKey, timelineId);
+        const comparable = { ...durable.authored };
+        if (save.draftOwnerId === undefined) delete comparable.draftOwnerId;
+        const sameAuthorship = stableJson(comparable) === stableJson(JSON.parse(JSON.stringify(save)));
+        const recoveredOwner = sameAuthorship ? owner : {
+          config: durable.authored.config as TimelineConfig, registry: durable.authored.registry as AssetRegistry | undefined,
+          bundle: durable.authored.bundle as TimelineBundleEnvelope | null | undefined,
+          headRevisionId: durable.authored.expectedHead.headRevisionId,
+        };
+        let release!: () => void;
+        const settled = new Promise<void>((resolve) => { release = resolve; });
+        this.pendingCommits.set(timelineId, { owner: recoveredOwner, request, durable,
+          recoveryKey, authored: durable.authored, settled, release });
+        if (!sameAuthorship) {
+          await this.saveCommitAtHead(durable.authored, recoveredOwner);
+          return this.saveCommitAtHead(save, owner);
+        }
+      }
+    }
     let pending = this.pendingCommits.get(timelineId);
     // useTimelinePersistence retains the exact attempt objects for a transport
     // retry and clones a new config for a newer edit. Equal snapshot values do
@@ -803,6 +939,7 @@ export class RuntimeDataProvider implements DataProvider {
       // JSON is the generated client's wire boundary. Capture once, including nested
       // commands; the producer retains no mutable reference into a retry's body.
       const request = freezeCommitValue(JSON.parse(JSON.stringify(produced)) as CommitRequest);
+      if (recoveryKey !== null) this.commitSession.assertReserved(request.session_id, request.session_sequence);
       if (request.project_id !== this.projectId || request.timeline_id !== timelineId
         || request.base_revision_id !== save.expectedHead.headRevisionId || request.dry_run
         || request.source.via !== 'app' || !request.request_id || !request.session_id) {
@@ -814,7 +951,7 @@ export class RuntimeDataProvider implements DataProvider {
       // Commands keep their authored base. Only Astrid may rebase a suffix
       // after an earlier save (or another writer) advanced the canonical head.
       const needsPreview = currentHead !== undefined && currentHead !== request.base_revision_id;
-      pending = { owner, request: needsPreview
+      pending = { owner, authored: save, recoveryKey, request: needsPreview
         ? freezeCommitValue({ ...request, dry_run: true }) : request, settled, release };
       this.pendingCommits.set(timelineId, pending);
     }
@@ -825,6 +962,8 @@ export class RuntimeDataProvider implements DataProvider {
       attempt.release();
     };
     attempt.flight = this.withTimelineOperation(timelineId, async () => {
+      let accepted = false;
+      let refused = false;
       try {
         if (attempt.request.dry_run) {
           const preview = await this.client.commitTimeline(attempt.request);
@@ -842,6 +981,8 @@ export class RuntimeDataProvider implements DataProvider {
           // Capture it before sending: uncertain transport always retries these
           // exact commands, target and identity, even if the head later moves.
           const session = this.commitSession.next(attempt.request.session_sequence);
+          if (attempt.recoveryKey !== null) this.commitSession.assertReserved(session.id, session.sequence);
+          attempt.preview = { requestBytes: JSON.stringify(attempt.request), result: structuredClone(preview) };
           attempt.request = freezeCommitValue(JSON.parse(JSON.stringify({
             ...attempt.request, request_id: generateUUID(),
             // An injected producer retains its own session identity. Native
@@ -852,20 +993,53 @@ export class RuntimeDataProvider implements DataProvider {
             change: { commands: preview.change.commands }, dry_run: false,
           })) as CommitRequest);
         }
+        if (attempt.recoveryKey !== null) {
+          if (!attempt.durable) {
+            const ownerId = attempt.authored.draftOwnerId!;
+            attempt.durable = freezeCommitValue(JSON.parse(JSON.stringify({
+              version: 1, recoveryKey: attempt.recoveryKey,
+              ownerId, authored: { ...attempt.authored, draftOwnerId: ownerId },
+              requestBytes: JSON.stringify(attempt.request),
+              ...(attempt.preview ? { preview: attempt.preview } : {}),
+              ...(attempt.authored.proposalTransactionId ? { proposalTransactionId: attempt.authored.proposalTransactionId } : {}),
+            })) as PendingTimelineDraftCommit);
+          }
+          await reserveTimelineDraftCommit(attempt.durable, {
+            key: attempt.recoveryKey, timelineId, ownerId: attempt.durable.ownerId,
+            draftIdentity: attempt.durable.ownerId, updatedAt: new Date().toISOString(), baseVersion: 0,
+            baseHeadProjectId: this.projectId, baseHeadTimelineId: timelineId,
+            baseHeadRevisionId: attempt.authored.expectedHead.headRevisionId,
+            draft: { config: attempt.authored.config, registry: attempt.authored.registry,
+              proposalTransactionId: attempt.authored.proposalTransactionId,
+              bundle: attempt.authored.bundle, editCommands: attempt.authored.editCommands,
+              occurrenceContext: attempt.authored.occurrenceContext },
+          });
+          if (attempt.durable.proposalTransactionId) this.pendingProposalTransactions.set(timelineId, attempt.durable.proposalTransactionId);
+        }
         const result = await this.client.commitTimeline(attempt.request);
+        refused = result?.request_id === attempt.request.request_id
+          && result.base_revision_id === attempt.request.base_revision_id
+          && (result.status === 'conflict' || result.status === 'refused');
         this.validateCommitResponse(attempt.request, result);
         if (result.status !== 'accepted' && result.status !== 'no_change') {
           throw new TimelineSchemaIncompatibleError(result.error?.message ?? 'Runtime did not accept the timeline commit.');
         }
+        accepted = true;
         const receipt = await this.readCommittedTimeline(timelineId, attempt.request, result);
+        if (attempt.durable) await clearTimelineDraftCommit(attempt.durable);
+        this.pendingProposalTransactions.delete(timelineId);
         finish();
         return receipt;
       } catch (error) {
         // Terminal responses release the next save. Transport/unknown outcomes keep
         // the exact request reserved until its acknowledgement is recovered.
-        if (error instanceof TimelineVersionConflictError || error instanceof TimelineSchemaIncompatibleError
+        if (!accepted && (attempt.durable ? refused : (error instanceof TimelineVersionConflictError || error instanceof TimelineSchemaIncompatibleError
           || (error instanceof ApiError && error.status >= 400 && error.status < 500
-            && error.status !== 408 && error.status !== 429)) finish();
+            && error.status !== 408 && error.status !== 429)))) {
+          if (attempt.durable) await clearTimelineDraftCommit(attempt.durable);
+          this.pendingProposalTransactions.delete(timelineId);
+          finish();
+        }
         throw this.toProviderError(error, timelineId);
       }
     }).finally(() => { attempt.flight = undefined; });
@@ -900,13 +1074,13 @@ export class RuntimeDataProvider implements DataProvider {
     assertRevisionIdentity(record, head, 'committed parent composition revision');
     const parentComposition = requiredRecord(record.payload, 'committed parent composition revision.payload');
     const current = this.canonicalTimelineState.get(timelineId);
-    if (current && current.headRevisionId !== request.base_revision_id && current.headRevisionId !== head) {
-      throw new TimelineVersionConflictError('The commit was confirmed, but the timeline has since changed; review the current head.');
-    }
-    const version = current?.headRevisionId === head ? current.version : (current?.version ?? 0) + 1;
+    const advanced = current && current.headRevisionId !== request.base_revision_id && current.headRevisionId !== head;
+    const version = current?.headRevisionId === head || advanced ? current!.version : (current?.version ?? 0) + 1;
     const registry = normalizeRegistry(parentComposition.registry);
-    this.canonicalTimelineState.set(timelineId, { headRevisionId: head, parentComposition, version });
-    this.activeRegistry = registry;
+    if (!advanced) {
+      this.canonicalTimelineState.set(timelineId, { headRevisionId: head, parentComposition, version });
+      this.activeRegistry = registry;
+    }
     const registryCommands = 'commands' in request.change ? request.change.commands : [];
     const registryNoChange = result.status === 'no_change' && registryCommands.length === 1
       && (isAssetRegistrationCommand(registryCommands[0]) || isAssetRegistrationInverse(registryCommands[0]));
@@ -1335,6 +1509,18 @@ export class RuntimeDataProvider implements DataProvider {
       // the same authenticated realm. A missing/mismatched identity disables
       // recovery only; ordinary Runtime reads keep their existing errors.
       await this.initializeRecoveryIdentity();
+      const recoveryKey = this.getTimelineDraftRecoveryMetadata(timelineId).recoveryKey;
+      if (recoveryKey) {
+        try {
+          const pending = (await loadTimelineDraft(recoveryKey))?.pendingCommit;
+          if (pending?.proposalTransactionId) this.pendingProposalTransactions.set(timelineId, pending.proposalTransactionId);
+          else this.pendingProposalTransactions.delete(timelineId);
+        } catch {
+          // The timeline remains readable. Proposal actions fail closed until
+          // the scoped slot can be inspected and explicitly retried.
+          this.pendingProposalTransactions.set(timelineId, '*unavailable*');
+        }
+      }
       const previous = this.canonicalTimelineState.get(timelineId);
       const version = previous && previous.headRevisionId === headRevisionId
         ? previous.version

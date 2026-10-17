@@ -416,6 +416,7 @@ export interface DataProvider extends AssetResolver {
     bundle?: TimelineBundleEnvelope | null,
     editCommands?: readonly EditCommand[],
     occurrenceContext?: TimelineOccurrenceContext,
+    commitOwner?: { id: string; proposalTransactionId?: string },
   ): Promise<TimelineSaveReceipt>;
   /** Optional canonical shot-composition boundary. Legacy shot records are not a fallback. */
   shotComposition?: ShotCompositionPort;
@@ -427,6 +428,10 @@ export interface DataProvider extends AssetResolver {
   persistenceEnabled?: boolean;
   /** Durable-recovery metadata captured synchronously at the first local edit. */
   getTimelineDraftRecoveryMetadata?(timelineId?: string): import('./timelineDraftIndexedDb.ts').TimelineDraftRecoveryMetadata;
+  /** Resolve a submitted request before the latest unsent draft is scheduled. */
+  recoverTimelineCommit?(timelineId: string, proposal?: {
+    transactionId: string; commands: readonly EditCommand[]; base: TimelineHeadRevision;
+  }): Promise<TimelineSaveReceipt | null>;
   /** Explicit reload path that bypasses provider-local unsaved recovery state. */
   loadCanonicalTimeline?(timelineId: string): Promise<LoadedTimeline>;
 

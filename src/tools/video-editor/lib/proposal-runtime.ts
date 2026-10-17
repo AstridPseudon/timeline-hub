@@ -741,8 +741,11 @@ export function createProposalRuntime(
           if (proposal.commandBinding.proposalId !== proposal.id || proposal.commandBinding.source !== proposal.source
             || proposal.commandBinding.baseVersion !== proposal.baseVersion
             || JSON.stringify(proposal.commandBinding.patch) !== JSON.stringify(proposal.patch)) continue;
-          if (!timelineOps.previewProposal) continue;
-          try { timelineOps.previewProposal(proposal.commandBinding); } catch { continue; }
+          if (timelineOps.proposalSubmitted?.(proposal.commandBinding)) submitted.add(proposal.id);
+          else {
+            if (!timelineOps.previewProposal) continue;
+            try { timelineOps.previewProposal(proposal.commandBinding); } catch { continue; }
+          }
         } else {
           try { proposal.commandBinding = timelineOps.captureProposal?.(proposal.patch, proposal.source, proposal.id); } catch { continue; }
         }

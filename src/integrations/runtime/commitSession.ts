@@ -51,6 +51,14 @@ export class RuntimeCommitSession {
 
   get recoverable(): boolean { return this.storage !== null; }
 
+  assertReserved(id: string, sequence: number): void {
+    const stored = this.read();
+    if (!this.storage || id !== this.id || stored?.id !== id
+      || !Number.isSafeInteger(sequence) || sequence < 1 || stored.sequence < sequence) {
+      throw new Error('Pending COMMIT does not belong to the reserved session sequence.');
+    }
+  }
+
   private read(): { id: string; sequence: number } | null {
     const raw = this.storage?.getItem(this.key);
     if (!raw) return null;

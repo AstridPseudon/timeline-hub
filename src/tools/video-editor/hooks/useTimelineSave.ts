@@ -184,7 +184,7 @@ export function useTimelineSave(
           && updatedAt >= checkStartedAt) return;
         const draft = record.draft as { config?: TimelineConfig; registry?: AssetRegistry; bundle?: TimelineBundleEnvelope | null };
         // Content equality cannot lend provenance to a legacy Runtime draft.
-        if (provider.saveTimelineAtHead && !trustedRecoveryHead(record)) {
+        if (record.pendingCommit || (provider.saveTimelineAtHead && !trustedRecoveryHead(record))) {
           offerRecovery(record);
           return;
         }
@@ -268,10 +268,37 @@ export function useTimelineSave(
       persistence.resumeDeferredRecoverySave();
       return;
     }
-    const recoveredHead = trustedRecoveryHead(record);
+    let recoveredHead = trustedRecoveryHead(record);
     if (provider.saveTimelineAtHead && !recoveredHead) {
       offerRecovery(record);
       return;
+    }
+    if (record.pendingCommit) {
+      if (!provider.recoverTimelineCommit) return;
+      try {
+        const receipt = await provider.recoverTimelineCommit(timelineId);
+        if (!receipt || !isCurrentAction()) return;
+        const latest = await loadTimelineDraft(recoveryKey);
+        if (!isCurrentAction()) return;
+        if (!latest) {
+          // The only submitted intent is now authoritative. Reload its current
+          // projection rather than scheduling those commands under a new key.
+          await persistence.reloadFromServer({ preserveDraft: true });
+          const queued = await loadTimelineDraft(recoveryKey);
+          if (queued) { offerRecovery(queued); return; }
+          setRecoveryDraft(null);
+          setRecoveredAsDirty(false);
+          recoveryPendingRef.current = false;
+          recoveryActiveRef.current = false;
+          persistence.resumeDeferredRecoverySave();
+          return;
+        }
+        record = latest;
+        recoveredHead = trustedRecoveryHead(record);
+        if (!recoveredHead) { offerRecovery(record); return; }
+        // A resolved; the existing path below retains B's authored base so its
+        // eventual save asks the server for the authoritative suffix.
+      } catch { return; }
     }
     const draft = record.draft as { config?: TimelineConfig; registry?: AssetRegistry; bundle?: TimelineBundleEnvelope | null; editCommands?: readonly EditCommand[]; occurrenceContext?: TimelineOccurrenceContext };
     if (!draft.config || !commit.data) {
@@ -320,7 +347,7 @@ export function useTimelineSave(
     // or transport failure must leave the recovered work retryable.
     setRecoveredAsDirty(true);
     commit.commitData(recovered, { save: true });
-  }, [canonicalReloadInProgressRef, clearDeferredRecoverySave, commit, configVersionRef, persistence, provider, recoveryKey, resolveAssetUrl, timelineEditability, trustedRecoveryHead, offerRecovery, recoveryActiveRef]);
+  }, [canonicalReloadInProgressRef, commit, configVersionRef, persistence, provider, recoveryKey, resolveAssetUrl, timelineEditability, timelineId, trustedRecoveryHead, offerRecovery, recoveryActiveRef]);
 
   const reloadCanonicalFromServer = persistence.reloadFromServer;
   const reloadFromServer = useCallback(async (options?: { clearDraft?: boolean; preserveDraft?: boolean }) => {

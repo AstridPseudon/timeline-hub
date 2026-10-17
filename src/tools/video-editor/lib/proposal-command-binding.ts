@@ -24,6 +24,7 @@ export interface ProposalCommandBinding {
 
 /** Internal host capability; ordinary SDK patch producers retain their API. */
 export type ProposalTimelineOps = TimelineOps & {
+  proposalSubmitted?: (binding: ProposalCommandBinding) => boolean;
   proposalContext?: () => string;
   captureProposal?: (patch: TimelinePatch, source: string, proposalId: string) => ProposalCommandBinding | undefined;
   previewProposal?: (binding: ProposalCommandBinding) => TimelinePreviewResult;
@@ -84,6 +85,9 @@ export function freezeProposal<T>(value: T): T {
 
 // The existing persistence attempt owns this metadata, including exact retries.
 const owners = new WeakMap<TimelineData, { base: TimelineHeadRevision; acknowledge: () => void }>();
+const correlations = new WeakMap<TimelineData, string>();
+export const bindProposalCorrelation = (data: TimelineData, transactionId: string) => correlations.set(data, transactionId);
+export const proposalCorrelationFor = (data: TimelineData) => correlations.get(data);
 export function bindProposalSave(data: TimelineData, base: TimelineHeadRevision, acknowledge: () => void) {
   let acknowledged = false;
   owners.set(data, { base: structuredClone(base), acknowledge() {

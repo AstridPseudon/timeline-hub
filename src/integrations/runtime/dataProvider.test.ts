@@ -1,4 +1,5 @@
 import { buildTranscriptCaptionCommands } from '@/tools/video-editor/commands/transcriptCaptions.ts';
+import * as draftStore from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { clearTimelineDraft, loadTimelineDraft, saveTimelineDraft, timelineDraftRecoveryKey } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { RuntimeCommitSession, browserCommitSessionStorage } from './commitSession.ts';
 import { splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils.ts';
@@ -7,7 +8,7 @@ import gesturePreservation from './fixtures/gesture-preservation.json';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ReighRuntimeClient, RuntimeAuthenticationError, RUNTIME_CLIENT_SCOPES } from './client.ts';
 import type { CommitRequest, CommitResult, EditCommand, RequestBody, Transport } from './generated.ts';
 import { RuntimeDataProvider, toRuntimePublication, type TimelineCommitSaveContext } from './dataProvider.ts';
@@ -22,6 +23,9 @@ import { sanitizeTimelineClipSnapshot } from '@/tools/video-editor/lib/timeline-
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
 import type { ProjectObjectMetadata } from '@reigh/editor-sdk';
 import type { TimelineConfig } from '@/tools/video-editor/types/index.ts';
+
+vi.mock('@/tools/video-editor/compositions/TimelineRenderer.tsx', () => ({ invalidateReferencedTimelineCache: vi.fn() }));
+vi.mock('@/tools/video-editor/hooks/usePollSync.ts', () => ({ usePollSync: vi.fn() }));
 
 // The repository-local fixture intentionally ships JavaScript only.
 const { createFakeIndexedDB, resetFakeIndexedDB } = await vi.importActual<{
@@ -1875,6 +1879,7 @@ describe('current App preservation pending acknowledgements', () => {
 // Client fixtures only: these empty command lists do not stand in for GESTURES,
 // D semantic execution, a real Runtime publication, X0, or GATE3.
 describe('RuntimeDataProvider commit save routing', () => {
+  beforeEach(() => { resetFakeIndexedDB(); vi.stubGlobal('indexedDB', createFakeIndexedDB()); });
   const commitPath = `/astrid/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/commit`;
   function request(id = 'save-request-1'): CommitRequest {
     return {
@@ -1902,6 +1907,7 @@ describe('RuntimeDataProvider commit save routing', () => {
     const fixture = runtimeFixture();
     const commits: Array<{ bytes: string; headers: Record<string, string> }> = [];
     const acceptedHeads = new Set<string>();
+    const acceptedRevisionReads: string[] = [];
     let polledHead = 'parent-r1';
     const setHead = (head: string) => { acceptedHeads.add(head); polledHead = head; };
     const transport: Transport = async (method, path, headers, body) => {
@@ -1919,6 +1925,7 @@ describe('RuntimeDataProvider commit save routing', () => {
       }
       const revision = path.split('/composition-revisions/')[1];
       if (method === 'GET' && acceptedHeads.has(revision)) {
+        acceptedRevisionReads.push(revision);
         // Bounded protocol fixture: immutable revision identity only. This is
         // not a semantic command executor or real Runtime publication proof.
         const response = await fixture.transport(method, path.replace(revision, 'parent-r1'), headers, body);
@@ -1927,7 +1934,7 @@ describe('RuntimeDataProvider commit save routing', () => {
       }
       return fixture.transport(method, path, headers, body);
     };
-    return { ...fixture, transport, commits, setHead };
+    return { ...fixture, transport, commits, setHead, acceptedRevisionReads };
   }
 
   function tabStorage() {
@@ -1939,6 +1946,340 @@ describe('RuntimeDataProvider commit save routing', () => {
     return new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport,
       commitSessionStorage: storage, commitRouting: { enabled: true } });
   }
+
+  it('durable pending COMMIT recovers the original accepted receipt after provider destruction before retry', async () => {
+    resetFakeIndexedDB(); vi.stubGlobal('indexedDB', createFakeIndexedDB());
+    const commands: EditCommand[] = [{ op: 'timeline.register-asset', select: null, args: { asset_id: 'registered', entry: { media_id: 'sha256:' + 'a'.repeat(64) } }, expect: { 'parent::registry.assets["registered"]': { state: 'absent' } } }];
+    const receipts = new Map<string, CommitResult>();
+    const fixture = commitFixture(async (body) => {
+      let accepted = receipts.get(body.request_id);
+      if (!accepted) {
+        accepted = { ...result(body), status: 'accepted', accepted_revision_id: 'accepted-A',
+          accepted_publication_id: 'publication-A', change: { ...result(body).change, direct_writes: [{ id: 'parent', path: 'registry.assets', before: { state: 'absent' }, after: { state: 'present', value: { registered: null } } }] } };
+        receipts.set(body.request_id, accepted);
+      }
+      return accepted;
+    });
+    let loseAck = true;
+    const transport: Transport = async (...args) => {
+      const response = await fixture.transport(...args);
+      if (args[0] === 'POST' && args[1] === commitPath && loseAck) {
+        loseAck = false; throw new TypeError('accepted ACK lost');
+      }
+      return response;
+    };
+    const storage = tabStorage();
+    const options = { projectId: PROJECT_ID, transport, commitSessionStorage: storage, commitRouting: { enabled: true } };
+    let provider: RuntimeDataProvider | undefined = new RuntimeDataProvider(options);
+    const loaded = await provider.loadTimeline(TIMELINE_ID);
+    const metadata = provider.getTimelineDraftRecoveryMetadata(TIMELINE_ID);
+    await saveTimelineDraft(TIMELINE_ID, { config: loaded.config, editCommands: commands }, 1, {
+      ...metadata, ownerId: 'owner-A', draftIdentity: 'draft-A', baseHeadProjectId: PROJECT_ID,
+      baseHeadTimelineId: TIMELINE_ID, baseHeadRevisionId: loaded.head!.headRevisionId });
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, commands, undefined, { id: 'owner-A' }))
+      .rejects.toThrow('accepted ACK lost');
+    provider = undefined; // no in-process retry before recreation
+    fixture.setHead('later-head');
+    const recreated = new RuntimeDataProvider(options); await recreated.loadTimeline(TIMELINE_ID);
+    const record = (await loadTimelineDraft(metadata.recoveryKey!))!;
+    const receipt = await recreated.saveTimelineAtHead(TIMELINE_ID, record.draft.config as TimelineConfig,
+      loaded.head!, undefined, undefined, record.draft.editCommands as EditCommand[], undefined, { id: 'owner-A' });
+    expect(fixture.commits[1]).toEqual(fixture.commits[0]);
+    expect(receipt.head.headRevisionId).toBe('accepted-A');
+    expect(receipt.commandInverse).toMatchObject({ op: 'timeline.inverse', args: { publication: 'publication-A' } });
+    expect(receipts.size).toBe(1);
+    expect((await loadTimelineDraft(metadata.recoveryKey!))?.pendingCommit).toBeUndefined();
+  });
+
+  async function durableUncertain() {
+    const fixture = commitFixture(async (body) => ({ ...result(body), status: 'accepted',
+      accepted_revision_id: 'accepted-A', accepted_publication_id: 'publication-A' }));
+    let lose = true;
+    const transport: Transport = async (...args) => {
+      const response = await fixture.transport(...args);
+      if (args[0] === 'POST' && args[1] === commitPath && lose) {
+        lose = false; throw new TypeError('ACK lost');
+      }
+      return response;
+    };
+    const storage = tabStorage();
+    const options = { projectId: PROJECT_ID, transport, commitSessionStorage: storage, commitRouting: { enabled: true } };
+    const provider = new RuntimeDataProvider(options);
+    const loaded = await provider.loadTimeline(TIMELINE_ID);
+    // Real IDB keeps undefined properties; the COMMIT JSON boundary omits them.
+    loaded.config.app = { ...loaded.config.app, optionalAuthoringValue: undefined };
+    const metadata = provider.getTimelineDraftRecoveryMetadata(TIMELINE_ID);
+    await saveTimelineDraft(TIMELINE_ID, { config: loaded.config, editCommands: [], proposalTransactionId: 'proposal:submitted-A' }, 1, {
+      ...metadata, ownerId: 'owner-A', draftIdentity: 'draft-A', baseHeadProjectId: PROJECT_ID,
+      baseHeadTimelineId: TIMELINE_ID, baseHeadRevisionId: loaded.head!.headRevisionId });
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, [], undefined,
+      { id: 'owner-A', proposalTransactionId: 'proposal:submitted-A' })).rejects.toThrow('ACK lost');
+    return { fixture, options, provider, loaded, metadata, storage };
+  }
+
+  async function mountRuntimeRecovery(provider: RuntimeDataProvider) {
+    const React = await import('react');
+    const { renderHook, act, waitFor } = await import('@testing-library/react/pure');
+    const { QueryClient, QueryClientProvider } = await import('@tanstack/react-query');
+    const { VideoEditorRuntimeProvider } = await import('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx');
+    const { useTimelineSave } = await import('@/tools/video-editor/hooks/useTimelineSave.ts');
+    const { createTimelineStore } = await import('@/tools/video-editor/hooks/timelineStore.ts');
+    const { createInteractionState } = await import('@/tools/video-editor/lib/interaction-state.ts');
+    const loaded = await provider.loadReferencedTimeline(TIMELINE_ID);
+    const initial = await buildTimelineData(loaded.timeline.config, loaded.registry, provider.resolveAssetUrl.bind(provider),
+      loaded.timeline.configVersion, undefined, loaded.timeline.head);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    const store = createTimelineStore(); const interaction = { current: createInteractionState() };
+    const runtime = { timelineId: TIMELINE_ID, assetResolver: null, shots: { isLoading: false,
+      shots: undefined, error: null, refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn() } };
+    const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(QueryClientProvider, { client },
+      React.createElement(VideoEditorRuntimeProvider, { value: runtime as never }, children));
+    const hook = renderHook(() => useTimelineSave({ timelineQuery: { isLoading: false }, assetRegistryQuery: {} } as never,
+      provider, interaction, store, initial), { wrapper });
+    act(() => hook.result.current.commitData(initial, { save: false, skipHistory: true, updateLastSavedSignature: true }));
+    await waitFor(() => expect(hook.result.current.recoveryDraft).not.toBeNull());
+    return { hook, act, waitFor, client };
+  }
+
+  it('durable pending COMMIT ordinary Retry uses the real storage hook after provider recreation', async () => {
+    const { fixture, options, metadata } = await durableUncertain();
+    fixture.setHead('head-after-A');
+    const editor = await mountRuntimeRecovery(new RuntimeDataProvider(options));
+    try {
+      await editor.act(async () => { await editor.hook.result.current.retryRecoveredDraft(); });
+      await editor.waitFor(() => expect(editor.hook.result.current.recoveryDraft).toBeNull());
+      expect(fixture.commits).toHaveLength(2);
+      expect(fixture.commits[1]).toEqual(fixture.commits[0]);
+      expect(await loadTimelineDraft(metadata.recoveryKey!)).toBeNull();
+      expect(fixture.acceptedRevisionReads).toContain('accepted-A');
+    } finally { editor.hook.unmount(); editor.client.clear(); }
+  });
+
+  async function rewriteSlot(key: string, mutate: (record: NonNullable<Awaited<ReturnType<typeof loadTimelineDraft>>>) => void) {
+    const open = indexedDB.open('reigh.timeline-drafts', 1);
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      open.addEventListener('success', () => resolve(open.result)); open.addEventListener('error', () => reject(open.error));
+    });
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction('timeline-drafts', 'readwrite'); const store = tx.objectStore('timeline-drafts');
+      const get = store.get(key);
+      get.addEventListener('success', () => { const record = structuredClone(get.result); mutate(record); store.put(record); });
+      tx.addEventListener('complete', () => resolve()); tx.addEventListener('error', () => reject(tx.error));
+    });
+    db.close();
+  }
+
+  it.each(['provider', 'ordinary Retry hook'] as const)('durable pending COMMIT keeps final preview A beside newer unsent B and routes B through the server suffix (%s)', async (mode) => {
+    const effects = new Map<string, CommitResult>();
+    const fixture = commitFixture(async (body) => {
+      if (body.dry_run) return { ...result(body), status: 'preview', accepted_revision_id: null,
+        rebased_onto: effects.size ? 'accepted-A' : 'moved-head', change: { ...result(body).change, commands: body.change.commands } };
+      if (!effects.has(body.request_id)) effects.set(body.request_id, { ...result(body), status: 'accepted',
+        accepted_revision_id: effects.size ? 'accepted-B' : 'accepted-A', accepted_publication_id: effects.size ? 'pub-B' : 'pub-A' });
+      return effects.get(body.request_id)!;
+    });
+    let lose = true;
+    const transport: Transport = async (...args) => {
+      const response = await fixture.transport(...args);
+      if (args[0] === 'POST' && args[1] === commitPath && !JSON.parse(fixture.commits.at(-1)!.bytes).dry_run && lose) {
+        lose = false; throw new TypeError('ACK lost');
+      }
+      return response;
+    };
+    const storage = tabStorage(); const options = { projectId: PROJECT_ID, transport, commitSessionStorage: storage, commitRouting: { enabled: true } };
+    const provider = new RuntimeDataProvider(options); const loaded = await provider.loadTimeline(TIMELINE_ID);
+    fixture.setHead('moved-head'); await provider.loadTimeline(TIMELINE_ID);
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, [], undefined, { id: 'owner-A' })).rejects.toThrow('ACK lost');
+    const metadata = provider.getTimelineDraftRecoveryMetadata(TIMELINE_ID); const key = metadata.recoveryKey!;
+    const pending = (await loadTimelineDraft(key))!.pendingCommit!;
+    expect(pending.requestBytes).toBe(fixture.commits[1].bytes);
+    expect(JSON.parse(pending.requestBytes)).toMatchObject({ dry_run: false, base_revision_id: 'moved-head', session_sequence: 2 });
+    const commands: EditCommand[] = [{ op: 'timeline.set', select: 'parent/track:V1', args: { values: { label: 'B' }, clear: [] } }];
+    await saveTimelineDraft(TIMELINE_ID, { config: { ...loaded.config, label: 'newer-B' }, editCommands: commands }, 1, {
+      ...metadata, ownerId: 'owner-B', draftIdentity: 'draft-B', baseHeadProjectId: PROJECT_ID,
+      baseHeadTimelineId: TIMELINE_ID, baseHeadRevisionId: loaded.head!.headRevisionId });
+    expect(await loadTimelineDraft(key)).toMatchObject({ ownerId: 'owner-B', pendingCommit: pending, draft: { editCommands: commands } });
+    const recreated = new RuntimeDataProvider(options); await recreated.loadTimeline(TIMELINE_ID);
+    if (mode === 'provider') {
+      await recreated.recoverTimelineCommit(TIMELINE_ID);
+      const b = (await loadTimelineDraft(key))!;
+      expect(b).toMatchObject({ ownerId: 'owner-B', draft: { editCommands: commands } });
+      expect(b.pendingCommit).toBeUndefined();
+      await recreated.saveTimelineAtHead(TIMELINE_ID, b.draft.config as TimelineConfig, loaded.head!, undefined, undefined, commands, undefined, { id: 'owner-B' });
+    } else {
+      const recover = recreated.recoverTimelineCommit.bind(recreated);
+      vi.spyOn(recreated, 'recoverTimelineCommit').mockImplementation(async (...args) => {
+        const receipt = await recover(...args);
+        expect(await loadTimelineDraft(key)).toMatchObject({ ownerId: 'owner-B', draft: { editCommands: commands } });
+        return receipt;
+      });
+      const editor = await mountRuntimeRecovery(recreated);
+      try {
+        await editor.act(async () => { await editor.hook.result.current.retryRecoveredDraft(); });
+        await editor.waitFor(() => expect(fixture.commits).toHaveLength(5));
+        await editor.waitFor(() => expect(editor.hook.result.current.recoveryDraft).toBeNull());
+      } finally { editor.hook.unmount(); editor.client.clear(); }
+    }
+    expect(fixture.commits[2]).toEqual(fixture.commits[1]);
+    expect(fixture.commits.slice(3).map(({ bytes }) => JSON.parse(bytes).dry_run)).toEqual([true, false]);
+    expect(effects.size).toBe(2);
+    expect(JSON.parse(fixture.commits[4].bytes).session_sequence).toBe(4);
+  });
+
+  it.each(['queued B', 'unrelated base'] as const)('durable pending COMMIT captures A owner before B replaces the slot at the pre-reservation barrier (%s)', async (replacement) => {
+    const effects = new Map<string, CommitResult>();
+    const fixture = commitFixture(async (body) => {
+      if (body.dry_run) return { ...result(body), status: 'preview', accepted_revision_id: null,
+        rebased_onto: 'accepted-A', change: { ...result(body).change, commands: body.change.commands } };
+      if (!effects.has(body.request_id)) effects.set(body.request_id, { ...result(body), status: 'accepted',
+        accepted_revision_id: effects.size ? 'accepted-B' : 'accepted-A', accepted_publication_id: effects.size ? 'pub-B' : 'pub-A' });
+      return effects.get(body.request_id)!;
+    });
+    let lose = true;
+    const transport: Transport = async (...args) => {
+      const response = await fixture.transport(...args);
+      if (args[0] === 'POST' && args[1] === commitPath && lose) { lose = false; throw new Error('ACK lost'); }
+      return response;
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport, commitSessionStorage: tabStorage(), commitRouting: { enabled: true } });
+    const loaded = await provider.loadTimeline(TIMELINE_ID); const metadata = provider.getTimelineDraftRecoveryMetadata(TIMELINE_ID);
+    await saveTimelineDraft(TIMELINE_ID, { config: loaded.config, editCommands: [], proposalTransactionId: 'proposal:A' }, 1, {
+      ...metadata, ownerId: 'owner-A', draftIdentity: 'draft-A', baseHeadProjectId: PROJECT_ID,
+      baseHeadTimelineId: TIMELINE_ID, baseHeadRevisionId: loaded.head!.headRevisionId });
+    let reached!: () => void; const atReservation = new Promise<void>((done) => { reached = done; });
+    let release!: () => void; const barrier = new Promise<void>((done) => { release = done; });
+    const reserve = draftStore.reserveTimelineDraftCommit;
+    const intercept = vi.spyOn(draftStore, 'reserveTimelineDraftCommit').mockImplementationOnce(async (...args) => {
+      reached(); await barrier; return reserve(...args);
+    });
+    const a = provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, [], undefined,
+      { id: 'owner-A', proposalTransactionId: 'proposal:A' });
+    const lost = expect(a).rejects.toThrow(replacement === 'queued B' ? 'ACK lost' : 'compatible draft base');
+    await atReservation;
+    const commands: EditCommand[] = [{ op: 'timeline.set', select: 'parent/track:V1', args: { values: { label: 'B' }, clear: [] } }];
+    await saveTimelineDraft(TIMELINE_ID, { config: { ...loaded.config, label: 'B' }, editCommands: commands,
+      proposalTransactionId: 'proposal:B' }, 2, { ...metadata, ownerId: 'owner-B', draftIdentity: 'draft-B',
+      baseHeadProjectId: PROJECT_ID, baseHeadTimelineId: TIMELINE_ID, baseHeadRevisionId: replacement === 'queued B' ? loaded.head!.headRevisionId : 'unrelated-head' });
+    const b = (await loadTimelineDraft(metadata.recoveryKey!))!;
+    expect(b.pendingCommit).toBeUndefined(); expect(fixture.commits).toHaveLength(0);
+    expect(await draftStore.saveTimelineDraftIfOwner(TIMELINE_ID, { stale: 'A' }, 1, {
+      ...metadata, ownerId: 'owner-A', draftIdentity: 'draft-A' }, 'draft-A')).toBe(false);
+    expect(await loadTimelineDraft(metadata.recoveryKey!)).toEqual(b);
+    release(); await lost; intercept.mockRestore();
+    if (replacement === 'unrelated base') {
+      expect(fixture.commits).toHaveLength(0);
+      expect(await loadTimelineDraft(metadata.recoveryKey!)).toEqual(b);
+      return;
+    }
+    const both = (await loadTimelineDraft(metadata.recoveryKey!))!;
+    expect(both).toMatchObject({ ...b, pendingCommit: { ownerId: 'owner-A', proposalTransactionId: 'proposal:A',
+      authored: { draftOwnerId: 'owner-A', proposalTransactionId: 'proposal:A', editCommands: [] } } });
+    expect(both.pendingCommit!.requestBytes).toBe(fixture.commits[0].bytes);
+    await provider.recoverTimelineCommit(TIMELINE_ID);
+    expect(fixture.commits[1]).toEqual(fixture.commits[0]);
+    expect(await loadTimelineDraft(metadata.recoveryKey!)).toEqual(b);
+    await provider.saveTimelineAtHead(TIMELINE_ID, b.draft.config as TimelineConfig, loaded.head!, undefined, undefined, commands, undefined,
+      { id: 'owner-B', proposalTransactionId: 'proposal:B' });
+    expect(fixture.commits.slice(2).map(({ bytes }) => JSON.parse(bytes).dry_run)).toEqual([true, false]);
+    expect(effects.size).toBe(2);
+  });
+
+  it('durable pending COMMIT atomically keeps B across a concurrent owner write and A resolution', async () => {
+    const { provider, loaded, metadata } = await durableUncertain();
+    await Promise.all([
+      saveTimelineDraft(TIMELINE_ID, { config: { ...loaded.config, label: 'B' }, editCommands: [] }, 2, {
+        ...metadata, ownerId: 'owner-B', draftIdentity: 'draft-B', baseHeadProjectId: PROJECT_ID,
+        baseHeadTimelineId: TIMELINE_ID, baseHeadRevisionId: loaded.head!.headRevisionId }),
+      provider.recoverTimelineCommit(TIMELINE_ID),
+    ]);
+    expect(await loadTimelineDraft(metadata.recoveryKey!)).toMatchObject({ ownerId: 'owner-B', draftIdentity: 'draft-B', draft: { config: { label: 'B' } } });
+    expect((await loadTimelineDraft(metadata.recoveryKey!))?.pendingCommit).toBeUndefined();
+  });
+
+  it.each(['realm', 'project', 'timeline', 'scope', 'session', 'sequence', 'owner', 'base', 'pins', 'commands', 'proposal', 'slot-project', 'slot-base', 'slot-commands', 'malformed-commands'] as const)(
+    'durable pending COMMIT refuses mismatched %s without allocating or sending', async (dimension) => {
+      const { fixture, options, metadata, storage } = await durableUncertain();
+      await rewriteSlot(metadata.recoveryKey!, (record) => {
+        const pending = record.pendingCommit!; const request = JSON.parse(pending.requestBytes);
+        if (dimension === 'realm') pending.recoveryKey = pending.recoveryKey.replace('realm-r1', 'foreign');
+        if (dimension === 'project') request.project_id = 'foreign';
+        if (dimension === 'timeline') record.timelineId = 'foreign';
+        if (dimension === 'scope') request.scope.target = 'foreign';
+        if (dimension === 'session') request.session_id = 'foreign';
+        if (dimension === 'sequence') request.session_sequence += 99;
+        if (dimension === 'owner') pending.ownerId = 'foreign';
+        if (dimension === 'base') request.base_revision_id = 'foreign';
+        if (dimension === 'pins') request.scope.shot_revision_id = 'foreign';
+        if (dimension === 'commands') request.change.commands = [{ op: 'timeline.set', select: 'parent', args: { values: {}, clear: [] } }];
+        if (dimension === 'proposal') pending.proposalTransactionId = 'foreign';
+        if (dimension === 'slot-project') record.baseHeadProjectId = 'foreign';
+        if (dimension === 'slot-base') record.baseHeadRevisionId = 'foreign';
+        if (dimension === 'slot-commands') record.draft.editCommands = [{ op: 'foreign' }];
+        if (dimension === 'malformed-commands') {
+          request.change.commands = [{ op: 'foreign', select: null, args: {} }];
+          pending.authored = { ...pending.authored, editCommands: request.change.commands };
+          record.draft.editCommands = request.change.commands;
+        }
+        pending.requestBytes = JSON.stringify(request);
+      });
+      const allocation = [...storage.values];
+      const recreated = new RuntimeDataProvider(options); await recreated.loadTimeline(TIMELINE_ID);
+      await expect(recreated.recoverTimelineCommit(TIMELINE_ID)).rejects.toThrow();
+      expect(fixture.commits).toHaveLength(1);
+      expect([...storage.values]).toEqual(allocation);
+      expect((await loadTimelineDraft(metadata.recoveryKey!))?.pendingCommit).toBeTruthy();
+    });
+
+  it.each(['write', 'read', 'session'] as const)('durable pending COMMIT never sends when pre-send %s persistence fails', async (failure) => {
+    const fixture = commitFixture(async (body) => result(body)); const storage = tabStorage(); const provider = nativeProvider(fixture, storage);
+    const loaded = await provider.loadTimeline(TIMELINE_ID);
+    if (failure === 'session') storage.setItem = () => { throw new Error('session write failure'); };
+    else if (failure === 'write') vi.stubGlobal('indexedDB', { open: () => { throw new Error('IDB write failure'); } });
+    else {
+      const original = indexedDB.open.bind(indexedDB); let reads = 0;
+      vi.stubGlobal('indexedDB', { open: (...args: Parameters<IDBFactory['open']>) => {
+        if (++reads >= 3) throw new Error('IDB verification read failure'); return original(...args);
+      } });
+    }
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, [])).rejects.toThrow();
+    expect(fixture.commits).toHaveLength(0);
+  });
+
+  it.each(['readback', 'wrong-ack'] as const)('durable pending COMMIT retains its exact reservation after failed %s', async (failure) => {
+    const fixture = commitFixture(async (body) => ({ ...result(body), status: 'accepted', accepted_revision_id: 'accepted-A' }));
+    let fail = true;
+    const transport: Transport = async (...args) => {
+      if (failure === 'readback' && args[0] === 'GET' && args[1].endsWith('/accepted-A') && fail) throw new Error('readback unavailable');
+      const response = await fixture.transport(...args);
+      if (failure === 'wrong-ack' && args[0] === 'POST' && args[1] === commitPath && fail) {
+        const ack = JSON.parse(new TextDecoder().decode(response.body)); ack.request_id = 'wrong'; return { ...response, body: json(ack) };
+      }
+      return response;
+    };
+    const options = { projectId: PROJECT_ID, transport, commitSessionStorage: tabStorage(), commitRouting: { enabled: true } };
+    const provider = new RuntimeDataProvider(options); const loaded = await provider.loadTimeline(TIMELINE_ID);
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, [])).rejects.toThrow();
+    const key = provider.getTimelineDraftRecoveryMetadata(TIMELINE_ID).recoveryKey!;
+    expect((await loadTimelineDraft(key))!.pendingCommit!.requestBytes).toBe(fixture.commits[0].bytes);
+    fail = false; const recreated = new RuntimeDataProvider(options); await recreated.loadTimeline(TIMELINE_ID);
+    await recreated.recoverTimelineCommit(TIMELINE_ID);
+    expect(fixture.commits[1]).toEqual(fixture.commits[0]);
+  });
+
+  it('durable pending COMMIT restores proposal correlation and refuses another proposal owner', async () => {
+    const { fixture, options, metadata } = await durableUncertain();
+    const recreated = new RuntimeDataProvider(options); await recreated.loadTimeline(TIMELINE_ID);
+    expect(recreated.getTimelineDraftRecoveryMetadata(TIMELINE_ID).pendingProposalTransactionId).toBe('proposal:submitted-A');
+    await expect(recreated.recoverTimelineCommit(TIMELINE_ID, { transactionId: 'proposal:different', commands: [],
+      base: { projectId: PROJECT_ID, timelineId: TIMELINE_ID, headRevisionId: 'parent-r1' } })).rejects.toThrow('does not match');
+    expect(fixture.commits).toHaveLength(1);
+    await clearTimelineDraft(metadata.recoveryKey!);
+    expect((await loadTimelineDraft(metadata.recoveryKey!))?.pendingCommit).toBeTruthy();
+    await recreated.recoverTimelineCommit(TIMELINE_ID, { transactionId: 'proposal:submitted-A', commands: [],
+      base: { projectId: PROJECT_ID, timelineId: TIMELINE_ID, headRevisionId: 'parent-r1' } });
+    expect(fixture.commits[1]).toEqual(fixture.commits[0]);
+    expect(recreated.getTimelineDraftRecoveryMetadata(TIMELINE_ID).pendingProposalTransactionId).toBeUndefined();
+  });
 
   it.each(['accepted', 'no_change'] as const)('routes the registered timeline-level bind and ordinary captions under one captured occurrence (%s protocol fixture)', async (status) => {
     const fixture = commitFixture(async (body) => {
@@ -2035,7 +2376,7 @@ describe('RuntimeDataProvider commit save routing', () => {
     expect(await loadTimelineDraft(metadata.recoveryKey!)).toMatchObject({ draftIdentity: selection.request_id,
       baseHeadProjectId: PROJECT_ID, baseHeadTimelineId: TIMELINE_ID, baseHeadRevisionId: loaded.head!.headRevisionId,
       draft: { editCommands: original } });
-    await expect(provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, commands))
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, commands, undefined, { id: 'caption-owner' }))
       .rejects.toMatchObject({ code: 'runtime_unavailable' });
     // Mutating a builder input after transport cannot change the reserved request.
     commands[0].args.next = { ...binding, document: { ...binding.document, version: 99 } };
@@ -2054,7 +2395,7 @@ describe('RuntimeDataProvider commit save routing', () => {
     expect(fixture.commits.map(({ bytes }) => JSON.parse(bytes).base_revision_id))
       .toEqual(['parent-r1', 'parent-r1', 'caption-head-2', 'caption-head-3']);
     expect(fixture.requests.some(({ path }) => path.includes('/documents/') || path.includes('/composition-revisions') && !path.includes('parent-r1'))).toBe(false);
-    expect((await loadTimelineDraft(metadata.recoveryKey!))?.draft.editCommands).toEqual(original);
+    expect(await loadTimelineDraft(metadata.recoveryKey!)).toBeNull();
     await clearTimelineDraft(metadata.recoveryKey!, 'caption-owner');
   });
 
@@ -2203,19 +2544,18 @@ describe('RuntimeDataProvider commit save routing', () => {
     await saveTimelineDraft(TIMELINE_ID, { config: loaded.config, editCommands: [] }, 1,
       { ...metadata, ownerId: 'suffix-owner', draftIdentity: 'suffix-draft', baseHeadRevisionId: 'parent-r1',
         baseHeadProjectId: PROJECT_ID, baseHeadTimelineId: TIMELINE_ID });
-    await first.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, []);
+    await first.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, [], undefined, { id: 'suffix-owner' });
     const second = nativeProvider(fixture, storage);
     const reloaded = await second.loadTimeline(TIMELINE_ID);
     expect(second.getTimelineDraftRecoveryMetadata(TIMELINE_ID)).toEqual(metadata);
     const key = metadata.recoveryKey!;
-    expect(await loadTimelineDraft(key)).toMatchObject({ ownerId: 'suffix-owner', draftIdentity: 'suffix-draft',
-      baseHeadProjectId: PROJECT_ID, baseHeadTimelineId: TIMELINE_ID, baseHeadRevisionId: 'parent-r1' });
-    await second.saveTimelineAtHead(TIMELINE_ID, reloaded.config, reloaded.head!, undefined, undefined, []);
+    expect(await loadTimelineDraft(key)).toBeNull();
+    await second.saveTimelineAtHead(TIMELINE_ID, reloaded.config, reloaded.head!, undefined, undefined, [], undefined, { id: 'suffix-owner' });
     const requests = fixture.commits.map(({ bytes }) => JSON.parse(bytes) as CommitRequest);
     expect(requests.map((r) => r.session_id)).toEqual([requests[0].session_id, requests[0].session_id]);
     expect(requests.map((r) => r.session_sequence)).toEqual([1, 2]);
     await clearTimelineDraft(key, 'other-owner');
-    expect(await loadTimelineDraft(key)).not.toBeNull();
+    expect(await loadTimelineDraft(key)).toBeNull();
     await clearTimelineDraft(key, 'suffix-owner');
     expect(await loadTimelineDraft(key)).toBeNull();
   });
@@ -2277,7 +2617,8 @@ describe('RuntimeDataProvider commit save routing', () => {
       commitSessionStorage: null, commitRouting: { enabled: true } });
     const loaded = await load(unavailable);
     expect(unavailable.getTimelineDraftRecoveryMetadata(TIMELINE_ID)).toEqual({ recoveryKey: null });
-    await unavailable.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, []);
+    await expect(unavailable.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, [])).rejects.toThrow('durable scoped draft');
+    expect(fixture.commits).toHaveLength(0);
     const supplied = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport,
       commitSessionStorage: tabStorage(), commitRouting: { enabled: true, requestForSave: () => request() } });
     await load(supplied);
@@ -2517,7 +2858,7 @@ describe('RuntimeDataProvider commit save routing', () => {
       expect(sent.change).toEqual({ commands: rebased });
       return accepted(sent, 'parent-r3');
     });
-    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport, commitRouting: { enabled: true } });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport, commitSessionStorage: tabStorage(), commitRouting: { enabled: true } });
     const loaded = await provider.loadTimeline(TIMELINE_ID);
     const first = provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, []);
     await running;
@@ -2554,7 +2895,7 @@ describe('RuntimeDataProvider commit save routing', () => {
       suffixAccepted = true;
       return accepted(sent, 'parent-r3');
     });
-    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport, commitRouting: { enabled: true } });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport, commitSessionStorage: tabStorage(), commitRouting: { enabled: true } });
     const loaded = await provider.loadTimeline(TIMELINE_ID);
     await provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, []);
     const next = structuredClone(loaded.config);
@@ -2595,7 +2936,7 @@ describe('RuntimeDataProvider commit save routing', () => {
         if (failure === 'target') response.rebased_onto = '';
         return response;
       });
-      const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport, commitRouting: { enabled: true } });
+      const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport, commitSessionStorage: tabStorage(), commitRouting: { enabled: true } });
       const loaded = await provider.loadTimeline(TIMELINE_ID);
       await provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, []);
       await expect(provider.saveTimelineAtHead(TIMELINE_ID, structuredClone(loaded.config), loaded.head!, undefined, undefined, suffix)).rejects.toThrow();
@@ -2621,7 +2962,7 @@ describe('gesture compatibility preservation witness', () => {
     // Reuses the synthetic B witness with a fixture transport. This is not the
     // original real Runtime reload and does not resolve its project-id mismatch.
     const fixture = runtimeFixture({ parentComposition: structuredClone(gesturePreservation.base) });
-    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport, commitRouting: { enabled: true } });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport, commitSessionStorage: tabStorage(), commitRouting: { enabled: true } });
     let head = (await provider.loadTimeline(TIMELINE_ID)).head!;
     expect(gesturePreservation.checks.filter((check) => check.category === 'repaired')).toHaveLength(23);
     expect(gesturePreservation.checks.filter((check) => check.category === 'unaffected')).toHaveLength(11);
