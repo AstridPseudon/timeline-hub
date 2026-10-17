@@ -157,7 +157,31 @@ Generated and digest-bound artifacts are regenerated from their source after `re
 - The pinned values in `tests/stage1/test_vendored_workspace_client_parity_luna.py:35-39`, `banodoco_workspace_client/contract_metadata.py:4-5`, and **the App's `src/integrations/runtime/client.test.ts:384`** (a literal `SCHEMA_DIGEST` pin). All three take the regenerated value.
 
 ### 4.5 Why this is merge-safe against R4 and Codex branches
-R4 (`timeline-platform-r4`, projects A to J, 95 cards) has not started and has no branches on any origin. The rename lands before R4 wave 0, so nothing in flight conflicts. The Phase 0 deletion PRs land first and tag `pre-astrid-rename` before the first of them, so a Codex branch that touches a deleted file gets a trivial delete conflict and the archive tag has the old content. Any other branch open at cutover runs `rename.py --apply` on itself, then merges. Because the rename is a script, there are no textual conflicts to resolve by hand, and until P-FINAL a branch that adds new old-name text is caught by `check-zero`.
+R4 (`timeline-platform-r4`, projects A to J, 95 cards) has not started and has no branches on any origin. The rename lands before R4 wave 0, so nothing in flight conflicts. The Phase 0 deletion PRs land first and tag `pre-astrid-rename` before the first of them, so a Codex branch that touches a deleted file gets a trivial delete conflict and the archive tag has the old content. Until P-FINAL, `check-zero` catches a branch that adds new old-name text.
+
+**The rename commit is pure.** In each repo, C-RT, C-AS and C-APP commit the raw `rename.py --apply` output as one commit of its own, titled `Apply the Astrid rename (rename.py)`, before any fix-up commit. History deletions are in the earlier D-* commits; tests, regeneration and fixes come in later commits. All three rename branches (C-RT's included) land with a merge commit, never a squash, so that commit survives on `main`. The catch-up recipe depends on this.
+
+**Catching up a branch that was open before the rename** (an R4 branch, a Codex branch, anything). Do not hand-merge the rename. Re-run it on the branch:
+
+```
+git fetch origin
+git merge <R>~1                                   # main up to just before the rename commit R; ordinary merge
+python3 tools/astrid-rename/rename.py --repo . --apply
+git commit -am "Apply the Astrid rename (rename.py)"
+git merge -X ours <R>                             # see below
+git merge origin/main                             # the fix-ups after R; ordinary merge
+tools/astrid-rename/check-zero --repo .           # then the repo's tests
+```
+
+Why `-X ours` is safe on `R`, and only on `R`:
+- After the branch has run the rename itself, `R` and the branch make the identical change to every line the branch didn't otherwise touch, so those merge cleanly.
+- The only conflicts are lines that the branch edited **and** that held an old name. In those, `R`'s side is just the rename, which the branch's side already contains. Keeping the branch's side is therefore correct.
+- Paths renamed on both sides are the same rename, so git pairs them.
+- Never use `-X ours` on any other commit.
+
+Real conflicts are left only where the branch introduced a name the map doesn't know. That is a map change, per stop rule 7.4. Expect minutes per branch, not a hand merge of a 13k-line commit.
+
+After P-FINAL deletes the tools, the tag `astrid-rename-done` still holds them: `git show astrid-rename-done:tools/astrid-rename/rename.py`.
 
 ### 4.6 History policy
 - Before the first deletion PR in each repo, tag the last pre-deletion commit `pre-astrid-rename` and push the tag. That tag is the archive.
@@ -580,7 +604,7 @@ Pre-condition: all Phase 0 tasks done and merged, O-GITHUB done. Tags `pre-astri
 - **Depends on:** C-INT
 - **Owns:** the Astrid and App mains
 - **Outcome:** `rename/astrid` merged into Astrid `main`, then App `main`. The Runtime is already on `main` (C-RT).
-- **Steps:** merge Astrid, then the App. Both already pin the merged `RUNTIME_SHA`, so squash or merge-commit does not matter. Re-run C-APP's acceptance commands once on the merged App `main`.
+- **Steps:** merge Astrid, then the App, each with a merge commit and **never a squash**, so the pure rename commit survives on `main` for the catch-up recipe (section 4.5). Re-run C-APP's acceptance commands once on the merged App `main`.
 - **Acceptance:** `git -C <each> log -1 origin/main` shows the merge; Astrid CI green on `main`; C-APP's `tsc`, `vitest run` and `build` pass on the merged App `main`. A green App CI alone is not evidence (it does not run them).
 
 #### O-DEPLOY
