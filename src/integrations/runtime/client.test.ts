@@ -381,7 +381,7 @@ describe('AstridRuntimeClient canonical Runtime reads and browser task seam', ()
   });
 
   it('accepts the selected Runtime contract digest during handshake', async () => {
-    const selectedRuntimeDigest = 'sha256:16bb1265d39d8bf82959c65ede08628e9c832832f21d785acaca64256aa3463e';
+    const selectedRuntimeDigest = 'sha256:200c2553f54a7e41a6405518912dc6ee9577de25292afd46fc1fcccf68be0770';
     expect(RUNTIME_SCHEMA_DIGEST).toBe(selectedRuntimeDigest);
     const fixture = createTransport();
     const client = clientFor(fixture);
