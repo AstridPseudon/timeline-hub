@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import re
 import pkgutil
 from pathlib import Path
 
@@ -55,7 +56,8 @@ def test_pack_production_modules_have_no_local_service_or_bridge_imports() -> No
     for path in paths:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         imports = [ast.unparse(node) for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom))]
-        assert not any(any(name in value for name in forbidden) for value in imports), path
+        # Whole module names only: astrid.sdk.media must not also match astrid.sdk.media_transcript.
+        assert not any(re.search(re.escape(name) + r"(?!\w)", value) for name in forbidden for value in imports), path
 
 
 def test_retired_local_timeline_bridge_is_not_a_pack_authority() -> None:
