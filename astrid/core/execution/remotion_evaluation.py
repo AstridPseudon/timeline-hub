@@ -56,6 +56,31 @@ class RemotionEvaluationClient:
         self._cache_bytes = 0
         self._lock = threading.RLock()
 
+    @classmethod
+    def for_authoring_lease(cls, lease, *, closure, generation, guard):
+        """Host-only request lease; never installs a process/thread global client."""
+        from .remotion_host_session import HostRemotionSession, _HostLease
+        if type(lease) is not _HostLease or type(lease.owner) is not HostRemotionSession:
+            raise FrameOwnerError("authoring_owner_unavailable")
+        client = cls.__new__(cls)
+        client._authoring_lease = lease
+        client._authoring_generation = generation
+        client._authoring_guard = guard
+        class Transport:
+            def request(self, identity, request, parser):
+                guard()
+                return lease.owner.request(lease, {"identity": identity, "request": request})
+        client._client = Transport()
+        client._selection = None
+        client.project, client.node, client.cli = lease.project, lease.node, str(lease.cli)
+        client.attempt = lease.scratch
+        client.closure = closure
+        client.environment = {}
+        client.port = 31500
+        client._cache, client._cache_bytes = OrderedDict(), 0
+        client._lock = threading.RLock()
+        return client
+
     def _installed_selection(self):
         try:
             return executor_selection(host_remotion_client())
@@ -63,6 +88,14 @@ class RemotionEvaluationClient:
             raise FrameOwnerError("evaluation_binding_invalid: " + str(error)) from error
 
     def _current_client(self):
+        lease = getattr(self, "_authoring_lease", None)
+        if lease is not None:
+            self._authoring_guard()
+            if (lease not in lease.owner._leases or lease.owner._closed
+                    or lease.owner.frame_owner.generation != self._authoring_generation):
+                raise FrameOwnerError("authoring_owner_changed")
+            lease.owner._validate_inputs(lease)
+            return self._client
         client = host_remotion_client()
         if client is None:
             raise FrameOwnerError("frame_owner_unavailable")

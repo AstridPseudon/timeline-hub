@@ -12,6 +12,7 @@ import json
 import re
 from pathlib import PurePosixPath
 import threading
+import time
 
 LIMIT = 64 * 1024
 NODE_VERSION = "astrid.remotion-frame-node/v1"
@@ -282,7 +283,14 @@ class RemotionFrameOwner:
         acquired = False
         inflight = False
         try:
-            acquired = self._exchange.acquire(timeout=300.0)
+            deadline = getattr(lease, "deadline", None)
+            deadline = time.monotonic() + 300.0 if deadline is None else deadline
+            while not acquired:
+                getattr(lease, "guard", lambda: None)()
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                acquired = self._exchange.acquire(timeout=min(0.1, remaining))
             if not acquired:
                 raise FrameOwnerError("frame_admission_timeout")
             with self._lock:

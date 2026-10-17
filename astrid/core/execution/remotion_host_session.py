@@ -297,7 +297,7 @@ class HostRemotionSession:
             raise
         self._record_inputs(lease, "revalidated", observed)
 
-    def lease(self, environment, *, attempt, scratch):
+    def lease(self, environment, *, attempt, scratch, guard=lambda: None, deadline=None):
         """Retain outer task custody and its exact policy-selected artifact root."""
         with self._lock:
             if self._closed or self.uncertain or self.execution_invalidated:
@@ -331,6 +331,7 @@ class HostRemotionSession:
             requested = float(environment.get("ASTRID_TIMELINE_FRAME_IDLE_SECONDS", str(limit)))
             self._idle_seconds = min(limit, max(0.0, requested)) if math.isfinite(requested) else limit
             lease = _HostLease(self, project, node, cli, dict(environment), attempt, scratch)
+            lease.guard, lease.deadline = guard, deadline
             self._leases.add(lease)
             return lease
 
@@ -344,6 +345,7 @@ class HostRemotionSession:
             del self._stderr[:-65536]
 
     def _start(self, lease, identity):
+        lease.guard()
         # Caller renderer identity is only one cache input, never authority to
         # reuse a child launched from different host-selected native inputs.
         identity = (identity, lease.selected_identity)
@@ -383,6 +385,7 @@ class HostRemotionSession:
         # Revalidate next to launch after lifecycle setup; the opened snapshot
         # does not claim immutable execution or replace confinement.
         self._validate_inputs(lease)
+        lease.guard()
         self._cleanup_settled = False
         try:
             self.process = popen_owned_group(
@@ -403,7 +406,7 @@ class HostRemotionSession:
         self._stderr_thread = threading.Thread(target=self._capture_stderr, args=(self.process,), daemon=True)
         self._stderr_thread.start()
 
-    def _exchange(self, request, *, timeout=300.0):
+    def _exchange(self, request, *, timeout=300.0, guard=lambda: None):
         process = self.process
         observe_tree(process)
         data = json.dumps(request, separators=(",", ":")).encode() + b"\n"
@@ -417,6 +420,7 @@ class HostRemotionSession:
             pending = memoryview(data)
             while pending:
                 self._guard()
+                guard()
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise TimeoutError("frame_time_budget_exceeded: original Remotion worker request write timed out")
@@ -429,7 +433,7 @@ class HostRemotionSession:
                 pending = pending[written:]
         finally:
             os.set_blocking(descriptor, blocking)
-        response = _read(_PipeReader(process.stdout, timeout=max(0, deadline-time.monotonic()), guard=self._guard))
+        response = _read(_PipeReader(process.stdout, timeout=max(0, deadline-time.monotonic()), guard=lambda: (self._guard(), guard())))
         observe_tree(process)
         if response.get("cleanup_uncertain") is True:
             self.uncertain = RuntimeError(str(response.get("cleanup_error") or "original Chrome cleanup unresolved"))
@@ -531,6 +535,7 @@ class HostRemotionSession:
                 return {"ok": True, "released": True, "exit": bool(request.get("force"))}
             if self.execution_invalidated:
                 raise RuntimeError("host renderer execution invalidated") from self.execution_invalidated
+            lease.guard()
             self._validate_request(lease, request)
             admitted_request = request
             try:
@@ -544,7 +549,9 @@ class HostRemotionSession:
                 if lease.browser is not None:
                     request = {**request, "browserExecutable": str(lease.browser)}
                 self._start(lease, frame["identity"])
-                response = self._exchange(request)
+                response = (self._exchange(request) if lease.deadline is None else
+                    self._exchange(request, timeout=max(0.0, lease.deadline - time.monotonic()), guard=lease.guard))
+                lease.guard()
                 self._validate_inputs(lease)
                 if request["type"] == "evaluate":
                     self._validate_request(lease, admitted_request)
@@ -655,6 +662,7 @@ class _HostLease:
     def __init__(self, owner, project, node, cli, environment, attempt, scratch):
         self.owner, self.project, self.node, self.cli, self.environment = owner, project, node, cli, environment
         self.attempt, self.scratch = attempt, scratch
+        self.guard, self.deadline = lambda: None, None
         observed = scratch.stat()
         self.scratch_identity = (observed.st_dev, observed.st_ino, observed.st_uid)
         self.browser = _host_browser_executable()
