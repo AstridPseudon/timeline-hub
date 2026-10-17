@@ -13,6 +13,7 @@ from tests.editing_conformance.runner import (
     PathResult,
     ScenarioError,
     classify,
+    comparable_records,
     load_scenario,
     parse_scenario,
     run_case,
@@ -53,6 +54,20 @@ def _scenario(**overrides):
 
 def _failures(scenario):
     return evaluate(scenario, run_scenario(scenario))
+
+
+def _repo_scenario(scenario_id):
+    from tests.editing_conformance.runner import SCENARIOS
+
+    return next(load_scenario(path) for path in SCENARIOS.rglob("*.yaml")
+                if path.stem == scenario_id)
+
+
+def _run_native_input(scenario_id, path, value):
+    scenario = _repo_scenario(scenario_id)
+    data = yaml.safe_load(scenario.file.read_text(encoding="utf-8"))
+    data[path] = value
+    return run_case(parse_scenario(data), path)
 
 
 def test_clean_scenario_has_no_failures_on_all_three_paths():
@@ -178,6 +193,108 @@ def test_refusal_parity_on_an_unknown_key():
         check=None,
     )
     assert _failures(scenario) == {}
+
+
+def test_unexpected_crash_does_not_count_as_a_typed_refusal():
+    from tests.editing_conformance.runner import PathResult
+
+    scenario = _scenario(expect="refused", check=None)
+    crashed = PathResult(
+        name="cli", exit_codes=[1], stdout="", stderr="", error="RuntimeError: process crashed",
+        base="unchanged", after="unchanged", undone="unchanged", redone="unchanged",
+        new_steps=0, undo_error=None, redo_error=None, checks={},
+    )
+    failures = evaluate(scenario, {"cli": crashed})
+    assert ("cli", "runs") in failures
+    assert "typed refusal" in failures[("cli", "runs")]
+
+
+def test_journal_comparison_rejects_guard_argument_binding_authorship_identity_and_cause_changes():
+    scenario = _repo_scenario("look.add.sprite")
+    results = run_scenario(scenario)
+    assert evaluate(scenario, results) == {}
+
+    def edit_call(records, call_index, mutate):
+        row = next(row for row in records if row.get("calls"))
+        mutate(row["calls"][call_index])
+
+    # Keep the guard replacement and other mutations explicit so each planted
+    # control names the exact loss it must detect.
+    mutations = {
+        "guard": lambda call: call["expect"][""].update(state="present"),
+        "arguments": lambda call: call["args"]["params"].update(x=601),
+        "binding": lambda call: call["bindings"].update({'"now"': "word:s2:2"}),
+        "authorship": lambda call: call["authorship"].update({"": "consequence"}),
+        "created identity": lambda call: call["created"].__setitem__(0, "occurrence:occ-B/clip:other"),
+        "causal attribution": lambda call: call["authorship"].update({"hold": "direct"}),
+    }
+    for label, mutation in mutations.items():
+        altered = copy.deepcopy(results)
+        index = 1 if label == "causal attribution" else 0
+        edit_call(altered["cli"].records, index, mutation)
+        failures = evaluate(scenario, altered)
+        assert ("cli", "journal") in failures, label
+        assert ("cli", "equal") not in failures, label
+
+
+def test_replaced_native_inputs_remain_behavioral_and_journal_inequality_controls():
+    # The native one-set route still reaches x=120; its trace remains distinct
+    # from the retained Python x=90 -> 120 regression.
+    one_set = _scenario()
+    one_set_results = run_scenario(one_set)
+    two_sets = _repo_scenario("code.python.two-sets-one-save")
+    two_sets_python = run_case(two_sets, "python")
+    assert one_set_results["cli"].after == two_sets_python.after
+    assert one_set_results["sheet"].after == two_sets_python.after
+    assert comparable_records(one_set_results["cli"].records) != comparable_records(two_sets_python.records)
+    assert comparable_records(one_set_results["sheet"].records) != comparable_records(two_sets_python.records)
+
+    controls = [
+        # Original add-only Python/sheet inputs; native CLI add -> trim remains matched.
+        ("audio.add.sfx-viral", "python",
+         'tl.add("media", at=\'"viral"\', hold=0.3, asset="Q", track="vo", cut=None, clip_id="blip")',
+         "audio.add.sfx-viral", "cli"),
+        ("audio.add.sfx-viral", "sheet",
+         {"text": 'edit {"op": "timeline.add", "select": null, "args": {"element": "media", "asset": "Q", "track": "vo", "at": "\\"viral\\"", "hold": 0.3, "cut": null, "clip_id": "blip"}}'},
+         "audio.add.sfx-viral", "cli"),
+        # Original one-command add-with-asset CLI input for the add -> swap case.
+        ("look.add-then-swap.sprite", "cli",
+         'edit --command \'{"op":"timeline.add","select":null,"args":{"element":"am-sprite","at":"\\"now\\"","layer":"pin","hold":1.5,"params":{"x":600,"y":300},"asset":"R"}}\'',
+         "look.add-then-swap.sprite", "python"),
+        # The old sheet add-with-asset row is retained by look.add.sprite, as a separate scenario.
+        ("look.add.sprite", "sheet", None, "look.add-then-swap.sprite", "python"),
+        # The native bare Live spelling still resolves, with a different binding key.
+        ("structure.close-gap.live", "cli", "edit --close-gap-before Live",
+         "structure.close-gap.live", "python"),
+        # Immediate reflow remains an explicit behavioral control beside staged reflow.
+        ("structure.gap-after.s1", "python", 'tl.voice("s1").set_gap_after(0.8)',
+         "structure.gap-after.s1", "cli"),
+        # Original implicit-ownership, inline-on/hold label producer.
+        ("look.add.label", "cli",
+         'edit --command \'{"op":"timeline.add","select":null,"args":{"element":"am-type","at":"\\"now\\"","layer":"beta","hold":1.5,"params":{"text":"beta","x":96,"y":84}}}\'',
+         "look.add.label", "sheet"),
+        ("look.add.label", "python",
+         'tl.add("am-type", at=\'"now"\', layer="beta", hold=1.5, params={"text": "beta", "x": 96, "y": 84})',
+         "look.add.label", "sheet"),
+        # Original implicit-ownership, inline-on/hold sprite producer.
+        ("look.add.sprite", "cli",
+         'edit --command \'{"op":"timeline.add","select":null,"args":{"element":"am-sprite","at":"\\"now\\"","layer":"pin","hold":1.5,"asset":"R","params":{"x":600,"y":300}}}\'',
+         "look.add.sprite", "sheet"),
+        ("look.add.sprite", "python",
+         'tl.add("am-sprite", at=\'"now"\', layer="pin", hold=1.5, asset="R", params={"x": 600, "y": 300})',
+         "look.add.sprite", "sheet"),
+    ]
+    for scenario_id, path, original_input, matched_scenario_id, matched_path in controls:
+        scenario = _repo_scenario(scenario_id)
+        if original_input is None:
+            native = run_case(scenario, path)
+        else:
+            native = _run_native_input(scenario_id, path, original_input)
+        matched = run_case(_repo_scenario(matched_scenario_id), matched_path)
+        assert native.error is None, f"{scenario_id}/{path}: {native.error}"
+        assert native.after == matched.after, f"{scenario_id}/{path}: authored behavior changed"
+        assert comparable_records(native.records) != comparable_records(matched.records), \
+            f"{scenario_id}/{path}: original execution trace was not retained as distinct"
 
 
 def test_a_replace_that_is_not_in_the_sheet_is_a_scenario_error():

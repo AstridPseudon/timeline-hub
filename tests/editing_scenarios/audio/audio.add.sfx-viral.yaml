@@ -5,13 +5,13 @@ fixture: audio-media
 expect: change
 cli: edit --add-media Q --track vo --on '"viral"' --for 0.3 --id blip
 sheet:
-  text: 'edit {"op": "timeline.add", "select": null, "args": {"element": "media", "asset": "Q", "track": "vo", "at": "\"viral\"",
-    "hold": 0.3, "cut": null, "clip_id": "blip"}}
-
-    '
-python: 'tl.add("media", at=''"viral"'', hold=0.3, asset="Q", track="vo", cut=None, clip_id="blip")
-
-  '
+  text: |-
+    edit {"op":"timeline.add","select":null,"args":{"element":"media","asset":"Q","track":"vo","at":"\"viral\"","hold":0.3,"cut":null,"clip_id":"blip"}}
+    edit {"op":"clip.trim","select":"blip","args":{"in_s":0,"out_s":0.3}}
+python: |
+  with tl.edit("Add and trim sound") as edit:
+      edit.canonical = True
+      tl.add("media", at='"viral"', hold=0.3, asset="Q", track="vo", cut=None, clip_id="blip").trim(in_s=0, out_s=0.3)
 check:
 - tl.clip("blip").cut_id is None
 - abs(tl.clip("blip").duration - 0.3) < 1e-6

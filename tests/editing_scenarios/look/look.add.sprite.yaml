@@ -3,8 +3,8 @@ source: h2 L6/L8
 intent: Add a sprite with asset R on the spoken word "now" in c2, at x=600 y=300 (canvas px), held 1.5 s.
 fixture: tiny
 expect: change
-cli: 'edit --command ''{"op": "timeline.add", "select": null, "args": {"element": "am-sprite", "at": "\"now\"", "layer": "pin",
-  "hold": 1.5, "asset": "R", "params": {"x": 600, "y": 300}}}'''
+cli: >-
+  edit --command '{"op":"timeline.batch","select":null,"args":{"commands":[{"op":"timeline.add","select":null,"args":{"element":"am-sprite","at":"\"now\"","layer":"pin","hold":null,"asset":"R","params":{"x":600,"y":300},"cut":"c2","track":"sprite"}},{"op":"clip.on","select":"am-sprite-01","args":{"moment":"\"now\""}},{"op":"clip.set-duration","select":"am-sprite-01","args":{"seconds":1.5}}]}}'
 sheet:
   cuts:
   - c2
@@ -12,9 +12,13 @@ sheet:
   - - '         type   card   type        "Live."  for 1s'
     - "         type   card   type        \"Live.\"  for 1s\n         sprite pin    sprite      R  on \"now\" for 1.5s x=600\
       \ y=300"
-python: 'tl.add("am-sprite", at=''"now"'', layer="pin", hold=1.5, asset="R", params={"x": 600, "y": 300})
-
-  '
+python: |
+  with tl.edit("Add sprite") as edit:
+      edit.canonical = True
+      pin = tl.add("am-sprite", at='"now"', layer="pin", hold=None, asset="R",
+                   params={"x": 600, "y": 300}, cut="c2", track="sprite")
+      pin.on('"now"')
+      pin.set_duration(1.5)
 check:
 - abs(tl.clip("c2.pin").duration - 1.5) < 1e-6
 - tl.clip("c2.pin").get("x") == 600

@@ -3,7 +3,8 @@ source: h1 T7 (silence before a word)
 intent: Close the silence before the word "Live" so it follows "viral" directly; no layer is lost.
 fixture: tiny
 expect: change
-cli: edit --close-gap-before Live
+cli: >-
+  edit --close-gap-before '"Live"'
 sheet:
   text: 'edit {"op":"timeline.close-gap","select":null,"args":{"before":"\"Live\""}}
 

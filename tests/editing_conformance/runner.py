@@ -114,6 +114,11 @@ class PathResult:
     checks: dict[str, tuple[bool, str]]  # expression -> (truthy, detail)
 
     records: list[dict] = dataclasses.field(default_factory=list)
+    records_before: list[dict] = dataclasses.field(default_factory=list)
+    persistence_before: dict[str, Any] | None = None
+    persistence_after: dict[str, Any] | None = None
+    boundary: str | None = None
+    journal_errors: tuple[str, ...] = ()
     refusal_type: str | None = None
     second_changed: bool | None = None  # idempotent scenarios: did the second run change the document (None: not run)
     second_steps: int = 0  # undo steps the second run made (taken back before the undo/redo checks)
@@ -307,6 +312,40 @@ def _history_count() -> int:
     return len(sorted(tc._history_dir(draft).glob("*.json"))) if draft else 0
 
 
+def _read_file_bytes(path: Path) -> bytes | None:
+    return path.read_bytes() if path.is_file() else None
+
+
+def _read_directory_bytes(path: Path) -> dict[str, bytes] | None:
+    if not path.exists():
+        return None
+    return {
+        item.relative_to(path).as_posix(): item.read_bytes()
+        for item in sorted(path.rglob("*")) if item.is_file()
+    }
+
+
+def _persistence_snapshot() -> dict[str, Any]:
+    """Capture the exact stored draft, journal and undo/redo bytes before readers run."""
+    from astrid.sdk.timeline import journal, store
+
+    draft = tc.find_draft(PROJECT, TIMELINE)
+    if draft is None:
+        raise RuntimeError("harness: the fresh working copy disappeared")
+    return {
+        "document": _read_file_bytes(draft),
+        "journal": _read_file_bytes(journal.journal_path("p", "t")),
+        "history": _read_directory_bytes(store._history_dir(draft)),
+        "redo": _read_directory_bytes(store._redo_dir(draft)),
+    }
+
+
+def _journal_records() -> list[dict]:
+    from astrid.sdk.timeline import journal
+
+    return [row.to_json() for row in journal.read(journal.journal_path("p", "t"))]
+
+
 @contextlib.contextmanager
 def _fresh(fixture: str):
     """A new temp data root with fixture-backed timeline and optional media read models."""
@@ -488,17 +527,22 @@ def _rerun(run_again) -> _Rerun:
 def _run_cli_path(scenario: Scenario, spec: PathSpec) -> PathResult:
     with _fresh(scenario.fixture):
         _checkout()
+        persistence_before = _persistence_snapshot()
+        records_before = _journal_records()
         base = _document()
         exits, stdout, stderr, error = _run_commands(spec.commands)
         second = None
         if scenario.idempotent and error is None and all(code == 0 for code in exits):
             second = _rerun(lambda: _run_commands_again(spec.commands))
-        return _finish(scenario, spec.name, exits, stdout, stderr, error, base, _undo_redo_cli, second)
+        return _finish(scenario, spec.name, exits, stdout, stderr, error, base, _undo_redo_cli,
+                       second, persistence_before, records_before)
 
 
 def _run_sheet_path(scenario: Scenario, spec: PathSpec) -> PathResult:
     with _fresh(scenario.fixture) as root:
         _checkout()
+        persistence_before = _persistence_snapshot()
+        records_before = _journal_records()
         tl = Checkout.draft(PROJECT, TIMELINE)
         base = canon(tl.document())
         text = spec.text if spec.text is not None else render_sheet(tl, cuts=spec.cuts)
@@ -515,7 +559,8 @@ def _run_sheet_path(scenario: Scenario, spec: PathSpec) -> PathResult:
         second = None
         if scenario.idempotent and exc is None and code == 0:
             second = _rerun(lambda: _apply_sheet_again(sheet_file))
-        return _finish(scenario, spec.name, [code], out, err, exc, base, _undo_redo_cli, second)
+        return _finish(scenario, spec.name, [code], out, err, exc, base, _undo_redo_cli,
+                       second, persistence_before, records_before)
 
 
 def _apply_sheet(sheet_file: Path) -> tuple[int, str, str, str | None]:
@@ -530,13 +575,16 @@ def _apply_sheet_again(sheet_file: Path) -> tuple[list[int], str, str | None]:
 def _run_python_path(scenario: Scenario, spec: PathSpec) -> PathResult:
     with _fresh(scenario.fixture):
         _checkout()
+        persistence_before = _persistence_snapshot()
+        records_before = _journal_records()
         tl = Checkout.draft(PROJECT, TIMELINE)
         base = canon(tl.document())
         stdout, error = _exec_snippet(spec.snippet, tl)
         second = None
         if scenario.idempotent and error is None:
             second = _rerun(lambda: _rerun_python(spec))
-        return _finish(scenario, spec.name, [], stdout, "", error, base, _undo_redo_python, second)
+        return _finish(scenario, spec.name, [], stdout, "", error, base, _undo_redo_python,
+                       second, persistence_before, records_before)
 
 
 def _rerun_python(spec: PathSpec) -> tuple[list[int], str, str | None]:
@@ -568,6 +616,8 @@ def _invoke_extension(spec):
 def _run_extension_path(scenario, spec):
     with _fresh(scenario.fixture):
         _checkout()
+        persistence_before = _persistence_snapshot()
+        records_before = _journal_records()
         base = _document()
         stdout, stderr, error = _invoke_extension(spec)
         second = None
@@ -576,16 +626,25 @@ def _run_extension_path(scenario, spec):
                 out, _err, failure = _invoke_extension(spec)
                 return [], out, failure
             second = _rerun(again)
-        return _finish(scenario, spec.name, [], stdout, stderr, error, base, _undo_redo_python, second)
+        return _finish(scenario, spec.name, [], stdout, stderr, error, base, _undo_redo_python,
+                       second, persistence_before, records_before)
 
 
 def _finish(scenario: Scenario, name: str, exits: list[int], stdout: str, stderr: str, error: str | None,
-            base: str, undo_redo, second: _Rerun | None = None) -> PathResult:
-    after = _document()
+            base: str, undo_redo, second: _Rerun | None = None,
+            persistence_before: dict[str, Any] | None = None,
+            records_before: list[dict] | None = None) -> PathResult:
+    # Refusal boundaries require exact persisted-byte evidence before any check,
+    # undo, redo, or journal reader can affect the working copy.
+    persistence_after = _persistence_snapshot()
     from astrid.sdk.timeline import journal
+
+    journal_bytes = persistence_after["journal"]
+    journal_errors = tuple(journal.verify_text(journal_bytes.decode("utf-8"))) if journal_bytes is not None else ()
+    after = _document()
     # Capture before undo/redo and check readers. Compare exact records, with
     # only the seven explicitly variable card fields removed.
-    records = [row.to_json() for row in journal.read(journal.journal_path("p", "t"))]
+    records = _journal_records()
     new_steps = _history_count()
     checks = _eval_checks(scenario.check, json.loads(base))
     undo_error = redo_error = None
@@ -599,7 +658,11 @@ def _finish(scenario: Scenario, name: str, exits: list[int], stdout: str, stderr
     return PathResult(
         name=name, exit_codes=exits, stdout=stdout, stderr=stderr, error=error,
         base=base, after=after, undone=undone, redone=redone, new_steps=new_steps,
-        undo_error=undo_error, redo_error=redo_error, checks=checks, records=records, **extra,
+        undo_error=undo_error, redo_error=redo_error, checks=checks, records=records,
+        records_before=records_before or [], persistence_before=persistence_before,
+        persistence_after=persistence_after,
+        boundary="file-application" if name == "sheet" else "transactional-edit",
+        journal_errors=journal_errors, **extra,
     )
 
 
@@ -666,16 +729,51 @@ def _refused(r: PathResult, expect: str) -> bool:
     return any(code not in allowed for code in r.exit_codes)
 
 
+def _refusal_boundary_error(r: PathResult) -> str | None:
+    """Enforce the persisted-state contract for this path's actual refusal boundary."""
+    before, after = r.persistence_before, r.persistence_after
+    if before is None or after is None:
+        return "refusal boundary did not capture persisted state before and after execution"
+
+    if r.boundary == "file-application":
+        changed = [key for key in ("document", "journal", "history", "redo")
+                   if before.get(key) != after.get(key)]
+        if changed:
+            return "failed file application changed persisted bytes: " + ", ".join(changed)
+        if r.records != r.records_before:
+            return "failed file application changed parsed journal records"
+        return None
+
+    changed = [key for key in ("document", "history", "redo") if before.get(key) != after.get(key)]
+    if changed:
+        return "transactional rollback changed authored bytes: " + ", ".join(changed)
+    if len(r.records) != len(r.records_before) + 1:
+        return ("transactional rollback must append exactly one rollback audit record; "
+                f"found {len(r.records) - len(r.records_before)}")
+    audit = r.records[-1]
+    if audit.get("kind") != "edit" or audit.get("outcome") != "rolled-back" or not audit.get("error"):
+        return "transactional refusal lacks a valid typed rollback audit record"
+    if audit.get("undo_step") is not None or r.new_steps != 0:
+        return "transactional rollback committed an undo step"
+    if r.journal_errors:
+        return "transactional rollback left an invalid journal: " + "; ".join(r.journal_errors)
+    return None
+
+
 def _evaluate_path(scenario: Scenario, r: PathResult, fail, ref: PathResult | None, ref_name: str | None) -> None:
     name, expect = r.name, scenario.expect
     changed = r.after != r.base
 
     if expect == "refused":
         if not r.refused:
-            fail(name, "runs", f"did not refuse (expected a refusal); exit codes {r.exit_codes}")
+            fail(name, "runs", f"did not produce a typed refusal (a crash is not a refusal); "
+                 f"exit codes {r.exit_codes}, error {r.error!r}")
         if changed:
             fail(name, "changes", "the document changed although the front-end refused\n"
                  + _diff(r.base, r.after, "base", name))
+        boundary_error = _refusal_boundary_error(r)
+        if boundary_error:
+            fail(name, "atomicity", boundary_error)
     else:
         if _refused(r, expect):
             detail = r.error or f"exit codes {r.exit_codes}: {(r.stderr or r.stdout).strip()[:300]}"
@@ -701,7 +799,9 @@ def _evaluate_path(scenario: Scenario, r: PathResult, fail, ref: PathResult | No
     if expect == "change" and ref is not None and name != ref_name and r.after != ref.after:
         fail(name, "equal", f"differs from the reference ({ref_name}):\n" + _diff(ref.after, r.after, ref_name, name))
 
-    if ref is not None and name != ref_name:
+    same_refusal_boundary = (scenario.expect == "refused" and ref is not None
+                             and r.boundary == ref.boundary)
+    if ref is not None and name != ref_name and (scenario.expect != "refused" or same_refusal_boundary):
         left, right = comparable_records(ref.records), comparable_records(r.records)
         if left != right:
             fail(name, "journal", "journal differs from " + str(ref_name) + ":\n" + _diff(canon(left), canon(right), str(ref_name), name))
