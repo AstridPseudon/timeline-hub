@@ -422,25 +422,21 @@ class _LookupMixin:
             raise TimelineEditError("Track rows require a nonempty string id")
         return owner.setdefault("tracks", []) if create else tracks
 
+    def _resolved_tracks(self, shot_id: str | None) -> list[dict[str, Any]]:
+        """Detached film definitions; chapter rows remain references, never copies."""
+        shots = self.bundle.get("shots", {})
+        selected = shots.values() if shot_id is None else [shots.get(shot_id, {})]
+        children = []
+        for shot in selected:
+            internal = shot.get("internal_timeline", {})
+            children.append({**internal, "clips": []})
+        try:
+            return resolve_parent_tracks({"config": {"tracks": self._tracks(None)}}, children)
+        except ShotCompositionProjectionError as exc:
+            raise TimelineEditError(str(exc)) from None
+
     def _track_kind(self, shot_id: str, track: str) -> str:
-        if shot_id is None:
-            tracks = self._tracks(None)
-        else:
-            parent_tracks = self._tracks(None)
-            shot = self.bundle.get("shots", {}).get(shot_id, {})
-            internal = shot.get("internal_timeline", {}) if isinstance(shot, Mapping) else {}
-            lookup_child = dict(internal) if isinstance(internal, Mapping) else internal
-            if isinstance(lookup_child, dict):
-                # Track-kind lookup needs this selected child's definitions;
-                # runtime projection validates the full child clip references.
-                lookup_child["clips"] = []
-            try:
-                tracks = resolve_parent_tracks(
-                    {"config": {"tracks": parent_tracks}}, [lookup_child]
-                )
-            except ShotCompositionProjectionError as exc:
-                raise TimelineEditError(str(exc)) from None
-        for t in tracks:
+        for t in self._resolved_tracks(shot_id):
             if str(t.get("id")) == track:
                 return str(t.get("kind") or "").lower()
         return ""
