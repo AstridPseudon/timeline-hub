@@ -164,6 +164,35 @@ def test_private_host_refusal_diagnostic_does_not_reflect_exception_text(private
     assert 'secret-credential' not in captured and '/private/untrusted-path' not in captured
 
 
+@pytest.mark.parametrize('alias', [False, True])
+def test_scene_before_first_task_prepares_only_the_trusted_renderer_parent(tmp_path, monkeypatch, alias):
+    from astrid.core.execution import remotion_host_session
+    from astrid.core.execution.generic_host import HostError
+    parent = tmp_path/'host-output/attempts'
+    if alias:
+        parent.parent.mkdir(); target = tmp_path/'outside'; target.mkdir(); parent.symlink_to(target)
+    made = []
+    def construct(**kwargs):
+        assert parent.is_dir()
+        made.append(kwargs)
+        return SimpleNamespace()
+    monkeypatch.setattr(remotion_host_session, 'HostRemotionSession', construct)
+    host = SimpleNamespace(_renderer_setup_lock=threading.Lock(), _shutdown=threading.Event(),
+        _cleanup_uncertain=False, _remotion_host_session=None, attempt_base=parent,
+        _track_host_lifetime_process=lambda process: None, _untrack_host_lifetime_process=lambda process: None,
+        _renderer_scratch_account=lambda root: None, _remotion_closure_binding=None,
+        execution_policy=SimpleNamespace(evidence_budget=SimpleNamespace(release=lambda root: None)))
+    if alias:
+        with pytest.raises(HostError, match='attempt base changed'):
+            GenericPackHost._authoring_scene_session(host, {})
+        assert not made and list(target.iterdir()) == []
+    else:
+        owner = GenericPackHost._authoring_scene_session(host, {})
+        assert owner is host._remotion_host_session
+        assert made[0]['root_parent'] == str(parent)
+        assert (parent.stat().st_mode & 0o777) == 0o700
+
+
 @pytest.mark.parametrize('private_host', [True], indirect=True)
 def test_long_selected_support_keeps_same_authenticated_scene_and_owned_cleanup(private_host):
     w = private_host

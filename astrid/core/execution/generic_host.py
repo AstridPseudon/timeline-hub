@@ -6275,6 +6275,14 @@ class GenericPackHost:
             if self._shutdown.is_set() or self._cleanup_uncertain:
                 raise HostError("authoring renderer owner is unavailable")
             if self._remotion_host_session is None:
+                # Scene authoring can precede the first claimed task, which
+                # normally creates this same trusted Host output namespace.
+                if self.attempt_base is not None:
+                    if self.attempt_base.is_symlink() or self.attempt_base.resolve() != self.attempt_base:
+                        raise HostError("authoring renderer attempt base changed")
+                    self.attempt_base.mkdir(parents=True, exist_ok=True, mode=0o700)
+                    if not self.attempt_base.is_dir() or self.attempt_base.resolve(strict=True) != self.attempt_base:
+                        raise HostError("authoring renderer attempt base changed")
                 self._remotion_host_session = HostRemotionSession(
                     track=self._track_host_lifetime_process, untrack=self._untrack_host_lifetime_process,
                     root_parent=str(self.attempt_base) if self.attempt_base else None,
