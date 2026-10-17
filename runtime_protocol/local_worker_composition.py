@@ -458,7 +458,6 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 parent.settimeout(self.timeout_seconds); activation.settimeout(self.timeout_seconds)
             broker.wait_until_sealed(); retained.bind_actor()
             if handle.inspection_owner is not None:
-                broker.retain_launch_child(process)
                 broker.close_child_pipes()
                 handle.inspection_owner.released.set()
 
