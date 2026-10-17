@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 
-RUNTIME = Path("/Users/peteromalley/Documents/reigh-workspace/banodoco-workspace-runtime-fi6-identity-20260905")
+RUNTIME = Path(__file__).resolve().parents[3] / "runtime"
 if RUNTIME.is_dir():
     sys.path.insert(0, str(RUNTIME))
 

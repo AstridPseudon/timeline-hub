@@ -257,7 +257,6 @@ def test_approve_regenerates_lock_and_keeps_quarantined_approvals(tmp_path):
             "source_labels": ["badpack.snap"],
             "historical_source_labels": [],
             "executor_inventory": [],
-            "legacy_ids": [],
         }),
         encoding="utf-8",
     )

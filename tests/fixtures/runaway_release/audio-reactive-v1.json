@@ -2,7 +2,7 @@
   "schema_version": "audio-reactive/v1-prototype",
   "purpose": "Portable handoff between analysis/editorial decisions and timeline rendering. Only resolved_events drive the renderer.",
   "source": {
-    "path": "/Users/peteromalley/Downloads/Westworld S2 Official Soundtrack Runaway - Ramin Djawadi WaterTower - WaterTower Music (192k).mp3",
+    "path": "Westworld S2 Official Soundtrack Runaway - Ramin Djawadi WaterTower - WaterTower Music (192k).mp3",
     "sha256": "cc71e6ac561dc03b438aab5b0298c098a0b52c68ee1e66394d790aed57de266d",
     "duration_seconds": 168.437007,
     "copied_into_project": false
@@ -464,7 +464,7 @@
     }
   ],
   "editorial_source": {
-    "manifest": "/Users/peteromalley/Documents/reigh-workspace/Astrid/projects/runaway-piano-colour-demo/runs/20260730T133500Z-restore-206-attack-v26/restore_206_attack_v26.json",
+    "manifest": "projects/runaway-piano-colour-demo/runs/20260730T133500Z-restore-206-attack-v26/restore_206_attack_v26.json",
     "manifest_sha256": "eba9e6a521200bb57458111315ecb0314a31739980da72b44dac4d66d0fcacf6",
     "intent": "V26 restores the independently articulated G-sharp 4 at 2:06.293, heard in review as the remaining missing beat after 2:04. It sits between the F-sharp attack at frame 6053 and the E attack at frame 6080. V25's removal of the premature 2:04.039 trigger is preserved."
   },

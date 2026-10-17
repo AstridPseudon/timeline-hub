@@ -1,8 +1,9 @@
 # Runaway release fixtures
 
-These are byte-for-byte, tracked copies of the immutable Runaway migration
-inputs used by the paired Reigh/Astrid release gate. The operational project
-tree remains ignored and untouched; release archives must use these fixtures
+These are tracked snapshots of the immutable Runaway migration inputs used by
+the paired Reigh/Astrid release gate. The fixture path hints are relative so
+they do not depend on a particular checkout or home directory. The operational
+project tree remains ignored and untouched; release archives use these fixtures
 so an exact Git commit is sufficient to reproduce migration acceptance.
 
 - `timing-manifest.json`: `44b5c0eea0aeb8b35a83e3e7620b5dbab27a106bf575fcc6e0ca6591dd4612bb`
