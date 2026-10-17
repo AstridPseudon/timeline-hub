@@ -4,18 +4,29 @@ from __future__ import annotations
 
 import copy
 import json
+from types import SimpleNamespace
 
 import pytest
 import yaml
 
 from tests.editing_conformance.runner import (
+    PathResult,
     ScenarioError,
     classify,
-    evaluate,
+    comparable_records,
     load_scenario,
     parse_scenario,
     run_case,
     run_scenario,
+)
+from tests.editing_conformance.test_conformance import (
+    _authored_restoration_matches,
+    _cut_ids,
+    _reservation_invariant_error,
+    _reservation_state,
+)
+from tests.editing_conformance.test_conformance import (
+    reservation_aware_evaluate as evaluate,
 )
 
 ROCKET = {
@@ -45,10 +56,111 @@ def _failures(scenario):
     return evaluate(scenario, run_scenario(scenario))
 
 
+def _repo_scenario(scenario_id):
+    from tests.editing_conformance.runner import SCENARIOS
+
+    return next(load_scenario(path) for path in SCENARIOS.rglob("*.yaml")
+                if path.stem == scenario_id)
+
+
+def _run_native_input(scenario_id, path, value):
+    scenario = _repo_scenario(scenario_id)
+    data = yaml.safe_load(scenario.file.read_text(encoding="utf-8"))
+    data[path] = value
+    return run_case(parse_scenario(data), path)
+
+
 def test_clean_scenario_has_no_failures_on_all_three_paths():
     scenario = _scenario()
     assert scenario.runnable() == ["cli", "sheet", "python"]
     assert _failures(scenario) == {}
+
+
+def test_reservation_comparison_still_fails_on_planted_authored_state_loss():
+    from tests.editing_conformance.runner import canon
+
+    base = {
+        "parent": {"config": {"app": {"astrid": {"author_note": {"keep": True}}}}},
+        "shots": {"A": {"internal_timeline": {"clips": [
+            {"id": "picture", "app": {"cut": "c1"}, "params": {"x": 60}},
+        ]}}},
+    }
+    after = copy.deepcopy(base)
+    after["shots"]["A"]["internal_timeline"]["clips"][0]["params"]["x"] = 120
+    reservation = {"number": 2, "suffixes": {}}
+    reservation_only_undo = copy.deepcopy(base)
+    reservation_only_redo = copy.deepcopy(after)
+    for document in (reservation_only_undo, reservation_only_redo):
+        document["parent"]["config"]["app"]["astrid"]["cut_id_high_water"] = copy.deepcopy(reservation)
+
+    scenario = _scenario(check=None)
+    reservation_only = PathResult(
+        name="python", exit_codes=[], stdout="", stderr="", error=None,
+        base=canon(base), after=canon(after), undone=canon(reservation_only_undo),
+        redone=canon(reservation_only_redo),
+        new_steps=1, undo_error=None, redo_error=None, checks={},
+        records=[{"calls": [{"op": "clip.set"}]}],
+    )
+    assert evaluate(scenario, {"python": reservation_only}) == {}
+    assert reservation_only.undone == canon(reservation_only_undo)
+    assert reservation_only.redone == canon(reservation_only_redo)
+
+    undone = copy.deepcopy(reservation_only_undo)
+    del undone["shots"]["A"]["internal_timeline"]["clips"][0]["params"]["x"]
+    redone = copy.deepcopy(reservation_only_redo)
+    del redone["shots"]["A"]["internal_timeline"]["clips"][0]["params"]["x"]
+    result = PathResult(
+        name="python", exit_codes=[], stdout="", stderr="", error=None,
+        base=canon(base), after=canon(after), undone=canon(undone), redone=canon(redone),
+        new_steps=1, undo_error=None, redo_error=None, checks={},
+        records=[{"calls": [{"op": "clip.set"}]}],
+    )
+    failures = evaluate(scenario, {"python": result})
+    assert ("python", "undo") in failures
+    assert ("python", "redo") in failures
+    assert "params" in failures[("python", "undo")]
+    assert "params" in failures[("python", "redo")]
+    assert ("python", "reservation") not in failures
+    assert result.undone == canon(undone) and result.redone == canon(redone)
+    assert not _authored_restoration_matches(result.base, result.undone)
+    assert not _authored_restoration_matches(result.after, result.redone)
+
+
+def test_multi_undo_preserves_cut_reservations_and_allocates_a_fresh_identity():
+    from astrid.sdk.timeline import Checkout
+    from tests.editing_conformance.runner import _checkout, _document, _fresh
+
+    with _fresh("tiny"):
+        _checkout()
+        base = _document()
+        timeline = Checkout.draft("p", "t")
+        with timeline.edit("first cut split", check=False, quiet=True):
+            first = timeline.cut("c1").split('"went"')
+
+        timeline = Checkout.draft("p", "t")
+        with timeline.edit("second cut split", check=False, quiet=True):
+            second = timeline.cut("c1a").split('"viral"')
+        second_document = _document()
+        assert (first.id, second.id) == ("c1a", "c1b")
+
+        timeline = Checkout.draft("p", "t")
+        timeline.undo(2)
+        undone = _document()
+        assert _authored_restoration_matches(base, undone)
+        stacked = SimpleNamespace(base=base, after=second_document, undone=undone, redone=undone)
+        assert _reservation_invariant_error(stacked) is None
+
+        timeline = Checkout.draft("p", "t")
+        with timeline.edit("allocate after multi-undo", check=False, quiet=True):
+            next_cut = timeline.cut("c1").split('"went"')
+        final = _document()
+        assert next_cut.id == "c1c"
+        final_result = SimpleNamespace(base=undone, after=final, undone=final, redone=final)
+        assert _reservation_invariant_error(final_result) is None
+        assert _reservation_state(second_document)["suffixes"]["1"] == 2
+        assert _reservation_state(undone)["suffixes"]["1"] == 2
+        assert _reservation_state(final)["suffixes"]["1"] == 3
+        assert {"c1a", "c1b"}.isdisjoint(_cut_ids(final))
 
 
 def test_python_setting_a_different_value_is_caught_as_a_mismatch():
@@ -81,6 +193,108 @@ def test_refusal_parity_on_an_unknown_key():
         check=None,
     )
     assert _failures(scenario) == {}
+
+
+def test_unexpected_crash_does_not_count_as_a_typed_refusal():
+    from tests.editing_conformance.runner import PathResult
+
+    scenario = _scenario(expect="refused", check=None)
+    crashed = PathResult(
+        name="cli", exit_codes=[1], stdout="", stderr="", error="RuntimeError: process crashed",
+        base="unchanged", after="unchanged", undone="unchanged", redone="unchanged",
+        new_steps=0, undo_error=None, redo_error=None, checks={},
+    )
+    failures = evaluate(scenario, {"cli": crashed})
+    assert ("cli", "runs") in failures
+    assert "typed refusal" in failures[("cli", "runs")]
+
+
+def test_journal_comparison_rejects_guard_argument_binding_authorship_identity_and_cause_changes():
+    scenario = _repo_scenario("look.add.sprite")
+    results = run_scenario(scenario)
+    assert evaluate(scenario, results) == {}
+
+    def edit_call(records, call_index, mutate):
+        row = next(row for row in records if row.get("calls"))
+        mutate(row["calls"][call_index])
+
+    # Keep the guard replacement and other mutations explicit so each planted
+    # control names the exact loss it must detect.
+    mutations = {
+        "guard": lambda call: call["expect"][""].update(state="present"),
+        "arguments": lambda call: call["args"]["params"].update(x=601),
+        "binding": lambda call: call["bindings"].update({'"now"': "word:s2:2"}),
+        "authorship": lambda call: call["authorship"].update({"": "consequence"}),
+        "created identity": lambda call: call["created"].__setitem__(0, "occurrence:occ-B/clip:other"),
+        "causal attribution": lambda call: call["authorship"].update({"hold": "direct"}),
+    }
+    for label, mutation in mutations.items():
+        altered = copy.deepcopy(results)
+        index = 1 if label == "causal attribution" else 0
+        edit_call(altered["cli"].records, index, mutation)
+        failures = evaluate(scenario, altered)
+        assert ("cli", "journal") in failures, label
+        assert ("cli", "equal") not in failures, label
+
+
+def test_replaced_native_inputs_remain_behavioral_and_journal_inequality_controls():
+    # The native one-set route still reaches x=120; its trace remains distinct
+    # from the retained Python x=90 -> 120 regression.
+    one_set = _scenario()
+    one_set_results = run_scenario(one_set)
+    two_sets = _repo_scenario("code.python.two-sets-one-save")
+    two_sets_python = run_case(two_sets, "python")
+    assert one_set_results["cli"].after == two_sets_python.after
+    assert one_set_results["sheet"].after == two_sets_python.after
+    assert comparable_records(one_set_results["cli"].records) != comparable_records(two_sets_python.records)
+    assert comparable_records(one_set_results["sheet"].records) != comparable_records(two_sets_python.records)
+
+    controls = [
+        # Original add-only Python/sheet inputs; native CLI add -> trim remains matched.
+        ("audio.add.sfx-viral", "python",
+         'tl.add("media", at=\'"viral"\', hold=0.3, asset="Q", track="vo", cut=None, clip_id="blip")',
+         "audio.add.sfx-viral", "cli"),
+        ("audio.add.sfx-viral", "sheet",
+         {"text": 'edit {"op": "timeline.add", "select": null, "args": {"element": "media", "asset": "Q", "track": "vo", "at": "\\"viral\\"", "hold": 0.3, "cut": null, "clip_id": "blip"}}'},
+         "audio.add.sfx-viral", "cli"),
+        # Original one-command add-with-asset CLI input for the add -> swap case.
+        ("look.add-then-swap.sprite", "cli",
+         'edit --command \'{"op":"timeline.add","select":null,"args":{"element":"am-sprite","at":"\\"now\\"","layer":"pin","hold":1.5,"params":{"x":600,"y":300},"asset":"R"}}\'',
+         "look.add-then-swap.sprite", "python"),
+        # The old sheet add-with-asset row is retained by look.add.sprite, as a separate scenario.
+        ("look.add.sprite", "sheet", None, "look.add-then-swap.sprite", "python"),
+        # The native bare Live spelling still resolves, with a different binding key.
+        ("structure.close-gap.live", "cli", "edit --close-gap-before Live",
+         "structure.close-gap.live", "python"),
+        # Immediate reflow remains an explicit behavioral control beside staged reflow.
+        ("structure.gap-after.s1", "python", 'tl.voice("s1").set_gap_after(0.8)',
+         "structure.gap-after.s1", "cli"),
+        # Original implicit-ownership, inline-on/hold label producer.
+        ("look.add.label", "cli",
+         'edit --command \'{"op":"timeline.add","select":null,"args":{"element":"am-type","at":"\\"now\\"","layer":"beta","hold":1.5,"params":{"text":"beta","x":96,"y":84}}}\'',
+         "look.add.label", "sheet"),
+        ("look.add.label", "python",
+         'tl.add("am-type", at=\'"now"\', layer="beta", hold=1.5, params={"text": "beta", "x": 96, "y": 84})',
+         "look.add.label", "sheet"),
+        # Original implicit-ownership, inline-on/hold sprite producer.
+        ("look.add.sprite", "cli",
+         'edit --command \'{"op":"timeline.add","select":null,"args":{"element":"am-sprite","at":"\\"now\\"","layer":"pin","hold":1.5,"asset":"R","params":{"x":600,"y":300}}}\'',
+         "look.add.sprite", "sheet"),
+        ("look.add.sprite", "python",
+         'tl.add("am-sprite", at=\'"now"\', layer="pin", hold=1.5, asset="R", params={"x": 600, "y": 300})',
+         "look.add.sprite", "sheet"),
+    ]
+    for scenario_id, path, original_input, matched_scenario_id, matched_path in controls:
+        scenario = _repo_scenario(scenario_id)
+        if original_input is None:
+            native = run_case(scenario, path)
+        else:
+            native = _run_native_input(scenario_id, path, original_input)
+        matched = run_case(_repo_scenario(matched_scenario_id), matched_path)
+        assert native.error is None, f"{scenario_id}/{path}: {native.error}"
+        assert native.after == matched.after, f"{scenario_id}/{path}: authored behavior changed"
+        assert comparable_records(native.records) != comparable_records(matched.records), \
+            f"{scenario_id}/{path}: original execution trace was not retained as distinct"
 
 
 def test_a_replace_that_is_not_in_the_sheet_is_a_scenario_error():

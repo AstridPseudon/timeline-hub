@@ -9,7 +9,8 @@ sheet:
   replace:
     - ['s1  "It went viral."', 's1  "It went viral."  gap 0.8']
 python: |
-  tl.voice("s1").set_gap_after(0.8)
+  tl.voice("s1").set_gap_after(0.8, reflow=False)
+  tl.reflow()
 check:
   - abs(tl.voice("s1").gap_after - 0.8) < 1e-6
   - abs(tl.time('"Live"') - 2.6) < 1e-3

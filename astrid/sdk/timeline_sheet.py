@@ -1085,6 +1085,7 @@ def _update_layer(tl, clip, layer, *, is_picture):
             clip.clear(key)
     from astrid.sdk.timeline_checkout import formula_from_spec, formula_short, parse_formula_value, to_canvas
     formulas = intent.formulas(data)
+    updates = {}
     for key, value in wanted.items():
         if value is ELIDED:
             continue
@@ -1096,11 +1097,16 @@ def _update_layer(tl, clip, layer, *, is_picture):
             current_expr = formulas.get(f"params.{key}") or {}
             new_expr = formula_from_spec(spec, element, key, current_expr)
             if not (current_expr and current_expr.get("mark") == new_expr["mark"] and abs(float(current_expr.get("offset") or 0)-new_expr["offset"]) < 1e-6):
-                clip.set(**{key: value})
+                updates[key] = value
             continue
         has_formula = any(p == f"params.{key}" or p.startswith((f"params.{key}[", f"params.{key}.")) for p in formulas)
         if has_formula or to_canvas(element, key, current.get(key)) != value:
-            clip.set(**{key: value})
+            updates[key] = value
+    if updates:
+        # A row supplies one property mapping, like the CLI's repeated --set
+        # flags and Python's set(**values). Record that mapping at the producer;
+        # separately authored commands still retain their intermediate guards.
+        clip.set(**updates)
     if (layer["on"] is not None or not is_picture) and layer["on"] != intent.on(data):
         clip.on(layer["on"]) if layer["on"] else tl._place_on(clip, None)
     same_for = (layer["for"] is None and intent.for_s(data) is None) or (layer["for"] is not None and intent.for_s(data) is not None and abs(layer["for"]-intent.for_s(data)) < 0.5/tl.fps)
@@ -1132,7 +1138,11 @@ def _add_layer(tl, cut_id, group, layer):
             validate_param_value(element, key, value, where=f"{cut_id}.{layer['name']}")
     if layer["text"] is not None:
         params["text"] = layer["text"]
-    clip = tl.add(element, at=group["start"], asset=layer["asset"], params=params, track=layer["track"], anchor=False,
+    # An authored start relation belongs to the add itself, including its
+    # journal binding. Starting at the cut and moving afterward records a
+    # different creation command and loses that anchor from the add's trace.
+    start = layer["on"] if layer["on"] is not None else group["start"]
+    clip = tl.add(element, at=start, asset=layer["asset"], params=params, track=layer["track"], anchor=layer["on"] is not None,
                   cut=cut_id, layer=layer["name"])
     intent.set_cut(clip.data, cut_id)
     intent.set_layer(clip.data, layer["name"])

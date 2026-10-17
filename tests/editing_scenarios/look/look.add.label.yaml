@@ -4,8 +4,8 @@ intent: Add a type label "beta" on the spoken word "now" in c2, held 1.5 s, at x
   and card.
 fixture: tiny
 expect: change
-cli: 'edit --command ''{"op": "timeline.add", "select": null, "args": {"element": "am-type", "at": "\"now\"", "layer": "beta",
-  "hold": 1.5, "params": {"text": "beta", "x": 96, "y": 84}}}'''
+cli: >-
+  edit --command '{"op":"timeline.batch","select":null,"args":{"commands":[{"op":"timeline.add","select":null,"args":{"element":"am-type","at":"\"now\"","layer":"beta","hold":null,"params":{"text":"beta","x":96,"y":84},"cut":"c2","track":"type"}},{"op":"clip.on","select":"am-type-01","args":{"moment":"\"now\""}},{"op":"clip.set-duration","select":"am-type-01","args":{"seconds":1.5}}]}}'
 sheet:
   cuts:
   - c2
@@ -13,9 +13,13 @@ sheet:
   - - '         type   card   type        "Live."  for 1s'
     - "         type   card   type        \"Live.\"  for 1s\n         type   beta   type        \"beta\"  on \"now\" for 1.5s\
       \ x=96 y=84"
-python: 'tl.add("am-type", at=''"now"'', layer="beta", hold=1.5, params={"text": "beta", "x": 96, "y": 84})
-
-  '
+python: |
+  with tl.edit("Add label") as edit:
+      edit.canonical = True
+      label = tl.add("am-type", at='"now"', layer="beta", hold=None,
+                     params={"text": "beta", "x": 96, "y": 84}, cut="c2", track="type")
+      label.on('"now"')
+      label.set_duration(1.5)
 check:
 - abs(tl.clip("c2.beta").duration - 1.5) < 1e-6
 - tl.clip("c2.beta").get("x") == 96
