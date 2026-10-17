@@ -221,10 +221,10 @@ def test_public_managed_media_refusal_preserves_valid_checkout(public_cli, local
         rows = journal.read(local.with_suffix('.json.journal.jsonl'))
         return dict(
             document=Checkout.load(local).document(),
-            file=local.read_text(),
-            history={p.name: p.read_text() for p in store._history_dir(local).glob('*.json')},
-            redo={p.name: p.read_text() for p in store._redo_dir(local).glob('*.json')},
-            journal=local.with_suffix('.json.journal.jsonl').read_text(),
+            file=local.read_bytes().decode('utf-8'),
+            history={p.name: p.read_bytes().decode('utf-8') for p in store._history_dir(local).glob('*.json')},
+            redo={p.name: p.read_bytes().decode('utf-8') for p in store._redo_dir(local).glob('*.json')},
+            journal=local.with_suffix('.json.journal.jsonl').read_bytes().decode('utf-8'),
             cursor=dict(sequence=rows[-1].seq, hash=rows[-1].hash, id=rows[-1].id),
         )
 
