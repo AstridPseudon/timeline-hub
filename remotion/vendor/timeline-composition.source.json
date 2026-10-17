@@ -1,30 +1,30 @@
 {
   "package": "@banodoco/timeline-composition",
   "package_version": "0.0.7",
-  "source_commit": "5947abc0f5d6c0f5ca20bb478521e010e76be039",
-  "source_tree": "50a4598a79b671688e4eb9e6b341e9e1e7eacbd1",
-  "source_parent": "80f801061be732b658a7216f379a9e328e58f8bc",
-  "source_branch": "codex/timeline-r4-A-I144-ROLLING-PACKAGE-002-T",
+  "source_commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+  "source_tree": "49975e7a54fd594e1b7fc807681fe28611d57864",
+  "source_parent": "5947abc0f5d6c0f5ca20bb478521e010e76be039",
+  "source_branch": "codex/timeline-r4-A-STABLE145-I144-G-BG-003-T",
   "source_baseline": {
     "kind": "admitted-T-git-source",
     "repository": "clones/timeline-composition",
-    "commit": "5947abc0f5d6c0f5ca20bb478521e010e76be039",
-    "tree": "50a4598a79b671688e4eb9e6b341e9e1e7eacbd1",
-    "parent": "80f801061be732b658a7216f379a9e328e58f8bc",
-    "scope": "Exact admitted I144 T source candidate; this one run-local archive is emitted directly from its clean Git source."
+    "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+    "tree": "49975e7a54fd594e1b7fc807681fe28611d57864",
+    "parent": "5947abc0f5d6c0f5ca20bb478521e010e76be039",
+    "scope": "Exact isolated I144 plus stable145 additive source merge; no acceptance implied."
   },
-  "build_commit": "5947abc0f5d6c0f5ca20bb478521e010e76be039",
-  "archive": "projects/A-integration/out/A-I144-ROLLING-PACKAGE-002/banodoco-timeline-composition-0.0.7.tgz",
-  "archive_bytes": 81826,
-  "archive_sha256": "632698e68a2d3b0b7307ed2b706b77235197ac7abcedf5f4009a9b89aee8cda8",
-  "archive_sha512": "c3aeb8211d7f6310fe56cd597502297e7924f4778ad61961d1fae94d4e55cf8450c4c05db50acb14dec473f43089a59540b3c11a62569c677f1da6d46b9615f4",
+  "build_commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+  "archive": "projects/A-integration/evidence/A-STABLE145-I144-G-BG-003-XHARD/banodoco-timeline-composition-0.0.7.tgz",
+  "archive_bytes": 81951,
+  "archive_sha256": "9973b30819f60ed68a67e6ff8836585f72fa2550789dcb2445d5044f51fa2fe6",
+  "archive_sha512": "9dd7ac41432e67233f7646150112ff1ffdfa3caeba4facd9930ab8da61befc3ba5d558c3d6676369654844192ca39d5a4dda2280ed04bd14cbfd43742f11550e",
   "archive_member_count": 92,
-  "unpacked_bytes": 291693,
-  "npm_shasum": "e10a9f48d369dfc704d8dd120989eda9b49d9c16",
-  "npm_integrity": "sha512-w664IR1/YxD+Vs1ZdQIpfnkk9HeK1hlh0frpTU5Vz4RQxMBdtQrLFN7Ec/QwiaWVQLPBGmJWnGd/HabUa5YV9A==",
-  "producer_handback": "projects/A-integration/receipts/A-I144-COMPATIBLE-SOURCE-JOIN-001-handback.md",
-  "producer_handback_sha256": "2c5753ab793564aa597c94d7d9932bc4d24e981366c4622f2dbdd347b3e3b601",
-  "build_evidence": "projects/A-integration/evidence/A-I144-ROLLING-PACKAGE-002-NORMAL/emitter-diagnostic-comparison.json",
+  "unpacked_bytes": 292039,
+  "npm_shasum": "94ab0cd290c121623798adeb205a70ec2d1c8e2b",
+  "npm_integrity": "sha512-ndesQUMuZyM/dkYVARL/H/36PK66T6zZkwq42mG+/Dul1VjD1mdjaWVIRBkso51aTdoigO0EvRTL/UN0LxFVDg==",
+  "producer_handback": "projects/A-integration/receipts/A-ASTRA110-NATIVE-HOLD-SCENE-003-source-handback.md",
+  "producer_handback_sha256": "b42a61d0057de9ce00908ba1c5a265cc7caccfe0107f9509ff4bea25cb6dfdb6",
+  "build_evidence": "projects/A-integration/evidence/A-STABLE145-I144-G-BG-003-XHARD/emitter-diagnostic-comparison.json",
   "build_log_sha256": "0bc4e461520af70bc35caa36e43d5d7814a79e9ef757ef31b805ecf013d01c6c",
   "build_exit_code": 2,
   "build_diagnostic_count": 13,
@@ -32,25 +32,24 @@
   "build_stdout_byte_identical_to_retained_producer": true,
   "required_ref": "v0.0.7/e2ab21a7",
   "required_ref_authenticated": false,
-  "integrated_astrid_merge_commit": "8b4289dda77175e229d94b3a987dacd01cf976b4",
-  "integrated_astrid_merge_tree": "4bd0ec6e8a667697da19a37e1b77073f5a994a6d",
+  "integrated_astrid_merge_commit": "2b60097e3df642ff0985c3f6646c41672b2321ce",
+  "integrated_astrid_merge_tree": "fa5d077f0546e185d16e49e86b20bf039adcb857",
   "integrated_astrid_merge_parents": [
-    "21e60f73a532c7b45d654423631b825418144a51",
-    "94daf237fa64f6faaa0868889e8e0bb85cd16a86"
+    "8b4289dda77175e229d94b3a987dacd01cf976b4"
   ],
   "consumer_source_inputs": {
     "Astrid": {
-      "commit": "8b4289dda77175e229d94b3a987dacd01cf976b4",
-      "tree": "4bd0ec6e8a667697da19a37e1b77073f5a994a6d",
-      "branch": "codex/timeline-r4-A-I144-COMPATIBLE-SOURCE-JOIN-001-ASTRID"
+      "commit": "2b60097e3df642ff0985c3f6646c41672b2321ce",
+      "tree": "fa5d077f0546e185d16e49e86b20bf039adcb857",
+      "branch": "codex/timeline-r4-A-STABLE145-I144-G-BG-003-ASTRID"
     },
     "App": {
-      "commit": "9207d111d527044d5a95f79d4f240c5c93466793",
-      "tree": "67e15c6ea01a774e42d1a26b3f5ef7c945ec93e7",
-      "branch": "codex/timeline-r4-A-I144-COMPATIBLE-SOURCE-JOIN-001-APP"
+      "commit": "286149d3b46914769bc7dd9fb8ec08620550e710",
+      "tree": "8639a21014f478b29eda3c6f211c14d42b43d404",
+      "branch": "codex/timeline-r4-A-STABLE145-I144-G-BG-003-APP"
     }
   },
-  "scope": "Run-local development package emitted from the exact admitted I144 T candidate. The same 13 inherited TS2307 diagnostics remain (emitter exit 2; not a clean build). This binds this run-local artifact and does not authenticate the published tag.",
+  "scope": "Run-local development package emitted from I144 plus stable145. The same 13 inherited TS2307 diagnostics remain (exit 2, not a clean build); does not authenticate the published tag. The integrated_astrid_merge_* legacy field names bind the current SDK input commit, which has one parent.",
   "files": [
     {
       "path": "README.md",
@@ -395,11 +394,11 @@
     },
     {
       "path": "typescript/dist/src/scene-evaluation.js",
-      "bytes": 10438,
-      "sha256": "2e4f74f5714afc69f9e98a0a2ec04879838ba7d56c843bf1730570f3d3b34354",
+      "bytes": 10617,
+      "sha256": "488ec31025208f2da3df13c9089abd5a7eddce258bf8d28dfe784980bf24f1da",
       "source_git_blob": null,
       "emitted_from": "typescript/src/scene-evaluation.ts",
-      "emitted_from_git_blob": "ce05f58234b159ca9ec6265400dab49dfb403d37"
+      "emitted_from_git_blob": "58a9f1009e097bb33ce45360eba07c712b59995c"
     },
     {
       "path": "typescript/dist/src/theme-api.js",
@@ -714,9 +713,9 @@
     },
     {
       "path": "typescript/src/scene-evaluation.ts",
-      "bytes": 11659,
-      "sha256": "b78f497e211d17b18496f79395cd7fcae6323a56861888e452af2a6e71e208e9",
-      "source_git_blob": "ce05f58234b159ca9ec6265400dab49dfb403d37",
+      "bytes": 11826,
+      "sha256": "f52f5f4b28cb89b335e8f09eb7befd617c1e53ec54df8224a669ceac7e28bd12",
+      "source_git_blob": "58a9f1009e097bb33ce45360eba07c712b59995c",
       "emitted_from": null
     },
     {
@@ -740,5 +739,19 @@
       "source_git_blob": "f20c427a7da10aff6b2492e2b1c7afddf80f21c8",
       "emitted_from": null
     }
-  ]
+  ],
+  "source_parents": [
+    "5947abc0f5d6c0f5ca20bb478521e010e76be039",
+    "dfc14e43451979198e5821175edf2b4fdb8d9375"
+  ],
+  "composition_inputs": {
+    "I144_admission": {
+      "path": "projects/A-integration/receipts/A-I144-ROLLING-PACKAGE-002-A-admission.md",
+      "sha256": "e310a6f7050bb9be8a97f4e876aea5706cf6cd5e4856715e9a9276a7e0566c41"
+    },
+    "T_parents": [
+      "5947abc0f5d6c0f5ca20bb478521e010e76be039",
+      "dfc14e43451979198e5821175edf2b4fdb8d9375"
+    ]
+  }
 }
