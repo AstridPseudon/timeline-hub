@@ -142,6 +142,7 @@ class _PreparedWorker:
     preparation: dict[str, Any] | None = None
     launch_verifier: Any = None
     verified_launch: Any = None
+    inspection_owner: Any = None
     preparation_diagnostic: dict[str, Any] | None = None
     cleanup_acknowledged: bool = False
     original_host_wait: int | None = None
@@ -352,6 +353,10 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             self.abort(self._active)
         if self._prepare_cancel.is_set():
             raise ConflictError("host-only preparation cancelled")
+        renderer = profile.host_launch.get("renderer_selection")
+        if renderer is not None:
+            from astrid.core.execution.custody_broker import (
+                RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv)
         selected = _selected_profile_payload(profile)
         epoch = self.config.get("runtime_instance_id")
         owner = default_process_identity(os.getpid())
@@ -372,7 +377,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 _create_host_custody_scope(scope)
                 broker = RoleBoundCustodyBroker(role="host", identity_provider=default_process_identity,
                     ledger_root=scope / "host-admission", authority_scope_root=scope,
-                    authority_journal=scope / "admissions.jsonl", owner_epoch=epoch, timeout=min(self.timeout_seconds, 60))
+                    authority_journal=scope / "admissions.jsonl", owner_epoch=epoch, timeout=min(self.timeout_seconds, 60),
+                    **({"retain_channel": True} if renderer is not None else {}))
                 hosted = broker.create_hosted_launch(request)
                 parent, activation = hosted.parents['control'], hosted.parents['activation']
                 control_child, activation_child = hosted.children['control'], hosted.children['activation']
@@ -418,18 +424,43 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 replacement.close()
                 environment.update(hosted.environment(mapped_argv, launch_binding=binding_file))
                 environment.update(broker.child_environment(mapped_argv, start_new_session=True))
+                inspection_owner = None
+                if renderer is not None:
+                    from types import SimpleNamespace
+                    from astrid.core.execution.custody_broker import _HostInspectionLaunch, _CommandInventoryOwner
+                    inspection = _HostInspectionLaunch(
+                        tuple(Path(p) for p in [profile.host_launch["pack_root"],
+                            *(v["path"] for v in profile.host_launch.get("additional_pack_roots", []))]),
+                        Path(self.config["source_checkout"]), environment,
+                        Path(self.config["capability_matrix"]) if self.config.get("capability_matrix") else None,
+                        node_executable=Path(renderer["node_executable"]))
+                    context = SimpleNamespace(_launch_broker=broker, owner_epoch=epoch, root=scope, process=None)
+                    inspection_owner = _CommandInventoryOwner(context, inspection.policy(environment, str(profile.support_root)))
+                    environment["ASTRID_COMMAND_CUSTODY_ENABLED"] = "1"
+
                 process = subprocess.Popen(custody_wrapper_argv(str(profile.host_executable)), cwd=str(profile.support_root),
                     env=environment, stdin=subprocess.DEVNULL, close_fds=True,
                     pass_fds=hosted.pass_fds)
                 retained = RetainedProcess(process)
                 handle = _PreparedWorker(process, "", parent, {}, scope / "host-launch.json", retained=retained,
                     broker=broker, owner_epoch=epoch, custody_scope=str(scope), host_only=True,
-                    activation=activation, preparation=request, launch_verifier=verifier, verified_launch=verified)
+                    activation=activation, preparation=request, launch_verifier=verifier, verified_launch=verified,
+                    inspection_owner=inspection_owner)
                 self._active = handle  # Before birth/seal/readiness can fail.
+                if inspection_owner is not None:
+                    inspection_owner.custody.process = process
+                    inspection_owner.start()
+
                 hosted.close_children()
+                if renderer is not None:
+                    broker.close_child_pipes()
                 binding_file.close()
                 parent.settimeout(self.timeout_seconds); activation.settimeout(self.timeout_seconds)
             broker.wait_until_sealed(); retained.bind_actor()
+            if handle.inspection_owner is not None:
+                broker.close_child_pipes()
+                handle.inspection_owner.released.set()
+
             identity = retained.verify(); handle.birth_id = identity["birth_id"]
             verifier.bind_child(verified, child=process, identity=identity)
             from banodoco_local.custody_broker import _atomic_owner_json
@@ -549,6 +580,13 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     handle.original_host_wait = handle.retained.poll()
                 except BaseException as wait_error:
                     record(wait_error)
+            if handle.inspection_owner is not None:
+                try:
+                    handle.inspection_owner.finish(cancel=True)
+                except BaseException as exc:
+                    record(exc)
+                    self.cleanup_uncertain = "host-only original inspection owner unresolved"
+                    raise ConflictError(self.cleanup_uncertain) from exc
             outcome = {"operation_id_sha256": hashlib.sha256(bound["operation_id"].encode()).hexdigest(),
                 "child_cleanup_acknowledged": handle.cleanup_acknowledged,
                 "original_host_wait": handle.original_host_wait,
@@ -1465,6 +1503,9 @@ def _installed_host_release(profile, config):
     """Trusted local owner supplies the existing verifier's installed record."""
     from .verified_host_launch import installed_inventory, raw_digest, source_checkout_closure, selected_python_layout
     _verify_installed_host_records(profile, config)
+    if (getattr(profile, "host_launch", None) or {}).get("renderer_selection") is not None:
+        from astrid.core.execution.host_renderer_selection import validate_renderer_selection
+        validate_renderer_selection(profile.host_launch["renderer_selection"])
     source = Path(config["source_checkout"])
     layout = selected_python_layout(source)
     inventories = {}; entries = []; runtime_identity = None
@@ -1504,6 +1545,10 @@ def _load_host_only_composition(raw, *, workspace_uuid, realm_root, support_root
         "environment": raw.get("environment", {}), "max_concurrency": raw.get("max_concurrency")}
     if "additional_pack_roots" in raw:
         launch["additional_pack_roots"] = raw["additional_pack_roots"]
+    if "renderer_selection" in raw:
+        from astrid.core.execution.host_renderer_selection import validate_renderer_selection
+        validate_renderer_selection(raw["renderer_selection"])
+        launch["renderer_selection"] = raw["renderer_selection"]
     profile = LocalWorkerProfile(str(raw.get("profile_id") or "astrid"), str(workspace_uuid), Path(realm_root).resolve(), Path(support_root).resolve(),
         str(raw.get("machine_id") or ""), None, executable, None, None, "", "", str(raw.get("host_artifact_digest") or ""), "", "",
         str(raw.get("session_config_digest") or ""), str(raw.get("profile_revision") or ""), str(raw.get("profile_digest") or ""),

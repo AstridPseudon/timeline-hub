@@ -155,7 +155,7 @@ def provision_host_only_profile(*, worker_profile: Path, source_manifest: Path,
                                workspace_uuid: str, realm_root: Path, support_root: Path,
                                max_concurrency: int, capability_matrix: Path | None,
                                environment: Mapping[str, str] | None = None,
-                               additional_pack_roots: tuple[Path, ...] = ()) -> SourceProfile:
+                               additional_pack_roots: tuple[Path, ...] = (), renderer_selection=None) -> SourceProfile:
     """Atomically provision a private worker profile and existing SourceProfile.
 
     Run with the selected installed Runtime interpreter. No checkout/environment
@@ -187,6 +187,11 @@ def provision_host_only_profile(*, worker_profile: Path, source_manifest: Path,
               "boot_manifest_path": str(boot), "boot_manifest_hash": "sha256:" + normalize_sha256_digest(manifest_hash(manifest)),
               "capability_matrix": str(capability_matrix) if capability_matrix else None,
               "environment": dict(environment or {}), "max_concurrency": max_concurrency}
+    if renderer_selection is not None:
+        from astrid.core.execution.host_renderer_selection import HostRendererSelection
+        if type(renderer_selection) is not HostRendererSelection:
+            raise BootstrapError("renderer setup requires an already admitted typed selection")
+        launch["renderer_selection"] = renderer_selection.payload()
     if additional_pack_roots:
         launch["additional_pack_roots"] = [{"path": str(_path(p)), "files": _pack_inventory(p)} for p in additional_pack_roots]
     kernel = _actual_executable(os.getpid())
