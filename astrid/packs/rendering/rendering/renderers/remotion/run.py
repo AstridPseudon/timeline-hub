@@ -1530,11 +1530,13 @@ def _execute_remotion_locked(
                 "TMP": str(remotion_temp_root),
                 "TEMP": str(remotion_temp_root),
             }
-            # Explicitly clear the stage for component-free requests, including
-            # warm owners that retain the preceding invocation environment.
-            remotion_env_additions["ASTRID_REMOTION_COMPONENT_STAGE"] = (
-                json.dumps(component_stage) if component_stage else ""
-            )
+            # Direct/warm callers explicitly clear a preceding component stage.
+            # The closed Host relay launches a fresh CLI with a qualified base
+            # environment; component-free requests need no stage override there.
+            if component_stage or render_client is None:
+                remotion_env_additions["ASTRID_REMOTION_COMPONENT_STAGE"] = (
+                    json.dumps(component_stage) if component_stage else ""
+                )
             if pcm_aac_mp4:
                 remotion_env_additions["ASTRID_REMOTION_PCM_AAC_OUTPUT"] = str(cli_video)
             # No machine-RAM heuristic. Unallocated renders use ordinary
