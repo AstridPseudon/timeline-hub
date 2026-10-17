@@ -1529,7 +1529,7 @@ def test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift(t
     input_root = attempt/'inputs'; input_root.mkdir()
     html_input = input_root/'inputs.html'; html_input.write_text('<html>review</html>')
     data_input = input_root/'data.json'; data_input.write_text('{}')
-    path = attempt/module._REVIEW_SESSION_NAME
+    path = attempt/"outputs"/module._REVIEW_SESSION_NAME
     bridge = _host_child_bridge(host, host.client, attempt, record, task_id='managed-review-cancel')
     observed = []
     started = time.monotonic()
@@ -1578,7 +1578,8 @@ def test_review_descriptor_cannot_adopt_foreign_process_or_receiver(tmp_path, fi
     from types import SimpleNamespace
     from astrid.core.execution import generic_host as module
     attempt = tmp_path.resolve()
-    path = attempt/module._REVIEW_SESSION_NAME
+    (attempt / 'outputs').mkdir()
+    path = attempt/"outputs"/module._REVIEW_SESSION_NAME
     birth = module.process_birth_identity()
     row = {'schema':'astrid.human-review-session/v1','process_pid':os.getpid(),
            'process_birth_id':birth,'receiver_url':'http://127.0.0.1:12345/?token='+'a'*32}
@@ -1595,7 +1596,7 @@ def test_review_descriptor_cannot_adopt_foreign_process_or_receiver(tmp_path, fi
 def test_review_descriptor_unsafe_file_is_bounded_and_retained(tmp_path, kind):
     from types import SimpleNamespace
     from astrid.core.execution import generic_host as module
-    attempt = tmp_path.resolve(); path = attempt/module._REVIEW_SESSION_NAME
+    attempt = tmp_path.resolve(); (attempt / 'outputs').mkdir(); path = attempt/"outputs"/module._REVIEW_SESSION_NAME
     if kind == 'fifo':
         os.mkfifo(path, 0o600)
     elif kind == 'symlink':
@@ -1785,9 +1786,10 @@ def test_cli_retained_host_only_owns_canonical_attempt_namespace(tmp_path, monke
         bridge = ChildBridge(channel)
         monkeypatch.setattr(review, '_inherited_bridge', lambda: bridge)
         (attempt / 'outputs').mkdir()
+        monkeypatch.setenv('TMPDIR', str(attempt / 'outputs'))
         monkeypatch.setenv('ASTRID_PROGRESS_PATH', str(attempt / '.astrid-progress.json'))
         try:
-            assert review._managed_receiver_path(attempt / 'outputs/review.html') == attempt / '.astrid-human-review-session.json'
+            assert review._managed_receiver_path(attempt / 'outputs/review.html') == attempt / 'outputs' / '.astrid-human-review-session.json'
         finally:
             bridge.close(); parent.close()
     finally:

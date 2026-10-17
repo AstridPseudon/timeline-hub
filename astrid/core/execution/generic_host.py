@@ -1407,13 +1407,18 @@ def _terminate_process_group(process: subprocess.Popen, *, grace_seconds: float 
 _REVIEW_SESSION_NAME = ".astrid-human-review-session.json"
 
 
+def _owned_review_session_path(attempt: Path) -> Path:
+    path = attempt / "outputs" / _REVIEW_SESSION_NAME
+    if attempt != attempt.resolve(strict=False) or path.parent != path.parent.resolve(strict=False):
+        raise HostError("review receiver attempt alias")
+    return path
+
+
 def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
                                   previous: tuple[int, int, bytes] | None = None
                                   ) -> tuple[int, int, bytes] | None:
     """Retain exact private bytes while the original action owner is observable."""
-    path = attempt / _REVIEW_SESSION_NAME
-    if attempt != attempt.resolve(strict=False):
-        raise HostError("review receiver attempt alias")
+    path = _owned_review_session_path(attempt)
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except FileNotFoundError:
@@ -1450,7 +1455,7 @@ def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
 
 def _retire_owned_review_session(attempt: Path, snapshot: tuple[int, int, bytes] | None) -> None:
     """Use only a previously retained observation, after positive child cleanup."""
-    path = attempt / _REVIEW_SESSION_NAME
+    path = _owned_review_session_path(attempt)
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except FileNotFoundError:

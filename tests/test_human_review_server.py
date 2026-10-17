@@ -509,6 +509,7 @@ def _receiver_bridge(monkeypatch, tmp_path, *, transport="socket"):
     monkeypatch.setattr(_child_bridge, '_bridge', bridge)
     attempt = tmp_path.resolve() / 'task-attempt'
     (attempt / 'outputs').mkdir(parents=True)
+    monkeypatch.setenv('TMPDIR', str(attempt / 'outputs'))
     monkeypatch.setenv('ASTRID_PROGRESS_PATH', str(attempt / '.astrid-progress.json'))
     return review, bridge, parent, attempt
 
@@ -540,7 +541,7 @@ def test_managed_receiver_rejects_path_and_closed_bridge(tmp_path, monkeypatch):
         alias = tmp_path / 'alias'; alias.symlink_to(attempt, target_is_directory=True)
         with pytest.raises(review.HumanReviewInputError, match='paths'):
             review._managed_receiver_path(alias / 'outputs' / 'decisions.json')
-        (attempt / '.astrid-progress.json').symlink_to(attempt / 'outputs' / 'missing')
+        monkeypatch.setenv('TMPDIR', str(alias / 'outputs'))
         with pytest.raises(review.HumanReviewInputError, match='paths'):
             review._managed_receiver_path(attempt / 'outputs' / 'decisions.json')
         bridge.close()
@@ -582,11 +583,11 @@ def test_managed_pipe_receiver_requires_both_original_open_endpoints(tmp_path, m
                 other_channel.close()
                 other_parent.close()
         if case == "live":
-            assert review._managed_receiver_path(attempt / "outputs/decisions.json") == attempt / review._RECEIVER_SESSION_NAME
+            assert review._managed_receiver_path(attempt / "outputs/decisions.json") == attempt / 'outputs' / review._RECEIVER_SESSION_NAME
         else:
             with pytest.raises(review.HumanReviewInputError, match="live inherited"):
                 review._managed_receiver_path(attempt / "outputs/decisions.json")
-        assert not (attempt / review._RECEIVER_SESSION_NAME).exists()
+        assert not (attempt / 'outputs' / review._RECEIVER_SESSION_NAME).exists()
     finally:
         if closed_endpoint is not None:
             setattr(channel, closed_endpoint, -1)
@@ -643,7 +644,7 @@ def test_managed_pipe_receiver_cannot_be_adopted_by_fork(tmp_path, monkeypatch):
         _, status = os.waitpid(child, 0)
         assert os.waitstatus_to_exitcode(status) == 0
         # Refusal in the child leaves the original parent's channel and path usable.
-        assert review._managed_receiver_path(attempt / "outputs/decisions.json") == attempt / review._RECEIVER_SESSION_NAME
+        assert review._managed_receiver_path(attempt / "outputs/decisions.json") == attempt / 'outputs' / review._RECEIVER_SESSION_NAME
     finally:
         bridge.close()
         parent.close()
@@ -699,7 +700,7 @@ def test_managed_receiver_live_http_and_secret_free_stdout(tmp_path, monkeypatch
         except BaseException as exc:
             errors.append(exc)
     thread = threading.Thread(target=serve); thread.start()
-    path = attempt / review._RECEIVER_SESSION_NAME
+    path = attempt / 'outputs' / review._RECEIVER_SESSION_NAME
     try:
         deadline = time.monotonic() + 3
         while not path.exists() and time.monotonic() < deadline:
