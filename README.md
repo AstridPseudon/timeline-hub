@@ -28,8 +28,6 @@ npm run dev                   # Vite on http://localhost:2222
 clips against a committed local bridge stub — no Docker, no Supabase, no sign-in.
 It prints the editor URL; open it and the timeline is there.
 
-GPU task processing requires **[Reigh-Worker](https://github.com/banodoco/Reigh-Worker)** running separately. Worker and API orchestration is managed by **[Reigh-Worker-Orchestrator](https://github.com/banodoco/Reigh-Worker-Orchestrator)**.
-
 ## Governance Contracts
 
 - Supabase runtime contract: [`docs/governance/contracts/supabase-runtime.md`](docs/governance/contracts/supabase-runtime.md)
