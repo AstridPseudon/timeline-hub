@@ -19,7 +19,7 @@ _RETAINED_TRANSPORT_PATCHES = {
     'serve-static.js': '94b7c486a0f646a95b297e4bd4eaec7244bef836a28ac6e0e89ff79d7b9e09c9',
     'prepare-server.js': '4bde104699dd7481469b2a7a48645a726e2f8c83b06f1177e5f7e808bacbeb04',
     'open-browser.js': '0dc0ebc6479feaf5db1b6e978c94fefd9efdc279868b859bf2c4d0699f2722a8',
-    'browser/BrowserRunner.js': '74b5799aaf2bc9c141e678d0a2ceb90260552b401f123c0df832e96a87100092',
+    'browser/BrowserRunner.js': 'd6f8c27c94f64b49da1e501bc1dbbf1d9f6380888e37c12505b6f47201b0e451',
 }
 
 
