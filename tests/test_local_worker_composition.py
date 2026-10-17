@@ -593,24 +593,6 @@ def test_host_only_nonchild_stop_and_reconnect_never_signal(tmp_path, monkeypatc
         preparer.reconnect({'host':{'pid':123,'birth_id':'old'}})
 
 
-def test_host_only_abort_missing_ack_retains_handle_and_does_not_signal(tmp_path, monkeypatch):
-    import threading
-    from test_local_worker import host_only_profile_case
-    profile=host_only_profile_case(); preparer=CrossProcessWorkerPreparer(profile=profile,config={},environment={})
-    retained=SimpleNamespace(verify=lambda:{'pid':42,'birth_id':'b'})
-    handle=_PreparedWorker(SimpleNamespace(pid=42), 'b', SimpleNamespace(settimeout=lambda value:None), {}, tmp_path/'config.json',
-        retained=retained,host_only=True,owner_epoch='epoch',custody_scope=str(tmp_path),
-        preparation={'version':'runtime.local-execution-preparation/v1','operation_id':'op','channel_id':'ch','owner_epoch':'epoch'},
-        broker=SimpleNamespace(signal=lambda *args,**kwargs:pytest.fail('signal before cleanup ack')))
-    preparer._active=handle
-    monkeypatch.setattr(preparer,'_host_only_report',lambda h:{'profile_binding_digest':_digest('1'),'custody_capabilities':{'host':{'pid':42}}})
-    monkeypatch.setattr('runtime_protocol.local_worker_composition._frame_send',lambda *args:None)
-    monkeypatch.setattr('runtime_protocol.local_worker_composition._frame_receive',lambda *args:{'status':'unresolved'})
-    with pytest.raises(ConflictError,match='acknowledgement'):
-        preparer.abort(handle)
-    assert preparer._active is handle and not handle.closed and preparer.cleanup_uncertain
-
-
 def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_without_engine(tmp_path,monkeypatch):
     """Offline transport contract only; fake handles grant no native custody proof."""
     import threading
@@ -671,7 +653,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     monkeypatch.setattr(module,'_installed_host_release',lambda *args:{})
     monkeypatch.setattr(module.subprocess,'Popen',popen)
     monkeypatch.setattr(module,'_frame_send',lambda channel,value:captures.update(request=value))
-    monkeypatch.setattr(module,'_frame_receive',lambda channel:{'version':captures['request']['version'],'status':'prepared',
+    monkeypatch.setattr(module,'_frame_receive',lambda channel, **kwargs:{'version':captures['request']['version'],'status':'prepared',
         'operation_id':'op','channel_id':'channel','owner_epoch':'epoch','execution_mode':'host_only_cpu',
         'processes':{'host':{'pid':4242,'birth_id':'original'}},'session_config_digest':profile.session_config_digest})
     preparer=CrossProcessWorkerPreparer(profile=profile,config=config,environment={})
@@ -737,3 +719,80 @@ def test_host_only_custody_scope_wrong_owner_never_grants_authority(tmp_path,mon
         _create_host_custody_scope(scope)
     assert scope.stat().st_uid==original_uid
     assert not list(scope.iterdir())
+
+
+@pytest.mark.parametrize("case", ["ack", "unresolved", "broken_pipe", "eof", "exited", "wait_timeout", "missing_wait", "kill"])
+def test_host_only_cleanup_always_reaches_original_wait_and_keeps_graph_failure(tmp_path, monkeypatch, case):
+    from test_local_worker import host_only_profile_case
+    from runtime_protocol import local_worker_composition as module
+    profile = host_only_profile_case()
+    preparer = CrossProcessWorkerPreparer(profile=profile, config={}, environment={})
+    calls, sent = [], []
+    state = {"exit": 7 if case == "exited" else None}
+    class Retained:
+        def poll(self):
+            calls.append("poll")
+            if case == "missing_wait": raise ChildProcessError("missing original wait")
+            return state["exit"]
+        def verify(self):
+            calls.append("verify")
+            return {"pid": 42, "birth_id": "birth"}
+        def wait(self, timeout):
+            calls.append(("wait", timeout))
+            if case in {"wait_timeout", "kill"} and signal.SIGKILL not in calls:
+                raise TimeoutError()
+            if case == "wait_timeout": raise TimeoutError()
+            state["exit"] = -9 if signal.SIGKILL in calls else 0
+            return state["exit"]
+    def send(channel, request):
+        sent.append(request)
+        if case == "broken_pipe": raise BrokenPipeError("secret is not logged")
+    def receive(channel):
+        if case == "eof": raise EOFError()
+        if case in {"unresolved", "wait_timeout", "missing_wait"}: return {"status": "unresolved"}
+        return {**{k: v for k, v in sent[-1].items() if k != "command"}, "status": "cleaned", "cleanup": {"host_children": "absent"}}
+    broker = SimpleNamespace(set_cleanup_deadline=lambda d: calls.append("deadline"),
+        role_authority=SimpleNamespace(reference=lambda: {"role": "host"}),
+        signal=lambda sig, **kw: calls.append(sig))
+    channel = SimpleNamespace(settimeout=lambda t: None, close=lambda: calls.append("close"))
+    handle = _PreparedWorker(SimpleNamespace(pid=42), "birth", channel, {}, tmp_path / "config",
+        retained=Retained(), broker=broker, host_only=True, activation=channel,
+        preparation={"version": "runtime.local-execution-preparation/v1", "operation_id": "op", "channel_id": "ch", "owner_epoch": "epoch"},
+        custody_scope=str(tmp_path))
+    preparer._active = handle
+    monkeypatch.setattr(module, "_frame_send", send)
+    monkeypatch.setattr(module, "_frame_receive", receive)
+    monkeypatch.setattr(preparer, "_host_only_report", lambda h: pytest.fail("cleanup required a live report"))
+    if case in {"ack", "kill"}:
+        preparer.abort(handle)
+        assert handle.closed and preparer._active is None and handle.cleanup_acknowledged
+        preparer.abort(handle)
+    else:
+        with pytest.raises(ConflictError, match="unresolved"):
+            preparer.abort(handle)
+        assert preparer._active is handle and not handle.closed and preparer.cleanup_uncertain
+        if case not in {"wait_timeout", "missing_wait"}:
+            assert handle.original_host_wait is not None
+        assert not handle.cleanup_acknowledged
+    if case == "exited": assert not sent and signal.SIGTERM not in calls and handle.original_host_wait == 7
+    elif case != "missing_wait": assert signal.SIGTERM in calls
+    if case in {"kill", "wait_timeout"}: assert signal.SIGKILL in calls
+    assert preparer.shutdown_timeout_seconds >= 3 * max(1, preparer.cleanup_timeout_seconds) + 1
+
+
+def test_host_only_original_child_exit_is_retained_wait_not_absence(tmp_path):
+    from runtime_protocol.local_execution_supervisor import RetainedProcess
+    child = subprocess.Popen([sys.executable, "-I", "-c", "raise SystemExit(17)"])
+    retained = RetainedProcess(child)
+    assert retained.wait(3) == 17
+    assert retained.poll() == 17 and child.returncode == 17
+
+
+def test_preparation_diagnostic_keeps_actual_refusal_and_hashes_arbitrary_values():
+    from runtime_protocol.local_worker_composition import _preparation_diagnostic
+    frame = {"version": "runtime.local-execution-preparation/v1", "status": "unresolved", "error_code": "preparation_unresolved", "operation_id": "SECRET", "unknown": "TOKEN"}
+    report = _preparation_diagnostic(frame, {"status": "prepared", "processes": {}, "operation_id": "expected"})
+    assert report["status"] == "unresolved" and report["error_code"] == "preparation_unresolved"
+    assert report["missing_fields"] == ["processes"] and report["differing_fields"] == ["operation_id", "status"]
+    assert "unknown" in report["extra_fields"]
+    assert "SECRET" not in json.dumps(report) and "TOKEN" not in json.dumps(report)

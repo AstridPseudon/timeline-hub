@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import ctypes
 import json
+import logging
 import os
 from dataclasses import dataclass, field
 import ipaddress
@@ -38,6 +39,9 @@ from .local_worker import (
     _host_only,
     _secure_profile,
 )
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 CONTROL_VERSION = "reigh.local-worker-control/v1"
@@ -73,7 +77,7 @@ def _frame_send(channel: socket.socket, value: Mapping[str, Any]) -> None:
     channel.sendall(encoded + b"\n")
 
 
-def _frame_receive(channel: socket.socket) -> dict[str, Any]:
+def _frame_receive(channel: socket.socket, *, evidence: dict | None = None) -> dict[str, Any]:
     frame = bytearray()
     while b"\n" not in frame:
         chunk = channel.recv(min(4096, CONTROL_FRAME_LIMIT + 1 - len(frame)))
@@ -83,6 +87,8 @@ def _frame_receive(channel: socket.socket) -> dict[str, Any]:
         if len(frame) > CONTROL_FRAME_LIMIT:
             raise ConflictError("local Worker control frame is too large")
     encoded, remainder = bytes(frame).split(b"\n", 1)
+    if evidence is not None:
+        evidence.update(raw_frame_sha256=hashlib.sha256(encoded).hexdigest(), received_bytes=len(encoded))
     if remainder:
         raise ConflictError("local Worker control channel carried multiple frames")
     try:
@@ -93,6 +99,25 @@ def _frame_receive(channel: socket.socket) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ConflictError("local Worker control frame must be an object")
     return value
+
+
+def _preparation_diagnostic(received, expected):
+    """Bounded evidence from the actual decoded frame; no arbitrary values."""
+    def digest(value):
+        return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
+    def name(key):
+        return key if len(key) <= 80 and all(c.isalnum() or c == "_" for c in key) else "field-sha256:" + digest(key)
+    def disposition(key, allowed):
+        value = received.get(key)
+        return value if isinstance(value, str) and value in allowed else {"sha256": digest(value)}
+    return {"frame_sha256": digest(received),
+        "status": disposition("status", {"prepared", "unresolved", "cleaned"}),
+        "version": disposition("version", {"runtime.local-execution-preparation/v1"}),
+        "error_code": disposition("error_code", {"preparation_unresolved", "report_unresolved", "cleanup_unresolved", "binding_conflict"}),
+        "missing_fields": sorted(name(k) for k in expected.keys() - received.keys())[:32],
+        "extra_fields": sorted(name(k) for k in received.keys() - expected.keys())[:32],
+        "differing_fields": sorted(name(k) for k in expected.keys() & received.keys() if expected[k] != received[k])[:32],
+        "binding_sha256": {k: digest(received.get(k)) for k in ("operation_id", "channel_id", "owner_epoch", "processes", "session_config_digest")}}
 
 
 @dataclass
@@ -117,6 +142,10 @@ class _PreparedWorker:
     preparation: dict[str, Any] | None = None
     launch_verifier: Any = None
     verified_launch: Any = None
+    preparation_diagnostic: dict[str, Any] | None = None
+    cleanup_acknowledged: bool = False
+    original_host_wait: int | None = None
+    cleanup_errors: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -144,7 +173,9 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         self.timeout_seconds = float(timeout_seconds)
         self.cleanup_timeout_seconds = max(0.05, float(cleanup_timeout_seconds))
         if _host_only(profile):
-            self.shutdown_timeout_seconds = self.cleanup_timeout_seconds * 2 + 0.5
+            # RPC, authenticated TERM/wait, authenticated KILL/wait share one
+            # deadline. The daemon must not discard this active cleanup thread.
+            self.shutdown_timeout_seconds = max(1.0, self.cleanup_timeout_seconds) * 3 + 1.0
         self._active: _PreparedWorker | None = None
         self._activation_binding = None
         self._generation_verifier = None
@@ -405,12 +436,20 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             _atomic_owner_json(handle.owner_session_config_path, profile.host_launch)
             # The private preparation channel reports no engine allocation.
             _frame_send(parent, request)
-            prepared = _frame_receive(parent)
+            raw_evidence = {}
+            try:
+                prepared = _frame_receive(parent, evidence=raw_evidence)
+            except BaseException as exc:
+                handle.preparation_diagnostic = {**raw_evidence, "exception_class": type(exc).__name__}
+                _LOGGER.error("host-only preparation transport refused: %s", json.dumps(handle.preparation_diagnostic, sort_keys=True))
+                raise
             expected = {"version": request["version"], "status": "prepared", "operation_id": operation_id,
                 "channel_id": channel_id, "owner_epoch": epoch, "execution_mode": "host_only_cpu",
                 "processes": {"host": {"pid": process.pid, "birth_id": handle.birth_id}},
                 "session_config_digest": profile.session_config_digest}
             if prepared != expected:
+                handle.preparation_diagnostic = {**_preparation_diagnostic(prepared, expected), **raw_evidence}
+                _LOGGER.error("host-only preparation refused: %s", json.dumps(handle.preparation_diagnostic, sort_keys=True))
                 raise ConflictError("host-only preparation response differs from original launch")
             handle.report_value = self._host_only_report(handle)
             return handle
@@ -440,26 +479,86 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             "profile_binding_digest": _digest(_selected_profile_payload(self.profile))}
 
     def _host_only_abort(self, handle):
-        with handle.cleanup_lock:
-            if handle.closed: return
+        # Child acknowledgement, original wait, and graph settlement are separate
+        # facts. No transport failure may skip this original owner's waiter.
+        step = max(1.0, self.cleanup_timeout_seconds)
+        deadline = time.monotonic() + step * 3
+        if not handle.cleanup_lock.acquire(timeout=max(0.0, deadline - time.monotonic())):
+            raise ConflictError("host-only original cleanup is still active")
+        try:
+            if handle.closed:
+                return
+            handle.cleanup_started = True
+            handle.broker.set_cleanup_deadline(deadline)
             bound = {k: handle.preparation[k] for k in ("version", "operation_id", "channel_id", "owner_epoch")}
-            request = {**bound, "command": "abort_local_execution", "profile_digest": self.profile.profile_digest,
-                "profile_binding_digest": self._host_only_report(handle)["profile_binding_digest"],
-                "custody_scope": handle.custody_scope, "custody_capabilities": self._host_only_report(handle)["custody_capabilities"]}
-            with handle.rpc_lock:
-                handle.retained.verify()
-                handle.control.settimeout(max(1.0, self.cleanup_timeout_seconds))
-                _frame_send(handle.control, request); response = _frame_receive(handle.control)
-            expected = {**{k: v for k, v in request.items() if k != "command"}, "status": "cleaned", "cleanup": {"host_children": "absent"}}
-            if response != expected:
-                self.cleanup_uncertain = "host-only child cleanup acknowledgement unresolved"
+            def record(exc):
+                if len(handle.cleanup_errors) < 6:
+                    handle.cleanup_errors.append(type(exc).__name__)
+            try:
+                handle.original_host_wait = handle.retained.poll()
+                if handle.original_host_wait is None and not handle.cleanup_acknowledged:
+                    # This binding comes from our launch, never from a response
+                    # or a live report that can fail once the child has exited.
+                    from .local_worker import _digest
+                    request = {**bound, "command": "abort_local_execution", "profile_digest": self.profile.profile_digest,
+                        "profile_binding_digest": _digest(_selected_profile_payload(self.profile)),
+                        "custody_scope": handle.custody_scope,
+                        "custody_capabilities": {"host": handle.broker.role_authority.reference()}}
+                    acquired = handle.rpc_lock.acquire(timeout=min(step, max(0.0, deadline - time.monotonic())))
+                    if not acquired:
+                        raise ConflictError("host-only cleanup RPC remains busy")
+                    try:
+                        handle.retained.verify()
+                        handle.control.settimeout(min(step, max(0.001, deadline - time.monotonic())))
+                        _frame_send(handle.control, request)
+                        response = _frame_receive(handle.control)
+                    finally:
+                        handle.rpc_lock.release()
+                    expected = {**{k: v for k, v in request.items() if k != "command"}, "status": "cleaned", "cleanup": {"host_children": "absent"}}
+                    handle.cleanup_acknowledged = response == expected
+            except BaseException as exc:
+                record(exc)
+            try:
+                handle.original_host_wait = handle.retained.poll()
+                if handle.original_host_wait is None:
+                    # Same authenticated broker and sole retained waiter. No
+                    # absent-PID, process-group, or reconstructed-handle fallback.
+                    handle.broker.signal(signal.SIGTERM, expected_pid=handle.worker.pid)
+                    try:
+                        handle.original_host_wait = handle.retained.wait(min(step, max(0.0, deadline - time.monotonic())))
+                    except BaseException as exc:
+                        record(exc)
+                        # An exit between timeout and escalation may already
+                        # have a real retained wait; verify that before signaling.
+                        handle.original_host_wait = handle.retained.poll()
+                        if handle.original_host_wait is None:
+                            handle.broker.signal(signal.SIGKILL, expected_pid=handle.worker.pid)
+                            handle.original_host_wait = handle.retained.wait(max(0.0, deadline - time.monotonic()))
+            except BaseException as exc:
+                record(exc)
+                # A signal race can still leave the original wait available.
+                try:
+                    handle.original_host_wait = handle.retained.poll()
+                except BaseException as wait_error:
+                    record(wait_error)
+            outcome = {"operation_id_sha256": hashlib.sha256(bound["operation_id"].encode()).hexdigest(),
+                "child_cleanup_acknowledged": handle.cleanup_acknowledged,
+                "original_host_wait": handle.original_host_wait,
+                "complete_graph": handle.cleanup_acknowledged and handle.original_host_wait is not None,
+                "secondary_error_classes": handle.cleanup_errors}
+            _LOGGER.warning("host-only cleanup outcome: %s", json.dumps(outcome, sort_keys=True))
+            if handle.original_host_wait is not None:
+                handle.control.close()
+                handle.activation.close()
+            if not outcome["complete_graph"]:
+                self.cleanup_uncertain = ("host-only child cleanup acknowledgement unresolved" if not handle.cleanup_acknowledged
+                    else "host-only original Host wait unresolved")
                 raise ConflictError(self.cleanup_uncertain)
-            # Full owned child cleanup was acknowledged, then reap original host.
-            if handle.retained.poll() is None:
-                handle.broker.signal(signal.SIGTERM, expected_pid=handle.worker.pid)
-            handle.retained.wait(max(1.0, self.cleanup_timeout_seconds))
-            handle.control.close(); handle.activation.close(); handle.closed = True
-            if self._active is handle: self._active = None
+            handle.closed = True
+            if self._active is handle:
+                self._active = None
+        finally:
+            handle.cleanup_lock.release()
 
     def _prepare_relay(self, profile, *, operation_id, channel_id):
         from .local_execution_supervisor import host_prepare_request, RetainedProcess
@@ -578,23 +677,26 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
 
     def activate(self, handle: _PreparedWorker, grant: Mapping[str, Any]) -> None:
         if handle.host_only:
-            binding = self._activation_binding
-            if binding is None or binding[0] is not handle or binding[1] != dict(grant):
-                raise ConflictError("host-only activation lacks exact Runtime publisher")
-            with handle.rpc_lock:
-                handle.retained.verify()
-                message = {**dict(grant), "host": {"pid": handle.worker.pid, "birth_id": handle.birth_id}}
-                _frame_send(handle.activation, message)
-                request = _frame_receive(handle.activation)
-                recorded = binding[2](request)
-                _frame_send(handle.activation, recorded)
-                handle.activation.shutdown(socket.SHUT_WR)
-                expected = {"version": "astrid.local-worker-activation-accepted/v1",
-                    **{k: grant[k] for k in ("operation_id", "channel_id", "activation_id", "executor_incarnation", "evidence_digest")}, "host": message["host"]}
-                if _frame_receive(handle.activation) != expected:
-                    raise ConflictError("host-only activation acknowledgement differs")
-                handle.retained.verify(); handle.activated = True
-            return
+            with handle.cleanup_lock:
+                if handle.cleanup_started:
+                    raise ConflictError("host-only cleanup has already started")
+                binding = self._activation_binding
+                if binding is None or binding[0] is not handle or binding[1] != dict(grant):
+                    raise ConflictError("host-only activation lacks exact Runtime publisher")
+                with handle.rpc_lock:
+                    handle.retained.verify()
+                    message = {**dict(grant), "host": {"pid": handle.worker.pid, "birth_id": handle.birth_id}}
+                    _frame_send(handle.activation, message)
+                    request = _frame_receive(handle.activation)
+                    recorded = binding[2](request)
+                    _frame_send(handle.activation, recorded)
+                    handle.activation.shutdown(socket.SHUT_WR)
+                    expected = {"version": "astrid.local-worker-activation-accepted/v1",
+                        **{k: grant[k] for k in ("operation_id", "channel_id", "activation_id", "executor_incarnation", "evidence_digest")}, "host": message["host"]}
+                    if _frame_receive(handle.activation) != expected:
+                        raise ConflictError("host-only activation acknowledgement differs")
+                    handle.retained.verify(); handle.activated = True
+                return
         if not handle.relay:
             response = self._rpc(handle, {"version": CONTROL_VERSION, "command": "activate", "grant": dict(grant)})
             if response.get("status") != "ok":
