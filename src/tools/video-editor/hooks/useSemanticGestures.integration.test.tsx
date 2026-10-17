@@ -1,3 +1,4 @@
+import { reorderTrackGestureCommands } from '../commands/trackGestures.ts';
 import { trimClipToMediaEnd } from '../lib/trim-to-media-end.ts';
 // @vitest-environment jsdom
 import React, { useEffect } from 'react';
@@ -5648,5 +5649,129 @@ describe('W13 fade legacy callback fallback', () => {
     expect(h.result.current.data!.config.clips[0].entrance).toEqual({ type: 'fade', duration: 0.4 });
     expect(history).toHaveBeenCalledTimes(1); expect(history.mock.calls[0][1].nativeRegistrationOwner).toBeUndefined();
     off(); h.unmount();
+  });
+});
+
+
+function trackReorderSource(initial: TimelineData, requests: CommitRequest[], mode = 'positive') {
+  const python = process.env.ASTRID_TEST_PYTHON;
+  if (!python) throw new Error('Set ASTRID_TEST_PYTHON to the qualified SDK test interpreter');
+  return JSON.parse(execFileSync(python, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/trackReorder.fixture.py')], {
+    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests, mode }), encoding: 'utf8', env: process.env,
+  })) as { before: { parent: { config: { tracks: Array<{ id: string }> } } }; results: CommitResult[]; result: CommitResult; replay: boolean[]; accept_counts: number[]; requests: CommitRequest[] };
+}
+
+async function trackReorderData() {
+  const base = await initialData();
+  return buildTimelineData({ ...base.config,
+    tracks: [{ id: 'V1', kind: 'visual', app: { opaque: [null, false] } }, { id: 'A1', kind: 'audio' },
+      { id: 'V2', kind: 'visual' }, { id: 'A4', kind: 'audio' }],
+    clips: [{ id: 'retained', at: 0, hold: 1, clipType: 'hold', track: 'V1' }],
+  }, base.registry, undefined, 1, undefined, base.head);
+}
+
+describe('W48 track-menu reorder native history', () => {
+  it('uses D156 direct receipt, publication-bound Undo and original-command Redo at current revisions', async () => {
+    const initial = await trackReorderData();
+    const requests: CommitRequest[] = []; let proof!: ReturnType<typeof trackReorderSource>;
+    const h = await setup(async request => {
+      requests.push(request); proof = trackReorderSource(initial, requests);
+      return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = renderHook(() => {
+      const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+      useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]); return state;
+    }, { wrapper: overlapHistoryWrapper(h) });
+    const oldOrder = ['V1', 'A1', 'V2', 'A4'].map(id => `parent/track:${id}`);
+    const newOrder = ['A1', 'V2', 'V1', 'A4'].map(id => `parent/track:${id}`);
+    try {
+      act(() => h.result.current.tracks.handleMoveTrack('V1', 'V2'));
+      expect(history.result.current.canUndo).toBe(false);
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 120_000 });
+      const forward = requests[0].change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] };
+      expect(forward.commands).toEqual([{ op: 'timeline.reorder', select: oldOrder[0], resolved: [oldOrder[0]],
+        args: { expected_order: oldOrder, order: newOrder }, expect: { [`${oldOrder[0]}::track_order`]: { state: 'present', value: oldOrder } } }]);
+      const writes = [{ id: oldOrder[0], path: 'track_order', before: { state: 'present', value: oldOrder }, after: { state: 'present', value: newOrder } }];
+      expect(proof.results[0].change.direct_writes).toEqual(writes);
+      expect(proof.results[0].accepted_publication_id).toBe('pub-parent-r2');
+      await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+      act(() => history.result.current.undo());
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 120_000 });
+      expect(requests[1].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null, args: { publication: 'pub-parent-r2',
+        writes: writes.map(write => ({ ...write, before: write.after, after: write.before })) } }] });
+      expect(proof.results[1].canonical_document).toEqual(proof.before);
+      await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+      act(() => history.result.current.redo());
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 120_000 });
+      expect(requests[2].change).toEqual(requests[0].change);
+      expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+      expect(proof.results[2].canonical_document).toEqual(proof.results[0].canonical_document);
+      expect((proof.results[2].canonical_document as unknown as typeof proof.before).parent.config.tracks.map(row => `parent/track:${row.id}`)).toEqual(newOrder);
+      expect(proof.replay).toEqual([true, true, true]); expect(proof.accept_counts).toEqual([1, 1, 1]);
+      expect(h.compatibilityRequests).toEqual([]);
+    } finally {
+      if (process.env.E_W48_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W48_EVIDENCE_DIR, 'caller-sdk-history.json'), JSON.stringify({ requests, proof }, null, 2));
+      history.unmount(); h.unmount();
+    }
+  }, 360_000);
+
+  it.each(['stale', 'no_change'])('%s SDK receipt supplies no native Undo registration', async mode => {
+    const initial = await trackReorderData(); let proof!: ReturnType<typeof trackReorderSource>;
+    const h = await setup(async request => {
+      proof = trackReorderSource(initial, [request], mode);
+      return { acceptedResult: proof.result };
+    }, false, initial);
+    const accepted = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', accepted);
+    const history = renderHook(() => {
+      const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+      useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]); return state;
+    }, { wrapper: overlapHistoryWrapper(h) });
+    try {
+      act(() => {
+        if (mode === 'stale') h.result.current.tracks.handleMoveTrack('V1', 'V2');
+        else h.result.current.applyEdit({ type: 'commands' }, {
+          editCommands: reorderTrackGestureCommands(initial, 'V1', initial.config.tracks!)!,
+        });
+      });
+      await waitFor(() => expect(proof).toBeDefined(), { timeout: 120_000 });
+      expect(mode === 'stale' ? ['conflict', 'refused'] : ['no_change']).toContain(proof.result.status);
+      expect(proof.result.change.direct_writes).toEqual([]);
+      expect(proof.result.accepted_publication_id).toBeNull();
+      if (mode === 'no_change') await waitFor(() => expect(accepted).toHaveBeenCalledWith(expect.anything(), null));
+      else expect(accepted).not.toHaveBeenCalled();
+      expect(history.result.current.canUndo).toBe(false);
+      act(() => history.result.current.undo()); expect(h.requests).toHaveLength(1);
+    } finally {
+      if (process.env.E_W48_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W48_EVIDENCE_DIR, `caller-sdk-${mode}.json`), JSON.stringify(proof, null, 2));
+      history.unmount(); h.unmount();
+    }
+  }, 180_000);
+});
+
+
+describe('W48 malformed direct receipts never register native history', () => {
+  it.each(['missing', 'extra', 'wrong identity', 'wrong order', 'malformed'])('%s stays unavailable for Undo', async kind => {
+    const initial = await trackReorderData();
+    const h = await setup(async request => {
+      const command = (request.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands[0];
+      const row = { id: command.select!, path: 'track_order', before: { state: 'present' as const, value: command.args.expected_order }, after: { state: 'present' as const, value: command.args.order } };
+      const writes = kind === 'missing' ? [] : kind === 'extra' ? [row, { ...row, path: 'muted' }]
+        : kind === 'wrong identity' ? [{ ...row, id: 'parent/track:A1' }]
+          : kind === 'wrong order' ? [{ ...row, before: { state: 'present' as const, value: [...command.args.expected_order as string[]].reverse() } }]
+            : [{ ...row, before: { state: 'absent' as const } }];
+      return { directWrites: writes };
+    }, false, initial);
+    const accepted = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', accepted);
+    const history = renderHook(() => {
+      const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+      useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]); return state;
+    }, { wrapper: overlapHistoryWrapper(h) });
+    try {
+      act(() => h.result.current.tracks.handleMoveTrack('V1', 'V2'));
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+      expect(accepted).not.toHaveBeenCalled(); expect(history.result.current.canUndo).toBe(false);
+      act(() => history.result.current.undo()); expect(h.requests).toHaveLength(1);
+      expect(h.compatibilityRequests).toEqual([]);
+    } finally { history.unmount(); h.unmount(); }
   });
 });

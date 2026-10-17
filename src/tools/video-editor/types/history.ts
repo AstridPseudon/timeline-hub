@@ -17,6 +17,8 @@ export type UndoEntry = {
     inverse?: import('@/integrations/runtime/generated.ts').EditCommand;
     /** Exact original selected-media add only; Redo repeats authority validation. */
     mediaReplay?: import('@/integrations/runtime/generated.ts').EditCommand;
+    /** W48 Redo replays the admitted captured-order command at the current revision. */
+    reorderReplay?: import('@/integrations/runtime/generated.ts').EditCommand;
   };
   snapshot: UndoSnapshot;
   timestamp: string;
