@@ -475,6 +475,17 @@ def test_saved_publish_generated_route_finalizes_restructured_exact_head(tmp_pat
     seed = port.open()
     seed["shots"]["film-shot"]["payload"]["metadata"]["fixture_seed"] = True
     runtime = RuntimeFixture(seed)
+    original_port = runtime.port
+
+    def synthetic_request_port(body):
+        # Adapt this test's generated-client fixture without changing its
+        # persistence/acceptance methods or claiming authenticated Runtime proof.
+        request_port = original_port(body)
+        request_port.evaluated = []
+        request_port.scene_evaluator = lambda candidate: Port.scene_evaluator(request_port, candidate)
+        return request_port
+
+    monkeypatch.setattr(runtime, "port", synthetic_request_port)
     closure = runtime.closure("rev-0")
     shots = {r["revision_id"]: r for r in closure["shot_revisions"]}
     internals = {r["revision_id"]: r for r in closure["internal_timeline_revisions"]}
