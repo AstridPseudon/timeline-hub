@@ -23,9 +23,10 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     def _run() -> int:
         args = build_parser().parse_args(argv)
-        onset, _ = _analysis.features(_analysis.decode(args.audio))
+        audio = _analysis.decode(args.audio)
+        onset, _ = _analysis.features(audio)
         result = _analysis.track_beats(onset)
-        result["duration_s"] = round(len(onset) * _analysis.FRAME_S, 4)
+        result["duration_s"] = round(len(audio) / _analysis.RATE, 4)
         result["audio"] = args.audio.name
         out = args.out.expanduser().resolve()
         out.mkdir(parents=True, exist_ok=True)

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+import wave
+
 import numpy as np
 import pytest
 
@@ -56,6 +59,41 @@ def test_beat_grid_has_four_beat_downbeats_and_phrase_bars() -> None:
 def test_beat_grid_rejects_silence() -> None:
     with pytest.raises(AstridError, match="no beat accents"):
         track_beats(np.zeros(300, np.float32))
+
+
+def test_beats_output_duration_uses_decoded_source_samples(tmp_path, monkeypatch) -> None:
+    from astrid.core.pack.entrypoint import canonical_runtime_entrypoint
+
+    source = tmp_path / "sixteen-seconds.wav"
+    sample_count = 16 * 11025
+    samples = np.arange(sample_count, dtype=np.float64)
+    pcm = (0.25 * np.sin(2 * np.pi * 440 * samples / 11025) * 32767).astype("<i2")
+    with wave.open(str(source), "wb") as output:
+        output.setnchannels(1)
+        output.setsampwidth(2)
+        output.setframerate(11025)
+        output.writeframes(pcm.tobytes())
+
+    with canonical_runtime_entrypoint("music.beats"):
+        from astrid.packs.music.actions.beats import run as beats_run
+
+    audio = beats_run._analysis.decode(source)
+    onset, _ = beats_run._analysis.features(audio)
+    feature_coverage = beats_run._analysis.FFT + (len(onset) - 1) * beats_run._analysis.HOP
+    assert len(audio) == sample_count
+    assert feature_coverage < len(audio)
+    assert len(audio) - feature_coverage == 16
+    assert round(len(onset) * beats_run._analysis.FRAME_S, 4) == 15.836
+
+    monkeypatch.setattr(
+        beats_run._analysis,
+        "track_beats",
+        lambda _onset: {"bpm": 120.0, "beats": [], "downbeats": []},
+    )
+    output_dir = tmp_path / "output"
+    assert beats_run.main(["--audio", str(source), "--out", str(output_dir)]) == 0
+    result = json.loads((output_dir / "beats.json").read_text())
+    assert result["duration_s"] == 16.0
 
 
 def test_music_actions_use_the_existing_v3_action_route_without_dispatch_branches(tmp_path) -> None:
