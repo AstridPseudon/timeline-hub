@@ -69,7 +69,7 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
       const findings: SceneFinding[] = [];
       const unknown = (code: string, reason: string) => {findings.push({code, clipId: clip.id, reason});};
       const element = scene.elements.has(clip.clipType ?? '')
-        || (!!clip.clipType && !['media', 'image', 'video', 'effect-layer'].includes(clip.clipType));
+        || (!!clip.clipType && !['media', 'image', 'video', 'hold', 'effect-layer'].includes(clip.clipType));
       const asset = clip.asset ? scene.assets.assets[clip.asset] : undefined;
       const capability = element ? scene.capabilities.components?.[clip.id] : undefined;
       const support = capability?.frame(remappedFrame(draw.ownFrame, clip.speed));
@@ -78,7 +78,9 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
       let bounds = targetBounds;
       let opacity: number | null = Math.min(1, Math.max(0, track.opacity ?? 1))
         * clipOpacity(clip, draw.ownFrame, scene.fps) * draw.opacity;
-      const absent = support?.presence === 'absent' || clip.clipType === 'effect-layer' || (!element && !asset?.file);
+      // An assetless native layer draws nothing; an unresolved referenced asset
+      // is still unknown and cannot acquire valid absence from missing media.
+      const absent = support?.presence === 'absent' || clip.clipType === 'effect-layer' || (!element && !clip.asset);
       if (element && !absent && (!support || support.presence === 'unknown' || support.opaqueSupport === 'unknown')) unknown('unknown-component-internals', 'Final component alpha and support are undeclared');
       if (clip.entrance !== undefined || clip.exit !== undefined
           || (element && [clip.cropTop, clip.cropBottom, clip.cropLeft, clip.cropRight].some(value => value !== undefined && value !== 0))) {
