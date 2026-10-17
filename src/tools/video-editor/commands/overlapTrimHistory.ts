@@ -16,6 +16,14 @@ export function isOverlapTrimCommand(command: EditCommand | undefined): boolean 
     && ['keep', 'detach', 'adjust-offset', 're-anchor'].includes(String(choice.choice));
 }
 
+function isLeftTrimChoices(value: unknown, primary: string): boolean {
+  return Array.isArray(value) && value.length > 0
+    && value.every((choice) => record(choice) && scoped(choice.target) && choice.target !== primary
+      && choice.target.split('/')[0] === primary.split('/')[0] && choice.edge === 'start'
+      && ['keep', 'detach', 'adjust-offset', 're-anchor'].includes(String(choice.choice)))
+    && new Set(value.map((choice) => choice.target)).size === value.length;
+}
+
 /** Exactly the admitted source-in trim followed by a frame nudge. */
 export function isOverlapTrimBatch(commands: readonly EditCommand[]): boolean {
   if (commands.length === 1) return isOverlapTrimCommand(commands[0]);
@@ -29,10 +37,10 @@ export function isOverlapTrimBatch(commands: readonly EditCommand[]): boolean {
     && nudge.op === 'clip.nudge' && nudge.select === trim.select
     && nudge.resolved?.length === 1 && nudge.resolved[0] === trim.select
     && Object.keys(nudge.args).length === 2 && Number.isSafeInteger(nudge.args.frames) && nudge.args.frames !== 0
-    && isOverlapTrimCommand({ ...nudge, op: 'clip.trim', args: { out_s: trim.args.out_s, relation_choices: nudge.args.relation_choices } });
+    && isLeftTrimChoices(nudge.args.relation_choices, trim.select);
 }
 
-/** Accept only the two clips and direct fields this producer actually records.
+/** Accept only the direct fields this bounded producer actually records.
  * Consequence rows, whole documents and locally synthesized diffs never enter
  * history. Runtime validates the publication and per-write expectations again.
  */
@@ -51,7 +59,7 @@ export function isOverlapTrimInverse(command: EditCommand | undefined): boolean 
   const primaryIds = [...new Set(writes.filter((write) => write.path === (left ? 'from' : 'to')).map((write) => write.id))];
   if (primaryIds.length !== 1 || (left && !primaryIds[0].startsWith('parent/'))) return false;
   const ids = [...new Set(writes.map((write) => write.id))];
-  return ids.length <= 2 && ids.every((id) => id.split('/')[0] === primaryIds[0].split('/')[0])
+  return (left || ids.length <= 2) && ids.every((id) => id.split('/')[0] === primaryIds[0].split('/')[0])
     && new Set(writes.map((write) => `${write.id}::${write.path}`)).size === writes.length
     && writes.every((write) => (write.id === primaryIds[0] ? (left ? ['from', 'at', 'hold'] : ['to', 'hold']) : ['at', 'intent.on', 'intent.fixed_start']).includes(write.path));
 }
@@ -70,7 +78,7 @@ export function overlapTrimInverse(commands: readonly EditCommand[], result: {
   if (!isOverlapTrimInverse(inverse)) return undefined;
   const source = commands[0];
   const allowedIds = source.op === 'clip.trim'
-    ? [source.select, ((commands.length === 2 ? commands[1] : source).args.relation_choices as Array<{ target: string }>)[0].target]
+    ? [source.select, ...((commands.length === 2 ? commands[1] : source).args.relation_choices as Array<{ target: string }>).map((choice) => choice.target)]
     : (source.args.writes as Array<{ id: string }>).map((write) => write.id);
   if (source.op === 'clip.trim') {
     const left = commands.length === 2;
@@ -79,6 +87,13 @@ export function overlapTrimInverse(commands: readonly EditCommand[], result: {
       || writes.some((write) => !(write.id === source.select
         ? (left ? ['from', 'at', 'hold'] : ['to', 'hold'])
         : ['at', 'intent.on', 'intent.fixed_start']).includes(write.path))) return undefined;
+  } else {
+    const sourceWrites = source.args.writes as Array<{ id: string; path: string }>;
+    // A left-trim inverse can only reverse the recorded field identities. It
+    // cannot promote a dependent to primary or acquire another dependent field.
+    if (sourceWrites.some((write) => write.path === 'from')
+      && (inverse.args.writes as Array<{ id: string; path: string }>).some((write) =>
+        !sourceWrites.some((original) => original.id === write.id && original.path === write.path))) return undefined;
   }
   if ((inverse.args.writes as Array<{ id: string }>).some((write) => !allowedIds.includes(write.id))) return undefined;
   validateEditCommand(inverse);

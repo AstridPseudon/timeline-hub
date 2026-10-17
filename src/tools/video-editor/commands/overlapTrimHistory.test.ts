@@ -20,6 +20,69 @@ const writes = () => [
 const receipt = (direct_writes = writes()) => ({ status: 'accepted', accepted_publication_id: 'publication', change: { direct_writes } });
 
 describe('bounded overlap resize history', () => {
+  const multi = () => {
+    const commands = pair();
+    (commands[1].args.relation_choices as unknown[]).push({ target: 'parent/clip:second', edge: 'start', choice: 'detach' });
+    return commands;
+  };
+  const multiWrites = () => [...writes(),
+    { id: 'parent/clip:second', path: 'intent.on', before: present(`clip-start "${primary}" -0.75s +0f`), after: { state: 'absent' } },
+    { id: 'parent/clip:second', path: 'intent.fixed_start', before: { state: 'absent' }, after: present(true) },
+    { id: 'parent/clip:second', path: 'at', before: present(1.25), after: present(1) },
+  ];
+  it('owns multiple exact source targets and their real inverse/redo fields', () => {
+    expect(isOverlapTrimBatch(multi())).toBe(true);
+    const inverse = overlapTrimInverse(multi(), receipt(multiWrites()))!;
+    expect(isOverlapTrimInverse(inverse)).toBe(true);
+    expect(overlapTrimInverse([inverse], receipt(inverse.args.writes as ReturnType<typeof writes>))?.args.writes).toEqual(multiWrites());
+  });
+  it.each(['empty', 'duplicate', 'primary', 'foreign owner', 'unscoped', 'end', 'unknown choice'])('refuses multi choice %s', (kind) => {
+    const commands = multi(); const choices = commands[1].args.relation_choices as Array<Record<string, unknown>>;
+    if (kind === 'empty') choices.length = 0;
+    if (kind === 'duplicate') choices[1].target = dependent;
+    if (kind === 'primary') choices[1].target = primary;
+    if (kind === 'foreign owner') choices[1].target = 'occurrence:other/clip:second';
+    if (kind === 'unscoped') choices[1].target = 'second';
+    if (kind === 'end') choices[1].edge = 'end';
+    if (kind === 'unknown choice') choices[1].choice = 'move';
+    expect(isOverlapTrimBatch(commands)).toBe(false);
+    expect(overlapTrimInverse(commands, receipt(multiWrites()))).toBeUndefined();
+  });
+  it.each(['unchosen same owner', 'foreign owner', 'second primary', 'primary relation', 'dependent hold', 'duplicate', 'document', 'consequence'])('rejects multi inverse %s', (kind) => {
+    const direct = multiWrites();
+    if (kind === 'unchosen same owner') direct[5].id = 'parent/clip:unchosen';
+    if (kind === 'foreign owner') direct[5].id = 'occurrence:other/clip:second';
+    if (kind === 'second primary') direct[5].path = 'from';
+    if (kind === 'primary relation') direct[5].id = primary;
+    if (kind === 'dependent hold') direct[5].path = 'hold';
+    if (kind === 'duplicate') direct.push(structuredClone(direct[5]));
+    if (kind === 'document') direct[5].path = '';
+    if (kind === 'consequence') direct[5] = { ...direct[5], cause: 0 } as never;
+    expect(overlapTrimInverse(multi(), receipt(direct))).toBeUndefined();
+  });
+  it('does not let inverse replay acquire a new dependent identity', () => {
+    const inverse = overlapTrimInverse(multi(), receipt(multiWrites()))!;
+    const direct = structuredClone(inverse.args.writes) as ReturnType<typeof writes>;
+    direct[5].id = 'parent/clip:unchosen';
+    expect(overlapTrimInverse([inverse], receipt(direct))).toBeUndefined();
+  });
+  it.each(['promote dependent', 'new dependent field'])('does not let left inverse replay %s', (kind) => {
+    const inverse = overlapTrimInverse(multi(), receipt(multiWrites()))!;
+    const direct = structuredClone(inverse.args.writes) as ReturnType<typeof writes>;
+    if (kind === 'promote dependent') {
+      direct.slice(0, 3).forEach((write) => { write.id = dependent; });
+      direct.splice(3, 2); // Leave a structurally valid inverse with a different primary.
+    } else direct[3].path = 'at';
+    expect(isOverlapTrimInverse({ op: 'timeline.inverse', select: null, args: { publication: 'p', writes: direct } })).toBe(true);
+    expect(overlapTrimInverse([inverse], receipt(direct))).toBeUndefined();
+  });
+  it('keeps the right-edge single-choice and two-identity limits', () => {
+    const commands = multi();
+    const right = [{ ...commands[0], args: { out_s: 3, relation_choices: commands[1].args.relation_choices } }];
+    expect(isOverlapTrimBatch(right)).toBe(false);
+    const direct = multiWrites().filter((write) => write.path !== 'at'); direct[0].path = 'to';
+    expect(isOverlapTrimInverse({ op: 'timeline.inverse', select: null, args: { publication: 'p', writes: direct } })).toBe(false);
+  });
   it('accepts only the ordered pair and reverses the actual direct writes', () => {
     expect(isOverlapTrimBatch(pair())).toBe(true);
     const inverse = overlapTrimInverse(pair(), receipt())!;
