@@ -374,7 +374,8 @@ class SelectedHostScene:
         if record["runtime_peer"] != dataclasses.asdict(runtime):
             raise ConflictError("authoring endpoint bound another Runtime")
         config = AuthoringSceneConfig(
-            root, host, runtime, record["context"], record["boot_manifest_hash"]
+            root, host, runtime, record["context"], record["boot_manifest_hash"],
+            socket_root=Path(record["socket_root"]) if "socket_root" in record else None,
         )
         if record != config.record or config.boot_manifest_hash != str(
             self.preparer.config["boot_manifest_hash"]
