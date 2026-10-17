@@ -161,7 +161,7 @@ def checkout_summary(parsed: argparse.Namespace, tl: Any, *, existed: bool) -> l
         f"  edit     change a line of that sheet, then  timelines apply {where} FILE",
         f"           or  timelines edit {where} --clip ADDRESS --until MOMENT",
         f'           or  Python: tl = Checkout.draft("{parsed.project}", "{parsed.ref}"); tl.clip("ADDRESS").until("MOMENT"); tl.save()',
-        f"  look     timelines visualize {where} --at MOMENT   (--compare published: before/after)",
+        f"  look     timelines visualize {where} --at MOMENT   (--compare published: same selected cuts, published vs working copy)",
         f'  publish  timelines status {where}   ·   timelines publish {where} -m "what changed"',
     ]
 

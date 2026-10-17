@@ -177,17 +177,30 @@ def test_qualified_show_address_and_bounded_clip_spelling_share_edit_guidance(ca
 
 
 def test_show_sheet_script_frame_index_and_revision_diff_agree_without_rendering(monkeypatch):
+    from astrid.core.timeline.moments import offset_text
     from astrid.core.timeline import scene_answers
-    from astrid.sdk.timeline_cuts import diff_bundles
+    from astrid.sdk.timeline_cuts import diff_bundles, render_cut_table, timecode
     from astrid.sdk.timeline_sheet import render_sheet
+    from astrid.sdk.timeline_views import clip_keyframes
 
     doc = bundle()
+    doc["placements"][0]["duration_ms"] = 4300
+    doc["placements"][1]["placement"]["start_ms"] = 4300
+    doc["placements"][1]["duration_ms"] = 3700
     doc["shots"]["A"]["internal_timeline"]["clips"][0]["id"] = "picture-c01"
+    doc["shots"]["A"]["internal_timeline"]["clips"][0]["hold"] = 4.3
     doc["shots"]["A"]["internal_timeline"]["clips"][0]["app"] = {"cut": "c01", "layer": "picture"}
     doc["shots"]["B"]["internal_timeline"]["clips"][0]["id"] = "picture-c02"
+    doc["shots"]["B"]["internal_timeline"]["clips"][0]["hold"] = 3.7
     doc["shots"]["B"]["internal_timeline"]["clips"][0]["app"] = {"cut": "c02", "layer": "picture"}
+    rocket = doc["shots"]["A"]["internal_timeline"]["clips"][1]
+    rocket["at"] = 37 / FPS
+    rocket["hold"] = 17 / FPS
+    rocket["params"]["keyframes"] = [{"atFrame": 23, "text": "keyframe"}]
+    rocket["app"] = {"cut": "c01", "layer": "rocket", "on": "c01 +37f", "for": 17 / FPS}
     checkout = Checkout(copy.deepcopy(doc))
     table = build_cut_table(doc)
+    table_text = render_cut_table(table)
     sheet = render_sheet(checkout)
     script = render_script(doc)
     index_rows = checkout.cut_index.rows
@@ -224,15 +237,39 @@ def test_show_sheet_script_frame_index_and_revision_diff_agree_without_rendering
         {"width": 1920, "height": 1080},
     )
 
-    assert [row["cut_id"] for row in table["rows"]] == ["c01", "c02"]
+    expected_rows = [("c01", 0.0, 4.3, 0, 129), ("c02", 4.3, 8.0, 129, 240)]
+    expected_timecodes = [(timecode(start, FPS), timecode(end, FPS))
+                          for _cut, start, end, _first, _last in expected_rows]
+    assert [(row["cut_id"], row["start"], row["end"]) for row in table["rows"]] == [
+        row[:3] for row in expected_rows
+    ]
     assert [row["cut_id"] for row in frame_index] == ["c01", "c02"]
-    assert [(row["start"], row["end"]) for row in table["rows"]] == [(0.0, 4.0), (4.0, 8.0)]
+    assert [f"{start:.2f}–{end:.2f} s" for _cut, start, end, _first, _last in expected_rows] == [
+        "0.00–4.30 s", "4.30–8.00 s",
+    ]
+    assert all(f"{start:.2f}–{end:.2f} s" in table_text for _cut, start, end, _first, _last in expected_rows)
+    assert all(f"{start:.2f} ┃ {cut}" in sheet for cut, start, _end, _first, _last in expected_rows)
+    assert "· 4.30 s" in sheet and "· 3.70 s" in sheet
+    assert f"{rocket['at']:.2f}   sprite  rocket" in sheet
+    assert f"on c01 +37f for {offset_text(rocket['app']['for'], FPS).lstrip('+')}" in sheet
     assert all(cut_id in sheet for cut_id in ("c01", "c02"))
-    assert "CUT 1  picture-c01" in script and "CUT 2  picture-c02" in script
-    assert [(row["start_frame"], row["end_frame"]) for row in frame_index] == [(0, 120), (120, 240)]
+    assert all(f"{start:.2f}–{end:.2f} s" in script for _cut, start, end, _first, _last in expected_rows)
+    assert "0.00 ┃ CUT 1  picture-c01" in script and "4.30 ┃ CUT 2  picture-c02" in script
+    keyframe_at, keyframe_label = clip_keyframes(rocket, rocket["at"], FPS)[0]
+    assert f"{keyframe_at:8.2f} ◆ am-sprite {keyframe_label}" in script
+    assert [(row["start_frame"], row["end_frame"]) for row in frame_index] == [
+        (first_frame, last_frame) for _cut, _start, _end, first_frame, last_frame in expected_rows
+    ]
+    assert expected_timecodes == [("00:00:00:00", "00:00:04:09"), ("00:00:04:09", "00:00:08:00")]
+    assert all(timecode in table_text for pair in expected_timecodes for timecode in pair)
     assert revision_diff["changes"][0]["clip_id"] == "picture-c01"
-    assert revision_diff["changes"][0]["before"] == revision_diff["changes"][0]["after"] == [0.0, 4.0]
+    before_range = revision_diff["changes"][0]["before"]
+    after_range = revision_diff["changes"][0]["after"]
+    assert before_range == after_range == [0.0, 4.3]
+    assert [round(value * FPS) for value in before_range] == [0, 129]
+    assert [timecode(value, FPS) for value in before_range] == list(expected_timecodes[0])
     assert [answer["frame"] for answer in evaluated] == [first_middle]
+    assert first_middle == 64
     assert calls and calls[0][1] == (first_middle,)
 
 

@@ -626,12 +626,18 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
     from astrid.packs.timeline.cli import COMMANDS, build_parser
 
     assert tuple(spec.name for spec in COMMANDS) == (
+        "restructure",
+        "purge-plan",
+        "purge-execute",
+        "adopt",
         "checkout",
+        "lift",
         "edit",
         "assets",
         "find",
         "apply",
         "undo",
+        "restore",
         "redo",
         "check",
         "status",
@@ -655,16 +661,27 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "inspect",
         "render",
     )
-    assert all(spec.aliases == () for spec in COMMANDS)
+    aliases = {spec.name: spec.aliases for spec in COMMANDS if spec.aliases}
+    assert aliases == {"undo": ("revert",)}
+    assert next(spec for spec in COMMANDS if spec.name == "visualize").aliases == ()
     # The parser registers the timeline verbs plus the
     # manifest-declared nested ``shots`` mount (task T29).
-    assert _subparser_choices(build_parser(_FakeClient())) == {
+    parser = build_parser(_FakeClient())
+    choices = _subparser_choices(parser)
+    assert choices == {
+        "restructure",
+        "purge-plan",
+        "purge-execute",
+        "adopt",
         "checkout",
+        "lift",
         "edit",
         "assets",
         "find",
         "apply",
         "undo",
+        "revert",
+        "restore",
         "redo",
         "check",
         "status",
@@ -689,6 +706,45 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "render",
         "shots",
     }
+    assert "visualization" not in choices
+    parsed = parser.parse_args(["visualize", "main", "--project", "demo", "--preset", "compare"])
+    assert parsed.preset == "compare"
+    assert parsed.handler.__name__ == "_cmd_visualize"
+
+
+def test_visualize_comparison_routes_are_distinct_in_help_skill_and_parse() -> None:
+    from pathlib import Path
+    from astrid.packs.timeline.cli import build_parser
+
+    parser = build_parser(_FakeClient())
+    visualize = parser._subparsers._group_actions[0].choices["visualize"]
+    help_text = " ".join(visualize.format_help().split())
+    assert "--compare published" in help_text
+    assert "same selected cuts" in help_text
+    assert "--preset compare" in help_text and "changed-cuts page" in help_text
+    assert "--view diff" in help_text and "immutable before/after revision view" in help_text
+
+    published = parser.parse_args([
+        "visualize", "main", "--project", "demo", "--draft", "working", "--compare", "published",
+    ])
+    changed_cuts = parser.parse_args([
+        "visualize", "main", "--project", "demo", "--preset", "compare", "--from", "before-rev", "--to", "after-rev",
+    ])
+    exact_diff = parser.parse_args([
+        "visualize", "main", "--project", "demo", "--view", "diff",
+        "--before-revision-id", "before-rev", "--after-revision-id", "after-rev",
+    ])
+    assert (published.compare_with, published.preset, published.view) == ("published", None, None)
+    assert (changed_cuts.preset, changed_cuts.from_revision, changed_cuts.to_revision) == (
+        "compare", "before-rev", "after-rev",
+    )
+    assert (exact_diff.view, exact_diff.before_revision_id, exact_diff.after_revision_id) == (
+        "diff", "before-rev", "after-rev",
+    )
+
+    skill = (Path(__file__).parents[2] / "astrid/packs/timeline/docs/SKILL.md").read_text(encoding="utf-8")
+    for spelling in ("--compare published", "--preset compare", "--view diff"):
+        assert spelling in skill
 
 
 def test_timelines_render_help_includes_copyable_flat_profile(capsys) -> None:

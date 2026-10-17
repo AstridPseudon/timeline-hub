@@ -2510,8 +2510,10 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
             "contact (overview): ONE overview page of the whole video, one tile per picture cut (capped at 120), "
             "480x270. motion: one cut (--cut N) as a motion sheet you can judge as stills: frame strip, onion skins, "
             "motion curves, word/beat/sfx sync, stillness, lip-sync and findings (<= 60 frames at 480x270). "
-            "diff: immutable revision diff, before/after tiles of only the cuts an edit changed, and the SCOPE "
-            "condition; needs --before-revision-id/--after-revision-id (or --from/--to). "
+            "diff: immutable before/after revision view of the cuts an edit changed, with the SCOPE condition; "
+            "select revisions with --before-revision-id/--after-revision-id (or --from/--to; --to defaults to "
+            "the current head). This view is separate from --preset compare's changed-cuts page and "
+            "--compare published's working-copy comparison. "
             "A full timeline.view/<pack>.<key> from --list-views prints its schema-driven read-only projection."
         ),
     )
@@ -2522,7 +2524,8 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
             "2 fps, 8 per row, up to 30 s); motion (<= 3 s at every 2nd frame, big 640x360 frames, 3 per row, onion "
             "skins + curves); beat (a frame at each word onset, music hit and sfx, labelled); frame (one exact "
             "frame, 1280x720, with --at or --frame); cut (a cut's motion sheet, with --cut); compare (--from REV: "
-            "before/after of what changed). Defaults: no window -> overview, --range -> scan, --at -> frame, "
+            "a before/after page for changed cuts, with --to REV optional and defaulting to the current head; separate "
+            "from --compare published and --view diff). Defaults: no window -> overview, --range -> scan, --at -> frame, "
             "--cut -> cut."
         ),
     )
@@ -2532,7 +2535,7 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
     )
     subparser.add_argument(
         "--after-revision-id", default=None,
-        help="Required with --view diff: exact immutable after revision; no current-head fallback.",
+        help="Exact immutable after revision with --view diff (default: current head when a before revision is supplied).",
     )
     subparser.add_argument("--cut", default=None, help="Motion cut number, picture clip id, or @seconds.")
     subparser.add_argument(
