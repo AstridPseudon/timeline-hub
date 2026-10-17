@@ -1,3 +1,4 @@
+import { isFadeHistoryBatch, isFadeHistoryInverse } from '../commands/fadeHistory.ts';
 import { isTrackHistoryBatch, isTrackHistoryInverse } from '../commands/trackHistory.ts';
 import { isSelectedMediaCreation, isClipStructureBatch, isClipStructureInverse } from '../commands/clipStructureHistory.ts';
 import { isClipPlacementBatch, isClipPlacementInverse } from '../commands/clipPlacementHistory.ts';
@@ -250,7 +251,7 @@ export function useTimelineHistory({
       syncHistoryState();
       return;
     }
-    if (!isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse) && !isTiedHoldExpansionInverse(inverse) && !isTranscriptCaptionInverse(inverse) && !isClipPlacementInverse(inverse) && !isClipStructureInverse(inverse) && !isTrackHistoryInverse(inverse)) return;
+    if (!isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse) && !isTiedHoldExpansionInverse(inverse) && !isTranscriptCaptionInverse(inverse) && !isClipPlacementInverse(inverse) && !isClipStructureInverse(inverse) && !isTrackHistoryInverse(inverse) && !isFadeHistoryInverse(inverse)) return;
     for (const entry of [...undoStackRef.current, ...redoStackRef.current]) {
       if (entry.nativeRegistration?.owner === owner) entry.nativeRegistration.inverse = structuredClone(inverse);
     }
@@ -335,7 +336,7 @@ export function useTimelineHistory({
     // Never turn an unacknowledged edit or missing receipt into a snapshot publication.
     const inverse = entry.nativeRegistration?.inverse;
     if (entry.nativeRegistration && !inverse) return false;
-    const nextData = entry.nativeRegistration && (isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse) || isTranscriptCaptionInverse(inverse) || isClipPlacementInverse(inverse) || isClipStructureInverse(inverse) || isTrackHistoryInverse(inverse))
+    const nextData = entry.nativeRegistration && (isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse) || isTranscriptCaptionInverse(inverse) || isClipPlacementInverse(inverse) || isClipStructureInverse(inverse) || isTrackHistoryInverse(inverse) || isFadeHistoryInverse(inverse))
       ? { ...current } : preserveUploadingClips(current, applyHistoryEntry(current, entry, direction));
     const mediaReplay = entry.nativeRegistration?.mediaReplay;
     const historyCommands = direction === 'redo' && mediaReplay ? [structuredClone(mediaReplay)] : inverse ? [inverse] : undefined;
@@ -456,7 +457,7 @@ export function useTimelineHistory({
     const nativeRelation = (entry: UndoEntry) => {
       const nativeCommands = entry.nativeRegistration && gestureCommandsFor(entry.nativeRegistration.owner);
       const command = nativeCommands?.[0];
-      return isTrackHistoryBatch(nativeCommands ?? []) || isTrackHistoryInverse(command) || isTrackHistoryInverse(entry.nativeRegistration?.inverse) || isClipStructureBatch(nativeCommands ?? []) || isClipStructureInverse(command) || isClipStructureInverse(entry.nativeRegistration?.inverse) || isClipPlacementBatch(nativeCommands ?? []) || isClipPlacementInverse(command) || isOverlapTrimBatch(nativeCommands ?? []) || isOverlapTrimInverse(command)
+      return isFadeHistoryBatch(nativeCommands ?? []) || isFadeHistoryInverse(command) || isFadeHistoryInverse(entry.nativeRegistration?.inverse) || isTrackHistoryBatch(nativeCommands ?? []) || isTrackHistoryInverse(command) || isTrackHistoryInverse(entry.nativeRegistration?.inverse) || isClipStructureBatch(nativeCommands ?? []) || isClipStructureInverse(command) || isClipStructureInverse(entry.nativeRegistration?.inverse) || isClipPlacementBatch(nativeCommands ?? []) || isClipPlacementInverse(command) || isOverlapTrimBatch(nativeCommands ?? []) || isOverlapTrimInverse(command)
         || isTiedHoldExpansionCommand(command) || isTiedHoldExpansionInverse(command)
         || isTranscriptCaptionBatch(nativeCommands ?? []) || isTranscriptCaptionInverse(command)
         || isTranscriptCaptionInverse(entry.nativeRegistration?.inverse) || isClipPlacementInverse(entry.nativeRegistration?.inverse);

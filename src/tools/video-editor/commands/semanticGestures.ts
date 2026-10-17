@@ -1,3 +1,4 @@
+import { isFadeHistoryInverse } from './fadeHistory.ts';
 import { isTrackHistoryInverse } from './trackHistory.ts';
 import { isClipStructureInverse } from './clipStructureHistory.ts';
 import { isClipPlacementInverse, isShotGroupTransferBatch } from './clipPlacementHistory.ts';
@@ -103,7 +104,7 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
   let parent = false;
   const transferBatch = isShotGroupTransferBatch(commands);
   const aggregateBatch = commands.length > 0 && commands.every((command) =>
-    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command));
+    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command) || isFadeHistoryInverse(command));
   const captionTarget = isTranscriptCaptionBatch(commands) ? transcriptBindTarget(commands[0]) : undefined;
   // Routing reads the handler's explicit args.target. The submitted registered
   // timeline-level bind retains select:null; this local view only captures custody.
@@ -198,6 +199,8 @@ export type FadeGestureArgs = {
 
 export type CompositeGestureResult = {
   handled: boolean;
+  /** Malformed/stale fade input must not become a compatibility edit. */
+  refused?: true;
   commands?: EditCommand[];
   localPatch?: ClipEditorPatch;
 };
@@ -471,17 +474,17 @@ export function compositeEffectGestureCommands(
       (args.clear ??= []).push(arg);
     } else if (fadeValue?.type === expectedType) {
       if (typeof fadeValue.duration !== 'number' || !Number.isFinite(fadeValue.duration) || fadeValue.duration < 0) {
-        return { handled: true };
+        return { handled: true, refused: true };
       }
       args[arg] = fadeValue.duration;
     } else if (typeof value === 'object' && value !== null && (value as { type?: unknown }).type === expectedType) {
-      return { handled: true };
+      return { handled: true, refused: true };
     } else {
       return { handled: false };
     }
   }
   const commandValue = fadeGestureCommand(data, id, args);
-  if (!commandValue) return { handled: true };
+  if (!commandValue) return Array.isArray(clip.effects) ? { handled: true } : { handled: true, refused: true };
   const effects = clip.effects;
   const effectValues: Record<string, unknown> = effects && !Array.isArray(effects)
     ? structuredClone(effects)
