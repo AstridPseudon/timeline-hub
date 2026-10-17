@@ -7,11 +7,21 @@
 // (smoke fixture asserts allowed-arrays match); the package consumers only
 // need the runtime shape used by the composition.
 
+/** Existing App seconds-key shape; opaque per-key siblings survive projection. */
+export type ClipKeyframe = {
+  time: number;
+  value: number | string | boolean;
+  interpolation: 'linear' | 'hold';
+  easing?: string;
+  [key: string]: unknown;
+};
+
 export type TimelineClip = {
   id: string;
   at: number;
   /** Key-time zero in seconds relative to clip start; independent of media trim. */
   keyframeOrigin?: number;
+  keyframes?: Record<string, ClipKeyframe[]>;
   /** Local renderer mirror; canonical schema/projection remains schema-owned. */
   modifiers?: readonly import('./modifier-types').ClipModifierReference[];
   track: string;

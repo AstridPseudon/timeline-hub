@@ -5,7 +5,8 @@ import type {ModifierRegistry} from './modifier-types';
 export const MODIFIER_REGISTRY: ModifierRegistry = Object.freeze({});
 
 export {composeModifiers, declareModifier, ModifierAdmissionError} from './lib/modifiers';
+export {modifierParameterAddress, parseModifierParameterAddress, resolveModifierKeyframes, hasModifierKeyframes} from './lib/modifier-keyframes';
 export type {
   ClipModifierReference, ModifierBounds, ModifierContext, ModifierDeclaration,
-  ModifierDefinition, ModifierFinding, ModifierProps, ModifierRegistry,
+  ModifierDefinition, ModifierFinding, ModifierProps, ModifierRegistry, ModifierParameterBinding,
 } from './modifier-types';
