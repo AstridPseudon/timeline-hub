@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://reigh.ai/contracts/reigh-extension.schema.json",
+  "$id": "https://astrid.haus/contracts/reigh-extension.schema.json",
   "title": "Reigh Extension Manifest",
   "description": "Frozen manifest contract for Reigh editor extensions. Validates contribution kind enums, discriminated shapes, placement rules, and rejects unknown top-level collections.",
   "type": "object",

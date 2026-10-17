@@ -5,8 +5,6 @@ export const PREVIEW_ALLOWED_HOSTS = [
   "reigh-production.up.railway.app",
   "astrid.haus",
   "www.astrid.haus",
-  "reigh.art",
-  "www.reigh.art",
 ] as const;
 
 export function resolveVitePort(rawPort: string | undefined): number {

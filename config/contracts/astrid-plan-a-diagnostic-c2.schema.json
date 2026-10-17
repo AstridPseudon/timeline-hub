@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://reigh.app/contracts/astrid-plan-a-diagnostic-c2.schema.json",
+  "$id": "https://astrid.haus/contracts/astrid-plan-a-diagnostic-c2.schema.json",
   "title": "Astrid Plan A C2 diagnostic projection",
   "type": "object",
   "additionalProperties": false,
