@@ -41,7 +41,7 @@ TRUTH_PATH = FIXTURE_DIR / "desert_truth.json"
 
 ASSEMBLY_SHA256 = "87fd29d84ec0cf837dd1534f50e2c7a683a51a8ffa93ef50706c6585739e34ef"
 REGISTRY_SHA256 = "514e6020af06a289764f6d1ab282619f49b0021e45a0bfa48034a0cc7106fb37"
-HEAD_LAST_HASH = "6f6de92702ef683d44b6bd52da32383f34488ea44db4113cadf95ec60ef8535d"
+HEAD_LAST_HASH = "7c90f004cb68f81b72f9b7bf16c598e7dcc0fe0ab02566fe7873da8ebf5f98bc"
 
 # JSON files that must parse whole; JSONL files parse line-by-line.
 JSON_FILES = ("assembly.json", "assembly.head.json", "registry.json")
@@ -96,6 +96,25 @@ def test_head_last_hash_matches_slice() -> None:
     assert head["last_hash"] == HEAD_LAST_HASH, (
         "assembly.head.json last_hash drifted from frozen head_last_hash"
     )
+
+
+def test_every_event_hash_and_prev_hash_form_a_chain_from_genesis() -> None:
+    from astrid.core.timeline.events.schema import TimelineEvent, with_event_hash
+
+    jsonl_path = SLICE_DIR / "assembly.jsonl"
+    previous_hash = None
+    with jsonl_path.open(encoding="utf-8") as fh:
+        for line_no, line in enumerate(fh, start=1):
+            assert line.strip(), f"blank event line at {line_no}"
+            event = TimelineEvent.from_dict(json.loads(line))
+            assert event.prev_hash == previous_hash, (
+                f"event line {line_no} prev_hash does not match the previous event"
+            )
+            recomputed = with_event_hash(event, prev_hash=previous_hash)
+            assert event.hash == recomputed.hash, (
+                f"event line {line_no} hash does not match its canonical content"
+            )
+            previous_hash = event.hash
 
 
 @pytest.mark.parametrize("name", JSON_FILES)
