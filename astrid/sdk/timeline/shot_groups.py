@@ -155,6 +155,9 @@ def snapshot_rows(row):
     if any(not isinstance(v, dict) or not isinstance(v.get("authoring"), dict)
            or set(v["authoring"]) != {"selector", "clip", "order"} for v in values):
         raise commands.CommandError("snapshot lacks lossless authored provenance")
+    if any(not isinstance(v["authoring"]["selector"], str)
+           or not isinstance(v["authoring"]["clip"], dict) for v in values):
+        raise commands.CommandError("snapshot requires an exact selector and authored clip")
     ids = [v["authoring"]["selector"] for v in values]
     if len(ids) != len(set(ids)):
         raise commands.CommandError("duplicate dormant snapshot identity")
@@ -179,6 +182,42 @@ def reservations(tl):
     return values
 
 
+def transfer_inputs(tl, row, target, members):
+    """Validate one existing row's ownership; members is its requested permutation."""
+    values, scope, track = selectors(tl, row)
+    if row.get("mode", "images") not in {"images", "video"} or row["trackId"] != track:
+        raise commands.CommandError("transfer requires an exact group key matching active ownership")
+    if (row.get("ownerOccurrenceId") is not None and
+            (scope == "parent" or row["ownerOccurrenceId"] != scope.removeprefix("occurrence:"))):
+        raise commands.CommandError("transfer group has a conflicting occurrence owner")
+    if (not isinstance(members, list) or any(not isinstance(v, str) for v in members)
+            or len(members) != len(values) or set(members) != set(values)):
+        raise commands.CommandError("transfer members must be the exact ordered scoped member permutation")
+    if not isinstance(target, str) or not target.startswith(scope + "/track:"):
+        raise commands.CommandError("transfer target requires an exact track in the member owner scope")
+    destination = commands.track_owner(tl, target)
+    source = commands.track_owner(tl, scope + "/track:" + track)
+    if destination.id == track or any(t.data.get("kind") != "visual" for t in (source, destination)):
+        raise commands.CommandError("transfer requires a different canonical visual track")
+    if row.get("mode") == "video" and len(values) != 1:
+        raise commands.CommandError("video transfer requires exactly one active member")
+    # Retained images stay dormant; only their explicitly authored track fields
+    # move. Snapshot identities/order/opaque siblings are never reconstructed.
+    if ("imageClipSnapshot" in row and row["imageClipSnapshot"] != []) or row.get("mode") == "video":
+        states = commands.entity_states(tl)
+        for snap in snapshot_rows(row):
+            authored = snap["authoring"]
+            clip, selector = authored["clip"], authored["selector"]
+            if (not isinstance(selector, str) or selector != scope + "/clip:" + str(clip.get("id"))
+                    or clip.get("track") != track or ("track" in snap and snap["track"] != track)
+                    or (selector in states and selector not in values)
+                    or (row.get("mode") == "video" and selector in states)):
+                raise commands.CommandError("retained snapshot has changed or ambiguous track/member ownership")
+            if reservations(tl).count(selector) != 1:
+                raise commands.CommandError("ambiguous retained snapshot reservation")
+    return values, scope, destination.id
+
+
 def guard(tl, call):
     """Capture exact selected reads before mutation; replay checks originals."""
     args = call.args
@@ -199,6 +238,8 @@ def guard(tl, call):
             raise commands.CommandError("selected shot group is absent")
         values, scope, track = selectors(tl, row)
     destination = snapshot_track(tl, row, scope) if intent == "images" else track
+    if intent == "transfer":
+        _, _, destination = transfer_inputs(tl, row, args.get("target"), args.get("members"))
     target = dict(group, trackId=destination)
     if target != group and any(identity({k: r[k] for k in group}) == identity(target) for r in rows):
         raise commands.CommandError("corrected shot group identity collides")
@@ -208,6 +249,8 @@ def guard(tl, call):
         expected.setdefault(entity + "::" + path, commands.state_at(states, entity, path))
     capture(sid)
     capture(identity(target))
+    if intent == "transfer":
+        capture(sid, "group_order")
     capture(scope + "/track:" + track)
     capture(scope + "/track:" + destination)
     if group["trackId"] != track:
@@ -272,16 +315,32 @@ def _media_entry(media, record):
                 authoring_metadata={k: copy.deepcopy(record[k]) for k in ("generation", "variant")})
 
 
-def set_group(self, *, group, intent, members=None, name=None, media=None, identities=None, media_record=None):
+def set_group(self, *, group, intent, members=None, name=None, media=None, identities=None, media_record=None, target=None):
     group = key(group)
     allowed = {"pin": {"members", "name"}, "video": {"media", "identities", "media_record"},
-               "replace-video": {"media", "media_record"}, "images": set()}
-    supplied = {k for k, v in dict(members=members, name=name, media=media, identities=identities, media_record=media_record).items() if v is not None}
+               "replace-video": {"media", "media_record"}, "images": set(), "transfer": {"target", "members"}}
+    supplied = {k for k, v in dict(members=members, name=name, media=media, identities=identities, media_record=media_record, target=target).items() if v is not None}
     if not isinstance(intent, str) or intent not in allowed or supplied - allowed[intent]:
         raise commands.CommandError("shot-group.set has closed intent-specific arguments")
     rows = groups(self)
     previous = next((r for r in rows if identity({k: r[k] for k in group}) == identity(group)), None)
     row = copy.deepcopy(previous or group)
+    if intent == "transfer":
+        values, _, destination = transfer_inputs(self, row, target, members)
+        row["trackId"] = destination
+        original_ids = dict(zip(values, row["clipIds"]))
+        row["clipIds"] = [original_ids[value] for value in members]
+        if "memberSelectors" in row:
+            row["memberSelectors"] = list(members)
+        for value in members:
+            member(self, value).data["track"] = destination
+        for snap in row.get("imageClipSnapshot", []):
+            snap["authoring"]["clip"]["track"] = destination
+            if "track" in snap:
+                snap["track"] = destination
+        _store(self, group, row)
+        self._refresh()
+        return self
     if intent == "pin":
         if previous and previous.get("mode") == "video":
             raise commands.CommandError("pin cannot discard a retained video snapshot")
@@ -389,6 +448,12 @@ def remove_group(self, *, group, remove_clip_ids):
 
 
 def direct_paths(entry, args, before, after):
+    if args.get("intent") == "transfer":
+        # The admitted intent owns only these fields. Geometry/aggregate arrays
+        # remain compiler consequences, rather than a diff-based group writer.
+        target = dict(args["group"], trackId=args["target"].split("/track:", 1)[1])
+        return {(identity(args["group"]), ""), (identity(target), ""),
+                *((value, "track") for value in args["members"])}
     changes = set(commands.changed_paths(before, after))
     # Exact aggregate row, explicit member roots, and registry entries own inverse.
     result = {(sid, "") for sid in set(before) | set(after) if sid.startswith(PREFIX) and before.get(sid) != after.get(sid)}
