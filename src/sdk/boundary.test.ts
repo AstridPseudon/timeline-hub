@@ -585,12 +585,14 @@ describe('ExtensionContext — no internal members exposed', () => {
 
   // ---- creative stubs are present but no real internals --------------------
 
-  it('creative has exactly 12 reserved stubs, all frozen', () => {
+  it('creative has exactly 14 reserved stubs, all frozen', () => {
     const creativeKeys = Object.keys(ctx.creative).sort();
     expect(creativeKeys).toEqual([
       'assets',
+      'documents',
       'export',
       'materials',
+      'pendingWork',
       'project',
       'projectObjects',
       'proposals',

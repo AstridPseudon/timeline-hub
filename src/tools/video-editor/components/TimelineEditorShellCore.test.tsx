@@ -139,6 +139,8 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
       );
     },
     useTimelineStoreApi: () => ({ getState: () => ({ playback: __playback }) }),
+    // useDataLanes reads the provider-scoped item host through this; no store means no host.
+    useTimelineStoreApiSafe: () => null,
     useProposalRuntimeFromStoreSafe: () => null,
     useProposalImportDiagnosticsFromStoreSafe: () => null,
   });

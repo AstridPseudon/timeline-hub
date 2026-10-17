@@ -61,6 +61,8 @@ import {
   projectMaturityCapabilities,
   readHostGenerationProvenance,
   shaderMissingMaterializerBlockerMessage,
+  sourceToTimelineTime,
+  timelineToSourceTime,
 } from '@reigh/editor-sdk';
 import type {
   ReighExtension,
@@ -135,6 +137,13 @@ import type {
   TimelineClipOutputFingerprintInput,
   TimelineConfigSignatureInput,
   DataLaneActionDescriptor,
+  DataKindSourceItem,
+  CreativeAssetReadSurface,
+  CreativeDocumentPage,
+  CreativeProjectDocument,
+  ExtensionPendingWorkService,
+  ExtensionPendingWorkState,
+  ProjectDocumentSurface,
   TimelineVersionConflictError,
   TimelineViewSnapshot,
   TimelineViewStore,
@@ -227,6 +236,43 @@ export const exampleDataLaneAction: DataLaneActionDescriptor = {
     void items;
   },
 };
+
+/** Demonstrate a source item in its native coordinates (before clip occurrences are derived). */
+export const exampleDataKindSourceItem: DataKindSourceItem = {
+  id: 'coverage-source-item',
+  shape: 'interval',
+  domain: 'source_seconds',
+  extent: { start: 1, end: 3 },
+  schemaRef: 'schema://example/coverage/v1',
+  payload: { text: 'Example payload' },
+  sourceArtifactRef: { assetId: 'asset-1' },
+  provenance: { adapterId: 'com.example.coverage', adapterVersion: '1.0.0' },
+};
+
+/**
+ * Generic editor surfaces: project documents, pending-work reporting, registry
+ * asset reads and source/timeline time arithmetic. Compile-time reference only;
+ * the coverage extension never calls this against a live context.
+ */
+export async function demonstrateGenericEditorSurfaces(ctx: ExtensionContext): Promise<number> {
+  const documents: ProjectDocumentSurface = ctx.creative.documents;
+  const created: CreativeProjectDocument = await documents.create('coverage-note', { text: 'hello' });
+  const updated: CreativeProjectDocument = await documents.update(created.document_id, { text: 'hi' }, created.version);
+  const page: CreativeDocumentPage = await documents.list('coverage-note', { limit: 10 });
+  const stopListening = documents.onChange(() => undefined);
+  stopListening();
+
+  const pendingWork: ExtensionPendingWorkService = ctx.creative.pendingWork;
+  const pendingState: ExtensionPendingWorkState = { writing: false, unsaved: page.items.length > 0 };
+  pendingWork.report(pendingState);
+
+  const assets: CreativeAssetReadSurface = ctx.creative.assets;
+  const assetMedia = assets.get('asset-1')?.media_id;
+  void [updated, assetMedia];
+
+  const clip = { at: 12, from: 4, speed: 2 };
+  return timelineToSourceTime(clip, sourceToTimelineTime(clip, exampleDataKindSourceItem.extent.start));
+}
 
 // ---------------------------------------------------------------------------
 // Extension definition

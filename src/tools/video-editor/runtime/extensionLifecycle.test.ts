@@ -2019,8 +2019,10 @@ describe('ExtensionLifecycle — creative context internal API boundary', () => 
     const creativeKeys = Object.keys(ctx.creative).sort();
     expect(creativeKeys).toEqual([
       'assets',
+      'documents',
       'export',
       'materials',
+      'pendingWork',
       'project',
       'projectObjects',
       'proposals',
