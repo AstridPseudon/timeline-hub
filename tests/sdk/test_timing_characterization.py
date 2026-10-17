@@ -17,6 +17,7 @@ from astrid.core.timeline.music_edit import plan_keep_end
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline.doc import _split_audio
 from astrid.sdk.timeline.model import retime_scope
+from astrid.sdk.timeline.music_beds import collection
 from astrid.sdk.timeline.reflow import _bed_clusters
 from astrid.sdk.timeline_editing import quantize_time
 
@@ -309,3 +310,68 @@ def test_split_music_piece_ids_are_unique_across_seams_in_one_retime():
     ids = [c.id for c in _music(tl)]
     assert len(ids) > 1
     assert len(ids) == len(set(ids))
+
+
+def test_equal_music_deltas_at_distinct_locations_preserve_seams_and_ordinary_audio():
+    """Two equal openings in one tiny-fixture bed retain their separate locations."""
+    def edited(policy):
+        tl = _tiny(full_music=True)
+        tl.music = policy
+        with retime_scope(tl):
+            tl.insert_time(1.0, 0.5)
+            tl.insert_time(6.0, 0.5)  # five seconds apart; the fixture's bar is two
+        return tl
+
+    def clip_bytes(tl, *, music=False, audio_only=False):
+        return json.dumps([
+            (c.shot_id, c.data) for c in tl.clips(audio=True)
+            if (c.track == "music") == music and (not audio_only or c.is_audio)
+        ], sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+    tl, independent, control = edited("keep_end"), edited("keep_end"), edited("plays_on")
+    owner = "occurrence:occ-A/clip:a-music"
+    basis = [{"at_s": 1.0, "delta_s": 0.5}, {"at_s": 6.0, "delta_s": 0.5}]
+    assert collection(tl)[owner]["ripple_basis"] == basis
+    pieces = _music(tl)
+    assert len(pieces) == 3
+    assert [(c.start, c.end, c.data["from"], c.data["to"]) for c in pieces] == [
+        (0.0, 1.125, 0.0, 1.125),
+        (0.875, 6.125, 0.375, 5.625),
+        (5.875, 9.0, 4.875, 8.0),
+    ]
+    assert pieces[-1].end == tl.duration == control.duration == 9.0
+    for first, second in zip(pieces, pieces[1:]):
+        assert first.end - second.start == 0.25
+        assert first.data["to"] - second.data["from"] - 0.25 == 0.5
+        assert first.data["params"]["fadeOut"] == second.data["params"]["fadeIn"] == 0.25
+    seam_notes = [n for n in tl.notes if n.startswith("music a-music:")]
+    assert len(seam_notes) == 2
+    assert "at 1.00 s, repeats 0.50 s" in seam_notes[0]
+    assert "at 6.00 s, repeats 0.50 s" in seam_notes[1]
+
+    ids = [c.id for c in pieces]
+    assert len(set(ids)) == 3
+    assert ids == collection(tl)[owner]["outputs"] == [c.id for c in _music(independent)]
+    materialized = clip_bytes(tl, music=True)
+    assert materialized == clip_bytes(independent, music=True)
+    assert len(_music(control)) == 1
+    assert _music(control)[0].data["to"] == 8.0
+
+    # Include every ordinary clip and explicitly exercise the split voice audio.
+    audio_ids = {c.id for c in tl.clips(audio=True) if c.is_audio and c.track != "music"}
+    assert {"a-vo", "a-vo~1000", "b-vo"} <= audio_ids
+    ordinary, audio = clip_bytes(tl), clip_bytes(tl, audio_only=True)
+    assert ordinary == clip_bytes(control)
+    assert audio == clip_bytes(control, audio_only=True)
+    authored = json.dumps(tl.document(), sort_keys=True, separators=(",", ":")).encode("utf-8")
+    for _ in range(2):
+        for result in (tl, control):
+            result.resolve()
+            result.reflow()
+        assert collection(tl)[owner]["ripple_basis"] == basis
+        assert collection(tl)[owner]["outputs"] == ids == [c.id for c in _music(tl)]
+        assert clip_bytes(tl, music=True) == materialized
+        assert [n for n in tl.notes if n.startswith("music a-music:")] == seam_notes
+        assert json.dumps(tl.document(), sort_keys=True, separators=(",", ":")).encode("utf-8") == authored
+        assert ordinary == clip_bytes(tl) == clip_bytes(control)
+        assert audio == clip_bytes(tl, audio_only=True) == clip_bytes(control, audio_only=True)
