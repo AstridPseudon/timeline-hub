@@ -378,7 +378,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 broker = RoleBoundCustodyBroker(role="host", identity_provider=default_process_identity,
                     ledger_root=scope / "host-admission", authority_scope_root=scope,
                     authority_journal=scope / "admissions.jsonl", owner_epoch=epoch, timeout=min(self.timeout_seconds, 60),
-                    **({"retain_channel": True} if renderer is not None else {}))
+                    **({"retain_channel": True, "defer_accept": True} if renderer is not None else {}))
                 hosted = broker.create_hosted_launch(request)
                 parent, activation = hosted.parents['control'], hosted.parents['activation']
                 control_child, activation_child = hosted.children['control'], hosted.children['activation']
@@ -438,6 +438,10 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     inspection_owner = _CommandInventoryOwner(context, inspection.policy(environment, str(profile.support_root)))
                     environment["ASTRID_COMMAND_CUSTODY_ENABLED"] = "1"
 
+                if renderer is not None:
+                    # Installed-source verification, one-shot claim and fixed
+                    # inspection setup precede the existing handshake budget.
+                    broker.start_accept()
                 process = subprocess.Popen(custody_wrapper_argv(str(profile.host_executable)), cwd=str(profile.support_root),
                     env=environment, stdin=subprocess.DEVNULL, close_fds=True,
                     pass_fds=hosted.pass_fds)

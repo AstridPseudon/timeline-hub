@@ -622,6 +622,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         def verify(self,**kwargs):captures['argv']=kwargs['host_argv'];captures['environment']=kwargs['environment'];return object()
         def claim(self,proof,**kwargs):
             captures['binding_fd']=kwargs['binding_fd']
+            captures['claimed']=True
             return [kwargs['host_argv'][0],'-I','-S',str(verified_host_launch.__file__),'--binding-fd',str(kwargs['binding_fd'])],b'{"canonical":true}'
         def bind_child(self,proof,**kwargs):assert kwargs['child'] is original
         def verify_child(self,proof,**kwargs):assert kwargs['child'] is original
@@ -633,6 +634,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     class Broker:
         def __init__(self,**kwargs):
             assert kwargs['role']=='host'
+            assert kwargs.get('defer_accept',False) is renderer
             descriptor=custody._open_authority_scope_lock(kwargs['authority_scope_root'])
             os.close(descriptor)
             self.role_authority=SimpleNamespace(reference=lambda:{'role':'host'})
@@ -642,6 +644,9 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
             from banodoco_local.hosted_contract import HostedLaunch
             return HostedLaunch(self,preparation)
         def child_environment(self,argv,**kwargs):return {}
+        def start_accept(self):
+            assert captures.get('claimed') and captures.get('inspection_prepared')
+            captures['accept_started']=True
         def wait_until_sealed(self):captures["sealed"]=True
         def close_child_pipes(self):pass
         def release_suspended_launch(self,**kwargs):
@@ -652,7 +657,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         import astrid.core.execution.custody_broker as inspection_custody
         class Inspection:
             def __init__(self,*args,**kwargs):pass
-            def policy(self,*args):return {}
+            def policy(self,*args):captures['inspection_prepared']=True;return {}
         class InspectionOwner:
             def __init__(self,context,policy):
                 self.custody=context;self.released=threading.Event()
@@ -662,6 +667,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         monkeypatch.setattr(inspection_custody,"RoleBoundCustodyBroker",Broker)
         monkeypatch.setattr(inspection_custody,"default_process_identity",lambda pid:{"pid":os.getpid(),"uid":os.getuid(),"parent_pid":1,"birth_id":"owner"})
     def popen(argv,**kwargs):
+        if renderer: assert captures.get('accept_started')
         descriptor=os.dup(captures['binding_fd'])
         def read_binding():
             data=b''
