@@ -8,8 +8,10 @@
   "sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1",
   "role_extension": {
     "property": "TimelineConfig.tracks[].role",
-    "values": ["output", "source"],
-    "source_receipt": "receiving/coordination/evidence/C/reigh-main-role-slice-20261009/integration-receipt.json",
+    "values": [
+      "output",
+      "source"
+    ],
     "source_commit": "3bd1d019715de79cd54aa208cf26de10427c29d5",
     "source_artifact": "vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json",
     "source_artifact_sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
