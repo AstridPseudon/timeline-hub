@@ -315,7 +315,12 @@ export async function runTranscriptCaptionFoundry(
     throw new Error('Transcript consumer refused: authenticated project host is not joined.');
   }
 
-  const selection = validateSelection(await host.selectTranscript(items));
+  const selectTranscript = host.selectTranscript;
+  const documents = host.documents;
+  const readTranscript = documents.read;
+  const buildCaptionCommands = host.buildCaptionCommands;
+
+  const selection = validateSelection(await selectTranscript.call(host, items));
   let submissions = submittedSelections.get(host);
   if (!submissions) {
     submissions = new WeakMap();
@@ -327,7 +332,7 @@ export async function runTranscriptCaptionFoundry(
     // Once submitted, only that path owns retries: an advanced source document
     // or an unavailable reader must not invalidate the already-pinned batch.
     submission = Promise.resolve().then(async () => {
-      const matches = await host.documents.read({
+      const matches = await readTranscript.call(documents, {
         project_id: selection.project_id,
         kind: TRANSCRIPT_DOCUMENT_KIND,
         document: selection.document,
@@ -342,7 +347,7 @@ export async function runTranscriptCaptionFoundry(
 
       const transcript = matches[0]!;
       const binding = validatePinnedRead(transcript, selection);
-      const captionBatch = host.buildCaptionCommands({ selection, transcript, binding });
+      const captionBatch = buildCaptionCommands.call(host, { selection, transcript, binding });
       const captionCommands = captionBatch.commands;
       if (!Array.isArray(captionCommands) || captionCommands.length === 0 || captionCommands.some((command) => (
         command.op === 'transcript.bind' || command.op.startsWith('transcript.')

@@ -71,6 +71,8 @@ export type TimelineDomainIssueCode =
   | 'astrid_format_version_unsupported'
   | 'astrid_music_beds_version_mismatch'
   | 'astrid_music_beds_malformed'
+  | 'astrid_bed_version_mismatch'
+  | 'astrid_bed_malformed'
   | 'shader_scope_occupied'
   | 'track_scale_positions_baked';
 
