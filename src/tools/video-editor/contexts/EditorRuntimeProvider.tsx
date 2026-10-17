@@ -486,7 +486,6 @@ function EditorRuntimeProviderInstance({
       : undefined,
     recordProcessResultAttach: enableMutationServices ? assembly.recordProcessResultAttach : undefined,
     timelineOverlaysEnabled,
-    timelineEditability,
     timelineViewStore: assembly.timelineViewStoreRef.current ?? undefined,
   }), [
     elementHost,
