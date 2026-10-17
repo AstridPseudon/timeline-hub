@@ -89,7 +89,7 @@ class RuntimeCommitService:
                     raise _Refusal("Document reconciliation and verified draft journal commands require the adapt-save producer")
                 base = self._load_revision(runtime_port, request, request["base_revision_id"])
                 occurrence = self._scope_occurrence(request, base)
-                from astrid.sdk.timeline.narration import capture_takes, candidate_narration
+                from astrid.sdk.timeline.narration import candidate_narration, capture_takes
                 self._check_calls(request["change"]["commands"])
                 takes = capture_takes(runtime_port, base, request["change"]["commands"])
                 from astrid.sdk.timeline.source_hydration import hydrate_sources
@@ -168,7 +168,7 @@ class RuntimeCommitService:
                                                      prefix + "::shot_revision_id": mapped["shot_revision_id"]})
                             shot = next(v for v in compilation.identity_mapping["shots"].values() if v["shot_id"] == mapped["shot_id"] and v["revision_id"] == mapped["shot_revision_id"])
                             result["id_map"][prefix + "::internal_revision_id"] = shot["internal_timeline_revision_id"]
-                    from astrid.sdk.timeline.shot_groups import identity, groups
+                    from astrid.sdk.timeline.shot_groups import identity
                     group_results = []
                     states = commands.entity_states(Checkout(current))
                     for index, call in enumerate(current_plan.calls):
@@ -179,8 +179,12 @@ class RuntimeCommitService:
                                      for sid, path in [commands.write_target(key, call.resolved)]
                                      if kind == "direct" and sid.startswith("parent/shot-group:") and sid in states]
                         selected_group = states[resulting[0]] if resulting else None
-                        members = selected_group.get("memberSelectors", []) if selected_group else []
                         intent = call.args.get("intent")
+                        # Transfer can preserve a legacy row without adding a
+                        # memberSelectors field. Its admitted permutation is
+                        # already exact scoped provenance, not a new selection.
+                        members = (list(call.args["members"]) if intent == "transfer" else
+                                   selected_group.get("memberSelectors", [])) if selected_group else []
                         created = [sid for sid in call.created if "/clip:" in sid]
                         restored = members if intent == "images" else []
                         reused = [sid for sid in members if sid not in created] if intent != "images" else []

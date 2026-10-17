@@ -943,6 +943,8 @@ def changed_paths(before, after):
 
 
 def state_at(entities, sid, path):
+    if path == "group_order" and sid.startswith("parent/shot-group:"):
+        return dict(state="present", value=[key for key in entities if key.startswith("parent/shot-group:")])
     if path.startswith("clip_order[") and "/clip:" in sid:
         from astrid.sdk.timeline.shot_groups import order_state
         return order_state(entities, sid, path)
