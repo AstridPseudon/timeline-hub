@@ -71,6 +71,31 @@ export const getLocalFontFaceCss = (): string =>
       `@font-face { font-family: '${family}'; src: url('${staticFile(file)}') format('woff2'); font-weight: ${weight}; font-style: ${style}; font-display: block; }`,
   ).join("\n");
 
+/** Same resolved FontFaceSet used by drawing and metadata preparation. */
+export const loadLocalFonts = async (): Promise<void> => {
+  if (typeof document === "undefined" || !document.fonts) {
+    throw new Error(
+      "Astrid local fonts require the browser FontFaceSet API",
+    );
+  }
+
+  await Promise.all(
+    LOCAL_FONT_FACES.map((face) =>
+      document.fonts.load(fontSpec(face), LOCAL_FONT_GLYPH_PROBE),
+    ),
+  );
+
+  const missing = LOCAL_FONT_FACES.filter(
+    (face) =>
+      !document.fonts.check(fontSpec(face), LOCAL_FONT_GLYPH_PROBE),
+  );
+  if (missing.length > 0) {
+    throw new Error(
+      `Astrid local font load incomplete: ${missing.map(faceLabel).join(", ")}`,
+    );
+  }
+};
+
 /**
  * Inject local @font-face declarations and hold Remotion until each shipped
  * face has been loaded. A failed local load cancels the render rather than
@@ -85,27 +110,7 @@ export const FontProvider = (): ReactElement => {
     let cancelled = false;
     const loadFonts = async (): Promise<void> => {
       try {
-        if (typeof document === "undefined" || !document.fonts) {
-          throw new Error(
-            "Astrid local fonts require the browser FontFaceSet API",
-          );
-        }
-
-        await Promise.all(
-          LOCAL_FONT_FACES.map((face) =>
-            document.fonts.load(fontSpec(face), LOCAL_FONT_GLYPH_PROBE),
-          ),
-        );
-
-        const missing = LOCAL_FONT_FACES.filter(
-          (face) =>
-            !document.fonts.check(fontSpec(face), LOCAL_FONT_GLYPH_PROBE),
-        );
-        if (missing.length > 0) {
-          throw new Error(
-            `Astrid local font load incomplete: ${missing.map(faceLabel).join(", ")}`,
-          );
-        }
+        await loadLocalFonts();
 
         if (!cancelled) {
           continueRender(renderHandle);

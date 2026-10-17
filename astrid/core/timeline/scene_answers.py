@@ -75,7 +75,7 @@ def _payload(config, fps, canvas, elements, assets=None):
     # Unrelated document notes, journal entries, and publication metadata don't.
     fields = {'id', 'at', 'hold', 'from', 'to', 'speed', 'asset', 'clipType', 'track',
               'x', 'y', 'width', 'height', 'opacity', 'cropTop', 'cropBottom', 'cropLeft',
-              'cropRight', 'params', 'entrance', 'exit', 'transition', 'effects', 'modifiers', 'keyframeOrigin'}
+              'cropRight', 'params', 'entrance', 'exit', 'transition', 'effects', 'modifiers', 'keyframeOrigin', 'elementRef'}
     clips = [{k: v for k, v in clip.items() if k in fields} for clip in config.get('clips', ())]
     tracks = config.get('tracks')
     if not tracks:

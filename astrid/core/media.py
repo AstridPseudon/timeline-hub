@@ -7,6 +7,7 @@ Any callers outside ``astrid/core/`` should import from here.
 from __future__ import annotations
 
 import json
+import hashlib
 import shutil
 import subprocess
 from urllib.parse import urlparse
@@ -44,6 +45,7 @@ class MediaProbe:
     # Exact/profile fields used by rendering.
     fps_rational: tuple[int, int] | None = None
     time_base: tuple[int, int] | None = None
+    video_stream_index: int | None = None
     video_codec: str | None = None
     video_profile: str | None = None
     video_level: str | None = None
@@ -205,6 +207,7 @@ def _parse_ffprobe_payload(data: dict[str, Any], file_path: str | Path) -> Media
     probe.audio_stream_present = audio_stream is not None
 
     if video_stream is not None:
+        probe.video_stream_index = _int_or_none(video_stream.get("index"))
         probe.width = _int_or_none(video_stream.get("width"), minimum=1)
         probe.height = _int_or_none(video_stream.get("height"), minimum=1)
         if probe.width is not None and probe.height is not None:
@@ -359,3 +362,79 @@ def ffprobe_duration_seconds(
         text=True,
     )
     return float(str(result.stdout).strip())
+
+
+# This identity describes the actual Composition VisualClip <Video> path.
+# Expand codec/decoder support only with corresponding decoded-alpha proof.
+SCENE_VIDEO_INTERPRETATION = "remotion-media/html-video/first-video/h264-yuv-v1"
+SCENE_IMAGE_INTERPRETATION = "remotion-image/jpeg-v1"
+
+
+def scene_media_evidence(
+    file_path: str | Path, object_id: str, *,
+    interpretation: str = SCENE_VIDEO_INTERPRETATION,
+) -> dict[str, Any] | None:
+    """Host-only projection from verified materialized bytes and selected stream.
+
+    Never consumes authored metadata. Rehash around the existing strict probe;
+    ambiguous streams, auxiliary alpha and unsupported decoding remain unknown.
+    The caller owns/stabilizes these private bytes until evaluation completes.
+    """
+    if (interpretation not in {SCENE_VIDEO_INTERPRETATION, SCENE_IMAGE_INTERPRETATION}
+            or not isinstance(object_id, str) or not object_id.startswith("sha256:")
+            or len(object_id) != 71
+            or any(c not in "0123456789abcdef" for c in object_id[7:])):
+        return None
+    path = require_runtime_materialized_file(file_path, label="scene media")
+    def digest() -> str:
+        with path.open("rb") as stream:
+            return hashlib.file_digest(stream, "sha256").hexdigest()
+    if digest() != object_id[7:]:
+        return None
+    try:
+        probe = ffprobe_metadata_strict(path)
+    except (MediaProbeError, OSError, ValueError):
+        return None
+    streams = probe._raw.get("streams", [])
+    if not isinstance(streams, list):
+        return None
+    videos = [s for s in streams if isinstance(s, Mapping) and s.get("codec_type") == "video"]
+    # Browser stream selection must be unambiguous. No attached/auxiliary video,
+    # alpha side channel, unsupported codec or alpha-capable pixel representation.
+    if len(videos) != 1 or probe.video_stream_index is None:
+        return None
+    selected = videos[0]
+    tags = selected.get("tags") or {}
+    disposition = selected.get("disposition") or {}
+    format_tags = (probe._raw.get("format") or {}).get("tags") or {}
+    if (not isinstance(tags, Mapping) or not isinstance(disposition, Mapping)
+            or not isinstance(format_tags, Mapping)
+            or type(selected.get("index")) is not int
+            or type(selected.get("width")) is not int or type(selected.get("height")) is not int):
+        return None
+    # The geometry route uses coded dimensions. Non-square samples or display
+    # rotation would disagree with the browser's intrinsic display size.
+    if (selected.get("sample_aspect_ratio") != "1:1"
+            or str(tags.get("rotate", "0")) != "0"
+            or (interpretation == SCENE_VIDEO_INTERPRETATION and (
+                probe.video_profile not in {"Constrained Baseline", "Baseline", "Main", "High"}
+                or probe.pixel_format not in {"yuv420p", "yuvj420p"}
+                or probe.video_level is None or not probe.video_level.isdigit()
+                or not 10 <= int(probe.video_level) <= 52))):
+        return None
+    if (disposition.get("attached_pic") in (1, True, "1")
+            or any("alpha" in str(k).lower() for k in (*tags, *format_tags))
+            or selected.get("side_data_list")
+            or not ((interpretation == SCENE_VIDEO_INTERPRETATION and probe.video_codec == "h264")
+                    or (interpretation == SCENE_IMAGE_INTERPRETATION and probe.video_codec == "mjpeg"
+                        and probe.format_name == "jpeg_pipe"))
+            or probe.pixel_format not in {"yuv420p", "yuvj420p", "yuv422p", "yuvj422p", "yuv444p", "yuvj444p"}
+            or not probe.width or not probe.height or digest() != object_id[7:]):
+        return None
+    return {
+        "version": 1, "objectId": object_id, "contentSha256": object_id[7:],
+        "file": str(path), "interpretation": interpretation,
+        "stream": {"index": probe.video_stream_index, "codec": probe.video_codec,
+                   "profile": probe.video_profile, "level": probe.video_level, "sampleAspectRatio": "1:1",
+                   "pixelFormat": probe.pixel_format, "width": probe.width, "height": probe.height},
+    }

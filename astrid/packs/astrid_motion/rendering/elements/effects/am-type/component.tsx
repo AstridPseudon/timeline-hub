@@ -1,3 +1,5 @@
+import {amTypeLayout, amTypeReveal} from './layout';
+import {prepareAmTypeCapability} from './scene-capability';
 import type {CSSProperties, ReactElement} from 'react';
 import {AbsoluteFill, useCurrentFrame} from 'remotion';
 import {
@@ -36,12 +38,8 @@ type Params = {
   underlineAt?: number;
 };
 
-const SLIDE_FRAMES = 8;
-const TYPE_FRAMES_PER_CHAR = 2;
 const UNDERLINE_FRAMES = 6;
 const UNDERLINE_PX = 6;
-const FONTS = ['display', 'label'] as const;
-const REVEALS = ['slideUp', 'type', 'none'] as const;
 const ALIGNS = ['left', 'center', 'right'] as const;
 
 type Run = {text: string; italic: boolean; underline: boolean; space: boolean};
@@ -102,17 +100,8 @@ export default function AmType(props: ElementComponentProps): ReactElement | nul
     );
   }
 
-  const font = oneOf(params.font, FONTS, 'display');
-  const isLabel = font === 'label';
-  const reveal = oneOf(params.reveal, REVEALS, 'slideUp');
-  const align = oneOf(params.align, ALIGNS, 'left');
-  const size = Math.max(1, finiteNumber(params.size, isLabel ? 28 : 96));
-  const tracking = finiteNumber(params.tracking, isLabel ? 0.12 : -0.01);
-  const lineHeight = Math.max(0.5, finiteNumber(params.lineHeight, isLabel ? 1.3 : 0.95));
-  const color = params.color ?? COLOR.ink;
-  const x = finiteNumber(params.x, 96);
-  const y = finiteNumber(params.y, 96);
-  const width = Math.max(1, finiteNumber(params.width, 1200));
+  const layout = amTypeLayout(params as Record<string, unknown>, frame);
+  const {reveal} = layout;
 
   const italicWord = typeof params.italicWord === 'string' ? params.italicWord.trim() : '';
   const underlineWord = typeof params.underlineWord === 'string' ? params.underlineWord.trim() : '';
@@ -124,7 +113,7 @@ export default function AmType(props: ElementComponentProps): ReactElement | nul
   const underlineP = easeOutCubic((frame - underlineStart) / UNDERLINE_FRAMES);
 
   // Typewriter reveal: one character every 2 frames, first character on frame 0.
-  const visibleChars = Math.floor(frame / TYPE_FRAMES_PER_CHAR) + 1;
+  const {visibleChars} = amTypeReveal(frame);
   let charIndex = 0;
 
   const renderChars = (value: string, key: string): ReactElement[] => {
@@ -178,39 +167,7 @@ export default function AmType(props: ElementComponentProps): ReactElement | nul
     );
   });
 
-  const slideProgress = easeOutCubic(frame / SLIDE_FRAMES);
-  const slideTransform = reveal === 'slideUp' && frame < SLIDE_FRAMES
-    ? `translateY(${(1 - slideProgress) * 100}%)`
-    : undefined;
-
-  // The mask gets padding so descenders and italic overhang are not clipped,
-  // and the matching negative margin keeps the layout unchanged.
-  const mask: CSSProperties = {
-    position: 'absolute',
-    left: x,
-    top: y,
-    width,
-    // Clip only while the slide is moving. A permanent clip would also cut the
-    // underline, which sits below the line box.
-    overflow: reveal === 'slideUp' && frame < SLIDE_FRAMES ? 'hidden' : 'visible',
-    paddingTop: '0.15em',
-    paddingBottom: '0.25em',
-    marginTop: '-0.15em',
-    marginBottom: '-0.25em',
-    boxSizing: 'border-box',
-  };
-  const line: CSSProperties = {
-    color,
-    fontFamily: isLabel ? FAMILY.label : FAMILY.display,
-    fontSize: size,
-    fontWeight: 400,
-    lineHeight,
-    letterSpacing: `${tracking}em`,
-    textAlign: align,
-    textTransform: isLabel ? 'uppercase' : 'none',
-    whiteSpace: 'pre-wrap',
-    transform: slideTransform,
-  };
+  const {mask, line} = layout;
 
   return (
     <AbsoluteFill style={{pointerEvents: 'none'}}>
@@ -220,3 +177,6 @@ export default function AmType(props: ElementComponentProps): ReactElement | nul
     </AbsoluteFill>
   );
 }
+
+// Selected registry wrappers forward this declaration from the same implementation.
+AmType.prepareSceneCapability = prepareAmTypeCapability;

@@ -285,7 +285,11 @@ class AuthoringSceneListener:
             scene = copy.deepcopy(request["scene"])
             for oid, data in raw.items():
                 (scratch / oid[7:]).write_bytes(data)
-            for entry in scene["assets"]["assets"].values():
+            # Wire validation admits no caller capability evidence. Only these
+            # authenticated, Host-owned materializations can produce it.
+            from astrid.core.media import scene_media_evidence, SCENE_IMAGE_INTERPRETATION, SCENE_VIDEO_INTERPRETATION
+            scene["mediaEvidence"] = {}
+            for asset_key, entry in scene["assets"]["assets"].items():
                 oid = next(
                     entry[k] for k in ("media_id", "object_id", "content_sha256") if k in entry
                 )
@@ -294,6 +298,12 @@ class AuthoringSceneListener:
                 # display location/type. No caller file or URL crossed the wire.
                 entry["file"] = entry["local_path"]
                 entry["type"] = request["dependencies"][oid]["media_type"].split("/", 1)[0]
+                entry["content_sha256"] = oid[7:]
+                proof = scene_media_evidence(entry["local_path"], oid,
+                    interpretation=SCENE_IMAGE_INTERPRETATION if entry["type"] == "image" else SCENE_VIDEO_INTERPRETATION)
+                if proof is not None:
+                    entry["resolution"] = f'{proof["stream"]["width"]}x{proof["stream"]["height"]}'
+                    scene["mediaEvidence"][asset_key] = proof
             session = self.host._authoring_scene_session(self.environment)
             generation = session.frame_owner.generation
             if generation != self.config.binding["owner_generation"]:

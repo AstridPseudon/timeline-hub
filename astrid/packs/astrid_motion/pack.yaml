@@ -460,6 +460,14 @@
           "path": "rendering/elements/effects/am-type/component.tsx"
         },
         {
+          "kind": "support",
+          "path": "rendering/elements/effects/am-type/layout.ts"
+        },
+        {
+          "kind": "support",
+          "path": "rendering/elements/effects/am-type/scene-capability.ts"
+        },
+        {
           "kind": "implementation",
           "path": "rendering/elements/effects/am-type/element.yaml"
         }
