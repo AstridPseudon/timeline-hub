@@ -4,6 +4,7 @@ import type { Shot } from '@/domains/generation/types/index.ts';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
+import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext.tsx';
 import { useShots } from '@/shared/contexts/ShotsContext.tsx';
 import { useShotCreation } from '@/shared/hooks/shotCreation/useShotCreation.ts';
@@ -103,6 +104,13 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
   const { selectedProjectId } = useProjectSelectionContext();
   const { shots } = useShots();
   const runtime = useVideoEditorRuntime();
+  // The hosted build's "Astrid stopped" / "restarted" card is what tells the person what to do; this banner stays quiet then.
+  const recoveryCardShowing = useRecoveryCardShowing();
+  // Astrid answering again clears the card; the refresh that failed while it was stopped is retried here, so the
+  // "Couldn't refresh this timeline" line does not outlive the stop it was about.
+  useOnRecoveryCardCleared(() => {
+    if (runtime.shots?.canonicalCompositionError ?? runtime.shots?.error) runtime.shots?.refetchShots();
+  });
   const isDocumentShotMode = runtime.userId === null;
   const canonicalOccurrences = runtime.shots?.canonicalOccurrences ?? [];
   const pendingOccurrences = (runtime.shots as (typeof runtime.shots & {
@@ -613,16 +621,16 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
           Canonical shot composition is unavailable; showing the explicit legacy shot view.
         </div>
       ) : null}
-      {isCanonicalEditor && (canonicalLoadState === 'error' || canonicalLoadState === 'stale') ? (
+      {isCanonicalEditor && !recoveryCardShowing && (canonicalLoadState === 'error' || canonicalLoadState === 'stale') ? (
         <div
           role={canonicalLoadState === 'error' ? 'alert' : 'status'}
           data-canonical-load-state={canonicalLoadState}
           className="border-b border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-center text-xs text-amber-900 dark:text-amber-100"
         >
           {canonicalLoadState === 'error' && 'Could not load the canonical shot composition. Legacy shot data was not substituted.'}
-          {canonicalLoadState === 'stale' && `Canonical refresh failed; showing the last known head${runtimeCanonicalHeadRevisionId ? ` ${runtimeCanonicalHeadRevisionId}` : ''}.`}
+          {canonicalLoadState === 'stale' && "Couldn't refresh this timeline. Showing your last saved version."}
           <button type="button" className="ml-2 underline" onClick={() => runtime.shots?.refetchShots()}>
-            Retry canonical read
+            Try again
           </button>
         </div>
       ) : null}

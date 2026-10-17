@@ -5,6 +5,7 @@ import { Badge } from '@/shared/components/ui/badge.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu.tsx';
+import { useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import type { useEditorSync } from '@/tools/video-editor/hooks/useEditorSync.ts';
 import { clampTimelineScaleWidth, TIMELINE_ZOOM_STEP } from '@/tools/video-editor/lib/timeline-scale.ts';
@@ -70,9 +71,18 @@ export function TimelineEditorShellToolbar({
   const chrome = useTimelineChromeContext();
   const toolbarButtonSizeClass = touchChrome ? 'h-11 w-11' : 'h-6 w-6';
 
+  // While the hosted build's "Astrid stopped" / "restarted" card is up, a failed save is not an editor fault: the changes
+  // are kept and the card says what to do, so the badge reads neutral instead of a red "Error". An open save conflict is
+  // a choice between two versions, not an error, so it reads the same way.
+  const recoveryCardShowing = useRecoveryCardShowing();
+  const notSaved = (recoveryCardShowing || chrome.isConflictExhausted) && chrome.saveStatus !== 'saved';
   const saveBadge = (
-    <Badge variant={STATUS_VARIANT[chrome.saveStatus]} className={cn('h-5 px-1.5 text-[10px] capitalize', !timelineLoaded && 'invisible')} aria-hidden={!timelineLoaded || undefined}>
-      {chrome.saveStatus}
+    <Badge
+      variant={notSaved ? 'outline' : STATUS_VARIANT[chrome.saveStatus]}
+      className={cn('h-5 px-1.5 text-[10px]', notSaved ? 'text-muted-foreground' : 'capitalize', !timelineLoaded && 'invisible')}
+      aria-hidden={!timelineLoaded || undefined}
+    >
+      {notSaved ? 'Not saved' : chrome.saveStatus}
     </Badge>
   );
   const syncButton = sync.isSyncAvailable ? (

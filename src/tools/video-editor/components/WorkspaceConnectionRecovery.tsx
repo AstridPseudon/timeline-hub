@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
 import { REIGH_LOCAL_DEV_COMMAND } from '@/shared/lib/localAstridRuntime.ts';
+import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
 
 export interface WorkspaceConnectionRecoveryProps {
   readonly retrying: boolean;
@@ -78,6 +79,9 @@ export function WorkspaceConnectionRecovery({
       ? 'Restart instructions copied. Paste them into your agent.'
       : 'Clipboard access is unavailable. Copy the brief from the field below.');
   };
+
+  // The hosted build has its own recovery (the connection panel and the Astrid cards); two paths would compete.
+  if (runtimeOrigin() !== '') return null;
 
   return (
     <main className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto bg-background px-4 py-8" data-testid="workspace-connection-recovery">

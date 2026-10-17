@@ -9,6 +9,8 @@ import {
   type RuntimeConnectionValue,
 } from './RuntimeConnectionProvider.tsx';
 import type { PermissionsLike } from './localNetworkPermission.ts';
+import { autoConnectRequested, requestAutoConnect } from './autoConnectRequest.ts';
+import { runtimeAppUrl, setRuntimeAppUrl } from './runtimeAppUrl.ts';
 
 const REALM = { realm_id: 'realm-1', display_name: 'Direct Journey' };
 const STORAGE_KEY = 'reigh.runtime.connectedBefore';
@@ -82,6 +84,8 @@ const status = () => screen.getByTestId('status').textContent;
 
 beforeEach(() => {
   window.localStorage.clear();
+  window.sessionStorage.clear();
+  setRuntimeAppUrl(null);
 });
 
 afterEach(() => {
@@ -102,6 +106,36 @@ describe('granted', () => {
     expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health', '/v1/realm']);
     expect(onConnected).toHaveBeenCalledTimes(1);
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('1');
+  });
+
+  it.each(['focus', 'interval'] as const)('a %s re-check between the probe answering and the connected render starts no second probe', async (trigger) => {
+    const gateway = fakeGateway();
+    // Plain stub answers: their json() settles in microtasks only, so the test controls exactly where the probe resumes.
+    const answer = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as unknown as Response;
+    let releaseRealm: (response: Response) => void = () => {};
+    gateway.routes['/v1/health'] = () => answer({ status: 'ok', protocol: 'workspace.v1' });
+    gateway.routes['/v1/realm'] = () => new Promise<Response>((resolve) => { releaseRealm = resolve; });
+    // Capture the provider's own poll (recognised by its distinctive period) so the test can fire it by hand.
+    const POLL_MS = 123_456;
+    let tick: () => void = () => {};
+    const realSetInterval = window.setInterval.bind(window);
+    vi.spyOn(window, 'setInterval').mockImplementation(((handler: TimerHandler, ms?: number, ...args: unknown[]) => {
+      if (ms !== POLL_MS) return realSetInterval(handler, ms, ...args);
+      tick = () => (handler as () => void)();
+      return realSetInterval(() => {}, ms);
+    }) as typeof window.setInterval);
+    renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: POLL_MS });
+    await waitFor(() => expect(gateway.calls).toHaveLength(2));
+
+    // The probe answers. Only microtasks run, so the probe has resumed (and cleared its in-flight guard) while React has
+    // not yet rendered the connected outcome, which is the window a slow machine leaves open.
+    releaseRealm(answer(REALM));
+    for (let i = 0; i < 50; i += 1) await Promise.resolve();
+    if (trigger === 'focus') window.dispatchEvent(new Event('focus'));
+    else tick();
+
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health', '/v1/realm']);
   });
 
   it('is booting, not cant_reach, until the first probe has answered', async () => {
@@ -443,6 +477,109 @@ describe('gate', () => {
     await waitFor(() => expect(screen.getByTestId('custom-pill')).toHaveTextContent('Direct Journey'));
     expect(screen.getByTestId('app')).toBeInTheDocument();
     expect(screen.queryByTestId('custom-panel')).toBeNull();
+  });
+});
+
+describe('gate: the landing page already asked to go in', () => {
+  /** A panel that shows the state the gate hands it, so the test sees explainer versus Chrome's prompt. */
+  const panel = ({ awaitingConnect, isChecking, connect }: RuntimeConnectionValue) => (
+    awaitingConnect && !isChecking
+      ? <button type="button" data-testid="explainer" onClick={connect}>Connect</button>
+      : <p data-testid="panel-state">{awaitingConnect ? 'pending' : 'other'}</p>
+  );
+  const renderGate = (gateway: ReturnType<typeof fakeGateway>, permission: string) => render(
+    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions(permission).permissions} pollIntervalMs={10}>
+      <RuntimeConnectionGate panel={panel}>
+        <div data-testid="app" />
+      </RuntimeConnectionGate>
+    </RuntimeConnectionProvider>,
+  );
+
+  it('connects at once with the flag set and the permission still to be asked, and never shows the explainer', async () => {
+    requestAutoConnect();
+    const gateway = fakeGateway();
+    renderGate(gateway, 'prompt');
+
+    await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
+    expect(screen.queryByTestId('explainer')).toBeNull();
+    expect(gateway.fetchImpl).toHaveBeenCalled();
+    // One-shot: the flag is used up.
+    expect(autoConnectRequested()).toBe(false);
+  });
+
+  it('shows the pending screen, not the explainer, while Chrome\'s prompt is open', async () => {
+    requestAutoConnect();
+    const gateway = fakeGateway();
+    gateway.routes['/v1/health'] = () => new Promise<Response>(() => {});
+    renderGate(gateway, 'prompt');
+
+    await waitFor(() => expect(screen.getByTestId('panel-state')).toHaveTextContent('pending'));
+    expect(screen.queryByTestId('explainer')).toBeNull();
+  });
+
+  it('shows the explainer for a direct visit, and asks Chrome only when Connect is pressed', async () => {
+    const gateway = fakeGateway();
+    renderGate(gateway, 'prompt');
+
+    await waitFor(() => expect(screen.getByTestId('explainer')).toBeInTheDocument());
+    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    act(() => screen.getByTestId('explainer').click());
+    await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
+  });
+
+  it('with the permission already granted or denied the flag has nothing to do, and does not linger', async () => {
+    for (const permission of ['granted', 'denied']) {
+      requestAutoConnect();
+      const gateway = fakeGateway();
+      const view = renderGate(gateway, permission);
+      await waitFor(() => expect(autoConnectRequested()).toBe(false));
+      view.unmount();
+    }
+  });
+
+  it('a later permission reset shows the explainer again, because the flag was used up', async () => {
+    requestAutoConnect();
+    const gateway = fakeGateway();
+    gateway.down();
+    const permissions = fakePermissions('prompt');
+    render(
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions.permissions} pollIntervalMs={10}>
+        <RuntimeConnectionGate panel={panel}><div data-testid="app" /></RuntimeConnectionGate>
+      </RuntimeConnectionProvider>,
+    );
+    await waitFor(() => expect(autoConnectRequested()).toBe(false));
+    permissions.change('denied');
+    permissions.change('prompt');
+    await waitFor(() => expect(screen.getByTestId('explainer')).toBeInTheDocument());
+  });
+
+  it('survives storage that refuses to be read', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
+    expect(() => requestAutoConnect()).not.toThrow();
+    expect(autoConnectRequested()).toBe(false);
+  });
+});
+
+describe('the local app address', () => {
+  it('is taken from the gateway\'s health answer when it connects', async () => {
+    const gateway = fakeGateway();
+    gateway.routes['/v1/health'] = () => json({ status: 'ok', protocol: 'workspace.v1', app_url: 'http://127.0.0.1:2222' });
+    renderProvider(gateway, fakePermissions('granted').permissions);
+
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(runtimeAppUrl()).toBe('http://127.0.0.1:2222');
+  });
+
+  it('is absent when the gateway does not report one, or reports something that is not a loopback app address', async () => {
+    for (const body of [{ status: 'ok', protocol: 'workspace.v1' }, { status: 'ok', protocol: 'workspace.v1', app_url: 'https://evil.test' }]) {
+      const gateway = fakeGateway();
+      gateway.routes['/v1/health'] = () => json(body);
+      const view = renderProvider(gateway, fakePermissions('granted').permissions);
+      await waitFor(() => expect(status()).toBe('connected'));
+      expect(runtimeAppUrl()).toBeNull();
+      view.unmount();
+    }
   });
 });
 

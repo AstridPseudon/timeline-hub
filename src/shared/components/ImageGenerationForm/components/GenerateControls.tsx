@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RefreshCw, Sparkles } from "lucide-react";
 import { PromptMode } from "../types";
 import { composeDisabledReason } from "@/shared/components/RuntimeConnection/copy.ts";
+import { LocalAppNote } from "@/shared/components/RuntimeConnection/LocalAppNote.tsx";
 
 interface GenerateControlsProps {
   imagesPerPrompt: number;
@@ -104,7 +105,7 @@ export const GenerateControls: React.FC<GenerateControlsProps> = ({
       </Button>
 
       {disabledReason && (
-        <p role="note" className="w-full max-w-md text-center text-xs text-muted-foreground">{disabledReason}</p>
+        <LocalAppNote message={disabledReason} className="w-full max-w-md text-center text-xs" />
       )}
 
       {/* Existing prompts buttons - only shown in automated mode when there are non-empty prompts */}

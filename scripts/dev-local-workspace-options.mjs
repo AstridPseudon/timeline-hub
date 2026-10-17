@@ -117,9 +117,17 @@ export function validatePreviewOutputDirectory(value) {
   return outputDirectory;
 }
 
+/**
+ * Arguments for the Vite child. `quiet` (the default launch: no `--verbose`) silences npm's banner and Vite's startup
+ * block; the launcher says what a person needs to know itself.
+ */
 export function viteChildArgs(options) {
+  const quiet = options.quiet === true;
+  const npm = quiet ? ['--silent'] : [];
+  const logging = quiet ? ['--logLevel', 'warn'] : [];
   if (options.preview) {
     return [
+      ...npm,
       'run',
       'preview',
       '--',
@@ -128,9 +136,10 @@ export function viteChildArgs(options) {
       '--strictPort',
       '--outDir',
       options.previewDir,
+      ...logging,
     ];
   }
-  return ['run', 'dev', '--', '--host', '127.0.0.1', '--strictPort'];
+  return [...npm, 'run', 'dev', '--', '--host', '127.0.0.1', '--strictPort', ...logging];
 }
 
 /** Runtime selection is independent of an Astrid source checkout. */
@@ -158,9 +167,10 @@ export function resolveLoopbackPort(value) {
 
 /**
  * Arguments for `scripts/reigh-loopback-gateway.ts`. ACP auto-approves tool calls and can open terminals, so the
- * gateway gets `--acp-endpoint` only when the developer passed `--acp` to the launcher.
+ * gateway gets `--acp-endpoint` only when the developer passed `--acp` to the launcher. `appPort` is the local app's port: the
+ * gateway reports it in its health answer so the hosted page can link to the app.
  */
-export function gatewayChildArgs({ discoveryPath, credentialPath, hostedOrigin, loopbackPort, acp, acpPort, auditLog, actor }) {
+export function gatewayChildArgs({ discoveryPath, credentialPath, hostedOrigin, loopbackPort, acp, acpPort, appPort, auditLog, actor }) {
   return [
     '--import', 'tsx',
     'scripts/reigh-loopback-gateway.ts',
@@ -169,6 +179,7 @@ export function gatewayChildArgs({ discoveryPath, credentialPath, hostedOrigin, 
     '--origin', hostedOrigin,
     ...(acp ? ['--acp-endpoint', `http://127.0.0.1:${acpPort}`] : []),
     '--port', loopbackPort,
+    ...(appPort ? ['--app-port', String(appPort)] : []),
     ...(auditLog ? ['--audit-log', auditLog] : []),
     ...(actor ? ['--actor', actor] : []),
   ];

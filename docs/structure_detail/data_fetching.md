@@ -27,6 +27,23 @@
 | `blocked` | Permission `denied`; nothing is sent |
 | `not_ready` (reason) | Gateway 503: `realm_changed`; `runtime_unavailable` or `runtime_discovery_invalid` gives `runtime_stopped`; `runtime_identity_mismatch` gives `identity_mismatch`; other codes give `unknown` |
 
+**What a person sees** (`src/shared/components/RuntimeConnection/`: wording only in `copy.ts`, layout in `RuntimeConnectionPanel.tsx`). The product is called Astrid on every screen; commands appear only in the agent block (`agent.instructions`). Several states share one screen because a person does the same thing for each:
+
+| Screen | States that show it | Primary action |
+|--------|---------------------|----------------|
+| Mink only, "Looking for Astrid on this computer…" after 1 s | `connecting`, `not_ready` `starting` | none |
+| "Connect to Astrid on this computer" | permission `prompt` (direct visit) | Connect (the landing page's "use it right here" click sets a one-shot flag, `autoConnectRequest.ts`, and the gate calls `connect()` at once) |
+| "Choose Allow in Chrome" | Connect pressed, Chrome's prompt open | none (arrow up to the address bar) |
+| "Allow Astrid in Chrome" | `blocked` | two steps in Chrome's site settings |
+| "Set up Astrid on this computer" | `cant_reach` first time | Copy setup steps for your agent (footer links the install guide) |
+| "Astrid isn't running" | `cant_reach` returning, `not_ready` `runtime_stopped` / `unknown` | Copy steps for your agent |
+| "Astrid needs a restart" | `not_ready` `identity_mismatch` / `realm_changed` | Copy steps for your agent (restart variant) |
+| "Open Astrid on your computer" | any not-connected state on a phone (`isMobileDevice`, the landing dialog's check) | Send the link to your computer |
+
+Once connected nothing is shown while Astrid is up (a screen-reader-only "Connected to Astrid" in `runtime-connection-status`). `useRuntimeRestartWatch` polls health: two failed readings in a row show the "Astrid stopped" card (clears itself when the same instance answers), a new instance or a `realm_changed` 503 shows the "Astrid restarted" card (Reload). While either card shows, `recoveryCard.ts` tells the editor to stay quiet: no canonical-refresh banner, no load-error card, a neutral "Not saved" badge, and `WorkspaceConnectionRecovery` never renders on the hosted build. The gateway adds `app_url` (`http://127.0.0.1:<app port>`, schema in `gatewayHealth.ts`) to its health answer so disabled controls can link to the local app ("Open it").
+
+**Launcher output** (`scripts/dev-local-workspace.mjs`): a healthy `npm run dev:local` prints `Starting Astrid…`, then the `Open <hosted origin>` block, only after the gateway and the app both listen. Everything else (proxy, ACP bridge, gateway JSON line, Vite) is held back; `--verbose` or `ASTRID_VERBOSE=1` prints it after the Open block. Errors are one `Astrid: ` line plus one `Details: ` line for an agent. A second launcher for the same realm says `Astrid is already running in another window.` and prints the same block without starting anything. `--check` prints `Astrid is ready.`
+
 **Gateway** (`127.0.0.1:17340`, `DEFAULT_GATEWAY_PORT`): serves the dev paths `/api/runtime/*` and `/api/astrid/*` on the route table; admin, doctor, backup, restore, export, realm recovery, workers, credentials, compose and ACP without `--acp` get 404 `route_not_allowed`. Checks run in this order:
 
 | Check | Refusal |
@@ -40,7 +57,7 @@
 Key invariants:
 
 1. No Runtime query runs before `connected`; on connect every key rooted in `RUNTIME_QUERY_ROOTS` is invalidated (`isRuntimeQueryKey`, `AuthContext.tsx`).
-2. `connected` is sticky for the page's life; a Runtime that stops later shows the restart message in `client.ts`, not a gate state.
+2. `connected` is sticky for the page's life; a Runtime that stops or restarts later shows the "Astrid stopped" / "Astrid restarted" card from `useRuntimeRestartWatch`, not a gate state.
 3. First connection calls `rememberAppEntryPreference` (a returning `/` visit skips the landing page); the storage flag is try/catch guarded.
 4. `setRuntimeOrigin()` runs once at boot; a gateway origin plus a compiled `VITE_WORKSPACE_RUNTIME_EXPECTED_*` identity throws (`build:hosted` sets them empty). Bases are read per request, never cached.
 5. The gateway checks Origin before routing, reads endpoint and token per request, and never sends the product token to the page; a changed realm is refused with 503 `realm_changed`.

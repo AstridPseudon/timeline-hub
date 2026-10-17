@@ -671,3 +671,35 @@ test('the gateway process keeps listening while the Runtime is down and serves a
     }
   });
 });
+
+test('the health answer carries the local app address when the launcher gave one, and only then', async () => {
+  const runtime = createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(req.url === '/v1/health' ? '{"status":"ok","protocol":"workspace.v1","runtime_instance_id":"i-1"}' : '{"realm_id":"r"}');
+  });
+  await new Promise<void>(resolve => runtime.listen(0, '127.0.0.1', resolve));
+  const endpoint = `http://127.0.0.1:${(runtime.address() as { port: number }).port}`;
+  const origin = 'https://hosted.test';
+  const servers: Array<ReturnType<typeof createLoopbackGateway>['server']> = [];
+  const read = async (appUrl: string | undefined, path: string) => {
+    const g = createLoopbackGateway({ endpoint, token: 't', origin, ...(appUrl ? { appUrl } : {}) });
+    servers.push(g.server);
+    await new Promise<void>(resolve => g.server.listen(0, '127.0.0.1', resolve));
+    const port = (g.server.address() as { port: number }).port;
+    const response = await fetch(`http://127.0.0.1:${port}/api/runtime${path}`, { headers: { Origin: origin } });
+    return { status: response.status, length: response.headers.get('content-length'), text: await response.text() };
+  };
+  try {
+    const withApp = await read('http://127.0.0.1:2222', '/v1/health');
+    assert.equal(withApp.status, 200);
+    assert.deepEqual(JSON.parse(withApp.text), { status: 'ok', protocol: 'workspace.v1', runtime_instance_id: 'i-1', app_url: 'http://127.0.0.1:2222' });
+    assert.equal(withApp.length, String(Buffer.byteLength(withApp.text)), 'the length is the rewritten body');
+    const without = await read(undefined, '/v1/health');
+    assert.deepEqual(JSON.parse(without.text), { status: 'ok', protocol: 'workspace.v1', runtime_instance_id: 'i-1' });
+    // Only the health answer is touched.
+    assert.deepEqual(JSON.parse((await read('http://127.0.0.1:2222', '/v1/realm')).text), { realm_id: 'r' });
+  } finally {
+    for (const server of servers) { server.close(); server.closeAllConnections(); }
+    runtime.close();
+  }
+});

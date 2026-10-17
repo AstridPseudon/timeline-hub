@@ -16,6 +16,7 @@ import { LoraSelectorModal } from '@/domains/lora/components';
 import type { LoraModel } from '@/domains/lora/types/lora';
 import type { LoraManagerState } from '@/domains/lora/types/loraManager';
 import { composeDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
+import { LocalAppNote } from '@/shared/components/RuntimeConnection/LocalAppNote.tsx';
 
 function blurActiveElement() {
   if (document.activeElement instanceof HTMLElement) {
@@ -193,7 +194,7 @@ export const Img2ImgControls: React.FC<Img2ImgControlsProps> = ({
         )}
       </Button>
       {disabledReason && (
-        <p role="note" className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>{disabledReason}</p>
+        <LocalAppNote message={disabledReason} className={isMobile ? 'text-[10px]' : 'text-xs'} />
       )}
 
       {/* Img2Img LoRA Selector Modal */}

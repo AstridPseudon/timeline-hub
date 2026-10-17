@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, Loader2, Mic, Paperclip, Send, Square, X } from
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { agentChatDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
+import { LocalAppNote } from '@/shared/components/RuntimeConnection/LocalAppNote.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
 import { useAgentChatBridge, useAgentChatActionsRegistry, type AgentChatActionsHandlers } from '@/shared/contexts/AgentChatContext.tsx';
@@ -213,7 +214,7 @@ export function AgentChatPanel({ isExpanded = false, onSessionSelectorOpenChange
     if (hostedReason) {
       return (
         <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-          <p className="max-w-sm text-xs text-muted-foreground">{hostedReason}</p>
+          <LocalAppNote message={hostedReason} className="max-w-sm text-xs" />
         </div>
       );
     }

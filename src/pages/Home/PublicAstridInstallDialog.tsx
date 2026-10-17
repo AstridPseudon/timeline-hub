@@ -4,30 +4,14 @@ import {
   APP_ENTRY_PATH,
   rememberAppEntryPreference,
 } from '@/app/entryClassification.ts';
-import {
-  detectBrowser,
-  detectDeviceType,
-  detectPlatform,
-  detectSafariPwaSupport,
-  isDesktopPlatform,
-} from '@/shared/hooks/platformInstall/platformDetection';
+import { requestAutoConnect } from '@/integrations/runtime/autoConnectRequest.ts';
 import { runInstallPrompt, useInstallPromptSignals } from '@/shared/hooks/platformInstall/signals';
+import { detectInstallScenario, type InstallScenario } from './installScenario.ts';
+import { useSendLinkToComputer } from './useSendLinkToComputer.ts';
 import './PublicAstridInstallDialog.css';
 
 const AVATAR_SRC = '/astrid-app-icon-192.png';
 const HOME_PATH = '/home';
-
-/** Which explainer to show: each browser installs from a different spot, and phones can't yet. */
-type InstallScenario = 'chromium' | 'safari' | 'unsupported' | 'mobile';
-
-function detectInstallScenario(): InstallScenario {
-  const platform = detectPlatform();
-  const browser = detectBrowser();
-  if (detectDeviceType(platform) !== 'desktop' || !isDesktopPlatform(platform)) return 'mobile';
-  if (browser === 'chrome' || browser === 'edge') return 'chromium';
-  if (detectSafariPwaSupport(browser, platform)) return 'safari';
-  return 'unsupported';
-}
 
 function useInstallScenario(): InstallScenario {
   return useMemo(detectInstallScenario, []);
@@ -72,6 +56,8 @@ function useBrowserInstall(active: boolean) {
 
 function openInBrowser() {
   rememberAppEntryPreference();
+  // Choosing the browser already says "take me in": the app goes straight to Chrome's prompt instead of explaining it first.
+  requestAutoConnect();
   window.location.assign(APP_ENTRY_PATH);
 }
 
@@ -226,56 +212,12 @@ const DESKTOP_COPY: Record<Exclude<InstallScenario, 'mobile'>, { lede: string; s
   },
 };
 
+function homeLink() {
+  return new URL(HOME_PATH, window.location.origin).href;
+}
+
 function MobileContent({ onClose, active }: { onClose: () => void; active: boolean }) {
-  const [copied, setCopied] = useState(false);
-  const activeRef = useRef(active);
-  const requestRef = useRef(0);
-  const resetRef = useRef<number | null>(null);
-
-  const clearReset = useCallback(() => {
-    if (resetRef.current !== null) {
-      window.clearTimeout(resetRef.current);
-      resetRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => {
-    activeRef.current = active;
-    if (!active) {
-      requestRef.current += 1;
-      clearReset();
-      setCopied(false);
-    }
-  }, [active, clearReset]);
-
-  useEffect(() => () => {
-    activeRef.current = false;
-    requestRef.current += 1;
-    clearReset();
-  }, [clearReset]);
-
-  const sendToComputer = async () => {
-    if (!activeRef.current) return;
-    const request = ++requestRef.current;
-    const url = new URL(HOME_PATH, window.location.origin).href;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Astrid', url });
-        return;
-      }
-      if (!navigator.clipboard?.writeText) return;
-      await navigator.clipboard.writeText(url);
-      if (!activeRef.current || request !== requestRef.current) return;
-      setCopied(true);
-      clearReset();
-      resetRef.current = window.setTimeout(() => {
-        if (activeRef.current && request === requestRef.current) setCopied(false);
-        resetRef.current = null;
-      }, 1_800);
-    } catch {
-      // The person dismissed the share sheet, or the clipboard is unavailable: nothing to do.
-    }
-  };
+  const { copied, send: sendToComputer } = useSendLinkToComputer(homeLink, active);
   return (
     <>
       <div className="astrid-install-desk" aria-hidden="true">

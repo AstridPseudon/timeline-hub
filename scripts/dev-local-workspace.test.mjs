@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync, rmSync, mkdirSync, chmodSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -49,6 +49,12 @@ describe('dev-local gateway options', () => {
     assert.equal(resolveLoopbackPort('  '), '17340');
     assert.equal(resolveLoopbackPort('0'), '0');
     assert.deepEqual(gatewayChildArgs({ ...base, auditLog: '/a.jsonl', actor: 'x' }).slice(-4), ['--audit-log', '/a.jsonl', '--actor', 'x']);
+  });
+
+  it('tells the gateway the local app port, so its health answer can point the page there', () => {
+    const args = gatewayChildArgs({ ...base, appPort: '2222' });
+    assert.deepEqual(args.slice(args.indexOf('--app-port'), args.indexOf('--app-port') + 2), ['--app-port', '2222']);
+    assert(!gatewayChildArgs(base).includes('--app-port'));
   });
 });
 
@@ -107,6 +113,16 @@ describe('dev-local preview options', () => {
     assert.deepEqual(viteChildArgs({ preview: true, previewDir: '/tmp/emitted' }), [
       'run', 'preview', '--', '--host', '127.0.0.1', '--strictPort', '--outDir', '/tmp/emitted',
     ]);
+  });
+
+  it('silences npm and Vite when quiet, and only then', () => {
+    assert.deepEqual(viteChildArgs({ preview: false, previewDir: null, quiet: true }), [
+      '--silent', 'run', 'dev', '--', '--host', '127.0.0.1', '--strictPort', '--logLevel', 'warn',
+    ]);
+    assert.deepEqual(viteChildArgs({ preview: true, previewDir: '/tmp/emitted', quiet: true }), [
+      '--silent', 'run', 'preview', '--', '--host', '127.0.0.1', '--strictPort', '--outDir', '/tmp/emitted', '--logLevel', 'warn',
+    ]);
+    assert(!viteChildArgs({ preview: false, previewDir: null, quiet: false }).includes('--silent'));
   });
 });
 const run = (args, env) => new Promise((resolve, reject) => {
@@ -205,7 +221,7 @@ test('local launcher binds the selected Astrid product credential and profile be
   const fixture = await launchFixture();
   try {
     const valid = await run(['--check', '--hosted-origin', 'https://hosted.test'], fixture.env);
-    assert.equal(valid.code, 0); assert.match(valid.stdout, /runtime healthy/); assert(!valid.stdout.includes(fixture.token));
+    assert.equal(valid.code, 0); assert.equal(valid.stdout, 'Astrid is ready.\n'); assert(!valid.stdout.includes(fixture.token));
     assert.deepEqual(fixture.requests.map(({ method, path }) => `${method} ${path}`), [
       'GET /v1/health', 'POST /v1/handshake', 'GET /v1/realm',
     ]);
@@ -214,8 +230,17 @@ test('local launcher binds the selected Astrid product credential and profile be
     for (const args of [['--check', '--hosted-origin'], ['--check', '--hosted-origin', '--paired'], ['--check', '--hosted-origin', 'http://hosted.test'], ['--check', '--hosted-origin', 'https://hosted.test/path']]) {
       const invalid = await run(args, fixture.env); assert.equal(invalid.code, 1); assert.match(invalid.stderr, /origin/); assert(!invalid.stderr.includes(fixture.token));
     }
+    // The technical line is still there for an agent that asks for it.
+    const verboseCheck = await run(['--check', '--verbose', '--hosted-origin', 'https://hosted.test'], fixture.env);
+    assert.equal(verboseCheck.code, 0); assert.match(verboseCheck.stdout, /workspace\.v1 runtime healthy/);
+    const badOrigin = await run(['--check', '--hosted-origin', 'http://hosted.test'], fixture.env);
+    assert.equal(badOrigin.stderr.split('\n')[0], 'Astrid: --hosted-origin must be an https:// address, like https://astrid.haus');
+    assert.match(badOrigin.stderr.split('\n')[1], /^Details: /);
     fixture.setAvailable(false);
     const offline = await run(['--check'], fixture.env); assert.equal(offline.code, 1); assert.match(offline.stderr, /HTTP 503/);
+    assert.equal(offline.stderr.split('\n')[0], "Astrid: Astrid's engine isn't running. Start it first: banodoco-local up --profile astrid");
+    assert.match(offline.stderr.split('\n')[1], /^Details: .*HTTP 503/);
+    assert(!offline.stderr.includes('dev:local:'), offline.stderr);
   } finally { await fixture.close(); }
 });
 
@@ -242,6 +267,10 @@ test('local launcher rejects credential, profile, and Runtime identity substitut
       assert.equal(result.code, 1, `${label}: expected failure`);
       assert.match(result.stderr, expectedError, label);
       assert(!result.stderr.includes(fixture.token), `${label}: credential leaked to stderr`);
+      if (label === 'health reports another Runtime instance') {
+        assert.equal(result.stderr.split('\n')[0], 'Astrid: Astrid changed on this computer. Restart its engine: banodoco-local up --profile astrid');
+        assert.match(result.stderr.split('\n')[1], /^Details: Runtime health instance does not match/);
+      }
       assert.equal(existsSync(fixture.spawnMarker), false, `${label}: launched a child`);
     } finally { await fixture.close(); }
   }
@@ -290,7 +319,8 @@ test('build handoff rejects a Runtime instance change during compilation', async
 });
 
 
-// The whole launcher against a fake Runtime, with a fake long-lived `npm` for ACP and Vite: what the gateway it starts says about ACP.
+// The whole launcher against a fake Runtime, with a fake long-lived `npm` for ACP and Vite. The fake Vite listens on the app's
+// port (PORT), so the launcher's Open block, which waits for it, is reached; it also records every spawn.
 function freePort() {
   return new Promise((resolvePort, reject) => {
     const server = createServer();
@@ -299,33 +329,79 @@ function freePort() {
   });
 }
 
-async function launchedGatewayLine(extraArgs) {
-  const fixture = await launchFixture();
-  writeFileSync(join(fixture.fixture, 'bin', 'npm'), `#!${process.execPath}\nsetInterval(() => {}, 1000);\n`, { mode: 0o700 });
+const FAKE_NPM = (spawnLog) => `#!${process.execPath}
+const args = process.argv.slice(2);
+require('node:fs').appendFileSync(${JSON.stringify(spawnLog)}, args.join(' ') + '\\n');
+console.log(['fake-npm', ...args].join(' '));
+if (args.includes('dev') || args.includes('preview')) require('node:net').createServer(() => {}).listen(Number(process.env.PORT), '127.0.0.1');
+if (args.includes('dev:astrid-acp') && process.env.FAKE_ACP_EXIT_MS) setTimeout(() => process.exit(3), Number(process.env.FAKE_ACP_EXIT_MS));
+setInterval(() => {}, 1000);
+`;
+
+const OPEN_BLOCK_END = 'Keep this window open while you work. Press Ctrl+C to stop.';
+
+/**
+ * The launcher against a fake Runtime. Resolves once `until(stdout, stderr, exitCode)` holds, with what it printed; `stop()`
+ * ends it and cleans up. The default free ports keep a developer's own gateway (17340) and app (2222) out of it.
+ */
+async function startLauncher({ args = [], env: overrides = {}, shippedConfig = false, until = (stdout) => stdout.includes(OPEN_BLOCK_END), fixture: given, ...fixtureOverrides } = {}) {
+  const fixture = given ?? await launchFixture(fixtureOverrides);
+  const spawnLog = join(fixture.fixture, 'spawn.log');
+  writeFileSync(spawnLog, '');
+  writeFileSync(join(fixture.fixture, 'bin', 'npm'), FAKE_NPM(spawnLog), { mode: 0o700 });
+  // The default port is 17340, so REIGH_LOOPBACK_PORT is not inherited from the developer's shell.
+  const { REIGH_LOOPBACK_PORT: _inheritedPort, ASTRID_VERBOSE: _verbose, ...inherited } = process.env;
   const env = {
+    ...inherited,
     ...fixture.env,
-    REIGH_LOOPBACK_ORIGIN: 'https://hosted.test',
-    REIGH_LOOPBACK_PORT: '0',
+    PORT: String(await freePort()),
     VITE_ASTRID_DYNAMIC_PROXY_PORT: String(await freePort()),
+    ...overrides,
   };
-  const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...extraArgs], { env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] });
-  let stdout = '', stderr = '';
-  child.stdout.on('data', c => { stdout += c; }); child.stderr.on('data', c => { stderr += c; });
+  // The shipped config/hosted-origin.json is read only when a case asks for it; the fixture config is the default otherwise.
+  if (shippedConfig) delete env.REIGH_HOSTED_ORIGIN_CONFIG;
+  const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...args], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+  const seen = { stdout: '', stderr: '' };
+  child.stdout.on('data', c => { seen.stdout += c; }); child.stderr.on('data', c => { seen.stderr += c; });
   const closed = new Promise(resolveClose => child.once('close', resolveClose));
-  try {
-    const deadline = Date.now() + 60_000;
-    let line;
-    while (!line) {
-      line = stdout.split('\n').find(candidate => candidate.trim().startsWith('{') && candidate.includes('"base"'));
-      if (!line && (child.exitCode !== null || Date.now() > deadline)) throw new Error(`gateway line not printed (exit ${child.exitCode}): ${stdout}${stderr}`);
-      if (!line) await new Promise(r => setTimeout(r, 50));
-    }
-    assert(!stdout.includes(fixture.token) && !stderr.includes(fixture.token));
-    return { line: JSON.parse(line), stdout };
-  } finally {
+  const stop = async () => {
     child.kill('SIGTERM');
     await closed;
-    await fixture.close();
+    if (!given) await fixture.close();
+  };
+  try {
+    const deadline = Date.now() + 60_000;
+    while (!until(seen.stdout, seen.stderr, child.exitCode)) {
+      if (Date.now() > deadline || (child.exitCode !== null && !until(seen.stdout, seen.stderr, child.exitCode))) {
+        throw new Error(`launcher did not get there (exit ${child.exitCode}): ${seen.stdout}${seen.stderr}`);
+      }
+      await new Promise(r => setTimeout(r, 50));
+    }
+    return { stdout: seen.stdout, stderr: seen.stderr, child, closed, env, fixture, spawnLog, stop, seen };
+  } catch (error) {
+    await stop();
+    throw error;
+  }
+}
+
+/** Runs the launcher to its end (a refusal, or `already running`), resolving with its exit code and output. */
+async function launcherEnds(options) {
+  const started = await startLauncher({ ...options, until: (_stdout, _stderr, exitCode) => exitCode !== null });
+  await started.closed;
+  const result = { code: started.child.exitCode, stdout: started.seen.stdout, stderr: started.seen.stderr, spawned: readFileSync(started.spawnLog, 'utf8') };
+  await started.stop();
+  return result;
+}
+
+async function launchedGatewayLine(extraArgs) {
+  const started = await startLauncher({ args: ['--verbose', ...extraArgs], env: { REIGH_LOOPBACK_ORIGIN: 'https://hosted.test', REIGH_LOOPBACK_PORT: '0' } });
+  try {
+    const line = started.stdout.split('\n').find(candidate => candidate.trim().startsWith('{') && candidate.includes('"base"'));
+    assert(line, `gateway line not printed: ${started.stdout}${started.stderr}`);
+    assert(!started.stdout.includes(started.fixture.token) && !started.stderr.includes(started.fixture.token));
+    return { line: JSON.parse(line), stdout: started.stdout };
+  } finally {
+    await started.stop();
   }
 }
 
@@ -338,56 +414,180 @@ test('the launcher starts the gateway without ACP by default, and with it only f
   assert.equal(on.line.acp, true);
 });
 
-// The hosted origin default. The launcher runs against the fake Runtime with a fake `npm` that prints each spawn. Vite is
-// its last spawn, after the gateway decision and its lines, so the marker orders everything printed before it.
-async function startLauncher({ args = [], env: overrides = {}, shippedConfig = false, ...fixtureOverrides } = {}) {
-  const fixture = await launchFixture(fixtureOverrides);
-  writeFileSync(join(fixture.fixture, 'bin', 'npm'), `#!${process.execPath}\nconsole.log(['fake-npm', ...process.argv.slice(2)].join(' '));\nsetInterval(() => {}, 1000);\n`, { mode: 0o700 });
-  // The default port is 17340, so REIGH_LOOPBACK_PORT is not inherited from the developer's shell.
-  const { REIGH_LOOPBACK_PORT: _inheritedPort, ...inherited } = process.env;
-  const env = {
-    ...inherited,
-    ...fixture.env,
-    VITE_ASTRID_DYNAMIC_PROXY_PORT: String(await freePort()),
-    ...overrides,
-  };
-  // The shipped config/hosted-origin.json is read only when a case asks for it; the fixture config is the default otherwise.
-  if (shippedConfig) delete env.REIGH_HOSTED_ORIGIN_CONFIG;
-  const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...args], { env, stdio: ['ignore', 'pipe', 'pipe'] });
-  let stdout = '', stderr = '';
-  child.stdout.on('data', c => { stdout += c; }); child.stderr.on('data', c => { stderr += c; });
-  const closed = new Promise(resolveClose => child.once('close', resolveClose));
+// What a person sees on a healthy start: three lines and the address, nothing else.
+const HEALTHY_OUTPUT = (origin) => ['Starting Astrid…', '', `  Open ${origin}`, '', OPEN_BLOCK_END, ''].join('\n');
+
+test('a healthy start prints exactly the Open block, once Astrid is reachable, and nothing else', async () => {
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: String(await freePort()) } });
   try {
-    const deadline = Date.now() + 60_000;
-    while (!stdout.includes('fake-npm run dev --')) {
-      if (child.exitCode !== null || Date.now() > deadline) throw new Error(`launcher did not start Vite (exit ${child.exitCode}): ${stdout}${stderr}`);
-      await new Promise(r => setTimeout(r, 50));
-    }
-    return { stdout, stderr };
-  } finally {
-    child.kill('SIGTERM');
-    await closed;
-    await fixture.close();
+    assert.equal(started.stdout, HEALTHY_OUTPUT('https://hosted.test'));
+    assert.equal(started.stderr, '');
+    // npm is asked to be silent, and Vite to log warnings only.
+    const spawned = readFileSync(started.spawnLog, 'utf8').split('\n').filter(Boolean);
+    assert(spawned.every(line => line.startsWith('--silent ')), spawned.join('\n'));
+    assert(spawned.some(line => line.includes('--logLevel warn')), spawned.join('\n'));
+  } finally { await started.stop(); }
+});
+
+test('the Open block is bold on a terminal only', async () => {
+  // The launcher decides from process.stdout.isTTY; piped output (as here) carries no escape codes.
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: String(await freePort()) } });
+  try { assert(!started.stdout.includes('\x1b['), JSON.stringify(started.stdout)); } finally { await started.stop(); }
+});
+
+test('--verbose prints the old technical lines after the Open block, and ASTRID_VERBOSE=1 does the same', async () => {
+  for (const options of [{ args: ['--verbose'] }, { env: { ASTRID_VERBOSE: '1' } }]) {
+    const port = await freePort();
+    const started = await startLauncher({
+      configuredOrigin: 'https://hosted.test',
+      ...options,
+      env: { REIGH_LOOPBACK_PORT: String(port), ...options.env },
+      until: (stdout) => stdout.includes('"base"') && stdout.includes('fake-npm'),
+    });
+    try {
+      const { stdout } = started;
+      assert(stdout.startsWith(HEALTHY_OUTPUT('https://hosted.test')), stdout);
+      const rest = stdout.slice(HEALTHY_OUTPUT('https://hosted.test').length);
+      assert.match(rest, /workspace\.v1 runtime healthy at http:\/\/127\.0\.0\.1:\d+; Reigh will use port \d+/);
+      assert(rest.includes('Runtime discovery proxy listening on 127.0.0.1:'), rest);
+      assert(rest.includes(`loopback gateway starting on 127.0.0.1:${port} for https://hosted.test`), rest);
+      assert.match(rest, /"base":"http:\/\/127\.0\.0\.1:\d+\/api\/runtime"/);
+      assert(rest.includes('fake-npm run dev --'), rest);
+      assert(!rest.includes('--silent'), 'verbose runs npm as it always did');
+    } finally { await started.stop(); }
   }
+});
+
+test('nothing is printed as Open until the gateway and the app both answer', async () => {
+  // A program already on the gateway port: the launcher refuses before it starts anything or prints an address.
+  const holder = createServer((_req, res) => { res.writeHead(200); res.end('not a gateway'); });
+  await new Promise(r => holder.listen(0, '127.0.0.1', r));
+  try {
+    const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: String(holder.address().port) } });
+    assert.equal(result.code, 1);
+    assert.equal(result.stderr.split('\n')[0], "Astrid: Another program is in the way, so Astrid can't start. Close it and try again.");
+    assert.match(result.stderr.split('\n')[1], /^Details: port \d+ is already in use by a program that is not the gateway for https:\/\/hosted\.test/);
+    assert(!result.stdout.includes('Open '), result.stdout);
+    assert.equal(result.spawned, '', 'no proxy, ACP bridge or Vite was started');
+  } finally { await new Promise(r => holder.close(r)); }
+});
+
+test('the app port taken by another program: one friendly line, the details, no Open block, and nothing started', async () => {
+  // Something that is not Astrid's app already listens on the app's port. Vite would not start, and whatever answers must
+  // never be taken for it: the launcher refuses before it prints "Starting Astrid…" or an address.
+  const holder = createServer((_req, res) => { res.writeHead(200); res.end('not the app'); });
+  await new Promise(r => holder.listen(0, '127.0.0.1', r));
+  const appPort = String(holder.address().port);
+  try {
+    const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { PORT: appPort, REIGH_LOOPBACK_PORT: String(await freePort()) } });
+    assert.equal(result.code, 1, result.stdout + result.stderr);
+    assert.deepEqual(result.stderr.split('\n').slice(0, 2), [
+      "Astrid: Another program is in the way, so Astrid can't start. Close it and try again.",
+      `Details: port ${appPort} is in use`,
+    ]);
+    assert(!result.stderr.includes('Agent chat stopped'), result.stderr);
+    assert(!result.stdout.includes('Open '), result.stdout);
+    assert(!result.stdout.includes('Starting Astrid'), result.stdout);
+    assert.equal(result.spawned, '', 'no proxy, ACP bridge or Vite was started');
+  } finally { await new Promise(r => holder.close(r)); }
+});
+
+test('a second launcher for the same Astrid says so, prints the same Open block, starts nothing and exits 0', async () => {
+  const port = String(await freePort());
+  const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: port } });
+  try {
+    writeFileSync(first.spawnLog, '');
+    const second = await launcherEnds({ fixture: first.fixture, env: { REIGH_LOOPBACK_PORT: port } });
+    assert.equal(second.code, 0, second.stderr);
+    assert.equal(second.stdout, ['Astrid is already running in another window.', '', '  Open https://hosted.test', '', OPEN_BLOCK_END, ''].join('\n'));
+    assert.equal(second.stderr, '');
+    assert.equal(second.spawned, '', 'no discovery proxy, ACP bridge or Vite for the second launcher');
+  } finally { await first.stop(); }
+});
+
+test('a second launcher for another Astrid says to stop the first one', async () => {
+  const port = String(await freePort());
+  const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: port } });
+  const other = await launchFixture({ configuredOrigin: 'https://hosted.test', discoveryRealmId: 'realm-other', catalogSelectedRealmId: 'realm-other', catalogRealmId: 'realm-other', handshakeRealmId: 'realm-other', realmResponseId: 'realm-other' });
+  try {
+    const second = await launcherEnds({ fixture: other, env: { REIGH_LOOPBACK_PORT: port } });
+    assert.equal(second.code, 1, second.stdout + second.stderr);
+    assert.equal(second.stderr.split('\n')[0], 'Astrid: Another Astrid is already running in another window. Stop it there with Ctrl+C first.');
+    assert.match(second.stderr.split('\n')[1], /^Details: /);
+    assert(!second.stdout.includes('Open '), second.stdout);
+    assert.equal(second.spawned, '');
+  } finally {
+    await first.stop();
+    await other.close();
+  }
+});
+
+test('the gateway stopping later is one friendly line, then the details', async () => {
+  const port = await freePort();
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: String(port) } });
+  try {
+    const pids = execFileSync('pgrep', ['-f', `reigh-loopback-gateway.ts.*--port ${port}`], { encoding: 'utf8' }).split('\n').filter(Boolean).map(Number);
+    assert(pids.length > 0, 'the gateway process');
+    for (const pid of pids) process.kill(pid, 'SIGKILL');
+    await started.closed;
+    assert.equal(started.child.exitCode, 1);
+    const lines = started.seen.stderr.split('\n');
+    assert.equal(lines[0], 'Astrid: Astrid stopped. Start it again with npm run dev:local.');
+    assert.match(lines[1], /^Details: loopback gateway exited with SIGKILL; the hosted app cannot reach this computer/);
+  } finally { await started.stop(); }
+});
+
+test('the agent chat bridge stopping is its own friendly line', async () => {
+  const result = await launcherEnds({
+    configuredOrigin: 'https://hosted.test',
+    env: { REIGH_LOOPBACK_PORT: String(await freePort()), FAKE_ACP_EXIT_MS: '200' },
+  });
+  assert.equal(result.code, 1);
+  assert.equal(result.stderr.split('\n')[0], 'Astrid: Agent chat stopped. Start Astrid again with npm run dev:local.');
+  assert.match(result.stderr.split('\n')[1], /^Details: Astrid ACP bridge exited with code 3; ACP is offline/);
+});
+
+test('a machine without Astrid set up points to the install guide, and every error line starts with "Astrid: "', async () => {
+  const fixture = await launchFixture();
+  try {
+    const result = await run(['--check'], { ...fixture.env, ASTRID_WORKSPACE_DISCOVERY: join(fixture.fixture, 'no-such-dir', 'discovery.json') });
+    assert.equal(result.code, 1);
+    const lines = result.stderr.split('\n');
+    assert.equal(lines[0], "Astrid: Astrid isn't set up on this computer yet. Install guide: https://github.com/peteromallet/astrid-agent/blob/main/docs/setup/local-source-install.md");
+    assert.match(lines[1], /^Details: cannot read runtime discovery at .*discovery\.json: /);
+    assert(!result.stderr.includes('dev:local:'), result.stderr);
+    assert.equal(result.stdout, '');
+  } finally { await fixture.close(); }
+});
+
+test('a stopped Runtime points to the command that starts it', async () => {
+  const fixture = await launchFixture();
+  try {
+    // The discovery file still names a Runtime, but nothing listens there any more.
+    await new Promise(r => fixture.runtime.close(r));
+    const result = await run(['--check'], fixture.env);
+    assert.equal(result.code, 1);
+    assert.equal(result.stderr.split('\n')[0], "Astrid: Astrid's engine isn't running. Start it first: banodoco-local up --profile astrid");
+    assert.match(result.stderr.split('\n')[1], /^Details: runtime is unavailable at http:\/\/127\.0\.0\.1:\d+ /);
+  } finally { rmSync(fixture.fixture, { recursive: true, force: true }); }
+});
+
+function assertOpenAfterStart(stdout, origin) {
+  assert.equal(stdout, HEALTHY_OUTPUT(origin));
 }
 
-function assertOpenFollowsStart(stdout, origin) {
-  const lines = stdout.split('\n');
-  const start = lines.indexOf(`loopback gateway starting on 127.0.0.1:17340 for ${origin}`);
-  assert.notEqual(start, -1, stdout);
-  assert.equal(lines[start + 1], `Open ${origin}`, stdout);
-}
-
-test('the shipped config makes the production origin the default: the gateway starts on 17340 and Open follows its start line', async () => {
-  const { stdout } = await startLauncher({ shippedConfig: true });
-  assertOpenFollowsStart(stdout, 'https://astrid.haus');
+test('the shipped config makes the production origin the default: Open shows it once the gateway and the app answer', async () => {
+  const started = await startLauncher({ shippedConfig: true, env: { REIGH_LOOPBACK_PORT: String(await freePort()) } });
+  try { assertOpenAfterStart(started.stdout, 'https://astrid.haus'); } finally { await started.stop(); }
 });
 
 test('REIGH_LOOPBACK_ORIGIN=off starts no gateway and prints no Open line, even with a configured origin', async () => {
-  const { stdout } = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { REIGH_LOOPBACK_ORIGIN: 'off' } });
-  assert(!stdout.includes('loopback gateway'), stdout);
-  assert(!stdout.includes('Open '), stdout);
-  assert(!stdout.includes('"base"'), stdout);
+  const started = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { REIGH_LOOPBACK_ORIGIN: 'off' }, until: (stdout) => stdout.includes('fake-npm run dev --') });
+  try {
+    assert(!started.stdout.includes('loopback gateway'), started.stdout);
+    assert(!started.stdout.includes('Open '), started.stdout);
+    assert(!started.stdout.includes('"base"'), started.stdout);
+  } finally { await started.stop(); }
 });
 
 test('--check starts nothing, even with the production origin as the default', async () => {
@@ -402,18 +602,24 @@ test('--check starts nothing, even with the production origin as the default', a
 });
 
 test("a null configured origin keeps today's behaviour: no gateway unless one is given", async () => {
-  const { stdout } = await startLauncher({ configuredOrigin: null });
-  assert(!stdout.includes('loopback gateway'), stdout);
-  assert(!stdout.includes('Open '), stdout);
+  const started = await startLauncher({ configuredOrigin: null, until: (stdout) => stdout.includes('fake-npm run dev --') });
+  try {
+    assert(!started.stdout.includes('loopback gateway'), started.stdout);
+    assert(!started.stdout.includes('Open '), started.stdout);
+  } finally { await started.stop(); }
 });
 
 test('an explicit origin wins over the configured one, from REIGH_LOOPBACK_ORIGIN or --hosted-origin', async () => {
-  const fromEnvironment = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { REIGH_LOOPBACK_ORIGIN: 'https://hosted.test' } });
-  assertOpenFollowsStart(fromEnvironment.stdout, 'https://hosted.test');
-  assert(!fromEnvironment.stdout.includes('astrid.haus'), fromEnvironment.stdout);
-  const fromArgument = await startLauncher({ configuredOrigin: 'https://astrid.haus', args: ['--hosted-origin', 'https://hosted.test'] });
-  assertOpenFollowsStart(fromArgument.stdout, 'https://hosted.test');
-  assert(!fromArgument.stdout.includes('astrid.haus'), fromArgument.stdout);
+  const fromEnvironment = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { REIGH_LOOPBACK_ORIGIN: 'https://hosted.test', REIGH_LOOPBACK_PORT: String(await freePort()) } });
+  try {
+    assertOpenAfterStart(fromEnvironment.stdout, 'https://hosted.test');
+    assert(!fromEnvironment.stdout.includes('astrid.haus'), fromEnvironment.stdout);
+  } finally { await fromEnvironment.stop(); }
+  const fromArgument = await startLauncher({ configuredOrigin: 'https://astrid.haus', args: ['--hosted-origin', 'https://hosted.test'], env: { REIGH_LOOPBACK_PORT: String(await freePort()) } });
+  try {
+    assertOpenAfterStart(fromArgument.stdout, 'https://hosted.test');
+    assert(!fromArgument.stdout.includes('astrid.haus'), fromArgument.stdout);
+  } finally { await fromArgument.stop(); }
 });
 
 test('REIGH_LOOPBACK_ORIGIN=off and --hosted-origin cannot both be set', async () => {

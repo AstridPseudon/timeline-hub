@@ -17,6 +17,7 @@ import { pathToFileURL } from 'node:url';
 import { classifyPairedRoute } from '../config/vite/pairedRoutePolicy';
 import { objectCacheControl } from '../config/vite/objectCachePolicy.mjs';
 import { currentRuntime } from './runtime-discovery-proxy.mjs';
+import { withAppUrl } from '../src/integrations/runtime/gatewayHealth.ts';
 
 /** The gateway's well-known port (Plan A D1). Tests pass `--port 0` or listen on 0 themselves. */
 export const DEFAULT_GATEWAY_PORT = 17340;
@@ -116,7 +117,7 @@ function createRuntimeResolver(config: { endpoint?: string; token?: string; runt
   };
 }
 
-export function createLoopbackGateway(config: { endpoint?: string; token?: string; runtime?: RuntimeSource; origin: string; acpEndpoint?: string; acpToken?: string; maxObjectBytes?: number; idleTimeoutMs?: number; audit?: (entry: Record<string, unknown>) => void }) {
+export function createLoopbackGateway(config: { endpoint?: string; token?: string; runtime?: RuntimeSource; origin: string; /** The local app address (`http://127.0.0.1:<app port>`) added to the health answer as `app_url`. */ appUrl?: string; acpEndpoint?: string; acpToken?: string; maxObjectBytes?: number; idleTimeoutMs?: number; audit?: (entry: Record<string, unknown>) => void }) {
   const maxObjectBytes = resolveMaxObjectBytes(config.maxObjectBytes === undefined ? undefined : String(config.maxObjectBytes));
   const resolver = createRuntimeResolver(config);
   const acpEndpoint = config.acpEndpoint ? loopbackEndpoint(config.acpEndpoint) : null;
@@ -207,6 +208,19 @@ export function createLoopbackGateway(config: { endpoint?: string; token?: strin
         response.on('data', chunk => { responseBytes += chunk.length; });
         response.on('error', () => res.destroy());
         response.on('aborted', () => res.destroy());
+        if (config.appUrl && method === 'GET' && route?.service === 'runtime' && upstreamPath.split('?', 1)[0] === '/v1/health' && res.statusCode === 200) {
+          // The health answer tells the page where the local Astrid app is (`gatewayHealth.ts`); the rest of it passes through.
+          const chunks: Buffer[] = [];
+          response.on('data', chunk => { chunks.push(chunk); });
+          response.on('end', () => {
+            const raw = Buffer.concat(chunks);
+            let body = raw;
+            try { body = Buffer.from(JSON.stringify(withAppUrl(JSON.parse(raw.toString('utf8')), config.appUrl!))); } catch { /* not JSON: pass it through */ }
+            res.setHeader('Content-Length', body.length);
+            res.end(body);
+          });
+          return;
+        }
         response.pipe(res);
       });
       upstream = attempt;
@@ -341,8 +355,10 @@ async function main() {
     acpToken = typeof acpCredential.token === 'string' ? acpCredential.token : acpRaw;
   }
   if (acpEndpointRaw && !acpToken) throw new Error('ACP endpoint requires ASTRID_ACP_BRIDGE_TOKEN or --acp-token-file');
+  const appPort = args.get('app-port');
+  if (appPort !== undefined && !/^\d{1,5}$/.test(appPort)) throw new Error('--app-port must be a port number');
   const auditPath = args.get('audit-log');
-  const gateway = createLoopbackGateway({ runtime, origin: args.get('origin')!, maxObjectBytes: resolveMaxObjectBytes(process.env.RUNTIME_MAX_OBJECT_BYTES), ...(acpEndpointRaw ? { acpEndpoint: acpEndpointRaw, acpToken } : {}), ...(auditPath ? { audit: (entry: Record<string, unknown>) => appendFileSync(auditPath, `${JSON.stringify(entry)}\n`, { mode: 0o600 }) } : {}) });
+  const gateway = createLoopbackGateway({ runtime, origin: args.get('origin')!, ...(appPort ? { appUrl: `http://127.0.0.1:${appPort}` } : {}), maxObjectBytes: resolveMaxObjectBytes(process.env.RUNTIME_MAX_OBJECT_BYTES), ...(acpEndpointRaw ? { acpEndpoint: acpEndpointRaw, acpToken } : {}), ...(auditPath ? { audit: (entry: Record<string, unknown>) => appendFileSync(auditPath, `${JSON.stringify(entry)}\n`, { mode: 0o600 }) } : {}) });
   const port = Number(args.get('port') ?? String(DEFAULT_GATEWAY_PORT));
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('Invalid port');
   gateway.server.once('error', (error: NodeJS.ErrnoException) => {

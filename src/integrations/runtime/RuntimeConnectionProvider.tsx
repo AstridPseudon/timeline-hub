@@ -40,6 +40,9 @@ import {
   type RuntimeConnectionState,
   type RuntimeNotReadyReason,
 } from './connection.ts';
+import { appUrlFromHealth } from './gatewayHealth.ts';
+import { setRuntimeAppUrl } from './runtimeAppUrl.ts';
+import { autoConnectRequested, takeAutoConnectRequest } from './autoConnectRequest.ts';
 import type { Realm } from './generated.ts';
 
 const POLL_INTERVAL_MS = 3000;
@@ -49,7 +52,8 @@ const CONNECTED_BEFORE_KEY = 'reigh.runtime.connectedBefore';
 type RealmSummary = Pick<Realm, 'realm_id' | 'display_name'>;
 
 export type RuntimeProbeOutcome =
-  | { kind: 'connected'; realm: RealmSummary }
+  /** `appUrl`: the local app address the gateway reported in its health answer (`gatewayHealth.ts`), null when it gave none. */
+  | { kind: 'connected'; realm: RealmSummary; appUrl: string | null }
   | { kind: 'cant_reach' }
   | { kind: 'not_ready'; reason: RuntimeNotReadyReason };
 
@@ -107,7 +111,7 @@ export async function probeRuntime(
   if ('kind' in realm) return realm;
   const { realm_id, display_name } = (realm.body ?? {}) as Partial<RealmSummary>;
   if (typeof realm_id !== 'string' || typeof display_name !== 'string') return { kind: 'cant_reach' };
-  return { kind: 'connected', realm: { realm_id, display_name } };
+  return { kind: 'connected', realm: { realm_id, display_name }, appUrl: appUrlFromHealth(health.body) };
 }
 
 function readConnectedBefore(): boolean {
@@ -175,6 +179,7 @@ export function RuntimeConnectionProvider({
   const inFlight = useRef<AbortController | null>(null);
   /** The untimed probe `connect()` started while the permission was not yet granted: the one a grant must replace. */
   const promptProbe = useRef<AbortController | null>(null);
+  /** Sticky once a probe connects (set in `runProbe`, before the render): no probe starts after it. */
   const connectedRef = useRef(false);
   const permissionRef = useRef(permission);
   permissionRef.current = permission;
@@ -232,6 +237,12 @@ export function RuntimeConnectionProvider({
     if (!mounted.current) return;
     setIsChecking(false);
     if (connectedRef.current) return;
+    // Latch the connection now, not on the render that `setOutcome` schedules: `inFlight` is already clear, and an
+    // interval tick or focus event that lands before that render would otherwise start a second probe.
+    if (result.kind === 'connected') {
+      connectedRef.current = true;
+      setRuntimeAppUrl(result.appUrl);
+    }
     setOutcome(result);
     if (result.kind !== 'connected' && permissionRef.current !== 'granted') {
       // A denied fetch looks like nothing listening, so the permission is the only way to tell them apart.
@@ -241,7 +252,6 @@ export function RuntimeConnectionProvider({
   }, [fetchImpl, permissions]);
 
   const isConnected = outcome?.kind === 'connected';
-  connectedRef.current = isConnected;
 
   // Granted: probe at once, then on an interval and on focus, until connected.
   useEffect(() => {
@@ -348,8 +358,28 @@ export function RuntimeConnectionGate({
   pill = () => null,
 }: RuntimeConnectionGateProps) {
   const connection = useRuntimeConnection();
-  if (!connection.gated) return <>{children}</>;
-  if (!connection.isConnected) return <>{panel(connection)}</>;
+  // The landing page's "use it right here" click asked to go in (`autoConnectRequest.ts`): the flag is read once, in the
+  // first render, so the explainer is never painted for the frame before the effect below asks Chrome.
+  const [autoConnect, setAutoConnect] = useState(autoConnectRequested);
+  const { gated, awaitingConnect, isBooting, isConnected, connect } = connection;
+  useEffect(() => {
+    if (!gated || !autoConnect) return;
+    if (awaitingConnect) {
+      // The flag is one-shot: after it is used, a later `prompt` (a permission reset) shows the explainer again.
+      if (takeAutoConnectRequest()) connect();
+      setAutoConnect(false);
+    } else if (isConnected || !isBooting) {
+      // The permission was not `prompt` (granted or denied), so the flag has nothing to do and must not linger.
+      takeAutoConnectRequest();
+      setAutoConnect(false);
+    }
+  }, [gated, autoConnect, awaitingConnect, isBooting, isConnected, connect]);
+  if (!gated) return <>{children}</>;
+  if (!connection.isConnected) {
+    // While the flag is waiting for its effect, the panel shows Chrome's prompt screen, not the explainer.
+    const shown = autoConnect && awaitingConnect ? { ...connection, isChecking: true } : connection;
+    return <>{panel(shown)}</>;
+  }
   return (
     <>
       {pill(connection)}

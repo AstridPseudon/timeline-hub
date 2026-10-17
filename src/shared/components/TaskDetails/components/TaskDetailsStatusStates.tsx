@@ -103,7 +103,7 @@ export function TaskDetailsEmptyState({
           </svg>
         </div>
         <p className="text-sm text-muted-foreground">
-          No task details available for this generation.
+          No details for this image yet.
         </p>
       </div>
     </div>

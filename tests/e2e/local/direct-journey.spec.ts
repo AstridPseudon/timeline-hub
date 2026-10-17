@@ -24,11 +24,11 @@
  * scripts/quality/check-known-failures.mjs. The budget must equal the number of markers in this file.
  *
  * App contract the UI cases assert (A2.S and A2.P chose these names):
- *   [data-testid="runtime-connection-status"][data-state="connected"]   the status pill, which also shows the realm's display name
- *   [data-testid="runtime-not-connected"]                               the connection panel (first-time, returning, blocked, not ready)
- *   a button named "Connect" in the first-time panel                    triggers Chrome's local-network prompt
- *   a button named "Copy instructions for your agent" inside that panel
- *   a button named "Reload" beside the Runtime restart message
+ *   [data-testid="runtime-connection-status"][data-state="connected"]   the status container: nothing visible while connected (screen-reader text only)
+ *   [data-testid="runtime-not-connected"]                               the connection panel (permission, blocked, set up, not running, restart needed)
+ *   a button named "Connect" in the permission panel                    triggers Chrome's local-network prompt
+ *   a button named "Copy setup steps for your agent" / "Copy steps for your agent" inside that panel
+ *   a button named "Reload" in the "Astrid restarted" card; the "Astrid stopped" card clears by itself
  */
 import { chromium, expect, test as base, type Browser, type Page } from '@playwright/test';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
@@ -43,13 +43,14 @@ const GATEWAY_RSS_GROWTH_LIMIT = 100 * 1024 * 1024;
 const UI = {
   status: '[data-testid="runtime-connection-status"]',
   panel: '[data-testid="runtime-not-connected"]',
-  copyInstructions: 'Copy instructions for your agent',
+  copySetup: 'Copy setup steps for your agent',
+  copySteps: 'Copy steps for your agent',
   connect: 'Connect',
   reload: 'Reload',
 };
 /** The workspace route a visitor opens on the hosted origin. `/` itself is the public landing page in the WEB build (src/app/routes.tsx:77). */
 const APP_ENTRY_ROUTE = '/tools/video-editor';
-/** The realm's display name (harness.ts creates the realm and starts the Runtime with it); the pill shows it. */
+/** The realm's display name (harness.ts creates the realm and starts the Runtime with it); the Runtime reports it, the page no longer shows it. */
 const REALM_DISPLAY_NAME = 'Direct Journey';
 
 function resolveChromium(): string | undefined {
@@ -164,6 +165,17 @@ async function editFirstTrackName(page: Page, name: string) {
   await field.blur();
 }
 
+/**
+ * Holds every save of a composition revision in flight, so the Runtime never receives it and an edit stays an unsaved
+ * draft by construction. The editor autosaves 500 ms after an edit, so without this a restart that follows the edit
+ * only keeps the draft when it happens to win that race. Returns the release (later saves go through).
+ */
+async function holdTimelineSaves(page: Page) {
+  const saves = /\/timelines\/[^/]+\/composition-revisions$/;
+  await page.route(saves, (route) => (route.request().method() === 'POST' ? new Promise<void>(() => {}) : route.fallback()));
+  return () => page.unroute(saves);
+}
+
 async function revisionBody(harness: DirectHarness, revisionId: string) {
   return (await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions/${revisionId}`)).body;
 }
@@ -186,8 +198,11 @@ test.describe('zero-click connection (App)', () => {
     // The probe is the existing health route under /api/runtime; there is no /v1/connect.
     expect(gatewayRequests.some((request) => request.startsWith('GET ') && request.endsWith('/api/runtime/v1/health'))).toBe(true);
     expect(gatewayRequests.some((request) => request.endsWith('/v1/connect'))).toBe(false);
-    await expect(page.locator(UI.status)).toContainText(REALM_DISPLAY_NAME);
+    // Nothing about the connection is visible while it holds: the editor already shows the project.
+    await expect(page.locator(UI.status)).toHaveText('Connected to Astrid');
+    await expect(page.locator(UI.status)).toHaveClass(/sr-only/);
     await expect(page.getByText(harness.seed.projectName)).toBeVisible();
+    await expect(page.getByText(/Connected ·/)).toHaveCount(0);
   });
 
   test('a reload stays connected', async ({ page, harness }) => {
@@ -207,10 +222,13 @@ test.describe('zero-click connection (App)', () => {
       await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
       const panel = page.locator(UI.panel);
       await expect(panel).toBeVisible();
-      await panel.getByRole('button', { name: UI.copyInstructions }).click();
+      await panel.getByRole('button', { name: UI.copySetup }).click();
+      await expect(panel.getByRole('button', { name: 'Copied' })).toBeVisible();
+      await expect(panel.getByText('Now paste them into your agent.')).toBeVisible();
       const copied = await page.evaluate(() => navigator.clipboard.readText());
       expect(copied).toContain('banodoco-local up --profile astrid');
       expect(copied).toContain('npm run dev:local');
+      expect(copied).toContain(`prints "Open ${harness.origin}"`);
       await harness.startGateway();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
       expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
@@ -255,16 +273,17 @@ test.describe('the bare domain (App)', () => {
 });
 
 test.describe('first time and returning panels (App)', () => {
-  test('a fresh profile shows "Set up Reigh on this computer", and after one connection the same profile shows "Reigh isn\'t running"', async ({ page, harness }) => {
+  test('a fresh profile shows "Set up Astrid on this computer", and after one connection the same profile shows "Astrid isn\'t running"', async ({ page, harness }) => {
     // Same context for both phases, so localStorage carries over; the fixture context is fresh, so nothing is remembered at the start.
     await harness.stopGateway();
     await harness.stopRuntime();
     try {
       await openApp(page, harness);
       const panel = page.locator(UI.panel);
-      await expect(panel.getByRole('heading', { name: 'Set up Reigh on this computer' })).toBeVisible();
-      await expect(panel.getByText('Already installed? Start it')).toBeVisible();
-      await expect(panel.getByRole('button', { name: UI.copyInstructions })).toBeVisible();
+      await expect(panel.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeVisible();
+      await expect(panel.getByText('Already installed? Start Astrid')).toBeVisible();
+      await expect(panel.getByRole('link', { name: 'the install guide' })).toBeVisible();
+      await expect(panel.getByRole('button', { name: UI.copySetup })).toBeVisible();
 
       await harness.startRuntime();
       await harness.startGateway();
@@ -272,8 +291,9 @@ test.describe('first time and returning panels (App)', () => {
 
       await harness.stopGateway();
       await page.reload();
-      await expect(panel.getByRole('heading', { name: "Reigh isn't running" })).toBeVisible();
-      await expect(panel.getByText('Set up Reigh on this computer')).toHaveCount(0);
+      await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
+      await expect(panel.getByRole('button', { name: UI.copySteps })).toBeVisible();
+      await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
     } finally {
       await harness.resetToHealthy();
     }
@@ -290,8 +310,8 @@ test.describe('permission gate and readiness (App)', () => {
       const gatewayRequests = await openApp(page, harness);
       expect(await readLocalNetworkState(page)).toBe('prompt');
       const panel = page.locator(UI.panel);
+      await expect(panel.getByRole('heading', { name: 'Connect to Astrid on this computer' })).toBeVisible();
       await expect(panel.getByRole('button', { name: UI.connect })).toBeVisible();
-      await expect(panel.getByRole('button', { name: UI.copyInstructions })).toBeVisible();
       expect(gatewayRequests, 'nothing is sent to the gateway before Connect').toEqual([]);
       // Headless Chromium cannot answer Chrome's prompt, so the click is followed by the grant the prompt would give.
       // The grant comes after the click: a granted permission connects by itself, and Connect would be gone.
@@ -304,7 +324,7 @@ test.describe('permission gate and readiness (App)', () => {
     }
   });
 
-  test('a denied local-network permission shows that the browser blocked the connection, with how to allow it', async ({ browser, harness }, testInfo) => {
+  test('a denied local-network permission shows how to allow Astrid in Chrome', async ({ browser, harness }, testInfo) => {
     const context = await browser.newContext();
     let override: Awaited<ReturnType<typeof setLocalNetworkPermission>> | undefined;
     try {
@@ -316,11 +336,12 @@ test.describe('permission gate and readiness (App)', () => {
       expect(await readLocalNetworkState(page)).toBe('denied');
       const gatewayRequests = await openApp(page, harness);
       const panel = page.locator(UI.panel);
-      await expect(panel.getByText(/browser blocked/i)).toBeVisible();
-      await expect(panel.getByText(/local network access/i)).toBeVisible();
-      await expect(panel.getByText('Set up Reigh on this computer')).toHaveCount(0);
+      await expect(panel.getByRole('heading', { name: 'Allow Astrid in Chrome' })).toBeVisible();
+      await expect(panel.getByText('Local network access')).toBeVisible();
+      await expect(panel.getByText('Come back here and it opens by itself.')).toBeVisible();
+      await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
       expect(gatewayRequests, 'a denied permission is not retried as if nothing were listening').toEqual([]);
-      // Phone width (CP3): the Chrome settings address wraps inside the card instead of scrolling the page sideways.
+      // Phone width (CP3): the steps wrap inside the card instead of scrolling the page sideways.
       await page.setViewportSize({ width: 360, height: 740 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
       await testInfo.attach('panel-blocked-360.png', { body: await page.screenshot(), contentType: 'image/png' });
@@ -330,15 +351,16 @@ test.describe('permission gate and readiness (App)', () => {
     }
   });
 
-  test('with the gateway up and the Runtime stopped, the panel says Reigh needs to be started again, then connects by itself', async ({ page, harness }) => {
+  test('with the gateway up and the Runtime stopped, the panel says Astrid isn\'t running, then connects by itself', async ({ page, harness }) => {
     await harness.stopRuntime(); // the gateway stays up
     try {
       await openApp(page, harness);
       await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
       const panel = page.locator(UI.panel);
-      await expect(panel.getByRole('heading', { name: 'Reigh needs to be started again' })).toBeVisible();
-      await expect(panel.getByText(/Runtime has stopped/i)).toBeVisible();
-      await expect(panel.getByText('Set up Reigh on this computer')).toHaveCount(0);
+      await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
+      await expect(panel.getByText('Start Astrid on this computer and this page opens by itself.')).toBeVisible();
+      await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
+      await expect(panel).not.toContainText(/Reigh|Runtime|workspace|realm|gateway|reload/i);
       await harness.startRuntime();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
       expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
@@ -426,8 +448,11 @@ test.describe('core journey', () => {
     const second = await harness.runtimeJson('POST', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions`, compositionPublication(harness.seed, head, 'Second writer', 24));
     expect(second.status).toBe(200);
     await editFirstTrackName(page, 'Draft from the first writer');
-    const conflict = page.getByRole('alertdialog', { name: 'Timeline save conflict' });
+    const conflict = page.getByRole('alertdialog', { name: 'This timeline changed somewhere else' });
     await expect(conflict).toBeVisible({ timeout: 20_000 });
+    await expect(conflict.getByText('Keep your changes, or switch to the latest version.')).toBeVisible();
+    await expect(conflict.getByRole('button', { name: 'Keep my changes' })).toBeVisible();
+    await expect(conflict.getByRole('button', { name: 'Use latest version' })).toBeVisible();
     // The dialog is modal, so the editor behind it is hidden from the accessibility tree but still holds the draft.
     const draftField = page.getByRole('textbox', { name: 'Track name', includeHidden: true }).first();
     await expect(draftField).toHaveValue('Draft from the first writer');
@@ -665,29 +690,58 @@ test.describe('restarts', () => {
     expect(response.json().runtime_instance_id).toBe(harness.runtimeInstanceId);
   });
 
-  test('App: a Runtime restart on a new port shows the restart message, and Reload reconnects with the draft kept', async ({ page, harness }) => {
+  test('App: an Astrid restart on a new port shows the restart card, and Reload reconnects with the draft kept', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
     await openSeededTimeline(page, harness);
+    const releaseSaves = await holdTimelineSaves(page);
     await editFirstTrackName(page, 'Draft kept across the restart');
     await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
 
     // The gateway follows the Runtime to its new port by itself; nothing here restarts it.
     await harness.restartRuntime();
-    await expect(page.getByText(/Runtime restarted/i)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: 'Astrid restarted' })).toBeVisible({ timeout: 20_000 });
     expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload), 'the page does not reload by itself').toBe(true);
+    // One recovery path: the editor's own technical cards stay out of the way, and the save badge is neutral.
+    await expect(page.getByText('Workspace connection unavailable')).toHaveCount(0);
+    await expect(page.getByText('Reload needed')).toHaveCount(0);
+    await expect(page.getByText('Not saved', { exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: UI.reload }).click();
     await expectConnected(page);
-    await expect(page.getByText(/Runtime restarted/i)).toHaveCount(0);
-    // The draft survives the reload: the editor offers it back as a recovered draft, and Retry saves it.
+    await expect(page.getByRole('heading', { name: 'Astrid restarted' })).toHaveCount(0);
+    // The draft survives the reload: the editor offers it back as a recovered draft, and Save them saves it.
     await openSeededTimeline(page, harness);
-    const recovered = page.getByRole('alert').filter({ hasText: 'We recovered unsaved changes' });
+    const recovered = page.getByRole('alert').filter({ hasText: 'You have unsaved changes' });
     await expect(recovered).toBeVisible();
     const headBefore = await currentHead(harness);
-    await recovered.getByRole('button', { name: 'Retry' }).click();
+    await releaseSaves();
+    await recovered.getByRole('button', { name: 'Save them' }).click();
     await expect.poll(() => currentHead(harness), { timeout: 20_000 }).not.toBe(headBefore);
     await expect(firstTrackName(page)).toHaveValue('Draft kept across the restart');
+  });
+
+  test('App: Astrid stopping while the page is connected shows "Astrid stopped", and the card clears by itself when it is back', async ({ page, harness }) => {
+    await openApp(page, harness);
+    await expectConnected(page);
+    await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
+
+    await harness.stopGateway();
+    try {
+      await expect(page.getByRole('heading', { name: 'Astrid stopped' })).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText('Start it again on this computer and this page carries on. Your changes are kept.')).toBeVisible();
+      await expect(page.getByRole('button', { name: UI.copySteps })).toBeVisible();
+      // The status no longer claims "Connected", and the editor's own technical recovery card is not there.
+      await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'stopped');
+      await expect(page.locator(UI.status)).not.toContainText('Connected');
+      await expect(page.getByText('Workspace connection unavailable')).toHaveCount(0);
+      await harness.startGateway();
+      await expect(page.getByRole('heading', { name: 'Astrid stopped' })).toHaveCount(0, { timeout: 20_000 });
+      await expectConnected(page);
+      expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload), 'the page carries on without a reload').toBe(true);
+    } finally {
+      await harness.resetToHealthy();
+    }
   });
 
   test('a stopped gateway refuses connections (Node and the page); started again it serves on the same fixed port', async ({ page, harness }) => {

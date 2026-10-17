@@ -218,6 +218,8 @@ export function useReighShotsHost(
         preparedCompositionRef.current = composition;
         setPreparedComposition(composition);
       }
+      // A read that succeeds means the outage is over: the ordinary graph poll resumes.
+      runtimePollingPausedRef.current = false;
       setCanonicalCompositionError(null);
       setCanonicalLoading(false);
       void loadSourceFrameThumbnails(composition, generation);

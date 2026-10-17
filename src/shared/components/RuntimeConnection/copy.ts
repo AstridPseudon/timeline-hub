@@ -1,40 +1,33 @@
-import { runtimeOrigin, type RuntimeConnectionState, type RuntimeNotReadyReason } from '@/integrations/runtime/connection.ts';
+import hostedOrigin from '../../../../config/hosted-origin.json';
+import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
 
 /**
- * Every word the hosted build's connection gate shows (Plan A, design D3; card CP3). The panel, the pill, the
- * Reload message and the disabled compose controls render from this object and nothing else, so the wording is
+ * Every word the hosted build's connection gate shows (Plan A, design D3; card CP3). The panel, the restart cards,
+ * the status container and the disabled compose controls render from this object and nothing else, so the wording is
  * reviewed in one place.
  *
  * Rules for this file:
- * - Headings never say "Runtime" or "gateway"; body sentences may name the Runtime where it helps.
- * - Straight apostrophes only: the journey matches `Reigh isn't running` exactly.
- * - One heading per not-ready reason, and a heading never contradicts the sentence under it.
+ * - Visible text says Astrid and never names a Runtime, workspace, port or command. Commands appear only in the agent block.
+ * - Straight apostrophes only: the journey matches `Astrid isn't running` exactly.
+ * - One screen per thing a person can do: states a person cannot tell apart share one message.
  * - Each phrase the journey looks for (`tests/e2e/local/direct-journey.spec.ts`) appears in one element of its
- *   panel only, so a text locator finds exactly one match: "Already installed? Start it", "browser blocked",
- *   "local network access", "Reigh needs to be started again", "Runtime has stopped", "Runtime restarted".
+ *   panel only, so a text locator finds exactly one match.
  * - No gateway literal (`127.0.0.1:<port>`, `/api/...`): those live in `connection.ts`.
  */
 
-/** Commands and paths the copy names. Plain strings, so a test or the panel can show them as code. */
+/** Commands and paths the agent block names. Plain strings. */
 const COMMANDS = {
   runtime: 'banodoco-local up --profile astrid',
   app: 'npm run dev:local',
   /** The installer guide, in the astrid-agent repository: a full URL, so a reader without the repo can open it. */
   installUrl: 'https://github.com/peteromallet/astrid-agent/blob/main/docs/setup/local-source-install.md',
-  /** The line `dev:local` prints once the loopback gateway this page talks to is starting (`scripts/dev-local-workspace.mjs`). */
-  gatewayLine: 'loopback gateway starting on 127.0.0.1:<port> for',
 } as const;
 
-/** A sentence made of text and inline code, so a command can be shown as `<code>` and still read as plain text. */
-export type Segment = string | { readonly code: string };
+/** The origin `npm run dev:local` opens for by default (`config/hosted-origin.json`); any other needs `REIGH_LOOPBACK_ORIGIN`. */
+const DEFAULT_HOSTED_ORIGIN: string | null = hostedOrigin.origin;
 
-/** The plain text of `segments`, for the pill's description and tests. */
-export function segmentsText(segments: readonly Segment[]): string {
-  return segments.map((segment) => (typeof segment === 'string' ? segment : segment.code)).join('');
-}
-
-/** What the panel and pill show; `restarted` is the Runtime restart message, which sits outside the gate's states. */
-export type RuntimeConnectionDisplay = RuntimeConnectionState | { status: 'restarted' };
+/** Which of the two agent blocks to copy: the page has never reached Astrid, or Astrid changed under a connected page. */
+export type AgentInstructionsVariant = 'start' | 'restart';
 
 /** A heading and the one sentence under it. */
 interface Message {
@@ -42,236 +35,177 @@ interface Message {
   readonly sentence: string;
 }
 
-/** A heading and the sentence under it, where the sentence may name a command. */
-interface RichMessage {
-  readonly title: string;
-  readonly sentence: readonly Segment[];
-}
-
-const REALM_CHANGED_TITLE = 'A different workspace is open';
-
 export interface RuntimeConnectionCopy {
   readonly commands: typeof COMMANDS;
   /** Accessible name for the panel region. */
   readonly panelLabel: string;
-  /** While the first probe is in flight. */
-  readonly connecting: Message;
+  /** While the first probe is in flight (and while Astrid is still starting): the one line under the mark. */
+  readonly connecting: { readonly sentence: string };
   /** Permission `prompt`: shown before anything is sent, with the Connect button. */
-  readonly permission: {
-    readonly title: string;
-    /** The two-line explainer shown before Chrome's prompt. */
-    readonly explainer: readonly [string, string];
+  readonly permission: Message & {
     readonly connect: string;
-    /** Button label while Chrome's prompt is open. */
-    readonly connectPending: string;
+    /** Chrome's prompt is open: nothing to press, so no button. */
+    readonly pending: Message;
   };
-  /** How to install, shown with the first-time and permission panels; `linkText` links to `COMMANDS.installUrl`. */
-  readonly install: { readonly before: string; readonly linkText: string; readonly after: string };
-  /** Nothing answers. */
-  readonly cantReach: {
-    readonly firstTime: Message & { readonly alreadyInstalled: string };
-    readonly returning: Message;
-  };
-  /** Permission `denied`. */
+  /** Permission `denied`: two steps in Chrome, then the page opens by itself. */
   readonly blocked: Message & {
-    readonly fixTitle: string;
-    readonly fixSteps: readonly string[];
-    /** The lead-in to `settingsAddress`. */
-    readonly settingsHint: string;
-    /** A direct route to this site's Chrome settings. A page cannot link to chrome://, so it is shown to select and paste. */
-    readonly settingsAddress: (pageOrigin: string) => string;
+    readonly steps: readonly [string, string];
+    readonly footer: string;
   };
-  /** The gateway answered 503. Each reason has its own heading and its one sentence. */
-  readonly notReady: { readonly reasons: Readonly<Record<RuntimeNotReadyReason, RichMessage>> };
-  readonly connected: { readonly sentence: (realmName: string | null) => string };
-  /** The Runtime restart message (`client.ts` fences the session), with Reload. */
-  readonly restarted: Message & { readonly realmChanged: Message; readonly reload: string };
-  readonly pill: {
-    readonly label: (state: RuntimeConnectionDisplay) => string;
-    /** Tooltip / accessible description. */
-    readonly description: (state: RuntimeConnectionDisplay) => string;
+  /** Nothing answers and this page has never connected: the install path. */
+  readonly setUp: Message & {
+    readonly button: string;
+    /** `linkText` links to `COMMANDS.installUrl`. */
+    readonly footer: { readonly before: string; readonly linkText: string; readonly after: string };
   };
+  /** Nothing answers on a return visit, or Astrid answered but is not ready: a person does the same thing for each. */
+  readonly notRunning: Message & { readonly button: string };
+  /** The Astrid running is not the one this page was set up with: only a restart helps. */
+  readonly restartNeeded: Message & { readonly button: string };
+  /** A phone can never reach Astrid on a computer: the link goes there instead. */
+  readonly phone: Message & { readonly button: string; readonly copied: string };
+  /** Screen-reader text of the status container while connected; nothing else says it. */
+  readonly connected: { readonly sentence: string };
+  /** Connected, and the health check stopped answering. The card clears itself when Astrid is back. */
+  readonly stopped: Message;
+  /** Connected, and Astrid restarted (or changed) under the page. */
+  readonly restarted: Message & { readonly reload: string };
+  /** The timeline (or the engine connection behind it) would not load on the hosted build: replaces every engineer-worded error. */
+  readonly loadFailed: Message & { readonly button: string; readonly retrying: string };
   readonly agent: {
+    /** The set-up state's button. */
+    readonly copySetup: string;
+    /** The button everywhere else. */
     readonly copy: string;
     readonly copied: string;
-    /** Inline, not a toast: the text is shown for copying by hand. */
+    /** The line under the button once the steps are copied. */
+    readonly pasteNext: string;
+    /** Shown with the steps in a text box, only when the clipboard write failed. */
     readonly copyFailed: string;
-    readonly fieldLabel: string;
-    readonly showInstructions: string;
-    readonly hideInstructions: string;
     /** One block an agent can act on. `pageOrigin` is `window.location.origin`, the origin the gateway must accept. */
-    readonly instructions: (pageOrigin: string) => string;
+    readonly instructions: (pageOrigin: string, variant: AgentInstructionsVariant) => string;
   };
-  /** Next to the compose controls the hosted build disables (card A2.X). */
+  /** Next to the compose controls the hosted build disables (card A2.X); followed by `openApp` when the app address is known. */
   readonly composeDisabled: string;
   /** In place of agent chat on the hosted build, which the loopback gateway does not serve (design D2). */
   readonly agentChatDisabled: string;
-}
-
-function realmLabel(realmName: string | null): string {
-  const name = realmName?.trim();
-  return name ? name : '';
+  /** The link text after `composeDisabled` / `agentChatDisabled`; it never shows the address. */
+  readonly openApp: string;
 }
 
 export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   commands: COMMANDS,
 
-  panelLabel: 'Connect to Reigh on this computer',
+  panelLabel: 'Connect to Astrid',
 
   connecting: {
-    title: 'Looking for Reigh',
-    sentence: 'Checking whether Reigh is running on this computer.',
+    sentence: 'Looking for Astrid on this computer…',
   },
 
   permission: {
-    title: 'Connect to Reigh on this computer',
-    explainer: [
-      'This page opens your projects straight from Reigh on your computer; this site only supplies the app.',
-      "Chrome will ask to let this site look for and connect to devices on your local network. Choose Allow; it only talks to Reigh on this computer, and won't ask again.",
-    ],
+    title: 'Connect to Astrid on this computer',
+    sentence: 'Chrome will ask about devices on your network. Choose Allow so this page can reach Astrid on your computer.',
     connect: 'Connect',
-    // Neutral: Chrome may have answered already while a slow gateway has not.
-    connectPending: 'Connecting…',
-  },
-
-  install: {
-    before: 'New to Reigh? Follow ',
-    linkText: 'the install guide',
-    after: ', or copy the instructions below for your agent.',
-  },
-
-  cantReach: {
-    firstTime: {
-      title: 'Set up Reigh on this computer',
-      sentence: "This page works with Reigh running on your own computer, and we couldn't find it here yet.",
-      alreadyInstalled: 'Already installed? Start it, and this page connects by itself.',
-    },
-    returning: {
-      title: "Reigh isn't running",
-      sentence: 'Start Reigh on this computer again and this page reconnects by itself, with no reload needed.',
+    pending: {
+      title: 'Choose Allow in Chrome',
+      sentence: 'Chrome is asking, just below the address bar, to let this page reach Astrid on your computer.',
     },
   },
 
   blocked: {
-    title: 'Your browser blocked the connection',
-    sentence: 'Chrome is set to stop this site from reaching Reigh on your computer, so nothing was sent.',
-    fixTitle: 'To allow it in Chrome',
-    fixSteps: [
-      'Click the site controls icon at the left of the address bar, then choose Site settings.',
-      'Find Local network access and change it to Allow.',
-      'Come back to this tab. It connects by itself; if Chrome offers to reload the page, go ahead.',
+    title: 'Allow Astrid in Chrome',
+    sentence: 'Chrome is set to stop this page reaching Astrid on your computer.',
+    steps: [
+      'Click the icon at the left of the address bar, then Site settings.',
+      'Set Local network access to Allow.',
     ],
-    settingsHint: 'Or paste this address into Chrome\'s address bar:',
-    settingsAddress: (pageOrigin) => `chrome://settings/content/siteDetails?site=${encodeURIComponent(pageOrigin)}`,
+    footer: 'Come back here and it opens by itself.',
   },
 
-  notReady: {
-    reasons: {
-      starting: {
-        title: 'Reigh is starting up',
-        sentence: ['Reigh is still starting up. This page connects as soon as it is ready.'],
-      },
-      runtime_stopped: {
-        title: 'Reigh needs to be started again',
-        sentence: [
-          'Reigh is open on this computer, but its Runtime has stopped. Start it again with ',
-          { code: COMMANDS.runtime },
-          ', and this page connects by itself.',
-        ],
-      },
-      realm_changed: {
-        title: REALM_CHANGED_TITLE,
-        sentence: [
-          'Reigh on this computer is now serving a different workspace, so this page paused to keep your projects apart. Start Reigh with the workspace you were using and this page connects by itself.',
-        ],
-      },
-      identity_mismatch: {
-        title: "This page can't use this Reigh",
-        sentence: [
-          "Reigh is running on this computer, but its Runtime isn't the one this page was set up for, so this page paused to keep your projects safe. Start it again with ",
-          { code: COMMANDS.runtime },
-          ', and this page tries again by itself.',
-        ],
-      },
-      unknown: {
-        title: "Reigh isn't ready",
-        sentence: [
-          "Reigh answered on this computer but isn't ready to use. Start it again with ",
-          { code: COMMANDS.runtime },
-          ", and if this page doesn't connect, reload it.",
-        ],
-      },
+  setUp: {
+    title: 'Set up Astrid on this computer',
+    sentence: "Astrid runs on your own computer, and it isn't running here yet.",
+    button: 'Copy setup steps for your agent',
+    footer: {
+      before: 'Already installed? Start Astrid and this page opens by itself. Or follow ',
+      linkText: 'the install guide',
+      after: '.',
     },
+  },
+
+  notRunning: {
+    title: "Astrid isn't running",
+    sentence: 'Start Astrid on this computer and this page opens by itself.',
+    button: 'Copy steps for your agent',
+  },
+
+  restartNeeded: {
+    title: 'Astrid needs a restart',
+    sentence: 'Astrid changed on this computer since this page last used it. Restart it and this page opens by itself.',
+    button: 'Copy steps for your agent',
+  },
+
+  phone: {
+    title: 'Open Astrid on your computer',
+    sentence: 'Astrid runs on a computer, so open this page there.',
+    button: 'Send the link to your computer',
+    copied: 'Link copied',
   },
 
   connected: {
-    sentence: (realmName) => {
-      const name = realmLabel(realmName);
-      return name ? `Connected to ${name} on this computer.` : 'Connected to Reigh on this computer.';
-    },
+    sentence: 'Connected to Astrid',
+  },
+
+  stopped: {
+    title: 'Astrid stopped',
+    sentence: 'Start it again on this computer and this page carries on. Your changes are kept.',
   },
 
   restarted: {
-    title: 'Reigh restarted',
-    sentence: 'The Runtime restarted on this computer, so this page needs a fresh start. Your draft is saved and comes back after you reload.',
-    realmChanged: {
-      title: REALM_CHANGED_TITLE,
-      sentence: 'Reigh on this computer is now serving another workspace. Your draft is saved; reload to continue with the one that is running.',
-    },
+    title: 'Astrid restarted',
+    sentence: 'Reload to carry on. Your changes are kept.',
     reload: 'Reload',
   },
 
-  pill: {
-    label: (state) => {
-      switch (state.status) {
-        case 'connecting': return 'Connecting…';
-        case 'connected': {
-          const name = realmLabel(state.realm.display_name);
-          return name ? `Connected · ${name}` : 'Connected';
-        }
-        case 'cant_reach': return 'Not connected';
-        case 'blocked': return 'Blocked by browser';
-        case 'not_ready': return state.reason === 'starting' ? 'Starting…' : 'Not ready';
-        case 'restarted': return 'Reload needed';
-      }
-    },
-    description: (state) => {
-      switch (state.status) {
-        case 'connecting': return 'Looking for Reigh on this computer.';
-        case 'connected': return RUNTIME_CONNECTION_COPY.connected.sentence(state.realm.display_name);
-        case 'cant_reach': return state.firstTime ? 'Reigh is not set up on this computer yet.' : 'Reigh is not running on this computer.';
-        case 'blocked': return 'Chrome is blocking this site from reaching Reigh on this computer.';
-        case 'not_ready': return segmentsText(RUNTIME_CONNECTION_COPY.notReady.reasons[state.reason].sentence);
-        case 'restarted': return 'Reigh restarted; reload to continue.';
-      }
-    },
+  loadFailed: {
+    title: "Couldn't load this timeline",
+    sentence: "Astrid on this computer didn't answer. Start it and try again.",
+    button: 'Try again',
+    retrying: 'Trying again…',
   },
 
   agent: {
-    copy: 'Copy instructions for your agent',
-    copied: 'Copied. Paste it into your agent.',
-    copyFailed: "Couldn't copy automatically. Select the instructions below and copy them.",
-    fieldLabel: 'Instructions for your agent',
-    showInstructions: 'Show instructions',
-    hideInstructions: 'Hide instructions',
-    instructions: (pageOrigin) => [
-      `Please start Reigh on this computer so the page open at ${pageOrigin} can connect to it.`,
-      'Keep any existing installation, profile, data root and workspace as they are. Do not reset, reinstall over or delete anything.',
-      [
-        `1. Start the Reigh Runtime: ${COMMANDS.runtime}`,
-        '   If it is already running, leave it running.',
-        `   If the command is not found, Reigh is not installed here yet: follow the install guide (${COMMANDS.installUrl}), then come back to this step.`,
-        `2. In the reigh-app checkout, run: REIGH_LOOPBACK_ORIGIN=${pageOrigin} ${COMMANDS.app}`,
-        `   If ${COMMANDS.app} is already running without printing "loopback gateway starting ... for ${pageOrigin}", stop it and start it again this way.`,
-        '   If it says its port is already taken, do not stop the process holding it; report the realm it names.',
-        `3. Leave both running, and report back once ${COMMANDS.app} prints "${COMMANDS.gatewayLine} ${pageOrigin}". The page connects by itself; it does not need a reload.`,
-      ].join('\n'),
-    ].join('\n\n'),
+    copySetup: 'Copy setup steps for your agent',
+    copy: 'Copy steps for your agent',
+    copied: 'Copied',
+    pasteNext: 'Now paste them into your agent.',
+    copyFailed: 'Copy these steps and paste them into your agent.',
+    instructions: (pageOrigin, variant) => {
+      const prefix = pageOrigin === DEFAULT_HOSTED_ORIGIN ? '' : `REIGH_LOOPBACK_ORIGIN=${pageOrigin} `;
+      return [
+        `Please start Astrid on this computer so the page open at ${pageOrigin} can connect to it.`,
+        'Keep any existing installation, profile, data root and workspace as they are. Do not reset, reinstall over or delete anything.',
+        ...(variant === 'restart'
+          ? [`Astrid changed since this page connected. If ${COMMANDS.app} is running, stop it before step 2.`]
+          : []),
+        [
+          `1. Start Astrid's Runtime: ${COMMANDS.runtime}`,
+          '   If it is already running, leave it running.',
+          `   If the command is not found, Astrid is not installed here yet: follow the install guide (${COMMANDS.installUrl}), then come back to this step.`,
+          `2. In the Astrid app checkout (the reigh-app repository), run: ${prefix}${COMMANDS.app}`,
+          `   If it is already running but never printed "Open ${pageOrigin}", stop it and start it again this way.`,
+          '   If it says another program is in the way, do not stop that program; report the details line it prints.',
+          `3. Leave both running, and report back once ${COMMANDS.app} prints "Open ${pageOrigin}". The page connects by itself; it does not need a reload.`,
+        ].join('\n'),
+      ].join('\n\n');
+    },
   },
 
-  composeDisabled: `Making new images needs Reigh's own app on your computer for now; open the address that ${COMMANDS.app} prints.`,
+  composeDisabled: 'Making new images works in Astrid on your computer for now.',
 
-  agentChatDisabled: `Agent chat needs Reigh's own app on your computer for now; open the address that ${COMMANDS.app} prints.`,
+  agentChatDisabled: 'Agent chat works in Astrid on your computer for now.',
+
+  openApp: 'Open it',
 };
 
 /**

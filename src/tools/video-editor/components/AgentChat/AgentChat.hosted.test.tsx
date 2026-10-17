@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
+import { setRuntimeAppUrl } from '@/integrations/runtime/runtimeAppUrl.ts';
 
 let origin = '';
 vi.mock('@/integrations/runtime/connection.ts', async (importOriginal) => ({
@@ -35,7 +36,24 @@ describe('agent chat on the hosted build', () => {
 
   afterEach(() => {
     origin = '';
+    setRuntimeAppUrl(null);
     vi.unstubAllGlobals();
+  });
+
+  it('says agent chat works in Astrid on the computer, with an "Open it" link only when the app address is known', () => {
+    origin = GATEWAY;
+    setRuntimeAppUrl('http://127.0.0.1:2222');
+    const view = render(<AgentChatPanel />, { wrapper: withQueryClient });
+
+    expect(screen.getByText('Agent chat works in Astrid on your computer for now.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open it' })).toHaveAttribute('href', 'http://127.0.0.1:2222');
+    expect(document.body.textContent).not.toContain('127.0.0.1');
+    view.unmount();
+
+    setRuntimeAppUrl(null);
+    render(<AgentChatPanel />, { wrapper: withQueryClient });
+    expect(screen.getByText('Agent chat works in Astrid on your computer for now.')).toBeInTheDocument();
+    expect(screen.queryByRole('link')).toBeNull();
   });
 
   it('with a gateway origin, shows one quiet line, no alert, and requests nothing from the gateway', async () => {

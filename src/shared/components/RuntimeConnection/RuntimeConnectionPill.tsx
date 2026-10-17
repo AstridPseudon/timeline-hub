@@ -1,34 +1,37 @@
-import { Badge } from '@/shared/components/ui/badge.tsx';
+import { useEffect } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY, type RuntimeConnectionDisplay } from './copy.ts';
-import { useRuntimeRestartWatch, type RuntimeRestartStatus } from './useRuntimeRestartWatch.ts';
+import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { CopyAgentInstructions } from './CopyAgentInstructions.tsx';
+import { RUNTIME_CONNECTION_COPY as COPY } from './copy.ts';
+import { useRuntimeRestartWatch } from './useRuntimeRestartWatch.ts';
 
 export interface RuntimeConnectionPillProps {
   readonly connection: RuntimeConnectionValue;
-  /** Override for tests; reloading the page is how the person picks up the restarted Runtime. */
+  /** Override for tests; reloading the page is how the person picks up the restarted Astrid. */
   readonly onReload?: () => void;
   /** Overrides for tests of the restart watch; the defaults are the production interval and `fetch`. */
   readonly restartCheckIntervalMs?: number;
   readonly fetchImpl?: (input: string, init?: RequestInit) => Promise<Response>;
 }
 
-function RestartMessage({ kind, onReload }: { kind: Exclude<RuntimeRestartStatus, 'ok'>; onReload: () => void }) {
-  const restarted = COPY.restarted;
-  const message = kind === 'realm_changed' ? restarted.realmChanged : restarted;
+/** Fixed bottom-right with a 16px gutter; on a phone it sits above the floating lock/gallery toolbar. */
+const CARD_CLASS = 'fixed bottom-20 right-4 z-50 w-[calc(100%-2rem)] max-w-sm space-y-3 rounded-2xl border border-border bg-card p-5 text-center text-card-foreground shadow-md sm:bottom-4';
+
+function CardText({ title, sentence }: { title: string; sentence: string }) {
   return (
-    <div role="alert" className="w-full max-w-sm space-y-2 rounded-lg border border-border bg-card p-4 text-card-foreground shadow-md">
-      <h2 className="text-sm font-medium">{message.title}</h2>
-      <p className="text-xs leading-5 text-muted-foreground">{message.sentence}</p>
-      <Button type="button" size="sm" onClick={onReload}>{restarted.reload}</Button>
+    <div className="space-y-1">
+      <h2 className="font-serif font-theme-heading text-base text-foreground">{title}</h2>
+      <p className="text-sm text-muted-foreground">{sentence}</p>
     </div>
   );
 }
 
 /**
- * The connection pill, fixed to the bottom-right while connected, and the Runtime restart message above it (Plan A,
- * D3). The pill names the realm; after a restart or a realm change the message replaces nothing: the editor stays
- * mounted with its draft until Reload. Renders nothing while not connected (the gate shows the panel then).
+ * What the connected page says about Astrid (Plan A, D3), bottom-right. While Astrid is up it says nothing visible: the
+ * editor already shows the project, and a "Connected" badge went stale the moment Astrid stopped. Two cards replace it:
+ * "Astrid stopped" (it clears itself when Astrid is back) and "Astrid restarted" (Reload). The editor stays mounted with
+ * its draft either way. Renders nothing while not connected (the gate shows the panel then).
  */
 export function RuntimeConnectionPill({
   connection,
@@ -37,23 +40,37 @@ export function RuntimeConnectionPill({
   fetchImpl,
 }: RuntimeConnectionPillProps) {
   const restart = useRuntimeRestartWatch(connection.isConnected, { intervalMs: restartCheckIntervalMs, fetchImpl });
+  const cardShowing = connection.isConnected && restart !== 'ok';
+
+  // The editor's own technical messages about the same failure stay quiet while the card is the one thing to read.
+  useEffect(() => {
+    setRecoveryCardShowing(cardShowing);
+    return () => setRecoveryCardShowing(false);
+  }, [cardShowing]);
+
   if (!connection.isConnected) return null;
 
-  const display: RuntimeConnectionDisplay = restart === 'ok' ? connection.state : { status: 'restarted' };
+  if (restart === 'ok') {
+    return (
+      <div data-testid="runtime-connection-status" data-state="connected" className="sr-only">
+        {COPY.connected.sentence}
+      </div>
+    );
+  }
+
+  if (restart === 'stopped') {
+    return (
+      <div data-testid="runtime-connection-status" data-state="stopped" role="alert" className={CARD_CLASS}>
+        <CardText title={COPY.stopped.title} sentence={COPY.stopped.sentence} />
+        <CopyAgentInstructions pageOrigin={window.location.origin} label={COPY.agent.copy} variant="start" />
+      </div>
+    );
+  }
+
   return (
-    <div
-      data-testid="runtime-connection-status"
-      data-state={display.status}
-      className="pointer-events-none fixed bottom-3 right-3 z-50 flex flex-col items-end gap-2"
-    >
-      {restart !== 'ok' && <div className="pointer-events-auto"><RestartMessage kind={restart} onReload={onReload} /></div>}
-      <Badge
-        variant="outline"
-        title={COPY.pill.description(display)}
-        className="pointer-events-auto cursor-default select-none bg-card px-3 py-1 text-xs text-foreground shadow-sm"
-      >
-        {COPY.pill.label(display)}
-      </Badge>
+    <div data-testid="runtime-connection-status" data-state="restarted" role="alert" className={CARD_CLASS}>
+      <CardText title={COPY.restarted.title} sentence={COPY.restarted.sentence} />
+      <Button type="button" className="w-full sm:w-auto" onClick={onReload}>{COPY.restarted.reload}</Button>
     </div>
   );
 }

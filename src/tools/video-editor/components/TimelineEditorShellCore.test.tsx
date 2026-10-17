@@ -1,6 +1,7 @@
 import { useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { act } from 'react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest';
@@ -37,6 +38,8 @@ let __editorPreferences: Record<string, any> = {
 };
 /** Per-test overrides merged into the mocked chrome slice. */
 let __chromeOverrides: Record<string, unknown> = {};
+let __editorDataOverrides: Record<string, unknown> = {};
+let __conflictDialog: Record<string, unknown> = {};
 /** Interaction mode reported by the mocked timeline store. */
 let __interactionMode: 'browse' | 'select' | 'move' | 'trim' | 'precision' = 'browse';
 const __seek = vi.fn();
@@ -95,6 +98,7 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
       get inspectorTarget() {
         return __liveInspectorTarget.value;
       },
+      ...__editorDataOverrides,
     }),
     useTimelineEditorOps: () => __editorOps,
     useTimelineChromeContext: () => ({
@@ -157,6 +161,7 @@ vi.mock('@/tools/video-editor/hooks/useTimelineRealtime.ts', () => ({
     setOpen: vi.fn(),
     keepLocalChanges: vi.fn(),
     discardAndReload: vi.fn(),
+    ...__conflictDialog,
   }),
 }));
 
@@ -1347,6 +1352,7 @@ describe('TimelineEditorShellCore — timeline load error', () => {
 
   afterEach(() => {
     __chromeOverrides = {};
+    __editorDataOverrides = {};
   });
 
   it('renders a load-error card where the timeline goes and keeps the toolbar', () => {
@@ -1378,6 +1384,64 @@ describe('TimelineEditorShellCore — timeline load error', () => {
     fireEvent.click(screen.getByRole('button', { name: /retry/i }));
 
     expect(retryLoad).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the last loaded timeline on screen behind the Astrid stopped card, so an unsaved edit does not vanish', () => {
+    __chromeOverrides = { loadError: new Error('bridge unreachable') };
+    __editorDataOverrides = { resolvedConfig: { output: { fps: 30 }, tracks: [], clips: [] } };
+    act(() => setRecoveryCardShowing(true));
+    try {
+      render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      expect(screen.getByTestId('timeline-editor')).toBeTruthy();
+      expect(screen.queryByText('Unable to load this timeline')).toBeNull();
+      expect(screen.getByLabelText('Zoom out timeline')).toBeTruthy();
+    } finally {
+      __editorDataOverrides = {};
+      act(() => setRecoveryCardShowing(false));
+    }
+  });
+
+  it('retries the timeline read by itself when the Astrid stopped card clears, and not before', () => {
+    const retryLoad = vi.fn();
+    __chromeOverrides = { loadError: new Error('bridge unreachable'), retryLoad };
+    act(() => setRecoveryCardShowing(true));
+    try {
+      render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      expect(retryLoad).not.toHaveBeenCalled();
+      act(() => setRecoveryCardShowing(false));
+      expect(retryLoad).toHaveBeenCalledTimes(1);
+    } finally {
+      act(() => setRecoveryCardShowing(false));
+    }
+  });
+
+  it('does not refetch when the card clears and nothing failed to load', () => {
+    const retryLoad = vi.fn();
+    __chromeOverrides = { loadError: null, retryLoad };
+    act(() => setRecoveryCardShowing(true));
+    try {
+      render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      act(() => setRecoveryCardShowing(false));
+      expect(retryLoad).not.toHaveBeenCalled();
+    } finally {
+      act(() => setRecoveryCardShowing(false));
+    }
+  });
+
+  it('stays quiet while the hosted build\'s Astrid stopped / restarted card is showing, and speaks again when it is gone', () => {
+    __chromeOverrides = { loadError: new Error('bridge unreachable') };
+    act(() => setRecoveryCardShowing(true));
+    try {
+      render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      expect(screen.queryByText('Unable to load this timeline')).toBeNull();
+      // The toolbar is still there.
+      expect(screen.getByLabelText('Zoom out timeline')).toBeTruthy();
+
+      act(() => setRecoveryCardShowing(false));
+      expect(screen.getByText('Unable to load this timeline')).toBeTruthy();
+    } finally {
+      act(() => setRecoveryCardShowing(false));
+    }
   });
 });
 
@@ -1466,29 +1530,69 @@ describe('TimelineEditorShellCore — diverged conflict banner', () => {
 
   afterEach(() => {
     __chromeOverrides = {};
+    __conflictDialog = {};
   });
 
-  it('renders the diverged banner with Reload and Save-as-copy actions', () => {
+  it('renders the diverged banner with the keep-mine and use-latest choices', () => {
     const reload = vi.fn();
-    const saveAsCopy = vi.fn();
+    const keepMine = vi.fn();
     __chromeOverrides = {
       isConflictExhausted: true,
       reloadFromServer: reload,
-      retrySaveAfterConflict: saveAsCopy,
+      retrySaveAfterConflict: keepMine,
     };
 
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
 
-    expect(screen.getByText(/the timeline version no longer matches this draft/i)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /reload/i }));
+    expect(screen.getByText('Keep your changes, or switch to the latest version.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Use latest version' }));
     expect(reload).toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: /save as copy/i }));
-    expect(saveAsCopy).toHaveBeenCalled();
+    expect(keepMine).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep my changes' }));
+    expect(keepMine).toHaveBeenCalled();
+  });
+
+  it('shows the diverged banner as a choice, in neutral colours, never destructive red', () => {
+    __chromeOverrides = { isConflictExhausted: true };
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+
+    const banner = screen.getByText('Keep your changes, or switch to the latest version.').closest('[role="alert"]') as HTMLElement;
+    expect(banner.className).toContain('text-foreground');
+    expect(banner.className).not.toContain('destructive');
+  });
+
+  it('makes keeping the person\'s changes the primary choice, and switching to the latest version the outline one', () => {
+    __chromeOverrides = { isConflictExhausted: true };
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+
+    expect(screen.getByRole('button', { name: 'Keep my changes' }).className).toContain('bg-primary');
+    expect(screen.getByRole('button', { name: 'Use latest version' }).className).not.toContain('bg-primary');
   });
 
   it('does not render the diverged banner when clean', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
-    expect(screen.queryByText(/the timeline version no longer matches this draft/i)).toBeNull();
+    expect(screen.queryByText('Keep your changes, or switch to the latest version.')).toBeNull();
+  });
+
+  it('the save conflict dialog says the timeline changed somewhere else, with Keep my changes as its primary action', () => {
+    const keepLocalChanges = vi.fn();
+    const discardAndReload = vi.fn();
+    __conflictDialog = { isOpen: true, keepLocalChanges, discardAndReload };
+
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+
+    const dialog = screen.getByRole('alertdialog');
+    expect(within(dialog).getByText('This timeline changed somewhere else')).toBeTruthy();
+    expect(within(dialog).getByText('Keep your changes, or switch to the latest version.')).toBeTruthy();
+    const keep = within(dialog).getByRole('button', { name: 'Keep my changes' });
+    const latest = within(dialog).getByRole('button', { name: 'Use latest version' });
+    expect(keep.className).toContain('bg-primary');
+    expect(latest.className).not.toContain('bg-primary');
+    fireEvent.click(latest);
+    expect(discardAndReload).toHaveBeenCalledOnce();
+    expect(keepLocalChanges).not.toHaveBeenCalled();
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Keep my changes' }));
+    expect(keepLocalChanges).toHaveBeenCalledOnce();
   });
 });
 
@@ -1509,21 +1613,24 @@ describe('TimelineEditorShellCore — recovery draft banner', () => {
     __chromeOverrides = {};
   });
 
-  it('offers Retry and Discard for a recovered draft', () => {
+  it('offers Save them and Discard for a recovered draft, naming only the time of day', () => {
     const retry = vi.fn();
     const discard = vi.fn();
+    const updatedAt = '2026-08-11T21:00:00.000Z';
     __chromeOverrides = {
-      recoveryDraft: { updatedAt: '2026-08-11T21:00:00.000Z', baseVersion: 159 },
+      recoveryDraft: { updatedAt, baseVersion: 159 },
       retryRecoveredDraft: retry,
       discardRecoveredDraft: discard,
     };
 
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
 
-    expect(screen.getByText(/recovered unsaved changes/i)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /retry/i }));
+    const time = new Date(updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    expect(screen.getByText(`You have unsaved changes from ${time}.`)).toBeTruthy();
+    expect(screen.queryByText(/previous session|draft from|Retry or Discard/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Save them' }));
     expect(retry).toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: /discard/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
     expect(discard).toHaveBeenCalled();
   });
 
@@ -1540,7 +1647,7 @@ describe('TimelineEditorShellCore — recovery draft banner', () => {
 
   it('does not render the recovery banner without a draft', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
-    expect(screen.queryByText(/recovered unsaved changes/i)).toBeNull();
+    expect(screen.queryByText(/You have unsaved changes/)).toBeNull();
   });
   it('hides recovery controls while the conflict surface is active', () => {
     __chromeOverrides = {
@@ -1548,11 +1655,11 @@ describe('TimelineEditorShellCore — recovery draft banner', () => {
       recoveryDraft: { updatedAt: '2026-10-08T13:43:57Z', baseVersion: 1 },
     };
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
-    expect(screen.getByText(/the timeline version no longer matches this draft/i)).toBeTruthy();
-    expect(screen.queryByText(/recovered unsaved changes/i)).toBeNull();
-    expect(screen.queryByRole('button', { name: /^retry$/i })).toBeNull();
+    expect(screen.getByText('Keep your changes, or switch to the latest version.')).toBeTruthy();
+    expect(screen.queryByText(/You have unsaved changes/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save them' })).toBeNull();
   });
-  it('marks unknown recovery provenance and disables Retry', () => {
+  it('marks unknown recovery provenance and disables Save them', () => {
     const retry = vi.fn();
     __chromeOverrides = {
       recoveryDraft: { updatedAt: '2026-10-08T13:43:57Z', baseVersion: 1, retryAllowed: false },
@@ -1560,7 +1667,7 @@ describe('TimelineEditorShellCore — recovery draft banner', () => {
     };
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
     expect(screen.getByText(/original editing head is unknown/i)).toBeTruthy();
-    const button = screen.getByRole('button', { name: /^retry$/i });
+    const button = screen.getByRole('button', { name: 'Save them' });
     expect(button.hasAttribute('disabled')).toBe(true);
     fireEvent.click(button);
     expect(retry).not.toHaveBeenCalled();

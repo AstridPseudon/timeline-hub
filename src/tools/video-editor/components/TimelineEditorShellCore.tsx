@@ -57,6 +57,7 @@ import { ProposalPanel } from '@/tools/video-editor/components/ProposalPanel/Pro
 import { TimelineEditorShellToolbar } from './TimelineEditorShellToolbar.tsx';
 import { TimelineExportMenu } from './TimelineExportMenu.tsx';
 import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
+import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { TimelineMobileInspectorDialog } from './TimelineMobileInspectorDialog.tsx';
 import { TimelineRenderControls } from './TimelineRenderControls.tsx';
 import { VideoEditorPanelDisplayControl } from './PropertiesPanel/VideoEditorPanelDisplayControl.tsx';
@@ -115,6 +116,16 @@ export interface TimelineEditorShellCoreProps {
   navigationControls?: ReactNode;
   navigationMode?: AppHeaderNavigationMode;
   showHeader?: boolean;
+}
+
+/** The save conflict dialog and its inline banner say the same thing with the same two buttons. */
+const TIMELINE_CONFLICT_SENTENCE = 'Keep your changes, or switch to the latest version.';
+const TIMELINE_CONFLICT_KEEP_MINE = 'Keep my changes';
+const TIMELINE_CONFLICT_USE_LATEST = 'Use latest version';
+
+/** "10:48 PM": when the recovered draft was last written. */
+function formatDraftTime(updatedAt: number | string | Date): string {
+  return new Date(updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
 /**
@@ -257,6 +268,14 @@ function TimelineEditorShellCoreComponent({
   }, []);
 
   const timelineFps = Math.max(1, editorData.resolvedConfig?.output?.fps ?? 30);
+  // A refetch that fails keeps the last loaded timeline (and the local draft on top of it). While the Astrid stopped /
+  // restarted card is up, that timeline stays mounted behind it: the card says the changes are kept, so they stay in view.
+  const hasLoadedTimeline = Boolean(editorData.resolvedConfig);
+  const recoveryCardShowing = useRecoveryCardShowing();
+  // Astrid answering again clears the card; a timeline read that failed while it was stopped is retried here.
+  useOnRecoveryCardCleared(() => {
+    if (chrome.loadError) chrome.retryLoad();
+  });
   const conflict = useTimelineRealtime({
     timelineId,
     conflictExhausted: chrome.isConflictExhausted,
@@ -733,18 +752,19 @@ function TimelineEditorShellCoreComponent({
 
   /** Diverged banner (B4): a 409 means the document changed elsewhere. No
    *  silent overwrite — explicit Reload or Save as copy. */
+  // A save conflict is a choice between two versions, not an error: neutral, not destructive red.
   const conflictBanner = chrome.isConflictExhausted ? (
     <div
       role="alert"
-      className="flex items-center justify-between gap-3 border-b border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+      className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-2 text-sm text-foreground"
     >
-      <span>The timeline version no longer matches this draft. Preserve a recovery draft before reloading, or discard your changes.</span>
+      <span>{TIMELINE_CONFLICT_SENTENCE}</span>
       <div className="flex items-center gap-2">
         <Button type="button" size="sm" variant="outline" onClick={() => void chrome.reloadFromServer()}>
-          Reload
+          {TIMELINE_CONFLICT_USE_LATEST}
         </Button>
-        <Button type="button" size="sm" variant="outline" onClick={chrome.retrySaveAfterConflict}>
-          Save as copy
+        <Button type="button" size="sm" onClick={chrome.retrySaveAfterConflict}>
+          {TIMELINE_CONFLICT_KEEP_MINE}
         </Button>
       </div>
     </div>
@@ -783,14 +803,12 @@ function TimelineEditorShellCoreComponent({
       className="flex items-center justify-between gap-3 border-b border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm"
     >
       <span>
-        We recovered unsaved changes from a previous session (draft from{' '}
-        {new Date(chrome.recoveryDraft.updatedAt).toLocaleString()}).
-        {' '}New edits remain unsaved until you Retry or Discard this draft.
+        You have unsaved changes from {formatDraftTime(chrome.recoveryDraft.updatedAt)}.
         {chrome.recoveryDraft.retryAllowed === false && ' The original editing head is unknown. This draft is preserved; discard it or resolve it explicitly before saving.'}
       </span>
       <div className="flex items-center gap-2">
         <Button type="button" size="sm" variant="outline" disabled={chrome.recoveryDraft.retryAllowed === false} onClick={() => void chrome.retryRecoveredDraft()}>
-          Retry
+          Save them
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={() => void chrome.discardRecoveredDraft()}>
           Discard
@@ -814,8 +832,9 @@ function TimelineEditorShellCoreComponent({
       {incompatibleBanner}
       {watchdogBanner}
       {recoveryBanner}
-      {chrome.loadError ? (
-        <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />
+      {chrome.loadError && !(recoveryCardShowing && hasLoadedTimeline) ? (
+        // The hosted build's "Astrid stopped" / "restarted" card already says what to do about the same failure.
+        recoveryCardShowing ? null : <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />
       ) : (
         <TimelineErrorBoundary>
           <TimelineEditor
@@ -1084,14 +1103,12 @@ function TimelineEditorShellCoreComponent({
       <AlertDialog open={conflict.isOpen} onOpenChange={conflict.setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Timeline save conflict</AlertDialogTitle>
-            <AlertDialogDescription>
-              The timeline version no longer matches this draft, so saving stopped to protect your edits. Preserve a recovery draft and reload the current server version, or discard your local changes and reload.
-            </AlertDialogDescription>
+            <AlertDialogTitle>This timeline changed somewhere else</AlertDialogTitle>
+            <AlertDialogDescription>{TIMELINE_CONFLICT_SENTENCE}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => void conflict.keepLocalChanges()}>Preserve draft and reload</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void conflict.discardAndReload()}>Discard and reload</AlertDialogAction>
+            <AlertDialogCancel onClick={() => void conflict.discardAndReload()}>{TIMELINE_CONFLICT_USE_LATEST}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void conflict.keepLocalChanges()}>{TIMELINE_CONFLICT_KEEP_MINE}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

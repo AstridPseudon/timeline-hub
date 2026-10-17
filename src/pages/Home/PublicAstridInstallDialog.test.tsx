@@ -118,6 +118,32 @@ describe('PublicAstridInstallDialog', () => {
     expect(screen.queryByRole('button', { name: 'Install now' })).not.toBeInTheDocument();
   });
 
+  it.each([
+    ['not installed', 'Or use it right here, in the browser', false],
+    ['installed', 'Use it here instead', true],
+  ] as const)('%s: choosing the browser already says "take me in", so the app is told to go straight to Chrome\'s prompt', (_name, label, installed) => {
+    window.sessionStorage.clear();
+    if (installed) act(() => window.dispatchEvent(new Event('appinstalled')));
+    // jsdom cannot navigate; the click only needs to leave the one-shot flag behind.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(<Harness />);
+    screen.getByRole('button', { name: 'Open install' }).focus();
+    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
+    expect(window.sessionStorage.getItem('reigh.runtime.autoConnect')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: label }));
+    expect(window.sessionStorage.getItem('reigh.runtime.autoConnect')).toBe('1');
+  });
+
+  it('still goes in when session storage refuses the flag', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
+    render(<Harness />);
+    screen.getByRole('button', { name: 'Open install' }).focus();
+    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
+    expect(() => fireEvent.click(screen.getByRole('button', { name: 'Or use it right here, in the browser' }))).not.toThrow();
+  });
+
   it('does not consume a prompt whose result arrives after modal departure', async () => {
     const choice = deferred<{ outcome: 'accepted' | 'dismissed' }>();
     const event = promptEvent(choice.promise);
