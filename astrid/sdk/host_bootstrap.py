@@ -576,6 +576,67 @@ def _stop_owned_host(state: Mapping[str, Any]) -> None:
         raise PackHostBootstrapError("prior host registration lock is unavailable; retirement blocked") from exc
 
 
+def _retained_hosts_for_support(runtime_support: Path):
+    """Select original obligations, including launches with no published marker."""
+    state_path = runtime_support / "generic-host.json"
+    ready_path = runtime_support / "generic-host.ready.json"
+    matches = []
+    for key, process in _RETAINED_HOSTS.items():
+        registration = getattr(process, "_astrid_host_registration", None)
+        record = registration or getattr(process, "_astrid_host_launch", None)
+        retired = ("_astrid_host_registration_retired" if registration is not None
+                   else "_astrid_host_launch_retired")
+        if getattr(process, retired, False):
+            continue
+        if record is None:
+            if getattr(process, "_astrid_host_support_root", None) == runtime_support:
+                raise PackHostBootstrapError("retained host launch evidence is unavailable; retirement blocked")
+            continue
+        path, ready, expected = record
+        if (path != state_path and expected.get("support_root") != str(runtime_support)
+                and getattr(process, "_astrid_host_support_root", None) != runtime_support):
+            continue
+        if (path != state_path or ready != ready_path
+                or expected.get("support_root") != str(runtime_support)
+                or expected.get("ready_file") != str(ready_path)
+                or key != (process.pid, expected.get("process_birth_id"))
+                or expected.get("pid") != process.pid
+                or not key[1]):
+            raise PackHostBootstrapError("retained host launch identity differs; retirement blocked")
+        matches.append((process, record))
+    return matches
+
+
+def _retire_failed_host_locked(process, record) -> None:
+    """Retire an actual failed launch, never manufacture a ready registration."""
+    state_path, ready_path, expected = record
+    before = {}
+    try:
+        for path in (state_path, ready_path):
+            if path.is_symlink():
+                raise PackHostBootstrapError("prior host launch marker is aliased; retirement blocked")
+            raw = path.read_bytes() if path.exists() else None
+            before[path] = raw
+            if raw is not None:
+                marker = json.loads(raw)
+                if (not isinstance(marker, dict)
+                        or any(marker.get(field) != expected.get(field)
+                               for field in ("pid", "process_birth_id"))
+                        or any(marker[field] != value for field, value in expected.items()
+                               if field in marker)):
+                    raise PackHostBootstrapError("prior host launch marker differs; retirement blocked")
+        _terminate_old_host(expected)
+        process.wait(timeout=0)
+        for path, raw in before.items():
+            if path.is_symlink() or (path.read_bytes() if path.exists() else None) != raw:
+                raise PackHostBootstrapError("prior host launch marker changed during cleanup; retirement blocked")
+        for path in before:
+            path.unlink(missing_ok=True)
+        process._astrid_host_launch_retired = True
+    except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
+        raise PackHostBootstrapError("prior host launch retirement is incomplete; replacement blocked") from exc
+
+
 def _execution_profile() -> str:
     profile = os.environ.get("ASTRID_HOST_EXECUTION_PROFILE", "source").strip()
     if profile not in {"source", "installed"}:
@@ -1281,6 +1342,13 @@ def ensure_pack_host(
                     "reconfiguration is deferred until its work finishes"
                 )
             _retire_owned_host_locked(current)
+        # A startup failure may have published no marker at all. Its original
+        # graph obligation must settle before another launch can replace it.
+        for retained, record in _retained_hosts_for_support(runtime_support):
+            if getattr(retained, "_astrid_host_registration", None) is not None:
+                _retire_owned_host_locked(record[2])
+            else:
+                _retire_failed_host_locked(retained, record)
         ready_path.unlink(missing_ok=True)
         log_path = runtime_support / "generic-host.log"
         try:
@@ -1339,7 +1407,6 @@ def ensure_pack_host(
             except UnboundLocalError:
                 pass
         process._astrid_host_launch_argv = tuple(argv)
-        _RETAINED_HOSTS[(process.pid, _host_birth_identity(process.pid))] = process
         process_state = {
             "launch_argv_sha256": launch_digest,
             "execution_profile": _execution_profile(), "execution_origins": execution_origins,
@@ -1349,6 +1416,9 @@ def ensure_pack_host(
             "process_birth_id": _host_birth_identity(process.pid),
             "remotion_validation": {k: v for k, v in child_env.items() if k.startswith("ASTRID_REMOTION_VALIDATION_")} or None,
         }
+        process._astrid_host_support_root = runtime_support
+        _RETAINED_HOSTS[(process.pid, process_state["process_birth_id"])] = process
+        process._astrid_host_launch = (state_path, ready_path, dict(process_state))
         try:
             process_state["launch_native_identity"] = _capture_native_host_launch_identity(process.pid)
         except BaseException as primary:
@@ -1357,6 +1427,7 @@ def ensure_pack_host(
             except BaseException as cleanup:
                 raise primary from cleanup
             raise
+        process._astrid_host_launch = (state_path, ready_path, dict(process_state))
         if not process_state["process_birth_id"]:
             _terminate_old_host(process_state)
             raise PackHostBootstrapError(f"generic Astrid pack host identity could not be captured; {reconfigure_action}")
@@ -1381,7 +1452,6 @@ def ensure_pack_host(
                 break
             time.sleep(0.05)
         if terminal_failure is not None:
-            _terminate_old_host(process_state)
             error = terminal_failure.get("error")
             diagnostic = error if isinstance(error, Mapping) else {}
             code = str(diagnostic.get("code") or "host_registration_failed")[:128]
@@ -1390,23 +1460,42 @@ def ensure_pack_host(
                 diagnostic.get("message") or "generic Astrid pack host registration failed"
             )[:512]
             suffix = f" [request_id={request_id}]" if request_id else ""
-            raise PackHostBootstrapError(
+            primary = PackHostBootstrapError(
                 message + suffix,
                 code=code,
                 request_id=request_id,
                 terminal=True,
             )
+            try:
+                _terminate_old_host(process_state)
+            except BaseException as cleanup:
+                raise primary from cleanup
+            raise primary
         if (not ready or ready.get("status") != "ready"
                 or str(ready.get("pid")) != str(process.pid)
                 or str(ready.get("process_birth_id")) != str(process_state["process_birth_id"])
                 or not all(ready.get(key) == expected_value for key, expected_value in expected.items())
                 or process.poll() is not None):
-            _terminate_old_host(process_state)
             cause = _host_failure_cause(log_path)
             detail = f": {cause}" if cause else ""
-            raise PackHostBootstrapError(
-                f"generic Astrid pack host did not become ready{detail}; inspect {log_path}"
+            returncode = process.poll()
+            if returncode is not None:
+                reason = f"process exited with return code {returncode}"
+            elif not ready or ready.get("status") != "ready":
+                reason = "readiness timeout"
+            else:
+                bindings = {**expected, "pid": process.pid,
+                            "process_birth_id": process_state["process_birth_id"]}
+                fields = sorted(key for key, value in bindings.items() if ready.get(key) != value)
+                reason = "readiness identity mismatch: " + ", ".join(fields)
+            primary = PackHostBootstrapError(
+                f"generic Astrid pack host did not become ready ({reason}){detail}; inspect {log_path}"
             )
+            try:
+                _terminate_old_host(process_state)
+            except BaseException as cleanup:
+                raise primary from cleanup
+            raise primary
         _write_object(state_path, process_state)
         # Keep the paths and identity with the original process owner. A later
         # interpreter possessing these public markers cannot acquire custody.

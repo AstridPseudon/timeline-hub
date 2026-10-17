@@ -434,6 +434,7 @@ def _owned_registration(tmp_path, monkeypatch, process):
 
 def test_owned_host_retirement_cleans_original_process_and_is_idempotent(monkeypatch, tmp_path):
     import sys
+    from astrid.sdk import upgrade
     process = host_bootstrap.popen_owned_group(
         [sys.executable, "-I", "-S", "-c", "import time, sys; print('ready'); sys.stdout.flush(); time.sleep(30)"],
         stdout=subprocess.PIPE, text=True,
@@ -441,7 +442,11 @@ def test_owned_host_retirement_cleans_original_process_and_is_idempotent(monkeyp
     try:
         assert process.stdout.readline().strip() == "ready"
         state, marker, ready = _owned_registration(tmp_path, monkeypatch, process)
-        host_bootstrap._stop_owned_host(state)
+        # The payload is a tiny owned sleeper; host executable/launch identity
+        # refusal has separate native tests below. Cleanup remains fully native.
+        monkeypatch.setattr(host_bootstrap, "_host_identity_matches", lambda _: True)
+        monkeypatch.setattr(host_bootstrap, "_descendant_snapshot", lambda _: {})
+        assert upgrade.stop_pack_host(tmp_path) == {"host_status": "stopped", "host_pid": process.pid}
         assert process.wait(timeout=0) is not None
         assert process._astrid_host_registration_retired is True
         assert not marker.exists() and not ready.exists()
@@ -583,6 +588,9 @@ def test_installed_profile_launch_preserves_identity_and_uses_isolated_interpret
 @pytest.mark.parametrize("profile", ["source", "installed"])
 def test_parked_launch_diagnostics_preserve_exact_ready_identity(monkeypatch, tmp_path, profile):
     from astrid.core.execution import generic_host
+    # This synthetic launch has an empty parent projection and never spawns.
+    # Exclude the ambient Darwin pin from its otherwise empty base environment.
+    monkeypatch.delenv("__CF_USER_TEXT_ENCODING", raising=False)
     source = tmp_path / "source"; source.mkdir()
     support = tmp_path / "runtime"; support.mkdir()
     credential = support / "credential"; credential.write_text("credential")
@@ -652,7 +660,7 @@ def test_startup_budget_rejected_before_handoff_side_effects(monkeypatch, budget
     (120, None, "exit", False, 1),
 ])
 def test_startup_budget_polling_preserves_identity_and_original_cleanup(
-    monkeypatch, tmp_path, budget, ready_at, mode, success, elapsed,
+    monkeypatch, tmp_path, budget, ready_at, mode, success, elapsed, cleanup_failure=False,
 ):
     import time as real_time
     from astrid.core.execution import generic_host
@@ -713,9 +721,13 @@ def test_startup_budget_polling_preserves_identity_and_original_cleanup(
     def read(path):
         if path.name == "generic-host.ready.json" and launched and ready_at is not None and clock[0] >= ready_at: return payload
         return None
+    secondary = host_bootstrap.CleanupUncertainError("controlled continuing frontier")
     def stop(original):
         assert original is process
         cleanup.append("stop_original")
+        if cleanup_failure:
+            (support / "generic-host.log").write_text("HostError: cleanup overwrote startup log\n")
+            raise secondary
         original.returncode = -15
         assert original.wait() == -15
     def verify(original):
@@ -727,6 +739,9 @@ def test_startup_budget_polling_preserves_identity_and_original_cleanup(
     monkeypatch.setattr(host_bootstrap, "terminate_group", stop)
     monkeypatch.setattr(host_bootstrap, "verify_tree_absent", verify)
     _mock_host_launch(monkeypatch, launch)
+    if cleanup_failure:
+        (support / "generic-host.log").write_text("HostError: first startup cause\n")
+        monkeypatch.setattr(host_bootstrap, "rotate_if_needed", lambda _: None)
     options = {} if budget is None else {"startup_timeout_seconds": budget}
     if success:
         result = host_bootstrap.ensure_pack_host(value, reconfigure_action="repair", **options)
@@ -734,7 +749,23 @@ def test_startup_budget_polling_preserves_identity_and_original_cleanup(
     else:
         with pytest.raises(host_bootstrap.PackHostBootstrapError) as caught:
             host_bootstrap.ensure_pack_host(value, reconfigure_action="repair", **options)
-        assert cleanup == ["stop_original", "original_wait", "verify_original"]
+        if cleanup_failure:
+            assert cleanup == ["stop_original"]
+            assert caught.value.__cause__.__cause__ is secondary
+            assert host_bootstrap._RETAINED_HOSTS[(process.pid, "birth")] is process
+            assert process._astrid_host_launch[2]["process_birth_id"] == "birth"
+            assert not hasattr(process, "_astrid_host_registration")
+            if mode != "terminal":
+                assert "HostError: first startup cause" in str(caught.value)
+                assert "cleanup overwrote" not in str(caught.value)
+                reason = {"exit": "process exited with return code 1", "foreign_source": "readiness identity mismatch: source_closure_digest"}.get(mode, "readiness timeout")
+                assert reason in str(caught.value)
+            # No marker or dead root can erase the pending graph on retry.
+            monkeypatch.setattr(host_bootstrap, "_read_object", lambda _: None)
+            with pytest.raises(host_bootstrap.PackHostBootstrapError, match="cleanup is uncertain"):
+                host_bootstrap.ensure_pack_host(value, reconfigure_action="repair", **options)
+        else:
+            assert cleanup == ["stop_original", "original_wait", "verify_original"]
         if mode == "terminal":
             assert caught.value.code == "registration_unavailable" and caught.value.request_id == "fixture-request" and caught.value.terminal
     assert launched == [process]
@@ -1001,3 +1032,185 @@ def test_non_darwin_host_identity_keeps_existing_command_contract(monkeypatch):
     monkeypatch.setattr(host_bootstrap, "_host_command", lambda pid: " ".join([
         "astrid.core.execution.generic_host", *[str(v) for k, v in state.items() if k not in {"pid", "process_birth_id"}]]))
     assert host_bootstrap._host_identity_matches(state)
+
+
+@pytest.mark.parametrize("mode,ready_at", [("ready", None), ("exit", None), ("foreign_source", 1), ("terminal", 1)])
+def test_startup_primary_survives_secondary_cleanup_failure(monkeypatch, tmp_path, mode, ready_at):
+    test_startup_budget_polling_preserves_identity_and_original_cleanup(
+        monkeypatch, tmp_path, 120, ready_at, mode, False,
+        120 if ready_at is None and mode != "exit" else 1, cleanup_failure=True,
+    )
+
+
+def _public_stop_fixture(monkeypatch, tmp_path, *, registered=True):
+    events = []
+    process = SimpleNamespace(pid=54321, wait=lambda **kw: events.append(("wait", kw)) or -15)
+    state, marker, ready = _owned_registration(tmp_path, monkeypatch, process)
+    process._astrid_host_launch = (marker, ready, dict(state))
+    process._astrid_host_support_root = marker.parent
+    monkeypatch.setattr(host_bootstrap, "_RETAINED_HOSTS", {(process.pid, state["process_birth_id"]): process})
+    monkeypatch.setattr(host_bootstrap, "_host_pid_alive", lambda _: False)
+    if not registered:
+        del process._astrid_host_registration
+        marker.unlink()
+        ready.unlink()
+    return process, state, marker, ready, events
+
+
+@pytest.mark.parametrize("registered", [True, False])
+@pytest.mark.parametrize("failure", ["census unavailable", "unresolved reparented descendant", "continuing frontier churn", "helper failure"])
+def test_public_stop_dead_root_retains_uncertain_graph(monkeypatch, tmp_path, registered, failure):
+    from astrid.sdk import upgrade
+    process, state, marker, ready, events = _public_stop_fixture(monkeypatch, tmp_path, registered=registered)
+    before = [(p.read_bytes() if p.exists() else None) for p in (marker, ready)]
+    primary = host_bootstrap.CleanupUncertainError(failure)
+    def uncertain(original):
+        assert original is process
+        raise primary
+    monkeypatch.setattr(host_bootstrap, "terminate_group", uncertain)
+    monkeypatch.setattr(host_bootstrap, "verify_tree_absent", lambda _: pytest.fail("cannot certify a failed graph"))
+    for _ in range(2):
+        with pytest.raises(upgrade.UpgradeError, match="graph cleanup is uncertain") as caught:
+            upgrade.stop_pack_host(tmp_path)
+        assert caught.value.__cause__.__cause__ is primary
+        assert host_bootstrap._RETAINED_HOSTS[(process.pid, state["process_birth_id"])] is process
+        assert not getattr(process, "_astrid_host_registration_retired", False)
+        assert not getattr(process, "_astrid_host_launch_retired", False)
+        assert [(p.read_bytes() if p.exists() else None) for p in (marker, ready)] == before
+        assert events == []
+
+
+@pytest.mark.parametrize("registered", [True, False])
+def test_public_stop_same_owner_waits_and_verifies_before_retirement(monkeypatch, tmp_path, registered):
+    from astrid.sdk import upgrade
+    process, state, marker, ready, events = _public_stop_fixture(monkeypatch, tmp_path, registered=registered)
+    monkeypatch.setattr(host_bootstrap, "terminate_group", lambda original: events.append(("terminate", original)))
+    def final(original):
+        import fcntl
+        assert original is process
+        with (marker.parent / "generic-host.lock").open("a+") as lock:
+            with pytest.raises(BlockingIOError):
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        assert not getattr(process, "_astrid_host_registration_retired", False)
+        assert not getattr(process, "_astrid_host_launch_retired", False)
+        events.append(("final_graph", original))
+    monkeypatch.setattr(host_bootstrap, "verify_tree_absent", final)
+    assert upgrade.stop_pack_host(tmp_path) == {"host_status": "stopped", "host_pid": process.pid}
+    assert [e[0] for e in events] == ["terminate", "final_graph", "wait"]
+    assert events[-1][1] == {"timeout": 0}
+    assert not marker.exists() and not ready.exists()
+    assert getattr(process, "_astrid_host_registration_retired" if registered else "_astrid_host_launch_retired")
+    if not registered:
+        assert not hasattr(process, "_astrid_host_registration")
+    assert upgrade.stop_pack_host(tmp_path) == {"host_status": "absent"}
+
+
+@pytest.mark.parametrize("registered", [True, False])
+@pytest.mark.parametrize("fault", ["missing_owner", "wrong_source", "reused_birth", "wrong_pid", "registration_drift", "unreaped", "final_census", "marker_race", "missing_launch_identity"])
+def test_public_stop_refuses_changed_or_missing_obligations(monkeypatch, tmp_path, registered, fault):
+    from astrid.sdk import upgrade
+    process, state, marker, ready, events = _public_stop_fixture(monkeypatch, tmp_path, registered=registered)
+    if not registered:
+        ready.write_text(json.dumps({**state, "status": "failed"}))
+    monkeypatch.setattr(host_bootstrap, "terminate_group", lambda original: events.append(("terminate", original)))
+    monkeypatch.setattr(host_bootstrap, "verify_tree_absent", lambda original: events.append(("final_graph", original)))
+    if fault == "missing_owner":
+        monkeypatch.setattr(host_bootstrap, "_RETAINED_HOSTS", {})
+    elif fault == "missing_launch_identity":
+        del process._astrid_host_launch
+        if registered:
+            del process._astrid_host_registration
+    elif fault in {"wrong_source", "reused_birth", "wrong_pid", "registration_drift"}:
+        path = marker if registered else ready
+        changed = json.loads(path.read_text())
+        field = {"wrong_source": "source_closure_digest", "reused_birth": "process_birth_id", "wrong_pid": "pid", "registration_drift": "boot_manifest_hash"}[fault]
+        changed[field] = "foreign"
+        path.write_text(json.dumps(changed))
+    elif fault == "unreaped":
+        def wait(**_): raise subprocess.TimeoutExpired("original", 0)
+        process.wait = wait
+    elif fault == "final_census":
+        def unavailable(_): raise host_bootstrap.CleanupUncertainError("final census unavailable")
+        monkeypatch.setattr(host_bootstrap, "verify_tree_absent", unavailable)
+    elif fault == "marker_race":
+        def changed(_): ready.write_text("changed during cleanup")
+        monkeypatch.setattr(host_bootstrap, "terminate_group", changed)
+    with pytest.raises(upgrade.UpgradeError):
+        upgrade.stop_pack_host(tmp_path)
+    assert not getattr(process, "_astrid_host_registration_retired", False)
+    assert not getattr(process, "_astrid_host_launch_retired", False)
+    assert ready.exists()
+    if fault not in {"unreaped", "final_census", "marker_race"}:
+        assert events == []
+
+
+def test_public_stop_does_not_select_another_support_owner(monkeypatch, tmp_path):
+    from astrid.sdk import upgrade
+    process, state, marker, ready, events = _public_stop_fixture(monkeypatch, tmp_path)
+    other = tmp_path / "other"
+    (other / "runtime").mkdir(parents=True)
+    assert upgrade.stop_pack_host(other) == {"host_status": "absent"}
+    assert marker.exists() and ready.exists() and not events
+
+
+@pytest.mark.parametrize("fault", ["identity", "native_unavailable", "active_child"])
+def test_public_stop_live_owner_keeps_native_and_idle_refusals(monkeypatch, tmp_path, fault):
+    from astrid.sdk import upgrade
+    process, state, marker, ready, events = _public_stop_fixture(monkeypatch, tmp_path)
+    monkeypatch.setattr(host_bootstrap, "_host_pid_alive", lambda _: True)
+    def identity(_):
+        if fault == "native_unavailable":
+            raise host_bootstrap.PackHostBootstrapError("native identity unavailable")
+        return fault != "identity"
+    monkeypatch.setattr(host_bootstrap, "_host_identity_matches", identity)
+    monkeypatch.setattr(host_bootstrap, "_descendant_snapshot", lambda _: {999: ("child", 999)})
+    monkeypatch.setattr(host_bootstrap, "terminate_group", lambda _: pytest.fail("refused live owner signalled"))
+    with pytest.raises((upgrade.UpgradeError, host_bootstrap.PackHostBootstrapError)):
+        upgrade.stop_pack_host(tmp_path)
+    assert marker.exists() and ready.exists() and not events
+    assert not getattr(process, "_astrid_host_registration_retired", False)
+
+
+@pytest.mark.parametrize("registered", [True, False])
+def test_public_stop_missing_retained_records_cannot_be_absent(monkeypatch, tmp_path, registered):
+    from astrid.sdk import upgrade
+    process, state, marker, ready, events = _public_stop_fixture(monkeypatch, tmp_path, registered=registered)
+    if registered:
+        marker.unlink()
+        ready.unlink()
+    else:
+        del process._astrid_host_launch
+    with pytest.raises(upgrade.UpgradeError):
+        upgrade.stop_pack_host(tmp_path)
+    assert not events
+    assert host_bootstrap._RETAINED_HOSTS[(process.pid, state["process_birth_id"])] is process
+
+
+def test_public_stop_unreadable_marker_without_owner_is_unresolved(monkeypatch, tmp_path):
+    from astrid.sdk import upgrade
+    support = tmp_path / "runtime"
+    support.mkdir()
+    marker = support / "generic-host.json"
+    marker.write_text("unreadable marker")
+    monkeypatch.setattr(host_bootstrap, "_RETAINED_HOSTS", {})
+    with pytest.raises(upgrade.UpgradeError, match="unreadable"):
+        upgrade.stop_pack_host(tmp_path)
+    assert marker.read_text() == "unreadable marker"
+
+
+@pytest.mark.parametrize("fault", ["retained_key", "process_incarnation", "launch_support"])
+def test_public_stop_retained_identity_drift_never_hides_obligation(monkeypatch, tmp_path, fault):
+    from astrid.sdk import upgrade
+    process, state, marker, ready, events = _public_stop_fixture(monkeypatch, tmp_path, registered=False)
+    if fault == "retained_key":
+        monkeypatch.setattr(host_bootstrap, "_RETAINED_HOSTS", {(process.pid, "reused-birth"): process})
+    elif fault == "process_incarnation":
+        process.pid += 1
+    else:
+        other = tmp_path / "foreign"
+        process._astrid_host_launch = (other / marker.name, other / ready.name,
+                                      {**state, "support_root": str(other), "ready_file": str(other / ready.name)})
+    monkeypatch.setattr(host_bootstrap, "terminate_group", lambda _: pytest.fail("changed retained identity signalled"))
+    with pytest.raises(upgrade.UpgradeError, match="identity differs"):
+        upgrade.stop_pack_host(tmp_path)
+    assert not events and not getattr(process, "_astrid_host_launch_retired", False)
