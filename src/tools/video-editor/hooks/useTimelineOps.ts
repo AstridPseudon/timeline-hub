@@ -12,8 +12,8 @@
  */
 
 import { useCallback, useMemo, useRef } from 'react';
-import { propertyGestureCommands, deleteGestureCommands } from '../commands/semanticGestures.ts';
-import { trackPropertyGesture } from '../commands/trackGestures.ts';
+import { commandContext, freezeProposal, orderedPatchCommands, type ProposalCommandBinding, type ProposalTimelineOps } from '../lib/proposal-command-binding.ts';
+import type { TimelineSaveTarget } from './useTimelinePersistence.ts';
 import { validateEditCommand, type EditCommand } from '@/integrations/runtime/generated.ts';
 import type {
   TimelineOps,
@@ -54,6 +54,13 @@ function uid(): string {
 export interface UseTimelineOpsArgs {
   /** Stable commitData from useTimelineCommit / useTimelineSave. */
   commitData: (nextData: TimelineData, options?: CommitDataOptions) => void;
+
+  /** Enable captured proposals only for the current provider's command writer. */
+  semanticCommandSaving?: boolean;
+  /** Existing provider recovery scope, read only; never supplied by a proposal. */
+  getProposalSourceContext?: () => string | null | undefined;
+  captureSaveTarget?: () => TimelineSaveTarget;
+  flushSaveTarget?: (target: TimelineSaveTarget) => Promise<number>;
 
   /** Existing command-only editor path used by the admitted transcript consumer. */
   applyEdit?: (
@@ -126,6 +133,10 @@ export interface UseTimelineOpsArgs {
 export function useTimelineOps({
   commitData,
   applyEdit,
+  semanticCommandSaving,
+  getProposalSourceContext,
+  captureSaveTarget,
+  flushSaveTarget,
   dataRef,
   getConfigVersion,
   flushPendingSave,
@@ -134,6 +145,9 @@ export function useTimelineOps({
   checkpoints,
   editability,
 }: UseTimelineOpsArgs): TimelineOps {
+  const proposalSourceContextRef = useRef(getProposalSourceContext);
+  proposalSourceContextRef.current = getProposalSourceContext;
+
   // Keep checkpoints in a ref so synchronous rollback lookups are always
   // against the latest list without re-creating the adapter on every change.
   const checkpointsRef = useRef(checkpoints);
@@ -290,45 +304,13 @@ export function useTimelineOps({
       // A mixed/unsupported batch stays entirely on the compatibility route.
       // Use the existing compiler for intermediate bases so repeated targets
       // carry sequential expectations without duplicating patch semantics.
-      let captured = current;
-      const commands: EditCommand[] = [];
-      const supported = patch.operations.length > 0 && patch.operations.every((operation) => {
-        if (operation.op === 'track.update') {
-          const { mode, ...properties } = operation.payload ?? {};
-          // The existing patch compiler merges only these scalar track fields.
-          if ((mode !== undefined && mode !== 'merge')
-            || Object.keys(properties).some((key) => !['label', 'role', 'muted'].includes(key))) return false;
-          const gesture = trackPropertyGesture(captured, operation.target, properties);
-          if (!gesture?.commands.length) return false;
-          commands.push(...gesture.commands);
-          const step = compileTimelinePatch({ ...patch, operations: [operation] }, captured);
-          if (!step.valid || !step.nextData) return false;
-          captured = step.nextData;
-          return true;
-        }
-        if (!captured.config.clips.some((clip) => clip.id === operation.target)) return false;
-        if (operation.op === 'clip.remove') {
-          commands.push(...deleteGestureCommands(captured, [operation.target]));
-        } else {
-          if (operation.op !== 'clip.update') return false;
-          const { mode, ...properties } = operation.payload ?? {};
-          if (mode !== undefined && mode !== 'merge') return false;
-          const produced = propertyGestureCommands(captured, operation.target, properties);
-          if (!produced?.length) return false;
-          commands.push(...produced);
-        }
-        const step = compileTimelinePatch({ ...patch, operations: [operation] }, captured);
-        if (!step.valid || !step.nextData) return false;
-        captured = step.nextData;
-        return true;
-      });
-
+      const commands = orderedPatchCommands(patch, current);
       // 3. Commit once through commitData with semantic transaction metadata.
       //    History recording is enabled by default (skipHistory defaults to false).
       commitData(compiled.nextData, {
         save: true,
         semantic: true,
-        editCommands: supported ? commands : undefined,
+        editCommands: commands,
       });
 
       // 4. Return the semantic diff
@@ -472,6 +454,81 @@ export function useTimelineOps({
     [apply, dataRef, getCanonicalVersion],
   );
 
+  // Capture once at production proposal creation, before any user action.
+  const submissions = useRef(new Map<string, { binding: ProposalCommandBinding; target: TimelineSaveTarget; before?: TimelineData; owner?: TimelineData; terminal?: unknown }>());
+  const captureProposal = useCallback((patch: TimelinePatch, source: string, proposalId: string) => {
+    if (!semanticCommandSaving) return undefined;
+    const current = dataRef.current;
+    if (!current) throw new Error('Proposal requires timeline data.');
+    const commands = orderedPatchCommands(patch, current);
+    // Other established patch families retain their compatibility behavior.
+    if (!commands) return undefined;
+    if (!current.head?.headRevisionId) throw new Error('Proposal requires an exact canonical base revision.');
+    const baseVersion = getCanonicalVersion();
+    if (patch.version !== 0 && patch.version !== baseVersion) throw new Error('Proposal has a stale base version.');
+    const compiled = compileTimelinePatch(patch, current);
+    if (!compiled.valid || !compiled.nextData) throw new Error('Proposal patch cannot be compiled.');
+    const previewResult = previewTimelinePatch(patch, current);
+    const occurrence = commandContext(current, commands);
+    const providerContext = proposalSourceContextRef.current?.() ?? null;
+    const detail = { proposalId, source, transactionId: 'proposal:' + proposalId,
+      base: current.head, providerContext, baseVersion, occurrence };
+    const preview = { ...previewResult, diagnostics: [...previewResult.diagnostics, {
+      severity: 'info' as const, code: 'timeline-patch/proposal-command-binding' as const,
+      message: 'Proposal commands are bound to this source and exact base revision.', detail,
+    }] };
+    return freezeProposal(JSON.parse(JSON.stringify({ proposalId, source, transactionId: `proposal:${proposalId}`,
+      base: current.head, providerContext, baseVersion, signature: current.stableSignature, patch,
+      commands, occurrence, preview }))) as ProposalCommandBinding;
+  }, [semanticCommandSaving, dataRef, getCanonicalVersion]);
+
+  const checkBinding = useCallback((binding: ProposalCommandBinding) => {
+    const captured = captureProposal(binding.patch, binding.source, binding.proposalId);
+    if (!captured || JSON.stringify(captured) !== JSON.stringify(binding)) {
+      throw new Error('Proposal base, commands or source context changed.');
+    }
+    return binding.preview;
+  }, [captureProposal]);
+
+  const acceptProposal = useCallback((binding: ProposalCommandBinding): Promise<TimelineDiff> => {
+    assertTimelineEditable('acceptProposal');
+    if (!semanticCommandSaving || !captureSaveTarget || !flushSaveTarget) throw new Error('Proposal command persistence is unavailable.');
+    // Old provider/session closures must fail before scheduling any edit.
+    captureSaveTarget();
+    let submission = submissions.current.get(binding.proposalId);
+    if (submission && JSON.stringify(submission.binding) !== JSON.stringify(binding)) throw new Error('Proposal retry changed its captured intent.');
+    if (!submission) {
+      checkBinding(binding);
+      const before = dataRef.current!;
+      const compiled = compileTimelinePatch(binding.patch, before);
+      if (!compiled.valid || !compiled.nextData) throw new Error('Proposal cannot be compiled.');
+      const owner = compiled.nextData;
+      try {
+        commitData(owner, { save: true, semantic: true, transactionId: binding.transactionId,
+          editCommands: binding.commands.map((command) => validateEditCommand(command)), proposalBase: binding.base });
+      } catch (error) {
+        if (dataRef.current === owner) commitData(before, { save: false, skipHistory: true });
+        throw error;
+      }
+      submission = { binding, before, owner, target: captureSaveTarget() };
+      submissions.current.set(binding.proposalId, submission);
+    }
+    if (submission.terminal) throw submission.terminal;
+    const attempt = submission;
+    return flushSaveTarget(attempt.target).then(() => {
+      attempt.before = undefined; attempt.owner = undefined;
+      return binding.preview.diff;
+    }, (error: unknown) => {
+      // Ambiguous outcomes retain the original save owner/request for exact retry.
+      if (error && typeof error === 'object' && 'certainty' in error && error.certainty === 'definitely-uncommitted') {
+        attempt.terminal = error;
+        if (attempt.before && dataRef.current === attempt.owner) commitData(attempt.before, { save: false, skipHistory: true });
+        attempt.before = undefined; attempt.owner = undefined;
+      }
+      throw error;
+    });
+  }, [assertTimelineEditable, semanticCommandSaving, captureSaveTarget, flushSaveTarget, checkBinding, commitData, dataRef]);
+
   // ---- assemble stable adapter --------------------------------------------
 
   const flush = useCallback(async (): Promise<{ readonly version: number }> => {
@@ -485,13 +542,17 @@ export function useTimelineOps({
     return Object.freeze({ version: await barrier() });
   }, [dataRef]);
 
-  return useMemo<TimelineOps & {
+  return useMemo<ProposalTimelineOps & {
     submitCommandTransaction: (
       commands: readonly EditCommand[],
       options: Readonly<{ transactionId: string; semantic: true }>,
     ) => void;
   }>(
     () => ({
+      proposalContext: () => JSON.stringify([getCanonicalVersion(), dataRef.current?.head, dataRef.current?.stableSignature, proposalSourceContextRef.current?.() ?? null]),
+      captureProposal,
+      previewProposal: checkBinding,
+      acceptProposal,
       validate,
       preview,
       apply,
@@ -514,6 +575,6 @@ export function useTimelineOps({
       rollback,
       setAllTracksMuted,
     }),
-    [validate, preview, apply, applyEdit, assertTimelineEditable, flush, checkpoint, rollback, setAllTracksMuted],
+    [getCanonicalVersion, dataRef, captureProposal, checkBinding, acceptProposal, validate, preview, apply, applyEdit, assertTimelineEditable, flush, checkpoint, rollback, setAllTracksMuted],
   );
 }

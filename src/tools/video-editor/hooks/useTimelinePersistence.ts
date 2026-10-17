@@ -1,3 +1,4 @@
+import { proposalSaveFor } from '../lib/proposal-command-binding.ts';
 import { timelineDraftRecoveryKey } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
 import { gestureCommandsFor, gestureOccurrenceFor } from '../commands/semanticGestures.ts';
@@ -737,6 +738,7 @@ export function useTimelinePersistence({
             // rebuilds the editor-data slice and triggers the O(n) render
             // cascade mid-drag). Reader/ops/sync read this store field.
             store?.getState().setConfigVersion(nextVersion);
+            if (attempt.generation === attempt.session.generation) proposalSaveFor(attempt.data)?.acknowledge();
             completedSeqRef.current = attempt.seq;
             attempt.session.acknowledgedSeq = Math.max(attempt.session.acknowledgedSeq, attempt.seq);
 
@@ -972,7 +974,7 @@ export function useTimelinePersistence({
     const recoveryMetadata = provider.getTimelineDraftRecoveryMetadata?.(timelineId) ?? {};
     // Provider caches may contain a polled head. Only the editor's adopted
     // base (or its own acknowledged successor) belongs to this draft.
-    const head = headRevisionRef.current;
+    const head = proposalSaveFor(nextData)?.base ?? headRevisionRef.current;
     const draftRecoveryKey = timelineDraftRecoveryKey(recoveryMetadata, timelineId);
     const draftBaseVersion = configVersionRef.current;
     const traceId = createShotTimelineTraceId(timelineId);
@@ -990,8 +992,11 @@ export function useTimelinePersistence({
     const previous = latestScheduledSaveRef.current;
     const hasUnconvertedPredecessor = previous?.session === session
       && previous.seq > savedSeqRef.current && !previous.editCommands;
-    const editCommands = provider.semanticCommandSaving && !hasUnconvertedPredecessor
+    const editCommands = provider.semanticCommandSaving && (!hasUnconvertedPredecessor || proposalSaveFor(nextData) !== undefined)
       ? gestureCommandsFor(nextData) : undefined;
+    if (proposalSaveFor(nextData) && !editCommands) {
+      throw new Error('Bound proposal commands cannot use a compatibility writer.');
+    }
     const occurrenceContext = editCommands !== undefined ? gestureOccurrenceFor(nextData) : undefined;
     const draft = {
       ...(occurrenceContext ? { occurrenceContext: cloneAttemptValue(occurrenceContext) } : {}),

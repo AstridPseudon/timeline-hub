@@ -43,7 +43,12 @@ import { buildDuplicateClipEdit } from '../lib/duplicate-clip.ts';
 import { createTimelineCommands } from './useTimelineCommandsService.ts';
 import type { TimelineStoreApi } from './timelineStore.ts';
 import { useTimelineOps } from './useTimelineOps.ts';
-import { createProposalRuntime } from '../lib/proposal-runtime.ts';
+import { createProposalRuntime, createProposalPersistenceBridge, type ProposalServiceBridge } from '../lib/proposal-runtime.ts';
+import { ProposalPanel } from '../components/ProposalPanel/ProposalPanel.tsx';
+import { createAgentToolRegistry } from '../runtime/agentToolRegistry.ts';
+import { createAgentToolInvocationService } from '../runtime/agentToolInvocationService.ts';
+import type { ProposalTimelineOps } from '../lib/proposal-command-binding.ts';
+import type { TimelinePatch, TimelineProposal } from '@/sdk/index';
 import { createTimelineReader } from '../lib/timeline-reader.ts';
 import { AstridElementOperationAdapter, createElementTimelineRoutes } from '../runtime/element-adapter.ts';
 import { buildReighAgentElementContext } from '../runtime/element-contract.ts';
@@ -57,7 +62,7 @@ import { ClipTransitionSection } from '@/tools/video-editor/components/Propertie
 // This transport is a wire recorder, not an Astrid operation executor. Successful
 // fixture acknowledgements establish App adaptation only, never Runtime acceptance.
 const json = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
-type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'unavailable' | 'failed' | 'rejected' | 'refused' | 'stale' | 'no_change' | { directWrites: CommitResult['change']['direct_writes'] }>;
+type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'unavailable' | 'failed' | 'rejected' | 'refused' | 'stale' | 'no_change' | { directWrites?: CommitResult['change']['direct_writes']; previewCommands?: import('@/integrations/runtime/generated.ts').EditCommand[]; loseSuccess?: boolean }>;
 const catalogFadeFallback = 'W13: legacy effects array has no clip.set-fade producer; retain the whole catalog operation';
 function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typeof catalogFadeFallback) {
   const requests: Array<{ request: CommitRequest; bytes: string; headers: Record<string, string> }> = [];
@@ -93,7 +98,7 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
       const request = JSON.parse(bytes) as CommitRequest;
       requests.push({ request, bytes, headers: { ...headers } });
       const outcome = await reply?.(request, requests.length);
-      const unavailable = outcome === 'unavailable';
+      let unavailable = outcome === 'unavailable';
       const failed = outcome === 'failed';
       const rejected = outcome === 'rejected';
       const refused = outcome === 'refused';
@@ -138,13 +143,14 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
           }
         }
       }
+      if (outcome && typeof outcome === 'object' && outcome.loseSuccess) unavailable = true;
       const response: CommitResult = {
         status: noChange ? 'no_change' : stale ? 'conflict' : unavailable || failed || rejected ? 'error' : refused ? 'refused' : request.dry_run ? 'preview' : 'accepted', request_id: request.request_id, request_hash: 'fixture',
         base_revision_id: request.base_revision_id, accepted_revision_id: unavailable || failed || rejected || refused || stale || noChange || request.dry_run ? null : acceptedHeads.get(request.request_id)!,
         accepted_publication_id: nativeWrites ? `pub-${currentHead}` : null, previous_revision_id: request.base_revision_id, rebased_onto: request.dry_run ? currentHead : null,
         canonical_document: null, projection_version: 1, document_digest: null, id_map: {},
         change: { changes: [], commands: request.dry_run && 'commands' in request.change
-          ? structuredClone(request.change.commands) : [], direct_writes: nativeWrites ?? [], consequences: [], affected: [] },
+          ? (outcome && typeof outcome === 'object' && outcome.previewCommands) || structuredClone(request.change.commands) : [], direct_writes: nativeWrites ?? [], consequences: [], affected: [] },
         conflicts: stale ? [{ id: 'parent/clip:clip-2', path: 'intent.on', kind: 'dependent', base: 'captured relation', theirs: 'changed relation', ours: null }] : [], choices: [], provenance: null, evidence: null, schema_report: null, runtime_receipt: null, error: unavailable ? { code: 'runtime_unavailable', message: 'fixture unavailable', hint: 'retry', next_action: 'retry' } : failed ? { code: 'validation_error', message: 'fixture refused batch', hint: 'invalid batch', next_action: 'fix' } : rejected ? { code: 'invalid_command', message: 'fixture rejected acceptance', hint: 'fix the command', next_action: 'fix' } : refused ? { code: 'bad_request', message: 'fixture refusal', hint: 'inspect the refused command', next_action: 'inspect' } : null,
       };
       return { status: unavailable ? 503 : 200, headers: {}, body: json(response) };
@@ -160,6 +166,7 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
     requests,
     compatibilityRequests,
     readbackHeads,
+    acceptedCount: () => acceptedHeads.size,
     getCurrentConfig: () => structuredClone(currentConfig),
     getCurrentHead: () => currentHead,
     transport,
@@ -244,7 +251,7 @@ async function occurrenceTransitionData() {
   }, base.registry, undefined, 1, undefined, base.head);
 }
 
-async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1', finalVideoMap: Map<string, ShotFinalVideo> = new Map(), outputSelector?: Parameters<typeof useSwitchToFinalVideo>[0]['getProjectMediaSelectionForOutput']) {
+async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1', finalVideoMap: Map<string, ShotFinalVideo> = new Map(), outputSelector?: Parameters<typeof useSwitchToFinalVideo>[0]['getProjectMediaSelectionForOutput'], proposalCommands = false) {
   const initial = providedInitial ?? await initialData(media);
   const fixture = wireFixture(initial, reply);
   const eventBus = new TimelineEventBus();
@@ -271,7 +278,7 @@ async function setup(reply?: FixtureReply, media = false, providedInitial?: Time
     const editing = useClipEditing({ ...commit, selectedClipId, selectedTrack: initial.tracks[0], currentTime, selectClip, resolvedConfig: commit.data?.resolvedConfig ?? null });
     const tracks = useTimelineTrackManagement({ ...commit, resolvedConfig: commit.data?.resolvedConfig ?? null, eventBus, editability });
     const resize = useClipResize({ ...commit, semanticCommandSaving: fixture.provider.semanticCommandSaving });
-    const ops = useTimelineOps({ ...commit, createManualCheckpoint: vi.fn(), jumpToCheckpoint: vi.fn(), checkpoints: [], editability });
+    const ops = useTimelineOps({ ...commit, ...(proposalCommands ? { semanticCommandSaving: fixture.provider.semanticCommandSaving, getConfigVersion: () => configVersionRef.current, captureSaveTarget: persistence.captureSaveTarget, flushSaveTarget: persistence.flushSaveTarget } : {}), createManualCheckpoint: vi.fn(), jumpToCheckpoint: vi.fn(), checkpoints: [], editability });
     const groupPins = usePinnedShotGroups({ dataRef: commit.dataRef, applyEdit: commit.applyEdit, enabled: true, semanticCommands: true });
     const groupSwitches = useSwitchToFinalVideo({ applyEdit: commit.applyEdit, dataRef: commit.dataRef, finalVideoMap, semanticCommands: true, projectId: initial.head?.projectId, getProjectMediaSelectionForOutput: outputSelector });
     const groupHandlers = useShotGroupHandlers({
@@ -4028,4 +4035,262 @@ describe('W42 tiny tied hold receipt boundaries', () => {
       expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
       history.unmount(); h.unmount();
     });
+});
+
+// UI actions call the actual production tool -> runtime -> TimelineOps adapter.
+// Transport receipts below prove App/SDK adaptation, not mounted public Host acceptance.
+describe('REVIEW ordered proposal commands', () => {
+  const patch = (): TimelinePatch => ({ version: 1, operations: [
+    { op: 'clip.update', target: 'clip-1', payload: { opacity: 0.4 } },
+    { op: 'clip.update', target: 'clip-1', payload: { opacity: 0.6 } },
+    { op: 'track.update', target: 'V1', payload: { label: 'Reviewed' } },
+  ] });
+  async function reviewSetup(reply?: FixtureReply, initial?: TimelineData) {
+    const h = await setup(reply, false, initial, 1, undefined, undefined, 'clip-1', new Map(), undefined, true);
+    const reader = createTimelineReader({ data: () => h.result.current.dataRef.current!, configVersion: () => h.configVersionRef.current });
+    const rows: Array<Awaited<ReturnType<NonNullable<ProposalServiceBridge['queryProposals']>>>[number]> = [];
+    const transitions = vi.fn();
+    const service: ProposalServiceBridge = { capabilities: { proposals: true },
+      async createProposal(record) { const id = 'db-' + (rows.length + 1);
+        rows.push({ ...record, id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); return id; },
+      async updateProposalStatus(id, status) { transitions(id, status); const row = rows.find((entry) => entry.id === id); if (!row) throw new Error('Unknown persistence identity'); row.status = status; },
+      async queryProposals() { return rows.filter((row) => row.status === 'pending'); },
+    };
+    const persistence = createProposalPersistenceBridge(service);
+    const runtime = createProposalRuntime({ timelineOps: h.result.current.ops, reader, persistenceProvider: persistence });
+    const registry = createAgentToolRegistry();
+    async function produce(source: string, value = patch()) {
+      registry.ingestAgentToolContribution('review-extension', { id: source, kind: 'agentTool', toolId: source, label: source, description: source, order: 0 });
+      registry.registerTool('review-extension', source, async () => ({ family: 'mutation/proposal', patches: [value] }));
+      const toolService = createAgentToolInvocationService({ registry, proposalRuntime: runtime });
+      const result = await toolService.invokeTool({ toolId: source, extensionId: 'review-extension', contributionId: source });
+      expect(result?.family).toBe('ui/summary');
+      return runtime.list().find((proposal) => proposal.source === source)!;
+    }
+    const historyWrapper = ({ children }: { children: React.ReactNode }) => React.createElement(VideoEditorRuntimeProvider, {
+      value: { provider: h.provider, timelineId: 'gesture-timeline', project: { projectId: 'gesture-project' }, toast: vi.fn() } as unknown as VideoEditorRuntimeContextValue, children });
+    const history = renderHook(() => {
+      const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+      useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]);
+      return state;
+    }, { wrapper: historyWrapper });
+    const journal = vi.fn(); h.eventBus.on('beforeCommit', journal);
+    const saves = vi.spyOn(h.provider, 'saveTimelineAtHead');
+    return { ...h, reader, persistence, runtime, produce, rows, history, journal, saves, transitions,
+      close() { history.unmount(); h.unmount(); } };
+  }
+  const show = (runtime: ReturnType<typeof createProposalRuntime>, source: string) => {
+    const panel = render(<ProposalPanel proposalRuntime={runtime} />);
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(source) }));
+    return panel;
+  };
+  it('rejects one production proposal without changing document/head/history/save and accepts one captured ordered batch after acknowledgement', async () => {
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    const h = await reviewSetup(async () => { await held; });
+    const rejected = await h.produce('review-reject'); const before = h.result.current.data;
+    const rejectedPanel = show(h.runtime, rejected.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Reject proposal from ' + rejected.source }));
+    expect(h.runtime.get(rejected.id)?.state).toBe('rejected');
+    expect(h.runtime.get(rejected.id)?.commandBinding).toEqual(rejected.commandBinding);
+    expect(h.result.current.data).toBe(before); expect(h.getCurrentHead()).toBe('parent-r1');
+    expect(h.journal).not.toHaveBeenCalled(); expect(h.saves).not.toHaveBeenCalled(); expect(h.requests).toHaveLength(0);
+    expect(h.history.result.current.canUndo).toBe(false); expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(() => h.runtime.accept(rejected.id)).toThrow('rejected'); rejectedPanel.unmount();
+
+    const accepted = await h.produce('review-accept');
+    expect(accepted.commandBinding).toMatchObject({ source: 'review-accept', proposalId: accepted.id,
+      base: before!.head, baseVersion: 1, transactionId: 'proposal:' + accepted.id });
+    expect(accepted.commandBinding!.commands.map((command) => command.op)).toEqual(['clip.set-look', 'clip.set-look', 'timeline.set']);
+    expect(accepted.commandBinding!.commands[1].expect).toEqual({ opacity: { state: 'present', value: 0.4 } });
+    const panel = show(h.runtime, accepted.source);
+    const lifecycleWrites = h.transitions.mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: 'Preview proposal from ' + accepted.source }));
+    await act(async () => { await Promise.resolve(); });
+    expect(h.transitions).toHaveBeenCalledTimes(lifecycleWrites);
+    expect(h.result.current.data).toBe(before); expect(h.requests).toHaveLength(0); expect(h.journal).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + accepted.source }));
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    expect(h.runtime.get(accepted.id)?.state).toBe('pending'); expect(h.journal).not.toHaveBeenCalled();
+    expect(() => h.runtime.reject(accepted.id)).toThrow('submitted');
+    expect(h.requests[0].request).toMatchObject({ base_revision_id: 'parent-r1', source: { via: 'app' }, change: { commands: accepted.commandBinding!.commands } });
+    release();
+    await waitFor(() => expect(h.runtime.get(accepted.id)?.state).toBe('accepted'));
+    expect(h.headRevisionRef.current?.headRevisionId).toBe('parent-r2'); expect(h.acceptedCount()).toBe(1);
+    expect(h.journal).toHaveBeenCalledTimes(1); expect(h.journal.mock.calls[0][1]).toMatchObject({ transactionId: accepted.commandBinding!.transactionId, semantic: true });
+    expect(h.runtime.get(accepted.id)?.diagnostics?.find((d) => d.code === 'timeline-patch/proposal-command-binding')?.detail).toMatchObject({ proposalId: accepted.id, source: accepted.source, base: before!.head });
+    expect(h.history.result.current.canUndo).toBe(true); expect(h.saves).toHaveBeenCalledTimes(1);
+    expect(h.rows.find((row) => row.payload.proposalId === accepted.id)?.payload.commandBinding).toEqual(accepted.commandBinding);
+    await waitFor(() => expect(h.rows.find((row) => row.payload.proposalId === accepted.id)?.status).toBe('accepted'));
+    expect(() => h.runtime.accept(accepted.id)).toThrow('accepted');
+    expect(h.compatibilityRequests).toEqual([]); panel.unmount(); h.close();
+  });
+
+
+  it('binds an existing version-zero producer to the host exact base without giving the payload revision authority', async () => {
+    const h = await reviewSetup();
+    const proposal = await h.produce('review-zero', { ...patch(), version: 0 });
+    expect(proposal.patch.version).toBe(0); expect(proposal.baseVersion).toBe(1);
+    expect(proposal.commandBinding).toMatchObject({ base: h.initial.head, baseVersion: 1 });
+    const panel = show(h.runtime, proposal.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    await waitFor(() => expect(h.runtime.get(proposal.id)?.state).toBe('accepted'));
+    expect(h.requests).toHaveLength(1); expect(h.requests[0].request.base_revision_id).toBe('parent-r1');
+    expect(h.compatibilityRequests).toEqual([]); panel.unmount(); h.close();
+  });
+  it('refuses a retained runtime after its provider session closes before any edit/save/history mutation', async () => {
+    const h = await reviewSetup(); const proposal = await h.produce('review-closed');
+    const before = h.result.current.dataRef.current;
+    h.close();
+    expect(() => h.runtime.accept(proposal.id)).toThrow('closed');
+    expect(h.result.current.dataRef.current).toBe(before); expect(h.requests).toEqual([]); expect(h.journal).not.toHaveBeenCalled();
+    expect(h.saves).not.toHaveBeenCalled(); expect(h.runtime.get(proposal.id)?.state).toBe('pending');
+  });
+  it('refuses a production tool result if the document context changes during execution', async () => {
+    const h = await reviewSetup();
+    const registry = createAgentToolRegistry();
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    registry.ingestAgentToolContribution('review-extension', { id: 'delayed', kind: 'agentTool', toolId: 'delayed', label: 'Delayed', description: 'Delayed', order: 0 });
+    registry.registerTool('review-extension', 'delayed', async () => { await held; return { family: 'mutation/proposal', patches: [patch()] }; });
+    const service = createAgentToolInvocationService({ registry, proposalRuntime: h.runtime });
+    const result = service.invokeTool({ toolId: 'delayed', extensionId: 'review-extension', contributionId: 'delayed' });
+    h.result.current.dataRef.current = { ...h.initial, head: { ...h.initial.head!, projectId: 'foreign-project' } };
+    release();
+    await expect(result).rejects.toThrow('source context changed');
+    expect(h.runtime.list()).toEqual([]); expect(h.saves).not.toHaveBeenCalled(); expect(h.requests).toEqual([]); expect(h.journal).not.toHaveBeenCalled();
+    h.close();
+  });
+  it('preserves bound pending proposal bytes on actual persistence-bridge reload and rejects changed persisted commands/source/base/context', async () => {
+    const h = await reviewSetup(); const proposal = await h.produce('review-reload');
+    await waitFor(() => expect(h.rows).toHaveLength(1));
+    const reload = () => createProposalRuntime({ timelineOps: h.result.current.ops, reader: h.reader, persistenceProvider: h.persistence });
+    const restored = reload(); await waitFor(() => expect(restored.get(proposal.id)).toBeDefined());
+    expect(restored.get(proposal.id)?.commandBinding).toEqual(proposal.commandBinding);
+    const original = structuredClone(h.rows[0].payload);
+    for (const field of ['source', 'commands', 'base', 'context'] as const) {
+      const changed = structuredClone(original);
+      const binding = changed.commandBinding as unknown as Record<string, unknown>;
+      if (field === 'source') changed.source = 'foreign';
+      if (field === 'commands') binding.commands = [{ op: 7 }];
+      if (field === 'base') binding.base = { ...proposal.commandBinding!.base, headRevisionId: 'foreign-revision' };
+      if (field === 'context') binding.base = { ...proposal.commandBinding!.base, projectId: 'foreign-project' };
+      h.rows[0].payload = changed;
+      const refused = reload(); await act(async () => { await Promise.resolve(); });
+      expect(refused.list()).toEqual([]);
+    }
+    expect(h.requests).toHaveLength(0); expect(h.saves).not.toHaveBeenCalled(); expect(h.journal).not.toHaveBeenCalled();
+    h.close();
+  });
+  it.each(['version', 'head', 'project', 'timeline', 'document'] as const)('refuses a changed captured %s without a save or history owner', async (change) => {
+    const h = await reviewSetup(); const proposal = await h.produce('review-changed');
+    const before = h.result.current.data!;
+    if (change === 'version') h.configVersionRef.current = 2;
+    else if (change === 'document') h.result.current.dataRef.current = await buildTimelineData({ ...before.config, clips: before.config.clips.map((clip) => ({ ...clip, opacity: 0.1 })) }, before.registry, undefined, 1, undefined, before.head);
+    else h.result.current.dataRef.current = { ...before, head: { ...before.head!, ...(change === 'head' ? { headRevisionId: 'foreign-head' } : change === 'project' ? { projectId: 'foreign-project' } : { timelineId: 'foreign-timeline' }) } };
+    await act(async () => { try { await h.runtime.accept(proposal.id); } catch { /* expected */ } });
+    expect(h.requests).toHaveLength(0); expect(h.saves).not.toHaveBeenCalled(); expect(h.journal).not.toHaveBeenCalled();
+    expect(h.runtime.get(proposal.id)?.state).not.toBe('accepted'); expect(h.getCurrentHead()).toBe('parent-r1');
+    h.close();
+  });
+  it.each(['refused', 'stale', 'failed'] as const)('a %s/failed expectation response restores content without head/history/fallback publication', async (outcome) => {
+    const h = await reviewSetup(async () => outcome); const before = h.result.current.data;
+    const proposal = await h.produce('review-refusal'); const panel = show(h.runtime, proposal.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Accept failed'));
+    expect(h.result.current.data).toBe(before); expect(h.getCurrentHead()).toBe('parent-r1'); expect(h.headRevisionRef.current?.headRevisionId).toBe('parent-r1');
+    expect(h.journal).not.toHaveBeenCalled(); expect(h.history.result.current.canUndo).toBe(false);
+    expect(h.acceptedCount()).toBe(0); expect(h.compatibilityRequests).toEqual([]); expect(h.requests).toHaveLength(1);
+    panel.unmount(); h.close();
+  });
+
+  it('uses actual SDK rebase results on a moved head, preserving returned commands rather than reconstructing the optimistic diff', async () => {
+    const base = await initialData();
+    const initial = await buildTimelineData({ ...base.config, clips: base.config.clips.map((clip) => ({ ...clip, app: { clipSentinel: true } })) },
+      base.registry, undefined, 1, undefined, base.head);
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    let authoritative!: import('@/integrations/runtime/generated.ts').EditCommand[];
+    const h = await reviewSetup(async (request, call) => {
+      if (call === 1) { await held; return; }
+      if (request.dry_run) {
+        const python = process.env.ASTRID_TEST_PYTHON!;
+        const output = execFileSync(python, ['-B', '-c', [
+          'import copy,json,os,sys',
+          'from pathlib import Path',
+          'sys.path.insert(0,os.environ["ASTRID_CHECKOUT"])',
+          'from astrid.sdk.timeline.checkout import Checkout',
+          'from astrid.sdk.timeline import commands',
+          'from astrid.sdk.timeline.rebase import rebase',
+          'v=json.load(sys.stdin)',
+          'fixture=json.loads((Path(os.environ["ASTRID_CHECKOUT"])/"tests/fixtures/timeline_editing/tiny_publishable.json").read_text())',
+          'fixture["parent"]={"config":{"output":v["config"]["output"],"tracks":v["config"]["tracks"]},"clips":v["config"]["clips"],"registry":v["registry"]}',
+          'tl=Checkout(copy.deepcopy(fixture))',
+          'with tl.edit("record proposal",quiet=True) as tx:',
+          ' for call in v["calls"]: commands.execute(tl,call)',
+          'recorded=[call.to_json() for call in tx.plan.calls]',
+          'onto=copy.deepcopy(fixture);onto["parent"]["clips"][0]["volume"]=0.7',
+          'result=rebase(recorded,onto)',
+          'assert not result.conflicts, result.conflicts',
+          'assert result.document["parent"]["clips"][0]["volume"]==0.7',
+          'assert result.document["parent"]["clips"][0]["opacity"]==0.6',
+          'assert result.document["parent"]["config"]["tracks"][0]["label"]=="Reviewed"',
+          'assert onto["parent"]["clips"][0]["opacity"]==0.9',
+          'bad=copy.deepcopy(onto);bad["parent"]["clips"][0]["opacity"]=0.2',
+          'refused=rebase(recorded,bad)',
+          'assert refused.conflicts and refused.document is None and bad["parent"]["clips"][0]["opacity"]==0.2',
+          'print(json.dumps({"commands":[call.to_json() for call in result.plan.calls],"writes":result.plan.direct_writes,"document":result.document,"journal":len(tl._journal),"failed_expectations":refused.conflicts}))',
+        ].join('\n')], { input: JSON.stringify({ config: initial.config, registry: initial.registry, calls: (request.change as { commands: unknown[] }).commands }), encoding: 'utf8' });
+        const sdk = JSON.parse(output);
+        authoritative = sdk.commands;
+        expect(sdk.journal).toBe(1); expect(sdk.writes.length).toBeGreaterThan(0);
+        if (process.env.E_REVIEW_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_REVIEW_EVIDENCE_DIR, 'sdk-rebase.json'), JSON.stringify({ request, ...sdk }, null, 2));
+        return { previewCommands: authoritative };
+      }
+      expect((request.change as { commands: unknown[] }).commands).toEqual(authoritative);
+    }, initial);
+    act(() => h.result.current.editing.handleSelectedClipChange({ volume: 0.7 }));
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    const proposal = await h.produce('review-rebase'); const panel = show(h.runtime, proposal.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    expect(proposal.commandBinding!.base.headRevisionId).toBe('parent-r1');
+    release();
+    await waitFor(() => expect(h.runtime.get(proposal.id)?.state).toBe('accepted'), { timeout: 10000 });
+    expect(h.requests).toHaveLength(3);
+    const preview = h.requests[1].request; const commit = h.requests[2].request;
+    expect(preview).toMatchObject({ dry_run: true, base_revision_id: 'parent-r1', change: { commands: proposal.commandBinding!.commands } });
+    expect(commit).toMatchObject({ dry_run: false, base_revision_id: 'parent-r2', change: { commands: authoritative } });
+    expect(authoritative).not.toEqual(proposal.commandBinding!.commands);
+    expect(commit.request_id).not.toBe(preview.request_id);
+    expect(h.headRevisionRef.current?.headRevisionId).toBe('parent-r3'); expect(h.acceptedCount()).toBe(2);
+    expect(h.journal).toHaveBeenCalledTimes(2); expect(h.journal.mock.calls[1][1].transactionId).toBe(proposal.commandBinding!.transactionId);
+    expect(h.compatibilityRequests).toEqual([]);
+    panel.unmount(); h.close();
+  }, 20000);
+  it('refuses malformed commands/bindings and unsupported reserved shapes without a fallback write', async () => {
+    const h = await reviewSetup(); const proposal = await h.produce('review-unsupported');
+    const forged = structuredClone(proposal);
+    forged.id = 'forged'; forged.commandBinding!.commands[0] = { op: 7 } as never;
+    expect(h.runtime.importProposal(forged)).toBe('rejected');
+    const unsupported: TimelineProposal = { ...structuredClone(proposal), id: 'unsupported', source: 'reserved',
+      commandBinding: undefined, patch: { version: 1, operations: [{ op: 'clip.split' as never, target: 'clip-1', payload: {} }] } };
+    expect(h.runtime.importProposal(unsupported)).toBe('imported');
+    expect(() => h.runtime.accept('unsupported')).toThrow();
+    expect(h.requests).toHaveLength(0); expect(h.journal).not.toHaveBeenCalled(); expect(h.saves).not.toHaveBeenCalled();
+    expect(h.result.current.data).toBe(h.initial); expect(h.compatibilityRequests).toEqual([]); h.close();
+  });
+  it('recovers a lost successful response with the same key/base/bytes and one publication/history owner', async () => {
+    const h = await reviewSetup(async (_request, call) => call === 1 ? { loseSuccess: true } : undefined);
+    const proposal = await h.produce('review-retry'); const panel = show(h.runtime, proposal.source);
+    fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 5000 });
+    // The first flush reports uncertainty; retry resolves the retained save target.
+    if (h.runtime.get(proposal.id)?.state === 'pending') {
+      fireEvent.click(screen.getByRole('button', { name: 'Accept proposal from ' + proposal.source }));
+    }
+    await waitFor(() => expect(h.runtime.get(proposal.id)?.state).toBe('accepted'));
+    expect(h.requests).toHaveLength(2); expect(h.requests[1].bytes).toBe(h.requests[0].bytes);
+    expect(h.requests[1].headers).toEqual(h.requests[0].headers);
+    expect(h.requests[0].headers['Idempotency-Key']).toBe(h.requests[0].request.request_id);
+    expect(h.acceptedCount()).toBe(1); expect(h.journal).toHaveBeenCalledTimes(1);
+    expect(h.result.current.editSeqRef.current).toBe(1); expect(h.history.result.current.canUndo).toBe(true);
+    expect(h.compatibilityRequests).toEqual([]); panel.unmount(); h.close();
+  });
 });

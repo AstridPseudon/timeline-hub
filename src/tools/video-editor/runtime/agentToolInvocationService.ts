@@ -319,6 +319,8 @@ export function createAgentToolInvocationService(
   async function invokeTool(
     request: AgentToolInvocationRequest,
   ): Promise<ToolResult | null> {
+    const creationContext = proposalRuntime.currentContext;
+    const creationVersion = proposalRuntime.currentVersion;
     // 1. Invoke through the registry (handler execution + result validation)
     const result = await registry.invokeTool(request);
 
@@ -329,7 +331,10 @@ export function createAgentToolInvocationService(
 
     // 3. If the result is a timeline-editing result, route through ProposalRuntime
     if (isTimelineEditableResult(result)) {
-      return routeTimelineEditableResult(result, request);
+      if (creationContext !== undefined && creationContext !== proposalRuntime.currentContext) {
+        throw new Error('Proposal source context changed while the tool was running.');
+      }
+      return routeTimelineEditableResult(result, request, creationVersion);
     }
 
     if (result.family === 'material/artifact') {
@@ -350,11 +355,8 @@ export function createAgentToolInvocationService(
   function routeTimelineEditableResult(
     result: ToolMutationProposalResult,
     request: AgentToolInvocationRequest,
+    baseVersion: number,
   ): ToolUISummaryResult {
-    // Use the proposalRuntime's currentVersion as the base version.
-    // This ensures proposals are computed against the version at invocation time.
-    const baseVersion = proposalRuntime.currentVersion;
-
     // Build a source identifier that includes the tool and extension
     const source = `${request.toolId}`;
 
@@ -372,6 +374,10 @@ export function createAgentToolInvocationService(
 
     // Build a UI summary describing what was created
     const proposalIds = createdProposals.map((p) => p.id);
+    const proposalBindings = createdProposals.flatMap((p) => p.commandBinding ? [{
+      proposalId: p.id, source: p.source, base: p.commandBinding.base,
+      transactionId: p.commandBinding.transactionId, baseVersion: p.commandBinding.baseVersion,
+    }] : []);
     const patchCount = proposalInputs.length;
     const previewable = createdProposals.every((p) => p.previewable);
 
@@ -411,6 +417,7 @@ export function createAgentToolInvocationService(
       message: summaryLines.join(' '),
       detail: {
         proposalIds,
+        ...(proposalBindings.length ? { proposalBindings } : {}),
         baseVersion,
         source,
         patchCount,
@@ -424,6 +431,7 @@ export function createAgentToolInvocationService(
       diagnostics,
       detail: {
         proposalIds,
+        ...(proposalBindings.length ? { proposalBindings } : {}),
         baseVersion,
         source,
         patchCount,

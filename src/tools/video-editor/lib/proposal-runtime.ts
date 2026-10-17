@@ -1,12 +1,13 @@
+import { freezeProposal, type ProposalCommandBinding, type ProposalTimelineOps } from './proposal-command-binding.ts';
 /**
  * ProposalRuntime — provider-scoped, in-memory proposal lifecycle manager.
  *
  * Manages TimelineProposal state transitions (pending → accepted/rejected/stale),
  * subscription notifications, preview against current reader snapshots, and
- * acceptance through TimelineOps with base-version revalidation.
+ * acceptance through TimelineOps with captured intent and base revalidation.
  *
  * @publicContract — implements the ProposalRuntime interface from the SDK.
- *   Accept always applies through TimelineOps; never bypasses commitData/history.
+ *   Accept always uses TimelineOps and the existing commitData/history writer.
  */
 
 import type {
@@ -22,7 +23,6 @@ import type {
   ProposalImportStatus,
   ProposalImportDiagnostic,
 } from '@/sdk/index';
-import type { TimelineOps } from '@/sdk/index';
 import type { TimelineReader } from '@/sdk/index';
 import type {
   TimelineDiff,
@@ -38,6 +38,8 @@ import { validateTimelinePatch } from './timeline-patch';
 /** Minimal proposal record shape used by the runtime persistence bridge. */
 export interface ProposalPersistenceRecord {
   readonly id: string;
+  readonly proposalId?: string;
+  readonly commandBinding?: ProposalCommandBinding;
   readonly source: string;
   readonly state: string;
   readonly rationale?: string;
@@ -141,6 +143,8 @@ export function createProposalPersistenceBridge(
         extensionId: EXTENSION_ID,
         status: record.state,
         payload: {
+          proposalId: record.proposalId,
+          commandBinding: record.commandBinding,
           source: record.source,
           rationale: record.rationale,
           baseVersion: record.baseVersion,
@@ -181,6 +185,8 @@ export function createProposalPersistenceBridge(
         const p = r.payload ?? {};
         return {
           id: r.id,
+          proposalId: typeof p.proposalId === 'string' ? p.proposalId : undefined,
+          commandBinding: p.commandBinding as ProposalCommandBinding | undefined,
           source: typeof p.source === 'string' ? p.source : r.extensionId,
           state: r.status,
           rationale: typeof p.rationale === 'string' ? p.rationale : undefined,
@@ -236,7 +242,7 @@ function now(): number {
 
 export interface CreateProposalRuntimeOptions {
   /** Stable TimelineOps adapter for applying accepted proposals. */
-  timelineOps: TimelineOps;
+  timelineOps: ProposalTimelineOps;
 
   /** Stable TimelineReader for base-version checks and preview snapshots. */
   reader: TimelineReader;
@@ -310,12 +316,17 @@ export function createProposalRuntime(
     });
   }
 
+  const accepting = new Map<string, Promise<TimelineDiff>>();
+  const submitted = new Set<string>();
+  const persistenceIds = new Map<string, Promise<string>>();
+
   // ── Persistence helpers ────────────────────────────────────────────────
 
   async function persistCreate(proposal: TimelineProposal): Promise<void> {
     if (!persistenceProvider) return;
     try {
-      await persistenceProvider.createProposal({
+      const stored = persistenceProvider.createProposal({
+        ...(proposal.commandBinding ? { proposalId: proposal.id, commandBinding: proposal.commandBinding } : {}),
         source: proposal.source,
         state: proposal.state,
         rationale: proposal.rationale,
@@ -326,6 +337,8 @@ export function createProposalRuntime(
         patch: proposal.patch as unknown as Record<string, unknown>,
         diagnostics: proposal.diagnostics as readonly Record<string, unknown>[] | undefined,
       });
+      persistenceIds.set(proposal.id, stored);
+      await stored;
     } catch {
       // Persistence failures are non-fatal for proposal operations.
       // Diagnostics already captured via runtimeDiagnostics.
@@ -339,7 +352,7 @@ export function createProposalRuntime(
   ): Promise<void> {
     if (!persistenceProvider) return;
     try {
-      await persistenceProvider.updateProposalStatus(id, state, detail);
+      await persistenceProvider.updateProposalStatus(await (persistenceIds.get(id) ?? Promise.resolve(id)), state, detail);
     } catch {
       // Non-fatal.
     }
@@ -372,6 +385,7 @@ export function createProposalRuntime(
       updatedAt: now(),
     };
 
+    freezeProposal(updated);
     proposals.set(updated.id, updated);
     notify(updated);
 
@@ -380,7 +394,8 @@ export function createProposalRuntime(
       updated.expiryDetail
         ? (updated.expiryDetail as unknown as Record<string, unknown>)
         : undefined;
-    void persistTransition(updated.id, nextState, detail);
+    // Preview refreshes must not race a terminal lifecycle write with a pending status.
+    if (nextState !== proposal.state) void persistTransition(updated.id, nextState, detail);
 
     return updated;
   }
@@ -395,7 +410,7 @@ export function createProposalRuntime(
   function autoExpire(): void {
     const nowMs = now();
     for (const [, proposal] of proposals) {
-      if (proposal.state !== 'pending') continue;
+      if (proposal.state !== 'pending' || submitted.has(proposal.id)) continue;
       if (proposal.expiresAt === undefined) continue;
       if (proposal.expiresAt > nowMs) continue;
 
@@ -432,10 +447,12 @@ export function createProposalRuntime(
   // ── create (with replaceForSource) ─────────────────────────────────────
 
   function create(input: TimelineProposalInput): TimelineProposal {
-    // Atomically replace any existing pending proposal from the same source.
+    // Capture/validate the replacement before removing a still-useful proposal.
+    let replacedId: string | undefined;
     for (const [id, existing] of proposals) {
       if (existing.source === input.source && existing.state === 'pending') {
-        proposals.delete(id);
+        if (submitted.has(id)) throw new Error('Cannot replace a proposal awaiting acknowledgement.');
+        replacedId = id;
         // Only need to delete the first match — replaceForSource ensures
         // at most one pending per source.
         break;
@@ -447,13 +464,18 @@ export function createProposalRuntime(
       source: input.source,
       rationale: input.rationale,
       state: 'pending',
-      patch: input.patch,
+      patch: structuredClone(input.patch),
       baseVersion: input.baseVersion,
       previewable: false,
       createdAt: now(),
       updatedAt: now(),
     };
 
+    proposal.commandBinding = timelineOps.captureProposal?.(proposal.patch, proposal.source, proposal.id);
+    if (proposal.commandBinding && proposal.baseVersion === 0 && proposal.patch.version === 0) proposal.baseVersion = proposal.commandBinding.baseVersion;
+    if (proposal.commandBinding && proposal.baseVersion !== proposal.commandBinding.baseVersion) throw new Error('Proposal baseVersion differs from its patch base.');
+    freezeProposal(proposal);
+    if (replacedId) proposals.delete(replacedId);
     proposals.set(proposal.id, proposal);
 
     // Persist the new proposal
@@ -486,7 +508,10 @@ export function createProposalRuntime(
       throw new Error(`ProposalRuntime.preview: proposal "${proposalId}" not found.`);
     }
 
-    const result = timelineOps.preview(proposal.patch);
+    const result = proposal.commandBinding
+      ? timelineOps.previewProposal?.(proposal.commandBinding)
+      : timelineOps.preview(proposal.patch);
+    if (!result) throw new Error('Bound proposal preview is unavailable.');
 
     // Update the proposal in-place with preview results.
     transition(proposal, proposal.state, {
@@ -500,7 +525,7 @@ export function createProposalRuntime(
 
   // ── accept ─────────────────────────────────────────────────────────────
 
-  function accept(proposalId: string): TimelineDiff {
+  function accept(proposalId: string): TimelineDiff | Promise<TimelineDiff> {
     // Auto-expire any TTL-elapsed proposals before checking state.
     // This ensures that proposals whose expiresAt has passed cannot be
     // accepted even when get()/list() haven't been called recently.
@@ -518,6 +543,9 @@ export function createProposalRuntime(
       );
     }
 
+    const flight = accepting.get(proposalId);
+    if (flight) return flight;
+
     // ── Base-version revalidation ──────────────────────────────────────
     const currentSnap = reader.snapshot();
     const currentVersion = currentSnap.currentVersion;
@@ -525,7 +553,7 @@ export function createProposalRuntime(
     // Version 0 means "no base-version expectation" (e.g. initial proposals
     // before the first provider load, or extensions that intentionally
     // bypass version gating).
-    if (proposal.baseVersion !== 0 && proposal.baseVersion !== currentVersion) {
+    if (!submitted.has(proposalId) && proposal.baseVersion !== 0 && proposal.baseVersion !== currentVersion) {
       // Mark the proposal stale so consumers can observe the transition.
       const expiryDetail: ProposalExpiryDetail = {
         reason: 'base-version-mismatch',
@@ -537,6 +565,7 @@ export function createProposalRuntime(
 
       transition(proposal, 'stale', {
         diagnostics: [
+          ...(proposal.diagnostics ?? []),
           {
             severity: 'error',
             code: 'timeline-patch/stale-base-version' as const,
@@ -555,6 +584,34 @@ export function createProposalRuntime(
         `(${proposal.baseVersion}) does not match current version ` +
         `(${currentVersion}). Proposal marked stale.`,
       );
+    }
+
+    if (proposal.commandBinding) {
+      if (!timelineOps.acceptProposal) throw new Error('Bound proposal acceptance is unavailable.');
+      const acceptance = timelineOps.acceptProposal(proposal.commandBinding);
+      submitted.add(proposalId);
+      const promise = acceptance.then((diff) => {
+        transition(proposals.get(proposalId)!, 'accepted');
+        return diff;
+      }, (error: unknown) => {
+        if (error && typeof error === 'object' && 'certainty' in error && error.certainty === 'definitely-uncommitted') {
+          submitted.delete(proposalId);
+          transition(proposals.get(proposalId)!, 'stale', { diagnostics: [
+            ...(proposal.diagnostics ?? []),
+            { severity: 'error', code: 'timeline-patch/proposal-refused',
+              message: error instanceof Error ? error.message : String(error) },
+          ] });
+        }
+        throw error;
+      }).finally(() => { accepting.delete(proposalId); });
+      accepting.set(proposalId, promise);
+      return promise;
+    }
+
+    // Reserved/non-executable operations can be inspected but have no writer.
+    const validation = validateTimelinePatch(proposal.patch);
+    if (validation.diagnostics.some((diagnostic) => diagnostic.code === 'timeline-patch/reserved-op')) {
+      throw new Error('Proposal contains invalid or unsupported operations.');
     }
 
     // ── Apply through TimelineOps ──────────────────────────────────────
@@ -581,6 +638,7 @@ export function createProposalRuntime(
       );
     }
 
+    if (submitted.has(proposalId)) throw new Error('Proposal acceptance has already been submitted.');
     transition(proposal, 'rejected');
   }
 
@@ -591,7 +649,7 @@ export function createProposalRuntime(
     const expired: TimelineProposal[] = [];
 
     for (const [, proposal] of proposals) {
-      if (proposal.state !== 'pending') continue;
+      if (proposal.state !== 'pending' || submitted.has(proposal.id)) continue;
 
       const age = nowMs - proposal.createdAt;
       // A value of 0 expires every pending proposal (per SDK contract).
@@ -653,10 +711,13 @@ export function createProposalRuntime(
         if (record.state !== 'pending') continue;
 
         // Skip proposals that already exist (avoid duplicates on re-hydration)
-        if (proposals.has(record.id)) continue;
+        const id = record.proposalId ?? record.id;
+        if (proposals.has(id)) continue;
+        persistenceIds.set(id, Promise.resolve(record.id));
 
         const proposal: TimelineProposal = {
-          id: record.id,
+          id,
+          commandBinding: record.commandBinding,
           source: record.source,
           rationale: record.rationale,
           state: record.state as ProposalState,
@@ -670,6 +731,17 @@ export function createProposalRuntime(
           expiryDetail: record.expiryDetail as TimelineProposal['expiryDetail'],
         };
 
+        // Restored bindings may never select a different runtime/source/base.
+        if (proposal.commandBinding) {
+          if (proposal.commandBinding.proposalId !== proposal.id || proposal.commandBinding.source !== proposal.source
+            || proposal.commandBinding.baseVersion !== proposal.baseVersion
+            || JSON.stringify(proposal.commandBinding.patch) !== JSON.stringify(proposal.patch)) continue;
+          if (!timelineOps.previewProposal) continue;
+          try { timelineOps.previewProposal(proposal.commandBinding); } catch { continue; }
+        } else {
+          try { proposal.commandBinding = timelineOps.captureProposal?.(proposal.patch, proposal.source, proposal.id); } catch { continue; }
+        }
+        freezeProposal(proposal);
         proposals.set(proposal.id, proposal);
 
         // Auto-expire if TTL has elapsed
@@ -822,6 +894,14 @@ export function createProposalRuntime(
           : proposal.diagnostics,
     };
 
+    try {
+      normalized.commandBinding = timelineOps.captureProposal?.(normalized.patch, normalized.source, normalized.id);
+      if (proposal.commandBinding && JSON.stringify(proposal.commandBinding) !== JSON.stringify(normalized.commandBinding)) return 'rejected';
+      if (normalized.commandBinding && normalized.baseVersion === 0 && normalized.patch.version === 0) normalized.baseVersion = normalized.commandBinding.baseVersion;
+      if (normalized.commandBinding && normalized.baseVersion !== normalized.commandBinding.baseVersion) return 'rejected';
+    } catch { return 'rejected'; }
+    normalized.patch = structuredClone(normalized.patch);
+    freezeProposal(normalized);
     proposals.set(normalized.id, normalized);
 
     // Auto-expire TTL proposals that have already elapsed
@@ -863,6 +943,7 @@ export function createProposalRuntime(
     get,
     list,
     importProposal,
+    get currentContext(): string | undefined { return timelineOps.proposalContext?.(); },
     get currentVersion(): number {
       return reader.snapshot().currentVersion;
     },
