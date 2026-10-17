@@ -490,6 +490,11 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 return
             handle.cleanup_started = True
             handle.broker.set_cleanup_deadline(deadline)
+            def bound_authority_guard():
+                # The broker's native observer and its file-lock guard must
+                # both fit the same original-owner cleanup deadline.
+                authority = handle.broker.role_authority
+                authority.timeout = min(float(getattr(authority, "timeout", step)), max(0.001, deadline - time.monotonic()))
             bound = {k: handle.preparation[k] for k in ("version", "operation_id", "channel_id", "owner_epoch")}
             def record(exc):
                 if len(handle.cleanup_errors) < 6:
@@ -500,6 +505,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     # This binding comes from our launch, never from a response
                     # or a live report that can fail once the child has exited.
                     from .local_worker import _digest
+                    bound_authority_guard()
                     request = {**bound, "command": "abort_local_execution", "profile_digest": self.profile.profile_digest,
                         "profile_binding_digest": _digest(_selected_profile_payload(self.profile)),
                         "custody_scope": handle.custody_scope,
@@ -523,6 +529,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 if handle.original_host_wait is None:
                     # Same authenticated broker and sole retained waiter. No
                     # absent-PID, process-group, or reconstructed-handle fallback.
+                    bound_authority_guard()
                     handle.broker.signal(signal.SIGTERM, expected_pid=handle.worker.pid)
                     try:
                         handle.original_host_wait = handle.retained.wait(min(step, max(0.0, deadline - time.monotonic())))
@@ -532,6 +539,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                         # have a real retained wait; verify that before signaling.
                         handle.original_host_wait = handle.retained.poll()
                         if handle.original_host_wait is None:
+                            bound_authority_guard()
                             handle.broker.signal(signal.SIGKILL, expected_pid=handle.worker.pid)
                             handle.original_host_wait = handle.retained.wait(max(0.0, deadline - time.monotonic()))
             except BaseException as exc:
