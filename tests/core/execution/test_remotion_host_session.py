@@ -395,6 +395,8 @@ def test_child_start_environment_does_not_include_runtime_credentials(tmp_path, 
     env = environment(tmp_path)
     env['BANODOCO_RUNTIME_CREDENTIAL'] = 'fixture-secret-do-not-forward'
     env['NODE_OPTIONS'] = '--require=/unadmitted.js'
+    env['BROWSERSLIST_CONFIG'] = '/unadmitted/browser-targets'
+    env['BROWSERSLIST'] = 'unadmitted browser targets'
     observed = []
     def start(argv, **kw):
         observed.append(kw['env'])
@@ -406,6 +408,8 @@ def test_child_start_environment_does_not_include_runtime_credentials(tmp_path, 
             manager.request(lease, request(env))
         assert 'BANODOCO_RUNTIME_CREDENTIAL' not in observed[0]
         assert 'NODE_OPTIONS' not in observed[0]
+        assert 'BROWSERSLIST' not in observed[0]
+        assert observed[0]['BROWSERSLIST_CONFIG'] == str(Path(env['ASTRID_REMOTION_PROJECT_DIR']) / 'package.json')
     finally:
         lease.close()
         manager.close()

@@ -422,6 +422,9 @@ class HostRemotionSession:
                        ("HOME", "LANG", "LC_ALL", "LC_CTYPE", "PATH") if key in lease.environment}
         environment.update(ASTRID_FRAME_WORKER_ROOT=str(self.root / "worker"),
                            TMPDIR=str(self.root), TMP=str(self.root), TEMP=str(self.root))
+        # Match the qualified managed-CLI path: Browserslist reads the admitted
+        # package rather than discovering ambient ancestor configuration.
+        environment['BROWSERSLIST_CONFIG'] = str(lease.project / 'package.json')
         (self.root / "worker").mkdir(exist_ok=True, mode=0o700)
         # Revalidate next to launch after lifecycle setup; the opened snapshot
         # does not claim immutable execution or replace confinement.
