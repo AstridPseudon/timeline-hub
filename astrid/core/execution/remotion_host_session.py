@@ -437,10 +437,17 @@ class HostRemotionSession:
         # package rather than discovering ambient ancestor configuration.
         environment['BROWSERSLIST_CONFIG'] = str(lease.project / 'package.json')
         if self._pack_roots:
-            for root in self._pack_roots:
+            roots = self._pack_roots
+            builtin = Path(__file__).resolve().parents[2] / 'packs'
+            # External container discovery deliberately excludes local. The
+            # shipped builtin local pack is already in this Host's installed
+            # inventory, so select it explicitly only with that builtin root.
+            if builtin in roots and (builtin / 'local/pack.yaml').is_file():
+                roots = (*roots, builtin / 'local')
+            for root in roots:
                 if not root.is_absolute() or root.resolve(strict=True) != root or not root.is_dir():
                     raise ValueError('host-selected renderer pack root changed')
-            environment['ASTRID_PACKS_PATH'] = os.pathsep.join(map(str, self._pack_roots))
+            environment['ASTRID_PACKS_PATH'] = os.pathsep.join(map(str, roots))
         (self.root / "worker").mkdir(exist_ok=True, mode=0o700)
         # Revalidate next to launch after lifecycle setup; the opened snapshot
         # does not claim immutable execution or replace confinement.

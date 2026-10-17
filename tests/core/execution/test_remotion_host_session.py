@@ -420,8 +420,12 @@ def test_task_cannot_modify_host_scope_inputs_or_escape_attempt(tmp_path, monkey
         manager.close()
 
 
-def test_child_start_environment_does_not_include_runtime_credentials(tmp_path, monkeypatch):
-    admitted_packs = Path(__file__).resolve().parents[3] / 'astrid/packs'
+@pytest.mark.parametrize('builtin', [True, False])
+def test_child_start_environment_does_not_include_runtime_credentials(tmp_path, monkeypatch, builtin):
+    admitted_packs = Path(__file__).resolve().parents[3] / 'astrid/packs' if builtin else tmp_path/'external-packs'
+    if not builtin:
+        (admitted_packs/'local').mkdir(parents=True)
+        (admitted_packs/'local/pack.yaml').write_text('id: local\n')
     manager, _ = owner(tmp_path, pack_roots=(admitted_packs,))
     env = environment(tmp_path)
     env['BANODOCO_RUNTIME_CREDENTIAL'] = 'fixture-secret-do-not-forward'
@@ -442,7 +446,8 @@ def test_child_start_environment_does_not_include_runtime_credentials(tmp_path, 
         assert 'NODE_OPTIONS' not in observed[0]
         assert 'BROWSERSLIST' not in observed[0]
         assert observed[0]['BROWSERSLIST_CONFIG'] == str(Path(env['ASTRID_REMOTION_PROJECT_DIR']) / 'package.json')
-        assert observed[0]['ASTRID_PACKS_PATH'] == str(admitted_packs)
+        expected = (admitted_packs, admitted_packs/'local') if builtin else (admitted_packs,)
+        assert observed[0]['ASTRID_PACKS_PATH'] == os.pathsep.join(map(str, expected))
     finally:
         lease.close()
         manager.close()
