@@ -14865,46 +14865,46 @@ def _cli() -> int:
             parser.error(f"host-only attempt directory is not writable: {exc}")
         args.attempt_base = str(owned_attempts)
 
-    remotion_closure_binding = None
-    selected_renderer = None
-    if (preparation is not None and preparation.result is not None
-            and not preparation._aborted and preparation._activation_grant == activation
-            and activation is not None):
-        launch = preparation._request["profile"].get("host_launch") or {}
-        selection = launch.get("renderer_selection")
-        if selection is not None:
-            from .host_renderer_selection import activate_renderer_selection
-            selected_renderer = activate_renderer_selection(selection)
-            remotion_closure_binding = selected_renderer.closure
-            # Derive renderer configuration only from the authenticated selection.
-            # A foreign validation reference is never imported into this launch.
-            from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
-            from astrid.core.subprocess_env import build_child_subprocess_env
-            for key in tuple(os.environ):
-                if key.startswith("ASTRID_REMOTION_VALIDATION_"):
-                    os.environ.pop(key)
-            os.environ.update(ASTRID_REMOTION_PROJECT_DIR=selection["project"],
-                              ASTRID_NODE_EXECUTABLE=selection["node_executable"],
-                              ASTRID_TIMELINE_SCHEMA_PYTHONPATH=launch["source_checkout"])
-            for key, name in (("XDG_STATE_HOME", "state"), ("XDG_CACHE_HOME", "cache"),
-                              ("XDG_CONFIG_HOME", "config"), ("XDG_DATA_HOME", "data")):
-                directory = support_root / "host-context" / name
-                directory.mkdir(parents=True, exist_ok=True, mode=0o700)
-                if directory.resolve(strict=True) != directory or directory.stat().st_uid != os.getuid():
-                    raise HostError("host-only renderer context must be canonical and owned")
-                os.environ[key] = str(directory)
-            environment = dict(os.environ)
-            reference = prepare_remotion_validation(
-                artifact_directory=support_root / "remotion-validation",
-                host_environment=environment, python_executable=sys.executable,
-                launch_id=__import__("secrets").token_hex(16),
-                contexts={"host": environment,
-                          "worker": _launch_worker_probe_environments(tuple(Path(p) for p in args.pack_root),
-                                      environment, Path(args.capability_matrix) if args.capability_matrix else None)})
-            os.environ.update(reference)
-    _emit_startup_phase("host_constructor_begin")
-    _install_host_vibecomfy_import_root()
     def create_host():
+        remotion_closure_binding = None
+        selected_renderer = None
+        if (preparation is not None and preparation.result is not None
+                and not preparation._aborted and preparation._activation_grant == activation
+                and activation is not None):
+            launch = preparation._request["profile"].get("host_launch") or {}
+            selection = launch.get("renderer_selection")
+            if selection is not None:
+                from .host_renderer_selection import activate_renderer_selection
+                selected_renderer = activate_renderer_selection(selection)
+                remotion_closure_binding = selected_renderer.closure
+                # Derive renderer configuration only from the authenticated selection.
+                # A foreign validation reference is never imported into this launch.
+                from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
+                from astrid.core.subprocess_env import build_child_subprocess_env
+                for key in tuple(os.environ):
+                    if key.startswith("ASTRID_REMOTION_VALIDATION_"):
+                        os.environ.pop(key)
+                os.environ.update(ASTRID_REMOTION_PROJECT_DIR=selection["project"],
+                                  ASTRID_NODE_EXECUTABLE=selection["node_executable"],
+                                  ASTRID_TIMELINE_SCHEMA_PYTHONPATH=launch["source_checkout"])
+                for key, name in (("XDG_STATE_HOME", "state"), ("XDG_CACHE_HOME", "cache"),
+                                  ("XDG_CONFIG_HOME", "config"), ("XDG_DATA_HOME", "data")):
+                    directory = support_root / "host-context" / name
+                    directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+                    if directory.resolve(strict=True) != directory or directory.stat().st_uid != os.getuid():
+                        raise HostError("host-only renderer context must be canonical and owned")
+                    os.environ[key] = str(directory)
+                environment = dict(os.environ)
+                reference = prepare_remotion_validation(
+                    artifact_directory=support_root / "remotion-validation",
+                    host_environment=environment, python_executable=sys.executable,
+                    launch_id=__import__("secrets").token_hex(16),
+                    contexts={"host": environment,
+                              "worker": _launch_worker_probe_environments(tuple(Path(p) for p in args.pack_root),
+                                          environment, Path(args.capability_matrix) if args.capability_matrix else None)})
+                os.environ.update(reference)
+        _emit_startup_phase("host_constructor_begin")
+        _install_host_vibecomfy_import_root()
         selected_host = GenericPackHost(
         pack_roots=args.pack_root,
         client=client,
