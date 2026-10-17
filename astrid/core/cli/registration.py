@@ -60,6 +60,9 @@ class CommandSpec:
         requires_pack_host: Whether this command performs pack-worker work and
             therefore needs explicit worker-host readiness during admission.
             Workspace CRUD/read commands stay false by default.
+        local_file_operation: Optional command-owned predicate for an explicit
+            parsed file operation that needs no Runtime. Undeclared operations
+            retain authenticated acquisition; this does not affect no-file parsing.
     """
 
     name: str
@@ -67,6 +70,7 @@ class CommandSpec:
     aliases: Sequence[str] = field(default_factory=tuple)
     configure: Callable[[argparse.ArgumentParser], None] | None = None
     requires_pack_host: bool = False
+    local_file_operation: Callable[[argparse.Namespace], bool] | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.name, str) or not self.name:
@@ -148,6 +152,7 @@ def register_product_commands(
             aliases=spec.aliases,
             configure=configure,
             requires_pack_host=spec.requires_pack_host,
+            local_file_operation=spec.local_file_operation,
         )
 
     stamped = [_stamp(spec) for spec in commands]

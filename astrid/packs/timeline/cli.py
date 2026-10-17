@@ -3230,6 +3230,7 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     if not changed:
         print("no change (the working copy already matches)")
         return 3
+    tl._edit_local_only = bool(target) and parsed.client is None
     report = tl.check()
     changes = _describe_edit(before, tl.document(), tl)
     cuts = _edit_cuts(before, tl)
@@ -3267,6 +3268,18 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     else:
         print(f'next: timelines check {target}   ·   timelines publish {target} -m "..."')
     return sweep_status or verify_status
+
+
+def _apply_line_gaps(tl, gaps):
+    from astrid.sdk.timeline_editing import TimelineEditError
+
+    for gap_spec in gaps:
+        segment, sep, value = gap_spec.partition("=")
+        if not sep or not segment:
+            raise TimelineEditError(f"--gap-after takes SEG=SECONDS, got {gap_spec!r}")
+        tl.voice(segment).set_gap_after(float(value), reflow=False)
+    if gaps:
+        tl.reflow()  # one re-flow for all of them
 
 
 def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
@@ -3350,13 +3363,7 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
     if parsed.insert:
         at, seconds = parsed.insert
         tl.insert_time(at, seconds)
-    for gap_spec in parsed.gap_after:
-        segment, sep, value = gap_spec.partition("=")
-        if not sep or not segment:
-            raise TimelineEditError(f"--gap-after takes SEG=SECONDS, got {gap_spec!r}")
-        tl.voice(segment).set_gap_after(float(value), reflow=False)
-    if parsed.gap_after:
-        tl.reflow()  # one re-flow for all of them
+    _apply_line_gaps(tl, parsed.gap_after)
     if parsed.remove_line:
         tl.remove_line(parsed.remove_line, **({"visuals": parsed.visuals} if parsed.visuals else {}))
     from astrid.packs.timeline.cli_film import apply_film_end
@@ -3915,14 +3922,17 @@ def _undo_target(value):
     return _positive_int(value) if value.isdigit() else value
 
 
+from astrid.packs.timeline.cli_local import adopt_is_local, edit_is_local, lines_is_local
+
+
 COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("restructure", help="Select chapter storage from existing canonical story ranges.", configure=_configure_working_verb("restructure")),
     CommandSpec("purge-plan", help="Plan retention for an explicit JSON list of pinned timeline IDs.", configure=_configure_working_verb("purge_plan")),
     CommandSpec("purge-execute", help="Execute a saved Runtime purge plan with a stable caller key.", configure=_configure_working_verb("purge_execute")),
-    CommandSpec("adopt", help="Preflight adoption of authored music sources as one bed.", configure=_configure_adopt_music),
+    CommandSpec("adopt", help="Preflight adoption of authored music sources as one bed.", configure=_configure_adopt_music, local_file_operation=adopt_is_local),
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
     CommandSpec("lift", help="Lift a cut's picture and hold the previous picture.", configure=_configure_lift),
-    CommandSpec("edit", help="Edit a detached timeline working copy.", configure=_configure_edit),
+    CommandSpec("edit", help="Edit a detached timeline working copy.", configure=_configure_edit, local_file_operation=edit_is_local),
     CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
     CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
     CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
@@ -3934,7 +3944,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("publish", help="Publish an existing working copy through the SDK merge/CAS boundary.", configure=_configure_publish),
     CommandSpec("discard", help="Drop a working copy (its unpublished edits).", configure=_configure_working_verb("discard")),
     CommandSpec("duplicate", help="Copy a timeline's published head into a new timeline, for a trial.", configure=_configure_working_verb("duplicate")),
-    CommandSpec("lines", help="The narration line by line: id, when it is spoken, the gap after it, its text and take.", configure=_configure_working_verb("lines")),
+    CommandSpec("lines", help="The narration line by line: id, when it is spoken, the gap after it, its text and take.", configure=_configure_working_verb("lines"), local_file_operation=lines_is_local),
     CommandSpec("words", help="List the spoken words with their times, or one word in full.", configure=_configure_working_verb("words")),
     CommandSpec(
         "create",

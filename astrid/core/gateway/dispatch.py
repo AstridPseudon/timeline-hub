@@ -431,7 +431,7 @@ def _dispatch_pack(pack: str, args: list[str]) -> int:
 
 def _dispatch_product(args: list[str]) -> int:
     """Run one product-family command through the remote SDK boundary."""
-    from astrid.core.cli.domain_product import PRODUCT_FAMILY_SET, run_product_family
+    from astrid.core.cli.domain_product import PRODUCT_FAMILY_SET, local_file_command, run_product_family
 
     if not args:
         raise AstridError(
@@ -458,6 +458,10 @@ def _dispatch_product(args: list[str]) -> int:
     edit_alias_help = family == "timelines" and rest[:1] == ["edit"] and "--help-all" in rest
     if help_request or edit_alias_help:
         return run_product_family(family, rest, client=None)
+
+    local = local_file_command(family, rest)
+    if local is not None:
+        return int(local.handler(local))
 
     from astrid.sdk.client import AstridClient
 

@@ -49,6 +49,21 @@ Use the address returned by `find` in every step:
 
 ## Look before publishing
 
+For an explicit detached Checkout, local narration reads and edits use
+`timelines lines --file checkout.json`: add `--line ID` to inspect a line,
+`--line ID --text TEXT` to update its script text while keeping its take and
+word timings, `--gap-after ID=0.5` to set a gap, or `--from-script script.json`
+to apply a local script. These edits use the same saved document, undo steps
+and journal as other Checkout edits. `--file` cannot be combined with a
+timeline positional, `--draft` or `--published` on `lines`.
+
+Local edits need no Runtime acquisition. Importing take files, managed media
+lookup, speech preparation/generation, remote sequence shapes, verification
+and publication still require authenticated Runtime access, including when
+an input Checkout is supplied with `--file`. Managed narration preparation
+remains `timelines edit --file checkout.json --from-script managed.json`;
+`lines --text` only edits script text and does not replace a take.
+
 | View | Try |
 |---|---|
 | One frame | `timelines visualize main --project demo --draft working --preset frame --at '"went"'` |

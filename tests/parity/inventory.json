@@ -2009,11 +2009,32 @@
         {
           "action": "_StoreAction",
           "default": null,
+          "dest": "file",
+          "nargs": null,
+          "options": [
+            "--file"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
           "dest": "from_script",
           "metavar": "PATH",
           "nargs": null,
           "options": [
             "--from-script"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": [],
+          "dest": "gap_after",
+          "metavar": "LINE=SECONDS",
+          "nargs": null,
+          "options": [
+            "--gap-after"
           ],
           "required": false
         },
@@ -2087,9 +2108,9 @@
           "action": "_StoreAction",
           "default": null,
           "dest": "ref",
-          "nargs": null,
+          "nargs": "?",
           "options": [],
-          "required": true
+          "required": false
         }
       ]
     },

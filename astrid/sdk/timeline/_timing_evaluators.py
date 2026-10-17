@@ -45,6 +45,17 @@ from astrid.sdk.timeline.units import _unit_path, element_units, mark_offset_can
 _EPS = 1e-6
 
 
+def script_take_folders(path, takes):
+    """The existing local script adapter's ordered take search paths."""
+    if takes:
+        raw = [takes] if isinstance(takes, (str, Path)) else list(takes)
+        return [Path(item).expanduser() for value in raw
+                for item in (value if isinstance(value, (list, tuple)) else [value])]
+    if path and (path.parent.parent / "vo").is_dir():
+        return [path.parent.parent / "vo"]
+    return [path.parent if path else Path.cwd()]
+
+
 def _is_seconds(text: str) -> bool:
     """A bare number of seconds ("2.5", "2.5s"), which is a time, not a moment."""
     try:
@@ -370,20 +381,7 @@ class _TimingEvaluators:
             raise TimelineEditError("a narration script must be an object")
         if data.get("version") == 1 and "lines" in data:
             raise TimelineEditError("managed script paths require the speech preparation adapter; local takes cannot bind them")
-        if takes:
-            raw_folders = [takes] if isinstance(takes, (str, Path)) else list(takes)
-            folders = []
-            for value in raw_folders:
-                if isinstance(value, (list, tuple)):
-                    folders.extend(Path(item).expanduser() for item in value)
-                else:
-                    folders.append(Path(value).expanduser())
-        else:
-            if path and (path.parent.parent / "vo").is_dir():
-                default = path.parent.parent / "vo"
-            else:
-                default = path.parent if path else Path.cwd()
-            folders = [default]
+        folders = script_take_folders(path, takes)
 
         def take_file(filename: str) -> Path:
             # Explicit folders are ordered from lowest to highest precedence.

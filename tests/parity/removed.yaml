@@ -62,3 +62,8 @@
   card: SCRIPT-EDIT
   reason: "Retains the single take-folder spelling and extends it to multiple folders and repeated options; later folders override earlier fallbacks."
   alias: "--takes"
+
+- feature: "argument:timelines.lines:ref"
+  card: VOCAB
+  reason: "Retains the timeline positional and its current-project lookup; makes it optional only when an explicit --file Checkout supplies the input. No-file lines still requires a timeline."
+  alias: "command:timelines.lines"

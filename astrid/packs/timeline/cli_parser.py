@@ -54,6 +54,8 @@ class TimelinesParser(argparse.ArgumentParser):
                 parsed.more_addresses, loose = list(loose), []  # show TL a b c: one record each
         if loose or len(extras) != len([e for e in extras if not e.startswith("-")]):
             self.error(f"unrecognized arguments: {' '.join(extras)}")
+        if getattr(parsed, "command", None) == "lines" and not getattr(parsed, "file", None) and not parsed.ref:
+            self.error("lines: name a timeline or pass --file F")
         if getattr(parsed, "command", None) in CURRENT_PROJECT_VERBS and not getattr(parsed, "project", None) and not getattr(parsed, "file", None):
             project = resolve_current_project(parsed)  # an explicit --project always wins
             if project is None:

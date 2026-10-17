@@ -17,9 +17,9 @@ The product census also excludes the operational commands (``serve``,
 ``doctor``, ``backup``): they are never part of the five-family product
 registry, help, or product dispatch.
 
-The dispatch boundary (:func:`run_product_family`) composes one
-``AstridClient`` and passes it to the family's in-tree parser builder, so
-every product handler is a rule-free SDK adapter (m4 plan step 24).
+The dispatch boundary passes the acquired ``AstridClient`` to the family's
+in-tree parser builder. Explicitly declared local-file operations can run
+without a client; each handler remains an SDK adapter (m4 plan step 24).
 """
 
 from __future__ import annotations
@@ -318,6 +318,33 @@ def command_requires_pack_host(family: str, args: Sequence[str]) -> bool:
             return False
         return True
     return bool(spec.requires_pack_host)
+
+
+def local_file_command(family: str, args: Sequence[str]) -> Any:
+    """Parse only an explicitly declared file route before Runtime acquisition.
+
+    In particular, no-file timelines must parse with the acquired client: their
+    parser can ask Runtime for the current project. A file is a prerequisite,
+    never itself authority to skip acquisition.
+    """
+    if family != "timelines" or not args or not any(
+        token == "--file" or token.startswith("--file=") for token in args
+    ):
+        return None
+    module = importlib.import_module(FAMILY_PARSER_MODULES[family])
+    spec = next((item for item in module.COMMANDS
+                 if args[0] in (item.name, *item.aliases)), None)
+    if spec is None or spec.local_file_operation is None:
+        return None
+    parser = module.build_parser(None)
+    parsed = parser.parse_args(list(args))
+    if not getattr(parsed, "file", None):
+        return None
+    try:
+        local = spec.local_file_operation(parsed)
+    except (OSError, ValueError) as exc:
+        parser.error(str(exc))
+    return parsed if local else None
 
 
 def run_product_family(

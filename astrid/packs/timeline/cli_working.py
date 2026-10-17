@@ -389,7 +389,8 @@ def _configure_words(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_lines(subparser: argparse.ArgumentParser) -> None:
     subparser.description = "The narration line by line: id, when it is spoken, the silence after it, its text and take."
-    _timeline_args(subparser, project_required=False)
+    _timeline_args(subparser, required_timeline=False, project_required=False)
+    subparser.add_argument("--file", default=None, help="Read or edit an explicit local Checkout file.")
     subparser.add_argument("--published", action="store_true", help="Read the published head, not the working copy.")
     subparser.add_argument("--line", default=None, metavar="ID", help="One line in full: its text, take, span, gap, "
                                                                         "every word with its time, and the cuts it is under.")
@@ -397,6 +398,8 @@ def _configure_lines(subparser: argparse.ArgumentParser) -> None:
         "--text", default=None, metavar="TEXT",
         help="Set --line's script text without changing its take or word timings.",
     )
+    subparser.add_argument("--gap-after", action="append", default=[], metavar="LINE=SECONDS",
+                           help="Set the silence after a line and reflow once; repeat for several lines.")
     subparser.add_argument(
         "--from-script", default=None, metavar="PATH",
         help="Apply a JSON narration script to the working copy.",
@@ -411,23 +414,32 @@ def _configure_lines(subparser: argparse.ArgumentParser) -> None:
 @guard(2)
 def _cmd_lines(parsed: argparse.Namespace) -> int:
     from astrid.sdk.timeline_checkout import Checkout
+    from astrid.packs.timeline.cli_local import validate_lines_file
 
-    editing = parsed.text is not None or parsed.from_script is not None
+    validate_lines_file(parsed)
+
+    editing = parsed.text is not None or parsed.from_script is not None or bool(parsed.gap_after)
     if getattr(parsed, "published", False) and editing:
         raise VerbError("lines --published is read-only; remove --published to edit the working copy", 2)
     if parsed.text is not None and not parsed.line:
         raise VerbError("--text requires --line ID", 2)
     if parsed.from_script is not None and parsed.line:
         raise VerbError("--from-script edits the line set; do not combine it with --line", 2)
+    if parsed.from_script is not None and (parsed.text is not None or parsed.gap_after):
+        raise VerbError("--from-script owns text and gaps; remove --text and --gap-after", 2)
     if parsed.takes and parsed.from_script is None:
         raise VerbError("--takes requires --from-script", 2)
     if parsed.script_gaps and parsed.from_script is None:
         raise VerbError("--gaps requires --from-script", 2)
+    local_next = f"next: timelines lines --file {shlex.quote(parsed.file)}" if parsed.file else None
 
     if editing:
-        if not parsed.ref:
+        if not parsed.ref and not parsed.file:
             raise VerbError("name a timeline to edit with timelines lines TL --line ID --text TEXT", 2)
-        tl, _existed = working_copy(parsed, create=True)
+        if parsed.file:
+            tl = Checkout.load(parsed.file)
+        else:
+            tl, _existed = working_copy(parsed, create=True)
         before = tl.document()
         if parsed.from_script is not None:
             report = tl.apply_script(parsed.from_script, takes=parsed.takes, gaps=parsed.script_gaps)
@@ -438,27 +450,43 @@ def _cmd_lines(parsed: argparse.Namespace) -> int:
             for line in report:
                 print(line)
             print("edited working copy")
-            print(
+            print(local_next or (
                 f"next: timelines status {parsed.ref} --project {parsed.project}  ·  "
                 f"timelines lines {parsed.ref} --project {parsed.project}"
-            )
+            ))
             return 0
 
         from astrid.sdk.timeline.commands import run
 
-        plan = run(tl, {"op": "voice.set-text", "select": parsed.line, "args": {"text": parsed.text}})
-        if not plan.changed:
+        if parsed.gap_after:
+            from astrid.packs.timeline.cli import _apply_line_gaps
+            from astrid.sdk.timeline.commands import execute
+
+            with tl.step("lines"):
+                if parsed.text is not None:
+                    execute(tl, {"op": "voice.set-text", "select": parsed.line, "args": {"text": parsed.text}})
+                _apply_line_gaps(tl, parsed.gap_after)
+            changed = before != tl.document()
+            if changed:
+                tl.save(quiet=True)
+        else:
+            plan = run(tl, {"op": "voice.set-text", "select": parsed.line, "args": {"text": parsed.text}})
+            changed = plan.changed
+        if not changed:
             print("no change (the working copy already matches)")
             return 3
-        print(f"line {parsed.line}: script text updated (narration re-pins on publish)")
+        if parsed.text is not None:
+            print(f"line {parsed.line}: script text updated (narration re-pins on publish)")
         print("edited working copy")
-        print(
+        print(local_next or (
             f"next: timelines status {parsed.ref} --project {parsed.project}  ·  "
             f"timelines lines {parsed.ref} --project {parsed.project} --line {parsed.line}"
-        )
+        ))
         return 0
 
-    if parsed.published:
+    if parsed.file:
+        tl = Checkout.load(parsed.file)
+    elif parsed.published:
         tl = Checkout.open(need_project(parsed), parsed.ref, client=parsed.client)
     else:
         tl, _existed = working_copy(parsed, create=True)
@@ -474,7 +502,8 @@ def _cmd_lines(parsed: argparse.Namespace) -> int:
         text = v.text if len(v.text) <= 70 else v.text[:69] + "…"
         print(f"  {v.segment:<{width}}  {start:7.2f}–{end:7.2f} s  gap {('%.2f' % gap) if gap is not None else '  - '}  "
               f"take {v.clips[0].asset or '?':<12} \"{text}\"")
-    print(f"next: timelines words {parsed.ref} --project {parsed.project} WORD   ·   "
+    print(local_next + " --line ID" if local_next else
+          f"next: timelines words {parsed.ref} --project {parsed.project} WORD   ·   "
           f"timelines edit {parsed.ref} --project {parsed.project} --line ID --take WAV --words WORDS.json")
     return 0
 
@@ -493,6 +522,10 @@ def _print_line(tl: Any, parsed: argparse.Namespace) -> int:
     print(f'  "{voice.text}"')
     for w in words:
         print(f"  {w.start:8.3f}–{w.end:.3f}  {w.text:<16} [{w.id}]  {_cut_at(tl, w.start) or '-'}")
+    if getattr(parsed, "file", None):
+        print(f"next: timelines lines --file {shlex.quote(parsed.file)} --line {voice.segment} --text TEXT"
+              f"   ·   --gap-after {voice.segment}=SECONDS")
+        return 0
     print(f"next: timelines edit {parsed.ref} --project {parsed.project} --line {voice.segment} --take WAV --words WORDS.json"
           f"   ·   --gap-after {voice.segment}=SECONDS")
     return 0
