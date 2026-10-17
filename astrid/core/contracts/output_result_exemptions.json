@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "description": "Committed output-result inventory. Every bundled executor in the default registry either writes a universal result manifest (non-exempt) or appears here with a specific M2-approved reason; optional external routes remain explicitly listed without being treated as bundled discovery. The registry conformance gate uses this list to allow non-conforming executors while making the gap visible.",
-  "last_registry_snapshot": "2026-10-16T07:57:13Z",
-  "total_executors": 111,
+  "last_registry_snapshot": "2026-10-17T02:12:58Z",
+  "total_executors": 112,
   "m1_adopters": 74,
-  "exempted": 37,
+  "exempted": 38,
   "non_exempt": [
     "capture.web_page",
     "chiptune.compose",
@@ -163,6 +163,12 @@
         "external-escape-hatch"
       ],
       "note": "Optional Hivemind executor declared by config/astrid-beta-capabilities.json; no bundled executor manifest is installed in this checkout."
+    },
+    "media.transcript_publish": {
+      "reasons": [
+        "no-artifact"
+      ],
+      "note": "Publishes a caller-bound transcript document and immutable snapshot through the authenticated Host adapter, returning data/receipt/snapshot values without stable worker-owned output paths or the universal result manifest."
     },
     "moirae.moirae": {
       "reasons": [

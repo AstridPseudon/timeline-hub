@@ -1,7 +1,8 @@
-"""Runtime/schema parity for the canonical capability-only pack v2 contract."""
+"""Runtime/schema parity for canonical first-party pack manifests."""
 
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 
@@ -13,7 +14,7 @@ from astrid.core.pack import PackValidationError, load_pack_manifest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PACK_SCHEMA = ROOT / "astrid/core/pack/schemas/v2/pack.json"
+PACK_SCHEMA_DIR = ROOT / "astrid/core/pack/schemas"
 
 
 def _body(extra: str = "", *, pack_id: str = "demo") -> str:
@@ -35,11 +36,18 @@ def _write(tmp_path: Path, body: str, *, folder: str = "demo") -> Path:
     return manifest
 
 
-def _schema_errors(body: str) -> list[jsonschema.ValidationError]:
-    schema = json.loads(PACK_SCHEMA.read_text(encoding="utf-8"))
+def _schema_errors_for_payload(payload: dict) -> list[jsonschema.ValidationError]:
+    version = payload.get("schema_version")
+    schema_version = version if type(version) is int and version in {1, 2, 3} else 2
+    schema_path = PACK_SCHEMA_DIR / f"v{schema_version}" / "pack.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
     validator_cls = jsonschema.validators.validator_for(schema)
     validator_cls.check_schema(schema)
-    return list(validator_cls(schema).iter_errors(yaml.safe_load(body)))
+    return list(validator_cls(schema).iter_errors(payload))
+
+
+def _schema_errors(body: str) -> list[jsonschema.ValidationError]:
+    return _schema_errors_for_payload(yaml.safe_load(body))
 
 
 def test_minimal_v2_manifest_loads_without_legacy_defaults(tmp_path: Path) -> None:
@@ -158,10 +166,29 @@ def test_rendering_extensions_round_trip(tmp_path: Path) -> None:
         "    planners: []\n"
         "    finalizers: []\n"
     )
+    assert _schema_errors(body) == []
     pack = load_pack_manifest(_write(tmp_path, body))
     assert pack.extensions["rendering"]["renderers"] == [
         "rendering/demo.renderer.yaml"
     ]
+
+
+@pytest.mark.parametrize(
+    "extension",
+    [
+        "rendering:\n    renderers: not-a-list\n",
+        "rendering:\n    renderers: [rendering/demo.yaml, 7]\n",
+        "rendering:\n    unknown: []\n",
+        "unknown_extension: {}\n",
+    ],
+)
+def test_v2_rendering_extensions_reject_malformed_and_unknown_fields(
+    tmp_path: Path, extension: str
+) -> None:
+    body = _body("extensions:\n  " + extension.replace("\n", "\n  "))
+    assert _schema_errors(body)
+    with pytest.raises(PackValidationError):
+        load_pack_manifest(_write(tmp_path, body))
 
 
 def test_aliases_round_trip_and_remain_pack_owned(tmp_path: Path) -> None:
@@ -207,3 +234,17 @@ def test_schema_and_runtime_both_accept_current_first_party_manifests() -> None:
         body = manifest.read_text(encoding="utf-8")
         assert _schema_errors(body) == [], manifest
         assert load_pack_manifest(manifest).id == manifest.parent.name
+
+
+def test_v3_rendering_declarations_reject_malformed_and_unknown_fields() -> None:
+    manifest = ROOT / "astrid/packs/astrid_motion/pack.yaml"
+    payload = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == 3
+
+    unknown = copy.deepcopy(payload)
+    unknown["rendering"]["effects/am-burst"]["unexpected"] = True
+    assert _schema_errors_for_payload(unknown)
+
+    malformed = copy.deepcopy(payload)
+    malformed["rendering"]["effects/am-burst"]["resources"][0]["kind"] = 7
+    assert _schema_errors_for_payload(malformed)

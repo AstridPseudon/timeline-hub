@@ -20,7 +20,7 @@
     "capabilities": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}},
     "permissions": {"type": "array", "items": {"$ref": "#/$defs/permission"}},
     "content": {"type": "object", "additionalProperties": {"$ref": "#/$defs/relative_path"}},
-    "extensions": {"type": "object"},
+    "extensions": {"$ref": "#/$defs/pack_extensions"},
     "aliases": {"type": "array", "items": {"$ref": "#/$defs/alias"}},
     "agent": {"type": "object"},
     "documentation": {"oneOf": [
@@ -39,6 +39,136 @@
     {"required": ["documentation"]}, {"required": ["resources"]}
   ],
   "$defs": {
+    "pack_extensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "generation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "backends": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "module", "class"],
+                "properties": {
+                  "id": {"$ref": "#/$defs/non_blank"},
+                  "module": {"$ref": "#/$defs/non_blank"},
+                  "class": {"$ref": "#/$defs/non_blank"},
+                  "label": {"type": "string"},
+                  "init_kwargs": {"type": "object"}
+                }
+              }
+            },
+            "features": {"$ref": "#/$defs/named_extension_list"},
+            "modes": {"$ref": "#/$defs/named_extension_list"}
+          }
+        },
+        "elements": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kinds": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id"],
+                "properties": {
+                  "id": {"$ref": "#/$defs/non_blank"},
+                  "singular": {"type": "string"},
+                  "plural": {"type": "string"},
+                  "label": {"type": "string"},
+                  "description": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "timeline": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kinds": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["catalog", "id"],
+                "properties": {
+                  "catalog": {"enum": ["transition", "clip", "track"]},
+                  "id": {"$ref": "#/$defs/non_blank"},
+                  "aliases": {"type": "array", "items": {"$ref": "#/$defs/non_blank"}},
+                  "default": {"type": "boolean"}
+                }
+              }
+            },
+            "operations": {"$ref": "#/$defs/string_list"},
+            "components": {"$ref": "#/$defs/string_list"},
+            "checks": {"$ref": "#/$defs/string_list"},
+            "views": {"$ref": "#/$defs/string_list"}
+          }
+        },
+        "rendering": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "renderers": {"$ref": "#/$defs/string_list"},
+            "planners": {"$ref": "#/$defs/string_list"},
+            "finalizers": {"$ref": "#/$defs/string_list"}
+          }
+        },
+        "editor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["entries"],
+          "properties": {"entries": {"$ref": "#/$defs/string_list"}}
+        },
+        "schemas": {"type": "object"},
+        "artifact_types": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id"],
+                "properties": {
+                  "id": {"$ref": "#/$defs/non_blank"},
+                  "aliases": {"$ref": "#/$defs/non_blank_string_list"},
+                  "description": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "data_namespace": {"type": "object"}
+      }
+    },
+    "named_extension_list": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"$ref": "#/$defs/non_blank"},
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id"],
+            "properties": {
+              "id": {"$ref": "#/$defs/non_blank"},
+              "label": {"type": "string"},
+              "description": {"type": "string"}
+            }
+          }
+        ]
+      }
+    },
+    "string_list": {"type": "array", "items": {"type": "string"}},
+    "non_blank_string_list": {"type": "array", "items": {"$ref": "#/$defs/non_blank"}},
     "non_blank": {"type": "string", "minLength": 1, "pattern": "^.*\\S.*$"},
     "relative_path": {"type": "string", "pattern": "^(?!/)(?!.*\\\\)(?!.*\\x00)(?!.*//)(?!.*(^|/)\\.($|/))(?!.*(^|/)\\.\\.($|/))[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$", "not": {"const": "pack.yaml"}},
     "permission": {"type": "object", "additionalProperties": false, "required": ["id", "reason"], "properties": {"id": {"type": "string"}, "reason": {"$ref": "#/$defs/non_blank"}, "access": {"$ref": "#/$defs/non_blank"}, "services": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/non_blank"}}}},
