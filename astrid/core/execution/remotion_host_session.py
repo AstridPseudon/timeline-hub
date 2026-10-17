@@ -268,8 +268,18 @@ class HostRemotionSession:
     def _persist_input_state(self):
         if self.root is None:
             return
-        from .custody_broker import _atomic_owner_json
+        from .custody_broker import _atomic_owner_json, _stop_exception
         self._guard(observe=False)
+        # The observer retains its first exception; observe_tree deliberately
+        # fences later callers with a new exception carrying only its reason.
+        # Keep the original bounded, privacy-filtered trace as diagnostics,
+        # never as a member identity, exit proof or cleanup disposition.
+        custody = getattr(self.process, "_astrid_custody", None)
+        primary = getattr(custody, "_uncertain", None)
+        original_custody_error = (
+            {"authority": "NONE", "exception": _stop_exception(primary)}
+            if isinstance(primary, BaseException) else None
+        )
         def reason(error):
             if error is None:
                 return None
@@ -281,6 +291,7 @@ class HostRemotionSession:
             "custody_unresolved": self.custody_unresolved is not None,
             "execution_failure": reason(self.execution_invalidated),
             "custody_failure": reason(self.custody_unresolved),
+            "original_custody_error": original_custody_error,
             "failed_snapshot": getattr(self.execution_invalidated, "input_facts", None),
             "cleanup_settled": self._cleanup_settled,
             "failed_original_output": getattr(self, "_failed_original_output", None),

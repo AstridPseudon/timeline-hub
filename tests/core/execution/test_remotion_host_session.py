@@ -57,6 +57,34 @@ def owner(tmp_path, **kwargs):
                                    root_parent=str(tmp_path), **kwargs), events
 
 
+def test_original_custody_trace_is_private_diagnostic_and_keeps_the_fence(tmp_path):
+    from types import SimpleNamespace
+    from astrid.core.execution.custody_broker import CustodyError
+
+    manager, _ = owner(tmp_path)
+    manager.root = tmp_path / 'retained'
+    manager.root.mkdir()
+    st = manager.root.stat()
+    manager._root_identity = (st.st_dev, st.st_ino, st.st_uid)
+    try:
+        raise CustodyError('SECRET_UNTRUSTED_MESSAGE')
+    except CustodyError as error:
+        primary = error
+    manager.process = SimpleNamespace(_astrid_custody=SimpleNamespace(_uncertain=primary))
+    manager.custody_unresolved = primary
+    manager.execution_invalidated = primary
+    manager._persist_input_state()
+    raw = (manager.root / 'input-validation.json').read_text()
+    facts = json.loads(raw)
+    assert 'SECRET_UNTRUSTED_MESSAGE' not in raw
+    assert facts['original_custody_error']['authority'] == 'NONE'
+    first = facts['original_custody_error']['exception']['chain'][0]
+    assert first['type'] == 'CustodyError' and first['message'] is None
+    assert first['frames'][-1]['function'] == 'test_original_custody_trace_is_private_diagnostic_and_keeps_the_fence'
+    assert manager.uncertain is primary and facts['custody_unresolved'] is True
+    assert facts['cleanup_settled'] is False
+
+
 def test_failed_original_pipe_capture_is_bounded_and_has_no_lifecycle_authority(tmp_path, monkeypatch):
     manager, events = owner(tmp_path)
     read_fd, write_fd = os.pipe()
