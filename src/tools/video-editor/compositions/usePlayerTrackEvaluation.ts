@@ -5,6 +5,7 @@ import type { TransitionRegistrySnapshot } from '../transitions/registry/types.t
 import { isBuiltInTransition } from '../transitions/catalog.ts';
 import { admitPlayerTransitions, type PlayerTransitionContext } from './playerTransitionAdmission.ts';
 import { preparePlayerTrack, type PlayerTrackEvaluation } from './playerEvaluation.ts';
+import type { AstridElementHost } from '../runtime/astrid-element-host.ts';
 
 export type PlayerTrackEvaluationState =
   | {status: 'pending'}
@@ -17,6 +18,7 @@ const refused = (error: unknown): PlayerTrackEvaluationState => ({status: 'refus
 export function usePlayerTrackEvaluation(
   track: TrackDefinition, clips: readonly ResolvedTimelineClip[], fps: number,
   width: number, height: number, snapshot: TransitionRegistrySnapshot,
+  componentHost?: Pick<AstridElementHost, 'resolveComponent'>,
 ): PlayerTrackEvaluationState {
   const environment = useRemotionEnvironment();
   const route = environment.isRendering ? 'worker-export'
@@ -27,25 +29,25 @@ export function usePlayerTrackEvaluation(
     if (!async) {
       try {
         return {context, immediate: {status: 'ready', evaluation:
-          preparePlayerTrack(track, clips, fps, width, height, context)} as PlayerTrackEvaluationState};
+          preparePlayerTrack(track, clips, fps, width, height, context, componentHost)} as PlayerTrackEvaluationState};
       } catch (error) {
         return {context, immediate: refused(error)};
       }
     }
     const handle = route === 'preview' ? undefined : delayRender('Admitting pinned timeline transitions');
     let released = false;
-    return {context, release: () => {
+    return {context, componentHost, release: () => {
       if (!released && handle !== undefined) continueRender(handle);
       released = true;
     }};
-  }, [track, clips, fps, width, height, snapshot, route]);
+  }, [track, clips, fps, width, height, snapshot, route, componentHost]);
   const [settled, setSettled] = useState<{request: typeof request; state: PlayerTrackEvaluationState}>();
   useEffect(() => {
     if (request.immediate) return;
     let disposed = false;
     admitPlayerTransitions(clips, request.context).then(contributions => {
       if (disposed) return;
-      return preparePlayerTrack(track, clips, fps, width, height, {...request.context, contributions});
+      return preparePlayerTrack(track, clips, fps, width, height, {...request.context, contributions}, request.componentHost);
     }).then(evaluation => {
       if (!disposed && evaluation) setSettled({request, state: {status: 'ready', evaluation}});
     }).catch(error => {

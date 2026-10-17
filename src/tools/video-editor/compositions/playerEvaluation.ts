@@ -7,10 +7,13 @@ import {
   type TransitionDeclaration,
   type PreparedScene,
   type TransitionSpec,
+  type SceneCapableComponent,
+  type SceneCapabilities,
 } from '@banodoco/timeline-composition/evaluation';
 import { getClipTimelineDuration, getSanitizedPlaybackRate } from '../lib/config-utils.ts';
 import { isBuiltInTransition } from '../transitions/catalog.ts';
 import { isSharedBuiltinTransition, requirePlayerTransitionRecord, requireCurrentPlayerTransitionBinding, refusePlayerTransition, type PlayerTransitionContext } from './playerTransitionAdmission.ts';
+import type { AstridElementHost } from '../runtime/astrid-element-host.ts';
 import type { ResolvedTimelineClip, TrackDefinition } from '../types/index.ts';
 
 type EvaluationClip = Parameters<typeof prepareScene>[0][number]['clips'][number];
@@ -23,6 +26,45 @@ export const playerEvaluationClip = (clip: ResolvedTimelineClip): EvaluationClip
   // Runtime audio is admitted by compileAudioEnvelope, never coerced here.
   audio: (clip as ResolvedTimelineClip & Pick<EvaluationClip, 'audio'>).audio,
 });
+
+const resolveSceneComponent = (
+  clip: ResolvedTimelineClip,
+  host: Pick<AstridElementHost, 'resolveComponent'>,
+) => {
+  const ref = clip.elementRef;
+  if (ref) {
+    if (ref.kind === 'transition' || ref.kind === 'transitions') return undefined;
+    return ref.packId
+      ? host.resolveComponent(ref.id, ref.kind, ref.packId)
+      : host.resolveComponent(ref.id, ref.kind);
+  }
+  if (!clip.clipType || ['media', 'image', 'video', 'hold', 'effect-layer', 'text', 'shot', 'audio-reactive-colour'].includes(clip.clipType)) {
+    return undefined;
+  }
+  // Match TimelineRenderer's legacy clipType-only Astrid effect selection.
+  return host.resolveComponent(clip.clipType, 'effect');
+};
+
+const preparePlayerSceneCapabilities = (
+  clips: readonly ResolvedTimelineClip[],
+  fps: number,
+  width: number,
+  height: number,
+  host?: Pick<AstridElementHost, 'resolveComponent'>,
+): SceneCapabilities => {
+  if (!host) return {};
+  const components = Object.fromEntries(clips.flatMap(clip => {
+    const component = resolveSceneComponent(clip, host);
+    const prepared = (component as SceneCapableComponent | undefined)?.prepareSceneCapability?.({
+      clip: playerEvaluationClip(clip), fps, width, height,
+      // App has no authenticated renderer closure or selected-font digest input
+      // at this boundary. Empty evidence preserves producer refusal semantics.
+      rendererIdentity: '', fontDigests: {},
+    });
+    return prepared ? [[clip.id, prepared]] : [];
+  }));
+  return {components};
+};
 
 export type PlayerTrackEvaluation = {
   scene: PreparedScene;
@@ -41,6 +83,7 @@ export const preparePlayerTrack = (
   width: number,
   height: number,
   context: PlayerTransitionContext = {route: 'preview'},
+  componentHost?: Pick<AstridElementHost, 'resolveComponent'>,
 ): PlayerTrackEvaluation => {
   const sorted = [...clips].sort((a, b) => a.at - b.at);
   const transitions: (TransitionSpec | null)[] = sorted.slice(1).map(() => null);
@@ -99,11 +142,13 @@ export const preparePlayerTrack = (
   }
   const assets = Object.fromEntries(sorted.flatMap(clip => clip.asset && clip.assetEntry
     ? [[clip.asset, {...clip.assetEntry, file: clip.assetEntry.src}]] : []));
+  const capabilities = preparePlayerSceneCapabilities(sorted, fps, width, height, componentHost);
   const scene = prepareScene([{track, clips: sorted.map(playerEvaluationClip), transitions}],
     {assets}, fps, width, height, {
       // Components keep their injected host. Their unknown internals must never cull a draw.
       elements: new Set(sorted.filter(clip => clip.clipType && !['media', 'image', 'hold'].includes(clip.clipType))
         .map(clip => clip.clipType!)),
+      capabilities,
     });
   if (contributedIndices.size) {
     if (legacyTiming.size) refusePlayerTransition('transition/unsupported-target', 'A contributed boundary touches a legacy transition track.');
@@ -144,4 +189,4 @@ export const preparePlayerTrack = (
 const preparePlayerSceneWithoutLegacyTransitions = (
   scene: PreparedScene, transitions: readonly (TransitionSpec | null)[],
 ): {scene: PreparedScene} => ({scene: prepareScene(scene.tracks.map(input => ({...input, transitions})),
-  scene.assets, scene.fps, scene.width, scene.height, {elements: scene.elements})});
+  scene.assets, scene.fps, scene.width, scene.height, {elements: scene.elements, capabilities: scene.capabilities})});

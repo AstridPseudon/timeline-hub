@@ -1,8 +1,10 @@
-import {describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
 import {preparePlayerTrack} from './playerEvaluation.ts';
 import {boundCanonicalConfigClips} from '../lib/canonicalRenderBounds.ts';
 import {projectOutputTimelineConfig} from '../data/timelineOutputProjection.ts';
+import {INSTALLED_ASTRID_ELEMENT_HOST} from '../runtime/astrid-element-components.tsx';
+import type {SceneCapableComponent} from '@banodoco/timeline-composition/evaluation';
 import type {ResolvedTimelineClip, ResolvedTimelineConfig, TrackDefinition} from '../types/index.ts';
 
 const track: TrackDefinition = {id: 'V1', kind: 'visual', label: 'Picture', scale: .5};
@@ -10,7 +12,10 @@ const clip = (id: string, at: number, extra: Partial<ResolvedTimelineClip> = {})
   id, track: track.id, at, hold: 2, clipType: 'media', asset: id,
   assetEntry: {file: `${id}.jpg`, src: `https://assets.test/${id}.jpg`, type: 'image/jpeg'}, ...extra,
 });
-const prepare = (clips: ResolvedTimelineClip[]) => preparePlayerTrack(track, clips, 30, 1280, 720);
+const prepare = (clips: ResolvedTimelineClip[], componentHost?: Parameters<typeof preparePlayerTrack>[6]) =>
+  preparePlayerTrack(track, clips, 30, 1280, 720, undefined, componentHost);
+
+afterEach(() => vi.restoreAllMocks());
 
 describe('Player shared scene boundary', () => {
   it('uses half-open shared cuts with stable painter identity and sanitized source URLs', () => {
@@ -133,5 +138,44 @@ describe('Player shared scene boundary', () => {
     const layers = querySceneFrame(scene,10).layers;
     expect(layers.map(layer => layer.clipId)).toEqual(['text','card']);
     expect(layers.every(layer => layer.visible === 'unknown')).toBe(true);
+  });
+
+  it('projects the selected Astrid component capability and retains it through legacy transition preparation', () => {
+    const descriptor = INSTALLED_ASTRID_ELEMENT_HOST.descriptors.find(element => element.id === 'am-type'
+      && element.kind === 'effect' && element.packId === 'astrid_motion');
+    expect(descriptor).toBeDefined();
+    const component = INSTALLED_ASTRID_ELEMENT_HOST.resolveComponent('am-type', 'effect', 'astrid_motion');
+    expect(component).toBeDefined();
+    const capabilityProvider = component as SceneCapableComponent;
+    expect(capabilityProvider.prepareSceneCapability).toBeTypeOf('function');
+    const caption = clip('caption-occurrence', 0, {
+      clipType: 'am-type',
+      elementRef: {id: 'am-type', kind: 'effect', packId: 'astrid_motion', revision: descriptor!.revision},
+      params: {text: 'Selected caption'},
+    });
+    const prepareCapability = vi.spyOn(capabilityProvider, 'prepareSceneCapability');
+
+    const normal = prepare([caption], INSTALLED_ASTRID_ELEMENT_HOST);
+    const normalCapability = normal.scene.capabilities.components?.[caption.id];
+    expect(prepareCapability).toHaveBeenCalledOnce();
+    expect(normalCapability).toBe(prepareCapability.mock.results[0]?.value);
+    expect(normalCapability?.identity).toContain('am-type/drawing-ink-v2');
+    expect(normalCapability?.frame(0)).toMatchObject({
+      presence: 'unknown',
+      bounds: {status: 'unknown', reason: 'Selected browser/font identity is unavailable'},
+      opaqueSupport: 'unknown',
+    });
+    expect(querySceneFrame(normal.scene, 0).layers[0]?.visible).toBe('unknown');
+
+    prepareCapability.mockClear();
+    const legacy = prepare([caption, clip('wipe-neighbor', 2, {transition: {type: 'wipe', duration: 1}})],
+      INSTALLED_ASTRID_ELEMENT_HOST);
+    const legacyCapability = legacy.scene.capabilities.components?.[caption.id];
+    expect(legacy.legacyTiming.size).toBeGreaterThan(0);
+    expect(prepareCapability).toHaveBeenCalledOnce();
+    expect(legacyCapability).toBe(prepareCapability.mock.results[0]?.value);
+    expect(legacyCapability?.identity).toBe(normalCapability?.identity);
+    expect(legacyCapability?.frame(0)).toEqual(normalCapability?.frame(0));
+    expect(querySceneFrame(legacy.scene, 0).layers[0]?.visible).toBe('unknown');
   });
 });

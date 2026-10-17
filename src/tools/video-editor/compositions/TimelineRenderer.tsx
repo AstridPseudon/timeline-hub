@@ -1412,7 +1412,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
   const clipTypeRegistry = useClipTypeRegistrySnapshot();
   const {width, height} = parseResolution(resolution);
   const transitionSnapshot = useTransitionRegistrySnapshot();
-  const evaluationState = usePlayerTrackEvaluation(track, clips, fps, width, height, transitionSnapshot);
+  const evaluationState = usePlayerTrackEvaluation(track, clips, fps, width, height, transitionSnapshot, host);
   const frame = useCurrentFrame();
   if (evaluationState.status !== 'ready') {
     return <AbsoluteFill role="alert" data-testid="player-transition-admission" data-status={evaluationState.status}
