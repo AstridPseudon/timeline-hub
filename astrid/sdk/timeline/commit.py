@@ -68,6 +68,7 @@ def _timeline_lock(project, timeline):
 
 class RuntimeCommitService:
     provider_id = "astrid-v1"
+    requires_scene_evaluation = True
     interface_version = 1
     contract_digest = SCHEMA_DIGEST
 
@@ -139,8 +140,22 @@ class RuntimeCommitService:
                         return inverse_conflict
                     before = Checkout(copy.deepcopy(onto)).document()
                     after = Checkout(current).document()
+                    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+                    from astrid.core.timeline import scene_answers
                     from astrid.sdk.timeline.check import _require_complete_evaluation
-                    _require_complete_evaluation(Checkout(after))
+                    evaluator = None
+                    previous = scene_answers.use_client(None)
+                    try:
+                        evaluator = runtime_port.scene_evaluator(copy.deepcopy(after))
+                        scene_answers.use_client(evaluator)
+                        evaluated = _require_complete_evaluation(Checkout(after))
+                        evaluator.complete(empty=not evaluated)
+                    except FrameOwnerError as exc:
+                        raise TimelineEditError("not publishing: scene evaluation incomplete; " + str(exc)) from exc
+                    finally:
+                        scene_answers.use_client(previous)
+                        if evaluator is not None:
+                            evaluator.close()
                     compilation = compile_authoring_candidate(after)
                     compiled = compilation.publication
                     for call in current_plan.calls:

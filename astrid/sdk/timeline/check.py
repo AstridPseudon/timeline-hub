@@ -62,6 +62,7 @@ def _require_complete_evaluation(checkout):
     if not _evaluation_complete(spans):
         raise TimelineEditError("not publishing: scene evaluation incomplete; " + "; ".join(
             f"evaluation {finding}" for finding in _evaluation_findings(spans)))
+    return spans
 
 
 class _CheckMixin:

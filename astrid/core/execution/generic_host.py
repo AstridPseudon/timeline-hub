@@ -5639,6 +5639,8 @@ class GenericPackHost:
         self._shutdown = threading.Event()
         # Dedicated preparation listener, never shared by claim slots or the
         # execution/cleanup control channel. Installed only by trusted startup.
+        self._authoring_scene_listener = None
+        self._authoring_scene_lock = threading.Lock()
         self._storage_preparation_listener = None
         self._storage_preparation_lock = threading.Lock()
         # An unregistered host must retain the existing claim-loop failure
@@ -5993,6 +5995,37 @@ class GenericPackHost:
             return self._remotion_host_session.lease(
                 environment, attempt=attempt, scratch=policy.private_write_root)
 
+    def _authoring_scene_session(self, environment):
+        """Trusted activation owns this purpose's lease on the same renderer."""
+        from .remotion_host_session import HostRemotionSession
+        with self._renderer_setup_lock:
+            if self._shutdown.is_set() or self._cleanup_uncertain:
+                raise HostError("authoring renderer owner is unavailable")
+            if self._remotion_host_session is None:
+                self._remotion_host_session = HostRemotionSession(
+                    track=self._track_host_lifetime_process, untrack=self._untrack_host_lifetime_process,
+                    root_parent=str(self.attempt_base) if self.attempt_base else None,
+                    account=self._renderer_scratch_account,
+                    retire=lambda root: self.execution_policy.evidence_budget.release(str(root)),
+                    closure_binding=self._remotion_closure_binding)
+            return self._remotion_host_session
+
+    def start_authoring_scene(self, config, environment):
+        from .authoring_scene_transport import AuthoringSceneListener
+        with self._authoring_scene_lock:
+            if self._shutdown.is_set() or self._authoring_scene_listener is not None:
+                raise HostError("authoring listener cannot rebind this lifecycle")
+            self._authoring_scene_listener = AuthoringSceneListener(self, config, environment).start()
+            return self._authoring_scene_listener
+
+    def _retire_changed_authoring_scene(self, runtime_state=None):
+        with self._authoring_scene_lock:
+            listener = self._authoring_scene_listener
+            if listener is not None and (not listener.is_ready() or runtime_state is not None and any(
+                    runtime_state.get(k) != listener.config.binding[k]
+                    for k in ("runtime_instance_id", "runtime_session_id"))):
+                listener.close()
+
     def prepare_wan_session(
         self, *, owner_dir: str | Path, root: str | Path, python: str | Path,
         source_digest: str, config_digest: str, readiness_timeout: float,
@@ -6092,6 +6125,12 @@ class GenericPackHost:
         with self.managed_tool_session._lock:
             self._shutdown.set()
         errors: list[BaseException] = []
+        with self._authoring_scene_lock:
+            if self._authoring_scene_listener is not None:
+                try:
+                    self._authoring_scene_listener.close()
+                except Exception as exc:  # noqa: BLE001 - preserve original custody on failure.
+                    errors.append(exc)
         with self._storage_preparation_lock:
             if self._storage_preparation_listener is not None:
                 try:
@@ -6365,6 +6404,7 @@ class GenericPackHost:
             "source_inventory_identity": self.source_inventory_identity,
             "matrix_digest": _canonical_digest(self.matrix),
         })
+        self._retire_changed_authoring_scene()
         self._retire_changed_storage_preparation()
         return tuple(records[key] for key in sorted(records))
 
@@ -6707,6 +6747,7 @@ class GenericPackHost:
             raise HostError(self._runtime_registration_fence)
         # A dead/incompatible Runtime must fail before expensive native work.
         runtime_state = self._runtime_compatibility()
+        self._retire_changed_authoring_scene(runtime_state)
         self._retire_changed_storage_preparation(runtime_state)
         if self._registered_runtime_state and not deliberate:
             changed = [key for key in ("protocol", "schema_digest", "runtime_epoch",
@@ -11910,6 +11951,12 @@ class LocalExecutionPreparation:
             config = configuration_from_activation(self)
             return self._claim_host.start_storage_preparation(config)
 
+    def start_authoring_scene(self):
+        from .authoring_scene_startup import configuration_from_activation
+        with self._lock:
+            config, environment = configuration_from_activation(self)
+            return self._claim_host.start_authoring_scene(config, environment)
+
     def retain_activation_grant(self, grant: Mapping[str, Any]) -> None:
         """Retain the activation accepted over the private Runtime channel."""
         if (not isinstance(grant, Mapping) or grant.get("version") != _ACTIVATION_VERSION
@@ -14445,6 +14492,11 @@ def _cli() -> int:
         }, sort_keys=True, default=_json_safe), flush=True)
     if preparation is not None and args.register:
         try:
+            preparation.start_authoring_scene()
+        except Exception as exc:  # noqa: BLE001 - missing ownership leaves authoring unavailable.
+            print(json.dumps({"event": "authoring_scene_unavailable", "code": type(exc).__name__}),
+                  file=sys.stderr, flush=True)
+        try:
             preparation.start_storage_preparation()
         except Exception as exc:  # noqa: BLE001 - preparation refuses without granting execution.
             print(json.dumps({"event": "storage_preparation_unavailable",
@@ -14520,7 +14572,7 @@ def _cli() -> int:
             supervisor.serve(sys.stdin, sys.stdout)
         return 0
     finally:
-        if host._storage_preparation_listener is not None:
+        if host._storage_preparation_listener is not None or host._authoring_scene_listener is not None:
             host.shutdown()
 
 

@@ -55,7 +55,20 @@ class Port:
         self.accepts = []
         self.reads = []
         self.on_accept = None
+        self.evaluated = []
         self.payload = dict(config={}, clips=[], occurrences=[])
+
+    def scene_evaluator(self, candidate):
+        self.evaluated.append(copy.deepcopy(candidate))
+        # Semantic-provider tests keep explicit synthetic scene answers. The
+        # coupled transport/Runtime suites own live authority and owner proofs.
+        from astrid.core.timeline import scene_answers
+        client = scene_answers._client()
+        class Evaluator:
+            query_scene = staticmethod(client.query_scene)
+            def complete(self, *, empty=False): pass
+            def close(self): pass
+        return Evaluator()
 
     def lookup_request(self):
         return copy.deepcopy(self.saved)
@@ -607,3 +620,39 @@ def test_scene_acceptance_gate_does_not_start_ambient_media_inspection(bundle, m
     service, port = core(body, bundle)
     result = service.commit(body, port)
     assert result["status"] == "accepted" and len(port.accepts) == 1
+
+
+def test_moving_head_evaluates_each_actual_rebased_candidate(bundle):
+    body = request(call(x=240))
+    service, port = core(body, bundle)
+    def race(p, prepared):
+        if len(p.accepts) == 1:
+            p.current = "scene-race"
+            p.bundles[p.current] = edited(bundle, call(select="b-type", text="moved while evaluating"))
+            raise StaleHead()
+    port.on_accept = race
+    result = service.commit(body, port)
+    assert result["status"] == "accepted"
+    assert len(port.evaluated) == 2
+    assert port.evaluated[0] != port.evaluated[1]
+    assert port.evaluated[-1] == result["canonical_document"]
+    assert Checkout(port.evaluated[-1]).clip("b-type").get("text") == "moved while evaluating"
+
+
+def test_runtime_evaluator_context_restored_on_refusal(bundle):
+    from astrid.core.timeline import scene_answers
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    body = request(call(x=240), dry_run=True)
+    service, port = core(body, bundle)
+    marker = object()
+    previous = scene_answers.use_client(marker)
+    def refuse(candidate):
+        raise FrameOwnerError("owner revoked")
+    port.scene_evaluator = refuse
+    try:
+        result = service.commit(body, port)
+        assert result["status"] in {"refused", "error"}
+        assert getattr(scene_answers._local, "client") is marker
+        assert not port.accepts
+    finally:
+        scene_answers.use_client(previous)
