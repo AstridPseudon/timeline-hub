@@ -115,7 +115,11 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
       if (!absent && !element && !opaqueMedia) unknown('unknown-media-alpha', 'Media does not declare opaque alpha');
       const uncertain = findings.some(item => item.code !== 'unknown-component-bounds');
       let visible: boolean | 'unknown' = absent || opacity === 0 ? false : uncertain ? 'unknown' : true;
-      if (bounds.status === 'known' && (bounds.rect.width === 0 || bounds.rect.height === 0)) visible = false;
+      // Known support outside the canvas draws no visible content. Keep its real
+      // geometry (including negative/partial bounds) for downstream inspection.
+      if (bounds.status === 'known' && (bounds.rect.width === 0 || bounds.rect.height === 0
+          || (!uncertain && (bounds.rect.x >= scene.width || bounds.rect.y >= scene.height
+            || bounds.rect.x + bounds.rect.width <= 0 || bounds.rect.y + bounds.rect.height <= 0)))) visible = false;
       if (visible !== false && uncertain) opacity = null;
       if (absent) {
         opacity = 0;
