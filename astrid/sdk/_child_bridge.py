@@ -331,13 +331,15 @@ class ChildBridge:
 
     def close(self) -> None:
         self._closed = True
-        if self._review_listener is not None:
-            self._review_listener.close()
         try:
-            self._channel.shutdown(socket.SHUT_RDWR)
-        except OSError:
-            pass
-        self._channel.close()
+            if self._review_listener is not None:
+                self._review_listener.close()
+        finally:
+            try:
+                self._channel.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+            self._channel.close()
 
     def _exchange(self, op: str, body: dict[str, Any], *, timeout_seconds: float | None = None,
                   expected_output: dict[str, Any] | None = None) -> Any:

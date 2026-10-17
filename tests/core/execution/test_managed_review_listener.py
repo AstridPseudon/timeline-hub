@@ -339,3 +339,19 @@ def test_review_observation_cannot_redirect_to_another_loopback_port(tmp_path):
     finally:
         listener.close()
         bridge.revoke()
+
+
+def test_listener_close_error_cannot_skip_original_operation_pipe_cleanup(tmp_path):
+    from astrid.sdk._child_bridge import ChildBridge
+    _, _, _, bridge, _, listener, _ = resource(tmp_path)
+    sdk = ChildBridge(bridge.child_channel)
+    inherited = _InheritedReviewListener(listener.socket.dup(), listener.metadata())
+    sdk._review_listener = inherited
+    os.close(inherited.socket.fileno())
+    try:
+        with pytest.raises(OSError):
+            sdk.close()
+        assert sdk._closed and bridge.child_channel.read_fd == bridge.child_channel.write_fd == -1
+    finally:
+        listener.close()
+        bridge.revoke()
