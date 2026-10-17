@@ -12270,8 +12270,10 @@ class LocalExecutionPreparation:
             "host-only admitted import closure differs", "host-only custody scope is unresolved",
             "hosted preparation differs from authenticated launch", "hosted generation or process designation differs",
             "host-only preparation replay conflicts", "host-only cleanup remains unresolved",
+            "custody designation differs from selected owner/reference",
+            "custody designation has unavailable or changed kernel identity",
         }
-        reason = str(exc) if type(exc) in (HostError, CleanupUncertainError) and str(exc) in safe_reasons else "detail withheld"
+        reason = str(exc) if str(exc) in safe_reasons else "detail withheld"
         diagnostic = {"exception_class": type(exc).__name__[:80], "reason": reason,
             "frames": [{"file": Path(f.filename).name[:80], "function": f.name[:80], "line": f.lineno}
                        for f in traceback.extract_tb(exc.__traceback__)[-4:]]}
