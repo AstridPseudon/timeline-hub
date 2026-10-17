@@ -10,20 +10,38 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from astrid.core.timeline import moments as mo
-from astrid.core.timeline.music_edit import plan_keep_end
-from astrid.core.timeline.music_bed import _bar_len, _bed_clusters
-from astrid.sdk import timeline_intent as intent
 from astrid.core.timeline.cuts import (
     clip_duration,
 )
-
-from astrid.sdk.timeline._common import (LOGICAL_PX, TimelineEditError, _norm, _num, _r)
-from astrid.sdk.timeline.doc import (_clock, _get_path, _post, _read_words, _row_start, _set_length, _set_path, _set_row_start, _split_audio, _trim_end, _trim_front)
-from astrid.sdk.timeline.model import (Clip, Voice, Word, _MomentContext, music_keyword, music_policy, retime_scope)
+from astrid.core.timeline.music_bed import _bar_len, _bed_clusters
+from astrid.core.timeline.music_edit import plan_keep_end
+from astrid.sdk import timeline_intent as intent
+from astrid.sdk.timeline._common import LOGICAL_PX, TimelineEditError, _norm, _num, _r
+from astrid.sdk.timeline.doc import (
+    _clock,
+    _get_path,
+    _post,
+    _read_words,
+    _row_start,
+    _set_length,
+    _set_path,
+    _set_row_start,
+    _split_audio,
+    _trim_end,
+    _trim_front,
+)
+from astrid.sdk.timeline.model import (
+    Clip,
+    Voice,
+    Word,
+    _MomentContext,
+    music_keyword,
+    music_policy,
+    retime_scope,
+)
 from astrid.sdk.timeline.selection import Selection
 from astrid.sdk.timeline.sequence_fit import allocate_fit_frames, fit_curve_inverse
-from astrid.sdk.timeline.units import (_unit_path, element_units, mark_offset_canvas)
-
+from astrid.sdk.timeline.units import _unit_path, element_units, mark_offset_canvas
 
 _EPS = 1e-6
 
@@ -323,13 +341,15 @@ class _TimingEvaluators:
         report names every such line. The script's ``voice``/``rate`` are TTS settings: re-flow reads
         only ``id``, ``text`` and ``gap_after_s`` (and the takes' words).
         """
+        from astrid.sdk.timeline.copy_sync import after_script
+        copy_before = copy.deepcopy(self.bundle)
         if isinstance(spec, dict) and "version" in spec and "lines" in spec:
             from astrid.sdk.timeline.narration import apply_prepared
             if takes is not None:
                 raise TimelineEditError("managed reflow takes are immutable references, not local paths")
-            return apply_prepared(self, spec)
-        from astrid.sdk.timeline.copy_sync import after_script
-        copy_before = copy.deepcopy(self.bundle)
+            report = apply_prepared(self, spec) + after_script(self, copy_before, refuse_ambiguous=True)
+            self.report = report
+            return report
         path = Path(spec).expanduser() if isinstance(spec, (str, Path)) else None
         data = json.loads(path.read_text(encoding="utf-8")) if path else dict(spec)
         if data.get("version") == 1 and "lines" in data:
