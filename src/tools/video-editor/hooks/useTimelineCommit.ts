@@ -1,3 +1,5 @@
+import { isManualTextBatch, isManualTextCreation, isManualTextInverse } from '../commands/manualTextHistory.ts';
+import { MANUAL_TEXT_REF, geometryOf, manualTextParams, manualTextPatch, captureManualTextBefore } from '../commands/manualText.ts';
 import { isAppKeyframeHistoryBatch } from '../commands/appKeyframeHistory.ts';
 import { isContinuousHistoryBatch } from '../commands/continuousHistory.ts';
 import { isShaderSlotBatch } from '../commands/shaderSlotHistory.ts';
@@ -372,7 +374,26 @@ export function useTimelineCommit({
   ) => {
     const shouldSave = options?.save ?? true;
     const currentData = dataRef.current;
+    if (shouldSave && currentData && options?.editCommands && isManualTextBatch(options.editCommands)) {
+      const patches = new Map(options.editCommands.map(call => [call.select!.slice('parent/clip:'.length), call]));
+      // Parent W30 caller values preserve the entire authored base, including
+      // unknown clip/config siblings omitted by the generic rows serializer.
+      if (options.editCommands.every(call => call.select!.startsWith('parent/clip:'))) {
+        const clips = currentData.config.clips.map(clip => patches.has(clip.id)
+          ? { ...clip, ...manualTextPatch(clip, patches.get(clip.id)!.args.text) } : clip);
+        nextData = buildDataFromCurrentRegistry({ ...currentData.config, clips }, currentData);
+      }
+    }
+    if (shouldSave && currentData && options?.editCommands && isManualTextCreation(options.editCommands)) {
+      const a = options.editCommands[0].args;
+      const action = a.action as { start: number; end: number };
+      const made = { id: String(a.clip_id), clipType: 'am-type', track: String(a.track), at: action.start, hold: action.end - action.start,
+        text: a.text as ClipMeta['text'], ...geometryOf(a.geometry as object), opacity: Number(a.opacity),
+        elementRef: { ...MANUAL_TEXT_REF }, params: manualTextParams(a.text, a.geometry as Record<string, unknown>) };
+      nextData = buildDataFromCurrentRegistry({ ...currentData.config, clips: [...currentData.config.clips, made] }, currentData);
+    }
     if (shouldSave && options?.editCommands) {
+      if (currentData && (isManualTextBatch(options.editCommands) || isManualTextCreation(options.editCommands) || options.editCommands.length === 1 && isManualTextInverse(options.editCommands[0]))) captureManualTextBefore(nextData, { data: currentData, selectedClipId: selectedClipIdRef.current, selectedTrackId: selectedTrackIdRef.current });
       attachGestureCommands(nextData, options.editCommands, currentData ?? nextData);
       // Explicit command batches with invalid/mixed occurrence custody must not
       // become local history or silently drop into the compatibility writer.
@@ -431,13 +452,15 @@ export function useTimelineCommit({
               || isContinuousHistoryBatch(options.editCommands)
               || isClipLookStyleBatch(options.editCommands)
               || isClipParamsHistoryBatch(options.editCommands)
+              || isManualTextBatch(options.editCommands)
+              || isManualTextCreation(options.editCommands)
             ))
           ))
           || (options?.editCommands?.length === 1 && (
             isAssetRegistrationCommand(options.editCommands[0])
             || isTiedHoldExpansionCommand(options.editCommands[0])
           ))
-            ? { nativeRegistrationOwner: nextData } : {}
+          ? { nativeRegistrationOwner: nextData } : {}
         ),
       });
       if (options?.proposalBase) bindProposalSave(nextData, options.proposalBase, recordHistory);
