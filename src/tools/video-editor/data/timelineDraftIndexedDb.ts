@@ -9,12 +9,26 @@
  */
 
 import type { TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
+import type { TimelineCommitSaveContext } from '@/integrations/runtime/dataProvider.ts';
+import type { CommitResult } from '@/integrations/runtime/generated.ts';
+
+/** Retry input only. Runtime revalidates credentials, commands and pins. */
+export interface PendingTimelineDraftCommit {
+  version: 1;
+  recoveryKey: string;
+  ownerId: string;
+  authored: TimelineCommitSaveContext;
+  requestBytes: string;
+  preview?: { requestBytes: string; result: CommitResult };
+  proposalTransactionId?: string;
+}
 
 const DATABASE_NAME = 'reigh.timeline-drafts';
 const DATABASE_VERSION = 1;
 const DRAFT_STORE_NAME = 'timeline-drafts';
 
 export interface TimelineDraftRecord {
+  pendingCommit?: PendingTimelineDraftCommit;
   /** `${timelineId}` — one slot per timeline. */
   key: string;
   timelineId: string;
@@ -37,6 +51,9 @@ export interface TimelineDraftRecord {
 }
 
 export interface TimelineDraftRecoveryMetadata {
+  pendingProposalTransactionId?: string;
+  /** Native semantic saves reserve a submitted request beside the latest draft. */
+  preservePendingCommit?: boolean;
   /** null explicitly disables recovery; undefined preserves the legacy timeline slot. */
   recoveryKey?: string | null;
   /** Stable logical identity when the editor query ID changes across popup openings. */
@@ -188,10 +205,10 @@ export async function saveTimelineDraftIfOwner(
         ? current === undefined
         : current?.draftIdentity === expectedDraftIdentity;
       if (ownsRecord) {
-        store.put(candidate);
+        store.put({ ...candidate, ...(current?.pendingCommit ? { pendingCommit: current.pendingCommit } : {}) });
         result = true;
       } else if (current && mergeOnOwnershipConflict) {
-        store.put(mergeOnOwnershipConflict(current, candidate));
+        store.put({ ...mergeOnOwnershipConflict(current, candidate), ...(current.pendingCommit ? { pendingCommit: current.pendingCommit } : {}) });
       }
     });
     request.addEventListener('error', () => reject(request.error));
@@ -215,7 +232,15 @@ export async function saveTimelineDraft(
   const record = createDraftRecord(timelineId, draft, baseVersion, recoveryMetadata);
   await new Promise<void>((resolve, reject) => {
     const transaction = database.transaction(DRAFT_STORE_NAME, 'readwrite');
-    transaction.objectStore(DRAFT_STORE_NAME).put(record);
+    const store = transaction.objectStore(DRAFT_STORE_NAME);
+    if (recoveryMetadata.preservePendingCommit) {
+      const request = store.get(record.key);
+      request.addEventListener('success', () => {
+        const current = request.result as TimelineDraftRecord | undefined;
+        store.put({ ...record, ...(current?.pendingCommit ? { pendingCommit: current.pendingCommit } : {}) });
+      });
+      request.addEventListener('error', () => reject(request.error));
+    } else store.put(record);
     transaction.addEventListener('complete', () => resolve());
     transaction.addEventListener('error', () => reject(transaction.error));
   });
@@ -239,6 +264,75 @@ export async function loadTimelineDraft(
   return record ?? null;
 }
 
+/** Reserve A in the same transaction that observes the latest unsent B. */
+export async function reserveTimelineDraftCommit(
+  pending: PendingTimelineDraftCommit,
+  fallback: TimelineDraftRecord,
+): Promise<void> {
+  const database = await openDatabase();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(DRAFT_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(DRAFT_STORE_NAME);
+      const request = store.get(pending.recoveryKey);
+      request.addEventListener('success', () => {
+        const current = request.result as TimelineDraftRecord | undefined;
+        if (current && (current.key !== pending.recoveryKey
+          || current.timelineId !== pending.authored.timelineId
+          || current.baseHeadProjectId !== pending.authored.expectedHead.projectId
+          || current.baseHeadTimelineId !== pending.authored.expectedHead.timelineId
+          || current.baseHeadRevisionId !== pending.authored.expectedHead.headRevisionId
+          || !current.ownerId || !current.draftIdentity)) {
+          reject(new Error('The authored COMMIT no longer owns a compatible draft base.'));
+          return;
+        }
+        if (current?.pendingCommit && JSON.stringify(current.pendingCommit) !== JSON.stringify(pending)) {
+          reject(new Error('An unresolved COMMIT already owns this draft slot.'));
+          return;
+        }
+        store.put({ ...(current ?? fallback), pendingCommit: pending });
+      });
+      request.addEventListener('error', () => reject(request.error));
+      transaction.addEventListener('complete', () => resolve());
+      transaction.addEventListener('error', () => reject(transaction.error));
+      transaction.addEventListener('abort', () => reject(transaction.error));
+    });
+  } finally { database.close(); }
+  // A successful put is insufficient if storage cannot subsequently be read.
+  const retained = await loadTimelineDraft(pending.recoveryKey);
+  if (JSON.stringify(retained?.pendingCommit) !== JSON.stringify(pending)) {
+    throw new Error('The pending COMMIT was not durably retained.');
+  }
+}
+
+/** Clear only A; a later authored draft B remains byte-for-byte intact. */
+export async function clearTimelineDraftCommit(pending: PendingTimelineDraftCommit): Promise<void> {
+  const database = await openDatabase();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(DRAFT_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(DRAFT_STORE_NAME);
+      const request = store.get(pending.recoveryKey);
+      request.addEventListener('success', () => {
+        const current = request.result as TimelineDraftRecord | undefined;
+        if (!current || JSON.stringify(current.pendingCommit) !== JSON.stringify(pending)) {
+          reject(new Error('The pending COMMIT reservation changed.'));
+          return;
+        }
+        if (current.ownerId === pending.ownerId) store.delete(pending.recoveryKey);
+        else {
+          const { pendingCommit: _resolved, ...draft } = current;
+          store.put(draft);
+        }
+      });
+      request.addEventListener('error', () => reject(request.error));
+      transaction.addEventListener('complete', () => resolve());
+      transaction.addEventListener('error', () => reject(transaction.error));
+      transaction.addEventListener('abort', () => reject(transaction.error));
+    });
+  } finally { database.close(); }
+}
+
 export async function clearTimelineDraft(timelineId: string | null, expectedOwnerId?: string): Promise<void> {
   if (timelineId === null || typeof indexedDB === 'undefined') {
     return;
@@ -247,13 +341,11 @@ export async function clearTimelineDraft(timelineId: string | null, expectedOwne
   await new Promise<void>((resolve, reject) => {
     const transaction = database.transaction(DRAFT_STORE_NAME, 'readwrite');
     const store = transaction.objectStore(DRAFT_STORE_NAME);
-    if (expectedOwnerId === undefined) {
-      store.delete(buildKey(timelineId));
-    } else {
+    {
       const request = store.get(buildKey(timelineId));
       request.addEventListener('success', () => {
         const current = request.result as TimelineDraftRecord | undefined;
-        if (current?.ownerId === expectedOwnerId) {
+        if (!current?.pendingCommit && (expectedOwnerId === undefined || current?.ownerId === expectedOwnerId)) {
           store.delete(buildKey(timelineId));
         }
       });
@@ -278,7 +370,7 @@ export async function clearTimelineDraftIfMatches(
     let matched = false;
     request.addEventListener('success', () => {
       const current = request.result as TimelineDraftRecord | undefined;
-      if (current?.acknowledgementIdentity === acknowledgementIdentity) {
+      if (current?.acknowledgementIdentity === acknowledgementIdentity && !current.pendingCommit) {
         matched = true;
         store.delete(buildKey(recoveryKey));
       }
@@ -432,7 +524,7 @@ export async function clearTimelineDraftIfSnapshotMatches(
     let matched = false;
     request.addEventListener('success', () => {
       const current = request.result as TimelineDraftRecord | undefined;
-      if (current?.updatedAt === snapshot.updatedAt
+      if (!current?.pendingCommit && current?.updatedAt === snapshot.updatedAt
         && current.draftIdentity === snapshot.draftIdentity) {
         matched = true;
         store.delete(buildKey(recoveryKey));

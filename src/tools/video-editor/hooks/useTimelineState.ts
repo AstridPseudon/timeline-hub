@@ -642,6 +642,14 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     applyEdit: save.applyEdit,
     semanticCommandSaving: runtime.provider.semanticCommandSaving,
     getProposalSourceContext: () => runtime.provider.getTimelineDraftRecoveryMetadata?.(runtime.timelineId).recoveryKey,
+    getPendingProposalTransactionId: () => runtime.provider.getTimelineDraftRecoveryMetadata?.(runtime.timelineId).pendingProposalTransactionId,
+    recoverProposalSave: async (binding) => {
+      const receipt = await runtime.provider.recoverTimelineCommit?.(runtime.timelineId, {
+        transactionId: binding.transactionId, commands: binding.commands, base: binding.base,
+      });
+      if (!receipt) throw new Error('The original proposal COMMIT could not be recovered.');
+      await save.reloadFromServer({ preserveDraft: true });
+    },
     captureSaveTarget: save.registrationOwner.captureSaveTarget,
     flushSaveTarget: save.registrationOwner.flushSaveTarget,
     dataRef: save.dataRef,

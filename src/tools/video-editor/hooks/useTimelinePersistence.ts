@@ -1,4 +1,4 @@
-import { proposalSaveFor } from '../lib/proposal-command-binding.ts';
+import { proposalSaveFor, proposalCorrelationFor } from '../lib/proposal-command-binding.ts';
 import { timelineDraftRecoveryKey } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
 import { gestureCommandsFor, gestureOccurrenceFor } from '../commands/semanticGestures.ts';
@@ -401,10 +401,12 @@ export function useTimelinePersistence({
       traceId,
       editCommands,
       occurrenceContext,
+      commitOwner,
     }: {
       config: TimelineConfig;
       editCommands?: readonly EditCommand[];
       occurrenceContext?: TimelineOccurrenceContext;
+      commitOwner?: { id: string; proposalTransactionId?: string };
       expectedVersion: number;
       expectedHead?: TimelineHeadRevision;
       registry?: AssetRegistry;
@@ -417,7 +419,9 @@ export function useTimelinePersistence({
       attemptProvider.setShotTimelineTraceId?.(traceId);
       const saved: Promise<number | TimelineSaveReceipt> = attemptProvider.saveTimelineAtHead
         ? expectedHead
-          ? occurrenceContext
+          ? attemptProvider.recoverTimelineCommit
+            ? attemptProvider.saveTimelineAtHead(attemptTimelineId, config, expectedHead, registry, bundle, editCommands, occurrenceContext, commitOwner)
+            : occurrenceContext
             ? attemptProvider.saveTimelineAtHead(attemptTimelineId, config, expectedHead, registry, bundle, editCommands, occurrenceContext)
             : attemptProvider.saveTimelineAtHead(attemptTimelineId, config, expectedHead, registry, bundle, editCommands)
           : Promise.reject(new TimelineVersionConflictError('Timeline draft has unknown head provenance; resolve or discard it before saving.'))
@@ -703,6 +707,7 @@ export function useTimelinePersistence({
           traceId: attempt.traceId,
           editCommands: attempt.editCommands,
           occurrenceContext: attempt.occurrenceContext,
+          commitOwner: { id: attempt.draftOwnerId, proposalTransactionId: proposalCorrelationFor(attempt.data) },
         },
         {
           onSuccess: (receipt) => {
@@ -999,6 +1004,7 @@ export function useTimelinePersistence({
     }
     const occurrenceContext = editCommands !== undefined ? gestureOccurrenceFor(nextData) : undefined;
     const draft = {
+      ...(proposalCorrelationFor(nextData) ? { proposalTransactionId: proposalCorrelationFor(nextData) } : {}),
       ...(occurrenceContext ? { occurrenceContext: cloneAttemptValue(occurrenceContext) } : {}),
       ...(editCommands !== undefined ? { editCommands: cloneAttemptValue(editCommands) } : {}),
       config: cloneAttemptValue(nextData.config),

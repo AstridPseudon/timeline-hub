@@ -1569,3 +1569,26 @@ describe('useTimelineOps', () => {
     });
   });
 });
+
+
+describe('durable submitted proposal recovery', () => {
+  it('recovers the original binding without compiling a new edit or accepting a different proposal', async () => {
+    const data = makeBaseTimelineData(); data.head = { projectId: 'p', timelineId: 't', headRevisionId: 'base' };
+    const commitData = vi.fn(); let pending = '';
+    const recoverProposalSave = vi.fn(async () => {});
+    const hook = renderHook(() => useTimelineOps({ dataRef: { current: data }, semanticCommandSaving: true,
+      getProposalSourceContext: () => 'scoped-session', getPendingProposalTransactionId: () => pending,
+      recoverProposalSave, commitData, createManualCheckpoint: vi.fn(), jumpToCheckpoint: vi.fn(), checkpoints: [] }));
+    const ops = hook.result.current as import('../lib/proposal-command-binding.ts').ProposalTimelineOps;
+    const patch = { version: 1, operations: [{ op: 'track.update' as const, target: 'A1', payload: { muted: true } }] };
+    const binding = ops.captureProposal!(patch, 'review', 'id-A')!;
+    pending = binding.transactionId;
+    expect(ops.proposalSubmitted!(binding)).toBe(true);
+    expect(() => ops.captureProposal!(patch, 'review', 'id-B')).toThrow('recovered');
+    await expect(ops.acceptProposal!(binding)).resolves.toEqual(binding.preview.diff);
+    expect(recoverProposalSave).toHaveBeenCalledExactlyOnceWith(binding);
+    expect(commitData).not.toHaveBeenCalled();
+    expect(() => ops.acceptProposal!({ ...binding, transactionId: 'proposal:id-B' })).toThrow('unresolved');
+    hook.unmount();
+  });
+});

@@ -12,7 +12,7 @@
  */
 
 import { useCallback, useMemo, useRef } from 'react';
-import { commandContext, freezeProposal, orderedPatchCommands, type ProposalCommandBinding, type ProposalTimelineOps } from '../lib/proposal-command-binding.ts';
+import { bindProposalCorrelation, commandContext, freezeProposal, orderedPatchCommands, type ProposalCommandBinding, type ProposalTimelineOps } from '../lib/proposal-command-binding.ts';
 import type { TimelineSaveTarget } from './useTimelinePersistence.ts';
 import { validateEditCommand, type EditCommand } from '@/integrations/runtime/generated.ts';
 import type {
@@ -59,6 +59,8 @@ export interface UseTimelineOpsArgs {
   semanticCommandSaving?: boolean;
   /** Existing provider recovery scope, read only; never supplied by a proposal. */
   getProposalSourceContext?: () => string | null | undefined;
+  getPendingProposalTransactionId?: () => string | undefined;
+  recoverProposalSave?: (binding: ProposalCommandBinding) => Promise<void>;
   captureSaveTarget?: () => TimelineSaveTarget;
   flushSaveTarget?: (target: TimelineSaveTarget) => Promise<number>;
 
@@ -135,6 +137,8 @@ export function useTimelineOps({
   applyEdit,
   semanticCommandSaving,
   getProposalSourceContext,
+  getPendingProposalTransactionId,
+  recoverProposalSave,
   captureSaveTarget,
   flushSaveTarget,
   dataRef,
@@ -147,6 +151,8 @@ export function useTimelineOps({
 }: UseTimelineOpsArgs): TimelineOps {
   const proposalSourceContextRef = useRef(getProposalSourceContext);
   proposalSourceContextRef.current = getProposalSourceContext;
+  const proposalRecoveryRef = useRef({ getPendingProposalTransactionId, recoverProposalSave });
+  proposalRecoveryRef.current = { getPendingProposalTransactionId, recoverProposalSave };
 
   // Keep checkpoints in a ref so synchronous rollback lookups are always
   // against the latest list without re-creating the adapter on every change.
@@ -458,6 +464,9 @@ export function useTimelineOps({
   const submissions = useRef(new Map<string, { binding: ProposalCommandBinding; target: TimelineSaveTarget; before?: TimelineData; owner?: TimelineData; terminal?: unknown }>());
   const captureProposal = useCallback((patch: TimelinePatch, source: string, proposalId: string) => {
     if (!semanticCommandSaving) return undefined;
+    if (proposalRecoveryRef.current.getPendingProposalTransactionId?.()) {
+      throw new Error('A submitted proposal must be recovered before creating another proposal.');
+    }
     const current = dataRef.current;
     if (!current) throw new Error('Proposal requires timeline data.');
     const commands = orderedPatchCommands(patch, current);
@@ -492,6 +501,13 @@ export function useTimelineOps({
 
   const acceptProposal = useCallback((binding: ProposalCommandBinding): Promise<TimelineDiff> => {
     assertTimelineEditable('acceptProposal');
+    const pending = proposalRecoveryRef.current.getPendingProposalTransactionId?.();
+    if (pending) {
+      if (pending !== binding.transactionId || !proposalRecoveryRef.current.recoverProposalSave) {
+        throw new Error('An unresolved proposal COMMIT must be recovered before accepting another proposal.');
+      }
+      return proposalRecoveryRef.current.recoverProposalSave(binding).then(() => binding.preview.diff);
+    }
     if (!semanticCommandSaving || !captureSaveTarget || !flushSaveTarget) throw new Error('Proposal command persistence is unavailable.');
     // Old provider/session closures must fail before scheduling any edit.
     captureSaveTarget();
@@ -503,6 +519,7 @@ export function useTimelineOps({
       const compiled = compileTimelinePatch(binding.patch, before);
       if (!compiled.valid || !compiled.nextData) throw new Error('Proposal cannot be compiled.');
       const owner = compiled.nextData;
+      bindProposalCorrelation(owner, binding.transactionId);
       try {
         commitData(owner, { save: true, semantic: true, transactionId: binding.transactionId,
           editCommands: binding.commands.map((command) => validateEditCommand(command)), proposalBase: binding.base });
@@ -550,6 +567,7 @@ export function useTimelineOps({
   }>(
     () => ({
       proposalContext: () => JSON.stringify([getCanonicalVersion(), dataRef.current?.head, dataRef.current?.stableSignature, proposalSourceContextRef.current?.() ?? null]),
+      proposalSubmitted: () => Boolean(proposalRecoveryRef.current.getPendingProposalTransactionId?.()),
       captureProposal,
       previewProposal: checkBinding,
       acceptProposal,
