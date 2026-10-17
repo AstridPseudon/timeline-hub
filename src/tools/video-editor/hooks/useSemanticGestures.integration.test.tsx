@@ -5897,3 +5897,126 @@ describe('W63 style-only SDK history chain', () => {
     history.unmount(); h.unmount();
   });
 });
+
+// W64: the mounted tool, generated wire, exact D156 service and native stack.
+function clipParamsSource(initial: TimelineData, requests: CommitRequest[], stale = false) {
+  return JSON.parse(execFileSync(process.env.ASTRID_TEST_PYTHON!, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/clipParamsHistory.fixture.py')], {
+    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests, stale }), encoding: 'utf8', env: process.env,
+  })) as { before: { parent: { clips: Array<{ params: Record<string, unknown> }> } }; results: CommitResult[]; result: CommitResult;
+    readback: unknown; accept_counts: number[] };
+}
+function w64Commands(h: Awaited<ReturnType<typeof setup>>) {
+  return createTimelineCommands({ getState: () => ({ data: { data: h.result.current.data, dataRef: h.result.current.dataRef },
+    ops: { applyEdit: h.result.current.applyEdit }, availability: { mounted: true },
+  }) } as unknown as TimelineStoreApi);
+}
+function w64History(h: Awaited<ReturnType<typeof setup>>) {
+  return renderHook(() => {
+    const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+    useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]); return state;
+  }, { wrapper: overlapHistoryWrapper(h) });
+}
+describe('W64 mounted params native history', () => {
+  it('uses actual accepted params writes for one Undo and original ordered Redo batch', async () => {
+    const base = await selectedMoveData();
+    const retained = { nullable: null, opaque: [{ op: 'clear' }, { $absent: true }] };
+    const initial = await buildTimelineData({ ...base.config, clips: base.config.clips.map(clip => clip.id === 'clip-1'
+      ? { ...clip, params: { ...clip.params, retained } } : clip) }, base.registry, undefined, 1, undefined, base.head);
+    const requests: CommitRequest[] = []; let proof!: ReturnType<typeof clipParamsSource>;
+    const h = await setup(async request => {
+      requests.push(request); proof = clipParamsSource(initial, requests);
+      if (process.env.E_W64_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W64_EVIDENCE_DIR, 'params-chain.json'), JSON.stringify({ requests, proof }, null, 2));
+      return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = w64History(h);
+    const params = { data: { op: 'clear', nested: [null, { opaque: true }] }, added: null, sibling: ['untouched', 7], retained };
+    act(() => expect(w64Commands(h).setClipParams({ clipId: 'clip-1', params }).ok).toBe(true));
+    expect(history.result.current.canUndo).toBe(false);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    expect(requests[1].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null, args: {
+      publication: proof.results[0].accepted_publication_id,
+      writes: proof.results[0].change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })),
+    } }] });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(requests[2].change).toEqual(requests[0].change);
+    const forward = (requests[0].change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands;
+    expect(forward.map(command => command.args.path)).toEqual(['data', 'added', 'sibling', 'retained']);
+    expect(proof.results[0].change.direct_writes.map(write => write.path).sort()).toEqual(['params.added', 'params.data', 'params.sibling']);
+    expect((proof.readback as typeof proof.before).parent.clips[0].params).toEqual(params);
+    const beforeClip = proof.before.parent.clips[0];
+    const afterClip = (proof.readback as typeof proof.before).parent.clips[0];
+    expect({ ...afterClip, params: beforeClip.params }).toEqual(beforeClip);
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(proof.results[1].canonical_document).toEqual(proof.before);
+    expect(proof.results[2].canonical_document).toEqual(proof.results[0].canonical_document);
+    expect(proof.readback).toEqual(proof.results[2].canonical_document);
+    expect(proof.accept_counts).toEqual([1, 1, 1]); expect(h.compatibilityRequests).toEqual([]);
+    history.unmount(); h.unmount();
+  }, 180_000);
+  it('removes the pending native entry for an actual no-change receipt', async () => {
+    const initial = await selectedMoveData(); let proof!: ReturnType<typeof clipParamsSource>;
+    const h = await setup(async request => {
+      proof = clipParamsSource(initial, [request]); return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = w64History(h);
+    act(() => expect(w64Commands(h).setClipParams({ clipId: 'clip-1', params: { data: null } }).ok).toBe(true));
+    expect(history.result.current.canUndo).toBe(false);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expect(proof.result.status).toBe('no_change'); expect(proof.result.change.direct_writes).toEqual([]);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    act(() => history.result.current.undo()); expect(h.requests).toHaveLength(1);
+    if (process.env.E_W64_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W64_EVIDENCE_DIR, 'params-no-change.json'), JSON.stringify({ requests: h.requests, proof }, null, 2));
+    history.unmount(); h.unmount();
+  }, 90_000);
+  it('refuses the complete multi-key transaction when its later expectation is stale', async () => {
+    const initial = await selectedMoveData(); let proof!: ReturnType<typeof clipParamsSource>;
+    const h = await setup(async request => {
+      proof = clipParamsSource(initial, [request], true); return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = w64History(h);
+    act(() => expect(w64Commands(h).setClipParams({ clipId: 'clip-1', params: { first: ['must roll back'], data: 'intended' } }).ok).toBe(true));
+    await waitFor(() => expect(proof).toBeDefined(), { timeout: 60_000 });
+    expect(proof.result.status).toBe('refused');
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+    expect(proof.accept_counts).toEqual([0]); expect(proof.result.change.direct_writes).toEqual([]);
+    expect(proof.readback).toEqual(proof.before); expect(proof.before.parent.clips[0].params).toEqual({ data: 'intervening writer' });
+    expect(h.savedSeqRef.current).toBe(0); expect(history.result.current.canUndo).toBe(false);
+    act(() => history.result.current.undo()); expect(h.requests).toHaveLength(1);
+    if (process.env.E_W64_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W64_EVIDENCE_DIR, 'params-stale.json'), JSON.stringify({ requests: h.requests, proof }, null, 2));
+    history.unmount(); h.unmount();
+  }, 90_000);
+  it.each(['missing', 'malformed', 'unexpected'] as const)('%s actual direct receipt writes never enable native Undo', async kind => {
+    const initial = await selectedMoveData(); let proof!: ReturnType<typeof clipParamsSource>; let returned!: CommitResult;
+    const h = await setup(async request => {
+      proof = clipParamsSource(initial, [request]); returned = structuredClone(proof.result);
+      if (kind === 'missing') returned.change.direct_writes = [];
+      if (kind === 'malformed') delete (returned.change.direct_writes[0].before as Record<string, unknown>).state;
+      if (kind === 'unexpected') returned.change.direct_writes.push({ ...returned.change.direct_writes[0], path: 'params.foreign' });
+      return { acceptedResult: returned };
+    }, false, initial);
+    const history = w64History(h);
+    act(() => expect(w64Commands(h).setClipParams({ clipId: 'clip-1', params: { data: 'accepted value', added: null } }).ok).toBe(true));
+    await waitFor(() => expect(proof).toBeDefined(), { timeout: 60_000 });
+    expect(proof.result.status).toBe('accepted'); expect(proof.accept_counts).toEqual([1]);
+    await waitFor(() => expect(['saved', 'error']).toContain(h.result.current.persistence.saveStatus));
+    expect(history.result.current.canUndo).toBe(false); act(() => history.result.current.undo());
+    expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
+    if (process.env.E_W64_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W64_EVIDENCE_DIR, `params-${kind}.json`), JSON.stringify({ requests: h.requests, proof, returned }, null, 2));
+    history.unmount(); h.unmount();
+  }, 90_000);
+  it.each(['omission', 'dotted literal', 'explicit clear'] as const)('keeps %s on its existing caller route outside params native history', async kind => {
+    const h = await setup(); const history = w64History(h);
+    const params = kind === 'omission' ? {} : kind === 'dotted literal' ? { data: null, 'literal.key': 3 } : { data: undefined };
+    act(() => expect(w64Commands(h).setClipParams({ clipId: 'clip-1', params }).ok).toBe(true));
+    if (kind === 'explicit clear') expect(gestureCommandsFor(h.result.current.data!)?.[0].op).toBe('clip.clear');
+    else expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
+    expect(h.requests).toHaveLength(0);
+    history.unmount(); h.unmount();
+  });
+
+});
