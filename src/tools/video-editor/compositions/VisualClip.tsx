@@ -34,7 +34,7 @@ import { PendingMaterialPlaceholder } from '@/tools/video-editor/components/Pend
 import type { CapabilityFinding, RenderMaterialRef } from '@reigh/editor-sdk';
 import type { RenderPlannerMaterialStatus } from '@/tools/video-editor/runtime/renderPlanner.ts';
 import { ClipShaderPreviewCanvas } from '@/tools/video-editor/shaders/preview/ClipShaderPreviewCanvas.tsx';
-import { mediaModifierBounds, type ModifierBounds } from '@banodoco/timeline-composition/theme-api';
+import { mediaModifierBounds, hasModifierKeyframes, type ModifierBounds } from '@banodoco/timeline-composition/theme-api';
 import { admitAppModifierTarget, composeAppClipModifiers, useAppModifierHost } from '@/tools/video-editor/runtime/clip-modifiers.ts';
 import {
   useOptionalShaderEffectRegistryContext,
@@ -318,7 +318,7 @@ const VisualAsset: FC<VisualClipProps & { evaluatedFrame: number }> = ({ clip, t
   const { width: compositionWidth, height: compositionHeight } = useVideoConfig();
   const previewMediaFailure = useOptionalPreviewMediaFailure();
   const modifierHost = useAppModifierHost();
-  const hasModifiers = Boolean(clip.modifiers?.length);
+  const hasModifiers = Boolean(clip.modifiers?.length || hasModifierKeyframes(clip));
   const wrapSpatialContent = (content: ReactNode, bounds: ModifierBounds): ReactNode => {
     if (!hasModifiers) return content;
     const modified = composeAppClipModifiers({ clip, content, frame: evaluatedFrame, fps, bounds, host: modifierHost });
