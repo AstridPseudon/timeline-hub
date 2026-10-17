@@ -4569,9 +4569,25 @@ class ProcessCustody:
             self.register(pid, birth, _observation=observation)
             if (observation is not None and observation.get("outcome") == "LIVE"
                     and census[pid]["parent_pid"] != root_pid and fresh_census is not None):
+                captured = self._handles.get(pid)
                 after = fresh_census()
                 self._collect_census_candidates({}, after)
-                self._validate_candidate_chain(pid, birth, after)
+                if pid in after or captured is None or captured[0] != birth:
+                    self._validate_candidate_chain(pid, birth, after)
+                else:
+                    # register completed its native token/identity bracket and
+                    # retained the capability. A later absence is not a LIVE
+                    # candidate needing new admission. Keep that exact handle;
+                    # the existing admitted-absence checks still reject reuse
+                    # and unadmitted children, and cleanup must prove settlement.
+                    self._check_unadmitted_census(after)
+                    root = after.get(root_pid)
+                    if (not isinstance(root, Mapping) or root.get('birth_id') != root_handle[0]
+                            or root.get('status') not in {1, 2, 3, 4}
+                            or self.actor.verify() != actor
+                            or self._handles.get(root_pid) != root_handle
+                            or self._handles.get(pid) != captured):
+                        raise CustodyError('post-registration retained owner or capability changed')
         except CustodyError as error:
             cause = error.__cause__
             capture = getattr(cause, "capture_failure", None)
