@@ -8636,11 +8636,15 @@ class GenericPackHost:
                         ]
                     )
                 )
+                # Confinement drops the ambient runner marker. Restore it only
+                # after the admitted pipe handshake, retaining the module as
+                # argv[0] so runpy does not overwrite the first pack argument.
                 startup = (
-                    "import json,runpy,sys; sys.path.extend(json.loads(sys.argv[1])); "
+                    "import json,os,runpy,sys; sys.path.extend(json.loads(sys.argv[1])); "
                     "from astrid.core.execution.render_command_pipe import install_render_command_client; "
-                    "install_render_command_client(); sys.argv=sys.argv[2:]; "
-                    "runpy.run_module(sys.argv.pop(0),run_name='__main__',alter_sys=True)"
+                    "install_render_command_client(); "
+                    "os.environ['ASTRID_INTERNAL_INVOCATION']='1'; sys.argv=sys.argv[2:]; "
+                    "runpy.run_module(sys.argv[0],run_name='__main__',alter_sys=True)"
                 )
                 argv = [
                     sys.executable,
