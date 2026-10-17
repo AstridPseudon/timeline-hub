@@ -24,6 +24,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from astrid.core.rendering.remotion_runtime import _validation_timing
 from astrid.core.subprocess_env import build_child_subprocess_env
 
 from .process_group import observe_tree, popen_owned_group, release_group, verify_tree_absent
@@ -342,6 +343,7 @@ class HostRemotionSession:
         except Exception as persistence:
             record['persistence_error_class'] = type(persistence).__name__[:80]
 
+    @_validation_timing('authoring_input_revalidation')
     def _validate_inputs(self, lease):
         observed = {}
         try:
@@ -360,6 +362,7 @@ class HostRemotionSession:
             raise
         self._record_inputs(lease, "revalidated", observed)
 
+    @_validation_timing('authoring_lease')
     def lease(self, environment, *, attempt, scratch, guard=lambda: None, deadline=None):
         """Retain outer task custody and its exact policy-selected artifact root."""
         with self._lock:
@@ -407,6 +410,7 @@ class HostRemotionSession:
             self._stderr.extend(chunk)
             del self._stderr[:-65536]
 
+    @_validation_timing('authoring_start')
     def _start(self, lease, identity):
         lease.guard()
         # Caller renderer identity is only one cache input, never authority to
