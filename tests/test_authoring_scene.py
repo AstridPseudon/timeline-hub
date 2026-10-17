@@ -86,6 +86,22 @@ def evaluate(w, port, candidate):
     return client
 
 
+def test_private_refusal_keeps_source_frames_without_exception_text(bound, monkeypatch, capsys):
+    from astrid.core.execution import authoring_scene_protocol as protocol
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    w = bound; port = scene.RequestSceneEvaluation(w.s, wire(w.p), w.identity)
+    client = port.evaluator({'candidate': 'bound'})
+    def failed(*args, **kwargs): raise TypeError('secret-credential /private/untrusted-path')
+    monkeypatch.setattr(w.relay, 'exchange', failed)
+    value = projection()
+    with pytest.raises(FrameOwnerError, match='authoring_evaluation_refused'):
+        client.query_scene(revision_digest=protocol.digest(value)[7:], scene=value, frames=[0])
+    captured = capsys.readouterr().err
+    assert 'TypeError' in captured and 'test_authoring_scene.py' in captured
+    assert 'secret-credential' not in captured and '/private/untrusted-path' not in captured
+    port.close()
+
+
 def test_authenticated_port_binds_complete_candidate_at_atomic_accept(bound):
     w = bound
     body = wire(w.p)

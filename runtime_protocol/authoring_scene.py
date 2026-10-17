@@ -315,6 +315,20 @@ class CandidateEvaluator:
         except FrameOwnerError:
             raise
         except Exception as exc:
+            import json
+            import sys
+            import traceback
+            from pathlib import Path
+            # Existing private Runtime stderr only; no arbitrary exception
+            # text, locals, credentials, paths or additional wire fields.
+            try:
+                print(json.dumps({'event': 'authoring_evaluation_refused',
+                    'exception_class': type(exc).__name__[:80],
+                    'frames': [{'file': Path(f.filename).name[:80], 'function': f.name[:80], 'line': f.lineno}
+                               for f in traceback.extract_tb(exc.__traceback__)[-6:]]}),
+                    file=sys.stderr, flush=True)
+            except Exception:
+                pass  # Optional diagnostics never replace the refusal.
             raise FrameOwnerError("authoring_evaluation_refused") from exc
 
     def complete(self, *, empty=False):
