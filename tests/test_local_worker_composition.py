@@ -593,8 +593,9 @@ def test_host_only_nonchild_stop_and_reconnect_never_signal(tmp_path, monkeypatc
         preparer.reconnect({'host':{'pid':123,'birth_id':'old'}})
 
 
-@pytest.mark.parametrize("renderer", [False, True])
-def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_without_engine(tmp_path,monkeypatch,renderer):
+@pytest.mark.parametrize("selection,fault", [(s, None) for s in ("none", "unselected_matrix", "isolation", "matrix", "additional", "unavailable", "renderer")]
+    + [("isolation", f) for f in ("seal", "release", "reply", "inspection_cleanup")])
+def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_without_engine(tmp_path,monkeypatch,selection,fault):
     """Offline transport contract only; fake handles grant no native custody proof."""
     import threading
     from dataclasses import replace
@@ -602,10 +603,33 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     from runtime_protocol import local_worker_composition as module
     from runtime_protocol import verified_host_launch, local_execution_supervisor
     import banodoco_local.custody_broker as custody
+    import astrid.core.execution.custody_broker as inspection_custody
+    from astrid.core.execution import declared_executables as de
+    renderer = selection == "renderer"
+    needs_inspection = selection not in {"none", "unselected_matrix"}
     original=SimpleNamespace(pid=4242)
     identity={'pid':4242,'birth_id':'original','uid':os.getuid()}
     selected=host_only_profile_case()
-    profile=replace(selected,support_root=tmp_path)
+    packs = tmp_path / 'packs'; packs.mkdir()
+    extra = tmp_path / 'extra'; extra.mkdir()
+    executable = tmp_path / 'helper'; executable.write_bytes(b'offline executable pin'); executable.chmod(0o700)
+    if selection == 'unavailable': executable.unlink()
+    tool = tmp_path / 'reader'; tool.write_bytes(b'offline reader pin')
+    tool_pin = de.FilePin.measure(tool)
+    monkeypatch.setattr(de, '_InspectionTool', lambda: SimpleNamespace(executable=tool_pin, verify=tool_pin.verify))
+    manifest = {'schema_version': 1, 'id': 'test.cpu', 'name': 'CPU', 'kind': 'external', 'version': '1.0',
+        'command': {'argv': ['{python_exec}', '-c', 'pass']}, 'outputs': [],
+        'isolation': {'mode': 'subprocess', 'network': False, 'binaries': ['helper'] if selection in {'isolation', 'additional', 'unavailable'} else []}}
+    (extra if selection == 'additional' else packs).joinpath('executor.yaml').write_text(json.dumps(manifest))
+    matrix = tmp_path / 'matrix.json'
+    matrix.write_text(json.dumps({'schema_version': 1, 'capabilities': [{'id': 'not.selected' if selection == 'unselected_matrix' else 'test.cpu', 'disposition': 'required',
+        'evidence_reason': 'offline contract', 'required_binaries': ['helper'] if selection in {'matrix', 'unselected_matrix'} else []}]}))
+    from runtime_protocol.local_worker import _digest
+    launch = {**selected.host_launch, 'source_checkout': str(tmp_path), 'pack_root': str(packs),
+        'capability_matrix': str(matrix), 'environment': {'PATH': str(tmp_path)}}
+    if selection == 'additional':
+        launch['additional_pack_roots'] = [{'path': str(extra), 'files': module._pack_inventory(str(extra))}]
+    profile=replace(selected,support_root=tmp_path,host_launch=launch,session_config_digest=_digest(launch))
     if renderer:
         from runtime_protocol.local_worker import _digest
         from astrid.core.execution import host_renderer_selection
@@ -615,7 +639,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     config={**profile.host_launch,'runtime_endpoint':'http://127.0.0.1:1','runtime_instance_id':'epoch',
         'credential_file':str(tmp_path/'credential'),'ready_file':str(tmp_path/'ready')}
     captures={};read_done=threading.Event()
-    for key in ('PYTHONPATH','PYTHONHOME','PYTHONDONTWRITEBYTECODE','BANODOCO_LOCAL_DATA_ROOT','BANODOCO_RUNTIME_OWNER_TOKEN','ASTRID_OUTPUT_ROOT','ASTRID_EXECUTION_TARGET_JSON'):
+    for key in ('PYTHONPATH','PYTHONHOME','PYTHONDONTWRITEBYTECODE','BANODOCO_LOCAL_DATA_ROOT','BANODOCO_RUNTIME_OWNER_TOKEN','ASTRID_OUTPUT_ROOT','ASTRID_EXECUTION_TARGET_JSON','ASTRID_COMMAND_CUSTODY_ENABLED','ASTRID_COMMAND_CONTROL_FD'):
         monkeypatch.setenv(key,'unadmitted-ambient')
     class Verifier:
         def __init__(self,**kwargs):pass
@@ -629,17 +653,24 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     class Retained:
         def __init__(self,process):assert process is original
         def bind_actor(self):
-            if renderer: assert captures.get("released") is True
+            if needs_inspection: assert captures.get("released") is True
         def verify(self):return identity
+        def poll(self):return captures.get('original_wait')
+        def wait(self,timeout):
+            assert captures['signalled'] == original.pid
+            captures['original_wait'] = 0
+            return 0
     class Broker:
         def __init__(self,**kwargs):
             assert kwargs['role']=='host'
-            assert kwargs.get('defer_accept',False) is renderer
+            assert kwargs.get('defer_accept',False) is needs_inspection
+            assert kwargs.get('retain_channel',False) is needs_inspection
             descriptor=custody._open_authority_scope_lock(kwargs['authority_scope_root'])
             os.close(descriptor)
             self.role_authority=SimpleNamespace(reference=lambda:{'role':'host'})
             self.role='host';self.owner_epoch=kwargs['owner_epoch'];self.run_id='fake-run'
             self.custody_generation=1;self.authority_scope_root=kwargs['authority_scope_root']
+            self.operation_channel=None
         def create_hosted_launch(self,preparation):
             from banodoco_local.hosted_contract import HostedLaunch
             return HostedLaunch(self,preparation)
@@ -647,27 +678,45 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         def start_accept(self):
             assert captures.get('claimed') and captures.get('inspection_prepared')
             captures['accept_started']=True
-        def wait_until_sealed(self):captures["sealed"]=True
+        def wait_until_sealed(self):
+            if fault == 'seal': raise ConflictError('offline seal refusal')
+            captures["sealed"]=True
         def close_child_pipes(self):pass
+        def set_cleanup_deadline(self,deadline):pass
+        def signal(self,sig,*,expected_pid):
+            assert sig == signal.SIGTERM and expected_pid == original.pid
+            captures['signalled'] = expected_pid
         def release_suspended_launch(self,**kwargs):
-            assert renderer and captures.get("sealed") is True
+            assert needs_inspection and captures.get("sealed") is True
             assert kwargs==dict(expected_pid=original.pid,process=original)
+            if fault == 'release': raise ConflictError('offline release refusal')
             captures["released"]=True
-    if renderer:
-        import astrid.core.execution.custody_broker as inspection_custody
-        class Inspection:
-            def __init__(self,*args,**kwargs):pass
-            def policy(self,*args):captures['inspection_prepared']=True;return {}
-        class InspectionOwner:
-            def __init__(self,context,policy):
-                self.custody=context;self.released=threading.Event()
-            def start(self):pass
-        monkeypatch.setattr(inspection_custody,"_HostInspectionLaunch",Inspection)
-        monkeypatch.setattr(inspection_custody,"_CommandInventoryOwner",InspectionOwner)
-        monkeypatch.setattr(inspection_custody,"RoleBoundCustodyBroker",Broker)
-        monkeypatch.setattr(inspection_custody,"default_process_identity",lambda pid:{"pid":os.getpid(),"uid":os.getuid(),"parent_pid":1,"birth_id":"owner"})
+    class InspectionBroker(Broker):
+        def __init__(self, **kwargs):
+            assert needs_inspection
+            super().__init__(**kwargs)
+    class PlainBroker(Broker):
+        def __init__(self, **kwargs):
+            assert not needs_inspection
+            super().__init__(**kwargs)
+    class InspectionOwner(inspection_custody._CommandInventoryOwner):
+        def __init__(self,context,policy):
+            super().__init__(context,policy)
+            captures['inspection_prepared']=True
+            assert context._launch_broker.owner_epoch == context.owner_epoch == 'epoch'
+            assert context.process is None and context.root == tmp_path/'local-execution-custody'/'op'
+            assert set(policy['inspection'].selections) == ({'node'} if renderer else set() if selection == 'unavailable' else {'helper'})
+        def start(self):
+            assert self.custody.process is original
+            # Only the native transport thread is replaced. Abort and finish
+            # still run the exact SDK owner lifecycle against retained state.
+            self.done.set()
+            if fault == 'inspection_cleanup': self.error = inspection_custody.CustodyError('offline uncertain helper')
+    monkeypatch.setattr(inspection_custody,"_CommandInventoryOwner",InspectionOwner)
+    monkeypatch.setattr(inspection_custody,"RoleBoundCustodyBroker",InspectionBroker)
+    monkeypatch.setattr(inspection_custody,"default_process_identity",lambda pid:{"pid":os.getpid(),"uid":os.getuid(),"parent_pid":1,"birth_id":"owner"})
     def popen(argv,**kwargs):
-        if renderer: assert captures.get('accept_started')
+        if needs_inspection: assert captures.get('accept_started')
         descriptor=os.dup(captures['binding_fd'])
         def read_binding():
             data=b''
@@ -680,20 +729,43 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         return original
     monkeypatch.setattr(verified_host_launch,'TrustedLocalHostLaunchVerifier',Verifier)
     monkeypatch.setattr(local_execution_supervisor,'RetainedProcess',Retained)
-    monkeypatch.setattr(custody,'RoleBoundCustodyBroker',Broker)
+    monkeypatch.setattr(custody,'RoleBoundCustodyBroker',PlainBroker)
     monkeypatch.setattr(custody,'default_process_identity',lambda pid:{'pid':os.getpid(),'uid':os.getuid(),'parent_pid':1,'birth_id':'owner'})
     monkeypatch.setattr(module,'_installed_host_release',lambda *args:{})
     monkeypatch.setattr(module.subprocess,'Popen',popen)
     monkeypatch.setattr(module,'_frame_send',lambda channel,value:captures.update(request=value))
-    monkeypatch.setattr(module,'_frame_receive',lambda channel, **kwargs:{'version':captures['request']['version'],'status':'prepared',
-        'operation_id':'op','channel_id':'channel','owner_epoch':'epoch','execution_mode':'host_only_cpu',
-        'processes':{'host':{'pid':4242,'birth_id':'original'}},'session_config_digest':profile.session_config_digest})
+    def receive(channel, **kwargs):
+        request = captures['request']
+        if request.get('command') == 'abort_local_execution':
+            return {**{k:v for k,v in request.items() if k != 'command'}, 'status':'cleaned', 'cleanup':{'host_children':'absent'}}
+        if fault == 'reply': raise ConflictError('offline reply refusal')
+        return {'version':request['version'],'status':'prepared', 'operation_id':'op','channel_id':'channel',
+            'owner_epoch':'epoch','execution_mode':'host_only_cpu', 'processes':{'host':{'pid':4242,'birth_id':'original'}},
+            'session_config_digest':profile.session_config_digest}
+    monkeypatch.setattr(module,'_frame_receive',receive)
     preparer=CrossProcessWorkerPreparer(profile=profile,config=config,environment={})
+    if fault in {'seal', 'release', 'reply'}:
+        with pytest.raises(ConflictError, match=f'offline {fault} refusal'):
+            preparer.prepare(profile,operation_id='op',channel_id='channel')
+        assert captures['original_wait'] == 0 and captures['request']['channel_id'] == 'channel'
+        assert read_done.wait(1)
+        if fault == 'reply':
+            assert preparer._active is None  # Released owner settles normally.
+        else:
+            handle = preparer._active
+            assert handle.worker is original and handle.inspection_owner.cancelled.is_set()
+            assert handle.inspection_owner.released.is_set() and handle.inspection_owner.error is not None
+            assert not handle.closed and preparer.cleanup_uncertain == 'host-only startup cleanup unresolved'
+        return
     handle=preparer.prepare(profile,operation_id='op',channel_id='channel')
     try:
         assert preparer._active is handle and handle.worker is original and handle.host_only
-        if renderer:
+        if needs_inspection:
             assert captures["released"] is True and handle.inspection_owner.released.is_set()
+            assert captures['environment']['ASTRID_COMMAND_CUSTODY_ENABLED'] == '1'
+        else:
+            assert handle.inspection_owner is None and 'inspection_prepared' not in captures
+            assert 'ASTRID_COMMAND_CUSTODY_ENABLED' not in captures['environment']
 
         assert read_done.wait(1) and captures['binding']==b'{"canonical":true}'
         argv=captures['argv'];assert argv[argv.index('--max-concurrency')+1]=='4'
@@ -703,8 +775,154 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         assert env['ASTRID_OUTPUT_ROOT']==str(profile.support_root/'host-output')
         assert env['BANODOCO_LOCAL_DATA_ROOT']==str(profile.realm_root)
         assert not set(env)&{'PYTHONPATH','PYTHONHOME','PYTHONDONTWRITEBYTECODE','BANODOCO_RUNTIME_OWNER_TOKEN','ASTRID_EXECUTION_TARGET_JSON'}
+        if fault == 'inspection_cleanup':
+            with pytest.raises(ConflictError, match='original inspection owner unresolved'):
+                preparer.abort(handle)
+            assert preparer._active is handle and not handle.closed
+        else:
+            preparer.abort(handle)
+            assert handle.closed and preparer._active is None
+        assert handle.original_host_wait == 0 and handle.cleanup_acknowledged
+        if needs_inspection:
+            assert handle.inspection_owner.cancelled.is_set() and not handle.inspection_owner.accepting
     finally:
         handle.control.close();handle.activation.close()
+
+
+@pytest.fixture
+def cpu_inspection_owner(tmp_path, monkeypatch):
+    """Exact SDK producer and predicates, with only native/tool surfaces mocked."""
+    from astrid.core.execution import custody_broker as cb, declared_executables as de
+    source = tmp_path / 'source'; source.mkdir()
+    (source / '.git').write_text('offline source marker')
+    pack = source / 'pack'; pack.mkdir()
+    (pack / 'executor.yaml').write_text(json.dumps({'schema_version': 1, 'id': 'test.cpu', 'name': 'CPU',
+        'kind': 'external', 'version': '1.0', 'command': {'argv': ['{python_exec}', '-c', 'pass']},
+        'outputs': [], 'isolation': {'mode': 'subprocess', 'network': False, 'binaries': ['helper']}}))
+    installed = tmp_path / 'installed'; installed.mkdir()
+    executable = installed / 'helper'; executable.write_bytes(b'offline helper'); executable.chmod(0o700)
+    tool = installed / 'reader'; tool.write_bytes(b'offline reader')
+    tool_pin = de.FilePin.measure(tool)
+    monkeypatch.setattr(de, '_InspectionTool', lambda: SimpleNamespace(executable=tool_pin, verify=tool_pin.verify))
+    launch = cb._HostInspectionLaunch((pack,), source, {'PATH': str(installed)}, node_executable=None)
+    identity = {'pid': os.getpid(), 'uid': os.getuid(), 'birth_id': 'offline-root',
+        'audit_token_sha256': 'offline-token', 'audit_token_pidversion': 1}
+    bound_identity = dict(identity)
+    binding = {'run_id': 'offline-run', 'owner_epoch': 'epoch', 'generation': 1, 'target': dict(bound_identity)}
+    actor = SimpleNamespace(verify=lambda: dict(identity))
+    broker = SimpleNamespace(run_id='offline-run', operation_channel=object(),
+        registration={'identity': dict(identity)}, retained_pipe_actor=lambda: actor,
+        role_authority=SimpleNamespace(reference=lambda: {'generation': 1, 'target': dict(bound_identity)}),
+        bind_ready_token=lambda **kw: None)
+    owner = cb._CommandInventoryOwner(SimpleNamespace(_launch_broker=broker, owner_epoch='epoch',
+        process=SimpleNamespace(pid=os.getpid()), root=tmp_path), launch.policy(launch.environment, str(tmp_path)))
+    frame = {'version': cb._COMMAND_INVENTORY_VERSION, 'command': 'inventory_load_commands',
+        'binding': binding, 'operation_id': 1, 'selection': 'helper', 'image': str(executable)}
+    return SimpleNamespace(cb=cb, launch=launch, owner=owner, broker=broker, frame=frame,
+        source=source, executable=executable, tool=tool, identity=identity)
+
+
+@pytest.mark.parametrize('fault', ['missing', 'foreign_channel', 'foreign_peer', 'stale_peer',
+    'epoch', 'generation', 'target', 'operation', 'replay'])
+def test_cpu_command_inspection_refuses_missing_foreign_and_stale_channels(cpu_inspection_owner, monkeypatch, fault):
+    from astrid.core.execution import process_group as pg
+    case = cpu_inspection_owner; cb = case.cb
+    monkeypatch.setattr(pg, 'popen_owned_process', lambda *a, **kw: pytest.fail('refusal spawned a helper'))
+    monkeypatch.setattr(subprocess, 'run', lambda *a, **kw: pytest.fail('inspection used a local fallback'))
+    if fault == 'missing':
+        monkeypatch.delenv(cb._COMMAND_INVENTORY_FD, raising=False)
+        with pytest.raises(cb.CustodyError, match='requires its original owner'):
+            cb._inventory_load_commands('helper', case.executable)
+    elif fault == 'foreign_channel':
+        with pytest.raises(cb.CustodyError, match='original host channel'):
+            case.owner._execute(case.frame, object())
+    elif fault in {'foreign_peer', 'stale_peer'}:
+        if fault == 'stale_peer':
+            case.owner._authenticate(case.broker.operation_channel)
+        case.identity['birth_id'] = 'changed'
+        with pytest.raises(cb.CustodyError, match='original root|custody changed'):
+            case.owner._execute(case.frame, case.broker.operation_channel)
+    else:
+        if fault in {'epoch', 'generation', 'target'}:
+            case.frame['binding'][{'epoch': 'owner_epoch'}.get(fault, fault)] = 'changed'
+        elif fault == 'operation':
+            case.frame['operation_id'] = 2
+        else:
+            case.owner.last_operation = 1
+        with pytest.raises(cb.CustodyError, match='invalid binding'):
+            case.owner._execute(case.frame, case.broker.operation_channel)
+    assert not case.owner.helpers and case.owner.pending is None
+
+
+@pytest.mark.parametrize('fault', ['source', 'source_marker', 'binary', 'binary_alias', 'tool', 'selection', 'image'])
+def test_cpu_command_inspection_refuses_source_and_binary_drift(cpu_inspection_owner, monkeypatch, fault):
+    from astrid.core.execution import declared_executables as de, process_group as pg
+    case = cpu_inspection_owner
+    monkeypatch.setattr(pg, 'popen_owned_process', lambda *a, **kw: pytest.fail('drift spawned a helper'))
+    if fault == 'source':
+        case.source.rename(case.source.with_name('retained-source')); case.source.mkdir()
+        with pytest.raises(case.cb.CustodyError, match='source checkout changed'):
+            case.launch.policy(case.launch.environment, str(case.source.parent))
+    elif fault == 'source_marker':
+        (case.source / '.git').write_text('changed marker')
+        with pytest.raises(de.ExecutableAdmissionError, match='artifact replaced'):
+            case.owner._validate_policy(str(case.source), case.owner.policy['cwd'], case.launch.environment, 'revision')
+    else:
+        if fault == 'binary': case.executable.write_bytes(b'changed executable')
+        elif fault == 'tool': case.tool.write_bytes(b'changed reader')
+        elif fault == 'binary_alias':
+            case.executable.rename(case.executable.with_name('retained-helper'))
+            case.executable.symlink_to(case.executable.with_name('retained-helper'))
+        elif fault == 'selection': case.frame['selection'] = 'undeclared'
+        else: case.frame['image'] = str(case.tool)
+        with pytest.raises(de.ExecutableAdmissionError):
+            case.owner._execute(case.frame, case.broker.operation_channel)
+    assert not case.owner.helpers and case.owner.pending is None
+
+
+def test_cpu_command_inspection_typed_channel_retains_fixed_helpers_and_original_wait(cpu_inspection_owner, monkeypatch):
+    from astrid.core.execution import process_group as pg
+    case = cpu_inspection_owner; cb = case.cb
+    request_read, request_write = os.pipe(); reply_read, reply_write = os.pipe()
+    server = cb._PipeChannel(request_read, reply_write)
+    descriptor = cb._canonical([cb._pipe_identity(reply_read, os.O_RDONLY),
+        cb._pipe_identity(request_write, os.O_WRONLY)]).decode()
+    case.broker.operation_channel = server
+    events = []
+    class Helper:
+        _astrid_custody = SimpleNamespace(_observer=None)
+        def __init__(self):
+            self.pid = 4000 + len(events)
+            for name in ('stdout', 'stderr'):
+                read, write = os.pipe(); os.close(write)
+                setattr(self, name, os.fdopen(read, 'rb', buffering=0))
+        def poll(self):return 0
+        def wait(self, timeout):events.append(('wait', self)); return 0
+    def spawn(argv, **kwargs):
+        assert argv == [str(case.tool), '-l', str(case.executable)]
+        assert kwargs['env'] == {'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'}
+        assert kwargs['cwd'] == case.owner.policy['cwd'] and kwargs['_delegate_inventory'] is False
+        helper = Helper(); events.append(('spawn', helper)); return helper
+    monkeypatch.setattr(pg, 'popen_owned_process', spawn)
+    monkeypatch.setattr(pg, 'verify_tree_absent', lambda helper: events.append(('closure', helper)))
+    monkeypatch.setenv(cb._COMMAND_INVENTORY_FD, descriptor)
+    case.owner.released.set(); case.owner.start()
+    key = (os.getpid(), descriptor)
+    try:
+        for operation in (1, 2):
+            result = cb._inventory_load_commands('helper', case.executable)
+            assert result.returncode == 0 and result.stdout == result.stderr == ''
+            assert case.owner.last_operation == operation and case.owner.pending is None
+        assert list(case.owner.helpers) == [1, 2]
+        for helper in case.owner.helpers.values():
+            assert [('spawn', helper), ('wait', helper), ('closure', helper)] == [e for e in events if e[1] is helper]
+    finally:
+        client = cb._COMMAND_CLIENTS.pop(key, None)
+        if client is not None: client.channel.close()
+        else:
+            os.close(reply_read); os.close(request_write)
+        case.owner.finish(cancel=True, timeout=2)
+    assert case.owner.done.is_set() and case.owner.error is None and case.owner.channel_closed
 
 
 def test_host_only_observation_rejects_missing_original_handle():

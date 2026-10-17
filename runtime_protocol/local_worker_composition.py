@@ -354,7 +354,18 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         if self._prepare_cancel.is_set():
             raise ConflictError("host-only preparation cancelled")
         renderer = profile.host_launch.get("renderer_selection")
-        if renderer is not None:
+        pack_roots = tuple(Path(p) for p in [profile.host_launch["pack_root"],
+            *(v["path"] for v in profile.host_launch.get("additional_pack_roots", []))])
+        capability_matrix = Path(self.config["capability_matrix"]) if self.config.get("capability_matrix") else None
+        inspection_required = renderer is not None
+        if not inspection_required:
+            # Use the SDK's explicit-source discovery and executable declaration
+            # projection, just as its inspection producer does. This reads no
+            # ambient source store and performs no executable/native inspection.
+            from astrid.core.execution.generic_host import _launch_static_records, _binary_requirements
+            records = _launch_static_records(tuple(p.resolve(strict=True) for p in pack_roots), capability_matrix)
+            inspection_required = any(_binary_requirements(record) for record in records.values())
+        if inspection_required:
             from astrid.core.execution.custody_broker import (
                 RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv)
         selected = _selected_profile_payload(profile)
@@ -378,7 +389,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 broker = RoleBoundCustodyBroker(role="host", identity_provider=default_process_identity,
                     ledger_root=scope / "host-admission", authority_scope_root=scope,
                     authority_journal=scope / "admissions.jsonl", owner_epoch=epoch, timeout=min(self.timeout_seconds, 60),
-                    **({"retain_channel": True, "defer_accept": True} if renderer is not None else {}))
+                    **({"retain_channel": True, "defer_accept": True} if inspection_required else {}))
                 hosted = broker.create_hosted_launch(request)
                 parent, activation = hosted.parents['control'], hosted.parents['activation']
                 control_child, activation_child = hosted.children['control'], hosted.children['activation']
@@ -425,20 +436,19 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 environment.update(hosted.environment(mapped_argv, launch_binding=binding_file))
                 environment.update(broker.child_environment(mapped_argv, start_new_session=True))
                 inspection_owner = None
-                if renderer is not None:
+                if inspection_required:
                     from types import SimpleNamespace
                     from astrid.core.execution.custody_broker import _HostInspectionLaunch, _CommandInventoryOwner
                     inspection = _HostInspectionLaunch(
-                        tuple(Path(p) for p in [profile.host_launch["pack_root"],
-                            *(v["path"] for v in profile.host_launch.get("additional_pack_roots", []))]),
+                        pack_roots,
                         Path(self.config["source_checkout"]), environment,
-                        Path(self.config["capability_matrix"]) if self.config.get("capability_matrix") else None,
-                        node_executable=Path(renderer["node_executable"]))
+                        capability_matrix,
+                        node_executable=Path(renderer["node_executable"]) if renderer is not None else None)
                     context = SimpleNamespace(_launch_broker=broker, owner_epoch=epoch, root=scope, process=None)
                     inspection_owner = _CommandInventoryOwner(context, inspection.policy(environment, str(profile.support_root)))
                     environment["ASTRID_COMMAND_CUSTODY_ENABLED"] = "1"
 
-                if renderer is not None:
+                if inspection_required:
                     # Installed-source verification, one-shot claim and fixed
                     # inspection setup precede the existing handshake budget.
                     broker.start_accept()
@@ -456,7 +466,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     inspection_owner.start()
 
                 hosted.close_children()
-                if renderer is not None:
+                if inspection_required:
                     broker.close_child_pipes()
                 binding_file.close()
                 parent.settimeout(self.timeout_seconds); activation.settimeout(self.timeout_seconds)
