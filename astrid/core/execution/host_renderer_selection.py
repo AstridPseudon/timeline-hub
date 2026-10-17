@@ -66,20 +66,29 @@ def renderer_selection_payload(value):
     return json.loads(json.dumps(value))
 
 
-def validate_renderer_selection(value):
+def validate_renderer_selection(value, *, retained=None):
     value = renderer_selection_payload(value)
     for name in ('project', 'installed_project', 'verification_receipt', 'node_executable'):
         _path(value[name])
-    binding = RemotionClosureBinding.admit(**{k: value[k] for k in (
-        'project', 'installed_project', 'verification_receipt', 'receipt_sha256', 'manifest_sha256', 'lock_sha256')})
+    if retained is None:
+        binding = RemotionClosureBinding.admit(**{k: value[k] for k in (
+            'project', 'installed_project', 'verification_receipt', 'receipt_sha256', 'manifest_sha256', 'lock_sha256')})
+    else:
+        # Retain admission facts, never mutable-byte results. Every invocation
+        # below still enumerates the whole installation and hashes every pin.
+        binding = retained
+        if (type(binding) is not RemotionClosureBinding
+                or (str(binding.project), str(binding.installed_project), str(binding.receipt),
+                    binding.receipt_digest, binding.manifest_digest, binding.lock_digest) != tuple(value[k] for k in (
+                        'project', 'installed_project', 'verification_receipt', 'receipt_sha256', 'manifest_sha256', 'lock_sha256'))):
+            raise ValueError('renderer retained selection differs')
     binding.require_retained_transport()
     if _digest([(str(p), h) for p, h in binding.files]) != value['closure_sha256']:
         raise ValueError('renderer selected closure changed')
     # Full executable dependency admission is checked through the original
     # owner's inspection channel after activation. No local inspection fallback.
     pin = FilePin.measure(Path(value['node_executable']))
-    pin.verify()
-    if hashlib.sha256(pin.path.read_bytes()).hexdigest() != value['node_sha256']:
+    if pin.sha256 != 'sha256:' + value['node_sha256']:
         raise ValueError('renderer selected Node changed')
     return binding
 

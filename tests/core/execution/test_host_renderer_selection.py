@@ -123,6 +123,22 @@ def test_identity_payload_survives_byte_drift_so_original_cleanup_can_bind(selec
         selected.validate_renderer_selection(value)
 
 
+@pytest.mark.parametrize('change', [None, 'receipt', 'source', 'new-file', 'binding'])
+def test_retained_admission_still_rechecks_every_byte_and_inventory(selection, monkeypatch, change):
+    from dataclasses import replace
+    value = selection.payload()
+    admitted = selected.validate_renderer_selection(value)
+    monkeypatch.setattr(closure.RemotionClosureBinding, 'admit', lambda **kwargs: pytest.fail('reconstructing retained admission'))
+    if change == 'receipt': admitted.receipt.write_text('changed')
+    elif change == 'source': (admitted.project/'src/astrid-frame-worker.mjs').write_text('changed')
+    elif change == 'new-file': (admitted.installed_project/'node_modules/late.js').write_text('new')
+    elif change == 'binding': admitted = replace(admitted, manifest_digest='0'*64)
+    if change is None:
+        assert selected.validate_renderer_selection(value, retained=admitted) is admitted
+    else:
+        with pytest.raises(ValueError): selected.validate_renderer_selection(value, retained=admitted)
+
+
 def test_installed_pack_revision_never_uses_an_enclosing_repository(tmp_path, monkeypatch):
     from astrid.core.execution import generic_host, custody_broker
     outer=tmp_path/"unselected-repo";(outer/".git").mkdir(parents=True)
