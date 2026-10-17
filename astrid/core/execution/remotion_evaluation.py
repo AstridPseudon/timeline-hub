@@ -130,6 +130,19 @@ class RemotionEvaluationClient:
             closure = self._closure()
             if not isinstance(closure, str) or not closure:
                 raise FrameOwnerError("renderer_closure_unavailable")
+            if scene:
+                projected = json.loads(encoded)
+                projected["scene"]["rendererIdentity"] = closure
+                # The Host/trusted-local owner reads only its already admitted
+                # renderer material. Confined executors never read host paths.
+                fonts = {}
+                if self._selection is None:
+                    for name in ("Gelasio-Regular.woff2", "DepartureMono-Regular.woff2"):
+                        font = self.project / "public" / "fonts" / name
+                        if font.is_file():
+                            fonts[name] = hashlib.sha256(font.read_bytes()).hexdigest()
+                projected["scene"]["fontDigests"] = fonts
+                encoded = json.dumps(projected, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
             key = hashlib.sha256(json.dumps([revision_digest, closure, scene]).encode() + b"\0" + encoded).digest()
             cached = key in self._cache
             if cached and self._selection is None:

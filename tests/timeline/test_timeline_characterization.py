@@ -1,7 +1,7 @@
-"""Characterization test for ``astrid.core.timeline`` before structural migration.
+"""Characterization tests for the canonical ``astrid.core.timeline`` contract.
 
 Pins current behavior of:
-1. The full public ``__all__`` import surface
+1. The full original-run public ``__all__`` import surface
 2. ``Timeline.load`` → ``timeline_config_digest`` stability (golden hash)
 3. ``Timeline.from_config(data).to_json_data()`` output shape and ``from``→``from_``
    serialization round-trip
@@ -35,7 +35,7 @@ class TimelineAllSurfaceTest(unittest.TestCase):
     preserve every name.
     """
 
-    # Golden: sorted __all__ as observed before the structural migration.
+    # Golden: original a046 exports, corrected under plan amendment 127.
     GOLDEN_ALL = sorted(
         [
             "ARRANGEMENT_VERSION",
@@ -159,11 +159,46 @@ class TimelineAllSurfaceTest(unittest.TestCase):
             "validate_timeline",
             "validate_timeline_config_for_container",
             "validate_shot_composition",
+            # Explicit composition exports present at the original source pin.
+            "AUTHORING_BUNDLE_SCHEMA_VERSION",
+            "AuthoringBundleError",
+            "AuthoringCandidateWriter",
+            "CandidateCompilation",
+            "MIGRATION_RECEIPT_TYPE",
+            "MIGRATION_SCHEMA_VERSION",
+            "MigrationAmbiguityError",
+            "MigrationInterruptedError",
+            "MigrationInventory",
+            "MigrationInventoryItem",
+            "MigrationPlan",
+            "MigrationRuntimeUnavailableError",
+            "MigrationSourceChangedError",
+            "RuntimeCompositionMigrationPort",
+            "ShotCompositionMigrationError",
+            "ShotCompositionProjection",
+            "ShotCompositionProjectionError",
+            "UnsupportedAuthoringEditError",
+            "authoring_contract",
+            "authoring_media_inventory",
+            "compile_authoring_candidate",
+            "diff_authoring_candidate",
+            "format_authoring_inspection",
+            "inspect_authoring_candidate",
+            "inventory_legacy_shot_compositions",
+            "migrate_shot_compositions",
+            "open_authoring_bundle",
+            "plan_shot_composition_migration",
+            "preview_authoring_candidate",
+            "project_canonical_shot_composition",
+            "project_shot_composition",
+            "publish_authoring_candidate",
+            "rehearse_shot_composition_migration",
+            "validate_authoring_candidate",
         ]
     )
 
     def test_all_exact_contents(self) -> None:
-        """``__all__`` must match the pre-migration golden list exactly."""
+        """``__all__`` must match the corrected original-run golden list exactly."""
         from astrid.core.timeline import __all__ as timeline_all
 
         self.assertEqual(sorted(timeline_all), self.GOLDEN_ALL)

@@ -1,7 +1,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 import { AbsoluteFill, Freeze, useCurrentFrame } from 'remotion';
-import { composeAnimations, resolveAnimationReferences } from './lib/animations';
-import { animationElapsed, clipOpacity, clipSpeed, cropClipPath, normalizeAnimationRefs, remappedFrame, } from './lib/clip-look';
+import { composeClipAnimationPhase } from './ClipAnimationPhase';
+import { clipOpacity, clipSpeed, cropClipPath, remappedFrame, } from './lib/clip-look';
 import { getClipDurationInFrames } from './lib/duration';
 import { useTheme } from './ThemeContext';
 import { MODIFIER_REGISTRY, composeModifiers } from './modifiers';
@@ -26,32 +26,6 @@ export const composeClipLook = ({ clip, fps, kind, children, modifierRegistry = 
             style.clipPath = clipPath;
         }
     }
-    const wrapPhase = (phase, refsSource, content) => {
-        const refs = normalizeAnimationRefs(refsSource, fps);
-        if (refs === undefined) {
-            return content;
-        }
-        const resolved = resolveAnimationReferences(refs, phase);
-        if (resolved.length === 0) {
-            return content;
-        }
-        const durationFrames = Math.max(...resolved.map((animation) => animation.durationFrames));
-        const explicitZeroBoundary = durationFrames === 0 && resolved.some((animation) => animation.easing !== undefined)
-            && frame === (phase === 'entrance' ? 0 : clipFrames);
-        const elapsedFrames = explicitZeroBoundary ? 0 : animationElapsed(phase, frame, clipFrames, durationFrames);
-        if (elapsedFrames === null) {
-            return content;
-        }
-        return composeAnimations({
-            clip,
-            refs,
-            phase,
-            content,
-            theme,
-            fps,
-            elapsedFrames,
-        });
-    };
     // Spatial crop is already inside VisualClip for media. Move element crop
     // inside the modifier only on the new path; legacy clip tree stays unchanged.
     const elementCrop = kind === 'element' && hasModifiers ? cropClipPath(clip) : undefined;
@@ -71,8 +45,8 @@ export const composeClipLook = ({ clip, fps, kind, children, modifierRegistry = 
     const body = remapElement
         ? _jsx(Freeze, { frame: targetFrame, children: modified })
         : modified;
-    let content = wrapPhase('entrance', clip.entrance, body);
-    content = wrapPhase('exit', clip.exit, content);
+    let content = composeClipAnimationPhase({ clip, fps, theme, clipFrames, phase: 'entrance', reference: clip.entrance, children: body }, frame);
+    content = composeClipAnimationPhase({ clip, fps, theme, clipFrames, phase: 'exit', reference: clip.exit, children: content }, frame);
     return (_jsx(AbsoluteFill, { "data-clip-id": clip.id, style: style, children: content }));
 };
 // A single hook adapter: no modifier component starts another clip clock.

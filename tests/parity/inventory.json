@@ -5294,6 +5294,10 @@
           "kind": "callable",
           "signature": "(self, cut: 'Any', *, why: 'str | None' = None, hold: 'str | bool | None' = None) -> 'dict[str, Any]'"
         },
+        "set_shader_postprocess": {
+          "kind": "callable",
+          "signature": "(self, shader)"
+        },
         "slot_clips": {
           "kind": "callable",
           "signature": "(self, slot_id: 'str') -> 'list[Clip]'"
@@ -5461,6 +5465,10 @@
           "kind": "callable",
           "signature": "(self, source: 'Any') -> \"'Clip'\""
         },
+        "set_continuous": {
+          "kind": "callable",
+          "signature": "(self, **values)"
+        },
         "set_duration": {
           "kind": "callable",
           "signature": "(self, seconds: 'float') -> \"'Clip'\""
@@ -5476,6 +5484,14 @@
         "set_param": {
           "kind": "callable",
           "signature": "(self, path: 'str', value: 'Any') -> \"'Clip'\""
+        },
+        "set_shader": {
+          "kind": "callable",
+          "signature": "(self, shader)"
+        },
+        "set_text": {
+          "kind": "callable",
+          "signature": "(self, *, text, elementRef)"
         },
         "set_track": {
           "kind": "callable",

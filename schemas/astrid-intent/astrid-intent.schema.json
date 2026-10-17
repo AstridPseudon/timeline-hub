@@ -514,7 +514,10 @@
           "minLength": 1
         },
         "occurrence_id": {
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "minLength": 1
         },
         "binding_id": {
@@ -590,19 +593,115 @@
             "lexical_digest"
           ],
           "additionalProperties": false
+        },
+        "take": {
+          "type": "object",
+          "properties": {
+            "speech": {
+              "type": "object",
+              "properties": {
+                "association_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "object_id": {
+                  "type": "string",
+                  "pattern": "^sha256:[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "association_id",
+                "object_id"
+              ],
+              "additionalProperties": false
+            },
+            "speech_words": {
+              "type": "object",
+              "properties": {
+                "association_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "object_id": {
+                  "type": "string",
+                  "pattern": "^sha256:[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "association_id",
+                "object_id"
+              ],
+              "additionalProperties": false
+            },
+            "speech_manifest": {
+              "type": "object",
+              "properties": {
+                "association_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "object_id": {
+                  "type": "string",
+                  "pattern": "^sha256:[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "association_id",
+                "object_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "speech",
+            "speech_words",
+            "speech_manifest"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "revision_id",
         "snapshot_digest",
         "occurrence_id",
-        "binding_id",
-        "content_hash",
         "clip",
         "segment",
         "words"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "binding_id",
+            "content_hash"
+          ],
+          "not": {
+            "required": [
+              "take"
+            ]
+          }
+        },
+        {
+          "required": [
+            "take",
+            "word_producer"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "binding_id"
+                ]
+              },
+              {
+                "required": [
+                  "content_hash"
+                ]
+              }
+            ]
+          }
+        }
+      ]
     }
   }
 }

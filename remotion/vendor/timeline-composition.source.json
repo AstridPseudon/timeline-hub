@@ -1,67 +1,67 @@
 {
   "package": "@banodoco/timeline-composition",
   "package_version": "0.0.7",
-  "source_commit": "0d748b52f460c2ac5b0865a7316c4c05b73e2555",
-  "source_tree": "28817f14126afb9d9dd6a1f8b619e906493b4f31",
-  "source_parent": "df38db31a18ada18d3339959b930e7b6bbbf16ea",
-  "source_branch": "codex/timeline-r4-A-COMPOSITION-UNKNOWN-BOUNDS-PACK-004",
-  "archive": "projects/A-integration/out/A-Composition-unknown-bounds-pack-004/banodoco-timeline-composition-0.0.7.tgz",
-  "archive_bytes": 74276,
-  "archive_sha256": "02500c55dcdc1883e027d89ab42e2426191fad3ab1fdcd08d3fce1ca51f11032",
-  "archive_sha512": "0f7dd333677fae6299d58a6324a6cafdf2b50ed1deb33bafd483e13a16707d553ba4a22c6d2874078bdab1b22df6d5a41a8766d260111e2589ce849d0657eed6",
-  "archive_member_count": 86,
-  "unpacked_bytes": 265158,
-  "npm_shasum": "83cd89c05a0824dc12c2a4d1c9d0a245490d69c3",
-  "npm_integrity": "sha512-D33TM2d/rmKZ1YpjJKbK/fK1DtHeszuv1IPhOhZwfVU7pKIsbSh0B4vasbIt9tWkGodm0mARHiWJzoSdBlfu1g==",
+  "source_commit": "67245fb4f734e2c4d9138e8ab3df87921f51b492",
+  "source_tree": "23854d166c8692bb8c21f1da1f5ae0203215fb98",
+  "source_parent": "f2cf610726410c4bb5d8933f17a85baa23ee252e",
+  "source_branch": "codex/timeline-r4-A-COMPOSITION-EASING-005",
+  "source_baseline": {
+    "kind": "authenticated-npm-package-payload-import",
+    "authenticated_archive_sha256": "02500c55dcdc1883e027d89ab42e2426191fad3ab1fdcd08d3fce1ca51f11032",
+    "initial_commit": "f9da6c0477feb73a7d0f13f37bed3e4861254cd2",
+    "initial_tree": "1d92ed9b6a1a77ee382c84205419e878cf49ef4d",
+    "initial_parent": null,
+    "scope": "Exact package file payload only; former repository history, source tests, and repository metadata were not recovered.",
+    "single_exact_remote_fetch": {
+      "remote": "https://github.com/AstridPseudon/timeline-composition.git",
+      "requested_object": "0d748b52f460c2ac5b0865a7316c4c05b73e2555",
+      "exit_code": 128,
+      "duration_seconds": 0.443874,
+      "stderr_sha256": "5856acfee580161afb16a8d91bf6421b91db7a8cb6b71e07c28ac7de4bfd5029"
+    }
+  },
+  "easing_patch_sha256": "11ea52a2fdcdebf75cf51b492191f5fc7b1f49d021e9bd8cdb7dc793b7c04800",
+  "easing_patch_commit": "f2cf610726410c4bb5d8933f17a85baa23ee252e",
+  "build_commit": "67245fb4f734e2c4d9138e8ab3df87921f51b492",
+  "archive": "projects/A-integration/out/A-COMPOSITION-EASING-RESTORE-005/banodoco-timeline-composition-0.0.7.tgz",
+  "archive_bytes": 74885,
+  "archive_sha256": "724b8818d5787687abfc72be9e9cffc185bcbffa9a122dd0a43750be337f62b6",
+  "archive_sha512": "841d8af8a121cd3c658a36d9d0d6532511da114b5c790d2e31d181bc90b34fafa7f4cbbad96f3610f73c07a532ac36607e5a389bb075f8ec71770d8cf53a7aa5",
+  "archive_member_count": 88,
+  "unpacked_bytes": 267424,
+  "npm_shasum": "40a19a0bc4975baf73ea530ea11d244711fa620d",
+  "npm_integrity": "sha512-hB2K+KEhzTxlijbZ0NZTJRHaEUtceQ0uMdGBvJCzT6+n9Mu62W82EPc8B6UyrDZgflo4m7B1+Oxxdw2M9Tp6pQ==",
   "producer_handback": "projects/I-story-motion-audio/receipts/I-EXT-COMPONENT-UNKNOWN-BOUNDS-006-handback.md",
   "producer_handback_sha256": "ae569f046c193dc87f7b55684239e413e823a527e62877f5695f9a9b822013bd",
-  "build_evidence": "projects/A-integration/evidence/A-Composition-unknown-bounds-pack-004/build-command.json",
-  "build_log_sha256": "9cd4985b3b2a3bacdfb9f0da53937e484b8aabf7ae074175157e0229469d6d7a",
+  "build_evidence": "projects/A-integration/evidence/A-COMPOSITION-EASING-RESTORE-005/emitted-build-comparison.json",
+  "build_log_sha256": "0bc4e461520af70bc35caa36e43d5d7814a79e9ef757ef31b805ecf013d01c6c",
+  "build_exit_code": 2,
+  "build_diagnostic_count": 13,
+  "build_diagnostics_match_inherited_baseline": true,
   "required_ref": "v0.0.7/e2ab21a7",
   "required_ref_authenticated": false,
-  "scope": "Run-local development package built from the exact recorded source commit. The package version does not authenticate equivalence to v0.0.7/e2ab21a7; no release or renderer-equivalence claim.",
+  "scope": "Run-local development package from the truthful parentless import of the authenticated 025 package payload, with the E easing source patch and newly emitted JavaScript. The original T source repository/history and tests were not recovered. This package version does not authenticate equivalence to v0.0.7/e2ab21a7; no release or renderer-equivalence claim.",
   "files": [
     {
-      "path": "typescript/dist/src/lib/animation-easing.js",
-      "bytes": 1743,
-      "sha256": "942f829f7408c9c18fcc29c6f15bc509db89bc5ca156d56a135b2b08f2367e20",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/lib/animation-easing.ts"
+      "path": "README.md",
+      "bytes": 9015,
+      "sha256": "62cf6038fa7b172f2f32271f8c0fb7812ad7e7c1fe25c14062511abc55b9a5c8",
+      "source_git_blob": "6d2f99c45bc1f337253a38a8411de9debe312b54",
+      "emitted_from": null
     },
     {
-      "path": "typescript/dist/src/lib/animation-progress-adapters.js",
-      "bytes": 2584,
-      "sha256": "d503f0cb5322bbacb655a39bf0d517db0f58dd6d150f42ca27ebc183b280dd3b",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/lib/animation-progress-adapters.tsx"
+      "path": "package.json",
+      "bytes": 2886,
+      "sha256": "20b0f15eba3fce002314fb24bba9017c22fd6ab2b72f4931167412e7cec00a7e",
+      "source_git_blob": "896cb93e86617d03f28a2bf02b44757090477367",
+      "emitted_from": null
     },
     {
-      "path": "typescript/dist/src/animations.generated.js",
-      "bytes": 1953,
-      "sha256": "a6a268fc23d2c433844925dc43f36fd2ad96027d35c0b7f3fb2222874dc55f17",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/animations.generated.ts"
-    },
-    {
-      "path": "typescript/dist/src/lib/animations.js",
-      "bytes": 6530,
-      "sha256": "8d7f471843e4c11933260cba85b869c195e9f0359df384b5b2b98fca976fb29e",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/lib/animations.tsx"
-    },
-    {
-      "path": "typescript/dist/src/lib/audio-curves.generated.js",
-      "bytes": 531,
-      "sha256": "3ec5a8fdb8af0042501957e6f70f68f9944be084d1d61b8cc86454557ff80397",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/lib/audio-curves.generated.ts"
-    },
-    {
-      "path": "typescript/dist/src/lib/audio-envelope.js",
-      "bytes": 7611,
-      "sha256": "7610060914b66edeb6a6c48041dd3253b3216a348d37fa673670b235654210da",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/lib/audio-envelope.ts"
+      "path": "scripts/gen-registry.ts",
+      "bytes": 10697,
+      "sha256": "64e0c4aa0f6eac6367cfbbd720d4208706ebd3f804f67f13f9949709ba608d64",
+      "source_git_blob": "a6b5aad0189bb60e665dcec286c8721d7105c0f2",
+      "emitted_from": null
     },
     {
       "path": "typescript/dist/src/AudioTrack.js",
@@ -71,39 +71,53 @@
       "emitted_from": "typescript/src/AudioTrack.tsx"
     },
     {
-      "path": "typescript/dist/src/lib/beat-loop.js",
-      "bytes": 3632,
-      "sha256": "b358dd67e4a1ac73003d16ccd6ab0116943e1f9fa17dfe5af751f7ead71f9632",
+      "path": "typescript/dist/src/ClipAnimationPhase.js",
+      "bytes": 1403,
+      "sha256": "67f532a5ed8289ca3604449a0e7e47a92621f56485d72f24465429c103b871d7",
       "source_git_blob": null,
-      "emitted_from": "typescript/src/lib/beat-loop.ts"
-    },
-    {
-      "path": "typescript/dist/src/lib/clip-look.js",
-      "bytes": 5277,
-      "sha256": "4d7d01fa5c98a4e40ca559fa397dd785c1ab7ececfebb8c8edb7ad0b14d806b3",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/lib/clip-look.ts"
+      "emitted_from": "typescript/src/ClipAnimationPhase.tsx"
     },
     {
       "path": "typescript/dist/src/ClipLook.js",
-      "bytes": 4310,
-      "sha256": "576b213f6df2cdcaae608df7b42bf09a5be74bf3ebc41f3765dd8c07696ff28b",
+      "bytes": 3418,
+      "sha256": "806bce332f34afcf22dc7b53808f19915899a25d2e783f2440770471737f2d3a",
       "source_git_blob": null,
       "emitted_from": "typescript/src/ClipLook.tsx"
     },
     {
-      "path": "typescript/dist/src/lib/duration.js",
-      "bytes": 1077,
-      "sha256": "3688d852aab473d0676d5a53638ac5d4d79cae37ed25b42985178d60940fea1d",
+      "path": "typescript/dist/src/ThemeContext.js",
+      "bytes": 1560,
+      "sha256": "81574f28fca4ea226b136e7405baaf4f0e4871fbc95a467c45e37db7c474d1a5",
       "source_git_blob": null,
-      "emitted_from": "typescript/src/lib/duration.ts"
+      "emitted_from": "typescript/src/ThemeContext.tsx"
     },
     {
-      "path": "typescript/dist/src/lib/effect-params.js",
-      "bytes": 136,
-      "sha256": "34a1fe73b56a421c89c4a4b102ada9e9c879ddab225297b342168df6b591dbc5",
+      "path": "typescript/dist/src/TimelineComposition.js",
+      "bytes": 9135,
+      "sha256": "8ff23d2899250032d4a10f1410e83edcf6334ec406ef3d555c6b257e5f710bd5",
       "source_git_blob": null,
-      "emitted_from": "typescript/src/lib/effect-params.ts"
+      "emitted_from": "typescript/src/TimelineComposition.tsx"
+    },
+    {
+      "path": "typescript/dist/src/TransitionLayer.js",
+      "bytes": 1115,
+      "sha256": "2ff44b1aebcfe4c1332dc8206e876c3db09bf744da276c3f3fb1bc4156f1d505",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/TransitionLayer.tsx"
+    },
+    {
+      "path": "typescript/dist/src/VisualClip.js",
+      "bytes": 4200,
+      "sha256": "ffb7c2798d540b601bd6d073316cf3add9a1566768ab391a20601c60a6dd1031",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/VisualClip.tsx"
+    },
+    {
+      "path": "typescript/dist/src/animations.generated.js",
+      "bytes": 1953,
+      "sha256": "a6a268fc23d2c433844925dc43f36fd2ad96027d35c0b7f3fb2222874dc55f17",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/animations.generated.ts"
     },
     {
       "path": "typescript/dist/src/effects-types.js",
@@ -127,18 +141,81 @@
       "emitted_from": "typescript/src/evaluation.ts"
     },
     {
-      "path": "typescript/dist/src/lib/fade.js",
-      "bytes": 197,
-      "sha256": "e79b7b7404e65b607cc8042b64376d85684babfce41f243ce7cbf51fd0ff886f",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/lib/fade.ts"
-    },
-    {
       "path": "typescript/dist/src/index.js",
       "bytes": 1494,
       "sha256": "a9e12c3716a21da962a1cb640c6d9847ecf10ba904e19b307d1924f4d83bd517",
       "source_git_blob": null,
       "emitted_from": "typescript/src/index.ts"
+    },
+    {
+      "path": "typescript/dist/src/lib/animation-easing.js",
+      "bytes": 1743,
+      "sha256": "942f829f7408c9c18fcc29c6f15bc509db89bc5ca156d56a135b2b08f2367e20",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/lib/animation-easing.ts"
+    },
+    {
+      "path": "typescript/dist/src/lib/animation-progress-adapters.js",
+      "bytes": 2584,
+      "sha256": "d503f0cb5322bbacb655a39bf0d517db0f58dd6d150f42ca27ebc183b280dd3b",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/lib/animation-progress-adapters.tsx"
+    },
+    {
+      "path": "typescript/dist/src/lib/animations.js",
+      "bytes": 6530,
+      "sha256": "8d7f471843e4c11933260cba85b869c195e9f0359df384b5b2b98fca976fb29e",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/lib/animations.tsx"
+    },
+    {
+      "path": "typescript/dist/src/lib/audio-curves.generated.js",
+      "bytes": 531,
+      "sha256": "3ec5a8fdb8af0042501957e6f70f68f9944be084d1d61b8cc86454557ff80397",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/lib/audio-curves.generated.ts"
+    },
+    {
+      "path": "typescript/dist/src/lib/audio-envelope.js",
+      "bytes": 7611,
+      "sha256": "7610060914b66edeb6a6c48041dd3253b3216a348d37fa673670b235654210da",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/lib/audio-envelope.ts"
+    },
+    {
+      "path": "typescript/dist/src/lib/beat-loop.js",
+      "bytes": 3632,
+      "sha256": "b358dd67e4a1ac73003d16ccd6ab0116943e1f9fa17dfe5af751f7ead71f9632",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/lib/beat-loop.ts"
+    },
+    {
+      "path": "typescript/dist/src/lib/clip-look.js",
+      "bytes": 5520,
+      "sha256": "f2a2819d53d787e32cc566c46f059523d04fd3c0efafdc237fa04f2658655248",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/lib/clip-look.ts"
+    },
+    {
+      "path": "typescript/dist/src/lib/duration.js",
+      "bytes": 1077,
+      "sha256": "3688d852aab473d0676d5a53638ac5d4d79cae37ed25b42985178d60940fea1d",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/lib/duration.ts"
+    },
+    {
+      "path": "typescript/dist/src/lib/effect-params.js",
+      "bytes": 136,
+      "sha256": "34a1fe73b56a421c89c4a4b102ada9e9c879ddab225297b342168df6b591dbc5",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/lib/effect-params.ts"
+    },
+    {
+      "path": "typescript/dist/src/lib/fade.js",
+      "bytes": 197,
+      "sha256": "e79b7b7404e65b607cc8042b64376d85684babfce41f243ce7cbf51fd0ff886f",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/lib/fade.ts"
     },
     {
       "path": "typescript/dist/src/lib/keyframe-easing.js",
@@ -169,25 +246,11 @@
       "emitted_from": "typescript/src/lib/modifier-bounds.ts"
     },
     {
-      "path": "typescript/dist/src/modifier-types.js",
-      "bytes": 11,
-      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/modifier-types.ts"
-    },
-    {
       "path": "typescript/dist/src/lib/modifiers.js",
       "bytes": 2289,
       "sha256": "fc8998b1b1d1f356e9fa3b5e46aeae3bf24b0fb4fd6f3d2610c746d0d2b06d31",
       "source_git_blob": null,
       "emitted_from": "typescript/src/lib/modifiers.tsx"
-    },
-    {
-      "path": "typescript/dist/src/modifiers.js",
-      "bytes": 300,
-      "sha256": "1e9e0d8be976e852c9e39b609c44e9feafe8f214071d91beb34b574d2438387f",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/modifiers.ts"
     },
     {
       "path": "typescript/dist/src/lib/motion-curves.generated.js",
@@ -197,46 +260,11 @@
       "emitted_from": "typescript/src/lib/motion-curves.generated.ts"
     },
     {
-      "path": "typescript/dist/src/registry.generated.js",
-      "bytes": 1352,
-      "sha256": "0fee7d7688fcc06a7cf8c973b68e7a0dd11841b4ae150b47e3b3d558d65263ab",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/registry.generated.ts"
-    },
-    {
       "path": "typescript/dist/src/lib/render-bounds.js",
       "bytes": 3833,
       "sha256": "9179da67b6d61861d807aba6a7f6e8516833e75cf00202e03270c45f904a5ed6",
       "source_git_blob": null,
       "emitted_from": "typescript/src/lib/render-bounds.ts"
-    },
-    {
-      "path": "typescript/dist/src/scene-evaluation.js",
-      "bytes": 8442,
-      "sha256": "1682db81e6e1758d6a35cfb58a069a411974bbf2837bec82ccbfd67a36eadb72",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/scene-evaluation.ts"
-    },
-    {
-      "path": "typescript/dist/src/theme-api.js",
-      "bytes": 1448,
-      "sha256": "568e94a25eb9f9e4a59e1448baebab4e7101eb560ca5b7aaf05e6bc08e298be9",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/theme-api.ts"
-    },
-    {
-      "path": "typescript/dist/src/ThemeContext.js",
-      "bytes": 1560,
-      "sha256": "81574f28fca4ea226b136e7405baaf4f0e4871fbc95a467c45e37db7c474d1a5",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/ThemeContext.tsx"
-    },
-    {
-      "path": "typescript/dist/src/TimelineComposition.js",
-      "bytes": 9135,
-      "sha256": "8ff23d2899250032d4a10f1410e83edcf6334ec406ef3d555c6b257e5f710bd5",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/TimelineComposition.tsx"
     },
     {
       "path": "typescript/dist/src/lib/tracks.js",
@@ -260,20 +288,6 @@
       "emitted_from": "typescript/src/lib/transition-spans.ts"
     },
     {
-      "path": "typescript/dist/src/TransitionLayer.js",
-      "bytes": 1115,
-      "sha256": "2ff44b1aebcfe4c1332dc8206e876c3db09bf744da276c3f3fb1bc4156f1d505",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/TransitionLayer.tsx"
-    },
-    {
-      "path": "typescript/dist/src/transitions.generated.js",
-      "bytes": 709,
-      "sha256": "0302db67e377dbfa284dbc5132394afdefb1d0a7acf40108c854f886a1bc45c2",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/transitions.generated.ts"
-    },
-    {
       "path": "typescript/dist/src/lib/transitions.js",
       "bytes": 1740,
       "sha256": "9b29dda493fee6e0ba231a70095b10a8cc9b4973c39ef79c36c4e43dcf493d2c",
@@ -288,13 +302,6 @@
       "emitted_from": "typescript/src/lib/trim.ts"
     },
     {
-      "path": "typescript/dist/src/types.js",
-      "bytes": 501,
-      "sha256": "717c9e9d2b9860a308ec8f520bfa78740287dcaadd2efbed0aa41d351b103f7c",
-      "source_git_blob": null,
-      "emitted_from": "typescript/src/types.ts"
-    },
-    {
       "path": "typescript/dist/src/lib/use-audio-envelope.js",
       "bytes": 3043,
       "sha256": "e7601362f86cabcad24547809a7e775f40335f98daee12757931b6bd548c2d57",
@@ -302,24 +309,136 @@
       "emitted_from": "typescript/src/lib/use-audio-envelope.ts"
     },
     {
-      "path": "typescript/dist/src/VisualClip.js",
-      "bytes": 4200,
-      "sha256": "ffb7c2798d540b601bd6d073316cf3add9a1566768ab391a20601c60a6dd1031",
+      "path": "typescript/dist/src/modifier-types.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
       "source_git_blob": null,
-      "emitted_from": "typescript/src/VisualClip.tsx"
+      "emitted_from": "typescript/src/modifier-types.ts"
     },
     {
-      "path": "package.json",
-      "bytes": 2886,
-      "sha256": "20b0f15eba3fce002314fb24bba9017c22fd6ab2b72f4931167412e7cec00a7e",
-      "source_git_blob": "896cb93e86617d03f28a2bf02b44757090477367",
+      "path": "typescript/dist/src/modifiers.js",
+      "bytes": 300,
+      "sha256": "1e9e0d8be976e852c9e39b609c44e9feafe8f214071d91beb34b574d2438387f",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/modifiers.ts"
+    },
+    {
+      "path": "typescript/dist/src/registry.generated.js",
+      "bytes": 1352,
+      "sha256": "0fee7d7688fcc06a7cf8c973b68e7a0dd11841b4ae150b47e3b3d558d65263ab",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/registry.generated.ts"
+    },
+    {
+      "path": "typescript/dist/src/scene-evaluation.js",
+      "bytes": 8442,
+      "sha256": "1682db81e6e1758d6a35cfb58a069a411974bbf2837bec82ccbfd67a36eadb72",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/scene-evaluation.ts"
+    },
+    {
+      "path": "typescript/dist/src/theme-api.js",
+      "bytes": 1592,
+      "sha256": "0e084d910b22b0b407de15d94239074bc1ddc17ad19d338b458e0b129f42660b",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/theme-api.ts"
+    },
+    {
+      "path": "typescript/dist/src/transitions.generated.js",
+      "bytes": 709,
+      "sha256": "0302db67e377dbfa284dbc5132394afdefb1d0a7acf40108c854f886a1bc45c2",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/transitions.generated.ts"
+    },
+    {
+      "path": "typescript/dist/src/types.js",
+      "bytes": 501,
+      "sha256": "717c9e9d2b9860a308ec8f520bfa78740287dcaadd2efbed0aa41d351b103f7c",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/types.ts"
+    },
+    {
+      "path": "typescript/src/AudioTrack.tsx",
+      "bytes": 1398,
+      "sha256": "d0ebeb67d0395063e3fbf0e51c00c110ef242a6482a0eec26e4007cde5c29f6f",
+      "source_git_blob": "0d9f029cf187bcf5ebdff7c03bb8327a9b32128e",
       "emitted_from": null
     },
     {
-      "path": "README.md",
-      "bytes": 9015,
-      "sha256": "62cf6038fa7b172f2f32271f8c0fb7812ad7e7c1fe25c14062511abc55b9a5c8",
-      "source_git_blob": "6d2f99c45bc1f337253a38a8411de9debe312b54",
+      "path": "typescript/src/ClipAnimationPhase.tsx",
+      "bytes": 1756,
+      "sha256": "c5028619097ebda3cf8bbeb473601141aff28efcd841b6181add1b62bcd58930",
+      "source_git_blob": "e5045055bf94361f7e31a60ea61fd475cd8ee40a",
+      "emitted_from": null
+    },
+    {
+      "path": "typescript/src/ClipLook.tsx",
+      "bytes": 4028,
+      "sha256": "881ad45c10e46d0f4098eee5278b79e402db9ab24a15edbde995f9f596f6b06f",
+      "source_git_blob": "669626e46f8bca7231684639958dca5b13463cf5",
+      "emitted_from": null
+    },
+    {
+      "path": "typescript/src/ThemeContext.tsx",
+      "bytes": 2184,
+      "sha256": "1a3c296f40fdb16525ca47cb23994e40306834a4baf433021f6b642fa6966ab0",
+      "source_git_blob": "4ab483832e090d3368a92431ffbd321addf3e044",
+      "emitted_from": null
+    },
+    {
+      "path": "typescript/src/TimelineComposition.tsx",
+      "bytes": 11412,
+      "sha256": "cfa6a3ea508a780dcbad715f66681ee09a570bb8abfaae172bc8d0f6266742dc",
+      "source_git_blob": "a0797f8f448456c87df230a5848ee664c5375cc1",
+      "emitted_from": null
+    },
+    {
+      "path": "typescript/src/TransitionLayer.tsx",
+      "bytes": 1190,
+      "sha256": "5f59b306bf372ffa999a5a7b2b3d3847862ca2975cf27f7e8c95d44e280ca50d",
+      "source_git_blob": "0136856848340b2443fde9575fff96e1004043f5",
+      "emitted_from": null
+    },
+    {
+      "path": "typescript/src/VisualClip.tsx",
+      "bytes": 4364,
+      "sha256": "531b49da2eb115113d86d6cccfb4dc0d73b2d68d311a75839a303d1f77545914",
+      "source_git_blob": "5b6c59c05056d522cf4ec8ac5158f7dda3b2ce4b",
+      "emitted_from": null
+    },
+    {
+      "path": "typescript/src/animations.generated.ts",
+      "bytes": 2142,
+      "sha256": "955a4f4ee61be7fcdba5d94f4061eaff2027964c99c6eefcffae6caa6ad7d93b",
+      "source_git_blob": "6017bbb403dd216d91a2b7ff867d5ab623068ab8",
+      "emitted_from": null
+    },
+    {
+      "path": "typescript/src/effects-types.ts",
+      "bytes": 3566,
+      "sha256": "188befad0958fac6fc3aa63b90c91894edde78ac5df2bca8718e7dfef84905b3",
+      "source_git_blob": "457aa44658f5d23b1df9a8055280c53d727890be",
+      "emitted_from": null
+    },
+    {
+      "path": "typescript/src/effects.generated.ts",
+      "bytes": 503,
+      "sha256": "0836c9e8d77434c8f49612ff2fd53e3a2a6d657afbcecddc604052eb8a78fc9b",
+      "source_git_blob": "60550cac94d49c251e80d61c9e59d1d65daa71b3",
+      "emitted_from": null
+    },
+    {
+      "path": "typescript/src/evaluation.ts",
+      "bytes": 3689,
+      "sha256": "e3b86a9a51e3a6a6a66360e050b16b877844dc07d210828d72a7ad64190021ca",
+      "source_git_blob": "45fbe1c190433e67a9670ddaafd3cbc1b737c996",
+      "emitted_from": null
+    },
+    {
+      "path": "typescript/src/index.ts",
+      "bytes": 2388,
+      "sha256": "c0cd486aa25b6fbc47def0041866858657e91416847fa2625501eead66cdb4fa",
+      "source_git_blob": "8df8ffdf07e2fd5395c828ccc16e94dfaf17fb10",
       "emitted_from": null
     },
     {
@@ -330,10 +449,17 @@
       "emitted_from": null
     },
     {
-      "path": "typescript/src/animations.generated.ts",
-      "bytes": 2142,
-      "sha256": "955a4f4ee61be7fcdba5d94f4061eaff2027964c99c6eefcffae6caa6ad7d93b",
-      "source_git_blob": "6017bbb403dd216d91a2b7ff867d5ab623068ab8",
+      "path": "typescript/src/lib/animation-progress-adapters.tsx",
+      "bytes": 2567,
+      "sha256": "67c17bbeadc876ec4a384adcec1fc3e3960b053e0a490d176fb138da7e2dd1fd",
+      "source_git_blob": "31e9c29ac637a23c3bbf088d6c83cd764127b936",
+      "emitted_from": null
+    },
+    {
+      "path": "typescript/src/lib/animations.tsx",
+      "bytes": 7867,
+      "sha256": "10e77a3b79baf58793a35d7b896b5eabd46be42ef200f8b63bb8e52c2be780bb",
+      "source_git_blob": "07128b1d66d174a383ef77f156207c536cba8f5a",
       "emitted_from": null
     },
     {
@@ -359,9 +485,9 @@
     },
     {
       "path": "typescript/src/lib/clip-look.ts",
-      "bytes": 6203,
-      "sha256": "d258be5a5618a2c75153098e0996fc6fb935a3a73b0416fdd011343ed34f31e2",
-      "source_git_blob": "360d0571abc04a03b442c70e054815067fa05071",
+      "bytes": 6438,
+      "sha256": "1aa9855f2325ac79385c6a0577680fa5ee8b6ccd7ddb82329c6e4b1959127cb5",
+      "source_git_blob": "c195e411620dfc7cfc865af43f67d9b8c2073d4c",
       "emitted_from": null
     },
     {
@@ -379,45 +505,10 @@
       "emitted_from": null
     },
     {
-      "path": "typescript/src/effects-types.ts",
-      "bytes": 3566,
-      "sha256": "188befad0958fac6fc3aa63b90c91894edde78ac5df2bca8718e7dfef84905b3",
-      "source_git_blob": "457aa44658f5d23b1df9a8055280c53d727890be",
-      "emitted_from": null
-    },
-    {
-      "path": "typescript/src/effects.generated.ts",
-      "bytes": 503,
-      "sha256": "0836c9e8d77434c8f49612ff2fd53e3a2a6d657afbcecddc604052eb8a78fc9b",
-      "source_git_blob": "60550cac94d49c251e80d61c9e59d1d65daa71b3",
-      "emitted_from": null
-    },
-    {
-      "path": "typescript/src/evaluation.ts",
-      "bytes": 3689,
-      "sha256": "e3b86a9a51e3a6a6a66360e050b16b877844dc07d210828d72a7ad64190021ca",
-      "source_git_blob": "45fbe1c190433e67a9670ddaafd3cbc1b737c996",
-      "emitted_from": null
-    },
-    {
       "path": "typescript/src/lib/fade.ts",
       "bytes": 266,
       "sha256": "4b7fcbd7fd1e1185047946c31973556af0e9efcd32a984d04efffbff284dc738",
       "source_git_blob": "041d4c12f1d8e9f6050a470ede0ad5cff5986e70",
-      "emitted_from": null
-    },
-    {
-      "path": "scripts/gen-registry.ts",
-      "bytes": 10697,
-      "sha256": "64e0c4aa0f6eac6367cfbbd720d4208706ebd3f804f67f13f9949709ba608d64",
-      "source_git_blob": "a6b5aad0189bb60e665dcec286c8721d7105c0f2",
-      "emitted_from": null
-    },
-    {
-      "path": "typescript/src/index.ts",
-      "bytes": 2388,
-      "sha256": "c0cd486aa25b6fbc47def0041866858657e91416847fa2625501eead66cdb4fa",
-      "source_git_blob": "8df8ffdf07e2fd5395c828ccc16e94dfaf17fb10",
       "emitted_from": null
     },
     {
@@ -449,17 +540,10 @@
       "emitted_from": null
     },
     {
-      "path": "typescript/src/modifier-types.ts",
-      "bytes": 2314,
-      "sha256": "671a29878ef8f81cc26fc64b585a0871cddf506954af3232a27e5e889cce8189",
-      "source_git_blob": "1499374a8983bf13db0253803e02d2a69aca6a93",
-      "emitted_from": null
-    },
-    {
-      "path": "typescript/src/modifiers.ts",
-      "bytes": 566,
-      "sha256": "b0b0c0f5d2adc0ba6c6c101dd9b93a09ee8ef0134e06e5ce3231747d1fd07ad1",
-      "source_git_blob": "9d147ee539ce5fc6158d47632b0d6877eb4a2a60",
+      "path": "typescript/src/lib/modifiers.tsx",
+      "bytes": 2601,
+      "sha256": "3d0c1b7d4d8dce6944145771c7c86ec8a0c0eeeb0c56f954429bc1a62053a599",
+      "source_git_blob": "5a343cf70ee5611dba59adf84306ae08ebb3688e",
       "emitted_from": null
     },
     {
@@ -470,38 +554,10 @@
       "emitted_from": null
     },
     {
-      "path": "typescript/src/registry.generated.ts",
-      "bytes": 1582,
-      "sha256": "b796c22ce6b53bdc2cd58e8a0d5ad5c54211b19693e247ecfb23474ae6c26365",
-      "source_git_blob": "bf5394b9fd984f9398765f50cc10b4660527658c",
-      "emitted_from": null
-    },
-    {
-      "path": "typescript/src/remotion-timer-compat.d.ts",
-      "bytes": 123,
-      "sha256": "146d912cf2bbb127cf0f96d27ab2c8cd33925ddbc385b23dc0b6e5ecd1dec8c9",
-      "source_git_blob": "f406eeceb62540c193fb426327aff60e9a1e8aad",
-      "emitted_from": null
-    },
-    {
       "path": "typescript/src/lib/render-bounds.ts",
       "bytes": 4606,
       "sha256": "ee5c4c7cab0ca0e398504fb4601e4cd7223f02d8dc5079da2bdcb719e4a5d11f",
       "source_git_blob": "146f0802e74814eebb38fcb2c4df6a37aa2169d5",
-      "emitted_from": null
-    },
-    {
-      "path": "typescript/src/scene-evaluation.ts",
-      "bytes": 9615,
-      "sha256": "8e4b4fd46e45212575cd7fe19ec20bdfd94d09d0306181635e985c0aaffac8b4",
-      "source_git_blob": "f74e84006a2c111a809aaa862b5ca545ce55b07c",
-      "emitted_from": null
-    },
-    {
-      "path": "typescript/src/theme-api.ts",
-      "bytes": 2709,
-      "sha256": "a57b35011fba91c0d30562391b39975250e7d6514d64eb2b80f9d136ae7c1f90",
-      "source_git_blob": "fc937aa5775fa7b11cbbb58cb7fb23ae17395d5c",
       "emitted_from": null
     },
     {
@@ -526,10 +582,10 @@
       "emitted_from": null
     },
     {
-      "path": "typescript/src/transitions.generated.ts",
-      "bytes": 1001,
-      "sha256": "deacf5761a2bcc59021842010791acf3b22bcac64eb082b1203654ba6ce11b8b",
-      "source_git_blob": "a58cf260193c0f46eced4217646cf6d6bf3b488f",
+      "path": "typescript/src/lib/transitions.tsx",
+      "bytes": 2393,
+      "sha256": "45a19d86f76547539d7f8cbf1926f573d239a653c98b6e4b2ceeb0efde640de9",
+      "source_git_blob": "3883368da0d3d1dfe5f16dc5f5b08feff9316992",
       "emitted_from": null
     },
     {
@@ -540,13 +596,6 @@
       "emitted_from": null
     },
     {
-      "path": "typescript/src/types.ts",
-      "bytes": 3027,
-      "sha256": "53cd9035c1a9a323f465fd8b917d8d2ef34a5338d1064d3d444dfd993246c7ca",
-      "source_git_blob": "298fbdb908202e29e81b1abd0087cd2e424cd44b",
-      "emitted_from": null
-    },
-    {
       "path": "typescript/src/lib/use-audio-envelope.ts",
       "bytes": 2868,
       "sha256": "a5cdf397358c6f3141c913ee75f4f48c3b328cdf46e1d904c8da5c7d992e8e61",
@@ -554,73 +603,59 @@
       "emitted_from": null
     },
     {
-      "path": "typescript/src/lib/animation-progress-adapters.tsx",
-      "bytes": 2567,
-      "sha256": "67c17bbeadc876ec4a384adcec1fc3e3960b053e0a490d176fb138da7e2dd1fd",
-      "source_git_blob": "31e9c29ac637a23c3bbf088d6c83cd764127b936",
+      "path": "typescript/src/modifier-types.ts",
+      "bytes": 2314,
+      "sha256": "671a29878ef8f81cc26fc64b585a0871cddf506954af3232a27e5e889cce8189",
+      "source_git_blob": "1499374a8983bf13db0253803e02d2a69aca6a93",
       "emitted_from": null
     },
     {
-      "path": "typescript/src/lib/animations.tsx",
-      "bytes": 7867,
-      "sha256": "10e77a3b79baf58793a35d7b896b5eabd46be42ef200f8b63bb8e52c2be780bb",
-      "source_git_blob": "07128b1d66d174a383ef77f156207c536cba8f5a",
+      "path": "typescript/src/modifiers.ts",
+      "bytes": 566,
+      "sha256": "b0b0c0f5d2adc0ba6c6c101dd9b93a09ee8ef0134e06e5ce3231747d1fd07ad1",
+      "source_git_blob": "9d147ee539ce5fc6158d47632b0d6877eb4a2a60",
       "emitted_from": null
     },
     {
-      "path": "typescript/src/AudioTrack.tsx",
-      "bytes": 1398,
-      "sha256": "d0ebeb67d0395063e3fbf0e51c00c110ef242a6482a0eec26e4007cde5c29f6f",
-      "source_git_blob": "0d9f029cf187bcf5ebdff7c03bb8327a9b32128e",
+      "path": "typescript/src/registry.generated.ts",
+      "bytes": 1582,
+      "sha256": "b796c22ce6b53bdc2cd58e8a0d5ad5c54211b19693e247ecfb23474ae6c26365",
+      "source_git_blob": "bf5394b9fd984f9398765f50cc10b4660527658c",
       "emitted_from": null
     },
     {
-      "path": "typescript/src/ClipLook.tsx",
-      "bytes": 4859,
-      "sha256": "372b355119a106c6ec986f8982a779a2f33580423068a03cc73011180c3f6af1",
-      "source_git_blob": "22e90ee783228759ce7015ab107fd2724e9da7ed",
+      "path": "typescript/src/remotion-timer-compat.d.ts",
+      "bytes": 123,
+      "sha256": "146d912cf2bbb127cf0f96d27ab2c8cd33925ddbc385b23dc0b6e5ecd1dec8c9",
+      "source_git_blob": "f406eeceb62540c193fb426327aff60e9a1e8aad",
       "emitted_from": null
     },
     {
-      "path": "typescript/src/lib/modifiers.tsx",
-      "bytes": 2601,
-      "sha256": "3d0c1b7d4d8dce6944145771c7c86ec8a0c0eeeb0c56f954429bc1a62053a599",
-      "source_git_blob": "5a343cf70ee5611dba59adf84306ae08ebb3688e",
+      "path": "typescript/src/scene-evaluation.ts",
+      "bytes": 9615,
+      "sha256": "8e4b4fd46e45212575cd7fe19ec20bdfd94d09d0306181635e985c0aaffac8b4",
+      "source_git_blob": "f74e84006a2c111a809aaa862b5ca545ce55b07c",
       "emitted_from": null
     },
     {
-      "path": "typescript/src/ThemeContext.tsx",
-      "bytes": 2184,
-      "sha256": "1a3c296f40fdb16525ca47cb23994e40306834a4baf433021f6b642fa6966ab0",
-      "source_git_blob": "4ab483832e090d3368a92431ffbd321addf3e044",
+      "path": "typescript/src/theme-api.ts",
+      "bytes": 2917,
+      "sha256": "ee5d091d41d77d87b33cab42e418aff480fda208a3270d19b648a2433027664b",
+      "source_git_blob": "4bbd4db683effbc3e45887b86b5794831d722251",
       "emitted_from": null
     },
     {
-      "path": "typescript/src/TimelineComposition.tsx",
-      "bytes": 11412,
-      "sha256": "cfa6a3ea508a780dcbad715f66681ee09a570bb8abfaae172bc8d0f6266742dc",
-      "source_git_blob": "a0797f8f448456c87df230a5848ee664c5375cc1",
+      "path": "typescript/src/transitions.generated.ts",
+      "bytes": 1001,
+      "sha256": "deacf5761a2bcc59021842010791acf3b22bcac64eb082b1203654ba6ce11b8b",
+      "source_git_blob": "a58cf260193c0f46eced4217646cf6d6bf3b488f",
       "emitted_from": null
     },
     {
-      "path": "typescript/src/TransitionLayer.tsx",
-      "bytes": 1190,
-      "sha256": "5f59b306bf372ffa999a5a7b2b3d3847862ca2975cf27f7e8c95d44e280ca50d",
-      "source_git_blob": "0136856848340b2443fde9575fff96e1004043f5",
-      "emitted_from": null
-    },
-    {
-      "path": "typescript/src/lib/transitions.tsx",
-      "bytes": 2393,
-      "sha256": "45a19d86f76547539d7f8cbf1926f573d239a653c98b6e4b2ceeb0efde640de9",
-      "source_git_blob": "3883368da0d3d1dfe5f16dc5f5b08feff9316992",
-      "emitted_from": null
-    },
-    {
-      "path": "typescript/src/VisualClip.tsx",
-      "bytes": 4364,
-      "sha256": "531b49da2eb115113d86d6cccfb4dc0d73b2d68d311a75839a303d1f77545914",
-      "source_git_blob": "5b6c59c05056d522cf4ec8ac5158f7dda3b2ce4b",
+      "path": "typescript/src/types.ts",
+      "bytes": 3027,
+      "sha256": "53cd9035c1a9a323f465fd8b917d8d2ef34a5338d1064d3d444dfd993246c7ca",
+      "source_git_blob": "298fbdb908202e29e81b1abd0087cd2e424cd44b",
       "emitted_from": null
     }
   ]

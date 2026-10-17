@@ -530,20 +530,27 @@ Checkout.copy_lint = copy_lint
 # (save, undo, redo, publish, draft/discard) keep their existing storage boundaries.
 from astrid.sdk.timeline import commands as _commands
 from astrid.sdk.timeline.composite_effects import set_fade, set_transition  # noqa: E402
+from astrid.sdk.timeline.continuous import set_continuous  # noqa: E402
 from astrid.sdk.timeline.music_beds import source_edit as _composite_source_edit  # noqa: E402
 
 Clip.set_fade = _composite_source_edit(set_fade)
 Clip.set_transition = _composite_source_edit(set_transition)
+Clip.set_continuous = _composite_source_edit(set_continuous)
+
+from astrid.sdk.timeline.shader_slots import set_shader, set_shader_postprocess  # noqa: E402
+
+Clip.set_shader = _composite_source_edit(set_shader)
+Checkout.set_shader_postprocess = set_shader_postprocess
 
 _commands.register(Clip, "clip", (
     "on", "until", "enter_at", "nudge", "hold_for", "for_", "set_duration", "trim", "slip", "extend", "end_at",
     "declare_quotes", "set", "set_param", "clear", "set_track", "clear_asset", "swap_asset", "set_beats", "keyframe_at",
-    "remove", "remove_layer", "keep", "set_look", "set_fade", "set_transition", "tag", "move_to_cut"))
+    "remove", "remove_layer", "keep", "set_look", "set_fade", "set_transition", "set_continuous", "set_shader", "tag", "move_to_cut"))
 Checkout.register_asset = _commands.register_asset
 _commands.register(Checkout, "timeline", (
     "add", "ripple_delete", "close_gap", "insert_time", "insert_line", "remove_line", "apply_script",
     "fill_slot", "fill_standins", "declare_gaps", "adopt", "add_cut", "set_cut_note", "replace_asset",
-    "reflow", "retime", "resolve", "film_end", "batch", "edit_flags", "register_asset"))
+    "reflow", "retime", "resolve", "film_end", "batch", "edit_flags", "register_asset", "set_shader_postprocess"))
 _commands.register(Cut, "cut", ("split", "set_note", "shorten", "lift", "move"))
 _commands.register(StepSequence, "sequence", ("fit",))
 _commands.register(Voice, "voice", ("replace", "set_gap_after"))
@@ -555,6 +562,10 @@ _commands.REGISTRY["timeline.split"] = _commands.Operation("timeline.split", "cl
 _commands.REGISTRY["timeline.remove"] = _commands.Operation("timeline.remove", "track", "remove", _commands.remove_track)
 _commands.REGISTRY["timeline.set"] = _commands.Operation("timeline.set", "track", "set", _commands.set_track)
 _commands.REGISTRY["timeline.reorder"] = _commands.Operation("timeline.reorder", "track", "reorder", _commands.reorder_tracks)
+
+from astrid.sdk.timeline.overhang import convert as _convert_overhang  # noqa: E402
+
+_commands.REGISTRY["clip.overhang-to-hold"] = _commands.Operation("clip.overhang-to-hold", "clip", "overhang_to_hold", _convert_overhang)
 
 # Preserve A's admitted canonical publication inverse adapter.
 from astrid.sdk.timeline.inverse import apply_inverse as _apply_inverse  # noqa: E402
@@ -576,3 +587,8 @@ _register_transcript_commands()
 
 Checkout.restructure = _restructure
 _commands.register(Checkout, "timeline", ("restructure",))
+
+from astrid.sdk.timeline.manual_text import set_text as _set_manual_text  # noqa: E402
+
+Clip.set_text = _composite_source_edit(_set_manual_text)
+_commands.register(Clip, "clip", ("set_text",))

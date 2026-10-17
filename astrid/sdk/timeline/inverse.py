@@ -376,6 +376,12 @@ def apply_inverse(self, writes, publication):
             raise commands.SemanticConflict("same-property", sid, path, write["before"], current, write["after"])
     from astrid.sdk.timeline.identity import cut_reservations, retain_cut_reservation_mark
     reservations = cut_reservations(tl.bundle)
+    # Keep the exact guarded owner before a collection-absence write can remove
+    # its storage. Delete tracks only after the inverse has removed/moved its
+    # own clips; any remaining authored users belong to work it cannot discard.
+    deleted_tracks = {w["id"]: (w, commands.track_owner(tl, w["id"])) for w in writes
+                      if not w["path"] and "/track:" in w["id"]
+                      and w["before"]["state"] == "present" and w["after"]["state"] == "absent"}
     handled = _music_writes(tl, writes, states)
     for index, write in enumerate(writes):
         if index in handled:
@@ -389,7 +395,8 @@ def apply_inverse(self, writes, publication):
             if path == "track_order" and "/track:" in write["id"]:
                 continue  # restore collection members before their guarded order
             elif not path:
-                _root(tl, write)
+                if write["id"] not in deleted_tracks:
+                    _root(tl, write)
             elif write["id"] == "parent" and path == "storage_policy":
                 if write["after"]["state"] == "absent":
                     tl.bundle.pop("storage_policy", None)
@@ -403,6 +410,19 @@ def apply_inverse(self, writes, publication):
                 _write(_entity(tl, write["id"]), path, write["after"])
         except (KeyError, IndexError, TypeError, AttributeError) as exc:
             raise commands.CommandError(f"inverse path is unavailable: {write['id']}.{path}") from exc
+    for write, owner in deleted_tracks.values():
+        users = commands.track_users(tl, owner)
+        if owner.shot_id is None:
+            # Child clips (including zero-output music sources) can inherit a
+            # canonical parent lane without a duplicate child track row.
+            current = commands.entity_states(tl)
+            users.extend(sid for sid, payload in current.items()
+                         if sid.startswith("occurrence:") and "/clip:" in sid
+                         and payload.get("track") == owner.id
+                         and sid.split("/clip:", 1)[0] + "/track:" + owner.id not in current)
+        if users:
+            raise commands.CommandError(f"Track {owner.scoped_id} is occupied by {', '.join(sorted(set(users)))}; inverse rolled back")
+        _root(tl, write)
     from astrid.sdk.timeline.transcripts import validate_bound_dependencies
     validate_bound_dependencies(tl)
     for write in writes:
@@ -438,10 +458,12 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
     from astrid.sdk.timeline.checkout import Checkout
     desired = {}
     materializers = set()
+    presence_guards = set()
     for index, value in enumerate(calls):
         call = commands.EditCommand.coerce(value)
         if any(getattr(call, key) is None for key in ("expect", "authorship", "bindings", "created")):
             raise commands.CommandError("publication lacks recorded command preconditions")
+        presence_guards.update(commands._position_reset_guards(call))
         if call.op in {"timeline.reflow", "timeline.retime", "timeline.resolve"}:
             materializers.add(index)
         for key, state in call.expect.items():
@@ -520,7 +542,8 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
     states = commands.entity_states(Checkout(copy.deepcopy(after)))
     writes = [dict(id=sid, path=path, before=commands.state_at(states, sid, path), after=state)
               for (sid, path), state in sorted(desired.items())]
-    writes = [w for w in writes if not (w["before"] == w["after"] == {"state": "absent"})]
+    writes = [w for w in writes if (w["id"], w["path"]) in presence_guards or
+              not (w["before"] == w["after"] == {"state": "absent"})]
     from astrid.sdk.timeline.shot_groups import PREFIX, groups, identity
     group_order = [identity({k: r[k] for k in ("shotId", "trackId")}) for r in groups(original_tl)]
     for write in writes:

@@ -213,6 +213,38 @@ def declare_keyframe_origin(clip: Mapping[str, Any], source: str) -> dict[str, A
     return dict(clip, keyframeOrigin=origin)
 
 
+def app_keyframes(clip: Mapping[str, Any], values: Mapping[str, Any]) -> dict[str, Any]:
+    """The App inspector's complete top-level pair, in its existing seconds clock.
+
+    Keys have no identity beyond parameter name and authored array position.
+    Validate the known App shape while copying opaque per-key siblings verbatim.
+    """
+    schema = {
+        "type": "object", "required": ["keyframes", "keyframeOrigin"],
+        "additionalProperties": False,
+        "properties": {
+            "keyframeOrigin": {"type": "number"},
+            "keyframes": {"type": "object", "additionalProperties": {
+                "type": "array", "items": {
+                    "type": "object", "required": ["time", "value", "interpolation"],
+                    "properties": {
+                        "time": {"type": "number"},
+                        "value": {"type": ["number", "string", "boolean"]},
+                        "interpolation": {"enum": ["linear", "hold"]},
+                        "easing": {"type": "string"},
+                    },
+                    "additionalProperties": True,
+                },
+            }},
+        },
+    }
+    _validate_composite(schema, values)
+    origin = declare_keyframe_origin(clip, "app-seconds")["keyframeOrigin"]
+    if values["keyframeOrigin"] != origin:
+        raise ClipFieldError("App keyframes must retain the declared app-seconds keyframeOrigin")
+    return {**copy.deepcopy(dict(clip)), **copy.deepcopy(dict(values))}
+
+
 @dataclass(frozen=True)
 class FieldSpec:
     name: str
@@ -287,6 +319,13 @@ def _load() -> tuple[Mapping[str, FieldSpec], frozenset[str]]:
 
 
 FIELDS: Mapping[str, FieldSpec] = _load()[0]
+
+# One ordinary clip.clear with these declared names resets App clip geometry.
+# Names differ from element parameters; storage paths still come only from YAML.
+POSITION_RESET_FIELDS = (
+    "position_x", "position_y", "position_width", "position_height",
+    "crop_top", "crop_bottom", "crop_left", "crop_right",
+)
 
 
 def fields() -> dict[str, FieldSpec]:

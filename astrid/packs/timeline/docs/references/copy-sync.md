@@ -29,15 +29,23 @@ bundle's script binding descriptors and actual word/take producers. It performs
 no remote or media reads. `snapshot_kind: detached-document-sha256` explicitly
 identifies the hash of this local document; it is not Runtime's independently
 read `snapshot_digest`. `revision_id` identifies the checkout's pinned base.
-Missing revision, binding identity, transcript, or occurrence identity produces
+Missing revision, producer identity, transcript, or occurrence identity produces
 unavailable evidence. Authored script text awaiting a matching transcript also
 reports unavailable. A separately obtained `read_composition_script` result is
 never asserted to share the word read's snapshot.
 
-A source association includes the binding/content pin and `word_producer`:
+A legacy source association includes its binding/content pin. Managed narration
+instead captures the existing `take` references (`speech`, `speech_words`, and
+`speech_manifest`); it does not fabricate a retired text binding. Parent managed
+lines use a null occurrence and their existing parent ScopedId. A typed transcript
+binding never falls back to its clip word cache when its pinned snapshot is absent
+from this detached reader.
+
+Both forms include `word_producer`:
 existing scoped speech clip, exact word-row digest, normalized whole-line digest,
-and the actual asset dependency from this same document. Word IDs use F's
-`segment:index` generator over the actual occurrence's time-ordered word read;
+and the actual asset dependency from this same document. Managed word reads retain
+F's opaque IDs and trim/speed/placement conversion through the existing source
+clock. Legacy word IDs use F's `segment:index` generator over the actual occurrence's time-ordered word read;
 occurrence, producer clip, line and captured text are essential parts of identity.
 The legacy global lookup's collapsed repeated-placement clocks are not used to
 choose an occurrence. These ordinals are not durable cross-edit identities.
@@ -89,6 +97,9 @@ Logical runs follow only forced correspondence across all optimal exact-word
 alignments. A unique insertion before a phrase can shift its word indices safely.
 Replacement, deletion, broken contiguity, changed occurrence/line, or lexical
 display changes report `COPY_STALE`; unresolved repetitions require rebinding.
+Managed script commands refuse ambiguous quoted-word correspondence atomically,
+preserving the document and history. Both managed and legacy commands run the same
+COPY-SYNC boundary hook. Unchanged dependencies do not refresh captured provenance.
 `copy_quote_tracking` stores command-owned correspondence/invalidation evidence
 keyed by the declaration's content digest. It never rewrites the declaration or
 its captured basis. Durable invalidation prevents a later reintroduced phrase

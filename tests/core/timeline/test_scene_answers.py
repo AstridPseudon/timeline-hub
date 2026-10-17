@@ -221,3 +221,93 @@ def test_disposable_blank_plate_checkout_uses_shared_evaluation_answer(owner, mo
     assert {span.content for span in spans} == {"EMPTY"}
     assert blocking and "only a background" in blocking[0]
     assert calls and all("scene" in props for _identity, props in calls)
+
+
+@pytest.mark.parametrize(
+    ("content", "expected", "options", "exit_code"),
+    [
+        ("EMPTY", "only a background", (), 0),
+        ("EMPTY", "only a background", ("--json",), 0),
+        ("CONTENT", None, (), 0),
+        ("EMPTY", "only a background", ("--only", "EMPTY", "--strict"), 1),
+        ("EMPTY", None, ("--only", "SAFE"), 0),
+    ],
+)
+def test_registered_lint_consumes_shared_evaluation_answer(
+    owner, monkeypatch, capsys, content, expected, options, exit_code
+):
+    """The registered timelines lint handler reports shared EMPTY answers and keeps clean scenes quiet."""
+    from types import SimpleNamespace
+
+    from astrid.packs.timeline import cli
+    from tests.sdk.test_timeline_reflow_golden import film
+
+    client, calls, _files = owner
+
+    def controlled_request(identity, request, parser):
+        props = json.loads(Path(request["propsPath"]).read_text(encoding="utf-8"))
+        scene_payload = props["scene"]
+        clip_ids = [str(clip["id"]) for clip in scene_payload["timeline"]["clips"]]
+        calls.append((identity, props))
+        return {
+            "ok": True,
+            "evaluation": [
+                {
+                    "frame": frame,
+                    "coverage": "COVERED",
+                    "content": content,
+                    "findings": [],
+                    "layers": [
+                        {"clipId": clip_id, "visible": True, "bounds": {"status": "unknown"}, "findings": []}
+                        for clip_id in clip_ids
+                    ],
+                }
+                for frame in props["frames"]
+            ],
+        }
+
+    monkeypatch.setattr(client._client, "request", controlled_request)
+    bundle = film()
+    internal = bundle["shots"]["F"]["internal_timeline"]
+    internal["tracks"] = [{"id": "plate", "kind": "visual"}]
+    internal["clips"] = [{
+        "id": "disposable-blank",
+        "clipType": "test-card",
+        "track": "plate",
+        "at": 0.0,
+        "hold": 9.0,
+        "params": {},
+        "app": {"cut": "c01", "layer": "picture"},
+    }]
+    internal["registry"] = {"assets": {}}
+
+    # Parse through the product parser and invoke the registered lint handler with an
+    # isolated bundle client; no project store or runtime film is read.
+    parsed = cli.build_parser(None).parse_args(
+        ["lint", "t", "--project", "P", "--published", "--no-rules", *options]
+    )
+
+    class Timelines:
+        def open_bundle(self, project, ref, revision_id=None):
+            return SimpleNamespace(
+                ok=True,
+                data={"bundle": copy.deepcopy(bundle), "timeline_id": "t", "revision_id": "disposable"},
+                error=None,
+                receipt=None,
+                idempotency_key=None,
+            )
+
+    parsed.client = SimpleNamespace(timelines=Timelines())
+    assert parsed.handler(parsed) == exit_code
+    output = capsys.readouterr().out
+    assert calls and all("scene" in props for _identity, props in calls)
+    assert "UNEXPECTED" not in output
+    if "--json" in options:
+        empty = next(finding for finding in json.loads(output)["data"]["findings"]
+                     if finding["code"] == "EMPTY")
+        assert expected in empty["message"] and empty["severity"] == "error"
+        return
+    if expected:
+        assert "EMPTY" in output and expected in output
+    else:
+        assert "EMPTY" not in output

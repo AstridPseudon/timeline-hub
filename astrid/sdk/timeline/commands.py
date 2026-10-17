@@ -153,16 +153,30 @@ def _adapter(entry):
             return entry.handler(owner, *args, **kwargs)
         choices = kwargs.pop("relation_choices", None)
         bound = _signature(entry.handler).bind(owner, *args, **kwargs)
-        arguments = {key: _plain(value) for key, value in bound.arguments.items() if key not in {"self", "client"}}
+        arguments = {key: (copy.deepcopy(value) if entry.op == "clip.set-continuous"
+                           or (entry.op in {"clip.set-shader", "timeline.set-shader-postprocess"} and key == "shader")
+                           else _plain(value))
+                     for key, value in bound.arguments.items() if key not in {"self", "client"}}
         if any(p.kind == p.VAR_KEYWORD for p in _signature(entry.handler).parameters.values()):
             for key, p in _signature(entry.handler).parameters.items():
                 if p.kind == p.VAR_KEYWORD:
                     arguments.update(arguments.pop(key, {}))
+        app_keys = entry.op == "clip.set" and bool({"keyframes", "keyframeOrigin"} & kwargs.keys())
+        if app_keys:
+            arguments = copy.deepcopy(kwargs)  # opaque App keys must bypass numeric/unit normalization
         select = None if entry.kind == "timeline" else str(
             getattr(owner, "id", None) or getattr(owner, "segment", None) or getattr(owner, "seq_id", ""))
         if choices is not None:
             arguments["relation_choices"] = choices
         command = EditCommand.coerce(dict(op=entry.op, select=select, args=arguments))
+        if app_keys:
+            select = scoped_clip(tl, owner)
+            states = entity_states(tl)
+            command = replace(command, select=select, expect={path: state_at(states, select, path)
+                                                              for path in ("keyframes", "keyframeOrigin")})
+        if entry.op in {"clip.set-shader", "timeline.set-shader-postprocess"}:
+            from astrid.sdk.timeline.shader_slots import capture_expectations
+            command = replace(command, expect=capture_expectations(tl, owner, entry))
         if entry.op == "timeline.restructure":
             run(tl, command)  # same no-write refusal/no-op policy as CLI and COMMIT
             return owner
@@ -176,11 +190,18 @@ def _adapter(entry):
 def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     if getattr(tl._open_edit, "cancelled", False):
         return owner
-    if (entry.op in {"clip.set-fade", "clip.set-transition"} and owner is None
+    app_keys = entry.op == "clip.set" and bool({"keyframes", "keyframeOrigin"} & command.args.keys())
+    if ((entry.op in {"clip.set-fade", "clip.set-transition", "clip.set-continuous", "clip.set-shader", "clip.set-text"} or app_keys) and owner is None
             and (not command.select or not is_scoped_id(command.select) or "/clip:" not in command.select)):
         raise CommandError(f"{entry.op} requires an exact clip ScopedId")
+    if (entry.op == "clip.set-shader" and owner is None and command.resolved
+            and command.resolved != (command.select,)):
+        raise CommandError("clip shader selector and recorded owner disagree")
     if entry.op == "timeline.add" and ("media" in command.args or isinstance(command.args.get("track"), Mapping)):
         entry = replace(entry, kind="track", handler=add_project_media if "media" in command.args else add_track)
+    if entry.op == "timeline.add" and "text" in command.args:
+        from astrid.sdk.timeline.manual_text import add as add_manual_text
+        entry = replace(entry, handler=add_manual_text)
     duplicate_source = None
     if entry.op == "timeline.add" and "from" in command.args:
         entry = replace(entry, handler=duplicate_clip_source)
@@ -251,6 +272,15 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     from astrid.sdk.timeline.identity import cut_reservations, retain_cut_reservation_mark
     previous_reservations = cut_reservations(tl.bundle)
     before_entities = entity_states(tl)
+    if app_keys:
+        from astrid.core.timeline import clip_fields as cf
+        if not all(any(write_target(key, selected) == (selected[0], path)
+                       for key in command.expect or {}) for path in ("keyframes", "keyframeOrigin")):
+            raise CommandError("App keyframes require tagged before expectations for the complete pair")
+        try:
+            cf.app_keyframes(owner.data, command.args)
+        except cf.ClipFieldError as exc:
+            raise CommandError(str(exc)) from None
     if entry.op == "cut.move":
         # Geometry and membership are inputs to a grouped translation. Rebase
         # must not silently translate a different set or changed layer offsets.
@@ -294,6 +324,12 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     if entry.op in {"shot-group.set", "shot-group.remove"}:
         from astrid.sdk.timeline.shot_groups import guard
         command = guard(tl, command)
+    if entry.op == "clip.overhang-to-hold":
+        from astrid.sdk.timeline.overhang import guard
+        command = guard(tl, command, owner, before_entities)
+    if entry.op == "clip.set-text" or (entry.op == "timeline.add" and "text" in command.args):
+        from astrid.sdk.timeline.manual_text import guard as guard_manual_text
+        command = guard_manual_text(tl, command, owner, before_entities)
     if entry.kind == "track":
         command = guard_track_call(tl, command, owner)
     from astrid.sdk.timeline import relations
@@ -306,6 +342,12 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             return owner
     if entry.op == "clip.set-transition":
         from astrid.sdk.timeline.composite_effects import guard_call
+        command = guard_call(tl, command, owner, before_entities, selected)
+    if entry.op == "clip.set-continuous":
+        from astrid.sdk.timeline.continuous import guard_call
+        command = guard_call(command, before_entities, selected, sdk=sdk_args is not None)
+    if entry.op in {"clip.set-shader", "timeline.set-shader-postprocess"}:
+        from astrid.sdk.timeline.shader_slots import guard_call
         command = guard_call(tl, command, owner, before_entities, selected)
     if (entry.op == "timeline.apply-script" and isinstance(command.args.get("spec"), Mapping)
             and command.args["spec"].get("version") == 1):
@@ -352,10 +394,23 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     for key, value in bound.arguments.items():
         if key in {"self", "client"}:
             continue
-        if sig.parameters[key].kind == inspect.Parameter.VAR_KEYWORD:
+        if ((entry.op == "timeline.inverse" and key == "writes")
+                or (entry.op in {"clip.set-shader", "timeline.set-shader-postprocess"} and key == "shader")
+                or entry.op == "clip.set-text" or (entry.op == "timeline.add" and "text" in command.args)):
+            # Inverse receipts and App shader/text payloads are literal authored JSON.
+            # Preserve opaque values and numeric identity (6.0/6).
+            # Keep _plain and the operation/request digest contracts unchanged.
+            canonical[key] = copy.deepcopy(value)
+        elif entry.op == "clip.set-continuous" and sig.parameters[key].kind == inspect.Parameter.VAR_KEYWORD:
+            # The full App slot and parameter payloads are literal authored
+            # JSON; recorded replay must retain opaque 1.0 versus 1 too.
+            canonical.update(copy.deepcopy(value))
+        elif sig.parameters[key].kind == inspect.Parameter.VAR_KEYWORD:
             canonical.update(_plain(value))
         else:
             canonical[key] = _plain(value)
+    if app_keys:
+        canonical = copy.deepcopy(dict(command.args))
     if entry.kind in {"shot", "occurrence"} or entry.op.startswith("shot-group."):
         canonical = {key: value for key, value in canonical.items() if value is not None}
     if relation_choices is not None:
@@ -405,7 +460,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         getattr(recording_owner, "id", None) or getattr(recording_owner, "segment", None) or getattr(recording_owner, "seq_id", None) or command.select)
     if entry.kind == "track":
         selector = owner.scoped_id
-    if entry.op in {"clip.set-fade", "clip.set-transition"}:
+    if entry.op in {"clip.set-fade", "clip.set-transition", "clip.set-continuous", "clip.set-shader", "clip.set-text", "clip.overhang-to-hold"} or app_keys:
         selector = selected[0]
     recorded = replace(command, select=selector, args=canonical, version=command.version or TOOL_VERSION,
                        resolved=resolved)
@@ -459,6 +514,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             result = entry.handler(owner, *sdk_args[0], **sdk_args[1]) if sdk_args is not None else entry.handler(owner, *positional, **args)
         if relation_state:
             relations.finish(tl, relation_state)
+        if entry.op == "clip.overhang-to-hold":
+            from astrid.sdk.timeline.overhang import validate_result
+            validate_result(owner, result, canonical)
         tl._active_relation_choices = []
         if entry.op == "timeline.inverse":
             undo_media_registry_consequences(tl, before_entities)
@@ -869,7 +927,8 @@ def entity_states(tl):
             projection=adopted_projection)
     # Carrier storage is represented once under its authored owner. The parent
     # snapshot must not claim a second authored entity for the same source.
-    app = result["parent"].get("config", {}).get("app", {}).get("astrid", {})
+    stored_app = result["parent"].get("config", {}).get("app")
+    app = ({} if stored_app is None else stored_app).get("astrid", {})
     # Sources live only in the owner-scoped view, but the authored collection's
     # presence is independent state. Keep its shell so causal recording can
     # distinguish enrollment into an absent collection from an authored {}.
@@ -943,6 +1002,8 @@ def changed_paths(before, after):
 
 
 def state_at(entities, sid, path):
+    if path == "group_order" and sid.startswith("parent/shot-group:"):
+        return dict(state="present", value=[key for key in entities if key.startswith("parent/shot-group:")])
     if path.startswith("clip_order[") and "/clip:" in sid:
         from astrid.sdk.timeline.shot_groups import order_state
         return order_state(entities, sid, path)
@@ -1022,11 +1083,34 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
     if entry.op == "occurrence.set":
         from astrid.sdk.timeline.graph_commands import PLACEMENT_PATHS
         return {(selected[0], PLACEMENT_PATHS[k]) for k in args.get("placement") or {}}
+    if entry.op == "clip.set" and {"keyframes", "keyframeOrigin"} & args.keys():
+        return {(selected[0], path) for path in ("keyframes", "keyframeOrigin")}
     if entry.op == "clip.set-fade":
         from astrid.sdk.timeline.composite_effects import direct_paths as fade_paths
         return fade_paths(selected[0], args, before[selected[0]])
+    if entry.op == "clip.set-text":
+        from astrid.sdk.timeline.manual_text import direct_paths as text_paths
+        return text_paths(selected[0], before[selected[0]])
     if entry.op == "clip.set-transition":
         return {(selected[0], path) for path in ("transition", "elementRef")}
+    if entry.op == "clip.set-continuous":
+        return {(selected[0], "continuous")}
+    if entry.op in {"clip.set-shader", "timeline.set-shader-postprocess"}:
+        from astrid.sdk.timeline.shader_slots import direct_paths as shader_paths
+        return shader_paths(entry.op, selected, before)
+    if entry.op == "clip.detach-audio":
+        # The handler authors the allocated child, including its complete copied
+        # payload. The enclosing clips array remains a storage consequence.
+        return {(selected[0], "volume")} | {
+            (sid, "") for sid in set(after) - set(before) if "/clip:" in sid}
+    if entry.op == "clip.overhang-to-hold":
+        return {(selected[0], "to"), (args["child"], "")} | {
+            (selected[0], path) for path in ("hold", "intent.for")
+            if state_at(before, selected[0], path) != state_at(after, selected[0], path)} | {
+            # Detach authors an absolute start even when 7 -> 7.0 compares
+            # equal. Its inverse needs the original literal cached clock too.
+            (row["target"], "at") for row in args.get("relation_choices", [])
+            if row["choice"] == "detach" and row["edge"] in {"start", "sequence"}}
     if entry.op == "clip.remove" and selected and "music_bed" in before.get(selected[0], {}):
         return {(selected[0], ""), (selected[0], "music_bed")}
     if entry.op == "timeline.inverse":
@@ -1242,6 +1326,23 @@ def capture_changed_bindings(tl, before, after, bindings):
                 capture_binding(tl, expr["moment"], clip, bindings)
 
 
+def _position_reset_guards(call):
+    """Keep all eight explicit reset guards, including absent -> absent.
+
+    A reset owns absence of every field, so a receipt-only inverse/redo must
+    retain the same guarded paths even when some fields were already absent.
+    Other clears and inverse families keep their existing receipt behavior.
+    """
+    if call.op not in {"clip.clear", "timeline.inverse"}:
+        return set()
+    from astrid.core.timeline import clip_fields as cf
+    paths = {cf.FIELDS[key].stored_at for key in cf.POSITION_RESET_FIELDS}
+    direct = {write_target(key, call.resolved) for key, kind in (call.authorship or {}).items()
+              if kind == "direct"}
+    owners = {sid for sid, _ in direct if "/clip:" in sid}
+    return {(sid, path) for sid in owners if all((sid, path) in direct for path in paths) for path in paths}
+
+
 def finish_recording(tl, tx, entry):
     """Attribute compiler output using actual compiled prefixes of this execution.
 
@@ -1299,8 +1400,10 @@ def finish_recording(tl, tx, entry):
         authorship[key] = kind
         tx.calls[cause] = replace(call, authorship=authorship)
         recorded_path = path
-        if (path.startswith("modifiers[") or call.op in {"clip.set-fade", "clip.set-transition", "timeline.register-asset"}) and kind != "direct":
-            # A whole-instance/params replacement owns its changed descendants.
+        if (path.startswith("modifiers[") or call.op in {"clip.set-fade", "clip.set-transition", "clip.set-continuous", "clip.set-shader", "timeline.set-shader-postprocess", "clip.set-text", "timeline.register-asset", "timeline.inverse"}
+                or (call.op == "clip.set" and "keyframes" in call.args)) and kind != "direct":
+            # A whole-instance/params replacement (including inverse restore)
+            # owns its changed descendants.
             # Keep the original explicit guard path in the call so authenticated
             # replay checks exactly the same direct-write set.
             parents = []
@@ -1318,6 +1421,35 @@ def finish_recording(tl, tx, entry):
                 direct.append(write)
         else:
             consequences.append({**write, "cause": cause})
+    # Track order is a synthetic authored property: entity_states preserves
+    # collection iteration order, but changed_paths only sees stored payloads.
+    # Use the executed call's explicit authorship, never its aggregate config
+    # consequence, to include the complete guarded permutation in the receipt.
+    for call in tx.calls:
+        for sid, path in sorted(_position_reset_guards(call)):
+            write = dict(id=sid, path=path, before=state_at(original, sid, path),
+                         after=state_at(final, sid, path))
+            if write not in direct:
+                direct.append(write)
+        for key, kind in (call.authorship or {}).items():
+            sid, path = write_target(key, call.resolved)
+            if kind != "direct" or path != "track_order" or "/track:" not in sid:
+                continue
+            old, new = state_at(original, sid, path), state_at(final, sid, path)
+            write = dict(id=sid, path=path, before=old, after=new)
+            if not _same_value(old, new) and write not in direct:
+                direct.append(write)
+    # The App inspector authors the pair even when the retained origin is equal.
+    # Include both tagged writes; history can then recover the complete clock.
+    for call in tx.calls:
+        if call.op != "clip.set" or "keyframes" not in call.args:
+            continue
+        for path in ("keyframes", "keyframeOrigin"):
+            sid = call.resolved[0]
+            write = dict(id=sid, path=path, before=state_at(original, sid, path),
+                         after=state_at(final, sid, path))
+            if write not in direct:
+                direct.append(write)
     tx.direct_writes, tx.consequences = direct, consequences
 
 

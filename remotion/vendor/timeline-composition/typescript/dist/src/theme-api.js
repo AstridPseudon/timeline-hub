@@ -20,3 +20,5 @@ export { MODIFIER_REGISTRY, composeModifiers, declareModifier, ModifierAdmission
 export { mediaModifierBounds } from './lib/modifier-bounds';
 export { interpolateKeyframeInterval } from './lib/keyframe-easing';
 export { motionCurveName, motionCurveProgress, motionCurveInverse } from './lib/motion-curves.generated';
+export { ClipAnimationPhase, composeClipAnimationPhase } from './ClipAnimationPhase';
+export { normalizeAnimationRefs } from './lib/clip-look';

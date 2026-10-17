@@ -293,8 +293,15 @@ def resolve(moment: Moment | str, ctx: Context, *, in_point: bool = False) -> fl
         if not hits:
             raise MomentError(_missing(m, ctx.words()))
         if m.n is None and len(hits) > 1:
-            where = "; ".join(f'"{m.text}" in {h[0].segment}' + (f" #{k}" if sum(1 for x in hits if x[0].segment == h[0].segment) > 1 else "")
-                              + f" at {h[0].start:.2f} s" for k, h in enumerate(hits, 1))
+            seen, choices = {}, []
+            for h in hits:
+                line = h[0].segment
+                seen[line] = seen.get(line, 0) + 1
+                choice = f'"{m.text}" in {line}'
+                if sum(1 for x in hits if x[0].segment == line) > 1:
+                    choice += f" #{seen[line]}"
+                choices.append(choice + f" at {h[0].start:.2f} s")
+            where = "; ".join(choices)
             raise MomentError(f'"{m.text}" is spoken {len(hits)} times: {where}. Say which (add in <line> or #n).')
         if m.n is not None and not 1 <= m.n <= len(hits):
             raise MomentError(f'"{m.text}" is spoken {len(hits)} time(s){" in " + m.line if m.line else ""}; #{m.n} does not exist')
@@ -308,7 +315,10 @@ def resolve(moment: Moment | str, ctx: Context, *, in_point: bool = False) -> fl
         t = ctx.clip_edge(m.clip, m.kind.split("_")[1])
     elif m.kind in ("beat", "downbeat"):
         base = resolve(m.base, ctx) if m.base else 0.0
-        beats = list(ctx.beats(m.kind))
+        # A checkout can select the authored bed covering the resolved base.
+        # Standalone contexts already supply a single grid.
+        scoped = getattr(ctx, "beats_at", None)
+        beats = list(scoped(m.kind, base) if scoped is not None else ctx.beats(m.kind))
         # a beat on the base's own frame is ON it, not after (or before) it: count from the next one
         near = 0.5 / float(ctx.fps or 30)
         pool = [b for b in beats if b > base + near] if m.direction == "after" else [b for b in reversed(beats) if b < base - near]

@@ -31,7 +31,7 @@ def _predecessor(clip, values, trial):
     tl = clip._tl
     if clip.is_audio or not clip.track:
         raise TimelineEditError("transition requires a visual track")
-    tracks = [r for r in tl._internal(clip.shot_id).get("tracks", []) if r.get("id") == clip.track]
+    tracks = [r for r in tl._tracks(clip.shot_id) if r.get("id") == clip.track]
     if len(tracks) != 1 or tracks[0].get("kind") != "visual":
         raise TimelineEditError("transition requires an exact declared visual track")
     sid = commands.scoped_clip(tl, clip)

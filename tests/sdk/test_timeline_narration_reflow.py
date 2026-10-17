@@ -455,7 +455,10 @@ def test_saved_managed_edit_reload_publish_and_lost_response_retry_use_original_
     result = Checkout.load(draft.path).publish(client=client)
     assert result["status"] == "accepted"
     assert len(runtime.publications) == 1
-    assert runtime.calls[0][0] == runtime.calls[1][0]
+    # The current transport records its authenticated preview separately from
+    # normal COMMIT traffic. Compare the actual accepted request and replay.
+    assert [json.loads(call[0])["dry_run"] for call in runtime.calls] == [True, False, False]
+    assert len(runtime.commits) == 2 and runtime.commits[0][0] == runtime.commits[1][0]
     loaded = Checkout.load(draft.path)
     assert intent.line_take(narration.line_clips(loaded)["occurrence:occ-A/clip:a-vo"].data) == a["refs"]
 

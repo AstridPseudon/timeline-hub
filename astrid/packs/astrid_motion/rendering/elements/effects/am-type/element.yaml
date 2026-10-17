@@ -22,6 +22,11 @@ metadata:
   description: Editorial headline or label with masked slide-up, stepped typewriter reveal, and emphasis word.
   whenToUse: Use for a headline, a specimen label or a short caption on a motion shot. Use font display for headlines and label for uppercase mono captions. Put one word in italicWord for the site's rust emphasis, and use underlineWord with underlineAt for the orange flash.
   role: "label"
+  scene_capability:
+    version: 1
+    export: prepareSceneCapability
+    bounds: conservative
+    opaque_support: none
   text: ["text"]
   summary: "{text}"
   geometry: {"position":["x","y"],"scale":"size","full_frame":false}
@@ -39,7 +44,7 @@ defaults:
   tracking: -0.01
   lineHeight: 0.95
 dependencies:
-  js_packages: []
+  js_packages: ["@remotion/layout-utils", "react-dom"]
   python_requirements: []
 schema:
   type: object
@@ -56,6 +61,11 @@ schema:
     font:
       type: string
       enum: [display, label]
+    fontFamily:
+      type: string
+      description: Explicit CSS family for inline App text; geometry comes from the canonical clip.
+    bold: {type: boolean}
+    italic: {type: boolean}
     size: {type: number, exclusiveMinimum: 0, description: Canvas px.}
     color: {type: string}
     align:

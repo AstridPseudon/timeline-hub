@@ -13,7 +13,7 @@ import type {
   TimelineThemeOverrides,
   VisualOverrides,
 } from './types.augmentations';
-import {FontProvider} from './fonts';
+import {FontProvider, loadLocalFonts} from './fonts';
 import {ReviewOverlay} from './ReviewOverlay';
 import {FrameDiagnostics} from './FrameDiagnostics';
 import {BoundsProbe} from './BoundsProbe';
@@ -172,7 +172,7 @@ export const Root = (): ReactElement => {
         id="AstridTrackEvaluation"
         component={TrackEvaluation}
         defaultProps={{spans: [], transitions: [], frames: [0]}}
-        calculateMetadata={evaluationMetadata}
+        calculateMetadata={async args => {await loadLocalFonts(); return evaluationMetadata(args);}}
         width={1}
         height={1}
         fps={30}

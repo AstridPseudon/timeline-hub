@@ -4,7 +4,6 @@ from __future__ import annotations
 import copy
 import json
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
@@ -46,66 +45,81 @@ def assert_opaque(bundle, expected):
 
 
 def test_collision_lifecycle(tmp_path, monkeypatch):
+    # Reuse the saved producer's disposable Runtime boundary double. Its real
+    # COMMIT service compiles, merges and acknowledges immutable revisions.
+    from test_timeline_saved_publish import RuntimeFixture, edit
+
+    from astrid.core.timeline import scene_answers
+    from astrid.sdk.timeline import journal, saved_publish
+    from astrid.sdk.timeline.saved_intent import SavedIntentError, read_saved_calls
+
     monkeypatch.setenv('BANODOCO_LOCAL_DATA_ROOT', str(tmp_path))
     # Pixel measurement is a media-service concern, outside JSON preservation.
     monkeypatch.setattr(Checkout, '_native_outline_integrity', lambda *a: None)
-    path = tmp_path / 'drafts' / 'disposable.json'
-    path.parent.mkdir()
-    expected = collision_bundle()
-    path.write_text(_serialize(expected))
-    tl = Checkout.load(path)
-    assert_opaque(tl.document(), expected)
-    tl.save(quiet=True)
-    assert_opaque(Checkout.load(path).document(), expected)
 
-    # Concurrent working-copy merge uses the real save, merge and undo paths.
-    other = Checkout.load(path)
-    tl.bundle['shots']['A']['internal_timeline']['clips'][1]['params']['x'] = 42
+    class SceneClient:
+        def query_scene(self, *, revision_digest, scene, frames):
+            return [dict(frame=frame, coverage='COVERED', content='CONTENT', findings=[], layers=[])
+                    for frame in frames]
+
+    scene_client = SceneClient()
+    monkeypatch.setattr(scene_answers, '_client', lambda: scene_client)
+    expected = collision_bundle()
+    runtime = RuntimeFixture(expected)
+    client = runtime.client()
+    monkeypatch.setattr(store, 'resolve_ids', lambda *a, **k: ('p', 't', runtime.current))
+    monkeypatch.setattr(store, 'fetch_bundle', lambda *a, **k: saved_publish._exact(
+        client, dict(project_id='p', timeline_id='t'), k.get('revision_id') or runtime.current))
+    # Raw working-copy saves retain their own JSON merge/undo lifecycle. Keep
+    # this draft distinct from publication, which requires journaled commands.
+    local = Checkout.draft('p', 't', 'merge-collision', client=client)
+    before_local_x = local.clip('c1.rocket').get('x')
+    other = Checkout.load(local.path)
+    local.bundle['shots']['A']['internal_timeline']['clips'][1]['params']['x'] = 42
     other.bundle['shots']['B']['internal_timeline']['clips'][1]['params']['text'] = 'Other'
     other.save(quiet=True)
-    tl.save(quiet=True)
-    assert tl.merged
-    assert_opaque(tl.document(), expected)
-    tl.undo()
-    assert_opaque(tl.document(), expected)
+    local.save(quiet=True)
+    assert local.merged
+    assert_opaque(Checkout.load(local.path).document(), expected)
+    local.undo()
+    assert_opaque(Checkout.load(local.path).document(), expected)
+    assert local.clip('c1.rocket').get('x') == before_local_x
+    assert local.bundle['shots']['B']['internal_timeline']['clips'][1]['params']['text'] == 'Other'
 
-    # Only the runtime transport is fake. Exercise Checkout.publish and compilation,
-    # real store merge, then reset/reopen from the disposable fake head.
-    state = {'head': copy.deepcopy(expected)}
-    state['head']['base_parent']['revision_id'] = 'concurrent-disposable-head'
-    monkeypatch.setattr(store, 'fetch_bundle', lambda *a, **k: copy.deepcopy(state['head']))
-    client = SimpleNamespace(timelines=SimpleNamespace(open_composition=lambda *a, **k:
-        SimpleNamespace(ok=True, data={'summary': {'head_revision_id': state['head']['base_parent']['revision_id']}})))
-    import astrid.sdk.authoring_bundle as authoring
-    import astrid.sdk.autobootstrap as bootstrap
-    import astrid.sdk.workspace_client as workspace
-    monkeypatch.setattr(bootstrap, 'ensure_runtime', lambda **k: {'endpoint': 'disposable', 'credential_file': str(tmp_path/'unused')})
-    monkeypatch.setattr(workspace, 'resolve_runtime_connection', lambda *a: ('disposable', 'fake'))
-    publications = []
-
-    class Transport:
-        def publish_parent_composition(self, project, timeline, publication, **kwargs):
-            publications.append(copy.deepcopy(publication))
-            assert publication['parent_composition']['clips'][0]['app'] == expected['parent']['clips'][0]['app']
-            return {'new_head': 'published-disposable-head'}
-
-    monkeypatch.setattr(workspace, 'WorkspaceClient', lambda *a: Transport())
-    real_publish = authoring.publish_authoring_candidate
-
-    def publish(candidate, writer, **kwargs):
-        assert_opaque(candidate, expected)
-        result = real_publish(candidate, writer, **kwargs)
-        state['head'] = copy.deepcopy(candidate)
-        state['head']['base_parent']['revision_id'] = 'published-disposable-head'
-        return result
-
-    monkeypatch.setattr(authoring, 'publish_authoring_candidate', publish)
-    tl.bundle['shots']['A']['internal_timeline']['clips'][1]['params']['x'] = 43
-    receipt = tl.publish('H-DATA disposable fixture', client=client)
-    assert receipt['new_head'] == 'published-disposable-head'
-    assert len(publications) == 1
-    assert_opaque(Checkout.open('disposable', 'disposable', client=client).document(), expected)
+    tl = Checkout.draft('p', 't', 'disposable', client=client)
+    path = tl.path
+    assert path == store.draft_path('p', 't', 'disposable')
     assert_opaque(Checkout.load(path).document(), expected)
+    tl.save(quiet=True)
+    assert_opaque(Checkout.load(path).document(), expected)
+
+    # A copy of valid saved bytes still cannot publish from an arbitrary path.
+    arbitrary = tmp_path / 'disposable.json'
+    arbitrary.write_bytes(path.read_bytes())
+    before = path.read_bytes(), journal.journal_path('p', 't').read_bytes()
+    with pytest.raises(SavedIntentError, match='exact saved canonical draft path'):
+        Checkout.load(arbitrary).publish()
+    assert (path.read_bytes(), journal.journal_path('p', 't').read_bytes()) == before
+    assert not runtime.calls
+
+    # Real saved commands merge a disjoint concurrent Runtime head at COMMIT.
+    competing = Checkout.draft('p', 't', 'competing', client=client)
+    edit(competing, y=180)
+    assert competing.publish(client=client)['status'] == 'accepted'
+    edit(tl, x=90)
+    assert read_saved_calls(Checkout.load(path))
+    receipt = Checkout.load(path).publish('H-DATA disposable fixture', client=client)
+    assert receipt['status'] == 'accepted' and receipt['local_state'] == 'finalized'
+    assert receipt['accepted_revision_id'] == runtime.current
+    assert len(runtime.publications) == 2
+    tl = Checkout.load(path)
+    assert_opaque(tl.document(), expected)
+    reopened = Checkout.open('p', 't', client=client)
+    assert_opaque(reopened.document(), expected)
+    assert reopened.clip('c1.rocket').get('x') == 90
+    assert reopened.clip('c1.rocket').get('y') == 180
+    assert read_saved_calls(tl) == ()
+
 
 
 def test_migration_parent_collisions_and_exact_byte_idempotence():

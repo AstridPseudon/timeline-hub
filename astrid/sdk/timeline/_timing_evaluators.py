@@ -10,20 +10,37 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from astrid.core.timeline import moments as mo
-from astrid.core.timeline.music_edit import plan_keep_end
-from astrid.core.timeline.music_bed import _bar_len, _bed_clusters
-from astrid.sdk import timeline_intent as intent
 from astrid.core.timeline.cuts import (
     clip_duration,
 )
-
-from astrid.sdk.timeline._common import (LOGICAL_PX, TimelineEditError, _norm, _num, _r)
-from astrid.sdk.timeline.doc import (_clock, _get_path, _post, _read_words, _row_start, _set_length, _set_path, _set_row_start, _split_audio, _trim_end, _trim_front)
-from astrid.sdk.timeline.model import (Clip, Voice, Word, _MomentContext, music_keyword, music_policy, retime_scope)
+from astrid.core.timeline.music_bed import _bar_len, _bed_clusters
+from astrid.core.timeline.music_edit import plan_keep_end
+from astrid.sdk import timeline_intent as intent
+from astrid.sdk.timeline._common import LOGICAL_PX, TimelineEditError, _norm, _num, _r
+from astrid.sdk.timeline.doc import (
+    _clock,
+    _post,
+    _read_words,
+    _row_start,
+    _set_length,
+    _set_path,
+    _set_row_start,
+    _split_audio,
+    _trim_end,
+    _trim_front,
+)
+from astrid.sdk.timeline.model import (
+    Clip,
+    Voice,
+    Word,
+    _MomentContext,
+    music_keyword,
+    music_policy,
+    retime_scope,
+)
 from astrid.sdk.timeline.selection import Selection
 from astrid.sdk.timeline.sequence_fit import allocate_fit_frames, fit_curve_inverse
-from astrid.sdk.timeline.units import (_unit_path, element_units, mark_offset_canvas)
-
+from astrid.sdk.timeline.units import _unit_path, element_units, mark_offset_canvas
 
 _EPS = 1e-6
 
@@ -323,13 +340,15 @@ class _TimingEvaluators:
         report names every such line. The script's ``voice``/``rate`` are TTS settings: re-flow reads
         only ``id``, ``text`` and ``gap_after_s`` (and the takes' words).
         """
+        from astrid.sdk.timeline.copy_sync import after_script
+        copy_before = copy.deepcopy(self.bundle)
         if isinstance(spec, dict) and "version" in spec and "lines" in spec:
             from astrid.sdk.timeline.narration import apply_prepared
             if takes is not None:
                 raise TimelineEditError("managed reflow takes are immutable references, not local paths")
-            return apply_prepared(self, spec)
-        from astrid.sdk.timeline.copy_sync import after_script
-        copy_before = copy.deepcopy(self.bundle)
+            report = apply_prepared(self, spec) + after_script(self, copy_before, refuse_ambiguous=True)
+            self.report = report
+            return report
         path = Path(spec).expanduser() if isinstance(spec, (str, Path)) else None
         data = json.loads(path.read_text(encoding="utf-8")) if path else dict(spec)
         if data.get("version") == 1 and "lines" in data:
@@ -642,52 +661,8 @@ class _TimingEvaluators:
                 for mate in clip._sequence_mates():
                     intent.set_orphan(mate.data, f"ORPHAN: {text} lost its bound source word")
                 return None
-            pinned = self._pin_nearest(text, clip)
-            if pinned is not None:
-                field = "on" if intent.on(clip.data) == text else "until"
-                (intent.set_on if field == "on" else intent.set_until)(clip.data, pinned)
-                self.notes.append(f"{clip.address}: {text} is now said more than once; pinned to {pinned}, the one nearest it")
-                try:
-                    return self._moment_time(pinned, clip, in_point=in_point)
-                except TimelineEditError:
-                    pass
             self.notes.append(str(exc))
             return None
-
-    def _pin_nearest(self, text: str, clip: "Clip", at: float | None = None) -> str | None:
-        """A word moment that became ambiguous (a new line says the same word): its scoped form for the
-        occurrence nearest the clip's current time, or None if it is not an ambiguity."""
-        try:
-            moment = mo.parse(text)
-        except mo.MomentError:
-            return None
-        if moment.kind in ("beat", "downbeat") and moment.base is not None and moment.base.kind == "word":
-            # beat 2 after "Astrid": pin the word to the occurrence just before the clip
-            base = moment.base
-            if base.n is not None or base.line is not None:
-                return None
-            hits = mo.find_words(base, self.words())
-            if len(hits) < 2 or any(w.source is not None for run in hits for w in run):
-                return None
-            earlier = [r for r in hits if r[0].start <= clip.start + 1e-6] or hits
-            run = max(earlier, key=lambda r: r[0].start)
-            from astrid.sdk.timeline_address import _phrase_address
-
-            pinned_base = mo.parse(_phrase_address(self, base, run))
-            return mo.format_moment(mo.Moment(moment.kind, n=moment.n, direction=moment.direction, base=pinned_base,
-                                              offset_s=moment.offset_s, offset_frames=moment.offset_frames))
-        if mo.bound_word(moment) is not None:
-            return None
-        if moment.kind != "word" or moment.n is not None:
-            return None
-        hits = mo.find_words(moment, self.words())
-        if len(hits) < 2 or any(w.source is not None for run in hits for w in run):
-            return None
-        anchor_t = (at if at is not None else clip.start) - moment.offset_s - moment.offset_frames / self.fps
-        run = min(hits, key=lambda r: abs((r[-1].end if moment.edge == "end" else r[0].start) - anchor_t))
-        from astrid.sdk.timeline_address import _phrase_address
-
-        return _phrase_address(self, moment, run)
 
     def _place_on(self, clip: "Clip", moment: Any) -> None:
         if isinstance(moment, (int, float)) and not isinstance(moment, bool):
@@ -815,8 +790,9 @@ class _TimingEvaluators:
             changed = True
         # Audio never inherits a cut's end in retime(); a supplied end is its
         # explicit until/for relation, which must refresh the cached hold too.
-        # Source windows retain their existing trim semantics.
-        if end is not None and "from" not in clip.data:
+        # The shared length setter maps this timeline span to source seconds,
+        # retaining the in-point for source-trimmed media too.
+        if end is not None:
             length = self._frame(end + 1e-6) - clip.start
             if length > 0.5 / self.fps and round(length * self.fps) != round(clip.duration * self.fps):
                 _set_length(clip.data, length)
@@ -978,26 +954,8 @@ class _TimingEvaluators:
                         intent.set_formula(clip.data, path, {**expr, "orphan": f"ORPHAN: {exc}"})
                         self.notes.append(f"{clip.address}.{path}: {exc} (kept its last value)")
                         continue
-                    previous_at = None  # a param's moment: pin to the occurrence nearest where the param was
-                    current = _get_path(clip.data, path)
-                    if isinstance(expr, Mapping) and isinstance(current, (int, float)) and not isinstance(current, bool):
-                        previous_at = clip.start + (current / self.fps if expr.get("as") == "clip_frame" else
-                                                    0.0 if expr.get("as") == "timeline_seconds" else current)
-                        if expr.get("as") == "timeline_seconds":
-                            previous_at = float(current)
-                    pinned = self._pin_nearest(expr.get("moment"), clip, previous_at) if isinstance(expr, Mapping) and expr.get("moment") else None
-                    if pinned is not None:
-                        expr = {**expr, "moment": pinned}
-                        intent.set_formula(clip.data, path, expr)
-                        self.notes.append(f"{clip.address}.{path.removeprefix('params.')}: now pinned to {pinned}, the one nearest it")
-                        try:
-                            value = self._evaluate(clip, expr, by_id, words, slots, path)
-                        except (TimelineEditError, mo.MomentError, ValueError, KeyError, TypeError) as again:
-                            self.notes.append(f"{clip.address}.{path.removeprefix('params.')}: {again} (kept its last value)")
-                            continue
-                    else:
-                        self.notes.append(f"{clip.address}.{path.removeprefix('params.')}: {exc} (kept its last value)")
-                        continue
+                    self.notes.append(f"{clip.address}.{path.removeprefix('params.')}: {exc} (kept its last value)")
+                    continue
                 unit = expr.get("as") if isinstance(expr, Mapping) else None
                 length = clip.duration * (self.fps if unit == "clip_frame" else 1.0)
                 if isinstance(expr, Mapping) and expr.get("moment") and unit in ("clip_frame", "clip_seconds") \

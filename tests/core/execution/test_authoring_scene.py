@@ -195,6 +195,7 @@ def test_scene_before_first_task_prepares_only_the_trusted_renderer_parent(tmp_p
         assert (parent.stat().st_mode & 0o777) == 0o700
 
 
+
 @pytest.mark.parametrize('private_host', [True], indirect=True)
 def test_long_selected_support_keeps_same_authenticated_scene_and_owned_cleanup(private_host):
     w = private_host

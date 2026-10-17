@@ -189,6 +189,7 @@ class RemotionClosureBinding:
         # admitted code and inventory are part of the same renderer closure.
         for path in sorted(_root_sources(project)):
             files[path] = _sha(path)
+
         binding = cls(project, installed, receipt, receipt_sha256, manifest_sha256, lock_sha256,
                       tuple(sorted(files.items(), key=lambda item: str(item[0]))))
         binding.validate(project)
@@ -226,6 +227,7 @@ class RemotionClosureBinding:
             raise ValueError('admitted renderer root source inventory changed')
         for root, expected_source in source_inventories:
             actual_source = set(_tree_files(root))
+
             if actual_source != expected_source:
                 raise ValueError('admitted renderer source file inventory changed')
         for path, expected in self.files:

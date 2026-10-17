@@ -8,12 +8,13 @@
 
 PY ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 
-.PHONY: help check ci preflight structure doctor ruff mypy cycles remotion-install remotion-typecheck renderer-parity parity-guard wheel ci-mirror editable lock-build lock-runtime lock-proof lock-validate toolchain-record s1-gate m4-baseline m4-gate m7-gate m8-gate
+.PHONY: help check ci preflight structure doctor ruff mypy cycles remotion-install remotion-typecheck renderer-parity parity-guard doc-refs wheel ci-mirror editable lock-build lock-runtime lock-proof lock-validate toolchain-record s1-gate m4-baseline m4-gate m7-gate m8-gate
 
 help:
 	@echo "make check   - blocking gates: structure, doctor, ruff, mypy, cycles, Remotion, renderer parity"
 	@echo "make ci      - full CI deploy mirror: check + editable + wheel-install + pytest/coverage (minutes)"
 	@echo "make parity-guard - run the focused feature parity guard"
+	@echo "make doc-refs - validate documentation capability and CLI references"
 	@echo "make s1-gate - m1 S1 gate: 12 focused lanes + durable summary/logs in out/s1-gate/latest"
 	@echo "make m4-baseline - m4 Step 1: run pre-change selectors and retain artifacts/m4/baseline.json (fails closed)"
 	@echo "make m4-gate - m4 Step 33: 13 focused lanes + authority lint + drift rejection + feasibility admission (fails closed)"
@@ -70,6 +71,9 @@ remotion-typecheck:
 
 renderer-parity:
 	@$(PY) scripts/reshape/remotion_gate.py parity
+
+doc-refs:
+	@$(PY) scripts/reshape/check_doc_references.py
 
 parity-guard:
 	@$(PY) -m pytest -q tests/parity/test_parity.py

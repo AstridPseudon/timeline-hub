@@ -23,12 +23,12 @@ import subprocess
 import sys
 import tempfile
 import time
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import ModuleType
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Iterator, Mapping, Sequence
 
 from astrid.core import timeline
 from astrid.core.audit import AuditContext
@@ -1208,6 +1208,36 @@ def _available_remotion_port() -> int:
         return int(probe.getsockname()[1])
 
 
+@contextmanager
+def _render_execution_lock(project_dir: Path, *, staging_parent: Path | None) -> Iterator[None]:
+    """Keep admitted read-only renders out of the source writer's lock file.
+
+    Only the existing authenticated Host relay and complete launch validation
+    select this lane. The immutable registry is rechecked, never regenerated;
+    its invocation owns the private bundle, scratch and lock lifetime. Legacy
+    mutable registry/render callers retain the shared writer lock unchanged.
+    """
+    from astrid.core.execution.render_command_pipe import command_client
+
+    if command_client() is None:
+        with remotion_lock.remotion_render_lock():
+            yield
+        return
+    if staging_parent is None:
+        raise ValueError("admitted render requires its invocation staging root")
+    from astrid.core.rendering.remotion_runtime import _validated_runtime
+
+    entry = _validated_runtime(project_dir)
+    if entry['registry']['mode'] not in {'source_settled', 'provisioned_only'}:
+        raise ValueError("admitted render requires a validated read-only registry")
+    root = Path(staging_parent)
+    if (not root.is_absolute() or not root.is_dir() or root == Path('/')
+            or any(part.is_symlink() for part in (root, *root.parents))):
+        raise ValueError("admitted render staging root is not canonical")
+    with remotion_lock._render_lock_at(root / '.astrid-registry.lock'):
+        yield
+
+
 def _execute_remotion(
     timeline_path: Path,
     assets_path: Path,
@@ -1238,7 +1268,7 @@ def _execute_remotion(
     final_path = provenance_out_path.resolve()
     requested_stage = staged_video.resolve()
     if requested_stage != final_path:
-        with remotion_lock.remotion_render_lock():
+        with _render_execution_lock(project_dir, staging_parent=staging_parent):
             return _execute_remotion_locked(
                 timeline_path,
                 assets_path,
@@ -1279,7 +1309,7 @@ def _execute_remotion(
     isolated_stage = Path(temporary_name)
     isolated_stage.unlink(missing_ok=True)
     try:
-        with remotion_lock.remotion_render_lock():
+        with _render_execution_lock(project_dir, staging_parent=staging_parent):
             details = _execute_remotion_locked(
                 timeline_path,
                 assets_path,
@@ -1500,11 +1530,13 @@ def _execute_remotion_locked(
                 "TMP": str(remotion_temp_root),
                 "TEMP": str(remotion_temp_root),
             }
-            # Explicitly clear the stage for component-free requests, including
-            # warm owners that retain the preceding invocation environment.
-            remotion_env_additions["ASTRID_REMOTION_COMPONENT_STAGE"] = (
-                json.dumps(component_stage) if component_stage else ""
-            )
+            # Direct/warm callers explicitly clear a preceding component stage.
+            # The closed Host relay launches a fresh CLI with a qualified base
+            # environment; component-free requests need no stage override there.
+            if component_stage or render_client is None:
+                remotion_env_additions["ASTRID_REMOTION_COMPONENT_STAGE"] = (
+                    json.dumps(component_stage) if component_stage else ""
+                )
             if pcm_aac_mp4:
                 remotion_env_additions["ASTRID_REMOTION_PCM_AAC_OUTPUT"] = str(cli_video)
             # No machine-RAM heuristic. Unallocated renders use ordinary
@@ -1875,6 +1907,7 @@ def support(request: RenderRequest, *, workspace: Path) -> SupportReport:
                 assets_path,
                 materialized_objects=request.materialized_objects,
                 materialized_root=request.materialized_root,
+                staging_parent=workspace,
                 allow_derived_files=request.materialized_root is not None,
             ):
                 pass
