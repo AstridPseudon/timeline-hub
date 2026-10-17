@@ -9,7 +9,7 @@ import copy
 import json
 
 import pytest
-from test_timeline_commit import StaleHead, request
+from test_timeline_commit import Port, StaleHead, request
 from test_timeline_saved_publish import synthetic_scene_answers  # noqa: F401
 
 from astrid.core.timeline.authoring_bundle import open_authoring_bundle
@@ -55,10 +55,16 @@ class DiskPort:
     def __init__(self, root, closure):
         self.path = root / "synthetic-store.json"
         self.accepts = []
+        self.evaluated = []
         self.race = False
         self._write(dict(current="rev-0", parents={"rev-0": closure["parent_revision"]},
                          shots={r["revision_id"]: r for r in closure["shot_revisions"]},
                          internals={r["revision_id"]: r for r in closure["internal_timeline_revisions"]}, saved={}))
+
+    def scene_evaluator(self, candidate):
+        # Reuse the explicit synthetic request evaluator from the provider tests.
+        # Disk persistence supplies no native renderer or Runtime authority.
+        return Port.scene_evaluator(self, candidate)
 
     def _write(self, data):
         self.path.write_text(json.dumps(data, sort_keys=True))
