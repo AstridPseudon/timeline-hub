@@ -1,4 +1,6 @@
 import { groupMoveGesture, plannedMoveGestureCommands } from '../commands/semanticGestures.ts';
+import { buildTransferShotGroupCommand } from '../commands/shotGroupCommands.ts';
+import { addTrackGestureCommands } from '../commands/trackGestures.ts';
 import type { TimelineApplyEdit } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import { userSelectTimelineClip, userSelectTimelineClips } from '@/shared/state/selectionStore.ts';
 import type { DropPosition } from '@/tools/video-editor/lib/drop-position.ts';
@@ -347,6 +349,41 @@ export function buildPendingDragSession({
   };
 }
 
+function transferDragCommands(
+  data: TimelineData, session: InternalDragSession, trackId: string,
+  moves: Parameters<typeof plannedMoveGestureCommands>[1], rows: TimelineRow[],
+) {
+  const group = session.groupDragEntry;
+  if (!group || group.groupKey.trackId === trackId) return undefined;
+  const ordered = orderClipIdsByAt(session.draggedClipIds, { rows });
+  if (moves.length !== ordered.length || moves.some((move) => move.targetRowId !== trackId
+    || !ordered.includes(move.clipId))) return undefined;
+  const transfer = buildTransferShotGroupCommand(data, { ...group.groupKey, clipIds: ordered }, trackId);
+  const movement = plannedMoveGestureCommands(data, moves, rows);
+  // Transfer owns every track write, including dormant snapshot tracks. Reuse
+  // only the timing commands; redundant set-track would carry a stale guard.
+  return transfer && movement ? [transfer, ...movement.filter((call) => call.op !== 'clip.set-track')] : undefined;
+}
+
+function transferGroupPreview(
+  groups: PinnedShotGroup[] | undefined, commands: ReturnType<typeof transferDragCommands>,
+): PinnedShotGroup[] | undefined {
+  const transfer = commands?.[0];
+  if (!transfer || !groups) return groups;
+  const key = transfer.args.group as { shotId: string; trackId: string };
+  const destination = String(transfer.args.target).split('/track:')[1];
+  return groups.map((group) => {
+    if (group.shotId !== key.shotId || group.trackId !== destination) return group;
+    const next = structuredClone(group);
+    if (next.memberSelectors) next.memberSelectors = [...transfer.args.members as string[]];
+    for (const snapshot of next.imageClipSnapshot ?? []) {
+      if (Object.prototype.hasOwnProperty.call(snapshot, 'track')) snapshot.track = destination;
+      if (snapshot.authoring) snapshot.authoring.clip.track = destination;
+    }
+    return next;
+  });
+}
+
 export function commitDraggingSession({
   session,
   nextStart,
@@ -428,12 +465,20 @@ export function commitDraggingSession({
                   nextRows,
                 )
               : undefined;
+            const newTrack = augmented.config.tracks?.find((track) => track.id === newTrackId);
+            // Track allocation is parent-only. Occurrence-local lane creation
+            // and insertion above existing lanes retain compatibility behavior.
+            const add = newTrack && !dropPosition.isNewTrackTop
+              && !liveData.config.clips.some((clip) => clip.app?.canonical)
+              ? addTrackGestureCommands(liveData, newTrack) : undefined;
+            const transfer = add && transferDragCommands(augmented, session, newTrackId, moves, nextRows);
             callbacks.applyEdit({
               type: 'config',
               resolvedConfig: finalConfig,
-              pinnedShotGroupsOverride,
+              pinnedShotGroupsOverride: transferGroupPreview(pinnedShotGroupsOverride, transfer),
             }, {
               transactionId: session.transactionId,
+              editCommands: add && transfer ? [...add, ...transfer] : undefined,
             });
             handledNewTrackMove = true;
           }
@@ -467,20 +512,23 @@ export function commitDraggingSession({
                 nextRows,
               )
             : undefined;
-          // Cross-track group identity/order needs its own producer. The
-          // same-track slice retains the exact grouping and captures every member.
+          // Same-track behavior retains the existing relation-sensitive producer.
           const group = session.groupDragEntry
             && JSON.stringify(pinnedShotGroupsOverride) === JSON.stringify(liveData.config.pinnedShotGroups)
             ? groupMoveGesture(liveData, moves, nextRows) : undefined;
+          const transfer = transferDragCommands(liveData, session, anchorTargetRowId, moves, nextRows);
           callbacks.applyEdit({
             type: 'rows',
             rows: nextRows,
             metaUpdates: { ...metaUpdates, ...Object.fromEntries(Object.entries(group?.metaUpdates ?? {}).map(([id, patch]) => [id, { ...metaUpdates[id], ...patch }])) },
-            clipOrderOverride: nextClipOrder,
-            pinnedShotGroupsOverride,
+            // Transfer retains the authored member rows. Planner traversal may
+            // follow an older group order; it must not reorder those rows.
+            clipOrderOverride: transfer ? { ...nextClipOrder, [anchorTargetRowId]: liveData.config.clips
+              .filter((clip) => nextClipOrder[anchorTargetRowId]?.includes(clip.id)).map((clip) => clip.id) } : nextClipOrder,
+            pinnedShotGroupsOverride: transferGroupPreview(pinnedShotGroupsOverride, transfer),
           }, {
             transactionId: session.transactionId,
-            editCommands: session.groupDragEntry ? group?.commands : plannedMoveGestureCommands(liveData, moves, nextRows),
+            editCommands: session.groupDragEntry ? transfer ?? group?.commands : plannedMoveGestureCommands(liveData, moves, nextRows),
           });
         }
       }

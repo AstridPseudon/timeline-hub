@@ -23,7 +23,7 @@ import type { AstridElementHost } from '../runtime/astrid-element-host.ts';
 import type { TimelineEditability } from '../lib/timeline-editability.ts';
 import { commitDraggingSession, type InternalDragSession } from './useClipDrag.helpers.ts';
 import { createInteractionState, notifyInteractionEndIfIdle } from '../lib/interaction-state.ts';
-import { __resetSelectionStoreForTests } from '@/shared/state/selectionStore.ts';
+import { __getSelectionStateForTests, __resetSelectionStoreForTests } from '@/shared/state/selectionStore.ts';
 import { __resetOverlayStackForTests } from '@/shared/state/overlayStack.ts';
 import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
@@ -66,7 +66,7 @@ import { ClipTransitionSection } from '@/tools/video-editor/components/Propertie
 // This transport is a wire recorder, not an Astrid operation executor. Successful
 // fixture acknowledgements establish App adaptation only, never Runtime acceptance.
 const json = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
-type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'unavailable' | 'failed' | 'rejected' | 'refused' | 'stale' | 'no_change' | { directWrites?: CommitResult['change']['direct_writes']; previewCommands?: import('@/integrations/runtime/generated.ts').EditCommand[]; loseSuccess?: boolean }>;
+type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'unavailable' | 'failed' | 'rejected' | 'refused' | 'stale' | 'no_change' | { acceptedResult?: CommitResult; directWrites?: CommitResult['change']['direct_writes']; previewCommands?: import('@/integrations/runtime/generated.ts').EditCommand[]; loseSuccess?: boolean }>;
 const catalogFadeFallback = 'W13: legacy effects array has no clip.set-fade producer; retain the whole catalog operation';
 function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typeof catalogFadeFallback) {
   const requests: Array<{ request: CommitRequest; bytes: string; headers: Record<string, string> }> = [];
@@ -102,6 +102,13 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
       const request = JSON.parse(bytes) as CommitRequest;
       requests.push({ request, bytes, headers: { ...headers } });
       const outcome = await reply?.(request, requests.length);
+      if (outcome && typeof outcome === 'object' && outcome.acceptedResult) {
+        const result = outcome.acceptedResult;
+        currentHead = result.accepted_revision_id ?? currentHead;
+        // Acceptance completed, but no response bytes reach the caller.
+        if (outcome.loseSuccess) throw new TypeError('Connection closed after durable acceptance');
+        return { status: 200, headers: {}, body: json(result) };
+      }
       let unavailable = outcome === 'unavailable';
       const failed = outcome === 'failed';
       const rejected = outcome === 'rejected';
@@ -5240,4 +5247,161 @@ describe('mounted existing-source literal ripple native history', () => {
     expect(source.journal).toBe(3); expect(source.reload).toBe(true); expect(h.requests).toHaveLength(3); expect(h.compatibilityRequests).toEqual([]);
     history.unmount(); h.unmount();
   }, 60_000);
+});
+
+// Caller proof: the production drag handler, captured-base scheduler and native
+// publication history run together; D supplies the accepted receipts and state.
+function groupTransferSource(initial: TimelineData, requests: CommitRequest[]) {
+  const python = process.env.ASTRID_TEST_PYTHON;
+  if (!python) throw new Error('Set ASTRID_TEST_PYTHON to the qualified SDK test interpreter');
+  return JSON.parse(execFileSync(python, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/shotGroupTransfer.fixture.py')], {
+    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests }), encoding: 'utf8', env: process.env,
+  })) as { before: { parent: { config: Record<string, unknown> } }; results: CommitResult[]; result: CommitResult; replay: boolean[]; accept_counts: number[] };
+}
+
+async function transferGroupData(occurrence = false, video = false) {
+  const base = await selectedMoveData(true, occurrence);
+  const clips = (video ? base.config.clips.slice(0, 1) : base.config.clips).map(clip => {
+    const identity = occurrence ? clip.app!.canonical as CanonicalClipIdentity : undefined;
+    const source = { ...(identity?.sourceClip ?? clip) };
+    if (!video) {
+      delete source.from; delete source.to; delete source.speed;
+      source.clipType = 'media'; source.hold = clip.id.endsWith('1') || clip.id === 'display-0' ? 2 : 1;
+      source.asset = 'retained-image';
+    }
+    return { ...clip, ...(!video ? { clipType: 'media' as const, hold: source.hold as number, from: undefined, to: undefined, speed: undefined, asset: 'retained-image' } : {}),
+      ...(identity ? { app: { ...clip.app, canonical: { ...identity, sourceClip: source } } } : {}) };
+  });
+  if (video) {
+    clips[0] = { ...clips[0], asset: 'retained-video' };
+    if (occurrence) {
+      const identity = clips[0].app!.canonical as CanonicalClipIdentity;
+      clips[0].app = { ...clips[0].app, canonical: { ...identity, sourceClip: { ...identity.sourceClip, asset: 'retained-video' } } };
+    }
+  }
+  const scope = occurrence ? 'occurrence:occ-A' : 'parent';
+  const members = clips.map(clip => `${scope}/clip:${occurrence ? (clip.app!.canonical as CanonicalClipIdentity).sourceClipId : clip.id}`);
+  const group = { shotId: 'shot-1', trackId: 'V1', clipIds: clips.map(clip => clip.id),
+    mode: video ? 'video' as const : 'images' as const, name: 'Retained director’s group',
+    videoAssetKey: 'retained-video', memberSelectors: [...members].reverse(),
+    ...(occurrence ? { ownerOccurrenceId: 'occ-A' } : {}),
+    opaque: { nullValue: null, nested: [{ track: 'V1', untouched: true }] },
+    imageClipSnapshot: video ? [{ clipId: 'dormant', assetKey: 'retained-image', track: 'V1', at: 1,
+      meta: { clipType: 'hold' as const, hold: 1 }, opaque: { retained: null },
+      authoring: { selector: `${scope}/clip:dormant`, order: ['dormant'],
+        clip: { id: 'dormant', track: 'V1', at: 1, hold: 1, clipType: 'media', asset: 'retained-image' } } }] : [],
+  };
+  // Retain collection position and deliberately reverse stored member order;
+  // the drag planner's resulting order must supply the transfer permutation.
+  group.clipIds.reverse();
+  return buildTimelineData({ ...base.config, clips, pinnedShotGroups: [
+    { shotId: 'neighbor-before', trackId: 'V2', clipIds: [], name: 'Before' }, group,
+    { shotId: 'neighbor-after', trackId: 'V2', clipIds: [], name: 'After' },
+  ] }, { assets: { ...base.registry.assets, 'retained-video': { media_id: `sha256:${'d'.repeat(64)}`, type: 'video/mp4', duration: 10 }, 'retained-image': { media_id: `sha256:${'e'.repeat(64)}`, type: 'image/png' } } }, undefined, 1, undefined, base.head);
+}
+
+function transferGroupDrag(h: Awaited<ReturnType<typeof setup>>, lane: 'existing' | 'new' | 'same' = 'existing',
+  applyEdit = h.result.current.applyEdit, sessionPatch: Partial<InternalDragSession> = {}) {
+  const data = h.result.current.data!;
+  const actions = data.rows.find(row => row.id === 'V1')!.actions;
+  const session = { clipId: actions[0].id, draggedClipIds: actions.map(action => action.id), sourceRowId: 'V1', sourceKind: 'visual',
+    transactionId: 'group-transfer-drag', groupDragEntry: { groupKey: { shotId: 'shot-1', trackId: 'V1' }, originStart: actions[0].start, originTrackId: 'V1' },
+    clipOffsets: actions.map(action => ({ clipId: action.id, rowId: 'V1', deltaTime: action.start - actions[0].start, initialStart: action.start, initialEnd: action.end })),
+  } as InternalDragSession;
+  Object.assign(session, sessionPatch);
+  act(() => commitDraggingSession({ session, liveData: data, nextStart: actions[0].start + 0.3, crossTrackActive: lane !== 'same',
+    dropPosition: { trackId: lane === 'existing' ? 'V2' : undefined, isNewTrack: lane === 'new', isNewTrackTop: false, isReject: false } as never,
+    callbacks: { ...h.result.current.tracks, applyEdit, selectClip: vi.fn(), selectClips: vi.fn() },
+  }));
+}
+
+describe('pinned group transfer App caller', () => {
+  it.each(['parent images', 'parent video', 'occurrence images', 'occurrence video', 'new lane', 'lost response'] as const)(
+    '%s uses D accepted receipts with native Undo Redo and exact replay', async kind => {
+      const initial = await transferGroupData(kind.startsWith('occurrence'), kind.endsWith('video'));
+      const requests: CommitRequest[] = []; let proof!: ReturnType<typeof groupTransferSource>;
+      const h = await setup(async request => {
+        requests.push(request); proof = groupTransferSource(initial, requests);
+        if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `group-transfer-${kind.replaceAll(' ', '-')}.json`), JSON.stringify({ requests, proof }, null, 2));
+        return { acceptedResult: proof.result, loseSuccess: kind === 'lost response' && requests.length === 1 };
+      }, false, initial);
+      const history = renderHook(() => {
+        const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+        useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]); return state;
+      }, { wrapper: overlapHistoryWrapper(h) });
+      transferGroupDrag(h, kind === 'new lane' ? 'new' : 'existing');
+      expect(gestureCommandsFor(h.result.current.data!)).toBeDefined();
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+      const scope = kind.startsWith('occurrence') ? 'occurrence:occ-A' : 'parent';
+      const members = initial.config.clips.map(clip => `${scope}/clip:${scope === 'parent' ? clip.id : (clip.app!.canonical as CanonicalClipIdentity).sourceClipId}`);
+      const destination = kind === 'new lane' ? 'V3' : 'V2';
+      const forward = (requests[0].change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands;
+      expect(forward.map(call => call.op)).toEqual([...(kind === 'new lane' ? ['timeline.add'] : []), 'shot-group.set', ...members.map(() => 'clip.nudge')]);
+      expect(forward.filter(call => call.op === 'clip.nudge').map(call => call.args.frames)).toEqual(members.map(() => 9));
+      expect([...__getSelectionStateForTests().timeline.selectedClipIds]).toEqual(initial.config.clips.map(clip => clip.id));
+      expect(h.result.current.data!.config.clips.map(clip => clip.id)).toEqual(initial.config.clips.map(clip => clip.id));
+      expect(h.result.current.data!.config.pinnedShotGroups![1]).toMatchObject({ trackId: destination,
+        clipIds: initial.config.clips.map(clip => clip.id), memberSelectors: members,
+        opaque: { nullValue: null, nested: [{ track: 'V1', untouched: true }] } });
+      expect(forward.find(call => call.op === 'shot-group.set')).toEqual({ op: 'shot-group.set', select: null,
+        args: { group: { shotId: 'shot-1', trackId: 'V1' }, intent: 'transfer', target: `${scope}/track:${destination}`, members } });
+      expect(requests[0]).toMatchObject({ base_revision_id: 'parent-r1', scope: { target: 'parent' }, source: { via: 'app' } });
+      expect(proof.results[0].shot_groups).toEqual([{ operation_index: kind === 'new lane' ? 1 : 0,
+        group: { shotId: 'shot-1', trackId: destination }, reused: members, created: [], restored: [] }]);
+      expect(proof.results[0].change.direct_writes.some(write => write.id.startsWith('parent/shot-group:'))).toBe(true);
+      for (const member of members) expect(proof.results[0].id_map[member]).toBe(member);
+      const moved = (proof.results[0].canonical_document as unknown as typeof proof.before).parent.config.pinnedShotGroups as Array<Record<string, unknown>>;
+      const original = initial.config.pinnedShotGroups!;
+      expect(moved.map(row => row.shotId)).toEqual(original.map(row => row.shotId));
+      expect(moved[1]).toMatchObject({ name: original[1].name, mode: original[1].mode, videoAssetKey: original[1].videoAssetKey,
+        opaque: { nullValue: null, nested: [{ track: 'V1', untouched: true }] }, trackId: destination, clipIds: members.map(id => id.split('/clip:')[1]) });
+      if (kind.endsWith('video')) expect(moved[1].imageClipSnapshot).toEqual([{
+        ...original[1].imageClipSnapshot![0], track: destination,
+        authoring: { ...original[1].imageClipSnapshot![0].authoring,
+          clip: { ...original[1].imageClipSnapshot![0].authoring!.clip, track: destination } },
+      }]);
+      await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+      act(() => history.result.current.undo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+      await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+      act(() => history.result.current.redo()); await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+      expect(proof.results[1].canonical_document).toEqual(proof.before);
+      expect(proof.results[2].canonical_document).toEqual(proof.results[0].canonical_document);
+      expect(proof.accept_counts).toEqual([1, 1, 1]);
+      expect(requests.slice(kind === 'lost response' ? 2 : 1).map(request => request.base_revision_id)).toEqual(['parent-r2', 'parent-r3']);
+      expect(requests.at(-2)!.change).toEqual({ commands: [{ op: 'timeline.inverse', select: null,
+        args: { publication: 'pub-parent-r2', writes: proof.results[0].change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before,
+          ...(write.id.startsWith('parent/shot-group:') ? { order: Object.values(proof.results[0].change.commands.find(call => call.op === 'shot-group.set')!.expect!).find(state => state.state === 'present' && Array.isArray(state.value) && state.value.every(id => typeof id === 'string' && id.startsWith('parent/shot-group:')) && state.value.length === 3)!.value } : {}) })) } }] });
+      if (kind === 'lost response') { expect(proof.replay).toEqual([true]); expect(h.requests[0].bytes).toBe(h.requests[1].bytes); }
+      expect(h.compatibilityRequests).toEqual([]);
+      const evidence = process.env.E_SELECTED_MOVE_EVIDENCE_DIR;
+      if (evidence) writeFileSync(path.join(evidence, `group-transfer-${kind.replaceAll(' ', '-')}.json`), JSON.stringify({ requests: h.requests, proof }, null, 2));
+      history.unmount(); h.unmount();
+    }, 180_000);
+});
+
+describe('pinned group transfer guards', () => {
+  it.each(['target collision', 'incomplete selection', 'mixed scope', 'stale pin', 'relation', 'sequence', 'bed', 'extra selected clip'] as const)(
+    '%s retains the compatibility boundary without submitting a partial transfer', async kind => {
+      const initial = await transferGroupData(['mixed scope', 'stale pin'].includes(kind));
+      if (kind === 'target collision') initial.config.pinnedShotGroups!.push({ shotId: 'shot-1', trackId: 'V2', clipIds: [] });
+      if (kind === 'mixed scope') (initial.config.clips[1].app!.canonical as CanonicalClipIdentity).occurrenceId = 'occ-B';
+      if (kind === 'stale pin') (initial.config.clips[1].app!.canonical as CanonicalClipIdentity).revisionId = 'stale-shot';
+      if (kind === 'relation' || kind === 'sequence') initial.config.clips[0].app!.astrid = kind === 'relation' ? { on: 'clip-end "parent/clip:clip-2"' } : { sequence: 'seq-1' };
+      if (kind === 'bed') initial.config.app = { ...initial.config.app, astrid: { music_beds: {} } };
+      const h = await setup(undefined, false, initial); const apply = vi.fn();
+      const ids = initial.rows.find(row => row.id === 'V1')!.actions.map(action => action.id);
+      transferGroupDrag(h, 'existing', apply, kind === 'incomplete selection' ? { draggedClipIds: ids.slice(0, 1) }
+        : kind === 'extra selected clip' ? { draggedClipIds: [...ids, 'missing'] } : {});
+      expect(apply).toHaveBeenCalledTimes(1); expect(apply.mock.calls[0][1].editCommands).toBeUndefined();
+      expect(h.requests).toEqual([]); expect(h.result.current.editSeqRef.current).toBe(0); h.unmount();
+    });
+  it.each(['read-only', 'locked member', 'locked destination'] as const)('%s refuses the complete batch before save or history', async kind => {
+    const initial = await transferGroupData();
+    const editability = createTimelineEditability(kind === 'read-only' ? { readOnly: true }
+      : kind === 'locked member' ? { lockedClipIds: ['clip-2'] } : { lockedTrackIds: ['V2'] });
+    const h = await setup(undefined, false, initial, 1, editability); const history = vi.fn(); h.eventBus.on('beforeCommit', history);
+    transferGroupDrag(h);
+    expect(h.result.current.data).toBe(initial); expect(h.requests).toEqual([]); expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(history).not.toHaveBeenCalled(); h.unmount();
+  });
 });
