@@ -2,6 +2,7 @@
 import type {CSSProperties} from 'react';
 import {COLOR, FAMILY, easeOutCubic, finiteNumber, oneOf} from '../../_shared/am';
 export const amTypeReveal = (frame: number) => ({
+  slideFraction: frame < 8 ? 1 - easeOutCubic(frame / 8) : 0,
   slideTransform: frame < 8 ? `translateY(${(1 - easeOutCubic(frame / 8)) * 100}%)` : undefined,
   visibleChars: Math.floor(frame / 2) + 1,
 });

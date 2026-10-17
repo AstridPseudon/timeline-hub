@@ -44,7 +44,7 @@ defaults:
   tracking: -0.01
   lineHeight: 0.95
 dependencies:
-  js_packages: ["@remotion/layout-utils"]
+  js_packages: ["@remotion/layout-utils", "react-dom"]
   python_requirements: []
 schema:
   type: object

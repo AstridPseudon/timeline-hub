@@ -461,6 +461,10 @@
         },
         {
           "kind": "support",
+          "path": "rendering/elements/effects/am-type/drawing.tsx"
+        },
+        {
+          "kind": "support",
           "path": "rendering/elements/effects/am-type/layout.ts"
         },
         {
