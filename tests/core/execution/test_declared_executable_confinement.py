@@ -266,8 +266,15 @@ def test_actual_confined_music_level_uses_declared_ffmpeg(tmp_path, monkeypatch)
                            XDG_STATE_HOME=str(tmp_path / 'state'))
         environment.pop('ASTRID_SOURCE_STATE', None)
         launch = custody._HostInspectionLaunch((pack,), source, environment)
-        process = groups.popen_owned_group([sys.executable, '-B', '-m', 'pytest', '-q',
-            'tests/core/execution/test_declared_executable_confinement.py::test_actual_confined_music_level_uses_declared_ffmpeg'],
+        # Run the same assertions under the retained original owner without a
+        # second pytest autouse fixture changing its bound HOME/config roots.
+        program = (
+            "import sys,pytest; from pathlib import Path; "
+            "from tests.core.execution.test_declared_executable_confinement import "
+            "test_actual_confined_music_level_uses_declared_ffmpeg as check; "
+            "check(Path(sys.argv[1]),pytest.MonkeyPatch())"
+        )
+        process = groups.popen_owned_group([sys.executable, '-B', '-c', program, str(tmp_path)],
             cwd=str(source), env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             _inspection_launch=launch)
         try:

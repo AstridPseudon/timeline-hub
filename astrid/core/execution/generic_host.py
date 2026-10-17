@@ -1184,7 +1184,19 @@ def _prepare_vibecomfy_execution_identity(
 
 def _dependency_pythonpath() -> tuple[str, ...]:
     """Keep only approved dependency roots across children."""
-    return dependency_pythonpath()
+    roots = dependency_pythonpath()
+    boundary = _retained_python_boundary()
+    if boundary is None:
+        return roots
+    _, excluded = boundary
+    return tuple(raw for raw in roots if not any(Path(raw).resolve().is_relative_to(p) for p in excluded))
+
+
+def _selected_python_package_paths() -> tuple[str, ...]:
+    boundary = _retained_python_boundary()
+    if boundary is not None:
+        return (str(boundary[0]["installed-packages"]),)
+    return (sysconfig.get_path("purelib"), sysconfig.get_path("platlib"))
 
 
 def _host_product_import_origins() -> dict[str, str | None]:
@@ -1940,6 +1952,7 @@ class _ConfinementPolicy:
     executable_directory: Path | None = None
     renderer_transport: Any = None
     renderer_reads: Any = None
+    excluded_python_roots: tuple[Path, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -1988,6 +2001,70 @@ def _python_runtime_library(prefix: Path) -> Path | None:
     return resolved
 
 
+def _python_path_binding(path):
+    pending = [path]; aliases = {}; visited = set()
+    while pending:
+        current = pending.pop()
+        for candidate in (current, *current.parents):
+            if candidate in visited:
+                continue
+            visited.add(candidate)
+            if candidate.is_symlink():
+                target = os.readlink(candidate)
+                aliases[str(candidate)] = target
+                pending.append(Path(os.path.abspath(candidate.parent / target)))
+    return {"lexical": str(path), "resolved": str(path.resolve(strict=True)),
+            "aliases": [{"path": p, "target": target} for p, target in sorted(aliases.items())]}
+
+
+def _retained_python_boundary():
+    """Read the private Runtime launcher binding, never task/env authority.
+
+    In the isolated -S Host, sysconfig purelib can describe the base Python.
+    The actual installed package root must come from retained composition.
+    """
+    value = globals().get("_RETAINED_SELECTED_PYTHON")
+    if value is None:
+        return None
+    if (not isinstance(value, dict) or set(value) != {"version", "roots", "excluded_roots", "startup_files", "interpreter", "root_bindings"}
+            or type(value["version"]) is not int or value["version"] != 1):
+        raise HostError("invalid retained Python boundary")
+    roots = value["roots"]
+    if not isinstance(roots, dict) or set(roots) != {"installed-packages", "python-runtime", "python-stdlib", "python-extensions"}:
+        raise HostError("invalid retained Python roots")
+    if any(not isinstance(raw, str) or not Path(raw).is_absolute() or ".." in Path(raw).parts for raw in roots.values()):
+        raise HostError("invalid retained Python root path")
+    if (value["root_bindings"] != {role: _python_path_binding(Path(raw)) for role, raw in roots.items()}
+            or value["interpreter"] != _python_path_binding(Path(os.path.abspath(sys.executable)))):
+        raise HostError("retained Python alias binding changed")
+    roots = {role: Path(raw).resolve(strict=True) for role, raw in roots.items()}
+    base = Path(sys.base_prefix).resolve(strict=True)
+    if (roots["python-runtime"] != base or roots["python-stdlib"] != Path(sysconfig.get_path("stdlib")).resolve()
+            or roots["python-extensions"] != Path(sysconfig.get_config_var("DESTSHARED")).resolve()
+            or roots["installed-packages"] != Path(__file__).resolve().parents[3]
+            or value["interpreter"]["lexical"] != os.path.abspath(sys.executable)
+            or value["interpreter"]["resolved"] != str(Path(sys.executable).resolve(strict=True))):
+        raise HostError("retained Python roots differ from selected Host")
+    scheme = sysconfig.get_paths(vars={"base": str(base), "platbase": str(base),
+        "installed_base": str(base), "installed_platbase": str(base)})
+    expected = sorted({scheme[name] for name in ("purelib", "platlib")})
+    rows = value["excluded_roots"]
+    if not isinstance(rows, list) or [row.get("path") for row in rows if isinstance(row, dict)] != expected:
+        raise HostError("retained Python exclusion boundary differs")
+    excluded = []
+    for row in rows:
+        path = Path(row["path"])
+        kind = "symlink" if path.is_symlink() else "directory" if path.is_dir() else "absent" if not path.exists() else "file"
+        observed = {"path": str(path), "kind": kind,
+            "target": os.readlink(path) if kind == "symlink" else None, "resolved": str(path.resolve())}
+        if row != observed:
+            raise HostError("retained Python exclusion boundary changed")
+        excluded.extend((path, path.resolve()))
+    if any(root.is_relative_to(p) for root in roots.values() for p in excluded):
+        raise HostError("selected Python root aliases into excluded ambient code")
+    return roots, tuple(dict.fromkeys(excluded))
+
+
 class _AttemptPolicyFactory:
     """Trusted code/bootstrap configuration shared by slots, never a policy."""
 
@@ -2028,9 +2105,12 @@ class _AttemptPolicyFactory:
         files = (python, *((python_library,) if python_library is not None else ()),
                  Path("/opt/homebrew/opt/gettext/lib/libintl.8.dylib"),
                  Path("/dev/null"), Path("/dev/urandom"), Path("/dev/random"))
-        roots = (Path(sysconfig.get_path("stdlib")).resolve(),
-                 Path(sysconfig.get_path("purelib")).resolve(),
-                 Path(sysconfig.get_path("platlib")).resolve(),
+        boundary = _retained_python_boundary()
+        python_roots = ((boundary[0]["python-stdlib"], boundary[0]["python-extensions"],
+                         boundary[0]["installed-packages"]) if boundary is not None else
+                        (Path(sysconfig.get_path("stdlib")).resolve(),
+                         *(Path(p).resolve() for p in _selected_python_package_paths())))
+        roots = (*python_roots,
                  Path(__file__).resolve().parents[2],
                  Path(__file__).resolve().parents[3] / "banodoco_workspace_client",
                  *_admitted_source_roots(record.source_root, record.definition),
@@ -2062,7 +2142,8 @@ class _AttemptPolicyFactory:
             tuple(p for p in files if p.exists()), tuple(dict.fromkeys(p for p in roots if p.is_dir())),
             _SandboxEnvironmentPolicy(), claim_binding=authority.fields,
             bootstrap_search_roots=(Path(__file__).resolve().parents[3], Path(record.source_root).resolve().parent),
-            executable_bindings=bindings, executable_directory=binary_directory)
+            executable_bindings=bindings, executable_directory=binary_directory,
+            excluded_python_roots=boundary[1] if boundary is not None else ())
         _confined_launch_plan([str(python)], policy=policy)
         return policy
 
@@ -2219,6 +2300,17 @@ def _confined_launch_plan(
         raise HostError("undeclared executable directory")
     # Keep declared symlink aliases explicit as well as their resolved artifacts.
     file_aliases = tuple(dict.fromkeys((*policy.bootstrap_files, *bootstrap_files, *declared_files)))
+    excluded_python = []
+    for raw in items(policy.excluded_python_roots, "excluded Python roots"):
+        if (not isinstance(raw, Path) or not raw.is_absolute() or ".." in raw.parts
+                or raw == Path("/") or any(ord(c) < 32 or ord(c) == 127 for c in str(raw))):
+            raise HostError("invalid excluded Python root")
+        excluded_python.extend((raw, raw.resolve()))
+    excluded_python = tuple(dict.fromkeys(excluded_python))
+    if any(p.resolve().is_relative_to(excluded) for p in
+           (*reads, *writes, private, *bootstrap_roots, *file_aliases, *bootstrap_search_roots)
+           for excluded in excluded_python):
+        raise HostError("confinement cannot re-admit excluded Python code")
     if any(p.is_relative_to(project) or project.is_relative_to(p)
            or p.is_relative_to(private) or private.is_relative_to(p) for p in bootstrap_roots):
         raise HostError("bootstrap roots must not subsume project or private authority")
@@ -2351,6 +2443,10 @@ def _confined_launch_plan(
     rules.extend(f'(allow file-map-executable (literal "{quote(p)}"))' for p in file_aliases)
     rules.extend(f'(allow file-write* (subpath "{quote(p)}"))' for p in (*writes, private))
     rules.extend(f'(allow network-outbound (remote tcp "{p}"))' for p in dict.fromkeys(network))
+    # Explicit denies override ancestor stdlib/project/bootstrap allows, for
+    # direct file loaders and native mappings as well as ordinary imports.
+    rules.extend(f'(deny file-read* (subpath "{quote(p)}"))' for p in excluded_python)
+    rules.extend(f'(deny file-map-executable (subpath "{quote(p)}"))' for p in excluded_python)
     profile = "\n".join(rules) + "\n"
     if policy.renderer_reads is not None or policy.renderer_transport is not None:
         from .renderer_transport import RetainedRendererProfile
@@ -8793,15 +8889,14 @@ class GenericPackHost:
                     "sys.argv=sys.argv[2:]; runpy.run_module('astrid.core.execution.generic_host_worker',run_name='__main__')"
                 )
                 argv = [sys.executable, "-I", "-S", "-B", "-c", startup,
-                        json.dumps(list(dict.fromkeys([package_parent, sysconfig.get_path('purelib'),
-                            sysconfig.get_path('platlib'), *_dependency_pythonpath()]))), *argv[2:]]
+                        json.dumps(list(dict.fromkeys([package_parent, *_selected_python_package_paths(),
+                            *_dependency_pythonpath()]))), *argv[2:]]
             elif render_command:
                 render_command_imports = list(
                     dict.fromkeys(
                         [
                             package_parent,
-                            sysconfig.get_path("purelib"),
-                            sysconfig.get_path("platlib"),
+                            *_selected_python_package_paths(),
                             *_dependency_pythonpath(),
                             *(str(root) for root in admitted_python_roots),
                         ]
@@ -8853,7 +8948,7 @@ class GenericPackHost:
                 scopes = tuple(root.resolve() for root in bootstrap.bootstrap_roots)
                 searches = list(bootstrap.bootstrap_search_roots)
                 imports = []
-                for raw in (package_parent, sysconfig.get_path('purelib'), sysconfig.get_path('platlib'),
+                for raw in (package_parent, *_selected_python_package_paths(),
                             str(record.source_root), str(record.source_root.parent), *_dependency_pythonpath()):
                     candidate = Path(raw).resolve()
                     if any(candidate == root or candidate.is_relative_to(root) for root in scopes):
@@ -9207,7 +9302,7 @@ class GenericPackHost:
                 )
                 argv = [sys.executable, "-I", "-S", "-B", "-c", startup,
                         json.dumps(list(dict.fromkeys([
-                            package_parent, sysconfig.get_path("purelib"), sysconfig.get_path("platlib"),
+                            package_parent, *_selected_python_package_paths(),
                             *_dependency_pythonpath(), *import_roots,
                         ]))), *argv[2:]]
             plan = self._workload_launch_plan(
@@ -9247,8 +9342,7 @@ class GenericPackHost:
                         dict.fromkeys(
                             [
                                 package_parent,
-                                sysconfig.get_path("purelib"),
-                                sysconfig.get_path("platlib"),
+                                *_selected_python_package_paths(),
                                 *_dependency_pythonpath(),
                                 *import_roots,
                             ]
