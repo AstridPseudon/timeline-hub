@@ -1342,7 +1342,7 @@ def load_local_worker_composition(path: str | Path, *, workspace_uuid: str, real
         "engine_artifact_digest", "engine_listener_artifact_digest", "session_config_digest", "profile_revision",
         "profile_digest", "release_digest", "source_checkout", "pack_root", "boot_manifest_path",
         "boot_manifest_hash", "capability_matrix", "environment", "worker_timeout_seconds",
-        "engine_launch", "host_os_executable", "host_os_artifact_digest", "host_protocol", "execution_mode", "additional_pack_roots", "max_concurrency",
+        "engine_launch", "host_os_executable", "host_os_artifact_digest", "host_protocol", "execution_mode", "additional_pack_roots", "max_concurrency", "renderer_selection",
     }
     unknown = sorted(set(raw) - allowed)
     if unknown:
@@ -1350,7 +1350,7 @@ def load_local_worker_composition(path: str | Path, *, workspace_uuid: str, real
     mode = raw.get("execution_mode", "worker_engine")
     if mode not in {"worker_engine", "host_only_cpu"}:
         raise ValidationError("unsupported local execution mode")
-    if mode != "host_only_cpu" and set(raw) & {"additional_pack_roots", "max_concurrency"}:
+    if mode != "host_only_cpu" and set(raw) & {"additional_pack_roots", "max_concurrency", "renderer_selection"}:
         raise ValidationError("additional pack declarations require host-only mode")
     if mode == "host_only_cpu":
         return _load_host_only_composition(raw, workspace_uuid=workspace_uuid, realm_root=realm_root,

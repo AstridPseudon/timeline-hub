@@ -237,3 +237,23 @@ result = {"case": case, "ok": True, "refusal": refusal}
 (root / "case-result.json").write_text(json.dumps(result, sort_keys=True) + "\n")
 print(json.dumps(result))
 '''
+
+
+def test_loader_routes_optional_renderer_selection_only_to_host_mode(tmp_path, monkeypatch):
+    from runtime_protocol import local_worker_composition as composition
+    from runtime_protocol.errors import ValidationError
+    profile = tmp_path/'selection.json'
+    renderer = {"selected": "test router input, not an admission"}
+    captured = []
+    def load(raw, **kwargs):
+        captured.append(raw)
+        return "typed-host-loader"
+    monkeypatch.setattr(composition, "_load_host_only_composition", load)
+    profile.write_text(json.dumps({"execution_mode":"host_only_cpu", "renderer_selection":renderer}))
+    kwargs = dict(workspace_uuid="test", realm_root=tmp_path, support_root=tmp_path, runtime_instance_id="test")
+    assert composition.load_local_worker_composition(profile, **kwargs) == "typed-host-loader"
+    assert captured[0]["renderer_selection"] == renderer
+    profile.write_text(json.dumps({"execution_mode":"worker_engine", "renderer_selection":renderer}))
+    with pytest.raises(ValidationError, match="host-only"):
+        composition.load_local_worker_composition(profile, **kwargs)
+    assert len(captured) == 1
