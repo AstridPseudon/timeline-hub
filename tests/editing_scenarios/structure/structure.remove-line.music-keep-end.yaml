@@ -1,14 +1,12 @@
 id: structure.remove-line.music-keep-end
 source: W2 (new)
 intent: Remove narration line s1 ("It went viral.") from a film whose music runs to its end; the default keep_end cuts the bed at the removal, so its ending stays on the film's end.
-fixture: tiny-bed8
+fixture: tiny-bed8  # under keep_end the bed already runs to the film's 8 s end (e766a7d8), so no setup step
 expect: change
 cli:
-  - edit --clip a-music --for 8       # setup: the bed runs to the film's 8 s end (in tiny it stops at 4 s)
   - edit --remove-line s1
 sheet: {missing: "the sheet cannot remove a narration line (harness H-5), so the music check cannot run on the sheet either"}
 python: |
-  tl.clip("a-music").set_duration(8)  # setup, as the CLI's --for
   tl.remove_line("s1")
 check:
   - '"s1" not in [v.segment for v in tl.lines()]'
