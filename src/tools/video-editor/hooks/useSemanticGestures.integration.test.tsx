@@ -7557,7 +7557,7 @@ async function manualTextRun(h: Awaited<ReturnType<typeof setup>>, proof: () => 
   expect(h.compatibilityRequests).toEqual([]);
 }
 describe('W30 manual text consumer', () => {
-  it('selected handler text edit uses accepted receipt Undo and receipt-derived Redo', async () => {
+  it('selected ClipPanel handler text edit uses accepted receipt Undo and receipt-derived Redo', async () => {
     const initial = await manualTextData(); const requests: CommitRequest[] = [];
     let proof!: Awaited<ReturnType<typeof manualTextSource>>;
     const h = await setup(async request => { requests.push(request); proof = await manualTextSource(initial, requests);
@@ -7565,17 +7565,21 @@ describe('W30 manual text consumer', () => {
       return { acceptedResult: proof.result };
     }, false, initial);
     const history = lookStyleHistory(h);
-    act(() => h.result.current.editing.handleSelectedClipChange({ text: {
-      ...initial.config.clips[0].text!, content: 'Selected SDK edit ✨', fontSize: 72, color: '#2468ac', align: 'right',
-      fontFamily: 'Inter, system-ui, sans-serif', bold: true, italic: true,
-    } }));
+    const { ClipPanelBody } = await import('../components/PropertiesPanel/ClipPanelBody.tsx');
+    const catalog = { data: { entrance: [], exit: [], continuous: [] }, effects: [], entrance: [], exit: [], continuous: [], isLoading: false,
+      isFetching: false, error: null, refetch: async () => {}, canCreateEffect: false, canUpdateEffect: false, canDeleteEffect: false };
+    const view = render(React.createElement(ClipPanelBody, { clip: initial.resolvedConfig.clips[0], track: initial.tracks[0],
+      deviceClass: 'desktop', interactionMode: 'move', precisionEnabled: false, hasPredecessor: false,
+      onChange: h.result.current.editing.handleSelectedClipChange, onResetPosition: vi.fn(), onClose: vi.fn(), onToggleMute: vi.fn(), onSplitAtPlayhead: vi.fn(),
+      onMoveTrackUp: vi.fn(), onMoveTrackDown: vi.fn(), onSetInteractionMode: vi.fn(), onSetPrecisionEnabled: vi.fn(), compositionWidth: 1920, compositionHeight: 1080,
+      registry: {}, activeTab: 'text', setActiveTab: vi.fn(), effectResources: catalog }));
+    fireEvent.change(view.container.querySelector('textarea')!, { target: { value: 'Selected SDK edit ✨' } });
     await manualTextRun(h, () => proof, history);
     expect(requests[0].change.commands).toHaveLength(1);
     expect(requests[0].change.commands[0]).toMatchObject({ op: 'clip.set-text', select: 'parent/clip:clip-1', args: { text: {
-      ...initial.config.clips[0].text, content: 'Selected SDK edit ✨', fontSize: 72, color: '#2468ac', align: 'right',
-      fontFamily: 'Inter, system-ui, sans-serif', bold: true, italic: true,
+      ...initial.config.clips[0].text, content: 'Selected SDK edit ✨',
     } } });
-    history.unmount(); h.unmount();
+    view.unmount(); history.unmount(); h.unmount();
   }, 180_000);
   it('constant common bulk text edit uses accepted receipt Undo and receipt-derived Redo', async () => {
     const initial = await manualTextData(); const requests: CommitRequest[] = [];
