@@ -43,7 +43,15 @@ export type ModifierDeclaration = {
   readonly bounds: 'preserve' | 'unknown';
   readonly alpha: 'preserve';
   readonly support: 'preserve';
+  /** Supplied by the existing admitted descriptor host, never inferred from params. */
+  readonly parameters?: ModifierParameterBinding;
   readonly wrap: (instance: ClipModifierReference, context: ModifierContext, children: ReactNode) => ReactElement;
+};
+
+export type ModifierParameterBinding = {
+  readonly schema: unknown;
+  /** The host's actual descriptor validator. It must throw on invalid params. */
+  readonly validateParams: (params: Record<string, unknown>) => void;
 };
 
 export type ModifierDefinition<TParams> = Omit<ModifierDeclaration, 'wrap'> & {

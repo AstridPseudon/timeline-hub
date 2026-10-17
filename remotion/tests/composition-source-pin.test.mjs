@@ -42,18 +42,18 @@ test('vendored payload matches the recorded package and retains source Git blob 
 });
 
 test('provenance identifies this run-local development archive without authenticating the tag', () => {
-  assert.equal(source.source_commit, '80f801061be732b658a7216f379a9e328e58f8bc');
-  assert.equal(source.source_tree, 'feb2d58551605a733af0443ad0d079a96dc5f052');
-  assert.equal(source.source_parent, 'e34470948ddce060e0bb1417497b2a2d0e1161e6');
-  assert.equal(source.source_branch, 'codex/timeline-r4-A-A110-SCENE-CAPABILITY-141-CONTINUATION-001-T');
-  assert.equal(source.archive, 'projects/A-integration/out/A-A110-SCENE-CAPABILITY-141-JOINED-PACKAGE-001/banodoco-timeline-composition-0.0.7.tgz');
-  assert.equal(source.archive_sha256, '6011abee2026fb38c432999c4600b1cda06a336c0594c0792f3dc802294a2f01');
-  assert.equal(source.archive_sha512, 'bd19355f63daf13cf865e862b5c8b944b01cf9eb9bd2dec5f085aa9c60726440fe8a367663b3da083945e05725acab017308076d1240c155188fc580cd8aca7b');
-  assert.equal(source.archive_bytes, 78072);
-  assert.equal(source.archive_member_count, 90);
-  assert.equal(source.unpacked_bytes, 278106);
-  assert.equal(source.npm_shasum, '9116ff2902353a78dc456a420d76a2f1b25ce7c1');
-  assert.equal(source.npm_integrity, 'sha512-vRk1X2Pa8Tz4Zehitci5RLAc+eub0t7F8IWqnGByZED+ijZ2Y7PaCDlF4FclrKsBcwgHbRJAwVUYj8WAzYrKew==');
+  assert.equal(source.source_commit, '5947abc0f5d6c0f5ca20bb478521e010e76be039');
+  assert.equal(source.source_tree, '50a4598a79b671688e4eb9e6b341e9e1e7eacbd1');
+  assert.equal(source.source_parent, '80f801061be732b658a7216f379a9e328e58f8bc');
+  assert.equal(source.source_branch, 'codex/timeline-r4-A-I144-ROLLING-PACKAGE-002-T');
+  assert.equal(source.archive, 'projects/A-integration/out/A-I144-ROLLING-PACKAGE-002/banodoco-timeline-composition-0.0.7.tgz');
+  assert.equal(source.archive_sha256, '632698e68a2d3b0b7307ed2b706b77235197ac7abcedf5f4009a9b89aee8cda8');
+  assert.equal(source.archive_sha512, 'c3aeb8211d7f6310fe56cd597502297e7924f4778ad61961d1fae94d4e55cf8450c4c05db50acb14dec473f43089a59540b3c11a62569c677f1da6d46b9615f4');
+  assert.equal(source.archive_bytes, 81826);
+  assert.equal(source.archive_member_count, 92);
+  assert.equal(source.unpacked_bytes, 291693);
+  assert.equal(source.npm_shasum, 'e10a9f48d369dfc704d8dd120989eda9b49d9c16');
+  assert.equal(source.npm_integrity, 'sha512-w664IR1/YxD+Vs1ZdQIpfnkk9HeK1hlh0frpTU5Vz4RQxMBdtQrLFN7Ec/QwiaWVQLPBGmJWnGd/HabUa5YV9A==');
   assert.equal(source.source_baseline.kind, 'admitted-T-git-source');
   assert.equal(source.source_baseline.commit, source.source_commit);
   assert.equal(source.source_baseline.tree, source.source_tree);
@@ -63,13 +63,13 @@ test('provenance identifies this run-local development archive without authentic
   assert.equal(source.build_diagnostic_count, 13);
   assert.equal(source.build_diagnostics_match_inherited_baseline, true);
   assert.equal(source.build_stdout_byte_identical_to_retained_producer, true);
-  assert.equal(source.producer_handback, 'projects/A-integration/receipts/A-A110-SCENE-CAPABILITY-141-CONTINUATION-001-XHARD-handback.md');
-  assert.equal(source.producer_handback_sha256, '7c86e675fb6d64511ea7555e19c1bfe26a04fe67681e467696e219b958f23cc1');
-  assert.equal(source.integrated_astrid_merge_commit, '13c1a2598b355acdb8f211f92392886b45787daf');
-  assert.equal(source.integrated_astrid_merge_tree, 'da1ab1ff6c3c4fc945726b03a6c63fdf8e058f87');
+  assert.equal(source.producer_handback, 'projects/A-integration/receipts/A-I144-COMPATIBLE-SOURCE-JOIN-001-handback.md');
+  assert.equal(source.producer_handback_sha256, '2c5753ab793564aa597c94d7d9932bc4d24e981366c4622f2dbdd347b3e3b601');
+  assert.equal(source.integrated_astrid_merge_commit, '8b4289dda77175e229d94b3a987dacd01cf976b4');
+  assert.equal(source.integrated_astrid_merge_tree, '4bd0ec6e8a667697da19a37e1b77073f5a994a6d');
   assert.deepEqual(source.integrated_astrid_merge_parents, [
-    '8e56b10cc14f74b2920ebda42eee4dc111322037',
-    'de3c8ec36f9c8fe6849d2707440eff93ddbc8b8c',
+    '21e60f73a532c7b45d654423631b825418144a51',
+    '94daf237fa64f6faaa0868889e8e0bb85cd16a86',
   ]);
   assert.equal(source.required_ref, 'v0.0.7/e2ab21a7');
   assert.equal(source.required_ref_authenticated, false);

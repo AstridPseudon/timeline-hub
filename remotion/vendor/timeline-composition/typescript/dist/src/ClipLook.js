@@ -4,7 +4,7 @@ import { composeClipAnimationPhase } from './ClipAnimationPhase';
 import { clipOpacity, clipSpeed, cropClipPath, remappedFrame, } from './lib/clip-look';
 import { getClipDurationInFrames } from './lib/duration';
 import { useTheme } from './ThemeContext';
-import { MODIFIER_REGISTRY, composeModifiers } from './modifiers';
+import { MODIFIER_REGISTRY, composeModifiers, hasModifierKeyframes } from './modifiers';
 import { spriteKeyframeFrame, timelineKeyframeTime } from './lib/keyframe-origin';
 const IDENTITY_CROP_PATH = 'inset(0% 0% 0% 0%)';
 export const composeClipLook = ({ clip, fps, kind, children, modifierRegistry = MODIFIER_REGISTRY, modifierBounds = { status: 'unknown', reason: 'Target has no declared bounds evaluator' }, globalFrame, onModifierFinding }, frame, theme) => {
@@ -33,7 +33,7 @@ export const composeClipLook = ({ clip, fps, kind, children, modifierRegistry = 
         ? _jsx(AbsoluteFill, { style: { clipPath: elementCrop }, children: children })
         : children;
     const targetFrame = remapElement ? remappedFrame(frame, clip.speed) : frame;
-    const modified = hasModifiers ? composeModifiers({
+    const modified = hasModifiers || hasModifierKeyframes(clip) ? composeModifiers({
         instances: clip.modifiers ?? [],
         registry: modifierRegistry,
         context: { clip, fps, frame: targetFrame, keyframeFrame: spriteKeyframeFrame(clip, targetFrame, fps),

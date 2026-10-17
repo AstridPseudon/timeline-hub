@@ -14,7 +14,7 @@ import {
 import {getClipDurationInFrames} from './lib/duration';
 import {useTheme, type RuntimeTheme} from './ThemeContext';
 import type {TimelineClip} from './types';
-import {MODIFIER_REGISTRY, composeModifiers} from './modifiers';
+import {MODIFIER_REGISTRY, composeModifiers, hasModifierKeyframes} from './modifiers';
 import type {ModifierBounds, ModifierFinding, ModifierRegistry} from './modifier-types';
 import {spriteKeyframeFrame, timelineKeyframeTime} from './lib/keyframe-origin';
 
@@ -61,7 +61,7 @@ export const composeClipLook = ({clip, fps, kind, children, modifierRegistry = M
     ? <AbsoluteFill style={{clipPath: elementCrop}}>{children}</AbsoluteFill>
     : children;
   const targetFrame = remapElement ? remappedFrame(frame, clip.speed) : frame;
-  const modified = hasModifiers ? composeModifiers({
+  const modified = hasModifiers || hasModifierKeyframes(clip) ? composeModifiers({
     instances: clip.modifiers ?? [],
     registry: modifierRegistry,
     context: {clip, fps, frame: targetFrame, keyframeFrame: spriteKeyframeFrame(clip, targetFrame, fps),

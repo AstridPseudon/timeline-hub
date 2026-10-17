@@ -1,30 +1,30 @@
 {
   "package": "@banodoco/timeline-composition",
   "package_version": "0.0.7",
-  "source_commit": "80f801061be732b658a7216f379a9e328e58f8bc",
-  "source_tree": "feb2d58551605a733af0443ad0d079a96dc5f052",
-  "source_parent": "e34470948ddce060e0bb1417497b2a2d0e1161e6",
-  "source_branch": "codex/timeline-r4-A-A110-SCENE-CAPABILITY-141-CONTINUATION-001-T",
+  "source_commit": "5947abc0f5d6c0f5ca20bb478521e010e76be039",
+  "source_tree": "50a4598a79b671688e4eb9e6b341e9e1e7eacbd1",
+  "source_parent": "80f801061be732b658a7216f379a9e328e58f8bc",
+  "source_branch": "codex/timeline-r4-A-I144-ROLLING-PACKAGE-002-T",
   "source_baseline": {
     "kind": "admitted-T-git-source",
     "repository": "clones/timeline-composition",
-    "commit": "80f801061be732b658a7216f379a9e328e58f8bc",
-    "tree": "feb2d58551605a733af0443ad0d079a96dc5f052",
-    "parent": "e34470948ddce060e0bb1417497b2a2d0e1161e6",
-    "scope": "Exact admitted T source commit; archive was emitted from this Git source without claiming authenticated published-tag equivalence."
+    "commit": "5947abc0f5d6c0f5ca20bb478521e010e76be039",
+    "tree": "50a4598a79b671688e4eb9e6b341e9e1e7eacbd1",
+    "parent": "80f801061be732b658a7216f379a9e328e58f8bc",
+    "scope": "Exact admitted I144 T source candidate; this one run-local archive is emitted directly from its clean Git source."
   },
-  "build_commit": "80f801061be732b658a7216f379a9e328e58f8bc",
-  "archive": "projects/A-integration/out/A-A110-SCENE-CAPABILITY-141-JOINED-PACKAGE-001/banodoco-timeline-composition-0.0.7.tgz",
-  "archive_bytes": 78072,
-  "archive_sha256": "6011abee2026fb38c432999c4600b1cda06a336c0594c0792f3dc802294a2f01",
-  "archive_sha512": "bd19355f63daf13cf865e862b5c8b944b01cf9eb9bd2dec5f085aa9c60726440fe8a367663b3da083945e05725acab017308076d1240c155188fc580cd8aca7b",
-  "archive_member_count": 90,
-  "unpacked_bytes": 278106,
-  "npm_shasum": "9116ff2902353a78dc456a420d76a2f1b25ce7c1",
-  "npm_integrity": "sha512-vRk1X2Pa8Tz4Zehitci5RLAc+eub0t7F8IWqnGByZED+ijZ2Y7PaCDlF4FclrKsBcwgHbRJAwVUYj8WAzYrKew==",
-  "producer_handback": "projects/A-integration/receipts/A-A110-SCENE-CAPABILITY-141-CONTINUATION-001-XHARD-handback.md",
-  "producer_handback_sha256": "7c86e675fb6d64511ea7555e19c1bfe26a04fe67681e467696e219b958f23cc1",
-  "build_evidence": "projects/A-integration/evidence/A-A110-SCENE-CAPABILITY-141-JOINED-PACKAGE-001-NORMAL/emitter-diagnostic-comparison.json",
+  "build_commit": "5947abc0f5d6c0f5ca20bb478521e010e76be039",
+  "archive": "projects/A-integration/out/A-I144-ROLLING-PACKAGE-002/banodoco-timeline-composition-0.0.7.tgz",
+  "archive_bytes": 81826,
+  "archive_sha256": "632698e68a2d3b0b7307ed2b706b77235197ac7abcedf5f4009a9b89aee8cda8",
+  "archive_sha512": "c3aeb8211d7f6310fe56cd597502297e7924f4778ad61961d1fae94d4e55cf8450c4c05db50acb14dec473f43089a59540b3c11a62569c677f1da6d46b9615f4",
+  "archive_member_count": 92,
+  "unpacked_bytes": 291693,
+  "npm_shasum": "e10a9f48d369dfc704d8dd120989eda9b49d9c16",
+  "npm_integrity": "sha512-w664IR1/YxD+Vs1ZdQIpfnkk9HeK1hlh0frpTU5Vz4RQxMBdtQrLFN7Ec/QwiaWVQLPBGmJWnGd/HabUa5YV9A==",
+  "producer_handback": "projects/A-integration/receipts/A-I144-COMPATIBLE-SOURCE-JOIN-001-handback.md",
+  "producer_handback_sha256": "2c5753ab793564aa597c94d7d9932bc4d24e981366c4622f2dbdd347b3e3b601",
+  "build_evidence": "projects/A-integration/evidence/A-I144-ROLLING-PACKAGE-002-NORMAL/emitter-diagnostic-comparison.json",
   "build_log_sha256": "0bc4e461520af70bc35caa36e43d5d7814a79e9ef757ef31b805ecf013d01c6c",
   "build_exit_code": 2,
   "build_diagnostic_count": 13,
@@ -32,13 +32,25 @@
   "build_stdout_byte_identical_to_retained_producer": true,
   "required_ref": "v0.0.7/e2ab21a7",
   "required_ref_authenticated": false,
-  "integrated_astrid_merge_commit": "13c1a2598b355acdb8f211f92392886b45787daf",
-  "integrated_astrid_merge_tree": "da1ab1ff6c3c4fc945726b03a6c63fdf8e058f87",
+  "integrated_astrid_merge_commit": "8b4289dda77175e229d94b3a987dacd01cf976b4",
+  "integrated_astrid_merge_tree": "4bd0ec6e8a667697da19a37e1b77073f5a994a6d",
   "integrated_astrid_merge_parents": [
-    "8e56b10cc14f74b2920ebda42eee4dc111322037",
-    "de3c8ec36f9c8fe6849d2707440eff93ddbc8b8c"
+    "21e60f73a532c7b45d654423631b825418144a51",
+    "94daf237fa64f6faaa0868889e8e0bb85cd16a86"
   ],
-  "scope": "Run-local development package emitted from exact admitted T80 source. The TypeScript emitter exited 2 with the same 13 inherited TS2307 diagnostics as the retained producer. This does not authenticate the published tag and makes no release, pixel, renderer-equivalence, or public-journey claim.",
+  "consumer_source_inputs": {
+    "Astrid": {
+      "commit": "8b4289dda77175e229d94b3a987dacd01cf976b4",
+      "tree": "4bd0ec6e8a667697da19a37e1b77073f5a994a6d",
+      "branch": "codex/timeline-r4-A-I144-COMPATIBLE-SOURCE-JOIN-001-ASTRID"
+    },
+    "App": {
+      "commit": "9207d111d527044d5a95f79d4f240c5c93466793",
+      "tree": "67e15c6ea01a774e42d1a26b3f5ef7c945ec93e7",
+      "branch": "codex/timeline-r4-A-I144-COMPATIBLE-SOURCE-JOIN-001-APP"
+    }
+  },
+  "scope": "Run-local development package emitted from the exact admitted I144 T candidate. The same 13 inherited TS2307 diagnostics remain (emitter exit 2; not a clean build). This binds this run-local artifact and does not authenticate the published tag.",
   "files": [
     {
       "path": "README.md",
@@ -79,11 +91,11 @@
     },
     {
       "path": "typescript/dist/src/ClipLook.js",
-      "bytes": 3418,
-      "sha256": "806bce332f34afcf22dc7b53808f19915899a25d2e783f2440770471737f2d3a",
+      "bytes": 3470,
+      "sha256": "d0a7a73a8f02c2214ba1ffc9f01f835eb2226857b684b38a69bfbb6729be8d27",
       "source_git_blob": null,
       "emitted_from": "typescript/src/ClipLook.tsx",
-      "emitted_from_git_blob": "669626e46f8bca7231684639958dca5b13463cf5"
+      "emitted_from_git_blob": "f7f0e836f3673a57d209cab670e56804ab03a518"
     },
     {
       "path": "typescript/dist/src/ThemeContext.js",
@@ -95,11 +107,11 @@
     },
     {
       "path": "typescript/dist/src/TimelineComposition.js",
-      "bytes": 9744,
-      "sha256": "ca678f6572758ad512cd4332d30167173dfa9834d85dfe218b8cb1115af9b552",
+      "bytes": 9826,
+      "sha256": "58e86a6aa2bc1a8499971b634cf89c1aa2a3ade85ec5eec54102d068acf991ee",
       "source_git_blob": null,
       "emitted_from": "typescript/src/TimelineComposition.tsx",
-      "emitted_from_git_blob": "6a26e89c12feadd897c2151727ff163d6057e2d0"
+      "emitted_from_git_blob": "aa0e2b361be2dd744856d11b27847df18ccd9514"
     },
     {
       "path": "typescript/dist/src/TransitionLayer.js",
@@ -270,12 +282,20 @@
       "emitted_from_git_blob": "8e96817534ddb9254c304c915458bf8fb65dffab"
     },
     {
+      "path": "typescript/dist/src/lib/modifier-keyframes.js",
+      "bytes": 5682,
+      "sha256": "40c4196b8ea6008db6175a969950fed1c4761239bc3427ceb52f10d1d0965c36",
+      "source_git_blob": null,
+      "emitted_from": "typescript/src/lib/modifier-keyframes.ts",
+      "emitted_from_git_blob": "e29efd7eea47b94d395c1e710749ecde91c4745f"
+    },
+    {
       "path": "typescript/dist/src/lib/modifiers.js",
-      "bytes": 2289,
-      "sha256": "fc8998b1b1d1f356e9fa3b5e46aeae3bf24b0fb4fd6f3d2610c746d0d2b06d31",
+      "bytes": 2512,
+      "sha256": "49936efa155cb5f75ea60ba6d9f8ed0fb14cf9641d16791e387886179e97339a",
       "source_git_blob": null,
       "emitted_from": "typescript/src/lib/modifiers.tsx",
-      "emitted_from_git_blob": "5a343cf70ee5611dba59adf84306ae08ebb3688e"
+      "emitted_from_git_blob": "defac515d10f2c74bb9066d426bb871adec27307"
     },
     {
       "path": "typescript/dist/src/lib/motion-curves.generated.js",
@@ -347,15 +367,15 @@
       "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
       "source_git_blob": null,
       "emitted_from": "typescript/src/modifier-types.ts",
-      "emitted_from_git_blob": "1499374a8983bf13db0253803e02d2a69aca6a93"
+      "emitted_from_git_blob": "8e8543784be0483bcce04fd78bda96080545ff09"
     },
     {
       "path": "typescript/dist/src/modifiers.js",
-      "bytes": 300,
-      "sha256": "1e9e0d8be976e852c9e39b609c44e9feafe8f214071d91beb34b574d2438387f",
+      "bytes": 448,
+      "sha256": "3256b2aba6cbf901d14615edc5c3e7d6ca63044512f71fda1ffcf7ebaab54124",
       "source_git_blob": null,
       "emitted_from": "typescript/src/modifiers.ts",
-      "emitted_from_git_blob": "9d147ee539ce5fc6158d47632b0d6877eb4a2a60"
+      "emitted_from_git_blob": "d73963f4050ceb72ecc87bf684c08a3d384738c8"
     },
     {
       "path": "typescript/dist/src/registry.generated.js",
@@ -383,11 +403,11 @@
     },
     {
       "path": "typescript/dist/src/theme-api.js",
-      "bytes": 1592,
-      "sha256": "0e084d910b22b0b407de15d94239074bc1ddc17ad19d338b458e0b129f42660b",
+      "bytes": 1697,
+      "sha256": "92593a6d6457f959007a9d96fbe5e0bdd70a7189a13c1a4dbcd46eabd5e4dcd8",
       "source_git_blob": null,
       "emitted_from": "typescript/src/theme-api.ts",
-      "emitted_from_git_blob": "4bbd4db683effbc3e45887b86b5794831d722251"
+      "emitted_from_git_blob": "64f0aa34076d51ce5d8607be984655473ab500d4"
     },
     {
       "path": "typescript/dist/src/transitions.generated.js",
@@ -403,7 +423,7 @@
       "sha256": "717c9e9d2b9860a308ec8f520bfa78740287dcaadd2efbed0aa41d351b103f7c",
       "source_git_blob": null,
       "emitted_from": "typescript/src/types.ts",
-      "emitted_from_git_blob": "a36007b2a01b4e41c6b4742e72471808c2e6d68f"
+      "emitted_from_git_blob": "f20c427a7da10aff6b2492e2b1c7afddf80f21c8"
     },
     {
       "path": "typescript/src/AudioTrack.tsx",
@@ -421,9 +441,9 @@
     },
     {
       "path": "typescript/src/ClipLook.tsx",
-      "bytes": 4028,
-      "sha256": "881ad45c10e46d0f4098eee5278b79e402db9ab24a15edbde995f9f596f6b06f",
-      "source_git_blob": "669626e46f8bca7231684639958dca5b13463cf5",
+      "bytes": 4080,
+      "sha256": "0d151e0ecc38a9e5402d6bae4d322efe353ad22f454dec954b451f2b323f52a2",
+      "source_git_blob": "f7f0e836f3673a57d209cab670e56804ab03a518",
       "emitted_from": null
     },
     {
@@ -435,9 +455,9 @@
     },
     {
       "path": "typescript/src/TimelineComposition.tsx",
-      "bytes": 12228,
-      "sha256": "b6cb3c770a480e0fd73e537d4bac62f1ab369a2c55a7e2b6c5cccd468faf893b",
-      "source_git_blob": "6a26e89c12feadd897c2151727ff163d6057e2d0",
+      "bytes": 12310,
+      "sha256": "a1ad24accb42ba1873c73f569d1302a22ee92786e2d1d1135d315a70d3e47e26",
+      "source_git_blob": "aa0e2b361be2dd744856d11b27847df18ccd9514",
       "emitted_from": null
     },
     {
@@ -588,10 +608,17 @@
       "emitted_from": null
     },
     {
+      "path": "typescript/src/lib/modifier-keyframes.ts",
+      "bytes": 5981,
+      "sha256": "dad7c7f579a920d1aa68413fd26722e0f51ec41cdcccd22c24fa4bab57961339",
+      "source_git_blob": "e29efd7eea47b94d395c1e710749ecde91c4745f",
+      "emitted_from": null
+    },
+    {
       "path": "typescript/src/lib/modifiers.tsx",
-      "bytes": 2601,
-      "sha256": "3d0c1b7d4d8dce6944145771c7c86ec8a0c0eeeb0c56f954429bc1a62053a599",
-      "source_git_blob": "5a343cf70ee5611dba59adf84306ae08ebb3688e",
+      "bytes": 2818,
+      "sha256": "b7b2a3eac447c25c7b07e6debd0a7ad72cf9564e48e7357c48ff288b1a8c2f9c",
+      "source_git_blob": "defac515d10f2c74bb9066d426bb871adec27307",
       "emitted_from": null
     },
     {
@@ -652,16 +679,16 @@
     },
     {
       "path": "typescript/src/modifier-types.ts",
-      "bytes": 2314,
-      "sha256": "671a29878ef8f81cc26fc64b585a0871cddf506954af3232a27e5e889cce8189",
-      "source_git_blob": "1499374a8983bf13db0253803e02d2a69aca6a93",
+      "bytes": 2677,
+      "sha256": "b9fe80364af5796d670562488818ecc72662ce9f48654070dd2e03a15d4e79a6",
+      "source_git_blob": "8e8543784be0483bcce04fd78bda96080545ff09",
       "emitted_from": null
     },
     {
       "path": "typescript/src/modifiers.ts",
-      "bytes": 566,
-      "sha256": "b0b0c0f5d2adc0ba6c6c101dd9b93a09ee8ef0134e06e5ce3231747d1fd07ad1",
-      "source_git_blob": "9d147ee539ce5fc6158d47632b0d6877eb4a2a60",
+      "bytes": 738,
+      "sha256": "fa738d5b680698ed9e7a58e6258004614c5688321cc4d52fd8edff6c2e91c3ee",
+      "source_git_blob": "d73963f4050ceb72ecc87bf684c08a3d384738c8",
       "emitted_from": null
     },
     {
@@ -694,9 +721,9 @@
     },
     {
       "path": "typescript/src/theme-api.ts",
-      "bytes": 2917,
-      "sha256": "ee5d091d41d77d87b33cab42e418aff480fda208a3270d19b648a2433027664b",
-      "source_git_blob": "4bbd4db683effbc3e45887b86b5794831d722251",
+      "bytes": 3050,
+      "sha256": "bf137dfadc07089057d2878d17ce4947f6d56d1e5facc3507f6cc5f3d2a16c0e",
+      "source_git_blob": "64f0aa34076d51ce5d8607be984655473ab500d4",
       "emitted_from": null
     },
     {
@@ -708,9 +735,9 @@
     },
     {
       "path": "typescript/src/types.ts",
-      "bytes": 3087,
-      "sha256": "a5afdd163ba59ab6dfcecac02482ecff13062d27251cdd9e0b5ab248ff11a8e9",
-      "source_git_blob": "a36007b2a01b4e41c6b4742e72471808c2e6d68f",
+      "bytes": 3382,
+      "sha256": "0c0387227ef9c5d98b705941fc1a0732ba0521678e3ae09f9d2cbf9ae33db7e8",
+      "source_git_blob": "f20c427a7da10aff6b2492e2b1c7afddf80f21c8",
       "emitted_from": null
     }
   ]
