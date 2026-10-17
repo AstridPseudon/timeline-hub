@@ -6,6 +6,7 @@ import os
 import re
 import sys
 from collections.abc import Iterable, Mapping
+from pathlib import Path
 
 from astrid.core.env_vars import (
     ASTRID_ENV_FILE,
@@ -184,6 +185,22 @@ def build_child_subprocess_env(
                     or any(value != inherited for value in supplied)):
                 raise SubprocessEnvPolicyError("Darwin CF encoding conflicts with its inherited owner pin")
             env[cf_key] = inherited
+
+    # The launch owner selects the inventory. A command may repeat that pin,
+    # but must neither introduce a task-selected store nor replace the owner.
+    source_key = "ASTRID_SOURCE_STATE"
+    selected = parent_env.get(source_key)
+    supplied = [mapping[source_key] for mapping in (base_env, explicit_env or {})
+                if source_key in mapping]
+    if selected is None:
+        if supplied:
+            raise SubprocessEnvPolicyError("source state selector requires an inherited parent-owned pin")
+    else:
+        if (not isinstance(selected, str) or not selected or "\0" in selected
+                or selected != selected.strip() or not Path(selected).is_absolute()
+                or any(value != selected for value in supplied)):
+            raise SubprocessEnvPolicyError("source state selector conflicts with its absolute parent-owned pin")
+        env[source_key] = selected
 
     env.pop(ASTRID_ACTOR, None)
     for key in sorted(_ASTRID_PROPAGATED_ENV):

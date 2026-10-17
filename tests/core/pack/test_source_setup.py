@@ -403,3 +403,152 @@ def test_real_filtered_command_root_cf_pin_preserves_all_four_inventory_operatio
         if process.poll() is None:
             pg.terminate_tree(process)
         process.wait(timeout=5)
+
+
+@pytest.mark.parametrize('where', ['base', 'explicit_env'])
+@pytest.mark.parametrize('value', ['/foreign/state.json', ''])
+def test_source_selector_rejects_command_conflict(where, value, tmp_path):
+    from astrid.core.subprocess_env import SubprocessEnvPolicyError, build_child_subprocess_env
+    parent = {'ASTRID_SOURCE_STATE': str(tmp_path / 'state.json')}
+    with pytest.raises(SubprocessEnvPolicyError, match='parent-owned'):
+        build_child_subprocess_env(parent=parent, **{'base': {}, where: {'ASTRID_SOURCE_STATE': value}})
+
+
+@pytest.mark.parametrize('value', ['', 'relative.json', ' /absolute.json', '/bad\0state'])
+def test_source_selector_rejects_invalid_parent(value):
+    from astrid.core.subprocess_env import SubprocessEnvPolicyError, build_child_subprocess_env
+    with pytest.raises(SubprocessEnvPolicyError, match='parent-owned'):
+        build_child_subprocess_env(base={}, parent={'ASTRID_SOURCE_STATE': value})
+
+
+def test_source_selector_absent_and_unowned_selection():
+    from astrid.core.subprocess_env import SubprocessEnvPolicyError, build_child_subprocess_env
+    assert build_child_subprocess_env(base={'HOME': '/owner', 'XDG_STATE_HOME': '/foreign',
+        'UNRELATED': 'value', 'API_TOKEN': 'secret', 'PYTHONSTARTUP': '/startup'}, parent={}) == {'HOME': '/owner'}
+    for channel in ('base', 'explicit_env'):
+        with pytest.raises(SubprocessEnvPolicyError, match='parent-owned'):
+            build_child_subprocess_env(parent={}, **{'base': {}, channel: {'ASTRID_SOURCE_STATE': '/task/state.json'}})
+
+
+def test_selected_source_real_registry_projections_and_fresh_refusals(tmp_path):
+    """Real verified fixture inventory and registry discovery; no native issuer."""
+    import hashlib
+    import os
+    import sys
+    import time
+
+    import banodoco_timeline_schema
+
+    from astrid.core.rendering import remotion_runtime as runtime
+    from astrid.core.subprocess_env import build_child_subprocess_env
+
+    repository = tmp_path / 'repository'
+    revision = _fixture_repo(repository)
+    state = tmp_path / 'selected.json'
+    assert provision((SourceDeclaration('demo', str(repository), revision),),
+        state_path=state, data_root=tmp_path / 'data')['ok']
+    original = state.read_bytes()
+    (tmp_path / 'qualified-state.json').write_bytes(original)
+    inventory = active_source_inventory(state_path=state)
+    root = Path(__file__).resolve().parents[3]
+    packs = root / 'tests/fixtures/renderer_packs/discovery/source'
+    parent = {'HOME': str(tmp_path), 'PATH': os.environ['PATH'], 'TMPDIR': str(tmp_path),
+              'ASTRID_SOURCE_STATE': str(state), 'ASTRID_PACKS_PATH': str(packs),
+              'ASTRID_TIMELINE_SCHEMA_PYTHONPATH': str(Path(banodoco_timeline_schema.__file__).resolve().parent.parent),
+              'XDG_STATE_HOME': str(tmp_path / 'foreign'), 'API_TOKEN': 'secret',
+              'PYTHONSTARTUP': '/unqualified', 'UNRELATED': 'value'}
+    child = build_child_subprocess_env(base=parent, parent=parent)
+    repeated = build_child_subprocess_env(base=child, parent=child,
+        explicit_env={'ASTRID_SOURCE_STATE': str(state)})
+    assert child == repeated
+    assert not {'XDG_STATE_HOME', 'API_TOKEN', 'PYTHONSTARTUP', 'UNRELATED'} & child.keys()
+    script = ('import sys,json; sys.path[0]=sys.argv[2]; sys.path.insert(0,sys.argv[1]); '
+              'sys.path.insert(0,sys.argv[3]); '
+              'from astrid.core.rendering.remotion_runtime import _registry_observation; '
+              'print(json.dumps(_registry_observation(),sort_keys=True))')
+
+    commands = []
+
+    def observe(environment, generator):
+        directory = root / ('scripts' if generator else 'astrid/packs/rendering/rendering')
+        argv = [sys.executable, '-B', '-I', '-c', script, str(root),
+                str(directory), parent['ASTRID_TIMELINE_SCHEMA_PYTHONPATH']]
+        started = time.monotonic()
+        with subprocess.Popen(argv, env=environment, cwd=directory,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as process:
+            stdout, stderr = process.communicate()
+        result = subprocess.CompletedProcess(argv, process.returncode, stdout, stderr)
+        prefix = f'probe-{len(commands):02d}'
+        (tmp_path / (prefix + '.stdout')).write_text(stdout)
+        (tmp_path / (prefix + '.stderr')).write_text(stderr)
+        commands.append({'argv': argv, 'cwd': str(directory), 'environment': environment,
+            'generator': generator, 'pid': process.pid, 'exit_code': result.returncode,
+            'seconds': time.monotonic() - started,
+            'state_sha256': hashlib.sha256(state.read_bytes()).hexdigest(),
+            'stdout_sha256': hashlib.sha256(stdout.encode()).hexdigest(),
+            'stderr_sha256': hashlib.sha256(stderr.encode()).hexdigest()})
+        (tmp_path / 'probe-commands.json').write_text(json.dumps(commands, indent=2))
+        return result
+
+    observations = []
+    for label, environment in [('parent', {k: v for k, v in parent.items()
+            if k not in {'PYTHONSTARTUP', 'XDG_STATE_HOME'}}), ('child', child), ('repeated', repeated)]:
+        for generator in (False, True):
+            context = runtime._registry_context(environment, generator=generator)
+            assert context['ASTRID_SOURCE_STATE'] == str(state)
+            assert context['ASTRID_PACKS_PATH'] == str(packs)
+            result = observe(context, generator)
+            assert result.returncode == 0, result.stderr
+            observation = json.loads(result.stdout)
+            assert observation['managed_inventory_identity'] == inventory.identity
+            assert observation['selected_source_state']['path'] == str(state)
+            assert observation['selected_source_state']['sha256'] == hashlib.sha256(original).hexdigest()
+            assert str(inventory.roots[0]) in observation['roots']
+            assert str(packs) in observation['roots']
+            assert observation['runtime_origin'] == str(Path(runtime.__file__).resolve())
+            runtime._registry_inputs(observation)
+            (tmp_path / f'{label}-{generator}.json').write_text(json.dumps(observation, indent=2))
+            observations.append(observation)
+    assert all(item['state'] == observations[0]['state'] for item in observations)
+    assert state.read_bytes() == original
+    print('SOURCE_PROJECTION=' + json.dumps({'state_path': str(state),
+        'state_sha256': hashlib.sha256(original).hexdigest(), 'revision': revision,
+        'inventory': [item.to_dict() for item in inventory.sources],
+        'identity': inventory.identity, 'registry': observations[0]['state'],
+        'origins': {key: observations[0][key] for key in ('astrid_origin', 'runtime_origin', 'generator_origin')}}))
+
+    # Actual verifier failures under both retained contexts, with a valid
+    # default inventory present to detect accidental selected-state fallback.
+    default = tmp_path / '.local/state/astrid/default/pack-sources.json'
+    default.parent.mkdir(parents=True)
+    default.write_bytes(original)
+    negatives = {}
+    for defect in ('version', 'key', 'revision', 'digest', 'foreign_root', 'pack_changed'):
+        changed = json.loads(original)
+        record = changed['active']['demo']
+        if defect == 'version':
+            changed['version'] = 999
+        elif defect == 'key':
+            changed['active']['foreign'] = changed['active'].pop('demo')
+        elif defect == 'revision':
+            record['revision'] = 'f' * 40
+        elif defect == 'digest':
+            record['tree_sha256'] = 'f' * 64
+        elif defect == 'foreign_root':
+            record['pack_root'] = str(tmp_path / 'foreign-root')
+        else:
+            (inventory.roots[0] / 'pack.yaml').write_text('changed pack')
+        state.write_text(json.dumps(changed))
+        for generator in (False, True):
+            # Use the already-qualified projections; observe must freshly
+            # validate actual state and source rather than reuse discovery.
+            result = observe(runtime._registry_context(repeated, generator=generator), generator) if defect not in {'version'} else observe(repeated, generator)
+            assert result.returncode != 0, (defect, result.stdout)
+            negatives[f'{defect}-{generator}'] = {'exit': result.returncode,
+                'stderr_sha256': hashlib.sha256(result.stderr.encode()).hexdigest()}
+        state.write_bytes(original)
+    (tmp_path / 'negative-results.json').write_text(json.dumps(negatives, indent=2))
+    assert runtime._selected_source_state_binding(repeated) == observations[0]['selected_source_state']
+    state.write_bytes(original + b'\n')
+    with pytest.raises(runtime.RemotionValidationError, match='changed after'):
+        runtime._registry_inputs(observations[0])
