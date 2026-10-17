@@ -78,6 +78,13 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
   let currentHead = initial.head!.headRevisionId!;
   let acceptanceSequence = 1;
   const acceptedHeads = new Map<string, string>();
+  // Keep J's durable COMMIT allocator live in this isolated synthetic provider.
+  // Browser navigation/session identity is deliberately not inferred in jsdom.
+  const commitSessionValues = new Map<string, string>();
+  const commitSessionStorage = {
+    getItem(key: string) { return commitSessionValues.get(key) ?? null; },
+    setItem(key: string, value: string) { commitSessionValues.set(key, String(value)); },
+  };
   const transport: Transport = async (method, path, headers, body) => {
     const posted = method === 'POST' && body ? JSON.parse(new TextDecoder().decode(body as Uint8Array)) : undefined;
     if (method === 'POST' && (/\/(?:publish-document|publish|composition-revisions)(?:$|\?)/.test(path)
@@ -190,7 +197,7 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply, fallback?: typ
     getCurrentConfig: () => structuredClone(currentConfig),
     getCurrentHead: () => currentHead,
     transport,
-    provider: new RuntimeDataProvider({ projectId: 'gesture-project', baseUrl: 'http://runtime.fixture', token: 'fixture-only', transport, commitRouting: { enabled: true } }),
+    provider: new RuntimeDataProvider({ projectId: 'gesture-project', baseUrl: 'http://runtime.fixture', token: 'fixture-only', transport, commitRouting: { enabled: true }, commitSessionStorage }),
   };
 }
 async function initialData(media = false, crops: { cropTop?: number; cropBottom?: number; cropLeft?: number; cropRight?: number } = {}) {
@@ -5421,6 +5428,22 @@ describe('W13 fade native history', () => {
     let release!: () => void;
     const pending = new Promise<void>(resolve => { release = resolve; });
     const h = await setup(async () => { await pending; return 'no_change'; });
+    const history = renderHook(() => {
+      const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+      useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]); return state;
+    }, { wrapper: overlapHistoryWrapper(h) });
+    try {
+      act(() => h.result.current.editing.handleSelectedClipChange({ entrance: { type: 'fade', duration: 0.4 } }));
+      expect(history.result.current.canUndo).toBe(false);
+      expect(history.result.current.canRedo).toBe(false);
+    } finally {
+      release();
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+      history.unmount(); h.unmount();
+    }
+  });
+});
+
 describe('W29 direct transition receipt history', () => {
   it('actual inspector assignment waits for a direct receipt before native Undo', async () => {
     let release!: () => void;
@@ -5436,15 +5459,22 @@ describe('W29 direct transition receipt history', () => {
       const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
       useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]); return state;
     }, { wrapper: overlapHistoryWrapper(h) });
-    try {
-      act(() => h.result.current.editing.handleSelectedClipChange({ entrance: { type: 'fade', duration: 0.4 } }));
-      expect(history.result.current.canUndo).toBe(false);
-      expect(history.result.current.canRedo).toBe(false);
-    } finally {
-      release();
-      await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
-      history.unmount(); h.unmount();
-    }
+    act(() => h.result.current.editing.handleSelectedClipChange({
+      transition: { type: 'crossfade', revision: 'sha256:crossfade-r1', duration: 0.5 },
+      elementRef: { id: 'crossfade', revision: 'sha256:crossfade-r1', kind: 'transition', packId: 'rendering' },
+    }));
+    expect(gestureCommandsFor(h.result.current.data!)?.[0].op).toBe('clip.set-transition');
+    expect(history.result.current.canUndo).toBe(false);
+    act(() => h.eventBus.emit('nativeRegistrationAccepted', { ...h.result.current.data! }, {
+      op: 'timeline.inverse', select: null, args: { publication: 'foreign-publication', writes: [{
+        id: 'parent/clip:after', path: 'transition', before: { state: 'present', value: null }, after: { state: 'absent' },
+      }] },
+    }));
+    expect(history.result.current.canUndo).toBe(false);
+    await act(async () => { release(); });
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    history.unmount(); h.unmount();
   });
 });
 
@@ -5556,30 +5586,16 @@ describe('W13 fade SDK native chain', () => {
     expect(h.readbackHeads).toEqual(['parent-r2', 'parent-r3', 'parent-r4']);
     expect(h.compatibilityRequests).toEqual([]);
     if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `fade-${name.replaceAll(' ', '-')}.json`), JSON.stringify({ requests: h.requests, proof, readback: h.getCurrentConfig() }, null, 2));
-    act(() => h.result.current.editing.handleSelectedClipChange({
-      transition: { type: 'crossfade', revision: 'sha256:crossfade-r1', duration: 0.5 },
-      elementRef: { id: 'crossfade', revision: 'sha256:crossfade-r1', kind: 'transition', packId: 'rendering' },
-    }));
-    expect(gestureCommandsFor(h.result.current.data!)?.[0].op).toBe('clip.set-transition');
-    expect(history.result.current.canUndo).toBe(false);
-    act(() => h.eventBus.emit('nativeRegistrationAccepted', { ...h.result.current.data! }, {
-      op: 'timeline.inverse', select: null, args: { publication: 'foreign-publication', writes: [{
-        id: 'parent/clip:after', path: 'transition', before: { state: 'present', value: null }, after: { state: 'absent' },
-      }] },
-    }));
-    expect(history.result.current.canUndo).toBe(false);
-    await act(async () => { release(); });
-    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
-    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
     history.unmount(); h.unmount();
-  });
+  }, 180_000);
 });
 
-function transitionSource(initial: TimelineData, requests: CommitRequest[]) {
+function transitionSource(initial: TimelineData, requests: CommitRequest[], trackAuthority: 'flat' | 'canonical' = 'flat') {
   const python = process.env.ASTRID_TEST_PYTHON;
   if (!python) throw new Error('Set ASTRID_TEST_PYTHON to the qualified SDK test interpreter');
   return JSON.parse(execFileSync(python, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/transitionAssignment.fixture.py')], {
-    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests }), encoding: 'utf8', env: process.env,
+    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests,
+      ...(trackAuthority === 'canonical' ? { track_authority: 'canonical' } : {}) }), encoding: 'utf8', env: process.env,
   })) as ReturnType<typeof groupTransferSource>;
 }
 
@@ -5689,6 +5705,53 @@ describe('W29 actual inspector SDK receipt Undo Redo', () => {
   }, 180_000);
 });
 
+
+describe('W29 current D producer App requalification', () => {
+  it.skipIf(!process.env.ASTRID_W29_CURRENT_PRODUCER)('current producer closes pinned-update and canonical-track App requalification cases', async () => {
+    const reference = { ...transitionReference(), opaqueReference: { keep: null } };
+    const prior = { type: reference.id, revision: reference.revision, duration: 0.5, params: null, opaqueTransition: { keep: true } };
+    for (const scenario of ['pinned update', 'canonical tracks'] as const) {
+      const initial = await adjacentTransitionData(scenario === 'pinned update'
+        ? { transition: prior, elementRef: reference } : {});
+      const requests: CommitRequest[] = []; let proof!: ReturnType<typeof transitionSource>;
+      const h = await setup(async request => {
+        requests.push(request);
+        proof = transitionSource(initial, requests, scenario === 'canonical tracks' ? 'canonical' : 'flat');
+        return { acceptedResult: proof.result };
+      }, false, initial, 1, undefined, pinnedTransitionHost(reference), 'after');
+      const history = renderHook(() => {
+        const state = useTimelineHistory({ ...h.result.current, eventBus: h.eventBus, interactionStateRef: h.interactionStateRef, pendingOpsRef: { current: 0 } });
+        useEffect(() => h.eventBus.on('beforeCommit', state.onBeforeCommit), [state.onBeforeCommit]);
+        return state;
+      }, { wrapper: overlapHistoryWrapper(h) });
+      const next = { ...prior, duration: 0.731 };
+      act(() => h.result.current.editing.handleSelectedClipChange({
+        transition: next,
+        ...(scenario === 'canonical tracks' ? { elementRef: reference } : {}),
+      }));
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+      expect(proof.results[0].status).toBe('accepted');
+      await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+      act(() => history.result.current.undo());
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+      expect(proof.results[1].canonical_document).toEqual(proof.before);
+      expect(proof.results[1].change.direct_writes.map(row => row.path)).toContain('transition');
+      await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+      act(() => history.result.current.redo());
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+      expect(proof.results[2].canonical_document).toEqual(proof.results[0].canonical_document);
+      expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+      expect(proof.accept_counts).toEqual([1, 1, 1]);
+      expect(h.compatibilityRequests).toEqual([]);
+      if (process.env.E_SELECTED_MOVE_EVIDENCE_DIR) {
+        const name = scenario.replaceAll(' ', '-');
+        writeFileSync(path.join(process.env.E_SELECTED_MOVE_EVIDENCE_DIR, `w29-current-${name}.json`), JSON.stringify({ requests, proof }, null, 2));
+      }
+      history.unmount(); h.unmount();
+    }
+  });
+});
+
 describe('W13 fade history guards', () => {
   it.each(['refused', 'stale', 'no_change', 'unacknowledged', 'wrong clip', 'extra path', 'duplicate path'] as const)('%s never arms history or submits a snapshot inverse', async kind => {
     const initial = await fadeHistoryData(false, 'absent');
@@ -5778,6 +5841,7 @@ describe('W13 fade malformed caller', () => {
     expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]);
     history.unmount(); h.unmount();
   });
+
 });
 
 

@@ -34,10 +34,13 @@ config = copy.deepcopy(value['config'])
 fixture = json.loads((sdk / 'tests/fixtures/timeline_editing/tiny_publishable.json').read_text())
 # Retain the admitted synthetic film's picture duration and shot closure.
 clips = config.pop('clips')
-# Match D156's supported flat-parent track authority exactly, as in
-# test_parent_scope_and_sdk_adapters_use_same_producers. Do not give Checkout
-# two track authorities. Config-owned tracks remain a producer limitation.
-fixture['parent'] = dict(config=config, clips=clips, tracks=config.pop('tracks'), registry=value['registry'])
+# Preserve one track authority. Historical D156 selectors use the supported
+# flat-parent form; current-producer requalification can select canonical
+# parent.config.tracks without creating a second collection.
+if value.get('track_authority') == 'canonical':
+    fixture['parent'] = dict(config=config, clips=clips, registry=value['registry'])
+else:
+    fixture['parent'] = dict(config=config, clips=clips, tracks=config.pop('tracks'), registry=value['registry'])
 retain_cut_reservations(fixture)
 tl = Checkout(fixture)
 tl.resolve()
