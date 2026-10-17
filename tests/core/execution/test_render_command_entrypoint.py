@@ -42,7 +42,8 @@ def test_v3_render_command_restores_canonical_entrypoint_after_pipe(tmp_path, la
         observed = []
         def observe(argv, **kwargs):
             result = plan(argv, **kwargs)
-            assert 'ASTRID_INTERNAL_INVOCATION' not in result.environment
+            assert 'ASTRID_INTERNAL_INVOCATION' not in dict(result.environment)
+            assert dict(result.environment)['PYTHONDONTWRITEBYTECODE'] == '1'
             observed.append(result)
             return result
         h._workload_launch_plan = observe
