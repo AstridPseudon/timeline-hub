@@ -53,17 +53,37 @@ retain_cut_reservations(fixture)
 tl = Checkout(fixture)
 tl.resolve()
 before = copy.deepcopy(tl.document())
-document = before
+base_revision_id = value['requests'][0]['base_revision_id']
+revision_documents = {base_revision_id: copy.deepcopy(before)}
+advanced_head_document = None
+if value.get('variant') == 'stale-base':
+    # Keep parent-r1 intact and make advanced-head a real later document whose
+    # second selected member conflicts with this caller's captured field pair.
+    advanced_head_document = copy.deepcopy(before)
+    advanced_clip = next(clip for clip in advanced_head_document['parent']['clips'] if clip['id'] == 'clip-1')
+    advanced_clip['keyframes']['opacity'][0]['value'] = 0.71
+    revision_documents['advanced-head'] = copy.deepcopy(advanced_head_document)
+    document = copy.deepcopy(advanced_head_document)
+else:
+    document = copy.deepcopy(before)
 results = []
 replays = []
 ports = []
 seen = {}
+revision_reads = []
+head_revision_before = None
+head_revision_after = None
+head_document_before = None
+head_document_after = None
 
 class CallerService(RuntimeCommitService):
     @staticmethod
     def _load_revision(port, request, revision):
-        # The acceptance double provides this exact immutable synthetic closure.
-        return copy.deepcopy(document)
+        # The acceptance double provides exact, revision-keyed immutable
+        # synthetic closures: parent-r1 stays original; advanced-head diverges.
+        revision_reads.append(revision)
+        assert revision in revision_documents, f'unexpected fixture revision read: {revision}'
+        return copy.deepcopy(revision_documents[revision])
 
 class CallerPort(Port):
     def accept(self, prepared):
@@ -85,6 +105,8 @@ for request in value['requests']:
         continue
     port = CallerPort(request)
     port.current = 'advanced-head' if value.get('variant') == 'stale-base' else request['base_revision_id']
+    head_revision_before = port.current
+    head_document_before = copy.deepcopy(revision_documents[head_revision_before])
     result = service.commit(request, port)
     assert result['status'] in {'accepted', 'no_change', 'refused', 'conflict'}, result
     assert service.commit(request, port) == result, 'exact replay changed receipt'
@@ -105,6 +127,29 @@ for request in value['requests']:
                 for field in ('op', 'select', 'resolved', 'args', 'expect'):
                     assert captured[field] == call[field]
         document = copy.deepcopy(result['canonical_document'])
+        if result['accepted_revision_id'] is not None:
+            revision_documents[result['accepted_revision_id']] = copy.deepcopy(document)
+    head_revision_after = port.current
+    head_document_after = copy.deepcopy(revision_documents[head_revision_after])
+    if value.get('variant') == 'stale-base':
+        call = request['change']['commands'][1]
+        conflict_clip = next(clip for clip in revision_documents['advanced-head']['parent']['clips']
+                             if clip['id'] == call['select'].split('/clip:')[1])
+        assert call['select'] == 'parent/clip:clip-1'
+        assert call['expect']['keyframes']['state'] == 'present'
+        assert conflict_clip['keyframes']['opacity'][0]['value'] == 0.71
+        assert revision_documents[base_revision_id] == before
+        assert revision_documents['advanced-head'] != revision_documents[base_revision_id]
+        assert result['status'] == 'conflict'
+        assert any(conflict.get('id') == call['select'] and conflict.get('path') == 'keyframes'
+                   and conflict.get('base') == call['expect']['keyframes']
+                   and conflict.get('theirs') == {'state': 'present', 'value': conflict_clip['keyframes']}
+                   for conflict in result['conflicts']), result['conflicts']
+        assert result['change']['direct_writes'] == []
+        assert not port.accepts
+        assert head_revision_after == 'advanced-head'
+        assert head_document_after == head_document_before == revision_documents['advanced-head']
+        assert document == head_document_after
     before_ids = {sid for sid in commands.entity_states(Checkout(before)) if '/clip:' in sid}
     after_ids = {sid for sid in commands.entity_states(Checkout(document)) if '/clip:' in sid}
     assert after_ids == before_ids, 'fade/history allocated or restored clip identities'
@@ -123,4 +168,7 @@ with tempfile.TemporaryDirectory(dir=os.environ['TMPDIR']) as directory:
     readback = Checkout.load(saved).document()
     assert readback == document
 print(json.dumps(dict(readback=readback, before=before, results=results, result=results_for_wire, replay=replays,
-                     accept_counts=ports, source=str(sdk))))
+                     accept_counts=ports, source=str(sdk), revision_reads=revision_reads,
+                     base_revision_id=base_revision_id, head_revision_before=head_revision_before,
+                     head_revision_after=head_revision_after, head_document_before=head_document_before,
+                     head_document_after=head_document_after, advanced_head_document=advanced_head_document)))

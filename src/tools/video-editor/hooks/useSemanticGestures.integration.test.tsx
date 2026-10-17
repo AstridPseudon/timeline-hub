@@ -6026,7 +6026,9 @@ describe('W64 mounted params native history', () => {
 function appKeyframeSource(initial: TimelineData, requests: CommitRequest[], variant?: 'stale' | 'stale-origin' | 'stale-second-origin' | 'stale-base' | 'refused') {
   return JSON.parse(execFileSync(process.env.ASTRID_TEST_PYTHON!, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/appKeyframesHistory.fixture.py')], {
     input: JSON.stringify({ config: initial.config, registry: initial.registry, requests, variant }), encoding: 'utf8', env: process.env,
-  })) as ReturnType<typeof groupTransferSource> & { readback: unknown };
+  })) as ReturnType<typeof groupTransferSource> & { readback: unknown; revision_reads: string[]; base_revision_id: string;
+    head_revision_before: string; head_revision_after: string; head_document_before: unknown; head_document_after: unknown;
+    advanced_head_document: unknown };
 }
 const w26Keys = {
   opacity: [
@@ -6380,8 +6382,8 @@ describe('W26 existing bulk API SDK accepted history', () => {
     expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof)); expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
   }, 180_000);
   it.each(['stale-second-origin', 'stale-base', 'no_change'] as const)('%s preserves whole-batch atomicity and explicit no-change history behavior', async kind => {
-    const initial = await appBulkKeyframeData(kind === 'no_change'); let proof!: ReturnType<typeof appKeyframeSource>;
-    const h = await setup(async request => { proof = appKeyframeSource(initial, [request], kind === 'no_change' ? undefined : kind);
+    const initial = await appBulkKeyframeData(kind === 'no_change'); let proof!: ReturnType<typeof appKeyframeSource>; let capturedRequest!: CommitRequest;
+    const h = await setup(async request => { capturedRequest = structuredClone(request); proof = appKeyframeSource(initial, [request], kind === 'no_change' ? undefined : kind);
       captureW26('w26-bulk-' + kind, { initial, request, proof }); return { acceptedResult: proof.result }; }, false, initial);
     const history = mountFadeHistory(h);
     act(() => h.result.current.editing.handleUpdateClipsDeep(w26BulkOrder, kind === 'no_change'
@@ -6390,8 +6392,32 @@ describe('W26 existing bulk API SDK accepted history', () => {
     expect(proof.result.status).toBe(kind === 'no_change' ? 'no_change' : kind === 'stale-base' ? 'conflict' : 'refused');
     if (kind === 'no_change') { await waitFor(() => expect(h.savedSeqRef.current).toBe(1)); expect(proof.result.change.direct_writes).toHaveLength(6); }
     else { await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error')); expect(h.savedSeqRef.current).toBe(0); expect(proof.accept_counts).toEqual([0]); }
-    expect(proof.readback).toEqual(proof.before); expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    if (kind === 'stale-base') {
+      const commands = (capturedRequest.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands;
+      expect(proof.base_revision_id).toBe('parent-r1');
+      expect(proof.revision_reads).toContain('parent-r1'); expect(proof.revision_reads).toContain('advanced-head');
+      expect(proof.head_revision_before).toBe('advanced-head'); expect(proof.head_revision_after).toBe('advanced-head');
+      expect(proof.advanced_head_document).not.toEqual(proof.before);
+      expect(proof.advanced_head_document).toMatchObject({ parent: { clips: expect.arrayContaining([
+        expect.objectContaining({ id: 'clip-1', keyframes: expect.objectContaining({ opacity: expect.arrayContaining([
+          expect.objectContaining({ time: 7.125, value: 0.71 }),
+        ]) }) }),
+      ]) } });
+      expect(commands.map(command => command.select)).toEqual(w26BulkOrder.map(id => 'parent/clip:' + id));
+      expect(commands[1].select).toBe('parent/clip:clip-1');
+      expect(commands[1].expect?.keyframes).toEqual({ state: 'present', value: w26Keys });
+      expect(proof.result.conflicts).toContainEqual(expect.objectContaining({ id: commands[1].select, path: 'keyframes',
+        base: commands[1].expect?.keyframes, theirs: { state: 'present', value: expect.objectContaining({ opacity: expect.arrayContaining([
+          expect.objectContaining({ time: 7.125, value: 0.71 }),
+        ]) }) } }));
+      expect(proof.result.change.direct_writes).toEqual([]);
+      expect(proof.result.accepted_revision_id).toBeNull(); expect(proof.result.accepted_publication_id).toBeNull();
+      expect(proof.readback).toEqual(proof.head_document_before);
+      expect(proof.head_document_after).toEqual(proof.head_document_before);
+    } else expect(proof.readback).toEqual(proof.before);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
     act(() => { history.result.current.undo(); history.result.current.redo(); }); expect(h.requests).toHaveLength(1);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
     expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
   }, 90_000);
 });
