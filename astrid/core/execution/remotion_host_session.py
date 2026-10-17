@@ -235,6 +235,7 @@ class HostRemotionSession:
         self._stderr = bytearray()
         self._stderr_thread = None
         self._failed_original_output = None
+        self._last_original_response = None
         self._idle_seconds = 45.0
         self.frame_owner = RemotionFrameOwner.for_host_session(self)
 
@@ -311,9 +312,16 @@ class HostRemotionSession:
             record['capture_error_class'] = type(capture).__name__[:80]
         record.update(stdout_base64=base64.b64encode(data).decode(),
                       stderr_base64=base64.b64encode(bytes(self._stderr[-65536:])).decode())
+        response = getattr(self, '_last_original_response', None)
+        if response is not None:
+            record['received_response_base64'] = base64.b64encode(
+                json.dumps(response, separators=(',', ':')).encode()[:65536]).decode()
         previous = getattr(self, '_failed_original_output', None)
         if previous is not None and not data:
             record['stdout_base64'] = previous.get('stdout_base64', '')
+        if previous is not None and 'received_response_base64' not in record:
+            if 'received_response_base64' in previous:
+                record['received_response_base64'] = previous['received_response_base64']
         self._failed_original_output = record
         try:
             self._persist_input_state()
@@ -452,6 +460,7 @@ class HostRemotionSession:
 
     def _exchange(self, request, *, timeout=300.0, guard=lambda: None):
         process = self.process
+        self._last_original_response = None
         observe_tree(process)
         data = json.dumps(request, separators=(",", ":")).encode() + b"\n"
         if len(data) > _LIMIT:
@@ -478,6 +487,9 @@ class HostRemotionSession:
         finally:
             os.set_blocking(descriptor, blocking)
         response = _read(_PipeReader(process.stdout, timeout=max(0, deadline-time.monotonic()), guard=lambda: (self._guard(), guard())))
+        # A later custody/lease refusal must not erase the original received
+        # reply. Retaining it does not make that refused result acceptable.
+        self._last_original_response = response
         observe_tree(process)
         if response.get("cleanup_uncertain") is True:
             self.uncertain = RuntimeError(str(response.get("cleanup_error") or "original Chrome cleanup unresolved"))

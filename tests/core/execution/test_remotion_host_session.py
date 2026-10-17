@@ -6,6 +6,7 @@ import os
 import subprocess
 import sys
 import threading
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -90,6 +91,34 @@ def test_failed_original_pipe_capture_is_bounded_and_has_no_lifecycle_authority(
     finally:
         os.close(write_fd)
         original_stdout.close()
+
+
+def test_original_reply_survives_post_read_custody_refusal_only_as_diagnostics(tmp_path, monkeypatch):
+    manager, events = owner(tmp_path)
+    process = Process()
+    manager.process = process
+    response = {'ok': False, 'error': 'original renderer refusal'}
+    observations = []
+    def observe(p):
+        observations.append(p)
+        if len(observations) == 2:
+            raise RuntimeError('post-read custody refusal')
+    monkeypatch.setattr(host, 'observe_tree', observe)
+    monkeypatch.setattr(manager, '_guard', lambda: None)
+    monkeypatch.setattr(host, '_read', lambda reader: response)
+    monkeypatch.setattr(manager, '_persist_input_state', lambda: None)
+    with tempfile.TemporaryFile() as stream:
+        process.stdin = stream
+        with pytest.raises(RuntimeError, match='post-read custody refusal') as refused:
+            manager._exchange({'type': 'evaluate'})
+        manager._capture_failed_original_output(refused.value)
+    retained = manager._failed_original_output
+    assert json.loads(base64.b64decode(retained['received_response_base64'])) == response
+    assert retained['authority'] == 'NONE' and retained['original_returncode'] is None
+    assert not process.waited and events == []
+    manager._last_original_response = None
+    manager._capture_failed_original_output(RuntimeError('later cleanup refusal'))
+    assert manager._failed_original_output['received_response_base64'] == retained['received_response_base64']
 
 
 class Process:
