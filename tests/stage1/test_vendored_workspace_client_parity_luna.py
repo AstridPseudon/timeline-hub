@@ -15,8 +15,8 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 
-from banodoco_workspace_client import ManagedOutput, ObjectLocation, WorkspaceClient, generated
-from banodoco_workspace_client.contract_metadata import (
+from astrid_runtime_client import ManagedOutput, ObjectLocation, WorkspaceClient, generated
+from astrid_runtime_client.contract_metadata import (
     COMPONENT_MANIFEST_SHA256,
     OPERATIONS,
     PROTOCOL,
@@ -25,8 +25,8 @@ from banodoco_workspace_client.contract_metadata import (
 from astrid.sdk.workspace_client import WorkspaceClient as AstridWorkspaceClient
 
 ROOT = Path(__file__).resolve().parents[2]
-GENERATED_PATH = ROOT / "banodoco_workspace_client" / "generated.py"
-METADATA_PATH = ROOT / "banodoco_workspace_client" / "contract_metadata.py"
+GENERATED_PATH = ROOT / "astrid_runtime_client" / "generated.py"
+METADATA_PATH = ROOT / "astrid_runtime_client" / "contract_metadata.py"
 
 # These values are intentionally duplicated in the immutable test gate. A
 # future runtime contract refresh must update the contract exports, file
