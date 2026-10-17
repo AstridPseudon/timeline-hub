@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -46,6 +48,129 @@ def _adopted_lane_fixture():
     switch = {"id": "switch-one", "on": '"SwitchWord" in s1 #1', "duration": 2.0, "curve": "equal-power"}
     evidence = {owner: {"confidence": 1.0, "source_offset_s": 0.0} for owner in owners}
     return Checkout(adopt_music_bed(tl.document(), owners, switches=[switch], alignment=evidence)), owners
+
+
+def test_authored_bed_edit_reflow_and_fresh_reload_feed_the_same_lane_and_sheet(tmp_path):
+    """Joined synthetic consumer proof; no mounted App or named-film claim."""
+    from astrid.sdk.timeline.music_beds import MusicBedError, adopted, sources
+
+    tl = tiny()
+    owners = [OWNER, "occurrence:occ-A/clip:synthetic-arrangement"]
+    reference = tl.clip("a-music").data
+    reference.update(speed=2.0, **{"from": 2.0, "to": 18.0})
+    reference.setdefault("app", {}).setdefault("astrid", {})["beats"] = {
+        "beats": [2.0, 6.0, 10.0, 14.0, 18.0],
+        "downbeats": [2.0, 6.0, 10.0, 14.0, 18.0], "time": "cue_seconds",
+    }
+    other = copy.deepcopy(reference)
+    other.update(id="synthetic-arrangement", at=2.0, speed=3.0, **{"from": 39.06, "to": 63.06})
+    # The second arrangement's grid must not select a separate seam/clock.
+    other["app"]["astrid"]["beats"] = {
+        "beats": [40.56, 43.56, 46.56], "downbeats": [40.56, 43.56, 46.56], "time": "cue_seconds",
+    }
+    tl._internal("A")["clips"].append(other)
+    voice = tl.clip("a-vo").data
+    voice.update(at=2.5, to=5.0)
+    voice["app"]["astrid"]["words"].extend([
+        [3.9, 4.1, "SwitchWord", "s1:40"], [4.2, 4.4, "NearbyWord", "s1:41"],
+    ])
+    tl.adopt(sources=owners,
+             switches=[{"id": "synthetic-switch", "on": "s1:40", "duration": 2.0, "curve": "equal-power"}],
+             alignment={owners[0]: {"confidence": 1.0, "source_offset_s": 2.0},
+                        owners[1]: {"confidence": 1.0, "source_offset_s": 33.06}})
+    assert project(tl)["switches"][0]["on"]["center_frame"] == 192
+    authored = {owner: copy.deepcopy(entry["source"]) for owner, entry in sources(tl).items()}
+
+    # A pre-onset edit both splits the reference and moves the later source.
+    tl.insert_time(1, 1)
+    tl.reflow()
+    lane = project(tl)
+    assert lane["switches"][0]["on"] == {"time_ref": "s1:40", "center_s": 7.4, "center_frame": 222}
+    assert lane["seams"] == [{
+        "at_s": 1.0, "frame": 30, "action": "repeat", "delta_s": 1.0, "duration_s": 1.0,
+    }]
+    bed = adopted(tl)
+    assert bed["ripple_basis"] == [{"at_s": 1.0, "delta_s": 1.0}]
+    authored[owners[1]]["at"] += 1
+    assert {owner: entry["source"] for owner, entry in sources(tl).items()} == authored
+    ids = [span["id"] for row in lane["arrangements"] for span in row["spans"]]
+    assert ids == ["a-music", "a-music:b", "synthetic-arrangement"]
+    assert len(ids) == len(set(ids))
+    assert [bed["outputs"][row["id"]] for row in lane["arrangements"]] == [
+        [span["id"] for span in row["spans"]] for row in lane["arrangements"]
+    ]
+
+    # Read source coordinates from the actual consumer, outside the seam mix.
+    def source_at(row, at):
+        active = [span for span in row["spans"]
+                  if span["timeline"]["start_s"] <= at < span["timeline"]["end_s"]]
+        assert len(active) == 1
+        return active[0]["source"]["start_s"] + row["rate"] * (at - active[0]["timeline"]["start_s"])
+
+    ref = lane["arrangements"][0]
+    assert [(row["source_offset_s"], row["rate"]) for row in lane["arrangements"]] == [(2.0, 2.0), (33.06, 3.0)]
+    for at in (3.5, 4.5, 6.5, 8.5):
+        u = (source_at(ref, at) - ref["source_offset_s"]) / ref["rate"]
+        for row in lane["arrangements"]:
+            assert source_at(row, at) == pytest.approx(row["source_offset_s"] + row["rate"] * u)
+
+    path = tmp_path / "authored-bed.checkout.json"
+    tl.save(path, quiet=True)
+    expected = tl.document()
+    # Real load in a fresh interpreter, with no retained Checkout/cache objects.
+    # Remove all generated clips before rebuilding: authored state is the input.
+    result = subprocess.run([sys.executable, "-B", "-c", '''
+import json, sys
+from astrid.sdk.timeline_checkout import Checkout
+from astrid.sdk.timeline.compiler import compile_timing
+from astrid.sdk.timeline.music_beds import project as rebuild
+from astrid.sdk.timeline.music_lane import project
+from astrid.sdk.timeline_sheet import render_sheet
+tl = Checkout.load(sys.argv[1])
+before = tl.document()
+lane = project(tl)
+ids = {span["id"] for row in lane["arrangements"] for span in row["spans"]}
+clips = tl._internal("A")["clips"]
+clips[:] = [clip for clip in clips if clip["id"] not in ids]
+rebuild(tl)
+for _ in range(2):
+    tl.reflow()
+    tl.resolve()
+    rebuild(tl)
+    assert tl.document() == before
+    assert project(tl) == lane
+assert compile_timing(before).bundle == before
+print(json.dumps({"document": tl.document(), "lane": project(tl), "sheet": render_sheet(tl),
+                  "word": vars(tl.word("s1:40"))}))
+''', str(path)], check=True, capture_output=True, text=True)
+    reloaded = json.loads(result.stdout)
+    assert reloaded["document"] == expected
+    assert reloaded["lane"] == lane
+    assert reloaded["word"]["id"] == "s1:40" and reloaded["word"]["text"] == "SwitchWord"
+    assert reloaded["word"]["start"] == 7.4
+    assert reloaded["sheet"] == render_sheet(tl)
+    assert "on s1:40 · center 7.40s/f222" in reloaded["sheet"]
+    for generated_id in ids:
+        assert f"~{generated_id}" in reloaded["sheet"]
+
+    # Simulate a later imported transcript losing this identity. Even an
+    # adjacent word with identical text must not inherit the switch.
+    missing = Checkout.load(path)
+    words = missing.clip("a-vo").data["app"]["astrid"]["words"]
+    words[:] = [word for word in words if len(word) != 4 or word[3] != "s1:40"]
+    words[-1][2] = "SwitchWord"
+    before = missing.document()
+    for consume in (project, render_sheet):
+        with pytest.raises(MusicBedError, match="ORPHAN switch synthetic-switch:.*re-home on an exact surviving TimeRef"):
+            consume(missing)
+        assert missing.document() == before
+    # The existing explicit TimeRef re-home restores the consumer.
+    adopted(missing)["switches"][0]["on"] = "s1:41"
+    materialize_beds(missing)
+    assert project(missing)["switches"][0]["on"] == {
+        "time_ref": "s1:41", "center_s": pytest.approx(7.7), "center_frame": 231,
+    }
+    assert "on s1:41 · center 7.70s/f231" in render_sheet(missing)
 
 
 def _render_snapshot(tl):
