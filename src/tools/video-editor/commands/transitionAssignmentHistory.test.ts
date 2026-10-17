@@ -89,6 +89,30 @@ describe('W29 transition assignment receipt adapter', () => {
       expect(isTransitionAssignmentBatch([call])).toBe(false);
       expect(transitionAssignmentInverse([call], receipt())).toBeUndefined();
     });
+  it('closes every absent after-state for a captured clear and restores exact null/absent siblings', () => {
+    const calls = [assignment('second'), assignment('first')];
+    for (const [index, call] of calls.entries()) {
+      const prior = { ...transition } as Record<string, unknown>;
+      if (index) delete prior.params;
+      call.args = { clear: true };
+      call.expect = { transition: present(prior), elementRef: present(structuredClone(reference)) };
+    }
+    const direct = calls.flatMap(call => ['transition', 'elementRef'].map(path => ({
+      id: call.select!, path, before: structuredClone(call.expect![path]), after: absent,
+    })));
+    expect(isTransitionAssignmentBatch(calls)).toBe(true);
+    const inverse = transitionAssignmentInverse(calls, receipt(direct))!;
+    expect(isTransitionAssignmentInverse(inverse)).toBe(true);
+    expect(inverse.args.writes).toEqual(direct.map(row => ({ ...row, before: absent, after: row.before })));
+    expect(transitionAssignmentInverse([inverse], { ...receipt(), accepted_publication_id: 'undo-pub',
+      change: { direct_writes: structuredClone(inverse.args.writes) as never } })?.args.writes).toEqual(direct);
+    expect(transitionAssignmentInverse(calls, receipt(direct.slice(0, 3)))).toBeUndefined();
+    expect(transitionAssignmentInverse(calls, receipt(direct.map(row => ({ ...row, after: present(null) }))))).toBeUndefined();
+    const mixed = [calls[0], assignment('other')];
+    expect(isTransitionAssignmentBatch(mixed)).toBe(false);
+    calls[1].expect!.elementRef = present({ ...reference, revision: 'stale' });
+    expect(isTransitionAssignmentBatch(calls)).toBe(false);
+  });
   it.each(['refused', 'conflict', 'error', 'preview'])('does not create an inverse for %s', status => {
     expect(transitionAssignmentInverse([assignment()], { ...receipt(), status })).toBeUndefined();
   });

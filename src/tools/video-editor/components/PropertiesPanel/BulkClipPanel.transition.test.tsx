@@ -472,7 +472,7 @@ describe('BulkClipPanelBody transition consumer', () => {
     expect(commands.some((command) => command.op === 'clip.set-transition')).toBe(false);
   });
 
-  it('leaves Remove outside the typed bulk assignment/update slice', async () => {
+  it('removes both captured fields in one ordered guarded bulk transition batch', async () => {
     const { applyEdit } = renderPanel({
       data: makeBoundData('captured-transition-r2'),
       host: makeElementHost([
@@ -487,11 +487,38 @@ describe('BulkClipPanelBody transition consumer', () => {
     await waitFor(() => expect(applyEdit).toHaveBeenCalledTimes(1));
     const [mutation, options] = applyEdit.mock.calls[0]!;
     expect(mutation.metaUpdates).toEqual({
-      'target-b': { transition: undefined },
-      'target-a': { transition: undefined },
+      'target-b': { transition: undefined, elementRef: undefined },
+      'target-a': { transition: undefined, elementRef: undefined },
     });
     expect(options?.editCommands).toHaveLength(2);
-    expect(options?.editCommands?.map((command) => command.op)).toEqual(['clip.clear', 'clip.clear']);
-    expect(options?.editCommands?.some((command) => command.op === 'clip.set-transition')).toBe(false);
+    expect(options?.editCommands?.map((command) => command.op)).toEqual(['clip.set-transition', 'clip.set-transition']);
+    expect(options?.editCommands?.map((command) => command.select)).toEqual(['parent/clip:target-b', 'parent/clip:target-a']);
+    for (const command of options!.editCommands!) {
+      expect(command.args).toEqual({ clear: true });
+      const id = command.select!.split(':')[1]!;
+      const prior = makeBoundData().config.clips.find(clip => clip.id === id)!;
+      expect(command.expect!.transition).toEqual({ state: 'present', value: prior.transition });
+      expect(command.expect!.elementRef).toEqual({ state: 'present', value: prior.elementRef });
+    }
   });
+
+  it.each(['missing', 'ambiguous', 'stale', 'null', 'absent'] as const)(
+    'keeps Remove wholly outside the transition batch when the later binding is %s', async kind => {
+      const data = makeBoundData();
+      const descriptors = [makeDescriptor(transitionId, 'captured-transition-r2')];
+      if (kind !== 'missing') descriptors.push(makeDescriptor(transitionId, 'captured-transition-r1'));
+      if (kind === 'ambiguous') descriptors.push(makeDescriptor(transitionId, 'captured-transition-r1'));
+      const later = data.config.clips.find(clip => clip.id === 'target-a')!;
+      if (kind === 'stale') later.elementRef = { ...later.elementRef!, revision: 'stale' };
+      if (kind === 'null') later.elementRef = null;
+      if (kind === 'absent') delete later.elementRef;
+      data.meta['target-a']!.elementRef = later.elementRef;
+      const { applyEdit } = renderPanel({ data, host: makeElementHost(descriptors),
+        selectedTransitionType: transitionId, selectedTransitionDuration: 0.5 });
+      fireEvent.click(screen.getByText('Remove'));
+      await waitFor(() => expect(applyEdit).toHaveBeenCalledTimes(1));
+      const [mutation, options] = applyEdit.mock.calls[0]!;
+      expect(mutation.metaUpdates).toEqual({ 'target-b': { transition: undefined }, 'target-a': { transition: undefined } });
+      expect(options?.editCommands?.map(command => command.op)).toEqual(['clip.clear', 'clip.clear']);
+    });
 });

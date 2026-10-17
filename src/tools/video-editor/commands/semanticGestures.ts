@@ -448,8 +448,8 @@ export function bulkTransitionGestureCommands(
   const groups = patches.map(({ id, patch }) => compositeEffectGestureCommands(data, id, patch, options));
   if (groups.some(group => !group.commands?.length || !group.localPatch)) return undefined;
   const commands = groups.flatMap(group => group.commands!);
-  // This admits only W29 assignment/update; clear/null/occurrences and other
-  // composite families retain their existing bulk behavior.
+  // Admit captured bound W29 clears as well as assignment/update. Null,
+  // occurrences and other composite families retain their bulk behavior.
   if (!isTransitionAssignmentBatch(commands)) return undefined;
   return { commands, metaUpdates: Object.fromEntries(patches.map(({ id }, index) => [id, groups[index].localPatch!])) };
 }

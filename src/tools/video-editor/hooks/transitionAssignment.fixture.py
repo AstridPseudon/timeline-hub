@@ -52,6 +52,7 @@ document = before
 results = []
 replays = []
 ports = []
+persisted_documents = []
 seen = {}
 
 class CallerService(RuntimeCommitService):
@@ -81,11 +82,14 @@ for request in value['requests']:
     port.current = request['base_revision_id']
     result = service.commit(request, port)
     if result['status'] != 'accepted':
-        print(json.dumps(dict(before=before, results=results, result=result, replay=replays, accept_counts=ports, document=document, attempted_accept_count=len(port.accepts), source=str(sdk))))
+        print(json.dumps(dict(before=before, results=results, result=result, replay=replays, accept_counts=ports, document=document, attempted_accept_count=len(port.accepts), persisted_documents=persisted_documents, source=str(sdk))))
         sys.exit(0)
     assert service.commit(request, port) == result, 'exact replay changed receipt'
     assert len(port.accepts) == 1
-    document = copy.deepcopy(result['canonical_document'])
+    persisted = port.saved['result']['canonical_document']
+    assert persisted == result['canonical_document'], 'saved document differs from accepted result'
+    persisted_documents.append(copy.deepcopy(persisted))
+    document = copy.deepcopy(persisted)
     before_ids = {sid for sid in commands.entity_states(Checkout(before)) if '/clip:' in sid}
     after_ids = {sid for sid in commands.entity_states(Checkout(document)) if '/clip:' in sid}
     assert after_ids == before_ids, 'transition/history changed clip identities'
@@ -99,4 +103,4 @@ if len(results) > 1:
 if len(results) > 2:
     assert results[2]['canonical_document'] == results[0]['canonical_document'], 'App history Redo changed authored state'
 print(json.dumps(dict(before=before, results=results, result=results_for_wire, replay=replays,
-                     accept_counts=ports, source=str(sdk))))
+                     accept_counts=ports, persisted_documents=persisted_documents, source=str(sdk))))

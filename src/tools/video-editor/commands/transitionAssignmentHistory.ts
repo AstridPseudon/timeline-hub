@@ -23,16 +23,28 @@ function validWire(command: EditCommand): boolean {
   try { validateEditCommand(command); return true; } catch { return false; }
 }
 
-/** Only the existing inspector's parent assignment/update shape. Clear/null and
- * occurrence edits retain their existing behavior. No identity comes from config.
+/** Parent assignment/update and captured bound clears. Null and occurrence
+ * edits retain their existing behavior. No identity comes from config.
  */
 export function isTransitionAssignmentBatch(commands: readonly EditCommand[]): boolean {
+  const clearing = commands.some(command => record(command?.args) && own(command.args, 'clear'));
   return commands.length > 0 && new Set(commands.map(command => command?.select)).size === commands.length
     && commands.every(command => {
       if (!validWire(command) || command.op !== 'clip.set-transition' || !parentClip(command.select)
         || command.resolved?.length !== 1 || command.resolved[0] !== command.select
-        || !record(command.args) || Object.keys(command.args).some(key => !['transition', 'elementRef', 'from_clip'].includes(key))
+        || !record(command.args) || Object.keys(command.args).some(key => !(clearing ? ['clear'] : ['transition', 'elementRef', 'from_clip']).includes(key))
         || !fields.every(field => tagged(command.expect?.[field]))) return false;
+      if (clearing) {
+        const previous = command.expect!.transition;
+        const binding = command.expect!.elementRef;
+        return command.args.clear === true && previous.state === 'present' && record(previous.value)
+          && binding.state === 'present' && record(binding.value)
+          && typeof previous.value.type === 'string' && !!previous.value.type
+          && typeof previous.value.revision === 'string' && !!previous.value.revision
+          && !previous.value.revision.startsWith('draft-')
+          && previous.value.type === binding.value.id && previous.value.revision === binding.value.revision
+          && (binding.value.kind === undefined || ['transition', 'transitions'].includes(String(binding.value.kind)));
+      }
       const transition = command.args.transition;
       const reference = command.args.elementRef;
       if (!record(transition) || !record(reference) || typeof transition.type !== 'string' || !transition.type
@@ -79,7 +91,7 @@ export function transitionAssignmentInverse(commands: readonly EditCommand[], re
     || !writesOf(result.change?.direct_writes)) return undefined;
   const expected: Write[] = forward ? commands.flatMap(command => fields.flatMap(path => {
     const before = command.expect![path] as State;
-    const after: State = { state: 'present', value: command.args[path] };
+    const after: State = command.args.clear === true ? { state: 'absent' } : { state: 'present', value: command.args[path] };
     return equal(before, after) ? [] : [{ id: command.select!, path, before, after }];
   })) : commands[0].args.writes as Write[];
   const writes = result.change.direct_writes;
