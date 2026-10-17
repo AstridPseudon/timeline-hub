@@ -1824,6 +1824,12 @@ def _capture_terminal_fixture(observed_descendant, monkeypatch, *, change=None):
     census[103].update(pid=103, uid=501)
     pre = {**native, "status": 2}
     if change == "parent": pre["parent_pid"] = 999
+    # This fixture already supplies a synthetic precise native identity. Supply
+    # its matching start/clock provider too, without consuming another ordinary
+    # observation or querying the real kernel for the synthetic PID.
+    start = {**pre, 'start_abstime': 100}
+    monkeypatch.setattr(custody, '_darwin_process_start', lambda pid: dict(start))
+    monkeypatch.setattr(custody, '_darwin_absolute_time', lambda: 101)
     post = {"outcome": "ZOMBIE", "native": dict(native),
             "identity": {"pid": 103, "uid": 501, "parent_pid": 100, "birth_id": birth}}
     if change == "live": post["outcome"], post["native"]["status"] = "LIVE", 2
@@ -3391,6 +3397,9 @@ def test_live_capture_retry_rejects_every_unqualified_boundary(observed_descenda
     identity={'pid':103,'uid':501,'parent_pid':100,'birth_id':birth}
     if defect=='unadmitted-parent':
         native['parent_pid']=census[103]['parent_pid']=identity['parent_pid']=102
+        parent = {**census[100], 'pid': 102, 'parent_pid': 100,
+                  'start_usec': census[100]['start_usec'] + 1}
+        census[102] = parent
     identities[103]=dict(identity)
     original_root=owner._handles[100]
     role='descendant_103_'+hashlib.sha256(birth.encode()).hexdigest()[:12]
@@ -3402,12 +3411,15 @@ def test_live_capture_retry_rejects_every_unqualified_boundary(observed_descenda
         census[104]={**census[103],'pid':104,'parent_pid':103,'birth_id':'fixture-child-104','start_usec':native['start_usec']+1}
     captures=[];samples=[]
     def observation(pid):
+        if pid == 104 and defect == 'original-child':
+            return {'outcome': 'ABSENT'}
+        if pid == 102 and defect == 'unadmitted-parent':
+            return {'outcome': 'LIVE', 'native': dict(parent),
+                    'identity': {key: parent[key] for key in ('pid', 'uid', 'parent_pid', 'birth_id')}}
         assert pid==103;samples.append(pid);index=len(samples)
         if defect=='retry-pre-absent' and index>=3:return {'outcome':'ABSENT'}
         current=dict(native)
-        if defect=='pre-precision' and index==1:current['start_usec']+=1
         if defect=='post-precision' and index==2:current['start_usec']+=1
-        if defect=='missing-pgid':current.pop('pgid')
         if defect=='recursive-pre-replacement' and index>=4:current['start_usec']+=1
         return {'outcome':'LIVE','identity':dict(identity),'native':current}
     def capture(pid):
@@ -3422,8 +3434,30 @@ def test_live_capture_retry_rejects_every_unqualified_boundary(observed_descenda
         return {**tokens[103],'words':list(tokens[103]['words'])}
     monkeypatch.setattr(custody,'ordinary_candidate_observation',observation)
     monkeypatch.setattr(custody,'current_process_audit_token',capture)
+    if defect in {'pre-precision', 'missing-pgid'}:
+        original_evidence = custody._candidate_observation_evidence
+        evidence_calls = []
+        def evidence(observed):
+            value = original_evidence(observed)
+            if captures == [103]:
+                evidence_calls.append(True)
+                if len(evidence_calls) == 1:
+                    # Corrupt the captured pre-failure qualification evidence,
+                    # after the initial live/census fence has allowed capture.
+                    if defect == 'pre-precision':
+                        value['native']['start_usec'] += 1
+                    else:
+                        value['native'].pop('pgid')
+            return value
+        monkeypatch.setattr(custody, '_candidate_observation_evidence', evidence)
     if defect=='diagnostic-persistence':
-        def failed_write():raise OSError('controlled diagnostic checkpoint failure')
+        original_write = owner._write_observed_containment
+        def failed_write():
+            # Reach the intended capture-failure checkpoint; initial census
+            # persistence must remain real and must not short-circuit capture.
+            if getattr(owner, '_capture_failure_observations', None):
+                raise OSError('controlled diagnostic checkpoint failure')
+            return original_write()
         monkeypatch.setattr(owner,'_write_observed_containment',failed_write)
     def fresh():
         if defect=='fresh-census-error':raise OSError('controlled fresh native census failure')
