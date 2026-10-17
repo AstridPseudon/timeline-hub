@@ -1,0 +1,691 @@
+{
+  "provenance": {
+    "diagnostic_sha256": "9d7f470e3c6784d7089fa54f508ad73e512151c3caa5871f418ec6d32d11e860",
+    "description": "Retained E W13 authored document and actual App forward/Undo requests; synthetic data only."
+  },
+  "before": {
+    "project_id": "p",
+    "timeline_id": "t",
+    "base_parent": {
+      "revision_id": "rev-0",
+      "content_digest": "sha256:tiny-publishable-rev-0"
+    },
+    "parent": {
+      "config": {
+        "output": {
+          "resolution": "1920x1080",
+          "fps": 30,
+          "file": "fixture.mp4"
+        },
+        "tracks": [
+          {
+            "id": "V1",
+            "kind": "visual",
+            "label": "V1",
+            "app": {
+              "trackSentinel": true,
+              "scaleAppliesToPositionedClips": true
+            }
+          },
+          {
+            "id": "V2",
+            "kind": "visual",
+            "label": "V2",
+            "app": {
+              "scaleAppliesToPositionedClips": true
+            }
+          }
+        ],
+        "app": {
+          "customConfig": {
+            "keep": true
+          },
+          "astrid": {
+            "cut_id_high_water": {
+              "number": 2,
+              "suffixes": {}
+            }
+          }
+        }
+      },
+      "clips": [],
+      "registry": {
+        "assets": {}
+      }
+    },
+    "placements": [
+      {
+        "shot_id": "A",
+        "occurrence_id": "occ-A",
+        "placement": {
+          "start_ms": 0
+        },
+        "duration_ms": 10000
+      }
+    ],
+    "shots": {
+      "A": {
+        "payload": {
+          "name": "A"
+        },
+        "internal_timeline": {
+          "tracks": [
+            {
+              "id": "V1",
+              "kind": "visual",
+              "label": "V1",
+              "app": {
+                "trackSentinel": true,
+                "scaleAppliesToPositionedClips": true
+              }
+            },
+            {
+              "id": "V2",
+              "kind": "visual",
+              "label": "V2",
+              "app": {
+                "scaleAppliesToPositionedClips": true
+              }
+            }
+          ],
+          "clips": [
+            {
+              "id": "clip-1",
+              "at": 1,
+              "hold": 2,
+              "clipType": "hold",
+              "track": "V1",
+              "opacity": 0.9,
+              "volume": 1,
+              "params": {
+                "data": null
+              },
+              "app": {
+                "clipSentinel": true
+              },
+              "effects": {
+                "fade_in": null,
+                "fade_out": 0.2,
+                "opaque": {
+                  "nested": [
+                    null,
+                    {}
+                  ]
+                }
+              },
+              "entrance": {
+                "type": "fade",
+                "duration": 0.4,
+                "opaque": {
+                  "keep": null
+                }
+              },
+              "exit": {
+                "type": "slide",
+                "duration": 0.2,
+                "opaque": [
+                  null,
+                  {}
+                ]
+              }
+            },
+            {
+              "id": "clip-2",
+              "at": 5,
+              "hold": 1,
+              "clipType": "hold",
+              "track": "V1",
+              "app": {
+                "clipSentinel": true
+              }
+            }
+          ],
+          "registry": {
+            "assets": {}
+          }
+        },
+        "base_payload": {
+          "name": "A"
+        },
+        "base_internal_timeline": {
+          "tracks": [
+            {
+              "id": "V1",
+              "kind": "visual",
+              "label": "V1",
+              "app": {
+                "trackSentinel": true,
+                "scaleAppliesToPositionedClips": true
+              }
+            },
+            {
+              "id": "V2",
+              "kind": "visual",
+              "label": "V2",
+              "app": {
+                "scaleAppliesToPositionedClips": true
+              }
+            }
+          ],
+          "clips": [
+            {
+              "id": "clip-1",
+              "at": 1,
+              "hold": 2,
+              "clipType": "hold",
+              "track": "V1",
+              "opacity": 0.9,
+              "volume": 1,
+              "params": {
+                "data": null
+              },
+              "app": {
+                "clipSentinel": true
+              },
+              "effects": {
+                "fade_in": null,
+                "fade_out": 0.2,
+                "opaque": {
+                  "nested": [
+                    null,
+                    {}
+                  ]
+                }
+              },
+              "entrance": {
+                "type": "fade",
+                "duration": 0.4,
+                "opaque": {
+                  "keep": null
+                }
+              },
+              "exit": {
+                "type": "slide",
+                "duration": 0.2,
+                "opaque": [
+                  null,
+                  {}
+                ]
+              }
+            },
+            {
+              "id": "clip-2",
+              "at": 5,
+              "hold": 1,
+              "clipType": "hold",
+              "track": "V1",
+              "app": {
+                "clipSentinel": true
+              }
+            }
+          ],
+          "registry": {
+            "assets": {}
+          }
+        },
+        "shot_id": "A"
+      },
+      "B": {
+        "payload": {
+          "name": "SHOT",
+          "text_bindings": [
+            {
+              "kind": "voiceover_script",
+              "content_hash": "sha256:f45b60c7dffbc79e51d445942caabec122e16752d1f39d655f9e23f01aa701d4",
+              "head": 1,
+              "shot_id": "B",
+              "text": "Live now.\n"
+            }
+          ]
+        },
+        "internal_timeline": {
+          "tracks": [
+            {
+              "id": "type",
+              "kind": "visual"
+            },
+            {
+              "id": "sprite",
+              "kind": "visual"
+            },
+            {
+              "id": "plate",
+              "kind": "visual"
+            },
+            {
+              "id": "vo",
+              "kind": "audio"
+            },
+            {
+              "id": "music",
+              "kind": "audio"
+            }
+          ],
+          "clips": [
+            {
+              "id": "b-plate",
+              "clipType": "am-snap-plate",
+              "track": "plate",
+              "asset": "Q",
+              "at": 0.0,
+              "hold": 4.0,
+              "params": {},
+              "app": {
+                "astrid": {
+                  "cut": "c2",
+                  "layer": "plate",
+                  "why": "live"
+                }
+              }
+            },
+            {
+              "id": "b-type",
+              "clipType": "am-type",
+              "track": "type",
+              "at": 0.0,
+              "hold": 1.0,
+              "params": {
+                "text": "Live."
+              },
+              "app": {
+                "astrid": {
+                  "cut": "c2",
+                  "layer": "card",
+                  "for": 1.0
+                }
+              }
+            },
+            {
+              "id": "b-vo",
+              "clipType": "media",
+              "track": "vo",
+              "asset": "P",
+              "at": 1.9,
+              "from": 0.0,
+              "to": 1.0,
+              "app": {
+                "astrid": {
+                  "segment": "s2",
+                  "words": [
+                    [
+                      0.1,
+                      0.4,
+                      "Live"
+                    ],
+                    [
+                      0.5,
+                      0.8,
+                      "now"
+                    ]
+                  ],
+                  "text": "Live now."
+                }
+              }
+            },
+            {
+              "id": "b-music",
+              "clipType": "media",
+              "track": "music",
+              "asset": "Q",
+              "at": 0.0,
+              "from": 0.0,
+              "to": 4.0
+            }
+          ],
+          "registry": {
+            "assets": {
+              "P": {
+                "media_id": "sha256:c57bc0c5ceafe2c7fff32d0d16a3a4b0b4bb7885238ac376c70dbf53bd669f44"
+              },
+              "R": {
+                "media_id": "sha256:7474f8a576b8a7b2da6b1e48dca004217b924a51c24424c072f57504dcfc35fb"
+              },
+              "Q": {
+                "media_id": "sha256:26ae3b4bffec466cdee5db4c6efcf5d1a3780b36d7449cf0b0952d71e2cf0b7d"
+              }
+            }
+          }
+        },
+        "base_payload": {
+          "name": "SHOT"
+        },
+        "base_internal_timeline": {
+          "tracks": [
+            {
+              "id": "type",
+              "kind": "visual"
+            },
+            {
+              "id": "sprite",
+              "kind": "visual"
+            },
+            {
+              "id": "plate",
+              "kind": "visual"
+            },
+            {
+              "id": "vo",
+              "kind": "audio"
+            },
+            {
+              "id": "music",
+              "kind": "audio"
+            }
+          ],
+          "clips": [
+            {
+              "id": "b-plate",
+              "clipType": "am-snap-plate",
+              "track": "plate",
+              "asset": "Q",
+              "at": 0.0,
+              "hold": 4.0,
+              "params": {},
+              "app": {
+                "astrid": {
+                  "cut": "c2",
+                  "layer": "plate",
+                  "why": "live"
+                }
+              }
+            },
+            {
+              "id": "b-type",
+              "clipType": "am-type",
+              "track": "type",
+              "at": 0.0,
+              "hold": 1.0,
+              "params": {
+                "text": "Live."
+              },
+              "app": {
+                "astrid": {
+                  "cut": "c2",
+                  "layer": "card",
+                  "for": 1.0
+                }
+              }
+            },
+            {
+              "id": "b-vo",
+              "clipType": "media",
+              "track": "vo",
+              "asset": "P",
+              "at": 1.9,
+              "from": 0.0,
+              "to": 1.0,
+              "app": {
+                "astrid": {
+                  "segment": "s2",
+                  "words": [
+                    [
+                      0.1,
+                      0.4,
+                      "Live"
+                    ],
+                    [
+                      0.5,
+                      0.8,
+                      "now"
+                    ]
+                  ],
+                  "text": "Live now."
+                }
+              }
+            },
+            {
+              "id": "b-music",
+              "clipType": "media",
+              "track": "music",
+              "asset": "Q",
+              "at": 0.0,
+              "from": 0.0,
+              "to": 4.0
+            }
+          ],
+          "registry": {
+            "assets": {
+              "P": {
+                "media_id": "sha256:c57bc0c5ceafe2c7fff32d0d16a3a4b0b4bb7885238ac376c70dbf53bd669f44"
+              },
+              "R": {
+                "media_id": "sha256:7474f8a576b8a7b2da6b1e48dca004217b924a51c24424c072f57504dcfc35fb"
+              },
+              "Q": {
+                "media_id": "sha256:26ae3b4bffec466cdee5db4c6efcf5d1a3780b36d7449cf0b0952d71e2cf0b7d"
+              }
+            }
+          }
+        },
+        "shot_id": "B"
+      }
+    },
+    "schema_version": 1,
+    "base_parent_payload": {
+      "config": {
+        "theme_overrides": {
+          "visual": {
+            "canvas": {
+              "fps": 30,
+              "width": 1920,
+              "height": 1080
+            }
+          }
+        },
+        "app": {
+          "astrid": {
+            "slots": {}
+          }
+        }
+      },
+      "clips": []
+    },
+    "base_placements": {
+      "occ-A": {
+        "shot_id": "A",
+        "occurrence_id": "occ-A",
+        "placement": {
+          "start_ms": 0
+        },
+        "duration_ms": 4000
+      },
+      "occ-B": {
+        "shot_id": "B",
+        "occurrence_id": "occ-B",
+        "placement": {
+          "start_ms": 4000
+        },
+        "duration_ms": 4000
+      }
+    },
+    "source_mapping": {
+      "placements": {
+        "occ-A": {
+          "shot_id": "A",
+          "occurrence_id": "occ-A",
+          "placement": {
+            "start_ms": 0
+          },
+          "duration_ms": 4000
+        },
+        "occ-B": {
+          "shot_id": "B",
+          "occurrence_id": "occ-B",
+          "placement": {
+            "start_ms": 4000
+          },
+          "duration_ms": 4000
+        }
+      },
+      "shots": {
+        "A": {
+          "shot_id": "A",
+          "revision_id": "shot-r1",
+          "content_digest": "sha256:shot-A",
+          "internal_timeline_id": "it-A",
+          "internal_timeline_revision_id": "internal-r1",
+          "internal_timeline_content_digest": "sha256:it-A",
+          "item_id_map": {}
+        },
+        "B": {
+          "shot_id": "B",
+          "revision_id": "rev-shot-B",
+          "content_digest": "sha256:shot-B",
+          "internal_timeline_id": "it-B",
+          "internal_timeline_revision_id": "rev-it-B",
+          "internal_timeline_content_digest": "sha256:it-B",
+          "item_id_map": {}
+        }
+      }
+    }
+  },
+  "requests": [
+    {
+      "api_version": 1,
+      "project_id": "gesture-project",
+      "timeline_id": "gesture-timeline",
+      "request_id": "534dec68-6d26-4a2e-8056-7bbe80862a0a",
+      "session_id": "ebd29f81-a6f8-42c3-b387-8de398b85e08",
+      "session_sequence": 1,
+      "base_revision_id": "parent-r1",
+      "base_publication_id": null,
+      "scope": {
+        "target": "occurrence:occ-A",
+        "content": "this-occurrence",
+        "shot_id": "A",
+        "shot_revision_id": "shot-r1",
+        "internal_revision_id": "internal-r1",
+        "complete": [
+          "clips",
+          "tracks"
+        ],
+        "projection_version": 1
+      },
+      "change": {
+        "commands": [
+          {
+            "op": "clip.set-fade",
+            "select": "occurrence:occ-A/clip:clip-1",
+            "resolved": [
+              "occurrence:occ-A/clip:clip-1"
+            ],
+            "args": {
+              "fade_in": 0.37
+            },
+            "expect": {
+              "entrance": {
+                "state": "present",
+                "value": {
+                  "type": "fade",
+                  "duration": 0.4,
+                  "opaque": {
+                    "keep": null
+                  }
+                }
+              },
+              "effects": {
+                "state": "present",
+                "value": {
+                  "fade_in": null,
+                  "fade_out": 0.2,
+                  "opaque": {
+                    "nested": [
+                      null,
+                      {}
+                    ]
+                  }
+                }
+              },
+              "exit": {
+                "state": "present",
+                "value": {
+                  "type": "slide",
+                  "duration": 0.2,
+                  "opaque": [
+                    null,
+                    {}
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "source": {
+        "via": "app"
+      },
+      "dry_run": false
+    },
+    {
+      "api_version": 1,
+      "project_id": "gesture-project",
+      "timeline_id": "gesture-timeline",
+      "request_id": "984656d1-bea5-45ea-af7f-628acc4fbe37",
+      "session_id": "ebd29f81-a6f8-42c3-b387-8de398b85e08",
+      "session_sequence": 2,
+      "base_revision_id": "parent-r2",
+      "base_publication_id": null,
+      "scope": {
+        "target": "parent",
+        "complete": [
+          "clips",
+          "tracks"
+        ],
+        "projection_version": 1
+      },
+      "change": {
+        "commands": [
+          {
+            "op": "timeline.inverse",
+            "select": null,
+            "args": {
+              "publication": "pub-parent-r2",
+              "writes": [
+                {
+                  "id": "occurrence:occ-A/clip:clip-1",
+                  "path": "effects.fade_in",
+                  "before": {
+                    "state": "present",
+                    "value": 0.37
+                  },
+                  "after": {
+                    "state": "present",
+                    "value": null
+                  }
+                },
+                {
+                  "id": "occurrence:occ-A/clip:clip-1",
+                  "path": "entrance",
+                  "before": {
+                    "state": "present",
+                    "value": {
+                      "type": "fade",
+                      "duration": 0.37,
+                      "opaque": {
+                        "keep": null
+                      }
+                    }
+                  },
+                  "after": {
+                    "state": "present",
+                    "value": {
+                      "type": "fade",
+                      "duration": 0.4,
+                      "opaque": {
+                        "keep": null
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "source": {
+        "via": "app"
+      },
+      "dry_run": false
+    }
+  ]
+}
