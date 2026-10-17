@@ -178,7 +178,8 @@ export function ProjectTimelineSelectors(props: ProjectTimelineSelectorsProps) {
             t.timeline_id === localTimelineId ||
             t.timeline_ulid === localTimelineId,
         )?.name ||
-        localTimelineId
+        // Until the name arrives (or if it never does) a neutral word, never the raw id.
+        (localTimelineId ? 'Timeline' : null)
       }
       projectsLoading={
         discovery.healthQuery.isLoading || discovery.projectsQuery.isLoading

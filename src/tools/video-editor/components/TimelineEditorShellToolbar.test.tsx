@@ -2,10 +2,17 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TimelineEditorShellToolbar } from './TimelineEditorShellToolbar.tsx';
 import type { useEditorSync } from '@/tools/video-editor/hooks/useEditorSync.ts';
 import { createTimelineStore, TimelineStoreProvider } from '@/tools/video-editor/hooks/timelineStore.ts';
+
+// '' is same-origin; a gateway origin is the hosted build.
+let hostedOrigin = '';
+vi.mock('@/integrations/runtime/connection.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/integrations/runtime/connection.ts')>()),
+  runtimeOrigin: () => hostedOrigin,
+}));
 
 describe('TimelineEditorShellToolbar', () => {
   it('refreshes canonical history whenever its dropdown opens', async () => {
@@ -93,6 +100,29 @@ describe('TimelineEditorShellToolbar', () => {
       const badge = screen.getByText('Not saved');
       expect(badge.className).not.toContain('bg-destructive');
       expect(badge.className).toContain('text-muted-foreground');
+    });
+
+    describe('on the hosted build', () => {
+      afterEach(() => { hostedOrigin = ''; });
+
+      it('never reads a red Error for a save that failed during a stop, even once the card has cleared', () => {
+        hostedOrigin = 'http://127.0.0.1:17340';
+        renderToolbar('error');
+        expect(screen.queryByText('error')).toBeNull();
+        const badge = screen.getByText('Not saved');
+        expect(badge.className).not.toContain('bg-destructive');
+        expect(badge.className).toContain('text-muted-foreground');
+      });
+
+      it('keeps the other statuses as they are', () => {
+        hostedOrigin = 'http://127.0.0.1:17340';
+        for (const status of ['saving', 'dirty', 'retrying'] as const) {
+          const view = renderToolbar(status);
+          expect(screen.getByText(status)).toBeTruthy();
+          expect(screen.queryByText('Not saved')).toBeNull();
+          view.unmount();
+        }
+      });
     });
 
     it('still says saved when nothing is wrong, card or not', () => {

@@ -51,10 +51,11 @@ export function applyAppTheme(darkness: number): void {
   for (const [name, value] of Object.entries(duskTokens(darkness))) root.style.setProperty(name, value);
   root.classList.toggle('dark', themeForDarkness(darkness) === 'dark');
   syncThemeColorToBackground();
-  // index.html paints its boot layer (paper and running mink) in these colours before any CSS loads.
+  // index.html paints its boot layer (paper and running mink) in these colours before any CSS loads, for an hour
+  // after `at`; an older (or missing) entry makes it work the colours out from the time of day instead.
   try {
     const { backgroundColor: background, color: ink } = getComputedStyle(document.body);
-    localStorage.setItem(BOOT_THEME_KEY, JSON.stringify({ background, ink }));
+    localStorage.setItem(BOOT_THEME_KEY, JSON.stringify({ background, ink, at: Date.now() }));
   } catch {
     // Storage blocked: the boot layer keeps its default paper.
   }

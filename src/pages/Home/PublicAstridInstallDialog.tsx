@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { ArrowRight, Check, Link2, Monitor, Share, X } from 'lucide-react';
 import {
   APP_ENTRY_PATH,
@@ -7,6 +7,7 @@ import {
 import { requestAutoConnect } from '@/integrations/runtime/autoConnectRequest.ts';
 import { runInstallPrompt, useInstallPromptSignals } from '@/shared/hooks/platformInstall/signals';
 import { detectInstallScenario, type InstallScenario } from './installScenario.ts';
+import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointer.tsx';
 import { useSendLinkToComputer } from './useSendLinkToComputer.ts';
 import './PublicAstridInstallDialog.css';
 
@@ -59,84 +60,6 @@ function openInBrowser() {
   // Choosing the browser already says "take me in": the app goes straight to Chrome's prompt instead of explaining it first.
   requestAutoConnect();
   window.location.assign(APP_ENTRY_PATH);
-}
-
-/** How far the arrow climbs towards the toolbar. It points the general way, up and to the right. */
-const POINTER_RISE = 150;
-const POINTER_REACH = 96;
-
-interface PointerGeometry { width: number; height: number; line: string; head: string; labelX: number; labelY: number }
-
-/** A curve from the card's top-right, heading up and to the right, with an arrowhead along its last direction. */
-function pointerGeometry(card: DOMRect): PointerGeometry {
-  const width = window.innerWidth;
-  const sx = card.right - 64;
-  const sy = card.top - 10;
-  const ex = sx + POINTER_REACH;
-  const ey = Math.max(16, sy - POINTER_RISE);
-  const c1x = sx;
-  const c1y = sy - (sy - ey) * 0.55;
-  const c2x = ex - (ex - sx) * 0.4;
-  const c2y = ey + (sy - ey) * 0.28;
-  const length = Math.hypot(ex - c2x, ey - c2y) || 1;
-  const [dx, dy] = [(ex - c2x) / length, (ey - c2y) / length];
-  const barb = (angle: number) => {
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    return `${(ex - 12 * (dx * cos - dy * sin)).toFixed(1)} ${(ey - 12 * (dx * sin + dy * cos)).toFixed(1)}`;
-  };
-  return {
-    width,
-    height: window.innerHeight,
-    line: `M${sx} ${sy}C${c1x} ${c1y} ${c2x} ${c2y} ${ex} ${ey}`,
-    head: `M${barb(0.5)}L${ex} ${ey}L${barb(-0.5)}`,
-    labelX: sx - 12,
-    labelY: sy - 4,
-  };
-}
-
-/**
- * The arrow leaves the card towards the browser's toolbar, so it is drawn across the whole viewport
- * and redrawn whenever the window or the card moves.
- */
-function ToolbarPointer({ open, label }: { open: boolean; label: string }) {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [geometry, setGeometry] = useState<PointerGeometry | null>(null);
-  useEffect(() => {
-    const card = svgRef.current?.parentElement;
-    if (!open || !card) return;
-    let disposed = false;
-    const measure = () => {
-      if (!disposed) setGeometry(pointerGeometry(card.getBoundingClientRect()));
-    };
-    measure();
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
-    observer?.observe(card);
-    window.addEventListener('resize', measure);
-    return () => {
-      disposed = true;
-      observer?.disconnect();
-      window.removeEventListener('resize', measure);
-    };
-  }, [open]);
-  return (
-    <svg
-      ref={svgRef}
-      className="astrid-install-pointer"
-      aria-hidden="true"
-      width={geometry?.width}
-      height={geometry?.height}
-      fill="none"
-    >
-      {geometry ? (
-        <>
-          <path className="astrid-install-pointer-line" d={geometry.line} pathLength={1} />
-          <path className="astrid-install-pointer-head" d={geometry.head} />
-          <text className="astrid-install-pointer-label" x={geometry.labelX} y={geometry.labelY} textAnchor="end">{label.toUpperCase()}</text>
-        </>
-      ) : null}
-    </svg>
-  );
 }
 
 /** A little window mock: the address bar's install icon pulses, is clicked, and offers Install. */
@@ -331,7 +254,7 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
     >
       <div className="astrid-install-card">
         {open && pointsUp && !installed ? (
-          <ToolbarPointer open={open} label={scenario === 'safari' ? 'Share, up here' : 'Up here'} />
+          <ToolbarPointer label={scenario === 'safari' ? 'Share, up here' : 'Up here'} />
         ) : null}
         <button ref={closeButtonRef} type="button" className="astrid-install-close" onClick={requestClose} aria-label="Close">
           <X size={16} strokeWidth={2} aria-hidden="true" />

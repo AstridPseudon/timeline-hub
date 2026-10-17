@@ -1,5 +1,6 @@
 import hostedOrigin from '../../../../config/hosted-origin.json';
 import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
+import { installBrowserName } from '@/pages/Home/installScenario.ts';
 
 /**
  * Every word the hosted build's connection gate shows (Plan A, design D3; card CP3). The panel, the restart cards,
@@ -12,8 +13,17 @@ import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
  * - One screen per thing a person can do: states a person cannot tell apart share one message.
  * - Each phrase the journey looks for (`tests/e2e/local/direct-journey.spec.ts`) appears in one element of its
  *   panel only, so a text locator finds exactly one match.
- * - No gateway literal (`127.0.0.1:<port>`, `/api/...`): those live in `connection.ts`.
+ * - The browser a card names is a `{browser}` placeholder, filled by `withBrowser` from the landing page's browser detection.
+- No gateway literal (`127.0.0.1:<port>`, `/api/...`): those live in `connection.ts`.
  */
+
+/** The browser's name goes where a card says `{browser}`: the one the landing page's install dialog detected. */
+export const BROWSER_PLACEHOLDER = '{browser}';
+
+/** `text` with every `{browser}` filled in (Chrome or Edge); the browser is detected once per call unless given. */
+export function withBrowser(text: string, browser: string = installBrowserName()): string {
+  return text.split(BROWSER_PLACEHOLDER).join(browser);
+}
 
 /** Commands and paths the agent block names. Plain strings. */
 const COMMANDS = {
@@ -44,10 +54,10 @@ export interface RuntimeConnectionCopy {
   /** Permission `prompt`: shown before anything is sent, with the Connect button. */
   readonly permission: Message & {
     readonly connect: string;
-    /** Chrome's prompt is open: nothing to press, so no button. */
-    readonly pending: Message;
+    /** The browser's prompt is open: nothing to press, so no button. */
+    readonly pending: Message & { readonly pointer: string };
   };
-  /** Permission `denied`: two steps in Chrome, then the page opens by itself. */
+  /** Permission `denied`: two steps in the browser, then the page opens by itself. */
   readonly blocked: Message & {
     readonly steps: readonly [string, string];
     readonly footer: string;
@@ -104,17 +114,19 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   permission: {
     title: 'Connect to Astrid on this computer',
-    sentence: 'Chrome will ask about devices on your network. Choose Allow so this page can reach Astrid on your computer.',
+    sentence: '{browser} will ask about devices on your network. Choose Allow so this page can reach Astrid on your computer.',
     connect: 'Connect',
     pending: {
-      title: 'Choose Allow in Chrome',
-      sentence: 'Chrome is asking, just below the address bar, to let this page reach Astrid on your computer.',
+      title: 'Choose Allow in {browser}',
+      sentence: '{browser} is asking, at the top left of this window, to let this page reach Astrid on your computer.',
+      /** The word on the arrow that points at the prompt, as the install dialog's says "Up here". */
+      pointer: 'Up here',
     },
   },
 
   blocked: {
-    title: 'Allow Astrid in Chrome',
-    sentence: 'Chrome is set to stop this page reaching Astrid on your computer.',
+    title: 'Allow Astrid in {browser}',
+    sentence: '{browser} is set to stop this page reaching Astrid on your computer.',
     steps: [
       'Click the icon at the left of the address bar, then Site settings.',
       'Set Local network access to Allow.',
@@ -201,11 +213,11 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     },
   },
 
-  composeDisabled: 'Making new images works in Astrid on your computer for now.',
+  composeDisabled: "Making new images isn't on this page yet.",
 
-  agentChatDisabled: 'Agent chat works in Astrid on your computer for now.',
+  agentChatDisabled: "Agent chat isn't on this page yet.",
 
-  openApp: 'Open it',
+  openApp: 'Open the full editor',
 };
 
 /**

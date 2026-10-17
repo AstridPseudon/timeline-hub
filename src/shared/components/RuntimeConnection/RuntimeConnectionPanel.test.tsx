@@ -13,10 +13,15 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const EDGE = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0';
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
 function panel(connection: RuntimeConnectionValue) {
   return render(<RuntimeConnectionPanel connection={connection} />);
+}
+
+function inEdge() {
+  vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(EDGE);
 }
 
 function onAPhone() {
@@ -52,14 +57,17 @@ describe('RuntimeConnectionPanel', () => {
     expect(shownText()).not.toMatch(/\bport\b|\borigin\b/i);
   });
 
-  it('shows the same Astrid avatar in every state, and no per-state icon', () => {
+  it('shows the install dialog\'s mink tile in every state, at its size, and no per-state icon', () => {
     for (const [, connection] of ALL_SCREENS) {
       const view = panel(connection());
-      const avatar = view.container.querySelector('img[src="/astrid-avatar.png"]');
+      const avatar = view.container.querySelector('img[src="/astrid-app-icon-192.png"]');
       expect(avatar).not.toBeNull();
       expect(avatar).toHaveAttribute('alt', '');
-      expect(avatar).toHaveClass('h-14', 'w-14', 'rounded-xl');
-      // The only svgs are the button's own icon and (while Chrome asks) the pointing arrow; none is a status icon.
+      // 76px like .astrid-install-avatar; the file carries its own rounded tile, so nothing rounds it again.
+      expect(avatar).toHaveClass('h-[76px]', 'w-[76px]');
+      expect(avatar).not.toHaveClass('rounded-xl');
+      expect(view.container.querySelector('img[src="/astrid-avatar.png"]')).toBeNull();
+      // The only svgs are the button's own icon and (while the browser asks) the pointing arrow; none is a status icon.
       expect(view.container.querySelector('.lucide-plug, .lucide-wifi-off, .lucide-shield-alert, .lucide-triangle-alert')).toBeNull();
       cleanup();
     }
@@ -88,6 +96,19 @@ describe('RuntimeConnectionPanel', () => {
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
       expect(view.container.querySelector('img')).toBeNull();
       expect(view.container.querySelector('.rounded-2xl')).toBeNull();
+    });
+
+    it('draws the mark at the boot screen\'s size and marks it for the boot layer to hand its stride to', () => {
+      const view = panel(connectionFor({ status: 'connecting' }, { isBooting: true }));
+
+      const mark = view.container.querySelector('.astrid-mink-runner') as HTMLElement;
+      expect(mark).toHaveClass('astrid-mink-runner-boot');
+      expect(mark).toHaveAttribute('data-boot-mink-continue');
+      // Nothing else on the page carries the marker, and no other state does.
+      expect(view.container.querySelectorAll('[data-boot-mink-continue]')).toHaveLength(1);
+      cleanup();
+      const other = panel(connectionFor({ status: 'cant_reach', firstTime: false }));
+      expect(other.container.querySelector('[data-boot-mink-continue]')).toBeNull();
     });
 
     it('fades in one line under the mark after a second', () => {
@@ -128,22 +149,45 @@ describe('RuntimeConnectionPanel', () => {
     expect(connect).toHaveBeenCalledOnce();
   });
 
-  it('connect pending: tells the person to choose Allow, with an arrow up to Chrome and no button', () => {
+  it('connect pending: tells the person to choose Allow, says where, and draws the install dialog\'s arrow outside the card, aimed top left', () => {
     const view = panel(connectionFor({ status: 'connecting' }, { awaitingConnect: true, isChecking: true }));
 
     expect(screen.getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeInTheDocument();
-    expect(screen.getByText('Chrome is asking, just below the address bar, to let this page reach Astrid on your computer.')).toBeInTheDocument();
+    expect(screen.getByText('Chrome is asking, at the top left of this window, to let this page reach Astrid on your computer.')).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByText('Connecting…')).not.toBeInTheDocument();
-    const arrow = view.container.querySelector('svg.lucide-arrow-up');
+    expect(view.container.querySelector('svg.lucide-arrow-up')).toBeNull();
+    const arrow = view.container.querySelector('svg.astrid-toolbar-pointer') as SVGElement;
     expect(arrow).not.toBeNull();
-    expect(arrow).toHaveClass('text-primary');
-    // Above the avatar, near the top of the card.
-    const avatar = view.container.querySelector('img') as HTMLElement;
-    expect(arrow!.compareDocumentPosition(avatar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(arrow).toHaveAttribute('data-corner', 'top-left');
+    expect(arrow).toHaveAttribute('data-tone', 'page');
+    expect(arrow).toHaveAttribute('aria-hidden', 'true');
+    // It hangs off the card (its parent is the card it leaves) and says "Up here" like the dialog's.
+    expect(arrow.parentElement).toBe(screen.getByTestId('runtime-not-connected').firstElementChild);
+    expect(arrow.querySelector('text')?.textContent).toBe('UP HERE');
+    expect(arrow.querySelector('path.astrid-toolbar-pointer-line')).not.toBeNull();
+    expect(shownText()).not.toContain('just below the address bar');
   });
 
-  it('browser blocked: two numbered steps in Chrome, left-aligned, and the page opens by itself', () => {
+  it('names the browser the page runs in: Edge for an Edge user, on every card that names one', () => {
+    inEdge();
+    panel(connectionFor({ status: 'connecting' }, { awaitingConnect: true, isChecking: true }));
+    expect(screen.getByRole('heading', { name: 'Choose Allow in Edge' })).toBeInTheDocument();
+    expect(screen.getByText('Edge is asking, at the top left of this window, to let this page reach Astrid on your computer.')).toBeInTheDocument();
+    cleanup();
+
+    panel(connectionFor({ status: 'cant_reach', firstTime: true }, { awaitingConnect: true }));
+    expect(screen.getByText('Edge will ask about devices on your network. Choose Allow so this page can reach Astrid on your computer.')).toBeInTheDocument();
+    cleanup();
+
+    panel(connectionFor({ status: 'blocked' }));
+    expect(screen.getByRole('heading', { name: 'Allow Astrid in Edge' })).toBeInTheDocument();
+    expect(screen.getByText('Edge is set to stop this page reaching Astrid on your computer.')).toBeInTheDocument();
+    expect(shownText()).not.toContain('Chrome');
+    expect(shownText()).not.toContain('{browser}');
+  });
+
+  it('browser blocked: two numbered steps in the browser, left-aligned, and the page opens by itself', () => {
     const view = panel(connectionFor({ status: 'blocked' }));
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'blocked');

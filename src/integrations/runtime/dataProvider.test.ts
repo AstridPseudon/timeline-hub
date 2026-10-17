@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ReighRuntimeClient, RuntimeAuthenticationError, RUNTIME_CLIENT_SCOPES } from './client.ts';
 import type { RequestBody, Transport } from './generated.ts';
 import { RuntimeDataProvider, toRuntimePublication } from './dataProvider.ts';
-import { TimelineSchemaIncompatibleError, TimelineVersionConflictError } from '@/tools/video-editor/data/DataProvider.ts';
+import { TimelineSchemaIncompatibleError, TimelineVersionConflictError, isOwnUnacknowledgedSaveError } from '@/tools/video-editor/data/DataProvider.ts';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
 import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import {
@@ -1933,5 +1933,23 @@ describe('current App preservation pending acknowledgements', () => {
     const none = sanitizeTimelineClipSnapshot({ ...partial, transition: undefined });
     await expect(provider.saveTimelineAtHead(TIMELINE_ID, { ...initial.config, clips: [none] }, initial.head!)).rejects.toBeInstanceOf(TimelineVersionConflictError);
     expect(fixture.requests.filter((request) => request.method === 'POST' && request.path.endsWith('/composition-revisions'))).toHaveLength(1);
+  });
+
+  it('refuses a different edit beside an unanswered save as the editor\'s own save, never as another writer, and sends nothing', async () => {
+    const fixture = runtimeFixture({ initialClips: [{ id: 'clip-a', at: 0, track: 'V1', hold: 2 }] });
+    const transport: typeof fixture.transport = async (...args) => {
+      if (args[0] === 'POST' && args[1].endsWith('/composition-revisions')) throw new Error('fixture: Astrid went away mid-request');
+      return fixture.transport(...args);
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
+    const initial = await provider.loadTimeline(TIMELINE_ID);
+    const edit = (at: number) => ({ ...initial.config, clips: [{ id: 'clip-a', at, track: 'V1', hold: 2 }] });
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, edit(1), initial.head!)).rejects.toThrow('went away');
+
+    const refused = await provider.saveTimelineAtHead(TIMELINE_ID, edit(2), initial.head!).catch((error: unknown) => error);
+    expect(refused).toBeInstanceOf(TimelineVersionConflictError);
+    expect(isOwnUnacknowledgedSaveError(refused)).toBe(true);
+    // A genuine rejection by the Runtime is not "ours".
+    expect(isOwnUnacknowledgedSaveError(new TimelineVersionConflictError('Another editor changed the timeline'))).toBe(false);
   });
 });

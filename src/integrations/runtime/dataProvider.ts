@@ -13,6 +13,7 @@ import {
   TimelineNotFoundError,
   TimelineSchemaIncompatibleError,
   TimelineVersionConflictError,
+  OwnUnacknowledgedSaveError,
   type DataProvider,
   type LoadedTimeline,
   type TimelineHeadRevision,
@@ -769,7 +770,7 @@ export class RuntimeDataProvider implements DataProvider {
     const replay = pending?.expectedHead === base.headRevisionId
       && pending.requestSignature === requestSignature ? pending : undefined;
     if (pending && !replay && pending.expectedHead === base.headRevisionId) {
-      throw new TimelineVersionConflictError('An unacknowledged save owns this timeline head and payload; resolve its acknowledgement before publishing another edit.');
+      throw new OwnUnacknowledgedSaveError('An unacknowledged save owns this timeline head and payload; resolve its acknowledgement before publishing another edit.');
     }
     // Load the immutable base payload, not a newer cached/polled head. Runtime
     // owns CAS (and checks idempotency replay first), including read/publish races.

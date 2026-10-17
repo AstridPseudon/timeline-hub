@@ -42,9 +42,12 @@ const BAD_HOSTED_ORIGIN = '--hosted-origin must be an https:// address, like htt
 const ENGINE_CHANGED = 'Astrid changed on this computer. Restart its engine: banodoco-local up --profile astrid';
 const CANT_START = "Astrid can't start with the setup on this computer.";
 
-/** One friendly line, then one `Details:` line with the technical message. Returns null so callers can `return fail(...)`. */
+/**
+ * One friendly line, then one `Details:` line with the technical message. Returns null so callers can `return fail(...)`.
+ * The line says who is speaking ("Astrid: ") only when the message does not already begin with the name.
+ */
 function fail(friendly, details) {
-  console.error(`Astrid: ${friendly}`);
+  console.error(friendly.startsWith('Astrid') ? friendly : `Astrid: ${friendly}`);
   if (details) console.error(dim(`Details: ${String(details).replace(/\s*\n\s*/g, ' ')}`));
   process.exitCode = 1;
   return null;

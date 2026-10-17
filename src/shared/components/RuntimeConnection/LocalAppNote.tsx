@@ -4,7 +4,7 @@ import { RUNTIME_CONNECTION_COPY as COPY } from './copy.ts';
 
 /**
  * The line next to a control the hosted build disables (making images, agent chat): what works only in the local Astrid
- * app, then "Open it" linking there. The link is the address the gateway reported (`gatewayHealth.ts`); when it reported
+ * app, then "Open the full editor" linking there. The link is the address the gateway reported (`gatewayHealth.ts`); when it reported
  * none, there is no link. The text never shows the address.
  */
 export function LocalAppNote({ message, className }: { message: string; className?: string }) {

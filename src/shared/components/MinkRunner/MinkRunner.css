@@ -10,8 +10,12 @@
   --cycle: 770ms;
   display: grid;
   justify-items: center;
-  gap: 1px;
+  gap: calc(1px * var(--scale));
 }
+/* index.html's boot mink size: each 81px frame is a whole 180 device pixels wide (20/9 CSS px a sprite px at 1x,
+   10/9 at 2x), so the stepped sheet never lands between pixels and the hand-off from the boot layer changes nothing. */
+.astrid-mink-runner-boot { --scale: calc(20 / 9); }
+@media (min-resolution: 2dppx) { .astrid-mink-runner-boot { --scale: calc(10 / 9); } }
 .astrid-mink-runner-window {
   display: block;
   overflow: hidden;
@@ -31,19 +35,19 @@
   display: block;
   overflow: hidden;
   width: calc(var(--frame-w) * var(--scale) * 1.6px);
-  height: 1px;
+  height: calc(1px * var(--scale));
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
 }
 .astrid-mink-runner-ground > span {
   display: block;
-  width: calc(100% + 12px);
+  width: calc(100% + 12px * var(--scale));
   height: 100%;
-  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--astrid-ink, currentColor) 28%, transparent) 0 4px, transparent 4px 12px);
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--astrid-ink, currentColor) 28%, transparent) 0 calc(4px * var(--scale)), transparent calc(4px * var(--scale)) calc(12px * var(--scale)));
   animation: astrid-mink-ground calc(var(--cycle) / 3) linear infinite;
 }
 @keyframes astrid-mink-run { to { background-position-x: calc(var(--frame-w) * var(--frames) * var(--scale) * -1px); } }
-@keyframes astrid-mink-ground { to { transform: translateX(-12px); } }
+@keyframes astrid-mink-ground { to { transform: translateX(calc(-12px * var(--scale))); } }
 @media (prefers-reduced-motion: reduce) {
   .astrid-mink-runner-sprite,
   .astrid-mink-runner-ground > span { animation: none !important; }

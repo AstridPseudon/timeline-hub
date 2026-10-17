@@ -272,9 +272,12 @@ function TimelineEditorShellCoreComponent({
   // restarted card is up, that timeline stays mounted behind it: the card says the changes are kept, so they stay in view.
   const hasLoadedTimeline = Boolean(editorData.resolvedConfig);
   const recoveryCardShowing = useRecoveryCardShowing();
-  // Astrid answering again clears the card; a timeline read that failed while it was stopped is retried here.
+  // Astrid answering again clears the card. What failed while it was stopped is retried here, so the page carries on as
+  // the card promised ("Your changes are kept"): a timeline read that failed is read again, and an edit that was never
+  // saved is saved now, without waiting for another edit.
   useOnRecoveryCardCleared(() => {
     if (chrome.loadError) chrome.retryLoad();
+    if (chrome.saveStatus === 'error' || chrome.saveStatus === 'dirty') chrome.retryPendingSave();
   });
   const conflict = useTimelineRealtime({
     timelineId,
@@ -753,7 +756,9 @@ function TimelineEditorShellCoreComponent({
   /** Diverged banner (B4): a 409 means the document changed elsewhere. No
    *  silent overwrite — explicit Reload or Save as copy. */
   // A save conflict is a choice between two versions, not an error: neutral, not destructive red.
-  const conflictBanner = chrome.isConflictExhausted ? (
+  // The dialog and this bar offer the same two buttons: the dialog is the one place while it is open, and this bar is
+  // the way back to the choice once it was dismissed.
+  const conflictBanner = chrome.isConflictExhausted && !conflict.isOpen ? (
     <div
       role="alert"
       className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-2 text-sm text-foreground"

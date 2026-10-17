@@ -40,19 +40,19 @@ describe('agent chat on the hosted build', () => {
     vi.unstubAllGlobals();
   });
 
-  it('says agent chat works in Astrid on the computer, with an "Open it" link only when the app address is known', () => {
+  it('says agent chat is not on this page yet, with an "Open the full editor" link only when the app address is known', () => {
     origin = GATEWAY;
     setRuntimeAppUrl('http://127.0.0.1:2222');
     const view = render(<AgentChatPanel />, { wrapper: withQueryClient });
 
-    expect(screen.getByText('Agent chat works in Astrid on your computer for now.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open it' })).toHaveAttribute('href', 'http://127.0.0.1:2222');
+    expect(screen.getByText("Agent chat isn't on this page yet.")).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open the full editor' })).toHaveAttribute('href', 'http://127.0.0.1:2222');
     expect(document.body.textContent).not.toContain('127.0.0.1');
     view.unmount();
 
     setRuntimeAppUrl(null);
     render(<AgentChatPanel />, { wrapper: withQueryClient });
-    expect(screen.getByText('Agent chat works in Astrid on your computer for now.')).toBeInTheDocument();
+    expect(screen.getByText("Agent chat isn't on this page yet.")).toBeInTheDocument();
     expect(screen.queryByRole('link')).toBeNull();
   });
 

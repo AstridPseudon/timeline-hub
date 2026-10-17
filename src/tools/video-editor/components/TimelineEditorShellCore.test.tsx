@@ -126,6 +126,7 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
       renderDirty: false,
       loadError: null,
       retryLoad: vi.fn(),
+      retryPendingSave: vi.fn(),
       ...__chromeOverrides,
     }),
     useTimelinePlaybackSelector: (selector: (playback: typeof __playback) => unknown) => {
@@ -1417,6 +1418,33 @@ describe('TimelineEditorShellCore — timeline load error', () => {
     }
   });
 
+  it.each(['error', 'dirty'] as const)('saves the edit that never got an answer when the Astrid stopped card clears (save status %s), and not before', (saveStatus) => {
+    const retryPendingSave = vi.fn();
+    __chromeOverrides = { saveStatus, retryPendingSave };
+    act(() => setRecoveryCardShowing(true));
+    try {
+      render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      expect(retryPendingSave).not.toHaveBeenCalled();
+      act(() => setRecoveryCardShowing(false));
+      expect(retryPendingSave).toHaveBeenCalledTimes(1);
+    } finally {
+      act(() => setRecoveryCardShowing(false));
+    }
+  });
+
+  it.each(['saved', 'saving', 'retrying'] as const)('does not start a second save when the card clears and the save status is %s', (saveStatus) => {
+    const retryPendingSave = vi.fn();
+    __chromeOverrides = { saveStatus, retryPendingSave };
+    act(() => setRecoveryCardShowing(true));
+    try {
+      render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      act(() => setRecoveryCardShowing(false));
+      expect(retryPendingSave).not.toHaveBeenCalled();
+    } finally {
+      act(() => setRecoveryCardShowing(false));
+    }
+  });
+
   it('does not refetch when the card clears and nothing failed to load', () => {
     const retryLoad = vi.fn();
     __chromeOverrides = { loadError: null, retryLoad };
@@ -1569,6 +1597,26 @@ describe('TimelineEditorShellCore — diverged conflict banner', () => {
 
     expect(screen.getByRole('button', { name: 'Keep my changes' }).className).toContain('bg-primary');
     expect(screen.getByRole('button', { name: 'Use latest version' }).className).not.toContain('bg-primary');
+  });
+
+  it('offers the choice in one place only: the dialog while it is open, the inline bar once it was dismissed', () => {
+    __chromeOverrides = { isConflictExhausted: true };
+    __conflictDialog = { isOpen: true };
+    const { unmount } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+
+    // Open: the dialog alone has the buttons, and the bar says nothing beside it.
+    expect(screen.getAllByRole('button', { name: 'Keep my changes' }, { hidden: true })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Use latest version' }, { hidden: true })).toHaveLength(1);
+    expect(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Keep my changes' })).toBeTruthy();
+    expect(screen.getAllByText('Keep your changes, or switch to the latest version.')).toHaveLength(1);
+    unmount();
+
+    // Dismissed (Escape): the bar is the way back to the same choice, and the dialog is gone.
+    __conflictDialog = { isOpen: false };
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Keep my changes' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Use latest version' })).toHaveLength(1);
   });
 
   it('does not render the diverged banner when clean', () => {

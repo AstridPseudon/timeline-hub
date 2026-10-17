@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu.tsx';
 import { useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import type { useEditorSync } from '@/tools/video-editor/hooks/useEditorSync.ts';
 import { clampTimelineScaleWidth, TIMELINE_ZOOM_STEP } from '@/tools/video-editor/lib/timeline-scale.ts';
@@ -75,7 +76,10 @@ export function TimelineEditorShellToolbar({
   // are kept and the card says what to do, so the badge reads neutral instead of a red "Error". An open save conflict is
   // a choice between two versions, not an error, so it reads the same way.
   const recoveryCardShowing = useRecoveryCardShowing();
-  const notSaved = (recoveryCardShowing || chrome.isConflictExhausted) && chrome.saveStatus !== 'saved';
+  // On the hosted build a failed save is Astrid not answering (the card says so, and the save is retried when it is back),
+  // so the red "Error" never shows there, not even in the moment after the card clears: schema rejections have their own banner.
+  const hostedSaveWaiting = runtimeOrigin() !== '' && chrome.saveStatus === 'error' && !chrome.schemaIncompatible;
+  const notSaved = (recoveryCardShowing || chrome.isConflictExhausted || hostedSaveWaiting) && chrome.saveStatus !== 'saved';
   const saveBadge = (
     <Badge
       variant={notSaved ? 'outline' : STATUS_VARIANT[chrome.saveStatus]}

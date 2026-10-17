@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialo
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
 import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext.tsx';
 import { useShots } from '@/shared/contexts/ShotsContext.tsx';
 import { useShotCreation } from '@/shared/hooks/shotCreation/useShotCreation.ts';
@@ -106,6 +107,9 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
   const runtime = useVideoEditorRuntime();
   // The hosted build's "Astrid stopped" / "restarted" card is what tells the person what to do; this banner stays quiet then.
   const recoveryCardShowing = useRecoveryCardShowing();
+  // On the hosted build the friendly cards own every failed-to-load moment (TimelineLoadErrorCard, the stopped and
+  // restarted cards): the engineer-worded "canonical shot composition" lines never reach a person there.
+  const hosted = runtimeOrigin() !== '';
   // Astrid answering again clears the card; the refresh that failed while it was stopped is retried here, so the
   // "Couldn't refresh this timeline" line does not outlive the stop it was about.
   useOnRecoveryCardCleared(() => {
@@ -616,12 +620,12 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
 
   return (
     <>
-      {isDocumentShotMode && !isCanonicalEditor ? (
+      {!hosted && isDocumentShotMode && !isCanonicalEditor ? (
         <div role="status" data-canonical-load-state="legacy" className="border-b px-3 py-1.5 text-center text-xs">
           Canonical shot composition is unavailable; showing the explicit legacy shot view.
         </div>
       ) : null}
-      {isCanonicalEditor && !recoveryCardShowing && (canonicalLoadState === 'error' || canonicalLoadState === 'stale') ? (
+      {isCanonicalEditor && !recoveryCardShowing && (canonicalLoadState === 'stale' || (canonicalLoadState === 'error' && !hosted)) ? (
         <div
           role={canonicalLoadState === 'error' ? 'alert' : 'status'}
           data-canonical-load-state={canonicalLoadState}

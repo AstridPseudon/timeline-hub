@@ -238,7 +238,7 @@ test('local launcher binds the selected Astrid product credential and profile be
     assert.match(badOrigin.stderr.split('\n')[1], /^Details: /);
     fixture.setAvailable(false);
     const offline = await run(['--check'], fixture.env); assert.equal(offline.code, 1); assert.match(offline.stderr, /HTTP 503/);
-    assert.equal(offline.stderr.split('\n')[0], "Astrid: Astrid's engine isn't running. Start it first: banodoco-local up --profile astrid");
+    assert.equal(offline.stderr.split('\n')[0], "Astrid's engine isn't running. Start it first: banodoco-local up --profile astrid");
     assert.match(offline.stderr.split('\n')[1], /^Details: .*HTTP 503/);
     assert(!offline.stderr.includes('dev:local:'), offline.stderr);
   } finally { await fixture.close(); }
@@ -268,7 +268,7 @@ test('local launcher rejects credential, profile, and Runtime identity substitut
       assert.match(result.stderr, expectedError, label);
       assert(!result.stderr.includes(fixture.token), `${label}: credential leaked to stderr`);
       if (label === 'health reports another Runtime instance') {
-        assert.equal(result.stderr.split('\n')[0], 'Astrid: Astrid changed on this computer. Restart its engine: banodoco-local up --profile astrid');
+        assert.equal(result.stderr.split('\n')[0], 'Astrid changed on this computer. Restart its engine: banodoco-local up --profile astrid');
         assert.match(result.stderr.split('\n')[1], /^Details: Runtime health instance does not match/);
       }
       assert.equal(existsSync(fixture.spawnMarker), false, `${label}: launched a child`);
@@ -532,7 +532,7 @@ test('the gateway stopping later is one friendly line, then the details', async 
     await started.closed;
     assert.equal(started.child.exitCode, 1);
     const lines = started.seen.stderr.split('\n');
-    assert.equal(lines[0], 'Astrid: Astrid stopped. Start it again with npm run dev:local.');
+    assert.equal(lines[0], 'Astrid stopped. Start it again with npm run dev:local.');
     assert.match(lines[1], /^Details: loopback gateway exited with SIGKILL; the hosted app cannot reach this computer/);
   } finally { await started.stop(); }
 });
@@ -547,13 +547,13 @@ test('the agent chat bridge stopping is its own friendly line', async () => {
   assert.match(result.stderr.split('\n')[1], /^Details: Astrid ACP bridge exited with code 3; ACP is offline/);
 });
 
-test('a machine without Astrid set up points to the install guide, and every error line starts with "Astrid: "', async () => {
+test('a machine without Astrid set up points to the install guide, and every error line names Astrid once', async () => {
   const fixture = await launchFixture();
   try {
     const result = await run(['--check'], { ...fixture.env, ASTRID_WORKSPACE_DISCOVERY: join(fixture.fixture, 'no-such-dir', 'discovery.json') });
     assert.equal(result.code, 1);
     const lines = result.stderr.split('\n');
-    assert.equal(lines[0], "Astrid: Astrid isn't set up on this computer yet. Install guide: https://github.com/peteromallet/astrid-agent/blob/main/docs/setup/local-source-install.md");
+    assert.equal(lines[0], "Astrid isn't set up on this computer yet. Install guide: https://github.com/peteromallet/astrid-agent/blob/main/docs/setup/local-source-install.md");
     assert.match(lines[1], /^Details: cannot read runtime discovery at .*discovery\.json: /);
     assert(!result.stderr.includes('dev:local:'), result.stderr);
     assert.equal(result.stdout, '');
@@ -567,7 +567,7 @@ test('a stopped Runtime points to the command that starts it', async () => {
     await new Promise(r => fixture.runtime.close(r));
     const result = await run(['--check'], fixture.env);
     assert.equal(result.code, 1);
-    assert.equal(result.stderr.split('\n')[0], "Astrid: Astrid's engine isn't running. Start it first: banodoco-local up --profile astrid");
+    assert.equal(result.stderr.split('\n')[0], "Astrid's engine isn't running. Start it first: banodoco-local up --profile astrid");
     assert.match(result.stderr.split('\n')[1], /^Details: runtime is unavailable at http:\/\/127\.0\.0\.1:\d+ /);
   } finally { rmSync(fixture.fixture, { recursive: true, force: true }); }
 });

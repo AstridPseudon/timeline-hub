@@ -268,6 +268,22 @@ describe('ProjectTimelineSelectors', () => {
     expect(screen.getByRole('combobox', { name: 'Select timeline' })).toHaveTextContent('Intro Cut');
   });
 
+  it('shows a neutral "Timeline", never the raw id, while the timeline\'s name has not arrived', () => {
+    const discovery = makeDiscovery({
+      timelinesQuery: {
+        isLoading: false,
+        isError: true,
+        error: new Error('Astrid did not answer'),
+        data: undefined,
+      } as UseAstridBridgeDiscoveryResult['timelinesQuery'],
+    });
+    renderSelectors({ discovery, localTimelineName: null });
+
+    const trigger = screen.getByRole('combobox', { name: 'Select timeline' });
+    expect(trigger).toHaveTextContent('Timeline');
+    expect(trigger.textContent).not.toContain('11111111');
+  });
+
   it('lists the newest local timeline first', async () => {
     const discovery = makeDiscovery({
       timelinesQuery: {

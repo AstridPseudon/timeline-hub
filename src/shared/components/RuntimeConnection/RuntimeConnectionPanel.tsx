@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ArrowUp, Check, Link2 } from 'lucide-react';
+import { Check, Link2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { MinkRunner } from '@/shared/components/MinkRunner/MinkRunner.tsx';
+import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointer.tsx';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import type { RuntimeNotReadyReason } from '@/integrations/runtime/connection.ts';
 import { isMobileDevice } from '@/pages/Home/installScenario.ts';
 import { useSendLinkToComputer } from '@/pages/Home/useSendLinkToComputer.ts';
 import { CopyAgentInstructions } from './CopyAgentInstructions.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY } from './copy.ts';
+import { RUNTIME_CONNECTION_COPY as COPY, withBrowser } from './copy.ts';
 
 export interface RuntimeConnectionPanelProps {
   /** The gate's value; the panel is only rendered while it is not connected. */
@@ -17,7 +18,8 @@ export interface RuntimeConnectionPanelProps {
 /** How long the mark is alone on the screen before the line under it fades in. */
 const CONNECTING_LINE_DELAY_MS = 1000;
 
-const AVATAR_SRC = '/astrid-avatar.png';
+/** The same face the landing page, the install dialog and the header show: the pixel mink's app icon. */
+const AVATAR_SRC = '/astrid-app-icon-192.png';
 
 interface PanelFrameProps {
   /** The `data-state` the journey and the Layout test read: `connecting`, `permission`, `cant_reach`, `blocked`, `not_ready`. */
@@ -30,15 +32,15 @@ interface PanelFrameProps {
   readonly footer?: ReactNode;
   /** Content between the sentence and the action (the blocked state's steps). */
   readonly children?: ReactNode;
-  /** A small arrow above the avatar: the thing to look at is Chrome's prompt, up by the address bar. */
-  readonly pointUp?: boolean;
+  /** The word on a hand-drawn arrow, outside the card, aimed at the top left of the window: the browser's prompt is there. */
+  readonly pointer?: string;
 }
 
 /**
  * The one layout every not-connected card shares, in the install dialog's style: the avatar, a serif heading, one
  * sentence, at most one primary button and at most one quiet line. Everything is centred.
  */
-function PanelFrame({ dataState, title, sentence, action, footer, children, pointUp = false }: PanelFrameProps) {
+function PanelFrame({ dataState, title, sentence, action, footer, children, pointer }: PanelFrameProps) {
   return (
     <section
       aria-label={COPY.panelLabel}
@@ -47,10 +49,8 @@ function PanelFrame({ dataState, title, sentence, action, footer, children, poin
       className="flex min-h-screen items-center justify-center bg-background p-4 text-foreground"
     >
       <div className="w-full max-w-md space-y-5 rounded-2xl border border-border bg-card p-6 text-center sm:p-8">
-        <div className="space-y-3">
-          {pointUp && <ArrowUp aria-hidden="true" className="mx-auto h-6 w-6 text-primary" />}
-          <img src={AVATAR_SRC} alt="" className="mx-auto h-14 w-14 rounded-xl" />
-        </div>
+        {/* The icon file carries its own rounded tile and shadow, as the install dialog shows it at this size. */}
+        <img src={AVATAR_SRC} alt="" className="mx-auto h-[76px] w-[76px]" />
         <div className="space-y-3">
           <h1 className="font-serif font-theme-heading text-2xl leading-tight text-foreground">{title}</h1>
           <p className="text-base leading-7 text-muted-foreground">{sentence}</p>
@@ -58,6 +58,7 @@ function PanelFrame({ dataState, title, sentence, action, footer, children, poin
         {children}
         {action && <div className="flex flex-col items-center">{action}</div>}
         {footer && <p className="text-sm text-muted-foreground">{footer}</p>}
+        {pointer && <ToolbarPointer label={pointer} corner="top-left" tone="page" />}
       </div>
     </section>
   );
@@ -79,7 +80,10 @@ function ConnectingPanel({ phone }: { phone: boolean }) {
       data-state="connecting"
       className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-4 text-foreground"
     >
-      <MinkRunner className="text-foreground" />
+      {/* As tall as the line below, so the mark sits at the exact centre of the page: where the boot screen drew it. */}
+      <div aria-hidden="true" className="min-h-5" />
+      {/* The boot screen's mink, same size and place: the boot layer hands its stride over to this one (bootLayer.ts). */}
+      <MinkRunner bootSize className="text-foreground" />
       {/* Always occupies its line, so the mark does not move when the words arrive. */}
       <p className="min-h-5 text-center text-sm text-muted-foreground">
         {lineShown && <span className="animate-in fade-in duration-500">{COPY.connecting.sentence}</span>}
@@ -107,29 +111,36 @@ function PhonePanel() {
   );
 }
 
-/** Chrome's local-network prompt has not been asked: nothing was sent, and Connect is what asks. */
+/** The browser's local-network prompt has not been asked: nothing was sent, and Connect is what asks. */
 function PermissionPanel({ connection }: { connection: RuntimeConnectionValue }) {
   const { permission } = COPY;
   if (connection.isChecking) {
-    // Chrome's prompt is open: nothing to press, only where to look.
-    return <PanelFrame dataState="permission" title={permission.pending.title} sentence={permission.pending.sentence} pointUp />;
+    // The browser's prompt is open: nothing to press, only where to look.
+    return (
+      <PanelFrame
+        dataState="permission"
+        title={withBrowser(permission.pending.title)}
+        sentence={withBrowser(permission.pending.sentence)}
+        pointer={permission.pending.pointer}
+      />
+    );
   }
   return (
     <PanelFrame
       dataState="permission"
-      title={permission.title}
-      sentence={permission.sentence}
+      title={withBrowser(permission.title)}
+      sentence={withBrowser(permission.sentence)}
       action={<Button type="button" className="w-full sm:w-auto" onClick={() => connection.connect()}>{permission.connect}</Button>}
     />
   );
 }
 
-/** Permission `denied`: the browser stopped the request, so the fix is in Chrome's site settings. */
+/** Permission `denied`: the browser stopped the request, so the fix is in its site settings. */
 function BlockedPanel() {
   const blocked = COPY.blocked;
   return (
-    // No agent button: the fix is a Chrome site setting, which an agent cannot change.
-    <PanelFrame dataState="blocked" title={blocked.title} sentence={blocked.sentence} footer={blocked.footer}>
+    // No agent button: the fix is a browser site setting, which an agent cannot change.
+    <PanelFrame dataState="blocked" title={withBrowser(blocked.title)} sentence={withBrowser(blocked.sentence)} footer={blocked.footer}>
       <ol className="list-decimal space-y-2 pl-5 text-left text-sm leading-6 text-muted-foreground">
         {blocked.steps.map((step) => <li key={step}>{step}</li>)}
       </ol>

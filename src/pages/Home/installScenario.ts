@@ -25,3 +25,11 @@ export function detectInstallScenario(): InstallScenario {
 export function isMobileDevice(): boolean {
   return detectInstallScenario() === 'mobile';
 }
+
+/**
+ * The name the connection cards give the person's browser ("Choose Allow in Edge"). The local-network prompt is a
+ * Chromium one, so Edge is named as Edge and every other browser as Chrome.
+ */
+export function installBrowserName(): 'Chrome' | 'Edge' {
+  return detectBrowser() === 'edge' ? 'Edge' : 'Chrome';
+}

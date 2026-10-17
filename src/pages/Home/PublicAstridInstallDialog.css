@@ -1,5 +1,5 @@
-/* Install dialog: centred on screen. On desktop a hand-drawn arrow in the top-right corner points
-   up at the browser's own install control. */
+/* Install dialog: centred on screen. On desktop a hand-drawn arrow in the top-right corner (ToolbarPointer)
+   points up at the browser's own install control. */
 .astrid-install-dialog {
   width: min(380px, calc(100vw - 32px));
   position: fixed;
@@ -34,26 +34,6 @@
   border-radius: 18px;
   background: var(--astrid-panel);
   box-shadow: 0 24px 60px -24px rgb(37 36 31 / .45), 0 2px 8px rgb(37 36 31 / .08);
-}
-
-.astrid-install-pointer {
-  /* Spans the viewport (nothing above it is transformed), so the arrow can leave the card. */
-  position: fixed;
-  inset: 0;
-  overflow: visible;
-  pointer-events: none;
-  color: #ff8a45;
-}
-.astrid-install-pointer path { stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-/* The line draws itself up to the toolbar, the head lands, then the whole thing breathes. */
-.astrid-install-pointer-line { stroke-dasharray: 1; animation: astrid-install-draw 900ms cubic-bezier(.45,0,.2,1) 200ms backwards; }
-.astrid-install-pointer-head { animation: astrid-install-fade 200ms ease 1000ms backwards; }
-@keyframes astrid-install-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-.astrid-install-pointer-label {
-  fill: #fffbf2;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  letter-spacing: .18em;
 }
 
 .astrid-install-close {
@@ -312,8 +292,6 @@
 @media (prefers-reduced-motion: reduce) {
   .astrid-install-dialog[open],
   .astrid-install-dialog[open]::backdrop,
-  .astrid-install-pointer-line,
-  .astrid-install-pointer-head,
   .astrid-install-target,
   .astrid-install-popover-confirm,
   .astrid-install-desk-arrow { animation: none; }

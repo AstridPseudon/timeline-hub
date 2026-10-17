@@ -6,6 +6,8 @@ export type {
 
 import type { ProjectObjectStorage } from '@/sdk/video/assets/projectObjects.ts';
 
+import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors.ts';
+
 export {
   TimelineVersionConflictError,
   isTimelineVersionConflictError,
@@ -70,6 +72,21 @@ export class TimelineNotFoundError extends Error {
 export function isTimelineNotFoundError(error: unknown): error is TimelineNotFoundError {
   return error instanceof TimelineNotFoundError
     || (error instanceof Error && error.name === 'TimelineNotFoundError');
+}
+
+/**
+ * A save was refused before it left the browser, because an earlier save of this same editor from the same head has
+ * not been acknowledged yet (its answer never came back, for instance while Astrid was away) and this one differs
+ * from it. Nobody else wrote anything: the earlier save is the editor's own, so this is never "the timeline changed
+ * somewhere else". The persistence layer retries the earlier save first and sends this edit behind it.
+ */
+export class OwnUnacknowledgedSaveError extends TimelineVersionConflictError {
+  readonly ownUnacknowledgedSave = true as const;
+}
+
+export function isOwnUnacknowledgedSaveError(error: unknown): error is OwnUnacknowledgedSaveError {
+  return error instanceof OwnUnacknowledgedSaveError
+    || (error instanceof Error && (error as { ownUnacknowledgedSave?: unknown }).ownUnacknowledgedSave === true);
 }
 
 /** Provider-wide outages must not enter the timeline save retry backoff. */

@@ -33,13 +33,13 @@ function renderControls() {
 afterEach(() => setRuntimeAppUrl(null));
 
 describe('Img2ImgControls on the hosted build', () => {
-  it('follows the compose line with an "Open it" link to the local app, when the gateway reported one', () => {
+  it('follows the compose line with an "Open the full editor" link to the local app, when the gateway reported one', () => {
     origin = 'http://127.0.0.1:17340';
     setRuntimeAppUrl('http://127.0.0.1:2222');
     renderControls();
 
-    expect(screen.getByText('Making new images works in Astrid on your computer for now.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open it' })).toHaveAttribute('href', 'http://127.0.0.1:2222');
+    expect(screen.getByText("Making new images isn't on this page yet.")).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open the full editor' })).toHaveAttribute('href', 'http://127.0.0.1:2222');
   });
 
   it('has no link without an app address', () => {

@@ -410,6 +410,7 @@ function createInitialChromeSlice(): TimelineChromeContextValue {
     watchdogTripped: false,
     watchdogReason: null,
     retryWatchdog: noop,
+    retryPendingSave: noop,
     recoveryDraft: null,
     retryRecoveredDraft: noop,
     discardRecoveredDraft: noop,

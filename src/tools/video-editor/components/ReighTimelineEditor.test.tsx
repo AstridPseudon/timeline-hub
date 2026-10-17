@@ -26,6 +26,13 @@ const mocks = vi.hoisted(() => ({
   selectedProjectId: 'project-1',
 }));
 
+// '' is same-origin; a gateway origin is the hosted build.
+let hostedOrigin = '';
+vi.mock('@/integrations/runtime/connection.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/integrations/runtime/connection.ts')>()),
+  runtimeOrigin: () => hostedOrigin,
+}));
+
 vi.mock('@/tools/video-editor/hooks/usePerfDiagnostics', () => ({
   useRenderDiagnostic: () => undefined,
 }));
@@ -486,6 +493,48 @@ describe('ReighTimelineEditor canonical read state', () => {
     expect(screen.queryByText(/explicit legacy shot view/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(refetchShots).toHaveBeenCalledTimes(1);
+  });
+
+  describe('on the hosted build', () => {
+    afterEach(() => { hostedOrigin = ''; });
+
+    it('never prints the engineer-worded error line: the load-error card owns that moment', () => {
+      hostedOrigin = 'http://127.0.0.1:17340';
+      const refetchShots = vi.fn();
+      const { container } = renderEditor({ runtime: {
+        shots: {
+          shotComposition: {},
+          canonicalOccurrences: [],
+          canonicalComposition: null,
+          canonicalCompositionError: new Error('Runtime unavailable'),
+          refetchShots,
+        },
+      } });
+
+      expect(container.querySelector('[data-canonical-load-state="error"]')).toBeNull();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(document.body.textContent).not.toMatch(/canonical|Legacy shot data|substituted/i);
+      expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    });
+
+    it('never prints the legacy shot view line either', () => {
+      const runtime = { userId: null, shots: { canonicalOccurrences: [] } };
+      // Same-origin the line is there (so the hosted absence below is not an empty render).
+      const sameOrigin = renderEditor({ runtime });
+      expect(sameOrigin.container.querySelector('[data-canonical-load-state="legacy"]')).not.toBeNull();
+      sameOrigin.unmount();
+
+      hostedOrigin = 'http://127.0.0.1:17340';
+      const { container } = renderEditor({ runtime });
+      expect(container.querySelector('[data-canonical-load-state="legacy"]')).toBeNull();
+      expect(document.body.textContent).not.toMatch(/legacy shot view|Canonical shot composition/i);
+    });
+
+    it('still says a stale refresh in plain words', () => {
+      hostedOrigin = 'http://127.0.0.1:17340';
+      const { container } = renderEditor({ runtime: staleRuntime() });
+      expect(container.querySelector('[data-canonical-load-state="stale"]')).toHaveTextContent("Couldn't refresh this timeline.");
+    });
   });
 
   const STALE_HEAD = '3f1c2a9e-4b7d-4c1e-9a55-0d6e7f8a9b10';

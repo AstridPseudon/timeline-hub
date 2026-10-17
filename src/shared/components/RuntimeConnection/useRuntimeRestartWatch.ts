@@ -115,3 +115,45 @@ export function useRuntimeRestartWatch(
 
   return status;
 }
+
+/**
+ * Runs `onAnswers` whenever Astrid starts answering the health route after not answering (or at the first reading, when
+ * the caller is only mounted because something already failed), and never again while it keeps answering. A thing that
+ * failed to load because Astrid was not there uses it to try again by itself, as the connection panel opens by itself.
+ */
+export function useOnAstridAnswers(
+  onAnswers: () => void,
+  { intervalMs = RESTART_CHECK_INTERVAL_MS, fetchImpl = browserFetch }: { intervalMs?: number; fetchImpl?: FetchLike } = {},
+): void {
+  const latest = useRef(onAnswers);
+  useEffect(() => {
+    latest.current = onAnswers;
+  });
+  useEffect(() => {
+    let disposed = false;
+    let inFlight = false;
+    let answering = false;
+    const check = async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const reading = await readHealth(fetchImpl);
+        if (disposed) return;
+        const nowAnswering = reading.kind === 'instance' || reading.kind === 'unknown';
+        const started = nowAnswering && !answering;
+        answering = nowAnswering;
+        if (started) latest.current();
+      } finally {
+        inFlight = false;
+      }
+    };
+    void check();
+    const interval = setInterval(() => void check(), intervalMs);
+    window.addEventListener('focus', check);
+    return () => {
+      disposed = true;
+      clearInterval(interval);
+      window.removeEventListener('focus', check);
+    };
+  }, [intervalMs, fetchImpl]);
+}
