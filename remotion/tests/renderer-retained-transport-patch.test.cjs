@@ -9,6 +9,7 @@ const {test} = require('node:test');
 const root = path.resolve(__dirname, '..');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'patches/renderer-4.0.509-retained-transport.json')));
 const reference = process.env.ASTRID_TEST_REMOTION_PROJECT || root;
+const upstreamReference = process.env.ASTRID_TEST_REMOTION_UPSTREAM_PROJECT || reference;
 const application = import(pathToFileURL(path.join(root, 'scripts/apply-renderer-retained-transport-patch.mjs')).href);
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
 function fixture(t) {
@@ -18,7 +19,7 @@ function fixture(t) {
   fs.mkdirSync(renderer, {recursive: true});
   fs.writeFileSync(path.join(renderer, 'package.json'), JSON.stringify({name: manifest.package, version: manifest.version}));
   for (const entry of manifest.files) {
-    let bytes = fs.readFileSync(path.join(reference, 'node_modules/@remotion/renderer', entry.path), 'utf8');
+    let bytes = fs.readFileSync(path.join(upstreamReference, 'node_modules/@remotion/renderer', entry.path), 'utf8');
     if (hash(bytes) === entry.after_sha256) bytes = bytes.replace(entry.after, entry.before);
     assert.equal(hash(bytes), entry.before_sha256);
     const filename = path.join(renderer, entry.path);

@@ -50,11 +50,11 @@ def request(env, attempt=None):
     }}
 
 
-def owner(tmp_path):
+def owner(tmp_path, **kwargs):
     events = []
     return host.HostRemotionSession(track=lambda p: events.append(("track", p)),
                                    untrack=lambda p: events.append(("untrack", p)),
-                                   root_parent=str(tmp_path)), events
+                                   root_parent=str(tmp_path), **kwargs), events
 
 
 def test_failed_original_pipe_capture_is_bounded_and_has_no_lifecycle_authority(tmp_path, monkeypatch):
@@ -399,7 +399,7 @@ def test_failed_acquisition_retains_exception_original_process(tmp_path, monkeyp
         lease.close()
 
 
-@pytest.mark.parametrize("change", ["cli", "environment", "props", "temp"])
+@pytest.mark.parametrize("change", ["cli", "environment", "pack_roots", "props", "temp"])
 def test_task_cannot_modify_host_scope_inputs_or_escape_attempt(tmp_path, monkeypatch, change):
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
@@ -408,6 +408,7 @@ def test_task_cannot_modify_host_scope_inputs_or_escape_attempt(tmp_path, monkey
     value = request(env)
     if change == "cli": value['request']['remotionCli'] = '/unadmitted/cli.js'
     if change == "environment": value['request']['environment'] = {'NODE_OPTIONS':'--require=/foreign.js'}
+    if change == "pack_roots": value['request']['environment'] = {'ASTRID_PACKS_PATH':'/unadmitted/packs'}
     if change == "props": value['request']['propsPath'] = str(tmp_path.parent/'outside.json')
     if change == "temp": value['request']['environment'] = {'TMPDIR':str(tmp_path.parent)}
     try:
@@ -420,12 +421,14 @@ def test_task_cannot_modify_host_scope_inputs_or_escape_attempt(tmp_path, monkey
 
 
 def test_child_start_environment_does_not_include_runtime_credentials(tmp_path, monkeypatch):
-    manager, _ = owner(tmp_path)
+    admitted_packs = Path(__file__).resolve().parents[3] / 'astrid/packs'
+    manager, _ = owner(tmp_path, pack_roots=(admitted_packs,))
     env = environment(tmp_path)
     env['BANODOCO_RUNTIME_CREDENTIAL'] = 'fixture-secret-do-not-forward'
     env['NODE_OPTIONS'] = '--require=/unadmitted.js'
     env['BROWSERSLIST_CONFIG'] = '/unadmitted/browser-targets'
     env['BROWSERSLIST'] = 'unadmitted browser targets'
+    env['ASTRID_PACKS_PATH'] = '/unadmitted/packs'
     observed = []
     def start(argv, **kw):
         observed.append(kw['env'])
@@ -439,6 +442,7 @@ def test_child_start_environment_does_not_include_runtime_credentials(tmp_path, 
         assert 'NODE_OPTIONS' not in observed[0]
         assert 'BROWSERSLIST' not in observed[0]
         assert observed[0]['BROWSERSLIST_CONFIG'] == str(Path(env['ASTRID_REMOTION_PROJECT_DIR']) / 'package.json')
+        assert observed[0]['ASTRID_PACKS_PATH'] == str(admitted_packs)
     finally:
         lease.close()
         manager.close()

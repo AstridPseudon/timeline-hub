@@ -74,8 +74,8 @@ def validate_renderer_selection(value, *, retained=None):
         binding = RemotionClosureBinding.admit(**{k: value[k] for k in (
             'project', 'installed_project', 'verification_receipt', 'receipt_sha256', 'manifest_sha256', 'lock_sha256')})
     else:
-        # Retain admission facts, never mutable-byte results. Every invocation
-        # below still enumerates the whole installation and hashes every pin.
+        # Retain admission facts. Every invocation below still enumerates the
+        # whole installation and checks every pin through the existing verifier.
         binding = retained
         if (type(binding) is not RemotionClosureBinding
                 or (str(binding.project), str(binding.installed_project), str(binding.receipt),

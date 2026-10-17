@@ -179,6 +179,7 @@ def test_scene_before_first_task_prepares_only_the_trusted_renderer_parent(tmp_p
     monkeypatch.setattr(remotion_host_session, 'HostRemotionSession', construct)
     host = SimpleNamespace(_renderer_setup_lock=threading.Lock(), _shutdown=threading.Event(),
         _cleanup_uncertain=False, _remotion_host_session=None, attempt_base=parent,
+        pack_roots=(tmp_path/'admitted-packs',),
         _track_host_lifetime_process=lambda process: None, _untrack_host_lifetime_process=lambda process: None,
         _renderer_scratch_account=lambda root: None, _remotion_closure_binding=None,
         execution_policy=SimpleNamespace(evidence_budget=SimpleNamespace(release=lambda root: None)))
@@ -190,6 +191,7 @@ def test_scene_before_first_task_prepares_only_the_trusted_renderer_parent(tmp_p
         owner = GenericPackHost._authoring_scene_session(host, {})
         assert owner is host._remotion_host_session
         assert made[0]['root_parent'] == str(parent)
+        assert made[0]['pack_roots'] == host.pack_roots
         assert (parent.stat().st_mode & 0o777) == 0o700
 
 

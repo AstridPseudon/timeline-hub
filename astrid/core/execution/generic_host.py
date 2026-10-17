@@ -6264,7 +6264,7 @@ class GenericPackHost:
                     root_parent=str(self.attempt_base) if self.attempt_base else None,
                     account=self._renderer_scratch_account,
                     retire=lambda root: self.execution_policy.evidence_budget.release(str(root)),
-                    closure_binding=self._remotion_closure_binding)
+                    closure_binding=self._remotion_closure_binding, pack_roots=self.pack_roots)
             return self._remotion_host_session.lease(
                 environment, attempt=attempt, scratch=policy.private_write_root)
 
@@ -6288,7 +6288,7 @@ class GenericPackHost:
                     root_parent=str(self.attempt_base) if self.attempt_base else None,
                     account=self._renderer_scratch_account,
                     retire=lambda root: self.execution_policy.evidence_budget.release(str(root)),
-                    closure_binding=self._remotion_closure_binding)
+                    closure_binding=self._remotion_closure_binding, pack_roots=self.pack_roots)
             return self._remotion_host_session
 
     def start_authoring_scene(self, config, environment):

@@ -211,7 +211,7 @@ def _host_browser_executable():
 
 class HostRemotionSession:
     """One host-owned original Node child, shared by sequential task leases."""
-    def __init__(self, *, track, untrack, root_parent=None, account=lambda root: None, retire=lambda root: None, closure_binding=None):
+    def __init__(self, *, track, untrack, root_parent=None, account=lambda root: None, retire=lambda root: None, closure_binding=None, pack_roots=()):
         self._lock = threading.RLock()
         self._track, self._untrack = track, untrack
         self._root_parent = root_parent
@@ -219,6 +219,9 @@ class HostRemotionSession:
         if closure_binding is not None and type(closure_binding) is not RemotionClosureBinding:
             raise ValueError("renderer closure must be a trusted host binding")
         self.closure_binding = closure_binding
+        # Only the trusted Host constructor supplies these admitted discovery
+        # roots. Neither a lease environment nor a request selects aliases.
+        self._pack_roots = tuple(Path(root) for root in pack_roots)
         self._account, self._retire = account, retire
         self._root_identity = None
         self._custody_root = None
@@ -433,6 +436,11 @@ class HostRemotionSession:
         # Match the qualified managed-CLI path: Browserslist reads the admitted
         # package rather than discovering ambient ancestor configuration.
         environment['BROWSERSLIST_CONFIG'] = str(lease.project / 'package.json')
+        if self._pack_roots:
+            for root in self._pack_roots:
+                if not root.is_absolute() or root.resolve(strict=True) != root or not root.is_dir():
+                    raise ValueError('host-selected renderer pack root changed')
+            environment['ASTRID_PACKS_PATH'] = os.pathsep.join(map(str, self._pack_roots))
         (self.root / "worker").mkdir(exist_ok=True, mode=0o700)
         # Revalidate next to launch after lifecycle setup; the opened snapshot
         # does not claim immutable execution or replace confinement.
