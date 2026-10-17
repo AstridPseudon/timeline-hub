@@ -6,6 +6,7 @@ not authority: the host composition supplies its independently admitted digest.
 from dataclasses import dataclass
 import hashlib
 import json
+import os
 from pathlib import Path
 
 _PATCHES = {
@@ -37,8 +38,26 @@ def _root_sources(project):
     return files
 
 
+def _tree_files(root):
+    """Match rglob's file inventory without restatting every directory entry."""
+    if not root.is_dir():
+        return
+    with os.scandir(root) as entries:
+        for entry in entries:
+            path = root / entry.name
+            # rglob does not traverse directory symlinks. File symlinks still
+            # participate and retain the existing byte validation below.
+            if entry.is_dir(follow_symlinks=False):
+                yield from _tree_files(path)
+            elif entry.is_file():
+                yield path
+
+
 def _sha(path):
-    path = Path(path)
+    # Binding snapshots already hold immutable Paths. Reconstructing each
+    # deep path reparses its parts on every guard without changing its identity.
+    if not isinstance(path, Path):
+        path = Path(path)
     def signature():
         value = path.stat()
         return (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
@@ -173,7 +192,7 @@ class RemotionClosureBinding:
         module_prefix = modules.parts
         expected_modules = {path for path, _ in self.files
                             if path.parts[:len(module_prefix)] == module_prefix}
-        actual_modules = {path for path in modules.rglob('*') if path.is_file()}
+        actual_modules = set(_tree_files(modules))
         if actual_modules != expected_modules:
             raise ValueError('admitted renderer installation file inventory changed')
         expected_root = {p for p, _ in self.files if p.parent == project and p.suffix in _ROOT_SOURCE_SUFFIXES}
@@ -184,7 +203,7 @@ class RemotionClosureBinding:
             source_prefix = root.parts
             expected_source = {p for p, _ in self.files
                                if p.parts[:len(source_prefix)] == source_prefix}
-            actual_source = {p for p in root.rglob('*') if p.is_file()}
+            actual_source = set(_tree_files(root))
             if actual_source != expected_source:
                 raise ValueError('admitted renderer source file inventory changed')
         for path, expected in self.files:

@@ -13,6 +13,20 @@ from astrid.core.execution import remotion_host_session as host
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def test_inventory_keeps_hidden_and_linked_files_without_traversing_directory_links(tmp_path):
+    root = tmp_path / 'root'; root.mkdir()
+    hidden = root / '.hidden'; hidden.mkdir()
+    first = root / 'file'; first.write_text('one')
+    second = hidden / 'file'; second.write_text('two')
+    alias = root / 'file-alias'; alias.symlink_to(first)
+    (root / 'broken').symlink_to(root / 'missing')
+    (hidden / 'cycle').symlink_to(root, target_is_directory=True)
+    outside = tmp_path / 'outside'; outside.mkdir()
+    (outside / 'unselected').write_text('outside')
+    (root / 'directory-alias').symlink_to(outside, target_is_directory=True)
+    assert set(closure._tree_files(root)) == {first, second, alias}
+
+
 @pytest.mark.parametrize('change', ['bytes','added','removed','escape'])
 def test_root_config_import_helpers_are_in_the_selected_closure(roots,tmp_path,change):
     project,_,_,args=roots
