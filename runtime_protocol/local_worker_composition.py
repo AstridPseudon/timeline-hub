@@ -456,7 +456,10 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     broker.close_child_pipes()
                 binding_file.close()
                 parent.settimeout(self.timeout_seconds); activation.settimeout(self.timeout_seconds)
-            broker.wait_until_sealed(); retained.bind_actor()
+            broker.wait_until_sealed()
+            if handle.inspection_owner is not None:
+                broker.release_suspended_launch(expected_pid=process.pid, process=process)
+            retained.bind_actor()
             if handle.inspection_owner is not None:
                 broker.close_child_pipes()
                 handle.inspection_owner.released.set()

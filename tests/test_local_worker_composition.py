@@ -593,7 +593,8 @@ def test_host_only_nonchild_stop_and_reconnect_never_signal(tmp_path, monkeypatc
         preparer.reconnect({'host':{'pid':123,'birth_id':'old'}})
 
 
-def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_without_engine(tmp_path,monkeypatch):
+@pytest.mark.parametrize("renderer", [False, True])
+def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_without_engine(tmp_path,monkeypatch,renderer):
     """Offline transport contract only; fake handles grant no native custody proof."""
     import threading
     from dataclasses import replace
@@ -605,6 +606,12 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     identity={'pid':4242,'birth_id':'original','uid':os.getuid()}
     selected=host_only_profile_case()
     profile=replace(selected,support_root=tmp_path)
+    if renderer:
+        from runtime_protocol.local_worker import _digest
+        from astrid.core.execution import host_renderer_selection
+        launch={**profile.host_launch, "renderer_selection":{"node_executable":str(Path(sys.executable).resolve())}}
+        profile=replace(profile,host_launch=launch,session_config_digest=_digest(launch))
+        monkeypatch.setattr(host_renderer_selection,"validate_renderer_selection",lambda value:None)
     config={**profile.host_launch,'runtime_endpoint':'http://127.0.0.1:1','runtime_instance_id':'epoch',
         'credential_file':str(tmp_path/'credential'),'ready_file':str(tmp_path/'ready')}
     captures={};read_done=threading.Event()
@@ -620,7 +627,8 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         def verify_child(self,proof,**kwargs):assert kwargs['child'] is original
     class Retained:
         def __init__(self,process):assert process is original
-        def bind_actor(self):pass
+        def bind_actor(self):
+            if renderer: assert captures.get("released") is True
         def verify(self):return identity
     class Broker:
         def __init__(self,**kwargs):
@@ -634,7 +642,25 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
             from banodoco_local.hosted_contract import HostedLaunch
             return HostedLaunch(self,preparation)
         def child_environment(self,argv,**kwargs):return {}
-        def wait_until_sealed(self):pass
+        def wait_until_sealed(self):captures["sealed"]=True
+        def close_child_pipes(self):pass
+        def release_suspended_launch(self,**kwargs):
+            assert renderer and captures.get("sealed") is True
+            assert kwargs==dict(expected_pid=original.pid,process=original)
+            captures["released"]=True
+    if renderer:
+        import astrid.core.execution.custody_broker as inspection_custody
+        class Inspection:
+            def __init__(self,*args,**kwargs):pass
+            def policy(self,*args):return {}
+        class InspectionOwner:
+            def __init__(self,context,policy):
+                self.custody=context;self.released=threading.Event()
+            def start(self):pass
+        monkeypatch.setattr(inspection_custody,"_HostInspectionLaunch",Inspection)
+        monkeypatch.setattr(inspection_custody,"_CommandInventoryOwner",InspectionOwner)
+        monkeypatch.setattr(inspection_custody,"RoleBoundCustodyBroker",Broker)
+        monkeypatch.setattr(inspection_custody,"default_process_identity",lambda pid:{"pid":os.getpid(),"uid":os.getuid(),"parent_pid":1,"birth_id":"owner"})
     def popen(argv,**kwargs):
         descriptor=os.dup(captures['binding_fd'])
         def read_binding():
@@ -660,6 +686,9 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     handle=preparer.prepare(profile,operation_id='op',channel_id='channel')
     try:
         assert preparer._active is handle and handle.worker is original and handle.host_only
+        if renderer:
+            assert captures["released"] is True and handle.inspection_owner.released.is_set()
+
         assert read_done.wait(1) and captures['binding']==b'{"canonical":true}'
         argv=captures['argv'];assert argv[argv.index('--max-concurrency')+1]=='4'
         target=json.loads(argv[argv.index('--execution-target-json')+1]);assert target=={'kind':'default'}
