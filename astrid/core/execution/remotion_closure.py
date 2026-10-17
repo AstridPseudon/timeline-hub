@@ -166,7 +166,13 @@ class RemotionClosureBinding:
         if project != self.project or (project/'node_modules').resolve(strict=True) != self.installed_project/'node_modules':
             raise ValueError('renderer project or dependency root changed after admission')
         modules = self.installed_project/'node_modules'
-        expected_modules = {path for path, _ in self.files if path.is_relative_to(modules)}
+        # These admitted paths and roots are absolute. Compare their lexical
+        # parts directly: Path.is_relative_to reparses the same deep root for
+        # every file, even though it does not inspect the filesystem. Current
+        # inventories and every existing file/hash check below still run.
+        module_prefix = modules.parts
+        expected_modules = {path for path, _ in self.files
+                            if path.parts[:len(module_prefix)] == module_prefix}
         actual_modules = {path for path in modules.rglob('*') if path.is_file()}
         if actual_modules != expected_modules:
             raise ValueError('admitted renderer installation file inventory changed')
@@ -175,7 +181,9 @@ class RemotionClosureBinding:
             raise ValueError('admitted renderer root source inventory changed')
         for directory in ('src', 'vendor/timeline-composition'):
             root = self.project/directory
-            expected_source = {p for p, _ in self.files if p.is_relative_to(root)}
+            source_prefix = root.parts
+            expected_source = {p for p, _ in self.files
+                               if p.parts[:len(source_prefix)] == source_prefix}
             actual_source = {p for p in root.rglob('*') if p.is_file()}
             if actual_source != expected_source:
                 raise ValueError('admitted renderer source file inventory changed')

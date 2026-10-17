@@ -73,6 +73,24 @@ def test_exact_admitted_install_link_binds_lexical_cli_and_source(roots,monkeypa
         lease.close();owner.close()
 
 
+@pytest.mark.parametrize('sibling', ['modules', 'src', 'composition'])
+def test_pinned_receipt_in_same_prefix_sibling_stays_out_of_source_inventory(roots,sibling):
+    project,installed,receipt,args=roots
+    parent = {'modules': installed/'node_modules-evidence',
+              'src': project/'src-evidence',
+              'composition': project/'vendor/timeline-composition-evidence'}[sibling]
+    parent.mkdir(parents=True)
+    selected = parent/'verified.json'
+    selected.write_bytes(receipt.read_bytes())
+    binding = closure.RemotionClosureBinding.admit(
+        **{**args, 'verification_receipt': selected, 'receipt_sha256': sha(selected)})
+    assert binding.validate(project)==installed/'node_modules/@remotion/cli/remotion-cli.js'
+    # The receipt is still byte-pinned even though it is outside each inventory.
+    selected.write_text('{}')
+    with pytest.raises(ValueError,match='changed'):
+        binding.validate(project)
+
+
 def test_unbound_out_of_tree_link_remains_refused(roots,tmp_path):
     project,_,_,_=roots
     owner=host.HostRemotionSession(track=lambda p:None,untrack=lambda p:None)
