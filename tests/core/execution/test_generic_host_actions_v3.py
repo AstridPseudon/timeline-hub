@@ -1596,7 +1596,9 @@ def test_review_descriptor_cannot_adopt_foreign_process_or_receiver(tmp_path, fi
 def test_review_descriptor_unsafe_file_is_bounded_and_retained(tmp_path, kind):
     from types import SimpleNamespace
     from astrid.core.execution import generic_host as module
-    attempt = tmp_path.resolve(); (attempt / 'outputs').mkdir(); path = attempt/"outputs"/module._REVIEW_SESSION_NAME
+    attempt = tmp_path.resolve()
+    (attempt / "outputs").mkdir()
+    path = attempt / "outputs" / module._REVIEW_SESSION_NAME
     if kind == 'fifo':
         os.mkfifo(path, 0o600)
     elif kind == 'symlink':

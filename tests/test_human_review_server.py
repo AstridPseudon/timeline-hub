@@ -650,6 +650,49 @@ def test_managed_pipe_receiver_cannot_be_adopted_by_fork(tmp_path, monkeypatch):
         parent.close()
 
 
+
+@pytest.mark.parametrize("case", ["missing", "relative", "different", "public"])
+def test_managed_receiver_requires_the_confined_private_tmpdir(tmp_path, monkeypatch, case):
+    review, bridge, parent, attempt = _receiver_bridge(monkeypatch, tmp_path, transport="pipe")
+    try:
+        if case == "missing":
+            monkeypatch.delenv("TMPDIR")
+        elif case == "relative":
+            monkeypatch.setenv("TMPDIR", "outputs")
+        elif case == "different":
+            monkeypatch.setenv("TMPDIR", str(tmp_path.resolve() / "other/outputs"))
+        else:
+            (attempt / "outputs").chmod(0o777)
+        # The old progress environment variable cannot rescue a foreign or
+        # absent private root in the actual confined launcher layout.
+        with pytest.raises(review.HumanReviewInputError, match="paths|owner controlled"):
+            review._managed_receiver_path(attempt / "outputs/decisions.json")
+        assert not (attempt / "outputs" / review._RECEIVER_SESSION_NAME).exists()
+        assert not (attempt / review._RECEIVER_SESSION_NAME).exists()
+    finally:
+        (attempt / "outputs").chmod(0o700)
+        bridge.close()
+        parent.close()
+
+
+@pytest.mark.parametrize("operation", ["observe", "retire"])
+def test_managed_receiver_host_refuses_aliased_output_directory(tmp_path, operation):
+    from astrid.core.execution import generic_host as host
+    attempt = tmp_path.resolve() / "attempt"
+    attempt.mkdir()
+    foreign = tmp_path.resolve() / "foreign"
+    foreign.mkdir()
+    path = foreign / host._REVIEW_SESSION_NAME
+    path.write_bytes(b"foreign-private-observation")
+    (attempt / "outputs").symlink_to(foreign, target_is_directory=True)
+    with pytest.raises(host.HostError, match="alias"):
+        if operation == "observe":
+            host._observe_owned_review_session(object(), attempt)
+        else:
+            host._retire_owned_review_session(attempt, None)
+    assert path.read_bytes() == b"foreign-private-observation"
+
+
 def test_unmanaged_receiver_never_uses_caller_progress_path(tmp_path, monkeypatch):
     from astrid.sdk import _child_bridge
     from astrid.packs.editorial.actions.human_review import run as review
