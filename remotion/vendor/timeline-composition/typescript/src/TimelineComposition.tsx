@@ -1,3 +1,4 @@
+import type {SceneCapabilities, SceneCapableComponent} from './scene-capabilities';
 // Sprint 5: physically moved + renamed from
 // tools/remotion/src/HypeComposition.tsx → TimelineComposition.tsx.
 //
@@ -202,13 +203,20 @@ const resolveTransitionSpec = (
 // Both native requested-frame metadata and drawing use this exact preparation boundary.
 export const prepareCompositionScene = (tracks: {track: TrackDefinition; clips: TimelineClip[]}[],
   assets: TimelineCompositionProps['assets'], fps: number, theme: ReturnType<typeof useTheme>,
-  width: number, height: number, registry?: ModifierRegistry, roles?: Readonly<Record<string, string>>) =>
+  width: number, height: number, registry?: ModifierRegistry, roles?: Readonly<Record<string, string>>,
+  capabilities: SceneCapabilities = {}, rendererIdentity = '', fontDigests: Readonly<Record<string, string>> = {}) =>
   prepareScene(tracks.map(({track, clips}) => {
     const sorted = sortClipsByAt(clips);
     return {track, clips: sorted, transitions: sorted.slice(0, -1).map((clip, index) =>
       resolveTransitionSpec(clip, sorted[index + 1], fps, theme))};
   }), assets, fps, width, height, {elements: new Set(Object.keys(EFFECT_REGISTRY).concat(Object.keys(CLIP_TYPE_ALIASES))),
-    modifiers: registry, roles});
+    modifiers: registry, roles, capabilities: {...capabilities, components: {...capabilities.components, ...Object.fromEntries(tracks.flatMap(({clips}) =>
+      clips.flatMap(clip => {
+        const id = (CLIP_TYPE_ALIASES[clip.clipType ?? ''] ?? clip.clipType) as keyof typeof EFFECT_REGISTRY;
+        const component = EFFECT_REGISTRY[id] as (SceneCapableComponent | undefined);
+        const prepared = component?.prepareSceneCapability?.({clip: {...clip, params: resolveParams(clip) as Record<string, unknown> | undefined}, fps, width, height, rendererIdentity, fontDigests});
+        return prepared ? [[clip.id, prepared]] : [];
+      })))}}});
 
 const renderVisualTrack = (
   track: TrackDefinition,

@@ -1,9 +1,10 @@
 /** Pure requested-frame scene answers. Undeclared component pixels remain unknown. */
 import { prepareTrack, queryTrackFrame } from './evaluation';
 import { getClipDurationInFrames } from './lib/duration';
-import { clipOpacity, fadeMultiplier } from './lib/clip-look';
+import { clipOpacity, fadeMultiplier, remappedFrame } from './lib/clip-look';
 import { admitModifiers } from './lib/modifier-admission';
 import { mediaModifierBounds } from './lib/modifier-bounds';
+import { provenOpaqueMedia } from './scene-capabilities';
 // Track input order is bottom to top, exactly Composition's painter order.
 export const prepareScene = (tracks, assets, fps, width, height, options = {}) => {
     if (![fps, width, height].every(value => Number.isFinite(value) && value > 0))
@@ -11,7 +12,7 @@ export const prepareScene = (tracks, assets, fps, width, height, options = {}) =
     return { tracks: tracks.map(input => ({ ...input, prepared: prepareTrack(input.clips.map(clip => ({
                 start: Math.round(clip.at * fps), duration: getClipDurationInFrames(clip, fps)
             })), input.transitions) })),
-        assets, fps, width, height, elements: options.elements ?? new Set(), modifiers: options.modifiers ?? {}, roles: options.roles ?? {} };
+        assets, fps, width, height, capabilities: options.capabilities ?? {}, elements: options.elements ?? new Set(), modifiers: options.modifiers ?? {}, roles: options.roles ?? {} };
 };
 const rectContains = (a, b) => a.status === 'known' && b.status === 'known'
     && a.rect.x <= b.rect.x && a.rect.y <= b.rect.y
@@ -19,7 +20,7 @@ const rectContains = (a, b) => a.status === 'known' && b.status === 'known'
 // Exact rectangular support partition, using the renderer's evaluated bounds and alpha.
 // This handles tiled pictures and overlapping translucent plates without inventing geometry.
 const canvasCovered = (layers, width, height) => {
-    const known = layers.filter(layer => layer.coverage !== 'unknown' && layer.bounds.status === 'known'
+    const known = layers.filter(layer => layer.opaqueSupport === 'rect' && layer.coverage !== 'unknown' && layer.bounds.status === 'known'
         && layer.opacity !== null && layer.opacity > 0);
     const rects = known.map(layer => ({ rect: layer.bounds.rect,
         opacity: layer.opacity }));
@@ -47,17 +48,21 @@ export const querySceneFrame = (scene, frame) => {
             const clip = clips[draw.clipIndex];
             const findings = [];
             const unknown = (code, reason) => { findings.push({ code, clipId: clip.id, reason }); };
-            const element = scene.elements.has(clip.clipType ?? '');
+            const element = scene.elements.has(clip.clipType ?? '')
+                || (!!clip.clipType && !['media', 'image', 'video', 'effect-layer'].includes(clip.clipType));
             const asset = clip.asset ? scene.assets.assets[clip.asset] : undefined;
-            const targetBounds = element ? { status: 'unknown', reason: 'Component has no declared evaluated bounds' }
+            const capability = element ? scene.capabilities.components?.[clip.id] : undefined;
+            const support = capability?.frame(remappedFrame(draw.ownFrame, clip.speed));
+            const targetBounds = element && support ? support.bounds : element ? { status: 'unknown', reason: 'Component has no declared evaluated bounds' }
                 : mediaModifierBounds(clip, track, asset, scene.width, scene.height);
             let bounds = targetBounds;
             let opacity = Math.min(1, Math.max(0, track.opacity ?? 1))
                 * clipOpacity(clip, draw.ownFrame, scene.fps) * draw.opacity;
-            const absent = clip.clipType === 'effect-layer' || (!element && !asset?.file);
-            if (element && !absent)
+            const absent = support?.presence === 'absent' || clip.clipType === 'effect-layer' || (!element && !asset?.file);
+            if (element && !absent && (!support || support.presence === 'unknown' || support.opaqueSupport === 'unknown'))
                 unknown('unknown-component-internals', 'Final component alpha and support are undeclared');
-            if (clip.entrance !== undefined || clip.exit !== undefined) {
+            if (clip.entrance !== undefined || clip.exit !== undefined
+                || (element && [clip.cropTop, clip.cropBottom, clip.cropLeft, clip.cropRight].some(value => value !== undefined && value !== 0))) {
                 unknown('unknown-animation-geometry', 'Animation does not declare evaluated support and alpha');
                 bounds = { status: 'unknown', reason: 'Animation geometry is undeclared' };
             }
@@ -81,33 +86,47 @@ export const querySceneFrame = (scene, frame) => {
                 bounds = { status: 'unknown', reason: 'Modifier admission refused' };
             }
             // Unresolved intrinsic alpha (e.g. PNG/video alpha) cannot establish opaque coverage.
-            const opaqueMedia = asset?.type === 'image/jpeg';
+            const opaqueMedia = provenOpaqueMedia(asset, clip.asset ? scene.capabilities.media?.[clip.asset] : undefined);
+            let opaqueSupport = element ? support?.opaqueSupport ?? 'unknown'
+                : opaqueMedia ? 'rect' : 'unknown';
+            if (track.blendMode && track.blendMode !== 'normal') {
+                unknown('unknown-blend-support', 'Blend mode does not prove opaque support');
+                opaqueSupport = 'unknown';
+            }
             if (!absent && !element && !opaqueMedia)
                 unknown('unknown-media-alpha', 'Media does not declare opaque alpha');
             const uncertain = findings.some(item => item.code !== 'unknown-component-bounds');
             let visible = absent || opacity === 0 ? false : uncertain ? 'unknown' : true;
-            if (bounds.status === 'known' && (bounds.rect.width === 0 || bounds.rect.height === 0))
+            // Known support outside the canvas draws no visible content. Keep its real
+            // geometry (including negative/partial bounds) for downstream inspection.
+            if (bounds.status === 'known' && (bounds.rect.width === 0 || bounds.rect.height === 0
+                || (!uncertain && (bounds.rect.x >= scene.width || bounds.rect.y >= scene.height
+                    || bounds.rect.x + bounds.rect.width <= 0 || bounds.rect.y + bounds.rect.height <= 0))))
                 visible = false;
             if (visible !== false && uncertain)
                 opacity = null;
-            if (absent)
+            if (absent) {
                 opacity = 0;
+                const admissionFailures = findings.filter(item => item.code === 'modifier-admission-refused');
+                findings.splice(0, findings.length, ...admissionFailures);
+                opaqueSupport = 'none';
+            }
             const fullFrame = bounds.status === 'known' && bounds.rect.x <= 0 && bounds.rect.y <= 0
-                && bounds.rect.width >= scene.width && bounds.rect.height >= scene.height;
+                && bounds.rect.x + bounds.rect.width >= scene.width && bounds.rect.y + bounds.rect.height >= scene.height;
             const plan = prepared.plans[draw.clipIndex];
             const dip = !absent && (((plan.fadeIn?.kind === 'dip' || plan.fadeOut?.kind === 'dip') && draw.opacity < 1)
                 || fadeMultiplier(clip, draw.ownFrame, scene.fps) < 1);
             layers.push({ clipId: clip.id, track: track.id, clipIndex: draw.clipIndex, z: 0,
                 drawLocalFrame: draw.drawLocalFrame, ownFrame: draw.ownFrame, transitionOpacity: draw.opacity,
-                opacity, visible, targetBounds, bounds, fullFrame, role: scene.roles[clip.id] ?? (track.id === 'plate' ? 'picture' : 'content'),
-                coverage: bounds.status === 'unknown' || uncertain ? 'unknown' : fullFrame && opacity >= .999 ? 'covered' : 'partial', findings, dip });
+                opacity, visible, opaqueSupport, targetBounds, bounds, fullFrame, role: scene.roles[clip.id] ?? (track.id === 'plate' ? 'picture' : 'content'),
+                coverage: bounds.status === 'unknown' || uncertain ? 'unknown' : opaqueSupport === 'rect' && fullFrame && opacity >= .999 ? 'covered' : 'partial', findings, dip });
         }
     }
     // Occlusion only from proven opaque support. Unknown/translucent layers never erase content.
     const front = [];
     for (const layer of [...layers].reverse()) {
         layer.z = front.length;
-        if (front.some(top => top.visible === true && top.opacity === 1 && top.coverage !== 'unknown'
+        if (front.some(top => top.visible === true && top.opaqueSupport === 'rect' && top.opacity === 1 && top.coverage !== 'unknown'
             && rectContains(top.bounds, layer.bounds)))
             layer.visible = false;
         front.push(layer);
@@ -120,5 +139,6 @@ export const querySceneFrame = (scene, frame) => {
     const content = coverage !== 'COVERED' ? null : visible.some(layer => layer.role !== 'background'
         && layer.visible === true && (layer.opacity ?? 0) >= .05) ? 'CONTENT'
         : visible.some(layer => layer.role !== 'background' && layer.visible === 'unknown') ? 'UNKNOWN' : 'EMPTY';
-    return { frame, layers, coverage, content, findings: visible.flatMap(layer => layer.findings) };
+    return { frame, layers, coverage, content, findings: layers.flatMap(layer => layer.visible !== false ? layer.findings
+            : layer.findings.filter(item => item.code === 'modifier-admission-refused')) };
 };

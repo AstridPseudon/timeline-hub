@@ -33,7 +33,8 @@ test('vendored payload matches the recorded package and retains source Git blob 
       assert.equal(file.emitted_from, null, file.path);
     } else {
       assert.ok(file.path.startsWith('typescript/dist/src/') && file.path.endsWith('.js'), file.path);
-      assert.ok(source.files.some((sourceFile) => sourceFile.path === file.emitted_from && sourceFile.source_git_blob), file.path);
+      assert.ok(source.files.some((sourceFile) => sourceFile.path === file.emitted_from
+        && sourceFile.source_git_blob === file.emitted_from_git_blob), file.path);
     }
   }
   assert.equal(source.files.find((file) => file.path === 'package.json').sha256,
@@ -41,36 +42,40 @@ test('vendored payload matches the recorded package and retains source Git blob 
 });
 
 test('provenance identifies this run-local development archive without authenticating the tag', () => {
-  assert.equal(source.source_commit, '67245fb4f734e2c4d9138e8ab3df87921f51b492');
-  assert.equal(source.source_tree, '23854d166c8692bb8c21f1da1f5ae0203215fb98');
-  assert.equal(source.source_parent, 'f2cf610726410c4bb5d8933f17a85baa23ee252e');
-  assert.equal(source.source_branch, 'codex/timeline-r4-A-COMPOSITION-EASING-005');
-  assert.equal(source.archive, 'projects/A-integration/out/A-COMPOSITION-EASING-RESTORE-005/banodoco-timeline-composition-0.0.7.tgz');
-  assert.equal(source.archive_sha256, '724b8818d5787687abfc72be9e9cffc185bcbffa9a122dd0a43750be337f62b6');
-  assert.equal(source.archive_sha512, '841d8af8a121cd3c658a36d9d0d6532511da114b5c790d2e31d181bc90b34fafa7f4cbbad96f3610f73c07a532ac36607e5a389bb075f8ec71770d8cf53a7aa5');
-  assert.equal(source.archive_bytes, 74885);
-  assert.equal(source.archive_member_count, 88);
-  assert.equal(source.unpacked_bytes, 267424);
-  assert.equal(source.npm_shasum, '40a19a0bc4975baf73ea530ea11d244711fa620d');
-  assert.equal(source.npm_integrity, 'sha512-hB2K+KEhzTxlijbZ0NZTJRHaEUtceQ0uMdGBvJCzT6+n9Mu62W82EPc8B6UyrDZgflo4m7B1+Oxxdw2M9Tp6pQ==');
-  assert.equal(source.source_baseline.kind, 'authenticated-npm-package-payload-import');
-  assert.equal(source.source_baseline.authenticated_archive_sha256, '02500c55dcdc1883e027d89ab42e2426191fad3ab1fdcd08d3fce1ca51f11032');
-  assert.equal(source.source_baseline.initial_commit, 'f9da6c0477feb73a7d0f13f37bed3e4861254cd2');
-  assert.equal(source.source_baseline.initial_tree, '1d92ed9b6a1a77ee382c84205419e878cf49ef4d');
-  assert.equal(source.source_baseline.initial_parent, null);
-  assert.equal(source.source_baseline.single_exact_remote_fetch.exit_code, 128);
-  assert.equal(source.easing_patch_sha256, '11ea52a2fdcdebf75cf51b492191f5fc7b1f49d021e9bd8cdb7dc793b7c04800');
-  assert.equal(source.easing_patch_commit, 'f2cf610726410c4bb5d8933f17a85baa23ee252e');
+  assert.equal(source.source_commit, '80f801061be732b658a7216f379a9e328e58f8bc');
+  assert.equal(source.source_tree, 'feb2d58551605a733af0443ad0d079a96dc5f052');
+  assert.equal(source.source_parent, 'e34470948ddce060e0bb1417497b2a2d0e1161e6');
+  assert.equal(source.source_branch, 'codex/timeline-r4-A-A110-SCENE-CAPABILITY-141-CONTINUATION-001-T');
+  assert.equal(source.archive, 'projects/A-integration/out/A-A110-SCENE-CAPABILITY-141-JOINED-PACKAGE-001/banodoco-timeline-composition-0.0.7.tgz');
+  assert.equal(source.archive_sha256, '6011abee2026fb38c432999c4600b1cda06a336c0594c0792f3dc802294a2f01');
+  assert.equal(source.archive_sha512, 'bd19355f63daf13cf865e862b5c8b944b01cf9eb9bd2dec5f085aa9c60726440fe8a367663b3da083945e05725acab017308076d1240c155188fc580cd8aca7b');
+  assert.equal(source.archive_bytes, 78072);
+  assert.equal(source.archive_member_count, 90);
+  assert.equal(source.unpacked_bytes, 278106);
+  assert.equal(source.npm_shasum, '9116ff2902353a78dc456a420d76a2f1b25ce7c1');
+  assert.equal(source.npm_integrity, 'sha512-vRk1X2Pa8Tz4Zehitci5RLAc+eub0t7F8IWqnGByZED+ijZ2Y7PaCDlF4FclrKsBcwgHbRJAwVUYj8WAzYrKew==');
+  assert.equal(source.source_baseline.kind, 'admitted-T-git-source');
+  assert.equal(source.source_baseline.commit, source.source_commit);
+  assert.equal(source.source_baseline.tree, source.source_tree);
+  assert.equal(source.source_baseline.parent, source.source_parent);
   assert.equal(source.build_commit, source.source_commit);
   assert.equal(source.build_exit_code, 2);
   assert.equal(source.build_diagnostic_count, 13);
   assert.equal(source.build_diagnostics_match_inherited_baseline, true);
-  assert.equal(source.producer_handback, 'projects/I-story-motion-audio/receipts/I-EXT-COMPONENT-UNKNOWN-BOUNDS-006-handback.md');
-  assert.equal(source.producer_handback_sha256, 'ae569f046c193dc87f7b55684239e413e823a527e62877f5695f9a9b822013bd');
+  assert.equal(source.build_stdout_byte_identical_to_retained_producer, true);
+  assert.equal(source.producer_handback, 'projects/A-integration/receipts/A-A110-SCENE-CAPABILITY-141-CONTINUATION-001-XHARD-handback.md');
+  assert.equal(source.producer_handback_sha256, '7c86e675fb6d64511ea7555e19c1bfe26a04fe67681e467696e219b958f23cc1');
+  assert.equal(source.integrated_astrid_merge_commit, '13c1a2598b355acdb8f211f92392886b45787daf');
+  assert.equal(source.integrated_astrid_merge_tree, 'da1ab1ff6c3c4fc945726b03a6c63fdf8e058f87');
+  assert.deepEqual(source.integrated_astrid_merge_parents, [
+    '8e56b10cc14f74b2920ebda42eee4dc111322037',
+    'de3c8ec36f9c8fe6849d2707440eff93ddbc8b8c',
+  ]);
   assert.equal(source.required_ref, 'v0.0.7/e2ab21a7');
   assert.equal(source.required_ref_authenticated, false);
   assert.match(source.scope, /Run-local development package/);
-  assert.match(source.scope, /original T source repository\/history and tests were not recovered/);
+  assert.match(source.scope, /same 13 inherited TS2307 diagnostics/);
+  assert.match(source.scope, /does not authenticate the published tag/);
   assert.equal(packed.name, source.package);
   assert.equal(packed.version, source.package_version);
 });
