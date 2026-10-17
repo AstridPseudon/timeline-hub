@@ -44,8 +44,6 @@ ROOT_FILE_ALLOWLIST = {
 # file belongs in ROOT_FILE_ALLOWLIST only if it is product content, and an
 # entry that is no longer tracked must be removed (find_stale_legacy_root_clutter).
 LEGACY_ROOT_CLUTTER = {
-    "CHECKPOINT.md",
-    "LOCAL_REVIEW_CHECKPOINT.json",
     "discord_solution_check.md",
     "eval_100_stratified.json",
     "eval_100_stratified.md",

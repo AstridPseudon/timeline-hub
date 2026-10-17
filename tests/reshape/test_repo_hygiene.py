@@ -248,7 +248,8 @@ def test_live_tree_passes_repo_hygiene() -> None:
 def test_legacy_root_clutter_is_tolerated_but_new_root_files_are_not(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    tracked_paths = ["CHECKPOINT.md", "brand_new_notes.md", "artifacts.json"]
+    legacy = sorted(check_repo_hygiene.LEGACY_ROOT_CLUTTER)[0]  # any entry still on the shrink-only list
+    tracked_paths = [legacy, "brand_new_notes.md", "artifacts.json"]
     for relpath in tracked_paths:
         _touch(tmp_path, relpath)
     monkeypatch.setattr(check_repo_hygiene, "REPO_ROOT", tmp_path)
