@@ -586,7 +586,9 @@ def add_visualize_flags(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--every-cut", dest="all_cuts", action="store_true", default=False,
                            help="With a working copy and no cut/range selection: every cut, not only the cuts you changed.")
     subparser.add_argument("--compare", dest="compare_with", choices=("published",), default=None,
-                           help="With a working copy: the published version and the working copy for the same cuts, labelled.")
+                           help=("With a working copy: pair the published head and working copy for the same selected cuts. "
+                                 "This is separate from --preset compare (changed cuts between revisions) and "
+                                 "--view diff (the immutable revision-diff view)."))
     subparser.add_argument("--highlight", default=None, metavar="ADDRESS",
                            help="Outline one layer over the frames (c41.tool-16; implies --layer bounds); "
                                 "with no window, the frames are taken inside it.")
@@ -608,11 +610,13 @@ def add_visualize_flags(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--edited", default=None, metavar="N[,M]",
                            help="diff view: the cuts you meant to edit; a change anywhere else is a SCOPE warning.")
     subparser.add_argument("--no-capture", dest="no_capture", action="store_true",
-                           help="diff view: compare the documents only (no before/after tiles).")
+                           help="--preset compare or --view diff: compare documents without before/after tiles.")
     subparser.add_argument("--from", dest="from_revision", default=None,
-                           help="diff/compare: the revision before the edit (alias of --before-revision-id).")
+                           help=("--preset compare: the exact revision before the edit; with --view diff, "
+                                 "the same value selects the immutable before revision."))
     subparser.add_argument("--to", dest="to_revision", default=None,
-                           help="diff/compare: the revision after (default: head; alias of --after-revision-id).")
+                           help=("--preset compare: the exact after revision (default: current head); with "
+                                 "--view diff, the same value selects the immutable after revision."))
 
 
 def _layer_names(parsed: argparse.Namespace) -> list[str]:
