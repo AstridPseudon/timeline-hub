@@ -218,7 +218,10 @@ def test_child_track_kind_resolves_parent_tracks_and_maps_definition_conflicts(f
     conflict_before = copy.deepcopy(tl.bundle)
     with pytest.raises(commands.TimelineEditError, match="conflicts"):
         tl._track_kind("A", "A1")
-    assert tl._track_kind(None, "A1") == "audio"
+    # The film lookup reconciles every child as well: a true initial conflict
+    # cannot silently fall back to the parent definition.
+    with pytest.raises(commands.TimelineEditError, match="conflicts"):
+        tl._track_kind(None, "A1")
     assert tl.bundle == conflict_before
 
     child["tracks"].pop()

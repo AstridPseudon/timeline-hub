@@ -148,7 +148,9 @@ def _closure(*, shared=True):
         occurrences.append(second)
     parent_payload = {
         "config": {
-            "tracks": [{"id": "picture", "kind": "visual"}],
+            # Equal legacy definitions; missing non-app fields would be an
+            # initial conflict under the strict film-track resolver.
+            "tracks": copy.deepcopy(internal_payload["tracks"]),
             "clips": [{"id": "direct", "track": "picture", "asset": "direct", "at": 3, "hold": 1}],
             "opaque_parent_config": {"keep": True},
         },
@@ -796,7 +798,8 @@ def test_full_authored_field_edits_compile_without_normalizing_opaque_fields():
     assert child["payload"]["internal_timeline_revision_id"]
     internal = compiled.publication["internal_timeline_revisions"][0]["payload"]
     assert internal["opaque_timeline"]["added"] == {"preserve": True}
-    assert {row["id"] for row in internal["tracks"]} == {"picture", "voice", "overlay"}
+    assert internal["tracks"] == []
+    assert {row["id"] for row in output["config"]["tracks"]} == {"picture", "voice", "overlay", "effects"}
 
 
 @pytest.mark.parametrize(
@@ -930,7 +933,10 @@ def test_bundle_structure_helpers_duplicate_and_remove_independent_placements():
         compile_authoring_candidate(candidate)
     candidate["placements"][1]["source_offset"] = {"start": 0, "end": 0}
     compilation = compile_authoring_candidate(candidate)
-    assert {row["shot_id"] for row in compilation.publication["shot_revisions"]} == {"shot-copy"}
+    # An actual edit also materializes the admitted source's legacy mirrors
+    # into canonical child references; its immutable old revision stays pinned.
+    assert {row["shot_id"] for row in compilation.publication["shot_revisions"]} == {source_id, "shot-copy"}
+    assert all(row["payload"]["tracks"] == [] for row in compilation.publication["internal_timeline_revisions"])
     remove_authoring_shot(candidate, "shot-copy")
     assert "shot-copy" not in candidate["shots"]
     assert [row["occurrence_id"] for row in candidate["placements"]] == ["occ-1"]

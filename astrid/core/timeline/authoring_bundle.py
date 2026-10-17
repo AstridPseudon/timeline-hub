@@ -462,7 +462,58 @@ def open_authoring_bundle(
             parent_revision, shot_revisions=shot_revisions,
             internal_timeline_revisions=internal_timeline_revisions)
         return flatten_chapter_storage(bundle, projection=projection)
-    return bundle
+    return _film_track_view(bundle)
+
+
+def _film_track_view(bundle: Mapping[str, Any]) -> dict[str, Any]:
+    """Reconcile admitted tracks before edits, retaining exact immutable bases.
+
+    This is the ordinary closure's authoring/storage adaptation. The existing
+    strict resolver owns equality and disjoint app-key reconciliation; only its
+    proven result becomes writable film truth. Child clips keep their IDs.
+    """
+    from .shot_composition_projection import (
+        ShotCompositionProjectionError, resolve_parent_tracks,
+    )
+
+    out = _copy(dict(bundle))
+    carriers = list(_storage_carriers(out))
+    try:
+        tracks = resolve_parent_tracks(out["parent"], [c for c, _ in carriers[1:]])
+    except ShotCompositionProjectionError as exc:
+        raise AuthoringBundleError(str(exc)) from exc
+    config = out["parent"].setdefault("config", {})
+    # Do not invent an optional empty collection in an exact trackless input.
+    if tracks or "tracks" in config:
+        config["tracks"] = tracks
+    for internal, _ in carriers[1:]:
+        if "tracks" in internal:
+            internal["tracks"] = []
+    return out
+
+
+def _immutable_authoring_base(bundle: Mapping[str, Any]) -> dict[str, Any]:
+    """Restore the pinned physical fields without changing source mappings."""
+    out = _copy(dict(bundle))
+    out["parent"] = _copy(out["base_parent_payload"])
+    out["placements"] = list(_copy(out["base_placements"]).values())
+    for shot in out["shots"].values():
+        shot["payload"] = _copy(shot["base_payload"])
+        shot["internal_timeline"] = _copy(shot["base_internal_timeline"])
+    return out
+
+
+def _physical_film_tracks(candidate: Mapping[str, Any]) -> dict[str, Any]:
+    # Reconcile the original definitions separately from edits.
+    # Comparing normalized views makes opening and no-op compilation reuse the
+    # old closure, while any semantic edit materializes canonical children.
+    base = _immutable_authoring_base(candidate)
+    baseline = _film_track_view(base)
+    current = _film_track_view(candidate)
+    if all(_canonical_json(current[key]) == _canonical_json(baseline[key])
+           for key in ("parent", "placements", "shots")):
+        return base
+    return current
 
 
 _CHAPTER_STORAGE_FORMAT = "astrid.authoring-chapters/v1"
@@ -532,7 +583,7 @@ def _storage_carriers(bundle: Mapping[str, Any]):
     parent = _mapping(bundle.get("parent"), "bundle.parent")
     if "tracks" in parent:
         raise AuthoringBundleError("ambiguous film track ownership: use parent.config.tracks")
-    yield _mapping(parent.get("config"), "bundle.parent.config"), "parent.config"
+    yield _mapping(parent.get("config", {}), "bundle.parent.config"), "parent.config"
     for shot_id, raw in _mapping(bundle.get("shots"), "bundle.shots").items():
         shot = _mapping(raw, f"shots.{shot_id}")
         internal = _mapping(shot.get("internal_timeline"), f"shots.{shot_id}.internal_timeline")
@@ -1088,6 +1139,8 @@ def compile_authoring_candidate(candidate: Mapping[str, Any], *, resolved_chapte
     """
     from .chapter_storage import split_chapter_storage
     physical = split_chapter_storage(candidate, chapters=resolved_chapters)
+    if "structure_base" not in candidate and candidate.get("storage_policy") is None:
+        physical = _physical_film_tracks(physical)
     compilation = _compile_physical_candidate(physical)
     return CandidateCompilation(
         candidate_digest=_digest(candidate), publication=compilation.publication,
@@ -1569,8 +1622,11 @@ def diff_authoring_candidate(candidate: Mapping[str, Any]) -> dict[str, Any]:
     """Return a deterministic authored-field diff against the pinned bundle."""
 
     root = _mapping(candidate, "candidate")
+    baseline = _immutable_authoring_base(root)
+    if "structure_base" not in root:
+        baseline = _film_track_view(baseline)
     base = {
-        "parent": root.get("base_parent_payload"),
+        "parent": baseline.get("parent"),
         "placements": list(_mapping(
             _mapping(root.get("source_mapping"), "candidate.source_mapping").get(
                 "placements", {}
@@ -1578,10 +1634,10 @@ def diff_authoring_candidate(candidate: Mapping[str, Any]) -> dict[str, Any]:
         ).values()),
         "shots": {
             key: {
-                "payload": value.get("base_payload"),
-                "internal_timeline": value.get("base_internal_timeline"),
+                "payload": value.get("payload"),
+                "internal_timeline": value.get("internal_timeline"),
             }
-            for key, value in _mapping(root.get("shots"), "candidate.shots").items()
+            for key, value in _mapping(baseline.get("shots"), "candidate.shots").items()
             if isinstance(value, Mapping)
         },
     }
