@@ -39,6 +39,19 @@ describe('Player shared scene boundary', () => {
     expect(b.transition).toEqual({type, duration: 1});
   });
 
+  it('retains explicit-null built-in params while adapting only the planner input', () => {
+    const transition = {type: 'crossfade', duration: 1, params: null, opaqueTransition: {keep: true}};
+    const incoming = clip('incoming', 2, {transition});
+    const {scene, clips, declarations, legacyTiming} = prepare([clip('outgoing', 0), incoming]);
+
+    expect(legacyTiming.size).toBe(0);
+    expect(declarations[0]?.params).toEqual({});
+    expect(clips[1]).toBe(incoming);
+    expect(clips[1].transition).toBe(transition);
+    expect(clips[1].transition?.params).toBeNull();
+    expect(querySceneFrame(scene, 45).layers.map(layer => layer.clipId)).toEqual(['outgoing', 'incoming']);
+  });
+
   it.each(['wipe'])('preserves %s host semantics without a dissolve substitution', type => {
     const {scene, legacyTiming} = prepare([clip('a', 0), clip('b', 2, {transition: {type, duration: 1}})]);
     expect([...legacyTiming]).toEqual([1,0]);

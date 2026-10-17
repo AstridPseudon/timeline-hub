@@ -65,6 +65,20 @@ describe('Player legacy text and card preservation', () => {
 
 
 describe('Player component transition preservation', () => {
+  it('maps plural timeline transition refs to the singular host registry kind', () => {
+    const Probe = ({clip}: any) => <span data-clip={clip.id}/>;
+    const resolveComponent = vi.fn(() => Probe);
+    const injected: AstridElementHost = {...host, resolveComponent};
+    const input: ResolvedTimelineConfig = {...config, clips:[{
+      ...config.clips[1],
+      id:'plural-transition-ref',
+      elementRef:{id:'text-card',kind:'transitions',packId:'rendering',revision:'fixture'},
+    }]};
+    renderToStaticMarkup(<TimelineRenderer config={input} astridElementHost={injected}/>);
+
+    expect(resolveComponent).toHaveBeenCalledWith('text-card','transition','rendering');
+  });
+
   it('retains injected component transition metadata when its audio internals are undeclared', () => {
     const Probe = ({clip}: any) => <span data-clip={clip.id} data-transition={clip.transition?.type}/>;
     const injected: AstridElementHost = {...host,resolveComponent: () => Probe};
