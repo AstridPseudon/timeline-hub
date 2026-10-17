@@ -126,13 +126,11 @@ def remotion_render_lock_child_env() -> dict[str, str]:
 
 
 @contextmanager
-def remotion_render_lock() -> Iterator[None]:
-    """Hold the one non-recursive Remotion registry/render file lock."""
-
+def _render_lock_at(lock_path: Path) -> Iterator[None]:
+    """Hold a caller-selected lock without changing non-recursive semantics."""
     if remotion_render_lock_held():
         raise RuntimeError("Remotion render lock is non-recursive")
 
-    lock_path = _resolved_lock_path()
     lock = _lock_for(lock_path)
     lock.acquire()
     token = _LOCAL_LOCK_PATH.set(str(lock_path))
@@ -143,6 +141,13 @@ def remotion_render_lock() -> Iterator[None]:
             lock.release()
         finally:
             _LOCAL_LOCK_PATH.reset(token)
+
+
+@contextmanager
+def remotion_render_lock() -> Iterator[None]:
+    """Hold the one non-recursive shared registry/writer lock."""
+    with _render_lock_at(_resolved_lock_path()):
+        yield
 
 
 __all__ = [
