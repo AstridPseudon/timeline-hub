@@ -187,6 +187,10 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         duplicate_source = command.args["from"]
         if "from_" in command.args:
             raise CommandError("Use the documented from argument only")
+    element_add = entry.op == "timeline.add" and entry.kind == "timeline" and duplicate_source is None
+    destination = None
+    if element_add:
+        command, destination = guard_add_destination(tl, command)
     if (entry.op in {"timeline.split", "timeline.remove"} and command.select and is_scoped_id(command.select)
             and command.resolved and command.resolved != (command.select,)):
         raise CommandError("Selector and recorded owner disagree")
@@ -323,7 +327,10 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         clips = [sid for sid in command.created if "/clip:" in sid]
         if len(clips) != 1:
             raise CommandError("timeline.add requires exactly one recorded created clip")
-        args["clip_id"] = clips[0].split("/clip:", 1)[1]
+        local = clips[0].split("/clip:", 1)[1]
+        if args.get("clip_id") is not None and args["clip_id"] != local:
+            raise CommandError("timeline.add clip_id contradicts created identity")
+        args["clip_id"] = local
     if command.created and any(sid in before_entities for sid in command.created):
         raise SemanticConflict("dependent", command.select or "", "created", None,
                                list(command.created), "created identity already exists")
@@ -423,6 +430,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     if entry.op not in {"timeline.batch", "timeline.edit-flags"}:
         tl._open_edit.calls.append(recorded)
     tl._command_depth = getattr(tl, "_command_depth", 0) + 1
+    previous_destination = getattr(tl, "_add_destination", None)
+    if element_add:
+        tl._add_destination = destination
     try:
         relation_state = []
         if relation_choices is not None and duplicate_source is None:
@@ -501,7 +511,10 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         elif entry.op == "timeline.add" and not isinstance(canonical.get("track"), Mapping):
             canonical["clip_id"] = result.id
             canonical["at"] = intent.on(result.data) or result.start
-            tl._open_edit.calls[index] = replace(recorded, args=canonical, resolved=(scoped_clip(tl, result),))
+            recorded = replace(recorded, args=canonical, resolved=(scoped_clip(tl, result),))
+            if element_add:
+                recorded, _ = guard_add_destination(tl, recorded)
+            tl._open_edit.calls[index] = recorded
         if entry.op not in {"timeline.batch", "timeline.edit-flags"}:
             call = tl._open_edit.calls[index]
             after_entities = entity_states(tl)
@@ -601,6 +614,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         tl._open_edit.failure = str(exc)
         raise
     finally:
+        tl._add_destination = previous_destination
         tl._active_relation_choices = []
         tl._moment_time = original_moment_time
         tl._new_id = original_new_id
@@ -619,6 +633,36 @@ class SemanticConflict(CommandError):
 
     def to_json(self):
         return {**super().to_json(), "details": copy.deepcopy(self.conflict)}
+
+
+def guard_add_destination(tl, call):
+    """Keep the existing envelope's exact creation owner through execution/replay."""
+    created = call.created
+    if created is not None and (len(created) != 1 or "/clip:" not in created[0]):
+        raise CommandError("timeline.add requires exactly one created clip ScopedId")
+    if call.resolved and (len(call.resolved) != 1 or "/clip:" not in call.resolved[0]):
+        raise CommandError("timeline.add requires exactly one resolved clip ScopedId")
+    destination = created[0] if created else call.resolved[0] if call.resolved else None
+    if destination is None:
+        return call, None  # legacy SDK resolves once; recorder retains that result
+    if not is_scoped_id(destination) or (call.resolved and call.resolved != (destination,)):
+        raise CommandError("timeline.add created and resolved identities disagree")
+    local = destination.split("/clip:", 1)[1]
+    if call.args.get("clip_id") is not None and call.args["clip_id"] != local:
+        raise CommandError("timeline.add clip_id contradicts created identity")
+    expectations = dict(call.expect or {})
+    for key, expected in expectations.items():
+        sid, path = write_target(key, (destination,))
+        if not path and "/clip:" in sid and (sid != destination or expected != {"state": "absent"}):
+            raise CommandError("timeline.add creation expectation contradicts destination")
+    expectations.setdefault(destination + "::", {"state": "absent"})
+    # Use F's existing owner/materialization seam, including shared-shot refusal.
+    from astrid.sdk.timeline.music_beds import locate
+    shot, _ = locate(tl, destination, {"id": local})
+    if shot is not None:
+        oid = destination.split("/clip:", 1)[0]
+        expectations.setdefault(oid + "::shot_id", {"state": "present", "value": shot})
+    return replace(call, args={**call.args, "clip_id": local}, expect=expectations), destination
 
 
 def is_scoped_id(value):
@@ -1005,7 +1049,7 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
         if entry.op == "timeline.reorder":
             return {(selected[0], "track_order")}
         return {(selected[0], "")}
-    if entry.op == "timeline.add" and "from" in args:
+    if entry.op == "timeline.add":
         # The cloned entity is authored directly; its container array is a
         # consequence. Retain that array in state for older recorded guards.
         return {(sid, path) for sid, path in changes if sid not in before and "/clip:" in sid}

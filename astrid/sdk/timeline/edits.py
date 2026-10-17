@@ -54,12 +54,20 @@ class _EditMixin:
             except mo.MomentError as exc:
                 raise TimelineEditError(f"at={at!r}: {exc}") from None
         start = self.quantize(word.start if word else self._moment_time(moment) if moment else self.time(at))
-        sid = self._shot_at(start)
+        destination = getattr(self, "_add_destination", None)
+        if destination is None:
+            sid = self._shot_at(start)
+        else:
+            from astrid.sdk.timeline.music_beds import locate
+            sid, _ = locate(self, destination, {"id": clip_id})
         internal = self._internal(sid)
         new = {"id": clip_id or self._new_id(element), "clipType": element, "track": track or ELEMENT_TRACK.get(element, "fx"),
                "at": 0.0, "hold": self.quantize(hold if hold is not None else 1.0), "params": {}}
-        if not any(str(t.get("id")) == new["track"] for t in internal.get("tracks") or []):
-            raise TimelineEditError(f"shot {sid} has no track {new['track']!r}; tracks: {', '.join(str(t.get('id')) for t in internal.get('tracks') or [])}")
+        tracks = self._resolved_tracks(sid)
+        if not any(t["id"] == new["track"] for t in tracks):
+            raise TimelineEditError(f"owner {sid} has no track {new['track']!r}")
+        if any(c.get("id") == new["id"] for c in internal.get("clips", [])):
+            raise TimelineEditError(f"duplicate clip identity {new['id']!r}")
         if asset is not None:
             try:
                 new["asset"] = self._register_asset(sid, asset)
@@ -81,7 +89,7 @@ class _EditMixin:
                                                 f"{source_duration:.3f} s")
                     new["from"], new["to"] = 0.0, self.quantize(source_out)
                     new["hold"] = self.quantize(source_out / (_num(new.get("speed"), 1.0) or 1.0))
-        cut_id = (self._cut_id(cut) or cut) if cut else (None if self._is_audio(sid, new) else self._cut_on_screen(start))
+        cut_id = (self._cut_id(cut) or cut) if cut else (None if sid is None or self._is_audio(sid, new) else self._cut_on_screen(start))
         name = layer
         if cut_id:
             taken = {intent.layer_of(c.data) for c in self.clips() if intent.cut_of(c.data) == cut_id}
@@ -108,6 +116,10 @@ class _EditMixin:
                 from astrid.sdk.timeline.identity import reserve_cut_id
                 reserve_cut_id(self.bundle, cut_id)
             intent.set_cut(new, cut_id)
+            if not intent.on(new):
+                # Numeric placement was authored before cut membership. Keep
+                # that explicit start when the compiler joins the new layer.
+                intent._set(new, "fixed_start", True)
             if hold is not None:
                 intent.set_for(new, self.quantize(hold))
         if name:
