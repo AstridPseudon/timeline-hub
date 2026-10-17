@@ -1,19 +1,6 @@
-/**
- * Compatibility metadata for the one generated Runtime client.
- *
- * Runtime remains the wire/schema authority. The C1/C2 values identify the
- * app contract inputs consumed by this seam; they do not create another wire
- * contract or client.
- */
+/** Generated contract metadata; do not edit by hand. */
 
-import { PROTOCOL, SCHEMA_DIGEST, COMPONENT_MANIFEST_SHA256 } from './generated-contract-metadata.ts';
-
-export const RUNTIME_PROTOCOL = PROTOCOL;
-/** The checked-in generated contract is the only accepted Runtime authority. */
-export const RUNTIME_SCHEMA_DIGEST = SCHEMA_DIGEST;
-export const RUNTIME_ACCEPTED_SCHEMA_DIGESTS = [RUNTIME_SCHEMA_DIGEST] as const;
-export const RUNTIME_COMPONENT_MANIFEST_SHA256 = COMPONENT_MANIFEST_SHA256;
-export const RUNTIME_TARGETED_EXECUTION_CAPABILITY = 'execution_binding.targeted.v1' as const;
-
-export const ASTRID_C1_CANONICAL_DIGEST = 'sha256:658c18bbdeb4f950806dc05ef265c0ffab422cbfd5ce17293fec6145e2f72515' as const;
-export const ASTRID_C2_CANONICAL_DIGEST = 'sha256:ca251dfbcadc6fbc68a5404495f2f0fd42128c821ce47a3560d2952399278d37' as const;
+export const PROTOCOL = "workspace.v1" as const;
+export const COMPONENT_MANIFEST_SHA256 = "sha256:46a1084915781086032f51971bf2f7d10ddbfd7fdda9f20ddf01e33e1cd4cc92";
+export const SCHEMA_DIGEST = "sha256:200c2553f54a7e41a6405518912dc6ee9577de25292afd46fc1fcccf68be0770";
+export const OPERATIONS = ["health", "handshake", "getRealm", "doctor", "createBackup", "restoreBackup", "exportRealm", "tombstoneRealm", "recoverRealm", "purgeRealm", "listProjects", "createProject", "getProject", "updateProject", "currentProject", "selectProject", "getPreferences", "updatePreferences", "listDocuments", "createDocument", "getDocument", "updateDocument", "listProjectObjects", "ingestProjectObject", "importProjectMedia", "getProjectMediaImport", "listProjectTasks", "listManagedOutputs", "getManagedOutput", "adoptManagedOutput", "getProjectObjectLocation", "exportManagedOutput", "updateManagedOutputLifecycle", "listProjectRuns", "createTimeline", "listTimelines", "getProjectTimeline", "renameTimeline", "inspectTimeline", "createTimelineView", "listProjectParentCompositionRevisions", "publishParentComposition", "replaceParentCompositionMedia", "getProjectParentCompositionRevision", "restoreProjectParentCompositionRevision", "createTimelineDocument", "getProjectShotRevision", "getProjectTimelineRevision", "updateTimeline", "listTimelineHistory", "replaceTimelineClip", "diffTimeline", "archiveTimeline", "recoverTimeline", "createShot", "getShot", "updateShot", "archiveShot", "recoverShot", "createReference", "createProjectShot", "listProjectShots", "getProjectShot", "updateProjectShot", "archiveProjectShot", "recoverProjectShot", "addShotItem", "removeShotItem", "promoteProjectShotCandidate", "reorderShotItems", "listProjectShotTextBindings", "setProjectShotTextBinding", "getProjectShotTextBinding", "setProjectShotTextBindingById", "rebindProjectShotTextBinding", "createProjectReference", "listProjectReferences", "getProjectReference", "updateProjectReference", "archiveProjectReference", "recoverProjectReference", "associateReference", "setPrimaryReference", "linkReferences", "getReference", "updateReference", "archiveReference", "recoverReference", "listMediaRelations", "createMediaRelation", "getSourceFrameThumbnail", "ensureSourceFrameThumbnail", "ingestObject", "getObject", "headObject", "admitTask", "claimTask", "admitDelegatedTask", "getTask", "cancelTask", "retryTask", "recoverTaskPlacement", "recordRemoteActivation", "controlRemoteCredential", "revokeRemoteActivation", "getRun", "cancelRun", "retryRun", "listRunEvents", "listEvents", "registerExecutor", "getExecutor", "getLocalWorkerGeneration", "startLocalWorker", "relinquishLocalWorker", "listCapabilities", "registerCapability", "listGenerations", "createGeneration", "getGeneration", "listVariants", "createVariant", "markGenerationVariantsViewed", "getVariant", "attachVariantThumbnail", "markVariantViewed", "settleAttempt", "publishRecoverableSnapshot", "issueChildAuthority", "prepareReboot", "checkpointAttempt", "publishTimelineRender", "failAttempt", "heartbeatAttempt", "requestReboot", "resumeAttempt"] as const;
