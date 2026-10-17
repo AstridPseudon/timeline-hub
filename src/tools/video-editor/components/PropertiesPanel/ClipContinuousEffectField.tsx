@@ -1,3 +1,4 @@
+import { continuousParameterPatch } from '../../commands/continuousHistory.ts';
 import { AlertTriangle, Globe, Lock, Monitor, Pencil, RefreshCw, Server, Trash2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/shared/components/ui/select.tsx';
@@ -149,6 +150,7 @@ export function ClipContinuousEffectField({
               className="h-6 gap-1 text-xs"
               onClick={() => onChange({
                 continuous: {
+                  ...clip.continuous!,
                   type: clip.continuous!.type,
                   intensity: clip.continuous!.intensity ?? 0.5,
                   params: getDefaultValues(continuousEffect!.parameterSchema),
@@ -192,16 +194,11 @@ export function ClipContinuousEffectField({
         <ParameterControls
           schema={continuousEffect.parameterSchema}
           values={getMergedEffectParams(continuousEffect, clip.continuous?.params)}
-          onChange={(paramName, value) => onChange({
-            continuous: {
-              type: clip.continuous?.type ?? `custom:${continuousEffect.id}`,
-              intensity: clip.continuous?.intensity ?? 0.5,
-              params: {
-                ...(clip.continuous?.params ?? {}),
-                [paramName]: value,
-              },
-            },
-          })}
+          onChange={(paramName, value) => onChange(continuousParameterPatch({
+            ...clip.continuous,
+            type: clip.continuous?.type ?? `custom:${continuousEffect.id}`,
+            intensity: clip.continuous?.intensity ?? 0.5,
+          }, { [paramName]: value }))}
           disabled={isEffectInError(continuousEffect)}
           diagnostics={continuousEffect.diagnostics}
         />

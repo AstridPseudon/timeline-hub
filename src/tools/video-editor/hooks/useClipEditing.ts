@@ -1,4 +1,4 @@
-import { compositeEffectGestureCommands, propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
+import { continuousBatchGestureCommands, continuousEffectGestureCommands, compositeEffectGestureCommands, propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
@@ -176,8 +176,11 @@ export function useClipEditing({
       validClipIds.map((clipId) => [clipId, patch]),
     ) as Record<string, Partial<ClipMeta>>;
 
-    const commandGroups = validClipIds.map((id) => propertyGestureCommands(current, id, patch));
-    const editCommands = commandGroups.every((commands) => commands !== undefined) ? commandGroups.flat() : undefined;
+    const commandGroups = validClipIds.map((id) => {
+      const continuous = continuousEffectGestureCommands(current, id, patch);
+      return continuous.handled ? (validClipIds.length === clipIds.length ? continuous.commands : undefined) : propertyGestureCommands(current, id, patch);
+    });
+    const editCommands = continuousBatchGestureCommands(current, commandGroups);
     if (!patchAffectsDuration(patch)) {
       applyRowsEdit(current.rows, metaUpdates, undefined, undefined, { editCommands });
       return;
@@ -235,9 +238,14 @@ export function useClipEditing({
       return;
     }
 
-    const groups = Object.entries(metaUpdates).map(([id, patch]) => propertyGestureCommands(current, id, patch));
+    const groups = validClipIds.map(id => {
+      const patch = metaUpdates[id];
+      if (!patch) return undefined;
+      const continuous = continuousEffectGestureCommands(current, id, patch);
+      return continuous.handled ? (validClipIds.length === clipIds.length ? continuous.commands : undefined) : propertyGestureCommands(current, id, patch);
+    });
     applyRowsEdit(current.rows, metaUpdates, undefined, undefined, {
-      editCommands: groups.every((commands) => commands !== undefined) ? groups.flat() : undefined,
+      editCommands: continuousBatchGestureCommands(current, groups),
     });
   }, [applyRowsEdit, dataRef, getValidClipIds]);
 
