@@ -1325,8 +1325,9 @@ def finish_recording(tl, tx, entry):
         authorship[key] = kind
         tx.calls[cause] = replace(call, authorship=authorship)
         recorded_path = path
-        if (path.startswith("modifiers[") or call.op in {"clip.set-fade", "clip.set-transition", "timeline.register-asset"}) and kind != "direct":
-            # A whole-instance/params replacement owns its changed descendants.
+        if (path.startswith("modifiers[") or call.op in {"clip.set-fade", "clip.set-transition", "timeline.register-asset", "timeline.inverse"}) and kind != "direct":
+            # A whole-instance/params replacement (including inverse restore)
+            # owns its changed descendants.
             # Keep the original explicit guard path in the call so authenticated
             # replay checks exactly the same direct-write set.
             parents = []
