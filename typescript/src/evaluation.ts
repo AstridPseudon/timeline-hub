@@ -81,3 +81,6 @@ export type {AudioEnvelope, AudioCurve} from './lib/audio-envelope';
 
 export {prepareScene, querySceneFrame, querySceneFrame as queryCompositionSceneFrame} from './scene-evaluation';
 export type {PreparedScene, SceneFrame, SceneLayer, SceneFinding, SceneTrackInput} from './scene-evaluation';
+
+export type {MediaSceneEvidence, ComponentFrameSupport, PreparedComponentCapability, ComponentCapabilityContext, SceneCapableComponent, SceneCapabilities} from './scene-capabilities';
+export {VIDEO_INTERPRETATION, IMAGE_INTERPRETATION, provenOpaqueMedia} from './scene-capabilities';

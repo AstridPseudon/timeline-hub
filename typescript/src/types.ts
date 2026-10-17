@@ -17,6 +17,7 @@ export type TimelineClip = {
   track: string;
   asset?: string;
   clipType?: string;
+  elementRef?: {id: string; kind: string; packId?: string};
   clip_order?: number;
   continuous?: unknown;
   cropBottom?: number;

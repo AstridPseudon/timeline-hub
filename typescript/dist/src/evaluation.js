@@ -31,3 +31,4 @@ export { loopPhase, positiveModulo, spriteSheetIndex } from './lib/beat-loop';
 export { mediaModifierBounds } from './lib/modifier-bounds';
 export { compileAudioEnvelope, validateAudioEnvelope, audioEnvelopeAt, applyAudioEnvelope, audioEnvelopeWav, AudioEnvelopeError } from './lib/audio-envelope';
 export { prepareScene, querySceneFrame, querySceneFrame as queryCompositionSceneFrame } from './scene-evaluation';
+export { VIDEO_INTERPRETATION, IMAGE_INTERPRETATION, provenOpaqueMedia } from './scene-capabilities';
