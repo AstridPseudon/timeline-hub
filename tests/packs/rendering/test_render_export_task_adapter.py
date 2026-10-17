@@ -805,12 +805,19 @@ def test_clean_probe_projection_preserves_values_absence_and_excludes_task_metad
     assert 'SECRET' not in json.dumps(ctx)
 
 
-def test_launch_validation_missing_reference_does_not_spawn(tmp_path, monkeypatch):
+@pytest.mark.parametrize('selected', [False, True])
+def test_launch_validation_missing_reference_does_not_spawn(tmp_path, monkeypatch, selected):
     def unexpected(*args, **kwargs):
         pytest.fail('ordinary readiness verification spawned a probe')
     monkeypatch.setattr(remotion_runtime, '_owned_probe', unexpected)
+    environment = {'HOME': str(tmp_path)}
+    if selected:
+        state = tmp_path / 'selected.json'
+        state.write_text('{"version":1,"active":{},"cached":{},"disabled":[]}')
+        environment.update(ASTRID_SOURCE_STATE=str(state), ASTRID_INTERNAL_INVOCATION='1')
+        (tmp_path / '.astrid-remotion-validated').write_text('not validation authority')
     with pytest.raises(remotion_runtime.RemotionValidationError, match='explicit owned validation'):
-        remotion_runtime._validated_runtime(tmp_path, environment={'HOME': str(tmp_path)})
+        remotion_runtime._validated_runtime(tmp_path, environment=environment)
 
 
 def test_owned_probe_positive_original_wait_precedes_final_census(monkeypatch, tmp_path):
@@ -1068,10 +1075,12 @@ def test_registry_settling_owned_generator_four_file_readback_and_unchanged_skip
 def test_registry_settling_refuses_renderer_generator_selector_disagreement(tmp_path, monkeypatch, selector):
     from astrid.packs.rendering.rendering.renderers.remotion import lock
     project, environment, observation, _, calls, generation, _ = _registry_settling_fixture(tmp_path, monkeypatch)
+    if selector == 'ASTRID_SOURCE_STATE':
+        (tmp_path / 'other').write_text('{"version":1,"active":{},"cached":{},"disabled":[]}')
     environment[selector] = str(tmp_path / 'other')
     def probe(env, python, **_kwargs):
         actual = json.loads(json.dumps(observation))
-        if selector in env:
+        if selector in env and not _kwargs.get('generator'):
             actual['state']['hash'] = 'b' * 64
         return actual, {'original_wait_exit_code': 0, 'retained_set_final_census_complete': True, 'custody_admitted': True}
     monkeypatch.setattr(remotion_runtime, '_registry_probe', probe)
@@ -1585,3 +1594,79 @@ def test_registry_generator90_timeout_never_publishes_state(tmp_path, monkeypatc
     assert caught.value.__cause__ is primary
     assert caught.value.probe_receipt["outcome"] == "REGISTRY_TIMEOUT_NOT_PROVEN"
     assert not (project / ".astrid-registry-state.json").exists()
+
+
+@pytest.mark.parametrize('defect', ['missing', 'malformed', 'version', 'fields', 'symlink',
+                                   'parent_alias', 'hardlink', 'relative', 'empty', 'dotdot'])
+def test_selected_source_state_refuses_invalid_context_without_default_fallback(tmp_path, defect):
+    state = tmp_path / 'selected.json'
+    state.write_text('{"version":1,"active":{},"cached":{},"disabled":[]}')
+    selected = str(state)
+    default = tmp_path / '.local/state/astrid/default/pack-sources.json'
+    default.parent.mkdir(parents=True)
+    default.write_bytes(state.read_bytes())
+    if defect == 'missing':
+        state.unlink()
+    elif defect == 'malformed':
+        state.write_text('{')
+    elif defect == 'version':
+        state.write_text('{"version":999}')
+    elif defect == 'fields':
+        state.write_text('{"version":1,"active":[]}')
+    elif defect == 'symlink':
+        alias = tmp_path / 'alias.json'
+        alias.symlink_to(state)
+        selected = str(alias)
+    elif defect == 'parent_alias':
+        alias = tmp_path / 'alias'
+        alias.symlink_to(tmp_path, target_is_directory=True)
+        selected = str(alias / state.name)
+    elif defect == 'hardlink':
+        os.link(state, tmp_path / 'hardlink.json')
+    elif defect == 'relative':
+        selected = 'selected.json'
+    elif defect == 'empty':
+        selected = ''
+    elif defect == 'dotdot':
+        selected = str(tmp_path / 'subdir/../selected.json')
+    for generator in (False, True):
+        with pytest.raises(remotion_runtime.RemotionValidationError):
+            remotion_runtime._registry_context({'HOME': str(tmp_path),
+                'ASTRID_SOURCE_STATE': selected}, generator=generator)
+
+
+def test_selected_source_state_context_preserves_pack_roots_and_clean_generator(tmp_path):
+    state = tmp_path / 'selected.json'
+    state.write_text('{"version":1,"active":{},"cached":{},"disabled":[]}')
+    environment = {'HOME': str(tmp_path), 'ASTRID_SOURCE_STATE': str(state),
+        'ASTRID_PACKS_PATH': '/explicit/packs', 'XDG_STATE_HOME': '/foreign',
+        'UNRELATED': 'value', 'API_TOKEN': 'secret', 'PYTHONPATH': '/renderer/imports'}
+    renderer = remotion_runtime._registry_context(environment, generator=False)
+    generator = remotion_runtime._registry_context(environment, generator=True)
+    assert renderer['ASTRID_SOURCE_STATE'] == generator['ASTRID_SOURCE_STATE'] == str(state)
+    assert renderer['ASTRID_PACKS_PATH'] == generator['ASTRID_PACKS_PATH'] == '/explicit/packs'
+    assert 'XDG_STATE_HOME' not in generator and 'PYTHONPATH' not in generator
+    assert not {'API_TOKEN', 'UNRELATED'} & (renderer.keys() | generator.keys())
+    for override in ('GIT_CONFIG_COUNT', 'PYTHONSTARTUP', 'PYTHONHOME'):
+        with pytest.raises(remotion_runtime.RemotionValidationError):
+            remotion_runtime._registry_context({**environment, override: ''}, generator=True)
+
+
+@pytest.mark.parametrize('change', ['bytes', 'missing', 'alias'])
+def test_selected_source_state_provisioned_consumer_rejects_changed_binding(tmp_path, monkeypatch, change):
+    state = tmp_path / 'selected.json'
+    state.write_text('{"version":1,"active":{},"cached":{},"disabled":[]}')
+    runtime, _, _, environment, reference, calls = _owned_validation_fixture(tmp_path, monkeypatch,
+        environment_overrides={'ASTRID_SOURCE_STATE': str(state)})
+    remotion_runtime._validated_runtime(runtime, environment={**environment, **reference})
+    if change == 'bytes':
+        state.write_bytes(state.read_bytes() + b'\n')
+    elif change == 'missing':
+        state.unlink()
+    else:
+        target = tmp_path / 'replacement.json'
+        state.rename(target)
+        state.symlink_to(target)
+    with pytest.raises(remotion_runtime.RemotionValidationError):
+        remotion_runtime._validated_runtime(runtime, environment={**environment, **reference})
+    assert len(calls) == 3

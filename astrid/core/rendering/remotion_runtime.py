@@ -361,6 +361,28 @@ _REGISTRY_KINDS = ('effects', 'animations', 'transitions')
 _REGISTRY_SELECTORS = ('ASTRID_PACKS_PATH', 'ASTRID_SOURCE_STATE', 'XDG_STATE_HOME')
 
 
+def _selected_source_state_binding(environment: Mapping[str, str]) -> dict[str, Any] | None:
+    """Bind an explicit launch selection; absence alone keeps legacy discovery."""
+    from astrid.core.pack.source_setup import SourceSetupError, load_source_state
+    if 'ASTRID_SOURCE_STATE' not in environment:
+        return None
+    raw = environment['ASTRID_SOURCE_STATE']
+    try:
+        if not isinstance(raw, str) or not raw or raw != raw.strip() or "\0" in raw:
+            raise ValueError('invalid selector')
+        path = Path(raw)
+        if (not path.is_absolute() or str(path) != raw or path.resolve(strict=True) != path
+                or not path.is_file() or path.stat().st_nlink != 1):
+            raise ValueError('selected state must be an ordinary non-aliased file')
+        before = _file_binding(path)
+        load_source_state(path)
+        if _file_binding(path) != before:
+            raise ValueError('selected state changed while reading')
+        return before
+    except (OSError, ValueError, SourceSetupError) as exc:
+        raise RemotionValidationError('selected source state is missing, invalid or aliased') from exc
+
+
 def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dict[str, str]:
     from astrid.core.subprocess_env import _SAFE_BASE_ENV
     probe_context(environment=environment, python_executable=sys.executable)
@@ -373,7 +395,8 @@ def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dic
             raise RemotionValidationError('registry selectors require absolute launch-known paths')
     if environment.get('PYTHONPATH') and any(not raw or not Path(raw).is_absolute() for raw in environment['PYTHONPATH'].split(os.pathsep)):
         raise RemotionValidationError('registry import paths require absolute launch-known locations')
-    keys = set(_SAFE_BASE_ENV) | {'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV}
+    _selected_source_state_binding(environment)
+    keys = set(_SAFE_BASE_ENV) | {'ASTRID_PACKS_PATH', 'ASTRID_SOURCE_STATE', TIMELINE_SCHEMA_PYTHONPATH_ENV}
     if not generator:
         keys.update((*_REGISTRY_SELECTORS, 'PYTHONPATH', 'XDG_CONFIG_HOME'))
     return {k: environment[k] for k in sorted(keys) if k in environment}
@@ -435,6 +458,7 @@ def _registry_observation() -> dict[str, Any]:
     from astrid.core.pack.source_setup import active_source_inventory, source_state_path
     from astrid.core.pack.discovery import discover_pack_metadata
     from astrid.packs.rendering.rendering.renderers.remotion import lock
+    selected_state = _selected_source_state_binding(os.environ)
     config_files = _registry_config_files(os.environ)
     _refuse_git_config_indirection(config_files)
     managed_git_roots, managed_config_files = _managed_registry_configuration()
@@ -464,7 +488,10 @@ def _registry_observation() -> dict[str, Any]:
         raise RemotionValidationError('managed registry corpus requires the selected Git executable')
     if git:
         files.append(str(Path(git).resolve()))
+    if _selected_source_state_binding(os.environ) != selected_state:
+        raise RemotionValidationError('selected source state changed during registry discovery')
     return {'state': state, 'roots': roots, 'optional_files': optional_files,
+            'selected_source_state': selected_state,
             'module_files': files, 'package_roots': package_roots,
             'search_paths': [str(Path(value or '.').absolute()) for value in sys.path],
             'search_path_spellings': sys.path, 'probe_cwd': os.getcwd(),
@@ -477,6 +504,11 @@ def _registry_observation() -> dict[str, Any]:
 
 
 def _registry_inputs(observation: Mapping[str, Any]) -> dict[str, Any]:
+    selected = observation.get('selected_source_state')
+    if selected is not None:
+        current = _selected_source_state_binding({'ASTRID_SOURCE_STATE': selected['path']})
+        if current != selected:
+            raise RemotionValidationError('selected source state changed after registry discovery')
     paths = [Path(raw) for raw in observation['module_files']]
     inventory: dict[str, Any] = {}
     for raw in (*observation['roots'], *observation['package_roots']):
@@ -613,6 +645,7 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
                 context['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(run._timeline_composition_src(project))
                 key = _canonical(context)
                 selected[key] = {'mode': 'provisioned_only', 'outputs': [_file_binding(p) for p in output_paths],
+                                 'selected_source_state': _selected_source_state_binding(context),
                                  'state_file': _file_binding(project / run._REGISTRY_STATE_PATH)
                                  if (project / run._REGISTRY_STATE_PATH).exists() else None}
         return selected
@@ -826,6 +859,9 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
                 phase = 'node_version' if name == 'node' else 'schema' if name == 'schema_discovery' else 'qualifying'
                 _require_completed_probe(receipt, phase=phase)
     for registry in registries.values():
+        selected = registry.get('selected_source_state')
+        if selected is not None and _selected_source_state_binding({'ASTRID_SOURCE_STATE': selected['path']}) != selected:
+            raise RemotionValidationError('selected source state changed before readiness publication')
         if any(_file_binding(Path(binding['path'])) != binding for binding in registry['outputs']):
             raise RemotionValidationError('settled registry output changed before readiness publication')
         if registry['mode'] == 'source_settled':
@@ -973,6 +1009,8 @@ def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | No
             if any(facts.get(k) != value for k, value in current_facts.items()):
                 raise RemotionValidationError('consumer interpreter installation differs')
         registry = entry['registry']
+        if registry.get('selected_source_state') != _selected_source_state_binding(env) and registry['mode'] == 'provisioned_only':
+            raise RemotionValidationError('launch-bound selected source state changed')
         if any(_file_binding(Path(binding['path'])) != binding for binding in registry['outputs']):
             raise RemotionValidationError('launch-bound generated registry outputs changed')
         if registry['mode'] == 'source_settled':
