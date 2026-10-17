@@ -582,7 +582,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     record(wait_error)
             if handle.inspection_owner is not None:
                 try:
-                    handle.inspection_owner.finish(cancel=True)
+                    handle.inspection_owner.finish(cancel=True, timeout=max(0.0, deadline - time.monotonic()))
                 except BaseException as exc:
                     record(exc)
                     self.cleanup_uncertain = "host-only original inspection owner unresolved"
