@@ -36,29 +36,40 @@ export const getAstridConfigCompatibilityIssues = (value: unknown): TimelineSche
   }
 
   const hasMusicBeds = Object.prototype.hasOwnProperty.call(astrid, 'music_beds');
-  if (version === 2 && !hasMusicBeds) {
-    return [{
-      pointer: '/app/astrid/music_beds',
-      code: 'astrid_music_beds_version_mismatch',
-      message: 'app.astrid.v=2 requires the music_beds carrier.',
-    }];
-  }
-  if (version !== 2 && hasMusicBeds) {
-    return [{
+  const hasBed = Object.prototype.hasOwnProperty.call(astrid, 'bed');
+  const issues: TimelineSchemaIssue[] = [];
+
+  if (hasMusicBeds && version !== 2) {
+    issues.push({
       pointer: '/app/astrid/music_beds',
       code: 'astrid_music_beds_version_mismatch',
       message: 'The music_beds carrier requires app.astrid.v=2.',
-    }];
+    });
   }
   if (hasMusicBeds && !isRecord(astrid.music_beds)) {
-    return [{
+    issues.push({
       pointer: '/app/astrid/music_beds',
       code: 'astrid_music_beds_malformed',
       message: 'app.astrid.music_beds must be an object keyed by scoped owner.',
-    }];
+    });
   }
 
-  return [];
+  if (hasBed && version !== 2) {
+    issues.push({
+      pointer: '/app/astrid/bed',
+      code: 'astrid_bed_version_mismatch',
+      message: 'The bed carrier requires app.astrid.v=2.',
+    });
+  }
+  if (hasBed && !isRecord(astrid.bed)) {
+    issues.push({
+      pointer: '/app/astrid/bed',
+      code: 'astrid_bed_malformed',
+      message: 'app.astrid.bed must be an object.',
+    });
+  }
+
+  return issues;
 };
 
 export const assertSupportedAstridConfig = (value: unknown): void => {

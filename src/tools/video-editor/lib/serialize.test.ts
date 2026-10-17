@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { repairConfig } from '@/tools/video-editor/lib/migrate';
 import { splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils';
 import { serializeClipForDisk, serializeForDisk, validateSerializedConfig } from '@/tools/video-editor/lib/serialize';
+import bedOnlyV2Fixture from '@/tools/video-editor/data/fixtures/astrid-bed-only-v2-1d4e8e936283cd841b1a4f0e367135f2ef5a269a.json';
+import rangesOnlyV2Fixture from '@/tools/video-editor/data/fixtures/astrid-ranges-only-v2-1d4e8e936283cd841b1a4f0e367135f2ef5a269a.json';
 import {
   TIMELINE_POSTPROCESS_SHADER_APP_KEY,
   cloneAssetRegistry,
@@ -423,6 +425,50 @@ describe('video-editor serialization', () => {
     expect(serializeTimelineConfigSnapshot(absent).config).not.toHaveProperty('app');
   });
 
+  it('accepts supported v2 headers with independently present known carriers', () => {
+    // Both fixture payloads were generated at Astrid pin
+    // 1d4e8e936283cd841b1a4f0e367135f2ef5a269a: `adopt_music_bed` on the
+    // existing plain-source adoption input and `set_ranges` on the tiny SDK
+    // fixture. music_beds remains covered by the existing bridge fixture below.
+    const bedOnly = bedOnlyV2Fixture.config.app.astrid;
+    const rangesOnly = rangesOnlyV2Fixture.config.app.astrid;
+    const unadoptedOwners = {
+      'timeline:unadopted-owner': {
+        owner: 'timeline:unadopted-owner',
+        source: { id: 'unadopted-music', track: 'A1', asset: 'music-asset' },
+        ripple_basis: [],
+        outputs: ['unadopted-music'],
+      },
+    };
+    const emptyMusicBeds = { v: 2, music_beds: {} };
+    const emptyBedEnvelope = { v: 2, bed: {} };
+    const base = {
+      output: { resolution: '1280x720', fps: 30, file: 'output.mp4' },
+      tracks: [{ id: 'A1', kind: 'audio', label: 'A1' }],
+      clips: [],
+    };
+
+    for (const astrid of [
+      { v: 2 },
+      bedOnly,
+      rangesOnly,
+      emptyMusicBeds,
+      emptyBedEnvelope,
+    ]) {
+      const config = { ...base, app: { astrid } } as TimelineConfig;
+      expect(validateTimelineConfigSnapshot(config).ok).toBe(true);
+      expect(serializeTimelineConfigSnapshot(config).config.app?.astrid).toEqual(astrid);
+    }
+
+    const bedWithUnadoptedOwner = {
+      ...bedOnly,
+      music_beds: unadoptedOwners,
+    };
+    const coexistenceConfig = { ...base, app: { astrid: bedWithUnadoptedOwner } } as TimelineConfig;
+    expect(validateTimelineConfigSnapshot(coexistenceConfig).ok).toBe(true);
+    expect(serializeTimelineConfigSnapshot(coexistenceConfig).config.app?.astrid).toEqual(bedWithUnadoptedOwner);
+  });
+
   it('rejects unsupported or malformed Astrid version/carrier combinations', () => {
     const base = {
       output: { resolution: '1280x720', fps: 30, file: 'output.mp4' },
@@ -430,10 +476,15 @@ describe('video-editor serialization', () => {
       clips: [],
     };
     const invalidAstridValues = [
-      { v: 2 },
-      { v: 1, music_beds: {} },
       { v: 3 },
+      { v: 2.5 },
+      { v: '2' },
+      { v: 1, music_beds: {} },
+      { v: 1, bed: {} },
       { v: 2, music_beds: [] },
+      { v: 2, bed: [] },
+      { v: 2, bed: {}, music_beds: [] },
+      { v: 2, bed: [], music_beds: {} },
       null,
     ];
 

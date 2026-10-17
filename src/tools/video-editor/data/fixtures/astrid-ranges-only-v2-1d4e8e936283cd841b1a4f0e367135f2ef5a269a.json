@@ -1,0 +1,27 @@
+{
+  "config": {
+    "theme_overrides": {
+      "visual": {
+        "canvas": {
+          "fps": 30,
+          "width": 1920,
+          "height": 1080
+        }
+      }
+    },
+    "app": {
+      "astrid": {
+        "slots": {},
+        "ranges": [
+          {
+            "name": "01 OPEN",
+            "kind": "chapter",
+            "from": "c1",
+            "to": "c2"
+          }
+        ],
+        "v": 2
+      }
+    }
+  }
+}

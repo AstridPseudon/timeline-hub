@@ -1,0 +1,119 @@
+{
+  "config": {
+    "theme_overrides": {
+      "visual": {
+        "canvas": {
+          "fps": 30,
+          "width": 1920,
+          "height": 1080
+        }
+      }
+    },
+    "app": {
+      "astrid": {
+        "slots": {},
+        "_future_metadata": {
+          "clear": null,
+          "nested": [
+            {
+              "keep": [
+                "opaque",
+                7
+              ]
+            }
+          ]
+        },
+        "vendor_extension": {
+          "explicit_clear": null,
+          "values": [
+            false,
+            5
+          ]
+        },
+        "v": 2,
+        "bed": {
+          "owner": "occurrence:occ-A/clip:a-music",
+          "arrangements": [
+            {
+              "id": "arrangement-716e02c049e940d1cf5e",
+              "owner": "occurrence:occ-A/clip:a-music",
+              "source": {
+                "id": "a-music",
+                "clipType": "media",
+                "track": "music",
+                "asset": "Q",
+                "at": 0.0,
+                "from": 0.0,
+                "to": 8.0,
+                "volume": 0.35,
+                "speed": 1.0,
+                "params": {
+                  "volume": 0.8,
+                  "arbitrary": [
+                    "keep"
+                  ]
+                },
+                "app": {
+                  "astrid": {
+                    "beats": {
+                      "beats": [
+                        0.0,
+                        1.0,
+                        2.0
+                      ],
+                      "time": "cue_seconds"
+                    }
+                  }
+                },
+                "opaque": {
+                  "media_identity": [
+                    "sha256:unchanged",
+                    null
+                  ]
+                }
+              },
+              "asset": "Q",
+              "source_offset_s": 0.0,
+              "rate": 1.0,
+              "gain": 0.35
+            },
+            {
+              "id": "arrangement-2ff413417d9f4d2c46eb",
+              "owner": "occurrence:occ-A/clip:arrangement-two",
+              "source": {
+                "id": "arrangement-two",
+                "clipType": "media",
+                "track": "music",
+                "asset": "Q",
+                "at": 4.0,
+                "from": 0.0,
+                "to": 8.0
+              },
+              "asset": "Q",
+              "source_offset_s": -4.0,
+              "rate": 1.0,
+              "gain": 1.0
+            }
+          ],
+          "switches": [
+            {
+              "id": "switch-one",
+              "on": "6s",
+              "duration": 4,
+              "curve": "equal-power"
+            }
+          ],
+          "ripple_basis": [],
+          "outputs": {
+            "arrangement-716e02c049e940d1cf5e": [
+              "a-music"
+            ],
+            "arrangement-2ff413417d9f4d2c46eb": [
+              "arrangement-two"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
