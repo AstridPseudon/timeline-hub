@@ -223,7 +223,7 @@ def test_only_verified_cas_dependencies_are_staged_in_host_scratch(private_host,
     assert len(w.exchanges) == 1
 
 
-@pytest.mark.parametrize('change', [None, 'provider', 'source', 'dependency', 'capability', 'epoch', 'boot', 'closure', 'generation'])
+@pytest.mark.parametrize('change', [None, 'provider', 'source', 'dependency', 'capability', 'epoch', 'boot', 'closure', 'generation', 'direct-boot', 'outside-boot'])
 def test_host_source_validation_at_real_method_boundary(tmp_path, monkeypatch, change):
     from astrid.core.execution import generic_host as hosts
     c = context()
@@ -249,6 +249,8 @@ def test_host_source_validation_at_real_method_boundary(tmp_path, monkeypatch, c
     monkeypatch.setattr(hosts, '_admitted_source_roots', lambda *a: [tmp_path])
     monkeypatch.setattr(hosts, '_verify_admitted_source', lambda *a: None)
     monkeypatch.setattr(startup, 'renderer_closure', lambda *a: 'sha256:' + 'a' * 64)
+    if change == 'direct-boot': host.boot_manifest_path=tmp_path/'boot-manifest.json'
+    elif change == 'outside-boot': host.boot_manifest_path=tmp_path.parent/'foreign-manifest.json'
     if change == 'provider': c['provider_digest'] = 'sha256:' + '0' * 64
     elif change == 'source': record.source_digest = '0' * 64
     elif change == 'dependency': record.dependency_digest = '0' * 64
@@ -259,7 +261,7 @@ def test_host_source_validation_at_real_method_boundary(tmp_path, monkeypatch, c
     elif change == 'generation': host._remotion_host_session.frame_owner.generation += 1
     # Config snapshots mutable construction input.
     if change == 'provider': config = dataclasses.replace(config, binding=c)
-    if change is None: startup.validate_host(host, config, {})
+    if change in (None, "direct-boot"): startup.validate_host(host, config, {})
     else:
         with pytest.raises(FrameOwnerError): startup.validate_host(host, config, {})
 
@@ -406,3 +408,25 @@ def test_inflight_change_discards_delivered_result(private_host, monkeypatch, ch
     with pytest.raises((FrameOwnerError, EOFError, OSError, ValueError)):
         w.relay.exchange(request(), guard=lambda: None, cancelled=cancelled,
                          timeout=.05 if change == 'late' else 1)
+
+
+@pytest.mark.parametrize("available", [True,False])
+def test_static_visualization_requires_real_launch_readiness_for_authoring_scene(selected_activation,monkeypatch,available):
+    from astrid.core.rendering import remotion_runtime
+    preparation,host=selected_activation
+    host.capabilities["rendering.timeline_visualize"].preflight={}
+    host._remotion_closure_binding=object()  # Explicit fixture authority; no renderer executes.
+    host._authoring_scene_session=lambda environment:SimpleNamespace(frame_owner=SimpleNamespace(generation=1))
+    calls=[]
+    def status(**kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(available=available,project_dir=Path("/qualified/project"),node_executable=Path("/qualified/node"))
+    monkeypatch.setattr(remotion_runtime,"remotion_runtime_status",status)
+    if available:
+        _,environment=startup.configuration_from_activation(preparation)
+        assert environment["ASTRID_REMOTION_PROJECT_DIR"]=="/qualified/project"
+        assert environment["ASTRID_NODE_EXECUTABLE"]=="/qualified/node"
+    else:
+        with pytest.raises(FrameOwnerError,match="renderer_unavailable"):
+            startup.configuration_from_activation(preparation)
+    assert calls==[{"require_explicit_project":True}]

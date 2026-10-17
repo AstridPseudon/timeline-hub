@@ -131,3 +131,26 @@ def test_installed_pack_revision_never_uses_an_enclosing_repository(tmp_path, mo
     monkeypatch.setattr(generic_host,"_retained_python_boundary",lambda:({"installed-packages":installed},()))
     monkeypatch.setattr(custody_broker,"command_inventory_git",lambda *args:pytest.fail("ambient enclosing Git is not authority"))
     assert generic_host._vcs_revision(pack) == "unversioned"
+
+
+@pytest.mark.parametrize("change", [None,"unretained","foreign-prefix","changed-cfg","not-no-site","version"])
+def test_no_site_consumer_uses_only_the_retained_installed_prefix(tmp_path,monkeypatch,change):
+    from astrid.core.rendering import remotion_runtime as runtime
+    from astrid.core.execution import generic_host
+    prefix=tmp_path/"venv";base=tmp_path/"base";base.mkdir()
+    installed=prefix/"lib/python3.11/site-packages";installed.mkdir(parents=True)
+    cfg=prefix/"pyvenv.cfg";cfg.write_text("home = selected-base")
+    observed=dict(prefix=str(base),exec_prefix=str(base),base_prefix=str(base),base_exec_prefix=str(base),
+                  version="actual",cache_tag="cpython-311",platform="darwin",abi_flags="")
+    expected={**observed,"prefix":str(prefix),"exec_prefix":str(prefix)}
+    monkeypatch.setattr(runtime,"_observed_consumer_startup",lambda:dict(observed))
+    monkeypatch.setattr(runtime,"_consumer_uses_no_site",lambda:change!="not-no-site")
+    monkeypatch.setattr(generic_host,"_retained_python_boundary",lambda:None if change=="unretained" else
+                        ({"installed-packages":installed,"python-runtime":base},()))
+    monkeypatch.setattr(generic_host,"_RETAINED_SELECTED_PYTHON",{"startup_files":{str(cfg):{"sha256":sha(cfg)}}},raising=False)
+    if change=="foreign-prefix":expected.update(prefix=str(tmp_path/"foreign"),exec_prefix=str(tmp_path/"foreign"))
+    elif change=="changed-cfg":cfg.write_text("changed")
+    elif change=="version":expected["version"]="foreign"
+    actual=runtime._consumer_startup_facts(expected)
+    assert (actual==expected) is (change is None)
+    assert actual["version"]=="actual"

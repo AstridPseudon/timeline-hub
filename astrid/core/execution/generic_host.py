@@ -15033,7 +15033,8 @@ def _cli() -> int:
         try:
             preparation.start_authoring_scene()
         except Exception as exc:  # noqa: BLE001 - missing ownership leaves authoring unavailable.
-            print(json.dumps({"event": "authoring_scene_unavailable", "code": type(exc).__name__}),
+            print(json.dumps({"event": "authoring_scene_unavailable", "code": type(exc).__name__,
+                              "reason": str(exc) if re.fullmatch(r"[a-z][a-z0-9_]{0,127}", str(exc)) else "unavailable"}),
                   file=sys.stderr, flush=True)
         try:
             preparation.start_storage_preparation()
