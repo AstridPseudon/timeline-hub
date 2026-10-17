@@ -281,6 +281,35 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             cf.app_keyframes(owner.data, command.args)
         except cf.ClipFieldError as exc:
             raise CommandError(str(exc)) from None
+        from astrid.sdk.timeline.modifiers import validate_keyframes
+        dependencies = validate_keyframes(owner.data, command.args['keyframes'])
+        if dependencies and owner.is_audio:
+            raise CommandError('modifier keyframes require an owning visual clip subtree')
+        expectations = dict(command.expect or {})
+        for path, value in dependencies.items():
+            expectations.setdefault(write_key(selected[0], path, selected), dict(state='present', value=value))
+        command = replace(command, expect=expectations)
+    if entry.op in {'clip.set-param', 'clip.clear'}:
+        from astrid.sdk.timeline import modifiers
+        paths = command.args.get('keys', []) if entry.op == 'clip.clear' else [command.args.get('path', '')]
+        addressed = [modifiers.address(path)[0] for path in paths
+                     if modifiers.handles(path) and path != 'modifiers.order']
+        if addressed:
+            expectations = dict(command.expect or {})
+            dependencies = modifiers.validate_keyframes(owner.data, owner.data.get('keyframes'))
+            elements = {row['element'] for mid, row in modifiers.instances(owner.data).items() if mid in addressed}
+            consumed_any = False
+            for path, value in dependencies.items():
+                consumed = value['identity'] in elements if path.startswith('modifierDeclarations[') else modifiers.address(path)[0] in addressed
+                if consumed:
+                    consumed_any = True
+                    expectations.setdefault(write_key(selected[0], path, selected), dict(state='present', value=value))
+            # Removal consumes map presence, even when no curve exists yet.
+            # Ordinary static edits keep their historical guards unchanged.
+            if entry.op == 'clip.clear' or consumed_any:
+                expectations.setdefault(write_key(selected[0], 'keyframes', selected),
+                                        state_at(before_entities, selected[0], 'keyframes'))
+            command = replace(command, expect=expectations)
     if entry.op == "cut.move":
         # Geometry and membership are inputs to a grouped translation. Rebase
         # must not silently translate a different set or changed layer offsets.
@@ -607,6 +636,16 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
                     raise CommandError(f"Replay changed resolved direct targets: expected {command.resolved}, got {hit}")
                 call = replace(call, resolved=hit)
             expectations = dict(command.expect or {})
+            if entry.op == 'timeline.inverse':
+                from astrid.sdk.timeline.modifiers import validate_keyframes
+                affected = {write['id'] for write in canonical['writes']
+                            if write['path'] == 'keyframes' or write['path'].startswith('modifiers')}
+                for sid in affected & after_entities.keys():
+                    dependencies = validate_keyframes(after_entities[sid], after_entities[sid].get('keyframes'))
+                    for path, value in dependencies.items():
+                        expected = (dict(state='present', value=value) if path.startswith('modifierDeclarations[')
+                                    else state_at(before_entities, sid, path))
+                        expectations.setdefault(write_key(sid, path, call.resolved), expected)
             authorship = dict(command.authorship or {})
             actual_direct = set()
             for sid, path in paths:
@@ -970,7 +1009,10 @@ def changed_paths(before, after):
         if isinstance(left, dict) and isinstance(right, dict):
             for key in sorted(set(left) | set(right)):
                 child = _member_path(path, key)
-                if not path and key == "modifiers" and (key not in left or key not in right):
+                if not path and key == 'keyframes':
+                    if not _same_value(left.get(key), right.get(key)) or (key in left) != (key in right):
+                        yield child
+                elif not path and key == "modifiers" and (key not in left or key not in right):
                     from astrid.sdk.timeline.modifiers import paths
                     for prop, old, new in paths(left.get(key, []), right.get(key, [])):
                         yield from walk(old, new, prop)
@@ -1002,6 +1044,11 @@ def changed_paths(before, after):
 
 
 def state_at(entities, sid, path):
+    if sid in entities and path.startswith('modifierDeclarations['):
+        from astrid.sdk.timeline.modifiers import declaration_state
+        declaration = declaration_state(entities[sid], path)
+        if declaration is not None:
+            return declaration
     if path == "group_order" and sid.startswith("parent/shot-group:"):
         return dict(state="present", value=[key for key in entities if key.startswith("parent/shot-group:")])
     if path.startswith("clip_order[") and "/clip:" in sid:

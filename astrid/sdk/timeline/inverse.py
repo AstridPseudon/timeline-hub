@@ -72,6 +72,33 @@ def _tokens(path):
 
 
 def _write(data, path, state):
+    if path.startswith('modifiers[') or path == 'modifiers.order':
+        from astrid.sdk.timeline import modifiers
+        rows = data.setdefault('modifiers', [])
+        by_id = modifiers.instances(data)
+        if path == 'modifiers.order':
+            order = state.get('value')
+            if state['state'] != 'present' or not isinstance(order, list) or len(order) != len(by_id) or set(order) != set(by_id):
+                raise commands.CommandError('modifier inverse order requires the complete instance permutation')
+            data['modifiers'] = [by_id[mid] for mid in order]
+            return
+        mid, suffix = modifiers.address(path)
+        if suffix:
+            if mid not in by_id:
+                raise commands.CommandError(f'missing inverse modifier instance: {mid}')
+            _write(by_id[mid], suffix.lstrip('.'), state)
+        elif state['state'] == 'absent':
+            data['modifiers'] = [row for row in rows if row['id'] != mid]
+        else:
+            value = copy.deepcopy(state['value'])
+            modifiers.instances({'modifiers': [value]})
+            if value['id'] != mid:
+                raise commands.CommandError('inverse modifier identity mismatch')
+            if mid in by_id:
+                rows[rows.index(by_id[mid])] = value
+            else:
+                rows.append(value)
+        return
     keys = _tokens(path)
     node = data
     for index, key in enumerate(keys[:-1]):
@@ -394,6 +421,8 @@ def apply_inverse(self, writes, publication):
                 continue
             if path == "track_order" and "/track:" in write["id"]:
                 continue  # restore collection members before their guarded order
+            elif path == 'modifiers.order':
+                continue  # restore stable instances before their guarded order
             elif not path:
                 if write["id"] not in deleted_tracks:
                     _root(tl, write)
@@ -425,6 +454,14 @@ def apply_inverse(self, writes, publication):
         _root(tl, write)
     from astrid.sdk.timeline.transcripts import validate_bound_dependencies
     validate_bound_dependencies(tl)
+    from astrid.sdk.timeline import modifiers
+    for write in writes:
+        if write['path'] == 'modifiers.order':
+            _write(_entity(tl, write['id']), write['path'], write['after'])
+    for sid in {write['id'] for write in writes if write['path'].startswith('modifiers') or write['path'] == 'keyframes'}:
+        if sid in commands.entity_states(tl):
+            data = _entity(tl, sid)
+            modifiers.validate_keyframes(data, data.get('keyframes'))
     for write in writes:
         if write["path"] != "track_order" or "/track:" not in write["id"]:
             continue
@@ -499,7 +536,13 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
             raise commands.CommandError("track permutation cannot reconstruct guarded original membership")
         desired[(sid, path)] = dict(state="present", value=original_order)
     for effect in consequences:
-        if effect.get("cause") not in materializers:
+        removal = False
+        cause = effect.get('cause')
+        if isinstance(cause, int) and 0 <= cause < len(calls):
+            call = commands.EditCommand.coerce(calls[cause])
+            removal = (call.op == 'clip.clear' and any(key.startswith('modifiers[') for key in call.args.get('keys', []))
+                       and effect['path'] in {'keyframes', 'modifiers.order'})
+        if cause not in materializers and not removal:
             continue
         sid, path = effect["id"], effect["path"]
         old = original.get(sid, {})

@@ -242,6 +242,12 @@ def app_keyframes(clip: Mapping[str, Any], values: Mapping[str, Any]) -> dict[st
     origin = declare_keyframe_origin(clip, "app-seconds")["keyframeOrigin"]
     if values["keyframeOrigin"] != origin:
         raise ClipFieldError("App keyframes must retain the declared app-seconds keyframeOrigin")
+    from astrid.sdk.timeline import modifiers
+    from astrid.sdk.timeline._common import TimelineEditError
+    try:
+        modifiers.validate_keyframes(clip, values['keyframes'])
+    except (TimelineEditError, ValueError) as exc:
+        raise ClipFieldError(str(exc)) from None
     return {**copy.deepcopy(dict(clip)), **copy.deepcopy(dict(values))}
 
 

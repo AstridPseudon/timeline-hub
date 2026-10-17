@@ -6,10 +6,10 @@ an existing trusted local host/bundler, never a second renderer or Python plugin
 from __future__ import annotations
 
 import copy
-from contextlib import contextmanager
-from contextvars import ContextVar
 import hashlib
 import json
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -159,12 +159,17 @@ def component_instance(component, instance_id, params, *, host):
     binding = bind_component(component, host=host)
     if not isinstance(instance_id, str) or not instance_id.strip():
         raise CommandError("component instance id must be nonempty")
+    value = _component_params(binding, params)
+    return {"id": instance_id, "element": component.identity, "params": value}
+
+
+def _component_params(binding, params):
     try:
         value = json.loads(json.dumps(params, allow_nan=False))
         jsonschema.Draft202012Validator(binding["descriptor"]["params"]).validate(value)
     except (TypeError, ValueError, jsonschema.ValidationError) as exc:
         raise CommandError(f"invalid component params: {exc}") from exc
-    return {"id": instance_id, "element": component.identity, "params": value}
+    return value
 
 
 def component_bounds(component, target_bounds):
@@ -193,6 +198,20 @@ def component_discovery_scope(**discovery):
 def validate_component_reference(row):
     component = resolve_component(row["element"], **_DISCOVERY.get())
     component_instance(component, row["id"], row["params"], host="composition")
+
+
+def component_reference_binding(row):
+    """Exact admitted declaration/resource inputs for semantic curve guards."""
+    component = resolve_component(row["element"], **_DISCOVERY.get())
+    binding = bind_component(component, host="composition")
+    _component_params(binding, row['params'])
+    return {key: binding[key] for key in ("identity", "implementation_digest", "descriptor")}
+
+
+def component_declaration_binding(identity):
+    component = resolve_component(identity, **_DISCOVERY.get())
+    binding = bind_component(component, host="composition")
+    return {key: binding[key] for key in ("identity", "implementation_digest", "descriptor")}
 
 
 def component_add_call(component, *, select, instance_id, params, host):
