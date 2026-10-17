@@ -1849,7 +1849,6 @@ def _capture_terminal_fixture(observed_descendant, monkeypatch, *, change=None):
     owner, census, native, birth = _zombie_candidate(observed_descendant, monkeypatch)
     census[103].update(pid=103, uid=501)
     pre = {**native, "status": 2}
-    if change == "parent": pre["parent_pid"] = 999
     # This fixture already supplies a synthetic precise native identity. Supply
     # its matching start/clock provider too, without consuming another ordinary
     # observation or querying the real kernel for the synthetic PID.
@@ -1864,12 +1863,21 @@ def _capture_terminal_fixture(observed_descendant, monkeypatch, *, change=None):
     elif change == "microsecond": post["native"]["start_usec"] += 1
     elif change == "uid": post["native"]["uid"] += 1
     elif change == "pid": post["native"]["pid"] = 104
-    elif change == "census-microsecond": census[103]["start_usec"] += 1
-    elif change == "missing-uid": census[103].pop("uid")
     observations = iter(({"outcome": "LIVE", "native": pre,
                           "identity": {"pid": 103, "uid": 501, "parent_pid": 100, "birth_id": birth}}, post))
-    monkeypatch.setattr(custody, "ordinary_candidate_observation", lambda _: next(observations))
+    def observe(pid):
+        if pid == 103:
+            return next(observations)
+        row = census[pid]
+        return {"outcome": "LIVE", "native": dict(row), "identity": {
+            key: row[key] for key in ("pid", "uid", "parent_pid", "birth_id")}}
+    monkeypatch.setattr(custody, "ordinary_candidate_observation", observe)
     def capture(_):
+        # These cases test failed-capture qualification after a valid initial
+        # start witness, rather than failing before capture is attempted.
+        if change == "parent": pre["parent_pid"] = 999
+        elif change == "census-microsecond": census[103]["start_usec"] += 1
+        elif change == "missing-uid": census[103].pop("uid")
         raise custody.NativeTokenCaptureError("initial Mach lookup failed", substage=(
             "task_info_first" if change == "later-phase" else "task_name_for_pid"),
             kern_return=5, port_acquired=change in {"partial-port", "later-phase"})
@@ -1952,7 +1960,10 @@ def test_postcapture_nonqualifying_observations_stay_sticky(observed_descendant,
 
 def test_capture_failure_post_observation_precedes_persistence_and_persistence_cannot_clear_failure(observed_descendant, monkeypatch):
     owner, census, _, birth = _capture_terminal_fixture(observed_descendant, monkeypatch)
+    original_write = custody._atomic_owner_json
     def refuse(path, value):
+        if not value["capture_failures"]:
+            return original_write(path, value)
         assert value["capture_failures"][0]["observations"]["post"]["outcome"] == "ZOMBIE"
         raise OSError("evidence write refused")
     monkeypatch.setattr(custody, "_atomic_owner_json", refuse)
@@ -1965,11 +1976,20 @@ def test_capture_failure_post_observation_precedes_persistence_and_persistence_c
 
 def test_capture_terminal_candidate_cannot_hide_new_descendant(observed_descendant, monkeypatch):
     owner, census, _, birth = _capture_terminal_fixture(observed_descendant, monkeypatch)
-    census[104] = {"birth_id": "child", "parent_pid": 103, "pgid": 104}
+    census[104] = {**census[103], "pid": 104, "birth_id": "child", "parent_pid": 103,
+                   "pgid": 104, "start_usec": census[103]["start_usec"] + 1}
+    ancestry_checks = []
+    def fresh():
+        # A live descendant receives an ancestry recheck before admission.
+        # Its parent has already become a zero-authority terminal candidate.
+        assert 103 in owner._unadmitted_absent and 104 not in owner._handles
+        ancestry_checks.append(True)
+        return census
     with pytest.raises(custody.CustodyError, match="requires unadmitted absent ancestry"):
         owner.observe_census({100: "root", 103: birth}, census=census,
-                             fresh_census=lambda: pytest.fail("unproved subtree accepted"))
+                             fresh_census=fresh)
     assert owner._uncertain is not None and 103 not in owner._handles
+    assert ancestry_checks == [True] and 104 not in owner._handles
 
 
 def test_capture_terminal_observation_leaves_other_admitted_obligation_unchanged(observed_descendant, monkeypatch):
@@ -2400,6 +2420,10 @@ def _successful_capture_terminal_fixture(observed_descendant, monkeypatch, outco
     samples = iter(({"outcome": "LIVE", "native": pre, "identity": identity}, post))
     calls = []
     def observe(pid):
+        if pid == 104 and pid in census:
+            row = census[pid]
+            return {"outcome": "LIVE", "native": dict(row), "identity": {
+                key: row[key] for key in ("pid", "uid", "parent_pid", "birth_id")}}
         assert pid == 103
         calls.append("observation")
         return next(samples)
@@ -2463,7 +2487,9 @@ def test_post_token_absence_preserves_fail_closed_reconciliation(observed_descen
     if change == "missing-root": fresh = {}
     elif change == "root-zombie": fresh[100]["status"] = 5
     elif change == "root-birth": fresh[100]["birth_id"] = "foreign"
-    else: census[104] = {"parent_pid": 103, "birth_id": "unproved-child"}
+    else:
+        census[104] = {**census[103], "pid": 104, "parent_pid": 103,
+                       "birth_id": "unproved-child", "start_usec": census[103]["start_usec"] + 1}
     with pytest.raises(custody.CustodyError):
         owner.observe_census({103: birth}, census=census, fresh_census=lambda: fresh)
     assert owner._uncertain is not None and 103 not in owner._handles
@@ -3260,7 +3286,10 @@ def test_one_same_transaction_live_capture_retry_never_defers_history(observed_d
         assert len(captures)==2 and len(fresh_calls)>=2
         assert not owner._unadmitted_absent
         authority,reference=owner._handles[103][1]
-        assert authority._live_start_anchor is None and reference['target']['pid']==103
+        assert authority._live_start_anchor == custody._start_anchor({**native, 'start_abstime': 100})
+        assert authority._anchor_actor is owner.actor
+        assert reference['target']['pid'] == 103 and reference['target']['uid'] == identity['uid']
+        assert reference['target']['birth_id'] == birth
     else:
         with pytest.raises(custody.CustodyError):
             owner.observe_census({pid:row['birth_id'] for pid,row in census.items()},census=census,fresh_census=fresh)
