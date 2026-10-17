@@ -281,8 +281,7 @@ function ParameterKeyframeSection({
     (index: number, patch: Partial<ClipKeyframe>) => {
       const next = [...keyframes];
       next[index] = { ...next[index], ...patch };
-      // Sort by time after change
-      next.sort((a, b) => a.time - b.time);
+      // Array position is the authored identity; duplicate times are allowed.
       onChange(next);
     },
     [keyframes, onChange],

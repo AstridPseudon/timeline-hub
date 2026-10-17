@@ -1,3 +1,4 @@
+import { isAppKeyframeHistoryBatch, isAppKeyframeHistoryInverse, isAppKeyframePayload } from './appKeyframeHistory.ts';
 import { isFadeHistoryInverse } from './fadeHistory.ts';
 import { isTrackHistoryInverse } from './trackHistory.ts';
 import { isClipStructureInverse } from './clipStructureHistory.ts';
@@ -104,7 +105,7 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
   let parent = false;
   const transferBatch = isShotGroupTransferBatch(commands);
   const aggregateBatch = commands.length > 0 && commands.every((command) =>
-    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command) || isFadeHistoryInverse(command));
+    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command) || isFadeHistoryInverse(command) || isAppKeyframeHistoryInverse(command));
   const captionTarget = isTranscriptCaptionBatch(commands) ? transcriptBindTarget(commands[0]) : undefined;
   // Routing reads the handler's explicit args.target. The submitted registered
   // timeline-level bind retains select:null; this local view only captures custody.
@@ -132,7 +133,7 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
           return identity && `occurrence:${identity.occurrenceId}/clip:${identity.sourceClipId}` === relationChoices[0]?.target
             && command.select!.startsWith(`occurrence:${identity.occurrenceId}/clip:`);
         }).length === 1;
-      if ((!occurrenceOps.has(command.op) && !endChoice && !overlapTrim) || command.resolved?.length !== 1
+      if ((!occurrenceOps.has(command.op) && !isAppKeyframeHistoryBatch([command]) && !endChoice && !overlapTrim) || command.resolved?.length !== 1
         || command.resolved[0] !== command.select) return;
       const matches = source.config.clips.flatMap((clip) => {
         const identity = occurrenceIdentityFor(source, clip.id);
@@ -385,7 +386,7 @@ export function catalogTransitionGestureCommands(
   }];
 }
 
-/** Convert only the mounted clip-inspector fade and transition edits. Generic
+/** Convert only the mounted clip-inspector keyframe, fade and transition edits. Generic
  * patch/proposal writers continue using propertyGestureCommands unchanged. */
 export function compositeEffectGestureCommands(
   data: Pick<TimelineData, 'config' | 'tracks'>,
@@ -394,6 +395,21 @@ export function compositeEffectGestureCommands(
   options: { elementHost?: AstridElementHost | null } = {},
 ): CompositeGestureResult {
   const entries = Object.entries(patch);
+  if (entries.some(([key]) => key === 'keyframes' || key === 'keyframeOrigin')) {
+    // Only the inspector's complete pair is this family. Unsupported mixed
+    // operations keep the caller's whole compatibility route.
+    if (entries.length !== 2 || !hasOwn(patch, 'keyframes') || !hasOwn(patch, 'keyframeOrigin')) return { handled: true };
+    const target = gestureTarget(data, id);
+    if (!target) return { handled: true, refused: true };
+    const clip = gestureSource(data, id);
+    const origin = clip.keyframeOrigin === undefined ? -clip.at : clip.keyframeOrigin;
+    if (!isAppKeyframePayload(patch.keyframes) || typeof origin !== 'number' || !Number.isFinite(origin)
+      || patch.keyframeOrigin !== origin) return { handled: true, refused: true };
+    return { handled: true, commands: [command(target, 'clip.set', {
+      keyframes: structuredClone(patch.keyframes), keyframeOrigin: origin,
+    }, { keyframes: state(clip.keyframes, hasOwn(clip, 'keyframes')),
+      keyframeOrigin: state(clip.keyframeOrigin, hasOwn(clip, 'keyframeOrigin')) })] };
+  }
   const hasTransition = entries.some(([key]) => key === 'transition' || key === 'elementRef');
   if (hasTransition) {
     if (!hasOwn(patch, 'transition') || entries.some(([key]) => !['transition', 'elementRef'].includes(key))) {

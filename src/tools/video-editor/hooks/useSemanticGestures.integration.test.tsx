@@ -61,6 +61,7 @@ import { readAudioLanePresentation } from '../data/audioLanePresentation.ts';
 import type { CanonicalClipIdentity } from '../data/shotCompositionProjection.ts';
 import { planClipDrag } from '../lib/clip-drag-planner.ts';
 import { createTimelineEditability } from '../lib/timeline-editability.ts';
+import { ClipEffectsTab } from '@/tools/video-editor/components/PropertiesPanel/ClipEffectsTab.tsx';
 import { ClipEntranceEffectField } from '@/tools/video-editor/components/PropertiesPanel/ClipEntranceEffectField.tsx';
 import { ClipTransitionSection } from '@/tools/video-editor/components/PropertiesPanel/ClipTransitionSection.tsx';
 
@@ -6019,4 +6020,201 @@ describe('W64 mounted params native history', () => {
     history.unmount(); h.unmount();
   });
 
+});
+
+// W26 uses the existing synthetic SDK acceptance port, never a JS evaluator.
+function appKeyframeSource(initial: TimelineData, requests: CommitRequest[], variant?: 'stale' | 'stale-origin' | 'refused') {
+  return JSON.parse(execFileSync(process.env.ASTRID_TEST_PYTHON!, ['-B', path.resolve(process.cwd(), 'src/tools/video-editor/hooks/appKeyframesHistory.fixture.py')], {
+    input: JSON.stringify({ config: initial.config, registry: initial.registry, requests, variant }), encoding: 'utf8', env: process.env,
+  })) as ReturnType<typeof groupTransferSource> & { readback: unknown };
+}
+const w26Keys = {
+  opacity: [
+    { time: 7.125, value: 0.7, interpolation: 'linear', easing: 'ease-in', opaque: { siblings: [null, false, { retain: 1.125 }] } },
+    { time: 0.25, value: 0.2, interpolation: 'hold' },
+    { time: 7.125, value: 0.3, interpolation: 'hold', duplicate: true },
+  ],
+  'custom.param[0]': [{ time: -0.25, value: 'exact', interpolation: 'hold', opaque: null }],
+};
+async function appKeyframeData(prior: 'absent' | 'null' | 'object' | 'declared', occurrence = false) {
+  const base = await fadeHistoryData(occurrence, 'absent');
+  const clips = base.config.clips.map((clip, index) => {
+    if (index !== 0) return clip;
+    const source = { ...(clip.app?.canonical?.sourceClip ?? clip), at: 2.375, from: 1.125, to: 3.625, speed: 1.25,
+      ...(prior === 'absent' ? {} : { keyframes: prior === 'null' ? null : structuredClone(w26Keys) }),
+      ...(prior === 'declared' ? { keyframeOrigin: -1.375 } : {}),
+    };
+    return occurrence ? { ...source, id: clip.id, app: { ...source.app, canonical: { ...clip.app!.canonical!, sourceClip: source } } } : source;
+  });
+  return buildTimelineData({ ...base.config, clips } as never, base.registry, undefined, 1, undefined, base.head);
+}
+function mountAppKeyframes(h: Awaited<ReturnType<typeof setup>>, onChange = h.result.current.editing.handleSelectedClipChange) {
+  const clip = h.result.current.data!.resolvedConfig.clips[0];
+  return render(<ClipEffectsTab clip={clip} onChange={onChange} effectResources={{ effects: [], entrance: [], exit: [], continuous: [], canCreateEffect: false, canUpdateEffect: false } as never}
+    clipDescriptor={{ paramsSchema: { kind: 'editor', params: [{ name: 'opacity', label: 'Opacity', type: 'number', default: 0.5 }] } } as never}
+    clipTypeResolution={{ status: 'unavailable' } as never} isEffectLayer={false} isSequenceClip={false}
+    registry={{}} currentTime={3.125} creatorOpen={false} setCreatorOpen={vi.fn()} editingEffect={null} setEditingEffect={vi.fn()} />);
+}
+function captureW26(name: string, data: unknown) {
+  if (process.env.E_W26_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W26_EVIDENCE_DIR, name + '.json'), JSON.stringify(data, null, 2));
+}
+describe('W26 actual inspector SDK native history', () => {
+  it.each(['absent', 'null'] as const)('%s add uses the actual inspector pair and accepted whole-document Undo/receipt-only Redo', async prior => {
+    const initial = await appKeyframeData(prior); const requests: CommitRequest[] = []; let proof!: ReturnType<typeof appKeyframeSource>;
+    let release!: () => void; const pending = new Promise<void>(resolve => { release = resolve; });
+    const h = await setup(async request => { requests.push(request); if (requests.length === 1) await pending;
+      proof = appKeyframeSource(initial, requests); captureW26('w26-add-' + prior, { initial, requests, proof });
+      return { acceptedResult: proof.result, readbackConfig: fadeReadback(initial, proof) };
+    }, false, initial);
+    const history = mountFadeHistory(h); const ui = mountAppKeyframes(h);
+    fireEvent.click(screen.getByRole('button', { name: 'Add keyframe at 3.13s' }));
+    expect(history.result.current.canUndo).toBe(false); act(() => history.result.current.undo()); release();
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    expect(requests[0].change).toEqual({ commands: [{ op: 'clip.set', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { keyframes: { opacity: [{ time: 3.125, value: 0.5, interpolation: 'linear' }] }, keyframeOrigin: -2.375 },
+      expect: { keyframes: prior === 'absent' ? { state: 'absent' } : { state: 'present', value: null }, keyframeOrigin: { state: 'absent' } },
+    }] });
+    const forward = structuredClone(proof.results[0].canonical_document);
+    act(() => history.result.current.onRemoteData(initial, h.result.current.data!));
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    expect(proof.results[1].canonical_document).toEqual(proof.before);
+    act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(proof.results[2].canonical_document).toEqual(forward); expect(proof.readback).toEqual(forward);
+    for (let index = 0; index < 2; index++) expect(requests[index + 1].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null,
+      args: { publication: proof.results[index].accepted_publication_id,
+        writes: proof.results[index].change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })) } }] });
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    expect(h.getCurrentConfig()).toEqual(fadeReadback(initial, proof)); expect(proof.accept_counts).toEqual([1, 1, 1]);
+    expect(h.compatibilityRequests).toEqual([]); ui.unmount(); history.unmount(); h.unmount();
+  }, 180_000);
+  it.each(['add', 'edit', 'remove'] as const)('%s preserves the actual authored array and opaque siblings on forward acceptance', async operation => {
+    const initial = await appKeyframeData('declared'); let proof!: ReturnType<typeof appKeyframeSource>;
+    let emitted!: import('../lib/timeline-data.ts').ClipEditorPatch;
+    const h = await setup(async request => { proof = appKeyframeSource(initial, [request]); captureW26('w26-' + operation, { initial, request, proof, emitted });
+      return { acceptedResult: proof.result, readbackConfig: fadeReadback(initial, proof) }; }, false, initial);
+    const history = mountFadeHistory(h); const ui = mountAppKeyframes(h, patch => { emitted = patch; h.result.current.editing.handleSelectedClipChange(patch); });
+    if (operation === 'add') fireEvent.click(screen.getByRole('button', { name: 'Add keyframe at 2.13s' }));
+    if (operation === 'remove') fireEvent.click(screen.getByRole('button', { name: 'Remove keyframe at index 1' }));
+    if (operation === 'edit') { const input = screen.getAllByTestId('keyframe-row')[0].querySelector('input')!;
+      fireEvent.change(input, { target: { value: '9.125' } }); }
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expect(proof.result.status).toBe('accepted'); expect(history.result.current.canUndo).toBe(true);
+    const keys = structuredClone(w26Keys);
+    if (operation === 'add') keys.opacity.push({ time: 2.125, value: expect.any(Number), interpolation: 'linear' } as never);
+    if (operation === 'remove') keys.opacity.splice(1, 1);
+    if (operation === 'edit') keys.opacity[0].time = 9.125;
+    expect(emitted).toEqual({ keyframes: keys, keyframeOrigin: -1.375 });
+    expect(proof.readback).toEqual(proof.result.canonical_document); expect(h.compatibilityRequests).toEqual([]);
+    ui.unmount(); history.unmount(); h.unmount();
+  }, 90_000);
+});
+
+describe('W26 actual provider guards', () => {
+  it.each(['missing', 'extra', 'duplicate', 'foreign', 'malformed'] as const)('%s direct receipt refuses acknowledgement and history', async kind => {
+    const initial = await appKeyframeData('object'); let proof!: ReturnType<typeof appKeyframeSource>; let returned!: CommitResult;
+    const h = await setup(async request => {
+      proof = appKeyframeSource(initial, [request]); returned = structuredClone(proof.result);
+      if (kind === 'missing') returned.change.direct_writes.pop();
+      if (kind === 'extra') returned.change.direct_writes.push({ ...returned.change.direct_writes[0], path: 'params.keyframes' });
+      if (kind === 'duplicate') returned.change.direct_writes[1] = returned.change.direct_writes[0];
+      if (kind === 'foreign') returned.change.direct_writes[0].id = 'parent/clip:clip-2';
+      if (kind === 'malformed') delete (returned.change.direct_writes[0].before as Record<string, unknown>).state;
+      captureW26('w26-receipt-' + kind, { initial, request, proof, returned });
+      return { acceptedResult: returned };
+    }, false, initial);
+    const history = mountFadeHistory(h); const ui = mountAppKeyframes(h);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove keyframe at index 1' }));
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'), { timeout: 60_000 });
+    expect(proof.result.status).toBe('accepted'); expect(h.savedSeqRef.current).toBe(0);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    act(() => { history.result.current.undo(); history.result.current.redo(); });
+    expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
+    ui.unmount(); history.unmount(); h.unmount();
+  }, 90_000);
+  it.each(['stale', 'stale-origin', 'refused', 'no_change'] as const)('%s uses the actual caller and never leaves usable history', async kind => {
+    const initial = await appKeyframeData(kind === 'no_change' ? 'declared' : 'object', kind === 'refused');
+    let proof!: ReturnType<typeof appKeyframeSource>;
+    const h = await setup(async request => { proof = appKeyframeSource(initial, [request], kind === 'no_change' ? undefined : kind);
+      captureW26('w26-boundary-' + kind, { initial, request, proof }); return { acceptedResult: proof.result }; }, false, initial, 1, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h);
+    if (kind === 'no_change') act(() => h.result.current.editing.handleSelectedClipChange({ keyframes: structuredClone(w26Keys) as never, keyframeOrigin: -1.375 }));
+    else { const ui = mountAppKeyframes(h); fireEvent.click(screen.getByRole('button', { name: 'Remove keyframe at index 1' })); ui.unmount(); }
+    await waitFor(() => expect(proof).toBeDefined(), { timeout: 60_000 });
+    expect(proof.result.status).toBe(kind === 'no_change' ? 'no_change' : 'refused');
+    if (kind === 'no_change') await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    else { await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error')); expect(h.savedSeqRef.current).toBe(0); expect(proof.accept_counts).toEqual([0]); expect(proof.readback).toEqual(proof.before); }
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    act(() => { history.result.current.undo(); history.result.current.redo(); }); expect(h.requests).toHaveLength(1);
+    expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  }, 90_000);
+  it('records exact D6a9 incomplete Undo receipts and refuses to fabricate Redo', async () => {
+    const initial = await appKeyframeData('object', true); const requests: CommitRequest[] = []; let proof!: ReturnType<typeof appKeyframeSource>;
+    const h = await setup(async request => { requests.push(request); proof = appKeyframeSource(initial, requests);
+      captureW26('w26-sdk-incomplete-undo', { initial, requests, proof });
+      return { acceptedResult: proof.result, readbackConfig: fadeReadback(initial, proof) }; }, false, initial, 1, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h); const ui = mountAppKeyframes(h);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove keyframe at index 1' }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'), { timeout: 60_000 });
+    expect(proof.results[1].status).toBe('accepted'); expect(proof.results[1].canonical_document).toEqual(proof.before);
+    expect(proof.results[1].change.direct_writes.some(write => write.path === 'keyframes')).toBe(false);
+    expect(proof.results[1].change.consequences.some(write => write.path.startsWith('keyframes.'))).toBe(true);
+    expect(history.result.current.canRedo).toBe(false); expect(h.savedSeqRef.current).toBe(1);
+    act(() => history.result.current.redo()); expect(h.requests).toHaveLength(2);
+    expect(h.compatibilityRequests).toEqual([]); ui.unmount(); history.unmount(); h.unmount();
+  }, 180_000);
+});
+
+describe('W26 publication and caller refusal', () => {
+  it('actual native Undo rejects a wrong publication and never creates Redo', async () => {
+    const initial = await appKeyframeData('absent'); const requests: CommitRequest[] = []; let proof!: ReturnType<typeof appKeyframeSource>;
+    const h = await setup(async request => {
+      const submitted = structuredClone(request);
+      if (requests.length === 1) (submitted.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands[0].args.publication = 'foreign-publication';
+      requests.push(submitted); proof = appKeyframeSource(initial, requests);
+      captureW26('w26-wrong-publication', { initial, requests, actualAppRequests: h.requests, proof });
+      return { acceptedResult: proof.result, ...(proof.result.status === 'accepted' ? { readbackConfig: fadeReadback(initial, proof) } : {}) };
+    }, false, initial);
+    const history = mountFadeHistory(h); const ui = mountAppKeyframes(h);
+    fireEvent.click(screen.getByRole('button', { name: 'Add keyframe at 3.13s' }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true)); act(() => history.result.current.undo());
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'), { timeout: 60_000 });
+    expect(proof.results[1].status).toBe('conflict'); expect(proof.accept_counts).toEqual([1, 0]);
+    expect(proof.readback).toEqual(proof.results[0].canonical_document);
+    expect(history.result.current.canRedo).toBe(false); act(() => history.result.current.redo()); expect(h.requests).toHaveLength(2);
+    expect(h.compatibilityRequests).toEqual([]); ui.unmount(); history.unmount(); h.unmount();
+  }, 180_000);
+  it.each(['origin mismatch', 'nonfinite key', 'invalid key value'] as const)('%s refuses the actual selected operation before local or provider mutation', async kind => {
+    const initial = await appKeyframeData('object'); const h = await setup(undefined, false, initial); const history = mountFadeHistory(h);
+    const keyframes = structuredClone(w26Keys);
+    if (kind === 'nonfinite key') keyframes.opacity[0].time = NaN;
+    if (kind === 'invalid key value') keyframes.opacity[0].value = null as never;
+    act(() => h.result.current.editing.handleSelectedClipChange({ keyframes: keyframes as never, keyframeOrigin: kind === 'origin mismatch' ? 0 : -2.375 }));
+    expect(h.result.current.editSeqRef.current).toBe(0); expect(h.result.current.data).toBe(initial);
+    expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    history.unmount(); h.unmount();
+  });
+});
+
+describe('W26 whole-operation compatibility boundary', () => {
+  it.each(['missing pair', 'mixed property', 'mixed movement'] as const)('%s retains the entire existing fallback without a partial typed command', async kind => {
+    const initial = await appKeyframeData('object'); const h = await setup(undefined, false, initial);
+    const patch = { keyframes: structuredClone(w26Keys), ...(kind === 'missing pair' ? {} : { keyframeOrigin: -2.375 }),
+      ...(kind === 'mixed property' ? { opacity: 0.4 } : {}), ...(kind === 'mixed movement' ? { at: 2.5 } : {}) };
+    act(() => h.result.current.editing.handleSelectedClipChange(patch as never));
+    expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined(); expect(h.result.current.editSeqRef.current).toBe(1);
+    await waitFor(() => expect(h.compatibilityRequests).toHaveLength(1));
+    expect(['error', 'retrying']).toContain(h.result.current.persistence.saveStatus);
+    expect(h.requests).toEqual([]); expect(h.savedSeqRef.current).toBe(0);
+    captureW26('w26-fallback-' + kind.replaceAll(' ', '-'), { compatibility: h.compatibilityRequests, typed: h.requests, patch });
+    h.unmount();
+  });
 });

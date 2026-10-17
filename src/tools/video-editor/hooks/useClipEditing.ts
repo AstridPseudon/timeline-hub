@@ -253,7 +253,11 @@ export function useClipEditing({
     }
 
     const { at: _at, ...metaPatch } = patch;
-    const composite = compositeEffectGestureCommands(current, selectedClipId, metaPatch, { elementHost });
+    // A keyframe command owns only the inspector pair. Keep mixed movement or
+    // property patches on the existing whole-operation compatibility route.
+    const compositePatch = Object.prototype.hasOwnProperty.call(metaPatch, 'keyframes')
+      || Object.prototype.hasOwnProperty.call(metaPatch, 'keyframeOrigin') ? patch : metaPatch;
+    const composite = compositeEffectGestureCommands(current, selectedClipId, compositePatch, { elementHost });
     if (composite.refused) return;
     const effectivePatch = composite.commands?.length && composite.localPatch ? composite.localPatch : metaPatch;
     const affectsDuration = patchAffectsDuration(effectivePatch as Partial<ClipMeta>);
