@@ -1,3 +1,4 @@
+import { isPositionResetInverse } from './positionReset.ts';
 import { isFadeHistoryInverse } from './fadeHistory.ts';
 import { isTrackHistoryInverse } from './trackHistory.ts';
 import { isClipStructureInverse } from './clipStructureHistory.ts';
@@ -104,7 +105,7 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
   let parent = false;
   const transferBatch = isShotGroupTransferBatch(commands);
   const aggregateBatch = commands.length > 0 && commands.every((command) =>
-    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command) || isFadeHistoryInverse(command));
+    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command) || isFadeHistoryInverse(command) || isPositionResetInverse(command));
   const captionTarget = isTranscriptCaptionBatch(commands) ? transcriptBindTarget(commands[0]) : undefined;
   // Routing reads the handler's explicit args.target. The submitted registered
   // timeline-level bind retains select:null; this local view only captures custody.

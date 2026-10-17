@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { positionResetCommands } from '../../commands/positionResetCommands.ts';
 import { updateClipInConfig } from '@/tools/video-editor/lib/editor-utils.ts';
 import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { ClipEditingContext } from './types.ts';
@@ -18,7 +19,12 @@ export function useClipPositioning(ctx: ClipEditingContext) {
       return;
     }
 
-    const nextConfig = updateClipInConfig(resolvedConfig, selectedClipId, (clip) => ({
+    const current = dataRef.current;
+    if (!current) return;
+    const editCommands = positionResetCommands(current, [selectedClipId]);
+    if (!editCommands) return;
+
+    const nextConfig = updateClipInConfig(current.resolvedConfig, selectedClipId, (clip) => ({
       ...clip,
       x: undefined,
       y: undefined,
@@ -29,8 +35,8 @@ export function useClipPositioning(ctx: ClipEditingContext) {
       cropLeft: undefined,
       cropRight: undefined,
     }));
-    applyConfigEdit(nextConfig, { selectedClipId });
-  }, [applyConfigEdit, resolvedConfig, selectedClipId]);
+    applyConfigEdit(nextConfig, { selectedClipId, editCommands });
+  }, [applyConfigEdit, dataRef, resolvedConfig, selectedClipId]);
 
   const handleResetClipsPosition = useCallback((clipIds: string[]) => {
     const current = dataRef.current;
@@ -42,6 +48,11 @@ export function useClipPositioning(ctx: ClipEditingContext) {
     if (validClipIds.length === 0) {
       return;
     }
+
+    // Preserve uploading-placeholder filtering, but never partially reset a stale member.
+    if (clipIds.some(id => !id.startsWith('uploading-') && !validClipIds.includes(id))) return;
+    const editCommands = positionResetCommands(current, validClipIds);
+    if (!editCommands) return;
 
     const metaUpdates = Object.fromEntries(
       validClipIds.map((clipId) => [clipId, {
@@ -56,7 +67,7 @@ export function useClipPositioning(ctx: ClipEditingContext) {
       }]),
     ) as Record<string, Partial<ClipMeta>>;
 
-    applyRowsEdit(current.rows, metaUpdates);
+    applyRowsEdit(current.rows, metaUpdates, undefined, undefined, { editCommands });
   }, [applyRowsEdit, dataRef, getValidClipIds]);
 
   return { handleResetClipPosition, handleResetClipsPosition };
