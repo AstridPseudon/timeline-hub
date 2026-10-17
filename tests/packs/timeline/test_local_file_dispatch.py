@@ -209,6 +209,39 @@ def test_public_managed_routes_still_enter_acquisition(public_cli, args):
     assert 'ACQUISITION_FORBIDDEN' in events
 
 
+def test_public_managed_media_refusal_preserves_valid_checkout(public_cli, local, tmp_path):
+    checkout = Checkout.load(local)
+    checkout.clip('R').nudge(0.1)
+    checkout.save(quiet=True)
+    checkout.clip('R').nudge(0.1)
+    checkout.save(quiet=True)
+    checkout.undo()
+
+    def state():
+        rows = journal.read(local.with_suffix('.json.journal.jsonl'))
+        return dict(
+            document=Checkout.load(local).document(),
+            file=local.read_text(),
+            history={p.name: p.read_text() for p in store._history_dir(local).glob('*.json')},
+            redo={p.name: p.read_text() for p in store._redo_dir(local).glob('*.json')},
+            journal=local.with_suffix('.json.journal.jsonl').read_text(),
+            cursor=dict(sequence=rows[-1].seq, hash=rows[-1].hash, id=rows[-1].id),
+        )
+
+    before_bytes = local.read_bytes()
+    before = state()
+    assert before['history'] and before['redo']
+    (tmp_path / 'before-refusal.json').write_text(json.dumps(before, indent=2))
+    code, out, err, events = public_cli(
+        'edit', '--file', local, '--clip', 'R', '--swap-asset', 'run:managed/media#0')
+    after = state()
+    (tmp_path / 'after-refusal.json').write_text(json.dumps(after, indent=2))
+    assert (code, out, err) == (86, '', '')
+    assert 'ACQUISITION_FORBIDDEN' in events
+    assert local.read_bytes() == before_bytes
+    assert after == before
+
+
 def test_no_file_current_project_is_resolved_after_acquisition(monkeypatch, capsys):
     from contextlib import contextmanager
     from astrid.sdk.client import AstridClient
