@@ -1925,6 +1925,8 @@ class _ConfinementPolicy:
     bootstrap_search_roots: tuple[Path, ...] = ()
     executable_bindings: tuple[ExecutableBinding, ...] = ()
     executable_directory: Path | None = None
+    renderer_transport: Any = None
+    renderer_reads: Any = None
 
 
 @dataclass(frozen=True)
@@ -2287,6 +2289,37 @@ def _confined_launch_plan(
     # monotonic birth fence handles exec token changes during live custody.
     # No mach-lookup, IPC, socket, process-fork or broad process grant is added.
     rules = ["(version 1)", "(deny default)", *process_rules, "(allow sysctl-read)"]
+    if policy.renderer_reads is not None:
+        from .renderer_transport import QualifiedRendererReads
+
+        if type(policy.renderer_reads) is not QualifiedRendererReads:
+            raise HostError("renderer read closure requires completed launch validation")
+        qualified_roots, qualified_literals = policy.renderer_reads.validate(policy)
+        for resource in (*qualified_roots, *qualified_literals):
+            rules.extend(f'(allow file-read-metadata (literal "{quote(p)}"))' for p in resource.parents)
+        rules.extend(f'(allow file-read* (subpath "{quote(p)}"))' for p in qualified_roots)
+        rules.extend(f'(allow file-map-executable (subpath "{quote(p)}"))' for p in qualified_roots)
+        rules.extend(f'(allow file-read* (literal "{quote(p)}"))' for p in qualified_literals)
+    if policy.renderer_transport is not None:
+        from .renderer_transport import RetainedRendererTransport
+
+        if type(policy.renderer_transport) is not RetainedRendererTransport or not policy.workload_process_creation:
+            raise HostError("renderer transport requires its retained Host owner")
+        ports = policy.renderer_transport.validate(policy)
+        browser = policy.renderer_transport.browser
+        if browser is not None:
+            # Signature-qualified installed app closure; never a task path or
+            # implicit Remotion browser download/cache.
+            browser_root = browser.parent.parent
+            rules.append(f'(allow file-read* (subpath "{quote(browser_root)}"))')
+            rules.append(f'(allow file-map-executable (subpath "{quote(browser_root)}"))')
+        # Inbound permits adopting/accepting the already-listening socket.
+        # Bind stays denied, including wildcard bind on these same ports.
+        rules.extend(f'(allow network-inbound (local tcp4 "localhost:{port}"))' for port in ports[:1])
+        rules.extend(f'(allow network-outbound (remote tcp4 "localhost:{port}"))' for port in ports)
+        # macOS inbound permission otherwise also admits a wildcard bind on
+        # that port. An explicit bind deny preserves inherited listen/accept.
+        rules.append('(deny network-bind)')
     # Nonrecursive bootstrap metadata exceptions, shared with the spike model.
     ancestors = sorted({p for resource in (*reads, *writes, private, *bootstrap_roots, *file_aliases)
                         for p in resource.parents}, key=str)

@@ -197,6 +197,7 @@ class HostRenderCommandBridge(pipe.HostPipeBridge):
         self.stdout, self.stderr = bytearray(), bytearray()
         self.children = set()
         self.child_bridges = []
+        self.renderer_transport = None
         self._closed = False
         broker = process._astrid_custody._launch_broker
         if (
@@ -283,25 +284,35 @@ class HostRenderCommandBridge(pipe.HostPipeBridge):
             return self._launch_locked(argv, **options)
 
     def _launch_locked(self, argv, **options):
+        from dataclasses import replace
+
         from .generic_host import _confined_launch_plan
 
         backend = options.pop("_backend", False)
         cli_environment = options.pop("_cli_environment", None)
         # This is a private host callback, never received from the pipe.
+        policy = self.policy
         if backend:
             args = argv[1:]
             startup = (
                 "import json,os,runpy,sys; sys.path.extend(json.loads(sys.argv[1])); "
-                "os.environ.update(json.loads(sys.argv[2])); sys.argv=sys.argv[3:]; "
+                "selected=json.loads(sys.argv[2]); "
+                "[os.environ.pop(k,None) for k in ('PYTHONNOUSERSITE','LC_ALL','LC_CTYPE') if k not in selected]; "
+                "os.environ.update(selected); sys.argv=sys.argv[3:]; "
                 "from astrid.core.execution.render_command_pipe import install_render_command_client; "
                 "install_render_command_client(); runpy.run_path(sys.argv[0],run_name='__main__')"
             )
             from astrid.core.subprocess_env import build_child_subprocess_env
 
             host_env = build_child_subprocess_env(base=self.environment, parent=self.environment)
-            # Host-selected render qualification references only. Caller env
-            # overlays never cross the pipe; PATH/HOME/TMP stay policy-owned.
-            host_env = {k: v for k, v in host_env.items() if k.startswith("ASTRID_")}
+            # Restore the exact already-qualified worker context. These values
+            # were fixed by Host admission, never received on the backend pipe.
+            if 'PYTHONPATH' in self.environment:
+                host_env['PYTHONPATH'] = self.environment['PYTHONPATH']
+            from .renderer_transport import QualifiedRendererReads
+
+            reads = QualifiedRendererReads.admit(closure=self.closure, environment=host_env, policy=self.policy)
+            policy = replace(self.policy, renderer_reads=reads)
             host_env.update(
                 ASTRID_INTERNAL_INVOCATION="1", ASTRID_RENDER_BACKEND="rendering.remotion"
             )
@@ -331,16 +342,23 @@ class HostRenderCommandBridge(pipe.HostPipeBridge):
                 json.dumps(argv),
                 json.dumps(cli_environment),
             ]
+        if cli_environment is not None:
+            if self.renderer_transport is None:
+                raise ValueError("Remotion CLI lacks its retained owner transport")
+            policy = replace(policy, renderer_transport=self.renderer_transport)
         plan = _confined_launch_plan(
             argv,
-            policy=self.policy,
+            policy=policy,
             cwd=Path(options["cwd"]),
             parent_environment=options.get("env"),
         )
         try:
+            launch_options = plan.subprocess_options()
+            if cli_environment is not None:
+                launch_options['stdin'] = self.renderer_transport.consume()
             process = popen_owned_process(
                 list(plan.argv),
-                **plan.subprocess_options(),
+                **launch_options,
                 text=True,
                 start_new_session=options.get("start_new_session", True),
             )
@@ -354,7 +372,7 @@ class HostRenderCommandBridge(pipe.HostPipeBridge):
             try:
                 bridge = HostRenderCommandBridge(
                     process,
-                    policy=self.policy,
+                    policy=policy,
                     backend_root=self.backend_root,
                     admission=self.binding["admission"],
                     launch_digest=_digest([plan.argv, str(plan.cwd), plan.environment]),
@@ -457,6 +475,7 @@ class HostRenderCommandBridge(pipe.HostPipeBridge):
         if self.closure is None or project != self.closure.project:
             raise ValueError("Remotion CLI requires the host admitted installed closure")
         cli = self.closure.validate(project)
+        self.closure.require_retained_transport()
         if Path(args[1]).resolve(strict=True) != cli.resolve(strict=True) or args[2] != "render":
             raise ValueError("Remotion CLI operation changed")
         if args[3] not in {"TimelineComposition", "AstridTimeline"}:
@@ -539,6 +558,23 @@ class HostRenderCommandBridge(pipe.HostPipeBridge):
             and "ASTRID_REMOTION_STREAM_FRAMES" not in environment
         ):
             raise ValueError("Remotion streaming allocation lacks its finite operation")
+        if self.renderer_transport is None:
+            raise ValueError("Remotion CLI has no retained transport")
+        endpoint = self.renderer_transport.metadata()
+        if [arg for arg in args if arg.startswith('--port=')] != [f"--port={endpoint['port']}"]:
+            raise ValueError("Remotion CLI port differs from retained transport")
+        environment = {**environment, 'ASTRID_REMOTION_RETAINED_ENDPOINT': json.dumps(endpoint)}
+        browser = self.renderer_transport.select_browser()
+        environment['ASTRID_REMOTION_RETAINED_BROWSER'] = str(browser)
+        # Existing declaration-driven alias selection must use the same
+        # qualified pack corpus rather than the installed project's parent.
+        reads = self.policy.renderer_reads
+        if reads is None:
+            raise ValueError('Remotion CLI lacks its qualified source read closure')
+        from astrid.core.rendering.remotion_runtime import _validated_runtime
+
+        qualified = _validated_runtime(project, environment=dict(reads.environment), python_executable=sys.executable)
+        environment['ASTRID_PACKS_PATH'] = os.pathsep.join(qualified['registry']['renderer']['observation']['roots'])
         process = self._launch(args, cwd=str(project), _cli_environment=environment)
         registration = process._astrid_custody._launch_broker.registration
         event = {
@@ -631,6 +667,17 @@ class HostRenderCommandBridge(pipe.HostPipeBridge):
                 result = self._backend(frame["request"])
             elif frame["operation"] == "remotion_cli":
                 result = self._cli(frame["request"])
+            elif frame["operation"] == "renderer_endpoint":
+                if self.role != 'backend' or frame['request'] != {} or self.renderer_transport is not None or self.closure is None:
+                    raise ValueError('renderer transport requires its original admitted backend')
+                from .renderer_transport import RetainedRendererTransport
+
+                self.renderer_transport = RetainedRendererTransport(bridge=self, closure=self.closure, policy=self.policy)
+                result = self.renderer_transport.metadata()
+            elif frame["operation"] == "renderer_assets":
+                if self.role != 'backend' or set(frame['request']) != {'root'} or self.renderer_transport is None:
+                    raise ValueError('renderer assets require their retained backend transport')
+                result = self.renderer_transport.assets(frame['request']['root'])
             else:
                 raise ValueError("unsupported render command operation")
         except BaseException as error:
@@ -682,6 +729,8 @@ class HostRenderCommandBridge(pipe.HostPipeBridge):
                     stream.close()
         for bridge in self.child_bridges:
             bridge.finish(cancelled=cancelled)
+        if self.renderer_transport is not None:
+            self.renderer_transport.close()
         if not self._closed:
             self._closed = True
             for stream in (self.process.stdin, self.process.stdout, self.process.stderr):
