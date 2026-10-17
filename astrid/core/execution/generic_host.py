@@ -6986,7 +6986,17 @@ class GenericPackHost:
             ]
             checks["credentials"] = {"ok": not missing_env, "missing": missing_env}
             required_packages = record.matrix.get("required_packages") or record.definition.metadata.get("required_packages", adapter.required_packages)
-            missing_packages = [package for package in (required_packages or ()) if importlib.util.find_spec(str(package)) is None]
+            missing_packages = []
+            for package in required_packages or ():
+                try:
+                    spec = importlib.util.find_spec(str(package))
+                except ModuleNotFoundError:
+                    # Confined finders refuse unmapped modules rather than
+                    # returning None. Keep that refusal capability-local;
+                    # never retry through an ambient import path.
+                    spec = None
+                if spec is None:
+                    missing_packages.append(package)
             checks["packages"] = {"ok": not missing_packages, "missing": missing_packages}
             # Only the final Remotion compositor needs the JavaScript render
             # tree. Other rendering-pack executors are offline Python/FFmpeg

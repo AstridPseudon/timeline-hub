@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from importlib.machinery import ModuleSpec
 import json
 import os
 import signal
@@ -13,6 +14,7 @@ from types import SimpleNamespace
 import pytest
 
 from astrid.core.execution import generic_host, process_group
+from astrid.core.execution.custody_broker import CustodyError
 from astrid.core.execution.generic_host import (
     AdapterRegistry,
     GenericPackHost,
@@ -1129,6 +1131,162 @@ def test_tree_cleanup_rejects_reused_child_before_adopting_descendants(monkeypat
     with pytest.raises(CleanupUncertainError, match="lacks retained cleanup custody"):
         process_group._signal_valid_tree_members(process, known, signal.SIGKILL, reused)
     assert signalled == [(100, "root", signal.SIGKILL)]
+
+
+def _package_preflight_host(tmp_path, *, independent_id="test.independent"):
+    _write_manifest(tmp_path / "dependent", capability_id="test.dependent")
+    _write_manifest(tmp_path / "independent", capability_id=independent_id)
+    matrix = tmp_path / "matrix.json"
+    matrix.write_text(json.dumps({
+        "schema_version": 1,
+        "capabilities": [
+            {
+                "id": capability_id,
+                "disposition": "optional",
+                "evidence_reason": "focused package preflight fixture",
+                "required_packages": packages,
+            }
+            for capability_id, packages in (
+                ("test.dependent", ["astrid_preflight_missing", "astrid_preflight_present"]),
+                (independent_id, []),
+            )
+        ],
+    }), encoding="utf-8")
+    host = GenericPackHost(pack_roots=[tmp_path], capability_matrix=matrix, credential_source={})
+    host.discover()
+    return host
+
+
+def test_package_preflight_strict_finder_refusal_is_capability_local(tmp_path, monkeypatch):
+    host = _package_preflight_host(tmp_path)
+    looked_up = []
+    ambient_lookups = []
+    packages = {"astrid_preflight_missing", "astrid_preflight_present"}
+
+    class StrictFinder:
+        def find_spec(self, fullname, path=None, target=None):
+            if fullname not in packages:
+                return None
+            looked_up.append(fullname)
+            if fullname == "astrid_preflight_missing":
+                raise ModuleNotFoundError("outside reviewed import mapping", name=fullname)
+            return ModuleSpec(fullname, loader=None)
+
+    class AmbientFinder:
+        def find_spec(self, fullname, path=None, target=None):
+            if fullname in packages:
+                ambient_lookups.append(fullname)
+                pytest.fail("package preflight must not retry ambient resolution")
+
+    monkeypatch.setattr(sys, "meta_path", [StrictFinder(), AmbientFinder(), *sys.meta_path])
+    records = {record.id: record for record in host.preflight()}
+
+    assert looked_up == ["astrid_preflight_missing", "astrid_preflight_present"]
+    assert ambient_lookups == []
+    assert records["test.dependent"].preflight["packages"] == {
+        "ok": False, "missing": ["astrid_preflight_missing"],
+    }
+    assert records["test.dependent"].ready is False
+    assert records["test.independent"].preflight["packages"] == {"ok": True, "missing": []}
+    assert records["test.independent"].ready is True
+    assert packages.isdisjoint(sys.modules)  # Discovery must not import package code.
+
+
+def test_package_preflight_none_is_capability_local(tmp_path, monkeypatch):
+    host = _package_preflight_host(tmp_path)
+    looked_up = []
+
+    def find_spec(name):
+        looked_up.append(name)
+        assert name in {"astrid_preflight_missing", "astrid_preflight_present"}
+        return None if name == "astrid_preflight_missing" else object()
+
+    monkeypatch.setattr(generic_host.importlib.util, "find_spec", find_spec)
+    records = {record.id: record for record in host.preflight()}
+
+    assert looked_up == ["astrid_preflight_missing", "astrid_preflight_present"]
+    assert records["test.dependent"].preflight["packages"] == {
+        "ok": False, "missing": ["astrid_preflight_missing"],
+    }
+    assert records["test.dependent"].ready is False
+    assert records["test.independent"].preflight["packages"] == {"ok": True, "missing": []}
+    assert records["test.independent"].ready is True
+
+
+@pytest.mark.parametrize("error_type", [ImportError, RuntimeError, ValueError, PermissionError, CustodyError])
+def test_package_preflight_unrelated_finder_fault_propagates(tmp_path, monkeypatch, error_type):
+    host = _package_preflight_host(tmp_path)
+    fault = error_type("finder failed for a reason other than a missing module")
+
+    def find_spec(name):
+        assert name == "astrid_preflight_missing"
+        raise fault
+
+    monkeypatch.setattr(generic_host.importlib.util, "find_spec", find_spec)
+    with pytest.raises(error_type) as caught:
+        host.preflight()
+    assert caught.value is fault
+
+
+@pytest.mark.parametrize("disposition", ["optional", "unsupported", "retired"])
+def test_package_preflight_atomic_registration_preserves_status(tmp_path, monkeypatch, disposition):
+    host = _package_preflight_host(tmp_path)
+    host.matrix["test.dependent"]["disposition"] = disposition
+    runtime = FakeRuntime()
+    host.client = runtime
+
+    def find_spec(name):
+        if name == "astrid_preflight_missing":
+            raise ModuleNotFoundError("outside reviewed import mapping")
+        assert name == "astrid_preflight_present"
+        return ModuleSpec(name, loader=None)
+
+    monkeypatch.setattr(generic_host.importlib.util, "find_spec", find_spec)
+    host.register()
+
+    assert len(runtime.registrations) == 1
+    assert runtime.capability_registrations == []
+    records = {row["capability_id"]: row for row in runtime.registrations[0][1]["capabilities"]}
+    assert records["test.independent"]["status"] == "ready"
+    assert records["test.dependent"]["status"] == (
+        "unavailable" if disposition == "optional" else disposition
+    )
+    assert records["test.dependent"]["unavailable_reason"] == (
+        "packages:missing=astrid_preflight_missing" if disposition == "optional"
+        else "focused package preflight fixture"
+    )
+
+
+def test_package_preflight_present_packages_remain_ready(tmp_path, monkeypatch):
+    host = _package_preflight_host(tmp_path)
+    looked_up = []
+
+    def find_spec(name):
+        looked_up.append(name)
+        return ModuleSpec(name, loader=None)
+
+    monkeypatch.setattr(generic_host.importlib.util, "find_spec", find_spec)
+    records = host.preflight("test.dependent")
+    assert looked_up == ["astrid_preflight_missing", "astrid_preflight_present"]
+    assert records[0].preflight["packages"] == {"ok": True, "missing": []}
+    assert records[0].ready is True
+
+
+def test_package_preflight_does_not_override_missing_speech_binary(tmp_path, monkeypatch):
+    host = _package_preflight_host(tmp_path, independent_id="generation.generate_speech")
+    host.matrix["generation.generate_speech"]["required_binaries"] = ["edge-tts"]
+
+    def require(binaries):
+        assert binaries == ("edge-tts",)
+        raise generic_host.ExecutableAdmissionError("declared speech binary is missing")
+
+    monkeypatch.setattr(host._executable_admission, "require", require)
+    record = host.preflight("generation.generate_speech")[0]
+
+    assert record.preflight["packages"] == {"ok": True, "missing": []}
+    assert record.preflight["binaries"]["ok"] is False
+    assert record.preflight["binaries"]["missing"] == ["edge-tts"]
+    assert record.ready is False
 
 
 def test_discovery_digest_and_truthful_preflight(tmp_path):
