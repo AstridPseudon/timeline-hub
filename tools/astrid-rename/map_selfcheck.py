@@ -168,6 +168,11 @@ def main() -> int:
             errors.append(f"... plus {len(uncovered)-100} more old tokens")
 
     workspace = HERE.parents[2]
+    # The manager's post-deletion rehearsal copies are the authoritative
+    # occurrence inventory once all three exist. Worker source checkouts can
+    # remain pinned to their pre-deletion branches.
+    if all((workspace / "dry" / repo / ".git").exists() for repo in REPOS):
+        workspace /= "dry"
     for repo in REPOS:
         root = workspace / repo
         if not root.is_dir():
