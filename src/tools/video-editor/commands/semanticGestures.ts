@@ -1098,19 +1098,84 @@ export function groupMoveGesture(
   return commands.length ? { commands, metaUpdates } : undefined;
 }
 
-/** Ordinary group right-edge resize: exact captured per-member edges only.
- * The planner still owns geometry. No relations, overlap trims, membership or
- * source-edge changes can be disguised as an ordinary duration/move batch.
- */
+/** Compile the planner's exact pinned-group left edge from one captured base. */
 export function groupLeftResizeGestureCommands(
   data: TimelineData, ids: readonly string[], rows: TimelineData['rows'], patches: Record<string, Partial<ClipMeta>>,
 ): EditCommand[] | undefined {
   // Holds have no source-in edge to trim. Their existing left-edge geometry is
   // exactly the same explicit move/duration vocabulary as a right-edge resize.
   const selected = new Set(ids);
-  if (ids.some(id => typeof data.config.clips.find(clip => clip.id === id)?.hold !== 'number')
-    || data.config.pinnedShotGroups?.filter(group => group.clipIds.length === selected.size && group.clipIds.every(id => selected.has(id))).length !== 1) return undefined;
-  return groupRightResizeGestureCommands(data, ids, rows, patches);
+  if (data.config.pinnedShotGroups?.filter(group => group.clipIds.length === selected.size && group.clipIds.every(id => selected.has(id))).length !== 1) return undefined;
+  if (ids.every(id => typeof data.config.clips.find(clip => clip.id === id)?.hold === 'number')) {
+    return groupRightResizeGestureCommands(data, ids, rows, patches);
+  }
+
+  const fps = data.output.fps;
+  const onGrid = (time: number) => Number.isFinite(time) && Math.abs(time * fps - Math.round(time * fps)) <= 1e-6;
+  const same = (a: number, b: number) => Math.abs(a - b) <= 1e-7;
+  const groups = data.config.pinnedShotGroups.filter(group => group.clipIds.some(id => selected.has(id)));
+  const group = groups[0];
+  const relations = ['on', 'until', 'for', 'fixed_start', 'cut', 'sequence', 'sequence_fit', 'segment', 'formulas', 'loop', 'orphan'];
+  if (!ids.length || selected.size !== ids.length || !Number.isFinite(fps) || fps <= 0 || groups.length !== 1
+    || group.ownerOccurrenceId || new Set(group.clipIds).size !== ids.length
+    || ids.some(id => !literalStructuralSource(data, id))
+    || (group.memberSelectors && (group.memberSelectors.length !== ids.length || new Set(group.memberSelectors).size !== ids.length
+      || group.memberSelectors.some(selector => !ids.some(id => selector === scopedGestureClipId(id)))))
+    || data.config.pinnedShotGroups.filter(other => other.shotId === group.shotId && other.trackId === group.trackId).length !== 1
+    || data.config.clips.some(clip => relations.some(key => hasOwn(clip.app ?? {}, key)
+      || hasOwn((clip.app?.astrid as object | undefined) ?? {}, key)))) return undefined;
+  const old = data.rows.flatMap(row => row.actions.map(action => ({ action, row: row.id })));
+  const next = rows.flatMap(row => row.actions.map(action => ({ action, row: row.id })));
+  if (old.length !== next.length || new Set(old.map(item => item.action.id)).size !== old.length
+    || new Set(next.map(item => item.action.id)).size !== next.length
+    || old.some(before => !selected.has(before.action.id)
+      && JSON.stringify(before) !== JSON.stringify(next.find(after => after.action.id === before.action.id)))) return undefined;
+  const members = ids.map(id => ({ id, clip: originalClip(data, id),
+    before: old.find(item => item.action.id === id), after: next.find(item => item.action.id === id) }));
+  for (const { id, clip, before, after } of members) {
+    const asset = clip?.asset && data.registry.assets[clip.asset];
+    if (!literalStructuralSource(data, id) || clip.clipType !== 'media' || hasOwn(clip, 'hold')
+      || !before || !after || before.row !== group.trackId || after.row !== group.trackId || clip.track !== group.trackId
+      || typeof clip.from !== 'number' || typeof clip.to !== 'number' || typeof clip.speed !== 'number'
+      || !Number.isFinite(clip.speed) || clip.speed <= 0 || !onGrid(clip.from) || !onGrid(clip.to)
+      || clip.from < 0 || clip.to <= clip.from || !asset || !['video', 'audio'].some(type => asset.type?.startsWith(type))
+      || typeof asset.duration !== 'number' || !Number.isFinite(asset.duration) || asset.duration <= 0 || clip.to > asset.duration
+      || ['keyframes', 'modifiers', 'keyframeOrigin'].some(key => hasOwn(clip.params ?? {}, key))
+      || before.action.start !== clip.at || !same(before.action.end - before.action.start, (clip.to - clip.from) / clip.speed)
+      || [before.action.start, before.action.end, after.action.start, after.action.end].some(time => !onGrid(time))
+      || after.action.start < 0 || after.action.end <= after.action.start) return undefined;
+  }
+  // Exactly one member changes length; preceding members translate and later
+  // members stay still. Stored membership order is preserved, never rewritten.
+  members.sort((a, b) => a.before!.action.start - b.before!.action.start);
+  if (members.some((member, index) => index > 0 && (!same(members[index - 1].before!.action.end, member.before!.action.start)
+    || !same(members[index - 1].after!.action.end, member.after!.action.start)))) return undefined;
+  const resized = members.filter(({ before, after }) => !same(before!.action.end - before!.action.start, after!.action.end - after!.action.start));
+  if (resized.length !== 1) return undefined;
+  const edge = resized[0], delta = edge.after!.action.start - edge.before!.action.start;
+  if (!same(edge.after!.action.end, edge.before!.action.end) || !delta
+    || old.some(({ action, row }) => row === group.trackId && !selected.has(action.id)
+      && members.some(member => action.start < member.before!.action.end && action.end > member.before!.action.start
+        || action.start < member.after!.action.end && action.end > member.after!.action.start))) return undefined;
+  const result: EditCommand[] = [];
+  for (const member of members) {
+    const { id, clip, before, after } = member;
+    const shift = before!.action.start < edge.before!.action.start ? delta : member === edge ? delta : 0;
+    if (!same(after!.action.start, before!.action.start + shift)
+      || (member !== edge && !same(after!.action.end, before!.action.end + shift))) return undefined;
+    if (member === edge) {
+      const from = clip.from! + delta * clip.speed!, patch = patches[id];
+      if (!onGrid(from) || from < 0 || from >= clip.to! || !patch || typeof patch.from !== 'number'
+        || !same(patch.from, from) || patch.to !== clip.to || typeof patch.speed !== 'number' || !same(patch.speed, clip.speed!)) return undefined;
+      result.push(command(id, 'clip.trim', { in_s: from, out_s: clip.to }, { '': state(clip, true) }));
+    }
+    if (shift) {
+      const move = moveGestureCommands(data, id, after!.action.start, group.trackId);
+      if (!move?.length) return undefined;
+      result.push(...move);
+    }
+  }
+  return result;
 }
 
 export function groupRightResizeGestureCommands(

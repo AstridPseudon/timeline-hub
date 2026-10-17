@@ -60,7 +60,7 @@ import { useClipEditing } from './useClipEditing.ts';
 import { useTimelineTrackManagement } from './useTimelineTrackManagement.ts';
 import { buildKeyboardTimeNudgeEdit } from '../lib/keyboard-nudge.ts';
 import { expandTinyClip } from '../lib/expand-tiny-clip.ts';
-import { gestureCommandsFor, tiedStartDragGesture } from '../commands/semanticGestures.ts';
+import { gestureCommandsFor, groupLeftResizeGestureCommands, tiedStartDragGesture } from '../commands/semanticGestures.ts';
 import { buildDuplicateClipEdit } from '../lib/duplicate-clip.ts';
 import { createTimelineCommands } from './useTimelineCommandsService.ts';
 import type { TimelineStoreApi } from './timelineStore.ts';
@@ -321,7 +321,7 @@ async function setup(reply?: FixtureReply, media = false, providedInitial?: Time
     useEffect(() => eventBus.on('scheduleSave', persistence.scheduleSave), [persistence.scheduleSave]);
     const editing = useClipEditing({ ...commit, selectedClipId, selectedTrack: initial.tracks[0], currentTime, selectClip, resolvedConfig: commit.data?.resolvedConfig ?? null });
     const tracks = useTimelineTrackManagement({ ...commit, resolvedConfig: commit.data?.resolvedConfig ?? null, eventBus, editability });
-    const resize = useClipResize({ ...commit, semanticCommandSaving: fixture.provider.semanticCommandSaving });
+    const resize = useClipResize({ ...commit, editability, semanticCommandSaving: fixture.provider.semanticCommandSaving });
     const ops = useTimelineOps({ ...commit, ...(proposalCommands ? { semanticCommandSaving: fixture.provider.semanticCommandSaving, getConfigVersion: () => configVersionRef.current, captureSaveTarget: persistence.captureSaveTarget, flushSaveTarget: persistence.flushSaveTarget } : {}), createManualCheckpoint: vi.fn(), jumpToCheckpoint: vi.fn(), checkpoints: [], editability });
     const groupPins = usePinnedShotGroups({ dataRef: commit.dataRef, applyEdit: commit.applyEdit, enabled: true, semanticCommands: true });
     const groupSwitches = useSwitchToFinalVideo({ applyEdit: commit.applyEdit, dataRef: commit.dataRef, finalVideoMap, semanticCommands: true, projectId: initial.head?.projectId, getProjectMediaSelectionForOutput: outputSelector });
@@ -6741,7 +6741,7 @@ describe('pinned group deletion caller guards', () => {
     });
 });
 
-function resizePinnedGroupLeft(h: Awaited<ReturnType<typeof setup>>, cancelled = false, afterStart?: () => void) {
+function resizePinnedGroupLeft(h: Awaited<ReturnType<typeof setup>>, cancelled = false, afterStart?: () => void, updates?: ReturnType<typeof applyClipEdgeMove>['updates']) {
   const data = h.result.current.data!; const row = data.rows.find(row => row.id === 'V1')!;
   const group = data.config.pinnedShotGroups!.find(group => group.shotId === 'shot-1')!;
   const children = row.actions.filter(action => group.clipIds.includes(action.id));
@@ -6754,7 +6754,7 @@ function resizePinnedGroupLeft(h: Awaited<ReturnType<typeof setup>>, cancelled =
   act(() => h.result.current.resize.onClipEdgeResizeEnd({
     session: { pointerId: 1, rowId: row.id, clipId: action.id, edge: 'left', started: true, startClientX: 0,
       startLocalX: 0, startTime: action.start, lastStart: action.start + 0.5, lastEnd: action.end, snapTargets: [], context },
-    updates: applyClipEdgeMove(context, 'left', action.start + 0.5).updates, cancelled,
+    updates: updates ?? applyClipEdgeMove(context, 'left', action.start + 0.5).updates, cancelled,
   }));
 }
 
@@ -6845,6 +6845,237 @@ describe('W40 pinned hold group left resize', () => {
     expect(h.savedSeqRef.current).toBe(0); expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
     expect(accepted).not.toHaveBeenCalled(); expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
     history.unmount(); h.unmount();
+  }, 90_000);
+});
+
+// Explicit literal source fixture: the hold/transfer fixtures have no source
+// windows or pinned durations and cannot establish this media-only boundary.
+async function leftMediaGroupData() {
+  const base = await transferGroupData();
+  const clips = base.config.clips.map((clip, index) => {
+    const copy = { ...clip, at: index ? 3 : 1, from: 2, to: 6, speed: 2, asset: 'group-left-source',
+      params: index ? { opaque: { presentNull: null, array: [false, 0, 'keep'] } } : { opaque: null } };
+    delete copy.hold;
+    return copy;
+  });
+  return buildTimelineData({ ...base.config, clips: [...clips,
+    { id: 'untouched-sibling', at: 7, hold: 1, clipType: 'hold', track: 'V1', app: { opaque: { keep: null } } },
+    { id: 'untouched-row', at: 0, hold: 1, clipType: 'hold', track: 'V2', params: { opaque: [null, 1] } },
+  ] }, { assets: { ...base.registry.assets,
+    'group-left-source': { media_id: `sha256:${'f'.repeat(64)}`, type: 'video/mp4', duration: 10 },
+  } }, undefined, 1, undefined, base.head);
+}
+
+function leftMediaPlan(initial: TimelineData) {
+  const ids = ['clip-1', 'clip-2'];
+  const rows = initial.rows.map(row => ({ ...row, actions: row.actions.map(action => ids.includes(action.id)
+    ? { ...action, start: action.start + 0.5, end: action.id === 'clip-1' ? action.end + 0.5 : action.end } : action) }));
+  return { ids, rows, patches: { 'clip-1': { track: 'V1', from: 3, to: 6, speed: 1.5 },
+    'clip-2': { track: 'V1', from: 3, to: 6, speed: 2 } } };
+}
+
+function expectLeftMediaCommands(calls: ReturnType<typeof gestureCommandsFor>, initial: TimelineData) {
+  const move = (index: number) => ({ op: 'clip.nudge', select: `parent/clip:clip-${index + 1}`,
+    resolved: [`parent/clip:clip-${index + 1}`], args: { frames: 15 }, expect: {
+      at: { state: 'present', value: initial.config.clips[index].at },
+      'app.astrid.on': { state: 'absent' }, 'app.astrid.until': { state: 'absent' },
+    } });
+  expect(calls).toEqual([move(0), { op: 'clip.trim', select: 'parent/clip:clip-2', resolved: ['parent/clip:clip-2'],
+    args: { in_s: 3, out_s: 6 }, expect: { '': { state: 'present', value: initial.config.clips[1] } } }, move(1)]);
+  calls!.forEach(call => expect(validateEditCommand(call)).toBe(call));
+}
+
+describe('W40 pinned literal media group left resize', () => {
+  it('the production pointer emits ordered scoped trim and nudge with exact captured expectations', async () => {
+    const initial = await leftMediaGroupData(); const h = await setup(undefined, false, initial);
+    resizePinnedGroupLeft(h);
+    expectLeftMediaCommands(gestureCommandsFor(h.result.current.data!), initial);
+    expect(h.result.current.editSeqRef.current).toBe(1);
+    h.unmount();
+  });
+
+  it('saves one SDK transaction and exact receipt-owned whole-document Undo and Redo', async () => {
+    const initial = await leftMediaGroupData(); const requests: CommitRequest[] = []; let proof!: ReturnType<typeof groupDeleteSource>;
+    const h = await setup(async request => {
+      requests.push(request); proof = groupDeleteSource(initial, requests);
+      writeGroupDeleteProof('w40-media-left-chain', { requests, proof });
+      expect(proof.result.status).toBe('accepted');
+      return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = bulkHistory(h); const accepted = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', accepted);
+    resizePinnedGroupLeft(h);
+    expect(history.result.current.canUndo).toBe(false);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expectLeftMediaCommands('commands' in requests[0].change ? requests[0].change.commands : undefined, initial);
+    expect(requests[0]).toMatchObject({ base_revision_id: 'parent-r1', source: { via: 'app' }, dry_run: false });
+    const expected = structuredClone(proof.before) as unknown as typeof proof.persisted_documents[number];
+    expected.parent.clips[0].at = 1.5; expected.parent.clips[1].at = 3.5; expected.parent.clips[1].from = 3;
+    // The existing SDK trim materializes source-duration hold; playback divides it by speed.
+    expected.parent.clips[1].hold = 3;
+    expect(proof.result.canonical_document).toEqual(expected); expect(proof.persisted_documents).toEqual([expected]);
+    expect(h.getCurrentConfig()).toEqual({ ...expected.parent.config, clips: expected.parent.clips });
+    expect(h.result.current.data!.rows.find(row => row.id === 'V1')!.actions.filter(action => ['clip-1', 'clip-2'].includes(action.id))
+      .map(action => [action.start, action.end])).toEqual([[1.5, 3.5], [3.5, 5]]);
+    expect(h.getCurrentConfig().clips[0].from).toBe(2); expect(h.getCurrentConfig().clips[0].speed).toBe(2);
+    expect(h.getCurrentConfig().clips[1].hold).toBe(3);
+    expect(h.getCurrentConfig().clips[0].params!.opaque).toBeNull();
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    expect(proof.result.canonical_document).toEqual(proof.before);
+    expect(h.getCurrentConfig().clips[1]).not.toHaveProperty('hold');
+    expect(h.getCurrentConfig().clips[1].params!.opaque).toEqual({ presentNull: null, array: [false, 0, 'keep'] });
+    expect(h.getCurrentConfig()).toEqual({ ...proof.before.parent.config, clips: (proof.before as unknown as typeof expected).parent.clips });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true));
+    act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(proof.persisted_documents).toEqual([expected, proof.before, expected]);
+    expect(h.getCurrentConfig()).toEqual({ ...expected.parent.config, clips: expected.parent.clips });
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    for (const index of [1, 2]) expect(requests[index].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null, args: {
+      publication: proof.results[index - 1].accepted_publication_id,
+      writes: proof.results[index - 1].change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })),
+    } }] });
+    expect(proof.accept_counts).toEqual([1, 1, 1]); expect(h.readbackHeads).toEqual(['parent-r2', 'parent-r3', 'parent-r4']);
+    expect(accepted).toHaveBeenCalledTimes(3); expect(h.compatibilityRequests).toEqual([]);
+    writeGroupDeleteProof('w40-media-left-final', { requests, proof, readback: h.getCurrentConfig(), readbackHeads: h.readbackHeads });
+    history.unmount(); h.unmount();
+  }, 180_000);
+
+  it.each(['missing duration', 'nonfinite duration', 'negative source', 'empty source', 'out of range', 'missing source',
+    'zero speed', 'negative speed', 'nonfinite speed', 'missing speed', 'source off grid', 'placement off grid', 'result off grid',
+    'incomplete group', 'duplicate member', 'ambiguous membership', 'missing member', 'duplicate source', 'duplicate action',
+    'cross track', 'mixed hold', 'relation', 'null relation', 'sequence', 'bed', 'keyframes', 'param keyframes', 'occurrence',
+    'wrong owner', 'stale selectors', 'overlapping group', 'overlapping sibling', 'sibling side effect', 'invalid trim', 'changed source-out',
+    'changed speed', 'zero fps', 'invalid start', 'no movement'] as const)('%s retains no typed command or source write', async kind => {
+    const initial = await leftMediaGroupData(); const plan = leftMediaPlan(initial);
+    const clip = initial.config.clips[0], group = initial.config.pinnedShotGroups![1];
+    if (kind === 'missing duration') delete initial.registry.assets['group-left-source'].duration;
+    if (kind === 'nonfinite duration') initial.registry.assets['group-left-source'].duration = Infinity;
+    if (kind === 'negative source') clip.from = -1;
+    if (kind === 'empty source') clip.from = 6;
+    if (kind === 'out of range') clip.to = 11;
+    if (kind === 'missing source') delete clip.to;
+    if (kind === 'zero speed') clip.speed = 0;
+    if (kind === 'negative speed') clip.speed = -2;
+    if (kind === 'nonfinite speed') clip.speed = NaN;
+    if (kind === 'missing speed') delete clip.speed;
+    if (kind === 'source off grid') clip.from = 2.001;
+    if (kind === 'placement off grid') initial.rows[0].actions[0].start += 0.001;
+    if (kind === 'result off grid') plan.rows[0].actions[0].start += 0.001;
+    if (kind === 'incomplete group') plan.ids.pop();
+    if (kind === 'duplicate member') group.clipIds = ['clip-1', 'clip-1'];
+    if (kind === 'ambiguous membership') initial.config.pinnedShotGroups!.push({ ...group, shotId: 'another-group' });
+    if (kind === 'missing member') initial.config.clips.splice(0, 1);
+    if (kind === 'duplicate source') initial.config.clips.push({ ...clip });
+    if (kind === 'duplicate action') initial.rows[0].actions.push({ ...initial.rows[0].actions[0] });
+    if (kind === 'cross track') clip.track = 'V2';
+    if (kind === 'mixed hold') { delete clip.from; delete clip.to; clip.hold = 2; }
+    if (kind === 'relation') initial.config.clips[2].app!.astrid = { on: '"viral"' };
+    if (kind === 'null relation') clip.app!.astrid = { on: null } as never;
+    if (kind === 'sequence') clip.app!.astrid = { sequence: 'retained' } as never;
+    if (kind === 'bed') initial.config.app = { ...initial.config.app, astrid: { music_beds: { 'parent/clip:clip-1': {} } } } as never;
+    if (kind === 'keyframes') Reflect.set(clip, 'keyframes', {});
+    if (kind === 'param keyframes') clip.params!.keyframes = {};
+    if (kind === 'occurrence') clip.app!.canonical = { occurrenceId: 'occ-A' };
+    if (kind === 'wrong owner') group.ownerOccurrenceId = 'occ-A';
+    if (kind === 'stale selectors') group.memberSelectors = ['parent/clip:missing', 'parent/clip:clip-2'];
+    if (kind === 'overlapping group') initial.rows[0].actions[1].start = 2.5;
+    if (kind === 'overlapping sibling') { initial.rows[0].actions[2].start = 1; initial.rows[0].actions[2].end = 2; }
+    if (kind === 'sibling side effect') plan.rows[0].actions[2] = { ...plan.rows[0].actions[2], end: plan.rows[0].actions[2].end + 0.5 };
+    if (kind === 'invalid trim') plan.patches['clip-2'].from = 6;
+    if (kind === 'changed source-out') plan.patches['clip-2'].to = 7;
+    if (kind === 'changed speed') plan.patches['clip-2'].speed = 3;
+    if (kind === 'zero fps') initial.output.fps = 0;
+    if (kind === 'invalid start') plan.rows[0].actions[0].start = NaN;
+    if (kind === 'no movement') plan.rows = initial.rows;
+    const before = structuredClone(initial);
+    expect(groupLeftResizeGestureCommands(initial, plan.ids, plan.rows, plan.patches)).toBeUndefined();
+    expect(initial).toEqual(before);
+  });
+
+  it.each(['missing duration', 'relation', 'mixed hold', 'occurrence', 'overlap side effect'] as const)(
+    'production pointer %s retains fallback or refusal without typed acceptance', async kind => {
+      const initial = await leftMediaGroupData();
+      if (kind === 'missing duration') delete initial.registry.assets['group-left-source'].duration;
+      if (kind === 'relation') initial.config.clips[0].app!.astrid = { on: '"viral"' };
+      if (kind === 'mixed hold') initial.config.clips[0].hold = 2;
+      if (kind === 'occurrence') initial.config.clips[0].app!.canonical = { occurrenceId: 'occ-A' };
+      if (kind === 'overlap side effect') initial.rows[0].actions[2].start = 3.75;
+      const h = await setup(undefined, false, initial); const history = bulkHistory(h);
+      const accepted = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', accepted);
+      resizePinnedGroupLeft(h);
+      expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined(); expect(h.requests).toEqual([]);
+      expect(h.acceptedCount()).toBe(0); expect(accepted).not.toHaveBeenCalled();
+      // Unsupported rows retain compatibility history; no receipt owner is admitted.
+      expect(history.result.current.canRedo).toBe(false); history.unmount(); h.unmount();
+    });
+
+  it.each(['pointer cancel', 'missing update', 'stale head', 'stale config', 'stale fps', 'late locked member', 'late read-only'] as const)(
+    '%s refuses before row mutation, draft, acceptance and history', async kind => {
+      const initial = await leftMediaGroupData(); let blocked = false;
+      const editability: TimelineEditability = { check: ({ clipId }) => ({ allowed: !(blocked && (kind === 'late read-only' || clipId === 'clip-1')) }) };
+      const h = await setup(undefined, false, initial, 1, editability); const history = bulkHistory(h);
+      const before = vi.fn(), accepted = vi.fn(); h.eventBus.on('beforeCommit', before); h.eventBus.on('nativeRegistrationAccepted', accepted);
+      const draft = vi.spyOn(draftStorage, 'saveTimelineDraft');
+      resizePinnedGroupLeft(h, kind === 'pointer cancel', () => {
+        if (kind === 'stale head') h.result.current.dataRef.current = { ...initial, head: { ...initial.head!, headRevisionId: 'late-head' } };
+        if (kind === 'stale config') h.result.current.dataRef.current = { ...initial, config: { ...initial.config, clips: [...initial.config.clips].reverse() } };
+        if (kind === 'stale fps') h.result.current.dataRef.current = { ...initial, output: { ...initial.output, fps: 24 } };
+        if (kind.startsWith('late')) blocked = true;
+      }, kind === 'missing update' ? [] : undefined);
+      expect(h.result.current.data).toBe(initial); expect(h.result.current.editSeqRef.current).toBe(0);
+      expect(before).not.toHaveBeenCalled(); expect(draft).not.toHaveBeenCalled(); expect(accepted).not.toHaveBeenCalled();
+      expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]); expect(h.acceptedCount()).toBe(0);
+      expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+      act(() => { history.result.current.undo(); history.result.current.redo(); }); expect(h.requests).toEqual([]);
+      history.unmount(); h.unmount();
+    });
+
+  it('stale source snapshot refuses the entire SDK batch before acceptance or history', async () => {
+    const initial = await leftMediaGroupData(); const server = { ...initial, config: structuredClone(initial.config) };
+    server.config.clips[1].params = { opaque: { late: null } };
+    let proof!: ReturnType<typeof groupDeleteSource>; let completed = false;
+    const h = await setup(async request => {
+      proof = groupDeleteSource(server, [request]); completed = true;
+      writeGroupDeleteProof('w40-media-left-stale', { request, proof }); return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = bulkHistory(h); const accepted = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', accepted);
+    resizePinnedGroupLeft(h);
+    await waitFor(() => expect(completed).toBe(true), { timeout: 60_000 });
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+    expect(proof.result.status).toBe('refused'); expect(proof.attempted_accept_count).toBe(0);
+    expect(proof.result.change.direct_writes).toEqual([]); expect(proof.document).toEqual(proof.before); expect(proof.persisted_documents).toEqual([]);
+    expect(h.savedSeqRef.current).toBe(0); expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    expect(accepted).not.toHaveBeenCalled(); act(() => { history.result.current.undo(); history.result.current.redo(); });
+    expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  }, 90_000);
+
+  it.each(['accepted', 'refused', 'rejected'] as const)('late %s result admits history only from a complete accepted receipt', async outcome => {
+    const initial = await leftMediaGroupData(); let release!: () => void; const held = new Promise<void>(resolve => { release = resolve; });
+    let proof: ReturnType<typeof groupDeleteSource> | undefined;
+    const h = await setup(async request => {
+      await held;
+      if (outcome !== 'accepted') return outcome;
+      proof = groupDeleteSource(initial, [request]); writeGroupDeleteProof('w40-media-left-late-accepted', { request, proof });
+      return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = bulkHistory(h); const accepted = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', accepted);
+    resizePinnedGroupLeft(h); await waitFor(() => expect(h.requests).toHaveLength(1));
+    expect(h.savedSeqRef.current).toBe(0); expect(history.result.current.canUndo).toBe(false); expect(accepted).not.toHaveBeenCalled();
+    act(() => { history.result.current.undo(); history.result.current.redo(); }); expect(h.requests).toHaveLength(1);
+    act(() => release());
+    if (outcome === 'accepted') {
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+      expect(proof!.accept_counts).toEqual([1]); await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+      expect(accepted).toHaveBeenCalledTimes(1);
+    } else {
+      await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+      expect(h.savedSeqRef.current).toBe(0); expect(h.acceptedCount()).toBe(0); expect(h.getCurrentConfig()).toEqual(initial.config);
+      expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false); expect(accepted).not.toHaveBeenCalled();
+      act(() => { history.result.current.undo(); history.result.current.redo(); });
+    }
+    expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
   }, 90_000);
 });
 
