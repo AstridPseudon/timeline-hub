@@ -6,7 +6,7 @@ an escrow reference. Numeric PIDs select observations; signals use kernel tokens
 """
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import base64
 import errno
 import shutil
@@ -941,6 +941,10 @@ def signal_audit_token(words: Sequence[int], signum: int) -> None:
     ctypes.set_errno(0)
     result = int(function(ctypes.byref(token), int(signum)))
     observed_errno = int(ctypes.get_errno())
+    event = getattr(_STOP_SIGNAL_OBSERVATION, "event", None)
+    if event is not None:
+        event["native_result"] = result
+        event["native_errno"] = observed_errno
     if result != 0:
         raise AuditTokenSignalError(result, observed_errno)
 
@@ -1196,6 +1200,178 @@ class RetainedChildActor:
             raise CustodyError("designated cleanup actor has no positive retained-child exit proof")
 
 
+# Private run-only observations. None of these records confers custody authority.
+_STOP_DIAGNOSTIC_LIMIT = 256
+_STOP_SIGNAL_OBSERVATION = threading.local()
+
+
+def _stop_diagnostics_enabled() -> bool:
+    return os.environ.get("ASTRID_CUSTODY_STOP_DIAGNOSTICS") == "1"
+
+
+def _stop_exception(error: BaseException) -> dict[str, Any]:
+    # Exception strings can contain commands, output, or credentials. Only these
+    # exact source-owned literals are known safe; never stringify other errors.
+    safe_messages = {
+        "candidate reconciliation did not stabilize within its bound",
+        "owned process census unavailable", "owned leader exited before ancestry capture",
+        "owned process identity was reused", "owned descendants survived bounded termination",
+        "owned leader survived bounded termination", "owned command descendants remain",
+        "owned group members remain", "custody registration or observation is unresolved",
+    }
+    nodes, seen, pending = [], {}, [error]
+    while pending and len(nodes) < 64:
+        item = pending.pop(0)
+        if id(item) in seen:
+            continue
+        seen[id(item)] = len(nodes)
+        frames, tb = [], item.__traceback__
+        while tb is not None and len(frames) < 256:
+            frames.append({"file": tb.tb_frame.f_code.co_filename,
+                           "module": tb.tb_frame.f_globals.get("__name__"),
+                           "function": tb.tb_frame.f_code.co_name, "line": tb.tb_lineno})
+            tb = tb.tb_next
+        message = item.args[0] if len(item.args) == 1 and type(item.args[0]) is str else None
+        nodes.append({"type": type(item).__name__, "module": type(item).__module__,
+                      "message": message if message in safe_messages else None,
+                      "frames": frames, "frames_truncated": tb is not None})
+        pending.extend(edge for edge in (item.__cause__, item.__context__) if edge is not None)
+    # Keep both edges, including suppressed context and cycles, without locals.
+    pending, visited = [error], set()
+    while pending:
+        item = pending.pop(0)
+        if id(item) in visited or id(item) not in seen:
+            continue
+        visited.add(id(item))
+        node = nodes[seen[id(item)]]
+        for name, edge in (("cause", item.__cause__), ("context", item.__context__)):
+            node[name] = seen.get(id(edge)) if edge is not None else None
+            if edge is not None:
+                pending.append(edge)
+        node["context_suppressed"] = item.__suppress_context__
+    return {"first": 0, "chain": nodes, "chain_truncated": bool(pending) or len(seen) == 64}
+
+
+def _stop_diagnostic(process, *, event=None, error=None, phase=None) -> None:
+    if not getattr(process, "_astrid_stop_diagnostics_enabled", False):
+        return
+    custody = getattr(process, "_astrid_custody", None)
+    with getattr(custody, "_lock", nullcontext()):
+        record = getattr(process, "_astrid_stop_diagnostics", None)
+        if record is None:
+            record = process._astrid_stop_diagnostics = {
+                "version": "astrid.private-stop-diagnostics/v1", "authority": "NONE",
+                "owner_pid": os.getpid(), "root_pid": process.pid,
+                "events": [], "secondary_failures": [], "truncated": False,
+            }
+            try:
+                if sys.platform == "darwin":
+                    record["native_identities"] = {
+                        role: _darwin_process_records(pid)
+                        for role, pid in (("owner", os.getpid()), ("root", process.pid))}
+                broker = getattr(custody, "_launch_broker", None)
+                registration = getattr(broker, "registration", None)
+                if isinstance(registration, Mapping):
+                    record["root_binding"] = {k: registration[k] for k in (
+                        "pid", "uid", "birth_id", "audit_token_sha256", "audit_token_pidversion")
+                        if k in registration}
+            except BaseException as observation_error:
+                record["identity_observation_error_type"] = type(observation_error).__name__
+        try:
+            if error is not None:
+                failure = {"phase": phase, **_stop_exception(error)}
+                if "first_failure" not in record:
+                    record["first_failure"] = failure
+                elif len(record["secondary_failures"]) < 16:
+                    record["secondary_failures"].append(failure)
+                else:
+                    record["truncated"] = True
+            if event is not None:
+                if len(record["events"]) < _STOP_DIAGNOSTIC_LIMIT:
+                    record["events"].append(event)
+                else:
+                    record["truncated"] = True
+            if custody is not None:
+                custody._write_observed_containment()
+        except BaseException as persistence_error:
+            # Observational failure must never replace the primary operation.
+            record["persistence_error_type"] = type(persistence_error).__name__
+
+
+class _NamedHelperObservation:
+    """Metadata only at three named source sites; never executes a command."""
+    _operations = {"declared_executables._load_commands": "/usr/bin/otool",
+                   "generic_host._hivemind_source_preflight.status": "git",
+                   "generic_host._hivemind_source_preflight.revision": "git",
+                   "generic_host._vcs_revision": "git"}
+
+    _log_lock = threading.Lock()
+    _log_count = 0
+
+    def __init__(self, operation):
+        self.record = {"operation": operation, "start_monotonic": time.monotonic(),
+                       "attribution": "UNPROVED", "authority": "NONE"}
+        self.process = None
+        self.selected = None
+        try:
+            executable = self._operations[operation]
+            selected = Path(shutil.which(executable) or executable).resolve(strict=True)
+            st = selected.stat()
+            self.selected = selected
+            self.record["selected_executable"] = {
+                "sha256": hashlib.sha256(selected.read_bytes()).hexdigest(),
+                "device": st.st_dev, "inode": st.st_ino, "size": st.st_size,
+                "mtime_ns": st.st_mtime_ns}
+        except BaseException as error:
+            self.record["observation_error_type"] = type(error).__name__
+
+    def bind(self, process):
+        self.process = process
+        self.record["child_pid"] = process.pid
+        try:
+            before = _darwin_process_records(process.pid)
+            if before:
+                self.record["native"] = before[0]
+            library = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+            library.proc_pidpath.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32]
+            library.proc_pidpath.restype = ctypes.c_int
+            path = ctypes.create_string_buffer(4096)
+            if library.proc_pidpath(process.pid, path, len(path)) <= 0:
+                raise CustodyError("helper executable unavailable")
+            observed = Path(os.fsdecode(path.value)).resolve(strict=True)
+            st = observed.stat()
+            after = _darwin_process_records(process.pid)
+            keys = ("pid", "uid", "parent_pid", "pgid", "start_sec", "start_usec")
+            pin = self.record.get("selected_executable", {})
+            if (len(before) == len(after) == 1 and before[0]["parent_pid"] == os.getpid()
+                    and all(before[0][k] == after[0][k] for k in keys)
+                    and before[0]["status"] in {1, 2, 3, 4} and after[0]["status"] in {1, 2, 3, 4}
+                    and observed == self.selected and st.st_dev == pin.get("device")
+                    and st.st_ino == pin.get("inode") and st.st_size == pin.get("size")
+                    and st.st_mtime_ns == pin.get("mtime_ns")
+                    and hashlib.sha256(observed.read_bytes()).hexdigest() == pin.get("sha256")):
+                self.record["attribution"] = "MATCHED_DIRECT_CHILD_INCARNATION_EXECUTABLE"
+        except BaseException as error:
+            self.record["observation_error_type"] = type(error).__name__
+
+    def finish(self, error=None):
+        self.record["end_monotonic"] = time.monotonic()
+        self.record["wait"] = {"returncode": getattr(self.process, "returncode", None),
+                               "failure_type": type(error).__name__ if error is not None else None}
+        with self._log_lock:
+            count = type(self)._log_count
+            type(self)._log_count += 1
+        if count > 8192:
+            return
+        if count == 8192:
+            self.record = {"operation": "named_helper_observations_truncated", "authority": "NONE"}
+        try:
+            # Host stderr is already an owner-retained log, not a new channel.
+            print("ASTRID_PRIVATE_HELPER " + json.dumps(self.record, sort_keys=True), file=sys.stderr, flush=True)
+        except BaseException:
+            pass
+
+
 class RetainedCustodyPopen(subprocess.Popen):
     """Popen retaining a positive native terminal wait status.
 
@@ -1205,7 +1381,30 @@ class RetainedCustodyPopen(subprocess.Popen):
 
     def __init__(self, *args, **kwargs):
         self._custody_wait_outcome = None
+        self._astrid_stop_diagnostics_enabled = _stop_diagnostics_enabled()
         super().__init__(*args, **kwargs)
+
+    def wait(self, timeout=None):
+        if not self._astrid_stop_diagnostics_enabled:
+            return super().wait(timeout=timeout)
+        caller = sys._getframe(1)
+        event = {"kind": "original_wait", "phase": caller.f_code.co_name,
+                 "file": caller.f_code.co_filename, "line": caller.f_lineno,
+                 "timeout": timeout, "start_monotonic": time.monotonic()}
+        del caller
+        try:
+            code = super().wait(timeout=timeout)
+            event["returncode"] = code
+            native = self._custody_wait_outcome
+            event["native_wait_status"] = native["status"] if native is not None else None
+            event["positive_native_wait"] = native is not None
+            return code
+        except BaseException as error:
+            event["failure_type"] = type(error).__name__
+            raise
+        finally:
+            event["end_monotonic"] = time.monotonic()
+            _stop_diagnostic(self, event=event)
 
     def _try_wait(self, wait_flags):
         # Preserve ECHILD as evidence loss rather than manufacturing status 0.
@@ -3056,7 +3255,85 @@ _COMMAND_CLIENTS: dict[tuple[int, str], Any] = {}
 _COMMAND_CLIENTS_LOCK = threading.Lock()
 
 
-def _inventory_launch_policy(environment: Mapping[str, str], cwd: str) -> dict[str, Any] | None:
+class _HostInspectionLaunch:
+    """Explicit composition-root input, never reconstructed from environment."""
+
+    def __init__(self, pack_roots: tuple[Path, ...], source_checkout: Path,
+                 environment: Mapping[str, str], capability_matrix: Path | None = None):
+        from .declared_executables import FilePin, _InspectionAdmission, _InspectionTool
+        from .generic_host import _binary_requirements, _launch_static_records
+
+        self.environment = dict(environment)
+        self.source_checkout = source_checkout.resolve(strict=True)
+        self.source_identity = self.source_checkout.stat()
+        marker = self.source_checkout / '.git'
+        self.revision_marker = None
+        if marker.exists():
+            if marker.is_symlink():
+                raise CustodyError('inspection source Git marker is aliased')
+            self.revision_marker = (FilePin.measure(marker) if marker.is_file() else
+                                    (marker.stat().st_dev, marker.stat().st_ino))
+        records = _launch_static_records(tuple(p.resolve(strict=True) for p in pack_roots), capability_matrix)
+        names = {name for record in records.values() for name in _binary_requirements(record)}
+        selections = {}
+        roots = set()
+        for name in sorted(names):
+            if not isinstance(name, str) or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.+-]*', name) is None:
+                raise CustodyError('inspection source has an invalid binary name')
+            selected = shutil.which(name, path=environment.get('PATH', os.defpath))
+            if selected is None:
+                continue  # The same unavailable optional binary remains unavailable.
+            pin = FilePin.measure(Path(selected))
+            selections[name] = pin
+            # Trust the selected installation, not arbitrary ancestors of output
+            # paths. Homebrew aliases share their explicitly selected prefix.
+            for alias in (pin.path, pin.resolved):
+                prefix = next((p for p in (Path('/opt/homebrew'), Path('/usr/local'))
+                               if alias.is_relative_to(p)), alias.parent.parent)
+                if prefix != Path('/'):
+                    roots.add(prefix.resolve(strict=True))
+        self.inspection = _InspectionAdmission(selections, tuple(sorted(roots)))
+        self.tool = _InspectionTool()  # File pins only; no recursive inspection.
+
+    def policy(self, environment: Mapping[str, str], cwd: str):
+        if dict(environment) != self.environment:
+            raise CustodyError('inspection launch environment differs')
+        current = self.source_checkout.stat()
+        if (current.st_dev, current.st_ino) != (self.source_identity.st_dev, self.source_identity.st_ino):
+            raise CustodyError('inspection source checkout changed')
+        self.tool.verify()
+        policy = {'inspection': self.inspection, 'inspection_tool': self.tool,
+                  'cwd': str(Path(cwd).resolve(strict=True)), 'environment': dict(environment)}
+        if self.revision_marker is not None:
+            policy.update(revision_checkout=str(self.source_checkout),
+                          revision_identity=(current.st_dev, current.st_ino),
+                          revision_marker=self.revision_marker)
+        return policy
+
+
+def _inventory_launch_policy(environment: Mapping[str, str], cwd: str,
+                             inspection: _HostInspectionLaunch | None = None) -> dict[str, Any] | None:
+    if inspection is None:
+        return _managed_inventory_launch_policy(environment, cwd)
+    if type(inspection) is not _HostInspectionLaunch:
+        raise CustodyError('inspection requires an explicit trusted Host launch')
+    # Explicit inspection never selects the default user source store.
+    from astrid.core.pack.source_setup import SOURCE_STATE_ENV
+    managed = _managed_inventory_launch_policy(environment, cwd) if environment.get(SOURCE_STATE_ENV) else None
+    policy = dict(managed or {'roots': {}})
+    policy.update(inspection.policy(environment, cwd))
+    if managed is None and 'revision_checkout' in policy:
+        selected = shutil.which('git', path=environment.get('PATH', os.defpath))
+        if selected is None:
+            raise CustodyError('command inventory Git executable is unavailable')
+        git = Path(selected).resolve(strict=True)
+        if not git.is_file() or not os.access(git, os.X_OK):
+            raise CustodyError('command inventory Git executable is unavailable')
+        policy.update(git=str(git), git_sha256=_digest_bytes(git.read_bytes()))
+    return policy
+
+
+def _managed_inventory_launch_policy(environment: Mapping[str, str], cwd: str) -> dict[str, Any] | None:
     """Pin declared managed roots, not a cached verification of their contents."""
     import shutil
     from astrid.core.pack import source_setup as sources
@@ -3211,23 +3488,43 @@ class _CommandInventoryOwner:
     def _validate_policy(self, checkout: str, cwd: str, environment: Mapping[str, str], operation: str) -> None:
         import shutil
         p = self.policy
-        self.failure_stage = 'policy_source_state'
-        state = Path(p['state_path'])
-        if state.is_symlink() or _digest_bytes(state.read_bytes()) != p['state_sha256']:
-            raise CustodyError('command inventory declaration changed')
-        self.failure_stage = 'policy_paths'
-        pack_roots = {root for values in p['roots'].values() for root in values}
-        allowed = set(p['roots']) if operation in {'revision', 'clean_status'} else pack_roots
-        if checkout not in allowed:
-            raise CustodyError('command inventory checkout is outside the launch binding')
-        for value in {checkout, *p['roots'], *pack_roots}:
-            path = Path(value)
-            if not path.is_absolute() or path.is_symlink() or not path.is_dir() or str(path.resolve(strict=True)) != value:
-                raise CustodyError('command inventory root identity changed')
-        self.failure_stage = 'policy_cwd'
-        allowed_cwd = {p['cwd'], *p['roots'], *pack_roots}
-        if cwd not in allowed_cwd or str(Path(cwd).resolve(strict=True)) != cwd:
-            raise CustodyError('command inventory caller cwd is unsupported')
+        explicit_revision = operation == 'revision' and checkout == p.get('revision_checkout')
+        if explicit_revision:
+            root = Path(checkout)
+            value = root.stat()
+            if (root.is_symlink() or str(root.resolve(strict=True)) != checkout
+                    or (value.st_dev, value.st_ino) != p['revision_identity'] or cwd != p['cwd']):
+                raise CustodyError('command inventory source checkout changed')
+            marker = root / '.git'
+            if marker.is_symlink():
+                raise CustodyError('command inventory source Git marker changed')
+            expected_marker = p['revision_marker']
+            if isinstance(expected_marker, tuple):
+                value = marker.stat()
+                if not marker.is_dir() or (value.st_dev, value.st_ino) != expected_marker:
+                    raise CustodyError('command inventory source Git marker changed')
+            else:
+                expected_marker.verify()
+        else:
+            self.failure_stage = 'policy_source_state'
+            if 'state_path' not in p:
+                raise CustodyError('command inventory checkout is outside the launch binding')
+            state = Path(p['state_path'])
+            if state.is_symlink() or _digest_bytes(state.read_bytes()) != p['state_sha256']:
+                raise CustodyError('command inventory declaration changed')
+            self.failure_stage = 'policy_paths'
+            pack_roots = {root for values in p['roots'].values() for root in values}
+            allowed = set(p['roots']) if operation in {'revision', 'clean_status'} else pack_roots
+            if checkout not in allowed:
+                raise CustodyError('command inventory checkout is outside the launch binding')
+            for value in {checkout, *p['roots'], *pack_roots}:
+                path = Path(value)
+                if not path.is_absolute() or path.is_symlink() or not path.is_dir() or str(path.resolve(strict=True)) != value:
+                    raise CustodyError('command inventory root identity changed')
+            self.failure_stage = 'policy_cwd'
+            allowed_cwd = {p['cwd'], *p['roots'], *pack_roots}
+            if cwd not in allowed_cwd or str(Path(cwd).resolve(strict=True)) != cwd:
+                raise CustodyError('command inventory caller cwd is unsupported')
         self.failure_stage = 'policy_environment'
         if (not isinstance(environment, dict) or len(environment) > 512
                 or any(not isinstance(k, str) or not isinstance(v, str) or '\0' in k + v or '=' in k
@@ -3257,32 +3554,50 @@ class _CommandInventoryOwner:
     def _execute(self, frame: Mapping[str, Any], channel: socket.socket) -> Any:
         import selectors
         from astrid.core.execution.process_group import popen_owned_process, terminate_tree, verify_tree_absent
-        required = {'version', 'command', 'binding', 'operation_id', 'operation', 'checkout', 'cwd', 'environment'}
+        inspection = frame.get('command') == 'inventory_load_commands'
+        required = ({'version', 'command', 'binding', 'operation_id', 'selection', 'image'} if inspection else
+                    {'version', 'command', 'binding', 'operation_id', 'operation', 'checkout', 'cwd', 'environment'})
         with self.lock:
             self.failure_detail = None
             binding = self._authenticate(channel)
             self.failure_stage = 'request_binding'
             if (set(frame) != required or frame.get('version') != _COMMAND_INVENTORY_VERSION
-                    or frame.get('command') != 'inventory_git' or frame.get('binding') != binding
+                    or frame.get('command') not in {'inventory_git', 'inventory_load_commands'}
+                    or frame.get('binding') != binding
                     or type(frame.get('operation_id')) is not int or frame['operation_id'] != self.last_operation + 1
-                    or frame.get('operation') not in _COMMAND_GIT_OPERATIONS or not self.accepting
-                    or self.pending is not None or self.error is not None):
+                    or (not inspection and frame.get('operation') not in _COMMAND_GIT_OPERATIONS)
+                    or not self.accepting or self.pending is not None or self.error is not None):
                 raise CustodyError('command inventory operation has an invalid binding')
-            self._validate_policy(frame['checkout'], frame['cwd'], frame['environment'], frame['operation'])
+            if inspection:
+                self.failure_stage = 'policy_inspection'
+                admission = self.policy.get('inspection')
+                tool = self.policy.get('inspection_tool')
+                if admission is None or tool is None:
+                    raise CustodyError('command inventory inspection is not admitted')
+                tool.verify()
+                pin, _ = admission.verify(frame['selection'], frame['image'])
+                argv = [str(tool.executable.path), '-l', str(pin.resolved)]
+                env = {'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'}
+                cwd = self.policy['cwd']
+                operation, artifact = 'inventory_load_commands', frame['image']
+            else:
+                self._validate_policy(frame['checkout'], frame['cwd'], frame['environment'], frame['operation'])
+                argv = [self.policy['git'], '-C', frame['checkout'], *_COMMAND_GIT_OPERATIONS[frame['operation']]]
+                env = dict(frame['environment'])
+                env.pop(_COMMAND_INVENTORY_FD, None)
+                cwd = frame['cwd']
+                operation, artifact = frame['operation'], frame['checkout']
             self.pending = self.last_operation = frame['operation_id']
             self.failure_stage = 'pending_journal'
             # Persist only identity/digests; never caller environment or credentials.
             _append_owner_jsonl(self.custody.root / 'custody.journal.jsonl', {
                 'event': 'command_inventory_pending', 'operation_id': self.pending,
                 'owner_epoch': self.custody.owner_epoch, 'root_generation': binding['generation'],
-                'operation': frame['operation'], 'checkout_sha256': _digest_bytes(os.fsencode(frame['checkout']))})
+                'operation': operation, 'checkout_sha256': _digest_bytes(os.fsencode(artifact))})
         process = None
         try:
-            argv = [self.policy['git'], '-C', frame['checkout'], *_COMMAND_GIT_OPERATIONS[frame['operation']]]
-            env = dict(frame['environment'])
-            env.pop(_COMMAND_INVENTORY_FD, None)
             self.failure_stage = 'helper_launch'
-            process = popen_owned_process(argv, cwd=frame['cwd'], env=env,
+            process = popen_owned_process(argv, cwd=cwd, env=env,
                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                           _delegate_inventory=False)
             with self.lock:
@@ -3329,6 +3644,12 @@ class _CommandInventoryOwner:
             with self.lock:
                 if self._authenticate(channel) != binding:
                     raise CustodyError('command inventory root changed during execution')
+                if inspection:
+                    self.failure_stage = 'inspection_completion'
+                    tool.verify()
+                    pin.verify()
+                    if code == 0:
+                        admission.complete(frame['selection'], frame['image'], _inventory_text(bytes(output['stdout'])))
                 self.failure_stage = 'completion_journal'
                 _append_owner_jsonl(self.custody.root / 'custody.journal.jsonl', {
                     'event': 'command_inventory_completed', 'operation_id': frame['operation_id'],
@@ -3454,6 +3775,15 @@ class _CommandInventoryClient:
             raise
 
     def run(self, operation: str, checkout: str, cwd: str, environment: dict[str, str]) -> Any:
+        return self._run_request({'command': 'inventory_git', 'operation': operation,
+            'checkout': checkout, 'cwd': cwd, 'environment': environment},
+            ['git', '-C', checkout, *_COMMAND_GIT_OPERATIONS[operation]])
+
+    def _load_commands(self, selection: str, image: str) -> Any:
+        return self._run_request({'command': 'inventory_load_commands', 'selection': selection, 'image': image},
+                                 ['otool', '-l', image])
+
+    def _run_request(self, request: dict[str, Any], argv: list[str]) -> Any:
         with self.lock:
             if self.creator_pid != os.getpid():
                 raise CustodyError('command inventory client cannot be inherited')
@@ -3463,8 +3793,7 @@ class _CommandInventoryClient:
                 self.operation += 1
                 base = {'version': _COMMAND_INVENTORY_VERSION, 'binding': self.binding,
                         'operation_id': self.operation}
-                _send_frame(self.channel, {**base, 'command': 'inventory_git', 'operation': operation,
-                    'checkout': checkout, 'cwd': cwd, 'environment': environment})
+                _send_frame(self.channel, {**base, **request})
                 output = {'stdout': bytearray(), 'stderr': bytearray()}
                 while True:
                     reply = _read_inventory_frame(self.channel)
@@ -3476,7 +3805,7 @@ class _CommandInventoryClient:
                         code = reply.get('returncode')
                         if type(code) is not int:
                             raise CustodyError('command inventory original wait is unavailable')
-                        return subprocess.CompletedProcess(['git', '-C', checkout, *_COMMAND_GIT_OPERATIONS[operation]], code,
+                        return subprocess.CompletedProcess(argv, code,
                                                            _inventory_text(bytes(output['stdout'])), _inventory_text(bytes(output['stderr'])))
                     if (set(reply) != {*base, 'status', 'stream', 'data'} or reply.get('status') != 'chunk'
                             or reply.get('stream') not in output or not isinstance(reply.get('data'), str)):
@@ -3490,6 +3819,27 @@ class _CommandInventoryClient:
                 self.error = error
                 self.channel.close()
                 raise CustodyError('command inventory transport or custody failed') from error
+
+
+def _inventory_load_commands(selection: str | None, path: Path) -> Any:
+    """Private declared-executable caller; never a Host-local fallback."""
+    if sys.platform != 'darwin' or not isinstance(selection, str):
+        raise CustodyError('command inventory inspection selection is unavailable')
+    descriptor = os.environ.get(_COMMAND_INVENTORY_FD)
+    if descriptor is None:
+        raise CustodyError('command inventory inspection requires its original owner')
+    try:
+        _validate_pipe_binding(json.loads(descriptor))
+        key = (os.getpid(), descriptor)
+        with _COMMAND_CLIENTS_LOCK:
+            client = _COMMAND_CLIENTS.get(key)
+            if client is None:
+                client = _COMMAND_CLIENTS[key] = _CommandInventoryClient(descriptor)
+        return client._load_commands(selection, str(path))
+    except CustodyError:
+        raise
+    except BaseException as error:
+        raise CustodyError('command inventory inspection context is unavailable') from error
 
 
 def command_inventory_git(args: Sequence[str], *, cwd: Path | None = None) -> Any | None:
@@ -3621,7 +3971,11 @@ class ProcessCustody:
             if not (hasattr(os, "pidfd_open") and hasattr(signal, "pidfd_send_signal")):
                 raise CustodyError("incarnation-bound kernel custody is unavailable")
             return list(argv), {}
-        policy = _inventory_launch_policy(inventory_context["environment"], inventory_context["cwd"]) if inventory_context is not None and role == "command" else None
+        policy = None
+        if inventory_context is not None and role == "command":
+            args = (inventory_context["environment"], inventory_context["cwd"])
+            policy = (_inventory_launch_policy(*args, inventory_context["inspection"])
+                      if "inspection" in inventory_context else _inventory_launch_policy(*args))
         broker = RoleBoundCustodyBroker(
             role=role, retain_channel=policy is not None, identity_provider=default_process_identity,
             ledger_root=self.root / (role + "-ledger-" + os.urandom(8).hex()),
@@ -3926,6 +4280,8 @@ class ProcessCustody:
             "unadmitted_candidates": list(self._unadmitted_absent.values()),
             "observed_candidates": list(getattr(self, "_observed_candidates", {}).values()),
             "capture_failures": getattr(self, "_capture_failure_observations", []),
+            **({"stop_diagnostics": self.process._astrid_stop_diagnostics}
+               if getattr(getattr(self, "process", None), "_astrid_stop_diagnostics", None) is not None else {}),
             "exit_observations": [watch.facts for watch in getattr(self, "_exit_observations", {}).values()],
             **({"command_observations": self._command_observations,
                 "command_diagnostics_truncated": getattr(self, "_command_diagnostics_truncated", False),
@@ -4455,6 +4811,33 @@ class ProcessCustody:
             raise CustodyError("terminal candidate birth/status observation contradicts retained census")
 
     def signal(self, pid: int, birth: str, signum: int, *, cleanup_deadline: float | None = None) -> None:
+        event = {"kind": "signal_attempt", "pid": pid, "birth_id": birth,
+                 "signal": int(signum), "start_monotonic": time.monotonic()}
+        enabled = getattr(self.process, "_astrid_stop_diagnostics_enabled", False)
+        previous = getattr(_STOP_SIGNAL_OBSERVATION, "event", None)
+        if enabled:
+            _STOP_SIGNAL_OBSERVATION.event = event
+        try:
+            result = self._signal(pid, birth, signum, cleanup_deadline=cleanup_deadline)
+            event["outcome"] = "CALL_RETURNED"
+            event.setdefault("native_result", "UNPROVED")  # An already-gone race is not a kernel call.
+            return result
+        except BaseException as error:
+            event["outcome"] = "CALL_FAILED"
+            event["failure_type"] = type(error).__name__
+            for key, value in (("kernel_result", getattr(error, "result", None)),
+                               ("errno", getattr(error, "observed_errno", getattr(error, "errno", None)))):
+                if type(value) is int:
+                    event[key] = value
+            _stop_diagnostic(self.process, error=error, phase="custody_signal")
+            raise
+        finally:
+            if enabled:
+                _STOP_SIGNAL_OBSERVATION.event = previous
+            event["end_monotonic"] = time.monotonic()
+            _stop_diagnostic(self.process, event=event)
+
+    def _signal(self, pid: int, birth: str, signum: int, *, cleanup_deadline: float | None = None) -> None:
         with self._lock:
             self._verify_root()
             entry = self._handles.get(pid)

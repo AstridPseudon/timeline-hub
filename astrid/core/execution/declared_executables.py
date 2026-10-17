@@ -5,6 +5,7 @@ Only exact installed files and OS shared-cache install names enter the policy.
 """
 from __future__ import annotations
 
+from contextvars import ContextVar
 from dataclasses import asdict, dataclass
 import hashlib
 import os
@@ -12,7 +13,6 @@ from pathlib import Path
 import re
 import shutil
 import stat
-import subprocess
 import sys
 import threading
 
@@ -73,15 +73,23 @@ def _system_library(path: Path) -> bool:
         Path("/usr/lib"), Path("/System/Library"))) and ".." not in path.parts
 
 
+# The private caller carries selection provenance, never caller-supplied pins.
+_INSPECTION_SELECTION = ContextVar("declared_executable_selection", default=None)
+
+
 def _load_commands(path: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    # No shell, user otool, DYLD settings or request environment participates.
-    result = subprocess.run(["/usr/bin/otool", "-l", str(path)], capture_output=True,
-                            text=True, env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"}, check=False)
+    from .custody_broker import _inventory_load_commands
+    selection = _INSPECTION_SELECTION.get()
+    result = _inventory_load_commands(selection, path)
     if result.returncode:
         raise ExecutableAdmissionError(f"cannot inspect declared executable library closure: {path}")
+    return _parse_load_commands(result.stdout)
+
+
+def _parse_load_commands(output: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
     libraries, rpaths = [], []
     command = ""
-    for line in result.stdout.splitlines():
+    for line in output.splitlines():
         line = line.strip()
         if line.startswith("cmd "):
             command = line[4:]
@@ -118,6 +126,39 @@ class ExecutableBinding:
                 "platform_identity": self.platform_identity}
 
 
+def _expand_load_path(value: str, loader: Path, executable: FilePin) -> Path:
+    for token, base in (("@loader_path", loader.parent), ("@executable_path", executable.resolved.parent)):
+        if value == token or value.startswith(token + "/"):
+            return Path(os.path.normpath(str(base) + value[len(token):]))
+    if not value.startswith("/"):
+        raise ExecutableAdmissionError(f"unsupported declared executable load path: {value}")
+    return Path(value)
+
+
+def _dependency_paths(executable: FilePin, loader: Path, inherited: tuple[Path, ...],
+                      names: tuple[str, ...], raw_rpaths: tuple[str, ...], approved_roots=None):
+    def admit(path):
+        if approved_roots is not None:
+            normalized = Path(os.path.normpath(path))
+            if not _system_library(normalized) and (not any(normalized.is_relative_to(root) for root in approved_roots)
+                    or not any(normalized.resolve().is_relative_to(root) for root in approved_roots)):
+                raise ExecutableAdmissionError("inspection dependency is outside approved roots")
+        return path
+
+    rpaths = tuple(dict.fromkeys((*[_expand_load_path(p, loader, executable) for p in raw_rpaths], *inherited)))
+    paths = []
+    for value in names:
+        if value.startswith("@rpath/"):
+            candidates = [admit(p / value[7:]) for p in rpaths]
+            path = next((p for p in candidates if p.is_file() or _system_library(p)), None)
+            if path is None:
+                raise ExecutableAdmissionError(f"unavailable declared executable library: {value}")
+        else:
+            path = _expand_load_path(value, loader, executable)
+        paths.append(admit(path))
+    return tuple(paths), rpaths
+
+
 def _bind(name: str, selected: Path) -> ExecutableBinding:
     executable = FilePin.measure(selected)
     if not os.access(selected, os.X_OK):
@@ -125,14 +166,6 @@ def _bind(name: str, selected: Path) -> ExecutableBinding:
     libraries: dict[Path, FilePin] = {}
     system: set[Path] = set()
     visited: set[tuple[Path, tuple[Path, ...]]] = set()
-
-    def expand(value: str, loader: Path) -> Path:
-        for token, base in (("@loader_path", loader.parent), ("@executable_path", executable.resolved.parent)):
-            if value == token or value.startswith(token + "/"):
-                return Path(os.path.normpath(str(base) + value[len(token):]))
-        if not value.startswith("/"):
-            raise ExecutableAdmissionError(f"unsupported declared executable load path: {value}")
-        return Path(value)
 
     def walk(loader: Path, inherited: tuple[Path, ...]) -> None:
         # Non-Darwin readiness still pins files; the required launch backend
@@ -144,15 +177,8 @@ def _bind(name: str, selected: Path) -> ExecutableBinding:
             return
         visited.add(key)
         names, raw_rpaths = _load_commands(loader)
-        rpaths = tuple(dict.fromkeys((*[expand(p, loader) for p in raw_rpaths], *inherited)))
-        for value in names:
-            if value.startswith("@rpath/"):
-                candidates = [p / value[7:] for p in rpaths]
-                path = next((p for p in candidates if p.is_file() or _system_library(p)), None)
-                if path is None:
-                    raise ExecutableAdmissionError(f"unavailable declared executable library: {value}")
-            else:
-                path = expand(value, loader)
+        paths, rpaths = _dependency_paths(executable, loader, inherited, names, raw_rpaths)
+        for path in paths:
             if _system_library(path):
                 system.add(path)
                 continue  # OS shared-cache entries need not exist as files.
@@ -165,11 +191,111 @@ def _bind(name: str, selected: Path) -> ExecutableBinding:
             if not seen:
                 walk(pin.resolved, rpaths)
 
-    walk(executable.resolved, ())
+    selection = _INSPECTION_SELECTION.set(name)
+    try:
+        walk(executable.resolved, ())
+    finally:
+        _INSPECTION_SELECTION.reset(selection)
     binding = ExecutableBinding(name, executable, tuple(libraries[p] for p in sorted(libraries)),
                                 tuple(sorted(system)), tuple(os.uname()))
     binding.verify()
     return binding
+
+
+class _InspectionAdmission:
+    """Launch-owned incremental closure, never populated by request digests."""
+
+    def __init__(self, selections: dict[str, FilePin], roots: tuple[Path, ...]):
+        self.platform = tuple(os.uname())
+        self.selections = dict(selections)
+        self.roots = tuple(p.resolve(strict=True) for p in roots)
+        if any(p == Path("/") for p in self.roots):
+            raise ExecutableAdmissionError("inspection dependency root is unscoped")
+        self.images = {name: {pin.resolved: (pin, {()})} for name, pin in selections.items()}
+        self.parents = {name: {pin.resolved: set()} for name, pin in selections.items()}
+
+    def verify(self, name: str, path: str):
+        if sys.platform != "darwin" or tuple(os.uname()) != self.platform:
+            raise ExecutableAdmissionError("inspection platform changed")
+        if not isinstance(name, str) or name not in self.selections or not isinstance(path, str):
+            raise ExecutableAdmissionError("inspection selection is unavailable")
+        self.selections[name].verify()
+        for pin, inherited in self.images[name].values():
+            if Path(path) in (pin.path, pin.resolved, *pin.aliases):
+                seen = set()
+                def verify_ancestry(image):
+                    if image in seen:
+                        return
+                    seen.add(image)
+                    self.images[name][image][0].verify()
+                    for parent in self.parents[name][image]:
+                        verify_ancestry(parent)
+                verify_ancestry(pin.resolved)
+                return pin, inherited
+        raise ExecutableAdmissionError("inspection file has no admitted selection or dependency edge")
+
+    def complete(self, name: str, path: str, output: str) -> None:
+        pin, contexts = self.verify(name, path)
+        names, rpaths = _parse_load_commands(output)
+        additions = []
+        for inherited in tuple(contexts):
+            paths, resolved_rpaths = _dependency_paths(self.selections[name], pin.resolved, inherited,
+                                                     names, rpaths, self.roots)
+            for candidate in paths:
+                if _system_library(candidate):
+                    continue
+                # Both the lexical alias and its target must stay within the
+                # launch's dependency scopes. Output is an edge, not a root grant.
+                if not any(candidate.is_relative_to(root) for root in self.roots):
+                    raise ExecutableAdmissionError("inspection dependency is outside approved roots")
+                dependency = FilePin.measure(candidate)
+                if any(not any(alias.is_relative_to(root) for root in self.roots)
+                       for alias in (*dependency.aliases, dependency.resolved)):
+                    raise ExecutableAdmissionError("inspection dependency alias escapes approved roots")
+                additions.append((dependency, resolved_rpaths))
+        pin.verify()
+        for dependency, inherited in additions:
+            previous = self.images[name].get(dependency.resolved)
+            if previous is not None:
+                if previous[0].resolved != dependency.resolved or previous[0].identity != dependency.identity:
+                    raise ExecutableAdmissionError("inspection dependency changed")
+                previous[0].verify()
+                previous[1].add(inherited)
+            else:
+                self.images[name][dependency.resolved] = (dependency, {inherited})
+            self.parents[name].setdefault(dependency.resolved, set()).add(pin.resolved)
+
+
+class _InspectionTool:
+    """Non-spawning system developer selection; no PATH/DEVELOPER_DIR override."""
+
+    def __init__(self):
+        if sys.platform != "darwin":
+            raise ExecutableAdmissionError("inspection requires Darwin")
+        self.platform = tuple(os.uname())
+        self.alias = FilePin.measure(Path("/usr/bin/otool"))
+        self.developer = Path("/var/db/xcode_select_link")
+        base, self.selection_identity = self._developer_selection()
+        self.base = base
+        self.executable = FilePin.measure(base / "usr/bin/otool")
+        if not os.access(self.executable.path, os.X_OK):
+            raise ExecutableAdmissionError("selected platform otool is not executable")
+
+    def _developer_selection(self):
+        if self.developer.exists() or self.developer.is_symlink():
+            value = self.developer.lstat()
+            identity = (value.st_dev, value.st_ino, value.st_mode, value.st_mtime_ns, value.st_ctime_ns,
+                        str(self.developer.readlink()) if self.developer.is_symlink() else None)
+            return self.developer.resolve(strict=True), identity
+        return Path("/Library/Developer/CommandLineTools"), None
+
+    def verify(self):
+        base, identity = self._developer_selection()
+        if (sys.platform != "darwin" or tuple(os.uname()) != self.platform
+                or base != self.base or identity != self.selection_identity):
+            raise ExecutableAdmissionError("inspection platform tool selection changed")
+        self.alias.verify()
+        self.executable.verify()
 
 
 class ExecutableAdmission:

@@ -766,3 +766,180 @@ def test_failed_suspended_admission_kills_and_reaps_original_child(monkeypatch):
             owner = retained[0]
             real_signal(owner._launch_broker, signal.SIGKILL, expected_pid=owner.process.pid)
             real_wait(owner.process, timeout=5)
+
+
+def test_private_stop_diagnostics_preserve_first_chain_and_persistence_failure(tmp_path, monkeypatch):
+    import json
+    process = SimpleNamespace(pid=123, _astrid_stop_diagnostics_enabled=True)
+    owner = SimpleNamespace(_lock=threading.RLock())
+    process._astrid_custody = owner
+    def cannot_persist():
+        raise OSError('private environment=DO_NOT_RECORD')
+    owner._write_observed_containment = cannot_persist
+    monkeypatch.setattr(custody, '_darwin_process_records', lambda pid: [])
+    try:
+        try:
+            raise ValueError('argv=SECRET_SENTINEL token_words=[1,2,3]')
+        except ValueError as cause:
+            raise custody.CustodyError('candidate reconciliation did not stabilize within its bound') from cause
+    except custody.CustodyError as first:
+        custody._stop_diagnostic(process, error=first, phase='observe_tree')
+    custody._stop_diagnostic(process, error=RuntimeError('environment=SECOND_SECRET'), phase='cleanup')
+    record = process._astrid_stop_diagnostics
+    assert record['first_failure']['chain'][0]['message'] == 'candidate reconciliation did not stabilize within its bound'
+    assert [n['type'] for n in record['first_failure']['chain']] == ['CustodyError', 'ValueError']
+    assert record['first_failure']['chain'][0]['cause'] == 1
+    assert record['first_failure']['chain'][0]['context'] == 1
+    assert record['secondary_failures'][0]['chain'][0]['type'] == 'RuntimeError'
+    assert record['persistence_error_type'] == 'OSError'
+    raw = json.dumps(record)
+    assert all(value not in raw for value in ('SECRET_SENTINEL', 'SECOND_SECRET', 'DO_NOT_RECORD', 'token_words', 'locals'))
+    assert set(record['first_failure']['chain'][0]['frames'][0]) == {'file', 'module', 'function', 'line'}
+
+
+def test_private_stop_diagnostics_original_wait_timeout_and_native_positive(monkeypatch):
+    import json
+    process = object.__new__(custody.RetainedCustodyPopen)
+    process.pid, process.returncode = 123, None
+    process._astrid_stop_diagnostics_enabled = True
+    process._custody_wait_outcome = None
+    monkeypatch.setattr(custody, '_darwin_process_records', lambda pid: [])
+    def original_wait(self, timeout=None):
+        if timeout == 0:
+            raise subprocess.TimeoutExpired(['secret-command'], timeout, output='secret-output')
+        self._custody_wait_outcome = {'status': 15, 'pid': 123, 'returncode': -15}
+        return -15
+    monkeypatch.setattr(subprocess.Popen, 'wait', original_wait)
+    with pytest.raises(subprocess.TimeoutExpired):
+        process.wait(timeout=0)
+    assert process.wait(timeout=1) == -15
+    events = process._astrid_stop_diagnostics['events']
+    assert events[0]['failure_type'] == 'TimeoutExpired' and 'returncode' not in events[0]
+    assert events[1]['returncode'] == -15 and events[1]['native_wait_status'] == 15
+    assert events[1]['positive_native_wait'] is True
+    assert all(e['end_monotonic'] >= e['start_monotonic'] for e in events)
+    assert 'secret-' not in json.dumps(events)
+    process._child_created = False  # synthetic object owns no OS child
+
+
+def test_private_stop_diagnostics_signal_results_are_not_wait_evidence(monkeypatch):
+    process = SimpleNamespace(pid=123, _astrid_stop_diagnostics_enabled=True)
+    owner = object.__new__(custody.ProcessCustody)
+    owner.process = process
+    monkeypatch.setattr(custody, '_darwin_process_records', lambda pid: [])
+    def fail(*args, **kwargs):
+        raise custody.AuditTokenSignalError(-1, 3)
+    owner._signal = fail
+    with pytest.raises(custody.AuditTokenSignalError):
+        owner.signal(123, 'birth', signal.SIGTERM)
+    event = process._astrid_stop_diagnostics['events'][0]
+    assert event['kind'] == 'signal_attempt' and event['kernel_result'] == -1 and event['errno'] == 3
+    assert 'returncode' not in event and 'native_wait_status' not in event
+    owner._signal = lambda *a, **k: None
+    owner.signal(123, 'birth', signal.SIGTERM)
+    assert process._astrid_stop_diagnostics['events'][1]['native_result'] == 'UNPROVED'
+
+
+def test_private_stop_diagnostics_default_silent_and_bounded(monkeypatch):
+    monkeypatch.delenv('ASTRID_CUSTODY_STOP_DIAGNOSTICS', raising=False)
+    assert custody._stop_diagnostics_enabled() is False
+    process = SimpleNamespace(pid=123)
+    custody._stop_diagnostic(process, error=ValueError('secret'))
+    assert not hasattr(process, '_astrid_stop_diagnostics')
+    process._astrid_stop_diagnostics_enabled = True
+    monkeypatch.setattr(custody, '_darwin_process_records', lambda pid: [])
+    for i in range(custody._STOP_DIAGNOSTIC_LIMIT + 1):
+        custody._stop_diagnostic(process, event={'kind': 'original_wait', 'returncode': 0})
+    assert len(process._astrid_stop_diagnostics['events']) == custody._STOP_DIAGNOSTIC_LIMIT
+    assert process._astrid_stop_diagnostics['truncated'] is True
+
+
+def test_private_stop_diagnostics_persist_on_existing_containment(tmp_path, monkeypatch):
+    import json
+    monkeypatch.setenv('ASTRID_CUSTODY_STOP_DIAGNOSTICS', '1')
+    owner = object.__new__(custody.ProcessCustody)
+    owner.root, owner.owner_epoch = tmp_path, 'synthetic'
+    owner._unadmitted_absent = {}
+    process = SimpleNamespace(pid=123, _astrid_stop_diagnostics_enabled=True, _astrid_custody=owner)
+    owner.process = process
+    monkeypatch.setattr(custody, '_darwin_process_records', lambda pid: [])
+    custody._stop_diagnostic(process, error=ValueError('private'), phase='observe_tree')
+    record = json.loads((tmp_path / 'observed-containment.json').read_text())
+    assert record['stop_diagnostics']['first_failure']['chain'][0]['type'] == 'ValueError'
+    assert record['complete_descendant_history'] == 'UNPROVED'
+    assert (tmp_path / 'observed-containment.json').stat().st_mode & 0o777 == 0o600
+
+
+@pytest.mark.parametrize('site', ['vcs', 'hivemind'])
+@pytest.mark.parametrize('outcome', ['positive', 'timeout', 'failure'])
+def test_private_named_helper_sites_preserve_result_and_redact(tmp_path, monkeypatch, capsys, site, outcome):
+    import json
+    from astrid.core.execution import generic_host as host
+    monkeypatch.setenv('ASTRID_CUSTODY_STOP_DIAGNOSTICS', '1')
+    (tmp_path / '.git').mkdir()
+    calls = []
+    class Child:
+        pid = 4321
+        returncode = None
+        def __init__(self, command, **kwargs):
+            self.status = 'status' in command
+            self.called = False
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+        def communicate(self, timeout=None):
+            calls.append(('wait', timeout))
+            if outcome == 'timeout' and not self.called and site != 'otool':
+                self.called = True
+                raise subprocess.TimeoutExpired(['SECRET_ARG'], timeout, output='SECRET_OUTPUT')
+            self.returncode = 7 if outcome == 'failure' else 0
+            return ('' if self.status else 'revision', 'SECRET_OUTPUT')
+        def kill(self):
+            calls.append(('kill',))
+    monkeypatch.setattr(subprocess, 'Popen', Child)
+    monkeypatch.setattr(custody._NamedHelperObservation, 'bind', lambda self, child: (
+        setattr(self, 'process', child), self.record.update({'child_pid': child.pid})))
+    if site == 'vcs':
+        assert host._vcs_revision(tmp_path) == ('revision' if outcome == 'positive' else 'unknown')
+    else:
+        record = SimpleNamespace(definition=SimpleNamespace(metadata={'source_pack': 'hivemind', 'pack_root': str(tmp_path)}))
+        assert host._hivemind_source_preflight(record)['ok'] is (outcome == 'positive')
+    raw = capsys.readouterr().err
+    assert 'SECRET_ARG' not in raw and 'SECRET_OUTPUT' not in raw
+    rows = [json.loads(line.removeprefix('ASTRID_PRIVATE_HELPER ')) for line in raw.splitlines()]
+    assert rows and all(row['attribution'] == 'UNPROVED' and row['child_pid'] == 4321 for row in rows)
+    assert all(row['end_monotonic'] >= row['start_monotonic'] for row in rows)
+    if outcome == 'timeout' and site != 'otool':
+        assert rows[0]['wait']['failure_type'] == 'TimeoutExpired'
+        assert calls == [('wait', 5), ('kill',), ('wait', None)]
+    elif outcome == 'positive':
+        assert all(row['wait']['returncode'] == 0 for row in rows)
+
+
+@pytest.mark.parametrize('drift', ['none', 'birth', 'executable', 'absent', 'parent'])
+def test_private_named_helper_incarnation_and_executable_match(tmp_path, monkeypatch, capsys, drift):
+    import ctypes
+    import json
+    selected = tmp_path / 'git'
+    selected.write_bytes(b'synthetic executable')
+    wrong = tmp_path / 'other'
+    wrong.write_bytes(b'other')
+    monkeypatch.setattr(custody.shutil, 'which', lambda _: str(selected))
+    native = {'pid': 4321, 'uid': 501, 'parent_pid': os.getpid(), 'pgid': 4321,
+              'status': 2, 'start_sec': 1, 'start_usec': 2}
+    after = dict(native)
+    if drift == 'birth': after['start_usec'] = 3
+    if drift == 'parent': native['parent_pid'] = after['parent_pid'] = 5
+    observations = iter(([native], [] if drift == 'absent' else [after]))
+    monkeypatch.setattr(custody, '_darwin_process_records', lambda pid: next(observations))
+    def pidpath(pid, buffer, length):
+        buffer.value = os.fsencode(wrong if drift == 'executable' else selected)
+        return len(buffer.value)
+    monkeypatch.setattr(custody.ctypes, 'CDLL', lambda *a, **k: SimpleNamespace(proc_pidpath=pidpath))
+    observation = custody._NamedHelperObservation('generic_host._vcs_revision')
+    observation.bind(SimpleNamespace(pid=4321, returncode=0))
+    observation.finish()
+    record = json.loads(capsys.readouterr().err.removeprefix('ASTRID_PRIVATE_HELPER '))
+    assert record['attribution'] == ('MATCHED_DIRECT_CHILD_INCARNATION_EXECUTABLE' if drift == 'none' else 'UNPROVED')
+    assert set(record['selected_executable']) == {'sha256', 'device', 'inode', 'size', 'mtime_ns'}
