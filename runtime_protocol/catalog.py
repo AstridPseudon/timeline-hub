@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import stat
+import sys
 import subprocess
 from contextlib import contextmanager
 from typing import Mapping, Any
@@ -43,6 +44,15 @@ def process_birth_identity(pid: int | None = None) -> str | None:
     value = os.getpid() if pid is None else int(pid)
     if value <= 0:
         return None
+    if sys.platform == "darwin":
+        # Discovery and the original custody owner must use the same native,
+        # fixed UTC identity as the selected Host; ps inherits observer TZ.
+        from banodoco_local.custody_broker import default_process_identity, CustodyError
+        try:
+            identity = default_process_identity(value)
+        except CustodyError:
+            return None
+        return None if identity is None else str(identity["birth_id"])
     stat_path = Path(f"/proc/{value}/stat")
     try:
         raw = stat_path.read_text(encoding="utf-8")

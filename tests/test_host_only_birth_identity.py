@@ -29,3 +29,12 @@ def test_native_custody_and_authenticated_private_peer_agree():
         assert own["birth_id"] == custody.default_process_identity(os.getpid())["birth_id"]
     finally:
         left.close(); right.close()
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="native Darwin discovery")
+def test_runtime_discovery_and_custody_birth_are_identical():
+    from runtime_protocol.catalog import process_birth_identity
+    from banodoco_local.runtime_boundary import LocalRuntimeBoundary
+    expected = custody.default_process_identity(os.getpid())["birth_id"]
+    assert process_birth_identity() == expected
+    assert LocalRuntimeBoundary.process_birth_identity(os.getpid()) == expected
