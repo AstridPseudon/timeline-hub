@@ -6,7 +6,7 @@ an escrow reference. Numeric PIDs select observations; signals use kernel tokens
 """
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import base64
 import errno
 import shutil
@@ -941,6 +941,10 @@ def signal_audit_token(words: Sequence[int], signum: int) -> None:
     ctypes.set_errno(0)
     result = int(function(ctypes.byref(token), int(signum)))
     observed_errno = int(ctypes.get_errno())
+    event = getattr(_STOP_SIGNAL_OBSERVATION, "event", None)
+    if event is not None:
+        event["native_result"] = result
+        event["native_errno"] = observed_errno
     if result != 0:
         raise AuditTokenSignalError(result, observed_errno)
 
@@ -1196,6 +1200,178 @@ class RetainedChildActor:
             raise CustodyError("designated cleanup actor has no positive retained-child exit proof")
 
 
+# Private run-only observations. None of these records confers custody authority.
+_STOP_DIAGNOSTIC_LIMIT = 256
+_STOP_SIGNAL_OBSERVATION = threading.local()
+
+
+def _stop_diagnostics_enabled() -> bool:
+    return os.environ.get("ASTRID_CUSTODY_STOP_DIAGNOSTICS") == "1"
+
+
+def _stop_exception(error: BaseException) -> dict[str, Any]:
+    # Exception strings can contain commands, output, or credentials. Only these
+    # exact source-owned literals are known safe; never stringify other errors.
+    safe_messages = {
+        "candidate reconciliation did not stabilize within its bound",
+        "owned process census unavailable", "owned leader exited before ancestry capture",
+        "owned process identity was reused", "owned descendants survived bounded termination",
+        "owned leader survived bounded termination", "owned command descendants remain",
+        "owned group members remain", "custody registration or observation is unresolved",
+    }
+    nodes, seen, pending = [], {}, [error]
+    while pending and len(nodes) < 64:
+        item = pending.pop(0)
+        if id(item) in seen:
+            continue
+        seen[id(item)] = len(nodes)
+        frames, tb = [], item.__traceback__
+        while tb is not None and len(frames) < 256:
+            frames.append({"file": tb.tb_frame.f_code.co_filename,
+                           "module": tb.tb_frame.f_globals.get("__name__"),
+                           "function": tb.tb_frame.f_code.co_name, "line": tb.tb_lineno})
+            tb = tb.tb_next
+        message = item.args[0] if len(item.args) == 1 and type(item.args[0]) is str else None
+        nodes.append({"type": type(item).__name__, "module": type(item).__module__,
+                      "message": message if message in safe_messages else None,
+                      "frames": frames, "frames_truncated": tb is not None})
+        pending.extend(edge for edge in (item.__cause__, item.__context__) if edge is not None)
+    # Keep both edges, including suppressed context and cycles, without locals.
+    pending, visited = [error], set()
+    while pending:
+        item = pending.pop(0)
+        if id(item) in visited or id(item) not in seen:
+            continue
+        visited.add(id(item))
+        node = nodes[seen[id(item)]]
+        for name, edge in (("cause", item.__cause__), ("context", item.__context__)):
+            node[name] = seen.get(id(edge)) if edge is not None else None
+            if edge is not None:
+                pending.append(edge)
+        node["context_suppressed"] = item.__suppress_context__
+    return {"first": 0, "chain": nodes, "chain_truncated": bool(pending) or len(seen) == 64}
+
+
+def _stop_diagnostic(process, *, event=None, error=None, phase=None) -> None:
+    if not getattr(process, "_astrid_stop_diagnostics_enabled", False):
+        return
+    custody = getattr(process, "_astrid_custody", None)
+    with getattr(custody, "_lock", nullcontext()):
+        record = getattr(process, "_astrid_stop_diagnostics", None)
+        if record is None:
+            record = process._astrid_stop_diagnostics = {
+                "version": "astrid.private-stop-diagnostics/v1", "authority": "NONE",
+                "owner_pid": os.getpid(), "root_pid": process.pid,
+                "events": [], "secondary_failures": [], "truncated": False,
+            }
+            try:
+                if sys.platform == "darwin":
+                    record["native_identities"] = {
+                        role: _darwin_process_records(pid)
+                        for role, pid in (("owner", os.getpid()), ("root", process.pid))}
+                broker = getattr(custody, "_launch_broker", None)
+                registration = getattr(broker, "registration", None)
+                if isinstance(registration, Mapping):
+                    record["root_binding"] = {k: registration[k] for k in (
+                        "pid", "uid", "birth_id", "audit_token_sha256", "audit_token_pidversion")
+                        if k in registration}
+            except BaseException as observation_error:
+                record["identity_observation_error_type"] = type(observation_error).__name__
+        try:
+            if error is not None:
+                failure = {"phase": phase, **_stop_exception(error)}
+                if "first_failure" not in record:
+                    record["first_failure"] = failure
+                elif len(record["secondary_failures"]) < 16:
+                    record["secondary_failures"].append(failure)
+                else:
+                    record["truncated"] = True
+            if event is not None:
+                if len(record["events"]) < _STOP_DIAGNOSTIC_LIMIT:
+                    record["events"].append(event)
+                else:
+                    record["truncated"] = True
+            if custody is not None:
+                custody._write_observed_containment()
+        except BaseException as persistence_error:
+            # Observational failure must never replace the primary operation.
+            record["persistence_error_type"] = type(persistence_error).__name__
+
+
+class _NamedHelperObservation:
+    """Metadata only at three named source sites; never executes a command."""
+    _operations = {"declared_executables._load_commands": "/usr/bin/otool",
+                   "generic_host._hivemind_source_preflight.status": "git",
+                   "generic_host._hivemind_source_preflight.revision": "git",
+                   "generic_host._vcs_revision": "git"}
+
+    _log_lock = threading.Lock()
+    _log_count = 0
+
+    def __init__(self, operation):
+        self.record = {"operation": operation, "start_monotonic": time.monotonic(),
+                       "attribution": "UNPROVED", "authority": "NONE"}
+        self.process = None
+        self.selected = None
+        try:
+            executable = self._operations[operation]
+            selected = Path(shutil.which(executable) or executable).resolve(strict=True)
+            st = selected.stat()
+            self.selected = selected
+            self.record["selected_executable"] = {
+                "sha256": hashlib.sha256(selected.read_bytes()).hexdigest(),
+                "device": st.st_dev, "inode": st.st_ino, "size": st.st_size,
+                "mtime_ns": st.st_mtime_ns}
+        except BaseException as error:
+            self.record["observation_error_type"] = type(error).__name__
+
+    def bind(self, process):
+        self.process = process
+        self.record["child_pid"] = process.pid
+        try:
+            before = _darwin_process_records(process.pid)
+            if before:
+                self.record["native"] = before[0]
+            library = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+            library.proc_pidpath.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32]
+            library.proc_pidpath.restype = ctypes.c_int
+            path = ctypes.create_string_buffer(4096)
+            if library.proc_pidpath(process.pid, path, len(path)) <= 0:
+                raise CustodyError("helper executable unavailable")
+            observed = Path(os.fsdecode(path.value)).resolve(strict=True)
+            st = observed.stat()
+            after = _darwin_process_records(process.pid)
+            keys = ("pid", "uid", "parent_pid", "pgid", "start_sec", "start_usec")
+            pin = self.record.get("selected_executable", {})
+            if (len(before) == len(after) == 1 and before[0]["parent_pid"] == os.getpid()
+                    and all(before[0][k] == after[0][k] for k in keys)
+                    and before[0]["status"] in {1, 2, 3, 4} and after[0]["status"] in {1, 2, 3, 4}
+                    and observed == self.selected and st.st_dev == pin.get("device")
+                    and st.st_ino == pin.get("inode") and st.st_size == pin.get("size")
+                    and st.st_mtime_ns == pin.get("mtime_ns")
+                    and hashlib.sha256(observed.read_bytes()).hexdigest() == pin.get("sha256")):
+                self.record["attribution"] = "MATCHED_DIRECT_CHILD_INCARNATION_EXECUTABLE"
+        except BaseException as error:
+            self.record["observation_error_type"] = type(error).__name__
+
+    def finish(self, error=None):
+        self.record["end_monotonic"] = time.monotonic()
+        self.record["wait"] = {"returncode": getattr(self.process, "returncode", None),
+                               "failure_type": type(error).__name__ if error is not None else None}
+        with self._log_lock:
+            count = type(self)._log_count
+            type(self)._log_count += 1
+        if count > 8192:
+            return
+        if count == 8192:
+            self.record = {"operation": "named_helper_observations_truncated", "authority": "NONE"}
+        try:
+            # Host stderr is already an owner-retained log, not a new channel.
+            print("ASTRID_PRIVATE_HELPER " + json.dumps(self.record, sort_keys=True), file=sys.stderr, flush=True)
+        except BaseException:
+            pass
+
+
 class RetainedCustodyPopen(subprocess.Popen):
     """Popen retaining a positive native terminal wait status.
 
@@ -1205,7 +1381,30 @@ class RetainedCustodyPopen(subprocess.Popen):
 
     def __init__(self, *args, **kwargs):
         self._custody_wait_outcome = None
+        self._astrid_stop_diagnostics_enabled = _stop_diagnostics_enabled()
         super().__init__(*args, **kwargs)
+
+    def wait(self, timeout=None):
+        if not self._astrid_stop_diagnostics_enabled:
+            return super().wait(timeout=timeout)
+        caller = sys._getframe(1)
+        event = {"kind": "original_wait", "phase": caller.f_code.co_name,
+                 "file": caller.f_code.co_filename, "line": caller.f_lineno,
+                 "timeout": timeout, "start_monotonic": time.monotonic()}
+        del caller
+        try:
+            code = super().wait(timeout=timeout)
+            event["returncode"] = code
+            native = self._custody_wait_outcome
+            event["native_wait_status"] = native["status"] if native is not None else None
+            event["positive_native_wait"] = native is not None
+            return code
+        except BaseException as error:
+            event["failure_type"] = type(error).__name__
+            raise
+        finally:
+            event["end_monotonic"] = time.monotonic()
+            _stop_diagnostic(self, event=event)
 
     def _try_wait(self, wait_flags):
         # Preserve ECHILD as evidence loss rather than manufacturing status 0.
@@ -3926,6 +4125,8 @@ class ProcessCustody:
             "unadmitted_candidates": list(self._unadmitted_absent.values()),
             "observed_candidates": list(getattr(self, "_observed_candidates", {}).values()),
             "capture_failures": getattr(self, "_capture_failure_observations", []),
+            **({"stop_diagnostics": self.process._astrid_stop_diagnostics}
+               if getattr(getattr(self, "process", None), "_astrid_stop_diagnostics", None) is not None else {}),
             "exit_observations": [watch.facts for watch in getattr(self, "_exit_observations", {}).values()],
             **({"command_observations": self._command_observations,
                 "command_diagnostics_truncated": getattr(self, "_command_diagnostics_truncated", False),
@@ -4455,6 +4656,33 @@ class ProcessCustody:
             raise CustodyError("terminal candidate birth/status observation contradicts retained census")
 
     def signal(self, pid: int, birth: str, signum: int, *, cleanup_deadline: float | None = None) -> None:
+        event = {"kind": "signal_attempt", "pid": pid, "birth_id": birth,
+                 "signal": int(signum), "start_monotonic": time.monotonic()}
+        enabled = getattr(self.process, "_astrid_stop_diagnostics_enabled", False)
+        previous = getattr(_STOP_SIGNAL_OBSERVATION, "event", None)
+        if enabled:
+            _STOP_SIGNAL_OBSERVATION.event = event
+        try:
+            result = self._signal(pid, birth, signum, cleanup_deadline=cleanup_deadline)
+            event["outcome"] = "CALL_RETURNED"
+            event.setdefault("native_result", "UNPROVED")  # An already-gone race is not a kernel call.
+            return result
+        except BaseException as error:
+            event["outcome"] = "CALL_FAILED"
+            event["failure_type"] = type(error).__name__
+            for key, value in (("kernel_result", getattr(error, "result", None)),
+                               ("errno", getattr(error, "observed_errno", getattr(error, "errno", None)))):
+                if type(value) is int:
+                    event[key] = value
+            _stop_diagnostic(self.process, error=error, phase="custody_signal")
+            raise
+        finally:
+            if enabled:
+                _STOP_SIGNAL_OBSERVATION.event = previous
+            event["end_monotonic"] = time.monotonic()
+            _stop_diagnostic(self.process, event=event)
+
+    def _signal(self, pid: int, birth: str, signum: int, *, cleanup_deadline: float | None = None) -> None:
         with self._lock:
             self._verify_root()
             entry = self._handles.get(pid)

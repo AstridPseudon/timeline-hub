@@ -2433,20 +2433,76 @@ def _hivemind_source_preflight(record: "CapabilityRecord") -> dict[str, Any] | N
     if checkout is None:
         return {"ok": False, "reason": "hivemind source is not a Git checkout"}
     try:
-        status = subprocess.run(
-            ["git", "-C", str(checkout), "status", "--porcelain=v1"],
-            capture_output=True,
-            text=True,
-            check=True,
-            timeout=5,
-        )
-        revision = subprocess.run(
-            ["git", "-C", str(checkout), "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=True,
-            timeout=5,
-        ).stdout.strip()
+        from .custody_broker import _NamedHelperObservation, _stop_diagnostics_enabled
+        if not _stop_diagnostics_enabled():
+            status = subprocess.run(
+                ["git", "-C", str(checkout), "status", "--porcelain=v1"],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=5,
+            )
+        else:
+            observation = _NamedHelperObservation("generic_host._hivemind_source_preflight.status")
+            observation.record["timeout"] = 5
+            failure = None
+            try:
+                with subprocess.Popen(["git", "-C", str(checkout), "status", "--porcelain=v1"], stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE, text=True) as child:
+                    observation.bind(child)
+                    try:
+                        stdout, stderr = child.communicate(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        child.kill()
+                        child.communicate()
+                        raise
+                    except BaseException:
+                        child.kill()
+                        raise
+                    if child.returncode:
+                        raise subprocess.CalledProcessError(child.returncode, ["git", "-C", str(checkout), "status", "--porcelain=v1"],
+                                                            output=stdout, stderr=stderr)
+                    status = subprocess.CompletedProcess(None, child.returncode, stdout, stderr)
+            except BaseException as error:
+                failure = error
+                raise
+            finally:
+                observation.finish(failure)
+        from .custody_broker import _NamedHelperObservation, _stop_diagnostics_enabled
+        if not _stop_diagnostics_enabled():
+            revision = subprocess.run(
+                ["git", "-C", str(checkout), "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=5,
+            ).stdout.strip()
+        else:
+            observation = _NamedHelperObservation("generic_host._hivemind_source_preflight.revision")
+            observation.record["timeout"] = 5
+            failure = None
+            try:
+                with subprocess.Popen(["git", "-C", str(checkout), "rev-parse", "HEAD"], stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE, text=True) as child:
+                    observation.bind(child)
+                    try:
+                        stdout, stderr = child.communicate(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        child.kill()
+                        child.communicate()
+                        raise
+                    except BaseException:
+                        child.kill()
+                        raise
+                    if child.returncode:
+                        raise subprocess.CalledProcessError(child.returncode, ["git", "-C", str(checkout), "rev-parse", "HEAD"],
+                                                            output=stdout, stderr=stderr)
+                    revision = subprocess.CompletedProcess(None, child.returncode, stdout, stderr).stdout.strip()
+            except BaseException as error:
+                failure = error
+                raise
+            finally:
+                observation.finish(failure)
     except (OSError, subprocess.SubprocessError):
         return {"ok": False, "reason": "hivemind source pin could not be verified"}
     if status.stdout.strip():
@@ -4590,13 +4646,41 @@ def _vcs_revision(root: Path) -> str:
     if checkout is None:
         return "unversioned"
     try:
-        result = subprocess.run(
-            ["git", "-C", str(checkout), "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=True,
-            timeout=5,
-        )
+        from .custody_broker import _NamedHelperObservation, _stop_diagnostics_enabled
+        if not _stop_diagnostics_enabled():
+            result = subprocess.run(
+                ["git", "-C", str(checkout), "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=5,
+            )
+        else:
+            observation = _NamedHelperObservation("generic_host._vcs_revision")
+            observation.record["timeout"] = 5
+            failure = None
+            try:
+                with subprocess.Popen(["git", "-C", str(checkout), "rev-parse", "HEAD"], stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE, text=True) as child:
+                    observation.bind(child)
+                    try:
+                        stdout, stderr = child.communicate(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        child.kill()
+                        child.communicate()
+                        raise
+                    except BaseException:
+                        child.kill()
+                        raise
+                    if child.returncode:
+                        raise subprocess.CalledProcessError(child.returncode, ["git", "-C", str(checkout), "rev-parse", "HEAD"],
+                                                            output=stdout, stderr=stderr)
+                    result = subprocess.CompletedProcess(None, child.returncode, stdout, stderr)
+            except BaseException as error:
+                failure = error
+                raise
+            finally:
+                observation.finish(failure)
     except (OSError, subprocess.SubprocessError):
         return "unknown"
     return result.stdout.strip() or "unknown"

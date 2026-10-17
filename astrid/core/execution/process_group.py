@@ -17,7 +17,7 @@ from typing import Any
 
 from astrid.core.execution.custody_broker import (
     CustodyError as CleanupUncertainError, CustodyRootBinding, ProcessCustody, RetainedCustodyPopen,
-    _darwin_process_records, _ps_lstart_birth,
+    _darwin_process_records, _ps_lstart_birth, _stop_diagnostic,
 )
 
 
@@ -274,6 +274,7 @@ def popen_owned_process(argv: list[str], *, custody_root: CustodyRootBinding | N
         if _child_bridge_launch is not None:
             _child_bridge_launch.bridge.revoke()
         # Keep the initiating error and its retained obligation visible.
+        _stop_diagnostic(process, error=error, phase="launch_admission")
         error.process = process
         error.custody = custody
         try:
@@ -434,6 +435,7 @@ def observe_tree(process: subprocess.Popen) -> dict[int, str]:
             return _observe_tree(process)
         except BaseException as exc:
             # A failed census or an unresolved admitted obligation remains sticky.
+            _stop_diagnostic(process, error=exc, phase="tree_observation_or_cleanup")
             process._astrid_tree_uncertain = str(exc) or type(exc).__name__
             raise
 
@@ -494,6 +496,7 @@ def verify_tree_absent(process: subprocess.Popen) -> None:
     try:
         _verify_tree_absent(process)
     except BaseException as exc:
+        _stop_diagnostic(process, error=exc, phase="tree_cleanup")
         process._astrid_tree_uncertain = str(exc) or type(exc).__name__
         raise
 
@@ -531,6 +534,7 @@ def terminate_tree(process: subprocess.Popen, *, grace_seconds: float = 1.0) -> 
     try:
         _terminate_tree(process, grace_seconds=grace_seconds)
     except BaseException as exc:
+        _stop_diagnostic(process, error=exc, phase="tree_cleanup")
         process._astrid_tree_uncertain = str(exc) or type(exc).__name__
         raise
 

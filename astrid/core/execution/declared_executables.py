@@ -75,8 +75,29 @@ def _system_library(path: Path) -> bool:
 
 def _load_commands(path: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
     # No shell, user otool, DYLD settings or request environment participates.
-    result = subprocess.run(["/usr/bin/otool", "-l", str(path)], capture_output=True,
-                            text=True, env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"}, check=False)
+    from .custody_broker import _NamedHelperObservation, _stop_diagnostics_enabled
+    if not _stop_diagnostics_enabled():
+        result = subprocess.run(["/usr/bin/otool", "-l", str(path)], capture_output=True,
+                                text=True, env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"}, check=False)
+    else:
+        observation = _NamedHelperObservation("declared_executables._load_commands")
+        failure = None
+        try:
+            with subprocess.Popen(["/usr/bin/otool", "-l", str(path)], stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE, text=True,
+                                  env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"}) as child:
+                observation.bind(child)
+                try:
+                    stdout, stderr = child.communicate()
+                except BaseException:
+                    child.kill()
+                    raise
+                result = subprocess.CompletedProcess(None, child.returncode, stdout, stderr)
+        except BaseException as error:
+            failure = error
+            raise
+        finally:
+            observation.finish(failure)
     if result.returncode:
         raise ExecutableAdmissionError(f"cannot inspect declared executable library closure: {path}")
     libraries, rpaths = [], []
