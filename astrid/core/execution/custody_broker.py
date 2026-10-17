@@ -65,28 +65,17 @@ _CHILD_BRIDGE_CONSUMER = 'ASTRID_CHILD_BRIDGE_CHANNEL'
 
 
 def _pipe_identity(fd: int, direction: int) -> dict[str, int]:
-    if type(fd) is not int or fd < 3:
-        raise CustodyError('private pipe descriptor is invalid')
-    value = os.fstat(fd)
-    if (not stat.S_ISFIFO(value.st_mode) or value.st_nlink != 0
-            or fcntl.fcntl(fd, fcntl.F_GETFL) & os.O_ACCMODE != direction):
-        raise CustodyError('private channel is not an anonymous directional pipe')
-    return {'fd': fd, 'device': value.st_dev, 'inode': value.st_ino, 'direction': direction}
+    try:
+        return hosted_contract._pipe_identity(fd, direction)
+    except hosted_contract.HostedContractError as exc:
+        raise CustodyError(str(exc)) from exc
 
 
 def _validate_pipe_binding(value: object) -> tuple[int, int]:
-    if not isinstance(value, list) or len(value) != 2:
-        raise CustodyError('private pipe binding is invalid')
-    descriptors = []
-    for item, direction in zip(value, (os.O_RDONLY, os.O_WRONLY)):
-        if (not isinstance(item, dict) or set(item) != {'fd', 'device', 'inode', 'direction'}
-                or any(type(part) is not int for part in item.values())
-                or _pipe_identity(item.get('fd'), direction) != item):
-            raise CustodyError('private pipe identity differs')
-        descriptors.append(item['fd'])
-    if descriptors[0] == descriptors[1]:
-        raise CustodyError('private pipe endpoints collide')
-    return tuple(descriptors)
+    try:
+        return hosted_contract._validate_pipe_binding(value)
+    except hosted_contract.HostedContractError as exc:
+        raise CustodyError(str(exc)) from exc
 
 
 def _validate_child_bridge_binding(value, *, role='command', argv=None, run_id=None):

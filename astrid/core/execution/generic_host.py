@@ -14866,6 +14866,7 @@ def _cli() -> int:
         args.attempt_base = str(owned_attempts)
 
     remotion_closure_binding = None
+    selected_renderer = None
     if (preparation is not None and preparation.result is not None
             and not preparation._aborted and preparation._activation_grant == activation
             and activation is not None):
@@ -14873,7 +14874,8 @@ def _cli() -> int:
         selection = launch.get("renderer_selection")
         if selection is not None:
             from .host_renderer_selection import activate_renderer_selection
-            remotion_closure_binding = activate_renderer_selection(selection)
+            selected_renderer = activate_renderer_selection(selection)
+            remotion_closure_binding = selected_renderer.closure
             # Derive renderer configuration only from the authenticated selection.
             # A foreign validation reference is never imported into this launch.
             from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
@@ -14884,6 +14886,13 @@ def _cli() -> int:
             os.environ.update(ASTRID_REMOTION_PROJECT_DIR=selection["project"],
                               ASTRID_NODE_EXECUTABLE=selection["node_executable"],
                               ASTRID_TIMELINE_SCHEMA_PYTHONPATH=launch["source_checkout"])
+            for key, name in (("XDG_STATE_HOME", "state"), ("XDG_CACHE_HOME", "cache"),
+                              ("XDG_CONFIG_HOME", "config"), ("XDG_DATA_HOME", "data")):
+                directory = support_root / "host-context" / name
+                directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+                if directory.resolve(strict=True) != directory or directory.stat().st_uid != os.getuid():
+                    raise HostError("host-only renderer context must be canonical and owned")
+                os.environ[key] = str(directory)
             environment = dict(os.environ)
             reference = prepare_remotion_validation(
                 artifact_directory=support_root / "remotion-validation",
@@ -14896,7 +14905,7 @@ def _cli() -> int:
     _emit_startup_phase("host_constructor_begin")
     _install_host_vibecomfy_import_root()
     def create_host():
-        return GenericPackHost(
+        selected_host = GenericPackHost(
         pack_roots=args.pack_root,
         client=client,
         executor_id=args.executor_id,
@@ -14909,6 +14918,11 @@ def _cli() -> int:
         boot_manifest_hash=boot_manifest_hash,
         remotion_closure_binding=remotion_closure_binding,
     )
+        if selected_renderer is not None:
+            # Reuse the authenticated executable admission for every declared
+            # Node consumer; ambient PATH cannot substitute another Node.
+            selected_host._executable_admission._bindings["node"] = selected_renderer.node
+        return selected_host
     host = preparation.construct_claim_host(create_host) if preparation is not None else create_host()
     _emit_startup_phase("host_constructor_done")
     host._native_engine_graph = preparation.graph if preparation is not None else None

@@ -36,7 +36,7 @@ def test_admitted_typed_selection_roundtrip_and_node_inspection(selection, monke
         calls.append((name, path))
         return selection.node
     monkeypatch.setattr(declared_executables, '_bind', inspect)
-    assert selected.activate_renderer_selection(value) == selection.closure
+    assert selected.activate_renderer_selection(value).closure == selection.closure
     assert calls == [('node', selection.node.executable.path)]
     monkeypatch.setattr(declared_executables, '_bind', lambda *args: ExecutableBinding(
         'node', selection.node.executable, (), (Path('/changed/library'),), tuple(os.uname())))

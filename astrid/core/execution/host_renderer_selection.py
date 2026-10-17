@@ -80,4 +80,4 @@ def activate_renderer_selection(value):
     node = _bind('node', Path(value['node_executable']))
     if _digest(node.evidence()) != value['node_admission_sha256']:
         raise ValueError('renderer Node admission changed')
-    return binding
+    return HostRendererSelection(binding, node)

@@ -29,6 +29,31 @@ class HostedContractError(RuntimeError):
     pass
 
 
+def _pipe_identity(fd, direction):
+    if type(fd) is not int or fd < 3:
+        raise HostedContractError('private pipe descriptor is invalid')
+    value = os.fstat(fd)
+    if (not stat.S_ISFIFO(value.st_mode) or value.st_nlink != 0
+            or fcntl.fcntl(fd, fcntl.F_GETFL) & os.O_ACCMODE != direction):
+        raise HostedContractError('private channel is not an anonymous directional pipe')
+    return {'fd': fd, 'device': value.st_dev, 'inode': value.st_ino, 'direction': direction}
+
+
+def _validate_pipe_binding(value):
+    if not isinstance(value, list) or len(value) != 2:
+        raise HostedContractError('private pipe binding is invalid')
+    descriptors = []
+    for item, direction in zip(value, (os.O_RDONLY, os.O_WRONLY)):
+        if (not isinstance(item, dict) or set(item) != {'fd', 'device', 'inode', 'direction'}
+                or any(type(part) is not int for part in item.values())
+                or _pipe_identity(item.get('fd'), direction) != item):
+            raise HostedContractError('private pipe identity differs')
+        descriptors.append(item['fd'])
+    if descriptors[0] == descriptors[1]:
+        raise HostedContractError('private pipe endpoints collide')
+    return tuple(descriptors)
+
+
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode()
 
@@ -163,7 +188,6 @@ def validate(value, *, role, argv=None):
     if 'inspection_pipes' in value:
         if role != 'host':
             raise HostedContractError('inspection pipes require the selected Host')
-        from .custody_broker import _validate_pipe_binding
         fds.extend(_validate_pipe_binding(value['inspection_pipes']))
     binding = value['launch_binding']
     if binding is not None:
@@ -303,8 +327,7 @@ def consume(role, sockets):
             or descriptor_set() != set(sockets.values()) | {p['fd'] for p in value.get('inspection_pipes', [])}):
         raise HostedContractError('hosted consumer role, descriptors or process incarnation differs')
     if value.get('inspection_pipes'):
-        from .custody_broker import _COMMAND_INVENTORY_FD, _validate_pipe_binding
-        selected = json.loads(os.environ.get(_COMMAND_INVENTORY_FD, 'null'))
+        selected = json.loads(os.environ.get('ASTRID_COMMAND_CONTROL_FD', 'null'))
         if selected != value['inspection_pipes']:
             raise HostedContractError('inspection consumer descriptor binding differs')
         for descriptor in _validate_pipe_binding(selected):

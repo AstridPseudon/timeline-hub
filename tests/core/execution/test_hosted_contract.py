@@ -89,6 +89,11 @@ def test_host_inspection_pipes_require_selected_renderer_and_bind_exact_endpoint
         argv[7] = str(selected.children['activation'].fileno())
         selected.environment(argv)
         assert {reads[0], writes[1]} <= set(selected.pass_fds)
+        # The native trampoline imports this stdlib module without a package.
+        import runpy
+        standalone = runpy.run_path(contract.__file__)
+        assert standalone['validate'](selected.value, role='host') == contract.validate(selected.value, role='host')
+
         forged = copy.deepcopy(selected.value)
         forged['inspection_pipes'][0]['inode'] += 1
         with pytest.raises((contract.HostedContractError, custody.CustodyError)):
