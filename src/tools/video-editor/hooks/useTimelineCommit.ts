@@ -415,27 +415,30 @@ export function useTimelineCommit({
         transactionId: options?.transactionId,
         semantic: options?.semantic,
         commandHistory: options?.commandHistory,
-        ...((options?.editCommands && (
-          isTranscriptCaptionBatch(options.editCommands)
-          || isOverlapTrimBatch(options.editCommands)
-          || (semanticCommandSaving && (
-            isShaderSlotBatch(options.editCommands)
-            || isTransitionAssignmentBatch(options.editCommands)
-            || isClipPlacementBatch(options.editCommands)
-            || isClipStructureBatch(options.editCommands)
-            || isTrackHistoryBatch(options.editCommands)
-            || isFadeHistoryBatch(options.editCommands)
-            || isPositionResetBatch(options.editCommands)
-            || isAppKeyframeHistoryBatch(options.editCommands)
-            || isContinuousHistoryBatch(options.editCommands)
-            || isClipLookStyleBatch(options.editCommands)
-            || isClipParamsHistoryBatch(options.editCommands)
+        ...(
+          (options?.editCommands && (
+            isTranscriptCaptionBatch(options.editCommands)
+            || isOverlapTrimBatch(options.editCommands)
+            || (semanticCommandSaving && (
+              isShaderSlotBatch(options.editCommands)
+              || isTransitionAssignmentBatch(options.editCommands)
+              || isClipPlacementBatch(options.editCommands)
+              || isClipStructureBatch(options.editCommands)
+              || isTrackHistoryBatch(options.editCommands)
+              || isFadeHistoryBatch(options.editCommands)
+              || isPositionResetBatch(options.editCommands)
+              || isAppKeyframeHistoryBatch(options.editCommands)
+              || isContinuousHistoryBatch(options.editCommands)
+              || isClipLookStyleBatch(options.editCommands)
+              || isClipParamsHistoryBatch(options.editCommands)
+            ))
           ))
-        )) || (options?.editCommands?.length === 1 && (
-          isAssetRegistrationCommand(options.editCommands[0])
-          || isTiedHoldExpansionCommand(options.editCommands[0])
-        )))
-          ? { nativeRegistrationOwner: nextData } : {}),
+          || (options?.editCommands?.length === 1 && (
+            isAssetRegistrationCommand(options.editCommands[0])
+            || isTiedHoldExpansionCommand(options.editCommands[0])
+          ))
+            ? { nativeRegistrationOwner: nextData } : {}
+        ),
       });
       if (options?.proposalBase) bindProposalSave(nextData, options.proposalBase, recordHistory);
       else recordHistory();

@@ -7216,6 +7216,7 @@ describe('W26 existing bulk API SDK accepted history', () => {
     expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
     expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
   }, 90_000);
+});
 function W28RegistrySeed({ records, children }: { records: ShaderEffectRegistryRecord[]; children: React.ReactNode }) {
   const { registry } = useShaderEffectRegistryContext();
   React.useLayoutEffect(() => { const handles = records.map(record => registry.register(record)); return () => handles.forEach(handle => handle.dispose()); }, [registry, records]);
@@ -7324,6 +7325,7 @@ describe.skipIf(!process.env.ASTRID_W28_SDK)('W28 SDK caller receipt history', (
       if (mode === 'edit') { const shader = unique[0].change.commands[0].args.shader as Record<string, unknown>; expect(shader.sourceHash).toBe('literal:retained descriptor'); expect(shader.unknownLegacy).toEqual({ keep: true }); expect(shader.uniforms).toMatchObject({ opaqueUniform: { keep: null } }); }
       mounted.unmount(); history.unmount(); h.unmount();
   }, 120_000);
+});
 // W32 uses the original selected/bulk reset handlers mounted with the real
 // commit, persistence, provider and shared native history hooks above.
 async function positionResetData(presence: 'value' | 'null' | 'mixed' | 'absent' = 'mixed', occurrence = false) {
