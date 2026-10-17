@@ -322,6 +322,7 @@ def _sdk_cpu_handoff_fixture(tmp_path, monkeypatch):
 
 
 def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_path, monkeypatch):
+    """Legacy command/finally with activated output layout; no V3/GPU claim."""
     import ast
     import hashlib
     import inspect
@@ -337,6 +338,11 @@ def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_
                 and any(isinstance(target, ast.Name) and target.id == "argv" for target in node.targets))
     flags = {node.value for node in ast.walk(argv) if isinstance(node, ast.Constant) and isinstance(node.value, str)}
     assert "--register" in flags and not flags.intersection({"--host-control-fd", "--activation-fd", "--activation-socket"})
+    startup = ast.parse(inspect.getsource(module._cli))
+    producer_base = ast.dump(ast.parse("str(Path(output_root) / 'attempts')", mode="eval").body)
+    assert any(isinstance(node, ast.Assign) and ast.dump(node.value) == producer_base
+               and any(ast.unparse(target) == "args.attempt_base" for target in node.targets)
+               for node in ast.walk(startup))
     f = _sdk_cpu_session_fixture(tmp_path, monkeypatch)
     profile_path = tmp_path / "readiness.json"
     profile_path.write_text(json.dumps(f.profile))
@@ -367,7 +373,12 @@ def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_
         (path / "executor.yaml").write_text(json.dumps(definition))
     runtime = FakeRuntime()
     runtime.get_object = objects.__getitem__
-    host = GenericPackHost(pack_roots=[packs], client=runtime, attempt_base=tmp_path / "attempts")
+    runtime.confirm_claim_authority = lambda **fields: module._AuthenticatedAttempt(
+        tuple(sorted(fields.items()))
+    )
+    attempt_base = Path(f.profile["launch"]["output_root"]) / "attempts"
+    host = GenericPackHost(pack_roots=[packs], client=runtime, attempt_base=attempt_base)
+    host._attempt_policy_factory = module._AttemptPolicyFactory(host._executable_admission)
     host._native_engine_graph = None
     host.discover()
     host.preflight()
@@ -393,7 +404,89 @@ def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_
     assert {p.name: p.read_bytes() for p in f.session.iterdir()} == before
     assert all(sig == 0 for _, sig in f.signals)
     assert host._native_engine_graph is None and not host.managed_tool_session.occupied
+    assert [row["data"] for row in runtime.uploaded_objects.values() if row["filename"] == "result.txt"] == [b"settled"]
+    assert list(attempt_base.iterdir()) == [] and host.last_cleanup_receipt["status"] == "deleted"
+    assert not (Path(f.profile["launch"]["output_root"]) / "astrid-tasks").exists()
     assert all(getattr(host, name) is None for name in ("_vibecomfy_warmth_hint", "_vibecomfy_current_warmth_hint", "_vibecomfy_requested_warmth_hint"))
+
+
+@pytest.mark.parametrize("fault", ["default", "outside", "missing_session", "foreign_session",
+                                   "root", "root_alias", "parent_alias", "claim", "source", "session", "token"])
+def test_legacy_hc03_command_output_refuses_before_spawn_or_external_writes(tmp_path, monkeypatch, fault):
+    import hashlib
+    import shutil
+    from astrid.core.execution import generic_host as module
+    from astrid.core.execution.managed_tool_session import CapabilityDescriptor, ManagedToolSessionError, SessionBinding
+
+    f = _sdk_cpu_session_fixture(tmp_path, monkeypatch)
+    pack_root = tmp_path / "legacy-command"
+    pack_root.mkdir()
+    manifest = pack_root / "executor.yaml"
+    manifest.write_text(json.dumps({"schema_version": 1, "id": "vibecomfy.run", "name": "legacy",
+        "kind": "external", "version": "1.0", "command": {"argv": ["{python_exec}", "-c", "raise AssertionError('must never launch')"]},
+        "inputs": [], "outputs": [], "metadata": {"adapter_family": "local_generation", "resource_keys": ["gpu"]}}))
+    runtime = FakeRuntime()
+    runtime.confirm_claim_authority = lambda **fields: module._AuthenticatedAttempt(tuple(sorted(fields.items())))
+    managed_root = Path(f.profile["launch"]["output_root"])
+    base = None if fault == "default" else tmp_path / "outside" if fault == "outside" else managed_root / "attempts"
+    host = GenericPackHost(pack_roots=[pack_root], client=runtime, attempt_base=base)
+    host.discover()
+    host.preflight()
+    _, admission = host.admit(capability_kind="executor", capability_id="vibecomfy.run")
+    record = host.capabilities["vibecomfy.run"]
+    attempt = host._allocate_attempt_root("vibe", "vibe-attempt")
+    fields = dict(task_id="vibe", attempt_id="vibe-attempt", lease_id="unit-lease", fence=1,
+                  runtime_epoch=1, project_id="unit-project", operation=record.id, executor_id=host.executor_id)
+    host._attempt_claim_authority = _install_attempt_policy(host, attempt, record, fields=fields)
+    adapter = module._ManagedVibeSessionAdapter.from_host_session(hc03_profile=f.profile,
+        model_id="fixture-model", template_id="fixture-template", invocation_identity="vibe:vibe-attempt:1")
+    s = f.profile["vibecomfy_session"]
+    binding = SessionBinding(s["session_dir"], f.profile["runtime"]["runtime_instance_id"], s["process_birth_id"],
+                            s["server_url"], s["source_revision"], s["config_digest"], engine_birth_id=s["comfy_process_birth_id"])
+    host.managed_tool_session.open(capability=CapabilityDescriptor(record.id), binding=binding, adapter=adapter)
+    token = host.managed_tool_session.admit(capability_id=record.id, invocation_id="vibe:vibe-attempt:1")
+    profile_path = tmp_path / "readiness.json"
+    profile_path.write_text(json.dumps(f.profile))
+    monkeypatch.setenv("ASTRID_HOST_READINESS_PROFILE_PATH", str(profile_path))
+    monkeypatch.setenv("ASTRID_HOST_READINESS_PROFILE_HASH", "sha256:" + hashlib.sha256(profile_path.read_bytes()).hexdigest())
+    def forbidden_spawn(*args, **kwargs): raise AssertionError("refused HC03 command must not spawn")
+    monkeypatch.setattr(module, "popen_owned_group", forbidden_spawn)
+    if fault == "missing_session":
+        monkeypatch.delenv("ASTRID_HOST_READINESS_PROFILE_PATH")
+    elif fault == "foreign_session":
+        foreign_parent = tmp_path / "foreign"
+        foreign_parent.mkdir()
+        foreign = _sdk_cpu_session_fixture(foreign_parent, monkeypatch)
+        host.managed_tool_session._active.adapter = module._ManagedVibeSessionAdapter.from_host_session(
+            hc03_profile=foreign.profile, model_id="fixture-model", template_id="fixture-template",
+            invocation_identity="vibe:vibe-attempt:1")
+    elif fault == "root":
+        adapter.backend._output_root = tmp_path
+    elif fault in {"root_alias", "parent_alias"}:
+        selected = managed_root if fault == "root_alias" else f.root
+        moved = selected.with_name(selected.name + "-real")
+        selected.rename(moved)
+        selected.symlink_to(moved, target_is_directory=True)
+    elif fault == "claim":
+        def changed_claim(**fields): raise HostError("authenticated claim authority binding mismatch")
+        runtime.confirm_claim_authority = changed_claim
+    elif fault == "source":
+        manifest.write_text(manifest.read_text() + "\n")
+    elif fault == "session":
+        (f.session / "source_revision").write_text("b" * 40)
+    elif fault == "token":
+        from dataclasses import replace
+        token = replace(token, generation=token.generation + 1)
+    try:
+        with pytest.raises((HostError, ValueError, ManagedToolSessionError)):
+            host._run_command_definition(record, {}, attempt / "outputs", attempt,
+                                         admission=admission, managed_token=token)
+        assert not (managed_root / "astrid-tasks").exists()
+        assert list((attempt / "outputs").iterdir()) == []
+        assert runtime.settlements == [] and runtime.failures == [] and f.controls == []
+        assert all(sig == 0 for _, sig in f.signals)
+    finally:
+        if fault == "default": shutil.rmtree(attempt)
 
 
 @pytest.mark.parametrize("field", ["session", "profile", "model", "template", "runtime", "fingerprint", "backend", "lost_binding", "invocation"])
