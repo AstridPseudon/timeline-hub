@@ -51,9 +51,9 @@ from astrid.core.rendering.registry import (
 from astrid.core.rendering.service import RenderService, _render_workspace_parent
 
 
-def test_managed_render_workspace_is_outside_attempt_output_root(tmp_path):
+def test_managed_render_workspace_is_inside_attempt_output_root(tmp_path):
     output = tmp_path / "attempt" / "outputs" / "video.mp4"
-    assert _render_workspace_parent(output) == tmp_path / "attempt"
+    assert _render_workspace_parent(output) == tmp_path / "attempt" / "outputs"
     assert _render_workspace_parent(tmp_path / "video.mp4") == tmp_path
 
 
@@ -2502,6 +2502,7 @@ def _retained_support_helper(tmp_path: Path) -> Path:
 
 def test_managed_support_uses_retained_attempt_through_real_transport(tmp_path, monkeypatch):
     attempt = tmp_path / "attempt"; attempt.mkdir()
+    (attempt / "outputs").mkdir()  # Host creates its private output root before invocation.
     progress = attempt / ".astrid-progress.json"
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
     monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(progress))
@@ -2511,7 +2512,7 @@ def test_managed_support_uses_retained_attempt_through_real_transport(tmp_path, 
     service.render_request(_request(attempt), selector="rendering.remotion", out_path=output)
     assert output.is_file()
     assert transport.support_workspaces
-    assert all(p.parent == attempt and not p.exists() for p in transport.support_workspaces)
+    assert all(p.parent == attempt / "outputs" and not p.exists() for p in transport.support_workspaces)
     report = service._support_reports["rendering.remotion"]
     assert report.features["progress"] == str(progress)
     assert not list(attempt.glob("astrid-render-support-*"))
@@ -2568,6 +2569,7 @@ def test_direct_layout_cannot_gain_managed_support_authority(tmp_path, monkeypat
 
 def test_managed_unsupported_support_cleans_without_output_mutation(tmp_path, monkeypatch):
     attempt = tmp_path / "attempt"; attempt.mkdir()
+    (attempt / "outputs").mkdir()  # Match the pre-existing Host-owned output grant.
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
     monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(attempt / ".astrid-progress.json"))
     transport = RetainedSupportTransport(_retained_support_helper(tmp_path), supported=False)
@@ -2576,12 +2578,13 @@ def test_managed_unsupported_support_cleans_without_output_mutation(tmp_path, mo
         _service(tmp_path, transport).render_request(_request(attempt), selector="rendering.remotion", out_path=output)
     assert not output.exists()
     assert not Path(str(output) + ".provenance.json").exists()
-    assert all(p.parent == attempt and not p.exists() for p in transport.support_workspaces)
+    assert all(p.parent == attempt / "outputs" and not p.exists() for p in transport.support_workspaces)
     assert not list(attempt.glob("astrid-render-support-*"))
 
 
 def test_managed_support_failure_cleans_attempt_and_commits_nothing(tmp_path, monkeypatch):
     attempt = tmp_path / "attempt"; attempt.mkdir()
+    (attempt / "outputs").mkdir()  # Host supplies this private root before support.
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
     monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(attempt / ".astrid-progress.json"))
     class FailedSupport(FakeTransport):
@@ -2593,7 +2596,7 @@ def test_managed_support_failure_cleans_attempt_and_commits_nothing(tmp_path, mo
     output = attempt / "outputs" / "video.mp4"
     with pytest.raises(RendererInternalError):
         _service(tmp_path, transport).render_request(_request(attempt), selector="rendering.remotion", out_path=output)
-    assert transport.workspace.parent == attempt
+    assert transport.workspace.parent == attempt / "outputs"
     assert not transport.workspace.exists()
     assert not output.exists()
     assert not Path(str(output) + ".provenance.json").exists()

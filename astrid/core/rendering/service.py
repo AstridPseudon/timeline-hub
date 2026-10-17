@@ -154,23 +154,20 @@ _CANONICAL_RENDERER_IDS = ("rendering.ffmpeg", "rendering.remotion", "rendering.
 
 
 def _render_workspace_parent(output: Path) -> Path:
-    """Keep managed render scratch outside the host output subtree.
+    """Keep transient render scratch inside the output parent's write scope.
 
     Generic-pack attempts expose an attempt/outputs directory as the declared
-    output root. Intermediate frame/audio files belong to the attempt scratch
-    budget, so managed output places its temporary workspace beside that
-    directory. Direct callers retain historical output-parent placement.
+    output root and confined workers cannot write its parent. Intermediate
+    workspaces stay below that existing grant and are removed before harvest.
+    Direct callers retain historical output-parent placement.
     """
 
-    output_parent = output.resolve(strict=False).parent
-    if output_parent.name == "outputs" and output_parent.parent != output_parent:
-        return output_parent.parent
-    return output_parent
+    return output.resolve(strict=False).parent
 
 
 
 def _render_support_workspace_parent(output: Path) -> Path | None:
-    """Confine managed support beside its host-owned output subtree.
+    """Bind managed support to its attempt and stage inside its output subtree.
 
     The output-derived attempt and inherited progress parent must agree.
     Standalone support retains its OS-temporary admission workspace.
@@ -179,7 +176,10 @@ def _render_support_workspace_parent(output: Path) -> Path | None:
     if not inherited or os.environ.get(ASTRID_INTERNAL_INVOCATION) != "1":
         return None
     progress = Path(inherited)
-    attempt = _render_workspace_parent(output)
+    # Progress authority binds the enclosing attempt, independently of where
+    # disposable scratch is placed within that attempt's existing write grant.
+    output_parent = output.resolve(strict=False).parent
+    attempt = output_parent.parent
     if (output.parent.name != "outputs"
             or not progress.is_absolute() or progress.name != ".astrid-progress.json"
             or progress.is_symlink() or not progress.parent.is_dir()
@@ -190,7 +190,7 @@ def _render_support_workspace_parent(output: Path) -> Path | None:
         # Retain the standalone admission route. The unchanged transport
         # rejects any inherited progress path that cannot contain its files.
         return None
-    return attempt
+    return output_parent
 
 
 def _select_capability(

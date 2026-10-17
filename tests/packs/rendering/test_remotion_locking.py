@@ -298,3 +298,72 @@ def test_remotion_render_lock_rejects_recursive_acquisition(
         with pytest.raises(RuntimeError, match="non-recursive"):
             with remotion_lock.remotion_render_lock():
                 pass
+
+
+@pytest.mark.parametrize('mode', ['source_settled', 'provisioned_only'])
+@pytest.mark.parametrize('fails', [False, True])
+def test_admitted_readonly_render_selects_only_its_private_lock(tmp_path, monkeypatch, mode, fails):
+    """Injected validation selects a lane; this is not a readiness/task witness."""
+    from astrid.core.execution import render_command_pipe
+    from astrid.core.rendering import remotion_runtime
+
+    source_lock = tmp_path / 'read-only-source' / '.astrid-registry.lock'
+    workspace = tmp_path / 'invocation'
+    workspace.mkdir()
+    monkeypatch.setattr(remotion_lock, 'REMOTION_LOCK_PATH', source_lock)
+    monkeypatch.setattr(render_command_pipe, 'command_client', lambda: object())
+    calls = []
+
+    def validated(project):
+        assert not (workspace / '.astrid-registry.lock').exists()
+        calls.append(project)
+        return {'registry': {'mode': mode}}
+
+    monkeypatch.setattr(remotion_runtime, '_validated_runtime', validated)
+    def locked_body(*args, **kwargs):
+        assert remotion_lock.remotion_render_lock_held()
+        assert (workspace / '.astrid-registry.lock').is_file()
+        if fails:
+            raise RuntimeError('body failure')
+        return remotion._ExecutionDetails({}, {}, {})
+
+    monkeypatch.setattr(remotion, '_execute_remotion_locked', locked_body)
+    args, kwargs = _execute_args(tmp_path, 'admitted.mp4')
+    kwargs['staging_parent'] = workspace
+    if fails:
+        with pytest.raises(RuntimeError, match='body failure'):
+            remotion._execute_remotion(*args, **kwargs)
+    else:
+        remotion._execute_remotion(*args, **kwargs)
+    assert calls == [kwargs['project_dir']]
+    assert not remotion_lock.remotion_render_lock_held() and not source_lock.exists()
+
+
+@pytest.mark.parametrize('defect', ['no-workspace', 'validation', 'mutable-mode', 'relative', 'symlink'])
+def test_admitted_private_lock_refuses_unqualified_context(tmp_path, monkeypatch, defect):
+    from astrid.core.execution import render_command_pipe
+    from astrid.core.rendering import remotion_runtime
+
+    workspace = tmp_path / 'invocation'
+    workspace.mkdir()
+    source_lock = tmp_path / 'source' / '.astrid-registry.lock'
+    monkeypatch.setattr(remotion_lock, 'REMOTION_LOCK_PATH', source_lock)
+    monkeypatch.setattr(render_command_pipe, 'command_client', lambda: object())
+
+    def validated(_):
+        if defect == 'validation':
+            raise ValueError('actual launch validation refused')
+        return {'registry': {'mode': 'mutable' if defect == 'mutable-mode' else 'source_settled'}}
+
+    monkeypatch.setattr(remotion_runtime, '_validated_runtime', validated)
+    root = None if defect == 'no-workspace' else workspace
+    if defect == 'relative':
+        root = Path('invocation')
+    if defect == 'symlink':
+        root = tmp_path / 'alias'
+        root.symlink_to(workspace, target_is_directory=True)
+    with pytest.raises(ValueError):
+        with remotion._render_execution_lock(tmp_path, staging_parent=root):
+            pytest.fail('unqualified context acquired a lock')
+    assert not source_lock.exists() and not (workspace / '.astrid-registry.lock').exists()
+    assert not remotion_lock.remotion_render_lock_held()
