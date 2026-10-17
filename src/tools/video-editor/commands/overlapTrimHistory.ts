@@ -16,6 +16,22 @@ export function isOverlapTrimCommand(command: EditCommand | undefined): boolean 
     && ['keep', 'detach', 'adjust-offset', 're-anchor'].includes(String(choice.choice));
 }
 
+/** Exactly the admitted source-in trim followed by a frame nudge. */
+export function isOverlapTrimBatch(commands: readonly EditCommand[]): boolean {
+  if (commands.length === 1) return isOverlapTrimCommand(commands[0]);
+  if (commands.length !== 2) return false;
+  const [trim, nudge] = commands;
+  return trim.op === 'clip.trim' && scoped(trim.select) && trim.select.startsWith('parent/')
+    && trim.resolved?.length === 1 && trim.resolved[0] === trim.select
+    && Object.keys(trim.args).length === 2
+    && ['in_s', 'out_s'].every((key) => typeof trim.args[key] === 'number' && Number.isFinite(trim.args[key]))
+    && (trim.args.in_s as number) >= 0 && (trim.args.in_s as number) < (trim.args.out_s as number)
+    && nudge.op === 'clip.nudge' && nudge.select === trim.select
+    && nudge.resolved?.length === 1 && nudge.resolved[0] === trim.select
+    && Object.keys(nudge.args).length === 2 && Number.isSafeInteger(nudge.args.frames) && nudge.args.frames !== 0
+    && isOverlapTrimCommand({ ...nudge, op: 'clip.trim', args: { out_s: trim.args.out_s, relation_choices: nudge.args.relation_choices } });
+}
+
 /** Accept only the two clips and direct fields this producer actually records.
  * Consequence rows, whole documents and locally synthesized diffs never enter
  * history. Runtime validates the publication and per-write expectations again.
@@ -31,18 +47,19 @@ export function isOverlapTrimInverse(command: EditCommand | undefined): boolean 
     && [write.before, write.after].every((state) => record(state)
       && (state.state === 'absent' ? Object.keys(state).length === 1
         : state.state === 'present' && Object.prototype.hasOwnProperty.call(state, 'value') && Object.keys(state).length === 2)))) return false;
-  const primaryIds = [...new Set(writes.filter((write) => write.path === 'to').map((write) => write.id))];
-  if (primaryIds.length !== 1) return false;
+  const left = writes.some((write) => write.path === 'from');
+  const primaryIds = [...new Set(writes.filter((write) => write.path === (left ? 'from' : 'to')).map((write) => write.id))];
+  if (primaryIds.length !== 1 || (left && !primaryIds[0].startsWith('parent/'))) return false;
   const ids = [...new Set(writes.map((write) => write.id))];
   return ids.length <= 2 && ids.every((id) => id.split('/')[0] === primaryIds[0].split('/')[0])
     && new Set(writes.map((write) => `${write.id}::${write.path}`)).size === writes.length
-    && writes.every((write) => (write.id === primaryIds[0] ? ['to', 'hold'] : ['at', 'intent.on', 'intent.fixed_start']).includes(write.path));
+    && writes.every((write) => (write.id === primaryIds[0] ? (left ? ['from', 'at', 'hold'] : ['to', 'hold']) : ['at', 'intent.on', 'intent.fixed_start']).includes(write.path));
 }
 
 export function overlapTrimInverse(commands: readonly EditCommand[], result: {
   status: string; accepted_publication_id: string | null; change: { direct_writes: unknown[] };
 }): EditCommand | null | undefined {
-  if (commands.length !== 1 || !(isOverlapTrimCommand(commands[0]) || isOverlapTrimInverse(commands[0]))) return undefined;
+  if (!(isOverlapTrimBatch(commands) || (commands.length === 1 && isOverlapTrimInverse(commands[0])))) return undefined;
   if (result.status === 'no_change') return null;
   if (result.status !== 'accepted' || !result.accepted_publication_id) return undefined;
   const inverse: EditCommand = { op: 'timeline.inverse', select: null, args: {
@@ -53,8 +70,16 @@ export function overlapTrimInverse(commands: readonly EditCommand[], result: {
   if (!isOverlapTrimInverse(inverse)) return undefined;
   const source = commands[0];
   const allowedIds = source.op === 'clip.trim'
-    ? [source.select, (source.args.relation_choices as Array<{ target: string }>)[0].target]
+    ? [source.select, ((commands.length === 2 ? commands[1] : source).args.relation_choices as Array<{ target: string }>)[0].target]
     : (source.args.writes as Array<{ id: string }>).map((write) => write.id);
+  if (source.op === 'clip.trim') {
+    const left = commands.length === 2;
+    const writes = inverse.args.writes as Array<{ id: string; path: string }>;
+    if (!writes.some((write) => write.id === source.select && write.path === (left ? 'from' : 'to'))
+      || writes.some((write) => !(write.id === source.select
+        ? (left ? ['from', 'at', 'hold'] : ['to', 'hold'])
+        : ['at', 'intent.on', 'intent.fixed_start']).includes(write.path))) return undefined;
+  }
   if ((inverse.args.writes as Array<{ id: string }>).some((write) => !allowedIds.includes(write.id))) return undefined;
   validateEditCommand(inverse);
   return inverse;

@@ -12,7 +12,7 @@ import {
 import type { TimelineEventBus } from './useTimelineEventBus.ts';
 import { isAssetRegistrationInverse } from '../commands/assetRegistration.ts';
 import { isTiedHoldExpansionCommand, isTiedHoldExpansionInverse } from '../commands/tiedHoldExpansionHistory.ts';
-import { isOverlapTrimCommand, isOverlapTrimInverse } from '../commands/overlapTrimHistory.ts';
+import { isOverlapTrimBatch, isOverlapTrimInverse } from '../commands/overlapTrimHistory.ts';
 import { gestureCommandsFor } from '../commands/semanticGestures.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { isDataProviderPersistenceEnabled } from '@/tools/video-editor/data/DataProvider.ts';
@@ -449,7 +449,7 @@ export function useTimelineHistory({
     const nativeRelation = (entry: UndoEntry) => {
       const nativeCommands = entry.nativeRegistration && gestureCommandsFor(entry.nativeRegistration.owner);
       const command = nativeCommands?.[0];
-      return isOverlapTrimCommand(command) || isOverlapTrimInverse(command)
+      return isOverlapTrimBatch(nativeCommands ?? []) || isOverlapTrimInverse(command)
         || isTiedHoldExpansionCommand(command) || isTiedHoldExpansionInverse(command)
         || isTranscriptCaptionBatch(nativeCommands ?? []) || isTranscriptCaptionInverse(command)
         || isTranscriptCaptionInverse(entry.nativeRegistration?.inverse);

@@ -604,20 +604,24 @@ export function legacyTiedEndResizeGesture(data: TimelineData, id: string, durat
   return { commands: [command(id, 'clip.until', { moment }, expect)], astrid: { ...astrid, until: moment } };
 }
 
-/** One ordinary audio right trim, clamped by one adjacent sibling whose sole
- * authored timing relation is a start anchored to this clip's end. This is a UI
+/** One ordinary audio overlap resize and one sibling whose sole authored start
+ * depends on the primary's moved edge. Right trims use the clamped end; left
+ * resizes use source-in trim followed by a frame nudge. This is a UI
  * eligibility check, not an affected-set/rebase planner: Astrid records and
  * guards the complete dependency set. No projected rows are persisted here.
  */
 export function overlapTrimGesture(data: TimelineData, id: string, rowId: string,
-  requestedStart: number, requestedEnd: number, end: number): { commands: EditCommand[] } | null | undefined {
+  requestedStart: number, requestedEnd: number, end: number, edge: 'left' | 'right' = 'right'): { commands: EditCommand[] } | null | undefined {
   const row = data.rows.find((candidate) => candidate.id === rowId);
   const actions = row?.actions.filter((action) => action.id === id) ?? [];
   if (actions.length !== 1 || data.tracks.find((track) => track.id === rowId)?.kind !== 'audio') return undefined;
   const action = actions[0];
   const overlaps = row!.actions.filter((other) => other.id !== id && requestedStart < other.end && requestedEnd > other.start);
-  if (overlaps.length !== 1 || requestedStart !== action.start || end !== overlaps[0].start
-    || end <= action.start || end === action.end || end >= requestedEnd) return undefined;
+  if (overlaps.length !== 1) return undefined;
+  if (edge === 'right' ? requestedStart !== action.start || end !== overlaps[0].start
+    || end <= action.start || end === action.end || end >= requestedEnd
+    : requestedEnd !== action.end || requestedStart === action.start || requestedStart < 0
+      || requestedStart >= requestedEnd) return undefined;
   const neighbour = overlaps[0];
   const target = gestureTarget(data, id);
   const adjacentTarget = gestureTarget(data, neighbour.id);
@@ -628,6 +632,9 @@ export function overlapTrimGesture(data: TimelineData, id: string, rowId: string
       || /^[^/\s]+$/.test(value))) return null;
   const select = scopedGestureClipId(target);
   const adjacentSelect = scopedGestureClipId(adjacentTarget);
+  // This new left-edge slice proves parent media only; occurrence projection
+  // clocks keep their existing refusal until separately exercised.
+  if (edge === 'left' && !select.startsWith('parent/')) return undefined;
   if (![select, adjacentSelect].every((value) => /^(?:parent|occurrence:[^/\s]+)\/clip:[^/\s]+$/.test(value))) return null;
   if (select.split('/')[0] !== adjacentSelect.split('/')[0]) return undefined;
   for (const clipId of [id, neighbour.id]) {
@@ -639,9 +646,10 @@ export function overlapTrimGesture(data: TimelineData, id: string, rowId: string
   const source = gestureSource(data, id);
   const adjacent = gestureSource(data, neighbour.id);
   const intent = adjacent.app?.astrid as Record<string, unknown> | undefined;
-  // Admit only this exact authored clip-end grammar; do not interpret offsets.
+  // This exact clip-start/clip-end grammar is included by SDK relations.affected.
+  // Geometry only establishes overlap; it never supplies a relation target.
   const relation = intent?.on;
-  const anchor = `clip-end "${select}"`;
+  const anchor = `clip-${edge === 'left' ? 'start' : 'end'} "${select}"`;
   if (typeof relation !== 'string' || !relation.startsWith(anchor)
     || !/^(?:\s+[+-](?:\d+(?:\.\d+)?s|\d+f))*$/.test(relation.slice(anchor.length))) return undefined;
   const blocked = ['on', 'until', 'for', 'cut', 'sequence', 'sequence_fit', 'segment', 'formulas', 'loop', 'orphan'];
@@ -656,10 +664,15 @@ export function overlapTrimGesture(data: TimelineData, id: string, rowId: string
   const from = source.from ?? 0;
   const speed = source.speed ?? 1;
   const to = source.to;
-  const out = from + (end - action.start) * speed;
+  const deltaFrames = Math.round((requestedStart - action.start) * data.output.fps);
+  const input = from + deltaFrames / data.output.fps * speed;
+  const out = edge === 'left' ? to : from + (end - action.start) * speed;
   const limit = source.asset ? data.resolvedConfig.registry[source.asset]?.duration ?? data.registry.assets[source.asset]?.duration : undefined;
   if (source.clipType !== 'media' || ![from, to, speed, out, limit].every((value) => typeof value === 'number' && Number.isFinite(value))
-    || from < 0 || speed <= 0 || out <= from || out > limit!
+    || from < 0 || speed <= 0 || out! <= from || out! > limit!
+    || (edge === 'left' && (!Number.isFinite(data.output.fps) || data.output.fps <= 0
+      || !Number.isSafeInteger(deltaFrames) || deltaFrames === 0 || input < 0 || input >= to!
+      || Math.abs(deltaFrames / data.output.fps - (requestedStart - action.start)) > 1e-7))
     || Math.abs((to! - from) / speed - (action.end - action.start)) > 1e-7) return undefined;
   const choice = window.prompt(`The start of ${neighbour.id} is tied to ${relation}. This trim changes its anchor. Choose keep to preserve the relation (the edit may be refused), detach to freeze its start, adjust-offset, or re-anchor. Cancel leaves everything unchanged.`, 'keep');
   if (!choice || !['keep', 'detach', 'adjust-offset', 're-anchor'].includes(choice)) return null;
@@ -677,6 +690,15 @@ export function overlapTrimGesture(data: TimelineData, id: string, rowId: string
     selected.offset_seconds = Number(seconds);
     selected.offset_frames = Number(frames);
   }
+  if (edge === 'left') return { commands: [
+    command(target, 'clip.trim', { in_s: input, out_s: to }, { '': state(source, true) }),
+    command(target, 'clip.nudge', { frames: deltaFrames, relation_choices: [selected] }, {
+      at: state(source.at, hasOwn(source, 'at')),
+      [`${adjacentSelect}::intent.on`]: state(relation, true),
+      [`${adjacentSelect}::at`]: state(adjacent.at, hasOwn(adjacent, 'at')),
+      [`${adjacentSelect}::hold`]: state(adjacent.hold, hasOwn(adjacent, 'hold')),
+    }),
+  ] };
   return { commands: [command(target, 'clip.trim', { out_s: out, relation_choices: [selected] }, { '': state(source, true) })] };
 }
 

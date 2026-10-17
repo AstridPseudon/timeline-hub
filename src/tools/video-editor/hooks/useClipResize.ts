@@ -289,6 +289,23 @@ export function useClipResize({
       return;
     }
 
+    // Left overlap commands use the requested frame delta, before legacy geometry
+    // clamping. Unsupported overlap cases retain the no-command refusal.
+    if (semanticEndChoices && session.edge === 'left' && current.rows.find((row) => row.id === session.rowId)?.actions.some(
+      (other) => other.id !== session.clipId && primaryUpdate.start < other.end && primaryUpdate.end > other.start)) {
+      const captured = resizeBaseRef.current[session.clipId];
+      const isCapturedBase = () => captured && captured.config === JSON.stringify(dataRef.current?.config)
+        && captured.head === JSON.stringify(dataRef.current?.head) && captured.fps === dataRef.current?.output.fps;
+      if (session.context.kind !== 'group' && snappedUpdates.length === 1 && isCapturedBase()) {
+        const overlap = overlapTrimGesture(current, session.clipId, session.rowId, primaryUpdate.start, primaryUpdate.end, primaryUpdate.end, 'left');
+        if (overlap && isCapturedBase()) applyEdit({ type: 'commands' }, {
+          transactionId, semantic: true, editCommands: overlap.commands,
+        });
+      }
+      clearResizeTracking(session.clipId);
+      return;
+    }
+
     if (session.context.kind === 'group') {
       const updatedRows = applyActionUpdates(current.rows, session.rowId, snappedUpdates);
       let nextRows = ensureGroupContiguity(updatedRows, current.config.pinnedShotGroups);
