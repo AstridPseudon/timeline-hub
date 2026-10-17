@@ -294,19 +294,36 @@ def publish_bundle(candidate: Mapping[str, Any], idempotency_key: str, *, client
         candidate = merged
         merged_note = f"merged onto head {current} (your checkout was {base})" + (" with force" if conflicts else "")
         base = current
-    receipt = ensure_runtime(start_pack_host=False)
+
+    def publish(transport: Any) -> dict[str, Any]:
+        class _Writer:
+            def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
+                response = transport.publish_parent_composition(project_id, timeline_id, publication, idempotency_key=idempotency_key)
+                return response.get("data", response)
+
+        result = publish_authoring_candidate(dict(candidate), _Writer(), idempotency_key=idempotency_key)
+        publication = result.get("publication") if isinstance(result, Mapping) else None
+        return {"old_head": base, "new_head": (publication or {}).get("new_head"), "receipt": result,
+                "idempotency_key": idempotency_key, "merged": merged_note}
+
+    # Write through the connection the reads used. Asking the launcher again would send the write to whatever Runtime it
+    # finds (the canonical one, or none: "the Banodoco workspace runtime is not installed") when the caller connected
+    # explicitly, e.g. through ``ASTRID_TIMELINE_EVAL_*``.
+    def own_transport(c: Any) -> Any:
+        transport = getattr(getattr(c, "_remote", None), "_transport", None)
+        return transport if callable(getattr(transport, "publish_parent_composition", None)) else None
+
+    if client is None:
+        with AstridClient.open_from_launcher(start_pack_host=False) as c:
+            transport = own_transport(c)
+            if transport is None:
+                raise RuntimeError("the opened Runtime client has no publish transport")
+            return publish(transport)
+    if own_transport(client) is not None:
+        return publish(own_transport(client))
+    receipt = ensure_runtime(start_pack_host=False)  # a caller-supplied stand-in with no transport of its own
     endpoint, token = resolve_runtime_connection(receipt["endpoint"], Path(receipt["credential_file"]))
-    transport = WorkspaceClient(endpoint, token)
-
-    class _Writer:
-        def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
-            response = transport.publish_parent_composition(project_id, timeline_id, publication, idempotency_key=idempotency_key)
-            return response.get("data", response)
-
-    result = publish_authoring_candidate(dict(candidate), _Writer(), idempotency_key=idempotency_key)
-    publication = result.get("publication") if isinstance(result, Mapping) else None
-    return {"old_head": base, "new_head": (publication or {}).get("new_head"), "receipt": result,
-            "idempotency_key": idempotency_key, "merged": merged_note}
+    return publish(WorkspaceClient(endpoint, token))
 
 
 # Runtime and draft seams added to the isolated modular SDK.
