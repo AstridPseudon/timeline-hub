@@ -3764,12 +3764,12 @@ class _CommandInventoryOwner:
         self.thread = threading.Thread(target=serve, name='astrid-command-inventory', daemon=True)
         self.thread.start()
 
-    def finish(self, *, cancel: bool = False) -> None:
+    def finish(self, *, cancel: bool = False, timeout: float = 120.0) -> None:
         with self.lock:
             self.accepting = False
             if cancel:
                 self.cancelled.set()
-        if not self.done.wait(120):
+        if not self.done.wait(max(0.0, timeout)):
             raise CustodyError('command inventory original owner is unresolved')
         if self.error is not None or self.pending is not None:
             raise CustodyError('command inventory delegated closure is uncertain') from self.error

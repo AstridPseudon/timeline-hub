@@ -83,3 +83,15 @@ def test_selection_rechecks_source_inventory_on_every_lease(selection):
 def test_raw_json_is_not_a_producer_admission(selection):
     with pytest.raises(ValueError, match='typed inputs'):
         selected.HostRendererSelection(selection.payload(), selection.node).payload()
+
+
+def test_original_inspection_owner_finish_uses_existing_cleanup_deadline(tmp_path):
+    import threading
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker
+    owner = custody_broker._CommandInventoryOwner(SimpleNamespace(), {})
+    waits = []
+    owner.done = SimpleNamespace(wait=lambda timeout: waits.append(timeout) or False)
+    with pytest.raises(custody_broker.CustodyError, match="unresolved"):
+        owner.finish(cancel=True, timeout=0)
+    assert waits == [0] and owner.cancelled.is_set()
