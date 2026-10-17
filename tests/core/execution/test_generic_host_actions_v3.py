@@ -1673,11 +1673,14 @@ def test_cli_retained_host_only_owns_canonical_attempt_namespace(tmp_path, monke
     monkeypatch.delenv('ASTRID_EXECUTION_TARGET_JSON', raising=False)
     monkeypatch.setattr(sys, 'argv', argv)
     monkeypatch.setattr(module.signal, 'signal', lambda *args: None)
+    monkeypatch.setattr(__import__('astrid.core.execution.hosted_contract', fromlist=['consume']), 'consume', lambda *a, **kw: None)
     monkeypatch.setattr(prepared, 'serve_control', lambda fd: None)
     monkeypatch.setattr(module, 'LocalExecutionPreparation', lambda **kw: prepared)
     monkeypatch.setattr(module, '_await_worker_activation', lambda *a, **kw: grant)
     monkeypatch.setattr(module, '_await_enabled_runtime_credential', lambda *a, **kw: None)
-    monkeypatch.setattr(module, 'RuntimeProtocolClient', lambda *a: object())
+    class RuntimeBoundary:
+        def __init__(self, *args): pass
+    monkeypatch.setattr(module, 'RuntimeProtocolClient', RuntimeBoundary)
     monkeypatch.setattr(module, '_compose_cli_boot_manifest', lambda *a: (boot, launch['boot_manifest_hash']))
     monkeypatch.setattr(module, '_startup_identity_attestation', lambda **kw: {'source': {'closure_digest': '3'*64}})
     captured = {}

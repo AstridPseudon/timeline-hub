@@ -135,6 +135,16 @@ class RemotionClosureBinding:
                 if not path.resolve(strict=True).is_relative_to(modules):
                     raise ValueError('renderer installation contains an escaping file link')
                 files[path] = _sha(path)
+        for directory in ('src', 'vendor/timeline-composition'):
+            for path in sorted((project/directory).rglob('*')):
+                if path.is_file():
+                    if not path.resolve(strict=True).is_relative_to(project):
+                        raise ValueError('renderer source contains an escaping file link')
+                    files[path] = _sha(path)
+        for name in ('remotion.config.ts', 'tsconfig.json'):
+            path = project/name
+            if path.is_file():
+                files[path] = _sha(path)
         binding = cls(project, installed, receipt, receipt_sha256, manifest_sha256, lock_sha256,
                       tuple(sorted(files.items(), key=lambda item: str(item[0]))))
         binding.validate(project)
@@ -149,6 +159,12 @@ class RemotionClosureBinding:
         actual_modules = {path for path in modules.rglob('*') if path.is_file()}
         if actual_modules != expected_modules:
             raise ValueError('admitted renderer installation file inventory changed')
+        for directory in ('src', 'vendor/timeline-composition'):
+            root = self.project/directory
+            expected_source = {p for p, _ in self.files if p.is_relative_to(root)}
+            actual_source = {p for p in root.rglob('*') if p.is_file()}
+            if actual_source != expected_source:
+                raise ValueError('admitted renderer source file inventory changed')
         for path, expected in self.files:
             if not path.is_file() or _sha(path) != expected:
                 raise ValueError('admitted renderer closure input changed')

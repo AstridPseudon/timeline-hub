@@ -890,6 +890,52 @@ def prepare_remotion_validation(**kwargs: Any) -> dict[str, str]:
             error.validation_evidence_error = type(persistence).__name__
         raise
 
+def _observed_consumer_startup():
+    return {'prefix': sys.prefix, 'exec_prefix': sys.exec_prefix,
+            'base_prefix': sys.base_prefix, 'base_exec_prefix': sys.base_exec_prefix,
+            'version': sys.version, 'cache_tag': sys.implementation.cache_tag,
+            'platform': sys.platform, 'abi_flags': getattr(sys, 'abiflags', '')}
+
+
+def _consumer_uses_no_site():
+    return bool(sys.flags.no_site)
+
+
+def _consumer_startup_facts(expected):
+    current = _observed_consumer_startup()
+    if current == expected or not _consumer_uses_no_site():
+        return current
+    # Python3.11 -S reports base prefixes although the retained launcher maps
+    # ONLY the independently verified installed environment. Do not enable site,
+    # infer a venv from ambient paths, or replace any other interpreter facts.
+    from astrid.core.execution import generic_host
+    boundary = generic_host._retained_python_boundary()
+    if boundary is None:
+        return current
+    selected = generic_host.__dict__.get('_RETAINED_SELECTED_PYTHON', {})
+    prefix, exec_prefix = expected.get('prefix'), expected.get('exec_prefix')
+    if (not isinstance(prefix, str) or prefix != exec_prefix or not Path(prefix).is_absolute()
+            or '..' in Path(prefix).parts
+            or current['prefix'] != current['base_prefix']
+            or current['exec_prefix'] != current['base_exec_prefix']
+            or not boundary[0]['installed-packages'].is_relative_to(Path(prefix))):
+        return current
+    cfg = Path(prefix) / 'pyvenv.cfg'
+    pin = selected.get('startup_files', {}).get(str(cfg))
+    if not isinstance(pin, dict) or not isinstance(pin.get('sha256'), str):
+        return current
+    resolved = cfg.resolve(strict=True)
+    if not any(resolved.is_relative_to(root) for root in (Path(prefix), boundary[0]['python-runtime'])):
+        return current
+    from runtime_protocol.verified_host_launch import _local_read
+    try:
+        _local_read(cfg, pin['sha256'])  # Same bounded64MiB installed reader.
+    except (OSError, RuntimeError, ValueError):
+        return current
+    current.update(prefix=prefix, exec_prefix=exec_prefix)
+    return current
+
+
 def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | None = None,
                        python_executable: str | None = None) -> dict[str, Any]:
     env = os.environ if environment is None else environment
@@ -923,10 +969,7 @@ def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | No
         entry = matches[0]
         if python_executable is None:
             facts = entry['closure']['startup']
-            current_facts = {'prefix': sys.prefix, 'exec_prefix': sys.exec_prefix,
-                             'base_prefix': sys.base_prefix, 'base_exec_prefix': sys.base_exec_prefix,
-                             'version': sys.version, 'cache_tag': sys.implementation.cache_tag,
-                             'platform': sys.platform, 'abi_flags': getattr(sys, 'abiflags', '')}
+            current_facts = _consumer_startup_facts(facts)
             if any(facts.get(k) != value for k, value in current_facts.items()):
                 raise RemotionValidationError('consumer interpreter installation differs')
         registry = entry['registry']

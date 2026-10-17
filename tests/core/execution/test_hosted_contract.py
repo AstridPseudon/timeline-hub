@@ -65,6 +65,44 @@ def test_hosted_binding_is_digest_bound_readonly_consumed_and_unlinked(launch):
     assert set(selected.pass_fds)=={fd,*(c.fileno() for c in selected.children.values())}
 
 
+def test_host_inspection_pipes_require_selected_renderer_and_bind_exact_endpoints(tmp_path):
+    reads = os.pipe(); writes = os.pipe()
+    selected = None
+    try:
+        pipes = [custody._pipe_identity(reads[0], os.O_RDONLY),
+                 custody._pipe_identity(writes[1], os.O_WRONLY)]
+        broker = SimpleNamespace(role='host', owner_epoch='epoch', run_id='run', custody_generation=1,
+                                 authority_scope_root=tmp_path, child_pipe_binding=pipes)
+        preparation = {'owner_epoch':'epoch', 'operation_id':'op', 'channel_id':'channel',
+                       'profile':{'host_executable':sys.executable}, 'custody_scope':str(tmp_path)}
+        selected = contract.HostedLaunch(broker, preparation)
+        argv = [sys.executable, '-m', 'astrid.core.execution.generic_host', 'run',
+                '--host-control-fd', str(selected.children['control'].fileno()),
+                '--activation-fd', str(selected.children['activation'].fileno()),
+                '--activation-operation-id', 'op', '--activation-channel-id', 'channel']
+        with pytest.raises(contract.HostedContractError, match='renderer selection'):
+            selected.environment(argv)
+        selected.close(); selected = contract.HostedLaunch(broker, preparation)
+        preparation['profile'].update(execution_mode='host_only_cpu', host_launch={'renderer_selection':{'selected':True}})
+        # Rebuild argv for the newly owned socket pair.
+        argv[5] = str(selected.children['control'].fileno())
+        argv[7] = str(selected.children['activation'].fileno())
+        selected.environment(argv)
+        assert {reads[0], writes[1]} <= set(selected.pass_fds)
+        # The native trampoline imports this stdlib module without a package.
+        import runpy
+        standalone = runpy.run_path(contract.__file__)
+        assert standalone['validate'](selected.value, role='host') == contract.validate(selected.value, role='host')
+
+        forged = copy.deepcopy(selected.value)
+        forged['inspection_pipes'][0]['inode'] += 1
+        with pytest.raises((contract.HostedContractError, custody.CustodyError)):
+            contract.validate(forged, role='host')
+    finally:
+        if selected is not None: selected.close()
+        for descriptor in (*reads, *writes): os.close(descriptor)
+
+
 @pytest.mark.parametrize('mutation',['owner','generation','operation','profile'])
 def test_hosted_preparation_fences_before_dispatch(launch,mutation):
     selected,_,_=launch;value=copy.deepcopy(selected.value);request=copy.deepcopy(selected.preparation)
@@ -114,7 +152,11 @@ def test_actual_trampoline_refuses_before_generic_host_entry(tmp_path,mutation):
         selected.close()
         if forged is not None:forged.close()
         for fd in extra:os.close(fd)
-        broker.abort_before_spawn()
+        # These negatives deliberately exported a launch and waited their
+        # actual rejected child. They cannot claim never-spawned retirement.
+        with pytest.raises(custody.CustodyError, match="never-exported"):
+            broker.abort_before_spawn()
+        broker._release_authority_scope()
 
 
 @pytest.mark.skipif(sys.platform!='darwin',reason='native process incarnation is Darwin only')

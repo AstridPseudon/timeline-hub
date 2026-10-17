@@ -337,3 +337,19 @@ def test_actual_confined_music_level_uses_declared_ffmpeg(tmp_path, monkeypatch)
         "environment": dict(plan.environment), "process_id": result.process_id,
         "result_bytes": (policy.private_write_root / "level.json").read_text(),
         "result_sha256": hashlib.sha256((policy.private_write_root / "level.json").read_bytes()).hexdigest()}))
+
+
+@pytest.mark.parametrize("failure", ["command inventory inspection requires its original owner", "command inventory transport or custody failed"])
+def test_preflight_without_inspection_owner_is_unavailable_but_real_cleanup_failure_is_fatal(selected, tmp_path, monkeypatch, failure):
+    from astrid.core.execution.custody_broker import CustodyError
+    admission, _, _ = selected
+    def refused(path): raise CustodyError(failure)
+    monkeypatch.setattr(binaries, "_load_commands", refused)
+    if failure.endswith("original owner"):
+        h, record = record_for(tmp_path, admission)
+        assert not record.ready and not record.executable_bindings
+        assert record.preflight["binaries"]["missing"] == ["ffmpeg"]
+        assert record.preflight["binaries"]["reasons"] == ["declared executable original-owner inspection unavailable"]
+    else:
+        with pytest.raises(CustodyError, match="transport or custody failed"):
+            record_for(tmp_path, admission)

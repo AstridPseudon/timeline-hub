@@ -65,28 +65,17 @@ _CHILD_BRIDGE_CONSUMER = 'ASTRID_CHILD_BRIDGE_CHANNEL'
 
 
 def _pipe_identity(fd: int, direction: int) -> dict[str, int]:
-    if type(fd) is not int or fd < 3:
-        raise CustodyError('private pipe descriptor is invalid')
-    value = os.fstat(fd)
-    if (not stat.S_ISFIFO(value.st_mode) or value.st_nlink != 0
-            or fcntl.fcntl(fd, fcntl.F_GETFL) & os.O_ACCMODE != direction):
-        raise CustodyError('private channel is not an anonymous directional pipe')
-    return {'fd': fd, 'device': value.st_dev, 'inode': value.st_ino, 'direction': direction}
+    try:
+        return hosted_contract._pipe_identity(fd, direction)
+    except hosted_contract.HostedContractError as exc:
+        raise CustodyError(str(exc)) from exc
 
 
 def _validate_pipe_binding(value: object) -> tuple[int, int]:
-    if not isinstance(value, list) or len(value) != 2:
-        raise CustodyError('private pipe binding is invalid')
-    descriptors = []
-    for item, direction in zip(value, (os.O_RDONLY, os.O_WRONLY)):
-        if (not isinstance(item, dict) or set(item) != {'fd', 'device', 'inode', 'direction'}
-                or any(type(part) is not int for part in item.values())
-                or _pipe_identity(item.get('fd'), direction) != item):
-            raise CustodyError('private pipe identity differs')
-        descriptors.append(item['fd'])
-    if descriptors[0] == descriptors[1]:
-        raise CustodyError('private pipe endpoints collide')
-    return tuple(descriptors)
+    try:
+        return hosted_contract._validate_pipe_binding(value)
+    except hosted_contract.HostedContractError as exc:
+        raise CustodyError(str(exc)) from exc
 
 
 def _validate_child_bridge_binding(value, *, role='command', argv=None, run_id=None):
@@ -2399,7 +2388,7 @@ class RoleBoundCustodyBroker:
             raise CustodyError("custody role is invalid")
         if sys.platform != "darwin":
             raise CustodyError("Darwin audit-token custody is unavailable")
-        if type(retain_channel) is not bool or (retain_channel and role not in {'command', 'engine'}):
+        if type(retain_channel) is not bool or (retain_channel and role not in {'command', 'engine', 'host'}):
             raise CustodyError('post-exec custody role has no matched pipe consumer')
         self.launch_parent = launch_parent
         self.retain_channel = retain_channel
@@ -3184,12 +3173,14 @@ def child_exec_from_environment() -> int:
         bridge_fds = _validate_child_bridge_binding(child_bridge, role=role, argv=argv,
             run_id=os.environ.get('ASTRID_RUNTIME_CUSTODY_RUN_ID'))
     if (bool(pipe_fds) != (role == 'engine' or command_channel)
-            or (command_channel and role != 'command')
+            or (command_channel and role not in {'command', 'host'})
             or _COMMAND_INVENTORY_FD in os.environ or 'ASTRID_ENGINE_CONTROL_FD' in os.environ):
         raise CustodyError('post-exec pipe selection is absent or unsupported')
     hosted = None
     if os.environ.get('ASTRID_RUNTIME_CUSTODY_ROLE') in {'host', 'relay'}:
         hosted = hosted_contract.bootstrap(os.environ, argv)
+        if pipe_binding != hosted[0].get('inspection_pipes', []):
+            raise CustodyError('Host inspection pipes differ from authenticated launch')
     elif any(key in os.environ for key in (hosted_contract.FD_KEY, hosted_contract.DIGEST_KEY,
                                            hosted_contract.CONSUMER_FD, hosted_contract.CONSUMER_DIGEST)):
         raise CustodyError('hosted descriptors cannot enter another role')
@@ -3271,7 +3262,7 @@ class _HostInspectionLaunch:
     """Explicit composition-root input, never reconstructed from environment."""
 
     def __init__(self, pack_roots: tuple[Path, ...], source_checkout: Path,
-                 environment: Mapping[str, str], capability_matrix: Path | None = None):
+                 environment: Mapping[str, str], capability_matrix: Path | None = None, *, node_executable: Path | None = None):
         from .declared_executables import FilePin, _InspectionAdmission, _InspectionTool
         from .generic_host import _binary_requirements, _launch_static_records
 
@@ -3304,6 +3295,14 @@ class _HostInspectionLaunch:
                                if alias.is_relative_to(p)), alias.parent.parent)
                 if prefix != Path('/'):
                     roots.add(prefix.resolve(strict=True))
+        if node_executable is not None:
+            pin = FilePin.measure(node_executable)
+            if pin.path != pin.resolved:
+                raise CustodyError('renderer Node must be canonical')
+            selections['node'] = pin
+            prefix = next((p for p in (Path('/opt/homebrew'), Path('/usr/local'))
+                           if pin.path.is_relative_to(p)), pin.path.parent.parent)
+            roots.add(prefix.resolve(strict=True))
         self.inspection = _InspectionAdmission(selections, tuple(sorted(roots)))
         self.tool = _InspectionTool()  # File pins only; no recursive inspection.
 
@@ -3754,12 +3753,12 @@ class _CommandInventoryOwner:
         self.thread = threading.Thread(target=serve, name='astrid-command-inventory', daemon=True)
         self.thread.start()
 
-    def finish(self, *, cancel: bool = False) -> None:
+    def finish(self, *, cancel: bool = False, timeout: float = 120.0) -> None:
         with self.lock:
             self.accepting = False
             if cancel:
                 self.cancelled.set()
-        if not self.done.wait(120):
+        if not self.done.wait(max(0.0, timeout)):
             raise CustodyError('command inventory original owner is unresolved')
         if self.error is not None or self.pending is not None:
             raise CustodyError('command inventory delegated closure is uncertain') from self.error

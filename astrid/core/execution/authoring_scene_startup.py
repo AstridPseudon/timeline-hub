@@ -37,6 +37,15 @@ def renderer_closure(host, environment):
         )
     ):
         raise FrameOwnerError("renderer_selection_unavailable")
+    selected = getattr(host, "_host_renderer_selection", None)
+    if selected is not None:
+        from .host_renderer_selection import HostRendererSelection
+        try:
+            if type(selected) is not HostRendererSelection or selected.node.executable.path != node:
+                raise ValueError("selected Node differs")
+            selected.node.verify()
+        except Exception as exc:
+            raise FrameOwnerError("renderer_selection_unavailable") from exc
     if host._remotion_closure_binding is not None:
         host._remotion_closure_binding.validate(project)
     from .remotion_host_session import _file_identity
@@ -72,7 +81,7 @@ def validate_host(host, config, environment):
         or host.source_epoch != c["source_epoch"]
         or host.boot_manifest_hash != config.boot_manifest_hash
         or host.boot_manifest_path is None
-        or host.boot_manifest_path.parents[1] != config.support_root
+        or not host.boot_manifest_path.is_relative_to(config.support_root)
         or host.boot_manifest_provenance()
         != {"kind": "astrid.boot_manifest", "sha256": config.boot_manifest_hash}
         or any(
@@ -192,6 +201,16 @@ def configuration_from_activation(preparation):
     # Existing preflight resolves the Host's qualified renderer after trusted
     # boot. Launch env intentionally cannot carry renderer authority selectors.
     admitted = record.preflight.get("remotion", {})
+    if getattr(host, "_remotion_closure_binding", None) is not None:
+        # timeline_visualize also serves static queries. Authoring scenes use
+        # the separately admitted renderer and its REAL launch-bound validator,
+        # rather than fabricating a Remotion check on that static capability.
+        from astrid.core.rendering.remotion_runtime import remotion_runtime_status
+        status = remotion_runtime_status(require_explicit_project=True)
+        admitted = {"ok": status.available,
+                    "project_dir": str(status.project_dir) if status.project_dir else None,
+                    "node_executable": str(status.node_executable) if status.node_executable else None}
+
     if (
         not admitted.get("ok")
         or not admitted.get("project_dir")

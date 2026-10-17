@@ -104,10 +104,13 @@ def test_bad_evaluation_refuses(change):
 
 
 @pytest.fixture
-def private_host(tmp_path, monkeypatch, disposable_browser):
+def private_host(tmp_path, monkeypatch, disposable_browser, request):
     # Short canonical owner-only scratch avoids Darwin's Unix path bound.
     with tempfile.TemporaryDirectory(prefix='as106-', dir='/private/tmp') as temporary:
         support = Path(temporary)
+        if getattr(request, 'param', False):
+            support = support / ('long-selected-support-' + 'a' * 100)
+            support.mkdir(mode=0o700)
         manager, _ = owner(tmp_path)
         env = environment(tmp_path)
         processes = fake_native(monkeypatch, manager)
@@ -130,6 +133,7 @@ def private_host(tmp_path, monkeypatch, disposable_browser):
         # real. Admitted-source discovery is separately tested below.
         monkeypatch.setattr(startup, 'validate_host', lambda *args: None)
         listener = GenericPackHost.start_authoring_scene(host, config, env)
+        config = listener.config
         relay = transport.AuthoringSceneRelay(config)
         try:
             yield SimpleNamespace(host=host, listener=listener, relay=relay, config=config,
@@ -147,6 +151,25 @@ def test_native_private_transport_reuses_real_host_owner_boundary(private_host):
     assert len(w.exchanges) == 2 and len(w.processes) == 1
     assert not w.manager._leases
     assert not list(w.config.socket_path.parent.glob('scene-*'))
+
+
+@pytest.mark.parametrize('private_host', [True], indirect=True)
+def test_long_selected_support_keeps_same_authenticated_scene_and_owned_cleanup(private_host):
+    w = private_host
+    assert len(os.fsencode(w.config.support_root / 'authoring-scene/s')) > 103
+    assert len(os.fsencode(w.config.socket_path)) <= 103
+    assert w.config.readiness_path.is_relative_to(w.config.support_root)
+    assert json.loads(w.config.readiness_path.read_bytes()) == w.config.record
+    assert w.relay.exchange(request(), guard=lambda: None, cancelled=threading.Event()) == answers([0, 1])
+    compact = w.config.socket_root
+    assert compact is not None
+    changed = dict(w.config.record, socket_root=str(w.config.support_root))
+    w.config.readiness_path.write_bytes(wire.encoded(changed) + b'\n')
+    with pytest.raises(FrameOwnerError, match='endpoint_changed'):
+        w.relay.check_live()
+    assert len(w.exchanges) == 1
+    w.listener.close()
+    assert not compact.exists() and not w.config.readiness_path.exists()
 
 
 @pytest.mark.parametrize('field', ['pid', 'uid', 'birth_id', 'audit_token_sha256', 'audit_token_pidversion'])
@@ -215,6 +238,8 @@ def test_only_verified_cas_dependencies_are_staged_in_host_scratch(private_host,
     value['scene_digest'] = wire.digest(value['scene'])
     w.relay.exchange(value, guard=lambda: None, cancelled=threading.Event())
     staged = w.exchanges[0]['scene']['assets']['assets']['x']['local_path']
+    assert w.exchanges[0]['scene']['assets']['assets']['x']['file'] == staged
+    assert w.exchanges[0]['scene']['assets']['assets']['x']['type'] == 'image'
     assert Path(staged).is_relative_to(w.config.socket_path.parent)
     assert not Path(staged).exists()  # request scratch released
     value['dependencies'][oid]['bytes'] = base64.b64encode(b'changed').decode()
@@ -223,7 +248,7 @@ def test_only_verified_cas_dependencies_are_staged_in_host_scratch(private_host,
     assert len(w.exchanges) == 1
 
 
-@pytest.mark.parametrize('change', [None, 'provider', 'source', 'dependency', 'capability', 'epoch', 'boot', 'closure', 'generation'])
+@pytest.mark.parametrize('change', [None, 'provider', 'source', 'dependency', 'capability', 'epoch', 'boot', 'closure', 'generation', 'direct-boot', 'outside-boot'])
 def test_host_source_validation_at_real_method_boundary(tmp_path, monkeypatch, change):
     from astrid.core.execution import generic_host as hosts
     c = context()
@@ -249,6 +274,8 @@ def test_host_source_validation_at_real_method_boundary(tmp_path, monkeypatch, c
     monkeypatch.setattr(hosts, '_admitted_source_roots', lambda *a: [tmp_path])
     monkeypatch.setattr(hosts, '_verify_admitted_source', lambda *a: None)
     monkeypatch.setattr(startup, 'renderer_closure', lambda *a: 'sha256:' + 'a' * 64)
+    if change == 'direct-boot': host.boot_manifest_path=tmp_path/'boot-manifest.json'
+    elif change == 'outside-boot': host.boot_manifest_path=tmp_path.parent/'foreign-manifest.json'
     if change == 'provider': c['provider_digest'] = 'sha256:' + '0' * 64
     elif change == 'source': record.source_digest = '0' * 64
     elif change == 'dependency': record.dependency_digest = '0' * 64
@@ -259,7 +286,7 @@ def test_host_source_validation_at_real_method_boundary(tmp_path, monkeypatch, c
     elif change == 'generation': host._remotion_host_session.frame_owner.generation += 1
     # Config snapshots mutable construction input.
     if change == 'provider': config = dataclasses.replace(config, binding=c)
-    if change is None: startup.validate_host(host, config, {})
+    if change in (None, "direct-boot"): startup.validate_host(host, config, {})
     else:
         with pytest.raises(FrameOwnerError): startup.validate_host(host, config, {})
 
@@ -406,3 +433,25 @@ def test_inflight_change_discards_delivered_result(private_host, monkeypatch, ch
     with pytest.raises((FrameOwnerError, EOFError, OSError, ValueError)):
         w.relay.exchange(request(), guard=lambda: None, cancelled=cancelled,
                          timeout=.05 if change == 'late' else 1)
+
+
+@pytest.mark.parametrize("available", [True,False])
+def test_static_visualization_requires_real_launch_readiness_for_authoring_scene(selected_activation,monkeypatch,available):
+    from astrid.core.rendering import remotion_runtime
+    preparation,host=selected_activation
+    host.capabilities["rendering.timeline_visualize"].preflight={}
+    host._remotion_closure_binding=object()  # Explicit fixture authority; no renderer executes.
+    host._authoring_scene_session=lambda environment:SimpleNamespace(frame_owner=SimpleNamespace(generation=1))
+    calls=[]
+    def status(**kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(available=available,project_dir=Path("/qualified/project"),node_executable=Path("/qualified/node"))
+    monkeypatch.setattr(remotion_runtime,"remotion_runtime_status",status)
+    if available:
+        _,environment=startup.configuration_from_activation(preparation)
+        assert environment["ASTRID_REMOTION_PROJECT_DIR"]=="/qualified/project"
+        assert environment["ASTRID_NODE_EXECUTABLE"]=="/qualified/node"
+    else:
+        with pytest.raises(FrameOwnerError,match="renderer_unavailable"):
+            startup.configuration_from_activation(preparation)
+    assert calls==[{"require_explicit_project":True}]
