@@ -2,6 +2,66 @@
 
 Status: **maintained recipe; final release inputs pending producer handoff**.
 
+## Deliberate timing changes: REPAIRS-REST
+
+Resolved ends now resize source-trimmed visual media and explicit audio
+`until`/`for` spans. Source in-points stay fixed; `to` and any stored
+`hold` follow the same speed-aware source window. A media duration edit
+also keeps `to` and `hold` consistent when both are present.
+
+`trim` stores the exact requested source-window length in `hold`, so
+playback speed is applied once. `slip` derives an omitted source out-point
+through the shared source/timeline clock and checks the resulting file bounds.
+Starts, clip identity, opaque metadata and existing relation-choice conflicts
+are preserved.
+
+Beat/downbeat references use the authored music bed covering their resolved
+base. The latest authored start owns an overlap; equal starts use lexical
+occurrence/clip ScopedId order. Coverage is half-open, so a boundary belongs
+to its incoming bed and a gap has no owner. Counts remain on that owner's
+grid across generated segments, following existing `split_from` ancestry
+and managed materialization; coincident crossfade beats count once. Source
+trim/speed conversion uses the shared clock.
+The compiler dependency graph uses that same owner, so an unrelated bed's
+end no longer creates a false beat-feedback cycle.
+
+The independent scenarios are in `tests/sdk/test_timing_repairs_rest.py`:
+moving-word visual/audio ends, literal/cut ends, duration/trim/slip at slow
+and fast speeds, source-bound refusal and rollback, overlap ties, gaps,
+half-open boundaries, nested split ancestry, generated crossfade counts,
+and stored on/formula consumers. Existing golden fixtures and CHARACTERIZE
+assertions are unchanged. Immutable transcript snapshots, validated word
+mapping/orphans and source-clock bindings retain their existing contract.
+
+## Deliberate timing changes: REPAIRS-STRUCT
+
+The shared timing compiler refuses music/film feedback and self-cycles with a
+complete directed `CYCLE` path before adopting a result. Film end follows the
+last shot's picture endpoints. An imported terminal `until="end"` (including
+cut-end aliases) keeps its literal extent as a compatibility basis; terminal
+sequence spans and `land="end"` keep their authored members and metadata.
+Only a film-end command that changes a music bed's ripple basis adds that
+bed's dependency on the new picture end. Existing numeric bases remain inputs,
+and a `plays_on` override keeps its existing behavior.
+
+Existing ambiguous word references now refuse with `AMBIGUOUS_REFERENCE`,
+the original reference and explicit `in <line>` / `#n` choices. Reflow never
+rewrites timing notes or parameter formulas to the nearest occurrence. This
+also covers nested beat bases, retained sequence declarations and fit lands.
+Explicit occurrence references, validated take mappings, frozen transcript
+bindings and ORPHAN caches retain their existing identity rules.
+Diagnostic occurrence numbers are local to the displayed line, so every
+suggested scoped choice resolves to the occurrence named beside it.
+
+The reflow golden scenario for change descriptions now first asserts refusal
+of ambiguous `"work"`, then makes the explicit `"work" in s3 #2` choice and
+retains its original change-description assertion. No golden fixture bytes
+or CHARACTERIZE assertions are updated for these repairs.
+The within-bar music-seam scenario and shared-occurrence music fixture now
+spell their unrelated rocket anchor as `"viral" #1`; their existing music
+assertions are unchanged. Those edits make the intended occurrence explicit
+when a split or repeated placement introduces another spoken match.
+
 This is the one setup recipe for the current Astrid publication tuple. It is
 an artifact manifest plus operator instructions, not a new installer or
 registry. It belongs to I11 and supplies the existing I03/I08/I09/I11 rows:

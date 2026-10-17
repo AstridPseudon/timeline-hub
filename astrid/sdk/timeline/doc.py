@@ -50,11 +50,15 @@ def _set_row_start(row: dict[str, Any], seconds: float) -> None:
 
 
 def _set_length(clip: dict[str, Any], seconds: float) -> None:
+    from astrid.sdk.timeline_editing import timeline_to_source_time
+
     speed = _num(clip.get("speed"), 1.0) or 1.0
+    source_in = _num(clip.get("from"))
+    source_out = float(timeline_to_source_time(seconds, source_start=source_in, speed=speed))
     if "hold" in clip or ("from" not in clip and "to" not in clip):
-        clip["hold"] = _r(seconds * speed)
-    else:
-        clip["to"] = _r(_num(clip.get("from")) + seconds * speed)
+        clip["hold"] = _r(source_out - source_in)
+    if "to" in clip or ("from" in clip and "hold" not in clip):
+        clip["to"] = _r(source_out)
 
 
 def _trim_end(clip: dict[str, Any], keep: float) -> None:
