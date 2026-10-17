@@ -1976,8 +1976,13 @@ def _python_runtime_library(prefix: Path) -> Path | None:
 class _AttemptPolicyFactory:
     """Trusted code/bootstrap configuration shared by slots, never a policy."""
 
-    def __init__(self, executables: ExecutableAdmission):
+    def __init__(self, executables: ExecutableAdmission, *, remotion_closure_binding=None):
+        from .remotion_closure import RemotionClosureBinding
+
+        if remotion_closure_binding is not None and type(remotion_closure_binding) is not RemotionClosureBinding:
+            raise HostError("renderer closure must be a trusted host binding")
         self.executables = executables
+        self.remotion_closure_binding = remotion_closure_binding
 
     def build(self, authority, *, attempt: Path, record) -> _ConfinementPolicy:
         if type(authority) is not _AuthenticatedAttempt:
@@ -2018,6 +2023,16 @@ class _AttemptPolicyFactory:
                  Path("/System/Library/Frameworks/CoreServices.framework"),
                  Path("/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld"),
                  Path("/System/Volumes/Preboot/Cryptexes/OS/usr/lib"))
+        if record.id == "rendering.render" and self.remotion_closure_binding is not None:
+            # This is host composition, never a task/environment-selected path.
+            # Project the already admitted installation into read-only bootstrap
+            # scope; all project writes, network and claim guards stay intact.
+            binding = self.remotion_closure_binding
+            try:
+                binding.validate(binding.project)
+            except (OSError, ValueError) as exc:
+                raise HostError("admitted renderer closure changed before policy projection") from exc
+            roots = (*roots, binding.project)
         # Existing installed platform artifacts only. Unsupported hosts are
         # refused by the same required backend check before any workload spawn.
         binary_directory = None
@@ -5617,7 +5632,9 @@ class GenericPackHost:
         self._confinement_policy = confinement_policy
         # Captured from trusted host startup, never a request's PATH/env.
         self._executable_admission = ExecutableAdmission(os.environ.get("PATH", os.defpath))
-        self._attempt_policy_factory = _AttemptPolicyFactory(self._executable_admission) if isinstance(client, RuntimeProtocolClient) else None
+        self._attempt_policy_factory = _AttemptPolicyFactory(
+            self._executable_admission, remotion_closure_binding=remotion_closure_binding,
+        ) if isinstance(client, RuntimeProtocolClient) else None
         self._attempt_claim_authority = None
         # Provider route grants are intentionally scoped to this host process;
         # their signing key never crosses into a child or runtime payload.
