@@ -19,7 +19,6 @@ from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline._common import LOGICAL_PX, TimelineEditError, _norm, _num, _r
 from astrid.sdk.timeline.doc import (
     _clock,
-    _get_path,
     _post,
     _read_words,
     _row_start,

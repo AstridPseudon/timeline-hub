@@ -234,4 +234,3 @@ def test_ambiguity_rolls_back_an_earlier_timing_command_in_the_same_edit():
 def test_deliberate_repairs_are_listed_in_existing_release_recipe():
     text = (Path(__file__).resolve().parents[2] / "docs/setup/release-recipe.md").read_text()
     assert "REPAIRS-STRUCT" in text and "AMBIGUOUS_REFERENCE" in text and "terminal" in text
-

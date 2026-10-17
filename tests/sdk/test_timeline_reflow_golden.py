@@ -12,8 +12,8 @@ import copy
 import pytest
 
 from astrid.sdk import timeline_intent as intent
-from astrid.sdk.timeline_checkout import Checkout, describe_changes
 from astrid.sdk.timeline.compiler import TimingAmbiguityError
+from astrid.sdk.timeline_checkout import Checkout, describe_changes
 
 FPS = 30
 

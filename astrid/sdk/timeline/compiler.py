@@ -10,7 +10,8 @@ from __future__ import annotations
 import copy
 import json
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from typing import Any, Mapping, Sequence
 
 from astrid.sdk.timeline._common import TimelineEditError
@@ -141,8 +142,8 @@ def _validate_dependencies(tl, *, music_end_owners=()):
                         if (w.shot_id, w.clip_id) in by_word}
             if m.kind in ('beat', 'downbeat'):
                 deps = visit(m.base) if m.base else set()
-                from astrid.sdk.timeline.model import _MomentContext
                 from astrid.sdk.timeline import music_beds
+                from astrid.sdk.timeline.model import _MomentContext
                 ctx = _MomentContext(tl, clip, film_end=film_end)
                 try:
                     base = mo.resolve(m.base, ctx) if m.base else 0.
@@ -326,17 +327,17 @@ class TimingInputs:
     """
 
     bundle: Mapping[str, Any]
-    state: Mapping[str, Any] = field(default_factory=dict, repr=False)
-    _owner: Any = field(default=None, repr=False, compare=False)
+    state: Mapping[str, Any] = dataclass_field(default_factory=dict, repr=False)
+    _owner: Any = dataclass_field(default=None, repr=False, compare=False)
 
 
 @dataclass(frozen=True)
 class TimingResult:
     bundle: dict[str, Any]
     values: tuple[Any, ...]
-    _state: dict[str, Any] = field(repr=False)
-    _origins: Mapping[int, Any] = field(repr=False, compare=False)
-    _arguments: tuple = field(repr=False, compare=False)
+    _state: dict[str, Any] = dataclass_field(repr=False)
+    _origins: Mapping[int, Any] = dataclass_field(repr=False, compare=False)
+    _arguments: tuple = dataclass_field(repr=False, compare=False)
 
 
 class _CheckoutCompileError(Exception):
