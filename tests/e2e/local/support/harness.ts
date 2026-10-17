@@ -25,11 +25,13 @@ export const GATEWAY_PORT = Number(process.env.REIGH_DIRECT_GATEWAY_PORT ?? 1734
 export const HOSTED_HOST = 'reigh.test';
 export const OTHER_HOST = 'evil.test';
 export const PRODUCT_ACTOR = 'reigh-e2e-product';
+/** The second client of the three-product journey (the Astrid CLI) is its own actor, so the Runtime's history says who wrote what. */
+export const ASTRID_ACTOR = 'astrid-f2';
 export const PRODUCT_SCOPES = ['handshake', 'projects:read', 'projects:write', 'tasks:read', 'tasks:write', 'objects:read', 'objects:write'];
 export const BIG_DOWNLOAD_BYTES = 60 * 1024 * 1024;
 export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
 
-const RUNTIME_CHECKOUT = path.resolve(process.env.BANODOCO_RUNTIME_CHECKOUT ?? path.join(REPO_ROOT, '..', 'banodoco-workspace-runtime'));
+export const RUNTIME_CHECKOUT = path.resolve(process.env.BANODOCO_RUNTIME_CHECKOUT ?? path.join(REPO_ROOT, '..', 'banodoco-workspace-runtime'));
 const DIST_DIR = path.resolve(process.env.REIGH_DIRECT_DIST ?? path.join(REPO_ROOT, 'dist'));
 
 export function runtimePython(): string | null {
@@ -75,15 +77,18 @@ function killGroupSync(pid: number) {
 }
 process.on('exit', () => { for (const pid of liveGroups) killGroupSync(pid); });
 
-interface Managed {
+export interface Managed {
   child: ChildProcess;
   stdout: string;
   stderr: string;
   exited: Promise<number | null>;
+  /** Resolves once the process has ended and its stdout and stderr are fully read (`exited` can come first). */
+  closed: Promise<void>;
 }
 
-function spawnGroup(command: string, args: string[], options: { cwd: string; env?: NodeJS.ProcessEnv }): Managed {
-  const child = spawn(command, args, { cwd: options.cwd, env: { ...process.env, ...options.env }, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+/** Starts `command` in its own process group. `exactEnv` gives it `options.env` alone; otherwise that is laid over this process's environment. */
+export function spawnGroup(command: string, args: string[], options: { cwd: string; env?: NodeJS.ProcessEnv; exactEnv?: boolean }): Managed {
+  const child = spawn(command, args, { cwd: options.cwd, env: options.exactEnv ? { ...options.env } : { ...process.env, ...options.env }, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
   if (!child.pid) throw new Error(`could not start ${command}`);
   liveGroups.add(child.pid);
   const managed: Managed = {
@@ -91,13 +96,14 @@ function spawnGroup(command: string, args: string[], options: { cwd: string; env
     stdout: '',
     stderr: '',
     exited: new Promise((resolve) => child.once('exit', (code) => { liveGroups.delete(child.pid!); resolve(code); })),
+    closed: new Promise((resolve) => child.once('close', () => resolve())),
   };
   child.stdout!.on('data', (chunk) => { managed.stdout += chunk; });
   child.stderr!.on('data', (chunk) => { managed.stderr += chunk; });
   return managed;
 }
 
-async function stopGroup(managed: Managed | undefined, graceMs = 8000): Promise<void> {
+export async function stopGroup(managed: Managed | undefined, graceMs = 8000): Promise<void> {
   if (!managed) return;
   const { pid, exitCode } = managed.child;
   if (!pid) return;
@@ -293,6 +299,42 @@ export interface MediaSeed {
   videoClipId: string;
 }
 
+/** The fields of `<support>/discovery.json` the journeys read (the Runtime writes more). The credential files named here are the owner's and the worker's, never the product's. */
+export interface RuntimeDiscovery {
+  endpoint: string;
+  active_realm: string;
+  runtime_instance_id: string;
+  worker_credential_file: string;
+  /** The actor the worker credential belongs to; an executor registered with it must carry this id. */
+  worker_actor: string;
+  [key: string]: unknown;
+}
+
+/** What `seedThreeProducts` made. */
+export interface ThreeProductsSeed {
+  projectSlug: string;
+  /** The harness's own seeded timeline: the seed is published onto it, so the editor still opens the only project and timeline. */
+  timelineId: string;
+  /** The head the seed produced; `seed.headRevisionId` stays the empty timeline it was published onto. */
+  headRevisionId: string;
+  appClipId: string;
+  agentClipId: string;
+  transitionClipId: string;
+  agentClearClipId: string;
+  /** The shot the agent's clips live in, and its occurrence in the parent composition (the App draws it as one block). */
+  shotId: string;
+  occurrenceId: string;
+  /** The key the agent names for a task output (`--swap-asset f2-marker=task:T/marker#0`). It is new: the CLI refuses a key that already names other media. */
+  markerAssetKey: string;
+  /** Opaque data neither client models; every later revision must carry both unchanged. */
+  opaque: { config: Record<string, unknown>; clip: Record<string, unknown> };
+}
+
+export const THREE_PRODUCTS_OPAQUE = {
+  config: { owner: 'f2', nested: [1, { k: 'v' }], flag: true },
+  clip: { owner: 'f2', nested: [1, { k: 'v' }] },
+} as const;
+
 const SCENE_MARKER = 'journey-scene';
 
 /** The smallest entry page the validator accepts: a `<head>` for the CSP, a `<body>` for the bridge, and `window.astridScene`. */
@@ -327,6 +369,7 @@ export class DirectHarness {
   private extensionsMode: ExtensionsConfigMode = 'on';
   private extensionsSeed?: ExtensionsSeed;
   private mediaSeed?: MediaSeed;
+  private threeProductsSeed?: ThreeProductsSeed;
 
   /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
   get extensionsConfig(): ExtensionsConfigMode { return this.extensionsMode; }
@@ -371,7 +414,7 @@ export class DirectHarness {
       mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
       this.realmId = await this.createRealm();
       await this.startRuntime();
-      await this.provisionProduct();
+      this.productToken = await this.provisionCredential(PRODUCT_ACTOR, 'product-credential.json');
       this.seed = await this.seedRuntime();
       await this.startGateway();
     } catch (error) {
@@ -440,18 +483,34 @@ export class DirectHarness {
     return { status: response.status, body: await response.json().catch(() => null) as T };
   }
 
-  /** The product-scoped credential, minted through the Runtime's own route with the owner credential. */
-  private async provisionProduct(): Promise<void> {
+  /**
+   * A credential for `actorId`, minted through the Runtime's own route with the owner credential and written to
+   * `<tmp>/<file>` as `{token, actor_id}`, mode 0600 (the shape the gateway's `--token-file` and Astrid's reader accept).
+   * Returns the token; it never leaves Node memory and that file, and the hosted server serves neither.
+   */
+  async provisionCredential(actorId: string, file: string): Promise<string> {
     const owner = readFileSync(path.join(this.supportDir, 'credentials', 'owner.token'), 'utf8').trim();
-    this.productToken = `prod-${randomBytes(24).toString('base64url')}`;
+    const token = `${actorId.slice(0, 8)}-${randomBytes(24).toString('base64url')}`;
     const response = await fetch(`${this.runtimeUrl}/v1/credentials`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${owner}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ actor_id: PRODUCT_ACTOR, credential: this.productToken, scope: 'astrid' }),
+      body: JSON.stringify({ actor_id: actorId, credential: token, scope: 'astrid' }),
     });
-    if (response.status !== 201) throw new Error(`product credential provisioning failed: ${response.status} ${await response.text()}`);
-    // The file the gateway reads (--token-file): token plus its actor, mode 0600.
-    writeFileSync(path.join(this.tmp, 'product-credential.json'), JSON.stringify({ token: this.productToken, actor_id: PRODUCT_ACTOR }), { mode: 0o600 });
+    if (response.status !== 201) throw new Error(`credential provisioning for ${actorId} failed: ${response.status} ${await response.text()}`);
+    writeFileSync(path.join(this.tmp, file), JSON.stringify({ token, actor_id: actorId }), { mode: 0o600 });
+    return token;
+  }
+
+  /**
+   * What the Runtime last published about itself (`<support>/discovery.json`, rewritten on every start). The gateway and every
+   * Astrid call re-read it, so a restarted Runtime on a new port is followed with no special case. Throws when it is absent or unparsable.
+   */
+  discovery(): RuntimeDiscovery {
+    const parsed = JSON.parse(readFileSync(path.join(this.supportDir, 'discovery.json'), 'utf8'));
+    for (const key of ['endpoint', 'active_realm', 'runtime_instance_id', 'worker_credential_file', 'worker_actor'] as const) {
+      if (typeof parsed[key] !== 'string' || !parsed[key]) throw new Error(`discovery.json has no ${key}`);
+    }
+    return parsed as RuntimeDiscovery;
   }
 
   private async seedRuntime(): Promise<Seed> {
@@ -576,6 +635,77 @@ export class DirectHarness {
     if (published.status !== 200) throw new Error(`seed media timeline: ${published.status} ${JSON.stringify(published.body)}`);
     this.mediaSeed = { projectSlug: (project.body.data ?? project.body).slug, timelineId, imageClipId, videoClipId };
     return this.mediaSeed;
+  }
+
+  /**
+   * The three-product seed, made once on first use: the next revision of the harness's own seeded timeline (so the editor still
+   * opens the only project and timeline by itself), with one clip per writer so a correct merge never touches the same clip twice,
+   * and two opaque fields neither client models (`config.x_f2_opaque`, and `app.f2Opaque` on the agent's clip).
+   *
+   * Two kinds of clip, because the two products reach different ones. The App edits the parent composition's own clips
+   * (`f2-app-clip`, `f2-transition-clip`, track `V1`, drawn as clips). The Astrid CLI addresses only clips inside a placed shot's
+   * internal timeline (astrid/sdk/timeline/lookup.py `clips`), so the agent's clips (`f2-agent-clip`, `f2-agent-clear-clip`) live in
+   * the shot `f2-shot` (occurrence on parent track `S1`, 0 s to 12 s), which the App draws as one block, not as its clips. The shot
+   * also holds a full-length `f2-plate` so the film stays covered when the agent clears an asset (Astrid refuses to publish a gap).
+   */
+  async seedThreeProducts(): Promise<ThreeProductsSeed> {
+    if (this.threeProductsSeed) return this.threeProductsSeed;
+    const { projectId, timelineId, image, video, headRevisionId } = this.seed;
+    const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
+    if (project.status !== 200) throw new Error(`seed three products project: ${project.status} ${JSON.stringify(project.body)}`);
+    const ids = { appClipId: 'f2-app-clip', agentClipId: 'f2-agent-clip', transitionClipId: 'f2-transition-clip', agentClearClipId: 'f2-agent-clear-clip' };
+    const markerAssetKey = 'f2-marker';
+    const videoExtension = video.mediaType === 'video/webm' ? 'webm' : 'mp4';
+    const imageAsset = (name: string) => ({ file: `${name}.png`, type: 'image/png', media_id: image.objectId, content_sha256: image.digest });
+    const videoAsset = { file: `f2-video.${videoExtension}`, type: video.mediaType, duration: 12, media_id: video.objectId, content_sha256: video.digest };
+    // The App's clips are the parent composition's own (the editor changes only the parent). The Astrid CLI reaches clips only
+    // inside a placed shot's internal timeline (astrid/sdk/timeline/lookup.py `clips`), so the agent's two clips live in a shot
+    // placed between them: 3 s to 9 s on the film, clips at 0 s and 3 s inside it.
+    const shotId = 'f2-shot';
+    const internalRevisionId = randomUUID();
+    const shotRevisionId = randomUUID();
+    const parentClips = [
+      { id: ids.appClipId, at: 0, track: 'V1', clipType: 'media', asset: 'f2-app', from: 0, to: 3, speed: 1 },
+      { id: ids.transitionClipId, at: 9, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
+    ];
+    const shotClips = [
+      { id: 'f2-plate', at: 0, track: 'plate', clipType: 'media', asset: 'f2-plate', hold: 12 },
+      { id: ids.agentClipId, at: 3, track: 'V2', clipType: 'media', asset: 'f2-placeholder', hold: 3, app: { f2Opaque: THREE_PRODUCTS_OPAQUE.clip } },
+      { id: ids.agentClearClipId, at: 6, track: 'V2', clipType: 'media', asset: 'f2-clear', hold: 3 },
+    ];
+    const publication = compositionPublication({ projectId, timelineId }, headRevisionId, 'Main', 30);
+    publication.parent_composition.config = { ...publication.parent_composition.config, clips: parentClips, tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }], x_f2_opaque: THREE_PRODUCTS_OPAQUE.config } as unknown as typeof publication.parent_composition.config;
+    publication.parent_composition.clips = parentClips as unknown as typeof publication.parent_composition.clips;
+    publication.parent_composition.registry = { assets: { 'f2-app': imageAsset('f2-app'), 'f2-video': videoAsset } } as unknown as typeof publication.parent_composition.registry;
+    Object.assign(publication, {
+      internal_timeline_revisions: [{
+        timeline_id: timelineId,
+        revision_id: internalRevisionId,
+        payload: {
+          tracks: [{ id: 'plate', kind: 'visual', label: 'plate' }, { id: 'V2', kind: 'visual', label: 'V2' }],
+          clips: shotClips, effects: [], audio: [], layout: {},
+          registry: { assets: { 'f2-plate': imageAsset('f2-plate'), 'f2-placeholder': imageAsset('f2-placeholder'), 'f2-clear': imageAsset('f2-clear') } },
+          assets: [],
+        },
+      }],
+      shot_revisions: [{
+        shot_id: shotId,
+        revision_id: shotRevisionId,
+        internal_timeline_revision_id: internalRevisionId,
+        payload: { metadata: { title: 'F2 agent shot' }, items: [], pools: [], selected_variants: {}, provenance: {}, generation_inputs: {}, audio_bindings: [], text_bindings: [] },
+      }],
+    });
+    (publication.parent_composition as Record<string, unknown>).occurrences = [{
+      occurrence_id: 'f2-occurrence', shot_id: shotId, shot_revision_id: shotRevisionId,
+      placement: { start_ms: 0 }, source_offset: 0, duration_ms: 12000, speed: 1, track: 'S1', transform: {}, gain: 1, mute: false, provenance: {},
+    }];
+    const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
+    if (published.status !== 200) throw new Error(`seed three products timeline: ${published.status} ${JSON.stringify(published.body)}`);
+    this.threeProductsSeed = {
+      projectSlug: (project.body.data ?? project.body).slug, timelineId, headRevisionId: published.body.data.new_head,
+      ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: { config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip } },
+    };
+    return this.threeProductsSeed;
   }
 
   // -- Gateway -------------------------------------------------------------------------------
