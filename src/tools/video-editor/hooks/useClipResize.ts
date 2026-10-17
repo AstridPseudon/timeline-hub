@@ -289,6 +289,14 @@ export function useClipResize({
       return;
     }
 
+    const multiRightOverlap = semanticEndChoices && session.edge === 'right'
+      && (current.rows.find((row) => row.id === session.rowId)?.actions.filter((other) =>
+        other.id !== session.clipId && primaryUpdate.start < other.end && primaryUpdate.end > other.start).length ?? 0) > 1;
+    if (multiRightOverlap && (session.context.kind === 'group' || snappedUpdates.length !== 1)) {
+      clearResizeTracking(session.clipId);
+      return;
+    }
+
     // Left overlap commands use the requested frame delta, before legacy geometry
     // clamping. Unsupported overlap cases retain the no-command refusal.
     if (semanticEndChoices && session.edge === 'left' && current.rows.find((row) => row.id === session.rowId)?.actions.some(
@@ -385,7 +393,7 @@ export function useClipResize({
     );
 
     const captured = resizeBaseRef.current[session.clipId];
-    if (semanticEndChoices && session.edge === 'right' && effectiveEnd !== primaryUpdate.end) {
+    if (semanticEndChoices && session.edge === 'right' && (multiRightOverlap || effectiveEnd !== primaryUpdate.end)) {
       const isCapturedBase = () => captured && captured.config === JSON.stringify(dataRef.current?.config)
         && captured.head === JSON.stringify(dataRef.current?.head) && captured.fps === dataRef.current?.output.fps;
       if (!isCapturedBase()) {
@@ -393,7 +401,7 @@ export function useClipResize({
         return;
       }
       const overlap = overlapTrimGesture(current, session.clipId, session.rowId, primaryUpdate.start, primaryUpdate.end, effectiveEnd);
-      if (overlap !== undefined) {
+      if (multiRightOverlap || overlap !== undefined) {
         // A prompt can yield to canonical head/permission updates. Recheck the
         // captured base before handing the sole transaction to the commit port.
         if (overlap && isCapturedBase()) applyEdit({ type: 'commands' }, {

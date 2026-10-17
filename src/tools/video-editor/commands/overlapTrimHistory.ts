@@ -9,18 +9,21 @@ export function isOverlapTrimCommand(command: EditCommand | undefined): boolean 
     || command.resolved?.length !== 1 || command.resolved[0] !== command.select
     || !record(command.args) || Object.keys(command.args).some((key) => !['out_s', 'relation_choices'].includes(key))
     || typeof command.args.out_s !== 'number' || !Number.isFinite(command.args.out_s)
-    || !Array.isArray(command.args.relation_choices) || command.args.relation_choices.length !== 1) return false;
-  const choice = command.args.relation_choices[0];
-  return record(choice) && scoped(choice.target) && choice.target !== command.select
-    && choice.target.split('/')[0] === command.select.split('/')[0] && choice.edge === 'start'
-    && ['keep', 'detach', 'adjust-offset', 're-anchor'].includes(String(choice.choice));
+    || !isTrimChoices(command.args.relation_choices, command.select)) return false;
+  return true;
 }
 
-function isLeftTrimChoices(value: unknown, primary: string): boolean {
+function isTrimChoices(value: unknown, primary: string): boolean {
   return Array.isArray(value) && value.length > 0
     && value.every((choice) => record(choice) && scoped(choice.target) && choice.target !== primary
       && choice.target.split('/')[0] === primary.split('/')[0] && choice.edge === 'start'
-      && ['keep', 'detach', 'adjust-offset', 're-anchor'].includes(String(choice.choice)))
+      && ['keep', 'detach', 'adjust-offset', 're-anchor'].includes(String(choice.choice))
+      && Object.keys(choice).every((key) => ['target', 'edge', 'choice',
+        ...(['adjust-offset', 're-anchor'].includes(String(choice.choice)) ? ['offset_seconds', 'offset_frames'] : []),
+        ...(choice.choice === 're-anchor' ? ['anchor'] : [])].includes(key))
+      && (!['adjust-offset', 're-anchor'].includes(String(choice.choice))
+        || (typeof choice.offset_seconds === 'number' && Number.isFinite(choice.offset_seconds) && Number.isSafeInteger(choice.offset_frames)))
+      && (choice.choice !== 're-anchor' || (typeof choice.anchor === 'string' && !!choice.anchor.trim())))
     && new Set(value.map((choice) => choice.target)).size === value.length;
 }
 
@@ -37,7 +40,7 @@ export function isOverlapTrimBatch(commands: readonly EditCommand[]): boolean {
     && nudge.op === 'clip.nudge' && nudge.select === trim.select
     && nudge.resolved?.length === 1 && nudge.resolved[0] === trim.select
     && Object.keys(nudge.args).length === 2 && Number.isSafeInteger(nudge.args.frames) && nudge.args.frames !== 0
-    && isLeftTrimChoices(nudge.args.relation_choices, trim.select);
+    && isTrimChoices(nudge.args.relation_choices, trim.select);
 }
 
 /** Accept only the direct fields this bounded producer actually records.
@@ -59,7 +62,7 @@ export function isOverlapTrimInverse(command: EditCommand | undefined): boolean 
   const primaryIds = [...new Set(writes.filter((write) => write.path === (left ? 'from' : 'to')).map((write) => write.id))];
   if (primaryIds.length !== 1 || (left && !primaryIds[0].startsWith('parent/'))) return false;
   const ids = [...new Set(writes.map((write) => write.id))];
-  return (left || ids.length <= 2) && ids.every((id) => id.split('/')[0] === primaryIds[0].split('/')[0])
+  return ids.every((id) => id.split('/')[0] === primaryIds[0].split('/')[0])
     && new Set(writes.map((write) => `${write.id}::${write.path}`)).size === writes.length
     && writes.every((write) => (write.id === primaryIds[0] ? (left ? ['from', 'at', 'hold'] : ['to', 'hold']) : ['at', 'intent.on', 'intent.fixed_start']).includes(write.path));
 }
@@ -89,10 +92,9 @@ export function overlapTrimInverse(commands: readonly EditCommand[], result: {
         : ['at', 'intent.on', 'intent.fixed_start']).includes(write.path))) return undefined;
   } else {
     const sourceWrites = source.args.writes as Array<{ id: string; path: string }>;
-    // A left-trim inverse can only reverse the recorded field identities. It
+    // An inverse can only reverse the recorded field identities. It
     // cannot promote a dependent to primary or acquire another dependent field.
-    if (sourceWrites.some((write) => write.path === 'from')
-      && (inverse.args.writes as Array<{ id: string; path: string }>).some((write) =>
+    if ((inverse.args.writes as Array<{ id: string; path: string }>).some((write) =>
         !sourceWrites.some((original) => original.id === write.id && original.path === write.path))) return undefined;
   }
   if ((inverse.args.writes as Array<{ id: string }>).some((write) => !allowedIds.includes(write.id))) return undefined;

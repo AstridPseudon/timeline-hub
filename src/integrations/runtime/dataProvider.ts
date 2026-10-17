@@ -908,8 +908,9 @@ export class RuntimeDataProvider implements DataProvider {
     const registryNoChange = result.status === 'no_change' && registryCommands.length === 1
       && (isAssetRegistrationCommand(registryCommands[0]) || isAssetRegistrationInverse(registryCommands[0]));
     const captionInverse = transcriptCaptionInverse(registryCommands, result);
+    const overlapInverse = overlapTrimInverse(registryCommands, result);
     const commandInverse = registryNoChange ? null : captionInverse !== undefined ? captionInverse : assetRegistrationInverse(registryCommands, result)
-      ?? overlapTrimInverse(registryCommands, result) ?? tiedHoldExpansionInverse(registryCommands, result);
+      ?? (overlapInverse !== undefined ? overlapInverse : tiedHoldExpansionInverse(registryCommands, result));
     return { configVersion: version, head: this.timelineHead(timelineId, head),
       ...(commandInverse !== undefined ? { commandInverse } : {}) };
   }

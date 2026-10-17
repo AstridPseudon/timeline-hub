@@ -76,13 +76,6 @@ describe('bounded overlap resize history', () => {
     expect(isOverlapTrimInverse({ op: 'timeline.inverse', select: null, args: { publication: 'p', writes: direct } })).toBe(true);
     expect(overlapTrimInverse([inverse], receipt(direct))).toBeUndefined();
   });
-  it('keeps the right-edge single-choice and two-identity limits', () => {
-    const commands = multi();
-    const right = [{ ...commands[0], args: { out_s: 3, relation_choices: commands[1].args.relation_choices } }];
-    expect(isOverlapTrimBatch(right)).toBe(false);
-    const direct = multiWrites().filter((write) => write.path !== 'at'); direct[0].path = 'to';
-    expect(isOverlapTrimInverse({ op: 'timeline.inverse', select: null, args: { publication: 'p', writes: direct } })).toBe(false);
-  });
   it('accepts only the ordered pair and reverses the actual direct writes', () => {
     expect(isOverlapTrimBatch(pair())).toBe(true);
     const inverse = overlapTrimInverse(pair(), receipt())!;
@@ -117,4 +110,71 @@ describe('bounded overlap resize history', () => {
       expect(overlapTrimInverse(pair(), receipt(direct))).toBeUndefined();
     },
   );
+});
+
+
+describe('multiple right overlap trim history', () => {
+  const batch = (): EditCommand[] => [{ op: 'clip.trim', select: primary, resolved: [primary], args: { out_s: 3,
+    relation_choices: [dependent, 'parent/clip:second', 'parent/clip:third'].map((target) => ({ target, edge: 'start', choice: 'detach' })) } }];
+  const direct = () => [
+    { id: primary, path: 'to', before: present(2), after: present(3) },
+    { id: primary, path: 'hold', before: { state: 'absent' }, after: present(3) },
+    ...[dependent, 'parent/clip:second', 'parent/clip:third'].flatMap((id) => [
+      { id, path: 'intent.on', before: present(`clip-end "${primary}" +1s`), after: { state: 'absent' } },
+      { id, path: 'intent.fixed_start', before: { state: 'absent' }, after: present(true) },
+    ]),
+  ];
+  it('owns one exact trim and its multi-dependent accepted inverse and redo', () => {
+    expect(isOverlapTrimBatch(batch())).toBe(true);
+    const inverse = overlapTrimInverse(batch(), receipt(direct()))!;
+    expect(isOverlapTrimInverse(inverse)).toBe(true);
+    expect(inverse.args.writes).toEqual(direct().map((write) => ({ ...write, before: write.after, after: write.before })));
+    expect(overlapTrimInverse([inverse], receipt(inverse.args.writes as ReturnType<typeof writes>))?.args.writes).toEqual(direct());
+    expect(overlapTrimInverse(batch(), { ...receipt(), status: 'no_change' })).toBeNull();
+    expect(overlapTrimInverse(batch(), { ...receipt(), status: 'refused' })).toBeUndefined();
+  });
+  it.each(['empty', 'duplicate', 'primary', 'foreign', 'unscoped', 'end', 'unknown', 'extra choice', 'missing offset', 'fractional frames', 'missing anchor', 'extra trim', 'nudge', 'unresolved'])(
+    'refuses malformed right batch %s', (kind) => {
+      const commands = batch(); const choices = commands[0].args.relation_choices as Array<Record<string, unknown>>;
+      if (kind === 'empty') choices.length = 0;
+      if (kind === 'duplicate') choices[1].target = dependent;
+      if (kind === 'primary') choices[1].target = primary;
+      if (kind === 'foreign') choices[1].target = 'occurrence:other/clip:second';
+      if (kind === 'unscoped') choices[1].target = 'second';
+      if (kind === 'end') choices[1].edge = 'end';
+      if (kind === 'unknown') choices[1].choice = 'move';
+      if (kind === 'extra choice') choices[1].relation_affected = [];
+      if (kind === 'missing offset') choices[1].choice = 'adjust-offset';
+      if (kind === 'fractional frames') Object.assign(choices[1], { choice: 'adjust-offset', offset_seconds: 0, offset_frames: 0.5 });
+      if (kind === 'missing anchor') Object.assign(choices[1], { choice: 're-anchor', offset_seconds: 0, offset_frames: 0 });
+      if (kind === 'extra trim') commands[0].args.in_s = 0;
+      if (kind === 'nudge') commands.push(pair()[1]);
+      if (kind === 'unresolved') commands[0].resolved = [dependent];
+      expect(isOverlapTrimBatch(commands)).toBe(false);
+      expect(overlapTrimInverse(commands, receipt(direct()))).toBeUndefined();
+    });
+  it.each(['unchosen', 'foreign', 'dependent to', 'dependent hold', 'primary at', 'duplicate', 'document', 'consequence', 'generic diff', 'malformed state', 'missing to'])(
+    'rejects right receipt %s', (kind) => {
+      const rows = direct();
+      if (kind === 'unchosen') rows[4].id = 'parent/clip:unchosen';
+      if (kind === 'foreign') rows[4].id = 'occurrence:other/clip:second';
+      if (kind === 'dependent to') rows[4].path = 'to';
+      if (kind === 'dependent hold') rows[4].path = 'hold';
+      if (kind === 'primary at') rows[1].path = 'at';
+      if (kind === 'duplicate') rows.push(structuredClone(rows[4]));
+      if (kind === 'document') rows[4].path = '';
+      if (kind === 'consequence') rows[4] = { ...rows[4], cause: 0 } as never;
+      if (kind === 'generic diff') rows[4].path = 'app.opaque';
+      if (kind === 'malformed state') rows[4].before = { state: 'absent', value: 1 };
+      if (kind === 'missing to') rows.shift();
+      expect(overlapTrimInverse(batch(), receipt(rows))).toBeUndefined();
+    });
+  it.each(['new id', 'new field', 'promote dependent'])('inverse replay cannot acquire %s', (kind) => {
+    const inverse = overlapTrimInverse(batch(), receipt(direct()))!;
+    const rows = structuredClone(inverse.args.writes) as ReturnType<typeof writes>;
+    if (kind === 'new id') rows[4].id = 'parent/clip:unchosen';
+    if (kind === 'new field') rows[4].path = 'at';
+    if (kind === 'promote dependent') { rows[0].id = dependent; rows[1].id = dependent; rows.splice(2, 2); }
+    expect(overlapTrimInverse([inverse], receipt(rows))).toBeUndefined();
+  });
 });
