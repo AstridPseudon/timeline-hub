@@ -226,7 +226,8 @@ export function useClipEditing({
       const continuous = continuousEffectGestureCommands(current, id, memberPatch);
       return continuous.handled ? (validClipIds.length === clipIds.length ? continuous.commands : undefined) : propertyGestureCommands(current, id, memberPatch);
     });
-    const editCommands = transitionBatch?.commands ?? continuousBatchGestureCommands(current, commandGroups);
+    const manualTextCommands = commandGroups.every(commands => commands !== undefined) ? commandGroups.flat() : undefined;
+    const editCommands = transitionBatch?.commands ?? (textEdit ? manualTextCommands : continuousBatchGestureCommands(current, commandGroups));
     if (textEdit && !editCommands) return;
     if (!patchAffectsDuration(patch)) {
       applyRowsEdit(current.rows, metaUpdates, undefined, undefined, { editCommands });
@@ -321,7 +322,8 @@ export function useClipEditing({
       const continuous = continuousEffectGestureCommands(current, id, patch);
       return continuous.handled ? (validClipIds.length === clipIds.length ? continuous.commands : undefined) : propertyGestureCommands(current, id, patch);
     });
-    const editCommands = transitionBatch?.commands ?? continuousBatchGestureCommands(current, groups);
+    const manualTextCommands = groups.every(commands => commands !== undefined) ? groups.flat() : undefined;
+    const editCommands = transitionBatch?.commands ?? (textEdit ? manualTextCommands : continuousBatchGestureCommands(current, groups));
     if (textEdit && !editCommands) return;
     applyRowsEdit(current.rows, transitionBatch?.metaUpdates ?? metaUpdates, undefined, undefined, { editCommands });
   }, [applyRowsEdit, dataRef, elementHost, getValidClipIds]);
