@@ -33,7 +33,7 @@ def _cmd_lint(parsed: argparse.Namespace) -> int:
         bundle_fps,
         occurrences_from_bundle,
     )
-    from astrid.packs.rendering.actions.timeline_visualize.layers.base import check_help
+    from astrid.packs.rendering.actions.timeline_visualize.layers.base import Finding, check_help
     from astrid.packs.rendering.actions.timeline_visualize.motion import model
     from astrid.packs.rendering.actions.timeline_visualize.motion.conditions import run_checks
     from astrid.packs.rendering.actions.timeline_visualize.motion.rules import resolve_rules
@@ -88,6 +88,25 @@ def _cmd_lint(parsed: argparse.Namespace) -> int:
         severity=(rules or {}).get("severity"), disable=(rules or {}).get("disable") or (), all_cuts=all_cuts,
         include_declared_checks=True, extension_context=timeline_check_host_context(named),
     )
+    # The registered motion checks operate on declared clip data. Keep the
+    # shared scene answer on its existing Checkout consumer path as well, so
+    # an evaluated blank plate is visible to lint without duplicating its
+    # coverage rules here.
+    spans = named._on_screen()
+    empty_blocking, empty_info = named.empty_cuts(spans)
+    selected_cut_ids = {str(cut.get("cut_id")) for cut in cuts}
+    filtered_cuts = getattr(parsed, "cut", None) or getattr(parsed, "range", None)
+    shared_findings = []
+    for messages, severity in ((empty_blocking, "error"), (empty_info, "info")):
+        for line in messages:
+            parts = line.split(maxsplit=2)
+            cut_id = parts[1] if len(parts) > 1 else "no cut"
+            if filtered_cuts and cut_id not in selected_cut_ids:
+                continue
+            message = " ".join(parts[1:]) if len(parts) > 1 else line
+            shared_findings.append(Finding("EMPTY", None, None, message, severity,
+                                           check="shared scene evaluation", show_scope=False))
+    timeline_findings.extend(shared_findings)
     if parsed.json:
         rows = [{**f.as_dict(), "cut_start": cut["start"], "cut_end": cut["end"]}
                 for cut, findings in results for f in findings]
