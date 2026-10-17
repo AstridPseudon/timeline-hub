@@ -14,7 +14,7 @@ import stat
 import tempfile
 import threading
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 from . import authoring_scene_protocol as wire
@@ -30,6 +30,7 @@ class AuthoringSceneConfig:
     runtime_peer: ProcessIdentity
     binding: dict
     boot_manifest_hash: str
+    socket_root: Path | None = None
 
     def __post_init__(self):
         wire.context(self.binding)
@@ -41,18 +42,24 @@ class AuthoringSceneConfig:
         ):
             raise FrameOwnerError("startup_invalid")
         object.__setattr__(self, "binding", copy.deepcopy(self.binding))
+        if self.socket_root is not None and (
+            self.socket_root.parent != custody.DARWIN_CUSTODY_SOCKET_PARENT
+            or not self.socket_root.name.startswith("runtime-cb-")
+            or self.socket_root.resolve(strict=True) != self.socket_root
+        ):
+            raise FrameOwnerError("startup_invalid")
 
     @property
     def socket_path(self):
-        return self.support_root / "authoring-scene" / "s"
+        return (self.socket_root or self.support_root / "authoring-scene") / "s"
 
     @property
     def readiness_path(self):
-        return self.socket_path.parent / "ready.json"
+        return self.support_root / "authoring-scene" / "ready.json"
 
     @property
     def record(self):
-        return dict(
+        record = dict(
             protocol=wire.PROTOCOL,
             operation=wire.OPERATION,
             purpose=wire.PURPOSE,
@@ -61,6 +68,9 @@ class AuthoringSceneConfig:
             runtime_peer=asdict(self.runtime_peer),
             boot_manifest_hash=self.boot_manifest_hash,
         )
+        if self.socket_root is not None:
+            record["socket_root"] = str(self.socket_root)
+        return record
 
 
 def _actor(identity):
@@ -72,7 +82,9 @@ def _actor(identity):
 def check_endpoint(config):
     """No aliases, public parent, stale record or endpoint substitution."""
     fd = _directory(config.socket_path.parent)
+    ready_fd = None
     try:
+        ready_fd = _directory(config.readiness_path.parent)
         facts = os.stat("s", dir_fd=fd, follow_symlinks=False)
         if (
             not stat.S_ISSOCK(facts.st_mode)
@@ -80,7 +92,7 @@ def check_endpoint(config):
             or stat.S_IMODE(facts.st_mode) != 0o600
         ):
             raise FrameOwnerError("endpoint_invalid")
-        record = os.open("ready.json", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
+        record = os.open("ready.json", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=ready_fd)
         try:
             info = os.fstat(record)
             if (
@@ -92,8 +104,10 @@ def check_endpoint(config):
                 raise FrameOwnerError("endpoint_changed")
         finally:
             os.close(record)
-        return _inode(os.fstat(fd)), _inode(facts)
+        return _inode(os.fstat(ready_fd)), _inode(os.fstat(fd)), _inode(facts)
     finally:
+        if ready_fd is not None:
+            os.close(ready_fd)
         os.close(fd)
 
 
@@ -168,6 +182,8 @@ class AuthoringSceneListener:
         self._listener = self._active = self._thread = None
         self._lock = threading.Lock()
         self._root_fd = None
+        self._socket_fd = None
+        self._compact_root = None
         self._owned = {}
 
     def check_live(self):
@@ -187,15 +203,22 @@ class AuthoringSceneListener:
                 os.mkdir("authoring-scene", 0o700, dir_fd=support)
             except FileExistsError:
                 pass
-            self._root_fd = _directory(self.config.socket_path.parent)
+            self._root_fd = _directory(self.config.readiness_path.parent)
         finally:
             os.close(support)
         try:
+            if self.config.socket_root is not None:
+                raise FrameOwnerError("startup_invalid")
             if (
                 len(os.fsencode(self.config.socket_path))
                 > custody.DARWIN_UNIX_SOCKET_PATH_MAX_BYTES
             ):
-                raise FrameOwnerError("endpoint_too_long")
+                # The same private scene receiver, with a short kernel address.
+                # Its record remains in authenticated selected support; peers
+                # still verify the retained Host and exact full source binding.
+                self._compact_root = custody._create_compact_socket_root()
+                self.config = replace(self.config, socket_root=self._compact_root)
+            self._socket_fd = _directory(self.config.socket_path.parent)
             self._listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self._listener.bind(str(self.config.socket_path))
             self._owned["s"] = _inode(os.lstat(self.config.socket_path))
@@ -254,7 +277,7 @@ class AuthoringSceneListener:
         guard()
         # Root and every name are selected by the Host; no wire paths survive.
         with tempfile.TemporaryDirectory(
-            prefix="scene-", dir=self.config.socket_path.parent
+            prefix="scene-", dir=self.config.readiness_path.parent
         ) as temporary:
             root = Path(temporary)
             scratch = root / "private"
@@ -318,14 +341,15 @@ class AuthoringSceneListener:
                         self._active = None
 
     def _remove(self, name):
-        if self._root_fd is None or name not in self._owned:
+        fd = self._socket_fd if name == "s" else self._root_fd
+        if fd is None or name not in self._owned:
             return
         try:
             if (
-                _inode(os.stat(name, dir_fd=self._root_fd, follow_symlinks=False))
+                _inode(os.stat(name, dir_fd=fd, follow_symlinks=False))
                 == self._owned[name]
             ):
-                os.unlink(name, dir_fd=self._root_fd)
+                os.unlink(name, dir_fd=fd)
         except FileNotFoundError:
             pass
 
@@ -345,6 +369,14 @@ class AuthoringSceneListener:
             if self._thread.is_alive():
                 raise FrameOwnerError("authoring_shutdown_unresolved")
         self._remove("s")
+        if self._socket_fd is not None:
+            if self._compact_root is not None:
+                if _inode(os.lstat(self._compact_root)) != _inode(os.fstat(self._socket_fd)):
+                    raise FrameOwnerError("endpoint_changed")
+                self._compact_root.rmdir()
+                self._compact_root = None
+            os.close(self._socket_fd)
+            self._socket_fd = None
         if self._root_fd is not None:
             os.close(self._root_fd)
             self._root_fd = None
