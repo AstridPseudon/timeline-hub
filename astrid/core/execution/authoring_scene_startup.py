@@ -37,6 +37,15 @@ def renderer_closure(host, environment):
         )
     ):
         raise FrameOwnerError("renderer_selection_unavailable")
+    selected = getattr(host, "_host_renderer_selection", None)
+    if selected is not None:
+        from .host_renderer_selection import HostRendererSelection
+        try:
+            if type(selected) is not HostRendererSelection or selected.node.executable.path != node:
+                raise ValueError("selected Node differs")
+            selected.node.verify()
+        except Exception as exc:
+            raise FrameOwnerError("renderer_selection_unavailable") from exc
     if host._remotion_closure_binding is not None:
         host._remotion_closure_binding.validate(project)
     from .remotion_host_session import _file_identity

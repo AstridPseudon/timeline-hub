@@ -95,3 +95,20 @@ def test_original_inspection_owner_finish_uses_existing_cleanup_deadline(tmp_pat
     with pytest.raises(custody_broker.CustodyError, match="unresolved"):
         owner.finish(cancel=True, timeout=0)
     assert waits == [0] and owner.cancelled.is_set()
+
+
+def test_scene_rechecks_admitted_node_dependency_before_evaluation(selection, tmp_path, monkeypatch):
+    from dataclasses import replace
+    from types import SimpleNamespace
+    from astrid.core.execution import authoring_scene_startup
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    library = tmp_path/"node-library"
+    library.write_bytes(b"admitted")
+    bound = replace(selection, node=replace(selection.node, libraries=(FilePin.measure(library),)))
+    environment = {"ASTRID_REMOTION_PROJECT_DIR":str(selection.closure.project),
+                   "ASTRID_NODE_EXECUTABLE":str(selection.node.executable.path)}
+    for key, value in environment.items(): monkeypatch.setenv(key, value)
+    library.write_bytes(b"changed")
+    host = SimpleNamespace(_host_renderer_selection=bound, _remotion_closure_binding=selection.closure)
+    with pytest.raises(FrameOwnerError, match="renderer_selection_unavailable"):
+        authoring_scene_startup.renderer_closure(host, environment)

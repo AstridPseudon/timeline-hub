@@ -14922,6 +14922,7 @@ def _cli() -> int:
             # Reuse the authenticated executable admission for every declared
             # Node consumer; ambient PATH cannot substitute another Node.
             selected_host._executable_admission._bindings["node"] = selected_renderer.node
+            selected_host._host_renderer_selection = selected_renderer
         return selected_host
     host = preparation.construct_claim_host(create_host) if preparation is not None else create_host()
     _emit_startup_phase("host_constructor_done")
