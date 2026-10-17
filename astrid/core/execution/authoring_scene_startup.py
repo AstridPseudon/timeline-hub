@@ -6,12 +6,13 @@ import hashlib
 import os
 from pathlib import Path
 
+from astrid.core.rendering.remotion_runtime import _validation_timing
+
 from . import authoring_scene_protocol as wire
 from . import custody_broker as custody
 from .authoring_scene_transport import AuthoringSceneConfig
 from .remotion_frame_owner import FrameOwnerError
 from .storage_preparation_transport import ProcessIdentity
-from astrid.core.rendering.remotion_runtime import _validation_timing
 
 
 def provider_digest():

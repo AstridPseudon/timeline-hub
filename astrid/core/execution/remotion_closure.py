@@ -3,13 +3,13 @@
 Never decode this binding from executor payloads or environment. A receipt is
 not authority: the host composition supplies its independently admitted digest.
 """
-from dataclasses import dataclass
-from functools import cached_property
 import hashlib
 import json
 import os
-from pathlib import Path
 import stat
+from dataclasses import dataclass
+from functools import cached_property
+from pathlib import Path
 
 _PATCHES = {
     '@remotion/renderer/dist/get-cpu-count.js': 'd89ef6b67068fb8f1c0e2f21781a37205b4beb1a8f7ff7997ba82b49c835c2bb',
