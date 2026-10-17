@@ -97,8 +97,7 @@ acceptance ledger and receipts below are the authoritative completion evidence.
 | Host only starts with Astrid source pack root and strips ambient pack paths | `astrid/sdk/host_bootstrap.py:ensure_pack_host`, especially argv and child env construction | Pass validated default roots explicitly and include them in host reuse identity |
 | Prototype reports source availability using a copied bundle | Dirty generic-host branch and ledger additions | Remove bundle-specific shortcut; validate actual external source/admission |
 
-External Hivemind exists at the source path recorded in `source-state.json` and
-has a validated v2 pack manifest at local revision
+External Hivemind has a validated v2 pack manifest at local revision
 `50ff509240c5582a7335dc71920533b59be7792c`. This continuation closes the
 independent QA gap: canonical `get_item` keeps Discord/Snowflake identifiers as
 strings, uses the narrow `message_feed` lookup for messages, and preserves
@@ -361,7 +360,6 @@ authorized upstream actor and a fresh remote installation resolves it.
 - [Luna default provisioning investigation](evidence/luna-default-packs.md)
 - [Luna skill linking investigation](evidence/luna-skill-links.md)
 - [Luna cleanup/review inventory](evidence/luna-cleanup.md)
-- [Source state](source-state.json)
 
 The coordinator resolves several overbroad or incorrect suggestions in those
 memos: the neutral setup owner was not established; Astrid host bootstrap is a
