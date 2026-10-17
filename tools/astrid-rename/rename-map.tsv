@@ -30,6 +30,7 @@ regex	(?<=github\.com/peteromallet/)Astrid(?:-agent)?	astrid-agent	all	GitHub UR
 token	"peteromallet/Astrid"	"peteromallet/astrid-agent"	astrid:astrid/core/release_identity.py	live Astrid repository identity; URL uses existing regex
 token	"peteromallet/Astrid"	"peteromallet/astrid-agent"	astrid:tests/test_release_identity.py	release identity expectation; URL uses existing regex
 token	"peteromallet/Astrid"	"peteromallet/astrid-agent"	astrid:tests/test_remote_targets.py	remote target identity expectation; URL uses existing regex
+token	"peteromallet/Astrid"	"peteromallet/astrid-agent"	runtime:runtime_protocol/release_identity.py	Runtime release identity registry; URL uses existing regex
 token	com.reigh.astrid	haus.astrid	all	section 5 extension id, including escaped and stutter forms
 token	com\.reigh\.astrid	haus\.astrid	all	section 5 extension id, including escaped and stutter forms
 token	com\\.reigh\\.astrid	haus\\.astrid	all	section 5 extension id, including escaped and stutter forms
