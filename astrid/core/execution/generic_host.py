@@ -2382,8 +2382,8 @@ def _confined_launch_plan(
             address = ipaddress.IPv4Address(value.address)
         except ipaddress.AddressValueError as exc:
             raise HostError("confinement TCP endpoint requires an exact IPv4 address") from exc
-        if (str(address) != value.address or address.is_unspecified or address.is_multicast
-                or int(address) == 0xFFFFFFFF or type(value.port) is not int or not 1 <= value.port <= 65535):
+        if (str(address) != value.address or value.address != '127.0.0.1'
+                or type(value.port) is not int or not 1 <= value.port <= 65535):
             raise HostError("invalid confinement TCP endpoint address or port")
         return f"{address}:{value.port}"
 
@@ -2490,7 +2490,8 @@ def _confined_launch_plan(
     rules.extend(f'(allow file-map-executable (subpath "{quote(p)}"))' for p in bootstrap_roots)
     rules.extend(f'(allow file-map-executable (literal "{quote(p)}"))' for p in file_aliases)
     rules.extend(f'(allow file-write* (subpath "{quote(p)}"))' for p in (*writes, private))
-    rules.extend(f'(allow network-outbound (remote tcp "{p}"))' for p in dict.fromkeys(network))
+    rules.extend(f'(allow network-outbound (remote tcp4 "localhost:{remote.split(":")[1]}"))'
+                 for remote in dict.fromkeys(network))
     # Explicit denies override ancestor stdlib/project/bootstrap allows, for
     # direct file loaders and native mappings as well as ordinary imports.
     rules.extend(f'(deny file-read* (subpath "{quote(p)}"))' for p in excluded_python)
