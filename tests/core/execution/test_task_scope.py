@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -49,13 +50,22 @@ def test_group_with_grandchildren_is_killed_at_teardown():
     assert not alive(child) and process.returncode is not None
 
 
-def test_kill_escalation_for_term_ignorers():
+def test_kill_escalation_for_term_ignorers(monkeypatch):
     process, child = launch(STUBBORN)
     time.sleep(0.3)
-    started = time.monotonic()
-    assert task_scope.stop(process, 0.3).status == "settled"
-    assert time.monotonic() - started >= 0.3
+    sent = []
+    killpg = task_scope._killpg
+
+    def record_signal(pgid, sig):
+        sent.append(sig)
+        return killpg(pgid, sig)
+
+    monkeypatch.setattr(task_scope, "_killpg", record_signal)
+    report = task_scope.stop(process, 0.3)
+    assert report.status == "settled"
+    assert signal.SIGKILL in sent
     assert not alive(child)
+    assert process.returncode is not None
 
 
 def test_cancel_midrun_leaves_nothing():
