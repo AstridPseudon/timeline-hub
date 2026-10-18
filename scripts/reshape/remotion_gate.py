@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -152,6 +153,111 @@ def _run(
         raise SystemExit(completed.returncode)
 
 
+def _composition_copy(expected_packages: dict, actual_packages: dict) -> None:
+    """Resolve only the committed Composition link, as RemotionClosureBinding does.
+
+    npm's packed copy has a different lock representation from the source link.
+    It has no archive integrity, so admit it only against the vendor manifest
+    and the complete declared shipped source inventory, never just its version.
+    """
+    name = "@banodoco/timeline-composition"
+    target = "vendor/timeline-composition"
+    lock_name = f"node_modules/{name}"
+    dependency = f"file:{target}"
+    root = REMOTION_ROOT.resolve(strict=True)
+
+    def checked(path: Path) -> Path:
+        relative = path.relative_to(root)
+        current = root
+        for part in relative.parts:
+            current = current / part
+            if current.is_symlink():
+                raise RuntimeError(f"Composition paths must not contain symlinks: {current}")
+        _contained(path, root, label="Composition path")
+        return path
+
+    def manifest(path: Path) -> dict:
+        value = json.loads(checked(path).read_text(encoding="utf-8"))
+        if not isinstance(value, dict):
+            raise RuntimeError(f"Composition manifest must be an object: {path}")
+        return value
+
+    try:
+        if REMOTION_ROOT.is_symlink():
+            raise RuntimeError("Composition project must not be a symlink")
+        source = checked(root / target)
+        packed = checked(root / lock_name)
+        root_manifest = manifest(root / "package.json")
+        source_manifest = manifest(source / "package.json")
+        installed_manifest = manifest(packed / "package.json")
+        root_record = expected_packages.get("", {})
+        link = expected_packages.get(lock_name)
+        vendor = expected_packages.get(target)
+        installed = actual_packages.get(lock_name)
+        if (not isinstance(root_record, dict)
+                or root_manifest.get("dependencies", {}).get(name) != dependency
+                or root_record.get("dependencies", {}).get(name) != dependency
+                or link != {"resolved": target, "link": True}):
+            raise RuntimeError("Composition root dependency or committed link target differs")
+        if not isinstance(vendor, dict) or not isinstance(installed, dict):
+            raise RuntimeError("Composition vendor or installed lock record is missing")
+        if target in actual_packages and actual_packages[target] != vendor:
+            raise RuntimeError("Composition installed vendor record differs from committed lock")
+        if (source_manifest.get("name") != name or not source_manifest.get("version")
+                or installed_manifest != source_manifest):
+            raise RuntimeError("Composition vendor and installed manifests differ")
+        # Vendor records include development dependencies; packed records need
+        # only runtime metadata, but any supplied development metadata must agree.
+        fields = ("name", "version", "dependencies", "devDependencies",
+                  "optionalDependencies", "peerDependencies", "peerDependenciesMeta",
+                  "engines", "os", "cpu", "bin", "license")
+        for field in fields:
+            if vendor.get(field) != source_manifest.get(field):
+                raise RuntimeError(f"Composition vendor lock mismatch: {field}")
+            required = field not in ("name", "devDependencies")
+            if (field in installed or required) and installed.get(field) != vendor.get(field):
+                raise RuntimeError(f"Composition installed lock mismatch: {field}")
+        if (installed.get("resolved") != dependency
+                or "link" in installed or "integrity" in installed
+                or any(field in vendor for field in ("resolved", "link", "integrity"))):
+            raise RuntimeError("Composition packed lock has contradictory resolution metadata")
+        # This gate admits the existing literal files declaration, not arbitrary
+        # local package links or an implementation of npm's glob/ignore rules.
+        shipped = ["typescript/dist", "typescript/src", "scripts"]
+        if source_manifest.get("files") != shipped:
+            raise RuntimeError("Composition shipped files declaration differs")
+
+        def inventory(directory: Path) -> dict[str, Path]:
+            checked(directory)
+            if not directory.is_dir():
+                raise RuntimeError(f"Composition shipped directory is missing: {directory}")
+            files = {}
+            for path in directory.rglob("*"):
+                checked(path)
+                mode = path.stat().st_mode
+                if stat.S_ISREG(mode):
+                    files[path.relative_to(directory).as_posix()] = path
+                elif not stat.S_ISDIR(mode):
+                    raise RuntimeError(f"Composition contains a non-regular path: {path}")
+            return files
+
+        wanted = {"package.json": checked(source / "package.json"),
+                  "README.md": checked(source / "README.md")}
+        for directory in shipped:
+            wanted.update({f"{directory}/{relative}": path
+                           for relative, path in inventory(source / directory).items()})
+        observed = inventory(packed)
+        if observed.keys() != wanted.keys():
+            raise RuntimeError("Composition shipped file inventory differs")
+        for relative, path in wanted.items():
+            other = observed[relative]
+            if (not path.is_file() or path.read_bytes() != other.read_bytes()
+                    or (path.stat().st_mode & 0o111) != (other.stat().st_mode & 0o111)):
+                raise RuntimeError(f"Composition shipped bytes or executable mode differ: {relative}")
+    except (OSError, ValueError, TypeError, AttributeError) as exc:
+        raise RuntimeError(f"cannot validate Composition packed copy: {exc}") from exc
+
+
 def _validate_install() -> None:
     package_lock = REMOTION_ROOT / "package-lock.json"
     hidden_lock = REMOTION_ROOT / "node_modules" / ".package-lock.json"
@@ -170,11 +276,20 @@ def _validate_install() -> None:
     actual_packages = actual.get("packages", {})
     if not isinstance(expected_packages, dict) or not isinstance(actual_packages, dict):
         raise RuntimeError("Remotion package locks have no package map")
+    composition_lock = "node_modules/@banodoco/timeline-composition"
+    composition_record = expected_packages.get(composition_lock, {})
+    local_composition = ("vendor/timeline-composition" in expected_packages
+                         or (isinstance(composition_record, dict)
+                             and composition_record.get("link") is True))
+    if local_composition:
+        _composition_copy(expected_packages, actual_packages)
     for package_name, metadata in actual_packages.items():
         if package_name not in expected_packages:
             raise RuntimeError(f"installed package is absent from package-lock.json: {package_name}")
         if not isinstance(metadata, dict) or not isinstance(expected_packages[package_name], dict):
             continue
+        if local_composition and package_name == composition_lock:
+            continue  # The exact link/packed semantic comparison above owns this record.
         for field in ("version", "resolved", "integrity"):
             if field in metadata and metadata.get(field) != expected_packages[package_name].get(field):
                 raise RuntimeError(f"installed lock mismatch for {package_name}: {field}")
