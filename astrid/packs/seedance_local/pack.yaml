@@ -185,6 +185,30 @@ actions:
       runtime_entrypoint: main
       runtime_file: actions/reference_video/run.py
       runtime_module: astrid.packs.seedance_local.actions.reference_video.run
+      network_policy:
+        allowed_protocols:
+        - dns
+        - tcp
+        allowed_destinations:
+        - queue.fal.run:443
+        - rest.alpha.fal.ai:443
+        - fal.media:443
+        - v3.fal.media:443
+        - v3b.fal.media:443
+        allow_redirects: false
+        broker:
+          host_managed: true
+          kind: broker
+          enforced: true
+          observable: true
+          route: declared-http-routes
+          wrapper: astrid-generic-host
+        descendant_enforcement:
+          kind: broker
+          validated: true
+          observable: true
+          route: declared-http-routes
+          wrapper: astrid-generic-host
       fal_model_id: bytedance/seedance-2.0/reference-to-video
       pricing_note: At creation time, 720p is approximately $0.3024 per generated second without video input or $0.1814 with video input.
 resources:
