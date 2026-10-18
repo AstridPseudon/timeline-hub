@@ -306,18 +306,23 @@ export function useTimelineHistory({
     const suffix = owners.flatMap(owner => (gestureCommandsFor(owner) ?? []).map(command => structuredClone(command)));
     const suffixHeads = owners.map(owner => owner.head);
     const suffixScopes = owners.map(owner => gestureOccurrenceFor(owner));
+    const recoverySuffix = owners.flatMap((owner, index) => {
+      const commands = gestureCommandsFor(owner);
+      return commands?.length ? [{ base: structuredClone(suffixHeads[index]), occurrence: structuredClone(suffixScopes[index]),
+        source: { via: 'app' as const }, commands: structuredClone([...commands]) }] : [];
+    });
     let binding: Checkpoint['binding'];
     try { binding = await provider.shotComposition?.captureCheckpoint?.(currentData); } catch { /* Keep local recovery available. */ }
-    if (binding?.kind === 'dirty') {
+    if (binding?.kind === 'dirty' && recoverySuffix.length) {
       const capturedBase = binding.base;
       if (suffix.length && suffixHeads.every(head => head?.projectId === capturedBase.projectId
         && head?.timelineId === capturedBase.timelineId && head?.headRevisionId === capturedBase.headRevisionId)
         && suffixScopes.every(scope => JSON.stringify(scope) === JSON.stringify(suffixScopes[0]))) {
-        binding = { ...binding, commands: suffix };
-      } else if (owners.length > 1) {
-        // An unprovable mixed base/scope stays local config recovery. Never
-        // label a truncated or retargeted command suffix canonical intent.
-        binding = undefined;
+        binding = { ...binding, commands: suffix, recoverySuffix };
+      } else {
+        // Heterogeneous custody is retained as local recovery records. Never
+        // retarget those original commands onto the latest owner's base.
+        binding = { ...binding, recoverySuffix };
       }
     }
     const checkpointInput = {
@@ -785,7 +790,11 @@ export function useTimelineHistory({
     if (dirty) {
       if (dirty.base.projectId !== historyProjectId || dirty.base.timelineId !== timelineId) return;
       next.head = structuredClone(dirty.base);
-      attachGestureCommands(next, structuredClone(dirty.commands), next);
+      if (!dirty.recoverySuffix?.some(record => record.base?.projectId !== dirty.base.projectId
+        || record.base?.timelineId !== dirty.base.timelineId || record.base?.headRevisionId !== dirty.base.headRevisionId
+        || JSON.stringify(record.occurrence) !== JSON.stringify(dirty.recoverySuffix?.[0]?.occurrence))) {
+        attachGestureCommands(next, structuredClone(dirty.commands), next);
+      }
     }
     // Config-only and dirty checkpoints are local recovery inputs. They never
     // authorize a canonical image publication or a property-inverse rewrite.

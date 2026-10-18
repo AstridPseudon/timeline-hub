@@ -16,7 +16,7 @@ import { useTimelineHistory } from './useTimelineHistory';
 import { TimelineEventBus } from './useTimelineEventBus';
 import type { Checkpoint } from '../types/history';
 import type { TimelineEditability } from '../lib/timeline-editability';
-import { attachGestureCommands } from '../commands/semanticGestures.ts';
+import { attachGestureCommands, gestureCommandsFor } from '../commands/semanticGestures.ts';
 import { trackHistoryInverse } from '../commands/trackHistory.ts';
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
 
@@ -334,17 +334,18 @@ describe('useTimelineHistory', () => {
     expect(restoreHistory).not.toHaveBeenCalled();
   });
 
-  it('dirty checkpoint captures the complete original pending command suffix across consecutive edits', async () => {
+  it.each([false, true])('dirty checkpoint retains the original pending suffix with mixed bases %s', async (mixed) => {
     const base = { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'original-base' };
+    const secondBase = mixed ? { ...base, headRevisionId: 'another-captured-base' } : base;
     const command = (id: string) => ({ op: 'timeline.add', select: null,
       args: { text: id, clip_id: id, track: 'V1', at: 0, duration: 1 } });
     const first = command('reserved-first'), second = command('reserved-second');
     const initialData = { ...makeTimelineData(0), head: base };
     const test = setup({ initialData, providerOverrides: { saveCheckpoint: vi.fn(async () => 'suffix'),
-      shotComposition: { load: vi.fn(), captureCheckpoint: vi.fn(async () => ({ kind: 'dirty' as const, base,
+      shotComposition: { load: vi.fn(), captureCheckpoint: vi.fn(async () => ({ kind: 'dirty' as const, base: secondBase,
         commands: [second], scope: { target: 'parent', complete: ['clips', 'tracks'], projection_version: 1 as const },
         source: { via: 'app' as const }, registry: { assets: {} } })) } } });
-    const owner1 = { ...makeTimelineData(1), head: base }, owner2 = { ...makeTimelineData(2), head: base };
+    const owner1 = { ...makeTimelineData(1), head: base }, owner2 = { ...makeTimelineData(2), head: secondBase };
     attachGestureCommands(owner1, [first], initialData);
     attachGestureCommands(owner2, [second], owner1);
     act(() => {
@@ -354,7 +355,14 @@ describe('useTimelineHistory', () => {
       test.dataRef.current = owner2;
     });
     await act(async () => { await test.result.current.createManualCheckpoint(); });
-    expect(test.result.current.checkpoints[0]?.binding).toMatchObject({ kind: 'dirty', base, commands: [first, second] });
+    expect(test.result.current.checkpoints[0]?.binding).toMatchObject({ kind: 'dirty', base: secondBase,
+      commands: mixed ? [second] : [first, second], recoverySuffix: [
+        { base, source: { via: 'app' }, commands: [first] },
+        { base: secondBase, source: { via: 'app' }, commands: [second] },
+      ] });
+    act(() => { test.result.current.jumpToCheckpoint('suffix'); });
+    expect(gestureCommandsFor(test.dataRef.current)).toEqual(mixed ? undefined : [first, second]);
+    expect(test.commitCalls.at(-1)?.options).toMatchObject({ save: false, skipHistory: true });
   });
   it('loads canonical history and reports a failed full-closure restore', async () => {
     const listHistory = vi.fn(async () => [{

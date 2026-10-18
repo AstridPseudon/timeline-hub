@@ -65,4 +65,8 @@ export type CheckpointBinding =
   | { kind: 'dirty'; base: import('../data/DataProvider.ts').TimelineHeadRevision;
       commands: import('@/integrations/runtime/generated.ts').EditCommand[];
       scope: import('@/integrations/runtime/generated.ts').CommitRequest['scope'];
-      source: { via: 'app' }; registry: AssetRegistry };
+      source: { via: 'app' }; registry: AssetRegistry;
+      /** Original custody per pending owner, including heterogeneous local recovery. */
+      recoverySuffix?: { base?: import('../data/DataProvider.ts').TimelineHeadRevision;
+        occurrence?: import('../data/DataProvider.ts').TimelineOccurrenceContext;
+        source: { via: 'app' }; commands: import('@/integrations/runtime/generated.ts').EditCommand[] }[] };
