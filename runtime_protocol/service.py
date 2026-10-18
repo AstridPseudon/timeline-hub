@@ -438,7 +438,7 @@ def _verified_mutation(function):
 
 
 def _durable_mutation(function):
-    """Keep a B7 project mutation and its idempotency receipt atomic."""
+    """Keep a project mutation and its idempotency receipt atomic."""
     @wraps(function)
     def wrapped(self, *args, **kwargs):
         with self.store._mutex:
@@ -665,7 +665,7 @@ class RuntimeService:
 
     def restore(self, backup_dir, destination, *, destination_identity=None, source_identity=None):
         # The backup's authenticated manifest owns the key identity.  Do not
-        # force this service's current support key: a B12 destination backup
+        # force this service's current support key: a destination backup
         # may have been signed by the destination realm's key while the
         # active service is restoring it. ``restore_backup`` resolves the
         # manifest key through descriptor-pinned I/O and checks its key id.

@@ -191,7 +191,6 @@ def run_b11_1(component_rows:Sequence[Mapping[str,Any]],generator_definitions:Se
             observed[cid].append(obs)
     return [{**r,"generator_ids":[x["generator_id"] for x in sorted(observed.get(r["component_id"],[]),key=lambda x:x["generator_id"])],"generator_observation_rows":sorted(observed.get(r["component_id"],[]),key=lambda x:x["generator_id"])} for r in rows]
 execute_b11_1=run_b11_1
-def component_registry_sha256(rows:Sequence[Mapping[str,Any]]|None=None)->str:return hashlib.sha256(canonical_bytes(list(rows if rows is not None else plan_component_registry()))).hexdigest()
 def _url(u:str)->None:
     p=urlparse(u)
     if p.scheme!="https" or p.netloc!="github.com" or p.username or p.password or p.query or p.fragment or not re.fullmatch(r"/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\.git",p.path):raise ReleaseIdentityError("canonical URL must be an absolute credential-free HTTPS GitHub URL")

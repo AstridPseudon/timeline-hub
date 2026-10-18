@@ -1,4 +1,4 @@
-"""Private, trusted G1b launch verification and isolated source loader.
+"""Private, trusted launch verification and isolated source loader.
 
 This file is also a standalone stdlib-only launcher. It does not import Runtime
 or Astrid at bootstrap. No production release is selected by default. The

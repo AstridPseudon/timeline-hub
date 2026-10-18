@@ -1,8 +1,9 @@
 """Runtime-owned issuance for one verified local Worker launch.
 
-The process adapter is intentionally narrow.  I-06b supplies the parked Worker
-implementation; this module owns the authority ordering and independently
-checks the process facts supplied by an OS inspector before issuing anything.
+The process adapter is intentionally narrow.  The parked Worker
+implementation is supplied separately; this module owns the authority ordering
+and independently checks the process facts supplied by an OS inspector before
+issuing anything.
 """
 
 from __future__ import annotations
@@ -394,7 +395,8 @@ class LocalWorkerLauncher:
         if existing:
             # Every durable bearer is unusable after owner restart until the
             # surviving process identity is independently revalidated. A
-            # pre-I-06 generation has no receipt and can never be revalidated.
+            # generation from before receipts existed has none and can never
+            # be revalidated.
             credentials.disable_actor(actor)
             if not self._receipt_shape_valid(existing):
                 receipt = existing.get("local_launch_receipt")

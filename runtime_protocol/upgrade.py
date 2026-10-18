@@ -709,7 +709,7 @@ def _apply_v28_to_v29(connection: sqlite3.Connection, root: Path) -> dict[str, o
         for row in rows:
             cursor = row["id"]
             if row["spec_digest"] is None:
-                continue  # W2 retired terminal bodies have no replay source.
+                continue  # Retired terminal bodies have no replay source.
             if row["spec_digest"] != row["task_spec_digest"]:
                 raise ValidationError("v28 task/run spec pair differs; refusing reference migration")
             source = connection.execute(

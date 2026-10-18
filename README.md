@@ -13,7 +13,7 @@ The repository contains the first independently runnable neutral-runtime slice. 
 ## Custody
 
 - Initial branch: `main`
-- No remote is configured by the seed operation.
+- Remote: `origin` at `https://github.com/banodoco/astrid-runtime`.
 - The Stage 1 oracle worktree is `../astrid-runtime-oracle` on `megado/astrid-stage1-beta`.
 - The exact Astrid source baseline and frozen roadmap inputs are recorded in the external Phase 0 custody receipt and in the oracle worktree.
 

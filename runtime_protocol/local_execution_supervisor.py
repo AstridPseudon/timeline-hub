@@ -623,7 +623,7 @@ class LocalExecutionRelay:
     def __init__(self, *, host_pid: int, host_birth_id: str, exchange, verify_host,
                  host_current_roles_version: str | None = None):
         # Direct constructor injection remains a fake/offline seam. Production
-        # NativeHostSession derives this only from its retained G1b verifier.
+        # NativeHostSession derives this only from its retained verifier.
         if host_current_roles_version not in (None, CURRENT_ROLES_VERSION):
             raise RelayError("host current-role protocol selection is unsupported")
         self._host_current_roles_version = host_current_roles_version

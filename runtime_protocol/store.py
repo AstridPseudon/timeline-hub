@@ -1661,7 +1661,7 @@ class RealmStore:
     def _freeze_managed_render_inputs(self, project_id, spec, supplied_input_object_ids):
         """Freeze a managed ``rendering.render`` timeline at admission.
 
-        Some consumers submit the HC-04 shape directly instead of going
+        Some consumers submit the reference shape directly instead of going
         through Astrid's managed-render helper.  Runtime is the authenticated
         project/timeline authority, so it may resolve that reference once and
         carry the resulting immutable snapshot into the claimed task. The
@@ -2688,7 +2688,7 @@ class RealmStore:
             if resolved.get("executor_incarnation") is not None:
                 value["executor_incarnation"] = resolved["executor_incarnation"]
         else:
-            # Read compatibility for bindings admitted before I-05.
+            # Read compatibility for bindings stored before the v26 projection.
             value["resolved_target"] = resolved
         value["effective_target"] = value["resolved_target"]
         value["placement_version"] = 0
