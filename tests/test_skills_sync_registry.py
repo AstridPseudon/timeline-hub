@@ -212,7 +212,9 @@ class SyncGatewayTest(unittest.TestCase):
             self.assertNotIn("../../../../../docs/", pack_builder)
             self.assertIn("](../pack-testing/SKILL.md)", pack_builder)
             pack_testing = (view / "pack-testing" / "SKILL.md").read_text(encoding="utf-8")
-            self.assertIn("https://github.com/peteromallet/astrid-agent/blob/main/tests/conftest.py", pack_testing)
+            for target in ("tests/conftest.py", "tests/lanes.py", "pyproject.toml"):
+                self.assertIn(f"https://github.com/banodoco/astrid-agent/blob/main/{target}", pack_testing)
+            self.assertNotIn("peteromallet", pack_testing)
             self.assertNotIn("../../../../../", pack_testing)
             registry_text = (view / "creative-work" / "references" / "packs.md").read_text(encoding="utf-8")
             self.assertIn("packs/foley/SKILL.md", registry_text)
