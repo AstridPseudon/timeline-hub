@@ -89,7 +89,8 @@ let releaseMedia: (() => void) | undefined;
 let releaseTask: (() => void) | undefined;
 const gate = (kind: 'media' | 'task') => new Promise<void>(resolve => { if (kind === 'media') releaseMedia = resolve; else releaseTask = resolve; });
 const taskProjects = new Map<string,string>();
-const managedOutputs = new Map<string, any>();
+type ManagedOutput = {association_id:string;project_id:string;run_id:string;task_id:string;attempt_id:string;output_port:string;role:string;object_id:string;digest:string;size:number;filename:string;media_type:string;state:string;version:number;provenance:{executor_id:string;lease_id:string;fence:number;runtime_epoch:number}};
+const managedOutputs = new Map<string, ManagedOutput>();
 const originalFetch = window.fetch.bind(window);
 const json = (value: unknown) => new Response(JSON.stringify(value), {headers: {'Content-Type':'application/json'}});
 window.fetch = async (input, init) => {
