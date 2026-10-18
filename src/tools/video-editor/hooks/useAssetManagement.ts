@@ -484,6 +484,7 @@ export function useAssetManagement({
   }, [selectedProjectId]);
 
   const registerGenerationAsset = useCallback((generationData: UploadedGenerationData | null) => {
+    if (runtime.provider.preparedMediaPlacementEnabled === false) return null;
     const prepared = prepareGenerationAsset(generationData);
     if (!prepared) {
       return null;
@@ -496,7 +497,7 @@ export function useAssetManagement({
     getPatchRegistry()(assetKey, prepared.entry, prepared.entry.file);
 
     return assetKey;
-  }, [getPatchRegistry, prepareGenerationAsset]);
+  }, [getPatchRegistry, prepareGenerationAsset, runtime.provider]);
 
   const placePreparedAsset = useCallback((
     prepared: TimelineProvisionedAsset,
@@ -507,6 +508,7 @@ export function useAssetManagement({
     removeClipId?: string,
     options?: { pinnedShotGroup?: { shotId: string; mode: 'video' } },
   ) => {
+    if (runtime.provider.preparedMediaPlacementEnabled === false) return false;
     const latestDataRef = getDataRef();
     const current = latestDataRef.current;
     if (!current) {
@@ -603,9 +605,10 @@ export function useAssetManagement({
       ...(editCommand ? { editCommands: [editCommand] } : {}),
     });
     return true;
-  }, [getApplyEdit, getDataRef, getSelectedTrackId]);
+  }, [getApplyEdit, getDataRef, getSelectedTrackId, runtime.provider]);
 
   const handleAssetDrop = useCallback((assetKey: string, trackId: string | undefined, time: number, forceNewTrack = false, insertAtTop = false, preparedAsset?: TimelineProvisionedAsset, removeClipId?: string, options?: { pinnedShotGroup?: { shotId: string; mode: 'video' } }) => {
+    if (runtime.provider.preparedMediaPlacementEnabled === false) return false;
     if (preparedAsset) {
       return placePreparedAsset(preparedAsset, trackId, time, forceNewTrack, insertAtTop, removeClipId, options);
     }
@@ -657,7 +660,7 @@ export function useAssetManagement({
     getSelectClip()(nextEdit.clipId);
     getSetSelectedTrackId()(resolvedTarget.trackId);
     return true;
-  }, [getApplyEdit, getDataRef, getSelectedTrackId, getSelectClip, getSetSelectedTrackId, placePreparedAsset, runtime.toast]);
+  }, [getApplyEdit, getDataRef, getSelectedTrackId, getSelectClip, getSetSelectedTrackId, placePreparedAsset, runtime.provider, runtime.toast]);
 
   const selectImportedMedia = useCallback(async (mediaImport: PreparedMediaImport): Promise<PreparedMediaImport> => {
     // A supplied tuple still goes through prepareGenerationAsset's existing exact

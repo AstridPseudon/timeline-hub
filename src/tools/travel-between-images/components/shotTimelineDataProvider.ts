@@ -384,6 +384,37 @@ export function createShotTimelineDataProvider(
     },
     persistenceEnabled: Boolean(shotCompositionAdapter?.publish),
     supportsEditorSync: false,
+    // Catalog import is independent of the pending occurrence-local placement
+    // contract. Never fall back to a Cloud upload or parent placement here.
+    supportsDirectAssetUpload: true,
+    preparedMediaPlacementEnabled: false,
+    prepareMediaImport: shotCompositionAdapter?.prepareMediaImport
+      ? async (file, options) => {
+          assertEditorHeadIsCurrent();
+          if (!shotCompositionAdapter.publish) {
+            throw new Error('The canonical shot-composition provider is read-only');
+          }
+          const imported = await shotCompositionAdapter.prepareMediaImport!(
+            { projectId: composition.projectId }, file, options,
+          );
+          assertEditorHeadIsCurrent();
+          if (imported.provider !== 'runtime' || imported.project !== composition.projectId) {
+            throw new Error('The popup requires a Runtime media import for its own project');
+          }
+          return imported;
+        }
+      : undefined,
+    getProjectMediaSelection: shotCompositionAdapter?.getProjectMediaSelection
+      ? async (request) => {
+          assertEditorHeadIsCurrent();
+          if (request.projectId !== composition.projectId) {
+            throw new Error('Runtime media selection belongs to a different project');
+          }
+          const selected = await shotCompositionAdapter.getProjectMediaSelection!(request);
+          assertEditorHeadIsCurrent();
+          return selected;
+        }
+      : undefined,
     semanticCommandSaving: shotCompositionAdapter?.semanticCommandSaving === true
       && Boolean(shotCompositionAdapter.saveTimelineAtHead),
     saveTimelineAtHead: async (timelineId, nextConfig, expectedHead, nextRegistry, bundle, commands, occurrenceContext) => {

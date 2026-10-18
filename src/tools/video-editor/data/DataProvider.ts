@@ -454,6 +454,8 @@ export interface DataProvider extends AssetResolver {
    * (`useExternalDrop` → `directAssetUploadAllFiles`).
    */
   supportsDirectAssetUpload?: boolean;
+  /** Explicit false stages catalog media without enabling editor placement or registry edits. */
+  preparedMediaPlacementEnabled?: boolean;
   loadTimeline(timelineId: string): Promise<LoadedTimeline>;
   /** Associate development timing phases with one shot-popup save attempt. */
   setShotTimelineTraceId?(traceId: string | null): void;

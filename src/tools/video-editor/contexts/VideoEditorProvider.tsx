@@ -531,6 +531,7 @@ export function VideoEditorRuntimeContent({
 
   useEffect(() => {
     if (editor.isLoading) return;
+    if (runtime.provider.preparedMediaPlacementEnabled === false) return;
     const targetProject = searchParams.get(ADD_GENERATION_PROJECT_PARAM);
     const targetTimeline = searchParams.get(ADD_GENERATION_TIMELINE_PARAM);
     const hasScopedIntent = Boolean(targetProject && targetTimeline);
@@ -668,7 +669,7 @@ export function VideoEditorRuntimeContent({
         drainInFlightRef.current = false;
       }
     })();
-  }, [editor.isLoading, isActiveInstance, pendingAddGenerationId, runtime.mediaLightbox, runtime.toast, runtime.timelineId, runtime.project.projectId, searchParams, setSearchParams, store]);
+  }, [editor.isLoading, isActiveInstance, pendingAddGenerationId, runtime.mediaLightbox, runtime.provider, runtime.toast, runtime.timelineId, runtime.project.projectId, searchParams, setSearchParams, store]);
 
   const [lightboxAssetKey, setLightboxAssetKey] = useState<string | null>(null);
   const [lightboxClipId, setLightboxClipId] = useState<string | null>(null);

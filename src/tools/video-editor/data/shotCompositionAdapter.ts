@@ -11,6 +11,7 @@ import {
 import { assertVisualSeamAdmission } from './visualSeamContract.ts';
 import { projectCanonicalComposition } from './shotCompositionProjection.ts';
 import type { DataProvider } from './DataProvider.ts';
+import type { MediaImportOptions, PreparedMediaImport } from './AssetResolver.ts';
 import type { TimelineDraftRecoveryMetadata } from './timelineDraftIndexedDb.ts';
 
 type JsonObject = Record<string, unknown>;
@@ -86,6 +87,13 @@ export type ShotCompositionPublishRequest = Readonly<{
  */
 export interface ShotCompositionPort {
   readonly semanticCommandSaving?: boolean;
+  /** Catalog acquisition only; this capability does not authorize placement. */
+  prepareMediaImport?(
+    request: Pick<ShotCompositionReadRequest, 'projectId'>,
+    file: File,
+    options?: MediaImportOptions,
+  ): Promise<PreparedMediaImport>;
+  getProjectMediaSelection?: DataProvider['getProjectMediaSelection'];
   saveTimelineAtHead?: DataProvider['saveTimelineAtHead'];
   getTimelineDraftRecoveryMetadata?(request: ShotCompositionReadRequest): TimelineDraftRecoveryMetadata;
   load(request: ShotCompositionReadRequest): Promise<unknown>;
@@ -295,6 +303,15 @@ export function createShotCompositionAdapter(port: ShotCompositionPort) {
   };
   return {
     get semanticCommandSaving() { return port.semanticCommandSaving === true; },
+    prepareMediaImport: port.prepareMediaImport
+      ? async (request: Pick<ShotCompositionReadRequest, 'projectId'>, file: File, options?: MediaImportOptions) => {
+          if (!port.publish) {
+            throw new ShotCompositionUnavailableError('The canonical shot-composition provider is read-only');
+          }
+          return port.prepareMediaImport!(request, file, options);
+        }
+      : undefined,
+    getProjectMediaSelection: port.getProjectMediaSelection?.bind(port),
     saveTimelineAtHead: port.saveTimelineAtHead?.bind(port),
     getTimelineDraftRecoveryMetadata: port.getTimelineDraftRecoveryMetadata?.bind(port),
     getSourceFrameThumbnailUrl: port.getSourceFrameThumbnailUrl

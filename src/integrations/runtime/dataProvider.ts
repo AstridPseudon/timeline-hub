@@ -210,6 +210,13 @@ export class RuntimeDataProvider implements DataProvider {
     },
   };
   readonly shotComposition: ShotCompositionPort = {
+    prepareMediaImport: (request, file, options) => {
+      if (request.projectId !== this.projectId) {
+        return Promise.reject(new Error('Runtime media import belongs to a different project'));
+      }
+      return this.prepareMediaImport(file, options);
+    },
+    getProjectMediaSelection: (request) => this.getProjectMediaSelection(request),
     // Use this provider's existing client, serializer and retry reservation.
     saveTimelineAtHead: (...args) => this.saveTimelineAtHead(...args),
     getTimelineDraftRecoveryMetadata: (request) => request.projectId === this.projectId
