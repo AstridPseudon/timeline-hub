@@ -122,11 +122,6 @@ describe('extension ship verifier', () => {
       && gate.args.join(' ') === 'run verify:extension-container'
     )));
     assert.ok(ASTRID_APP_GATE_PROFILE.some((gate) => (
-      gate.id === 'paired-release-e2e'
-      && gate.command === 'npm'
-      && gate.args.join(' ') === 'run verify:paired-release-e2e'
-    )));
-    assert.ok(ASTRID_APP_GATE_PROFILE.some((gate) => (
       gate.id === 'cross-browser-e2e'
       && gate.command === 'npm'
       && gate.args.join(' ') === 'run test:e2e:extension-cross-browser'
@@ -241,8 +236,6 @@ describe('extension ship verifier', () => {
       astridCheckout,
       nodeExecutable: '/tmp/pinned-node',
       astridPython: '/tmp/astrid-python',
-      astridRef: 'a'.repeat(40),
-      appRef: 'b'.repeat(40),
     });
 
     assert.equal(
@@ -263,13 +256,7 @@ describe('extension ship verifier', () => {
     });
     assert.ok(plan.every((step) => Array.isArray(step.args)));
     assert.ok(plan.every((step) => step.command === 'npm' || step.command === 'make'));
-    const paired = plan.find((step) => step.id === 'paired-release-e2e');
-    assert.deepEqual(paired?.env, {
-      ASTRID_CHECKOUT: astridCheckout,
-      ASTRID_PYTHON: '/tmp/astrid-python',
-      ASTRID_REF: 'a'.repeat(40),
-      ASTRID_APP_REF: 'b'.repeat(40),
-    });
+    assert.equal(plan.some((step) => step.id.startsWith('paired')), false);
     assert.notEqual(plan.at(-1).env.ASTRID_APP_RELEASE_CHECKOUT, REPO_ROOT);
 
     const rendered = plan.map(formatCommand).join('\n');
@@ -578,8 +565,6 @@ describe('extension ship verifier', () => {
         astridCheckout: '/tmp/astrid-pinned-fixture',
         nodeExecutable: '/tmp/pinned-node',
         astridPython: '/tmp/astrid-python',
-        astridRef: 'a'.repeat(40),
-        appRef: 'b'.repeat(40),
       }).at(-1);
       let captured;
       executeSteps([astridCi], (_command, _args, options) => {

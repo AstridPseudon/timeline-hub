@@ -1877,7 +1877,7 @@ fresh console collection.
   `End`, but then removed its button from the DOM. The retained screenshot and
   accessibility snapshot showed the inspector on `T0566` while the 128 mounted
   controls stopped at `T0565`, leaving keyboard focus nowhere. The failed raw
-  evidence root remains under the local `astrid-paired-release-evidence`
+  evidence root remains under the local release evidence
   directory with artifact-index SHA-256
   `42733cd8dc0054bca22cec14d36b6416750dfc9ee963da2b109c11ab8336fb59`;
   it is diagnostic history, never an RC17 receipt.

@@ -151,7 +151,7 @@ export function createTimelineFixtures({ assetSrcBaseUrl = '' } = {}) {
  * `audio-reactive-colour` semantic contract.  Keep this separate from the
  * general four-clip demo: the effect fast path is deliberately one visual
  * effect plus one audio clip, and must not be accidentally coupled to the
- * caption/Runaway paired-release fixture.
+ * caption/Runaway fixture.
  *
  * The marker values and frame positions are copied from Astrid's pinned
  * renderer-parity fixture (`audio-reactive-colour.timeline.json`).  At 30fps

@@ -87,9 +87,6 @@ function preview(initial: ResolvedTimelineConfig) {
   const view = render(draw(initial));
   return { ref, view, replace: (c: ResolvedTimelineConfig) => view.rerender(draw(c)) };
 }
-function evidence(id: string) {
-  console.log('L03_EVENT ' + JSON.stringify({ id, events: boundary.events, applied: boundary.props.inputProps.config.output.file, fps: boundary.props.fps, playing: boundary.player.isPlaying(), playCalls: boundary.player.play.mock.calls.length, pendingRaf: raf.size }));
-}
 beforeEach(() => {
   vi.useFakeTimers();
   boundary.player = null;
@@ -117,7 +114,6 @@ it('H3 newest C beats queued playing B on explicit pause and subsequent one-seco
   settle();
   act(() => h.ref.current!.seek(1));
   settle();
-  evidence('H3');
   expect.soft(boundary.props.inputProps.config).toBe(c);
   expect.soft(boundary.player.seekTo).toHaveBeenLastCalledWith(90);
   expect.soft(boundary.player.isPlaying()).toBe(false);
@@ -188,7 +184,6 @@ it('preserves finite H2 A to B to the exact same A pending seek delivery', () =>
   h.replace(a);
   act(() => h.ref.current!.seek(1));
   settle();
-  evidence('H2');
   expect(boundary.props.inputProps.config).toBe(a);
   expect(boundary.player.seekTo).toHaveBeenNthCalledWith(1, 15);
   expect(boundary.player.seekTo).toHaveBeenLastCalledWith(30);
@@ -215,4 +210,3 @@ it('cancels pending mailbox and paused timer work on unmount', () => {
   settle();
   expect(boundary.applied).not.toContain(b);
 });
-console.log('L03_WORKER ' + JSON.stringify({ pid: process.pid, ppid: process.ppid, version: process.version }));

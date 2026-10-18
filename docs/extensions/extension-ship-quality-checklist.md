@@ -173,7 +173,7 @@ Astrid App, migrate the Runaway project, exercise every extension in a real brow
 restart everything, render/export the result, and reproduce the same persisted
 state and visual evidence with zero unexpected errors.
 
-The executable paired-repository gate is
+The executable release gate is
 [`scripts/release/verify-extension-ship.mjs`](../../scripts/release/verify-extension-ship.mjs);
 inspect it with `npm run verify:extension-ship -- --plan` and operate the rollout,
 recovery, review, and human-acceptance controls in

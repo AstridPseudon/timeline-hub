@@ -115,25 +115,6 @@ function emitFrame(frame: number) {
   });
 }
 
-function logEvidence(id: string) {
-  console.log(
-    'L02_EVENT ' +
-      JSON.stringify({
-        id,
-        events: boundary.events,
-        forwards: observed?.forwards,
-        time: observed?.time,
-        owner: observed?.owner,
-        captures: observed?.captures ? [...observed.captures] : [],
-        previewSync: observed?.fromPreview?.current,
-        timelineSync: observed?.fromTimeline?.current,
-        mirrors: observed?.timelineRef?.current.setTime.mock.calls,
-        playCalls: boundary.player?.play.mock.calls.length,
-        playing: boundary.player?.isPlaying(),
-        pendingRaf: raf.size,
-      }),
-  );
-}
 
 function Pointer(name: string, options: any) {
   class TestPointerEvent extends MouseEvent {
@@ -302,7 +283,6 @@ it('commits the final release through explicit seek while preview feedback holds
   point(hit, 'pointerup', 10);
   settle();
 
-  logEvidence('P-HELD');
   expect(observed.forwards).toEqual([['drag', 0.5], ['drag', 0.7], ['click', 1]]);
   expect(boundary.events.map((event: any) => event.frame)).toEqual([15, 30]);
   expect(observed.time).toBe(1);
@@ -323,7 +303,6 @@ it('commits a completed drag after the preview guard clears', () => {
   point(hit, 'pointerup', 10);
   settle();
 
-  logEvidence('P-CLEAR');
   expect(observed.forwards).toEqual([['drag', 0.5], ['click', 1]]);
   expect(boundary.player.seekTo).toHaveBeenLastCalledWith(30);
   expect(boundary.player.play).not.toHaveBeenCalled();
@@ -347,7 +326,6 @@ it('keeps mouse clicks, touch taps, and touch drags on the explicit seek path', 
   point(hit, 'pointerup', 10, 9, 'touch');
   settle();
 
-  logEvidence('P-MOUSE-TOUCH');
   expect(observed.forwards).toEqual([['click', 2], ['click', 3], ['drag', 0.5], ['click', 1]]);
   expect(modalities).toEqual(['mouse', 'touch', 'touch']);
   expect(boundary.player.seekTo).toHaveBeenLastCalledWith(30);
@@ -360,7 +338,6 @@ it('suppresses timeline-origin frame feedback and avoids recursive seeks during 
   expect(observed.fromTimeline.current).toBe(true);
   emitFrame(6);
 
-  logEvidence('P-FEEDBACK');
   expect(observed.timelineRef.current.setTime).not.toHaveBeenCalled();
   expect(boundary.player.seekTo).toHaveBeenCalledTimes(1);
   expect(boundary.player.seekTo).toHaveBeenLastCalledWith(15);
@@ -382,7 +359,6 @@ it('keeps only the latest final target when release arrives during active seek w
 
   settle();
 
-  logEvidence('P-LATEST');
   expect(observed.forwards).toEqual([['drag', 0.5], ['drag', 0.7], ['click', 1]]);
   expect(boundary.player.seekTo).toHaveBeenCalledTimes(2);
   expect(boundary.events.map((event: any) => event.frame)).toEqual([15, 30]);
@@ -401,7 +377,6 @@ it('ignores mismatched release and cancel, and a repeated matching cancel only r
   point(hit, 'pointercancel', 10, 7);
   settle();
 
-  logEvidence('P-CANCEL');
   expect(observed.forwards).toEqual([['drag', 0.5]]);
   expect(boundary.player.seekTo).toHaveBeenCalledTimes(1);
   expect(boundary.player.seekTo).toHaveBeenLastCalledWith(15);
@@ -421,7 +396,6 @@ it('ignores mismatched and repeated pointer-up after one successful final commit
   point(hit, 'pointerup', 10, 7);
   settle();
 
-  logEvidence('P-POINTER-OWNERSHIP');
   expect(observed.forwards).toEqual([['drag', 0.5], ['click', 1]]);
   expect(boundary.player.seekTo).toHaveBeenCalledTimes(2);
   expect(boundary.player.seekTo).toHaveBeenLastCalledWith(30);
@@ -445,7 +419,6 @@ it('preserves an explicit pause made before the final release', () => {
   point(hit, 'pointerup', 10);
   settle();
 
-  logEvidence('P-PAUSE');
   expect(observed.forwards).toEqual([['drag', 0.5], ['click', 1]]);
   expect(boundary.player.seekTo).toHaveBeenLastCalledWith(30);
   expect(boundary.player.isPlaying()).toBe(false);

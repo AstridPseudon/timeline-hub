@@ -74,9 +74,6 @@ const bridgePort = inheritedRunPorts
 process.env.ASTRID_APP_TIMELINE_PORTS_ALLOCATED = '1';
 const bridgeServeCommand = 'node tests/e2e/timeline/astrid-bridge-stub.mjs';
 const extensionHarnessDependencies = ['extension-harness-setup'];
-// Release specs require the paired gate's provisioned fixtures and credentials;
-// playwright.paired-release.config.ts owns their collection.
-const PAIRED_RELEASE_SPECS = /tests[\\/]e2e[\\/]release[\\/].*\.spec\.ts$/;
 // The same-machine direct journey needs a Runtime checkout, a gateway and its
 // own config (`playwright.direct.config.ts`, `npm run test:e2e:direct`).
 const LOCAL_JOURNEY_SPECS = /tests[\\/]e2e[\\/]local[\\/].*\.spec\.ts$/;
@@ -84,7 +81,6 @@ const defaultProjectIgnores = [
   TIMELINE_DEVICE_SPECS,
   EXTENSION_HARNESS_SETUP_SPEC,
   DEDICATED_EXTENSION_SPECS,
-  PAIRED_RELEASE_SPECS,
   LOCAL_JOURNEY_SPECS,
 ];
 

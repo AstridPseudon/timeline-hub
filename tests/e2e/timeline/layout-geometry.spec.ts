@@ -255,6 +255,5 @@ test.describe('timeline layout geometry', () => {
     if (Object.keys(collected).length !== CONTEXTS.length) return; // partial run; don't clobber the baseline
     mkdirSync(dirname(BASELINE_PATH), { recursive: true });
     writeFileSync(BASELINE_PATH, `${JSON.stringify(collected, null, 2)}\n`);
-    console.log(`[layout-geometry] wrote baseline for ${Object.keys(collected).length} contexts to ${BASELINE_PATH}`);
   });
 });

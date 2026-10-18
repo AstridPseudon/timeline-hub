@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { LIGHT_STUDY_PUBLIC_EXAMPLE } from '../content/light-study-v1/public-example.ts';
 import {
   SCRIPTED_EXAMPLE_LABEL,
   SCRIPTED_REPLAY_CUES,
@@ -9,18 +10,11 @@ import {
   deriveScriptedReplayPresentation,
   scriptedReplayReducer,
   unavailableScriptedResult,
-  type ScriptedReplayScript,
   type ScriptedReplayState,
 } from './scriptedReplay';
 
-// Vitest's transformed import.meta.url is not a file URL in the checkout lane.
-// The shared Vitest config fixes its project root to the app checkout, so resolve
-// this repository fixture from that root instead.
-const fixturePath = path.resolve(
-  process.cwd(),
-  'scripts/astrid-landing/offline-verifier/fixtures/light-study-v1/scripted-example.json',
-);
-const script = JSON.parse(readFileSync(fixturePath, 'utf8')) as ScriptedReplayScript;
+// The committed Light study script is the fixture; no local evidence directory is read.
+const script = LIGHT_STUDY_PUBLIC_EXAMPLE.script;
 
 const tick = (state: ScriptedReplayState, deltaMs: number): ScriptedReplayState =>
   scriptedReplayReducer(state, { type: 'TICK', deltaMs, generation: state.generation });
