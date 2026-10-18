@@ -1,7 +1,10 @@
 import Ajv from 'ajv';
+import { createTimelineCommandRunner, type TimelineCommand, type TimelineCommandContext, type TimelineCommandDescriptor } from '../commands';
 import { describe, expect, it } from 'vitest';
 import {
   validateAudioEnvelope,
+  compileAudioEnvelope,
+  audioEnvelopeAt,
   type AudioEnvelope,
 } from '@banodoco/timeline-composition/evaluation';
 import schema from '../../../../vendor/timeline-schema/typescript/dist/timeline.schema.json';
@@ -61,11 +64,72 @@ const expectOpaqueAndLegacy = (actual: TimelineConfig, original: TimelineConfig)
   expect(JSON.stringify(actual.clips[0].params)).toBe(JSON.stringify(original.clips[0].params));
 };
 
+type Move = TimelineCommand<'move-clip', {clipId: string; at: number}>;
+const moveEffect = ({currentData, command}: TimelineCommandContext<Move>) => ({
+  mutation: {type: 'rows' as const, rows: currentData.rows.map(row => ({...row,
+    actions: row.actions.map(action => action.id === command.payload!.clipId
+      ? {...action, start: command.payload!.at, end: command.payload!.at + action.end - action.start} : action),
+  }))}, summary: 'move authored audio',
+});
+const move: TimelineCommandDescriptor<Move> = {
+  type: 'move-clip', validate: () => [], apply: moveEffect, dryRun: moveEffect,
+  invert: ({currentData, command}) => ({type: 'move-clip', payload: {
+    clipId: command.payload!.clipId,
+    at: currentData.rows.flatMap(row => row.actions).find(action => action.id === command.payload!.clipId)!.start,
+  }}),
+};
+
 describe('authored audio envelope persistence', () => {
+  it('preserves authored gain and opaque values through command, projection, inverse and reload', async () => {
+    const original = makeConfig({ envelope });
+    const data = await buildTimelineData(original, registry);
+    const runner = createTimelineCommandRunner([move]);
+    const applied = runner.apply(data, { transactionId: 'audio-roundtrip', commands: [
+      { type: 'move-clip', payload: { clipId: 'tone', at: 2 } },
+    ] });
+    expect(applied.status).toBe('ok');
+    expect(save(applied.nextData).clips[0].audio).toEqual({ envelope });
+    expectOpaqueAndLegacy(save(applied.nextData), original);
+    expect(applied.history.inverseTransaction).toBeTruthy();
+    const undone = runner.apply(applied.nextData, applied.history.inverseTransaction!);
+    expect(undone.status).toBe('ok');
+    const reloaded = await buildTimelineData(save(undone.nextData), registry);
+    expect(save(reloaded).clips[0].audio).toEqual({ envelope });
+    expect(save(reloaded).clips[0].at).toBe(0);
+    expectOpaqueAndLegacy(save(reloaded), original);
+  });
+
+  it('uses above-unity gain and overlapping factors once, ahead of legacy fades', () => {
+    const gain = { keyframes: [{ at: 0, value: 2 }],
+      multiply: [{ keyframes: [{ at: 0, value: 0.8 }] }],
+      minimum: [{ keyframes: [{ at: 0, value: 0.5 }] }, { keyframes: [{ at: 0, value: 0.25 }] }] };
+    const clip = makeConfig({ envelope: gain }).clips[0];
+    const compiled = compileAudioEnvelope({id: clip.id, at: clip.at, track: clip.track, from: clip.from, to: clip.to, speed: clip.speed, params: clip.params, audio: clip.audio}, 30)!;
+    expect(compiled).toBe(gain);
+    expect(audioEnvelopeAt(compiled, 0)).toBeCloseTo(2 * 0.8 * 0.25);
+  });
+
+  it.each([
+    { keyframes: [{ at: 0, value: 1 }], duck: 1 },
+    { keyframes: [{ at: 0, value: 1 }], duck: null },
+    { keyframes: [{ at: 0, value: true }] },
+    { keyframes: [{ at: NaN, value: 1 }] },
+    { keyframes: [{ at: 0, value: Infinity }] },
+    { keyframes: [{ at: 0, value: NaN }] },
+    { keyframes: [{ at: 0, value: 1, curve: null }] },
+    { keyframes: [{ at: 1, value: 1 }, { at: 0, value: 1 }] },
+    { keyframes: [{ at: 0, value: 1 }, { at: 0, value: 2 }] },
+  ])('reuses semantic validation at storage before JSON can hide malformed values: %j', malformed => {
+    const clip = makeConfig({ envelope }).clips[0];
+    Object.assign(clip, { audio: { envelope: malformed } });
+    expect(() => sanitizeTimelineClipSnapshot(clip)).toThrow();
+    expect(() => validateAudioEnvelope(malformed as AudioEnvelope)).toThrow();
+  });
+
   it('survives JSON load, default-row metadata, a row edit, shared save and reload with every registered curve', async () => {
     const original = makeConfig({ envelope });
     validateAudioEnvelope(envelope);
-    expect(schema.definitions.AudioEnvelope.properties.keyframes.items.properties.curve.enum)
+    expect(schema.definitions.AudioEnvelopeKeyframe.properties.curve.enum)
       .toEqual(Object.keys(AUDIO_GAIN_CURVES));
     const data = await buildTimelineData(JSON.parse(JSON.stringify(original)), registry);
     expect(data.meta.tone.audio).toEqual({ envelope });
@@ -140,12 +204,11 @@ describe('authored audio envelope persistence', () => {
     ['invalid nested envelope', { envelope: { keyframes: [{ at: 0, value: 1 }], minimum: [{}] } }],
     ['invalid duck flag', { envelope: { keyframes: [{ at: 0, value: 1 }], duck: 'yes' } }],
     ['derived render source', { envelope, render_source: { url: 'blob:derived' } }],
-  ])('leaves %s uncoerced by the field sanitizer and rejects it at both schema entry points', (_name, audio) => {
+  ])('rejects %s at storage and both schema entry points', (_name, audio) => {
     const config = makeConfig();
     Object.assign(config.clips[0], { audio });
-    const sanitized = sanitizeTimelineClipSnapshot(config.clips[0]);
-    expect(sanitized.audio).toEqual(audio);
-    expect(validateClip(sanitized)).toBe(false);
-    expect(validateConfig({ ...config, clips: [sanitized] })).toBe(false);
+    expect(() => sanitizeTimelineClipSnapshot(config.clips[0])).toThrow();
+    expect(validateClip(config.clips[0])).toBe(false);
+    expect(validateConfig(config)).toBe(false);
   });
 });

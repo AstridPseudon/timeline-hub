@@ -11,6 +11,9 @@ from __future__ import annotations
 
 from .generated import (
     AssetEntry,
+    AudioEnvelope,
+    AudioEnvelopeKeyframe,
+    AuthoredClipAudio,
     ClipKeyframe,
     Theme,
     ThemeOverrides,
@@ -25,6 +28,9 @@ from .validate import load_schema, validate_timeline
 
 __all__ = [
     "AssetEntry",
+    "AudioEnvelope",
+    "AudioEnvelopeKeyframe",
+    "AuthoredClipAudio",
     "ClipKeyframe",
     "OUTPUT_FILE_DEFAULT",
     "Theme",

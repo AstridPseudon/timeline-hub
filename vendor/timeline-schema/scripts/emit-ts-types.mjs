@@ -1,7 +1,7 @@
 // Generate TypeScript declarations from the canonical timeline.schema.json.
 // The JSON Schema is the single source of truth (plan-v5 B2); this script is
 // the only generator. Run via `npm run gen:types`.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { compile } from 'json-schema-to-typescript';
@@ -53,3 +53,12 @@ const aliases = [
 
 writeFileSync(outPath, `${ts}\n${aliases}\n`);
 console.log(`wrote ${outPath} (${ts.length + aliases.length} chars)`);
+
+// The runtime distribution schema is a projection of the same input, never
+// independently edited. Both root config and standalone clip share definitions.
+const {definitions: sharedDefinitions, $schema, ...configDefinition} = schema;
+const distributedSchema = {$schema, $ref: '#/definitions/TimelineConfig',
+  definitions: {TimelineConfig: configDefinition, ...sharedDefinitions}};
+mkdirSync(resolve(root, 'typescript/dist'), {recursive: true});
+writeFileSync(resolve(root, 'typescript/dist/timeline.schema.json'),
+  `${JSON.stringify(distributedSchema, null, 2)}\n`);

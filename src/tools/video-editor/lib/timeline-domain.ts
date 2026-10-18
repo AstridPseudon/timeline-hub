@@ -1,3 +1,4 @@
+import { validateAudioEnvelope } from '@banodoco/timeline-composition/evaluation';
 import type {
   AssetRegistry,
   AssetRegistryEntry,
@@ -2494,7 +2495,13 @@ export const sanitizeTimelineClipSnapshot = (clip: TimelineClip): TimelineClip =
 
     const value = clip[field];
     if (value !== undefined) {
-      if (field === 'app') {
+      if (field === 'audio') {
+        if (!isRecordValue(value) || Object.keys(value).length !== 1 || !('envelope' in value)) {
+          throw new Error('authored audio must contain only envelope');
+        }
+        validateAudioEnvelope(value.envelope as NonNullable<TimelineClip['audio']>['envelope']);
+        serializedClip.audio = value as NonNullable<TimelineClip['audio']>;
+      } else if (field === 'app') {
         if (isRecordValue(value)) {
           serializedClip.app = cloneAppExtension(value);
         }

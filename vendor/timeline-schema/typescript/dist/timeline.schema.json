@@ -11,299 +11,7 @@
         "clips": {
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "at": {
-                "type": "number"
-              },
-              "track": {
-                "type": "string"
-              },
-              "source_uuid": {
-                "type": "string"
-              },
-              "clipType": {
-                "type": "string"
-              },
-              "label": {
-                "type": "string"
-              },
-              "asset": {
-                "type": "string"
-              },
-              "from": {
-                "type": "number"
-              },
-              "to": {
-                "type": "number"
-              },
-              "speed": {
-                "type": "number"
-              },
-              "hold": {
-                "type": "number"
-              },
-              "volume": {
-                "type": "number"
-              },
-              "x": {
-                "type": "number"
-              },
-              "y": {
-                "type": "number"
-              },
-              "width": {
-                "type": "number"
-              },
-              "height": {
-                "type": "number"
-              },
-              "cropTop": {
-                "type": "number"
-              },
-              "cropBottom": {
-                "type": "number"
-              },
-              "cropLeft": {
-                "type": "number"
-              },
-              "cropRight": {
-                "type": "number"
-              },
-              "opacity": {
-                "type": "number"
-              },
-              "text": {
-                "type": "object",
-                "properties": {
-                  "content": {
-                    "type": "string"
-                  },
-                  "fontFamily": {
-                    "type": "string"
-                  },
-                  "fontSize": {
-                    "type": "number"
-                  },
-                  "color": {
-                    "type": "string"
-                  },
-                  "align": {
-                    "type": "string",
-                    "enum": [
-                      "left",
-                      "center",
-                      "right"
-                    ]
-                  },
-                  "bold": {
-                    "type": "boolean"
-                  },
-                  "italic": {
-                    "type": "boolean"
-                  }
-                },
-                "additionalProperties": false
-              },
-              "entrance": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string"
-                  },
-                  "duration": {
-                    "type": "number"
-                  },
-                  "intensity": {
-                    "type": "number"
-                  },
-                  "params": {
-                    "type": "object",
-                    "additionalProperties": {}
-                  }
-                },
-                "additionalProperties": false
-              },
-              "exit": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string"
-                  },
-                  "duration": {
-                    "type": "number"
-                  },
-                  "intensity": {
-                    "type": "number"
-                  },
-                  "params": {
-                    "type": "object",
-                    "additionalProperties": {}
-                  }
-                },
-                "additionalProperties": false
-              },
-              "continuous": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string"
-                  },
-                  "intensity": {
-                    "type": "number"
-                  },
-                  "params": {
-                    "type": "object",
-                    "additionalProperties": {}
-                  }
-                },
-                "additionalProperties": false
-              },
-              "transition": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      },
-                      "duration": {
-                        "type": "number"
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "duration"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "type": {
-                        "type": "string"
-                      },
-                      "duration": {
-                        "type": "number"
-                      },
-                      "durationFrames": {
-                        "type": "number"
-                      },
-                      "params": {
-                        "type": "object",
-                        "additionalProperties": {}
-                      }
-                    },
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "effects": {
-                "anyOf": [
-                  {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "fade_in": {
-                          "type": "number"
-                        },
-                        "fade_out": {
-                          "type": "number"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "number"
-                    }
-                  }
-                ]
-              },
-              "params": {
-                "type": "object",
-                "additionalProperties": {}
-              },
-              "generation": {
-                "type": "object",
-                "additionalProperties": {}
-              },
-              "keyframes": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "time": {
-                        "type": "number"
-                      },
-                      "value": {
-                        "type": [
-                          "number",
-                          "string",
-                          "boolean"
-                        ]
-                      },
-                      "interpolation": {
-                        "type": "string",
-                        "enum": [
-                          "linear",
-                          "hold"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "time",
-                      "value",
-                      "interpolation"
-                    ],
-                    "additionalProperties": false
-                  }
-                }
-              },
-              "app": {
-                "type": "object",
-                "additionalProperties": {}
-              },
-              "pool_id": {
-                "type": "string"
-              },
-              "clip_order": {
-                "type": "integer",
-                "exclusiveMinimum": 0
-              },
-              "audio": {
-                "type": "object",
-                "properties": {
-                  "envelope": {
-                    "$ref": "#/definitions/AudioEnvelope"
-                  }
-                },
-                "required": [
-                  "envelope"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "id",
-              "at",
-              "track"
-            ],
-            "additionalProperties": false
+            "$ref": "#/definitions/TimelineClip"
           }
         },
         "tracks": {
@@ -386,9 +94,6 @@
               "shotId": {
                 "type": "string"
               },
-              "name": {
-                "type": "string"
-              },
               "trackId": {
                 "type": "string"
               },
@@ -414,102 +119,29 @@
                   "type": "object",
                   "additionalProperties": {}
                 }
-              },
-              "poolGenerationIds": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "derivedFrom": {
-                "type": "object",
-                "properties": {
-                  "shotId": {
-                    "type": "string"
-                  },
-                  "trackId": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "shotId",
-                  "trackId"
-                ],
-                "additionalProperties": false
               }
             },
             "additionalProperties": false
           }
         },
         "theme_overrides": {
-          "type": "object",
-          "properties": {
-            "visual": {
-              "type": "object",
-              "additionalProperties": {}
-            },
-            "generation": {
-              "type": "object",
-              "additionalProperties": {}
-            },
-            "voice": {
-              "type": "object",
-              "additionalProperties": {}
-            },
-            "audio": {
-              "type": "object",
-              "additionalProperties": {}
-            },
-            "pacing": {
-              "type": "object",
-              "additionalProperties": {}
-            }
-          },
-          "additionalProperties": false
+          "$ref": "#/definitions/ThemeOverrides"
         },
         "generation_defaults": {
           "type": "object",
           "additionalProperties": {}
         },
-        "output": {
-          "type": "object",
-          "properties": {
-            "resolution": {
-              "type": "string"
-            },
-            "fps": {
-              "type": "number"
-            },
-            "file": {
-              "type": "string"
-            },
-            "background": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "background_scale": {
-              "type": [
-                "number",
-                "null"
-              ]
-            }
-          },
-          "required": [
-            "resolution",
-            "fps",
-            "file"
-          ],
-          "additionalProperties": false
-        },
         "app": {
           "type": "object",
           "additionalProperties": {}
+        },
+        "output": {
+          "$ref": "#/definitions/TimelineOutput"
         }
       },
       "required": [
-        "clips"
+        "clips",
+        "tracks"
       ],
       "additionalProperties": false
     },
@@ -529,9 +161,6 @@
           "type": "string"
         },
         "clipType": {
-          "type": "string"
-        },
-        "label": {
           "type": "string"
         },
         "asset": {
@@ -735,6 +364,12 @@
             }
           ]
         },
+        "modifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimelineClipModifier"
+          }
+        },
         "params": {
           "type": "object",
           "additionalProperties": {}
@@ -743,43 +378,12 @@
           "type": "object",
           "additionalProperties": {}
         },
-        "keyframes": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "time": {
-                  "type": "number"
-                },
-                "value": {
-                  "type": [
-                    "number",
-                    "string",
-                    "boolean"
-                  ]
-                },
-                "interpolation": {
-                  "type": "string",
-                  "enum": [
-                    "linear",
-                    "hold"
-                  ]
-                }
-              },
-              "required": [
-                "time",
-                "value",
-                "interpolation"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
         "app": {
           "type": "object",
           "additionalProperties": {}
+        },
+        "label": {
+          "type": "string"
         },
         "pool_id": {
           "type": "string"
@@ -788,23 +392,86 @@
           "type": "integer",
           "exclusiveMinimum": 0
         },
-        "audio": {
+        "keyframes": {
           "type": "object",
-          "properties": {
-            "envelope": {
-              "$ref": "#/definitions/AudioEnvelope"
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ClipKeyframe"
             }
-          },
-          "required": [
-            "envelope"
-          ],
-          "additionalProperties": false
+          }
+        },
+        "derived_output": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "audio": {
+          "$ref": "#/definitions/AuthoredClipAudio"
         }
       },
       "required": [
         "id",
         "at",
         "track"
+      ],
+      "additionalProperties": false
+    },
+    "ClipKeyframe": {
+      "type": "object",
+      "properties": {
+        "time": {
+          "type": "number"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "interpolation": {
+          "type": "string",
+          "enum": [
+            "linear",
+            "hold"
+          ]
+        },
+        "easing": {
+          "type": "string",
+          "description": "Optional named easing; absence preserves the prior interpolation behavior."
+        }
+      },
+      "required": [
+        "time",
+        "value",
+        "interpolation"
+      ],
+      "additionalProperties": {}
+    },
+    "TimelineClipModifier": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "element": {
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "id",
+        "element",
+        "params"
       ],
       "additionalProperties": false
     },
@@ -904,9 +571,6 @@
         "file": {
           "type": "string"
         },
-        "media_id": {
-          "type": "string"
-        },
         "url": {
           "type": "string"
         },
@@ -943,40 +607,47 @@
       },
       "additionalProperties": false
     },
+    "AudioEnvelopeKeyframe": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "type": "number",
+          "minimum": -1.7976931348623157e+308,
+          "maximum": 1.7976931348623157e+308
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1.7976931348623157e+308
+        },
+        "curve": {
+          "type": "string",
+          "enum": [
+            "equal-power",
+            "exponential-fast",
+            "exponential-moderate",
+            "exponential-slow",
+            "linear",
+            "s-curve"
+          ],
+          "default": "linear"
+        }
+      },
+      "required": [
+        "at",
+        "value"
+      ],
+      "additionalProperties": false
+    },
     "AudioEnvelope": {
-      "description": "The existing Composition AudioEnvelope gain representation; curve ids project the audio gain registry.",
+      "description": "Authored clip-local linear gain. Keys must be finite and strictly increasing (checked by the shared envelope consumers). Derived narration/occurrence projections are transient.",
       "type": "object",
       "properties": {
         "keyframes": {
           "type": "array",
           "minItems": 1,
           "items": {
-            "type": "object",
-            "properties": {
-              "at": {
-                "type": "number"
-              },
-              "value": {
-                "type": "number",
-                "minimum": 0
-              },
-              "curve": {
-                "type": "string",
-                "enum": [
-                  "equal-power",
-                  "exponential-fast",
-                  "exponential-moderate",
-                  "exponential-slow",
-                  "linear",
-                  "s-curve"
-                ]
-              }
-            },
-            "required": [
-              "at",
-              "value"
-            ],
-            "additionalProperties": false
+            "$ref": "#/definitions/AudioEnvelopeKeyframe"
           }
         },
         "multiply": {
@@ -997,6 +668,18 @@
       },
       "required": [
         "keyframes"
+      ],
+      "additionalProperties": false
+    },
+    "AuthoredClipAudio": {
+      "type": "object",
+      "properties": {
+        "envelope": {
+          "$ref": "#/definitions/AudioEnvelope"
+        }
+      },
+      "required": [
+        "envelope"
       ],
       "additionalProperties": false
     }

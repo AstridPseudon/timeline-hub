@@ -25,6 +25,23 @@ class TimelineClipModifier(TypedDict):
     params: dict[str, Any]
 
 
+class AudioEnvelopeKeyframe(TypedDict):
+    at: float
+    value: float
+    curve: NotRequired[Literal["equal-power", "exponential-fast", "exponential-moderate", "exponential-slow", "linear", "s-curve"]]
+
+
+class AudioEnvelope(TypedDict):
+    keyframes: list[AudioEnvelopeKeyframe]
+    multiply: NotRequired[list[AudioEnvelope]]
+    minimum: NotRequired[list[AudioEnvelope]]
+    duck: NotRequired[bool]
+
+
+class AuthoredClipAudio(TypedDict):
+    envelope: AudioEnvelope
+
+
 class TimelineClip(TypedDict, total=False):
     id: str
     at: float
@@ -36,6 +53,7 @@ class TimelineClip(TypedDict, total=False):
     speed: float
     hold: float
     volume: float
+    audio: AuthoredClipAudio
     x: float
     y: float
     width: float

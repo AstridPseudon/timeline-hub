@@ -140,6 +140,7 @@ export interface TimelineClip {
   derived_output?: {
     [k: string]: unknown;
   };
+  audio?: AuthoredClipAudio;
 }
 /**
  * This interface was referenced by `TimelineConfig`'s JSON-Schema
@@ -165,6 +166,37 @@ export interface ClipKeyframe {
    */
   easing?: string;
   [k: string]: unknown;
+}
+/**
+ * This interface was referenced by `TimelineConfig`'s JSON-Schema
+ * via the `definition` "AuthoredClipAudio".
+ */
+export interface AuthoredClipAudio {
+  envelope: AudioEnvelope;
+}
+/**
+ * Authored clip-local linear gain. Keys must be finite and strictly increasing (checked by the shared envelope consumers). Derived narration/occurrence projections are transient.
+ *
+ * This interface was referenced by `TimelineConfig`'s JSON-Schema
+ * via the `definition` "AudioEnvelope".
+ */
+export interface AudioEnvelope {
+  /**
+   * @minItems 1
+   */
+  keyframes: [AudioEnvelopeKeyframe, ...AudioEnvelopeKeyframe[]];
+  multiply?: AudioEnvelope[];
+  minimum?: AudioEnvelope[];
+  duck?: boolean;
+}
+/**
+ * This interface was referenced by `TimelineConfig`'s JSON-Schema
+ * via the `definition` "AudioEnvelopeKeyframe".
+ */
+export interface AudioEnvelopeKeyframe {
+  at: number;
+  value: number;
+  curve?: "equal-power" | "exponential-fast" | "exponential-moderate" | "exponential-slow" | "linear" | "s-curve";
 }
 /**
  * This interface was referenced by `TimelineConfig`'s JSON-Schema

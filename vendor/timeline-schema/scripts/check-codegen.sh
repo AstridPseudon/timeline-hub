@@ -50,9 +50,9 @@ print("artifact: meta-schema valid, definitions present")
 EOF
 
 # 3. TS types regenerate byte-identically.
-node scripts/emit-ts-types.mjs > /tmp/emit-ts-types.out
-if ! git -C "$PKG_ROOT" diff --exit-code --quiet -- "$GENERATED_TS" 2>/dev/null; then
-    fail "typescript/src/generated.ts is stale — regenerate with 'npm run gen:types' and commit"
+node scripts/emit-ts-types.mjs
+if ! git -C "$PKG_ROOT" diff --exit-code --quiet -- "$GENERATED_TS" typescript/dist/timeline.schema.json 2>/dev/null; then
+    fail "generated types or distribution schema is stale — regenerate with 'npm run gen:types' and commit"
 fi
 
 # 4. Python TypedDicts consistent with the artifact.
