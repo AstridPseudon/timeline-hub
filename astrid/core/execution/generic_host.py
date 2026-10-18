@@ -1656,6 +1656,37 @@ def _launch_static_records(pack_roots: tuple[Path, ...], capability_matrix: Path
     return records
 
 
+def _activate_selected_renderer_environment(launch):
+    """Project renderer paths only from the retained launch selection."""
+    selection = launch.get("renderer_selection")
+    if selection is None:
+        return None, {}
+    from .host_renderer_selection import activate_renderer_selection
+    from astrid.core.rendering.remotion_runtime import _REQUIRED_SCHEMA_FILES
+    selected_renderer = activate_renderer_selection(selection)
+    binding = selected_renderer.closure
+    # Activation authenticates the typed selection. Recheck its retained pins
+    # before projecting the schema package; existence alone is not admission.
+    binding.require_retained_transport()
+    relative = Path("node_modules/@banodoco/timeline-schema/python")
+    schema = binding.project / relative
+    installed_schema = binding.installed_project / relative
+    if (schema.resolve(strict=True) != installed_schema
+            or installed_schema.resolve(strict=True) != installed_schema):
+        raise HostError("selected renderer schema root differs from its retained installation")
+    package = installed_schema / "banodoco_timeline_schema"
+    pins = dict(binding.files)
+    for name in _REQUIRED_SCHEMA_FILES:
+        path = package / name
+        if path not in pins or not path.resolve(strict=True).is_relative_to(package):
+            raise HostError("selected renderer schema file is outside its retained package closure")
+    return selected_renderer, {
+        "ASTRID_REMOTION_PROJECT_DIR": str(binding.project),
+        "ASTRID_NODE_EXECUTABLE": str(selected_renderer.node.executable.path),
+        "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": str(schema),
+    }
+
+
 def _launch_needs_command_inspection(pack_roots: tuple[Path, ...], capability_matrix: Path | None = None) -> bool:
     """Static binary declarations from selected launch sources only; no probes."""
     records = _launch_static_records(tuple(root.resolve(strict=True) for root in pack_roots), capability_matrix)
@@ -15454,10 +15485,8 @@ def _cli() -> int:
                 and not preparation._aborted and preparation._activation_grant == activation
                 and activation is not None):
             launch = preparation._request["profile"].get("host_launch") or {}
-            selection = launch.get("renderer_selection")
-            if selection is not None:
-                from .host_renderer_selection import activate_renderer_selection
-                selected_renderer = activate_renderer_selection(selection)
+            selected_renderer, renderer_environment = _activate_selected_renderer_environment(launch)
+            if selected_renderer is not None:
                 remotion_closure_binding = selected_renderer.closure
                 # Derive renderer configuration only from the authenticated selection.
                 # A foreign validation reference is never imported into this launch.
@@ -15466,9 +15495,7 @@ def _cli() -> int:
                 for key in tuple(os.environ):
                     if key.startswith("ASTRID_REMOTION_VALIDATION_"):
                         os.environ.pop(key)
-                os.environ.update(ASTRID_REMOTION_PROJECT_DIR=selection["project"],
-                                  ASTRID_NODE_EXECUTABLE=selection["node_executable"],
-                                  ASTRID_TIMELINE_SCHEMA_PYTHONPATH=launch["source_checkout"])
+                os.environ.update(renderer_environment)
                 for key, name in (("XDG_STATE_HOME", "state"), ("XDG_CACHE_HOME", "cache"),
                                   ("XDG_CONFIG_HOME", "config"), ("XDG_DATA_HOME", "data")):
                     directory = support_root / "host-context" / name

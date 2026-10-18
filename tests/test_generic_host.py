@@ -5539,3 +5539,134 @@ def test_offline_request_preparation_source_drift_still_refuses(request_estimato
     w.source.write_text(w.source.read_text() + '\n# drift\n')
     with pytest.raises(HostError, match='source digest changed'):
         w.host.verify_storage_preparation(w.request, prepared)
+
+
+@pytest.fixture
+def selected_renderer_schema(tmp_path, monkeypatch):
+    from tests.core.execution.test_remotion_closure_binding import roots, sha
+    from astrid.core.execution import remotion_closure, host_renderer_selection, declared_executables
+    from astrid.core.rendering import remotion_runtime
+    project, installed, receipt, arguments = roots.__wrapped__(tmp_path, monkeypatch)
+    # C's installed renderer owns its modules directly, as required by the
+    # existing Runtime-input containment check.
+    (project / "node_modules").unlink()
+    (installed / "node_modules").rename(project / "node_modules")
+    installed = project
+    arguments["installed_project"] = project
+    for name in remotion_runtime._REQUIRED_PACKAGES:
+        package = installed / "node_modules/@banodoco" / name
+        package.mkdir(parents=True, exist_ok=True)
+        (package / "package.json").write_text('{"version":"fixture"}')
+        if name == "timeline-composition":
+            (project / "vendor/timeline-composition/package.json").write_bytes((package / "package.json").read_bytes())
+    schema = installed / "node_modules/@banodoco/timeline-schema/python"
+    package = schema / "banodoco_timeline_schema"
+    package.mkdir(parents=True)
+    for name in remotion_runtime._REQUIRED_SCHEMA_FILES:
+        (package / name).write_text("{}" if name.endswith(".json") else "# selected schema fixture\n")
+    patches = {}
+    for relative in remotion_closure._RETAINED_TRANSPORT_PATCHES:
+        path = installed / "node_modules/@remotion/renderer/dist" / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("disposable retained transport " + relative)
+        patches[relative] = sha(path)
+    monkeypatch.setattr(remotion_closure, "_RETAINED_TRANSPORT_PATCHES", patches)
+    binding = remotion_closure.RemotionClosureBinding.admit(**arguments)
+    node = declared_executables.ExecutableBinding(
+        "node", declared_executables.FilePin.measure(Path(sys.executable).resolve()), (), (), tuple(os.uname()))
+    selected = host_renderer_selection.HostRendererSelection(binding, node)
+    # Only executable inspection is injected; selection activation and every
+    # closure inventory/hash/containment check use the production validators.
+    inspected = []
+    def inspect(name, path):
+        inspected.append((name, path))
+        assert (name, path) == ("node", node.executable.path)
+        return node
+    monkeypatch.setattr(declared_executables, "_bind", inspect)
+    site = tmp_path / "site-packages"
+    site.mkdir()
+    launch = {"source_checkout": str(site), "renderer_selection": selected.payload()}
+    return SimpleNamespace(selected=selected, schema=schema, package=package, launch=launch,
+                           arguments=arguments, inspected=inspected)
+
+
+def test_selected_renderer_schema_projection_uses_retained_project_without_sdk_schema(selected_renderer_schema, monkeypatch):
+    from astrid.core.rendering import remotion_runtime
+    world = selected_renderer_schema
+    assert not (Path(world.launch["source_checkout"]) / "banodoco_timeline_schema").exists()
+    for name in ("ASTRID_REMOTION_PROJECT_DIR", "ASTRID_NODE_EXECUTABLE", "ASTRID_TIMELINE_SCHEMA_PYTHONPATH"):
+        monkeypatch.setenv(name, "/unselected/ambient")
+    selected, environment = generic_host._activate_selected_renderer_environment(world.launch)
+    assert type(selected) is type(world.selected)
+    assert selected.closure == world.selected.closure
+    assert world.inspected == [("node", selected.node.executable.path)]
+    # Exercise the actual Runtime input verifier that refused C's SDK-site
+    # projection. It hashes this offline fixture; it launches no native process.
+    inputs = remotion_runtime._runtime_inputs(selected.closure.project, environment, sys.executable, {})
+    assert inputs["schema"] == str(world.schema)
+    assert Path(environment[remotion_runtime.TIMELINE_SCHEMA_PYTHONPATH_ENV]).resolve() == world.schema
+    assert inputs["configured_project"] == str(selected.closure.project)
+    assert inputs["configured_node"] == str(selected.node.executable.path)
+
+
+@pytest.mark.parametrize("fault", [
+    "missing-admitted", "missing-after-activation", "changed-after-activation",
+    "escaping-file", "escaping-package", "project-link", "unbound-schema",
+    "substituted-project", "substituted-closure", "unbound-selection",
+])
+def test_selected_renderer_schema_projection_refuses_unbound_or_changed_inputs(selected_renderer_schema, monkeypatch, tmp_path, fault):
+    from astrid.core.execution import host_renderer_selection, remotion_closure
+    world = selected_renderer_schema
+    value = dict(world.launch["renderer_selection"])
+    target = world.package / "generated.py"
+    if fault == "missing-admitted":
+        target.unlink()
+        binding = remotion_closure.RemotionClosureBinding.admit(**world.arguments)
+        value = replace(world.selected, closure=binding).payload()
+    elif fault == "unbound-schema":
+        binding = replace(world.selected.closure, files=tuple(
+            (path, digest) for path, digest in world.selected.closure.files if path != target))
+        # Model a retained selection whose schema file is absent from its pins;
+        # inventory validation must refuse, even though the file exists.
+        value["closure_sha256"] = host_renderer_selection._digest([(str(p), h) for p, h in binding.files])
+    elif fault == "substituted-project":
+        value["project"] = str(tmp_path)
+    elif fault == "substituted-closure":
+        value["installed_project"] = str(tmp_path)
+    elif fault == "unbound-selection":
+        value["closure_sha256"] = "0" * 64
+    else:
+        activate = host_renderer_selection.activate_renderer_selection
+        def activate_then_drift(payload):
+            selected = activate(payload)
+            if fault == "missing-after-activation":
+                target.unlink()
+            elif fault == "changed-after-activation":
+                target.write_text("# changed selected bytes")
+            elif fault == "escaping-file":
+                outside = tmp_path / "foreign-schema.py"
+                outside.write_bytes(target.read_bytes())
+                target.unlink(); target.symlink_to(outside)
+            elif fault == "escaping-package":
+                outside = tmp_path / "foreign-package"
+                world.package.rename(outside)
+                world.package.symlink_to(outside, target_is_directory=True)
+            else:
+                link = selected.closure.project / "node_modules"
+                link.rename(tmp_path / "original-modules")
+                link.symlink_to(tmp_path, target_is_directory=True)
+            return selected
+        monkeypatch.setattr(host_renderer_selection, "activate_renderer_selection", activate_then_drift)
+    with pytest.raises((ValueError, HostError, OSError, KeyError)):
+        generic_host._activate_selected_renderer_environment({**world.launch, "renderer_selection": value})
+
+
+@pytest.mark.parametrize("launch", [{}, {"source_checkout": "/sdk/site"},
+                                      {"selected_actions": [{"action_id": "fixture"}]}])
+def test_selected_renderer_absence_preserves_launch_environment(monkeypatch, launch):
+    from astrid.core.execution import host_renderer_selection
+    monkeypatch.setattr(host_renderer_selection, "activate_renderer_selection",
+                        lambda *_: pytest.fail("no renderer selection to activate"))
+    before = dict(os.environ)
+    assert generic_host._activate_selected_renderer_environment(launch) == (None, {})
+    assert dict(os.environ) == before
