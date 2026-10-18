@@ -12,11 +12,9 @@ import pytest
 # Both tests need the sibling Runtime checkout (BANODOCO_RUNTIME_CHECKOUT).
 pytestmark = pytest.mark.integration
 
-RUNTIME = Path(
-    os.environ.get("BANODOCO_RUNTIME_CHECKOUT")
-    or "/Users/peteromalley/Documents/reigh-workspace/banodoco-workspace-runtime-stage1-convergence"
-)
-sys.path.insert(0, str(RUNTIME))
+runtime_checkout = os.environ.get("BANODOCO_RUNTIME_CHECKOUT")
+if runtime_checkout:
+    sys.path.insert(0, runtime_checkout)
 
 pytest.importorskip("runtime_protocol.daemon")
 from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
