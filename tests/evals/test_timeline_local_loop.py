@@ -290,6 +290,7 @@ def test_real_launcher_receives_only_the_prepared_runtime_environment_for_every_
     assert action_env["PYTHONDONTWRITEBYTECODE"] == "1"
 
 
+@pytest.mark.darwin_native
 @pytest.mark.skipif(sys.platform != "darwin", reason="local worker boundary uses macOS sandbox-exec")
 def test_real_case_boundary_denies_sibling_coordinator_and_evaluator_reads_but_captures_evidence(tmp_path: Path) -> None:
     attempt = tmp_path / "attempt"
@@ -342,6 +343,7 @@ def test_real_case_boundary_denies_sibling_coordinator_and_evaluator_reads_but_c
     assert receipt["selected_case_path"] == str(work.resolve())
 
 
+@pytest.mark.darwin_native
 @pytest.mark.skipif(sys.platform != "darwin", reason="local worker boundary uses macOS sandbox-exec")
 def test_real_case_boundary_denies_private_otto_trees_but_keeps_case_and_public_docs(tmp_path: Path) -> None:
     source_root = Path(local_loop.__file__).resolve().parents[2]

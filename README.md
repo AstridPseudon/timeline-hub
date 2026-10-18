@@ -30,6 +30,8 @@ Tools and knowledge for agents and humans to make art with open models.
 
 **Want to set it up yourself?** [Get started →](docs/setup/README.md)
 
+The CI default lane uses the committed `.test_durations` file to balance its eight pytest shards. After a full default-lane run, refresh it with `python -m pytest -q --store-durations`, then commit the updated file.
+
 ### More info
 
 - [How Astrid works](docs/guides/how-it-works.md)
