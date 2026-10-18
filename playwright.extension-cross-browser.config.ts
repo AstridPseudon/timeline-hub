@@ -66,6 +66,7 @@ export default defineConfig({
         // Do not infer this from an ambient token: real bridge requests must
         // continue to fail closed under their dedicated authenticated harness.
         ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB: '1',
+        REIGH_E2E_EXTENSION_FIXTURES: '1',
       },
     },
     {

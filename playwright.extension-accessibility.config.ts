@@ -57,6 +57,7 @@ export default defineConfig({
         VITE_APP_ENV: process.env.VITE_APP_ENV ?? 'web',
         VITE_ASTRID_BRIDGE_PORT: String(bridgePort),
         ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB: '1',
+        REIGH_E2E_EXTENSION_FIXTURES: '1',
       },
     },
     {
