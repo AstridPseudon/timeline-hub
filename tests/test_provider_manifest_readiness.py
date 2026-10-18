@@ -7,7 +7,9 @@ from pathlib import Path
 
 import pytest
 
+from astrid.core.execution import provider_route_resolvers
 from astrid.core.execution.generic_host import GenericPackHost
+from astrid.core.rendering import remotion_runtime
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKS = ROOT / "astrid" / "packs"
@@ -30,7 +32,13 @@ def _fixture_credentials(host: GenericPackHost) -> dict[str, str]:
         str(name)
         for record in host.capabilities.values()
         if record.adapter.family == "provider"
-        for name in (record.matrix.get("required_env") or ())
+        for name in (
+            *(record.matrix.get("required_env") or ()),
+            *(record.definition.isolation.secrets_required or ()),
+            *(record.definition.metadata.get("env") or ()),
+            *(record.definition.metadata.get("required_env") or ()),
+            *(record.definition.metadata.get("secrets_required") or ()),
+        )
     }
     return {name: "provider-manifest-fixture-secret" for name in names}
 
@@ -65,8 +73,49 @@ def test_every_tcp_provider_manifest_declares_an_enforceable_host_broker():
 
 
 @pytest.mark.darwin_native
-def test_all_supported_provider_routes_are_ready_and_grantable_with_declared_inputs():
+def test_all_supported_provider_routes_are_ready_and_grantable_with_declared_inputs(monkeypatch, tmp_path):
     probe = _provider_host(credentials={})
+    providers = [record for record in probe.capabilities.values() if record.adapter.family == "provider"]
+    declared_tools = {
+        str(binary)
+        for record in providers
+        for binary in (
+            *record.definition.isolation.binaries,
+            *(record.matrix.get("required_binaries") or ()),
+            *record.adapter.required_binaries,
+        )
+    }
+    # Supply every tool named by the provider declarations so readiness cannot
+    # vary with binaries installed on the machine running this contract test.
+    monkeypatch.setattr(
+        shutil,
+        "which",
+        lambda name, *args, **kwargs: f"/fixture/bin/{name}"
+        if name in declared_tools or name == "sandbox-exec"
+        else None,
+    )
+    # The capture route also requires the independently provisioned Remotion
+    # runtime. Give preflight a deterministic available runtime fixture so its
+    # readiness does not depend on this checkout's Node installation.
+    remotion_project = tmp_path / "remotion"
+    monkeypatch.setattr(
+        remotion_runtime,
+        "remotion_runtime_status",
+        lambda *, require_explicit_project=False: remotion_runtime.RemotionRuntimeStatus(
+            True, remotion_project, node_executable=tmp_path / "node", node_version="fixture",
+            remotion_cli=remotion_project / "cli.js",
+        ),
+    )
+    # Dynamic RunPod routes are resolved through the live provider API. Exercise
+    # grant creation with the declared handle input while keeping this contract
+    # test independent of an actual pod or API credential.
+    def fixture_runpod_route(handle):
+        handle_path = Path(str(handle)).resolve()
+        assert handle_path.is_relative_to(tmp_path.resolve())
+        assert handle_path.is_file()
+        return "tcp://192.0.2.1:22"
+
+    monkeypatch.setattr(provider_route_resolvers, "resolve_runpod_pod_handle_ssh_route", fixture_runpod_route)
     host = _provider_host(credentials=_fixture_credentials(probe))
     providers = [record for record in host.capabilities.values() if record.adapter.family == "provider"]
     tcp_providers = []
@@ -74,32 +123,23 @@ def test_all_supported_provider_routes_are_ready_and_grantable_with_declared_inp
         protocols = {str(value).lower() for value in record.definition.metadata["network_policy"]["allowed_protocols"]}
         if not protocols & {"udp", "quic"}:
             tcp_providers.append(record)
-            if record.id == "editorial.script_pipeline" and not record.ready:
-                assert record.preflight["sandbox"]["reason"] == (
-                    "host-managed provider broker requires an OS network sandbox"
-                )
-                pytest.skip(
-                    "LINUX_SANDBOX: editorial.script_pipeline requires "
-                    "darwin sandbox-exec for its host-managed broker"
-                )
-            if not record.ready and record.matrix.get("disposition") == "optional":
-                # Optional provider routes remain truthfully unavailable when
-                # this host lacks a declared local binary; that is a valid
-                # readiness result, not a broker-contract failure.
-                assert record.preflight["binaries"]["ok"] is False
-                continue
             assert record.ready, (record.id, record.preflight)
 
     assert len(tcp_providers) == 33
     for record in tcp_providers:
-        if not record.ready:
-            assert record.matrix.get("disposition") == "optional"
-            continue
+        policy = record.definition.metadata["network_policy"]
+        declared_inputs = {}
+        for name in policy.get("dynamic_url_inputs", ()):
+            declared_inputs[str(name)] = "https://provider-route-fixture.invalid"
+        for name in policy.get("dynamic_tcp_inputs", ()):
+            handle = tmp_path / f"{record.id}-{name}.json"
+            handle.write_text('{"fixture": true}\n', encoding="utf-8")
+            declared_inputs[str(name)] = str(handle)
         task = {
             "task": {
                 "id": f"manifest-grant-{record.id}",
                 "capability": record.id,
-                "spec": {"inputs": {}},
+                "spec": {"inputs": declared_inputs},
             }
         }
         token = host.request_provider_route_grant(task)
