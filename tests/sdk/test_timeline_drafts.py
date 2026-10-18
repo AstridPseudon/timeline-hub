@@ -36,7 +36,9 @@ def drafts(tmp_path, monkeypatch):
     monkeypatch.setattr(tc, "fetch_bundle", lambda *a, **k: copy.deepcopy(bundle))
     monkeypatch.setattr("astrid.sdk.timeline.drafts.time.time", lambda: NOW)
 
-    def create(name="main"):
+    def create(name="main", *, parent_config=None):
+        if parent_config is not None:
+            bundle["parent"]["config"].update(copy.deepcopy(parent_config))
         checkout = Checkout.draft("P", "t", name)
         os.utime(checkout.path, (NOW, NOW))
         return checkout
@@ -282,9 +284,7 @@ def test_process_crash_recovers_exact_multi_step_state_and_both_stacks(drafts, d
 @pytest.mark.parametrize("direction", ["undo", "redo"])
 @pytest.mark.parametrize("window", ["destination-before-target", "removed-before-target"])
 def test_crash_history_retains_allocated_ids_and_opaque_fields(drafts, direction, window):
-    checkout = drafts()
-    checkout.bundle["parent"]["config"]["future-owner"] = {"nested": [None, {"x": "opaque"}]}
-    checkout.save(quiet=True)
+    checkout = drafts(parent_config={"future-owner": {"nested": [None, {"x": "opaque"}]}})
     before = checkout.document()
     commands.run(checkout, {"op": "cut.split", "select": "c1", "args": {"on": 2.0}})
     commands.run(checkout, {"op": "clip.set", "select": "c1.rocket", "args": {"x": 40}})

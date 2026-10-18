@@ -716,6 +716,7 @@ def checkout_change_units(checkout: Any, *, complete: bool = False) -> tuple[boo
     if "structure_base" not in document:
         from astrid.core.timeline.authoring_bundle import _film_track_view
         base_document = _film_track_view(base_document)
+        document = _film_track_view(document)
     base_document, document = normalized(base_document), normalized(document)
     before_units = _units(base_document, whole=True)
     current_units = _units(document, whole=True)
