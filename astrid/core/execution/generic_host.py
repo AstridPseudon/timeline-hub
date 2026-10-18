@@ -1283,6 +1283,8 @@ class _NetworkBrokerContext:
     policy: dict[str, Any]
     evidence_key: str
     auth_token: str
+    attempt_root: Path | None = None
+    claim_binding: tuple[tuple[str, Any], ...] = ()
 
     def stop(self) -> None:
         stop = getattr(self.broker, "stop", None)
@@ -5935,6 +5937,7 @@ class GenericPackHost:
             self._executable_admission, remotion_closure_binding=remotion_closure_binding,
         ) if isinstance(client, RuntimeProtocolClient) else None
         self._attempt_claim_authority = None
+        self._selected_action_preparation = None
         # Provider route grants are intentionally scoped to this host process;
         # their signing key never crosses into a child or runtime payload.
         self._provider_grants = ProviderRouteGrantAuthority()
@@ -6018,6 +6021,7 @@ class GenericPackHost:
         self, argv: Sequence[str], *, attempt: Path, cwd: Path | None,
         environment: Mapping[str, str], inherited_fds: tuple[int, ...],
         broker_endpoint: str | None, child_bridge: Any = None, review_port: int | None = None,
+        network_broker: _NetworkBrokerContext | None = None,
     ) -> _ConfinedLaunchPlan:
         policy = self._required_confinement_policy(attempt)
         if self._attempt_claim_authority is not None:
@@ -6026,6 +6030,13 @@ class GenericPackHost:
                 "task_id", "attempt_id", "lease_id", "fence", "runtime_epoch", "project_id", "operation", "executor_id")})
         if cwd == attempt:
             cwd = policy.private_write_root
+        if network_broker is not None:
+            endpoint, _ = self._owned_action_broker(network_broker, attempt=attempt)
+            if broker_endpoint != endpoint or policy.network.outbound_tcp or policy.network.broker is not None:
+                raise HostError('owned broker projection conflicts with confinement network policy')
+            parsed = urlsplit(endpoint)
+            policy = replace(policy, network=_SandboxNetworkPolicy(
+                broker=_SandboxTcpEndpoint(parsed.hostname, parsed.port)))
         # Only this existing bridge's retained pair can extend this attempt's
         # immutable descriptor policy. Caller pass_fds remain unmatched.
         bridge_launch = None
@@ -6067,6 +6078,141 @@ class GenericPackHost:
         if policy.attempt_root.resolve() != attempt.resolve():
             raise HostError("confinement policy belongs to a different attempt")
         return policy
+
+    def _selected_action(self, record):
+        """Resolve a child selection from retained authenticated composition."""
+        from runtime_protocol.verified_host_launch import action_contract, raw_digest, validate_action_closures
+        retained = globals().get('_RETAINED_ACTION_LAUNCH')
+        preparation = self._selected_action_preparation
+        if not isinstance(retained, dict) or preparation is None:
+            raise HostError('action requires its verified selected child launch')
+        with preparation._lock:
+            request = preparation._request
+            if (preparation._aborted or preparation._abort_started or preparation._activation_grant is None
+                    or preparation.result is None or preparation._claim_host is not self._handoff_accounting_owner
+                    or not isinstance(request, Mapping) or raw_digest(request['profile']) != retained['profile_digest']
+                    or request['profile'].get('host_launch', {}).get('selected_actions') != retained['actions']
+                    or request.get('operation_id') != preparation.operation_id
+                    or request.get('channel_id') != preparation.channel_id
+                    or preparation._activation_grant.get('operation_id') != preparation.operation_id
+                    or preparation._activation_grant.get('channel_id') != preparation.channel_id):
+                raise HostError('selected action profile or owner is stale')
+            peer = preparation._retained_relay_actor
+            owner = peer.verify() if peer is not None else None
+            if owner is None or any(owner.get(k) != request['runtime_owner'].get(k) for k in ('pid','uid','birth_id')):
+                raise HostError('selected action Runtime owner differs')
+            from .custody_broker import RoleCustodyAuthority
+            authority = RoleCustodyAuthority(Path(request['custody_scope']), 'host')
+            from . import hosted_contract
+            hosted = getattr(preparation, '_hosted_binding', None)
+            if not isinstance(hosted, Mapping):
+                raise HostError('selected action requires original authenticated hosted launch')
+            hosted_contract.verify_preparation(hosted, request, authority, actor=peer)
+            reference = authority.reference()
+            authority.verify_reference(reference, expected_actor=owner, owner_epoch=request['owner_epoch'])
+            if (reference['generation'] != hosted['generation']
+                    or reference['target'].get('pid') != os.getpid() or reference['target'].get('birth_id') != process_birth_identity()):
+                raise HostError('selected action Host incarnation differs')
+            actions = validate_action_closures(retained['actions'])
+            selection = actions.get(record.id)
+            if (selection is None or selection['capability_digest'] != record.capability_digest
+                    or record.capability_digest != _capability_digest(record.definition.to_dict())
+                    or selection['capability_row_sha256'] != raw_digest(record.matrix)
+                    or selection['pack_root'] != str(record.source_root)
+                    or selection['declaration'] != record.definition.metadata.get('execution_dependencies')):
+                raise HostError('selected action capability or declaration differs')
+            current = action_contract(Path(retained['source_root']), record.id, selection['capability_matrix'])
+            if any(selection[k] != v for k,v in current.items()):
+                raise HostError('selected action canonical inputs changed')
+            return retained, selection, {'profile_digest': retained['profile_digest'], 'owner': owner,
+                'owner_epoch': request['owner_epoch'], 'generation': reference['generation'],
+                'operation_id': preparation.operation_id, 'channel_id': preparation.channel_id}
+
+    def _selected_action_context(self, record):
+        from runtime_protocol.verified_host_launch import validate_action_context
+        retained, selection, context = self._selected_action(record)
+        authority = self._attempt_claim_authority
+        if type(authority) is not _AuthenticatedAttempt:
+            raise HostError('selected action requires authenticated attempt authority')
+        fields = dict(authority.fields)
+        keys = ('task_id','attempt_id','lease_id','fence','runtime_epoch','operation','executor_id')
+        confirmed = self.client.confirm_claim_authority(**{k:fields[k] for k in (*keys,'project_id')})
+        if type(confirmed) is not _AuthenticatedAttempt or any(dict(confirmed.fields).get(k) != fields[k] for k in keys):
+            raise HostError('selected action current claim binding differs')
+        context.update({k:fields[k] for k in keys})
+        context.update(capability_digest=record.capability_digest, closure_digest=selection['digest'])
+        validate_action_context(context, selection=selection, profile_digest=retained['profile_digest'])
+        return retained, context
+
+    def _owned_action_broker(self, context, *, attempt, record=None):
+        from .network_broker import ObservableNetworkBroker
+        if (type(context) is not _NetworkBrokerContext or type(context.broker) is not ObservableNetworkBroker
+                or context.attempt_root != attempt or type(self._attempt_claim_authority) is not _AuthenticatedAttempt
+                or context.claim_binding != self._attempt_claim_authority.fields):
+            raise HostError('selected action broker belongs to another authenticated attempt')
+        broker = context.broker
+        endpoint = broker.endpoint
+        parsed = urlsplit(endpoint)
+        fields = dict(context.claim_binding)
+        if (parsed.scheme != 'http' or parsed.hostname != '127.0.0.1' or not parsed.port
+                or endpoint != f'http://127.0.0.1:{parsed.port}' or context.policy.get('proxy') != endpoint
+                or not broker._strict or broker._stopping.is_set() or broker._thread is None or not broker._thread.is_alive()
+                or context.auth_token != broker.auth_token or not context.auth_token
+                or any(broker._admission.get(k) != fields[k] for k in ('task_id','attempt_id','fence'))
+                or broker.expected_admission_digest != _canonical_digest(broker._admission)
+                or not broker.expected_nonce or broker.expected_nonce != broker._admission.get('network_nonce')
+                or context.policy.get('allowed_destinations') != [endpoint]
+                or context.policy.get('allow_redirects') is not False):
+            raise HostError('selected action broker endpoint, admission or policy changed')
+        if record is not None:
+            declared = _network_policy(record)
+            if (declared is None or broker.allowed_routes != _provider_routes(record)
+                    or broker._admission.get('capability_digest') != record.capability_digest
+                    or broker._admission.get('source_digest') != record.source_digest
+                    or broker._admission.get('dependency_digest') != record.dependency_digest
+                    or context.policy.get('broker') != {**declared.get('broker', {}), 'evidence_path': str(broker.evidence_path)}
+                    or any(context.policy.get(k) != v for k,v in declared.items() if k not in {'proxy','allowed_destinations','broker'})):
+                raise HostError('selected action broker routes differ from canonical capability')
+        policy = {**context.policy, 'broker': {k:v for k,v in context.policy.get('broker', {}).items() if k != 'evidence_path'}}
+        environment = {'ASTRID_NETWORK_POLICY': json.dumps(policy, sort_keys=True, separators=(',',':')),
+            'ASTRID_NETWORK_EVIDENCE': str(attempt/'outputs/network-evidence.json'),
+            'ASTRID_NETWORK_ADMISSION_DIGEST': broker.expected_admission_digest,
+            'ASTRID_NETWORK_NONCE': broker.expected_nonce, 'ASTRID_NETWORK_BROKER_TOKEN': broker.auth_token,
+            'ASTRID_BROKER_PROXY': endpoint}
+        environment.update({k:endpoint for k in ('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','http_proxy','https_proxy','all_proxy')})
+        return endpoint, environment
+
+    def _prepare_selected_action_command(self, record, argv, *, attempt, network_broker):
+        from runtime_protocol.verified_host_launch import prepare_action_binding, canonical
+        retained, context = self._selected_action_context(record)
+        selection = retained['actions'][record.id]
+        if argv[:3] != [sys.executable, '-m', selection['module']]:
+            raise HostError('selected action command differs from admitted entrypoint')
+        environment = {}
+        if record.definition.isolation.network:
+            _, environment = self._owned_action_broker(network_broker, attempt=attempt, record=record)
+        elif network_broker is not None:
+            raise HostError('offline action cannot select a broker')
+        payload = prepare_action_binding(retained, action_id=record.id, context=context, network_environment=environment)
+        policy = self._required_confinement_policy(attempt)
+        if policy.pass_fds or policy.renderer_reads is not None or policy.renderer_transport is not None:
+            raise HostError('selected action cannot inherit unrelated delegation or renderer channels')
+        installed = Path(retained['source_root'])
+        roots = tuple(root for root in policy.bootstrap_roots if not (root == installed or root.is_relative_to(installed) or installed.is_relative_to(root)))
+        files = tuple(file for file in policy.bootstrap_files if not file.is_relative_to(installed))
+        files = tuple(dict.fromkeys((*files, *(Path(p) for p in payload['read_files']))))
+        searches = tuple(dict.fromkeys((*policy.bootstrap_search_roots,
+            *(Path(p).parent for p in payload['read_files']))))
+        self._confinement_policy = replace(policy, bootstrap_roots=roots, bootstrap_files=files,
+            bootstrap_search_roots=searches)
+        # Use the retained launcher's existing private stdin PIPE. The process
+        # custody wrapper rejects unmatched caller pass_fds; this bootstrap is
+        # its sole stdin consumer and closes it before importing any action.
+        command = [sys.executable, '-I', '-S', '-B', retained['launcher']['path'],
+            '--action-binding-fd', '0', '--context-digest', payload['context_digest'], *argv[3:]]
+        if self._selected_action_context(record)[1] != context:
+            raise HostError('selected action owner changed during preparation')
+        return command, canonical(payload)
 
     @property
     def last_cleanup_receipt(self) -> dict[str, Any] | None:
@@ -6993,7 +7139,16 @@ class GenericPackHost:
             checks["credentials"] = {"ok": not missing_env, "missing": missing_env}
             required_packages = record.matrix.get("required_packages") or record.definition.metadata.get("required_packages", adapter.required_packages)
             missing_packages = []
-            for package in required_packages or ():
+            selected_dependencies = record.definition.metadata.get('execution_dependencies')
+            if selected_dependencies is not None:
+                try:
+                    from runtime_protocol.verified_host_launch import installed_host_closure
+                    retained, selection, _ = self._selected_action(record)
+                    installed_host_closure(Path(retained['source_root']), action_closures=retained['actions'])
+                    checks['action_child'] = {'ok': True, 'closure_digest': selection['digest']}
+                except (ValueError, RuntimeError, OSError, ImportError) as exc:
+                    checks['action_child'] = {'ok': False, 'reason': str(exc)}
+            for package in (() if selected_dependencies is not None else required_packages or ()):
                 try:
                     spec = importlib.util.find_spec(str(package))
                 except ModuleNotFoundError:
@@ -7910,7 +8065,8 @@ class GenericPackHost:
         # ``routes`` and signs the observed route evidence.
         effective["allowed_destinations"] = [broker.endpoint]
         effective["broker"] = {**dict(descriptor), "evidence_path": str(evidence_path)}
-        return _NetworkBrokerContext(broker=broker, policy=effective, evidence_key=evidence_key, auth_token=auth_token)
+        return _NetworkBrokerContext(broker=broker, policy=effective, evidence_key=evidence_key, auth_token=auth_token,
+            attempt_root=attempt, claim_binding=self._attempt_claim_authority.fields if self._attempt_claim_authority is not None else ())
 
     def request_provider_route_grant(
         self,
@@ -8932,6 +9088,11 @@ class GenericPackHost:
         )
         broker_endpoint = network_broker.policy.get("proxy") if network_broker is not None else None
         inherited_fds = ()
+        selected_action = record.definition.metadata.get('execution_dependencies') is not None
+        selected_channel = None
+        selected_writer = None
+        if selected_action and child_bridge is not None:
+            raise HostError('selected action command cannot inherit a delegation bridge')
         if child_bridge is not None:
             # Bootstrap in the action interpreter before pack code. Private
             # launch arguments contain a descriptor and command, no authority.
@@ -8990,7 +9151,10 @@ class GenericPackHost:
             remotion_lease = self._renderer_task_lease(
                 env, attempt, policy=self._required_confinement_policy(attempt))
         try:
-            if remotion_lease is not None:
+            if selected_action:
+                argv, selected_channel = self._prepare_selected_action_command(
+                    record, argv, attempt=attempt, network_broker=network_broker)
+            elif remotion_lease is not None:
                 argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker",
                         "--renderer-command-stdio", json.dumps(argv[1:])]
                 startup = (
@@ -9031,7 +9195,9 @@ class GenericPackHost:
                     json.dumps(render_command_imports),
                     *argv[2:],
                 ]
-            if not allow_runtime_connection and (network_broker is not None or _network_policy(record) is not None):
+            if selected_action:
+                pass  # The mapped bootstrap installs the retained broker before pack imports.
+            elif not allow_runtime_connection and (network_broker is not None or _network_policy(record) is not None):
                 argv = _network_startup_argv(argv, attempt, env, broker_required=network_broker is not None)
             elif (remotion_lease is None and not render_command
                     and Path(argv[0]).resolve() == Path(sys.executable).resolve()):
@@ -9073,9 +9239,41 @@ class GenericPackHost:
                 argv, attempt=attempt, cwd=cwd, environment=env,
                 inherited_fds=inherited_fds, broker_endpoint=broker_endpoint, child_bridge=child_bridge,
                 review_port=values.get("port", 0) if record.id == "editorial.human_review" and child_bridge is not None else None,
+                network_broker=network_broker if selected_action else None,
             )
+            if selected_channel is not None:
+                sealed = json.loads(selected_channel)
+                if self._selected_action_context(record)[1] != sealed['context']:
+                    raise HostError('selected action launch context changed before spawn')
+                if record.definition.isolation.network and self._owned_action_broker(
+                        network_broker, attempt=attempt, record=record)[1] != sealed['network_environment']:
+                    raise HostError('selected action broker changed before spawn')
             process = popen_owned_group(list(plan.argv), **plan.subprocess_options(), text=True)
             self._track_process(process)
+            if selected_channel is not None:
+                stream = process.stdin
+                process.stdin = None  # communicate() must not flush this closed channel.
+                def write_binding():
+                    try:
+                        stream.buffer.write(selected_channel)
+                        stream.buffer.flush()
+                    except (BrokenPipeError, OSError):
+                        pass  # A refused/bootstrap-exited child is handled by its exit.
+                    finally:
+                        try:
+                            stream.close()
+                        except OSError:
+                            pass
+                selected_writer = threading.Thread(target=write_binding, name='selected-action-binding', daemon=True)
+                try:
+                    selected_writer.start()
+                except BaseException:
+                    stream.close()
+                    try:
+                        _terminate_process_group(process)
+                    finally:
+                        self._untrack_process(process)
+                    raise
             if child_bridge is not None:
                 try:
                     child_bridge.launched(process)
@@ -9279,6 +9477,9 @@ class GenericPackHost:
                     except BaseException as error:
                         self._latch_cleanup_uncertainty(str(error))
                         raise HostError(f"render command relay cleanup uncertain: {error}") from error
+                if selected_writer is not None:
+                    # Owned child termination closes the only read endpoint.
+                    selected_writer.join()
                 env.clear()
                 secrets.clear()
 
@@ -11649,6 +11850,7 @@ class GenericPackHost:
         slot._evidence_observation_binding = dict(self._evidence_observation_binding)
         slot._evidence_observation_lock = self._evidence_observation_lock
         slot._handoff_accounting_owner = self
+        slot._selected_action_preparation = self._selected_action_preparation
         # Parallel slots own private attempts, but claim/handoff accounting
         # must remain visible on the coordinating host without a false zero.
         for name in ("_handoff_enter_claim_rpc", "_handoff_leave_claim_rpc",
@@ -12430,6 +12632,7 @@ class LocalExecutionPreparation:
             self._host_only_phase = "claim_constructing"
             host = factory()
             self._claim_host = host
+            host._selected_action_preparation = self
             self._host_only_phase = "claim_owned"
             return host
 
@@ -12478,6 +12681,7 @@ class LocalExecutionPreparation:
             if self._claim_host is not None and self._claim_host is not host:
                 raise HostError("local execution control already has a claim owner")
             self._claim_host = host
+            host._selected_action_preparation = self
             self._host_only_phase = "claim_owned"
             if not journal_ready:
                 with host._handoff_condition:
@@ -13428,7 +13632,7 @@ class LocalExecutionPreparation:
         if set(profile) - required - {"host_os_executable", "host_os_artifact_digest"} or not required <= set(profile):
             raise HostError("host-only selected profile shape is invalid")
         launch = profile["host_launch"]
-        if not isinstance(launch, Mapping) or set(launch) - {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "additional_pack_roots", "max_concurrency", "renderer_selection"} or not {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "max_concurrency"} <= set(launch):
+        if not isinstance(launch, Mapping) or set(launch) - {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "additional_pack_roots", "max_concurrency", "renderer_selection", "selected_actions"} or not {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "max_concurrency"} <= set(launch):
             raise HostError("host-only launch selection is invalid")
         if type(launch["max_concurrency"]) is not int or not 1 <= launch["max_concurrency"] <= 16:
             raise HostError("host-only concurrency must be explicitly bounded")
@@ -13462,6 +13666,12 @@ class LocalExecutionPreparation:
                 or protocol["version"] != CURRENT_ROLES_VERSION or protocol["module"] != "astrid.core.execution.generic_host"
                 or protocol["source_closure_digest"] != closure):
             raise HostError("host-only admitted import closure differs")
+        if 'selected_actions' in launch:
+            from runtime_protocol.verified_host_launch import validate_action_closures, raw_digest
+            retained = globals().get('_RETAINED_ACTION_LAUNCH')
+            if (not isinstance(retained, dict) or retained['profile_digest'] != raw_digest(profile)
+                    or retained['actions'] != validate_action_closures(launch['selected_actions'])):
+                raise HostError('host-only selected actions differ from verified launch')
         if "renderer_selection" in launch:
             from .host_renderer_selection import validate_renderer_selection
             validate_renderer_selection(launch["renderer_selection"])

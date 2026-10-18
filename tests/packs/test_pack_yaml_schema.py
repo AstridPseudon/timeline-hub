@@ -13,6 +13,67 @@ import yaml
 from astrid.core.pack import PackValidationError, load_pack_manifest
 
 
+@pytest.mark.parametrize('requirement,active', [
+    ('edge-tts==7.2.8', True), ('aiohttp<4.0.0,>=3.8.0', True),
+    ('async-timeout<6.0,>=4.0; python_version < "3.11"', False),
+    ('typing_extensions>=4.4; python_version < "3.13"', True),
+    ('Brotli>=1.2; (platform_python_implementation == "CPython" and sys_platform != "android" and sys_platform != "ios") and extra == "speedups"', False),
+    ('example; (python_version >= "3.11" and extra == "") or extra == "test"', True),
+])
+def test_action_execution_requirement_supported_grammar(requirement, active):
+    from astrid.core.pack.canonical import execution_requirement
+    name, constraints, applicable = execution_requirement(requirement)
+    assert '-' in name or name.isidentifier()
+    assert applicable is active
+
+
+@pytest.mark.parametrize('requirement', [
+    'package[speedups]>=1', 'package~=1.0', 'package===1', 'package==1.*',
+    'package>=1,broken', 'package @ https://example.invalid/wheel', '../package', '',
+    'package>=1; extra == "unused" and unknown == "x"',
+    'package>=1; extra == "unused" or python_version in "3.11"',
+    'package>=1; (extra == "unused"', 'package>=1; python_version == "3.*"',
+    'package>=1; extra == "unused"; python_version < "3.11"',
+])
+def test_action_execution_requirement_refuses_every_unsupported_branch(requirement):
+    from astrid.core.pack.canonical import execution_requirement, CanonicalPackValidationError
+    with pytest.raises(CanonicalPackValidationError):
+        execution_requirement(requirement)
+
+
+@pytest.mark.parametrize('declaration', [None, {}, {'python': []}, {'python': 'edge-tts'},
+    {'python': ['edge-tts'], 'ambient': True}, {'python': ['edge_tts==7.2.8', 'edge-tts>=7']}])
+def test_action_execution_dependencies_are_typed_and_unique(declaration):
+    from astrid.core.pack.canonical import validate_execution_dependencies, CanonicalPackValidationError
+    with pytest.raises(CanonicalPackValidationError):
+        validate_execution_dependencies(declaration)
+
+
+def test_generation_speech_declares_command_child_and_actual_tools():
+    from astrid.core.pack.canonical import validate_canonical_pack
+    root = Path(__file__).resolve().parents[2]
+    entry = validate_canonical_pack(root/'astrid/packs/generation')
+    action = entry.definition.actions['generate_speech']
+    assert action['metadata']['execution_dependencies']['python'] == ('edge-tts==7.2.8',)
+    assert action['invocation']['command']['argv'][1:3] == ('-m', 'astrid.packs.generation.actions.generate_speech.run')
+    row = next(r for r in json.loads((root/'config/astrid-beta-capabilities.json').read_text())['capabilities'] if r['id']=='generation.generate_speech')
+    assert row['required_binaries'] == ['ffmpeg','ffprobe']
+
+
+@pytest.mark.parametrize('dependencies',[{'python':'edge-tts'}, {'python':[]},
+    {'python':['edge-tts>=7,unsupported']}, {'python':['edge-tts[dev]>=7']},
+    {'python':['edge_tts==7.2.8','edge-tts>=7']}])
+def test_execution_dependencies_refuse_at_canonical_manifest_admission(tmp_path,dependencies):
+    from astrid.core.pack.canonical import validate_canonical_pack,CanonicalPackValidationError
+    root=tmp_path/'offline';root.mkdir()
+    body={'schema_version':3,'id':'offline','name':'Offline','version':'1.0.0',
+        'actions':{'probe':{'description':'Offline dependency admission fixture','inputs':[],'outputs':[],'invocation':{'kind':'command','command':{'argv':['{python_exec}','-m','offline']}},
+            'metadata':{'execution_dependencies':dependencies}}}}
+    (root/'pack.yaml').write_text(yaml.safe_dump(body))
+    with pytest.raises(CanonicalPackValidationError,match='execution_dependencies|execution dependency'):
+        validate_canonical_pack(root)
+
+
 ROOT = Path(__file__).resolve().parents[2]
 PACK_SCHEMA_DIR = ROOT / "astrid/core/pack/schemas"
 

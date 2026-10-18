@@ -448,7 +448,6 @@
    ],
    "required_env": [],
    "required_binaries": [
-    "edge-tts",
     "ffmpeg",
     "ffprobe"
    ],

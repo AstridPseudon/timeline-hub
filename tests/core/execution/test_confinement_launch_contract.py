@@ -37,6 +37,42 @@ def plan(config, **kwargs):
     return host._confined_launch_plan([str(config.bootstrap_files[0]), "fixture"], policy=config, **kwargs)
 
 
+@pytest.mark.parametrize('changed',['executable','library','alias'])
+def test_selected_action_media_executable_and_library_pins_refuse_replacement(config,tmp_path,changed):
+    from astrid.core.execution.declared_executables import FilePin,ExecutableBinding
+    executable=tmp_path/'ffmpeg';executable.write_bytes(b'offline executable fixture');executable.chmod(0o700)
+    library=tmp_path/'codec.dylib';library.write_bytes(b'offline library fixture')
+    binding=ExecutableBinding('ffmpeg',FilePin.measure(executable),(FilePin.measure(library),),(),tuple(os.uname()))
+    directory=config.attempt_root/'.astrid-executables';directory.mkdir(mode=0o700)
+    (directory/'ffmpeg').symlink_to(executable)
+    policy=replace(config,executable_bindings=(binding,),executable_directory=directory)
+    assert plan(policy)
+    if changed=='executable':executable.write_bytes(b'substitute executable')
+    elif changed=='library':library.write_bytes(b'substitute library')
+    else:
+        (directory/'ffmpeg').unlink();(directory/'ffmpeg').symlink_to(library)
+    with pytest.raises(host.HostError):plan(policy)
+
+
+@pytest.mark.parametrize('argument',['https://host.invalid/audio','http://host.invalid/audio',
+    'tcp:127.0.0.1:443','udp:127.0.0.1:443','rtsp://host.invalid/audio','concat:https://host.invalid/a'])
+def test_selected_action_local_media_cannot_carry_urls(argument):
+    from astrid.core.execution.network_policy import _local_media_tool
+    for tool in ('ffmpeg','ffprobe'):
+        assert _local_media_tool([tool,'-i',argument,'local.wav']) is False
+        assert _local_media_tool([tool,'-i','input.mp3','output.wav']) is True
+    assert _local_media_tool(['edge-tts','--text','offline']) is False
+
+
+def test_selected_action_broker_policy_has_no_direct_upstream_egress(monkeypatch):
+    from astrid.core.execution import network_policy
+    monkeypatch.setattr(network_policy,'_POLICY',{'allowed_destinations':['http://127.0.0.1:43210']})
+    assert network_policy._allowed_destination('127.0.0.1',43210)
+    assert not network_policy._allowed_destination('127.0.0.1',43211)
+    assert not network_policy._allowed_destination('api.msedgeservices.com',443)
+    assert not network_policy._allowed_destination('speech.platform.bing.com',443)
+
+
 def test_valid_plan_separates_project_bootstrap_private_and_subprocess_authority(config):
     result = plan(config)
     profile = result.argv[2]
