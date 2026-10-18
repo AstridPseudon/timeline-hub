@@ -614,3 +614,7 @@ from astrid.sdk.timeline.manual_text import set_text as _set_manual_text  # noqa
 
 Clip.set_text = _composite_source_edit(_set_manual_text)
 _commands.register(Clip, "clip", ("set_text",))
+
+from astrid.sdk.timeline.element_reference import set_element as _set_element_reference
+# Command-only App projection, using the existing graph-command registry seam.
+_commands.REGISTRY["clip.set-element"] = _commands.Operation("clip.set-element", "clip", "set_element", _set_element_reference)

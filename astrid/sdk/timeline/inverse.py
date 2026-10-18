@@ -401,6 +401,8 @@ def apply_inverse(self, writes, publication):
         current = commands.state_at(states, sid, path)
         if not commands._same_value(current, write["before"]):
             raise commands.SemanticConflict("same-property", sid, path, write["before"], current, write["after"])
+    from astrid.sdk.timeline.element_reference import guard_inverse as guard_element_reference_inverse
+    guard_element_reference_inverse(tl, writes)
     from astrid.sdk.timeline.identity import cut_reservations, retain_cut_reservation_mark
     reservations = cut_reservations(tl.bundle)
     # Keep the exact guarded owner before a collection-absence write can remove
