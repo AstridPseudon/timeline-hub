@@ -88,7 +88,7 @@ export function normalizeShotRevisionAssets(
     else if (selected.has(id)) throw new Error(`Workspace Runtime internal timeline registry ${shotId}/${revisionId} selected asset ${id} is malformed`);
   }
   for (const id of selected) {
-    if (Object.hasOwn(registry ?? {}, id) && !record(registry?.[id])) {
+    if (Object.prototype.hasOwnProperty.call(registry ?? {}, id) && !record(registry?.[id])) {
       throw new Error(`Workspace Runtime internal timeline registry ${shotId}/${revisionId} selected asset ${id} is malformed`);
     }
   }
