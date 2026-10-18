@@ -693,7 +693,7 @@ def test_host_only_nonchild_stop_and_reconnect_never_signal(tmp_path, monkeypatc
 
 @pytest.mark.parametrize("selection,fault", [(s, None) for s in ("none", "unselected_matrix", "isolation", "matrix", "additional", "unavailable", "renderer")]
     + [("isolation", f) for f in ("seal", "release", "reply", "inspection_cleanup")])
-def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_without_engine(tmp_path,monkeypatch,selection,fault):
+def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_without_engine(tmp_path,monkeypatch,selection,fault,request):
     """Offline transport contract only; fake handles grant no native custody proof."""
     import threading
     from dataclasses import replace
@@ -837,6 +837,11 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
             hosted_contract.validate(binding, role='host')  # Real open pipe identities, before spawn.
         else:
             assert 'inspection_pipes' not in binding
+        # The fake child must retain the real anonymous endpoint just as a
+        # spawned child would. Preparation sends its preflight bytes directly;
+        # intercepting _frame_send covers only the later ordinary controls.
+        captures['control_peer'] = captures['hosted'].children['control'].dup()
+        request.addfinalizer(captures['control_peer'].close)
         descriptor=os.dup(captures['binding_fd'])
         def read_binding():
             data=b''
@@ -859,10 +864,13 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         captures['request'] = value
         return encode(value)
     monkeypatch.setattr(module, '_prepare_frame_encode', capture_preparation)
+    receive_frame = module._frame_receive
     def receive(channel, **kwargs):
         request = captures['request']
         if request.get('command') == 'abort_local_execution':
             return {**{k:v for k,v in request.items() if k != 'command'}, 'status':'cleaned', 'cleanup':{'host_children':'absent'}}
+        captures['control_peer'].settimeout(1)
+        assert receive_frame(captures['control_peer']) == request
         if fault == 'reply': raise ConflictError('offline reply refusal')
         return {'version':request['version'],'status':'prepared', 'operation_id':'op','channel_id':'channel',
             'owner_epoch':'epoch','execution_mode':'host_only_cpu', 'processes':{'host':{'pid':4242,'birth_id':'original'}},
@@ -1101,14 +1109,13 @@ def test_host_only_custody_scope_wrong_owner_never_grants_authority(tmp_path,mon
     assert not list(scope.iterdir())
 
 
-@pytest.mark.parametrize("case", ["ack", "unresolved", "broken_pipe", "eof", "exited", "wait_timeout", "missing_wait", "kill"])
-def test_host_only_cleanup_always_reaches_original_wait_and_keeps_graph_failure(tmp_path, monkeypatch, case):
+def _host_only_cleanup_case(tmp_path, monkeypatch, case):
     from test_local_worker import host_only_profile_case
     from runtime_protocol import local_worker_composition as module
     profile = host_only_profile_case()
     preparer = CrossProcessWorkerPreparer(profile=profile, config={}, environment={})
     calls, sent = [], []
-    state = {"exit": 7 if case == "exited" else None}
+    state = {"exit": 120 if case == "terminal120" else 7 if case == "exited" else None}
     class Retained:
         def poll(self):
             calls.append("poll")
@@ -1143,6 +1150,12 @@ def test_host_only_cleanup_always_reaches_original_wait_and_keeps_graph_failure(
     monkeypatch.setattr(module, "_frame_send", send)
     monkeypatch.setattr(module, "_frame_receive", receive)
     monkeypatch.setattr(preparer, "_host_only_report", lambda h: pytest.fail("cleanup required a live report"))
+    return preparer, handle, calls, sent, state
+
+
+@pytest.mark.parametrize("case", ["ack", "unresolved", "broken_pipe", "eof", "exited", "wait_timeout", "missing_wait", "kill"])
+def test_host_only_cleanup_always_reaches_original_wait_and_keeps_graph_failure(tmp_path, monkeypatch, case):
+    preparer, handle, calls, sent, state = _host_only_cleanup_case(tmp_path, monkeypatch, case)
     if case in {"ack", "kill"}:
         preparer.abort(handle)
         assert handle.closed and preparer._active is None and handle.cleanup_acknowledged
@@ -1598,3 +1611,49 @@ def test_selected_action_installed_release_projects_real_verified_host_binding(t
     assert 'edge_tts' not in payload['mapping']
     assert set(f.closure['distributions'])==set(gate.HOST_DISTRIBUTIONS)
     (tmp_path/'verified-host-action-projection.json').write_bytes(gate.canonical(payload['action_launch']))
+
+
+@pytest.mark.parametrize("case", ["terminal120", "ack"])
+@pytest.mark.parametrize("logger_fails", [False, True])
+def test_host_only_cleanup_retains_outcome_before_logger(tmp_path, monkeypatch, case, logger_fails):
+    from runtime_protocol import local_worker_composition as module
+    preparer, handle, calls, sent, state = _host_only_cleanup_case(tmp_path, monkeypatch, case)
+    handle.inspection_owner = SimpleNamespace(finish=lambda **kw: calls.append("inspection"))
+    def log(*args):
+        assert handle.cleanup_outcome["original_host_wait"] == (120 if case == "terminal120" else 0)
+        assert handle.cleanup_outcome["inspection_owner_settled"] is True
+        assert bool(preparer.cleanup_uncertain) == (case == "terminal120")
+        if logger_fails:
+            raise OSError("private-logger-value")
+    monkeypatch.setattr(module._LOGGER, "warning", log)
+    if case == "terminal120":
+        with pytest.raises(ConflictError, match="acknowledgement unresolved") as caught:
+            preparer.abort(handle)
+        assert caught.value.details["reason"] == "child_cleanup_acknowledgement_unresolved"
+        assert not handle.closed and preparer._active is handle and not sent
+    else:
+        preparer.abort(handle)
+        assert handle.closed and preparer._active is None
+    outcome = handle.cleanup_outcome
+    assert outcome["child_cleanup_acknowledged"] == (case == "ack")
+    assert outcome["complete_graph"] == (case == "ack")
+    assert outcome["logging_status"] == ("failed" if logger_fails else "written")
+    assert "private-logger-value" not in json.dumps(outcome)
+
+
+def test_host_only_cleanup_channel_failure_keeps_refusal_after_good_ack(tmp_path, monkeypatch):
+    preparer, handle, calls, sent, state = _host_only_cleanup_case(tmp_path, monkeypatch, "ack")
+    def close():
+        calls.append("close")
+        raise OSError("private-close-value")
+    handle.control.close = close
+    with pytest.raises(ConflictError, match="channel close unresolved") as caught:
+        preparer.abort(handle)
+    assert caught.value.details["reason"] == "cleanup_failed"
+    assert handle.cleanup_outcome["child_cleanup_acknowledged"] is True
+    assert handle.cleanup_outcome["original_host_wait"] == 0
+    assert handle.cleanup_outcome["complete_graph"] is True
+    assert handle.cleanup_outcome["secondary_error_codes"] == ["os_error", "os_error"]
+    assert not handle.closed and preparer._active is handle and preparer.cleanup_uncertain
+    assert calls.count("close") == 2
+    assert "private-" not in json.dumps(handle.cleanup_outcome)

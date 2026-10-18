@@ -39,6 +39,10 @@ from .local_worker import (
     _host_only,
     _secure_profile,
     _report_start_failure,
+    _cleanup_context,
+    _cleanup_error_code,
+    _cleanup_reason,
+    _retain_cleanup_context,
 )
 
 
@@ -161,6 +165,8 @@ class _PreparedWorker:
     cleanup_acknowledged: bool = False
     original_host_wait: int | None = None
     cleanup_errors: list[str] = field(default_factory=list)
+    cleanup_context: dict[str, Any] | None = None
+    cleanup_outcome: dict[str, Any] | None = None
 
 
 @dataclass
@@ -192,6 +198,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             # deadline. The daemon must not discard this active cleanup thread.
             self.shutdown_timeout_seconds = max(1.0, self.cleanup_timeout_seconds) * 3 + 1.0
         self._active: _PreparedWorker | None = None
+        self.cleanup_uncertain: str | None = None
         self._activation_binding = None
         self._generation_verifier = None
         self._adopted_handoff = None
@@ -516,6 +523,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             handle.report_value = self._host_only_report(handle)
             return handle
         except BaseException as primary:
+            _retain_cleanup_context(handle, phase="host_only_prepare", operation_id=operation_id,
+                                    initiating_error=primary)
             # Report before any close/abort wait: cleanup is secondary and can
             # outlive the caller's observation without settling this operation.
             try:
@@ -581,7 +590,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             bound = {k: handle.preparation[k] for k in ("version", "operation_id", "channel_id", "owner_epoch")}
             def record(exc):
                 if len(handle.cleanup_errors) < 6:
-                    handle.cleanup_errors.append(type(exc).__name__)
+                    handle.cleanup_errors.append(_cleanup_error_code(exc))
             try:
                 handle.original_host_wait = handle.retained.poll()
                 if handle.original_host_wait is None and not handle.cleanup_acknowledged:
@@ -643,18 +652,45 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 "child_cleanup_acknowledged": handle.cleanup_acknowledged,
                 "original_host_wait": handle.original_host_wait,
                 "complete_graph": handle.cleanup_acknowledged and handle.original_host_wait is not None and inspection_error is None,
-                "secondary_error_classes": handle.cleanup_errors}
+                "secondary_error_codes": list(handle.cleanup_errors), "logging_status": "pending"}
             if handle.inspection_owner is not None:
                 outcome["inspection_owner_settled"] = inspection_error is None
-            _LOGGER.warning("host-only cleanup outcome: %s", json.dumps(outcome, sort_keys=True))
+            reason = ("host-only original inspection owner unresolved" if inspection_error is not None else
+                "host-only child cleanup acknowledgement unresolved" if not handle.cleanup_acknowledged
+                else "host-only original Host wait unresolved")
+            outcome["reason"] = "cleanup_complete" if outcome["complete_graph"] else _cleanup_reason(reason)
+            # Keep the original result before either sink can fail. Diagnostic
+            # errors cannot replace the ACK/wait/inspection result or refusal.
+            if handle.cleanup_outcome is None:
+                handle.cleanup_outcome = outcome
+            if handle.cleanup_context is None:
+                handle.cleanup_context = _cleanup_context("cleanup", bound["operation_id"])
+            if not outcome["complete_graph"] and self.cleanup_uncertain is None:
+                self.cleanup_uncertain = reason
+            try:
+                _LOGGER.warning("host-only cleanup outcome: %s", json.dumps(handle.cleanup_outcome, sort_keys=True))
+            except BaseException as exc:
+                handle.cleanup_outcome["logging_status"] = "failed"
+                record(exc)
+            else:
+                handle.cleanup_outcome["logging_status"] = "written"
+            close_failed = False
             if handle.original_host_wait is not None:
-                handle.control.close()
-                handle.activation.close()
-            if not outcome["complete_graph"]:
-                self.cleanup_uncertain = ("host-only original inspection owner unresolved" if inspection_error is not None else
-                    "host-only child cleanup acknowledgement unresolved" if not handle.cleanup_acknowledged
-                    else "host-only original Host wait unresolved")
-                raise ConflictError(self.cleanup_uncertain)
+                for channel in (handle.control, handle.activation):
+                    try:
+                        channel.close()
+                    except BaseException as exc:
+                        record(exc)
+                        close_failed = True
+            handle.cleanup_outcome["secondary_error_codes"] = list(handle.cleanup_errors)
+            if close_failed and outcome["complete_graph"]:
+                # A settled graph does not prove that owner channel cleanup
+                # succeeded. Preserve the existing refusal on close failure.
+                handle.cleanup_outcome["reason"] = "cleanup_failed"
+                if self.cleanup_uncertain is None:
+                    self.cleanup_uncertain = "host-only cleanup channel close unresolved"
+            if not outcome["complete_graph"] or close_failed:
+                raise ConflictError(self.cleanup_uncertain, details={"reason": handle.cleanup_outcome["reason"]})
             handle.closed = True
             if self._active is handle:
                 self._active = None

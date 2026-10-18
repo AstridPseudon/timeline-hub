@@ -7,6 +7,7 @@ checks the process facts supplied by an OS inspector before issuing anything.
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import ipaddress
 import json
@@ -229,6 +230,91 @@ def _report_start_phase(phase, operation_id, started, outcome):
         pass
 
 
+_CLEANUP_REASONS = {
+    "cleanup_failed", "cleanup_deadline_exceeded", "retained_cleanup_uncertain",
+    "child_cleanup_acknowledgement_unresolved", "original_host_wait_unresolved",
+    "inspection_owner_unresolved", "host_only_recovery_unsupported", "cleanup_complete",
+}
+
+
+def _cleanup_error_code(exc: BaseException) -> str:
+    if isinstance(exc, OSError):
+        return "enospc" if exc.errno == errno.ENOSPC else "os_error"
+    if isinstance(exc, ConflictError):
+        return "conflict"
+    return "error"
+
+
+def _cleanup_reason(reason: BaseException | str) -> str:
+    # Never turn exception values or an adapter's arbitrary message into API data.
+    if not isinstance(reason, str):
+        return "cleanup_failed"
+    if reason in _CLEANUP_REASONS:
+        return reason
+    return {
+        "retained cleanup uncertainty requires capability recovery": "retained_cleanup_uncertain",
+        "host-only departed owner recovery is unsupported": "host_only_recovery_unsupported",
+        "host-only nonchild recovery requires original retained owner": "host_only_recovery_unsupported",
+        "host-only child cleanup acknowledgement unresolved": "child_cleanup_acknowledgement_unresolved",
+        "host-only original Host wait unresolved": "original_host_wait_unresolved",
+        "host-only original inspection owner unresolved": "inspection_owner_unresolved",
+    }.get(reason, "cleanup_failed")
+
+
+_CLEANUP_EXCEPTION_TYPES = (
+    ConflictError, ValidationError, TimeoutError, OSError, ValueError,
+    TypeError, RuntimeError, Exception, BaseException,
+)
+
+
+def _cleanup_context(phase="cleanup", operation_id=None, initiating_error=None) -> dict[str, Any]:
+    result = {"phase": phase if phase in {
+        "start", "prepare", "host_only_prepare", "observation", "activation",
+        "publication", "cleanup", "liveness",
+    } else "unknown"}
+    if isinstance(operation_id, str) and re.fullmatch(r"[0-9a-f]{32}", operation_id):
+        result["operation_id"] = operation_id
+    if isinstance(initiating_error, BaseException):
+        # Store bounded type/code evidence, never the exception, its message,
+        # traceback locals, or arbitrary adapter-supplied fields.
+        result["initiating_error"] = {
+            "exception_type": next(kind.__name__ for kind in _CLEANUP_EXCEPTION_TYPES
+                                   if isinstance(initiating_error, kind)),
+            "code": _cleanup_error_code(initiating_error),
+        }
+    elif isinstance(initiating_error, Mapping):
+        kind, code = initiating_error.get("exception_type"), initiating_error.get("code")
+        if kind in {item.__name__ for item in _CLEANUP_EXCEPTION_TYPES} and code in {
+            "enospc", "os_error", "conflict", "error",
+        }:
+            result["initiating_error"] = {"exception_type": kind, "code": code}
+    return result
+
+
+def _retain_cleanup_context(handle, *, phase, operation_id, initiating_error=None) -> None:
+    # Legacy adapters can use opaque handles. The original host-only owner has
+    # explicit storage; this diagnostic never creates ownership or authority.
+    if hasattr(handle, "__dict__") and getattr(handle, "cleanup_context", None) is None:
+        handle.cleanup_context = _cleanup_context(phase, operation_id, initiating_error)
+
+
+def _cleanup_outcome(handle) -> dict[str, Any] | None:
+    value = getattr(handle, "cleanup_outcome", None)
+    if not isinstance(value, Mapping):
+        return None
+    result = {"reason": _cleanup_reason(value.get("reason"))}
+    for key in ("child_cleanup_acknowledged", "complete_graph", "inspection_owner_settled"):
+        result[key] = value.get(key) if type(value.get(key)) is bool else None
+    wait = value.get("original_host_wait")
+    result["original_host_wait"] = wait if type(wait) is int and -(2**31) <= wait < 2**31 else None
+    status = value.get("logging_status")
+    result["logging_status"] = status if status in {"pending", "written", "failed"} else "unknown"
+    errors = value.get("secondary_error_codes", [])
+    result["secondary_error_codes"] = [e if e in {"enospc", "os_error", "conflict", "error"} else "error"
+        for e in errors[:6]] if isinstance(errors, list) else []
+    return result
+
+
 def _receipt_identity_digest_valid(
     profile: LocalWorkerProfile,
     receipt: Mapping[str, Any],
@@ -394,6 +480,8 @@ class LocalWorkerLauncher:
         self._cleanup_handles: list[object] = []
         self._prepare_cancel = threading.Event()
         self._orderly_handoff: _OrderlyHandoff | None = None
+        self._cleanup_failure: dict[str, Any] | None = None
+        self._cleanup_failure_handle: object | None = None
         self._cleanup_uncertain: str | None = None
         self._startup_receipt_rejection: str | None = None
         if any(_secure_profile(profile) for profile in self.profiles.values()):
@@ -443,22 +531,58 @@ class LocalWorkerLauncher:
         except OSError:
             pass
 
-    def _latch_cleanup_uncertain(self, reason: BaseException | str) -> None:
-        """Persist a fail-closed replacement fence at the first cleanup failure."""
-
-        message = type(reason).__name__ if isinstance(reason, BaseException) else str(reason)
+    def _latch_cleanup_uncertain(self, reason: BaseException | str, *, handle=None) -> None:
+        """Retain first refusal before attempting the existing durable fence."""
         with self._state_lock:
+            outcome = _cleanup_outcome(handle)
             if self._cleanup_uncertain is None:
-                self._cleanup_uncertain = message
-        atomic_json_write(
-            self.support_root / "orderly-handoff-cleanup-uncertain.json",
-            {
-                "version": 1,
-                "state": "cleanup_uncertain",
-                "runtime_pid": self.runtime_pid,
-                "reason": self._cleanup_uncertain,
-            },
-        )
+                self._cleanup_uncertain = _cleanup_reason(reason)
+            if getattr(self, "_cleanup_failure", None) is None:
+                context = getattr(handle, "cleanup_context", None) or {}
+                self._cleanup_failure_handle = handle
+                self._cleanup_failure = {
+                    "reason": (outcome["reason"] if outcome is not None and
+                        _cleanup_reason(reason) != "cleanup_deadline_exceeded" else _cleanup_reason(self._cleanup_uncertain)),
+                    **_cleanup_context(context.get("phase", "cleanup"), context.get("operation_id"),
+                                       context.get("initiating_error")),
+                    "outcome": outcome, "marker_persistence": "pending", "marker_error": None,
+                }
+            failure = self._cleanup_failure
+            if handle is self._cleanup_failure_handle and outcome is not None:
+                # A deadline may precede the original adapter's final outcome.
+                # Its later completion cannot replace the first refusal.
+                failure["outcome"] = outcome
+            try:
+                atomic_json_write(
+                    self.support_root / "orderly-handoff-cleanup-uncertain.json",
+                    {"version": 1, "state": "cleanup_uncertain", "runtime_pid": self.runtime_pid,
+                     "reason": failure["reason"],
+                     "diagnostic": {**failure, "marker_persistence": "written"}},
+                )
+            except BaseException as exc:
+                failure["marker_persistence"] = "failed"
+                if failure["marker_error"] is None:
+                    failure["marker_error"] = _cleanup_error_code(exc)
+            else:
+                failure["marker_persistence"] = "written"
+
+    def _cleanup_refusal_details(self) -> dict[str, Any]:
+        with self._state_lock:
+            failure = getattr(self, "_cleanup_failure", None)
+            if failure is not None:
+                # Return independent JSON data, never mutable owner state.
+                return json.loads(_canonical(failure))
+            handle = getattr(self.preparer, "_active", None)
+            context = getattr(handle, "cleanup_context", None) or {}
+            outcome = _cleanup_outcome(handle)
+            return {"reason": outcome["reason"] if outcome is not None else _cleanup_reason(
+                        self._cleanup_uncertain or getattr(self.preparer, "cleanup_uncertain", None)),
+                    **_cleanup_context(context.get("phase", "cleanup"), context.get("operation_id"),
+                                       context.get("initiating_error")),
+                    "outcome": outcome,
+                    "marker_persistence": "retained" if self._cleanup_uncertain ==
+                        "retained cleanup uncertainty requires capability recovery" else "not_attempted",
+                    "marker_error": None}
 
     def _receipt_shape_valid(self, metadata: Mapping[str, Any]) -> bool:
         receipt = metadata.get("local_launch_receipt")
@@ -818,21 +942,25 @@ class LocalWorkerLauncher:
             if any(handle is current for current in self._cleanup_handles):
                 return
             self._cleanup_handles.append(handle)
-        failures: list[BaseException] = []
         def cleanup() -> None:
             try:
                 self.preparer.abort(handle)
             except BaseException as exc:
                 # The adapter must itself signal only positively identified
                 # owned children. Cleanup failure cannot restore authority.
-                failures.append(exc)
-                self._latch_cleanup_uncertain(exc)
+                self._latch_cleanup_uncertain(exc, handle=handle)
+            else:
+                with self._state_lock:
+                    pending = (self._cleanup_uncertain is not None and
+                        getattr(self, "_cleanup_failure_handle", None) is handle)
+                if pending:
+                    self._latch_cleanup_uncertain("cleanup_deadline_exceeded", handle=handle)
 
         thread = threading.Thread(target=cleanup, name="local-worker-abort", daemon=True)
         thread.start()
         thread.join(max(0.0, float(timeout)))
         if thread.is_alive():
-            self._latch_cleanup_uncertain("cleanup_deadline_exceeded")
+            self._latch_cleanup_uncertain("cleanup_deadline_exceeded", handle=handle)
 
     def _control_alive(self, handle: object) -> bool:
         return bool(self.preparer.control_alive(handle))
@@ -1516,6 +1644,7 @@ class LocalWorkerLauncher:
             try:
                 preparation = getattr(handle, "preparation", None)
                 operation_id = preparation.get("operation_id") if isinstance(preparation, Mapping) else None
+                _retain_cleanup_context(handle, phase="liveness", operation_id=operation_id, initiating_error=exc)
                 _report_start_failure(exc, phase="liveness", operation_id=operation_id)
             except BaseException:
                 pass
@@ -1840,7 +1969,7 @@ class LocalWorkerLauncher:
             if self._startup_receipt_rejection is not None:
                 raise ConflictError(self._startup_receipt_rejection)
             if self._cleanup_uncertain is not None or getattr(self.preparer, "cleanup_uncertain", None):
-                raise ConflictError("local Worker graph cleanup is uncertain")
+                raise ConflictError("local Worker graph cleanup is uncertain", details=self._cleanup_refusal_details())
             profile = self._profile(profile_id, expected_workspace_uuid)
             detailed_start = _secure_profile(profile)
             with self._state_lock:
@@ -1979,6 +2108,7 @@ class LocalWorkerLauncher:
                 "evidence_digest": second["evidence_digest"],
             }
         except Exception as exc:
+            _retain_cleanup_context(handle, phase=phase, operation_id=operation_id, initiating_error=exc)
             try:
                 _report_start_failure(exc, phase=phase if detailed_start else "start",
                                       operation_id=operation_id if detailed_start else None)
