@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
-      ASTRID_RUNTIME_CHECKOUT: ${{ runner.temp }}/c12-runtime
+      ASTRID_RUNTIME_CHECKOUT: ${{ github.workspace }}/../c12-runtime
 
     steps:
       - name: Check out repository
@@ -203,7 +203,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 55
     env:
-      ASTRID_RUNTIME_CHECKOUT: ${{ runner.temp }}/c12-runtime
+      ASTRID_RUNTIME_CHECKOUT: ${{ github.workspace }}/../c12-runtime
 
     steps:
       - name: Check out repository
