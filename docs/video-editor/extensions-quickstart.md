@@ -7,9 +7,9 @@
 
 ---
 
-## 1. What is a Astrid App extension?
+## 1. What is an Astrid App extension?
 
-A Astrid App extension is a TypeScript module that uses **only** the public `@astrid/editor-sdk` entrypoint. Extensions declare their identity, contributions, and lifecycle in a single frozen manifest, then register behaviour imperatively during `activate()`.
+An Astrid App extension is a TypeScript module that uses **only** the public `@astrid/editor-sdk` entrypoint. Extensions declare their identity, contributions, and lifecycle in a single frozen manifest, then register behaviour imperatively during `activate()`.
 
 In V1, every extension is a **trusted-local extension**: it runs in the same browser JavaScript context as the Astrid App editor with full renderer privileges. There is no sandbox, no process isolation, and no capability enforcement. **Review extension source before enabling it in a shared project.** See the [Trust Envelope](./extensions-trust-envelope.md) for full details.
 

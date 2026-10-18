@@ -91,6 +91,23 @@ function readStore(databaseName: string, storeName: string): Promise<unknown[]> 
   });
 }
 
+function addStoreRecord(databaseName: string, storeName: string, value: unknown, key: IDBValidKey): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(databaseName);
+    request.addEventListener('error', () => reject(request.error), { once: true });
+    request.addEventListener('success', () => {
+      const database = request.result;
+      const transaction = database.transaction(storeName, 'readwrite');
+      transaction.objectStore(storeName).put(value, key);
+      transaction.addEventListener('complete', () => {
+        database.close();
+        resolve();
+      }, { once: true });
+      transaction.addEventListener('abort', () => reject(transaction.error), { once: true });
+    }, { once: true });
+  });
+}
+
 function readStoreSchema(databaseName: string, storeName: string): Promise<{ keyPath: string | string[] | null; indexes: string[] }> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(databaseName);
@@ -171,7 +188,7 @@ describe('Astrid browser rename migration', () => {
   it('copies every listed browser name, verifies the new state, then removes the old state', async () => {
     await seedEveryListedOldName();
 
-    await migrateAstridBrowserStorage();
+    expect(await migrateAstridBrowserStorage()).toEqual({ success: true });
 
     for (const key of OLD_LOCAL_STORAGE_KEYS) {
       expect(browserStorage.getItem(key.newName)).toBe(key.value);
@@ -217,13 +234,24 @@ describe('Astrid browser rename migration', () => {
 
   it('uses the completion marker to make a second run a no-op', async () => {
     await seedEveryListedOldName();
-    await migrateAstridBrowserStorage();
+    expect(await migrateAstridBrowserStorage()).toEqual({ success: true });
     browserStorage.setItem('astrid:videoEditor:pendingAdds', 'newer value');
 
-    await migrateAstridBrowserStorage();
+    expect(await migrateAstridBrowserStorage()).toEqual({ success: true });
 
     expect(browserStorage.getItem('astrid:videoEditor:pendingAdds')).toBe('newer value');
     expect(browserStorage.getItem(COMPLETION_KEY)).toBeTruthy();
+  });
+
+  it('migrates when the completion marker is nonempty but invalid', async () => {
+    await seedEveryListedOldName();
+    browserStorage.setItem(COMPLETION_KEY, 'invalid');
+
+    expect(await migrateAstridBrowserStorage()).toEqual({ success: true });
+
+    expect(browserStorage.getItem('astrid:videoEditor:pendingAdds')).toBe('["generation-1"]');
+    expect(browserStorage.getItem(OLD_LOCAL_STORAGE_KEYS[0].oldName)).toBeNull();
+    expect(browserStorage.getItem(COMPLETION_KEY)).toBe('complete');
   });
 
   it('leaves all old data and sets no marker when a copy fails part-way through', async () => {
@@ -236,7 +264,7 @@ describe('Astrid browser rename migration', () => {
     });
     const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-    await migrateAstridBrowserStorage();
+    expect(await migrateAstridBrowserStorage()).toMatchObject({ success: false, store: expect.stringContaining('localStorage') });
 
     for (const key of OLD_LOCAL_STORAGE_KEYS) expect(storage.getItem(key.oldName)).toBe(key.value);
     for (const prefix of OLD_LOCAL_STORAGE_PREFIXES) {
@@ -247,6 +275,73 @@ describe('Astrid browser rename migration', () => {
     expect(storage.getItem(COMPLETION_KEY)).toBeNull();
     expect(warning).toHaveBeenCalledOnce();
     expect(warning.mock.calls[0][0]).toContain('localStorage astrid:skipDeleteGenerationConfirm');
+  });
+
+  it('preserves divergent destination data after failure and refuses destructive retry', async () => {
+    await seedDatabase(OLD_DATABASES.timelineDrafts.oldName, [{
+      name: 'timeline-drafts',
+      options: { keyPath: 'key' },
+      records: [{ value: { key: 'timeline-1', draft: { title: 'Original' } } }],
+    }]);
+    const realDeleteDatabase = indexedDB.deleteDatabase.bind(indexedDB);
+    let failSourceCleanup = true;
+    vi.spyOn(indexedDB, 'deleteDatabase').mockImplementation((name) => {
+      if (name === OLD_DATABASES.timelineDrafts.oldName && failSourceCleanup) {
+        failSourceCleanup = false;
+        throw new Error('simulated source cleanup failure');
+      }
+      return realDeleteDatabase(name);
+    });
+
+    const firstAttempt = await migrateAstridBrowserStorage();
+    expect(firstAttempt).toMatchObject({ success: false, store: expect.stringContaining(OLD_DATABASES.timelineDrafts.newName) });
+    expect(await readStore(OLD_DATABASES.timelineDrafts.newName, 'timeline-drafts')).toEqual([
+      { key: 'timeline-1', draft: { title: 'Original' } },
+    ]);
+    expect(browserStorage.getItem(COMPLETION_KEY)).toBeNull();
+
+    vi.mocked(indexedDB.deleteDatabase).mockRestore();
+    await addStoreRecord(OLD_DATABASES.timelineDrafts.newName, 'timeline-drafts', {
+      key: 'timeline-2', draft: { title: 'Written after failed attempt' },
+    }, 'timeline-2');
+
+    const retry = await migrateAstridBrowserStorage();
+
+    expect(retry).toMatchObject({ success: false, store: expect.stringContaining('timeline-drafts') });
+    expect(await readStore(OLD_DATABASES.timelineDrafts.oldName, 'timeline-drafts')).toEqual([
+      { key: 'timeline-1', draft: { title: 'Original' } },
+    ]);
+    expect(await readStore(OLD_DATABASES.timelineDrafts.newName, 'timeline-drafts')).toEqual([
+      { key: 'timeline-1', draft: { title: 'Original' } },
+      { key: 'timeline-2', draft: { title: 'Written after failed attempt' } },
+    ]);
+    expect(browserStorage.getItem(COMPLETION_KEY)).toBeNull();
+  });
+
+  it('safely retries when the destination contains only the verified copied snapshot', async () => {
+    await seedDatabase(OLD_DATABASES.timelineDrafts.oldName, [{
+      name: 'timeline-drafts',
+      options: { keyPath: 'key' },
+      records: [{ value: { key: 'timeline-1', draft: { title: 'Original' } } }],
+    }]);
+    const realDeleteDatabase = indexedDB.deleteDatabase.bind(indexedDB);
+    let failSourceCleanup = true;
+    vi.spyOn(indexedDB, 'deleteDatabase').mockImplementation((name) => {
+      if (name === OLD_DATABASES.timelineDrafts.oldName && failSourceCleanup) {
+        failSourceCleanup = false;
+        throw new Error('simulated source cleanup failure');
+      }
+      return realDeleteDatabase(name);
+    });
+
+    expect(await migrateAstridBrowserStorage()).toMatchObject({ success: false });
+    vi.mocked(indexedDB.deleteDatabase).mockRestore();
+
+    expect(await migrateAstridBrowserStorage()).toEqual({ success: true });
+    expect(await readStore(OLD_DATABASES.timelineDrafts.newName, 'timeline-drafts')).toEqual([
+      { key: 'timeline-1', draft: { title: 'Original' } },
+    ]);
+    expect(browserStorage.getItem(COMPLETION_KEY)).toBeTruthy();
   });
 
   it('marks an uncloneable local media handle for re-import without dropping its entry', async () => {
@@ -262,7 +357,7 @@ describe('Astrid browser rename migration', () => {
       return realStructuredClone(value);
     });
 
-    await migrateAstridBrowserStorage();
+    expect(await migrateAstridBrowserStorage()).toEqual({ success: true });
 
     expect(await readStore(OLD_DATABASES.localMedia.newName, NEW_LOCAL_MEDIA_STORE)).toEqual([
       { kind: 'file', name: 'clip.mov', needsReimport: true },

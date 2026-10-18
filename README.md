@@ -14,7 +14,7 @@ React + Vite + TypeScript · TailwindCSS + shadcn-ui · Supabase (Postgres, Auth
 
 ```bash
 git clone https://github.com/banodoco/astrid-app
-cd astrid && npm install
+cd astrid-app && npm install
 
 cp .env.example .env.local    # required VITE_* vars, each commented
 supabase start                # launches Postgres, Auth, Storage, Realtime

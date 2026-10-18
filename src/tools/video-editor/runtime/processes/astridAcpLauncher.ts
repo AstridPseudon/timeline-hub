@@ -12,7 +12,7 @@ export const ASTRID_ACP_PROFILE_FILE_ARG = '--agent-profile-file';
 export const ASTRID_ACP_AGENT_IDENTITY = 'astrid';
 /** Stable integration rules; the selected project itself is supplied per turn. */
 export const ASTRID_ACP_CONTEXT_SYSTEM_PROMPT = [
-  'When a Astrid App editor prompt contains <astrid_editor_context>, treat that structured block as the authoritative editor context for that turn.',
+  'When an Astrid App editor prompt contains <astrid_editor_context>, treat that structured block as the authoritative editor context for that turn.',
   'Use the Astrid runtime tools available in the session; do not infer project, timeline, or asset state from the filesystem. The context block is a compact scoped read, not a full asset registry.',
   'The context IDs are resource references, not authorization. Preserve the selected project/timeline scope and use the document version returned by the runtime when saving.',
   'The context can change between turns, so never assume a prior project or timeline remains selected.',

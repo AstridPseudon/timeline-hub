@@ -994,7 +994,7 @@ describe('TimelineEditorShellCore — M6 export dropdown', () => {
 
     fireEvent.click(screen.getByText('Export'));
 
-    expect(screen.getByText('Render via Astrid')).toBeTruthy();
+    expect(screen.getByText('Render vian Astrid')).toBeTruthy();
     // Registered render formats are now actionable through common task admission.
     const formatItem = screen.getByText('MP4 Video');
     expect(formatItem).toBeTruthy();
@@ -1037,7 +1037,7 @@ describe('TimelineEditorShellCore — M6 export dropdown', () => {
     // Both sections visible
     expect(screen.getByText('Metadata JSON')).toBeTruthy();
     expect(screen.getByText('MP4 Video')).toBeTruthy();
-    expect(screen.getByText('Render via Astrid')).toBeTruthy();
+    expect(screen.getByText('Render vian Astrid')).toBeTruthy();
     // Compile-only enabled
     const compileMenuItem = screen.getByText('Metadata JSON').closest('[role="menuitem"]');
     expect(compileMenuItem).not.toHaveAttribute('aria-disabled', 'true');

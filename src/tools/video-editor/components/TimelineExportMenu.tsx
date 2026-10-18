@@ -59,7 +59,7 @@ export function TimelineExportMenu({
         {renderDependentExportFormats.length > 0 && (
           <>
             <DropdownMenuLabel className="text-[10px] text-muted-foreground/60">
-              Render via Astrid
+              Render vian Astrid
             </DropdownMenuLabel>
             {renderDependentExportFormats.map((fmt) => (
               <DropdownMenuItem

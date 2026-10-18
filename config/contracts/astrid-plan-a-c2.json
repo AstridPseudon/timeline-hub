@@ -4,12 +4,12 @@
   "revision": "C2",
   "issuedOn": "2026-09-24",
   "status": "frozen-local-contract",
-  "digest": "sha256:d2ec7f8128268d6c25bb955369da08432e0da0e2c8c697fdf6d2b8b545e30d1e",
+  "digest": "sha256:d5210a9da4fe9f5039d3946aa58a91524a290a8ebd8c40dd9eac47d0261e303d",
   "predecessor": {
     "path": "config/contracts/astrid-plan-a-c1.json",
     "revision": "C1",
-    "canonicalDigest": "sha256:38307a07134e3da89a887768d7b0c91be36175d5d02ef5ae2e316d7821523a20",
-    "rawFileSha256": "38635b25249995fc5ca2c501611de7b894f331ea8fe41ab7613f581f788789b1",
+    "canonicalDigest": "sha256:bce45d851aa4c92fe3abcf53379e5401d8180f8be10209acb69a5f4484c92e66",
+    "rawFileSha256": "e26cb8be966dc3f79b6d17e43d02d5649a9295f873afe928d7b5f9d43b11665b",
     "immutable": true
   },
   "authority": {
@@ -18,7 +18,6 @@
     "runtimeWireOwner": "astrid-runtime",
     "publicProjectionOwner": "astrid-agent",
     "appConsumerOwner": "astrid-app",
-    "workerPlacementOwner": "astrid-worker",
     "rules": [
       "C2 is a projection contract and never a Runtime wire schema, task store, binding store, queue, or supervisor.",
       "Runtime remains sole workspace, admission, attempt, fence, event, cancellation, retry, and settlement authority.",
@@ -130,39 +129,39 @@
   "sourceApplicability": [
     {
       "repository": "astrid-app",
-      "head": "c9cc077c96390bd482c5ec954057237dd3f79cdc",
+      "head": "a062e825ed3b335a6eb4175c0bf2a020e036120c",
       "path": "config/contracts/astrid-plan-a-c1.json",
-      "sha256": "38635b25249995fc5ca2c501611de7b894f331ea8fe41ab7613f581f788789b1",
+      "sha256": "e26cb8be966dc3f79b6d17e43d02d5649a9295f873afe928d7b5f9d43b11665b",
       "role": "immutable-predecessor",
       "status": "applicable"
     },
     {
       "repository": "astrid-app",
-      "head": "c9cc077c96390bd482c5ec954057237dd3f79cdc",
+      "head": "a062e825ed3b335a6eb4175c0bf2a020e036120c",
       "path": "scripts/quality/check-astrid-contract-freeze.mjs",
-      "sha256": "16409a746ffc84c4b1a06571dba1af4da04d31524cbb289a14f1313046f17f1e",
+      "sha256": "e0bb65543bcd1f42de0c18dd63089d374ec9394b670b74cfaffd299bd7f5ffbd",
       "role": "C1-validator-and-C2-gap-source",
       "status": "applicable-with-C2-successor"
     },
     {
       "repository": "astrid-agent",
-      "head": "6227cdd05cb8d971fe7a05385676e6ebeed432b9",
+      "head": "6c989a8602a189a3b080d05dcc0d18fecf138fcd",
       "path": "astrid/core/gateway/dispatch.py",
-      "sha256": "329caff2fe2b5ceeb1c08031a79874eafc6743ddc28e291e247ced5a271a04ac",
+      "sha256": "3ce0eb8fbc14712c5402493ebe8aa7998f2f4e64d33defa54bc7703b34074f11",
       "role": "public-doctor-consumer",
       "status": "downstream-I-07-I-08-conformance-required"
     },
     {
       "repository": "astrid-agent",
-      "head": "6227cdd05cb8d971fe7a05385676e6ebeed432b9",
+      "head": "6c989a8602a189a3b080d05dcc0d18fecf138fcd",
       "path": "astrid/sdk/workspace_client.py",
-      "sha256": "05b37afe89191bf3b723be45d1b55dc9449bed2bbdfa1a05d90e32ea6a48373c",
+      "sha256": "d088d220ec239f545bba5403321093b74e840f6cfe873779f53fcbb429e08a08",
       "role": "Runtime-client-consumer",
       "status": "applicable-runtime-authority-preserved"
     },
     {
       "repository": "astrid-runtime",
-      "head": "60e3efdbb9591c25c113402136bfb31b7dfcc4c4",
+      "head": "3b21334366fa8124f1a7b0d371cc4295821616f5",
       "path": "contract/schemas/doctor.json",
       "sha256": "d0caac9e7bf6a81d68abb52e757b321f7a45d4f2afff43bd4880089ea8dcc243",
       "role": "Runtime-doctor-wire",
@@ -170,50 +169,42 @@
     },
     {
       "repository": "astrid-runtime",
-      "head": "60e3efdbb9591c25c113402136bfb31b7dfcc4c4",
+      "head": "3b21334366fa8124f1a7b0d371cc4295821616f5",
       "path": "runtime_protocol/service.py",
-      "sha256": "c35416a7457cc7826ffe35632d08442eb91068c2c5a6201be35d88ed2343f85e",
+      "sha256": "ea323e1f1c24323f9b28e8609108cb7e265e5fa3d54675f503b1c5d3642521a3",
       "role": "Runtime-execution-authority",
       "status": "held-primary-overlay-pending-I-04-I-05"
-    },
-    {
-      "repository": "astrid-worker",
-      "head": "c2c6eca79f474033bfaedc6a8fa80f70940b057f",
-      "path": "source/runtime/entrypoints/worker.py",
-      "sha256": "1de77313553fb338e4044eae265ec26a067912c52a92c7f6ce56b764f586cf59",
-      "role": "worker-placement-producer-boundary",
-      "status": "no-C2-projection-change-I-06-proof-required"
     }
   ],
   "generatedClientCompatibility": {
-    "runtimeSchemaDigest": "sha256:904574dd9f347e335d3658d05bd2f788995cbcdd385a7b627dd9227d7479e4f8",
+    "runtimeSchemaDigest": "sha256:200c2553f54a7e41a6405518912dc6ee9577de25292afd46fc1fcccf68be0770",
     "authorityStatus": "held-primary-overlay-pending-I-04-I-05",
     "clients": [
       {
         "repository": "astrid-runtime",
         "language": "python",
         "generatedPath": "packages/python/astrid_runtime_client/generated.py",
-        "generatedSha256": "02703613029ab7940bd9fba238f19b8425ff92b098c115bb0fdc082cd5022469",
+        "generatedSha256": "0ae65e07e918f018e521bc9563f904b462645681e41e5a0b90255ad619a2c2e3",
         "metadataPath": "packages/python/astrid_runtime_client/contract_metadata.py",
-        "metadataSha256": "5ef4fc368cea2037c1942ec8c1097b159dd0aecefafb566d4fc123fd3ade5a5d",
+        "metadataSha256": "80fc75fd5bb5f8215624306f11b94893321b7d3d5725d9a647b7f13fc6abe3ef",
         "status": "canonical-candidate-input"
       },
       {
         "repository": "astrid-runtime",
         "language": "typescript",
         "generatedPath": "packages/typescript/src/generated.ts",
-        "generatedSha256": "3b9a6e003b7297204176431b69447aad18a383e2ddfae08a18e9b548d91ce742",
+        "generatedSha256": "82f1b330a257a8414f49f852a8604ed2692ee70c3482a9a45ff51df18bd77325",
         "metadataPath": "packages/typescript/src/contract-metadata.ts",
-        "metadataSha256": "68772f3a867c1d5357ef451206a5830650968bf2f28356e43882c65ccdc5fb2e",
+        "metadataSha256": "dd5f9c081b17c6e071d40658e114638e44d7320a2bb6ce2bcdde2ddb5386a692",
         "status": "canonical-candidate-input"
       },
       {
         "repository": "astrid-agent",
         "language": "python-vendored",
         "generatedPath": "astrid_runtime_client/generated.py",
-        "generatedSha256": "02703613029ab7940bd9fba238f19b8425ff92b098c115bb0fdc082cd5022469",
+        "generatedSha256": "0ae65e07e918f018e521bc9563f904b462645681e41e5a0b90255ad619a2c2e3",
         "metadataPath": "astrid_runtime_client/contract_metadata.py",
-        "metadataSha256": "c10367d5d44999857bfbebd6d9078433f2d3b2f5a2e6859952f36a0c633018f6",
+        "metadataSha256": "80fc75fd5bb5f8215624306f11b94893321b7d3d5725d9a647b7f13fc6abe3ef",
         "status": "generated-byte-parity-metadata-adds-provenance-only"
       }
     ],
@@ -221,10 +212,6 @@
       {
         "repository": "astrid-app",
         "status": "typed-task-route-adapter-is-lane-input-not-generated-authority"
-      },
-      {
-        "repository": "astrid-worker",
-        "status": "wire-producer-consumer-not-generated-client-owner"
       }
     ]
   },

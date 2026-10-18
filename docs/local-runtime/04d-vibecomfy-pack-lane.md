@@ -51,10 +51,9 @@ inputs, pump heartbeat, supervise runners, upload, and settle; it also owns the
 persistent JSONL protocol. This lane consumes those contracts and must not
 implement a second host or runtime control plane.
 
-Astrid App Worker owns GPU bootstrap, resource admission, telemetry, and eventual
-deletion of migrated route/template/adapter code. This lane does not modify
-Worker dispatch or delete Worker files; it supplies the replacement receipt and
-exact deletion target.
+This lane documents the VibeComfy adapter boundary. Runtime remains the
+authority for admission and settlement, while the host owns process
+supervision and the adapter owns engine-specific setup and output handling.
 
 Integration owns real GPU runs, immutable-SHA composition, and final
 cold/warm/cancel/restart/reclaim acceptance. This lane supplies GPU cases and
@@ -293,8 +292,6 @@ in-flight guard, `SessionConfig.warm_policy`, loader fingerprints, flush,
 extras.py` defines plugin/dynamic-root discovery; `registry/ready.py` defines
 repository versus dynamic templates and `pure_python` classification.
 
-Current migration surfaces are `Astrid/astrid/packs/vibecomfy/` (CLI escape
-hatch) and `astrid-worker/source/models/comfy/vibecomfy_adapter.py`,
-`source/task_handlers/tasks/template_routing.py`, and
-`source/task_handlers/tasks/task_execution.py` (behavior summarized in the
-replacement receipt and later deleted by Worker).
+The current migration surface is `Astrid/astrid/packs/vibecomfy/` (CLI escape
+hatch); this document does not claim ownership of a retired external worker
+repository.

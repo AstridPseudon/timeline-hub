@@ -289,9 +289,8 @@ function main(argv) {
   const roots = {};
   const flags = {
     '--app-root': 'astrid-app',
-    '--astrid-root': 'Astrid',
+    '--astrid-root': 'astrid-agent',
     '--runtime-root': 'astrid-runtime',
-    '--worker-root': 'astrid-worker',
   };
   try {
     for (let index = 0; index < argv.length; index += 1) {

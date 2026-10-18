@@ -75,6 +75,10 @@ interface PreparedDatabase extends Omit<DatabaseSnapshot, 'stores'> {
   stores: PreparedStore[];
 }
 
+export type BrowserMigrationResult =
+  | { success: true }
+  | { success: false; store: string; error: unknown };
+
 function requestResult<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     request.addEventListener('success', () => resolve(request.result), { once: true });
@@ -327,6 +331,31 @@ async function readDatabaseRecords(database: IDBDatabase): Promise<Array<{ name:
   return Promise.all(reads);
 }
 
+async function destinationDatabaseIsSafe(database: IDBDatabase, expected: PreparedDatabase): Promise<void> {
+  if (!schemasMatch(database, expected)) {
+    throw new Error(`Schema mismatch for IndexedDB ${expected.newName}`);
+  }
+
+  const destinationStores = await readDatabaseRecords(database);
+  for (const destinationStore of destinationStores) {
+    const expectedStore = expected.stores.find((store) => store.newName === destinationStore.name);
+    if (!expectedStore) throw new Error(`Unexpected destination store ${destinationStore.name}`);
+
+    for (const destinationRecord of destinationStore.records) {
+      let sourceRecord: PreparedRecord | undefined;
+      for (const candidate of expectedStore.records) {
+        if (globalThis.indexedDB.cmp(candidate.key, destinationRecord.key) === 0) {
+          sourceRecord = candidate;
+          break;
+        }
+      }
+      if (!sourceRecord || !(await valuesEqual(sourceRecord.value, destinationRecord.value))) {
+        throw new Error(`Destination data diverges in IndexedDB store ${destinationStore.name}`);
+      }
+    }
+  }
+}
+
 function createMappedSchema(database: IDBDatabase, expected: PreparedDatabase): void {
   for (const expectedStore of expected.stores) {
     const store = database.createObjectStore(expectedStore.newName, {
@@ -361,17 +390,17 @@ async function openMappedDatabase(expected: PreparedDatabase): Promise<IDBDataba
 async function writeAndVerifyDatabase(expected: PreparedDatabase): Promise<void> {
   const database = await openMappedDatabase(expected);
   try {
-    if (!schemasMatch(database, expected)) {
-      throw new Error(`Schema mismatch for IndexedDB ${expected.newName}`);
-    }
+    await destinationDatabaseIsSafe(database, expected);
 
     for (const expectedStore of expected.stores) {
       const transaction = database.transaction(expectedStore.newName, 'readwrite');
       const done = transactionComplete(transaction);
+      void done.catch(() => undefined);
       try {
         const store = transaction.objectStore(expectedStore.newName);
-        store.clear();
+        const existingKeys = await requestResult(store.getAllKeys());
         for (const record of expectedStore.records) {
+          if (existingKeys.some((key) => globalThis.indexedDB.cmp(key, record.key) === 0)) continue;
           if (expectedStore.keyPath === null) store.put(record.value, record.key);
           else store.put(record.value);
         }
@@ -447,6 +476,12 @@ function localStoragePlan(storage: Storage): Array<{ oldName: string; newName: s
 
 function writeAndVerifyLocalStorage(storage: Storage, entries: Array<{ oldName: string; newName: string; value: string }>): void {
   for (const entry of entries) {
+    const existing = storage.getItem(entry.newName);
+    if (existing !== null && existing !== entry.value) {
+      throw new Error(`Destination data diverges for localStorage key ${entry.newName}`);
+    }
+  }
+  for (const entry of entries) {
     try {
       storage.setItem(entry.newName, entry.value);
       if (storage.getItem(entry.newName) !== entry.value) {
@@ -469,6 +504,10 @@ function deleteOldLocalStorage(
       const latestValue = storage.getItem(entry.oldName);
       if (latestValue === null) continue;
       if (latestValue !== entry.value) {
+        const destinationValue = storage.getItem(entry.newName);
+        if (destinationValue !== null && destinationValue !== latestValue) {
+          throw new Error(`Destination data diverges for localStorage key ${entry.newName}`);
+        }
         storage.setItem(entry.newName, latestValue);
         if (storage.getItem(entry.newName) !== latestValue) {
           throw new Error('Read-back value mismatch after a concurrent update');
@@ -491,23 +530,32 @@ function warnStoreFailure(store: string, error: unknown): void {
 }
 
 /** Copy, verify, then remove all listed browser storage names once per origin. */
-export async function migrateAstridBrowserStorage(): Promise<void> {
-  if (typeof window === 'undefined') return;
-  const storage = window.localStorage;
+export async function migrateAstridBrowserStorage(): Promise<BrowserMigrationResult> {
+  if (typeof window === 'undefined') return { success: true };
+
+  const fail = (store: string, error: unknown): BrowserMigrationResult => {
+    warnStoreFailure(store, error);
+    return { success: false, store, error };
+  };
+
+  let storage: Storage;
+  try {
+    storage = window.localStorage;
+  } catch (error) {
+    return fail('localStorage access', error);
+  }
 
   try {
-    if (storage.getItem(COMPLETION_KEY) !== null) return;
+    if (storage.getItem(COMPLETION_KEY) === COMPLETION_VALUE) return { success: true };
   } catch (error) {
-    warnStoreFailure(`localStorage completion marker ${COMPLETION_KEY}`, error);
-    return;
+    return fail(`localStorage completion marker ${COMPLETION_KEY}`, error);
   }
 
   let localEntries: ReturnType<typeof localStoragePlan>;
   try {
     localEntries = localStoragePlan(storage);
   } catch (error) {
-    warnStoreFailure('localStorage source read', error);
-    return;
+    return fail('localStorage source read', error);
   }
 
   const snapshots: DatabaseSnapshot[] = [];
@@ -516,8 +564,7 @@ export async function migrateAstridBrowserStorage(): Promise<void> {
       const snapshot = await readDatabaseSnapshot(oldName, newName);
       if (snapshot) snapshots.push(snapshot);
     } catch (error) {
-      warnStoreFailure(`IndexedDB database ${oldName}`, error);
-      return;
+      return fail(`IndexedDB database ${oldName}`, error);
     }
   }
 
@@ -526,44 +573,48 @@ export async function migrateAstridBrowserStorage(): Promise<void> {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'write/read-back error';
     const store = message.match(/localStorage key ([^ ]+)/)?.[1] ?? 'localStorage';
-    warnStoreFailure(`localStorage ${store}`, error);
-    return;
+    return fail(`localStorage ${store}`, error);
   }
 
   const preparedDatabases: PreparedDatabase[] = [];
   for (const snapshot of snapshots) {
     try {
       const prepared = await prepareDatabase(snapshot);
+      const existing = await openMappedDatabase(prepared);
+      try {
+        await destinationDatabaseIsSafe(existing, prepared);
+      } finally {
+        existing.close();
+      }
       await writeAndVerifyDatabase(prepared);
       preparedDatabases.push(prepared);
     } catch (error) {
-      warnStoreFailure(`IndexedDB database ${snapshot.oldName}`, error);
-      return;
+      const message = error instanceof Error ? error.message : '';
+      const store = message.match(/IndexedDB store ([^ ]+)/)?.[1];
+      return fail(store ? `IndexedDB ${snapshot.newName} / ${store}` : `IndexedDB database ${snapshot.newName}`, error);
     }
   }
 
+  let cleanupStore = 'localStorage cleanup';
   try {
+    cleanupStore = 'localStorage source keys';
     deleteOldLocalStorage(storage, localEntries);
     for (const database of preparedDatabases) {
+      cleanupStore = `IndexedDB database ${database.newName}`;
       await deleteDatabase(database.oldName);
     }
+    cleanupStore = `localStorage completion marker ${COMPLETION_KEY}`;
     storage.setItem(COMPLETION_KEY, COMPLETION_VALUE);
     if (storage.getItem(COMPLETION_KEY) !== COMPLETION_VALUE) {
       throw new Error(`Read-back value mismatch for localStorage completion marker ${COMPLETION_KEY}`);
     }
+    return { success: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'source cleanup or marker error';
-    const localStorageKey = message.match(/localStorage key ([^ ]+)/)?.[1];
-    const store = message.includes('IndexedDB')
-      ? message
-      : localStorageKey
-        ? `localStorage ${localStorageKey}`
-        : 'localStorage cleanup or completion marker';
     try {
       storage.removeItem(COMPLETION_KEY);
     } catch {
       // Keep the original failure as the diagnostic; the next run checks the marker first.
     }
-    warnStoreFailure(store, error);
+    return fail(cleanupStore, error);
   }
 }

@@ -1,6 +1,6 @@
 /**
  * Shared runtime assembly for the video editor's two host providers:
- * `VideoEditorProvider` (Astrid app shell) and `EditorRuntimeProvider`
+ * `VideoEditorProvider` (Astrid App shell) and `EditorRuntimeProvider`
  * (embed/browser host). Internal host-only wiring — not part of the
  * supported public SDK surface.
  *

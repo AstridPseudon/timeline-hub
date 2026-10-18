@@ -8,7 +8,7 @@
  * reaches main), update MANUAL_SETUP_STEPS and RECONNECT_COMMAND to match.
  */
 
-export const ASTRID_REPO = 'https://github.com/peteromallet/astrid-agent';
+export const ASTRID_REPO = 'https://github.com/banodoco/astrid-agent';
 export const ASTRID_SETUP_REF = 'main';
 
 const blobUrl = (path: string) => `${ASTRID_REPO}/blob/${ASTRID_SETUP_REF}/${path}`;
@@ -53,7 +53,7 @@ export const ASTRID_STUDIO_MESSAGE = `Hi Astrid, I've just installed you. Please
 2. If local: ask whether I already use ComfyUI and where my model files are, and point Astrid at my existing model folders (extra_model_paths.yaml) instead of downloading them again. Ask which models I like, offer the local ones your catalog supports, and tell me each download's size before fetching it.
 3. For APIs or RunPod: have me store each key with astrid-credential, never in chat, and tell me roughly what generations cost.
 4. Ask if I have ComfyUI workflows to bring in. Import each with vibecomfy, and wrap simple prompt-driven ones with comfy_wrap so I can use them by name.
-5. Create a first project and make one quick test generation, so I can see it in the Astrid app.
+5. Create a first project and make one quick test generation, so I can see it in the Astrid App.
 
 Then summarise what's set up and ask what I'd like to make.`;
 
@@ -83,7 +83,7 @@ Rules:
 - Keep any existing Astrid install, credentials and agent instructions; don't use --force.
 - Never ask me to paste API keys into chat. When a key is needed, have me enter it locally: astrid-credential set <provider>
 - Leave Astrid's Runtime running when you finish; I'll be using it.
-The install is done when every check in the guide's "Check the complete setup" section passes. Report each briefly, and never mark a blocked or skipped check as passed. The Astrid app watches the Runtime itself and shows me "You're set up", so you don't need to ask me to refresh anything.
+The install is done when every check in the guide's "Check the complete setup" section passes. Report each briefly, and never mark a blocked or skipped check as passed. The Astrid App watches the Runtime itself and shows me "You're set up", so you don't need to ask me to refresh anything.
 
 FINALLY: HAND OVER TO ASTRID
 Astrid has its own agent (the astrid command, which runs on oh-my-pi). Make sure running astrid opens it; if something it needs is missing, install that too. Then run astrid --onboard with me so I can choose the AI model Astrid uses.
@@ -112,7 +112,7 @@ export const MANUAL_SETUP_INTRO: Record<SetupPlatform, string> = {
 export const PLATFORM_VALIDATED: Record<SetupPlatform, boolean> = { unix: true, windows: false };
 
 // The Runtime revision ASTRID_SETUP_REF's guide pins; update it with the guide.
-const RUNTIME_PIN = 'bc74a4b2179de83ace55c35fa6371f10e1e58610';
+const RUNTIME_PIN = '3b21334366fa8124f1a7b0d371cc4295821616f5';
 const SOURCE_PROFILE = "import json, pathlib; r = pathlib.Path.cwd().resolve(); (r / 'astrid-source-profile.json').write_text(json.dumps({'profile': 'astrid', 'source_checkout': str(r / 'Astrid'), 'runtime_checkout': str(r / 'Runtime'), 'runtime_environment': str(r / '.venv')}, indent=2))";
 
 /** Mirrors ASTRID_SETUP_REF's docs/setup/README.md, step for step, in each platform's shell. */
@@ -128,7 +128,7 @@ export const MANUAL_SETUP_STEPS: Record<SetupPlatform, readonly ManualSetupStep[
       detail: 'In a new folder. The Runtime is pinned to the revision this version of Astrid was tested with.',
       command: [
         'mkdir ~/astrid-local && cd ~/astrid-local',
-        'git clone https://github.com/peteromallet/astrid-agent.git',
+        'git clone https://github.com/banodoco/astrid-agent.git Astrid',
         'git clone https://github.com/banodoco/astrid-runtime.git Runtime',
         `git -C Runtime checkout ${RUNTIME_PIN}`,
         'python3 -m venv .venv && source .venv/bin/activate',
@@ -173,7 +173,7 @@ export const MANUAL_SETUP_STEPS: Record<SetupPlatform, readonly ManualSetupStep[
       detail: 'In a new folder. The Runtime is pinned to the revision this version of Astrid was tested with.',
       command: [
         'mkdir ~\\astrid-local; cd ~\\astrid-local',
-        'git clone https://github.com/peteromallet/astrid-agent.git',
+        'git clone https://github.com/banodoco/astrid-agent.git Astrid',
         'git clone https://github.com/banodoco/astrid-runtime.git Runtime',
         `git -C Runtime checkout ${RUNTIME_PIN}`,
         'py -3.11 -m venv .venv; .\\.venv\\Scripts\\Activate.ps1',
