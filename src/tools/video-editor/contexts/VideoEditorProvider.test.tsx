@@ -30,7 +30,7 @@ import {
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { EditorRuntimeProvider } from '@/tools/video-editor/contexts/EditorRuntimeProvider';
 import type { VideoEditorScopedServices } from '@/tools/video-editor/browser/scopedServices';
-import { buildVideoEditorLightboxMedia, VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider';
+import { buildVideoEditorLightboxMedia, readGalleryGenerationSelection, VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider';
 import { ExtensionSettingsPanel } from '@/tools/video-editor/components/ExtensionSettings/ExtensionSettingsPanel';
 import type { EffectRegistryRecord } from '@/tools/video-editor/effects/registry/types';
 import { useEffectRegistryContext } from '@/tools/video-editor/effects/registry/EffectRegistryContext';
@@ -784,6 +784,31 @@ describe('VideoEditorProvider', () => {
     operationalChromeState.store = null;
     operationalChromeState.isConflictExhausted = false;
     operationalChromeState.renderStatus = 'idle';
+  });
+
+  it('keeps the exact Runtime Gallery selection for typed timeline additions and refuses mismatches', async () => {
+    const request = {
+      projectId: 'project-1',
+      asset: `sha256:${'a'.repeat(64)}`,
+      generationId: 'generation-1',
+      variantId: 'variant-1',
+    };
+    const response = {
+      asset: request.asset,
+      generation_id: request.generationId,
+      variant_id: request.variantId,
+      object_id: request.asset,
+      catalog_digest: `sha256:${'b'.repeat(64)}`,
+    };
+    const getProjectMediaSelection = vi.fn(async () => response);
+    const provider: Pick<DataProvider, 'getProjectMediaSelection'> = { getProjectMediaSelection };
+
+    await expect(readGalleryGenerationSelection(provider, request)).resolves.toBe(response);
+    expect(getProjectMediaSelection).toHaveBeenCalledExactlyOnceWith(request);
+
+    getProjectMediaSelection.mockResolvedValueOnce({ ...response, generation_id: 'other-generation' });
+    await expect(readGalleryGenerationSelection(provider, request)).resolves.toBeNull();
+    expect(getProjectMediaSelection).toHaveBeenCalledTimes(2);
   });
 
 

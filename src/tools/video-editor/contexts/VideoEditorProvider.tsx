@@ -81,6 +81,9 @@ import { createProposalPersistenceBridge, type ProposalPersistenceProvider } fro
 import type { ProcessManager } from '@/tools/video-editor/runtime/processes/ProcessManager.ts';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 import type { ResolvedAssetRegistryEntry } from '@/tools/video-editor/types/index.ts';
+import type { SelectedProjectMediaIdentity } from '@/shared/contracts/selectedProjectMedia.ts';
+import { readSelectedProjectMediaIdentity } from '@/tools/video-editor/commands/selectedProjectMedia.ts';
+import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers.ts';
 import { publishLocalTestExtensionDiagnostics } from '@/app/localTestRuntime.ts';
 import {
   withCanonicalShotDraftLock,
@@ -174,6 +177,34 @@ function isGenerationRow(value: unknown): value is GenerationRow {
   ) && (
     value.params === undefined || isRecord(value.params)
   );
+}
+
+/**
+ * Resolve the current Runtime selection for a staged Gallery item. Providers
+ * without this capability retain their legacy prepared-media behavior; a
+ * present selector is authoritative and any malformed or mismatched response
+ * is a refusal.
+ */
+export async function readGalleryGenerationSelection(
+  provider: Pick<DataProvider, 'getProjectMediaSelection'>,
+  request: { projectId: string; asset: string; generationId: string; variantId: string },
+): Promise<SelectedProjectMediaIdentity | null | undefined> {
+  if (!provider.getProjectMediaSelection) return undefined;
+  let response: unknown;
+  try {
+    response = await provider.getProjectMediaSelection.call(provider, request);
+  } catch {
+    return null;
+  }
+  const identity = readSelectedProjectMediaIdentity(response);
+  if (!identity || identity.asset !== request.asset
+    || identity.generation_id !== request.generationId
+    || identity.variant_id !== request.variantId
+    || identity.object_id !== request.asset) {
+    return null;
+  }
+  // Keep the exact helper response object. Do not reconstruct its identity.
+  return identity;
 }
 
 function isVideoEditorMediaLightboxProps(
@@ -554,8 +585,40 @@ export function VideoEditorRuntimeContent({
             processed.push(generationId);
             continue;
           }
+          const canonicalGenerationId = getGenerationId(generation) ?? generation.id;
+          const mediaSelector = runtime.provider.getProjectMediaSelection;
+          let selectedMedia: SelectedProjectMediaIdentity | undefined;
+          if (mediaSelector) {
+            const asset = generation.media_id;
+            const variantId = generation.primary_variant_id;
+            if (!asset || !variantId || !runtime.project.projectId) {
+              runtime.toast.error('Could not resolve the registered project media selection');
+              processed.push(generationId);
+              continue;
+            }
+            const resolvedSelection = await readGalleryGenerationSelection(runtime.provider, {
+              projectId: runtime.project.projectId,
+              asset,
+              generationId: canonicalGenerationId,
+              variantId,
+            });
+            if (!resolvedSelection) {
+              runtime.toast.error('Could not resolve the registered project media selection');
+              processed.push(generationId);
+              continue;
+            }
+            selectedMedia = resolvedSelection;
+            log('[video-editor] Gallery selection resolved for timeline add', {
+              projectId: runtime.project.projectId,
+              timelineId: runtime.timelineId,
+              generationId: canonicalGenerationId,
+              selectedMedia,
+            });
+          }
           const registrationPlan = planGenerationAssetRegistration({
-            generationId: generation.id,
+            ...(selectedMedia ? { assetId: selectedMedia.asset } : {}),
+            generationId: canonicalGenerationId,
+            ...(selectedMedia ? { variantId: selectedMedia.variant_id } : {}),
             mediaId: generation.media_id,
             variantType: generation.type === 'video' ? 'video' : 'image',
             imageUrl: generation.location ?? generation.imageUrl ?? '',
@@ -578,36 +641,21 @@ export function VideoEditorRuntimeContent({
             (max, clip) => Math.max(max, clip.at + getClipTimelineDuration(clip)),
             0,
           );
-          const preparedCommand = {
-            type: 'place-prepared-media',
-            payload: {
-              asset: {
-                assetKey: registrationPlan.assetId,
-                mediaType,
-                durationSeconds: registrationPlan.assetEntry.duration ?? null,
-                entry: registrationPlan.assetEntry,
-                source: 'registered',
-              },
-              at: timelineEnd,
-              selectedTrackId: editorForDrop.selectedTrackId,
+          const placed = editorForDrop.commands.addClip({
+            preparedAsset: {
+              assetKey: registrationPlan.assetId,
+              mediaType,
+              durationSeconds: registrationPlan.assetEntry.duration ?? null,
+              entry: registrationPlan.assetEntry,
+              source: 'registered',
+              ...(selectedMedia ? { selectedMedia } : {}),
             },
-          } as const;
-          const preview = editorForDrop.commands.dryRun(preparedCommand);
-          if (preview.status === 'rejected') {
-            console.error('[video-editor] Staged generation asset could not be planned', { assetKey: registrationPlan.assetId });
-            runtime.toast.error(preview.errors[0]?.message ?? 'Could not place asset');
-            processed.push(generationId);
-            continue;
-          }
-          const detail = preview.commandResults[0]?.detail;
-          const placed = editorForDrop.commands.apply(preparedCommand, {
-            semantic: true,
-            selectedClipId: typeof detail?.clipId === 'string' ? detail.clipId : undefined,
-            selectedTrackId: typeof detail?.trackId === 'string' ? detail.trackId : editorForDrop.selectedTrackId,
+            time: timelineEnd,
+            ...(editorForDrop.selectedTrackId ? { trackId: editorForDrop.selectedTrackId } : {}),
           });
-          if (placed.status === 'rejected') {
+          if (!placed.ok) {
             console.error('[video-editor] Staged generation asset could not be placed', { assetKey: registrationPlan.assetId });
-            runtime.toast.error(placed.errors[0]?.message ?? 'Could not place asset');
+            runtime.toast.error(placed.error.message ?? 'Could not place asset');
           }
           processed.push(generationId);
           // Allow React to commit the clip before the next iteration reads clips.
