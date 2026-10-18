@@ -1355,7 +1355,7 @@ export default function VideoEditorPage() {
   const localTimelinesPending =
     discovery.timelinesQuery.isPending ||
     (!localTimelineId &&
-      (discovery.timelinesQuery.data?.timelines.length ?? 0) > 0);
+      (discovery.timelinesQuery.data?.timelines?.length ?? 0) > 0);
 
   const selectors = useMemo(
     () => (

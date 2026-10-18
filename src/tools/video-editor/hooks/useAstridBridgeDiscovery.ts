@@ -278,13 +278,14 @@ export function useAstridBridgeDiscovery({
           'timelines list',
           onBridgeRequest,
         );
-        const runtime = selectedProject?.project_id ? new ReighRuntimeClient() : null;
+        const runtimeProjectId = selectedProject?.project_id ?? null;
+        const runtime = runtimeProjectId ? new ReighRuntimeClient() : null;
         const timelines = await Promise.all(payload.items.map(async (timeline) => {
           let name = timeline.name?.trim() || undefined;
-          if ((!name || name === timeline.timeline_id) && runtime && timeline.head_revision_id) {
+          if ((!name || name === timeline.timeline_id) && runtime && runtimeProjectId && timeline.head_revision_id) {
             try {
               const revision = await runtime.getProjectParentCompositionRevision(
-                selectedProject.project_id!,
+                runtimeProjectId,
                 timeline.timeline_id,
                 timeline.head_revision_id,
               );
