@@ -177,9 +177,12 @@ describe('real panel → real hooks → owned ACP transport', () => {
   it('recovers accepted delivery after a lost response and fresh module reload without resending', async () => {
     fixture.seed('p1');
     fixture.acceptedResponseFailure = new Error('Response lost after acceptance');
+    // Keep replay unavailable until the reload; the separate durable-disconnect test covers immediate reconciliation.
+    fixture.onPrompt = async () => { fixture.loadFailure = new Error('Replay unavailable until reload'); };
     const first = mount();
     await send('Accepted before connection failed');
     await screen.findByRole('button', { name: 'Retry saved message' });
+    await waitFor(() => expect(fixture.chat('p1').draft.queued_messages).toHaveLength(1));
     const savedId = fixture.chat('p1').draft.queued_messages[0].id;
     const prompt = fixture.calls.find(call => call.route.endsWith('/prompt'))!;
     const captured = JSON.parse(prompt.body.prompt[1].text.replace('<astrid_editor_context>', '').replace('</astrid_editor_context>', ''));
@@ -187,6 +190,8 @@ describe('real panel → real hooks → owned ACP transport', () => {
     first.unmount();
     await freshModules();
     fixture.acceptedResponseFailure = null;
+    fixture.loadFailure = null;
+    fixture.onPrompt = null;
     mount();
     await waitFor(() => expect(fixture.chat('p1').draft.queued_messages).toEqual([]));
     expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(1);
