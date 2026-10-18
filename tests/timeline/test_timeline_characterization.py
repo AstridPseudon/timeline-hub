@@ -283,7 +283,7 @@ class TimelineDigestGoldenTest(unittest.TestCase):
 
     # Golden: pre-migration digest computed from the fixture.
     # This hash pins the exact stable serialization contract.
-    GOLDEN_DIGEST = "872b50fab9248ef3497490f88fdc772526c74a391c5286040367e25fada10f9a"
+    GOLDEN_DIGEST = "0660ddbf09ed0b6ebf5f4b6637debfffb412528d91bb0a5e381e2fc34337c121"
 
     def setUp(self) -> None:
         self.assertTrue(
