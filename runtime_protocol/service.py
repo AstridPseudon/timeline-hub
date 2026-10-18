@@ -2122,7 +2122,7 @@ class RuntimeService(TimelineCommitAcceptance):
         """Expose the canonical receipt facts committed with the mutation."""
         if row is None or row["txn_id"] is None:
             return None
-        result = command_result(row["result_json"], kind=row["command_kind"], created_at=None if row["command_kind"] in {"object.ingest", "media.import", "parent_composition.publish", "timeline.commit", "timeline.purge"} else row["created_at"], connection=self.store.conn)
+        result = command_result(row["result_json"], kind=row["command_kind"], created_at=None if row["command_kind"] in {"object.ingest", "media.import", "generation.duplicate", "parent_composition.publish", "timeline.commit", "timeline.purge"} else row["created_at"], connection=self.store.conn)
         return {
             "receipt_id": row["txn_id"],
             "command_kind": row["command_kind"],
@@ -2173,7 +2173,7 @@ class RuntimeService(TimelineCommitAcceptance):
             if kind == "timeline.commit":
                 raise ConflictError("idempotency key was already used with different input", details={"code": "RequestIdConflict", "stored_request_hash": prior["request_hash"]})
             raise ConflictError("idempotency key was already used with different input")
-        result = command_result(prior["result_json"], kind=kind, created_at=None if kind in {"object.ingest", "media.import", "parent_composition.publish", "timeline.commit", "timeline.purge"} else prior["created_at"], connection=self.store.conn)
+        result = command_result(prior["result_json"], kind=kind, created_at=None if kind in {"object.ingest", "media.import", "generation.duplicate", "parent_composition.publish", "timeline.commit", "timeline.purge"} else prior["created_at"], connection=self.store.conn)
         if project_id is not None and with_receipt:
             result = {"data": result, "receipt": self._receipt_payload(prior, project_id=project_id)}
         return True, result
@@ -4680,6 +4680,80 @@ class RuntimeService(TimelineCommitAcceptance):
         value["generation_id"] = value.pop("id")
         value["metadata"] = json.loads(value.pop("metadata_json"))
         return value
+
+    @_durable_mutation
+    def duplicate_project_generation(self, project_id, body, *, idempotency_key, identity):
+        """Copy registered metadata, never bytes, task provenance or publication.
+
+        Acquisition is its own durable transaction. Timeline placement consumes
+        the returned selection later, and cannot roll this receipt back.
+        """
+        from .timeline_commit import _media_selection, _publisher, digest
+        _publisher(identity, None)
+        if "projects:write" not in identity.get("scopes", []):
+            raise AuthorizationError("explicit projects:write scope required")
+        grant = identity.get("_paired_session")
+        if grant is not None:
+            from .paired_session import SessionGrant
+            if not isinstance(grant, SessionGrant) or self._task_authority_owner is None:
+                raise AuthorizationError("authenticated paired session required")
+            if (grant.realm_id != self.realm["id"] or grant.actor != identity["actor"]
+                    or grant.credential_binding != identity.get("_credential_binding")):
+                raise AuthorizationError("paired session principal or realm mismatch")
+            binding = self._task_authority_owner.task_binding(
+                grant, project_id=project_id, operation="generation.duplicate")
+        else:
+            if identity.get("connector_assertion"):
+                raise AuthorizationError("authenticated paired session required")
+            binding = TaskAuthorityBinding(1, "credential", self.runtime_session_id,
+                self.realm["id"], identity["actor"], identity.get("_credential_binding"),
+                project_id, "generation.duplicate", identity.get("expires_at"))
+        # Revalidate durable credential/session/expiry/revocation before lookup
+        # or replay; a committed result does not confer continuing authority.
+        self._resolve_task_authority(binding, scope="projects:write")
+        project = self.store.get_project(project_id)
+        if project["id"] != project_id or project["realm_id"] != self.realm["id"]:
+            raise AuthorizationError("canonical project in request realm required")
+        if not isinstance(body, dict) or set(body) != {"source"}:
+            raise ValidationError("duplicate requires only an exact source selection")
+        _media_selection(body["source"], require_digest=True)
+        source_selection = dict(body["source"])
+        validate_idempotency_key(idempotency_key)
+        if idempotency_key is None:
+            raise ValidationError("duplication requires an idempotency key")
+        request_hash = digest({"project_id": project_id, "source": source_selection})
+        replay = self._command_replay("generation.duplicate", project_id,
+            idempotency_key, request_hash, project_id=project_id)
+        if replay is not None:
+            return replay
+        source = self._selected_project_media(project_id, source_selection)
+        if source["entry"]["media_type"].startswith(("video/", "audio/")) and "duration_seconds" not in source["entry"]:
+            raise ValidationError("metadata copy requires intrinsic source duration")
+        generation_id, variant_id, created_at = new_id(), new_id(), now()
+        lineage = {"realm_id": self.realm["id"], "project_id": project_id,
+                   "source": source_selection}
+        # Only intrinsic metadata is copied. A managed-output association stays
+        # owned by its original settled generation/variant, reached via lineage.
+        intrinsic = {key: source["entry"][key] for key in (
+            "duration_seconds", "width", "height", "size", "media_type") if key in source["entry"]}
+        generation_metadata = {"params": intrinsic, "runtime_metadata_copy": lineage}
+        variant_metadata = {**intrinsic, "runtime_metadata_copy": lineage}
+        self.store.conn.execute(
+            "INSERT INTO generations(id,project_id,source_task_id,type,status,metadata_json,version,created_at,updated_at) "
+            "VALUES (?,?,NULL,?,'completed',?,1,?,?)",
+            (generation_id, project_id, source["generation"]["type"], canonical_json(generation_metadata), created_at, created_at))
+        self.store.conn.execute(
+            "INSERT INTO generation_variants(id,generation_id,object_id,variant_type,metadata_json,created_at) VALUES (?,?,?,?,?,?)",
+            (variant_id, generation_id, source["object_id"][7:], source["variant"]["variant_type"], canonical_json(variant_metadata), created_at))
+        selection = self.get_project_media_selection(project_id, asset=variant_id,
+            generation_id=generation_id, variant_id=variant_id)
+        result = {"generation": self.get_generation(generation_id),
+                  "variant": self._variant_resource(self.store.conn.execute(
+                      "SELECT * FROM generation_variants WHERE id=?", (variant_id,)).fetchone()),
+                  "selection": selection, "entry": source["entry"]}
+        self._resolve_task_authority(binding, scope="projects:write")
+        return self._command_record("generation.duplicate", project_id, idempotency_key,
+            request_hash, result, project_id=project_id)
 
     @_durable_mutation
     def create_generation(self, project_id, body, *, idempotency_key=None):

@@ -1,9 +1,9 @@
 {
   "artifacts": [
     {
-      "byte_length": 3439,
+      "byte_length": 3468,
       "path": "contract-metadata.ts",
-      "sha256": "426fdbb5f23e2435fe28860c54ab3aaf9530dfdb5e7fef687593bac02a0df5d0"
+      "sha256": "420c0cda243247abc8974ad5fa98e3cdf18b6801e5b98422523b66ea76210d72"
     },
     {
       "byte_length": 215,
@@ -46,14 +46,14 @@
       "sha256": "7dc2f5d3f82219b439f1c1147aa230f39e706a3c3b24a7d177efc1b975f543b9"
     },
     {
-      "byte_length": 22168,
+      "byte_length": 22197,
       "path": "generated.ts",
-      "sha256": "6d83d87b4b469ddadc19ae2524563f3e180036b1d10fa686cb8ec51b5ff8b64e"
+      "sha256": "b9e7eb4dc38a7b2aa486c4476378e765848916c8021acb49b862935be3a92759"
     }
   ],
   "component_manifest_id": "GENERATOR-CONFORMANCE-ID",
   "component_manifest_sha256": "43db3374e0235750a3d0dd6590926cccba73e6e67de317573f86fd812cbcf082",
-  "contract_sha256": "7a9195d90b90e189ebdcd33fd3034d35cfd7ba2e2ffc167946c42f06193408bd",
+  "contract_sha256": "c3a02ef9712549c7676d4547ff29cc06f50ba91b4b5eee93ed49bcd87d6466c2",
   "generator": "GENERATOR-TYPESCRIPT-CONFORMANCE",
   "operations": [
     "addShotItem",
@@ -89,6 +89,7 @@
     "currentProject",
     "diffTimeline",
     "doctor",
+    "duplicateProjectGeneration",
     "ensureSourceFrameThumbnail",
     "executeTimelinePurge",
     "exportManagedOutput",
@@ -198,7 +199,7 @@
     "updateTimeline"
   ],
   "protocol": "workspace.v1",
-  "schema_digest": "sha256:a0aef27ca984208da810b49c95a6d70dbdbe78da8b05574999c9a0288efc651d",
+  "schema_digest": "sha256:f51f48c0a0d80be5f17149126eb3b24d766a77458fffd339ad140c2e3b0a37ac",
   "schema_manifest_sha256": "83d7e25c0ba52a7ef9f78fb4a88143e0d9729caf9fc5393750ba1833740264bd",
   "schema_version": 1
 }

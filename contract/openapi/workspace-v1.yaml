@@ -801,6 +801,28 @@ paths:
         '422': { description: Invalid selected media metadata }
         '404': { description: Missing generation/variant or unmanaged/cross-project object }
         '409': { description: Incomplete or ineligible output, ambiguous registration, or captured identity/version changed }
+  /v1/projects/{project_id}/generations/duplicate:
+    post:
+      operationId: duplicateProjectGeneration
+      description: Atomically copy metadata for the exact captured registered variant onto server-created generation and variant identities, retaining the same immutable object and truthful immediate lineage. No synthesis, task execution or publication. Authenticate projects write and the exact generation.duplicate paired grant before lookup or replay. Acquisition and timeline placement are separate transactions.
+      x-required-scopes: [projects:write]
+      x-project-grant-operation: generation.duplicate
+      parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/generation.json#/definitions/DuplicateRequest' } } } }
+      responses:
+        '201':
+          description: Exact acquired identities, intrinsic metadata and fresh selection with durable receipt. The same key and request replay the same result.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/CommittedMutation' }
+                  - { type: object, properties: { data: { $ref: './schemas/generation.json#/definitions/DuplicateResult' } } }
+        '401': { description: Missing or invalid project write credential }
+        '403': { description: Paired project, session, operation or grant denied }
+        '404': { description: Source generation, displayed variant or managed project object missing }
+        '409': { description: Changed idempotency input, catalogue, lifecycle or source identity }
+        '422': { description: Invalid source tuple, caller destination identity or metadata }
   /v1/projects/{project_id}/generations:
     get:
       operationId: listGenerations
