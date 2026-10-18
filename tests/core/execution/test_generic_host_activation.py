@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import errno
 import json
 import os
 import secrets
@@ -80,6 +81,14 @@ def test_local_receiver_waits_for_owner_receipt_before_final_ack(monkeypatch):
 ])
 def test_local_receiver_rejects_failed_or_mismatched_receipt_without_ack(monkeypatch, failure):
     monkeypatch.setattr(generic_host, "process_birth_identity", lambda pid=None: "birth-1")
+    sent_frames = []
+    send_frame = generic_host._send_activation_frame
+
+    def record_frame(control, value):
+        sent_frames.append(dict(value))
+        send_frame(control, value)
+
+    monkeypatch.setattr(generic_host, "_send_activation_frame", record_frame)
     worker, host = socket.socketpair()
     worker.settimeout(2)
     with worker, ThreadPoolExecutor(max_workers=1) as pool:
@@ -106,10 +115,65 @@ def test_local_receiver_rejects_failed_or_mismatched_receipt_without_ack(monkeyp
             if failure == "duplicate":
                 _send(worker, receipt)
         if failure != "duplicate":
-            worker.shutdown(socket.SHUT_WR)
+            try:
+                worker.shutdown(socket.SHUT_WR)
+            except OSError as exc:
+                if exc.errno != errno.ENOTCONN:
+                    raise
         with pytest.raises(generic_host.HostError):
             future.result(timeout=2)
+        assert [frame["version"] for frame in sent_frames] == [
+            "astrid.local-worker-activation-request/v1"
+        ]
+        try:
+            assert worker.recv(1) == b""
+        except ConnectionResetError:
+            # A rejected Unix stream may reset when it closes with peer data
+            # still queued. The frame spy above proves no ACK was emitted.
+            pass
+
+
+def test_local_receiver_rejects_fragment_of_duplicate_receipt_without_ack(monkeypatch):
+    monkeypatch.setattr(generic_host, "process_birth_identity", lambda pid=None: "birth-1")
+    sent_frames = []
+    send_frame = generic_host._send_activation_frame
+
+    def record_frame(control, value):
+        sent_frames.append(dict(value))
+        send_frame(control, value)
+
+    monkeypatch.setattr(generic_host, "_send_activation_frame", record_frame)
+    read_frame = generic_host._read_activation_frame
+    receipt_read = threading.Event()
+
+    def observe_receipt(control, *, limit=generic_host._ACTIVATION_FRAME_LIMIT):
+        frame = read_frame(control, limit=limit)
+        if frame.get("version") == "runtime.local-worker-activation-recorded/v1":
+            receipt_read.set()
+        return frame
+
+    monkeypatch.setattr(generic_host, "_read_activation_frame", observe_receipt)
+    worker, host = socket.socketpair()
+    worker.settimeout(2)
+    with worker, ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(_receive, host)
+        _send(worker, _local_grant())
+        request = json.loads(worker.makefile("rb").readline())
+        _send(worker, {**request, "version": "runtime.local-worker-activation-recorded/v1"})
+        assert receipt_read.wait(timeout=2)
+        # A one-byte fragment from a duplicate frame is enough to reject it.
+        worker.sendall(b"{")
+        try:
+            worker.shutdown(socket.SHUT_WR)
+        except OSError as exc:
+            if exc.errno != errno.ENOTCONN:
+                raise
+        with pytest.raises(generic_host.HostError, match="receipt was duplicated"):
+            future.result(timeout=2)
         assert worker.recv(1) == b""
+        assert [frame["version"] for frame in sent_frames] == [
+            "astrid.local-worker-activation-request/v1"
+        ]
 
 
 def test_machine_receiver_cannot_downgrade_to_legacy_ack(monkeypatch):
@@ -183,6 +247,16 @@ def test_remote_socket_receiver_uses_same_private_activation_frame(tmp_path, mon
     # receiver runs against a short private /tmp path just like the RunPod host.
     parent = Path("/tmp").resolve(strict=True) / f"astrid-activation-{secrets.token_hex(5)}"
     path = parent / "s"
+    listener_ready = threading.Event()
+    original_socket = generic_host.socket.socket
+
+    class ObservedSocket(original_socket):
+        def listen(self, backlog=0):
+            result = super().listen(backlog)
+            listener_ready.set()
+            return result
+
+    monkeypatch.setattr(generic_host.socket, "socket", ObservedSocket)
     completed = threading.Event()
     result: list[dict[str, object]] = []
 
@@ -195,25 +269,28 @@ def test_remote_socket_receiver_uses_same_private_activation_frame(tmp_path, mon
 
     thread = threading.Thread(target=wait)
     thread.start()
-    deadline = time.monotonic() + 2
-    while not path.exists() and time.monotonic() < deadline:
-        time.sleep(0.005)
-    assert path.exists()
-    assert path.parent.stat().st_mode & 0o777 == 0o700
-    worker = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    worker.settimeout(2)
-    with worker:
+    worker = None
+    try:
+        assert listener_ready.wait(timeout=2)
+        assert path.exists()
+        assert path.parent.stat().st_mode & 0o777 == 0o700
+        worker = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        worker.settimeout(2)
         worker.connect(str(path))
         _send(worker, _grant())
         acknowledgement = json.loads(worker.makefile("rb").readline())
-    thread.join(timeout=2)
+        thread.join(timeout=2)
 
-    assert completed.is_set()
-    assert result == [_grant()]
-    assert acknowledgement["version"] == "astrid.local-worker-activation-accepted/v1"
-    assert acknowledgement["host"] == {"pid": os.getpid(), "birth_id": "birth-1"}
-    assert not path.exists()
-    shutil.rmtree(parent)
+        assert completed.is_set()
+        assert result == [_grant()]
+        assert acknowledgement["version"] == "astrid.local-worker-activation-accepted/v1"
+        assert acknowledgement["host"] == {"pid": os.getpid(), "birth_id": "birth-1"}
+        assert not path.exists()
+    finally:
+        if worker is not None:
+            worker.close()
+        thread.join(timeout=2)
+        shutil.rmtree(parent, ignore_errors=True)
 
 
 def test_remote_socket_receiver_rejects_overlong_unix_path(tmp_path) -> None:
