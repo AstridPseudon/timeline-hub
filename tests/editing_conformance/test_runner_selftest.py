@@ -87,17 +87,28 @@ def test_a_replace_that_is_not_in_the_sheet_is_a_scenario_error():
         run_scenario(scenario)
 
 
-def test_xfail_declarations_are_scenario_errors():
+@pytest.mark.parametrize(("declaration", "value"), [
+    ("missing", "known gap"),
+    ("xfail", "known gap"),
+    ("xfail", [{"path": "python", "check": "steps", "reason": "known gap"}]),
+])
+def test_missing_and_xfail_declarations_are_scenario_errors(declaration, value):
     data = copy.deepcopy(ROCKET)
-    data["xfail"] = [{"path": "python", "check": "steps", "reason": "known gap"}]
+    data[declaration] = value
     with pytest.raises(ScenarioError, match="unknown key"):
         parse_scenario(data)
 
 
-@pytest.mark.parametrize("path", ["cli", "sheet", "python"])
-def test_missing_path_declarations_are_scenario_errors(path):
+@pytest.mark.parametrize(("path", "declaration"), [
+    ("cli", "missing"), ("cli", "xfail"),
+    ("sheet", "missing"), ("sheet", "xfail"),
+    ("python", "missing"), ("python", "xfail"),
+])
+def test_missing_and_xfail_path_declarations_are_scenario_errors(path, declaration):
     data = copy.deepcopy(ROCKET)
-    data[path] = {"missing": "known gap"}
+    # Sheets have a strict key set; CLI commands and Python snippets also reject
+    # mapping-shaped gap declarations.
+    data[path] = {declaration: "known gap"}
     with pytest.raises(ScenarioError):
         parse_scenario(data)
 

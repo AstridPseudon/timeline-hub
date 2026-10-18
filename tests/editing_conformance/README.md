@@ -28,7 +28,7 @@ check:                       # optional: Python expressions; tl is a fresh draft
   - tl.clip("c1.rocket").get("x") == 120
 ```
 
-- At least one path must be declared, and each declared path must be runnable. Unknown keys, including `missing` and `xfail`, are a `ScenarioError`.
+- At least one path must be declared, and each declared path must be runnable. Unknown keys, including `missing` and `xfail`, are a `ScenarioError` at the scenario level and inside the sheet mapping. CLI paths accept command strings or lists of them; Python paths accept a snippet string. Both reject mapping-shaped gap declarations.
 
 ## Fixtures
 
