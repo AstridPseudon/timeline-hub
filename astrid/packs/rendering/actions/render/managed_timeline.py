@@ -43,6 +43,41 @@ class ManagedRenderValidationError(ValueError):
         self.details = details
 
 
+def _project_legacy_asset_identity(key: str, entry: dict[str, Any]) -> None:
+    """Canonicalize agreeing managed SHA-256 aliases on a private render copy.
+
+    Only the historical ``object_id``/``digest`` spellings are consumed. All
+    other metadata stays present for the strict registry validator to check.
+    Canonical-only rows retain their existing validation/admission behavior.
+    """
+    if not {"object_id", "digest"}.intersection(entry):
+        return
+    label = f"canonical registry asset {key!r}"
+    if "object_id" not in entry and "media_id" not in entry:
+        raise ValueError(f"{label} legacy identity requires object_id or media_id")
+
+    digests: list[str] = []
+    for field in ("object_id", "digest", "media_id", "content_sha256"):
+        if field not in entry:
+            continue
+        value = entry[field]
+        if field != "content_sha256":
+            if not isinstance(value, str) or not value.startswith("sha256:"):
+                raise ValueError(f"{label}.{field} must be a sha256: managed identity")
+            value = value[len("sha256:"):]
+        try:
+            digests.append(validate_digest(value))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{label}.{field} must contain a lowercase 64-hex SHA-256") from exc
+    if len(set(digests)) != 1:
+        raise ValueError(f"{label} has conflicting legacy/canonical media identities")
+
+    entry["media_id"] = "sha256:" + digests[0]
+    entry["content_sha256"] = digests[0]
+    entry.pop("object_id", None)
+    entry.pop("digest", None)
+
+
 def _render_compatible_projection(
     config: Mapping[str, Any], registry: Mapping[str, Any]
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -75,6 +110,7 @@ def _render_compatible_projection(
     for asset_key, raw_entry in raw_assets.items():
         if not isinstance(raw_entry, dict):
             continue
+        _project_legacy_asset_identity(str(asset_key), raw_entry)
         # ``managed-local`` is the authoring/import description used by the
         # evaluation helpers.  Once Runtime has admitted the exact media id and
         # digest, it is an opaque imported source for renderer purposes.

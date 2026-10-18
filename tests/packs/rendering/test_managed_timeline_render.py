@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -367,6 +368,156 @@ def test_runtime_admitted_media_stays_an_identity_not_a_local_cas_path(tmp_path:
     assert asset["content_sha256"] == digest
     assert "file" not in asset
     assert ".astrid" not in json.dumps(snapshot.registry)
+
+
+_J195_SHA256 = "48c37fbad1d5b883a821fbe4081cd6eccca750eb329dd0d9ad05d4c28ba31faa"
+_J195_OBJECT_ID = "sha256:" + _J195_SHA256
+_J195_LEGACY_ROW = {
+    "digest": _J195_OBJECT_ID,
+    "object_id": _J195_OBJECT_ID,
+    "type": "audio",
+}
+_J195_CANONICAL_ROW = {
+    "media_id": _J195_OBJECT_ID,
+    "content_sha256": _J195_SHA256,
+    "type": "audio",
+}
+
+
+def _legacy_audio_runtime(entry: object) -> _Runtime:
+    runtime = _Runtime(media=[{"object_id": _J195_OBJECT_ID, "digest": _J195_OBJECT_ID}])
+    runtime.timeline["registry"] = {"assets": {"j195-music": deepcopy(entry)}}
+    runtime.timeline["config"] = {
+        "tracks": [{"id": "music", "kind": "audio", "label": "Music"}],
+        "clips": [{
+            "id": "bed", "track": "music", "clipType": "audio", "at": 0,
+            "from": 0, "to": 1, "asset": "j195-music",
+        }],
+    }
+    return runtime
+
+
+def test_legacy_audio_registry_projects_exact_row_without_mutating_snapshot() -> None:
+    from astrid.core import timeline
+
+    runtime = _legacy_audio_runtime(_J195_LEGACY_ROW)
+    original = deepcopy(runtime.timeline)
+    # The persisted row remains invalid under the unchanged strict contract.
+    with pytest.raises(ValueError, match="unknown key"):
+        timeline.validate_registry(original["registry"])
+    config, registry = managed_timeline._render_compatible_projection(
+        original["config"], original["registry"]
+    )
+    assert config == original["config"]
+    assert registry == {"assets": {"j195-music": _J195_CANONICAL_ROW}}
+    timeline.validate_registry(registry)
+
+    snapshot = _snapshot(runtime)
+    frozen_snapshot = deepcopy(snapshot)
+    frozen_parent = deepcopy(runtime.parent_revisions)
+    validate_managed_render_snapshot(snapshot)
+    prepared, authority = _prepare_managed_render_inputs(
+        {"timeline_ref": "main"}, project="demo", _client=runtime
+    )
+    assert prepared["timeline_snapshot"]["registry"] == registry
+    assert authority["registry_hash"] == managed_timeline._digest(original["registry"])
+    assert authority["materialized_registry_hash"] == managed_timeline._digest(registry)
+    assert authority["parent_revision_id"] == snapshot.head_event_id
+    assert authority["head_hash"] == snapshot.head_hash
+    assert authority["managed_media_admissions"] == {_J195_OBJECT_ID: _J195_SHA256}
+    assert snapshot == frozen_snapshot
+    assert runtime.timeline == original
+    assert runtime.parent_revisions == frozen_parent
+
+
+@pytest.mark.parametrize("entry", [
+    {**_J195_LEGACY_ROW, **_J195_CANONICAL_ROW},
+    {"object_id": _J195_OBJECT_ID, "type": "audio"},
+    {"digest": _J195_OBJECT_ID, "media_id": _J195_OBJECT_ID, "type": "audio"},
+    {**_J195_CANONICAL_ROW, "object_id": _J195_OBJECT_ID},
+], ids=["all-agree", "object-only", "digest-with-media-id", "object-with-canonical"])
+def test_legacy_registry_agreeing_aliases_prepare_canonical_row(entry) -> None:
+    prepared, _ = _prepare_managed_render_inputs(
+        {"timeline_ref": "main"}, project="demo", _client=_legacy_audio_runtime(entry)
+    )
+    assert prepared["timeline_snapshot"]["registry"] == {
+        "assets": {"j195-music": _J195_CANONICAL_ROW}
+    }
+
+
+@pytest.mark.parametrize("field,value", [
+    ("digest", "sha256:" + "b" * 64),
+    ("object_id", "sha256:" + "b" * 64),
+    ("media_id", "sha256:" + "b" * 64),
+    ("content_sha256", "b" * 64),
+], ids=["digest", "object-id", "media-id", "content-sha256"])
+def test_legacy_registry_conflicting_identity_refuses(field, value) -> None:
+    runtime = _legacy_audio_runtime({**_J195_LEGACY_ROW, field: value})
+    original = deepcopy(runtime.timeline)
+    with pytest.raises(CapabilityValidationError, match="conflicting legacy/canonical"):
+        _prepare_managed_render_inputs(
+            {"timeline_ref": "main"}, project="demo", _client=runtime
+        )
+    assert runtime.timeline == original
+
+
+@pytest.mark.parametrize("bad_digest", [
+    _J195_SHA256, "md5:" + _J195_SHA256, "SHA256:" + _J195_SHA256,
+    "sha256:" + _J195_SHA256.upper(), "sha256:" + "a" * 63,
+    "sha256:" + "g" * 64, "sha256:" + _J195_OBJECT_ID,
+    _J195_OBJECT_ID + "\n", "", None, 123, {"sha256": _J195_SHA256},
+], ids=["bare", "non-sha", "prefix-case", "hex-case", "short", "non-hex",
+        "double-prefix", "whitespace", "empty", "null", "number", "object"])
+def test_legacy_registry_malformed_digest_refuses(bad_digest) -> None:
+    with pytest.raises(CapabilityValidationError, match=r"j195-music.*digest"):
+        _prepare_managed_render_inputs(
+            {"timeline_ref": "main"}, project="demo",
+            _client=_legacy_audio_runtime({**_J195_LEGACY_ROW, "digest": bad_digest}),
+        )
+
+
+@pytest.mark.parametrize("entry", [
+    {**_J195_LEGACY_ROW, "object_id": _J195_SHA256},
+    {**_J195_LEGACY_ROW, "object_id": "opaque-object"},
+    {**_J195_LEGACY_ROW, "object_id": None},
+    {**_J195_LEGACY_ROW, "media_id": ""},
+    {**_J195_LEGACY_ROW, "media_id": None},
+    {**_J195_LEGACY_ROW, "content_sha256": _J195_OBJECT_ID},
+    {**_J195_LEGACY_ROW, "content_sha256": None},
+    {"digest": _J195_OBJECT_ID, "type": "audio"},
+    {"type": "audio"},
+    [_J195_LEGACY_ROW],
+], ids=["bare-object", "opaque-object", "null-object", "empty-media", "null-media",
+        "prefixed-content", "null-content", "digest-without-identity", "no-identity",
+        "non-object-entry"])
+def test_legacy_registry_unsupported_identity_refuses(entry) -> None:
+    with pytest.raises(CapabilityValidationError):
+        _prepare_managed_render_inputs(
+            {"timeline_ref": "main"}, project="demo", _client=_legacy_audio_runtime(entry)
+        )
+
+
+@pytest.mark.parametrize("extra", [
+    {"task_id": "producer-task"}, {"provenance": {"origin": "imported"}},
+    {"sha256": _J195_SHA256}, {"hash": _J195_SHA256}, {"unknown": True},
+], ids=["task", "provenance", "sha256", "hash", "unknown"])
+@pytest.mark.parametrize("base", [_J195_LEGACY_ROW, _J195_CANONICAL_ROW],
+                         ids=["legacy", "canonical"])
+def test_legacy_registry_unknown_metadata_still_refuses(base, extra) -> None:
+    with pytest.raises(CapabilityValidationError, match="unknown key"):
+        _prepare_managed_render_inputs(
+            {"timeline_ref": "main"}, project="demo",
+            _client=_legacy_audio_runtime({**base, **extra}),
+        )
+
+
+def test_legacy_registry_projection_does_not_bypass_runtime_admission() -> None:
+    runtime = _legacy_audio_runtime(_J195_LEGACY_ROW)
+    runtime.media_rows = []
+    with pytest.raises(CapabilityValidationError, match="not admitted"):
+        _prepare_managed_render_inputs(
+            {"timeline_ref": "main"}, project="demo", _client=runtime
+        )
 
 
 @pytest.mark.parametrize("page", [
