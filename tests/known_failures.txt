@@ -1,2 +1,0 @@
-# Known red tests (testing plan R-6). Format: <node id> | <owner> | <expires YYYY-MM-DD> | <reason>
-# Each runs as a strict xfail; remove the line in the commit that fixes the test.
