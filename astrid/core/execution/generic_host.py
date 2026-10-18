@@ -48,12 +48,15 @@ from urllib.parse import quote, urlsplit
 # latency is not bounded; this diagnostic never changes descriptor flags.
 _STARTUP_OBSERVATION_ENABLED = __name__ == "__main__" and "--ready-file" in sys.argv
 _STARTUP_OBSERVATION_STARTED = time.monotonic()
+_STARTUP_LAST_BEGUN_PHASE = None
 _STARTUP_OBSERVATION_PHASES = frozenset({
     "module_import_begin", "module_import_done", "cli_args_parsed",
     "startup_identity_begin", "startup_identity_done",
     "host_constructor_begin", "host_constructor_done", "discovery_begin",
     "discovery_done", "preflight_begin", "preflight_done",
     "registration_begin", "registration_done", "ready_written",
+    "renderer_selection_begin", "renderer_selection_done",
+    "renderer_validation_begin", "renderer_validation_done", "activation_begin", "activation_done",
 })
 
 
@@ -63,7 +66,12 @@ def _emit_startup_phase(phase: str) -> None:
     A file write can stall before startup/cleanup. No nonblocking guarantee,
     new sink, retry, descriptor flag change or diagnostic thread is implied.
     """
-    if not _STARTUP_OBSERVATION_ENABLED or type(phase) is not str or phase not in _STARTUP_OBSERVATION_PHASES:
+    global _STARTUP_LAST_BEGUN_PHASE
+    if type(phase) is not str or phase not in _STARTUP_OBSERVATION_PHASES:
+        return
+    if phase.endswith("_begin"):
+        _STARTUP_LAST_BEGUN_PHASE = phase
+    if not _STARTUP_OBSERVATION_ENABLED:
         return
     try:
         info = os.fstat(2)
@@ -79,6 +87,23 @@ def _emit_startup_phase(phase: str) -> None:
     except Exception:
         # Observation must never mask the original startup branch/exception.
         pass
+
+
+def _startup_error_evidence(exc, *, phase, construction_returned):
+    """Bounded code identities only; never exception text or validation paths."""
+    import traceback
+    validation_phases = {"launch_transaction", "registry_settle", "context_binding", "complete_inputs",
+                         "owned_probe", "owned_probe_acquire", "owned_probe_execute"}
+    validation_phase = getattr(exc, "validation_phase", None)
+    persistence = getattr(exc, "validation_evidence_error", None)
+    persistence = persistence if isinstance(persistence, str) and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,79}", persistence) else None
+    return {"phase": phase, "exception_class": type(exc).__name__[:80],
+        "construction_returned": construction_returned,
+        "last_begun_phase": validation_phase if isinstance(validation_phase, str) and validation_phase in validation_phases else _STARTUP_LAST_BEGUN_PHASE,
+        "validation_receipt_retained": isinstance(getattr(exc, "validation_evidence", None), str),
+        "persistence_error_class": persistence,
+        "frames": [{"file": Path(f.filename).name[:80], "function": f.name[:80], "line": f.lineno}
+                   for f in traceback.extract_tb(exc.__traceback__)[-4:]]}
 
 
 _emit_startup_phase("module_import_begin")
@@ -12950,7 +12975,16 @@ class LocalExecutionPreparation:
             if self._abort_started or self._aborted:
                 raise HostError("local preparation has been aborted")
             self._host_only_phase = "claim_constructing"
-            host = factory()
+            try:
+                host = factory()
+            except BaseException as exc:
+                # Retain the constructor's first cause before waiting abort or
+                # control work can acquire this same ownership lock.
+                try:
+                    self._record_control_error(exc)
+                except BaseException:
+                    pass
+                raise
             self._claim_host = host
             host._selected_action_preparation = self
             self._host_only_phase = "claim_owned"
@@ -15309,6 +15343,7 @@ def _cli() -> int:
                 "require_receipt": target.get("kind") == "machine" or (preparation is not None and
                     (preparation._request or {}).get("profile", {}).get("execution_mode") == "host_only_cpu"),
             }
+            _emit_startup_phase("activation_begin")
             if args.activation_fd is not None:
                 activation = _await_worker_activation(args.activation_fd, **activation_args)
             else:
@@ -15319,7 +15354,13 @@ def _cli() -> int:
                 raise HostError("local activation arrived before verified preparation")
             if preparation is not None:
                 preparation.retain_activation_grant(activation)
+            _emit_startup_phase("activation_done")
         except (HostError, json.JSONDecodeError) as exc:
+            if preparation is not None:
+                try:
+                    preparation._record_control_error(exc)
+                except BaseException:
+                    pass
             if preparation is not None:
                 try:
                     preparation.abort()
@@ -15504,6 +15545,66 @@ def _cli() -> int:
             parser.error(f"host-only attempt directory is not writable: {exc}")
         args.attempt_base = str(owned_attempts)
 
+    host = None
+    def fail_startup(exc, *, phase):
+        diagnostic = _startup_error_evidence(exc, phase=phase, construction_returned=host is not None)
+        if preparation is not None:
+            if re.fullmatch(r"[0-9a-f]{32}", preparation.operation_id):
+                diagnostic["operation_id"] = preparation.operation_id
+            try:
+                preparation._record_control_error(exc)
+            except BaseException:
+                pass  # The first cause is retained before optional sinks run.
+        if phase == "construction":
+            code, request_id, message = "host_construction_failed", "", "executor construction failed"
+        else:
+            code = str(getattr(exc, "code", f"host_{phase}_failed"))[:128]
+            request_id = str(getattr(exc, "request_id", ""))[:128]
+            raw_message = getattr(exc, "message", None)
+            message = (str(raw_message) if raw_message else
+                       (str(exc) if isinstance(exc, HostError) else f"executor {phase} failed"))[:512]
+            if credential:
+                message = message.replace(credential, "[redacted]")
+        failure = {"status": "failed", "terminal": True, "pid": os.getpid(),
+            "process_birth_id": process_birth_identity(),
+            "error": {"code": code, "request_id": request_id, "message": message}}
+        if phase == "construction":
+            failure["diagnostic"] = diagnostic
+        if ready_path is not None:
+            try:
+                _write_ready_marker(ready_path, failure)
+            except BaseException as persistence:
+                diagnostic["failure_marker_error"] = type(persistence).__name__[:80]
+        try:
+            print(json.dumps({"diagnostic": "astrid.host_startup_failure", **diagnostic}, sort_keys=True), file=sys.stderr, flush=True)
+            print(json.dumps(failure, sort_keys=True), file=sys.stderr, flush=True)
+        except BaseException:
+            try:
+                _LOGGER.error("Host startup failure: %s", json.dumps(diagnostic, sort_keys=True))
+            except BaseException:
+                pass
+        if preparation is not None:
+            try:
+                preparation.abort()
+            except BaseException as cleanup_error:
+                try:
+                    preparation._record_control_error(cleanup_error)
+                except BaseException:
+                    pass
+                _retain_unresolved_owner(preparation)
+            while preparation._abort_ack is None:
+                time.sleep(0.05)
+        elif host is not None:
+            try:
+                host.shutdown()
+            except BaseException as cleanup_error:
+                try:
+                    print(json.dumps({"diagnostic": "astrid.host_startup_failure", "phase": phase,
+                        "cleanup_error": type(cleanup_error).__name__[:80]}, sort_keys=True), file=sys.stderr, flush=True)
+                except BaseException:
+                    pass
+        return 1
+
     def create_host():
         remotion_closure_binding = None
         selected_renderer = None
@@ -15511,7 +15612,9 @@ def _cli() -> int:
                 and not preparation._aborted and preparation._activation_grant == activation
                 and activation is not None):
             launch = preparation._request["profile"].get("host_launch") or {}
+            _emit_startup_phase("renderer_selection_begin")
             selected_renderer, renderer_environment = _activate_selected_renderer_environment(launch)
+            _emit_startup_phase("renderer_selection_done")
             if selected_renderer is not None:
                 remotion_closure_binding = selected_renderer.closure
                 # Derive renderer configuration only from the authenticated selection.
@@ -15530,6 +15633,7 @@ def _cli() -> int:
                         raise HostError("host-only renderer context must be canonical and owned")
                     os.environ[key] = str(directory)
                 environment = dict(os.environ)
+                _emit_startup_phase("renderer_validation_begin")
                 reference = prepare_remotion_validation(
                     artifact_directory=support_root / "remotion-validation",
                     host_environment=environment, python_executable=sys.executable,
@@ -15538,7 +15642,7 @@ def _cli() -> int:
                               "worker": _launch_worker_probe_environments(tuple(Path(p) for p in args.pack_root),
                                           environment, Path(args.capability_matrix) if args.capability_matrix else None)})
                 os.environ.update(reference)
-        _emit_startup_phase("host_constructor_begin")
+                _emit_startup_phase("renderer_validation_done")
         _install_host_vibecomfy_import_root()
         selected_host = GenericPackHost(
         pack_roots=args.pack_root,
@@ -15559,61 +15663,25 @@ def _cli() -> int:
             selected_host._executable_admission._bindings["node"] = selected_renderer.node
             selected_host._host_renderer_selection = selected_renderer
         return selected_host
-    host = preparation.construct_claim_host(create_host) if preparation is not None else create_host()
-    _emit_startup_phase("host_constructor_done")
-    host._native_engine_graph = preparation.graph if preparation is not None else None
-    if preparation is not None:
-        preparation.attach_claim_host(host)
-    if support_root is not None:
-        host.cleanup_latch_path = support_root / CLEANUP_LATCH_NAME
-        host.evidence_status_path = support_root / EVIDENCE_STATUS_NAME
-        host._evidence_observation_binding = {
-            "process_birth_id": process_birth_identity(),
-            "runtime_instance_id": args.runtime_instance_id,
-            "source_closure_digest": identity_attestation["source"].get("closure_digest"),
-            "ready_file": str(ready_path) if ready_path is not None else None,
-        }
-    def fail_startup(exc, *, phase):
+    try:
+        _emit_startup_phase("host_constructor_begin")
+        host = preparation.construct_claim_host(create_host) if preparation is not None else create_host()
+        _emit_startup_phase("host_constructor_done")
+        host._native_engine_graph = preparation.graph if preparation is not None else None
         if preparation is not None:
-            preparation._record_control_error(exc)
-        code = str(getattr(exc, "code", f"host_{phase}_failed"))[:128]
-        request_id = str(getattr(exc, "request_id", ""))[:128]
-        raw_message = getattr(exc, "message", None)
-        message = (
-            str(raw_message)
-            if raw_message
-            else (str(exc) if isinstance(exc, HostError) else f"executor {phase} failed")
-        )[:512]
-        if credential:
-            message = message.replace(credential, "[redacted]")
-        failure = {
-            "status": "failed",
-            "terminal": True,
-            "pid": os.getpid(),
-            "process_birth_id": process_birth_identity(),
-            "error": {
-                "code": code,
-                "request_id": request_id,
-                "message": message,
-            },
-        }
-        if ready_path is not None:
-            _write_ready_marker(ready_path, failure)
-        print(json.dumps(failure, sort_keys=True), file=sys.stderr, flush=True)
-        if preparation is not None:
-            # A constructed claim owner can carry obligations even when
-            # registration fails. Keep its original control receiver until
-            # Runtime has consumed the existing, bound child-cleanup ACK.
-            try:
-                preparation.abort()
-            except BaseException as cleanup_error:
-                preparation._record_control_error(cleanup_error)
-                _retain_unresolved_owner(preparation)
-            while preparation._abort_ack is None:
-                time.sleep(0.05)
-        else:
-            host.shutdown()
-        return 1
+            preparation.attach_claim_host(host)
+        if support_root is not None:
+            host.cleanup_latch_path = support_root / CLEANUP_LATCH_NAME
+            host.evidence_status_path = support_root / EVIDENCE_STATUS_NAME
+            host._evidence_observation_binding = {
+                "process_birth_id": process_birth_identity(),
+                "runtime_instance_id": args.runtime_instance_id,
+                "source_closure_digest": identity_attestation["source"].get("closure_digest"),
+                "ready_file": str(ready_path) if ready_path is not None else None,
+            }
+    except Exception as exc:
+        return fail_startup(exc, phase="construction")
+
 
     try:
         _emit_startup_phase("discovery_begin")

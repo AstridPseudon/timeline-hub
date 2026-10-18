@@ -105,17 +105,39 @@ class RemotionValidationError(RuntimeError):
     """Validation failed; uncertain original child handles remain attached."""
 
 
+_VALIDATION_PHASES = frozenset({"launch_transaction", "registry_settle", "context_binding", "complete_inputs",
+                               "owned_probe", "owned_probe_acquire", "owned_probe_execute"})
+
+
+def _validation_error_phase(error):
+    phase = getattr(error, "validation_phase", None)
+    return phase if isinstance(phase, str) and phase in _VALIDATION_PHASES else None
+
+
 def _validation_timing(phase: str):
     """Bounded diagnostic metadata; no launch paths, arguments or environment."""
+    phase = phase if isinstance(phase, str) and phase in _VALIDATION_PHASES else "unknown"
     def decorate(operation):
         @wraps(operation)
         def measured(*args, **kwargs):
             started = time.monotonic()
             outcome = "failed"
             try:
+                print(json.dumps({"diagnostic": "astrid.remotion_validation_phase", "phase": phase,
+                    "outcome": "begun", "process_id": os.getpid(), "elapsed_ms": 0}), file=sys.stderr, flush=True)
+            except BaseException:
+                pass
+            try:
                 result = operation(*args, **kwargs)
                 outcome = "completed"
                 return result
+            except BaseException as error:
+                try:
+                    if not hasattr(error, "validation_phase"):
+                        error.validation_phase = phase
+                except BaseException:
+                    pass
+                raise
             finally:
                 try:
                     print(json.dumps({"diagnostic": "astrid.remotion_validation_phase",
@@ -123,7 +145,7 @@ def _validation_timing(phase: str):
                                       "process_id": os.getpid(),
                                       "elapsed_ms": round((time.monotonic() - started) * 1000)}),
                           file=sys.stderr, flush=True)
-                except Exception:
+                except BaseException:
                     pass  # Optional diagnostics never replace validation failures.
         return measured
     return decorate
@@ -141,13 +163,17 @@ def _owned_probe(argv: list[str], *, cwd: Path, env: Mapping[str, str],
         raise RemotionValidationError("owned probe needs an explicit nonempty environment")
     process = None
     try:
-        process = popen_owned_group(
+        process = _validation_timing("owned_probe_acquire")(popen_owned_group)(
             argv, cwd=str(cwd), env=dict(env), stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         )
-        stdout, stderr = process.communicate(timeout=timeout)
-        code = process.wait(timeout=0)
-        verify_tree_absent(process)
+        @_validation_timing("owned_probe_execute")
+        def execute():
+            stdout, stderr = process.communicate(timeout=timeout)
+            code = process.wait(timeout=0)
+            verify_tree_absent(process)
+            return stdout, stderr, code
+        stdout, stderr, code = execute()
     except BaseException as primary:
         # A failed acquisition can expose its retained child on the exception.
         process = process or getattr(primary, "process", None)
@@ -742,6 +768,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
     proofs: dict[bytes, dict[str, Any]] = {}
     proof_environments: dict[bytes, dict[str, str]] = {}
     digest_memo: dict = {}  # Never persisted or shared with consumers.
+    @_validation_timing("context_binding")
     def validate_context(environment: Mapping[str, str]) -> dict[str, Any]:
         context = probe_context(environment=environment, python_executable=python_executable)
         registry_context = _registry_context(environment, generator=False)
@@ -910,6 +937,7 @@ def prepare_remotion_validation(**kwargs: Any) -> dict[str, str]:
             _UNRESOLVED_VALIDATION_PROBES.append(error)
         record = {'schema': _VALIDATION_SCHEMA, 'status': 'FAILED_NOT_READINESS',
                   'error_type': type(error).__name__,
+                  'last_begun_phase': _validation_error_phase(error),
                   'original_probe_receipt': getattr(error, 'probe_receipt', None),
                   'probe_check': getattr(error, 'probe_check', None),
                   'retained_original_child_pid': getattr(getattr(error, 'process', None), 'pid', None),
@@ -924,6 +952,14 @@ def prepare_remotion_validation(**kwargs: Any) -> dict[str, str]:
             error.validation_evidence = str(evidence)
         except BaseException as persistence:
             error.validation_evidence_error = type(persistence).__name__
+        try:
+            print(json.dumps({'diagnostic': 'astrid.remotion_validation_failure',
+                'error_type': type(error).__name__[:80],
+                'last_begun_phase': _validation_error_phase(error),
+                'persistence_error_class': getattr(error, 'validation_evidence_error', None)}),
+                file=sys.stderr, flush=True)
+        except BaseException:
+            pass
         raise
 
 def _observed_consumer_startup():

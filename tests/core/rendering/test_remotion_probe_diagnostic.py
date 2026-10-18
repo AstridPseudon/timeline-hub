@@ -130,3 +130,71 @@ def test_existing_failure_writer_retains_safe_check_and_original_error(monkeypat
     assert evidence['retained_original_child_pid'] == 71
     assert evidence['original_probe_receipt'] is None
     assert SENTINEL not in json.dumps(evidence) + str(caught.value)
+
+
+@pytest.mark.parametrize("phase", ["complete_inputs", "owned_probe_acquire", "owned_probe_execute"])
+def test_validation_phase_begins_before_blocking_and_retains_first_failure(phase, capsys):
+    error = runtime.RemotionValidationError(SENTINEL)
+    @runtime._validation_timing(phase)
+    def fail():
+        rows = [json.loads(line) for line in capsys.readouterr().err.splitlines()]
+        assert rows[-1]["outcome"] == "begun" and rows[-1]["phase"] == phase
+        raise error
+    with pytest.raises(runtime.RemotionValidationError) as caught:
+        fail()
+    assert caught.value is error and error.validation_phase == phase
+    rows = [json.loads(line) for line in capsys.readouterr().err.splitlines()]
+    assert rows[-1]["outcome"] == "failed" and rows[-1]["elapsed_ms"] >= 0
+    assert SENTINEL not in json.dumps(rows)
+
+
+def test_validation_artifact_write_failure_keeps_primary_and_phase(monkeypatch, tmp_path, capsys):
+    error = runtime.RemotionValidationError(SENTINEL)
+    error.validation_phase = "complete_inputs"
+    monkeypatch.setattr(runtime, "_UNRESOLVED_VALIDATION_PROBES", [])
+    monkeypatch.setattr(runtime, "_prepare_remotion_validation", lambda **_: (_ for _ in ()).throw(error))
+    monkeypatch.setattr(runtime.Path, "mkdir", lambda *_a, **_k: (_ for _ in ()).throw(OSError(SENTINEL)))
+    with pytest.raises(runtime.RemotionValidationError) as caught:
+        runtime.prepare_remotion_validation(artifact_directory=tmp_path)
+    assert caught.value is error and error.validation_evidence_error == "OSError"
+    rows = [json.loads(line) for line in capsys.readouterr().err.splitlines()]
+    assert rows[-1]["last_begun_phase"] == "complete_inputs"
+    assert rows[-1]["persistence_error_class"] == "OSError"
+    assert SENTINEL not in json.dumps(rows)
+
+
+@pytest.mark.parametrize("seam", ["inputs", "acquisition", "execution"])
+def test_actual_input_and_owned_probe_failure_phases_survive_cleanup(seam, monkeypatch, tmp_path, capsys):
+    from astrid.core.execution import process_group
+    primary = runtime.RemotionValidationError(SENTINEL)
+    cleanup = TimeoutError(SENTINEL)
+    process = SimpleNamespace(pid=71, returncode=None)
+    def acquire(*args, **kwargs):
+        if seam == "acquisition":
+            raise primary
+        return process
+    process.communicate = lambda **_: (_ for _ in ()).throw(primary)
+    monkeypatch.setattr(process_group, "popen_owned_group", acquire)
+    monkeypatch.setattr(process_group, "terminate_group", lambda *_a, **_k: (_ for _ in ()).throw(cleanup))
+    monkeypatch.setattr(process_group, "verify_tree_absent", lambda *_: None)
+    monkeypatch.setattr(runtime, "_UNRESOLVED_VALIDATION_PROBES", [])
+    def prepare(**kwargs):
+        if seam == "inputs":
+            return runtime._runtime_inputs(tmp_path, {}, "unused-python", {})
+        return runtime._owned_probe([SENTINEL], cwd=tmp_path, env={"LANG": "C"}, timeout=1)
+    monkeypatch.setattr(runtime, "_prepare_remotion_validation", prepare)
+    with pytest.raises(runtime.RemotionValidationError) as caught:
+        runtime.prepare_remotion_validation(artifact_directory=tmp_path)
+    expected = {"inputs": "complete_inputs", "acquisition": "owned_probe_acquire", "execution": "owned_probe_execute"}[seam]
+    assert caught.value.validation_phase == expected
+    if seam != "inputs":
+        assert caught.value is primary
+    if seam == "execution":
+        assert primary.cleanup_error is cleanup and primary.process is process
+        assert runtime._UNRESOLVED_VALIDATION_PROBES == [primary]
+    evidence = json.loads(next(tmp_path.glob("failed-validation-*.json")).read_text())
+    assert evidence["last_begun_phase"] == expected
+    rows = [json.loads(line) for line in capsys.readouterr().err.splitlines()]
+    assert any(row.get("phase") == expected and row.get("outcome") == "begun" for row in rows)
+    assert rows[-1]["last_begun_phase"] == expected
+    assert SENTINEL not in json.dumps(rows) + json.dumps(evidence)
