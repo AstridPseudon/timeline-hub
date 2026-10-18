@@ -827,7 +827,7 @@ class Journey:
     def excerpt(self, phase: str, tag: str, ids: list[str], *, revision_id: str | None = None,
                 project_id: str | None = None, profile: Mapping[str, Any] | None = None,
                 expected_dimensions: tuple[int, int] | None = None,
-                expected_version: int | None = None) -> None:
+                expected_version: int | None = None, duration_tolerance: float = 0.5) -> None:
         result, name = self.render(phase, tag, self.start, self.end, profile=profile,
                                    expected_version=expected_version)
         data = result.get("data") or {}
@@ -855,8 +855,8 @@ class Journey:
                 raise JourneyFailure(phase, f"task timeline_snapshot_ref did not pin the saved revision: {snapshot_ref}")
         seconds = _duration(output, self.r, self.env, phase)
         want = self.end - self.start
-        if abs(seconds - want) > 0.5:
-            raise JourneyFailure(phase, f"{output} duration {seconds}s, expected {want}s +-0.5")
+        if abs(seconds - want) > duration_tolerance:
+            raise JourneyFailure(phase, f"{output} duration {seconds}s, expected {want}s +-{duration_tolerance:g}")
         if expected_dimensions is not None:
             probe = self.r.command(phase, ["ffprobe", "-v", "error", "-select_streams", "v:0",
                                            "-show_entries", "stream=width,height", "-of", "json", str(output)], self.env,
@@ -891,7 +891,8 @@ class Journey:
                    "audio_channel_layout": "stereo", "duration_tolerance": 1}
         ids: list[str] = []
         self.excerpt("quick_render", "saved", ids, revision_id=revision, project_id=descriptor["projectId"],
-                     profile=profile, expected_dimensions=(320, 180), expected_version=version)
+                     profile=profile, expected_dimensions=(320, 180), expected_version=version,
+                     duration_tolerance=1 / 24)
         self.r.details["quick_render"]["revision_id"] = revision
 
     # -- recovery phases ------------------------------------------------------------------
