@@ -109,6 +109,28 @@ def _command_leaves(values):
             yield command
 
 
+def _restore_selection(request):
+    commands = request["change"].get("commands", [])
+    if not any(c.get("op") == "timeline.restore" for c in _command_leaves(commands)):
+        return None
+    if len(commands) != 1 or commands[0].get("op") != "timeline.restore":
+        raise ValidationError("timeline.restore must be the sole command")
+    command = commands[0]
+    _object(command, ("op", "args"), ("select", "version", "resolved", "expect", "bindings", "created", "authorship"))
+    if (command.get("select") is not None or command.get("resolved", []) != []
+            or any(command.get(k) is not None for k in ("expect", "bindings", "created", "authorship"))
+            or request["scope"] != dict(target="parent", complete=["clips", "tracks"], projection_version=1)):
+        raise ValidationError("restore requires an unambiguous complete parent image")
+    args = command["args"]
+    _object(args, ("revision_id", "content_digest"), ("publication_id",))
+    _string(args["revision_id"])
+    if not isinstance(args["content_digest"], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", args["content_digest"]):
+        raise ValidationError("restore requires an exact content digest")
+    if args.get("publication_id") is not None:
+        _string(args["publication_id"])
+    return copy.deepcopy(args)
+
+
 def _media_selection(value, *, require_digest=False):
     fields = ("asset", "generation_id", "variant_id", "object_id")
     _object(value, (*fields, "catalog_digest") if require_digest else fields,
@@ -525,7 +547,7 @@ class TimelineCommitAcceptance:
                 values = values[index + 1:]
             return values[:limit]
 
-    def accept(self, request, *, identity, _selected_media=(), _narration_takes=(), _revision_closures=(), _transcript_check=None, _scene_check=None):
+    def accept(self, request, *, identity, _selected_media=(), _narration_takes=(), _revision_closures=(), _restore_capture=None, _transcript_check=None, _scene_check=None):
         """Accept an internal COMMIT result. No HTTP caller can supply this template.
 
         A single outer transaction includes nested existing publication, evidence,
@@ -534,7 +556,9 @@ class TimelineCommitAcceptance:
         from .service import require_idempotency_key
         _object(request, ("project_id", "timeline_id", "request_id", "request_hash", "expected_head_revision_id",
                           "publication", "result", "evidence", "source"),
-                ("asserted_actor", "label", "reason", "narration"))
+                ("asserted_actor", "label", "reason", "narration", "restore"))
+        if ("restore" in request) != (_restore_capture is not None):
+            raise ValidationError("restore requires the request-bound historical capture")
         if "asserted_actor" in request:
             _object(request["asserted_actor"], ("kind", "id"))
         publisher = _publisher(identity, request.get("asserted_actor"))
@@ -612,6 +636,17 @@ class TimelineCommitAcceptance:
                     raise NotFoundError("commit base revision not found")
                 if head["revision_id"] != request["expected_head_revision_id"]:
                     raise ConflictError("StaleHead", details={"code": "StaleHead", "current_head_revision_id": head["revision_id"]})
+                restore = request.get("restore")
+                if restore is not None:
+                    if (request["expected_head_revision_id"] != result["base_revision_id"]
+                            or (restore["expected_publication_id"] is not None
+                                and head["publication_id"] != restore["expected_publication_id"])):
+                        raise ConflictError("StaleHead: captured restore publication changed")
+                    fresh = self._commit_restore_capture(project_id, timeline_id, restore)
+                    if digest(fresh) != digest(_restore_capture):
+                        raise ConflictError("historical restore closure changed before acceptance")
+                    if digest(request["publication"]) != digest(fresh["publication"]):
+                        raise ValidationError("restore publication differs from captured historical image")
                 # Replay precedes these dependency checks. BEGIN IMMEDIATE and
                 # the same head CAS fence both membership and selected metadata.
                 for selection, captured_closure in _revision_closures:
@@ -654,6 +689,7 @@ class TimelineCommitAcceptance:
                     published = self.publish_parent_composition(project_id, timeline_id, {
                         **publication, "project_id": project_id, "timeline_id": timeline_id,
                         "expected_head": head["revision_id"],
+                        **({"dependency_manifest": {"media": _restore_capture["media"]}} if restore is not None else {}),
                     }, idempotency_key="accept-" + digest([aggregate, key])[7:])
                     revision_id = published["data"]["revision_id"]
                     publication_id = published["receipt"]["receipt_id"]
@@ -695,8 +731,8 @@ class TimelineCommitAcceptance:
                     provenance["asserted_actor"] = request["asserted_actor"]
                 if publication_id is not None:
                     self.store.conn.execute(
-                        "UPDATE parent_composition_publications SET provenance_json=? WHERE publication_id=?",
-                        (canonical_json(provenance), publication_id),
+                        "UPDATE parent_composition_publications SET provenance_json=?, restored_from_revision_id=? WHERE publication_id=?",
+                        (canonical_json(provenance), restore["revision_id"] if restore is not None else None, publication_id),
                     )
                 result.update(accepted_revision_id=revision_id, accepted_publication_id=publication_id,
                               previous_revision_id=head["revision_id"], runtime_receipt=receipt,
@@ -704,7 +740,7 @@ class TimelineCommitAcceptance:
                 summary = None if revision_id is None else dict(
                     revision_id=revision_id, publication_id=publication_id,
                     previous_revision_id=head["revision_id"], previous_publication_id=head["publication_id"],
-                    restored_from_revision_id=None, accepted_at=timestamp, source=request["source"],
+                    restored_from_revision_id=restore["revision_id"] if restore is not None else None, accepted_at=timestamp, source=request["source"],
                     asserted_actor=request.get("asserted_actor"), publisher=publisher,
                     label=request.get("label"), evidence_digest=evidence_digest)
                 if _scene_check is not None:
@@ -916,6 +952,58 @@ class TimelineCommitAcceptance:
         return scoped()
 
 
+    def _commit_restore_capture(self, project, timeline, selection):
+        """Verify the historical ledger with the same authority as direct restore.
+
+        Dependency rows alone cannot authorize manifest-only media. The existing
+        revision/event integrity validator proves those rows before we retain
+        them, and acceptance repeats this read under its SQLite write fence.
+        """
+        revision = selection["revision_id"]
+        closure = self._commit_revision_closure(project, timeline, revision)
+        parent = closure["parent_revision"]
+        if (parent["content_digest"] != selection["content_digest"]
+                or canonical_json(self._complete_parent_payload(copy.deepcopy(parent["payload"]))) != canonical_json(parent["payload"])):
+            raise ConflictError("historical restore digest or canonical image mismatch")
+        publication = None
+        if selection.get("publication_id") is not None:
+            row = self.store.conn.execute(
+                "SELECT * FROM parent_composition_publications WHERE project_id=? AND timeline_id=? "
+                "AND revision_id=? AND publication_id=?",
+                (project, timeline, revision, selection["publication_id"]),
+            ).fetchone()
+            if row is None:
+                raise ConflictError("historical restore publication is unavailable")
+            publication = dict(row)
+        report = self.store.integrity_report(timeout_seconds=self.store.admission_timeout)
+        checks = report.get("checks", {}) if isinstance(report, dict) else {}
+        errors = []
+        for kind in ("revisions", "event_chain"):
+            check = checks.get(kind)
+            if (not isinstance(check, dict) or "ok" not in check
+                    or not isinstance(check.get("errors"), list)
+                    or check.get("reason") == "not_checked"):
+                raise ConflictError("historical restore integrity report unavailable")
+            errors.extend(error for error in check["errors"] if isinstance(error, dict) and (
+                (kind == "revisions" and (str(error.get("identity", "")) == revision
+                    or str(error.get("identity", "")).startswith(revision + ":")))
+                or (kind == "event_chain" and error.get("timeline_id") == timeline)))
+        if errors:
+            raise ConflictError("historical restore dependency ledger failed verification", details={"errors": errors})
+        dependencies = [dict(row) for row in self.store.conn.execute(
+            "SELECT * FROM composition_revision_dependencies WHERE parent_revision_id=? ORDER BY ordinal", (revision,))]
+        media = sorted(row["dependency_id"] for row in dependencies if row["dependency_kind"] == "media")
+        self._validate_media_dependencies(project, {"media": media})
+        return dict(closure=closure, dependencies=dependencies, selected_publication=publication, media=media,
+                    publication=dict(parent_composition=copy.deepcopy(parent["payload"]),
+                        shot_revisions=[{k: copy.deepcopy(row[k]) for k in (
+                            "shot_id", "revision_id", "internal_timeline_revision_id", "content_digest", "payload")}
+                            for row in closure["shot_revisions"]],
+                        internal_timeline_revisions=[{k: copy.deepcopy(row[k]) for k in (
+                            "timeline_id", "revision_id", "content_digest", "payload")}
+                            for row in closure["internal_timeline_revisions"]]))
+
+
     def _request_commit_port(self, request, identity):
         # Trusted code is composed in-process; scope is enforced at every call.
         original = copy.deepcopy(request)
@@ -924,6 +1012,8 @@ class TimelineCommitAcceptance:
                      if isinstance(identity, dict) else copy.deepcopy(identity))
         project, timeline, key = original["project_id"], original["timeline_id"], original["request_id"]
         request_hash = digest(original)
+        restore_selection = _restore_selection(original)
+        restore_capture = None
         scene_invocation = None
         def scene_evaluator(candidate):
             nonlocal scene_invocation
@@ -951,6 +1041,8 @@ class TimelineCommitAcceptance:
         captured = {}
         captured_closures = {}
         permitted_revisions = {original["base_revision_id"]}
+        if restore_selection is not None:
+            permitted_revisions.add(restore_selection["revision_id"])
         def declared(values):
             if not isinstance(values, list):
                 return
@@ -1109,7 +1201,9 @@ class TimelineCommitAcceptance:
                     if base_takes is None:
                         closure = self._commit_revision_closure(project, timeline, original["base_revision_id"])
                         base_takes = [line["take"] for line, _ in narration_lines(closure)]
-                    if refs not in base_takes:
+                    historical_takes = ([line["take"] for line, _ in narration_lines(restore_capture["closure"])]
+                                        if restore_capture is not None else [])
+                    if refs not in base_takes and refs not in historical_takes:
                         raise AuthorizationError("narration take is outside captured request and pinned base")
                 token = digest(refs)
                 if token not in captured_takes:
@@ -1135,13 +1229,21 @@ class TimelineCommitAcceptance:
 
         def revision_closure(revision_id):
             def scoped():
+                nonlocal restore_capture
                 _publisher(principal, original.get("asserted_actor"))
                 self._assert_commit_authority(principal, project)
                 token = digest(revision_id) if isinstance(revision_id, dict) else revision_id
                 allowed = (token in declared_shots and declared_shots[token] == revision_id) if isinstance(revision_id, dict) else revision_id in permitted_revisions
                 if not allowed:
                     raise AuthorizationError("revision closure is outside captured request and observed heads")
-                closure = self._commit_revision_closure(project, timeline, revision_id)
+                if restore_selection is not None and revision_id == restore_selection["revision_id"]:
+                    fresh = self._commit_restore_capture(project, timeline, restore_selection)
+                    if restore_capture is not None and digest(restore_capture) != digest(fresh):
+                        raise ConflictError("historical restore closure changed during request")
+                    restore_capture = copy.deepcopy(fresh)
+                    closure = fresh["closure"]
+                else:
+                    closure = self._commit_revision_closure(project, timeline, revision_id)
                 if token in captured_closures and captured_closures[token][1] != closure:
                     raise ConflictError("immutable revision dependency changed during request")
                 captured_closures[token] = (copy.deepcopy(revision_id), copy.deepcopy(closure))
@@ -1178,6 +1280,13 @@ class TimelineCommitAcceptance:
                     or not isinstance(prepared.get("result"), dict)
                     or prepared["result"].get("base_revision_id") != original["base_revision_id"]):
                 raise AuthorizationError("prepared acceptance changed captured request authority or identity")
+            if restore_selection is not None:
+                marker = {**restore_selection, "expected_publication_id": original["base_publication_id"]}
+                if (prepared.get("restore") != marker or restore_capture is None
+                        or prepared.get("expected_head_revision_id") != original["base_revision_id"]):
+                    raise ValidationError("restore marker must match captured command, head and historical read")
+            elif "restore" in prepared:
+                raise ValidationError("restore marker requires the sole captured restore command")
             # Every declared selection must have been consumed by the semantic
             # provider. Repeated reads/rebase use exactly that detached record.
             dependencies = []
@@ -1192,6 +1301,7 @@ class TimelineCommitAcceptance:
                                              _selected_media=dependencies,
                                              _narration_takes=copy.deepcopy(list(captured_takes.values())),
                                              _revision_closures=copy.deepcopy(list(captured_closures.values())),
+                                             _restore_capture=copy.deepcopy(restore_capture),
                                              _transcript_check=check_transcripts,
                                              _scene_check=check_scene if getattr(getattr(self, "_timeline_commit_provider", None),
                                                  "requires_scene_evaluation", False) or scene_invocation is not None else None))
@@ -1200,12 +1310,34 @@ class TimelineCommitAcceptance:
                 permitted_revisions.add(accepted_revision)
             return accepted
 
+        def revisions(options):
+            if restore_selection is None:
+                return read(lambda: self.revisions(project, timeline, copy.deepcopy(options)))
+            def scoped():
+                _publisher(principal, original.get("asserted_actor"))
+                self._assert_commit_authority(principal, project)
+                _object(options, (), ("limit", "before"))
+                limit = options.get("limit", 50)
+                if type(limit) is not int or limit < 1:
+                    raise ValidationError("revision limit must be a positive integer")
+                rows = [dict(row) for row in self.store.conn.execute(
+                    "SELECT revision_id, publication_id FROM parent_composition_publications "
+                    "WHERE project_id=? AND timeline_id=? ORDER BY sequence DESC", (project, timeline))]
+                if "before" in options:
+                    _string(options["before"])
+                    index = next((i for i, row in enumerate(rows) if row["publication_id"] == options["before"]), None)
+                    if index is None:
+                        raise NotFoundError("restore publication cursor not found")
+                    rows = rows[index + 1:]
+                return rows[:limit]
+            return read(scoped)
+
         return RuntimeCommitPort(
             lookup=lambda: read(lambda: self.lookup_request(project, timeline, key)),
             head=head,
             revision=lambda revision_id: read(lambda: self.get_project_parent_composition_revision(project, timeline, revision_id)),
             revision_closure=revision_closure,
-            revisions=lambda options: read(lambda: self.revisions(project, timeline, copy.deepcopy(options))),
+            revisions=revisions,
             evidence=evidence, accept=accept, selected_media=selected_media, narration_take=narration_take,
             transcript_source=transcript_source, scene_evaluator=scene_evaluator, close=close_scene, validate_scene=check_scene,
         )
