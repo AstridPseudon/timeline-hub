@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from dataclasses import replace
 from importlib.machinery import ModuleSpec
 import json
 import os
@@ -5264,3 +5265,277 @@ def test_request_estimator_executes_resolved_interpreter_through_private_alias_c
     prepared = w.host.prepare_storage_estimate(w.request)
     assert prepared.storage_estimate["scratch_bytes"] > 0
     assert prepared.storage_estimate["output_bytes"] == 2
+
+
+@pytest.fixture
+def retained_cpu_storage(tmp_path, monkeypatch):
+    """Real pack prediction/serialization, with offline authenticated-owner seams."""
+    import copy
+    import runtime_protocol.verified_host_launch as launch
+    from astrid.core.execution import storage_estimator as estimates
+    from astrid.packs.chiptune.actions.compose import planner
+    pack = Path(generic_host.__file__).resolve().parents[2] / 'packs/chiptune'
+    host = GenericPackHost(pack_roots=[pack])
+    host.discover()
+    record = host.capabilities['chiptune.compose']
+    params = {port.name: copy.deepcopy(port.default) for port in record.definition.inputs if port.default is not None}
+    params.update(duration_s=2.0, sections=[{'start_s': 0.0, 'end_s': 2.0, 'energy': 0.6,
+        'mood': 'bright', 'cadence_bars': 0}], hits=None, duck=None, vo_mask=None, mutes=None)
+    request = estimates.StorageEstimateRequest(record.id, record.capability_digest, 1,
+        {'family': record.id, 'params': params, 'output_policy': {}})
+    installed = tmp_path / 'installed'
+    installed.mkdir()
+    launcher = tmp_path / 'launcher.py'
+    launcher.write_text('# offline launch fixture\n')
+    module = installed / 'astrid/core/fixture.py'
+    module.parent.mkdir(parents=True)
+    module.write_text('# admitted installed closure\n')
+    retained = {'source_root': str(installed), 'host_files': {'astrid/core/fixture.py': 'pin'},
+        'actions': {}, 'launcher': {'path': str(launcher), 'sha256': 'pin'}}
+    selection = {'pack_id': 'chiptune', 'distributions': {}, 'digest': 'a' * 64}
+    valid = [True]
+    def selected(_):
+        if not valid[0]:
+            raise HostError('selected action profile or owner is stale')
+        return retained, selection, {}
+    monkeypatch.setattr(host, '_selected_action', selected)
+    monkeypatch.setattr(launch, 'installed_host_closure', lambda *a, **kw: {'files': dict(retained['host_files'])})
+    host._attempt_policy_factory = generic_host._AttemptPolicyFactory(host._executable_admission)
+    bootstrap = tmp_path / 'bootstrap'
+    bootstrap.mkdir()
+    monkeypatch.setattr(host._attempt_policy_factory, 'bootstrap_inputs', lambda _: (
+        (Path(sys.executable).resolve(),), (bootstrap,), (installed,), ()))
+    # Only the existing confined estimator process is injected. The authentic
+    # admitted descriptor/digest/request/source checks and pure pack code run.
+    calls = []
+    def estimator(_, descriptor, frozen, **kwargs):
+        calls.append(descriptor)
+        pair = planner.estimate_compose_storage(frozen.spec['params'])
+        return {'scratch_bytes': pair.scratch_bytes, 'output_bytes': pair.output_bytes}
+    monkeypatch.setattr(estimates, 'run_source_estimator', estimator)
+    monkeypatch.setattr(host, '_allocate_attempt_root', lambda *a: pytest.fail('preparation allocated attempt'))
+    monkeypatch.setattr(generic_host.subprocess, 'Popen', lambda *a, **kw: pytest.fail('preparation launched child'))
+    return SimpleNamespace(host=host, record=record, request=request, retained=retained,
+        selection=selection, valid=valid, calls=calls, planner=planner)
+
+
+def test_retained_cpu_storage_preparation_composes_authentic_pack_once(retained_cpu_storage, tmp_path):
+    w = retained_cpu_storage
+    pack = w.planner.estimate_compose_storage(w.request.spec['params'])
+    prepared, budget = w.host._prepare_storage_with_control(w.request)
+    assert (pack.scratch_bytes, pack.output_bytes) == (1583, 386320)
+    assert prepared.storage_estimate == {'scratch_bytes': pack.scratch_bytes + budget.scratch_bytes,
+                                       'output_bytes': pack.output_bytes}
+    assert prepared.estimator == w.record.request_storage_estimate_contract['estimator']
+    assert w.host.verify_storage_preparation(w.request, prepared) == prepared
+    assert len(w.calls) == 2
+    assert not list(tmp_path.rglob('.renderer-policy-*'))
+    for delta in (-1, 1, budget.scratch_bytes):
+        forged = replace(prepared, storage_estimate={**prepared.storage_estimate,
+            'scratch_bytes': prepared.storage_estimate['scratch_bytes'] + delta})
+        with pytest.raises(HostError, match='mismatch'):
+            w.host.verify_storage_preparation(w.request, forged)
+
+
+@pytest.mark.parametrize('directory_length,closure_count', [(1, 1), (120, 9), (200, 3000)])
+def test_retained_cpu_storage_bound_covers_serialized_path_and_closure_variation(
+        retained_cpu_storage, tmp_path, monkeypatch, directory_length, closure_count):
+    from astrid.core.execution.renderer_transport import RetainedRendererProfile
+    w = retained_cpu_storage
+    installed = Path(w.retained['source_root'])
+    closure = installed / ('q' * directory_length)
+    closure.mkdir()
+    files = {}
+    for i in range(closure_count):
+        path = closure / f'module_{i}.py'
+        path.write_text('# retained fixture\n')
+        files[str(path.relative_to(installed))] = 'pin'
+    w.selection['distributions'] = {'fixture': {'files': files}}
+    prepared, budget = w.host._prepare_storage_with_control(w.request)
+    attempt = tmp_path / ('a' * directory_length)
+    attempt.mkdir()
+    for part in ('inputs', 'outputs'):
+        (attempt / part).mkdir()
+    raw_files, roots, searches, excluded = w.host._attempt_policy_factory.bootstrap_inputs(w.record)
+    policy = generic_host._ConfinementPolicy(attempt, attempt / 'outputs',
+        generic_host._SandboxProjectScope(attempt / 'inputs', (attempt / 'inputs',)),
+        raw_files, roots, generic_host._SandboxEnvironmentPolicy(), bootstrap_search_roots=searches,
+        host_control_budget=budget)
+    policy = generic_host._selected_action_policy(policy, w.retained,
+        generic_host._selected_action_read_files(w.retained, w.selection))
+    monkeypatch.setattr(generic_host.sys, 'platform', 'darwin')
+    monkeypatch.setattr(generic_host.shutil, 'which', lambda _: '/usr/bin/sandbox-exec')
+    plan = generic_host._confined_launch_plan([sys.executable], policy=policy)
+    profile = plan.renderer_profile
+    assert type(profile) is RetainedRendererProfile
+    profile.validate()
+    actual = profile.path.stat().st_size
+    assert actual <= budget.scratch_bytes
+    if closure_count == 3000:
+        assert actual > 912950  # The originally failed policy is within this scale.
+    assert prepared.storage_estimate['scratch_bytes'] == w.planner.estimate_compose_storage(
+        w.request.spec['params']).scratch_bytes + budget.scratch_bytes
+    _assert_live_storage_envelope(prepared.storage_estimate, attempt, attempt / 'outputs')
+    _task_storage_envelope({'storage_estimate': prepared.storage_estimate}, attempt, [])
+    before = sorted(attempt.rglob('*'))
+    with pytest.raises(ValueError, match='byte/count/path bound'):
+        RetainedRendererProfile.create(profile.path.read_text(), policy)
+    assert sorted(attempt.rglob('*')) == before
+    if closure_count == 1:
+        # A genuine workload overrun must still fail with the composed budget,
+        # including when the workload chooses a policy-looking filename.
+        for kind, target, limit in (
+                ('scratch', attempt / '.renderer-policy-workload',
+                 prepared.storage_estimate['scratch_bytes'] - actual),
+                ('output', attempt / 'outputs/.renderer-policy-workload',
+                 prepared.storage_estimate['output_bytes'])):
+            with target.open('wb') as stream:
+                stream.truncate(limit + 1)
+            with pytest.raises(HostError, match=kind):
+                _assert_live_storage_envelope(prepared.storage_estimate, attempt, attempt / 'outputs')
+            with pytest.raises(HostError, match=kind):
+                _task_storage_envelope({'storage_estimate': prepared.storage_estimate}, attempt, [])
+            target.unlink()
+
+
+@pytest.mark.parametrize('fault', ['bytes', 'path'])
+def test_retained_cpu_control_bound_refuses_before_materialization(tmp_path, monkeypatch, fault):
+    from astrid.core.execution import renderer_transport as transport
+    attempt = tmp_path / 'attempt'
+    attempt.mkdir()
+    budget = transport.HostControlStorageBudget(1 if fault == 'bytes' else 100,
+        1 if fault == 'path' else 10000)
+    policy = SimpleNamespace(attempt_root=attempt, host_control_budget=budget)
+    monkeypatch.setattr(transport.tempfile, 'mkdtemp', lambda **kw: pytest.fail('allocated control directory'))
+    with pytest.raises(ValueError, match='byte/count/path bound'):
+        transport.RetainedRendererProfile.create('(deny default)\n', policy)
+    assert list(attempt.iterdir()) == []
+
+
+@pytest.mark.parametrize('fault', ['profile', 'closure', 'during_estimator'])
+def test_retained_cpu_storage_drift_refuses(retained_cpu_storage, monkeypatch, fault):
+    import runtime_protocol.verified_host_launch as launch
+    from astrid.core.execution import storage_estimator as estimates
+    w = retained_cpu_storage
+    prepared = w.host.prepare_storage_estimate(w.request)
+    if fault == 'profile':
+        w.valid[0] = False
+    elif fault == 'closure':
+        monkeypatch.setattr(launch, 'installed_host_closure', lambda *a, **kw: {'files': {}})
+    else:
+        original = estimates.run_source_estimator
+        def changed(*a, **kw):
+            result = original(*a, **kw)
+            w.valid[0] = False
+            return result
+        monkeypatch.setattr(estimates, 'run_source_estimator', changed)
+    with pytest.raises(HostError, match='stale|changed'):
+        w.host.verify_storage_preparation(w.request, prepared)
+
+
+@pytest.mark.parametrize('fault', ['content', 'replacement', 'symlink', 'hardlink', 'mode', 'directory'])
+def test_retained_cpu_profile_identity_fences_remain_offline(tmp_path, fault):
+    from astrid.core.execution.renderer_transport import RetainedRendererProfile
+    attempt = tmp_path / 'attempt'
+    output = attempt / 'outputs'
+    output.mkdir(parents=True)
+    policy = SimpleNamespace(attempt_root=attempt, host_control_budget=None,
+        project=SimpleNamespace(write_roots=()), private_write_root=output)
+    profile = RetainedRendererProfile.create('(version 1)\n(deny default)\n', policy)
+    path = profile.path
+    if fault == 'directory':
+        path.parent.chmod(0o755)
+    elif fault == 'mode':
+        path.chmod(0o600)
+    elif fault == 'hardlink':
+        os.link(path, path.with_name('alias'))
+    elif fault in ('replacement', 'symlink'):
+        path.rename(path.with_name('original'))
+        if fault == 'symlink':
+            path.symlink_to(path.with_name('original'))
+        else:
+            path.write_text('(version 1)\n(deny default)\n')
+            path.chmod(0o400)
+    else:
+        path.chmod(0o600)
+        path.write_text('(allow default)\n')
+        path.chmod(0o400)
+    with pytest.raises((ValueError, OSError)):
+        profile.validate()
+
+
+def test_retained_cpu_profile_workload_write_scope_remains_forbidden(tmp_path):
+    from astrid.core.execution.renderer_transport import RetainedRendererProfile
+    policy = SimpleNamespace(attempt_root=tmp_path, host_control_budget=None,
+        project=SimpleNamespace(write_roots=()), private_write_root=tmp_path)
+    with pytest.raises(ValueError, match='overlaps workload writes'):
+        RetainedRendererProfile.create('(deny default)\n', policy)
+    assert not list(tmp_path.glob('.renderer-policy-*'))
+
+
+@pytest.mark.parametrize('kind', ['scratch', 'output'])
+@pytest.mark.parametrize('phase', ['live', 'final'])
+def test_policy_named_workload_storage_still_overruns(tmp_path, kind, phase):
+    attempt = tmp_path / 'attempt'
+    output = attempt / 'outputs'
+    output.mkdir(parents=True)
+    root = output if kind == 'output' else attempt
+    (root / '.renderer-policy-workload').write_bytes(b'ordinary workload bytes')
+    pair = {'scratch_bytes': 0, 'output_bytes': 0}
+    with pytest.raises(HostError, match=kind):
+        if phase == 'live':
+            _assert_live_storage_envelope(pair, attempt, output)
+        else:
+            _task_storage_envelope({'storage_estimate': pair}, attempt, [])
+
+
+@pytest.mark.parametrize('delta', [-1, 0, 1])
+def test_retained_cpu_admission_recomputes_whole_pair_before_allocation(
+        retained_cpu_storage, tmp_path, monkeypatch, delta):
+    w = retained_cpu_storage
+    runtime = FakeRuntime()
+    runtime.confirm_claim_authority = lambda **kw: generic_host._AuthenticatedAttempt(tuple(sorted(kw.items())))
+    w.host.client = runtime
+    pair = dict(w.host.prepare_storage_estimate(w.request).storage_estimate)
+    pair['scratch_bytes'] += delta
+    runtime.tasks['estimated'] = _estimator_task(w, pair)
+    class BoundaryReached(Exception):
+        pass
+    if delta:
+        with pytest.raises(HostError, match='requires storage_estimate'):
+            w.host.run_task(_estimator_task(w, pair), lease_token='lease')
+        assert runtime.failures and not runtime.settlements
+    else:
+        attempt = tmp_path / 'admitted-attempt'
+        def allocate(*a):
+            attempt.mkdir()
+            (attempt / 'inputs').mkdir()
+            (attempt / 'outputs').mkdir()
+            return attempt
+        monkeypatch.setattr(w.host, '_allocate_attempt_root', allocate)
+        monkeypatch.setattr(w.host._attempt_policy_factory, 'build', lambda *a, **kw:
+            generic_host._ConfinementPolicy(attempt, attempt / 'outputs',
+                generic_host._SandboxProjectScope(attempt / 'inputs', (attempt / 'inputs',)),
+                (), (), generic_host._SandboxEnvironmentPolicy()))
+        def materialize(*a, **kw):
+            control = w.host._confinement_policy.host_control_budget
+            assert control.scratch_bytes + w.planner.estimate_compose_storage(
+                w.request.spec['params']).scratch_bytes == pair['scratch_bytes']
+            assert kw['storage_estimate'] == pair
+            raise BoundaryReached()
+        monkeypatch.setattr(w.host, '_materialize_inputs', materialize)
+        with pytest.raises(BoundaryReached):
+            w.host.run_task(_estimator_task(w, pair), lease_token='lease')
+    assert not runtime.uploaded_objects and not runtime.settlements
+    assert bool(runtime.heartbeats) is (delta == 0)  # Successful admission renews its lease.
+
+
+def test_offline_request_preparation_source_drift_still_refuses(request_estimator_host, monkeypatch):
+    from astrid.core.execution import storage_estimator as estimates
+    w = request_estimator_host
+    monkeypatch.setattr(estimates, 'run_source_estimator', lambda *a, **kw:
+        {'scratch_bytes': 10, 'output_bytes': 20})
+    prepared = w.host.prepare_storage_estimate(w.request)
+    w.source.write_text(w.source.read_text() + '\n# drift\n')
+    with pytest.raises(HostError, match='source digest changed'):
+        w.host.verify_storage_preparation(w.request, prepared)

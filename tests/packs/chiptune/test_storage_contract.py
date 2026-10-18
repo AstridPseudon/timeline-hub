@@ -28,7 +28,11 @@ def test_current_chiptune_has_no_declared_finite_storage_budget():
     assert record.estimated_output_bytes is None
     host.preflight("chiptune.compose")
     record = host.capabilities["chiptune.compose"]
-    assert record.ready  # The joined request-estimator declaration is valid.
+    # A valid estimator declaration does not establish the installed action
+    # owner required by the current selected-child launch contract.
+    assert not record.ready
+    assert record.preflight['action_child']['ok'] is False
+    assert 'verified selected child launch' in record.preflight['action_child']['reason']
     assert record.storage_estimate_unavailable_reason is None
     assert record.has_request_storage_estimator
     assert record.manifest()["ready"] is False  # Preparation is not ordinary ready-to-run work.

@@ -1981,6 +1981,7 @@ class _ConfinementPolicy:
     excluded_python_roots: tuple[Path, ...] = ()
     review_listener: Any = None
     retained_profile: bool = False
+    host_control_budget: Any = None
 
 
 @dataclass(frozen=True)
@@ -2128,6 +2129,28 @@ def _installed_discovery_roots(pack_roots: tuple[Path, ...]) -> bool:
     return True
 
 
+def _selected_action_read_files(retained, selection):
+    root = Path(retained['source_root'])
+    pack = 'astrid/packs/' + selection['pack_id'] + '/'
+    files = {p: pin for p, pin in retained['host_files'].items()
+             if not p.startswith('astrid/packs/') or p == 'astrid/packs/__init__.py' or p.startswith(pack)}
+    for identity in selection['distributions'].values():
+        files.update(identity['files'])
+    return {**{str(root / p): pin for p, pin in files.items()},
+            retained['launcher']['path']: retained['launcher']['sha256']}
+
+
+def _selected_action_policy(policy, retained, read_files):
+    installed = Path(retained['source_root'])
+    roots = tuple(root for root in policy.bootstrap_roots
+        if not (root == installed or root.is_relative_to(installed) or installed.is_relative_to(root)))
+    files = tuple(file for file in policy.bootstrap_files if not file.is_relative_to(installed))
+    return replace(policy, bootstrap_roots=roots,
+        bootstrap_files=tuple(dict.fromkeys((*files, *(Path(p) for p in read_files)))),
+        bootstrap_search_roots=tuple(dict.fromkeys((*policy.bootstrap_search_roots,
+            *(Path(p).parent for p in read_files)))), retained_profile=True)
+
+
 class _AttemptPolicyFactory:
     """Trusted code/bootstrap configuration shared by slots, never a policy."""
 
@@ -2139,29 +2162,8 @@ class _AttemptPolicyFactory:
         self.executables = executables
         self.remotion_closure_binding = remotion_closure_binding
 
-    def build(self, authority, *, attempt: Path, record) -> _ConfinementPolicy:
-        if type(authority) is not _AuthenticatedAttempt:
-            raise HostError("authenticated attempt authority required")
-        try:
-            bindings = self.executables.require(_binary_requirements(record))
-        except ExecutableAdmissionError as exc:
-            raise HostError(str(exc)) from exc
-        if bindings != record.executable_bindings:
-            raise HostError("declared executable readiness binding differs from launch")
-        projection = dict(authority.fields)
-        if not projection.get("project_id"):
-            # Explicit host-owned/unpaired workspace tasks have no project data.
-            if projection.get("kind") == "paired_session":
-                raise HostError("paired claim lacks selected project")
-        # Only Runtime-admitted CAS inputs are materialized here. No task path,
-        # environment or selected-project title chooses a host filesystem root.
-        project = attempt / "inputs"
-        private = attempt / "outputs"
-        for root in (project, private):
-            root.mkdir(mode=0o700, exist_ok=True)
-            if root.is_symlink() or root.resolve() != root or root.stat().st_uid != os.getuid():
-                raise HostError("attempt resource root is not canonical and owned")
-        _verify_admitted_source({"source_digest": record.source_digest, "source_roots": [str(root) for root in _admitted_source_roots(record.source_root, record.definition)]})
+    def bootstrap_inputs(self, record):
+        """Read the same installed inputs for prediction and materialization."""
         python = Path(sys.executable).resolve(strict=True)
         prefix = Path(sys.base_prefix).resolve(strict=True)
         python_library = _python_runtime_library(prefix)
@@ -2191,6 +2193,36 @@ class _AttemptPolicyFactory:
             except (OSError, ValueError) as exc:
                 raise HostError("admitted renderer closure changed before policy projection") from exc
             roots = (*roots, binding.project)
+        return (tuple(p for p in files if p.exists()),
+                tuple(dict.fromkeys(p for p in roots if p.is_dir())),
+                (Path(__file__).resolve().parents[3], Path(record.source_root).resolve().parent),
+                boundary[1] if boundary is not None else ())
+
+    def build(self, authority, *, attempt: Path, record) -> _ConfinementPolicy:
+        if type(authority) is not _AuthenticatedAttempt:
+            raise HostError("authenticated attempt authority required")
+        try:
+            bindings = self.executables.require(_binary_requirements(record))
+        except ExecutableAdmissionError as exc:
+            raise HostError(str(exc)) from exc
+        if bindings != record.executable_bindings:
+            raise HostError("declared executable readiness binding differs from launch")
+        projection = dict(authority.fields)
+        if not projection.get("project_id"):
+            # Explicit host-owned/unpaired workspace tasks have no project data.
+            if projection.get("kind") == "paired_session":
+                raise HostError("paired claim lacks selected project")
+        # Only Runtime-admitted CAS inputs are materialized here. No task path,
+        # environment or selected-project title chooses a host filesystem root.
+        project = attempt / "inputs"
+        private = attempt / "outputs"
+        for root in (project, private):
+            root.mkdir(mode=0o700, exist_ok=True)
+            if root.is_symlink() or root.resolve() != root or root.stat().st_uid != os.getuid():
+                raise HostError("attempt resource root is not canonical and owned")
+        _verify_admitted_source({"source_digest": record.source_digest, "source_roots": [str(root) for root in _admitted_source_roots(record.source_root, record.definition)]})
+        files, roots, searches, excluded = self.bootstrap_inputs(record)
+        python = Path(sys.executable).resolve(strict=True)
         # Existing installed platform artifacts only. Unsupported hosts are
         # refused by the same required backend check before any workload spawn.
         binary_directory = None
@@ -2202,11 +2234,11 @@ class _AttemptPolicyFactory:
                 (binary_directory / binding.name).symlink_to(binding.executable.resolved)
         policy = _ConfinementPolicy(attempt, private,
             _SandboxProjectScope(project, (project,)),
-            tuple(p for p in files if p.exists()), tuple(dict.fromkeys(p for p in roots if p.is_dir())),
+            files, roots,
             _SandboxEnvironmentPolicy(), claim_binding=authority.fields,
-            bootstrap_search_roots=(Path(__file__).resolve().parents[3], Path(record.source_root).resolve().parent),
+            bootstrap_search_roots=searches,
             executable_bindings=bindings, executable_directory=binary_directory,
-            excluded_python_roots=boundary[1] if boundary is not None else ())
+            excluded_python_roots=excluded)
         _confined_launch_plan([str(python)], policy=policy)
         return policy
 
@@ -2286,6 +2318,73 @@ def _renderer_browser_read_rules(browser: Path, quote: Callable[[Path], str]) ->
     ]
 
 
+def _serialize_confinement_profile(policy, *, reads, writes, private, bootstrap_roots,
+                                   file_aliases, bootstrap_search_roots, excluded_python, network):
+    """Serialize validated inputs; also usable without an attempt for prediction."""
+    def quote(value):
+        return str(value).replace("\\", "\\\\").replace('"', '\\"')
+
+    process_rules = (["(allow process*)"] if policy.workload_process_creation else
+                     ["(allow process-exec)", "(deny process-fork)"])
+    # SETEXEC of this same process retains Seatbelt. The existing authenticated
+    # monotonic birth fence handles exec token changes during live custody.
+    # No mach-lookup, IPC, socket, process-fork or broad process grant is added.
+    rules = ["(version 1)", "(deny default)", *process_rules, "(allow sysctl-read)"]
+    if policy.renderer_reads is not None:
+        from .renderer_transport import QualifiedRendererReads
+
+        if type(policy.renderer_reads) is not QualifiedRendererReads:
+            raise HostError("renderer read closure requires completed launch validation")
+        qualified_roots, qualified_literals = policy.renderer_reads.validate(policy)
+        for resource in (*qualified_roots, *qualified_literals):
+            rules.extend(f'(allow file-read-metadata (literal "{quote(p)}"))' for p in resource.parents)
+        rules.extend(f'(allow file-read* (subpath "{quote(p)}"))' for p in qualified_roots)
+        rules.extend(f'(allow file-map-executable (subpath "{quote(p)}"))' for p in qualified_roots)
+        rules.extend(f'(allow file-read* (literal "{quote(p)}"))' for p in qualified_literals)
+    if policy.review_listener is not None:
+        from ._review_listener import _RetainedReviewListener
+        if type(policy.review_listener) is not _RetainedReviewListener or not policy.workload_process_creation:
+            raise HostError("review listener requires its original Host launch")
+        port = policy.review_listener.validate(policy)
+        rules.extend((f'(allow network-inbound (local tcp4 "localhost:{port}"))', '(deny network-bind)'))
+    if policy.renderer_transport is not None:
+        from .renderer_transport import RetainedRendererTransport
+
+        if type(policy.renderer_transport) is not RetainedRendererTransport or not policy.workload_process_creation:
+            raise HostError("renderer transport requires its retained Host owner")
+        ports = policy.renderer_transport.validate(policy)
+        browser = policy.renderer_transport.browser
+        if browser is not None:
+            # Signature-qualified installed app closure; never a task path or
+            # implicit Remotion browser download/cache.
+            rules.extend(_renderer_browser_read_rules(browser, quote))
+        # Inbound permits adopting/accepting the already-listening socket.
+        # Bind stays denied, including wildcard bind on these same ports.
+        rules.extend(f'(allow network-inbound (local tcp4 "localhost:{port}"))' for port in ports[:1])
+        rules.extend(f'(allow network-outbound (remote tcp4 "localhost:{port}"))' for port in ports)
+        # macOS inbound permission otherwise also admits a wildcard bind on
+        # that port. An explicit bind deny preserves inherited listen/accept.
+        rules.append('(deny network-bind)')
+    # Nonrecursive bootstrap metadata exceptions, shared with the spike model.
+    ancestors = sorted({p for resource in (*reads, *writes, private, *bootstrap_roots, *file_aliases)
+                        for p in resource.parents}, key=str)
+    rules.extend(f'(allow file-read-metadata (literal "{quote(p)}"))' for p in ancestors)
+    rules.append('(allow file-read* (literal "/"))')
+    rules.extend(f'(allow file-read* (subpath "{quote(p)}"))' for p in (*reads, private, *bootstrap_roots))
+    rules.extend(f'(allow file-read* (literal "{quote(p)}"))' for p in (*file_aliases, *bootstrap_search_roots))
+    rules.extend(f'(allow file-map-executable (subpath "{quote(p)}"))' for p in bootstrap_roots)
+    rules.extend(f'(allow file-map-executable (literal "{quote(p)}"))' for p in file_aliases)
+    rules.extend(f'(allow file-write* (subpath "{quote(p)}"))' for p in (*writes, private))
+    rules.extend(f'(allow network-outbound (remote tcp4 "localhost:{remote.split(":")[1]}"))'
+                 for remote in dict.fromkeys(network))
+    # Explicit denies override ancestor stdlib/project/bootstrap allows, for
+    # direct file loaders and native mappings as well as ordinary imports.
+    rules.extend(f'(deny file-read* (subpath "{quote(p)}"))' for p in excluded_python)
+    rules.extend(f'(deny file-map-executable (subpath "{quote(p)}"))' for p in excluded_python)
+    profile = "\n".join(rules) + "\n"
+    return profile
+
+
 def _confined_launch_plan(
     argv: Sequence[str], *, policy: _ConfinementPolicy | None = None,
     cwd: Path | None = None, parent_environment: Mapping[str, str] | None = None,
@@ -2328,9 +2427,6 @@ def _confined_launch_plan(
 
     def within(value: Path, roots: Sequence[Path]) -> bool:
         return any(value.is_relative_to(root) for root in roots)
-
-    def quote(value: Path | str) -> str:
-        return str(value).replace("\\", "\\\\").replace('"', '\\"')
 
     attempt = path(policy.attempt_root, directory=True)
     private = path(policy.private_write_root, directory=True)
@@ -2479,64 +2575,9 @@ def _confined_launch_plan(
     sandbox = shutil.which("/usr/bin/sandbox-exec")
     if sandbox != "/usr/bin/sandbox-exec":
         raise HostError("required confinement needs the host sandbox-exec backend")
-    process_rules = (["(allow process*)"] if policy.workload_process_creation else
-                     ["(allow process-exec)", "(deny process-fork)"])
-    # SETEXEC of this same process retains Seatbelt. The existing authenticated
-    # monotonic birth fence handles exec token changes during live custody.
-    # No mach-lookup, IPC, socket, process-fork or broad process grant is added.
-    rules = ["(version 1)", "(deny default)", *process_rules, "(allow sysctl-read)"]
-    if policy.renderer_reads is not None:
-        from .renderer_transport import QualifiedRendererReads
-
-        if type(policy.renderer_reads) is not QualifiedRendererReads:
-            raise HostError("renderer read closure requires completed launch validation")
-        qualified_roots, qualified_literals = policy.renderer_reads.validate(policy)
-        for resource in (*qualified_roots, *qualified_literals):
-            rules.extend(f'(allow file-read-metadata (literal "{quote(p)}"))' for p in resource.parents)
-        rules.extend(f'(allow file-read* (subpath "{quote(p)}"))' for p in qualified_roots)
-        rules.extend(f'(allow file-map-executable (subpath "{quote(p)}"))' for p in qualified_roots)
-        rules.extend(f'(allow file-read* (literal "{quote(p)}"))' for p in qualified_literals)
-    if policy.review_listener is not None:
-        from ._review_listener import _RetainedReviewListener
-        if type(policy.review_listener) is not _RetainedReviewListener or not policy.workload_process_creation:
-            raise HostError("review listener requires its original Host launch")
-        port = policy.review_listener.validate(policy)
-        rules.extend((f'(allow network-inbound (local tcp4 "localhost:{port}"))', '(deny network-bind)'))
-    if policy.renderer_transport is not None:
-        from .renderer_transport import RetainedRendererTransport
-
-        if type(policy.renderer_transport) is not RetainedRendererTransport or not policy.workload_process_creation:
-            raise HostError("renderer transport requires its retained Host owner")
-        ports = policy.renderer_transport.validate(policy)
-        browser = policy.renderer_transport.browser
-        if browser is not None:
-            # Signature-qualified installed app closure; never a task path or
-            # implicit Remotion browser download/cache.
-            rules.extend(_renderer_browser_read_rules(browser, quote))
-        # Inbound permits adopting/accepting the already-listening socket.
-        # Bind stays denied, including wildcard bind on these same ports.
-        rules.extend(f'(allow network-inbound (local tcp4 "localhost:{port}"))' for port in ports[:1])
-        rules.extend(f'(allow network-outbound (remote tcp4 "localhost:{port}"))' for port in ports)
-        # macOS inbound permission otherwise also admits a wildcard bind on
-        # that port. An explicit bind deny preserves inherited listen/accept.
-        rules.append('(deny network-bind)')
-    # Nonrecursive bootstrap metadata exceptions, shared with the spike model.
-    ancestors = sorted({p for resource in (*reads, *writes, private, *bootstrap_roots, *file_aliases)
-                        for p in resource.parents}, key=str)
-    rules.extend(f'(allow file-read-metadata (literal "{quote(p)}"))' for p in ancestors)
-    rules.append('(allow file-read* (literal "/"))')
-    rules.extend(f'(allow file-read* (subpath "{quote(p)}"))' for p in (*reads, private, *bootstrap_roots))
-    rules.extend(f'(allow file-read* (literal "{quote(p)}"))' for p in (*file_aliases, *bootstrap_search_roots))
-    rules.extend(f'(allow file-map-executable (subpath "{quote(p)}"))' for p in bootstrap_roots)
-    rules.extend(f'(allow file-map-executable (literal "{quote(p)}"))' for p in file_aliases)
-    rules.extend(f'(allow file-write* (subpath "{quote(p)}"))' for p in (*writes, private))
-    rules.extend(f'(allow network-outbound (remote tcp4 "localhost:{remote.split(":")[1]}"))'
-                 for remote in dict.fromkeys(network))
-    # Explicit denies override ancestor stdlib/project/bootstrap allows, for
-    # direct file loaders and native mappings as well as ordinary imports.
-    rules.extend(f'(deny file-read* (subpath "{quote(p)}"))' for p in excluded_python)
-    rules.extend(f'(deny file-map-executable (subpath "{quote(p)}"))' for p in excluded_python)
-    profile = "\n".join(rules) + "\n"
+    profile = _serialize_confinement_profile(policy, reads=reads, writes=writes, private=private,
+        bootstrap_roots=bootstrap_roots, file_aliases=file_aliases,
+        bootstrap_search_roots=bootstrap_search_roots, excluded_python=excluded_python, network=network)
     if policy.renderer_reads is not None or policy.renderer_transport is not None or policy.retained_profile:
         from .renderer_transport import RetainedRendererProfile
 
@@ -6226,6 +6267,61 @@ class GenericPackHost:
         environment.update({k:endpoint for k in ('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','http_proxy','https_proxy','all_proxy')})
         return endpoint, environment
 
+    def _host_control_storage_bound(self, record):
+        """Host contribution, distinct from the authentic pack estimator pair.
+
+        Selected CPU commands retain exactly one policy. Its serialization uses
+        the admitted installed literal closure and the factory's bootstrap inputs.
+        The filesystem path limit bounds all future attempt IDs, including their
+        worst-case escaped spelling and ancestor count. No attempt is allocated.
+        """
+        if record.definition.metadata.get('execution_dependencies') is None:
+            return None
+        from .renderer_transport import HostControlStorageBudget
+        from runtime_protocol.verified_host_launch import installed_host_closure
+        retained, selection, _ = self._selected_action(record)
+        installed = installed_host_closure(Path(retained['source_root']), action_closures=retained['actions'])
+        if installed['files'] != retained['host_files']:
+            raise HostError('selected action base Host files changed')
+        read_files = _selected_action_read_files(retained, selection)
+        factory = self._attempt_policy_factory
+        if factory is None:
+            raise HostError('selected action storage requires the admitted policy factory')
+        files, roots, searches, excluded = factory.bootstrap_inputs(record)
+        # A path of one-byte escaped components maximizes both escaped bytes
+        # and metadata ancestors for any absolute path under PC_PATH_MAX.
+        path_limit = os.pathconf('/', 'PC_PATH_MAX')
+        if type(path_limit) is not int or path_limit < 2:
+            raise HostError('finite attempt path bound is unavailable')
+        spelling = '/' + '/'.join('"' for _ in range((path_limit - 1) // 2))
+        spelling += '"' * (path_limit - 1 - len(spelling))
+        attempt = Path(spelling)
+        policy = _ConfinementPolicy(attempt, attempt / 'outputs',
+            _SandboxProjectScope(attempt / 'inputs', (attempt / 'inputs',)),
+            files, roots, _SandboxEnvironmentPolicy(), bootstrap_search_roots=searches,
+            excluded_python_roots=excluded)
+        policy = _selected_action_policy(policy, retained, read_files)
+        declared_files = []
+        for binding in record.executable_bindings:
+            declared_files.append(attempt / '.astrid-executables' / binding.name)
+            for pin in (binding.executable, *binding.libraries):
+                declared_files.extend((*pin.aliases, pin.resolved))
+            declared_files.extend(binding.system_libraries)
+        searches = policy.bootstrap_search_roots
+        if record.executable_bindings:
+            searches = (*searches, attempt / '.astrid-executables')
+        roots = tuple(p.resolve() for p in policy.bootstrap_roots)
+        aliases = tuple(dict.fromkeys((*policy.bootstrap_files,
+            *(p.resolve() for p in policy.bootstrap_files), *declared_files)))
+        excluded = tuple(dict.fromkeys(p for raw in excluded for p in (raw, raw.resolve())))
+        profile = _serialize_confinement_profile(policy, reads=policy.project.read_roots, writes=(),
+            private=policy.private_write_root, bootstrap_roots=roots, file_aliases=aliases,
+            bootstrap_search_roots=searches, excluded_python=excluded,
+            network=('127.0.0.1:65535',) if record.definition.isolation.network else ())
+        if self._selected_action(record)[:2] != (retained, selection):
+            raise HostError('selected action changed during storage preparation')
+        return HostControlStorageBudget(len(profile.encode('utf-8')), path_limit - 1)
+
     def _prepare_selected_action_command(self, record, argv, *, attempt, network_broker):
         from runtime_protocol.verified_host_launch import prepare_action_binding, canonical
         retained, context = self._selected_action_context(record)
@@ -6241,14 +6337,13 @@ class GenericPackHost:
         policy = self._required_confinement_policy(attempt)
         if policy.pass_fds or policy.renderer_reads is not None or policy.renderer_transport is not None:
             raise HostError('selected action cannot inherit unrelated delegation or renderer channels')
-        installed = Path(retained['source_root'])
-        roots = tuple(root for root in policy.bootstrap_roots if not (root == installed or root.is_relative_to(installed) or installed.is_relative_to(root)))
-        files = tuple(file for file in policy.bootstrap_files if not file.is_relative_to(installed))
-        files = tuple(dict.fromkeys((*files, *(Path(p) for p in payload['read_files']))))
-        searches = tuple(dict.fromkeys((*policy.bootstrap_search_roots,
-            *(Path(p).parent for p in payload['read_files']))))
-        self._confinement_policy = replace(policy, bootstrap_roots=roots, bootstrap_files=files,
-            bootstrap_search_roots=searches, retained_profile=True)
+        if record.has_request_storage_estimator:
+            from .renderer_transport import HostControlStorageBudget
+            if type(policy.host_control_budget) is not HostControlStorageBudget:
+                raise HostError('selected action lacks admitted Host control storage bound')
+        if set(payload['read_files']) != set(_selected_action_read_files(retained, selection)):
+            raise HostError('selected action control storage closure differs')
+        self._confinement_policy = _selected_action_policy(policy, retained, payload['read_files'])
         # Use the retained launcher's existing private stdin PIPE. The process
         # custody wrapper rejects unmatched caller pass_fds; this bootstrap is
         # its sole stdin consumer and closes it before importing any action.
@@ -7110,13 +7205,24 @@ class GenericPackHost:
         This predicts bytes only. Task authority is checked again on execution.
         No provider, attempt allocation, media discovery or publication occurs.
         """
+        return self._prepare_storage_with_control(request)[0]
+
+    def _prepare_storage_with_control(self, request):
         from .storage_estimator import StorageEstimatorError, prepare
         record = self.capabilities.get(request.capability_id)
         if record is None or record.approval_reason or _is_withdrawn(record):
             raise HostError("request estimator capability is not admitted")
         try:
-            return prepare(record, request, timeout=self.execution_policy.deadline_seconds,
-                           output_limit=self.execution_policy.evidence_cap_bytes)
+            control = self._host_control_storage_bound(record)
+            prepared = prepare(record, request, timeout=self.execution_policy.deadline_seconds,
+                output_limit=self.execution_policy.evidence_cap_bytes,
+                host_control_scratch_bytes=control.scratch_bytes if control is not None else 0)
+            current = self._host_control_storage_bound(record)
+            if ((control is None) != (current is None) or control is not None and
+                    (control.scratch_bytes, control.attempt_path_bytes) !=
+                    (current.scratch_bytes, current.attempt_path_bytes)):
+                raise HostError('Host control storage inputs changed during preparation')
+            return prepared, control
         except StorageEstimatorError as exc:
             raise HostError(str(exc)) from exc
 
@@ -10310,7 +10416,8 @@ class GenericPackHost:
                         raise HostError("request estimator schema version mismatch")
                     request = StorageEstimateRequest(
                         capability_id, task_data.get("capability_digest"), 1, canonical_spec)
-                    expected = dict(self.prepare_storage_estimate(request).storage_estimate)
+                    prepared, host_control_budget = self._prepare_storage_with_control(request)
+                    expected = dict(prepared.storage_estimate)
                 else:
                     expected = {
                         "scratch_bytes": record.estimated_scratch_bytes,
@@ -10355,6 +10462,9 @@ class GenericPackHost:
                         operation=capability_id, executor_id=self.executor_id)
                 self._confinement_policy = self._attempt_policy_factory.build(
                     confirmation, attempt=root, record=record)
+                if record.has_request_storage_estimator:
+                    self._confinement_policy = replace(self._confinement_policy,
+                        host_control_budget=host_control_budget)
                 self._attempt_claim_authority = confirmation
             except Exception as exc:  # noqa: BLE001 - terminalize every failed owned claim.
                 if self.attempt_root is None:

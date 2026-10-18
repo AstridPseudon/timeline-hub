@@ -47,6 +47,12 @@ class StorageEstimateRequest:
 
 @dataclass(frozen=True)
 class StoragePreparation:
+    """Authenticated whole-task pair; estimator identifies the pack subtotal.
+
+    Host control composition is bound by this pair's preparation digest and the
+    existing installed Host source/profile qualification, not the pack function ID.
+    """
+
     request: StorageEstimateRequest
     spec_digest: str
     source_digest: str
@@ -440,7 +446,8 @@ def run_source_estimator(record, descriptor: Mapping[str, Any], request: Storage
             pipe.close()
 
 
-def prepare(record, request: StorageEstimateRequest, *, timeout: float, output_limit: int) -> StoragePreparation:
+def prepare(record, request: StorageEstimateRequest, *, timeout: float, output_limit: int,
+            host_control_scratch_bytes: int = 0) -> StoragePreparation:
     from .generic_host import _admitted_source_roots, _capability_digest, _verify_admitted_source
     # Detach before validation so a caller cannot mutate between validation
     # and computation. No normalization, filtering or default injection.
@@ -456,6 +463,11 @@ def prepare(record, request: StorageEstimateRequest, *, timeout: float, output_l
         raise StorageEstimatorError("admitted estimator definition digest changed")
     pair = run_source_estimator(record, descriptor, frozen, timeout=timeout, output_limit=output_limit)
     _verify_admitted_source(admission)
+    # The identity below remains the pack function's identity. The Host adds
+    # its separately predicted control storage exactly once to the whole task.
+    if type(host_control_scratch_bytes) is not int or host_control_scratch_bytes < 0:
+        raise StorageEstimatorError("invalid Host control storage bound")
+    pair = validate_pair({**pair, "scratch_bytes": pair["scratch_bytes"] + host_control_scratch_bytes})
     identity = {key: descriptor[key] for key in ("id", "version", "implementation_digest")}
     return StoragePreparation(frozen, "sha256:" + canonical_json_digest(frozen.spec),
                               "sha256:" + record.source_digest, identity, pair)

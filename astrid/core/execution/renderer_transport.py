@@ -13,10 +13,32 @@ import socket
 import stat
 import sys
 import tempfile
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from astrid.core.rendering.assets import InvocationAssetServer
+
+
+@dataclass(frozen=True)
+class HostControlStorageBudget:
+    """One retained policy file for an admitted selected CPU command.
+
+    This is private Host composition, never deserialized task authority. A
+    shared attempt owner enforces count and bytes before allocating a directory.
+    Failed writes also consume the slot, so retries cannot grow control storage.
+    """
+
+    scratch_bytes: int
+    attempt_path_bytes: int
+    _used: bool = field(default=False, init=False, compare=False, repr=False)
+    _lock: object = field(default_factory=threading.Lock, init=False, compare=False, repr=False)
+
+    def reserve(self, payload, attempt):
+        with self._lock:
+            if self._used or len(payload) > self.scratch_bytes or len(os.fsencode(attempt)) > self.attempt_path_bytes:
+                raise ValueError('Host control storage byte/count/path bound exceeded')
+            object.__setattr__(self, '_used', True)
 
 
 @dataclass(frozen=True)
@@ -35,6 +57,12 @@ class RetainedRendererProfile:
     @classmethod
     def create(cls, profile: str, policy):
         attempt = policy.attempt_root.resolve(strict=True)
+        payload = profile.encode("utf-8")
+        budget = policy.host_control_budget
+        if budget is not None:
+            if type(budget) is not HostControlStorageBudget:
+                raise ValueError('invalid Host control storage budget')
+            budget.reserve(payload, attempt)
         directory = Path(tempfile.mkdtemp(prefix=".renderer-policy-", dir=attempt))
         # A workload must never be able to replace the policy before sandbox-exec
         # consumes it. Project writes and scratch are separate admitted scopes.
@@ -43,7 +71,6 @@ class RetainedRendererProfile:
             directory.rmdir()
             raise ValueError("renderer policy overlaps workload writes")
         path = directory / "profile.sb"
-        payload = profile.encode("utf-8")
         try:
             fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o400)
             with os.fdopen(fd, "wb") as stream:
