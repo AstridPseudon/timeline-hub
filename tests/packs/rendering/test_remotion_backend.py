@@ -1019,6 +1019,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 mock.patch.dict(
                     render_remotion.os.environ,
                     {
+                        "HOME": str(tmp / "home"),
                         "ASTRID_NODE_EXECUTABLE": os.environ[
                             "ASTRID_NODE_EXECUTABLE"
                         ]
@@ -1027,6 +1028,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 ),
                 mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run),
             ):
+                Path(render_remotion.os.environ["HOME"]).mkdir()
                 result, provenance = _execute_direct(
                     timeline_path,
                     assets_path,
@@ -1303,6 +1305,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
             host_env = {
+                "HOME": str(tmp / "home"),
                 "OPENAI_API_KEY": "sk-should-not-leak",
                 "AWS_SECRET_ACCESS_KEY": "synthetic-secret",
                 "RENDER_HOST_ONLY": "host-value",
@@ -1313,6 +1316,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                     "ASTRID_NODE_EXECUTABLE"
                 ],
             }
+            Path(host_env["HOME"]).mkdir()
             with (
                 mock.patch.dict(render_remotion.os.environ, host_env, clear=True),
                 mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run),

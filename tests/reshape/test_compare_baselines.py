@@ -88,6 +88,26 @@ def test_structure_gate_fails_on_a_new_violation_and_on_a_fixed_one() -> None:
     assert compare(["a"], ["a", "b"]) == ([], ["b"])
 
 
+def test_structure_baseline_script_runs_directly_from_outside_the_checkout(tmp_path) -> None:
+    import os
+    import sys
+
+    from scripts.reshape.compare_structure_baseline import REPO_ROOT
+
+    result = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "scripts/reshape/compare_structure_baseline.py")],
+        cwd=tmp_path,
+        env={key: value for key, value in os.environ.items() if key != "PYTHONPATH"},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Structure violations:" in result.stdout
+    assert "No module named 'scripts'" not in result.stderr
+
+
 def test_the_tree_has_exactly_the_baselined_structure_violations() -> None:
     import json
 

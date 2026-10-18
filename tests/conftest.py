@@ -207,7 +207,7 @@ def _sandboxed_home_and_projects(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[None]:
-    """Sandbox ``ASTRID_HOME``, workspace config, and the projects root.
+    """Sandbox home, managed pack sources, workspace config, and projects.
 
     Every test gets tmp-backed state roots so no test writes into the real
     ``~/.astrid`` or the user's projects directory. The legacy session
@@ -216,26 +216,36 @@ def _sandboxed_home_and_projects(
     """
 
     _clear_task_env()
-    # This fixture is function-scoped, so keep all three roots under the
+    # This fixture is function-scoped, so keep all state roots under the
     # function-scoped tmp_path. Using tmp_path_factory here retained three
     # roots for every test until session end and exhausted disk in the full
     # 7,000+ test suite before the installed-artifact lanes could start.
     astrid_home = tmp_path / "astrid-home"
     home = tmp_path / "home"
     xdg_state_home = tmp_path / "xdg-state"
+    xdg_data_home = tmp_path / "xdg-data"
     projects_root = tmp_path / "projects"
     workspace_config_dir = tmp_path / "workspace-config"
-    source_state = tmp_path / "pack-sources.json"
-    for root in (astrid_home, home, xdg_state_home, projects_root, workspace_config_dir):
+    for root in (astrid_home, home, xdg_state_home, xdg_data_home, projects_root, workspace_config_dir):
         root.mkdir()
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.setenv("XDG_STATE_HOME", str(xdg_state_home))
-    # Custody's command inventory resolves this selector before its XDG/HOME
-    # fallback. Keep the ambient per-user pack registry out of every test;
-    # tests that exercise source state can replace this value explicitly.
-    monkeypatch.setenv(source_setup.SOURCE_STATE_ENV, str(source_state))
     monkeypatch.setenv("ASTRID_HOME", str(astrid_home))
+    # Child processes may intentionally receive only HOME after the subprocess
+    # environment filter removes XDG/source selectors. Keep that fallback local.
+    monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("ASTRID_WORKSPACE_CONFIG_DIR", str(workspace_config_dir))
+    # Managed pack discovery reads these XDG roots directly; ASTRID_HOME does
+    # not redirect pack-sources.json or the managed pack cache. Ignore ambient
+    # source selectors so a developer's active ~/.local/state inventory cannot
+    # leak into otherwise isolated tests. Tests that exercise source setup can
+    # still opt in by setting these values after this autouse fixture runs.
+    monkeypatch.setenv("XDG_STATE_HOME", str(xdg_state_home))
+    monkeypatch.setenv("XDG_DATA_HOME", str(xdg_data_home))
+    for name in (
+        source_setup.SOURCE_DECLARATIONS_ENV,
+        source_setup.SOURCE_STATE_ENV,
+        source_setup.SOURCE_DATA_ENV,
+    ):
+        monkeypatch.delenv(name, raising=False)
     # Seed PROJECTS_ROOT to a tmp dir so tests never touch the real
     # projects root. Tests that need their own projects-root (via
     # tmp_projects_root) override this with their own monkeypatch.setenv.

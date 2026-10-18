@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import copy
 import json
+import os
+import secrets
 import shutil
 import subprocess
 import sys
@@ -22,6 +24,14 @@ import pytest
 
 pytest.importorskip("banodoco_timeline_schema")
 
+from astrid.core.env_vars import (
+    ASTRID_NODE_EXECUTABLE,
+    ASTRID_REMOTION_PROJECT_DIR,
+    ASTRID_REMOTION_VALIDATION_LAUNCH,
+    ASTRID_REMOTION_VALIDATION_PATH,
+    ASTRID_REMOTION_VALIDATION_ROLE,
+    ASTRID_REMOTION_VALIDATION_SHA256,
+)
 from astrid.core.execution.executor import runner as executor_runner
 from astrid.core.execution.executor.registry import load_default_registry
 from astrid.core.execution.executor.runner import ExecutorRunRequest, run_executor
@@ -43,9 +53,15 @@ from astrid.core.rendering.errors import (
     make_renderer_error,
 )
 from astrid.core.rendering.registry import load_default_registries
+from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
 from astrid.core.rendering.service import RenderService
 from astrid.core.rendering.transport import CommandTransport
-from astrid.core.subprocess_env import TASK_PROJECT_ENV, TASK_RUN_ID_ENV, TASK_STEP_ID_ENV
+from astrid.core.subprocess_env import (
+    TASK_PROJECT_ENV,
+    TASK_RUN_ID_ENV,
+    TASK_STEP_ID_ENV,
+    build_child_subprocess_env,
+)
 from tests.packs.rendering._helpers import _execution_env
 
 pytestmark = [pytest.mark.renderer_parity, pytest.mark.integration]
@@ -218,6 +234,55 @@ def remotion_static_assets(monkeypatch: pytest.MonkeyPatch):
     if not existed:
         with suppress(OSError):
             public_root.rmdir()
+
+
+@pytest.fixture
+def remotion_launch_validation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    renderer_execution_environment: None,
+) -> None:
+    """Create the real launch proof that a provisioned Remotion worker needs.
+
+    The renderer-parity cases invoke a production RenderService directly, so
+    there is no GenericPackHost bootstrap to issue its normal launch artifact.
+    Qualify the same canonical child environment here; the backend child then
+    inherits these parent-owned references through CommandTransport.
+    """
+
+    _require_remotion_environment()
+    for name in (
+        ASTRID_REMOTION_VALIDATION_PATH,
+        ASTRID_REMOTION_VALIDATION_SHA256,
+        ASTRID_REMOTION_VALIDATION_LAUNCH,
+        ASTRID_REMOTION_VALIDATION_ROLE,
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    monkeypatch.setenv(ASTRID_REMOTION_PROJECT_DIR, str(REMOTION.resolve()))
+    configured_node = os.environ.get(ASTRID_NODE_EXECUTABLE)
+    node_value = configured_node or shutil.which("node")
+    assert node_value, "the provisioned Remotion environment must provide Node"
+    node = Path(node_value).expanduser().resolve(strict=True)
+    monkeypatch.setenv(ASTRID_NODE_EXECUTABLE, str(node))
+
+    # Render transport applies this exact allowlist projection again. In
+    # particular, pytest's PYTHONPYCACHEPREFIX is intentionally not inherited
+    # by the real protocol child and cannot appear in the attested context.
+    parent_environment = dict(os.environ)
+    child_environment = build_child_subprocess_env(
+        base=parent_environment,
+        parent=parent_environment,
+    )
+    reference = prepare_remotion_validation(
+        artifact_directory=tmp_path / "remotion-validation",
+        host_environment=child_environment,
+        python_executable=sys.executable,
+        launch_id=secrets.token_hex(16),
+        contexts={"standalone": child_environment},
+    )
+    for name, value in reference.items():
+        monkeypatch.setenv(name, value)
 
 
 def _request(
@@ -411,6 +476,7 @@ def test_real_remotion_renders_each_semantic_variant(
     service: RenderService,
     tmp_path: Path,
     remotion_static_assets: None,
+    remotion_launch_validation: None,
 ) -> None:
     _require_remotion_environment()
     expected_output = tmp_path / f"{fixture}-rendering-remotion.mp4"

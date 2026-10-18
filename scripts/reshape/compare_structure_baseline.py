@@ -17,6 +17,12 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BASELINE_PATH = REPO_ROOT / "scripts" / "reshape" / "baselines" / "structure_astrid.json"
 
+# Make direct execution (as used by ``make structure``) able to import the
+# checkout's ``astrid`` package even though Python puts this script's folder on
+# sys.path, not the repository root.
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(REPO_ROOT))
+
 
 def normalise(error: str, root: Path = REPO_ROOT) -> str:
     first = error.splitlines()[0].replace(f"{root}/", "")
