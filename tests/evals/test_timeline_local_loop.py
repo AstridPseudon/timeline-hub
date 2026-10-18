@@ -345,15 +345,25 @@ def test_real_case_boundary_denies_sibling_coordinator_and_evaluator_reads_but_c
 
 @pytest.mark.darwin_native
 @pytest.mark.skipif(sys.platform != "darwin", reason="local worker boundary uses macOS sandbox-exec")
-def test_real_case_boundary_denies_private_otto_trees_but_keeps_case_and_public_docs(tmp_path: Path) -> None:
-    source_root = Path(local_loop.__file__).resolve().parents[2]
+def test_real_case_boundary_denies_private_otto_trees_but_keeps_case_and_public_docs(
+    monkeypatch, tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    source_root = workspace_root / "checkout"
+    monkeypatch.setattr(local_loop, "__file__", str(source_root / "evals/timeline/local_loop.py"))
+    (source_root / "evals/timeline").mkdir(parents=True)
+    (source_root / "astrid").mkdir()
+    (source_root / "astrid_runtime_client").mkdir()
+    public_doc = source_root / "docs/timeline-editing-guide.md"
+    public_doc.parent.mkdir()
+    public_doc.write_text("public guide\n", encoding="utf-8")
     checkout_private_root = source_root / ".otto"
-    workspace_private_root = source_root.parent / ".otto"
+    workspace_private_root = workspace_root / ".otto"
+    checkout_private_root.mkdir(parents=True)
+    workspace_private_root.mkdir(parents=True)
     attempt = tmp_path / "attempt"
     work = attempt / "cases/A06/work"
     work.mkdir(parents=True)
-    public_doc = source_root / "docs/timeline-editing-guide.md"
-
     with (
         tempfile.TemporaryDirectory(prefix="worker-boundary-", dir=checkout_private_root) as private_dir,
         tempfile.TemporaryDirectory(prefix="worker-boundary-", dir=workspace_private_root) as workspace_dir,
