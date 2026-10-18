@@ -569,26 +569,6 @@ class PipelineCachingTest(unittest.TestCase):
         self.assertEqual([name for name, _ in calls], POOL_NO_RENDER_STEPS)
         self.assertNotIn("refine", [name for name, _ in calls])
 
-    # Expected failure per prior megaplan scope: this preserves the old legacy
-    # call-order assertion as an explicit OOS marker while the active path is pool mode.
-    @unittest.expectedFailure
-    def test_legacy_brief_call_order_oos_expected_failure(self) -> None:
-        root = self.make_workspace()
-        result, calls, _, _, _ = self.invoke(root, [])
-
-        self.assertEqual(result, 0)
-        self.assertEqual([name for name, _ in calls], ["transcribe", "scenes", "quality_zones", "shots", "picks", "cut"])
-
-    # Expected failure per prior megaplan scope: legacy render call order is no
-    # longer production behavior and is intentionally not restored.
-    @unittest.expectedFailure
-    def test_legacy_brief_render_call_order_oos_expected_failure(self) -> None:
-        root = self.make_workspace()
-        result, calls, _, _, _ = self.invoke(root, ["--render"])
-
-        self.assertEqual(result, 0)
-        self.assertEqual([name for name, _ in calls], ["transcribe", "scenes", "quality_zones", "shots", "picks", "cut", "render"])
-
 
 if __name__ == "__main__":
     unittest.main()
