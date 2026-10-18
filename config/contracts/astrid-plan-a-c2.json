@@ -4,12 +4,12 @@
   "revision": "C2",
   "issuedOn": "2026-09-24",
   "status": "frozen-local-contract",
-  "digest": "sha256:ca251dfbcadc6fbc68a5404495f2f0fd42128c821ce47a3560d2952399278d37",
+  "digest": "sha256:d2ec7f8128268d6c25bb955369da08432e0da0e2c8c697fdf6d2b8b545e30d1e",
   "predecessor": {
     "path": "config/contracts/astrid-plan-a-c1.json",
     "revision": "C1",
-    "canonicalDigest": "sha256:658c18bbdeb4f950806dc05ef265c0ffab422cbfd5ce17293fec6145e2f72515",
-    "rawFileSha256": "b5036e16eab503afd15a4ec5b11cb178a01c6e895016b0545493e93314404783",
+    "canonicalDigest": "sha256:38307a07134e3da89a887768d7b0c91be36175d5d02ef5ae2e316d7821523a20",
+    "rawFileSha256": "38635b25249995fc5ca2c501611de7b894f331ea8fe41ab7613f581f788789b1",
     "immutable": true
   },
   "authority": {
@@ -28,7 +28,7 @@
   },
   "diagnostic": {
     "schemaPath": "config/contracts/astrid-plan-a-diagnostic-c2.schema.json",
-    "schemaSha256": "4ab2701ae518be8e068f8143b7d389f1115313aac60daff0057911aeebbc84ef",
+    "schemaSha256": "0aa8f9b9329935641d977d3af5f5304d315e9065527f4c97654340ae44a70809",
     "totalObservationDeadlineMs": 5000,
     "deadlineScope": "total-including-all-helpers",
     "collectionEffects": [
@@ -132,7 +132,7 @@
       "repository": "reigh-app",
       "head": "c9cc077c96390bd482c5ec954057237dd3f79cdc",
       "path": "config/contracts/astrid-plan-a-c1.json",
-      "sha256": "b5036e16eab503afd15a4ec5b11cb178a01c6e895016b0545493e93314404783",
+      "sha256": "38635b25249995fc5ca2c501611de7b894f331ea8fe41ab7613f581f788789b1",
       "role": "immutable-predecessor",
       "status": "applicable"
     },

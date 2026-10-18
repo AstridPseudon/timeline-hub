@@ -4,7 +4,7 @@
   "revision": "C1",
   "issuedOn": "2026-09-23",
   "status": "frozen-semantics-pending-ack",
-  "digest": "sha256:658c18bbdeb4f950806dc05ef265c0ffab422cbfd5ce17293fec6145e2f72515",
+  "digest": "sha256:38307a07134e3da89a887768d7b0c91be36175d5d02ef5ae2e316d7821523a20",
   "scope": {
     "owner": "CF",
     "consumers": [
@@ -1093,14 +1093,14 @@
       "id": "local-session",
       "repository": "reigh-app",
       "path": "src/shared/auth/bridgeSession.ts",
-      "sha256": "76318d0776b10ee862183e08f4e714d6418f35cf2abbdff30084f6cdd011ae95",
+      "sha256": "ed6ac6472acefb536a1a971faaf8786a77364bb63a3ddf0fc92d2c575095d151",
       "summary": "Healthy local bridge is login-free session; failure remains degraded."
     },
     {
       "id": "local-auth-gate",
       "repository": "reigh-app",
       "path": "src/shared/auth/components/AuthGate.tsx",
-      "sha256": "ea4a20d371698a85fa2e5a163f6fb76f39f329c063b5a36f65b90c048a9672e1",
+      "sha256": "fe906f9359ced0e9168457891931548fde093bde8130e8b55801b2f3f9a66078",
       "summary": "Loading-only local gate; does not implement hosted Discord enforcement."
     },
     {
@@ -1114,14 +1114,14 @@
       "id": "runtime-proxy",
       "repository": "reigh-app",
       "path": "config/vite/runtimeProxy.ts",
-      "sha256": "a064f337fc3b8e278585452e6bc0bb0fd6a68f6853b12912cf0cdb0ca0b1bce1",
+      "sha256": "7e1c4258ee4c0c2a93a319d90a336cf666767000a925ef7736d9d1e8c17fff62",
       "summary": "Existing server-side Runtime bearer forwarding."
     },
     {
       "id": "local-launcher",
       "repository": "reigh-app",
       "path": "scripts/dev-local-workspace.mjs",
-      "sha256": "ab45e3d77fc8d17909182febd3522fc2a1394018c092f89c2aa25ed006cf0d0a",
+      "sha256": "4c915fdfba98e71c1b36946636f9057357fac6d47463464fad7f70b2577cbaf8",
       "summary": "Existing workspace.v1 discovery/profile bridge; not stable selection implementation."
     },
     {
