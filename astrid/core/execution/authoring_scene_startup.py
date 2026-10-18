@@ -21,6 +21,17 @@ def provider_digest():
     return "sha256:" + hashlib.sha256(Path(commit.__file__).read_bytes()).hexdigest()
 
 
+def _without_renderer(host):
+    record = host.capabilities.get("rendering.timeline_visualize")
+    return (
+        record is not None
+        and not record.preflight.get("remotion")
+        and getattr(host, "_host_renderer_selection", None) is None
+        and host._remotion_closure_binding is None
+        and host._remotion_host_session is None
+    )
+
+
 @_validation_timing('authoring_renderer_binding')
 def renderer_closure(host, environment):
     from astrid.packs.rendering.actions.timeline_visualize.composed_frame import (
@@ -107,7 +118,12 @@ def validate_host(host, config, environment):
         + _canonical_digest({k: v.dependency_digest for k, v in host.capabilities.items()})
         != c["executor_dependency_digest"]
         or provider_digest() != c["provider_digest"]
-        or renderer_closure(host, environment) != c["renderer_closure"]
+        or (
+            not _without_renderer(host)
+            or any(k in environment for k in ("ASTRID_REMOTION_PROJECT_DIR", "ASTRID_NODE_EXECUTABLE"))
+            if wire.empty_only(c)
+            else renderer_closure(host, environment) != c["renderer_closure"]
+        )
     ):
         raise FrameOwnerError("host_source_or_owner_changed")
     _verify_admitted_source(
@@ -205,6 +221,12 @@ def configuration_from_activation(preparation):
     # Existing preflight resolves the Host's qualified renderer after trusted
     # boot. Launch env intentionally cannot carry renderer authority selectors.
     admitted = record.preflight.get("remotion", {})
+    empty = (
+        request["profile"].get("execution_mode") == "host_only_cpu"
+        and launch is not None
+        and "renderer_selection" not in launch
+        and _without_renderer(host)
+    )
     if getattr(host, "_remotion_closure_binding", None) is not None:
         # timeline_visualize also serves static queries. Authoring scenes use
         # the separately admitted renderer and its REAL launch-bound validator,
@@ -215,7 +237,7 @@ def configuration_from_activation(preparation):
                     "project_dir": str(status.project_dir) if status.project_dir else None,
                     "node_executable": str(status.node_executable) if status.node_executable else None}
 
-    if (
+    if not empty and (
         not admitted.get("ok")
         or not admitted.get("project_dir")
         or not admitted.get("node_executable")
@@ -224,10 +246,11 @@ def configuration_from_activation(preparation):
     environment = {
         k: os.environ[k] for k in ("HOME", "LANG", "LC_ALL", "LC_CTYPE", "PATH") if k in os.environ
     }
-    environment.update(
-        ASTRID_REMOTION_PROJECT_DIR=admitted["project_dir"],
-        ASTRID_NODE_EXECUTABLE=admitted["node_executable"],
-    )
+    if not empty:
+        environment.update(
+            ASTRID_REMOTION_PROJECT_DIR=admitted["project_dir"],
+            ASTRID_NODE_EXECUTABLE=admitted["node_executable"],
+        )
     context = dict(
         runtime_realm_id=request["profile"]["workspace_uuid"],
         runtime_instance_id=state["runtime_instance_id"],
@@ -239,14 +262,19 @@ def configuration_from_activation(preparation):
         provider_digest=provider_digest(),
         source_digest="sha256:" + record.source_digest,
         dependency_digest="sha256:" + record.dependency_digest,
-        renderer_closure=renderer_closure(host, environment),
-        owner_generation=host._authoring_scene_session(environment).frame_owner.generation,
         capability_digest=record.capability_digest,
         executor_source_digest="sha256:"
         + _canonical_digest({k: v.source_digest for k, v in host.capabilities.items()}),
         executor_dependency_digest="sha256:"
         + _canonical_digest({k: v.dependency_digest for k, v in host.capabilities.items()}),
     )
+    if empty:
+        context["mode"] = wire.EMPTY_MODE
+    else:
+        context.update(
+            renderer_closure=renderer_closure(host, environment),
+            owner_generation=host._authoring_scene_session(environment).frame_owner.generation,
+        )
     config = AuthoringSceneConfig(
         Path(request["profile"]["support_root"]),
         host_peer,

@@ -292,13 +292,17 @@ def test_only_verified_cas_dependencies_are_staged_in_host_scratch(private_host,
 
 
 @pytest.mark.parametrize('change', [None, 'provider', 'source', 'dependency', 'capability', 'epoch', 'boot', 'closure', 'generation', 'direct-boot', 'outside-boot'])
-def test_host_source_validation_at_real_method_boundary(tmp_path, monkeypatch, change):
+@pytest.mark.parametrize('mode', ['renderer', 'empty'])
+def test_host_source_validation_at_real_method_boundary(tmp_path, monkeypatch, change, mode):
     from astrid.core.execution import generic_host as hosts
     c = context()
     c['provider_digest'] = startup.provider_digest()
     c['executor_source_digest'] = 'sha256:' + hosts._canonical_digest({'rendering.timeline_visualize': 'a' * 64})
     c['executor_dependency_digest'] = c['executor_source_digest']
     identity = ProcessIdentity(**AuthenticatedCleanupActor.current().verify())
+    if mode == 'empty':
+        c = {**{k: v for k, v in c.items() if k not in {'renderer_closure', 'owner_generation'}},
+             'mode': wire.EMPTY_MODE}
     config = transport.AuthoringSceneConfig(tmp_path, identity, identity, c, 'a' * 64)
     record = SimpleNamespace(approval_reason=None, ready=True, matrix={}, source_digest='a' * 64,
         dependency_digest='a' * 64, capability_digest=c['capability_digest'], source_root=tmp_path,
@@ -317,6 +321,10 @@ def test_host_source_validation_at_real_method_boundary(tmp_path, monkeypatch, c
     monkeypatch.setattr(hosts, '_admitted_source_roots', lambda *a: [tmp_path])
     monkeypatch.setattr(hosts, '_verify_admitted_source', lambda *a: None)
     monkeypatch.setattr(startup, 'renderer_closure', lambda *a: 'sha256:' + 'a' * 64)
+    if mode == 'empty':
+        record.preflight = {}
+        host._remotion_host_session = None
+        host._remotion_closure_binding = None
     if change == 'direct-boot': host.boot_manifest_path=tmp_path/'boot-manifest.json'
     elif change == 'outside-boot': host.boot_manifest_path=tmp_path.parent/'foreign-manifest.json'
     if change == 'provider': c['provider_digest'] = 'sha256:' + '0' * 64
@@ -325,8 +333,12 @@ def test_host_source_validation_at_real_method_boundary(tmp_path, monkeypatch, c
     elif change == 'capability': record.capability_digest = 'sha256:' + '0' * 64
     elif change == 'epoch': host.source_epoch = 'foreign'
     elif change == 'boot': host.boot_manifest_hash = '0' * 64
-    elif change == 'closure': monkeypatch.setattr(startup, 'renderer_closure', lambda *a: 'sha256:' + '0' * 64)
-    elif change == 'generation': host._remotion_host_session.frame_owner.generation += 1
+    elif change == 'closure':
+        if mode == 'empty': host._remotion_closure_binding = object()
+        else: monkeypatch.setattr(startup, 'renderer_closure', lambda *a: 'sha256:' + '0' * 64)
+    elif change == 'generation':
+        if mode == 'empty': host._remotion_host_session = object()
+        else: host._remotion_host_session.frame_owner.generation += 1
     # Config snapshots mutable construction input.
     if change == 'provider': config = dataclasses.replace(config, binding=c)
     if change in (None, "direct-boot"): startup.validate_host(host, config, {})
@@ -423,8 +435,10 @@ def test_trusted_activation_derives_identity_and_reuses_same_session(selected_ac
 
 
 @pytest.mark.parametrize('change', ['grant', 'owner', 'source', 'missing'])
-def test_activation_refuses_unbound_startup(selected_activation, change):
+@pytest.mark.parametrize('empty', [False, True])
+def test_activation_refuses_unbound_startup(selected_activation, change, empty):
     preparation, host = selected_activation
+    if empty: host.capabilities['rendering.timeline_visualize'].preflight = {}
     if change == 'grant': preparation._activation_grant['operation_id'] = 'foreign'
     elif change == 'owner': preparation._request['runtime_owner']['birth_id'] = 'foreign'
     elif change == 'source': host.pack_roots = (Path('/foreign'),)
@@ -607,3 +621,154 @@ def test_static_visualization_requires_real_launch_readiness_for_authoring_scene
         with pytest.raises(FrameOwnerError,match="renderer_unavailable"):
             startup.configuration_from_activation(preparation)
     assert calls==[{"require_explicit_project":True}]
+
+
+# Empty-only admission keeps the real private socket/peer transport. Source
+# inventory is a narrow fixture; no native renderer process/session is created.
+def empty_context():
+    return {**{k: v for k, v in context().items()
+               if k not in {"renderer_closure", "owner_generation"}}, "mode": wire.EMPTY_MODE}
+
+
+def empty_candidate():
+    from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+    from astrid.sdk.timeline.checkout import Checkout
+    payload = dict(config={"tracks": [{"id": "V1", "kind": "visual", "opacity": .625}]},
+                   clips=[], occurrences=[])
+    return Checkout(open_authoring_bundle(
+        dict(project_id="project_id", timeline_id="timeline_id", revision_id="empty-base",
+             payload=payload, content_digest=wire.digest(payload)),
+        shot_revisions=[], internal_timeline_revisions=[])).document()
+
+
+def empty_request():
+    value = request()
+    candidate = empty_candidate()
+    return dict(protocol=wire.PROTOCOL, operation=wire.EMPTY_OPERATION, purpose=wire.PURPOSE,
+                context=empty_context(), invocation={**value["invocation"], "candidate_digest": wire.digest(candidate)},
+                candidate=candidate)
+
+
+@pytest.fixture
+def private_empty_host(monkeypatch):
+    with tempfile.TemporaryDirectory(prefix="as171-", dir="/private/tmp") as temporary:
+        identity = ProcessIdentity(**AuthenticatedCleanupActor.current().verify())
+        config = transport.AuthoringSceneConfig(Path(temporary), identity, identity, empty_context(), "a" * 64)
+        def no_session(*args):
+            pytest.fail("empty-only receiver acquired a renderer session")
+        host = SimpleNamespace(_shutdown=threading.Event(), _authoring_scene_lock=threading.Lock(),
+            _authoring_scene_listener=None, _authoring_scene_session=no_session)
+        monkeypatch.setattr(startup, "validate_host", lambda *args: None)
+        listener = GenericPackHost.start_authoring_scene(host, config, {})
+        relay = transport.AuthoringSceneRelay(listener.config)
+        try:
+            yield SimpleNamespace(host=host, listener=listener, relay=relay)
+        finally:
+            relay.close()
+            listener.close()
+
+
+def test_empty_only_typed_completion_uses_real_transport_without_session(private_empty_host):
+    value = empty_request()
+    result = private_empty_host.relay.exchange(value, guard=lambda: None, cancelled=threading.Event())
+    assert result == wire.empty_reply(value)
+    assert wire.validate_empty_reply(result, value) == result
+    assert "renderer_closure" not in result["context"] and "owner_generation" not in result["context"]
+
+
+@pytest.mark.parametrize("field", sorted(wire.EMPTY_REPLY_FIELDS) + list(wire.INVOCATION_FIELDS))
+def test_empty_completion_rejects_every_forged_reply_binding(field):
+    value = empty_request()
+    result = copy.deepcopy(wire.empty_reply(value))
+    if field in wire.INVOCATION_FIELDS:
+        result["invocation"][field] = "foreign"
+    else:
+        result[field] = None
+    with pytest.raises(FrameOwnerError):
+        wire.validate_empty_reply(result, value)
+
+
+@pytest.mark.parametrize("change", ["frame", "mode", "renderer-mode", "candidate", "identity", "assert-empty"])
+def test_empty_only_closed_request_refuses_wrong_mode_frame_and_candidate(change):
+    value = empty_request()
+    if change == "frame": value["frames"] = [0]
+    elif change == "mode": value["context"]["mode"] = "anything"
+    elif change == "renderer-mode": value["context"] = context()
+    elif change == "candidate": value["candidate"]["parent"]["config"]["opacity"] = .75
+    elif change == "identity":
+        value["candidate"]["project_id"] = "foreign"
+        value["invocation"]["candidate_digest"] = wire.digest(value["candidate"])
+    elif change == "assert-empty": value["empty"] = True
+    with pytest.raises(FrameOwnerError):
+        wire.validate_request(value, empty_context())
+    frame = request()
+    frame["context"] = empty_context()
+    with pytest.raises(FrameOwnerError): wire.validate_request(frame, empty_context())
+
+
+@pytest.mark.parametrize("change", ["nonempty", "missing-shots", "malformed", "unsupported"])
+def test_empty_host_verifies_complete_hydrated_candidate(private_empty_host, change):
+    value = empty_request()
+    if change == "nonempty":
+        # Parent clips alone are empty, but the hydrated placements are not.
+        from astrid.sdk.timeline.checkout import Checkout
+        value["candidate"] = Checkout(json.loads((Path(__file__).parents[2] /
+            "fixtures/timeline_editing/tiny_publishable.json").read_text())).document()
+        value["candidate"].update(project_id="project_id", timeline_id="timeline_id")
+    elif change == "missing-shots": del value["candidate"]["shots"]
+    elif change == "malformed": value["candidate"]["placements"] = {"not": "a list"}
+    elif change == "unsupported":
+        value["candidate"]["parent"].setdefault("config", {}).setdefault("app", {})["astrid"] = {"v": 999}
+    value["invocation"]["candidate_digest"] = wire.digest(value["candidate"])
+    with pytest.raises((FrameOwnerError, EOFError, ValueError, OSError)):
+        private_empty_host.relay.exchange(value, guard=lambda: None, cancelled=threading.Event())
+
+
+def test_cpu_activation_derives_empty_mode_without_renderer_owner(selected_activation, monkeypatch):
+    preparation, host = selected_activation
+    host.capabilities["rendering.timeline_visualize"].preflight = {}
+    host._authoring_scene_session = lambda *a: pytest.fail("empty activation acquired renderer")
+    config, environment = startup.configuration_from_activation(preparation)
+    assert wire.empty_only(config.binding)
+    assert "owner_generation" not in config.binding and "renderer_closure" not in config.binding
+    assert host._remotion_host_session is None
+    assert not any(k.startswith("ASTRID_REMOTION") for k in environment)
+
+
+@pytest.mark.parametrize("change", ["shutdown", "source", "endpoint", "relay", "cancel", "peer"])
+def test_empty_completion_preserves_live_channel_guards(private_empty_host, monkeypatch, change):
+    w = private_empty_host
+    cancelled = threading.Event()
+    if change == "shutdown": w.host._shutdown.set()
+    elif change == "source":
+        def invalid(*args): raise FrameOwnerError("source_changed")
+        monkeypatch.setattr(startup, "validate_host", invalid)
+    elif change == "endpoint": w.listener.config.readiness_path.unlink()
+    elif change == "relay": w.relay.close()
+    elif change == "cancel": cancelled.set()
+    elif change == "peer":
+        monkeypatch.setattr(transport, "_actor", lambda peer: SimpleNamespace(verify=lambda: {}))
+    with pytest.raises((FrameOwnerError, EOFError, ValueError, OSError, KeyError)):
+        w.relay.exchange(empty_request(), guard=lambda: None, cancelled=cancelled)
+
+
+@pytest.mark.parametrize("change", ["profile", "selected", "preflight", "session"])
+def test_empty_mode_cannot_upgrade_an_unready_or_selected_renderer(selected_activation, change):
+    preparation, host = selected_activation
+    host.capabilities["rendering.timeline_visualize"].preflight = {}
+    if change == "profile": preparation._request["profile"]["execution_mode"] = "foreign"
+    elif change == "selected": preparation._request["profile"]["host_launch"]["renderer_selection"] = {}
+    elif change == "preflight": host.capabilities["rendering.timeline_visualize"].preflight = {"remotion": {"ok": False}}
+    elif change == "session": host._remotion_host_session = SimpleNamespace(close=lambda: None)
+    from astrid.core.execution.hosted_contract import HostedContractError
+    expected = HostedContractError if change in {"profile", "selected"} else FrameOwnerError
+    reason = "hosted preparation differs from authenticated launch" if change in {"profile", "selected"} else "renderer_unavailable"
+    with pytest.raises(expected, match=reason):
+        startup.configuration_from_activation(preparation)
+
+
+@pytest.mark.parametrize("field", sorted(wire.EMPTY_CONTEXT_FIELDS))
+def test_empty_request_preserves_every_trusted_context_field(field):
+    value = empty_request()
+    value["context"][field] = "foreign"
+    with pytest.raises(FrameOwnerError): wire.validate_request(value, empty_context())
