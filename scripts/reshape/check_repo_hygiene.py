@@ -134,12 +134,6 @@ TRACKED_PATH_ALLOWLISTS = (
     "tests/core/util/test_secrets.py",
     "tests/sdk/test_zero_secret_smoke.py",
     "tests/v10/test_m6_secret_sink.py",
-    # M7 finalizer inputs are pinned by the release gate; runtime state stays
-    # detectable below.
-    ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/plan_v1.meta.json",
-    ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/plan_v2.md",
-    ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/plan_v2.meta.json",
-    ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/state.json",
     "tests/**/fixtures/**",
     "tests/fixtures/**",
     # Element/workflow assets that are authored pack content, not runtime
