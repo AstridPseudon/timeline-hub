@@ -4,12 +4,12 @@
   "revision": "C2",
   "issuedOn": "2026-09-24",
   "status": "frozen-local-contract",
-  "digest": "sha256:d5210a9da4fe9f5039d3946aa58a91524a290a8ebd8c40dd9eac47d0261e303d",
+  "digest": "sha256:1a3eef2ed3bd8977334a482ef8882b38bb28fbc0a9e3151cfb1c028637247a14",
   "predecessor": {
     "path": "config/contracts/astrid-plan-a-c1.json",
     "revision": "C1",
-    "canonicalDigest": "sha256:bce45d851aa4c92fe3abcf53379e5401d8180f8be10209acb69a5f4484c92e66",
-    "rawFileSha256": "e26cb8be966dc3f79b6d17e43d02d5649a9295f873afe928d7b5f9d43b11665b",
+    "canonicalDigest": "sha256:74ff6d5b7582391d6ae5335162bc25faf9bec9745d4d90b4c7646fc20ee76772",
+    "rawFileSha256": "78cbfd87b43c391fec57549aabb075fa03fc86de8448bdb9f81f3e56d7675c5c",
     "immutable": true
   },
   "authority": {
@@ -131,7 +131,7 @@
       "repository": "astrid-app",
       "head": "a062e825ed3b335a6eb4175c0bf2a020e036120c",
       "path": "config/contracts/astrid-plan-a-c1.json",
-      "sha256": "e26cb8be966dc3f79b6d17e43d02d5649a9295f873afe928d7b5f9d43b11665b",
+      "sha256": "78cbfd87b43c391fec57549aabb075fa03fc86de8448bdb9f81f3e56d7675c5c",
       "role": "immutable-predecessor",
       "status": "applicable"
     },
@@ -171,22 +171,22 @@
       "repository": "astrid-runtime",
       "head": "3b21334366fa8124f1a7b0d371cc4295821616f5",
       "path": "runtime_protocol/service.py",
-      "sha256": "ea323e1f1c24323f9b28e8609108cb7e265e5fa3d54675f503b1c5d3642521a3",
+      "sha256": "f1f611e4f9ad424e2104249ce7fd6d5c7ff932f41677a1a1b1b914f0b47a6897",
       "role": "Runtime-execution-authority",
       "status": "held-primary-overlay-pending-I-04-I-05"
     }
   ],
   "generatedClientCompatibility": {
-    "runtimeSchemaDigest": "sha256:200c2553f54a7e41a6405518912dc6ee9577de25292afd46fc1fcccf68be0770",
+    "runtimeSchemaDigest": "sha256:ec06fbc6567fe28065d22626b040cad81bb2e5318623586ae9187c713794f6b9",
     "authorityStatus": "held-primary-overlay-pending-I-04-I-05",
     "clients": [
       {
         "repository": "astrid-runtime",
         "language": "python",
         "generatedPath": "packages/python/astrid_runtime_client/generated.py",
-        "generatedSha256": "0ae65e07e918f018e521bc9563f904b462645681e41e5a0b90255ad619a2c2e3",
+        "generatedSha256": "e1bb3018128ea51355324a230b83be921c550a01586959274baf2c0e2b5955a3",
         "metadataPath": "packages/python/astrid_runtime_client/contract_metadata.py",
-        "metadataSha256": "80fc75fd5bb5f8215624306f11b94893321b7d3d5725d9a647b7f13fc6abe3ef",
+        "metadataSha256": "3b141ab4bebd723a0721b3ae56fabd9cafed658c2245066f2c072ce4cae87663",
         "status": "canonical-candidate-input"
       },
       {
@@ -195,16 +195,16 @@
         "generatedPath": "packages/typescript/src/generated.ts",
         "generatedSha256": "82f1b330a257a8414f49f852a8604ed2692ee70c3482a9a45ff51df18bd77325",
         "metadataPath": "packages/typescript/src/contract-metadata.ts",
-        "metadataSha256": "dd5f9c081b17c6e071d40658e114638e44d7320a2bb6ce2bcdde2ddb5386a692",
+        "metadataSha256": "bf852360f57c15e41a06037d5e78191128d98b5d4909882e06c0e9d40a3479c8",
         "status": "canonical-candidate-input"
       },
       {
         "repository": "astrid-agent",
         "language": "python-vendored",
         "generatedPath": "astrid_runtime_client/generated.py",
-        "generatedSha256": "0ae65e07e918f018e521bc9563f904b462645681e41e5a0b90255ad619a2c2e3",
+        "generatedSha256": "e1bb3018128ea51355324a230b83be921c550a01586959274baf2c0e2b5955a3",
         "metadataPath": "astrid_runtime_client/contract_metadata.py",
-        "metadataSha256": "80fc75fd5bb5f8215624306f11b94893321b7d3d5725d9a647b7f13fc6abe3ef",
+        "metadataSha256": "3b141ab4bebd723a0721b3ae56fabd9cafed658c2245066f2c072ce4cae87663",
         "status": "generated-byte-parity-metadata-adds-provenance-only"
       }
     ],

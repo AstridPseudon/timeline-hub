@@ -4,7 +4,7 @@
   "revision": "C1",
   "issuedOn": "2026-09-23",
   "status": "frozen-semantics-pending-ack",
-  "digest": "sha256:bce45d851aa4c92fe3abcf53379e5401d8180f8be10209acb69a5f4484c92e66",
+  "digest": "sha256:74ff6d5b7582391d6ae5335162bc25faf9bec9745d4d90b4c7646fc20ee76772",
   "scope": {
     "owner": "CF",
     "consumers": [
@@ -1121,7 +1121,7 @@
       "id": "local-launcher",
       "repository": "astrid-app",
       "path": "scripts/dev-local-workspace.mjs",
-      "sha256": "015a605e5ade734dfb063160a471e9dd3cfa2d184b935ee772ae0b9178ec8ffa",
+      "sha256": "e190c5965cebd712c0a9cee9feb0757812037b6bc310103160a0a16e8ec1632d",
       "summary": "Existing workspace.v1 discovery/profile bridge; not stable selection implementation."
     },
     {
@@ -1149,7 +1149,7 @@
       "id": "capability-profile",
       "repository": "astrid-agent",
       "path": "config/astrid-beta-capabilities.json",
-      "sha256": "8985d5785d30f87e9099914fb4163c6865e4d29d15204b062583cec7191867eb",
+      "sha256": "7aad14959c790730c5efdb1f00900b1e9f70dad395224328102520b0b9f00dd0",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
@@ -1177,7 +1177,7 @@
       "id": "generic-pack-host",
       "repository": "astrid-agent",
       "path": "astrid/core/execution/generic_host.py",
-      "sha256": "e6691e435e486ab98464ff82dceef00b36d944b22baf7093ac99cf2c7f4cc87b",
+      "sha256": "387788fb010f54dcdad3756bb26beb45f9775b6f64722d38fda8c364a2f6dd1e",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
@@ -1191,7 +1191,7 @@
       "id": "engine-profile",
       "repository": "astrid-agent",
       "path": "astrid/packs/vibecomfy/actions/run/run.py",
-      "sha256": "bcab5b9feda0fdb1b50e57db0648070e0eaab39bf20768fddccf9e6f36898e5c",
+      "sha256": "a6ea2a57f23f1e61f92f5a70b18243ae47a1513219977a2308361798b4d18694",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
@@ -1247,7 +1247,7 @@
       "id": "runtime-autobootstrap",
       "repository": "astrid-agent",
       "path": "astrid/sdk/autobootstrap.py",
-      "sha256": "21bf61f4c0e8b59b6b9cf37dfaeb73c3dfc526d9267afa4fd82af1159c1d735b",
+      "sha256": "215589edd971dd87ebf18d776834dc342af164aa2ef9173509545771f83556b0",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
@@ -1310,7 +1310,7 @@
       "id": "runtime-errors",
       "repository": "astrid-runtime",
       "path": "contract/schemas/common.json",
-      "sha256": "d07a72f61186f197920074252a2b679f3a1ed5b84b6938d2f23c82815ca77ecc",
+      "sha256": "65e0196e36a0565f3a2f69e489e4c1fa6114df039eb25666c60591f266e06f19",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
@@ -1401,7 +1401,7 @@
       "id": "pack-training",
       "repository": "astrid-agent",
       "path": "astrid/packs/training/pack.yaml",
-      "sha256": "b5fdfe0e11c30b4f3bea97acdd657857dc1b6c150afdee6fdd16322f9e9f2b55",
+      "sha256": "980f8a310c65b22b40685f24f33e700e82530c94c45e0ea10473996f7af53e6f",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
@@ -1415,7 +1415,7 @@
       "id": "pack-understanding",
       "repository": "astrid-agent",
       "path": "astrid/packs/understanding/pack.yaml",
-      "sha256": "17c8a0edaa572dfbe8a4519c67768d5c00c67c48a2e7fe0d5628da36b02a7e4a",
+      "sha256": "ac24a734c5ddaa603942b07bb6e23f6f05b13970a0b4a22bfba159c85ca874d2",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
@@ -1429,7 +1429,7 @@
       "id": "pack-video_editing",
       "repository": "astrid-agent",
       "path": "astrid/packs/video_editing/pack.yaml",
-      "sha256": "9da0464217948deee3534f5145e37b7de0eb63834d961e9e149e080cd37e2ab7",
+      "sha256": "53ad0207af00cd880a3e8261c03f9caab69cc59b471064d141b4e8c36c125216",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {

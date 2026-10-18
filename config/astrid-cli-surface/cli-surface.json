@@ -1818,6 +1818,9 @@
             "--json": {
               "required": false
             },
+            "--name": {
+              "required": false
+            },
             "--project": {
               "required": true
             },
@@ -1908,6 +1911,9 @@
             },
             "--project": {
               "required": true
+            },
+            "--revision": {
+              "required": false
             },
             "--slug": {
               "required": false
@@ -2464,6 +2470,21 @@
           ],
           "verbs": {}
         },
+        "rename": {
+          "flags": {
+            "--json": {
+              "required": false
+            },
+            "--project": {
+              "required": true
+            }
+          },
+          "positionals": [
+            "ref",
+            "name"
+          ],
+          "verbs": {}
+        },
         "render": {
           "flags": {
             "--audio-target": {
@@ -2542,6 +2563,32 @@
             },
             "--source-object-id": {
               "required": true
+            }
+          },
+          "positionals": [
+            "ref"
+          ],
+          "verbs": {}
+        },
+        "restructure": {
+          "flags": {
+            "--dry-run": {
+              "required": false
+            },
+            "--keep-original": {
+              "required": false
+            },
+            "--message": {
+              "required": false
+            },
+            "--name": {
+              "required": false
+            },
+            "--project": {
+              "required": true
+            },
+            "-m": {
+              "required": false
             }
           },
           "positionals": [
@@ -2887,6 +2934,26 @@
             "ref"
           ],
           "verbs": {}
+        },
+        "transcripts": {
+          "flags": {},
+          "positionals": [],
+          "verbs": {
+            "sync": {
+              "flags": {
+                "--dry-run": {
+                  "required": false
+                },
+                "--project": {
+                  "required": true
+                }
+              },
+              "positionals": [
+                "ref"
+              ],
+              "verbs": {}
+            }
+          }
         },
         "undo": {
           "flags": {
