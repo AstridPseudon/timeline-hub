@@ -73,6 +73,20 @@ def test_selected_action_broker_policy_has_no_direct_upstream_egress(monkeypatch
     assert not network_policy._allowed_destination('speech.platform.bing.com',443)
 
 
+def test_selected_action_retained_profile_is_small_argv_and_rechecks_bytes(config):
+    retained=plan(replace(config,retained_profile=True))
+    assert retained.argv[:2]==('/usr/bin/sandbox-exec','-f')
+    path=Path(retained.argv[2])
+    assert not path.is_relative_to(config.private_write_root)
+    assert all(not path.is_relative_to(root) for root in config.project.write_roots)
+    assert '(deny default)' in path.read_text()
+    retained.subprocess_options()
+    path.chmod(0o600);path.write_text('(allow default)\n');path.chmod(0o400)
+    with pytest.raises(ValueError):retained.subprocess_options()
+    (config.attempt_root.parent.parent/'retained-profile-file-refusal.json').write_text(
+        '{"changed_profile_refused":true,"native_execution":false}\n')
+
+
 def test_valid_plan_separates_project_bootstrap_private_and_subprocess_authority(config):
     result = plan(config)
     profile = result.argv[2]

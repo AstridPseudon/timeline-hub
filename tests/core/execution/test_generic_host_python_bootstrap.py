@@ -154,8 +154,15 @@ def test_selected_action_real_command_preparation_confines_exact_files_and_broke
     monkeypatch.setattr(f.host,'_prepare_selected_action_command',binding)
     class Prepared(Exception):pass
     def spawn(argv,**options):
-        assert argv[:2]==['/usr/bin/sandbox-exec','-p']
-        policy=argv[2]
+        assert argv[:2]==['/usr/bin/sandbox-exec','-f']
+        policy=Path(argv[2]).read_text()
+        assert sum(len(arg.encode()) for arg in argv) < 16384
+        proof_root=Path(f.retained['source_root']).parent
+        (proof_root/'compiled-sandbox-profile.sb').write_text(policy)
+        (proof_root/'compiled-launch-proof.json').write_text(json.dumps({
+            'argv':argv,'cwd':options['cwd'],'pass_fds':options['pass_fds'],
+            'environment_keys':sorted(options['env']), 'argv_bytes':sum(len(a.encode()) for a in argv),
+            'profile_bytes':len(policy.encode()),'profile_sha256':hashlib.sha256(policy.encode()).hexdigest()},indent=2)+'\n')
         assert f'(allow file-read* (subpath "{f.retained["source_root"]}"))' not in policy
         assert f'(allow file-read* (literal "{f.retained["source_root"]}/edge_tts/__init__.py"))' in policy
         assert '(allow network-outbound (remote tcp "127.0.0.1:43210"))' in policy
@@ -243,7 +250,7 @@ assert any(Path(c[0]).name=='ffprobe' for c in commands)
 print('OFFLINE_SELECTED_DISPATCH_OK',json.dumps(commands))
 '''
     def spawn(argv,**options):
-        assert argv[:2]==['/usr/bin/sandbox-exec','-p']
+        assert argv[:2]==['/usr/bin/sandbox-exec','-f']
         selected=argv[3:]
         assert selected[:4]==[sys.executable,'-I','-S','-B']
         # Retain the real binding FD and command arguments. These replacements
@@ -265,6 +272,11 @@ print('OFFLINE_SELECTED_DISPATCH_OK',json.dumps(commands))
     assert [o['name'] for o in manifest['outputs']]==['speech','speech_manifest','speech_words']
     assert not (f.outputs/'audio/speech.mp3').exists()
     assert not f.host._active_processes
+    (Path(f.retained['source_root']).parent/'offline-speech-proof.json').write_text(json.dumps({
+        'manifest':manifest,'provenance':provenance,'words':words,'wav_bytes':wav.stat().st_size,
+        'wav_sha256':hashlib.sha256(wav.read_bytes()).hexdigest(),'mp3_exists':False,
+        'returncode':result.returncode,'live_children_after_test':False,
+        'external_boundaries':'socket/provider/media/custody are offline seams'},indent=2)+'\n')
 
 
 PROBE = '''

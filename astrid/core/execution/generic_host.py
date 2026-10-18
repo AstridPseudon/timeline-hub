@@ -1975,6 +1975,7 @@ class _ConfinementPolicy:
     renderer_reads: Any = None
     excluded_python_roots: tuple[Path, ...] = ()
     review_listener: Any = None
+    retained_profile: bool = False
 
 
 @dataclass(frozen=True)
@@ -2260,6 +2261,8 @@ def _confined_launch_plan(
         raise HostError("required confinement policy is missing or invalid")
     if type(policy.workload_process_creation) is not bool:
         raise HostError("invalid confinement process creation policy")
+    if type(policy.retained_profile) is not bool:
+        raise HostError('invalid retained confinement profile selection')
 
     def items(value: Any, name: str) -> tuple:
         if type(value) is not tuple:
@@ -2493,7 +2496,7 @@ def _confined_launch_plan(
     rules.extend(f'(deny file-read* (subpath "{quote(p)}"))' for p in excluded_python)
     rules.extend(f'(deny file-map-executable (subpath "{quote(p)}"))' for p in excluded_python)
     profile = "\n".join(rules) + "\n"
-    if policy.renderer_reads is not None or policy.renderer_transport is not None:
+    if policy.renderer_reads is not None or policy.renderer_transport is not None or policy.retained_profile:
         from .renderer_transport import RetainedRendererProfile
 
         retained = RetainedRendererProfile.create(profile, policy)
@@ -6204,7 +6207,7 @@ class GenericPackHost:
         searches = tuple(dict.fromkeys((*policy.bootstrap_search_roots,
             *(Path(p).parent for p in payload['read_files']))))
         self._confinement_policy = replace(policy, bootstrap_roots=roots, bootstrap_files=files,
-            bootstrap_search_roots=searches)
+            bootstrap_search_roots=searches, retained_profile=True)
         # Use the retained launcher's existing private stdin PIPE. The process
         # custody wrapper rejects unmatched caller pass_fds; this bootstrap is
         # its sole stdin consumer and closes it before importing any action.
