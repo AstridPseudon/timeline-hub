@@ -701,6 +701,11 @@ def main(args: list[str]) -> int:
     reclaim_cmd = sub.add_parser("reclaim", help="report and expire registered disposable roots")
     reclaim_cmd.add_argument("--dry-run", action="store_true", help="report only; do not delete expired roots")
     reclaim_cmd.add_argument("--json", action="store_true")
+    sub.add_parser("journey", help="run a bounded development journey against an already-running Runtime")
+    if args and args[0] == "journey":
+        from astrid.core.dev.journey import main as journey_main
+
+        return journey_main(args[1:])
     parsed = parser.parse_args(args)
     if parsed.command == "reclaim":
         return _reclaim_command(parsed, resolve_runtime_data_root)

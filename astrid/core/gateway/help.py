@@ -49,7 +49,7 @@ Operational families:
   python3 -m astrid status [--json]
   python3 -m astrid doctor [--json]
   python3 -m astrid backup {create,restore,export,tombstone,recover,purge} [--json]
-  python3 -m astrid dev {status,promote,reclaim} [--ref REF] [--dry-run] [--json]
+  python3 -m astrid dev {status,promote,reclaim,journey} [--ref REF] [--dry-run] [--json]
   python3 -m astrid auth {login,status,logout,revoke}
 
 External tools:
@@ -116,7 +116,7 @@ Operational families:
   documents   [runtime] reusable project documents; list/create/show/checkout/checkin
   doctor      [runtime] read-only runtime health diagnostics
   backup      [runtime] create/restore/export/tombstone/recover/purge
-  dev         [operator] status/promote the served checkout; reclaim: report and expire registered disposable storage roots
+  dev         [operator] status/promote the served checkout; journey: run against an existing Runtime; reclaim: report and expire registered disposable storage roots
 
 Contributor authentication (reserved):
   auth        [hivemind] login/status/logout/revoke; contribution-only access
