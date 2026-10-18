@@ -5,7 +5,9 @@ fixture: tiny-bed8  # under keep_end the bed already runs to the film's 8 s end 
 expect: change
 cli:
   - edit --remove-line s1 --music plays-on
-sheet: {missing: "the sheet cannot remove a narration line (harness H-5), so the music policy cannot run on the sheet either"}
+sheet:
+  replace:
+    - ['  s1  "It went viral."', 'music plays-on']
 python: |
   tl.remove_line("s1", music="plays_on")
 check:

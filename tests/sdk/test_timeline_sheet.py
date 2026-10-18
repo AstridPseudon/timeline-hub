@@ -264,6 +264,146 @@ def test_detail_prints_long_values_as_editable_json_and_round_trips():
     assert card.params["inset"]["top"] == 90
 
 
+def test_a_sound_row_can_add_an_independent_clip_on_a_word():
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1] / "fixtures" / "timeline_editing"
+    tl = Checkout(json.loads((root / "tiny.json").read_text(encoding="utf-8")))
+    sheet = render_sheet(tl).replace("a-music  media  Q  for 4s  trim=0..4",
+                                    'a-music  media  Q  for 4s  trim=0..4\n  vo  blip  media  Q  on "viral"  for 0.3s')
+    assert apply_sheet(tl, sheet)
+    blip = tl.clip("blip")
+    assert blip.is_audio and blip.cut_id is None
+    assert blip.start == pytest.approx(tl.word("viral").start, abs=1 / FPS)
+    assert blip.duration == pytest.approx(0.3)
+    shown = render_sheet(tl)
+    assert any("blip" in line and 'on "viral" for 0.3s' in line for line in shown.splitlines())
+    assert apply_sheet(tl, shown) == []
+
+
+def test_a_sound_row_can_add_an_until_anchored_clip_and_refuses_visual_tracks():
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1] / "fixtures" / "timeline_editing"
+    tl = Checkout(json.loads((root / "tiny.json").read_text(encoding="utf-8")))
+    tl._registry(tl.clip("a-music").shot_id)["Q"]["duration"] = 10.0
+    sheet = render_sheet(tl).replace("a-music  media  Q  for 4s  trim=0..4",
+                                    'a-music  media  Q  for 4s  trim=0..4\n  vo  tail  media  Q  on "viral"  until "now"')
+    apply_sheet(tl, sheet)
+    tail = tl.clip("tail")
+    assert tail.start == pytest.approx(tl.word("viral").start, abs=1 / FPS)
+    assert tail.end == pytest.approx(tl.word("now").start, abs=1 / FPS)
+    shown = render_sheet(tl)
+    assert any("tail" in line and 'on "viral" until "now"' in line for line in shown.splitlines())
+    rows = shown.splitlines()
+    tail_row = next(i for i, line in enumerate(rows) if "tail" in line)
+    rows.insert(tail_row + 1, '  plate  bad  media  Q  on "viral"  for 0.3s')
+    with pytest.raises(SheetError, match="not an audio track"):
+        apply_sheet(tl, "\n".join(rows))
+    assert not [clip for clip in tl.clips() if clip.id == "bad"]
+
+
+def test_sound_trim_is_rendered_and_parsed_and_unchanged_window_is_noop():
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1] / "fixtures" / "timeline_editing"
+    tl = Checkout(json.loads((root / "tiny.json").read_text(encoding="utf-8")))
+    music = tl.clip("a-music")
+    music.data["from"], music.data["to"] = 0.0, 4.0
+    music.data.pop("hold", None)
+    sheet = render_sheet(tl)
+    assert "trim=0..4" in sheet
+    assert apply_sheet(tl, sheet) == []
+    changed = parse_sheet(sheet.replace("trim=0..4", "trim=3..5"))
+    assert changed["sound"][0]["trim"] == (3.0, 5.0)
+    tl._registry(music.shot_id)["Q"]["duration"] = 8.0
+    apply_sheet(tl, sheet.replace("trim=0..4", "trim=3..5"))
+    assert (music.data["from"], music.data["to"], music.duration) == (3.0, 5.0, 2.0)
+
+
+def test_film_end_and_music_policy_round_trip_in_sheet_header():
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1] / "fixtures" / "timeline_editing"
+    tl = Checkout(json.loads((root / "tiny.json").read_text(encoding="utf-8")))
+    sheet = render_sheet(tl) + 'end after "now" +2.3s\nmusic plays-on\n'
+    parsed = parse_sheet(sheet)
+    assert parsed["film_end"] == 'after "now" +2.3s'
+    assert parsed["music"] == "plays_on"
+    assert apply_sheet(tl, sheet)
+    assert tl.duration == pytest.approx(9.0)
+    assert tl.music == "plays_on"
+    current = render_sheet(tl)
+    assert 'end after "now" +2.3s' in current and "music plays-on" in current
+    assert apply_sheet(tl, current) == []
+
+
+def test_visual_clip_looks_round_trip_and_omission_clears_them():
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1] / "fixtures" / "timeline_editing"
+    tl = Checkout(json.loads((root / "tiny.json").read_text(encoding="utf-8")))
+    card = tl.clip("c2.card")
+    card.set_look(opacity=0.6, entrance="scale-in 18f", exit="fade 12f")
+    sheet = render_sheet(tl)
+    assert 'opacity=0.6' in sheet and 'entrance="scale-in 18f"' in sheet and 'exit="fade 12f"' in sheet
+    assert apply_sheet(tl, sheet) == []
+    cleared = sheet.replace(" opacity=0.6", "").replace(' entrance="scale-in 18f"', "").replace(' exit="fade 12f"', "")
+    assert apply_sheet(tl, cleared)
+    assert card.look.get("opacity") is None
+    assert card.data.get("entrance") is None and card.data.get("exit") is None
+
+
+def test_trim_syntax_on_a_visual_layer_is_refused_atomically():
+    tl = Checkout(named())
+    tl.resolve()
+    before = tl.document()
+    with pytest.raises(SheetError, match="apply only to sound rows"):
+        apply_sheet(tl, render_sheet(tl).replace("snap-plate  P", "snap-plate  P  trim=1..2", 1))
+    assert tl.document() == before
+
+
+def test_omitting_one_of_two_same_named_layers_deletes_only_that_cut_layer():
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1] / "fixtures" / "timeline_editing"
+    tl = Checkout(json.loads((root / "tiny.json").read_text(encoding="utf-8")))
+    tl.add("am-sprite", at='"viral"', hold=0.4, asset="R", track="sprite", cut="c1", layer="shared")
+    tl.add("am-sprite", at='"Live"', hold=0.4, asset="R", track="sprite", cut="c2", layer="shared")
+    sheet = render_sheet(tl)
+    rows = sheet.splitlines()
+    c1 = next(i for i, line in enumerate(rows) if "┃ c1 " in line)
+    row = next(i for i in range(c1 + 1, len(rows)) if "shared" in rows[i])
+    rows.pop(row)
+    apply_sheet(tl, "\n".join(rows))
+    named = {f"{intent.cut_of(c.data)}.{intent.layer_of(c.data)}" for c in tl.clips()
+             if intent.cut_of(c.data) and intent.layer_of(c.data)}
+    assert "c1.shared" not in named and "c2.shared" in named
+
+
+def test_audio_fade_curve_round_trips_and_a_curve_only_edit_applies():
+    import json
+    from pathlib import Path
+
+    from astrid.core.timeline import clip_fields as cf
+
+    root = Path(__file__).resolve().parents[1] / "fixtures" / "timeline_editing"
+    tl = Checkout(json.loads((root / "tiny.json").read_text(encoding="utf-8")))
+    music = tl.clip("a-music")
+    cf.write(music.data, "fade_in", "0.5s curve=equal-power", fps=tl.fps, audio=True)
+    sheet = render_sheet(tl)
+    assert "fade_in=\"15f curve=equal-power\"" in sheet
+    assert apply_sheet(tl, sheet) == []
+    apply_sheet(tl, sheet.replace("curve=equal-power", "curve=s-curve"))
+    assert cf.describe(music.data, fps=tl.fps)["fade_in"] == "15f curve=s-curve"
+
+
 def test_a_cuts_notes_belong_to_the_cut_when_its_picture_changes():
     """Repro (c18): a why written while churn was the picture; churn moves to fx and another clip becomes the
     picture; a new why must be written, shown and diffed, and the hold must follow the picture role."""

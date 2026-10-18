@@ -3,7 +3,9 @@ source: h2 L6 (AUDIT bug 3)
 intent: Add a sprite on "now" in c2 at x=600 y=300 and give it asset R; the position and the asset must survive.
 fixture: tiny
 expect: change
-cli: {missing: "no add verb in the CLI (AUDIT: Missing tools, Add a clip by verb; h2 L6)"}
+cli:
+  - edit --add-layer sprite --layer pin --on '"now"' --for 1.5 --set x=600 --set y=300
+  - edit --clip c2.pin --swap-asset R
 sheet:
   cuts: [c2]
   replace:

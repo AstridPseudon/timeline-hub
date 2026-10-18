@@ -13,5 +13,3 @@ python: |
 check:
   - tl.time('"Live"') - tl.time('after "viral"') < 0.15
   - len(tl.clips(text="Live.")) == 1
-xfail:
-  - {path: sheet, check: equal, reason: "NEW: the sheet 'gap 0' writes gap_after_s 0.0 and keeps the 0.1 s lead of 'Live' (Live at 1.8 s); --close-gap-before and Python close_gap write no gap key and start Live at 1.7 s (the end of 'viral')"}

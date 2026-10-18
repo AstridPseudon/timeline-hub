@@ -531,7 +531,7 @@ class Clip(_Suggest):
             if (audio and applies == "visual") or (not audio and applies == "audio"):
                 raise TimelineEditError(f"{self.address}: {name} does not apply to {'an audio' if audio else 'a visual'} clip")
         try:
-            cf.coerce_many(fields, fps=self._tl.fps, audio=audio)
+            cf.coerce_many({k: v for k, v in fields.items() if v is not None}, fps=self._tl.fps, audio=audio)  # None clears
             trial = copy.deepcopy(self.data)
             for name, value in fields.items():
                 cf.write(trial, name, value, fps=self._tl.fps, audio=audio)
@@ -592,7 +592,7 @@ class Clip(_Suggest):
                      "end": ".until(MOMENT)", "asset": ".swap_asset(KEY)"}
 
     def _check_param_keys(self, keys: list[str]) -> None:
-        from astrid.sdk.timeline_address import element_schema, unknown_params
+        from astrid.sdk.timeline_address import declared_params, element_schema, unknown_params
 
         tops = [re.split(r"[.\[]", k, maxsplit=1)[0] for k in keys]
         timing = [k for k in tops if k in self._TIMING_WORDS and k not in (element_schema(self.element).get("properties") or {})]
@@ -601,7 +601,7 @@ class Clip(_Suggest):
                                     + "; ".join(f"{k} → {self._TIMING_WORDS[k]}" for k in timing))
         bad = unknown_params(self.element, tops, existing=self.params)
         if bad:
-            props = sorted(element_schema(self.element).get("properties") or {})
+            props = declared_params(self.element)
             hints = [f"{k} (did you mean {', '.join(difflib.get_close_matches(k, props, n=2))}?)"
                      if difflib.get_close_matches(k, props, n=2) else k for k in bad]
             raise TimelineEditError(f"{self.address} is an {self.element}, which has no param {', '.join(hints)}. It takes: "

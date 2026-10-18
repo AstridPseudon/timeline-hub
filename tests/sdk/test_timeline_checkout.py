@@ -896,6 +896,31 @@ def test_python_setters_are_discoverable_and_refuse_what_is_not_a_param():
     assert card.params["brand_new"] == 1
 
 
+def test_media_set_refuses_unknown_params_and_accepts_declared_fades():
+    tl = Checkout(bundle())
+    clip = tl.clip("a-music")
+    before = copy.deepcopy(clip.data)
+    with pytest.raises(TimelineEditError, match="has no param zzbogus"):
+        clip.set(zzbogus=2)
+    assert clip.data == before
+    clip.set(fadeIn=0.5, fadeOut=0.25, fadeInCurve="equal-power", fadeOutCurve="linear")
+    assert clip.params == {"fadeIn": 0.5, "fadeOut": 0.25, "fadeInCurve": "equal-power", "fadeOutCurve": "linear"}
+
+
+@pytest.mark.parametrize("clip_id,fields,stored", [
+    ("a-music", {"volume": "-3dB", "fade_in": "8f curve=equal-power"}, {"volume", "params"}),
+    ("a-rocket", {"opacity": 0.6, "entrance": "fade 8f"}, {"opacity", "entrance"}),
+])
+def test_look_none_clears_fields_without_changing_other_clip_data(clip_id, fields, stored):
+    clip = Checkout(bundle()).clip(clip_id)
+    clip.data.setdefault("params", {})
+    before = copy.deepcopy(clip.data)
+    clip.look.set(**fields)
+    assert all(name in clip.data for name in stored)
+    clip.look.set(**{name: None for name in fields})
+    assert clip.data == before
+
+
 def test_verify_in_python_uses_the_fast_lane_at_what_changed(monkeypatch):
     """Script-mode parity with edit --verify: tl.verify() picks the changed moments, or at=."""
     from astrid.packs.rendering.actions.timeline_visualize import fast_lane

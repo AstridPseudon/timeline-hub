@@ -39,13 +39,9 @@ RESOLVED = ("p", "t", "rev-0")  # what the patched resolve_ids returns (the fixt
 
 PATHS = ("cli", "sheet", "python")
 EXPECTS = ("change", "no-change", "refused")
-CHECKS = ("runs", "changes", "reports", "equal", "steps", "undo", "redo", "check", "exists", "idempotent")
 AREAS = ("timing", "structure", "look", "audio", "code")
-TOP_KEYS = {"id", "source", "intent", "fixture", "tool", "expect", "idempotent", "cli", "sheet", "python", "check",
-            "xfail"}
+TOP_KEYS = {"id", "source", "intent", "fixture", "tool", "expect", "idempotent", "cli", "sheet", "python", "check"}
 NO_CHANGE_OK_CODES = (0, 3)  # v1 CLI: 3 means "no change" (it ran)
-XFAIL_KEYS = {"path", "check", "reason"}
-MISSING_KEYS = {"missing"}
 ID_RE = re.compile(r"(%s)\.[a-z0-9_-]+\.[a-z0-9_-]+" % "|".join(AREAS))
 
 
@@ -56,18 +52,10 @@ class ScenarioError(ValueError):
 @dataclass(frozen=True)
 class PathSpec:
     name: str
-    missing: str | None = None  # why this front-end cannot do it today (audit ref); None when present
     commands: tuple[str, ...] = ()  # cli: one `timelines` command per entry (without the timeline/project)
     cuts: tuple[str, ...] | None = None  # sheet: only these cuts; None = the whole sheet
     replace: tuple[tuple[str, str], ...] = ()  # sheet: (old, new), old must occur exactly once
     snippet: str | None = None  # python: runs with tl = Checkout.draft(P, t)
-
-
-@dataclass(frozen=True)
-class XFail:
-    path: str
-    check: str
-    reason: str
 
 
 @dataclass(frozen=True)
@@ -79,17 +67,13 @@ class Scenario:
     expect: str
     paths: dict[str, PathSpec]
     check: tuple[str, ...]
-    xfail: tuple[XFail, ...]
     tool: str | None = None  # the registered tool this scenario tests (stored only)
     idempotent: bool = False  # each path runs a second time on the same working copy; that run must be a no-change
     file: Path | None = None
 
     def present(self) -> list[str]:
-        """Every path the scenario names, runnable or missing, in PATHS order."""
+        """Every runnable path the scenario names, in PATHS order."""
         return [name for name in PATHS if name in self.paths]
-
-    def runnable(self) -> list[str]:
-        return [name for name in self.present() if self.paths[name].missing is None]
 
 
 @dataclass
@@ -160,9 +144,8 @@ def parse_scenario(data: Any, where: str = "scenario") -> Scenario:
         raise ScenarioError(f"{where}: idempotent applies only to expect: change, not {data['expect']!r}")
 
     paths = {name: _parse_path(name, data[name], where) for name in PATHS if name in data}
-    if not any(spec.missing is None for spec in paths.values()):
-        raise ScenarioError(f"{where}: at least one path must be present (not only missing)")
-
+    if not paths:
+        raise ScenarioError(f"{where}: at least one runnable path is required")
     check = data.get("check", [])
     if not isinstance(check, list) or not all(isinstance(e, str) and e.strip() for e in check):
         raise ScenarioError(f"{where}: check is a list of Python expressions")
@@ -172,31 +155,6 @@ def parse_scenario(data: Any, where: str = "scenario") -> Scenario:
         except SyntaxError as exc:
             raise ScenarioError(f"{where}: check {expr!r} is not an expression: {exc}") from exc
 
-    xfails = []
-    seen: set[tuple[str, str]] = set()
-    for entry in data.get("xfail", []) or []:
-        if not isinstance(entry, dict) or set(entry) != XFAIL_KEYS:
-            raise ScenarioError(f"{where}: each xfail entry is {{path, check, reason}}; got {entry!r}")
-        path, check_name, reason = entry["path"], entry["check"], entry["reason"]
-        if path not in PATHS:
-            raise ScenarioError(f"{where}: xfail path {path!r} must be one of {PATHS}")
-        if check_name not in CHECKS:
-            raise ScenarioError(f"{where}: xfail check {check_name!r} must be one of {CHECKS}")
-        if path not in paths:
-            raise ScenarioError(f"{where}: xfail names path {path!r}, which the scenario does not have")
-        if paths[path].missing is not None and check_name != "exists":
-            raise ScenarioError(f"{where}: a missing path only has check 'exists', not {check_name!r}")
-        if check_name == "reports" and data["expect"] == "refused":
-            raise ScenarioError(f"{where}: 'reports' does not apply to expect: refused")
-        if check_name == "equal" and data["expect"] != "change":
-            raise ScenarioError(f"{where}: 'equal' only applies to expect: change")
-        if not isinstance(reason, str) or not reason.strip():
-            raise ScenarioError(f"{where}: xfail {path} {check_name} needs a reason (the audit reference)")
-        if (path, check_name) in seen:
-            raise ScenarioError(f"{where}: duplicate xfail {path} {check_name}")
-        seen.add((path, check_name))
-        xfails.append(XFail(path, check_name, reason))
-
     return Scenario(
         id=sid,
         source=data["source"],
@@ -205,21 +163,12 @@ def parse_scenario(data: Any, where: str = "scenario") -> Scenario:
         expect=data["expect"],
         paths=paths,
         check=tuple(check),
-        xfail=tuple(xfails),
         tool=tool,
         idempotent=idempotent,
     )
 
 
 def _parse_path(name: str, value: Any, where: str) -> PathSpec:
-    if isinstance(value, dict) and "missing" in value:
-        extra = set(value) - MISSING_KEYS
-        if extra:
-            raise ScenarioError(f"{where}: {name}: a missing path has only 'missing', not {sorted(extra)}")
-        if not isinstance(value["missing"], str) or not value["missing"].strip():
-            raise ScenarioError(f"{where}: {name}: 'missing' needs the reason (with the audit ref)")
-        return PathSpec(name=name, missing=value["missing"])
-
     if name == "cli":
         if isinstance(value, str) and value.strip():
             commands = (value,)
@@ -234,7 +183,7 @@ def _parse_path(name: str, value: Any, where: str) -> PathSpec:
 
     if name == "python":
         if not isinstance(value, str) or not value.strip():
-            raise ScenarioError(f"{where}: python is a non-empty snippet (or {{missing: ...}})")
+            raise ScenarioError(f"{where}: python is a non-empty snippet")
         try:
             compile(value, "<python>", "exec")
         except SyntaxError as exc:
@@ -243,7 +192,7 @@ def _parse_path(name: str, value: Any, where: str) -> PathSpec:
 
     # sheet
     if not isinstance(value, dict):
-        raise ScenarioError(f"{where}: sheet is a mapping (cuts, replace) or {{missing: ...}}")
+        raise ScenarioError(f"{where}: sheet is a mapping (cuts, replace)")
     extra = set(value) - {"cuts", "replace"}
     if extra:
         raise ScenarioError(f"{where}: sheet has unknown key(s) {sorted(extra)}; allowed: cuts, replace")
@@ -507,14 +456,12 @@ def _finish(scenario: Scenario, name: str, exits: list[int], stdout: str, stderr
 def run_case(scenario: Scenario, via: str) -> PathResult:
     """Run one front-end (via: "cli" | "sheet" | "python") on a fresh copy of the fixture.
 
-    Raises ScenarioError for a broken scenario (a missing path, a replace that does not match once)."""
+    Raises ScenarioError for a broken scenario (an absent path, a replace that does not match once)."""
     if via not in PATHS:
         raise ScenarioError(f"via must be one of {PATHS}, not {via!r}")
     spec = scenario.paths.get(via)
     if spec is None:
         raise ScenarioError(f"{scenario.id}: no {via} path")
-    if spec.missing is not None:
-        raise ScenarioError(f"{scenario.id}: {via} is missing ({spec.missing}); it cannot run")
     if via == "cli":
         return _run_cli_path(scenario, spec)
     if via == "sheet":
@@ -526,7 +473,7 @@ run_path = run_case  # alias, kept for existing callers
 
 
 def run_scenario(scenario: Scenario) -> dict[str, PathResult]:
-    return {name: run_case(scenario, name) for name in scenario.runnable()}
+    return {name: run_case(scenario, name) for name in scenario.present()}
 
 
 # ---- evaluating --------------------------------------------------------------------------
@@ -543,10 +490,6 @@ def evaluate(scenario: Scenario, results: dict[str, PathResult]) -> dict[tuple[s
 
     def fail(path: str, check: str, message: str) -> None:
         failures.setdefault((path, check), []).append(message)
-
-    for name in scenario.present():
-        if scenario.paths[name].missing is not None:
-            fail(name, "exists", f"missing: {scenario.paths[name].missing}")
 
     ref_name = next((n for n in ("python", "cli", "sheet") if n in results), None)
     for name, r in results.items():
@@ -624,23 +567,3 @@ def _evaluate_path(scenario: Scenario, r: PathResult, fail, ref: PathResult | No
     for expr, (ok, detail) in r.checks.items():
         if not ok:
             fail(name, "check", f"{expr}" + (f" ({detail})" if detail else ""))
-
-
-def xfail_reasons(scenario: Scenario) -> dict[tuple[str, str], str]:
-    return {(x.path, x.check): x.reason for x in scenario.xfail}
-
-
-def classify(scenario: Scenario, failures: dict[tuple[str, str], str]) -> tuple[list, list, list]:
-    """Split failures against the scenario's xfail list.
-
-    Returns (unexpected, expected, fixed): unexpected failures are not listed (they fail the test);
-    expected ones are listed as xfail; fixed ones are xfail entries that no longer fail (strict: remove them).
-    A missing path's 'exists' failure is always expected.
-    """
-    listed = {(x.path, x.check) for x in scenario.xfail}
-    implicit = {(name, "exists") for name in scenario.present() if scenario.paths[name].missing is not None}
-    expected_keys = listed | implicit
-    unexpected = sorted(k for k in failures if k not in expected_keys)
-    expected = sorted(k for k in failures if k in expected_keys)
-    fixed = sorted(k for k in listed if k not in failures)
-    return unexpected, expected, fixed

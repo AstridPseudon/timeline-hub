@@ -9,7 +9,6 @@ import yaml
 
 from tests.editing_conformance.runner import (
     ScenarioError,
-    classify,
     evaluate,
     load_scenario,
     parse_scenario,
@@ -46,7 +45,7 @@ def _failures(scenario):
 
 def test_clean_scenario_has_no_failures_on_all_three_paths():
     scenario = _scenario()
-    assert scenario.runnable() == ["cli", "sheet", "python"]
+    assert scenario.present() == ["cli", "sheet", "python"]
     assert _failures(scenario) == {}
 
 
@@ -88,10 +87,18 @@ def test_a_replace_that_is_not_in_the_sheet_is_a_scenario_error():
         run_scenario(scenario)
 
 
-def test_an_xfail_with_an_unknown_check_name_is_a_scenario_error():
+def test_xfail_declarations_are_scenario_errors():
     data = copy.deepcopy(ROCKET)
-    data["xfail"] = [{"path": "python", "check": "stepz", "reason": "typo"}]
-    with pytest.raises(ScenarioError, match="stepz"):
+    data["xfail"] = [{"path": "python", "check": "steps", "reason": "known gap"}]
+    with pytest.raises(ScenarioError, match="unknown key"):
+        parse_scenario(data)
+
+
+@pytest.mark.parametrize("path", ["cli", "sheet", "python"])
+def test_missing_path_declarations_are_scenario_errors(path):
+    data = copy.deepcopy(ROCKET)
+    data[path] = {"missing": "known gap"}
+    with pytest.raises(ScenarioError):
         parse_scenario(data)
 
 
@@ -100,23 +107,10 @@ def test_an_xfail_with_an_unknown_check_name_is_a_scenario_error():
     {"colour": "red"},
     {"id": "look-set-rocket"},
     {"cli": None, "sheet": None, "python": None},
-    {"xfail": [{"path": "cli", "check": "steps", "reason": "r"}], "cli": None},
-    {"xfail": [{"path": "python", "check": "steps"}]},
 ])
 def test_other_malformed_scenarios_are_scenario_errors(overrides):
     with pytest.raises(ScenarioError):
         _scenario(**overrides)
-
-
-def test_a_missing_path_is_an_exists_xfail_and_not_run():
-    scenario = _scenario(cli={"missing": "AUDIT bug 3: the CLI has no add verb"})
-    assert scenario.runnable() == ["sheet", "python"]
-    results = run_scenario(scenario)
-    assert set(results) == {"sheet", "python"}
-    failures = evaluate(scenario, results)
-    assert failures == {("cli", "exists"): "missing: AUDIT bug 3: the CLI has no add verb"}
-    unexpected, expected, fixed = classify(scenario, failures)
-    assert unexpected == [] and expected == [("cli", "exists")] and fixed == []
 
 
 def test_yaml_text_round_trips_through_the_loader(tmp_path):
@@ -127,20 +121,6 @@ def test_yaml_text_round_trips_through_the_loader(tmp_path):
     (tmp_path / "other.yaml").write_text(text, encoding="utf-8")
     with pytest.raises(ScenarioError, match="must match the file name"):
         load_scenario(tmp_path / "other.yaml")
-
-
-def test_classify_splits_unexpected_expected_and_strict_fixed():
-    data = copy.deepcopy(ROCKET)
-    data["xfail"] = [
-        {"path": "python", "check": "steps", "reason": "AUDIT bug 10"},
-        {"path": "cli", "check": "undo", "reason": "stale: passes today"},
-    ]
-    scenario = parse_scenario(data)
-    failures = {("python", "steps"): "2 new", ("sheet", "changes"): "silent"}
-    unexpected, expected, fixed = classify(scenario, failures)
-    assert unexpected == [("sheet", "changes")]
-    assert expected == [("python", "steps")]
-    assert fixed == [("cli", "undo")]
 
 
 def test_exit_code_3_is_a_run_for_no_change_but_a_refusal_for_change():

@@ -4,10 +4,12 @@ intent: Set the c1 rocket to 60 percent opacity; the clip-level look must show a
 fixture: tiny_publishable    # tiny.json has no pinned base, so no edit shows as a change there
 expect: change
 cli: edit --clip c1.rocket --opacity 0.6
-sheet: {missing: "the sheet has no clip-level field form yet (M-4 / CATALOGUE)"}
+sheet:
+  cuts: [c1]
+  replace:
+    - ["x=60", "x=60 opacity=0.6"]
 python: |
-  from astrid.core.timeline import clip_fields as cf
-  cf.write(tl.clip("c1.rocket").data, "opacity", 0.6)  # a raw write until clip.look lands
+  tl.clip("c1.rocket").look.set(opacity=0.6)
 check:
   - 'tl.clip("c1.rocket").data.get("opacity") == 0.6'
   - 'any("opacity" in line for line in tl.changes())'

@@ -1,8 +1,7 @@
 """Platform step 0: the safety-net fixtures (production/review/merge/TIMELINE-PLATFORM.md, section 7).
 
-These tests are written to FAIL TODAY where the platform is known to be broken, as strict xfails with
-the reason. When a step-1/step-2 fix lands, the strict xfail turns into a failure ("XPASS(strict)"),
-which is the signal to remove the marker. Do not weaken the assertions to make them pass.
+These tests keep focused assertions for platform behavior that needs explicit validation. Do not
+weaken the assertions to make them pass.
 
 (a) A CLI-made film keeps all Astrid intent through a simulated App load, a no-op save, one edit, a save
     and a CLI checkout. The App side is simulated from the App's known-key rebuild: the App source

@@ -337,10 +337,20 @@ def _type_of(spec: dict[str, Any]) -> str:
     return str(kind)
 
 
+# A media clip (footage or audio file) has no element manifest; the only params it carries are its audio fades.
+MEDIA_PARAMS = frozenset({"fadeIn", "fadeOut", "fadeInCurve", "fadeOutCurve"})
+
+
+def declared_params(element: str) -> list[str]:
+    """The param names the element takes, sorted (a media clip takes only its fade params)."""
+    if element == "media":
+        return sorted(MEDIA_PARAMS)
+    return sorted(element_schema(element).get("properties") or {})
+
+
 def unknown_params(element: str, keys: list[str], existing: dict[str, Any] | None = None) -> list[str]:
     """Keys the element does not declare (and the clip does not already have)."""
-    schema = element_schema(element)
-    props = schema.get("properties") or {}
+    props = declared_params(element)
     if not props:
         return []
     return [k for k in keys if k not in props and k not in (existing or {})]
