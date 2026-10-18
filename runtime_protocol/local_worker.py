@@ -427,6 +427,16 @@ def _engine_endpoint(value: str) -> str:
 
 
 @dataclass
+class _CleanupAttempt:
+    handle: object
+    preparer: object
+    generation: int
+    identity: tuple | None
+    thread: threading.Thread | None = None
+    succeeded: bool = False
+
+
+@dataclass
 class _OrderlyHandoff:
     handoff_id: str
     handle: object
@@ -481,6 +491,10 @@ class LocalWorkerLauncher:
         self._preparing_handle: object | None = None
         self._active_receipt: dict[str, Any] | None = None
         self._cleanup_handles: list[object] = []
+        self._cleanup_attempts: list[_CleanupAttempt] = []
+        self._lifecycle_generation = 0
+        self._cleanup_reconciliation_blocked = False
+        self._cleanup_history: list[dict[str, Any]] = []
         self._prepare_cancel = threading.Event()
         self._orderly_handoff: _OrderlyHandoff | None = None
         self._cleanup_failure: dict[str, Any] | None = None
@@ -538,6 +552,14 @@ class LocalWorkerLauncher:
         """Retain first refusal before attempting the existing durable fence."""
         with self._state_lock:
             outcome = _cleanup_outcome(handle)
+            if self._cleanup_uncertain is None and self._cleanup_failure is not None:
+                # The preceding settlement remains history; a new generation
+                # must retain its own first refusal and original handle.
+                self._cleanup_failure = None
+                self._cleanup_failure_handle = None
+            if (_cleanup_reason(reason) != "cleanup_deadline_exceeded" or
+                    (self._cleanup_failure is not None and handle is not self._cleanup_failure_handle)):
+                self._cleanup_reconciliation_blocked = True
             if self._cleanup_uncertain is None:
                 self._cleanup_uncertain = _cleanup_reason(reason)
             if getattr(self, "_cleanup_failure", None) is None:
@@ -560,9 +582,11 @@ class LocalWorkerLauncher:
                     self.support_root / "orderly-handoff-cleanup-uncertain.json",
                     {"version": 1, "state": "cleanup_uncertain", "runtime_pid": self.runtime_pid,
                      "reason": failure["reason"],
+                     "history": self._cleanup_history,
                      "diagnostic": {**failure, "marker_persistence": "written"}},
                 )
             except BaseException as exc:
+                self._cleanup_reconciliation_blocked = True
                 failure["marker_persistence"] = "failed"
                 if failure["marker_error"] is None:
                     failure["marker_error"] = _cleanup_error_code(exc)
@@ -945,6 +969,16 @@ class LocalWorkerLauncher:
             if any(handle is current for current in self._cleanup_handles):
                 return
             self._cleanup_handles.append(handle)
+            from .local_worker_composition import (
+                CrossProcessWorkerPreparer, _PreparedWorker, _host_only_cleanup_identity,
+            )
+            identity = None
+            if (isinstance(self.preparer, CrossProcessWorkerPreparer) and
+                    isinstance(handle, _PreparedWorker) and handle.host_only and
+                    self.preparer._active is handle and not handle.closed):
+                identity = _host_only_cleanup_identity(self.preparer, handle)
+            attempt = _CleanupAttempt(handle, self.preparer, self._lifecycle_generation, identity)
+            self._cleanup_attempts.append(attempt)
         def cleanup() -> None:
             try:
                 self.preparer.abort(handle)
@@ -954,16 +988,75 @@ class LocalWorkerLauncher:
                 self._latch_cleanup_uncertain(exc, handle=handle)
             else:
                 with self._state_lock:
+                    attempt.succeeded = True
                     pending = (self._cleanup_uncertain is not None and
                         getattr(self, "_cleanup_failure_handle", None) is handle)
                 if pending:
                     self._latch_cleanup_uncertain("cleanup_deadline_exceeded", handle=handle)
 
         thread = threading.Thread(target=cleanup, name="local-worker-abort", daemon=True)
+        attempt.thread = thread
         thread.start()
         thread.join(max(0.0, float(timeout)))
         if thread.is_alive():
             self._latch_cleanup_uncertain("cleanup_deadline_exceeded", handle=handle)
+
+    def _reconcile_cleanup_completion(self) -> None:
+        """Settle only this owner's completed original abort, before a start.
+
+        The adapter's private completion record and this launcher's successful
+        thread return are both required. Diagnostic outcome flags alone convey
+        no authority. A restarted launcher has neither retained proof.
+        """
+        from .local_worker_composition import _host_only_cleanup_identity
+        with self._state_lock:
+            if (self._cleanup_uncertain != "cleanup_deadline_exceeded" or
+                    self._cleanup_reconciliation_blocked or self._shutdown.is_set() or
+                    getattr(self.preparer, "cleanup_uncertain", None) or
+                    self._active_handle is not None or self._preparing_handle is not None or
+                    self._active_receipt is not None or self._orderly_handoff is not None or
+                    self._adopted_handoff_control is not None):
+                return
+            attempts = self._cleanup_attempts
+            target = next((a for a in attempts if a.handle is self._cleanup_failure_handle), None)
+            if target is None or target.generation != self._lifecycle_generation:
+                return
+            for handle in self._cleanup_handles:
+                attempt = next((a for a in attempts if a.handle is handle), None)
+                if (attempt is None or attempt.preparer is not self.preparer or
+                        attempt.identity is None or not attempt.succeeded or
+                        attempt.thread is None or attempt.thread.is_alive()):
+                    return
+                if (handle._cleanup_settlement != (self.preparer, attempt.identity) or
+                        _host_only_cleanup_identity(self.preparer, handle) != attempt.identity or
+                        not handle.closed or not handle.cleanup_acknowledged or
+                        type(handle.original_host_wait) is not int):
+                    return
+            # Hold the preparer's spawn/publication fence through persistence.
+            # current_handle() hides closed handles, so inspect the actual slot.
+            with self.preparer._handoff_lock:
+                if self.preparer._active is not None or self.preparer._adopted_handoff is not None:
+                    return
+                failure = self._cleanup_failure
+                settled = {**failure, "outcome": _cleanup_outcome(target.handle),
+                    "marker_persistence": "written", "settlement": "original_adapter_completed"}
+                try:
+                    atomic_json_write(
+                        self.support_root / "orderly-handoff-cleanup-uncertain.json",
+                        {"version": 1, "state": "cleanup_settled", "runtime_pid": self.runtime_pid,
+                         "history": self._cleanup_history,
+                         "reason": failure["reason"], "diagnostic": settled},
+                    )
+                except BaseException as exc:
+                    failure["marker_persistence"] = "failed"
+                    if failure["marker_error"] is None:
+                        failure["marker_error"] = _cleanup_error_code(exc)
+                    # A failed write (even after rename) cannot grant a start.
+                    self._cleanup_reconciliation_blocked = True
+                    return
+                self._cleanup_failure = settled
+                self._cleanup_history.append(json.loads(_canonical(settled)))
+                self._cleanup_uncertain = None
 
     def _control_alive(self, handle: object) -> bool:
         return bool(self.preparer.control_alive(handle))
@@ -1031,6 +1124,7 @@ class LocalWorkerLauncher:
                 # its event before _start_watcher evaluates the old thread.
                 self._watch_stop.set()
             self._active_handle = handle
+            self._lifecycle_generation += 1
             self._active_profile = profile
             self._active_identity = dict(identity)
             self._active_receipt = dict(receipt)
@@ -1971,6 +2065,7 @@ class LocalWorkerLauncher:
                 raise ConflictError("Runtime owner is shutting down")
             if self._startup_receipt_rejection is not None:
                 raise ConflictError(self._startup_receipt_rejection)
+            self._reconcile_cleanup_completion()
             if self._cleanup_uncertain is not None or getattr(self.preparer, "cleanup_uncertain", None):
                 raise ConflictError("local Worker graph cleanup is uncertain", details=self._cleanup_refusal_details())
             profile = self._profile(profile_id, expected_workspace_uuid)
@@ -1997,6 +2092,8 @@ class LocalWorkerLauncher:
 
             operation_id = uuid.uuid4().hex
             channel_id = uuid.uuid4().hex
+            with self._state_lock:
+                self._lifecycle_generation += 1
             phase = "prepare"
             if detailed_start:
                 _report_start_phase(phase, operation_id, started, "begun")

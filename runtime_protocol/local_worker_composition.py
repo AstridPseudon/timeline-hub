@@ -167,6 +167,20 @@ class _PreparedWorker:
     cleanup_errors: list[str] = field(default_factory=list)
     cleanup_context: dict[str, Any] | None = None
     cleanup_outcome: dict[str, Any] | None = None
+    # Private adapter completion evidence, never populated from a report/JSON.
+    _cleanup_settlement: tuple | None = field(default=None, repr=False)
+
+
+def _host_only_cleanup_identity(preparer, handle):
+    """Bind settlement to the original owner objects and launch generation."""
+    return (
+        id(preparer), preparer.config.get("runtime_instance_id"),
+        preparer.profile.profile_id, preparer.profile.profile_revision, preparer.profile.profile_digest,
+        *(id(value) for value in (handle, handle.worker, handle.retained, handle.broker,
+            handle.control, handle.activation, handle.inspection_owner)),
+        handle.birth_id, handle.owner_epoch, handle.custody_scope,
+        json.dumps(handle.preparation, sort_keys=True, separators=(",", ":")),
+    )
 
 
 @dataclass
@@ -580,6 +594,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         try:
             if handle.closed:
                 return
+            original_identity = _host_only_cleanup_identity(self, handle)
             handle.cleanup_started = True
             handle.broker.set_cleanup_deadline(deadline)
             def bound_authority_guard():
@@ -711,6 +726,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 raise ConflictError(self.cleanup_uncertain, details={"reason": handle.cleanup_outcome["reason"]})
             handle.closed = True
             handle.cleanup_outcome["owner_settled"] = True
+            if original_identity == _host_only_cleanup_identity(self, handle):
+                handle._cleanup_settlement = (self, original_identity)
             if self._active is handle:
                 self._active = None
         finally:

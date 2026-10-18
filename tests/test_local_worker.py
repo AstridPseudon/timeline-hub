@@ -236,7 +236,8 @@ def test_cleanup_watcher_abort_start_retains_terminal_refusal(tmp_path, monkeypa
 
 
 @pytest.mark.parametrize("late_failure", [False, True])
-def test_cleanup_deadline_late_completion_keeps_first_refusal(tmp_path, monkeypatch, late_failure):
+def test_cleanup_deadline_late_completion_reconciles_only_original_success(tmp_path, monkeypatch, late_failure):
+    import json
     import threading
     from runtime_protocol.errors import ConflictError
     from test_local_worker_composition import _host_only_cleanup_case
@@ -254,11 +255,15 @@ def test_cleanup_deadline_late_completion_keeps_first_refusal(tmp_path, monkeypa
     credentials = SimpleNamespace(actor_metadata=lambda _: None)
     launcher = LocalWorkerLauncher(credentials=credentials, profiles={}, preparer=preparer, inspector=None,
         workspace_uuid="workspace", realm_root=tmp_path, support_root=tmp_path, runtime_pid=77, actor="worker", scopes=())
+    handle.cleanup_context = {"phase": "liveness", "operation_id": "a" * 32,
+        "initiating_error": {"exception_type": "ValueError", "code": "error"}}
     try:
         launcher._abort(handle, timeout=0)
         assert entered.wait(1)
         launcher._abort(handle, timeout=0)
         assert launcher._cleanup_handles == [handle]
+        with pytest.raises(ConflictError, match="cleanup is uncertain"):
+            launcher.start("fixture", "workspace")
     finally:
         release.set()
     assert finished.wait(3)
@@ -266,12 +271,227 @@ def test_cleanup_deadline_late_completion_keeps_first_refusal(tmp_path, monkeypa
     for thread in threads:
         thread.join(3)
         assert not thread.is_alive()
-    with pytest.raises(ConflictError) as caught:
-        launcher.start("fixture", "workspace")
-    assert caught.value.details["reason"] == "cleanup_deadline_exceeded"
-    assert caught.value.details["outcome"]["complete_graph"] == (not late_failure)
-    assert launcher._cleanup_uncertain == "cleanup_deadline_exceeded"
+    if late_failure:
+        with pytest.raises(ConflictError) as caught:
+            launcher.start("fixture", "workspace")
+        assert caught.value.details["reason"] == "cleanup_deadline_exceeded"
+        assert caught.value.details["outcome"]["complete_graph"] is False
+        assert launcher._cleanup_uncertain == "cleanup_deadline_exceeded"
+    else:
+        _assert_offline_successor_admitted(launcher, preparer, tmp_path)
+        marker = json.loads((tmp_path / "orderly-handoff-cleanup-uncertain.json").read_text())
+        assert marker["diagnostic"]["phase"] == "liveness"
+        assert marker["diagnostic"]["initiating_error"] == handle.cleanup_context["initiating_error"]
+        restarted = LocalWorkerLauncher(credentials=credentials, profiles={"fixture": preparer.profile},
+            preparer=preparer, inspector=None, workspace_uuid="workspace", realm_root=tmp_path,
+            support_root=tmp_path, runtime_pid=77, actor="worker", scopes=())
+        with pytest.raises(ConflictError, match="cleanup is uncertain"):
+            # Even a durable settled JSON record cannot reconstruct an owner.
+            restarted.start("fixture", "workspace")
     assert handle.closed == (not late_failure)
+
+
+def _assert_offline_successor_admitted(launcher, preparer, tmp_path):
+    """Exercise start through its next prepare boundary, without a native start."""
+    import json
+    primary = ValueError("offline successor preparation boundary")
+    prepared = []
+    launcher._profile = lambda *_: preparer.profile
+    def prepare(*args, **kwargs):
+        marker = json.loads((tmp_path / "orderly-handoff-cleanup-uncertain.json").read_text())
+        assert marker["state"] == "cleanup_settled"
+        assert marker["reason"] == "cleanup_deadline_exceeded"
+        assert marker["diagnostic"]["outcome"]["owner_settled"] is True
+        assert marker["diagnostic"]["settlement"] == "original_adapter_completed"
+        assert launcher._cleanup_uncertain is None
+        prepared.append(kwargs["operation_id"])
+        raise primary
+    preparer.prepare = prepare
+    with pytest.raises(ValueError) as caught:
+        launcher.start("fixture", "workspace")
+    assert caught.value is primary and len(prepared) == 1
+    assert not launcher._operation_lock.locked()
+
+
+@pytest.mark.parametrize("fault", [
+    "none", "kill", "ack_false", "missing_wait", "inspection", "channel_close",
+    "adapter_failure", "forged_outcome", "wrong_handle", "foreign_preparer",
+    "owner_epoch", "operation_id", "channel_id", "retained_waiter", "inspection_owner",
+    "restarted_owner_epoch", "generation", "generation_after_fence", "active_handle",
+    "preparing_handle", "other_obligation", "preparer_obligation", "preparer_uncertain",
+    "wait_lost_after_completion", "ack_lost_after_completion", "closed_lost_after_completion",
+    "marker_deadline", "marker_settlement", "marker_after_write", "restarted_launcher",
+])
+def test_late_cleanup_settlement_requires_all_original_owner_obligations(tmp_path, monkeypatch, fault):
+    import errno
+    import json
+    import threading
+    from runtime_protocol import local_worker as module
+    from runtime_protocol.errors import ConflictError
+    from test_local_worker_composition import _host_only_cleanup_case
+    case = {"ack_false": "terminal120", "missing_wait": "missing_wait", "kill": "kill"}.get(fault, "ack")
+    preparer, handle, calls, sent, state = _host_only_cleanup_case(tmp_path, monkeypatch, case)
+    entered, release = threading.Event(), threading.Event()
+    handle.inspection_owner = SimpleNamespace(finish=lambda **kw: calls.append("inspection"))
+    if fault == "inspection":
+        handle.inspection_owner.finish = lambda **kw: (_ for _ in ()).throw(OSError("private-inspection"))
+    if fault == "channel_close":
+        handle.control.close = lambda: (_ for _ in ()).throw(OSError("private-close"))
+    original_abort = preparer.abort
+    def delayed(selected):
+        entered.set()
+        assert release.wait(3)
+        if fault == "forged_outcome":
+            # Diagnostic booleans and a normal adapter return cannot substitute
+            # for the original adapter's private terminal settlement record.
+            selected.cleanup_acknowledged = selected.closed = True
+            selected.original_host_wait = 0
+            selected.cleanup_outcome = {"owner_settled": True, "complete_graph": True,
+                "child_cleanup_acknowledged": True, "inspection_owner_settled": True,
+                "original_host_wait": 0, "reason": "cleanup_complete"}
+            preparer._active = None
+            return
+        original_abort(selected)
+        if fault == "adapter_failure":
+            raise OSError("private-adapter-failure-after-close")
+    preparer.abort = delayed
+    credentials = SimpleNamespace(actor_metadata=lambda _: None)
+    launcher = LocalWorkerLauncher(credentials=credentials, profiles={}, preparer=preparer, inspector=None,
+        workspace_uuid="workspace", realm_root=tmp_path, support_root=tmp_path,
+        runtime_pid=77, actor="worker", scopes=())
+    real_write = module.atomic_json_write
+    writes = []
+    def write(path, value):
+        writes.append(value["state"])
+        fail = (fault == "marker_deadline" and value["state"] == "cleanup_uncertain" or
+                fault in {"marker_settlement", "marker_after_write"} and value["state"] == "cleanup_settled")
+        if fail:
+            if fault == "marker_after_write":
+                real_write(path, value)
+            raise OSError(errno.ENOSPC, "private-write")
+        real_write(path, value)
+    monkeypatch.setattr(module, "atomic_json_write", write)
+    if fault == "wrong_handle":
+        preparer._active = object()
+    launcher._abort(handle, timeout=0)
+    thread = launcher._cleanup_attempts[0].thread
+    try:
+        assert entered.wait(1)
+        with pytest.raises(ConflictError, match="cleanup is uncertain"):
+            launcher.start("fixture", "workspace")
+        if fault == "generation":
+            launcher._install_active(object(), preparer.profile, {}, {})
+        if fault == "generation_after_fence":
+            # Even a replacement that has already been fenced is a successor.
+            replacement = object()
+            launcher._install_active(replacement, preparer.profile, {}, {})
+            launcher._revoke_actor = lambda: None
+            assert launcher._fence_generation(replacement, abort=False)
+    finally:
+        release.set()
+        thread.join(3)
+        assert not thread.is_alive()
+    if fault == "foreign_preparer":
+        from runtime_protocol.local_worker_composition import CrossProcessWorkerPreparer
+        launcher.preparer = CrossProcessWorkerPreparer(profile=preparer.profile, config={}, environment={})
+    if fault in {"owner_epoch", "operation_id", "channel_id"}:
+        handle.preparation[fault] = "changed"
+    if fault == "retained_waiter": handle.retained = object()
+    if fault == "inspection_owner": handle.inspection_owner = object()
+    if fault == "restarted_owner_epoch": preparer.config["runtime_instance_id"] = "new-owner"
+    if fault == "active_handle": launcher._active_handle = object()
+    if fault == "preparing_handle": launcher._preparing_handle = object()
+    if fault == "other_obligation": launcher._cleanup_handles.append(object())
+    if fault == "preparer_obligation": preparer._active = object()
+    if fault == "preparer_uncertain": preparer.cleanup_uncertain = "other obligation"
+    if fault == "wait_lost_after_completion": handle.original_host_wait = None
+    if fault == "ack_lost_after_completion": handle.cleanup_acknowledged = False
+    if fault == "closed_lost_after_completion": handle.closed = False
+    if fault == "restarted_launcher":
+        launcher = LocalWorkerLauncher(credentials=credentials, profiles={"fixture": preparer.profile},
+            preparer=preparer, inspector=None, workspace_uuid="workspace", realm_root=tmp_path,
+            support_root=tmp_path, runtime_pid=77, actor="worker", scopes=())
+    if fault in {"none", "kill"}:
+        _assert_offline_successor_admitted(launcher, preparer, tmp_path)
+        if fault == "kill": assert handle.original_host_wait == -9
+    else:
+        launcher._profile = lambda *_: pytest.fail("unsettled cleanup admitted a successor")
+        with pytest.raises(ConflictError, match="cleanup is uncertain"):
+            launcher.start("fixture", "workspace")
+        assert launcher._cleanup_uncertain is not None
+        if fault.startswith("marker_"):
+            assert launcher._cleanup_failure["marker_persistence"] == "failed"
+        if fault != "restarted_launcher":
+            assert launcher._cleanup_failure["reason"] == "cleanup_deadline_exceeded"
+        if fault == "marker_after_write":
+            # Published bytes without successful durability never authorize.
+            assert json.loads((tmp_path / "orderly-handoff-cleanup-uncertain.json").read_text())["state"] == "cleanup_settled"
+
+
+def test_completed_graph_does_not_admit_start_until_original_adapter_returns(tmp_path, monkeypatch):
+    import threading
+    from runtime_protocol.errors import ConflictError
+    from test_local_worker_composition import _host_only_cleanup_case
+    preparer, handle, *_ = _host_only_cleanup_case(tmp_path, monkeypatch, "ack")
+    entered, release = threading.Event(), threading.Event()
+    abort = preparer.abort
+    def delayed(selected):
+        abort(selected)
+        entered.set()
+        assert release.wait(3)
+    preparer.abort = delayed
+    launcher = LocalWorkerLauncher(credentials=SimpleNamespace(actor_metadata=lambda _: None), profiles={},
+        preparer=preparer, inspector=None, workspace_uuid="workspace", realm_root=tmp_path,
+        support_root=tmp_path, runtime_pid=77, actor="worker", scopes=())
+    launcher._abort(handle, timeout=0)
+    thread = launcher._cleanup_attempts[0].thread
+    try:
+        assert entered.wait(1)
+        assert handle.closed and handle._cleanup_settlement is not None
+        with pytest.raises(ConflictError, match="cleanup is uncertain"):
+            launcher.start("fixture", "workspace")
+    finally:
+        release.set()
+        thread.join(3)
+        assert not thread.is_alive()
+    _assert_offline_successor_admitted(launcher, preparer, tmp_path)
+
+
+def test_later_cleanup_generation_retains_previous_settlement_history(tmp_path, monkeypatch):
+    import json
+    import threading
+    from test_local_worker_composition import _host_only_cleanup_case
+    preparer, first, *_ = _host_only_cleanup_case(tmp_path, monkeypatch, "ack")
+    launcher = LocalWorkerLauncher(credentials=SimpleNamespace(actor_metadata=lambda _: None), profiles={},
+        preparer=preparer, inspector=None, workspace_uuid="workspace", realm_root=tmp_path,
+        support_root=tmp_path, runtime_pid=77, actor="worker", scopes=())
+    abort = preparer.abort
+    for generation in range(2):
+        if generation == 0:
+            handle = first
+        else:
+            _, handle, *_ = _host_only_cleanup_case(tmp_path, monkeypatch, "ack")
+            preparer._active = handle
+            handle.preparation["operation_id"] = "second"
+        entered, release = threading.Event(), threading.Event()
+        def delayed(selected):
+            entered.set()
+            assert release.wait(3)
+            abort(selected)
+        preparer.abort = delayed
+        launcher._abort(handle, timeout=0)
+        thread = launcher._cleanup_attempts[-1].thread
+        try:
+            assert entered.wait(1)
+        finally:
+            release.set()
+            thread.join(3)
+            assert not thread.is_alive()
+        _assert_offline_successor_admitted(launcher, preparer, tmp_path)
+    marker = json.loads((tmp_path / "orderly-handoff-cleanup-uncertain.json").read_text())
+    assert len(marker["history"]) == 1 and len(launcher._cleanup_history) == 2
+    assert marker["history"][0]["reason"] == "cleanup_deadline_exceeded"
+    assert launcher._cleanup_failure_handle is handle
 
 
 @pytest.mark.parametrize("logger_fails", [False, True])

@@ -681,11 +681,13 @@ def test_shutdown_fences_auth_before_hung_abort_and_is_bounded(tmp_path, monkeyp
     monkeypatch.setattr(daemon, "_shutdown_http", shutdown_http.set)
 
     started = time.monotonic()
-    daemon.stop()
-    elapsed = time.monotonic() - started
     try:
+        with pytest.raises(ConflictError, match="cleanup is uncertain"):
+            daemon.stop()
+        elapsed = time.monotonic() - started
         assert elapsed < 1.5
         assert entered_abort.wait(timeout=1)
+        assert daemon.local_worker_launcher is launcher
         with pytest.raises(AuthorizationError):
             store.load(token)
     finally:
@@ -1097,7 +1099,8 @@ def test_activation_record_exact_replay_and_conflict_without_republishing(tmp_pa
 def test_changed_credential_generation_before_activation_request_is_fenced(tmp_path):
     def rotate(store, _grant):
         metadata = store.actor_metadata(WORKER_ACTOR)
-        store.provision(WORKER_ACTOR, metadata["scopes"], metadata={k: v for k, v in metadata.items() if k not in {"actor", "scopes"}}, rotate=True, enabled=False)
+        store.provision(WORKER_ACTOR, metadata["scopes"], metadata={k: v for k, v in metadata.items()
+            if k not in {"actor", "scopes", "credential_format", "_credential_binding"}}, rotate=True, enabled=False)
     launcher, store, profile, scope, events, errors, close = _relay_activation_fixture(tmp_path, before_request=rotate)
     try:
         with pytest.raises(ConflictError, match="generation changed"):
