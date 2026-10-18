@@ -138,14 +138,18 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   // The timeline canvas shows immediate visual feedback; the Player catches up after 150ms idle.
   const [delivery, setDelivery] = useState({config, generation: 0});
   const deferredConfig = delivery.config;
-  const setDeferredConfig = (nextConfig: ResolvedTimelineConfig) => setDelivery({config: nextConfig, generation: configGenerationRef.current});
+  // Stable identity: reads only the state setter and refs, so effects can depend on it.
+  const setDeferredConfig = useCallback(
+    (nextConfig: ResolvedTimelineConfig) => setDelivery({config: nextConfig, generation: configGenerationRef.current}),
+    [],
+  );
   const deferTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Live-edit mailbox: while playing, timeline edits must reach the Player on
   // the next animation frame (live media updates, no pause+restart), but no
   // more than once per frame so rapid commits can't cause renderer jank.
   const latestConfigRef = useRef<ResolvedTimelineConfig | null>(null);
   const rafRef = useRef<number | null>(null);
-  const flushDeferredConfig = (nextConfig: ResolvedTimelineConfig, delayMs: number) => {
+  const flushDeferredConfig = useCallback((nextConfig: ResolvedTimelineConfig, delayMs: number) => {
     // Guard is load-bearing: it narrows `Timeout | null` away (this lib mix
     // rejects null) and resets the ref so a stale timer can't double-fire.
     if (deferTimerRef.current) {
@@ -159,7 +163,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
     deferTimerRef.current = setTimeout(() => {
       setDeferredConfig(nextConfig);
     }, delayMs);
-  };
+  }, [setDeferredConfig]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -196,7 +200,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
         deferTimerRef.current = null;
       }
     };
-  }, [config, isPlaying]);
+  }, [config, isPlaying, flushDeferredConfig, setDeferredConfig]);
 
   const outputProjection = useMemo(() => projectOutputTimelineConfig(deferredConfig), [deferredConfig]);
   // Preserve the ordinary preview identity/mailbox when nothing is excluded.

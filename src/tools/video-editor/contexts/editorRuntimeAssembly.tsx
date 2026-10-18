@@ -998,6 +998,7 @@ export function useEditorRuntimeSync({
     rendererRegistryRef,
     settingsNotificationRegistryRef,
     settingsRepository,
+    store,
     settingsSnapshotsRef,
     shaderRegistryRef,
     transitionRegistryRef,

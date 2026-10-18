@@ -79,7 +79,7 @@ export function useAssetOperations(
     } finally {
       pendingOpsRef.current -= 1;
     }
-  }, [commitRegistryEntry, prepareUpload]);
+  }, [commitRegistryEntry, pendingOpsRef, prepareUpload]);
 
   const prepareAssetUpload = prepareUpload;
 

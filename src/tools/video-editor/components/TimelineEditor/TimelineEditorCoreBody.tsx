@@ -862,6 +862,7 @@ function TimelineEditorCoreComponent({
     selectedClipIds,
     shotNameByClipId,
     shotGroupClipIds,
+    silentVideoWaveformAssetHashes,
     staleAssetKeys,
     thumbnailMap,
     trackMap,
