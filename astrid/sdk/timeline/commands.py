@@ -88,6 +88,48 @@ class Operation:
 REGISTRY: dict[str, Operation] = {}
 
 
+def restore_spec(value):
+    """A selected immutable image, never caller-supplied replacement bytes."""
+    call = EditCommand.coerce(value)
+    args = call.args
+    if (call.op != "timeline.restore" or call.select is not None or call.resolved
+            or any(v is not None for v in (call.expect, call.bindings, call.created, call.authorship))
+            or set(args) - {"revision_id", "content_digest", "publication_id"}
+            or not {"revision_id", "content_digest"} <= set(args)
+            or not isinstance(args["revision_id"], str) or not args["revision_id"]
+            or not isinstance(args["content_digest"], str)
+            or re.fullmatch(r"sha256:[0-9a-f]{64}", args["content_digest"]) is None
+            or ("publication_id" in args and args["publication_id"] is not None
+                and (not isinstance(args["publication_id"], str) or not args["publication_id"]))):
+        raise CommandError("timeline.restore requires an exact revision/digest and optional publication identity")
+    return call
+
+
+def _restore_plan(tl, value, *, restore_image=None):
+    """Record a complete verified image write without property inverse semantics.
+
+    The commit service supplies a detached request-bound closure, never an OpCall
+    argument. Local drafts cannot manufacture canonical restore authority.
+    """
+    from astrid.sdk.timeline.transaction import Plan
+    call = restore_spec(value)
+    if restore_image is None:
+        raise CommandError("timeline.restore requires the authenticated commit service's verified image")
+    if restore_image.get("base_parent") != {"revision_id": call.args["revision_id"],
+                                           "content_digest": call.args["content_digest"]}:
+        raise CommandError("verified restore image differs from the selected revision/digest")
+    before, after = tl.document(), copy.deepcopy(restore_image)
+    call = replace(call, version=TOOL_VERSION)
+    return Plan("timeline.restore", calls=(call,), changed=before != after,
+                changes=("Restore complete immutable timeline image",),
+                direct_writes=({"id": "parent", "path": "image",
+                                "before": {"state": "present", "value": before},
+                                "after": {"state": "present", "value": after}},))
+
+
+REGISTRY["timeline.restore"] = Operation("timeline.restore", "timeline", "restore", _restore_plan, "image")
+
+
 def _plain(value):
     if isinstance(value, float) and value.is_integer():
         return int(value)
@@ -188,6 +230,8 @@ def _adapter(entry):
 
 
 def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
+    if entry.boundary == "image":
+        raise CommandError("timeline.restore must run alone through the authenticated commit service")
     if getattr(tl._open_edit, "cancelled", False):
         return owner
     app_keys = entry.op == "clip.set" and bool({"keyframes", "keyframeOrigin"} & command.args.keys())
@@ -1524,10 +1568,12 @@ def call_label(calls):
                      for c in calls)[:160]
 
 
-def run(tl, value, *, dry_run=False):
+def run(tl, value, *, dry_run=False, restore_image=None):
     """Run one OpCall atomically and return its change preview."""
     command = EditCommand.coerce(value)
     entry = REGISTRY.get(command.op)
+    if entry is not None and entry.boundary == "image":
+        return entry.handler(tl, command, restore_image=restore_image)
     if entry is None and command.op == "timeline.operation":
         # Trusted local contributions expand before publication. Only the existing
         # guarded primitive calls enter the journal and Runtime commit envelope.
