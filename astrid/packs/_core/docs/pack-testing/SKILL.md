@@ -47,7 +47,10 @@ scripts/check-before-push                                       # before every p
 ```
 
 Lanes are defined in [tests/lanes.py](../../../../../tests/lanes.py) (R-2).
-The default run deselects four markers; the nightly lane runs exactly those:
+The default run deselects four markers. No scheduled job runs them: run them
+yourself, as shown above for one pack or for everything with
+`python -m pytest -m "integration or darwin_native or live or opt_in"`.
+A `-m` on the command line replaces the default deselection.
 
 | Marker | When |
 |---|---|
@@ -155,6 +158,9 @@ assert the new behaviour.
 - [ ] Every subprocess is owned and reaped.
 - [ ] Any known failure has an owner, an expiry and a file:line reason; any
       deleted test has a `removed.yaml` line and its assertions a named home.
-- [ ] `python3 -m astrid.core.pack.cli validate` passes, the capability
-      catalog is regenerated if actions changed, and
-      `scripts/check-before-push` is green.
+- [ ] `python3 -m astrid.core.pack.cli validate` passes.
+- [ ] The capability catalog is regenerated if a manifest changed:
+      `python scripts/gen_capability_index.py` (`make doc-refs` fails on a
+      stale catalog).
+- [ ] The tests of any lane the change touches were run by hand (see above),
+      and `scripts/check-before-push` is green.

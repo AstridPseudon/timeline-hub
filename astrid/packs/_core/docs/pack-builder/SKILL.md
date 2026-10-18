@@ -20,9 +20,10 @@ The detailed contracts are maintained in these authoritative guides:
 - [When and how to create a pack](../../../../../docs/guides/create-a-pack.md) —
   the current v3 authoring route, starter journeys, roles, documentation
   pointer, validation, and inspect commands.
-- [Creating Astrid Packs (legacy v1 reference)](../../../../../docs/packs/creating-packs.md) —
-  retained protocol and migration material for existing packs; it is not the
-  current new-pack walkthrough.
+- [Creating Astrid Packs](../../../../../docs/packs/creating-packs.md) — the
+  layout and `pack.yaml` field reference: the `actions`, `ui`, `rendering` and
+  `documents` sections, the role folders they point into, the rules
+  `validate` enforces, permissions, secrets and aliases.
 - [Pack data storage](../../../../../docs/packs/data-storage.md) — the shared
   Runtime project-document convention for mutable pack settings, source files,
   Runtime versions, schema migrations, and conflict handling.
@@ -37,9 +38,10 @@ The detailed contracts are maintained in these authoritative guides:
 - [SDK reference](../../../../../docs/reference/sdk.md) — invocation and
   rendering APIs.
 - [Capability reference](../references/capabilities.md) — generated inventory
-  for quick orientation; when executor, orchestrator, or element manifests
-  change, regenerate it with
-  [`scripts/gen_capability_index.py`](../../../../../scripts/gen_capability_index.py).
+  for quick orientation; when a pack manifest changes, regenerate it with
+  `python scripts/gen_capability_index.py`
+  ([source](../../../../../scripts/gen_capability_index.py)). `make doc-refs`
+  fails on a stale catalog.
 - [Pack testing](../pack-testing/SKILL.md) — where a pack's tests go, which
   lane they run in, how to test an action (unit, real Runtime daemon, editing
   scenario), and the known-failures rules.
@@ -118,11 +120,11 @@ For a new reusable pack, follow the supported authoring path in
    validation checks manifests, roots, docs, and entrypoints; it does not
    execute pack code or install dependencies.
 
-Use the manifest schemas and templates linked by the pack guide instead of
+Use the schema and field reference linked by the pack guide instead of
 inventing fields. Declare network, files, subprocesses, environment, GPU,
-and external-service needs in the pack permissions; declare specific secret
-environment variables on the component manifest that reads them. Permission
-metadata is disclosure-only in the current contract.
+and external-service needs in the pack `permissions`; declare the specific
+secret environment variables in the pack-level `secrets` list in `pack.yaml`.
+Permission metadata is disclosure-only in the current contract.
 
 ## Implementation invariants
 
@@ -157,6 +159,7 @@ the static validator, that all declared paths stay inside the pack, and that a
 cold agent can discover and inspect the capability from the SDK. Run a smoke
 invocation only when the requested change includes runtime behavior and the
 required runtime/dependencies are available. Write and review the pack's tests
-with the [pack testing skill](../pack-testing/SKILL.md). For rendering contributions,
+with the [pack testing skill](../pack-testing/SKILL.md), and regenerate the
+capability catalog if a manifest changed. For rendering contributions,
 use the rendering-specific validation and smoke path linked from the [current
 pack guide](../../../../../docs/guides/create-a-pack.md).

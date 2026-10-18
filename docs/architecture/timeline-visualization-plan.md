@@ -1,7 +1,7 @@
 # Timeline visualization plan
 
-> Historical design record. The epic is complete; the current implementation
-> is described in `timeline-visualization-agent-navigation.md`. Where the original plan spoke
+> Historical design record. The epic is complete; the current public surface
+> is the rendered filmstrip (see `astrid/packs/rendering/docs/SKILL.md`). Where the original plan spoke
 > about repairing a projected `assembly.json`, the shipped kernel integration
 > instead replays and verifies the authoritative event stream without repair
 > or mutation.
