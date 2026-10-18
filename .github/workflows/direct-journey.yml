@@ -86,9 +86,7 @@ jobs:
         env:
           REPORT: ${{ runner.temp }}/direct-journey.json
         run: |
-          M=$(node -e "import('./scripts/quality/check-known-failures.mjs').then(m => console.log(m.FILE_BUDGETS['tests/e2e/local/direct-journey.spec.ts'] ?? 0))")
-          echo "Expected failures (budget M): $M"
-          jq --argjson m "$M" '
+          jq '
             [.. | objects | select(has("expectedStatus") and has("results"))] as $tests
             | {
                 total: ($tests | length),
@@ -99,9 +97,9 @@ jobs:
                 skipped: .stats.skipped
               }
             | . as $r | $r, (
-                if $r.total > 0 and $r.expected_failures == $m and $r.expected_failures_that_failed == $m
+                if $r.total > 0 and $r.expected_failures == 0 and $r.expected_failures_that_failed == 0
                    and $r.unexpected == 0 and $r.flaky == 0 and $r.skipped == 0
-                then empty else error("direct journey: want \($m) expected failures, 0 unexpected, 0 flaky, 0 skipped; got \($r)") end)
+                then empty else error("direct journey: want 0 expected failures, 0 unexpected, 0 flaky, 0 skipped; got \($r)") end)
           ' "$REPORT"
 
       - name: Collect artifacts
@@ -203,9 +201,7 @@ jobs:
         env:
           REPORT: ${{ runner.temp }}/three-products.json
         run: |
-          M=$(node -e "import('./scripts/quality/check-known-failures.mjs').then(m => console.log(m.FILE_BUDGETS['tests/e2e/local/three-products.spec.ts'] ?? 0))")
-          echo "Expected failures (budget M): $M"
-          jq --argjson m "$M" '
+          jq '
             [.. | objects | select(has("expectedStatus") and has("results"))] as $tests
             | {
                 total: ($tests | length),
@@ -216,9 +212,9 @@ jobs:
                 skipped: .stats.skipped
               }
             | . as $r | $r, (
-                if $r.total > 0 and $r.expected_failures == $m and $r.expected_failures_that_failed == $m
+                if $r.total > 0 and $r.expected_failures == 0 and $r.expected_failures_that_failed == 0
                    and $r.unexpected == 0 and $r.flaky == 0 and $r.skipped == 0
-                then empty else error("three-product journey: want cases, \($m) expected failures, 0 unexpected, 0 flaky, 0 skipped; got \($r)") end)
+                then empty else error("three-product journey: want cases, 0 expected failures, 0 unexpected, 0 flaky, 0 skipped; got \($r)") end)
           ' "$REPORT"
 
       - name: Collect artifacts
