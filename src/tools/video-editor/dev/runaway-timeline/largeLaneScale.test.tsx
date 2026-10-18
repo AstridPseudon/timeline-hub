@@ -141,8 +141,7 @@ afterEach(() => {
 });
 
 describe('large typed-lane scale contract', () => {
-  // known-failure: reigh-app | 2026-10-30 | product no longer renders the lane density summary
-  it.fails.each(SCALE_CASES)(
+  it.each(SCALE_CASES)(
     '$count intervals stay bounded, navigable, and density-stable',
     ({ count, renderBudgetMs, heapGrowthBytes: heapGrowthBudgetBytes }) => {
       const source = response(count);
@@ -166,10 +165,10 @@ describe('large typed-lane scale contract', () => {
 
       const chips = container.querySelectorAll<HTMLElement>('[data-testid="runaway-transition-chip"]');
       const laneElement = container.querySelector<HTMLElement>('[data-testid="runaway-timeline-lane"]');
-      const density = container.querySelector<HTMLElement>('[data-testid="data-lane-density-summary"]');
       expect(chips).toHaveLength(DATA_LANE_DOM_ITEM_BUDGET);
       expect(container.querySelectorAll('*').length).toBeLessThanOrEqual(DOM_NODE_BUDGET);
-      expect(density).toHaveTextContent(`${DATA_LANE_DOM_ITEM_BUDGET}/${count}`);
+      expect(chips[0]).toHaveAttribute('aria-posinset', '1');
+      expect(chips[0]).toHaveAttribute('aria-setsize', String(count));
       expect(laneElement).toHaveAccessibleName(
         `${count} transitions, ${DATA_LANE_DOM_ITEM_BUDGET} shown, ${REGION_COUNT} of ${REGION_COUNT} regions in window`,
       );
@@ -180,7 +179,9 @@ describe('large typed-lane scale contract', () => {
       expect(lastChip).not.toBeNull();
       expect(lastChip).toHaveFocus();
       expect(laneElement).toHaveAttribute('data-window-end', String(count));
-      expect(density).toHaveTextContent(`${DATA_LANE_DOM_ITEM_BUDGET}/${count}`);
+      expect(container.querySelectorAll('[data-testid="runaway-transition-chip"]')).toHaveLength(DATA_LANE_DOM_ITEM_BUDGET);
+      expect(lastChip).toHaveAttribute('aria-posinset', String(count));
+      expect(lastChip).toHaveAttribute('aria-setsize', String(count));
 
       fireEvent.keyDown(lastChip!, { key: 'Home' });
       const firstChip = container.querySelector<HTMLElement>('[data-item-id="T00001"]');
