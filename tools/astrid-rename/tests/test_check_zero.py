@@ -5,7 +5,6 @@ import shutil
 import subprocess
 from pathlib import Path
 
-
 TOOL_SOURCE = Path(__file__).resolve().parents[1]
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
