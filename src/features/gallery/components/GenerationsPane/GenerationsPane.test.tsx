@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GenerationsPane } from './GenerationsPane';
+import { __resetOverlayStackForTests, useOverlayStackApi } from '@/shared/state/overlayStack';
 
 const paneControlTabMock = vi.fn();
 const useIsDraggingFilesMock = vi.fn();
@@ -144,6 +145,7 @@ function buildController() {
 describe('GenerationsPane', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetOverlayStackForTests();
     panesState.effectiveGenerationsPaneHeight = 180;
     useIsDraggingFilesMock.mockReturnValue(false);
     dropToGenerationMock.mockResolvedValue(undefined);
@@ -167,6 +169,52 @@ describe('GenerationsPane', () => {
     render(<GenerationsPane />);
 
     expect(screen.getByTestId('generations-pane').firstElementChild).toHaveClass('min-h-0');
+  });
+
+  it('raises only the locked gallery above a canonical shot-editor backdrop', () => {
+    const popup = document.createElement('div');
+    popup.setAttribute('data-canonical-shot-editor', 'true');
+    useOverlayStackApi().getState().pushOverlay({
+      id: 'canonical-shot-editor',
+      type: 'dialog',
+      modal: true,
+      elements: [popup],
+    });
+
+    render(<GenerationsPane />);
+    expect(screen.getByTestId('generations-pane')).toHaveStyle({ zIndex: '110011' });
+  });
+
+  it('keeps an unlocked gallery below a canonical shot-editor backdrop', () => {
+    const popup = document.createElement('div');
+    popup.setAttribute('data-canonical-shot-editor', 'true');
+    useOverlayStackApi().getState().pushOverlay({
+      id: 'canonical-shot-editor',
+      type: 'dialog',
+      modal: true,
+      elements: [popup],
+    });
+    const controller = buildController();
+    controller.pane.isLocked = false;
+    useGenerationsPaneControllerMock.mockReturnValue(controller);
+
+    render(<GenerationsPane />);
+    expect(screen.getByTestId('generations-pane')).toHaveStyle({ zIndex: '100013' });
+  });
+
+  it('keeps the locked gallery below unrelated modal dialogs', () => {
+    const popup = document.createElement('div');
+    popup.setAttribute('data-unrelated-dialog', 'true');
+    useOverlayStackApi().getState().pushOverlay({
+      id: 'unrelated-dialog',
+      type: 'dialog',
+      modal: true,
+      elements: [popup],
+    });
+
+    render(<GenerationsPane />);
+
+    expect(screen.getByTestId('generations-pane')).toHaveStyle({ zIndex: '100013' });
   });
 
   it('renders the drop chip above the pane tab with the same horizontal offset math while dragging files', () => {

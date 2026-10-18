@@ -435,6 +435,43 @@ describe('TimelineEditorCore', () => {
       expect(store.getState().ops.onDoubleClickAsset).not.toHaveBeenCalled();
     });
 
+    it('opens a canonical shot occurrence with an empty child timeline for its first edit', () => {
+      const identity = occurrence({ tracks: [], clips: [] });
+      const onShotGroupOpen = vi.fn();
+      const { container, store } = renderWithStore(
+        <TimelineEditorCore
+          shotGroups={[canonicalGroup(identity)]}
+          onShotGroupOpen={onShotGroupOpen}
+        />,
+        { canonicalShotClip: true },
+      );
+      const clip = container.querySelector('[data-clip-id="clip-1"]');
+      expect(clip).toBeTruthy();
+
+      fireEvent.doubleClick(clip!);
+
+      expect(onShotGroupOpen).toHaveBeenCalledWith(identity);
+      expect(store.getState().ops.onDoubleClickAsset).not.toHaveBeenCalled();
+    });
+
+    it('does not open a nonempty canonical child whose clips are malformed', () => {
+      const onShotGroupOpen = vi.fn();
+      const { container, store } = renderWithStore(
+        <TimelineEditorCore
+          shotGroups={[canonicalGroup(occurrence({ tracks: [], clips: [null] }))]}
+          onShotGroupOpen={onShotGroupOpen}
+        />,
+        { canonicalShotClip: true },
+      );
+      const clip = container.querySelector('[data-clip-id="clip-1"]');
+      expect(clip).toBeTruthy();
+
+      fireEvent.doubleClick(clip!);
+
+      expect(onShotGroupOpen).not.toHaveBeenCalled();
+      expect(store.getState().ops.onDoubleClickAsset).toHaveBeenCalledWith('asset-1', 'clip-1');
+    });
+
     it('keeps the asset lightbox route when canonical identity has no resolvable internal timeline', () => {
       const onShotGroupOpen = vi.fn();
       const { container, store } = renderWithStore(

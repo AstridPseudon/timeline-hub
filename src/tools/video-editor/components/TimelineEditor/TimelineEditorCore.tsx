@@ -125,9 +125,9 @@ function hasResolvableCanonicalTimeline(occurrence: CanonicalShotOccurrence): bo
   const timeline = (internal as Record<string, unknown>).timeline;
   if (!timeline || typeof timeline !== 'object' || Array.isArray(timeline)) return false;
   const clips = (timeline as Record<string, unknown>).clips;
-  return Array.isArray(clips) && clips.some((clip) => (
+  return Array.isArray(clips) && (clips.length === 0 || clips.some((clip) => (
     clip !== null && typeof clip === 'object' && !Array.isArray(clip)
-  ));
+  )));
 }
 
 export function resolveSelectedGenerationIdsForShotCreation({

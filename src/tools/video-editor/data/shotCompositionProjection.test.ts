@@ -667,6 +667,12 @@ describe('canonical shot-composition downstream projection', () => {
       expect.objectContaining({ code: 'blank_child_output' }),
     );
     expect(() => projectCanonicalComposition(blank)).toThrow(CanonicalCompositionProjectionError);
+
+    const emptyEditor = projectCanonicalComposition({
+      ...blank,
+      occurrences: [blank.occurrences[0]!],
+    }, undefined, { allowEmptyChildOutput: true });
+    expect(emptyEditor.config.clips).toEqual([]);
   });
 
   it('matches managed outputs only to occurrence-qualified metadata', () => {

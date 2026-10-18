@@ -10,6 +10,8 @@ import { GenerationsDropChip } from './components/GenerationsDropChip';
 import { useGenerationsPaneController } from './hooks/useGenerationsPaneController';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
 import { usePanesStore } from '@/shared/state/panesStore';
+import { getOverlayLayerStyle } from '@/shared/components/ui/overlay/shared';
+import { useOverlayStackState } from '@/shared/state/overlayStack';
 
 type GenerationsPaneController = ReturnType<typeof useGenerationsPaneController>;
 
@@ -95,6 +97,13 @@ function GenerationsPaneTab({ controller }: { controller: GenerationsPaneControl
 function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneController }) {
   const { pane, filters, gallery, layout, navigation } = controller;
   const effectiveGenerationsPaneHeight = usePanesStore((state) => state.effectiveGenerationsPaneHeight);
+  const { overlays } = useOverlayStackState();
+  const canonicalShotEditorIndex = overlays.findIndex((overlay) => (
+    overlay.modal && overlay.elements.some((element) => element.hasAttribute('data-canonical-shot-editor'))
+  ));
+  const canonicalShotEditorGalleryZIndex = canonicalShotEditorIndex >= 0
+    ? getOverlayLayerStyle(canonicalShotEditorIndex + 1, 'positioner').zIndex
+    : null;
 
   // The Image Generation tool owns the full-page gallery. Keep the app-shell
   // generations pane out of that route, including when it was left hovered or
@@ -111,7 +120,12 @@ function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneCon
         height: `${effectiveGenerationsPaneHeight}px`,
         left: pane.isShotsPaneLocked ? `${pane.shotsPaneWidth}px` : 0,
         right: pane.isTasksPaneLocked ? `${pane.tasksPaneWidth}px` : 0,
-        zIndex: UI_Z_LAYERS.GENERATIONS_PANE,
+        // A locked gallery is the supported drag source for the canonical
+        // shot editor. Put it above that dialog's backdrop but below its
+        // popup; other dialogs keep the normal locked-pane ordering.
+        zIndex: pane.isLocked && pane.paneIsOpen && canonicalShotEditorGalleryZIndex !== null
+          ? canonicalShotEditorGalleryZIndex
+          : UI_Z_LAYERS.GENERATIONS_PANE,
       }}
       className={cn(
         'fixed bottom-0 bg-zinc-900/95 border-t border-zinc-700 shadow-xl transform transition-all duration-300 ease-smooth flex flex-col pointer-events-auto',

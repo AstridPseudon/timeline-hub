@@ -730,6 +730,7 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
       >
         <DialogContent
           className="h-[min(90vh,900px)] max-h-[90vh] w-[calc(100vw-2rem)] max-w-4xl overflow-hidden p-0"
+          data-canonical-shot-editor="true"
           finalFocus={false}
           onKeyDown={(event) => {
             // This dialog has no trigger element. Handle Escape here so the

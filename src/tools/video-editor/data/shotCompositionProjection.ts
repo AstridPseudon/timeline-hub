@@ -432,6 +432,8 @@ function projectClip(
 export type CanonicalCompositionProjectionOptions = Readonly<{
   /** Keep shot-local overhang visible so saving can grow the soft wall. */
   clampToOccurrenceDuration?: boolean;
+  /** Let an editing surface mount on an empty child so the first clip can be authored. */
+  allowEmptyChildOutput?: boolean;
 }>;
 
 export function projectCanonicalComposition(
@@ -488,7 +490,7 @@ export function projectCanonicalComposition(
     );
     const effectiveOccurrence = { ...occurrence, durationMs: effectiveDurationMs };
     const rawClips = Array.isArray(timeline.clips) ? timeline.clips : [];
-    if (rawClips.length === 0) {
+    if (rawClips.length === 0 && options.allowEmptyChildOutput !== true) {
       throw new CanonicalCompositionProjectionError(
         'blank_child_output',
         `Canonical occurrence ${occurrence.occurrenceId} has a blank child output`,
@@ -516,7 +518,7 @@ export function projectCanonicalComposition(
         }
       }
     });
-    if (!rawClips.some((rawClip) => record(rawClip))) {
+    if (rawClips.length > 0 && !rawClips.some((rawClip) => record(rawClip))) {
       throw new CanonicalCompositionProjectionError(
         'blank_child_output',
         `Canonical occurrence ${occurrence.occurrenceId} has no renderable child clips`,

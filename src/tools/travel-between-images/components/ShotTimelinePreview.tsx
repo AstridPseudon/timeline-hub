@@ -96,7 +96,12 @@ function projectShotTimeline(composition: PreparedShotComposition, occurrenceId:
       tracks: [],
       clips: [],
       registry: {},
-    }, { clampToOccurrenceDuration: false }).config;
+    }, {
+      clampToOccurrenceDuration: false,
+      // A blank child is an editable authoring surface, not a renderable output.
+      // Keep the shared projection strict for every output/rendering caller.
+      allowEmptyChildOutput: true,
+    }).config;
     const occurrenceOffset = occurrence.atMs / 1000;
     const clips = projected.clips.map((clip) => {
       const app = clip.app && typeof clip.app === 'object' && !Array.isArray(clip.app)

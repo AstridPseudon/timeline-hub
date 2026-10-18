@@ -26,6 +26,7 @@ vi.mock('@/tools/video-editor/sequences/components/EndSpanningLayerSequence.tsx'
 }));
 vi.mock('@/tools/video-editor/runtime/astrid-element-components.tsx', () => ({
   ASTRID_ELEMENT_COMPONENTS: {},
+  INSTALLED_ASTRID_ELEMENT_HOST: {},
 }));
 vi.mock('@/tools/video-editor/runtime/astrid-element-catalog.ts', () => ({
   ASTRID_ANIMATION_CATALOG: [],
@@ -53,6 +54,13 @@ function editedGraph(atMs: number, headId: string) {
   graph.primary_timeline.head.revision_id = headId;
   graph.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
     .internal_timeline_revision.timeline.clips[0]!.at_ms = atMs;
+  return graph;
+}
+
+function emptyChildGraph() {
+  const graph = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
+  graph.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
+    .internal_timeline_revision.timeline.clips = [];
   return graph;
 }
 
@@ -116,6 +124,36 @@ describe('shot timeline popup real recovery integration', () => {
     releaseLoad();
     await waitFor(() => expect(document.querySelector('.timeline-wrapper')).toBeTruthy());
     view.unmount();
+  });
+
+  it('mounts an editable empty child timeline as the target for its first media drop', async () => {
+    const graph = emptyChildGraph();
+    const adapter = createShotCompositionAdapter({ load: vi.fn().mockResolvedValue(graph), publish: vi.fn() });
+    const composition = adapter.prepare(graph);
+    const { container } = render(
+      <ShotTimelinePreview composition={composition} occurrenceId="occ-1" shotCompositionAdapter={adapter} />,
+      { wrapper: wrapper() },
+    );
+
+    const canvas = await waitFor(() => {
+      const current = container.querySelector('[data-shot-timeline-canvas="true"]');
+      expect(current).toHaveAttribute('data-shot-timeline-clip-count', '0');
+      return current;
+    });
+    expect(screen.getByRole('region', { name: 'Shot timeline' }))
+      .toHaveAttribute('data-shot-timeline-status', 'ready');
+    const dropTarget = await waitFor(() => {
+      const current = container.querySelector('.timeline-wrapper');
+      expect(current).toBeTruthy();
+      return current;
+    });
+    fireEvent.dragOver(dropTarget!, {
+      dataTransfer: { types: ['asset-key'], files: [], items: [] },
+      clientX: 24,
+      clientY: 24,
+    });
+    expect(dropTarget).toHaveAttribute('data-drag-over', 'true');
+    expect(canvas).toHaveAttribute('data-shot-timeline-clip-count', '0');
   });
 
   it('emits a scoped optimistic parent projection before the durable save debounce', async () => {

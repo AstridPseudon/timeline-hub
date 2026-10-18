@@ -2070,7 +2070,7 @@ describe('useExternalDrop', () => {
     expect(dataRef.current).toBe(initialData);
   });
 
-  it('passes the exact Runtime selection for a registered shot image into prepared timeline placement', async () => {
+  it('inserts the first clip on an empty timeline from the exact registered shot image selection', async () => {
     const projectId = 'fa20eee1bee84789b1351b9e821933af';
     const selection = {
       asset: 'sha256:a95bc2abe67e7de50fb4572334e15b0c59ad6bd08731f8602ac86ca4a6c03791',
@@ -2101,6 +2101,8 @@ describe('useExternalDrop', () => {
 
     const initialData = makeDropTestData();
     initialData.head = { projectId, timelineId: 'c196-visual', headRevisionId: 'revision-1' };
+    expect(initialData.config.clips).toEqual([]);
+    expect(initialData.rows.every((row) => row.actions.length === 0)).toBe(true);
     initialData.registry.assets[selection.asset] = {
       file: 'https://runtime.test/c196-local.png',
       type: 'image/png',
