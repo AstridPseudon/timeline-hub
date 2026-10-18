@@ -204,7 +204,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         entry = replace(entry, handler=add_manual_text)
     duplicate_source = None
     if entry.op == "timeline.add" and "from" in command.args:
-        entry = replace(entry, handler=duplicate_clip_source)
+        entry = replace(entry, kind="timeline", handler=duplicate_clip_source)
         duplicate_source = command.args["from"]
         if "from_" in command.args:
             raise CommandError("Use the documented from argument only")
@@ -272,6 +272,19 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     from astrid.sdk.timeline.identity import cut_reservations, retain_cut_reservation_mark
     previous_reservations = cut_reservations(tl.bundle)
     before_entities = _recording_states(tl)
+    if entry.op == "timeline.inverse":
+        # A selected-media child owns registry cleanup, but later authored users
+        # still own their references. Refuse its whole inverse before deletion.
+        for write in command.args.get("writes", []):
+            sid = write.get("id") if isinstance(write, Mapping) else None
+            row = before_entities.get(sid, {})
+            if (isinstance(sid, str) and "/clip:" in sid and write.get("path") == ""
+                    and write.get("after") == {"state": "absent"}
+                    and row.get("app", {}).get("astrid", {}).get("media_registry_insert")):
+                from astrid.sdk.timeline import relations
+
+                if any(row["target"] != sid for row in relations.affected(tl, [sid])):
+                    raise CommandError("Selected-media child has later authored dependents")
     if app_keys:
         from astrid.core.timeline import clip_fields as cf
         if not all(any(write_target(key, selected) == (selected[0], path)
@@ -321,6 +334,8 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             expectations.setdefault(sid + "::", state_at(before_entities, sid, ""))
         command = replace(command, expect=expectations)
     if duplicate_source is not None:
+        if "media" in command.args and (command.created is None or len(command.created) != 1):
+            raise CommandError("Selected clone requires one reserved child identity")
         if not isinstance(duplicate_source, str) or not is_scoped_id(duplicate_source) or "/clip:" not in duplicate_source:
             raise CommandError("timeline.add from requires an exact clip ScopedId")
         # Source ownership and created ownership are separate identities. Guard
@@ -447,6 +462,10 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         canonical["relation_affected"] = relation_affected
     if duplicate_source is not None:
         canonical["from"] = canonical.pop("from_")
+        # Optional acquisition fields must not change ordinary clone replay.
+        for key in ("media", "media_record"):
+            if canonical.get(key) is None:
+                canonical.pop(key, None)
     if entry.kind == "track" and entry.op == "timeline.set":
         canonical["values"] = dict(args.get("values", {}))
         canonical["clear"] = list(args.get("clear", []))
@@ -1738,7 +1757,7 @@ def _literal_source(clip, *, relation_choices=None):
 
 def duplicate_clip_source(
     self, *, from_: str, at: Any, track: str | None = None, clip_id: str | None = None,
-    relation_choices: list | None = None
+    relation_choices: list | None = None, media=None, media_record=None
 ) -> Clip:
     """Copy an exact source within its recorded owner; placement is explicit."""
     tl = self
@@ -1766,6 +1785,38 @@ def duplicate_clip_source(
             "Duplicate within the source owner; cross-owner insertion requires explicit asset/track mapping"
         )
     data = copy.deepcopy(source.data)
+    if (media is None) != (media_record is None):
+        raise CommandError("Selected clone requires captured project media")
+    if media is not None:
+        import math
+
+        if not isinstance(clip_id, str) or not clip_id or "/" in clip_id or any(
+                row.get("id") == clip_id for row in tl._internal(source.shot_id).get("clips", [])):
+            raise CommandError("Selected clone reserved child identity is unavailable")
+        if track is not None and track != data.get("track"):
+            raise CommandError("Selected clone must preserve the source track")
+        old_entry = tl._registry(source.shot_id).get(data.get("asset"), {})
+        new_type = media_record["entry"].get("media_type", "")
+        old_type = old_entry.get("type", "").split("/")[0]
+        if old_type not in {"video", "image"} or new_type.split("/")[0] != old_type:
+            raise CommandError("Selected clone must preserve the source media kind")
+        if old_type == "video":
+            duration = media_record["entry"].get("duration_seconds")
+            left, right = data.get("from", 0), data.get("to")
+            if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
+                   for v in (left, right, duration)) or not 0 <= left < right <= duration:
+                raise CommandError("Selected clone cannot preserve the full source range")
+        key, entry, inserted = _register_selected_media(tl, source.shot_id, media, media_record)
+        data["asset"] = key
+        # Internal registry provenance belongs to the replacement, not its source.
+        astrid = data.get("app", {}).get("astrid", {})
+        if "media_registry_insert" in astrid:
+            del astrid["media_registry_insert"]
+        if inserted:
+            from astrid.sdk.timeline.commit import _digest
+
+            data.setdefault("app", {}).setdefault("astrid", {})["media_registry_insert"] = {
+                "asset": key, "entry_digest": _digest(entry)}
     data["id"] = clip_id or tl._new_id(source.id)
     data["at"] = start - tl._shot_start(source.shot_id)
     if track is not None:
@@ -2132,6 +2183,36 @@ def register_asset(self, asset_id: str, entry: Mapping[str, Any]):
     return self
 
 
+def _register_selected_media(tl, shot_id, media, media_record):
+    """Reuse the detached capture supplied by COMMIT; never resolve media here."""
+    if any(media_record.get(key) != media.get(key) for key in ("asset", "generation_id", "variant_id", "object_id", "catalog_digest")):
+        raise CommandError("Captured clone media identity mismatch")
+    media_type = media_record["entry"].get("media_type", "")
+    intrinsic = media_record["entry"].get("duration_seconds")
+    entry = dict(
+        media_id=media_record["object_id"],
+        content_sha256=media_record["object_id"].removeprefix("sha256:"),
+        type=media_type,
+        duration=intrinsic,
+        format=copy.deepcopy(media_record["entry"]),
+        generationId=media_record["generation_id"],
+        variantId=media_record["variant_id"],
+        authoring_metadata={key: copy.deepcopy(media_record[key]) for key in ("generation", "variant")},
+    )
+    key = media["asset"]
+    if not isinstance(key, str) or not key:
+        raise CommandError("Media asset key must be a nonempty string")
+    assets = tl._registry(shot_id)
+    if key in assets and (
+        not isinstance(assets[key], Mapping)
+        or any(not _same_value(assets[key].get(field), value) for field, value in entry.items())
+    ):
+        raise CommandError("Owner asset-key identity collision")
+    registry_inserted = key not in assets
+    assets.setdefault(key, entry)
+    return key, assets[key], registry_inserted
+
+
 def add_project_media(self, *, media, at, clip_id, media_record, duration=None, source_range=None):
     import math
 
@@ -2187,27 +2268,7 @@ def add_project_media(self, *, media, at, clip_id, media_record, duration=None, 
         raise CommandError("Media needs explicit positive duration within intrinsic range")
     if media_type.startswith("image/") and source_range is not None:
         raise CommandError("Still images require explicit duration")
-    entry = dict(
-        media_id=media_record["object_id"],
-        content_sha256=media_record["object_id"].removeprefix("sha256:"),
-        type=media_type,
-        duration=intrinsic,
-        format=copy.deepcopy(media_record["entry"]),
-        generationId=media_record["generation_id"],
-        variantId=media_record["variant_id"],
-        authoring_metadata={key: copy.deepcopy(media_record[key]) for key in ("generation", "variant")},
-    )
-    key = media["asset"]
-    if not isinstance(key, str) or not key:
-        raise CommandError("Media asset key must be a nonempty string")
-    assets = tl._registry(self.shot_id)
-    if key in assets and (
-        not isinstance(assets[key], Mapping)
-        or any(not _same_value(assets[key].get(field), value) for field, value in entry.items())
-    ):
-        raise CommandError("Owner asset-key identity collision")
-    registry_inserted = key not in assets
-    assets.setdefault(key, entry)
+    key, entry, registry_inserted = _register_selected_media(tl, self.shot_id, media, media_record)
     row = dict(
         id=clip_id,
         clipType="media",

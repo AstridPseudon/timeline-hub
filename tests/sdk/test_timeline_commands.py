@@ -323,3 +323,134 @@ def test_preview_and_commit_have_the_same_film_length_digest(draft):
     assert preview.digests == applied.digests
     assert applied.digests["after"] == journal.document_digest(draft.document())
     assert journal.read(journal.journal_path("p", "t"))[-1].after == applied.digests["after"]
+
+
+# W46 source preparation only. This detached authority fixture exercises captured
+# media_record semantics; it is not a Runtime acquisition or acceptance receipt.
+def w46_clone_fixture():
+    from astrid.sdk.timeline.commit import _digest
+    bundle = json.loads(FIXTURE.read_text())
+    source = dict(id="source", track="V1", at=1, clipType="media", asset="old", from_=2)
+    source.pop("from_")
+    source.update({"from": 2, "to": 6, "speed": 2, "volume": 0.4, "opacity": 0.8,
+                   "params": {"opaque": {"op": "clear", "value": None}},
+                   "entrance": {"name": "fade"}, "app": {"reference": {"revision": "r1", "null": None}}})
+    follower = dict(id="follower", track="V1", at=5, clipType="hold", hold=1)
+    bundle["parent"] = {"config": {"tracks": [{"id": "V1", "kind": "visual"}],
+                                   "output": {"resolution": "1920x1080", "fps": 30, "file": "out.mp4"}},
+                        "clips": [source, follower], "registry": {"assets": {"old": {"type": "video/mp4", "duration": 8}}}}
+    from astrid.sdk.timeline.identity import retain_cut_reservations
+    retain_cut_reservations(bundle)
+    detached = dict(realm_id="unit-realm", project_id=bundle["project_id"], asset="replacement",
+                    generation_id="unit-generation", variant_id="unit-variant", object_id="sha256:"+"a"*64,
+                    generation={"opaque": None}, variant={"op": "clear"},
+                    entry={"object_id": "sha256:"+"a"*64, "media_type": "video/mp4", "duration_seconds": 8})
+    record = {**detached, "catalog_digest": _digest(detached)}
+    selection = {key: record[key] for key in ("asset", "generation_id", "variant_id", "object_id", "catalog_digest")}
+    call = {"op": "timeline.add", "select": None, "args": {"from": "parent/clip:source", "at": 3, "media": selection},
+            "created": ["parent/clip:child"], "expect": {"parent/clip:source::": {"state": "present", "value": copy.deepcopy(source)},
+            "parent/clip:source::clip_order": {"state": "present", "value": ["parent/clip:source", "parent/clip:follower"]},
+            "parent/clip:child::": {"state": "absent"}, "parent/clip:follower::": {"state": "present", "value": copy.deepcopy(follower)},
+            "parent::registry.assets.replacement": {"state": "absent"}}}
+    return Checkout(bundle), record, call
+
+
+def w46_capture(tl, record, calls):
+    from types import SimpleNamespace
+    from astrid.sdk.timeline.commit import RuntimeCommitService
+    return RuntimeCommitService._capture_media(SimpleNamespace(selected_media=lambda selection: copy.deepcopy(record)),
+                                               {"project_id": tl.bundle["project_id"]}, calls)
+
+
+def test_w46_captured_clone_preserves_whole_row_registry_ripple_inverse_and_replay(tmp_path):
+    tl, record, call = w46_clone_fixture()
+    before = copy.deepcopy(tl.document())
+    nudge = {"op": "clip.nudge", "select": "parent/clip:follower", "args": {"frames": 60}}
+    captured = w46_capture(tl, record, [call, nudge])
+    with tl.edit("W46 source-only clone", quiet=True) as tx:
+        for value in captured:
+            commands.execute(tl, value)
+    assert not tx.plan.blocking
+    forward = copy.deepcopy(tl.document())
+    source = before["parent"]["clips"][0]
+    child = next(row for row in forward["parent"]["clips"] if row["id"] == "child")
+    mark = child["app"]["astrid"]["media_registry_insert"]
+    expected = {**copy.deepcopy(source), "id": "child", "at": 3, "asset": "replacement"}
+    expected["app"]["astrid"] = {"media_registry_insert": mark}
+    assert child == expected
+    assert next(row for row in forward["parent"]["clips"] if row["id"] == "follower")["at"] == 7
+    entry = forward["parent"]["registry"]["assets"]["replacement"]
+    assert entry["media_id"] == record["object_id"] and entry["format"] == record["entry"]
+    # Replaying the captured command batch on the exact base is byte-stable.
+    replay, _, _ = w46_clone_fixture()
+    with replay.edit("W46 replay", quiet=True):
+        for value in captured:
+            commands.execute(replay, value)
+    assert replay.document() == forward
+    writes = tx.plan.direct_writes
+    inverse = {"op": "timeline.inverse", "select": None, "args": {"publication": "unit-publication", "writes": [
+        {**copy.deepcopy(w), "before": copy.deepcopy(w["after"]), "after": copy.deepcopy(w["before"]),
+         **({"order": ["parent/clip:source", "parent/clip:follower", "parent/clip:child"]} if w["path"] == "" else {})}
+        for w in writes]}}
+    with tl.edit("W46 inverse", quiet=True):
+        commands.execute(tl, inverse)
+    assert tl.document() == before
+    with tl.edit("W46 redo", quiet=True):
+        for value in captured:
+            commands.execute(tl, value)
+    assert tl.document() == forward
+    saved = tmp_path / "clone.json"
+    tl.save(saved, quiet=True)
+    assert Checkout.load(saved).document() == forward
+
+
+@pytest.mark.parametrize("kind", ["duration", "wrong project", "wrong object", "wrong variant", "catalog", "collision", "stale source", "stale order", "stale registry", "dependent source", "unreserved child", "wrong track"])
+def test_w46_clone_refusal_has_no_effect(kind):
+    from astrid.sdk.timeline.commit import _digest
+    tl, record, call = w46_clone_fixture()
+    if kind == "duration": record["entry"]["duration_seconds"] = 5
+    if kind == "wrong project": record["project_id"] = "different-project"
+    if kind == "wrong object": record["entry"]["object_id"] = "sha256:"+"b"*64
+    if kind == "wrong variant": record["variant_id"] = "different-variant"
+    if kind == "catalog": record["variant"]["changed"] = True
+    if kind == "unreserved child": call.pop("created")
+    if kind == "wrong track": call["args"]["track"] = "different-track"
+    if kind in {"duration", "wrong object"}:
+        record["catalog_digest"] = _digest({k: v for k, v in record.items() if k != "catalog_digest"})
+        call["args"]["media"]["catalog_digest"] = record["catalog_digest"]
+    rows = tl.bundle["parent"]["clips"]
+    if kind == "collision": rows.append({"id": "child", "track": "V1", "at": 9, "hold": 1})
+    if kind == "stale source": rows[0]["opacity"] = 0.1
+    if kind == "stale order": rows.reverse()
+    if kind == "stale registry": tl.bundle["parent"]["registry"]["assets"]["replacement"] = {"media_id": "sha256:"+"c"*64}
+    if kind == "dependent source": rows[1].setdefault("app", {})["astrid"] = {"on": 'clip-end "parent/clip:source"'}
+    before = copy.deepcopy(tl.document())
+    from astrid.sdk.timeline.commit import _Refusal
+    with pytest.raises((TimelineEditError, _Refusal)):
+        with tl.edit("W46 refused", quiet=True):
+            for value in w46_capture(tl, record, [call, {"op": "clip.nudge", "select": "parent/clip:follower", "args": {"frames": 60}}]):
+                commands.execute(tl, value)
+    assert tl.document() == before
+
+
+@pytest.mark.parametrize("kind", ["edited child", "dependent child"])
+def test_w46_later_child_prevents_whole_inverse(kind):
+    tl, record, call = w46_clone_fixture()
+    captured = w46_capture(tl, record, [call, {"op": "clip.nudge", "select": "parent/clip:follower", "args": {"frames": 60}}])
+    with tl.edit("W46 source preparation", quiet=True) as tx:
+        for value in captured:
+            commands.execute(tl, value)
+    writes = [{**copy.deepcopy(w), "before": copy.deepcopy(w["after"]), "after": copy.deepcopy(w["before"]),
+               **({"order": ["parent/clip:source", "parent/clip:follower", "parent/clip:child"]} if w["path"] == "" else {})}
+              for w in tx.plan.direct_writes]
+    if kind == "edited child":
+        next(row for row in tl.bundle["parent"]["clips"] if row["id"] == "child")["opacity"] = 0.2
+    else:
+        tl.bundle["parent"]["clips"].append(dict(id="dependent", track="V1", at=5, clipType="hold", hold=1,
+                                               app={"astrid": {"on": 'clip-end "parent/clip:child"'}}))
+    before = copy.deepcopy(tl.document())
+    with pytest.raises(TimelineEditError):
+        with tl.edit("W46 refused inverse", quiet=True):
+            commands.execute(tl, {"op": "timeline.inverse", "select": None,
+                                 "args": {"publication": "unit-publication", "writes": writes}})
+    assert tl.document() == before
