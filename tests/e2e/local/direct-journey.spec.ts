@@ -270,7 +270,7 @@ test.describe('permission gate and readiness (App)', () => {
       await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
       await expect(panel.getByText('Start Astrid on this computer and this page opens by itself.')).toBeVisible();
       await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
-      await expect(panel).not.toContainText(/Astrid|Runtime|workspace|realm|gateway|reload/i);
+      await expect(panel).not.toContainText(/Runtime|workspace|realm|gateway|reload/i);
       await harness.startRuntime();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
       expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
