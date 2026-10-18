@@ -69,6 +69,8 @@ def contract_errors(payload: object, returncode: int) -> list[str]:
         errors.append(
             f"problemCode={report.get('problemCode')!r} disagrees with exit {returncode}"
         )
+    if not is_healthy and not report.get("nextActions"):
+        errors.append("a failed diagnostic must carry a typed next action")
     for key in ("healthy", "ok"):
         if key in payload and (not isinstance(payload[key], bool) or payload[key] != is_healthy):
             errors.append(f"{key} disagrees with the diagnostic's problemCode")

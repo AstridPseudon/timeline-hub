@@ -57,6 +57,15 @@ def test_ci_doctor_rejects_missing_or_malformed_c2_payload() -> None:
     assert any("C2 identity is invalid" in error for error in errors)
 
 
+def test_ci_doctor_rejects_failed_diagnostic_without_next_action() -> None:
+    report = _failed_report()
+    report["nextActions"] = []
+
+    errors = ci_doctor.contract_errors({"diagnostic": report}, 1)
+
+    assert "a failed diagnostic must carry a typed next action" in errors
+
+
 def test_ci_doctor_rejects_exit_and_health_mismatches() -> None:
     failed = _failed_report()
     assert any(
