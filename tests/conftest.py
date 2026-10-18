@@ -110,53 +110,57 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path
     root = Path(__file__).resolve().parents[1]
     environment = tmp_path_factory.mktemp("stage1-runtime") / "venv"
     wheelhouse = environment.parent / "wheelhouse"
-    generated = (
-        root / "build",
-        root / "astrid_runtime.egg-info",
-        root / "astrid_runtime_client.egg-info",
-        root / "packages" / "python" / "build",
-        root / "packages" / "python" / "astrid_runtime_client.egg-info",
+    source = environment.parent / "source"
+    builders = [sys.executable, "python3.11", "python3.12", "python3.13", "python3", "python"]
+    builder = None
+    for candidate in builders:
+        try:
+            probe = subprocess.run(
+                [candidate, "-c", "import setuptools.build_meta"],
+                capture_output=True,
+                check=False,
+            )
+        except OSError:
+            continue
+        if probe.returncode == 0:
+            builder = candidate
+            break
+    if builder is None:
+        raise RuntimeError("Stage 1 tests require an available Python with setuptools.build_meta")
+    # setuptools writes build/ and egg-info beside the source tree. Build
+    # from a private copy so concurrent pytest sessions cannot delete or
+    # replace each other's generated package files in the checkout.
+    source.mkdir()
+    for filename in ("pyproject.toml", "setup.py", "LICENSE"):
+        shutil.copy2(root / filename, source / filename)
+    for package in ("astrid_runtime", "runtime_protocol"):
+        shutil.copytree(root / package, source / package, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    client_source = source / "packages" / "python"
+    client_source.mkdir(parents=True)
+    shutil.copy2(root / "packages" / "python" / "pyproject.toml", client_source / "pyproject.toml")
+    shutil.copytree(
+        root / "packages" / "python" / "astrid_runtime_client",
+        client_source / "astrid_runtime_client",
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
     )
-    existed = {path: path.exists() for path in generated}
-    try:
-        builders = [sys.executable, "python3.11", "python3.12", "python3.13", "python3", "python"]
-        builder = None
-        for candidate in builders:
-            try:
-                probe = subprocess.run(
-                    [candidate, "-c", "import setuptools.build_meta"],
-                    capture_output=True,
-                    check=False,
-                )
-            except OSError:
-                continue
-            if probe.returncode == 0:
-                builder = candidate
-                break
-        if builder is None:
-            raise RuntimeError("Stage 1 tests require an available Python with setuptools.build_meta")
-        subprocess.run([sys.executable, "-m", "venv", str(environment)], check=True)
-        wheelhouse.mkdir()
-        subprocess.run(
-            [builder, "-m", "pip", "wheel", "--no-index", "--no-build-isolation", "--no-deps", "--wheel-dir", str(wheelhouse), str(root), str(root / "packages" / "python")],
-            cwd=str(root),
-            env={**os.environ, "SETUPTOOLS_USE_DISTUTILS": "stdlib"},
-            check=True,
-        )
-        pip = environment / "bin" / "pip"
-        wheels = sorted(wheelhouse.glob("*.whl"))
-        if len(wheels) != 2:
-            raise RuntimeError(f"expected two local Stage 1 wheels, found {len(wheels)}")
-        # The prepared interpreter may carry an editable checkout of this
-        # project.  Force-install the exact wheels into the fresh child venv so
-        # pip cannot mistake that outer editable metadata for an installed
-        # package and silently omit one of the two runtime components.
-        subprocess.run(
-            [str(pip), "install", "--no-index", "--no-deps", "--force-reinstall", *(str(wheel) for wheel in wheels)],
-            check=True,
-        )
-        yield environment
-    finally:
-        for path, was_present in existed.items():
-            if not was_present and path.is_dir():
-                shutil.rmtree(path)
+    subprocess.run([sys.executable, "-m", "venv", str(environment)], check=True)
+    wheelhouse.mkdir()
+    subprocess.run(
+        [builder, "-m", "pip", "wheel", "--no-index", "--no-build-isolation", "--no-deps", "--wheel-dir", str(wheelhouse), str(source), str(client_source)],
+        cwd=str(source),
+        env={**os.environ, "SETUPTOOLS_USE_DISTUTILS": "stdlib"},
+        check=True,
+    )
+    pip = environment / "bin" / "pip"
+    wheels = sorted(wheelhouse.glob("*.whl"))
+    if len(wheels) != 2:
+        raise RuntimeError(f"expected two local Stage 1 wheels, found {len(wheels)}")
+    # The prepared interpreter may carry an editable checkout of this
+    # project.  Force-install the exact wheels into the fresh child venv so
+    # pip cannot mistake that outer editable metadata for an installed
+    # package and silently omit one of the two runtime components.
+    subprocess.run(
+        [str(pip), "install", "--no-index", "--no-deps", "--force-reinstall", *(str(wheel) for wheel in wheels)],
+        check=True,
+    )
+    return environment
