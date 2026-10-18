@@ -56,6 +56,7 @@ _REQUIRED_SCHEMA_FILES = (
 )
 
 _SCHEMA_PROBE = """
+import json
 import pathlib
 import sys
 
@@ -69,15 +70,19 @@ from banodoco_timeline_schema import (
     TimelineClip,
     TimelineConfig,
     TimelineOutput,
-    load_schema,
     materialize_output,
     resolve_theme,
-    validate_timeline,
 )
 origin = pathlib.Path(schema.__file__).resolve()
 if not origin.is_relative_to(root / "banodoco_timeline_schema"):
     raise RuntimeError(f"schema origin escaped trusted root: {origin}")
-load_schema()
+contract = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
+import jsonschema
+jsonschema.validate(
+    {"tracks": [{"id": "source", "kind": "visual", "label": "Source", "role": "source"}],
+     "clips": []},
+    contract,
+)
 print(origin)
 """
 
@@ -303,7 +308,8 @@ def _runtime_inputs(project_dir: Path, environment: Mapping[str, str], python: s
     if (project / "src").is_dir():
         roots.append(project / "src")
     roots.extend(Path(p) for p in closure.get("package_roots", []))
-    paths = [node, Path(python), cli, project / "package.json", project / "package-lock.json", Path(__file__)]
+    paths = [node, Path(python), cli, project / "package.json", project / "package-lock.json", Path(__file__),
+             REPO_ROOT / "astrid" / "core" / "timeline" / "schema" / "timeline-config.schema.json"]
     paths.extend(p for p in project.iterdir() if p.is_file() and p.suffix in {".ts", ".js", ".mjs", ".cjs", ".json"})
     cfg = Path(python).parent.parent / "pyvenv.cfg"
     if cfg.is_file():
@@ -826,7 +832,8 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
             error.probe_receipt = node_wait
             raise error
         schema_probe, schema_wait = _owned_probe(
-            [python_executable, '-I', '-c', _schema_probe_source(), str(schema_root)],
+            [python_executable, '-I', '-c', _schema_probe_source(), str(schema_root),
+             str(REPO_ROOT / "astrid" / "core" / "timeline" / "schema" / "timeline-config.schema.json")],
             cwd=schema_root.parent, env=context['schema_env'], timeout=5)
         if schema_probe.returncode:
             error = RemotionValidationError("clean timeline schema validation failed")
@@ -855,7 +862,8 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
         # import: establish its complete closure binding before that import.
         complete_before = _runtime_inputs(project, environment, python_executable, closure, digest_memo=digest_memo)
         qualifying, qualifying_wait = _owned_probe(
-            [python_executable, '-I', '-c', _schema_probe_source(), str(schema_root)],
+            [python_executable, '-I', '-c', _schema_probe_source(), str(schema_root),
+             str(REPO_ROOT / "astrid" / "core" / "timeline" / "schema" / "timeline-config.schema.json")],
             cwd=schema_root.parent, env=context['schema_env'], timeout=5)
         try:
             qualifying_closure = json.loads(qualifying.stdout)
@@ -1136,6 +1144,21 @@ def resolve_remotion_project_dir() -> Path:
     return (REPO_ROOT / "remotion").resolve()
 
 
+def remotion_install_problem(project: Path) -> str | None:
+    """Explain which locked Remotion packages or CLI are missing from a project."""
+    node_modules = project / "node_modules"
+    missing = [
+        f"@banodoco/{name}"
+        for name in _REQUIRED_PACKAGES
+        if not (node_modules / "@banodoco" / name / "package.json").is_file()
+    ]
+    if missing:
+        return "required Remotion package(s) missing: " + ", ".join(missing)
+    if not (project / REMOTION_CLI_RELATIVE_PATH).is_file():
+        return f"locked Remotion CLI is missing: {project / REMOTION_CLI_RELATIVE_PATH}"
+    return None
+
+
 def remotion_runtime_status(
     *, require_explicit_project: bool = False
 ) -> RemotionRuntimeStatus:
@@ -1162,24 +1185,9 @@ def remotion_runtime_status(
         return RemotionRuntimeStatus(False, project_dir, f"project directory not found: {project_dir}")
     if not (project_dir / "package.json").is_file():
         return RemotionRuntimeStatus(False, project_dir, f"package.json missing: {project_dir}")
-    node_modules = project_dir / "node_modules"
-    if not node_modules.is_dir():
-        return RemotionRuntimeStatus(False, project_dir, f"node_modules missing: {node_modules}")
-    missing = [
-        f"@banodoco/{name}"
-        for name in _REQUIRED_PACKAGES
-        if not (node_modules / "@banodoco" / name).is_dir()
-        or not (node_modules / "@banodoco" / name / "package.json").is_file()
-    ]
-    if missing:
-        return RemotionRuntimeStatus(
-            False,
-            project_dir,
-            "required Remotion package(s) missing: " + ", ".join(missing),
-        )
-    if not (project_dir / REMOTION_CLI_RELATIVE_PATH).is_file():
-        return RemotionRuntimeStatus(False, project_dir,
-                                     f"locked Remotion CLI is missing: {project_dir / REMOTION_CLI_RELATIVE_PATH}")
+    install_problem = remotion_install_problem(project_dir)
+    if install_problem:
+        return RemotionRuntimeStatus(False, project_dir, install_problem)
     schema_root_raw = os.environ.get(TIMELINE_SCHEMA_PYTHONPATH_ENV, "").strip()
     if not schema_root_raw:
         return RemotionRuntimeStatus(
@@ -1233,6 +1241,7 @@ __all__ = [
     "RemotionRuntimeStatus",
     "resolve_remotion_project_dir",
     "resolve_remotion_runtime_tools",
+    "remotion_install_problem",
     "remotion_runtime_status",
     "timeline_requires_remotion",
 ]

@@ -25,6 +25,8 @@ def test_run_pack_main_adds_default_recovery_to_bare_astrid_errors(exc: AstridEr
     assert "boom" in err
     assert "recovery: python3 -m astrid executors run demo.cap --help" in err
     assert "demo.cap" in err
+    assert exc.recovery == exc.recovery_command
+    assert exc.state_snapshot == {"argv": [], "capability_id": "demo.cap"}
 
 
 def test_run_pack_main_keeps_explicit_recovery(capsys) -> None:
