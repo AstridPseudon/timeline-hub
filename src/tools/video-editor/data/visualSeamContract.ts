@@ -351,18 +351,14 @@ function continuityTracksFor(spans: readonly ClipSpan[], options: VisualSeamAnal
 type VisualGapEdge = Readonly<{
   track: string;
   previousOccurrenceId: string;
-  previousClipId: string;
   nextOccurrenceId: string;
-  nextClipId: string;
   startFrame: number;
   endFrame: number;
 }>;
 
-function projectedClipIdentity(id: string): Readonly<{occurrenceId: string; clipId: string}> {
+function projectedOccurrenceId(id: string): string {
   const separator = id.indexOf(':');
-  return separator < 0
-    ? {occurrenceId: '', clipId: id}
-    : {occurrenceId: id.slice(0, separator), clipId: id.slice(separator + 1)};
+  return separator < 0 ? '' : id.slice(0, separator);
 }
 
 function visualGapEdges(config: ResolvedTimelineConfig): VisualGapEdge[] {
@@ -381,14 +377,10 @@ function visualGapEdges(config: ResolvedTimelineConfig): VisualGapEdge[] {
     for (let index = 1; index < spans.length; index += 1) {
       const previous = spans[index - 1]!;
       const next = spans[index]!;
-      const previousIdentity = projectedClipIdentity(previous.clip.id);
-      const nextIdentity = projectedClipIdentity(next.clip.id);
       gaps.push({
         track,
-        previousOccurrenceId: previousIdentity.occurrenceId,
-        previousClipId: previousIdentity.clipId,
-        nextOccurrenceId: nextIdentity.occurrenceId,
-        nextClipId: nextIdentity.clipId,
+        previousOccurrenceId: projectedOccurrenceId(previous.clip.id),
+        nextOccurrenceId: projectedOccurrenceId(next.clip.id),
         startFrame: previous.endFrame,
         endFrame: next.startFrame,
       });
@@ -427,12 +419,8 @@ export function remapDeclaredVisualPauseEdges(
       : undefined;
     if (!prior) return [rawGap];
     const priorGap = record(prior)!;
-    const exactEdge = previousEdges.find((edge) => edge.track === gap.track
+    const anchoredEdge = previousEdges.find((edge) => edge.track === gap.track
       && edge.startFrame === priorGap.startFrame && edge.endFrame === priorGap.endFrame);
-    const overlappingEdges = previousEdges.filter((edge) => edge.track === gap.track
-      && edge.endFrame > edge.startFrame
-      && edge.startFrame < priorGap.endFrame && edge.endFrame > priorGap.startFrame);
-    const anchoredEdge = exactEdge ?? (overlappingEdges.length === 1 ? overlappingEdges[0] : undefined);
     if (!anchoredEdge) return [rawGap];
     const matchingEdges = nextEdges.filter((edge) => edge.track === anchoredEdge.track
       && edge.previousOccurrenceId === anchoredEdge.previousOccurrenceId

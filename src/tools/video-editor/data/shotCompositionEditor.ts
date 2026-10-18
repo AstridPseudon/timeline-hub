@@ -471,8 +471,6 @@ export function updateCanonicalShotTimeline(
   const occurrence = graph.occurrences.find((candidate) => candidate.occurrence_id === occurrenceId);
   if (!occurrence) throw new Error(`canonical occurrence ${occurrenceId} is missing`);
   return (async () => {
-    const adapter = createShotCompositionAdapter({load: async () => graph});
-    const previousConfig = projectCanonicalComposition(adapter.prepare(graph)).config;
     const updated = await updateCanonicalShotRevision(graph, occurrenceId, {
       timeline,
       identitySeed,
@@ -480,6 +478,17 @@ export function updateCanonicalShotTimeline(
       // occurrence is checked as a hard wall inside updateCanonicalShotRevision.
       occurrenceDurationMs: timelineContentExtentMs(timeline),
     });
+    const currentContract = record(record(record(graph.parent_composition)?.config)?.app)?.visualSeamContract;
+    const currentGaps = record(currentContract)?.gaps;
+    const hasDeclaredPauses = Array.isArray(currentGaps)
+      && currentGaps.some((gap) => record(gap)?.kind === 'pause');
+    // Most shot edits have no authored pause to move. Avoid projecting the
+    // whole parent graph in that case, and keep empty timelines on the normal
+    // editor path (the canonical projection intentionally rejects them).
+    if (!hasDeclaredPauses || timelineContentExtentMs(timeline) <= 0) return updated;
+
+    const adapter = createShotCompositionAdapter({load: async () => graph});
+    const previousConfig = projectCanonicalComposition(adapter.prepare(graph)).config;
     const nextConfig = projectCanonicalComposition(adapter.prepare(updated)).config;
     const gaps = remapDeclaredVisualPauseEdges(previousConfig, nextConfig);
     if (!gaps) return updated;

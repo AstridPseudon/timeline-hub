@@ -33,6 +33,19 @@ import {
 
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
 
+function setAlphaStartWithAuthoredPause(graph: typeof fixture, atMs: number): void {
+  const revision = graph.shot_revisions.find((candidate) => candidate.shot_id === 'shot-alpha' && candidate.revision_id === 'rev-a')!;
+  const clip = revision.internal_timeline_revision.timeline.clips[0]!;
+  clip.at_ms = atMs;
+  const gaps = graph.parent_composition.config.app.visualSeamContract.gaps;
+  const pauses = gaps.filter((gap) => gap.kind === 'pause' && gap.track === 'video');
+  const deltaFrames = Math.round(atMs * 30 / 1000);
+  pauses[0]!.startFrame = 60 + deltaFrames;
+  pauses[0]!.endFrame = 120 + deltaFrames;
+  pauses[1]!.startFrame = 180 + deltaFrames;
+  pauses[1]!.endFrame = 240;
+}
+
 // Spy on the shared presenter while keeping its real behavior.
 vi.mock('@/shared/lib/errorHandling/runtimeError.ts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/errorHandling/runtimeError.ts')>();
@@ -266,8 +279,7 @@ describe('shot timeline popup persistence', () => {
     await clearTimelineDraft(shotTimelineRecoveryId('document-primary', 'occ-1'));
     const latestContract = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
     latestContract.primary_timeline.head.revision_id = 'head-latest-on-open';
-    latestContract.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
-      .internal_timeline_revision.timeline.clips[0]!.at_ms = 500;
+    setAlphaStartWithAuthoredPause(latestContract, 500);
     const port = { load: vi.fn().mockResolvedValue(latestContract), publish: vi.fn() };
     const adapter = createShotCompositionAdapter(port);
     const composition = adapter.prepare(fixture);
@@ -321,8 +333,7 @@ describe('shot timeline popup persistence', () => {
   it('keeps the clean mounted editor on the freshly loaded head when stale props arrive', async () => {
     const latestContract = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
     latestContract.primary_timeline.head.revision_id = 'head-visible-current';
-    latestContract.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
-      .internal_timeline_revision.timeline.clips[0]!.at_ms = 700;
+    setAlphaStartWithAuthoredPause(latestContract, 700);
     const publish = vi.fn(async (request) => request.graph);
     const adapter = createShotCompositionAdapter({
       load: vi.fn().mockResolvedValue(latestContract),
@@ -356,12 +367,10 @@ describe('shot timeline popup persistence', () => {
     await clearTimelineDraft(shotTimelineRecoveryId('document-primary', 'occ-1'));
     const graphH0 = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
     graphH0.primary_timeline.head.revision_id = 'head-held-h0';
-    graphH0.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
-      .internal_timeline_revision.timeline.clips[0]!.at_ms = 200;
+    setAlphaStartWithAuthoredPause(graphH0, 200);
     const graphH1 = JSON.parse(JSON.stringify(graphH0)) as typeof fixture;
     graphH1.primary_timeline.head.revision_id = 'head-held-h1';
-    graphH1.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
-      .internal_timeline_revision.timeline.clips[0]!.at_ms = 900;
+    setAlphaStartWithAuthoredPause(graphH1, 900);
     const publish = vi.fn(async (request) => request.graph);
     const adapter = createShotCompositionAdapter({
       load: vi.fn().mockResolvedValueOnce(graphH0).mockResolvedValue(graphH1),
@@ -405,12 +414,10 @@ describe('shot timeline popup persistence', () => {
     await clearTimelineDraft(shotTimelineRecoveryId('document-primary', 'occ-1'));
     const graphH0 = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
     graphH0.primary_timeline.head.revision_id = 'head-query-h0';
-    graphH0.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
-      .internal_timeline_revision.timeline.clips[0]!.at_ms = 200;
+    setAlphaStartWithAuthoredPause(graphH0, 200);
     const graphH1 = JSON.parse(JSON.stringify(graphH0)) as typeof fixture;
     graphH1.primary_timeline.head.revision_id = 'head-query-h1';
-    graphH1.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
-      .internal_timeline_revision.timeline.clips[0]!.at_ms = 900;
+    setAlphaStartWithAuthoredPause(graphH1, 900);
     const publish = vi.fn();
     const adapter = createShotCompositionAdapter({
       load: vi.fn().mockResolvedValue(graphH1),

@@ -55,8 +55,16 @@ function wrapper() {
 function editedGraph(atMs: number, headId: string) {
   const graph = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
   graph.primary_timeline.head.revision_id = headId;
-  graph.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
-    .internal_timeline_revision.timeline.clips[0]!.at_ms = atMs;
+  const revision = graph.shot_revisions.find((candidate) => candidate.shot_id === 'shot-alpha' && candidate.revision_id === 'rev-a')!;
+  const clip = revision.internal_timeline_revision.timeline.clips[0]!;
+  clip.at_ms = atMs;
+  const pauses = graph.parent_composition.config.app.visualSeamContract.gaps
+    .filter((gap) => gap.kind === 'pause' && gap.track === 'video');
+  const deltaFrames = Math.round(atMs * 30 / 1000);
+  pauses[0]!.startFrame = 60 + deltaFrames;
+  pauses[0]!.endFrame = 120 + deltaFrames;
+  pauses[1]!.startFrame = 180 + deltaFrames;
+  pauses[1]!.endFrame = 240;
   return graph;
 }
 
