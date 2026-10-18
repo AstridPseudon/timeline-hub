@@ -112,3 +112,35 @@ def test_start_diagnostics_and_cleanup_never_replace_first_error(monkeypatch, re
         launcher.start("fixture", "workspace")
     assert caught.value is primary and events == ["reported", "cleanup"]
     assert launcher._active_handle is None and not launcher._operation_lock.locked()
+
+
+@pytest.mark.parametrize("fault", ["control", "observation"])
+@pytest.mark.parametrize("reporter_fails", [False, True])
+def test_liveness_failure_reports_before_fencing_without_weakening_guard(monkeypatch, capsys, fault, reporter_fails):
+    import json
+    import threading
+    from runtime_protocol import local_worker as module
+    launcher = LocalWorkerLauncher.__new__(LocalWorkerLauncher)
+    launcher._state_lock = threading.RLock()
+    handle = SimpleNamespace(preparation={"operation_id": "a" * 32})
+    launcher._active_handle = handle
+    launcher._active_profile = object()
+    launcher._active_identity = {}
+    primary = ValueError("private-liveness-value")
+    launcher._control_alive = lambda _: fault != "control"
+    launcher.inspector = SimpleNamespace(observe=lambda _: (_ for _ in ()).throw(primary))
+    observed = []
+    def fence(selected, *, abort):
+        assert selected is handle and abort is True
+        observed.append(capsys.readouterr().err)
+        return True
+    launcher._fence_generation = fence
+    if reporter_fails:
+        monkeypatch.setattr(module, "_report_start_failure", lambda *_a, **_k: (_ for _ in ()).throw(OSError("private-sink-value")))
+    assert launcher.check_liveness(handle) is False
+    assert len(observed) == 1
+    if not reporter_fails:
+        row = json.loads(observed[0])
+        assert row["phase"] == "liveness" and row["operation_id"] == "a" * 32
+        assert row["exception_type"] == ("ConflictError" if fault == "control" else "ValueError")
+        assert "private-liveness-value" not in observed[0]

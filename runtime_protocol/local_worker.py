@@ -202,7 +202,7 @@ def _report_start_failure(exc: BaseException, *, phase="start", operation_id=Non
                            "function": code.co_name[:80], "line": current.tb_lineno})
             frames = frames[-16:]
             current = current.tb_next
-        phases = {"start", "prepare", "host_only_prepare", "observation", "activation", "publication", "cleanup"}
+        phases = {"start", "prepare", "host_only_prepare", "observation", "activation", "publication", "cleanup", "liveness"}
         if not secondary and not hasattr(exc, "local_worker_start_phase"):
             exc.local_worker_start_phase = phase
         first_phase = getattr(exc, "local_worker_start_phase", phase)
@@ -1510,7 +1510,15 @@ class LocalWorkerLauncher:
             if current != expected:
                 raise ConflictError("active local Worker identity changed")
             return True
-        except BaseException:
+        except BaseException as exc:
+            # The original watcher must retain its initiating failure before
+            # fencing/abort can replace the visible outcome with cleanup.
+            try:
+                preparation = getattr(handle, "preparation", None)
+                operation_id = preparation.get("operation_id") if isinstance(preparation, Mapping) else None
+                _report_start_failure(exc, phase="liveness", operation_id=operation_id)
+            except BaseException:
+                pass
             self._fence_generation(handle, abort=True)
             return False
 
