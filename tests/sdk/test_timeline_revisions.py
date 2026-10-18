@@ -336,3 +336,14 @@ def test_positional_ref_does_not_invent_unknown_migrated_publication_links():
     ])
     with pytest.raises(TimelineEditError, match='publication ancestry is unavailable'):
         resolve_revision('P', 'TL', 'prev', store=store)
+
+
+def test_registered_restore_selection_preserves_opaque_revision_digest_and_unknown_publication():
+    revision = Revision('opaque-history', 'other', None, None, None,
+                        content_digest='sha256:' + 'a' * 64, provenance=None)
+    call = RuntimeRevisions.restore_command(revision)
+    assert call['op'] == 'timeline.restore'
+    assert call['args'] == dict(revision_id='opaque-history', content_digest='sha256:' + 'a' * 64)
+    assert revision.provenance is None
+    with pytest.raises(TimelineEditError, match='exact revision/digest'):
+        RuntimeRevisions.restore_command(Revision('legacy', 'other', None, None, None))

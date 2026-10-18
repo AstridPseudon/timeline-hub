@@ -31,6 +31,18 @@ def command(op="clip.set", select="c1.rocket", **args):
     return dict(op=op, select=select, args=args)
 
 
+def test_restore_is_registered_but_local_config_cannot_grant_image_authority(draft):
+    before = draft.document()
+    value = command("timeline.restore", None, revision_id="opaque", content_digest="sha256:" + "a" * 64)
+    assert commands.REGISTRY["timeline.restore"].boundary == "image"
+    with pytest.raises(commands.CommandError, match="verified image"):
+        commands.run(draft, value)
+    assert draft.document() == before
+    with pytest.raises(commands.CommandError, match="must run alone"):
+        commands.execute(draft, value)
+    assert draft.document() == before
+
+
 def files(root):
     return {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()}
 

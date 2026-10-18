@@ -38,6 +38,7 @@ class Revision:
     restored_from_revision_id: str | None = None
     provenance: Mapping[str, Any] | None = None
     is_current_head: bool | None = None
+    content_digest: str | None = None
 
 
 def publisher_identity(provenance: Any) -> str | None:
@@ -209,6 +210,7 @@ class RuntimeRevisions(RevisionStore):
                     provenance=row.get("provenance"),
                     message=_text(row.get("message")),
                     is_current_head=row.get("is_current_head") is True,
+                    content_digest=_text(row.get("content_digest")),
                 )
                 out.append(revision)
                 if row.get("is_current_head") is True:
@@ -288,6 +290,19 @@ class RuntimeRevisions(RevisionStore):
             expected_head=expected_head,
             idempotency_key=idempotency_key,
         )
+
+    @staticmethod
+    def restore_command(revision: Revision) -> dict[str, Any]:
+        """Prepare registered image intent from an immutable history selection.
+
+        The caller captures its current head/request envelope separately. This
+        producer neither mutates Runtime nor infers unknown publication identity.
+        """
+        from astrid.sdk.timeline.commands import restore_spec
+        args = dict(revision_id=revision.id, content_digest=revision.content_digest)
+        if revision.publication_id is not None:
+            args["publication_id"] = revision.publication_id
+        return restore_spec(dict(op="timeline.restore", select=None, args=args)).to_json()
 
 
 def split_ref(text: str) -> tuple[str, str | None]:

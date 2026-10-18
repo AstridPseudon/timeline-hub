@@ -87,6 +87,9 @@ class RuntimeCommitService:
             try:
                 if "commands" not in request["change"]:
                     raise _Refusal("Document reconciliation and verified draft journal commands require the adapt-save producer")
+                calls = request["change"]["commands"]
+                if isinstance(calls, list) and any(commands.EditCommand.coerce(c).op == "timeline.restore" for c in calls):
+                    return self._restore(request, runtime_port, result)
                 base = self._load_revision(runtime_port, request, request["base_revision_id"])
                 occurrence = self._scope_occurrence(request, base)
                 from astrid.sdk.timeline.narration import candidate_narration, capture_takes
@@ -267,6 +270,120 @@ class RuntimeCommitService:
                 return self._error(result, "bad_request", str(exc), status="refused")
             except (ConnectionError, TimeoutError):
                 raise
+
+    def _restore(self, request, port, result):
+        """One absolute image acceptance through the existing Runtime port.
+
+        No direct restore mutation and no property inverse or automatic rebase.
+        Runtime remains responsible for atomic closure recapture, publication,
+        authenticated provenance, restored-from metadata and durable replay.
+        """
+        values = request["change"]["commands"]
+        if len(values) != 1:
+            raise _Refusal("timeline.restore must be the sole command")
+        call = commands.restore_spec(values[0])
+        if request["scope"] != dict(target="parent", complete=["clips", "tracks"], projection_version=1):
+            raise _Refusal("timeline.restore requires complete parent image scope")
+        head = port.head()
+        if (head["revision_id"] != request["base_revision_id"]
+                or (request.get("base_publication_id") is not None
+                    and head["publication_id"] != request["base_publication_id"])):
+            return self._conflict(result, request, ["Captured whole-image head changed"], None, None, None, kind="dependent")
+        base = self._load_revision(port, request, request["base_revision_id"])
+        closure = copy.deepcopy(port.revision_closure(call.args["revision_id"]))
+        class Captured:
+            def revision_closure(self, rid):
+                if rid != call.args["revision_id"]:
+                    raise _Refusal("Selected restore revision changed")
+                return copy.deepcopy(closure)
+        target = self._load_revision(Captured(), request, call.args["revision_id"])
+        require_writable_candidate(target)
+        plan = commands.run(Checkout(copy.deepcopy(base)), call, restore_image=target)
+        selected_publication = call.args.get("publication_id")
+        if selected_publication is not None:
+            # Preserve unknown provenance. Never infer publication from a name,
+            # and never accept a known selection that this port cannot prove.
+            cursor = None
+            while True:
+                rows = port.revisions(dict(limit=100, **({"before": cursor} if cursor else {})))
+                if not isinstance(rows, list) or any(not isinstance(row, Mapping) for row in rows):
+                    raise _Refusal("Runtime history did not return detached revision summaries")
+                if any(row.get("revision_id") == call.args["revision_id"]
+                       and row.get("publication_id") == selected_publication for row in rows):
+                    break
+                next_cursor = rows[-1].get("publication_id") if len(rows) == 100 else None
+                if not next_cursor or next_cursor == cursor:
+                    raise _Refusal("Selected restore publication is not verified by Runtime history")
+                cursor = next_cursor
+        self._check_detached_media(Checkout(copy.deepcopy(target)))
+        from astrid.sdk.timeline.narration import capture_takes, candidate_narration
+        takes = capture_takes(port, base, [])
+        takes.update(capture_takes(port, target, []))
+        from astrid.core.timeline import scene_answers
+        from astrid.sdk.timeline.check import _require_complete_evaluation
+        evaluator = None
+        previous = scene_answers.use_client(None)
+        try:
+            evaluator = port.scene_evaluator(copy.deepcopy(target))
+            scene_answers.use_client(evaluator)
+            evaluated = _require_complete_evaluation(Checkout(copy.deepcopy(target)))
+            evaluator.complete(empty=not evaluated)
+        finally:
+            scene_answers.use_client(previous)
+            if evaluator is not None:
+                evaluator.close()
+        publication = dict(parent_composition=copy.deepcopy(closure["parent_revision"]["payload"]),
+                           shot_revisions=[{k: copy.deepcopy(row[k]) for k in
+                               ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest", "payload")}
+                               for row in closure["shot_revisions"]],
+                           internal_timeline_revisions=[{k: copy.deepcopy(row[k]) for k in
+                               ("timeline_id", "revision_id", "content_digest", "payload")}
+                               for row in closure["internal_timeline_revisions"]])
+        result.update(status="preview" if request["dry_run"] else "accepted",
+                      canonical_document=copy.deepcopy(target), document_digest=_digest(target))
+        result["change"].update(changes=list(plan.changes), commands=[c.to_json() for c in plan.calls],
+                                direct_writes=copy.deepcopy(list(plan.direct_writes)))
+        if request["dry_run"]:
+            return result
+        prepared = dict(project_id=request["project_id"], timeline_id=request["timeline_id"],
+                        request_id=request["request_id"], request_hash=result["request_hash"],
+                        expected_head_revision_id=request["base_revision_id"], publication=publication,
+                        result=copy.deepcopy(result), source=copy.deepcopy(request["source"]),
+                        evidence=dict(commands=copy.deepcopy(result["change"]["commands"]),
+                                      direct_writes=copy.deepcopy(result["change"]["direct_writes"]),
+                                      digests=dict(before=_digest(base), after=_digest(target)),
+                                      toolchain=dict(astrid_sha="unavailable", compiler_version=f"Checkout.resolve/{__version__}")))
+        # Explicit internal intent is mandatory. A Runtime lacking image
+        # acceptance rejects this field before publication instead of silently
+        # accepting an ordinary commit without restored-from/closure semantics.
+        prepared["restore"] = {**copy.deepcopy(dict(call.args)),
+                               "expected_publication_id": request.get("base_publication_id")}
+        for key in ("asserted_actor", "label", "reason"):
+            if key in request:
+                prepared[key] = copy.deepcopy(request[key])
+        if takes:
+            # candidate_narration only consumes this manifest's internal pins.
+            prepared["narration"] = candidate_narration(target, {**publication, "dependency_manifest": {
+                "internal_timelines": publication["internal_timeline_revisions"]}}, takes)
+        try:
+            accepted = port.accept(prepared)["stored_result"]
+        except (ConnectionError, TimeoutError):
+            raise
+        except Exception as exc:
+            if getattr(exc, "code", None) == "conflict":
+                return self._conflict(result, request, [str(exc)], base, head, target, kind="dependent")
+            raise
+        # The accepted image is an immutable read, even if another writer has
+        # already advanced the mutable head. Never substitute request bytes.
+        try:
+            readback = self._load_revision(port, request, accepted["accepted_revision_id"])
+        except (ConnectionError, TimeoutError):
+            raise
+        except Exception as exc:
+            raise RuntimeError("Restore was accepted but its exact immutable readback failed") from exc
+        if readback["base_parent"]["content_digest"] != call.args["content_digest"]:
+            raise RuntimeError("Accepted restore readback differs from selected immutable content")
+        return accepted
 
     @classmethod
     def _capture_media(cls, port, request, values):

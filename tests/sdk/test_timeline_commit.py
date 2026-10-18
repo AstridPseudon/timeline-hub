@@ -472,6 +472,124 @@ def exact_closure(bundle, revision_id="rev-0"):
     return dict(parent_revision=parent, shot_revisions=shots, internal_timeline_revisions=internals)
 
 
+def restore_fixture(bundle, *, dry_run=False):
+    target = exact_closure(bundle, "opaque-selected")
+    # Opaque identity and explicitly unknown provenance are source content.
+    target["parent_revision"]["payload"]["opaque"] = {"id": "foreign-shape", "provenance": None}
+    target["parent_revision"]["content_digest"] = _digest(target["parent_revision"]["payload"])
+    body = request(call("timeline.restore", None, revision_id="opaque-selected",
+                        content_digest=target["parent_revision"]["content_digest"]), dry_run=dry_run)
+    body["scope"] = dict(target="parent", complete=["clips", "tracks"], projection_version=1)
+    body["base_publication_id"] = "pub-rev-0"
+    port = Port(body)
+    closures = {"rev-0": exact_closure(bundle), "opaque-selected": target}
+    port.revision_closure = lambda rid: copy.deepcopy(closures[rid])
+    accept = port.accept
+    def accept_image(prepared):
+        value = accept(prepared)
+        accepted = copy.deepcopy(target)
+        accepted["parent_revision"]["revision_id"] = value["stored_result"]["accepted_revision_id"]
+        closures[accepted["parent_revision"]["revision_id"]] = accepted
+        return value
+    port.accept = accept_image
+    return body, port, closures
+
+
+def test_restore_complete_image_one_accept_exact_readback_and_no_inverse(bundle):
+    body, port, closures = restore_fixture(bundle)
+    original = copy.deepcopy(closures)
+    result = RuntimeCommitService().commit(body, port)
+    assert result["status"] == "accepted" and len(port.accepts) == 1
+    prepared = port.accepts[0]
+    assert prepared["publication"]["parent_composition"] == original["opaque-selected"]["parent_revision"]["payload"]
+    assert prepared["publication"]["parent_composition"]["opaque"]["provenance"] is None
+    assert result["change"]["commands"][0]["op"] == "timeline.restore"
+    assert result["change"]["direct_writes"][0]["path"] == "image"
+    assert result == port.saved["result"]
+    assert {k: closures[k] for k in original} == original
+    assert prepared["restore"] == {**body["change"]["commands"][0]["args"], "expected_publication_id": "pub-rev-0"}
+
+
+def test_restore_stale_captured_head_never_reads_target_or_accepts(bundle):
+    body, port, _ = restore_fixture(bundle)
+    port.current = "later"
+    port.revision_closure = lambda rid: pytest.fail("stale restore read a closure")
+    assert RuntimeCommitService().commit(body, port)["status"] == "conflict"
+    assert not port.accepts
+
+
+def test_restore_lost_response_same_id_replays_single_acceptance(bundle):
+    body, port, _ = restore_fixture(bundle)
+    accept = port.accept
+    def lost(prepared):
+        accept(prepared)
+        raise TimeoutError("accepted response lost")
+    port.accept = lost
+    service = RuntimeCommitService()
+    with pytest.raises(TimeoutError):
+        service.commit(body, port)
+    port.current = "later"
+    result = service.commit(body, port)
+    assert result == port.saved["result"] and len(port.accepts) == 1
+    changed = copy.deepcopy(body)
+    changed["change"]["commands"][0]["args"]["revision_id"] = "another"
+    assert service.commit(changed, port)["error"]["code"] == "request_id_conflict"
+
+
+@pytest.mark.parametrize("damage", ["digest", "missing", "cross-project", "publication", "scope", "mixed"])
+def test_restore_refuses_unverified_image_without_acceptance(bundle, damage):
+    body, port, closures = restore_fixture(bundle)
+    target = closures["opaque-selected"]
+    if damage == "digest":
+        body["change"]["commands"][0]["args"]["content_digest"] = "sha256:" + "0" * 64
+    elif damage == "missing":
+        target["internal_timeline_revisions"] = []
+    elif damage == "cross-project":
+        target["shot_revisions"][0]["project_id"] = "other"
+    elif damage == "publication":
+        body["change"]["commands"][0]["args"]["publication_id"] = "wrong"
+        port.revisions = lambda opts: []
+    elif damage == "scope":
+        body["scope"]["complete"] = ["clips"]
+    else:
+        body["change"]["commands"].append(call())
+    port.body = copy.deepcopy(body)
+    result = RuntimeCommitService().commit(body, port)
+    assert result["status"] == "refused" and not port.accepts
+
+
+def test_restore_preview_runs_verified_image_runner_without_acceptance(bundle):
+    body, port, _ = restore_fixture(bundle, dry_run=True)
+    result = RuntimeCommitService().commit(body, port)
+    assert result["status"] == "preview" and result["change"]["commands"][0]["op"] == "timeline.restore"
+    assert not port.accepts and port.saved is None
+
+
+def test_restore_known_publication_uses_existing_detached_history_contract(bundle):
+    body, port, _ = restore_fixture(bundle)
+    body["change"]["commands"][0]["args"]["publication_id"] = "known-publication"
+    port.body = copy.deepcopy(body)
+    port.revisions = lambda opts: [{"revision_id": "opaque-selected", "publication_id": "known-publication"}]
+    result = RuntimeCommitService().commit(body, port)
+    assert result["status"] == "accepted" and len(port.accepts) == 1
+    assert port.accepts[0]["restore"]["publication_id"] == "known-publication"
+
+
+def test_restore_accepted_readback_failure_never_claims_a_no_effects_refusal(bundle):
+    body, port, closures = restore_fixture(bundle)
+    accept = port.accept
+    def altered_readback(prepared):
+        accepted = accept(prepared)
+        closure = closures[accepted["stored_result"]["accepted_revision_id"]]
+        closure["parent_revision"]["payload"]["opaque"]["id"] = "wrong-image"
+        closure["parent_revision"]["content_digest"] = _digest(closure["parent_revision"]["payload"])
+        return accepted
+    port.accept = altered_readback
+    with pytest.raises(RuntimeError, match="differs from selected"):
+        RuntimeCommitService().commit(body, port)
+    assert len(port.accepts) == 1 and port.saved["result"]["status"] == "accepted"
+
+
 @pytest.mark.parametrize("scope", ["parent", "occurrence:occ-A"])
 def test_exact_request_bound_closure_opens_pinned_children_without_revision_fallback(bundle, scope):
     body = request(call(x=240))
