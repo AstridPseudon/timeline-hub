@@ -1607,13 +1607,15 @@ describe('createCreativeContextStubs', () => {
     }
   });
 
-  it('all 12 creative members are enumerable', () => {
+  it('all 14 creative members are enumerable', () => {
     const stubs = createCreativeContextStubs();
     const keys = Object.keys(stubs).sort();
     expect(keys).toEqual([
       'assets',
+      'documents',
       'export',
       'materials',
+      'pendingWork',
       'project',
       'projectObjects',
       'proposals',
@@ -1658,12 +1660,14 @@ describe('ExtensionNotImplementedError', () => {
 // ---------------------------------------------------------------------------
 
 describe('CREATIVE_MEMBER_MILESTONE', () => {
-  it('has entries for all 12 creative members', () => {
+  it('has entries for all 14 creative members', () => {
     const keys = Object.keys(CREATIVE_MEMBER_MILESTONE).sort();
     expect(keys).toEqual([
       'assets',
+      'documents',
       'export',
       'materials',
+      'pendingWork',
       'project',
       'projectObjects',
       'proposals',

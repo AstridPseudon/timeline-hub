@@ -4,7 +4,7 @@ import type {
   Task as RuntimeTask,
   Transport,
 } from '@/integrations/runtime/generated.ts';
-import { ReighRuntimeClient } from '@/integrations/runtime/client.ts';
+import { RUNTIME_CLIENT_SCOPES, ReighRuntimeClient } from '@/integrations/runtime/client.ts';
 import {
   RUNTIME_SCHEMA_DIGEST,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
@@ -105,7 +105,7 @@ describe('Runtime final-video hydration boundary', () => {
         return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 4, runtime_instance_id: 'runtime-instance-retained-output' }) };
       }
       if (path === '/v1/handshake') {
-        return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-retained-output', actor_id: 'product-connector', realm_id: 'realm-retained-output', scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write'], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
+        return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-retained-output', actor_id: 'reigh-product-connector', realm_id: 'realm-retained-output', scopes: [...RUNTIME_CLIENT_SCOPES], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
       }
       if (path === '/v1/realm') {
         return { status: 200, headers: {}, body: json({ realm_id: 'realm-retained-output', display_name: 'Retained output fixture', version: 1, created_at: '2026-09-13T00:00:00Z' }) };

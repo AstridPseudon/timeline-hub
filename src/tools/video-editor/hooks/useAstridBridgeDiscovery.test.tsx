@@ -369,6 +369,8 @@ describe('workspace.v1 canonical timeline discovery', () => {
     }), { wrapper: createWrapper() });
   }
 
+  // 663dcd40 (timeline names): a nameless row whose id is a raw ULID is shown
+  // as 'Untitled timeline' instead of the opaque id; identity stays untouched.
   it('displays a nameless canonical row without rewriting identity, version or head', async () => {
     const { result } = discover(canonical);
     await waitFor(() => expect(result.current.projectsQuery.isSuccess).toBe(true));
@@ -382,8 +384,34 @@ describe('workspace.v1 canonical timeline discovery', () => {
     }]);
     await waitFor(() => expect(result.current.timelinesQuery.isSuccess).toBe(true));
     expect(result.current.timelinesQuery.data?.timelines).toEqual([{
-      ...canonical, name: timelineId, is_default: true, is_shot: false,
+      ...canonical, name: 'Untitled timeline', is_default: true, is_shot: false,
     }]);
+    expect(result.current.timelinesQuery.data?.timelines?.[0]).toMatchObject({
+      timeline_id: timelineId, version: 2, head_revision_id: head,
+    });
+  });
+
+  it('accepts a null supplied name as nameless and shows the readable fallback', async () => {
+    const { result } = discover({ ...canonical, name: null });
+    await waitFor(() => expect(result.current.timelinesQuery.isSuccess).toBe(true));
+    expect(result.current.timelinesQuery.data?.timelines).toEqual([{
+      ...canonical, name: 'Untitled timeline', is_default: true, is_shot: false,
+    }]);
+  });
+
+  it('falls back to the slug, then to a readable non-ULID id, never to a raw ULID', async () => {
+    const withSlug = discover({ ...canonical, slug: 'intro-cut' });
+    await waitFor(() => expect(withSlug.result.current.timelinesQuery.isSuccess).toBe(true));
+    expect(withSlug.result.current.timelinesQuery.data?.timelines?.[0]).toMatchObject({
+      timeline_id: timelineId, name: 'intro-cut',
+    });
+    withSlug.unmount();
+
+    const readableId = discover({ ...canonical, timeline_id: 'main-cut' });
+    await waitFor(() => expect(readableId.result.current.timelinesQuery.isSuccess).toBe(true));
+    expect(readableId.result.current.timelinesQuery.data?.timelines?.[0]).toMatchObject({
+      timeline_id: 'main-cut', name: 'main-cut',
+    });
   });
 
   it('retains a supplied legacy display name on a canonical row', async () => {
@@ -398,7 +426,6 @@ describe('workspace.v1 canonical timeline discovery', () => {
   it.each([
     ['empty supplied name', { name: '' }],
     ['malformed supplied name', { name: 7 }],
-    ['null supplied name', { name: null }],
     ['empty canonical identity', { timeline_id: '' }],
     ['missing canonical identity', { timeline_id: undefined }],
   ])('rejects %s without a display or identity fallback', async (_label, invalid) => {

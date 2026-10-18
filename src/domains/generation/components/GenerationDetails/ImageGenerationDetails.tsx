@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/button';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard';
 import type { DisplayableMetadata } from '@/shared/types/displayableMetadata';
 import { useImageGenerationDetailsViewModel } from './useImageGenerationDetailsViewModel';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 // Helper function to map model names to display names
 const getModelDisplayName = (modelName: string | undefined): string => {
@@ -84,6 +85,7 @@ export const ImageGenerationDetails: React.FC<ImageGenerationDetailsProps> = ({
           <div>
             <img 
               src={qwenSourceImage} 
+              crossOrigin={mediaCrossOrigin(qwenSourceImage)}
               alt="Source image for edit"
               className="h-auto max-h-24 object-contain object-left rounded-sm border"
               loading="lazy"
@@ -101,6 +103,7 @@ export const ImageGenerationDetails: React.FC<ImageGenerationDetailsProps> = ({
           <div className="flex justify-center">
             <img 
               src={metadata.userProvidedImageUrl} 
+              crossOrigin={mediaCrossOrigin(metadata.userProvidedImageUrl)}
               alt="User provided image preview"
               className="w-full h-auto max-h-24 object-contain rounded-sm border"
               loading="lazy"
@@ -122,6 +125,7 @@ export const ImageGenerationDetails: React.FC<ImageGenerationDetailsProps> = ({
             >
               <img
                 src={styleReference.image}
+                crossOrigin={mediaCrossOrigin(styleReference.image)}
                 alt="Style reference"
                 className="w-full h-full object-cover rounded border shadow-sm transition-transform group-hover:scale-105"
               />

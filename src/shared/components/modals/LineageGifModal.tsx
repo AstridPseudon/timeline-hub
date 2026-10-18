@@ -126,6 +126,7 @@ function downloadBlob(blob: Blob, filename: string): void {
 }
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { ModalContainer } from '@/shared/components/ModalContainer';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface LineageGifModalProps {
   open: boolean;
@@ -228,6 +229,7 @@ export const LineageGifModal: React.FC<LineageGifModalProps> = ({
               >
                 <img
                   src={item.thumbnailUrl || item.imageUrl}
+                  crossOrigin={mediaCrossOrigin(item.thumbnailUrl || item.imageUrl)}
                   alt={`Lineage ${index + 1}`}
                   className="w-full h-full object-cover"
                   loading="lazy"

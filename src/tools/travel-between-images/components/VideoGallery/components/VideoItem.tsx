@@ -14,6 +14,7 @@ import { VideoItemActions } from './VideoItemActions';
 import { videoItemPropsAreEqual } from './VideoItemMemo';
 import { determineVideoPhase, createLoadingSummary } from '../utils/video-loading-utils';
 import { getDisplayUrl } from '@/shared/lib/media/mediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { useGenerationTaskMapping } from '@/domains/generation/hooks/tasks/useGenerationTaskMapping';
 import { useShareGeneration } from '@/shared/hooks/useShareGeneration';
 import { getProjectAspectRatioStyle } from '@/tools/travel-between-images/components/shared/aspectRatio';
@@ -263,6 +264,7 @@ export const VideoItem = React.memo<VideoItemProps>(({
                 {(child.thumbUrl || child.imageUrl) && (
                   <img
                     src={getDisplayUrl(child.thumbUrl || child.imageUrl || '')}
+                    crossOrigin={mediaCrossOrigin(getDisplayUrl(child.thumbUrl || child.imageUrl || ''))}
                     className="w-full h-full object-cover transition-opacity duration-300"
                     alt={`Segment ${idx + 1}`}
                     loading="lazy"
@@ -333,6 +335,7 @@ export const VideoItem = React.memo<VideoItemProps>(({
               <img
                 key={`poster-${video.id}`}
                 src={posterSrcStable || resolvedPosterUrl}
+                crossOrigin={mediaCrossOrigin(posterSrcStable || resolvedPosterUrl)}
                 alt="Video poster"
                 loading="eager"
                 decoding="async"
@@ -356,6 +359,7 @@ export const VideoItem = React.memo<VideoItemProps>(({
               <img
                 key={`thumb-${video.id}`}
                 src={thumbSrcStable || resolvedThumbUrl || ''}
+                crossOrigin={mediaCrossOrigin(thumbSrcStable || resolvedThumbUrl || '')}
                 alt="Video thumbnail"
                 loading="eager"
                 decoding="async"

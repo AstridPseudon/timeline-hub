@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { getDisplayUrl, stripQueryParameters } from '@/shared/lib/media/mediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { useVideoScrubbing } from '@/shared/hooks/useVideoScrubbing';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
@@ -144,6 +145,7 @@ const HoverScrubVideo: React.FC<HoverScrubVideoProps> = ({
   
   // Safely handle potentially missing or placeholder sources
   const displaySrc = getDisplayUrl(src);
+  const posterUrl = poster ? getDisplayUrl(poster) : undefined;
   const hasValidVideoSrc = displaySrc && displaySrc !== '/placeholder.svg';
   
   const stableSrcRef = useRef<string>(stripQueryParameters(src));
@@ -365,7 +367,9 @@ const HoverScrubVideo: React.FC<HoverScrubVideoProps> = ({
       <video
         ref={videoRefCallback}
         src={hasValidVideoSrc ? displaySrc : undefined}
-        poster={poster ? getDisplayUrl(poster) : undefined}
+        // A poster is fetched with the video's CORS mode, so a gateway poster needs the attribute even before the video has a src.
+        crossOrigin={mediaCrossOrigin(displaySrc) ?? mediaCrossOrigin(posterUrl)}
+        poster={posterUrl}
         preload={thumbnailMode ? 'none' : (isMobile ? 'metadata' : preloadProp)}
         controls={showNativeControls}
         onLoadedMetadata={handleHoverScrubLoadedMetadata}

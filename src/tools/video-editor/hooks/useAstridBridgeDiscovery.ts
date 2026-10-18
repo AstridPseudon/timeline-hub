@@ -17,6 +17,7 @@ import type {
 } from '@/tools/video-editor/data/bridgeContract.ts';
 import type { AstridBridgeRequestObservation } from '@/tools/video-editor/data/AstridBridgeDataProvider.ts';
 import { ReighRuntimeClient } from '@/integrations/runtime/client.ts';
+import { astridBase } from '@/integrations/runtime/connection.ts';
 import {
   astridProjectCollectionPath,
   astridTimelineCollectionPath,
@@ -42,8 +43,6 @@ import {
  *   open and the projects list is empty. Polling stops once the data is
  *   healthy/non-empty.
  */
-export const LOCAL_BRIDGE_BASE_URL = '/api/astrid';
-
 export const BRIDGE_DISCOVERY_POLL_MS = 3_000;
 
 /** Canonical Runtime rows need no legacy document or display name. Keep
@@ -108,7 +107,7 @@ async function fetchBridgeJson<Schema extends ZodType>(
   const startedAt = performance.now();
   let response: Response;
   try {
-    response = await fetch(`${LOCAL_BRIDGE_BASE_URL}${path}`, {
+    response = await fetch(`${astridBase()}${path}`, {
       signal: AbortSignal.timeout(BRIDGE_REQUEST_TIMEOUT_MS),
     });
   } catch (error) {

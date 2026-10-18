@@ -89,4 +89,70 @@ describe('releaseBootLayerWhenReady', () => {
     expect(boot.classList.contains('boot-flying')).toBe(false);
     expect(logo.style.opacity).toBe('');
   });
+
+  describe('onto a page that draws the same mink (data-boot-mink-continue)', () => {
+    function mountSameMark(root: HTMLElement) {
+      const mark = document.createElement('div');
+      mark.setAttribute('data-boot-mink-continue', '');
+      mark.innerHTML = '<span class="astrid-mink-runner-window"><span class="astrid-mink-runner-sprite"></span></span><span class="astrid-mink-runner-ground"><span></span></span>';
+      root.append(mark);
+      return mark;
+    }
+    const stripRunningAt = (boot: HTMLElement, currentTime: number) => {
+      boot.querySelector<HTMLElement>('.boot-mink-strip')!.getAnimations = () => [{ currentTime }] as unknown as Animation[];
+    };
+
+    it('removes the boot layer at once, with no paper fade and no run-on, and starts the page\'s mink where the boot mink is', async () => {
+      const { boot, root } = mountBoot('1');
+      stripRunningAt(boot, 1000 + 770 * 3);
+      const mark = mountSameMark(root);
+      releaseBootLayerWhenReady(root);
+      await settle();
+
+      expect(boot.isConnected).toBe(false);
+      expect(boot.classList.contains('boot-done')).toBe(false);
+      expect(boot.classList.contains('boot-flying')).toBe(false);
+      // 1000 ms into a 770 ms cycle is 230 ms into the next: both parts begin that far in.
+      expect(mark.querySelector<HTMLElement>('.astrid-mink-runner-sprite')!.style.animationDelay).toBe('-230ms');
+      expect(mark.querySelector<HTMLElement>('.astrid-mink-runner-ground > span')!.style.animationDelay).toBe('-230ms');
+      // The page's own stylesheet animation is left in charge (the restart only cleared the name for a frame).
+      expect(mark.querySelector<HTMLElement>('.astrid-mink-runner-sprite')!.style.animationName).toBe('');
+    });
+
+    it('takes precedence over running to a logo, because the mark is already home', async () => {
+      const { boot, root } = mountBoot('1');
+      stripRunningAt(boot, 100);
+      mountSameMark(root);
+      const logo = document.createElement('img');
+      logo.setAttribute('data-boot-mink-target', '');
+      root.append(logo);
+      releaseBootLayerWhenReady(root);
+      await settle();
+
+      expect(boot.isConnected).toBe(false);
+      expect(logo.style.opacity).toBe('');
+    });
+
+    it('still removes the layer when the browser cannot report the stride (nothing to align, no delay set)', async () => {
+      const { boot, root } = mountBoot('1');
+      const mark = mountSameMark(root);
+      releaseBootLayerWhenReady(root);
+      await settle();
+
+      expect(boot.isConnected).toBe(false);
+      expect(mark.querySelector<HTMLElement>('.astrid-mink-runner-sprite')!.style.animationDelay).toBe('');
+    });
+
+    it('falls back to the paper dissolving when the boot mink is not fully in (it is still fading in, or never appeared)', async () => {
+      for (const opacity of ['0', '0.5']) {
+        const { boot, root } = mountBoot(opacity);
+        mountSameMark(root);
+        releaseBootLayerWhenReady(root);
+        await settle();
+
+        expect(boot.classList.contains('boot-done')).toBe(true);
+        document.body.replaceChildren();
+      }
+    });
+  });
 });

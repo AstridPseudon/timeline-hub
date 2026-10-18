@@ -26,12 +26,13 @@ import {
   RUNTIME_ACCEPTED_SCHEMA_DIGESTS,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
 } from './contract-metadata.ts';
+import { runtimeApiBase, runtimeOrigin } from './connection.ts';
 import { loadWorkspaceRuntimeConfig } from './workspaceRuntimeConfig.ts';
 
-// Browser requests stay same-origin so the connector/proxy can inject the
-// product credential without exposing it to the page. The endpoint env var is a
-// Vite-server setting for the proxy, not a browser destination.
-export const RUNTIME_BASE_URL = '/api/runtime';
+// A client without an explicit `baseUrl` asks `runtimeApiBase()` on every request: same-origin
+// `/api/runtime` locally (the connector/proxy injects the product credential), or the loopback
+// gateway on the hosted build. It never caches the base, so a client built before boot still
+// reaches the right place.
 export const RUNTIME_CLIENT_VERSION = 'reigh-r1-consumer-20260911';
 export const RUNTIME_CLIENT_SCOPES = [
   'handshake',
@@ -76,7 +77,9 @@ let pageRuntimeIdentity: Promise<RuntimeIdentityBinding | undefined> | undefined
 export function initializeWorkspaceRuntimeIdentity(): Promise<RuntimeIdentityBinding | undefined> {
   if (!pageRuntimeIdentity) {
     const fetchImpl = globalThis.fetch;
-    pageRuntimeIdentity = typeof fetchImpl === 'function'
+    // The runtime config is served by the local preview proxy, so only same-origin builds read it. The hosted
+    // build has no identity compiled in and binds to the first healthy session it sees through the gateway.
+    pageRuntimeIdentity = typeof fetchImpl === 'function' && runtimeOrigin() === ''
       ? loadWorkspaceRuntimeConfig(configuredRuntimeIdentity(), fetchImpl.bind(globalThis))
       : Promise.resolve(configuredRuntimeIdentity());
   }
@@ -208,12 +211,17 @@ export function isRuntimeCanonicalPayloadConflict(error: unknown): error is ApiE
 }
 
 export class ReighRuntimeClient {
-  readonly baseUrl: string;
-  private readonly client: WorkspaceClient;
+  /** Set only when the caller pinned a base; otherwise every read resolves `runtimeApiBase()`. */
+  private readonly pinnedBaseUrl: string | undefined;
+  private readonly token: string | undefined;
+  private readonly transport: Transport | undefined;
+  private readonly workspaceClients = new Map<string, WorkspaceClient>();
   private expectedIdentity: RuntimeIdentityBinding | undefined;
+  /** A default client with no pinned launch binding adopts the page's runtime config on its first session. */
   private readonly usesRuntimeConfig: boolean;
   private readonly identityStore: ObservedRuntimeIdentities;
-  private readonly slot: SessionSlot;
+  /** A private slot (token, transport or injected store); undefined means the page-shared slot for the current base. */
+  private readonly ownSlot: SessionSlot | undefined;
 
   constructor(options: {
     baseUrl?: string; token?: string; transport?: Transport; expectedIdentity?: RuntimeIdentityBinding;
@@ -221,18 +229,34 @@ export class ReighRuntimeClient {
     identityStore?: ObservedRuntimeIdentities;
   } = {}) {
     this.identityStore = options.identityStore ?? (options.transport ? new Map() : observedRuntimeIdentities);
-    this.baseUrl = options.baseUrl ?? RUNTIME_BASE_URL;
+    this.pinnedBaseUrl = options.baseUrl;
     this.expectedIdentity = options.expectedIdentity ?? configuredRuntimeIdentity();
-    this.usesRuntimeConfig = this.baseUrl === RUNTIME_BASE_URL
+    this.usesRuntimeConfig = options.baseUrl === undefined
       && !options.expectedIdentity && !options.transport && !options.token;
     // Browser credentials are supplied by the authenticated connector/proxy.
     // A token is accepted for direct test/CLI clients, but is never persisted.
-    this.client = new WorkspaceClient(this.baseUrl, options.token, options.transport);
-    if (options.token || options.transport || options.identityStore) {
-      this.slot = { current: null, inflight: new Map() };
-    } else {
-      this.slot = sharedSlotFor(JSON.stringify([this.baseUrl, this.expectedIdentity ?? null]));
-    }
+    this.token = options.token;
+    this.transport = options.transport;
+    this.ownSlot = options.token || options.transport || options.identityStore
+      ? { current: null, inflight: new Map() }
+      : undefined;
+  }
+
+  /** The Runtime base this client talks to, resolved now (see `connection.ts`). */
+  get baseUrl(): string {
+    return this.pinnedBaseUrl ?? runtimeApiBase();
+  }
+
+  private get client(): WorkspaceClient {
+    const base = this.baseUrl;
+    let client = this.workspaceClients.get(base);
+    if (!client) this.workspaceClients.set(base, client = new WorkspaceClient(base, this.token, this.transport));
+    return client;
+  }
+
+  /** One slot per resolved base and launch binding, so a page negotiates once per base. */
+  private get slot(): SessionSlot {
+    return this.ownSlot ?? sharedSlotFor(JSON.stringify([this.baseUrl, this.expectedIdentity ?? null]));
   }
 
   /** Refuse every operation once any client sharing this binding saw a restart. */
@@ -323,14 +347,15 @@ export class ReighRuntimeClient {
     // Every ad hoc client must receive the same page binding, including clients
     // that join a session opened by another instance.
     if (this.usesRuntimeConfig) this.expectedIdentity = await initializeWorkspaceRuntimeIdentity();
-    if (!this.slot.current) {
+    const slot = this.slot;
+    if (!slot.current) {
       const opening: Promise<RuntimeSession> = this.openSession().catch((error) => {
-        if (this.slot.current === opening) this.slot.current = null;
+        if (slot.current === opening) slot.current = null;
         throw error;
       });
-      this.slot.current = opening;
+      slot.current = opening;
     }
-    return this.slot.current;
+    return slot.current;
   }
 
   /** Force the existing client through a fresh authenticated handshake. */

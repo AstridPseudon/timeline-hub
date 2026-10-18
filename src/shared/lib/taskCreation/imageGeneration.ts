@@ -9,6 +9,8 @@ import {
   bridgeTaskAdmissionRequestSchema,
 } from '@/tools/video-editor/data/bridgeContract.ts';
 import type { TaskCreationRequest } from './types';
+import { astridBase } from '@/integrations/runtime/connection.ts';
+import { composeDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
 
 export const IMAGE_GENERATION_CAPABILITY_ID = 'generation.generate_image';
 export const IMAGE_I2I_CAPABILITY_ID = 'generation.generate_image_cloud_i2i';
@@ -24,8 +26,13 @@ const MAX_SEED = 2_147_483_647;
 const MAX_STEPS = 1_000;
 const MAX_CLOUD_I2I_SOURCE_BYTES = 512_000;
 const BOUNDED_CLOUD_I2I_SIZE = '1024x1024';
-const IMAGE_COMPOSE_ROUTE = '/api/astrid/generation/compose';
 const MAX_COMPOSE_RESPONSE_BYTES = 256 * 1024;
+
+/** The hosted page's gateway does not serve the composer, so neither creator may send a request from there. */
+function assertComposeAvailable(): void {
+  const disabledReason = composeDisabledReason();
+  if (disabledReason) throw new TaskValidationError(disabledReason, 'generation_intent');
+}
 
 export interface ImageToImageTaskOptions {
   sourceUrl: string;
@@ -61,7 +68,7 @@ async function composeCreativeImageAdmission(
 ): Promise<TaskCreationRequest> {
   let response: Response;
   try {
-    response = await fetch(IMAGE_COMPOSE_ROUTE, {
+    response = await fetch(`${astridBase()}/generation/compose`, {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
@@ -258,6 +265,7 @@ export async function createImageGenerationTasks(
   project: string,
   params: BatchImageGenerationTaskParams,
 ): Promise<TaskCreationResult> {
+  assertComposeAvailable();
   const compiled = compileImageGenerationParams(params);
   const capability = await resolveTaskCapability(project, IMAGE_GENERATION_CAPABILITY_ID);
   if (capability.estimated_scratch_bytes <= 0 || capability.estimated_output_bytes <= 0) {
@@ -283,6 +291,7 @@ export async function createImageToImageTask(
   project: string,
   options: ImageToImageTaskOptions,
 ): Promise<TaskCreationResult> {
+  assertComposeAvailable();
   if (options.model !== undefined && options.model !== 'z-image') {
     throw new TaskValidationError('Only z-image is registered for the typed i2i route', 'model');
   }

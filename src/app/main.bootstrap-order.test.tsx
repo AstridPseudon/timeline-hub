@@ -25,6 +25,8 @@ describe('main entry bootstrap order', () => {
     bootstrapMocks.initializeVideoEditorExtensionRuntime.mockReset();
     bootstrapMocks.renderApp.mockReset();
     document.body.replaceChildren();
+    // The web root is the public landing entry; the app bootstrap only runs on an app route.
+    window.history.replaceState({}, '', '/tools/video-editor');
   });
 
   it('waits for extension runtime initialization before rendering the app', async () => {
@@ -39,7 +41,9 @@ describe('main entry bootstrap order', () => {
 
     await import('@/app/main');
 
-    expect(bootstrapMocks.initializeVideoEditorExtensionRuntime).toHaveBeenCalledOnce();
+    // main() is fire-and-forget: its dynamic imports settle after the module
+    // evaluates, so wait for the initialization call instead of racing it.
+    await vi.waitFor(() => expect(bootstrapMocks.initializeVideoEditorExtensionRuntime).toHaveBeenCalledOnce());
     expect(bootstrapMocks.renderApp).not.toHaveBeenCalled();
 
     resolveInitialization();

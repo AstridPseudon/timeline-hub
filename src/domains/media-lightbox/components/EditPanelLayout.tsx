@@ -166,7 +166,8 @@ export const EditPanelLayout: React.FC<EditPanelLayoutProps> = ({
       )}
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto min-h-0 overscroll-none">
+      {/* On a phone the floating lock/gallery toolbar covers the bottom of the panel: pb-24 lets the last line scroll clear of it. */}
+      <div className={cn("flex-1 overflow-y-auto min-h-0 overscroll-none", isMobile && "pb-24")}>
         {/* Mode selector section - only shown when NOT using simplified header */}
         {!simplifiedHeader && (
           <div className={cn("border-b border-border", isMobile ? "p-2" : "px-6 py-3")}>

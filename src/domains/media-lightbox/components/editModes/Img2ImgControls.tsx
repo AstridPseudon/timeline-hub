@@ -15,6 +15,8 @@ import { mapSelectedLorasForModal } from '@/shared/components/lora/mapSelectedLo
 import { LoraSelectorModal } from '@/domains/lora/components';
 import type { LoraModel } from '@/domains/lora/types/lora';
 import type { LoraManagerState } from '@/domains/lora/types/loraManager';
+import { composeDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
+import { LocalAppNote } from '@/shared/components/RuntimeConnection/LocalAppNote.tsx';
 
 function blurActiveElement() {
   if (document.activeElement instanceof HTMLElement) {
@@ -65,6 +67,8 @@ export const Img2ImgControls: React.FC<Img2ImgControlsProps> = ({
   const sliderTextSize = isMobile ? 'text-xs' : 'text-sm';
   const buttonSize = isMobile ? 'sm' : 'default';
   const iconSize = isMobile ? 'h-3 w-3' : 'h-4 w-4';
+  // The hosted build cannot compose images: the button is disabled and the line says why.
+  const disabledReason = composeDisabledReason();
 
   return (
     <>
@@ -165,7 +169,7 @@ export const Img2ImgControls: React.FC<Img2ImgControlsProps> = ({
         variant="default"
         size={buttonSize as 'sm' | 'default'}
         onClick={handleGenerateImg2Img}
-        disabled={isGeneratingImg2Img || img2imgGenerateSuccess}
+        disabled={disabledReason !== null || isGeneratingImg2Img || img2imgGenerateSuccess}
         className={cn(
           "w-full",
           isMobile && "h-9 text-xs",
@@ -189,6 +193,9 @@ export const Img2ImgControls: React.FC<Img2ImgControlsProps> = ({
           </>
         )}
       </Button>
+      {disabledReason && (
+        <LocalAppNote message={disabledReason} className={isMobile ? 'text-[10px]' : 'text-xs'} />
+      )}
 
       {/* Img2Img LoRA Selector Modal */}
       {img2imgLoraManager && (

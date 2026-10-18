@@ -1,8 +1,6 @@
 import { useSyncExternalStore } from 'react';
-import {
-  BRIDGE_PROBE_BASE_URL,
-  probeBridgeSession,
-} from '@/shared/auth/bridgeSession.ts';
+import { probeBridgeSession } from '@/shared/auth/bridgeSession.ts';
+import { astridBase } from '@/integrations/runtime/connection.ts';
 import { getLocalProjectSlug } from '@/shared/dev/devSession.ts';
 import { AstridBridgeTransport, BridgeRouteError } from './transport.ts';
 import { AstridLocalProjectRoutes } from './projectRoutes.ts';
@@ -182,7 +180,7 @@ function selectCapabilityProbeProject(
  * separate: a healthy older bridge can lack the task/gallery/media routes.
  */
 export async function inspectAstridCapabilities(
-  baseUrl: string = BRIDGE_PROBE_BASE_URL,
+  baseUrl: string = astridBase(),
 ): Promise<AstridCapabilityCensus> {
   const session = await probeBridgeSession(baseUrl);
   if (!session.ok) {
@@ -256,7 +254,7 @@ export async function inspectAstridCapabilities(
 }
 
 export function refreshAstridCapabilityCensus(
-  baseUrl: string = BRIDGE_PROBE_BASE_URL,
+  baseUrl: string = astridBase(),
   force = false,
 ): Promise<AstridCapabilityCensus> {
   if (inFlight && !force) return inFlight;

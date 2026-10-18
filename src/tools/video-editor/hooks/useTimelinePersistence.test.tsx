@@ -25,7 +25,7 @@ import { getConfigSignature, getStableConfigSignature } from '../lib/config-util
 import { buildDataFromCurrentRegistry } from '../lib/timeline-save-utils';
 import { createDefaultTimelineConfig } from '../lib/defaults';
 import type { AssetResolver } from '../data/AssetResolver';
-import { TimelineSchemaIncompatibleError, TimelineVersionConflictError, type DataProvider } from '../data/DataProvider';
+import { OwnUnacknowledgedSaveError, TimelineSchemaIncompatibleError, TimelineVersionConflictError, type DataProvider } from '../data/DataProvider';
 import { StaleWriteError } from '../data/shotComposition';
 import { BRIDGE_REQUEST_TIMEOUT_MS } from '../data/bridgeContract';
 import { loadTimelineDraft, saveTimelineDraft, type TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
@@ -939,6 +939,160 @@ describe('useTimelinePersistence — interaction gating', () => {
       // Backoff is cleared by the successful save: no further attempts.
       await advance(10_000);
       expect(harness.saveTimeline).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('a save that failed while Astrid was away', () => {
+    const advance = async (ms: number) => {
+      await act(async () => {
+        vi.advanceTimersByTime(ms);
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+    };
+    const astridAway = () => Object.assign(new Error('Astrid is not answering'), { code: 'runtime_unavailable' });
+    const outputFileOf = (call: ReadonlyArray<unknown>) => (call[1] as TimelineData['config']).output.file;
+
+    it('waits for Astrid without a timer, then sends the very same save when told Astrid is back', async () => {
+      let calls = 0;
+      const harness = setup({
+        saveTimelineImpl: async () => {
+          calls += 1;
+          if (calls === 1) throw astridAway();
+          return 2;
+        },
+      });
+
+      harness.scheduleSave(makeTimelineData('away'));
+      await advance(600);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(1);
+      expect(harness.result.current.saveStatus).toBe('error');
+
+      // No flood while it is away: nothing retries by itself.
+      await advance(60_000);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(1);
+
+      act(() => harness.result.current.retryPendingSave());
+      await advance(0);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(2);
+      expect(harness.saveTimeline.mock.calls[1]).toEqual(harness.saveTimeline.mock.calls[0]);
+      expect(harness.result.current.saveStatus).toBe('saved');
+      expect(harness.result.current.isConflictExhausted).toBe(false);
+
+      // And it does not send again.
+      act(() => harness.result.current.retryPendingSave());
+      await advance(10_000);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(2);
+    });
+
+    it('does nothing when everything is saved already', async () => {
+      const harness = setup();
+      harness.scheduleSave(makeTimelineData('done'));
+      await advance(600);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(1);
+      expect(harness.result.current.saveStatus).toBe('saved');
+
+      act(() => harness.result.current.retryPendingSave());
+      await advance(10_000);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not send over a conflict the person has yet to settle', async () => {
+      const harness = setup({
+        saveTimelineImpl: async () => { throw new TimelineVersionConflictError('Another editor changed it'); },
+      });
+      harness.scheduleSave(makeTimelineData('conflicted'));
+      await advance(600);
+      expect(harness.result.current.isConflictExhausted).toBe(true);
+
+      act(() => harness.result.current.retryPendingSave());
+      await advance(10_000);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(1);
+    });
+
+    it('sends an edit made meanwhile behind the unanswered save: its own earlier save is not another writer, so no conflict', async () => {
+      let calls = 0;
+      const harness = setup({
+        saveTimelineImpl: async () => {
+          calls += 1;
+          if (calls === 1) throw astridAway();
+          // The second edit, sent beside the unanswered first one, is refused by the provider as the editor's own.
+          if (calls === 2) throw new OwnUnacknowledgedSaveError('An unacknowledged save owns this timeline head and payload');
+          return calls;
+        },
+      });
+
+      harness.scheduleSave(makeTimelineData('first'));
+      await advance(600);
+      expect(harness.result.current.saveStatus).toBe('error');
+
+      harness.editSeqRef.current = 2;
+      harness.scheduleSave(makeTimelineData('second'));
+      await advance(600);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(2);
+      expect(harness.result.current.isConflictExhausted).toBe(false);
+      expect(harness.result.current.saveStatus).toBe('retrying');
+
+      // The first save is sent again (under its own key), and the second goes after it.
+      await advance(600);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(4);
+      expect(outputFileOf(harness.saveTimeline.mock.calls[2])).toBe('output-first.mp4');
+      expect(outputFileOf(harness.saveTimeline.mock.calls[3])).toBe('output-second.mp4');
+      expect(harness.result.current.isConflictExhausted).toBe(false);
+      expect(harness.result.current.saveStatus).toBe('saved');
+      await advance(10_000);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(4);
+    });
+
+    it('sends the waiting save at once, instead of out its backoff, when told Astrid is back', async () => {
+      let calls = 0;
+      const harness = setup({
+        saveTimelineImpl: async () => {
+          calls += 1;
+          if (calls === 1) throw astridAway();
+          if (calls === 2) throw new OwnUnacknowledgedSaveError('An unacknowledged save owns this timeline head and payload');
+          return calls;
+        },
+      });
+      harness.scheduleSave(makeTimelineData('first'));
+      await advance(600);
+      harness.editSeqRef.current = 2;
+      harness.scheduleSave(makeTimelineData('second'));
+      await advance(600);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(2);
+      expect(harness.result.current.saveStatus).toBe('retrying');
+
+      act(() => harness.result.current.retryPendingSave());
+      await advance(0);
+      expect(harness.saveTimeline).toHaveBeenCalledTimes(4);
+      expect(harness.result.current.saveStatus).toBe('saved');
+    });
+
+    it('still names a conflict when the provider refuses an edit as the editor\'s own but no save of ours is waiting', async () => {
+      const harness = setup({
+        saveTimelineImpl: async () => { throw new OwnUnacknowledgedSaveError('An unacknowledged save owns this timeline head and payload'); },
+      });
+      harness.scheduleSave(makeTimelineData('orphan'));
+      await advance(600);
+      expect(harness.result.current.isConflictExhausted).toBe(true);
+    });
+
+    it('still names a conflict for a genuine second writer while a save of ours is waiting', async () => {
+      let calls = 0;
+      const harness = setup({
+        saveTimelineImpl: async () => {
+          calls += 1;
+          if (calls === 1) throw astridAway();
+          throw new TimelineVersionConflictError('Another editor changed the timeline');
+        },
+      });
+      harness.scheduleSave(makeTimelineData('first'));
+      await advance(600);
+      harness.editSeqRef.current = 2;
+      harness.scheduleSave(makeTimelineData('second'));
+      await advance(600);
+      expect(harness.result.current.isConflictExhausted).toBe(true);
     });
   });
 

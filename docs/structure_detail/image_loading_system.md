@@ -1,6 +1,6 @@
 # Image Loading System
 
-**Source of truth**: `src/shared/lib/imageLoadingPriority.ts` (all timing/strategy config)
+**Source of truth**: `src/shared/lib/media/imageLoadingPriority.ts` (strategy and batch config)
 
 Progressive image loading with device-adaptive batching. Images cascade top-to-bottom on purpose (time-based, not scroll-dependent) to give immediate feedback, prevent browser overload, and create a predictable reveal pattern.
 
@@ -9,11 +9,11 @@ Progressive image loading with device-adaptive batching. Images cascade top-to-b
 | File | Purpose |
 |------|---------|
 | `src/shared/components/ProgressiveLoadingManager.tsx` | Orchestrates progressive revealing via `showImageIndices` |
-| `src/shared/components/ImagePreloadManager.tsx` | Background preloading of adjacent pages |
-| `src/shared/hooks/useProgressiveImageLoading.ts` | Session management, timing, race-condition protection |
-| `src/shared/hooks/useAdjacentPagePreloading.ts` | Priority queue, device adaptation, 1-3 concurrent reqs |
-| `src/shared/lib/imageCacheManager.ts` | Cache status tracking, automatic cleanup at 500 images |
-| `src/shared/lib/imageLoadingPriority.ts` | Strategy calculation, device detection, config |
+| `src/shared/hooks/ui-image/useProgressiveImageLoading.ts` | Session management, timing, race-condition protection |
+| `src/shared/lib/media/imageLoadingPriority.ts` | Strategy calculation, device detection, batch config |
+| `src/shared/hooks/gallery/useAdjacentPagePreloader.ts` | Preloads adjacent gallery pages (scheduling via `src/shared/lib/gallery/adjacentPagePreloadCoordinator.ts`) |
+| `src/shared/lib/preloading/index.ts` | Shared preloading service and `hasLoadedImage` |
+| `src/shared/lib/sessionId.ts` | Session IDs for overlapping load sequences |
 
 ## Data Flow
 
@@ -22,12 +22,10 @@ MediaGallery
 ├── ProgressiveLoadingManager (current page)
 │   └── useProgressiveImageLoading
 │       ├── Gets timing from imageLoadingPriority
-│       ├── Checks cache via imageCacheManager
 │       └── Provides showImageIndices to children
-└── ImagePreloadManager (adjacent pages)
-    └── useAdjacentPagePreloading
-        ├── Preloads prev/next page images (60ms intervals)
-        └── Updates imageCacheManager cache
+└── useAdjacentPagePreloader (adjacent pages)
+    └── adjacentPagePreloadCoordinator
+        └── Prefetches neighbouring pages' generations
 ```
 
 ## Device-Adaptive Batching
@@ -38,46 +36,24 @@ MediaGallery
 | Low-End / Mobile | 3 images | 40-50ms | 120ms |
 | Desktop / High-End | 4 images | 25ms | 100ms |
 
-Device capability detected automatically from memory, CPU cores, and connection speed.
+Device capability is detected from memory, CPU cores, and connection type (`getDeviceCapabilities` in `imageLoadingPriority.ts`).
 
 ## Loading Priority Order
 
 | Priority | Delay | Condition |
 |----------|-------|-----------|
-| Preloaded images | 0ms | `isImageCached(image)` returns true |
-| First image | 0ms | Always instant |
-| Initial batch (2-4) | 8ms increments | 8ms, 16ms, 24ms |
-| Remaining images | Device stagger | 25-60ms with device-specific cap |
-
-## Cache Handoff
-
-The critical path for preloaded images bypassing delays:
-
-```
-setImageCacheStatus(url, 'loaded')  ->  isImageCached(url) returns true  ->  progressiveDelay = 0
-```
-
-Adjacent pages preload in background (400-800ms debounce after navigation). When user navigates to a preloaded page, all images display instantly.
+| Preloaded images | 0ms | Caller passes `isPreloaded: true` |
+| First image | 0ms | Index 0 |
+| Initial batch | `index × 8`ms | Index below the batch size (0, 8, 16, 24 on desktop) |
+| Remaining images | `min(stagger × (n + 1), max)` | `n` is the position after the batch |
 
 ## Performance Auto-Adjustment
 
-The system tracks actual image load times and adjusts delays with a 0.5x-2.0x multiplier:
-- Average load time >500ms: delays increase (slower stagger to reduce contention)
-- Fast loads: delays decrease toward minimums
-
-## Memory Management
-
-- Cache auto-cleanup triggers at 500 cached images (oldest evicted first)
-- `AbortController` cancels in-flight preload fetches on page change
-- Unique session IDs prevent race conditions between overlapping load sequences
+None. The delays come from the device table only; no load-time feedback loop exists.
 
 ## Navigation Scenarios
 
-| Scenario | Behavior |
-|----------|----------|
-| First visit | Images 0-3 instant, rest cascade at 25-40ms intervals |
-| Adjacent page | All images instant (preloaded and cached) |
-| Distant page | Images 0-3 instant, rest cascade, new adjacent pages start preloading |
+Adjacent pages are prefetched as query data by `useAdjacentPagePreloader`. The first page of a visit cascades through the batch table above.
 
 ## API
 
@@ -85,29 +61,41 @@ The system tracks actual image load times and adjusts delays with a 0.5x-2.0x mu
 const strategy = getImageLoadingStrategy(index, {
   isMobile,
   totalImages: images.length,
-  isPreloaded: isImageCached(image)
+  isPreloaded, // true when the caller already holds the image
 });
 // Returns: { shouldLoadInInitialBatch, progressiveDelay, batchGroup }
 ```
 
 Individual items should NOT invent their own delays -- progressive loading is the single mechanism.
 
-## Debugging
+## Memory Management
 
-Console log tags:
+- `useProgressiveImageLoading` gives each load sequence its own session ID and `AbortController`, and cancels timeouts and animation frames when a session is superseded or the component unmounts.
+
+## Debugging
 
 | Tag | What it shows |
 |-----|---------------|
-| `[PAGELOADINGDEBUG]` | Progressive loading lifecycle, session IDs |
-| `[GalleryDebug]` | Gallery state changes, strategy decisions |
-| `[ItemDebug]` | Individual image timing |
-| `[PRELOAD]` | Adjacent page preloading operations |
+| `[GalleryDebug]` | Gallery state changes (`useMediaGalleryDebugTools.ts`) |
 
-Browser console debugger:
+## Cross-Origin Media (hosted build)
 
-```javascript
-window.imageLoadingDebugger.logCurrentIssues()   // comprehensive diagnostics
-window.imageLoadingDebugger.getGalleryState()     // current gallery state
-window.imageLoadingDebugger.getCacheState()        // cache contents
-window.imageLoadingDebugger.diagnoseStuckPage()    // stuck page troubleshooting
-```
+**Purpose**: Which `<img>`, `<video>` and canvas sources get `crossOrigin` on the hosted build, where media comes from the local gateway on another origin.
+
+**Source of Truth**: `src/shared/lib/media/mediaCrossOrigin.ts` (the rule), `src/integrations/runtime/connection.ts` (`isGatewayUrl`, the configured origin).
+
+| Input | `mediaCrossOrigin(url)` | Why |
+|-------|-------------------------|-----|
+| Gateway URL on the hosted build | `'anonymous'` | The gateway authorizes media by `Origin`, which an element sends only in CORS mode |
+| Same-origin path, Supabase, CDN | `undefined` | Unchanged; no attribute rendered |
+| `data:`, `blob:`, null or relative | `undefined` | Not a gateway read |
+
+Apply it to each element whose source comes from `objectContentUrl`, `bridgeMediaUrl` or `getDisplayUrl`: `crossOrigin={mediaCrossOrigin(src)}`. A video's poster gets the same treatment (`src/shared/components/media/StyledVideoPlayer.tsx`). Scripted loads (`new Image()`, `document.createElement('video')`, the preload queue and cache probes) set `crossOrigin` before `src`, so their request has the same CORS mode as the element that shows the URL; a File or `blob:` source needs nothing.
+
+Key invariants:
+
+1. A plain `<img>` with a gateway source fails in Chromium: no Referer is sent from https to `http://127.0.0.1`, and the gateway refuses media without `Origin`. Every gateway element needs the attribute.
+2. Canvas draws of gateway media need CORS mode too, or the canvas is tainted and cannot be read back.
+3. The helper reads the configured origin at call time, so same-origin builds always get `undefined`.
+4. Only `Origin` authorizes media; the gateway never accepts a Referer in its place.
+5. Open: `<source>`, `<link rel=preload>` and CSS `url()` are not covered by this helper. They are settled by card A3.R (convert each, or list it with a reason).

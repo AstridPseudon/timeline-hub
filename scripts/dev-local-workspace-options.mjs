@@ -9,6 +9,7 @@ export function parseDevLocalWorkspaceArgs(args) {
   let checkOnly = false;
   let paired = false;
   let resetPairing = false;
+  let acp = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -22,6 +23,10 @@ export function parseDevLocalWorkspaceArgs(args) {
     }
     if (argument === '--reset-pairing') {
       resetPairing = true;
+      continue;
+    }
+    if (argument === '--acp') {
+      acp = true;
       continue;
     }
     if (argument === '--preview') {
@@ -52,6 +57,7 @@ export function parseDevLocalWorkspaceArgs(args) {
     checkOnly,
     paired,
     resetPairing,
+    acp,
     preview,
     previewDir,
   });
@@ -111,9 +117,17 @@ export function validatePreviewOutputDirectory(value) {
   return outputDirectory;
 }
 
+/**
+ * Arguments for the Vite child. `quiet` (the default launch: no `--verbose`) silences npm's banner and Vite's startup
+ * block; the launcher says what a person needs to know itself.
+ */
 export function viteChildArgs(options) {
+  const quiet = options.quiet === true;
+  const npm = quiet ? ['--silent'] : [];
+  const logging = quiet ? ['--logLevel', 'warn'] : [];
   if (options.preview) {
     return [
+      ...npm,
       'run',
       'preview',
       '--',
@@ -122,9 +136,10 @@ export function viteChildArgs(options) {
       '--strictPort',
       '--outDir',
       options.previewDir,
+      ...logging,
     ];
   }
-  return ['run', 'dev', '--', '--host', '127.0.0.1', '--strictPort'];
+  return [...npm, 'run', 'dev', '--', '--host', '127.0.0.1', '--strictPort', ...logging];
 }
 
 /** Runtime selection is independent of an Astrid source checkout. */
@@ -141,4 +156,31 @@ export function resolveWorkspaceDiscoveryPath({ discovery, supportRoot, dataRoot
     throw new Error('ASTRID_SUPPORT_ROOT and BANODOCO_LOCAL_DATA_ROOT select different roots');
   }
   return join(roots[0] || join(home, 'Library', 'Application Support', 'Banodoco'), 'runtime', 'discovery.json');
+}
+
+/** The gateway's well-known port (Plan A D1); `REIGH_LOOPBACK_PORT` overrides it, and tests use 0. */
+export const DEFAULT_LOOPBACK_PORT = '17340';
+
+export function resolveLoopbackPort(value) {
+  return value?.trim() || DEFAULT_LOOPBACK_PORT;
+}
+
+/**
+ * Arguments for `scripts/reigh-loopback-gateway.ts`. ACP auto-approves tool calls and can open terminals, so the
+ * gateway gets `--acp-endpoint` only when the developer passed `--acp` to the launcher. `appPort` is the local app's port: the
+ * gateway reports it in its health answer so the hosted page can link to the app.
+ */
+export function gatewayChildArgs({ discoveryPath, credentialPath, hostedOrigin, loopbackPort, acp, acpPort, appPort, auditLog, actor }) {
+  return [
+    '--import', 'tsx',
+    'scripts/reigh-loopback-gateway.ts',
+    '--discovery', discoveryPath,
+    '--token-file', credentialPath,
+    '--origin', hostedOrigin,
+    ...(acp ? ['--acp-endpoint', `http://127.0.0.1:${acpPort}`] : []),
+    '--port', loopbackPort,
+    ...(appPort ? ['--app-port', String(appPort)] : []),
+    ...(auditLog ? ['--audit-log', auditLog] : []),
+    ...(actor ? ['--actor', actor] : []),
+  ];
 }

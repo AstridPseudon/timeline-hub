@@ -6,6 +6,7 @@ import {
   RUNTIME_SCHEMA_DIGEST,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
 } from './contract-metadata.ts';
+import { RUNTIME_CLIENT_SCOPES } from './client.ts';
 
 const PROJECT_ID = 'project-imports';
 const ASSET_ID = `sha256:${'a'.repeat(64)}`;
@@ -64,8 +65,8 @@ function createTransport(options: { lostAck?: boolean } = {}) {
 
   const transport: Transport = async (method, path, headers, body) => {
     requests.push({ method, path, headers, body });
-    if (path === '/v1/health') return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1 }) };
-    if (path === '/v1/handshake') return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-import', actor_id: 'connector-owner', realm_id: 'realm-import', scopes: ['handshake', 'projects:read', 'projects:write'], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
+    if (path === '/v1/health') return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1, runtime_instance_id: 'runtime-instance-import' }) };
+    if (path === '/v1/handshake') return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-import', actor_id: 'connector-owner', realm_id: 'realm-import', scopes: [...RUNTIME_CLIENT_SCOPES], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
     if (path === '/v1/realm') return { status: 200, headers: {}, body: json({ realm_id: 'realm-import', display_name: 'imports', version: 1, created_at: '2026-09-23T00:00:00Z' }) };
     if (method === 'POST' && path === `/v1/projects/${PROJECT_ID}/media-imports`) {
       importPostCount += 1;

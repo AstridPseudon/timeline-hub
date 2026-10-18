@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { getDisplayUrl } from '@/shared/lib/media/mediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { useProgressiveImage } from '@/shared/hooks/ui-image/useProgressiveImage';
 import { isProgressiveLoadingEnabled } from '@/shared/settings/progressiveLoading';
 import { useMarkVariantViewed } from '@/shared/hooks/variants/useMarkVariantViewed';
@@ -276,6 +277,7 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
           <img
             ref={progressiveRef}
             src={shouldLoad ? displayImageUrl : '/placeholder.svg'}
+            crossOrigin={shouldLoad ? mediaCrossOrigin(displayImageUrl) : undefined}
             alt={`Time ${framesToSeconds(displayFrame, timelineFps)}`}
             className={cn(
               'w-full h-full object-cover',

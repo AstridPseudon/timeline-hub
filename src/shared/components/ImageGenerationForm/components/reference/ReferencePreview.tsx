@@ -1,6 +1,7 @@
 import React from "react";
 import { Images } from "lucide-react";
 import { useFormReferencesContext } from "../../ImageGenerationFormContext";
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface ReferencePreviewProps {
   isLoadingReferenceData: boolean;
@@ -30,6 +31,7 @@ export const ReferencePreview: React.FC<ReferencePreviewProps> = ({
           {!imageLoaded && (
             <img
               src={imageUrl}
+              crossOrigin={mediaCrossOrigin(imageUrl)}
               alt=""
               style={{ display: "none" }}
               onLoad={() => setImageLoaded(true)}
@@ -45,6 +47,7 @@ export const ReferencePreview: React.FC<ReferencePreviewProps> = ({
           {imageLoaded && (
             <img
               src={imageUrl}
+              crossOrigin={mediaCrossOrigin(imageUrl)}
               alt="Selected reference"
               className="w-full h-full object-contain"
             />

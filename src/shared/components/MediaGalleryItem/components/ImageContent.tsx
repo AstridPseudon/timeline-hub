@@ -2,6 +2,7 @@ import React from "react";
 import { AlertTriangle } from "lucide-react";
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { GeneratedImageWithMetadata } from "../../MediaGallery/types";
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface ImageContentProps {
   image: GeneratedImageWithMetadata;
@@ -63,6 +64,7 @@ export const ImageContent: React.FC<ImageContentProps> = ({
         <img
           ref={progressiveRef}
           src={actualSrc}
+          crossOrigin={mediaCrossOrigin(actualSrc)}
           alt={image.prompt || `Generated image ${index + 1}`}
           className={cn(
             "absolute inset-0 w-full h-full object-cover group-hover:opacity-80 transition-all duration-300",
@@ -87,6 +89,7 @@ export const ImageContent: React.FC<ImageContentProps> = ({
       {actualSrc && !imageLoaded && (
         <img
           src={actualSrc}
+          crossOrigin={mediaCrossOrigin(actualSrc)}
           alt={image.prompt || `Generated image ${index + 1}`}
           style={{ display: 'none' }}
           onError={onImageError}

@@ -387,13 +387,14 @@ describe('DynamicEffectRegistry', () => {
     expect(getEffectRegistry().get('custom:resource-effect')).toBeUndefined();
   });
 
-  it('resolves built-ins, normalized custom resources, schemas, and wrapping from provider snapshots', async () => {
+  it('resolves built-ins and keeps resource-backed custom effects inactive, blocked, and unrendered in provider snapshots', async () => {
     let receivedProps: Omit<EffectComponentProps, 'children'> | null = null;
+    const observed: { record?: EffectRegistryRecord } = {};
     const schema: ParameterSchema = [
       { name: 'amount', label: 'Amount', description: 'Effect amount', type: 'number', default: 4, min: 0, max: 10 },
       { name: 'enabled', label: 'Enabled', description: 'Enable effect', type: 'boolean', default: true },
     ];
-    vi.spyOn(compileEffectModule, 'compileEffect').mockImplementation((code: string) => {
+    const compileSpy = vi.spyOn(compileEffectModule, 'compileEffect').mockImplementation((code: string) => {
       return function ProviderCompiledEffect({ children, ...props }: EffectComponentProps) {
         receivedProps = props;
         return <div data-testid={`provider-${code}`}>{children}</div>;
@@ -423,6 +424,7 @@ describe('DynamicEffectRegistry', () => {
         snapshot,
       );
       const customRecord = snapshot.get('provider-custom');
+      observed.record = customRecord;
       return (
         <div data-testid="provider-snapshot-state">
           <span data-testid="builtin-state">
@@ -448,23 +450,33 @@ describe('DynamicEffectRegistry', () => {
     await waitFor(() => {
       expect(screen.getByTestId('builtin-state').textContent).toBe('builtin-found');
       expect(screen.getByTestId('custom-state').textContent).toBe('custom-found');
-      expect(screen.getByTestId('provider-provider-custom-code')).toContainElement(screen.getByTestId('provider-child'));
+      expect(screen.getByTestId('provider-child')).toBeInTheDocument();
     });
-    expect(receivedProps).toEqual({
-      durationInFrames: 30,
-      effectFrames: 30,
-      intensity: 0.8,
-      params: { amount: 4, enabled: true },
-    });
+
+    // The resource-backed custom effect is registered as inactive, with its
+    // capabilities blocked until it is migrated to an admitted element pack.
+    expect(observed.record?.status).toBe('inactive');
+    expect(observed.record?.renderability.capabilities.length).toBeGreaterThan(0);
+    for (const capability of observed.record?.renderability.capabilities ?? []) {
+      expect(capability.status).toBe('blocked');
+      expect(capability.message).toBe('Requires migration to an admitted element pack.');
+    }
+
+    // Its code is never compiled, its component is never rendered, and the
+    // child content is passed through unwrapped with no params applied.
+    expect(compileSpy).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('provider-provider-custom-code')).not.toBeInTheDocument();
+    expect(receivedProps).toBeNull();
     expect(getEffectRegistry().get('custom:provider-custom')).toBeUndefined();
   });
 
-  it('isolates same effect IDs across provider registries without leaking components or singleton state', async () => {
+  it('isolates same effect IDs across provider registries as inactive, unrendered records without compiling or leaking state', async () => {
     const compileSpy = vi.spyOn(compileEffectModule, 'compileEffect').mockImplementation((code: string) => {
       return function MockCompiledEffect({ children }: EffectComponentProps) {
         return <div data-testid={`compiled-${code}`}>{children}</div>;
       };
     });
+    const observed: Record<string, EffectRegistryRecord | undefined> = {};
 
     function ProviderRegistryHost({
       label,
@@ -478,6 +490,7 @@ describe('DynamicEffectRegistry', () => {
       const record = snapshot.get('shared-effect');
       const CompiledEffect = record?.component;
       const registryRecord = registry.resolve('shared-effect');
+      observed[label] = registryRecord;
       return (
         <div data-testid={`${label}-state`}>
           <span data-testid={`${label}-code`}>{registryRecord?.code ?? 'missing'}</span>
@@ -513,13 +526,26 @@ describe('DynamicEffectRegistry', () => {
       expect(screen.getByTestId('provider-b-code').textContent).toBe('provider-b');
     });
 
-    expect(screen.getByTestId('compiled-provider-a')).toContainElement(screen.getByTestId('provider-a-child'));
-    expect(screen.getByTestId('compiled-provider-b')).toContainElement(screen.getByTestId('provider-b-child'));
-    expect(screen.queryByTestId('compiled-provider-a')).not.toContainElement(screen.getByTestId('provider-b-child'));
-    expect(screen.queryByTestId('compiled-provider-b')).not.toContainElement(screen.getByTestId('provider-a-child'));
+    // Each provider keeps its own record: same ID, distinct code, both inactive and blocked.
+    for (const label of ['provider-a', 'provider-b']) {
+      const record = observed[label];
+      expect(record?.status).toBe('inactive');
+      expect(record?.renderability.capabilities.length).toBeGreaterThan(0);
+      for (const capability of record?.renderability.capabilities ?? []) {
+        expect(capability.status).toBe('blocked');
+        expect(capability.message).toBe('Requires migration to an admitted element pack.');
+      }
+    }
+    expect(observed['provider-a']).not.toBe(observed['provider-b']);
+
+    // Neither provider compiles or renders its custom component, so no marker
+    // or child element appears and the singleton stays untouched.
+    expect(compileSpy).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('compiled-provider-a')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('compiled-provider-b')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('provider-a-child')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('provider-b-child')).not.toBeInTheDocument();
     expect(getEffectRegistry().get('custom:shared-effect')).toBeUndefined();
-    expect(compileSpy).toHaveBeenCalledWith('provider-a');
-    expect(compileSpy).toHaveBeenCalledWith('provider-b');
   });
 
   it('uses a memoized standalone fallback registry outside a provider', async () => {
@@ -548,12 +574,13 @@ describe('DynamicEffectRegistry', () => {
     expect(getEffectRegistry().get('custom:standalone-resource-effect')).toBeUndefined();
   });
 
-  it('seeds provider-unaware fallback registries locally without leaking same effect IDs', async () => {
-    vi.spyOn(compileEffectModule, 'compileEffect').mockImplementation((code: string) => {
+  it('seeds provider-unaware fallback registries locally as inactive, unrendered records without compiling or leaking same effect IDs', async () => {
+    const compileSpy = vi.spyOn(compileEffectModule, 'compileEffect').mockImplementation((code: string) => {
       return function MockCompiledEffect({ children }: EffectComponentProps) {
         return <div data-testid={`standalone-${code}`}>{children}</div>;
       };
     });
+    const observed: Record<string, EffectRegistryRecord | undefined> = {};
 
     function StandaloneRegistryHost({
       label,
@@ -565,6 +592,7 @@ describe('DynamicEffectRegistry', () => {
       const registry = useEffectRegistry(undefined, resourceEffects);
       const record = registry.resolve('fallback-shared-effect');
       const CompiledEffect = record?.component;
+      observed[label] = record;
       return (
         <div data-testid={`${label}-fallback-state`}>
           <span data-testid={`${label}-fallback-code`}>{record?.code ?? 'missing'}</span>
@@ -596,10 +624,24 @@ describe('DynamicEffectRegistry', () => {
       expect(screen.getByTestId('fallback-b-fallback-code').textContent).toBe('fallback-b');
     });
 
-    expect(screen.getByTestId('standalone-fallback-a')).toContainElement(screen.getByTestId('fallback-a-fallback-child'));
-    expect(screen.getByTestId('standalone-fallback-b')).toContainElement(screen.getByTestId('fallback-b-fallback-child'));
-    expect(screen.queryByTestId('standalone-fallback-a')).not.toContainElement(screen.getByTestId('fallback-b-fallback-child'));
-    expect(screen.queryByTestId('standalone-fallback-b')).not.toContainElement(screen.getByTestId('fallback-a-fallback-child'));
+    // Each fallback registry keeps its own record: inactive and blocked until migrated.
+    for (const label of ['fallback-a', 'fallback-b']) {
+      const record = observed[label];
+      expect(record?.status).toBe('inactive');
+      expect(record?.renderability.capabilities.length).toBeGreaterThan(0);
+      for (const capability of record?.renderability.capabilities ?? []) {
+        expect(capability.status).toBe('blocked');
+        expect(capability.message).toBe('Requires migration to an admitted element pack.');
+      }
+    }
+    expect(observed['fallback-a']).not.toBe(observed['fallback-b']);
+
+    // Neither fallback compiles or renders its custom component, and the singleton stays untouched.
+    expect(compileSpy).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('standalone-fallback-a')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('standalone-fallback-b')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('fallback-a-fallback-child')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('fallback-b-fallback-child')).not.toBeInTheDocument();
     expect(getEffectRegistry().get('custom:fallback-shared-effect')).toBeUndefined();
   });
 

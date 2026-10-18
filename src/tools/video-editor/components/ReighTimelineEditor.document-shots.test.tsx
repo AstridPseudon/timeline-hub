@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
   createShot: vi.fn(),
   navigate: vi.fn(),
   duplicateShotGroup: vi.fn(async () => ({})),
@@ -45,6 +46,7 @@ const data = {
 };
 const dataRef = { current: data };
 
+vi.mock('@/shared/components/ui/runtime/sonner.tsx', () => ({ toast: mocks.toast }));
 vi.mock('@/shared/contexts/ShotsContext.tsx', () => ({ useShots: () => ({ shots: [] }) }));
 vi.mock('@/shared/hooks/shotCreation/useShotCreation.ts', () => ({
   useShotCreation: () => ({ createShot: mocks.createShot, isCreating: false }),
@@ -168,6 +170,7 @@ vi.mock('@/tools/travel-between-images/pages/LocalTimelineShotBrowser.tsx', () =
   ),
 }));
 
+import { installRuntimeErrorPresenter } from '@/shared/lib/errorHandling/runtimeErrorPresenter.ts';
 import {
   ReighTimelineEditor,
   shouldKeepPublishedCanonicalCompositionOverride,
@@ -211,6 +214,33 @@ describe('ReighTimelineEditor document-derived shot consumer', () => {
 
     expect(mocks.reloadFromServer).toHaveBeenCalledTimes(2);
     expect(mocks.createShot).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {
+      action: 'Promote document variant',
+      title: 'Failed to promote primary variant',
+      success: 'Primary variant promoted',
+      fail: () => mocks.galleryGet.mockRejectedValueOnce(new Error('generation was not found')),
+    },
+    {
+      action: 'Duplicate document shot',
+      title: 'Failed to duplicate shot',
+      success: 'Shot duplicated',
+      fail: () => mocks.duplicateShotGroup.mockRejectedValueOnce(new Error('unknown family')),
+    },
+  ])('$action: a bridge failure shows the error toast, never a success toast, and leaves the document alone', async ({ action, title, success, fail }) => {
+    const presenter = vi.fn(() => true);
+    installRuntimeErrorPresenter(presenter);
+    fail();
+    render(<ReighTimelineEditor />);
+
+    fireEvent.click(screen.getByText(action));
+
+    await waitFor(() => expect(presenter).toHaveBeenCalledWith(expect.objectContaining({ message: expect.any(String) }), title));
+    expect(mocks.toast.success).not.toHaveBeenCalledWith(success);
+    expect(mocks.reloadFromServer).not.toHaveBeenCalled();
+    expect(mocks.promotePrimaryVariant).not.toHaveBeenCalled();
   });
 
   it('opens a canonical shot editor overlay without reloading the document', () => {

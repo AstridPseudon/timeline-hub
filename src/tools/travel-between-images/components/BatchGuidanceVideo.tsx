@@ -8,6 +8,7 @@ import { ResourceBrowserModalBase } from '@/features/resources/components/Resour
 import { useBatchGuidanceVideoController } from './hooks/useBatchGuidanceVideoController';
 import type { AuthoredVideoMetadata, VideoMetadata } from '@/shared/lib/media/videoUploader';
 import type { TravelGuidanceMode } from '@/shared/lib/tasks/travelGuidance';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface BatchGuidanceVideoProps {
   shotId: string;
@@ -148,6 +149,7 @@ export const BatchGuidanceVideo: React.FC<BatchGuidanceVideoProps> = ({
             <video
               ref={controller.videoRef}
               src={videoUrl}
+              crossOrigin={mediaCrossOrigin(videoUrl)}
               preload="metadata"
               className="hidden"
               muted

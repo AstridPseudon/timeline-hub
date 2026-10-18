@@ -7,7 +7,7 @@
  * `python3 -m astrid doctor --json` command.
  */
 
-import { BRIDGE_PROBE_BASE_URL } from '@/shared/auth/bridgeSession.ts';
+import { astridBase } from '@/integrations/runtime/connection.ts';
 import {
   inspectAstridCapabilities,
   type AstridCapability,
@@ -22,7 +22,7 @@ export type AstridDoctorAvailability =
   | { status: 'unavailable'; reason: string };
 
 export async function checkAstridDoctorAvailability(
-  baseUrl: string = BRIDGE_PROBE_BASE_URL,
+  baseUrl: string = astridBase(),
 ): Promise<Exclude<AstridDoctorAvailability, { status: 'checking' }>> {
   const result = await inspectAstridCapabilities(baseUrl);
   if (result.health === 'unavailable') {

@@ -4,6 +4,8 @@ import { SliderWithValue } from "@/shared/components/ui/composed/slider-with-val
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { PromptMode } from "../types";
+import { composeDisabledReason } from "@/shared/components/RuntimeConnection/copy.ts";
+import { LocalAppNote } from "@/shared/components/RuntimeConnection/LocalAppNote.tsx";
 
 interface GenerateControlsProps {
   imagesPerPrompt: number;
@@ -36,6 +38,9 @@ export const GenerateControls: React.FC<GenerateControlsProps> = ({
   // Normalize promptMode to handle invalid/empty values from persistence
   const normalizedPromptMode: PromptMode =
     (promptMode === 'automated' || promptMode === 'managed') ? promptMode : 'automated';
+
+  // The hosted build cannot compose images: the submit button is disabled and says why.
+  const disabledReason = composeDisabledReason();
 
   const showExistingPromptButtons = normalizedPromptMode === 'automated' && actionablePromptsCount > 0;
   return (
@@ -88,7 +93,7 @@ export const GenerateControls: React.FC<GenerateControlsProps> = ({
         className="w-full max-w-md transition-none disabled:opacity-100 disabled:saturate-100 disabled:brightness-100"
         variant={justQueued ? "success" : "retro"}
         size="retro-default"
-        disabled={isGenerating || (normalizedPromptMode === 'managed' && actionablePromptsCount === 0)}
+        disabled={disabledReason !== null || isGenerating || (normalizedPromptMode === 'managed' && actionablePromptsCount === 0)}
       >
         {justQueued
           ? "Creating tasks!"
@@ -98,6 +103,10 @@ export const GenerateControls: React.FC<GenerateControlsProps> = ({
               ? `Generate ${imagesPerPrompt * promptMultiplier} New ${imagesPerPrompt * promptMultiplier === 1 ? 'Image' : 'Images'}`
               : `Generate ${imagesPerPrompt * actionablePromptsCount} New ${imagesPerPrompt * actionablePromptsCount === 1 ? 'Image' : 'Images'}`}
       </Button>
+
+      {disabledReason && (
+        <LocalAppNote message={disabledReason} className="w-full max-w-md text-center text-xs" />
+      )}
 
       {/* Existing prompts buttons - only shown in automated mode when there are non-empty prompts */}
       {showExistingPromptButtons && (

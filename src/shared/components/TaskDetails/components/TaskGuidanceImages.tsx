@@ -1,6 +1,7 @@
 import React from 'react';
 import type { getVariantConfig } from '@/shared/types/taskDetailsTypes';
 import { asNumber, asRecord, asString, type UnknownRecord } from '@/shared/lib/tasks/taskParamParsers';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface TaskGuidanceImagesProps {
   config: ReturnType<typeof getVariantConfig>;
@@ -53,6 +54,7 @@ export const TaskGuidanceImages: React.FC<TaskGuidanceImagesProps> = ({
                 <img
                   key={index}
                   src={imageUrl}
+                  crossOrigin={mediaCrossOrigin(imageUrl)}
                   alt={`Input ${index + 1}`}
                   className="w-full aspect-square object-cover rounded border shadow-sm"
                 />
@@ -89,7 +91,7 @@ export const TaskGuidanceImages: React.FC<TaskGuidanceImagesProps> = ({
                   </svg>
                 </div>
               ) : (
-                <video src={videoPath} className="w-full rounded border" loop muted playsInline autoPlay />
+                <video src={videoPath} crossOrigin={mediaCrossOrigin(videoPath)} className="w-full rounded border" loop muted playsInline autoPlay />
               )}
             </div>
             <div className={`${config.textSize} ${config.fontWeight} space-y-0.5`}>

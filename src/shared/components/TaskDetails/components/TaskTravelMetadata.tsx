@@ -1,6 +1,7 @@
 import { asNumber, asString } from '@/shared/lib/tasks/taskParamParsers';
 import { formatTravelModelName } from '@/shared/components/TaskDetails/hooks/useVideoTravelTaskData';
 import { getVariantConfig } from '@/shared/types/taskDetailsTypes';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface TaskTravelMetadataProps {
   config: ReturnType<typeof getVariantConfig>;
@@ -38,7 +39,7 @@ export function TaskTravelMetadata({
             Style Reference
           </p>
           <div className="flex items-center gap-3">
-            <img src={styleImage} alt="Style" className="w-[80px] object-cover rounded border" />
+            <img src={styleImage} crossOrigin={mediaCrossOrigin(styleImage)} alt="Style" className="w-[80px] object-cover rounded border" />
             {styleStrength != null && (
               <span className={`${config.textSize} ${config.fontWeight}`}>
                 Strength: {Math.round(styleStrength * 100)}%

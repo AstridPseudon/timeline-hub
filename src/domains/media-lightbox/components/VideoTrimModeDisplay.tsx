@@ -9,6 +9,7 @@
 
 import React from 'react';
 import type { TrimState } from '@/shared/types/videoTrim';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface VideoTrimModeDisplayProps {
   /** Reference to the video element */
@@ -85,6 +86,8 @@ export const VideoTrimModeDisplay: React.FC<VideoTrimModeDisplayProps> = ({
     <video
       ref={videoRef}
       src={videoUrl}
+      // A poster is fetched with the video's CORS mode, so a gateway poster needs the attribute too.
+      crossOrigin={mediaCrossOrigin(videoUrl) ?? mediaCrossOrigin(posterUrl)}
       poster={posterUrl}
       muted
       playsInline

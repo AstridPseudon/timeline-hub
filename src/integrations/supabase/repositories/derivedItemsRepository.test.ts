@@ -49,7 +49,7 @@ describe('fetchDerivedItemsFromRepository (bridge R13 read)', () => {
     await expect(fetchDerivedItemsFromRepository('gen-1')).resolves.toEqual([]);
   });
 
-  it('maps edit variants into derived items with R9 content-route URLs, recency-sorted', async () => {
+  it('maps edit variants into derived items with CAS object-route URLs, recency-sorted', async () => {
     const sourceId = createJourneyState().galleryDetails[0]!.generation_id;
     // Seed one edit variant (non-primary, EDIT type) plus a non-edit variant
     // that must be excluded.
@@ -83,6 +83,13 @@ describe('fetchDerivedItemsFromRepository (bridge R13 read)', () => {
 
     const result = await fetchDerivedItemsFromRepository(sourceId);
 
+    // The R13 detail addresses each variant by its Runtime object identity, so
+    // the display URL is the object route for that variant's digest.
+    const variantPage = await (await router.handle(
+      new Request(`${FAKE_ORIGIN}/v1/generations/${sourceId}/variants`),
+    )).json() as { items: Array<{ variant_id: string; object_id: string }> };
+    const editObjectId = variantPage.items.find((variant) => variant.variant_id === fixtureUlid('varedit'))!.object_id;
+
     // Only the EDIT-typed variant qualifies as a derived item.
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
@@ -90,7 +97,7 @@ describe('fetchDerivedItemsFromRepository (bridge R13 read)', () => {
       variantType: 'edit',
       variantName: 'Edit A',
       prompt: 'edit prompt',
-      url: `/api/astrid/projects/${SLUG}/media/${mediaId}/content`,
+      url: `/api/astrid/v1/objects/${encodeURIComponent(editObjectId)}`,
     });
     expect(result[0]!.thumbUrl).toBe(result[0]!.url);
   });

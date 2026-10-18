@@ -17,9 +17,7 @@
 
 import { BRIDGE_REQUEST_TIMEOUT_MS } from '@/tools/video-editor/data/bridgeContract.ts';
 import { isAstridWorkspaceV1 } from '@/integrations/astrid/workspaceV1.ts';
-
-/** Same-origin base of the development bridge proxy (see vite.config). */
-export const BRIDGE_PROBE_BASE_URL = '/api/astrid';
+import { astridBase } from '@/integrations/runtime/connection.ts';
 
 /**
  * The fixed local identity every covered journey runs under once the
@@ -36,7 +34,7 @@ export type BridgeSessionProbeResult =
  * Never throws — every failure comes back as `{ ok: false }`.
  */
 export async function probeBridgeSession(
-  baseUrl: string = BRIDGE_PROBE_BASE_URL,
+  baseUrl: string = astridBase(),
 ): Promise<BridgeSessionProbeResult> {
   let response: Response;
   try {

@@ -327,8 +327,10 @@ describe('M3: value exports are importable from @reigh/editor-sdk', () => {
     const creativeKeys = Object.keys(stubs).sort();
     expect(creativeKeys).toEqual([
       'assets',
+      'documents',
       'export',
       'materials',
+      'pendingWork',
       'project',
       'projectObjects',
       'proposals',

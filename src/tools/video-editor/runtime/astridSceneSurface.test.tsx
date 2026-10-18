@@ -99,8 +99,8 @@ describe('actual SceneSurface document lifecycle',()=>{
     await waitFor(()=>expect(messages.some(m=>m.revision===nextSource.revision&&m.kind==='initialize')).toBe(true));
     const nextIframe=view.container.querySelector<HTMLIFrameElement>('iframe[data-scene-role="candidate"]')!;
     expect(view.container.querySelector('iframe[data-scene-role="displayed"]')).toBe(iframe);
-    expect(iframe).toHaveStyle({visibility:'visible'});
-    expect(nextIframe).toHaveStyle({visibility:'hidden'});
+    expect(iframe).toHaveStyle({opacity:'1'});
+    expect(nextIframe).toHaveStyle({opacity:'0'});
     expect(nextIframe).not.toBe(iframe);
     expect(nextIframe.srcdoc).toContain(`"revision":"${nextSource.revision}"`);
     const next=messages.filter(m=>m.revision===nextSource.revision).at(-1)!;
@@ -168,6 +168,23 @@ function ownedChildren() {
 }
 
 describe('last-good replacement ownership',()=>{
+  it('keeps a not-yet-displayed candidate renderable: transparent, never visibility:hidden or display:none',async()=>{
+    // Chromium render-throttles a hidden cross-origin frame: its document.fonts.ready and requestAnimationFrame
+    // then never settle, the candidate never acknowledges initialization and the scene stays "loading".
+    const source=await makeSource();
+    const t=ownedChildren();
+    const view=render(<SceneSurface source={source} sourceTime={2} width={640} height={360}/>);
+    const candidate=await t.mounted(view.container);
+    expect(candidate).toHaveAttribute('data-scene-role','candidate');
+    expect(candidate).toHaveStyle({opacity:'0',width:'640px',height:'360px',display:'block',pointerEvents:'none'});
+    expect(candidate.style.visibility).not.toBe('hidden');
+    expect(candidate.style.display).not.toBe('none');
+    expect(candidate).toHaveAttribute('aria-hidden','true');
+    t.initialize(candidate);t.ready(candidate);
+    expect(candidate).toHaveAttribute('data-scene-role','displayed');
+    expect(candidate).toHaveStyle({opacity:'1'});
+    expect(candidate).not.toHaveAttribute('aria-hidden');
+  });
   it('keeps the same displayed iframe through verification and initialization, then promotes without remount',async()=>{
     const first=await makeSource(),next=await makeSource({html:'<html><head></head><body>next</body></html>'});
     const gate=deferred<void>(),verify=sceneRuntime.verifyScenePackageIntegrity;
@@ -175,8 +192,8 @@ describe('last-good replacement ownership',()=>{
     const t=ownedChildren(),onStatus=vi.fn();
     const view=render(<SceneSurface source={first} sourceTime={2} width={640} height={360} onStatus={onStatus}/>);
     const old=await t.mounted(view.container);
-    expect(old).toHaveStyle({visibility:'hidden'});t.initialize(old);t.ready(old);
-    expect(old).toHaveStyle({visibility:'visible'});
+    expect(old).toHaveStyle({opacity:'0'});t.initialize(old);t.ready(old);
+    expect(old).toHaveStyle({opacity:'1'});
     view.rerender(<SceneSurface source={next} sourceTime={4} width={640} height={360} onStatus={onStatus}/>);
     expect(view.container.querySelectorAll('iframe')).toHaveLength(1);
     expect(view.container.querySelector('iframe')).toBe(old);
@@ -187,7 +204,7 @@ describe('last-good replacement ownership',()=>{
     await act(async()=>gate.resolve());
     await waitFor(()=>expect(view.container.querySelectorAll('iframe')).toHaveLength(2));
     const candidate=await t.mounted(view.container,'iframe[data-scene-role="candidate"]');
-    expect(old).toHaveStyle({visibility:'visible'});expect(candidate).toHaveStyle({visibility:'hidden'});
+    expect(old).toHaveStyle({opacity:'1'});expect(candidate).toHaveStyle({opacity:'0'});
     t.initialize(candidate);
     const hellos=t.messages(candidate).filter(m=>m.kind==='initialize').length;
     expect(view.container.firstChild).toHaveAttribute('data-phase','rendering');
@@ -195,7 +212,7 @@ describe('last-good replacement ownership',()=>{
     t.ready(candidate);
     expect(view.container.querySelectorAll('iframe')).toHaveLength(1);
     expect(view.container.querySelector('iframe')).toBe(candidate);
-    expect(candidate).toHaveStyle({visibility:'visible'});expect(old.isConnected).toBe(false);
+    expect(candidate).toHaveStyle({opacity:'1'});expect(old.isConnected).toBe(false);
     expect(t.messages(candidate).filter(m=>m.kind==='initialize')).toHaveLength(hellos);
     expect(t.messages(candidate).filter(m=>m.kind==='render')).toHaveLength(1);
     expect(view.container.firstChild).toHaveAttribute('data-displayed-revision',next.revision);
@@ -213,7 +230,7 @@ describe('last-good replacement ownership',()=>{
     view.rerender(show({...broken,html:broken.html.replace('aaaa','bbbb')}));
     await waitFor(()=>expect(view.container.firstChild).toHaveTextContent('Scene entry digest mismatch'));
     expect(view.container.querySelectorAll('iframe')).toHaveLength(1);
-    expect(view.container.querySelector('iframe')).toBe(old);expect(old).toHaveStyle({visibility:'visible'});
+    expect(view.container.querySelector('iframe')).toBe(old);expect(old).toHaveStyle({opacity:'1'});
     view.rerender(show({revision:'bad'}));
     expect(view.container.firstChild).toHaveTextContent('Missing scene source/revision');
     expect(view.container.querySelector('iframe')).toBe(old);
@@ -222,7 +239,7 @@ describe('last-good replacement ownership',()=>{
     const failed=await t.mounted(view.container,'iframe[data-scene-role="candidate"]');
     t.ack(failed,{kind:'error',error:'broken initialization'});
     expect(failed.isConnected).toBe(false);
-    expect(view.container.querySelector('iframe')).toBe(old);expect(old).toHaveStyle({visibility:'visible'});
+    expect(view.container.querySelector('iframe')).toBe(old);expect(old).toHaveStyle({opacity:'1'});
     expect(view.container.firstChild).toHaveAttribute('data-phase','error');
     expect(view.container.firstChild).toHaveAttribute('data-displayed-revision',first.revision);
     expect(view.container.firstChild).toHaveTextContent('broken initialization');
@@ -250,7 +267,7 @@ describe('last-good replacement ownership',()=>{
     view.rerender(<SceneSurface source={next} sourceTime={2} width={20} height={15}/>);
     t.ack(candidate,{...obsolete,kind:'frame'});
     expect(view.container.querySelector('iframe[data-scene-role="displayed"]')).toBe(old);
-    expect(candidate).toHaveStyle({visibility:'hidden'});
+    expect(candidate).toHaveStyle({opacity:'0'});
     expect(t.messages(candidate).at(-1)).toMatchObject({kind:'render',sourceTime:2,width:20,height:15,requestId:2});
     const beforeResize=t.messages(candidate).at(-1)!;
     view.rerender(<SceneSurface source={next} sourceTime={2} width={25} height={15}/>);
@@ -393,7 +410,7 @@ it('rebuilds a persisted BFCache document after synchronously retiring its trans
     expect(surface).toHaveAttribute('data-phase','loading');
     expect(surface).not.toHaveAttribute('data-source-time');
     expect(surface).not.toHaveAttribute('data-displayed-revision');
-    expect(restored).toHaveStyle({visibility:'hidden',width:'800px',height:'450px'});
+    expect(restored).toHaveStyle({opacity:'0',width:'800px',height:'450px'});
     expect(vi.getTimerCount()).toBe(2);
     const restoredCount=onStatus.mock.calls.length;
     t.initialize(old);
@@ -414,7 +431,7 @@ it('rebuilds a persisted BFCache document after synchronously retiring its trans
     expect(surface).toHaveAttribute('data-phase','ready');
     expect(surface).toHaveAttribute('data-source-time','9.000');
     expect(surface).toHaveAttribute('data-displayed-revision',source.revision);
-    expect(restored).toHaveStyle({visibility:'visible'});
+    expect(restored).toHaveStyle({opacity:'1'});
     expect(onStatus).toHaveBeenLastCalledWith(expect.objectContaining({phase:'ready',sourceTime:9,width:800,height:450}));
     expect(vi.getTimerCount()).toBe(0);
     view.rerender(show(10,800,450));

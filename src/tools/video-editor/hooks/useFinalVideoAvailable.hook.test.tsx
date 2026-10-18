@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ManagedOutput, Task as RuntimeTask } from '@/integrations/runtime/generated.ts';
-import { RUNTIME_BASE_URL } from '@/integrations/runtime/client.ts';
+import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
 import { useFinalVideoAvailable } from './useFinalVideoAvailable.ts';
 
 const mocks = vi.hoisted(() => ({
@@ -63,7 +63,7 @@ describe('useFinalVideoAvailable sweep sharing', () => {
     mocks.getTask.mockResolvedValue(succeededTask());
     mocks.listManagedOutputs.mockResolvedValue({ items: [videoOutput()], next_cursor: null });
     mocks.runtime = {
-      provider: { apiBaseUrl: RUNTIME_BASE_URL },
+      provider: { apiBaseUrl: runtimeApiBase() },
       project: { projectId: 'p' },
       userId: 'owner',
       shots: { finalVideoMap: new Map(), dismissFinalVideo: vi.fn() },

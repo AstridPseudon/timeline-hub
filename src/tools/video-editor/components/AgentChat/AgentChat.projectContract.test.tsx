@@ -328,13 +328,12 @@ describe('real panel → real hooks → owned ACP transport', () => {
     expect(screen.queryByText('Thinking...')).not.toBeInTheDocument();
   });
 
-  it.each(['rejection', 'timeout', 'disconnect'] as const)('settles terminal %s with visible recovery and persisted user text', async failure => {
+  it.each(['rejection', 'timeout'] as const)('settles terminal %s with visible recovery and persisted user text', async failure => {
     fixture.seed('p1');
     mount();
     await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
     if (failure === 'rejection') fixture.promptFailure = new Error('Prompt rejected');
     if (failure === 'timeout') fixture.promptFailure = new DOMException('Deadline elapsed', 'TimeoutError');
-    if (failure === 'disconnect') fixture.onPrompt = async () => { fixture.disconnected = true; };
     await send(`Retain ${failure} text`);
     await screen.findByRole('alert');
     await waitFor(() => expect(screen.queryByText('Thinking...')).not.toBeInTheDocument());
@@ -342,6 +341,27 @@ describe('real panel → real hooks → owned ACP transport', () => {
     expect(screen.getByRole('button', { name: 'Retry saved message' })).toBeInTheDocument();
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 550)); });
     expect(fixture.calls.filter(c => c.route.endsWith('/prompt'))).toHaveLength(1);
+  });
+
+  // The host accepts the prompt and then drops the connection. A failed send now
+  // refetches the session at once (perf(agent-chat): 70fecd3a), so the durable
+  // acceptance is seen immediately: the text is delivered and shown in the
+  // transcript, the saved queue row is retired, and nothing offers a re-send.
+  it('settles a disconnect after durable acceptance with visible recovery and no duplicate send', async () => {
+    fixture.seed('p1');
+    mount();
+    await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
+    fixture.onPrompt = async () => { fixture.disconnected = true; };
+    await send('Retain disconnect text');
+    await screen.findByRole('alert');
+    await waitFor(() => expect(screen.queryByText('Thinking...')).not.toBeInTheDocument());
+    await screen.findByText('Retain disconnect text');
+    await waitFor(() => expect(fixture.chat('p1').draft.queued_messages).toEqual([]));
+    expect(screen.queryByRole('button', { name: 'Retry saved message' })).not.toBeInTheDocument();
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 550)); });
+    const prompts = fixture.calls.filter(c => c.route.endsWith('/prompt'));
+    expect(prompts).toHaveLength(1);
+    expect(prompts[0].body.prompt[0]).toMatchObject({ type: 'text', text: 'Retain disconnect text' });
   });
 
   it('shows recoverable initialization failure without automatically issuing another creation operation', async () => {

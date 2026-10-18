@@ -316,8 +316,7 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, { notifications: [], disconnected: false });
   }
 
-  // Test-only control plane for the deterministic stub. The real bridge never
-  // exposes this route, and support.ts never calls it under REAL_BRIDGE=1.
+  // Test-only control plane for the deterministic stub.
   if (path === '/__test/reset' && req.method === 'POST') {
     return serializeMutation(() => send(res, 200, resetPristineState()));
   }

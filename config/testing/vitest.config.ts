@@ -3,8 +3,10 @@ import path from 'path';
 import fs from 'fs';
 import { createElementAdmissionsPlugin } from '../vite/astridElementAdmissions';
 import { resolveAstridSource, validateAstridToolCatalog } from '../vite/astridSource';
+import { CHECKOUT_LANE } from './lanes';
 
 const projectRoot = path.resolve(__dirname, '../..');
+const checkoutLane = process.env.VITEST_LANE === 'checkout';
 const astridSource = resolveAstridSource();
 if (astridSource) validateAstridToolCatalog(astridSource.sourceRoot);
 const astridPublicSource = resolveAstridSource(
@@ -83,9 +85,18 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    // Hang guard only (testing plan R-10): durations never fail a run, so the
+    // per-test and per-hook ceilings are generous; only a genuine hang trips them.
+    testTimeout: 120_000,
+    hookTimeout: 120_000,
     environment: 'jsdom',
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: checkoutLane
+      ? CHECKOUT_LANE
+      // The loopback gateway test lives next to its subject in scripts/ and is
+      // the only scripts/ test that runs under vitest (the others use node:test).
+      : ['src/**/*.test.{ts,tsx}', 'scripts/reigh-loopback-gateway.test.ts'],
     exclude: [
+      ...(checkoutLane ? [] : CHECKOUT_LANE),
       'supabase/functions/**',
       // This suite imports Astrid's selected Remotion composition and has its
       // own config so its linked workspace aliases resolve to Astrid's pack.

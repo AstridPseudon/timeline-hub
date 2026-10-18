@@ -18,6 +18,13 @@ import { fixtureUlid } from '@/test/bridgeFixtures.mjs';
 
 const FAKE_ORIGIN = 'http://bridge.fake';
 
+// These assertions cover the workspace.v1 routes (`/v1/projects`, `/v1/objects`).
+// The workspace flag is read once at module load, so opt in before client.ts
+// (and its workspaceV1 import) is evaluated.
+vi.hoisted(() => {
+  vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+});
+
 describe('AstridLocalClient', () => {
   let router: FakeBridgeRouter;
 

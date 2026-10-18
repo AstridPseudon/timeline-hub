@@ -14,6 +14,7 @@ import { MediaErrorBoundary } from '@/tools/video-editor/compositions/MediaError
 import { useOptionalPreviewAudioFailureReporter } from '@/tools/video-editor/compositions/PreviewMediaFailureContext.tsx';
 import type { ResolvedTimelineClip, TrackDefinition } from '@/tools/video-editor/types/index.ts';
 import { boundCanonicalClipToOccurrence } from '@/tools/video-editor/lib/canonicalRenderBounds.ts';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 /**
  * Audio mounts this far ahead of its first frame. Remotion keeps a premounted
@@ -210,7 +211,7 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, ...media })
       // Native media volume stops at 1. Remotion's Web Audio gain supports
       // the renderer's boosted volume, including its per-frame fade ramp.
       useWebAudioApi={amplify || undefined}
-      crossOrigin={amplify ? 'anonymous' : undefined}
+      crossOrigin={amplify ? 'anonymous' : mediaCrossOrigin(src)}
       // Buffer the whole premount window, not just metadata.
       preload="auto"
       // The hold above replaces Remotion's, which restarts requests in flight.

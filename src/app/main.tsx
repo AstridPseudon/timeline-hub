@@ -3,6 +3,7 @@ import {
   prefersAppEntry,
   resolveReturningAppEntry,
 } from '@/app/entryClassification.ts';
+import { setRuntimeOrigin } from '@/integrations/runtime/connection.ts';
 import { releaseBootLayerWhenReady } from '@/app/bootLayer.ts';
 
 function loadInstalledAppTypography(): void {
@@ -28,6 +29,10 @@ function loadInstalledAppTypography(): void {
 }
 
 async function main(): Promise<void> {
+  // First, before any module that can build a Runtime client or media URL is imported: the hosted
+  // build points every Runtime and Astrid base at the loopback gateway (`connection.ts`).
+  setRuntimeOrigin(import.meta.env);
+
   const rootElement = document.getElementById('root');
   if (!rootElement) {
     throw new Error("Failed to render app: element with id 'root' was not found.");

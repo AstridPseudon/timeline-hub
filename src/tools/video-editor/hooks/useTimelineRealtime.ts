@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { realtimeEventProcessor } from '@/shared/realtime/RealtimeEventProcessor.ts';
 import { assetRegistryQueryKey, timelineQueryKey } from '@/tools/video-editor/hooks/useTimeline.ts';
@@ -20,7 +20,8 @@ export function useTimelineRealtime({
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
+  // Before paint, so the inline bar (which yields to the open dialog) is never drawn for a frame beside it.
+  useLayoutEffect(() => {
     if (conflictExhausted) {
       setIsOpen(true);
     }

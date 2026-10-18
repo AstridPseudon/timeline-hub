@@ -17,6 +17,7 @@ import { useHiddenShots } from '@/tools/travel-between-images/hooks/useHiddenSho
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { isVideoGeneration, isPositioned } from '@/shared/lib/typeGuards';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
 import { useAddImageToShot } from '@/shared/hooks/shots/useShotGenerationMutations';
 import { useDuplicateShot, useDeleteShot } from '@/shared/hooks/shots/useShotsCrud';
@@ -199,7 +200,7 @@ function ShotCard({
 
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
         {thumbnailUrl ? (
-          <img src={thumbnailUrl} alt={shot.name} className="h-full w-full object-cover" draggable={false} />
+          <img src={thumbnailUrl} crossOrigin={mediaCrossOrigin(thumbnailUrl)} alt={shot.name} className="h-full w-full object-cover" draggable={false} />
         ) : (
           <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">No images</div>
         )}

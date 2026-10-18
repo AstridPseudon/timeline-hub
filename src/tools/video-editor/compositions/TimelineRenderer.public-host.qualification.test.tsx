@@ -31,6 +31,8 @@ import path from 'node:path';
 
 let currentFrame = 0;
 vi.mock('remotion', () => ({
+  delayRender: () => 0,
+  continueRender: () => {},
   AbsoluteFill: ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) => <div {...props}>{children}</div>,
   Sequence: ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) => <div data-testid="sequence" {...props}>{children}</div>,
   Series: ({ children }: PropsWithChildren) => <>{children}</>,
@@ -101,7 +103,11 @@ const makeProbeHost = () => {
   ));
   const SequenceProbe: FC = () => <div data-testid="probe-sequence" />;
   const host: AstridElementHost = {
-    descriptors: [],
+    // The renderer resolves an element only when the host declares its descriptor.
+    descriptors: [
+      { id: 'probe', kind: 'effect', revision: 'r1', componentPath: 'probe/effect.tsx' },
+      { id: 'probe', kind: 'animation', revision: 'r2', componentPath: 'probe/animation.tsx' },
+    ],
     sequenceRegistry: { 'sequence-probe': { component: SequenceProbe, source: 'probe' } },
     resolveComponent: resolveComponent as AstridElementHost['resolveComponent'],
     resolveSequenceClipEntry,
@@ -350,7 +356,13 @@ describe('V009 public host behavior qualification', () => {
   });
 
   it('preserves installed catalog, sequence registry, capability, and resolver identity', () => {
-    expect(INSTALLED_ASTRID_ELEMENT_HOST.descriptors).toBe(ASTRID_RENDERING_ELEMENTS);
+    // descriptors is now a fresh array per read (catalog plus admitted elements), so
+    // assert each catalog entry by identity rather than the array itself.
+    const installedDescriptors = INSTALLED_ASTRID_ELEMENT_HOST.descriptors;
+    expect(installedDescriptors.slice(0, ASTRID_RENDERING_ELEMENTS.length)).toHaveLength(ASTRID_RENDERING_ELEMENTS.length);
+    ASTRID_RENDERING_ELEMENTS.forEach((element, index) => {
+      expect(installedDescriptors[index]).toBe(element);
+    });
     expect(INSTALLED_ASTRID_ELEMENT_HOST.sequenceRegistry).toBe(SEQUENCE_COMPONENT_REGISTRY);
     const textCard = ASTRID_RENDERING_ELEMENTS.find((item) => item.kind === 'effect' && item.id === 'text-card');
     expect(textCard?.componentPath).toBe('packs/rendering/rendering/elements/effects/text-card/component.tsx');

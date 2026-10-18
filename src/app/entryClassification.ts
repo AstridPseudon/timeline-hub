@@ -37,11 +37,23 @@ export function classifyBrowserEntry(
 }
 
 /**
+ * The hosted build is the one compiled with a Runtime origin (`VITE_RUNTIME_ORIGIN`, `connection.ts`). It talks to the
+ * visitor's own Runtime, which has no `demo-project`: the demo slug there is a stale explicit URL and shows "Project
+ * not found". The bare editor route lets the editor pick the last-opened (or newest) project by itself.
+ */
+function isHostedBuild(): boolean {
+  const origin = (import.meta.env as { VITE_RUNTIME_ORIGIN?: unknown }).VITE_RUNTIME_ORIGIN;
+  return typeof origin === 'string' && origin.trim() !== '';
+}
+
+/**
  * Where a returning visitor lands once they have chosen the app over the landing page: the local
  * editor. Other app routes send anyone without a signed-in session back to /home, so they would
  * bounce straight back here.
  */
-export const APP_ENTRY_PATH = `/tools/video-editor?localProject=${DEMO_LOCAL_PROJECT}&localTimeline=${DEMO_LOCAL_TIMELINE}`;
+export const APP_ENTRY_PATH = isHostedBuild()
+  ? '/tools/video-editor'
+  : `/tools/video-editor?localProject=${DEMO_LOCAL_PROJECT}&localTimeline=${DEMO_LOCAL_TIMELINE}`;
 const APP_ENTRY_PREFERENCE_KEY = 'astrid:prefers-app';
 
 /** Remember that this browser chose the app (installed it, or asked to use it here). */

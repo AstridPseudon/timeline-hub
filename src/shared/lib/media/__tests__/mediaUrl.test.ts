@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getDisplayUrl, stripQueryParameters } from '../mediaUrl';
 
 describe('getDisplayUrl', () => {
@@ -72,5 +72,55 @@ describe('stripQueryParameters', () => {
 
   it('strips query parameters', () => {
     expect(stripQueryParameters('https://example.com/file.png?token=abc&v=1')).toBe('https://example.com/file.png');
+  });
+});
+
+describe('getDisplayUrl on the hosted build (gateway origin)', () => {
+  const GATEWAY = 'http://127.0.0.1:17340';
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.stubEnv('VITE_API_TARGET_URL', 'http://127.0.0.1:8085');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  async function withGateway() {
+    const connection = await import('@/integrations/runtime/connection.ts');
+    const media = await import('../mediaUrl');
+    connection.setRuntimeOrigin({ VITE_RUNTIME_ORIGIN: GATEWAY });
+    return media.getDisplayUrl;
+  }
+
+  it('leaves a gateway media URL untouched, whatever the API target', async () => {
+    const getDisplayUrl = await withGateway();
+    const astrid = `${GATEWAY}/api/astrid/v1/objects/sha256%3Aabc?download=0`;
+    const runtime = `${GATEWAY}/api/runtime/v1/objects/sha256%3Aabc`;
+    expect(getDisplayUrl(astrid)).toBe(astrid);
+    expect(getDisplayUrl(runtime)).toBe(runtime);
+  });
+
+  it('cache-busts a gateway media URL without changing its origin or route', async () => {
+    const getDisplayUrl = await withGateway();
+    vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
+    expect(getDisplayUrl(`${GATEWAY}/api/astrid/v1/objects/sha256%3Aabc#frame`, true))
+      .toBe(`${GATEWAY}/api/astrid/v1/objects/sha256%3Aabc?t=1700000000000#frame`);
+  });
+
+  it('sends only unmanaged paths to the API target', async () => {
+    const getDisplayUrl = await withGateway();
+    expect(getDisplayUrl('/storage/img.png')).toBe('http://127.0.0.1:8085/storage/img.png');
+    // A same-origin /api/astrid path is not under the gateway's media base, so it is unmanaged here.
+    expect(getDisplayUrl('/api/astrid/v1/objects/sha256%3Aabc')).toBe('http://127.0.0.1:8085/api/astrid/v1/objects/sha256%3Aabc');
+  });
+
+  it('does not treat a longer path segment as managed', async () => {
+    const connection = await import('@/integrations/runtime/connection.ts');
+    const { getDisplayUrl } = await import('../mediaUrl');
+    expect(connection.astridBase()).toBe('/api/astrid');
+    expect(getDisplayUrl('/api/astrid-element-admissions/x')).toBe('http://127.0.0.1:8085/api/astrid-element-admissions/x');
   });
 });

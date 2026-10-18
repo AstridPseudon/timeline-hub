@@ -24,6 +24,7 @@ import {
 import { Loader2, Check, Sparkles, Film, ArrowUp } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { VideoEnhanceSettings } from '../hooks/useGenerationEditSettings';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 // Default FPS for AI-generated videos (matches useVideoEditing assumption)
 const DEFAULT_VIDEO_FPS = 16;
@@ -41,6 +42,7 @@ function useDetectVideoFps(videoUrl: string | undefined): number | null {
 
     // Create a hidden video element to detect FPS
     const video = document.createElement('video');
+    video.crossOrigin = mediaCrossOrigin(videoUrl) ?? null;
     video.src = videoUrl;
     video.muted = true;
     video.playsInline = true;

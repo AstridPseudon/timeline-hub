@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import {
   ReighRuntimeClient,
-  RUNTIME_BASE_URL,
 } from '@/integrations/runtime/client.ts';
+import { isRuntimeMode as isRuntimeApiBase, runtimeApiBase } from '@/integrations/runtime/connection.ts';
 import type {
   ManagedOutput,
   ManagedOutputExportReceipt,
@@ -306,7 +306,8 @@ export function useFinalVideoAvailable() {
   const [dismissedTaskOutputs, setDismissedTaskOutputs] = useState<ReadonlySet<string>>(new Set());
   const projectSlug = runtime.project.projectId;
   const runtimeBaseUrl = (runtime.provider as { apiBaseUrl?: string }).apiBaseUrl;
-  const isRuntimeMode = runtimeBaseUrl === RUNTIME_BASE_URL;
+  const isRuntimeMode = isRuntimeApiBase(runtimeBaseUrl);
+  const runtimeBase = runtimeBaseUrl ?? runtimeApiBase();
   const taskSnapshot = useBridgeTaskSnapshot(isRuntimeMode ? [] : projectSlug ? [projectSlug] : []);
   const canonicalCompositionSettled = Boolean(
     shots.canonicalComposition || shots.canonicalCompositionError,
@@ -315,8 +316,8 @@ export function useFinalVideoAvailable() {
     isRuntimeMode && canonicalCompositionSettled ? projectSlug : null,
   );
   const runtimeClient = useMemo(
-    () => new ReighRuntimeClient({ baseUrl: runtimeBaseUrl ?? RUNTIME_BASE_URL }),
-    [runtimeBaseUrl],
+    () => new ReighRuntimeClient({ baseUrl: runtimeBase }),
+    [runtimeBase],
   );
   const exportRuntimeManagedOutput = useCallback(async (output: ManagedOutput) => {
     if (!isRuntimeMode) {
@@ -337,7 +338,7 @@ export function useFinalVideoAvailable() {
   );
   const runtimeFinalVideoQueryKey = [
     'runtime-final-videos',
-    runtimeBaseUrl ?? RUNTIME_BASE_URL,
+    runtimeBase,
     projectSlug ?? '__no-project__',
     canonicalComposition?.headRevisionId ?? '__no-canonical-head__',
     runtimeTaskFingerprint,
@@ -354,7 +355,7 @@ export function useFinalVideoAvailable() {
         projectSlug!,
         runtimeTasks.data,
         canonicalComposition,
-        resolvedRenderCacheFor(runtimeBaseUrl ?? RUNTIME_BASE_URL),
+        resolvedRenderCacheFor(runtimeBase),
       );
       next.retryDelayMs = nextFinalVideoRetryDelay(
         next.retryableNoOutput ?? false,

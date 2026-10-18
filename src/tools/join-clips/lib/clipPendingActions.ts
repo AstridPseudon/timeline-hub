@@ -14,6 +14,7 @@ import {
   type OperationResult,
 } from '@/shared/lib/operationResult';
 import type { VideoClip } from '../clipTypes';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 const PENDING_CLIPS_TTL_MS = 5 * 60 * 1000;
 
@@ -79,6 +80,7 @@ function getVideoDurationFromUrl(videoUrl: string): Promise<number> {
     videoElement.preload = 'metadata';
     videoElement.onloadedmetadata = () => resolve(videoElement.duration);
     videoElement.onerror = () => resolve(0);
+    videoElement.crossOrigin = mediaCrossOrigin(videoUrl) ?? null;
     videoElement.src = videoUrl;
   });
 }

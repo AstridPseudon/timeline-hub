@@ -4,6 +4,7 @@ import { useProgressiveImage } from '@/shared/hooks/ui-image/useProgressiveImage
 import { isProgressiveLoadingEnabled } from '@/shared/settings/progressiveLoading';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
 
 interface ImagePreviewProps {
@@ -33,6 +34,7 @@ export const SingleImagePreview: React.FC<ImagePreviewProps> = ({ image }) => {
       <img
         ref={progressiveRef}
         src={displaySrc}
+        crossOrigin={mediaCrossOrigin(displaySrc)}
         alt={`Image ${image.id}`}
         className={cn(
           "max-w-full max-h-full object-contain rounded-sm transition-opacity duration-100",
@@ -73,6 +75,7 @@ export const MultiImagePreview: React.FC<MultiImagePreviewProps> = ({ count, ima
         <img
           ref={progressiveRef}
           src={displaySrc}
+          crossOrigin={mediaCrossOrigin(displaySrc)}
           alt={`Image ${image.id}`}
           className={cn(
             "max-w-full max-h-full object-contain rounded-sm transition-opacity duration-100",

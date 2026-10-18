@@ -121,6 +121,15 @@ async function flush() {
   });
 }
 
+// The hook freezes writes (including owned flushes) until its one-time
+// IndexedDB recovery check settles. IndexedDB requests complete in issue
+// order, so a read issued after the hook's read resolves only once that check
+// has resolved; flush the check's trailing promise handlers afterwards.
+async function settleInitialRecoveryCheck() {
+  await loadTimelineDraft('timeline-1');
+  await flush();
+}
+
 describe('useTimelineSave — recovered draft durability', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -136,6 +145,7 @@ describe('useTimelineSave — recovered draft durability', () => {
     let acknowledge!: (version: number) => void;
     const harness = setup(() => new Promise<number>((resolve) => { acknowledge = resolve; }));
     act(() => harness.hook.result.current.commitData(makeTimelineData('baseline'), { save: false }));
+    await settleInitialRecoveryCheck();
     let receipt!: ReturnType<typeof harness.hook.result.current.registrationOwner.patchRegistryOwned>;
     let target!: ReturnType<typeof harness.hook.result.current.registrationOwner.captureSaveTarget>;
     let barrier!: Promise<number>;
@@ -159,6 +169,7 @@ describe('useTimelineSave — recovered draft durability', () => {
     const cause = new TimelineVersionConflictError('CAS denied');
     const harness = setup(async () => { throw cause; });
     act(() => harness.hook.result.current.commitData(makeTimelineData('baseline'), { save: false }));
+    await settleInitialRecoveryCheck();
     let receipt!: ReturnType<typeof harness.hook.result.current.registrationOwner.patchRegistryOwned>;
     let target!: ReturnType<typeof harness.hook.result.current.registrationOwner.captureSaveTarget>;
     let failure: unknown;

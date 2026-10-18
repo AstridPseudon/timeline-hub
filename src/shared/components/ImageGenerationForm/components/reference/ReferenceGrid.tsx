@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useFormCoreContext, useFormReferencesContext } from "../../ImageGenerationFormContext";
 import { ReferenceThumbnail, SkeletonThumbnail } from "./ReferenceThumbnail";
 import { AddReferenceButton } from "./AddReferenceButton";
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 const REFS_PER_PAGE = 11; // 11 refs per page + 1 for add button = 12 items (3 rows of 4)
 
@@ -81,6 +82,7 @@ export const ReferenceGrid: React.FC<ReferenceGridProps> = ({
         if (url) {
           const img = new Image();
           img.fetchPriority = "high";
+          img.crossOrigin = mediaCrossOrigin(url) ?? null;
           img.src = url;
         }
       });

@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { useVariants } from '@/shared/hooks/variants/useVariants';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 const PAGE_SIZE = 9;
 
@@ -91,6 +92,7 @@ export const ImageVariantPicker: React.FC<ImageVariantPickerProps> = ({
               >
                 <img
                   src={variantUrl}
+                  crossOrigin={mediaCrossOrigin(variantUrl)}
                   alt={variant.name ?? 'Variant thumbnail'}
                   className="h-full w-full object-cover"
                 />

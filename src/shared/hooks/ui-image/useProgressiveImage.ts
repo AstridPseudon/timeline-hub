@@ -9,6 +9,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { hasLoadedImage, markImageLoaded } from '@/shared/lib/preloading';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { createSessionId } from '@/shared/lib/sessionId';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 type ImagePhase = 'idle' | 'thumb' | 'loadingFull' | 'full' | 'error';
 
@@ -153,6 +154,9 @@ export const useProgressiveImage = (
         reject(new Error('Session aborted'));
       });
 
+      // CORS mode must match the element that later shows this URL, or the gateway sees no Origin.
+      const crossOrigin = mediaCrossOrigin(url);
+      if (crossOrigin) img.crossOrigin = crossOrigin;
       img.src = url;
     });
   }, [isSessionActive]);

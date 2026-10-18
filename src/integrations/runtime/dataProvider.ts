@@ -13,6 +13,7 @@ import {
   TimelineNotFoundError,
   TimelineSchemaIncompatibleError,
   TimelineVersionConflictError,
+  OwnUnacknowledgedSaveError,
   type DataProvider,
   type LoadedTimeline,
   type TimelineHeadRevision,
@@ -593,7 +594,10 @@ export class RuntimeDataProvider implements DataProvider {
       revisionId: requiredString(occurrence.shot_revision_id ?? occurrence.revision_id, 'parent composition occurrence.shot_revision_id'),
     }));
     const resolved = await Promise.all(identities.map(async ({ shotId, revisionId }) => {
-      let shot = this.shotRevisions.get(revisionId);
+      // Revision ids are unique per shot, not across shots (shot-alpha/rev-a and
+      // shot-beta/rev-a are different immutable records), so key by both.
+      const shotKey = `${shotId}\u0000${revisionId}`;
+      let shot = this.shotRevisions.get(shotKey);
       if (!shot) {
         shot = await this.readImmutableInFlight(
           JSON.stringify(['shot', projectId, shotId, revisionId]),
@@ -602,7 +606,7 @@ export class RuntimeDataProvider implements DataProvider {
         assertRuntimeIdentity(shot, projectId, shotId, 'shot revision');
         assertRevisionIdentity(shot, revisionId, 'shot revision');
         if (shot.shot_id !== shotId) throw new Error(`Runtime shot revision identity mismatch: requested ${shotId}, got ${String(shot.shot_id)}`);
-        this.shotRevisions.set(revisionId, shot);
+        this.shotRevisions.set(shotKey, shot);
       }
       const internalRevisionId = requiredString(shot.internal_timeline_revision_id, `shot revision ${revisionId}.internal_timeline_revision_id`);
       // The shot revision may carry the canonical immutable timeline scope;
@@ -766,7 +770,7 @@ export class RuntimeDataProvider implements DataProvider {
     const replay = pending?.expectedHead === base.headRevisionId
       && pending.requestSignature === requestSignature ? pending : undefined;
     if (pending && !replay && pending.expectedHead === base.headRevisionId) {
-      throw new TimelineVersionConflictError('An unacknowledged save owns this timeline head and payload; resolve its acknowledgement before publishing another edit.');
+      throw new OwnUnacknowledgedSaveError('An unacknowledged save owns this timeline head and payload; resolve its acknowledgement before publishing another edit.');
     }
     // Load the immutable base payload, not a newer cached/polled head. Runtime
     // owns CAS (and checks idempotency replay first), including read/publish races.

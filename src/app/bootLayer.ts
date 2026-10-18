@@ -8,6 +8,10 @@
  * editor's frame rather than into an empty sky. The lift starts on the next frame, with that
  * frame already painted under it.
  *
+ * With a visible mink and a page that draws the same mark in the same place (`data-boot-mink-continue`: the
+ * connecting screen's MinkRunner, at the boot mink's size), the layer is removed at once and that mark carries on
+ * from the boot mink's frame: nothing fades, runs on or restarts, so the mark never dims or jumps.
+ *
  * With a visible mink and a logo to land on (`data-boot-mink-target`), the mink runs home to
  * the logo, slowing to a stop, while its body dissolves from the bottom up; only its head
  * arrives, on the logo's head, and the two trade places on the same pixels. Otherwise (no
@@ -64,7 +68,9 @@ export function releaseBootLayerWhenReady(root: HTMLElement): void {
     observer.disconnect();
     requestAnimationFrame(() => {
       const target = root.querySelector<HTMLElement>('[data-boot-mink-target]');
-      if (target && minkIsShowing(boot) && !prefersReducedMotion()) flyMinkHome(boot, target);
+      const sameMark = root.querySelector<HTMLElement>('[data-boot-mink-continue]');
+      if (sameMark && minkIsFullyShowing(boot)) continueMink(boot, sameMark);
+      else if (target && minkIsShowing(boot) && !prefersReducedMotion()) flyMinkHome(boot, target);
       else fadeOut(boot);
     });
   };
@@ -80,8 +86,34 @@ function minkIsShowing(boot: HTMLElement): boolean {
   return Boolean(mink) && Number(getComputedStyle(mink!).opacity) > 0.05;
 }
 
+/** Fully in: a mink still fading in has nothing to hand over, and the paper dissolving over the page reveals the mark. */
+function minkIsFullyShowing(boot: HTMLElement): boolean {
+  const mink = boot.querySelector<HTMLElement>('.boot-mink');
+  return Boolean(mink) && Number(getComputedStyle(mink!).opacity) >= 0.99;
+}
+
 function prefersReducedMotion(): boolean {
   return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/**
+ * The page draws the same mink where the boot mink stands, so hand the stride over: start the page's sprite and ground
+ * as far into their cycles as the boot strip is (a negative delay), and drop the boot layer in the same frame.
+ */
+function continueMink(boot: HTMLElement, mark: HTMLElement): void {
+  const strip = boot.querySelector<HTMLElement>('.boot-mink-strip');
+  const run = strip && typeof strip.getAnimations === 'function' ? strip.getAnimations()[0] : undefined;
+  if (run) {
+    const phase = (Number(run.currentTime) || 0) % CYCLE_MS;
+    for (const part of mark.querySelectorAll<HTMLElement>('.astrid-mink-runner-sprite, .astrid-mink-runner-ground > span')) {
+      part.style.animationDelay = `${-phase}ms`;
+      // Already running from its own start: restart it so the delay is where it begins, in this frame.
+      part.style.animationName = 'none';
+      void part.offsetWidth;
+      part.style.animationName = '';
+    }
+  }
+  boot.remove();
 }
 
 function fadeOut(boot: HTMLElement): void {

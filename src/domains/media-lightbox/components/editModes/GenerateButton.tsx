@@ -10,6 +10,8 @@ import { Button } from '@/shared/components/ui/button';
 import { CheckCircle, Loader2, Paintbrush, Pencil, Sparkles } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { BrushStroke } from '../../hooks/inpainting/types';
+import { LocalAppNote } from '@/shared/components/RuntimeConnection/LocalAppNote.tsx';
+import { composeDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
 
 interface GenerateButtonProps {
   isMobile: boolean;
@@ -41,8 +43,11 @@ export const GenerateButton: React.FC<GenerateButtonProps> = ({
 }) => {
   const buttonSize = isMobile ? 'sm' : 'default';
   const iconSize = isMobile ? 'h-3 w-3' : 'h-4 w-4';
+  // The hosted build cannot make new images from any edit tab: the button is disabled and the line says why.
+  const disabledReason = composeDisabledReason();
 
   return (
+    <>
     <Button
       variant="default"
       size={buttonSize as 'sm' | 'default'}
@@ -52,6 +57,7 @@ export const GenerateButton: React.FC<GenerateButtonProps> = ({
           : handleUnifiedGenerate
       }
       disabled={
+        disabledReason !== null ||
         (editMode === 'annotate' && (brushStrokes.length === 0 || !inpaintPrompt.trim())) ||
         (editMode !== 'annotate' && !inpaintPrompt.trim()) ||
         (editMode === 'inpaint' && brushStrokes.length === 0) ||
@@ -93,5 +99,9 @@ export const GenerateButton: React.FC<GenerateButtonProps> = ({
         </>
       )}
     </Button>
+    {disabledReason && (
+      <LocalAppNote message={disabledReason} className={isMobile ? 'text-[10px]' : 'text-xs'} />
+    )}
+    </>
   );
 };

@@ -133,7 +133,7 @@
     "astrid/packs/rendering/rendering/elements/transitions/fade/element.yaml": "28f1b4f74919f026418ee2b1d1d7a294a6674cb7ef5709e0db95ee6f9dc9c7c2",
     "astrid/packs/rendering/shared/element_contracts.ts": "433f0b6b81fcfc7826c4f434bb158c1a2a3dea4f71f99a6689226c9e0395f3b6",
     "astrid/packs/rendering/shared/readiness-image.tsx": "3e65b118c6dae90b64d058c6522ab38361fd81129373a0c56ae58a7db4bad075",
-    "astrid/packs/rendering/ui/live-scenes/SceneSurface.tsx": "830b7966ed736431ef688242c0917273d563e9716f3f58a633b5402879e7c2f9",
+    "astrid/packs/rendering/ui/live-scenes/SceneSurface.tsx": "467c92e06e4c9171d3fa25bf738c89f8fbe90d06aa4474275eb1ffbb28c4492d",
     "astrid/packs/rendering/ui/live-scenes/authoring.ts": "1f5242296ddab3497eaac437244541e0e762f84d6cac1803b9c0d86a2f206a85",
     "astrid/packs/rendering/ui/live-scenes/diagnostics.ts": "012c8d739dfddf33742e0479a19a59d0a1f1b7e618e1e3948a049b962080a022",
     "astrid/packs/rendering/ui/live-scenes/extension.tsx": "4c3a91754752af5b319c2b6268454ec13bef2559a357b7665ea071b2692554ee",

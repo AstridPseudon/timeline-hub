@@ -5,9 +5,13 @@ import React from 'react';
 
 const runtimeSnapshotMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/app/runtime/runtimeDocument', () => ({
-  getRuntimeDocumentProjectId: () => 'runtime-project',
-}));
+vi.mock('@/app/runtime/runtimeDocument', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/app/runtime/runtimeDocument')>();
+  return {
+    ...actual,
+    getRuntimeDocumentProjectId: () => 'runtime-project',
+  };
+});
 vi.mock('@/integrations/runtime/generationAccess', () => ({
   fetchRuntimeGenerationSnapshot: (...args: unknown[]) => runtimeSnapshotMock(...args),
   runtimeSnapshotToDetail: (snapshot: { generation: unknown; variants: unknown[] }) => ({

@@ -218,6 +218,8 @@ export function useReighShotsHost(
         preparedCompositionRef.current = composition;
         setPreparedComposition(composition);
       }
+      // A read that succeeds means the outage is over: the ordinary graph poll resumes.
+      runtimePollingPausedRef.current = false;
       setCanonicalCompositionError(null);
       setCanonicalLoading(false);
       void loadSourceFrameThumbnails(composition, generation);
@@ -283,7 +285,8 @@ export function useReighShotsHost(
     && draftScopeMatchesHost(canonicalDraftState.scope)
     ? canonicalDraftState.composition.occurrences
     : scopedComposition?.occurrences ?? [], [canonicalDraftState, draftScopeMatchesHost, scopedComposition]);
-  const scopedPendingOccurrences = pendingOccurrences?.projectId === projectId
+  const scopedPendingOccurrences = pendingOccurrences
+    && pendingOccurrences.projectId === projectId
     && pendingOccurrences.parentDocumentId === parentDocumentId
     ? pendingOccurrences.placements : EMPTY_PENDING_OCCURRENCES;
   const shots = useMemo(() => selectCanonicalShotViewModels(scopedComposition), [scopedComposition]);

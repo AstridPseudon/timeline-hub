@@ -403,6 +403,7 @@ function useTimelineChromeContextValue({
   watchdogTripped,
   watchdogReason,
   retryWatchdog,
+  retryPendingSave,
   recoveryDraft,
   retryRecoveredDraft,
   discardRecoveredDraft,
@@ -426,6 +427,7 @@ function useTimelineChromeContextValue({
   watchdogTripped: boolean;
   watchdogReason: 'timeout' | 'lost-edit' | null;
   retryWatchdog: () => void;
+  retryPendingSave: () => void;
   recoveryDraft: ReturnType<typeof useTimelineSave>['recoveryDraft'];
   retryRecoveredDraft: ReturnType<typeof useTimelineSave>['retryRecoveredDraft'];
   discardRecoveredDraft: ReturnType<typeof useTimelineSave>['discardRecoveredDraft'];
@@ -473,6 +475,7 @@ function useTimelineChromeContextValue({
     watchdogTripped,
     watchdogReason,
     retryWatchdog,
+    retryPendingSave,
     recoveryDraft,
     retryRecoveredDraft,
     discardRecoveredDraft,
@@ -516,6 +519,7 @@ function useTimelineChromeContextValue({
     render.cancelRender,
     retrySaveAfterConflict,
     retryWatchdog,
+    retryPendingSave,
     saveStatus,
     setScaleWidth,
     startRender,
@@ -1227,6 +1231,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     watchdogTripped: save.watchdogTripped,
     watchdogReason: save.watchdogReason,
     retryWatchdog: save.retryWatchdog,
+    retryPendingSave: save.retryPendingSave,
     recoveryDraft: save.recoveryDraft,
     retryRecoveredDraft: save.retryRecoveredDraft,
     discardRecoveredDraft: save.discardRecoveredDraft,

@@ -1,0 +1,66 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
+import { setRuntimeAppUrl } from '@/integrations/runtime/runtimeAppUrl.ts';
+
+let origin = '';
+vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeOrigin: () => origin }));
+vi.mock('@/domains/lora/components', () => ({
+  ActiveLoRAsDisplay: () => null,
+  LoraSelectorModal: () => null,
+}));
+
+import { Img2ImgControls } from './Img2ImgControls';
+
+function renderControls() {
+  return render(
+    <Img2ImgControls
+      isMobile={false}
+      img2imgPrompt="a prompt"
+      setImg2imgPrompt={vi.fn()}
+      flushTextFields={vi.fn().mockResolvedValue(undefined)}
+      img2imgStrength={0.5}
+      setImg2imgStrength={vi.fn()}
+      isGeneratingImg2Img={false}
+      img2imgGenerateSuccess={false}
+      handleGenerateImg2Img={vi.fn()}
+      availableLoras={[]}
+      SectionLabel={({ children }) => <span>{children}</span>}
+    />,
+  );
+}
+
+afterEach(() => setRuntimeAppUrl(null));
+
+describe('Img2ImgControls on the hosted build', () => {
+  it('follows the compose line with an "Open the full editor" link to the local app, when the gateway reported one', () => {
+    origin = 'http://127.0.0.1:17340';
+    setRuntimeAppUrl('http://127.0.0.1:2222');
+    renderControls();
+
+    expect(screen.getByText("Making new images isn't on this page yet.")).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open the full editor' })).toHaveAttribute('href', 'http://127.0.0.1:2222');
+  });
+
+  it('has no link without an app address', () => {
+    origin = 'http://127.0.0.1:17340';
+    renderControls();
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('with the gateway origin, disables Transform and shows the compose line', () => {
+    origin = 'http://127.0.0.1:17340';
+    renderControls();
+
+    expect(screen.getByRole('button', { name: /Transform Image/ })).toBeDisabled();
+    expect(screen.getByText(RUNTIME_CONNECTION_COPY.composeDisabled)).toBeInTheDocument();
+  });
+
+  it('same-origin is unchanged: Transform is enabled and no line shows', () => {
+    origin = '';
+    renderControls();
+
+    expect(screen.getByRole('button', { name: /Transform Image/ })).toBeEnabled();
+    expect(screen.queryByText(RUNTIME_CONNECTION_COPY.composeDisabled)).toBeNull();
+  });
+});

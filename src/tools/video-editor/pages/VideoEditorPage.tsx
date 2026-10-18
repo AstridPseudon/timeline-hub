@@ -12,6 +12,8 @@ import {
  * Not part of the supported public SDK surface.
  */
 import { resolveRuntimeProjectId } from "@/integrations/runtime/resolveProjectSelector.ts";
+import { useRecoveryCardShowing } from "@/integrations/runtime/recoveryCard.ts";
+import { RUNTIME_CONNECTION_COPY } from "@/shared/components/RuntimeConnection/copy.ts";
 import {
   useCallback,
   useEffect,
@@ -82,10 +84,8 @@ import { ApiError } from "@/integrations/runtime/generated.ts";
 import { generateUUID } from "@/shared/lib/taskCreation/ids.ts";
 import { AppHeader } from "@/shared/components/AppHeader.tsx";
 import { WorkspaceConnectionRecovery } from "@/tools/video-editor/components/WorkspaceConnectionRecovery.tsx";
-import {
-  LOCAL_BRIDGE_BASE_URL,
-  useAstridBridgeDiscovery,
-} from "@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts";
+import { astridBase, runtimeOrigin } from "@/integrations/runtime/connection.ts";
+import { useAstridBridgeDiscovery } from "@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts";
 import { RuntimeDataProvider } from "@/integrations/runtime/dataProvider.ts";
 import type { SaveStatus } from "@/tools/video-editor/hooks/useTimelinePersistence.ts";
 import {
@@ -190,7 +190,7 @@ async function fetchBridgeJson<Schema extends ZodType>(
   schema: Schema,
   what: string,
 ): Promise<z.infer<Schema>> {
-  const response = await fetch(`${LOCAL_BRIDGE_BASE_URL}${path}`, {
+  const response = await fetch(`${astridBase()}${path}`, {
     signal: AbortSignal.timeout(BRIDGE_REQUEST_TIMEOUT_MS),
   });
   if (!response.ok) {
@@ -235,9 +235,16 @@ export function RuntimeConnectorRecoveryBanner({
   onRetry: () => void | Promise<void>;
   retrying?: boolean;
 }) {
+  // The hosted build's "Astrid stopped" / "restarted" card already says what to do about the same failure.
+  const recoveryCardShowing = useRecoveryCardShowing();
+  const hosted = runtimeOrigin() !== "";
+  if (hosted && recoveryCardShowing) return null;
   const authenticationFailed = error instanceof RuntimeAuthenticationError;
   const runtimeUnavailable = error instanceof RuntimeUnavailableError;
-  const title = authenticationFailed
+  // On the hosted build a person never reads the engineer titles or `recoveryAction`: one friendly line stands in.
+  const title = hosted
+    ? RUNTIME_CONNECTION_COPY.loadFailed.title
+    : authenticationFailed
     ? "Workspace Runtime authentication failed"
     : runtimeUnavailable && error.failureKind === "admission"
       ? "Workspace Runtime failed its startup checks"
@@ -254,7 +261,7 @@ export function RuntimeConnectorRecoveryBanner({
       <div className="min-w-0">
         <p className="text-sm font-medium text-foreground">{title}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {error.recoveryAction}
+          {hosted ? RUNTIME_CONNECTION_COPY.loadFailed.sentence : error.recoveryAction}
         </p>
       </div>
       <Button
@@ -264,7 +271,9 @@ export function RuntimeConnectorRecoveryBanner({
         onClick={() => void onRetry()}
         disabled={retrying}
       >
-        {retrying ? "Retrying Runtime connection…" : "Retry Runtime connection"}
+        {hosted
+          ? (retrying ? RUNTIME_CONNECTION_COPY.loadFailed.retrying : RUNTIME_CONNECTION_COPY.loadFailed.button)
+          : (retrying ? "Retrying Runtime connection…" : "Retry Runtime connection")}
       </Button>
     </div>
   );
@@ -1733,8 +1742,11 @@ export default function VideoEditorPage() {
   }
 
   if (mode === "local") {
+    // On the hosted build the connection gate, the "Astrid stopped" card and the restart card cover every way the
+    // connection can fail, so this technical recovery card never renders there and never hides the editor.
     const connectionFailed =
-      discovery.bridgeDown || !!runtimeConnectorError || !!nativeRecoveryError;
+      runtimeOrigin() === "" &&
+      (discovery.bridgeDown || !!runtimeConnectorError || !!nativeRecoveryError);
     const recovery = (
       <WorkspaceConnectionRecovery
         projectSlug={localProjectSlug}

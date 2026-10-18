@@ -4,6 +4,7 @@ import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
+import { agentChatDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
 import type { AgentChatEditorContext } from '@/shared/contexts/AgentChatContext.tsx';
 import type { AgentTurn, AgentTurnAttachment, AgentSessionStatus } from '@/tools/video-editor/types/agent-session.ts';
 import { timelineQueryKey, assetRegistryQueryKey } from '@/tools/video-editor/hooks/useTimeline.ts';
@@ -757,9 +758,12 @@ if (typeof window !== 'undefined') {
   window.addEventListener('pagehide', () => agentStore.closeConnectionOnPageHide());
 }
 
-/** ACP chat is now the local Astrid implementation, not the retired Supabase surface. */
+/**
+ * ACP chat is the local Astrid implementation, not the retired Supabase surface. It is off on the hosted
+ * build, whose loopback gateway never serves ACP (Plan A, D2): nothing may request the project-chat routes there.
+ */
 export function isTimelineAgentSessionsAvailable(): boolean {
-  return true;
+  return agentChatDisabledReason() === null;
 }
 
 export const agentSessionsQueryKey = (timelineId: string | null | undefined, projectId?: string | null) =>
@@ -896,7 +900,7 @@ export function useProjectAgentTaskLinks(projectId: string | null | undefined) {
   const queryClient = useQueryClient();
   return useQuery<AgentTaskLink[]>({
     queryKey: ['project-agent-task-links', projectId ?? null],
-    enabled: Boolean(projectId),
+    enabled: Boolean(projectId) && isTimelineAgentSessionsAvailable(),
     queryFn: async () => {
       const sessions = await agentStore.list(projectId);
       const links: AgentTaskLink[] = [];

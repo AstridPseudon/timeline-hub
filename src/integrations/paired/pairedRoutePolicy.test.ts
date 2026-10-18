@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import * as policy from '../../../config/vite/pairedRoutePolicy';
 import { allowedAcpRoute, allowedRoute } from '../../../scripts/reigh-loopback-gateway';
-import { classifyPairedRoute, type PairedService } from '../../../config/vite/pairedRoutePolicy';
+import { classifyPairedRoute, forwardHeaders, type PairedService } from '../../../config/vite/pairedRoutePolicy';
+import generatedClientSource from '../runtime/generated.ts?raw';
+import runtimeClientSource from '../runtime/client.ts?raw';
 
 const P = 'proj-1';
 const T = 'tl-1';
@@ -22,6 +24,7 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = [
   ['PATCH', runtime(`/v1/projects/${P}`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/timelines?limit=50`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/timelines/${T}`), 'runtime'],
+  ['PATCH', runtime(`/v1/projects/${P}/timelines/${T}`), 'runtime'], // renameTimeline
   ['GET', runtime(`/v1/projects/${P}/timelines/${T}/revisions/${R}`), 'runtime'],
   ['POST', runtime(`/v1/projects/${P}/timelines/${T}/composition-revisions`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/timelines/${T}/composition-revisions?limit=50`), 'runtime'],
@@ -328,5 +331,116 @@ describe('paired route policy', () => {
       'x-media-duration-seconds': '4.5', 'x-expected-version': '3', 'if-match': '"v1"', range: 'bytes=0-9',
     });
     for (const credential of ['authorization', 'cookie', 'x-output-binding', 'origin', 'host']) expect(forwarded).not.toHaveProperty(credential);
+  });
+});
+
+// The App's Workspace v1 calls, derived from source so the allowlist cannot drift
+// from them (bug B1: composition-revisions, inspect and /v1/capabilities were
+// called by the App but missing from the allowlist). Operations come from the
+// generated client (method + path template per `async op(...)`); the ones the App
+// uses are the `this.client.<op>(` calls in the runtime provider/adapter code.
+describe('paired route policy vs the App\'s Workspace v1 calls', () => {
+  // ReighRuntimeClient is the one place that owns a WorkspaceClient; the providers
+  // (dataProvider.ts etc.) reach the Runtime only through its wrappers.
+  const usedOperations = new Set([...runtimeClientSource.matchAll(/\bthis\.client\.(\w+)\(/g)].map((m) => m[1]));
+
+  /** Source text of a template literal starting after its opening backtick (nested `${ }` aware). */
+  const templateAt = (source: string, start: number) => {
+    let depth = 0;
+    for (let i = start; i < source.length; i += 1) {
+      if (source[i] === '`' && depth === 0) return source.slice(start, i);
+      if (source[i] === '$' && source[i + 1] === '{') { depth += 1; i += 1; } else if (source[i] === '}' && depth > 0) depth -= 1;
+    }
+    throw new Error('unterminated template literal');
+  };
+  /** Path with an example id per `encodeURIComponent(..)`, optional query parts included. */
+  const render = (template: string, action = ''): string => {
+    let out = '';
+    for (let i = 0; i < template.length; i += 1) {
+      if (template[i] !== '$' || template[i + 1] !== '{') { out += template[i]; continue; }
+      let depth = 1;
+      let end = i + 2;
+      for (; depth > 0; end += 1) depth += template[end] === '{' ? 1 : template[end] === '}' ? -1 : 0;
+      const expr = template.slice(i + 2, end - 1);
+      const optional = expr.match(/^\w+ {1}\? `(.*)` : ""$/s);
+      out += expr.startsWith('encodeURIComponent(') ? encodeURIComponent('timeline:id-1')
+        : optional ? render(optional[1]) : expr === 'action' ? action : '1';
+      i = end - 1;
+    }
+    return out;
+  };
+
+  interface DerivedCall { op: string; method: string; path: string; headers: string[] }
+  const operationBodies = new Map<string, string>();
+  for (const part of generatedClientSource.split(/\n {2}(?:private )?async /).slice(1)) operationBodies.set(part.match(/^(\w+)/)![1], part);
+
+  /** Every HTTP request an operation makes, following calls to sibling operations (cancelTask -> transitionTask, ...). */
+  const derive = (op: string, action = ''): DerivedCall[] => {
+    const body = operationBodies.get(op);
+    if (!body) throw new Error(`App uses ${op}, which is not in the generated client`);
+    const own = [...body.matchAll(/this\.request\("([A-Z]+)", (`|"|\w+)/g)].map((call) => {
+      let template: string;
+      const at = call.index! + call[0].length;
+      if (call[2] === '`') template = templateAt(body, at);
+      else if (call[2] === '"') template = body.slice(at).split('"')[0];
+      else template = templateAt(body, body.indexOf(`const ${call[2]} = \``) + `const ${call[2]} = \``.length); // path in a local variable
+      const headers = [...body.matchAll(/"([A-Z][A-Za-z]*(?:-[A-Za-z]+)+)"|headers\.([A-Z]\w*)/g)].map((m) => (m[1] ?? m[2]).toLowerCase());
+      return { op, method: call[1], path: render(template, action), headers: ['accept', ...headers] };
+    });
+    const siblings = [...body.matchAll(/this\.(\w+)\(([^)]*)\)/g)]
+      .filter(([, name]) => name !== op && name !== 'request' && operationBodies.has(name))
+      .flatMap(([, name, args]) => derive(name, args.match(/"(\w+)"/)?.[1] ?? action).map((call) => ({ ...call, op })));
+    if (own.length + siblings.length === 0) throw new Error(`cannot find the HTTP call of ${op}`);
+    return [...own, ...siblings];
+  };
+  const calls = [...usedOperations].sort().flatMap((op) => derive(op));
+
+  // Reached through /api/astrid (nativeEditorConnection.ts:6); the Runtime alias deliberately has no capability catalog.
+  const astridOnly = new Set(['listCapabilities']);
+
+  it('derives the App\'s calls from source, including the B1 routes', () => {
+    const derived = calls.map(({ method, path }) => `${method} ${path.split('?')[0]}`);
+    const id = encodeURIComponent('timeline:id-1');
+    const timeline = `/v1/projects/${id}/timelines/${id}`;
+    for (const b1 of [`POST ${timeline}/composition-revisions`, `POST ${timeline}/inspect`, 'GET /v1/capabilities']) {
+      expect(derived).toContain(b1);
+    }
+    expect(calls.length).toBeGreaterThan(25);
+    expect(calls.every(({ path }) => path.startsWith('/v1/') && !path.includes('${'))).toBe(true);
+    expect(calls.flatMap((call) => call.headers)).toEqual(expect.arrayContaining(['content-type', 'idempotency-key', 'x-original-name', 'range']));
+  });
+
+  describe.each(calls)('$op: $method $path', ({ method, path, headers, op }) => {
+    const prefixes = astridOnly.has(op) ? ['/api/astrid'] : ['/api/runtime', '/api/astrid'];
+    it.each(prefixes)('is allowed through %s, relay and gateway agree', (prefix) => {
+      const service = prefix === '/api/runtime' ? 'runtime' : 'astrid';
+      const route = classifyPairedRoute(`${prefix}${path}`, method, { 'content-length': '12' });
+      expect(route?.service).toBe(service);
+      expect(route?.upstreamPath).toBe(decodeURIComponent(path.split('?')[0]) + (path.includes('?') ? `?${path.split('?')[1]}` : ''));
+      expect(allowedRoute(path, method, service)).toBe(true);
+    });
+    it('keeps every header the call sends', () => {
+      const sent = Object.fromEntries(headers.map((name) => [name, 'v']));
+      expect(Object.keys(forwardHeaders(sent)).sort()).toEqual(Object.keys(sent).sort());
+    });
+  });
+
+  it('keeps the capability catalog off the Runtime alias and only the product surface reachable', () => {
+    expect(classifyPairedRoute('/api/runtime/v1/capabilities', 'GET')).toBeNull();
+    expect(classifyPairedRoute('/api/astrid/v1/capabilities', 'GET')?.service).toBe('astrid');
+    expect(classifyPairedRoute('/api/runtime/v1/not-a-route', 'GET')).toBeNull();
+    expect(classifyPairedRoute('/api/astrid/v1/not-a-route', 'POST')).toBeNull();
+  });
+
+  it('rejects the generated client\'s privileged operations (admin, worker, credential, realm)', () => {
+    const privilegedOps = ['doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm',
+      'claimTask', 'settleAttempt', 'registerExecutor', 'registerCapability', 'controlRemoteCredential', 'recordRemoteActivation', 'revokeRemoteActivation',
+      'recoverTaskPlacement', 'replaceParentCompositionMedia', 'prepareReboot', 'checkpointAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority'];
+    for (const op of privilegedOps) {
+      expect(usedOperations.has(op)).toBe(false);
+      for (const { method, path } of derive(op)) {
+        for (const prefix of prefixes) expect(classifyPairedRoute(`${prefix}${path}`, method), `${op} ${method} ${path}`).toBeNull();
+      }
+    }
   });
 });

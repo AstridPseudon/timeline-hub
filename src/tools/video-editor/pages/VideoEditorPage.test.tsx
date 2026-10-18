@@ -265,7 +265,6 @@ vi.mock("@/tools/video-editor/hooks/useTimelinesList.ts", () => ({
 // mutable `state.discovery` object so bridge-down → online refreshes can be
 // simulated without a real bridge.
 vi.mock("@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts", () => ({
-  LOCAL_BRIDGE_BASE_URL: "/api/astrid",
   useAstridBridgeDiscovery: () => ({
     healthQuery: {
       isLoading: state.discovery.healthLoading,

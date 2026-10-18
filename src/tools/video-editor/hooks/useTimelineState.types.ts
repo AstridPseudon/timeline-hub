@@ -265,6 +265,11 @@ export interface TimelineChromeContextValue {
   watchdogReason: 'timeout' | 'lost-edit' | null;
   retryWatchdog: () => void;
   /**
+   * Astrid answered again after a stop: sends the save that never got an answer now (does nothing when none waits, or
+   * when a conflict, reload or recovery choice owns the timeline).
+   */
+  retryPendingSave: () => void;
+  /**
    * One-slot recovery draft (plan-v5 B9): non-null when a previous session
    * left unsaved work. The shell offers Retry / Discard.
    */

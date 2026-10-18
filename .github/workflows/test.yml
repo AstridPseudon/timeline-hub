@@ -1,0 +1,45 @@
+# Default vitest run per push (testing plan UP.1). The checkout lane (npm run test:checkout) needs sibling repos and does not run here.
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  vitest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm test
+
+  # Cross-repo copies (testing plan C1): vendored Runtime files must match the producer's main; Astrid vendor files must match their provenance.
+  boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: banodoco/banodoco-workspace-runtime
+          ref: main
+          path: runtime-producer
+      - uses: actions/checkout@v4
+        with:
+          repository: peteromallet/astrid-agent
+          ref: main
+          path: astrid-producer
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+      - run: |
+          for lock in src/integrations/runtime/vendor.lock.json vendor/timeline-schema/vendor.lock.json; do
+            node scripts/vendor-lock.mjs check "$lock" --producer runtime-producer
+          done
+      - run: node scripts/vendor-lock.mjs check config/astrid-cli-surface/vendor.lock.json --producer astrid-producer
+      - run: node scripts/build/verify-astrid-vendor-sources.mjs

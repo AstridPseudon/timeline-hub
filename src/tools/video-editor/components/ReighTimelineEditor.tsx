@@ -4,6 +4,8 @@ import type { Shot } from '@/domains/generation/types/index.ts';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
+import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext.tsx';
 import { useShots } from '@/shared/contexts/ShotsContext.tsx';
 import { useShotCreation } from '@/shared/hooks/shotCreation/useShotCreation.ts';
@@ -103,6 +105,16 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
   const { selectedProjectId } = useProjectSelectionContext();
   const { shots } = useShots();
   const runtime = useVideoEditorRuntime();
+  // The hosted build's "Astrid stopped" / "restarted" card is what tells the person what to do; this banner stays quiet then.
+  const recoveryCardShowing = useRecoveryCardShowing();
+  // On the hosted build the friendly cards own every failed-to-load moment (TimelineLoadErrorCard, the stopped and
+  // restarted cards): the engineer-worded "canonical shot composition" lines never reach a person there.
+  const hosted = runtimeOrigin() !== '';
+  // Astrid answering again clears the card; the refresh that failed while it was stopped is retried here, so the
+  // "Couldn't refresh this timeline" line does not outlive the stop it was about.
+  useOnRecoveryCardCleared(() => {
+    if (runtime.shots?.canonicalCompositionError ?? runtime.shots?.error) runtime.shots?.refetchShots();
+  });
   const isDocumentShotMode = runtime.userId === null;
   const canonicalOccurrences = runtime.shots?.canonicalOccurrences ?? [];
   const pendingOccurrences = (runtime.shots as (typeof runtime.shots & {
@@ -608,21 +620,21 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
 
   return (
     <>
-      {isDocumentShotMode && !isCanonicalEditor ? (
+      {!hosted && isDocumentShotMode && !isCanonicalEditor ? (
         <div role="status" data-canonical-load-state="legacy" className="border-b px-3 py-1.5 text-center text-xs">
           Canonical shot composition is unavailable; showing the explicit legacy shot view.
         </div>
       ) : null}
-      {isCanonicalEditor && (canonicalLoadState === 'error' || canonicalLoadState === 'stale') ? (
+      {isCanonicalEditor && !recoveryCardShowing && (canonicalLoadState === 'stale' || (canonicalLoadState === 'error' && !hosted)) ? (
         <div
           role={canonicalLoadState === 'error' ? 'alert' : 'status'}
           data-canonical-load-state={canonicalLoadState}
           className="border-b border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-center text-xs text-amber-900 dark:text-amber-100"
         >
           {canonicalLoadState === 'error' && 'Could not load the canonical shot composition. Legacy shot data was not substituted.'}
-          {canonicalLoadState === 'stale' && `Canonical refresh failed; showing the last known head${runtimeCanonicalHeadRevisionId ? ` ${runtimeCanonicalHeadRevisionId}` : ''}.`}
+          {canonicalLoadState === 'stale' && "Couldn't refresh this timeline. Showing your last saved version."}
           <button type="button" className="ml-2 underline" onClick={() => runtime.shots?.refetchShots()}>
-            Retry canonical read
+            Try again
           </button>
         </div>
       ) : null}

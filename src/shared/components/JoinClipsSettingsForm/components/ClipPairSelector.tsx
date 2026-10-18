@@ -1,6 +1,7 @@
 import { Film } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { ClipPairInfo } from '@/shared/components/JoinClipsSettingsForm/types';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface ClipPairSelectorProps {
   clipPairs: ClipPairInfo[];
@@ -46,6 +47,7 @@ export function ClipPairSelector({
           {selectedPair.clipA.finalFrameUrl ? (
             <img
               src={selectedPair.clipA.finalFrameUrl}
+              crossOrigin={mediaCrossOrigin(selectedPair.clipA.finalFrameUrl)}
               alt={selectedPair.clipA.name}
               className="w-full h-full object-cover"
             />
@@ -60,6 +62,7 @@ export function ClipPairSelector({
           {selectedPair.clipB.posterUrl ? (
             <img
               src={selectedPair.clipB.posterUrl}
+              crossOrigin={mediaCrossOrigin(selectedPair.clipB.posterUrl)}
               alt={selectedPair.clipB.name}
               className="w-full h-full object-cover"
             />

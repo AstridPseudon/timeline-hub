@@ -185,6 +185,15 @@ describe('useReighShotsHost optimistic shot timeline bridge', () => {
     expect(load).toHaveBeenCalledTimes(3);
   });
 
+  it('renders with no placeholders when no project id is supplied yet', () => {
+    // a77938eb read `pendingOccurrences.parentDocumentId` when the state was null
+    // and projectId was undefined (`undefined === undefined`), crashing the render.
+    const { result } = renderHook(() => useReighShotsHost(
+      undefined as unknown as string | null, parentDocumentId,
+    ));
+    expect(result.current.pendingOccurrences).toEqual([]);
+  });
+
   it('keeps thumbnail Map identity when a poll returns unchanged URLs', () => {
     const current = new Map([['occ-1', 'thumb-a'], ['occ-2', 'thumb-b']]);
     const unchanged = new Map([['occ-1', 'thumb-a'], ['occ-2', 'thumb-b']]);

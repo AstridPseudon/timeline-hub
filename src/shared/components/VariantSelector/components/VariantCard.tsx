@@ -20,6 +20,7 @@ import { getVariantIcon, getVariantLabel, isNewVariant, getTimeAgo, hasLoadableS
 import { hasDifferentSourceImages } from '../variantSourceImages';
 import { VariantDetails } from './VariantDetails';
 import type { VariantCardSharedProps } from './variantCardSharedTypes';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 // --- VariantCard ---
 
@@ -124,6 +125,7 @@ export const VariantCard: React.FC<VariantCardProps> = ({
         {previewUrl && !thumbnailFailed ? (
           <img
             src={previewUrl}
+            crossOrigin={mediaCrossOrigin(previewUrl)}
             alt={label}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             onError={() => setThumbnailFailed(true)}

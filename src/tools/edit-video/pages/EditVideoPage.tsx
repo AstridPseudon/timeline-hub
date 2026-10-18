@@ -23,6 +23,7 @@ import { useEditToolMediaPersistence } from '@/shared/hooks/media/useEditToolMed
 import { EditMediaSelectionLayout } from '@/shared/editMedia/EditMediaSelectionLayout';
 import { navigateToGenerationById } from '@/domains/generation/navigation';
 import { requireProjectAndUserId } from '@/shared/editMedia/uploadGuards';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 // Preload video poster helper - warm up the browser cache
 const preloadedVideoRef = { current: null as string | null };
@@ -30,6 +31,7 @@ const preloadVideoPoster = (gen: GenerationRow) => {
   const urlToPreload = gen.thumbUrl || gen.imageUrl || gen.location;
   if (!urlToPreload || preloadedVideoRef.current === urlToPreload) return;
   const img = new Image();
+  img.crossOrigin = mediaCrossOrigin(urlToPreload) ?? null;
   img.src = urlToPreload;
   preloadedVideoRef.current = urlToPreload;
 };

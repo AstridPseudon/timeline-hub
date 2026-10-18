@@ -3,6 +3,7 @@ import { Music2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/components/ui/dialog';
 import { Button } from '@/shared/components/ui/button';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { getMediaUrl } from '@/shared/lib/media/mediaTypeHelpers';
 import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
 import type { GenerationRow } from '@/domains/generation/types';
@@ -47,7 +48,7 @@ export function AudioLightbox({ media, onClose, navigation, features, customOver
         <DialogTitle className="flex items-center gap-2 pr-6"><Music2 className="h-5 w-5" aria-hidden="true" />{name}</DialogTitle>
         <DialogDescription>Audio preview</DialogDescription>
         <div className="relative">
-          <audio key={`${media.id}:${src}`} src={src} controls preload="metadata" aria-label={name} className="w-full" />
+          <audio key={`${media.id}:${src}`} src={src} crossOrigin={mediaCrossOrigin(src)} controls preload="metadata" aria-label={name} className="w-full" />
           {customOverlay}
         </div>
         <div className="flex items-center justify-between gap-2">

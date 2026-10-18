@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ReighTimelineEditor } from '@/tools/video-editor/components/ReighTimelineEditor';
 import { getCanonicalLoadState } from '@/tools/video-editor/components/ReighTimelineEditor';
@@ -23,6 +24,13 @@ const mocks = vi.hoisted(() => ({
   pinGroup: vi.fn(),
   shots: [] as Shot[],
   selectedProjectId: 'project-1',
+}));
+
+// '' is same-origin; a gateway origin is the hosted build.
+let hostedOrigin = '';
+vi.mock('@/integrations/runtime/connection.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/integrations/runtime/connection.ts')>()),
+  runtimeOrigin: () => hostedOrigin,
 }));
 
 vi.mock('@/tools/video-editor/hooks/usePerfDiagnostics', () => ({
@@ -483,7 +491,99 @@ describe('ReighTimelineEditor canonical read state', () => {
     expect(screen.getByRole('alert')).toHaveAttribute('data-canonical-load-state', 'error');
     expect(screen.getByText(/Legacy shot data was not substituted/)).toBeInTheDocument();
     expect(screen.queryByText(/explicit legacy shot view/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Retry canonical read' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(refetchShots).toHaveBeenCalledTimes(1);
+  });
+
+  describe('on the hosted build', () => {
+    afterEach(() => { hostedOrigin = ''; });
+
+    it('never prints the engineer-worded error line: the load-error card owns that moment', () => {
+      hostedOrigin = 'http://127.0.0.1:17340';
+      const refetchShots = vi.fn();
+      const { container } = renderEditor({ runtime: {
+        shots: {
+          shotComposition: {},
+          canonicalOccurrences: [],
+          canonicalComposition: null,
+          canonicalCompositionError: new Error('Runtime unavailable'),
+          refetchShots,
+        },
+      } });
+
+      expect(container.querySelector('[data-canonical-load-state="error"]')).toBeNull();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(document.body.textContent).not.toMatch(/canonical|Legacy shot data|substituted/i);
+      expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    });
+
+    it('never prints the legacy shot view line either', () => {
+      const runtime = { userId: null, shots: { canonicalOccurrences: [] } };
+      // Same-origin the line is there (so the hosted absence below is not an empty render).
+      const sameOrigin = renderEditor({ runtime });
+      expect(sameOrigin.container.querySelector('[data-canonical-load-state="legacy"]')).not.toBeNull();
+      sameOrigin.unmount();
+
+      hostedOrigin = 'http://127.0.0.1:17340';
+      const { container } = renderEditor({ runtime });
+      expect(container.querySelector('[data-canonical-load-state="legacy"]')).toBeNull();
+      expect(document.body.textContent).not.toMatch(/legacy shot view|Canonical shot composition/i);
+    });
+
+    it('still says a stale refresh in plain words', () => {
+      hostedOrigin = 'http://127.0.0.1:17340';
+      const { container } = renderEditor({ runtime: staleRuntime() });
+      expect(container.querySelector('[data-canonical-load-state="stale"]')).toHaveTextContent("Couldn't refresh this timeline.");
+    });
+  });
+
+  const STALE_HEAD = '3f1c2a9e-4b7d-4c1e-9a55-0d6e7f8a9b10';
+  const staleRuntime = (refetchShots = vi.fn()) => ({
+    shots: {
+      shotComposition: {},
+      canonicalOccurrences: [],
+      canonicalComposition: { headRevisionId: STALE_HEAD },
+      canonicalCompositionError: new Error('Runtime unavailable'),
+      refetchShots,
+    },
+  });
+
+  it('says a stale read in plain words, never prints the head id, and offers Try again', () => {
+    const refetchShots = vi.fn();
+    const { container } = renderEditor({ runtime: staleRuntime(refetchShots) });
+
+    const banner = container.querySelector('[data-canonical-load-state="stale"]') as HTMLElement;
+    expect(banner).toHaveAttribute('role', 'status');
+    expect(banner).toHaveTextContent("Couldn't refresh this timeline. Showing your last saved version.");
+    expect(banner.textContent).not.toContain(STALE_HEAD);
+    expect(banner.textContent).not.toMatch(/canonical|head/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(refetchShots).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries the refresh by itself when the Astrid stopped card clears, so the stale line does not stay behind', () => {
+    const refetchShots = vi.fn();
+    act(() => setRecoveryCardShowing(true));
+    try {
+      renderEditor({ runtime: staleRuntime(refetchShots) });
+      expect(refetchShots).not.toHaveBeenCalled();
+      act(() => setRecoveryCardShowing(false));
+      expect(refetchShots).toHaveBeenCalledTimes(1);
+    } finally {
+      act(() => setRecoveryCardShowing(false));
+    }
+  });
+
+  it('stays quiet while the Astrid stopped / restarted card is showing, and speaks again when it is gone', () => {
+    act(() => setRecoveryCardShowing(true));
+    try {
+      const { container } = renderEditor({ runtime: staleRuntime() });
+      expect(container.querySelector('[data-canonical-load-state="stale"]')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+      act(() => setRecoveryCardShowing(false));
+      expect(container.querySelector('[data-canonical-load-state="stale"]')).not.toBeNull();
+    } finally {
+      act(() => setRecoveryCardShowing(false));
+    }
   });
 });

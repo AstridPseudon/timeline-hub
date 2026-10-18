@@ -8,6 +8,7 @@ import {
   isDataProviderPersistenceEnabled,
   isTimelineNotFoundError,
   isProviderUnavailableError,
+  isOwnUnacknowledgedSaveError,
   isTimelineSchemaIncompatibleError,
   isTimelineVersionConflictError,
   TimelineVersionConflictError,
@@ -209,6 +210,11 @@ export interface UseTimelinePersistenceResult {
   watchdogReason: 'timeout' | 'lost-edit' | null;
   /** Re-attempt the save (timeout) or dismiss the notice (lost-edit). */
   retryWatchdog: () => void;
+  /**
+   * Astrid answered again after a stop: send the edit that never got an answer now, instead of waiting for the next
+   * edit or a click. Does nothing when no save is waiting or a conflict, reload or recovery choice owns the timeline.
+   */
+  retryPendingSave: () => void;
   /** Synchronous guard for recovery actions that must not race canonical reload. */
   canonicalReloadInProgressRef: MutableRefObject<boolean>;
   /**
@@ -286,6 +292,9 @@ export function useTimelinePersistence({
   const session = activeTargetRef.current;
   const issuedFailuresRef = useRef(new WeakSet<TimelineSaveBarrierError>());
   const errorRetryAttemptRef = useRef<SaveAttempt | null>(null);
+  // The save that failed because the whole provider was unavailable (Astrid stopped). It is not retried on a timer, so
+  // it waits here until Astrid is back (`retryPendingSave`) or a newer edit runs into it and queues behind it.
+  const stalledAttemptRef = useRef<SaveAttempt | null>(null);
   const makeBarrierError = useCallback((target: TimelineSaveTarget, cause: unknown,
     noWrite = false, rejectedAttempt?: SaveAttempt) => {
     const owner = activeTargetRef.current;
@@ -495,6 +504,7 @@ export function useTimelinePersistence({
   const clearErrorRetry = useCallback(() => {
     cancelErrorRetryTimer();
     errorRetryRef.current = 0;
+    stalledAttemptRef.current = null;
   }, [cancelErrorRetryTimer]);
 
   const waitForRecoveryDraftWrites = useCallback(async () => {
@@ -799,7 +809,25 @@ export function useTimelinePersistence({
         cancelErrorRetryTimer();
         disarmWatchdog();
         setSaveStatus('error');
+        stalledAttemptRef.current = attempt;
         rejectFlushWaiters(persistenceError);
+        return;
+      }
+
+      if (
+        isOwnUnacknowledgedSaveError(persistenceError)
+        && stalledAttemptRef.current?.session === attempt.session
+        && !('expectedVersion' in scheduledOrAttempt)
+      ) {
+        // This edit met the editor's own earlier save, which never got an answer while Astrid was away. Nobody else
+        // wrote: the earlier save is retried first (it replays under its own key), and this edit waits behind it and is
+        // sent on the head that save lands on. It is not "the timeline changed somewhere else".
+        const earlier = stalledAttemptRef.current;
+        stalledAttemptRef.current = null;
+        pendingSaveRef.current = scheduledOrAttempt;
+        retryScheduled = true;
+        setSaveStatus('retrying');
+        scheduleErrorRetry(earlier);
         return;
       }
 
@@ -1235,6 +1263,31 @@ export function useTimelinePersistence({
     }
   }, [clearWatchdog, dataRef, getDataRef, scheduleSave, watchdogReason]);
 
+  const retryPendingSave = useCallback(() => {
+    if (!isMountedRef.current || reloadInProgressRef.current || isSavingRef.current) return;
+    if (isConflictExhaustedRef.current || isSchemaIncompatibleRef.current) return;
+    if (recoveryPendingRef?.current || recoveryActiveRef?.current) return;
+    if (isInteractionActive(getInteractionStateRef())) return;
+    // The save that failed while Astrid was away: send it again as it was, under its own key.
+    const stalled = stalledAttemptRef.current;
+    if (stalled) {
+      stalledAttemptRef.current = null;
+      if (stalled.session === activeTargetRef.current) doSaveRef.current?.(stalled, { attemptKind: 'transport-retry' });
+      return;
+    }
+    // A transport retry is waiting out its backoff: Astrid answering is the reason to stop waiting.
+    const waiting = errorRetryAttemptRef.current;
+    if (errorRetryTimer.current && waiting) {
+      cancelErrorRetryTimer();
+      if (waiting.session === activeTargetRef.current) doSaveRef.current?.(waiting, { attemptKind: 'transport-retry' });
+      return;
+    }
+    if (saveTimer.current || pendingSaveRef.current) return;
+    // Edits no save covers: send the latest.
+    const latest = getDataRef().current ?? dataRef.current;
+    if (latest && latest.stableSignature !== lastSavedSignatureRef.current) scheduleSave(latest, { preserveStatus: true });
+  }, [cancelErrorRetryTimer, dataRef, getDataRef, getInteractionStateRef, lastSavedSignatureRef, recoveryActiveRef, recoveryPendingRef, scheduleSave]);
+
   // When a gesture ends, flush the latest deferred payload (if any) through
   // the normal scheduleSave path, which will now proceed past the gate.
   useEffect(() => {
@@ -1522,6 +1575,7 @@ export function useTimelinePersistence({
     watchdogTripped,
     watchdogReason,
     retryWatchdog,
+    retryPendingSave,
     canonicalReloadInProgressRef: reloadInProgressRef,
     /** Bundle from the last server reload; consumed downstream ([V2-B4]). */
     loadedBundleRef,

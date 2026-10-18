@@ -4,6 +4,7 @@ import { AlertTriangle, Check, ImageOff, Loader2, Play, Trash2 } from 'lucide-re
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { VariantBadge } from '@/shared/components/VariantBadge';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
@@ -188,6 +189,7 @@ export const SegmentPreview: React.FC<SegmentPreviewProps> = ({
         {thumbUrl && !imageError ? (
           <img
             src={bridgeMediaUrl(getProjectSelectionFallbackId(), thumbUrl)}
+            crossOrigin={mediaCrossOrigin(bridgeMediaUrl(getProjectSelectionFallbackId(), thumbUrl))}
             alt={`Segment ${pairIndex + 1}`}
             className={cn('absolute inset-0 w-full h-full object-cover', isHovering && 'brightness-110')}
             onError={() => setImageError(true)}
@@ -307,6 +309,7 @@ export const SegmentPreview: React.FC<SegmentPreviewProps> = ({
                 <video
                   ref={videoRef}
                   src={bridgeMediaUrl(getProjectSelectionFallbackId(), videoUrl)}
+                  crossOrigin={mediaCrossOrigin(bridgeMediaUrl(getProjectSelectionFallbackId(), videoUrl))}
                   className="w-full h-full object-cover"
                   muted
                   loop

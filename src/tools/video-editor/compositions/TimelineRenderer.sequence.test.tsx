@@ -43,6 +43,8 @@ let currentEnvironment = {
 
 vi.mock('remotion', async () => {
   return {
+    delayRender: () => 0,
+    continueRender: () => {},
     AbsoluteFill: ({
       children,
       ...props

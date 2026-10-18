@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
 
 type PairStatus = { pair_id: string; realm_id: string; expires_at: number };
 
@@ -37,7 +38,7 @@ export default function PairingPage() {
   const checkRuntime = async () => {
     setBusy(true);
     try {
-      const response = await fetch('/api/runtime/v1/health', { headers: { Accept: 'application/json' } });
+      const response = await fetch(`${runtimeApiBase()}/v1/health`, { headers: { Accept: 'application/json' } });
       const value = await response.json().catch(() => ({})) as { protocol?: unknown; status?: unknown; error?: unknown };
       setRuntimeCheck(response.ok ? `${String(value.protocol)} / ${String(value.status)}` : `HTTP ${response.status}: ${String(value.error ?? 'request rejected')}`);
     } catch (error) { setRuntimeCheck(error instanceof Error ? error.message : 'Runtime request failed.'); }

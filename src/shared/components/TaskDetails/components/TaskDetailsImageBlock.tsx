@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { getVariantConfig } from '@/shared/types/taskDetailsTypes';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface TaskDetailsImageBlockProps {
   config: ReturnType<typeof getVariantConfig>;
@@ -29,6 +30,7 @@ export function TaskDetailsImageBlock({
       <div className={cn('relative group', containerClassName)} style={containerStyle}>
         <img
           src={imageUrl}
+          crossOrigin={mediaCrossOrigin(imageUrl)}
           alt={alt}
           className={cn('w-full object-cover rounded border shadow-sm', imageClassName)}
         />

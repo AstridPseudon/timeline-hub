@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { GenerationRow } from '@/domains/generation/types';
 import { hasLoadedImage, getImageElement } from '@/shared/lib/preloading';
 import { useAppEventListener } from '@/shared/lib/typedEvents';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 /**
  * Check if the browser already has the image decoded/cached.
@@ -19,6 +20,7 @@ const isInBrowserCache = (url: string): boolean => {
   // Fallback to creating a new image element to test
   try {
     const testImg = new Image();
+    testImg.crossOrigin = mediaCrossOrigin(url) ?? null; // the probe must use the element's CORS mode
     testImg.src = url;
 
     // For cached images, complete should be true immediately
