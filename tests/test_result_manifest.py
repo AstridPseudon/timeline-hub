@@ -889,6 +889,30 @@ def test_harvest_preserves_collection_name_and_distinct_ordinals(tmp_path: Path)
     assert [item["is_primary"] for item in harvested] == [True, False]
 
 
+def test_harvest_preserves_explicit_and_implicit_ordinal_provenance(tmp_path: Path) -> None:
+    spool = tmp_path / "outputs"
+    spool.mkdir()
+    (spool / "explicit.bin").write_bytes(b"explicit")
+    (spool / "positional.bin").write_bytes(b"positional")
+    write_manifest(
+        spool / "manifest.json",
+        build_manifest(
+            kind="audio",
+            inputs={},
+            outputs=[
+                {"path": "explicit.bin", "name": "music", "ordinal": 0, "role": "result", "is_primary": True},
+                {"path": "positional.bin", "name": "music", "role": "result"},
+            ],
+            created="2026-09-08T00:00:00Z",
+        ),
+    )
+
+    harvested = harvest_staged_outputs(spool, require=True)
+
+    assert [item["ordinal"] for item in harvested] == [0, 1]
+    assert [item["ordinal_explicit"] for item in harvested] == [True, False]
+
+
 def test_harvest_rejects_global_duplicate_ordinals_across_generation_groups(
     tmp_path: Path,
 ) -> None:

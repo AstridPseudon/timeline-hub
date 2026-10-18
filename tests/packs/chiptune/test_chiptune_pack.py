@@ -162,6 +162,26 @@ def test_compose_same_seed_is_byte_identical(tmp_path: Path) -> None:
     assert (first / "music.wav").read_bytes() != (other / "music.wav").read_bytes()
 
 
+def test_compose_result_manifest_marks_music_ordinal_explicit(tmp_path: Path) -> None:
+    out = _compose(
+        tmp_path,
+        "ordinal",
+        duration_s=2.0,
+        sections=[{"start_s": 0, "end_s": 2, "energy": 0.6, "mood": "bright", "cadence_bars": 0}],
+    )
+    manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+    music = next(output for output in manifest["outputs"] if output["name"] == "music")
+    beats = next(output for output in manifest["outputs"] if output["name"] == "beats")
+
+    assert "ordinal" in music and music["ordinal"] == 0
+    assert music["path"] == "music.wav"
+    assert music["artifact_type"] == "audio"
+    assert music["role"] == "result" and music["is_primary"] is True
+    assert beats["path"] == "beats.json"
+    assert beats["role"] == "auxiliary"
+    assert beats["media_type"] == "application/json"
+
+
 def test_compose_generator_declaration_retains_command_and_managed_outputs() -> None:
     from astrid.sdk import get_capability
 
