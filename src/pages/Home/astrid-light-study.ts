@@ -1,6 +1,6 @@
 import { LIGHT_STUDY_PUBLIC_EXAMPLE } from './content/light-study-v1/public-example.ts';
 import { PublicAstridExampleWriteError } from './publicAstridExample.tsx';
-import type { TimelineConfig } from '@/tools/video-editor/types/index.ts';
+import type { TimelineConfig } from '@/tools/video-editor/index.ts';
 
 /** Compatibility aliases for C01/sample-specific tests and provenance tooling. */
 export const PUBLIC_LIGHT_TIMELINE_ID = LIGHT_STUDY_PUBLIC_EXAMPLE.timelineId;

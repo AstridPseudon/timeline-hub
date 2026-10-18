@@ -1,4 +1,4 @@
-import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/index.ts';
+import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/index.ts';
 import { LIGHT_STUDY_MEDIA, resolveLightStudyAssetUrl } from './media.ts';
 
 export const LIGHT_STUDY_TIMELINE: TimelineConfig = Object.freeze({
