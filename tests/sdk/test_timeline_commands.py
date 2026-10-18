@@ -197,6 +197,88 @@ def test_cli_sdk_and_sheet_adapters_journal_the_same_add_media(monkeypatch, tmp_
     assert cli_tl.document() == sdk_tl.document() == sheet_tl.document()
 
 
+def _parent_only_audio_timeline(tmp_path, suffix):
+    fixture = Path(__file__).parents[1] / "fixtures/timeline_editing/tiny.json"
+    bundle = json.loads(fixture.read_text(encoding="utf-8"))
+    bundle["shots"] = {}
+    bundle["placements"] = []
+    bundle.pop("base_placements", None)
+    bundle["parent"]["clips"] = []
+    bundle["parent"]["config"]["tracks"] = []
+    timeline = Checkout(bundle, path=tmp_path / f"{suffix}.json")
+    track = "parent/track:music"
+    commands.run(timeline, {
+        "op": "timeline.add", "select": track,
+        "args": {"track": {"id": "music", "kind": "audio", "label": "Imported music"}},
+        "expect": {track + "::": {"state": "absent"}},
+    })
+    timeline.register_asset("Q", {
+        "media_id": "sha256:" + "a" * 64,
+        "object_id": "sha256:" + "a" * 64,
+        "type": "audio", "duration": 10.0,
+    })
+    return timeline
+
+
+def test_add_media_honors_exact_parent_created_identity_and_replays_owner(tmp_path):
+    target = "parent/clip:parent-bed"
+    call = {
+        "op": "timeline.add-media", "select": None, "created": [target],
+        "args": {"asset": "Q", "track": "music", "at": 0.0,
+                 "for_seconds": 2.0, "trim_in": 0.0, "clip_id": "parent-bed"},
+    }
+    first = _parent_only_audio_timeline(tmp_path, "parent-media-first")
+    plan = commands.run(first, call)
+    assert first.document()["parent"]["clips"][0]["id"] == "parent-bed"
+    assert first.document()["parent"]["clips"][0]["asset"] == "Q"
+    assert first.document()["parent"]["clips"][0]["track"] == "music"
+    recorded = plan.calls[0]
+    assert recorded.resolved == (target,)
+    assert recorded.created == (target,)
+    assert recorded.expect[target + "::"] == {"state": "absent"}
+
+    replay = _parent_only_audio_timeline(tmp_path, "parent-media-replay")
+    replay_plan = commands.run(replay, recorded)
+    assert replay.document() == first.document()
+    assert replay_plan.calls[0].resolved == (target,)
+
+
+def test_add_media_keeps_explicit_shot_owner_and_rejects_bad_created_destinations(tmp_path):
+    fixture = Path(__file__).parents[1] / "fixtures/timeline_editing/tiny.json"
+    bundle = json.loads(fixture.read_text(encoding="utf-8"))
+    bundle["shots"]["A"]["internal_timeline"]["registry"]["assets"]["Q"]["duration"] = 10.0
+    shot = Checkout(bundle, path=tmp_path / "shot-media.json")
+    target = "occurrence:occ-A/clip:shot-bed"
+    plan = commands.run(shot, {
+        "op": "timeline.add-media", "select": None, "created": [target],
+        "args": {"asset": "Q", "track": "music", "at": 1.0,
+                 "for_seconds": 1.0, "clip_id": "shot-bed"},
+    })
+    assert plan.calls[0].resolved == (target,)
+    assert shot.clip("shot-bed").shot_id == "A"
+
+    malformed = [
+        {"created": ["unscoped-bed"]},
+        {"created": ["parent/clip:one"], "resolved": ["parent/clip:two"]},
+        {"created": ["parent/clip:one"], "args": {"asset": "Q", "track": "music", "at": 0,
+                                                       "for_seconds": 1, "clip_id": "two"}},
+        {"created": ["parent/clip:one"], "expect": {"parent/clip:other::": {"state": "absent"}}},
+    ]
+    for index, overrides in enumerate(malformed):
+        parent = _parent_only_audio_timeline(tmp_path, f"bad-parent-media-{index}")
+        value = {
+            "op": "timeline.add-media", "select": None,
+            "created": ["parent/clip:one"],
+            "args": {"asset": "Q", "track": "music", "at": 0,
+                     "for_seconds": 1, "clip_id": "one"},
+        }
+        value.update(overrides)
+        before = parent.document()
+        with pytest.raises(commands.CommandError):
+            commands.run(parent, value)
+        assert parent.document() == before
+
+
 def test_skill_edit_flag_reference_matches_canonical_sources():
     from tools.parity.edit_flag_reference import TARGET, render_reference
 
