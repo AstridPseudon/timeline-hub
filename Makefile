@@ -8,7 +8,7 @@
 
 PY ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 
-.PHONY: help check ci preflight structure doc-refs doctor ruff mypy cycles remotion-install remotion-typecheck renderer-parity wheel ci-mirror editable lock-build lock-runtime lock-proof lock-validate toolchain-record s1-gate m4-baseline m4-gate m7-gate m8-gate
+.PHONY: help check ci preflight structure doc-refs doctor ruff mypy cycles remotion-install remotion-typecheck renderer-parity wheel ci-mirror editable lock-build lock-runtime lock-proof lock-validate toolchain-record s1-gate m4-baseline m4-gate m8-gate
 
 help:
 	@echo "make check   - blocking gates: structure, doc-refs, doctor, ruff, mypy, cycles, Remotion, renderer parity"
@@ -16,11 +16,10 @@ help:
 	@echo "make s1-gate - m1 S1 gate: 12 focused lanes + durable summary/logs in out/s1-gate/latest"
 	@echo "make m4-baseline - m4 Step 1: run pre-change selectors and retain artifacts/m4/baseline.json (fails closed)"
 	@echo "make m4-gate - m4 Step 33: 13 focused lanes + authority lint + drift rejection + feasibility admission (fails closed)"
-	@echo "make m7-gate - m7 GA evidence: admitted selectors 1-10 + provisional/retained dispositions (fails closed)"
 	@echo "make m8-gate - m8 packaged GA evidence: digest validation + atomic six-file release publication (set M8_EVIDENCE=... to publish a bundle)"
 	@echo "make lock-runtime / lock-build / lock-proof - refresh universal SHA-256 dependency locks with uv"
 	@echo "make lock-validate - validate exact pins, hashes, and direct dependency coverage"
-	@echo "make <gate>  - run one gate: structure | doctor | ruff | mypy | cycles | remotion-install | remotion-typecheck | renderer-parity | wheel | ci-mirror | editable | s1-gate | m4-baseline | m4-gate | m7-gate | m8-gate"
+	@echo "make <gate>  - run one gate: structure | doctor | ruff | mypy | cycles | remotion-install | remotion-typecheck | renderer-parity | wheel | ci-mirror | editable | s1-gate | m4-baseline | m4-gate | m8-gate"
 	@echo "make preflight - verify Python, Node, ffmpeg, and locked Remotion prerequisites"
 
 # --- Fast gates: catch the common deploy blockers in seconds. Run before every push. ---
@@ -142,16 +141,6 @@ m4-baseline:
 m4-gate:
 	@$(PY) scripts/reshape/m4_gate.py
 	@echo "✓ m4-gate (13 focused lanes + authority lint + drift + feasibility admission; admission retained in artifacts/m4/finalizer-admission.json)"
-
-# --- m7 GA evidence gate (plan step 9 / task T12_impl) ---
-# The script first validates the fresh Phase 0 admission, runs the explicit
-# whole-file selectors for GA items 1–10, and revalidates admission immediately
-# before atomically publishing acceptance.json and defects.md.  Item 11 is
-# source/build provisional evidence; item 12 retains the M3 source/test proof
-# pending the M8 installed-artifact rerun.
-m7-gate:
-	@$(PY) scripts/reshape/m7_gate.py --gate --artifact-dir artifacts/m7 --admission artifacts/m7/finalizer-admission.json
-	@echo "✓ m7-gate (GA items 1–10 executed; items 11–12 honestly staged; evidence retained in artifacts/m7)"
 
 # --- m8 packaged GA release gate (plan step 9 / task T11) ---
 # With M8_EVIDENCE set, publish the supplied installed-lane bundle.  Without
