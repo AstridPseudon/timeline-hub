@@ -13,7 +13,6 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any, Callable
 
-
 FIXTURE_RELATIVE_PATH = "tests/fixtures/timeline_visualize/desert_slice/assembly.jsonl"
 SLICE_RELATIVE_DIR = "tests/fixtures/timeline_visualize/desert_slice"
 TRUTH_RELATIVE_PATH = "tests/fixtures/timeline_visualize/desert_truth.json"

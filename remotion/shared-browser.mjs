@@ -15,7 +15,12 @@ import {fileURLToPath} from 'node:url';
 // Overrides the shared location (an explicit path must exist; it is never ignored).
 export const BROWSER_ENV = 'ASTRID_REMOTION_BROWSER_EXECUTABLE';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
+// Remotion evaluates remotion.config.ts (and what it imports) as bundled CommonJS, where import.meta is empty:
+// an unconditional fileURLToPath(import.meta.url) here threw while the config loaded, so no render could start.
+// Native ESM (the frame worker, the scripts) keeps the module-relative default; the config loader runs from
+// the selected Remotion root, so its working directory is the project.
+const here = typeof import.meta.url === 'string' ? path.dirname(fileURLToPath(import.meta.url)) : null;
+const defaultProjectRoot = () => (here === null ? process.cwd() : path.resolve(here, '..'));
 
 export const sharedBrowserRoot = () =>
   path.join(os.homedir(), 'Library', 'Caches', 'astrid-remotion-browser');
@@ -37,7 +42,7 @@ export function browserRelativePath(platform = process.platform, arch = process.
 // The Remotion version this project renders with, read from its installed package
 // (not via require.resolve: @remotion/renderer's exports map may hide package.json).
 // Returns null when the package is not installed: the config must still load (tests, typecheck).
-export function remotionRendererVersion(projectRoot = path.resolve(here, '..')) {
+export function remotionRendererVersion(projectRoot = defaultProjectRoot()) {
   const pkg = path.join(projectRoot, 'node_modules', '@remotion', 'renderer', 'package.json');
   try {
     return JSON.parse(fs.readFileSync(pkg, 'utf8')).version ?? null;
@@ -48,7 +53,7 @@ export function remotionRendererVersion(projectRoot = path.resolve(here, '..')) 
 
 export function sharedBrowserExecutable({
   env = process.env,
-  projectRoot = path.resolve(here, '..'),
+  projectRoot = defaultProjectRoot(),
   root = sharedBrowserRoot(),
   platform = process.platform,
   arch = process.arch,

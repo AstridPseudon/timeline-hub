@@ -504,7 +504,10 @@ def renderer_install_problem(project: Path) -> str | None:
     (host_bootstrap._provision_render_runtime_env); without them ``rendering.render`` is never ready and
     the failure surfaces much later as "capability is not ready for admission".
     """
-    from astrid.core.rendering.remotion_runtime import _REQUIRED_PACKAGES, REMOTION_CLI_RELATIVE_PATH
+    from astrid.core.rendering.remotion_runtime import (
+        _REQUIRED_PACKAGES,
+        REMOTION_CLI_RELATIVE_PATH,
+    )
     modules = project / "node_modules"
     missing = [str(modules / "@banodoco" / name) for name in _REQUIRED_PACKAGES
                if not (modules / "@banodoco" / name / "package.json").is_file()]
