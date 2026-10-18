@@ -42,7 +42,8 @@ def test_pack_host_credential_is_scoped_distinct_and_rotated_for_new_owner(tmp_p
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
         assert WORKER_SCOPES == canonical_scopes
         assert BOOTSTRAP_WORKER_SCOPES == canonical_scopes
-        assert metadata == {"actor": WORKER_ACTOR, "scopes": sorted(WORKER_SCOPES)}
+        assert metadata == {"credential_format": "astrid.runtime-credential/v1",
+                            "actor": WORKER_ACTOR, "scopes": sorted(WORKER_SCOPES)}
         discovery = json.loads((support / "discovery.json").read_text(encoding="utf-8"))
         assert discovery["worker_scopes"] == list(canonical_scopes)
         worker_token = worker_path.read_text(encoding="utf-8").strip()
