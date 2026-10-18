@@ -74,7 +74,18 @@ jobs:
         run: python -m pip install -e '.[dev]'
 
       - name: Unit tests (default lane shard)
-        run: python -m pytest -q --splits 8 --group ${{ matrix.group }} --durations-path .test_durations
+        # Read the committed baseline for selection; write only this shard's
+        # measured tests so the eight artifacts can be merged without stale entries.
+        run: python -m pytest -q --splits 8 --group ${{ matrix.group }} --durations-path .test_durations --store-durations --clean-durations
+
+      - name: Upload measured test durations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-durations-${{ matrix.group }}
+          path: .test_durations
+          include-hidden-files: true
+          if-no-files-found: error
 
   unit:
     name: unit
