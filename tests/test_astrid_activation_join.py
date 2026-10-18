@@ -539,6 +539,9 @@ def _run_case(tmp_path, astrid_root, *, drop_ack=False, misbind=False):
     result=None; initiating_error=None; shutdown_error=None; active_token_usable=False; metadata_before_shutdown=None; report_before_shutdown=None; activated_before_shutdown=False
     try:
         result=launcher.start(profile.profile_id,profile.workspace_uuid)
+        # The host writes its evidence after activation returns; shutdown must not
+        # SIGTERM it mid-write (the modules manifest is its last write).
+        _wait_for(events.with_suffix(".modules.json"),timeout=30)
         metadata_before_shutdown=credentials.actor_metadata("cpu-proof")
         if metadata_before_shutdown:
             active_token_usable=credentials.load(credentials.path_for("cpu-proof").read_text().strip())["actor"]=="cpu-proof"
