@@ -47,6 +47,7 @@ dev = [
     "mypy==1.17.0",
     "pytest==9.0.2",
     "pytest-cov==7.1.0",
+    "pytest-split==0.11.0",
     # The runtime keeps the canonical Banodoco schema optional, but the full
     # development/CI suite must exercise timeline validation against one exact
     # compatible contract instead of an ambient sibling checkout or an older
