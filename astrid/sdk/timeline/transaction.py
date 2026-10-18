@@ -173,6 +173,7 @@ def _needs_resolve(calls):
 def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool = True,
                      quiet: bool = False, reason: str | None = None, persist: bool = True,
                      record_no_change: bool = True, record_rollback: bool = True) -> Iterator[Edit]:
+    tl._assert_runner_state()
     if getattr(tl, "_edit_depth", 0):
         yield tl._open_edit
         return
@@ -206,6 +207,7 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
             digest = _digest(_strip_derived(copy.deepcopy(entry)))
             tx.plan = _plan(label, changed=False, digests={"before": digest, "after": digest})
             return
+        tl._assert_runner_state()
         # Capture authored values before the existing resolver can normalize them.
         raw_transitions = {(clip.shot_id, clip.id): copy.deepcopy(clip.data.get("transition"))
                            for clip in tl.clips() if not clip.is_audio}
@@ -234,6 +236,7 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
         if _store._snapshot(tl) == before_snapshot:
             from astrid.sdk.timeline.commands import finish_recording
             finish_recording(tl, tx, entry)
+            tl._accept_bundle()
             tx.plan = _plan(label, changed=False, digests=digests, calls=tx.calls,
                             direct_writes=getattr(tx, "direct_writes", ()), consequences=getattr(tx, "consequences", ()))
             if persist and record_no_change and not dry_run:
@@ -261,6 +264,7 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
         guard_direct_writes(tl, guards)
         from astrid.sdk.timeline.commands import finish_recording
         finish_recording(tl, tx, entry)
+        tl._accept_bundle()
         tx.plan = _plan(label, changed=True, changes=changes, diff=diff, clips=clips, cuts=cuts,
                         digests=digests, report=tx.report, calls=tx.calls,
                         direct_writes=getattr(tx, "direct_writes", ()), consequences=getattr(tx, "consequences", ()))

@@ -314,6 +314,7 @@ def _adapter(entry):
 
 
 def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
+    tl._assert_runner_state()
     if entry.boundary == "image":
         raise CommandError("timeline.restore must run alone through the authenticated commit service")
     if getattr(tl._open_edit, "cancelled", False):
@@ -865,6 +866,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
                 tl._open_edit.semantic_snapshots = snapshots = []
             from astrid.sdk.timeline.compiler import _detached_checkout
             snapshots.append((index, _detached_checkout(tl), before_entities, after_entities, command.created))
+        tl._accept_bundle()
         return result
     except TimelineEditError as exc:
         # Adapters may add source context to their displayed error; the durable

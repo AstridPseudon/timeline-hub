@@ -363,7 +363,7 @@ def test_a_failed_working_copy_write_leaves_no_undo_step_for_the_edit_it_did_not
 
     assert Checkout.load(path).clip("b-type").params["text"] == "edit one"  # the file still holds the last good save
     reopened = Checkout.load(path)
-    assert reopened.undo(1) == ["c2.card.set(text='edit one')"]  # the one real step: it changes something
+    assert reopened.undo(1) == ["set(text='edit one')"]  # RUNNER's label; the one real step changes something
     assert Checkout.load(path).clip("b-type").params["text"] == "Live."
     with pytest.raises(TimelineEditError, match="nothing to undo"):
         reopened.undo(1)  # and there is no phantom second step

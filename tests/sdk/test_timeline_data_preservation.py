@@ -70,13 +70,13 @@ def test_collision_lifecycle(tmp_path, monkeypatch):
     monkeypatch.setattr(store, 'resolve_ids', lambda *a, **k: ('p', 't', runtime.current))
     monkeypatch.setattr(store, 'fetch_bundle', lambda *a, **k: saved_publish._exact(
         client, dict(project_id='p', timeline_id='t'), k.get('revision_id') or runtime.current))
-    # Raw working-copy saves retain their own JSON merge/undo lifecycle. Keep
-    # this draft distinct from publication, which requires journaled commands.
+    # SDK commands retain the JSON merge/undo lifecycle and opaque payloads.
+    # Keep this draft distinct from the publication proof below.
     local = Checkout.draft('p', 't', 'merge-collision', client=client)
     before_local_x = local.clip('c1.rocket').get('x')
     other = Checkout.load(local.path)
-    local.bundle['shots']['A']['internal_timeline']['clips'][1]['params']['x'] = 42
-    other.bundle['shots']['B']['internal_timeline']['clips'][1]['params']['text'] = 'Other'
+    local.clip('c1.rocket').set(x=252)  # authoring pixels -> stored sprite x=42
+    other.clip('c2.card').set(text='Other')
     other.save(quiet=True)
     local.save(quiet=True)
     assert local.merged

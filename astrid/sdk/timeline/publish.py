@@ -25,8 +25,11 @@ class _PublishMixin:
         A retry authenticates currently and sends the original complete envelope.
         """
         from astrid.sdk.timeline.saved_publish import publish_saved
-        return publish_saved(self, message, idempotency_key=idempotency_key,
-                             client=client, force=force, dry_run=dry_run)
+        result = publish_saved(self, message, idempotency_key=idempotency_key,
+                               client=client, force=force, dry_run=dry_run)
+        if result.get("local_state") == "finalized":
+            self._accept_bundle()  # only the acknowledged saved-base reset
+        return result
 
     # ---- narration: the script text each shot is bound to ---------------------------
     def narration(self) -> dict[str, str]:
@@ -56,6 +59,7 @@ class _PublishMixin:
 
     def pin_narration(self, client: Any, *, idempotency_key: str) -> list[str]:
         """Register narration per shot as an explicit media preparation step."""
+        self._assert_runner_state()
         pinned = []
         for sid, text in self.narration_changes().items():
             payload = self.bundle["shots"][sid]["payload"]
@@ -70,6 +74,7 @@ class _PublishMixin:
             payload["text_bindings"] = [b for b in payload.get("text_bindings") or [] if b.get("kind") != "voiceover_script"] + [dict(pin)]
             (payload.get("metadata") or {}).pop("voiceover_script", None)
             pinned.append(sid)
+            self._accept_bundle()  # retain successful pins if a later binding refuses
         return pinned
 
     def document(self) -> dict[str, Any]:
