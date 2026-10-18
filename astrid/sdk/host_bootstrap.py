@@ -713,14 +713,14 @@ print(json.dumps({key:importlib.util.find_spec(module).origin for key,module in 
             "rebind the profile to the selected interpreter's noneditable product tree") from exc
 
 
-_JOB_ENV_TAGS = ("OTTO_HEAVY_LEASE",)
+_JOB_ENV_TAGS = ("OTTO_HEAVY_LEASE", "OTTO_HEAVY_DIR", "OTTO_HEAVY_CAPACITY")
 
 
 def _host_render_environment(source_path: Path) -> dict[str, str]:
     environment = dict(os.environ)
     environment.pop('ASTRID_PACKS_PATH', None)
     # The host outlives the command (and any capacity job) that happened to start it.
-    # A per-job lease tag would let that job's end-of-job sweep kill the host mid-work.
+    # Lease tags and private capacity state belong to that job, not the durable host.
     for tag in _JOB_ENV_TAGS:
         environment.pop(tag, None)
     if _execution_profile() == "installed":
@@ -1417,6 +1417,7 @@ def ensure_pack_host(
             "-m", "astrid.core.execution.generic_host", "run",
             "--pack-root", str(pack_root),
             "--runtime-endpoint", endpoint,
+            "--runtime-discovery-file", str(runtime_support / "discovery.json"),
             "--credential-file", str(worker_path),
             "--executor-id", PACK_HOST_ACTOR,
             "--ready-file", str(ready_path),
