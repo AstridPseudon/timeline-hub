@@ -27,6 +27,7 @@ from .bootstrap import (
     restart,
 )
 from .io import read_json
+from .loopback_http import urlopen_loopback
 from .paths import DATA_ROOT_ENV, RuntimePaths
 from .runtime_boundary import LocalRuntimeBoundary
 from .workspace import configure_workspace, inspect_workspace
@@ -262,7 +263,7 @@ def _start_local_worker(paths: RuntimePaths, *, profile_id: str, expected_worksp
         },
     )
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
+        with urlopen_loopback(request, timeout=30) as response:
             value = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         try:

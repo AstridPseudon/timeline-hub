@@ -10,11 +10,32 @@ import urllib.request
 import uuid
 from dataclasses import dataclass
 from typing import Any, Callable, Literal, Mapping
+from urllib.parse import urlsplit
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
 SCHEMA_DIGEST = "sha256:ec06fbc6567fe28065d22626b040cad81bb2e5318623586ae9187c713794f6b9"
 OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+_LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
+
+
+def _require_loopback(url: str) -> None:
+    host = urlsplit(url).hostname
+    if host not in _LOOPBACK_HOSTS:
+        raise ValueError(f"refusing to send a runtime credential to non-loopback host {host!r}")
+
+
+class _LoopbackRedirects(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        _require_loopback(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _urlopen_loopback(request: urllib.request.Request, *, timeout: float) -> Any:
+    """Open `request` without any configured HTTP proxy; loopback hosts only."""
+    _require_loopback(request.full_url)
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), _LoopbackRedirects)
+    return opener.open(request, timeout=timeout)
 
 
 @dataclass(frozen=True)
@@ -593,7 +614,7 @@ class WorkspaceClient:
                     reading_response = False
             else:
                 request = urllib.request.Request(self.base_url + path, data=body, headers=request_headers, method=method)
-                with urllib.request.urlopen(request, timeout=self.timeout) as response:  # noqa: S310 - endpoint is caller-configured
+                with _urlopen_loopback(request, timeout=self.timeout) as response:
                     status, response_headers = response.status, dict(response.headers)
                     reading_response = response_reader is not None
                     response_body = response.read() if response_reader is None else response_reader(response)

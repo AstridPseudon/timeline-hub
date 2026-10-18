@@ -24,6 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from astrid_runtime.loopback_http import urlopen_loopback  # noqa: E402
 from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
 from runtime_protocol.store import RealmStore  # noqa: E402
 
@@ -90,7 +91,7 @@ class Recorder:
         if key:
             request.add_header("Idempotency-Key", key)
         try:
-            with urllib.request.urlopen(request, timeout=10) as response:
+            with urlopen_loopback(request, timeout=10) as response:
                 status, content_type, payload = response.status, response.headers.get("Content-Type"), response.read()
         except urllib.error.HTTPError as error:
             status, content_type, payload = error.code, error.headers.get("Content-Type"), error.read()
