@@ -58,7 +58,12 @@ class PortProxy:
 @pytest.fixture
 def runtime(tmp_path, monkeypatch, synthetic_scene_answers):
     service, project = _service(tmp_path)
-    service.publish_parent_composition(project, "main", _publication(project), idempotency_key="initial")
+    # The imported Runtime fixture leaves tracks empty; current SDK closures
+    # require the picture and narration tracks to be declared by their owner.
+    initial = _publication(project, config=dict(tracks=[dict(id="video-1", type="video"),
+                                                       dict(id="audio-1", type="audio"),
+                                                       dict(id="voice", type="audio")]))
+    service.publish_parent_composition(project, "main", initial, idempotency_key="initial")
     credentials = CredentialStore(tmp_path / "credentials")
     token, _ = credentials.provision("fixture-writer", ["projects:write", "projects:read", "objects:read"])
     identity = dict(actor="fixture-writer", scopes=["projects:write", "objects:read"],
@@ -543,22 +548,50 @@ def publication_draft(service, project, monkeypatch):
     return draft, client
 
 
-@pytest.mark.parametrize("edit_kind", ["timing", "remove", "replace"])
+def edge_tts_retained_shape(manifest, words):
+    manifest["settings"].update(provider="edge-tts")
+    words.update(source="edge-tts", boundary="WordBoundary", words=[
+        dict(word="It", start_s=.05, end_s=.2), dict(word="went", start_s=.2125, end_s=.3875),
+        dict(word="viral", start_s=.4, end_s=.975)])
+
+
+@pytest.mark.parametrize("edit_kind", ["timing", "remove", "replace", "edge-tts"])
 def test_offline_prepared_publication_undo_reapply_exact_closure(runtime, monkeypatch, edit_kind):
     from astrid.sdk.timeline.checkout import Checkout
     s, p = runtime
-    refs, _, _ = managed_take(s, p)
+    monkeypatch.setattr("astrid.sdk.invocation.invoke", lambda *_a, **_kw: pytest.fail("generated speech"))
+    text = "It went viral." if edit_kind == "edge-tts" else "Hello world!"
+    refs, manifest, word_doc = managed_take(s, p, text=text,
+                                           bad=edge_tts_retained_shape if edit_kind == "edge-tts" else None)
     draft, client = publication_draft(s, p, monkeypatch)
     old_bytes = {ref["object_id"]: client.get_object(ref["object_id"])["data"] for ref in refs.values()}
+    original_spec = script(refs)["args"]["spec"]
+    original_spec["lines"][0]["text"] = text
     # Preparation uses settled managed bytes, not a private verified-take field.
-    narration.apply_managed_script(draft, script(refs)["args"]["spec"], client=client,
+    narration.apply_managed_script(draft, original_spec, client=client,
                                    preparation_id="offline-original", allow_generation=False)
     original = draft.publish("offline original", client=client, idempotency_key="offline-original")
     assert original["status"] == "accepted", original
     original_revision = original["accepted_revision_id"]
     original_closure = s._commit_revision_closure(p, "main", original_revision)
-    changed = script(refs)["args"]["spec"]
-    if edit_kind == "timing":
+    if edit_kind == "edge-tts":
+        from astrid.sdk import timeline_intent as intent
+        from astrid.sdk.timeline import saved_publish
+        exact = Checkout(saved_publish._exact(client, dict(project_id=p, timeline_id="main"), original_revision))
+        clip = exact.clip("voice")
+        assert intent.line_text(clip.data) == manifest["text"] == text
+        assert intent.line_take(clip.data) == refs
+        narration.validate_take(text, narration.read_managed_take(client, p, refs),
+                                authored_words=intent.words(clip.data))
+        # Omitting the explicit take must reuse the same settled output.
+        unchanged = copy.deepcopy(original_spec)
+        unchanged["lines"][0].pop("take")
+        command, takes = narration.prepare_script(Checkout.load(draft.path), unchanged, client=client,
+                                                  preparation_id="offline-reuse", allow_generation=False)
+        assert command["args"]["spec"]["lines"][0]["take"] == refs
+        assert takes[narration.take_key(refs)]["words"] == word_doc
+    changed = copy.deepcopy(original_spec)
+    if edit_kind in ("timing", "edge-tts"):
         changed["lines"][0]["gap_after_s"] = .8
     elif edit_kind == "remove":
         changed = dict(version=1, lines=[], remove=["occurrence:occurrence-1/clip:voice"])
@@ -679,14 +712,18 @@ def test_offline_prepared_publication_undo_reapply_exact_closure(runtime, monkey
         exact_content_restored=True, old_bytes_unchanged=True, exact_retry=True)))
 
 
-def test_offline_publication_inverse_refuses_unverified_or_unrelated_takes_before_effects(runtime, monkeypatch):
+@pytest.mark.parametrize("provider", ["fixture", "edge-tts"])
+def test_offline_publication_inverse_refuses_unverified_or_unrelated_takes_before_effects(runtime, monkeypatch, provider):
     from astrid.sdk.timeline import commands, journal
     from astrid.sdk.timeline._common import TimelineEditError
     from astrid.sdk.timeline.checkout import Checkout
     s, p = runtime
-    refs, _, _ = managed_take(s, p)
+    monkeypatch.setattr("astrid.sdk.invocation.invoke", lambda *_a, **_kw: pytest.fail("generated speech"))
+    refs, manifest, _ = managed_take(s, p, text="It went viral." if provider == "edge-tts" else "Hello world!",
+                                    bad=edge_tts_retained_shape if provider == "edge-tts" else None)
     draft, client = publication_draft(s, p, monkeypatch)
     raw = script(refs)["args"]["spec"]
+    raw["lines"][0]["text"] = manifest["text"]
     untouched = draft.document()
     with pytest.raises(TimelineEditError, match="no verified request-bound take"):
         commands.run(draft, script(refs))

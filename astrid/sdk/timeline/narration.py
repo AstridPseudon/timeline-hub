@@ -11,6 +11,7 @@ import hashlib
 import json
 import math
 import re
+import unicodedata
 from collections.abc import Mapping
 
 from astrid.sdk import timeline_intent as intent
@@ -57,6 +58,35 @@ def validate_speech_boundary(text, rows):
         raise TimelineEditError("speech words do not exactly match the complete ordered text tokens")
 
 
+def _edge_tts_word_boundary_spans_v1(text, rows):
+    """Map authenticated EdgeTTS v1 labels to exact authored character spans.
+
+    Algorithm v1 pairs whitespace tokens and rows by position, never by search.
+    A label must match exactly, or omit one ASCII sentence terminator (. ! ?)
+    after its final letter/number (including combining marks). Every sentence
+    is mapped, not just the final token. Internal punctuation and Unicode stay exact;
+    punctuation-only tokens, compound terminators and split/merged labels refuse.
+
+    Each (start, lexical_end, authored_end) leaves any omitted terminator in the
+    untimed authored suffix. These ephemeral spans never replace text, raw rows,
+    timings or managed references, and make no acoustic-correctness assertion.
+    Call only after the take's provenance, format and timings are validated.
+    """
+    tokens = list(re.finditer(r"\S+", text))
+    if not tokens or len(tokens) != len(rows):
+        raise TimelineEditError("EdgeTTS boundaries require one row per authored token")
+    spans = []
+    for token, row in zip(tokens, rows):
+        word = row["word"]
+        if (word.split() != [word] or not any(c.isalnum() for c in word)
+                or (token.group() != word and not (
+                    (word[-1].isalnum() or unicodedata.category(word[-1]).startswith("M"))
+                    and token.group() in (word + ".", word + "!", word + "?")))):
+            raise TimelineEditError("EdgeTTS boundaries differ from exact authored lexical spans")
+        spans.append((token.start(), token.start() + len(word), token.end()))
+    return tuple(spans)
+
+
 def validate_take(text, take, *, authored_words=None):
     """Validate a detached verified take before any authored edit or emission."""
     try:
@@ -79,14 +109,23 @@ def validate_take(text, take, *, authored_words=None):
                        for k in ("voice", "rate"))):
             raise TimelineEditError("speech text, audio, manifest or exact duration mismatch")
         rows = words["words"]
-        validate_speech_boundary(text, rows)
+        if not isinstance(rows, list) or not rows:
+            raise TimelineEditError("speech needs complete word rows")
         previous = 0
         for row in rows:
+            if (not isinstance(row, Mapping) or not isinstance(row.get("word"), str)
+                    or row["word"].split() != [row["word"]]):
+                raise TimelineEditError("each speech boundary row must be one exact token")
             start, end = row["start_s"], row["end_s"]
             if (any(type(v) not in (int, float) or not math.isfinite(v) for v in (start, end))
                     or not previous <= start < end <= duration):
                 raise TimelineEditError("invalid finite ordered speech word timings")
             previous = end
+        if (manifest["settings"].get("provider") == "edge-tts"
+                and words.get("source") == "edge-tts" and words.get("boundary") == "WordBoundary"):
+            _edge_tts_word_boundary_spans_v1(text, rows)
+        else:
+            validate_speech_boundary(text, rows)
         if authored_words is not None:
             raw = [{"start_s": r[0], "end_s": r[1], "word": r[2]} if isinstance(r, list)
                    else {k: v for k, v in r.items() if k != "id"} for r in authored_words]

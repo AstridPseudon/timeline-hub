@@ -42,6 +42,100 @@ def line(oid, cid, selected, *, segment="same", gap=None):
     return value
 
 
+def edge_take(text="It went viral.", labels=("It", "went", "viral")):
+    selected = take(text, duration=max(1.25, len(labels) * .3))
+    selected["words"].update(source="edge-tts", boundary="WordBoundary")
+    selected["words"]["words"] = [dict(word=word, start_s=i * .3, end_s=i * .3 + .2)
+                                   for i, word in enumerate(labels)]
+    for port, doc in (("speech_words", selected["words"]), ("speech_manifest", selected["manifest"])):
+        selected["refs"][port]["object_id"] = "sha256:" + narration.digest(doc)
+    return selected
+
+
+def test_edge_tts_retained_wordboundary_shape_is_lossless():
+    selected = edge_take()
+    selected["words"]["words"] = [dict(word="It", start_s=.05, end_s=.2),
+        dict(word="went", start_s=.2125, end_s=.3875), dict(word="viral", start_s=.4, end_s=.975)]
+    selected["refs"]["speech_words"]["object_id"] = "sha256:" + narration.digest(selected["words"])
+    before, key = copy.deepcopy(selected), narration.take_key(selected["refs"])
+    assert narration.validate_take("It went viral.", selected) is selected
+    assert selected == before and narration.take_key(selected["refs"]) == key
+    with pytest.raises(TimelineEditError):
+        narration.validate_speech_boundary("It went viral.", selected["words"]["words"])
+
+
+@pytest.mark.parametrize("text,labels,spans", [
+    ("One. Two! Three?", ["One", "Two", "Three"], ((0, 3, 4), (5, 8, 9), (10, 15, 16))),
+    ("\tCafé.\n12?  don't! ", ["Café", "12", "don't"], ((1, 5, 6), (7, 9, 10), (12, 17, 18))),
+    ("Go. Go!", ["Go", "Go"], ((0, 2, 3), (4, 6, 7))),
+    ("well-known, words.", ["well-known,", "words"], ((0, 11, 11), (12, 17, 18))),
+    ("Exact words!", ["Exact", "words!"], ((0, 5, 5), (6, 12, 12))),
+    ("Cafe\u0301.", ["Cafe\u0301"], ((0, 5, 6),)),
+])
+def test_edge_tts_word_boundary_spans_v1_contract(text, labels, spans):
+    selected = edge_take(text, labels)
+    before = copy.deepcopy(selected)
+    assert narration.validate_take(text, selected) is selected
+    assert narration._edge_tts_word_boundary_spans_v1(text, selected["words"]["words"]) == spans
+    assert selected == before
+
+
+@pytest.mark.parametrize("text,labels", [
+    ("It went viral.", ["It", "viral"]),  # missing
+    ("It went viral.", ["It", "went", "very", "viral"]),  # extra
+    ("It went viral.", ["went", "It", "viral"]),
+    ("It went viral.", ["it", "went", "viral"]),
+    ("Café.", ["Cafe\u0301"]),
+    ("12.", ["twelve"]), ("12.", ["13"]),
+    ("well-known.", ["wellknown"]), ("Hello, world.", ["Hello", "world"]),
+    ("cannot.", ["can", "not"]), ("can not.", ["cannot"]),
+    ("It went viral.", ["It went", "viral"]),
+    (".", ["."]), ("hello .", ["hello", "."]),
+    ("word...", ["word"]), ("word?!", ["word"]),
+    ("word.!", ["word."]), ("word,.", ["word,"]),
+    ("word。", ["word"]), ("word!", ["word?"]),
+])
+def test_edge_tts_refuses_nonexact_or_ambiguous_lexical_alignment(text, labels):
+    selected = edge_take(text, labels)
+    before = copy.deepcopy(selected)
+    with pytest.raises(TimelineEditError):
+        narration.validate_take(text, selected)
+    assert selected == before
+
+
+@pytest.mark.parametrize("mutation", [
+    lambda t: t["manifest"]["settings"].update(provider="other"),
+    lambda t: t["manifest"]["settings"].pop("provider"),
+    lambda t: t["words"].update(source="other"),
+    lambda t: t["words"].pop("source"),
+    lambda t: t["words"].update(boundary="SentenceBoundary"),
+    lambda t: t["words"].pop("boundary"),
+    lambda t: t["words"].update(schema_version=2),
+    lambda t: t["manifest"].update(schema_version=2),
+    lambda t: t["manifest"].update(text_sha256="0" * 64),
+    lambda t: t["manifest"].update(text="It went viral!"),
+    lambda t: t["manifest"].update(duration_seconds=1.3),
+    lambda t: t["words"]["words"][1].update(start_s=.1),
+    lambda t: t["words"]["words"][1].update(end_s=float("inf")),
+    lambda t: t["refs"]["speech"].update(object_id="sha256:" + "f" * 64),
+])
+def test_edge_tts_adapter_requires_exact_format_identity_and_timings(mutation):
+    selected = edge_take()
+    mutation(selected)
+    with pytest.raises(TimelineEditError):
+        narration.validate_take("It went viral.", selected)
+
+
+def test_edge_tts_authored_rows_must_remain_exact_raw_provider_rows():
+    selected = edge_take()
+    raw = selected["words"]["words"]
+    assert narration.validate_take("It went viral.", selected, authored_words=copy.deepcopy(raw)) is selected
+    authored = copy.deepcopy(raw)
+    authored[-1]["word"] += "."
+    with pytest.raises(TimelineEditError, match="immutable speech artifact"):
+        narration.validate_take("It went viral.", selected, authored_words=authored)
+
+
 def op(*lines, remove=()):
     return dict(op="timeline.apply-script", select=None,
                 args=dict(spec=dict(version=1, lines=list(lines), remove=list(remove))))
@@ -181,6 +275,8 @@ def test_source_word_clock_projects_exact_take_per_occurrence(managed, source_in
 
 def test_changed_new_and_deleted_lines_are_one_prepared_candidate(monkeypatch):
     bundle, takes = sample()
+    # The inserted narration uses its declared track under the current SDK.
+    bundle["parent"]["config"]["tracks"].append(dict(id="voice", kind="audio"))
     fresh = take("Changed exact text.")
     inserted = take("First inserted.")
     takes.update({narration.take_key(t["refs"]): t for t in [fresh, inserted]})
