@@ -391,6 +391,65 @@ def _prepare_apply_file_draft(tmp_path, monkeypatch):
     return Checkout.draft("P", "t")
 
 
+def _json_files(folder):
+    return {path.name: path.read_bytes() for path in folder.glob("*.json")}
+
+
+def test_apply_file_single_opcall_noop_matches_cli_and_python_records(tmp_path, monkeypatch, capsys):
+    from astrid.sdk.timeline import journal, store
+    from astrid.sdk.timeline.apply_file import apply_file
+    from astrid.sdk.timeline.commands import run as run_command
+
+    def exercise(route):
+        workspace = tmp_path / route
+        workspace.mkdir()
+        monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(workspace / "data"))
+        tl = _prepare_apply_file_draft(workspace, monkeypatch)
+        capsys.readouterr()
+        value = tl.clip("c1.rocket").get("x")
+        assert run_command(tl, {"op": "clip.set", "select": "c1.rocket", "args": {"x": 120}}).changed
+        assert len(tl.undo()) == 1
+
+        call = {"op": "clip.set", "select": "c1.rocket", "args": {"x": value}}
+        path = Path(tl.path)
+        journal_path = journal.journal_path("p", "t")
+        history_dir = store._history_dir(path)
+        redo_dir = store._redo_dir(path)
+        document_bytes = path.read_bytes()
+        records_before = journal.read(journal_path)
+        history_before, redo_before = _json_files(history_dir), _json_files(redo_dir)
+
+        if route == "cli":
+            assert _run("edit", "--file", str(path), "--command", json.dumps(call)) == 3
+            capsys.readouterr()
+        elif route == "sheet":
+            sheet = workspace / "noop.sheet"
+            sheet.write_text("edit " + json.dumps(call, separators=(",", ":")) + "\n", encoding="utf-8")
+            assert apply_file(tl, sheet) == []
+        else:
+            assert not run_command(tl, call).changed
+
+        records = journal.read(journal_path)
+        assert len(records) == len(records_before) + 1
+        record = records[-1]
+        assert record.kind == "edit" and record.outcome == "no-change"
+        assert record.label == call["op"] and len(record.calls) == 1
+        assert record.calls[0]["op"] == call["op"]
+        assert record.before == record.after and record.before
+        assert record.undo_step is None
+        assert path.read_bytes() == document_bytes
+        assert _json_files(history_dir) == history_before
+        assert _json_files(redo_dir) == redo_before
+        assert journal.verify(journal_path) == []
+        assert len(Checkout.load(path).redo()) == 1
+        return record.to_json()
+
+    records = [exercise(route) for route in ("cli", "sheet", "python")]
+    variable = {"source", "actor", "at", "id", "seq", "prev", "hash"}
+    comparable = [{key: value for key, value in record.items() if key not in variable} for record in records]
+    assert comparable[0] == comparable[1] == comparable[2]
+
+
 def _apply_file_contents(kind):
     first = {"op": "clip.set", "select": "c1.rocket", "args": {"x": 120}}
     second = {"op": "clip.set-duration", "select": "c2.card", "args": {"seconds": 2}}
