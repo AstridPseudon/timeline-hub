@@ -40,6 +40,9 @@ The detailed contracts are maintained in these authoritative guides:
   for quick orientation; when executor, orchestrator, or element manifests
   change, regenerate it with
   [`scripts/gen_capability_index.py`](../../../../../scripts/gen_capability_index.py).
+- [Pack testing](../pack-testing/SKILL.md) — where a pack's tests go, which
+  lane they run in, how to test an action (unit, real Runtime daemon, editing
+  scenario), and the known-failures rules.
 - [Video editing skill](../../../video_editing/docs/SKILL.md) — existing timeline
   editing route; the [rendering skill](../../../rendering/docs/SKILL.md) is the
   downstream render/evidence compatibility layer.
@@ -153,6 +156,7 @@ Before handoff, confirm that the pack's manifest and every contribution pass
 the static validator, that all declared paths stay inside the pack, and that a
 cold agent can discover and inspect the capability from the SDK. Run a smoke
 invocation only when the requested change includes runtime behavior and the
-required runtime/dependencies are available. For rendering contributions,
+required runtime/dependencies are available. Write and review the pack's tests
+with the [pack testing skill](../pack-testing/SKILL.md). For rendering contributions,
 use the rendering-specific validation and smoke path linked from the [current
 pack guide](../../../../../docs/guides/create-a-pack.md).
