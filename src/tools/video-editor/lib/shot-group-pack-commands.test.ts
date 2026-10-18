@@ -10,9 +10,7 @@ import { deriveTimelineShotGroupViews } from '@/tools/video-editor/lib/timeline-
 import { createFakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
 import {
   DUPLICATE_SHOT_GROUP_FAMILY,
-  PROMOTE_PRIMARY_FAMILY,
   admitDuplicateShotGroupPackCommand,
-  admitPromotePrimaryPackCommand,
   deepCopyShotGroupInDocument,
   duplicateShotGroup,
   promotePrimaryVariant,
@@ -204,21 +202,6 @@ describe('shot-group pack commands', () => {
     }, 'reigh:shot-pack:v1:duplicate:shot-a:V1:shot-b');
   });
 
-  it('admits promote-primary with the pinned family and stable receipt key', async () => {
-    const admit = vi.fn(async () => admissionResponse());
-    const client = commandClient({ tasks: { admit, get: vi.fn() } });
-
-    await admitPromotePrimaryPackCommand(client, {
-      generationId: 'gen-1',
-      variantId: 'variant-2',
-    });
-
-    expect(admit).toHaveBeenCalledWith({
-      family: PROMOTE_PRIMARY_FAMILY,
-      input: { generation_id: 'gen-1', variant_id: 'variant-2' },
-    }, 'reigh:shot-pack:v1:promote-primary:gen-1:variant-2');
-  });
-
   it('polls a command at the caller-supplied cadence until succeeded', async () => {
     const get = vi.fn()
       .mockResolvedValueOnce(taskDetail('queued'))
@@ -305,8 +288,7 @@ describe('shot-group pack commands', () => {
     expect(paths.some((path) => path.includes(forbidden) || path.includes('supabase'))).toBe(false);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | product bug: duplicate/promote pack commands use the retired legacy envelope
-  it.fails('promotes and refreshes only the explicit active timeline document', async () => {
+  it('refuses the retired promote-primary family before task admission or timeline mutation', async () => {
     const router = createFakeBridgeRouter();
     const seed = documentFixture();
     const generation = router.state.galleryDetails[0]!;
@@ -317,34 +299,40 @@ describe('shot-group pack commands', () => {
     router.state.config = seed.config;
     router.state.registry = seed.registry;
     router.state.configVersion = 11;
+    const stateBefore = structuredClone({
+      config: router.state.config,
+      registry: router.state.registry,
+      galleryVariants: generation.variants,
+      configVersion: router.state.configVersion,
+    });
     const paths: string[] = [];
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const raw = input instanceof Request ? input.url : String(input);
       const url = raw.startsWith('http') ? raw : `http://bridge.fake${raw}`;
       const request = new Request(url, init);
       paths.push(`${request.method} ${new URL(url).pathname}`);
-      if (request.method === 'POST' && new URL(url).pathname.endsWith('/tasks')) {
-        for (const variant of generation.variants) variant.is_primary = variant.id === alternative.id;
-        return new Response(JSON.stringify(admissionResponse()), { status: 201, headers: { 'Content-Type': 'application/json' } });
-      }
-      if (request.method === 'GET' && new URL(url).pathname.endsWith('/tasks/task-1')) {
-        return new Response(JSON.stringify({ task: { ...taskDetail('succeeded'), outputs: [] } }), { headers: { 'Content-Type': 'application/json' } });
-      }
       return await router.handle(request);
     }));
 
-    const views = await promotePrimaryVariant({
+    await expect(promotePrimaryVariant({
       projectSlug: 'demo-project',
       timelineRef: 'active-non-default',
       configVersion: 11,
       generationId: generation.generation_id,
       variantId: alternative.id,
-    }, { wait: async () => undefined });
+    }, { wait: async () => undefined })).rejects.toThrow(
+      'Legacy task family promote_primary is unsupported; submit the canonical HC-04 admission envelope',
+    );
 
-    expect(views[0]?.members.find((member) => member.generationId === generation.generation_id)?.variantId)
-      .toBe(alternative.id);
-    expect(paths).toContain('POST /api/astrid/projects/demo-project/timelines/active-non-default/save');
-    expect(paths.some((path) => /\/timelines$/.test(path))).toBe(false);
+    expect(paths).toHaveLength(1);
+    expect(paths[0]).toMatch(/^GET (?:\/api\/astrid)?\/(?:v1\/)?projects\/demo-project\/timelines\/active-non-default$/);
+    expect(paths.some((path) => path.startsWith('POST '))).toBe(false);
     expect(paths.some((path) => path.includes(forbidden) || path.includes('supabase'))).toBe(false);
+    expect({
+      config: router.state.config,
+      registry: router.state.registry,
+      galleryVariants: generation.variants,
+      configVersion: router.state.configVersion,
+    }).toEqual(stateBefore);
   });
 });
