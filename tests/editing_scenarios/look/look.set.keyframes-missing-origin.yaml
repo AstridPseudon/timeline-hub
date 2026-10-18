@@ -1,0 +1,18 @@
+id: look.set.keyframes-missing-origin
+source: App keyframe coordinate contract
+intent: Refuse otherwise valid App keyframes when their coordinate origin is missing.
+fixture: tiny
+expect: refused
+cli: edit --command '{"op":"clip.set","select":"occurrence:occ-A/clip:a-rocket","args":{"keyframes":{"x":[{"time":0,"value":1000,"interpolation":"linear"},{"time":1,"value":1400,"interpolation":"linear"}]}},"expect":{"keyframes":{"state":"absent"},"keyframeOrigin":{"state":"absent"}}}'
+sheet:
+  text: |
+    edit {"op":"clip.set","select":"occurrence:occ-A/clip:a-rocket","args":{"keyframes":{"x":[{"time":0,"value":1000,"interpolation":"linear"},{"time":1,"value":1400,"interpolation":"linear"}]}},"expect":{"keyframes":{"state":"absent"},"keyframeOrigin":{"state":"absent"}}}
+python: |
+  from astrid.sdk.timeline.commands import run
+  run(tl, {"op": "clip.set", "select": "occurrence:occ-A/clip:a-rocket",
+           "args": {"keyframes": {"x": [{"time": 0, "value": 1000, "interpolation": "linear"},
+                                      {"time": 1, "value": 1400, "interpolation": "linear"}]}},
+           "expect": {"keyframes": {"state": "absent"}, "keyframeOrigin": {"state": "absent"}}})
+check:
+- '"keyframes" not in tl.clip("c1.rocket").data'
+- '"keyframeOrigin" not in tl.clip("c1.rocket").data'

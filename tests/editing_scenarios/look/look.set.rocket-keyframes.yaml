@@ -1,18 +1,24 @@
 id: look.set.rocket-keyframes
 source: h2 L10 (keyframed move)
-intent: Move the c1 rocket from x=1000 to x=1400 (canvas px) over 1 s (30 fps) with keyframes.
+intent: Move the c1 rocket from x=1000 to x=1400 (canvas px) over 1 s with App keyframes anchored to its actual clip origin.
 fixture: tiny
 expect: change
-cli: edit --clip c1.rocket --set 'keyframes=[{"frame":0,"x":1000,"y":300},{"frame":30,"x":1400,"y":300}]'
+cli: edit --clip c1.rocket --set 'keyframes={"x":[{"time":0,"value":1000,"interpolation":"linear"},{"time":1,"value":1400,"interpolation":"linear"}],"y":[{"time":0,"value":300,"interpolation":"hold"}]}' --set keyframeOrigin=-1.3
 sheet:
   cuts:
   - c1
   replace:
   - - x=60
-    - x=60 keyframes=[{"frame":0,"x":1000,"y":300},{"frame":30,"x":1400,"y":300}]
-python: 'tl.clip("c1.rocket").set(keyframes=[{"frame": 0, "x": 1000, "y": 300}, {"frame": 30, "x": 1400, "y": 300}])
-
-  '
+    - x=60 keyframes={"x":[{"time":0,"value":1000,"interpolation":"linear"},{"time":1,"value":1400,"interpolation":"linear"}],"y":[{"time":0,"value":300,"interpolation":"hold"}]} keyframeOrigin=-1.3
+python: |
+  clip = tl.clip("c1.rocket")
+  clip.set(keyframes={"x": [{"time": 0, "value": 1000, "interpolation": "linear"},
+                            {"time": 1, "value": 1400, "interpolation": "linear"}],
+                      "y": [{"time": 0, "value": 300, "interpolation": "hold"}]},
+           keyframeOrigin=-clip.data["at"])
 check:
-- len(tl.clip("c1.rocket").get("keyframes")) == 2
-- tl.clip("c1.rocket").get("keyframes")[1]["x"] == 1400
+- 'len(tl.clip("c1.rocket").data["keyframes"]["x"]) == 2'
+- 'tl.clip("c1.rocket").data["keyframes"]["x"][0]["value"] == 1000'
+- 'tl.clip("c1.rocket").data["keyframes"]["x"][1] == {"time": 1, "value": 1400, "interpolation": "linear"}'
+- 'tl.clip("c1.rocket").data["keyframes"]["y"][0]["value"] == 300'
+- 'tl.clip("c1.rocket").data["keyframeOrigin"] == -tl.clip("c1.rocket").data["at"] == -1.3'

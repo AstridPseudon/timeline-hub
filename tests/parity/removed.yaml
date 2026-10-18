@@ -79,3 +79,11 @@
   card: VOCAB
   reason: "Extends the canonical --compare choices with changed-cuts and document while retaining published and mapping the new values to the existing comparison routes. The legacy --preset compare and --view diff selectors remain available."
   alias: "--compare"
+- feature: "flag:timelines.edit:--set"
+  card: VOCAB164
+  reason: "The generated snapshot now records the existing PATH=VALUE help metavar from the adopted setter vocabulary. The --set option, accepted arguments, action and default remain unchanged."
+  alias: "--set"
+- feature: "deliberate: tests/packs/timeline/test_cli_media.py::test_crossfade_records_curves_for_exact_replay_and_one_undo_step"
+  card: RUNNER-COMMAND-JOURNAL-172
+  reason: "The adopted Registry adapter records one canonical timeline.crossfade OpCall instead of the legacy three primitive calls for None, linear and s-curve. The three original assertions remain unchanged. test_canonical_crossfade_preserves_curves_guards_replay_and_one_undo_step retains their timing, fade values/curves, exact replay, same-property stale-state refusal, single-step undo/redo and journal verification, and explicitly proves all four duration/curve guards including unchanged curves. Only the obsolete primitive journal shape is dispositioned."
+  alias: "astrid.sdk.timeline.commands.run"

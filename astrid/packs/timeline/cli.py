@@ -3131,7 +3131,10 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
             raise CommandError(f"--command requires JSON: {exc.msg}") from None
         tl = Checkout.load(parsed.file) if parsed.file else _edit_checkout(parsed)
         plan = run(tl, command, dry_run=parsed.dry_run)
-        print(json.dumps(plan.to_json(), ensure_ascii=False))
+        result = plan.to_json()
+        if not plan.changed:
+            result["message"] = "no change (the working copy already matches)"
+        print(json.dumps(result, ensure_ascii=False))
         return 0 if plan.changed else 3
 
     voice_ops = any((parsed.replace_line, parsed.insert_line, parsed.remove_line, parsed.gap_after, parsed.from_script))

@@ -256,12 +256,12 @@ def operation_call(operation, inputs):
 def invoke_operation(tl, operation, inputs, *, dry_run=False, host="sdk"):
     """One existing transaction/undo step; return the runner's existing Plan shape."""
     from astrid.sdk.timeline.commands import run
-    calls = plan_operation(tl, operation, inputs, host=host)
     label = f"{operation.identity}@{operation.implementation_digest}"
     with tl.edit(label, dry_run=dry_run, quiet=True) as tx:
         if label not in tx.label:
             tx.label += "; " + label
         tx.canonical = True
+        calls = plan_operation(tl, operation, inputs, host=host)
         if calls:
             run(tl, dict(op="timeline.batch", select=None,
                          args={"commands": [call.to_json() for call in calls]}))

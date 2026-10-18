@@ -127,9 +127,42 @@ def test_returned_commands_use_the_same_runner_and_music_retime_keeps_references
 ])
 def test_refusals_leave_memory_disk_and_undo_unchanged(setup, inputs):
     tl, op, _kwargs = setup
+    data_root = Path(tl.path).parents[3]
+    before, disk = tl.document(), _files(data_root)
+    journal_path = journal.journal_path("p", "t")
+    journal_key = str(journal_path.relative_to(data_root))
+    records_before = journal.read(journal_path)
+    state = (copy.deepcopy(tl._journal), copy.deepcopy(tl._pending_calls), tl._disk,
+             "_command_depth" in tl.__dict__)
+    rocket = tl.clip("c1.rocket")
+    rocket_before = copy.deepcopy(rocket.data)
+    with pytest.raises(TimelineEditError) as refusal:
+        invoke_operation(tl, op, inputs)
+    assert tl.document() == before
+    assert rocket.data == rocket_before
+    assert (tl._journal, tl._pending_calls, tl._disk, "_command_depth" in tl.__dict__) == state
+    assert tl._edit_depth == 0 and tl._open_edit is None
+    after_disk = _files(data_root)
+    assert {key: value for key, value in after_disk.items() if key != journal_key} == {
+        key: value for key, value in disk.items() if key != journal_key}
+    assert after_disk[journal_key].startswith(disk[journal_key])
+    records = journal.read(journal_path)
+    assert records[:-1] == records_before
+    assert len(records) == len(records_before) + 1
+    audit = records[-1]
+    assert audit.kind == "edit" and audit.outcome == "rolled-back"
+    assert audit.label == f"{op.identity}@{op.implementation_digest}"
+    assert audit.error == journal.one_line(refusal.value)
+    assert not audit.calls and audit.undo_step is None
+    assert not list(store._history_dir(Path(tl.path)).glob("*.json"))
+    assert journal.verify(journal_path) == []
+
+
+def test_refused_operation_preview_leaves_no_audit_or_other_disk_change(setup):
+    tl, op, _kwargs = setup
     before, disk = tl.document(), _files(Path(tl.path).parents[3])
     with pytest.raises(TimelineEditError):
-        invoke_operation(tl, op, inputs)
+        invoke_operation(tl, op, {**INPUTS, "clips": ["c1.rocket", "c1.plate"]}, dry_run=True)
     assert tl.document() == before
     assert _files(Path(tl.path).parents[3]) == disk
 

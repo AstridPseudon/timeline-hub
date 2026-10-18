@@ -753,7 +753,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
                     else:
                         fields[normalized_key] = stored
                 operation = ("look.opacity" if entry.op == "look.opacity"
-                             or (entry.op == "clip.set" and set(fields) == {"opacity"})
+                             or set(fields) == {"opacity"}
                              else "clip.set-look")
                 tl._open_edit.calls[index] = replace(recorded, op=operation, args=fields)
         elif entry.op in {"timeline.add", "timeline.add-media"} and not isinstance(canonical.get("track"), Mapping):
@@ -1399,6 +1399,12 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
                      (path.startswith("intent.formulas") or path.startswith("app.astrid")))
         return paths
     direct = set()
+    if entry.op == "timeline.crossfade":
+        # The canonical macro authors both duration and curve, even when the
+        # selected curve equals its previous value. Keep both replay guards.
+        for reference, side in ((args["first"], "Out"), (args["second"], "In")):
+            sid = scoped_clip(tl, tl.clip(reference))
+            direct.update((sid, path) for path in (f"params.fade{side}", f"params.fade{side}Curve"))
     targets = set(selected)
     if entry.op == "timeline.split":
         targets.update(set(after) - set(before))
