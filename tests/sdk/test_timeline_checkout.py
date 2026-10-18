@@ -1088,8 +1088,7 @@ def test_type_boxes_are_measured_with_the_fonts_and_check_says_when_text_leaves_
     """Text-fit (T12/T15): the record states the measured box and the size that fits; check flags overflow."""
     from astrid.core.timeline import text_fit
 
-    if not text_fit.available("label"):
-        pytest.skip("the type fonts are not in this tree")
+    assert text_fit.available("label"), "bundled WOFF2 fonts require the fonttools[woff] development dependency"
     label = text_fit.layout("PART 01 · ADAPT, LIVE", font="label", size=28, width=1200)
     assert label["w"] > 21 * 28 * 0.62  # the old estimate ended the highlight at "ADAP"
     tl = Checkout(bundle())
