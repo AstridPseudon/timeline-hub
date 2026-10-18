@@ -5,6 +5,10 @@ agentic consumers (both human operators and AI agents).  It covers stream
 discipline, output modes, error signaling, and the behavioral guarantees
 that agents can rely on when invoking Astrid subcommands.
 
+The versioned producer bundle for the CLI surface and diagnostic projection
+is documented in [`public-boundary`](../../public-boundary/README.md); its
+manifest and fixtures define the consumer conformance inputs.
+
 The gateway owns **seven core families** — the five product families
 (`projects`, `timelines`, `media`, `tasks`, `runs`) and the two
 operational families (`doctor`, `backup`) — plus the two
