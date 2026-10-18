@@ -200,6 +200,44 @@ def test_draft_flow_checkout_edit_status_discard(tmp_path, monkeypatch, capsys):
     assert "no working copy" in capsys.readouterr().out
 
 
+@pytest.mark.parametrize(("ref", "expected"), [("TL", "main-final"), ("main-final", "main-final"), ("t", "t")])
+def test_edit_next_hint_uses_resolved_timeline_slug_and_keeps_explicit_address(
+    tmp_path, monkeypatch, capsys, ref, expected,
+):
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(tmp_path / "data"))
+    client = _SelectedTimelineClient(bundle())
+    parsed = _parse("edit", ref, "--project", "P", "--clip", "R", "--nudge-frames", "3", "--no-sweep")
+    parsed.client = client
+
+    assert parsed.handler(parsed) == 0
+    output = capsys.readouterr().out
+    assert f"next: timelines show {expected} --project P" in output
+    assert f'timelines publish {expected} --project P -m "..."' in output
+    assert client.timelines.composition_reads
+    assert all(call == ("P", ref) for call in client.timelines.composition_reads)
+
+
+def test_accept_suggestions_next_hint_uses_resolved_timeline_slug(tmp_path, monkeypatch, capsys):
+    from astrid.sdk import timeline_intent as intent
+    from tests.sdk.test_timeline_reflow_golden import film
+
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(tmp_path / "data"))
+    data = film()
+    draft = Checkout(data)
+    intent.set_orphan(draft.clip("c2.live").data, "synthetic orphan")
+    client = _SelectedTimelineClient(draft.bundle)
+    parsed = _parse("edit", "TL", "--project", "P", "--accept-suggestions")
+    parsed.client = client
+
+    assert parsed.handler(parsed) == 0
+    output = capsys.readouterr().out
+    assert 'c2 → "Live"' in output
+    assert "next: timelines show main-final --project P --as sheet --orphans" in output
+    assert 'timelines publish main-final --project P -m "..."' in output
+    assert client.timelines.composition_reads
+    assert all(call == ("P", "TL") for call in client.timelines.composition_reads)
+
+
 # ---- voice lines (timeline-level; the film re-flows) -----------------------------------
 
 def _words_file(tmp_path, name, rows):
@@ -223,6 +261,38 @@ class _Timelines:
 
 class _Client:
     timelines = _Timelines()
+
+
+class _SelectedTimelineTimelines:
+    def __init__(self, data):
+        self.data = data
+        self.composition_reads = []
+
+    def open_composition(self, project, timeline):
+        self.composition_reads.append((project, timeline))
+        return _Opened({
+            "summary": {
+                "project_slug": "P",
+                "timeline_slug": "main-final",
+                "head_revision_id": "rev-0",
+            },
+            "native_inspection": {"project_id": "p", "timeline_id": "t"},
+        })
+
+    def open_bundle(self, project, timeline, revision_id=None):
+        return _Opened({
+            "bundle": copy.deepcopy(self.data),
+            "timeline_id": "t",
+            "revision_id": "rev-0",
+            "project_id": "p",
+            "is_current_head": True,
+            "head_revision_id": "rev-0",
+        })
+
+
+class _SelectedTimelineClient:
+    def __init__(self, data):
+        self.timelines = _SelectedTimelineTimelines(data)
 
 
 def _run_with_client(*argv):

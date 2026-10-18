@@ -3081,6 +3081,47 @@ def _edit_label(parsed: argparse.Namespace) -> str:
     return ("edit " + " ".join(parts))[:160]
 
 
+def _edit_hint_timeline_address(parsed: argparse.Namespace) -> str:
+    """Use the selected timeline's canonical slug in follow-up hints when the ref is an alias."""
+    ref = getattr(parsed, "ref", None)
+    if ref in (None, ""):
+        return "<timeline>"
+
+    def resolve(client: Any) -> str:
+        opened = client.timelines.open_composition(parsed.project, ref)
+        data = getattr(opened, "data", None)
+        if not getattr(opened, "ok", False) or not isinstance(data, Mapping):
+            return str(ref)
+        _project, address = _navigation_scope(project=None, timeline=None, outputs=data)
+        if address == "<unresolved>":
+            return str(ref)
+
+        # Keep a caller's explicit slug or ID intact; aliases should become the
+        # canonical slug returned by the existing selected-timeline lookup.
+        containers = [data]
+        containers.extend(
+            value for key in ("summary", "scope", "native_inspection", "inspection", "provenance")
+            if isinstance((value := data.get(key)), Mapping)
+        )
+        explicit_ids = {
+            str(container[key])
+            for container in containers
+            for key in ("timeline_id", "id")
+            if container.get(key) not in (None, "")
+        }
+        return str(ref) if str(ref) == address or str(ref) in explicit_ids else address
+
+    try:
+        if parsed.client is not None:
+            return resolve(parsed.client)
+        from astrid.sdk import AstridClient
+
+        with AstridClient.open_from_launcher(start_pack_host=False) as client:
+            return resolve(client)
+    except Exception:  # noqa: BLE001 - a courtesy hint cannot change the edit result
+        return str(ref)
+
+
 def _print_verify(parsed: argparse.Namespace, tl: Any, before: Mapping[str, Any]) -> int:
     """One-shot verify of what the edit changed: published vs working copy, decoded frames (see Checkout.verify)."""
     from astrid.sdk.timeline_editing import TimelineEditError
@@ -3305,9 +3346,10 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
                         or film_end_requested(parsed)),
             touched_cuts=len(touched_cuts(before, tl)),
         )
-        print(f"next: timelines show {parsed.ref} --project {parsed.project or '<project>'} --range "
+        timeline_address = _edit_hint_timeline_address(parsed)
+        print(f"next: timelines show {timeline_address} --project {parsed.project or '<project>'} --range "
               f"{_edit_range(before, tl.document())} (your change)   ·   "
-              f'timelines publish {parsed.ref} --project {parsed.project or "<project>"} -m "..."')
+              f'timelines publish {timeline_address} --project {parsed.project or "<project>"} -m "..."')
     else:
         print(f'next: timelines check {target}   ·   timelines publish {target} -m "..."')
     return sweep_status or verify_status
@@ -3376,8 +3418,9 @@ def _cmd_accept_suggestions(parsed: argparse.Namespace, tl: Any, target: str | N
     tl.save(**({"path": target} if target else {}), quiet=True)
     print("edited working copy")
     if target is None:
-        print(f"next: timelines show {parsed.ref} --project {parsed.project or '<project>'} --as sheet --orphans   ·   "
-              f'timelines publish {parsed.ref} --project {parsed.project or "<project>"} -m "..."')
+        timeline_address = _edit_hint_timeline_address(parsed)
+        print(f"next: timelines show {timeline_address} --project {parsed.project or '<project>'} --as sheet --orphans   ·   "
+              f'timelines publish {timeline_address} --project {parsed.project or "<project>"} -m "..."')
     else:
         print(f"next: timelines check {target}   ·   timelines publish {target} -m \"...\"")
     return 0
