@@ -103,7 +103,7 @@ export function BrowserVideoEditorProvider(props: BrowserVideoEditorProviderProp
     };
   }
   const scopeKey = props.hostServices
-    ? videoEditorScopeKey(props.hostServices.scope) : JSON.stringify([props.hostContext?.projectId ?? null, props.hostContext?.projectSlug ?? null, props.timelineId]);
+    ? videoEditorScopeKey(props.hostServices.scope) : JSON.stringify([props.hostContext?.projectId ?? null, props.timelineId]);
   return <BrowserVideoEditorProviderInstance key={JSON.stringify([scopeKey, props.userId ?? null, authority.current.generation])} {...props} />;
 }
 
