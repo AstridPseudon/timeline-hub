@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import socket
 import subprocess
 import sys
@@ -43,9 +44,18 @@ from runtime_protocol.local_worker_composition import CrossProcessWorkerPreparer
 from banodoco_local.custody_broker import default_process_identity
 
 
-ASTRID_ROOT = Path("/Users/peteromalley/Documents/reigh-workspace/Astrid/.otto/worktrees/three-effort-post-completion-integration-20261001")
-ASTRID_PYTHON = Path("/Users/peteromalley/Documents/reigh-workspace/Astrid/.venv/bin/python")
 RUNTIME_ROOT = Path(__file__).resolve().parents[1]
+ASTRID_PYTHON = Path(sys.executable).resolve()
+
+
+@pytest.fixture
+def astrid_root(tmp_path):
+    source = RUNTIME_ROOT.parent / "astrid" / "astrid"
+    if not source.is_dir():
+        raise AssertionError(f"Astrid checkout is unavailable: {source}")
+    root = tmp_path / "astrid-checkout"
+    shutil.copytree(source, root / "astrid", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    return root
 
 
 # Explicit child program: this is the only graph substitution. It still enters
@@ -259,9 +269,9 @@ class _RetainedRelay:
 
 class _Adapter(CrossProcessWorkerPreparer):
     """Use production activation methods with a real serve_control subprocess."""
-    def __init__(self, profile, config, *, events, drop_ack=False, misbind=False):
+    def __init__(self, profile, config, *, events, astrid_root, drop_ack=False, misbind=False):
         super().__init__(profile=profile,config=config,environment={},timeout_seconds=15,cleanup_timeout_seconds=2)
-        self.events=events; self.drop_ack=drop_ack; self.misbind=misbind; self.session=None; self.thread=None
+        self.events=events; self.astrid_root=astrid_root; self.drop_ack=drop_ack; self.misbind=misbind; self.session=None; self.thread=None
         self._current=None
 
     def prepare(self, profile, *, operation_id, channel_id):
@@ -275,11 +285,11 @@ class _Adapter(CrossProcessWorkerPreparer):
                          "runtime_instance_id":"cpu-proof-epoch","coordinator_epoch":"cpu-proof-epoch"},
           profile=_selected_profile_payload(profile),custody_scope=host_scope)
         relay_script=("from tests.test_astrid_activation_join import _serve_test_relay; "
-                      "s=__import__('sys'); _serve_test_relay(int(s.argv[1]),s.argv[2],s.argv[3]=='1',s.argv[4]=='1')")
+                      "s=__import__('sys'); _serve_test_relay(int(s.argv[1]),s.argv[2],s.argv[3]=='1',s.argv[4]=='1',s.argv[5])")
         self.events.with_suffix(".relay-wrapper.txt").write_text(relay_script)
-        env=dict(os.environ); env["PYTHONPATH"]=str(RUNTIME_ROOT)+os.pathsep+str(ASTRID_ROOT)
+        env=dict(os.environ); env["PYTHONPATH"]=str(RUNTIME_ROOT)+os.pathsep+str(self.astrid_root)
         process=subprocess.Popen([str(ASTRID_PYTHON),"-c",relay_script,str(relay_end.fileno()),str(self.events),
-          "1" if self.drop_ack else "0", "1" if self.misbind else "0"],cwd=str(RUNTIME_ROOT),env=env,stdin=subprocess.DEVNULL,
+          "1" if self.drop_ack else "0", "1" if self.misbind else "0", str(self.astrid_root)],cwd=str(RUNTIME_ROOT),env=env,stdin=subprocess.DEVNULL,
           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,close_fds=True,pass_fds=(relay_end.fileno(),),start_new_session=True)
         relay_end.close()
         relay_identity=default_process_identity(process.pid)
@@ -340,24 +350,24 @@ class _Adapter(CrossProcessWorkerPreparer):
 
 
 class _HostSession:
-    def __init__(self,preparation,profile,config,*,events,drop_ack,misbind=False,
+    def __init__(self,preparation,profile,config,*,events,astrid_root,drop_ack,misbind=False,
                  receiver_program=_ASTRID_RECEIVER, receiver_config=None, credential_actor="cpu-proof"):
         self.timeout = 5.0
         self.preparation=preparation; self.drop_ack=drop_ack; self._request=None
-        self.misbind=misbind
+        self.misbind=misbind; self.astrid_root=astrid_root
         self.control,self.control_child=socket.socketpair(); self.activation,self.activation_child=socket.socketpair()
         self.control.settimeout(5); self.activation.settimeout(5)
         self.events=events
         receiver=events.parent/"astrid_receiver.py"; receiver.write_text(receiver_program)
         self.wrapper_bytes=receiver.read_bytes()
         config_file=events.parent/"receiver-config.json"
-        config_file.write_text(json.dumps({"events":str(events),"astrid_root":str(ASTRID_ROOT),
+        config_file.write_text(json.dumps({"events":str(events),"astrid_root":str(self.astrid_root),
                                           **(receiver_config or {})}))
-        env=dict(os.environ); env["PYTHONPATH"]=str(RUNTIME_ROOT)+os.pathsep+str(ASTRID_ROOT)
+        env=dict(os.environ); env["PYTHONPATH"]=str(RUNTIME_ROOT)+os.pathsep+str(self.astrid_root)
         self.process=subprocess.Popen([str(ASTRID_PYTHON),str(receiver),str(self.control_child.fileno()),
           str(self.activation_child.fileno()),preparation["operation_id"],preparation["channel_id"],
           str(Path(profile["support_root"])/"credentials"/(credential_actor+".token")),preparation["custody_scope"],str(config_file)],
-          cwd=str(ASTRID_ROOT),env=env,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,
+          cwd=str(self.astrid_root),env=env,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,
           close_fds=True,pass_fds=(self.control_child.fileno(),self.activation_child.fileno()),start_new_session=True)
         self.control_child.close(); self.activation_child.close()
         identity=default_process_identity(self.process.pid)
@@ -435,7 +445,7 @@ class _HostSession:
         return code
 
 
-def _serve_test_relay(descriptor, events_value, drop_ack, misbind):
+def _serve_test_relay(descriptor, events_value, drop_ack, misbind, astrid_root_value):
     """Subprocess entry point; the actual Runtime serve_control owns framing."""
     channel=socket.socket(fileno=descriptor); channel.settimeout(15)
     events=Path(events_value); state={}
@@ -458,7 +468,8 @@ def _serve_test_relay(descriptor, events_value, drop_ack, misbind):
           "target":{"pid":target["pid"],"birth_id":target["birth_id"],"uid":os.getuid(),
                     "audit_token_sha256":"sha256:"+"b"*64,"audit_token_pidversion":max(1,target["pid"])}}
     def factory(preparation,config,*,retain):
-        session=_HostSession(preparation,preparation["profile"],config,events=events,drop_ack=drop_ack,misbind=misbind)
+        session=_HostSession(preparation,preparation["profile"],config,events=events,
+                             astrid_root=Path(astrid_root_value),drop_ack=drop_ack,misbind=misbind)
         state["session"]=session; retain(session); return session
     try:
         serve_control(channel,session_factory=factory,reference_reader=reference,
@@ -508,19 +519,19 @@ class _Inspector:
           custody_scope=report["custody_scope"],custody_capabilities=refs)
 
 
-def _launch(tmp_path, *, drop_ack=False, misbind=False):
+def _launch(tmp_path, astrid_root, *, drop_ack=False, misbind=False):
     root=tmp_path.resolve(); profile=_fixture_profile(root)
     events=root/"events.json"; observations=[]
     credentials=_ObservedCredentialStore(profile.support_root/"credentials",ack_path=events.with_suffix(".ack"),observations=observations)
-    adapter=_Adapter(profile,{},events=events,drop_ack=drop_ack,misbind=misbind)
+    adapter=_Adapter(profile,{},events=events,astrid_root=astrid_root,drop_ack=drop_ack,misbind=misbind)
     launcher=LocalWorkerLauncher(credentials=credentials,profiles={profile.profile_id:profile},preparer=adapter,
       inspector=_Inspector(profile,credentials,events,observations),workspace_uuid=profile.workspace_uuid,realm_root=profile.realm_root,
       support_root=profile.support_root,runtime_pid=os.getpid(),actor="cpu-proof",scopes=("worker:claim",))
     return launcher,credentials,adapter,events,profile
 
 
-def _run_case(tmp_path, *, drop_ack=False, misbind=False):
-    launcher,credentials,adapter,events,profile=_launch(tmp_path,drop_ack=drop_ack,misbind=misbind)
+def _run_case(tmp_path, astrid_root, *, drop_ack=False, misbind=False):
+    launcher,credentials,adapter,events,profile=_launch(tmp_path,astrid_root,drop_ack=drop_ack,misbind=misbind)
     result=None; initiating_error=None; shutdown_error=None; active_token_usable=False; metadata_before_shutdown=None; report_before_shutdown=None; activated_before_shutdown=False
     try:
         result=launcher.start(profile.profile_id,profile.workspace_uuid)
@@ -567,8 +578,8 @@ def _run_case(tmp_path, *, drop_ack=False, misbind=False):
       "profile":profile,"result":result,"initiating_error":initiating_error,"cleanup":cleanup}
 
 
-def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_path):
-    main=_run_case(tmp_path)
+def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_path, astrid_root):
+    main=_run_case(tmp_path,astrid_root)
     launcher=main["launcher"]; credentials=main["credentials"]; adapter=main["adapter"]; events=main["events"]
     assert main["initiating_error"] is None, f"launch failed after cleanup: {main['initiating_error']}"
     assert main["result"]["state"]=="active"
@@ -584,10 +595,10 @@ def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_pat
     assert credentials.actor_metadata("cpu-proof") is None
     astrid_modules=json.loads(_wait_for(events.with_suffix(".modules.json")).read_text())
     assert astrid_modules["astrid.core.execution.generic_host"]=={
-      "path":str(ASTRID_ROOT/"astrid/core/execution/generic_host.py"),
+      "path":str(astrid_root/"astrid/core/execution/generic_host.py"),
       "sha256":"3796a2131adc4c1431b65e89446be9fe83fd627e2a131b63adf39d1990901a29"}
     assert astrid_modules["astrid.core.execution.custody_broker"]=={
-      "path":str(ASTRID_ROOT/"astrid/core/execution/custody_broker.py"),
+      "path":str(astrid_root/"astrid/core/execution/custody_broker.py"),
       "sha256":"71f2520156e77cab2570680b1f500f91ac5ec3b3fdefa87246658a111b976d4f"}
     runtime_modules=json.loads(_wait_for(events.with_suffix(".runtime-modules.json")).read_text())
     for module,relative,digest in (
@@ -612,7 +623,7 @@ def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_pat
     assert returned["host_pid"]==ack["host"]["pid"] and returned["host_birth_id"]==ack["host"]["birth_id"]
     assert returned["interpreter"]==str(ASTRID_PYTHON)
     assert returned["wrapper_sha256"]==hashlib.sha256(_ASTRID_RECEIVER.encode()).hexdigest()
-    assert returned["generic_host_source"]==str(ASTRID_ROOT/"astrid/core/execution/generic_host.py")
+    assert returned["generic_host_source"]==str(astrid_root/"astrid/core/execution/generic_host.py")
     assert returned["generic_host_sha256"]=="3796a2131adc4c1431b65e89446be9fe83fd627e2a131b63adf39d1990901a29"
     assert accepted["wrapper_sha256"]==hashlib.sha256(_ASTRID_RECEIVER.encode()).hexdigest()
     assert Path(accepted["wrapper_path"]).read_bytes()==_ASTRID_RECEIVER.encode()
@@ -621,7 +632,7 @@ def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_pat
 
     lost_root=tmp_path/"lost-ack"
     lost_root.mkdir()
-    lost=_run_case(lost_root,drop_ack=True)
+    lost=_run_case(lost_root,astrid_root,drop_ack=True)
     lost_credentials=lost["credentials"]; lost_adapter=lost["adapter"]; lost_events=lost["events"]
     assert lost["initiating_error"] is not None
     assert lost["cleanup"]["cleanup_proven"], f"lost-ACK cleanup incomplete: {lost['cleanup']}"
@@ -637,7 +648,7 @@ def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_pat
 
     wrong_root=tmp_path/"wrong-binding"
     wrong_root.mkdir()
-    wrong=_run_case(wrong_root,misbind=True)
+    wrong=_run_case(wrong_root,astrid_root,misbind=True)
     wrong_credentials=wrong["credentials"]; wrong_adapter=wrong["adapter"]; wrong_events=wrong["events"]
     assert wrong["initiating_error"] is not None
     assert wrong["cleanup"]["cleanup_proven"], f"rejected-binding cleanup incomplete: {wrong['cleanup']}"
@@ -1124,8 +1135,8 @@ class _JoinedRetainedRelay(_RetainedRelay):
 
 
 class _JoinedAdapter(_Adapter):
-    def __init__(self, profile, *, events, endpoint, successor):
-        super().__init__(profile, {}, events=events)
+    def __init__(self, profile, *, events, endpoint, successor, astrid_root):
+        super().__init__(profile, {}, events=events, astrid_root=astrid_root)
         self.endpoint, self.successor = endpoint, successor
 
     def prepare(self, profile, *, operation_id, channel_id):
@@ -1143,7 +1154,7 @@ class _JoinedAdapter(_Adapter):
                                           "runtime_endpoint": self.endpoint}))
         wrapper = "from tests.test_astrid_activation_join import _serve_joined_relay; import sys; _serve_joined_relay(int(sys.argv[1]),sys.argv[2],sys.argv[3])"
         self.events.with_suffix(".relay-wrapper.txt").write_text(wrapper)
-        env = dict(os.environ); env["PYTHONPATH"] = str(RUNTIME_ROOT) + os.pathsep + str(ASTRID_ROOT)
+        env = dict(os.environ); env["PYTHONPATH"] = str(RUNTIME_ROOT) + os.pathsep + str(self.astrid_root)
         process = subprocess.Popen([str(ASTRID_PYTHON), "-c", wrapper, str(relay_end.fileno()), str(self.events), str(config_file)],
             cwd=RUNTIME_ROOT, env=env, pass_fds=(relay_end.fileno(),), close_fds=True, stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, start_new_session=True)
@@ -1211,7 +1222,7 @@ class _JoinedProtocolLauncher(LocalWorkerLauncher):
         return None
 
 
-def test_runtime_relay_to_generic_host_successor_finalization_cpu(tmp_path, monkeypatch):
+def test_runtime_relay_to_generic_host_successor_finalization_cpu(tmp_path, astrid_root, monkeypatch):
     """One joined journey, four scenarios; no ACK/journal validator substitute."""
     import copy
     from dataclasses import replace
@@ -1224,7 +1235,7 @@ def test_runtime_relay_to_generic_host_successor_finalization_cpu(tmp_path, monk
     from runtime_protocol.server import RuntimeHTTPServer, RuntimeHandler
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
-    for root, pins in ((RUNTIME_ROOT, _JOIN_PINS), (ASTRID_ROOT, _JOIN_ASTRID_PINS)):
+    for root, pins in ((RUNTIME_ROOT, _JOIN_PINS), (astrid_root, _JOIN_ASTRID_PINS)):
         for path, pin in pins.items(): assert _digest(root / path) == "sha256:" + pin
     root = tmp_path.resolve(); root.chmod(0o700)
     cleanup = {"status": "unresolved", "errors": []}; final_request = None; evidence = {}; b_control = None
@@ -1247,7 +1258,8 @@ def test_runtime_relay_to_generic_host_successor_finalization_cpu(tmp_path, monk
         actor_state = {"pid": os.getpid()}; selected_relay = {"pid": None}
         _install_join_providers(custody, current_pid=lambda: actor_state["pid"], peer_pid=lambda _sock: selected_relay["pid"], patch=monkeypatch)
         profile = replace(_fixture_profile(root), workspace_uuid=service.realm["id"])
-        adapter = _JoinedAdapter(profile, events=events, endpoint=daemon.endpoint, successor=successor)
+        adapter = _JoinedAdapter(profile, events=events, endpoint=daemon.endpoint, successor=successor,
+                                 astrid_root=astrid_root)
         inspector = _JoinedInspector(profile, credentials, events, observations)
         launcher_a = _JoinedProtocolLauncher(credentials=credentials, profiles={profile.profile_id: profile}, preparer=adapter,
             inspector=inspector, workspace_uuid=profile.workspace_uuid, realm_root=profile.realm_root, support_root=profile.support_root,
