@@ -78,6 +78,9 @@ class FakeRuntime:
             "coordinator_epoch": "fixture-runtime-instance",
         }
 
+    def refresh_local_connection(self):
+        return False
+
     def register_executor(self, executor_id, **payload):
         self.registrations.append((executor_id, payload))
         return {"id": executor_id, "state": "registered"}

@@ -219,6 +219,9 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     assert len(inventory_calls) == 1
     assert "--source-inventory-identity" in launches[0]
     assert launches[0][launches[0].index("--source-inventory-identity") + 1] == "inventory-1"
+    assert launches[0][launches[0].index("--runtime-discovery-file") + 1] == str(
+        credential.parent.parent / "discovery.json"
+    )
     assert launches[0].count("--pack-root") == 2
 
     inventory.identity = "inventory-2"

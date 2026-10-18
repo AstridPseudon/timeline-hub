@@ -1,9 +1,10 @@
-"""A running pack host follows a Runtime restart; no Astrid client needs to open."""
+"""A running pack host follows a same-port or changed-port Runtime restart."""
 
 from __future__ import annotations
 
 import hashlib
 import json
+import socket
 import threading
 from pathlib import Path
 
@@ -32,7 +33,10 @@ def _executor(pack: Path) -> None:
 
 
 @pytest.mark.parametrize("concurrency", [1, 2])
-def test_idle_host_claims_work_admitted_after_the_runtime_restarts(tmp_path: Path, monkeypatch, concurrency) -> None:
+@pytest.mark.parametrize("changed_port", [False, True])
+def test_idle_host_claims_work_admitted_after_the_runtime_restarts(
+    tmp_path: Path, monkeypatch, concurrency, changed_port: bool,
+) -> None:
     # Renew at once, so the host's own loop (not a client) is what must notice the restart.
     monkeypatch.setattr(generic_host, "_EXECUTOR_REFRESH_SECONDS", 0.0)
     pack = tmp_path / "pack"
@@ -48,19 +52,32 @@ def test_idle_host_claims_work_admitted_after_the_runtime_restarts(tmp_path: Pat
     daemon = start()
     port = daemon.httpd.server_port
     first_epoch = WorkspaceClient(daemon.endpoint, daemon.token).health().runtime_epoch
+    runtime_client = RuntimeProtocolClient(
+        daemon.endpoint, daemon.worker_credential_path.read_text().strip(),
+        credential_file=daemon.worker_credential_path,
+    )
+    if changed_port:
+        runtime_client.bind_local_runtime(support / "discovery.json")
     host = GenericPackHost(
         pack_roots=[pack], executor_id=PACK_HOST_ACTOR, max_concurrency=concurrency,
-        client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_credential_path.read_text().strip(),
-                                     credential_file=daemon.worker_credential_path),
+        client=runtime_client,
     )
     host.register()
     served: list = []
     thread = threading.Thread(target=lambda: served.extend(host.run(poll_seconds=0.05, max_tasks=1)), daemon=True)
     thread.start()
     try:
-        # The Runtime restarts under the idle, still-running host (new epoch, rotated worker credential).
+        # Restart under the idle host. When the port changes, reserve the old one so
+        # the daemon must bind a different port instead of reusing it opportunistically.
         daemon.stop()
-        daemon = start(port)
+        if changed_port:
+            with socket.socket() as reserved_port:
+                reserved_port.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                reserved_port.bind(("127.0.0.1", port))
+                daemon = start()
+            assert daemon.httpd.server_port != port
+        else:
+            daemon = start(port)
         api = WorkspaceClient(daemon.endpoint, daemon.token)
         assert api.health().runtime_epoch != first_epoch
         project = api.create_project("Restart", slug="restart", idempotency_key="restart-project")

@@ -48,6 +48,9 @@ class Client:
         self.backend.clients.append(client)
         return client
 
+    def refresh_local_connection(self):
+        return False
+
     def claim_next(self, **kwargs):
         backend = self.backend
         with backend.condition:

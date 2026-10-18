@@ -29,6 +29,7 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -81,6 +82,22 @@ class JourneyFailure(RuntimeError):
         self.phase, self.kind = phase, kind
 
 
+def _interrupt_journey(signum, _frame) -> None:
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(sig, signal.SIG_IGN)
+    raise JourneyFailure("interrupted", f"received {signal.Signals(signum).name}")
+
+
+@contextmanager
+def _journey_signals():
+    previous = {sig: signal.signal(sig, _interrupt_journey) for sig in (signal.SIGTERM, signal.SIGINT)}
+    try:
+        yield
+    finally:
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
+
+
 def select_reference_realm(reference: Path) -> tuple[str, Path]:
     """Validate the stopped reference and return its realm; never copy it.
 
@@ -129,28 +146,25 @@ def _processes(root: Path) -> list[dict[str, Any]]:
 
 def _reap_owned_groups(root: Path) -> list[dict[str, Any]]:
     """Signal only groups whose every listed member is rooted in our temp realm."""
-    rows = _processes(root)
-    if not rows:
-        return []
-    all_ps = _ps_rows()
-    groups = {row["pgid"] for row in rows}
-    safe = set(groups)
-    owned_pids = {row["pid"] for row in rows}
-    for row in all_ps:
-        if row["pgid"] in groups and row["pid"] not in owned_pids:
-            safe.discard(row["pgid"])
-    for group in safe:
-        if group != os.getpgrp():
-            try:
-                os.killpg(group, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-    deadline = time.monotonic() + 5
-    while time.monotonic() < deadline:
-        remaining = _processes(root)
-        if not remaining:
+    for signum in (signal.SIGTERM, signal.SIGKILL):
+        rows = _processes(root)
+        if not rows:
             return []
-        time.sleep(0.2)
+        all_ps = _ps_rows()
+        groups = {row["pgid"] for row in rows}
+        safe = set(groups)
+        owned_pids = {row["pid"] for row in rows}
+        for row in all_ps:
+            if row["pgid"] in groups and row["pid"] not in owned_pids:
+                safe.discard(row["pgid"])
+        for group in safe:
+            if group != os.getpgrp():
+                try:
+                    os.killpg(group, signum)
+                except ProcessLookupError:
+                    pass
+        if wait_for(lambda: not _processes(root), 5):
+            return []
     return _processes(root)
 
 
@@ -464,7 +478,10 @@ class Runner:
                         raise JourneyFailure(phase, f"command hung (no exit after {hang_limit}s): {argv!r}", kind="hung")
         finally:
             if process.poll() is None:
-                os.killpg(process.pid, signal.SIGTERM)
+                try:
+                    os.killpg(process.pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
                 try:
                     process.wait(timeout=3)
                 except subprocess.TimeoutExpired:
@@ -680,6 +697,11 @@ class Journey:
         if heavy:
             # A fresh capacity lease around the client: the host it starts must outlive the job.
             use.pop("OTTO_HEAVY_LEASE", None)
+            use.pop("OTTO_HEAVY_CAPACITY", None)
+            lease_root = self.root / "heavy-lease"
+            lease_root.mkdir(exist_ok=True)
+            (lease_root / "capacity").write_text("1\n")
+            use["OTTO_HEAVY_DIR"] = str(lease_root)
             argv = [str(HEAVY_LAUNCHER), "--weight", "1", "--purpose", "astrid dev journey: host start inside a job",
                     "--max-minutes", "3", "--"] + argv
         self.r.command(phase, argv, use, json_result=False)
@@ -898,6 +920,7 @@ class Journey:
         return run_id
 
 
+@_journey_signals()
 def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "smoke", start: float = 144.0, end: float = 152.0,
         replace_slot: str = "BUGNET", expect_duration: float | None = None, backend: str = REMOTION_BACKEND,
         app_checkout: Path | None = None, app_render: bool = True) -> int:
@@ -988,8 +1011,8 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
             nonlocal changed
             if source_probe.read_bytes() != original:
                 raise JourneyFailure("source_change", "journey source changed concurrently; refusing to overwrite it")
-            source_probe.write_bytes(probe_bytes)
             changed = True
+            source_probe.write_bytes(probe_bytes)
         runner.phase("source_change", touch)
         host = runner.phase("replace_host", lambda: j.replace_host(old_host))
         runner.phase("heavy_survival", lambda: j.survives_job(host))
@@ -1006,11 +1029,17 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
         failure = str(exc)
         hung = getattr(exc, "kind", None) == "hung"
     finally:
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            signal.signal(sig, signal.SIG_IGN)
         if changed:
-            if source_probe.read_bytes() == probe_bytes:
-                source_probe.write_bytes(original)
-            else:
-                failure = (failure + "; " if failure else "") + "source_change: journey source changed concurrently; manual restore required"
+            try:
+                current = source_probe.read_bytes()
+                if current == probe_bytes:
+                    source_probe.write_bytes(original)
+                elif current != original:
+                    raise OSError("journey source changed concurrently; manual restore required")
+            except OSError as exc:
+                failure = (failure + "; " if failure else "") + f"source_change: {exc}"
         if adopt_attempted:
             try:
                 runner.phase("down", lambda: runner.command("down", [sys.executable, "-m", "astrid_runtime", "down", "--source-manifest", str(manifest_path)] + common, env))

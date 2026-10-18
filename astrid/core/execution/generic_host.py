@@ -4369,6 +4369,9 @@ class RuntimeProtocolClient:
             raise HostError(f"runtime endpoint rejected: {exc}") from exc
         self.credential = credential
         self.credential_file = Path(credential_file) if credential_file else None
+        self._local_runtime_discovery_file: Path | None = None
+        self._local_runtime_realm: str | None = None
+        self._local_runtime_instance: str | None = None
         self.timeout = timeout
         try:
             from astrid_runtime_client import WorkspaceClient
@@ -4407,21 +4410,47 @@ class RuntimeProtocolClient:
         client = RuntimeProtocolClient(self.endpoint, self.credential, timeout=self.timeout,
                                       credential_file=self.credential_file)
         client.executor_id = self.executor_id
+        client._local_runtime_discovery_file = self._local_runtime_discovery_file
+        client._local_runtime_realm = self._local_runtime_realm
+        client._local_runtime_instance = self._local_runtime_instance
         return client
 
-    def reload_credential(self) -> None:
-        """Adopt the credential file's current bearer (a Runtime restart rotates it)."""
-        if self.credential_file is None:
-            return
-        try:
-            credential = self.credential_file.read_text(encoding="utf-8").strip()
-        except OSError as exc:
-            raise HostError(f"worker credential unreadable: {exc}") from exc
-        if credential and credential != self.credential:
-            from astrid_runtime_client import WorkspaceClient
+    def _local_runtime_advertisement(self, path: Path) -> dict[str, Any]:
+        value = _handoff_read_protected_json(path.parent, path.name)
+        if (value.get("version") != 1 or self.credential_file is None
+                or value.get("worker_credential_file") != str(self.credential_file)
+                or not all(isinstance(value.get(key), str) and value[key]
+                           for key in ("endpoint", "active_realm", "runtime_instance_id"))):
+            raise HostError("local Runtime advertisement has a different worker credential binding")
+        return value
 
-            self.credential = credential
-            self.generated = WorkspaceClient(self.endpoint, credential, timeout=self.timeout)
+    def bind_local_runtime(self, discovery_file: Path) -> None:
+        """Opt a launcher-owned host into following its explicit local advertisement."""
+        advertisement = self._local_runtime_advertisement(discovery_file)
+        self._local_runtime_discovery_file = discovery_file
+        self._local_runtime_realm = advertisement["active_realm"]
+        self._local_runtime_instance = advertisement["runtime_instance_id"]
+
+    def refresh_local_connection(self) -> bool:
+        """Refresh an idle worker's endpoint and bearer without changing claim fences."""
+        if self.credential_file is None:
+            return False
+        path = self._local_runtime_discovery_file
+        advertisement = self._local_runtime_advertisement(path) if path is not None else None
+        endpoint = validate_runtime_endpoint(advertisement.get("endpoint", "")) if advertisement else self.endpoint
+        instance = advertisement.get("runtime_instance_id") if advertisement is not None else None
+        credential = _handoff_read_private_bytes(self.credential_file, limit=65536).decode("utf-8").strip()
+        if endpoint == self.endpoint and instance == self._local_runtime_instance and credential == self.credential:
+            return False
+        if not self.executor_id:
+            raise HostError("Runtime credential refresh requires a registered worker")
+        candidate = RuntimeProtocolClient(endpoint, credential, timeout=self.timeout)
+        realm = candidate._authenticate_worker(self.executor_id)
+        if self._local_runtime_realm is not None and realm != self._local_runtime_realm:
+            raise HostError("refreshed Runtime authenticated a different realm")
+        self.endpoint, self.credential, self.generated = endpoint, credential, candidate.generated
+        self._local_runtime_instance, self._local_runtime_realm = instance, realm
+        return True
 
     def health(self):
         """Read protocol/schema/runtime epoch through the generated client."""
@@ -4431,7 +4460,7 @@ class RuntimeProtocolClient:
             self._runtime_epoch = int(epoch)
         return value
 
-    def _authenticate_worker(self, executor_id: str) -> None:
+    def _authenticate_worker(self, executor_id: str) -> str:
         """Prove this enabled bearer can execute through the existing handshake."""
         value = self.generated.handshake(
             "astrid-generic-host", "1", ["worker:execute"]
@@ -4448,6 +4477,7 @@ class RuntimeProtocolClient:
             or field("protocol") != "workspace.v1"
         ):
             raise HostError("authenticated Runtime worker readiness is foreign or incomplete")
+        return str(field("realm_id"))
 
     def _current_runtime_epoch(self) -> int:
         """Read the live bootstrap epoch before every mutating operation."""
@@ -6196,14 +6226,12 @@ class GenericPackHost:
         """
         self._handoff_begin_registration()
         try:
+            if idle and self.client is not None:
+                self.client.refresh_local_connection()
             renew = getattr(self.client, "renew_registration_session", None)
             if callable(renew):
                 renew()
             adopt = idle and self._runtime_restarted
-            if adopt:
-                reload = getattr(self.client, "reload_credential", None)
-                if callable(reload):
-                    reload()
             self._register_impl(idle_renewal=True, deliberate=adopt)
         except Exception:
             self._registration_refresh_blocked = True
@@ -10293,8 +10321,7 @@ class GenericPackHost:
                         slot.runtime_state = dict(self.runtime_state)
                         with self._handoff_condition:
                             slot._remotion_full_preflight = copy.deepcopy(self._remotion_full_preflight)
-                        if callable(getattr(slot.client, "reload_credential", None)):
-                            slot.client.reload_credential()
+                        slot.client.refresh_local_connection()
                         slot._runtime_registration_fence = self._runtime_registration_fence
                         slot._registration_refresh_blocked = self._registration_refresh_blocked
                         worker = threading.Thread(target=serve, args=(index,),
@@ -13096,6 +13123,7 @@ def _cli() -> int:
     parser.add_argument("command", nargs="?", choices=("run", "supervise"), help="run the worker loop or JSONL supervisor")
     parser.add_argument("--pack-root", action="append", required=True, help="pack/executor root to discover")
     parser.add_argument("--runtime-endpoint")
+    parser.add_argument("--runtime-discovery-file", help="explicit local Runtime advertisement to follow while idle")
     parser.add_argument("--credential-file", help="owner-only file containing the worker bearer credential")
     parser.add_argument("--executor-id", default="astrid-pack-host")
     parser.add_argument("--max-concurrency", type=int, default=1)
@@ -13304,6 +13332,13 @@ def _cli() -> int:
     boot_manifest, boot_manifest_hash = _compose_cli_boot_manifest(args, parser)
     client = (RuntimeProtocolClient(args.runtime_endpoint, credential, credential_file=credential_path)
               if args.runtime_endpoint else None)
+    if args.runtime_discovery_file is not None:
+        if client is None:
+            parser.error("--runtime-discovery-file requires --runtime-endpoint")
+        try:
+            client.bind_local_runtime(Path(args.runtime_discovery_file))
+        except (OSError, ValueError, HostError, WorkspaceClientError) as exc:
+            parser.error(str(exc))
     if activation is not None:
         if client is None:
             parser.error("parked activation requires --runtime-endpoint")

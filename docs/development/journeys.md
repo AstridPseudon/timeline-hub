@@ -33,8 +33,10 @@ each with whether the tree was dirty when the run started. `outcome` is `success
 usable renderer Node, render the excerpt (`--range 144 152` by default), append a comment to `astrid/core/dev/journey.py`
 (inside the host's source closure; restored in `finally`), then:
 
-1. the next client open, run inside an `otto-heavy` job, replaces the outdated idle host by itself and the new host
-   outlives the job (`OTTO_HEAVY_LEASE` is stripped for the host);
+1. the next client open, run inside an `otto-heavy` job with private one-slot lease state, replaces the outdated idle
+   host by itself and the new host outlives the job. The outer journey retains the machine-wide capacity lease;
+   the nested job exercises lease cleanup without joining that queue. Job lease and capacity settings are stripped
+   from the durable host;
 2. a second excerpt renders on the new host;
 3. a client with a duplicated PATH reuses the host (neither refused nor replaced);
 4. kill -9 of the idle host: the next open recovers with a new host;
@@ -49,6 +51,10 @@ usable renderer Node, render the excerpt (`--range 144 152` by default), append 
    `astrid.render:v1:<timeline>:head:download:<file>`, the bearer token from `credentials/astrid.json`, the digest and storage
    estimate of `rendering.render` from `GET /v1/capabilities`, the selected backend as `selector`) and must complete.
    The output file is not inspected: the destination is `download`. Then a render succeeds on the restarted Runtime.
+
+SIGTERM and SIGINT record an interrupted failure and run teardown: restore the source probe, stop the private Runtime,
+and reap private process groups. Further interrupts are ignored during teardown. Groups that survive SIGTERM are
+checked again for ownership before SIGKILL.
 
 `--tier full` (about 20 min) adds a Codex image (`generation.generate_image`, flux-dev t2i), `pixel.sprites`
 (chroma, scale 5), `timelines checkout --fresh`, `edit --replace-asset SLOT=run:<sprites>/sprites#0`
