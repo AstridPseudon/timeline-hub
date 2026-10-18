@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import pytest
 
 from astrid.core.execution.generic_host import GenericPackHost
-
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKS = ROOT / "astrid" / "packs"
@@ -106,7 +106,17 @@ def test_all_supported_provider_routes_are_ready_and_grantable_with_declared_inp
         assert token.startswith("provider-route-grant-v1.")
 
 
-def test_required_provider_routes_remain_unavailable_without_credentials():
+def test_required_provider_routes_remain_unavailable_without_credentials(monkeypatch):
+    # Hermetic: readiness must not depend on what this machine happens to have installed
+    # (e.g. a `codex` binary on PATH) or exported. Hide every binary except the macOS
+    # sandbox launcher, and clear every provider credential variable from the environment.
+    real_which = shutil.which
+    monkeypatch.setattr(
+        shutil, "which", lambda name, *a, **k: real_which(name, *a, **k) if name == "sandbox-exec" else None
+    )
+    probe = _provider_host(credentials={})
+    for name in _fixture_credentials(probe):
+        monkeypatch.delenv(name, raising=False)
     host = _provider_host(credentials={})
     required = [
         record
@@ -115,9 +125,17 @@ def test_required_provider_routes_remain_unavailable_without_credentials():
     ]
     assert len(required) == 18
     for record in required:
-        assert record.ready is False
         if record.matrix.get("required_env"):
+            # Credential-gated: never ready without the credential, whatever else is installed.
+            assert record.ready is False, record.id
             assert record.preflight["credentials"]["missing"], record.id
+        elif record.matrix.get("required_binaries"):
+            # Binary-gated (binaries are hidden above): unavailable because the binary is missing.
+            assert record.ready is False, record.id
+            assert not record.preflight["binaries"]["ok"], record.id
         else:
-            # Not credential-gated: unavailable for a declared binary or network reason.
-            assert not record.preflight["binaries"]["ok"] or not record.preflight["network"]["ok"], record.id
+            # Not gated by a credential or binary (e.g. training.training_run, whose credentials
+            # are declared in its run config): readiness is exactly the remaining checks.
+            checks = record.preflight
+            ok = all(v is True or (isinstance(v, dict) and v.get("ok") is True) for v in checks.values())
+            assert record.ready is ok, record.id
