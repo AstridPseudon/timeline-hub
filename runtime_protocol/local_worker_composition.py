@@ -362,9 +362,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             # Use the SDK's explicit-source discovery and executable declaration
             # projection, just as its inspection producer does. This reads no
             # ambient source store and performs no executable/native inspection.
-            from astrid.core.execution.generic_host import _launch_static_records, _binary_requirements
-            records = _launch_static_records(tuple(p.resolve(strict=True) for p in pack_roots), capability_matrix)
-            inspection_required = any(_binary_requirements(record) for record in records.values())
+            from astrid.core.execution.generic_host import _launch_needs_command_inspection
+            inspection_required = _launch_needs_command_inspection(pack_roots, capability_matrix)
         if inspection_required:
             from astrid.core.execution.custody_broker import (
                 RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv)

@@ -671,9 +671,19 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
             self.role='host';self.owner_epoch=kwargs['owner_epoch'];self.run_id='fake-run'
             self.custody_generation=1;self.authority_scope_root=kwargs['authority_scope_root']
             self.operation_channel=None
+            self.child_pipe_binding=[]
+            self.pipe_fds=[]
+            if needs_inspection:
+                # Match the SDK broker's actual anonymous directional endpoints.
+                request_read, request_write = os.pipe()
+                reply_read, reply_write = os.pipe()
+                self.pipe_fds = [request_read, request_write, reply_read, reply_write]
+                self.child_pipe_binding = [inspection_custody._pipe_identity(reply_read, os.O_RDONLY),
+                                           inspection_custody._pipe_identity(request_write, os.O_WRONLY)]
         def create_hosted_launch(self,preparation):
-            from banodoco_local.hosted_contract import HostedLaunch
-            return HostedLaunch(self,preparation)
+            from astrid.core.execution.hosted_contract import HostedLaunch
+            captures['hosted'] = HostedLaunch(self,preparation)
+            return captures['hosted']
         def child_environment(self,argv,**kwargs):return {}
         def start_accept(self):
             assert captures.get('claimed') and captures.get('inspection_prepared')
@@ -681,7 +691,10 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         def wait_until_sealed(self):
             if fault == 'seal': raise ConflictError('offline seal refusal')
             captures["sealed"]=True
-        def close_child_pipes(self):pass
+        def close_child_pipes(self):
+            for fd in self.pipe_fds: os.close(fd)
+            self.pipe_fds=[]
+        def abort_before_spawn(self):self.close_child_pipes()
         def set_cleanup_deadline(self,deadline):pass
         def signal(self,sig,*,expected_pid):
             assert sig == signal.SIGTERM and expected_pid == original.pid
@@ -716,7 +729,16 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     monkeypatch.setattr(inspection_custody,"RoleBoundCustodyBroker",InspectionBroker)
     monkeypatch.setattr(inspection_custody,"default_process_identity",lambda pid:{"pid":os.getpid(),"uid":os.getuid(),"parent_pid":1,"birth_id":"owner"})
     def popen(argv,**kwargs):
-        if needs_inspection: assert captures.get('accept_started')
+        from astrid.core.execution import hosted_contract
+        assert type(captures['hosted']) is hosted_contract.HostedLaunch
+        binding = captures['hosted'].value
+        if needs_inspection:
+            assert captures.get('accept_started')
+            assert binding['inspection_pipes'] == captures['hosted'].broker.child_pipe_binding
+            assert {p['fd'] for p in binding['inspection_pipes']} <= set(kwargs['pass_fds'])
+            hosted_contract.validate(binding, role='host')  # Real open pipe identities, before spawn.
+        else:
+            assert 'inspection_pipes' not in binding
         descriptor=os.dup(captures['binding_fd'])
         def read_binding():
             data=b''
@@ -823,7 +845,7 @@ def cpu_inspection_owner(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize('fault', ['missing', 'foreign_channel', 'foreign_peer', 'stale_peer',
-    'epoch', 'generation', 'target', 'operation', 'replay'])
+    'epoch', 'generation', 'target', 'operation', 'replay', 'command'])
 def test_cpu_command_inspection_refuses_missing_foreign_and_stale_channels(cpu_inspection_owner, monkeypatch, fault):
     from astrid.core.execution import process_group as pg
     case = cpu_inspection_owner; cb = case.cb
@@ -845,6 +867,8 @@ def test_cpu_command_inspection_refuses_missing_foreign_and_stale_channels(cpu_i
     else:
         if fault in {'epoch', 'generation', 'target'}:
             case.frame['binding'][{'epoch': 'owner_epoch'}.get(fault, fault)] = 'changed'
+        elif fault == 'command':
+            case.frame['command'] = 'execute_arbitrary_command'
         elif fault == 'operation':
             case.frame['operation_id'] = 2
         else:
