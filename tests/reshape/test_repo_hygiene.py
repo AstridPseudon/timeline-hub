@@ -180,18 +180,20 @@ def test_allowlists_preserve_legitimate_tracked_fixtures_and_source_files(
     assert check_repo_hygiene.find_tracked_ignored_artifacts() == []
 
 
-def test_durable_megaplan_assets_are_allowed_but_runtime_state_is_not(
+def test_retired_m7_megaplan_assets_and_runtime_state_are_rejected(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    durable = [
+    retired_m7 = [
+        ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/plan_v1.meta.json",
         ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/plan_v2.md",
+        ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/plan_v2.meta.json",
         ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/state.json",
     ]
     runtime = [
         ".megaplan/initiatives/astrid-first/.process_adapter_wbc/events.ndjson",
         ".megaplan/plans/unapproved-runtime/state.json",
     ]
-    tracked_paths = durable + runtime
+    tracked_paths = retired_m7 + runtime
     for relpath in tracked_paths:
         _touch(tmp_path, relpath)
 
@@ -199,7 +201,9 @@ def test_durable_megaplan_assets_are_allowed_but_runtime_state_is_not(
     monkeypatch.setattr(check_repo_hygiene, "_tracked_files", lambda: tracked_paths)
 
     findings = check_repo_hygiene.find_tracked_ignored_artifacts()
-    assert sorted({path for _category, path in findings}) == sorted(runtime)
+    assert sorted({path for _category, path in findings}) == sorted(tracked_paths)
+    for path in tracked_paths:
+        assert ("megaplan local state", path) in findings
 
 
 def test_secret_named_test_sources_are_allowed(
