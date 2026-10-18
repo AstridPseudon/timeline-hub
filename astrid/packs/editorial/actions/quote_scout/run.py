@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from astrid.core.contracts.errors import AstridValueError
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
 
 guard_canonical_entrypoint('editorial.quote_scout')
@@ -51,39 +52,39 @@ SYSTEM_PROMPT = (
 
 def validate_quote_candidates(payload: Any) -> None:
     if not isinstance(payload, dict):
-        raise ValueError("quote_candidates payload must be an object")
+        raise AstridValueError("quote_candidates payload must be an object")
     if payload.get("version") != QUOTE_CANDIDATES_VERSION:
-        raise ValueError(f"quote_candidates.version must be {QUOTE_CANDIDATES_VERSION}")
+        raise AstridValueError(f"quote_candidates.version must be {QUOTE_CANDIDATES_VERSION}")
     generated_at = payload.get("generated_at")
     if not isinstance(generated_at, str) or not generated_at.endswith("Z"):
-        raise ValueError("quote_candidates.generated_at must be a UTC timestamp ending in 'Z'")
+        raise AstridValueError("quote_candidates.generated_at must be a UTC timestamp ending in 'Z'")
     candidates = payload.get("candidates")
     if not isinstance(candidates, list):
-        raise ValueError("quote_candidates.candidates must be a list")
+        raise AstridValueError("quote_candidates.candidates must be a list")
     for index, candidate in enumerate(candidates):
         path = f"quote_candidates.candidates[{index}]"
         if not isinstance(candidate, dict):
-            raise ValueError(f"{path} must be an object")
+            raise AstridValueError(f"{path} must be an object")
         if set(candidate) != {"segment_ids", "text", "speaker", "theme", "power", "quote_kind"}:
-            raise ValueError(f"{path} has unexpected keys")
+            raise AstridValueError(f"{path} has unexpected keys")
         segment_ids = candidate.get("segment_ids")
         if not isinstance(segment_ids, list) or not segment_ids or not all(isinstance(segment_id, int) and segment_id >= 0 for segment_id in segment_ids):
-            raise ValueError(f"{path}.segment_ids must be a non-empty list of 0-based integers")
+            raise AstridValueError(f"{path}.segment_ids must be a non-empty list of 0-based integers")
         for field in ("text", "theme", "quote_kind"):
             if not isinstance(candidate.get(field), str) or not candidate[field]:
-                raise ValueError(f"{path}.{field} must be a non-empty string")
+                raise AstridValueError(f"{path}.{field} must be a non-empty string")
         speaker = candidate.get("speaker")
         if speaker is not None and not isinstance(speaker, str):
-            raise ValueError(f"{path}.speaker must be a string or null")
+            raise AstridValueError(f"{path}.speaker must be a string or null")
         power = candidate.get("power")
         if not isinstance(power, int) or power < 1 or power > 5:
-            raise ValueError(f"{path}.power must be an integer from 1 to 5")
+            raise AstridValueError(f"{path}.power must be an integer from 1 to 5")
 
 
 def _transcript_digest(transcript: dict[str, Any] | list[dict[str, Any]]) -> str:
     segments = transcript.get("segments") if isinstance(transcript, dict) else transcript
     if not isinstance(segments, list):
-        raise ValueError("transcript must be a list or an object with segments")
+        raise AstridValueError("transcript must be a list or an object with segments")
     lines = [
         f"{index}: speaker={segment.get('speaker')!r} text={str(segment.get('text', '')).strip()}"
         for index, segment in enumerate(segments)
@@ -109,7 +110,7 @@ def build_quote_candidates(
     )
     candidates = response.get("candidates")
     if not isinstance(candidates, list):
-        raise ValueError("Claude quote scout response is missing candidates")
+        raise AstridValueError("Claude quote scout response is missing candidates")
     payload = {"version": QUOTE_CANDIDATES_VERSION, "generated_at": _utc_now(), "candidates": candidates}
     validate_quote_candidates(payload)
     return payload

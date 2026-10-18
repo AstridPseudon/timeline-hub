@@ -138,7 +138,7 @@ def _synthesize(edge_tts: Any, args: argparse.Namespace, *, proxy: str | None,
                     raise
                 warnings.append(f"Edge TTS at {host} failed ({type(exc).__name__}: {exc}); used the next endpoint")
                 break
-    raise RuntimeError("no Edge TTS endpoint to try")
+    raise AstridError("no Edge TTS endpoint to try")
 
 
 def _word_rows(raw_words: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -148,7 +148,7 @@ def _word_rows(raw_words: list[dict[str, Any]]) -> list[dict[str, Any]]:
         offset = int(raw.get("offset", -1))
         duration = int(raw.get("duration", -1))
         if offset < 0 or duration < 0:
-            raise RuntimeError(f"edge-tts returned invalid word timing for {word!r}")
+            raise AstridError(f"edge-tts returned invalid word timing for {word!r}")
         if not word.strip():
             continue
         rows.append({
@@ -202,21 +202,21 @@ def generate_core(argv: list[str] | None = None) -> GenerationResult:
     try:
         raw_words = _synthesize(edge_tts, args, proxy=proxy, mp3_path=mp3_path, warnings=warnings)
         if not mp3_path.is_file() or mp3_path.stat().st_size == 0:
-            raise RuntimeError("edge-tts completed without producing audio")
+            raise AstridError("edge-tts completed without producing audio")
         words = _word_rows(raw_words)
         if not words:
-            raise RuntimeError("edge-tts produced audio without WordBoundary timing")
+            raise AstridError("edge-tts produced audio without WordBoundary timing")
         subprocess.run(
             [ffmpeg, "-nostdin", "-v", "error", "-y", "-i", str(mp3_path),
              "-acodec", "pcm_s16le", str(wav_path)],
             check=True, capture_output=True, text=True, timeout=60,
         )
         if not wav_path.is_file() or wav_path.stat().st_size <= 44:
-            raise RuntimeError("ffmpeg completed without producing a valid WAV")
+            raise AstridError("ffmpeg completed without producing a valid WAV")
         probe = ffprobe_metadata(wav_path)
         duration = probe.duration_seconds
         if duration is None or not math.isfinite(duration) or duration <= 0:
-            raise RuntimeError("ffprobe could not determine positive WAV duration")
+            raise AstridError("ffprobe could not determine positive WAV duration")
         if words[-1]["end_s"] > duration + 0.05:
             warnings.append(
                 f"last word ends at {words[-1]['end_s']}s after measured WAV duration {duration:.3f}s"

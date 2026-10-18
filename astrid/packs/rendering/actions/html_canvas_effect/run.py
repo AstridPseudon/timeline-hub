@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from astrid.core.contracts.errors import AstridError
+from astrid.core.contracts.errors import AstridError, AstridValueError
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
 
 guard_canonical_entrypoint("rendering.html_canvas_effect")
@@ -128,19 +128,19 @@ def _load_or_bootstrap_local_manifest(local_pack: Path) -> tuple[Path, dict[str,
     if not manifest_path.exists():
         return manifest_path, dict(_LOCAL_PACK_MANIFEST)
     if manifest_path.is_symlink() or not manifest_path.is_file():
-        raise ValueError(f"local pack manifest is not a regular file: {manifest_path}")
+        raise AstridValueError(f"local pack manifest is not a regular file: {manifest_path}")
     try:
         payload = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
-        raise ValueError(f"invalid local pack manifest: {manifest_path}") from exc
+        raise AstridValueError(f"invalid local pack manifest: {manifest_path}") from exc
     if not isinstance(payload, dict):
-        raise ValueError(f"local pack manifest must contain an object: {manifest_path}")
+        raise AstridValueError(f"local pack manifest must contain an object: {manifest_path}")
     if payload.get("schema_version") != 3 or payload.get("id") != "local":
-        raise ValueError(
+        raise AstridValueError(
             f"local pack manifest must be a v3 manifest for pack 'local': {manifest_path}"
         )
     if not isinstance(payload.get("rendering", {}), dict):
-        raise ValueError(f"local pack rendering declarations must be an object: {manifest_path}")
+        raise AstridValueError(f"local pack rendering declarations must be an object: {manifest_path}")
     return manifest_path, payload
 
 
@@ -183,9 +183,9 @@ def scaffold(
     existing_declaration = rendering.get(declaration_key)
     if existing_declaration is not None:
         if not isinstance(existing_declaration, dict) or existing_declaration.get("type") != "element":
-            raise ValueError(f"local pack declaration is not an element: {declaration_key}")
+            raise AstridValueError(f"local pack declaration is not an element: {declaration_key}")
         if existing_declaration.get("path") not in {None, expected_manifest_path}:
-            raise ValueError(
+            raise AstridValueError(
                 f"refusing to move an existing declaration outside its selected closure: {declaration_key}"
             )
     element_exists = element_root.exists() or element_root.is_symlink()

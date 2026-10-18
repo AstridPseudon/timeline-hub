@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from astrid.core.contracts.errors import AstridError
 import argparse
 import fcntl
 import hashlib
@@ -81,7 +82,7 @@ def build_parser() -> argparse.ArgumentParser:
 def _json_mapping(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
-        raise RuntimeError(f"{path} must contain a JSON object")
+        raise AstridError(f"{path} must contain a JSON object")
     return value
 
 
@@ -208,7 +209,7 @@ def _digest(value: Any) -> str | None:
 def _descriptor(row: Mapping[str, Any], *, filename: str) -> dict[str, Any]:
     object_id = _digest(row)
     if object_id is None:
-        raise RuntimeError(f"managed artifact {filename!r} has no canonical object digest")
+        raise AstridError(f"managed artifact {filename!r} has no canonical object digest")
     return {
         "object_id": object_id,
         "digest": object_id,
@@ -222,7 +223,7 @@ def _import_runtime_file(client: Any, *, project: str | None, path: Path, filena
 
     importer = getattr(getattr(client, "media", None), "import_file", None)
     if not callable(importer):
-        raise RuntimeError("connected Runtime client cannot import a managed input")
+        raise AstridError("connected Runtime client cannot import a managed input")
     if not isinstance(project, str) or not project:
         current = getattr(getattr(client, "projects", None), "current", None)
         observed = current() if callable(current) else None
@@ -230,7 +231,7 @@ def _import_runtime_file(client: Any, *, project: str | None, path: Path, filena
         if isinstance(data, Mapping):
             project = str(data.get("project_id") or data.get("id") or "") or None
     if not project:
-        raise RuntimeError("H3 transform requires a selected project to stage managed inputs")
+        raise AstridError("H3 transform requires a selected project to stage managed inputs")
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     result = importer(
         project=project,
@@ -238,13 +239,13 @@ def _import_runtime_file(client: Any, *, project: str | None, path: Path, filena
         idempotency_key=f"h3-av-input-{digest}",
     )
     if not getattr(result, "ok", False):
-        raise RuntimeError(f"could not import managed H3 input {filename!r}: {getattr(result, 'error', result)}")
+        raise AstridError(f"could not import managed H3 input {filename!r}: {getattr(result, 'error', result)}")
     data = getattr(result, "data", None)
     if not isinstance(data, Mapping):
-        raise RuntimeError(f"managed H3 input {filename!r} returned no object descriptor")
+        raise AstridError(f"managed H3 input {filename!r} returned no object descriptor")
     descriptor = _descriptor(data, filename=filename)
     if descriptor["digest"] != "sha256:" + digest:
-        raise RuntimeError(f"managed H3 input {filename!r} import returned a different digest")
+        raise AstridError(f"managed H3 input {filename!r} import returned a different digest")
     return descriptor
 
 
@@ -263,28 +264,28 @@ def _materialize_output(
             return local, {"path": str(local), "sha256": hashlib.sha256(local.read_bytes()).hexdigest()}
     rows = _managed_rows(result, name)
     if not rows:
-        raise RuntimeError(f"child {getattr(result, 'capability_id', '?')} did not return settled output {name!r}")
+        raise AstridError(f"child {getattr(result, 'capability_id', '?')} did not return settled output {name!r}")
     # A primary result is authoritative; do not accidentally retrieve a JSON
     # receipt or an auxiliary output with the same task.
     row = next((item for item in rows if item.get("is_primary") or item.get("role") == "result"), rows[0])
     object_id = _digest(row)
     if object_id is None:
-        raise RuntimeError(f"managed output {name!r} has no canonical object digest")
+        raise AstridError(f"managed output {name!r} has no canonical object digest")
     data = client.media.read_bytes(object_id)
     if not isinstance(data, bytes):
-        raise RuntimeError(f"managed output {name!r} did not return bytes")
+        raise AstridError(f"managed output {name!r} did not return bytes")
     actual = "sha256:" + hashlib.sha256(data).hexdigest()
     if actual != object_id:
-        raise RuntimeError(f"managed output {name!r} failed digest verification")
+        raise AstridError(f"managed output {name!r} failed digest verification")
     declared_size = row.get("size")
     if declared_size is not None and declared_size != len(data):
-        raise RuntimeError(f"managed output {name!r} failed size verification")
+        raise AstridError(f"managed output {name!r} failed size verification")
     filename = row.get("filename") or row.get("name") or name
     filename = Path(str(filename)).name
     if not filename or filename in {".", ".."}:
         filename = name
     if expected_filename is not None and filename != expected_filename:
-        raise RuntimeError(
+        raise AstridError(
             f"managed output {name!r} returned filename {filename!r}; expected {expected_filename!r}"
         )
     destination = out_dir / "retrieved" / filename
@@ -308,13 +309,13 @@ def _retrieve_generation_outputs(
             by_role[role].append(row)
     missing = [role for role in ("video", "audio") if not by_role[role]]
     if missing:
-        raise RuntimeError(
+        raise AstridError(
             "managed LanPaint generation is missing required output role(s): "
             + ", ".join(missing)
         )
     duplicate = [role for role in ("video", "audio") if len(by_role[role]) != 1]
     if duplicate:
-        raise RuntimeError(
+        raise AstridError(
             "managed LanPaint generation has ambiguous output role(s): "
             + ", ".join(duplicate)
         )
@@ -346,7 +347,7 @@ def _retrieve_muxed_generation(
 
     rows = _managed_rows(result, "vibecomfy_run")
     if len(rows) != 1:
-        raise RuntimeError(
+        raise AstridError(
             "managed native H3 generation must return exactly one muxed AV output; "
             f"observed {len(rows)}"
         )
@@ -371,18 +372,18 @@ def _write_generated_bundle(
     """Create a deterministic, role-bearing bundle for compose/verify."""
 
     if set(outputs) != {"video", "audio"}:
-        raise RuntimeError("LanPaint generated bundle requires exactly video and audio outputs")
+        raise AstridError("LanPaint generated bundle requires exactly video and audio outputs")
     records: list[dict[str, Any]] = []
     payloads: list[tuple[str, bytes]] = []
     for role in ("video", "audio"):
         path, row = outputs[role]
         if not path.is_file():
-            raise RuntimeError(f"retrieved LanPaint {role} output is missing: {path}")
+            raise AstridError(f"retrieved LanPaint {role} output is missing: {path}")
         data = path.read_bytes()
         digest = hashlib.sha256(data).hexdigest()
         declared = row.get("sha256")
         if declared != digest:
-            raise RuntimeError(f"retrieved LanPaint {role} output failed digest verification")
+            raise AstridError(f"retrieved LanPaint {role} output failed digest verification")
         member = f"outputs/{role}-{path.name}"
         records.append(
             {
@@ -422,7 +423,7 @@ def _retrieve_compiled_workflow(
 
     workflow = compilation.get("workflow")
     if not isinstance(workflow, Mapping):
-        raise RuntimeError("compilation.json is missing its selected workflow manifest")
+        raise AstridError("compilation.json is missing its selected workflow manifest")
     inputs: dict[str, Any] = {}
     for port, filename in (
         ("python", "workflow.py"),
@@ -432,7 +433,7 @@ def _retrieve_compiled_workflow(
         identity = workflow.get(filename)
         expected = identity.get("sha256") if isinstance(identity, Mapping) else None
         if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
-            raise RuntimeError(f"compilation.json has no valid hash for workflow member {filename!r}")
+            raise AstridError(f"compilation.json has no valid hash for workflow member {filename!r}")
         path, row = _materialize_output(
             client,
             compiled,
@@ -443,7 +444,7 @@ def _retrieve_compiled_workflow(
         )
         actual = hashlib.sha256(path.read_bytes()).hexdigest()
         if actual != expected:
-            raise RuntimeError(
+            raise AstridError(
                 f"managed workflow member {filename!r} failed compilation hash/provenance verification"
             )
         inputs[port] = _descriptor(row, filename=filename)
@@ -465,33 +466,33 @@ def _materialize_prepared_worker_workflow_bundle(
         "source": "source.json",
     }
     if set(paths) != set(expected_names):
-        raise RuntimeError("prepared RunPod execution requires the complete canonical workflow bundle")
+        raise AstridError("prepared RunPod execution requires the complete canonical workflow bundle")
     workflow = compilation.get("workflow")
     if not isinstance(workflow, Mapping):
-        raise RuntimeError("compilation.json is missing its selected workflow manifest")
+        raise AstridError("compilation.json is missing its selected workflow manifest")
     expected_hashes: dict[str, str] = {}
     for port, filename in expected_names.items():
         row = workflow.get(filename)
         digest = row.get("sha256") if isinstance(row, Mapping) else None
         if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
-            raise RuntimeError(f"compilation.json has no valid hash for {filename!r}")
+            raise AstridError(f"compilation.json has no valid hash for {filename!r}")
         source = Path(paths[port])
         if source.is_symlink() or not source.is_file():
-            raise RuntimeError(f"materialized workflow member {filename!r} is not a regular file")
+            raise AstridError(f"materialized workflow member {filename!r} is not a regular file")
         if hashlib.sha256(source.read_bytes()).hexdigest() != digest:
-            raise RuntimeError(f"materialized workflow member {filename!r} changed after verification")
+            raise AstridError(f"materialized workflow member {filename!r} changed after verification")
         expected_hashes[filename] = digest
 
     if destination.is_symlink():
-        raise RuntimeError("prepared workflow bundle path must not be a symlink")
+        raise AstridError("prepared workflow bundle path must not be a symlink")
     if destination.exists():
         if not destination.is_dir() or {item.name for item in destination.iterdir()} != set(expected_names.values()):
-            raise RuntimeError("saved prepared workflow bundle has unexpected content")
+            raise AstridError("saved prepared workflow bundle has unexpected content")
         for port, filename in expected_names.items():
             target = destination / filename
             if (target.is_symlink() or not target.is_file()
                     or hashlib.sha256(target.read_bytes()).hexdigest() != expected_hashes[filename]):
-                raise RuntimeError("saved prepared workflow bundle differs from the frozen compilation")
+                raise AstridError("saved prepared workflow bundle differs from the frozen compilation")
     else:
         destination.mkdir(parents=True, mode=0o700)
         try:
@@ -506,12 +507,12 @@ def _materialize_prepared_worker_workflow_bundle(
 def _provenance(preparation: Mapping[str, Any], compilation: Mapping[str, Any]) -> dict[str, Any]:
     request_digest = preparation.get("request_digest")
     if request_digest != compilation.get("request_digest"):
-        raise RuntimeError("H3 request provenance does not match the selected compilation")
+        raise AstridError("H3 request provenance does not match the selected compilation")
     assets = preparation.get("assets")
     workflow = compilation.get("workflow")
     managed_assets = compilation.get("managed_assets")
     if not isinstance(workflow, Mapping) or not isinstance(managed_assets, Mapping):
-        raise RuntimeError("H3 compilation is missing managed workflow or asset provenance")
+        raise AstridError("H3 compilation is missing managed workflow or asset provenance")
     return {
         "schema_version": 1,
         "request_digest": request_digest,
@@ -578,7 +579,7 @@ def _invoke(
         read_managed_outputs=True,
     )
     if not result.ok:
-        raise RuntimeError(f"{capability_id} failed: {result.error}")
+        raise AstridError(f"{capability_id} failed: {result.error}")
     return result
 
 
@@ -679,7 +680,7 @@ def _invocation_payload(result: InvocationResult) -> dict[str, Any]:
         }
     )
     if not isinstance(payload, Mapping):
-        raise RuntimeError("canonical invocation result did not serialize to an object")
+        raise AstridError("canonical invocation result did not serialize to an object")
     return dict(payload)
 
 
@@ -701,20 +702,20 @@ def _load_invocation_result(path: Path, *, expected_input_digest: str) -> Invoca
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"cannot load saved canonical run result: {exc}") from exc
+        raise AstridError(f"cannot load saved canonical run result: {exc}") from exc
     if not isinstance(value, Mapping) or value.get("schema_version") != 1:
-        raise RuntimeError("saved canonical run result envelope is unsupported")
+        raise AstridError("saved canonical run result envelope is unsupported")
     if value.get("input_digest") != expected_input_digest:
-        raise RuntimeError("saved canonical run result belongs to different stage inputs")
+        raise AstridError("saved canonical run result belongs to different stage inputs")
     result_payload = value.get("result")
     if not isinstance(result_payload, Mapping):
-        raise RuntimeError("saved canonical run result must contain an object")
+        raise AstridError("saved canonical run result must contain an object")
     if value.get("result_digest") != _stable_digest(result_payload):
-        raise RuntimeError("saved canonical run result failed its integrity check")
+        raise AstridError("saved canonical run result failed its integrity check")
     value = result_payload
     required = ("capability_id", "capability_type", "native_kind", "ok")
     if any(key not in value for key in required):
-        raise RuntimeError("saved canonical run result is incomplete")
+        raise AstridError("saved canonical run result is incomplete")
     raw_result = value.get("raw_result")
     outputs = value.get("outputs")
     return InvocationResult(
@@ -752,7 +753,7 @@ def _reobserve_saved_result(
     run_id = saved.kernel_run_id
     attempt_id = saved.kernel_attempt_id
     if not all(isinstance(value, str) and value for value in (task_id, run_id, attempt_id)):
-        raise RuntimeError(
+        raise AstridError(
             f"cannot resume {phase}: saved result is missing task/run/attempt identity"
         )
 
@@ -760,7 +761,7 @@ def _reobserve_saved_result(
     show = getattr(tasks, "show", None)
     read_outputs = getattr(tasks, "list_managed_outputs", None)
     if not callable(show) or not callable(read_outputs):
-        raise RuntimeError(
+        raise AstridError(
             f"cannot resume {phase}: Runtime identity and managed-output readback are unavailable"
         )
 
@@ -768,22 +769,22 @@ def _reobserve_saved_result(
     observed_ok = bool(getattr(observed, "ok", isinstance(observed, Mapping)))
     task = getattr(observed, "data", observed if isinstance(observed, Mapping) else None)
     if not observed_ok or not isinstance(task, Mapping):
-        raise RuntimeError(
+        raise AstridError(
             f"cannot resume {phase}: Runtime settlement for task {task_id!r} is unknown"
         )
     task = dict(task)
     if task.get("task_id", task.get("id")) != task_id:
-        raise RuntimeError(f"cannot resume {phase}: Runtime returned a different task identity")
+        raise AstridError(f"cannot resume {phase}: Runtime returned a different task identity")
     if task.get("run_id") != run_id or task.get("attempt_id") != attempt_id:
-        raise RuntimeError(f"cannot resume {phase}: Runtime task identity disagrees with saved identity")
+        raise AstridError(f"cannot resume {phase}: Runtime task identity disagrees with saved identity")
     state = str(task.get("state") or task.get("status") or "").lower()
     if state not in {"succeeded", "completed"}:
-        raise RuntimeError(
+        raise AstridError(
             f"cannot resume {phase}: Runtime task {task_id!r} is not settled ({state or 'unknown'}); refusing replay"
         )
     settled = task.get("result")
     if not isinstance(settled, Mapping):
-        raise RuntimeError(f"cannot resume {phase}: Runtime settlement has no result")
+        raise AstridError(f"cannot resume {phase}: Runtime settlement has no result")
 
     managed_response = read_outputs(task_id)
     managed_ok = bool(getattr(managed_response, "ok", isinstance(managed_response, Mapping)))
@@ -793,13 +794,13 @@ def _reobserve_saved_result(
         managed_response if isinstance(managed_response, (list, tuple)) else None,
     )
     if not managed_ok:
-        raise RuntimeError(
+        raise AstridError(
             f"cannot resume {phase}: Runtime managed-output readback for task {task_id!r} is unknown"
         )
     if isinstance(managed, tuple) and len(managed) == 2 and isinstance(managed[0], list):
         managed = managed[0]
     if not isinstance(managed, list):
-        raise RuntimeError(f"cannot resume {phase}: Runtime managed-output readback is invalid")
+        raise AstridError(f"cannot resume {phase}: Runtime managed-output readback is invalid")
 
     output_rows = settled.get("outputs")
     raw_result = {
@@ -845,7 +846,7 @@ def _assert_recorded_identity(
         and recorded_capability
         and recorded_capability != result.capability_id
     ):
-        raise RuntimeError(f"cannot resume {phase}: capability identity disagrees with journal admission")
+        raise AstridError(f"cannot resume {phase}: capability identity disagrees with journal admission")
     for journal_key, result_value in (
         ("task_id", result.kernel_task_id),
         ("run_id", result.kernel_run_id),
@@ -853,7 +854,7 @@ def _assert_recorded_identity(
     ):
         recorded = previous.get(journal_key)
         if isinstance(recorded, str) and recorded and recorded != result_value:
-            raise RuntimeError(f"cannot resume {phase}: observed identity disagrees with journal admission")
+            raise AstridError(f"cannot resume {phase}: observed identity disagrees with journal admission")
 
 
 def _recovery_receipt_path(saved_result: Path, journal: OperationJournal) -> Path:
@@ -861,7 +862,7 @@ def _recovery_receipt_path(saved_result: Path, journal: OperationJournal) -> Pat
 
     submission_id = journal.submission_id
     if not isinstance(submission_id, str) or not submission_id:
-        raise RuntimeError("H3 operation journal is missing its submission identity")
+        raise AstridError("H3 operation journal is missing its submission identity")
     return saved_result.with_name(f".{saved_result.name}.{submission_id}.recovery.json")
 
 
@@ -882,12 +883,12 @@ def _observe_legacy_saved_result(
     run_id = saved.kernel_run_id
     saved_attempt_id = saved.kernel_attempt_id
     if not all(isinstance(value, str) and value for value in (task_id, run_id)):
-        raise RuntimeError(
+        raise AstridError(
             f"cannot resume {phase}: saved result is missing task/run identity"
         )
     expected_attempt_id = attempt_pin or saved_attempt_id
     if attempt_pin and saved_attempt_id and attempt_pin != saved_attempt_id:
-        raise RuntimeError(f"cannot resume {phase}: saved attempt disagrees with journal admission")
+        raise AstridError(f"cannot resume {phase}: saved attempt disagrees with journal admission")
     observed = observe_task_invocation(
         client,
         capability_id=saved.capability_id,
@@ -902,24 +903,24 @@ def _observe_legacy_saved_result(
         manifest_path=saved.manifest_path,
     )
     if not observed.ok:
-        raise RuntimeError(
+        raise AstridError(
             f"cannot resume {phase}: Runtime settlement for task {task_id!r} is unknown or unsuccessful"
         )
     task = observed.raw_result.get("task") if isinstance(observed.raw_result, Mapping) else None
     if not isinstance(task, Mapping):
-        raise RuntimeError(f"cannot resume {phase}: Runtime settlement has no task resource")
+        raise AstridError(f"cannot resume {phase}: Runtime settlement has no task resource")
     if task.get("task_id", task.get("id")) != task_id or task.get("run_id") != run_id:
-        raise RuntimeError(f"cannot resume {phase}: Runtime task identity disagrees with saved identity")
+        raise AstridError(f"cannot resume {phase}: Runtime task identity disagrees with saved identity")
     observed_attempt_id = str(task.get("attempt_id") or "")
     if expected_attempt_id and observed_attempt_id != expected_attempt_id:
-        raise RuntimeError(f"cannot resume {phase}: Runtime attempt identity disagrees with saved identity")
+        raise AstridError(f"cannot resume {phase}: Runtime attempt identity disagrees with saved identity")
     state = str(task.get("state") or task.get("status") or "").lower()
     if state not in {"succeeded", "completed"}:
-        raise RuntimeError(
+        raise AstridError(
             f"cannot resume {phase}: Runtime task {task_id!r} is not settled ({state or 'unknown'}); refusing replay"
         )
     if not isinstance(task.get("result"), Mapping):
-        raise RuntimeError(f"cannot resume {phase}: Runtime settlement has no result")
+        raise AstridError(f"cannot resume {phase}: Runtime settlement has no result")
     return observed
 
 
@@ -951,10 +952,10 @@ def _invoke_stage(
         if previous is not None:
             recorded_digest = previous.get("input_digest")
             if isinstance(recorded_digest, str) and recorded_digest != input_digest:
-                raise RuntimeError(f"cannot resume {phase}: different stage inputs from the journal")
+                raise AstridError(f"cannot resume {phase}: different stage inputs from the journal")
             recorded_capability = previous.get("capability_id")
             if isinstance(recorded_capability, str) and recorded_capability != capability_id:
-                raise RuntimeError(f"cannot resume {phase}: journaled capability identity changed")
+                raise AstridError(f"cannot resume {phase}: journaled capability identity changed")
         result = _invoke(
             client,
             capability_id,
@@ -979,17 +980,17 @@ def _invoke_stage(
         return result
     if resume and saved_result.is_file():
         if previous is None:
-            raise RuntimeError(
+            raise AstridError(
                 f"cannot resume {phase}: saved result has no matching journal admission"
             )
         recorded_digest = previous.get("input_digest")
         if isinstance(recorded_digest, str) and recorded_digest != input_digest:
-            raise RuntimeError(f"cannot resume {phase}: different stage inputs from the journal")
+            raise AstridError(f"cannot resume {phase}: different stage inputs from the journal")
         result = _load_invocation_result(saved_result, expected_input_digest=input_digest)
         if not result.ok:
-            raise RuntimeError(f"saved {phase} result is not successful")
+            raise AstridError(f"saved {phase} result is not successful")
         if result.capability_id != capability_id:
-            raise RuntimeError(f"saved {phase} result belongs to {result.capability_id!r}")
+            raise AstridError(f"saved {phase} result belongs to {result.capability_id!r}")
         result = _observe_legacy_saved_result(
             client,
             result,
@@ -1012,7 +1013,7 @@ def _invoke_stage(
         )
         return result
     if resume and previous is not None and previous.get("status") in {"started", "uncertain", "completed"}:
-        raise RuntimeError(
+        raise AstridError(
             f"cannot resume {phase}: SDK recovery receipt and legacy result are missing after {previous.get('status')}"
         )
     journal.record(phase, "started", capability_id=capability_id, input_digest=input_digest)
@@ -1077,18 +1078,18 @@ def _invoke_canonical_run(
     })
     prior_run = journal.latest("run")
     if resume and prior_run is not None and journal.admission_digest is None:
-        raise RuntimeError("cannot resume canonical run: journal has no frozen admission identity")
+        raise AstridError("cannot resume canonical run: journal has no frozen admission identity")
     try:
         journal.freeze_admission(admission_digest)
     except OperationJournalError as exc:
-        raise RuntimeError(str(exc)) from exc
+        raise AstridError(str(exc)) from exc
 
     receipt_path = _recovery_receipt_path(saved_result, journal)
     if resume and receipt_path.is_file():
         if prior_run is not None:
             recorded_admission = prior_run.get("admission_digest")
             if isinstance(recorded_admission, str) and recorded_admission != admission_digest:
-                raise RuntimeError("cannot resume canonical run: journaled admission identity changed")
+                raise AstridError("cannot resume canonical run: journaled admission identity changed")
         result = _invoke(
             client,
             "vibecomfy.run",
@@ -1102,7 +1103,7 @@ def _invoke_canonical_run(
         )
         identity = (result.kernel_task_id, result.kernel_run_id, result.kernel_attempt_id)
         if not all(isinstance(value, str) and value for value in identity):
-            raise RuntimeError("canonical run receipt returned incomplete task/run/attempt identity")
+            raise AstridError("canonical run receipt returned incomplete task/run/attempt identity")
         _assert_recorded_identity(result, prior_run, phase="canonical run")
         journal.set_admission_phase("settled")
         journal.record(
@@ -1117,20 +1118,20 @@ def _invoke_canonical_run(
 
     if resume and saved_result.is_file():
         if prior_run is None:
-            raise RuntimeError(
+            raise AstridError(
                 "cannot resume canonical run: saved result has no matching journal admission"
             )
         result = _load_invocation_result(saved_result, expected_input_digest=run_input_digest)
         if not result.ok:
-            raise RuntimeError("saved canonical run result is not successful")
+            raise AstridError("saved canonical run result is not successful")
         if result.capability_id != "vibecomfy.run":
-            raise RuntimeError("saved canonical run result has the wrong capability identity")
+            raise AstridError("saved canonical run result has the wrong capability identity")
         identity = (result.kernel_task_id, result.kernel_run_id, result.kernel_attempt_id)
         if not all(isinstance(value, str) and value for value in identity):
-            raise RuntimeError("saved canonical run result is missing task/run/attempt identity")
+            raise AstridError("saved canonical run result is missing task/run/attempt identity")
         recorded_admission = prior_run.get("admission_digest")
         if isinstance(recorded_admission, str) and recorded_admission != admission_digest:
-            raise RuntimeError("cannot resume canonical run: journaled admission identity changed")
+            raise AstridError("cannot resume canonical run: journaled admission identity changed")
         result = _observe_legacy_saved_result(
             client,
             result,
@@ -1150,11 +1151,11 @@ def _invoke_canonical_run(
         return result
 
     if resume and journal.admission_phase in {"admission_started", "uncertain", "settled"}:
-        raise RuntimeError(
+        raise AstridError(
             "cannot resume canonical run: admission may have occurred but its settled result is unavailable"
         )
     if resume and prior_run is not None:
-        raise RuntimeError("cannot resume canonical run: journal phase and saved result disagree")
+        raise AstridError("cannot resume canonical run: journal phase and saved result disagree")
 
     journal.set_admission_phase("admission_started")
     journal.record("run", "admission_started", admission_digest=admission_digest)
@@ -1167,7 +1168,7 @@ def _invoke_canonical_run(
         )
         identity = (result.kernel_task_id, result.kernel_run_id, result.kernel_attempt_id)
         if not all(isinstance(value, str) and value for value in identity):
-            raise RuntimeError("canonical run result is missing task/run/attempt identity")
+            raise AstridError("canonical run result is missing task/run/attempt identity")
         _save_invocation_result(saved_result, result, input_digest=run_input_digest)
     except Exception as exc:
         journal.set_admission_phase("uncertain")
@@ -1190,13 +1191,13 @@ def _generation_intent(compilation: Mapping[str, Any]) -> dict[str, Any]:
     capabilities = compilation.get("capabilities")
     public = capabilities.get("public_generation") if isinstance(capabilities, Mapping) else None
     if not isinstance(public, Mapping):
-        raise RuntimeError("sealed H3 compilation is missing public_generation")
+        raise AstridError("sealed H3 compilation is missing public_generation")
     selectors = public.get("selectors")
     modality = public.get("modality", "video")
     if not isinstance(selectors, list) or not selectors:
-        raise RuntimeError("sealed H3 compilation declares no public generation selectors")
+        raise AstridError("sealed H3 compilation declares no public generation selectors")
     if not all(isinstance(selector, Mapping) for selector in selectors):
-        raise RuntimeError("sealed H3 generation selectors must be objects")
+        raise AstridError("sealed H3 generation selectors must be objects")
     return {
         "version": 1,
         "modality": modality,
@@ -1218,15 +1219,15 @@ def _finalizer_generation_intent(
     raw_evidence = getattr(raw_managed_publication, "evidence", None)
     raw_publication = raw_evidence.get("publication") if isinstance(raw_evidence, Mapping) else None
     if not isinstance(raw_publication, Mapping):
-        raise RuntimeError("cannot admit finalizer without verified raw Runtime lineage")
+        raise AstridError("cannot admit finalizer without verified raw Runtime lineage")
     candidate_sha256 = verification.get("candidate_sha256")
     if not isinstance(candidate_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", candidate_sha256):
-        raise RuntimeError("cannot admit finalizer without a verified candidate digest")
+        raise AstridError("cannot admit finalizer without a verified candidate digest")
     if verification.get("request_digest") != request_digest:
-        raise RuntimeError("cannot admit finalizer with verification for a different H3 request")
+        raise AstridError("cannot admit finalizer with verification for a different H3 request")
     raw_object_id = _digest(raw_publication)
     if raw_object_id is None or raw_object_id.removeprefix("sha256:") == candidate_sha256:
-        raise RuntimeError("finalizer requires distinct raw and composed hashes")
+        raise AstridError("finalizer requires distinct raw and composed hashes")
     required = {
         "generation_id": raw_publication.get("generation_id"),
         "variant_id": raw_publication.get("variant_id"),
@@ -1236,7 +1237,7 @@ def _finalizer_generation_intent(
         "output_port": raw_publication.get("output_port"),
     }
     if not all(isinstance(value, str) and value for value in required.values()):
-        raise RuntimeError("raw Runtime lineage lacks finalizer identity")
+        raise AstridError("raw Runtime lineage lacks finalizer identity")
     return {
         "version": 1,
         "modality": generation_intent.get("modality", "video"),
@@ -1288,7 +1289,7 @@ def _run_transform_unlocked(args: argparse.Namespace) -> dict[str, Any]:
                 qualification, execution_request
             )
         except WorkerQualificationError as exc:
-            raise RuntimeError(f"worker qualification failed before admission: {exc}") from exc
+            raise AstridError(f"worker qualification failed before admission: {exc}") from exc
         root.mkdir(parents=True, exist_ok=True)
         (root / "00-worker-qualification.json").write_text(
             json.dumps(
@@ -1306,7 +1307,7 @@ def _run_transform_unlocked(args: argparse.Namespace) -> dict[str, Any]:
         )
     elif args.require_worker_qualification:
         if args.prepared_worker is None:
-            raise RuntimeError(
+            raise AstridError(
                 "worker qualification is required before targeted H3 admission"
             )
     if args.prepared_worker is not None:
@@ -1326,9 +1327,9 @@ def _run_transform_unlocked(args: argparse.Namespace) -> dict[str, Any]:
                 root / "operation-state.json", request_digest=request.digest
             )
         except OperationJournalError as exc:
-            raise RuntimeError(f"cannot open H3 operation journal: {exc}") from exc
+            raise AstridError(f"cannot open H3 operation journal: {exc}") from exc
         if journal.has_history and not getattr(args, "resume", False):
-            raise RuntimeError("operation journal already has history; use --resume to continue it")
+            raise AstridError("operation journal already has history; use --resume to continue it")
         journal.record("operation", "started", resume=bool(getattr(args, "resume", False)))
         idempotency_context = {"h3_submission_id": journal.submission_id}
         staging = root / "staged-inputs"
@@ -1384,7 +1385,7 @@ def _run_transform_unlocked(args: argparse.Namespace) -> dict[str, Any]:
         expected_assets_digest = compilation.get("managed_assets", {}).get("sha256")
         actual_assets_digest = hashlib.sha256(managed_assets_path.read_bytes()).hexdigest()
         if expected_assets_digest != actual_assets_digest:
-            raise RuntimeError("managed H3 assets failed compilation hash/provenance verification")
+            raise AstridError("managed H3 assets failed compilation hash/provenance verification")
         provenance = _provenance(preparation, compilation)
         provenance_path = _write_provenance_preparation(root, preparation, provenance)
         materialized_workflow: dict[str, Path] = {}
@@ -1472,7 +1473,7 @@ def _run_transform_unlocked(args: argparse.Namespace) -> dict[str, Any]:
                 root / "04-run" / "retrieved" / "lanpaint-generated-av.zip",
             )
         else:
-            raise RuntimeError(f"unsupported H3 output contract: {output_contract!r}")
+            raise AstridError(f"unsupported H3 output contract: {output_contract!r}")
         journal.record("pullback", "completed")
         raw_managed_publication = attest_runtime_managed_publication(
             runtime_result=run,
@@ -1674,7 +1675,7 @@ def _operation_directory_writer_lock(root: Path):
         try:
             fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
-            raise RuntimeError("H3 operation directory is already in use") from exc
+            raise AstridError("H3 operation directory is already in use") from exc
         yield
     finally:
         os.close(descriptor)

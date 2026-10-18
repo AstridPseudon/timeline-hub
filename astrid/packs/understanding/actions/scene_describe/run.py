@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from astrid.core.contracts.errors import AstridValueError
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
 
 guard_canonical_entrypoint('understanding.scene_describe')
@@ -52,20 +53,20 @@ def scene_id_for(scene: dict[str, Any]) -> str:
 
 def validate_scene_descriptions(payload: Any) -> None:
     if not isinstance(payload, dict):
-        raise ValueError("scene_descriptions payload must be an object")
+        raise AstridValueError("scene_descriptions payload must be an object")
     if payload.get("version") != SCENE_DESCRIPTIONS_VERSION:
-        raise ValueError(f"scene_descriptions.version must be {SCENE_DESCRIPTIONS_VERSION}")
+        raise AstridValueError(f"scene_descriptions.version must be {SCENE_DESCRIPTIONS_VERSION}")
     generated_at = payload.get("generated_at")
     if not isinstance(generated_at, str) or not generated_at.endswith("Z"):
-        raise ValueError("scene_descriptions.generated_at must be a UTC timestamp ending in 'Z'")
+        raise AstridValueError("scene_descriptions.generated_at must be a UTC timestamp ending in 'Z'")
     entries = payload.get("entries")
     if not isinstance(entries, list):
-        raise ValueError("scene_descriptions.entries must be a list")
+        raise AstridValueError("scene_descriptions.entries must be a list")
     seen_ids: set[str] = set()
     for index, entry in enumerate(entries):
         path = f"scene_descriptions.entries[{index}]"
         if not isinstance(entry, dict):
-            raise ValueError(f"{path} must be an object")
+            raise AstridValueError(f"{path} must be an object")
         required = {
             "scene_id",
             "description",
@@ -78,34 +79,34 @@ def validate_scene_descriptions(payload: Any) -> None:
             "deep_score",
         }
         if not required.issubset(entry):
-            raise ValueError(f"{path} is missing required keys")
+            raise AstridValueError(f"{path} is missing required keys")
         scene_id = entry.get("scene_id")
         if not isinstance(scene_id, str) or not scene_id:
-            raise ValueError(f"{path}.scene_id must be a non-empty string")
+            raise AstridValueError(f"{path}.scene_id must be a non-empty string")
         if scene_id in seen_ids:
-            raise ValueError(f"{path}.scene_id {scene_id!r} is duplicated")
+            raise AstridValueError(f"{path}.scene_id {scene_id!r} is duplicated")
         seen_ids.add(scene_id)
         if entry.get("motion_level") not in {"low", "med", "high"}:
-            raise ValueError(f"{path}.motion_level must be one of low|med|high")
+            raise AstridValueError(f"{path}.motion_level must be one of low|med|high")
         for field in ("description", "mood"):
             if not isinstance(entry.get(field), str) or not entry[field]:
-                raise ValueError(f"{path}.{field} must be a non-empty string")
+                raise AstridValueError(f"{path}.{field} must be a non-empty string")
         for field in ("speaker_visible", "dialogue_salient"):
             if not isinstance(entry.get(field), bool):
-                raise ValueError(f"{path}.{field} must be a boolean")
+                raise AstridValueError(f"{path}.{field} must be a boolean")
         for field in ("motion_tags", "mood_tags"):
             value = entry.get(field)
             if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
-                raise ValueError(f"{path}.{field} must be a list of strings")
+                raise AstridValueError(f"{path}.{field} must be a list of strings")
         deep_score = entry.get("deep_score")
         if not isinstance(deep_score, (int, float)) or deep_score < 0 or deep_score > 1:
-            raise ValueError(f"{path}.deep_score must be a float from 0 to 1")
+            raise AstridValueError(f"{path}.deep_score must be a float from 0 to 1")
 
 
 def _triage_map(triage: dict[str, Any]) -> dict[str, dict[str, Any]]:
     entries = triage.get("entries") if isinstance(triage, dict) else None
     if not isinstance(entries, list):
-        raise ValueError("triage payload must contain entries")
+        raise AstridValueError("triage payload must contain entries")
     mapping: dict[str, dict[str, Any]] = {}
     for entry in entries:
         if isinstance(entry, dict) and isinstance(entry.get("scene_id"), str):
@@ -201,7 +202,7 @@ def build_scene_descriptions(
     out_dir: Path | None = None,
 ) -> dict[str, Any]:
     if top_n <= 0:
-        raise ValueError("top_n must be > 0")
+        raise AstridValueError("top_n must be > 0")
     out_dir = (out_dir or video.parent).resolve()
     cache_dir = out_dir / "_describe_cache"
     existing_path = out_dir / "scene_descriptions.json"

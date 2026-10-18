@@ -8,7 +8,9 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+from astrid.core.cli.choices_registry import add_kind_arg
 from astrid.core.contracts.errors import AstridError
+from astrid.core.pack import ELEMENT_KIND_REGISTRY
 from astrid.core.search import (
     SearchRecord,
     short_description_or_truncated,
@@ -27,11 +29,16 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if getattr(args, 'project_pack_action', None) == 'resolve':
             from .project_packs import resolve_admitted_element
-            record=resolve_admitted_element(args.realm,args.project,{'packId':args.pack,'id':args.element,'kind':args.kind,'revision':args.revision})
+            record=resolve_admitted_element(args.realm,args.project,{'packId':args.pack,'id':args.element,'kind':ELEMENT_KIND_REGISTRY.singular(args.kind),'revision':args.revision})
             print(json.dumps(record,indent=2,sort_keys=True))
             return 0
         if getattr(args, 'project_pack_action', None):
-            from .project_packs import init_project_pack, inspect_project_pack, admit_project_pack, materialize_project_pack
+            from .project_packs import (
+                admit_project_pack,
+                init_project_pack,
+                inspect_project_pack,
+                materialize_project_pack,
+            )
             operation = {'init':init_project_pack,'inspect':inspect_project_pack,'admit':admit_project_pack,'materialize':materialize_project_pack}[args.project_pack_action]
             print(json.dumps(operation(args.realm,args.project,collection=args.collection),indent=2,sort_keys=True))
             return 0
@@ -94,7 +101,7 @@ def build_parser() -> argparse.ArgumentParser:
         if action=='resolve':
             item.add_argument('--pack',required=True)
             item.add_argument('--element',required=True)
-            item.add_argument('--kind',choices=['effect','animation','transition'],required=True)
+            add_kind_arg(item,'--kind',catalog='element',required=True)
             item.add_argument('--revision',required=True)
     for item in (list_parser,inspect_parser):
         item.add_argument('--realm',help='Current canonical realm for project source selection.')

@@ -159,6 +159,10 @@ class AstridError(RuntimeError):
         return payload
 
 
+class AstridValueError(AstridError, ValueError):
+    """``AstridError`` for invalid input that callers may still catch as ``ValueError``."""
+
+
 def error_from_result(result: object) -> AstridError | None:
     """Convert a non-exception result object into an ``AstridError``.
 
@@ -273,6 +277,7 @@ def _first_text_attr(value: object, *names: str) -> str | None:
 __all__ = [
     "AstridError",
     "AstridErrorEnvelope",
+    "AstridValueError",
     "build_state_snapshot",
     "coerce_astrid_error",
     "error_from_result",

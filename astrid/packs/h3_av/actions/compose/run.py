@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from astrid.core.contracts.errors import AstridValueError
 import argparse
 import json
 import shutil
@@ -23,7 +24,7 @@ def _video_media_type(path: Path) -> str:
         return "video/x-matroska"
     if len(header) >= 12 and header[4:8] == b"ftyp":
         return "video/quicktime" if header[8:12] == b"qt  " else "video/mp4"
-    raise ValueError("composed candidate must be an MP4/QuickTime or Matroska video container")
+    raise AstridValueError("composed candidate must be an MP4/QuickTime or Matroska video container")
 
 
 def build_parser() -> argparse.ArgumentParser:

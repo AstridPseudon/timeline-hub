@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from astrid.core.contracts.errors import AstridValueError
 from astrid.core.pack.entrypoint import (
     guard_canonical_entrypoint,
     run_pack_main,
@@ -275,7 +276,7 @@ def _build_openai_manifest(
         try:
             rel = p.relative_to(manifest_root).as_posix()
         except ValueError:
-            raise ValueError(
+            raise AstridValueError(
                 f"OpenAI output is outside its manifest root: {p}"
             ) from None
         outputs.append(
