@@ -11,7 +11,7 @@
 // --check writes nothing and exits 1 if a refresh would change a file. Missing source files are reported
 // and make the command fail, so a half-refreshed contract is never presented as sealed.
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { computeContractDigest as computeC1Digest } from './check-astrid-contract-freeze.mjs';
@@ -23,15 +23,6 @@ const C2_PATH = path.join(REPO_ROOT, 'config/contracts/astrid-plan-a-c2.json');
 const SCHEMA_PATH = path.join(REPO_ROOT, 'config/contracts/astrid-plan-a-diagnostic-c2.schema.json');
 const RUNTIME_METADATA_PATH = 'runtime_protocol/contract_metadata.py';
 const APP_METADATA_PATH = path.join(REPO_ROOT, 'src/integrations/runtime/contract-metadata.ts');
-
-// Source files that moved upstream after the contract was issued: old path -> new path, per repository.
-// A moved path is rewritten only when the old one is gone and the new one exists.
-const PATH_MOVES = {
-  'astrid-agent': {
-    'astrid/packs/vibecomfy/executors/run/run.py': 'astrid/packs/vibecomfy/actions/run/run.py',
-    'astrid/packs/vibecomfy/executors/run/requirements.txt': 'astrid/packs/vibecomfy/actions/run/requirements.txt',
-  },
-};
 
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const serialize = (value) => `${JSON.stringify(value, null, 2)}\n`;
@@ -73,11 +64,6 @@ export function refresh({ roots, check = false }) {
     const root = roots[evidence.repository];
     if (!root) continue;
     try {
-      const moved = PATH_MOVES[evidence.repository]?.[evidence.path];
-      if (moved && !existsSync(path.resolve(root, evidence.path)) && existsSync(path.resolve(root, moved))) {
-        changes.push(`C1 ${evidence.id}: path ${evidence.path} -> ${moved}`);
-        evidence.path = moved;
-      }
       sync(`C1 ${evidence.id}`, evidence, 'sha256', hashSource(root, evidence.path));
     }
     catch (error) { problems.push(`C1 sourceEvidence.${evidence.id} (${evidence.repository}:${evidence.path}): ${error.message}`); }
