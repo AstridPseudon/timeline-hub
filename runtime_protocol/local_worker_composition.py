@@ -160,6 +160,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
 
     def cancel_current(self) -> None:
         """Interrupt a prepare RPC without waiting for its normal timeout."""
+        self._prepare_cancel.set()
         if not self._handoff_lock.acquire(timeout=self.cleanup_timeout_seconds):
             return
         try:
