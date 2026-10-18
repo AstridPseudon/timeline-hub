@@ -305,7 +305,7 @@ export function useTimelineSave(
     // or transport failure must leave the recovered work retryable.
     setRecoveredAsDirty(true);
     commit.commitData(recovered, { save: true });
-  }, [canonicalReloadInProgressRef, clearDeferredRecoverySave, commit, configVersionRef, persistence, provider, recoveryKey, resolveAssetUrl, timelineEditability, trustedRecoveryHead, offerRecovery, recoveryActiveRef]);
+  }, [canonicalReloadInProgressRef, commit, configVersionRef, persistence, provider, recoveryKey, resolveAssetUrl, timelineEditability, trustedRecoveryHead, offerRecovery, recoveryActiveRef]);
 
   const reloadCanonicalFromServer = persistence.reloadFromServer;
   const reloadFromServer = useCallback(async (options?: { clearDraft?: boolean; preserveDraft?: boolean }) => {
@@ -334,34 +334,46 @@ export function useTimelineSave(
   }, [reloadFromServer]);
 
   const registrationTargetsRef = useRef(new WeakMap<OwnedRegistryMutation, { session: object; generation: number }>());
+  // commit and persistence are fresh object literals on every render; their
+  // members are useCallback-stable. Depend on those members, not the objects.
+  const {
+    captureSaveTarget,
+    flushSaveTarget,
+    discardUncommittedSaveTarget,
+  } = persistence;
+  const {
+    patchRegistryOwned,
+    ownsRegistryMutation,
+    canRollbackRegistryMutation,
+    rollbackRegistryMutation,
+  } = commit;
   const registrationOwner = useMemo<RegistrationSaveOwner>(() => ({
-    captureSaveTarget: persistence.captureSaveTarget,
+    captureSaveTarget,
     patchRegistryOwned: (assetId, entry, src) => {
-      const target = persistence.captureSaveTarget();
-      const receipt = commit.patchRegistryOwned(assetId, entry, src);
+      const target = captureSaveTarget();
+      const receipt = patchRegistryOwned(assetId, entry, src);
       registrationTargetsRef.current.set(receipt, { session: target.session, generation: target.generation });
       return receipt;
     },
     ownsRegistryMutation: (receipt) => {
       const binding = registrationTargetsRef.current.get(receipt);
       try {
-        const current = persistence.captureSaveTarget();
+        const current = captureSaveTarget();
         return binding?.session === current.session && binding.generation === current.generation
-          && commit.ownsRegistryMutation(receipt);
+          && ownsRegistryMutation(receipt);
       } catch { return false; }
     },
-    flushSaveTarget: persistence.flushSaveTarget,
+    flushSaveTarget,
     rollbackRegistration: (receipt, target, error) => {
       const binding = registrationTargetsRef.current.get(receipt);
       if (target.targetSeq !== receipt.editSeq || binding?.session !== target.session
         || binding.generation !== target.generation) return false;
-      if (!commit.canRollbackRegistryMutation(receipt)) return false;
-      if (!persistence.discardUncommittedSaveTarget(target, error)) return false;
-      return commit.rollbackRegistryMutation(receipt);
+      if (!canRollbackRegistryMutation(receipt)) return false;
+      if (!discardUncommittedSaveTarget(target, error)) return false;
+      return rollbackRegistryMutation(receipt);
     },
-  }), [commit.canRollbackRegistryMutation, commit.ownsRegistryMutation, commit.patchRegistryOwned,
-    commit.rollbackRegistryMutation, persistence.captureSaveTarget, persistence.discardUncommittedSaveTarget,
-    persistence.flushSaveTarget]);
+  }), [captureSaveTarget, flushSaveTarget, discardUncommittedSaveTarget, patchRegistryOwned,
+    ownsRegistryMutation, canRollbackRegistryMutation, rollbackRegistryMutation]);
 
   return {
     data: commit.data,

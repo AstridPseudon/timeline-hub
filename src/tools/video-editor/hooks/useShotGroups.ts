@@ -4,11 +4,7 @@ import type { TimelineShotGroupView } from '@/tools/video-editor/lib/timeline-do
 import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
 import type { CanonicalShotOccurrence, ShotPlacement } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { shotNameForOccurrence } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
-import {
-  isActiveTimelineClip,
-  timelineOccurrenceContentExtentMs,
-  timelineOccurrenceEffectiveDurationMs,
-} from '@/tools/video-editor/data/shotCompositionTiming.ts';
+import { isActiveTimelineClip } from '@/tools/video-editor/data/shotCompositionTiming.ts';
 
 const SHOT_COLORS = ['#a855f7', '#ef4444', '#22c55e', '#3b82f6', '#f59e0b', '#14b8a6', '#ec4899', '#84cc16'];
 const EMPTY_PENDING_OCCURRENCES: readonly ShotPlacement[] = [];

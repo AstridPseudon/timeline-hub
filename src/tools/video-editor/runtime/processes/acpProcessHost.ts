@@ -1,6 +1,5 @@
 import type {
   JsonRpcProcessLike,
-  JsonRpcReadableStreamLike,
   JsonRpcWritableStreamLike,
 } from './jsonRpcStdioTransport.ts';
 import { ASTRID_ACP_REQUEST_TIMEOUT_MS } from '../../data/astridBridgeWire.ts';

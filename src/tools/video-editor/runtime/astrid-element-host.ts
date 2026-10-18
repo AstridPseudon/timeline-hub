@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { RuntimeTheme } from '@banodoco/timeline-composition/theme-api';
 import type { ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
+import type { DynamicSequenceComponentEntry } from '@/tools/video-editor/sequences/registry.ts';
 
 export type AstridElementKind = 'effect' | 'animation' | 'transition';
 
@@ -25,7 +26,7 @@ export type AstridElementDescriptor = {
 
 export type AstridDynamicSequenceEntry = {
   clipType: string;
-  component: ComponentType<any>;
+  component: DynamicSequenceComponentEntry['component'];
   schemaJson?: object;
   themeId?: string;
 };
