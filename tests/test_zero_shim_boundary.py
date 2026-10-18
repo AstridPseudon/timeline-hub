@@ -1,6 +1,7 @@
 """Adversarial checks for the installed neutral runtime boundary."""
 
 import inspect
+import os
 import sys
 from pathlib import Path
 
@@ -87,7 +88,26 @@ def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path):
         captured.update(argv=argv, kwargs=kwargs)
         return FakeProcess()
 
+    class FakeBroker:
+        # The custody broker is the one substituted layer: it normally waits for
+        # the real wrapper child to seal itself, and the fake Popen starts none.
+        # The launch arguments under test are still the ones start() builds.
+        def __init__(self, **_kwargs):
+            pass
+
+        def child_environment(self, argv, *, start_new_session):
+            return {"ASTRID_RUNTIME_CUSTODY_ROLE": "runtime_owner"}
+
+        def wait_until_sealed(self):
+            pass
+
+        def bind_ready_token(self, **_kwargs):
+            pass
+
     boundary = LocalRuntimeBoundary()
+    monkeypatch.setattr("astrid_runtime.runtime_boundary.RoleBoundCustodyBroker", FakeBroker)
+    monkeypatch.setattr("astrid_runtime.runtime_boundary.default_process_identity", lambda _pid: {"birth_id": "birth"})
+    monkeypatch.setattr("astrid_runtime.runtime_boundary.publish_active_capability", lambda *_a, **_k: None)
     monkeypatch.setattr("astrid_runtime.runtime_boundary.subprocess.Popen", fake_popen)
     monkeypatch.setattr(boundary, "_wait_endpoint", lambda _support, _process: "http://127.0.0.1:1")
     monkeypatch.setattr(boundary, "_read_discovery", lambda _support: {"process_birth_id": "birth"})
@@ -105,9 +125,14 @@ def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path):
     )
     owner_lock = tmp_path / "support" / "owner.lock"
     boundary.start(realm_id="realm", realm_root=tmp_path / "realm", owner_lock=owner_lock, source_profile=profile)
-    assert "cwd" not in captured["kwargs"]
-    assert "env" not in captured["kwargs"]
-    assert "PYTHONPATH" not in captured["kwargs"]
+    kwargs = captured["kwargs"]
+    assert "cwd" not in kwargs
+    # The custody wrapper needs its own variables in env; nothing derived from
+    # either checkout may be added, so the import path is the host's own.
+    assert kwargs["env"].get("PYTHONPATH") == os.environ.get("PYTHONPATH")
+    assert not any(str(source_checkout) in str(value) for value in kwargs["env"].values())
+    assert not any(str(source_checkout) in part for part in captured["argv"])
+    assert "PYTHONPATH" not in kwargs
 
 
 def test_wait_endpoint_does_not_adopt_incumbent_discovery(monkeypatch, tmp_path):
