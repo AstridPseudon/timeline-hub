@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import fcntl
 import multiprocessing
 import subprocess
-import threading
-import time
 from pathlib import Path
 
 import pytest
@@ -32,7 +31,20 @@ def _launcher_result(status: str, *, ok: bool = True) -> str:
 def _hold_acquisition_lock(data_root: str, entered, release) -> None:
     with autobootstrap._acquisition_file_lock(Path(data_root), timeout=2.0):
         entered.set()
-        release.wait(5.0)
+        assert release.wait(5.0)
+
+
+def _contend_for_acquisition_lock(data_root: str, attempted, acquired) -> None:
+    lock_path = autobootstrap._acquisition_lock_path(Path(data_root))
+    with lock_path.open("a+") as lock_file:
+        try:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            attempted.set()
+        else:
+            raise AssertionError("nonblocking acquisition succeeded while holder owned lock")
+    with autobootstrap._acquisition_file_lock(Path(data_root), timeout=2.0):
+        acquired.set()
 
 
 def test_thin_launcher_accepts_restarted_owner_and_preserves_normal_command(monkeypatch, launcher_data_root):
@@ -60,30 +72,36 @@ def test_acquisition_lock_is_canonical_and_cross_process_serialized(launcher_dat
 
     context = multiprocessing.get_context("spawn")
     entered = context.Event()
+    contender_started = context.Event()
+    contender_acquired = context.Event()
     release = context.Event()
     holder = context.Process(
         target=_hold_acquisition_lock,
         args=(str(launcher_data_root), entered, release),
     )
     holder.start()
-    releaser = None
+    contender = None
     try:
         assert entered.wait(5.0)
-        releaser = threading.Timer(0.15, release.set)
-        releaser.start()
-        started = time.monotonic()
-        with autobootstrap._acquisition_file_lock(launcher_data_root, timeout=2.0):
-            elapsed = time.monotonic() - started
-        assert elapsed >= 0.10
+        contender = context.Process(
+            target=_contend_for_acquisition_lock,
+            args=(str(launcher_data_root), contender_started, contender_acquired),
+        )
+        contender.start()
+        assert contender_started.wait(5.0)
+        assert not contender_acquired.is_set()
+        release.set()
+        assert contender_acquired.wait(5.0)
     finally:
-        if releaser is not None:
-            releaser.join(5.0)
+        if contender is not None:
+            contender.join(5.0)
         release.set()
         holder.join(5.0)
         if holder.is_alive():
             holder.terminate()
             holder.join(5.0)
     assert holder.exitcode == 0
+    assert contender.exitcode == 0
 
 
 @pytest.mark.parametrize(
