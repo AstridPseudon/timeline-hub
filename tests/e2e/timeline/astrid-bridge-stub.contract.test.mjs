@@ -51,6 +51,54 @@ test('deterministic Astrid stub serves the typed Runaway contract', async () => 
   });
   try {
     await waitForHealth(origin);
+
+    const workspaceConfigResponse = await fetch(`${origin}/runtime-config/v1/workspace.json`);
+    assert.equal(workspaceConfigResponse.status, 200);
+    assert.deepEqual(await workspaceConfigResponse.json(), {
+      schemaVersion: 1,
+      endpoint: origin,
+      actorId: 'reigh-product-connector',
+      realmId: 'realm-reigh-editor-e2e',
+      runtimeInstanceId: 'runtime-instance-reigh-editor-e2e',
+    });
+    const healthResponse = await fetch(`${origin}/v1/health`);
+    assert.equal(healthResponse.status, 200);
+    const health = await healthResponse.json();
+    const runtimeClient = await readFile(resolve(HERE, '../../../src/integrations/runtime/client.ts'), 'utf8');
+    const generatedMetadata = await readFile(resolve(HERE, '../../../src/integrations/runtime/generated-contract-metadata.ts'), 'utf8');
+    const contractMetadata = await readFile(resolve(HERE, '../../../src/integrations/runtime/contract-metadata.ts'), 'utf8');
+    const expectedScopes = /export const RUNTIME_CLIENT_SCOPES = \[([\s\S]*?)\];/
+      .exec(runtimeClient)?.[1].match(/'([^']+)'/g)?.map((scope) => scope.slice(1, -1));
+    const expectedDigest = /SCHEMA_DIGEST = "(sha256:[0-9a-f]+)"/.exec(generatedMetadata)?.[1];
+    const expectedCapability = /RUNTIME_TARGETED_EXECUTION_CAPABILITY = '([^']+)'/.exec(contractMetadata)?.[1];
+    assert.ok(expectedScopes?.length);
+    assert.ok(expectedDigest);
+    assert.ok(expectedCapability);
+    assert.equal(health.schema_digest, expectedDigest);
+    assert.equal(health.runtime_instance_id, 'runtime-instance-reigh-editor-e2e');
+    assert.equal(health.runtime_session_id, 'session-reigh-editor-e2e');
+
+    const handshakeResponse = await fetch(`${origin}/v1/handshake`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ protocol: 'workspace.v1', client_name: 'contract-test', client_version: '1', requested_scopes: expectedScopes }),
+    });
+    assert.equal(handshakeResponse.status, 200);
+    const handshake = await handshakeResponse.json();
+    assert.equal(handshake.protocol, 'workspace.v1');
+    assert.equal(handshake.schema_digest, expectedDigest);
+    assert.equal(handshake.actor_id, 'reigh-product-connector');
+    assert.equal(handshake.realm_id, 'realm-reigh-editor-e2e');
+    assert.deepEqual(handshake.scopes, expectedScopes);
+    assert.deepEqual(handshake.capabilities, [expectedCapability]);
+
+    const realmResponse = await fetch(`${origin}/v1/realm`);
+    assert.equal(realmResponse.status, 200);
+    assert.equal((await realmResponse.json()).realm_id, handshake.realm_id);
+    const projectsResponse = await fetch(`${origin}/v1/projects?limit=200`);
+    assert.equal(projectsResponse.status, 200);
+    assert.deepEqual(await projectsResponse.json(), { items: [], next_cursor: null });
+
     const response = await fetch(`${origin}/v1/projects/cross-browser-release-gate/runaway-transitions?limit=1000`);
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('X-Astrid-Bridge-Version'), 'v1');

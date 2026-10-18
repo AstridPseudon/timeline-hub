@@ -28,6 +28,28 @@ import {
 
 const PORT = Number(process.env.ASTRID_BRIDGE_PORT || 17334);
 const BASE_URL = (process.env.BASE_URL || 'http://127.0.0.1:2222').replace(/\/+$/, '');
+const GENERATED_RUNTIME_METADATA = fs.readFileSync(
+  new URL('../../../src/integrations/runtime/generated-contract-metadata.ts', import.meta.url),
+  'utf8',
+);
+const RUNTIME_CONTRACT_METADATA = fs.readFileSync(
+  new URL('../../../src/integrations/runtime/contract-metadata.ts', import.meta.url),
+  'utf8',
+);
+const RUNTIME_CLIENT_SOURCE = fs.readFileSync(
+  new URL('../../../src/integrations/runtime/client.ts', import.meta.url),
+  'utf8',
+);
+const RUNTIME_SCHEMA_DIGEST = /SCHEMA_DIGEST = "(sha256:[0-9a-f]+)"/.exec(GENERATED_RUNTIME_METADATA)?.[1];
+const RUNTIME_TARGETED_EXECUTION_CAPABILITY = /RUNTIME_TARGETED_EXECUTION_CAPABILITY = '([^']+)'/.exec(RUNTIME_CONTRACT_METADATA)?.[1];
+const RUNTIME_CLIENT_SCOPES = /export const RUNTIME_CLIENT_SCOPES = \[([\s\S]*?)\];/
+  .exec(RUNTIME_CLIENT_SOURCE)?.[1].match(/'([^']+)'/g)?.map((scope) => scope.slice(1, -1));
+if (!RUNTIME_SCHEMA_DIGEST || !RUNTIME_TARGETED_EXECUTION_CAPABILITY || !RUNTIME_CLIENT_SCOPES?.length) {
+  throw new Error('Could not read the current generated Runtime contract metadata for the editor fixture');
+}
+const RUNTIME_REALM_ID = 'realm-reigh-editor-e2e';
+const RUNTIME_INSTANCE_ID = 'runtime-instance-reigh-editor-e2e';
+const RUNTIME_ACTOR_ID = 'reigh-product-connector';
 
 // Asset bytes come from the repo's own `public/` directory, resolved relative to
 // this file so the stub works from any cwd.
@@ -278,6 +300,54 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'OPTIONS') return send(res, 204, {});
   if (path === '/health') return send(res, 200, { ok: true });
+  if (path === '/runtime-config/v1/workspace.json' && req.method === 'GET') {
+    return send(res, 200, {
+      schemaVersion: 1,
+      endpoint: `http://127.0.0.1:${PORT}`,
+      actorId: RUNTIME_ACTOR_ID,
+      realmId: RUNTIME_REALM_ID,
+      runtimeInstanceId: RUNTIME_INSTANCE_ID,
+    });
+  }
+  if (path === '/v1/health' && req.method === 'GET') {
+    return send(res, 200, {
+      status: 'ok',
+      protocol: 'workspace.v1',
+      schema_digest: RUNTIME_SCHEMA_DIGEST,
+      runtime_epoch: 1,
+      runtime_session_id: 'session-reigh-editor-e2e',
+      runtime_instance_id: RUNTIME_INSTANCE_ID,
+    });
+  }
+  if (path === '/v1/handshake' && req.method === 'POST') {
+    const body = await readBody(req);
+    if (body?.protocol !== 'workspace.v1' || !Array.isArray(body.requested_scopes)) {
+      return send(res, 400, { error: 'invalid_handshake' });
+    }
+    return send(res, 200, {
+      protocol: 'workspace.v1',
+      schema_digest: RUNTIME_SCHEMA_DIGEST,
+      session_id: 'session-reigh-editor-e2e',
+      actor_id: RUNTIME_ACTOR_ID,
+      realm_id: RUNTIME_REALM_ID,
+      scopes: RUNTIME_CLIENT_SCOPES,
+      capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY],
+    });
+  }
+  if (path === '/v1/realm' && req.method === 'GET') {
+    return send(res, 200, {
+      realm_id: RUNTIME_REALM_ID,
+      display_name: 'Editor E2E Fixture',
+      version: 1,
+      created_at: '2026-01-01T00:00:00.000Z',
+      state: 'active',
+      tombstoned_at: null,
+      lifecycle_version: 1,
+    });
+  }
+  if (path === '/v1/projects' && req.method === 'GET') {
+    return send(res, 200, { items: [], next_cursor: null });
+  }
   if (path === '/projects') return send(res, 200, { projects: [PROJECT] });
 
   // Local editor tests may render the project chat pane, which reads the

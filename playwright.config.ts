@@ -134,6 +134,8 @@ export default defineConfig({
         // keeps its normal font policy because this env is dev-server-only.
         VITE_DISABLE_REMOTE_FONTS: process.env.VITE_DISABLE_REMOTE_FONTS ?? '1',
         VITE_ASTRID_BRIDGE_PORT: String(bridgePort),
+        VITE_WORKSPACE_RUNTIME_URL: `http://127.0.0.1:${bridgePort}`,
+        VITE_ASTRID_WORKSPACE_V1: '0',
         // The timeline project uses one deterministic stub for both the
         // timeline bridge and the narrow project-chat read. Do not inherit
         // the developer machine's default ACP listener/credential in browser

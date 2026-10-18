@@ -64,6 +64,8 @@ export default defineConfig({
         VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? 'test-anon-key',
         VITE_APP_ENV: process.env.VITE_APP_ENV ?? 'web',
         VITE_ASTRID_BRIDGE_PORT: String(bridgePort),
+        VITE_WORKSPACE_RUNTIME_URL: `http://127.0.0.1:${bridgePort}`,
+        VITE_ASTRID_WORKSPACE_V1: '0',
         VITE_ASTRID_ACP_BRIDGE_PORT: String(bridgePort),
         VITE_DISABLE_REMOTE_FONTS: '1',
         // This isolated release lane always starts the committed local stub below.
