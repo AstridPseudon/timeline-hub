@@ -67,7 +67,7 @@ import { buildKeyboardTimeNudgeEdit } from '../lib/keyboard-nudge.ts';
 import { expandTinyClip } from '../lib/expand-tiny-clip.ts';
 import { gestureCommandsFor, groupLeftResizeGestureCommands, tiedStartDragGesture } from '../commands/semanticGestures.ts';
 import { buildDuplicateClipEdit } from '../lib/duplicate-clip.ts';
-import { capturePreparedCloneBase, createTimelineCommands } from './useTimelineCommandsService.ts';
+import { capturePreparedCloneBase, captureGenerationClonePlan, createTimelineCommands } from './useTimelineCommandsService.ts';
 import type { TimelineStoreApi } from './timelineStore.ts';
 import { useTimelineOps } from './useTimelineOps.ts';
 import { createProposalRuntime, createProposalPersistenceBridge, type ProposalServiceBridge } from '../lib/proposal-runtime.ts';
@@ -8926,7 +8926,7 @@ describe('W44 overhang-to-hold App adapter', () => {
 // W46 detached source preparation: real SDK capture/compile/recorder, synthetic
 // transport acknowledgements. This is not authentic Runtime media acquisition.
 describe('W46 selected generation clone source preparation', () => {
-  async function fixture() {
+  async function fixture(tied = false) {
     const base = await initialData(true);
     const initial = await buildTimelineData({ ...base.config, clips: [
       { ...base.config.clips[0], asset: 'old', app: { opaque: { null: null }, reference: { revision: 'r1' } }, entrance: { name: 'fade' } },
@@ -8934,6 +8934,7 @@ describe('W46 selected generation clone source preparation', () => {
       { id: 'follower-2', track: 'V1', at: 5, clipType: 'hold', hold: 1, app: { opaque: null } },
       { id: 'unrelated', track: 'V2', at: 2, clipType: 'hold', hold: 1 },
     ] }, { assets: { old: { type: 'video/mp4', duration: 8, media_id: `sha256:${'c'.repeat(64)}` } } }, undefined, 1, undefined, base.head);
+    if (tied) initial.config.clips[0].app!.astrid = { on: 'clip-start \"parent/clip:unrelated\" -1s' };
     const object_id = `sha256:${'a'.repeat(64)}`;
     const detached = { realm_id: 'source-fixture', project_id: initial.head!.projectId, asset: 'new-registered', generation_id: 'new-g', variant_id: 'new-v', object_id,
       generation: { opaque: null }, variant: { opaque: { op: 'clear' } }, entry: { object_id, media_type: 'video/mp4', duration_seconds: 8 } };
@@ -8943,13 +8944,15 @@ describe('W46 selected generation clone source preparation', () => {
     const entry = { media_id: object_id, content_sha256: 'a'.repeat(64), type: 'video/mp4', duration: 8,
       format: record.entry, generationId: record.generation_id, variantId: record.variant_id,
       authoring_metadata: { generation: record.generation, variant: record.variant } };
-    const input = { preparedAsset: { assetKey: selection.asset, mediaType: 'video' as const, durationSeconds: 8, entry, selectedMedia: selection, source: 'registered' as const },
+    const choices = tied ? [{ target: 'parent/clip:clip-1', edge: 'start' as const, choice: 'detach' as const }] : [];
+    const plan = captureGenerationClonePlan(initial, 'clip-1', choices)!;
+    const input = { preparedClonePlan: plan, preparedAsset: { assetKey: selection.asset, mediaType: 'video' as const, durationSeconds: 8, entry, selectedMedia: selection, source: 'registered' as const },
       afterClipId: 'clip-1', clipId: buildDuplicateClipEdit(initial, 'clip-1', selection.asset)!.clipId, preparedCloneBase: capturePreparedCloneBase(initial) };
     return { initial, record, selection, input };
   }
 
-  it('captures exact source/style/reference and ordered ripple with native whole-document Undo/Redo and readback', async () => {
-    const { initial, record, selection, input } = await fixture();
+  it.each([false, true])('captures exact source/style/reference and ordered ripple with native whole-document Undo/Redo and readback (tied=%s)', async tied => {
+    const { initial, record, selection, input } = await fixture(tied);
     const requests: CommitRequest[] = []; let source!: ReturnType<typeof selectedMoveSource>;
     const h = await setup(async request => { requests.push(request); source = selectedMoveSource(initial, requests, record);
       return { directWrites: source.plans.at(-1)!.writes }; }, false, initial);
@@ -8962,7 +8965,8 @@ describe('W46 selected generation clone source preparation', () => {
     const forward = h.requests[0].request;
     expect(forward.base_revision_id).toBe('parent-r1');
     expect(forward.change.commands.map(call => call.op)).toEqual(['timeline.add', 'clip.nudge', 'clip.nudge']);
-    expect(forward.change.commands[0].args).toEqual({ from: 'parent/clip:clip-1', at: 3, media: selection });
+    expect(forward.change.commands[0].args).toEqual({ from: 'parent/clip:clip-1', at: 3, media: selection,
+      ...(tied ? { relation_choices: input.preparedClonePlan.choices } : {}) });
     expect(forward.change.commands[0].created).toEqual([`parent/clip:${input.clipId}`]);
     expect(forward.change.commands.slice(1).map(call => call.select)).toEqual(['parent/clip:clip-2', 'parent/clip:follower-2']);
     expect(source.mediaReads).toEqual([selection]);
@@ -8980,7 +8984,9 @@ describe('W46 selected generation clone source preparation', () => {
     }
     const sourceDoc = source.documents[0] as { parent: { clips: Array<Record<string, unknown>> } };
     const child = sourceDoc.parent.clips.find(clip => clip.id === input.clipId)!;
-    expect(child).toMatchObject({ ...initial.config.clips[0], id: input.clipId, asset: selection.asset, at: 3 });
+    const expected = structuredClone(initial.config.clips[0]);
+    if (tied) delete expected.app!.astrid;
+    expect(child).toMatchObject({ ...expected, id: input.clipId, asset: selection.asset, at: 3 });
     expect(sourceDoc.parent.clips.find(clip => clip.id === 'unrelated')).toEqual(initial.config.clips[3]);
     await waitFor(() => expect(history.result.current.canUndo).toBe(true)); act(() => history.result.current.undo());
     await waitFor(() => expect(h.savedSeqRef.current).toBe(2));

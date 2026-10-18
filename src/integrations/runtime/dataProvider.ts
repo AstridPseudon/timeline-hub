@@ -500,6 +500,11 @@ export class RuntimeDataProvider implements DataProvider {
     this.commitSession = new RuntimeCommitSession(context.storage, namespace, context.fresh);
   }
 
+  async duplicateProjectGeneration(request: Parameters<NonNullable<DataProvider['duplicateProjectGeneration']>>[0]) {
+    if (request.projectId !== this.projectId) throw new Error('Runtime duplication belongs to a different project');
+    return this.client.duplicateProjectGeneration(this.projectId, request.source, request.idempotencyKey);
+  }
+
   async getProjectMediaSelection(request: {
     projectId: string;
     asset: string;

@@ -1,6 +1,6 @@
 import type { ProjectTranscriptReader } from '@/integrations/runtime/projectTranscriptReader.ts';
 import type { SelectedProjectMediaIdentity } from '@/shared/contracts/selectedProjectMedia.ts';
-import type { EditCommand } from '@/integrations/runtime/generated.ts';
+import type { EditCommand, MutationResult, ProjectGenerationDuplicate } from '@/integrations/runtime/generated.ts';
 export type {
   ImmutableProjectPackageDescriptor,
   ProjectObjectMetadata,
@@ -389,6 +389,12 @@ export interface ExtensionPersistenceService {
 // ---------------------------------------------------------------------------
 
 export interface DataProvider extends AssetResolver {
+  /** Durable project metadata copy; separate from timeline placement. */
+  duplicateProjectGeneration?(request: {
+    projectId: string;
+    source: SelectedProjectMediaIdentity;
+    idempotencyKey: string;
+  }): Promise<MutationResult<ProjectGenerationDuplicate>>;
   /** Request-bound Runtime selection; providers without this capability retain compatibility placement. */
   getProjectMediaSelection?(request: {
     projectId: string;

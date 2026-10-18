@@ -1405,11 +1405,56 @@ export function splitGestureCommands(data: TimelineData, id: string, at: number,
     expect: { [`${source}::`]: state(identity?.sourceClip ?? originalClip(data, id), true) } }];
 }
 
-export function duplicateGestureCommands(data: TimelineData, id: string, at: number, childId: string): EditCommand[] | undefined {
-  if (!literalStructuralSource(data, id) || !Number.isFinite(at) || at < 0
+export type CloneRelationChoice = { target: string; edge: 'start' | 'end'; choice: 'keep' | 'detach' | 'adjust-offset' | 're-anchor';
+  anchor?: string; offset_seconds?: number; offset_frames?: number };
+
+/** Validate copied timing relations separately from the source's exact bytes. */
+export function cloneStructuralSource(data: TimelineData, id: string): boolean {
+  const captured = structuredClone(data.config);
+  const source = captured.clips.find(clip => clip.id === id);
+  if (!source) return false;
+  for (const key of ['on', 'until', 'for']) {
+    if (source.app && Object.prototype.hasOwnProperty.call(source.app, key)) return false;
+    if (source.app?.astrid) delete (source.app.astrid as Record<string, unknown>)[key];
+  }
+  return literalStructuralSource({ ...data, config: captured } as TimelineData, id);
+}
+
+/** Existing closed relation choices, resolved before metadata acquisition. */
+export function chooseCloneRelations(data: TimelineData, id: string): CloneRelationChoice[] | null {
+  if (!cloneStructuralSource(data, id)) return null;
+  const intent = originalClip(data, id).app?.astrid as Record<string, unknown> | undefined;
+  const choices: CloneRelationChoice[] = [];
+  for (const [edge, value] of [['start', intent?.on], ['end', intent?.until ?? intent?.for]] as const) {
+    if (value === undefined) continue;
+    if (typeof value !== 'string' && !(edge === 'end' && typeof value === 'number' && Number.isFinite(value) && value > 0)) return null;
+    const choice = window.prompt(`The copied ${edge} of ${id} is tied to ${String(value)}. Choose keep, detach, adjust-offset or re-anchor. Cancel leaves everything unchanged.`, 'keep');
+    if (!choice || !['keep', 'detach', 'adjust-offset', 're-anchor'].includes(choice)) return null;
+    const row: CloneRelationChoice = { target: scopedGestureClipId(id), edge, choice: choice as CloneRelationChoice['choice'] };
+    if (choice === 're-anchor') {
+      const anchor = window.prompt('New Moment anchor, without an offset:');
+      if (!anchor?.trim()) return null;
+      row.anchor = anchor.trim();
+    }
+    if (choice === 'adjust-offset' || choice === 're-anchor') {
+      const seconds = window.prompt('Offset in seconds:', '0');
+      const frames = window.prompt('Offset in frames:', '0');
+      if (seconds === null || frames === null || !seconds.trim() || !frames.trim()
+        || !Number.isFinite(Number(seconds)) || !Number.isSafeInteger(Number(frames))) return null;
+      row.offset_seconds = Number(seconds); row.offset_frames = Number(frames);
+    }
+    choices.push(row);
+  }
+  return choices;
+}
+
+export function duplicateGestureCommands(data: TimelineData, id: string, at: number, childId: string,
+  relationChoices?: readonly CloneRelationChoice[]): EditCommand[] | undefined {
+  if (!(relationChoices?.length ? cloneStructuralSource(data, id) : literalStructuralSource(data, id)) || !Number.isFinite(at) || at < 0
     || Math.abs(at * data.output.fps - Math.round(at * data.output.fps)) > 1e-6) return undefined;
   const source = scopedGestureClipId(id);
-  return [{ op: 'timeline.add', select: null, args: { from: source, at },
+  return [{ op: 'timeline.add', select: null, args: { from: source, at,
+    ...(relationChoices?.length ? { relation_choices: structuredClone([...relationChoices]) } : {}) },
     created: [`parent/clip:${childId}`], expect: { [`${source}::`]: state(originalClip(data, id), true) } }];
 }
 

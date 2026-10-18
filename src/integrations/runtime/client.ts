@@ -16,6 +16,7 @@ import {
   type ManagedOutputExportReceipt,
   type MediaImportOperation as MediaImport,
   type MutationResult,
+  type ProjectGenerationDuplicate,
   type Page,
   type Project,
   type Realm,
@@ -456,6 +457,11 @@ export class ReighRuntimeClient {
       idempotencyKey,
       { filename, expectedDigest, width, height, durationSeconds },
     ));
+  }
+
+  async duplicateProjectGeneration(projectId: string, source: SelectedProjectMediaIdentity,
+    acquisitionKey: string): Promise<MutationResult<ProjectGenerationDuplicate>> {
+    return this.withSession(() => this.client.duplicateProjectGeneration(projectId, source, acquisitionKey));
   }
 
   async getProjectMediaSelection(

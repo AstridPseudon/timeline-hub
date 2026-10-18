@@ -74,7 +74,11 @@ export function isSelectedCloneBatch(commands: readonly EditCommand[]): boolean 
   const child = call?.created?.[0], source = call?.args.from;
   if (!media || call.op !== 'timeline.add' || call.select !== null || !scoped(source) || !source.startsWith('parent/')
     || !scoped(child) || !child.startsWith('parent/') || call.created?.length !== 1 || child === source
-    || !exact(call.args, ['from', 'at', 'media']) || typeof call.args.at !== 'number' || !Number.isFinite(call.args.at)
+    || !(exact(call.args, ['from', 'at', 'media']) || exact(call.args, ['from', 'at', 'media', 'relation_choices'])
+      && Array.isArray(call.args.relation_choices) && call.args.relation_choices.length > 0
+      && call.args.relation_choices.every(choice => record(choice) && choice.target === source
+        && ['start', 'end'].includes(String(choice.edge)) && ['keep', 'detach', 'adjust-offset', 're-anchor'].includes(String(choice.choice))))
+    || typeof call.args.at !== 'number' || !Number.isFinite(call.args.at)
     || call.args.at < 0 || call.expect?.[`${child}::`]?.state !== 'absent') return false;
   const row = call.expect[`${source}::`], order = call.expect[`${source}::clip_order`], fps = call.expect['parent::config.output.fps'];
   const registry = call.expect[selectedMediaRegistryExpectationPath(media.asset)];
@@ -155,6 +159,21 @@ function selectedCloneInverse(commands: readonly EditCommand[], result: {
     || root.after.state !== 'present' || !record(root.after.value)) return undefined;
   const payload = structuredClone(captured.value);
   payload.id = child.split('/clip:')[1]; payload.at = call.args.at; payload.asset = media.asset;
+  if (Array.isArray(call.args.relation_choices)) {
+    const actualApp = root.after.value.app;
+    const actual: Record<string, unknown> = record(actualApp) && record(actualApp.astrid) ? actualApp.astrid : {};
+    const app: Record<string, unknown> = record(payload.app) ? payload.app : {};
+    const intent: Record<string, unknown> = record(app.astrid) ? app.astrid : {};
+    for (const choice of call.args.relation_choices) {
+      if (!record(choice) || choice.choice === 'keep') continue;
+      for (const key of choice.edge === 'start' ? ['on', 'fixed_start'] : ['until', 'for']) {
+        if (Object.prototype.hasOwnProperty.call(actual, key)) intent[key] = structuredClone(actual[key]);
+        else delete intent[key];
+      }
+    }
+    if (Object.keys(intent).length) app.astrid = intent; else delete app.astrid;
+    if (Object.keys(app).length) payload.app = app; else delete payload.app;
+  }
   if (record(payload.app) && record(payload.app.astrid)) delete payload.app.astrid.media_registry_insert;
   const registration = expect[selectedMediaRegistryExpectationPath(media.asset)];
   if (registration?.state === 'absent') {

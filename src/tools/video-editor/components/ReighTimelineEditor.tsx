@@ -35,7 +35,7 @@ import {
   useTimelineConfigVersion,
   useTimelineOpsSelector,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
-import { buildDuplicateClipEdit } from '@/tools/video-editor/lib/duplicate-clip.ts';
+import { chooseCloneRelations } from '@/tools/video-editor/commands/semanticGestures.ts';
 import { readSelectedProjectMediaIdentity } from '@/tools/video-editor/commands/selectedProjectMedia.ts';
 import { duplicateGenerationAsset } from '@/tools/video-editor/lib/generation-utils.ts';
 import {
@@ -103,6 +103,10 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
   const runtime = useVideoEditorRuntime();
   const duplicateContextRef = useRef({ projectId: selectedProjectId, runtimeProjectId: runtime.project.projectId, timelineId: runtime.timelineId, provider: runtime.provider });
   duplicateContextRef.current = { projectId: selectedProjectId, runtimeProjectId: runtime.project.projectId, timelineId: runtime.timelineId, provider: runtime.provider };
+  const duplicateAcquisitionsRef = useRef(new WeakMap<object, Map<string, { key: string;
+    source?: Parameters<typeof duplicateGenerationAsset>[0]['source'];
+    acquisition?: Awaited<ReturnType<typeof duplicateGenerationAsset>>;
+    pending?: Promise<Awaited<ReturnType<typeof duplicateGenerationAsset>>> }>>());
   const isDocumentShotMode = runtime.userId === null;
   const canonicalOccurrences = runtime.shots?.canonicalOccurrences ?? [];
   const hasCanonicalOccurrences = canonicalOccurrences.length > 0;
@@ -562,16 +566,45 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
       return;
     }
 
-    const base = capturePreparedCloneBase(current);
-    const reserved = assetKey && buildDuplicateClipEdit(current, clipId, assetKey);
     const context = duplicateContextRef.current;
-    if (!reserved || current.head?.projectId !== selectedProjectId || runtime.project.projectId !== selectedProjectId) return;
+    if (current.head?.projectId !== selectedProjectId || runtime.project.projectId !== selectedProjectId
+      || !runtime.provider.getProjectMediaSelection || !runtime.provider.duplicateProjectGeneration
+      || !assetEntry?.variantId || !assetEntry.media_id) return;
+    const choices = chooseCloneRelations(current, clipId);
+    if (choices === null) return;
+    const prepared = commands.prepareGenerationClone(clipId, choices);
+    if (!prepared.ok) return;
+    const plan = prepared.data;
+    const base = plan.base;
+    const isCurrent = () => duplicateContextRef.current.projectId === context.projectId
+      && duplicateContextRef.current.runtimeProjectId === context.runtimeProjectId
+      && duplicateContextRef.current.timelineId === context.timelineId && duplicateContextRef.current.provider === context.provider
+      && !!dataRef.current && capturePreparedCloneBase(dataRef.current) === base;
     setDuplicatingClipId(clipId);
     try {
-      const duplicatedGeneration = await duplicateGenerationAsset({
-        generationId,
-        projectId: selectedProjectId,
-      });
+      let acquisitions = duplicateAcquisitionsRef.current.get(runtime.provider);
+      if (!acquisitions) { acquisitions = new Map(); duplicateAcquisitionsRef.current.set(runtime.provider, acquisitions); }
+      // A repeated placement attempt on the same captured plan reuses the same
+      // logical acquisition and receipt, including after a lost response.
+      const retryIdentity = JSON.stringify([selectedProjectId, runtime.timelineId, clipId, plan]);
+      let retained = acquisitions.get(retryIdentity);
+      if (!retained) { retained = { key: crypto.randomUUID() }; acquisitions.set(retryIdentity, retained); }
+      if (!retained.acquisition && !retained.pending) {
+        retained.pending = (async () => {
+          const source = retained!.source ?? await runtime.provider.getProjectMediaSelection!({ projectId: selectedProjectId,
+            asset: assetKey!, generationId, variantId: assetEntry.variantId! });
+          const identity = readSelectedProjectMediaIdentity(source);
+          if (!identity || identity.asset !== assetKey || identity.generation_id !== generationId
+            || identity.variant_id !== assetEntry.variantId || identity.object_id !== assetEntry.media_id || !isCurrent()) {
+            throw new Error('Source selection or captured clone plan changed before acquisition.');
+          }
+          retained!.source = source;
+          return duplicateGenerationAsset({ source, projectId: selectedProjectId,
+            idempotencyKey: retained!.key, provider: runtime.provider });
+        })().catch(error => { retained!.pending = undefined; throw error; });
+      }
+      const duplicatedGeneration = retained.acquisition ?? await retained.pending!;
+      retained.acquisition = duplicatedGeneration;
       // Acquisition must return a real registered asset. Neither selector creates
       // or duplicates media; URLs and the old duration cannot supply its identity.
       const registered = duplicatedGeneration.registeredAsset && structuredClone(duplicatedGeneration.registeredAsset);
@@ -580,15 +613,11 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
         || registered.entry.variantId !== duplicatedGeneration.variantId || !runtime.provider.getProjectMediaSelection) {
         throw new Error('Duplicated generation has no exact registered acquisition.');
       }
-      const selectedMedia = await runtime.provider.getProjectMediaSelection({ projectId: selectedProjectId,
-        asset: registered.assetId, generationId: duplicatedGeneration.generationId, variantId: duplicatedGeneration.variantId });
+      const selectedMedia = duplicatedGeneration.selectedMedia;
       const identity = readSelectedProjectMediaIdentity(selectedMedia);
       if (!identity || identity.asset !== registered.assetId || identity.generation_id !== duplicatedGeneration.generationId
         || identity.variant_id !== duplicatedGeneration.variantId || identity.object_id !== registered.entry.media_id
-        || duplicateContextRef.current.projectId !== context.projectId || duplicateContextRef.current.runtimeProjectId !== context.runtimeProjectId
-        || duplicateContextRef.current.timelineId !== context.timelineId
-        || duplicateContextRef.current.provider !== context.provider || !dataRef.current
-        || capturePreparedCloneBase(dataRef.current) !== base) {
+        || !isCurrent()) {
         throw new Error('Duplicated generation selection or captured timeline changed.');
       }
 
@@ -602,8 +631,9 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
           source: 'registered',
         },
         afterClipId: clipId,
-        clipId: reserved.clipId,
+        clipId: plan.clipId,
         preparedCloneBase: base,
+        preparedClonePlan: plan,
       });
       if (!result.ok) {
         throw new Error(result.error.message);

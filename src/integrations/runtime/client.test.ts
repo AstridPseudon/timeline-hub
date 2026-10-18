@@ -158,6 +158,15 @@ function createTransport(options: {
         }),
       };
     }
+    if (method === 'POST' && path === `/v1/projects/${encodeURIComponent(PROJECT_ID)}/generations/duplicate`) {
+      const source = parsedBody!.source as Record<string, string>;
+      return { status: 201, headers: {}, body: json({ data: {
+        generation: { ...generation, generation_id: 'copied-generation', status: 'completed', source_task_id: null },
+        variant: { ...variant, generation_id: 'copied-generation', variant_id: 'copied-variant', object_id: source.object_id },
+        selection: { ...source, asset: 'copied-variant', generation_id: 'copied-generation', variant_id: 'copied-variant' },
+        entry: { object_id: source.object_id, media_type: 'image/png', size: 4, filename: 'fixture.png' },
+      }, receipt: receipt('generation.duplicate', headers['Idempotency-Key']) }) };
+    }
     if (path === `/v1/projects/${encodeURIComponent(PROJECT_ID)}/generations?limit=2&cursor=generations-7`) {
       return { status: 200, headers: {}, body: json({ items: [generation], next_cursor: 'generations-8' }) };
     }
@@ -275,6 +284,21 @@ function clientFor(fixture: ReturnType<typeof createTransport>, options: { token
 }
 
 describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () => {
+  it('W46 sends only the captured source through the authenticated generated copy method and reuses its key', async () => {
+    const fixture = createTransport(), client = clientFor(fixture, { token: true });
+    const source = { asset: 'displayed', generation_id: 'source-generation', variant_id: 'displayed-variant',
+      object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` };
+    const first = await client.duplicateProjectGeneration(PROJECT_ID, source, 'w46.stable');
+    expect(await client.duplicateProjectGeneration(PROJECT_ID, source, 'w46.stable')).toEqual(first);
+    expect(first.receipt.command_kind).toBe('generation.duplicate');
+    const copies = fixture.requests.filter(request => request.path.endsWith('/generations/duplicate'));
+    expect(copies).toHaveLength(2); expect(copies[1]).toEqual(copies[0]);
+    expect(copies[0].body).toEqual({ source });
+    expect(copies[0].headers['Idempotency-Key']).toBe('w46.stable');
+    expect(copies[0].headers.Authorization).toBe('Bearer fixture-token');
+    expect(first.selection).toMatchObject({ generation_id: 'copied-generation', variant_id: 'copied-variant', object_id: source.object_id });
+    expect(fixture.requests.filter(request => request.path === '/v1/handshake')).toHaveLength(1);
+  });
   it('rejects a replacement Runtime instance on reconnect without rebinding or writing', async () => {
     const options = { runtimeInstanceId: EXPECTED_IDENTITY.runtimeInstanceId };
     const fixture = createTransport(options);
