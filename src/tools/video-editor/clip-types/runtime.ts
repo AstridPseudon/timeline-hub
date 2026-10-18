@@ -518,7 +518,7 @@ const astridEffectDescriptor = (clipType: string): ClipTypeDescriptor | undefine
     description: element.description,
     hold: { kind: 'required', defaultSeconds: 5, minSeconds: 0.05, maxSeconds: 120, stepSeconds: 0.1 },
     paramsSchema: { kind: 'sequence', params: definitions },
-    defaults: { params: element.defaults as import('./defineClipType.ts').JsonValue },
+    defaults: { params: element.defaults as Record<string, import('./defineClipType.ts').JsonValue> },
     commands: HOLD_ONLY_COMMANDS,
     renderCapabilities: {
       previewRoute: 'custom',

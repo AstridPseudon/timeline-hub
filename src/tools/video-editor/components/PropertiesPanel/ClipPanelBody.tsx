@@ -128,10 +128,11 @@ export function ClipPanelBody({
     ? getRegisteredClipTypeDescriptor(clip.clipType)
     : undefined;
   const holdTiming = clipDescriptor?.hold;
+  const holdDefaultSeconds = holdTiming && holdTiming.kind !== 'unsupported' ? holdTiming.defaultSeconds : undefined;
   type TimingField = 'at' | 'hold' | 'speed' | 'from' | 'to';
   const timingValuesRef = useRef<Record<TimingField, number>>({
     at: clip?.at ?? 0,
-    hold: clip?.hold ?? holdTiming?.defaultSeconds ?? 0,
+    hold: clip?.hold ?? holdDefaultSeconds ?? 0,
     speed: clip?.speed ?? 1,
     from: clip?.from ?? 0,
     to: clip?.to ?? clip?.assetEntry?.duration ?? 5,
@@ -142,7 +143,7 @@ export function ClipPanelBody({
   // only when the timeline no longer contains it.
   timingValuesRef.current = {
     at: clip?.at ?? 0,
-    hold: clip?.hold ?? holdTiming?.defaultSeconds ?? 0,
+    hold: clip?.hold ?? holdDefaultSeconds ?? 0,
     speed: clip?.speed ?? 1,
     from: clip?.from ?? 0,
     to: clip?.to ?? clip?.assetEntry?.duration ?? 5,

@@ -910,7 +910,7 @@ export function useTimelineTrackManagement({
   }, [applyEdit, resolvedConfig]);
 
   const handleMoveTrack = useCallback((activeId: string, overId: string, lanes?: readonly DataLaneView[]) => {
-    if (editability?.checkTimeline?.().allowed === false || editability?.check({ clipId: '__row-reorder__' }).allowed === false) return;
+    if (editability?.checkTimeline?.().allowed === false || editability?.check({ clipId: '__row-reorder__', sourceTrackId: null, targetTrackId: null }).allowed === false) return;
     if (!resolvedConfig) {
       return;
     }

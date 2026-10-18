@@ -860,7 +860,7 @@ export function resolveVideoEditorPanelRegistry(
 /** Selection context supplied by the host to inspector contributions. */
 export interface InspectorSelectionSnapshot {
   /** Discriminated kind of the current selection. */
-  readonly kind: 'clip' | 'selection' | 'track' | 'timeline' | 'shader' | 'dataLane' | 'dataItem';
+  readonly kind: 'clip' | 'selection' | 'track' | 'timeline' | 'shader' | 'dataLane' | 'dataItem' | 'shotOccurrence';
   /** Single clip ID when kind === 'clip'. */
   readonly clipId?: string;
   /** Multiple clip IDs when kind === 'selection'. */
@@ -881,6 +881,14 @@ export interface InspectorSelectionSnapshot {
   readonly laneId?: string;
   /** Item ID when kind === 'dataItem'. */
   readonly itemId?: string;
+  /** Shot occurrence identity and time range when kind === 'shotOccurrence'. */
+  readonly occurrenceId?: string;
+  readonly shotId?: string;
+  readonly revisionId?: string;
+  readonly parentDocumentId?: string;
+  readonly shotName?: string;
+  readonly start?: number;
+  readonly end?: number;
 }
 
 /** A resolved, selection-aware inspector contribution ready for rendering. */
