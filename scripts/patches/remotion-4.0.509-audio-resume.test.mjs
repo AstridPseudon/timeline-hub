@@ -7,19 +7,20 @@ import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-const SCRIPT = fileURLToPath(new URL('./remotion-4.0.503-audio-resume.mjs', import.meta.url));
+const SCRIPT = fileURLToPath(new URL('./remotion-4.0.509-audio-resume.mjs', import.meta.url));
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const VERSION = '4.0.503';
+const REMOTION_SOURCE_ROOT = process.env.REMOTION_SOURCE_ROOT ?? join(REPO_ROOT, 'node_modules', 'remotion');
+const VERSION = '4.0.509';
 const TARGETS = [
   {
     relativePath: 'dist/cjs/audio/shared-audio-tags.js',
-    originalSha256: '71bb40afee1be9a9d24fc2ca97dae78428d79270179945f3455d5ef1b68241ea',
-    patchedSha256: '4fbf66aac63105d6ecd8c036b7d6db8cb0f800429be6e4a1633a0584994564c5',
+    originalSha256: '471b33916a91f5b9529c477bdf0ec586cb700d5a7179ab910a82dd932e172f6c',
+    patchedSha256: '949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8',
   },
   {
     relativePath: 'dist/esm/index.mjs',
-    originalSha256: '2fb803a18bd355a3b7dde45fdd0ff857acc6602ba521bf015cca27908285d872',
-    patchedSha256: '447802377a5ecf17b7c224d8a209b4a3c92a29e8efb8ee679a283a48ffc0d9a2',
+    originalSha256: '9fdfe58f3f34e6a72564a811ac5d374d1c97a0f535e2a0e3aac198670d9b7ff8',
+    patchedSha256: '5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28',
   },
 ];
 
@@ -51,7 +52,7 @@ async function fixture(t) {
   // always begin with exact pristine bytes, even after the installed package
   // has been patched by its single owner.
   for (const target of TARGETS) {
-    const source = join(REPO_ROOT, 'node_modules', 'remotion', target.relativePath);
+    const source = join(REMOTION_SOURCE_ROOT, target.relativePath);
     const destination = join(packageRoot, target.relativePath);
     await mkdir(dirname(destination), { recursive: true });
     await copyFile(source, destination);
@@ -121,6 +122,6 @@ test('unknown version refuses before either target is written', async (t) => {
 
   const result = run('--apply', root);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /expected remotion@4\.0\.503/i);
+  assert.match(result.stderr, /expected remotion@4\.0\.509/i);
   assert.deepEqual(await Promise.all(paths.map((path) => readFile(path))), before);
 });
