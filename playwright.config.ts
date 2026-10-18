@@ -118,6 +118,9 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 120_000,
       env: {
+        // The editor capability-matrix E2E suite uses a fixed host-owned
+        // fixture catalog; the Vite config only aliases it for `serve`.
+        REIGH_E2E_EXTENSION_FIXTURES: '1',
         VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? DEFAULT_DEV_SUPABASE_URL,
         VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? 'test-anon-key',
         VITE_APP_ENV: process.env.VITE_APP_ENV ?? 'web',

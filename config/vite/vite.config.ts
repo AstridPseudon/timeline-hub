@@ -28,6 +28,7 @@ import { createBundleBudgetPlugin } from "./bundleBudget";
 import { createRemoteFontModePlugin } from "./remoteFonts";
 import { createPairedRelayPlugin, resolvePairedRelayConfig } from "./pairedRelay";
 import { createShareMetaPlugin } from "./shareMeta";
+import { editorExtensionFixtureAlias } from "./editorExtensionFixtureAlias";
 
 export { createRemoteFontModePlugin, stripRemoteFontLinks } from "./remoteFonts";
 
@@ -52,7 +53,7 @@ function readRuntimeProxyToken(tokenFile: string | null): string | null {
   }
 }
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
   const port = resolveVitePort(process.env.PORT);
   const astridBridgePort = resolveAstridBridgePort(process.env.VITE_ASTRID_BRIDGE_PORT);
   const astridAcpBridgePort = resolveAstridAcpBridgePort(process.env.VITE_ASTRID_ACP_BRIDGE_PORT);
@@ -108,6 +109,7 @@ export default defineConfig(() => {
     readDocument:async(projectId:string,id:string)=>{try{return await elementRuntime.getDocument(projectId,id);}catch(error){if((error as {status?:number}).status===404)return null;throw error;}},
   }:undefined;
   const disableRemoteFonts = process.env.VITE_DISABLE_REMOTE_FONTS === "1";
+  const editorFixtureAlias = editorExtensionFixtureAlias(command, process.env);
   const generatedRegistryPath = path.resolve(
     __dirname,
     "../../node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts",
@@ -166,6 +168,7 @@ export default defineConfig(() => {
     ].filter(Boolean),
     resolve: {
       alias: {
+        ...(editorFixtureAlias ? { [editorFixtureAlias.find]: editorFixtureAlias.replacement } : {}),
         "@": path.resolve(__dirname, "../../src"),
         "@reigh/editor-sdk": path.resolve(__dirname, "../../src/sdk/index.ts"),
         ...(astridSource ? { "@astrid": astridSource.sourceRoot } : {}),
