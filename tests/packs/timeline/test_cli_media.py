@@ -126,13 +126,13 @@ def test_crossfade_records_curves_for_exact_replay_and_one_undo_step(tmp_path, m
             assert clip.params[key] == expected_curve
     records = journal.read(journal.journal_path("p", "t"))
     calls = records[-1].calls
-    assert [call["op"] for call in calls] == ["clip.enter-at", "clip.set-look", "clip.set-look"]
-    for call, field in zip(calls[1:], ("fade_out", "fade_in")):
-        assert call["args"][field] == (0.5 if expected_curve == "linear" else f"0.5s curve={expected_curve}")
-    for call, side in zip(calls[1:], ("Out", "In")):
+    assert [call["op"] for call in calls] == ["timeline.crossfade"]
+    assert calls[0]["args"] == {"first": "a-music", "second": "next-bed", "curve": curve, "overlap": 0.5}
+    for clip_id, side in (("a-music", "Out"), ("next-bed", "In")):
         for key, value in ((f"params.fade{side}", 0.2), (f"params.fade{side}Curve", "equal-power")):
-            assert call["expect"][key] == {"state": "present", "value": value}
-            assert call["authorship"][key] == "direct"
+            path = f"occurrence:occ-A/clip:{clip_id}::{key}"
+            assert calls[0]["expect"][path] == {"state": "present", "value": value}
+            assert calls[0]["authorship"][path] == "direct"
     batch = {"op": "timeline.batch", "select": None, "args": {"commands": list(calls)}}
     replay = Checkout(copy.deepcopy(before))
     commands.run(replay, batch)
