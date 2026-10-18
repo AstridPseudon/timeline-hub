@@ -191,6 +191,35 @@ def test_unrecorded_revision_remains_listable_with_unknown_ancestry(history):
     assert old['is_current_head'] is False
 
 
+def test_commit_restore_preserves_unknown_legacy_publication(history):
+    import json
+    from runtime_protocol.timeline_commit import digest
+    from test_graph_closure_commit import restore_request, restore_prepared
+    from test_selected_media_commit import snapshot
+    s, p = history
+    payload = s._complete_parent_payload(dict(config={'opaque': {'source': 'foreign/opaque', 'provenance': None}},
+                                              registry={}, clips=[], occurrences=[]))
+    # Synthetic pre-ledger immutable image: deliberately no event/publication.
+    with s.store._transaction():
+        s.store.conn.execute("INSERT INTO parent_composition_revisions SELECT 'legacy-unknown', project_id, timeline_id, ?, ?, created_at FROM parent_composition_revisions WHERE id='parent-1'",
+                             (json.dumps(payload), digest(payload)))
+    request = restore_request(s, p, revision='legacy-unknown', known=None)
+    port = s._request_commit_port(request, IDENTITY)
+    closure = port.revision_closure('legacy-unknown')
+    assert all(row['revision_id'] != 'legacy-unknown' for row in port.revisions({'limit': 100}))
+    forged = restore_request(s, p, revision='legacy-unknown', known=None, key='forged')
+    forged['change']['commands'][0]['args']['publication_id'] = request['base_publication_id']
+    before = snapshot(s)
+    with pytest.raises(ConflictError): s._request_commit_port(forged, IDENTITY).revision_closure('legacy-unknown')
+    assert snapshot(s) == before
+    result = port.accept(restore_prepared(s, p, request, closure))
+    assert port.revision_closure(result['revision_id'])['parent_revision']['payload'] == payload
+    rows = s.list_project_parent_composition_revisions(p, 'main')['items']
+    legacy = next(row for row in rows if row['revision_id'] == 'legacy-unknown')
+    assert legacy['publication_id'] is legacy['provenance'] is legacy['previous_revision_id'] is None
+    assert rows[0]['restored_from_revision_id'] == 'legacy-unknown'
+
+
 def test_migration_preserves_preexisting_acceptance_provenance_and_links(history):
     s, p = history
     accepted = s.accept(acceptance(s, p), identity=IDENTITY)

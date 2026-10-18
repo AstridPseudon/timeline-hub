@@ -374,3 +374,35 @@ def test_parent_take_cannot_bypass_candidate_validation(fixture):
     before=snapshot(s)
     with pytest.raises(ValidationError,match='projection'):port.accept(value)
     assert snapshot(s)==before
+
+
+@pytest.mark.parametrize('mode', ['success', 'unread', 'reclaimed'])
+def test_restore_captures_historical_narration_after_selected_closure(fixture, mode):
+    from test_graph_closure_commit import restore_request, restore_prepared
+    s, p = fixture
+    refs, request, port, take, value = setup(s, p, manifest_ref=True)
+    historical = port.accept(value)
+    advance = acceptance(s, p, key='clear-narration')
+    advance['narration'] = {'version': 1, 'lines': []}
+    s.accept(advance, identity=IDENTITY)
+    request = restore_request(s, p, revision=historical['revision_id'])
+    port = s._request_commit_port(request, IDENTITY)
+    # The empty base cannot authorize an unrelated historical managed take.
+    with pytest.raises(AuthorizationError): port.narration_take(refs)
+    closure = port.revision_closure(historical['revision_id'])
+    restored = restore_prepared(s, p, request, closure)
+    restored['narration'] = narration_projection(closure)
+    if mode != 'unread': assert port.narration_take(refs) == take
+    if mode == 'reclaimed': mutate(s, "UPDATE managed_output_lifecycle SET state='reclaimed'")
+    before = snapshot(s)
+    if mode != 'success':
+        with pytest.raises((ValidationError, ConflictError)):
+            port.accept(restored)
+        assert snapshot(s) == before
+        return
+    result = port.accept(restored)
+    assert narration_projection(port.revision_closure(result['revision_id'])) == restored['narration']
+    assert result['receipt']['narration_state']['projection'] == restored['narration']
+    media = {row[0] for row in s.store.conn.execute("SELECT dependency_id FROM composition_revision_dependencies WHERE parent_revision_id=? AND dependency_kind='media'", (result['revision_id'],))}
+    assert media == set(take['dependency_objects'])
+    assert s.revisions(p, 'main', {'limit': 1})[0]['restored_from_revision_id'] == historical['revision_id']
