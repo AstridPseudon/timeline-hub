@@ -71,6 +71,20 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         self.merged: list[str] = []      # what the last save merged in from another writer, in plain words
         from astrid.sdk.timeline.story import _migrate_legacy
         _migrate_legacy(self)  # namespace migration only; never retime or journal on load
+        self._accept_bundle()
+
+    def _accept_bundle(self) -> None:
+        """Pin state admitted by loading, runner execution or a storage transition."""
+        self._accepted_digest = _journal.document_digest(self.bundle)
+
+    def _assert_runner_state(self) -> None:
+        if _journal.document_digest(self.bundle) != self._accepted_digest:
+            if self._open_edit is not None and self._open_edit.calls:
+                # Retain the runner's existing typed refusal for an unrecorded
+                # write following a command, before a compiler can normalize it.
+                from astrid.sdk.timeline.commands import CommandError
+                raise CommandError("Compiler prefix evidence does not match the executed candidate")
+            raise TimelineEditError("raw bundle mutation outside the runner: use timeline edit commands before saving")
 
     def _refresh(self) -> None:
         """Rebuild derived checkout state after an edit transaction restores its bundle."""
@@ -136,6 +150,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         tl.bundle = tl._absorb(raw)
         tl.fps = bundle_fps(tl.bundle) or 30.0
         tl._disk = text
+        tl._accept_bundle()
         return tl
 
     HISTORY = 60  # edits of a working copy kept for undo
@@ -152,7 +167,10 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         this handle loaded it, the save is a three-way merge (what you loaded → your edit, onto
         what is there now), like publish. Edits to different clips merge (``self.merged`` says
         what came in); the same clip changed by both refuses, unless ``force`` (yours wins)."""
-        target = Path(path or self.path or "timeline.checkout.json")
+        self._assert_runner_state()
+        if path is None and self.path is None:
+            raise TimelineEditError("save requires an explicit path or a working copy opened with Checkout.draft()")
+        target = Path(path if path is not None else self.path)
         with _store._file_lock(target):
             saved = self._save_locked(target, force=force)
         if (self.SAY_SAVED if quiet is None else not quiet) and not _store._cli_running():
@@ -177,18 +195,25 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
             if now != self._disk:
                 self._merge_writer(target, now, force=force)
         self.notes.extend(self._sync_film_length())  # the film's length follows its content, before it is written
+        # Merge/sync are owned storage transitions, even if the file write fails.
+        # _save_locked also receives verified refresh candidates, not only save().
+        self._accept_bundle()
         text = _serialize(self._annotated())
         staged: list[tuple[Path, Path]] = []  # undo steps: written under a temp name now, committed after the file
         clear_redo = False
         journaled_step: tuple[str, str, str] | None = None  # (label, previous text, step file name) of the step staged now
-        if record and target.is_file():
-            previous = target.read_text(encoding="utf-8")
+        if record:
+            previous = target.read_text(encoding="utf-8") if target.is_file() else None
             journal = list(self._journal)
-            if previous != text and not journal and not _same_document(target, previous, text):
+            if previous is None and journal:
+                # A first save/save-as still owns the pending edit's before state.
+                snapshot = next((state for _label, state in journal if state is not None), None)
+                previous = _store._draft_text(snapshot) if snapshot is not None else self._disk
+            if previous is not None and previous != text and not journal and not _same_document(target, previous, text):
                 # edited without the API (by hand): one step. A pre-A1 file that differs only by the migration
                 # (intent moved under app.astrid, derived fields dropped) is not an edit: no step, no record.
                 journal = [("an edit", None)]
-            if journal:
+            if journal and previous is not None:
                 # One undo step per save: everything journaled since the last save, whose "before" is the file as it was
                 history = _store._history_dir(target)
                 history.mkdir(parents=True, exist_ok=True)
@@ -359,6 +384,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
     def _reload(self) -> None:
         fresh = Checkout.load(self.path)
         self.bundle, self._mcache, self._journal, self._disk = fresh.bundle, None, [], fresh._disk
+        self._accept_bundle()
 
     @contextlib.contextmanager
     def step(self, label: str):
@@ -404,6 +430,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
 
     def refresh(self, *, client: Any = None) -> dict[str, Any]:
         """Reapply only saved commands onto the observed exact Runtime head."""
+        self._assert_runner_state()
         from astrid.sdk.timeline.sync import refresh
         if client is None:
             return _store._with_client(None, lambda opened: refresh(self, client=opened))
@@ -493,6 +520,10 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
     def log(self, **filters: Any) -> list[_journal.JournalRecord]:
         """The edit journal of this timeline (every working copy shares it), filtered: since, actor, op, cut, clip, outcome."""
         path = _journal.journal_path(str(self.bundle.get("project_id") or ""), str(self.bundle.get("timeline_id") or ""))
+        if self.path:
+            local = Path(self.path).with_suffix(Path(self.path).suffix + ".journal.jsonl")
+            if local.is_file():
+                path = local
         return _journal.query(_journal.read(path), **filters)
 
     def changes(self, against: Mapping[str, Any] | None = None) -> list[str]:
