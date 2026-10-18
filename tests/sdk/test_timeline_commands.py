@@ -553,7 +553,7 @@ def test_preview_and_commit_have_the_same_film_length_digest(draft):
 
 # W46 source preparation only. This detached authority fixture exercises captured
 # media_record semantics; it is not a Runtime acquisition or acceptance receipt.
-def w46_clone_fixture():
+def w46_clone_fixture(*, relation_edge=None):
     from astrid.sdk.timeline.commit import _digest
     bundle = json.loads(FIXTURE.read_text())
     source = dict(id="source", track="V1", at=1, clipType="media", asset="old", from_=2)
@@ -561,6 +561,11 @@ def w46_clone_fixture():
     source.update({"from": 2, "to": 6, "speed": 2, "volume": 0.4, "opacity": 0.8,
                    "params": {"opaque": {"op": "clear", "value": None}},
                    "entrance": {"name": "fade"}, "app": {"reference": {"revision": "r1", "null": None}}})
+    if relation_edge is not None:
+        relation = "on" if relation_edge == "start" else "until"
+        source["app"]["astrid"] = {
+            relation: 'clip-start "parent/clip:follower" -' + ("4s" if relation_edge == "start" else "2s")
+        }
     follower = dict(id="follower", track="V1", at=5, clipType="hold", hold=1)
     bundle["parent"] = {"config": {"tracks": [{"id": "V1", "kind": "visual"}],
                                    "output": {"resolution": "1920x1080", "fps": 30, "file": "out.mp4"}},
@@ -691,11 +696,8 @@ def test_w46_later_child_prevents_whole_inverse(kind):
     ('end', 'adjust-offset', 2, False), ('end', 're-anchor', 2, False),
 ])
 def test_w46_selected_clone_choices_preserve_full_range_and_anchor(edge, choice, offset, accepted):
-    tl, record, call = w46_clone_fixture()
+    tl, record, call = w46_clone_fixture(relation_edge=edge)
     source = tl.bundle['parent']['clips'][0]
-    relation = 'on' if edge == 'start' else 'until'
-    source['app']['astrid'] = {relation: 'clip-start "parent/clip:follower" -' + ('4s' if edge == 'start' else '2s')}
-    call['expect']['parent/clip:source::']['value'] = copy.deepcopy(source)
     row = dict(target='parent/clip:source', edge=edge, choice=choice)
     if offset is not None:
         row['offset_seconds'] = offset
