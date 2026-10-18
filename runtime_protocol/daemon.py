@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import copy
 import hashlib
 from importlib import import_module
 import os
@@ -1476,31 +1477,70 @@ class RuntimeDaemon:
             close_pinned(candidate_identity)
             close_pinned(active_identity)
 
-    def stop(self):
+    def stop(self, *, primary_error=None):
+        """Keep original errors and the owner's actual teardown result separate.
+
+        A caller using try/finally can pass its primary error; context-manager
+        callers get the same preservation automatically. Custody is retained
+        when teardown fails. This never removes a caller's support/temp root.
+        """
+        from .local_worker import _cleanup_outcome, _cleanup_error_code
+        handles = list(getattr(self, "_local_worker_shutdown_handles", []))
+        stages = []
+        stage = "fence"
+        try:
+            self._stop_owned(handles, lambda value: stages.append(value))
+        except BaseException as cleanup:
+            stage = stages[-1] if stages else stage
+            self.local_worker_cleanup = {
+                "status": "failed", "secondary_error_stage": stage,
+                "secondary_error_code": _cleanup_error_code(cleanup),
+                "outcomes": [_cleanup_outcome(h) for h in handles],
+            }
+            if primary_error is None:
+                raise
+            primary_error.add_note("Runtime cleanup failed separately; original owner custody and cleanup outcome retained")
+        else:
+            self.local_worker_cleanup = {"status": "complete", "secondary_error_stage": None,
+                "secondary_error_code": None, "outcomes": [_cleanup_outcome(h) for h in handles]}
+            self._local_worker_shutdown_handles = []
+        if primary_error is not None:
+            primary_error.local_worker_cleanup = copy.deepcopy(self.local_worker_cleanup)
+            if isinstance(primary_error, RuntimeErrorBase):
+                primary_error.details = {**(primary_error.details or {}),
+                    "local_worker_cleanup": copy.deepcopy(self.local_worker_cleanup)}
+        return copy.deepcopy(self.local_worker_cleanup)
+
+    def _stop_owned(self, worker_handles, set_stage):
         # Fence bearer authority and authenticated acceptance before any
         # potentially blocking child cleanup. The launcher's abort wrapper is
         # bounded independently of the Worker's configured RPC timeout.
-        worker_handles = []
         if self.httpd is not None:
             self.httpd.accepting_authenticated_requests = False
         if self.local_worker_launcher is not None:
-            worker_handles = self.local_worker_launcher.begin_shutdown()
+            for handle in self.local_worker_launcher.begin_shutdown():
+                if not any(handle is current for current in worker_handles):
+                    worker_handles.append(handle)
+            self._local_worker_shutdown_handles = worker_handles
         if self.service is not None:
             try:
                 self.catalog.revoke_readiness(self.service.realm["id"], instance_id=self.instance_id, reason="runtime_stopped")
             except Exception:
                 pass
+        set_stage("runtime_shutdown")
         self.discovery.clear(self.instance_id)
         self._shutdown_http()
         if self.local_worker_launcher is not None:
+            set_stage("worker_cleanup")
             self.local_worker_launcher.finish_shutdown(worker_handles)
             self.local_worker_launcher = None
         if self.service:
+            set_stage("service_close")
             self.service.close()
             self.service = None
 
     def __enter__(self):
         return self.start()
 
-    def __exit__(self, *_):
-        self.stop()
+    def __exit__(self, exc_type, exc, traceback):
+        self.stop(primary_error=exc)

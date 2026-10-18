@@ -40,6 +40,7 @@ def test_production_binding_projects_rich_launch_receipt_and_fences_revocation(r
     verified = []
     monkeypatch.setattr(d, "_assert_local_relinquish_receipt", lambda value, metadata: verified.append(copy.deepcopy(value)))
     monkeypatch.setattr(transport.LocalPreparationRelay, "_paths", lambda self: None)
+    monkeypatch.setattr(transport.LocalPreparationRelay, "startup_listener_present", lambda self, timeout: True)
     profile = SimpleNamespace(execution_mode="host_only_cpu", support_root=tmp_path,
         host_launch={"pack_root": str(tmp_path), "executor_id": "host", "boot_manifest_hash": "e"*64})
     receipt["owner_epoch"] = report["owner_epoch"]
@@ -252,6 +253,7 @@ def test_source_ready_and_legacy_preparation_remain_authenticated(source_composi
     from runtime_protocol import local_preparation_relay as transport
     w = source_composition
     monkeypatch.setattr(transport.LocalPreparationRelay, "_paths", lambda self: None)
+    monkeypatch.setattr(transport.LocalPreparationRelay, "startup_listener_present", lambda self, timeout: True)
     for reason in (None, "request storage estimator unsupported by legacy catalog; prepare/execute join required"):
         if reason: w.availability(reason)
         staged = transport.bind_selected_host(w.d, w.profile, w.handle)
@@ -296,6 +298,7 @@ def test_source_ready_preparation_rechecks_authority_after_exchange(source_compo
     from runtime_protocol import local_preparation_relay as transport
     w = source_composition
     monkeypatch.setattr(transport.LocalPreparationRelay, "_paths", lambda self: None)
+    monkeypatch.setattr(transport.LocalPreparationRelay, "startup_listener_present", lambda self, timeout: True)
     staged = transport.bind_selected_host(w.d, w.profile, w.handle)
     w.s._preparation_relay = relay = staged.relay
     calls = []
@@ -325,6 +328,103 @@ def prepared(request):
               "estimator": ESTIMATOR, "storage_estimate": {"scratch_bytes": 123, "output_bytes": 456}}
     result["preparation_digest"] = digest(result)
     return result
+
+
+@pytest.mark.parametrize("case", ["registration_delay", "progress", "readiness_stall", "listener_stall",
+    "malformed", "replacement", "source_replacement", "registration_missing"])
+def test_source_startup_has_generation_bound_progress_budget(source_composition, monkeypatch, case):
+    from types import SimpleNamespace
+    from runtime_protocol import local_preparation_relay as transport
+    w = source_composition
+    w.d.local_worker_preparer.timeout_seconds = 1
+    clock = SimpleNamespace(now=0.0)
+    clock.monotonic = lambda: clock.now
+    last = []
+    original_init = transport.LocalPreparationRelay.__init__
+    def initialize(self, binding):
+        original_init(self, binding)
+        last[:] = [self]
+    monkeypatch.setattr(transport.LocalPreparationRelay, "__init__", initialize)
+    monkeypatch.setattr(transport, "time", clock)
+    if case in {"registration_delay", "progress", "registration_missing"}:
+        w.s.store.conn.execute("UPDATE executors SET readiness='pending'")
+    def sleep(seconds):
+        clock.now += seconds
+        if case != "registration_missing" and clock.now >= .8:
+            w.s.store.conn.execute("UPDATE executors SET readiness='ready'")
+        if case in {"replacement", "source_replacement"} and clock.now >= .4:
+            if case == "replacement": w.provision()
+            else: w.s.store.conn.execute("UPDATE executors SET source_epoch='replacement'")
+        ready_at = 1.6 if case == "progress" else .9 if case == "registration_delay" else .2
+        if last and clock.now >= ready_at and case not in {"readiness_stall", "registration_missing"}:
+            path = Path(last[0].binding["readiness_record_path"])
+            path.parent.mkdir(mode=0o700, exist_ok=True)
+            path.write_bytes(b'{"broken":' if case == "malformed" else canonical(last[0].readiness_record()))
+            path.chmod(0o600)
+    clock.sleep = sleep
+    def paths(self):
+        if not Path(self.binding["readiness_record_path"]).exists(): raise FileNotFoundError()
+    monkeypatch.setattr(transport.LocalPreparationRelay, "_paths", paths)
+    monkeypatch.setattr(transport.LocalPreparationRelay, "startup_listener_present",
+        lambda self, timeout: case != "listener_stall" and clock.now >= (2.4 if case == "progress" else .9))
+    if case in {"registration_delay", "progress"}:
+        staged = transport.bind_selected_host(w.d, w.profile, w.handle)
+        assert staged.relay is not None
+        staged.check()
+        assert w.d.local_preparation_diagnostic["stage"] == "ready"
+        assert clock.now < 3
+        if case == "progress": assert clock.now > 2
+    else:
+        with pytest.raises(RuntimeErrorBase) as caught:
+            transport.bind_selected_host(w.d, w.profile, w.handle)
+        d = caught.value.details["startup"]
+        if case in {"replacement", "source_replacement"}:
+            assert caught.value.details["reason"] == "selected_activation_changed"
+        elif case == "malformed":
+            assert caught.value.details["reason"] == "malformed_frame"
+        else:
+            assert caught.value.details["reason"] == "preparation_startup_deadline"
+            assert d["stage"] == {"readiness_stall": "readiness", "listener_stall": "listener",
+                                  "registration_missing": "registration"}[case]
+            assert 1 <= clock.now <= 1.3  # repeated valid file writes never renew a budget
+        assert set(d) == {"stage", "elapsed_ms", "generation_sha256", "registration", "readiness",
+                          "listener_present", "phase_budget_ms", "total_budget_ms"}
+        assert "fixture-host" not in json.dumps(d)
+
+
+@pytest.mark.parametrize("present", [False, True])
+def test_startup_listener_probe_requires_live_authenticated_peer(source_composition, tmp_path, monkeypatch, present):
+    from runtime_protocol import local_preparation_relay as transport
+    relay = LocalPreparationRelay(binding_for(source_composition.d, tmp_path))
+    calls = []
+    class Channel:
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def settimeout(self, value): assert 0 < value <= .05
+        def connect(self, path):
+            calls.append("connect")
+            if not present: raise ConnectionRefusedError()
+    monkeypatch.setattr(transport.socket, "socket", lambda *args: Channel())
+    monkeypatch.setattr(transport.AuthenticatedCleanupActor, "private_peer",
+        lambda channel: type("Actor", (), {"verify": lambda self: copy.deepcopy(ACTOR)})())
+    assert relay.startup_listener_present(.05) is present
+    assert calls == ["connect"]
+
+
+def test_source_daemon_retains_attempt004_typed_boundary_and_launcher_custody(source_composition):
+    w = source_composition
+    data = json.loads((Path(__file__).parent / "fixtures/h004-startup-boundary.json").read_text())
+    with pytest.raises(RuntimeErrorBase) as caught:
+        w.d.start_local_worker(w.profile.profile_id, w.s.realm["id"])
+    primary = caught.value
+    assert type(primary).__name__ == data["primary"]["exception_type"]
+    assert str(primary) == data["primary"]["message"]
+    assert primary.details["reason"] == data["primary"]["reason"]
+    assert primary.details["startup"]["stage"] == "readiness"
+    assert primary.details["local_worker_state"] == "activated_composition_failed"
+    assert w.d.local_worker_preparer.current_handle() is w.handle
+    assert not w.handle.closed and w.d.local_worker_launcher is not None
+    assert w.s._preparation_relay is None
 
 
 @pytest.fixture

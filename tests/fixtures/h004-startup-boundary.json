@@ -1,0 +1,25 @@
+{
+  "provenance": {
+    "run": "timeline-r4-portfolio-20261015",
+    "attempt": "H continuation-4 attempt-004",
+    "source": "projects/H-hosted-security/evidence/H-GRANT-AUTHENTICATED-CONSUMER-214/continuation-4/attempt-004/fixture-stderr.log",
+    "sha256": "467ab4adfca9143c23a0b902c2d61e1e369a7ce44c82d00727c83189d5896d67"
+  },
+  "primary": {
+    "exception_type": "CapabilityUnavailableError",
+    "message": "storage preparation unavailable",
+    "reason": "preparation_startup_deadline",
+    "boundary": ["RuntimeDaemon.start_local_worker", "bind_selected_host"],
+    "wait_stage": "unproven"
+  },
+  "cleanup_observation": {
+    "original_host_wait": -9,
+    "child_cleanup_acknowledged": true,
+    "complete_graph": true,
+    "inspection_owner_settled": true,
+    "secondary_error_codes": ["error"],
+    "logging_status": "pending",
+    "reason": "cleanup_complete"
+  },
+  "caller_secondary": "supported Host cleanup was not fully evidenced; private fixture root retained"
+}

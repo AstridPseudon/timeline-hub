@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 import socket
 import stat
+import sys
 import time
 import uuid
 from typing import Callable
@@ -259,6 +260,20 @@ class LocalPreparationRelay:
         if self._selected_host_ready is not None:
             self._selected_host_ready()
 
+    def startup_listener_present(self, timeout):
+        """Authenticate the listening peer without sending a frame or a spec."""
+        try:
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as channel:
+                channel.settimeout(timeout)
+                channel.connect(self._binding["socket_path"])
+                if AuthenticatedCleanupActor.private_peer(channel).verify() != self._binding["host_process"]:
+                    raise unavailable("host_peer_mismatch")
+                return True
+        except (FileNotFoundError, ConnectionRefusedError, TimeoutError):
+            return False
+        except CustodyError as exc:
+            raise unavailable("peer_identity_unsupported") from exc
+
     def exchange(self, request):
         b = self._binding
         end = time.monotonic() + b["deadline_ms"] / 1000
@@ -326,7 +341,57 @@ class LocalPreparationRelay:
             raise unavailable("endpoint_unavailable") from exc
 
 
+class _StartupProgress:
+    """Only verified, forward milestones renew the idle budget, at most twice.
+
+    No heartbeat, repeated file write or replacement generation earns time.
+    Registration, readiness and listener each get one preparer-sized budget;
+    the whole exchange is capped at three budgets after static discovery.
+    """
+    def __init__(self, seconds):
+        self.started = time.monotonic()
+        self.budget = seconds
+        self.end = self.started + seconds
+        self.limit = self.started + 3 * seconds
+        self.stage = "registration"
+        self.generation = None
+        self.readiness = "pending"
+        self.listener = None
+
+    def advance(self, stage):
+        if time.monotonic() >= self.end:
+            raise unavailable("preparation_startup_deadline")
+        if self.stage != stage:
+            self.stage = stage
+            self.end = min(self.limit, time.monotonic() + self.budget)
+
+    def snapshot(self):
+        return dict(stage=self.stage, elapsed_ms=max(0, int((time.monotonic() - self.started) * 1000)),
+            generation_sha256=self.generation,
+            registration="pending" if self.stage == "registration" else "validated",
+            readiness=self.readiness, listener_present=self.listener,
+            phase_budget_ms=int(self.budget * 1000), total_budget_ms=int(3 * self.budget * 1000))
+
+
 def bind_selected_host(daemon, profile, handle):
+    diagnostic = {}
+    try:
+        return _bind_selected_host(daemon, profile, handle, diagnostic)
+    except BaseException as exc:
+        if isinstance(exc, (CapabilityUnavailableError, InvalidPreparationReplyError)):
+            exc.details = {**(exc.details or {}), "startup": copy.deepcopy(diagnostic)}
+        raise
+    finally:
+        daemon.local_preparation_diagnostic = copy.deepcopy(diagnostic)
+        if diagnostic:
+            try:
+                print(json.dumps({"event": "storage_preparation_startup", **diagnostic}, sort_keys=True),
+                      file=sys.stderr, flush=True)
+            except BaseException:
+                pass
+
+
+def _bind_selected_host(daemon, profile, handle, diagnostic):
     """Stage only the retained authenticated launch; publish no service state.
 
     Static Astrid discovery supplies capability source scopes from the selected
@@ -355,10 +420,14 @@ def bind_selected_host(daemon, profile, handle):
     finally:
         inventory.shutdown()
     service = daemon.service
-    end = time.monotonic() + daemon.local_worker_preparer.timeout_seconds
+    progress = _StartupProgress(daemon.local_worker_preparer.timeout_seconds)
     root = Path(profile.support_root)
     expected_generation = None
+    expected_binding = None
     while True:
+        diagnostic.update(progress.snapshot())
+        if time.monotonic() >= progress.end:
+            raise unavailable("preparation_startup_deadline")
         if (daemon.local_worker_preparer.current_handle() is not handle
                 or handle.closed or not handle.activated):
             raise unavailable("selected_host_changed")
@@ -437,7 +506,16 @@ def bind_selected_host(daemon, profile, handle):
                     if service._preparation_binding_context(binding) != context:
                         raise unavailable("selected_source_changed")
             check_selected()
+            identity = tuple(binding[k] for k in CONTEXT_FIELDS + ("host_instance_id", "source_epoch"))
+            if expected_binding is None:
+                expected_binding = identity
+                progress.generation = hashlib.sha256(canonical(identity)).hexdigest()
+                progress.advance("readiness")
+            elif identity != expected_binding:
+                raise unavailable("selected_activation_changed")
             if refusal is not None:
+                progress.stage = "unavailable"
+                diagnostic.update(progress.snapshot())
                 return StagedStorageBinding(unavailable=refusal, check=check_selected,
                                             check_authority=check_authority)
             readiness = Path(binding["readiness_record_path"])
@@ -456,19 +534,39 @@ def bind_selected_host(daemon, profile, handle):
                         raise unavailable("readiness_oversized")
                     startup = decode(raw)
                     binding["socket_path"] = startup.get("socket_path", binding["socket_path"])
+                    # Validate the entire record even while the socket is late.
+                    # A malformed/stale file is fatal, never progress.
+                    relay = LocalPreparationRelay(binding)
+                    if canonical(startup) != canonical(relay.readiness_record()):
+                        raise unavailable("readiness_stale")
+                    progress.readiness = "validated"
+                    if progress.stage == "readiness":
+                        progress.advance("listener")
                 finally:
                     os.close(fd)
             relay = LocalPreparationRelay(binding)
             try:
                 relay._paths()
-            except (FileNotFoundError, OSError):
-                pass
+            except FileNotFoundError:
+                if progress.stage == "listener":
+                    progress.listener = False
             else:
+                progress.listener = relay.startup_listener_present(min(0.05, max(0.001, progress.end - time.monotonic())))
+                if not progress.listener:
+                    diagnostic.update(progress.snapshot())
+                    time.sleep(min(0.05, max(0.0, progress.end - time.monotonic())))
+                    continue
                 check_selected()
+                if time.monotonic() >= progress.end:
+                    raise unavailable("preparation_startup_deadline")
                 relay._selected_host_check = check_selected
                 relay._selected_host_ready = check_selected_ready
+                progress.stage = "ready"
+                progress.readiness = "validated"
+                diagnostic.update(progress.snapshot())
                 return StagedStorageBinding(relay=relay, check=check_selected,
                                             check_authority=check_authority)
-        if time.monotonic() >= end:
-            raise unavailable("preparation_startup_deadline")
-        time.sleep(0.05)
+        elif expected_binding is not None:
+            raise unavailable("selected_activation_changed")
+        diagnostic.update(progress.snapshot())
+        time.sleep(min(0.05, max(0.0, progress.end - time.monotonic())))

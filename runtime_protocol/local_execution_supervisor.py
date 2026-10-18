@@ -46,6 +46,10 @@ class RelayError(RuntimeError):
     """A bounded delegated transition lacks exact identity or custody."""
 
 
+class RetainedWaitTimeout(RelayError, TimeoutError):
+    """The original waiter's deadline expired; custody is still retained."""
+
+
 def canonical_json(value: object) -> bytes:
     try:
         return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")
@@ -967,7 +971,7 @@ class RetainedProcess:
             if result is not None:
                 return result
             if time.monotonic() >= deadline:
-                raise RelayError("retained child exit remains unresolved")
+                raise RetainedWaitTimeout("retained child exit remains unresolved")
             time.sleep(min(0.01, max(0.0, deadline - time.monotonic())))
 
 

@@ -1168,6 +1168,7 @@ def test_host_only_cleanup_always_reaches_original_wait_and_keeps_graph_failure(
             assert handle.original_host_wait is not None
         assert not handle.cleanup_acknowledged
     if case == "exited": assert not sent and signal.SIGTERM not in calls and handle.original_host_wait == 7
+    elif case == "ack": assert signal.SIGTERM not in calls and handle.original_host_wait == 0
     elif case != "missing_wait": assert signal.SIGTERM in calls
     if case in {"kill", "wait_timeout"}: assert signal.SIGKILL in calls
     assert preparer.shutdown_timeout_seconds >= 3 * max(1, preparer.cleanup_timeout_seconds) + 1
@@ -1657,3 +1658,100 @@ def test_host_only_cleanup_channel_failure_keeps_refusal_after_good_ack(tmp_path
     assert not handle.closed and preparer._active is handle and preparer.cleanup_uncertain
     assert calls.count("close") == 2
     assert "private-" not in json.dumps(handle.cleanup_outcome)
+
+
+@pytest.mark.parametrize("case", ["ack", "kill", "unresolved", "wait_timeout"])
+@pytest.mark.parametrize("logger_fails", [False, True])
+def test_startup_primary_survives_actual_owner_cleanup_outcome(tmp_path, monkeypatch, case, logger_fails):
+    from runtime_protocol.daemon import RuntimeDaemon
+    from runtime_protocol import local_worker_composition as module
+    from runtime_protocol.local_preparation_relay import unavailable
+    preparer, handle, calls, sent, state = _host_only_cleanup_case(tmp_path, monkeypatch, case)
+    handle.inspection_owner = SimpleNamespace(finish=lambda **kw: calls.append("inspection"))
+    if logger_fails:
+        monkeypatch.setattr(module._LOGGER, "warning", lambda *args: (_ for _ in ()).throw(OSError("SECRET")))
+    daemon = RuntimeDaemon.__new__(RuntimeDaemon)
+    daemon.httpd = None
+    daemon.service = None
+    daemon.instance_id = "fixture"
+    daemon.discovery = SimpleNamespace(clear=lambda instance: None)
+    daemon._shutdown_http = lambda: None
+    daemon.local_worker_launcher = SimpleNamespace(begin_shutdown=lambda: [handle],
+        finish_shutdown=lambda handles: preparer.abort(handles[0]))
+    # Serialized actual H004 boundary, with no credentials/handles/private paths.
+    data = json.loads((Path(__file__).parent / "fixtures/h004-startup-boundary.json").read_text())
+    primary = unavailable(data["primary"]["reason"])
+    with pytest.raises(type(primary)) as caught:
+        try:
+            raise primary
+        finally:
+            daemon.__exit__(type(primary), primary, primary.__traceback__)
+    assert caught.value is primary and primary.details["reason"] == data["primary"]["reason"]
+    result = primary.local_worker_cleanup
+    outcome = result["outcomes"][0]
+    assert outcome["terminal"] == (case != "wait_timeout")
+    assert outcome["graceful"] == (case == "ack")
+    assert outcome["complete_graph"] == (case in {"ack", "kill"})
+    assert outcome["child_cleanup_acknowledged"] == (case in {"ack", "kill"})
+    assert outcome["inspection_owner_settled"] is True
+    assert outcome["owner_settled"] == (case in {"ack", "kill"})
+    assert outcome["logging_status"] == ("failed" if logger_fails else "written")
+    if case == "kill":
+        assert outcome["original_host_wait"] == -9 and not outcome["graceful"]
+    if logger_fails: assert "logging" in outcome["secondary_error_stages"]
+    if case in {"unresolved", "wait_timeout"}:
+        assert result["status"] == "failed" and result["secondary_error_stage"] == "worker_cleanup"
+        assert daemon.local_worker_launcher is not None
+        assert daemon._local_worker_shutdown_handles == [handle] and preparer._active is handle
+    else:
+        assert result["status"] == "complete" and daemon.local_worker_launcher is None
+    assert "SECRET" not in json.dumps(result)
+
+
+def test_cleanup_without_primary_still_refuses_and_retains_outcome(tmp_path, monkeypatch):
+    from runtime_protocol.daemon import RuntimeDaemon
+    daemon = RuntimeDaemon.__new__(RuntimeDaemon)
+    def fail(handles, set_stage):
+        set_stage("worker_cleanup")
+        raise ConflictError("private error")
+    daemon._stop_owned = fail
+    with pytest.raises(ConflictError): daemon.stop()
+    assert daemon.local_worker_cleanup["status"] == "failed"
+    assert daemon.local_worker_cleanup["secondary_error_stage"] == "worker_cleanup"
+
+
+def test_retained_wait_deadline_is_distinct_from_lost_wait_ownership(monkeypatch):
+    from runtime_protocol.local_execution_supervisor import RetainedProcess, RetainedWaitTimeout, RelayError
+    retained = RetainedProcess(None)
+    monkeypatch.setattr(retained, "poll", lambda: None)
+    with pytest.raises(RetainedWaitTimeout, match="exit remains unresolved"):
+        retained.wait(.001)
+    assert issubclass(RetainedWaitTimeout, RelayError)
+    missing = RelayError("retained child wait ownership is unknown")
+    monkeypatch.setattr(retained, "poll", lambda: (_ for _ in ()).throw(missing))
+    with pytest.raises(RelayError) as caught: retained.wait(0)
+    assert caught.value is missing and not isinstance(missing, TimeoutError)
+
+
+def test_ack_natural_exit_and_escalation_share_existing_total_deadline(tmp_path, monkeypatch):
+    from runtime_protocol import local_worker_composition as module
+    preparer, handle, calls, sent, state = _host_only_cleanup_case(tmp_path, monkeypatch, "kill")
+    clock = SimpleNamespace(now=0.0)
+    monkeypatch.setattr(module, "time", SimpleNamespace(monotonic=lambda: clock.now))
+    budgets = []
+    def wait(timeout):
+        assert timeout >= 0
+        budgets.append(timeout)
+        clock.now += timeout
+        if signal.SIGKILL not in calls: raise TimeoutError()
+        state["exit"] = -9
+        return -9
+    handle.retained.wait = wait
+    handle.inspection_owner = SimpleNamespace(finish=lambda **kw: budgets.append(kw["timeout"]))
+    preparer.abort(handle)
+    total = 3 * max(1, preparer.cleanup_timeout_seconds)
+    assert clock.now <= total and sum(budgets) <= total
+    assert budgets[0] == max(1, preparer.cleanup_timeout_seconds) / 2
+    assert handle.cleanup_outcome["original_host_wait"] == -9
+    assert handle.cleanup_outcome["complete_graph"] and handle.cleanup_outcome["owner_settled"]
+    assert not handle.cleanup_outcome["graceful"]

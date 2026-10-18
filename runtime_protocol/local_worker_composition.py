@@ -588,9 +588,12 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 authority = handle.broker.role_authority
                 authority.timeout = min(float(getattr(authority, "timeout", step)), max(0.001, deadline - time.monotonic()))
             bound = {k: handle.preparation[k] for k in ("version", "operation_id", "channel_id", "owner_epoch")}
-            def record(exc):
+            error_stages = []
+            def record(exc, stage):
                 if len(handle.cleanup_errors) < 6:
                     handle.cleanup_errors.append(_cleanup_error_code(exc))
+                if stage not in error_stages:
+                    error_stages.append(stage)
             try:
                 handle.original_host_wait = handle.retained.poll()
                 if handle.original_host_wait is None and not handle.cleanup_acknowledged:
@@ -615,9 +618,19 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     expected = {**{k: v for k, v in request.items() if k != "command"}, "status": "cleaned", "cleanup": {"host_children": "absent"}}
                     handle.cleanup_acknowledged = response == expected
             except BaseException as exc:
-                record(exc)
+                record(exc, "ack")
             try:
                 handle.original_host_wait = handle.retained.poll()
+                if handle.original_host_wait is None and handle.cleanup_acknowledged:
+                    # An ACK proves child cleanup, not that the Host has already
+                    # exited. Give that same owner's waiter a short natural-exit
+                    # window before signaling. Reserve the rest of the existing
+                    # total deadline for TERM/KILL and inspection settlement.
+                    try:
+                        handle.original_host_wait = handle.retained.wait(
+                            min(step / 2, max(0.0, deadline - time.monotonic())))
+                    except TimeoutError:
+                        handle.original_host_wait = handle.retained.poll()
                 if handle.original_host_wait is None:
                     # Same authenticated broker and sole retained waiter. No
                     # absent-PID, process-group, or reconstructed-handle fallback.
@@ -626,7 +639,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     try:
                         handle.original_host_wait = handle.retained.wait(min(step, max(0.0, deadline - time.monotonic())))
                     except BaseException as exc:
-                        record(exc)
+                        record(exc, "terminal_wait")
                         # An exit between timeout and escalation may already
                         # have a real retained wait; verify that before signaling.
                         handle.original_host_wait = handle.retained.poll()
@@ -635,23 +648,27 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                             handle.broker.signal(signal.SIGKILL, expected_pid=handle.worker.pid)
                             handle.original_host_wait = handle.retained.wait(max(0.0, deadline - time.monotonic()))
             except BaseException as exc:
-                record(exc)
+                record(exc, "terminal_wait")
                 # A signal race can still leave the original wait available.
                 try:
                     handle.original_host_wait = handle.retained.poll()
                 except BaseException as wait_error:
-                    record(wait_error)
+                    record(wait_error, "terminal_wait")
             inspection_error = None
             if handle.inspection_owner is not None:
                 try:
                     handle.inspection_owner.finish(cancel=True, timeout=max(0.0, deadline - time.monotonic()))
                 except BaseException as exc:
-                    record(exc)
+                    record(exc, "inspection")
                     inspection_error = exc
             outcome = {"operation_id_sha256": hashlib.sha256(bound["operation_id"].encode()).hexdigest(),
                 "child_cleanup_acknowledged": handle.cleanup_acknowledged,
                 "original_host_wait": handle.original_host_wait,
                 "complete_graph": handle.cleanup_acknowledged and handle.original_host_wait is not None and inspection_error is None,
+                "terminal": handle.original_host_wait is not None,
+                "graceful": handle.original_host_wait == 0 and handle.cleanup_acknowledged and inspection_error is None,
+                "owner_settled": False,
+                "secondary_error_stages": error_stages,
                 "secondary_error_codes": list(handle.cleanup_errors), "logging_status": "pending"}
             if handle.inspection_owner is not None:
                 outcome["inspection_owner_settled"] = inspection_error is None
@@ -671,7 +688,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 _LOGGER.warning("host-only cleanup outcome: %s", json.dumps(handle.cleanup_outcome, sort_keys=True))
             except BaseException as exc:
                 handle.cleanup_outcome["logging_status"] = "failed"
-                record(exc)
+                record(exc, "logging")
             else:
                 handle.cleanup_outcome["logging_status"] = "written"
             close_failed = False
@@ -680,9 +697,10 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     try:
                         channel.close()
                     except BaseException as exc:
-                        record(exc)
+                        record(exc, "channel_close")
                         close_failed = True
             handle.cleanup_outcome["secondary_error_codes"] = list(handle.cleanup_errors)
+            handle.cleanup_outcome["secondary_error_stages"] = error_stages
             if close_failed and outcome["complete_graph"]:
                 # A settled graph does not prove that owner channel cleanup
                 # succeeded. Preserve the existing refusal on close failure.
@@ -692,6 +710,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             if not outcome["complete_graph"] or close_failed:
                 raise ConflictError(self.cleanup_uncertain, details={"reason": handle.cleanup_outcome["reason"]})
             handle.closed = True
+            handle.cleanup_outcome["owner_settled"] = True
             if self._active is handle:
                 self._active = None
         finally:

@@ -303,7 +303,7 @@ def _cleanup_outcome(handle) -> dict[str, Any] | None:
     if not isinstance(value, Mapping):
         return None
     result = {"reason": _cleanup_reason(value.get("reason"))}
-    for key in ("child_cleanup_acknowledged", "complete_graph", "inspection_owner_settled"):
+    for key in ("child_cleanup_acknowledged", "complete_graph", "inspection_owner_settled", "owner_settled", "terminal", "graceful"):
         result[key] = value.get(key) if type(value.get(key)) is bool else None
     wait = value.get("original_host_wait")
     result["original_host_wait"] = wait if type(wait) is int and -(2**31) <= wait < 2**31 else None
@@ -312,6 +312,9 @@ def _cleanup_outcome(handle) -> dict[str, Any] | None:
     errors = value.get("secondary_error_codes", [])
     result["secondary_error_codes"] = [e if e in {"enospc", "os_error", "conflict", "error"} else "error"
         for e in errors[:6]] if isinstance(errors, list) else []
+    stages = value.get("secondary_error_stages", [])
+    result["secondary_error_stages"] = [s for s in stages[:6] if s in {
+        "ack", "terminal_wait", "inspection", "logging", "channel_close"}] if isinstance(stages, list) else []
     return result
 
 
