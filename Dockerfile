@@ -1,7 +1,3 @@
-# check=skip=SecretsUsedInArgOrEnv
-# VITE_SUPABASE_ANON_KEY is public Vite client config. Docker's stock secret
-# check flags the ARG name, so scripts/quality/check-dockerfile-sensitive-env.mjs
-# enforces the narrower rule this app needs: no sensitive Docker ENV layers.
 # Pinned to satisfy package-lock.json's ^20.19.0 || >=22.12.0 engine constraint.
 # Bumping the FROM tag is the ONLY Node-version authority for production —
 # .nvmrc and engines.node must track this value.
@@ -22,19 +18,10 @@ RUN npm install -g npm@11.21.1 --no-audit --no-fund && npm ci --no-audit --no-fu
 
 COPY . .
 
-# Vite inlines ordinary browser client config into the JS bundle. Extension
-# rollout controls are intentionally absent here; the runtime stage writes
-# those from non-VITE service variables whenever the container starts.
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
-ARG VITE_API_TARGET_URL
-ARG VITE_APP_ENV
+# Extension rollout controls are intentionally absent at build time; the runtime
+# stage writes them from non-VITE service variables whenever the container starts.
 RUN node scripts/build/verify-astrid-vendor-sources.mjs && \
-    VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
-    VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
-    VITE_API_TARGET_URL="$VITE_API_TARGET_URL" \
-    VITE_APP_ENV="$VITE_APP_ENV" \
-    NODE_OPTIONS="--max-old-space-size=4096" npm run build
+    NODE_OPTIONS="--max-old-space-size=4096" npm run build:hosted
 
 FROM node:20.19.4-alpine@sha256:df02558528d3d3d0d621f112e232611aecfee7cbc654f6b375765f72bb262799 AS runtime
 WORKDIR /app
