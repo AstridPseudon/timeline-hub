@@ -26,7 +26,10 @@ import type { TimelineEventBus } from './useTimelineEventBus.ts';
 import { isAssetRegistrationInverse } from '../commands/assetRegistration.ts';
 import { isTiedHoldExpansionCommand, isTiedHoldExpansionInverse } from '../commands/tiedHoldExpansionHistory.ts';
 import { isOverlapTrimBatch, isOverlapTrimInverse } from '../commands/overlapTrimHistory.ts';
-import { gestureCommandsFor } from '../commands/semanticGestures.ts';
+import { gestureCommandsFor, gestureOccurrenceFor, attachGestureCommands } from '../commands/semanticGestures.ts';
+import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
+import { createShotCompositionAdapter, type ShotCompositionHistoryRestoreRequest } from '../data/shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { isDataProviderPersistenceEnabled } from '@/tools/video-editor/data/DataProvider.ts';
 import type {
@@ -241,6 +244,9 @@ export function useTimelineHistory({
   const [canonicalHistoryError, setCanonicalHistoryError] = useState<string | null>(null);
   const [restoringCanonicalRevisionId, setRestoringCanonicalRevisionId] = useState<string | null>(null);
   const canonicalHistoryRequestRef = useRef(0);
+  const pendingImageRestoreRef = useRef<ShotCompositionHistoryRestoreRequest | null>(null);
+  const pendingImageTargetsRef = useRef<{ before: CanonicalShotCompositionHistoryEntry; selected: CanonicalShotCompositionHistoryEntry } | null>(null);
+  const imageRestoreFlightRef = useRef(false);
   const canonicalHistorySupported = Boolean(provider.shotComposition?.listHistory && provider.shotComposition?.restoreHistory);
 
   const syncHistoryState = useCallback(() => {
@@ -289,14 +295,35 @@ export function useTimelineHistory({
     editsSinceLastCheckpoint: number,
     label?: string,
   ) => {
-    if (!isDataProviderPersistenceEnabled(provider) || !provider.saveCheckpoint) {
+    if (!isDataProviderPersistenceEnabled(provider)) {
       return;
     }
 
     const createdAt = new Date().toISOString();
+    const captured = structuredClone(currentData);
+    const owners = [...new Set([...undoStackRef.current.flatMap(entry => entry.nativeRegistration
+      && !entry.nativeRegistration.inverse ? [entry.nativeRegistration.owner] : []), currentData])];
+    const suffix = owners.flatMap(owner => (gestureCommandsFor(owner) ?? []).map(command => structuredClone(command)));
+    const suffixHeads = owners.map(owner => owner.head);
+    const suffixScopes = owners.map(owner => gestureOccurrenceFor(owner));
+    let binding: Checkpoint['binding'];
+    try { binding = await provider.shotComposition?.captureCheckpoint?.(currentData); } catch { /* Keep local recovery available. */ }
+    if (binding?.kind === 'dirty') {
+      const capturedBase = binding.base;
+      if (suffix.length && suffixHeads.every(head => head?.projectId === capturedBase.projectId
+        && head?.timelineId === capturedBase.timelineId && head?.headRevisionId === capturedBase.headRevisionId)
+        && suffixScopes.every(scope => JSON.stringify(scope) === JSON.stringify(suffixScopes[0]))) {
+        binding = { ...binding, commands: suffix };
+      } else if (owners.length > 1) {
+        // An unprovable mixed base/scope stays local config recovery. Never
+        // label a truncated or retargeted command suffix canonical intent.
+        binding = undefined;
+      }
+    }
     const checkpointInput = {
       timelineId,
-      config: cloneConfig(currentData.config),
+      config: cloneConfig(captured.config),
+      ...(binding ? { binding } : {}),
       createdAt,
       triggerType,
       label: label?.trim() || defaultCheckpointLabel(triggerType),
@@ -304,7 +331,8 @@ export function useTimelineHistory({
     };
 
     try {
-      const checkpointId = await provider.saveCheckpoint(timelineId, checkpointInput);
+      const checkpointId = provider.saveCheckpoint
+        ? await provider.saveCheckpoint(timelineId, checkpointInput) : generateUUID();
       appendCheckpoint({
         id: checkpointId,
         ...checkpointInput,
@@ -478,6 +506,7 @@ export function useTimelineHistory({
     // inverses carry Runtime expectations and remain safe over a poll
     // or another head: Runtime alone accepts or refuses that inverse.
     const nativeRelation = (entry: UndoEntry) => {
+      if (entry.imageRestore) return true;
       const nativeCommands = entry.nativeRegistration && gestureCommandsFor(entry.nativeRegistration.owner);
       const command = nativeCommands?.[0];
       return isManualTextBatch(nativeCommands ?? []) || isManualTextCreation(nativeCommands ?? []) || isManualTextInverse(command) || isManualTextInverse(entry.nativeRegistration?.inverse)
@@ -504,7 +533,59 @@ export function useTimelineHistory({
     syncHistoryState();
   }, [syncHistoryState]);
 
+  const performImageRestore = useCallback(async (request: ShotCompositionHistoryRestoreRequest) => {
+    const port = provider.shotComposition;
+    const current = dataRef.current;
+    if (!port?.restoreHistory || !current || imageRestoreFlightRef.current) return undefined;
+    if (pendingOpsRef.current > 0 || isInteractionActive(interactionStateRef)
+      || (editability?.checkTimeline && !editability.checkTimeline().allowed)) return undefined;
+    imageRestoreFlightRef.current = true;
+    setRestoringCanonicalRevisionId(request.revisionId);
+    try {
+      const receipt = await port.restoreHistory(request);
+      if (dataRef.current !== current) throw new Error('Restore was accepted; local editing changed while awaiting readback. Retry this restore to reconcile.');
+      const prepared = await createShotCompositionAdapter({ load: async () => receipt.graph }).load(request);
+      if (prepared.headRevisionId !== receipt.newHead) throw new Error('Restore readback head differs from acceptance');
+      const projected = projectCanonicalComposition(prepared).config;
+      const { registry, ...config } = projected;
+      const next = buildDataFromSnapshot({ ...config, clips: config.clips.map(({ assetEntry: _entry, ...clip }) => clip) },
+        { assets: registry }, { ...current, resolvedConfig: { ...current.resolvedConfig, registry: {} } });
+      next.head = { projectId: request.projectId, timelineId: request.parentDocumentId, headRevisionId: receipt.newHead };
+      commitData(next, { save: false, skipHistory: true });
+      lastUntransactedEditAtRef.current = null;
+      lastEditTimestampRef.current = Date.now();
+      return receipt;
+    } finally {
+      imageRestoreFlightRef.current = false;
+      setRestoringCanonicalRevisionId(null);
+    }
+  }, [commitData, dataRef, editability, interactionStateRef, pendingOpsRef, provider]);
+
+  const traverseImageHistory = useCallback(async (entry: UndoEntry, direction: 'undo' | 'redo') => {
+    const image = entry.imageRestore!;
+    image.request ??= { projectId: image.target.projectId, parentDocumentId: image.target.parentDocumentId,
+      revisionId: image.target.revisionId, contentDigest: image.target.contentDigest,
+      publicationId: image.target.publicationId, expectedHead: image.expectedHead,
+      expectedPublicationId: image.expectedPublicationId, requestId: generateUUID() };
+    try {
+      const receipt = await performImageRestore(image.request);
+      if (!receipt) return;
+      const from = direction === 'undo' ? undoStackRef : redoStackRef;
+      const to = direction === 'undo' ? redoStackRef : undoStackRef;
+      if (from.current.at(-1) !== entry) return;
+      from.current = from.current.slice(0, -1);
+      to.current = [...to.current, { ...entry, imageRestore: { target: image.opposite, opposite: image.target,
+        expectedHead: receipt.newHead, expectedPublicationId: receipt.publicationId } }];
+      setCanonicalHistoryError(null);
+      syncHistoryState();
+    } catch (error) {
+      setCanonicalHistoryError(error instanceof Error ? error.message : String(error));
+    }
+  }, [performImageRestore, syncHistoryState]);
+
   const undo = useCallback(() => {
+    const imageEntry = undoStackRef.current.at(-1);
+    if (imageEntry?.imageRestore) { void traverseImageHistory(imageEntry, 'undo'); return; }
     if ([...undoStackRef.current, ...redoStackRef.current]
       .some((entry) => entry.nativeRegistration && !entry.nativeRegistration.inverse)) return;
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
@@ -537,9 +618,11 @@ export function useTimelineHistory({
       },
     ].slice(-UNDO_STACK_LIMIT);
     syncHistoryState();
-  }, [dataRef, editability, interactionStateRef, pendingOpsRef, restoreHistoryEntry, syncHistoryState]);
+  }, [dataRef, editability, interactionStateRef, pendingOpsRef, restoreHistoryEntry, syncHistoryState, traverseImageHistory]);
 
   const redo = useCallback(() => {
+    const imageEntry = redoStackRef.current.at(-1);
+    if (imageEntry?.imageRestore) { void traverseImageHistory(imageEntry, 'redo'); return; }
     if ([...undoStackRef.current, ...redoStackRef.current]
       .some((entry) => entry.nativeRegistration && !entry.nativeRegistration.inverse)) return;
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
@@ -570,28 +653,7 @@ export function useTimelineHistory({
       },
     ].slice(-UNDO_STACK_LIMIT);
     syncHistoryState();
-  }, [dataRef, editability, interactionStateRef, pendingOpsRef, restoreHistoryEntry, syncHistoryState]);
-
-  const jumpToCheckpoint = useCallback((checkpointId: string) => {
-    if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
-    const current = dataRef.current;
-    const checkpoint = checkpoints.find((entry) => entry.id === checkpointId);
-    if (!current || !checkpoint) {
-      return;
-    }
-
-    undoStackRef.current = [];
-    redoStackRef.current = [];
-    syncHistoryState();
-    restoreHistoryEntry({
-      snapshot: {
-        config: cloneConfig(checkpoint.config),
-        signature: checkpoint.id,
-      },
-      timestamp: new Date().toISOString(),
-    }, 'undo');
-    editsSinceLastCheckpointRef.current = 0;
-  }, [checkpoints, dataRef, editability, restoreHistoryEntry, syncHistoryState]);
+  }, [dataRef, editability, interactionStateRef, pendingOpsRef, restoreHistoryEntry, syncHistoryState, traverseImageHistory]);
 
   const createManualCheckpoint = useCallback(async (label?: string) => {
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
@@ -663,36 +725,77 @@ export function useTimelineHistory({
     };
   }, [refreshCanonicalHistory]);
 
-  const restoreCanonicalRevision = useCallback(async (revisionId: string) => {
-    const restoreHistory = provider.shotComposition?.restoreHistory;
-    if (!restoreHistory || !timelineId || !historyProjectId) return;
-    if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
-    if (pendingOpsRef.current > 0 || isInteractionActive(interactionStateRef)) {
-      setCanonicalHistoryError('History restore is paused while an edit or media upload is active.');
+  const restoreCanonicalRevision = useCallback(async (revisionId: string, checkpointImage?: CanonicalShotCompositionHistoryEntry) => {
+    if (!provider.shotComposition?.restoreHistory || !timelineId || !historyProjectId || imageRestoreFlightRef.current) return;
+    const head = dataRef.current?.head;
+    const candidate = checkpointImage ?? canonicalHistory.find(row => row.revisionId === revisionId);
+    const selected = candidate?.revisionId === revisionId && candidate.projectId === historyProjectId
+      && candidate.parentDocumentId === timelineId ? candidate : undefined;
+    const before = canonicalHistory.find(row => row.revisionId === head?.headRevisionId
+      && row.projectId === historyProjectId && row.parentDocumentId === timelineId);
+    const pending = pendingImageRestoreRef.current;
+    if ((!pending && (!head?.headRevisionId || !selected || !before))
+      || (pending && pending.revisionId !== revisionId)) {
+      setCanonicalHistoryError('Restore requires a captured immutable head and selected image, or retry of the pending restore.');
       return;
     }
-
+    if ([...undoStackRef.current, ...redoStackRef.current].some(entry => entry.nativeRegistration && !entry.nativeRegistration.inverse)) {
+      setCanonicalHistoryError('Restore is paused while an edit awaits acceptance.'); return;
+    }
+    const request = pending ?? { projectId: historyProjectId, parentDocumentId: timelineId,
+      revisionId, contentDigest: selected!.contentDigest, publicationId: selected!.publicationId,
+      expectedHead: head!.headRevisionId!, expectedPublicationId: before!.publicationId, requestId: generateUUID() };
+    pendingImageRestoreRef.current = request;
+    pendingImageTargetsRef.current ??= { before: before!, selected: selected! };
     setCanonicalHistoryError(null);
-    setRestoringCanonicalRevisionId(revisionId);
     try {
-      await restoreHistory({ projectId: historyProjectId, parentDocumentId: timelineId, revisionId });
-      const entries = await provider.shotComposition?.listHistory?.({
-        projectId: historyProjectId,
-        parentDocumentId: timelineId,
-      });
-      if (entries) setCanonicalHistory(entries);
-      undoStackRef.current = [];
+      const receipt = await performImageRestore(request);
+      if (!receipt) return;
+      // This is an image history entry, never a fabricated timeline.inverse.
+      const target = pendingImageTargetsRef.current?.before;
+      const opposite = pendingImageTargetsRef.current?.selected;
+      undoStackRef.current = target && opposite ? [{ snapshot: buildSnapshot(dataRef.current!), timestamp: new Date().toISOString(),
+        imageRestore: { target, opposite, expectedHead: receipt.newHead, expectedPublicationId: receipt.publicationId } }] : [];
       redoStackRef.current = [];
+      pendingImageRestoreRef.current = null;
+      pendingImageTargetsRef.current = null;
       syncHistoryState();
       toast.success('Timeline history restored', { description: `Restored revision ${revisionId.slice(0, 16)}.` });
+      // Refresh is display-only; a later list failure cannot undo the acceptance.
+      void refreshCanonicalHistory();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       setCanonicalHistoryError(message);
       toast.error('Could not restore timeline history', { description: message });
-    } finally {
-      setRestoringCanonicalRevisionId(null);
     }
-  }, [editability, historyProjectId, interactionStateRef, pendingOpsRef, provider, syncHistoryState, timelineId, toast]);
+  }, [canonicalHistory, dataRef, historyProjectId, performImageRestore, provider, refreshCanonicalHistory, syncHistoryState, timelineId, toast]);
+
+  const jumpToCheckpoint = useCallback((checkpointId: string) => {
+    if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
+    if (pendingOpsRef.current > 0 || imageRestoreFlightRef.current || isInteractionActive(interactionStateRef)) return;
+    const current = dataRef.current;
+    const checkpoint = checkpoints.find(entry => entry.id === checkpointId);
+    if (!current || !checkpoint) return;
+    if (checkpoint.binding?.kind === 'clean') {
+      void restoreCanonicalRevision(checkpoint.binding.image.revisionId, checkpoint.binding.image);
+      return;
+    }
+    const dirty = checkpoint.binding?.kind === 'dirty' ? checkpoint.binding : undefined;
+    const next = buildDataFromSnapshot(cloneConfig(checkpoint.config), dirty?.registry ?? current.registry, current);
+    if (dirty) {
+      if (dirty.base.projectId !== historyProjectId || dirty.base.timelineId !== timelineId) return;
+      next.head = structuredClone(dirty.base);
+      attachGestureCommands(next, structuredClone(dirty.commands), next);
+    }
+    // Config-only and dirty checkpoints are local recovery inputs. They never
+    // authorize a canonical image publication or a property-inverse rewrite.
+    commitData(next, { save: false, skipHistory: true });
+    undoStackRef.current = [];
+    redoStackRef.current = [];
+    syncHistoryState();
+    editsSinceLastCheckpointRef.current = 0;
+    toast.info('Checkpoint recovered locally', { description: 'Review the recovered changes before saving.' });
+  }, [checkpoints, commitData, dataRef, editability, historyProjectId, interactionStateRef, pendingOpsRef, restoreCanonicalRevision, syncHistoryState, timelineId, toast]);
 
   // Read at render time. Every pendingOps transition is bracketed by a data
   // commit (skeleton insert on increment; skeleton removal / failure cleanup
@@ -701,8 +804,8 @@ export function useTimelineHistory({
   const historyPausedForUploads = pendingOpsRef.current > 0;
 
   return {
-    canUndo: canUndo && !historyPausedForUploads,
-    canRedo: canRedo && !historyPausedForUploads,
+    canUndo: canUndo && !historyPausedForUploads && !restoringCanonicalRevisionId,
+    canRedo: canRedo && !historyPausedForUploads && !restoringCanonicalRevisionId,
     historyPausedForUploads,
     checkpoints,
     canonicalHistory,

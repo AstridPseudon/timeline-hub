@@ -16,6 +16,10 @@ import { RuntimeDataProvider, toRuntimePublication, type TimelineCommitSaveConte
 import { TimelineSchemaIncompatibleError, TimelineVersionConflictError } from '@/tools/video-editor/data/DataProvider.ts';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
 import { buildTimelineData, loadTimelineJsonFromProvider } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import { getStableConfigSignature } from '@/tools/video-editor/lib/config-utils.ts';
+import { attachGestureCommands } from '@/tools/video-editor/commands/semanticGestures.ts';
+import { buildDataFromSnapshot } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 import {
   RUNTIME_SCHEMA_DIGEST,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
@@ -935,27 +939,47 @@ describe('RuntimeDataProvider', () => {
     expect(fixture.read().documentVersion).toBe(2);
   });
 
-  it('loads project-scoped canonical revisions and restores through a current-head CAS', async () => {
+  it('requires captured restore authority instead of acquiring a fresh head during execution', async () => {
     const fixture = runtimeFixture();
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    const history = await provider.shotComposition.listHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID });
+    expect(history.map(entry => entry.revisionId)).toEqual(['parent-r1', 'parent-old']);
+    await expect(provider.shotComposition.restoreHistory!({ projectId: PROJECT_ID,
+      parentDocumentId: TIMELINE_ID, revisionId: 'parent-old' } as never)).rejects.toThrow('captured');
+    expect(fixture.requests.filter(r => r.method === 'POST' && /(?:\/restore|\/commit|\/composition-revisions)$/.test(r.path))).toHaveLength(0);
+  });
 
-    const history = await provider.shotComposition.listHistory!({
-      projectId: PROJECT_ID,
-      parentDocumentId: TIMELINE_ID,
-    });
-    expect(history.map((entry) => entry.revisionId)).toEqual(['parent-r1', 'parent-old']);
-
-    const restored = await provider.shotComposition.restoreHistory!({
-      projectId: PROJECT_ID,
-      parentDocumentId: TIMELINE_ID,
-      revisionId: 'parent-old',
-    });
-    expect(restored.newHead).toBe('restore-parent-old');
-    expect(fixture.requests.some((request) => request.method === 'POST'
-      && request.path.endsWith('/composition-revisions/parent-old/restore')
-      && request.body?.expected_head === 'parent-r1')).toBe(true);
-    expect(fixture.requests.some((request) => request.method === 'GET'
-      && request.path.endsWith('/composition-revisions/restore-parent-old'))).toBe(true);
+  it('checkpoint capture binds an acknowledged clean image and retains original dirty commands without inventing provenance', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      const response = await fixture.transport(...args);
+      if (args[0] === 'GET' && args[1].includes('composition-revisions?')) {
+        const value = JSON.parse(new TextDecoder().decode(response.body));
+        value.items[0].publication_id = 'acknowledged-publication';
+        value.items[0].provenance = null;
+        return { ...response, body: json(value) };
+      }
+      return response;
+    } });
+    const loaded = await provider.loadTimeline(TIMELINE_ID);
+    const registry = await provider.loadAssetRegistry(TIMELINE_ID);
+    const data = buildDataFromSnapshot(loaded.config, registry, { configVersion: loaded.configVersion,
+      head: loaded.head, resolvedConfig: { registry: {} } } as TimelineData);
+    const clean = await provider.shotComposition.captureCheckpoint!(data);
+    expect(clean).toMatchObject({ kind: 'clean', image: { revisionId: 'parent-r1',
+      publicationId: 'acknowledged-publication', provenance: null, contentDigest: 'sha256:' + '1'.repeat(64) } });
+    const commands: EditCommand[] = [{ op: 'timeline.add', select: null,
+      args: { text: 'reserved', clip_id: 'allocated-original-id', track: 'V1', at: 0, duration: 1 } }];
+    const dirty = { ...data, config: { ...data.config, output: { ...data.config.output, file: 'dirty.mp4' } } };
+    dirty.stableSignature = getStableConfigSignature(dirty.config, registry);
+    attachGestureCommands(dirty, commands, data);
+    const captured = await provider.shotComposition.captureCheckpoint!(dirty);
+    expect(captured).toMatchObject({ kind: 'dirty', base: loaded.head, commands,
+      scope: { target: 'parent', complete: ['clips', 'tracks'] }, source: { via: 'app' }, registry });
+    commands[0].args.clip_id = 'later-id';
+    expect(captured).toMatchObject({ commands: [{ args: { clip_id: 'allocated-original-id' } }] });
+    const unknown = await provider.shotComposition.captureCheckpoint!({ ...dirty, head: { ...loaded.head!, projectId: 'foreign' } });
+    expect(unknown).toBeUndefined();
   });
 
   it('serializes canonical placement start after stale nested placement metadata', async () => {
@@ -1949,6 +1973,47 @@ describe('RuntimeDataProvider commit save routing', () => {
     return new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport,
       commitSessionStorage: storage, commitRouting: { enabled: true } });
   }
+
+  it('registered image restore retries identical captured COMMIT bytes after a lost response and reads exact acceptance', async () => {
+    const fixture = commitFixture(async body => ({ ...result(body), status: 'accepted',
+      accepted_revision_id: 'accepted-image', accepted_publication_id: 'publication-image',
+      previous_revision_id: body.base_revision_id,
+      runtime_receipt: { publisher: 'fixture', accepted_at: 'fixture', evidence_digest: 'sha256:' + 'a'.repeat(64), narration_state: null },
+      change: { ...result(body).change, commands: 'commands' in body.change ? body.change.commands : [] } }));
+    let lost = true;
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      const response = await fixture.transport(...args);
+      if (args[0] === 'POST' && args[1] === commitPath && lost) { lost = false; throw new TypeError('image response lost'); }
+      return response;
+    } });
+    const restore = { projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, revisionId: 'opaque-selected',
+      contentDigest: 'sha256:' + '1'.repeat(64), publicationId: null,
+      expectedHead: 'parent-r1', expectedPublicationId: 'original-publication', requestId: 'image-request' };
+    await expect(provider.shotComposition.restoreHistory!(restore)).rejects.toThrow('lost');
+    const accepted = await provider.shotComposition.restoreHistory!(restore);
+    expect(accepted).toMatchObject({ newHead: 'accepted-image', publicationId: 'publication-image', contentDigest: restore.contentDigest });
+    expect(fixture.commits).toHaveLength(2);
+    expect(fixture.commits[1]).toEqual(fixture.commits[0]);
+    const body = JSON.parse(fixture.commits[0].bytes);
+    expect(body).toMatchObject({ base_revision_id: 'parent-r1', base_publication_id: 'original-publication',
+      scope: { target: 'parent', complete: ['clips', 'tracks'] }, change: { commands: [{ op: 'timeline.restore',
+        args: { revision_id: 'opaque-selected', content_digest: restore.contentDigest, publication_id: null } }] } });
+    expect(fixture.acceptedRevisionReads.every(head => head === 'accepted-image')).toBe(true);
+    expect(fixture.requests.some(r => r.path.endsWith('/restore'))).toBe(false);
+    await expect(provider.shotComposition.restoreHistory!({ ...restore, revisionId: 'different' })).rejects.toThrow('different content');
+    expect(fixture.commits).toHaveLength(2);
+  });
+
+  it('registered image restore refuses a stale Runtime result before any accepted reload', async () => {
+    const fixture = commitFixture(async body => ({ ...result(body), status: 'conflict', conflicts: [
+      { id: TIMELINE_ID, path: 'image', base: null, theirs: null, ours: null, kind: 'dependent' } ] }));
+    const provider = nativeProvider(fixture);
+    await expect(provider.shotComposition.restoreHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID,
+      revisionId: 'old', contentDigest: 'sha256:' + '1'.repeat(64), expectedHead: 'captured-stale', requestId: 'stale-image' }))
+      .rejects.toBeInstanceOf(TimelineVersionConflictError);
+    expect(fixture.acceptedRevisionReads).toHaveLength(0);
+    expect(fixture.commits).toHaveLength(1);
+  });
 
   it('durable pending COMMIT recovers the original accepted receipt after provider destruction before retry', async () => {
     resetFakeIndexedDB(); vi.stubGlobal('indexedDB', createFakeIndexedDB());

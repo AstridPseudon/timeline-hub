@@ -43,16 +43,27 @@ export type CanonicalShotCompositionHistoryEntry = Readonly<{
   contentDigest: string;
   createdAt: string;
   isCurrentHead: boolean;
+  publicationId?: string | null;
+  provenance?: JsonObject | null;
 }>;
 
 export type ShotCompositionHistoryRequest = ShotCompositionReadRequest;
 
 export type ShotCompositionHistoryRestoreRequest = ShotCompositionReadRequest & Readonly<{
   revisionId: string;
+  contentDigest: string;
+  publicationId?: string | null;
+  expectedHead: string;
+  expectedPublicationId?: string | null;
+  requestId: string;
 }>;
 
 export type ShotCompositionHistoryRestoreReceipt = Readonly<{
   newHead: string;
+  publicationId: string;
+  contentDigest: string;
+  result: import('@/integrations/runtime/generated.ts').CommitResult;
+  graph: unknown;
 }>;
 
 export type ShotCompositionPublishRequest = Readonly<{
@@ -82,6 +93,7 @@ export interface ShotCompositionPort {
   publish?(request: ShotCompositionPublishRequest): Promise<unknown>;
   listHistory?(request: ShotCompositionHistoryRequest): Promise<readonly CanonicalShotCompositionHistoryEntry[]>;
   restoreHistory?(request: ShotCompositionHistoryRestoreRequest): Promise<ShotCompositionHistoryRestoreReceipt>;
+  captureCheckpoint?(data: import('../lib/timeline-data.ts').TimelineData): Promise<import('../types/history.ts').CheckpointBinding | undefined>;
   getSourceFrameThumbnailUrl?(request: SourceFrameThumbnailRequest): Promise<string | null>;
 }
 

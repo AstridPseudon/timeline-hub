@@ -59,22 +59,26 @@ import {
   type PreparedMediaImport,
 } from '@/tools/video-editor/data/AssetResolver.ts';
 import type { TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
-import { parseTimelineBundle } from '@/tools/video-editor/data/typed/timelineBundle.ts';
+import { parseTimelineBundle, canonicalJsonStringify } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import { readAudioLanePresentation } from '@/tools/video-editor/data/audioLanePresentation.ts';
 import type { AudioLanePresentation } from '@/tools/video-editor/data/audioLanePresentation.ts';
 import { withDefaultTimelineOutput } from '@/tools/video-editor/lib/defaults.ts';
 import {
   ShotCompositionUnavailableError,
+  createShotCompositionAdapter,
   type CanonicalShotCompositionHistoryEntry,
   type ShotCompositionHeadReadRequest,
   type ShotCompositionPort,
 } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
+import { buildDataFromSnapshot } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 import {
   stableOccurrenceDeepLink,
   stableOutputIdentity,
   StaleWriteError,
 } from '@/tools/video-editor/data/shotComposition.ts';
 import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
+import { gestureCommandsFor, gestureOccurrenceFor } from '@/tools/video-editor/commands/semanticGestures.ts';
 import {
   runtimeThumbnailObjectId,
   selectRuntimePrimaryVariant,
@@ -258,40 +262,90 @@ export class RuntimeDataProvider implements DataProvider {
             contentDigest: requiredString(value.content_digest, 'composition history.content_digest'),
             createdAt: requiredString(value.created_at, 'composition history.created_at'),
             isCurrentHead: value.is_current_head === true,
+            ...(value.publication_id !== undefined ? { publicationId: nullableString(value.publication_id, 'history.publication_id') } : {}),
+            ...(value.provenance !== undefined ? { provenance: asRecord(value.provenance) } : {}),
           });
         }
         cursor = page.next_cursor ?? undefined;
       } while (cursor);
       return entries;
     },
+    captureCheckpoint: async (data) => {
+      const head = data.head;
+      if (!head?.headRevisionId || head.projectId !== this.projectId) return undefined;
+      const state = this.canonicalTimelineState.get(head.timelineId);
+      if (!state || state.headRevisionId !== head.headRevisionId) return undefined;
+      const commands = gestureCommandsFor(data);
+      const config = { ...requiredRecord(state.parentComposition.config, 'checkpoint.config'),
+        clips: canonicalParentClips(state.parentComposition, requiredRecord(state.parentComposition.config, 'checkpoint.config')) } as unknown as TimelineConfig;
+      let clean = buildDataFromSnapshot(config, normalizeRegistry(state.parentComposition.registry), data).stableSignature === data.stableSignature;
+      if (!clean) {
+        const graph = await this.loadRuntimeShotCompositionAtHead({ projectId: head.projectId,
+          parentDocumentId: head.timelineId, headRevisionId: head.headRevisionId });
+        const prepared = createShotCompositionAdapter({ load: async () => graph }).prepare(graph);
+        const { registry, ...projected } = projectCanonicalComposition(prepared).config;
+        clean = buildDataFromSnapshot({ ...projected, clips: projected.clips.map(({ assetEntry: _entry, ...clip }) => clip) },
+          { assets: registry }, data).stableSignature === data.stableSignature;
+      }
+      if (!clean && commands?.length) {
+        const occurrence = gestureOccurrenceFor(data);
+        return { kind: 'dirty', base: structuredClone(head), commands: structuredClone([...commands]),
+          scope: occurrence ? { target: `occurrence:${occurrence.occurrenceId}`, content: 'this-occurrence',
+            shot_id: occurrence.shotId, shot_revision_id: occurrence.shotRevisionId,
+            internal_revision_id: occurrence.internalRevisionId, complete: ['clips', 'tracks'], projection_version: 1 }
+            : structuredClone(this.commitScope),
+          source: { via: 'app' }, registry: structuredClone(data.registry) };
+      }
+      if (!clean) return undefined;
+      const rows = await this.shotComposition.listHistory!({ projectId: this.projectId, parentDocumentId: head.timelineId });
+      const image = rows.find(row => row.revisionId === head.headRevisionId && row.isCurrentHead && row.publicationId);
+      return image ? { kind: 'clean', image: structuredClone(image) } : undefined;
+    },
     restoreHistory: async (request) => {
-      const inspection = await this.inspectCanonicalTimelineHead(request.projectId, request.parentDocumentId);
-      const expectedHead = nullableString(inspection.head_revision_id, 'canonical timeline inspection.head_revision_id');
-      if (!expectedHead) {
-        throw new ShotCompositionUnavailableError('Workspace Runtime timeline has no current head to compare before restoring history');
+      if (request.projectId !== this.projectId || !request.parentDocumentId || !request.expectedHead
+        || !request.requestId || !request.revisionId || !/^sha256:[0-9a-f]{64}$/.test(request.contentDigest)) {
+        throw new ShotCompositionUnavailableError('Restore requires the captured project/head, selected digest and stable request identity');
       }
-      const restored = await this.client.restoreProjectParentCompositionRevision(
-        request.projectId,
-        request.parentDocumentId,
-        request.revisionId,
-        expectedHead,
-        generateUUID(),
-      );
-      const newHead = nullableString(
-        restored.revision_id ?? restored.parent_revision_id ?? restored.new_head,
-        'parent composition restore receipt.new_head',
-      );
-      if (!newHead) {
-        throw new ShotCompositionUnavailableError('Workspace Runtime restore receipt omitted the new canonical head');
+      const key = request.requestId;
+      let attempt = this.imageRestores.get(key);
+      const identity = canonicalJsonStringify(request);
+      if (attempt && attempt.identity !== identity) throw new ShotCompositionUnavailableError('Restore request identity was reused with different content');
+      if (!attempt) {
+        const session = this.commitSession.next();
+        const command: EditCommand = { op: 'timeline.restore', select: null,
+          args: { revision_id: request.revisionId, content_digest: request.contentDigest,
+            ...(request.publicationId !== undefined ? { publication_id: request.publicationId } : {}) } };
+        const body: CommitRequest = { api_version: 1, project_id: request.projectId, timeline_id: request.parentDocumentId,
+          request_id: key, session_id: session.id, session_sequence: session.sequence,
+          base_revision_id: request.expectedHead, base_publication_id: request.expectedPublicationId ?? null,
+          scope: { target: 'parent', complete: ['clips', 'tracks'], projection_version: 1 },
+          change: { commands: [command] }, source: { via: 'app' }, dry_run: false };
+        attempt = { identity, body: freezeCommitValue(body) };
+        this.imageRestores.set(key, attempt);
       }
-      // Resolve the exact committed closure now so a malformed historical
-      // revision cannot appear to have restored successfully in the editor.
-      await this.loadRuntimeShotCompositionAtHead({
-        projectId: request.projectId,
-        parentDocumentId: request.parentDocumentId,
-        headRevisionId: newHead,
-      });
-      return { newHead };
+      const result = await this.client.commitTimeline(attempt.body);
+      this.validateCommitResponse(attempt.body, result);
+      if (result.status !== 'accepted' || !result.accepted_revision_id || !result.accepted_publication_id
+        || !result.runtime_receipt || result.change.commands.length !== 1
+        || result.change.commands[0].op !== 'timeline.restore'
+        || canonicalJsonStringify(result.change.commands[0].args) !== canonicalJsonStringify(('commands' in attempt.body.change ? attempt.body.change.commands : [])[0].args)) {
+        throw new ShotCompositionUnavailableError('Runtime restore omitted its exact accepted command/publication receipt');
+      }
+      const newHead = result.accepted_revision_id;
+      const record = await this.client.getProjectParentCompositionRevision(request.projectId, request.parentDocumentId, newHead);
+      assertRuntimeIdentity(record, request.projectId, request.parentDocumentId, 'accepted restore');
+      assertRevisionIdentity(record, newHead, 'accepted restore');
+      if (record.content_digest !== request.contentDigest) throw new ShotCompositionUnavailableError('Accepted restore digest differs from selected immutable image');
+      const graph = await this.loadRuntimeShotCompositionAtHead({ projectId: request.projectId,
+        parentDocumentId: request.parentDocumentId, headRevisionId: newHead });
+      const current = this.canonicalTimelineState.get(request.parentDocumentId);
+      if (!current || current.headRevisionId === request.expectedHead || current.headRevisionId === newHead) {
+        this.canonicalTimelineState.set(request.parentDocumentId, { headRevisionId: newHead,
+          parentComposition: requiredRecord(record.payload, 'accepted restore.payload'),
+          version: (current?.version ?? 0) + (current?.headRevisionId === newHead ? 0 : 1) });
+        this.activeRegistry = normalizeRegistry(requiredRecord(record.payload, 'accepted restore.payload').registry);
+      }
+      return { newHead, publicationId: result.accepted_publication_id, contentDigest: request.contentDigest, result, graph };
     },
     publish: async (request) => {
       const publishStartedAt = import.meta.env.DEV ? performance.now() : 0;
@@ -381,6 +435,7 @@ export class RuntimeDataProvider implements DataProvider {
   private readonly commitScope: ImmutableCommitRequest['scope'] = Object.freeze({
     target: 'parent', complete: Object.freeze(['clips', 'tracks'] as const), projection_version: 1,
   });
+  private readonly imageRestores = new Map<string, { identity: string; body: CommitRequest }>();
   private readonly pendingCommits = new Map<string, PendingTimelineCommit>();
   private readonly pendingProposalTransactions = new Map<string, string>();
   private readonly assetRegistrationAttempts = new WeakMap<AssetRegistryEntry, Map<string, Promise<{

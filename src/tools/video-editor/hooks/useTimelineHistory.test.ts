@@ -242,6 +242,120 @@ afterEach(() => {
 });
 
 describe('useTimelineHistory', () => {
+  function imageRow(revisionId: string, isCurrentHead = false) {
+    return { revisionId, projectId: 'project-1', parentDocumentId: 'timeline-1',
+      contentDigest: 'sha256:' + (isCurrentHead ? 'a' : 'b').repeat(64),
+      publicationId: 'publication-' + revisionId, provenance: null, createdAt: 'fixture', isCurrentHead };
+  }
+  function imageReceipt(request: { revisionId: string; contentDigest: string }, index: number) {
+    const newHead = 'accepted-image-' + index;
+    return { newHead, publicationId: 'accepted-publication-' + index, contentDigest: request.contentDigest,
+      result: {} as never,
+      graph: { schema_version: 1, project: { project_id: 'project-1', document_id: 'timeline-1', role: 'project' },
+        primary_timeline: { document_id: 'timeline-1', role: 'primary_timeline',
+          head: { revision_id: newHead, content_digest: request.contentDigest } },
+        parent_composition: { config: makeConfig(index), clips: [], registry: {
+          assets: { shared: { file: 'https://example.com/selected.png', src: 'https://example.com/selected.png', type: 'image' } } } },
+        shot_revisions: [], occurrences: [],
+        cases: { missing_dependency: { shot_id: 'missing', revision_id: 'missing', expected: 'missing_dependency' },
+          stale_write_rejection: { expected_head_revision_id: newHead, submitted_head_revision_id: 'stale', expected_status: 409 } } } };
+  }
+
+  it('clean checkpoint caller uses registered image restore and guarded image Undo/Redo without snapshot saving', async () => {
+    const before = imageRow('before', true), target = imageRow('selected');
+    const restoreHistory = vi.fn(async (request: { revisionId: string; contentDigest: string }) => imageReceipt(request, restoreHistory.mock.calls.length));
+    const saveCheckpoint = vi.fn(async (_timelineId: string, _checkpoint: Omit<Checkpoint, 'id'>) => 'clean-checkpoint');
+    const initialData = { ...makeTimelineData(0), head: { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'before' } };
+    initialData.registry.assets.shared = { file: 'https://example.com/stale.png', type: 'image' };
+    initialData.resolvedConfig.registry.shared = { file: 'https://example.com/stale.png', src: 'https://example.com/stale.png', type: 'image' };
+    const test = setup({ initialData, providerOverrides: { saveCheckpoint, shotComposition: {
+      load: vi.fn(), listHistory: vi.fn(async () => [before, target]), restoreHistory,
+      captureCheckpoint: vi.fn(async () => ({ kind: 'clean' as const, image: { ...target, publicationId: 'checkpoint-publication' } })),
+    } } });
+    await waitFor(() => expect(test.result.current.canonicalHistory).toHaveLength(2));
+    await act(async () => { await test.result.current.createManualCheckpoint('clean'); });
+    expect(saveCheckpoint.mock.calls[0]?.[1]).toMatchObject({ binding: { kind: 'clean', image: { ...target, publicationId: 'checkpoint-publication' } } });
+    await act(async () => { test.result.current.jumpToCheckpoint('clean-checkpoint'); });
+    expect(test.result.current.canonicalHistoryError).toBeNull();
+    await waitFor(() => expect(test.result.current.canUndo).toBe(true));
+    expect(restoreHistory.mock.calls[0]?.[0]).toMatchObject({ revisionId: 'selected', contentDigest: target.contentDigest,
+      publicationId: 'checkpoint-publication', expectedHead: 'before', expectedPublicationId: before.publicationId, requestId: expect.any(String) });
+    expect(test.dataRef.current.head?.headRevisionId).toBe('accepted-image-1');
+    expect(test.dataRef.current.resolvedConfig.registry.shared.src).toBe('https://example.com/selected.png');
+    await act(async () => { test.result.current.undo(); });
+    await waitFor(() => expect(test.result.current.canRedo).toBe(true));
+    expect(restoreHistory.mock.calls[1]?.[0]).toMatchObject({ revisionId: 'before', expectedHead: 'accepted-image-1' });
+    await act(async () => { test.result.current.redo(); });
+    await waitFor(() => expect(test.dataRef.current.head?.headRevisionId).toBe('accepted-image-3'));
+    expect(restoreHistory.mock.calls[2]?.[0]).toMatchObject({ revisionId: 'selected', expectedHead: 'accepted-image-2' });
+    expect(test.commitCalls.every(call => call.options?.save === false && call.options?.skipHistory)).toBe(true);
+    const accepted = test.dataRef.current;
+    restoreHistory.mockRejectedValueOnce(new Error('Captured whole-image head changed'));
+    await act(async () => { test.result.current.undo(); });
+    expect(test.result.current.canonicalHistoryError).toContain('head changed');
+    expect(test.result.current.canUndo).toBe(true);
+    expect(test.dataRef.current).toBe(accepted);
+  });
+
+  it('canonical history retry retains captured head and request identity after a lost response', async () => {
+    const before = imageRow('before', true), target = imageRow('selected');
+    const restoreHistory = vi.fn(async (_request: unknown) => { throw new Error('lost response'); });
+    const test = setup({ initialData: { ...makeTimelineData(0), head: {
+      projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'before' } }, providerOverrides: {
+      shotComposition: { load: vi.fn(), listHistory: vi.fn(async () => [before, target]), restoreHistory },
+    } });
+    await waitFor(() => expect(test.result.current.canonicalHistory).toHaveLength(2));
+    await act(async () => { await test.result.current.restoreCanonicalRevision('selected'); });
+    test.dataRef.current = { ...test.dataRef.current, head: { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'later' } };
+    await act(async () => { await test.result.current.restoreCanonicalRevision('selected'); });
+    expect(restoreHistory.mock.calls).toHaveLength(2);
+    expect(restoreHistory.mock.calls[1]).toEqual(restoreHistory.mock.calls[0]);
+    expect(test.commitCalls).toHaveLength(0);
+  });
+
+  it('dirty checkpoint caller retains original commands base scope provenance and allocated IDs as local recovery', async () => {
+    const commands = [{ op: 'timeline.add', select: null, args: { text: 'original', clip_id: 'reserved-id',
+      track: 'V1', at: 0, duration: 1 } }];
+    const binding = { kind: 'dirty' as const, base: { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'captured-base' },
+      commands, scope: { target: 'parent', complete: ['clips', 'tracks'], projection_version: 1 as const },
+      source: { via: 'app' as const }, registry: { assets: {} } };
+    const restoreHistory = vi.fn();
+    const saveCheckpoint = vi.fn(async () => 'dirty-checkpoint');
+    const test = setup({ providerOverrides: { saveCheckpoint, shotComposition: {
+      load: vi.fn(), restoreHistory, captureCheckpoint: vi.fn(async () => structuredClone(binding)),
+    } } });
+    await act(async () => { await test.result.current.createManualCheckpoint('dirty'); });
+    expect(test.result.current.checkpoints[0].binding).toEqual(binding);
+    commands[0].args.text = 'later';
+    await act(async () => { test.result.current.jumpToCheckpoint('dirty-checkpoint'); });
+    expect(test.dataRef.current.head).toEqual(binding.base);
+    expect(test.result.current.checkpoints[0].binding).toMatchObject({ commands: [{ args: { text: 'original', clip_id: 'reserved-id' } }] });
+    expect(test.commitCalls.at(-1)?.options).toMatchObject({ save: false, skipHistory: true });
+    expect(restoreHistory).not.toHaveBeenCalled();
+  });
+
+  it('dirty checkpoint captures the complete original pending command suffix across consecutive edits', async () => {
+    const base = { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'original-base' };
+    const command = (id: string) => ({ op: 'timeline.add', select: null,
+      args: { text: id, clip_id: id, track: 'V1', at: 0, duration: 1 } });
+    const first = command('reserved-first'), second = command('reserved-second');
+    const initialData = { ...makeTimelineData(0), head: base };
+    const test = setup({ initialData, providerOverrides: { saveCheckpoint: vi.fn(async () => 'suffix'),
+      shotComposition: { load: vi.fn(), captureCheckpoint: vi.fn(async () => ({ kind: 'dirty' as const, base,
+        commands: [second], scope: { target: 'parent', complete: ['clips', 'tracks'], projection_version: 1 as const },
+        source: { via: 'app' as const }, registry: { assets: {} } })) } } });
+    const owner1 = { ...makeTimelineData(1), head: base }, owner2 = { ...makeTimelineData(2), head: base };
+    attachGestureCommands(owner1, [first], initialData);
+    attachGestureCommands(owner2, [second], owner1);
+    act(() => {
+      test.result.current.onBeforeCommit(initialData, { nativeRegistrationOwner: owner1 });
+      test.dataRef.current = owner1;
+      test.result.current.onBeforeCommit(owner1, { nativeRegistrationOwner: owner2 });
+      test.dataRef.current = owner2;
+    });
+    await act(async () => { await test.result.current.createManualCheckpoint(); });
+    expect(test.result.current.checkpoints[0]?.binding).toMatchObject({ kind: 'dirty', base, commands: [first, second] });
+  });
   it('loads canonical history and reports a failed full-closure restore', async () => {
     const listHistory = vi.fn(async () => [{
       revisionId: 'parent-revision-1',
@@ -260,6 +374,7 @@ describe('useTimelineHistory', () => {
       restoreHistory,
     };
     const { result, toast } = setup({
+      initialData: { ...makeTimelineData(0), head: { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'parent-revision-1' } },
       providerOverrides: { shotComposition } as unknown as Partial<DataProvider>,
     });
 
@@ -270,11 +385,12 @@ describe('useTimelineHistory', () => {
       await result.current.restoreCanonicalRevision('parent-revision-1');
     });
 
-    expect(restoreHistory).toHaveBeenCalledWith({
+    expect(restoreHistory).toHaveBeenCalledWith(expect.objectContaining({
       projectId: 'project-1',
       parentDocumentId: 'timeline-1',
       revisionId: 'parent-revision-1',
-    });
+      contentDigest: 'sha256:' + 'a'.repeat(64), expectedHead: 'parent-revision-1', requestId: expect.any(String),
+    }));
     expect(result.current.canonicalHistoryError).toContain('failed immutable verification');
     expect(toast.error).toHaveBeenCalledWith('Could not restore timeline history', {
       description: 'historical internal timeline revision failed immutable verification',
@@ -654,7 +770,7 @@ describe('useTimelineHistory', () => {
     expect(dataRef.current.config.output.file).toBe('output-7.mp4');
     expect(result.current.canUndo).toBe(false);
     expect(result.current.canRedo).toBe(false);
-    expect(commitCalls.at(-1)?.options).toMatchObject({ save: true, skipHistory: true });
+    expect(commitCalls.at(-1)?.options).toMatchObject({ save: false, skipHistory: true });
   });
 
   it('blocks undo, redo, and checkpoint jumps while whole-timeline editability is denied', async () => {
