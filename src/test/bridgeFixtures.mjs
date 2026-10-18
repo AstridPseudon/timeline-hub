@@ -30,15 +30,19 @@ export const AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID = 'audio-reactive-colour-
 export const AUDIO_REACTIVE_OFFSET_START_FRAME = 6;
 export const AUDIO_REACTIVE_OFFSET_INITIAL_COLOR = '#102030';
 
-function createAudioReactiveColourShotComposition({ atSeconds = 0, initialColor = '#000000' } = {}) {
+function createAudioReactiveColourShotComposition({
+  timelineId = AUDIO_REACTIVE_FIXTURE_TIMELINE_ID,
+  atSeconds = 0,
+  initialColor = '#000000',
+} = {}) {
   const projectId = FIXTURE_PROJECT.slug;
-  const parentDocumentId = `${AUDIO_REACTIVE_FIXTURE_TIMELINE_ID}-document`;
+  const parentDocumentId = `${timelineId}-document`;
   const shotId = 'audio-reactive-colour-shot';
   const revisionId = 'audio-reactive-colour-shot-rev-1';
   const occurrenceId = 'audio-reactive-colour-occurrence-1';
   const outputIdentity = `project/${projectId}/document/${parentDocumentId}/occurrence/${occurrenceId}/output/final-video`;
   const stableDeepLink = `project/${projectId}/document/${parentDocumentId}/shot/${shotId}/revision/${revisionId}/occurrence/${occurrenceId}`;
-  const audioDigest = `sha256:${'a'.repeat(64)}`;
+  const audioDigest = 'sha256:fa17b6d0dc1e6ca7aed9833b0ceded944644f12b22964f081d7a982427f8ac29';
   const durationMs = 600;
   return {
     schema_version: 1,
@@ -46,7 +50,7 @@ function createAudioReactiveColourShotComposition({ atSeconds = 0, initialColor 
     primary_timeline: {
       document_id: parentDocumentId,
       role: 'primary_timeline',
-      head: { revision_id: `${AUDIO_REACTIVE_FIXTURE_TIMELINE_ID}-head-1`, content_digest: `sha256:${'b'.repeat(64)}` },
+      head: { revision_id: `${timelineId}-head-1`, content_digest: `sha256:${'b'.repeat(64)}` },
     },
     shot_revisions: [{
       shot_id: shotId,
@@ -74,7 +78,7 @@ function createAudioReactiveColourShotComposition({ atSeconds = 0, initialColor 
     occurrences: [{ occurrence_id: occurrenceId, parent_document_id: parentDocumentId, shot_id: shotId, revision_id: revisionId, ordinal: 0, at_ms: Math.round(atSeconds * 1000), duration_ms: durationMs, stable_deep_link: stableDeepLink, output_identity: outputIdentity }],
     cases: {
       missing_dependency: { shot_id: 'missing-shot', revision_id: 'missing-revision', expected: 'missing_dependency' },
-      stale_write_rejection: { expected_head_revision_id: `${AUDIO_REACTIVE_FIXTURE_TIMELINE_ID}-head-1`, submitted_head_revision_id: `${AUDIO_REACTIVE_FIXTURE_TIMELINE_ID}-head-0`, expected_status: 409 },
+      stale_write_rejection: { expected_head_revision_id: `${timelineId}-head-1`, submitted_head_revision_id: `${timelineId}-head-0`, expected_status: 409 },
     },
   };
 }
@@ -251,6 +255,7 @@ export function createOffsetAudioReactiveColourFixtures({ assetSrcBaseUrl = '' }
       })),
     },
     shotComposition: createAudioReactiveColourShotComposition({
+      timelineId: AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID,
       atSeconds: offsetSeconds,
       initialColor: AUDIO_REACTIVE_OFFSET_INITIAL_COLOR,
     }),

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { once } from 'node:events';
+import { readFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import http from 'node:http';
 import { test } from 'node:test';
@@ -248,6 +250,10 @@ test('deterministic Astrid stub serves the typed Runaway contract', async () => 
     assert.deepEqual(audioInitial.shot_composition, audioPristine.shotComposition);
     assert.equal(audioInitial.shot_composition.occurrences[0].at_ms, 0);
     assert.equal(audioInitial.shot_composition.shot_revisions[0].internal_timeline_revision.timeline.clips[0].params.initialColor, '#000000');
+    const audioBytes = await readFile(new URL('../../../public/audio-reactive-colour-tone.wav', import.meta.url));
+    const audioDigest = `sha256:${createHash('sha256').update(audioBytes).digest('hex')}`;
+    assert.equal(audioInitial.shot_composition.shot_revisions[0].assets[0].digest, audioDigest);
+    assert.equal(audioInitial.shot_composition.shot_revisions[0].audio.digest, audioDigest);
     assert.deepEqual(
       audioInitial.config.clips[0].params.events.map((event) => event.frame),
       [2, 4],
@@ -277,6 +283,8 @@ test('deterministic Astrid stub serves the typed Runaway contract', async () => 
     assert.deepEqual(offsetInitial.config, offsetPristine.config);
     assert.deepEqual(offsetInitial.registry, offsetPristine.registry);
     assert.deepEqual(offsetInitial.shot_composition, offsetPristine.shotComposition);
+    assert.notEqual(offsetInitial.shot_composition.project.document_id, audioInitial.shot_composition.project.document_id);
+    assert.notEqual(offsetInitial.shot_composition.primary_timeline.head.revision_id, audioInitial.shot_composition.primary_timeline.head.revision_id);
     assert.equal(offsetInitial.shot_composition.occurrences[0].at_ms, AUDIO_REACTIVE_OFFSET_START_FRAME * (1000 / 30));
     assert.equal(offsetInitial.shot_composition.shot_revisions[0].internal_timeline_revision.timeline.clips[0].params.initialColor, '#102030');
     assert.equal(offsetInitial.config.clips[0].at, AUDIO_REACTIVE_OFFSET_START_FRAME / 30);
