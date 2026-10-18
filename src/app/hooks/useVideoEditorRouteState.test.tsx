@@ -43,7 +43,7 @@ describe('useVideoEditorRouteState', () => {
   });
 
   it('fills the local Astrid editor shell before the first timeline exists', () => {
-    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
     const state = stateFor('/tools/video-editor?localProject=project-1');
 
     expect(state.isEditorRoute).toBe(true);

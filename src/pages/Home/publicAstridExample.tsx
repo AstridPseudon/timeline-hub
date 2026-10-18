@@ -141,7 +141,6 @@ export function createPublicAstridDataProvider({
 
   return Object.freeze({
     persistenceEnabled: false,
-    supportsEditorSync: false,
     supportsDirectAssetUpload: false,
     async loadTimeline(requestedId: string) {
       requireTimeline(requestedId);

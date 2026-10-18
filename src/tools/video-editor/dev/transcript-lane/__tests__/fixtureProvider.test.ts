@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SupabaseDataProvider } from '@/tools/video-editor/data/SupabaseDataProvider.ts';
-import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
+import { InMemoryDataProvider } from '@/tools/video-editor/testing/InMemoryDataProvider.ts';
 import {
   DENSE_TRANSCRIPT_FIXTURE_SEGMENT_COUNT,
   RENDER_MATRIX_TRANSCRIPT_CAPTION_COUNT,
@@ -14,7 +13,7 @@ describe('withTranscriptFixture', () => {
   // methods (`resolveAssetUrl`, `loadTimeline`) and the editor threw before
   // the lane plane ran. The wrapper must preserve the full surface.
   it('keeps prototype methods callable through the wrapper', () => {
-    const base = new SupabaseDataProvider({ projectId: 'p1', userId: 'u1' }) as unknown as DataProvider;
+    const base = new InMemoryDataProvider();
     const wrapped = withTranscriptFixture(base);
     expect(typeof wrapped.resolveAssetUrl).toBe('function');
     expect(typeof wrapped.loadTimeline).toBe('function');
@@ -22,7 +21,7 @@ describe('withTranscriptFixture', () => {
   });
 
   it('answers every asset with the fixture segments', async () => {
-    const base = new SupabaseDataProvider({ projectId: 'p1', userId: 'u1' }) as unknown as DataProvider;
+    const base = new InMemoryDataProvider();
     const wrapped = withTranscriptFixture(base);
     const profile = await wrapped.loadAssetProfile!('any-asset-id');
     expect(profile?.transcript?.segments).toHaveLength(2);
@@ -30,7 +29,7 @@ describe('withTranscriptFixture', () => {
   });
 
   it('provides the bounded dense browser fixture only when explicitly requested', async () => {
-    const base = new SupabaseDataProvider({ projectId: 'p1', userId: 'u1' }) as unknown as DataProvider;
+    const base = new InMemoryDataProvider();
     const profile = await withTranscriptFixture(base, { dense: true }).loadAssetProfile!('any-asset-id');
     expect(profile?.transcript?.segments).toHaveLength(DENSE_TRANSCRIPT_FIXTURE_SEGMENT_COUNT);
     expect(profile?.transcript?.segments?.[0]).toMatchObject({ start: 0, text: 'Dense fixture segment 1' });
@@ -38,7 +37,7 @@ describe('withTranscriptFixture', () => {
   });
 
   it('provides Unicode, overlap, gap, and empty-text export evidence only on the matrix carrier', async () => {
-    const base = new SupabaseDataProvider({ projectId: 'p1', userId: 'u1' }) as unknown as DataProvider;
+    const base = new InMemoryDataProvider();
     const wrapped = withTranscriptFixture(base, { renderMatrix: true });
     const carrier = await wrapped.loadAssetProfile!('demo-clip');
     const audio = await wrapped.loadAssetProfile!('matrix-audio');

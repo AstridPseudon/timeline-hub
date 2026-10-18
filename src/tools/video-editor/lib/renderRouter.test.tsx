@@ -12,7 +12,7 @@ import {
 import { executeRenderPipeline } from '@/tools/video-editor/render/renderPipeline';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
-import { createFakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
+import { createFakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
 
 const RENDER_CAPABILITY_ID = 'rendering.render';
 const RENDER_CAPABILITY_DIGEST = `sha256:${'d'.repeat(64)}`;
@@ -1388,7 +1388,7 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
 // ---------------------------------------------------------------------------
 
 function stubFakeBridge() {
-  const router = createFakeBridgeRouter();
+  const router = createFakeRuntimeRouter();
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     return await router.handle(new Request(`http://bridge.fake${url.pathname}${url.search}`, init));

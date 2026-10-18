@@ -10,21 +10,23 @@
  *
  * One command: `npm run test:e2e:timeline` (after a one-time
  * `npx playwright install chromium`). Its opt-in flag makes `playwright.config.ts`
- * boot *both* live processes these specs need — the dev server and the local-mode
- * bridge stub — as `webServer` entries. A second terminal is unnecessary: the
- * harness owns fresh editor and bridge ports for the run and fails loudly if
- * an explicitly supplied port is occupied.
+ * boot *both* live processes these specs need — the dev server and the fake
+ * Runtime (`tests/e2e/fake-runtime`) — as `webServer` entries. A second terminal
+ * is unnecessary: the harness owns fresh editor and fake Runtime ports for the
+ * run and fails loudly if an explicitly supplied port is occupied.
  *
  * Both endpoints are env-parameterized. `BASE_URL` or
  * `PLAYWRIGHT_BASE_URL` wins; otherwise the origin follows the
  * run-isolated `PLAYWRIGHT_PORT` published by `playwright.config.ts`.
- * `ASTRID_BRIDGE_PORT` is likewise run-isolated.
+ * `FAKE_RUNTIME_PORT` is likewise run-isolated, and `FAKE_RUNTIME_TOKEN_FILE`
+ * names the 0600 file holding the fake's bearer token.
  */
 import { test as playwrightTest, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
 import { dirname, resolve } from 'node:path';
-import { createTimelineFixtures } from '../../../src/test/bridgeFixtures.mjs';
+import { createTimelineFixtures } from '../../../src/test/fakeRuntimeSeed.mjs';
+import { createSeedTimelines } from '../fake-runtime/seed.ts';
 import {
   CLIP_BODY_SELECTOR,
   EDIT_AREA_SELECTOR,
@@ -54,21 +56,52 @@ if (configuredBaseURL && editorPort != null && configuredBaseURL.port !== editor
 }
 export const BASE_URL = configuredBaseURL?.url
   ?? resolveCanonicalBaseUrl(editorPort as number);
-const bridgePortValue = process.env.ASTRID_BRIDGE_PORT;
-if (!bridgePortValue) {
-  throw new Error('ASTRID_BRIDGE_PORT was not published by playwright.config.ts; refusing an implicit shared bridge port');
+const fakeRuntimePortValue = process.env.FAKE_RUNTIME_PORT;
+if (!fakeRuntimePortValue) {
+  throw new Error('FAKE_RUNTIME_PORT was not published by playwright.config.ts; refusing an implicit shared fake Runtime port');
 }
-export const BRIDGE_PORT = Number(bridgePortValue);
-if (!Number.isInteger(BRIDGE_PORT) || BRIDGE_PORT < 1 || BRIDGE_PORT > 65_535) {
-  throw new Error(`Invalid ASTRID_BRIDGE_PORT: ${bridgePortValue}`);
+export const FAKE_RUNTIME_PORT = Number(fakeRuntimePortValue);
+if (!Number.isInteger(FAKE_RUNTIME_PORT) || FAKE_RUNTIME_PORT < 1 || FAKE_RUNTIME_PORT > 65_535) {
+  throw new Error(`Invalid FAKE_RUNTIME_PORT: ${fakeRuntimePortValue}`);
 }
-export const BRIDGE_ORIGIN = `http://127.0.0.1:${BRIDGE_PORT}`;
+export const FAKE_RUNTIME_ORIGIN = `http://127.0.0.1:${FAKE_RUNTIME_PORT}`;
 
+/** The seeded project's slug and canonical id; the fake accepts either on its routes. */
 export const PROJECT_SLUG = 'demo-project';
+export const PROJECT_ID = 'demo-project-id';
 export const TIMELINE_SLUG = 'demo-timeline';
 
-export const EDITOR_URL =
-  `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1`;
+export interface EditorRouteOptions {
+  /** App route; defaults to the video editor. */
+  route?: string;
+  /** Runtime timeline to open; defaults to the seeded demo timeline. */
+  timeline?: string;
+  /** Extra query parameters (fixtures, canaries); `localTest=1` is always set. */
+  params?: Record<string, string>;
+}
+
+/**
+ * The one place the Runtime-mode editor URL is built: `runtime=1` binds the page to the Runtime path
+ * (workspace.v1) and `runtimeProject`/`runtimeTimeline` select the seeded project and timeline.
+ * Returns a path plus query, for specs that use the Playwright `baseURL`.
+ */
+export function editorPath({ route = '/tools/video-editor', timeline = TIMELINE_SLUG, params = {} }: EditorRouteOptions = {}): string {
+  const query = new URLSearchParams({
+    runtime: '1',
+    runtimeProject: PROJECT_ID,
+    runtimeTimeline: timeline,
+    localTest: '1',
+    ...params,
+  });
+  return `${route}?${query.toString()}`;
+}
+
+/** Absolute form of {@link editorPath}. */
+export function editorUrl(options: EditorRouteOptions = {}): string {
+  return `${BASE_URL}${editorPath(options)}`;
+}
+
+export const EDITOR_URL = editorUrl();
 
 /**
  * Browser captures are run artifacts by default. Tracked acceptance evidence
@@ -90,15 +123,17 @@ export function browserEvidencePath(testInfo: TestInfo, relativePath: string): s
   return destination;
 }
 
-const BRIDGE_TIMELINE = `${BRIDGE_ORIGIN}/projects/${PROJECT_SLUG}/timelines/${TIMELINE_SLUG}`;
-const STUB_RESET_URL = `${BRIDGE_ORIGIN}/__test/reset`;
-const PRISTINE_STUB_FIXTURE = createTimelineFixtures({ assetSrcBaseUrl: BASE_URL });
+const FAKE_RUNTIME_RESET_URL = `${FAKE_RUNTIME_ORIGIN}/__test/reset`;
+const FAKE_RUNTIME_TIMELINES_URL = `${FAKE_RUNTIME_ORIGIN}/v1/projects/${PROJECT_ID}/timelines`;
+const PRISTINE_SEED_FIXTURE = createTimelineFixtures({ assetSrcBaseUrl: BASE_URL });
+/** The registry the fake Runtime serves for the default timeline after a reset: sha256 media ids included. */
+const PRISTINE_SEED_REGISTRY = createSeedTimelines()[0]!.parentComposition.registry;
 
 /** How long the editor needs to boot, resolve assets and lay the timeline out. */
 export const EDITOR_SETTLE_MS = 9_000;
 
 /**
- * Clip layout the specs assert against. The bridge stub persists saves and the
+ * Clip layout the specs assert against. The fake Runtime persists saves and the
  * gestures under test really do commit edits, so every spec restores this first
  * or the second run measures the first run's leftovers.
  */
@@ -117,47 +152,61 @@ export const BASELINE_TRACKS = [
   { id: 'A1', kind: 'audio', label: 'A1', scale: 1, fit: 'contain', opacity: 1, blendMode: 'normal' },
 ];
 
-function resetBridgeBaselineOnce(): Promise<string | null> {
+/** Bearer header for direct reads and writes against the fake Runtime (the browser goes through the Vite proxy). */
+export function fakeRuntimeAuthHeaders(): Record<string, string> {
+  const tokenFile = process.env.FAKE_RUNTIME_TOKEN_FILE;
+  if (!tokenFile) throw new Error('FAKE_RUNTIME_TOKEN_FILE was not published by playwright.config.ts');
+  return { Authorization: `Bearer ${readFileSync(tokenFile, 'utf8').trim()}` };
+}
+
+interface FakeRuntimeTimelineSummary { timeline_id: string; head_revision_id: string }
+
+async function readFakeRuntimeHeads(headers: Record<string, string>): Promise<Map<string, string> | string> {
+  const response = await fetch(FAKE_RUNTIME_TIMELINES_URL, { headers });
+  if (!response.ok) return `[reset] fake Runtime timeline list returned ${response.status}`;
+  const { items } = await response.json() as { items?: FakeRuntimeTimelineSummary[] };
+  if (!Array.isArray(items)) return '[reset] fake Runtime timeline list did not include items';
+  return new Map(items.map((item) => [item.timeline_id, item.head_revision_id]));
+}
+
+function resetFakeRuntimeBaselineOnce(): Promise<string | null> {
   return (async () => {
     try {
-      const healthResponse = await fetch(`${BRIDGE_ORIGIN}/health`);
-      if (!healthResponse.ok) return `[reset] bridge health returned ${healthResponse.status}`;
-      const health = await healthResponse.json();
-      if (health?.ok !== true) return '[reset] bridge health response was not {ok:true}';
-      const beforeResponse = await fetch(BRIDGE_TIMELINE);
-      if (!beforeResponse.ok) return `[reset] bridge fixture GET returned ${beforeResponse.status}`;
-      const current = await beforeResponse.json();
-      if (!Number.isInteger(current.config_version)) {
-        return '[reset] bridge fixture GET did not include an integer config_version';
-      }
-      const resetResponse = await fetch(STUB_RESET_URL, {
-        method: 'POST',
-      });
+      const headers = fakeRuntimeAuthHeaders();
+      const readiness = await fetch(`${FAKE_RUNTIME_ORIGIN}/runtime-config/v1/workspace.json`);
+      if (!readiness.ok) return `[reset] fake Runtime workspace.json returned ${readiness.status}`;
+      const before = await readFakeRuntimeHeads(headers);
+      if (typeof before === 'string') return before;
+      const beforeHead = before.get(TIMELINE_SLUG);
+      if (!beforeHead) return `[reset] fake Runtime did not list ${TIMELINE_SLUG} before the reset`;
+      const resetResponse = await fetch(FAKE_RUNTIME_RESET_URL, { method: 'POST', headers });
       if (!resetResponse.ok) return `[reset] hard reset returned ${resetResponse.status}`;
-      const reset = await resetResponse.json();
+      const reset = await resetResponse.json() as { reset?: boolean; epoch?: number; heads?: Record<string, string> };
       if (reset?.reset !== true) return '[reset] hard reset response was not marked reset:true';
-      if (!Number.isInteger(reset.config_version) || reset.config_version <= current.config_version) {
-        return `[reset] hard reset did not monotonically advance config_version: before=${current.config_version}, after=${reset.config_version}`;
-      }
-      if (!isDeepStrictEqual(reset.config, PRISTINE_STUB_FIXTURE.config)) {
-        return `[reset] hard reset config mismatch: expected ${JSON.stringify(PRISTINE_STUB_FIXTURE.config)}, got ${JSON.stringify(reset.config)}`;
-      }
-      if (!isDeepStrictEqual(reset.registry, PRISTINE_STUB_FIXTURE.registry)) {
-        return `[reset] hard reset registry mismatch: expected ${JSON.stringify(PRISTINE_STUB_FIXTURE.registry)}, got ${JSON.stringify(reset.registry)}`;
+      const resetHead = reset.heads?.[TIMELINE_SLUG];
+      // Heads never rewind across a reset, so a new epoch always has a head the previous one never held.
+      if (!Number.isInteger(reset.epoch) || !resetHead || resetHead === beforeHead) {
+        return `[reset] hard reset did not move the head: before=${beforeHead}, after=${resetHead}`;
       }
 
-      // Verify the public read surface, not only the reset response assembled by
-      // the control route.
-      const afterResponse = await fetch(BRIDGE_TIMELINE);
-      if (!afterResponse.ok) return `[reset] bridge fixture verification GET returned ${afterResponse.status}`;
-      const after = await afterResponse.json();
-      if (after.config_version !== reset.config_version) {
-        return `[reset] verification version mismatch: reset=${reset.config_version}, read=${after.config_version}`;
+      // Verify the public read surface, not only the reset response assembled by the control route.
+      const after = await readFakeRuntimeHeads(headers);
+      if (typeof after === 'string') return after;
+      for (const [timelineId, head] of Object.entries(reset.heads ?? {})) {
+        if (after.get(timelineId) !== head) {
+          return `[reset] verification head mismatch for ${timelineId}: reset=${head}, read=${after.get(timelineId)}`;
+        }
       }
-      if (!isDeepStrictEqual(after.config, PRISTINE_STUB_FIXTURE.config)) {
+      const revisionResponse = await fetch(
+        `${FAKE_RUNTIME_TIMELINES_URL}/${TIMELINE_SLUG}/composition-revisions/${encodeURIComponent(resetHead)}`,
+        { headers },
+      );
+      if (!revisionResponse.ok) return `[reset] verification revision GET returned ${revisionResponse.status}`;
+      const { payload } = await revisionResponse.json() as { payload: { config: unknown; registry: unknown } };
+      if (!isDeepStrictEqual(payload.config, PRISTINE_SEED_FIXTURE.config)) {
         return '[reset] verification read did not return the pristine config';
       }
-      if (!isDeepStrictEqual(after.registry, PRISTINE_STUB_FIXTURE.registry)) {
+      if (!isDeepStrictEqual(payload.registry, PRISTINE_SEED_REGISTRY)) {
         return '[reset] verification read did not return the pristine registry';
       }
       return null;
@@ -167,23 +216,106 @@ function resetBridgeBaselineOnce(): Promise<string | null> {
   })();
 }
 
+/** The head composition of a seeded timeline, as the Runtime serves it (`composition-revisions/<head>`). */
+export interface FakeRuntimeComposition {
+  headRevisionId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the payload is the Runtime's parent composition, partly opaque to specs
+  config: Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registry: Record<string, any>;
+  payload: Record<string, unknown>;
+}
+
+/** Read a timeline's head composition straight from the fake Runtime (the persisted state, not the editor's view of it). */
+export async function readFakeRuntimeComposition(timelineId: string = TIMELINE_SLUG): Promise<FakeRuntimeComposition> {
+  const headers = fakeRuntimeAuthHeaders();
+  const heads = await readFakeRuntimeHeads(headers);
+  if (typeof heads === 'string') throw new Error(heads);
+  const headRevisionId = heads.get(timelineId);
+  if (!headRevisionId) throw new Error(`fake Runtime does not list timeline ${timelineId}`);
+  const response = await fetch(
+    `${FAKE_RUNTIME_TIMELINES_URL}/${encodeURIComponent(timelineId)}/composition-revisions/${encodeURIComponent(headRevisionId)}`,
+    { headers },
+  );
+  if (!response.ok) throw new Error(`fake Runtime head revision GET returned ${response.status}`);
+  const { payload } = await response.json() as { payload: FakeRuntimeComposition['payload'] & { config: FakeRuntimeComposition['config']; registry: FakeRuntimeComposition['registry'] } };
+  return { headRevisionId, config: payload.config, registry: payload.registry, payload };
+}
+
+let externalPublishCounter = 0;
+
+/**
+ * Publish a new head the way a second writer would: read the head, let `update` edit a clone of its
+ * config/registry, and POST the result with `expected_head` set to the head just read (a lost race is a 409,
+ * never a silent overwrite). The editor under test sees it as an external change.
+ */
+export async function publishFakeRuntimeComposition(
+  update: (composition: Pick<FakeRuntimeComposition, 'config' | 'registry'>) => void,
+  timelineId: string = TIMELINE_SLUG,
+): Promise<FakeRuntimeComposition> {
+  const current = await readFakeRuntimeComposition(timelineId);
+  const config = structuredClone(current.config);
+  const registry = structuredClone(current.registry);
+  update({ config, registry });
+  externalPublishCounter += 1;
+  const revisionId = `e2e-external-${process.pid}-${externalPublishCounter}`;
+  const response = await fetch(
+    `${FAKE_RUNTIME_TIMELINES_URL}/${encodeURIComponent(timelineId)}/composition-revisions`,
+    {
+      method: 'POST',
+      headers: { ...fakeRuntimeAuthHeaders(), 'Content-Type': 'application/json', 'Idempotency-Key': revisionId },
+      body: JSON.stringify({
+        expected_head: current.headRevisionId,
+        parent_revision_id: revisionId,
+        parent_composition: { config, registry, clips: config.clips ?? [], occurrences: [] },
+      }),
+    },
+  );
+  if (!response.ok) throw new Error(`fake Runtime publish returned ${response.status}: ${await response.text()}`);
+  return { headRevisionId: revisionId, config, registry, payload: { config, registry, clips: config.clips ?? [], occurrences: [] } };
+}
+
 // Playwright can invoke hooks from multiple projects/pages in the same worker.
-// Queue resets so two GET → CAS-save sequences cannot interleave and silently
-// restore an intermediate fixture.
+// Queue resets so two reset-and-verify sequences cannot interleave and silently
+// verify an intermediate world.
 let resetTail: Promise<void> = Promise.resolve();
-export function resetBridgeBaseline(): Promise<string | null> {
-  const result = resetTail.then(resetBridgeBaselineOnce, resetBridgeBaselineOnce);
+export function resetFakeRuntimeBaseline(): Promise<string | null> {
+  const result = resetTail.then(resetFakeRuntimeBaselineOnce, resetFakeRuntimeBaselineOnce);
   resetTail = result.then(() => undefined, () => undefined);
   return result;
 }
 
-// All ordinary timeline specs share one long-lived mutable stub process. Reset
+// All ordinary timeline specs share one long-lived mutable fake Runtime process. Reset
 // its complete state before every test so file/order changes cannot leak config,
 // app metadata, or registry assets.
 playwrightTest.beforeEach(async () => {
-  const error = await resetBridgeBaseline();
+  const error = await resetFakeRuntimeBaseline();
   if (error) throw new Error(error);
 });
+
+/**
+ * Seed the per-timeline editor preference record (`EditorPreferences`, `useEditorPreferences.ts`) that the
+ * editor reads on mount, the way a user's earlier choices would be there. Missing fields take the editor's
+ * defaults. Call before `page.goto`.
+ */
+export async function seedEditorPreferences(
+  page: Page,
+  patch: Record<string, unknown>,
+  timelineId: string = TIMELINE_SLUG,
+): Promise<void> {
+  await page.addInitScript(({ storageKey, value }) => {
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(value));
+    } catch {
+      // storage unavailable: the spec's own assertions report the missing state
+    }
+  }, { storageKey: `video-editor:preferences:${timelineId}`, value: patch });
+}
+
+/** Data-kind lanes other than the transcript start hidden; a spec that measures one opts in like a user does. */
+export function showDataLanes(page: Page, timelineId: string = TIMELINE_SLUG): Promise<void> {
+  return seedEditorPreferences(page, { showDataLanes: true }, timelineId);
+}
 
 const pageIssues = new WeakMap<Page, string[]>();
 
@@ -270,7 +402,7 @@ export async function createTouchInput(context: BrowserContext, page: Page): Pro
 
 /**
  * The editor's only permitted network authorities in local mode are the
- * Vite app and the loopback bridge; anything else (Supabase, Google Fonts, a
+ * Vite app (which proxies the fake Runtime, so the browser never calls it directly); anything else (Supabase, Google Fonts, a
  * provider API) is a leak even if the request later fails. Non-network schemes
  * (data:, blob:, ...) are allowed.
  */
@@ -285,17 +417,17 @@ function isLocalAuthority(raw: string): boolean {
   const web = secure || parsed.protocol === 'http:' || parsed.protocol === 'ws:';
   if (!web) return true;
   const origin = `${secure ? 'https' : 'http'}://${parsed.host}`;
-  return origin === new URL(BASE_URL).origin || origin === BRIDGE_ORIGIN;
+  return origin === new URL(BASE_URL).origin;
 }
 
 /**
- * Open the editor in local mode and wait for it to settle.
+ * Open the editor in Runtime mode (over the fake Runtime) and wait for it to settle.
  *
  * Local mode must never talk to a backend: no session is seeded, so every
  * auth-gated query is disabled. This waits for the editor, then asserts zero
  * Supabase REST/auth requests — with a stale project id pre-seeded, covering
  * the regression where leftover project selection re-enabled queries — and
- * that every request and websocket stayed on the app and bridge origins.
+ * that every request and websocket stayed on the app origin.
  */
 export async function openEditor(page: Page): Promise<void> {
   const issues = collectPageLogs(page);
@@ -350,7 +482,7 @@ export async function openEditor(page: Page): Promise<void> {
     throw new Error(`local-test editor made forbidden remote requests:\n${[...new Set(forbiddenRequests)].join('\n')}`);
   }
   if (offOriginUrls.size > 0) {
-    throw new Error(`local-test editor left the app and bridge origins:\n${[...offOriginUrls].join('\n')}`);
+    throw new Error(`local-test editor left the app origin:\n${[...offOriginUrls].join('\n')}`);
   }
   const backendCalls = await page.evaluate(() => {
     const urls = performance.getEntriesByType('resource')

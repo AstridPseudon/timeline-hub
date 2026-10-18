@@ -1,12 +1,10 @@
 import { expect, test } from '@playwright/test';
 import {
-  BASE_URL,
   CLIP_BODY_SELECTOR,
-  PROJECT_SLUG,
-  TIMELINE_SLUG,
+  editorUrl,
 } from './support.ts';
 
-const EDITOR_URL = `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1&transcriptLaneFixture=render-matrix&runawayTimelineProject=runaway-8085`;
+const EDITOR_URL = editorUrl({ params: { transcriptLaneFixture: 'render-matrix', runawayTimelineProject: 'runaway-8085' } });
 const CAPTION_SELECTOR = `${CLIP_BODY_SELECTOR}[data-clip-id^="transcript-caption-"]`;
 const EXPECTED_CAPTIONS = [
   'Ava: café — 👩🏽‍🚀',

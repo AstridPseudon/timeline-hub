@@ -96,7 +96,6 @@ export const strictLintDebtFiles = [
   "src/tools/video-editor/hooks/useAgentSession.ts",
   "src/tools/video-editor/hooks/useClipResizeGesture.ts",
   "src/tools/video-editor/hooks/useEffectResources.ts",
-  "src/tools/video-editor/hooks/useEditorSync.ts",
   "src/tools/video-editor/hooks/useKeyboardShortcuts.ts",
   "src/tools/video-editor/hooks/usePinnedShotGroups.ts",
   "src/tools/video-editor/hooks/useRenderState.ts",

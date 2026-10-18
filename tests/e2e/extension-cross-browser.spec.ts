@@ -3,11 +3,12 @@ import {
   PROJECT_SLUG,
   TIMELINE_SLUG,
   browserEvidencePath,
-  resetBridgeBaseline,
+  editorPath,
+  resetFakeRuntimeBaseline,
 } from './timeline/support';
 
 const RUNAWAY_PROJECT = 'cross-browser-release-gate';
-const EDITOR_URL = `/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1&timelineOverlayCanary=1&transcriptLaneFixture=1&runawayTimelineProject=${RUNAWAY_PROJECT}`;
+const EDITOR_URL = editorPath({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: '1', runawayTimelineProject: RUNAWAY_PROJECT } });
 
 function collectIssues(page: Page): string[] {
   const issues: string[] = [];
@@ -46,7 +47,7 @@ function evidencePath(testInfo: TestInfo, fileName: string): string {
 
 async function openCombinedEditor(page: Page): Promise<string[]> {
   const issues = collectIssues(page);
-  expect(await resetBridgeBaseline()).toBeNull();
+  expect(await resetFakeRuntimeBaseline()).toBeNull();
   await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
   const response = await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   expect(response?.ok()).toBe(true);
@@ -63,6 +64,7 @@ async function openCombinedEditor(page: Page): Promise<string[]> {
 
 test('extension inventory host renders active and diagnostic state', async ({ page }) => {
   const issues = collectIssues(page);
+  // The harness mounts no data provider. `localProject` is kept only because Layout's sessionless auth gate keys off it.
   await page.goto(`/tools/video-editor/harness?scenario=populated&localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1`, {
     waitUntil: 'domcontentloaded',
   });

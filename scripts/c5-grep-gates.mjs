@@ -9,7 +9,6 @@ import ts from 'typescript';
 const DEFAULT_REPO_ROOT = resolve(import.meta.dirname, '..');
 const DEFAULT_SURFACE_ROOTS = [
   'src/app/providers/AppProviders.tsx',
-  'src/integrations/astrid/AstridCapabilityBootstrap.tsx',
   'src/shared/providers/RealtimeProvider.tsx',
 ];
 const SOURCE_SUFFIXES = ['', '.ts', '.tsx', '/index.ts', '/index.tsx'];

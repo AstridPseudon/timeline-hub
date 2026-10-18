@@ -4,8 +4,7 @@ import { astridBase } from '@/integrations/runtime/connection.ts';
 /**
  * Display-URL addressing for managed media (B3 Slice B).
  *
- * Mirrors the `assetBaseUrl ?? astridBase()` posture of
- * `AstridBridgeDataProvider`: every managed-media reference becomes an R9
+ * Uses the `assetBaseUrl ?? astridBase()` posture: every managed-media reference becomes an R9
  * byte-route address (`GET /projects/:slug/media/:id/content`, Range/ETag)
  * under the Astrid base, read at call time: same-origin through the
  * per-boot-token-injecting dev proxy, or the loopback gateway on the hosted

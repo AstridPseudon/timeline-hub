@@ -3,14 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useProjectCRUD } from '../useProjectCRUD';
 
 const mocks = vi.hoisted(() => ({
-  workspaceV1: false,
   clientOptions: [] as unknown[],
   createProject: vi.fn(),
   ensureProjectHasTimeline: vi.fn(),
-}));
-
-vi.mock('@/integrations/astrid/workspaceV1', () => ({
-  get isAstridWorkspaceV1() { return mocks.workspaceV1; },
 }));
 
 vi.mock('@/integrations/astrid/client', () => ({
@@ -29,7 +24,6 @@ vi.mock('@/integrations/runtime/createDefaultTimeline', () => ({
 
 describe('useProjectCRUD local workspace project creation', () => {
   beforeEach(() => {
-    mocks.workspaceV1 = true;
     mocks.clientOptions = [];
     mocks.createProject.mockReset().mockResolvedValue({
       data: {

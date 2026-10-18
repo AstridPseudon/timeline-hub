@@ -6,7 +6,7 @@ const VIDEO_EDITOR_ROUTE = '/tools/video-editor';
  * surface; cloud builds and ordinary app routes keep their normal shell.
  */
 export function isAstridEditorOnlyWorkspace(): boolean {
-  return import.meta.env.VITE_ASTRID_WORKSPACE_V1 === '1';
+  return import.meta.env.VITE_ASTRID_EDITOR_ONLY === '1';
 }
 
 export function isAstridEditorOnlyShellPath(pathname: string): boolean {

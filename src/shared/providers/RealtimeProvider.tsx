@@ -24,7 +24,6 @@ import {
   upsertRealtimeTaskSnapshot,
 } from '@/shared/state/realtimeStore';
 import type { ConnectionState, ConnectionStatus, RawDatabaseEvent } from '@/shared/realtime/types';
-import { useAstridCapabilityCensus } from '@/integrations/astrid/capabilityCensus.ts';
 import { listenAppEvent } from '@/shared/lib/typedEvents';
 import { refreshRuntimeTaskList } from '@/features/tasks/components/TasksPane/hooks/useRuntimeTasks';
 import { taskQueryKeys } from '@/shared/lib/queryKeys/tasks';
@@ -123,7 +122,6 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
     realtimeConnection.getState()
   );
   const activeProjectIdRef = useRef<string | null>(null);
-  const capabilityCensus = useAstridCapabilityCensus();
   const urlSearch = useUrlSearch();
 
   // Set up the invalidation hook (subscribes to processed events)
@@ -224,9 +222,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       resetRealtimeTaskScope(previousProjectId);
     }
 
-    const pollableCapabilityAvailable = capabilityCensus.capabilities.tasks !== 'unavailable'
-      || capabilityCensus.capabilities.generations !== 'unavailable';
-    if (!selectedProjectId || capabilityCensus.health === 'unavailable' || !pollableCapabilityAvailable) {
+    if (!selectedProjectId) {
       activeProjectIdRef.current = null;
       realtimeConnection.disconnect();
       dataFreshnessManager.reset();
@@ -244,7 +240,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       // Don't disconnect on cleanup - let the next effect handle it
       // This prevents disconnect/reconnect when the component re-renders
     };
-  }, [capabilityCensus.capabilities.generations, capabilityCensus.capabilities.tasks, capabilityCensus.health, selectedProjectId, realtimeConnection, urlSearch]);
+  }, [selectedProjectId, realtimeConnection, urlSearch]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -261,18 +257,11 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
     if (hasLocalModeUrlParams(urlSearch)) {
       return;
     }
-    if (
-      selectedProjectId
-      && capabilityCensus.health !== 'unavailable'
-      && (
-        capabilityCensus.capabilities.tasks !== 'unavailable'
-        || capabilityCensus.capabilities.generations !== 'unavailable'
-      )
-    ) {
+    if (selectedProjectId) {
       realtimeConnection.reset();
       realtimeConnection.connect(selectedProjectId);
     }
-  }, [capabilityCensus.capabilities.generations, capabilityCensus.capabilities.tasks, capabilityCensus.health, selectedProjectId, realtimeConnection, urlSearch]);
+  }, [selectedProjectId, realtimeConnection, urlSearch]);
 
   // Derive context value from connection state
   const contextValue: RealtimeContextValue = {

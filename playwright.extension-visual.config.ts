@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { DEFAULT_DEV_SUPABASE_URL } from './src/shared/dev/devSession.ts';
+import { fakeRuntimeEnv } from './tests/e2e/fake-runtime/launch.mjs';
 import { astridOnboardedStorageState } from './tests/e2e/fixtures/astridOnboardedStorageState';
 import {
   allocateIsolatedPort,
@@ -15,14 +16,14 @@ if (configuredBaseURL && !process.env.PLAYWRIGHT_PORT) process.env.PLAYWRIGHT_PO
 const port = inheritedRunPorts
   ? readPublishedPort('PLAYWRIGHT_PORT')
   : allocateIsolatedPort('PLAYWRIGHT_PORT', allocatedPorts);
-const bridgePort = inheritedRunPorts
-  ? readPublishedPort('ASTRID_BRIDGE_PORT')
-  : allocateIsolatedPort('ASTRID_BRIDGE_PORT', allocatedPorts);
+const fakeRuntimePort = inheritedRunPorts
+  ? readPublishedPort('FAKE_RUNTIME_PORT')
+  : allocateIsolatedPort('FAKE_RUNTIME_PORT', allocatedPorts);
 const baseURL = resolveCanonicalBaseUrl(port);
+const fakeRuntimeViteEnv = fakeRuntimeEnv({ port: fakeRuntimePort });
 
 process.env.BASE_URL = baseURL;
 process.env.PLAYWRIGHT_BASE_URL = baseURL;
-process.env.ASTRID_BRIDGE_PORT = String(bridgePort);
 process.env.ASTRID_APP_EXTENSION_PORTS_ALLOCATED = '1';
 
 /**
@@ -63,21 +64,25 @@ export default defineConfig({
         VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? DEFAULT_DEV_SUPABASE_URL,
         VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? 'test-anon-key',
         VITE_APP_ENV: process.env.VITE_APP_ENV ?? 'web',
-        VITE_ASTRID_BRIDGE_PORT: String(bridgePort),
-        VITE_WORKSPACE_RUNTIME_URL: `http://127.0.0.1:${bridgePort}`,
-        VITE_ASTRID_WORKSPACE_V1: '0',
-        VITE_ASTRID_ACP_BRIDGE_PORT: String(bridgePort),
-        VITE_DISABLE_REMOTE_FONTS: '1',
-        ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB: '1',
+        // Same font policy as the timeline lane: the dev server strips remote font links.
+        VITE_DISABLE_REMOTE_FONTS: process.env.VITE_DISABLE_REMOTE_FONTS ?? '1',
+        // One fake Runtime serves workspace.v1, the `/api/astrid` bridge routes and the ACP read, behind one token.
+        ...fakeRuntimeViteEnv,
+        // The editor capability-matrix suite uses a fixed host-owned fixture catalog; the Vite config only
+        // aliases it for `serve`.
         ASTRID_APP_E2E_EXTENSION_FIXTURES: '1',
       },
     },
     {
-      command: 'node tests/e2e/timeline/astrid-bridge-stub.mjs',
-      url: `http://127.0.0.1:${bridgePort}/health`,
+      command: 'node tests/e2e/fake-runtime/launch.mjs --serve',
+      // workspace.json is the one open route; every other route needs the token.
+      url: `http://127.0.0.1:${fakeRuntimePort}/runtime-config/v1/workspace.json`,
       reuseExistingServer: false,
       timeout: 30_000,
-      env: { ASTRID_BRIDGE_PORT: String(bridgePort), BASE_URL: baseURL },
+      env: {
+        FAKE_RUNTIME_PORT: String(fakeRuntimePort),
+        FAKE_RUNTIME_TOKEN_FILE: fakeRuntimeViteEnv.FAKE_RUNTIME_TOKEN_FILE,
+      },
     },
   ],
   projects: [{ name: 'chromium-visual', use: { ...devices['Desktop Chrome'] } }],

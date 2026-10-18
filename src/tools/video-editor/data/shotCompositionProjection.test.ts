@@ -225,7 +225,7 @@ describe('canonical shot-composition downstream projection', () => {
     expect(first?.assetEntry).toMatchObject({
       file: 'object-alpha-image',
       media_id: 'object-alpha-image',
-      src: '/api/astrid/projects/project-001/media/object-alpha-image/content',
+      src: '/api/astrid/v1/objects/object-alpha-image',
     });
   });
 
@@ -606,7 +606,7 @@ describe('canonical shot-composition downstream projection', () => {
       file: 'object-alpha-audio',
       media_id: 'object-alpha-audio',
       type: 'audio',
-      src: '/api/astrid/projects/project-001/media/object-alpha-audio/content',
+      src: '/api/astrid/v1/objects/object-alpha-audio',
     });
   });
 

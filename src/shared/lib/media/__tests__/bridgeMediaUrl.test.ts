@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bridgeMediaUrl } from '../bridgeMediaUrl';
-import { FIXTURE_PROJECT } from '@/test/bridgeFixtures.mjs';
+import { FIXTURE_PROJECT } from '@/test/fakeRuntimeSeed.mjs';
 
 describe('bridgeMediaUrl', () => {
-  it('addresses a managed media id via the R9 content route', () => {
+  it('addresses a managed media id via the workspace.v1 object route', () => {
     expect(bridgeMediaUrl(FIXTURE_PROJECT.slug, '01j8zcex4q7m4sjdy6g6mediapngaaa'))
-      .toBe(`/api/astrid/projects/${FIXTURE_PROJECT.slug}/media/01j8zcex4q7m4sjdy6g6mediapngaaa/content`);
+      .toBe('/api/astrid/v1/objects/01j8zcex4q7m4sjdy6g6mediapngaaa');
   });
 
   it('honors an explicit base url and trims trailing slashes', () => {
     expect(bridgeMediaUrl('demo-project', 'media01', 'http://127.0.0.1:17333/'))
-      .toBe('http://127.0.0.1:17333/projects/demo-project/media/media01/content');
+      .toBe('http://127.0.0.1:17333/v1/objects/media01');
   });
 
   it('passes absolute urls through untouched', () => {
@@ -55,7 +55,7 @@ describe('bridgeMediaUrl on the hosted build (gateway origin)', () => {
   it('addresses a managed media id under the gateway', async () => {
     const bridgeMediaUrl = await withGateway();
     expect(bridgeMediaUrl('demo-project', 'media01'))
-      .toBe(`${GATEWAY}/api/astrid/projects/demo-project/media/media01/content`);
+      .toBe(`${GATEWAY}/api/astrid/v1/objects/media01`);
   });
 
   it('addresses a content digest under the gateway', async () => {
@@ -67,7 +67,7 @@ describe('bridgeMediaUrl on the hosted build (gateway origin)', () => {
   it('still honors an explicit base, passes absolute and rooted references through, and keeps placeholders', async () => {
     const bridgeMediaUrl = await withGateway();
     expect(bridgeMediaUrl('demo-project', 'media01', 'http://127.0.0.1:17333/'))
-      .toBe('http://127.0.0.1:17333/projects/demo-project/media/media01/content');
+      .toBe('http://127.0.0.1:17333/v1/objects/media01');
     expect(bridgeMediaUrl('demo-project', `${GATEWAY}/api/astrid/v1/objects/sha256%3Aabc`))
       .toBe(`${GATEWAY}/api/astrid/v1/objects/sha256%3Aabc`);
     expect(bridgeMediaUrl('demo-project', '/api/astrid/projects/demo-project/media/media01/content'))

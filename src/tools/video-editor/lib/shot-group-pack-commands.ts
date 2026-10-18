@@ -15,7 +15,7 @@ import type {
   BridgeTaskAdmissionResponse,
   BridgeTaskDetailPayload,
 } from '@/tools/video-editor/data/bridgeContract.ts';
-import { mutateTimelineDocument } from '@/shared/lib/placement/placementService.ts';
+import { loadTimelineDocument, mutateTimelineDocument } from '@/shared/lib/placement/placementService.ts';
 import type { PlacementDocument } from '@/shared/lib/placement/documentPlacement.ts';
 import {
   deriveTimelineShotGroupViews,
@@ -23,11 +23,9 @@ import {
   type TimelineShotGroupView,
 } from '@/tools/video-editor/lib/timeline-domain.ts';
 import type {
-  AssetRegistry,
   AssetRegistryEntry,
   PinnedShotGroup,
   TimelineClip,
-  TimelineConfig,
 } from '@/tools/video-editor/types/index.ts';
 
 export const DUPLICATE_SHOT_GROUP_FAMILY = 'duplicate' as const;
@@ -387,16 +385,14 @@ export async function duplicateShotGroup(
   options: WaitForShotPackCommandOptions = {},
 ): Promise<DeepCopyShotGroupResult> {
   const client = new AstridLocalClient({ projectSlug: input.projectSlug });
-  const head = await client.timelines.get(input.timelineRef);
-  if (head.config_version !== input.configVersion) {
+  const head = await loadTimelineDocument(input.projectSlug, input.timelineRef);
+  if (head.expectedVersion !== input.configVersion) {
     throw new Error(
-      `Timeline ${input.timelineRef} is at version ${head.config_version}; expected active editor version ${input.configVersion}`,
+      `Timeline ${input.timelineRef} is at version ${head.expectedVersion}; expected active editor version ${input.configVersion}`,
     );
   }
-  const source = sourceFinalVideo({
-    config: head.config as TimelineConfig,
-    registry: (head.registry ?? { assets: {} }) as AssetRegistry,
-  }, input.source);
+  const source = sourceFinalVideo(head, input.source);
+  // A group with no final video has no bytes to copy: duplicate its document nodes without a pack task.
   let replacement: DeepCopyShotGroupInput['finalVideoReplacement'];
   if (source.entry) {
     const admitted = await admitDuplicateShotGroupPackCommand(client, {
@@ -457,10 +453,10 @@ export async function promotePrimaryVariant(
   options: WaitForShotPackCommandOptions = {},
 ): Promise<readonly TimelineShotGroupView[]> {
   const client = new AstridLocalClient({ projectSlug: input.projectSlug });
-  const head = await client.timelines.get(input.timelineRef);
-  if (head.config_version !== input.configVersion) {
+  const head = await loadTimelineDocument(input.projectSlug, input.timelineRef);
+  if (head.expectedVersion !== input.configVersion) {
     throw new Error(
-      `Timeline ${input.timelineRef} is at version ${head.config_version}; expected active editor version ${input.configVersion}`,
+      `Timeline ${input.timelineRef} is at version ${head.expectedVersion}; expected active editor version ${input.configVersion}`,
     );
   }
   const admitted = await admitPromotePrimaryPackCommand(client, input);

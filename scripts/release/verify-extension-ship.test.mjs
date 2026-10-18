@@ -185,7 +185,7 @@ describe('extension ship verifier', () => {
     );
   });
 
-  it('explicitly permits only the committed Astrid stub in browser release lanes', () => {
+  it('serves browser release lanes from the fake Runtime, with no unauthenticated mode', () => {
     for (const configName of [
       'playwright.extension-cross-browser.config.ts',
       'playwright.extension-accessibility.config.ts',
@@ -194,13 +194,13 @@ describe('extension ship verifier', () => {
       const config = readFileSync(`${REPO_ROOT}/${configName}`, 'utf8');
       assert.match(
         config,
-        /ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB:\s*'1'/,
-        `${configName} must explicitly permit its committed bridge stub`,
+        /command:\s*'node tests\/e2e\/fake-runtime\/launch\.mjs --serve'/,
+        `${configName} must start the fake Runtime launcher`,
       );
-      assert.match(
+      assert.doesNotMatch(
         config,
-        /command:\s*'node tests\/e2e\/timeline\/astrid-bridge-stub\.mjs'/,
-        `${configName} must start the committed bridge stub`,
+        /UNAUTHENTICATED/,
+        `${configName} must not carry an unauthenticated bridge mode`,
       );
     }
   });

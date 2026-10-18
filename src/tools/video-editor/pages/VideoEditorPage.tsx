@@ -1,6 +1,5 @@
 import { useNativeEditorRecovery } from '../hooks/useNativeEditorRecovery.ts';
 import { assertNativeEditorConnection } from "@/integrations/astrid/nativeEditorConnection.ts";
-import { dispatchAppEvent } from "@/shared/lib/typedEvents.ts";
 import type { ExtensionPendingWorkState } from "@/sdk/context.ts";
 import {
   useRuntimeEditorDiscovery,
@@ -22,9 +21,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
-import type { z, ZodType } from "zod";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useHomeNavigation } from "@/shared/hooks/useHomeNavigation.ts";
 import { isHomeToolPathActive } from "@/shared/lib/tooling/homeNavigation.ts";
@@ -40,16 +37,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton.tsx";
 import { useOptionalAgentChatRegistry } from "@/shared/contexts/AgentChatContext.tsx";
 import { useOptionalGlobalHeaderSlot } from "@/shared/contexts/ToolPageHeaderContext.tsx";
 import { toast } from "@/shared/components/ui/toast.tsx";
-import {
-  AstridBridgeDataProvider,
-  type AstridBridgeRequestObservation,
-} from "@/tools/video-editor/data/AstridBridgeDataProvider.ts";
-import {
-  BRIDGE_REQUEST_TIMEOUT_MS,
-  bridgeHealthSchema,
-  bridgeTimelinePayloadSchema,
-  parseBridgePayload,
-} from "@/tools/video-editor/data/bridgeContract.ts";
+import type { AstridBridgeRequestObservation } from "@/integrations/astrid/transport.ts";
 import type { DataProvider } from "@/tools/video-editor/data/DataProvider.ts";
 import { VideoEditorProvider } from "@/tools/video-editor/contexts/VideoEditorProvider.tsx";
 import { devLocalExtensions } from "@/tools/video-editor/dev/localExtensions.ts";
@@ -84,14 +72,10 @@ import { ApiError } from "@/integrations/runtime/generated.ts";
 import { generateUUID } from "@/shared/lib/taskCreation/ids.ts";
 import { AppHeader } from "@/shared/components/AppHeader.tsx";
 import { WorkspaceConnectionRecovery } from "@/tools/video-editor/components/WorkspaceConnectionRecovery.tsx";
-import { astridBase, runtimeOrigin } from "@/integrations/runtime/connection.ts";
+import { runtimeOrigin } from "@/integrations/runtime/connection.ts";
 import { useAstridBridgeDiscovery } from "@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts";
 import { RuntimeDataProvider } from "@/integrations/runtime/dataProvider.ts";
 import type { SaveStatus } from "@/tools/video-editor/hooks/useTimelinePersistence.ts";
-import {
-  astridTimelineReadPath,
-  isAstridWorkspaceV1,
-} from "@/integrations/astrid/workspaceV1.ts";
 import { publishLocalTestExtensionDiagnostics } from "@/app/localTestRuntime.ts";
 import {
   createHostOwnedExtensionOperationalEmitter,
@@ -177,53 +161,6 @@ function mostRecentlyCreatedLocalProject(
           left.project.slug.localeCompare(right.project.slug),
       )[0]?.project ?? null
   );
-}
-
-/**
- * Every page-level bridge read goes through the shared wire contract
- * (`bridgeContract.ts`) rather than a bare `as T` assertion, and every one of
- * them is bounded by the same transport deadline as the provider's requests —
- * a hung local runtime must not park the entry screen forever.
- */
-async function fetchBridgeJson<Schema extends ZodType>(
-  path: string,
-  schema: Schema,
-  what: string,
-): Promise<z.infer<Schema>> {
-  const response = await fetch(`${astridBase()}${path}`, {
-    signal: AbortSignal.timeout(BRIDGE_REQUEST_TIMEOUT_MS),
-  });
-  if (!response.ok) {
-    throw new Error(
-      `Astrid bridge request failed: ${response.status} ${response.statusText}`,
-    );
-  }
-  return parseBridgePayload(schema, await response.json(), what);
-}
-
-/**
- * The local timeline *name* for the header/dropdown label comes from the
- * timeline list when workspace.v1 is active. The latest Runtime deliberately
- * retires the mutable timeline GET, so the legacy name read remains limited
- * to the legacy bridge path.
- */
-function useBridgeTimelineName(
-  projectSlug: string | null,
-  timelineRef: string | null,
-  enabled: boolean,
-) {
-  return useQuery({
-    queryKey: ["astrid-bridge", projectSlug, timelineRef, "name"],
-    enabled: enabled && Boolean(projectSlug) && Boolean(timelineRef),
-    queryFn: async () => {
-      const payload = await fetchBridgeJson(
-        astridTimelineReadPath(projectSlug!, timelineRef!),
-        bridgeTimelinePayloadSchema,
-        "timeline read",
-      );
-      return typeof payload.name === "string" ? payload.name : null;
-    },
-  });
 }
 
 export function RuntimeConnectorRecoveryBanner({
@@ -338,7 +275,6 @@ function useVideoEditorProviderSelection({
   runtimeProjectSlug,
   runtimeTimelineId,
   runtimeTimelineName,
-  onBridgeRequest,
   onRuntimeError,
 }: {
   mode: VideoEditorMode;
@@ -350,27 +286,13 @@ function useVideoEditorProviderSelection({
   runtimeProjectSlug?: string | null;
   runtimeTimelineId: string | null;
   runtimeTimelineName?: string | null;
-  onBridgeRequest?: (event: AstridBridgeRequestObservation) => void;
   onRuntimeError?: (error: RuntimeConnectorError) => void;
 }): ProviderSelection | null {
-  const providerKind =
-    mode === "runtime"
-      ? "runtime"
-      : isAstridWorkspaceV1
-        ? "local-runtime"
-        : "bridge";
+  const providerKind = mode === "runtime" ? "runtime" : "local-runtime";
   const providerProjectId =
-    mode === "runtime"
-      ? runtimeProjectId
-      : isAstridWorkspaceV1
-        ? localProjectId
-        : null;
+    mode === "runtime" ? runtimeProjectId : localProjectId;
   const providerTimelineId =
     mode === "runtime" ? runtimeTimelineId : localTimelineId;
-  const runtimeErrorHandler =
-    providerKind === "bridge" ? undefined : onRuntimeError;
-  const bridgeRequestObserver =
-    providerKind === "bridge" ? onBridgeRequest : undefined;
 
   // Display metadata can refresh while the editor and its pending reads stay
   // mounted. Keep their stateful provider owned by the effective authority.
@@ -381,27 +303,16 @@ function useVideoEditorProviderSelection({
     if (!providerProjectId || !providerTimelineId) {
       return null;
     }
-    if (providerKind === "bridge") {
-      return {
-        dataProvider: new AstridBridgeDataProvider({
-          projectSlug: providerProjectId,
-          timelineRef: providerTimelineId,
-          timelineId: providerTimelineId,
-          onBridgeRequest: bridgeRequestObserver,
-        }),
-      };
-    }
     const dataProvider = new RuntimeDataProvider({
       projectId: providerProjectId,
-      onRuntimeError: runtimeErrorHandler,
+      onRuntimeError,
     });
     return { dataProvider, runtimeReconnect: () => dataProvider.reconnect() };
   }, [
     providerKind,
     providerProjectId,
     providerTimelineId,
-    runtimeErrorHandler,
-    bridgeRequestObserver,
+    onRuntimeError,
   ]);
 
   return useMemo(() => {
@@ -429,25 +340,14 @@ function useVideoEditorProviderSelection({
       if (!localProjectSlug || !localTimelineId) {
         return null;
       }
-      if (isAstridWorkspaceV1) {
-        // Workspace v1 writes use the canonical id; the slug/name are display
-        // metadata and can change without replacing the authority's provider.
-        if (!localProjectId) {
-          return null;
-        }
-        return {
-          ...providerConnection,
-          projectId: localProjectId,
-          projectSlug: localProjectSlug,
-          timelineId: localTimelineId,
-          timelineName: localTimelineName,
-          userId: null,
-          remountKey: `local-runtime:${localProjectId}:${localTimelineId}`,
-        };
+      // Workspace v1 writes use the canonical id; the slug/name are display
+      // metadata and can change without replacing the authority's provider.
+      if (!localProjectId) {
+        return null;
       }
       return {
         ...providerConnection,
-        projectId: localProjectSlug,
+        projectId: localProjectId,
         projectSlug: localProjectSlug,
         timelineId: localTimelineId,
         timelineName: localTimelineName,
@@ -455,7 +355,7 @@ function useVideoEditorProviderSelection({
         // the auth-gated catalog queries (effects, resources) against a
         // backend that local mode must never touch. `null` keeps them off.
         userId: null,
-        remountKey: `local:${localProjectSlug}:${localTimelineId}`,
+        remountKey: `local-runtime:${localProjectId}:${localTimelineId}`,
       };
     }
     return null;
@@ -586,7 +486,7 @@ export default function VideoEditorPage() {
   const hasGlobalHeader = globalHeaderSlot.hasProvider;
 
   // Runtime mode is an explicit authenticated connector entry. It remains
-  // separate from the normal Astrid bridge route because it uses a different
+  // separate from the local workspace route because it uses a different
   // transport, not a different project authority.
   // `runtimeProject` may be a slug or a canonical id; it is resolved to the
   // canonical id (B8) before the provider is built.
@@ -608,8 +508,8 @@ export default function VideoEditorPage() {
   // Selector dropdown open state drives discovery refetch-on-open + polling.
   const [selectorsOpen, setSelectorsOpen] = useState(false);
   const discovery = useAstridBridgeDiscovery({
-    open: selectorsOpen && mode === "local" && isAstridWorkspaceV1,
-    currentLocal: mode === "local" && isAstridWorkspaceV1,
+    open: selectorsOpen && mode === "local",
+    currentLocal: mode === "local",
     selectedProjectSlug: localProjectSlug,
     onBridgeRequest,
   });
@@ -740,9 +640,7 @@ export default function VideoEditorPage() {
   const chatProjectId =
     mode === "runtime"
       ? (selectedRuntimeProject?.project_id ?? null)
-      : isAstridWorkspaceV1
-        ? localProjectId
-        : localProjectSlug;
+      : localProjectId;
   const chatProjectSlug =
     mode === "runtime"
       ? (selectedRuntimeProject?.slug ?? null)
@@ -803,15 +701,7 @@ export default function VideoEditorPage() {
     timelineId: string;
     name: string;
   } | null>(null);
-  const bridgeTimelineName = useBridgeTimelineName(
-    localProjectSlug,
-    localTimelineId,
-    mode === "local" && !isAstridWorkspaceV1,
-  );
-  const discoveredLocalTimelineName = selectedLocalTimeline?.name ?? null;
-  const localTimelineName = isAstridWorkspaceV1
-    ? discoveredLocalTimelineName
-    : (bridgeTimelineName.data ?? null);
+  const localTimelineName = selectedLocalTimeline?.name ?? null;
   const resolvedLocalProjectSlug = selectedLocalProject
     ? localProjectSlug
     : null;
@@ -840,17 +730,11 @@ export default function VideoEditorPage() {
     !selectedRuntimeTimeline;
   const runtimeSelectionVetoed = runtimeProjectMissing || runtimeTimelineMissing;
   const effectiveProviderKind =
-    mode === "runtime"
-      ? "runtime"
-      : isAstridWorkspaceV1
-        ? "local-runtime"
-        : "bridge";
+    mode === "runtime" ? "runtime" : "local-runtime";
   const effectiveProviderProjectId =
     mode === "runtime"
       ? runtimeSelectionVetoed ? null : runtimeProjectId
-      : isAstridWorkspaceV1
-        ? localProjectId
-        : resolvedLocalProjectSlug;
+      : localProjectId;
   const effectiveProviderTimelineId =
     mode === "runtime"
       ? runtimeSelectionVetoed ? null : runtimeTimelineId
@@ -886,11 +770,7 @@ export default function VideoEditorPage() {
         ? selectedRuntimeTimeline.timeline_id
         : null) ||
       "Untitled timeline",
-    onBridgeRequest,
-    onRuntimeError:
-      mode === "runtime" || (mode === "local" && isAstridWorkspaceV1)
-        ? onRuntimeError
-        : undefined,
+    onRuntimeError,
   });
 
   // dataKind V1 golden path (groken round 4): DEV-only fixture provider so the
@@ -914,7 +794,7 @@ export default function VideoEditorPage() {
   }, [providerSelection]);
 
   const nativeRecovery = useNativeEditorRecovery({
-    enabled: isAstridWorkspaceV1 && !!providerSelection,
+    enabled: !!providerSelection,
     scope: connectorScope,
     onRecovered: () => {
       setRuntimeConnectorError(null);
@@ -1119,12 +999,7 @@ export default function VideoEditorPage() {
   );
 
   const handleCreateFirstTimeline = useCallback(async () => {
-    if (
-      !isAstridWorkspaceV1 ||
-      !localProjectSlug ||
-      !localProjectId ||
-      creatingFirstTimeline
-    ) {
+    if (!localProjectSlug || !localProjectId || creatingFirstTimeline) {
       return;
     }
     setCreatingFirstTimeline(true);
@@ -1172,7 +1047,6 @@ export default function VideoEditorPage() {
   // mounted project prevent failed creation from becoming a background loop.
   useEffect(() => {
     if (
-      !isAstridWorkspaceV1 ||
       mode !== "local" ||
       !localProjectId ||
       localTimelineId ||
@@ -1199,12 +1073,7 @@ export default function VideoEditorPage() {
   ]);
 
   const handleCreateAdditionalTimeline = useCallback(async () => {
-    if (
-      !isAstridWorkspaceV1 ||
-      !localProjectSlug ||
-      !localProjectId ||
-      creatingFirstTimeline
-    ) {
+    if (!localProjectSlug || !localProjectId || creatingFirstTimeline) {
       return;
     }
     setCreatingFirstTimeline(true);
@@ -1328,7 +1197,7 @@ export default function VideoEditorPage() {
       (current) => {
         const next = new URLSearchParams(current);
         next.set("localProject", localProjectSlug);
-        // Prefer the ULID: it is the routable address for bridge requests,
+        // Prefer the ULID: it is the routable address for timeline requests,
         // while the canonical timeline_id is identity only.
         next.set(
           "localTimeline",
@@ -1368,7 +1237,6 @@ export default function VideoEditorPage() {
         onSelectTimeline={handleSelectTimeline}
         onSetPrimaryTimeline={handleSetPrimaryTimeline}
         onCreateTimeline={
-          isAstridWorkspaceV1 &&
           (discovery.timelinesQuery.data?.timelines?.length ?? 0) > 0
             ? handleCreateAdditionalTimeline
             : undefined
@@ -1609,27 +1477,6 @@ export default function VideoEditorPage() {
       showProjectControls={false}
     />
   ) : null;
-
-  if (!isAstridWorkspaceV1) {
-    return (
-      <div className="flex h-full flex-col">
-        <AppHeader showProjectControls={false} />
-        <div className="m-auto max-w-lg p-6" role="alert">
-          <h1 className="text-lg font-medium">Connect the local workspace</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            This app has not connected to its local workspace. Open workspace
-            settings to connect, then retry.
-          </p>
-          <Button
-            className="mt-3"
-            onClick={() => dispatchAppEvent("openSettings", {})}
-          >
-            Workspace settings
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   if (mode === "runtime") {
     return (

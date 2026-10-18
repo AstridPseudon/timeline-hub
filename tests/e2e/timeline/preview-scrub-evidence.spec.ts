@@ -3,19 +3,16 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import {
-  BRIDGE_ORIGIN,
   EDITOR_URL,
   EDITOR_SETTLE_MS,
-  PROJECT_SLUG,
-  TIMELINE_SLUG,
   browserEvidencePath,
+  publishFakeRuntimeComposition,
 } from './support';
 
 const execFileAsync = promisify(execFile);
 const FPS = 30;
 const PREVIEW = '[data-testid="video-editor-preview-surface"]';
 const RULER = '[data-testid="timeline-ruler"]';
-const TIMELINE_URL = `${BRIDGE_ORIGIN}/projects/${PROJECT_SLUG}/timelines/${TIMELINE_SLUG}`;
 const SOURCE_ROOT = process.cwd();
 
 type EvidenceRecord = {
@@ -41,7 +38,6 @@ type EvidenceState = {
 };
 type FixtureClip = { id: string; asset?: string; from?: number; to?: number; [key: string]: unknown };
 type FixtureConfig = { clips: FixtureClip[]; [key: string]: unknown };
-type FixtureTimeline = { config: FixtureConfig; registry: Record<string, unknown>; config_version: number };
 type EvidenceWindow = Window & { __SCRUB_EVIDENCE__: EvidenceState };
 type RulerMap = { x1: number; time1: number; pixelsPerSecond: number };
 type SeekEvidence = { observedTime: number; inputStartedAt: number; dispatchCount: number; inputToDispatchMs: number };
@@ -219,29 +215,16 @@ async function matchPixels(
   throw new Error(`pixel match timeout for ${label}: last RMSE=${last?.rmse ?? 'none'}, threshold=${threshold}`);
 }
 
-async function readTimeline(): Promise<FixtureTimeline> {
-  const response = await fetch(TIMELINE_URL);
-  if (!response.ok) throw new Error(`timeline GET failed: ${response.status}`);
-  return response.json() as Promise<FixtureTimeline>;
-}
-
+/** Edit the persisted head the way a second writer would: a new Runtime revision published against the head just read. */
 async function replaceConfig(update: (config: FixtureConfig) => void): Promise<void> {
-  const timeline = await readTimeline();
-  const config = structuredClone(timeline.config);
-  update(config);
-  const response = await fetch(`${TIMELINE_URL}/save`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ config, registry: timeline.registry, expected_version: timeline.config_version }),
-  });
-  if (!response.ok) throw new Error(`timeline save failed: ${response.status} ${await response.text()}`);
+  await publishFakeRuntimeComposition(({ config }) => update(config as FixtureConfig));
 }
 
 async function refreshLiveQueries(page: Page): Promise<void> {
-  // The local bridge provider intentionally uses the shared 30s timeline
-  // refresh cadence and does not expose an imperative query invalidator.
-  // Wait one full cadence after the external CAS save; this remains live and
-  // avoids a reload or a test-only cache mutation.
+  // The Runtime provider uses the shared 30s timeline refresh cadence and
+  // does not expose an imperative query invalidator. Wait one full cadence
+  // after the external publish; this remains live and avoids a reload or a
+  // test-only cache mutation.
   await page.waitForTimeout(31_500);
 }
 

@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { BASE_URL, PROJECT_SLUG, TIMELINE_SLUG } from './support.ts';
+import { editorUrl } from './support.ts';
 
 const EXPECTED_CAPTIONS = 4;
 const EXPECTED_RENDERED_SEGMENTS = 5;
-const EDITOR_URL = `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1&transcriptLaneFixture=render-matrix&runawayTimelineProject=runaway-8085`;
+const EDITOR_URL = editorUrl({ params: { transcriptLaneFixture: 'render-matrix', runawayTimelineProject: 'runaway-8085' } });
 
 test.describe('transcript overlap hit targets', () => {
   test.use({ viewport: { width: 1280, height: 800 } });

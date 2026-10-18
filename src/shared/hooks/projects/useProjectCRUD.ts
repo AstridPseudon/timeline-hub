@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { AstridLocalClient } from '@/integrations/astrid/client';
 import { ensureProjectHasTimeline } from '@/integrations/runtime/createDefaultTimeline';
 import { bridgeCapabilityUnavailable } from '@/integrations/astrid/capability';
-import { isAstridWorkspaceV1 } from '@/integrations/astrid/workspaceV1';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { Project } from '@/types/project';
 import { UserPreferences } from '@/shared/settings/userPreferences';
@@ -69,7 +68,7 @@ interface UseProjectCRUDOptions {
  */
 export function useProjectCRUD({
   userId,
-  selectedProjectId,
+  selectedProjectId: _selectedProjectId,
   onProjectsLoaded,
   onProjectCreated,
   onProjectDeleted: _onProjectDeleted,
@@ -149,41 +148,36 @@ export function useProjectCRUD({
     }
     setIsCreatingProject(true);
     try {
-      if (isUrlOwnedMode || isAstridWorkspaceV1) {
-        const created = await new AstridLocalClient({ projectSlug: '__discovery__' }).projects.create({
-          name: projectData.name.trim(),
-          slug: projectSlugFromName(projectData.name),
-          metadata: { aspect_ratio: projectData.aspectRatio },
+      const created = await new AstridLocalClient({ projectSlug: '__discovery__' }).projects.create({
+        name: projectData.name.trim(),
+        slug: projectSlugFromName(projectData.name),
+        metadata: { aspect_ratio: projectData.aspectRatio },
+      });
+      const createdProject = mapDbProjectToProject({
+        id: created.data.slug,
+        name: created.data.name,
+        user_id: 'local-user',
+        aspect_ratio: created.data.metadata.aspect_ratio,
+        created_at: created.data.created_at,
+      });
+      setProjects((current) => [...current.filter((project) => project.id !== createdProject.id), createdProject]);
+      try {
+        await ensureProjectHasTimeline(created.data.project_id);
+      } catch (timelineError: unknown) {
+        normalizeAndPresentError(timelineError, {
+          context: 'ProjectContext',
+          toastTitle: 'Project created; its first timeline could not be created',
         });
-        const createdProject = mapDbProjectToProject({
-          id: created.data.slug,
-          name: created.data.name,
-          user_id: 'local-user',
-          aspect_ratio: created.data.metadata.aspect_ratio,
-          created_at: created.data.created_at,
-        });
-        setProjects((current) => [...current.filter((project) => project.id !== createdProject.id), createdProject]);
-        try {
-          await ensureProjectHasTimeline(created.data.project_id);
-        } catch (timelineError: unknown) {
-          normalizeAndPresentError(timelineError, {
-            context: 'ProjectContext',
-            toastTitle: 'Project created; its first timeline could not be created',
-          });
-        }
-        onProjectCreated(createdProject);
-        return createdProject;
       }
-      if (!userId) throw new Error('Not authenticated');
-      void selectedProjectId;
-      throw bridgeCapabilityUnavailable('create project', 'Create the project with the Astrid CLI, then refresh this page.');
+      onProjectCreated(createdProject);
+      return createdProject;
     } catch (err: unknown) {
       normalizeAndPresentError(err, { context: 'ProjectContext', toastTitle: 'Failed to create project' });
       return null;
     } finally {
       setIsCreatingProject(false);
     }
-  }, [isUrlOwnedMode, onProjectCreated, userId, selectedProjectId]);
+  }, [onProjectCreated]);
 
   const updateProject = useCallback(async (projectId: string, updates: ProjectUpdate): Promise<boolean> => {
     if (!updates.name?.trim() && !updates.aspectRatio) {

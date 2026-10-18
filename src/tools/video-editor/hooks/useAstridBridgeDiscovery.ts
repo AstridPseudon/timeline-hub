@@ -4,9 +4,6 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { z, type ZodType } from 'zod';
 import {
   BRIDGE_REQUEST_TIMEOUT_MS,
-  bridgeHealthSchema,
-  bridgeProjectsSchema,
-  bridgeTimelinesSchema,
   parseBridgePayload,
   runtimeProjectPageSchema,
 } from '@/tools/video-editor/data/bridgeContract.ts';
@@ -15,13 +12,12 @@ import type {
   BridgeProjectsPayload,
   BridgeTimelinesPayload,
 } from '@/tools/video-editor/data/bridgeContract.ts';
-import type { AstridBridgeRequestObservation } from '@/tools/video-editor/data/AstridBridgeDataProvider.ts';
+import type { AstridBridgeRequestObservation } from '@/integrations/astrid/transport.ts';
 import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import { astridBase } from '@/integrations/runtime/connection.ts';
 import {
   astridProjectCollectionPath,
   astridTimelineCollectionPath,
-  isAstridWorkspaceV1,
 } from '@/integrations/astrid/workspaceV1.ts';
 
 /**
@@ -179,23 +175,14 @@ export function useAstridBridgeDiscovery({
   const healthQuery = useQuery({
     queryKey: ['astrid-bridge', 'health'],
     queryFn: async () => {
-      if (isAstridWorkspaceV1) {
-        try {
-          await assertNativeEditorConnection();
-          nativeProbeFailures.current = 0;
-          return true;
-        } catch (error) {
-          nativeProbeFailures.current += 1;
-          throw error;
-        }
+      try {
+        await assertNativeEditorConnection();
+        nativeProbeFailures.current = 0;
+        return true;
+      } catch (error) {
+        nativeProbeFailures.current += 1;
+        throw error;
       }
-      const payload = await fetchBridgeJson(
-        '/health',
-        bridgeHealthSchema,
-        'health response',
-        onBridgeRequest,
-      );
-      return payload.ok === true;
     },
     enabled: currentLocal || open,
     staleTime: 0,
@@ -205,7 +192,7 @@ export function useAstridBridgeDiscovery({
     // is waiting on its initial project discovery; polling here lets the page
     // continue without a manual reload.
     refetchInterval: (query) =>
-      currentLocal && (!isAstridWorkspaceV1 || nativeProbeFailures.current < 3)
+      currentLocal && nativeProbeFailures.current < 3
         && (query.state.status === 'error' || query.state.data === false)
         ? BRIDGE_DISCOVERY_POLL_MS
         : false,
@@ -217,30 +204,22 @@ export function useAstridBridgeDiscovery({
   const projectsQuery = useQuery({
     queryKey: ['astrid-bridge', 'projects'],
     queryFn: async () => {
-      if (isAstridWorkspaceV1) {
-        const payload = await fetchBridgeJson(
-          `${astridProjectCollectionPath()}?limit=200`,
-          runtimeProjectPageSchema,
-          'projects list',
-          onBridgeRequest,
-        );
-        return {
-          projects: payload.items.map((project) => ({
-            slug: project.slug,
-            name: project.name,
-            project_id: project.project_id,
-            version: project.version,
-            created_at: project.created_at,
-            metadata: project.metadata,
-          })),
-        };
-      }
-      return fetchBridgeJson(
-        '/projects',
-        bridgeProjectsSchema,
+      const payload = await fetchBridgeJson(
+        `${astridProjectCollectionPath()}?limit=200`,
+        runtimeProjectPageSchema,
         'projects list',
         onBridgeRequest,
       );
+      return {
+        projects: payload.items.map((project) => ({
+          slug: project.slug,
+          name: project.name,
+          project_id: project.project_id,
+          version: project.version,
+          created_at: project.created_at,
+          metadata: project.metadata,
+        })),
+      };
     },
     enabled: (currentLocal || open) && bridgeHealthy,
     staleTime: 0,
@@ -271,72 +250,60 @@ export function useAstridBridgeDiscovery({
       selectedProjectDefaultTimeline ?? null,
     ],
     queryFn: async () => {
-      if (isAstridWorkspaceV1) {
-        const payload = await fetchBridgeJson(
-          `${astridTimelineCollectionPath(selectedProjectSlug!)}?limit=200`,
-          runtimeTimelinePageSchema,
-          'timelines list',
-          onBridgeRequest,
-        );
-        const runtimeProjectId = selectedProject?.project_id ?? null;
-        const runtime = runtimeProjectId ? new AstridRuntimeClient() : null;
-        const timelines = await Promise.all(payload.items.map(async (timeline) => {
-          let name = timeline.name?.trim() || undefined;
-          if ((!name || name === timeline.timeline_id) && runtime && runtimeProjectId && timeline.head_revision_id) {
-            try {
-              const revision = await runtime.getProjectParentCompositionRevision(
-                runtimeProjectId,
-                timeline.timeline_id,
-                timeline.head_revision_id,
-              );
-              // Immutable revision reads wrap the canonical composition under
-              // `payload`; older connector responses may expose
-              // `parent_composition` directly. Accept both contract shapes.
-              const revisionPayload = revision.payload;
-              const parentComposition = revision.parent_composition;
-              const compositionValue = revisionPayload && typeof revisionPayload === 'object'
-                ? revisionPayload
-                : parentComposition && typeof parentComposition === 'object'
-                  ? parentComposition
-                  : null;
-              if (compositionValue) {
-                const composition = compositionValue as Record<string, unknown>;
-                name = (typeof composition.name === 'string' && composition.name.trim())
-                  || (typeof composition.slug === 'string' && composition.slug.trim())
-                  || name;
-              }
-            } catch {
-              // Timeline labels are optional metadata; keep the stable id as a
-              // fallback when an older Runtime cannot return the immutable head.
-            }
-          }
-          return {
-            ...timeline,
-            name: name ?? timeline.slug ??
-              (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(timeline.timeline_id)
-                ? timeline.timeline_id
-                : 'Untitled timeline'),
-          };
-        }));
-        return {
-          timelines: annotateAstridTimelines(
-            timelines,
-            selectedProjectDefaultTimeline,
-          ),
-        };
-      }
       const payload = await fetchBridgeJson(
-        `/projects/${encodeURIComponent(selectedProjectSlug!)}/timelines`,
-        bridgeTimelinesSchema,
+        `${astridTimelineCollectionPath(selectedProjectSlug!)}?limit=200`,
+        runtimeTimelinePageSchema,
         'timelines list',
         onBridgeRequest,
       );
+      const runtimeProjectId = selectedProject?.project_id ?? null;
+      const runtime = runtimeProjectId ? new AstridRuntimeClient() : null;
+      const timelines = await Promise.all(payload.items.map(async (timeline) => {
+        let name = timeline.name?.trim() || undefined;
+        if ((!name || name === timeline.timeline_id) && runtime && runtimeProjectId && timeline.head_revision_id) {
+          try {
+            const revision = await runtime.getProjectParentCompositionRevision(
+              runtimeProjectId,
+              timeline.timeline_id,
+              timeline.head_revision_id,
+            );
+            // Immutable revision reads wrap the canonical composition under
+            // `payload`; older connector responses may expose
+            // `parent_composition` directly. Accept both contract shapes.
+            const revisionPayload = revision.payload;
+            const parentComposition = revision.parent_composition;
+            const compositionValue = revisionPayload && typeof revisionPayload === 'object'
+              ? revisionPayload
+              : parentComposition && typeof parentComposition === 'object'
+                ? parentComposition
+                : null;
+            if (compositionValue) {
+              const composition = compositionValue as Record<string, unknown>;
+              name = (typeof composition.name === 'string' && composition.name.trim())
+                || (typeof composition.slug === 'string' && composition.slug.trim())
+                || name;
+            }
+          } catch {
+            // Timeline labels are optional metadata; keep the stable id as a
+            // fallback when an older Runtime cannot return the immutable head.
+          }
+        }
+        return {
+          ...timeline,
+          name: name ?? timeline.slug ??
+            (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(timeline.timeline_id)
+              ? timeline.timeline_id
+              : 'Untitled timeline'),
+        };
+      }));
       return {
-        timelines: annotateAstridTimelines(payload.timelines ?? [], selectedProjectDefaultTimeline),
+        timelines: annotateAstridTimelines(
+          timelines,
+          selectedProjectDefaultTimeline,
+        ),
       };
     },
-    enabled: bridgeHealthy && Boolean(selectedProjectSlug)
-      && (!isAstridWorkspaceV1 || Boolean(selectedProject?.project_id)),
+    enabled: bridgeHealthy && Boolean(selectedProjectSlug) && Boolean(selectedProject?.project_id),
     staleTime: 0,
     retry: 0,
   });

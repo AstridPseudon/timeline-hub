@@ -1,15 +1,17 @@
 import { expect, test, type BrowserContext } from '@playwright/test';
-import { resetBridgeBaseline } from './support';
+import { PROJECT_ID, TIMELINE_SLUG, editorPath, resetFakeRuntimeBaseline, showDataLanes } from './support';
 
-const EDITOR_URL = '/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline'
-  + '&localTest=1&timelineOverlayCanary=1&transcriptLaneFixture=render-matrix'
-  + '&runawayTimelineProject=runaway-8085';
+const EDITOR_URL = editorPath({
+  params: { timelineOverlayCanary: '1', transcriptLaneFixture: 'render-matrix', runawayTimelineProject: 'runaway-8085' },
+});
 const RUNAWAY_REQUEST = '**/api/astrid/v1/projects/runaway-8085/runaway-transitions?*';
-// The local proxy accepts both the legacy v1 route and the current bridge
-// route; timeline hydration uses the latter after the Astrid cutover.
-const PROJECT_DATA_PATH = /\/api\/astrid(?:\/v1)?\/projects\/demo-project\/timelines\/demo-timeline(?:\/registry)?$/;
-const BRIDGE_DATA_PATH = new RegExp(
-  `${PROJECT_DATA_PATH.source}|/api/astrid/v1/projects/[^/]+/runaway-transitions$`,
+// Timeline hydration reads the head composition from the Runtime (`composition-revisions/<head>`, through the
+// Vite proxy at `/api/runtime`); the Runaway lane reads its rows from the Astrid bridge proxy.
+const PROJECT_DATA_PATH = new RegExp(
+  `^/api/runtime/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_SLUG}/composition-revisions/[^/]+$`,
+);
+const DATA_REQUEST_PATH = new RegExp(
+  `${PROJECT_DATA_PATH.source}|^/api/astrid/v1/projects/[^/]+/runaway-transitions$`,
 );
 const CAPABILITY_PROBE_PATH = /^\/api\/astrid\/projects\/[^/]+\/media\/__astrid_capability_probe__\/content$/;
 const ABORTED_RUNAWAY_PATH = /^\/api\/astrid\/v1\/projects\/runaway-8085\/runaway-transitions$/;
@@ -54,8 +56,8 @@ const BUDGET = {
   commandSearchMs: 1_500,
   virtualScrollMs: 2_000,
   quietWindowMs: 5_000,
-  quietBridgeRequests: 4,
-  burstBridgeRequests: 4,
+  quietDataRequests: 4,
+  burstDataRequests: 4,
   domNodes: 5_000,
   heapBytes: 256 * 1024 * 1024,
   heapGrowthBytes: 64 * 1024 * 1024,
@@ -84,15 +86,16 @@ test.describe('extension performance and resource budgets', () => {
 
   test('bounds startup, activation, command search, virtualization, DOM, and heap', async ({ context, page }, testInfo) => {
     test.setTimeout(120_000);
-    expect(await resetBridgeBaseline()).toBeNull();
+    expect(await resetFakeRuntimeBaseline()).toBeNull();
     await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
+    await showDataLanes(page);
 
     const issues = collectIssues(page);
-    const bridgeDataRequests: string[] = [];
+    const dataRequests: string[] = [];
     const projectDataBodies: Promise<number>[] = [];
     page.on('request', (request) => {
-      if (BRIDGE_DATA_PATH.test(new URL(request.url()).pathname)) {
-        bridgeDataRequests.push(request.url());
+      if (DATA_REQUEST_PATH.test(new URL(request.url()).pathname)) {
+        dataRequests.push(request.url());
       }
     });
     page.on('response', (response) => {
@@ -121,7 +124,7 @@ test.describe('extension performance and resource budgets', () => {
     const readyNow = await page.evaluate(() => performance.now());
     const hydrationMs = Math.max(0, readyNow - navigationTiming.domContentLoadedEventEnd);
     await expect.poll(() => projectDataBodies.length, {
-      message: 'the local bridge must expose a serialized timeline payload',
+      message: 'the Runtime must serve a serialized timeline payload',
       timeout: 5_000,
     }).toBeGreaterThan(0);
     const projectDataBytes = Math.max(0, ...(await Promise.all(projectDataBodies)));
@@ -164,7 +167,7 @@ test.describe('extension performance and resource budgets', () => {
     expect(contributionCount).toBeGreaterThan(0);
     expect(contributionCount).toBeLessThanOrEqual(BUDGET.contributionCount);
 
-    const requestsBeforeBurst = bridgeDataRequests.length;
+    const requestsBeforeBurst = dataRequests.length;
     await page.locator('.timeline-canvas-edit-area').evaluate((scroller) => {
       const end = scroller.scrollWidth;
       for (let index = 0; index < 24; index += 1) {
@@ -175,13 +178,13 @@ test.describe('extension performance and resource budgets', () => {
       }
     });
     await expect(page.getByTestId('runaway-timeline-lane')).toHaveAttribute('data-window-end', '566');
-    const burstBridgeRequests = bridgeDataRequests.length - requestsBeforeBurst;
-    expect(burstBridgeRequests).toBeLessThanOrEqual(BUDGET.burstBridgeRequests);
+    const burstDataRequests = dataRequests.length - requestsBeforeBurst;
+    expect(burstDataRequests).toBeLessThanOrEqual(BUDGET.burstDataRequests);
 
-    const quietWindowStart = bridgeDataRequests.length;
+    const quietWindowStart = dataRequests.length;
     await page.waitForTimeout(BUDGET.quietWindowMs);
-    const quietBridgeRequests = bridgeDataRequests.length - quietWindowStart;
-    expect(quietBridgeRequests).toBeLessThanOrEqual(BUDGET.quietBridgeRequests);
+    const quietDataRequests = dataRequests.length - quietWindowStart;
+    expect(quietDataRequests).toBeLessThanOrEqual(BUDGET.quietDataRequests);
 
     const dom = await page.evaluate(() => ({
       nodes: document.getElementsByTagName('*').length,
@@ -208,8 +211,8 @@ test.describe('extension performance and resource budgets', () => {
         contributionCount,
         commandSearchMs,
         virtualScrollMs,
-        burstBridgeRequests,
-        quietBridgeRequests,
+        burstDataRequests,
+        quietDataRequests,
         domNodes: dom.nodes,
         mountedRunaway: dom.mountedRunaway,
         heapBytes: heapAfterBytes,
@@ -244,6 +247,7 @@ test.describe('extension performance and resource budgets', () => {
       await route.abort('internetdisconnected');
     });
     await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
+    await showDataLanes(page);
     await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
 
     const state = page.getByTestId('runaway-load-state');

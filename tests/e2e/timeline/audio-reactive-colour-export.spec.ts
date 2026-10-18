@@ -2,18 +2,21 @@ import { expect, test } from '@playwright/test';
 import { execFile } from 'node:child_process';
 import { readFile, stat } from 'node:fs/promises';
 import { promisify } from 'node:util';
+import { AUDIO_REACTIVE_OFFSET_START_FRAME } from '../../../src/test/fakeRuntimeSeed.mjs';
 import {
-  AUDIO_REACTIVE_OFFSET_START_FRAME,
-} from '../../../src/test/bridgeFixtures.mjs';
-import { BASE_URL, BRIDGE_ORIGIN, PROJECT_SLUG, browserEvidencePath } from './support';
+  FAKE_RUNTIME_ORIGIN,
+  browserEvidencePath,
+  editorUrl,
+  fakeRuntimeAuthHeaders,
+  readFakeRuntimeComposition,
+  resetFakeRuntimeBaseline,
+} from './support';
 
 const execFileAsync = promisify(execFile);
 const TIMELINE_SLUG = 'audio-reactive-colour-timeline';
 const OFFSET_TIMELINE_SLUG = 'audio-reactive-colour-offset-timeline';
-const TIMELINE_URL = `${BRIDGE_ORIGIN}/projects/${PROJECT_SLUG}/timelines/${TIMELINE_SLUG}`;
-const OFFSET_TIMELINE_URL = `${BRIDGE_ORIGIN}/projects/${PROJECT_SLUG}/timelines/${OFFSET_TIMELINE_SLUG}`;
-const EDITOR_URL = `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1&localBrowserRender=1`;
-const OFFSET_EDITOR_URL = `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${OFFSET_TIMELINE_SLUG}&localTest=1&localBrowserRender=1`;
+const EDITOR_URL = editorUrl({ timeline: TIMELINE_SLUG, params: { localBrowserRender: '1' } });
+const OFFSET_EDITOR_URL = editorUrl({ timeline: OFFSET_TIMELINE_SLUG, params: { localBrowserRender: '1' } });
 const FRAME_COUNT = 18;
 const FPS = 30;
 const COLOR_TOLERANCE = 10;
@@ -32,26 +35,35 @@ type ProbeStream = {
   channels?: number;
 };
 
-async function requireCanonicalShotComposition(
-  timelineUrl: string,
+type Composition = Awaited<ReturnType<typeof readFakeRuntimeComposition>>;
+
+/**
+ * The persisted head composition of a seeded timeline, read from the Runtime (not through the editor).
+ * A composition without its config, registry and clips is an incomplete fixture: refuse to start a
+ * browser export against it.
+ */
+async function requireCanonicalComposition(
   expectedTimelineId: string,
   purpose: string,
-): Promise<Record<string, unknown>> {
-  const response = await fetch(timelineUrl);
-  expect(response.ok, `${purpose}: timeline setup returned HTTP ${response.status}`).toBe(true);
-  const payload = await response.json() as Record<string, unknown>;
-  expect(payload.timeline_id, `${purpose}: fixture timeline identity`).toBe(expectedTimelineId);
-  const composition = payload.shot_composition;
+): Promise<Composition> {
+  const composition = await readFakeRuntimeComposition(expectedTimelineId);
+  for (const part of ['config', 'registry'] as const) {
+    expect(
+      composition[part] !== null && typeof composition[part] === 'object' && !Array.isArray(composition[part]),
+      `${purpose}: canonical ${part} is absent from the head composition of ${expectedTimelineId}; refusing to start a browser export against an incomplete fixture.`,
+    ).toBe(true);
+  }
   expect(
-    composition,
-    `${purpose}: canonical shot_composition is absent for ${expectedTimelineId}; refusing to start a browser export against an incomplete fixture. Historical v12 data is not substituted.`,
-  ).toBeDefined();
-  expect(
-    composition !== null && typeof composition === 'object' && !Array.isArray(composition),
-    `${purpose}: shot_composition must be a canonical object for ${expectedTimelineId}`,
+    Array.isArray(composition.payload.clips),
+    `${purpose}: the head composition of ${expectedTimelineId} carries no clips[]`,
   ).toBe(true);
-  return payload;
+  return composition;
 }
+
+/** A write to the timeline: `POST .../timelines/<id>/composition-revisions` (rendering must never make one). */
+const isCompositionPublish = (method: string, pathname: string): boolean => (
+  method === 'POST' && /\/timelines\/[^/]+\/composition-revisions$/.test(pathname)
+);
 
 function expectedRgb(
   frame: number,
@@ -210,44 +222,60 @@ test.describe('audio-reactive-colour browser export proof', () => {
   test.use({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
 
   test('loads and plays the managed source_audio asset after a user gesture', async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     const pageErrors: string[] = [];
     const consoleErrors: string[] = [];
     const sourceRequests: Array<{ method: string; status: number; url: string }> = [];
+    let sourceAudioDigest = '\0unset';
     page.on('pageerror', (error) => pageErrors.push(error.message));
     page.on('console', (message) => {
       if (message.type() === 'error') consoleErrors.push(message.text());
     });
     page.on('response', (response) => {
-      if (response.url().includes('/assets/source_audio')) {
+      if (decodeURIComponent(response.url()).includes(sourceAudioDigest)) {
         sourceRequests.push({ method: response.request().method(), status: response.status(), url: response.url() });
       }
     });
 
-    const reset = await fetch(`${BRIDGE_ORIGIN}/__test/reset`, { method: 'POST' });
-    expect(reset.ok).toBe(true);
-    const sourceUrl = `${BRIDGE_ORIGIN}/projects/${PROJECT_SLUG}/timelines/${TIMELINE_SLUG}/assets/source_audio`;
-    const head = await page.request.fetch(sourceUrl, { method: 'HEAD' });
+    expect(await resetFakeRuntimeBaseline()).toBeNull();
+    // The managed source audio is a content-addressed Runtime object: the registry entry names its digest
+    // and the editor reads the bytes from `/v1/objects/<digest>` (through the Vite proxy).
+    const { registry } = await requireCanonicalComposition(TIMELINE_SLUG, 'audio-reactive source audio');
+    const sourceDigest = registry.assets.source_audio.media_id as string;
+    sourceAudioDigest = sourceDigest;
+    expect(sourceDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+    const sourceUrl = `${FAKE_RUNTIME_ORIGIN}/v1/objects/${encodeURIComponent(sourceDigest)}`;
+    const authHeaders = fakeRuntimeAuthHeaders();
+    const head = await page.request.fetch(sourceUrl, { method: 'HEAD', headers: authHeaders });
     expect(head.status()).toBe(200);
     expect(head.headers()['accept-ranges']).toBe('bytes');
     expect(head.headers()['content-type']).toContain('audio/wav');
     expect(Number(head.headers()['content-length'])).toBeGreaterThan(100);
-    const range = await page.request.get(sourceUrl, { headers: { Range: 'bytes=0-127' } });
+    const range = await page.request.get(sourceUrl, { headers: { ...authHeaders, Range: 'bytes=0-127' } });
     expect(range.status()).toBe(206);
     expect(range.headers()['content-range']).toMatch(/^bytes 0-127\//);
     expect((await range.body())).toHaveLength(128);
 
     await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
-    await expect.poll(async () => page.locator('audio').evaluateAll((elements) => elements.some((element) => (
-      element.src.includes('/assets/source_audio')
-      && element.readyState >= 2
-      && Number.isFinite(element.duration)
-      && element.error === null
-    ))), { timeout: 30_000 }).toBe(true);
-    const before = await page.locator('audio').evaluateAll((elements) => {
-      const audio = elements.find((element) => element.src.includes('/assets/source_audio'));
-      return audio ? { readyState: audio.readyState, duration: audio.duration, currentTime: audio.currentTime, paused: audio.paused } : null;
-    });
+    // The element playing the managed source audio: the one whose src names the registry digest.
+    const sourceAudioState = () => page.locator('audio').evaluateAll((elements, digest) => {
+      const audio = (elements as HTMLAudioElement[]).find((element) => decodeURIComponent(element.src).includes(digest));
+      return audio
+        ? {
+          readyState: audio.readyState,
+          duration: audio.duration,
+          currentTime: audio.currentTime,
+          paused: audio.paused,
+          errored: audio.error !== null,
+        }
+        : null;
+    }, sourceDigest);
+    await expect.poll(async () => {
+      const state = await sourceAudioState();
+      return Boolean(state && state.readyState >= 2 && Number.isFinite(state.duration) && !state.errored);
+      // A cold Vite module graph (the first page of a run) needs about a minute before the editor mounts.
+    }, { timeout: 90_000 }).toBe(true);
+    const before = await sourceAudioState();
     expect(before).not.toBeNull();
     expect(before?.readyState).toBeGreaterThanOrEqual(2);
     expect(Number.isFinite(before?.duration)).toBe(true);
@@ -256,12 +284,12 @@ test.describe('audio-reactive-colour browser export proof', () => {
     const playButton = page.getByRole('button', { name: 'Play', exact: true }).first();
     await expect(playButton).toBeVisible({ timeout: 15_000 });
     await playButton.click();
-    await expect.poll(async () => page.locator('audio').evaluateAll((elements) => {
-      const audio = elements.find((element) => element.src.includes('/assets/source_audio'));
-      return Boolean(audio && audio.readyState >= 2 && audio.error === null && audio.paused === false);
-    }), { timeout: 15_000 }).toBe(true);
-    const playingAt = await page.locator('audio').evaluateAll((elements) => elements.find((element) => element.src.includes('/assets/source_audio'))?.currentTime ?? -1);
-    await expect.poll(async () => page.locator('audio').evaluateAll((elements) => elements.find((element) => element.src.includes('/assets/source_audio'))?.currentTime ?? -1), { timeout: 5_000 }).toBeGreaterThan(playingAt);
+    await expect.poll(async () => {
+      const state = await sourceAudioState();
+      return Boolean(state && state.readyState >= 2 && !state.errored && state.paused === false);
+    }, { timeout: 15_000 }).toBe(true);
+    const playingAt = (await sourceAudioState())?.currentTime ?? -1;
+    await expect.poll(async () => (await sourceAudioState())?.currentTime ?? -1, { timeout: 5_000 }).toBeGreaterThan(playingAt);
     expect(sourceRequests.some((request) => request.status === 200)).toBe(true);
     expect(sourceRequests.some((request) => request.status === 206)).toBe(true);
     expect(pageErrors).toEqual([]);
@@ -284,7 +312,7 @@ test.describe('audio-reactive-colour browser export proof', () => {
       if (/(supabase\.co|127\.0\.0\.1:54321|localhost:54321|\/auth\/v1\/|\/rest\/v1\/|\/functions\/v1\/)/.test(url)) {
         forbiddenRequests.push(url);
       }
-      if (request.method() === 'POST' && /\/timelines\/[^/]+\/save$/.test(new URL(url).pathname)) {
+      if (isCompositionPublish(request.method(), new URL(url).pathname)) {
         saveRequests.push(url);
       }
     });
@@ -292,17 +320,11 @@ test.describe('audio-reactive-colour browser export proof', () => {
       if (response.status() === 404) notFoundResponses.push(response.url());
     });
 
-    const reset = await fetch(`${BRIDGE_ORIGIN}/__test/reset`, { method: 'POST' });
-    expect(reset.ok).toBe(true);
-    const before = await requireCanonicalShotComposition(
-      TIMELINE_URL,
+    expect(await resetFakeRuntimeBaseline()).toBeNull();
+    const before = await requireCanonicalComposition(
       TIMELINE_SLUG,
       'audio-reactive marker export',
-    ) as {
-      config: Record<string, unknown>;
-      registry: Record<string, unknown>;
-      config_version: number;
-    };
+    );
     expect(before.config.output).toMatchObject({ resolution: '640x360', fps: FPS });
     expect(before.config.clips).toHaveLength(2);
 
@@ -338,7 +360,7 @@ test.describe('audio-reactive-colour browser export proof', () => {
     await assertDecodedFixture(outputPath);
 
     // Rendering is client-only and must not write the timeline. Repeat it to
-    // prove idempotency and to catch accidental bridge persistence coupling.
+    // prove idempotency and to catch accidental Runtime persistence coupling.
     await expect(renderButton).toBeEnabled();
     const firstDownloadHref = await downloadLink.getAttribute('href');
     await renderButton.click();
@@ -353,14 +375,8 @@ test.describe('audio-reactive-colour browser export proof', () => {
     expect((await stat(secondOutputPath)).size).toBeGreaterThan(1_000);
     expect((await readFile(secondOutputPath)).subarray(4, 8).toString('ascii')).toBe('ftyp');
     await assertDecodedFixture(secondOutputPath);
-    const afterResponse = await fetch(TIMELINE_URL);
-    expect(afterResponse.ok).toBe(true);
-    const after = await afterResponse.json() as {
-      config: Record<string, unknown>;
-      registry: Record<string, unknown>;
-      config_version: number;
-    };
-    expect(after.config_version).toBe(before.config_version);
+    const after = await readFakeRuntimeComposition(TIMELINE_SLUG);
+    expect(after.headRevisionId).toBe(before.headRevisionId);
     expect(after.config).toEqual(before.config);
     expect(after.registry).toEqual(before.registry);
     expect(saveRequests).toEqual([]);
@@ -387,22 +403,16 @@ test.describe('audio-reactive-colour browser export proof', () => {
       if (/(supabase\.co|127\.0\.0\.1:54321|localhost:54321|\/auth\/v1\/|\/rest\/v1\/|\/functions\/v1\/)/.test(url)) {
         forbiddenRequests.push(url);
       }
-      if (request.method() === 'POST' && /\/timelines\/[^/]+\/save$/.test(new URL(url).pathname)) {
+      if (isCompositionPublish(request.method(), new URL(url).pathname)) {
         saveRequests.push(url);
       }
     });
 
-    const reset = await fetch(`${BRIDGE_ORIGIN}/__test/reset`, { method: 'POST' });
-    expect(reset.ok).toBe(true);
-    const before = await requireCanonicalShotComposition(
-      OFFSET_TIMELINE_URL,
+    expect(await resetFakeRuntimeBaseline()).toBeNull();
+    const before = await requireCanonicalComposition(
       OFFSET_TIMELINE_SLUG,
       'offset audio-reactive marker export',
-    ) as {
-      config: Record<string, unknown>;
-      registry: Record<string, unknown>;
-      config_version: number;
-    };
+    );
     const beforeClips = before.config.clips as Array<{ at: number; params?: { events?: Array<{ frame: number }> } }>;
     expect(before.config.output).toMatchObject({ resolution: '640x360', fps: FPS });
     expect(beforeClips).toHaveLength(2);
@@ -459,14 +469,8 @@ test.describe('audio-reactive-colour browser export proof', () => {
     expect(withinExpectedColor(pixels[9] ?? [], 9, OFFSET_CLIP_START_FRAME, [0x10, 0x20, 0x30])).toBe(true);
     expect(withinExpectedColor(pixels[10] ?? [], 10, OFFSET_CLIP_START_FRAME, [0x10, 0x20, 0x30])).toBe(true);
 
-    const afterResponse = await fetch(OFFSET_TIMELINE_URL);
-    expect(afterResponse.ok).toBe(true);
-    const after = await afterResponse.json() as {
-      config: Record<string, unknown>;
-      registry: Record<string, unknown>;
-      config_version: number;
-    };
-    expect(after.config_version).toBe(before.config_version);
+    const after = await readFakeRuntimeComposition(OFFSET_TIMELINE_SLUG);
+    expect(after.headRevisionId).toBe(before.headRevisionId);
     expect(after.config).toEqual(before.config);
     expect(after.registry).toEqual(before.registry);
     expect(saveRequests).toEqual([]);

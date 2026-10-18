@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import type { Task } from '@/types/tasks';
 import { taskQueryKeys } from '@/shared/lib/queryKeys/tasks';
 import { listBridgeTasks } from '@/integrations/astrid/bridgeTaskReads';
-import { useAstridCapabilityCensus } from '@/integrations/astrid/capabilityCensus.ts';
 import { upsertRealtimeTaskSnapshot } from '@/shared/state/realtimeStore';
 
 /**
@@ -22,7 +21,6 @@ export function taskSnapshotScope(projectIds: readonly string[]): string {
 export function useBridgeTaskSnapshot(
   projectIds: readonly (string | null | undefined)[],
 ) {
-  const capabilityCensus = useAstridCapabilityCensus();
   const normalizedProjectIds = normalizeProjectIds(projectIds);
   const scope = taskSnapshotScope(normalizedProjectIds);
   const queryKey = taskQueryKeys.snapshot(scope);
@@ -43,8 +41,7 @@ export function useBridgeTaskSnapshot(
 
       return tasks;
     },
-    enabled: normalizedProjectIds.length > 0
-      && capabilityCensus.capabilities.tasks !== 'unavailable',
+    enabled: normalizedProjectIds.length > 0,
     staleTime: 0,
     gcTime: 5 * 60 * 1000,
     refetchOnMount: false,

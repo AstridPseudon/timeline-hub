@@ -1,31 +1,26 @@
 /**
- * Canonical fetch-level fake of the frozen doc-27 §4.1 bridge — the ONE
- * vitest-side stand-in for `astrid serve` (no MSW).
+ * Canonical fetch-level fake of the local Runtime's routes (no MSW). The fake
+ * Runtime server (`tests/e2e/fake-runtime/server.ts`) routes every `/v1/*`
+ * request here.
  *
- * - Every handler validates request/response shapes against the extended
- *   schemas in `bridgeContract.ts`, so a fixture drift fails loudly here
+ * - Every handler validates request/response shapes against the schemas in
+ *   `bridgeContract.ts`, so a fixture drift fails loudly here
  *   instead of silently in a browser.
- * - All seed data comes from `src/test/bridgeFixtures.mjs`, the same module
- *   `tests/e2e/timeline/astrid-bridge-stub.mjs` consumes. There is no second
+ * - All seed data comes from `src/test/fakeRuntimeSeed.mjs`, the same module
+ *   `tests/e2e/fake-runtime/server.ts` consumes. There is no second
  *   fixture list anywhere.
  *
  * Error posture mirrors the real server: `{error, detail}` envelope, the
  * five public categories (`invalid_body/not_found/conflict/
- * capability_unavailable/payload_too_large`), frozen timeline codes on the
- * CAS routes, and receipt semantics on admission (replay → 200 with the
- * stored task; key reuse with different bytes → 409 idempotency_mismatch).
+ * capability_unavailable/payload_too_large`) and receipt semantics on admission
+ * (replay → 200 with the stored task; key reuse with different bytes → 409
+ * idempotency_mismatch). It serves no timeline document: the Runtime serves
+ * those through `runtimeFixture` (`fakeWorkspaceRuntime.ts`).
  */
 
 import {
-  bridgeCancelRequestSchema,
-  bridgeGenerationDetailPayloadSchema,
-  bridgeGenerationListSchema,
   bridgeTaskAdmissionRequestSchema,
   bridgeTaskAdmissionResponseSchema,
-  bridgeTaskDetailPayloadSchema,
-  bridgeTaskListSchema,
-  bridgeTimelinePayloadSchema,
-  BRIDGE_VERSION_CONFLICT_CODE,
   runtimeGenerationPageSchema,
   runtimeGenerationResourceSchema,
   runtimeProjectPageSchema,
@@ -37,16 +32,33 @@ import {
   type RuntimeCapability,
   type RuntimeManagedObject,
 } from '@/tools/video-editor/data/bridgeContract.ts';
-import {
-  AVAILABLE_FAMILIES,
-  createJourneyState,
-  fixtureUlid,
-  makeAttemptWireShape,
-  makeAdmittedTaskReadModel,
-  taskSummaryFromReadModel,
-} from './bridgeFixtures.mjs';
+import { AVAILABLE_FAMILIES, createJourneyState, makeAttemptWireShape, makeAdmittedTaskReadModel, taskSummaryFromReadModel } from './bridgeFixtures.mjs';
+import { fixtureUlid } from './fakeRuntimeSeed.mjs';
+import type { FakeObjectStore } from './fakeObjectStore.ts';
 
-export type FakeBridgeState = ReturnType<typeof createJourneyState> & {
+export type FakeRuntimeEvent = {
+  event_id: string;
+  sequence: number;
+  cursor: string;
+  event_type: string;
+  aggregate_type: string;
+  aggregate_id: string;
+  payload: Record<string, unknown>;
+  occurred_at: string;
+};
+
+export type FakeRuntimeRouterOptions = {
+  /**
+   * A shared content-addressed object store (see `fakeObjectStore.ts`). When given, the project object
+   * list, ingest and GET read and write it instead of the router's own two maps, and the two placeholder
+   * objects (`sha256:111...`, `sha256:222...`, which have no bytes) are not seeded.
+   */
+  objectStore?: FakeObjectStore;
+  /** The sequence the event feed continues from, so a rebuilt router never rewinds a client's cursor. */
+  eventSequenceStart?: number;
+};
+
+export type FakeRuntimeState = ReturnType<typeof createJourneyState> & {
   /** task_id → full admission read model (`id`-keyed wire shape). */
   admittedByTaskId: Map<string, Record<string, unknown>>;
   /** IdempotencyKey → task_id, for replay responses. */
@@ -57,13 +69,15 @@ export type FakeBridgeState = ReturnType<typeof createJourneyState> & {
   runtimeCapabilities: RuntimeCapability[];
   /** task_id → committed output rows surfaced on the detail read. */
   taskOutputs: Map<string, Array<{ ordinal: number; role: string; media_id: string; is_primary?: boolean }>>;
+  /** The `GET /v1/events` feed: one `task.*` event per admission, cancel and completion, oldest first. */
+  events: FakeRuntimeEvent[];
 };
 
-export type FakeBridgeRouter = {
+export type FakeRuntimeRouter = {
   /** Drop-in fetch target: `(request) => response`. */
   handle(request: Request): Promise<Response>;
   /** Mutate directly to drive poll/cancel scenarios. */
-  state: FakeBridgeState;
+  state: FakeRuntimeState;
   /** Executor hook: mark a task succeeded and commit one output row (R9 media). */
   completeTask(taskId: string, output: { role: string; media_id: string; is_primary?: boolean }): void;
 };
@@ -139,8 +153,15 @@ async function readJsonObject(request: Request): Promise<Record<string, unknown>
   }
 }
 
-export function createFakeBridgeRouter(): FakeBridgeRouter {
-  const state = createJourneyState() as FakeBridgeState;
+/** The one project row; `GET /v1/projects` and `GET /v1/projects/:selector` are built from it. */
+const PROJECT_ROW_ID = 'demo-project-id';
+/** Paging cursors are tagged so they can be told from polling cursors (bare sequence numbers), as the daemon's `numeric` flag does. */
+const PAGING_CURSOR_PREFIX = 'p:';
+
+export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}): FakeRuntimeRouter {
+  const objectStore = options.objectStore;
+  const state = createJourneyState() as FakeRuntimeState;
+  state.events = [];
   state.admittedByTaskId = new Map();
   state.receiptTasks = new Map();
   state.runtimeObjects = new Map();
@@ -160,7 +181,7 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
     estimated_scratch_bytes: 0,
     estimated_output_bytes: 0,
   }];
-  for (const [index, objectId] of ['1', '2'].entries()) {
+  for (const [index, objectId] of (objectStore ? [] : ['1', '2']).entries()) {
     state.runtimeObjects.set(`sha256:${objectId.repeat(64)}`, {
       object_id: `sha256:${objectId.repeat(64)}`,
       digest: `sha256:${objectId.repeat(64)}`,
@@ -187,14 +208,79 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
       media_id: output.media_id,
       ...(output.is_primary ? { is_primary: true } : {}),
     }]);
+    // `effect`, `objects` and `result.outputs` as recorded in `events_page_2_200`.
+    const completedObject = {
+      name: output.role,
+      kind: 'object',
+      digest: output.media_id,
+      media_type: output.role.includes('video') ? 'video/mp4' : 'image/png',
+      size: 0,
+    };
+    emitTaskEvent(taskId, 'task.completed', {
+      effect: null,
+      objects: [completedObject],
+      result: { outputs: [completedObject] },
+    });
   }
 
-  function timelinePayload() {
+  let eventSequence = options.eventSequenceStart ?? 0;
+  function emitTaskEvent(taskId: string, eventType: string, payload: Record<string, unknown>): void {
+    eventSequence += 1;
+    state.events.push({
+      event_id: String(eventSequence),
+      sequence: eventSequence,
+      cursor: String(eventSequence),
+      event_type: eventType,
+      aggregate_type: 'task',
+      aggregate_id: taskId,
+      payload,
+      occurred_at: '2026-09-06T00:00:00Z',
+    });
+  }
+
+  /**
+   * `GET /v1/events`: `limit`, `cursor`, `aggregate_id` and `from=latest`, mirroring the real daemon's two
+   * cursor kinds (`runtime_protocol/service.py` `events_page`, recorded as `events_page_1_200` and
+   * `events_page_2_200`):
+   *  - a polling cursor (`from=latest` mints it) is the bare last sequence seen. It always comes back
+   *    non-null: the newest item's sequence, or the cursor itself when nothing is new;
+   *  - a paging cursor (`p:<sequence>`) is minted only when a page has more behind it. A walk that starts
+   *    with no cursor, or with a paging cursor, ends in `next_cursor: null`.
+   * A cursor of neither shape answers the recorded `invalid_cursor_400` shape.
+   */
+  function listEvents(url: URL): Response {
+    const rawCursor = url.searchParams.get('cursor');
+    const paging = rawCursor !== null && rawCursor.startsWith(PAGING_CURSOR_PREFIX);
+    const cursorKey = rawCursor === null ? null : paging ? rawCursor.slice(PAGING_CURSOR_PREFIX.length) : rawCursor;
+    if (cursorKey !== null && !/^\d+$/.test(cursorKey)) return runtimeError(400, 'invalid_request', 'cursor is invalid');
+    const requestedLimit = Number(url.searchParams.get('limit') ?? '50');
+    const limit = Number.isInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 200) : 50;
+    if (url.searchParams.get('from') === 'latest' && rawCursor === null) {
+      return json(200, { items: [], next_cursor: String(eventSequence) });
+    }
+    const polling = rawCursor !== null && !paging;
+    const after = cursorKey === null ? 0 : Number(cursorKey);
+    const aggregateId = url.searchParams.get('aggregate_id');
+    const matching = state.events
+      .filter((event) => event.sequence > after && (aggregateId === null || event.aggregate_id === aggregateId));
+    const items = matching.slice(0, limit);
+    const last = items[items.length - 1];
+    let nextCursor: string | null;
+    if (polling) nextCursor = last === undefined ? rawCursor : last.cursor;
+    else nextCursor = matching.length > limit && last !== undefined ? `${PAGING_CURSOR_PREFIX}${last.cursor}` : null;
+    return json(200, { items, next_cursor: nextCursor });
+  }
+
+  function projectRow() {
     return {
-      ...state.timelineSummary,
-      config: state.config,
-      config_version: state.configVersion,
-      registry: state.registry,
+      project_id: PROJECT_ROW_ID,
+      slug: state.project.slug as string,
+      name: state.project.name as string,
+      metadata: {},
+      version: 1,
+      created_at: '2026-09-06T00:00:00Z',
+      updated_at: '2026-09-06T00:00:00Z',
+      archived: false,
     };
   }
 
@@ -252,6 +338,7 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
     state.admittedByTaskId.set(readModel.id, readModel);
     state.receipts.set(rawKey, serializedBody);
     state.receiptTasks.set(rawKey, readModel.id);
+    emitTaskEvent(readModel.id, 'task.admitted', { capability: parsed.data.capability_id });
 
     const payload = { task: readModel };
     // Round-trip through the schema: a fixture that stops matching the frozen
@@ -416,6 +503,7 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
     state.admittedByTaskId.set(readModel.id, neutralReadModel);
     state.receipts.set(rawKey, serializedBody);
     state.receiptTasks.set(rawKey, readModel.id);
+    emitTaskEvent(readModel.id, 'task.admitted', { capability: parsed.data.capability_id });
     const resource = runtimeTaskResource(readModel.id, body);
     return json(201, { data: resource, receipt: runtimeReceipt('task.create', rawKey, taskCreateReceiptResult(resource)) });
   }
@@ -469,38 +557,6 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
     return { resource, variants };
   }
 
-  // -- R2 cancellation ------------------------------------------------------
-
-  function cancelTask(taskId: string, body: Record<string, unknown>): Response {
-    const summary = state.tasks.get(taskId);
-    if (summary === undefined) {
-      return errorEnvelope(404, 'not_found', `task ${taskId} was not found`);
-    }
-    const fence = bridgeCancelRequestSchema.safeParse(body);
-    if (!fence.success) {
-      return errorEnvelope(400, 'invalid_body', 'cancel body violates the wire contract');
-    }
-    if (summary.status === 'running') {
-      const hasFence = Boolean(fence.data.attempt_id && fence.data.lease_id && fence.data.status_version);
-      if (!hasFence) {
-        return errorEnvelope(409, 'conflict', 'cancelling a running task requires the live attempt fence', {
-          attempt: makeAttemptWireShape({ status: 'running' }),
-        });
-      }
-    }
-    if (['succeeded', 'failed', 'cancelled'].includes(summary.status)) {
-      // Terminal replay: current state, no mutation.
-      return json(200, { task: summary });
-    }
-    summary.status = 'cancelled';
-    const readModel = state.admittedByTaskId.get(taskId);
-    if (readModel !== undefined && typeof readModel === 'object') {
-      readModel.status = 'cancelled';
-      readModel.finished_at = '2026-08-22T12:01:00Z';
-    }
-    return json(200, { task: readModel, attempt: null });
-  }
-
   async function ingestRuntimeObject(request: Request, projectId: string): Promise<Response> {
     const idempotencyKey = request.headers.get('Idempotency-Key');
     const mediaType = request.headers.get('Content-Type');
@@ -522,8 +578,20 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
         ? { filename: request.headers.get('X-Original-Name')! }
         : {}),
     };
-    state.runtimeObjects.set(objectId, object);
-    state.runtimeObjectBodies.set(objectId, bytes);
+    if (objectStore) {
+      if (!objectStore.has(objectId)) {
+        objectStore.set(objectId, {
+          projectId,
+          bytes,
+          digest: objectId,
+          mediaType,
+          ...(object.filename ? { filename: object.filename } : {}),
+        });
+      }
+    } else {
+      state.runtimeObjects.set(objectId, object);
+      state.runtimeObjectBodies.set(objectId, bytes);
+    }
     return json(201, {
       data: object,
       receipt: {
@@ -540,8 +608,22 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
     });
   }
 
+  /** Every stored object as the wire row; the shared store, when given, is the only source. */
+  function runtimeObjectRows(): RuntimeManagedObject[] {
+    if (!objectStore) return [...state.runtimeObjects.values()];
+    return [...objectStore.values()].map((stored) => ({
+      object_id: stored.digest,
+      digest: stored.digest,
+      media_type: stored.mediaType,
+      size: stored.bytes.byteLength,
+      version: 1,
+      created_at: '2026-09-06T00:00:00Z',
+      ...(stored.filename ? { filename: stored.filename } : {}),
+    }));
+  }
+
   function listRuntimeObjects(url: URL): Response {
-    const all = [...state.runtimeObjects.values()];
+    const all = runtimeObjectRows();
     const offset = Number(url.searchParams.get('cursor') ?? '0');
     const limit = Number(url.searchParams.get('limit') ?? '50');
     const items = all.slice(offset, offset + limit);
@@ -594,8 +676,11 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
   }
 
   function serveRuntimeObject(request: Request, objectId: string): Response {
-    const object = state.runtimeObjects.get(objectId);
-    const bytes = state.runtimeObjectBodies.get(objectId);
+    const stored = objectStore?.get(objectId);
+    const object = objectStore
+      ? runtimeObjectRows().find((row) => row.object_id === objectId)
+      : state.runtimeObjects.get(objectId);
+    const bytes = objectStore ? stored?.bytes : state.runtimeObjectBodies.get(objectId);
     if (object === undefined || bytes === undefined) {
       return errorEnvelope(404, 'not_found', `object ${objectId} was not found`);
     }
@@ -681,60 +766,23 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
       return serveRuntimeObject(request, decodeURIComponent(parts[2]));
     }
     if (parts[0] === 'v1' && parts[1] === 'projects' && parts.length === 2 && request.method === 'GET') {
-      const page = {
-        items: [{
-          project_id: 'demo-project-id',
-          slug: state.project.slug,
-          name: state.project.name,
-          metadata: {},
-          version: 1,
-          created_at: '2026-09-06T00:00:00Z',
-          updated_at: '2026-09-06T00:00:00Z',
-          archived: false,
-        }],
-        next_cursor: null,
-      };
+      const page = { items: [projectRow()], next_cursor: null };
       runtimeProjectPageSchema.parse(page);
       return json(200, page);
     }
-    if (parts[0] === 'projects' && parts.length === 1) return json(200, { projects: [state.project] });
-
-    // Timeline discovery / load / CAS save (frozen contract, unchanged).
-    if (parts[0] === 'projects' && parts[2] === 'timelines' && parts.length === 3) {
-      return json(200, { timelines: [state.timelineSummary] });
-    }
-    if (parts[0] === 'projects' && parts[2] === 'timelines' && parts.length === 4 && request.method === 'GET') {
-      const payload = timelinePayload();
-      bridgeTimelinePayloadSchema.parse(payload);
-      return json(200, payload);
-    }
-    if (
-      parts[0] === 'projects'
-      && parts[2] === 'timelines'
-      && parts[4] === 'save'
-      && parts.length === 5
-      && request.method === 'POST'
-    ) {
-      const body = await readJsonObject(request);
-      if (body === null) return errorEnvelope(400, 'invalid_body', 'request body must be valid JSON');
-      const expectedVersion = body.expected_version;
-      if (
-        expectedVersion !== undefined
-        && (typeof expectedVersion !== 'number' || !Number.isInteger(expectedVersion))
-      ) {
-        return errorEnvelope(400, 'invalid_expected_version', 'expected_version must be an integer');
+    // One project by slug or canonical id, built from the same row as the list.
+    if (parts[0] === 'v1' && parts[1] === 'projects' && parts.length === 3 && request.method === 'GET') {
+      const row = projectRow();
+      const selector = decodeURIComponent(parts[2]);
+      if (selector !== row.slug && selector !== row.project_id) {
+        return runtimeError(404, 'not_found', `project ${selector} was not found`);
       }
-      if (typeof expectedVersion === 'number' && expectedVersion !== state.configVersion) {
-        return errorEnvelope(409, BRIDGE_VERSION_CONFLICT_CODE, 'stale expected head', {
-          config_version: state.configVersion,
-        });
-      }
-      if (body.config !== undefined) state.config = body.config as FakeBridgeState['config'];
-      if (body.registry !== undefined) state.registry = body.registry as FakeBridgeState['registry'];
-      state.configVersion += 1;
-      return json(200, timelinePayload());
+      runtimeProjectPageSchema.parse({ items: [row], next_cursor: null });
+      return json(200, row);
     }
-
+    if (parts[0] === 'v1' && parts[1] === 'events' && parts.length === 2 && request.method === 'GET') {
+      return listEvents(url);
+    }
     // Neutral Runtime task admission and reads.
     if (parts[0] === 'v1' && parts[1] === 'tasks' && parts.length === 2 && request.method === 'POST') {
       const body = await readJsonObject(request);
@@ -767,6 +815,7 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
           readModel.status = 'cancelled';
           readModel.finished_at = '2026-08-22T12:01:00Z';
         }
+        emitTaskEvent(parts[2], 'task.cancelled', {});
       }
       const resource = runtimeTaskResource(parts[2]);
       return json(200, { data: resource, receipt: runtimeReceipt('task.cancel', key, resource) });
@@ -806,68 +855,6 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
         });
       }
       return await admitTask(request, body);
-    }
-
-    // Task reads.
-    if (parts[0] === 'projects' && parts[2] === 'tasks' && parts.length === 3 && request.method === 'GET') {
-      const payload = { tasks: [...state.tasks.values()], next_offset: null };
-      bridgeTaskListSchema.parse(payload);
-      return json(200, payload);
-    }
-    if (parts[0] === 'projects' && parts[2] === 'tasks' && parts.length === 4 && request.method === 'GET') {
-      const summary = state.tasks.get(parts[3]);
-      if (summary === undefined) return errorEnvelope(404, 'not_found', `task ${parts[3]} was not found`);
-      const detail = {
-        task: {
-          ...summary,
-          attempts: summary.status === 'running'
-            ? [{
-                ...makeAttemptWireShape({}),
-                diagnostics: { progress: {}, error: {} },
-              }]
-            : [],
-          outputs: state.taskOutputs.get(parts[3]) ?? [],
-        },
-      };
-      bridgeTaskDetailPayloadSchema.parse(detail);
-      return json(200, detail);
-    }
-
-    // R2 cancellation.
-    if (
-      parts[0] === 'projects'
-      && parts[2] === 'tasks'
-      && parts[4] === 'cancel'
-      && parts.length === 5
-      && request.method === 'POST'
-    ) {
-      const body = await readJsonObject(request);
-      if (body === null) return errorEnvelope(400, 'invalid_body', 'request body must be valid JSON');
-      return cancelTask(parts[3], body);
-    }
-
-    // Gallery reads (R12 subset that exists in v1).
-    if (parts[0] === 'projects' && parts[2] === 'generations' && parts.length === 3 && request.method === 'GET') {
-      let rows = state.galleryPageRows;
-      const starred = url.searchParams.get('starred');
-      if (starred !== null) {
-        if (!['true', 'false'].includes(starred)) {
-          return errorEnvelope(400, 'invalid_body', 'starred must be true or false');
-        }
-        rows = starred === 'true' ? rows.filter((row) => row.starred) : rows.filter((row) => !row.starred);
-      }
-      const payload = { generations: rows, next_cursor: null };
-      bridgeGenerationListSchema.parse(payload);
-      return json(200, payload);
-    }
-    if (parts[0] === 'projects' && parts[2] === 'generations' && parts.length === 4 && request.method === 'GET') {
-      const detail = state.galleryDetails.find((generation) => generation.generation_id === parts[3]);
-      if (detail === undefined) {
-        return errorEnvelope(404, 'generation_not_found', `generation ${parts[3]} was not found`);
-      }
-      const payload = { generation: detail };
-      bridgeGenerationDetailPayloadSchema.parse(payload);
-      return json(200, payload);
     }
 
     // Managed-media bytes (R9).

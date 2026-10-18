@@ -10,22 +10,18 @@ import {
   useProjectGenerations,
 } from '../useProjectGenerations';
 import type { GeneratedImageWithMetadata } from '@/shared/components/MediaGallery/types';
-import { createFakeBridgeRouter, type FakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
-import { createJourneyState, FIXTURE_PROJECT } from '@/test/bridgeFixtures.mjs';
-import {
-  markAstridCapabilityUnavailable,
-  resetAstridCapabilityCensusForTesting,
-} from '@/integrations/astrid/capabilityCensus.ts';
+import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
+import { createJourneyState } from '@/test/bridgeFixtures.mjs';
+import { FIXTURE_PROJECT } from '@/test/fakeRuntimeSeed.mjs';
 
 const FAKE_ORIGIN = 'http://bridge.fake';
 const SLUG = FIXTURE_PROJECT.slug;
 
 describe('useProjectGenerations (bridge gallery reads R12)', () => {
-  let router: FakeBridgeRouter;
+  let router: FakeRuntimeRouter;
 
   beforeEach(() => {
-    resetAstridCapabilityCensusForTesting();
-    router = createFakeBridgeRouter();
+    router = createFakeRuntimeRouter();
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       // The client defaults to the same-origin base ('/api/astrid'); resolve
       // relative paths against the fake origin before handing to the router.
@@ -298,19 +294,6 @@ describe('useProjectGenerations (bridge gallery reads R12)', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.items.length).toBeGreaterThan(0);
     expect(result.current.data?.items[0].url).toMatch(/\/v1\/objects\/sha256%3A/);
-  });
-
-  it('makes zero gallery requests after the boot census marks the route unavailable', async () => {
-    markAstridCapabilityUnavailable('generations', 'unknown route: generations');
-    vi.mocked(globalThis.fetch).mockClear();
-
-    const { result } = renderHook(
-      () => useProjectGenerations(SLUG, 1, 100, true),
-      { wrapper: createWrapper() },
-    );
-
-    expect(result.current.fetchStatus).toBe('idle');
-    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it('returns an empty page when no project id is given', async () => {

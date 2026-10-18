@@ -412,8 +412,6 @@ export interface DataProvider extends AssetResolver {
    * it supports, so no behavioral fork hides inside a type check. Absent or
    * `false` both mean "not supported".
    */
-  /** Cloud-sync UI availability (`useEditorSync`). */
-  supportsEditorSync?: boolean;
   /**
    * Direct upload of every dropped file without per-type handlers
    * (`useExternalDrop` → `directAssetUploadAllFiles`).

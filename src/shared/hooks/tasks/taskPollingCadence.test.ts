@@ -1,16 +1,15 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  markAstridCapabilityUnavailable,
-  resetAstridCapabilityCensusForTesting,
-} from '@/integrations/astrid/capabilityCensus.ts';
-import { TASK_POLL_ACTIVE_MS, taskPollingCadence } from './taskPollingCadence.ts';
+import { afterEach, describe, expect, it } from 'vitest';
+import { TASK_POLL_ACTIVE_MS, TASK_POLL_IDLE_MS, taskPollingCadence } from './taskPollingCadence.ts';
 
-describe('taskPollingCadence capability stop', () => {
-  beforeEach(() => resetAstridCapabilityCensusForTesting());
+describe('taskPollingCadence', () => {
+  afterEach(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+  });
 
-  it('permanently stops polling after the bridge says tasks are unavailable', () => {
+  it('polls at the active cadence while the page is visible and the idle cadence while hidden', () => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
     expect(taskPollingCadence()).toBe(TASK_POLL_ACTIVE_MS);
-    markAstridCapabilityUnavailable('tasks', 'unknown route: tasks');
-    expect(taskPollingCadence()).toBe(false);
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    expect(taskPollingCadence()).toBe(TASK_POLL_IDLE_MS);
   });
 });

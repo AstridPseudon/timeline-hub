@@ -5,11 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // These assertions cover the workspace.v1 health contract (`/v1/health`,
-// `{ status: 'ok' }`). The workspace flag is read once at module load, so opt
-// in before bridgeSession.ts (and its workspaceV1 import) is evaluated.
-vi.hoisted(() => {
-  vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
-});
+// `{ status: 'ok' }`).
 
 import {
   LOCAL_USER_ID,

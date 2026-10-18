@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { browserEvidencePath, openEditor, resetBridgeBaseline } from "./support";
+import { browserEvidencePath, openEditor, resetFakeRuntimeBaseline } from "./support";
 
 const VIEWPORTS = [
   {
@@ -117,7 +117,7 @@ for (const viewport of VIEWPORTS) {
       page,
     }, testInfo) => {
       test.setTimeout(120_000);
-      await resetBridgeBaseline();
+      await resetFakeRuntimeBaseline();
       await openEditor(page);
 
       const geometry = await page.evaluate(() => {

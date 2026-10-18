@@ -61,8 +61,6 @@ import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations
 import { TimelineMobileInspectorDialog } from './TimelineMobileInspectorDialog.tsx';
 import { TimelineRenderControls } from './TimelineRenderControls.tsx';
 import { VideoEditorPanelDisplayControl } from './PropertiesPanel/VideoEditorPanelDisplayControl.tsx';
-import { TimelineSyncDivergenceDialog } from './TimelineSyncDivergenceDialog.tsx';
-import { useEditorSyncFeedback } from './useEditorSyncFeedback.ts';
 import {
   CHROME_OVERHEAD,
   MIN_PREVIEW_HEIGHT,
@@ -285,7 +283,6 @@ function TimelineEditorShellCoreComponent({
     onKeepLocalChanges: chrome.retrySaveAfterConflict,
     onDiscardRemoteChanges: chrome.reloadFromServer,
   });
-  const { sync, syncDialogOpen, setSyncDialogOpen, syncResultMessage } = useEditorSyncFeedback();
 
   useEffect(() => {
     bootDiagnostics();
@@ -607,8 +604,6 @@ function TimelineEditorShellCoreComponent({
   const toolbar = (
     <TimelineEditorShellToolbar
       timelineLoaded={Boolean(editorData.data)}
-      sync={sync}
-      syncResultMessage={syncResultMessage}
       touchChrome={touchChrome}
       condensed={condensed}
       toolbarModeSwitcher={toolbarModeSwitcher}
@@ -1094,16 +1089,6 @@ function TimelineEditorShellCoreComponent({
           onOpenChange={setIsCommandPaletteOpen}
         />
       )}
-
-      <TimelineSyncDivergenceDialog
-        open={syncDialogOpen}
-        onOpenChange={setSyncDialogOpen}
-        lastSyncResult={sync.lastSyncResult}
-        onLoadLatestFromDb={() => {
-          setSyncDialogOpen(false);
-          void chrome.reloadFromServer();
-        }}
-      />
 
       <AlertDialog open={conflict.isOpen} onOpenChange={conflict.setOpen}>
         <AlertDialogContent>

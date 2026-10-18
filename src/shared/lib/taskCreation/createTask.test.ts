@@ -7,7 +7,7 @@ vi.mock('@/shared/lib/errorHandling/runtimeError', () => ({
 }));
 
 import { createTask, ingestProjectInput, ingestProjectInputFromUrl } from './createTask';
-import { createFakeBridgeRouter, type FakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
+import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
 import {
   bridgeTaskAdmissionRequestSchema,
   type RuntimeCapability,
@@ -15,11 +15,11 @@ import {
 
 const FAKE_ORIGIN = 'http://bridge.fake';
 
-let router: FakeBridgeRouter;
+let router: FakeRuntimeRouter;
 let fetchMock: Mock;
 
 beforeEach(() => {
-  router = createFakeBridgeRouter();
+  router = createFakeRuntimeRouter();
   fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(input instanceof Request ? input.url : String(input), FAKE_ORIGIN);
     return await router.handle(new Request(`${FAKE_ORIGIN}${url.pathname}${url.search}`, init));

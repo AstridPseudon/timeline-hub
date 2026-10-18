@@ -22,7 +22,7 @@ import { TooltipProvider } from '@/shared/components/ui/tooltip';
 import { useBridgeTaskSnapshot } from '@/shared/hooks/tasks/useBridgeTaskSnapshot';
 import { createTask } from '@/shared/lib/taskCreation/createTask';
 import { taskQueryKeys } from '@/shared/lib/queryKeys/tasks';
-import { createFakeBridgeRouter } from '@/test/fakeBridgeRouter';
+import { createFakeRuntimeRouter } from '@/test/fakeRuntimeRouter';
 import '@/index.css';
 
 // Fixture media, network and failure injection only. All timeline, draft,
@@ -69,7 +69,7 @@ const provider = new WorkflowDataProvider({ timelines: { 'workflow-full': struct
 const resolver = { resolveAssetUrl };
 const effectCatalog = createVideoEditorEffectCatalog({ effects: [] });
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-const bridge = createFakeBridgeRouter();
+const bridge = createFakeRuntimeRouter();
 const originalFetch = window.fetch.bind(window);
 window.fetch = (input, init) => {
   const request = new Request(input, init);

@@ -10,7 +10,7 @@ import {
   collectPageLogs,
   countSelectedClips,
   openEditor,
-  resetBridgeBaseline,
+  resetFakeRuntimeBaseline,
 } from './support';
 
 test.describe('timeline desktop interaction', () => {
@@ -20,7 +20,7 @@ test.describe('timeline desktop interaction', () => {
     test.setTimeout(180_000);
 
     const logs: string[] = [];
-    const resetError = await resetBridgeBaseline();
+    const resetError = await resetFakeRuntimeBaseline();
     if (resetError) logs.push(resetError);
     logs.push(...collectPageLogs(page));
 
@@ -133,7 +133,8 @@ test.describe('timeline desktop interaction', () => {
       () => document.body.innerText.match(/\d:\d\d\.\d\d/)?.[0] ?? null,
     );
     const timeBefore = await clockText();
-    await page.locator('button[aria-label*="play" i], button[title*="play" i]').first().click({ timeout: 5_000 });
+    // Exact name: a substring match also hits the hidden "Panel display" control.
+    await page.getByRole('button', { name: 'Play', exact: true }).first().click({ timeout: 5_000 });
     await page.waitForTimeout(2_500);
     const timeAfter = await clockText();
 

@@ -6,7 +6,6 @@
  */
 
 import type { AstridBridgeTransport } from './transport.ts';
-import { observeAstridCapabilityFailure } from './capabilityCensus.ts';
 import { dispatchAppEvent } from '@/shared/lib/typedEvents';
 import {
   bridgeCancelRequestSchema,
@@ -52,15 +51,6 @@ export class AstridLocalTaskRoutes {
 
   private projectTasksPath(): string {
     return `/v1/projects/${encodeURIComponent(this.projectSlug)}/tasks`;
-  }
-
-  private async request<T>(operation: () => Promise<T>): Promise<T> {
-    try {
-      return await operation();
-    } catch (error) {
-      observeAstridCapabilityFailure('tasks', error);
-      throw error;
-    }
   }
 
   /**
@@ -109,12 +99,12 @@ export class AstridLocalTaskRoutes {
       generation_intent: parsed.generation_intent,
       settlement_effect: parsed.settlement_effect,
     };
-    const response = await this.request(() => this.transport.requestJson(
+    const response = await this.transport.requestJson(
       '/v1/tasks',
       { method: 'POST', body: canonicalRequest, headers: { 'Idempotency-Key': idempotencyKey } },
       runtimeTaskMutationSchema,
       'task admission',
-    ));
+    );
     // Keep the app-facing admission projection stable while making the
     // neutral Runtime resource the only accepted wire shape at this boundary.
     const task = runtimeTaskToAdmittedTask(response.data, this.projectSlug);
@@ -134,12 +124,12 @@ export class AstridLocalTaskRoutes {
     if (options.limit !== undefined) params.set('limit', String(options.limit));
     if (options.cursor !== undefined) params.set('cursor', options.cursor);
     const query = params.size > 0 ? `?${params.toString()}` : '';
-    const page = await this.request(() => this.transport.requestJson(
+    const page = await this.transport.requestJson(
       this.projectTasksPath() + query,
       {},
       runtimeTaskReadPageSchema,
       'task list',
-    ));
+    );
     return {
       tasks: page.items.map((task) => runtimeTaskToSummary(task, this.projectSlug)),
       next_offset: null,
@@ -149,12 +139,12 @@ export class AstridLocalTaskRoutes {
 
   /** One task's full read model incl. attempts and committed outputs. */
   async get(taskId: string): Promise<ReturnType<typeof runtimeTaskToDetail>> {
-    const resource = await this.request(() => this.transport.requestJson(
+    const resource = await this.transport.requestJson(
       `/v1/tasks/${encodeURIComponent(taskId)}`,
       {},
       runtimeTaskReadResourceSchema,
       'task detail',
-    ));
+    );
     return runtimeTaskToDetail(resource, this.projectSlug);
   }
 
@@ -166,12 +156,12 @@ export class AstridLocalTaskRoutes {
     }
     const params = new URLSearchParams({ aggregate_id: taskId, limit: String(limit) });
     if (options.cursor !== undefined) params.set('cursor', options.cursor);
-    return this.request(() => this.transport.requestJson(
+    return this.transport.requestJson(
       `/v1/events?${params.toString()}`,
       {},
       runtimeEventPageSchema,
       'task events',
-    ));
+    );
   }
 
   /**
@@ -187,12 +177,12 @@ export class AstridLocalTaskRoutes {
     // Runtime key grammar: ^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$ — separators
     // must stay inside that set (a colon key is a hard 400 on this route).
     const idempotencyKey = `astrid.task.cancel-${taskId}-${parsedFence.status_version ?? 'current'}`;
-    const response = await this.request(() => this.transport.requestJson(
+    const response = await this.transport.requestJson(
       `/v1/tasks/${encodeURIComponent(taskId)}/cancel`,
       { method: 'POST', body, headers: { 'Idempotency-Key': idempotencyKey } },
       runtimeTaskMutationSchema,
       'task cancel',
-    ));
+    );
     return { task: runtimeTaskToAdmittedTask(response.data, this.projectSlug) };
   }
 }

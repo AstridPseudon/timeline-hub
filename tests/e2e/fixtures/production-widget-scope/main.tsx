@@ -18,7 +18,7 @@ import { ProjectProvider } from '@/shared/contexts/ProjectContext';
 import { ShotsContextProvider } from '@/shared/contexts/ShotsContext';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
 import { createTask } from '@/shared/lib/taskCreation/createTask';
-import { createFakeBridgeRouter } from '@/test/fakeBridgeRouter';
+import { createFakeRuntimeRouter } from '@/test/fakeRuntimeRouter';
 import { GenerationsPane } from '@/features/gallery/components/GenerationsPane/GenerationsPane';
 import { TasksPane } from '@/features/tasks/components/TasksPane/TasksPane';
 import { IncomingTasksProvider } from '@/shared/contexts/IncomingTasksContext';
@@ -69,7 +69,7 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false 
 const sameProject = new URLSearchParams(window.location.search).get('sameProject') === '1';
 const dialogProject = sameProject ? 'project-a' : 'project-b';
 const bridges = new Map(['project-a', 'project-b'].map(project => {
-  const router = createFakeBridgeRouter();
+  const router = createFakeRuntimeRouter();
   router.state.project = { ...router.state.project, slug: project };
   router.state.tasks.clear();
   router.state.admissions = project === 'project-b' ? 100 : 0;

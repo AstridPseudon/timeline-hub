@@ -91,7 +91,6 @@ export class RuntimeDataProvider implements DataProvider {
   readonly projectTranscripts: ProjectTranscriptRepository;
   readonly documents: NonNullable<DataProvider['documents']>;
   readonly persistenceEnabled = true;
-  readonly supportsEditorSync = false;
   readonly supportsDirectAssetUpload = true;
   /**
    * Runtime has no public timeline-document event cursor yet. Until that

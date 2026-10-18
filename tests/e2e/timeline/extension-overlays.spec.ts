@@ -19,24 +19,23 @@
  *   - disabling the extension MID-DRAG terminates the session cleanly
  *     (no commit, no stuck gesture owner, editor stays interactive).
  *
- * One command: `npm run test:e2e:timeline` (boots the dev server + bridge
- * stub via `playwright.config.ts` webServer entries).
+ * One command: `npm run test:e2e:timeline` (boots the dev server + fake Runtime
+ * via `playwright.config.ts` webServer entries).
  */
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { CLIP_BODY_SELECTOR } from '../../../src/tools/video-editor/lib/timeline-dom.ts';
 import {
-  BASE_URL,
-  BRIDGE_ORIGIN,
   EDITOR_SETTLE_MS,
-  PROJECT_SLUG,
-  TIMELINE_SLUG,
   collectPageLogs,
   countSelectedClips,
   createTouchInput,
   openEditor,
   pickFreeDraggableClip,
-  resetBridgeBaseline,
+  publishFakeRuntimeComposition,
+  readFakeRuntimeComposition,
+  resetFakeRuntimeBaseline,
   type TouchInput,
+  editorUrl,
 } from './support';
 
 // ---------------------------------------------------------------------------
@@ -44,9 +43,7 @@ import {
 // ---------------------------------------------------------------------------
 
 const SCENE_PHASE_EXTENSION_ID = 'haus.astrid.scene-phase-markers';
-const CANARY_PARAM = 'timelineOverlayCanary=1';
-const CANARY_URL = `${BASE_URL}/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&${CANARY_PARAM}`;
-const BRIDGE_TIMELINE = `${BRIDGE_ORIGIN}/projects/${PROJECT_SLUG}/timelines/${TIMELINE_SLUG}`;
+const CANARY_URL = editorUrl({ params: { timelineOverlayCanary: '1' } });
 const EDIT_AREA_SELECTOR = '.timeline-canvas-edit-area';
 const STRIP_SELECTOR = '[data-testid="timeline-extension-ruler-overlay-strip"]';
 const DISABLE_TOGGLE_SELECTOR = `[data-video-editor-dev-local-toggle="${SCENE_PHASE_EXTENSION_ID}"]`;
@@ -104,26 +101,19 @@ async function expectMarkerLayerComposition(page: Page, expectedTotal: number): 
 // ---------------------------------------------------------------------------
 
 /**
- * Restore the stub's clip baseline and then seed the canary's marker data.
- * `resetBridgeBaseline` replaces the config wholesale (dropping `app`), so
- * seeding must always happen after it.
+ * Seed the canary's marker data on top of the seeded timeline, as a second writer would: a new head
+ * published to the Runtime with `config.app[<extension id>].sceneMarkers` set. The shared hard reset
+ * replaces the whole composition (dropping `app`), so seeding must always happen after it.
  */
 async function seedSceneMarkers(markers: Array<{ id: string; time: number }> = MARKERS): Promise<string | null> {
   try {
-    const current = await (await fetch(BRIDGE_TIMELINE)).json();
-    const config = {
-      ...(current.config ?? {}),
-      app: {
-        ...(current.config?.app ?? {}),
+    await publishFakeRuntimeComposition(({ config }) => {
+      config.app = {
+        ...(config.app ?? {}),
         [SCENE_PHASE_EXTENSION_ID]: { sceneMarkers: markers },
-      },
-    };
-    const response = await fetch(`${BRIDGE_TIMELINE}/save`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ config }),
+      };
     });
-    return response.ok ? null : `[seed] ${response.status}`;
+    return null;
   } catch (error) {
     return `[seed] ${(error as Error).message}`;
   }
@@ -293,11 +283,10 @@ async function waitForDomMarkerTime(
   }
 }
 
-/** Poll the bridge's persisted config until the marker lands at `expected`. */
-async function readBridgeSceneMarkers(): Promise<Array<{ id: string; time: number }>> {
-  const response = await fetch(BRIDGE_TIMELINE);
-  const data = await response.json();
-  const app = data.config?.app?.[SCENE_PHASE_EXTENSION_ID];
+/** The scene markers in the Runtime's persisted head composition (`config.app`), not the editor's copy. */
+async function readPersistedSceneMarkers(): Promise<Array<{ id: string; time: number }>> {
+  const { config } = await readFakeRuntimeComposition();
+  const app = config.app?.[SCENE_PHASE_EXTENSION_ID];
   return Array.isArray(app?.sceneMarkers) ? app.sceneMarkers : [];
 }
 
@@ -311,21 +300,21 @@ async function readPlayheadTransformX(page: Page): Promise<number | null> {
   });
 }
 
-async function waitForBridgeMarkerTime(
+async function waitForPersistedMarkerTime(
   markerId: string,
   expected: number,
   tolerance = 0.06,
 ): Promise<void> {
   const deadline = Date.now() + 15_000;
   for (;;) {
-    const markers = await readBridgeSceneMarkers();
+    const markers = await readPersistedSceneMarkers();
     const marker = markers.find((entry) => entry.id === markerId);
     if (marker && Math.abs(marker.time - expected) <= tolerance) {
       return;
     }
     if (Date.now() > deadline) {
       throw new Error(
-        `bridge marker ${markerId} did not reach ${expected} (last=${JSON.stringify(markers)})`,
+        `persisted marker ${markerId} did not reach ${expected} (last=${JSON.stringify(markers)})`,
       );
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
@@ -501,7 +490,7 @@ test.describe('timeline extension overlays (desktop)', () => {
     test.setTimeout(240_000);
 
     const logs: string[] = [];
-    const resetError = await resetBridgeBaseline();
+    const resetError = await resetFakeRuntimeBaseline();
     if (resetError) logs.push(resetError);
     const seedError = await seedSceneMarkers();
     if (seedError) logs.push(seedError);
@@ -625,7 +614,7 @@ test.describe('timeline extension overlays (desktop)', () => {
       await dragMarkerBy(page, 'e2e-marker-a', dx);
       const expected = 1 + 2;
       await waitForDomMarkerTime(page, 'e2e-marker-a', expected);
-      await waitForBridgeMarkerTime('e2e-marker-a', expected);
+      await waitForPersistedMarkerTime('e2e-marker-a', expected);
     });
     await shot('dragged');
 
@@ -774,10 +763,10 @@ test.describe('timeline extension overlays (desktop)', () => {
     // Capture logs by reference: collectPageLogs registers page listeners on
     // the SAME array we assert against, so the final assertion is not vacuous.
     const logs: string[] = [];
-    const resetError = await resetBridgeBaseline();
+    const resetError = await resetFakeRuntimeBaseline();
     if (resetError) logs.push(resetError);
-    // resetBridgeBaseline preserves config.app, so explicitly clear any
-    // scene markers a previous spec left in the bridge's persisted config.
+    // resetFakeRuntimeBaseline preserves config.app, so explicitly clear any
+    // scene markers a previous spec left in the Runtime's persisted config.
     const clearError = await seedSceneMarkers([]);
     if (clearError) logs.push(clearError);
     logs.push(...collectPageLogs(page));
@@ -842,10 +831,10 @@ test.describe('timeline extension overlays (desktop)', () => {
     await expect(markerLayer.locator('[data-marker-id]').first()).toBeVisible();
     await shot('marked');
 
-    // The marker must be persisted through project-data (bridge config.app)
+    // The marker must be persisted through project-data (the Runtime head's config.app)
     // at the scrubbed time. The editor saves asynchronously, so poll.
-    await expect.poll(async () => (await readBridgeSceneMarkers()).length, { timeout: 15_000 }).toBe(1);
-    const persisted = await readBridgeSceneMarkers();
+    await expect.poll(async () => (await readPersistedSceneMarkers()).length, { timeout: 15_000 }).toBe(1);
+    const persisted = await readPersistedSceneMarkers();
     expect(persisted[0]!.time, JSON.stringify(persisted)).toBeGreaterThan(0);
 
     // Reload: the marker must survive the round trip and re-render.
@@ -878,7 +867,7 @@ test.describe('timeline extension overlays (tablet)', () => {
     test.setTimeout(240_000);
 
     const logs: string[] = [];
-    const resetError = await resetBridgeBaseline();
+    const resetError = await resetFakeRuntimeBaseline();
     if (resetError) logs.push(resetError);
     const seedError = await seedSceneMarkers();
     if (seedError) logs.push(seedError);
@@ -914,7 +903,7 @@ test.describe('timeline extension overlays (tablet)', () => {
       const dx = Math.round(2.5 * metrics.pps);
       await touchDragMarker(touch, page, 'e2e-marker-b', dx);
       await waitForDomMarkerTime(page, 'e2e-marker-b', 5.5);
-      await waitForBridgeMarkerTime('e2e-marker-b', 5.5);
+      await waitForPersistedMarkerTime('e2e-marker-b', 5.5);
     });
     await shot('dragged');
 
@@ -979,7 +968,7 @@ test.describe('timeline extension overlays (phone)', () => {
     test.setTimeout(240_000);
 
     const logs: string[] = [];
-    const resetError = await resetBridgeBaseline();
+    const resetError = await resetFakeRuntimeBaseline();
     if (resetError) logs.push(resetError);
     const seedError = await seedSceneMarkers();
     if (seedError) logs.push(seedError);
@@ -1014,7 +1003,7 @@ test.describe('timeline extension overlays (phone)', () => {
       const dx = Math.round(2 * metrics.pps);
       await touchDragMarker(touch, page, 'e2e-marker-a', dx);
       await waitForDomMarkerTime(page, 'e2e-marker-a', 3);
-      await waitForBridgeMarkerTime('e2e-marker-a', 3);
+      await waitForPersistedMarkerTime('e2e-marker-a', 3);
     });
     await shot('dragged');
 

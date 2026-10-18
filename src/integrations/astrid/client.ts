@@ -3,7 +3,7 @@
  * doc-27 §4.1 task/gallery/media routes.
  *
  * It shares ONLY the wire contract (`bridgeContract.ts`) and the transport
- * pipeline (`transport.ts`) with `AstridBridgeDataProvider`: no base class,
+ * pipeline (`transport.ts`) with the other bridge consumers: no base class,
  * no abstraction layer. Since B4 (C1-5) it also exposes the frozen timeline
  * CAS routes so document-native placement (doc 24 Q1) works on surfaces
  * outside the editor page; the provider keeps owning editor-session CAS

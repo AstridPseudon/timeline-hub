@@ -15,7 +15,7 @@ import {
   createTouchInput,
   openEditor,
   pickFreeDraggableClip,
-  resetBridgeBaseline,
+  resetFakeRuntimeBaseline,
 } from './support';
 
 const IPAD_USER_AGENT = 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15'
@@ -40,7 +40,7 @@ for (const orientation of ORIENTATIONS) {
       test.setTimeout(240_000);
 
       const logs: string[] = [];
-      const resetError = await resetBridgeBaseline();
+      const resetError = await resetFakeRuntimeBaseline();
       if (resetError) logs.push(resetError);
       logs.push(...collectPageLogs(page));
 

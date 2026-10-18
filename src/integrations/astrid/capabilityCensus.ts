@@ -1,4 +1,3 @@
-import { useSyncExternalStore } from 'react';
 import { probeBridgeSession } from '@/shared/auth/bridgeSession.ts';
 import { astridBase } from '@/integrations/runtime/connection.ts';
 import { getLocalProjectSlug } from '@/shared/dev/devSession.ts';
@@ -7,53 +6,23 @@ import { AstridLocalProjectRoutes } from './projectRoutes.ts';
 import { runtimeTaskReadPageSchema } from './taskReadSchemas.ts';
 import { runtimeGenerationPageSchema } from '@/tools/video-editor/data/bridgeContract.ts';
 
+/**
+ * One-shot capability inspection for the setup step and the doctor read. There is no shared census
+ * store: workspace.v1 owns capability discovery (the Runtime handshake), and no feature poller gates on
+ * a boot probe.
+ */
 export type AstridCapability = 'tasks' | 'generations' | 'media';
-export type AstridCapabilitySupport = 'checking' | 'supported' | 'unavailable' | 'unknown';
+export type AstridCapabilitySupport = 'supported' | 'unavailable' | 'unknown';
 
 export interface AstridCapabilityCensus {
-  health: 'checking' | 'available' | 'unavailable';
-  readiness: 'checking' | 'ready' | 'degraded' | 'unavailable';
+  health: 'available' | 'unavailable';
+  readiness: 'ready' | 'degraded' | 'unavailable';
   projectSlug: string | null;
   capabilities: Record<AstridCapability, AstridCapabilitySupport>;
   reasons: Partial<Record<AstridCapability | 'health' | 'projects', string>>;
 }
 
-const CHECKING_CENSUS: AstridCapabilityCensus = Object.freeze({
-  health: 'checking',
-  readiness: 'checking',
-  projectSlug: null,
-  capabilities: Object.freeze({
-    tasks: 'checking',
-    generations: 'checking',
-    media: 'checking',
-  }),
-  reasons: Object.freeze({}),
-});
-
-let census: AstridCapabilityCensus = CHECKING_CENSUS;
-let inFlight: Promise<AstridCapabilityCensus> | null = null;
-const listeners = new Set<() => void>();
-
-function publish(next: AstridCapabilityCensus): AstridCapabilityCensus {
-  census = next;
-  listeners.forEach((listener) => listener());
-  return next;
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-export function getAstridCapabilityCensus(): AstridCapabilityCensus {
-  return census;
-}
-
-export function useAstridCapabilityCensus(): AstridCapabilityCensus {
-  return useSyncExternalStore(subscribe, getAstridCapabilityCensus, getAstridCapabilityCensus);
-}
-
-export function isPermanentCapabilityUnavailable(error: unknown): boolean {
+function isPermanentCapabilityUnavailable(error: unknown): boolean {
   return error instanceof BridgeRouteError
     && (
       error.code === 'capability_unavailable'
@@ -251,53 +220,4 @@ export async function inspectAstridCapabilities(
     capabilities,
     reasons,
   };
-}
-
-export function refreshAstridCapabilityCensus(
-  baseUrl: string = astridBase(),
-  force = false,
-): Promise<AstridCapabilityCensus> {
-  if (inFlight && !force) return inFlight;
-  if (!force && census.readiness !== 'checking') return Promise.resolve(census);
-  publish(CHECKING_CENSUS);
-  const request = inspectAstridCapabilities(baseUrl).then(publish);
-  inFlight = request;
-  void request.finally(() => {
-    if (inFlight === request) inFlight = null;
-  });
-  return request;
-}
-
-export function markAstridCapabilityUnavailable(
-  capability: AstridCapability,
-  reason: string,
-): void {
-  if (census.capabilities[capability] === 'unavailable' && census.reasons[capability] === reason) {
-    return;
-  }
-  publish({
-    ...census,
-    readiness: census.health === 'available' ? 'degraded' : census.readiness,
-    capabilities: { ...census.capabilities, [capability]: 'unavailable' },
-    reasons: { ...census.reasons, [capability]: reason },
-  });
-}
-
-/** Record a permanent route answer and return whether retries must stop. */
-export function observeAstridCapabilityFailure(
-  capability: AstridCapability,
-  error: unknown,
-): boolean {
-  if (!isPermanentCapabilityUnavailable(error)) return false;
-  markAstridCapabilityUnavailable(
-    capability,
-    error instanceof Error ? error.message : String(error),
-  );
-  return true;
-}
-
-/** @internal Test isolation. */
-export function resetAstridCapabilityCensusForTesting(): void {
-  inFlight = null;
-  publish(CHECKING_CENSUS);
 }

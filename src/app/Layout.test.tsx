@@ -274,7 +274,7 @@ describe('Layout route access', () => {
   });
 
   it('hides only tool navigation in the local Astrid editor while preserving task and editor panes', () => {
-    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
     locationPathname = '/tools/video-editor';
     locationSearch = '?localProject=astrid-intro';
 

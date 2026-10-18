@@ -9,12 +9,6 @@ vi.mock('@/integrations/astrid/bridgeTaskReads', () => ({
   listBridgeTasks,
 }));
 
-vi.mock('@/integrations/astrid/capabilityCensus.ts', () => ({
-  useAstridCapabilityCensus: () => ({
-    capabilities: { tasks: 'supported', generations: 'supported', media: 'supported' },
-  }),
-}));
-
 vi.mock('@/shared/realtime/RealtimeConnection', () => ({
   getRealtimeConnection: () => ({
     getState: () => ({ status: 'disconnected' }),

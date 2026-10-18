@@ -89,8 +89,6 @@ function installV1Fetch() {
 }
 
 async function loadService() {
-  vi.resetModules();
-  vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
   return await import('../placementService');
 }
 
@@ -104,7 +102,6 @@ describe('placementService under Workspace v1', () => {
   });
   afterEach(() => {
     vi.unstubAllGlobals();
-    vi.unstubAllEnvs();
   });
 
   it('places a generation by publishing a new head revision', async () => {

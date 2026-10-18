@@ -1,8 +1,9 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
-import { PROJECT_SLUG, TIMELINE_SLUG, resetBridgeBaseline } from './timeline/support';
+import { PROJECT_SLUG, TIMELINE_SLUG, editorPath, resetFakeRuntimeBaseline } from './timeline/support';
 
 const RUNAWAY_PROJECT = 'extension-accessibility';
-const EDITOR_URL = `/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1&timelineOverlayCanary=1&transcriptLaneFixture=1&runawayTimelineProject=${RUNAWAY_PROJECT}`;
+const EDITOR_URL = editorPath({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: '1', runawayTimelineProject: RUNAWAY_PROJECT } });
+// The harness mounts no data provider. `localProject` is kept only because Layout's sessionless auth gate keys off it.
 const HARNESS_URL = `/tools/video-editor/harness?scenario=populated&localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1`;
 // This spec exercises the historical 13-extension SDK capability matrix via
 // the explicit fixture catalog enabled by playwright.extension-accessibility.config.ts.
@@ -40,7 +41,7 @@ function collectIssues(page: Page): string[] {
 
 async function openComposedEditor(page: Page): Promise<string[]> {
   const issues = collectIssues(page);
-  expect(await resetBridgeBaseline()).toBeNull();
+  expect(await resetFakeRuntimeBaseline()).toBeNull();
   await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
   const response = await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   expect(response?.ok()).toBe(true);
