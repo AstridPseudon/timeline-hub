@@ -33,7 +33,13 @@ class RecordingRunner:
         self.calls.append(call)
         produces = Path(_arg_value(call, "--produces-dir"))
         produces.mkdir(parents=True, exist_ok=True)
-        command = call[call.index("astrid.packs.runpod.executors.provision.run") + 1]
+        module_index = next(
+            index
+            for index, arg in enumerate(call)
+            if arg.startswith("astrid.packs.runpod.actions.") and arg.endswith(".run")
+        )
+        command = call[module_index + 1]
+        assert call[module_index] == f"astrid.packs.runpod.actions.{command}.run"
         if command == "provision":
             (produces / "pod_handle.json").write_text(
                 json.dumps(

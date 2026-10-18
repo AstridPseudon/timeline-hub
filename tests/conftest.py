@@ -27,6 +27,7 @@ from astrid.core.subprocess_env import (
     TASK_RUN_ID_ENV,
     TASK_STEP_ID_ENV,
 )
+from tests.lanes import pytest_collection_modifyitems, pytest_configure  # noqa: F401  (lanes, known failures, fd guard)
 from tests.process_groups import ProcessGroups
 
 

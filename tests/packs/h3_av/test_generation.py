@@ -25,6 +25,7 @@ def request(count=4, **updates):
 
 
 @pytest.mark.parametrize("count", [1, 4, 9])
+@pytest.mark.integration
 def test_dynamic_references_emit_one_portable_sampling_graph(tmp_path: Path, count: int, monkeypatch):
     from vibecomfy.cli_loader import load_bundle
     from vibecomfy.security.provenance import Provenance
@@ -99,6 +100,7 @@ def test_generation_timing_covers_original_fifteen_second_request():
                                    "raw_frames": 362, "trim_tail_frames": 2, "duration": 15}
 
 
+@pytest.mark.integration
 def test_reference_must_decode_as_still_image(tmp_path: Path):
     path = tmp_path / "fake.png"
     path.write_bytes(b"not an image")

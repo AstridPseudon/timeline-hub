@@ -92,6 +92,7 @@ except HostError:
     assert observed["accepted"] is (fault == "success")
 
 
+@pytest.mark.integration
 def test_installed_cpu_profile_binds_actual_product_roots(monkeypatch):
     import sys
     from banodoco_local.bootstrap import SourceProfile
@@ -104,6 +105,7 @@ def test_installed_cpu_profile_binds_actual_product_roots(monkeypatch):
 
 
 @pytest.mark.parametrize("difference", ["source", "runtime", "environment", "command", "python", "profile", "alias"])
+@pytest.mark.integration
 def test_installed_cpu_profile_rejects_execution_drift(tmp_path, monkeypatch, difference):
     import sys
     from dataclasses import replace
@@ -128,6 +130,7 @@ def test_installed_cpu_profile_rejects_execution_drift(tmp_path, monkeypatch, di
         helper._selected_execution_roots(selected, python=python)
 
 
+@pytest.mark.integration
 def test_source_cpu_profile_roots_remain_source_bound(monkeypatch):
     import sys
     from banodoco_local.bootstrap import SourceProfile
@@ -138,6 +141,7 @@ def test_source_cpu_profile_roots_remain_source_bound(monkeypatch):
     assert helper._selected_execution_roots(selected) == (helper.RUNTIME_ROOT, helper.ASTRID_ROOT)
 
 
+@pytest.mark.integration
 def test_installed_cpu_origins_are_real_and_reject_mixed_source():
     import sys
     from astrid.sdk.host_bootstrap import _installed_execution_origins, PackHostBootstrapError
@@ -150,6 +154,7 @@ def test_installed_cpu_origins_are_real_and_reject_mixed_source():
         _installed_execution_origins(helper.ASTRID_ROOT, sys.executable)
 
 
+@pytest.mark.integration
 def test_installed_cpu_actions_retain_candidate_content_pins(tmp_path):
     from tests.helpers import h3_cpu_runtime as helper
 
@@ -163,6 +168,7 @@ def test_installed_cpu_actions_retain_candidate_content_pins(tmp_path):
         helper._verify_installed_candidate_actions(drift)
 
 
+@pytest.mark.integration
 def test_installed_cpu_renderer_uses_real_provisioned_outputs():
     from astrid.packs.rendering.rendering.renderers.remotion import run
     from tests.helpers import h3_cpu_runtime as helper
@@ -177,6 +183,7 @@ def test_installed_cpu_renderer_uses_real_provisioned_outputs():
     assert not (project / run._REGISTRY_STATE_PATH).exists()
 
 
+@pytest.mark.integration
 def test_installed_cpu_parent_vibe_origin_and_exact_restoration():
     import sys
     from tests.helpers import h3_cpu_runtime as helper
@@ -202,6 +209,7 @@ def test_installed_cpu_parent_vibe_origin_and_exact_restoration():
             if name == "vibecomfy" or name.startswith("vibecomfy.")} == prior_modules
 
 
+@pytest.mark.integration
 def test_installed_cpu_parent_vibe_rejects_foreign_origin_and_alias(tmp_path):
     import sys
     from tests.helpers import h3_cpu_runtime as helper
@@ -257,6 +265,7 @@ def _boundary_blockers() -> list[str]:
     return blockers
 
 
+@pytest.mark.integration
 def test_public_cpu_boundary_preflight_does_not_require_a_prior_qualification_receipt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -274,6 +283,7 @@ def test_public_cpu_boundary_preflight_does_not_require_a_prior_qualification_re
     assert _boundary_blockers() == []
 
 
+@pytest.mark.integration
 def test_h3_public_workspace_helper_pin_matches_current_shared_fixture() -> None:
     from tests.helpers import h3_cpu_runtime
 
@@ -308,6 +318,7 @@ def test_cpu_harness_asset_map_matches_public_transform_input_contract(tmp_path:
     assert materialized.read_bytes() == image.read_bytes()
 
 
+@pytest.mark.integration
 def test_cpu_harness_invokes_transform_unbound_without_request_or_target(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -656,6 +667,7 @@ def test_candidate_manifest_reaches_declared_orchestrator_child_environment(
     assert "ASTRID_H3_UNDECLARED_TEST_VALUE" not in child_env
 
 
+@pytest.mark.integration
 def test_character_swap_digest_override_is_source_and_inventory_bound(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1152,6 +1164,7 @@ def _managed_import_wire_response(headers, body):
     return 201, {}, json.dumps({"data": data, "receipt": receipt}).encode()
 
 
+@pytest.mark.integration
 def test_managed_import_legacy_key_is_rejected_by_real_sdk(tmp_path):
     from runtime_protocol.service import validate_idempotency_key
     from runtime_protocol.errors import InvalidRequestError
@@ -1172,6 +1185,7 @@ def test_managed_import_legacy_key_is_rejected_by_real_sdk(tmp_path):
     assert result.error.code == "invalid_request" and result.data is None and result.receipt is None
 
 
+@pytest.mark.integration
 def test_managed_import_both_ports_use_valid_stable_distinct_keys_and_real_results(tmp_path):
     from types import SimpleNamespace
     from runtime_protocol.service import validate_idempotency_key
@@ -1338,6 +1352,7 @@ def test_synthetic_fixture_uses_pinned_explicit_source_with_installed_code_only(
             module.character_swap_asset_sha256()
 
 @pytest.mark.parametrize("fault", ["success", "return_failure", "raise"])
+@pytest.mark.integration
 def test_cpu_public_parent_carries_attested_vibe_imports_to_real_runner(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str
 ) -> None:

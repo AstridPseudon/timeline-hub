@@ -6,8 +6,12 @@ from collections import defaultdict
 from typing import Any
 
 from astrid.sdk import timeline_intent as intent
-from astrid.sdk.media_transcript import NARRATION_SOURCE, build_transcript, read_transcript, write_transcript
-
+from astrid.sdk.media_transcript import (
+    NARRATION_SOURCE,
+    build_transcript,
+    read_transcript,
+    write_transcript,
+)
 
 _SHA = re.compile(r"sha256:[0-9a-f]{64}\Z")
 
@@ -50,7 +54,7 @@ def plan_narration_transcripts(tl: Any) -> list[dict[str, Any]]:
             continue
         groups[media_id].append({"segment": segment or clip.id, "text": intent.line_text(data),
                                  "words": timed, "clip": clip.id})
-    plan = []
+    plan: list[dict[str, Any]] = []
     for media_id, pieces in sorted(groups.items()):
         segments = {piece["segment"] for piece in pieces}
         if len(segments) != 1:
@@ -92,7 +96,7 @@ def sync_narration_transcripts(tl: Any, client: Any, project: str, *, dry_run: b
                         "would update" if current else "would create")
                 else:
                     row["status"] = write_transcript(client, project, media_id, NARRATION_SOURCE, content)
-            except Exception as exc:  # a document failure must never undo a published timeline
+            except Exception as exc:  # noqa: BLE001 - containment: a document failure must never undo a published timeline
                 row["status"], row["reason"] = "skipped", str(exc)
         report.append(row)
     return report

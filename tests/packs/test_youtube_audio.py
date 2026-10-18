@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from astrid.packs.youtube.executors.youtube_audio import run as youtube_audio
+from astrid.packs.youtube.actions.youtube_audio import run as youtube_audio
 
 
 class YoutubeAudioMainTests(unittest.TestCase):
@@ -59,7 +59,7 @@ class YoutubeAudioMainTests(unittest.TestCase):
         self.assertTrue(manifest_path.is_file(), f"manifest not found at {manifest_path}")
 
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        self.assertEqual(manifest["kind"], "youtube_audio")
+        self.assertEqual(manifest["kind"], "youtube.youtube_audio")
         self.assertEqual(manifest["schema_version"], 1)
         self.assertIsInstance(manifest["inputs"], dict)
         self.assertIn("target", manifest["inputs"])

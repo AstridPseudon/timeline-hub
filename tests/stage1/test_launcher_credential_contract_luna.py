@@ -9,6 +9,9 @@ import sys
 
 import pytest
 
+# Both tests need the sibling Runtime checkout (BANODOCO_RUNTIME_CHECKOUT).
+pytestmark = pytest.mark.integration
+
 RUNTIME = Path(
     os.environ.get("BANODOCO_RUNTIME_CHECKOUT")
     or "/Users/peteromalley/Documents/reigh-workspace/banodoco-workspace-runtime-stage1-convergence"
@@ -52,7 +55,7 @@ def test_first_launch_cli_reads_launcher_credential_file_without_secret_env(
         assert credential_file is not None
         monkeypatch.delenv("BANODOCO_RUNTIME_CREDENTIAL", raising=False)
         monkeypatch.setattr(
-            "astrid.sdk.autobootstrap.ensure_runtime", lambda: _launcher_result(daemon)
+            "astrid.sdk.autobootstrap.ensure_runtime", lambda **_kwargs: _launcher_result(daemon)
         )
         assert gateway_main(
             [
@@ -83,7 +86,7 @@ def test_launcher_path_is_forwarded_as_path_not_bearer_text(
     try:
         monkeypatch.delenv("BANODOCO_RUNTIME_CREDENTIAL", raising=False)
         monkeypatch.setattr(
-            "astrid.sdk.autobootstrap.ensure_runtime", lambda: _launcher_result(daemon)
+            "astrid.sdk.autobootstrap.ensure_runtime", lambda **_kwargs: _launcher_result(daemon)
         )
         observed: dict[str, object] = {}
         original_open = AstridClient.open

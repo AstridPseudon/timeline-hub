@@ -89,7 +89,7 @@ def test_live_media_modules_have_no_locator_fetch_or_resolution_authority() -> N
     root = Path(__file__).parents[2]
     resolution = (root / "astrid/core/timeline/resolution.py").read_text(encoding="utf-8")
     assets = (root / "astrid/core/rendering/assets.py").read_text(encoding="utf-8")
-    task_adapter = (root / "astrid/packs/rendering/executors/render/task_adapter.py").read_text(encoding="utf-8")
+    task_adapter = (root / "astrid/packs/rendering/actions/render/task_adapter.py").read_text(encoding="utf-8")
     assert "urllib.request" not in assets
     assert "asset_cache" not in assets
     assert "original_reference" not in assets
@@ -104,7 +104,7 @@ def test_live_media_modules_have_no_locator_fetch_or_resolution_authority() -> N
     assert "project_root" not in resolution
     assert "path:" not in resolution
     assert "path" not in {field.name for field in AssetIntegrity.__dataclass_fields__.values()}
-    managed_timeline = (root / "astrid/packs/rendering/executors/render/managed_timeline.py").read_text(encoding="utf-8")
+    managed_timeline = (root / "astrid/packs/rendering/actions/render/managed_timeline.py").read_text(encoding="utf-8")
     assert "client is None" not in managed_timeline
     assert "AstridClient.open" not in managed_timeline
     assert "projects_root" not in str(inspect.signature(__import__(

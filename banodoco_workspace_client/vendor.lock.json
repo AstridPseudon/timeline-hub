@@ -1,0 +1,20 @@
+{
+  "files": {
+    "banodoco_workspace_client/__init__.py": {
+      "from": "packages/python/banodoco_workspace_client/__init__.py",
+      "sha256": "sha256:97629bd1b977fb75797d26bcdafe3d3763a7fa12b6c2e738ebb49de1e2f4ffa1"
+    },
+    "banodoco_workspace_client/contract_metadata.py": {
+      "from": "packages/python/banodoco_workspace_client/contract_metadata.py",
+      "sha256": "sha256:eac584dff918170b9b69ef360e9c93cee58a8e99efa2d581d97f12f8a03fdb8d"
+    },
+    "banodoco_workspace_client/generated.py": {
+      "from": "packages/python/banodoco_workspace_client/generated.py",
+      "sha256": "sha256:55a05c55d000822a35badd4a739ee55b3d30e876fb700ae2fe318f4914f7b19f"
+    }
+  },
+  "manifest": "contract/artifacts.json",
+  "producer": "banodoco-workspace-runtime",
+  "producer_version": "sha256:737f97e0b4bee795d3d9ac1b912bd1aa53126d6e349e623219cea9d0faf4f091",
+  "source_commit": "569412ca45423d576ce829002b5233bee6ee8305"
+}

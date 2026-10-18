@@ -216,6 +216,8 @@ def test_public_target_receipt_advertises_generic_route_for_other_edit_cases(tmp
     assert target["capabilities"]["readback"]["status"] == "unavailable"
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_public_target_receipt_advertises_a03_route_without_private_locator(tmp_path):
     baseline = _baseline()
     runtime = FakeRuntime(baseline)
@@ -252,6 +254,7 @@ def test_public_target_receipt_keeps_a01_specialized_route_unavailable_without_l
     assert "edit_route" not in target
 
 
+@pytest.mark.integration
 def test_offline_navigation_entrypoint_materializes_only_selected_case_and_receipt(tmp_path):
     destination = tmp_path / "case-L03"
     destination.mkdir()
@@ -275,6 +278,7 @@ def test_offline_navigation_entrypoint_materializes_only_selected_case_and_recei
         )
 
 
+@pytest.mark.integration
 def test_l10_entrypoint_exposes_verified_voice_bytes_and_existing_player_adapter(tmp_path):
     destination = tmp_path / "case-L10"
     destination.mkdir()
@@ -291,6 +295,7 @@ def test_l10_entrypoint_exposes_verified_voice_bytes_and_existing_player_adapter
     assert player["resolved_executable"]
 
 
+@pytest.mark.integration
 def test_l06_invalid_candidate_is_rejected_by_real_validator_without_publication():
     manifest_path = DEFAULT_FIXTURE_ROOT / "informational" / "fixture.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -305,6 +310,7 @@ def test_l06_invalid_candidate_is_rejected_by_real_validator_without_publication
     assert result["publication_performed"] is False
 
 
+@pytest.mark.integration
 def test_l06_offline_entrypoint_projects_invalid_candidate_diagnostic(tmp_path):
     destination = tmp_path / "case-L06"
     destination.mkdir()

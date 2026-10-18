@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from astrid.core.cli_choices import add_choice_arg
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
 
 guard_canonical_entrypoint("pixel.strip")
@@ -30,7 +31,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--out", type=Path, required=True, help="Output directory.")
     parser.add_argument("--grid-width", type=int, default=0)
     parser.add_argument("--grid-height", type=int, default=0)
-    parser.add_argument("--fit", choices=("cover", "contain", "none"), default="cover")
+    add_choice_arg(parser, "--fit", values=("cover", "contain", "none"), default="cover")
     parser.add_argument(
         "--palette",
         action="append",
@@ -39,7 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--max-colors", type=int, default=0)
     parser.add_argument("--fps", type=float, default=8.0)
-    parser.add_argument("--align", choices=ALIGNS, default="bottom")
+    add_choice_arg(parser, "--align", values=ALIGNS, default="bottom")
     parser.add_argument("--allow-lossy", type=px.parse_bool, default=False, help="Permit a coarse explicit grid (true/false).")
     return parser
 

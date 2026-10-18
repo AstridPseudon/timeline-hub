@@ -135,7 +135,7 @@ create conflict is safe to accept only after the winning record's project,
 kind, stable identity, and content schema are checked. Do not treat the
 Runtime's generic JSON acceptance as validation of your pack schema.
 
-The `astrid documents` CLI can create, inspect, and edit the same records.
+The `documents` CLI family can create, inspect, and edit the same records.
 Compute the ID from the SDK helper, then use checkout/check-in for a
 conflict-safe manual edit:
 

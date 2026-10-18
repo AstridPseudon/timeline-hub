@@ -88,6 +88,9 @@ class _AdmissionTransport:
 
 @pytest.mark.parametrize("change", ["capability_digest", "consent", "input", "target"])
 def test_kernel_idempotency_uses_completed_remote_admission(change):
+    """An explicit caller key replays one completed admission; a changed admission
+    field under that key is a Runtime conflict. Without a key, RemoteTasks allocates
+    a fresh key, so identical content is a new admission."""
     transport = _AdmissionTransport()
     client = SimpleNamespace(tasks=RemoteTasks(transport))
     capability = SimpleNamespace(
@@ -100,18 +103,19 @@ def test_kernel_idempotency_uses_completed_remote_admission(change):
     }
     request = {"target": {"kind": "machine", "id": "worker-1"}}
 
-    def invoke():
+    def invoke(idempotency_key=None):
         result = invocation._kernel_invoke(
             capability, kind="executor", project="demo", inputs=inputs,
-            outputs={}, execution_request=request, _client=client,
+            outputs={}, execution_request=request, idempotency_key=idempotency_key,
+            _client=client,
         )
         assert result[5] is True
         return result[1]
 
-    first = invoke()
+    first = invoke("caller-key")
     # Mapping insertion order has no bearing on replay identity.
     inputs = dict(reversed(list(inputs.items())))
-    assert invoke() == first
+    assert invoke("caller-key") == first
     assert len(transport.receipts) == 1
     assert transport.calls[0]["input_object_ids"] == ["sha256:" + "a" * 64]
     assert transport.calls[0]["spec"]["inputs"]["python_execution_consent"] == "confirmed"
@@ -123,14 +127,19 @@ def test_kernel_idempotency_uses_completed_remote_admission(change):
         inputs["python"] = {"object_id": "sha256:" + "b" * 64, "filename": "workflow.py"}
     else:
         request = {"target": {"kind": "machine", "id": "worker-2"}}
-    changed = invoke()
-    assert changed != first
-    assert invoke() == changed
+    with pytest.raises(RuntimeError, match="idempotency key was already used with different input"):
+        invoke("caller-key")
+    assert len(transport.receipts) == 1
+    fresh = invoke()
+    assert fresh != first
     assert len(transport.receipts) == 2
-    assert transport.calls[0]["idempotency_key"] != transport.calls[2]["idempotency_key"]
+    assert [call["idempotency_key"] for call in transport.calls[:3]] == ["caller-key"] * 3
+    assert transport.calls[3]["idempotency_key"] not in {"caller-key", ""}
 
 
-def test_h3_submission_context_separates_fresh_runtime_admissions() -> None:
+def test_h3_submission_context_is_authority_not_admission_identity() -> None:
+    """The H3 submission id travels as spec authority context. It is not an admission
+    key: each invocation is a fresh Runtime admission, even for the same submission."""
     transport = _AdmissionTransport()
     client = SimpleNamespace(tasks=RemoteTasks(transport))
     capability = SimpleNamespace(
@@ -151,10 +160,12 @@ def test_h3_submission_context_separates_fresh_runtime_admissions() -> None:
     replay = invoke("submission-a")
     second = invoke("submission-b")
 
-    assert replay == first
-    assert second != first
-    assert transport.calls[0]["idempotency_key"] == transport.calls[1]["idempotency_key"]
-    assert transport.calls[1]["idempotency_key"] != transport.calls[2]["idempotency_key"]
+    assert len({first, replay, second}) == 3
+    assert [call["spec"]["authority_context"]["h3_submission_id"] for call in transport.calls] == [
+        "submission-a", "submission-a", "submission-b",
+    ]
+    assert len({call["idempotency_key"] for call in transport.calls}) == 3
+    assert len(transport.receipts) == 3
 
 
 @pytest.mark.parametrize("value", [

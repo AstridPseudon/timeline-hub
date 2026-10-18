@@ -108,6 +108,12 @@ class Harness:
             time.sleep(0.05)
         return proc, int(record.read_text())
 
+    def kill_leader(self, proc: subprocess.Popen) -> None:
+        """Register the live leader (so its start time is recorded), then kill only it."""
+        self.register(proc.pid)
+        os.kill(proc.pid, signal.SIGKILL)
+        proc.wait()
+
     def cleanup(self) -> None:
         for proc in self.procs:
             try:
@@ -126,6 +132,15 @@ def harness(tmp_path, monkeypatch):
     h.cleanup()
 
 
+def _defunct(pid: int) -> bool:
+    """True for a terminated process whose parent has not reaped it yet."""
+    try:
+        stat = Path(f"/proc/{pid}/stat").read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return stat.rpartition(")")[2].split()[:1] == ["Z"]
+
+
 def _gone(pid: int, timeout: float = 5.0) -> bool:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -133,23 +148,23 @@ def _gone(pid: int, timeout: float = 5.0) -> bool:
             os.kill(pid, 0)
         except OSError:
             return True
+        if _defunct(pid):
+            return True  # killed, awaiting a reaper (a container's PID 1 may reap late)
         time.sleep(0.05)
     return False
 
 
 def test_gone_host_with_empty_group_is_dropped_and_relaunched(harness):
-    proc, _ = harness.host(stay=False)
-    harness.register(proc.pid)
-    proc.wait()
+    proc, _ = harness.host()
+    harness.kill_leader(proc)
     harness.ensure()
     assert len(harness.launches) == 1
     assert harness.marker()["pid"] == FAKE_PID
 
 
 def test_dead_leader_with_surviving_member_is_killed_then_dropped(harness):
-    proc, member = harness.host(child="child", stay=False)
-    harness.register(proc.pid)
-    proc.wait()
+    proc, member = harness.host(child="child")
+    harness.kill_leader(proc)
     assert not _gone(member, 0.2), "the orphan must be alive before recovery"
     harness.ensure()
     assert _gone(member), "orphan in the dead host's group must be killed"

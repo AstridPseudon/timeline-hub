@@ -45,7 +45,7 @@ def test_intentional_tracked_root_directories_are_allowed(
 ) -> None:
     tracked_paths = [
         ".vscode/settings.json",
-        "artifacts/m4/baseline.json",
+        "artifacts/p7/composition.json",
         "planning/phase2-execution-plan.md",
     ]
     for relpath in tracked_paths:
@@ -232,3 +232,57 @@ def test_main_reports_category_and_path_names_without_file_contents(
     stderr = capsys.readouterr().err
     assert "[local env filename] .env.local" in stderr
     assert "not-for-output" not in stderr
+
+
+def test_live_tree_passes_repo_hygiene() -> None:
+    """The committed tree is clean under every hygiene rule (home of the CI hygiene lane)."""
+    tracked = check_repo_hygiene._tracked_files()
+
+    assert check_repo_hygiene.find_unknown_root_entries(tracked) == []
+    assert check_repo_hygiene.find_stale_legacy_root_clutter(tracked) == []
+    assert check_repo_hygiene.find_root_generated_artifacts() == []
+    assert check_repo_hygiene.find_tracked_ignored_artifacts(tracked) == []
+    assert check_repo_hygiene.main() == 0
+
+
+def test_legacy_root_clutter_is_tolerated_but_new_root_files_are_not(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    legacy = sorted(check_repo_hygiene.LEGACY_ROOT_CLUTTER)[0]  # any entry still on the shrink-only list
+    tracked_paths = [legacy, "brand_new_notes.md", "artifacts.json"]
+    for relpath in tracked_paths:
+        _touch(tmp_path, relpath)
+    monkeypatch.setattr(check_repo_hygiene, "REPO_ROOT", tmp_path)
+
+    assert check_repo_hygiene.find_unknown_root_entries(tracked_paths) == ["brand_new_notes.md"]
+    # Shrink-only: an entry the owner already removed must be dropped from the set.
+    assert check_repo_hygiene.find_stale_legacy_root_clutter(["artifacts.json"]) == sorted(
+        check_repo_hygiene.LEGACY_ROOT_CLUTTER
+    )
+
+
+def test_pack_assets_and_credentials_docs_are_allowed_but_other_media_and_keys_are_not(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    allowed = [
+        "astrid/packs/local/rendering/elements/effects/demo/assets/card-0.png",
+        "astrid/packs/h3_av/workflows/demo/mask_full_frame.png",
+        "docs/setup/credentials.md",
+    ]
+    flagged = [
+        "astrid/packs/local/rendering/elements/effects/demo/render.mp4",
+        "astrid/packs/h3_av/workflows/demo/output.png",
+        "config/dev.key",
+        "scripts/credentials.json",
+        "runs/demo/output.json",
+        ".venv/bin/python",
+        ".env",
+    ]
+    tracked_paths = allowed + flagged
+    for relpath in tracked_paths:
+        _touch(tmp_path, relpath)
+    monkeypatch.setattr(check_repo_hygiene, "REPO_ROOT", tmp_path)
+
+    flagged_paths = {path for _category, path in check_repo_hygiene.find_tracked_ignored_artifacts(tracked_paths)}
+
+    assert flagged_paths == set(flagged)

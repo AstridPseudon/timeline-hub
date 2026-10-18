@@ -27,7 +27,41 @@ ROOT_FILE_ALLOWLIST = {
     "Makefile",
     "README.md",
     "package.json",
+    # Generated, checked contracts: scripts/artifact_manifest.py and
+    # scripts/gen_cli_surface.py write them; tests/test_artifact_manifest.py
+    # checks them. candidate-dependencies.json is pinned by the pack
+    # requirements.txt files under astrid/packs/{comfy_wrap,vibecomfy}.
+    "artifacts.json",
+    "candidate-dependencies.json",
+    "cli-surface.json",
     "pyproject.toml",
+}
+
+# Legacy scratch notes the owner committed at the repo root. They are not
+# product or source content, but they are the owner's to move or delete, so
+# this checker tolerates exactly these names and nothing else.
+# SHRINK-ONLY: the owner moves or deletes entries; never add one. A new root
+# file belongs in ROOT_FILE_ALLOWLIST only if it is product content, and an
+# entry that is no longer tracked must be removed (find_stale_legacy_root_clutter).
+LEGACY_ROOT_CLUTTER = {
+    "discord_solution_check.md",
+    "eval_100_stratified.json",
+    "eval_100_stratified.md",
+    "eval_run_results.md",
+    "failure_taxonomy.md",
+    "gh_workflow_issues_shortlist.md",
+    "judged_assessment_summary.md",
+    "pitfall_analysis.json",
+    "pitfall_report.md",
+    "sense_check_v2_report.md",
+    "vibecomfy_scenario_assessment.json",
+    "vibecomfy_scenario_quality.md",
+    "workflow_provided_shortlist.md",
+    "workflow_questions_shortlist.md",
+    "workflow_scenarios_100.json",
+    "workflow_scenarios_100.md",
+    "workflow_scenarios_FINAL.md",
+    "workflow_scenarios_master.json",
 }
 
 # Approved top-level directories.
@@ -39,16 +73,39 @@ ROOT_DIR_ALLOWLIST = {
     ".vscode",
     "astrid",
     "artifacts",
+    # Product configuration and contracts read by code and tests:
+    # config/ (capability ledger, runtime, hivemind contract),
+    # schemas/ (JSON schemas validated by tests/schemas),
+    # banodoco_workspace_client/ (vendored generated client, imported by
+    # scripts and astrid), evals/ (timeline eval harness imported by tests/evals).
+    "banodoco_workspace_client",
+    "config",
     "docs",
+    "evals",
     "examples",
     "planning",
     "remotion",
     "requirements",
+    "schemas",
     "scripts",
     # Authored storyboard provenance (not generated render output).
     "storyboards",
     "tests",
     "tools",
+    # Authored operator source and records, committed deliberately:
+    # workflows/ (H3 workflow scripts and READMEs referenced by guides and
+    # scripts/watch_h3_5090_storage.py), projects/ (H3 continuation recipe
+    # exercised by tests/test_h3_continuation_runner_contract.py), guides/
+    # (operator guides linked from README and checked by check_doc_references),
+    # receipts/ and findings/ (durable review evidence, like
+    # .astrid-convergence; nothing in code reads them), output/ (one tracked
+    # imagegen prompt source; generated output elsewhere stays untracked).
+    "findings",
+    "guides",
+    "output",
+    "projects",
+    "receipts",
+    "workflows",
 }
 
 ROOT_GENERATED_PATTERNS = (
@@ -85,6 +142,12 @@ TRACKED_PATH_ALLOWLISTS = (
     ".megaplan/plans/m7-dogfood-and-hardening-20260820-0835/state.json",
     "tests/**/fixtures/**",
     "tests/fixtures/**",
+    # Element/workflow assets that are authored pack content, not runtime
+    # output: render-element plates and cards, and the h3_av inpaint masks.
+    "astrid/packs/*/rendering/elements/**/assets/*",
+    "astrid/packs/h3_av/workflows/**/mask_*.png",
+    # Docs *about* credentials (setup/reference prose), never credential values.
+    "docs/**/*credentials*.md",
 )
 
 # Each rule is (category-label, name/path globs). A tracked path is flagged
@@ -217,6 +280,12 @@ def _is_allowlisted(path: str) -> bool:
     return _matches_any(path, TRACKED_PATH_ALLOWLISTS)
 
 
+def find_stale_legacy_root_clutter(tracked: list[str] | None = None) -> list[str]:
+    """LEGACY_ROOT_CLUTTER entries that are no longer tracked (must be removed)."""
+    present = set(tracked if tracked is not None else _tracked_files())
+    return sorted(name for name in LEGACY_ROOT_CLUTTER if name not in present)
+
+
 def find_root_generated_artifacts() -> list[str]:
     findings: list[str] = []
     for pattern in ROOT_GENERATED_PATTERNS:
@@ -232,7 +301,11 @@ def find_unknown_root_entries(tracked: list[str] | None = None) -> list[str]:
             if root not in ROOT_DIR_ALLOWLIST and (REPO_ROOT / path).exists():
                 findings.append(root + "/")
             continue
-        if path not in ROOT_FILE_ALLOWLIST and (REPO_ROOT / path).exists():
+        if (
+            path not in ROOT_FILE_ALLOWLIST
+            and path not in LEGACY_ROOT_CLUTTER
+            and (REPO_ROOT / path).exists()
+        ):
             findings.append(path)
     return sorted(set(findings))
 
@@ -263,6 +336,13 @@ def main() -> int:
         failed = True
         print("unknown root entries must not be committed or kept at repository root:", file=sys.stderr)
         for path in unknown_root:
+            print(f"  {path}", file=sys.stderr)
+
+    stale_clutter = find_stale_legacy_root_clutter()
+    if stale_clutter:
+        failed = True
+        print("LEGACY_ROOT_CLUTTER is shrink-only; remove entries that are no longer tracked:", file=sys.stderr)
+        for path in stale_clutter:
             print(f"  {path}", file=sys.stderr)
 
     root_findings = find_root_generated_artifacts()

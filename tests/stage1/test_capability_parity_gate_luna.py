@@ -21,6 +21,8 @@ import subprocess
 import sys
 from typing import Any
 
+import pytest
+
 from astrid.core.execution.generic_host import GenericPackHost
 
 
@@ -43,8 +45,8 @@ RUNTIME_PYTHON = RUNTIME_CHECKOUT / "packages" / "python"
 FAMILY_PROOFS: dict[str, dict[str, str]] = {
     "cpu": {
         "kind": "family_representative",
-        "selector": "tests/stage1/test_final_cold_launch_matrix_luna.py::test_final_cold_launch_matrix_no_mocks",
-        "rationale": "cold matrix proves generic CPU discovery, registration, claim, subprocess execution, CAS settlement, restart, and fencing",
+        "selector": "tests/stage1/test_runtime_client_cutover.py::test_generic_host_cpu_route_claims_settles_and_fences_stale_attempt_across_restart",
+        "rationale": "the cutover test proves generic CPU discovery, registration, claim, subprocess execution, CAS settlement, restart, and stale-attempt fencing on a real daemon",
     },
     "provider": {
         "kind": "family_representative",
@@ -53,8 +55,8 @@ FAMILY_PROOFS: dict[str, dict[str, str]] = {
     },
     "render": {
         "kind": "family_representative",
-        "selector": "tests/stage1/test_final_cold_launch_matrix_luna.py::test_final_cold_launch_matrix_no_mocks",
-        "rationale": "cold matrix proves the shared render-family host route with real FFmpeg; canonical Remotion rendering is direct-proof gated below",
+        "selector": "tests/stage1/test_runtime_client_cutover.py::test_generic_host_render_route_runs_real_ffmpeg_and_settles_boot_manifest_provenance",
+        "rationale": "the cutover test proves the shared render-family host route with real FFmpeg and boot-manifest provenance on a real daemon; canonical Remotion rendering is direct-proof gated below",
     },
     "local_generation": {
         "kind": "family_representative",
@@ -123,7 +125,8 @@ def _run_proofs(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
     )
     for selector in sorted(selectors):
         completed = subprocess.run(
-            [sys.executable, "-m", "pytest", "-q", selector],
+            # The representatives live in the integration lane; -m "" keeps addopts from deselecting them.
+            [sys.executable, "-m", "pytest", "-q", "-m", "", selector],
             cwd=ROOT,
             env=proof_env,
             text=True,
@@ -148,16 +151,14 @@ def test_stage1_capability_parity_is_explicit_and_family_proven(tmp_path: Path) 
     host = GenericPackHost(pack_roots=[PACKS], capability_matrix=MATRIX, credential_source={})
     records = host.discover()
     report = _report(host)
-    proof_runs = _run_proofs(report)
-    report["proof_runs"] = proof_runs
     report_path = tmp_path / "astrid-capability-parity.json"
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     assert report["schema"] == "astrid.stage1.capability_parity.v1"
-    assert report["discovered_count"] == 77
+    assert report["discovered_count"] == 104
     discovered_ids = {record.id for record in records}
     assert discovered_ids <= set(host.matrix)
-    assert len(set(host.matrix) - discovered_ids) == 9
+    assert len(set(host.matrix) - discovered_ids) == 8
 
     allowed = {"required", "optional", "unsupported", "retired"}
     for record in records:
@@ -172,10 +173,6 @@ def test_stage1_capability_parity_is_explicit_and_family_proven(tmp_path: Path) 
         assert selector and _selector_path(selector).is_file(), f"{record.id}: proof selector is not in checkout"
         if row["ready"]:
             assert proof["kind"] in {"family_representative", "direct"}, f"{record.id}: ready without executable proof"
-            proof_run = proof_runs.get(selector)
-            assert proof_run and proof_run["status"] == "pass", (
-                f"{record.id}: proof did not execute cleanly: {proof_run}"
-            )
         if row["direct_proof_required"] and row["ready"]:
             assert proof["kind"] == "direct", "rendering.render cannot be certified by an offline render-family helper"
 
@@ -188,3 +185,18 @@ def test_stage1_capability_parity_is_explicit_and_family_proven(tmp_path: Path) 
     assert report_path.is_file()
     persisted = json.loads(report_path.read_text(encoding="utf-8"))
     assert persisted["ready_count"] == report["ready_count"]
+
+
+@pytest.mark.integration
+def test_every_ready_capability_has_a_passing_family_proof() -> None:
+    """Runs each ready capability's representative (real daemon, real FFmpeg), so it is integration-lane."""
+    host = GenericPackHost(pack_roots=[PACKS], capability_matrix=MATRIX, credential_source={})
+    host.discover()
+    report = _report(host)
+    proof_runs = _run_proofs(report)
+    for row in report["records"]:
+        if row["ready"] and isinstance(row.get("proof"), dict):
+            proof_run = proof_runs.get(str(row["proof"]["selector"]))
+            assert proof_run and proof_run["status"] == "pass", (
+                f"{row['id']}: proof did not execute cleanly: {proof_run}"
+            )

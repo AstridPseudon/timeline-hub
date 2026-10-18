@@ -15,8 +15,15 @@ def test_beta_matrix_covers_every_discovered_capability_and_declaration():
         for capability_id in host.matrix
         if capability_id.startswith("hivemind.")
     }
-    assert len(records) == 77
-    assert {record.id for record in records} == set(host.matrix) - uninstalled_external_contracts
+    # h3_av.transform declares metadata.local_orchestrator, so the action
+    # loader rejects it as a host executor; it is owned by the orchestrator
+    # registry and its stale matrix row is reported, not discovered.
+    local_orchestrators = {"h3_av.transform"}
+    # Every discovered capability must have a row in
+    # config/astrid-beta-capabilities.json; no discovered id is exempted.
+    assert {record.id for record in records} == (
+        set(host.matrix) - uninstalled_external_contracts - local_orchestrators
+    )
     assert {record.matrix["disposition"] for record in records} <= {"required", "optional", "unsupported", "retired"}
     for record in records:
         assert record.matrix["evidence_reason"]

@@ -20,7 +20,10 @@ import yaml
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _FIRST_PARTY_PACKS_ROOT = _REPO_ROOT / "astrid" / "packs"
 _FIRST_PARTY_PACK_IDS = (
+    "astrid_motion",
     "blender",
+    "capture",
+    "chiptune",
     "comfy_wrap",
     "discord_local",
     "editorial",
@@ -32,6 +35,8 @@ _FIRST_PARTY_PACK_IDS = (
     "local",
     "media",
     "moirae",
+    "music",
+    "pixel",
     "rendering",
     "runpod",
     "seedance_local",

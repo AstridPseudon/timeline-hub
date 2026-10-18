@@ -269,6 +269,7 @@ def test_startup_recovery_command_crosses_real_astrid_runtime_entrypoint(monkeyp
     ]
 
 
+@pytest.mark.integration
 def test_startup_recovery_command_parses_at_installed_runtime_boundary(tmp_path):
     """Exercise the parser that owns the installed ``astrid-runtime`` script."""
 

@@ -36,7 +36,7 @@ def _import_probe(module: str) -> dict[str, object]:
 def test_live_pack_imports_do_not_reach_retired_thread_store() -> None:
     for module in (
         "astrid.packs.iteration.actions.assemble.run",
-        "astrid.packs.video_editing.orchestrators.iteration_video.run",
+        "astrid.packs.video_editing.actions.iteration_video.run",
         "astrid.packs.video_editing.actions.logo_ideas.run",
         "astrid.packs.generation.actions.generate_image_openai.run",
     ):
@@ -68,5 +68,5 @@ def test_logo_dry_run_publishes_manifest_without_variant_sidecar(tmp_path: Path)
 
 def test_video_editing_orchestrators_have_no_pack_event_sidecar_writer() -> None:
     for name in ("thumbnail_maker", "event_talks"):
-        source = (ROOT / "astrid/packs/video_editing/orchestrators" / name / "run.py").read_text()
+        source = (ROOT / "astrid/packs/video_editing/actions" / name / "run.py").read_text()
         assert "pack_events.jsonl" not in source

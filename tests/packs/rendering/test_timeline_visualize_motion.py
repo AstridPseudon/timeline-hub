@@ -27,6 +27,7 @@ def test_motion_layer_registry_and_v3_element_lookup():
     )
 
 
+@pytest.mark.integration
 def test_transform_at_adapter_preserves_clip_time_and_canvas_units():
     modules = element_motion.modules()
     values = element_motion.evaluate(

@@ -4,8 +4,9 @@ import json
 import hashlib
 from pathlib import Path
 
-from astrid.core.execution.executor.schema import load_executor_manifest
-from astrid.packs.foley.actions.foley_map import run
+from astrid.core.pack.canonical import validate_canonical_pack
+
+PACK_ROOT = Path(__file__).resolve().parents[3] / "astrid" / "packs" / "fal"
 
 
 class _FakeClient:
@@ -20,12 +21,16 @@ class _FakeClient:
 def test_foley_host_contract_declares_inputs_outputs_and_typed_manifest(
     tmp_path: Path, monkeypatch
 ) -> None:
+    # The entrypoint guard refuses import unless the host marks the invocation internal.
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    from astrid.packs.fal.actions.fal_foley import run
+
     clip = tmp_path / "clip.mp4"
     clip.write_bytes(b"video")
     out = tmp_path / "run"
     client = _FakeClient()
 
-    monkeypatch.setattr(run.CredentialsScope, "get", lambda *args, **kwargs: "test-key")
+    monkeypatch.setattr(run.CredentialsScope, "get_local", lambda *args, **kwargs: "test-key")
     monkeypatch.setattr(run, "default_client", lambda: client)
     monkeypatch.setattr(
         run,
@@ -52,6 +57,7 @@ def test_foley_host_contract_declares_inputs_outputs_and_typed_manifest(
     ) == 0
 
     manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+    sidecar_bytes = (out / "audio.wav.fal.json").read_bytes()
     assert manifest["outputs"] == [
         {
             "name": "audio",
@@ -65,7 +71,19 @@ def test_foley_host_contract_declares_inputs_outputs_and_typed_manifest(
             "bytes": 5,
             "content_hash": "sha256:"
             + hashlib.sha256(b"audio").hexdigest(),
-        }
+        },
+        {
+            "name": "audio_provenance",
+            "path": "audio.wav.fal.json",
+            "type": "file",
+            "artifact_type": "application/json",
+            "media_type": "application/json",
+            "ordinal": 1,
+            "role": "auxiliary",
+            "is_primary": False,
+            "bytes": len(sidecar_bytes),
+            "content_hash": "sha256:" + hashlib.sha256(sidecar_bytes).hexdigest(),
+        },
     ]
     assert manifest["provider_extension"] == {
         "model_id": "fal-ai/hunyuan-video-foley",
@@ -74,20 +92,22 @@ def test_foley_host_contract_declares_inputs_outputs_and_typed_manifest(
         "source_file_name": "provider.wav",
     }
 
-    declared = load_executor_manifest(
-        str(Path(__file__).resolve().parents[3] / "astrid/packs/fal/executors/fal_foley/executor.yaml")
-    )
-    assert [(output.name, output.path_template, output.artifact_type) for output in declared.outputs] == [
-        ("audio", "{out}/audio.wav", "audio"),
-        ("audio_manifest", "{out}/manifest.json", None),
+    declared = validate_canonical_pack(PACK_ROOT).definition.actions["fal_foley"]
+    assert [
+        (output["name"], output.get("artifact_type"), output["path_template"])
+        for output in declared["outputs"]
+    ] == [
+        ("audio", "audio", "{out}/audio.wav"),
+        ("audio_manifest", None, "{out}/manifest.json"),
+        ("audio_provenance", "application/json", "{out}/audio.wav.fal.json"),
     ]
-    assert declared.inputs[0].name == "clip"
-    assert declared.inputs[1].name == "prompt"
-    assert declared.command.argv[-6:] == (
+    assert declared["inputs"][0]["name"] == "clip"
+    assert declared["inputs"][1]["name"] == "prompt"
+    assert list(declared["invocation"]["command"]["argv"][-6:]) == [
         "--clip",
         "{clip}",
         "--prompt",
         "{prompt}",
         "--out",
         "{out}/audio.wav",
-    )
+    ]

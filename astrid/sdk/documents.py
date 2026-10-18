@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .contracts import DomainResult, ErrorObject
+from .media_transcript import transcript_document_id
 from .pagination import page_pair
 from .remote import _RemoteFamily
 
@@ -218,12 +219,10 @@ class Documents(_DocumentFamily):
         if not resolved.ok:
             return resolved
         if kind == "media.transcript" and document_id is None:
-            from .media_transcript import transcript_document_id
-
             if not isinstance(content, Mapping) or not all(isinstance(content.get(name), str) and content[name]
                                                            for name in ("media_id", "source_id")):
                 return _failure("validation_error", "media.transcript content needs media_id and source_id")
-            document_id = transcript_document_id(resolved.data, content["media_id"], content["source_id"])
+            document_id = transcript_document_id(str(resolved.data), content["media_id"], content["source_id"])
         key = idempotency_key or uuid.uuid4().hex
         return self._typed("create_document", resolved.data, document_id or "document:" + str(uuid.uuid5(uuid.NAMESPACE_URL, key)), kind, content, key=key, idempotency_key=key)
 

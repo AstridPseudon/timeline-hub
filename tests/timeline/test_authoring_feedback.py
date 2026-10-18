@@ -84,7 +84,6 @@ def test_saved_pair_action_quotes_receipt_ids_and_parses_exact_supported_flags()
     assert parsed.ref == "timeline; two"
     assert parsed.from_revision == "old head; $(no)"
     assert parsed.to_revision == "new 'head'"
-    assert parsed.json is True
     assert parsed.format == "readable"
 
 

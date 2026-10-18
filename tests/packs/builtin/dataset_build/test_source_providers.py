@@ -1,13 +1,20 @@
 from __future__ import annotations
 
+import copy
+import hashlib
 import json
 import subprocess
+from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+import pytest
 
 from astrid.packs.training.actions.dataset_build.source_providers import get_source_provider, iter_source_candidates
 from astrid.packs.training.actions.dataset_build.source_providers.local_folder import LocalFolderSourceProvider
 from astrid.packs.training.actions.dataset_build.source_providers.youtube import YouTubeSourceProvider, youtube_source_key
+from tests.fixtures.dataset_build_child_invoker import install_child_invoker, make_child_meter
 
 
 def _probe(path: Path) -> dict[str, Any]:
@@ -94,32 +101,134 @@ def test_source_provider_registry_dispatches_config_sources(tmp_path: Path) -> N
     assert candidates[0]["source_id"].startswith("local_")
 
 
-def test_youtube_provider_delegates_download_scene_split_and_internal_clip_extract(tmp_path: Path) -> None:
+@dataclass(frozen=True)
+class _YouTubeOutput:
+    output: dict[str, Any]
+    filename: str
+
+    def producer_file(self) -> dict[str, str]:
+        return {
+            "filename": self.filename,
+            "media_type": str(self.output["media_type"]),
+            "output_port": str(self.output["output_port"]),
+        }
+
+
+@dataclass(frozen=True)
+class _YouTubeChild:
+    ok: bool
+    raw_result: dict[str, Any]
+    kernel_task_id: str
+    kernel_attempt_id: str
+    kernel_run_id: str
+    outputs: dict[str, Any]
+    error: Any
+    _local: dict[str, _YouTubeOutput]
+
+    def materialize_output(self, association_id: str) -> _YouTubeOutput:
+        return self._local[association_id]
+
+
+class _YouTubeChildHost:
+    """Host bridge for the YouTube provider's delegated download and scene children.
+
+    ``youtube.youtube_audio`` completes with a binary ``media`` output and
+    ``editorial.scenes`` with a JSON ``scenes`` output. Each output is written under
+    ``root`` with the size, digest and identities the provider verifies on
+    materialization, so the product's own checks run against real bytes.
+    """
+
+    def __init__(self, root: Path, *, scenes: list[dict[str, float]]) -> None:
+        self._root = root.resolve()
+        self._scenes = scenes
+        self.calls: list[dict[str, Any]] = []
+
+    def __call__(
+        self,
+        capability: str,
+        *,
+        kind: str,
+        inputs: Mapping[str, Any],
+        child_key: str,
+        wait: bool,
+        timeout_seconds: float,
+        poll_seconds: float,
+    ) -> _YouTubeChild:
+        assert kind == "action"
+        assert wait is True
+        index = len(self.calls)
+        self.calls.append(
+            {"capability": capability, "inputs": copy.deepcopy(dict(inputs)), "child_key": child_key}
+        )
+        if capability == "youtube.youtube_audio":
+            port, media_type, body = "media", "video/mp4", b"video"
+        elif capability == "editorial.scenes":
+            port, media_type = "scenes", "application/json"
+            body = json.dumps(self._scenes).encode("utf-8")
+        else:
+            raise AssertionError(f"unexpected delegated capability: {capability}")
+        filename = f"children/{index}/{port}"
+        (self._root / filename).parent.mkdir(parents=True, exist_ok=True)
+        (self._root / filename).write_bytes(body)
+        digest = "sha256:" + hashlib.sha256(body).hexdigest()
+        row = {
+            "output_port": port,
+            "task_id": f"task-{index}",
+            "attempt_id": f"attempt-{index}",
+            "run_id": f"run-{index}",
+            "size": len(body),
+            "digest": digest,
+            "object_id": digest,
+            "association_id": f"assoc-{index}",
+            "media_type": media_type,
+        }
+        return _YouTubeChild(
+            ok=True,
+            raw_result={"state": "completed"},
+            kernel_task_id=row["task_id"],
+            kernel_attempt_id=row["attempt_id"],
+            kernel_run_id=row["run_id"],
+            outputs={"managed_outputs": [row]},
+            error=None,
+            _local={row["association_id"]: _YouTubeOutput(output=row, filename=filename)},
+        )
+
+
+def _install_youtube_host(
+    monkeypatch: pytest.MonkeyPatch, root: Path, *, scenes: list[dict[str, float]]
+) -> _YouTubeChildHost:
+    host = _YouTubeChildHost(root, scenes=scenes)
+    install_child_invoker(monkeypatch, host)
+    return host
+
+
+def _youtube_provider(runner: Any, root: Path) -> YouTubeSourceProvider:
+    return YouTubeSourceProvider(
+        runner=runner,
+        prober=_probe,
+        child_work_meter=make_child_meter(),
+        materialization_root=root,
+    )
+
+
+def test_youtube_provider_delegates_download_scene_split_and_internal_clip_extract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "materialized"
+    host = _install_youtube_host(
+        monkeypatch,
+        root,
+        scenes=[{"start": 0.0, "end": 1.0}, {"start": 1.0, "end": 4.0}, {"start": 4.0, "end": 20.0}],
+    )
     calls: list[list[str]] = []
 
     def runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
         calls.append(cmd)
-        if "astrid.packs.youtube.executors.youtube_audio.run" in cmd:
-            out_base = Path(cmd[cmd.index("--out") + 1])
-            out_base.with_suffix(".mp4").write_bytes(b"video")
-        elif "astrid.packs.editorial.actions.scenes.run" in cmd:
-            out_path = Path(cmd[cmd.index("--out") + 1])
-            out_path.parent.mkdir(parents=True, exist_ok=True)
-            out_path.write_text(
-                json.dumps(
-                    [
-                        {"start": 0.0, "end": 1.0},
-                        {"start": 1.0, "end": 4.0},
-                        {"start": 4.0, "end": 20.0},
-                    ]
-                ),
-                encoding="utf-8",
-            )
-        elif cmd and cmd[0] == "ffmpeg":
+        if cmd and cmd[0] == "ffmpeg":
             Path(cmd[-1]).write_bytes(b"clip")
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
-    provider = YouTubeSourceProvider(runner=runner, prober=_probe)
+    provider = _youtube_provider(runner, root)
     candidates = list(
         provider.acquire(
             {
@@ -135,26 +244,29 @@ def test_youtube_provider_delegates_download_scene_split_and_internal_clip_extra
     assert candidates[0]["duration_s"] == 3.0
     assert candidates[0]["clip_start_s"] == 1.0
     assert candidates[0]["clip_end_s"] == 4.0
-    assert any("astrid.packs.youtube.executors.youtube_audio.run" in cmd for cmd in calls)
-    assert any("astrid.packs.editorial.actions.scenes.run" in cmd for cmd in calls)
+    assert [call["capability"] for call in host.calls] == ["youtube.youtube_audio", "editorial.scenes"]
+    assert host.calls[0]["inputs"] == {"query": "https://youtube.example/watch?v=1", "mode": "video"}
+    assert host.calls[1]["inputs"]["video"]["output_port"] == "media"
+    assert not any("astrid.packs.youtube.executors.youtube_audio.run" in cmd for cmd in calls)
+    assert not any("astrid.packs.editorial.actions.scenes.run" in cmd for cmd in calls)
     assert any(cmd and cmd[0] == "ffmpeg" for cmd in calls)
     assert not any(cmd and cmd[0] == "yt-dlp" for cmd in calls)
 
 
-def test_youtube_provider_uses_bucket_search_queries_from_config(tmp_path: Path) -> None:
+def test_youtube_provider_uses_bucket_search_queries_from_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "materialized"
+    host = _install_youtube_host(monkeypatch, root, scenes=[{"start": 0.0, "end": 3.0}])
     calls: list[list[str]] = []
 
     def runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
         calls.append(cmd)
-        if "astrid.packs.youtube.executors.youtube_audio.run" in cmd:
-            Path(cmd[cmd.index("--out") + 1]).with_suffix(".mp4").write_bytes(b"video")
-        elif "astrid.packs.editorial.actions.scenes.run" in cmd:
-            Path(cmd[cmd.index("--out") + 1]).write_text(json.dumps([{"start": 0.0, "end": 3.0}]), encoding="utf-8")
-        elif cmd and cmd[0] == "ffmpeg":
+        if cmd and cmd[0] == "ffmpeg":
             Path(cmd[-1]).write_bytes(b"clip")
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
-    provider = YouTubeSourceProvider(runner=runner, prober=_probe)
+    provider = _youtube_provider(runner, root)
     candidates = list(
         provider.acquire(
             {
@@ -170,11 +282,15 @@ def test_youtube_provider_uses_bucket_search_queries_from_config(tmp_path: Path)
     )
 
     assert len(candidates) == 1
-    query_commands = [cmd for cmd in calls if "astrid.packs.youtube.executors.youtube_audio.run" in cmd]
-    assert query_commands[0][query_commands[0].index("--query") + 1] == "query from bucket"
+    assert host.calls[0]["capability"] == "youtube.youtube_audio"
+    assert host.calls[0]["inputs"] == {"query": "query from bucket", "mode": "video"}
 
 
-def test_youtube_provider_skips_processed_source_before_download(tmp_path: Path) -> None:
+def test_youtube_provider_skips_processed_source_before_download(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "materialized"
+    host = _install_youtube_host(monkeypatch, root, scenes=[])
     calls: list[list[str]] = []
     source = {"kind": "url", "value": "https://youtube.example/watch?v=already"}
 
@@ -182,7 +298,7 @@ def test_youtube_provider_skips_processed_source_before_download(tmp_path: Path)
         calls.append(cmd)
         raise AssertionError("processed YouTube source should skip before download")
 
-    provider = YouTubeSourceProvider(runner=runner, prober=_probe)
+    provider = _youtube_provider(runner, root)
     candidates = list(
         provider.acquire(
             {
@@ -195,9 +311,14 @@ def test_youtube_provider_skips_processed_source_before_download(tmp_path: Path)
 
     assert candidates == []
     assert calls == []
+    assert host.calls == []
 
 
-def test_youtube_provider_honors_acquisition_request_exclusions_before_download(tmp_path: Path) -> None:
+def test_youtube_provider_honors_acquisition_request_exclusions_before_download(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "materialized"
+    host = _install_youtube_host(monkeypatch, root, scenes=[])
     calls: list[list[str]] = []
     source = {"kind": "url", "value": "https://youtube.example/watch?v=topup-skip"}
 
@@ -205,7 +326,7 @@ def test_youtube_provider_honors_acquisition_request_exclusions_before_download(
         calls.append(cmd)
         raise AssertionError("excluded YouTube source should skip before download")
 
-    provider = YouTubeSourceProvider(runner=runner, prober=_probe)
+    provider = _youtube_provider(runner, root)
     candidates = list(
         provider.acquire(
             {
@@ -218,11 +339,16 @@ def test_youtube_provider_honors_acquisition_request_exclusions_before_download(
 
     assert candidates == []
     assert calls == []
+    assert host.calls == []
     assert provider.last_acquisition_result["no_new_candidates"] is True
     assert provider.last_acquisition_result["skipped_excluded"] == 1
 
 
-def test_youtube_provider_reports_no_new_candidates_for_processed_source_keys(tmp_path: Path) -> None:
+def test_youtube_provider_reports_no_new_candidates_for_processed_source_keys(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "materialized"
+    host = _install_youtube_host(monkeypatch, root, scenes=[])
     calls: list[list[str]] = []
     source = {"kind": "query", "value": "already handled"}
 
@@ -230,7 +356,7 @@ def test_youtube_provider_reports_no_new_candidates_for_processed_source_keys(tm
         calls.append(cmd)
         raise AssertionError("processed source key should skip before download")
 
-    provider = YouTubeSourceProvider(runner=runner, prober=_probe)
+    provider = _youtube_provider(runner, root)
     config = {
         "out_dir": str(tmp_path / "yt"),
         "search_queries": [source["value"]],
@@ -241,5 +367,6 @@ def test_youtube_provider_reports_no_new_candidates_for_processed_source_keys(tm
 
     assert candidates == []
     assert calls == []
+    assert host.calls == []
     assert config["acquisition_result"]["no_new_candidates"] is True
     assert config["acquisition_result"]["skipped_processed"] == 1

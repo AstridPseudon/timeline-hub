@@ -486,8 +486,7 @@ There is no `--run` flag on `tasks retry`; the batch retry surface is
 
 ```bash
 # create — one client.timelines.create call (slug immutable)
-python3 -m astrid timelines create --project demo primary \
-  --name "Primary" --json
+python3 -m astrid timelines create --project demo --slug primary --json
 
 # list — compact identities and counts for active timelines (slug ascending)
 python3 -m astrid timelines list --project demo --json

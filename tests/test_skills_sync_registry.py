@@ -198,12 +198,14 @@ class SyncGatewayTest(unittest.TestCase):
             for route in (
                 video_skill,
                 view / "packs" / "rendering" / "SKILL.md",
-                view / "packs" / "references" / "SKILL.md",
                 view / "creative-work" / "../packs" / "generation" / "SKILL.md",
                 view / "creative-work" / "../packs" / "rendering" / "SKILL.md",
                 view / "pack-builder" / "SKILL.md",
             ):
                 self.assertTrue(route.resolve().is_file(), f"unopenable composed route: {route}")
+            # ``packs/references`` has no pack.yaml; only _core may be a manifestless
+            # implicit skill (discovery.list_skills), so it is not composed into the view.
+            self.assertFalse((view / "packs" / "references").exists())
             pack_builder = (view / "pack-builder" / "SKILL.md").read_text(encoding="utf-8")
             self.assertIn("https://github.com/peteromallet/Astrid/blob/main/docs/", pack_builder)
             self.assertNotIn("../../../../../docs/", pack_builder)

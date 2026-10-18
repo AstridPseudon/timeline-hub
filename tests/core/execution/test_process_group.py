@@ -602,6 +602,7 @@ def test_original_root_term_wait_precedes_kill_and_preserves_escalation_budget(m
     assert events[-1] == ('wait', 0)
     assert 100 not in census and 900 in census
 
+@pytest.mark.darwin_native
 def test_native_original_root_term_wait_avoids_unnecessary_kill(monkeypatch, tmp_path):
     import json, select, sys
     assert sys.platform == 'darwin'
@@ -637,7 +638,7 @@ def test_terminal_member_birth_mismatch_cannot_be_filtered_away(tmp_path, monkey
     monkeypatch.setattr(groups, "_process_snapshot", lambda: census)
     assert groups.observe_tree(process) == {100: "root"}
     evidence = groups._census_evidence(census)
-    with pytest.raises(custody.CustodyError, match="terminal candidate member identity changed"):
+    with pytest.raises(custody.CustodyError, match="candidate lacks its first census identity"):
         owner.observe_census({100: "root", 200: "replacement"}, census=evidence, fresh_census=lambda: evidence)
     assert owner._uncertain is not None and 200 not in owner._handles
 
@@ -844,7 +845,7 @@ def test_termination_passes_existing_total_deadline_without_extension(monkeypatc
     calls = []
     monkeypatch.setattr(groups, "_terminate_tree", lambda process, **kw: calls.append(kw))
     groups.terminate_tree(process, grace_seconds=1.0)
-    assert calls == [{"grace_seconds": 1.0, "cleanup_deadline": 12.0}]
+    assert calls == [{"grace_seconds": 1.0, "cleanup_deadline": 10.0 + 1.0 + groups._CLEANUP_FLOOR_SECONDS}]
 
 
 @pytest.mark.parametrize("role", ["command", "renderer", "lookalike-command"])
@@ -922,3 +923,85 @@ def test_final_verification_still_fails_closed_when_lock_stays_busy(tmp_path, mo
     finally:
         release.set(); thread.join()
     assert process._astrid_tree_uncertain
+
+
+linux_only = pytest.mark.skipif(not sys.platform.startswith("linux"), reason="/proc zombie witness is Linux-only")
+
+
+_BOUND_OWNERS: list = []
+
+
+@pytest.fixture(autouse=True)
+def _release_bound_sleeper_pidfds():
+    """Each test kills and reaps its sleeper; release the pidfds its custody retained."""
+    yield
+    while _BOUND_OWNERS:
+        _BOUND_OWNERS.pop().release_pidfds()
+
+
+def _bound_sleeper():
+    """A bound, once-observed child under real custody, as popen_owned_process leaves it."""
+    owner = custody.ProcessCustody()
+    _BOUND_OWNERS.append(owner)
+    argv, _env = owner.prepare_launch([sys.executable, "-c", "import time; time.sleep(60)"], start_new_session=True)
+    process = subprocess.Popen(argv, start_new_session=True)
+    process._astrid_custody = owner
+    process._astrid_process_group_id = process.pid
+    owner.bind_launch(process)
+    process._astrid_process_birth = owner._handles[process.pid][0]
+    groups.observe_tree(process)
+    return owner, process
+
+
+def _exit_without_reaping(process):
+    process.kill()
+    os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOWAIT)
+
+
+@linux_only
+def test_census_witnesses_an_unreaped_zombie_without_listing_it_live():
+    owner, process = _bound_sleeper()
+    try:
+        birth = owner._handles[process.pid][0]
+        _exit_without_reaping(process)
+        census = groups._process_snapshot()
+        assert process.pid not in census
+        assert census.exited[process.pid] == birth
+    finally:
+        process.kill()
+        process.wait()
+
+
+@linux_only
+def test_first_observer_census_accepts_a_launch_with_zombie_witness():
+    owner, process = _bound_sleeper()
+    try:
+        _exit_without_reaping(process)
+        owner.start_observer()  # exited after ancestry capture; same-census zombie of the bound birth
+        assert owner._uncertain is None
+    finally:
+        process.wait()
+
+
+@linux_only
+def test_first_observer_census_still_fails_closed_without_witness():
+    owner, process = _bound_sleeper()
+    process.kill()
+    process.wait()  # reaped: absent, and no zombie row proves the exit
+    with pytest.raises(custody.CustodyError, match="observer census is unresolved") as raised:
+        owner.start_observer()
+    assert "omitted the suspended launch" in str(raised.value.__cause__)
+
+
+@linux_only
+def test_zombie_witness_requires_the_exact_bound_incarnation():
+    owner, process = _bound_sleeper()
+    try:
+        _exit_without_reaping(process)
+        groups._observe_tree(process)
+        birth = owner._handles[process.pid][0]
+        assert groups.launch_exit_witnessed(process, birth)
+        assert not groups.launch_exit_witnessed(process, birth + "0")
+        assert not groups.launch_exit_witnessed(process, "")
+    finally:
+        process.wait()

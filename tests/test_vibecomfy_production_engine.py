@@ -480,6 +480,7 @@ def test_pip_embedded_inserts_tree_containing_embedded_client(
     assert Path(imported.__file__).resolve() == client.resolve()
 
 
+@pytest.mark.integration
 def test_pip_embedded_consumes_canonical_bundle_and_pinned_session_config(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

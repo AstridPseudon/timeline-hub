@@ -67,9 +67,11 @@ class PipelineDispatchAliasTest(unittest.TestCase):
                 self.assertEqual(exit_code, 2)
                 self.assertIn(f"unknown command '{token}'", stderr.getvalue())
 
-    def test_top_level_handlers_are_exactly_seven_families(self) -> None:
+    def test_top_level_handlers_are_exactly_the_current_families(self) -> None:
         from astrid.core.gateway.dispatch import _TOP_LEVEL_HANDLERS
 
+        # documents/preferences (3ecf5b1b) and dev (39240d8d) are deliberate
+        # top-level families added after the Stage1 seven.
         self.assertEqual(
             set(_TOP_LEVEL_HANDLERS),
             {
@@ -78,6 +80,9 @@ class PipelineDispatchAliasTest(unittest.TestCase):
                 "media",
                 "tasks",
                 "runs",
+                "documents",
+                "preferences",
+                "dev",
                 "doctor",
                 "backup",
             },

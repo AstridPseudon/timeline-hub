@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+from .arrangement_rules import (
+    MAX_VISUAL_HOLD_RATIO,
+    MIN_OVERLAY_COVERAGE_SEC,
+    ROLE_DURATION_BOUNDS,
+    TOTAL_DURATION_BOUNDS,
+    TRIM_BOUND_EXTENSION_SEC,
+    compile_arrangement_plan,
+)
 from .authoring_bundle import (
     AUTHORING_BUNDLE_SCHEMA_VERSION,
     AuthoringBundleError,
@@ -175,6 +183,12 @@ from .shot_composition_projection import (
 )
 
 __all__ = [
+    "MAX_VISUAL_HOLD_RATIO",
+    "MIN_OVERLAY_COVERAGE_SEC",
+    "ROLE_DURATION_BOUNDS",
+    "TOTAL_DURATION_BOUNDS",
+    "TRIM_BOUND_EXTENSION_SEC",
+    "compile_arrangement_plan",
     "AUTHORING_BUNDLE_SCHEMA_VERSION",
     "ARRANGEMENT_VERSION",
     "AnimationReference",

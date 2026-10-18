@@ -10,8 +10,9 @@ For every shipped pack id in ``PORTFOLIO_PACK_IDS`` we prove:
   :func:`_run_external_executor` (the same path external packs
   use). We verify the dispatch boundary by stubbing that subprocess
   entrypoint.
-* Per-component manifests are v1-compliant: ``schema_version: 1`` is
-  present on every per-component manifest with a valid ``kind``.
+* Pack manifests are canonical ``schema_version: 3`` (no ``content:`` /
+  ``extensions:`` blocks) and every declared action carries a name, a
+  version and a supported ``invocation.kind``.
 """
 
 from __future__ import annotations
@@ -73,14 +74,6 @@ def _load_manifest(path: Path) -> dict:
         return yaml.safe_load(text)
 
 
-def _iter_component_manifests(pack_root: Path) -> list[Path]:
-    out: list[Path] = []
-    for name in ("executor.yaml", "executor.yml", "executor.json",
-                 "orchestrator.yaml", "orchestrator.yml", "orchestrator.json"):
-        out.extend(sorted(pack_root.rglob(name)))
-    return out
-
-
 # ---------------------------------------------------------------------------
 # Resolver + validator parity
 # ---------------------------------------------------------------------------
@@ -99,9 +92,10 @@ def test_resolver_discovers_pack(packs_index: dict, pack_id: str) -> None:
     assert pack is not None, f"pack {pack_id!r} not discovered"
     assert pack.id == pack_id
     assert pack.root.is_dir()
-    assert pack.content, (
-        f"pack {pack_id!r} must declare content roots in pack.yaml"
-    )
+    assert str(pack.schema_version) == "3"
+    assert pack.actions, f"pack {pack_id!r} must declare actions in pack.yaml"
+    # v3 packs declare capabilities directly; the v2 content: block is gone.
+    assert not pack.content
 
 
 @pytest.mark.parametrize("pack_id", PORTFOLIO_PACK_IDS)
@@ -114,56 +108,44 @@ def test_validator_accepts_pack(pack_id: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Strict-v2 pack / v1 component compliance
+# Canonical v3 pack / action compliance
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("pack_id", PORTFOLIO_PACK_IDS)
-def test_pack_manifest_v2_compliant(pack_id: str) -> None:
-    """Pack manifest declares canonical schema_version 2 and content roots."""
+def test_pack_manifest_v3_compliant(pack_id: str) -> None:
+    """Pack manifest declares canonical schema_version 3 with no v2 blocks."""
     pack_yaml = PACKS_DIR / pack_id / "pack.yaml"
     doc = _load_manifest(pack_yaml)
-    assert doc.get("schema_version") == 2, (
-        f"{pack_yaml}: schema_version must be 2, got {doc.get('schema_version')!r}"
+    assert doc.get("schema_version") == 3, (
+        f"{pack_yaml}: schema_version must be 3, got {doc.get('schema_version')!r}"
     )
-    content_val = doc.get("content")
-    assert isinstance(content_val, dict) and content_val, (
-        f"{pack_yaml}: must declare a non-empty content:{{}} block"
-    )
+    # The v3 schema forbids the v2 top-level content: and extensions: keys.
+    for retired in ("content", "extensions"):
+        assert retired not in doc, f"{pack_yaml}: v3 manifest must not declare {retired}:"
+    assert doc.get("id") == pack_id
 
 
 @pytest.mark.parametrize("pack_id", PORTFOLIO_PACK_IDS)
-def test_component_manifests_v1_compliant(pack_id: str) -> None:
-    """Every per-component manifest declares schema_version: 1 and a valid kind."""
-    pack_root = PACKS_DIR / pack_id
-    manifests = _iter_component_manifests(pack_root)
-    assert manifests, f"pack {pack_id!r} has no component manifests"
-    for mpath in manifests:
-        doc = _load_manifest(mpath)
-        rel = mpath.relative_to(REPO_ROOT)
-        # Multi-executor manifests (top-level "executors" key) are wrappers;
-        # the per-executor objects inside them carry the kind field.  Single-
-        # component manifests carry kind at the top level.
-        components: list[dict] = (
-            doc.get("executors") or doc.get("orchestrators") or []  # pyright: ignore[reportArgumentType]
+def test_action_declarations_v3_compliant(pack_id: str) -> None:
+    """Every action declared in pack.yaml has a name, version and valid invocation."""
+    pack_yaml = PACKS_DIR / pack_id / "pack.yaml"
+    doc = _load_manifest(pack_yaml)
+    rel = pack_yaml.relative_to(REPO_ROOT)
+    actions = doc.get("actions")
+    assert isinstance(actions, dict) and actions, f"{rel}: must declare actions"
+    for action_name, action in actions.items():
+        assert isinstance(action, dict), f"{rel}: action {action_name!r} must be a mapping"
+        assert action.get("name"), f"{rel}: action {action_name!r} must declare a name"
+        assert action.get("version"), f"{rel}: action {action_name!r} must declare a version"
+        invocation = action.get("invocation")
+        assert isinstance(invocation, dict), (
+            f"{rel}: action {action_name!r} must declare an invocation"
         )
-        if components:
-            for comp in components:
-                assert comp.get("schema_version") == 1 or doc.get("schema_version") == 1, (
-                    f"{rel}: schema_version must be 1"
-                )
-                kind = comp.get("kind")
-                assert kind in ("built_in", "external"), (
-                    f"{rel}: kind must be 'built_in' or 'external', got {kind!r}"
-                )
-        else:
-            assert doc.get("schema_version") == 1, (
-                f"{rel}: schema_version must be 1, got {doc.get('schema_version')!r}"
-            )
-            kind = doc.get("kind")
-            assert kind in ("built_in", "external"), (
-                f"{rel}: kind must be 'built_in' or 'external', got {kind!r}"
-            )
+        assert invocation.get("kind") in ("command", "python"), (
+            f"{rel}: action {action_name!r} invocation.kind must be 'command' or "
+            f"'python', got {invocation.get('kind')!r}"
+        )
 
 
 # ---------------------------------------------------------------------------

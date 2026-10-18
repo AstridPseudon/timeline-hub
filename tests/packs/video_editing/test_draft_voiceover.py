@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.packs.video_editing import draft_voiceover as vo
+from astrid.packs.video_editing.shared import draft_voiceover as vo
 
 OLD = 'sha256:' + '1' * 64
 NEW = 'sha256:' + '2' * 64

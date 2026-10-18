@@ -12,7 +12,7 @@ from referencing import Registry, Resource
 
 from .items import repo_relative_path, utc_now_iso
 
-SCHEMAS_ROOT = Path(__file__).resolve().parent / "schemas"
+SCHEMAS_ROOT = Path(__file__).resolve().parents[1] / "actions" / "dataset_build" / "schemas"
 
 
 def accepted_items(items: list[Mapping[str, Any]]) -> list[dict[str, Any]]:

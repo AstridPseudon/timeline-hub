@@ -767,8 +767,18 @@ def test_real_repo_top_level_matches_structure_constants() -> None:
             )
 
     # ── disk → constants (validator filter) ───────────────────────────
+    # Entries already in the shrink-only structure baseline are known debt
+    # (scripts/reshape/baselines/structure_astrid.json); anything else is new.
+    import json
+
+    baseline = set(json.loads(
+        (REPO_ROOT / "scripts" / "reshape" / "baselines" / "structure_astrid.json").read_text(encoding="utf-8")
+    )["violations"])
 
     for child in sorted(astrid_root.iterdir()):
+        if (f"top-level astrid module must move to a canonical package: astrid/{child.name}" in baseline
+                or f"top-level astrid directory is not a canonical concept: astrid/{child.name}" in baseline):
+            continue
         # Skip dotfiles (same filter as _validate_top_level_astrid).
         if child.name.startswith("."):
             continue

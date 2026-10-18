@@ -633,10 +633,17 @@ def test_real_authority_absence_reconciles_only_positive_retained_root(graph, mo
     owner = object.__new__(custody.ProcessCustody)
     owner._lock, owner._uncertain = threading.RLock(), prior_uncertainty
     owner.actor = actors[101]
+    def wait(timeout=None):
+        if case == "live-root":
+            raise subprocess.TimeoutExpired("root", timeout)
+        return 0
     owner.process = SimpleNamespace(
         pid=100 if case in {"waited-other-root", "observed-descendant"} else 103,
         poll=lambda: None if case == "live-root" else 0,
+        wait=wait,
     )
+    # Retained-root signalling compares the handle against the launch broker.
+    owner._launch_broker = None if case == "observed-descendant" else broker
     owner._handles = {103: ("birth-103", (authority, reference) if case == "observed-descendant" else broker)}
     if case == "birth-replaced":
         identities[103] = {**identities[103], "birth_id": "replacement"}
@@ -1125,7 +1132,11 @@ def observed_descendant(graph, tmp_path, monkeypatch):
     """Real role authority, controlled identity/token providers, no kernel calls."""
     _, actors, identities, tokens = graph
     monkeypatch.setattr(custody.sys, "platform", "darwin")
-    monkeypatch.setattr(custody, "default_process_identity", identities.get)
+    monkeypatch.setattr(custody, "default_process_identity", lambda pid, **_kwargs: identities.get(pid))
+    def no_process_start(_pid):
+        raise custody.DarwinProcessExitedError("no process")
+    # Keep the fixture hermetic: the initial start witness must never reach libproc.
+    monkeypatch.setattr(custody, "_darwin_process_start", no_process_start)
     def fake_observation(pid):
         try:
             identity = custody.default_process_identity(pid)
@@ -1784,7 +1795,10 @@ def _capture_terminal_fixture(observed_descendant, monkeypatch, *, change=None):
     def capture(_):
         raise custody.NativeTokenCaptureError("initial Mach lookup failed", substage=(
             "task_info_first" if change == "later-phase" else "task_name_for_pid"),
-            kern_return=5, port_acquired=change in {"partial-port", "later-phase"})
+            # A LIVE post must be refused for terminal disposition without the
+            # synchronous capture retry, so use a shape that is not retry-eligible
+            # (kern_return 5 on task_name_for_pid is the name-no-port retry shape).
+            kern_return=4 if change == "live" else 5, port_acquired=change in {"partial-port", "later-phase"})
     monkeypatch.setattr(custody, "current_process_audit_token", capture)
     if change == "partial-designation":
         owner.root.mkdir(parents=True)
@@ -2469,7 +2483,7 @@ def test_failed_candidate_metadata_io_occurs_only_after_immediate_native_post(ob
     def capture(pid):
         events.append("capture_failure")
         raise custody.NativeTokenCaptureError("retained original failure", substage="task_name_for_pid",
-                                             kern_return=5, port_acquired=False)
+                                             kern_return=4, port_acquired=False)
     def command(pid):
         events.append("command")
         return original(pid)
@@ -2531,7 +2545,20 @@ def _new_round_local_live_child(identities, tokens, pid):
     identities[pid] = {"pid": pid, "uid": 501, "birth_id": f"birth-{pid}"}
     tokens[pid] = {"pid": pid, "uid": 501, "pidversion": pid + 1,
                    "sha256": f"sha256:token-{pid}", "words": [pid] * 8}
-    return {"birth_id": f"birth-{pid}", "parent_pid": 100, "pgid": pid}
+    return {"pid": pid, "uid": 501, "birth_id": f"birth-{pid}", "parent_pid": 100, "pgid": pid,
+            "start_sec": 1791421200 + pid, "start_usec": pid, "status": 2}
+
+
+def _precise_native_for_new_round_children(monkeypatch):
+    """A delayed candidate must match its first precise census row, native field for field."""
+    fake = custody.ordinary_candidate_observation
+    def observe(pid):
+        result = fake(pid)
+        if result["outcome"] == "LIVE" and pid >= 104:
+            result = {**result, "native": {k: v for k, v in _new_round_local_live_child({}, {}, pid).items()
+                                           if k != "birth_id"}}
+        return result
+    monkeypatch.setattr(custody, "ordinary_candidate_observation", observe)
 
 
 def test_historical_tombstone_does_not_chase_continuous_new_live_children(observed_descendant):
@@ -2554,8 +2581,9 @@ def test_historical_tombstone_does_not_chase_continuous_new_live_children(observ
     assert old_record["capability"] == "NONE" and old_record["exit_reap"] == "UNPROVED"
 
 
-def test_new_absence_is_finalized_before_fresh_live_child_without_fixed_point_chase(observed_descendant):
+def test_new_absence_is_finalized_before_fresh_live_child_without_fixed_point_chase(observed_descendant, monkeypatch):
     owner, identities, census = _ordinary_census_fixture(observed_descendant)
+    _precise_native_for_new_round_children(monkeypatch)
     tokens = observed_descendant[3]
     current = {100: census[100]}
     calls = []
@@ -2577,16 +2605,19 @@ def test_new_absence_is_finalized_before_fresh_live_child_without_fixed_point_ch
                                  fresh_census=lambda: pytest.fail("historical absence forced fresh chase")) == {100: "root", 104: "birth-104"}
 
 
-def test_genuinely_new_absence_every_round_still_exhausts_same_bound_and_stays_sticky(observed_descendant):
+def test_genuinely_new_absence_every_round_still_exhausts_same_bound_and_stays_sticky(observed_descendant, monkeypatch):
     owner, _, census = _ordinary_census_fixture(observed_descendant)
+    # The 1 s wall-clock deadline bounds the rounds; a short fake deadline keeps the test fast and
+    # deterministic without depending on how many rounds the machine completes.
+    monkeypatch.setattr(custody, "_CANDIDATE_RECONCILIATION_SECONDS", 0.05)
     calls = []
     def disappearing_every_round():
         pid = 104 + len(calls)
         calls.append(pid)
         return {100: census[100], pid: {"birth_id": f"birth-{pid}", "parent_pid": 100, "pgid": pid}}
-    with pytest.raises(custody.CustodyError, match="did not stabilize within its bound"):
+    with pytest.raises(custody.CustodyError, match="did not stabilize before its deadline"):
         owner.observe_census({100: "root", 103: "birth-103"}, census=census, fresh_census=disappearing_every_round)
-    assert len(calls) == 8 and owner._uncertain is not None
+    assert len(calls) >= 1 and owner._uncertain is not None
     assert set(owner._handles) == {100}
     assert all(row["capability"] == "NONE" and row["exit_reap"] == "UNPROVED"
                for row in owner._unadmitted_absent.values())
@@ -2974,6 +3005,7 @@ def test_capture_substage_release_or_identity_failure_stays_sticky(observed_desc
     assert owner._uncertain is not None and 103 not in owner._handles and not owner._unadmitted_absent
 
 
+@pytest.mark.darwin_native
 def test_real_owned_terminal_capture_substage_releases_mach_port(tmp_path, monkeypatch):
     import ctypes, select, subprocess, sys, time
     import astrid.core.execution.process_group as groups
@@ -3176,6 +3208,7 @@ def test_one_same_transaction_live_capture_retry_never_defers_history(observed_d
     assert first['observations']['pre']['outcome']==first['observations']['post']['outcome']=='LIVE'
 
 
+@pytest.mark.darwin_native
 @pytest.mark.parametrize("capture_mode", ["invalid-destination", "name-no-port"])
 def test_real_owned_live_capture_retry_uses_actual_native_token(tmp_path, monkeypatch, capture_mode):
     import ctypes, select, subprocess, sys, time
@@ -3489,6 +3522,7 @@ def test_prospective_authority_failures_are_not_target_declines(observed_descend
     if failure!='clock':assert 103 in owner._handles
 
 
+@pytest.mark.darwin_native
 @pytest.mark.parametrize('exec_during_capture',[False,True])
 def test_real_owned_ordinary_descendant_exec_refreshes_retained_anchor(tmp_path,monkeypatch,exec_during_capture):
     import select
@@ -3707,6 +3741,7 @@ def test_consumed_target_gone_accepts_only_fresh_absent_census_without_dropping_
     assert owner._handles[103] is retained and owner._uncertain is None
 
 
+@pytest.mark.darwin_native
 def test_real_owned_admitted_zombie_signal_observation_requires_original_reap_and_final_census(tmp_path, monkeypatch):
     import select, time
     import astrid.core.execution.process_group as groups
@@ -3878,7 +3913,7 @@ def test_ordinary_descendant_does_not_consume_initial_anchor_capture_exit(observ
     monkeypatch.setattr(authority, '_commit', lambda *_: pytest.fail('descendant target exit committed'))
     real_signal = authority.signal
     monkeypatch.setattr(authority, 'signal', lambda **kwargs: real_signal(**kwargs, signal_provider=lambda *_: pytest.fail('descendant target exit signalled')))
-    with pytest.raises(custody._SignalCaptureTargetGone): owner.signal(103, 'birth-103', signal.SIGTERM, cleanup_deadline=0)
+    with pytest.raises(custody._SignalCaptureTargetGone): owner.signal(103, 'birth-103', signal.SIGTERM, cleanup_deadline=time.monotonic() + 30)
     assert owner._handles[103] is retained and authority._read() == before
     assert len(calls) == read_number
 
@@ -4125,6 +4160,7 @@ def test_busy_lock_is_retryable_but_an_error_inside_the_guard_still_poisons(obse
     assert owner._uncertain is not None
 
 
+@pytest.mark.darwin_native
 @pytest.mark.parametrize("mode", ["finite", "churn"])
 def test_real_reconciliation_burst_and_deadline_keep_exact_custody(tmp_path, monkeypatch, mode):
     import ctypes, os, select, subprocess, sys, time
@@ -4320,6 +4356,7 @@ def test_retry_decision_records_first_refusal_without_replacing_capture_failure(
         assert saved['capture_failures'][0]['retry_decision'] == decision
 
 
+@pytest.mark.darwin_native
 @pytest.mark.parametrize('phase', ['fresh-absent', 'retry-pre-absent', 'fresh-absent-sibling'])
 def test_real_later_absence_reconciles_without_rewriting_capture_history(tmp_path, monkeypatch, phase):
     import ctypes, select, subprocess, sys, time

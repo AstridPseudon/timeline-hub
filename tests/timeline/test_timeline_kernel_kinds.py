@@ -410,5 +410,9 @@ class DoctorV10ChecksTest(unittest.TestCase):
         payload = json.loads(output.getvalue())
         self.assertEqual(code, 1)
         self.assertFalse(payload["ok"])
-        self.assertEqual(payload["state"], "unavailable")
-        self.assertIn("banodoco-local up --profile astrid", payload["next_action"])
+        self.assertEqual(payload["problem_code"], "runtime_unavailable")
+        diagnostic = payload["diagnostic"]
+        self.assertEqual(diagnostic["problemCode"], "runtime_unavailable")
+        self.assertEqual(diagnostic["failureBoundary"], "runtime-contact")
+        self.assertEqual([action["commandId"] for action in diagnostic["nextActions"]], ["runtime-up"])
+        self.assertTrue(diagnostic["nextActions"][0]["authorizationRequired"])

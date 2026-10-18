@@ -49,8 +49,36 @@ def _wire_fixture(name: str) -> dict[str, Any]:
 
 def _request(tmp_path: Path, payload: dict[str, Any]) -> Path:
     path = tmp_path / "request.json"
-    path.write_text(json.dumps(payload), encoding="utf-8")
+    path.write_text(json.dumps({**payload, "launch_gate": str(tmp_path / "launch.gate")}), encoding="utf-8")
     return path
+
+
+@pytest.fixture(autouse=True)
+def _backend_waits_for_custody(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Hold the fixture backend until custody has made its first observation of it.
+
+    A renderer that exits first is the Linux custody gap owned in
+    tests/known_failures.txt (no stopped launch); under CPU load every instantly
+    exiting backend here hit it. These tests are about the transport's wire and
+    lifecycle behaviour, so the backend (see ``launch_gate`` in
+    fixtures/transport_backend.py) starts only once ``popen_owned_process`` returns.
+    """
+    launch = transport_module.popen_owned_process
+
+    def gated(argv, *args, **kwargs):
+        process = launch(argv, *args, **kwargs)
+        argv = [str(part) for part in argv]
+        if "--request" in argv:
+            request = Path(argv[argv.index("--request") + 1])
+            try:
+                gate = json.loads(request.read_text(encoding="utf-8")).get("launch_gate")
+            except (OSError, ValueError):
+                gate = None
+            if gate:
+                Path(gate).touch()
+        return process
+
+    monkeypatch.setattr(transport_module, "popen_owned_process", gated)
 
 
 def _run(
@@ -125,9 +153,14 @@ def test_unbounded_timeout_keeps_polling_and_parses_result(
     observed = []
     original_observe = transport_module.observe_tree
 
+    release_gate = tmp_path / "release.gate"
+
     def record_observation(process, **kwargs):
         observed.append((process.pid, kwargs["deadline"]))
-        return original_observe(process, **kwargs)
+        live = original_observe(process, **kwargs)
+        if len(observed) >= 2:
+            release_gate.touch()  # the backend may finish only after two polls
+        return live
 
     monkeypatch.setattr(transport_module, "observe_tree", record_observation)
     payload_name = "support.json" if verb == "support" else "result.json"
@@ -139,7 +172,7 @@ def test_unbounded_timeout_keeps_polling_and_parses_result(
             tmp_path,
             {
                 "action": "delayed-result",
-                "delay_seconds": 0.15,
+                "release_gate": str(release_gate),
                 "payload": _wire_fixture(payload_name),
             },
         ),

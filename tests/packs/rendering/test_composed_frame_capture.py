@@ -217,27 +217,57 @@ def test_shared_owner_force_release_forwards_force_to_session(monkeypatch):
     assert session.calls == [True]
 
 
+def _pretend_launchctl_present(monkeypatch):
+    """Make the /bin/launchctl existence gate in _remove_owner_job pass on any host."""
+    real_is_file = Path.is_file
+    monkeypatch.setattr(
+        Path, "is_file", lambda self: True if str(self) == "/bin/launchctl" else real_is_file(self)
+    )
+
+
 def test_force_close_removes_submitted_launchd_owner(monkeypatch, tmp_path):
     from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_run
 
     calls = []
 
+    class Connection:
+        def sendall(self, value):
+            calls.append(("send", value))
+
+        def close(self):
+            calls.append(("close",))
+
+    def fake_connect(_path, *, timeout_seconds=None):
+        calls.append(("connect", timeout_seconds))
+        return Connection()
+
+    def fake_read_response(_connection):
+        calls.append(("read",))
+        return {"ok": True, "released": True, "exit": True}
+
     def fake_run(command, **kwargs):
-        calls.append(command)
+        calls.append(("run", command))
         return __import__("types").SimpleNamespace(returncode=0)
 
+    _pretend_launchctl_present(monkeypatch)
     monkeypatch.setattr(remotion_run.sys, "platform", "darwin")
     monkeypatch.setattr(remotion_run.subprocess, "run", fake_run)
     session = remotion_run.PersistentRemotionFrameSession()
+    monkeypatch.setattr(session, "_connect", fake_connect)
+    monkeypatch.setattr(session, "_read_response", fake_read_response)
     socket_path = tmp_path / ("owner-" + "a" * 32 + ".sock")
     session._socket_path = socket_path
     session.close(force=True)
 
-    assert calls == [[
-        "/bin/launchctl",
-        "remove",
-        "astrid-rfo-" + "a" * 32,
-    ]]
+    # The owner must acknowledge a forced release before its launchd job is removed.
+    assert calls == [
+        ("connect", 5.0),
+        ("send", b'{"type":"release","force":true}\n'),
+        ("read",),
+        ("close",),
+        ("run", ["/bin/launchctl", "remove", "astrid-rfo-" + "a" * 32]),
+    ]
+    assert session._socket_path is None
 
 
 def test_filmstrip_pack_accepts_capture_provider_without_video(tmp_path):
@@ -362,12 +392,15 @@ def test_previously_bound_owner_refusal_keeps_established_cleanup_responsibility
     import pytest
     module, session, selected, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
     session._socket_path = selected
-    def launch(**_): raise module._FrameOwnerSubmissionRefused("controlled refusal", 7)
-    monkeypatch.setattr(session, "_launch_owner", launch)
-    with pytest.raises(module._FrameOwnerSubmissionRefused): session.render(**arguments)
+    # The fixture's 1.0 s liveness probe of the bound endpoint fails (only the 5.0 s
+    # release connection succeeds), so replacement of the retained owner is refused.
+    with pytest.raises(RuntimeError, match="replacement refused") as caught: session.render(**arguments)
+    assert isinstance(caught.value.__cause__, FileNotFoundError)
+    # The established cleanup responsibility is discharged by an acknowledged forced release.
     assert events == [("remove", selected)]
-    assert session._owner_boundary_diagnostics[0]["previously_bound"] is True
-    assert "submitted" not in [r["stage"] for r in session._owner_boundary_diagnostics]
+    assert session._owner_cleanup_error is caught.value.__cause__
+    stages = [r["stage"] for r in session._owner_boundary_diagnostics]
+    assert "submission_requested" not in stages and "submitted" not in stages
 
 
 def test_different_previous_binding_is_not_replaced_by_refusal(monkeypatch, tmp_path):
@@ -416,6 +449,7 @@ def test_request_failure_preserves_existing_force_close(monkeypatch, tmp_path):
 
 def test_launchd_removal_records_return_code_without_native_cleanup_claim(monkeypatch, tmp_path):
     module, session, selected, _, _ = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    _pretend_launchctl_present(monkeypatch)
     monkeypatch.setattr(module.sys, "platform", "darwin")
     monkeypatch.setattr(module.subprocess, "run", lambda *_, **__: __import__("types").SimpleNamespace(returncode=9))
     result = module.PersistentRemotionFrameSession._remove_owner_job(selected)

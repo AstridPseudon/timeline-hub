@@ -14,6 +14,7 @@ explicitly in the private environment.
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import os
@@ -281,6 +282,31 @@ _REMOVED_ENV_NAMES = {
 }
 
 
+# Provisioning (and only provisioning) resolves packages over the network, so
+# pip needs the caller's proxy and CA settings (a corporate or sandbox proxy
+# re-terminates TLS).  Lanes never see these: ``scrub_environment`` is separate.
+_PIP_NETWORK_ENV_NAMES = (
+    "CURL_CA_BUNDLE",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "NO_PROXY",
+    "PIP_CERT",
+    "REQUESTS_CA_BUNDLE",
+    "SSL_CERT_FILE",
+)
+
+
+def _pip_network_environment(parent: Mapping[str, str] | None = None) -> dict[str, str]:
+    """Return the proxy/CA variables pip needs to reach its index."""
+    source = os.environ if parent is None else parent
+    found: dict[str, str] = {}
+    for name in _PIP_NETWORK_ENV_NAMES:
+        for candidate in (name, name.lower()):
+            if source.get(candidate):
+                found[candidate] = str(source[candidate])
+    return found
+
+
 def is_secret_env_name(name: str) -> bool:
     """Return whether an environment name may carry credentials/configuration."""
     upper = name.upper()
@@ -513,6 +539,40 @@ def _redact_output(text: str) -> str:
     )
 
 
+def _record_hashes(text: str) -> dict[str, str]:
+    """Map RECORD path -> ``algo=digest`` for entries that carry a hash."""
+    hashes: dict[str, str] = {}
+    for row in csv.reader(text.splitlines()):
+        if len(row) >= 2 and row[1]:
+            hashes[row[0]] = row[1]
+    return hashes
+
+
+def _require_installed_matches_wheel(wheel: Path, import_path: Path) -> None:
+    """Fail unless the installed copy carries every hashed file of ``wheel``."""
+    with zipfile.ZipFile(wheel) as archive:
+        record_name = next(
+            (n for n in archive.namelist() if n.endswith(".dist-info/RECORD") and "/" in n),
+            None,
+        )
+        if record_name is None:
+            raise ArtifactIdentityError(f"wheel {wheel.name} has no dist-info/RECORD")
+        expected = _record_hashes(archive.read(record_name).decode("utf-8"))
+    site_packages = import_path.parent.parent
+    installed_record = site_packages / record_name
+    if not installed_record.is_file():
+        raise ArtifactIdentityError(f"installed RECORD is missing: {installed_record}")
+    installed = _record_hashes(installed_record.read_text(encoding="utf-8"))
+    expected.pop(record_name, None)
+    wrong = sorted(path for path, digest in expected.items() if installed.get(path) != digest)
+    if not expected or wrong:
+        raise ArtifactIdentityError(
+            f"installed Astrid is not the supplied wheel {wheel.name}: "
+            f"{len(wrong)} of {len(expected)} hashed files differ or are missing "
+            f"(first: {wrong[:3]})"
+        )
+
+
 class InstalledArtifactHarness:
     """One build-once wheel installation and its installed lane runner."""
 
@@ -693,6 +753,7 @@ class InstalledArtifactHarness:
                 "TEMP": str(workspace_path / "pip-tmp"),
                 "PYTHONNOUSERSITE": "1",
                 "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+                **_pip_network_environment(),
             }
             Path(install_env["HOME"]).mkdir(parents=True, exist_ok=True)
             Path(install_env["TMPDIR"]).mkdir(parents=True, exist_ok=True)
@@ -764,6 +825,73 @@ class InstalledArtifactHarness:
                 python_executable=child_python,
             )
             harness.probe_identity()
+            return harness
+        except Exception:
+            if owned:
+                shutil.rmtree(workspace_path, ignore_errors=True)
+            raise
+
+    @classmethod
+    def attach(
+        cls,
+        repo_root: str | Path,
+        *,
+        wheel: str | Path,
+        venv_dir: str | Path,
+        workspace: str | Path | None = None,
+    ) -> InstalledArtifactHarness:
+        """Run lanes against a wheel and venv that something else built.
+
+        CI's release job builds one wheel with the hashed build lock and installs
+        it with only the hashed runtime lock; this adopts that exact pair instead
+        of building a second one.  Nothing is built or installed here, so the
+        pair is verified rather than trusted: the wheel must be a real
+        ``astrid`` wheel, the venv must import Astrid from its own
+        site-packages at the wheel's version, and every hashed file in the
+        wheel's RECORD must appear with the same hash in the installed copy (a
+        stale venv or a different build of the same version fails here).
+
+        ``workspace`` behaves as in :meth:`build`: omitted means the harness
+        owns a temporary one and removes it on :meth:`close`.
+        """
+        root = Path(repo_root).expanduser().resolve()
+        if not (root / "pyproject.toml").is_file():
+            raise InstalledArtifactError(f"repository root is missing pyproject.toml: {root}")
+        artifact = inspect_wheel(wheel)
+        if artifact.distribution.lower().replace("-", "_") != DEFAULT_DISTRIBUTION:
+            raise InstalledArtifactError(
+                f"expected {DEFAULT_DISTRIBUTION!r} wheel, found {artifact.distribution!r}"
+            )
+        venv_path = Path(venv_dir).expanduser().absolute()
+        python = venv_path / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        if not python.is_file():
+            raise InstalledArtifactError(f"venv Python executable is missing: {python}")
+        owned = workspace is None
+        if workspace is None:
+            workspace_path = Path(tempfile.mkdtemp(prefix="astrid-installed-artifact-")).resolve()
+        else:
+            workspace_path = Path(workspace).expanduser().resolve()
+            workspace_path.mkdir(parents=True, exist_ok=True)
+        try:
+            if _relative_to(workspace_path, root):
+                raise InstalledArtifactError(
+                    f"isolated workspace must be outside the checkout: {workspace_path}"
+                )
+            harness = cls(
+                repo_root=root,
+                workspace=workspace_path,
+                owned_workspace=owned,
+                # Nothing is copied from the checkout in this mode; the path
+                # only feeds the "no source path in lane output" check.
+                source_snapshot=workspace_path / "source",
+                dist_dir=artifact.path.parent,
+                venv_dir=venv_path,
+                artifact=artifact,
+                roots=IsolatedRoots.create(workspace_path / "roots"),
+                python_executable=python,
+            )
+            identity = harness.probe_identity()
+            _require_installed_matches_wheel(artifact.path, Path(identity.import_path))
             return harness
         except Exception:
             if owned:
@@ -1087,6 +1215,7 @@ def provision_locked_environment(
             "TEMP": str(install_root / "tmp"),
             "PYTHONNOUSERSITE": "1",
             "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+            **_pip_network_environment(),
         }
         Path(install_env["HOME"]).mkdir(parents=True, exist_ok=True)
         Path(install_env["TMPDIR"]).mkdir(parents=True, exist_ok=True)

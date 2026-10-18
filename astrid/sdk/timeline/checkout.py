@@ -32,6 +32,8 @@ from astrid.sdk.timeline.transaction import edit_transaction
 class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixin, _Suggest):
     """A complete, editable copy of one timeline head (parent → shots → internal timelines)."""
 
+    bundle: dict[str, Any]
+
     def __init__(self, bundle: dict[str, Any], *, path: Path | None = None):
         intent.migrate(bundle)  # a working copy holds Astrid intent under app.astrid only (old places move in; reads stay dual)
         from astrid.sdk.timeline_restructure import flatten

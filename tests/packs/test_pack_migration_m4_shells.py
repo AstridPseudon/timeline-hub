@@ -1,3 +1,11 @@
+"""Pins the taxonomy and declared content kinds of the twelve core packs.
+
+Packs are schema-v3 (``pack.yaml`` with ``actions`` / ``rendering`` maps; commit
+71d43e00). The retired v2 layout (``content`` roots of executors/orchestrators/
+elements, each capability directory carrying its own ``executor.yaml`` /
+``orchestrator.yaml``) is no longer asserted; see tests/removed.yaml.
+"""
+
 from __future__ import annotations
 
 import unittest
@@ -8,135 +16,76 @@ from astrid.core.pack import load_pack_manifest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PACKS_ROOT = REPO_ROOT / "astrid" / "packs"
 
-
-EXPECTED_PACKS = {
-    "rendering": {
-        "domain": "media",
-        "content": {"executors": "executors", "elements": "elements"},
-        "aliases": {},
-    },
-    "understanding": {
-        "domain": "media",
-        "content": {"executors": "executors"},
-        "aliases": {},
-    },
-    "generation": {
-        "domain": "generation",
-        "content": {"executors": "executors"},
-        "aliases": {},
-    },
-    "editorial": {
-        "domain": "editorial",
-        "content": {"executors": "executors"},
-        "aliases": {},
-    },
-    "video_editing": {
-        "domain": "media",
-        "content": {"executors": "executors", "orchestrators": "orchestrators"},
-        "aliases": {},
-    },
-    "foley": {
-        "domain": "media",
-        "content": {"executors": "executors", "orchestrators": "orchestrators"},
-        "aliases": {},
-    },
-    "training": {
-        "domain": "development",
-        "content": {"executors": "executors", "orchestrators": "orchestrators"},
-        "aliases": {},
-    },
-    "youtube": {
-        "domain": "integration",
-        "content": {"executors": "executors"},
-        "aliases": {},
-    },
-    "fal": {
-        "domain": "integration",
-        "content": {"executors": "executors"},
-        "aliases": {},
-    },
-    "vibecomfy": {
-        "domain": "integration",
-        "content": {"executors": "executors"},
-        "aliases": {},
-    },
-    "runpod": {
-        "domain": "infrastructure",
-        "content": {"executors": "executors"},
-        "aliases": {},
-    },
-    "moirae": {
-        "domain": "integration",
-        "content": {"executors": "executors"},
-        "aliases": {},
-    },
+# Reviewable table: pack id -> (domain, rendering descriptor types it declares).
+# Every pack here declares actions; only `rendering` also declares rendering
+# descriptors (renderers, finalizers, and the render-time elements).
+CORE_PACKS: dict[str, tuple[str, frozenset[str]]] = {
+    "rendering": ("media", frozenset({"renderer", "finalizer", "element"})),
+    "understanding": ("media", frozenset()),
+    "generation": ("generation", frozenset()),
+    "editorial": ("editorial", frozenset()),
+    "video_editing": ("media", frozenset()),
+    "foley": ("media", frozenset()),
+    "training": ("development", frozenset()),
+    "youtube": ("integration", frozenset()),
+    "fal": ("integration", frozenset()),
+    "vibecomfy": ("integration", frozenset()),
+    "runpod": ("infrastructure", frozenset()),
+    "moirae": ("integration", frozenset()),
 }
 
+RETIRED_V2_MANIFESTS = {"executor.yaml", "orchestrator.yaml"}
 
-class TestPackMigrationM4Shells(unittest.TestCase):
-    def test_target_pack_shells_match_migration_contract(self) -> None:
-        for pack_id, expected in EXPECTED_PACKS.items():
+
+class TestCorePackTaxonomyV3(unittest.TestCase):
+    def test_core_pack_taxonomy_and_declared_content_kinds(self) -> None:
+        for pack_id, (domain, rendering_types) in CORE_PACKS.items():
             with self.subTest(pack=pack_id):
                 pack = load_pack_manifest(PACKS_ROOT / pack_id / "pack.yaml")
                 self.assertEqual(pack.id, pack_id)
-                self.assertEqual(pack.domain, expected["domain"])
+                self.assertEqual(str(pack.schema_version), "3")
+                self.assertEqual(pack.domain, domain)
                 self.assertEqual(pack.stability, "stable")
                 self.assertEqual(pack.support, "core")
                 self.assertEqual(pack.visibility, "visible")
-                self.assertEqual(pack.content, expected["content"])
+                self.assertEqual(pack.status, "active")
+                self.assertEqual(len(pack.aliases), 0)
+                # v3 has no `content` roots; capabilities are declared maps.
+                self.assertEqual(pack.content, {})
+                self.assertTrue(pack.actions, "pack declares no actions")
+                self.assertEqual(
+                    {descriptor["type"] for descriptor in pack.rendering.values()},
+                    set(rendering_types),
+                )
 
-                aliases = {
-                    alias["alias"]: alias["canonical_id"]
-                    for alias in pack.aliases
-                }
-                self.assertEqual(aliases, expected["aliases"])
-
-    def test_physical_migration_creates_active_capability_manifests(self) -> None:
-        for pack_id, expected in EXPECTED_PACKS.items():
+    def test_declared_rendering_elements_match_element_manifests_on_disk(self) -> None:
+        for pack_id in CORE_PACKS:
             with self.subTest(pack=pack_id):
                 pack_root = PACKS_ROOT / pack_id
-                manifest_files = sorted(
+                pack = load_pack_manifest(pack_root / "pack.yaml")
+                declared = {
+                    descriptor["path"]
+                    for descriptor in pack.rendering.values()
+                    if descriptor["type"] == "element"
+                }
+                on_disk = {
+                    path.relative_to(pack_root).as_posix()
+                    for path in pack_root.rglob("element.yaml")
+                }
+                # Every element manifest is declared, and every declared
+                # descriptor exists: none orphaned in either direction.
+                self.assertEqual(declared, on_disk)
+
+    def test_no_retired_v2_capability_manifests_remain(self) -> None:
+        for pack_id in CORE_PACKS:
+            with self.subTest(pack=pack_id):
+                pack_root = PACKS_ROOT / pack_id
+                leftovers = sorted(
                     path.relative_to(pack_root).as_posix()
                     for path in pack_root.rglob("*")
-                    if path.name in {"executor.yaml", "orchestrator.yaml", "element.yaml"}
+                    if path.name in RETIRED_V2_MANIFESTS
                 )
-                # Invariant: every capability directory under the pack's
-                # content roots carries exactly one manifest, and no
-                # manifest exists outside a capability directory. Container
-                # dirs (element kinds) are skipped; leaf dirs with files but
-                # no manifest are orphan capabilities and fail the assertIn
-                # below. The alias table above is the frozen m4 snapshot;
-                # the physical tree is the live truth for the count.
-                manifest_names = {
-                    "executor.yaml",
-                    "orchestrator.yaml",
-                    "element.yaml",
-                }
-                capability_dirs: list[str] = []
-                for kind, rel in expected["content"].items():
-                    root = pack_root / rel
-                    if not root.is_dir():
-                        continue
-                    for path in root.rglob("*"):
-                        if not path.is_dir() or path.name.startswith("__"):
-                            continue
-                        entries = list(path.iterdir())
-                        has_manifest = any(
-                            p.name in manifest_names for p in entries
-                        )
-                        has_subdirs = any(
-                            p.is_dir() and not p.name.startswith("__")
-                            for p in entries
-                        )
-                        if has_manifest or (
-                            not has_subdirs
-                            and any(p.name == "run.py" for p in entries)
-                        ):
-                            capability_dirs.append(str(path.relative_to(pack_root)))
-                self.assertEqual(len(manifest_files), len(capability_dirs))
-                for manifest in manifest_files:
-                    parent = manifest.rsplit("/", 1)[0]
-                    self.assertIn(parent, capability_dirs)
+                self.assertEqual(leftovers, [])
 
 
 if __name__ == "__main__":

@@ -23,6 +23,8 @@ def _fake_preparer(case_id, *, case_root, **kwargs):
     )
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_local_loop_dry_run_writes_twenty_manual_review_rows_without_scoring(tmp_path: Path) -> None:
     result = run_local_loop(SUITE, attempt_root=tmp_path / "attempt")
     assert result["case_count"] == 20
@@ -40,6 +42,7 @@ def test_local_loop_dry_run_writes_twenty_manual_review_rows_without_scoring(tmp
     assert "result.json" not in brief.read_text(encoding="utf-8")
 
 
+@pytest.mark.integration
 def test_local_loop_continues_after_process_failure_and_records_result_reporting_defect(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(local_loop, "render_case_brief", lambda case_id, *, prepared, doc_path: f"prepared {case_id}\n")
     attempt = tmp_path / "attempt"
@@ -87,6 +90,7 @@ def test_local_loop_continues_after_process_failure_and_records_result_reporting
     assert (attempt / "cases/A02/work/brief.md").is_file()
 
 
+@pytest.mark.integration
 def test_local_loop_continues_after_case_timeout(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(local_loop, "render_case_brief", lambda case_id, *, prepared, doc_path: f"prepared {case_id}\n")
     def fake_launcher(argv, cwd, timeout, trace_path, log_path):
@@ -110,6 +114,7 @@ def test_local_loop_continues_after_case_timeout(tmp_path: Path, monkeypatch) ->
     assert timeout["partial_stderr_preserved"] is True
 
 
+@pytest.mark.integration
 def test_local_loop_accepts_worker_result_and_preserves_manual_review(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(local_loop, "render_case_brief", lambda case_id, *, prepared, doc_path: f"prepared {case_id}\n")
     attempt = tmp_path / "attempt"
@@ -146,6 +151,7 @@ def test_local_loop_accepts_worker_result_and_preserves_manual_review(tmp_path: 
     assert "score" not in row
 
 
+@pytest.mark.integration
 def test_local_loop_dry_run_does_not_launch_an_external_command(tmp_path: Path) -> None:
     result = run_local_loop(
         SUITE, attempt_root=tmp_path / "attempt", execute=False,
@@ -154,6 +160,7 @@ def test_local_loop_dry_run_does_not_launch_an_external_command(tmp_path: Path) 
     assert result["records"][0]["execution"] == "not_launched"
 
 
+@pytest.mark.integration
 def test_execute_prepares_captures_and_closes_before_returning(tmp_path: Path, monkeypatch) -> None:
     attempt = tmp_path / "attempt"
     lifecycle: list[str] = []
@@ -194,6 +201,7 @@ def test_execute_prepares_captures_and_closes_before_returning(tmp_path: Path, m
     assert json.loads((case_root / "fixture-receipt.json").read_text()) == {"kind": "test-fixture"}
 
 
+@pytest.mark.integration
 def test_required_final_output_is_captured_after_worker_and_before_runtime_close(tmp_path: Path, monkeypatch) -> None:
     attempt = tmp_path / "attempt"
     lifecycle: list[str] = []
@@ -227,6 +235,7 @@ def test_required_final_output_is_captured_after_worker_and_before_runtime_close
     assert outcome["render_artifacts"]["authority_verified"] is True
 
 
+@pytest.mark.integration
 def test_real_launcher_receives_only_the_prepared_runtime_environment_for_every_case(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(local_loop, "render_case_brief", lambda case_id, *, prepared, doc_path: f"prepared {case_id}\n")
     monkeypatch.setenv("ASTRID_TIMELINE_EVAL_ENDPOINT", "http://ambient.invalid")
@@ -424,6 +433,7 @@ def test_worker_boundary_denies_exact_runtime_and_canonical_paths_but_allows_cre
     assert receipt["canonical_root_denied"] == str(canonical.resolve())
 
 
+@pytest.mark.integration
 def test_preparation_failure_records_setup_error_and_continues_without_launch(tmp_path: Path, monkeypatch) -> None:
     attempts: list[str] = []
     monkeypatch.setattr(local_loop, "render_case_brief", lambda case_id, *, prepared, doc_path: f"prepared {case_id}\n")
@@ -455,6 +465,7 @@ def test_preparation_failure_records_setup_error_and_continues_without_launch(tm
     assert attempts == ["A02"]
 
 
+@pytest.mark.integration
 def test_timeout_after_saved_edit_keeps_execution_separate_from_undetermined_semantics(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(local_loop, "render_case_brief", lambda case_id, *, prepared, doc_path: f"prepared {case_id}\n")
     observations = iter((
@@ -489,6 +500,7 @@ def test_timeout_after_saved_edit_keeps_execution_separate_from_undetermined_sem
     assert saved["worker_protocol"]["valid"] is False
 
 
+@pytest.mark.integration
 def test_action_noop_is_failed_without_requiring_worker_result_json(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(local_loop, "render_case_brief", lambda case_id, *, prepared, doc_path: f"prepared {case_id}\n")
     snapshot = {"head_revision_id": "head-1", "semantic_digest": "digest-1"}

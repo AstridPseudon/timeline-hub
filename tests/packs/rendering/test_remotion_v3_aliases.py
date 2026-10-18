@@ -5,6 +5,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[3]
 MODULE = ROOT / "remotion" / "webpack-alias.mjs"
@@ -109,6 +111,7 @@ def test_native_defaults_and_explicit_roots_ignore_later_cwd(tmp_path: Path) -> 
     assert result['@workspace-effects'].startswith(str(ROOT / 'astrid/packs/rendering/'))
 
 
+@pytest.mark.integration
 def test_cjs_default_requires_native_esm_but_explicit_factory_works(tmp_path: Path) -> None:
     result = _node_json(
         """

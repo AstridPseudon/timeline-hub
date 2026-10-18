@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from evals.timeline.fixture_manifest import (
     _fixture_requirement_reasons,
     build_readiness,
@@ -71,6 +72,8 @@ def test_build_readiness_reports_actual_fixture_states_per_case(tmp_path):
     assert all(not row.operational_ready for row in rows.values())
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_real_fixture_matrix_checks_sidecar_bytes_and_separates_operational_readiness():
     rows = {row.case_id: row for row in build_readiness()}
 
@@ -87,6 +90,7 @@ def test_real_fixture_matrix_checks_sidecar_bytes_and_separates_operational_read
     assert not any(row.operational_ready for row in rows.values())
 
 
+@pytest.mark.integration
 def test_real_action_inputs_name_truthful_starting_media_and_occurrences():
     manifest = json.loads((FIXTURES / "action/manifest.json").read_text(encoding="utf-8")) if (FIXTURES := Path(__file__).resolve().parents[3] / ".otto/runs/timeline-text-inspection-20260922/evals/fixtures") else {}
     cases = {row["id"]: row for row in manifest["cases"]}
@@ -117,6 +121,7 @@ def test_declared_fixture_requirements_follow_actual_fields_not_case_ids(tmp_pat
     assert _fixture_requirement_reasons(requirement, manifest, tmp_path / "fixture.json") == []
 
 
+@pytest.mark.integration
 def test_attempt_evidence_marks_only_fixture_ready_case_operational(tmp_path):
     attempt_root = tmp_path / "attempt-fresh-20260923-01"
     for case_id in ("A01", "L04"):
@@ -169,6 +174,7 @@ def test_attempt_evidence_marks_only_fixture_ready_case_operational(tmp_path):
     assert "fixture prerequisites are blocked" in rows["L04"].operational_reasons[0]
 
 
+@pytest.mark.integration
 def test_all_case_matrix_admits_a03_route_but_keeps_missing_fixture_blocked():
     rows = {row.case_id: row for row in build_readiness()}
     assert len(rows) == 20
@@ -181,6 +187,7 @@ def test_all_case_matrix_admits_a03_route_but_keeps_missing_fixture_blocked():
     assert not any("no occurrence-group move operation" in item for item in rows["A03"].operational_reasons)
 
 
+@pytest.mark.integration
 def test_fixture_ready_case_is_not_operational_without_coordinator_readback_and_safety(tmp_path):
     attempt_root = tmp_path / "attempt-fresh"
     case_dir = attempt_root / "cases" / "A01"
@@ -212,6 +219,7 @@ def test_fixture_ready_case_is_not_operational_without_coordinator_readback_and_
     assert any("coordinator-owned before/after readback" in item for item in row.operational_reasons)
 
 
+@pytest.mark.integration
 def test_blocked_and_setup_failed_attempts_remain_non_operational(tmp_path):
     attempt_root = tmp_path / "attempt-fresh-20260923-02"
     case_dir = attempt_root / "cases" / "A02"

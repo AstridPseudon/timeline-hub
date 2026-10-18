@@ -3,17 +3,26 @@ from __future__ import annotations
 import copy
 import json
 import subprocess
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-import yaml
 import pytest
+import yaml
 
 from astrid.core.contracts.errors import AstridError
 from astrid.packs.training.actions.dataset_build import run as dataset_run
+from astrid.packs.training.actions.dataset_build.source_providers.local_folder import (
+    LocalFolderSourceProvider,
+)
+from astrid.packs.training.actions.dataset_build.state import (
+    make_initial_state,
+    read_review_state,
+    set_status,
+    write_review_state,
+)
 from astrid.packs.training.shared.items import config_hash, make_candidate_item
-from astrid.packs.training.actions.dataset_build.state import make_initial_state, read_review_state, set_status, write_review_state
-from astrid.packs.training.actions.dataset_build.source_providers.local_folder import LocalFolderSourceProvider
+from tests.fixtures.dataset_build_child_invoker import FakeChildInvoker, install_child_invoker
 
 
 def _config(tmp_path: Path, media_dir: Path) -> Path:
@@ -111,6 +120,28 @@ def _patch_round_provider(monkeypatch, media_file: Path) -> list[dict[str, Any]]
 
     monkeypatch.setattr(LocalFolderSourceProvider, "acquire", acquire)
     return seen_requests
+
+
+def _patch_local_provider_per_file(monkeypatch, media_files: list[Path]) -> None:
+    def acquire(self: LocalFolderSourceProvider, config: dict[str, Any]):
+        for index, media_file in enumerate(media_files):
+            yield {
+                **make_candidate_item(
+                    source_type="local_folder",
+                    source_id=f"source-{index + 1}",
+                    source_url=media_file.as_uri(),
+                    media_path=media_file,
+                    media_type="video",
+                    source_metadata={"resolution": {"width": 64, "height": 64}},
+                    duration_s=5.0,
+                    clip_start_s=0.0,
+                    clip_end_s=5.0,
+                    scene_index=index,
+                ),
+                "item_id": f"clip-{index}",
+            }
+
+    monkeypatch.setattr(LocalFolderSourceProvider, "acquire", acquire)
 
 
 def test_dataset_build_cli_runs_noninteractive_pipeline_into_requested_out_dir(tmp_path: Path, monkeypatch) -> None:
@@ -450,8 +481,9 @@ def test_dataset_build_resume_uses_existing_review_state_authoritatively(tmp_pat
 
 
 def test_run_pipeline_threads_services_through_filter_caption_and_human_review(tmp_path: Path, monkeypatch) -> None:
-    media_dir = tmp_path / "media"
-    media_dir.mkdir()
+    run_dir = tmp_path / "run"
+    media_dir = run_dir / "clips"
+    media_dir.mkdir(parents=True)
     media_file = media_dir / "source.mp4"
     media_file.write_bytes(b"fixture")
     _patch_local_provider(monkeypatch, media_file)
@@ -473,22 +505,24 @@ def test_run_pipeline_threads_services_through_filter_caption_and_human_review(t
         ]
     }
     config["review"] = {"enabled": True}
-    config["budgets"] = {"max_api_calls": 2, "max_estimated_cost_usd": 1.0, "providers": {}}
+    config["budgets"] = {
+        "max_api_calls": 2,
+        "max_estimated_cost_usd": 1.0,
+        "providers": {},
+        "delegation": {"max_derived_bytes": 4294967296},
+    }
     config_path.write_text(json.dumps(config), encoding="utf-8")
     parsed = dataset_run.load_dataset_config(config_path)
     calls: list[str] = []
 
-    def filter_runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        calls.append("filter")
-        out = Path(cmd[cmd.index("--out") + 1])
-        out.write_text(json.dumps({"accept": True, "bucket": "wide", "reason": "usable", "score": 0.9}), encoding="utf-8")
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-
-    def caption_runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+    def respond(capability: str, inputs: Mapping[str, Any]) -> dict[str, Any]:
+        if "response_schema" in inputs:
+            calls.append("filter")
+            return {"accept": True, "bucket": "wide", "reason": "usable", "score": 0.9}
         calls.append("caption")
-        out = Path(cmd[cmd.index("--out") + 1])
-        out.write_text(json.dumps({"text": "Service caption.", "schema_version": 1, "confidence": 0.8, "model": "stub"}), encoding="utf-8")
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+        return {"text": "Service caption.", "schema_version": 1, "confidence": 0.8, "model": "stub"}
+
+    install_child_invoker(monkeypatch, FakeChildInvoker(respond, attempt_root=run_dir))
 
     def human_review_runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
         calls.append("human_review")
@@ -512,12 +546,10 @@ def test_run_pipeline_threads_services_through_filter_caption_and_human_review(t
 
     services = dataset_run.DatasetRunServices.from_config(
         parsed.data,
-        caption_runner=caption_runner,
-        filter_stage_runners={"bucket_judge_filter": filter_runner},
         human_review_runner=human_review_runner,
     )
 
-    summary = dataset_run.run_pipeline(parsed, tmp_path / "run", services=services)
+    summary = dataset_run.run_pipeline(parsed, run_dir, services=services)
 
     assert summary["state_status"] == "finalized"
     assert summary["accepted"] == 1
@@ -530,17 +562,55 @@ def test_run_pipeline_threads_services_through_filter_caption_and_human_review(t
     }
 
 
-def test_run_pipeline_exercises_transcript_semantic_and_near_duplicate_filters_with_injected_runners(tmp_path: Path, monkeypatch) -> None:
-    media_dir = tmp_path / "media"
-    media_dir.mkdir()
-    media_file = media_dir / "source.mp4"
-    media_file.write_bytes(b"fixture")
-    _patch_local_provider_many(monkeypatch, media_file, 2)
+def _run_child_pipeline(
+    tmp_path: Path,
+    monkeypatch,
+    filter_stages: list[dict[str, Any]],
+    respond,
+    *,
+    clip_bytes: list[bytes],
+) -> tuple[dict[str, Any], Path]:
+    run_dir = tmp_path / "run"
+    media_dir = run_dir / "clips"
+    media_dir.mkdir(parents=True)
+    media_files = []
+    for index, payload in enumerate(clip_bytes):
+        media_file = media_dir / f"source-{index}.mp4"
+        media_file.write_bytes(payload)
+        media_files.append(media_file)
+    _patch_local_provider_per_file(monkeypatch, media_files)
     config_path = _config(tmp_path, media_dir)
     config = json.loads(config_path.read_text(encoding="utf-8"))
     config["extensions"] = {"fixture_mode": False}
-    config["filters"] = {
-        "stages": [
+    config["filters"] = {"stages": filter_stages}
+    config["review"] = {"enabled": False, "top_up": {"max_rounds": 0}}
+    config["budgets"] = {
+        "max_api_calls": 10,
+        "max_estimated_cost_usd": 1.0,
+        "providers": {},
+        "delegation": {"max_derived_bytes": 4294967296},
+    }
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    parsed = dataset_run.load_dataset_config(config_path)
+    install_child_invoker(monkeypatch, FakeChildInvoker(respond, attempt_root=run_dir))
+    services = dataset_run.DatasetRunServices.from_config(parsed.data, human_review_runner=subprocess.run)
+    return dataset_run.run_pipeline(parsed, run_dir, services=services), run_dir
+
+
+def test_run_pipeline_exercises_transcript_and_near_duplicate_filters_with_child_invoker(tmp_path: Path, monkeypatch) -> None:
+    calls: list[str] = []
+
+    def respond(capability: str, inputs: Mapping[str, Any]) -> dict[str, Any]:
+        if capability == "editorial.transcribe":
+            calls.append("transcript")
+            return {"text": "keep this clip", "segments": [{"text": "keep this clip"}]}
+        calls.append("caption")
+        return {"text": "Caption.", "schema_version": 1, "confidence": 0.9, "model": "stub"}
+
+    summary, run_dir = _run_child_pipeline(
+        tmp_path,
+        monkeypatch,
+        [
             {
                 "stage_id": "transcript_keyword_filter",
                 "config": {
@@ -548,6 +618,48 @@ def test_run_pipeline_exercises_transcript_semantic_and_near_duplicate_filters_w
                     "out_dir": str(tmp_path / "transcripts"),
                 },
             },
+            {
+                "stage_id": "near_duplicate_filter",
+                "config": {
+                    "fixture_hashes": {
+                        "clip-0": ["0000000000000000"],
+                        "clip-1": ["ffffffffffffffff"],
+                    },
+                    "hamming_threshold": 3,
+                    "out_dir": str(tmp_path / "frames"),
+                },
+            },
+        ],
+        respond,
+        clip_bytes=[b"fixture-0", b"fixture-1"],
+    )
+
+    assert summary["state_status"] == "finalized"
+    assert summary["accepted"] == 2
+    assert calls.count("transcript") == 2
+    assert calls.count("caption") == 2
+    filtered = json.loads((run_dir / "filtered_items.json").read_text(encoding="utf-8"))
+    assert [item["item_id"] for item in filtered["active"]] == ["clip-0", "clip-1"]
+    assert filtered["rejected"] == []
+
+
+def test_run_pipeline_exercises_semantic_filters_with_child_invoker(tmp_path: Path, monkeypatch) -> None:
+    calls: list[str] = []
+
+    def respond(capability: str, inputs: Mapping[str, Any]) -> dict[str, Any]:
+        if capability == "understanding.video_understand":
+            calls.append("semantic_video")
+            return {"accept": True, "reason": "useful", "score": 0.9, "details": {"stub": True}}
+        if "response_schema" in inputs:
+            calls.append("semantic_visual")
+            return {"accept": True, "reason": "useful", "score": 0.9, "details": {"stub": True}}
+        calls.append("caption")
+        return {"text": "Caption.", "schema_version": 1, "confidence": 0.9, "model": "stub"}
+
+    summary, run_dir = _run_child_pipeline(
+        tmp_path,
+        monkeypatch,
+        [
             {
                 "stage_id": "semantic_visual_filter",
                 "config": {
@@ -573,55 +685,17 @@ def test_run_pipeline_exercises_transcript_semantic_and_near_duplicate_filters_w
                     "out_dir": str(tmp_path / "frames"),
                 },
             },
-        ]
-    }
-    config["review"] = {"enabled": False, "top_up": {"max_rounds": 0}}
-    config["budgets"] = {"max_api_calls": 10, "max_estimated_cost_usd": 1.0, "providers": {}}
-    config_path.write_text(json.dumps(config), encoding="utf-8")
-    parsed = dataset_run.load_dataset_config(config_path)
-    calls: list[str] = []
-
-    def transcript_runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        calls.append("transcript")
-        out = Path(cmd[cmd.index("--out") + 1])
-        out.mkdir(parents=True, exist_ok=True)
-        (out / "transcript.json").write_text(json.dumps({"text": "keep this clip", "segments": [{"text": "keep this clip"}]}), encoding="utf-8")
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-
-    def semantic_runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        calls.append("semantic_video" if "video_understand" in " ".join(cmd) else "semantic_visual")
-        out = Path(cmd[cmd.index("--out") + 1])
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps({"accept": True, "reason": "useful", "score": 0.9, "details": {"stub": True}}), encoding="utf-8")
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-
-    def caption_runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        calls.append("caption")
-        out = Path(cmd[cmd.index("--out") + 1])
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps({"text": "Caption.", "schema_version": 1, "confidence": 0.9, "model": "stub"}), encoding="utf-8")
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-
-    services = dataset_run.DatasetRunServices.from_config(
-        parsed.data,
-        caption_runner=caption_runner,
-        filter_stage_runners={
-            "transcript_keyword_filter": transcript_runner,
-            "semantic_visual_filter": semantic_runner,
-            "semantic_video_filter": semantic_runner,
-        },
-        human_review_runner=subprocess.run,
+        ],
+        respond,
+        clip_bytes=[b"fixture-0", b"fixture-1"],
     )
-
-    summary = dataset_run.run_pipeline(parsed, tmp_path / "run", services=services)
 
     assert summary["state_status"] == "finalized"
     assert summary["accepted"] == 2
-    assert calls.count("transcript") == 2
     assert calls.count("semantic_visual") == 2
     assert calls.count("semantic_video") == 2
     assert calls.count("caption") == 2
-    filtered = json.loads((tmp_path / "run" / "filtered_items.json").read_text(encoding="utf-8"))
+    filtered = json.loads((run_dir / "filtered_items.json").read_text(encoding="utf-8"))
     assert [item["item_id"] for item in filtered["active"]] == ["clip-0", "clip-1"]
     assert filtered["rejected"] == []
 

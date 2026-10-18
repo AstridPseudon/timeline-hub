@@ -64,21 +64,21 @@ def test_admission_and_normal_callers_have_no_local_composition() -> None:
         / "astrid"
         / "packs"
         / "video_editing"
-        / "orchestrators"
+        / "actions"
         / "thumbnail_maker"
         / "run.py",
         Path(__file__).parents[2]
         / "astrid"
         / "packs"
         / "video_editing"
-        / "orchestrators"
+        / "actions"
         / "event_talks"
         / "run.py",
         Path(__file__).parents[2]
         / "astrid"
         / "packs"
         / "video_editing"
-        / "orchestrators"
+        / "actions"
         / "hype"
         / "project_adapter.py",
     ]

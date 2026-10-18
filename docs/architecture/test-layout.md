@@ -32,7 +32,7 @@ and contains only tests for that domain.
 | `tests/spikes/` | Spike/exploratory tests | Existing directory, no new relocations |
 
 **Pre-existing directories** that received no root-level relocations but remain
-active: `tests/adapter/`, `tests/concurrency/`, `tests/golden/`, `tests/helpers/`,
+active: `tests/adapter/`, `tests/golden/`, `tests/helpers/`,
 `tests/migrations/`.
 
 ### 1.1 Settled Home Ambiguities

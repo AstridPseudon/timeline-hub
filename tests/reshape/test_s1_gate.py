@@ -1,7 +1,7 @@
 """Tests for the one-command S1 gate runner (scripts/reshape/s1_gate.py).
 
 Covers:
-- the frozen twelve-lane table and its selectors (all real files, focused,
+- the frozen eleven-lane table and its selectors (all real files, focused,
   never the broad suite),
 - fresh hermetic root injection into lane subprocesses (ASTRID_PROJECTS_ROOT,
   ASTRID_HOME, scrubbed task env, seeded identity),
@@ -38,7 +38,6 @@ _EXPECTED_LANE_NAMES = (
     "receipt",
     "replay",
     "crash",
-    "contention",
     "conformance",
     "lint",
     "bridge",
@@ -100,7 +99,7 @@ def _env_probe_test(tmp_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 
 
-def test_lane_table_has_exactly_the_twelve_required_lanes() -> None:
+def test_lane_table_has_exactly_the_eleven_required_lanes() -> None:
     assert tuple(lane.name for lane in LANES) == _EXPECTED_LANE_NAMES
 
 

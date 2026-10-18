@@ -119,9 +119,9 @@ def test_cut_resume_copies_materialized_artifacts_without_workspace_lookup(
 
 def test_cut_sources_have_no_workspace_mutation_gateway() -> None:
     for module_path in (
-        Path("astrid/packs/video_editing/executors/cut/run.py"),
-        Path("astrid/packs/video_editing/executors/cut/resume.py"),
-        Path("astrid/packs/video_editing/executors/cut/timeline_build.py"),
+        Path("astrid/packs/video_editing/actions/cut/run.py"),
+        Path("astrid/packs/video_editing/actions/cut/resume.py"),
+        Path("astrid/packs/video_editing/actions/cut/timeline_build.py"),
     ):
         source = module_path.read_text(encoding="utf-8")
         assert "pack_write_gateway" not in source

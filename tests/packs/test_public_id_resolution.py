@@ -25,11 +25,13 @@ PRESERVED_EXECUTOR_IDS = [
     "training.pool_build",
     "iteration.assemble",
     "youtube.upload",
+    # Declared as a v3 command action, so it lives in the executor registry.
+    "video_editing.hype",
 ]
 
 # One canonical orchestrator per pack that ships orchestrators.
 PRESERVED_ORCHESTRATOR_IDS = [
-    "video_editing.hype",
+    "h3_av.transform",
 ]
 
 

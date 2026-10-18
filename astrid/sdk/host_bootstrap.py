@@ -395,7 +395,7 @@ def _host_progress_token(process: Any, log_path: Path, ready_path: Path) -> Any:
         parts.append(tuple(sorted(
             f[1] for f in (line.split() for line in out.splitlines())
             if len(f) == 2 and f[0] == group)))
-    except Exception:
+    except (OSError, ValueError, subprocess.SubprocessError):
         parts.append(None)
     return tuple(parts)
 

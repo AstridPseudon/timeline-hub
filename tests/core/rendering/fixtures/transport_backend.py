@@ -33,6 +33,16 @@ def main() -> int:
     request = json.loads(Path(args.request).read_text(encoding="utf-8"))
     action = request.get("action", "result")
 
+    # Linux has no stopped launch, so a renderer that exits before the parent's first
+    # ancestry observation is a known custody gap (tests/known_failures.txt). A test
+    # that is about the wire protocol, not that gap, names a gate file the parent
+    # creates once custody has observed this process; waiting is by file, not by time.
+    gate = request.get("launch_gate")
+    if gate:
+        deadline = time.monotonic() + 60
+        while not Path(gate).exists() and time.monotonic() < deadline:
+            time.sleep(0.005)
+
     stdout = request.get("stdout")
     stderr = request.get("stderr")
     if stdout:
@@ -48,7 +58,15 @@ def main() -> int:
         Path(args.result).write_text("{not-json", encoding="utf-8")
         return 0
     if action == "delayed-result":
-        time.sleep(float(request.get("delay_seconds", 0.15)))
+        release = request.get("release_gate")
+        if release:
+            # Finish only when the parent says it has polled enough, not after a
+            # wall-clock delay that a loaded host's slow census can outlast.
+            deadline = time.monotonic() + 60
+            while not Path(release).exists() and time.monotonic() < deadline:
+                time.sleep(0.005)
+        else:
+            time.sleep(float(request.get("delay_seconds", 0.15)))
     if action == "environment":
         payload = request["payload"]
         payload["metadata"] = {

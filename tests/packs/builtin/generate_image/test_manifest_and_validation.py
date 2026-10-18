@@ -1,7 +1,6 @@
 """Executor-manifest + execution validation tests for generation.generate_image.
 
 Covers:
-  (a) Manifest validation — executor.yaml passes load_executor_manifest.
   (b) Invalid execution value — rejected after model/mode lookup with
       pair-specific available backends named.
   (c) Requires violation — i2i without image_ref fails BEFORE HTTP.
@@ -21,7 +20,6 @@ from pathlib import Path
 import pytest
 
 from astrid.core.contracts.errors import AstridError
-from astrid.core.execution.executor.schema import load_executor_manifest
 from astrid.core.generation.backends import GenerationResult
 from astrid.core.model_catalog.schema import ModeSpec
 
@@ -29,13 +27,6 @@ from astrid.core.model_catalog.schema import ModeSpec
 @pytest.fixture(autouse=True)
 def _fake_fal_key(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("FAL_KEY", "test-fal-key")
-
-
-# Path to the executor manifest
-_EXECUTOR_YAML = (
-    Path(__file__).resolve().parents[4]
-    / "astrid/packs/generation/executors/generate_image/executor.yaml"
-)
 
 
 # ---------------------------------------------------------------------------
@@ -95,29 +86,6 @@ def _assert_astrid_error(call, *cause_parts: str) -> AstridError:
         assert part in error.cause
     return error
 
-
-# ---------------------------------------------------------------------------
-# (a) Manifest validation
-# ---------------------------------------------------------------------------
-
-
-def test_manifest_loads() -> None:
-    """load_executor_manifest succeeds on the shipped executor.yaml."""
-    manifest = load_executor_manifest(str(_EXECUTOR_YAML))
-    assert manifest.id == "generation.generate_image"
-    assert manifest.kind == "built_in"
-    assert manifest.version == "2.1"
-    assert manifest.metadata["runtime_entrypoint"] == "run_sdk"
-    assert {"prompt", "model", "execution", "count", "seed", "steps", "size"}.issubset(
-        set(manifest.metadata["hc04_param_ports"])
-    )
-    assert {"image_ref", "strength"}.isdisjoint(set(manifest.metadata["hc04_param_ports"]))
-    assert manifest.metadata["fixed_inputs"] == {"mode": "t2i", "execution": "cloud"}
-    assert manifest.metadata["hc04_cas_param_ports"] == []
-    # v2 executor inputs include backend controls for Codex in addition to
-    # core model/mode generation fields.
-    assert len(manifest.inputs) == 22
-    assert len(manifest.outputs) == 2  # generated_images, image_manifest
 
 
 def test_bounded_profile_rejects_zero_negative_and_fanout_counts_before_http(

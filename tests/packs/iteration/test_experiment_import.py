@@ -483,7 +483,7 @@ class TestSlugCollisionResolution:
 
 # ── Gate-G3: non-destructive COW materialization ───────────────────────────
 
-from astrid.packs.iteration.actions.experiment_prepare import run as import_run  # noqa: E402
+from astrid.packs.iteration.actions.experiment_import import run as import_run  # noqa: E402
 
 
 class TestCloneNonDestructive:

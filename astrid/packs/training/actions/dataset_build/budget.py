@@ -141,8 +141,11 @@ class ChildWorkMeter:
     """Lifetime local checks; persisted Runtime policy remains the authority.
 
     Reserve before crossing a boundary and retain charges on uncertain failure.
-    Retention uses association identity. Registration uses the object union and
-    requires compatible producer descriptors, even when content hashes repeat.
+    Retention uses association identity. Registration charges the object union
+    once per content hash, even when the same object flows through several
+    producer ports (e.g. one clip feeding both the transcript and visual
+    filters); each (object, port) pair must keep one unchanged producer
+    descriptor, even when content hashes repeat.
     """
 
     OBJECT_MAX_BYTES = 64 * 1024**2
@@ -157,6 +160,7 @@ class ChildWorkMeter:
         self._children: dict[str, str] = {}
         self._retained: dict[str, dict[str, Any]] = {}
         self._registered: dict[str, dict[str, Any]] = {}
+        self._producers: dict[tuple[str, str], dict[str, Any]] = {}
 
     @property
     def retained_bytes(self) -> int:
@@ -254,10 +258,16 @@ class ChildWorkMeter:
             or descriptor["size"] > self.limits["max_child_bytes"]
         ):
             raise RuntimeError("child input count or byte budget exceeded")
-        previous = self._registered.get(descriptor["object_id"])
+        producer_key = (descriptor["object_id"], descriptor["output_port"])
+        previous = self._producers.get(producer_key)
         if previous is not None:
             if previous != registration:
                 raise ValueError("derived object has a conflicting producer descriptor")
+            return
+        if descriptor["object_id"] in self._registered:
+            # Same content already charged under another producer port: record
+            # the new port's descriptor without charging the object again.
+            self._producers[producer_key] = registration
             return
         if (
             len(self._registered) + 1 > self.limits["max_derived_objects"]
@@ -265,6 +275,7 @@ class ChildWorkMeter:
         ):
             raise RuntimeError("derived registration object or byte budget exceeded")
         self._registered[descriptor["object_id"]] = registration
+        self._producers[producer_key] = registration
 
     def register_local_file(
         self, path: Path, producer: Mapping[str, str], *, name: str

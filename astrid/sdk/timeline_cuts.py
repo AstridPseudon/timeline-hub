@@ -893,9 +893,11 @@ def diff_bundles(before: Mapping[str, Any], after: Mapping[str, Any], *, toleran
             for value in (a["app"], b["app"])
         )
         app_a, app_b = dict(app_a or {}), dict(app_b or {})
-        if {key: value for key, value in app_a.items() if key not in notes} != {
-            key: value for key, value in app_b.items() if key not in notes
-        }:
+        if not _values_equal(
+            {key: value for key, value in app_a.items() if key not in notes},
+            {key: value for key, value in app_b.items() if key not in notes},
+            tolerance,
+        ):
             fields.append("app")
         if any(app_a.get(key) != app_b.get(key) for key in notes):
             fields.append("note")

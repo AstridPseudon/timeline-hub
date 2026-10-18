@@ -11,8 +11,16 @@ from astrid.sdk.remote import RemoteTasks
 from astrid.sdk.workspace_client import WorkspaceClient
 
 
+def _recorded(case: str) -> dict:
+    """The Runtime's recorded response body (tests/fixtures/runtime-responses, vendored under a lock)."""
+    return json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "runtime-responses" / f"{case}.json").read_text())["body"]
+
+
 def _managed_output(*, project_id: str, run_id: str, task_id: str, object_id: str, size: int) -> dict:
+    # Start from the recorded wire item so the fake can never lack or invent a field; set only what tests read.
+    recorded = _recorded("managed_outputs_200")["items"][0]
     return {
+        **recorded,
         "association_id": "association-video",
         "project_id": project_id,
         "run_id": run_id,
@@ -30,12 +38,12 @@ def _managed_output(*, project_id: str, run_id: str, task_id: str, object_id: st
         "media_type": "video/mp4",
         "ordinal": 0,
         "role": "result",
-        "producer": {"id": "astrid-renderer"},
-        "provenance": {"capability_id": "rendering.render", "fence": 3},
+        "producer": {"capability_id": "rendering.render"},
+        "provenance": {**recorded["provenance"], "capability_id": "rendering.render", "fence": 3},
         "durability": "durable",
         "state": "available",
         "version": 1,
-        "lifecycle": {"state": "available", "version": 1},
+        "lifecycle": {**recorded["lifecycle"], "state": "available", "version": 1},
     }
 
 
@@ -112,6 +120,7 @@ class ManagedOutputRuntime:
         if self.use_get:
             output["association_id"] = "association-video"
         return {
+            **_recorded("task_read_200"),
             "task_id": task_id,
             "capability_id": "rendering.render",
             "state": "completed",

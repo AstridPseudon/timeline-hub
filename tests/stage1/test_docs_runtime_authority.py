@@ -14,11 +14,11 @@ LIVE_DOCS = (
     ROOT / "docs" / "reference" / "sdk.md",
     ROOT / "docs" / "guides" / "cli-journeys.md",
     ROOT / "docs" / "guides" / "creating-tools.md",
-    ROOT / "astrid" / "packs" / "_core" / "skill" / "SKILL.md",
+    ROOT / "astrid" / "packs" / "_core" / "docs" / "SKILL.md",
 )
 
 AUTHORITATIVE_PACK_DOCS = (
-    ROOT / "astrid" / "packs" / "rendering" / "skill" / "SKILL.md",
+    ROOT / "astrid" / "packs" / "rendering" / "docs" / "SKILL.md",
     ROOT / "docs" / "packs" / "creating-packs.md",
     ROOT / "docs" / "contracts" / "render-backend-v1.md",
 )
@@ -48,7 +48,15 @@ def test_live_docs_do_not_publish_retired_local_authority() -> None:
 
 
 def test_live_docs_name_runtime_bootstrap_and_authority() -> None:
+    # README.md is a landing page that routes setup to docs/setup/README.md;
+    # the workspace runtime is named in that setup guide, not in the landing page.
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "docs/setup/README.md" in readme
+    setup_guide = (ROOT / "docs" / "setup" / "README.md").read_text(encoding="utf-8")
+    assert re.search(r"workspace\s+runtime", setup_guide, re.I), "docs/setup/README.md"
     for path in LIVE_DOCS:
+        if path == ROOT / "README.md":
+            continue
         text = path.read_text(encoding="utf-8")
         assert re.search(r"workspace\s+runtime", text, re.I), path
     assert "banodoco-local up --profile astrid" in (

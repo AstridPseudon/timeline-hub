@@ -80,6 +80,11 @@ current directory, create an empty replacement, or disable identity checks.
 
 These are toolkit/runtime checks, not agent onboarding:
 
+To start or reconnect the selected workspace Runtime directly, run
+`banodoco-local up --profile astrid` (the Runtime's "start or reconnect the
+selected runtime" command); it does not replace the workspace selection in
+step 3.
+
 ```bash
 python3 -m astrid --help
 python3 -m astrid doctor --json

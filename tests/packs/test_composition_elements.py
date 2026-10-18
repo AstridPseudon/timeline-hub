@@ -32,7 +32,7 @@ def _timeline_composition_source() -> Path:
 
 class CompositionElementTest(unittest.TestCase):
     def _assert_animation_plugin(self, animation_id: str, kind: str) -> None:
-        root = ROOT / "astrid" / "packs" / "rendering" / "elements" / "animations" / animation_id
+        root = ROOT / "astrid" / "packs" / "rendering" / "rendering" / "elements" / "animations" / animation_id
         for filename in ("component.tsx", "element.yaml"):
             self.assertTrue((root / filename).is_file(), f"{root / filename} missing")
         self.assertEqual(effects_catalog.read_animation_meta(animation_id)["kind"], kind)
@@ -67,7 +67,7 @@ class CompositionElementTest(unittest.TestCase):
         }
         self.assertEqual(set(expected), set(effects_catalog.list_animation_ids()))
         for animation_id, kind in expected.items():
-            root = ROOT / "astrid" / "packs" / "rendering" / "elements" / "animations" / animation_id
+            root = ROOT / "astrid" / "packs" / "rendering" / "rendering" / "elements" / "animations" / animation_id
             for filename in ("component.tsx", "element.yaml"):
                 self.assertTrue((root / filename).is_file(), f"{root / filename} missing")
             self.assertEqual(effects_catalog.read_animation_meta(animation_id)["kind"], kind)

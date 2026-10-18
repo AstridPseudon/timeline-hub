@@ -30,8 +30,12 @@ def _read(url: str, *, range_header: str | None = None, origin: str | None = Non
         headers["Range"] = range_header
     if origin:
         headers["Origin"] = origin
-    with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=5) as response:
-        return response.status, response.headers, response.read()
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=5) as response:
+            return response.status, response.headers, response.read()
+    except urllib.error.HTTPError as error:
+        error.close()  # The error owns the response socket; code and headers stay readable.
+        raise
 
 
 @pytest.fixture

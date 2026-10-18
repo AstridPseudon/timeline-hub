@@ -387,7 +387,7 @@ def capture_evidence(
     if "source_manifests" in selected:
         _capture_digests(evidence_dir, repo_root, "source_manifests", [repo_root / "config" / "astrid-beta-capabilities.json", repo_root / "remotion" / "package-lock.json"], "manifests")
     if run_commands:
-        # Run the existing focused S1 gate once.  Its twelve lane outputs are
+        # Run the existing focused S1 gate once.  Its lane outputs are
         # attached to minimum_correctness below; it is a prerequisite, not a
         # second receipt category.
         if include_s1 and "minimum_correctness" in selected:

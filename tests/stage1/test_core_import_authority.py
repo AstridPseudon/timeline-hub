@@ -370,7 +370,11 @@ def test_sdk_dry_run_is_manifest_only_and_does_not_load_runtime_authority(tmp_pa
 
 
 def test_sdk_orchestrator_dry_run_is_manifest_only(tmp_path: Path) -> None:
-    """Orchestrator previews use the same runtime-free admission boundary."""
+    """Orchestrator previews use the same runtime-free admission boundary.
+
+    ``h3_av.transform`` is the only capability still registered as an
+    orchestrator; ``video_editing.hype`` is now an executor action.
+    """
 
     root = Path(__file__).resolve().parents[2]
     preview_root = tmp_path / "orchestrator-out"
@@ -381,9 +385,9 @@ def test_sdk_orchestrator_dry_run_is_manifest_only(tmp_path: Path) -> None:
             (
                 "import sys; import astrid; from pathlib import Path; "
                 f"out = Path({str(preview_root)!r}); "
-                "preview = astrid.invoke('video_editing.hype', kind='orchestrator', "
+                "preview = astrid.invoke('h3_av.transform', kind='orchestrator', "
                 "project='not-a-local-project', "
-                "inputs={'video': 'clip.mp4', 'brief': 'brief.md'}, out=out, dry_run=True); "
+                "inputs={'request': {}, 'asset_map': {}}, out=out, dry_run=True); "
                 "legacy = ('astrid.core.execution.executor.runner', "
                 "'astrid.core.execution.orchestrator.runner', 'astrid.core.project.run', "
                 "'astrid.core.project.guidance'); "

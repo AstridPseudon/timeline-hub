@@ -29,6 +29,6 @@ except PackageNotFoundError:
     __version__ = _source_version()
 
 
-ASTRID_VERSION = __version__
+ASTRID_VERSION: str = __version__
 
 __all__ = ["ASTRID_VERSION", "__version__"]

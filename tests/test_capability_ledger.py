@@ -1,5 +1,6 @@
 """B9.1 source reconciliation and no-drop coverage."""
 
+import json
 from pathlib import Path
 
 from astrid.core.execution.capability_ledger import load_capability_ledger
@@ -11,7 +12,11 @@ def test_shipped_ledger_reconciles_historical_capability_sets():
 
     assert sources["counts"]["pack_labels"] == 107
     assert sources["counts"]["historical_pack_labels"] == 108
-    assert sources["counts"]["executor_inventory"] == 88
+    # The executor inventory is the committed output-result snapshot plus historical
+    # rows; it grows whenever a bundled executor is registered, so pin it to the
+    # approved census lock rather than a literal.
+    lock = json.loads(Path("config/astrid-capability-census.lock.json").read_text(encoding="utf-8"))
+    assert sources["counts"]["executor_inventory"] == len(lock["executor_inventory"])
     assert all(section["complete"] for section in sources["coverage"].values())
     assert not sources["coverage"]["source_labels"]["missing"]
     assert sources["coverage"]["historical_source_labels"]["complete"]
@@ -52,7 +57,11 @@ def test_host_consumes_the_reconciled_ledger_before_readiness_matrix():
 
     host = GenericPackHost(pack_roots=[Path("astrid/packs")])
     assert host.ledger["sources"]["counts"]["pack_labels"] == 107
-    assert len(host.matrix) == 111
+    # The host matrix is the shipped readiness matrix, row for row; deriving the
+    # count keeps it from drifting each time a capability is admitted.
+    shipped = json.loads(Path("config/astrid-beta-capabilities.json").read_text(encoding="utf-8"))
+    assert set(host.matrix) == {row["id"] for row in shipped["capabilities"]}
+    assert len(host.matrix) == len(shipped["capabilities"])
     finalizer = host.matrix["h3_av.publication_finalizer"]
     assert finalizer["adapter_family"] == "cpu"
     assert finalizer["resource_keys"] == ["cpu"]
@@ -184,10 +193,10 @@ def test_reviewed_v3_pack_labels_preserve_exact_canonical_action_admission():
         ("pixel", "snap"): ("pixel.snap", "cpu", ["cpu"]),
         ("pixel", "sprites"): ("pixel.sprites", "cpu", ["cpu"]),
         ("chiptune", "midi"): ("chiptune.midi", "cpu", ["cpu"]),
+        ("pixel", "strip"): ("pixel.strip", "cpu", ["cpu"]),
     }
-    # pixel.strip has no reviewed matrix row yet; it stays an unmapped source label.
-    assert set(labels) == set(expected) | {("pixel", "strip")}
-    assert labels[("pixel", "strip")]["disposition"] == "unmapped_source_label"
+    # pixel.strip now has a reviewed matrix row (4b77bdcf), so it is admitted like its siblings.
+    assert set(labels) == set(expected)
     matrix = {row["id"]: row for row in ledger["capabilities"]}
     for (pack, label), (action_id, adapter, resources) in expected.items():
         source = labels[(pack, label)]

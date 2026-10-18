@@ -17,33 +17,47 @@ def _parse(reader, *options):
                               '--from-revision', 'parent-1', '--to-revision', 'parent-2', *options])
 
 
-@pytest.mark.parametrize('options', [(), ('--json',), ('--format', 'json')])
-def test_actual_cli_json_modes_keep_exact_envelope_and_result(options, capsys):
+@pytest.mark.parametrize('options', [('--json',), ('--format', 'json')])
+def test_actual_cli_json_modes_print_the_exact_revision_pair_cut_diff_envelope(options, capsys):
+    # An exact revision pair is read as two immutable bundles and compared as
+    # cuts; the JSON envelope carries that cut diff, not the authoring diff.
     reader = HistoricalReader()
     parsed = _parse(reader, *options)
     assert parsed.handler(parsed) == 0
     out, err = capsys.readouterr()
     envelope = json.loads(out)
-    assert set(envelope) == {'ok', 'data', 'error', 'receipt', 'idempotency_key'}
-    assert envelope['ok'] is True and err == ''
-    assert envelope['data'] == json.loads(json.dumps(reader.diff(
-        'project-1', 'main', from_revision='parent-1', to_revision='parent-2').data))
+    assert set(envelope) == {'ok', 'data', 'error'}
+    assert envelope['ok'] is True and envelope['error'] is None and err == ''
+    data = envelope['data']
+    assert data['from_revision'] == 'parent-1' and data['to_revision'] == 'parent-2'
+    assert data['timeline_id'] == 'main'
+    assert [(c['kind'], c['shot'], c['clip_id'], c['fields']) for c in data['changes']] == [
+        ('changed', 'Opening', 'picture-1', ['rect']),
+        ('changed', 'Opening', 'picture-1', ['rect']),
+    ]
+    assert data['windows'] == [[0.0, 2.0]]
+    assert set(data['commands']) == {'before 0..2', 'after 0..2'}
+    assert all('future-parent-99' not in str(call) for call in reader.calls)
 
 
-@pytest.mark.parametrize('mode', ['readable', 'details'])
-def test_actual_cli_human_modes_keep_labels_pair_unknown_changes_and_all_details(mode, capsys):
+@pytest.mark.parametrize('mode', [None, 'readable', 'details'])
+def test_actual_cli_human_modes_print_the_cut_diff_with_the_exact_pair_and_visualize_commands(mode, capsys):
     reader = HistoricalReader()
-    parsed = _parse(reader, '--format', mode)
+    parsed = _parse(reader, *(('--format', mode) if mode else ()))
     assert parsed.handler(parsed) == 0
     out, err = capsys.readouterr()
     assert err == ''
-    assert 'Opening' in out and 'occ-1' in out and 'occ-2' in out
-    assert 'picture-1' in out and 'parent-1' in out and 'parent-2' in out
-    assert 'rect' in out and 'metadata' in out and 'changed' in out
-    if mode == 'details':
-        result = reader.diff('project-1', 'main', from_revision='parent-1', to_revision='parent-2')
-        for change in result.data['changes']:
-            assert change['path'] in out
+    assert out.startswith('Timeline main: parent-1 \u2192 parent-2\n')
+    assert '2 clip changes (2 changed) in 1 shot(s): Opening' in out
+    assert out.count('picture-1') == 2 and '(rect changed)' in out
+    assert '--revision-id parent-1 --range 0..2' in out and '--revision-id parent-2 --range 0..2' in out
+    assert 'future-parent-99' not in out
+    if mode is None:
+        return
+    # readable and details are the same cut table for a revision pair.
+    plain = _parse(HistoricalReader())
+    plain.handler(plain)
+    assert out == capsys.readouterr().out
 
 
 @pytest.mark.parametrize('mode', ['readable', 'details'])

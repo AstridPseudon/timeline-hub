@@ -298,10 +298,15 @@ def test_output_result_registry_conformance_covers_default_registry() -> None:
     external_ids = {
         str(entry["id"])
         for entry in matrix["capabilities"]
-        if str(entry["id"]).startswith(("discord_local.", "hivemind.", "seedance_local."))
+        if str(entry["id"]).startswith("hivemind.")
     }
+    # discord_local and seedance_local are bundled packs in the default registry
+    # (71d43e00) and declare output_result_manifest, so they are non-exempt and no
+    # longer an external escape hatch; only the Hivemind routes remain external.
+    for bundled_id in ("discord_local.command", "seedance_local.reference_video"):
+        assert bundled_id in registry_ids
+        assert bundled_id in non_exempt_ids
     assert external_ids == {
-        "discord_local.command",
         "hivemind.contribute",
         "hivemind.get_item",
         "hivemind.ingest_article",
@@ -309,7 +314,6 @@ def test_output_result_registry_conformance_covers_default_registry() -> None:
         "hivemind.ingest_youtube",
         "hivemind.refresh_media",
         "hivemind.search",
-        "seedance_local.reference_video",
     }
     assert listed_ids - registry_ids == external_ids
     assert external_ids.isdisjoint(registry_ids)
@@ -341,20 +345,27 @@ def test_output_result_registry_explicitly_covers_understanding_trio() -> None:
     payload = json.loads(Path("astrid/core/contracts/output_result_exemptions.json").read_text(encoding="utf-8"))
     non_exempt_ids = set(payload["non_exempt"])
 
-    # Audio now declares the two concrete files its runtime receives through
-    # placeholders.  Visual/video retain their manifest-only contract because
-    # their runtimes choose their result path dynamically.
+    # The understanding pack declares its concrete outputs in pack.yaml
+    # (schema_version 3); each trio member's declared output names are pinned here.
     audio = registry.get("understanding.audio_understand")
     assert tuple(output.name for output in audio.outputs) == ("analysis", "manifest")
     assert audio.metadata.get("output_result_manifest") is True
     assert "understanding.audio_understand" in non_exempt_ids
 
-    for executor_id in (
-        "understanding.visual_understand",
-        "understanding.video_understand",
-    ):
+    expected_outputs = {
+        "understanding.visual_understand": (
+            "result",
+            "manifest",
+            "contact_sheet",
+            "crop_contact_sheet",
+            "crops",
+            "frames",
+        ),
+        "understanding.video_understand": ("windows", "result", "manifest"),
+    }
+    for executor_id, output_names in expected_outputs.items():
         definition = registry.get(executor_id)
-        assert definition.outputs == ()
+        assert tuple(output.name for output in definition.outputs) == output_names
         assert definition.metadata.get("output_result_manifest") is True
         assert executor_id in non_exempt_ids
 

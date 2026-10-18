@@ -68,6 +68,16 @@ class VibeComfyStructuredMetadataTest(unittest.TestCase):
                 "{readiness_profile_path}",
                 "--readiness-profile-hash",
                 "{readiness_profile_hash}",
+                "--source-video",
+                "{source_video}",
+                "--source-video-node",
+                "{source_video_node}",
+                "--source-video-widget",
+                "{source_video_widget}",
+                "--managed-assets",
+                "{managed_assets}",
+                "--workflow-inputs",
+                "{workflow_inputs}",
             ],
         )
         self.assertEqual(payload["isolation"]["requirements"], ["vibecomfy"])
@@ -78,7 +88,7 @@ class VibeComfyStructuredMetadataTest(unittest.TestCase):
         self.assertEqual(metadata["vibecomfy_command"], "run")
         self.assertEqual(metadata["command_names"], ["run", "validate"])
         self.assertEqual(metadata["requirements"], ["vibecomfy"])
-        self.assertEqual(metadata["requirements_source"], "requirements.txt")
+        self.assertEqual(metadata["requirements_source"], "actions/run/requirements.txt")
         self.assertEqual(
             metadata["workflow_input_contract"],
             {

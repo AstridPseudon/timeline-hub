@@ -36,6 +36,16 @@ class HistoricalReader(RemoteTimelines):
         self.calls.append(('resolve', project, ref))
         return DomainResult.success(self.scope)
 
+    def open_composition(self, project, ref, *, revision_id=None, **kwargs):
+        # The Runtime inspection read only names the timeline identity; the
+        # pinned closure itself is read through _typed below.
+        self.calls.append(('open_composition', project, ref, revision_id))
+        return DomainResult.success({
+            'native_inspection': {'project_id': 'project-1', 'timeline_id': 'main',
+                                  'head_revision_id': self.scope['head_revision_id']},
+            'summary': {},
+        })
+
     def _typed(self, operation, *args, **kwargs):
         self.calls.append((operation, args, kwargs))
         if operation == 'get_project':
@@ -105,7 +115,17 @@ def test_cli_revision_pair_parses_and_forwards_exact_identity_without_mutation(m
     _configure_diff(parser)
     parsed = parser.parse_args(['main-slug', '--project', 'project-slug', '--from-revision', 'parent-1', '--to-revision', 'parent-2', '--json'])
     calls = []
-    parsed.client = SimpleNamespace(timelines=SimpleNamespace(diff=lambda *args, **kwargs: calls.append((args, kwargs)) or DomainResult.success({})))
-    monkeypatch.setattr('astrid.packs.timeline.cli.print_result', lambda result, **kwargs: 0)
+
+    def open_bundle(*args, **kwargs):
+        calls.append((args, kwargs))
+        return DomainResult.failure(ErrorObject('not_found', 'stop after the first read', {}))
+
+    parsed.client = SimpleNamespace(timelines=SimpleNamespace(
+        open_bundle=open_bundle,
+        diff=lambda *args, **kwargs: pytest.fail('a revision pair is read as two exact bundles, not a legacy diff'),
+    ))
+    printed = []
+    monkeypatch.setattr('astrid.packs.timeline.cli.print_result', lambda result, **kwargs: printed.append((result, kwargs)) or 0)
     assert _cmd_diff(parsed) == 0
-    assert calls == [(('project-slug', 'main-slug'), {'from_revision': 'parent-1', 'to_revision': 'parent-2'})]
+    assert calls == [(('project-slug', 'main-slug'), {'revision_id': 'parent-1'})]
+    assert printed[0][0].error.code == 'not_found' and printed[0][1] == {'as_json': True}

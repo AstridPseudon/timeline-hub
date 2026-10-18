@@ -52,6 +52,7 @@ def test_owner_restart_command_uses_only_named_start_id(tmp_path) -> None:
     assert "--launch-flag=--use-ck-attention" in command
 
 
+@pytest.mark.integration
 def test_process_absence_probe_uncertainty_fails_closed(monkeypatch) -> None:
     from vibecomfy.runtime import session as runtime_session
 

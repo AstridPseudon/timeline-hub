@@ -18,6 +18,7 @@ import math
 import os
 import re
 from pathlib import Path
+import select
 import signal
 import socket
 import stat
@@ -2796,6 +2797,9 @@ def _check_reconciliation_deadline(deadline: float) -> None:
 
 
 
+_PIDFD_RELEASED = object()
+
+
 class ProcessCustody:
     """Retain every registered incarnation independently of ancestry/session.
 
@@ -3772,6 +3776,8 @@ class ProcessCustody:
                 # census, original waits and final absence still decide cleanup.
                 return
             self._handles[pid] = (birth, (authority, refreshed))
+        elif handle is _PIDFD_RELEASED:
+            return  # Exact incarnation was verified absent; its pidfd is closed.
         else:
             from astrid.core.execution.process_group import process_birth_identity
             if self._actor_birth != process_birth_identity():
@@ -3785,6 +3791,30 @@ class ProcessCustody:
             except OSError as exc:
                 raise CustodyError("retained pidfd signal failed") from exc
 
+    def release_pidfds(self, *, only_exited: bool = False) -> None:
+        """Close retained Linux pidfds so they do not outlive their incarnations.
+
+        The (pid, birth) entry stays so later registration and census checks still
+        see the incarnation as admitted; only the kernel descriptor is released.
+        A signal to a released entry is a no-op, since its target is absent.
+        With ``only_exited`` just the pidfds the kernel reports readable (the exact
+        incarnation has terminated) are closed; live ones remain the obligation.
+        """
+        with self._lock:
+            for pid, (birth, handle) in tuple(self._handles.items()):
+                if type(handle) is not int:
+                    continue
+                if only_exited:
+                    poller = select.poll()
+                    poller.register(handle, select.POLLIN)
+                    if not poller.poll(0):
+                        continue
+                self._handles[pid] = (birth, _PIDFD_RELEASED)
+                try:
+                    os.close(handle)
+                except OSError:
+                    pass
+
     def observe(self, members: Mapping[int, str]) -> None:
         with self._lock:
             if self._uncertain is not None:
@@ -3796,6 +3826,14 @@ class ProcessCustody:
                 self._uncertain = exc
                 raise
 
+    def _launch_exit_witnessed(self) -> bool:
+        """Positive proof that the bound launch exited: a census listed that exact
+        incarnation (birth recorded at bind) as an unreaped zombie. Absence alone
+        is never proof, so a launch missing without this witness stays unresolved."""
+        from astrid.core.execution.process_group import launch_exit_witnessed
+        bound = self._handles.get(self.process.pid)
+        return bound is not None and launch_exit_witnessed(self.process, bound[0])
+
     def start_observer(self) -> None:
         """Complete one census before launch release, then watch descendants."""
         ready = threading.Event()
@@ -3806,7 +3844,7 @@ class ProcessCustody:
                 try:
                     live = observe_tree(self.process)
                     if not ready.is_set():
-                        if self.process.pid not in live:
+                        if self.process.pid not in live and not self._launch_exit_witnessed():
                             raise CustodyError("initial custody census omitted the suspended launch")
                         ready.set()
                     if not live:

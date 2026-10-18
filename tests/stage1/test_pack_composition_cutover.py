@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import re
 import pkgutil
 from pathlib import Path
 
@@ -20,7 +21,18 @@ def test_packs_registry_keeps_only_checkout_composition() -> None:
         "shots": ("timelines", "shots"),
         "references": ("media", "references"),
     }
-    assert len(build_product_mounts()) == 7
+    assert {mount.family for mount in build_product_mounts()} == {
+        "projects",
+        "documents",
+        "preferences",
+        "media",
+        "tasks",
+        "runs",
+        "timelines",
+        "shots",
+        "references",
+    }
+    assert len(build_product_mounts()) == 9
     assert not hasattr(astrid.packs, "STANDARD_SCHEMA_PACKS")
     assert not hasattr(astrid.packs, "build_standard_registry")
     assert not hasattr(astrid.packs, "compose_standard_bridge")
@@ -44,7 +56,8 @@ def test_pack_production_modules_have_no_local_service_or_bridge_imports() -> No
     for path in paths:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         imports = [ast.unparse(node) for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom))]
-        assert not any(any(name in value for name in forbidden) for value in imports), path
+        # Whole module names only: astrid.sdk.media must not also match astrid.sdk.media_transcript.
+        assert not any(re.search(re.escape(name) + r"(?!\w)", value) for name in forbidden for value in imports), path
 
 
 def test_retired_local_timeline_bridge_is_not_a_pack_authority() -> None:

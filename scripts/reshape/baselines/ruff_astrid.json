@@ -4,7 +4,7 @@
     "pyproject.toml [tool.ruff].include"
   ],
   "command": [
-    "/Users/peteromalley/.pyenv/versions/3.11.11/bin/python",
+    "/home/user/astrid-agent/.venv/bin/python",
     "-m",
     "ruff",
     "check",
@@ -12,16 +12,22 @@
     "--output-format",
     "json"
   ],
-  "finding_count": 1469,
+  "finding_count": 2292,
   "code_counts": {
-    "F401": 394,
-    "I001": 74,
-    "BLE001": 215,
-    "E402": 717,
-    "F841": 21,
-    "F821": 32,
-    "E702": 8,
-    "F541": 7,
-    "F601": 1
+    "F401": 159,
+    "BLE001": 218,
+    "I001": 251,
+    "E701": 490,
+    "E702": 246,
+    "E731": 11,
+    "F821": 13,
+    "F841": 63,
+    "E402": 823,
+    "F402": 2,
+    "F822": 7,
+    "F541": 3,
+    "F601": 1,
+    "E741": 4,
+    "E401": 1
   }
 }

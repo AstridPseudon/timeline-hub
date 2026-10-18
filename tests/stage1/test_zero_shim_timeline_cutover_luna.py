@@ -41,15 +41,21 @@ ASTRID_SOURCE = Path(
 ).parent
 RUNTIME_WORKTREE = ASTRID_SOURCE.parent / "banodoco-workspace-runtime-execution-20260909"
 RUNTIME_COMMIT = "afccb430e2a983c968b6a8a96fd630ba3a6262fc"
-_RUNTIME_TMP = tempfile.TemporaryDirectory(prefix="astrid-runtime-archive-")
-RUNTIME = Path(_RUNTIME_TMP.name)
-archive = subprocess.run(
-    ["git", "-C", str(RUNTIME_WORKTREE), "archive", "--format=tar", RUNTIME_COMMIT],
-    check=True,
-    capture_output=True,
-).stdout
-with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
-    tar.extractall(RUNTIME)
+_RUNTIME_TMPDIRS: list[tempfile.TemporaryDirectory] = []
+
+
+def _runtime_archive() -> Path:
+    """Extract the pinned runtime commit from the sibling runtime checkout."""
+    tmp = tempfile.TemporaryDirectory(prefix="astrid-runtime-archive-")
+    _RUNTIME_TMPDIRS.append(tmp)
+    archive = subprocess.run(
+        ["git", "-C", str(RUNTIME_WORKTREE), "archive", "--format=tar", RUNTIME_COMMIT],
+        check=True,
+        capture_output=True,
+    ).stdout
+    with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
+        tar.extractall(tmp.name)
+    return Path(tmp.name)
 
 
 def test_live_import_graph_does_not_load_project_timeline_authority() -> None:
@@ -101,7 +107,7 @@ def test_filesystem_modes_are_rejected_without_touching_the_tree(tmp_path: Path)
             project="demo",
             project_root=tmp_path,
         )
-    with pytest.raises(CapabilityValidationError, match="path-backed"):
+    with pytest.raises(CapabilityValidationError, match="requires a managed Runtime object with a valid SHA-256 digest"):
         invocation._prepare_managed_render_inputs(
             {"timeline": str(tmp_path / "assembly.json")},
             project="demo",
@@ -151,13 +157,12 @@ def test_runtime_materialization_projects_in_memory_and_never_repairs(tmp_path: 
     assert not list(tmp_path.rglob("assembly.jsonl"))
 
 
+@pytest.mark.integration
 def test_runtime_timeline_create_read_version_and_cas(tmp_path: Path) -> None:
     """The supported timeline lifecycle is a runtime transaction, including CAS."""
     # Keep the subprocess on the pinned runtime source, independent of any
     # mutable sibling checkout or ambient override.
-    runtime_root = RUNTIME
-    if not runtime_root.is_dir():
-        pytest.skip("workspace runtime checkout is not available")
+    runtime_root = _runtime_archive()
     probe = r'''import sys
 from pathlib import Path
 
@@ -284,9 +289,9 @@ def test_runaway_schema_host_and_migration_are_absent() -> None:
 
 def test_pack_workers_are_result_only_and_have_no_timeline_write_binding() -> None:
     worker_paths = (
-        ROOT / "astrid/packs/video_editing/executors/cut/timeline_build.py",
-        ROOT / "astrid/packs/iteration/executors/assemble/run.py",
-        ROOT / "astrid/packs/editorial/executors/refine/run.py",
+        ROOT / "astrid/packs/video_editing/actions/cut/timeline_build.py",
+        ROOT / "astrid/packs/iteration/actions/assemble/run.py",
+        ROOT / "astrid/packs/editorial/actions/refine/run.py",
     )
     forbidden = (
         "pack_write_gateway",

@@ -13,6 +13,10 @@ from astrid.core.execution.provider_route_resolvers import (
     resolve_runpod_pod_handle_ssh_route,
 )
 
+# Both tests patch ``runpod_lifecycle.api`` (the sibling RunPod lifecycle package,
+# not a project dependency), so they need that checkout to run.
+pytestmark = pytest.mark.integration
+
 
 def _handle(path: Path, *, ssh: str = "root@198.51.100.7 -p 53603") -> None:
     path.write_text(

@@ -215,15 +215,12 @@ def test_generic_host_discovers_explicit_astrid_packs_path_without_default_scan(
     from astrid.core.execution.generic_host import GenericPackHost
 
     env_root = tmp_path / "env-pack-root"
-    executor_root = env_root / "env_pack" / "executors" / "demo"
-    executor_root.mkdir(parents=True)
+    (env_root / "env_pack").mkdir(parents=True)
     (env_root / "env_pack" / "pack.yaml").write_text(
-        "schema_version: 2\nid: env_pack\nname: Env Pack\nversion: '1.0'\nstatus: active\n"
-        "documentation:\n  kind: none\n  reason: test fixture\ncontent:\n  executors: executors\n",
-        encoding="utf-8",
-    )
-    (executor_root / "executor.yaml").write_text(
-        "schema_version: 1\nid: env_pack.demo\nname: Demo\nkind: external\nversion: '1.0'\ncommand: [python3, -c, pass]\n",
+        "schema_version: 3\nid: env_pack\nname: Env Pack\nversion: '1.0.0'\nstatus: active\n"
+        "documentation:\n  kind: none\n  reason: test fixture\n"
+        "actions:\n  demo:\n    description: Demo action.\n    invocation:\n      kind: command\n"
+        "      command:\n        argv: [python3, -c, pass]\n    inputs: []\n    outputs: []\n",
         encoding="utf-8",
     )
     monkeypatch.setenv("ASTRID_PACKS_PATH", str(env_root))
@@ -237,7 +234,7 @@ def test_supported_astrid_cleanup_paths_use_kernel_custody_without_numeric_signa
     import ast
     paths = ("astrid/core/execution/process_group.py", "astrid/core/execution/generic_host.py",
              "astrid/sdk/host_bootstrap.py", "astrid/sdk/rendering.py", "astrid/core/rendering/transport.py",
-             "astrid/packs/video_editing/orchestrators/hype/runner.py")
+             "astrid/packs/video_editing/actions/hype/runner.py")
     for relative in paths:
         source = ast.parse((ROOT / relative).read_text())
         for node in ast.walk(source):

@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 import copy
 from contextlib import contextmanager
@@ -8,7 +9,14 @@ from pathlib import Path
 import pytest
 import yaml
 from astrid.core.element import project_packs as packs
-from runtime_protocol.service import validate_idempotency_key
+
+# Wire grammar of Runtime's Idempotency-Key (runtime_protocol/service.py: IDEMPOTENCY_KEY_RE,
+# enforced by validate_idempotency_key). Mirrored here so the fake client needs no runtime checkout.
+_IDEMPOTENCY_KEY_RE=re.compile(r'[A-Za-z0-9][A-Za-z0-9._~-]{0,255}')
+
+def validate_idempotency_key(value):
+    if not isinstance(value,str) or _IDEMPOTENCY_KEY_RE.fullmatch(value) is None:raise ValueError('Idempotency-Key must start with an alphanumeric character and contain at most 256 ASCII characters')
+    return value
 
 class FakeDocuments:
     def __init__(self):self.rows={};self.reads=[];self.writes=[];self.reject_update=False

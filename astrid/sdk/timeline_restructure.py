@@ -16,7 +16,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -77,7 +77,7 @@ def is_split(bundle: Mapping[str, Any]) -> bool:
         # shot closure readable; split will refuse the repeated name on publish.
         if len(rows) < 2 or len(set(names)) != len(names):
             return False
-        cut_starts: dict[str, int] = {}
+        cut_starts: dict[str, float] = {}
         for row in rows:
             start = _row_start(row)
             for clip in (shots[str(row["shot_id"])].get("internal_timeline") or {}).get("clips") or []:
@@ -367,7 +367,7 @@ def _strings(value: Any):
             yield from _strings(v)
 
 
-def _used(clips: list[Mapping[str, Any]], keys: Mapping[str, Any]) -> set[str]:
+def _used(clips: Iterable[Mapping[str, Any]], keys: Mapping[str, Any]) -> set[str]:
     return {s for clip in clips for s in _strings(clip) if s in keys}
 
 

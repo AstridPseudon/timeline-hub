@@ -41,6 +41,8 @@ def _authority() -> dict:
 
 
 class Runtime:
+    """A Runtime client: media import (preflight) and transport object ingestion (admission)."""
+
     def __init__(self, *, can_import: bool = True):
         self.objects = {ASSET_DIGEST: ASSET}
         self.created = []
@@ -58,6 +60,13 @@ class Runtime:
                 return SimpleNamespace(ok=True, data={"digest": digest, "object_id": digest, "filename": filename}, error=None)
 
             self.media = SimpleNamespace(import_bytes=import_bytes)
+
+            def ingest_project_object(project, data, *, media_type, idempotency_key, filename=None):
+                digest = "sha256:" + hashlib.sha256(data).hexdigest()
+                self.objects[digest] = data
+                return {"data": {"digest": digest, "object_id": digest}, "receipt": {}}
+
+            self._remote = SimpleNamespace(_transport=SimpleNamespace(ingest_project_object=ingest_project_object))
         else:
             self.media = SimpleNamespace()
 
@@ -76,20 +85,30 @@ def _admit(runtime) -> dict:
 
 
 def test_visualize_spec_carries_digests_not_the_snapshot():
-    inline = _admit(Runtime(can_import=False))  # the old shape, still used by clients without import_bytes
     runtime = Runtime()
     admitted = _admit(runtime)
-    before = len(json.dumps(inline["spec"]))
-    after = len(json.dumps(admitted["spec"]))
-    assert before > 1_000_000 and after < 20_000, (before, after)
+    assert len(json.dumps(admitted["spec"])) < 20_000
     inputs, authority = admitted["spec"]["inputs"], admitted["spec"]["authority_context"]
     assert set(inputs["filmstrip_authority"]) == {"digest", "filename", "media_type", "size_bytes"}
     assert "capture_snapshot" not in authority and authority["authority_object"] == inputs["filmstrip_authority"]["digest"]
     for port in ("filmstrip_authority", "timeline", "assets_registry"):
         assert inputs[port]["digest"] in admitted["input_manifest"]
     assert ASSET_DIGEST in admitted["input_manifest"]  # registry media stay authorized
-    # the stored authority is exactly the old inline document
-    assert json.loads(runtime.objects[inputs["filmstrip_authority"]["digest"]]) == json.loads(inline["spec"]["inputs"]["filmstrip_authority"])
+    # the stored authority carries the frozen snapshot unchanged, plus the element-resource binding in metadata
+    stored = json.loads(runtime.objects[inputs["filmstrip_authority"]["digest"]])["capture_snapshot"]
+    expected = _snapshot()
+    assert {k: v for k, v in stored.items() if k != "metadata"} == {k: v for k, v in expected.items() if k != "metadata"}
+    assert set(stored["metadata"]) == {"element_resource_binding_hash", "element_resources"}
+    assert stored["metadata"]["element_resources"] == {}
+
+
+def test_snapshot_admission_without_object_ingestion_is_refused():
+    runtime = Runtime(can_import=False)
+    result = _invoke_internal_result("rendering.timeline_visualize", kind="executor", project="p",
+                                     client=runtime, inputs={"view": "filmstrip"})
+    assert runtime.created == []
+    assert result.ok is False
+    assert result.error["message"] == "snapshot reference admission requires Runtime object ingestion"
 
 
 def test_the_current_host_materializes_the_objects_as_the_executors_input_files(tmp_path):

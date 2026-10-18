@@ -10,7 +10,6 @@ from pathlib import Path
 import pytest
 import yaml
 from jsonschema import Draft202012Validator, ValidationError
-from vibecomfy.cli_loader import load_workflow_any
 
 from astrid.packs.h3_av.actions.compile.compile import CompilationError, compile_preparation
 from astrid.packs.h3_av.actions.compile.run import main as compile_executor_main
@@ -230,9 +229,11 @@ def test_adapter_media_and_branch_limits_fail_before_compile(case: str) -> None:
 
 @pytest.mark.parametrize("turbo_enabled", [True, False])
 @pytest.mark.parametrize("source", [False, True])
+@pytest.mark.integration
 def test_native_v2_compile_binds_exact_references_and_connected_lora_chain(
     tmp_path: Path, turbo_enabled: bool, source: bool,
 ) -> None:
+    load_workflow_any = pytest.importorskip("vibecomfy.cli_loader").load_workflow_any
     raw = _request(turbo=turbo_enabled, source=source)
     raw["settings"].update({"steps": 13, "seed": 731, "sampler": "heun", "scheduler": "karras"})
     raw["settings"]["turbo"]["strength"] = 0.4
@@ -303,9 +304,11 @@ def test_native_v2_compile_binds_exact_references_and_connected_lora_chain(
     assert workflow.validate().ok
 
 
+@pytest.mark.integration
 def test_native_v2_compile_uses_only_the_selected_synthetic_boundary_digest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    pytest.importorskip("vibecomfy")  # VibeComfy is a sibling checkout; compile loads it lazily
     from astrid.packs.h3_av.shared import generation
 
     synthetic_digest = "a1" * 32
@@ -327,8 +330,10 @@ def test_native_v2_compile_uses_only_the_selected_synthetic_boundary_digest(
     assert connected[CHARACTER_SWAP_FILENAME]["hf_revision"] == CHARACTER_SWAP_REVISION
 
 
+@pytest.mark.integration
 def test_managed_v2_prepare_to_compile_preserves_normalized_request(tmp_path: Path) -> None:
     """The executor boundary must reuse the sealed v2 request from prepare."""
+    pytest.importorskip("vibecomfy")  # VibeComfy is a sibling checkout; compile loads it lazily
     raw = _request()
     request_path = tmp_path / "request.json"
     request_path.write_text(json.dumps(raw, sort_keys=True), encoding="utf-8")
@@ -362,7 +367,9 @@ def test_managed_v2_prepare_to_compile_preserves_normalized_request(tmp_path: Pa
     assert compilation["managed_assets"]["sha256"]
 
 
+@pytest.mark.integration
 def test_character_swap_rejects_spatial_and_channel_specific_composition_before_execution(tmp_path: Path) -> None:
+    pytest.importorskip("vibecomfy")  # VibeComfy is a sibling checkout; compile loads it lazily
     raw = _request(source=True)
     raw["media"][0]["edit"][0]["mask"] = {"rectangle": [0, 0, 0.5, 0.5]}
     with pytest.raises(CompilationError, match="not rasterized"):
@@ -428,7 +435,9 @@ def test_character_swap_preserve_only_publishes_authoritative_source_bytes(tmp_p
     assert verification["preservation"]["status"] == "exact_whole_file_match"
 
 
+@pytest.mark.integration
 def test_character_swap_compilation_accepts_resolved_image_mask_asset(tmp_path: Path) -> None:
+    pytest.importorskip("vibecomfy")  # VibeComfy is a sibling checkout; compile loads it lazily
     from PIL import Image
 
     raw = _request(source=True)
@@ -524,8 +533,11 @@ def test_finalizer_contract_is_declared_and_copies_candidate_without_claiming_ac
     assert registered.metadata["runtime_module"] == (
         "astrid.packs.h3_av.actions.publication_finalizer.run"
     )
-    # V3 composes all admitted actions in the canonical action/executor registry.
-    registered_transform = load_default_registry().get("h3_av.transform")
+    # h3_av.transform is a metadata.local_orchestrator action: it is registered in the
+    # orchestrator registry, not the executor registry (71d43e00 folded it into pack v3).
+    from astrid.core.execution.orchestrator.registry import load_default_registry as load_orchestrators
+
+    registered_transform = load_orchestrators().get("h3_av.transform")
     assert registered_transform.metadata["runtime_module"] == (
         "astrid.packs.h3_av.actions.transform.run"
     )

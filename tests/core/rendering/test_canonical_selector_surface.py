@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import yaml
 
 from astrid.core.rendering.errors import RendererUnsupportedError
 from astrid.core.rendering.registry import load_default_registries
@@ -45,16 +46,16 @@ def test_rendering_pack_manifest_has_only_canonical_renderer_sources() -> None:
 
 
 def test_render_facade_exposes_only_selector_boundary() -> None:
-    manifest = Path(
-        "astrid/packs/rendering/executors/render/executor.yaml"
-    ).read_text(encoding="utf-8")
+    pack = yaml.safe_load(
+        Path("astrid/packs/rendering/pack.yaml").read_text(encoding="utf-8")
+    )
+    inputs = {item["name"]: item for item in pack["actions"]["render"]["inputs"]}
+    assert inputs["selector"]["type"] == "string"
+    assert "engine" not in inputs
+    assert "backend" not in inputs
     facade = Path(
-        "astrid/packs/rendering/executors/render/run.py"
+        "astrid/packs/rendering/actions/render/run.py"
     ).read_text(encoding="utf-8")
-    assert '"input": "selector"' in manifest
-    assert '"flag": "--selector"' in manifest
-    assert '"input": "engine"' not in manifest
-    assert '"flag": "--engine"' not in manifest
-    assert '"flag": "--backend"' not in manifest
+    assert '"--selector"' in facade
     assert "--engine" not in facade
     assert "--backend\"" not in facade

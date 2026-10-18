@@ -247,6 +247,7 @@ def test_owned_input_setup_failure_is_cleaned(tmp_path: Path) -> None:
     assert list((tmp_path / "render-project").glob(".render-inputs-*")) == []
 
 
+@pytest.mark.integration
 def test_forced_caption_uses_server_owned_executable_routing_and_isolation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -549,7 +550,8 @@ def test_remotion_runtime_uses_absolute_node_not_hostile_path(
         tmp_path, monkeypatch, environment_overrides={'PATH': str(tmp_path)})
     cli = runtime / REMOTION_CLI_RELATIVE_PATH
     from astrid.core.subprocess_env import _SAFE_BASE_ENV
-    for key in (*_SAFE_BASE_ENV, *remotion_runtime._REGISTRY_SELECTORS, *remotion_runtime._UNSUPPORTED_PYTHON_STARTUP, 'PYTHONPATH', 'XDG_CONFIG_HOME'):
+    for key in (*_SAFE_BASE_ENV, *remotion_runtime._REGISTRY_SELECTORS, *remotion_runtime._UNSUPPORTED_PYTHON_STARTUP, 'PYTHONPATH', 'XDG_CONFIG_HOME',
+                'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'):
         monkeypatch.delenv(key, raising=False)
     for key in tuple(os.environ):
         if key.startswith(('GIT_', 'DYLD_', 'LD_')):

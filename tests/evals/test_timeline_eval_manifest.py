@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -34,6 +35,8 @@ def _read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_manifest_has_exactly_twenty_unique_versioned_cases():
     suite = _read_json(SUITE_PATH)
     cases = suite["cases"]
@@ -49,6 +52,7 @@ def test_manifest_has_exactly_twenty_unique_versioned_cases():
     assert all(case["version"] == suite["suite_version"] for case in cases)
 
 
+@pytest.mark.integration
 def test_historical_prompt_sources_are_preserved_without_requiring_old_ceremony():
     suite = _read_json(SUITE_PATH)
     original = _read_json(HISTORICAL_BRIEF_PATH)
@@ -72,6 +76,7 @@ def test_historical_prompt_sources_are_preserved_without_requiring_old_ceremony(
             assert case["prompt"]["focus"] != old["focus"] or case["prompt"]["questions"] != old["questions"]
 
 
+@pytest.mark.integration
 def test_action_prompts_match_astra_design_and_public_briefs():
     suite = _read_json(SUITE_PATH)
     briefs = _read_json(BRIEFS_PATH)
@@ -90,6 +95,7 @@ def test_action_prompts_match_astra_design_and_public_briefs():
     assert public_actions == ACTION_PROMPTS
 
 
+@pytest.mark.integration
 def test_case_records_have_machine_readable_contract_and_valid_units():
     suite = _read_json(SUITE_PATH)
     required = {
@@ -125,6 +131,7 @@ def test_case_records_have_machine_readable_contract_and_valid_units():
             assert isinstance(window["purpose"], str) and window["purpose"]
 
 
+@pytest.mark.integration
 def test_agent_briefs_exclude_verifier_only_fields_and_match_suite_prompts():
     suite = _read_json(SUITE_PATH)
     briefs = _read_json(BRIEFS_PATH)
@@ -156,6 +163,7 @@ def test_agent_briefs_exclude_verifier_only_fields_and_match_suite_prompts():
             assert {"id", "version", "task", "prompt"} <= public.keys()
 
 
+@pytest.mark.integration
 def test_manifest_renders_stable_json_and_has_no_executed_case_claims():
     raw = SUITE_PATH.read_text(encoding="utf-8")
     parsed = json.loads(raw)

@@ -145,16 +145,17 @@ def test_cli_json_and_shorthand_share_validation_and_shorthand_precedence():
 def test_mastering_receipt_preserves_every_owned_command_result(tmp_path):
     source=tmp_path/'source.mp4';source.write_bytes(b'input')
     dest=tmp_path/'master.mp4';calls=[]
-    from tests.core.rendering.test_delivery_audio import LOUDNORM_JSON
+    from tests.core.rendering.test_delivery_audio import LOUDNORM_JSON, _clock_log
     def runner(argv,**kwargs):
         calls.append(argv)
         if any('loudnorm=' in x and 'print_format=json' in x for x in argv):
-            stderr=LOUDNORM_JSON
+            stderr=LOUDNORM_JSON+'\n'+_clock_log('astrid_input')
         elif any('ebur128=peak=true' in x for x in argv):
             peak=-0.1 if len(calls)==1 else -1.1
             stderr=f'Integrated loudness:\n I: -14.0 LUFS\nLoudness range:\n LRA: 2.0 LU\nTrue peak:\n Peak: {peak} dBFS\n'
+            if any('ashowinfo@astrid_final' in x for x in argv):stderr+=_clock_log('astrid_final')
         else:
-            dest.write_bytes(b'mastered');stderr=''
+            dest.write_bytes(b'mastered');stderr=_clock_log('astrid_encode_input')+'\n'+_clock_log('astrid_encoded')
         return subprocess.CompletedProcess(argv,0,'',stderr), {'original_child_pid':100+len(calls),'original_wait_exit_code':0,'retained_set_final_census_complete':True}
     receipt=audio.apply_delivery_audio(source,dest,audio.DeliveryAudioTarget(),ffmpeg='/qualified/ffmpeg',runner=runner,sample_rate=48000)
     assert any('-ar' in argv and argv[argv.index('-ar')+1]=='48000' for argv in calls)

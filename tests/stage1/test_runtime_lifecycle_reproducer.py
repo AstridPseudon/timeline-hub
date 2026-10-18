@@ -83,6 +83,8 @@ def test_explicit_client_path_does_not_bootstrap(monkeypatch: pytest.MonkeyPatch
                 "protocol": PROTOCOL,
                 "schema_digest": SCHEMA_DIGEST,
                 "runtime_epoch": 1,
+                "runtime_session_id": "fixture-runtime-session",
+                "runtime_instance_id": "fixture-instance",
             }
 
         def handshake(self, *_args: object) -> dict[str, object]:
@@ -103,6 +105,7 @@ def test_explicit_client_path_does_not_bootstrap(monkeypatch: pytest.MonkeyPatch
                     "tasks:read",
                     "tasks:write",
                 ],
+                "capabilities": ["execution_binding.targeted.v1"],
             }
 
     monkeypatch.setattr(autobootstrap, "ensure_runtime", lambda: pytest.fail("explicit open bootstrapped"))

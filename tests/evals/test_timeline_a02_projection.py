@@ -103,6 +103,8 @@ def test_a02_negative_oracle_rejects_muted_voice_and_music_identity_drift() -> N
     assert "music clip music media identity changed" in errors
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_a02_contract_exposes_projection_but_remains_blocked_without_route() -> None:
     contract = action_target_contract({"id": "A02"})
     assert contract.readback_projection == A02_PROJECTION

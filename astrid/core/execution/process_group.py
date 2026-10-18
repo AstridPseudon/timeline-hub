@@ -43,9 +43,18 @@ _CENSUS_RETRY_DELAY_SECONDS = 0.1
 
 
 class _Census(dict):
-    """A process census.  When it is empty, ``failure`` says why ps gave none."""
+    """A process census.  When it is empty, ``failure`` says why ps gave none.
+
+    ``exited`` maps pid -> birth token for rows this census saw as unreaped
+    zombies (Linux).  Such a row is not in the census proper, which lists live
+    processes only; it is positive proof that exactly that incarnation exited.
+    """
 
     failure: str | None = None
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.exited: dict[int, str] = {}
 
 
 def _failed_census(reason: str) -> _Census:
@@ -113,6 +122,8 @@ def _parse_census(stdout: str) -> _Census:
         birth = process_birth_identity(pid) if sys.platform.startswith("linux") else "ps-lstart:" + fields[3]
         if birth:
             entries[pid] = _ProcessInfo(pid, ppid, pgid, birth)
+        elif sys.platform.startswith("linux") and (exited := _zombie_birth_identity(pid)):
+            entries.exited[pid] = exited
     return entries
 
 
@@ -202,6 +213,39 @@ def process_birth_identity(pid: int | None = None) -> str:
             return ""
     info = _process_snapshot().get(process_id)
     return info.birth if info is not None else ""
+
+
+def _zombie_birth_identity(pid: int) -> str:
+    """Linux: the birth token of *pid* only while it is an exited, unreaped zombie.
+
+    Returns ``""`` for a live, absent, unreadable or merely dying (``X``) pid.
+    The token is built exactly like ``process_birth_identity`` so an equal token
+    names the same incarnation; a reused pid carries a different start tick.
+    """
+    try:
+        with open("/proc/%d/stat" % pid, encoding="ascii") as stream:
+            stat_fields = stream.read().rsplit(")", 1)[1].split()
+        if stat_fields[0] != "Z":
+            return ""
+        with open("/proc/sys/kernel/random/boot_id", encoding="ascii") as stream:
+            boot_id = stream.read().strip()
+        start_ticks = stat_fields[19]
+        if not boot_id or not start_ticks.isdigit():
+            return ""
+        return boot_id + ":" + start_ticks
+    except (OSError, IndexError, UnicodeError):
+        return ""
+
+
+def launch_exit_witnessed(process: subprocess.Popen, birth: str) -> bool:
+    """True once a census listed *process* as an unreaped zombie of incarnation *birth*.
+
+    Evidence is monotone (a zombie never becomes live again, and its pid cannot
+    be reused before it is reaped), so a witness from any earlier census still
+    explains the launch's absence from the live set.  Absence without a witness
+    proves nothing and stays uncertain.
+    """
+    return bool(birth) and getattr(process, "_astrid_census_exited", {}).get(process.pid) == birth
 
 
 def popen_owned_process(argv: list[str], **kwargs: Any) -> subprocess.Popen:
@@ -433,6 +477,9 @@ def _observe_tree(process: subprocess.Popen, *, deadline: float | None = None) -
         ):
             raise CleanupUncertainError("unverified child of missing owned parent")
     live = _tree_members(process, known, snapshot)
+    if (witness := getattr(snapshot, "exited", {}).get(process.pid)) is not None:
+        # Only the retained child itself; other zombies are no one's evidence.
+        process._astrid_census_exited = {process.pid: witness}  # type: ignore[attr-defined]
     if process.pid not in known:
         raise CleanupUncertainError("owned leader identity unavailable")
     custody = getattr(process, "_astrid_custody", None)
@@ -500,7 +547,17 @@ def _verify_tree_absent(process: subprocess.Popen, *, deadline: float | None = N
             if (hasattr(process, "_astrid_process_group_id")
                     and any(info.pgid == _group_id(process) for info in snapshot.values())):
                 raise CleanupUncertainError("owned group members remain")
+    # Tree and group are verified absent and the leader is reaped, so the retained
+    # pidfds no longer guard anything; release them instead of holding them for
+    # the life of the parent process.
+    if isinstance(custody, ProcessCustody) and process.poll() is not None:
+        custody.release_pidfds()
 
+
+# Floor of the cleanup budget beyond the grace period. It caps the wait, so a healthy
+# cleanup is no slower; on a loaded host a census holding the custody lock can take
+# over a second, and a 1 s floor turned Ctrl+C into a CustodyError.
+_CLEANUP_FLOOR_SECONDS = 5.0
 
 def terminate_tree(process: subprocess.Popen, *, grace_seconds: float = 1.0) -> None:
     """Stop a birth/ancestry-fenced tree, descendants before the leader.
@@ -509,7 +566,7 @@ def terminate_tree(process: subprocess.Popen, *, grace_seconds: float = 1.0) -> 
     Ownership is remembered during execution, not recovered by name/path after
     a parent exits. Success certifies observed identities absent.
     """
-    deadline = time.monotonic() + max(0.0, grace_seconds) + max(1.0, grace_seconds)
+    deadline = time.monotonic() + max(0.0, grace_seconds) + max(_CLEANUP_FLOOR_SECONDS, grace_seconds)
     try:
         _terminate_tree(process, grace_seconds=grace_seconds, cleanup_deadline=deadline)
     except BaseException as exc:
@@ -526,7 +583,7 @@ def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: flo
                              first_error: str) -> None:
     """Best effort on retained capabilities; never certifies tree cleanup."""
     custody = getattr(process, "_astrid_custody", None)
-    report = {"status": "UNCERTAIN_RETAINED_HANDLES_ONLY", "first_error": first_error,
+    report: dict[str, Any] = {"status": "UNCERTAIN_RETAINED_HANDLES_ONLY", "first_error": first_error,
               "complete_descendant_history": "UNPROVED", "signals": [], "errors": [],
               "original_wait": None, "deadline": cleanup_deadline}
     process._astrid_retained_containment = report
@@ -566,6 +623,10 @@ def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: flo
         report["original_wait"] = process.wait(timeout=max(0.0, cleanup_deadline - time.monotonic()))
     except BaseException as exc:
         report["errors"].append({"stage": "original-final-wait", "error_type": type(exc).__name__})
+    try:
+        custody.release_pidfds(only_exited=True)  # Exited incarnations need no capability.
+    except BaseException as exc:  # noqa: BLE001 - like every stage here, containment must still write its report
+        report["errors"].append({"stage": "release-exited-pidfds", "error_type": type(exc).__name__})
     report["deadline_expired"] = time.monotonic() > cleanup_deadline
     try:
         _atomic_owner_json(custody.root / "retained-cleanup-containment.json", report)
@@ -576,7 +637,7 @@ def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: flo
 def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
                     cleanup_deadline: float | None = None) -> None:
     if cleanup_deadline is None:
-        cleanup_deadline = time.monotonic() + max(0.0, grace_seconds) + max(1.0, grace_seconds)
+        cleanup_deadline = time.monotonic() + max(0.0, grace_seconds) + max(_CLEANUP_FLOOR_SECONDS, grace_seconds)
     custody = getattr(process, "_astrid_custody", None)
     observation_options = ({"deadline": cleanup_deadline}
                            if isinstance(custody, ProcessCustody) and sys.platform == "darwin" else {})
@@ -601,9 +662,12 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
         signal.SIGKILL, strict=True,
         **({"cleanup_deadline": cleanup_deadline} if observation_options else {}),
     )
+    # kill_deadline times the root's escalation (how long SIGTERM gets before SIGKILL);
+    # signalling and reaping get the whole cleanup budget, because each signal waits for
+    # the custody lock, which a census on a busy host can hold for over a second.
     kill_deadline = min(cleanup_deadline, time.monotonic() + max(1.0, grace_seconds))
     _signal_valid_tree_members(process, {process.pid: known[process.pid]}, signal.SIGTERM,
-                              strict=True, cleanup_deadline=kill_deadline)
+                              strict=True, cleanup_deadline=cleanup_deadline)
     # Wait only on the original child, reserving half the root budget for KILL.
     root_grace = min(max(0.0, grace_seconds), max(0.0, kill_deadline - time.monotonic()) / 2)
     if process.poll() is None and root_grace > 0:
@@ -611,13 +675,13 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
             process.wait(timeout=root_grace)
         except subprocess.TimeoutExpired:
             pass
-    while time.monotonic() < kill_deadline:
+    while time.monotonic() < cleanup_deadline:
         process.poll()  # reap our direct child before its absence check
         live = observe_tree(process, **observation_options)
         if not live:
             break
         _signal_valid_tree_members(process, live, signal.SIGKILL,
-                                  strict=True, cleanup_deadline=kill_deadline)
+                                  strict=True, cleanup_deadline=cleanup_deadline)
         time.sleep(0.02)
     try:
         process.wait(timeout=0)

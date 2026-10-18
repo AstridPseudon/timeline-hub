@@ -53,7 +53,7 @@ ROOT = Path(__file__).resolve().parents[3]
 RENDERING_PACK = ROOT / "astrid" / "packs" / "rendering"
 REMOTION_PROJECT = ROOT / "remotion"
 MANIFEST = (
-    RENDERING_PACK / "backends" / "threejs" / "renderer.yaml"
+    RENDERING_PACK / "rendering" / "renderers" / "threejs" / "renderer.yaml"
 )
 THREEJS_ID = "rendering.threejs"
 
@@ -169,7 +169,7 @@ def test_threejs_manifest_registers_static_raw_command_backend() -> None:
 
     assert manifest.id == THREEJS_ID
     assert manifest.protocol_version == 1
-    assert manifest.command == ("python3", "backends/threejs/run.py")
+    assert manifest.command == ("python3", "rendering/renderers/threejs/run.py")
     assert manifest.operations == ("support", "render")
     assert manifest.required_permissions == ("project_files", "subprocess")
     assert manifest.required_binaries == ("node", "npx", "ffprobe")
@@ -200,7 +200,7 @@ def test_threejs_is_discovered_and_inspected() -> None:
     assert candidate.id == THREEJS_ID
     assert candidate.pack_id == "rendering"
     assert candidate.source_kind == "source"
-    assert candidate.manifest.command == ("python3", "backends/threejs/run.py")
+    assert candidate.manifest.command == ("python3", "rendering/renderers/threejs/run.py")
     assert candidate.manifest.required_binaries == ("node", "npx", "ffprobe")
     assert candidate.execution_eligible is True
     assert (candidate.pack_root / candidate.manifest.command[1]).is_file()

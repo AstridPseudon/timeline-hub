@@ -20,6 +20,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Literal, TypeAlias
 
+from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
 from astrid.core.execution.process_group import (
     observe_tree,
     popen_owned_process,
@@ -163,7 +164,7 @@ class CommandTransport:
         # Progress remains a host-owned retained-attempt file. Request data
         # and arbitrary environment overlays cannot nominate another path.
         inherited_progress = os.environ.get("ASTRID_PROGRESS_PATH")
-        if inherited_progress and os.environ.get("ASTRID_INTERNAL_INVOCATION") == "1":
+        if inherited_progress and os.environ.get(ASTRID_INTERNAL_INVOCATION) == "1":
             progress = Path(inherited_progress)
             if (not progress.is_absolute() or progress.name != ".astrid-progress.json"
                     or progress.is_symlink() or not progress.parent.is_dir()
@@ -238,6 +239,9 @@ class CommandTransport:
                 message=f"failed to start renderer command: {exc}",
                 details={"error_type": type(exc).__name__, **self.last_logs},
             )
+        except BaseException as exc:
+            _release_failed_launch(exc)
+            raise
 
         # Only a fresh session owns a group. Inherited mode must never signal
         # the host/sibling group; ancestry-fenced individual cleanup works in
@@ -497,19 +501,43 @@ def _remove_stale_result(result_path: Path, *, backend: str) -> None:
         )
 
 
+def _close_pipes(process: Any) -> None:
+    for stream in (getattr(process, "stdout", None), getattr(process, "stderr", None)):
+        if stream is not None:
+            stream.close()
+
+
+def _release_failed_launch(error: BaseException) -> None:
+    """Free what a refused launch left open; the retained custody error stays as raised.
+
+    The launcher exposes its child and custody on the exception. This transport
+    never reads that child's pipes, and a pidfd the kernel reports as exited no
+    longer guards anything.
+    """
+    _close_pipes(getattr(error, "process", None))
+    custody = getattr(error, "custody", None)
+    if custody is not None and hasattr(custody, "release_pidfds"):
+        custody.release_pidfds(only_exited=True)
+
+
 def _terminate_process_group(
     process: subprocess.Popen[str], *, grace: float
 ) -> tuple[str, str]:
     """Terminate only the remembered renderer tree, then its owned group."""
-    terminate_tree(process, grace_seconds=grace)
-    if hasattr(process, "_astrid_process_group_id"):
-        terminate_group(process, grace_seconds=grace)
-    verify_tree_absent(process)
     try:
-        stdout, stderr = process.communicate(timeout=max(grace, 1.0))
-    except (subprocess.TimeoutExpired, OSError):
-        raise RuntimeError("renderer pipes did not close after owned cleanup")
-    return stdout or "", stderr or ""
+        terminate_tree(process, grace_seconds=grace)
+        if hasattr(process, "_astrid_process_group_id"):
+            terminate_group(process, grace_seconds=grace)
+        verify_tree_absent(process)
+        try:
+            stdout, stderr = process.communicate(timeout=max(grace, 1.0))
+        except (subprocess.TimeoutExpired, OSError):
+            raise RuntimeError("renderer pipes did not close after owned cleanup")
+        return stdout or "", stderr or ""
+    finally:
+        # communicate() closes these on success; a failed or uncertain cleanup
+        # raises before it, and the caller never reads them again.
+        _close_pipes(process)
 
 
 def _terminate_leftover_group(

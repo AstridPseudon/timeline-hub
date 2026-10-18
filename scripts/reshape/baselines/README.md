@@ -1,4 +1,4 @@
-Advisory lint/type baselines for `scripts/reshape/run_ci_checks.sh`.
+Advisory lint/type baselines for the `make ruff` / `make mypy` gates (run by `.github/workflows/ci.yml`).
 
 History note:
 - Git evidence: commit `7d343bcff89a0e6d342c0704d78f7bdb315242a9` introduced `pyproject.toml`, `.github/workflows/ci.yml`, and `scripts/reshape/run_ci_checks.sh` together. That commit scoped Ruff to reshape/concurrency paths and scoped mypy to `files = ["scripts/reshape"]`.

@@ -28,6 +28,10 @@ from astrid.core.execution.network_broker import ObservableNetworkBroker
 RUNTIME = Path(__file__).resolve().parents[3] / "runtime"
 if RUNTIME.is_dir():
     sys.path.insert(0, str(RUNTIME))
+
+# Needs the sibling Runtime package (runtime_protocol), which does not ship with this repo.
+pytestmark = pytest.mark.integration
+pytest.importorskip("runtime_protocol")
 from banodoco_workspace_client import ApiError, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from tests.helpers.runtime import initialize_runtime_realm

@@ -1,14 +1,15 @@
-"""Immutable release gates for Astrid's vendored workspace client.
+"""Release gates for Astrid's vendored workspace client.
 
-The runtime repository owns generation. Astrid deliberately does not invoke
-that repository's generator at test time: this gate proves that the checked-in
-client is the exact reviewed upstream artifact, identified by immutable file
-hashes and an upstream commit pin alongside the contract metadata.
+The Runtime repository owns generation. Astrid does not invoke that repository's generator at test time: the
+checked-in client is a copy, and ``banodoco_workspace_client/vendor.lock.json`` (written by
+``scripts/vendor_lock.py update``) records the digest of every file and the producer version it came from. This
+gate runs the lock check, so a one-byte local edit fails here, and the CI ``boundary`` job checks the lock
+against the Runtime's main. No hash or schema digest is copied by hand into this file (testing plan C1, R-3).
 """
 
 from __future__ import annotations
 
-import hashlib
+import importlib.util
 import inspect
 import json
 import re
@@ -25,18 +26,11 @@ from banodoco_workspace_client.contract_metadata import (
 from astrid.sdk.workspace_client import WorkspaceClient as AstridWorkspaceClient
 
 ROOT = Path(__file__).resolve().parents[2]
-GENERATED_PATH = ROOT / "banodoco_workspace_client" / "generated.py"
-METADATA_PATH = ROOT / "banodoco_workspace_client" / "contract_metadata.py"
-
-# These values are intentionally duplicated in the immutable test gate. A
-# future runtime contract refresh must update the contract exports, file
-# hashes, and this test in one reviewed change; no ambient sibling checkout can
-# silently alter the shipped transport.
-PINNED_PROTOCOL = "workspace.v1"
-PINNED_COMPONENT_MANIFEST_SHA256 = 'sha256:43db3374e0235750a3d0dd6590926cccba73e6e67de317573f86fd812cbcf082'
-PINNED_SCHEMA_DIGEST = 'sha256:16bb1265d39d8bf82959c65ede08628e9c832832f21d785acaca64256aa3463e'
-PINNED_GENERATED_SHA256 = '55a05c55d000822a35badd4a739ee55b3d30e876fb700ae2fe318f4914f7b19f'
-PINNED_METADATA_SHA256 = 'eac584dff918170b9b69ef360e9c93cee58a8e99efa2d581d97f12f8a03fdb8d'
+LOCK = ROOT / "banodoco_workspace_client" / "vendor.lock.json"
+_spec = importlib.util.spec_from_file_location("vendor_lock", ROOT / "scripts" / "vendor_lock.py")
+vendor_lock = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(vendor_lock)
+DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
 
 
 def _camel_to_snake(value: str) -> str:
@@ -44,15 +38,17 @@ def _camel_to_snake(value: str) -> str:
     return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", value).lower()
 
 
-def test_vendored_client_is_the_frozen_runtime_artifact() -> None:
-    # The reconciled Runtime source and generator are recorded by the
-    # final-tuple parity receipt; this test pins the exact shipped client
-    # bytes and its public contract surface.
-    assert PROTOCOL == PINNED_PROTOCOL == generated.PROTOCOL
-    assert COMPONENT_MANIFEST_SHA256 == PINNED_COMPONENT_MANIFEST_SHA256
-    assert SCHEMA_DIGEST == PINNED_SCHEMA_DIGEST == generated.SCHEMA_DIGEST
-    assert hashlib.sha256(GENERATED_PATH.read_bytes()).hexdigest() == PINNED_GENERATED_SHA256
-    assert hashlib.sha256(METADATA_PATH.read_bytes()).hexdigest() == PINNED_METADATA_SHA256
+def test_vendored_client_is_the_locked_runtime_artifact() -> None:
+    assert vendor_lock.check(LOCK) == []
+    assert set(json.loads(LOCK.read_text())["files"]) == {
+        f"banodoco_workspace_client/{name}" for name in ("__init__.py", "generated.py", "contract_metadata.py")
+    }
+
+
+def test_vendored_client_contract_exports_agree() -> None:
+    assert PROTOCOL == "workspace.v1" == generated.PROTOCOL
+    assert SCHEMA_DIGEST == generated.SCHEMA_DIGEST
+    assert DIGEST.fullmatch(SCHEMA_DIGEST) and DIGEST.fullmatch(COMPONENT_MANIFEST_SHA256)
 
 
 def test_vendored_client_operation_catalog_matches_typed_methods() -> None:

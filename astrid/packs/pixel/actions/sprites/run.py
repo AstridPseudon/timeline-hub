@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from astrid.core.cli_choices import add_choice_arg
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
 
 guard_canonical_entrypoint("pixel.sprites")
@@ -24,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="pixel.sprites", description="Cut, snap and split a generated sprite sheet.")
     parser.add_argument("--image", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--mode", choices=("chroma", "flat", "luma"), default="chroma")
+    add_choice_arg(parser, "--mode", values=("chroma", "flat", "luma"), default="chroma")
     parser.add_argument("--key", default="#FF00FF")
     parser.add_argument("--tolerance", type=int, default=48)
     parser.add_argument("--holes", type=px.parse_bool, default=True)

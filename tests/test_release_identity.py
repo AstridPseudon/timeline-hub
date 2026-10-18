@@ -105,6 +105,7 @@ def test_receipt_inside_checkout_and_locator_traversal_are_rejected(tmp_path: Pa
         bind_remote_targets(pre, [{"remote_target_id": "x", "canonical_url": "file:///tmp/x"}])
 
 
+@pytest.mark.darwin_native
 def test_b11_runs_declared_generator_twice(tmp_path: Path) -> None:
     checkout = _repo(tmp_path, "Astrid")
     script = checkout / "generator.py"
@@ -136,6 +137,7 @@ def test_installed_cli_consumes_exact_seed_directory_manifest(tmp_path: Path) ->
     assert receipt["pre_live_seed_payloads"][0]["media_type"] == "application/octet-stream"
     assert receipt["pre_live_seed_payloads"][0]["producer_id"] == "FIXTURE-PRODUCER"
 
+@pytest.mark.darwin_native
 def test_b11_local_submodule_is_pinned_and_inside_source_root(tmp_path: Path) -> None:
     sub = _repo(tmp_path, "submodule"); checkout = _repo(tmp_path, "Astrid")
     subprocess.run(["git", "-C", str(checkout), "-c", "protocol.file.allow=always", "submodule", "add", str(sub), "vendor/sub"], check=True, stdout=subprocess.DEVNULL)

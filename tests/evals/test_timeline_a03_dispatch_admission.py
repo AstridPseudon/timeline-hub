@@ -95,6 +95,8 @@ def _target():
     }
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_a03_static_route_is_distinct_from_missing_fresh_target_and_readback():
     case = {"id": "A03", "kind": "action"}
     contract = action_target_contract(case)

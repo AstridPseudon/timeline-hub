@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from astrid.packs.rendering.actions.assemble_timeline.run import build_authoring_proposal
 from astrid.packs.rendering.shared.runtime_stitch import publish_authoring_proposal
 from astrid.sdk.client import AstridClient
@@ -18,14 +20,12 @@ RUNTIME_CHECKOUT = Path(__file__).resolve().parents[3].parent / "banodoco-worksp
 if str(RUNTIME_CHECKOUT) not in sys.path:
     sys.path.insert(0, str(RUNTIME_CHECKOUT))
 
-from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
 from tests.helpers.runtime import initialize_runtime_realm
 
 
-_RuntimeDaemon = RuntimeDaemon
-
-
 def RuntimeDaemon(root, *args, **kwargs):
+    from runtime_protocol.daemon import RuntimeDaemon as _RuntimeDaemon
+
     initialize_runtime_realm(root)
     return _RuntimeDaemon(root, *args, **kwargs)
 
@@ -68,6 +68,7 @@ def _settle_child(service, attempt: dict, *, index: int, value: bytes, digest: s
     return {"task_id": attempt["task_id"], "digest": digest}
 
 
+@pytest.mark.integration
 def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tmp_path):
     """Exercise child settlement -> authoring -> fenced publication -> render admission."""
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
@@ -191,6 +192,7 @@ def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invo
     assert "save" not in repr(runtime.calls) and "invoke" not in repr(runtime.calls)
 
 
+@pytest.mark.integration
 def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch):
     """Run the complete two-child continuation through the real pack host."""
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None or shutil.which("node") is None:

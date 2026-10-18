@@ -681,7 +681,6 @@ project_canonical_shot_composition = project_shot_composition
 __all__ = [
     "ShotCompositionProjection",
     "ShotCompositionProjectionError",
-    "project_canonical_shot_composition",
     "project_runtime_parent_composition",
     "project_shot_composition",
 ]

@@ -73,12 +73,10 @@ def test_generated_failure_keeps_request_correlation(monkeypatch):
     assert caught.value.details == {"retryable": False}
 
 
-def test_timeline_creation_has_only_atomic_generated_route():
+def test_timeline_document_create_is_retired_and_never_reaches_generated_route():
     class Client:
         def create_timeline_document(self, *args, **kwargs):
-            assert kwargs["config"] == {"tracks": []}
-            assert kwargs["registry"] == {"assets": {}}
-            return {"timeline_id": args[1], "receipt": {"receipt_id": "r"}}
+            raise AssertionError("retired timeline create must not reach the generated route")
 
     remote = RemoteTimelines(Client())
     result = remote.create(
@@ -88,7 +86,10 @@ def test_timeline_creation_has_only_atomic_generated_route():
         slug="main",
         idempotency_key="timeline-1",
     )
-    assert result.ok
+    assert not result.ok
+    assert result.error.code == "retired_route"
+    assert result.error.details["replacement"] == "timelines.inspect/open_composition"
+    assert result.idempotency_key == "timeline-1"
     assert not hasattr(remote, "create_timeline")
 
 
@@ -144,5 +145,7 @@ def test_sdk_boundary_has_no_checkout_or_dynamic_import_injection():
     assert "sys.path" not in workspace_source
     assert "importlib" not in workspace_source
     assert "BANODOCO_RUNTIME_CHECKOUT" not in workspace_source
-    assert "source_checkout" not in bootstrap_source
+    # The launcher owns source selection; the SDK only carries its reported field through.
+    assert "source_checkout" in bootstrap_source
+    assert "result[field] = value[field]" in bootstrap_source
     assert "PYTHONPATH" not in bootstrap_source

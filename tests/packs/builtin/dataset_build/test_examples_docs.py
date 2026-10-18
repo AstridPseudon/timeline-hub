@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 
 import pytest
+import yaml
 
 from astrid.packs.training.actions.dataset_build.config import load_dataset_config
 
@@ -14,8 +14,8 @@ EXAMPLE_CONFIG = ROOT / "examples" / "configs" / "dataset" / "seinfeld-dataset.y
 ALWAYS_SUNNY_CONFIG = ROOT / "examples" / "configs" / "dataset" / "always-sunny-dataset.yaml"
 MIGRATION_DOC = ROOT / "docs" / "builtin-dataset-build.md"
 TRAINING_WORKFLOW_DOC = ROOT / "docs" / "examples" / "training-workflow.md"
-BUILTIN_PACKAGE = ROOT / "astrid" / "packs" / "training" / "orchestrators" / "dataset_build"
-ORCHESTRATOR = BUILTIN_PACKAGE / "orchestrator.yaml"
+BUILTIN_PACKAGE = ROOT / "astrid" / "packs" / "training" / "actions" / "dataset_build"
+PACK_MANIFEST = ROOT / "astrid" / "packs" / "training" / "pack.yaml"
 SEINFELD_ARCHIVE = ROOT / "docs" / "examples" / "seinfeld"
 
 
@@ -105,10 +105,12 @@ def test_builtin_dataset_build_code_has_no_seinfeld_literals() -> None:
 
 
 def test_dataset_build_orchestrator_metadata_declares_m2b_discovery_outputs() -> None:
-    metadata = json.loads(ORCHESTRATOR.read_text(encoding="utf-8"))
+    manifest = yaml.safe_load(PACK_MANIFEST.read_text(encoding="utf-8"))
+    dataset_build = manifest["actions"]["dataset_build"]
 
-    assert "editorial.transcribe" in metadata["child_executors"]
-    assert "understanding.visual_understand" in metadata["child_executors"]
-    assert "understanding.video_understand" in metadata["child_executors"]
-    outputs = {output["name"]: output for output in metadata["outputs"]}
+    child_actions = dataset_build["graph"]["child_actions"]
+    assert "editorial.transcribe" in child_actions
+    assert "understanding.visual_understand" in child_actions
+    assert "understanding.video_understand" in child_actions
+    outputs = {output["name"]: output for output in dataset_build["outputs"]}
     assert outputs["quality_report.json"]["path_template"] == "{out}/quality_report.json"

@@ -190,124 +190,96 @@ def test_fake_output_containment_rejects_escape_without_writing_outside(
     assert runner.state.snapshot.failed_runs == 1
 
 
-def test_one_shot_cancellation_is_structured_before_engine_lookup(
-    tmp_path: Path, settings: dict[str, object]
-) -> None:
-    from astrid.packs.wan2gp.src.driver import one_shot_run
+def test_generate_core_refuses_direct_execution_for_valid_inputs() -> None:
+    """Direct execution is disabled: valid inputs fail closed to the host-owned session."""
+    from astrid.packs.wan2gp.actions.generate_video.run import build_parser, generate_core
 
-    result = one_shot_run(
-        settings=settings,
-        attempt_root=tmp_path / "attempt",
-        wan2gp_root=tmp_path / "missing-engine",
-        cancelled=lambda: True,
+    args = build_parser().parse_args(
+        [
+            "--prompt", "a kite", "--resolution", "512x512", "--frames", "9",
+            "--fps", "8", "--seed", "7", "--guidance-scale", "5.0", "--steps", "4",
+        ]
     )
-    assert result.success is False
-    assert result.errors == ["cancelled: cancelled"]
-    assert result.spool == (tmp_path / "attempt").resolve()
+    assert generate_core(args) == (
+        2,
+        {
+            "ok": False,
+            "error": "wan2gp.generate_video requires the GenericPackHost-owned Wan session",
+            "code": "host_session_required",
+        },
+    )
 
 
-def test_generate_core_fail_closes_success_without_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from argparse import Namespace
+_HOST_INPUTS: dict[str, object] = {
+    "prompt": "a kite",
+    "model": "wan-2.2",
+    "resolution": "512x512",
+    "frames": 9,
+    "fps": 8,
+    "seed": 7,
+}
 
-    from astrid.packs.wan2gp.executors.generate_video.run import generate_core
-    from astrid.packs.wan2gp.src.driver import DriverResult
 
-    def fake_one_shot_run(**_kwargs):
-        spool = tmp_path / "spool"
-        spool.mkdir(parents=True, exist_ok=True)
-        return DriverResult(
-            success=True,
-            generated_files=[],
-            errors=[],
-            total_tasks=1,
-            successful_tasks=1,
-            failed_tasks=0,
-            disclosed_engine={"engine": "wan2gp", "route": "owned"},
-            spool=spool,
+def _terminal_evidence(source_root: Path, files: list[Path]) -> dict[str, object]:
+    from astrid.packs.wan2gp.src.driver import snapshot_native_outputs
+
+    generated = [str(path) for path in files]
+    return {
+        "result": {"success": True, "errors": [], "generated_files": generated},
+        "terminal": True,
+        "native_job_id": "native-job-1",
+        "source_root": str(source_root),
+        "output_snapshots": snapshot_native_outputs(generated, source_root) if generated else [],
+        "events": [],
+    }
+
+
+def test_materialize_host_result_fail_closes_success_without_files(tmp_path: Path) -> None:
+    from astrid.packs.wan2gp.src.driver import materialize_host_result
+
+    source_root = tmp_path / "native"
+    source_root.mkdir()
+    attempt_root = tmp_path / "attempt"
+
+    with pytest.raises(RuntimeError, match="lacks terminal file observations"):
+        materialize_host_result(
+            _terminal_evidence(source_root, []),
+            attempt_root=attempt_root,
+            inputs=_HOST_INPUTS,
         )
 
-    monkeypatch.setattr(
-        "astrid.packs.wan2gp.executors.generate_video.run.one_shot_run",
-        fake_one_shot_run,
-    )
-    code, payload = generate_core(
-        Namespace(
-            prompt="a kite",
-            model="wan-2.2",
-            negative_prompt=None,
-            resolution="512x512",
-            video_length=9,
-            fps="8",
-            seed=7,
-            guidance_scale=5.0,
-            num_inference_steps=4,
-            loras=None,
-            out=tmp_path / "spool",
-            wan2gp_path=None,
-        )
-    )
-    assert code == 1
-    assert payload["ok"] is False
-    assert "no files" in str(payload["error"])
+    assert not attempt_root.exists()
 
 
-def test_generate_core_receipt_identifies_video_collection(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from argparse import Namespace
+def test_materialize_host_result_receipt_identifies_video_collection(tmp_path: Path) -> None:
+    from astrid.packs.wan2gp.src.driver import materialize_host_result
 
-    from astrid.packs.wan2gp.executors.generate_video.run import generate_core
-    from astrid.packs.wan2gp.src.driver import DriverResult
+    source_root = tmp_path / "native"
+    source_root.mkdir()
+    fixture = Path(__file__).parent / "fixtures" / "reshape" / "hype_regression" / "main.mp4"
+    clips = [source_root / "first.mp4", source_root / "second.mp4"]
+    for clip in clips:
+        shutil.copyfile(fixture, clip)
+    attempt_root = tmp_path / "attempt"
 
-    spool = tmp_path / "spool"
-
-    def fake_one_shot_run(**_kwargs):
-        spool.mkdir(parents=True, exist_ok=True)
-        clips = [spool / "first.mp4", spool / "second.mp4"]
-        source = Path(__file__).parent / "fixtures" / "reshape" / "hype_regression" / "main.mp4"
-        for clip in clips:
-            shutil.copyfile(source, clip)
-        return DriverResult(
-            success=True,
-            generated_files=[str(clip) for clip in clips],
-            errors=[],
-            total_tasks=2,
-            successful_tasks=2,
-            failed_tasks=0,
-            disclosed_engine={"engine": "wan2gp", "route": "owned"},
-            spool=spool,
-        )
-
-    monkeypatch.setattr(
-        "astrid.packs.wan2gp.executors.generate_video.run.one_shot_run",
-        fake_one_shot_run,
-    )
-    code, payload = generate_core(
-        Namespace(
-            prompt="a kite",
-            model="wan-2.2",
-            negative_prompt=None,
-            resolution="512x512",
-            video_length=9,
-            fps="8",
-            seed=7,
-            guidance_scale=5.0,
-            num_inference_steps=4,
-            loras=None,
-            out=spool,
-            wan2gp_path=None,
-        )
+    mapped = materialize_host_result(
+        _terminal_evidence(source_root, clips),
+        attempt_root=attempt_root,
+        inputs=_HOST_INPUTS,
     )
 
-    assert code == 0
-    outputs = payload["manifest"]["outputs"]
-    assert [entry["name"] for entry in outputs] == [
-        "generated_videos",
-        "generated_videos",
-    ]
+    outputs = mapped["manifest"]["outputs"]
+    assert mapped["generated_files"] == ["first.mp4", "second.mp4"]
+    assert [entry["name"] for entry in outputs] == ["generated_videos", "generated_videos"]
     assert [entry["ordinal"] for entry in outputs] == [0, 1]
     assert [entry["role"] for entry in outputs] == ["result", "result"]
     assert [entry["is_primary"] for entry in outputs] == [True, False]
     assert all(entry["content_hash"].startswith("sha256:") for entry in outputs)
     assert all(entry["bytes"] > 0 for entry in outputs)
+    expected_hash = "sha256:" + hashlib.sha256(fixture.read_bytes()).hexdigest()
+    assert [entry["content_hash"] for entry in outputs] == [expected_hash, expected_hash]
+    assert (attempt_root / "first.mp4").read_bytes() == fixture.read_bytes()
+    assert (attempt_root / "manifest.json").is_file()
 
 
 def test_generated_mp4_wall_clock_comments_canonicalize_to_equal_digest(

@@ -4,12 +4,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from scripts.proofs.astrid_intro_text_bindings import run
 
 REPO = Path(__file__).resolve().parents[2]
 SOURCE_REPO = REPO.parents[2]
 
 
+# integration: needs the local intro build outputs (sibling source tree); retired tests/proofs harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_text_bindings_are_derived_from_the_canonical_fixture(tmp_path: Path) -> None:
     result = run(["--source-repo", str(SOURCE_REPO), "--out", str(tmp_path / "bindings.json")])
     section_count = len(result["shots"])
@@ -27,6 +31,7 @@ def test_text_bindings_are_derived_from_the_canonical_fixture(tmp_path: Path) ->
     }
 
 
+@pytest.mark.integration
 def test_materialization_is_deterministic(tmp_path: Path) -> None:
     first = run(["--source-repo", str(SOURCE_REPO), "--out", str(tmp_path / "first.json")])
     second = run(["--source-repo", str(SOURCE_REPO), "--out", str(tmp_path / "second.json")])

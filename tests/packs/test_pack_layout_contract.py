@@ -17,6 +17,10 @@ import subprocess
 from pathlib import Path
 
 from astrid.core.pack import discover_packs
+from astrid.core.pack.validate_first_party import (
+    _FIRST_PARTY_PACK_IDS,
+    _TRACKED_FIRST_PARTY_PACK_IDS,
+)
 
 # ── repo-root-relative paths ────────────────────────────────────────────────
 
@@ -34,9 +38,9 @@ _REMOVED_DATA_ONLY_PACKAGE_MARKERS = (
     "astrid/packs/media/executors/clip_extract/__init__.py",
 )
 _PRESERVED_HELPER_PACKAGE_MARKERS = (
-    "astrid/packs/runpod/executors/session/__init__.py",
-    "astrid/packs/training/orchestrators/training_run/trainer_adapters/__init__.py",
-    "astrid/packs/editorial/executors/refine/src/reviewers/__init__.py",
+    "astrid/packs/runpod/actions/session/__init__.py",
+    "astrid/packs/training/actions/training_run/trainer_adapters/__init__.py",
+    "astrid/packs/editorial/actions/refine/src/reviewers/__init__.py",
 )
 _REMOVED_MARKER_IMPORT_PATHS = (
     "astrid.packs.media.actions.clip_extract.run",
@@ -44,27 +48,11 @@ _REMOVED_MARKER_IMPORT_PATHS = (
 
 # ── known shipped pack ids (must remain stable across layout changes) ───────
 # Every immediate subdirectory of astrid/packs/ that contains a pack
-# manifest is a "shipped pack".  The set of ids must not regress.
-_SHIPPED_PACK_IDS = frozenset({
-    "blender",
-    "comfy_wrap",
-    "editorial",
-    "fal",
-    "foley",
-    "generation",
-    "iteration",
-    "media",
-    "moirae",
-    "rendering",
-    "runpod",
-    "stream_content",
-    "training",
-    "typed_timeline",
-    "understanding",
-    "vibecomfy",
-    "video_editing",
-    "youtube",
-})
+# manifest is a "shipped pack".  The single source of truth is the first-party
+# validator's inventory; the tracked subset excludes the local-only packs that
+# may be gitignored in a given checkout.
+_SHIPPED_PACK_IDS = frozenset(_FIRST_PARTY_PACK_IDS)
+_TRACKED_SHIPPED_PACK_IDS = frozenset(_TRACKED_FIRST_PARTY_PACK_IDS)
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -237,20 +225,23 @@ def test_core_is_skill_only_shell_no_pack_manifest() -> None:
 
 
 def test_core_has_skill_md() -> None:
-    """``_core`` skill_only_shell must provide ``skill/SKILL.md`` for agent
-    harness skill discovery."""
-    skill_md = _PACKS_ROOT / "_core" / "skill" / "SKILL.md"
+    """``_core`` skill_only_shell must provide ``docs/SKILL.md`` (the one
+    authored skill in the v3 layout) for agent harness skill discovery."""
+    skill_md = _PACKS_ROOT / "_core" / "docs" / "SKILL.md"
     assert skill_md.is_file(), (
         f"_core is classified as skill_only_shell but is missing "
-        f"skill/SKILL.md at {skill_md}"
+        f"docs/SKILL.md at {skill_md}"
     )
 
 
 def test_core_only_contains_skill_directory() -> None:
-    """``_core`` skill_only_shell must contain *only* the ``skill/`` tree
-    (no executors, orchestrators, elements, or build directories)."""
+    """``_core`` skill_only_shell must contain *only* skill content: the
+    ``docs/`` authored skill and the ``skill/`` references (no actions,
+    rendering, executors, orchestrators, elements, or build directories)."""
     core_root = _PACKS_ROOT / "_core"
-    forbidden_dirs = {"executors", "orchestrators", "elements", "build"}
+    forbidden_dirs = {
+        "actions", "rendering", "executors", "orchestrators", "elements", "build",
+    }
     found: list[str] = []
     for child in core_root.iterdir():
         if child.is_dir() and child.name in forbidden_dirs:
@@ -258,12 +249,12 @@ def test_core_only_contains_skill_directory() -> None:
     assert not found, (
         f"_core (skill_only_shell) contains forbidden content roots: {found}"
     )
-    # Verify that only the skill/ directory exists as a top-level child.
+    # Verify that only the docs/ and skill/ directories exist as top-level children.
     actual_dirs = sorted(
         child.name for child in core_root.iterdir() if child.is_dir()
     )
-    assert actual_dirs == ["skill"], (
-        f"_core (skill_only_shell) expected only 'skill/' directory; "
+    assert actual_dirs == ["docs", "skill"], (
+        f"_core (skill_only_shell) expected only 'docs/' and 'skill/' directories; "
         f"got {actual_dirs}"
     )
 
@@ -309,7 +300,7 @@ def test_all_shipped_packs_discoverable() -> None:
     discovered = discover_packs(_PACKS_ROOT)
     discovered_ids = {pack.id for pack in discovered}
     # All shipped pack ids must appear.
-    missing = _SHIPPED_PACK_IDS - discovered_ids
+    missing = _TRACKED_SHIPPED_PACK_IDS - discovered_ids
     assert not missing, (
         f"Shipped pack ids not discovered by discover_packs: {sorted(missing)}"
     )
@@ -388,7 +379,7 @@ def test_skill_discovery_finds_pack_skills() -> None:
 
 
 def test_v2_integration_packs_are_discoverable() -> None:
-    """Former external-origin packs remain discoverable after v2 conversion."""
+    """Former external-origin packs remain discoverable after v3 conversion."""
     integration_ids = {
         "fal",
         "moirae",
@@ -402,11 +393,13 @@ def test_v2_integration_packs_are_discoverable() -> None:
     assert not missing, (
         f"Integration packs not discovered: {sorted(missing)}"
     )
-    # Strict v2 intentionally removes the retired origin field.
+    # Strict v2/v3 intentionally remove the retired origin field.
     import yaml as _yaml
     for pack in discovered:
         if pack.id in integration_ids:
             manifest_path = pack.manifest_path
             data = _yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
-            assert data["schema_version"] == 2
+            assert data["schema_version"] == 3, (
+                f"{pack.id}: unsupported schema_version {data['schema_version']!r}"
+            )
             assert "origin" not in data

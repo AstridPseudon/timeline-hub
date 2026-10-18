@@ -1,5 +1,5 @@
 """Parity test: every env var referenced by dataset_build providers maps
-to a registered ``credentials.<provider>`` scope, and all 8 canonical
+to a registered ``credentials.<provider>`` scope, and all 10 canonical
 providers are registered.
 
 This is a static-grep test — it does not require real API keys.
@@ -40,6 +40,8 @@ _CANONICAL_PROVIDERS = {
     "fireworks",
     "gemini",
     "giphy",
+    "huggingface",
+    "runpod",
 }
 
 
@@ -88,7 +90,7 @@ def test_all_dataset_build_env_vars_map_to_registered_scopes() -> None:
 
 
 def test_all_canonical_providers_registered() -> None:
-    """All 8 canonical providers must have credentials.<provider> scopes registered."""
+    """All 10 canonical providers must have credentials.<provider> scopes registered."""
     missing: list[str] = []
     for provider in sorted(_CANONICAL_PROVIDERS):
         scope_key = f"credentials.{provider}"
@@ -113,7 +115,7 @@ def test_env_to_scope_self_consistent() -> None:
 
 
 def test_canonical_provider_count() -> None:
-    """The canonical provider set covers exactly the 8 defined providers."""
+    """The canonical provider set covers exactly the 10 defined providers."""
     # This is a shape guard: if a new credentials scope is registered but
     # _ENV_TO_SCOPE is not updated, this test catches the mismatch.
     from astrid.core.util.credentials_scope import _PROVIDER_ENV

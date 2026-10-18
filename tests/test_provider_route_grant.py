@@ -91,6 +91,7 @@ def test_provider_route_grant_expires_and_missing_grant_fails_closed() -> None:
         )
 
 
+@pytest.mark.darwin_native
 def test_provider_route_grant_reads_runtime_nested_task_inputs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -185,6 +186,7 @@ def test_tcp_only_broker_retires_udp_even_when_manifest_marks_broker_managed(tmp
     assert "does not support UDP/QUIC" in host.capabilities[record.id].preflight["network"]["reason"]
 
 
+@pytest.mark.darwin_native
 def test_provider_run_requires_explicit_grant(tmp_path: Path) -> None:
     class _RuntimeClient:
         def heartbeat(self, *_args, **_kwargs):

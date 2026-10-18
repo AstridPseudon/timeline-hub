@@ -1,13 +1,13 @@
 """Repository source-topology allowlist for concrete renderer dependencies.
 
 The ``rendering.render`` executor is a backend-neutral facade: concrete
-renderers (``astrid.packs.rendering.backends.*``) are pluggable
+renderers (``astrid.packs.rendering.rendering.renderers.*``) are pluggable
 implementations that production code must reach only through the rendering
 registry / ``RenderService``.  This gate greps the checked-in ``astrid/``
 source tree (site-packages and vendored code are never scanned) and fails
 if any production module:
 
-* imports ``astrid.packs.rendering.backends.*``,
+* imports ``astrid.packs.rendering.rendering.renderers.*``,
 * references the facade runtime module
   (``astrid.packs.rendering.actions.render.run``) in argv / imports —
   i.e. spawns ``python -m astrid.packs.rendering.actions.render.run``
@@ -31,9 +31,9 @@ ASTRID_DIR = REPO_ROOT / "astrid"
 # Patterns
 # ---------------------------------------------------------------------------
 
-# ``import astrid.packs.rendering.backends...`` or
-# ``from astrid.packs.rendering.backends... import ...`` (any depth).
-_BACKEND_IMPORT = r"(?:import|from)\s+astrid\.packs\.rendering\.backends(?:\.[A-Za-z_]\w*)*"
+# ``import astrid.packs.rendering.rendering.renderers...`` or
+# ``from astrid.packs.rendering.rendering.renderers... import ...`` (any depth).
+_BACKEND_IMPORT = r"(?:import|from)\s+astrid\.packs\.rendering\.rendering\.renderers(?:\.[A-Za-z_]\w*)*"
 
 # The retired legacy engine import pattern, retained only as a negative scan.
 # (``import astrid.packs.rendering.actions.render.legacy_engine`` /
@@ -42,8 +42,8 @@ _BACKEND_IMPORT = r"(?:import|from)\s+astrid\.packs\.rendering\.backends(?:\.[A-
 # (``from astrid.packs.rendering.actions.render import legacy_engine``).
 _LEGACY_ENGINE_IMPORT = (
     r"(?:"
-    r"(?:import|from)\s+astrid\.packs\.rendering\.executors\.render\.legacy_engine"
-    r"|from\s+astrid\.packs\.rendering\.executors\.render\s+import\s+[^\n]*legacy_engine"
+    r"(?:import|from)\s+astrid\.packs\.rendering\.actions\.render\.legacy_engine"
+    r"|from\s+astrid\.packs\.rendering\.actions\.render\s+import\s+[^\n]*legacy_engine"
     r")"
 )
 
@@ -51,7 +51,7 @@ _LEGACY_ENGINE_IMPORT = (
 # astrid.packs.rendering.actions.render.run`` argv spawns, argv-list
 # strings, and direct imports.  Executor manifests declare this module in
 # their argv and ``metadata.runtime_module`` and are exempt as data.
-_RENDER_RUN_REF = r"astrid\.packs\.rendering\.executors\.render\.run"
+_RENDER_RUN_REF = r"astrid\.packs\.rendering\.actions\.render\.run"
 
 _PY_GLOBS = ("--glob", "*.py")
 _SPAWN_GLOBS = ("--glob", "*.py", "--glob", "*.yaml", "--glob", "*.yml", "--glob", "*.json")
@@ -60,10 +60,10 @@ _SPAWN_GLOBS = ("--glob", "*.py", "--glob", "*.yaml", "--glob", "*.yml", "--glob
 # Allowlist
 # ---------------------------------------------------------------------------
 
-# Backend implementations: any module inside the backends package is the
-# implementation of a pluggable renderer and may import sibling backends
+# Backend implementations: any module inside the rendering/renderers package is the
+# implementation of a pluggable renderer and may import sibling renderers
 # (e.g. the FFmpeg backend reuses the Remotion transport lock).
-_BACKEND_IMPL_PREFIX = "astrid/packs/rendering/backends/"
+_BACKEND_IMPL_PREFIX = "astrid/packs/rendering/rendering/renderers/"
 
 # Explicitly allowlisted production files, each with its reason.  The facade
 # owns all dispatch; the legacy engine module is the characterized
@@ -75,7 +75,7 @@ _ALLOWED_FILES: dict[str, str] = {
         "pack raw-command launcher: entrypoint that backend renderer "
         "manifests execute; dispatches to the transport-selected backend"
     ),
-    "astrid/packs/rendering/executors/render/run.py": (
+    "astrid/packs/rendering/actions/render/run.py": (
         "render facade: neutral adapter that delegates all dispatch to "
         "RenderService"
     ),
@@ -86,10 +86,28 @@ _ALLOWED_FILES: dict[str, str] = {
         "modules directly under ASTRID_INTERNAL_INVOCATION, same as the "
         "editorial children). Reaches only the facade, never a backend."
     ),
-    "astrid/packs/rendering/executors/render/__init__.py": (
+    "astrid/sdk/host_bootstrap.py": (
+        "host bootstrap probe: names the render action module as a string in "
+        "the importlib.util.find_spec probe table; it only locates the module "
+        "to bind the installed product root and never imports or spawns it"
+    ),
+    "astrid/core/rendering/remotion_runtime.py": (
+        "Remotion runtime owner: lazily imports the concrete remotion "
+        "renderer's lock and run modules because it IS the server-owned "
+        "Remotion runtime (project discovery, render lock, frame capture), "
+        "not a backend-neutral caller"
+    ),
+    "astrid/packs/rendering/actions/timeline_visualize/composed_frame.py": (
+        "timeline_visualize composed-frame capture: lazily imports the "
+        "remotion renderer's frame-capture entrypoints "
+        "(capture_remotion_frames, PersistentRemotionFrameSession); "
+        "there is no registry-level frame-capture API, and this is the only "
+        "action that needs per-frame Remotion stills"
+    ),
+    "astrid/packs/rendering/actions/render/__init__.py": (
         "render facade package marker"
     ),
-    "astrid/packs/rendering/executors/render/audio_reactive_colour.py": (
+    "astrid/packs/rendering/actions/render/audio_reactive_colour.py": (
         "render facade compatibility alias: keeps the historical module path "
         "for the FFmpeg backend specialization"
     ),
@@ -175,13 +193,13 @@ def test_backend_import_pattern_still_observes_known_importers() -> None:
     matches = _run_grep(_BACKEND_IMPORT, _PY_GLOBS)
     paths = {_rel_path(m) for m in matches}
 
-    assert "astrid/packs/rendering/executors/render/audio_reactive_colour.py" in paths
+    assert "astrid/packs/rendering/actions/render/audio_reactive_colour.py" in paths
     assert "astrid/packs/rendering/run.py" in paths
     assert any(p.startswith(_BACKEND_IMPL_PREFIX) for p in paths)
 
 
 def test_no_production_backend_imports_outside_allowlist() -> None:
-    """No production module imports ``astrid.packs.rendering.backends.*``."""
+    """No production module imports ``astrid.packs.rendering.rendering.renderers.*``."""
     matches = _run_grep(_BACKEND_IMPORT, _PY_GLOBS)
     assert matches, "backend-import grep found nothing; pattern may be broken"
     _assert_no_violations(matches, manifests_ok=False, label="backend imports")

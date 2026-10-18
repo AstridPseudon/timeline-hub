@@ -1,4 +1,4 @@
-"""Integrated strict-v2 closure on the current Stage1 capability catalog."""
+"""Integrated strict closure (schema_version 3) on the current capability catalog."""
 
 from __future__ import annotations
 
@@ -15,37 +15,17 @@ from astrid.core.execution.orchestrator.registry import (
 )
 from astrid.core.pack import discover_packs
 from astrid.core.pack.canonical import BundledCatalog, validate_canonical_pack
+from astrid.core.pack.validate_first_party import _FIRST_PARTY_PACK_IDS
 
 
 ROOT = Path(__file__).resolve().parents[2]
 PACKS = ROOT / "astrid/packs"
-PACK_IDS = (
-    "blender",
-    "comfy_wrap",
-    "editorial",
-    "fal",
-    "foley",
-    "generation",
-    "h3_av",
-    "iteration",
-    "local",
-    "media",
-    "moirae",
-    "rendering",
-    "runpod",
-    "stream_content",
-    "training",
-    "typed_timeline",
-    "understanding",
-    "vibecomfy",
-    "video_editing",
-    "wan2gp",
-    "youtube",
-)
+# One source of truth for the shipped pack ids: the first-party validator inventory.
+PACK_IDS = tuple(sorted(_FIRST_PARTY_PACK_IDS))
 RETIRED = {"builtin", "references", "reigh", "runaway", "shots", "timeline"}
 
 
-def test_current_catalog_is_exact_strict_v2_capability_set() -> None:
+def test_current_catalog_is_exact_strict_v3_capability_set() -> None:
     manifests = sorted(PACKS.glob("*/pack.yaml"))
     assert tuple(path.parent.name for path in manifests) == PACK_IDS
     assert not any((PACKS / pack_id / "pack.yaml").exists() for pack_id in RETIRED)
@@ -53,14 +33,15 @@ def test_current_catalog_is_exact_strict_v2_capability_set() -> None:
 
     for manifest in manifests:
         data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
-        assert data["schema_version"] == 2
+        assert data["schema_version"] == 3
         assert data["id"] == manifest.parent.name
         assert "database" not in data
+        assert "content" not in data
         assert data["documentation"] == {
             "kind": "skill",
-            "path": "skill/SKILL.md",
+            "path": "docs/SKILL.md",
         }
-        assert (manifest.parent / "skill/SKILL.md").is_file()
+        assert (manifest.parent / "docs/SKILL.md").is_file()
         assert validate_canonical_pack(manifest.parent).id == data["id"]
 
 
@@ -71,10 +52,10 @@ def test_catalog_preserves_stage1_capability_census() -> None:
     elements = load_elements()
     assert tuple(pack.id for pack in packs) == PACK_IDS
     assert (len(packs), len(executors.list()), len(orchestrators.list()), len(elements.list())) == (
-        21,
-        77,
-        14,
-        24,
+        28,
+        104,
+        1,
+        44,
     )
 
 
@@ -86,7 +67,7 @@ def test_bundled_resources_are_confined_and_readable() -> None:
         assert all(handle.resolved.exists() for handle in entry.resource_handles)
 
 
-def test_examples_and_external_fixtures_use_v2_without_installed_overlay() -> None:
+def test_examples_and_external_fixtures_use_canonical_schema_without_installed_overlay() -> None:
     candidates = [
         *sorted((ROOT / "examples/packs").glob("*/pack.yaml")),
         ROOT / "tests/fixtures/external_pack/pack.yaml",
@@ -94,7 +75,9 @@ def test_examples_and_external_fixtures_use_v2_without_installed_overlay() -> No
     ]
     for manifest in candidates:
         data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
-        assert data["schema_version"] == 2, manifest
+        # Canonical admission accepts schema_version 2 and 3; examples and
+        # fixtures intentionally cover both.
+        assert data["schema_version"] in (2, 3), manifest
         assert "database" not in data, manifest
         assert validate_canonical_pack(manifest.parent).id == data["id"]
 
