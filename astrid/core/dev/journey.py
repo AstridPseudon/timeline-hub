@@ -403,18 +403,31 @@ def lease_snapshot(task: Mapping[str, Any]) -> dict[str, Any]:
 
 
 
+def tree_bytes(path: Path) -> int:
+    """Bytes the journey's own tree occupies (lstat sizes; files that vanish mid-walk count as gone)."""
+    total = 0
+    for directory, _names, files in os.walk(path):
+        for name in files:
+            try:
+                total += os.lstat(os.path.join(directory, name)).st_size
+            except OSError:
+                pass
+    return total
+
+
 class Runner:
     def __init__(self, root: Path, summary: Path, tier: str = "smoke") -> None:
         self.root, self.summary, self.tier = root, summary, tier
         self.started = time.monotonic()
         self.loads: dict[str, dict[str, Any]] = {}
-        self.free_before = shutil.disk_usage(root).free
         self.disk_high_water = 0
         self.phases: dict[str, float] = {}
         self.details: dict[str, Any] = {}
 
     def sample(self) -> None:
-        used = max(0, self.free_before - shutil.disk_usage(self.root).free)
+        # The journey's own footprint, not the volume's free-space delta: that also counts every other
+        # process on a shared Mac (builds, other suites) over a run of many minutes.
+        used = tree_bytes(self.root)
         self.disk_high_water = max(self.disk_high_water, used)
         if self.disk_high_water > DISK_BUDGET:
             raise JourneyFailure("disk_budget", f"high water {self.disk_high_water} > {DISK_BUDGET} bytes")

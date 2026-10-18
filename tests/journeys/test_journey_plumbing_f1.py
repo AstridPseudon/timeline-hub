@@ -569,3 +569,22 @@ def test_generated_reference_is_a_valid_stopped_reference(tmp_path: Path) -> Non
     [project] = described["projects"]
     assert project["slug"] == "journey" and project["objects"] == 3
     assert project["timelines"] == [{"timeline_id": "main", "head": "parent-1"}]
+
+
+# -- the disk budget measures the journey's own tree --------------------------------------------
+
+
+def test_disk_sample_counts_the_journeys_tree_not_the_volumes_free_space(tmp_path: Path, monkeypatch) -> None:
+    root = tmp_path / "root"
+    (root / "tmp").mkdir(parents=True)
+    (root / "tmp" / "scratch.bin").write_bytes(b"x" * 1000)
+    (root / "data.bin").write_bytes(b"y" * 24)
+    assert journey.tree_bytes(root) == 1024
+    runner = journey.Runner(root, tmp_path / "s.json")
+    # Other processes filling the volume must not count against the journey.
+    monkeypatch.setattr(journey.shutil, "disk_usage", lambda p: type("U", (), {"free": 0, "total": 1, "used": 1})())
+    runner.sample()
+    assert runner.disk_high_water == 1024
+    monkeypatch.setattr(journey, "DISK_BUDGET", 1000)
+    with pytest.raises(JourneyFailure, match="disk_budget"):
+        runner.sample()
