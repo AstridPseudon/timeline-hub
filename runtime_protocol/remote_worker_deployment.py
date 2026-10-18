@@ -771,6 +771,10 @@ def deployment_binding_from_task(value: Mapping[str, Any]) -> DeploymentBinding:
 
     expected_effect = task.get("expected_effect")
     spec_for_hash = task_spec_for_request_hash(dict(spec))
+    # Runtime stamps this when the parent attempt settles; it is lifecycle
+    # bookkeeping, not admitted identity, so it must not move the binding digest
+    # a drain qualification was issued against.
+    spec_for_hash.pop("delegation_closed_attempt_id", None)
     spec_digest = _sha256(spec_for_hash)
     request_digest = _sha256(request)
     admission_material = {

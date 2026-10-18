@@ -5820,7 +5820,12 @@ class RuntimeService:
                 or task["executor_id"] != row["executor_id"] or int(task["runtime_epoch"] or 0) != int(row["runtime_epoch"])):
             raise LeaseError("parent attempt is no longer live")
         if identity is not None and (self._task_requires_remote_activation(task["id"]) or isinstance(identity.get("qualified_activation"), dict)):
-            if not self._remote_activation_matches(task["id"], identity, self._trusted_execution_placement(identity), require_fresh=True):
+            # A draining activation may still finish the parent attempt captured at
+            # the cutoff (_assert_attempt_identity enforced it above), so freshness
+            # applies only when no drain has begun.
+            activation = identity.get("qualified_activation")
+            marker = self._remote_drain(activation.get("task_id"), activation.get("activation_id")) if isinstance(activation, dict) else None
+            if not self._remote_activation_matches(task["id"], identity, self._trusted_execution_placement(identity), require_fresh=marker is None):
                 raise AuthorizationError("parent activation is missing, expired, revoked, or foreign")
         if self.store._spec(task).get("delegated_parent") is not None:
             raise AuthorizationError("delegated children cannot delegate further")
