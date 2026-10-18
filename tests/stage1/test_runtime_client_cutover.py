@@ -126,28 +126,6 @@ def _fake_runtime_cli(monkeypatch, *, data, returncode=0):
     return calls
 
 
-def _pin_runtime_cli_subprocess(monkeypatch):
-    """Run the operational doctor subprocess from this test's exact archive."""
-    from astrid import runtime_cli
-
-    def runner(argv, **kwargs):
-        env = os.environ.copy()
-        existing_pythonpath = env.get("PYTHONPATH", "")
-        env["PYTHONPATH"] = str(RUNTIME) + (os.pathsep + existing_pythonpath if existing_pythonpath else "")
-        return subprocess.run(argv, cwd=str(RUNTIME), env=env, **kwargs)
-
-    original = runtime_cli.RuntimeCLI
-
-    class PinnedRuntimeCLI(original):
-        def __init__(self):
-            super().__init__(
-                command=[sys.executable, "-B", "-m", "astrid_runtime"],
-                runner=runner,
-            )
-
-    monkeypatch.setattr(runtime_cli, "RuntimeCLI", PinnedRuntimeCLI)
-
-
 def _open_client(daemon: RuntimeDaemon) -> AstridClient:
     """Open with the runtime-issued identity and canonical protocol explicitly."""
     return AstridClient.open(
@@ -863,7 +841,24 @@ def test_operational_gateway_uses_typed_runtime_backup_and_lifecycle(tmp_path, m
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(support / "credentials" / "owner.token"))
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str((tmp_path / "support").resolve()))
-    _pin_runtime_cli_subprocess(monkeypatch)
+    # The typed backup and lifecycle operations below exercise the real daemon.
+    # Keep the doctor observer deterministic here; its separate subprocess
+    # argv/deadline boundary is covered by the RuntimeCLI tests. Cold imports
+    # here otherwise consume C2's fixed five-second observation budget.
+    from astrid_runtime_client.contract_metadata import PROTOCOL, SCHEMA_DIGEST
+    observer_calls = _fake_runtime_cli(
+        monkeypatch,
+        data={
+            "healthy": True,
+            "issues": [],
+            "recovery_action": "No recovery action required.",
+            "compatibility": {
+                "protocol": PROTOCOL,
+                "schema_digest": SCHEMA_DIGEST,
+                "compatible": True,
+            },
+        },
+    )
     _use_explicit_gateway_connection(monkeypatch, daemon)
     try:
         assert dispatch._dispatch_doctor(["--json"]) == 0
@@ -871,6 +866,7 @@ def test_operational_gateway_uses_typed_runtime_backup_and_lifecycle(tmp_path, m
         assert doctor["healthy"] is True
         assert doctor["issues"] == []
         assert doctor["diagnostic"]["facts"]["runtime"]["value"] == "ready"
+        assert [call[0] for call in observer_calls] == ["doctor"]
 
         backup_path = tmp_path / "backup"
         assert dispatch._dispatch_backup(["create", str(backup_path), "--json"]) == 0

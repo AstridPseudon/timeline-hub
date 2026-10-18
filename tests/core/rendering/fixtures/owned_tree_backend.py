@@ -1,4 +1,4 @@
-"""Bounded test writer tree with backend and browser session escapes."""
+"""Test writer tree with backend and browser session escapes."""
 
 from __future__ import annotations
 
@@ -16,15 +16,24 @@ def main() -> None:
     registry = Path(registry_raw)
     registry.mkdir(parents=True, exist_ok=True)
     (registry / f"{role}.pid").write_text(str(os.getpid()))
-    deadline = time.monotonic() + 15
     if role == "worker":
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
-        while time.monotonic() < deadline:
+        expected_roles = ("backend", "node", "browser", "worker")
+        while not all((registry / f"{name}.pid").is_file() for name in expected_roles):
+            time.sleep(0.01)
+        (output / "writer.txt").write_text("owned fixture writer")
+        (registry / "last-write.txt").write_text(str(time.monotonic_ns()))
+        ready = registry / "ready.tmp"
+        ready.write_text("ready")
+        ready.replace(registry / "ready.txt")
+        while True:
             (output / "writer.txt").write_text("owned fixture writer")
             (registry / "last-write.txt").write_text(str(time.monotonic_ns()))
             time.sleep(0.01)
         return
 
+    # Child readiness also proves each ancestor installed its cleanup handler.
+    signal.signal(signal.SIGTERM, lambda *_: None)
     child_role = {"pack": "backend", "backend": "node", "node": "browser", "browser": "worker"}[role]
     child = subprocess.Popen(
         [sys.executable, __file__, child_role, str(output), str(registry)],
@@ -32,16 +41,14 @@ def main() -> None:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
-    # Keep ancestors available while the stubborn leaf requires escalation.
-    # Reap ordinary TERM exits; the 15 s bound also protects failed test runs.
-    signal.signal(signal.SIGTERM, lambda *_: None)
+    # Keep each ancestor available until its owned child exits.
     try:
-        while child.poll() is None and time.monotonic() < deadline:
+        while child.poll() is None:
             time.sleep(0.01)
     finally:
         if child.poll() is None:
             child.kill()
-        child.wait(timeout=2)
+        child.wait()
 
 
 if __name__ == "__main__":

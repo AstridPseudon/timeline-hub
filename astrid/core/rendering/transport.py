@@ -255,7 +255,12 @@ class CommandTransport:
                 else time.monotonic() + normalized_timeout
             )
             while True:
-                observe_tree(process, deadline=deadline)
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise subprocess.TimeoutExpired(argv, normalized_timeout)
+                # Finish custody's bounded observation even if the renderer's
+                # execution allowance expires during its census. That expiry
+                # requires normal timeout cleanup, not uncertain custody.
+                observe_tree(process, deadline=None)
                 remaining = (
                     None if deadline is None else deadline - time.monotonic()
                 )

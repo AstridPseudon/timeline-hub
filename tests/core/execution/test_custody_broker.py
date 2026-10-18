@@ -2,10 +2,10 @@
 
 from concurrent.futures import ThreadPoolExecutor
 import base64
-import json
+import errno
 import hashlib
+import json
 import os
-from pathlib import Path
 import signal
 import socket
 import subprocess
@@ -13,6 +13,7 @@ import sys
 import tempfile
 import threading
 import time
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -3880,7 +3881,7 @@ def test_original_root_capture_exit_uses_only_bounded_original_wait(observed_des
         assert len(waits) == (1 if result == 'still-live' else 0)
     assert owner._handles[103] is retained
 
-def test_capture_exit_after_definitely_unsuccessful_kernel_is_not_first_capture_marker(graph):
+def test_capture_exit_after_definitely_unsuccessful_kernel_is_typed_retry_gone(graph):
     reader = establish_anchor(graph)
     reads, kernels = [], []
     def start(pid):
@@ -3890,13 +3891,15 @@ def test_capture_exit_after_definitely_unsuccessful_kernel_is_not_first_capture_
     def kernel(words, sig):
         kernels.append(sig)
         raise custody.AuditTokenSignalError(3, 3)
-    with pytest.raises(custody.DarwinProcessExitedError) as caught:
+    with pytest.raises(custody._SignalRetryTargetGone) as caught:
         fresh_fire(graph, start, kernel=kernel)
-    assert not isinstance(caught.value, custody._SignalCaptureTargetGone)
+    assert "phase=start-before" in str(caught.value)
+    assert "current_kernel_call_attempted=false" in str(caught.value)
+    assert "prior_attempts_definitely_esrch=1" in str(caught.value)
     assert kernels == [signal.SIGTERM] and len(reads) == 3
 
-@pytest.mark.parametrize('read_number', [1, 2])
-def test_ordinary_descendant_does_not_consume_initial_anchor_capture_exit(observed_descendant, monkeypatch, read_number):
+@pytest.mark.parametrize('read_number', [1, 2, 3])
+def test_ordinary_descendant_pre_signal_exit_preserves_handle_and_final_census_obligation(observed_descendant, monkeypatch, read_number):
     owner, actors, _, tokens = _ordinary_signal_fixture(observed_descendant)
     authority, reference = owner._handles[103][1]
     start = {'pid': 103, 'uid': 501, 'start_abstime': 100, 'start_sec': 123, 'start_usec': 456, 'status': 2}
@@ -3904,18 +3907,84 @@ def test_ordinary_descendant_does_not_consume_initial_anchor_capture_exit(observ
     retained = ('birth-103', (authority, authority.reference()))
     owner._handles[103] = retained
     before = authority._read()
-    calls = []
+    calls, kernels = [], []
     def read_start(pid):
         calls.append(pid)
         if len(calls) == read_number: raise custody.DarwinProcessExitedError('descendant target exit')
         return dict(start)
     monkeypatch.setattr(custody, '_darwin_process_start', read_start)
-    monkeypatch.setattr(authority, '_commit', lambda *_: pytest.fail('descendant target exit committed'))
+    commits = []
+    original_commit = authority._commit
+    def commit(record):
+        commits.append(record)
+        return original_commit(record)
+    monkeypatch.setattr(authority, '_commit', commit)
     real_signal = authority.signal
-    monkeypatch.setattr(authority, 'signal', lambda **kwargs: real_signal(**kwargs, signal_provider=lambda *_: pytest.fail('descendant target exit signalled')))
-    with pytest.raises(custody._SignalCaptureTargetGone): owner.signal(103, 'birth-103', signal.SIGTERM, cleanup_deadline=time.monotonic() + 30)
+    def signal_provider(*_):
+        kernels.append(signal.SIGTERM)
+        if read_number == 3:
+            raise custody.AuditTokenSignalError(errno.ESRCH, errno.ESRCH)
+        pytest.fail('descendant target exit signalled')
+    monkeypatch.setattr(authority, 'signal', lambda **kwargs: real_signal(**kwargs, signal_provider=signal_provider))
+    if read_number == 3:
+        owner.signal(103, 'birth-103', signal.SIGTERM, cleanup_deadline=time.monotonic() + 30)
+    else:
+        with pytest.raises(custody.DarwinProcessExitedError):
+            owner.signal(103, 'birth-103', signal.SIGTERM, cleanup_deadline=time.monotonic() + 30)
     assert owner._handles[103] is retained and authority._read() == before
     assert len(calls) == read_number
+    assert len(kernels) == (1 if read_number == 3 else 0)
+    assert len(commits) == (1 if read_number == 3 else 0)
+    with pytest.raises(custody.CustodyError, match="retained observed processes remain"):
+        owner.validate_final_census({
+            100: {"birth_id": "root", "parent_pid": 1, "pgid": 100},
+            103: {"birth_id": "birth-103", "parent_pid": 100, "pgid": 103},
+        })
+
+
+@pytest.mark.parametrize("outcome", ["ABSENT", "ZOMBIE", "LIVE", "reused-zombie", "OBSERVATION_ERROR", "actor-exited"])
+def test_initial_descendant_capture_exit_requires_fresh_terminal_target(observed_descendant, monkeypatch, outcome):
+    owner, actors, _, tokens = _ordinary_signal_fixture(observed_descendant)
+    authority, reference = owner._handles[103][1]
+    start = {"pid": 103, "uid": 501, "start_abstime": 100, "start_sec": 123, "start_usec": 456, "status": 2}
+    authority.establish_start_anchor(
+        actor=actors[101], generation=1, expected_target=reference["target"],
+        authenticated_token=tokens[103], require_suspended=False,
+        start_provider=lambda _: dict(start), token_provider=lambda _: dict(tokens[103]), clock_provider=lambda: 101,
+    )
+    retained = ("birth-103", (authority, authority.reference()))
+    owner._handles[103] = retained
+    before = authority._read()
+    def exited(*_):
+        raise custody.DarwinProcessExitedError("target vanished during initial capture")
+    monkeypatch.setattr(custody, "_darwin_process_start", exited)
+    observations = []
+    failure = OSError("fresh target observation failed")
+    def terminal(pid):
+        observations.append(pid)
+        if outcome == "actor-exited":
+            monkeypatch.setattr(owner.actor, "verify", exited)
+            return {"outcome": "ABSENT"}
+        if outcome == "OBSERVATION_ERROR":
+            return {"outcome": outcome, "error": failure}
+        native = {**start, "status": 5 if outcome in {"ZOMBIE", "reused-zombie"} else 2}
+        if outcome == "reused-zombie":
+            native["start_usec"] += 1  # Same-second PID reuse must remain strict.
+        return {"outcome": "ZOMBIE" if outcome == "reused-zombie" else outcome, "native": native}
+    monkeypatch.setattr(custody, "ordinary_candidate_observation", terminal)
+    real_signal = authority.signal
+    monkeypatch.setattr(authority, "signal", lambda **kwargs: real_signal(
+        **kwargs, signal_provider=lambda *_: pytest.fail("terminal target received a kernel signal")))
+    if outcome in {"ABSENT", "ZOMBIE"}:
+        owner.signal(103, "birth-103", signal.SIGKILL)
+    else:
+        with pytest.raises(OSError if outcome == "OBSERVATION_ERROR" else custody.DarwinProcessExitedError):
+            owner.signal(103, "birth-103", signal.SIGKILL)
+    assert observations == [103]
+    assert owner._handles[103] is retained and authority._read() == before
+    if outcome in {"ABSENT", "ZOMBIE"}:
+        with pytest.raises(custody.CustodyError, match="retained observed processes remain"):
+            owner.validate_final_census({103: {"birth_id": "birth-103", "parent_pid": 1, "pgid": 103}})
 
 
 def test_command_inventory_actual_client_owner_accepts_only_macos_cf_addition(tmp_path, monkeypatch):
@@ -4695,3 +4764,36 @@ def test_handled_first_census_identity_stays_exact_without_freezing_ancestry(obs
         live = owner.observe_census({pid: value['birth_id'] for pid, value in census.items()}, census=census, fresh_census=fresh)
         assert live == {100: 'root', 102: 'birth-102'} and owner._uncertain is None
     assert len(retained) == 1 and owner._handles[102] is retained[0]
+
+
+def test_linux_descendant_gone_before_registration_is_absent_not_a_violation(observed_descendant, monkeypatch):
+    from astrid.core.execution import process_group as groups
+    owner, _, census = _ordinary_census_fixture(observed_descendant)
+    monkeypatch.setattr(custody.sys, "platform", "linux")
+    monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "")  # reaped or zombie
+    monkeypatch.setattr(custody.os, "pidfd_open", lambda *_: pytest.fail("bound a pidfd to a gone process"), raising=False)
+    assert owner.observe_census({103: "birth-103"}, census=census,
+                                fresh_census=lambda: pytest.fail("no reconciliation on Linux")) == {103: "birth-103"}
+    assert 103 not in owner._handles and owner._uncertain is None
+
+
+def test_linux_descendant_pid_reused_before_registration_is_absent(observed_descendant, monkeypatch):
+    from astrid.core.execution import process_group as groups
+    owner, _, census = _ordinary_census_fixture(observed_descendant)
+    monkeypatch.setattr(custody.sys, "platform", "linux")
+    monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "another-incarnation")
+    monkeypatch.setattr(custody.os, "pidfd_open", lambda *_: pytest.fail("bound a pidfd to a reused pid"), raising=False)
+    owner.observe_census({103: "birth-103"}, census=census, fresh_census=lambda: pytest.fail("unexpected"))
+    assert 103 not in owner._handles and owner._uncertain is None
+
+
+def test_linux_descendant_exiting_during_pidfd_bind_is_absent(observed_descendant, monkeypatch):
+    from astrid.core.execution import process_group as groups
+    owner, _, census = _ordinary_census_fixture(observed_descendant)
+    monkeypatch.setattr(custody.sys, "platform", "linux")
+    monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "birth-103")
+    def gone(*_):
+        raise ProcessLookupError
+    monkeypatch.setattr(custody.os, "pidfd_open", gone, raising=False)
+    owner.observe_census({103: "birth-103"}, census=census, fresh_census=lambda: pytest.fail("unexpected"))
+    assert 103 not in owner._handles and owner._uncertain is None

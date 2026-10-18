@@ -216,6 +216,9 @@ def test_parked_host_validation_failure_precedes_socket_and_host_creation(tmp_pa
 
 def test_parked_host_carries_owned_validation_reference_and_launch_argument(tmp_path, monkeypatch):
     import socket
+    monkeypatch.setattr(host_bootstrap.sys, "platform", "darwin")
+    monkeypatch.setenv("__CF_USER_TEXT_ENCODING", "1:0")
+    monkeypatch.setenv("ASTRID_TASK_RUN_ID", "ambient-task")
     source = tmp_path / 'source'
     source.mkdir()
     reference = SimpleNamespace(
@@ -240,6 +243,8 @@ def test_parked_host_carries_owned_validation_reference_and_launch_argument(tmp_
         assert order == ['owned-validation-complete']
         assert argv[argv.index('--remotion-validation-launch-id') + 1] == 'c' * 32
         assert all(kwargs['env'][k] == v for k, v in marker.items())
+        assert kwargs['env']['__CF_USER_TEXT_ENCODING'] == '1:0'
+        assert 'ASTRID_TASK_RUN_ID' not in kwargs['env']
         order.append('host-created')
         return SimpleNamespace(pid=4244)
     monkeypatch.setattr(host_bootstrap, '_dependency_pythonpath', lambda: ())
@@ -257,6 +262,33 @@ def test_parked_host_carries_owned_validation_reference_and_launch_argument(tmp_
         assert host_bootstrap._RETAINED_HOSTS[(4244, 'exact-birth')] is handle.process
     finally:
         handle.control.close()
+
+
+def test_parked_host_rejects_conflicting_projected_cf_encoding(tmp_path, monkeypatch):
+    import socket
+
+    from astrid.core.subprocess_env import SubprocessEnvPolicyError
+
+    monkeypatch.setattr(host_bootstrap.sys, "platform", "darwin")
+    monkeypatch.setenv("__CF_USER_TEXT_ENCODING", "1:0")
+    source = tmp_path / 'source'
+    source.mkdir()
+    reference = SimpleNamespace(
+        effective_target={'kind': 'machine', 'id': socket.gethostname()},
+        source_checkout=source, pack_roots=(source,), ready_file=tmp_path / 'ready.json',
+        support_root=tmp_path, dependency_closure=(), digest=lambda: 'deployment',
+        source_closure_digest='sha256:closure', credential_ref='file:' + str(tmp_path / 'credential'),
+        runtime_endpoint='http://127.0.0.1:9999', boot_manifest_path=tmp_path / 'boot.json',
+        boot_manifest_hash='sha256:' + 'a' * 64)
+    launch = SimpleNamespace(
+        deployment_digest='deployment',
+        env=lambda: {'HOME': str(tmp_path), '__CF_USER_TEXT_ENCODING': '2:0'},
+        argv=(sys.executable, '-m', 'astrid.core.execution.generic_host'), cwd=source)
+    preparer = host_bootstrap._ParkedPackHostPreparer(project_launch=lambda _ref: launch)
+
+    with pytest.raises(SubprocessEnvPolicyError, match='conflicts with its inherited owner pin'):
+        preparer.prepare(reference)
+    assert preparer._handle is None
 
 
 def test_launch_and_reuse_share_exact_canonical_host_registry_context(tmp_path, monkeypatch):
