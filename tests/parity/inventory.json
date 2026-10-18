@@ -2855,6 +2855,17 @@
           "required": false
         },
         {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "range_value",
+          "metavar": "START..END",
+          "nargs": null,
+          "options": [
+            "--range"
+          ],
+          "required": false
+        },
+        {
           "action": "_StoreTrueAction",
           "default": null,
           "dest": "review",
@@ -5116,6 +5127,17 @@
         "nargs": null,
         "options": [
           "--project"
+        ],
+        "required": false
+      },
+      {
+        "action": "_StoreAction",
+        "default": null,
+        "dest": "range_value",
+        "metavar": "START..END",
+        "nargs": null,
+        "options": [
+          "--range"
         ],
         "required": false
       },
