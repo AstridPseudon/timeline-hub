@@ -381,7 +381,7 @@ describe('AstridRuntimeClient canonical Runtime reads and browser task seam', ()
   });
 
   it('accepts exactly the vendored Runtime contract digest during handshake', async () => {
-    // The digest comes from the vendored contract metadata; vendor.lock.json pins those bytes to the producer.
+    // The digest comes from the vendored contract metadata; runtime.lock.json pins those bytes to the producer.
     const selectedRuntimeDigest = RUNTIME_SCHEMA_DIGEST;
     expect(selectedRuntimeDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
     const fixture = createTransport();

@@ -96,8 +96,8 @@ export function revisionSet(identity?: AstridIdentity) {
     astridFile: identity?.astrid_file ?? null,
     runtimeHead: gitHead(RUNTIME_CHECKOUT),
     vendorLocks: {
-      app: vendorLock(path.join(REPO_ROOT, 'src', 'integrations', 'runtime', 'vendor.lock.json')),
-      astrid: vendorLock(path.join(ASTRID_CHECKOUT, 'astrid_runtime_client', 'vendor.lock.json')),
+      app: vendorLock(path.join(REPO_ROOT, 'runtime.lock.json')),
+      astrid: vendorLock(path.join(ASTRID_CHECKOUT, 'runtime.lock.json')),
     },
     schemaDigest: { app: digests.app, astrid: digests.astrid, runtime: identity?.schema_digest ?? null },
   };
