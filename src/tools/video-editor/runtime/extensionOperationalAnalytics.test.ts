@@ -84,9 +84,21 @@ describe('extension operational analytics browser sink', () => {
     expect(toTransportSafeOperationalEvent({ ...event, errorClass: 'bridge.timeout' })).toBeNull();
     expect(toTransportSafeOperationalEvent({
       ...event,
-      extensionId: 'com.reigh.unreviewed-extension',
+      extensionId: 'haus.astrid.unreviewed-extension',
       extensionVersion: '1.0.0',
     })).toBeNull();
+  });
+
+  it('accepts the reviewed mapped Runaway Timeline extension ID', () => {
+    expect(toTransportSafeOperationalEvent({
+      ...event,
+      extensionId: 'haus.astrid-runaway-timeline',
+      extensionVersion: '1.0.0',
+    })).toEqual({
+      ...event,
+      extensionId: 'haus.astrid-runaway-timeline',
+      extensionVersion: '1.0.0',
+    });
   });
 
   it('keeps the browser and server reviewed inventories identical', () => {

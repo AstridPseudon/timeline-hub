@@ -4,6 +4,7 @@ import {
   resolveReturningAppEntry,
 } from '@/app/entryClassification.ts';
 import { releaseBootLayerWhenReady } from '@/app/bootLayer.ts';
+import { migrateAstridBrowserStorage } from '@/migrations/astridRenameBrowserMigration.ts';
 
 function loadInstalledAppTypography(): void {
   if (document.querySelector('[data-installed-app-fonts]')) return;
@@ -44,6 +45,48 @@ async function main(): Promise<void> {
   if (owner === 'public') {
     const { renderPublicEntry } = await import('@/app/publicBootstrap.tsx');
     renderPublicEntry(rootElement);
+    releaseBootLayerWhenReady(rootElement);
+    return;
+  }
+
+  await startApp(rootElement);
+}
+
+function showMigrationFailure(
+  rootElement: HTMLElement,
+  store: string,
+  retry: () => Promise<void>,
+): void {
+  const container = document.createElement('main');
+  container.setAttribute('role', 'alert');
+  container.style.cssText = 'min-height:100vh;display:grid;place-content:center;gap:12px;padding:24px;font:16px Inter, sans-serif;color:#ededf1;background:#101014';
+
+  const title = document.createElement('h1');
+  title.textContent = 'Astrid could not prepare browser storage';
+  title.style.cssText = 'margin:0;font-size:20px';
+
+  const detail = document.createElement('p');
+  detail.textContent = `Migration failed for ${store}. Your existing browser data is preserved. Retry to try again.`;
+  detail.style.cssText = 'max-width:560px;margin:0;line-height:1.5';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = 'Retry migration';
+  button.style.cssText = 'justify-self:start;padding:9px 14px;border:0;border-radius:6px;background:#fff;color:#111;font:inherit;cursor:pointer';
+  button.addEventListener('click', () => {
+    button.disabled = true;
+    button.textContent = 'Retrying…';
+    void retry();
+  });
+
+  container.append(title, detail, button);
+  rootElement.replaceChildren(container);
+}
+
+async function startApp(rootElement: HTMLElement): Promise<void> {
+  const migration = await migrateAstridBrowserStorage();
+  if (!migration.success) {
+    showMigrationFailure(rootElement, migration.store, () => startApp(rootElement));
     releaseBootLayerWhenReady(rootElement);
     return;
   }
