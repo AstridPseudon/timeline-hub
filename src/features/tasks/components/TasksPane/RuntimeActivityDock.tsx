@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Activity, ChevronDown, ChevronUp, CircleDot, Clock3, FileOutput, Film, Image as ImageIcon, Loader2, Lock, Music2, Pin, PinOff, RotateCcw, Square, Unlock, Video, X } from 'lucide-react';
-import type { Event, ManagedOutput, Task as RuntimeTask } from '@/integrations/runtime/generated.ts';
+import type { Event as RuntimeEvent, ManagedOutput, Task as RuntimeTask } from '@/integrations/runtime/generated.ts';
 import { ReighRuntimeClient } from '@/integrations/runtime/client.ts';
 import { Button } from '@/shared/components/ui/button';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
@@ -91,7 +91,7 @@ function cleanErrorMessage(value: unknown): string | undefined {
   return message.slice(0, 160);
 }
 
-function safeEvent(event: Event): SafeTaskEvent {
+function safeEvent(event: RuntimeEvent): SafeTaskEvent {
   const payload = asRecord(event.payload);
   const error = asRecord(payload?.error);
   const message = cleanErrorMessage(error?.message ?? payload?.message);
@@ -168,7 +168,7 @@ function ActivityTaskInspector({
   isExportTaskPending: RuntimeActivityDockProps['isExportTaskPending'];
 }) {
   const client = useMemo(() => new ReighRuntimeClient(), []);
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<RuntimeEvent[]>([]);
   const [outputs, setOutputs] = useState<ManagedOutput[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
