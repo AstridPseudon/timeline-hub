@@ -12,6 +12,7 @@ import sysconfig
 from types import ModuleType, SimpleNamespace
 
 import pytest
+from tests.astrid_checkout import astrid_checkout
 from runtime_protocol import verified_host_launch as gate
 
 
@@ -31,7 +32,7 @@ def test_mapped_distribution_metadata_real_version_with_empty_sys_path(tmp_path,
     finder=gate.MappedImports({},trusted_local=True,distribution_metadata=rows)
     monkeypatch.setattr(sys,'meta_path',[finder]);monkeypatch.setattr(sys,'path',[])
     assert gate.importlib.metadata.version('Astrid')=='7.2'
-    version_path=Path(__file__).parents[2]/'Astrid--integration-reconciled/astrid/version.py'
+    version_path=astrid_checkout()/'astrid/version.py'
     item={'path':str(version_path),'sha256':hashlib.sha256(version_path.read_bytes()).hexdigest(),'package':False}
     selected_version=ModuleType('selected_version')
     gate._SourceLoader(item,trusted_local=True).exec_module(selected_version)
@@ -319,7 +320,7 @@ def test_native_extensions_require_protected_runtime_inventory(tmp_path):
 @pytest.mark.integration
 def test_nine_component_measurement_parity_without_importing_astrid(tmp_path):
     f=fixture_authority(tmp_path)
-    host=Path(__file__).resolve().parents[2]/'Astrid--integration/astrid/core/execution/generic_host.py'
+    host=astrid_checkout()/'astrid/core/execution/generic_host.py'
     tree=ast.parse(host.read_bytes());names={'_canonical_digest','_source_digest','source_checkout_closure'}
     nodes=[n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in names]
     # Only measurement functions, not any host package/module import or startup.

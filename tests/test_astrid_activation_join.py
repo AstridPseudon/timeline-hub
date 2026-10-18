@@ -23,6 +23,7 @@ import pytest
 
 pytestmark = pytest.mark.integration  # needs the sibling Astrid checkout and its venv
 
+from tests.astrid_checkout import astrid_checkout
 from runtime_protocol.auth import CredentialStore
 from runtime_protocol.errors import AuthorizationError
 from runtime_protocol.local_execution_supervisor import (
@@ -50,9 +51,7 @@ ASTRID_PYTHON = Path(sys.executable).resolve()
 
 @pytest.fixture
 def astrid_root(tmp_path):
-    source = RUNTIME_ROOT.parent / "astrid" / "astrid"
-    if not source.is_dir():
-        raise AssertionError(f"Astrid checkout is unavailable: {source}")
+    source = astrid_checkout() / "astrid"
     root = tmp_path / "astrid-checkout"
     shutil.copytree(source, root / "astrid", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     return root

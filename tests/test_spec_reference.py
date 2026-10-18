@@ -18,7 +18,7 @@ def _digest(value):
 
 
 @pytest.mark.integration
-def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source(tmp_path):
+def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source(tmp_path, astrid_importable):
     # This crosses task admission, CAS custody, task readback, and Astrid's
     # actual host materializer. A fake Runtime *transport* delegates to the
     # real service, so neither the admission nor the hydration layer is mocked.
@@ -81,7 +81,7 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
 
 
 @pytest.mark.integration
-def test_render_hydration_reads_named_revision_after_head_moves(tmp_path):
+def test_render_hydration_reads_named_revision_after_head_moves(tmp_path, astrid_importable):
     from astrid.core.execution.generic_host import GenericPackHost
 
     root = tmp_path / "realm"
@@ -332,7 +332,7 @@ def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path):
 
 @pytest.mark.integration
 @pytest.mark.parametrize("failure", [None, "missing_parent_digest", "changed_parent_digest", "wrong_ingest_digest"])
-def test_sdk_render_producer_ingest_reference_reaches_real_runtime_admission(tmp_path, failure):
+def test_sdk_render_producer_ingest_reference_reaches_real_runtime_admission(tmp_path, failure, astrid_importable):
     """Exercise the production SDK publisher and Runtime reference validator together.
 
     The transport adapter delegates to the real in-process service and preserves
