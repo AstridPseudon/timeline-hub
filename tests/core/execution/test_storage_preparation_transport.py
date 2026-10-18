@@ -502,3 +502,52 @@ def test_long_selected_support_uses_owned_compact_socket(world, monkeypatch):
     listener.close()
     assert not compact.exists()
     assert not w.config.readiness_path.exists()
+
+
+def test_readiness_publication_is_atomic_and_after_serving_thread(world, monkeypatch):
+    w = world
+    real_link = os.link
+    observed = []
+    def publish(src, dst, **kwargs):
+        listener = w.host._storage_preparation_listener
+        assert listener is not None and listener._thread.is_alive()
+        assert not w.config.readiness_path.exists()
+        pending = w.config.readiness_path.parent / src
+        payload = json.loads(pending.read_bytes())
+        assert payload == listener._record
+        observed.append(payload)
+        return real_link(src, dst, **kwargs)
+    monkeypatch.setattr(os, 'link', publish)
+    listener = w.host.start_storage_preparation(w.config)
+    assert observed == [listener._record]
+    assert listener.is_ready()
+    assert not (w.config.readiness_path.parent / '.ready.pending').exists()
+
+
+@pytest.mark.parametrize('cleanup_fails', [False, True])
+def test_listener_start_failure_keeps_primary_and_original_host_custody(world, monkeypatch, cleanup_fails):
+    w = world
+    primary = transport.PreparationTransportError('source_mismatch')
+    original_close = transport.StoragePreparationListener.close
+    def fail_link(*args, **kwargs): raise primary
+    def close(listener):
+        if cleanup_fails: raise OSError('SECRET cleanup value')
+        original_close(listener)
+    monkeypatch.setattr(os, 'link', fail_link)
+    monkeypatch.setattr(transport.StoragePreparationListener, 'close', close)
+    with pytest.raises(transport.PreparationTransportError) as caught:
+        w.host.start_storage_preparation(w.config)
+    assert caught.value is primary and primary.code == 'source_mismatch'
+    listener = w.host._storage_preparation_listener
+    if cleanup_fails:
+        assert listener is not None and listener._thread.is_alive()
+        assert primary.storage_preparation_cleanup == {'status': 'failed', 'secondary_error_stage': 'listener_close'}
+        assert 'SECRET' not in json.dumps(primary.storage_preparation_cleanup)
+        monkeypatch.setattr(transport.StoragePreparationListener, 'close', original_close)
+        # The exact Host-retained owner settles its failed-start obligations.
+        w.host.shutdown()
+        assert not listener._thread.is_alive()
+    else:
+        assert listener is None
+    assert not w.config.readiness_path.exists()
+    assert not (w.config.readiness_path.parent / '.ready.pending').exists()

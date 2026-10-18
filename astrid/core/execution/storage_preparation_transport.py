@@ -301,22 +301,38 @@ class StoragePreparationListener:
                 "executor_source_digest": config.executor_source_digest,
                 "executor_dependency_digest": config.executor_dependency_digest}
             encoded = _encoded(self._record)
-            fd = os.open("ready.json", os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+            fd = os.open(".ready.pending", os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                          0o600, dir_fd=self._root_fd)
             try:
-                self._owned["ready.json"] = _inode(os.fstat(fd))
+                self._owned[".ready.pending"] = _inode(os.fstat(fd))
                 with os.fdopen(fd, "wb", closefd=False) as stream:
                     stream.write(encoded)
                     stream.flush()
                     os.fsync(fd)
             finally:
                 os.close(fd)
-            self._validate_endpoint()
+            # Publish complete bytes only after listen() and the serving thread.
+            # link() keeps the existing fail-closed, no-replacement semantics;
+            # readers can never observe a partially written readiness record.
             self._thread = threading.Thread(target=self._serve, name="astrid-storage-preparation", daemon=True)
             self._thread.start()
+            os.link(".ready.pending", "ready.json", src_dir_fd=self._root_fd,
+                    dst_dir_fd=self._root_fd, follow_symlinks=False)
+            self._owned["ready.json"] = self._owned[".ready.pending"]
+            self._remove_owned(".ready.pending")
+            self._validate_endpoint()
+            if not self._thread.is_alive():
+                raise PreparationTransportError("unavailable")
             return self
-        except BaseException:
-            self.close()
+        except BaseException as primary:
+            try:
+                self.close()
+            except BaseException:
+                self.startup_cleanup = {"status": "failed", "secondary_error_stage": "listener_close"}
+                primary.storage_preparation_cleanup = dict(self.startup_cleanup)
+                primary.add_note("Storage listener cleanup failed separately; Host retains listener custody")
+            else:
+                self.startup_cleanup = {"status": "complete", "secondary_error_stage": None}
             raise
 
     def _validate_endpoint(self):
@@ -481,6 +497,7 @@ class StoragePreparationListener:
     def close(self):
         self._stop.set()
         self._remove_owned("ready.json")
+        self._remove_owned(".ready.pending")
         if self._listener is not None:
             self._listener.close()
         with self._lock:

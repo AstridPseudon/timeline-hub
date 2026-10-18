@@ -166,3 +166,15 @@ def test_abort_prepare_race_cannot_publish_late_success(pending, monkeypatch):
     assert prepared == [{"status": "prepared"}] and replies[0]["status"] == "cleaned"
     with pytest.raises(host.HostError, match="replay"):
         p.dispatch(request)
+
+
+def test_secondary_control_logger_failure_keeps_first_error_and_safe_stage(pending, monkeypatch):
+    p, _, _ = pending
+    first = host.HostError('host-only selected profile shape is invalid')
+    monkeypatch.setattr(host._LOGGER, 'error', lambda *args: (_ for _ in ()).throw(OSError('SECRET logger value')))
+    p._record_control_error(first)
+    p._record_control_error(BrokenPipeError('SECRET cleanup value'))
+    assert p.control_error is first
+    assert len(p.control_diagnostics) == 2
+    assert all(d['logging_status'] == 'failed' and d['secondary_error_stage'] == 'logging' for d in p.control_diagnostics)
+    assert 'SECRET' not in json.dumps(p.control_diagnostics)
