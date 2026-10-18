@@ -381,6 +381,8 @@ def main(argv: list[str] | None = None, *, confinement_policy: _ConfinementPolic
         return _print_agent_profile_file()
     if rest and rest[0] == "help":
         return _dispatch_toolkit(rest)
+    if rest and rest[0] in {"status", "dev"}:
+        return _dispatch_toolkit(rest)
     if rest and rest[0] == "auth":
         return run_auth(rest[1:])
     if rest and rest[0] in _AUTH_ALIASES:
