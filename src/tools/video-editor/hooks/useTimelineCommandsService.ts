@@ -1,5 +1,5 @@
 import { manualTextPatch, isManualTextClip } from '../commands/manualText.ts';
-import { buildSelectedProjectMediaAddCommand } from '../commands/selectedProjectMedia.ts';
+import { readSelectedProjectMediaIdentity, selectedMediaRegistryExpectationPath, buildSelectedProjectMediaAddCommand } from '../commands/selectedProjectMedia.ts';
 import { addTrackGestureCommands, authoredTracks } from '../commands/trackGestures.ts';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
 import { toolTrimGestureCommands, structuralChildId, splitGestureCommands, duplicateGestureCommands, deleteGestureCommands, literalStructuralSource, moveGestureCommands, propertyGestureCommands, rightResizeGestureCommands } from '../commands/semanticGestures.ts';
@@ -87,6 +87,8 @@ export interface AddClipCommandInput {
   insertAtTop?: boolean;
   clipSpanSeconds?: number | null;
   afterClipId?: string;
+  /** Captured before asynchronous duplicate acquisition; never recaptured after selection. */
+  preparedCloneBase?: string;
   clipId?: string;
   removeClipId?: string;
   removeClipIds?: string[];
@@ -301,7 +303,7 @@ const isPinnedGroupClip = (current: TimelineData, clipId: string): boolean => {
  * if even one affected action cannot be represented by an exact parent nudge.
  * The no-ripple route below keeps its existing admission rules.
  */
-const duplicateRippleCommands = (current: TimelineData, sourceId: string, edit: NonNullable<ReturnType<typeof buildDuplicateClipEdit>>) => {
+const duplicateRippleCommands = (current: TimelineData, sourceId: string, edit: NonNullable<ReturnType<typeof buildDuplicateClipEdit>>, preserveSource = false) => {
   const row = current.rows.find((candidate) => candidate.actions.some((action) => action.id === sourceId));
   const index = row?.actions.findIndex((action) => action.id === sourceId) ?? -1;
   if (!row || index < 0 || index === row.actions.length - 1
@@ -335,6 +337,7 @@ const duplicateRippleCommands = (current: TimelineData, sourceId: string, edit: 
       || nudge[0].args.frames !== Math.round(duration * fps)) return undefined;
     commands.push(...nudge);
   }
+  if (preserveSource) return commands;
   // The row serializer supports a bounded set of clip fields. Do not admit a
   // semantic copy if that existing local path would drop opaque authored data
   // or change anything beyond the planner's copy and captured placements.
@@ -351,6 +354,63 @@ const duplicateRippleCommands = (current: TimelineData, sourceId: string, edit: 
     !== canonicalJsonStringify(actual.clips.find((candidate) => candidate.id === clip.id)))
     || canonicalJsonStringify({ ...current.config, clips: actual.clips }) !== canonicalJsonStringify(actual)) return undefined;
   return commands;
+};
+
+/** Exact acquisition base, including the planner's ordered actions and registry. */
+export const capturePreparedCloneBase = (data: TimelineData): string => canonicalJsonStringify({
+  config: data.config, registry: data.registry, head: data.head, configVersion: data.configVersion,
+  rows: data.rows, meta: data.meta, order: data.clipOrder, output: data.output,
+});
+
+const preparedClone = (current: TimelineData, input: AddClipCommandInput) => {
+  const asset = input.preparedAsset!, selection = readSelectedProjectMediaIdentity(asset.selectedMedia);
+  const source = current.config.clips.find(clip => clip.id === input.afterClipId);
+  if (!selection || selection.asset !== asset.assetKey || asset.entry.media_id !== selection.object_id
+    || asset.entry.generationId !== selection.generation_id || asset.entry.variantId !== selection.variant_id
+    || input.preparedCloneBase !== capturePreparedCloneBase(current) || !current.head?.projectId || !current.head.headRevisionId
+    || !source || !source.asset || !literalStructuralSource(current, source.id)
+    || !input.clipId || current.config.clips.some(clip => clip.id === input.clipId)
+    || input.removeClipId || input.removeClipIds?.length || input.replaceClipId || input.pinnedShotGroupsOverride !== undefined
+    || input.forceNewTrack || input.insertAtTop || input.trackId || input.time !== undefined || input.clipSpanSeconds !== undefined
+    || asset.mediaType === 'audio' || !asset.entry.type?.startsWith(asset.mediaType)
+    || !current.registry.assets[source.asset]?.type?.startsWith(asset.mediaType)
+    || asset.mediaType === 'video' && (typeof asset.durationSeconds !== 'number' || !Number.isFinite(asset.durationSeconds)
+      || asset.durationSeconds <= 0 || asset.entry.duration !== asset.durationSeconds
+      || typeof source.to !== 'number' || !Number.isFinite(source.to) || source.to > asset.durationSeconds
+      || typeof source.from !== 'number' || source.from < 0 || source.from >= source.to)) return undefined;
+  const edit = buildDuplicateClipEdit(current, source.id, asset.assetKey);
+  if (!edit || edit.clipId !== input.clipId || isPinnedGroupClip(current, source.id)) return undefined;
+  const row = current.rows.find(candidate => candidate.id === edit.trackId)!;
+  if (current.rows.filter(candidate => candidate.id === row.id).length !== 1
+    || current.config.tracks?.filter(track => track.id === row.id).length !== 1
+    || current.rows.flatMap(row => row.actions).filter(action => action.id === source.id).length !== 1
+    || source.track !== row.id) return undefined;
+  const index = row.actions.findIndex(action => action.id === source.id);
+  const action = row.actions[index];
+  if (source.at !== action.start) return undefined;
+  const calls = index === row.actions.length - 1
+    ? duplicateGestureCommands(current, source.id, action.end, edit.clipId)
+    : duplicateRippleCommands(current, source.id, edit, true);
+  if (!calls || action.end - action.start < 0.05) return undefined;
+  const followers = row.actions.slice(index + 1);
+  calls[0].args = { ...calls[0].args, media: selection };
+  calls[0].expect = { ...calls[0].expect,
+    'parent::config.output.fps': { state: 'present', value: current.output.fps },
+    'parent::config.pinnedShotGroups': current.config.pinnedShotGroups === undefined ? { state: 'absent' }
+      : { state: 'present', value: structuredClone(current.config.pinnedShotGroups) },
+    [`parent/clip:${source.id}::clip_order`]: { state: 'present', value: current.config.clips.map(clip => `parent/clip:${clip.id}`) },
+    [`parent/clip:${edit.clipId}::`]: { state: 'absent' },
+    [`parent::registry.assets[${JSON.stringify(source.asset)}]`]: { state: 'present', value: structuredClone(current.registry.assets[source.asset]) },
+    [selectedMediaRegistryExpectationPath(asset.assetKey)]: Object.prototype.hasOwnProperty.call(current.registry.assets, asset.assetKey)
+      ? { state: 'present', value: structuredClone(current.registry.assets[asset.assetKey]) } : { state: 'absent' },
+    ...Object.fromEntries(followers.map(action => [`parent/clip:${action.id}::`, { state: 'present' as const,
+      value: structuredClone(current.config.clips.find(clip => clip.id === action.id)!) }])),
+  };
+  const preview = applyPreparedMediaCommand(current, { type: 'place-prepared-media', payload: { asset, at: 0, afterClipId: source.id } });
+  if (!preview || preview.commandResult?.detail?.clipId !== edit.clipId) return undefined;
+  // This semantic submission preserves the full source in the SDK rather than
+  // serializing opaque clip fields through the editor's bounded row projection.
+  return { calls, clipId: edit.clipId, trackId: edit.trackId };
 };
 
 const getClipTrackKind = (current: TimelineData, clip: TimelineData['resolvedConfig']['clips'][number]): TrackKind => {
@@ -523,6 +583,24 @@ export function createTimelineCommands(
       }
 
       if (input.preparedAsset) {
+        if (input.afterClipId) {
+          const source = current.config.clips.find(clip => clip.id === input.afterClipId);
+          if (source) {
+            const managed = checkManagedClip(source.id);
+            if (managed) return managed;
+            const permission = options?.timelineEditability?.check({ clipId: source.id, sourceTrackId: source.track, targetTrackId: source.track });
+            if (permission && !permission.allowed) return failure('timeline_read_only', 'Generation clone target is read-only.');
+          }
+          const clone = preparedClone(current, input);
+          if (!clone) return failure('invalid_argument', 'Prepared generation clone requires an unchanged captured base, exact registered selection and compatible full source range.');
+          try {
+            state.ops.applyEdit({ type: 'commands' }, { semantic: true, selectedClipId: clone.clipId,
+              selectedTrackId: clone.trackId, editCommands: clone.calls });
+            return success({ clipId: clone.clipId, trackId: clone.trackId });
+          } catch (cause) {
+            return failure('mutation_failed', 'Prepared generation clone failed.', { cause });
+          }
+        }
         let preparedAt = input.time;
         const preparedTrackId = input.trackId;
         if (input.afterClipId) {
