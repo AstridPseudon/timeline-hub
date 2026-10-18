@@ -1768,8 +1768,9 @@ def test_vendored_runtime_client_preserves_server_failure_diagnostic():
     assert failure.value.details == {"retryable": False}
 
 
+@pytest.mark.parametrize("failure_mode", ["registration", "constructor", "marker-write", "cleanup"])
 def test_cli_writes_terminal_correlated_registration_failure_marker(
-    tmp_path, monkeypatch, capsys
+    tmp_path, monkeypatch, capsys, failure_mode
 ):
     from banodoco_workspace_client import ApiError
     from banodoco_workspace_client.contract_metadata import SCHEMA_DIGEST
@@ -1844,8 +1845,32 @@ def test_cli_writes_terminal_correlated_registration_failure_marker(
         ],
     )
 
+    if failure_mode == "constructor":
+        def constructor(**kwargs):
+            raise RuntimeError("private-constructor-token-and-path")
+        monkeypatch.setattr(generic_host, "GenericPackHost", constructor)
+    elif failure_mode == "marker-write":
+        monkeypatch.setattr(generic_host, "_write_ready_marker", lambda *_: (_ for _ in ()).throw(OSError("private-write-error")))
+    elif failure_mode == "cleanup":
+        monkeypatch.setattr(generic_host.GenericPackHost, "shutdown", lambda *_: (_ for _ in ()).throw(RuntimeError("private-cleanup-error")))
     assert generic_host._cli() == 1
+    stderr = capsys.readouterr().err
+    if failure_mode == "marker-write":
+        assert not ready.exists()
+        assert '"status": "failed"' in stderr and '"failure_marker_error": "OSError"' in stderr
+        assert "private-write-error" not in stderr
+        return
     marker = json.loads(ready.read_text(encoding="utf-8"))
+    if failure_mode == "constructor":
+        assert marker["status"] == "failed" and marker["terminal"] is True
+        assert marker["error"]["code"] == "host_construction_failed"
+        assert marker["diagnostic"]["exception_class"] == "RuntimeError"
+        assert marker["diagnostic"]["construction_returned"] is False
+        assert "private-constructor-token-and-path" not in json.dumps(marker) + stderr
+        return
+    if failure_mode == "cleanup":
+        assert '"cleanup_error": "RuntimeError"' in stderr
+        assert "private-cleanup-error" not in stderr
     assert marker == {
         "status": "failed",
         "terminal": True,
@@ -1858,7 +1883,7 @@ def test_cli_writes_terminal_correlated_registration_failure_marker(
         },
     }
     assert "worker-token" not in ready.read_text(encoding="utf-8")
-    assert '"terminal": true' in capsys.readouterr().err
+    assert '"terminal": true' in stderr
 
 
 def test_runtime_protocol_client_settlement_preserves_structured_result(monkeypatch):

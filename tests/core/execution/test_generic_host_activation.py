@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import errno
 import json
 import os
 import secrets
@@ -106,7 +107,13 @@ def test_local_receiver_rejects_failed_or_mismatched_receipt_without_ack(monkeyp
             if failure == "duplicate":
                 _send(worker, receipt)
         if failure != "duplicate":
-            worker.shutdown(socket.SHUT_WR)
+            try:
+                worker.shutdown(socket.SHUT_WR)
+            except OSError as error:
+                # A prompt authenticated rejection can already have closed the
+                # peer. Still require its HostError and absence of any ACK.
+                if error.errno != errno.ENOTCONN:
+                    raise
         with pytest.raises(generic_host.HostError):
             future.result(timeout=2)
         assert worker.recv(1) == b""
@@ -345,3 +352,78 @@ def test_authenticated_readiness_rejects_foreign_or_incomplete_handshake(field, 
     client.generated = SimpleNamespace(handshake=lambda *args: response)
     with pytest.raises(generic_host.HostError, match="foreign or incomplete"):
         client._authenticate_worker("host")
+
+
+def test_constructor_failure_is_first_cause_before_waiting_control_work(monkeypatch):
+    import threading
+    from types import SimpleNamespace
+    from astrid.core.execution import generic_host as host
+    preparation = host.LocalExecutionPreparation(operation_id="operation", channel_id="channel")
+    entered, release, caught, secondary_done = (threading.Event() for _ in range(4))
+    primary = RuntimeError("private-constructor-value")
+    secondary = host.CleanupUncertainError("secondary cleanup")
+    errors = []
+    def factory():
+        entered.set()
+        assert release.wait(2)
+        raise primary
+    def construct():
+        try:
+            preparation.construct_claim_host(factory)
+        except BaseException as error:
+            errors.append(error)
+            caught.set()
+            assert secondary_done.wait(2)
+            preparation._record_control_error(error)
+    def cleanup_observation():
+        assert entered.wait(2)
+        with preparation._lock:
+            preparation._record_control_error(secondary)
+        secondary_done.set()
+    owner = threading.Thread(target=construct)
+    owner.start(); assert entered.wait(2)
+    control = threading.Thread(target=cleanup_observation)
+    control.start()
+    # A caller's observation deadline grants no early ready/abort ACK and
+    # does not replace the original constructor owner or start another one.
+    assert not caught.wait(0.02)
+    assert owner.is_alive() and preparation._claim_host is None
+    assert preparation._abort_ack is None
+    release.set(); owner.join(3); control.join(3)
+    assert not owner.is_alive() and not control.is_alive()
+    assert errors == [primary]
+    assert preparation.control_error is primary
+    assert preparation._host_only_phase == "claim_constructing"
+    assert preparation._claim_host is None and preparation._abort_ack is None
+
+
+def test_delayed_constructor_remains_serialized_with_abort_until_owned():
+    import threading
+    from types import SimpleNamespace
+    from astrid.core.execution import generic_host as host
+    preparation = host.LocalExecutionPreparation(operation_id="operation", channel_id="channel")
+    preparation._request = {"profile": {"execution_mode": "host_only_cpu"}}
+    preparation._prepare_done.set()
+    entered, release, abort_done = (threading.Event() for _ in range(3))
+    calls, failures = [], []
+    selected_host = SimpleNamespace(shutdown=lambda: calls.append("shutdown"))
+    def factory():
+        calls.append("factory"); entered.set()
+        assert release.wait(2)
+        return selected_host
+    def abort():
+        try:
+            preparation.abort()
+        except BaseException as error:
+            failures.append(error)
+        finally:
+            abort_done.set()
+    owner = threading.Thread(target=lambda: preparation.construct_claim_host(factory))
+    owner.start(); assert entered.wait(2)
+    cleanup = threading.Thread(target=abort); cleanup.start()
+    assert not abort_done.wait(0.02)
+    assert preparation._claim_host is None and preparation._abort_ack is None
+    release.set(); owner.join(3); cleanup.join(3)
+    assert calls == ["factory", "shutdown"] and not failures
+    assert preparation._claim_host is selected_host and preparation._aborted
+    assert preparation._abort_ack is None  # Local abort is not Runtime's bound ACK.
