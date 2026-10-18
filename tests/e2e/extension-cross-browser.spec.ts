@@ -72,7 +72,7 @@ test('extension inventory host renders active and diagnostic state', async ({ pa
   await expect(page.locator('[data-video-editor-extension-package-state="loaded"]')).toHaveCount(3);
   await expect(page.getByLabel('Extension summary: 3 packages, 3 loaded')).toBeVisible();
   await expect(page.locator('[data-video-editor-activity-event]')).toHaveCount(3);
-  await expect(page.locator('[data-video-editor-extension-trust-warning="true"]')).toBeVisible();
+  await expect(page.locator('[data-video-editor-extension-manager="true"]')).toBeVisible();
 
   const diagnosticButton = page.getByRole('button', {
     name: 'Show diagnostics for Inspector Tools',

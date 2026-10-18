@@ -11,7 +11,7 @@ import { VerificationError, verifyFixture } from "./verify.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "../../..");
-const fixtureRoot = path.resolve(repoRoot, "../../runs/astrid-2026-09-25/evidence/C01/light-study-v1");
+const fixtureRoot = path.join(here, "fixtures/light-study-v1");
 const schemaPath = path.join(repoRoot, "vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json");
 
 function withFixture(mutate, run) {

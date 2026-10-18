@@ -80,7 +80,8 @@ function copySdk(dir, rel = '') {
       if (!relative.startsWith('.')) {
         relative = `./${relative}`;
       }
-      return `${match.startsWith('import(') ? 'import(' : 'from '}${quote}${relative.replace(/\\/g, '/')}${quote}`;
+      const isDynamicImport = match.startsWith('import(');
+      return `${isDynamicImport ? 'import(' : 'from '}${quote}${relative.replace(/\\/g, '/')}${quote}${isDynamicImport ? ')' : ''}`;
     }
 
     content = content.replace(

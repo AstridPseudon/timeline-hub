@@ -15,7 +15,6 @@ test('prewarms the deterministic extension harness before parallel device gates'
   await expect(page.locator('[data-video-editor-harness-ready="true"]')).toBeVisible({
     timeout: 120_000,
   });
-  await expect(
-    page.locator('[data-video-editor-extension-trust-warning="true"]'),
-  ).toBeVisible();
+  await expect(page.locator('[data-video-editor-extension-manager="true"]')).toBeVisible();
+  await expect(page.locator('[data-video-editor-extension-package-id]')).toHaveCount(3);
 });

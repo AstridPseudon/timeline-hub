@@ -99,18 +99,39 @@ async function openComposedEditor(page: Page): Promise<void> {
   await expect(page.getByTestId('timeline-marker-layer-legend')).toBeVisible();
 }
 
-async function expectDensityLabelClearOfRunawayChips(page: Page): Promise<void> {
-  const intersections = await page.locator('[data-lane-kind="astrid.runaway.transitions"]').evaluate((lane) => {
-    const density = lane.querySelector('[data-testid="data-lane-density-summary"]');
-    if (!density) return -1;
-    const summary = density.getBoundingClientRect();
-    return [...lane.querySelectorAll('[data-testid="runaway-transition-chip"]')].filter((chip) => {
+async function expectAccessibleRunawayLaneDensity(page: Page): Promise<void> {
+  const lane = page.getByTestId('runaway-timeline-lane');
+  const totalItems = Number(await lane.getAttribute('data-total-items'));
+  const chips = page.getByTestId('runaway-transition-chip');
+  const mountedCount = await chips.count();
+  const accessibleName = await lane.getAttribute('aria-label');
+
+  expect(totalItems).toBe(566);
+  expect(mountedCount).toBeGreaterThan(0);
+  expect(mountedCount).toBeLessThanOrEqual(128);
+  expect(accessibleName).toMatch(new RegExp(`^566 transitions, ${mountedCount} shown, \\d+ of \\d+ regions in window$`));
+  await expect(page.getByTestId('data-lane-density-summary')).toHaveCount(0);
+
+  const chipContract = await lane.evaluate((element) => {
+    const laneRect = element.getBoundingClientRect();
+    return [...element.querySelectorAll<HTMLElement>('[data-testid="runaway-transition-chip"]')].map((chip) => {
       const rect = chip.getBoundingClientRect();
-      return Math.min(summary.right, rect.right) > Math.max(summary.left, rect.left)
-        && Math.min(summary.bottom, rect.bottom) > Math.max(summary.top, rect.top);
-    }).length;
+      return {
+        label: chip.getAttribute('aria-label'),
+        position: Number(chip.getAttribute('aria-posinset')),
+        setSize: Number(chip.getAttribute('aria-setsize')),
+        width: rect.width,
+        height: rect.height,
+        intersectsLane: Math.min(rect.right, laneRect.right) > Math.max(rect.left, laneRect.left)
+          && Math.min(rect.bottom, laneRect.bottom) > Math.max(rect.top, laneRect.top),
+      };
+    });
   });
-  expect(intersections, 'the host density label must not cover selectable Runaway chips').toBe(0);
+  expect(chipContract).toHaveLength(mountedCount);
+  expect(chipContract.every((chip) => Boolean(chip.label)
+    && chip.position >= 1 && chip.position <= totalItems
+    && chip.setSize === totalItems
+    && chip.width > 0 && chip.height > 0 && chip.intersectsLane)).toBe(true);
 }
 
 async function fulfillJson(route: Route, body: unknown): Promise<void> {
@@ -127,7 +148,7 @@ for (const viewport of viewports) {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await openComposedEditor(page);
     await expect(page.getByTestId('runaway-lane-summary')).toHaveCount(0);
-    await expectDensityLabelClearOfRunawayChips(page);
+    await expectAccessibleRunawayLaneDensity(page);
     await expectTimelineSnapshot(page, `composed-${viewport.name}.png`);
   });
 }

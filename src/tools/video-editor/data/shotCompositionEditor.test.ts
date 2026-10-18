@@ -18,6 +18,14 @@ import {
   timelineOccurrenceEffectiveDurationMs,
 } from './shotCompositionTiming.ts';
 
+function visualPauseGaps(graph: Record<string, unknown>): readonly unknown[] {
+  const parent = graph.parent_composition as Record<string, unknown> | undefined;
+  const config = parent?.config as Record<string, unknown> | undefined;
+  const app = config?.app as Record<string, unknown> | undefined;
+  const contract = app?.visualSeamContract as Record<string, unknown> | undefined;
+  return Array.isArray(contract?.gaps) ? contract.gaps : [];
+}
+
 describe('canonical shot-composition editor operations', () => {
   it('repairs a stored empty-tail occurrence by deriving its end from content', async () => {
     const occurrenceId = 'b9a999b8-d3e1-5c94-8b6e-b5d53dc6af27';
@@ -57,6 +65,22 @@ describe('canonical shot-composition editor operations', () => {
       .toMatchObject({ duration_ms: 3430 });
     expect(repaired.occurrences.find((candidate) => candidate.occurrence_id === 'occ-2'))
       .toMatchObject({ duration_ms: 2000, revision_id: 'rev-a' });
+  });
+
+  it('moves an authored pause edge with the same adjacent clips when popup content grows', async () => {
+    const graph = parseShotComposition(fixture);
+    const originalGaps = visualPauseGaps(graph);
+    const updated = await updateCanonicalShotTimeline(graph, 'occ-1', {
+      tracks: [{ id: 'video', kind: 'visual' }, { id: 'audio', kind: 'audio' }],
+      clips: [
+        { id: 'alpha-video', clip_type: 'media', track: 'video', at: 0.2, hold: 2, asset_id: 'alpha-image' },
+        { id: 'alpha-audio', clip_type: 'media', track: 'audio', at: 0, hold: 2, asset_id: 'alpha-audio' },
+      ],
+    });
+
+    const updatedGaps = visualPauseGaps(updated);
+    expect(updatedGaps[0]).toMatchObject({ kind: 'pause', track: 'video', startFrame: 66, endFrame: 120 });
+    expect(updatedGaps.slice(1)).toEqual(originalGaps.slice(1));
   });
 
   it('moves and trims an occurrence without changing its pinned revision identity', () => {

@@ -86,6 +86,17 @@ describe('native tool attestation', () => {
         /pinned native executable is missing from PATH/,
       );
 
+      const missingTesseract = makeFixture();
+      try {
+        rmSync(resolve(missingTesseract.bin, 'tesseract'));
+        assert.throws(
+          () => attestNativeTools({ ...missingTesseract, pathValue: missingTesseract.bin }),
+          /pinned native executable is missing from PATH: tesseract/,
+        );
+      } finally {
+        rmSync(missingTesseract.root, { recursive: true, force: true });
+      }
+
       const substituted = makeFixture();
       try {
         writeFileSync(resolve(substituted.bin, 'ffmpeg'), '#!/bin/sh\nprintf \'ffmpeg version 7.1.1\\nsubstituted\\nconfiguration: fixture\\n\'');

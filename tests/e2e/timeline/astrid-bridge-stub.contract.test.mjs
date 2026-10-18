@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { once } from 'node:events';
+import { readFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import http from 'node:http';
 import { test } from 'node:test';
@@ -49,6 +51,54 @@ test('deterministic Astrid stub serves the typed Runaway contract', async () => 
   });
   try {
     await waitForHealth(origin);
+
+    const workspaceConfigResponse = await fetch(`${origin}/runtime-config/v1/workspace.json`);
+    assert.equal(workspaceConfigResponse.status, 200);
+    assert.deepEqual(await workspaceConfigResponse.json(), {
+      schemaVersion: 1,
+      endpoint: origin,
+      actorId: 'astrid-product-connector',
+      realmId: 'realm-astrid-editor-e2e',
+      runtimeInstanceId: 'runtime-instance-astrid-editor-e2e',
+    });
+    const healthResponse = await fetch(`${origin}/v1/health`);
+    assert.equal(healthResponse.status, 200);
+    const health = await healthResponse.json();
+    const runtimeClient = await readFile(resolve(HERE, '../../../src/integrations/runtime/client.ts'), 'utf8');
+    const generatedMetadata = await readFile(resolve(HERE, '../../../src/integrations/runtime/generated-contract-metadata.ts'), 'utf8');
+    const contractMetadata = await readFile(resolve(HERE, '../../../src/integrations/runtime/contract-metadata.ts'), 'utf8');
+    const expectedScopes = /export const RUNTIME_CLIENT_SCOPES = \[([\s\S]*?)\];/
+      .exec(runtimeClient)?.[1].match(/'([^']+)'/g)?.map((scope) => scope.slice(1, -1));
+    const expectedDigest = /SCHEMA_DIGEST = "(sha256:[0-9a-f]+)"/.exec(generatedMetadata)?.[1];
+    const expectedCapability = /RUNTIME_TARGETED_EXECUTION_CAPABILITY = '([^']+)'/.exec(contractMetadata)?.[1];
+    assert.ok(expectedScopes?.length);
+    assert.ok(expectedDigest);
+    assert.ok(expectedCapability);
+    assert.equal(health.schema_digest, expectedDigest);
+    assert.equal(health.runtime_instance_id, 'runtime-instance-astrid-editor-e2e');
+    assert.equal(health.runtime_session_id, 'session-astrid-editor-e2e');
+
+    const handshakeResponse = await fetch(`${origin}/v1/handshake`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ protocol: 'workspace.v1', client_name: 'contract-test', client_version: '1', requested_scopes: expectedScopes }),
+    });
+    assert.equal(handshakeResponse.status, 200);
+    const handshake = await handshakeResponse.json();
+    assert.equal(handshake.protocol, 'workspace.v1');
+    assert.equal(handshake.schema_digest, expectedDigest);
+    assert.equal(handshake.actor_id, 'astrid-product-connector');
+    assert.equal(handshake.realm_id, 'realm-astrid-editor-e2e');
+    assert.deepEqual(handshake.scopes, expectedScopes);
+    assert.deepEqual(handshake.capabilities, [expectedCapability]);
+
+    const realmResponse = await fetch(`${origin}/v1/realm`);
+    assert.equal(realmResponse.status, 200);
+    assert.equal((await realmResponse.json()).realm_id, handshake.realm_id);
+    const projectsResponse = await fetch(`${origin}/v1/projects?limit=200`);
+    assert.equal(projectsResponse.status, 200);
+    assert.deepEqual(await projectsResponse.json(), { items: [], next_cursor: null });
+
     const response = await fetch(`${origin}/v1/projects/cross-browser-release-gate/runaway-transitions?limit=1000`);
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('X-Astrid-Bridge-Version'), 'v1');
@@ -245,6 +295,13 @@ test('deterministic Astrid stub serves the typed Runaway contract', async () => 
     assert.deepEqual(audioInitial.config, audioPristine.config);
     assert.deepEqual(audioInitial.registry, audioPristine.registry);
     assert.equal(audioInitial.config.output.fps, 30);
+    assert.deepEqual(audioInitial.shot_composition, audioPristine.shotComposition);
+    assert.equal(audioInitial.shot_composition.occurrences[0].at_ms, 0);
+    assert.equal(audioInitial.shot_composition.shot_revisions[0].internal_timeline_revision.timeline.clips[0].params.initialColor, '#000000');
+    const audioBytes = await readFile(new URL('../../../public/audio-reactive-colour-tone.wav', import.meta.url));
+    const audioDigest = `sha256:${createHash('sha256').update(audioBytes).digest('hex')}`;
+    assert.equal(audioInitial.shot_composition.shot_revisions[0].assets[0].digest, audioDigest);
+    assert.equal(audioInitial.shot_composition.shot_revisions[0].audio.digest, audioDigest);
     assert.deepEqual(
       audioInitial.config.clips[0].params.events.map((event) => event.frame),
       [2, 4],
@@ -266,12 +323,18 @@ test('deterministic Astrid stub serves the typed Runaway contract', async () => 
     const audioAfterReset = await (await fetch(audioTimelineUrl)).json();
     assert.deepEqual(audioAfterReset.config, audioPristine.config);
     assert.deepEqual(audioAfterReset.registry, audioPristine.registry);
+    assert.deepEqual(audioAfterReset.shot_composition, audioPristine.shotComposition);
 
     const offsetTimelineUrl = `${origin}/projects/demo-project/timelines/${AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID}`;
     const offsetPristine = createOffsetAudioReactiveColourFixtures({ assetSrcBaseUrl: origin });
     const offsetInitial = await (await fetch(offsetTimelineUrl)).json();
     assert.deepEqual(offsetInitial.config, offsetPristine.config);
     assert.deepEqual(offsetInitial.registry, offsetPristine.registry);
+    assert.deepEqual(offsetInitial.shot_composition, offsetPristine.shotComposition);
+    assert.notEqual(offsetInitial.shot_composition.project.document_id, audioInitial.shot_composition.project.document_id);
+    assert.notEqual(offsetInitial.shot_composition.primary_timeline.head.revision_id, audioInitial.shot_composition.primary_timeline.head.revision_id);
+    assert.equal(offsetInitial.shot_composition.occurrences[0].at_ms, AUDIO_REACTIVE_OFFSET_START_FRAME * (1000 / 30));
+    assert.equal(offsetInitial.shot_composition.shot_revisions[0].internal_timeline_revision.timeline.clips[0].params.initialColor, '#102030');
     assert.equal(offsetInitial.config.clips[0].at, AUDIO_REACTIVE_OFFSET_START_FRAME / 30);
     assert.equal(offsetInitial.config.clips[0].hold, 0.6);
     assert.equal(offsetInitial.config.clips[0].params.initialColor, '#102030');

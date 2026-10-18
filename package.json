@@ -7,11 +7,6 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "postinstall": "node scripts/patches/remotion-4.0.503-audio-resume.mjs --apply",
-    "remotion:audio-resume:patch": "node scripts/patches/remotion-4.0.503-audio-resume.mjs --apply",
-    "remotion:audio-resume:check": "node scripts/patches/remotion-4.0.503-audio-resume.mjs --check",
-    "remotion:audio-resume:revert": "node scripts/patches/remotion-4.0.503-audio-resume.mjs --revert",
-    "test:remotion-audio-resume-patch": "node --test scripts/patches/remotion-4.0.503-audio-resume.test.mjs",
     "preflight": "docker build .",
     "dev": "vite --config config/vite/vite.config.ts",
     "dev:editor": "node scripts/dev-editor.mjs",
@@ -133,7 +128,12 @@
     "check:astrid-contract-freeze": "node scripts/quality/check-astrid-contract-freeze.mjs",
     "test:astrid-contract-freeze": "node --test scripts/quality/check-astrid-contract-freeze.test.mjs",
     "check:astrid-contract-c2": "node scripts/quality/check-astrid-contract-c2.mjs",
-    "test:astrid-contract-c2": "node --test scripts/quality/check-astrid-contract-c2.test.mjs"
+    "test:astrid-contract-c2": "node --test scripts/quality/check-astrid-contract-c2.test.mjs",
+    "postinstall": "node scripts/patches/remotion-4.0.509-audio-resume.mjs --apply",
+    "remotion:audio-resume:patch": "node scripts/patches/remotion-4.0.509-audio-resume.mjs --apply",
+    "remotion:audio-resume:check": "node scripts/patches/remotion-4.0.509-audio-resume.mjs --check",
+    "remotion:audio-resume:revert": "node scripts/patches/remotion-4.0.509-audio-resume.mjs --revert",
+    "test:remotion-audio-resume-patch": "node --test scripts/patches/remotion-4.0.509-audio-resume.test.mjs scripts/patches/remotion-4.0.509-audio-resume.semantic.test.mjs"
   },
   "dependencies": {
     "@banodoco/timeline-composition": "file:vendor/timeline-composition",
@@ -143,9 +143,9 @@
     "@base-ui/react": "^1.2.0",
     "@dnd-kit/core": "^6.3.0",
     "@dnd-kit/sortable": "^10.0.0",
-    "@remotion/media": "4.0.503",
-    "@remotion/player": "4.0.503",
-    "@remotion/web-renderer": "4.0.503",
+    "@remotion/media": "4.0.509",
+    "@remotion/player": "4.0.509",
+    "@remotion/web-renderer": "4.0.509",
     "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-query": "^5.56.2",
     "class-variance-authority": "^0.7.1",
@@ -164,16 +164,19 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^6.26.2",
     "remark-gfm": "^4.0.1",
-    "remotion": "4.0.503",
+    "remotion": "4.0.509",
     "sucrase": "^3.35.1",
     "tailwind-merge": "^2.5.2",
     "zod": "^4.3.6",
-    "zustand": "^5.0.12"
+    "zustand": "^5.0.12",
+    "@remotion/three": "4.0.509",
+    "@react-three/fiber": "8.18.0",
+    "three": "0.185.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
     "@playwright/test": "^1.60.0",
-    "@remotion/layout-utils": "^4.0.452",
+    "@remotion/layout-utils": "4.0.509",
     "@tailwindcss/container-queries": "^0.1.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -198,7 +201,8 @@
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",
     "vitest": "^4.0.18",
-    "ws": "^8.20.0"
+    "ws": "^8.20.0",
+    "@types/three": "0.185.4"
   },
   "packageManager": "npm@10.8.2"
 }

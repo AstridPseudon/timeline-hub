@@ -52,8 +52,8 @@ describe('extension ship verifier', () => {
     assert.doesNotThrow(() => validatePackageJson(packageJson, manifest));
     assert.deepEqual(manifest.requiredGates, [...EXPECTED_REQUIRED_GATES]);
     const gitignore = readFileSync(`${REPO_ROOT}/.gitignore`, 'utf8');
-    assert.match(gitignore, /^!docs\/extensions\/evidence\/releases\/$/m);
-    assert.match(gitignore, /^!docs\/extensions\/evidence\/releases\/\*\*$/m);
+    assert.match(gitignore, /^!docs\/extensions\/ship-evidence\/releases\/$/m);
+    assert.match(gitignore, /^!docs\/extensions\/ship-evidence\/releases\/\*\*$/m);
 
     for (const command of [
       'npx --yes only-allow npm',
@@ -171,9 +171,9 @@ describe('extension ship verifier', () => {
         ...substituted,
         verification: {
           ...substituted.verification,
-          tesseract: {
-            ...substituted.verification.tesseract,
-            executable: 'missing-tesseract-path-substitution',
+          ffmpeg: {
+            ...substituted.verification.ffmpeg,
+            executable: 'missing-ffmpeg-path-substitution',
           },
         },
       }),
@@ -181,9 +181,9 @@ describe('extension ship verifier', () => {
     );
   });
 
-  it('fails closed when a pinned caption-semantic executable is unavailable', () => {
+  it('fails closed when a pinned native executable is unavailable', () => {
     const missingTool = structuredClone(manifest);
-    missingTool.verification.tesseract.executable = 'missing-tesseract-for-release-test';
+    missingTool.verification.ffmpeg.executable = 'missing-native-tool-for-release-test';
     assert.throws(
       () => assertCaptionSemanticsToolchain(missingTool),
       /pinned native executable is missing from PATH/,

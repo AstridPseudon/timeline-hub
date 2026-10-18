@@ -1,8 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { TimelineNotFoundError } from '@/tools/video-editor/data/DataProvider.ts';
-import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
-import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/index.ts';
-import { getPairTimelineDuration } from '@/tools/video-editor/lib/timeline-domain.ts';
+import { TimelineNotFoundError, getPairTimelineDuration } from '@/tools/video-editor/index.ts';
+import type { AssetRegistry, DataProvider, TimelineConfig } from '@/tools/video-editor/index.ts';
 import type { ScriptedReplayScript } from './replay/scriptedReplay.ts';
 
 export type PublicAstridProviderBinding =

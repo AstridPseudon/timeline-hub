@@ -397,16 +397,19 @@ export async function duplicateShotGroup(
     config: head.config as TimelineConfig,
     registry: (head.registry ?? { assets: {} }) as AssetRegistry,
   }, input.source);
-  const admitted = await admitDuplicateShotGroupPackCommand(client, {
-    source: input.source,
-    destinationShotId: input.destinationShotId,
-    destinationTrackId: input.destinationTrackId ?? source.group.trackId,
-    finalVideoMediaId: source.mediaId,
-  });
-  const task = await waitForShotPackCommand(client, admitted.task.id, options);
-  const replacement = finalVideoReplacementFromTask(task);
-  if (source.entry && !replacement) {
-    throw new Error('Duplicate pack command succeeded without a copied final-video output');
+  let replacement: DeepCopyShotGroupInput['finalVideoReplacement'];
+  if (source.entry) {
+    const admitted = await admitDuplicateShotGroupPackCommand(client, {
+      source: input.source,
+      destinationShotId: input.destinationShotId,
+      destinationTrackId: input.destinationTrackId ?? source.group.trackId,
+      finalVideoMediaId: source.mediaId,
+    });
+    const task = await waitForShotPackCommand(client, admitted.task.id, options);
+    replacement = finalVideoReplacementFromTask(task);
+    if (!replacement) {
+      throw new Error('Duplicate pack command succeeded without a copied final-video output');
+    }
   }
   return (await mutateTimelineDocument({
     projectSlug: input.projectSlug,

@@ -13,9 +13,12 @@ import {
   type ScriptedReplayState,
 } from './scriptedReplay';
 
+// Vitest's transformed import.meta.url is not a file URL in the checkout lane.
+// The shared Vitest config fixes its project root to the app checkout, so resolve
+// this repository fixture from that root instead.
 const fixturePath = path.resolve(
   process.cwd(),
-  '../../runs/astrid-2026-09-25/evidence/C01/light-study-v1/scripted-example.json',
+  'scripts/astrid-landing/offline-verifier/fixtures/light-study-v1/scripted-example.json',
 );
 const script = JSON.parse(readFileSync(fixturePath, 'utf8')) as ScriptedReplayScript;
 

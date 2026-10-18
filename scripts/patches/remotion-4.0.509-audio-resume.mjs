@@ -4,26 +4,26 @@ import { createHash, randomBytes } from 'node:crypto';
 import { open, readFile, rename, rm, stat } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 
-const EXPECTED_VERSION = '4.0.503';
+const EXPECTED_VERSION = '4.0.509';
 const PACKAGE_RELATIVE = join('node_modules', 'remotion');
 const TARGETS = [
   {
     relativePath: join('dist', 'cjs', 'audio', 'shared-audio-tags.js'),
-    originalSha256: '71bb40afee1be9a9d24fc2ca97dae78428d79270179945f3455d5ef1b68241ea',
-    patchedSha256: '4fbf66aac63105d6ecd8c036b7d6db8cb0f800429be6e4a1633a0584994564c5',
+    originalSha256: '471b33916a91f5b9529c477bdf0ec586cb700d5a7179ab910a82dd932e172f6c',
+    patchedSha256: '949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8',
     originalLine:
-      '(0, wait_until_actually_resumed_js_1.waitUntilActuallyResumed)(ctxAndGain.audioContext, logLevel).then(resolve);',
+      '(0, wait_until_actually_resumed_js_1.waitUntilActuallyResumed)(ctxAndGain.audioContext, logLevel, abortController.signal).then(resolve);',
     patchedLine:
-      'resumePromise.then(() => (0, wait_until_actually_resumed_js_1.waitUntilActuallyResumed)(ctxAndGain.audioContext, logLevel).then(resolve), () => {});',
+      'resumePromise.then(() => (0, wait_until_actually_resumed_js_1.waitUntilActuallyResumed)(ctxAndGain.audioContext, logLevel, abortController.signal).then(resolve), () => {});',
   },
   {
     relativePath: join('dist', 'esm', 'index.mjs'),
-    originalSha256: '2fb803a18bd355a3b7dde45fdd0ff857acc6602ba521bf015cca27908285d872',
-    patchedSha256: '447802377a5ecf17b7c224d8a209b4a3c92a29e8efb8ee679a283a48ffc0d9a2',
+    originalSha256: '9fdfe58f3f34e6a72564a811ac5d374d1c97a0f535e2a0e3aac198670d9b7ff8',
+    patchedSha256: '5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28',
     originalLine:
-      'waitUntilActuallyResumed(ctxAndGain.audioContext, logLevel).then(resolve);',
+      'waitUntilActuallyResumed(ctxAndGain.audioContext, logLevel, abortController.signal).then(resolve);',
     patchedLine:
-      'resumePromise.then(() => waitUntilActuallyResumed(ctxAndGain.audioContext, logLevel).then(resolve), () => {});',
+      'resumePromise.then(() => waitUntilActuallyResumed(ctxAndGain.audioContext, logLevel, abortController.signal).then(resolve), () => {});',
   },
 ];
 
@@ -191,8 +191,8 @@ function parseArgs(argv) {
 
 function usage() {
   return [
-    'Usage: node scripts/patches/remotion-4.0.503-audio-resume.mjs --apply|--check|--revert [--root <project-root>]',
-    '--check is read-only and accepts only the exact known pristine or patched 4.0.503 files.',
+    'Usage: node scripts/patches/remotion-4.0.509-audio-resume.mjs --apply|--check|--revert [--root <project-root>]',
+    '--check is read-only and accepts only the exact known pristine or patched 4.0.509 files.',
   ].join('\n');
 }
 

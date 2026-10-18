@@ -6,6 +6,7 @@ import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSy
 import { arch, platform, release, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { describe, it } from 'node:test';
+import { deflateSync } from 'node:zlib';
 
 import {
   EXPECTED_EXTENSION_COUNT,
@@ -85,6 +86,42 @@ const TEST_COMMAND_OPTIONS = Object.freeze({
 
 function runTestCommand(command, args, options = {}) {
   return runBoundedCommand(command, args, { ...TEST_COMMAND_OPTIONS, ...options });
+}
+
+function pngChunk(type, data) {
+  const name = Buffer.from(type, 'ascii');
+  const crcInput = Buffer.concat([name, data]);
+  let crc = 0xffffffff;
+  for (const byte of crcInput) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+  }
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(data.length);
+  const checksum = Buffer.alloc(4);
+  checksum.writeUInt32BE((crc ^ 0xffffffff) >>> 0);
+  return Buffer.concat([length, name, data, checksum]);
+}
+
+function writeSolidBlackPng(path, width, height) {
+  const rowBytes = 1 + width * 4;
+  const pixels = Buffer.alloc(rowBytes * height);
+  for (let y = 0; y < height; y += 1) {
+    const row = y * rowBytes;
+    pixels[row] = 0;
+    for (let x = 0; x < width; x += 1) pixels[row + 1 + x * 4 + 3] = 255;
+  }
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;
+  header[9] = 6;
+  writeFileSync(path, Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    pngChunk('IHDR', header),
+    pngChunk('IDAT', deflateSync(pixels)),
+    pngChunk('IEND', Buffer.alloc(0)),
+  ]));
 }
 
 describe('paired repository release E2E gate', () => {
@@ -478,7 +515,7 @@ process.exit(1);
     }
   });
 
-  it('rejects omitted or black rendered media and accepts the exact transformed control geometry', () => {
+  it('rejects omitted or black rendered media and accepts the exact fixture geometry', () => {
     const root = mkdtempSync(resolve(tmpdir(), 'paired-media-render-negative-'));
     const black = resolve(root, 'black.png');
     try {
@@ -487,8 +524,7 @@ process.exit(1);
         metadataPath: resolve(REPO_ROOT, PAIRED_RELEASE_MEDIA_METADATA),
       });
       assert.doesNotThrow(() => validateRenderedMediaFrame(fixture.path, fixture));
-      const blackResult = runTestCommand('magick', [fixture.path, '-fill', 'black', '-colorize', '100%', '-define', 'png:color-type=6', black]);
-      assert.equal(blackResult.status, 0, blackResult.stderr);
+      writeSolidBlackPng(black, fixture.width, fixture.height);
       assert.throws(() => validateRenderedMediaFrame(black, fixture), /does not contain the seeded test card/);
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -1412,8 +1448,8 @@ process.exit(1);
         'sys.modules["jsonschema"] = types.SimpleNamespace(validate=lambda *args, **kwargs: None)',
         'from typing import get_args, get_type_hints',
         'from banodoco_timeline_schema import TimelineClip, TimelineConfig',
-        'from banodoco_timeline_schema.generated import Clip',
-        'assert TimelineClip is Clip',
+        'from banodoco_timeline_schema.generated import TimelineClip as GeneratedTimelineClip',
+        'assert TimelineClip is GeneratedTimelineClip',
         'assert get_args(get_type_hints(TimelineConfig)["clips"])[0] is TimelineClip',
       ].join('\n')]);
       assert.equal(typeIdentity.status, 0, typeIdentity.stderr);

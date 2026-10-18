@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import fixture from './shotComposition.fixture.json';
 import orderFixture from './shotTrackOrder.fixture.json';
 import { createShotCompositionAdapter, type PreparedShotComposition } from './shotCompositionAdapter.ts';
+import { createAudioReactiveColourFixtures } from '@/test/bridgeFixtures.mjs';
 import {
   CanonicalCompositionProjectionError,
   managedOutputMatchesOccurrence,
@@ -11,8 +12,28 @@ import {
 import { timelineContentExtentMs } from './shotCompositionTiming.ts';
 import { boundCanonicalClipToOccurrence } from '@/tools/video-editor/lib/canonicalRenderBounds.ts';
 import { getClipTimelineDuration } from '@/tools/video-editor/lib/config-utils.ts';
+import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 
 const prepared = createShotCompositionAdapter({ load: async () => fixture }).prepare(fixture);
+
+describe('audio-reactive local bridge fixture projection', () => {
+  it('preserves output settings and resolves the selected source audio asset', () => {
+    const fixtures = createAudioReactiveColourFixtures({ assetSrcBaseUrl: 'http://127.0.0.1:22217' });
+    const composition = createShotCompositionAdapter({ load: async () => fixtures.shotComposition }).prepare(fixtures.shotComposition);
+    const projection = projectCanonicalComposition(composition, {
+      ...fixtures.config,
+      registry: fixtures.registry.assets,
+    } as ResolvedTimelineConfig);
+
+    expect(projection.config.output).toMatchObject({ resolution: '640x360', fps: 30 });
+    const audioClip = projection.config.clips.find((clip) => clip.id === 'audio_source');
+    expect(audioClip?.assetEntry).toMatchObject({
+      media_id: 'fixture-media-audio',
+      src: 'http://127.0.0.1:22217/audio-reactive-colour-tone.wav',
+      type: 'audio/wav',
+    });
+  });
+});
 
 function withOccurrenceRevision(
   source: PreparedShotComposition,

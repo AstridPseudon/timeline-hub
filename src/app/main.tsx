@@ -8,6 +8,7 @@ import { releaseBootLayerWhenReady } from '@/app/bootLayer.ts';
 import { migrateAstridBrowserStorage } from '@/migrations/astridRenameBrowserMigration.ts';
 
 function loadInstalledAppTypography(): void {
+  if (import.meta.env.VITE_DISABLE_REMOTE_FONTS === '1') return;
   if (document.querySelector('[data-installed-app-fonts]')) return;
 
   const fonts = [

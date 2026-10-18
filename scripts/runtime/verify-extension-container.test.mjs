@@ -26,10 +26,7 @@ describe('production extension container gate', () => {
     assert.match(pin.digest.replace(/^@/, ''), /^sha256:[0-9a-f]{64}$/);
     assert.match(dockerfile, /^HEALTHCHECK .*\\$/m);
     assert.match(dockerfile, /USER node/);
-    assert.match(
-      dockerfile,
-      /^COPY --chown=node:node src\/tools\/video-editor\/data\/astridBridgeWire\.ts \.\/src\/tools\/video-editor\/data\/astridBridgeWire\.ts$/m,
-    );
+    assert.match(dockerfile, /^COPY --chown=node:node src \.\/src$/m);
   });
 
   it('fails closed when the configured digest or built-image attestation drifts', async () => {

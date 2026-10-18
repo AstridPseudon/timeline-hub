@@ -7,11 +7,12 @@ import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const script = path.join(root, 'scripts/patches/remotion-4.0.503-audio-resume.mjs');
+const script = path.join(root, 'scripts/patches/remotion-4.0.509-audio-resume.mjs');
 const targets = [
-  ['CJS', 'dist/cjs/audio/shared-audio-tags.js', '(0, wait_until_actually_resumed_js_1.waitUntilActuallyResumed)'],
-  ['ESM', 'dist/esm/index.mjs', 'waitUntilActuallyResumed'],
+  ['CJS', 'dist/cjs/audio/shared-audio-tags.js', '(0, wait_until_actually_resumed_js_1.waitUntilActuallyResumed)(ctxAndGain.audioContext, logLevel, abortController.signal)'],
+  ['ESM', 'dist/esm/index.mjs', 'waitUntilActuallyResumed(ctxAndGain.audioContext, logLevel, abortController.signal)'],
 ];
+const sourceRoot = process.env.REMOTION_SOURCE_ROOT ?? path.join(root, 'node_modules/remotion');
 const deferred = () => {
   let resolve, reject;
   const promise = new Promise((yes, no) => {resolve = yes; reject = no;});
@@ -27,7 +28,7 @@ function callbackBody(source, form) {
     : 'const resume = useCallback10(() => {';
   const offset = source.indexOf(start);
   assert.notEqual(offset, -1);
-  const end = source.indexOf('}, [ctxAndGain, logLevel]);', offset);
+  const end = source.indexOf('}, [ctxAndGain, _experimentalKeepAudioContextAlive, logLevel]);', offset);
   assert.notEqual(end, -1);
   return source.slice(offset + start.length, end);
 }
@@ -35,6 +36,7 @@ function callbackBody(source, form) {
 function harness(source, form) {
   const native = deferred(), pendingOutput = [], warnings = [];
   const isResuming = {current: null};
+  const nextResumeAttemptId = {current: 0};
   const audioContextIsPlayingEventually = {current: false};
   const audioContext = {currentTime: 0};
   const ctxAndGain = {audioContext, resume: () => native.promise,
@@ -47,11 +49,11 @@ function harness(source, form) {
   };
   const Log = {warn: (...args) => warnings.push(args)};
   const resume = new Function('ctxAndGain', 'audioContextIsPlayingEventually',
-    'nodesToResume', 'isResuming', 'logLevel', 'waitUntilActuallyResumed',
-    'wait_until_actually_resumed_js_1', 'Log', 'log_js_1',
+    'nodesToResume', 'isResuming', 'nextResumeAttemptId', 'logLevel', 'waitUntilActuallyResumed',
+    'wait_until_actually_resumed_js_1', 'Log', 'log_js_1', '_experimentalKeepAudioContextAlive',
     `return function(){${callbackBody(source, form)}}`)(ctxAndGain,
-      audioContextIsPlayingEventually, {current: new Map()}, isResuming,
-      'warn', wait, {waitUntilActuallyResumed: wait}, Log, {Log});
+      audioContextIsPlayingEventually, {current: new Map()}, isResuming, nextResumeAttemptId,
+      'warn', wait, {waitUntilActuallyResumed: wait}, Log, {Log}, false);
   return {native, pendingOutput, warnings, isResuming, resume,
     outputAdvances() {audioContext.currentTime += 0.1; pendingOutput.forEach(output => output.resolve());}};
 }
@@ -59,7 +61,7 @@ function harness(source, form) {
 async function fulfillmentInvariant(source, form) {
   const h = harness(source, form);
   const nativeReturn = h.resume();
-  const sharedWait = h.isResuming.current;
+  const sharedWait = h.isResuming.current?.promise;
   assert.ok(sharedWait);
   let released = false;
   sharedWait.then(() => {released = true;});
@@ -69,7 +71,7 @@ async function fulfillmentInvariant(source, form) {
   await flush();
   assert.equal(released, false, 'apparent output readiness cannot release before native fulfillment');
   assert.equal(h.pendingOutput.length, 0, 'output sampling must start after native fulfillment');
-  assert.equal(h.isResuming.current, sharedWait);
+  assert.equal(h.isResuming.current?.promise, sharedWait);
   h.native.resolve();
   await nativeReturn;
   await flush();
@@ -84,7 +86,7 @@ async function fulfillmentInvariant(source, form) {
 
 async function rejectionInvariant(source, form) {
   const h = harness(source, form), error = new Error('native resume rejected');
-  const nativeReturn = h.resume(), sharedWait = h.isResuming.current;
+  const nativeReturn = h.resume(), sharedWait = h.isResuming.current?.promise;
   h.native.reject(error);
   await nativeReturn; // Existing public behavior swallows logged native failure.
   await sharedWait;   // Existing failure behavior releases rather than deadlocks.
@@ -94,14 +96,14 @@ async function rejectionInvariant(source, form) {
   assert.equal(h.warnings[0].at(-1), error);
 }
 
-test('generated CJS and ESM native-fulfillment fence (original red, candidate green)', async t => {
+test('Remotion 4.0.509 CJS and ESM native-fulfillment fence (original red, patched green)', async t => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'remotion-resume-semantic-'));
   try {
     const original = new Map();
     for (const [form, relative, waitName] of targets) {
-      const installed = fs.readFileSync(path.join(root, 'node_modules/remotion', relative), 'utf8');
-      const before = `${waitName}(ctxAndGain.audioContext, logLevel).then(resolve);`;
-      const after = `resumePromise.then(() => ${waitName}(ctxAndGain.audioContext, logLevel).then(resolve), () => {});`;
+      const installed = fs.readFileSync(path.join(sourceRoot, relative), 'utf8');
+      const before = `${waitName}.then(resolve);`;
+      const after = `resumePromise.then(() => ${waitName}.then(resolve), () => {});`;
       // Allow rerunning after installation; reconstruct ONLY the exact guarded
       // one-line delta. The guard script still validates full-file fingerprints.
       const pristine = installed.includes(after) ? installed.replace(after, before) : installed;
@@ -110,14 +112,15 @@ test('generated CJS and ESM native-fulfillment fence (original red, candidate gr
       fs.mkdirSync(path.dirname(file), {recursive: true});
       fs.writeFileSync(file, pristine);
     }
-    fs.copyFileSync(path.join(root, 'node_modules/remotion/package.json'), path.join(fixture, 'node_modules/remotion/package.json'));
+    fs.copyFileSync(path.join(sourceRoot, 'package.json'), path.join(fixture, 'node_modules/remotion/package.json'));
     execFileSync(process.execPath, [script, '--apply', '--root', fixture], {encoding: 'utf8'});
     for (const [form, relative, waitName] of targets) {
+      const before = `${waitName}.then(resolve);`;
+      const after = `resumePromise.then(() => ${waitName}.then(resolve), () => {});`;
       const pristine = original.get(form), patched = fs.readFileSync(path.join(fixture, 'node_modules/remotion', relative), 'utf8');
       await t.test(`${form}: exact D3 delta only`, () => {
-        assert.equal(patched, pristine.replace(
-          `${waitName}(ctxAndGain.audioContext, logLevel).then(resolve);`,
-          `resumePromise.then(() => ${waitName}(ctxAndGain.audioContext, logLevel).then(resolve), () => {});`));
+        assert.equal(pristine.split(before).length - 1, 1);
+        assert.equal(patched, pristine.replace(before, after));
       });
       await t.test(`${form}: original MUST fail fulfillment invariant`, async () => {
         await assert.rejects(fulfillmentInvariant(pristine, form), /apparent output readiness cannot release before native fulfillment/);

@@ -25,6 +25,7 @@ export default defineConfig({
     ...baseConfig.resolve,
     alias: {
       ...baseAliases,
+      '@remotion/three': path.resolve(__dirname, '../../node_modules/@remotion/three'),
       '@workspace-effects': path.join(renderingElements, 'effects'),
       '@workspace-animations': path.join(renderingElements, 'animations'),
       '@workspace-transitions': path.join(renderingElements, 'transitions'),
@@ -34,5 +35,12 @@ export default defineConfig({
     ...baseConfig.test,
     include: ['src/tools/video-editor/runtime/astridSceneComposition.test.tsx'],
     exclude: ['supabase/functions/**'],
+    server: {
+      ...baseConfig.test.server,
+      deps: {
+        ...baseConfig.test.server?.deps,
+        inline: ['remotion'],
+      },
+    },
   },
 });

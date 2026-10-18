@@ -4,6 +4,9 @@ import { PROJECT_SLUG, TIMELINE_SLUG, resetBridgeBaseline } from './timeline/sup
 const RUNAWAY_PROJECT = 'extension-accessibility';
 const EDITOR_URL = `/tools/video-editor?localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1&timelineOverlayCanary=1&transcriptLaneFixture=1&runawayTimelineProject=${RUNAWAY_PROJECT}`;
 const HARNESS_URL = `/tools/video-editor/harness?scenario=populated&localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1`;
+// This spec exercises the historical 13-extension SDK capability matrix via
+// the explicit fixture catalog enabled by playwright.extension-accessibility.config.ts.
+// The live product dev catalog is generated from Astrid and currently has two entries.
 const EXTENSION_COUNT = 13;
 
 function collectIssues(page: Page): string[] {
@@ -100,7 +103,7 @@ async function saveScreenshot(page: Page, testInfo: TestInfo, name: string): Pro
   await page.screenshot({ path: testInfo.outputPath(name), fullPage: true });
 }
 
-test('all 13 extensions expose state and retain keyboard focus through disable and re-enable', async ({ page }, testInfo) => {
+test('all 13 SDK fixture extensions expose state and retain keyboard focus through disable and re-enable', async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const issues = await openComposedEditor(page);
@@ -135,14 +138,14 @@ test('all 13 extensions expose state and retain keyboard focus through disable a
     JSON.stringify(focusStyle),
   ).toBe(true);
   expect(issues).toEqual([]);
-  await saveScreenshot(page, testInfo, 'all-13-keyboard-focus.png');
+  await saveScreenshot(page, testInfo, 'all-13-fixture-extensions-keyboard-focus.png');
 });
 
 for (const viewport of [
   { name: 'tablet', width: 834, height: 1194 },
   { name: 'phone', width: 420, height: 820 },
 ] as const) {
-  test(`all 13 extension states remain reachable at ${viewport.name} size`, async ({ page }, testInfo) => {
+  test(`all 13 SDK fixture extension states remain reachable at ${viewport.name} size`, async ({ page }, testInfo) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     const issues = await openComposedEditor(page);
@@ -150,7 +153,7 @@ for (const viewport of [
     await expectToggleSemantics(inventory);
     await expectViewportContained(page, viewport.width);
     expect(issues).toEqual([]);
-    await saveScreenshot(page, testInfo, `all-13-${viewport.name}.png`);
+    await saveScreenshot(page, testInfo, `all-13-fixture-extensions-${viewport.name}.png`);
   });
 }
 
@@ -220,7 +223,6 @@ test('200% CSS page-content zoom, reduced motion, names, expanded state, and con
       );
     };
     const selectors = [
-      '[data-video-editor-extension-trust-warning="true"] > div > div > div:last-child',
       '[data-video-editor-extension-toggle] span',
       '[data-video-editor-extension-diagnostics-toggle] span:first-of-type',
     ];

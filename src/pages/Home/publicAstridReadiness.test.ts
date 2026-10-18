@@ -35,4 +35,18 @@ describe('public Astrid readiness reducer', () => {
     const state = createPublicAstridReadiness(2);
     expect(reducePublicAstridReadiness(state, { type: 'module-ready', attempt: 1 })).toBe(state);
   });
+
+  it.each(['presenting', 'settled'] as const)('keeps %s when real signals replace fallbacks', (phase) => {
+    let state = createPublicAstridReadiness();
+    for (const type of ['module-ready', 'media-fallback', 'inspector-fallback', 'timeline-fallback', 'present'] as const) {
+      state = reducePublicAstridReadiness(state, { type, attempt: 0 });
+    }
+    if (phase === 'settled') state = reducePublicAstridReadiness(state, { type: 'settled', attempt: 0 });
+
+    for (const signal of ['media', 'inspector', 'timeline'] as const) {
+      state = reducePublicAstridReadiness(state, { type: `${signal}-ready`, attempt: 0 });
+      expect(state.phase).toBe(phase);
+      expect(state[`${signal}Fallback`]).toBe(false);
+    }
+  });
 });

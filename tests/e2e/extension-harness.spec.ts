@@ -91,7 +91,6 @@ test.describe('Extension Harness — Populated', () => {
 
   test('renders the Extension Manager with package cards', async ({ page }) => {
     await goToScenario(page, 'populated');
-    await expect(page.locator('[data-video-editor-extension-trust-warning="true"]')).toBeVisible();
     await expect(page.locator('[data-video-editor-extension-package-id="ext.inspector-tools"]')).toBeVisible();
     await expect(page.locator('[data-video-editor-extension-package-id="ext.shader-pack"]')).toBeVisible();
     await expect(page.locator('[data-video-editor-extension-package-id="ext.effect-bundle"]')).toBeVisible();
@@ -122,9 +121,9 @@ test.describe('Extension Harness — Populated', () => {
     await goToScenario(page, 'populated');
     await expectNoOverlap(
       page.locator('[data-video-editor-activity-region="true"]'),
-      page.locator('[data-video-editor-extension-trust-warning="true"]'),
+      page.locator('[data-video-editor-extension-manager="true"]'),
       'activity-region',
-      'trust-warning',
+      'extension-manager',
     );
   });
 
@@ -141,29 +140,22 @@ test.describe('Extension Harness — Populated', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('Extension Harness — Empty', () => {
-  test('renders the trust warning banner', async ({ page }) => {
+  test('omits the retired generic trust notice while rendering the empty inventory', async ({ page }) => {
     await goToScenario(page, 'empty');
-    await expect(page.locator('[data-video-editor-extension-trust-warning="true"]')).toBeVisible();
+    await expect(page.locator('[data-video-editor-extension-manager="true"]')).toBeVisible();
+    await expect(page.locator('[data-video-editor-extension-trust-warning="true"]')).toHaveCount(0);
+    await expect(page.locator('[data-video-editor-extension-package-id]')).toHaveCount(0);
   });
 
-  test('shows empty state message', async ({ page }) => {
+  test('shows an empty package inventory', async ({ page }) => {
     await goToScenario(page, 'empty');
-    await expect(page.locator('[aria-label="No packages in inventory"]')).toBeVisible();
+    await expect(page.locator('[data-video-editor-extension-manager="true"]')).toBeVisible();
+    await expect(page.locator('[data-video-editor-extension-package-id]')).toHaveCount(0);
   });
 
   test('activity region is not rendered when there are no events and no children', async ({ page }) => {
     await goToScenario(page, 'empty');
     await expect(page.locator('[data-video-editor-activity-region="true"]')).not.toBeVisible();
-  });
-
-  test('trust warning does not overlap with empty state message', async ({ page }) => {
-    await goToScenario(page, 'empty');
-    await expectNoOverlap(
-      page.locator('[data-video-editor-extension-trust-warning="true"]'),
-      page.locator('[aria-label="No packages in inventory"]'),
-      'trust-warning',
-      'empty-state',
-    );
   });
 });
 
@@ -224,13 +216,13 @@ test.describe('Extension Harness — Package Error', () => {
     );
   });
 
-  test('activity region and trust warning do not overlap', async ({ page }) => {
+  test('activity region and extension manager do not overlap', async ({ page }) => {
     await goToScenario(page, 'package-error');
     await expectNoOverlap(
       page.locator('[data-video-editor-activity-region="true"]'),
-      page.locator('[data-video-editor-extension-trust-warning="true"]'),
+      page.locator('[data-video-editor-extension-manager="true"]'),
       'activity-region',
-      'trust-warning',
+      'extension-manager',
     );
   });
 });
@@ -341,14 +333,15 @@ test.describe('Extension Harness — All Scenarios Grid', () => {
       } else {
         await expect(card.locator('[data-video-editor-activity-region="true"]')).toBeVisible();
       }
-      await expect(card.locator('[data-video-editor-extension-trust-warning="true"]')).toBeVisible();
+      await expect(card.locator('[data-video-editor-extension-manager="true"]')).toBeVisible();
     }
   });
 
-  test('empty scenario card shows "No packages in inventory"', async ({ page }) => {
+  test('empty scenario card has an empty package inventory', async ({ page }) => {
     await goToScenario(page, 'all');
     const emptyCard = page.locator('[data-video-editor-harness-scenario="empty"]');
-    await expect(emptyCard.locator('[aria-label="No packages in inventory"]')).toBeVisible();
+    await expect(emptyCard.locator('[data-video-editor-extension-manager="true"]')).toBeVisible();
+    await expect(emptyCard.locator('[data-video-editor-extension-package-id]')).toHaveCount(0);
   });
 
   test('package-error scenario card shows 5 packages', async ({ page }) => {
@@ -374,9 +367,8 @@ test.describe('Extension Harness — All Scenarios Grid', () => {
 test.describe('Extension Harness — Condensed Viewport', () => {
   test.use({ viewport: { width: 768, height: 1024 } });
 
-  test('populated: renders trust warning, package cards, and summary', async ({ page }) => {
+  test('populated: renders package cards and summary', async ({ page }) => {
     await goToScenario(page, 'populated');
-    await expect(page.locator('[data-video-editor-extension-trust-warning="true"]')).toBeVisible();
     await expect(page.locator('[data-video-editor-extension-package-id="ext.inspector-tools"]')).toBeVisible();
     await expect(page.locator('[data-video-editor-extension-package-id="ext.shader-pack"]')).toBeVisible();
     await expect(page.locator('[data-video-editor-extension-package-id="ext.effect-bundle"]')).toBeVisible();
@@ -389,28 +381,18 @@ test.describe('Extension Harness — Condensed Viewport', () => {
     await expect(page.locator('[data-video-editor-activity-event]')).toHaveCount(3);
   });
 
-  test('populated: no overlap between trust warning, activity region, and package cards', async ({ page }) => {
+  test('populated: manager and activity are separated; package cards do not overlap', async ({ page }) => {
     await goToScenario(page, 'populated');
-    const trust = page.locator('[data-video-editor-extension-trust-warning="true"]');
+    const manager = page.locator('[data-video-editor-extension-manager="true"]');
     const activity = page.locator('[data-video-editor-activity-region="true"]');
-    await expectNoOverlap(trust, activity, 'trust-warning', 'activity-region');
+    await expectNoOverlap(manager, activity, 'extension-manager', 'activity-region');
     await expectNoMutualOverlap(page.locator('body'), '[data-video-editor-extension-package-id]', 'package-card');
   });
 
-  test('empty: renders trust warning and empty state', async ({ page }) => {
+  test('empty: renders manager with no packages', async ({ page }) => {
     await goToScenario(page, 'empty');
-    await expect(page.locator('[data-video-editor-extension-trust-warning="true"]')).toBeVisible();
-    await expect(page.locator('[aria-label="No packages in inventory"]')).toBeVisible();
-  });
-
-  test('empty: trust warning and empty state do not overlap', async ({ page }) => {
-    await goToScenario(page, 'empty');
-    await expectNoOverlap(
-      page.locator('[data-video-editor-extension-trust-warning="true"]'),
-      page.locator('[aria-label="No packages in inventory"]'),
-      'trust-warning',
-      'empty-state',
-    );
+    await expect(page.locator('[data-video-editor-extension-manager="true"]')).toBeVisible();
+    await expect(page.locator('[data-video-editor-extension-package-id]')).toHaveCount(0);
   });
 
   test('package-error: renders all error-state packages with correct badges', async ({ page }) => {
@@ -481,9 +463,8 @@ test.describe('Extension Harness — Condensed Viewport', () => {
 test.describe('Extension Harness — Mobile Viewport', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('populated: renders trust warning, package cards, and summary', async ({ page }) => {
+  test('populated: renders package cards and summary', async ({ page }) => {
     await goToScenario(page, 'populated');
-    await expect(page.locator('[data-video-editor-extension-trust-warning="true"]')).toBeVisible();
     await expect(page.locator('[data-video-editor-extension-package-id="ext.inspector-tools"]')).toBeVisible();
     await expect(page.locator('[data-video-editor-extension-package-id="ext.shader-pack"]')).toBeVisible();
     await expect(page.locator('[data-video-editor-extension-package-id="ext.effect-bundle"]')).toBeVisible();
@@ -492,9 +473,9 @@ test.describe('Extension Harness — Mobile Viewport', () => {
   test('populated: no incoherent overlap between key UI regions', async ({ page }) => {
     await goToScenario(page, 'populated');
     await expectNoOverlap(
-      page.locator('[data-video-editor-extension-trust-warning="true"]'),
+      page.locator('[data-video-editor-extension-manager="true"]'),
       page.locator('[data-video-editor-activity-region="true"]'),
-      'trust-warning',
+      'extension-manager',
       'activity-region',
     );
     await expectNoMutualOverlap(
@@ -509,16 +490,10 @@ test.describe('Extension Harness — Mobile Viewport', () => {
     await expect(page.locator('[aria-label="Extension summary: 3 packages, 3 loaded"]')).toBeVisible();
   });
 
-  test('empty: renders trust warning and empty state, no overlap', async ({ page }) => {
+  test('empty: renders the manager with no packages', async ({ page }) => {
     await goToScenario(page, 'empty');
-    await expect(page.locator('[data-video-editor-extension-trust-warning="true"]')).toBeVisible();
-    await expect(page.locator('[aria-label="No packages in inventory"]')).toBeVisible();
-    await expectNoOverlap(
-      page.locator('[data-video-editor-extension-trust-warning="true"]'),
-      page.locator('[aria-label="No packages in inventory"]'),
-      'trust-warning',
-      'empty-state',
-    );
+    await expect(page.locator('[data-video-editor-extension-manager="true"]')).toBeVisible();
+    await expect(page.locator('[data-video-editor-extension-package-id]')).toHaveCount(0);
   });
 
   test('package-error: renders all error badges and state reasons', async ({ page }) => {

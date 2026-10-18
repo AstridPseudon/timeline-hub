@@ -24,6 +24,7 @@ import { TasksPane } from '@/features/tasks/components/TasksPane/TasksPane';
 import { IncomingTasksProvider } from '@/shared/contexts/IncomingTasksContext';
 import { bootstrapPanesStore } from '@/shared/state/panesStore';
 import {RUNTIME_SCHEMA_DIGEST,RUNTIME_TARGETED_EXECUTION_CAPABILITY} from '@/integrations/runtime/contract-metadata';
+import {RUNTIME_CLIENT_SCOPES} from '@/integrations/runtime/client';
 import '@/index.css';
 
 // Fixture media/network, asynchronous gates, and read-only observations only.
@@ -100,7 +101,7 @@ window.fetch = async (input, init) => {
   const body = request.method === 'POST' ? await request.clone().json() : undefined;
   requests.push({method: request.method, path, ...(body ? {body} : {})});
   if (path.endsWith('/v1/health')) return json({protocol:'workspace.v1',schema_digest:RUNTIME_SCHEMA_DIGEST,runtime_epoch:1,status:'ok'});
-  if (path.endsWith('/v1/handshake')) return json({protocol:'workspace.v1',schema_digest:RUNTIME_SCHEMA_DIGEST,session_id:'fixture-session',actor_id:'fixture',realm_id:'fixture',scopes:[],capabilities:[RUNTIME_TARGETED_EXECUTION_CAPABILITY]});
+  if (path.endsWith('/v1/handshake')) return json({protocol:'workspace.v1',schema_digest:RUNTIME_SCHEMA_DIGEST,session_id:'fixture-session',actor_id:'fixture',realm_id:'fixture',scopes:[...RUNTIME_CLIENT_SCOPES],capabilities:[RUNTIME_TARGETED_EXECUTION_CAPABILITY]});
   if (path.endsWith('/v1/realm')) return json({realm_id:'fixture',display_name:'Fixture',version:1,created_at:new Date().toISOString()});
   const taskMatch = path.match(/\/v1\/tasks\/([^/]+)/);
   const projectMatch = path.match(/\/projects\/([^/]+)/);

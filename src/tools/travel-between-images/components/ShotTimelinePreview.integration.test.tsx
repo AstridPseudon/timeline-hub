@@ -55,15 +55,18 @@ function wrapper() {
 function editedGraph(atMs: number, headId: string) {
   const graph = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
   graph.primary_timeline.head.revision_id = headId;
-  graph.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
-    .internal_timeline_revision.timeline.clips[0]!.at_ms = atMs;
+  const revision = graph.shot_revisions.find((candidate) => candidate.shot_id === 'shot-alpha' && candidate.revision_id === 'rev-a')!;
+  const clip = revision.internal_timeline_revision.timeline.clips[0]!;
+  clip.at_ms = atMs;
+  const pauses = graph.parent_composition.config.app.visualSeamContract.gaps
+    .filter((gap) => gap.kind === 'pause' && gap.track === 'video');
+  const deltaFrames = Math.round(atMs * 30 / 1000);
+  pauses[0]!.startFrame = 60 + deltaFrames;
+  pauses[0]!.endFrame = 120 + deltaFrames;
+  pauses[1]!.startFrame = 180 + deltaFrames;
+  pauses[1]!.endFrame = 240;
   return graph;
 }
-
-// known-failure: astrid-app | 2026-10-30 | product bug: seam admission refuses popup edits that move a declared pause's edges (shotCompositionAdapter.publish vs visualSeamContract)
-const itRefusedBySeamAdmission = it.fails;
-// known-failure: astrid-app | 2026-10-30 | product bug: usePollSync.ts:215 drops the provider-hydrated recovery draft while recovery is active, so the editor shows the canonical clip
-const itRecoveryDraftDropped = it.fails;
 
 describe('shot timeline popup real recovery integration', () => {
   beforeEach(async () => {
@@ -220,7 +223,7 @@ describe('shot timeline popup real recovery integration', () => {
     view.unmount();
   });
 
-  itRecoveryDraftDropped('reopens B with its acknowledged H1 base and retries it through the real popup recovery controls', async () => {
+  it('reopens B with its acknowledged H1 base and retries it through the real popup recovery controls', async () => {
     const graphH0 = editedGraph(200, 'head-retry-h0');
     const graphH1 = editedGraph(900, 'head-retry-h1');
     const adapter = createShotCompositionAdapter({
@@ -270,7 +273,7 @@ describe('shot timeline popup real recovery integration', () => {
     view.unmount();
   });
 
-  itRefusedBySeamAdmission('holds H1 while the real mounted editor still shows H0, then edits through H1 without remounting', async () => {
+  it('holds H1 while the real mounted editor still shows H0, then edits through H1 without remounting', async () => {
     await clearTimelineDraft(recoveryKey);
     const graphH0 = editedGraph(200, 'head-mounted-h0');
     const graphH1 = editedGraph(900, 'head-mounted-h1');

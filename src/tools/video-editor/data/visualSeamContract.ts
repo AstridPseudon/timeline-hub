@@ -348,6 +348,96 @@ function continuityTracksFor(spans: readonly ClipSpan[], options: VisualSeamAnal
   return candidateTracks;
 }
 
+type VisualGapEdge = Readonly<{
+  track: string;
+  previousOccurrenceId: string;
+  nextOccurrenceId: string;
+  startFrame: number;
+  endFrame: number;
+}>;
+
+function projectedOccurrenceId(id: string): string {
+  const separator = id.indexOf(':');
+  return separator < 0 ? '' : id.slice(0, separator);
+}
+
+function visualGapEdges(config: ResolvedTimelineConfig): VisualGapEdge[] {
+  const spans = buildSpans(config);
+  const tracks = continuityTracksFor(spans, {});
+  const spansByTrack = new Map<string, ClipSpan[]>();
+  for (const span of spans) {
+    if (!span.primary || !span.track || !tracks.has(span.clip.track)) continue;
+    const current = spansByTrack.get(span.clip.track) ?? [];
+    current.push(span);
+    spansByTrack.set(span.clip.track, current);
+  }
+  const gaps: VisualGapEdge[] = [];
+  for (const [track, spans] of spansByTrack) {
+    spans.sort((left, right) => left.startFrame - right.startFrame || left.clip.id.localeCompare(right.clip.id));
+    for (let index = 1; index < spans.length; index += 1) {
+      const previous = spans[index - 1]!;
+      const next = spans[index]!;
+      gaps.push({
+        track,
+        previousOccurrenceId: projectedOccurrenceId(previous.clip.id),
+        nextOccurrenceId: projectedOccurrenceId(next.clip.id),
+        startFrame: previous.endFrame,
+        endFrame: next.startFrame,
+      });
+    }
+  }
+  return gaps;
+}
+
+/**
+ * Move only existing pause declarations whose adjacent canonical clips are
+ * stable across a shot edit. This keeps a pause attached to the same cut while
+ * its surrounding content edges move, and leaves unrelated/new gaps undeclared.
+ */
+export function remapDeclaredVisualPauseEdges(
+  previousConfig: ResolvedTimelineConfig,
+  nextConfig: ResolvedTimelineConfig,
+): readonly unknown[] | undefined {
+  const nextApp = record(nextConfig.app);
+  const nextContract = record(nextApp?.visualSeamContract);
+  if (!Array.isArray(nextContract?.gaps)) return undefined;
+  const previousGaps = record(record(previousConfig.app)?.visualSeamContract)?.gaps;
+  const previousEdges = visualGapEdges(previousConfig);
+  const nextEdges = visualGapEdges(nextConfig);
+  let changed = false;
+  const gaps = nextContract.gaps.flatMap((rawGap) => {
+    const gap = record(rawGap);
+    if (gap?.kind !== 'pause' || typeof gap.track !== 'string'
+      || typeof gap.startFrame !== 'number' || !Number.isInteger(gap.startFrame)
+      || typeof gap.endFrame !== 'number' || !Number.isInteger(gap.endFrame)) return [rawGap];
+    const prior = Array.isArray(previousGaps)
+      ? previousGaps.find((candidate) => {
+          const priorGap = record(candidate);
+          return priorGap?.kind === 'pause' && priorGap.track === gap.track
+            && priorGap.startFrame === gap.startFrame && priorGap.endFrame === gap.endFrame;
+        })
+      : undefined;
+    if (!prior) return [rawGap];
+    const priorGap = record(prior)!;
+    const anchoredEdge = previousEdges.find((edge) => edge.track === gap.track
+      && edge.startFrame === priorGap.startFrame && edge.endFrame === priorGap.endFrame);
+    if (!anchoredEdge) return [rawGap];
+    const matchingEdges = nextEdges.filter((edge) => edge.track === anchoredEdge.track
+      && edge.previousOccurrenceId === anchoredEdge.previousOccurrenceId
+      && edge.nextOccurrenceId === anchoredEdge.nextOccurrenceId);
+    const movedEdge = matchingEdges.length === 1 ? matchingEdges[0] : undefined;
+    if (!movedEdge) return [rawGap];
+    if (movedEdge.endFrame <= movedEdge.startFrame) {
+      changed = true;
+      return [];
+    }
+    if (movedEdge.startFrame === gap.startFrame && movedEdge.endFrame === gap.endFrame) return [rawGap];
+    changed = true;
+    return [{...gap, startFrame: movedEdge.startFrame, endFrame: movedEdge.endFrame}];
+  });
+  return changed ? gaps : nextContract.gaps;
+}
+
 export function analyzeVisualSeams(
   config: ResolvedTimelineConfig,
   options: VisualSeamAnalysisOptions = {},
