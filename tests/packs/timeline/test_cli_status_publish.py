@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 
 from astrid.packs.timeline import cli as timeline_cli
+from astrid.core.cli.domain_output import DomainResult, ErrorObject, print_result
+from astrid.sdk.timeline import drafts as timeline_drafts
 from astrid.sdk.timeline import store as timeline_store
 from astrid.sdk.timeline_checkout import Checkout
 
@@ -18,9 +20,11 @@ def test_status_absent_draft_reports_head_without_creating(tmp_path, monkeypatch
     monkeypatch.setattr(timeline_store, "resolve_ids", lambda *_args, **_kwargs: ("p1", "t1", "head-2"))
     monkeypatch.setattr(timeline_store, "current_draft", lambda *_args: "main")
     monkeypatch.setattr(timeline_store, "draft_path", lambda *_args: path)
+    monkeypatch.setattr(timeline_drafts, "expire_drafts", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(timeline_drafts, "list_drafts", lambda *_args, **_kwargs: [])
     monkeypatch.setattr(Checkout, "load", classmethod(lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("must not load an absent draft"))))
 
-    parsed = parser.parse_args(["status", "main", "--project", "p1"])
+    parsed = parser.parse_args(["status", "main", "--project", "p1", "--json"])
 
     assert parsed.handler(parsed) == 0
     payload = _json_result(capsys)
@@ -39,6 +43,7 @@ def test_status_absent_draft_reports_head_without_creating(tmp_path, monkeypatch
         "current_head": "head-2",
         "draft": "main",
         "working_copy": "absent",
+        "drafts": [],
     }
     assert not path.exists()
 
@@ -51,6 +56,9 @@ def test_status_existing_draft_reports_base_head_changes_and_check(tmp_path, mon
     monkeypatch.setattr(timeline_store, "resolve_ids", lambda *_args, **_kwargs: ("p1", "t1", "head-3"))
     monkeypatch.setattr(timeline_store, "current_draft", lambda *_args: "working")
     monkeypatch.setattr(timeline_store, "draft_path", lambda *_args: path)
+    monkeypatch.setattr(timeline_drafts, "expire_drafts", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(timeline_drafts, "list_drafts", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(timeline_store, "checkout_change_units", lambda *_args, **_kwargs: (True, [["clip", "s1", "c2"]]))
 
     class Report:
         valid = False
@@ -79,7 +87,7 @@ def test_status_existing_draft_reports_base_head_changes_and_check(tmp_path, mon
         "_checkout_change_units",
         lambda _checkout: (True, [["clip", "s1", "c2"]]),
     )
-    parsed = parser.parse_args(["status", "main", "--project", "p1"])
+    parsed = parser.parse_args(["status", "main", "--project", "p1", "--json"])
 
     assert parsed.handler(parsed) == 0
     payload = _json_result(capsys)
@@ -108,6 +116,7 @@ def test_status_existing_draft_reports_base_head_changes_and_check(tmp_path, mon
         "placement_changes": [],
         "cut_points": {"moved": [], "added": [], "removed": []},
         "check": {"valid": False, "problems": ["missing media"], "changed_cuts": ["c2"]},
+        "drafts": [],
     }
 
 
@@ -118,6 +127,7 @@ def test_checkout_fresh_keeps_dirty_draft_and_allows_named_fresh(tmp_path, monke
     monkeypatch.setattr(timeline_store, "resolve_ids", lambda *_args, **_kwargs: ("p1", "t1", "head-2"))
     monkeypatch.setattr(timeline_store, "current_draft", lambda *_args: "main")
     monkeypatch.setattr(timeline_store, "draft_path", lambda _p, _t, name: dirty if name == "main" else tmp_path / f"{name}.json")
+    monkeypatch.setattr(timeline_drafts, "expire_drafts", lambda *_args, **_kwargs: [])
 
     class DirtyCheckout:
         base_revision = "head-1"
@@ -147,7 +157,7 @@ def test_checkout_fresh_keeps_dirty_draft_and_allows_named_fresh(tmp_path, monke
     )
     monkeypatch.setattr(Checkout, "draft", classmethod(lambda _cls, *args, **kwargs: calls.append((args, kwargs)) or object()))
 
-    refused = parser.parse_args(["checkout", "main", "--project", "p1", "--fresh"])
+    refused = parser.parse_args(["checkout", "main", "--project", "p1", "--fresh", "--json"])
     assert refused.handler(refused) == 1
     payload = _json_result(capsys)
     assert payload["ok"] is False
@@ -187,7 +197,7 @@ def test_checkout_fresh_refuses_parent_config_edit_when_clip_diff_is_empty(tmp_p
     calls = []
     monkeypatch.setattr(Checkout, "draft", classmethod(lambda _cls, *args, **kwargs: calls.append((args, kwargs)) or object()))
 
-    parsed = parser.parse_args(["checkout", "main", "--project", "p1", "--fresh"])
+    parsed = parser.parse_args(["checkout", "main", "--project", "p1", "--fresh", "--json"])
     assert parsed.handler(parsed) == 1
     payload = _json_result(capsys)
     assert payload["ok"] is False
@@ -217,7 +227,7 @@ def test_publish_forwards_key_and_force_to_sdk_once(tmp_path, monkeypatch, capsy
 
     monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
     parsed = parser.parse_args([
-        "publish", "main", "--project", "p1", "--idempotency-key", "edit-42", "--force", "-m", "edit",
+        "publish", "main", "--project", "p1", "--idempotency-key", "edit-42", "--force", "-m", "edit", "--json",
     ])
 
     assert parsed.handler(parsed) == 0
@@ -243,11 +253,26 @@ def test_publish_unavailable_preserves_runtime_result_and_does_not_retry(tmp_pat
             return dict(receipt)
 
     monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
-    parsed = parser.parse_args(["publish", "main", "--project", "p1", "-m", "edit"])
+    parsed = parser.parse_args(["publish", "main", "--project", "p1", "-m", "edit", "--json"])
     assert parsed.handler(parsed) == 1
     payload = _json_result(capsys)
     assert payload["ok"] is False and payload["error"]["code"] == "runtime_unavailable"
     assert payload["error"]["details"]["receipt"] == receipt
     assert calls == [{"idempotency_key": None, "client": parsed.client, "force": False}]
     assert payload["idempotency_key"] == "saved-request"
+
+
+def test_human_failure_prints_next_action_and_json_keeps_it(capsys) -> None:
+    action = "run timelines status main --project p1"
+    result = DomainResult.failure(ErrorObject("conflict", "draft is dirty", {"next_action": action}))
+
+    assert print_result(result) == 1
+    assert capsys.readouterr().err.splitlines() == [
+        "error conflict: draft is dirty",
+        f"next action: {action}",
+    ]
+
+    assert print_result(result, as_json=True) == 1
+    payload = _json_result(capsys)
+    assert payload["error"]["details"]["next_action"] == action
 

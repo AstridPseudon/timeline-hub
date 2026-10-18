@@ -1,6 +1,8 @@
 """Features that work on the live line and must stay on the combined trunk."""
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from astrid.packs.timeline import cli as timeline_cli
@@ -24,6 +26,122 @@ class _Projects:
 class _Client:
     def __init__(self, project="demo"):
         self.projects = _Projects(project)
+
+
+@pytest.mark.parametrize("argv", [
+    ["edit", "main", "--project", "P"],
+    ["check", "main", "--project", "P"],
+    ["find", "--file", "draft.json", "main", "viral", "--project", "P"],
+    ["undo", "main", "--project", "P"],
+    ["apply", "main", "changes.json", "--project", "P"],
+])
+def test_editor_verbs_offer_json_as_an_opt_in(argv) -> None:
+    parser = timeline_cli.build_parser(_Client("demo"))
+
+    human = parser.parse_args(argv)
+    machine = parser.parse_args([*argv, "--json"])
+
+    assert human.json is False
+    assert machine.json is True
+
+
+@pytest.mark.parametrize("argv", [
+    ["status", "main", "--project", "P"],
+    ["publish", "main", "--project", "P", "-m", "why"],
+    ["history", "main", "--project", "P"],
+    ["diff", "main", "--project", "P"],
+    ["list", "--project", "P"],
+    ["render", "main", "--project", "P"],
+    ["checkout", "main", "--project", "P"],
+])
+def test_human_first_verbs_offer_json_envelopes_as_opt_in(argv) -> None:
+    parser = timeline_cli.build_parser(_Client("demo"))
+
+    human = parser.parse_args(argv)
+    machine = parser.parse_args([*argv, "--json"])
+
+    assert human.json is False
+    assert getattr(human, "format", None) is None
+    assert machine.json is True or getattr(machine, "format", None) == "json"
+
+
+def test_diff_legacy_version_is_human_by_default_and_json_is_enveloped(capsys) -> None:
+    class Timelines:
+        def diff(self, project, ref, *, from_version=None, to_version=None):
+            return DomainResult.success({
+                "project": project,
+                "timeline": ref,
+                "from_version": from_version,
+                "to_version": to_version,
+            })
+
+    client = _Client()
+    client.timelines = Timelines()
+    parser = timeline_cli.build_parser(client)
+
+    human = parser.parse_args(["diff", "main", "--project", "P", "--from-version", "1"])
+    assert human.handler(human) == 0
+    output = capsys.readouterr().out
+    assert output.startswith("project P · ")
+    assert not output.lstrip().startswith("{")
+
+    machine = parser.parse_args([
+        "diff", "main", "--project", "P", "--from-version", "1", "--json",
+    ])
+    assert machine.handler(machine) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert set(payload) == {"ok", "data", "error", "receipt", "idempotency_key"}
+    assert payload["data"]["from_version"] == 1
+
+    invalid = parser.parse_args(["diff", "main", "--project", "P", "--json"])
+    assert invalid.handler(invalid) == 2
+    payload = json.loads(capsys.readouterr().out)
+    assert set(payload) == {"ok", "data", "error", "receipt", "idempotency_key"}
+    assert payload["ok"] is False
+    assert payload["error"]["code"] == "validation_error"
+
+
+def test_list_human_summary_is_default_and_json_is_explicit(capsys) -> None:
+    class Timelines:
+        def list(self, project, *, include_archived=False):
+            return DomainResult.success([{"slug": "main", "name": "Main"}])
+
+    client = _Client()
+    client.timelines = Timelines()
+    parser = timeline_cli.build_parser(client)
+
+    human = parser.parse_args(["list", "--project", "P"])
+    assert human.json is False
+    assert human.handler(human) == 0
+    human_output = capsys.readouterr().out
+    assert human_output.startswith("1 result(s)\n")
+    assert not human_output.lstrip().startswith("{")
+
+    machine = parser.parse_args(["list", "--project", "P", "--json"])
+    assert machine.handler(machine) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert set(payload) == {"ok", "data", "error", "receipt", "idempotency_key"}
+    assert payload["data"][0]["slug"] == "main"
+
+
+def test_unknown_flag_names_verb_flag_and_nearest_option_in_three_lines(capsys) -> None:
+    parser = timeline_cli.build_parser(_Client())
+    with pytest.raises(SystemExit) as exc:
+        parser.parse_args(["edit", "main", "--clip", "c1", "--clpi", "c1"])
+    assert exc.value.code == 2
+    lines = capsys.readouterr().err.splitlines()
+    assert len(lines) <= 3
+    assert "edit" in lines[0] and "--clpi" in lines[0] and "--clip" in lines[0]
+
+
+def test_clip_used_for_cut_note_says_use_cut_flag(tmp_path, capsys) -> None:
+    path = _local_checkout(tmp_path)
+    parsed = timeline_cli.build_parser(_Client(None)).parse_args([
+        "edit", "--file", str(path), "--clip", "R", "--why", "x",
+    ])
+
+    assert parsed.handler(parsed) == 2
+    assert "use --cut" in capsys.readouterr().err
 
 
 VERBS = {

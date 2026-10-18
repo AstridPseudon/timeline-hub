@@ -68,7 +68,7 @@ from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
-from astrid.core.cli.domain_output import DomainResult, envelope_dict, print_result, render_human
+from astrid.core.cli.domain_output import DomainResult, envelope_dict, print_result, render_envelope_json, render_human
 from astrid.core.cli.registration import CommandSpec, register_product_commands
 from astrid.core.cli.task_progress import task_handoff
 from astrid.packs.timeline.cli_visualize import (  # noqa: F401  (re-exported: the verb's helpers live beside it)
@@ -1403,11 +1403,18 @@ def _cmd_diff(parsed: argparse.Namespace) -> int:
             from astrid.core.timeline.authoring_diff_format import format_authoring_revision_diff
             return print_result(
                 result,
+                as_json=as_json,
                 human_renderer=lambda envelope: format_authoring_revision_diff(
+                    envelope_dict(envelope)["data"], mode=output_format,
+                ) if as_json else f"project {parsed.project} · " + format_authoring_revision_diff(
                     envelope_dict(envelope)["data"], mode=output_format,
                 ),
             )
-        return print_result(result, as_json=True)
+        return print_result(
+            result,
+            as_json=as_json,
+            human_renderer=lambda envelope: f"project {parsed.project} · {render_human(envelope)}",
+        )
 
     presentation = getattr(parsed, "presentation", None)
     if as_json and presentation:
@@ -1416,15 +1423,27 @@ def _cmd_diff(parsed: argparse.Namespace) -> int:
         return print_result(_diff_presentation(parsed, presentation), as_json=True)
 
     if not isinstance(from_revision, str) or not from_revision.strip():
-        print(
-            "error validation_error: say what to compare: --from <revision-id> "
-            "[--to <revision-id>] compares two saved revisions (default --to: current head)."
+        from astrid.sdk.contracts import ErrorObject
+
+        print_result(
+            DomainResult.failure(ErrorObject(
+                "validation_error",
+                "say what to compare: --from <revision-id> [--to <revision-id>] "
+                "compares two saved revisions (default --to: current head).",
+                {},
+            )),
+            as_json=as_json,
         )
         return 2
 
     opener = getattr(parsed.client.timelines, "open_bundle", None)
     if not callable(opener):
-        print("error unavailable: this client cannot open timeline revisions")
+        from astrid.sdk.contracts import ErrorObject
+
+        print_result(
+            DomainResult.failure(ErrorObject("unavailable", "this client cannot open timeline revisions", {})),
+            as_json=as_json,
+        )
         return 2
     before = opener(parsed.project, parsed.ref, revision_id=from_revision)
     if not before.ok or not isinstance(before.data, Mapping):
@@ -1472,8 +1491,7 @@ def _cmd_diff(parsed: argparse.Namespace) -> int:
             ])
     diff["commands"] = commands
     if as_json:
-        print(json.dumps({"ok": True, "data": diff, "error": None}, indent=2, sort_keys=True))
-        return 0
+        return print_result(DomainResult.success(diff), as_json=True)
     text = render_diff(diff, title=f"Timeline {after.data.get('timeline_id')}: {old} → {new}",
                        limit=None if getattr(parsed, "all", False) else 40)
     if commands:
@@ -1499,9 +1517,9 @@ def _diff_working_copy(parsed: argparse.Namespace, working: Mapping[str, Any], *
     diff = diff_bundles(head.data["bundle"], working["bundle"])
     diff.update({"from_revision": old, "to_revision": "working copy", "timeline_id": head.data.get("timeline_id")})
     if as_json:
-        print(json.dumps({"ok": True, "data": {**diff, "working_copy": {"base_revision": working["base_revision"],
-                          "edits": len(working["changes"])}}, "error": None}, indent=2, sort_keys=True))
-        return 0
+        return print_result(DomainResult.success({**diff, "working_copy": {
+            "base_revision": working["base_revision"], "edits": len(working["changes"]),
+        }}), as_json=True)
     print(working_banner(working))
     print(render_diff(diff, title=f"Timeline {head.data.get('timeline_id')}: {old} → working copy",
                       limit=None if getattr(parsed, "all", False) else 40))
@@ -2265,7 +2283,7 @@ def _configure_list(subparser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Include archived timelines and their archived_at state.",
     )
-    _add_json_flag(subparser)
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_cmd_list)
 
 
@@ -2401,7 +2419,7 @@ def _configure_history(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
     subparser.add_argument("ref", help="Timeline UUID, ULID, or slug (TL@prev etc. names an earlier revision elsewhere).")
     subparser.add_argument("--limit", type=_positive_int, default=50, help="Newest revisions to list (default 50).")
-    _add_json_flag(subparser)
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_cmd_history)
 
 
@@ -2416,9 +2434,9 @@ def _configure_diff(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--to-version", type=int, help="Explicit legacy integer version (not a canonical parent revision).")
     output = subparser.add_mutually_exclusive_group()
     output.add_argument("--format", choices=("readable", "details", "json"),
-                        help="Group authored changes, show every raw detail, or print the exact SDK envelope (default: json).")
+                        help="Human summary by default; group changes, show details, or print the SDK envelope.")
     output.add_argument("--json", dest="format", action="store_const", const="json",
-                        help="Print the exact SDK envelope; equivalent to --format json (default).")
+                        help="Print the exact SDK envelope; same as --format json.")
     subparser.add_argument(
         "--as",
         dest="presentation",
@@ -2693,7 +2711,7 @@ def _configure_render(subparser: argparse.ArgumentParser) -> None:
         default=3600.0,
         help="Maximum wait for --wait before returning a non-success result (default: 3600).",
     )
-    _add_json_flag(subparser)
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_cmd_render)
 
 
@@ -3657,13 +3675,56 @@ def _as_timeline_verb(handler):
     return run
 
 
+def _json_aware(handler):
+    """Give the hand-written editor verbs an opt-in JSON envelope."""
+    @wraps(handler)
+    def run(parsed):
+        if not getattr(parsed, "json", False):
+            return handler(parsed)
+
+        from contextlib import redirect_stderr, redirect_stdout
+        from io import StringIO
+        from astrid.sdk.contracts import ErrorObject
+
+        stdout, stderr = StringIO(), StringIO()
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            code = int(handler(parsed))
+        output = stdout.getvalue().strip()
+        error_text = stderr.getvalue().strip()
+        try:
+            decoded = json.loads(output) if output else None
+        except json.JSONDecodeError:
+            decoded = None
+        if isinstance(decoded, Mapping) and set(decoded) == {
+            "ok", "data", "error", "receipt", "idempotency_key",
+        }:
+            print(render_envelope_json(decoded))
+            return code
+        if code in (0, 3):
+            data = decoded if decoded is not None else {"summary": output, "exit_code": code}
+            result = DomainResult.success(data)
+        else:
+            message = error_text or output or f"{getattr(parsed, 'command', 'timeline command')} failed"
+            details: dict[str, Any] = {"summary": output} if output and output != message else {}
+            action = next((line.partition(":")[2].strip() for line in message.splitlines()
+                           if line.lower().startswith("next action:")), None)
+            if action:
+                details["next_action"] = action
+            result = DomainResult.failure(ErrorObject(
+                "usage_error" if code == 2 else "command_failed", message, details,
+            ))
+        print(render_envelope_json(result))
+        return code
+    return run
+
+
 def _configure_checkout(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline id or slug to check out.")
     subparser.add_argument("--from", dest="from_ref", help="Adopt content from another timeline into this working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("--fresh", action="store_true", help="Check out the current head instead of reusing the selected working copy.")
-    _add_json_flag(subparser)
+    _add_json_flag(subparser, default=False)
     subparser.add_argument("--refresh", action="store_true", help="Rebase this working copy's recorded commands onto the observed head.")
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_checkout))
 
@@ -3706,7 +3767,7 @@ def _configure_status(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--watch", action="store_true", help="Poll the compact Runtime head read-only; Ctrl-C stops.")
     subparser.add_argument("--poll-seconds", type=_positive_float, default=2.0)
     subparser.add_argument("--timeout-seconds", type=_positive_float, default=3600.0)
-    _add_json_flag(subparser)
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_status))
 
 
@@ -3718,7 +3779,7 @@ def _configure_publish(subparser: argparse.ArgumentParser) -> None:
     _add_idempotency_key(subparser)
     subparser.add_argument("--force", action="store_true", help="Retained spelling; guarded COMMIT refuses forced expectation overrides.")
     subparser.add_argument("--dry-run", action="store_true", help="Preview through COMMIT without reserving a publish intent.")
-    _add_json_flag(subparser)
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_publish))
 
 
@@ -3962,7 +4023,8 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.epilog = ("Canonical edit spellings (registry):\n" + render_canonical_flag_reference()
                         + "\n\nRetained aliases (registry):\n" + render_cli_alias_reference())
     _configure_edit_help(subparser)
-    subparser.set_defaults(handler=_as_timeline_verb(_cmd_edit))
+    _add_json_flag(subparser, default=False)
+    subparser.set_defaults(handler=_as_timeline_verb(_json_aware(_cmd_edit)))
 
 
 def _configure_check(subparser: argparse.ArgumentParser) -> None:
@@ -3979,7 +4041,8 @@ def _configure_check(subparser: argparse.ArgumentParser) -> None:
     add_zoom_flags(subparser)
     from astrid.packs.timeline.cli_sweep import add_check_sweep_flag
     add_check_sweep_flag(subparser)
-    subparser.set_defaults(handler=_as_timeline_verb(_cmd_check))
+    _add_json_flag(subparser, default=False)
+    subparser.set_defaults(handler=_as_timeline_verb(_json_aware(_cmd_check)))
 
 
 def _cmd_assets(parsed: argparse.Namespace) -> int:
@@ -4019,7 +4082,8 @@ def _configure_find(subparser: argparse.ArgumentParser) -> None:
     from astrid.packs.timeline.cli_find import configure_find, run_find
 
     configure_find(subparser, _add_project_arg)
-    subparser.set_defaults(handler=run_find)
+    _add_json_flag(subparser, default=False)
+    subparser.set_defaults(handler=_json_aware(run_find))
 
 
 def _configure_working_verb(name: str):
@@ -4041,7 +4105,8 @@ def _configure_apply(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("sheet_file", help="Path to an edited cut sheet, commands JSONL file, or Python edit script.")
-    subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_apply)))
+    _add_json_flag(subparser, default=False)
+    subparser.set_defaults(handler=_as_timeline_verb(_json_aware(_guarded(2, _cmd_apply))))
 
 
 def _configure_adopt_music(subparser):
@@ -4058,7 +4123,11 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
     if handler is _cmd_undo:
         subparser.add_argument("--publication", help="Stage this publication's inverse from verified local commands.")
     subparser.add_argument("--steps", dest="steps_option", type=_positive_int, default=None, help="The same, as an option.")
-    subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _with_steps(handler))))
+    wrapped = _guarded(2, _with_steps(handler))
+    if handler is _cmd_undo:
+        _add_json_flag(subparser, default=False)
+        wrapped = _json_aware(wrapped)
+    subparser.set_defaults(handler=_as_timeline_verb(wrapped))
 
 
 def _configure_restore(subparser: argparse.ArgumentParser) -> None:

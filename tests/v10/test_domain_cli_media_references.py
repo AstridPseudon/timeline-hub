@@ -88,7 +88,12 @@ class _RecordingMedia:
         )
         key = idempotency_key or "generated-key"
         return DomainResult.success(
-            {"id": "M-1", "project_id": "P-1", "content_hash": "abc"},
+            {
+                "id": "M-1",
+                "project_id": "P-1",
+                "content_hash": "abc",
+                "digest": "sha256:" + "a" * 64,
+            },
             receipt=_receipt("core.media.import", key),
             idempotency_key=key,
         )
@@ -522,8 +527,38 @@ def test_media_import_file_is_one_sdk_call_with_exact_envelope(tmp_path, capsys)
     assert set(envelope) == ENVELOPE_KEYS
     assert envelope["ok"] is True
     assert envelope["data"]["id"] == "M-1"
+    assert envelope["data"]["digest"] == "sha256:" + "a" * 64
     assert envelope["receipt"]["command_kind"] == "core.media.import"
     assert envelope["idempotency_key"] == "generated-key"
+
+
+def test_media_import_human_output_includes_reusable_handle_and_swap_command(tmp_path, capsys) -> None:
+    path = tmp_path / "shot.png"
+    path.write_bytes(b"png-bytes")
+    client = _FakeClient()
+
+    rc = _run("media", ["import", str(path), "--project", "demo"], client=client)
+
+    handle = "sha256:" + "a" * 64
+    assert rc == 0
+    output = capsys.readouterr().out.splitlines()
+    assert f"handle: {handle}" in output
+    assert f"use: --swap-asset {handle}" in output
+    assert client.calls[0][0] == "media.import_file"
+
+
+def test_media_import_human_output_omits_invalid_digest_handle(tmp_path, capsys) -> None:
+    path = tmp_path / "shot.png"
+    path.write_bytes(b"png-bytes")
+    client = _FakeClient()
+    client.media.import_file = lambda **_kwargs: DomainResult.success({"digest": "sha256:not-a-digest"})
+
+    rc = _run("media", ["import", str(path), "--project", "demo"], client=client)
+
+    assert rc == 0
+    output = capsys.readouterr().out
+    assert "handle:" not in output
+    assert "--swap-asset" not in output
 
 
 def test_media_import_directory_is_one_sdk_call(tmp_path, capsys) -> None:

@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import difflib
+import re
+import sys
 from typing import Any
 
 
@@ -35,8 +38,41 @@ class TimelinesParser(argparse.ArgumentParser):
     """``show TL --project P c41.mink``: a positional after the flags fills the verb's open positional
     (address, word, query, sheet file, asset key) instead of failing with "unrecognized arguments"."""
 
+    def error(self, message: str) -> None:
+        match = re.search(r"unrecognized arguments:\s+(.+)$", message)
+        if match:
+            tokens = match.group(1).split()
+            bad = next((token for token in tokens if token.startswith("-") and token not in self._option_string_actions), None)
+            if bad:
+                options = set(self._option_string_actions)
+                pending = [self]
+                while pending:
+                    current = pending.pop()
+                    for action in current._actions:
+                        if isinstance(action, argparse._SubParsersAction):
+                            pending.extend(action.choices.values())
+                        else:
+                            options.update(action.option_strings)
+                command = getattr(getattr(self, "_namespace_for_error", None), "command", None)
+                if not command:
+                    argv = getattr(self, "_args_for_error", [])
+                    top_level = next((
+                        action.choices for action in self._actions
+                        if isinstance(action, argparse._SubParsersAction)
+                    ), {})
+                    command = next((token for token in argv if token in top_level), None)
+                verb = str(command or self.prog.rsplit(" ", 1)[-1])
+                nearest = difflib.get_close_matches(bad, options, n=1, cutoff=0.45)
+                suggestion = f"; did you mean {nearest[0]}?" if nearest else ""
+                print(f"{verb}: unknown flag {bad}{suggestion}", file=sys.stderr)
+                raise SystemExit(2)
+        super().error(message)
+
     def parse_args(self, args: Any = None, namespace: Any = None) -> argparse.Namespace:
-        parsed, extras = self.parse_known_args(args, namespace)
+        raw_args = list(sys.argv[1:] if args is None else args)
+        self._args_for_error = raw_args
+        parsed, extras = self.parse_known_args(raw_args, namespace)
+        self._namespace_for_error = parsed
         loose = [e for e in extras if not e.startswith("-")]
         if extras and len(loose) == len(extras):
             for dest in ("address", "word", "query", "sheet", "sheet_file", "key", "steps"):
