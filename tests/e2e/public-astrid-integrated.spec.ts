@@ -62,12 +62,19 @@ test.afterEach(async ({ page }, info) => {
 });
 
 test('A01/A02/A03/A10/A13 production entries and repeated retained-state history', async ({ page }, info) => {
-  const editorRequests: string[] = [];
-  page.on('request', (request) => { if (/PublicAstridMountedEditor|publicAstridExample|public-example/.test(request.url())) editorRequests.push(request.url()); });
+  const editorRuntimeRequests: string[] = [];
+  page.on('request', (request) => {
+    // `publicAstridExampleSelection.ts` is shell-safe metadata, statically used for
+    // the preview label. Only the lazy editor component and full example payload
+    // count as editor runtime on a page that does not mount Home.
+    if (/\/PublicAstridMountedEditor\.tsx(?:\?|$)|\/content\/light-study-v1\/public-example\.ts(?:\?|$)/.test(request.url())) {
+      editorRuntimeRequests.push(request.url());
+    }
+  });
   await page.goto('/vision');
   await surface(page, 'vision');
   await page.waitForTimeout(700);
-  expect(editorRequests).toEqual([]);
+  expect(editorRuntimeRequests).toEqual([]);
   await expect(page.locator('main.astrid-public-site')).toHaveCount(0);
   await shot(page, info, 'direct-vision');
   for (const route of ['/', '/home', '/home?experience=agent']) {
@@ -77,6 +84,8 @@ test('A01/A02/A03/A10/A13 production entries and repeated retained-state history
     await expect.soft(page.locator('.astrid-editor-stage')).toHaveAttribute('data-astrid-readiness', 'settled', { timeout: route.includes('agent') ? 5_000 : 30_000 });
     await shot(page, info, `entry-${route.includes('agent') ? 'agent' : route === '/' ? 'root' : 'home'}`);
   }
+  expect(editorRuntimeRequests.some((url) => url.includes('/PublicAstridMountedEditor.tsx'))).toBe(true);
+  expect(editorRuntimeRequests.some((url) => url.includes('/content/light-study-v1/public-example.ts'))).toBe(true);
   const editor = page.locator('.astrid-editor-stage');
   await editor.evaluate((element) => element.setAttribute('data-f08-identity', 'retained'));
   for (let trip = 0; trip < 3; trip += 1) {
