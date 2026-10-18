@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { buildHomeDocumentHandoffUrl } from './homeDocumentHandoffUrl.ts';
 
 type ReplaceDocument = (url: string) => void;
 
@@ -7,24 +8,18 @@ interface HomeDocumentHandoffProps {
   replaceDocument?: ReplaceDocument;
 }
 
-export function buildHomeDocumentHandoffUrl(
-  location: Pick<Location, 'search' | 'hash'>,
-  origin: string,
-): string {
-  const target = new URL('/home', origin);
-  target.search = location.search;
-  target.hash = location.hash;
-  return target.href;
-}
+// Module-scope so the default keeps one identity across renders; an inline default
+// would change every render and re-run the handoff effect each time.
+const replaceWindowDocument: ReplaceDocument = (url) => window.location.replace(url);
 
 export function HomeDocumentHandoff({
-  replaceDocument = (url) => window.location.replace(url),
+  replaceDocument = replaceWindowDocument,
 }: HomeDocumentHandoffProps) {
-  const location = useLocation();
+  const { hash, search } = useLocation();
 
   useEffect(() => {
-    replaceDocument(buildHomeDocumentHandoffUrl(location, window.location.origin));
-  }, [location.hash, location.search, replaceDocument]);
+    replaceDocument(buildHomeDocumentHandoffUrl({ hash, search }, window.location.origin));
+  }, [hash, search, replaceDocument]);
 
   return null;
 }

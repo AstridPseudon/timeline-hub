@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, type CSSProperties, type RefObject } from 'react';
+import { useLayoutEffect, useRef, type CSSProperties, type RefObject } from 'react';
 import type { PublicAstridAudience } from './publicAstridMotion';
 import { readPublicAstridPlayerHeight } from './usePublicAstridPlayerHeight';
 import {
@@ -281,13 +281,6 @@ function connectorControls(start: Point, end: Point, side: CalloutSide, swing?: 
     : { c1: { x: start.x, y: start.y + direction * reach }, c2: { x: end.x, y: end.y - direction * reach } };
 }
 
-function blendPoint(from: Point, to: Point, progress: number): Point {
-  return {
-    x: from.x + (to.x - from.x) * progress,
-    y: from.y + (to.y - from.y) * progress,
-  };
-}
-
 /** Add a bounded S-bend without moving either endpoint. The opposite control-point offsets
  * make the connector breathe laterally instead of translating as one rigid curve. The small
  * tangential trail makes the rear half follow the leading half like a flexible drawn stroke. */
@@ -556,8 +549,8 @@ export function PublicAstridCallouts({ stageRef, audience, reducedMotion, active
           ? cardAnchor(box, geometry.side, geometry.end, phone ? callout.phoneAnchor : undefined)
           : { x: box.left + box.width * geometry.swing, y: geometry.side === 'top' ? box.top : box.bottom };
         const start = anchor(cardBox, { side, swing, end });
-        let sx = start.x - originX;
-        let sy = start.y - originY;
+        const sx = start.x - originX;
+        const sy = start.y - originY;
         let ex = end.x - originX;
         let ey = end.y - originY;
         let slotTransitionEnd = slotExtendAt + extendDuration + CALLOUT_VACUUM_SETTLE_MS;
@@ -945,7 +938,7 @@ export function PublicAstridCallouts({ stageRef, audience, reducedMotion, active
       releaseTracked(stageElement.querySelector<HTMLElement>('.astrid-preview-transport-outlet'));
       // The outgoing launcher stays at its tracked box until the connector retargets.
     };
-  }, [active, appView, callouts, reducedMotion, stageRef]);
+  }, [active, appView, audience, callouts, reducedMotion, stageRef]);
 
   return (
     <PublicAstridCalloutLayout audience={audience} reducedMotion={reducedMotion} active={active} move={moveRef}>

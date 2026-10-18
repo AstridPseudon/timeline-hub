@@ -1,7 +1,8 @@
 import { render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import { buildHomeDocumentHandoffUrl, HomeDocumentHandoff } from './HomeDocumentHandoff.tsx';
+import { HomeDocumentHandoff } from './HomeDocumentHandoff.tsx';
+import { buildHomeDocumentHandoffUrl } from './homeDocumentHandoffUrl.ts';
 
 describe('HomeDocumentHandoff', () => {
   it('builds a same-origin /home replacement preserving search and hash', () => {
