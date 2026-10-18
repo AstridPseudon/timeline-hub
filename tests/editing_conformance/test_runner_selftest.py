@@ -488,7 +488,7 @@ def test_repository_scenarios_have_the_expected_frontends():
         "look.clear.rocket-x",
         "look.replace-asset.everywhere",
     }
-    assert len(scenarios) == 61
+    assert len(scenarios) == 62
     for scenario in scenarios:
         if scenario.id in cli_only:
             assert scenario.present() == scenario.runnable() == ["cli"]
