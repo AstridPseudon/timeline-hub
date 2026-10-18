@@ -46,7 +46,7 @@ from astrid_runtime.custody_broker import default_process_identity
 
 
 RUNTIME_ROOT = Path(__file__).resolve().parents[1]
-ASTRID_PYTHON = Path(sys.executable).resolve()
+ASTRID_PYTHON = Path(sys.executable)
 
 
 @pytest.fixture
@@ -64,6 +64,7 @@ _ASTRID_RECEIVER = r'''import hashlib, json, os, signal, subprocess, sys, time
 from pathlib import Path
 from astrid.core.execution.generic_host import LocalExecutionPreparation, _await_worker_activation
 from astrid.core.execution.custody_broker import default_process_identity
+from runtime_protocol.local_worker_composition import _actual_executable
 
 control_fd, activation_fd = map(int, sys.argv[1:3])
 operation_id, channel_id, credential_file, scope, config_path = sys.argv[3:]
@@ -96,7 +97,11 @@ class CpuGraph:
         self.request=request; self.engine=None; self.listener_pid=None; self.listener_birth=None
         self.refs={}; self.aborted=False
     def prepare(self):
-        engine_code = "import subprocess,sys,time,signal; p=subprocess.Popen([sys.executable,'-c','import time; time.sleep(600)']); print(p.pid,flush=True); signal.signal(signal.SIGTERM,lambda *_:sys.exit(0));\ntry: time.sleep(600)\nfinally: p.terminate(); print('listener-exit:'+str(p.wait()),flush=True)"
+        engine_code = "import subprocess,sys,time,signal; p=subprocess.Popen([LISTENER_EXE,'-c','import time; time.sleep(600)']); print(p.pid,flush=True); signal.signal(signal.SIGTERM,lambda *_:sys.exit(0));\ntry: time.sleep(600)\nfinally: p.terminate(); print('listener-exit:'+str(p.wait()),flush=True)"
+        # The OS reports a different executable path for a grandchild of a venv
+        # interpreter than for the child itself; launch the listener by the path
+        # the OS reports for this process so its pin is the one Runtime measures.
+        engine_code = engine_code.replace("LISTENER_EXE", repr(str(_actual_executable(os.getpid()))))
         self.engine=subprocess.Popen([sys.executable,"-c",engine_code], start_new_session=True,
                                      stdout=subprocess.PIPE, text=True)
         self.listener_pid=int(self.engine.stdout.readline().strip())
@@ -243,7 +248,7 @@ def _fixture_profile(root: Path) -> LocalWorkerProfile:
     config = {"runtime_root":str(root),"cwd":str(root),"server_log_path":str(session_root/"comfy.log"),
               "port":18888,"locality":"managed_local_server","warm_policy":"auto","ready_timeout_sec":5}
     session_digest="sha256:"+hashlib.sha256(json.dumps(config,indent=2,sort_keys=True).encode()).hexdigest()
-    py=Path(sys.executable).resolve(); exe_digest=_digest(py)
+    py=Path(_actual_executable(os.getpid())); exe_digest=_digest(py)
     launch={"module":"vibecomfy.commands.session","session_root":str(session_root),"config":config,
             "source_revision":"1"*40,"source_content_digest":"sha256:"+"3"*64,
             "listener_argv":[str(py),"-c","pass"],
@@ -277,7 +282,7 @@ class _Adapter(CrossProcessWorkerPreparer):
         from runtime_protocol.local_execution_supervisor import host_prepare_request
         runtime_end,relay_end=socket.socketpair(); runtime_end.settimeout(5)
         host_scope=str(profile.support_root/"custody"/operation_id)
-        Path(host_scope).mkdir(parents=True,exist_ok=True)
+        Path(host_scope).mkdir(parents=True,exist_ok=True,mode=0o700)
         owner=default_process_identity(os.getpid())
         preparation=host_prepare_request(operation_id=operation_id,channel_id=channel_id,owner_epoch="cpu-proof-epoch",
           runtime_owner={"pid":os.getpid(),"uid":os.getuid(),"birth_id":owner["birth_id"],
@@ -294,7 +299,7 @@ class _Adapter(CrossProcessWorkerPreparer):
         relay_identity=default_process_identity(process.pid)
         if relay_identity is None: raise AssertionError("Runtime relay subprocess identity was not observable")
         observed_control=_ObservedChannel(runtime_end,self.events)
-        handle=SimpleNamespace(worker=process,birth_id=relay_identity["birth_id"],control=observed_control,
+        handle=SimpleNamespace(host_only=False,worker=process,birth_id=relay_identity["birth_id"],control=observed_control,
           rpc_lock=threading.RLock(),relay=True,closed=False,activated=False,retained=_RetainedRelay(process.pid),
           owner_epoch="cpu-proof-epoch",custody_scope=host_scope,preparation=preparation,report_value=None)
         self._active=handle; self._current=handle
