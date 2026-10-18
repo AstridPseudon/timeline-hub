@@ -24,7 +24,7 @@ from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
 pytestmark = pytest.mark.integration  # a real daemon from a second checkout, and short-lived subprocesses
 
 ASTRID = Path(__file__).resolve().parents[2]
-RUNTIME_COMMIT = json.loads((ASTRID / "astrid_runtime_client" / "vendor.lock.json").read_text())["source_commit"]
+RUNTIME_COMMIT = json.loads((ASTRID / "runtime.lock.json").read_text())["source_commit"]
 ACTOR = "owner"
 # Spelled out, not imported: this is the contract the App-side harness relies on.
 CONTEXT = {

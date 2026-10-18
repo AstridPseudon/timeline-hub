@@ -84,14 +84,14 @@ pack_manifests = sorted(
     path.relative_to(repo_root / "astrid").as_posix()
     for path in (repo_root / "astrid" / "packs").glob("*/pack.yaml")
 )
-vendor_lock = json.loads((repo_root / "astrid_runtime_client" / "vendor.lock.json").read_text("utf-8"))
+vendor_lock = json.loads((repo_root / "runtime.lock.json").read_text("utf-8"))
 spec = importlib.util.spec_from_file_location(
     "checkout_contract_metadata", repo_root / "astrid_runtime_client" / "contract_metadata.py"
 )
 checkout_contract = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(checkout_contract)
 assert pack_manifests, "checkout has no astrid/packs/*/pack.yaml to compare against"
-assert vendor_lock["files"], "vendor.lock.json lists no files"
+assert vendor_lock["files"], "runtime.lock.json lists no files"
 
 # --- Lane programs, run by the INSTALLED interpreter. -------------------------
 REGISTRY_LANE = """
@@ -224,7 +224,10 @@ try:
     assert "package resources: OK" in resource_probe.stdout
 
     # --- Vendored client: installed copy, byte-identical to the lock ----------
-    lock_hashes = {name: entry["sha256"] for name, entry in vendor_lock["files"].items()}
+    lock_hashes = {
+        name: entry["sha256"] for name, entry in vendor_lock["files"].items()
+        if name.startswith("astrid_runtime_client/")
+    }
     runtime_client = harness.run_lane(
         "runtime-client", ["-c", CLIENT_LANE, json.dumps(lock_hashes)], check=True
     )

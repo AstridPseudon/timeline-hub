@@ -514,7 +514,7 @@ def load_vendored_timeline_schema() -> dict[str, Any]:
     The pinned ``banodoco_timeline_schema`` package does not define
     ``tracks[].role``. The Runtime's role-aware ``contract/schemas`` artifact
     is copied here by ``scripts/vendor_lock.py update`` (see
-    ``schema/vendor.lock.json``) and is the validation source.
+    ``runtime.lock.json``) and is the validation source.
     """
     return cast(dict[str, Any], json.loads(_VENDORED_SCHEMA.read_text(encoding="utf-8")))
 

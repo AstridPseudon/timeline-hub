@@ -185,8 +185,8 @@ jobs:
           name: release-wheel-${{ matrix.python-version }}
           path: dist/
 
-  # Boundary (testing plan C1, R-3): every vendored copy still matches what the Runtime's main produces.
-  # The default-lane test (tests/test_vendor_lock.py) catches local edits; this catches a producer change.
+  # Boundary: every vendored copy matches the immutable Runtime commit selected by runtime.lock.json.
+  # The default-lane test catches local edits; this job also verifies producer manifest and source bytes.
   boundary:
     name: boundary
     runs-on: ubuntu-latest
@@ -195,11 +195,15 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Read the pinned Runtime commit
+        id: runtime-pin
+        run: echo "commit=$(python -c 'import json; print(json.load(open("runtime.lock.json"))["source_commit"])')" >> "$GITHUB_OUTPUT"
+
       - name: Check out the Runtime (producer)
         uses: actions/checkout@v4
         with:
           repository: banodoco/astrid-runtime
-          ref: main
+          ref: ${{ steps.runtime-pin.outputs.commit }}
           path: runtime-producer
 
       - name: Set up Python
@@ -207,14 +211,5 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Vendored Runtime client matches the producer
-        run: python scripts/vendor_lock.py check astrid_runtime_client/vendor.lock.json --producer runtime-producer
-
-      - name: Vendored TimelineConfig schema matches the producer
-        run: python scripts/vendor_lock.py check astrid/core/timeline/schema/vendor.lock.json --producer runtime-producer
-
-      - name: Visual-boundary fixture matches the producer
-        run: python scripts/vendor_lock.py check tests/fixtures/vendor.lock.json --producer runtime-producer
-
-      - name: Recorded Runtime responses match the producer
-        run: python scripts/vendor_lock.py check tests/fixtures/runtime-responses/vendor.lock.json --producer runtime-producer
+      - name: All vendored Runtime artifacts match the pinned producer
+        run: python scripts/vendor_lock.py check runtime.lock.json --producer runtime-producer
