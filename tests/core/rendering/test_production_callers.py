@@ -21,6 +21,7 @@ raw-command launcher that backend renderer manifests execute.
 
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -126,7 +127,7 @@ _MANIFEST_SUFFIXES = {".yaml", ".yml", ".json"}
 def _run_grep(pattern: str, globs: tuple[str, ...]) -> list[str]:
     """Run ripgrep over ``astrid/`` and return matching ``path:line:...`` lines.
 
-    Falls back to plain ``grep -rnP`` when ripgrep is unavailable.  An exit
+    Falls back to a Python regex scan when ripgrep is unavailable. An exit
     code of 1 (no matches) is not an error.
     """
     try:
@@ -137,12 +138,24 @@ def _run_grep(pattern: str, globs: tuple[str, ...]) -> list[str]:
             timeout=60,
         )
     except FileNotFoundError:
-        result = subprocess.run(
-            ["grep", "-rnP", pattern, str(ASTRID_DIR)],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
+        # macOS ships BSD grep, which does not implement ``-P``. Keep this
+        # source-topology gate working on clean hosts without ripgrep by
+        # applying the same regex to the requested file suffixes in Python.
+        suffixes = {glob[1:] for glob in globs if glob.startswith("*")}
+        expression = re.compile(pattern)
+        matches = []
+        for path in sorted(ASTRID_DIR.rglob("*")):
+            if not path.is_file() or path.suffix not in suffixes:
+                continue
+            lines = path.read_text(encoding="utf-8").splitlines()
+            matches.extend(
+                f"{path}:{line_number}:{line}"
+                for line_number, line in enumerate(lines, start=1)
+                if expression.search(line)
+            )
+        return matches
+    if result.returncode not in (0, 1):
+        raise RuntimeError(f"source scan failed: {result.stderr}")
     return [line for line in result.stdout.splitlines() if line.strip()]
 
 
@@ -196,6 +209,20 @@ def test_backend_import_pattern_still_observes_known_importers() -> None:
     assert "astrid/packs/rendering/actions/render/audio_reactive_colour.py" in paths
     assert "astrid/packs/rendering/run.py" in paths
     assert any(p.startswith(_BACKEND_IMPL_PREFIX) for p in paths)
+
+
+def test_grep_fallback_scans_source_when_ripgrep_is_unavailable(monkeypatch) -> None:
+    """The clean-host fallback must not depend on GNU grep's unsupported -P flag."""
+
+    def missing_ripgrep(*args, **kwargs):
+        raise FileNotFoundError("rg")
+
+    monkeypatch.setattr(subprocess, "run", missing_ripgrep)
+    matches = _run_grep(_BACKEND_IMPORT, _PY_GLOBS)
+    paths = {_rel_path(match) for match in matches}
+
+    assert "astrid/packs/rendering/actions/render/audio_reactive_colour.py" in paths
+    assert "astrid/packs/rendering/run.py" in paths
 
 
 def test_no_production_backend_imports_outside_allowlist() -> None:
