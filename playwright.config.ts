@@ -51,16 +51,17 @@ const launchOptions = chromiumExecutablePath
   ? { executablePath: chromiumExecutablePath, args: [...BROWSER_DNS_BLACKHOLE_ARGS] }
   : { args: [...BROWSER_DNS_BLACKHOLE_ARGS] };
 
-// Timeline device specs and the extension harness need a live dev server plus
-// the local-mode bridge stub (both booted by `webServer` below). They are
-// registered only for their opt-in scripts and are excluded from every default
-// project.
+// Timeline device specs need a live dev server plus the local-mode bridge stub
+// (both booted by `webServer` below). Their opt-in script owns their collection.
 // See `npm run test:e2e:timeline`.
 const TIMELINE_DEVICE_SPECS = /tests[\\/]e2e[\\/]timeline[\\/].*\.spec\.ts$/;
 const RENDERER_OWNED_TIMELINE_SPECS = /(?:caption-render-export|caption-render-matrix)\.spec\.ts$/;
 const includeTimelineDevices = process.env.PLAYWRIGHT_TIMELINE_DEVICES === '1';
-const includeExtensionHarness = process.env.PLAYWRIGHT_EXTENSION_HARNESS === '1';
 const EXTENSION_HARNESS_SETUP_SPEC = /extension-harness\.setup\.ts$/;
+// These specs have dedicated configs which provision their browser, bridge and
+// raster policy. The default device matrix must not collect them a second time
+// under a different topology (in particular, mobile WebKit is not a pixel gate).
+const DEDICATED_EXTENSION_SPECS = /extension-(?:accessibility|cross-browser|visual-regression)\.spec\.ts$/;
 // The bridge port is run-isolated too, so a stale bridge from another
 // checkout cannot answer this run's requests.
 const bridgePort = inheritedRunPorts
@@ -71,10 +72,7 @@ const bridgePort = inheritedRunPorts
 // as though they were stale external processes.
 process.env.REIGH_TIMELINE_PORTS_ALLOCATED = '1';
 const bridgeServeCommand = 'node tests/e2e/timeline/astrid-bridge-stub.mjs';
-const includeBridgeServer = includeTimelineDevices || includeExtensionHarness;
-const extensionHarnessDependencies = includeExtensionHarness
-  ? ['extension-harness-setup']
-  : [];
+const extensionHarnessDependencies = ['extension-harness-setup'];
 // Release specs require the paired gate's provisioned fixtures and credentials;
 // playwright.paired-release.config.ts owns their collection.
 const PAIRED_RELEASE_SPECS = /tests[\\/]e2e[\\/]release[\\/].*\.spec\.ts$/;
@@ -84,6 +82,7 @@ const LOCAL_JOURNEY_SPECS = /tests[\\/]e2e[\\/]local[\\/].*\.spec\.ts$/;
 const defaultProjectIgnores = [
   TIMELINE_DEVICE_SPECS,
   EXTENSION_HARNESS_SETUP_SPEC,
+  DEDICATED_EXTENSION_SPECS,
   PAIRED_RELEASE_SPECS,
   LOCAL_JOURNEY_SPECS,
 ];
@@ -138,29 +137,25 @@ export default defineConfig({
         ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB: '1',
       },
     },
-    ...(includeBridgeServer
-      ? [{
-          command: bridgeServeCommand,
-          url: `http://127.0.0.1:${bridgePort}/health`,
-          reuseExistingServer: false,
-          timeout: 30_000,
-          env: {
-            ASTRID_BRIDGE_PORT: String(bridgePort),
-            // The stub's media URLs must follow the run-isolated editor
-            // origin; otherwise its default 2222 base yields browser 404s.
-            BASE_URL: baseURL,
-          },
-        }]
-      : []),
+    {
+      command: bridgeServeCommand,
+      url: `http://127.0.0.1:${bridgePort}/health`,
+      reuseExistingServer: false,
+      timeout: 30_000,
+      env: {
+        ASTRID_BRIDGE_PORT: String(bridgePort),
+        // The stub's media URLs must follow the run-isolated editor
+        // origin; otherwise its default 2222 base yields browser 404s.
+        BASE_URL: baseURL,
+      },
+    },
   ],
   projects: [
-    ...(includeExtensionHarness
-      ? [{
-          name: 'extension-harness-setup',
-          testMatch: EXTENSION_HARNESS_SETUP_SPEC,
-          use: { ...devices['Desktop Chrome'] },
-        }]
-      : []),
+    {
+      name: 'extension-harness-setup',
+      testMatch: EXTENSION_HARNESS_SETUP_SPEC,
+      use: { ...devices['Desktop Chrome'] },
+    },
     {
       name: 'chromium-desktop',
       testIgnore: defaultProjectIgnores,
