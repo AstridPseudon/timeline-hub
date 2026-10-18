@@ -449,15 +449,13 @@ export class DirectHarness {
         if (!/^https?:\/\//.test(discovery.endpoint)) throw new Error('adopted Runtime discovery endpoint must be an absolute HTTP URL');
         if (discovery.active_realm !== this.attachment.realmId || discovery.runtime_instance_id !== this.attachment.runtimeInstanceId) throw new Error(`adopted Runtime discovery identity mismatch: realm ${discovery.active_realm}, instance ${discovery.runtime_instance_id}`);
         this.runtimePort = Number(new URL(discovery.endpoint).port);
-        const healthResponse = await fetch(`${discovery.endpoint}/v1/health`);
-        if (!healthResponse.ok) throw new Error(`adopted Runtime health failed: ${healthResponse.status}`);
-        const health = await healthResponse.json() as { realm_id?: string; runtime_instance_id?: string };
-        this.runtimeInstanceId = health.runtime_instance_id ?? '';
-        if (health.realm_id !== this.realmId || this.runtimeInstanceId !== this.attachment.runtimeInstanceId) throw new Error(`adopted Runtime identity mismatch: realm ${health.realm_id}, instance ${this.runtimeInstanceId}`);
         this.productToken = readCredentialToken(this.attachment.productCredentialFile);
+        await this.assertAttachedIdentity();
         const project = await this.runtimeJson('GET', `/v1/projects/${this.attachment.projectId}`);
         if (project.status !== 200) throw new Error(`adopted project lookup failed: ${project.status} ${JSON.stringify(project.body)}`);
-        const projectName = (project.body.data ?? project.body).name ?? this.attachment.projectSlug;
+        const resource = project.body;
+        if (resource.project_id !== this.attachment.projectId || resource.realm_id !== this.realmId || resource.slug !== this.attachment.projectSlug) throw new Error(`adopted project identity mismatch: ${JSON.stringify(resource)}`);
+        const projectName = resource.name;
         this.quickSeed = { projectId: this.attachment.projectId, projectSlug: this.attachment.projectSlug, projectName, timelineId: this.attachment.timelineId, headRevisionId: this.attachment.headRevisionId };
         this.seed = { ...this.quickSeed, image: undefined, video: undefined, big: undefined } as unknown as Seed;
       } else {
@@ -478,6 +476,17 @@ export class DirectHarness {
   // -- Runtime -------------------------------------------------------------------------------
 
   private runtimeEnv(): NodeJS.ProcessEnv { return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1' }; }
+
+  /** Health identifies the running instance; the authenticated realm route identifies its realm. */
+  private async assertAttachedIdentity(): Promise<void> {
+    const healthResponse = await fetch(`${this.runtimeUrl}/v1/health`);
+    if (!healthResponse.ok) throw new Error(`adopted Runtime health failed: ${healthResponse.status}`);
+    const health = await healthResponse.json() as { runtime_instance_id?: string };
+    const realm = await this.runtimeJson('GET', '/v1/realm');
+    if (realm.status !== 200) throw new Error(`adopted realm lookup failed: ${realm.status} ${JSON.stringify(realm.body)}`);
+    if (realm.body.realm_id !== this.realmId || health.runtime_instance_id !== this.attachment!.runtimeInstanceId) throw new Error(`adopted Runtime identity mismatch: realm ${realm.body.realm_id}, instance ${health.runtime_instance_id}`);
+    this.runtimeInstanceId = health.runtime_instance_id;
+  }
 
   private async createRealm(): Promise<string> {
     const output = execFileSync(runtimePython()!, ['-m', 'runtime_protocol.cli', 'create', '--root', this.realmDir, '--display-name', 'Direct Journey'], { cwd: this.tmp, env: cleanProcessEnv({ ...process.env, ...this.runtimeEnv() }), encoding: 'utf8' });
@@ -833,8 +842,7 @@ export class DirectHarness {
   /** Brings Runtime and gateway back to a serving state after a test that restarted or stopped either. */
   async resetToHealthy(): Promise<void> {
     if (this.attachment) {
-      const health = await fetch(`${this.runtimeUrl}/v1/health`).then((response) => response.ok ? response.json() as Promise<{ realm_id?: string; runtime_instance_id?: string }> : null).catch(() => null);
-      if (!health || health.realm_id !== this.realmId || health.runtime_instance_id !== this.runtimeInstanceId) throw new Error('adopted Runtime is not healthy with its original identity');
+      await this.assertAttachedIdentity();
     } else if (!this.runtimeRunning) { this.runtime = undefined; await this.startRuntime(); }
     if (!this.gatewayRunning) { this.gateway = undefined; await this.startGateway(); return; }
     const probe = await this.gatewayRequest('/v1/health').catch(() => null);

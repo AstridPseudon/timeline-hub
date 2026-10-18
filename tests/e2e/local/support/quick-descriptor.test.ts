@@ -59,7 +59,11 @@ describe('QUICK descriptor and attachment support', () => {
     assert.equal(child.stdout, '/adopted/runtime-root');
   });
 
-  it('attaches without creating, stopping, or removing F1-owned Runtime state', async () => {
+  for (const scenario of [
+    { name: 'adopts the actual realm and project resources', realmId: 'f1-realm', projectId: 'descriptor-project-id', succeeds: true },
+    { name: 'rejects an unexpected authenticated realm without touching a project', realmId: 'wrong-realm', projectId: 'descriptor-project-id', succeeds: false },
+    { name: 'rejects a project resource with the wrong opaque ID', realmId: 'f1-realm', projectId: 'wrong-project-id', succeeds: false },
+  ]) it(scenario.name, async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'quick-attachment-test-'));
     const dataRoot = path.join(dir, 'f1-data');
     const support = path.join(dataRoot, 'runtime');
@@ -69,11 +73,19 @@ describe('QUICK descriptor and attachment support', () => {
     const sentinel = path.join(dataRoot, 'f1-owned.txt');
     writeFileSync(sentinel, 'F1 owns this');
     const realmId = 'f1-realm';
+    const descriptorProjectId = 'descriptor-project-id';
+    const projectSlug = 'f1-project-slug';
     const runtimeInstanceId = 'f1-runtime-instance';
+    const requests: Array<{ path: string; authorization?: string }> = [];
     const runtime = createServer((request, response) => {
+      requests.push({ path: request.url ?? '', authorization: request.headers.authorization });
       response.setHeader('Content-Type', 'application/json');
-      if (request.url === '/v1/health') return response.end(JSON.stringify({ realm_id: realmId, runtime_instance_id: runtimeInstanceId }));
-      if (request.url === '/v1/projects/project-id') return response.end(JSON.stringify({ data: { name: 'Quick Project', slug: 'project-slug' } }));
+      if (request.url === '/v1/health') return response.end(JSON.stringify({ runtime_instance_id: runtimeInstanceId }));
+      if (request.url === '/v1/realm') return response.end(JSON.stringify({ realm_id: scenario.realmId, display_name: 'F1 Realm', version: 1, created_at: '2026-10-18T00:00:00Z' }));
+      if (request.url === `/v1/projects/${descriptorProjectId}`) return response.end(JSON.stringify({
+        project_id: scenario.projectId, realm_id: realmId, slug: projectSlug, name: 'Quick Project', metadata: {}, version: 1,
+        created_at: '2026-10-18T00:00:00Z', updated_at: '2026-10-18T00:00:00Z', archived: false,
+      }));
       response.statusCode = 404;
       response.end('{}');
     });
@@ -86,7 +98,7 @@ describe('QUICK descriptor and attachment support', () => {
     writeFileSync(productCredentialFile, JSON.stringify({ token: 'product-token', actor_id: 'product' }));
     writeFileSync(astridCredentialFile, JSON.stringify({ token: 'astrid-token', actor_id: 'astrid-f2' }));
     const descriptorFile = path.join(dir, 'descriptor.json');
-    writeFileSync(descriptorFile, JSON.stringify({ ...valid, dataRoot, sourceManifest: path.join(support, 'source.json'), discoveryFile, productCredentialFile, astridCredentialFile, realmId, runtimeInstanceId }), { mode: 0o600 });
+    writeFileSync(descriptorFile, JSON.stringify({ ...valid, dataRoot, sourceManifest: path.join(support, 'source.json'), discoveryFile, productCredentialFile, astridCredentialFile, projectId: descriptorProjectId, projectSlug, realmId, runtimeInstanceId }), { mode: 0o600 });
     chmodSync(descriptorFile, 0o600);
     const previousDescriptor = process.env.ASTRID_QUICK_DESCRIPTOR;
     process.env.ASTRID_QUICK_DESCRIPTOR = descriptorFile;
@@ -98,9 +110,23 @@ describe('QUICK descriptor and attachment support', () => {
       return { base: harness.gatewayBase, realm_id: realmId, acp: false };
     } });
     try {
-      await harness.start();
-      assert.equal(harness.attachment?.realmId, realmId);
-      assert.equal(harness.quickSeed?.projectName, 'Quick Project');
+      if (scenario.succeeds) {
+        await harness.start();
+        assert.equal(harness.attachment?.realmId, realmId);
+        assert.deepEqual(harness.quickSeed, { projectId: descriptorProjectId, projectSlug, projectName: 'Quick Project', timelineId: 'timeline-id', headRevisionId: 'head-id' });
+      } else {
+        await assert.rejects(harness.start(), /adopted (Runtime identity|project identity) mismatch/);
+      }
+      const expectedPaths = scenario.realmId === realmId
+        ? ['/v1/health', '/v1/realm', `/v1/projects/${descriptorProjectId}`]
+        : ['/v1/health', '/v1/realm'];
+      assert.deepEqual(requests.map(({ path: requestPath }) => requestPath), expectedPaths);
+      for (const request of requests.filter(({ path: requestPath }) => requestPath !== '/v1/health')) assert.equal(request.authorization, 'Bearer product-token');
+      if (scenario.succeeds) {
+        await harness.resetToHealthy();
+        assert.deepEqual(requests.slice(-2).map(({ path: requestPath }) => requestPath), ['/v1/health', '/v1/realm']);
+        assert.equal(requests.at(-1)?.authorization, 'Bearer product-token');
+      }
       await harness.stopRuntime();
       await harness.stop();
       assert.equal(existsSync(sentinel), true);
