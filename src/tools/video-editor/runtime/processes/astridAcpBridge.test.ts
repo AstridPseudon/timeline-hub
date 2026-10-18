@@ -483,15 +483,27 @@ describe('Astrid App ACP HTTP bridge', () => {
     expect(terminalCreate.result?.terminalId).toEqual(expect.any(String));
     const terminalId = terminalCreate.result!.terminalId!;
 
-    await new Promise<void>((resolve) => setTimeout(resolve, 20));
     const afterCreate = fakeProcess.stdin.writes.length;
+    fakeProcess.stdout.emit('data', `${JSON.stringify({
+      jsonrpc: '2.0',
+      id: 'terminal-wait-1',
+      method: 'terminal/wait_for_exit',
+      params: { terminalId },
+    })}\n`);
+    await waitForRequest(fakeProcess, afterCreate);
+    expect(lastRequest(fakeProcess)).toMatchObject({
+      id: 'terminal-wait-1',
+      result: { exitCode: 0, signal: null },
+    });
+
+    const afterExit = fakeProcess.stdin.writes.length;
     fakeProcess.stdout.emit('data', `${JSON.stringify({
       jsonrpc: '2.0',
       id: 'terminal-output-1',
       method: 'terminal/output',
       params: { terminalId },
     })}\n`);
-    await waitForRequest(fakeProcess, afterCreate);
+    await waitForRequest(fakeProcess, afterExit);
     expect(lastRequest(fakeProcess)).toMatchObject({
       id: 'terminal-output-1',
       result: { output: 'bridge-ok\n', truncated: false, exitStatus: { exitCode: 0, signal: null } },

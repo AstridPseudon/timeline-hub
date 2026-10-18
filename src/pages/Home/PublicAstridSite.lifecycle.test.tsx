@@ -11,6 +11,10 @@ vi.mock('./PublicAstridSky.tsx', async (original) => ({
   ...await original<typeof import('./PublicAstridSky')>(),
   PublicAstridSky: ({ reducedMotion }: { reducedMotion: boolean }) => <div data-testid="sky" data-reduced={reducedMotion} />,
 }));
+vi.mock('./publicAstridExampleSelection.ts', async (original) => ({
+  ...await original<typeof import('./publicAstridExampleSelection')>(),
+  loadActivePublicAstridExample: async () => ({}),
+}));
 vi.mock('./PublicAstridMountedEditor.tsx', async () => {
   const React = await import('react');
   return { PublicAstridMountedEditor: ({ active, attempt, conversationActive, onConversationReady }: { active: boolean; attempt: number; conversationActive: boolean; onConversationReady: (attempt: number) => void }) => {
