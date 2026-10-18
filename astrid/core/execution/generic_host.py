@@ -1605,6 +1605,19 @@ def _fixed_worker_environment(record: "CapabilityRecord", explicit_env: Mapping[
     return explicit
 
 
+def _launch_explicit_packs(pack_roots: tuple[Path, ...]):
+    """Project only selected roots, without managed state or ambient discovery."""
+    from astrid.core.pack.discovery import DiscoveredPack
+    from astrid.core.pack.loader import load_pack_manifest, scan_packs
+
+    for index, root in enumerate(pack_roots):
+        packs = ((load_pack_manifest(root / 'pack.yaml'),) if (root / 'pack.yaml').is_file()
+                 else scan_packs(root, strict=False).packs)
+        for pack in packs:
+            if pack.root.resolve().is_relative_to(root):
+                yield DiscoveredPack(pack, 'extra', index)
+
+
 def _launch_static_records(pack_roots: tuple[Path, ...], capability_matrix: Path | None = None):
     """Read only the explicit launch sources; no Git or executable inspection."""
     from astrid.core.execution.executor.folder import (
@@ -1626,16 +1639,8 @@ def _launch_static_records(pack_roots: tuple[Path, ...], capability_matrix: Path
                 source_root=executor_root, matrix=matrix.get(definition.id, {}))
     # Match host discovery's strict V3 projection and exact source roots. A
     # local orchestration action is deliberately not a host worker definition.
-    from astrid.core.pack.discovery import DiscoveredPack
-    from astrid.core.pack.loader import load_pack_manifest, scan_packs
     from astrid.sdk.actions import action_executor_definition
-    def packs(root):
-        if (root / 'pack.yaml').is_file():
-            return (load_pack_manifest(root / 'pack.yaml'),)
-        return scan_packs(root, strict=False).packs
-    explicit = (DiscoveredPack(pack, 'extra', index)
-                for index, root in enumerate(pack_roots) for pack in packs(root))
-    for discovered_pack in explicit:
+    for discovered_pack in _launch_explicit_packs(pack_roots):
         pack = discovered_pack.pack
         pack_root = pack.root.resolve()
         if not any(pack_root == root or pack_root.is_relative_to(root) for root in pack_roots):
@@ -2086,6 +2091,41 @@ def _retained_python_boundary():
     if any(root.is_relative_to(p) for root in roots.values() for p in excluded):
         raise HostError("selected Python root aliases into excluded ambient code")
     return roots, tuple(dict.fromkeys(excluded))
+
+
+def _installed_discovery_roots(pack_roots: tuple[Path, ...]) -> bool:
+    """Select installed discovery only from the verified launcher's inputs.
+
+    Runtime installs the private Python binding and sys.argv together, before
+    executing this module. Neither CLI roots alone nor an environment marker
+    can establish this mode. Check the whole Host root set before any scan.
+    """
+    boundary = _retained_python_boundary()
+    if boundary is None:
+        if globals().get('_RETAINED_ACTION_LAUNCH') is not None:
+            raise HostError('installed discovery requires retained Python binding')
+        return False
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False, exit_on_error=False)
+    parser.add_argument('--pack-root', action='append', default=[])
+    parser.add_argument('--source-checkout')
+    try:
+        selected, _ = parser.parse_known_args(sys.argv[1:])
+    except argparse.ArgumentError as exc:
+        raise HostError('invalid retained launch pack roots') from exc
+    source = boundary[0]['installed-packages']
+    if selected.source_checkout != str(source):
+        raise HostError('installed discovery source differs from retained launch binding')
+    installed = source / 'astrid' / 'packs'
+    roots = []
+    for raw in selected.pack_root:
+        path = Path(raw)
+        if (not path.is_absolute() or '..' in path.parts or not path.is_dir()
+                or path.resolve(strict=True) != path or not path.is_relative_to(installed)):
+            raise HostError('installed discovery root escapes retained launch namespace')
+        roots.append(path)
+    if not roots or tuple(dict.fromkeys(roots)) != pack_roots:
+        raise HostError('installed discovery roots differ from retained launch selection')
+    return True
 
 
 class _AttemptPolicyFactory:
@@ -6801,6 +6841,7 @@ class GenericPackHost:
         )
         from astrid.core.execution.executor.schema import ExecutorValidationError
 
+        installed = _installed_discovery_roots(self.pack_roots)
         records: dict[str, CapabilityRecord] = {}
         quarantined_dirs, quarantined_ids = _quarantine_scope(self.pack_roots)
         for root in self.pack_roots:
@@ -6826,7 +6867,7 @@ class GenericPackHost:
         from astrid.core.pack.discovery import discover_pack_metadata
         from astrid.sdk.actions import action_executor_definition
 
-        discovered_packs = discover_pack_metadata(
+        discovered_packs = _launch_explicit_packs(self.pack_roots) if installed else discover_pack_metadata(
             project_root=self.pack_roots[0] if self.pack_roots else Path.cwd(),
             extra_pack_roots=tuple(str(root) for root in self.pack_roots),
         )
