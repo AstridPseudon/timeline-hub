@@ -16,15 +16,41 @@ class _ReplayClient:
         self.calls: list[tuple[str, str]] = []
         self._replies: dict[str, dict[str, object]] = {}
 
-    def _mutate(self, operation: str, idempotency_key: str) -> dict[str, object]:
+    def _mutate(
+        self,
+        operation: str,
+        idempotency_key: str,
+        data: dict[str, object] | None = None,
+    ) -> dict[str, object]:
         self.calls.append((operation, idempotency_key))
         return self._replies.setdefault(
             idempotency_key,
-            {"data": {"operation": operation, "key": idempotency_key}, "receipt": None},
+            {
+                "data": data if data is not None else {"operation": operation, "key": idempotency_key},
+                "receipt": None,
+            },
         )
 
-    def update_timeline_document(self, *_args: object, idempotency_key: str, **_kwargs: object):
-        return self._mutate("update_timeline_document", idempotency_key)
+    def create_timeline(
+        self, project: str, timeline_id: str, *, idempotency_key: str
+    ) -> dict[str, object]:
+        return self._mutate(
+            "create_timeline",
+            idempotency_key,
+            {"project_id": project, "timeline_id": timeline_id},
+        )
+
+    def publish_parent_composition(
+        self,
+        _project: str,
+        _timeline_id: str,
+        _publication: dict[str, object],
+        *,
+        idempotency_key: str,
+    ) -> dict[str, object]:
+        return self._mutate(
+            "publish_parent_composition", idempotency_key, {"new_head": "head"}
+        )
 
     def create_generation(self, *_args: object, idempotency_key: str, **_kwargs: object):
         return self._mutate("create_generation", idempotency_key)
@@ -37,19 +63,17 @@ def test_remote_mutations_preserve_caller_keys_and_replay_same_result() -> None:
     client = _ReplayClient()
 
     timeline = RemoteTimelines(client)
-    first_timeline = timeline.save(
-        "project",
-        "timeline",
-        config={},
-        registry={},
-        idempotency_key="timeline-save-key",
+    first_timeline = timeline.create_empty(
+        project="project",
+        timeline_id="timeline",
+        config={"tracks": []},
+        idempotency_key="timeline-create-key",
     )
-    replayed_timeline = timeline.save(
-        "project",
-        "timeline",
-        config={},
-        registry={},
-        idempotency_key="timeline-save-key",
+    replayed_timeline = timeline.create_empty(
+        project="project",
+        timeline_id="timeline",
+        config={"tracks": []},
+        idempotency_key="timeline-create-key",
     )
 
     generations = RemoteGenerations(client)
@@ -66,15 +90,17 @@ def test_remote_mutations_preserve_caller_keys_and_replay_same_result() -> None:
         "generation", variant_id="variant", idempotency_key="variant-key"
     )
 
-    assert first_timeline.idempotency_key == replayed_timeline.idempotency_key == "timeline-save-key"
+    assert first_timeline.idempotency_key == replayed_timeline.idempotency_key == "timeline-create-key"
     assert first_timeline.data == replayed_timeline.data
     assert first_generation.idempotency_key == replayed_generation.idempotency_key == "generation-key"
     assert first_generation.data == replayed_generation.data
     assert first_variant.idempotency_key == replayed_variant.idempotency_key == "variant-key"
     assert first_variant.data == replayed_variant.data
     assert client.calls == [
-        ("update_timeline_document", "timeline-save-key"),
-        ("update_timeline_document", "timeline-save-key"),
+        ("create_timeline", "timeline-create-key-shell"),
+        ("publish_parent_composition", "timeline-create-key-head"),
+        ("create_timeline", "timeline-create-key-shell"),
+        ("publish_parent_composition", "timeline-create-key-head"),
         ("create_generation", "generation-key"),
         ("create_generation", "generation-key"),
         ("create_variant", "variant-key"),

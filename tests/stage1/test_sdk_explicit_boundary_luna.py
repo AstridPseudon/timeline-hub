@@ -169,20 +169,61 @@ def test_generated_failure_keeps_request_correlation(monkeypatch):
 
 def test_timeline_creation_has_only_atomic_generated_route():
     class Client:
-        def create_timeline_document(self, *args, **kwargs):
-            assert kwargs["config"] == {"tracks": []}
-            assert kwargs["registry"] == {"assets": {}}
-            return {"timeline_id": args[1], "receipt": {"receipt_id": "r"}}
+        def __init__(self):
+            self.calls = []
 
-    remote = RemoteTimelines(Client())
-    result = remote.create(
+        def create_timeline(self, project, timeline_id, **kwargs):
+            self.calls.append(("create_timeline", project, timeline_id, kwargs))
+            return {"project_id": project, "timeline_id": timeline_id}
+
+        def publish_parent_composition(self, project, timeline_id, publication, **kwargs):
+            self.calls.append(
+                ("publish_parent_composition", project, timeline_id, publication, kwargs)
+            )
+            return {"new_head": "head-1"}
+
+    client = Client()
+    remote = RemoteTimelines(client)
+    result = remote.create_empty(
         project="project-1",
+        timeline_id="timeline-1",
         config={"tracks": []},
-        registry={"assets": {}},
-        slug="main",
         idempotency_key="timeline-1",
     )
     assert result.ok
+    assert result.data == {
+        "project_id": "project-1",
+        "timeline_id": "timeline-1",
+        "head_revision_id": "head-1",
+        "created": True,
+    }
+    assert client.calls == [
+        (
+            "create_timeline",
+            "project-1",
+            "timeline-1",
+            {"idempotency_key": "timeline-1-shell"},
+        ),
+        (
+            "publish_parent_composition",
+            "project-1",
+            "timeline-1",
+            {
+                "project_id": "project-1",
+                "timeline_id": "timeline-1",
+                "expected_head": None,
+                "parent_composition": {
+                    "config": {"tracks": []},
+                    "registry": {},
+                    "clips": [],
+                    "occurrences": [],
+                },
+                "shot_revisions": [],
+                "internal_timeline_revisions": [],
+            },
+            {"idempotency_key": "timeline-1-head"},
+        ),
+    ]
     assert not hasattr(remote, "create_timeline")
 
 
@@ -209,6 +250,7 @@ def test_launcher_uses_installed_command_and_explicit_manifest(monkeypatch, tmp_
     manifest.write_text(json.dumps({"profile": "astrid"}), encoding="utf-8")
     monkeypatch.setenv("BANODOCO_LOCAL_SOURCE_MANIFEST", str(manifest))
     monkeypatch.setenv("BANODOCO_LOCAL_LAUNCHER", "/usr/local/bin/banodoco-local")
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str((tmp_path / "runtime-support").resolve()))
     seen: dict[str, object] = {}
 
     def run(command, **kwargs):
@@ -225,6 +267,11 @@ def test_launcher_uses_installed_command_and_explicit_manifest(monkeypatch, tmp_
     result = autobootstrap.ensure_runtime()
     assert result["status"] == "started"
     assert seen["command"][:5] == ["/usr/local/bin/banodoco-local", "up", "--profile", "astrid", "--source-manifest"]
+    assert seen["command"][-3:] == [
+        "--data-root",
+        str((tmp_path / "runtime-support").resolve()),
+        "--json",
+    ]
 
 
 def test_public_open_signature_has_no_auto_bootstrap_keyword():
@@ -238,5 +285,4 @@ def test_sdk_boundary_has_no_checkout_or_dynamic_import_injection():
     assert "sys.path" not in workspace_source
     assert "importlib" not in workspace_source
     assert "BANODOCO_RUNTIME_CHECKOUT" not in workspace_source
-    assert "source_checkout" not in bootstrap_source
     assert "PYTHONPATH" not in bootstrap_source

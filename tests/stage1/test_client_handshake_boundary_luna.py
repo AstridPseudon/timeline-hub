@@ -183,6 +183,7 @@ def test_launcher_rejects_non_loopback_advertisement(
     manifest.write_text('{"profile":"astrid"}', encoding="utf-8")
     monkeypatch.setenv("BANODOCO_LOCAL_SOURCE_MANIFEST", str(manifest))
     monkeypatch.setenv("BANODOCO_LOCAL_LAUNCHER", "/bin/true")
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str((tmp_path / "runtime-support").resolve()))
     monkeypatch.setattr(
         autobootstrap.subprocess,
         "run",
