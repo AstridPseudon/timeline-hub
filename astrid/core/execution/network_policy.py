@@ -32,6 +32,7 @@ _POLICY: dict[str, Any] = {}
 _EVIDENCE: Path | None = None
 _EVIDENCE_KEY = ""
 _ADMISSION: dict[str, Any] = {}
+_AIOHTTP_REQUESTS: dict[type, Any] = {}
 
 
 class NetworkPolicyError(RuntimeError):
@@ -208,6 +209,38 @@ def _patch_redirects(originals: Mapping[tuple[Any, str], Any]) -> None:
         return originals[(HTTPRedirectHandler, "redirect_request")](self, req, fp, code, msg, headers, newurl, *args, **kwargs)
 
     HTTPRedirectHandler.redirect_request = redirect_request  # type: ignore[method-assign]
+
+
+def install_aiohttp_no_redirects(client: Any) -> None:
+    """Register no-follow enforcement after the mapped child loads aiohttp."""
+    import inspect
+
+    if (_INSTALLED is not True or _POLICY.get("allow_redirects") is not False
+            or _policy_bool(_POLICY, "redirects", False)):
+        raise NetworkPolicyError("aiohttp requires an installed no-redirect policy")
+    session = getattr(client, "ClientSession", None)
+    request = getattr(session, "_request", None)
+    with _LOCK:
+        if not isinstance(session, type):
+            raise NetworkPolicyError("aiohttp request enforcement is unavailable")
+        if session in _AIOHTTP_REQUESTS:
+            if request is not _AIOHTTP_REQUESTS[session]:
+                raise NetworkPolicyError("aiohttp request enforcement changed")
+            return
+        try:
+            parameter = inspect.signature(request).parameters.get("allow_redirects")
+        except (TypeError, ValueError) as exc:
+            raise NetworkPolicyError("aiohttp request enforcement is incompatible") from exc
+        if (not inspect.iscoroutinefunction(request) or parameter is None
+                or parameter.kind is not inspect.Parameter.KEYWORD_ONLY):
+            raise NetworkPolicyError("aiohttp request enforcement is incompatible")
+
+        async def no_redirect_request(self: Any, *args: Any, **kwargs: Any):
+            kwargs["allow_redirects"] = False
+            return await request(self, *args, **kwargs)
+
+        session._request = no_redirect_request
+        _AIOHTTP_REQUESTS[session] = no_redirect_request
 
 
 def _validated_descendant_owner() -> bool:
@@ -447,4 +480,4 @@ def install_from_environment(*, strict: bool = False, broker_required: bool = Fa
     return False
 
 
-__all__ = ["NetworkPolicyError", "install", "install_from_environment"]
+__all__ = ["NetworkPolicyError", "install", "install_from_environment", "install_aiohttp_no_redirects"]
