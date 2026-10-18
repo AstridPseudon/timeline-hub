@@ -37,12 +37,12 @@ export function useTimelineSave(
   initialData?: TimelineData,
 ) {
   const { timelineId, assetResolver, timelineEditability, shots } = useVideoEditorRuntime();
-  const resolveAssetUrl = useCallback((file: string) => {
+  const resolveAssetUrl = useCallback(async (file: string) => {
     if (assetResolver) {
-      return Promise.resolve(assetResolver.resolveAssetUrl(file));
+      return await assetResolver.resolveAssetUrl(file);
     }
 
-    return provider.resolveAssetUrl(file);
+    return await provider.resolveAssetUrl(file);
   }, [assetResolver, provider]);
   const lastSavedSignatureRef = useRef(initialData?.stableSignature ?? '');
   const savedSeqRef = useRef(0);
