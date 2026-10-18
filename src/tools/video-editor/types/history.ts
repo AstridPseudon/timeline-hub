@@ -11,6 +11,13 @@ export type UndoSnapshot = {
 };
 
 export type UndoEntry = {
+  imageRestore?: {
+    target: import('../data/shotCompositionAdapter.ts').CanonicalShotCompositionHistoryEntry;
+    opposite: import('../data/shotCompositionAdapter.ts').CanonicalShotCompositionHistoryEntry;
+    expectedHead: string;
+    expectedPublicationId?: string | null;
+    request?: import('../data/shotCompositionAdapter.ts').ShotCompositionHistoryRestoreRequest;
+  };
   /** In-memory ownership only; an unacknowledged native edit has no snapshot save fallback. */
   nativeRegistration?: {
     owner: import('../lib/timeline-data.ts').TimelineData;
@@ -49,4 +56,17 @@ export type Checkpoint = {
   triggerType: CheckpointTriggerType;
   label: string;
   editsSinceLastCheckpoint: number;
+  /** Missing on legacy config-only local recovery material. */
+  binding?: CheckpointBinding;
 };
+
+export type CheckpointBinding =
+  | { kind: 'clean'; image: import('../data/shotCompositionAdapter.ts').CanonicalShotCompositionHistoryEntry }
+  | { kind: 'dirty'; base: import('../data/DataProvider.ts').TimelineHeadRevision;
+      commands: import('@/integrations/runtime/generated.ts').EditCommand[];
+      scope: import('@/integrations/runtime/generated.ts').CommitRequest['scope'];
+      source: { via: 'app' }; registry: AssetRegistry;
+      /** Original custody per pending owner, including heterogeneous local recovery. */
+      recoverySuffix?: { base?: import('../data/DataProvider.ts').TimelineHeadRevision;
+        occurrence?: import('../data/DataProvider.ts').TimelineOccurrenceContext;
+        source: { via: 'app' }; commands: import('@/integrations/runtime/generated.ts').EditCommand[] }[] };
