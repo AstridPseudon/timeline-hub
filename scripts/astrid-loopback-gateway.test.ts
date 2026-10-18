@@ -381,7 +381,7 @@ test('the gateway prints {base, realm_id, acp} with no link or secret; a taken p
 
       const second = runGateway([...common, '--port', String(port)]);
       assert.equal(await second.exited, 1);
-      for (const part of [`port ${port} is already served by a Astrid gateway for realm`, 'Gateway CLI ?[31mrealm', `(${realmId})`]) assert(second.stderr.includes(part), `${part} in: ${second.stderr}`);
+      for (const part of [`port ${port} is already served by an Astrid App gateway for realm`, 'Gateway CLI ?[31mrealm', `(${realmId})`]) assert(second.stderr.includes(part), `${part} in: ${second.stderr}`);
       assert(!second.stderr.includes('\u001b'), 'terminal escapes from the holder are not printed');
       assert(!second.stderr.includes('cli-product-token-not-for-output'));
       assert.equal(second.stdout, '');
@@ -396,7 +396,7 @@ test('the gateway prints {base, realm_id, acp} with no link or secret; a taken p
       const taken = (squatter.address() as { port: number }).port;
       const result = runGateway([...common, '--port', String(taken)]);
       assert.equal(await result.exited, 1);
-      assert.match(result.stderr, new RegExp(`port ${taken} is already in use by a program that is not a Astrid gateway`));
+      assert.match(result.stderr, new RegExp(`port ${taken} is already in use by a program that is not an Astrid App gateway`));
     } finally { squatter.closeAllConnections(); await new Promise<void>(resolve => squatter.close(() => resolve())); }
   });
 });

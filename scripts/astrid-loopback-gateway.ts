@@ -288,9 +288,9 @@ export async function describePortHolder(port: number, hostedOrigin: string): Pr
   });
   if (realm && typeof realm.realm_id === 'string') {
     const name = typeof realm.display_name === 'string' && realm.display_name ? `"${printable(realm.display_name)}" (${printable(realm.realm_id)})` : printable(realm.realm_id);
-    return `port ${port} is already served by a Astrid App gateway for realm ${name}; stop that one first, or pass --port to use another`;
+    return `port ${port} is already served by an Astrid App gateway for realm ${name}; stop that one first, or pass --port to use another`;
   }
-  return `port ${port} is already in use by a program that is not a Astrid App gateway for ${hostedOrigin}; stop it, or pass --port to use another`;
+  return `port ${port} is already in use by a program that is not an Astrid App gateway for ${hostedOrigin}; stop it, or pass --port to use another`;
 }
 /** Asks a Runtime who it is, the way the gateway's own start does. A Runtime that does not answer is `runtime_unavailable`. */
 type Handshake = { protocol?: unknown; actor_id?: unknown; realm_id?: unknown; scopes?: unknown };
