@@ -338,7 +338,7 @@ def find_ready_capability(items: Iterable[Mapping[str, Any]], capability_id: str
 def build_app_render_admission(*, project: str, timeline_id: str, output_name: str, capability: Mapping[str, Any],
                                token: str, backend: str = REMOTION_BACKEND, expected_version: int | None = None,
                                destination: str = "download") -> dict[str, Any]:
-    """The request the App sends to render a timeline (astrid-app ``enqueueBanodocoRenderTimeline``).
+    """The request the App sends to render a timeline (astrid-app ``enqueueAstridRuntimeRenderTimeline``).
 
     ``capability`` is the ``rendering.render`` row from ``GET /v1/capabilities``: the App takes both the
     digest and the storage estimate from it and invents neither.
