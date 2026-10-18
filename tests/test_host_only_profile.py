@@ -243,11 +243,8 @@ else:
         assert profile.worker_executable is None and profile.engine_launch is None
         assert str(profile.host_executable) == os.path.abspath(sys.executable)
         _selected_profile_payload(profile)
-        actual_records = {}
-        for package in ("astrid", "banodoco-workspace-runtime"):
-            distribution = original_distribution(package)
-            entry = next(p for p in distribution.files if str(p).endswith(".dist-info/RECORD"))
-            actual_records[package] = hashlib.sha256(distribution.locate_file(entry).read_bytes()).hexdigest()
+        from runtime_protocol.verified_host_launch import installed_host_closure
+        actual_records = installed_host_closure(raw["source_checkout"])["distributions"]
         assert profile.release_digest == "sha256:" + raw_digest(actual_records)
     except AssertionError: raise
     except Exception as exc:
