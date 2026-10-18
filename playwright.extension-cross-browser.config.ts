@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { DEFAULT_DEV_SUPABASE_URL } from './src/shared/dev/devSession.ts';
+import { astridOnboardedStorageState } from './tests/e2e/fixtures/astridOnboardedStorageState';
 import {
   allocateIsolatedPort,
   readCanonicalBaseUrl,
@@ -48,6 +49,7 @@ export default defineConfig({
   outputDir: 'artifacts/extension-cross-browser/test-results',
   use: {
     baseURL,
+    storageState: astridOnboardedStorageState(baseURL),
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
@@ -62,6 +64,8 @@ export default defineConfig({
         VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? 'test-anon-key',
         VITE_APP_ENV: process.env.VITE_APP_ENV ?? 'web',
         VITE_ASTRID_BRIDGE_PORT: String(bridgePort),
+        VITE_ASTRID_ACP_BRIDGE_PORT: String(bridgePort),
+        VITE_DISABLE_REMOTE_FONTS: '1',
         // This isolated release lane always starts the committed local stub below.
         // Do not infer this from an ambient token: real bridge requests must
         // continue to fail closed under their dedicated authenticated harness.

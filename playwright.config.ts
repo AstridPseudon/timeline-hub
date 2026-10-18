@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { DEFAULT_DEV_SUPABASE_URL } from './src/shared/dev/devSession.ts';
+import { astridOnboardedStorageState } from './tests/e2e/fixtures/astridOnboardedStorageState';
 import {
   allocateIsolatedPort,
   readCanonicalBaseUrl,
@@ -101,6 +102,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL,
+    storageState: astridOnboardedStorageState(baseURL),
     trace: 'retain-on-failure',
     ...(launchOptions ? { launchOptions } : {}),
   },

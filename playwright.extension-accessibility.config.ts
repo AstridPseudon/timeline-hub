@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { DEFAULT_DEV_SUPABASE_URL } from './src/shared/dev/devSession.ts';
+import { astridOnboardedStorageState } from './tests/e2e/fixtures/astridOnboardedStorageState';
 import {
   allocateIsolatedPort,
   readCanonicalBaseUrl,
@@ -42,6 +43,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL,
+    storageState: astridOnboardedStorageState(baseURL),
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
@@ -56,6 +58,8 @@ export default defineConfig({
         VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? 'test-anon-key',
         VITE_APP_ENV: process.env.VITE_APP_ENV ?? 'web',
         VITE_ASTRID_BRIDGE_PORT: String(bridgePort),
+        VITE_ASTRID_ACP_BRIDGE_PORT: String(bridgePort),
+        VITE_DISABLE_REMOTE_FONTS: '1',
         ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB: '1',
         REIGH_E2E_EXTENSION_FIXTURES: '1',
       },
