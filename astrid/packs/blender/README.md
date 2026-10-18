@@ -1,7 +1,7 @@
 # Astrid Blender pack
 
 Render 3D scenes with Blender, **locally** or on a **remote cloud render host** —
-either the always-on Hetzner box (CPU) or an on-demand **RunPod GPU pod**. The
+either an SSH-reachable CPU host or an on-demand **RunPod GPU pod**. The
 action works the same way in both modes; only the transport differs.
 
 ## Pieces
@@ -14,7 +14,7 @@ astrid/packs/blender/
   server/
     blender_render_server.py        # stdlib HTTP render API (deployed to a host)
     blender-render-api.service      # systemd unit
-  deploy.py                         # provision/deploy hosts: hetzner | ssh | runpod | runpod-render
+  deploy.py                         # provision/deploy hosts: ssh | runpod | runpod-render
 ```
 
 The render server and `render_core.py` are dependency-free (stdlib only) so they
@@ -32,7 +32,7 @@ result = sdk.invoke("blender.render", out="./out", inputs={
     "resolution": "1280x720",
 })
 
-# CLOUD — POSTs to any host running the render API (Hetzner box, a RunPod pod, …)
+# CLOUD — POSTs to any host running the render API (an SSH host, a RunPod pod, …)
 result = sdk.invoke("blender.render", out="./out", inputs={
     "execution": "cloud",
     "cloud_url": "http://<host>:8778",
@@ -47,10 +47,7 @@ omitted) or `blend` (an existing `.blend` file). `frames=1` → still PNG;
 ## Provision a render host
 
 ```bash
-# Hetzner box (always-on, CPU). Installed live — no reset.
-python -m astrid.packs.blender.deploy hetzner --token "$(cat ~/.astrid/blender-render-token)"
-
-# Any SSH host
+# Any SSH host (CPU). Installed live — no reset. --host and --user are required.
 python -m astrid.packs.blender.deploy ssh --host 1.2.3.4 --user root
 
 # RunPod: persistent GPU pod (keep up, tear down manually)
@@ -65,12 +62,19 @@ python -m astrid.packs.blender.deploy teardown-runpod --pod-id <id>
 
 ### Notes
 
-- **Hetzner box:** 159.69.51.216, render API on `:8778` behind a Hetzner Cloud
-  Firewall (only 22/8080 open). Reach it via an SSH tunnel:
-  `ssh -fN -L 18778:127.0.0.1:8778 root@159.69.51.216`, then
-  `cloud_url=http://127.0.0.1:18778`. No hcloud token is on the machine, so the
-  cloud firewall can't be opened programmatically — use the console if you need a
-  public URL. The Arnold docker container on :8080 is separate; don't touch it.
+- **Token and bind address:** the server binds `127.0.0.1` by default and refuses to
+  start on any other address without `BLENDER_RENDER_TOKEN`. `deploy` always runs
+  the server on all interfaces with a token: `--token` (or `BLENDER_RENDER_TOKEN`)
+  if given, otherwise a random one that is written into the systemd unit and saved
+  to `~/.astrid/blender-render-token-<host>` (mode 0600, never printed). Pass it to
+  clients as `cloud_token`. Keep the host firewalled to the clients that need it,
+  or bind loopback yourself and reach it over an SSH tunnel
+  (`ssh -fN -L 18778:127.0.0.1:8778 <user>@<host>`, `cloud_url=http://127.0.0.1:18778`).
+- **Requests:** `mesh_url` must be `https://` (local renders now refuse `http://`
+  and `file://` mesh URLs too); archives are checked for paths that
+  escape the work directory before extraction. `POST /render` still executes a
+  client-supplied preset `script` inside Blender, so treat the token as full
+  code-execution access to the host.
 - **RunPod:** no official Blender image exists, so a CUDA image
   (`runpod/pytorch:…cuda…`) is launched and the **official** GPU-capable Blender
   tarball is installed (the distro `apt` Blender has no CUDA). API key uses
@@ -80,7 +84,7 @@ python -m astrid.packs.blender.deploy teardown-runpod --pod-id <id>
 - **Teardown:** `runpod-render --teardown auto` (default) tears the pod down the
   moment the render finishes; `--teardown never` keeps it up; `--keep-after-seconds N`
   lingers N seconds first.
-- **GPU vs CPU:** the Hetzner box has no GPU (CPU/Cycles only). RunPod gives a
+- **GPU vs CPU:** an `ssh` host without a GPU renders on CPU/Cycles only. RunPod gives a
   10–50× Cycles speedup and enables EEVEE. First GPU render compiles CUDA/OptiX
   kernels (one-time overhead); complex scenes benefit most.
 

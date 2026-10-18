@@ -4,9 +4,8 @@
 A host-agnostic deploy tool. The same render server (``blender_render_server.py``
 + ``render_core.py``, both stdlib-only) is deployed to:
 
-  * ``hetzner`` — the always-on Hetzner box (default host from HETZNER_HOST or
-    159.69.51.216), via SSH. Installed live: no machine/docker reset.
-  * ``ssh``     — any SSH-reachable host (--host/--port/--user/--identity).
+  * ``ssh``     — any SSH-reachable host (--host and --user are required;
+    --port/--ssh-port/--identity optional). Installed live: no machine/docker reset.
   * ``runpod``  — an on-demand GPU pod, spun up via the runpod-lifecycle package,
     deployed over the pod's SSH, then left running (or torn down).
 
@@ -15,14 +14,18 @@ copy/restart a small systemd service. Nothing is reimaged.
 
 Usage::
 
-    python -m astrid.packs.blender.deploy hetzner
     python -m astrid.packs.blender.deploy ssh --host 1.2.3.4 --user root
     python -m astrid.packs.blender.deploy runpod --gpu "NVIDIA GeForce RTX 4090"
     python -m astrid.packs.blender.deploy teardown-runpod --pod-id <id>
-    python -m astrid.packs.blender.deploy health --url http://159.69.51.216:8778
+    python -m astrid.packs.blender.deploy health --url http://<host>:8778 --token <token>
+
+The deployed server listens on all interfaces and always requires a bearer
+token. Pass ``--token`` (or set BLENDER_RENDER_TOKEN); if neither is given a
+random token is generated, written into the systemd unit, and saved to
+``~/.astrid/blender-render-token-<host>`` (mode 0600). The token is never printed.
 
 Environment:
-  HETZNER_HOST, HETZNER_USER, HETZNER_PORT, BLENDER_RENDER_PORT (default 8778),
+  BLENDER_RENDER_PORT (default 8778),
   BLENDER_RENDER_TOKEN, RUNPOD_API_KEY (or Astrid's shared astrid.env entry),
   RUNPOD_GPU_TYPE, RUNPOD_TEMPLATE_ID, RUNPOD_WORKER_IMAGE, etc.
 """
@@ -34,13 +37,14 @@ import base64
 import json
 import os
 import re
+import secrets
 import shlex
 import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from astrid.core.cli_choices import StaticChoices
 
@@ -58,9 +62,41 @@ SERVER_FILES = (
 )
 SERVICE_FILE = "blender-render-api.service"
 
-DEFAULT_HETZNER_HOST = os.environ.get("HETZNER_HOST", "159.69.51.216")
-DEFAULT_HETZNER_USER = os.environ.get("HETZNER_USER", "root")
-DEFAULT_HETZNER_PORT = os.environ.get("HETZNER_PORT", "22")
+# Deployed servers are reached over the network, so they bind every interface;
+# that is only allowed because deploy always sets a token (the server refuses a
+# non-loopback bind without one).
+DEPLOY_BIND_HOST = "0.0.0.0"
+# Tokens land in a systemd unit, a shell script and a curl header: keep them to
+# a charset that needs no quoting and cannot inject unit directives.
+_TOKEN_RE = re.compile(r"[A-Za-z0-9._~-]{16,}")
+
+
+class DeployResult(NamedTuple):
+    url: str
+    token: str
+    token_generated: bool
+
+
+def _resolve_deploy_token(token: str | None) -> tuple[str, bool]:
+    """Return ``(token, generated)``; generate one when none was given."""
+    if token is None or not token.strip():
+        return secrets.token_urlsafe(32), True
+    token = token.strip()
+    if not _TOKEN_RE.fullmatch(token):
+        raise SystemExit("render token must be at least 16 characters of [A-Za-z0-9._~-]")
+    return token, False
+
+
+def _remember_token(label: str, token: str) -> Path:
+    """Save a generated token (mode 0600) so the operator can pass it to clients."""
+    safe = re.sub(r"[^A-Za-z0-9._-]+", "_", label).strip("._") or "host"
+    path = Path.home() / ".astrid" / f"blender-render-token-{safe}"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        fh.write(token + "\n")
+    os.chmod(path, 0o600)
+    return path
 
 
 # ---------------------------------------------------------------------------
@@ -77,7 +113,7 @@ class RemoteHost:
     def put_text(self, remote_path: str, content: str) -> None:
         # Transfer via base64 through the shell — no scp/paramiko dependency.
         b64 = base64.b64encode(content.encode("utf-8")).decode("ascii")
-        cmd = f"umask 022; mkdir -p {shlex.quote(os.path.dirname(remote_path))}; "
+        cmd = f"umask 077; mkdir -p {shlex.quote(os.path.dirname(remote_path))}; "
         cmd += f"echo {shlex.quote(b64)} | base64 -d > {shlex.quote(remote_path)}"
         rc, out, err = self.run(cmd)
         if rc != 0:
@@ -103,7 +139,7 @@ def _arun(coro: Any) -> Any:
 class SshHost(RemoteHost):
     """RemoteHost over a local ``ssh`` subprocess (uses SSH config/keys)."""
 
-    def __init__(self, host: str, user: str = "root", port: str | int = "22", identity: str | None = None):
+    def __init__(self, host: str, user: str, port: str | int = "22", identity: str | None = None):
         self.host = host
         self.user = user
         self.port = str(port)
@@ -227,9 +263,16 @@ def install_official_blender(host: RemoteHost, version: str = "4.0.2") -> str:
     return blender_bin
 
 
-def _wait_for_health(host: RemoteHost, port: int, token: str | None, timeout: int = 45) -> bool:
+def _chmod(host: RemoteHost, path: str, mode: str) -> None:
+    """Set ``mode`` on a file that holds the render token; a failure aborts the deploy."""
+    rc, out, err = host.run(f"chmod {mode} {shlex.quote(path)}")
+    if rc != 0:
+        raise RuntimeError(f"failed to chmod {mode} {path}: {err or out}")
+
+
+def _wait_for_health(host: RemoteHost, port: int, token: str, timeout: int = 45) -> bool:
     """Poll the render API's /health (via localhost on the host) until ready."""
-    hdr = f"-H 'Authorization: Bearer {token}'" if token else ""
+    hdr = f"-H 'Authorization: Bearer {token}'"
     deadline = time.time() + timeout
     while time.time() < deadline:
         rc, out, _ = host.run(
@@ -248,17 +291,21 @@ def deploy_to_host(
     token: str | None = None,
     blender_flavor: str = "apt",
     blender_version: str = "4.0.2",
-) -> str:
-    """Install deps + server + systemd on ``host`` and return the service URL.
+) -> DeployResult:
+    """Install deps + server + systemd on ``host``; return the URL and the token in force.
+
+    The server is bound to all interfaces and always runs with a bearer token:
+    ``token`` if given, otherwise a freshly generated one (``token_generated``).
 
     Pure-additive: only installs missing packages, copies two files, and
     (re)starts a single systemd unit. Nothing on the host is reset.
 
-    ``blender_flavor``: ``apt`` (CPU-only distro build, fine for the Hetzner box),
+    ``blender_flavor``: ``apt`` (CPU-only distro build, fine for a CPU-only host),
     ``official`` (CUDA/OptiX tarball, required for GPU on a generic CUDA image),
     or ``system`` (use a ``blender`` already present in the image — for Blender
     RunPod images that ship Blender preinstalled).
     """
+    token, token_generated = _resolve_deploy_token(token)
     print(f"  target {host.__class__.__name__} -> {REMOTE_DIR} (port {port}, blender={blender_flavor})", flush=True)
     if blender_flavor == "official":
         blender_exec = install_official_blender(host, blender_version)
@@ -284,15 +331,19 @@ def deploy_to_host(
     unit = unit_template
     unit = re.sub(r"Environment=BLENDER_EXEC=.*", f"Environment=BLENDER_EXEC={blender_exec}", unit)
     unit = re.sub(r"Environment=BLENDER_RENDER_PORT=\d+", f"Environment=BLENDER_RENDER_PORT={port}", unit)
-    if token:
-        unit = re.sub(
-            r"# Environment=BLENDER_RENDER_TOKEN=.*",
-            f"Environment=BLENDER_RENDER_TOKEN={token}",
-            unit,
-        )
-    host.put_text(f"/etc/systemd/system/{SERVICE_FILE}", unit)
+    unit, host_subs = re.subn(
+        r"Environment=BLENDER_RENDER_HOST=.*", f"Environment=BLENDER_RENDER_HOST={DEPLOY_BIND_HOST}", unit
+    )
+    unit, token_subs = re.subn(
+        r"# Environment=BLENDER_RENDER_TOKEN=.*", f"Environment=BLENDER_RENDER_TOKEN={token}", unit
+    )
+    if host_subs != 1 or token_subs != 1:
+        raise RuntimeError(f"{SERVICE_FILE} template lost its BLENDER_RENDER_HOST/BLENDER_RENDER_TOKEN lines")
+    unit_path = f"/etc/systemd/system/{SERVICE_FILE}"
+    host.put_text(unit_path, unit)
+    _chmod(host, unit_path, "600")
 
-    # Try systemd first (Hetzner host); fall back to a setsid start script.
+    # Try systemd first (regular Linux hosts); fall back to a setsid start script.
     # RunPod containers have no systemd, and a plain `nohup ... &` over an SSH
     # exec channel dies when the channel closes — setsid detaches the server
     # into its own session so it survives.
@@ -304,17 +355,19 @@ def deploy_to_host(
             "pkill -f blender_render_server.py 2>/dev/null\n"
             f"cd {REMOTE_DIR}\n"
             f"export BLENDER_EXEC={blender_exec} BLENDER_RENDER_PORT={port}\n"
-            + (f"export BLENDER_RENDER_TOKEN={token}\n" if token else "")
-            + f"setsid /usr/bin/python3 {REMOTE_DIR}/blender_render_server.py </dev/null >>{REMOTE_DIR}/server.log 2>&1 &\n"
+            f"export BLENDER_RENDER_HOST={DEPLOY_BIND_HOST}\n"
+            f"export BLENDER_RENDER_TOKEN={token}\n"
+            f"setsid /usr/bin/python3 {REMOTE_DIR}/blender_render_server.py </dev/null >>{REMOTE_DIR}/server.log 2>&1 &\n"
         )
         host.put_text(f"{REMOTE_DIR}/start.sh", start_script)
+        _chmod(host, f"{REMOTE_DIR}/start.sh", "700")
         host.run(f"bash {REMOTE_DIR}/start.sh && sleep 1")
 
     if not _wait_for_health(host, port, token, timeout=45):
         rc, log, _ = host.run(f"tail -30 {REMOTE_DIR}/server.log 2>/dev/null")
         raise RuntimeError(f"render API did not become healthy on :{port}; server.log tail:\n{(log or '')[-2000:]}")
     print(f"  render API healthy on :{port}", flush=True)
-    return f"http://{getattr(host, 'host', '<pod>')}:{port}"
+    return DeployResult(f"http://{getattr(host, 'host', '<pod>')}:{port}", token, token_generated)
 
 
 # ---------------------------------------------------------------------------
@@ -409,7 +462,7 @@ def cmd_runpod(args: argparse.Namespace) -> int:
 
     # GPU box -> official (CUDA/OptiX) Blender so Cycles can use the GPU.
     host = RunPodHost(pod)
-    deploy_to_host(
+    deployed = deploy_to_host(
         host,
         port=port,
         token=args.token,
@@ -427,6 +480,7 @@ def cmd_runpod(args: argparse.Namespace) -> int:
     print(f"  pod_id   = {pod.id}")
     print(f"  url      = {public}")
     print(f"  cloud-url= {public}")
+    _report_token(pod.id, deployed)
     state_path = Path(".astrid-blender-runpod.json")
     state_path.write_text(
         json.dumps({"pod_id": pod.id, "url": public, "gpu": gpu, "port": port}, indent=2),
@@ -440,6 +494,15 @@ def cmd_runpod(args: argparse.Namespace) -> int:
     else:
         print("  (pod left RUNNING until you tear it down)")
     return 0
+
+
+def _report_token(label: str, deployed: DeployResult) -> None:
+    """Tell the operator which token protects the host without printing it."""
+    if deployed.token_generated:
+        path = _remember_token(label, deployed.token)
+        print(f"  token    = generated; saved to {path} (mode 0600)")
+    else:
+        print("  token    = the one you supplied")
 
 
 def _runpod_ssh_details(pod: Any) -> dict[str, Any]:
@@ -583,7 +646,7 @@ def cmd_runpod_render(args: argparse.Namespace) -> int:
 
     flavor = "system" if args.blender_flavor_system else "official"
     host = RunPodHost(pod)
-    deploy_to_host(host, port=port, token=args.token, blender_flavor=flavor, blender_version=args.blender_version)
+    deployed = deploy_to_host(host, port=port, token=args.token, blender_flavor=flavor, blender_version=args.blender_version)
     url = _runpod_public_url(pod, port)
     if not url:
         raise SystemExit("could not resolve a public RunPod URL for the render port; falling back requires a tunnel")
@@ -591,7 +654,7 @@ def cmd_runpod_render(args: argparse.Namespace) -> int:
 
     out_path = str(Path(args.out).expanduser().resolve())
     print(f"  rendering on GPU pod ...", flush=True)
-    result = render_via_http(url, args.token, payload, out_path, timeout=args.render_timeout)
+    result = render_via_http(url, deployed.token, payload, out_path, timeout=args.render_timeout)
     print(f"  render done: {result['out_path']} ({result['bytes']} bytes, "
           f"transfer {result['transfer_ms']}ms, engine={result['engine']})", flush=True)
 
@@ -635,19 +698,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Deploy the Astrid Blender render API to a host.")
     sub = p.add_subparsers(dest="command", required=True)
 
-    ph = sub.add_parser("hetzner", help="Deploy to the Hetzner box over SSH.")
-    ph.add_argument("--host", default=DEFAULT_HETZNER_HOST)
-    ph.add_argument("--user", default=DEFAULT_HETZNER_USER)
-    ph.add_argument("--port", type=int, default=DEFAULT_PORT, help="Render API port.")
-    ph.add_argument("--ssh-port", default=DEFAULT_HETZNER_PORT, help="SSH port.")
-    ph.add_argument("--identity", default=None)
-    ph.add_argument("--token", default=os.environ.get("BLENDER_RENDER_TOKEN"))
-    ph.add_argument("--blender-flavor", default="apt", choices=StaticChoices(("apt", "official")), help="apt=CPU distro build; official=CUDA/OptiX tarball (GPU).")
-    ph.add_argument("--blender-version", default="4.0.2")
-
     ps = sub.add_parser("ssh", help="Deploy to any SSH host.")
     ps.add_argument("--host", required=True)
-    ps.add_argument("--user", default="root")
+    ps.add_argument("--user", required=True)
     ps.add_argument("--port", type=int, default=DEFAULT_PORT, help="Render API port.")
     ps.add_argument("--ssh-port", default="22")
     ps.add_argument("--identity", default=None)
@@ -707,9 +760,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "teardown-runpod":
         return cmd_teardown_runpod(args)
 
-    # hetzner / ssh share the SSH path.
     host = SshHost(args.host, user=args.user, port=args.ssh_port, identity=args.identity)
-    url = deploy_to_host(
+    deployed = deploy_to_host(
         host,
         port=args.port,
         token=args.token,
@@ -717,11 +769,12 @@ def main(argv: list[str] | None = None) -> int:
         blender_version=args.blender_version,
     )
     print("\nRENDER HOST READY")
-    print(f"  url       = {url}")
-    print(f"  cloud-url = {url}")
-    print(f"  health    = python -m astrid.packs.blender.deploy health --url {url}")
+    print(f"  url       = {deployed.url}")
+    print(f"  cloud-url = {deployed.url}")
+    _report_token(args.host, deployed)
+    print(f"  health    = python -m astrid.packs.blender.deploy health --url {deployed.url} --token <token>")
     print(f"  render    = astrid executors run blender.render --out <dir> "
-          f"--input execution=cloud --input cloud_url={url}")
+          f"--input execution=cloud --input cloud_url={deployed.url} --input cloud_token=<token>")
     return 0
 
 

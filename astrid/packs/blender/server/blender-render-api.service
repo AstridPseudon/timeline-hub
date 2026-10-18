@@ -9,10 +9,10 @@ User=root
 WorkingDirectory=/opt/astrid-blender-render
 Environment=PYTHONUNBUFFERED=1
 Environment=BLENDER_EXEC=/usr/bin/blender
-Environment=BLENDER_RENDER_HOST=0.0.0.0
+Environment=BLENDER_RENDER_HOST=127.0.0.1
 Environment=BLENDER_RENDER_PORT=8778
 Environment=BLENDER_RENDER_CONCURRENCY=2
-# Set BLENDER_RENDER_TOKEN to require Authorization: Bearer <token>.
+# A non-loopback BLENDER_RENDER_HOST requires BLENDER_RENDER_TOKEN; deploy.py writes both.
 # Environment=BLENDER_RENDER_TOKEN=change-me
 ExecStart=/usr/bin/python3 /opt/astrid-blender-render/blender_render_server.py
 Restart=on-failure

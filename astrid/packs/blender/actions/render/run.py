@@ -3,7 +3,7 @@
 
 Renders a Blender scene to a still image or animation, either *locally* (runs
 ``blender`` as a subprocess on this machine) or on the *cloud* (HTTP POST to a
-Blender render API host such as the Hetzner box or a RunPod GPU pod).
+Blender render API host such as an SSH-deployed host or a RunPod GPU pod).
 
 Inputs
 ------
@@ -57,9 +57,12 @@ from astrid.packs.blender.render_core import (
     default_blender_executable,
     ffmpeg_encode_command,
     frame_pattern,
+    https_only_opener,
     normalize_scene,
     normalize_settings,
     parse_output_path,
+    require_https_mesh_url,
+    safe_extract_zip,
 )
 
 
@@ -155,14 +158,29 @@ def _resolve_mesh_url(args: argparse.Namespace) -> str | None:
     if getattr(args, "sketchfab_uid", None):
         from astrid.packs.blender import mesh_fetch
 
-        return mesh_fetch.resolve_sketchfab_mesh_url(args.sketchfab_uid)
-    return getattr(args, "mesh_url", None)
+        url: str | None = mesh_fetch.resolve_sketchfab_mesh_url(args.sketchfab_uid)
+    else:
+        url = getattr(args, "mesh_url", None)
+    if not url:
+        return None
+    try:
+        return require_https_mesh_url(url)
+    except ValueError as exc:
+        raise AstridError(
+            str(exc),
+            recovery_command="pass an https:// --mesh-url (or use --sketchfab-uid)",
+        ) from exc
+
+
+def _fetch(url: str, dest: str) -> None:
+    """Stream ``url`` to ``dest``, refusing redirects off ``https``."""
+    with https_only_opener().open(url, timeout=300) as resp, open(dest, "wb") as fh:
+        shutil.copyfileobj(resp, fh)
 
 
 def _download_mesh_to_dir(url: str, work_dir: Path) -> str:
     """Download a mesh URL into work_dir (extract archives); return model path."""
     import zipfile
-    import urllib.request
 
     low = url.split("?")[0].lower()
     ext = ""
@@ -172,17 +190,17 @@ def _download_mesh_to_dir(url: str, work_dir: Path) -> str:
             break
     if ext in ("", ".zip"):
         archive = str(work_dir / ("mesh.zip" if ext == ".zip" else "mesh.bin"))
-        urllib.request.urlretrieve(url, archive)
+        _fetch(url, archive)
         if zipfile.is_zipfile(archive):
             with zipfile.ZipFile(archive) as zf:
-                zf.extractall(work_dir)
+                safe_extract_zip(zf, str(work_dir))
             for e in (".glb", ".gltf", ".fbx"):
                 for p in work_dir.rglob(f"*{e}"):
                     return str(p)
         os.rename(archive, str(work_dir / "mesh.glb"))
         return str(work_dir / "mesh.glb")
     dest = str(work_dir / f"mesh{ext}")
-    urllib.request.urlretrieve(url, dest)
+    _fetch(url, dest)
     return dest
 
 
