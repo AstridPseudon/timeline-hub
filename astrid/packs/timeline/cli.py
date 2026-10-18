@@ -3155,7 +3155,7 @@ def _parse_insert(value: str) -> tuple[str, float]:
 def _edit_label(parsed: argparse.Namespace) -> str:
     """What one `timelines edit` did, for undo: ``edit --clip c30.cover --until Astrid``."""
     parts = []
-    for name in ("clip", "cut", "add_media", "track", "clip_id", "trim_in", "trim_out", "slip", "on", "until",
+    for name in ("clip", "cut", "add_media", "add_layer", "layer", "layer_asset", "track", "clip_id", "trim_in", "trim_out", "slip", "on", "until",
                  "for_seconds", "at_word", "at", "nudge", "nudge_frames", "extend", "swap_asset", "replace_asset",
                  "beats", "split", "cut_id", "picture", "why", "hold", "replace_line", "insert_line", "remove_line",
                  "from_script", "close_gap_before", "film_end", "insert", "crossfade"):
@@ -3206,6 +3206,9 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     if cut_ops and parsed.on is None:
         raise _VerbError("--split and --add-cut need --on MOMENT (where the new cut starts)", 2)
     add_media = parsed.add_media is not None
+    add_layer = parsed.add_layer is not None
+    if add_layer and add_media:
+        raise _VerbError("--add-layer and --add-media are separate edits; run one per command", 2)
     timeline_level = bool(parsed.retime or parsed.close_gap_before or parsed.insert or voice_ops or cut_ops
                           or parsed.replace_asset or film_end_requested(parsed) or crossfade)
     selector = parsed.clip is not None or parsed.cut is not None
@@ -3213,12 +3216,24 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         raise _VerbError("--crossfade is a timeline-level operation; run it separately", 2)
     if add_media and (selector or timeline_level):
         raise _VerbError("--add-media is one edit; do not combine it with a clip selector or timeline-level edit", 2)
+    if add_layer and (selector or timeline_level):
+        raise _VerbError("--add-layer is one edit; do not combine it with a clip selector or timeline-level edit", 2)
+    if add_layer and not parsed.on:
+        raise _VerbError("--add-layer needs --on MOMENT (where the layer starts)", 2)
+    if add_layer:
+        unsupported = [name for name in ("at", "at_word", "near", "n", "offset", "trim_in", "trim_out", "slip",
+                                         "nudge", "nudge_frames", "extend", "swap_asset", "beats", "why", "hold",
+                                         "picture", "cut_id", "shape_from") if getattr(parsed, name) is not None]
+        unsupported.extend(name for name in ("remove", "keep", "clear_asset", "fit_sequence") if getattr(parsed, name))
+        if unsupported:
+            flags = ", ".join("--" + name.replace("_", "-") for name in unsupported)
+            raise _VerbError(f"--add-layer does not take {flags}; edit the added clip in a separate command", 2)
     if add_media and not (parsed.track and parsed.on):
         raise _VerbError("--add-media needs --track TRACK and --on MOMENT", 2)
     if selector and timeline_level:
         raise _VerbError("a clip edit and a timeline-level edit (--retime, --close-gap-before, --insert, or a voice "
                          "op) are separate: run one per command", 2)
-    if not selector and not timeline_level and not add_media:
+    if not selector and not timeline_level and not add_media and not add_layer:
         if has_look(parsed):
             raise _VerbError("look flags require --clip", 2)
         raise _VerbError("name a clip (--clip QUERY or --cut N) or a timeline-level edit (--retime, "
@@ -3342,6 +3357,9 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
     if parsed.add_media is not None:
         _add_media(tl, parsed)
         return
+    if parsed.add_layer is not None:
+        _add_layer(tl, parsed)
+        return
     if parsed.split:
         tl.cut(parsed.split).split(parsed.on, id=parsed.cut_id, picture=parsed.picture)
         return
@@ -3418,13 +3436,16 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
         clip.slip(parsed.slip)
     values = _parse_set(parsed.set_values)
     if values:
-        from astrid.sdk.timeline_address import element_schema, unknown_params
+        from astrid.core.timeline import clip_fields as cf
+        from astrid.sdk.timeline_address import declared_params, unknown_params
 
-        bad = unknown_params(clip.element, [re.split(r"[.\[]", k, maxsplit=1)[0] for k in values], existing=clip.params)
+        # a clip-level look field the element does not declare is written by clip.set through clip.look
+        bad = unknown_params(clip.element, [k for k in (re.split(r"[.\[]", k, maxsplit=1)[0] for k in values)
+                                            if k not in cf.FIELDS], existing=clip.params)
         if bad and not parsed.allow_new_params:
             import difflib
 
-            props = sorted((element_schema(clip.element).get("properties") or {}))
+            props = declared_params(clip.element)
             hints = [f"{k} (did you mean {', '.join(difflib.get_close_matches(k, props, n=2))}?)"
                      if difflib.get_close_matches(k, props, n=2) else k for k in bad]
             raise _VerbError(f"{clip.address} is an {clip.element}, which has no param {', '.join(hints)}. "
@@ -3446,6 +3467,36 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
         clip.set_beats(parsed.beats)
     if parsed.clear_asset:
         clip.clear_asset()
+
+
+def _add_layer(tl: Any, parsed: argparse.Namespace) -> None:
+    """--add-layer ELEMENT --on MOMENT [--layer NAME] [--layer-asset ASSET] [--for S|--until M] [--set k=v]: one layer
+    in the cut on screen at that moment (the verb form of `tl.add`; a clip-level look flag applies to it)."""
+    element = parsed.add_layer
+    if not (element == "media" or element.startswith("am-") or "/" in element):
+        element = "am-" + element
+    from astrid.core.timeline import clip_fields as cf
+    from astrid.sdk.timeline_address import unknown_params
+
+    params = _parse_set(parsed.set_values)
+    keys = [re.split(r"[.\[]", key, maxsplit=1)[0] for key in params]
+    bad = unknown_params(element, [key for key in keys if key not in cf.FIELDS])
+    if bad and not parsed.allow_new_params:
+        raise _VerbError(f"{element} has no param {', '.join(bad)}; use --allow-new-params to add one on purpose", 2)
+    clip = tl.add(element, at=parsed.on, hold=parsed.for_seconds, asset=parsed.layer_asset,
+                  layer=parsed.layer, track=parsed.track, clip_id=parsed.clip_id)
+    if params:
+        clip.set(**params, _allow_new=parsed.allow_new_params)
+    if parsed.until is not None:
+        clip.until(parsed.until)
+    from astrid.packs.timeline.cli_look import apply_look, look_values
+
+    values = look_values(parsed)
+    if values:
+        try:
+            apply_look(tl, clip, values)
+        except ValueError as exc:
+            raise _VerbError(str(exc), 2) from None
 
 
 def _add_media(tl: Any, parsed: argparse.Namespace) -> None:
@@ -3608,8 +3659,14 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--add-media", dest="add_media", default=None, metavar="FILE|HANDLE|KEY",
                            help="Add an audio media clip; audio tracks stay independent of picture cuts "
                                 "(needs --track and --on; --for/--until/--trim-in/--trim-out/--gain-db/--id optional).")
-    subparser.add_argument("--track", default=None, metavar="TRACK", help="Audio track for --add-media (music, vo, sfx ...).")
-    subparser.add_argument("--id", dest="clip_id", default=None, metavar="ID", help="Clip id for --add-media.")
+    subparser.add_argument("--add-layer", dest="add_layer", default=None, metavar="ELEMENT",
+                           help="Add a layer (type, sprite, snap-plate ...) to the cut on screen at --on MOMENT "
+                                "(--layer NAME, --layer-asset ASSET, --for/--until, --set k=v, --track optional).")
+    subparser.add_argument("--layer", default=None, metavar="NAME", help="Layer name for --add-layer (default: its asset or element name).")
+    subparser.add_argument("--layer-asset", dest="layer_asset", default=None, metavar="ASSET",
+                           help="Asset (key, file or media handle) for --add-layer.")
+    subparser.add_argument("--track", default=None, metavar="TRACK", help="Track for --add-layer, or the audio track for --add-media (music, vo, sfx ...).")
+    subparser.add_argument("--id", dest="clip_id", default=None, metavar="ID", help="Clip id for --add-media or --add-layer.")
     subparser.add_argument("--trim-in", dest="trim_in", type=float, default=None, metavar="SECONDS",
                            help="Set a media clip's source in point; its film start stays and its length follows.")
     subparser.add_argument("--trim-out", dest="trim_out", type=float, default=None, metavar="SECONDS",

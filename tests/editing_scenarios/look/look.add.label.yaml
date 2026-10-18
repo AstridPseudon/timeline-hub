@@ -3,7 +3,7 @@ source: h2 L5
 intent: Add a type label "beta" on the spoken word "now" in c2, held 1.5 s, at x=96 y=84 (canvas px), keeping the c2 plate and card.
 fixture: tiny
 expect: change
-cli: {missing: "no add verb in the CLI (AUDIT: Missing tools, Add a clip by verb; h2 L5)"}
+cli: edit --add-layer type --layer beta --on '"now"' --for 1.5 --set text=beta --set x=96 --set y=84
 sheet:
   cuts: [c2]
   replace:

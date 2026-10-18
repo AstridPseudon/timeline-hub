@@ -131,6 +131,13 @@ def render_sheet(tl: Checkout, *, start=None, end=None, banner=None, film=None, 
     out = [f"film {film or tl.bundle.get('project_id', '')} · {tl.bundle.get('timeline_id', '')} · {_canvas(tl)} · {tl.fps:g} fps · v {version}"]
     if banner:
         out.append(banner)
+    last_picture = max((c for c in tl.clips() if not c.is_audio and c.track == "plate"),
+                       key=lambda c: c.end, default=None)
+    film_end = intent.until(last_picture.data) if last_picture else None
+    if film_end and abs(last_picture.end - tl.duration) < 0.5 / tl.fps:
+        out.append(f"end {film_end}")
+    if getattr(tl, "music", "keep_end") == "plays_on":
+        out.append("music plays-on")
     if start is not None or end is not None:
         ids = [g["id"] for g in picked]
         named = ", ".join(ids) if wanted is not None else f"{ids[0]}..{ids[-1]}" if ids else ""
@@ -203,11 +210,20 @@ def sound_clips(tl):
 
 def _sound_row(tl, clip):
     bits = [f"volume={clip.data['volume']:g}"] if isinstance(clip.data.get("volume"), (int, float)) else []
+    bits.extend(_look_bits(clip, skip={"volume"}))
+    if clip.data.get("from") is not None and clip.data.get("to") is not None:
+        bits.append(f"trim={clip.data['from']:g}..{clip.data['to']:g}")
     label = intent.beats_label(clip.data)
     if label:
         bits.append(f"~beats={label}")
+    on = intent.on(clip.data)
     until = intent.until(clip.data)
-    timing = f"until {until}" if until else f"for {_length_text(clip.duration, tl.fps)}"
+    timing_parts = [f"on {on}"] if on else []
+    if until:
+        timing_parts.append(f"until {until}")
+    else:
+        timing_parts.append(f"for {_length_text(clip.duration, tl.fps)}")
+    timing = " ".join(timing_parts)
     return [f"{clip.start:6.2f}", clip.track or "sfx", intent.layer_of(clip.data) or clip.id,
             _short(clip.element), clip.asset or "", " ".join(bits), timing]
 
@@ -289,6 +305,7 @@ def _layer_row(tl, clip, lo, hi, *, is_picture, detail=False):
             elif len(shown) > 28:
                 shown = "…"
             bits.append(f"{key}={shown}")
+    bits.extend(_look_bits(clip, skip=set(params)))
     timing = []
     on = intent.on(clip.data)
     if on and not is_picture:
@@ -300,6 +317,48 @@ def _layer_row(tl, clip, lo, hi, *, is_picture, detail=False):
         timing.append(f"for {_length_text(length, tl.fps)}")
     track = clip.track if not clip.is_audio else (clip.track or "sfx")
     return [gutter, track, name, _short(clip.element), what, " ".join(bits), " ".join(timing)]
+
+
+def _look_keys(element, keys):
+    """The keys that are clip-level look fields for this element: declared by clip_fields, not by the element."""
+    from astrid.sdk.timeline_address import declared_params
+    declared = set(declared_params(element))
+    return [k for k in keys if k in cf.FIELDS and k not in declared]
+
+
+def _look_bits(clip, *, skip=()):
+    """`opacity=0.6 entrance="fade 8f"`: the clip's set look fields, in their human form (what clip.look.describe shows)."""
+    from astrid.sdk.timeline.look import Look
+    shown = Look(clip).describe()
+    if clip.is_audio:
+        shown.update(cf.describe(clip.data, fps=clip._tl.fps))
+    keys = _look_keys(clip.element, [k for k in shown if k not in skip])
+    return [f"{k}={shown[k] if _is_number(shown[k]) else _value(shown[k])}" for k in keys]
+
+
+def _apply_look(clip, fields):
+    """Make the clip's look fields equal `fields` (a name omitted from a row that shows it is cleared)."""
+    from astrid.sdk.timeline.look import Look
+    audio = clip.is_audio
+    fps = clip._tl.fps
+    wanted = {k: v for k, v in fields.items() if v is not ELIDED}
+    changes = {}
+    for name, value in wanted.items():
+        if name not in cf.FIELDS:
+            continue
+        stored = cf.coerce(name, value, fps=fps, audio=audio)[1]
+        if audio and name in {"fade_in", "fade_out"}:
+            candidate = copy.deepcopy(clip.data)
+            cf.write(candidate, name, value, fps=fps, audio=True)
+            if cf.describe(candidate, fps=fps).get(name) != cf.describe(clip.data, fps=fps).get(name):
+                changes[name] = value
+        elif stored != cf.read(clip.data, name, fps=fps, audio=audio):
+            changes[name] = value
+    for name in _look_keys(clip.element, list(Look(clip).describe())):
+        if name not in fields:
+            changes[name] = None
+    if changes:
+        clip.set_look(**changes)
 
 
 def _length_text(seconds, fps):
@@ -352,6 +411,12 @@ def parse_sheet(text: str) -> dict[str, Any]:
         if not line.strip():
             continue
         body = line.strip()
+        if body.startswith("end "):
+            sheet["film_end"] = _canon(body[4:], number)
+            continue
+        if body == "music plays-on":
+            sheet["music"] = "plays_on"
+            continue
         if raw.startswith(("film ", "WORKING COPY", "PUBLISHED", "next:", "scope ")) or body.startswith((">", "↳")) or raw.startswith("# "):
             continue
         if body in ("lines", "orphans", "sound"):
@@ -479,7 +544,8 @@ def _parse_layer(body, number, fps=30.0):
     if len(tokens) < 3:
         raise SheetError(f"line {number}: a layer reads  track name element [ASSET] [\"text\"] [k=v …] [on …] [until …|for …]")
     layer = {"track": tokens[0], "name": tokens[1], "element": tokens[2], "asset": None, "text": None,
-             "params": {}, "on": None, "until": None, "for": None, "line": number, "at": gutter}
+             "params": {}, "on": None, "until": None, "for": None, "trim": None, "slip": None,
+             "line": number, "at": gutter}
     current, buf = None, []
     def close_clause():
         if current is None:
@@ -495,6 +561,18 @@ def _parse_layer(body, number, fps=30.0):
         if token in CLAUSES:
             close_clause()
             current, buf = token, []
+            continue
+        if token.startswith("trim="):
+            match = re.fullmatch(r"trim=([\d.]+)\.\.([\d.]+)", token)
+            if not match:
+                raise SheetError(f"line {number}: trim takes a source range like trim=3..5")
+            layer["trim"] = (float(match.group(1)), float(match.group(2)))
+            continue
+        if token.startswith("slip="):
+            try:
+                layer["slip"] = float(token[5:])
+            except ValueError:
+                raise SheetError(f"line {number}: slip takes seconds like slip=2") from None
             continue
         is_param = "=" in token and not token.startswith('"') and not (layer["asset"] is None and _names_media(token, layer["element"]))
         if current is not None and not is_param and not token.startswith("~"):
@@ -761,6 +839,10 @@ def merge_sheet(sheet: dict[str, Any], base_tl: Any, tl: Any) -> dict[str, Any]:
         chosen = pick(f"line {seg} (narration)", key(b), key(entry), key(c))
         if chosen is not None and chosen != key(c):
             merged["lines"][seg] = {**entry, "text": chosen[0], "gap": chosen[1]}
+    for field in ("film_end", "music"):
+        selected = pick(field.replace("_", " "), base.get(field), sheet.get(field), now.get(field))
+        if selected is not None and selected != now.get(field):
+            merged[field] = selected
     if sheet.get("sound"):
         b_sound = {r["name"]: r for r in base.get("sound") or []}
         c_sound = {r["name"]: r for r in now.get("sound") or []}
@@ -829,25 +911,42 @@ def _apply_parsed(tl, sheet, before):
             hi = hi if hi is not None else tl.duration + 1
             scoped_segments.update(word.segment for word in tl.words(between=(lo, hi)))
         line_removals = scoped_segments.difference(sheet["lines"])
+    if sheet.get("music"):
+        tl.music = sheet["music"]
+    if sheet.get("sound"):
+        _apply_sound(tl, sheet["sound"])
     for segment, entry in sheet["lines"].items():
         voice = tl.voice(segment)
         if entry["text"] and entry["text"] != voice.text.replace('"', "'"):
             intent.set_line_text(voice.clips[0].data, entry["text"])
         if entry["gap"] is not None and (voice.gap_after is None or abs(voice.gap_after-entry["gap"]) > 0.0051):
+            if entry["gap"] == 0:
+                voices = tl.lines()
+                index = next((i for i, item in enumerate(voices) if item.segment == segment), -1)
+                if index >= 0 and index + 1 < len(voices) and voices[index + 1].words:
+                    tl.close_gap(before=voices[index + 1].words[0])
+                    continue
             voice.set_gap_after(entry["gap"], reflow=False)
             reflow = True
-    if sheet.get("sound"):
-        _apply_sound(tl, sheet["sound"])
+    for cut in sheet["cuts"]:
+        for layer in cut["layers"]:
+            if layer.get("trim") is not None or layer.get("slip") is not None:
+                raise SheetError(_with_text(f"line {layer['line']}: trim= and slip= apply only to sound rows",
+                                            layer["line"], layer.get("text_line", "")))
     groups = {g["id"]: g for g in tl._cut_groups()}
+    # Add new cuts before processing omissions in existing cuts: splitting
+    # automatically moves and carries the existing layers into the new cut.
+    for cut in sheet["cuts"]:
+        if cut["id"] not in groups:
+            _add_cut(tl, cut)
+            groups = {g["id"]: g for g in tl._cut_groups()}
     for cut in sheet["cuts"]:
         group = groups.get(cut["id"])
         if group is None:
-            _add_cut(tl, cut)
-            continue
+            raise SheetError(f"line {cut['line']}: could not create cut {cut['id']}")
         picture = group["picture"]
         if cut["on"] is not None and picture is not None and cut["on"] != intent.on(picture.data):
             picture.on(cut["on"])
-            reflow = True
         note = tl.cut_note(cut["id"])
         if cut["why"] is not None and cut["why"] != note.get("why"):
             tl.set_cut_note(cut["id"], why=cut["why"])
@@ -895,6 +994,8 @@ def _apply_parsed(tl, sheet, before):
     tl.resolve()
     if reflow:
         tl.reflow()
+    if sheet.get("film_end"):
+        tl.film_end(sheet["film_end"])
     for segment in sorted(line_removals):
         if any(line.segment == segment for line in tl.lines()):
             tl.remove_line(segment)
@@ -940,25 +1041,53 @@ def _apply_sound(tl, rows):
     from astrid.sdk.timeline_checkout import TimelineEditError
     clips = {(intent.layer_of(c.data) or c.id): c for c in sound_clips(tl)}
     for row in rows:
+        if row["element"] != "media":
+            raise SheetError(_with_text(f"line {row['line']}: a sound row must use the media element",
+                                        row["line"], row.get("text_line", "")))
         clip = clips.get(row["name"])
         if clip is None:
-            raise SheetError(_with_text(f"line {row['line']}: no sound clip {row['name']!r} (sound clips: {', '.join(clips) or 'none'}); add one with timelines edit", row["line"], row.get("text_line", "")))
+            if not row["asset"]:
+                raise SheetError(_with_text(f"line {row['line']}: a new sound row needs a media asset", row["line"], row.get("text_line", "")))
+            try:
+                at = row["on"] or row["at"]
+                if at is None:
+                    raise SheetError(f"line {row['line']}: a new sound row needs a gutter time or on <moment>")
+                clip = tl.add("media", at=at, asset=row["asset"], track=row["track"], hold=row["for"],
+                              cut=None, clip_id=row["name"])
+                if not clip.is_audio:
+                    raise SheetError(f"line {row['line']}: track {row['track']!r} is not an audio track")
+                if row["on"]:
+                    clip.on(row["on"])
+                if row["until"]:
+                    clip.until(row["until"])
+                elif row["for"] is None and row.get("trim") is None:
+                    clip.trim(in_s=0, out_s=clip._source_duration())
+                if row.get("trim"):
+                    clip.trim(in_s=row["trim"][0], out_s=row["trim"][1])
+                clips[row["name"]] = clip
+            except (TimelineEditError, mo.MomentError) as exc:
+                raise SheetError(_with_text(f"line {row['line']}: {exc}", row["line"], row.get("text_line", ""))) from None
         try:
             if row["asset"] and row["asset"] != clip.asset:
                 clip.swap_asset(row["asset"])
-            if row.get("at") is not None and abs(row["at"]-clip.start) > 0.0051:
+            trim_changed = row.get("trim") is not None and (clip.data.get("from") != row["trim"][0] or clip.data.get("to") != row["trim"][1])
+            if trim_changed:
+                clip.trim(in_s=row["trim"][0], out_s=row["trim"][1])
+            if row.get("slip") is not None:
+                clip.slip(row["slip"])
+            if row.get("on") and row["on"] != intent.on(clip.data):
+                clip.on(row["on"])
+            elif not row.get("on") and row.get("at") is not None and abs(row["at"]-clip.start) > 0.0051:
                 clip.enter_at(row["at"], anchor=False)
             if row["until"] and row["until"] != intent.until(clip.data):
                 clip.until(row["until"])
-            elif row["for"] is not None and abs(row["for"]-clip.duration) > 0.5/tl.fps:
+            elif row["for"] is not None and not trim_changed and abs(row["for"]-clip.duration) > 0.5/tl.fps:
                 clip.set_duration(row["for"])
-            for key, value in row["params"].items():
-                if key != "volume":
-                    raise SheetError(f"line {row['line']}: a sound line takes volume= only (got {key}=)")
-                if value is not ELIDED:
-                    stored = cf.coerce(key, value, fps=tl.fps, audio=True)[1]
-                    if stored != cf.read(clip.data, key, fps=tl.fps, audio=True):
-                        cf.write(clip.data, key, value, fps=tl.fps, audio=True)
+            for key in row["params"]:
+                if key not in _look_keys(clip.element, [key]) or cf.FIELDS[key].applies_to == "visual":
+                    audio_fields = sorted(k for k, f in cf.FIELDS.items() if f.applies_to != "visual")
+                    raise SheetError(f"line {row['line']}: a sound line takes {', '.join(audio_fields)} (got {key}=)")
+            _apply_look(clip, row["params"])
         except (TimelineEditError, mo.MomentError, cf.ClipFieldError) as exc:
             raise SheetError(_with_text(f"line {row['line']}: {clip.address}: {exc}", row["line"], row.get("text_line", ""))) from None
 
@@ -986,6 +1115,7 @@ def _update_layer(tl, clip, layer, *, is_picture):
     raw_params = data.get("params") if isinstance(data.get("params"), dict) else None
     current = dict(raw_params or {})
     wanted = dict(layer["params"])
+    look = {k: wanted.pop(k) for k in _look_keys(element, list(wanted))}
     if element == "am-type":
         if layer["text"] is not None:
             wanted["text"] = layer["text"]
@@ -1021,6 +1151,7 @@ def _update_layer(tl, clip, layer, *, is_picture):
         has_formula = any(p == f"params.{key}" or p.startswith((f"params.{key}[", f"params.{key}.")) for p in formulas)
         if has_formula or to_canvas(element, key, current.get(key)) != value:
             clip.set(**{key: value})
+    _apply_look(clip, look)
     if (layer["on"] is not None or not is_picture) and layer["on"] != intent.on(data):
         clip.on(layer["on"]) if layer["on"] else tl._place_on(clip, None)
     same_for = (layer["for"] is None and intent.for_s(data) is None) or (layer["for"] is not None and intent.for_s(data) is not None and abs(layer["for"]-intent.for_s(data)) < 0.5/tl.fps)
@@ -1038,6 +1169,8 @@ def _add_layer(tl, cut_id, group, layer):
     from astrid.sdk.timeline_address import element_schema, unknown_params
     from astrid.sdk.timeline_checkout import parse_formula_value, parse_moment_value
     element = _element(layer["element"])
+    layer = {**layer, "params": dict(layer["params"])}
+    look = {k: layer["params"].pop(k) for k in _look_keys(element, list(layer["params"]))}
     computed = {k: v for k, v in layer["params"].items() if v is not ELIDED and (parse_formula_value(v) is not None or parse_moment_value(v) is not None)}
     # tl.add converts canvas px to each element's storage itself (one param path, like clip.set),
     # so the sheet passes the canvas values it shows; converting here too stored x=600 as 17.
@@ -1065,6 +1198,7 @@ def _add_layer(tl, cut_id, group, layer):
         clip.hold_for(layer["for"])
     for key, value in computed.items():
         clip.set_param(key, value)
+    _apply_look(clip, look)
 
 
 def iter_layers(sheet: dict[str, Any]) -> Iterable[tuple[str, dict[str, Any]]]:

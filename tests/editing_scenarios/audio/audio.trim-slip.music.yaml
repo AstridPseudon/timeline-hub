@@ -4,7 +4,9 @@ intent: Trim a music source range and slip it without moving its film position.
 fixture: audio-media
 expect: change
 cli: edit --clip a-music --trim-in 1 --trim-out 3 --slip 2
-sheet: {missing: "the sheet has no source trim or slip syntax yet"}
+sheet:
+  replace:
+    - ['for 8s  trim=0..8', 'for 2s  trim=3..5']
 python: |
   tl.clip("a-music").trim(in_s=1, out_s=3).slip(2)
 check:

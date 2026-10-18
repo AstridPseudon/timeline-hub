@@ -3,7 +3,7 @@ source: h2 L6/L8
 intent: Add a sprite with asset R on the spoken word "now" in c2, at x=600 y=300 (canvas px), held 1.5 s.
 fixture: tiny
 expect: change
-cli: {missing: "no add verb in the CLI (AUDIT: Missing tools, Add a clip by verb; h2 L6)"}
+cli: edit --add-layer sprite --layer pin --on '"now"' --for 1.5 --layer-asset R --set x=600 --set y=300
 sheet:
   cuts: [c2]
   replace:

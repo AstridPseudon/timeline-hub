@@ -896,6 +896,31 @@ def test_python_setters_are_discoverable_and_refuse_what_is_not_a_param():
     assert card.params["brand_new"] == 1
 
 
+def test_media_set_refuses_unknown_params_and_accepts_declared_fades():
+    tl = Checkout(bundle())
+    clip = tl.clip("a-music")
+    before = copy.deepcopy(clip.data)
+    with pytest.raises(TimelineEditError, match="has no param zzbogus"):
+        clip.set(zzbogus=2)
+    assert clip.data == before
+    clip.set(fadeIn=0.5, fadeOut=0.25, fadeInCurve="equal-power", fadeOutCurve="linear")
+    assert clip.params == {"fadeIn": 0.5, "fadeOut": 0.25, "fadeInCurve": "equal-power", "fadeOutCurve": "linear"}
+
+
+@pytest.mark.parametrize("clip_id,fields,stored", [
+    ("a-music", {"volume": "-3dB", "fade_in": "8f curve=equal-power"}, {"volume", "params"}),
+    ("a-rocket", {"opacity": 0.6, "entrance": "fade 8f"}, {"opacity", "entrance"}),
+])
+def test_look_none_clears_fields_without_changing_other_clip_data(clip_id, fields, stored):
+    clip = Checkout(bundle()).clip(clip_id)
+    clip.data.setdefault("params", {})
+    before = copy.deepcopy(clip.data)
+    clip.look.set(**fields)
+    assert all(name in clip.data for name in stored)
+    clip.look.set(**{name: None for name in fields})
+    assert clip.data == before
+
+
 def test_verify_in_python_uses_the_fast_lane_at_what_changed(monkeypatch):
     """Script-mode parity with edit --verify: tl.verify() picks the changed moments, or at=."""
     from astrid.packs.rendering.actions.timeline_visualize import fast_lane
@@ -1063,8 +1088,7 @@ def test_type_boxes_are_measured_with_the_fonts_and_check_says_when_text_leaves_
     """Text-fit (T12/T15): the record states the measured box and the size that fits; check flags overflow."""
     from astrid.core.timeline import text_fit
 
-    if not text_fit.available("label"):
-        pytest.skip("the type fonts are not in this tree")
+    assert text_fit.available("label"), "bundled WOFF2 fonts require the fonttools[woff] development dependency"
     label = text_fit.layout("PART 01 · ADAPT, LIVE", font="label", size=28, width=1200)
     assert label["w"] > 21 * 28 * 0.62  # the old estimate ended the highlight at "ADAP"
     tl = Checkout(bundle())
@@ -1202,7 +1226,7 @@ def test_candidate_video_retains_original_working_artifact_and_rejects_wrong_aut
 
 @pytest.mark.integration  # imports runtime_protocol from the sibling Runtime checkout
 @pytest.mark.parametrize("base_policy", ["clean", "historical", "review", "profile", "canvas"])
-def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(tmp_path, monkeypatch, base_policy):
+def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(tmp_path, monkeypatch, request, base_policy):
     """Only transport/kernel are fake: real admission, wait and DTO projection.
 
     Retained T410 bytes/descriptor reconstruct the output boundary. Its caller
@@ -1238,7 +1262,6 @@ def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(
     candidate["parent"]["config"]["clips"][0]["params"]["content"] = "frozen-WORKING"
     candidate["parent"]["clips"] = deepcopy(candidate["parent"]["config"]["clips"])
     produced = {}
-    import sqlite3
     from runtime_protocol.service import RuntimeService
     def result(value): return SimpleNamespace(ok=True, data=value)
 
@@ -1249,19 +1272,11 @@ def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(
             # Exact T412 retained public projection: run.completed, task.succeeded.
             # RuntimeService.run and _task_resource remain real; only transport
             # storage/kernel admission are fixture-owned.
-            connection = sqlite3.connect(":memory:")
-            connection.row_factory = sqlite3.Row
-            connection.execute("CREATE TABLE runs (id TEXT, project_id TEXT, capability TEXT, status TEXT, spec_json TEXT)")
-            connection.execute("CREATE TABLE tasks (id TEXT, run_id TEXT, created_at TEXT)")
-            connection.execute("CREATE TABLE events (id INTEGER, task_id TEXT, kind TEXT, payload_json TEXT)")
             original_runs = [("base-run", "base-task"), ("candidate", "candidate-task")]
             if base_policy == "historical": original_runs.append(("newer-run", "newer-task"))
-            for run_id, task_id in original_runs:
-                connection.execute("INSERT INTO runs VALUES (?,?,?,?,?)", (run_id, "p", "rendering.render", "completed", "{}"))
-                connection.execute("INSERT INTO tasks VALUES (?,?,?)", (task_id, run_id, "fixture"))
+            store = _seed_terminal_projection_runtime(tmp_path / "runtime-realm", "p", original_runs, request)
             self.public_service = RuntimeService.__new__(RuntimeService)
-            self.public_service.store = SimpleNamespace(conn=connection,
-                execution_binding=lambda task: None, _current_runtime_epoch=lambda: 1)
+            self.public_service.store = store
             self.projects = SimpleNamespace(show=lambda ref: result(self.get_project(ref)))
             self.timelines = SimpleNamespace(list=lambda project, **kwargs: result(self.list_timelines(project)),
                 inspect=lambda project, timeline, **kwargs: result({"representation": "canonical_head", "is_current_head": True, "revision_id": "saved-revision", "timeline_id": "tl"}))
@@ -1579,10 +1594,9 @@ def test_normal_candidate_preview_keeps_review_default_and_allows_verification_o
 
 @pytest.mark.integration  # imports runtime_protocol from the sibling Runtime checkout
 @pytest.mark.parametrize("failure", [None, "wrong_run", "wrong_snapshot", "wrong_project", "wrong_task", "wrong_task_digest", "pending_task", "preview", "missing_ref", "digest", "bytes", "no_media"])
-def test_base_video_materializes_only_exact_managed_media_through_real_public_client(tmp_path, failure):
+def test_base_video_materializes_only_exact_managed_media_through_real_public_client(tmp_path, request, failure):
     """Real SDK public families normalize only transport-owned Runtime rows/CAS."""
     import hashlib
-    import sqlite3
     from copy import deepcopy
     from types import SimpleNamespace
     from runtime_protocol.service import RuntimeService
@@ -1594,15 +1608,9 @@ def test_base_video_materializes_only_exact_managed_media_through_real_public_cl
     snapshot = {"render_run_id": "base-run", "video_digest": digest, "metadata": {"selection": "explicit_current_render"}}
     authority = {"render_run_id": "base-run", "project_id": "project", "include_media": True,
                  "filmstrip_snapshot": snapshot, "video_digest": digest, "video_object_id": digest}
-    connection = sqlite3.connect(":memory:")
-    connection.row_factory = sqlite3.Row
-    connection.execute("CREATE TABLE runs (id TEXT, project_id TEXT, capability TEXT, status TEXT, spec_json TEXT)")
-    connection.execute("CREATE TABLE tasks (id TEXT, run_id TEXT, created_at TEXT)")
-    connection.execute("CREATE TABLE events (id INTEGER, task_id TEXT, kind TEXT, payload_json TEXT)")
-    connection.execute("INSERT INTO runs VALUES (?,?,?,?,?)", ("base-run", "project", "rendering.render", "completed", "{}"))
-    connection.execute("INSERT INTO tasks VALUES (?,?,?)", ("base-task", "base-run", "fixture"))
+    store = _seed_terminal_projection_runtime(tmp_path / "runtime-realm", "project", [("base-run", "base-task")], request)
     producer = RuntimeService.__new__(RuntimeService)
-    producer.store = SimpleNamespace(conn=connection, execution_binding=lambda task: None, _current_runtime_epoch=lambda: 1)
+    producer.store = store
     raw = {"id": "base-task", "status": "completed", "capability": "rendering.render", "spec": {}, "result": {"outputs": [{"name": "video", "digest": digest}]},
            "created_at": "2026-10-13T18:10:25.451Z", "updated_at": "2026-10-13T18:10:25.451Z"}
     task = producer._task_resource({"task": raw, "run": {"id": "base-run", "project_id": "project"}})
@@ -1639,4 +1647,33 @@ def test_base_video_materializes_only_exact_managed_media_through_real_public_cl
         assert video.parent.parent == tmp_path
         assert receipt == {"render_run_id": "base-run", "digest": digest, "selection": "explicit_current_render", "verified": True}
     assert authority == before
-    connection.close()
+
+
+def _seed_terminal_projection_runtime(root, project_id, run_tasks, request):
+    """Build a real Runtime store containing only terminal projection rows."""
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.util import now
+
+    store = RealmStore.initialize(root)
+    request.addfinalizer(store.close)
+    with store._transaction():
+        realm_id = store.conn.execute("SELECT id FROM realm").fetchone()[0]
+        timestamp = now()
+        store.conn.execute(
+            "INSERT INTO projects (id, realm_id, slug, name, metadata_json, version, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,1,?,?)",
+            (project_id, realm_id, project_id, project_id, "{}", timestamp, timestamp),
+        )
+        spec_digest = store._store_spec({})
+        for run_id, task_id in run_tasks:
+            store.conn.execute(
+                "INSERT INTO runs (id, project_id, capability, spec_digest, status, created_at, updated_at) "
+                "VALUES (?,?,?,?,?,?,?)",
+                (run_id, project_id, "rendering.render", spec_digest, "completed", timestamp, timestamp),
+            )
+            store.conn.execute(
+                "INSERT INTO tasks (id, run_id, capability, spec_digest, status, created_at, updated_at) "
+                "VALUES (?,?,?,?,?,?,?)",
+                (task_id, run_id, "rendering.render", spec_digest, "completed", timestamp, timestamp),
+            )
+    return store

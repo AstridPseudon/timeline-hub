@@ -26,13 +26,9 @@ python: |                    # optional: runs with tl = Checkout.draft("P", "t")
   tl.clip("c1.rocket").set(x=120)
 check:                       # optional: Python expressions; tl is a fresh draft after the edit; each truthy
   - tl.clip("c1.rocket").get("x") == 120
-xfail:                       # optional: known mismatches, each with the audit reference
-  - {path: python, check: steps, reason: "AUDIT bug 10: a Python save with 2 edits is 2 undo steps"}
 ```
 
-- A path is absent, `{missing: "<why, with audit ref>"}` (the front-end cannot do it today), or present.
-  A missing path is reported as an `exists` xfail. At least one path must be present.
-- Unknown keys, a bad `expect`, an unknown xfail path or check, or a missing reason are a `ScenarioError`.
+- At least one path must be declared, and each declared path must be runnable. Unknown keys, including `missing` and `xfail`, are a `ScenarioError` at the scenario level and inside the sheet mapping. CLI paths accept command strings or lists of them; Python paths accept a snippet string. Both reject mapping-shaped gap declarations.
 
 ## Fixtures
 
@@ -41,7 +37,7 @@ xfail:                       # optional: known mismatches, each with the audit r
 
 ## Checks
 
-Each present path is checked against these names (xfail entries use them):
+Each declared path is checked against these names:
 
 - `runs`: the path ran (every CLI/sheet command exits 0, Python raises nothing). For `refused` it must refuse. For `no-change`, exit 3 (no change) also counts as ran.
 - `changes`: the document differs from the base (`change`), equals it (`no-change`, `refused`).
@@ -51,7 +47,6 @@ Each present path is checked against these names (xfail entries use them):
 - `undo`: undoing the measured steps restores the base exactly (only when steps >= 1).
 - `redo`: redoing them restores the after-document exactly (only when steps >= 1).
 - `check`: every `check:` expression is truthy.
-- `exists`: the path is present (a missing path fails it, and is an expected xfail).
 - `idempotent`: only for `idempotent: true` scenarios. After a path's first run (before undo/redo) it runs again
   on the same working copy; this check fails if that second run changed the document, made an undo step,
   or (cli/sheet) did not say "no change". Its steps are taken back, so undo/redo still test the first run.
@@ -61,14 +56,8 @@ Each present path is checked against these names (xfail entries use them):
 `equal` compares against the reference: `python` if present, else `cli`, else `sheet`. The reference
 itself is not checked against itself.
 
-## Strict xfail
-
-A listed xfail that still fails is reported as an expected xfail. A listed xfail that passes fails the
-test with "fixed? remove the xfail", so known bugs cannot silently get fixed or hidden. An unlisted failure
-fails the test. Missing paths xfail with their reason.
-
 ## Files
 
-- `runner.py`: `load_scenario`, `parse_scenario`, `run_case(scenario, via)` (alias `run_path`), `run_scenario`, `evaluate`, `classify`.
+- `runner.py`: `load_scenario`, `parse_scenario`, `run_case(scenario, via)` (alias `run_path`), `run_scenario`, `evaluate`.
 - `test_conformance.py`: one test per (scenario, path).
 - `test_runner_selftest.py`: proves the harness catches each class of bug.

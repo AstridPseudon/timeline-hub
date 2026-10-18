@@ -1,8 +1,6 @@
 """More on-screen model cases (TRUTH.md §2.2): cross-fades, fades at the film start, layout, audio, element data, speed."""
 from __future__ import annotations
 
-import time
-
 from astrid.core.timeline.onscreen import coverage, visible_at
 
 FPS = 30
@@ -113,7 +111,9 @@ def test_the_real_elements_declare_the_picture_roles_coverage_needs():
     assert found["am-footage"]["coverage"] == found["am-presenter"]["coverage"] == "picture"
 
 
-def test_coverage_of_4500_frames_and_300_clips_is_fast():
+def test_large_coverage_processes_each_clip_boundary_once(monkeypatch):
+    from astrid.core.timeline import onscreen
+
     clips = []
     for i in range(300):
         track = "plate" if i % 2 == 0 else "fx"
@@ -123,11 +123,30 @@ def test_coverage_of_4500_frames_and_300_clips_is_fast():
             effects={"fade_in": 0.2, "fade_out": 0.2},
         ))
     config = _config(clips)
-    started = time.perf_counter()
-    spans = coverage(config, FPS, CANVAS, ELEMENTS, end_frame=4500)
-    elapsed = time.perf_counter() - started
-    assert spans and spans[-1].end_frame == 4500
-    assert elapsed < 0.5, f"coverage took {elapsed:.3f}s"
+    boundary_calls = {"start": {}, "end": {}}
+    original_start = onscreen.clip_start_frame
+    original_end = onscreen.clip_end_frame
+
+    def count_boundary(kind, original):
+        def counted(clip, fps):
+            clip_id = clip["id"]
+            boundary_calls[kind][clip_id] = boundary_calls[kind].get(clip_id, 0) + 1
+            return original(clip, fps)
+        return counted
+
+    monkeypatch.setattr(onscreen, "clip_start_frame", count_boundary("start", original_start))
+    monkeypatch.setattr(onscreen, "clip_end_frame", count_boundary("end", original_end))
+    spans = onscreen.coverage(config, FPS, CANVAS, ELEMENTS, end_frame=4500)
+
+    assert [(span.start_frame, span.end_frame, span.cls, span.content) for span in spans] == [
+        (0, 6, "DIP", None),
+        (6, 4500, "COVERED", "CONTENT"),
+    ]
+    expected_ids = {clip["id"] for clip in clips}
+    assert boundary_calls == {
+        "start": {clip_id: 1 for clip_id in expected_ids},
+        "end": {clip_id: 1 for clip_id in expected_ids},
+    }
 
 
 def test_a_declared_non_fade_entrance_on_the_picture_is_a_dip_not_a_gap():

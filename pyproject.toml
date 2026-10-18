@@ -43,6 +43,7 @@ astrid-upgrade = "astrid.sdk.upgrade:main"
 
 [project.optional-dependencies]
 dev = [
+    "fonttools[woff]>=4.0",
     "mypy==1.17.0",
     "pytest==9.0.2",
     "pytest-cov==7.1.0",

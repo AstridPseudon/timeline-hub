@@ -83,6 +83,24 @@ def test_unknown_audio_curve_is_refused_and_stored_bad_curves_fail_check() -> No
     assert any("fadeInCurve is invalid" in problem for problem in tl._type_mismatches())
 
 
+def test_set_refuses_unknown_media_param_without_changing_the_clip(monkeypatch, capsys) -> None:
+    import copy
+
+    tl = _tiny()
+    before = copy.deepcopy(tl.clip("a-music").data)
+    assert _run(monkeypatch, tl, "--clip", "a-music", "--set", "zzbogus=2") == 2
+    assert "has no param zzbogus" in capsys.readouterr().err
+    assert tl.clip("a-music").data == before
+
+
+def test_set_accepts_clip_level_volume_on_media(monkeypatch) -> None:
+    tl = _tiny()
+    assert _run(monkeypatch, tl, "--clip", "a-music", "--set", 'volume="-3dB"') == 0
+    clip = tl.clip("a-music")
+    assert clip.data["volume"] == 0.7079
+    assert "volume" not in clip.params
+
+
 def test_crossfade_moves_b_and_writes_both_fades(monkeypatch, capsys) -> None:
     import copy
 

@@ -4,7 +4,9 @@ intent: Add a source-trimmed music clip independently of the picture cut.
 fixture: audio-media
 expect: change
 cli: edit --add-media Q --track music --on 1 --for 3 --trim-in 2 --gain-db -5.8 --id music-bed
-sheet: {missing: "the cut sheet cannot add independent media clips; use the CLI verb or SDK"}
+sheet:
+  replace:
+    - ["a-music  media  Q  for 8s  trim=0..8", "a-music  media  Q  for 8s  trim=0..8\n  1.00   music  music-bed  media  Q  volume=-5.8dB  for 3s  trim=2..5"]
 python: |
   clip = tl.add("media", asset="Q", track="music", at=1, hold=3, cut=None, clip_id="music-bed")
   clip.trim(in_s=2, out_s=5)

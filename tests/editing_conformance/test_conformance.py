@@ -6,11 +6,9 @@ import pytest
 
 from tests.editing_conformance.runner import (
     SCENARIOS,
-    classify,
     evaluate,
     load_scenario,
     run_scenario,
-    xfail_reasons,
 )
 
 _SCENARIOS = [load_scenario(p) for p in sorted(SCENARIOS.rglob("*.yaml"))]
@@ -32,22 +30,7 @@ def _evaluated(scenario):
 
 @pytest.mark.parametrize(("scenario", "path"), _CASES, ids=[f"{s.id}-{p}" for s, p in _CASES])
 def test_conformance(scenario, path):
-    spec = scenario.paths[path]
-    if spec.missing is not None:
-        pytest.xfail(f"missing: {spec.missing}")
-
     _results, failures = _evaluated(scenario)
-    unexpected, expected, fixed = classify(scenario, failures)
-
-    bad = [k for k in unexpected if k[0] == path]
+    bad = [k for k in failures if k[0] == path]
     if bad:
         pytest.fail("\n\n".join(f"{p} {c}: {failures[(p, c)]}" for p, c in bad))
-
-    stale = [k for k in fixed if k[0] == path]
-    if stale:
-        pytest.fail("; ".join(f"fixed? remove the xfail: {p} {c}" for p, c in stale))
-
-    known = [k for k in expected if k[0] == path]
-    if known:
-        reasons = xfail_reasons(scenario)
-        pytest.xfail("; ".join(f"{p} {c}: {reasons.get((p, c), 'missing')}" for p, c in known))
