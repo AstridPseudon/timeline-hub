@@ -1,18 +1,15 @@
-Advisory lint/type baselines for the `make ruff` / `make mypy` gates (run by `.github/workflows/ci.yml`).
-
-History note:
-- Git evidence: commit `7d343bcff89a0e6d342c0704d78f7bdb315242a9` introduced `pyproject.toml`, `.github/workflows/ci.yml`, and `scripts/reshape/run_ci_checks.sh` together. That commit scoped Ruff to reshape/concurrency paths and scoped mypy to `files = ["scripts/reshape"]`.
-- Git evidence: the same commit message included `ci: exclude known non-s0 baseline gates`.
-- Inference: `astrid/` was intentionally kept out of the first advisory gate so CI could start narrow before the broader repo backlog was baselined.
+Blocking lint/type baselines for the `make ruff` / `make mypy` gates (run by `.github/workflows/ci.yml` and `make check`).
 
 Baseline policy:
-- These files record the accepted current finding counts for the expanded advisory scope.
-- Compare scripts must exit `0` when current findings are less than or equal to baseline, and non-zero only when the count regresses upward.
-- Existing backlog stays advisory until it is separately remediated and the baseline is intentionally lowered.
+- `ruff_astrid.json` and `mypy_astrid.json` record the accepted finding counts for the whole tree (Ruff: `pyproject.toml` `[tool.ruff]`; mypy: `astrid` and `scripts/reshape`).
+- The gate is exact, like `structure_astrid.json` (`compare_structure_baseline.py`). A higher count fails as a regression. A lower count also fails until the baseline is rewritten, so deleted code cannot leave slack for a later regression to fill.
+- The shared comparison is `scripts/reshape/count_baseline.py`. `import_cycles.json` is checked by `scripts/reshape/import_cycles.py`.
+- The baselines can only shrink: commit the lower number in the same change that removed the findings.
 
-Regeneration commands:
+Regeneration commands (after fixing or deleting code):
 
 ```bash
-python3 scripts/reshape/compare_ruff_baseline.py --write-baseline
-python3 scripts/reshape/compare_mypy_baseline.py --write-baseline
+python -m scripts.reshape.compare_ruff_baseline --write-baseline
+python -m scripts.reshape.compare_mypy_baseline --write-baseline
+python -m scripts.reshape.compare_structure_baseline --write-baseline
 ```

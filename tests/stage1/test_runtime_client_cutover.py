@@ -1,108 +1,26 @@
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import os
 import shutil
 import stat
 import subprocess
 import sys
-import tarfile
-import tempfile
 from pathlib import Path
 
 import pytest
 
-ASTRID_SOURCE = Path(__file__).resolve().parents[2]
-# The acceptance revision is the Runtime commit the vendored workspace client was
-# produced from, so the daemon's schema digest cannot drift from the client's.
-RUNTIME_COMMIT = json.loads(
-    (ASTRID_SOURCE / "astrid_runtime_client" / "vendor.lock.json").read_text(encoding="utf-8")
-)["source_commit"]
-
-
-def _runtime_archive() -> bytes:
-    """Find the optional runtime's pinned acceptance revision."""
-    override = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
-    if override:
-        candidates = [Path(override).expanduser().resolve()]
-    else:
-        sibling_roots = [ASTRID_SOURCE.parent]
-        # Linked worktrees may live in /tmp; use the common checkout only to
-        # discover runtime siblings, never as the Astrid source under test.
-        try:
-            common = subprocess.run(
-                ["git", "-C", str(ASTRID_SOURCE), "rev-parse", "--path-format=absolute", "--git-common-dir"],
-                check=False, capture_output=True, text=True,
-            )
-        except OSError:
-            common = None
-        if common is not None and common.returncode == 0:
-            sibling_roots.append(Path(common.stdout.strip()).parent.parent)
-        candidates = [
-            root / name
-            for root in dict.fromkeys(sibling_roots)
-            for name in (
-                "runtime-export-candidate",
-                "astrid-runtime",
-                "astrid-runtime-execution-20260909",
-            )
-        ]
-    reasons = []
-    for checkout in candidates:
-        if not checkout.is_dir():
-            reasons.append(f"{checkout}: absent")
-            continue
-        try:
-            pinned = subprocess.run(
-                ["git", "-C", str(checkout), "cat-file", "-e", f"{RUNTIME_COMMIT}^{{commit}}"],
-                check=False, capture_output=True,
-            )
-            if pinned.returncode != 0:
-                reasons.append(f"{checkout}: missing acceptance revision {RUNTIME_COMMIT}")
-                continue
-            revision = RUNTIME_COMMIT
-            archive = subprocess.run(
-                ["git", "-C", str(checkout), "archive", "--format=tar", revision],
-                check=False, capture_output=True,
-            )
-        except OSError as exc:
-            reasons.append(f"{checkout}: {exc}")
-            continue
-        if archive.returncode == 0:
-            return archive.stdout
-        reasons.append(f"{checkout}: cannot archive {revision}: {archive.stderr.decode(errors='replace').strip()}")
-    pytest.skip(
-        "Optional Astrid Runtime unavailable; set ASTRID_RUNTIME_CHECKOUT "
-        "to a runtime Git checkout. " + "; ".join(reasons),
-        allow_module_level=True,
-    )
-
-
-archive = _runtime_archive()
-_RUNTIME_TMP = tempfile.TemporaryDirectory(prefix="astrid-runtime-archive-")
-RUNTIME = Path(_RUNTIME_TMP.name)
-with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
-    tar.extractall(RUNTIME)
-sys.path.insert(0, str(RUNTIME))
-
-pytest.importorskip("runtime_protocol.daemon", reason="Optional runtime checkout does not provide runtime_protocol.daemon or its dependencies")
-from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
-from tests.helpers.runtime import initialize_runtime_realm
-
-
-_RuntimeDaemon = RuntimeDaemon
-
-
-def RuntimeDaemon(root, *args, **kwargs):
-    initialize_runtime_realm(root)
-    return _RuntimeDaemon(root, *args, **kwargs)
-
-from astrid.core.gateway import dispatch  # noqa: E402
+from astrid.core.gateway import dispatch
 from astrid.core.gateway import main as gateway_main
-from astrid.sdk.client import AstridClient  # noqa: E402
-from astrid_runtime_client import ApiError, WorkspaceClient  # noqa: E402
+from astrid.sdk.client import AstridClient
+from astrid_runtime_client import ApiError, WorkspaceClient
+from tests.helpers.runtime import use_runtime, vendored_runtime_commit
+
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
+# The Runtime as of the commit the vendored workspace client was produced from, so the daemon's schema
+# digest cannot drift from the client's.
+RUNTIME = use_runtime(vendored_runtime_commit())
 
 
 @pytest.fixture(autouse=True)
@@ -148,7 +66,7 @@ def _pin_runtime_cli_subprocess(monkeypatch):
     monkeypatch.setattr(runtime_cli, "RuntimeCLI", PinnedRuntimeCLI)
 
 
-def _open_client(daemon: RuntimeDaemon) -> AstridClient:
+def _open_client(daemon) -> AstridClient:
     """Open with the runtime-issued identity and canonical protocol explicitly."""
     return AstridClient.open(
         endpoint=daemon.endpoint,
@@ -161,7 +79,7 @@ def _open_client(daemon: RuntimeDaemon) -> AstridClient:
     )
 
 
-def _register_render_basic(daemon: RuntimeDaemon) -> None:
+def _register_render_basic(daemon) -> None:
     """Seed the capability catalog required by task-admission journeys."""
     daemon.service.register_capability({
         "capability_id": "render.basic",
@@ -170,7 +88,7 @@ def _register_render_basic(daemon: RuntimeDaemon) -> None:
     })
 
 
-def _use_explicit_gateway_connection(monkeypatch: pytest.MonkeyPatch, daemon: RuntimeDaemon) -> None:
+def _use_explicit_gateway_connection(monkeypatch: pytest.MonkeyPatch, daemon) -> None:
     """Keep gateway integration online without asking the launcher to boot."""
     monkeypatch.setattr(
         AstridClient,
@@ -330,8 +248,8 @@ def test_product_client_requires_bootstrap_with_exact_next_action(tmp_path, monk
         AstridClient.open()
 
 
-def test_product_client_crosses_real_daemon_and_returns_stable_envelopes(tmp_path, monkeypatch):
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+def test_product_client_crosses_real_daemon_and_returns_stable_envelopes(tmp_path, monkeypatch, real_runtime):
+    daemon = real_runtime()
     _register_render_basic(daemon)
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(tmp_path / "support" / "credentials" / "owner.token"))
@@ -351,9 +269,9 @@ def test_product_client_crosses_real_daemon_and_returns_stable_envelopes(tmp_pat
         daemon.stop()
 
 
-def test_retired_timeline_create_is_absent_from_cli_and_sdk(tmp_path, monkeypatch, capsys):
+def test_retired_timeline_create_is_absent_from_cli_and_sdk(tmp_path, monkeypatch, capsys, real_runtime):
     """Timeline documents are created through the canonical composition flow, not the retired route."""
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     _use_explicit_gateway_connection(monkeypatch, daemon)
     try:
         assert gateway_main(
@@ -393,8 +311,8 @@ def test_retired_timeline_create_is_absent_from_cli_and_sdk(tmp_path, monkeypatc
         daemon.stop()
 
 
-def test_cold_mutations_expose_server_receipts_on_cli_sdk_replay(tmp_path, monkeypatch, capsys):
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+def test_cold_mutations_expose_server_receipts_on_cli_sdk_replay(tmp_path, monkeypatch, capsys, real_runtime):
+    daemon = real_runtime()
     _register_render_basic(daemon)
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(tmp_path / "support" / "credentials" / "owner.token"))
@@ -442,8 +360,8 @@ def test_cold_mutations_expose_server_receipts_on_cli_sdk_replay(tmp_path, monke
         daemon.stop()
 
 
-def test_projects_selection_and_unready_admission_are_typed_on_real_daemon(tmp_path, monkeypatch):
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+def test_projects_selection_and_unready_admission_are_typed_on_real_daemon(tmp_path, monkeypatch, real_runtime):
+    daemon = real_runtime()
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(tmp_path / "support" / "credentials" / "owner.token"))
     try:
@@ -473,8 +391,8 @@ def test_projects_selection_and_unready_admission_are_typed_on_real_daemon(tmp_p
         daemon.stop()
 
 
-def test_documented_project_cli_mutations_return_committed_receipts(tmp_path, monkeypatch, capsys):
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+def test_documented_project_cli_mutations_return_committed_receipts(tmp_path, monkeypatch, capsys, real_runtime):
+    daemon = real_runtime()
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(tmp_path / "support" / "credentials" / "owner.token"))
     _use_explicit_gateway_connection(monkeypatch, daemon)
@@ -511,8 +429,8 @@ def test_documented_project_cli_mutations_return_committed_receipts(tmp_path, mo
         daemon.stop()
 
 
-def test_project_shot_scope_stays_with_project_route(tmp_path, monkeypatch):
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+def test_project_shot_scope_stays_with_project_route(tmp_path, monkeypatch, real_runtime):
+    daemon = real_runtime()
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(tmp_path / "support" / "credentials" / "owner.token"))
 
@@ -554,8 +472,8 @@ def test_project_shot_scope_stays_with_project_route(tmp_path, monkeypatch):
         daemon.stop()
 
 
-def test_project_reference_scope_stays_with_project_route(tmp_path, monkeypatch):
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+def test_project_reference_scope_stays_with_project_route(tmp_path, monkeypatch, real_runtime):
+    daemon = real_runtime()
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(tmp_path / "support" / "credentials" / "owner.token"))
 
@@ -609,8 +527,8 @@ def test_project_reference_scope_stays_with_project_route(tmp_path, monkeypatch)
         daemon.stop()
 
 
-def test_remote_reads_are_scoped_and_unsupported_operations_fail_honestly(tmp_path, monkeypatch):
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+def test_remote_reads_are_scoped_and_unsupported_operations_fail_honestly(tmp_path, monkeypatch, real_runtime):
+    daemon = real_runtime()
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(tmp_path / "support" / "credentials" / "owner.token"))
     try:
@@ -641,8 +559,8 @@ def test_remote_reads_are_scoped_and_unsupported_operations_fail_honestly(tmp_pa
         daemon.stop()
 
 
-def test_client_reopens_after_close_against_same_daemon(tmp_path, monkeypatch):
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+def test_client_reopens_after_close_against_same_daemon(tmp_path, monkeypatch, real_runtime):
+    daemon = real_runtime()
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(tmp_path / "support" / "credentials" / "owner.token"))
     try:
@@ -767,8 +685,8 @@ def test_doctor_preserves_observer_failure_and_diagnostic(capsys, monkeypatch):
     assert len(calls) == 1 and calls[0][0] == "doctor"
 
 
-def test_remote_domains_use_generated_runtime_and_reopen(tmp_path, monkeypatch):
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+def test_remote_domains_use_generated_runtime_and_reopen(tmp_path, monkeypatch, real_runtime):
+    daemon = real_runtime()
     _register_render_basic(daemon)
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(tmp_path / "support" / "credentials" / "owner.token"))
@@ -791,7 +709,7 @@ def test_remote_domains_use_generated_runtime_and_reopen(tmp_path, monkeypatch):
         assert run.ok
         assert client.runs.events(task.data["run_id"]).ok
         daemon.stop()
-        daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+        daemon = real_runtime()
         monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
         reopened = _open_client(daemon)
         assert reopened.projects.show("journey").ok
@@ -800,8 +718,8 @@ def test_remote_domains_use_generated_runtime_and_reopen(tmp_path, monkeypatch):
         daemon.stop()
 
 
-def test_editor_domain_reads_and_media_relations_use_generated_operations(tmp_path, monkeypatch):
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+def test_editor_domain_reads_and_media_relations_use_generated_operations(tmp_path, monkeypatch, real_runtime):
+    daemon = real_runtime()
     _register_render_basic(daemon)
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(tmp_path / "support" / "credentials" / "owner.token"))
@@ -853,13 +771,9 @@ def test_editor_domain_reads_and_media_relations_use_generated_operations(tmp_pa
         daemon.stop()
 
 
-def test_operational_gateway_uses_typed_runtime_backup_and_lifecycle(tmp_path, monkeypatch, capsys):
+def test_operational_gateway_uses_typed_runtime_backup_and_lifecycle(tmp_path, monkeypatch, capsys, real_runtime):
     support = tmp_path / "support" / "runtime"
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=support,
-        owner_lock=support / "instance.lock",
-    ).start()
+    daemon = real_runtime(tmp_path / "realm", support_root=support, owner_lock=support / "instance.lock")
     monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", daemon.endpoint)
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(support / "credentials" / "owner.token"))
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str((tmp_path / "support").resolve()))
@@ -894,11 +808,11 @@ def test_operational_gateway_uses_typed_runtime_backup_and_lifecycle(tmp_path, m
         daemon.stop()
 
 
-def test_daemon_binds_loopback_only_and_keeps_credentials_private(tmp_path, monkeypatch):
+def test_daemon_binds_loopback_only_and_keeps_credentials_private(tmp_path, monkeypatch, real_runtime):
     with pytest.raises(ValueError, match="runtime daemon only binds to loopback"):
-        _RuntimeDaemon(tmp_path / "public-realm", host="0.0.0.0")
+        real_runtime(tmp_path / "public-realm", host="0.0.0.0")
 
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         assert daemon.endpoint.startswith("http://127.0.0.1:")
         credentials = tmp_path / "support" / "credentials"
@@ -923,8 +837,8 @@ def test_daemon_binds_loopback_only_and_keeps_credentials_private(tmp_path, monk
         daemon.stop()
 
 
-def test_empty_timeline_opens_as_composition_on_real_daemon(tmp_path, monkeypatch):
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+def test_empty_timeline_opens_as_composition_on_real_daemon(tmp_path, monkeypatch, real_runtime):
+    daemon = real_runtime()
     try:
         client = _open_client(daemon)
         project_id = client.projects.create(slug="composition", name="Composition", idempotency_key="project").data["project_id"]
@@ -950,11 +864,13 @@ def test_empty_timeline_opens_as_composition_on_real_daemon(tmp_path, monkeypatc
         daemon.stop()
 
 
-def test_promote_candidate_receipt_replay_and_foreign_provenance_rejection(tmp_path, monkeypatch):
+def test_promote_candidate_receipt_replay_and_foreign_provenance_rejection(tmp_path, monkeypatch, real_runtime):
     """Astrid's recipe reaches the runtime-owned atomic promotion; 422 surfaces as validation_error."""
-    from astrid.packs.generation.actions.generate_image.task_adapter import validate_shot_generation_recipe
+    from astrid.packs.generation.actions.generate_image.task_adapter import (
+        validate_shot_generation_recipe,
+    )
 
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         astrid = _open_client(daemon)
         project_id = astrid.projects.create(slug="promotion", name="Promotion", idempotency_key="project").data["project_id"]
@@ -1077,7 +993,7 @@ def _write_cpu_executor(pack: Path, *, capability_id: str, argv: list[str], outp
     )
 
 
-def test_generic_host_cpu_route_claims_settles_and_fences_stale_attempt_across_restart(tmp_path, monkeypatch):
+def test_generic_host_cpu_route_claims_settles_and_fences_stale_attempt_across_restart(tmp_path, monkeypatch, real_runtime):
     """Shared generic-host route: discover, register, claim, subprocess, CAS settle, restart, stale fence."""
     from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
 
@@ -1089,7 +1005,7 @@ def test_generic_host_cpu_route_claims_settles_and_fences_stale_attempt_across_r
         outputs=[{"name": "answer", "type": "file", "path_template": "{out}/answer.txt", "artifact_type": "text/plain"}],
     )
     support = tmp_path / "support"
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=support).start()
+    daemon = real_runtime(tmp_path / "realm", support_root=support)
     try:
         client = _open_client(daemon)
         project_id = client.projects.create(slug="cpu-route", name="CPU Route", idempotency_key="project").data["project_id"]
@@ -1139,7 +1055,7 @@ def test_generic_host_cpu_route_claims_settles_and_fences_stale_attempt_across_r
         assert claim is not None and claim.task_id == recovery.data["task_id"]
 
         daemon.stop()
-        daemon = RuntimeDaemon(tmp_path / "realm", support_root=support).start()
+        daemon = real_runtime(tmp_path / "realm", support_root=support)
         restarted = WorkspaceClient(daemon.endpoint, daemon.worker_token)
         assert int(restarted.health()["runtime_epoch"]) > old_epoch
         with pytest.raises(ApiError) as fenced:
@@ -1167,7 +1083,7 @@ def test_generic_host_cpu_route_claims_settles_and_fences_stale_attempt_across_r
         daemon.stop()
 
 
-def test_generic_host_render_route_runs_real_ffmpeg_and_settles_boot_manifest_provenance(tmp_path, monkeypatch):
+def test_generic_host_render_route_runs_real_ffmpeg_and_settles_boot_manifest_provenance(tmp_path, monkeypatch, real_runtime):
     """Render-family route on a real daemon: real FFmpeg child, CAS-published outputs, stamped provenance."""
     from astrid.core._shared.boot_manifest import load_boot_manifest_hash
     from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
@@ -1197,7 +1113,7 @@ def test_generic_host_render_route_runs_real_ffmpeg_and_settles_boot_manifest_pr
         ],
     )
     support = tmp_path / "support"
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=support).start()
+    daemon = real_runtime(tmp_path / "realm", support_root=support)
     try:
         client = _open_client(daemon)
         project_id = client.projects.create(slug="render-route", name="Render Route", idempotency_key="project").data["project_id"]
@@ -1248,9 +1164,9 @@ def test_generic_host_render_route_runs_real_ffmpeg_and_settles_boot_manifest_pr
         daemon.stop()
 
 
-def test_shot_items_and_reference_associations_use_versioned_routes_and_survive_restart(tmp_path, monkeypatch):
+def test_shot_items_and_reference_associations_use_versioned_routes_and_survive_restart(tmp_path, monkeypatch, real_runtime):
     support = tmp_path / "support"
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=support).start()
+    daemon = real_runtime(tmp_path / "realm", support_root=support)
     try:
         astrid = _open_client(daemon)
         project_id = astrid.projects.create(slug="items", name="Items", idempotency_key="project").data["project_id"]
@@ -1302,7 +1218,7 @@ def test_shot_items_and_reference_associations_use_versioned_routes_and_survive_
         assert secondary.ok and primary.ok and link.ok
 
         daemon.stop()
-        daemon = RuntimeDaemon(tmp_path / "realm", support_root=support).start()
+        daemon = real_runtime(tmp_path / "realm", support_root=support)
         reopened = _open_client(daemon)
         shown = reopened.shots.show(project_id, "item-shot")
         assert shown.ok and shown.data["name"] == "Item Updated" and shown.data["archived"] is False

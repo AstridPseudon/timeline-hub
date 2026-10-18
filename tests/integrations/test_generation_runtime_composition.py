@@ -16,47 +16,28 @@ import socket
 import ssl
 import struct
 import subprocess
-import sys
 import threading
 import zlib
 from http import HTTPStatus
 from pathlib import Path
-from urllib.parse import urlsplit
 
 import pytest
 
-RUNTIME_ROOT = Path(
-    os.environ.get("ASTRID_RUNTIME_CHECKOUT")
-    or "/Users/hannahomalley/Documents/Codex/2026-09-09/can-you-see-the-poms-skills/work/astrid-prep/repos/Runtime"
-).resolve()
+from astrid.core.execution.generic_host import (
+    GenericPackHost,
+    HostError,
+    RuntimeProtocolClient,
+)
+from astrid.core.execution.network_broker import _BrokerHandler
+from astrid.sdk.generation_publication import compose_image_publication_request
+from astrid_runtime_client import WorkspaceClient
+
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
+
 ASTRID_APP_ROOT = Path(
     os.environ.get("ASTRID_APP_CHECKOUT")
     or "/Users/hannahomalley/Documents/Codex/2026-09-09/can-you-see-the-poms-skills/work/astrid-prep/repos/astrid-app"
 ).resolve()
-sys.path.insert(0, str(RUNTIME_ROOT))
-
-# Needs the sibling Runtime checkout (ASTRID_RUNTIME_CHECKOUT); it does not ship with this repo.
-pytestmark = pytest.mark.integration
-pytest.importorskip("runtime_protocol")
-
-from astrid_runtime_client import WorkspaceClient  # noqa: E402
-from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
-from runtime_protocol.store import RealmStore  # noqa: E402
-from tests.helpers.runtime import initialize_runtime_realm
-
-from astrid.core.execution.generic_host import GenericPackHost, HostError, RuntimeProtocolClient  # noqa: E402
-from astrid.core.execution.network_broker import _BrokerHandler  # noqa: E402
-from astrid.sdk.generation_publication import compose_image_publication_request  # noqa: E402
-
-
-_RuntimeDaemon = RuntimeDaemon
-
-
-def RuntimeDaemon(root, *args, **kwargs):
-    """Keep every CPU composition fixture on explicit canonical setup."""
-    initialize_runtime_realm(root)
-    return _RuntimeDaemon(root, *args, **kwargs)
-
 
 _PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
 
@@ -530,15 +511,9 @@ def _character_animation_cpu_fixture(root: Path) -> Path:
     return pack
 
 
-def test_typed_image_admission_crosses_runtime_host_and_cas(tmp_path: Path) -> None:
+def test_typed_image_admission_crosses_runtime_host_and_cas(tmp_path: Path, real_runtime) -> None:
     pack = _fixture_pack(tmp_path)
-    realm_root = tmp_path / "realm"
-    RealmStore.initialize(realm_root).close()
-    daemon = RuntimeDaemon(
-        realm_root,
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -616,15 +591,11 @@ def test_typed_image_admission_crosses_runtime_host_and_cas(tmp_path: Path) -> N
         daemon.stop()
 
 
-def test_typed_video_enhance_admission_settles_variant_and_readback(tmp_path: Path) -> None:
+def test_typed_video_enhance_admission_settles_variant_and_readback(tmp_path: Path, real_runtime) -> None:
     """Exercise the bounded video contract through CPU Runtime custody."""
     pack = _video_enhance_cpu_fixture(tmp_path)
     previous_readiness = _set_cpu_readiness_environment(pack)
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -731,15 +702,11 @@ def test_typed_video_enhance_admission_settles_variant_and_readback(tmp_path: Pa
         daemon.stop()
 
 
-def test_typed_character_animation_admission_consumes_ordered_cas_and_readback(tmp_path: Path) -> None:
+def test_typed_character_animation_admission_consumes_ordered_cas_and_readback(tmp_path: Path, real_runtime) -> None:
     """Exercise the bounded two-input character profile through CPU custody."""
     pack = _character_animation_cpu_fixture(tmp_path)
     previous_readiness = _set_cpu_readiness_environment(pack)
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -873,15 +840,11 @@ def test_typed_character_animation_admission_consumes_ordered_cas_and_readback(t
         daemon.stop()
 
 
-def test_astrid_character_animation_producer_composes_runtime_and_gallery_readback(tmp_path: Path) -> None:
+def test_astrid_character_animation_producer_composes_runtime_and_gallery_readback(tmp_path: Path, real_runtime) -> None:
     """Prove the paired Astrid App producer → Runtime → shipped host → gallery path."""
     pack = _character_animation_cpu_fixture(tmp_path)
     previous_readiness = _set_cpu_readiness_environment(pack)
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -1082,7 +1045,7 @@ globalThis.fetch = async (input, init = {}) => {
         daemon.stop()
 
 
-def test_production_t2i_command_runs_through_host_broker_http_substitute(tmp_path: Path) -> None:
+def test_production_t2i_command_runs_through_host_broker_http_substitute(tmp_path: Path, real_runtime) -> None:
     """Run the shipped command/manifest with only upstream HTTP substituted."""
     generation_root = Path(__file__).resolve().parents[2] / "astrid/packs/generation"
     original_forward = _BrokerHandler._forward_http
@@ -1179,11 +1142,7 @@ fal_module.default_client = lambda: HttpClient(transport=_transport)
             return env, secrets
 
     _BrokerHandler._forward_http = fake_forward
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -1282,6 +1241,7 @@ def test_production_t2i_command_uses_https_connect_and_auth(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     oversized_output_index: int | None,
+    real_runtime,
 ) -> None:
     """Exercise the shipped command through the broker's real CONNECT path."""
     import astrid.core.execution.network_broker as broker_module
@@ -1409,11 +1369,7 @@ def test_production_t2i_command_uses_https_connect_and_auth(
             env["SSL_CERT_FILE"] = str(child_cert)
             return env, secrets
 
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -1501,6 +1457,7 @@ def test_production_i2i_command_uses_ordered_cas_through_https_connect_and_auth(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     oversized_output: bool,
+    real_runtime,
 ) -> None:
     """Exercise the shipped bounded i2i command with a CAS-owned source.
 
@@ -1634,11 +1591,7 @@ def test_production_i2i_command_uses_ordered_cas_through_https_connect_and_auth(
             env["SSL_CERT_FILE"] = str(child_cert)
             return env, secrets
 
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -1760,6 +1713,7 @@ def test_production_qwen_edit_command_uses_ordered_cas_through_https_connect_and
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     oversized_output: bool,
+    real_runtime,
 ) -> None:
     """Exercise the shipped source-only Qwen edit command end to end on CPU.
 
@@ -1895,11 +1849,7 @@ def test_production_qwen_edit_command_uses_ordered_cas_through_https_connect_and
             env["SSL_CERT_FILE"] = str(child_cert)
             return env, secrets
 
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -2063,6 +2013,7 @@ def test_production_unified_edit_profiles_settle_variant_and_readback(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     profile: dict[str, object],
+    real_runtime,
 ) -> None:
     """Exercise inpaint and Klein through the shipped unified edit boundary."""
     import astrid.core.execution.network_broker as broker_module
@@ -2197,11 +2148,7 @@ def test_production_unified_edit_profiles_settle_variant_and_readback(
             env["SSL_CERT_FILE"] = str(child_cert)
             return env, secrets
 
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -2333,17 +2280,13 @@ def test_production_unified_edit_profiles_settle_variant_and_readback(
         provider_thread.join(timeout=2)
 
 
-def test_production_i2i_rejects_extra_or_misordered_single_cas_inputs(tmp_path: Path) -> None:
+def test_production_i2i_rejects_extra_or_misordered_single_cas_inputs(tmp_path: Path, real_runtime) -> None:
     """A single CAS port is still an ordered one-element input contract."""
     pack = _registered_image_executor_fixture(
         tmp_path,
         manifest_name="generate_image_cloud_i2i",
     )
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -2439,6 +2382,7 @@ def test_registered_image_executor_consumes_cas_image_and_cleans_attempt(
     model: str,
     mode: str,
     oversized_output_index: int | None,
+    real_runtime,
 ) -> None:
     pack = _registered_image_executor_fixture(
         tmp_path,
@@ -2446,11 +2390,7 @@ def test_registered_image_executor_consumes_cas_image_and_cleans_attempt(
         oversized_output_index=oversized_output_index,
         preserve_production_metadata=mode == "t2i",
     )
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -2577,17 +2517,14 @@ def test_registered_image_executor_consumes_cas_image_and_cleans_attempt(
 def test_registered_qwen_edit_failure_is_terminal_and_does_not_settle(
     tmp_path: Path,
     failure: str,
+    real_runtime,
 ) -> None:
     pack = _registered_image_executor_fixture(
         tmp_path,
         manifest_name="generate_image_edit",
         oversized_output=failure == "oversized_output",
     )
-    daemon = RuntimeDaemon(
-        tmp_path / "realm",
-        support_root=tmp_path / "support",
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)

@@ -236,7 +236,7 @@ def test_invalid_cursor_400_keeps_its_status_and_code() -> None:
 THUMBNAIL = _load("core/test_thumbnail_backfill.py")
 ACTIVATION = _load("core/execution/test_remote_activation_owner.py")
 MANAGED_OUTPUT = _load("sdk/test_rrp_managed_output_consumer.py")
-JOURNEY = _load("journeys/test_journey_plumbing_f1.py")
+JOURNEY = _load("journeys/test_journey_plumbing.py")
 
 
 def _thumbnail_runtime():

@@ -9,16 +9,12 @@ from typing import Any
 
 import pytest
 
-# Needs the sibling Runtime package (runtime_protocol), which does not ship with this repo.
-pytestmark = pytest.mark.integration
-pytest.importorskip("runtime_protocol")
-
 from astrid_runtime_client import WorkspaceClient
-from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.store import RealmStore
 
 from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
 from astrid.core.execution.guards import ExecutionGuardPolicy
+
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout
 
 
 FIXTURE_FILENAME = "publication-contract-fixture.mp4"
@@ -108,16 +104,9 @@ def _write_pack(root: Path) -> Path:
     return root
 
 
-def test_publication_contract_producer_upload_fenced_settlement_roundtrip(tmp_path: Path) -> None:
+def test_publication_contract_producer_upload_fenced_settlement_roundtrip(tmp_path: Path, real_runtime) -> None:
     pack_root = _write_pack(tmp_path / "publication-pack")
-    realm_root = tmp_path / "realm"
-    RealmStore.initialize(realm_root).close()
-    support_root = tmp_path / "support"
-    daemon = RuntimeDaemon(
-        realm_root,
-        support_root=support_root,
-        production_worker_credentials=True,
-    ).start()
+    daemon = real_runtime(production_worker_credentials=True)
     host: GenericPackHost | None = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)

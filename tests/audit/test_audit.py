@@ -58,7 +58,6 @@ def test_pipeline_audit_cli_is_retired() -> None:
 
 
 def test_pipeline_audit_env_propagation_and_fallback(monkeypatch, tmp_path: Path) -> None:
-    pytest.importorskip("jsonschema")
     from astrid.packs.video_editing.actions.hype.runner import run_step
     from astrid.packs.video_editing.actions.hype.steps import Step
 

@@ -20,7 +20,6 @@ from types import SimpleNamespace
 
 import pytest
 
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.core.execution.executor import runner as executor_runner
 from astrid.core.execution.executor.registry import load_default_registry
@@ -46,9 +45,8 @@ from astrid.core.rendering.registry import load_default_registries
 from astrid.core.rendering.service import RenderService
 from astrid.core.rendering.transport import CommandTransport
 from astrid.core.subprocess_env import TASK_PROJECT_ENV, TASK_RUN_ID_ENV, TASK_STEP_ID_ENV
-from tests.packs.rendering._helpers import _execution_env
 
-pytestmark = [pytest.mark.renderer_parity, pytest.mark.integration]
+pytestmark = [pytest.mark.integration]
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "astrid" / "core" / "rendering" / "fixtures" / "renderer_parity"
@@ -65,20 +63,6 @@ SEMANTIC_FIXTURES = (
 )
 PARENT_RUN_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAT"
 TASK_STEP_ID = "render"
-
-
-@pytest.fixture(autouse=True)
-def renderer_execution_environment():
-    """Keep nested planner/backend commands on the test process runtime.
-
-    The parity suite exercises real protocol subprocesses.  Their manifests
-    intentionally use ``python3`` and the legacy-hybrid planner starts a
-    second protocol child, so relying on the shell's ambient PATH can select a
-    different interpreter that lacks the canonical timeline-schema package.
-    """
-
-    with _execution_env():
-        yield
 
 
 class _ParityTransport(CommandTransport):
@@ -463,99 +447,6 @@ def test_real_ffmpeg_renders_supported_semantic_variants(
     if fixture == "audio-reactive-colour":
         fragment = sidecar["backend_fragments"]["rendering.ffmpeg"]
         assert fragment["specialization"]["id"] == "audio-reactive-colour/v1"
-
-
-@pytest.mark.skip(reason="retired shorthand and automatic fallback route")
-def test_nominal_remotion_auto_routes_supported_media_to_ffmpeg(
-    parity_media: Path,
-    service: RenderService,
-    tmp_path: Path,
-) -> None:
-    with pytest.warns(LegacyRenderRoutingWarning):
-        output, sidecar = _render(
-            service,
-            parity_media,
-            tmp_path,
-            "media-only",
-            "remotion",
-            audio=AudioOwnership.RENDERED,
-        )
-    _assert_tiny_semantic_video(output, duration=0.6)
-    assert sidecar["routing"]["auto_route"] is True
-    assert sidecar["routing"]["resolved_backends"] == ["rendering.ffmpeg"]
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_real_all_ffmpeg_hybrid_plans_and_finalizes(
-    parity_media: Path,
-    service: RenderService,
-    tmp_path: Path,
-) -> None:
-    output, sidecar = _render(
-        service,
-        parity_media,
-        tmp_path,
-        "media-only",
-        "hybrid",
-        audio=AudioOwnership.RENDERED,
-        backend_config={
-            "rendering.legacy_hybrid": {"renderers": ["rendering.ffmpeg"]}
-        },
-    )
-    _assert_tiny_semantic_video(output, duration=0.6)
-    assert [segment["renderer"]["id"] for segment in sidecar["segments_v2"]] == [
-        "rendering.ffmpeg"
-    ]
-    assert sidecar["finalizer"]["id"] == "rendering.ffmpeg-finalizer"
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_real_mixed_hybrid_uses_transition_windows(
-    parity_media: Path,
-    service: RenderService,
-    tmp_path: Path,
-    remotion_static_assets: None,
-) -> None:
-    _require_remotion_environment()
-    expected_output = tmp_path / "transition-windows-hybrid.mp4"
-    try:
-        output, sidecar = _render(
-            service,
-            parity_media,
-            tmp_path,
-            "transition-windows",
-            "hybrid",
-            audio=AudioOwnership.RENDERED,
-            backend_config={
-                "rendering.legacy_hybrid": {
-                    "simple_renderers": ["rendering.ffmpeg"],
-                    "complex_renderers": ["rendering.remotion"],
-                },
-                "rendering.remotion": {
-                    "project_dir": str(REMOTION),
-                    "composition_id": "TimelineComposition",
-                },
-            },
-        )
-    except RendererException as exc:
-        if not _is_managed_chromium_denial(exc):
-            raise
-        _assert_managed_chromium_denial(exc, expected_output)
-        return
-    _assert_tiny_semantic_video(output, duration=2.0)
-    segments = sidecar["segments_v2"]
-    assert [segment["renderer"]["id"] for segment in segments] == [
-        "rendering.remotion",
-        "rendering.ffmpeg",
-    ]
-    windows = [segment["window"] for segment in segments]
-    assert windows[0]["start_frame"] == 0
-    assert windows[-1]["end_frame"] == 20
-    assert all(
-        left["end_frame"] == right["start_frame"]
-        for left, right in zip(windows, windows[1:])
-    )
-    assert sidecar["finalizer"]["id"] == "rendering.ffmpeg-finalizer"
 
 
 def test_raw_fixture_renderer_is_real_deterministic_and_honors_output_names(

@@ -45,8 +45,8 @@ def test_intentional_tracked_root_directories_are_allowed(
 ) -> None:
     tracked_paths = [
         ".vscode/settings.json",
-        "artifacts/p7/composition.json",
-        "planning/phase2-execution-plan.md",
+        "examples/p7/composition.json",
+        "guides/operator-notes.md",
     ]
     for relpath in tracked_paths:
         _touch(tmp_path, relpath)
@@ -54,24 +54,6 @@ def test_intentional_tracked_root_directories_are_allowed(
     monkeypatch.setattr(check_repo_hygiene, "REPO_ROOT", tmp_path)
 
     assert check_repo_hygiene.find_unknown_root_entries(tracked_paths) == []
-
-
-def test_convergence_evidence_root_is_allowed_but_unknown_root_is_not(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """The stage1 output root is allowed, but unknown roots remain drift."""
-    tracked_paths = [
-        ".astrid-convergence/stage1-acceptance/acceptance.json",
-        "unapproved-evidence/report.md",
-    ]
-    for relpath in tracked_paths:
-        _touch(tmp_path, relpath)
-
-    monkeypatch.setattr(check_repo_hygiene, "REPO_ROOT", tmp_path)
-
-    assert check_repo_hygiene.find_unknown_root_entries(tracked_paths) == [
-        "unapproved-evidence/"
-    ]
 
 
 def test_storyboard_root_is_narrowly_allowlisted(
@@ -243,26 +225,9 @@ def test_live_tree_passes_repo_hygiene() -> None:
     tracked = check_repo_hygiene._tracked_files()
 
     assert check_repo_hygiene.find_unknown_root_entries(tracked) == []
-    assert check_repo_hygiene.find_stale_legacy_root_clutter(tracked) == []
     assert check_repo_hygiene.find_root_generated_artifacts() == []
     assert check_repo_hygiene.find_tracked_ignored_artifacts(tracked) == []
     assert check_repo_hygiene.main() == 0
-
-
-def test_legacy_root_clutter_is_tolerated_but_new_root_files_are_not(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    legacy = sorted(check_repo_hygiene.LEGACY_ROOT_CLUTTER)[0]  # any entry still on the shrink-only list
-    tracked_paths = [legacy, "brand_new_notes.md", "artifacts.json"]
-    for relpath in tracked_paths:
-        _touch(tmp_path, relpath)
-    monkeypatch.setattr(check_repo_hygiene, "REPO_ROOT", tmp_path)
-
-    assert check_repo_hygiene.find_unknown_root_entries(tracked_paths) == ["brand_new_notes.md"]
-    # Shrink-only: an entry the owner already removed must be dropped from the set.
-    assert check_repo_hygiene.find_stale_legacy_root_clutter(["artifacts.json"]) == sorted(
-        check_repo_hygiene.LEGACY_ROOT_CLUTTER
-    )
 
 
 def test_pack_assets_and_credentials_docs_are_allowed_but_other_media_and_keys_are_not(

@@ -240,8 +240,8 @@ entrypoint, follow these rules:
 
 ### Structured Stderr for Agents
 
-The assessor in `tests/agentic/assessor.py` filters stderr through
-`_head_tail_filter_stderr()`, which preserves lines containing these markers:
+Agent-facing stderr keeps these markers (the `tests/agentic/` assessor that
+once filtered it has been removed):
 
 - `valid options:` — the allowed-values enumeration
 - `recovery:` — the recovery command

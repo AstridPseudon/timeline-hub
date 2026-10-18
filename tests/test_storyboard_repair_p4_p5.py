@@ -40,7 +40,6 @@ def _story() -> dict:
 
 
 def test_image_media_is_emitted_as_a_bounded_window() -> None:
-    pytest.importorskip("banodoco_timeline_schema")
     importer = _Import()
     story = _story()
     config, registry, _ = bs.compile_storyboard(
@@ -134,7 +133,6 @@ def test_expansion_rejects_unbounded_image_media_before_renderer() -> None:
 def test_compile_threads_isolated_projects_root_to_default_importer(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    pytest.importorskip("banodoco_timeline_schema")
     importer = _Import()
     root = Path("/isolated/projects-root")
     monkeypatch.setattr(bs, "sdk_import_asset", importer)

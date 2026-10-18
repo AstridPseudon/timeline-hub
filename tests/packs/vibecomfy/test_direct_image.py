@@ -146,8 +146,9 @@ def test_canonical_binding_rejects_semantics_missing_from_current_template() -> 
         canonical_workflow_binding(compiled)
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_canonical_binding_loads_through_reviewed_production_loader(tmp_path: Path) -> None:
-    pytest.importorskip("vibecomfy")
+    import vibecomfy  # noqa: F401
     from astrid.packs.vibecomfy import production_engine
 
     compiled = compile_image_request(

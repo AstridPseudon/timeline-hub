@@ -15,27 +15,20 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
 import pytest
 
 from astrid.core.execution.generic_host import GenericPackHost
-
+from tests.helpers.runtime import runtime_checkout
 
 ROOT = Path(__file__).resolve().parents[2]
 PACKS = ROOT / "astrid" / "packs"
 MATRIX = ROOT / "config" / "astrid-beta-capabilities.json"
-RUNTIME_CHECKOUT = Path(
-    os.environ.get(
-        "ASTRID_STAGE1_RUNTIME_CHECKOUT",
-        str(ROOT.parent / "Runtime"),
-    )
-)
-RUNTIME_PYTHON = RUNTIME_CHECKOUT / "packages" / "python"
 
 # These selectors are the durable proofs for the shared host boundary.  A
 # family proof is intentionally not claimed as business-level proof for every
@@ -117,10 +110,12 @@ def _run_proofs(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
         if row["ready"] and isinstance(row.get("proof"), dict)
     }
     results: dict[str, dict[str, Any]] = {}
+    runtime = runtime_checkout()
     proof_env = os.environ.copy()
+    proof_env["ASTRID_RUNTIME_CHECKOUT"] = str(runtime)
     proof_env["PYTHONPATH"] = os.pathsep.join(
         part
-        for part in (str(ROOT), str(RUNTIME_CHECKOUT), str(RUNTIME_PYTHON), proof_env.get("PYTHONPATH", ""))
+        for part in (str(ROOT), str(runtime), str(runtime / "packages" / "python"), proof_env.get("PYTHONPATH", ""))
         if part
     )
     for selector in sorted(selectors):

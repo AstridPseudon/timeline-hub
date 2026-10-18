@@ -236,8 +236,8 @@ def test_core_has_skill_md() -> None:
 
 def test_core_only_contains_skill_directory() -> None:
     """``_core`` skill_only_shell must contain *only* skill content: the
-    ``docs/`` authored skill and the ``skill/`` references (no actions,
-    rendering, executors, orchestrators, elements, or build directories)."""
+    ``docs/`` authored skill (no actions, rendering, executors,
+    orchestrators, elements, or build directories)."""
     core_root = _PACKS_ROOT / "_core"
     forbidden_dirs = {
         "actions", "rendering", "executors", "orchestrators", "elements", "build",
@@ -249,12 +249,12 @@ def test_core_only_contains_skill_directory() -> None:
     assert not found, (
         f"_core (skill_only_shell) contains forbidden content roots: {found}"
     )
-    # Verify that only the docs/ and skill/ directories exist as top-level children.
+    # Verify that only the docs/ directory exists as a top-level child.
     actual_dirs = sorted(
         child.name for child in core_root.iterdir() if child.is_dir()
     )
-    assert actual_dirs == ["docs", "skill"], (
-        f"_core (skill_only_shell) expected only 'docs/' and 'skill/' directories; "
+    assert actual_dirs == ["docs"], (
+        f"_core (skill_only_shell) expected only the 'docs/' directory; "
         f"got {actual_dirs}"
     )
 

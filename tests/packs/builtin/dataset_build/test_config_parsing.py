@@ -19,17 +19,24 @@ from astrid.packs.training.actions.dataset_build.config import (
 
 
 ROOT = Path(__file__).resolve().parents[4]
-FIXTURES = ROOT / "docs" / "megaplan" / "epics" / "builtin-training" / "contracts" / "fixtures"
+FIXTURES = ROOT / "tests" / "fixtures" / "dataset_build"
 
 
 def _fixture(name: str) -> Path:
-    if not FIXTURES.is_dir():
-        pytest.skip("retired builtin-training contract fixtures are not shipped")
     return FIXTURES / name
 
 
 def _load_fixture(name: str) -> dict:
     return json.loads(_fixture(name).read_text(encoding="utf-8"))
+
+
+def _with_delegation(data: dict) -> dict:
+    """Model-backed child work needs an explicit finite derived-bytes budget."""
+    data["budgets"] = {
+        **data.get("budgets", {}),
+        "delegation": {"max_derived_bytes": 64 * 1024**2},
+    }
+    return data
 
 
 def _write_json(path: Path, data: dict) -> Path:
@@ -227,6 +234,7 @@ def test_preflight_allows_explicit_fixture_mode_without_secrets(tmp_path: Path) 
 def test_preflight_rejects_api_backed_caption_without_secret(tmp_path: Path) -> None:
     data = _load_fixture("dataset-config.valid.json")
     data["extensions"] = {"fixture_mode": False}
+    _with_delegation(data)
     path = _write_json(tmp_path / "api.json", data)
     parsed = load_dataset_config(path)
 
@@ -237,6 +245,7 @@ def test_preflight_rejects_api_backed_caption_without_secret(tmp_path: Path) -> 
 def test_preflight_accepts_api_backed_caption_with_secret(tmp_path: Path) -> None:
     data = _load_fixture("dataset-config.valid.json")
     data["extensions"] = {"fixture_mode": False}
+    _with_delegation(data)
     path = _write_json(tmp_path / "api.json", data)
     parsed = load_dataset_config(path)
 
@@ -271,6 +280,7 @@ def test_preflight_rejects_api_backed_stage_with_provider_zero_call_budget(tmp_p
     data["extensions"] = {"fixture_mode": False}
     data["budgets"] = copy.deepcopy(data["budgets"])
     data["budgets"]["providers"] = {"caption.visual_understand": {"max_calls": 0}}
+    _with_delegation(data)
     path = _write_json(tmp_path / "provider-budget.json", data)
     parsed = load_dataset_config(path)
 
@@ -289,6 +299,7 @@ def test_preflight_rejects_ordered_api_backed_bucket_judge_without_secret(tmp_pa
         ]
     }
     data["extensions"] = {"fixture_mode": False}
+    _with_delegation(data)
     path = _write_json(tmp_path / "ordered-bucket-preflight.json", data)
     parsed = load_dataset_config(path)
 
@@ -302,6 +313,7 @@ def test_preflight_rejects_api_backed_semantic_filter_without_secret(tmp_path: P
     data["caption"] = {"provider": "transcribe"}
     data["extensions"] = {"fixture_mode": False}
     data["filters"] = {"stages": [{"stage_id": "semantic_video_filter"}]}
+    _with_delegation(data)
     path = _write_json(tmp_path / "semantic-preflight.json", data)
     parsed = load_dataset_config(path)
 
@@ -315,6 +327,7 @@ def test_preflight_rejects_api_backed_transcript_filter_without_secret(tmp_path:
     data["caption"] = {"provider": "transcribe"}
     data["extensions"] = {"fixture_mode": False}
     data["filters"] = {"stages": [{"stage_id": "transcript_keyword_filter"}]}
+    _with_delegation(data)
     path = _write_json(tmp_path / "transcript-preflight.json", data)
     parsed = load_dataset_config(path)
 

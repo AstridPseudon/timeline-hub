@@ -252,7 +252,7 @@ def main() -> int:
                     "pytest",
                     "-q",
                     "-m",
-                    "renderer_parity",
+                    "integration",
                     "tests/packs/test_renderer_parity.py",
                 ],
                 cwd=REPO_ROOT,

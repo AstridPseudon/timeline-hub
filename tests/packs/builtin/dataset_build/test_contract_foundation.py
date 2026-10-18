@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import importlib.util
 import inspect
 import json
@@ -9,13 +8,12 @@ from types import ModuleType
 from typing import Any
 
 import jsonschema
-import pytest
 from referencing import Registry, Resource
 
 
 ROOT = Path(__file__).resolve().parents[4]
-DOCS_CONTRACTS = ROOT / "docs" / "megaplan" / "epics" / "builtin-training" / "contracts"
-DOCS_SCHEMAS = DOCS_CONTRACTS / "schemas"
+TRAINING_RUN_SCHEMAS = ROOT / "astrid" / "packs" / "training" / "actions" / "training_run" / "schemas"
+FIXTURES = ROOT / "tests" / "fixtures" / "dataset_build"
 RUNTIME_PACKAGE = ROOT / "astrid" / "packs" / "training" / "shared"
 RUNTIME_SCHEMAS = ROOT / "astrid" / "packs" / "training" / "actions" / "dataset_build" / "schemas"
 
@@ -27,8 +25,6 @@ SCHEMA_VERSION_SOURCE_PROPERTY = {
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    if path.is_relative_to(DOCS_CONTRACTS) and not path.is_file():
-        pytest.skip("retired builtin-training frozen contract docs are not shipped")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -48,8 +44,6 @@ def _validator(schema_root: Path, schema_name: str) -> jsonschema.Draft7Validato
 
 
 def _load_module(path: Path, name: str) -> ModuleType:
-    if path.is_relative_to(DOCS_CONTRACTS) and not path.is_file():
-        pytest.skip("retired builtin-training frozen contract docs are not shipped")
     spec = importlib.util.spec_from_file_location(name, path)
     assert spec is not None
     assert spec.loader is not None
@@ -83,27 +77,6 @@ def _public_signature_map(module: ModuleType) -> dict[str, dict[str, str]]:
     return signatures
 
 
-def test_packaged_schemas_match_frozen_m0_except_run_state_extension() -> None:
-    if not DOCS_SCHEMAS.is_dir():
-        pytest.skip("retired builtin-training frozen contract schemas are not shipped")
-    doc_names = sorted(path.name for path in DOCS_SCHEMAS.glob("*.schema.json"))
-    runtime_names = sorted(path.name for path in RUNTIME_SCHEMAS.glob("*.schema.json"))
-    assert runtime_names == doc_names
-
-    for schema_name in doc_names:
-        frozen = _load_json(DOCS_SCHEMAS / schema_name)
-        runtime = _load_json(RUNTIME_SCHEMAS / schema_name)
-        if schema_name != "run-state.schema.json":
-            assert runtime == frozen
-            continue
-
-        assert "schema_version_source" not in frozen["properties"]
-        assert runtime["properties"]["schema_version_source"] == SCHEMA_VERSION_SOURCE_PROPERTY
-        normalized_runtime = copy.deepcopy(runtime)
-        normalized_runtime["properties"].pop("schema_version_source")
-        assert normalized_runtime == frozen
-
-
 def test_schema_version_source_is_package_local_to_run_state() -> None:
     for path in RUNTIME_SCHEMAS.glob("*.schema.json"):
         schema = _load_json(path)
@@ -113,12 +86,9 @@ def test_schema_version_source_is_package_local_to_run_state() -> None:
         else:
             assert "schema_version_source" not in properties
 
-    frozen_run_state = _load_json(DOCS_SCHEMAS / "run-state.schema.json")
-    assert "schema_version_source" not in frozen_run_state["properties"]
-
 
 def test_packaged_run_state_schema_validates_m0_fixture_and_parser_provenance_extension() -> None:
-    fixture = _load_json(DOCS_CONTRACTS / "fixtures" / "run-state.valid.json")
+    fixture = _load_json(FIXTURES / "run-state.valid.json")
     validator = _validator(RUNTIME_SCHEMAS, "run-state.schema.json")
     validator.validate(fixture)
 
@@ -130,19 +100,8 @@ def test_packaged_run_state_schema_validates_m0_fixture_and_parser_provenance_ex
     assert errors
 
 
-def test_frozen_run_state_schema_rejects_package_local_parser_provenance() -> None:
-    fixture = _load_json(DOCS_CONTRACTS / "fixtures" / "run-state.valid.json")
-    validator = _validator(DOCS_SCHEMAS, "run-state.schema.json")
-    validator.validate(fixture)
-
-    with_source = {**fixture, "schema_version_source": "deprecated_inferred_v1"}
-    errors = sorted(validator.iter_errors(with_source), key=lambda error: list(error.path))
-    assert errors
-    assert any("Additional properties are not allowed" in error.message for error in errors)
-
-
-def test_runtime_and_frozen_schemas_accept_m2b_stage_ids_and_caption_validation_metadata() -> None:
-    config = _load_json(DOCS_CONTRACTS / "fixtures" / "dataset-config.valid.json")
+def test_runtime_schemas_accept_m2b_stage_ids_and_caption_validation_metadata() -> None:
+    config = _load_json(FIXTURES / "dataset-config.valid.json")
     config["filters"] = {
         "stages": [
             {"stage_id": "transcript_keyword_filter"},
@@ -169,7 +128,7 @@ def test_runtime_and_frozen_schemas_accept_m2b_stage_ids_and_caption_validation_
         },
     }
 
-    state = _load_json(DOCS_CONTRACTS / "fixtures" / "run-state.valid.json")
+    state = _load_json(FIXTURES / "run-state.valid.json")
     state["caption_validation_failures"] = [
         {"item_id": "fixture_clip_001", "code": "schema_error", "message": "caption missing text"}
     ]
@@ -189,27 +148,19 @@ def test_runtime_and_frozen_schemas_accept_m2b_stage_ids_and_caption_validation_
         }
     ]
 
-    for schema_root in (DOCS_SCHEMAS, RUNTIME_SCHEMAS):
-        _validator(schema_root, "dataset-config.schema.json").validate(config)
-        _validator(schema_root, "review-item.schema.json").validate(item)
+    _validator(RUNTIME_SCHEMAS, "dataset-config.schema.json").validate(config)
+    _validator(RUNTIME_SCHEMAS, "review-item.schema.json").validate(item)
 
-    _validator(DOCS_SCHEMAS, "run-state.schema.json").validate(state)
+    _validator(RUNTIME_SCHEMAS, "run-state.schema.json").validate(state)
     runtime_state = {**state, "schema_version_source": "deprecated_inferred_v1"}
     _validator(RUNTIME_SCHEMAS, "run-state.schema.json").validate(runtime_state)
 
 
 def test_training_run_config_schema_accepts_declared_required_env_contract() -> None:
-    config = _load_json(DOCS_CONTRACTS / "fixtures" / "training-run-config.seinfeld.json")
+    config = _load_json(FIXTURES / "training-run-config.seinfeld.json")
     assert config["secrets"]["required_env"] == ["RUNPOD_API_KEY", "HF_TOKEN"]
 
-    for schema_root in (DOCS_SCHEMAS, RUNTIME_SCHEMAS):
-        _validator(schema_root, "training-run-config.schema.json").validate(config)
-
-
-def test_interfaces_port_m0_protocol_signatures() -> None:
-    frozen = _load_module(DOCS_CONTRACTS / "interfaces.py", "builtin_training_m0_interfaces")
-    runtime = _load_module(RUNTIME_PACKAGE / "interfaces.py", "dataset_build_runtime_interfaces")
-    assert _public_signature_map(runtime) == _public_signature_map(frozen)
+    _validator(TRAINING_RUN_SCHEMAS, "training-run-config.schema.json").validate(config)
 
 
 def test_compute_backend_stays_lifecycle_only_and_remote_execution_is_companion_protocol() -> None:

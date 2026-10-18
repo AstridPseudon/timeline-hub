@@ -7,7 +7,7 @@ Companion to [README.md](README.md). Counts are from `git grep -I` on the checko
 | Repo | Old-name lines | Files | Notes |
 |---|---|---|---|
 | App | 5,193 (`src/` 2,337; docs 1,690; scripts 598; supabase 137; config 68; tests 180) | 957 | 71 tracked paths carry an old name; about 70 distinct `REIGH` env names |
-| Astrid | 5,597 (live 1,264; history 4,333) | about 698 | history: `.oracle` 4,103, `.megaplan` 52, `artifacts` 36, `receipts` 18, `.astrid-convergence` 23, `docs/projects` 94 |
+| Astrid | 5,597 (live 1,264; history 4,333) | about 698 | history: `.oracle` 4,103, `.megaplan` 52, `artifacts` 36, `receipts` 18, `docs/projects` 94 |
 | Runtime | 24 `reigh` lines; `banodoco` 418 (`banodoco_local` 176, `banodoco_workspace_client` 61, `banodoco-local` 38, `banodoco-workspace-runtime` 15) | | 20 old-name paths including tracked `*.egg-info` |
 | Distinct old tokens | 2,602 ([old-tokens.txt](old-tokens.txt)) | | 79 collide with an existing new name (section 7) |
 
@@ -55,7 +55,6 @@ Companion to [README.md](README.md). Counts are from `git grep -I` on the checko
 | `docs/local-runtime/02-reigh-plan.md`, `docs/local-runtime/04e-reigh-worker-cutover-lane.md` | 2 |
 | `docs/local-runtime/reviews/grok-reigh-review.md` | 1 |
 | `docs/video-editor/reigh-branch-census-and-convergence.md` | 1 |
-| `tsconfig.reigh-hosted-rework.json`, `tsconfig.reigh-runtime-contract-r2.json` | 2 |
 
 Notes: the 71 app files are the complete list of name matches, grouped above; the grouping is exact (counts sum to 71). The `reigh-extension.json` count covers the manifest name only.
 
@@ -301,7 +300,7 @@ Old-name tokens: `reigh`, `banodoco_workspace`, `banodoco_local`, `banodoco-loca
 
 | file | job | key line | old-name token lines |
 |---|---|---|---|
-| bridge-latency.yml | bridge-latency | 28 | **yes**: 34, 35, 47, 53 |
+| bridge-latency.yml (historical: deleted with the bridge-latency gate; nothing to rename) | bridge-latency | 28 | **yes**: 34, 35, 47, 53 |
 | dockerfile-check.yml | dockerfile-check | 12 | none |
 | slot-first-quality.yml | slot-first-audit | 19 | none |
 
@@ -317,11 +316,10 @@ Note: the `BANODOCO_RUNTIME_CHECKOUT` / `REIGH_WORKER_CHECKOUT` env lines in ci.
 
 | folder | tracked files | old-name lines | live readers outside folder (code, tests, scripts, CI) |
 |---|---|---|---|
-| `.oracle` | 534 | 4097 | `scripts/reshape/check_repo_hygiene.py:39` (lists `.oracle` as an allowed top-level name, not a read); `evals/timeline/admission_rehearsal.py:430` is a field named `oracle`, not this folder (not a reader). No verified live reader of files under `.oracle/`. |
+| `.oracle` | 534 | 4097 | `scripts/reshape/check_repo_hygiene.py:39` (lists `.oracle` as an allowed top-level name, not a read). No verified live reader of files under `.oracle/`. |
 | `.megaplan` | 27 | 52 | `.gitignore:102`, `.gitignore:111` (ignore rules, not readers); `scripts/reshape/check_repo_hygiene.py` treats `docs/megaplan/` only. No verified live reader. |
 | `artifacts` | 20 | 36 | `.github/workflows/ci.yml:34,35,42,91,97` reads/uploads `artifacts/m7/` (live CI reader of `artifacts/m7/`). |
 | `receipts` | 8 | 18 | None found. Matches were `astrid/core/receipts/` Python package paths (different folder), so no verified live reader of the root `receipts/` folder. |
-| `.astrid-convergence` | 3 | 22 | `scripts/reshape/stage1_acceptance.py:19-20` (`--evidence-dir .astrid-convergence/stage1-evidence`, `--output-dir .astrid-convergence/stage1-acceptance`); `tests/reshape/test_repo_hygiene.py:64` (string path); `docs/contracts/stage1-acceptance-evidence-v1.md:56,71,84,85` (doc). |
 | `findings` | 5 | 7 | None found (matches were prose or `findings` identifiers, not the folder). |
 | `docs/projects` | 58 | 93 | `guides/runpod-lifecycle.md:256` and `guides/spinning-up-and-executing-tasks-on-runpod.md:841,848` (markdown links, docs-only). No code reader found. |
 | `docs/plans` | 26 | 25 | `docs/projects/runpod-managed-generation-20260921/control-provenance.json:2082,2088` and `SHA256SUMS:138` (provenance records, not readers). No live reader found. |
@@ -337,7 +335,7 @@ Note: the `BANODOCO_RUNTIME_CHECKOUT` / `REIGH_WORKER_CHECKOUT` env lines in ci.
 | `docs/slot-first-audits` | 8 | 256 | `.github/workflows/slot-first-quality.yml:11` (CI path filter `docs/slot-first-audits/**`). |
 | `docs/local-runtime/reviews` | 2 | 34 | None found. |
 | `docs/extensions/evidence` | 137 | 206 | `scripts/quality/capture-extension-external-evidence.mjs:287` (builds a path under `docs/extensions/evidence/releases/`; runtime read/write behaviour unverified); `scripts/quality/check-extension-release-preflight.mjs:161` (command string in a message); `.gitattributes:6`, `.gitignore:69,70` (attributes and ignore rules). |
-| `.oracle`, `.megaplan`, `artifacts`, `receipts`, `.astrid-convergence`, `findings`, `docs/projects`, `docs/megaplan` | 0 each | 0 each | Not tracked in app. Path strings found elsewhere (e.g. `.gitignore`, `.dockerignore`, `.cursorrules`, `docs/cutover-inventory.md`) are ignore rules or docs, not live readers. |
+| `.oracle`, `.megaplan`, `artifacts`, `receipts`, `findings`, `docs/projects`, `docs/megaplan` | 0 each | 0 each | Not tracked in app. Path strings found elsewhere (e.g. `.gitignore`, `.dockerignore`, `.cursorrules`, `docs/cutover-inventory.md`) are ignore rules or docs, not live readers. |
 | `docs/plans` | 0 | 0 | Not tracked in app. `config/contracts/astrid-plan-a-c1.json:1222` references `docs/plans/astrid-default-packs-and-skills/PLAN.md`; whether that path resolves is unverified. |
 
 

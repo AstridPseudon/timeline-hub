@@ -9,12 +9,8 @@ attempt outputs.
 from __future__ import annotations
 
 import importlib
-import io
-import os
 import subprocess
 import sys
-import tarfile
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -31,31 +27,6 @@ from astrid.sdk import invocation
 from astrid.sdk.exceptions import CapabilityValidationError
 
 ROOT = Path(__file__).resolve().parents[2]
-ASTRID_SOURCE = Path(
-    subprocess.run(
-        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-).parent
-RUNTIME_WORKTREE = ASTRID_SOURCE.parent / "astrid-runtime-execution-20260909"
-RUNTIME_COMMIT = "afccb430e2a983c968b6a8a96fd630ba3a6262fc"
-_RUNTIME_TMPDIRS: list[tempfile.TemporaryDirectory] = []
-
-
-def _runtime_archive() -> Path:
-    """Extract the pinned runtime commit from the sibling runtime checkout."""
-    tmp = tempfile.TemporaryDirectory(prefix="astrid-runtime-archive-")
-    _RUNTIME_TMPDIRS.append(tmp)
-    archive = subprocess.run(
-        ["git", "-C", str(RUNTIME_WORKTREE), "archive", "--format=tar", RUNTIME_COMMIT],
-        check=True,
-        capture_output=True,
-    ).stdout
-    with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
-        tar.extractall(tmp.name)
-    return Path(tmp.name)
 
 
 def test_live_import_graph_does_not_load_project_timeline_authority() -> None:
@@ -119,7 +90,6 @@ def test_filesystem_modes_are_rejected_without_touching_the_tree(tmp_path: Path)
 
 
 def test_runtime_materialization_projects_in_memory_and_never_repairs(tmp_path: Path) -> None:
-    pytest.importorskip("banodoco_timeline_schema")
     row = KernelTimeline(
         timeline_id="11111111-1111-4111-8111-111111111111",
         timeline_ulid="01ARZ3NDEKTSV4RRFFQ69G5FAV",
@@ -155,88 +125,6 @@ def test_runtime_materialization_projects_in_memory_and_never_repairs(tmp_path: 
     assert snapshot.assembly == {"tracks": [], "clips": []}
     assert not list(tmp_path.rglob("display.json"))
     assert not list(tmp_path.rglob("assembly.jsonl"))
-
-
-@pytest.mark.integration
-def test_runtime_timeline_create_read_version_and_cas(tmp_path: Path) -> None:
-    """The supported timeline lifecycle is a runtime transaction, including CAS."""
-    # Keep the subprocess on the pinned runtime source, independent of any
-    # mutable sibling checkout or ambient override.
-    runtime_root = _runtime_archive()
-    probe = r'''import sys
-from pathlib import Path
-
-from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.store import RealmStore
-from astrid.sdk.client import AstridClient
-
-root = Path(sys.argv[1])
-RealmStore.initialize(root / "realm").close()
-daemon = RuntimeDaemon(root / "realm", support_root=root / "support").start()
-try:
-    credential = root / "support" / "credentials" / "owner.token"
-    with AstridClient.open(
-        endpoint=daemon.endpoint,
-        credential=credential,
-        realm_id=daemon.service.realm["id"],
-        actor_id="owner",
-        client_name="astrid-stage1-test",
-        client_version="stage1",
-        protocol_version="workspace.v1",
-    ) as client:
-        created = client.projects.create(
-            slug="demo", name="Demo", idempotency_key="project"
-        )
-        assert created.ok and created.data
-        created_timeline = client.timelines.create(
-            project="demo",
-            slug="main",
-            config={"tracks": [], "clips": []},
-            registry={"assets": {}},
-            idempotency_key="timeline",
-        )
-        assert created_timeline.ok and created_timeline.data
-        timeline_id = created_timeline.data["timeline_id"]
-        shown = client.timelines.show("demo", timeline_id)
-        assert shown.ok and shown.data["config_version"] == 1
-        updated = client.timelines.save(
-            "demo",
-            timeline_id,
-            config={"tracks": [], "clips": []},
-            registry={"assets": {}},
-            expected_version=1,
-            idempotency_key="timeline-save",
-        )
-        assert updated.ok and updated.data["config_version"] == 2
-        stale = client.timelines.save(
-            "demo",
-            timeline_id,
-            config={"tracks": [], "clips": []},
-            registry={"assets": {}},
-            expected_version=1,
-            idempotency_key="timeline-stale",
-        )
-        assert not stale.ok and stale.error.code == "conflict"
-        assert stale.error.details == {"actual": 2, "expected": 1}
-        assert client.timelines.show("demo", timeline_id).data["config_version"] == 2
-finally:
-    daemon.stop()
-'''
-    env = dict(os.environ)
-    env["PYTHONPATH"] = os.pathsep.join(
-        (
-            str(runtime_root),
-            str(ROOT),
-        )
-    )
-    result = subprocess.run(
-        [sys.executable, "-c", probe, str(tmp_path)],
-        cwd=ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, result.stderr
 
 
 def test_replay_capture_has_no_timeline_or_theme_file_authority() -> None:

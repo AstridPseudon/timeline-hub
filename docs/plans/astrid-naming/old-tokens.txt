@@ -267,8 +267,6 @@
 /Users/peteromalley/Documents/reigh-workspace
 /Users/peteromalley/Documents/reigh-workspace-oracle
 /Users/peteromalley/Documents/reigh-workspace/
-/Users/peteromalley/Documents/reigh-workspace/.astrid-convergence/sol-astrid-beta-sensecheck.md
-/Users/peteromalley/Documents/reigh-workspace/.astrid-convergence/stage1-execution-current.md
 /Users/peteromalley/Documents/reigh-workspace/.local/astrid-projects-extension-demo
 /Users/peteromalley/Documents/reigh-workspace/.megaplan/plans/redesign-the-segment-position-20260330-1913
 /Users/peteromalley/Documents/reigh-workspace/.megaplan/plans/redesign-the-segment-position-20260330-1913/

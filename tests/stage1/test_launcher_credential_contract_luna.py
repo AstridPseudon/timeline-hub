@@ -3,36 +3,18 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
-import sys
 
 import pytest
 
-# Both tests need the sibling Runtime checkout (ASTRID_RUNTIME_CHECKOUT).
+from astrid.core.gateway import main as gateway_main
+from astrid.sdk.client import AstridClient
+
+# Both tests need the Runtime from a second checkout (real_runtime fixture).
 pytestmark = pytest.mark.integration
 
-runtime_checkout = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
-if runtime_checkout:
-    sys.path.insert(0, runtime_checkout)
 
-pytest.importorskip("runtime_protocol.daemon")
-from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
-from tests.helpers.runtime import initialize_runtime_realm
-
-
-_RuntimeDaemon = RuntimeDaemon
-
-
-def RuntimeDaemon(root, *args, **kwargs):
-    initialize_runtime_realm(root)
-    return _RuntimeDaemon(root, *args, **kwargs)
-
-from astrid.core.gateway import main as gateway_main  # noqa: E402
-from astrid.sdk.client import AstridClient  # noqa: E402
-
-
-def _launcher_result(daemon: RuntimeDaemon) -> dict[str, str]:
+def _launcher_result(daemon) -> dict[str, str]:
     credential_file = daemon.credential_path
     assert credential_file is not None and credential_file.is_file()
     return {
@@ -45,9 +27,9 @@ def _launcher_result(daemon: RuntimeDaemon) -> dict[str, str]:
 
 
 def test_first_launch_cli_reads_launcher_credential_file_without_secret_env(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], real_runtime
 ) -> None:
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         credential_file = daemon.credential_path
         assert credential_file is not None
@@ -78,9 +60,9 @@ def test_first_launch_cli_reads_launcher_credential_file_without_secret_env(
 
 
 def test_launcher_path_is_forwarded_as_path_not_bearer_text(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
 ) -> None:
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         monkeypatch.delenv("ASTRID_RUNTIME_CREDENTIAL", raising=False)
         monkeypatch.setattr(

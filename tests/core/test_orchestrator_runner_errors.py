@@ -111,11 +111,6 @@ def _unvalidated_registry(definition: OrchestratorDefinition) -> OrchestratorReg
     return registry
 
 
-def _require_timeline_schema() -> None:
-    """Skip project/timeline fixtures when the optional shared schema is absent."""
-    pytest.importorskip("banodoco_timeline_schema")
-
-
 # ---------------------------------------------------------------------------
 # build_orchestrator_command — error paths
 # ---------------------------------------------------------------------------
@@ -432,7 +427,6 @@ def test_project_orchestrator_rejects_passthrough_out(
 def test_command_orchestrator_dry_run_uses_placeholder_out_without_ledger(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _require_timeline_schema()
     monkeypatch.setenv(project_paths.PROJECTS_ROOT_ENV, str(tmp_path / "projects"))
     (tmp_path / "projects" / "demo").mkdir(parents=True, exist_ok=True)
 
@@ -461,7 +455,6 @@ def test_command_orchestrator_dry_run_uses_placeholder_out_without_ledger(
 def test_orchestrator_out_only_requires_project(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _require_timeline_schema()
     projects_root = tmp_path / "projects"
     monkeypatch.setenv(project_paths.PROJECTS_ROOT_ENV, str(projects_root))
     (projects_root / "default").mkdir(parents=True, exist_ok=True)

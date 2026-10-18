@@ -11,7 +11,6 @@ from typing import Any
 
 import pytest
 
-from astrid.core.pack.alias_resolver import AliasResolver
 from astrid.core.rendering.contracts import (
     SCHEMA_VERSION,
     Attachment,
@@ -195,39 +194,6 @@ def _finalizer_resolution(
         manifest_digest=_digest(backend),
         trust_eligibility={"eligible": True},
         support_decision=_support(backend),
-    )
-
-
-def _plan(
-    renderer: str,
-    *,
-    segment_frames: tuple[int, ...] = (10,),
-) -> RenderPlan:
-    cursor = 0
-    segments: list[RenderSegment] = []
-    for duration in segment_frames:
-        segments.append(
-            RenderSegment(
-                window=FrameWindow(
-                    start_frame=cursor,
-                    end_frame=cursor + duration,
-                    fps_rational=(10, 1),
-                ),
-                renderer=_renderer_resolution(renderer),
-                input_hashes={},
-            )
-        )
-        cursor += duration
-    return RenderPlan(
-        schema_version=SCHEMA_VERSION,
-        request_digest="0" * 64,
-        requested_policy="hybrid",
-        planner=_planner_resolution(),
-        segments=segments,
-        finalizer=_finalizer_resolution(),
-        profile=_profile(),
-        total_frames=cursor,
-        reasons={str(index): "fixture" for index in range(len(segments))},
     )
 
 
@@ -518,168 +484,6 @@ def test_direct_renderer_does_not_require_an_executable_finalizer(
     ]
 
 
-@pytest.mark.skip(reason="retired shorthand and fallback route")
-def test_legacy_remotion_auto_routes_supported_media_to_ffmpeg_with_warning(
-    tmp_path: Path,
-) -> None:
-    transport = FakeTransport()
-    service = _service(tmp_path, transport)
-
-    with pytest.warns(LegacyRenderRoutingWarning, match="auto-routed"):
-        service.render_request(
-            _request(tmp_path),
-            selector="remotion",
-            out_path=tmp_path / "legacy-remotion.mp4",
-        )
-
-    assert ("render", "rendering.ffmpeg") in transport.calls
-    assert ("render", "rendering.remotion") not in transport.calls
-
-
-@pytest.mark.skip(reason="retired shorthand and fallback route")
-def test_legacy_remotion_falls_back_when_ffmpeg_declines_support(
-    tmp_path: Path,
-) -> None:
-    transport = FakeTransport()
-    transport.support["rendering.ffmpeg"] = _support(
-        "rendering.ffmpeg",
-        supported=False,
-        alternatives=["rendering.remotion"],
-    )
-    service = _service(tmp_path, transport)
-
-    service.render_request(
-        _request(tmp_path),
-        selector="remotion",
-        out_path=tmp_path / "legacy-remotion-fallback.mp4",
-    )
-
-    assert transport.calls == [
-        ("support", "rendering.ffmpeg"),
-        ("support", "rendering.remotion"),
-        ("render", "rendering.remotion"),
-    ]
-    payload = _sidecar(tmp_path / "legacy-remotion-fallback.mp4")
-    routing = payload["routing"]
-    reason = routing["segment_reasons"]["0"]
-    assert "rendering.ffmpeg" in reason
-    assert "rejected" in reason
-
-
-@pytest.mark.skip(reason="retired shorthand selector")
-def test_legacy_ffmpeg_is_strict(tmp_path: Path) -> None:
-    transport = FakeTransport()
-    service = _service(tmp_path, transport)
-
-    service.render_request(
-        _request(tmp_path),
-        selector="ffmpeg",
-        out_path=tmp_path / "legacy-ffmpeg.mp4",
-    )
-
-    assert transport.calls == [
-        ("support", "rendering.ffmpeg"),
-        ("render", "rendering.ffmpeg"),
-    ]
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_hybrid_selects_planner_and_executes_its_segment(tmp_path: Path) -> None:
-    transport = FakeTransport()
-    transport.plan = _plan("fixture.window")
-    service = _service(
-        tmp_path,
-        transport,
-        renderer_ids=("fixture.window",),
-        planner_ids=("rendering.legacy_hybrid",),
-    )
-
-    service.render_request(
-        _request(tmp_path),
-        selector="hybrid",
-        out_path=tmp_path / "hybrid.mp4",
-    )
-
-    assert transport.calls[:2] == [
-        ("support", "rendering.legacy_hybrid"),
-        ("plan", "rendering.legacy_hybrid"),
-    ]
-    assert ("render", "fixture.window") in transport.calls
-    # The plan pins the ffmpeg finalizer; even a single-segment hybrid plan
-    # runs it (profile/audio normalization is the finalizer's contract).
-    assert ("finalize", "rendering.ffmpeg-finalizer") in transport.calls
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_planned_window_is_materialized_for_full_timeline_renderer(
-    tmp_path: Path,
-) -> None:
-    transport = FakeTransport()
-    transport.plan = _plan("fixture.full")
-    renderers = RendererRegistry(
-        [
-            _candidate(
-                tmp_path,
-                "fixture.full",
-                "renderer",
-                capabilities={
-                    "supports_full_timeline": True,
-                    "supports_windows": False,
-                },
-            )
-        ]
-    )
-    planners = PlannerRegistry(
-        [_candidate(tmp_path, "rendering.legacy_hybrid", "planner")]
-    )
-    finalizers = FinalizerRegistry(
-        [_candidate(tmp_path, "rendering.ffmpeg-finalizer", "finalizer")]
-    )
-    service = RenderService(
-        registries=(renderers, planners, finalizers),
-        transport=transport,
-        validator=lambda result, **_kwargs: result,
-    )
-    output = tmp_path / "materialized-window.mp4"
-    request = _request(tmp_path)
-
-    service.render_request(request, selector="hybrid", out_path=output)
-
-    renderer_payloads = [
-        payload
-        for verb, backend, payload in transport.payloads
-        if backend == "fixture.full" and verb in {"support", "render"}
-    ]
-    assert len(renderer_payloads) == 2
-    assert all(payload["window"] is None for payload in renderer_payloads)
-    assert all(
-        payload["timeline_path"] != request.timeline_path
-        for payload in renderer_payloads
-    )
-    sidecar = json.loads(Path(f"{output}.provenance.json").read_text(encoding="utf-8"))
-    assert "materialized_timeline" in sidecar["segments_v2"][0]["input_hashes"]
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_planned_segment_duration_mismatch_is_rejected(tmp_path: Path) -> None:
-    transport = FakeTransport()
-    transport.plan = _plan("fixture.window")
-    transport.render_frames["fixture.window"] = 3
-    service = _service(
-        tmp_path,
-        transport,
-        renderer_ids=("fixture.window",),
-        planner_ids=("rendering.legacy_hybrid",),
-    )
-    output = tmp_path / "wrong-duration.mp4"
-
-    with pytest.raises(RendererInvalidArtifactError, match="planned frame window"):
-        service.render_request(_request(tmp_path), selector="hybrid", out_path=output)
-
-    assert not output.exists()
-    assert not list(tmp_path.glob(".wrong-duration.mp4.render-service-*"))
-
-
 def test_unknown_backend_is_structured_and_lists_alternatives(tmp_path: Path) -> None:
     transport = FakeTransport()
     service = _service(tmp_path, transport)
@@ -837,95 +641,6 @@ def test_passthrough_audio_cannot_publish_without_host_completion(
     assert not Path(f"{output}.provenance.json").exists()
 
 
-@pytest.mark.skip(reason="retired built-in planner")
-def test_multiple_segments_run_registered_finalizer(tmp_path: Path) -> None:
-    transport = FakeTransport()
-    transport.plan = _plan("fixture.window", segment_frames=(5, 5))
-    service = _service(
-        tmp_path,
-        transport,
-        renderer_ids=("fixture.window",),
-        planner_ids=("rendering.legacy_hybrid",),
-    )
-    output = tmp_path / "finalized.mp4"
-
-    service.render_request(
-        _request(tmp_path), selector="hybrid", out_path=output
-    )
-
-    assert ("finalize", "rendering.ffmpeg-finalizer") in transport.calls
-    assert output.read_bytes().startswith(b"finalize:rendering.ffmpeg-finalizer")
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_multiple_segments_defer_audio_completion_until_after_finalizer(
-    tmp_path: Path,
-) -> None:
-    transport = FakeTransport()
-    transport.plan = _plan("fixture.window", segment_frames=(5, 5))
-    transport.render_ownership["fixture.window"] = AudioOwnership.PASSTHROUGH
-    transport.finalize_ownership = AudioOwnership.PASSTHROUGH
-    completions: list[str] = []
-
-    def audio_completer(result: RenderResult, **_kwargs: Any) -> RenderResult:
-        completions.append(result.video.path)
-        return replace(
-            result,
-            video=replace(
-                result.video,
-                profile=_profile(audio=True),
-                audio=AudioOwnership.RENDERED,
-            ),
-            audio_ownership=AudioOwnership.RENDERED,
-        )
-
-    service = _service(
-        tmp_path,
-        transport,
-        renderer_ids=("fixture.window",),
-        planner_ids=("rendering.legacy_hybrid",),
-        audio_completer=audio_completer,
-    )
-    output = tmp_path / "finalized-passthrough.mp4"
-
-    service.render_request(_request(tmp_path), selector="hybrid", out_path=output)
-
-    assert completions == ["outputs/video.mp4"]
-    sidecar = json.loads(Path(f"{output}.provenance.json").read_text(encoding="utf-8"))
-    assert sidecar["audio_ownership"] == AudioOwnership.RENDERED.value
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_multiple_segments_allow_finalizer_to_complete_silent_audio_segment(
-    tmp_path: Path,
-) -> None:
-    transport = FakeTransport()
-    transport.plan = replace(
-        _plan("fixture.window", segment_frames=(5, 5)),
-        profile=_profile(audio=True),
-    )
-    transport.render_ownership["fixture.window"] = AudioOwnership.NONE
-    transport.finalize_ownership = AudioOwnership.RENDERED
-    service = _service(
-        tmp_path,
-        transport,
-        renderer_ids=("fixture.window",),
-        planner_ids=("rendering.legacy_hybrid",),
-    )
-    output = tmp_path / "finalized-silence.mp4"
-    request = replace(
-        _request(tmp_path),
-        audio=AudioOwnership.RENDERED,
-        profile=_profile(audio=True),
-    )
-
-    service.render_request(request, selector="hybrid", out_path=output)
-
-    assert ("finalize", "rendering.ffmpeg-finalizer") in transport.calls
-    sidecar = json.loads(Path(f"{output}.provenance.json").read_text(encoding="utf-8"))
-    assert sidecar["audio_ownership"] == AudioOwnership.RENDERED.value
-
-
 def test_backend_failure_removes_invocation_workspace_and_commits_nothing(
     tmp_path: Path,
 ) -> None:
@@ -961,331 +676,12 @@ def test_each_success_commits_exactly_one_sidecar(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# T4.5 — routing / hybrid matrix
+# T4.5 — routing matrix
 # ---------------------------------------------------------------------------
 
 
 def _sidecar(output: Path) -> dict[str, Any]:
     return json.loads(Path(f"{output}.provenance.json").read_text(encoding="utf-8"))
-
-
-def _hybrid_timeline(*, fps: int = 24) -> dict[str, Any]:
-    """A media clip plus an overlapping text-card: simple/complex/simple windows."""
-    return {
-        "theme": "banodoco-default",
-        "theme_overrides": {
-            "visual": {"canvas": {"width": 1920, "height": 1080, "fps": fps}}
-        },
-        "tracks": [
-            {"id": "v", "kind": "visual"},
-            {"id": "a", "kind": "audio"},
-        ],
-        "clips": [
-            {
-                "id": "media",
-                "at": 0,
-                "track": "v",
-                "clipType": "media",
-                "asset": "source",
-                "from": 0,
-                "to": 6,
-                "speed": 1,
-                "volume": 0,
-            },
-            {
-                "id": "title",
-                "at": 2,
-                "track": "v",
-                "clipType": "text-card",
-                "hold": 1,
-            },
-        ],
-    }
-
-
-def _hybrid_request(
-    tmp_path: Path,
-    timeline: dict[str, Any],
-    *,
-    config: dict[str, Any] | None = None,
-    audio: AudioOwnership | None = None,
-) -> RenderRequest:
-    root = tmp_path / "media"
-    root.mkdir(exist_ok=True)
-    timeline_path = root / "timeline.json"
-    assets_path = root / "assets.json"
-    timeline_path.write_text(json.dumps(timeline), encoding="utf-8")
-    assets_path.write_text(json.dumps({"assets": {}}), encoding="utf-8")
-    return RenderRequest(
-        schema_version=SCHEMA_VERSION,
-        timeline_path=str(timeline_path),
-        assets_registry_path=str(assets_path),
-        output_name="video.mp4",
-        audio=audio,
-        backend_config=(
-            {} if config is None else {"rendering.legacy_hybrid": config}
-        ),
-    )
-
-
-def _planner_support_resolver(
-    accepted: set[str] | None = None,
-):
-    supported = (
-        {"raw_command.renderer", "rendering.remotion", "rendering.ffmpeg"}
-        if accepted is None
-        else accepted
-    )
-
-    def resolve(
-        renderer_id: str, _request: RenderRequest, _timeline: object
-    ) -> SupportReport:
-        ok = renderer_id in supported
-        return SupportReport(
-            schema_version=SCHEMA_VERSION,
-            supported=ok,
-            reasons=[] if ok else ["fixture rejection"],
-            features={"fixture": True},
-            alternatives=[],
-            backend=renderer_id,
-            backend_version="1.0.0",
-        )
-
-    return resolve
-
-
-def _mixed_plan(
-    tmp_path: Path,
-    transport: FakeTransport,
-    *,
-    config: dict[str, Any],
-) -> RenderRequest:
-    timeline = _hybrid_timeline()
-    request = _hybrid_request(tmp_path, timeline, config=config)
-    transport.plan = legacy_hybrid.plan(
-        request,
-        workspace=tmp_path,
-        support_resolver=_planner_support_resolver(),
-    )
-    return request
-
-
-def _mixed_service(
-    tmp_path: Path,
-    transport: FakeTransport,
-    *,
-    renderer_ids: tuple[str, ...] = (
-        "raw_command.renderer",
-        "rendering.remotion",
-    ),
-) -> RenderService:
-    renderers = RendererRegistry(
-        [_candidate(tmp_path, item, "renderer") for item in renderer_ids]
-    )
-    planners = PlannerRegistry(
-        [_candidate(tmp_path, "rendering.legacy_hybrid", "planner")]
-    )
-    finalizers = FinalizerRegistry(
-        [_candidate(tmp_path, "rendering.ffmpeg-finalizer", "finalizer")]
-    )
-    return RenderService(
-        registries=(renderers, planners, finalizers),
-        transport=transport,
-        validator=lambda result, **_kwargs: result,
-    )
-
-
-RAW_FIXTURE_PACK_ROOT = (
-    Path(__file__).resolve().parents[2]
-    / "fixtures"
-    / "renderer_packs"
-    / "raw_command"
-)
-
-
-class _RawFixtureTransport(FakeTransport):
-    """FakeTransport that executes the deterministic Batch-2 raw fixture.
-
-    ``raw_command.renderer`` invocations run the fixture's real stdlib
-    ``backend.py`` subprocess; every other backend stays simulated.
-    """
-
-    def __init__(self, pack_root: Path = RAW_FIXTURE_PACK_ROOT) -> None:
-        super().__init__()
-        self.pack_root = Path(pack_root)
-
-    def run(
-        self,
-        verb: str,
-        command: Any,
-        *,
-        backend: str,
-        request_path: Path,
-        result_path: Path,
-        cwd: Path,
-        **kwargs: Any,
-    ) -> Any:
-        if backend != "raw_command.renderer":
-            return super().run(
-                verb,
-                command,
-                backend=backend,
-                request_path=request_path,
-                result_path=result_path,
-                cwd=cwd,
-                **kwargs,
-            )
-        self.calls.append((verb, backend))
-        subprocess.run(
-            [
-                sys.executable,
-                "backend.py",
-                verb,
-                "--request",
-                str(request_path),
-                "--result",
-                str(result_path),
-            ],
-            cwd=self.pack_root,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        payload = json.loads(result_path.read_text(encoding="utf-8"))
-        if verb == "support":
-            return SupportReport.from_dict(payload)
-        if verb == "render":
-            return RenderResult.from_dict(payload)
-        raise AssertionError(f"raw fixture backend has no {verb!r} verb")
-
-
-@pytest.mark.parametrize(
-    (
-        "selector",
-        "hybrid_plan",
-        "expected_calls",
-        "expected_engine",
-        "expected_backend",
-        "auto_route",
-        "warning",
-    ),
-    [
-        (
-            "rendering.remotion",
-            False,
-            [("support", "rendering.remotion"), ("render", "rendering.remotion")],
-            "rendering.remotion",
-            "rendering.remotion",
-            False,
-            False,
-        ),
-        (
-            "rendering.ffmpeg",
-            False,
-            [("support", "rendering.ffmpeg"), ("render", "rendering.ffmpeg")],
-            "rendering.ffmpeg",
-            "rendering.ffmpeg",
-            False,
-            False,
-        ),
-        (
-            "remotion",
-            False,
-            [("support", "rendering.ffmpeg"), ("render", "rendering.ffmpeg")],
-            "remotion",
-            "rendering.ffmpeg",
-            True,
-            True,
-        ),
-        (
-            None,
-            False,
-            [("support", "rendering.ffmpeg"), ("render", "rendering.ffmpeg")],
-            "remotion",
-            "rendering.ffmpeg",
-            True,
-            True,
-        ),
-        (
-            "ffmpeg",
-            False,
-            [("support", "rendering.ffmpeg"), ("render", "rendering.ffmpeg")],
-            "ffmpeg",
-            "rendering.ffmpeg",
-            False,
-            False,
-        ),
-        (
-            "hybrid",
-            True,
-            [
-                ("support", "rendering.legacy_hybrid"),
-                ("plan", "rendering.legacy_hybrid"),
-                ("support", "fixture.window"),
-                ("render", "fixture.window"),
-                ("support", "rendering.ffmpeg-finalizer"),
-                ("finalize", "rendering.ffmpeg-finalizer"),
-            ],
-            "hybrid",
-            "fixture.window",
-            False,
-            False,
-        ),
-    ],
-    ids=[
-        "qualified-remotion",
-        "qualified-ffmpeg",
-        "legacy-remotion",
-        "default-remotion",
-        "legacy-ffmpeg",
-        "hybrid",
-    ],
-)
-@pytest.mark.skip(reason="retired shorthand and planner selectors")
-def test_selector_routing_matrix(
-    tmp_path: Path,
-    selector: str | None,
-    hybrid_plan: bool,
-    expected_calls: list[tuple[str, str]],
-    expected_engine: str,
-    expected_backend: str,
-    auto_route: bool,
-    warning: bool,
-) -> None:
-    transport = FakeTransport()
-    if hybrid_plan:
-        transport.plan = _plan("fixture.window")
-        service = _service(
-            tmp_path,
-            transport,
-            renderer_ids=("fixture.window",),
-            planner_ids=("rendering.legacy_hybrid",),
-        )
-    else:
-        service = _service(tmp_path, transport)
-    output = tmp_path / "routing.mp4"
-
-    if warning:
-        with pytest.warns(LegacyRenderRoutingWarning, match="auto-routed"):
-            service.render_request(
-                _request(tmp_path), selector=selector, out_path=output
-            )
-    else:
-        service.render_request(
-            _request(tmp_path), selector=selector, out_path=output
-        )
-
-    assert transport.calls == expected_calls
-    if selector != "hybrid":
-        assert not any(verb == "finalize" for verb, _backend in transport.calls)
-    payload = _sidecar(output)
-    routing = payload["routing"]
-    assert routing["requested_engine"] == expected_engine
-    assert routing["requested_policy"] == expected_engine
-    assert routing["resolved_backend"] == expected_backend
-    assert routing["resolved_backends"] == [expected_backend]
-    assert routing["auto_route"] is auto_route
-    assert payload["requested_policy"] == expected_engine
 
 
 def test_trust_denied_higher_priority_candidate_never_wins(
@@ -1331,27 +727,6 @@ def test_trust_denied_higher_priority_candidate_never_wins(
     assert renderer["id"] == "contested.renderer"
     assert renderer["trust_eligibility"]["eligible"] is True
     assert renderer["trust_eligibility"]["reason"] == "fixture trust"
-
-
-@pytest.mark.skip(reason="retired shorthand selector")
-def test_unknown_short_selector_lists_legacy_alternatives(
-    tmp_path: Path,
-) -> None:
-    transport = FakeTransport()
-    service = _service(tmp_path, transport)
-
-    with pytest.raises(RendererUnsupportedError) as caught:
-        service.render_request(
-            _request(tmp_path),
-            selector="webgl",
-            out_path=tmp_path / "webgl.mp4",
-        )
-
-    error = caught.value.error
-    assert error.kind == "unsupported"
-    assert error.details["legacy_selectors"] == ["remotion", "ffmpeg", "hybrid"]
-    assert "remotion" in error.recovery_command
-    assert transport.calls == []
 
 
 @pytest.mark.parametrize(
@@ -1487,203 +862,6 @@ def test_builtin_paths_commit_exactly_one_video_and_sidecar(
     assert not list(tmp_path.glob(".*.render-service-*"))
 
 
-@pytest.mark.skip(reason="retired built-in planner")
-def test_raw_mixed_plan_routes_windows_and_aligns_segment_provenance(
-    tmp_path: Path,
-) -> None:
-    transport = FakeTransport()
-    request = _mixed_plan(
-        tmp_path,
-        transport,
-        config={
-            "simple_renderers": ["raw_command.renderer"],
-            "complex_renderers": ["rendering.remotion"],
-        },
-    )
-    service = _mixed_service(tmp_path, transport)
-    output = tmp_path / "mixed.mp4"
-
-    service.render_request(request, selector="hybrid", out_path=output)
-
-    render_calls = [backend for verb, backend in transport.calls if verb == "render"]
-    assert render_calls == [
-        "raw_command.renderer",
-        "rendering.remotion",
-        "raw_command.renderer",
-    ]
-    assert ("finalize", "rendering.ffmpeg-finalizer") in transport.calls
-    payload = _sidecar(output)
-    segments = payload["segments_v2"]
-    assert [segment["renderer"]["id"] for segment in segments] == [
-        "raw_command.renderer",
-        "rendering.remotion",
-        "raw_command.renderer",
-    ]
-    windows = [
-        (segment["window"]["start_frame"], segment["window"]["end_frame"])
-        for segment in segments
-    ]
-    assert windows[0][0] == 0
-    assert windows[-1][1] == transport.plan.total_frames
-    assert all(left[1] == right[0] for left, right in zip(windows, windows[1:]))
-    assert all("timeline" in segment["input_hashes"] for segment in segments)
-    assert payload["finalizer"]["id"] == "rendering.ffmpeg-finalizer"
-    assert payload["routing"]["requested_engine"] == "hybrid"
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_raw_mixed_plan_executes_deterministic_raw_fixture_window(
-    tmp_path: Path,
-) -> None:
-    transport = _RawFixtureTransport()
-    request = _mixed_plan(
-        tmp_path,
-        transport,
-        config={
-            "simple_renderers": ["raw_command.renderer"],
-            "complex_renderers": ["rendering.remotion"],
-        },
-    )
-    service = _mixed_service(tmp_path, transport)
-    output = tmp_path / "mixed-real.mp4"
-
-    service.render_request(request, selector="hybrid", out_path=output)
-
-    render_calls = [backend for verb, backend in transport.calls if verb == "render"]
-    assert render_calls == [
-        "raw_command.renderer",
-        "rendering.remotion",
-        "raw_command.renderer",
-    ]
-    assert ("finalize", "rendering.ffmpeg-finalizer") in transport.calls
-    payload = _sidecar(output)
-    segments = payload["segments_v2"]
-    assert [segment["renderer"]["id"] for segment in segments] == [
-        "raw_command.renderer",
-        "rendering.remotion",
-        "raw_command.renderer",
-    ]
-    raw_windows = [
-        segment["window"]
-        for segment in segments
-        if segment["renderer"]["id"] == "raw_command.renderer"
-    ]
-    assert len(raw_windows) == 2
-    assert all(
-        segment["window"]["end_frame"] - segment["window"]["start_frame"] > 0
-        for segment in segments
-    )
-    # The raw fixture really rendered its windows: real mp4 bytes with the
-    # planned frame count in the committed artifact profile.
-    assert output.is_file()
-    assert output.read_bytes().startswith(b"finalize:rendering.ffmpeg-finalizer")
-
-
-@pytest.mark.parametrize(
-    ("selector", "plan_segments", "ownership", "expected", "completer"),
-    [
-        ("rendering.remotion", None, AudioOwnership.RENDERED, AudioOwnership.RENDERED, False),
-        ("rendering.ffmpeg", None, AudioOwnership.RENDERED, AudioOwnership.RENDERED, False),
-        ("rendering.remotion", None, AudioOwnership.NONE, AudioOwnership.NONE, False),
-        ("rendering.ffmpeg", None, AudioOwnership.NONE, AudioOwnership.NONE, False),
-        ("rendering.remotion", None, AudioOwnership.PASSTHROUGH, AudioOwnership.RENDERED, True),
-        ("rendering.ffmpeg", None, AudioOwnership.PASSTHROUGH, AudioOwnership.RENDERED, True),
-        ("hybrid", (10,), AudioOwnership.RENDERED, AudioOwnership.RENDERED, False),
-        ("hybrid", (10,), AudioOwnership.NONE, AudioOwnership.NONE, False),
-        ("hybrid", (10,), AudioOwnership.PASSTHROUGH, AudioOwnership.RENDERED, True),
-    ],
-    ids=[
-        "remotion-rendered",
-        "ffmpeg-rendered",
-        "remotion-none",
-        "ffmpeg-none",
-        "remotion-passthrough",
-        "ffmpeg-passthrough",
-        "hybrid-rendered",
-        "hybrid-none",
-        "hybrid-passthrough",
-    ],
-)
-@pytest.mark.skip(reason="retired planner audio matrix")
-def test_audio_ownership_matrix_across_backends(
-    tmp_path: Path,
-    selector: str,
-        plan_segments: tuple[int, ...] | None,
-    ownership: AudioOwnership,
-    expected: AudioOwnership,
-    completer: bool,
-) -> None:
-    transport = FakeTransport()
-
-    def audio_completer(result: RenderResult, **_kwargs: Any) -> RenderResult:
-        return replace(
-            result,
-            video=replace(
-                result.video,
-                profile=_profile(audio=True),
-                audio=AudioOwnership.RENDERED,
-            ),
-            audio_ownership=AudioOwnership.RENDERED,
-        )
-
-    if plan_segments is not None:
-        transport.plan = _plan("fixture.window", segment_frames=plan_segments)
-        service = _service(
-            tmp_path,
-            transport,
-            renderer_ids=("fixture.window",),
-            planner_ids=("rendering.legacy_hybrid",),
-            audio_completer=audio_completer if completer else None,
-        )
-        # A pinned planner finalizer completes audio for hybrid plans; the
-        # fixture finalizer must honor the ownership the request asked for.
-        transport.finalize_ownership = ownership
-    else:
-        service = _service(
-            tmp_path,
-            transport,
-            audio_completer=audio_completer if completer else None,
-        )
-    output = tmp_path / f"audio-{ownership.value}.mp4"
-
-    service.render_request(
-        replace(_request(tmp_path), audio=ownership),
-        selector=selector,
-        out_path=output,
-    )
-
-    payload = _sidecar(output)
-    assert payload["audio_ownership"] == expected.value
-    assert payload["routing"]["requested_engine"] == (
-        "hybrid" if plan_segments is not None else selector
-    )
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_finalizer_failure_removes_workspace_and_commits_nothing(
-    tmp_path: Path,
-) -> None:
-    transport = FakeTransport()
-    transport.fail_finalize = "rendering.ffmpeg-finalizer"
-    transport.plan = _plan("fixture.window", segment_frames=(5, 5))
-    service = _service(
-        tmp_path,
-        transport,
-        renderer_ids=("fixture.window",),
-        planner_ids=("rendering.legacy_hybrid",),
-    )
-    output = tmp_path / "failed-finalize.mp4"
-
-    with pytest.raises(RendererInternalError):
-        service.render_request(
-            _request(tmp_path), selector="hybrid", out_path=output
-        )
-
-    assert not output.exists()
-    assert not list(tmp_path.glob("*.provenance.json"))
-    assert not list(tmp_path.glob(".*.render-service-*"))
-
-
 def test_support_failure_removes_workspace_and_commits_nothing(
     tmp_path: Path,
 ) -> None:
@@ -1731,38 +909,6 @@ def test_renderer_attachments_survive_validation_into_committed_provenance(
         "storyboard.png",
         "captions.srt",
     }
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_finalizer_preserves_segment_attachments_and_adds_its_own(
-    tmp_path: Path,
-) -> None:
-    transport = FakeTransport()
-    transport.render_attachments["fixture.window"] = [
-        {"segment-a.txt": b"first-segment"},
-        {"segment-b.txt": b"second-segment"},
-    ]
-    transport.finalize_attachments = {"final-note.txt": b"final"}
-    transport.plan = _plan("fixture.window", segment_frames=(5, 5))
-    service = _service(
-        tmp_path,
-        transport,
-        renderer_ids=("fixture.window",),
-        planner_ids=("rendering.legacy_hybrid",),
-    )
-    output = tmp_path / "finalized-attachments.mp4"
-
-    service.render_request(_request(tmp_path), selector="hybrid", out_path=output)
-
-    payload = _sidecar(output)
-    assert set(payload["attachments"]) == {
-        "segment-a.txt",
-        "segment-b.txt",
-        "final-note.txt",
-    }
-    assert len(payload["artifact_profiles"]) == 2
-    assert set(payload["artifact_profiles"][0]["attachments"]) == {"segment-a.txt"}
-    assert set(payload["artifact_profiles"][1]["attachments"]) == {"segment-b.txt"}
 
 
 def test_audio_completer_dropping_attachments_is_rejected(tmp_path: Path) -> None:
@@ -1976,38 +1122,6 @@ def test_real_ffmpeg_renders_through_generic_service(
     assert payload["engine"] == "rendering.ffmpeg"
 
 
-@pytest.mark.skip(reason="retired built-in planner")
-def test_real_hybrid_plans_assigns_ffmpeg_and_finalizes_through_service(
-    tmp_path: Path,
-) -> None:
-    """Real hybrid planning: the media-only timeline routes every window to
-    the real FFmpeg backend and the real ffmpeg finalizer concatenates."""
-    _require_ffmpeg()
-    timeline_path, assets_path = _real_media_inputs(tmp_path)
-    service = _real_service(tmp_path)
-    output = tmp_path / "real-hybrid.mp4"
-
-    service.render_request(
-        replace(
-            _request(tmp_path),
-            timeline_path=str(timeline_path),
-            assets_registry_path=str(assets_path),
-        ),
-        selector="hybrid",
-        out_path=output,
-    )
-
-    assert output.is_file()
-    assert output.stat().st_size > 0
-    sidecars = list(tmp_path.glob("*.provenance.json"))
-    assert sidecars == [Path(f"{output}.provenance.json")]
-    payload = json.loads(sidecars[0].read_text(encoding="utf-8"))
-    assert payload["routing"]["requested_engine"] == "hybrid"
-    resolved = payload["routing"]["resolved_policy"]
-    assert resolved["planner"] == "rendering.legacy_hybrid"
-    assert resolved["finalizer"] == "rendering.ffmpeg-finalizer"
-
-
 def _real_audio_reactive_inputs(tmp_path: Path) -> tuple[Path, Path]:
     """A two-clip timeline the strict FFmpeg backend renders through its
     audio-reactive colour specialization (real AAC audio source)."""
@@ -2121,37 +1235,6 @@ def test_real_ffmpeg_audio_reactive_through_generic_service(
     assert payload["audio_ownership"] == "rendered"
 
 
-@pytest.mark.skip(reason="retired built-in planner")
-def test_single_segment_plan_records_finalizer_fragment(
-    tmp_path: Path,
-) -> None:
-    """A single-segment plan that pins the ffmpeg finalizer must record BOTH
-    the renderer fragment and the executed finalizer fragment in provenance."""
-    transport = FakeTransport()
-    transport.plan = _plan("fixture.window", segment_frames=(10,))
-    service = _service(
-        tmp_path,
-        transport,
-        renderer_ids=("fixture.window",),
-        planner_ids=("rendering.legacy_hybrid",),
-    )
-    output = tmp_path / "single-finalize.mp4"
-
-    service.render_request(_request(tmp_path), selector="hybrid", out_path=output)
-
-    payload = _sidecar(output)
-    fragments = payload["backend_fragments"]
-    assert fragments["fixture.window"]["fixture_backend"] == "fixture.window"
-    assert (
-        fragments["rendering.ffmpeg-finalizer"]["fixture_backend"]
-        == "rendering.ffmpeg-finalizer"
-    )
-    # One hashed lineage entry per segment (the renderer artifact), while the
-    # finalizer's artifact is represented by the finalizer fragment.
-    assert len(payload["artifact_profiles"]) == 1
-    assert payload["artifact_profiles"][0]["path"].endswith("segment-0000.mp4")
-
-
 # ---------------------------------------------------------------------------
 # Layer Stack Batch 2 — track-filtered host slice + alpha metadata stamp.
 # _window_timeline slices the host timeline to one z-layer's tracks; the
@@ -2209,20 +1292,6 @@ def _layered_segment(*, z: int, tracks: tuple[str, ...]) -> RenderSegment:
         renderer=_renderer_resolution("fixture.full"),
         input_hashes={},
         layer=LayerRef(z=z, tracks=tracks),
-    )
-
-
-def _layered_plan(*, z: int, tracks: tuple[str, ...]) -> RenderPlan:
-    return RenderPlan(
-        schema_version=SCHEMA_VERSION,
-        request_digest="0" * 64,
-        requested_policy="hybrid",
-        planner=_planner_resolution(),
-        segments=[_layered_segment(z=z, tracks=tracks)],
-        finalizer=_finalizer_resolution(),
-        profile=_profile(),
-        total_frames=10,
-        reasons={"0": "fixture"},
     )
 
 
@@ -2344,89 +1413,6 @@ def test_segment_request_z0_stamps_alpha_false(tmp_path: Path) -> None:
 
     assert materialized["metadata"]["astrid_layer"] == {"z": 0, "alpha": False}
     assert [track["id"] for track in materialized["tracks"]] == ["v1"]
-
-
-class _TimelineCaptureTransport(FakeTransport):
-    """Records the timeline JSON a full-timeline renderer actually receives."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.received_timelines: list[dict[str, Any]] = []
-
-    def run(
-        self,
-        verb: str,
-        command: Any,
-        *,
-        backend: str,
-        request_path: Path,
-        result_path: Path,
-        cwd: Path,
-        **kwargs: Any,
-    ) -> Any:
-        if verb == "render":
-            payload = json.loads(Path(request_path).read_text(encoding="utf-8"))
-            timeline_path = payload.get("timeline_path")
-            if timeline_path:
-                self.received_timelines.append(
-                    json.loads(Path(timeline_path).read_text(encoding="utf-8"))
-                )
-        return super().run(
-            verb,
-            command,
-            backend=backend,
-            request_path=request_path,
-            result_path=result_path,
-            cwd=cwd,
-            **kwargs,
-        )
-
-
-@pytest.mark.skip(reason="retired built-in planner")
-def test_layer_plan_end_to_end_materializes_track_slice_and_stamp(
-    tmp_path: Path,
-) -> None:
-    """Full service path: a planned layered segment rendered by a
-    supports_windows: false renderer receives a materialized timeline with
-    ONLY its layer's track/clips and the astrid_layer stamp."""
-    timeline_path = _layered_timeline(tmp_path)
-    transport = _TimelineCaptureTransport()
-    transport.plan = _layered_plan(z=1, tracks=("v2",))
-    renderers = RendererRegistry(
-        [
-            _candidate(
-                tmp_path,
-                "fixture.full",
-                "renderer",
-                capabilities={
-                    "supports_full_timeline": True,
-                    "supports_windows": False,
-                },
-            )
-        ]
-    )
-    planners = PlannerRegistry(
-        [_candidate(tmp_path, "rendering.legacy_hybrid", "planner")]
-    )
-    finalizers = FinalizerRegistry(
-        [_candidate(tmp_path, "rendering.ffmpeg-finalizer", "finalizer")]
-    )
-    service = RenderService(
-        registries=(renderers, planners, finalizers),
-        transport=transport,
-        validator=lambda result, **_kwargs: result,
-    )
-    output = tmp_path / "layer-slice.mp4"
-    request = replace(_request(tmp_path), timeline_path=str(timeline_path))
-
-    service.render_request(request, selector="hybrid", out_path=output)
-
-    assert len(transport.received_timelines) == 1
-    materialized = transport.received_timelines[0]
-    assert [track["id"] for track in materialized["tracks"]] == ["v2"]
-    assert [clip["id"] for clip in materialized["clips"]] == ["c2_0_10"]
-    assert materialized["metadata"]["astrid_layer"] == {"z": 1, "alpha": True}
-    assert materialized["metadata"]["project"] == "layer-slice"
 
 
 def test_direct_render_with_pinned_finalizer_records_both_fragments(
@@ -2599,3 +1585,72 @@ def test_managed_support_failure_cleans_attempt_and_commits_nothing(tmp_path, mo
     assert not Path(str(output) + ".provenance.json").exists()
     assert not list(attempt.glob("astrid-render-support-*"))
     assert not list(attempt.glob(".*.render-service-*"))
+
+
+def _plan(
+    renderer: str,
+    *,
+    segment_frames: tuple[int, ...] = (10,),
+) -> RenderPlan:
+    cursor = 0
+    segments: list[RenderSegment] = []
+    for duration in segment_frames:
+        segments.append(
+            RenderSegment(
+                window=FrameWindow(
+                    start_frame=cursor,
+                    end_frame=cursor + duration,
+                    fps_rational=(10, 1),
+                ),
+                renderer=_renderer_resolution(renderer),
+                input_hashes={},
+            )
+        )
+        cursor += duration
+    return RenderPlan(
+        schema_version=SCHEMA_VERSION,
+        request_digest="0" * 64,
+        requested_policy="hybrid",
+        planner=_planner_resolution(),
+        segments=segments,
+        finalizer=_finalizer_resolution(),
+        profile=_profile(),
+        total_frames=cursor,
+        reasons={str(index): "fixture" for index in range(len(segments))},
+    )
+
+
+class _TimelineCaptureTransport(FakeTransport):
+    """Records the timeline JSON a full-timeline renderer actually receives."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.received_timelines: list[dict[str, Any]] = []
+
+    def run(
+        self,
+        verb: str,
+        command: Any,
+        *,
+        backend: str,
+        request_path: Path,
+        result_path: Path,
+        cwd: Path,
+        **kwargs: Any,
+    ) -> Any:
+        if verb == "render":
+            payload = json.loads(Path(request_path).read_text(encoding="utf-8"))
+            timeline_path = payload.get("timeline_path")
+            if timeline_path:
+                self.received_timelines.append(
+                    json.loads(Path(timeline_path).read_text(encoding="utf-8"))
+                )
+        return super().run(
+            verb,
+            command,
+            backend=backend,
+            request_path=request_path,
+            result_path=result_path,
+            cwd=cwd,
+            **kwargs,
+        )

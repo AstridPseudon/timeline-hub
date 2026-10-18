@@ -7,24 +7,22 @@ are spelled out here on purpose: removing or renaming them in ``astrid/sdk/clien
 """
 from __future__ import annotations
 
-import io
 import json
 import os
 import struct
 import subprocess
 import sys
-import tarfile
 import zlib
 from pathlib import Path
 
 import pytest
 
 from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+from tests.helpers.runtime import vendored_runtime_commit
 
 pytestmark = pytest.mark.integration  # a real daemon from a second checkout, and short-lived subprocesses
 
 ASTRID = Path(__file__).resolve().parents[2]
-RUNTIME_COMMIT = json.loads((ASTRID / "astrid_runtime_client" / "vendor.lock.json").read_text())["source_commit"]
 ACTOR = "owner"
 # Spelled out, not imported: this is the contract the App-side harness relies on.
 CONTEXT = {
@@ -35,37 +33,10 @@ CONTEXT = {
 }
 
 
-@pytest.fixture(scope="module")
-def runtime_checkout(tmp_path_factory) -> Path:
-    """The Runtime at the commit the vendored client was produced from, so the schema digests agree."""
-    override = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
-    if override:
-        candidates = [Path(override).expanduser()]
-    else:  # a sibling of this tree, or of the main checkout when this is a linked worktree
-        common = subprocess.run(["git", "-C", str(ASTRID), "rev-parse", "--path-format=absolute", "--git-common-dir"], capture_output=True, text=True)
-        roots = [ASTRID.parent, *([Path(common.stdout.strip()).parent.parent] if common.returncode == 0 else [])]
-        candidates = [root / "astrid-runtime" for root in roots]
-    for checkout in candidates:
-        done = subprocess.run(["git", "-C", str(checkout), "archive", "--format=tar", RUNTIME_COMMIT], capture_output=True)
-        if done.returncode == 0:
-            root = tmp_path_factory.mktemp("runtime-archive")
-            with tarfile.open(fileobj=io.BytesIO(done.stdout), mode="r:") as tar:
-                tar.extractall(root)
-            return root
-    pytest.skip(f"set ASTRID_RUNTIME_CHECKOUT to a Runtime checkout containing {RUNTIME_COMMIT}")
-
-
 @pytest.fixture
-def daemon(runtime_checkout, tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(str(runtime_checkout))
-    pytest.importorskip("runtime_protocol.daemon")
-    from runtime_protocol.daemon import RuntimeDaemon
-    from runtime_protocol.store import RealmStore
-
-    RealmStore.initialize(tmp_path / "realm").close()
-    started = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "runtime-support").start()
-    yield started
-    started.stop()
+def daemon(real_runtime, tmp_path):
+    """A real daemon from the Runtime commit the vendored client was produced from, so the schema digests agree."""
+    return real_runtime(support_root=tmp_path / "runtime-support", commit=vendored_runtime_commit())
 
 
 @pytest.fixture

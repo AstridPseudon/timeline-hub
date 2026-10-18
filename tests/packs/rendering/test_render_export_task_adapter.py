@@ -16,7 +16,6 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("banodoco_timeline_schema")
 
 from astrid.core.foundation.hash import sha256_file
 from astrid.core.rendering import remotion_runtime

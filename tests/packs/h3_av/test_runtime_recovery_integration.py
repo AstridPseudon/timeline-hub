@@ -9,45 +9,34 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
-import os
 import shutil
-import sys
 from pathlib import Path
 
 import pytest
 
-ASTRID_ROOT = Path(__file__).resolve().parents[3]
-_runtime_root = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
-if not _runtime_root:
-    pytest.skip("ASTRID_RUNTIME_CHECKOUT must pin the Runtime source worktree", allow_module_level=True)
-RUNTIME_ROOT = Path(_runtime_root).resolve()
-if not (RUNTIME_ROOT / "runtime_protocol").is_dir():
-    pytest.skip("ASTRID_RUNTIME_CHECKOUT must point to a Runtime source worktree", allow_module_level=True)
-sys.path.insert(0, str(RUNTIME_ROOT))
-
-pytest.importorskip("runtime_protocol")
-from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
-from runtime_protocol.store import RealmStore  # noqa: E402
-
-from astrid.core.foundation.hash import executor_definition_digest  # noqa: E402
-from astrid.packs.h3_av.actions.transform.run import (  # noqa: E402
-    _invoke_canonical_run,
-    _materialize_output,
-)
-from astrid.packs.h3_av.shared.compose import compose_candidate  # noqa: E402
-from astrid.packs.h3_av.actions.transform.operation import OperationJournal  # noqa: E402
-from astrid.packs.h3_av.actions.prepare.prepare import prepare_request  # noqa: E402
-from astrid.packs.h3_av.actions.transform.receipt import (  # noqa: E402
+from astrid.core.foundation.hash import executor_definition_digest
+from astrid.packs.h3_av.actions.prepare.prepare import prepare_request
+from astrid.packs.h3_av.actions.transform.operation import OperationJournal
+from astrid.packs.h3_av.actions.transform.receipt import (
     attest_runtime_managed_publication,
     build_final_receipt,
     write_final_receipt,
 )
-from astrid.packs.h3_av.shared.request import normalize_request  # noqa: E402
-from astrid.packs.h3_av.actions.verify.verify import verify_candidate  # noqa: E402
-from astrid.sdk.client import AstridClient  # noqa: E402
-from astrid.sdk.invocation import _sdk_module  # noqa: E402
-from astrid.sdk.remote import RemoteAstridClient  # noqa: E402
-from astrid.sdk.workspace_client import WorkspaceClient  # noqa: E402
+from astrid.packs.h3_av.actions.transform.run import (
+    _invoke_canonical_run,
+    _materialize_output,
+)
+from astrid.packs.h3_av.actions.verify.verify import verify_candidate
+from astrid.packs.h3_av.shared.compose import compose_candidate
+from astrid.packs.h3_av.shared.request import normalize_request
+from astrid.sdk.client import AstridClient
+from astrid.sdk.invocation import _sdk_module
+from astrid.sdk.remote import RemoteAstridClient
+from astrid.sdk.workspace_client import WorkspaceClient
+
+ASTRID_ROOT = Path(__file__).resolve().parents[3]
+
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
 
 def _synthetic_av(path: Path, *, color: str) -> None:
@@ -65,7 +54,7 @@ def _synthetic_av(path: Path, *, color: str) -> None:
     )
 
 
-def _connected(daemon: RuntimeDaemon) -> tuple[AstridClient, WorkspaceClient]:
+def _connected(daemon) -> tuple[AstridClient, WorkspaceClient]:
     transport = WorkspaceClient(daemon.endpoint, daemon.token)
     transport.handshake(
         "h3-recovery-integration", "1",
@@ -91,10 +80,8 @@ def _descriptor(transport: WorkspaceClient, project_id: str, payload: bytes, *, 
 
 
 @pytest.mark.skipif(not shutil.which("ffmpeg") or not shutil.which("ffprobe"), reason="ffmpeg/ffprobe required for CPU H3 composition")
-def test_runtime_response_loss_resumes_canonical_run_into_h3_verified_receipt(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    realm = tmp_path / "realm"
-    RealmStore.initialize(realm).close()
-    daemon = RuntimeDaemon(realm).start()
+def test_runtime_response_loss_resumes_canonical_run_into_h3_verified_receipt(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime) -> None:
+    daemon = real_runtime(tmp_path / "realm")
     try:
         sdk_client, worker = _connected(daemon)
         transport = sdk_client._remote._transport

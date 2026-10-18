@@ -64,10 +64,8 @@ def test_product_census_is_exactly_seven_families() -> None:
 
 
 def test_operational_families_are_excluded_from_product_census() -> None:
-    """serve/doctor/backup are operational families outside the census."""
-    assert EXCLUDED_FROM_PRODUCT_CENSUS == frozenset(
-        {"serve", "doctor", "backup"}
-    )
+    """doctor/backup are operational families outside the census."""
+    assert EXCLUDED_FROM_PRODUCT_CENSUS == frozenset({"doctor", "backup"})
     for excluded in EXCLUDED_FROM_PRODUCT_CENSUS:
         assert not is_product_family(excluded)
         assert excluded not in product_top_level_commands()
@@ -775,9 +773,7 @@ def test_product_help_text_declares_exact_census_and_mounts() -> None:
         assert operational in text
     assert "timelines shots" in text
     assert "media references" in text
-    # ``serve`` remains a rejected legacy token but is no longer an advertised
-    # operational family after the Stage1 runtime cutover.
-    for excluded in EXCLUDED_FROM_PRODUCT_CENSUS - {"serve"}:
+    for excluded in EXCLUDED_FROM_PRODUCT_CENSUS:
         assert excluded in text
 
 

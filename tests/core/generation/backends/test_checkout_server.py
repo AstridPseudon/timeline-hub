@@ -494,7 +494,6 @@ def test_generate_failure_discards_prepared_warmth(
 
 
 def _hc03_profile(tmp_path: Path, *, model_digest: str = "sha256:" + "a" * 64) -> dict[str, object]:
-    pytest.importorskip("vibecomfy")
     from vibecomfy.runtime.session import (
         current_source_content_digest,
         current_source_revision,
@@ -586,6 +585,7 @@ def _hc03_profile(tmp_path: Path, *, model_digest: str = "sha256:" + "a" * 64) -
     }
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_from_host_session_requires_owned_registry_and_binds_hc03(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -605,6 +605,7 @@ def test_from_host_session_requires_owned_registry_and_binds_hc03(
     assert adapter._bound_fingerprint
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_from_host_session_adopts_only_matching_host_warmth_hint(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -648,6 +649,7 @@ def test_from_host_session_adopts_only_matching_host_warmth_hint(
     assert prepared["warm_reused"] is False
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_from_host_session_rejects_reachability_without_binding(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -663,6 +665,7 @@ def test_from_host_session_rejects_reachability_without_binding(
         )
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_from_host_session_rejects_model_root_inventory_digest_drift(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -681,6 +684,7 @@ def test_from_host_session_rejects_model_root_inventory_digest_drift(
         )
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_from_host_session_rejects_source_content_drift(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -697,10 +701,11 @@ def test_from_host_session_rejects_source_content_drift(
         )
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_run_compiled_workflow_uses_bundle_and_private_output_custody(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    vibecomfy = pytest.importorskip("vibecomfy")
+    import vibecomfy
     from vibecomfy.workflow import VibeWorkflow, WorkflowSource
     import vibecomfy.workflow_bundle as workflow_bundle
     profile = _hc03_profile(tmp_path)
@@ -761,11 +766,11 @@ def test_run_compiled_workflow_uses_bundle_and_private_output_custody(
     assert generated[0].read_bytes() == b"artifact"
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 @pytest.mark.parametrize("failure_at", ["refresh", "compile"])
 def test_run_rejects_target_schema_failure_before_generation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure_at: str,
 ) -> None:
-    pytest.importorskip("vibecomfy")
     from vibecomfy.workflow import VibeWorkflow, WorkflowSource
     import vibecomfy.workflow_bundle as workflow_bundle
 
@@ -803,10 +808,10 @@ def test_run_rejects_target_schema_failure_before_generation(
     adapter._run_workflow.assert_not_called()
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_run_compiled_workflow_augments_workflow_config_with_host_identity(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    pytest.importorskip("vibecomfy")
     from vibecomfy.workflow import VibeWorkflow, WorkflowSource
     import vibecomfy.workflow_bundle as workflow_bundle
 
@@ -869,10 +874,10 @@ def test_run_compiled_workflow_augments_workflow_config_with_host_identity(
     assert config_without_ids.extra["output_directory"] == config.extra["output_directory"]
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_run_compiled_workflow_rejects_conflicting_environment_output_before_warm(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    pytest.importorskip("vibecomfy")
     from vibecomfy.workflow import VibeWorkflow, WorkflowSource
     import vibecomfy.workflow_bundle as workflow_bundle
 
@@ -915,10 +920,10 @@ def test_run_compiled_workflow_rejects_conflicting_environment_output_before_war
     adapter.warm_session.assert_not_called()
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_run_compiled_workflow_accepts_canonical_bundle_loader_result(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    pytest.importorskip("vibecomfy")
     from vibecomfy.workflow import VibeWorkflow, WorkflowSource
     from vibecomfy.workflow_bundle import WorkflowBundle
     profile = _hc03_profile(tmp_path)
@@ -976,10 +981,11 @@ def test_run_compiled_workflow_accepts_canonical_bundle_loader_result(
     assert generated[0].read_bytes() == b"artifact"
 
 
+@pytest.mark.integration  # needs vibecomfy from a second checkout
 def test_run_compiled_workflow_rejects_registry_mutation_after_binding(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    vibecomfy = pytest.importorskip("vibecomfy")
+    import vibecomfy
     from vibecomfy.workflow import VibeWorkflow, WorkflowSource
 
     profile = _hc03_profile(tmp_path)

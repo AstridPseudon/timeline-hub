@@ -60,9 +60,11 @@ def test_every_vendored_face_covers_all_printable_ascii() -> None:
         assert entry["sha256"] == digest, f"{name} changed; regenerate the coverage record"
 
 
-def test_recorded_coverage_matches_binaries_when_fonttools_is_available() -> None:
-    ttlib = pytest.importorskip("fontTools.ttLib")
-    pytest.importorskip("brotli")
+@pytest.mark.integration  # needs fontTools and brotli, which are not dev dependencies
+def test_recorded_coverage_matches_binaries() -> None:
+    import brotli  # noqa: F401
+    from fontTools import ttLib as ttlib
+
     recorded = json.loads(COVERAGE_RECORD.read_text(encoding="utf-8"))["files"]
     for path in _shipped_font_files():
         cmap = ttlib.TTFont(str(path)).getBestCmap()

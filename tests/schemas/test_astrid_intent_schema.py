@@ -15,7 +15,6 @@ from pathlib import Path
 
 import pytest
 
-jsonschema = pytest.importorskip("jsonschema")
 from jsonschema import Draft202012Validator  # noqa: E402
 
 from astrid.core.timeline import astrid_ns as ns  # noqa: E402

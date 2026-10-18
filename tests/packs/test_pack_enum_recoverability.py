@@ -274,7 +274,6 @@ def test_pack_enum_recoverability_sampled_surfaces_recover_within_budget() -> No
 
 
 @pytest.mark.opt_in
-@pytest.mark.pack_recoverability_exhaustive
 def test_pack_enum_recoverability_exhaustive_surfaces_recover_within_budget() -> None:
     inventory = _inventory()
     applicable = [

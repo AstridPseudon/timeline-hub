@@ -1,13 +1,8 @@
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import shutil
-import subprocess
-import sys
-import tarfile
-import tempfile
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -16,31 +11,7 @@ import pytest
 from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
 from astrid.sdk.client import AstridClient
 
-ASTRID_SOURCE = Path(
-    subprocess.run(
-        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-).parent
-RUNTIME_WORKTREE = ASTRID_SOURCE.parent / "astrid-runtime-execution-20260909"
-RUNTIME_COMMIT = "afccb430e2a983c968b6a8a96fd630ba3a6262fc"
-RUNTIME_ROOT = Path(tempfile.mkdtemp(prefix="vibecomfy-import-runtime-"))
-if RUNTIME_WORKTREE.is_dir():
-    archive = subprocess.run(
-        ["git", "-C", str(RUNTIME_WORKTREE), "archive", "--format=tar", RUNTIME_COMMIT],
-        check=True,
-        capture_output=True,
-    ).stdout
-    with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
-        tar.extractall(RUNTIME_ROOT)
-    sys.path.insert(0, str(RUNTIME_ROOT))
-
-runtime_daemon = pytest.importorskip("runtime_protocol.daemon")
-RuntimeDaemon = runtime_daemon.RuntimeDaemon
-runtime_store = pytest.importorskip("runtime_protocol.store")
-RealmStore = runtime_store.RealmStore
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
 ROOT = Path(__file__).resolve().parents[2]
 IMPORT_CAPABILITY = (
@@ -214,13 +185,12 @@ def _project_task_ids(client: AstridClient, project_id: str) -> set[str]:
 
 def test_import_edit_capture_history_runs_as_runtime_tasks_and_settles_lineage(
     tmp_path: Path,
+    real_runtime,
 ) -> None:
     pack_root = tmp_path / "packs"
     pack_root.mkdir()
     _write_fake_vibecomfy_package(pack_root)
-    realm_root = tmp_path / "realm"
-    RealmStore.initialize(realm_root).close()
-    daemon = RuntimeDaemon(realm_root, support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         client = _open_client(daemon)
         project = client.projects.create(

@@ -795,15 +795,14 @@ def test_real_repo_top_level_matches_structure_constants() -> None:
 
 
 def test_architecture_inventories_parse_and_have_required_structure() -> None:
-    """M0 real-repo smoke: all four architecture inventories parse as valid
+    """M0 real-repo smoke: all three architecture inventories parse as valid
     JSON and contain the expected structural keys.
 
-    The four inventories are:
+    The three inventories are:
 
     1. ``docs/architecture/top-level-inventory.json``
     2. ``docs/architecture/pack-layout-variants.json``
-    3. ``docs/architecture/test-relocation-map.json``
-    4. ``docs/architecture/giant-file-split-candidates.json``
+    3. ``docs/architecture/giant-file-split-candidates.json``
     """
     import json
 
@@ -865,26 +864,7 @@ def test_architecture_inventories_parse_and_have_required_structure() -> None:
         "pack-layout-variants.json: 'internal_directories' must be a dict"
     )
 
-    # ── 3. test-relocation-map.json ───────────────────────────────────
-
-    trm_path = arch_dir / "test-relocation-map.json"
-    assert trm_path.is_file(), f"Missing: {trm_path}"
-    trm = json.loads(trm_path.read_text(encoding="utf-8"))
-
-    assert isinstance(trm.get("relocations"), list), (
-        "test-relocation-map.json: 'relocations' must be a list"
-    )
-    assert len(trm["relocations"]) >= 100, (
-        f"Expected >= 100 relocation entries; got {len(trm['relocations'])}"
-    )
-    for entry in trm["relocations"]:
-        assert "file" in entry, f"Relocation entry missing 'file': {entry}"
-        assert "target" in entry, f"Relocation entry missing 'target': {entry}"
-        assert "confidence" in entry, (
-            f"Relocation entry missing 'confidence': {entry}"
-        )
-
-    # ── 4. giant-file-split-candidates.json ───────────────────────────
+    # ── 3. giant-file-split-candidates.json ───────────────────────────
 
     gfs_path = arch_dir / "giant-file-split-candidates.json"
     assert gfs_path.is_file(), f"Missing: {gfs_path}"

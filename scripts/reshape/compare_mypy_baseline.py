@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import argparse
 import collections
-import json
 import re
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+from scripts.reshape import count_baseline
 
 BASELINE_PATH = Path("scripts/reshape/baselines/mypy_astrid.json")
 COMMAND = [
@@ -58,28 +58,7 @@ def _run() -> dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--baseline", type=Path, default=BASELINE_PATH)
-    parser.add_argument("--write-baseline", action="store_true")
-    args = parser.parse_args()
-
-    try:
-        current = _run()
-    except RuntimeError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 2
-    if args.write_baseline:
-        args.baseline.write_text(json.dumps(current, indent=2) + "\n")
-        print(f"Wrote mypy baseline to {args.baseline} ({current['finding_count']} findings)")
-        return 0
-
-    baseline = json.loads(args.baseline.read_text())
-    baseline_count = int(baseline["finding_count"])
-    current_count = int(current["finding_count"])
-    print(f"Mypy findings: current={current_count} baseline={baseline_count}")
-    if current_count <= baseline_count:
-        return 0
-    return 1
+    return count_baseline.main("Mypy", BASELINE_PATH, _run)
 
 
 if __name__ == "__main__":

@@ -266,9 +266,11 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     assert len(stale_workspace.calls) == 1
 
 
+@pytest.mark.integration  # a real Runtime from a second checkout
 def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
-    service_module = pytest.importorskip("runtime_protocol.service")
-    store_module = pytest.importorskip("runtime_protocol.store")
+    from runtime_protocol import service as service_module
+    from runtime_protocol import store as store_module
+
     root = tmp_path / "isolated-realm"
     store_module.RealmStore.initialize(root).close()
     service = service_module.RuntimeService(root)

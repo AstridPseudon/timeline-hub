@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
-import textwrap
+import json
 import os
 import socket
 import subprocess
-import sys
 import sysconfig
+import textwrap
 import threading
-from types import SimpleNamespace
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -24,25 +23,9 @@ from astrid.core.execution.generic_host import (
     _hivemind_source_preflight,
 )
 from astrid.core.execution.network_broker import ObservableNetworkBroker
-
-RUNTIME = Path(__file__).resolve().parents[3] / "runtime"
-if RUNTIME.is_dir():
-    sys.path.insert(0, str(RUNTIME))
-
-# Needs the sibling Runtime package (runtime_protocol), which does not ship with this repo.
-pytestmark = pytest.mark.integration
-pytest.importorskip("runtime_protocol")
 from astrid_runtime_client import ApiError, WorkspaceClient
-from runtime_protocol.daemon import RuntimeDaemon
-from tests.helpers.runtime import initialize_runtime_realm
 
-
-_RuntimeDaemon = RuntimeDaemon
-
-
-def RuntimeDaemon(root, *args, **kwargs):
-    initialize_runtime_realm(root)
-    return _RuntimeDaemon(root, *args, **kwargs)
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
 
 @pytest.mark.parametrize("project_id", [None, "existing-project"])
@@ -129,7 +112,7 @@ def _run_provider(host: GenericPackHost, task: dict, *, lease_token: str = "fixt
 
 
 def test_external_pack_command_imports_from_its_admitted_pack_root(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
 ) -> None:
     """A command-pack provider must execute through the generic host.
 
@@ -218,7 +201,7 @@ def test_external_pack_command_imports_from_its_admitted_pack_root(
         "FIXTURE_PROVIDER_URL",
         f"http://127.0.0.1:{server.server_port}/response",
     )
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
         generated.handshake(
@@ -300,7 +283,7 @@ def test_hivemind_without_clean_pinned_source_is_optional_unavailable(tmp_path: 
     assert "not a Git checkout" in host.capabilities[record.id].preflight["pack_source"]["reason"]
 
 
-def test_unready_external_provider_is_not_claimed_by_runtime(tmp_path: Path) -> None:
+def test_unready_external_provider_is_not_claimed_by_runtime(tmp_path: Path, real_runtime) -> None:
     """Unavailable capabilities fail before admission and leave no ledger rows."""
     class ProviderHandler(BaseHTTPRequestHandler):
         def do_GET(self):  # noqa: N802 - stdlib handler API
@@ -348,7 +331,7 @@ def test_unready_external_provider_is_not_claimed_by_runtime(tmp_path: Path) -> 
         },
     }), encoding="utf-8")
 
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
         generated.handshake("provider-fixture", "0.1.0", ["projects:read", "worker:execute"])
@@ -548,7 +531,6 @@ def test_provider_network_policy_retires_unbrokered_quic_over_udp_fixture(tmp_pa
 
 def test_provider_network_policy_retires_unbrokered_aioquic_handshake(tmp_path: Path) -> None:
     """A QUIC provider is unavailable until a host-owned datagram broker exists."""
-    pytest.importorskip("aioquic")
     package_root = tmp_path / "quic_provider"
     package_root.mkdir()
     (package_root / "__init__.py").write_text("\n", encoding="utf-8")
@@ -676,7 +658,7 @@ def test_native_network_command_is_unready_without_enforceable_observable_gatewa
         )
 
 
-def test_clean_pinned_hivemind_pack_publishes_through_real_runtime(tmp_path: Path) -> None:
+def test_clean_pinned_hivemind_pack_publishes_through_real_runtime(tmp_path: Path, real_runtime) -> None:
     """A committed local Hivemind-style pack is admitted by digest and settles via CAS."""
     checkout = tmp_path / "hivemind-checkout"
     executor_root = checkout / "packs" / "hivemind" / "executors" / "search"
@@ -710,7 +692,7 @@ def test_clean_pinned_hivemind_pack_publishes_through_real_runtime(tmp_path: Pat
     revision = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True).strip()
     assert host.capabilities[record.id].preflight["pack_source"]["revision"] == revision
 
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = real_runtime()
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
         generated.handshake("hivemind-fixture", "0.1.0", ["projects:read", "worker:execute"])

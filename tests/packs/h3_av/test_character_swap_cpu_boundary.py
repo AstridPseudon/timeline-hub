@@ -13,6 +13,7 @@ from astrid.packs.h3_av.shared.input_bundle import build_input_bundle
 from astrid.packs.h3_av.shared.request import normalize_request
 from astrid.packs.vibecomfy.asset_manifest import read_archive
 from astrid.sdk.pagination import paged_rows
+from tests.helpers.runtime import locate_runtime
 
 
 def _field(value, name: str, default=None):
@@ -240,10 +241,7 @@ def test_installed_cpu_parent_vibe_rejects_foreign_origin_and_alias(tmp_path):
 def _boundary_blockers() -> list[str]:
     checkout = Path(__file__).resolve().parents[3]
     receiving_root = checkout.parents[1]
-    runtime_root = Path(
-        os.environ.get("ASTRID_STAGE1_RUNTIME_CHECKOUT")
-        or receiving_root / "checkouts" / "astrid-runtime--integration"
-    )
+    runtime_root = locate_runtime()
     vibecomfy_root = Path(
         os.environ.get("ASTRID_VIBECOMFY_CHECKOUT") or receiving_root / "repos" / "vibecomfy"
     )
@@ -256,8 +254,8 @@ def _boundary_blockers() -> list[str]:
         / ".otto/runs/h3-transform-pack-20260923/fixtures/t9-public-h3-20260925-9/support/runtime/t9-vibecomfy-readiness.json"
     )
     blockers = []
-    if not runtime_root.is_dir():
-        blockers.append(f"Runtime checkout unavailable at {runtime_root}")
+    if runtime_root is None:
+        blockers.append("Runtime checkout unavailable: set ASTRID_RUNTIME_CHECKOUT")
     if not vibecomfy_root.is_dir():
         blockers.append(f"VibeComfy checkout unavailable at {vibecomfy_root}")
     if not profile.is_file():
@@ -273,9 +271,6 @@ def test_public_cpu_boundary_preflight_does_not_require_a_prior_qualification_re
     receiving_root = checkout.parents[1]
     profile = tmp_path / "synthetic-t9-template.json"
     profile.write_text(json.dumps({"profile_template": "test-only"}), encoding="utf-8")
-    monkeypatch.setenv("ASTRID_STAGE1_RUNTIME_CHECKOUT", str(
-        receiving_root / "checkouts" / "astrid-runtime--integration"
-    ))
     monkeypatch.setenv("ASTRID_VIBECOMFY_CHECKOUT", str(receiving_root / "repos" / "vibecomfy"))
     monkeypatch.setenv("ASTRID_H3_T9_READINESS_PROFILE", str(profile))
     monkeypatch.delenv("ASTRID_H3_CHARACTER_SWAP_CPU_QUALIFICATION_RECEIPT", raising=False)

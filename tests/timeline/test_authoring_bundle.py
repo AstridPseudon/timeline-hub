@@ -974,9 +974,11 @@ def test_compact_inspection_pins_head_and_reports_bounded_structure_without_opaq
     assert "placement occ-2" in text
 
 
+@pytest.mark.integration  # a real Runtime from a second checkout
 def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path):
-    runtime_service = pytest.importorskip("runtime_protocol.service")
-    runtime_store = pytest.importorskip("runtime_protocol.store")
+    from runtime_protocol import service as runtime_service
+    from runtime_protocol import store as runtime_store
+
     root = tmp_path / "realm"
     runtime_store.RealmStore.initialize(root).close()
     service = runtime_service.RuntimeService(root)

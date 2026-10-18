@@ -9,14 +9,12 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("runtime_protocol")
-from astrid_runtime_client import WorkspaceClient  # noqa: E402
-from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
-from runtime_protocol.store import RealmStore  # noqa: E402
+from astrid.core.execution import generic_host
+from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
+from astrid.sdk.host_bootstrap import PACK_HOST_ACTOR
+from astrid_runtime_client import WorkspaceClient
 
-from astrid.core.execution import generic_host  # noqa: E402
-from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient  # noqa: E402
-from astrid.sdk.host_bootstrap import PACK_HOST_ACTOR  # noqa: E402
+pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
 
 def _executor(pack: Path) -> None:
@@ -32,18 +30,15 @@ def _executor(pack: Path) -> None:
 
 
 @pytest.mark.parametrize("concurrency", [1, 2])
-def test_idle_host_claims_work_admitted_after_the_runtime_restarts(tmp_path: Path, monkeypatch, concurrency) -> None:
+def test_idle_host_claims_work_admitted_after_the_runtime_restarts(tmp_path: Path, monkeypatch, concurrency, real_runtime) -> None:
     # Renew at once, so the host's own loop (not a client) is what must notice the restart.
     monkeypatch.setattr(generic_host, "_EXECUTOR_REFRESH_SECONDS", 0.0)
     pack = tmp_path / "pack"
     _executor(pack)
     record = GenericPackHost(pack_roots=[pack]).discover()[0]
-    realm, support = tmp_path / "realm", tmp_path / "support"
-    RealmStore.initialize(realm).close()
 
-    def start(port: int = 0) -> RuntimeDaemon:
-        return RuntimeDaemon(realm, support_root=support, port=port,
-                             production_worker_credentials=True).start()
+    def start(port: int = 0):
+        return real_runtime(port=port, production_worker_credentials=True)
 
     daemon = start()
     port = daemon.httpd.server_port

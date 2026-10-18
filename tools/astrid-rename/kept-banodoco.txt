@@ -80,8 +80,6 @@ banodoco\.(?:video\.travel@2|image\.generate@3) # Astra decision: retained commu
 banodoco_slug # external community website catalog metadata key
 (?i:of Banodoco; opens) # Saint Peter of Banodoco community onboarding preset description
 (?i:registry/banodoco) # exploratory document's external community schema source name
-test_banodoco_(?:baseline|claim_loop|worker)\.py # 2026-06-07 test-relocation map preserves historical filenames
-"rationale": "Banodoco (?:baseline|claim loop|worker) # dated test-relocation rationale about old community code
 (?i:Banodoco \(2025-09-08) # community Discord workflow corpus date range
 banodoco shell webpack-alias\.mjs # community composition shell alias source in App Vite config
 Banodoco equivalent # comparison with the external community DerivedFrom schema in exploration notes

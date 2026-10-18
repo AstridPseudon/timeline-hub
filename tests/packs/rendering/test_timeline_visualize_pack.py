@@ -16,9 +16,6 @@ from jsonschema import Draft202012Validator
 from PIL import Image
 from referencing import Registry, Resource
 
-pytestmark = pytest.mark.skip(reason="legacy filesystem fixture superseded by runtime snapshot tests")
-pytest.importorskip("banodoco_timeline_schema")
-
 from astrid.core.timeline.snapshot import TimelineSnapshot, snapshot_from_runtime
 from astrid.packs.rendering.actions.timeline_visualize.emit import (
     emit_action_index,
@@ -39,25 +36,19 @@ from astrid.packs.rendering.actions.timeline_visualize.layout import (
     layout_timeline,
 )
 from astrid.packs.rendering.actions.timeline_visualize.model import (
-    TimelineInspectionModel,
     build_model,
 )
 from astrid.packs.rendering.actions.timeline_visualize.navigation import (
-    IdentityMap,
     build_identity_map,
 )
 from astrid.packs.rendering.actions.timeline_visualize.render_png import (
     render_page_png,
-)
-from astrid.packs.rendering.actions.timeline_visualize.render_svg import (
-    render_page_svg_bytes,
 )
 from astrid.packs.rendering.actions.timeline_visualize.schemas import (
     DEFS_PATH,
     SCHEMAS,
 )
 from astrid.packs.rendering.actions.timeline_visualize.scope import (
-    Scope,
     select_scope,
 )
 from astrid.packs.rendering.actions.timeline_visualize.snapshot_digest import (
@@ -68,6 +59,7 @@ from astrid.packs.rendering.actions.timeline_visualize.snapshot_digest import (
 TESTS_ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_ROOT = TESTS_ROOT / "fixtures" / "timeline_visualize"
 SLICE_DIR = FIXTURE_ROOT / "desert_slice"
+TRUTH = json.loads((FIXTURE_ROOT / "desert_truth.json").read_text(encoding="utf-8"))
 PROJECT_SLUG = "desert-plant-growth"
 
 #: Absolute manifest path R9 embeds in every --from-view argv; R13 must rewrite
@@ -89,32 +81,20 @@ def _iter_strings(value):
             yield from _iter_strings(nested)
 
 
-def _prepared_snapshot(
-    tmp_path: Path,
-) -> tuple[TimelineSnapshot, Path]:
-    """Portable desert slice plus synthetic contained media (verified hashes)."""
-    project_root = tmp_path / "project"
-    timeline_dir = project_root / "timelines" / "01KYPVKMW5STB4W6FE05ED8242"
-    timeline_dir.parent.mkdir(parents=True)
-    shutil.copytree(SLICE_DIR, timeline_dir)
-
-    snapshot = acquire_snapshot(timeline_dir, project_slug=PROJECT_SLUG)
-
-    registry = deepcopy(snapshot.registry)
-    for key, entry in registry["assets"].items():
-        payload = f"portable R7 media: {key}".encode("utf-8")
-        target = project_root / "sources" / entry["file"]
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(payload)
-        if "content_sha256" in entry:
-            entry["content_sha256"] = hashlib.sha256(payload).hexdigest()
-
-    snapshot = replace(
-        snapshot,
-        registry=registry,
-        registry_sha256=sha256_bytes(canonical_json_bytes(registry)),
+def _prepared_snapshot() -> TimelineSnapshot:
+    """Portable desert slice projected through the runtime snapshot path."""
+    events = [
+        json.loads(line)
+        for line in (SLICE_DIR / "assembly.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    identity = TRUTH["timeline"]
+    return snapshot_from_runtime(
+        timeline_id=identity["uuid"],
+        timeline_ulid=identity["ulid"],
+        slug=identity["slug"],
+        project_slug=PROJECT_SLUG,
+        events=events,
     )
-    return snapshot, project_root
 
 
 def _tiny_png(path: Path, seed: int) -> Path:
@@ -130,8 +110,8 @@ def _tiny_png(path: Path, seed: int) -> Path:
 @pytest.fixture
 def pack_inputs(tmp_path: Path) -> dict:
     """Everything write_evidence_pack needs for the clean desert root pack."""
-    snapshot, project_root = _prepared_snapshot(tmp_path)
-    model = build_model(snapshot, project_root=project_root)
+    snapshot = _prepared_snapshot()
+    model = build_model(snapshot)
     identity_map = build_identity_map(
         model,
         root_sns=model.snapshot_sns,
@@ -159,7 +139,7 @@ def pack_inputs(tmp_path: Path) -> dict:
         "structure_md": emit_structure_md(model, identity_map, snapshot),
         "metric_definitions": emit_metric_definitions(model, identity_map, snapshot),
         "pages": pages,
-        "svg_bytes": {page.page_id: render_page_svg_bytes(page) for page in pages},
+        "svg_bytes": {},
         "png_bytes": {page.page_id: render_page_png(page) for page in pages},
         "filmstrips": {"TL01.AS01": [frame_a, frame_b]},
     }
@@ -210,8 +190,6 @@ def test_full_pack_all_files_exist_and_validate(pack_inputs, tmp_path) -> None:
         "structure.md",
         "PG001.png",
         "PG002.png",
-        "PG001.svg",
-        "PG002.svg",
         "filmstrip/TL01_AS01_film_00.png",
         "filmstrip/TL01_AS01_film_01.png",
         PACK_HASHES_NAME,
@@ -231,20 +209,16 @@ def test_full_pack_all_files_exist_and_validate(pack_inputs, tmp_path) -> None:
     ):
         _validate(name, json.loads((out_root / f"{name}.json").read_text(encoding="utf-8")))
 
-    # PNG count == page count; SVG count matches the svg_bytes supplied.
+    # PNG count == page count; SVG output was removed, so none are written.
     assert len(pack_inputs["pages"]) == 2
     pngs = sorted(out_root.glob("PG*.png"))
-    svgs = sorted(out_root.glob("PG*.svg"))
     assert len(pngs) == len(pack_inputs["pages"]) == 2
-    assert len(svgs) == len(pack_inputs["png_bytes"]) == 2
+    assert not list(out_root.glob("*.svg"))
 
     # Reading guide present; structure present (non-null path, null reason).
     assert (out_root / "reading-guide.md").is_file()
     manifest = json.loads((out_root / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["inputs"]["timeline_source"] == [
-        pack_inputs["snapshot"].project_slug
-    ]
-    assert manifest["inputs"]["source_mode"] == "project"
+    assert manifest["inputs"]["source_mode"] == "kernel"
     assert manifest["inputs"]["resolved_project"] == {
         "slug": pack_inputs["snapshot"].project_slug
     }
@@ -263,17 +237,16 @@ def test_full_pack_all_files_exist_and_validate(pack_inputs, tmp_path) -> None:
     ] = uppercase_user_identity["inputs"]["resolved_timelines"][0]["ulid"]
     with pytest.raises(AssertionError, match="manifest invalid"):
         _validate("manifest", uppercase_user_identity)
-    # The additive provenance fields are optional in schema v1 so an existing
-    # frozen pack remains valid and navigable without rewriting its bytes.
-    legacy_manifest = json.loads(json.dumps(manifest))
-    for key in (
-        "source_mode",
-        "resolved_project",
-        "resolved_timelines",
-        "canonical_timeline_identities",
-    ):
-        legacy_manifest["inputs"].pop(key)
-    _validate("manifest", legacy_manifest)
+    # The comparison-safe identity projection is additive and optional; the
+    # authority provenance (source_mode, resolved_project/timelines) is required.
+    without_projection = json.loads(json.dumps(manifest))
+    without_projection["inputs"].pop("canonical_timeline_identities")
+    _validate("manifest", without_projection)
+    for key in ("source_mode", "resolved_project", "resolved_timelines"):
+        missing_provenance = json.loads(json.dumps(manifest))
+        missing_provenance["inputs"].pop(key)
+        with pytest.raises(AssertionError, match=f"'{key}' is a required property"):
+            _validate("manifest", missing_provenance)
     assert manifest["entrypoints"]["structure"] == "structure.md"
     assert manifest["optional_formats"]["structure"] == {"path": "structure.md", "reason": None}
     assert manifest["entrypoints"]["reading_guide"] == "reading-guide.md"
@@ -286,16 +259,16 @@ def test_full_pack_all_files_exist_and_validate(pack_inputs, tmp_path) -> None:
     assert manifest["page_count"] == len(page_ids)
 
 
-def test_manifest_records_explicit_legacy_authority_mode(pack_inputs, tmp_path) -> None:
+def test_manifest_records_explicit_frozen_authority_mode(pack_inputs, tmp_path) -> None:
     _layout, out_root = _write_pack(
         tmp_path,
         **pack_inputs,
-        source_mode="legacy",
+        source_mode="frozen",
     )
 
     manifest = json.loads((out_root / "manifest.json").read_text(encoding="utf-8"))
     _validate("manifest", manifest)
-    assert manifest["inputs"]["source_mode"] == "legacy"
+    assert manifest["inputs"]["source_mode"] == "frozen"
     assert manifest["inputs"]["resolved_timelines"] == [
         manifest["snapshots"][0]["timeline"]
     ]
@@ -372,6 +345,16 @@ def test_determinism_two_writes_identical_bytes(pack_inputs, tmp_path) -> None:
         assert (out_a / f"{page_id}.png").read_bytes() == png
     for page_id, svg in pack_inputs["svg_bytes"].items():
         assert (out_a / f"{page_id}.svg").read_bytes() == svg
+
+
+def test_png_rendering_is_byte_deterministic_and_page_sized(pack_inputs) -> None:
+    """render_page_png is a pure function of the layout page: same bytes twice."""
+    for page in pack_inputs["pages"]:
+        first = render_page_png(page)
+        assert render_page_png(page) == first == pack_inputs["png_bytes"][page.page_id]
+        with Image.open(io.BytesIO(first)) as image:
+            assert image.format == "PNG"
+            assert image.size == (page.width, page.height)
 
 
 # ---------------------------------------------------------------------------
@@ -526,38 +509,22 @@ def test_frozen_at_override_is_deterministic_and_materialized(pack_inputs, tmp_p
 # ---------------------------------------------------------------------------
 
 
-def _prepared_snapshot_with_missing_asset(
-    tmp_path: Path,
-) -> tuple[TimelineSnapshot, Path]:
-    """Like _prepared_snapshot but leaves one contained asset missing."""
-    project_root = tmp_path / "project"
-    timeline_dir = project_root / "timelines" / "01KYPVKMW5STB4W6FE05ED8242"
-    timeline_dir.parent.mkdir(parents=True)
-    shutil.copytree(SLICE_DIR, timeline_dir)
-
-    snapshot = acquire_snapshot(timeline_dir, project_slug=PROJECT_SLUG)
-
+def _prepared_snapshot_with_missing_asset() -> TimelineSnapshot:
+    """Like _prepared_snapshot but one asset carries no runtime object id."""
+    snapshot = _prepared_snapshot()
     registry = deepcopy(snapshot.registry)
-    for key, entry in registry["assets"].items():
-        if key == "toccata-fugue":
-            continue  # contained ref, but the file is never written -> missing
-        payload = f"portable R7 media: {key}".encode("utf-8")
-        target = project_root / "sources" / entry["file"]
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(payload)
-        if "content_sha256" in entry:
-            entry["content_sha256"] = hashlib.sha256(payload).hexdigest()
-
-    snapshot = replace(
+    # Without a locator or object id the asset classifies as ``missing``;
+    # the locator-bearing assets stay ``unsupported``.
+    del registry["assets"]["toccata-fugue"]["file"]
+    return replace(
         snapshot,
         registry=registry,
         registry_sha256=sha256_bytes(canonical_json_bytes(registry)),
     )
-    return snapshot, project_root
 
 
-def _pack_inputs_for(snapshot: TimelineSnapshot, project_root: Path) -> dict:
-    model = build_model(snapshot, project_root=project_root)
+def _pack_inputs_for(snapshot: TimelineSnapshot) -> dict:
+    model = build_model(snapshot)
     identity_map = build_identity_map(
         model,
         root_sns=model.snapshot_sns,
@@ -580,7 +547,7 @@ def _pack_inputs_for(snapshot: TimelineSnapshot, project_root: Path) -> dict:
         "structure_md": emit_structure_md(model, identity_map, snapshot),
         "metric_definitions": emit_metric_definitions(model, identity_map, snapshot),
         "pages": pages,
-        "svg_bytes": {page.page_id: render_page_svg_bytes(page) for page in pages},
+        "svg_bytes": {},
         "png_bytes": {page.page_id: render_page_png(page) for page in pages},
         "filmstrips": {},
     }
@@ -595,6 +562,10 @@ _GT_KEY_TO_METRIC_IDS = {
     "all_track_composition": {
         "all_track_composition_frames",
         "all_track_composition_seconds",
+    },
+    "authored_all_track_composition": {
+        "authored_all_track_composition_frames",
+        "authored_all_track_composition_seconds",
     },
     "fps": {"fps"},
     "at_seconds": {"clip_authored_interval"},
@@ -672,54 +643,52 @@ def test_metric_definitions_artifact_shipped_validated_and_covering(
 # ---------------------------------------------------------------------------
 
 
-def test_missing_asset_pack_emits_no_absolute_project_paths(tmp_path: Path) -> None:
-    snapshot, project_root = _prepared_snapshot_with_missing_asset(tmp_path)
-    inputs = _pack_inputs_for(snapshot, project_root)
+def test_missing_asset_pack_emits_no_absolute_paths(tmp_path: Path) -> None:
+    snapshot = _prepared_snapshot_with_missing_asset()
+    inputs = _pack_inputs_for(snapshot)
     _layout, out_root = _write_pack(tmp_path, **inputs)
 
-    project_root_str = str(project_root.resolve())
+    root_str = str(tmp_path.resolve())
 
-    # The missing asset is reported (MISSING_MEDIA) with a relative reason.
+    # The asset without an object id is reported (MISSING_MEDIA) with a reason
+    # that names no path; the locator-bearing assets are UNSUPPORTED_MEDIA.
     diagnostics = json.loads((out_root / "diagnostics.json").read_text(encoding="utf-8"))
     missing = [item for item in diagnostics["diagnostics"] if item["code"] == "MISSING_MEDIA"]
-    assert missing, "expected a MISSING_MEDIA diagnostic for the missing asset"
+    assert [item["object_ref"] for item in missing] == ["TL01.AS05"]
     for item in missing:
-        assert "file not found" in item["message"]
-        assert project_root_str not in item["message"]
+        assert "object_id is required" in item["message"]
+        assert root_str not in item["message"]
+    unsupported = [
+        item["object_ref"]
+        for item in diagnostics["diagnostics"]
+        if item["code"] == "UNSUPPORTED_MEDIA"
+    ]
+    assert unsupported == ["TL01.AS01", "TL01.AS02", "TL01.AS03", "TL01.AS04"]
 
-    # Scan EVERY emitted JSON and MD file for the absolute project path
-    # substring (asset-index.json contained_path is schema-blessed and checked
-    # separately below).
+    # Scan EVERY emitted JSON and MD file for the absolute output path.
     for rel in sorted(out_root.rglob("*")):
-        if not rel.is_file() or rel.name == "asset-index.json":
-            continue
-        if rel.suffix not in (".json", ".md"):
+        if not rel.is_file() or rel.suffix not in (".json", ".md"):
             continue
         text = rel.read_text(encoding="utf-8")
-        assert project_root_str not in text, f"{rel.relative_to(out_root)} leaks the project path"
+        assert root_str not in text, f"{rel.relative_to(out_root)} leaks an absolute path"
 
     # Manifest warnings copy the sanitized diagnostics messages.
     manifest = json.loads((out_root / "manifest.json").read_text(encoding="utf-8"))
     assert any("MISSING_MEDIA" in warning for warning in manifest["warnings"])
     for warning in manifest["warnings"]:
-        assert project_root_str not in warning
+        assert root_str not in warning
 
-    # asset-index.contained_path stays: project-scoped provenance under the
-    # project dir (never the pack, never an unrelated worktree location).
+    # Runtime-managed media has no local path: the asset index never records one.
     asset_index = json.loads((out_root / "asset-index.json").read_text(encoding="utf-8"))
-    missing_assets = [
-        asset
-        for asset in asset_index["assets"]
-        if asset["integrity_state"] == "missing"
-    ]
-    assert missing_assets
-    for asset in asset_index["assets"]:
-        contained = asset["contained_path"]
-        if contained:
-            assert Path(contained).resolve().is_relative_to(project_root.resolve()), (
-                f"asset {asset['qualified_ref']} contained_path escapes the project dir"
-            )
-            assert not Path(contained).resolve().is_relative_to(out_root.resolve())
+    states = {asset["stable_id"]: asset["integrity_state"] for asset in asset_index["assets"]}
+    assert states == {
+        "AS01": "unsupported",
+        "AS02": "unsupported",
+        "AS03": "unsupported",
+        "AS04": "unsupported",
+        "AS05": "missing",
+    }
+    assert all(asset["contained_path"] is None for asset in asset_index["assets"])
 
 
 def test_diagnostic_sanitizer_redacts_space_and_colon_paths() -> None:

@@ -63,14 +63,13 @@ PRODUCT_FAMILIES: tuple[str, ...] = (
 PRODUCT_FAMILY_SET: frozenset[str] = frozenset(PRODUCT_FAMILIES)
 
 EXCLUDED_FROM_PRODUCT_CENSUS: frozenset[str] = frozenset(
-    {"serve", "doctor", "backup"}
+    {"doctor", "backup"}
 )
 """Operational commands excluded from the product census.
 
-``serve``, ``doctor``, and ``backup`` are operational families (tooling
-over the single SQLite file and managed-media root). None of them is a
-product family, appears in the product census, or dispatches through the
-product boundary.
+``doctor`` and ``backup`` are operational families (tooling over the single
+SQLite file and managed-media root). Neither is a product family, appears in
+the product census, or dispatches through the product boundary.
 """
 
 REQUIRED_RUNTIME_MOUNTS: dict[str, tuple[str, ...]] = {

@@ -48,13 +48,6 @@
 | `h3_av.prepare` | Normalize an H3 audiovisual request into masks and asset evidence. |
 | `h3_av.publication_finalizer` | Copy one verified H3 candidate into the Runtime publication spool. |
 | `h3_av.verify` | Verify H3 artifact custody and protected-source evidence. |
-| `hivemind.contribute` | Submit and review immutable Hivemind resource revisions and evidence. |
-| `hivemind.get_item` | Fetch a single full row from the Hivemind corpus by kind and id. |
-| `hivemind.ingest_article` | Fetch a web article, extract readable text, and submit as a resource. |
-| `hivemind.ingest_workflow` | Parse a ComfyUI workflow JSON and submit as a resource with model metadata. |
-| `hivemind.ingest_youtube` | Extract YouTube captions via yt-dlp and submit as a transcript resource. |
-| `hivemind.refresh_media` | Refresh expiring Discord CDN attachment URLs for a message. |
-| `hivemind.search` | Search Discord messages and accepted current resource heads with per-token matching and client-side ranking. |
 | `iteration.assemble` | Adapt runtime-materialized iteration data into result-only timeline and render artifacts. |
 | `iteration.experiment_import` | Import an unmanaged run root into an experiment without rewriting history or guessing ambiguous associations. |
 | `iteration.experiment_prepare` | Normalize an experiment's provider manifests into a provider-independent review model with diagnostics. |
@@ -174,12 +167,3 @@
 | `transitions/fade` | Fade-through-black transition. |
 
 <!-- END CAPABILITY INDEX -->
-
-### Hivemind external-pack contract
-
-The managed Hivemind pack is admitted only after its v2 manifest and immutable
-source pin validate. Its public reads remain anonymous; contributor operations,
-the three ingestion writers, and `submit-vibecomfy-rating` use Hivemind's
-contributor-authenticated backend. See
-[`docs/reference/hivemind-pack-contract.md`](../../../../docs/reference/hivemind-pack-contract.md)
-and [`config/hivemind-pack-contract.json`](../../../../config/hivemind-pack-contract.json).

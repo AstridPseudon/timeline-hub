@@ -15,13 +15,6 @@ if str(TOOLS_ROOT) not in sys.path:
 from astrid.core import timeline  # noqa: E402
 
 
-def pytest_configure(config: pytest.Config) -> None:
-    config.addinivalue_line("markers", "standalone: standalone executable test.")
-    config.addinivalue_line("markers", "hype_cut_invariants: validates arrangement-mode hype cut output invariants.")
-    config.addinivalue_line("markers", "integration: tests that require external dependencies, heavyweight fixtures, or env prerequisites.")
-    config.addinivalue_line("markers", "opt_in: tests that are explicitly opt-in and should never run in the default lane.")
-
-
 def _clip_duration_sec(clip: dict[str, object]) -> float:
     start = float(clip.get("from_", clip.get("from", 0.0)) or 0.0)
     end = float(clip.get("to", start) or start)
@@ -281,14 +274,10 @@ def _discovered_brief_dirs() -> list[Path]:
     return discovered
 
 
-@pytest.mark.standalone
-@pytest.mark.hype_cut_invariants
 def test_hype_cut_invariants_on_synthetic_run(tmp_path: Path) -> None:
     _assert_hype_cut_invariants(_build_synthetic_run(tmp_path))
 
 
-@pytest.mark.standalone
-@pytest.mark.hype_cut_invariants
 @pytest.mark.integration
 @pytest.mark.opt_in
 def test_hype_cut_invariants_on_discovered_run_dirs() -> None:

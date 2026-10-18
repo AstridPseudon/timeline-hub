@@ -1028,6 +1028,31 @@ _METRIC_DEFINITIONS: tuple[dict[str, str], ...] = (
         "scope": "per-timeline",
     },
     {
+        "id": "authored_all_track_composition_frames",
+        "name": "Authored all-track composition extent (frames)",
+        "definition": (
+            "All-track authored composition duration in frames, before any "
+            "declared render-only tail; equals the all-track composition "
+            "extent when the timeline declares no tail."
+        ),
+        "formula": "timeline_duration_frames(assembly, fps)",
+        "derivation": "duration.py: timeline_duration_frames",
+        "unit": "frames",
+        "scope": "per-timeline",
+    },
+    {
+        "id": "authored_all_track_composition_seconds",
+        "name": "Authored all-track composition extent (seconds)",
+        "definition": (
+            "The authored all-track composition extent in seconds: "
+            "authored_all_track_composition_frames / fps."
+        ),
+        "formula": "timeline_duration_frames(assembly, fps) / fps",
+        "derivation": "duration.py: timeline_duration_seconds",
+        "unit": "seconds",
+        "scope": "per-timeline",
+    },
+    {
         "id": "composition_extent",
         "name": "Composition extent (seconds)",
         "definition": (

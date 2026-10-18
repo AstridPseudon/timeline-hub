@@ -1,8 +1,8 @@
-"""Platform step 0: the safety-net fixtures (production/review/merge/TIMELINE-PLATFORM.md, section 7).
+"""Platform safety net: the App round-trip and Source-track fixtures (production/review/merge/TIMELINE-PLATFORM.md, section 7).
 
-These tests are written to FAIL TODAY where the platform is known to be broken, as strict xfails with
-the reason. When a step-1/step-2 fix lands, the strict xfail turns into a failure ("XPASS(strict)"),
-which is the signal to remove the marker. Do not weaken the assertions to make them pass.
+Where the platform is known to be broken, the test is a strict xfail listed in tests/known_failures.txt with
+its reason. When the fix lands, the strict xfail turns into a failure ("XPASS(strict)"), which is the signal
+to remove the known-failures line. Do not weaken the assertions to make them pass.
 
 (a) A CLI-made film keeps all Astrid intent through a simulated App load, a no-op save, one edit, a save
     and a CLI checkout. The App side is simulated from the App's known-key rebuild: the App source
@@ -10,7 +10,8 @@ which is the signal to remove the marker. Do not weaken the assertions to make t
     `ALLOWED_TOP_LEVEL_KEYS` (timeline-domain.ts:217-226), `withCanonicalClips` (timeline-domain.ts:1241-1250)
     and the `app` replace on save (timeline-patch.ts:1261-1266), as the platform doc describes them.
 (b) A track with role "source" is excluded from render (today the Astrid validator rejects `role`).
-(c) A preview-vs-render parity harness: structure only, skipped until the App preview is reachable.
+(c) A preview-vs-render parity harness: structure only, skipped until the F2 journey wires the App preview
+    (testing plan, F2 step 4).
 
 Run: python -m pytest -q tests/editing_conformance/test_platform_safety_net.py
 """
@@ -143,8 +144,8 @@ def test_source_role_track_is_excluded_from_render():
 
 
 @pytest.mark.skip(reason=(
-    "step-0 skeleton (c): needs the App preview (timeline-composition, a Codex-owned package not reachable "
-    "from this worktree) and a frame capture of `tiny` through the Astrid render; fill in when both are wired"
+    "F2 step 4 (testing plan): needs the App preview (timeline-composition) and a frame capture of `tiny` "
+    "through the Astrid render; fill in when the journey wires both"
 ))
 @pytest.mark.parametrize("frame_ms", [0, 1000, 2000, 3500])
 def test_preview_matches_render_frame(frame_ms):

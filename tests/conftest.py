@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import atexit
-import json
 import os
 import shutil
 import sys
 import tempfile
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -39,6 +38,29 @@ def owned_process_groups():
         yield owner
     finally:
         owner.terminate_all()
+
+
+@pytest.fixture
+def real_runtime(tmp_path, owned_process_groups):
+    """Start a real Runtime daemon on a temp realm; the one way a test gets one (testing plan AT-1).
+
+    ``real_runtime()`` starts the daemon at ``tmp_path/realm`` with its support root at ``tmp_path/support``.
+    ``real_runtime(realm, support_root=..., **daemon_options)`` starts one at a given realm (a restart reuses
+    it); ``commit=`` runs the Runtime as of that commit. The Runtime comes from ``tests.helpers.runtime``'s
+    locator (``ASTRID_RUNTIME_CHECKOUT``). Every daemon is stopped at teardown.
+    """
+    from tests.helpers.runtime import new_runtime_daemon
+
+    def start(realm=None, *, support_root=None, commit=None, **daemon_options):
+        if realm is None:
+            realm, support_root = tmp_path / "realm", support_root or tmp_path / "support"
+        if support_root is not None:
+            daemon_options["support_root"] = support_root
+        daemon = new_runtime_daemon(realm, commit=commit, **daemon_options).start()
+        owned_process_groups.add_cleanup(daemon.stop)
+        return daemon
+
+    return start
 
 
 def pytest_sessionfinish(session, exitstatus):
@@ -131,63 +153,6 @@ if "ASTRID_TIMELINE_COMPOSITION_SRC" not in os.environ:
 os.environ.setdefault("ASTRID_INTERNAL_INVOCATION", "1")
 
 
-@pytest.fixture
-def seed_project() -> Callable[[Path, str], Path]:
-    """Return a callable that seeds a filesystem project with a timeline."""
-
-    def _seed_project(projects_root: Path, slug: str) -> Path:
-        from astrid.core import timeline as timeline_contract
-        from astrid.core.ids import generate_ulid
-
-        pdir = projects_root / slug
-        pdir.mkdir(parents=True, exist_ok=True)
-
-        timeline_ulid = generate_ulid()
-        tdir = pdir / "timelines" / timeline_ulid
-        tdir.mkdir(parents=True, exist_ok=True)
-        (tdir / "assembly.json").write_text(
-            json.dumps(timeline_contract.canonical_empty_timeline()), encoding="utf-8"
-        )
-        (tdir / "manifest.json").write_text(
-            json.dumps(
-                {
-                    "schema_version": 1,
-                    "contributing_runs": [],
-                    "final_outputs": [],
-                    "tombstoned_at": None,
-                }
-            ),
-            encoding="utf-8",
-        )
-        (tdir / "display.json").write_text(
-            json.dumps(
-                {
-                    "schema_version": 1,
-                    "slug": "primary",
-                    "name": "Primary",
-                    "is_default": True,
-                }
-            ),
-            encoding="utf-8",
-        )
-        (pdir / "project.json").write_text(
-            json.dumps(
-                {
-                    "created_at": "2026-05-11T00:00:00Z",
-                    "name": slug,
-                    "schema_version": 1,
-                    "slug": slug,
-                    "updated_at": "2026-05-11T00:00:00Z",
-                    "default_timeline_id": timeline_ulid,
-                }
-            ),
-            encoding="utf-8",
-        )
-        return pdir
-
-    return _seed_project
-
-
 def _clear_task_env() -> None:
     """Scrub raw task-run env that tests may mutate outside monkeypatch."""
 
@@ -227,30 +192,8 @@ def _sandboxed_home_and_projects(
     monkeypatch.setenv("ASTRID_HOME", str(astrid_home))
     monkeypatch.setenv("ASTRID_WORKSPACE_CONFIG_DIR", str(workspace_config_dir))
     # Seed PROJECTS_ROOT to a tmp dir so tests never touch the real
-    # projects root. Tests that need their own projects-root (via
-    # tmp_projects_root) override this with their own monkeypatch.setenv.
+    # projects root. Tests that need their own projects-root override this
+    # with their own monkeypatch.setenv.
     monkeypatch.setenv(paths.PROJECTS_ROOT_ENV, str(projects_root))
     yield
     _clear_task_env()
-
-
-@pytest.fixture
-def tmp_projects_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
-    monkeypatch.setenv(paths.PROJECTS_ROOT_ENV, str(tmp_path))
-    for name in (
-        TASK_RUN_ID_ENV,
-        TASK_PROJECT_ENV,
-        TASK_STEP_ID_ENV,
-        TASK_ITEM_ID_ENV,
-        TASK_ITERATION_ENV,
-    ):
-        monkeypatch.delenv(name, raising=False)
-    yield tmp_path
-    for name in (
-        TASK_RUN_ID_ENV,
-        TASK_PROJECT_ENV,
-        TASK_STEP_ID_ENV,
-        TASK_ITEM_ID_ENV,
-        TASK_ITERATION_ENV,
-    ):
-        monkeypatch.delenv(name, raising=False)

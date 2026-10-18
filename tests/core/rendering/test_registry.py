@@ -214,24 +214,6 @@ def test_same_pack_conflict_report_is_deterministic(tmp_path: Path) -> None:
     assert [candidate.manifest.name for candidate in conflict.shadowed] == ["Second"]
 
 
-@pytest.mark.skip(reason="programmatic renderer aliases are retired")
-def test_alias_chain_and_programmatic_compatibility_aliases(tmp_path: Path) -> None:
-    with _load_with_source(tmp_path) as (renderers, _, _):
-        chained = renderers.get("rendering.legacy")
-        chain_evidence = renderers.resolve_evidence("rendering.legacy")
-        remotion = renderers.get("rendering.remotion")
-        ffmpeg = renderers.get("rendering.ffmpeg")
-
-    assert chained.id == "rendering.remotion"
-    assert chain_evidence["alias_chain"] == [
-        "rendering.legacy",
-        "rendering.compat",
-        "rendering.remotion",
-    ]
-    assert remotion.id == "rendering.remotion"
-    assert ffmpeg.id == "rendering.ffmpeg"
-
-
 def test_alias_cycle_is_rejected_as_structured_registry_error(tmp_path: Path) -> None:
     cycle_root = CYCLE_ROOT
     with (
@@ -374,42 +356,6 @@ def test_cross_pack_alias_fallback_is_rejected_by_v2_ownership(
             env_pack_roots=(str(env_root),),
         ):
             pass
-
-
-@pytest.mark.skip(reason="programmatic renderer aliases are retired")
-def test_dangling_programmatic_alias_falls_through_to_eligible_pack_alias(
-    tmp_path: Path,
-) -> None:
-    source_root = tmp_path / "source"
-    fallback = _write_renderer_pack(
-        source_root,
-        "trustedfallback",
-        renderer_name="Trusted Fallback",
-    )
-    _append_renderer_aliases(
-        fallback,
-        ("shared.programmatic", "trustedfallback.renderer"),
-    )
-
-    with (
-        mock.patch.object(
-            rendering_registry_module,
-            "_PROGRAMMATIC_RENDERER_ALIASES",
-            (("shared.programmatic", "missing.renderer"),),
-        ),
-        _load_with_source(
-            tmp_path / "project",
-            source_root,
-        ) as (renderers, _, _),
-    ):
-        selected = renderers.get("shared.programmatic")
-        evidence = renderers.resolve_evidence("shared.programmatic")
-
-    assert selected.id == "trustedfallback.renderer"
-    assert evidence["alias_chain"] == [
-        "shared.programmatic",
-        "trustedfallback.renderer",
-    ]
 
 
 def test_source_and_project_local_candidates_are_executable(tmp_path: Path) -> None:

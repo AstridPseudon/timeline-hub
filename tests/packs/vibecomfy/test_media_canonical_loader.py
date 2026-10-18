@@ -4,7 +4,10 @@ from pathlib import Path
 
 import pytest
 
-vibecomfy = pytest.importorskip("vibecomfy")
+from tests.lanes import require_module
+
+pytestmark = pytest.mark.integration  # needs vibecomfy from a second checkout
+vibecomfy = require_module("vibecomfy")
 
 from astrid.packs.vibecomfy.media.compiler import (  # noqa: E402
     CharacterAnimationRequest,

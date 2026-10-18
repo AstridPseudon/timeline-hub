@@ -47,7 +47,7 @@ boundary.
 Contributor-facing architecture docs live under
 **[docs/architecture/](architecture/)**.  See
 **[Repo Shape](architecture/repo-shape.md)** for module layout,
-**[Test Layout](architecture/test-layout.md)** for test organization, and
+**[Testing Plan](development/testing-plan.md)** for test organization, and
 **[Decisions](architecture/decisions.md)** for design records.
 
 The proposed direction for local pack-authored app tools and interface
