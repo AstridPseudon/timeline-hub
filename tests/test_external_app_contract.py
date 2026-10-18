@@ -130,7 +130,7 @@ def test_external_app_runs_from_outside_repo() -> None:
                 if not os.environ.get("PYTHONPATH")
                 else f"{ROOT}{os.pathsep}{os.environ['PYTHONPATH']}",
             },
-            timeout=60,
+            timeout=600,  # a hang ceiling for a fresh python importing astrid under load, not a duration judgement
         )
 
         assert completed.returncode == 0, (

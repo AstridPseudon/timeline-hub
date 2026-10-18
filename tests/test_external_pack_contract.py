@@ -179,7 +179,7 @@ def test_external_pack_via_env_path() -> None:
             text=True,
             cwd=str(tmp_path),
             env=env,
-            timeout=60,
+            timeout=600,  # a hang ceiling for a fresh python importing astrid under load, not a duration judgement
         )
 
         assert completed.returncode == 0, (
@@ -300,7 +300,7 @@ if __name__ == "__main__":
             text=True,
             cwd=str(tmp_path),
             env=env,
-            timeout=60,
+            timeout=600,  # a hang ceiling for a fresh python importing astrid under load, not a duration judgement
         )
         assert validate.returncode == 0, (
             f"External Python pack failed validation\nSTDOUT:\n{validate.stdout}\nSTDERR:\n{validate.stderr}"

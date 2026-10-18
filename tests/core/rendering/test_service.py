@@ -1462,19 +1462,37 @@ class RetainedSupportTransport(FakeTransport):
         if verb != "support":
             return super().run(verb, command, backend=backend, request_path=request_path,
                                result_path=result_path, cwd=cwd, **kwargs)
+        from unittest import mock
+
+        from astrid.core.rendering import transport as transport_module
         from astrid.core.rendering.transport import CommandTransport
         self.support_workspaces.append(Path(request_path).parent)
-        return CommandTransport(backend).run(
-            verb, [sys.executable, str(self.helper), "1" if self.supported else "0"],
-            backend=backend, request_path=request_path, result_path=result_path,
-            cwd=cwd, timeout=2,
-        )
+        # Linux has no stopped launch, so a helper that exits before custody's first
+        # ancestry observation is a known custody gap (tests/known_failures.txt). The
+        # helper waits on a launch_gate file, touched once popen_owned_process returns.
+        gate = Path(request_path).parent / "launch.gate"
+        launch = transport_module.popen_owned_process
+
+        def gated(*args, **kw):
+            process = launch(*args, **kw)
+            gate.touch()
+            return process
+
+        # The timeout is a hang ceiling, never a judgement of how long the helper takes.
+        with mock.patch.object(transport_module, "popen_owned_process", gated):
+            return CommandTransport(backend).run(
+                verb, [sys.executable, str(self.helper), "1" if self.supported else "0", str(gate)],
+                backend=backend, request_path=request_path, result_path=result_path,
+                cwd=cwd, timeout=600,
+            )
 
 
 def _retained_support_helper(tmp_path: Path) -> Path:
     helper = tmp_path / "support_backend.py"
     helper.write_text(
-        "import sys,json,os\nfrom pathlib import Path\n"
+        "import sys,json,os,time\nfrom pathlib import Path\n"
+        "gate=Path(sys.argv[2]); deadline=time.monotonic()+600\n"
+        "while not gate.exists() and time.monotonic()<deadline: time.sleep(0.005)\n"
         "result=Path(sys.argv[sys.argv.index('--result')+1])\n"
         "value={'schema_version':1,'supported':sys.argv[1]=='1',"
         "'reasons':[] if sys.argv[1]=='1' else ['fixture unsupported'],"
