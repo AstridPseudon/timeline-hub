@@ -4,12 +4,12 @@
   "revision": "C2",
   "issuedOn": "2026-09-24",
   "status": "frozen-local-contract",
-  "digest": "sha256:1a3eef2ed3bd8977334a482ef8882b38bb28fbc0a9e3151cfb1c028637247a14",
+  "digest": "sha256:396d117206670e7ed9cf44582317a5a9396761793024e74f55823e448e77ffb3",
   "predecessor": {
     "path": "config/contracts/astrid-plan-a-c1.json",
     "revision": "C1",
-    "canonicalDigest": "sha256:74ff6d5b7582391d6ae5335162bc25faf9bec9745d4d90b4c7646fc20ee76772",
-    "rawFileSha256": "78cbfd87b43c391fec57549aabb075fa03fc86de8448bdb9f81f3e56d7675c5c",
+    "canonicalDigest": "sha256:e74a88b718861d100e64c1212f1caa7f36ded5d280e44f5cb6d9a424412a8559",
+    "rawFileSha256": "4cf8b1b5cd8c2563b72d48aed2fd1f0adcb4adf8df207c610e78f2e96cf26873",
     "immutable": true
   },
   "authority": {
@@ -131,7 +131,7 @@
       "repository": "astrid-app",
       "head": "a062e825ed3b335a6eb4175c0bf2a020e036120c",
       "path": "config/contracts/astrid-plan-a-c1.json",
-      "sha256": "78cbfd87b43c391fec57549aabb075fa03fc86de8448bdb9f81f3e56d7675c5c",
+      "sha256": "4cf8b1b5cd8c2563b72d48aed2fd1f0adcb4adf8df207c610e78f2e96cf26873",
       "role": "immutable-predecessor",
       "status": "applicable"
     },

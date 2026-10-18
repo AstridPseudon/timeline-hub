@@ -126,7 +126,7 @@ jobs:
   # Three products on one realm (testing plan F2, thin slice): the same hosted build, loopback gateway and real Runtime as the
   # job above, plus the real Astrid CLI as a second client. Local equivalent: npm run test:e2e:three-products.
   # Astrid is private to this lane's token: add a repository secret ASTRID_READ_TOKEN (a fine-grained PAT with read access to
-  # peteromallet/astrid-agent, or whichever repository holds Astrid). Without it the job falls back to github.token, which
+  # banodoco/astrid-agent, or whichever repository holds Astrid). Without it the job falls back to github.token, which
   # only reads Astrid if this repository can. A missing checkout or interpreter fails the job by name (R-9); it never skips.
   # Until the Astrid branch carrying astrid/core/dev/cross_client.py (tidy-w2) merges to its main, this job checks out an Astrid
   # without that module, so any PR touching tests/e2e/local/** (or the paths above) is red here until that merge.
@@ -149,7 +149,7 @@ jobs:
           token: ${{ secrets.RUNTIME_READ_TOKEN || github.token }}
       - uses: actions/checkout@v4
         with:
-          repository: peteromallet/astrid-agent
+          repository: banodoco/astrid-agent
           ref: main
           path: astrid-agent
           token: ${{ secrets.ASTRID_READ_TOKEN || github.token }}

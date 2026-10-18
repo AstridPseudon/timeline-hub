@@ -553,7 +553,7 @@ test('a machine without Astrid set up points to the install guide, and every err
     const result = await run(['--check'], { ...fixture.env, ASTRID_WORKSPACE_DISCOVERY: join(fixture.fixture, 'no-such-dir', 'discovery.json') });
     assert.equal(result.code, 1);
     const lines = result.stderr.split('\n');
-    assert.equal(lines[0], "Astrid isn't set up on this computer yet. Install guide: https://github.com/peteromallet/astrid-agent/blob/main/docs/setup/local-source-install.md");
+    assert.equal(lines[0], "Astrid isn't set up on this computer yet. Install guide: https://github.com/banodoco/astrid-agent/blob/main/docs/setup/local-source-install.md");
     assert.match(lines[1], /^Details: cannot read runtime discovery at .*discovery\.json: /);
     assert(!result.stderr.includes('dev:local:'), result.stderr);
     assert.equal(result.stdout, '');

@@ -30,7 +30,7 @@ const COMMANDS = {
   runtime: 'astrid-runtime up --profile astrid',
   app: 'npm run dev:local',
   /** The installer guide, in the astrid-agent repository: a full URL, so a reader without the repo can open it. */
-  installUrl: 'https://github.com/peteromallet/astrid-agent/blob/main/docs/setup/local-source-install.md',
+  installUrl: 'https://github.com/banodoco/astrid-agent/blob/main/docs/setup/local-source-install.md',
 } as const;
 
 /** The origin `npm run dev:local` opens for by default (`config/hosted-origin.json`); any other needs `ASTRID_APP_LOOPBACK_ORIGIN`. */

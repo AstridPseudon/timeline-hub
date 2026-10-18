@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "contractRevision": "C2",
-  "contractDigest": "sha256:1a3eef2ed3bd8977334a482ef8882b38bb28fbc0a9e3151cfb1c028637247a14",
+  "contractDigest": "sha256:396d117206670e7ed9cf44582317a5a9396761793024e74f55823e448e77ffb3",
   "mode": "shared",
   "collectedAt": "2026-09-24T12:00:00Z",
   "timing": { "deadlineScope": "total-including-all-helpers", "deadlineMs": 5000, "elapsedMs": 40, "timedOut": false },

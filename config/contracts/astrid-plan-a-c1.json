@@ -4,7 +4,7 @@
   "revision": "C1",
   "issuedOn": "2026-09-23",
   "status": "frozen-semantics-pending-ack",
-  "digest": "sha256:74ff6d5b7582391d6ae5335162bc25faf9bec9745d4d90b4c7646fc20ee76772",
+  "digest": "sha256:e74a88b718861d100e64c1212f1caa7f36ded5d280e44f5cb6d9a424412a8559",
   "scope": {
     "owner": "CF",
     "consumers": [
@@ -1121,7 +1121,7 @@
       "id": "local-launcher",
       "repository": "astrid-app",
       "path": "scripts/dev-local-workspace.mjs",
-      "sha256": "e190c5965cebd712c0a9cee9feb0757812037b6bc310103160a0a16e8ec1632d",
+      "sha256": "bb31d7342d90abe16cb8fe970db3672dd027f37d9cd0dd1a68d24226561b01b4",
       "summary": "Existing workspace.v1 discovery/profile bridge; not stable selection implementation."
     },
     {

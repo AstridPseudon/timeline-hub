@@ -29,7 +29,7 @@ jobs:
           path: runtime-producer
       - uses: actions/checkout@v4
         with:
-          repository: peteromallet/astrid-agent
+          repository: banodoco/astrid-agent
           ref: main
           path: astrid-producer
       - uses: actions/setup-node@v4

@@ -31,7 +31,7 @@ const verbose = process.argv.includes('--verbose') || process.env.ASTRID_VERBOSE
 const bold = (text) => (process.stdout.isTTY ? `\x1b[1m${text}\x1b[22m` : text);
 const dim = (text) => (process.stderr.isTTY ? `\x1b[2m${text}\x1b[22m` : text);
 
-const INSTALL_GUIDE_URL = 'https://github.com/peteromallet/astrid-agent/blob/main/docs/setup/local-source-install.md';
+const INSTALL_GUIDE_URL = 'https://github.com/banodoco/astrid-agent/blob/main/docs/setup/local-source-install.md';
 const NOT_SET_UP = `Astrid isn't set up on this computer yet. Install guide: ${INSTALL_GUIDE_URL}`;
 const ENGINE_STOPPED = "Astrid's engine isn't running. Start it first: astrid-runtime up --profile astrid";
 const PROGRAM_IN_THE_WAY = "Another program is in the way, so Astrid can't start. Close it and try again.";
