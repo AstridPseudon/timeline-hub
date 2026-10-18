@@ -148,14 +148,16 @@ export type ReighElementOperation =
       clip_id?: string;
       at?: number;
       duration?: number;
-      params?: Record<string, unknown>;
+      params?: Record<string, unknown> | null;
+      params_mode?: 'merge' | 'replace' | 'clear';
       placement: ReighElementPlacement;
     })
   | (ReighElementMutationScope & {
       name: 'timeline.update_element';
       clip_id: string;
       element?: ReighElementRef;
-      params?: Record<string, unknown>;
+      params?: Record<string, unknown> | null;
+      params_mode?: 'merge' | 'replace' | 'clear';
     })
   | (ReighElementMutationScope & { name: 'timeline.remove_element'; clip_id: string })
   | (ReighElementMutationScope & {
@@ -292,6 +294,14 @@ export function validateReighElementOperation(
   if (name === 'timeline.update_element') {
     requireString(operation.clip_id, 'clip_id', diagnostics);
     if (operation.element !== undefined) requireElementRef(operation.element, 'element', diagnostics);
+  }
+
+  if (name === 'timeline.apply_element' || name === 'timeline.update_element') {
+    if (operation.params_mode !== undefined && !['merge', 'replace', 'clear'].includes(String(operation.params_mode))) diagnostics.push({ path: 'params_mode', message: 'must be merge, replace or clear' });
+    if (operation.params !== undefined && operation.params !== null && (typeof operation.params !== 'object' || Array.isArray(operation.params))) diagnostics.push({ path: 'params', message: 'must be an object or null' });
+    if (operation.params_mode === 'clear' && operation.params !== undefined) diagnostics.push({ path: 'params', message: 'must be omitted for explicit clear' });
+    if (['merge', 'replace'].includes(String(operation.params_mode)) && operation.params === undefined) diagnostics.push({ path: 'params', message: 'is required for merge or replace' });
+    if (operation.params_mode === 'merge' && operation.params === null) diagnostics.push({ path: 'params', message: 'must be an object for merge' });
   }
 
   if (name === 'timeline.remove_element' || name === 'timeline.set_clip_fade') {

@@ -1,9 +1,12 @@
+import { webcrypto } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { AstridElementOperationAdapter, createElementTimelineRoutes } from './element-adapter.ts';
 import { buildReighAgentElementContext } from './element-contract.ts';
 import { ASTRID_EFFECT_CATALOG } from './astrid-element-catalog.ts';
 import { configToRows, rowsToConfig } from '../lib/timeline-data.ts';
 import type { TimelineConfig } from '../types/index.ts';
+
+vi.stubGlobal('crypto', webcrypto);
 
 function context() {
   return buildReighAgentElementContext({
@@ -20,6 +23,7 @@ function documentPayload() {
   return {
     config: {
       output: { resolution: '1280x720', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'picture', kind: 'visual' }],
       clips: [
         { id: 'a', at: 0, track: 'picture', hold: 2 },
         { id: 'b', at: 2, track: 'picture', hold: 2 },
@@ -387,5 +391,64 @@ describe('catalog captured head provenance', () => {
       .rejects.toThrow('captured timeline head');
     expect(saveTimelineAtHead).not.toHaveBeenCalled();
     expect(saveTimeline).not.toHaveBeenCalled();
+  });
+});
+
+describe('W12 typed reference caller contracts', () => {
+  const ref = { id: 'pulse', kind: 'animation' as const, revision: 'r1', packId: 'pack' };
+  const row = { kind: ref.kind, revision: ref.revision, packId: ref.packId, source: 'export default () => null;', opaque: { values: [null, 6.0] } };
+  function fixture() {
+    const catalog = [{ ...ref, label: 'Pulse', placement: 'clip' as const, publication: 'published' as const,
+      capabilities: { browserPreview: 'supported' as const, astridExport: 'blocked' as const, workerExport: 'blocked' as const } }];
+    let payload: any = { ...documentPayload(), config: { ...documentPayload().config,
+      app: { opaque: { keep: true }, elements: { pulse: structuredClone(row), sibling: { keep: [null, 1] } } } } };
+    const save = vi.fn(async (_id, input) => { payload = { ...payload, config: input.config, config_version: payload.config_version + 1 }; return payload; });
+    return { catalog, save, payload: () => payload,
+      adapter: new AstridElementOperationAdapter({ ...context(), catalog }, { get: async () => payload, save }, 'p') };
+  }
+  it('apply/update/explicit params clear/detach capture opaque source, full identity and coupled entrance', async () => {
+    const f = fixture();
+    const scope = { project: 'p', timeline: 'main' };
+    await f.adapter.execute({ ...scope, name: 'timeline.apply_element', expected_version: 7, placement: 'clip', clip_id: 'a', element: ref, params: { gain: 1 } });
+    const applied = f.save.mock.calls[0][1].editCommands[0];
+    expect(applied).toMatchObject({ op: 'clip.set-element', select: 'parent/clip:a', args: { intent: 'assign', binding: { reference: ref, row: { state: 'present', value: row } },
+      fields: { elementRef: { state: 'present', value: ref }, entrance: { state: 'present', value: { type: 'pulse', duration: .4, params: { gain: 1 } } } } } });
+    await f.adapter.execute({ ...scope, name: 'timeline.update_element', expected_version: 8, clip_id: 'a', params: { other: null } });
+    expect(f.payload().config.clips[0].params).toEqual({ gain: 1, other: null });
+    expect(f.payload().config.clips[0].entrance.params).toEqual({ gain: 1, other: null });
+    await f.adapter.execute({ ...scope, name: 'timeline.update_element', expected_version: 9, clip_id: 'a', params_mode: 'clear' });
+    expect(f.payload().config.clips[0]).not.toHaveProperty('params');
+    expect(f.payload().config.clips[0].entrance).not.toHaveProperty('params');
+    await f.adapter.execute({ ...scope, name: 'timeline.remove_element', expected_version: 10, clip_id: 'a' });
+    expect(f.payload().config.clips[0]).not.toHaveProperty('elementRef');
+    expect(f.payload().config.clips[0]).not.toHaveProperty('entrance');
+    expect(f.payload().config.app.elements.pulse).toEqual(row);
+    expect(f.payload().config.app.elements.sibling).toEqual({ keep: [null, 1] });
+    expect(f.save.mock.calls.map(call => call[1].editCommands[0].op)).toEqual(Array(4).fill('clip.set-element'));
+  });
+  it('overlay retry captures the same reserved clip, order, placement and typed command', async () => {
+    const f = fixture(); const inputs: any[] = [];
+    const adapter = new AstridElementOperationAdapter({ ...context(), catalog: f.catalog }, {
+      get: async () => f.payload(), save: async (_id, input) => { inputs.push(input); throw new Error('ambiguous transport outcome'); },
+    }, 'p');
+    const operation = { name: 'timeline.apply_element', project: 'p', timeline: 'main', expected_version: 7,
+      placement: 'overlay', clip_id: 'a', element: ref, at: .25, duration: .75 };
+    await expect(adapter.execute(operation)).rejects.toThrow('ambiguous');
+    await expect(adapter.execute(operation)).rejects.toThrow('ambiguous');
+    expect(inputs[0]).toEqual(inputs[1]);
+    expect(inputs[0].editCommands[0]).toMatchObject({ op: 'timeline.add', created: ['parent/clip:element-pulse-250'],
+      args: { at: .25, duration: .75, time_domain: 'timeline-seconds', track: 'picture', expected_order: ['a', 'b'], insertion_index: 2 } });
+  });
+  it('ambiguous catalog and same-ID source pack/revision collisions refuse without save', async () => {
+    const f = fixture();
+    const ambiguous = new AstridElementOperationAdapter({ ...context(), catalog: [...f.catalog, { ...f.catalog[0], packId: 'other' }] }, {
+      get: async () => f.payload(), save: f.save,
+    }, 'p');
+    const { packId: _pack, ...unqualified } = ref;
+    const operation = { name: 'timeline.apply_element', project: 'p', timeline: 'main', expected_version: 7, placement: 'clip', clip_id: 'a', element: unqualified };
+    await expect(ambiguous.execute(operation)).rejects.toThrow('ambiguous');
+    f.payload().config.app.elements.pulse.revision = 'other';
+    await expect(f.adapter.execute({ ...operation, element: ref })).rejects.toThrow('collision');
+    expect(f.save).not.toHaveBeenCalled();
   });
 });

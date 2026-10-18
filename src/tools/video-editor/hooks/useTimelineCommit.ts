@@ -1,3 +1,4 @@
+import { isElementReferenceBatch } from '../commands/elementReferenceHistory.ts';
 import { isManualTextBatch, isManualTextCreation, isManualTextInverse } from '../commands/manualTextHistory.ts';
 import { MANUAL_TEXT_REF, geometryOf, manualTextParams, manualTextPatch, captureManualTextBefore } from '../commands/manualText.ts';
 import { isAppKeyframeHistoryBatch } from '../commands/appKeyframeHistory.ts';
@@ -442,7 +443,8 @@ export function useTimelineCommit({
             isTranscriptCaptionBatch(options.editCommands)
             || isOverlapTrimBatch(options.editCommands)
             || (semanticCommandSaving && (
-              isShaderSlotBatch(options.editCommands)
+              isElementReferenceBatch(options.editCommands)
+              || isShaderSlotBatch(options.editCommands)
               || isTransitionAssignmentBatch(options.editCommands)
               || isClipPlacementBatch(options.editCommands)
               || isClipStructureBatch(options.editCommands)

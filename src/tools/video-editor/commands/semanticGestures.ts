@@ -1,3 +1,4 @@
+import { isElementReferenceBatch, isElementReferenceInverse } from './elementReferenceHistory.ts';
 import { isManualTextCreation, isManualTextInverse } from './manualTextHistory.ts';
 import { setManualTextCommand } from './manualText.ts';
 import { isAppKeyframeHistoryBatch, isAppKeyframeHistoryInverse, isAppKeyframePayload } from './appKeyframeHistory.ts';
@@ -114,8 +115,8 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
   let context: TimelineOccurrenceContext | undefined;
   let parent = false;
   const transferBatch = isShotGroupTransferBatch(commands);
-  const aggregateBatch = isManualTextCreation(commands) || commands.length > 0 && commands.every((command) =>
-    isManualTextInverse(command) || isShotGroupAggregateCommand(command) || isShaderSlotBatch([command]) || isShaderSlotInverse(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command) || isFadeHistoryInverse(command) || isPositionResetInverse(command) || isContinuousHistoryInverse(command) || isAppKeyframeHistoryInverse(command));
+  const aggregateBatch = isElementReferenceBatch(commands) || isManualTextCreation(commands) || commands.length > 0 && commands.every((command) =>
+    isElementReferenceInverse(command) || isManualTextInverse(command) || isShotGroupAggregateCommand(command) || isShaderSlotBatch([command]) || isShaderSlotInverse(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command) || isOverlapTrimInverse(command) || isTiedHoldExpansionInverse(command) || isTranscriptCaptionInverse(command) || isClipPlacementInverse(command) || isClipStructureInverse(command) || isTrackHistoryInverse(command) || isFadeHistoryInverse(command) || isPositionResetInverse(command) || isContinuousHistoryInverse(command) || isAppKeyframeHistoryInverse(command));
   const captionTarget = isTranscriptCaptionBatch(commands) ? transcriptBindTarget(commands[0]) : undefined;
   // Routing reads the handler's explicit args.target. The submitted registered
   // timeline-level bind retains select:null; this local view only captures custody.
