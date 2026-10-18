@@ -23,17 +23,20 @@ CLIP_SECONDS = 4
 CLIP_SIZE = "640x360"
 TIMELINE_SECONDS = CLIP_COUNT * CLIP_SECONDS
 FFMPEG_SECONDS = 120
+TINY_CLIP_SECONDS = 1
+TINY_CLIP_SIZE = "320x180"
 
 
 class ReferenceBuildError(RuntimeError):
     """The generated reference could not be built (missing tool, refused command, bad content)."""
 
 
-def ffmpeg_clip_argv(output: Path, index: int) -> list[str]:
+def ffmpeg_clip_argv(output: Path, index: int, *, seconds: int = CLIP_SECONDS,
+                     size: str = CLIP_SIZE) -> list[str]:
     """One test clip: ``testsrc2`` video plus a sine tone (a different pitch per clip), h264/aac."""
     return ["ffmpeg", "-v", "error", "-y",
-            "-f", "lavfi", "-i", f"testsrc2=size={CLIP_SIZE}:rate=24:duration={CLIP_SECONDS}",
-            "-f", "lavfi", "-i", f"sine=frequency={220 * (index + 1)}:duration={CLIP_SECONDS}",
+            "-f", "lavfi", "-i", f"testsrc2=size={size}:rate=24:duration={seconds}",
+            "-f", "lavfi", "-i", f"sine=frequency={220 * (index + 1)}:duration={seconds}",
             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", str(output)]
 
 
@@ -42,23 +45,26 @@ def source_manifest(source_checkout: Path, runtime_checkout: Path, runtime_envir
             "runtime_checkout": str(runtime_checkout), "runtime_environment": runtime_environment}
 
 
-def media_only_publication(project_id: str, media: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+def media_only_publication(project_id: str, media: Sequence[Mapping[str, Any]], *, seconds: int = CLIP_SECONDS) -> dict[str, Any]:
     """The parent-composition publication: the clips end to end on one visual track, nothing else."""
     assets = {f"clip{n}": {"media_id": m["object_id"], "content_sha256": m["object_id"], "type": "video"}
               for n, m in enumerate(media, 1)}
     clips = [{"id": f"clip-{n}", "clipType": "media", "track": "video", "asset": f"clip{n}",
-              "at": CLIP_SECONDS * (n - 1), "from": 0, "to": CLIP_SECONDS, "speed": 1}
+              "at": seconds * (n - 1), "from": 0, "to": seconds, "speed": 1}
              for n in range(1, len(media) + 1)]
+    config = {"tracks": [{"id": "video", "kind": "visual", "label": "Video"}], "effects": []}
+    if seconds == TINY_CLIP_SECONDS:
+        config["theme_overrides"] = {"visual": {"canvas": {"width": 320, "height": 180, "fps": 24}}}
     return {
         "project_id": project_id, "timeline_id": TIMELINE_ID, "expected_head": None,
         "parent_revision_id": "parent-1",
         "dependency_manifest": {"media": [{"media_id": m["object_id"], "content_digest": m["digest"]} for m in media]},
-        "parent_composition": {"config": {"tracks": [{"id": "video", "kind": "visual", "label": "Video"}], "effects": []},
+        "parent_composition": {"config": config,
                                "registry": {"assets": assets}, "clips": clips, "occurrences": []},
     }
 
 
-def _run(argv: list[str], env: Mapping[str, str], what: str, timeout: float) -> str:
+def _run(argv: list[str], env: Mapping[str, str], what: str, timeout: float | None) -> str:
     done = subprocess.run(argv, env=dict(env), capture_output=True, text=True, timeout=timeout, check=False)
     if done.returncode:
         told = " | ".join(f"{label}: {text.strip()[-800:]}" for label, text in (("stderr", done.stderr), ("stdout", done.stdout)) if text.strip())
@@ -67,7 +73,7 @@ def _run(argv: list[str], env: Mapping[str, str], what: str, timeout: float) -> 
 
 
 def build_reference(workdir: Path, *, env: Mapping[str, str], source_checkout: Path, runtime_checkout: Path,
-                    runtime_environment: str) -> Path:
+                    runtime_environment: str, tiny: bool = False) -> Path:
     """Build the reference under ``workdir/reference`` and return that data root (stopped, never started)."""
     if shutil.which("ffmpeg", path=env.get("PATH")) is None:
         raise ReferenceBuildError("ffmpeg is not on PATH; the generated reference needs it for its test clips")
@@ -84,18 +90,22 @@ def build_reference(workdir: Path, *, env: Mapping[str, str], source_checkout: P
     child = dict(env, ASTRID_RUNTIME_DATA_ROOT=str(root))
     _run([sys.executable, "-m", "astrid_runtime", "workspace", "create", "--profile", "astrid", "--data-root", str(root),
           "--realm-root", str(realm), "--realm-id", REALM_ID, "--source-manifest", str(manifest), "--json"],
-         child, "workspace create", 120)
+         child, "workspace create", None if tiny else 120)
     service = RuntimeService(realm)
     try:
         project = service.create_project({"slug": PROJECT_SLUG, "name": "Journey"}, idempotency_key="journey-project")
         service.create_timeline(project["id"], TIMELINE_ID, idempotency_key="journey-timeline")
         media = []
-        for index in range(CLIP_COUNT):
+        count = 1 if tiny else CLIP_COUNT
+        seconds = TINY_CLIP_SECONDS if tiny else CLIP_SECONDS
+        size = TINY_CLIP_SIZE if tiny else CLIP_SIZE
+        for index in range(count):
             clip = clips / f"clip{index + 1}.mp4"
-            _run(ffmpeg_clip_argv(clip, index), env, f"ffmpeg clip {index + 1}", FFMPEG_SECONDS)
+            _run(ffmpeg_clip_argv(clip, index, seconds=seconds, size=size), env,
+                 f"ffmpeg clip {index + 1}", None if tiny else FFMPEG_SECONDS)
             media.append(service.ingest(project["id"], clip.read_bytes(), media_type="video/mp4", original_name=clip.name,
                                         idempotency_key=f"journey-clip-{index + 1}")["data"])
-        publication = media_only_publication(project["id"], media)
+        publication = media_only_publication(project["id"], media, seconds=seconds)
         service.publish_parent_composition(project["id"], TIMELINE_ID, publication, idempotency_key="journey-publish")
     finally:
         service.close()
