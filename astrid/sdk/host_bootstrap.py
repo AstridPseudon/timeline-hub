@@ -1517,13 +1517,17 @@ def ensure_pack_host(
                 raise PackHostBootstrapError("prior Remotion host lacks launch validation; reconfigure explicitly")
             if reference is not None:
                 from astrid.core.env_vars import ASTRID_REMOTION_PROJECT_DIR
-                from astrid.core.rendering.remotion_runtime import _validated_runtime
+                from astrid.core.rendering.remotion_runtime import (
+                    RemotionValidationError,
+                    _validated_runtime,
+                )
                 if ready.get("remotion_validation") != reference:
                     raise PackHostBootstrapError("prior Remotion launch validation marker differs")
                 try:
                     _validated_runtime(Path(reuse_env[ASTRID_REMOTION_PROJECT_DIR]),
                                        environment={**reuse_env, **reference}, python_executable=host_python)
-                except (RuntimeError, OSError, ValueError, TypeError, ImportError, subprocess.SubprocessError):
+                except (KeyError, RemotionValidationError, RuntimeError, OSError, ValueError, TypeError, ImportError,
+                        subprocess.SubprocessError):
                     # This caller's render context wasn't validated by that launch
                     # (different PATH, packs, interpreter...): replace the host below,
                     # when idle, instead of refusing.

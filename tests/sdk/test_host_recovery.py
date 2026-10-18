@@ -467,3 +467,21 @@ def test_stop_group_reports_sigkill_escalation_without_live_processes(monkeypatc
 
     assert forced is True
     assert calls == [(4321, signal.SIGTERM), (4321, signal.SIGKILL)]
+
+
+def test_process_census_catches_declared_failure_without_hiding_programming_errors(monkeypatch):
+    def unavailable():
+        raise host_bootstrap.CleanupUncertainError("census unavailable")
+
+    monkeypatch.setattr(host_bootstrap, "_process_snapshot", unavailable)
+    assert host_bootstrap._host_birth_identity(4321) == ""
+    assert host_bootstrap._descendant_snapshot(4321) == {}
+
+    def broken():
+        raise ValueError("invalid census implementation")
+
+    monkeypatch.setattr(host_bootstrap, "_process_snapshot", broken)
+    with pytest.raises(ValueError, match="invalid census implementation"):
+        host_bootstrap._host_birth_identity(4321)
+    with pytest.raises(ValueError, match="invalid census implementation"):
+        host_bootstrap._descendant_snapshot(4321)
