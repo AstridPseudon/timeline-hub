@@ -7,6 +7,7 @@ from typing import Any
 
 from astrid.sdk.timeline.commands import CommandError
 from astrid.sdk.timeline.commands import run as run_command
+from astrid.sdk.timeline import store
 from astrid.sdk.timeline.transaction import edit_transaction
 from astrid.sdk.timeline_sheet import apply_sheet, parse_sheet
 
@@ -94,21 +95,27 @@ def apply_file(tl: Any, path: str | Path) -> list[str]:
     sheet_operation = None
     if suffix not in {".py", ".jsonl"}:
         sheet_operation = _no_change_operation(parse_sheet(source))
+    before_snapshot = store._snapshot(tl) if sheet_operation is not None else None
 
     with edit_transaction(
         tl,
-        sheet_operation or f"apply {source_path.name}",
+        f"apply {source_path.name}",
         check=False,
         quiet=True,
         record_no_change=sheet_operation is not None,
         record_rollback=False,
     ) as tx:
-        tx.canonical = True
+        # Eligible singleton sheets keep the file label when they commit; their
+        # explicit no-change label is selected after comparing snapshots below.
+        tx.canonical = sheet_operation is None
         if suffix == ".py":
             _apply_python(tl, source_path, source)
         elif suffix == ".jsonl":
             _apply_commands_jsonl(tl, source)
         else:
             apply_sheet(tl, source)
+            if (sheet_operation is not None and not tx.cancelled
+                    and store._snapshot(tl) == before_snapshot):
+                tx.label = sheet_operation
 
     return list(tx.changes) if tx.changed else []

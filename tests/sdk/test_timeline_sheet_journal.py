@@ -148,6 +148,17 @@ def test_apply_file_single_opcall_noop_audits_but_declarative_sheets_stay_silent
     assert _history_files(history_dir) == before_history
     assert journal.verify(journal_path) == []
 
+    changed_source = tmp_path / "changed.sheet"
+    changed_call = {"op": "clip.set", "select": "c1.rocket", "args": {"x": 120}}
+    changed_source.write_text("edit " + json.dumps(changed_call, separators=(",", ":")) + "\n", encoding="utf-8")
+    assert apply_file(tl, changed_source)
+    changed_records = journal.read(journal_path)
+    assert len(changed_records) == len(before_records) + 2
+    changed_record = changed_records[-1]
+    assert changed_record.outcome == "changed"
+    assert changed_record.label == f"apply {changed_source.name}"
+    assert changed_record.undo_step is not None
+
 
 @pytest.mark.parametrize("suffix", [".jsonl", ".py"])
 def test_apply_file_non_sheet_noop_formats_remain_silent(tmp_path, draft, suffix):
