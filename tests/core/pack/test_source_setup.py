@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -20,7 +22,10 @@ from astrid.core.pack.source_setup import (
     default_source_declarations,
     hivemind_pin_report,
     provision,
+    source_data_root,
+    source_state_path,
 )
+from astrid.core.subprocess_env import build_child_subprocess_env
 from astrid.sdk.discovery import _discover_pack_inventory
 from astrid.sdk.discovery import _pack_record
 
@@ -70,6 +75,27 @@ def test_default_source_policy_uses_full_delivery_hivemind_pin(
     assert declarations[0].revision == DEFAULT_HIVEMIND_REVISION
     assert declarations[0].repository == DEFAULT_HIVEMIND_REPOSITORY
     assert hivemind_pin_report(declarations)["status"] == "configured"
+
+
+def test_test_home_isolates_default_managed_source_inventory(tmp_path: Path) -> None:
+    """The shared test sandbox must not inherit a developer's pack inventory."""
+    assert source_state_path().is_relative_to(Path(os.environ["XDG_STATE_HOME"]))
+    assert source_data_root().is_relative_to(Path(os.environ["XDG_DATA_HOME"]))
+    assert active_source_inventory().sources == ()
+
+    child_home = tmp_path / "filtered-child-home"
+    parent = {
+        "HOME": str(child_home),
+        "XDG_STATE_HOME": str(tmp_path / "host-xdg-state"),
+        "ASTRID_SOURCE_STATE": str(tmp_path / "host-source-state.json"),
+    }
+    child = build_child_subprocess_env(base=parent, parent=parent)
+    assert child["HOME"] == str(child_home)
+    assert "XDG_STATE_HOME" not in child
+    assert "ASTRID_SOURCE_STATE" not in child
+    with mock.patch.dict(os.environ, child, clear=True):
+        assert source_state_path() == child_home / ".local/state/astrid/default/pack-sources.json"
+        assert active_source_inventory().sources == ()
 
 
 def test_default_source_policy_accepts_only_a_configured_full_immutable_pin(

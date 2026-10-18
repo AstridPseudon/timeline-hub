@@ -220,12 +220,31 @@ def _sandboxed_home_and_projects(
     # roots for every test until session end and exhausted disk in the full
     # 7,000+ test suite before the installed-artifact lanes could start.
     astrid_home = tmp_path / "astrid-home"
+    home = tmp_path / "home"
     projects_root = tmp_path / "projects"
     workspace_config_dir = tmp_path / "workspace-config"
-    for root in (astrid_home, projects_root, workspace_config_dir):
+    state_root = tmp_path / "xdg-state"
+    data_root = tmp_path / "xdg-data"
+    for root in (astrid_home, home, projects_root, workspace_config_dir, state_root, data_root):
         root.mkdir()
     monkeypatch.setenv("ASTRID_HOME", str(astrid_home))
+    # Child processes may intentionally receive only HOME after the subprocess
+    # environment filter removes XDG/source selectors. Keep that fallback local.
+    monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("ASTRID_WORKSPACE_CONFIG_DIR", str(workspace_config_dir))
+    # Managed pack discovery reads these XDG roots directly; ASTRID_HOME does
+    # not redirect pack-sources.json or the managed pack cache. Ignore ambient
+    # source selectors so a developer's active ~/.local/state inventory cannot
+    # leak into otherwise isolated tests. Tests that exercise source setup can
+    # still opt in by setting these values after this autouse fixture runs.
+    monkeypatch.setenv("XDG_STATE_HOME", str(state_root))
+    monkeypatch.setenv("XDG_DATA_HOME", str(data_root))
+    for name in (
+        "ASTRID_SOURCE_DECLARATIONS",
+        "ASTRID_SOURCE_STATE",
+        "ASTRID_SOURCE_DATA",
+    ):
+        monkeypatch.delenv(name, raising=False)
     # Seed PROJECTS_ROOT to a tmp dir so tests never touch the real
     # projects root. Tests that need their own projects-root (via
     # tmp_projects_root) override this with their own monkeypatch.setenv.
