@@ -630,7 +630,10 @@ def test_stale_and_archived_timelines_are_rejected() -> None:
 
 
 def test_managed_preflight_requires_runtime_ref_and_rejects_file_mode(tmp_path: Path) -> None:
-    with pytest.raises(CapabilityValidationError, match="requires timeline_ref"):
+    with pytest.raises(
+        CapabilityValidationError,
+        match=r"requires timeline=.*or timeline_ref=",
+    ):
         _prepare_managed_render_inputs({}, project="demo")
     with pytest.raises(CapabilityValidationError, match="mutually exclusive"):
         _prepare_managed_render_inputs(
