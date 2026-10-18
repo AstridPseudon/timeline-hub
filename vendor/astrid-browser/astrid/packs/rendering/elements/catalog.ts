@@ -716,7 +716,6 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "freezeAt": null,
       "height": 1080,
       "highlights": [],
-      "layout": "full",
       "rows": [],
       "scrollFrames": 14,
       "startDate": "",
@@ -762,23 +761,6 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         "label": "Height",
         "name": "height",
         "type": "number"
-      },
-      {
-        "default": "full",
-        "description": "Transparent date and counters, contain-fit to the authored box; full keeps the complete ledger.",
-        "label": "Layout",
-        "name": "layout",
-        "options": [
-          {
-            "label": "Full",
-            "value": "full"
-          },
-          {
-            "label": "Panel",
-            "value": "panel"
-          }
-        ],
-        "type": "select"
       },
       {
         "default": 14,
@@ -833,7 +815,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:4c596f7b6302bb361d7c5bb9e70d2c3b870706d5d546557e91d0c9c838191f5f",
+    "revision": "sha256:160d5177397feb3fb4d8531f488851c32175a6fef3051635fdcc0fe83c8b7392",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -918,14 +900,6 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
             "type": "object"
           },
           "type": "array"
-        },
-        "layout": {
-          "description": "Transparent date and counters, contain-fit to the authored box; full keeps the complete ledger.",
-          "enum": [
-            "full",
-            "panel"
-          ],
-          "type": "string"
         },
         "rows": {
           "description": "One entry per calendar day from startDate to endDate, ascending, zero-filled. added and deleted are the hand-ish daily counts; commits is optional.",
@@ -1899,7 +1873,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       },
       {
         "default": 0,
-        "description": "Deprecated: set the clip-level volume (`--volume`, clip.look(volume=...)); this param is read only when the clip has none.",
+        "description": "Footage audio (default 0; the VO track carries the voice).",
         "label": "Volume",
         "max": 1,
         "min": 0,
@@ -1920,7 +1894,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:c603e6b9dffdbd776dc382c31df17539ff9067a060f94c69554dbf9cfde40d18",
+    "revision": "sha256:0e824eb10fe1e229ee4760b6b28b20c8c460fc94682aed28693d37dd15c8b257",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -2069,7 +2043,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         },
         "volume": {
           "deprecated": true,
-          "description": "Deprecated: set the clip-level volume (`--volume`, clip.look(volume=...)); this param is read only when the clip has none.",
+          "description": "Footage audio (default 0; the VO track carries the voice).",
           "maximum": 1,
           "minimum": 0,
           "type": "number"
@@ -3326,7 +3300,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:9050dc21d2306b4f7c1741b3814e4b81ded364fa83b45baf0da1b168c018711c",
+    "revision": "sha256:b9068d038d6002c0467022de44d4f8ff809ec2814fcc192d8b0159e1961513a0",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -3362,10 +3336,6 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
             "cut",
             "blockWipe"
           ],
-          "type": "string"
-        },
-        "fill": {
-          "description": "Assetless flat plate; a brand token or CSS colour. Existing asset and explicit background behavior is preserved.",
           "type": "string"
         },
         "focus": {
@@ -3781,22 +3751,6 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         "type": "number"
       },
       {
-        "description": "Brand keeps the ruled pixel window; real uses a dark terminal with round window controls.",
-        "label": "Look",
-        "name": "look",
-        "options": [
-          {
-            "label": "Brand",
-            "value": "brand"
-          },
-          {
-            "label": "Real",
-            "value": "real"
-          }
-        ],
-        "type": "select"
-      },
-      {
         "description": "",
         "label": "Width",
         "name": "width",
@@ -3820,7 +3774,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:d0fd44ba12f00df99bddbb43c1cf0bbedf07fc771ba6db85e238e9897f330370",
+    "revision": "sha256:fcf38ea6040af00a71508d61a1e43dd272ff5a0ff8fb251a30e45eca9edaf6c4",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -3839,14 +3793,6 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         },
         "lines": {
           "type": "array"
-        },
-        "look": {
-          "description": "Brand keeps the ruled pixel window; real uses a dark terminal with round window controls.",
-          "enum": [
-            "brand",
-            "real"
-          ],
-          "type": "string"
         },
         "prompt": {
           "type": "string"
@@ -4135,7 +4081,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:bab94b36a46e6b4e88a96bdc2c326137ba93f6a05cde1f2ae58a7ebc3f3ef8cb",
+    "revision": "sha256:5f5ebbef85eea11aab9516e3c6229ec741c9adeb22d4b0d064610971802ff31d",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
