@@ -185,13 +185,24 @@ def test_fixture_grant_intersects_actual_shipped_source_ledger(bound):
     handle = authority.issue(policy)
     del request["operation"]
     ledger = load_capability_ledger("config/astrid-beta-capabilities.json")
+    source_complete = all(
+        section["complete"] for section in ledger["sources"]["coverage"].values()
+    )
     for capability in ("rendering.render", "rendering.timeline_visualize"):
         decision = project_capability_execution_admission(
             ledger, capability, authority=authority, grant=handle, **request,
         )
-        assert decision["executable"] is True
-        assert decision["code"] == "project_capability_admitted"
-        assert decision["requires_runtime_readiness"] is True
+        assert decision["project_decision"]["allowed"] is True
+        if source_complete:
+            assert decision["executable"] is True
+            assert decision["code"] == "project_capability_admitted"
+            assert decision["requires_runtime_readiness"] is True
+        else:
+            # A valid paired policy cannot override the current source census.
+            # This verifies refusal, not renderer availability or census approval.
+            assert decision["executable"] is False
+            assert decision["code"] == "project_capability_unavailable"
+            assert decision["reason"] == "capability source reconciliation is incomplete"
     # Edit is a Runtime operation, not an executable capability in this ledger.
     # A successful policy check cannot invent that missing consumer.
     decision = project_capability_execution_admission(
