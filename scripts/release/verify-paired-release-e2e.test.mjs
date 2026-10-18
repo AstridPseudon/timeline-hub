@@ -1412,8 +1412,8 @@ process.exit(1);
         'sys.modules["jsonschema"] = types.SimpleNamespace(validate=lambda *args, **kwargs: None)',
         'from typing import get_args, get_type_hints',
         'from banodoco_timeline_schema import TimelineClip, TimelineConfig',
-        'from banodoco_timeline_schema.generated import Clip',
-        'assert TimelineClip is Clip',
+        'from banodoco_timeline_schema.generated import TimelineClip as GeneratedTimelineClip',
+        'assert TimelineClip is GeneratedTimelineClip',
         'assert get_args(get_type_hints(TimelineConfig)["clips"])[0] is TimelineClip',
       ].join('\n')]);
       assert.equal(typeIdentity.status, 0, typeIdentity.stderr);
