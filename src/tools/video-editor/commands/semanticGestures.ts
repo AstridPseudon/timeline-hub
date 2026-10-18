@@ -30,7 +30,7 @@ import { isOverlapTrimInverse } from './overlapTrimHistory.ts';
 /** Intent is attached by the handler, never inferred from the resulting document. */
 const authoredCommands = new WeakMap<TimelineData, readonly EditCommand[]>();
 const authoredOccurrences = new WeakMap<TimelineData, TimelineOccurrenceContext>();
-const occurrenceOps = new Set(['clip.set-shader', 'clip.nudge', 'clip.set-track', 'clip.set-duration', 'clip.set-look', 'clip.set-param', 'clip.set-fade', 'clip.set-transition', 'clip.set-continuous', 'clip.clear', 'clip.set-text', 'transcript.bind']);
+const occurrenceOps = new Set(['timeline.split', 'clip.set-shader', 'clip.nudge', 'clip.set-track', 'clip.set-duration', 'clip.set-look', 'clip.set-param', 'clip.set-fade', 'clip.set-transition', 'clip.set-continuous', 'clip.clear', 'clip.set-text', 'transcript.bind']);
 const selectedMediaFields = ['asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'];
 const isRecord = (value: unknown): value is Record<string, unknown> => (
   value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -1347,20 +1347,62 @@ export function literalStructuralSource(data: TimelineData, id: string): boolean
   return typeof clip.at === 'number' && Number.isFinite(clip.at);
 }
 
-/** Stable allocation, captured once with the command and reused on retry. */
+/** Split alone admits a recorded occurrence; other structural writers remain parent-only. */
+function occurrenceSplitIdentity(data: TimelineData, id: string): CanonicalClipIdentity | undefined {
+  const identity = occurrenceIdentityFor(data, id);
+  if (!identity || !/^[^/\s]+$/.test(identity.occurrenceId) || !/^[^/\s]+$/.test(identity.sourceClipId!)
+    || identity.projectId !== data.head?.projectId || identity.parentDocumentId !== data.head?.timelineId
+    || identity.headRevisionId !== data.head?.headRevisionId) return undefined;
+  const matches = data.config.clips.filter(clip => {
+    const other = occurrenceIdentityFor(data, clip.id);
+    return other?.occurrenceId === identity.occurrenceId && other.sourceClipId === identity.sourceClipId;
+  });
+  if (matches.length !== 1 || data.config.clips.some(clip => {
+    const other = clip.app?.canonical as CanonicalClipIdentity | undefined;
+    return other?.occurrenceId === identity.occurrenceId && (!occurrenceIdentityFor(data, clip.id)
+      || JSON.stringify(contextFor(other)) !== JSON.stringify(contextFor(identity)));
+  })) return undefined;
+  const source = identity.sourceClip as ReturnType<typeof originalClip>;
+  const captured = { ...data, config: { ...data.config, clips: [source] } };
+  // A timed transcript also partitions authored words. That is outside the
+  // literal split receipt family, so refuse before accepting an unundoable edit.
+  const intent: Record<string, unknown> = { ...source.app, ...(source.app?.astrid as Record<string, unknown> | undefined) };
+  if (intent.words !== undefined) return undefined;
+  if (!literalStructuralSource(captured, source.id)
+    || data.config.pinnedShotGroups?.some(group => group.clipIds.includes(id) || group.clipIds.includes(source.id))
+    || data.config.clips.some(clip => clip.id !== id && clip.app?.canonical === undefined && clip.id === source.id)) return undefined;
+  const beds = (data.config.app?.astrid as Record<string, unknown> | undefined)?.music_beds;
+  if (beds && hasOwn(beds as object, `occurrence:${identity.occurrenceId}/clip:${identity.sourceClipId}`)) return undefined;
+  return identity;
+}
+
+/** Stable allocation, captured once with the command and reused on retry.
+ * Occurrence children use their reserved scoped identity as a local display ID too.
+ */
 export function structuralChildId(data: TimelineData, id: string): string {
-  const used = new Set(data.config.clips.map((clip) => clip.id));
+  const identity = occurrenceIdentityFor(data, id);
+  const prefix = identity ? `occurrence:${identity.occurrenceId}/clip:` : '';
+  const source = identity?.sourceClipId ?? id;
+  const used = new Set(data.config.clips.flatMap(clip => {
+    const other = occurrenceIdentityFor(data, clip.id);
+    return [clip.id, ...(other?.occurrenceId === identity?.occurrenceId ? [other?.sourceClipId] : [])];
+  }));
   let index = 1;
-  while (used.has(`${id}-${String(index).padStart(2, '0')}`)) index++;
-  return `${id}-${String(index).padStart(2, '0')}`;
+  while (used.has(`${source}-${String(index).padStart(2, '0')}`) || used.has(`${prefix}${source}-${String(index).padStart(2, '0')}`)) index++;
+  return `${prefix}${source}-${String(index).padStart(2, '0')}`;
 }
 
 export function splitGestureCommands(data: TimelineData, id: string, at: number, childId: string): EditCommand[] | undefined {
-  if (!literalStructuralSource(data, id) || !Number.isFinite(at)
-    || Math.abs(at * data.output.fps - Math.round(at * data.output.fps)) > 1e-6) return undefined;
-  const source = scopedGestureClipId(id);
-  return [{ op: 'timeline.split', select: source, args: { at },
-    created: [`parent/clip:${childId}`], expect: { [`${source}::`]: state(originalClip(data, id), true) } }];
+  const occurrence = Boolean(originalClip(data, id).app?.canonical);
+  const identity = occurrence ? occurrenceSplitIdentity(data, id) : undefined;
+  if ((occurrence ? !identity : !literalStructuralSource(data, id)) || !Number.isFinite(at)
+    || !Number.isFinite(data.output.fps) || data.output.fps <= 0
+    || Math.abs(at * data.output.fps - Math.round(at * data.output.fps)) > 1e-6
+    || childId !== structuralChildId(data, id)) return undefined;
+  const source = identity ? `occurrence:${identity.occurrenceId}/clip:${identity.sourceClipId}` : scopedGestureClipId(id);
+  return [{ op: 'timeline.split', select: source, ...(identity ? { resolved: [source] } : {}), args: { at },
+    created: [identity ? childId : `parent/clip:${childId}`],
+    expect: { [`${source}::`]: state(identity?.sourceClip ?? originalClip(data, id), true) } }];
 }
 
 export function duplicateGestureCommands(data: TimelineData, id: string, at: number, childId: string): EditCommand[] | undefined {

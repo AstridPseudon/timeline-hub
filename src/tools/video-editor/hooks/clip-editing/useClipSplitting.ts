@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { toast } from '@/shared/components/ui/toast.tsx';
 import { splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils.ts';
-import { splitGestureCommands, structuralChildId } from '../../commands/semanticGestures.ts';
+import { attachGestureCommands, gestureCommandsFor, occurrenceIdentityFor, splitGestureCommands, structuralChildId } from '../../commands/semanticGestures.ts';
 import type { ClipEditingContext } from './types.ts';
 
 export function useClipSplitting(ctx: ClipEditingContext) {
@@ -21,6 +21,11 @@ export function useClipSplitting(ctx: ClipEditingContext) {
       notifyPinnedGroupEditBlocked();
       return;
     }
+    const scopes = valid.map(id => occurrenceIdentityFor(current, id)?.occurrenceId ?? 'parent');
+    if (new Set(scopes).size > 1) {
+      toast.warning('Split selection must belong to one captured occurrence or parent');
+      return;
+    }
     let config = current.resolvedConfig;
     const editCommands = [];
     let selected: string | null = null;
@@ -36,10 +41,28 @@ export function useClipSplitting(ctx: ClipEditingContext) {
         return; // Whole-batch refusal: no partial visual or semantic edit.
       }
       config = split.config;
+      if (current.config.clips.find(clip => clip.id === id)?.app?.canonical) {
+        // Optimistic geometry is not a new canonical source identity. Until
+        // readback, this reserved scoped display ID cannot become a parent row.
+        config = { ...config, clips: config.clips.map(clip => {
+          if (clip.id !== child || !clip.app) return clip;
+          const app = { ...clip.app }; delete app.canonical;
+          return { ...clip, app };
+        }) };
+      }
       selected = child;
       editCommands.push(...commands);
     }
-    if (editCommands.length) applyConfigEdit(config, { selectedClipId: selected, semantic: true, editCommands });
+    if (editCommands.length) {
+      // Validate the entire captured scope before any local/history/save effect.
+      const probe = { ...current };
+      attachGestureCommands(probe, editCommands, current);
+      if (!gestureCommandsFor(probe)) {
+        toast.warning('Split requires one exact current occurrence or parent scope');
+        return;
+      }
+      applyConfigEdit(config, { selectedClipId: selected, semantic: true, editCommands });
+    }
   }, [applyConfigEdit, dataRef, getValidClipIds, isPinnedGroupMember, notifyPinnedGroupEditBlocked]);
 
   const handleSplitSelectedClip = useCallback(() => {

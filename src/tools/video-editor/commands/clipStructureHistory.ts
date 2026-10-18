@@ -211,9 +211,93 @@ export function isSelectedMediaCreation(command: EditCommand | undefined): boole
     && command.expect?.[`${child}::`]?.state === 'absent';
 }
 
+const occurrenceClipId = (value: unknown): value is string => scopedClipId(value) && value.startsWith('occurrence:');
+function isOccurrenceSplitBatch(commands: readonly EditCommand[]): boolean {
+  const sources = commands.map(call => call.select), children = commands.flatMap(call => call.created ?? []);
+  return commands.length > 0 && commands.every(call => call.op === 'timeline.split' && occurrenceClipId(call.select)
+    && call.resolved?.length === 1 && call.resolved[0] === call.select && Object.keys(call.args).length === 1
+    && typeof call.args.at === 'number' && Number.isFinite(call.args.at) && call.args.at >= 0
+    && wholeSource(call, call.select) && call.created?.length === 1 && occurrenceClipId(call.created[0])
+    && call.created[0].split('/clip:')[0] === call.select.split('/clip:')[0])
+    && new Set(sources.map(id => id!.split('/clip:')[0])).size === 1
+    && new Set(sources).size === commands.length && new Set(children).size === commands.length
+    && children.every(id => !sources.includes(id));
+}
+function isOccurrenceSplitInverse(call: EditCommand): boolean {
+  const writes = call.args.writes;
+  if (!Array.isArray(writes) || writes.length < 2 || !writes.every(record)
+    || !writes.every(write => occurrenceClipId(write.id) && Object.keys(write).length === 4
+      && ['id', 'path', 'before', 'after'].every(key => hasKey(write, key)) && tagged(write.before) && tagged(write.after))
+    || new Set(writes.map(write => String(write.id).split('/clip:')[0])).size !== 1
+    || new Set(writes.map(write => `${write.id}::${write.path}`)).size !== writes.length) return false;
+  const roots = writes.filter(write => write.path === '');
+  return roots.length > 0 && writes.length === roots.length * 2 && writes.every(write => {
+    const before = write.before as { state: string; value?: unknown }, after = write.after as { state: string; value?: unknown };
+    return write.path === '' ? before.state !== after.state && [before, after].every(state => state.state === 'absent'
+      || record(state.value) && state.value.id === String(write.id).split('/clip:')[1])
+      : ['hold', 'to'].includes(String(write.path)) && !roots.some(root => root.id === write.id)
+        && before.state === 'present' && after.state === 'present' && positive(before.value) && positive(after.value);
+  });
+}
+const hasKey = (value: object, key: string) => Object.prototype.hasOwnProperty.call(value, key);
+
+/** Occurrence structure history is bound to the entire accepted direct receipt.
+ * Validate source trim and copied child together; never synthesize an inverse
+ * from optimistic display geometry or accept a subset/foreign receipt.
+ */
+function occurrenceSplitInverse(commands: readonly EditCommand[], result: {
+  status: string; accepted_publication_id: string | null; change: { direct_writes: unknown[] }; canonical_document?: unknown;
+}): EditCommand | null | undefined {
+  const undo = commands.length === 1 && isClipStructureInverse(commands[0]) && isOccurrenceSplitInverse(commands[0]);
+  if (!undo && !isOccurrenceSplitBatch(commands)) return undefined;
+  if (result.status === 'no_change') return null;
+  if (result.status !== 'accepted' || !result.accepted_publication_id
+    || undo && result.accepted_publication_id === commands[0].args.publication) return undefined;
+  const writes = result.change.direct_writes;
+  if (!Array.isArray(writes) || writes.length !== (undo ? (commands[0].args.writes as unknown[]).length : commands.length * 2)
+    || writes.some(write => !record(write) || Object.keys(write).length !== 4
+      || !['id', 'path', 'before', 'after'].every(key => hasKey(write, key)) || !tagged(write.before) || !tagged(write.after))
+    || new Set(writes.map(write => `${(write as Record<string, unknown>).id}::${(write as Record<string, unknown>).path}`)).size !== writes.length) return undefined;
+  if (undo) {
+    const expected = commands[0].args.writes as Array<Record<string, unknown>>;
+    if (!writes.every(write => expected.some(row => equal(row, write)))) return undefined;
+  } else for (const call of commands) {
+    const source = (call.expect![`${call.select}::`] as { state: 'present'; value: Record<string, unknown> }).value;
+    const field = hasKey(source, 'hold') ? 'hold' : 'to';
+    const trim = writes.find(write => record(write) && write.id === call.select && write.path === field) as HoldWrite | undefined;
+    const child = writes.find(write => record(write) && write.id === call.created![0] && write.path === '') as HoldWrite | undefined;
+    if (!trim || !child || !equal(trim.before, { state: 'present', value: source[field] })
+      || trim.after.state !== 'present' || !positive(trim.after.value) || Number(trim.after.value) >= Number(source[field])
+      || child.before.state !== 'absent' || child.after.state !== 'present' || !record(child.after.value)) return undefined;
+    const speed = typeof source.speed === 'number' ? source.speed : 1;
+    const start = typeof source.from === 'number' ? source.from : 0;
+    if (!positive(speed) || typeof source.at !== 'number') return undefined;
+    const left = (Number(trim.after.value) - (field === 'to' ? start : 0)) / speed;
+    const document = result.canonical_document;
+    const placements = record(document) && Array.isArray(document.placements) ? document.placements : [];
+    const owners = placements.filter(row => record(row) && `occurrence:${row.occurrence_id}/clip:${source.id}` === call.select);
+    if (owners.length !== 1) return undefined;
+    const owner = owners[0] as Record<string, unknown>;
+    const startMs = owner.at_ms ?? (record(owner.placement) ? owner.placement.start_ms : undefined);
+    if (left <= 0 || typeof startMs !== 'number' || !Number.isFinite(startMs)
+      || Math.abs(startMs / 1000 + source.at + left - Number(call.args.at)) > 1e-6) return undefined;
+    const round = (value: number) => Math.round(value * 1e6) / 1e6;
+    const expected = { ...source, id: call.created![0].split('/clip:')[1], at: round(source.at + left),
+      ...(field === 'hold' ? { hold: round(Number(source.hold) - Number(trim.after.value)) } : { from: trim.after.value }) };
+    if (!equal(child.after.value, expected)) return undefined;
+  }
+  const inverse: EditCommand = { op: 'timeline.inverse', select: null, args: { publication: result.accepted_publication_id,
+    writes: writes.map(value => { const write = value as HoldWrite;
+      return { ...structuredClone(write), before: structuredClone(write.after), after: structuredClone(write.before) };
+    }) } };
+  if (!isClipStructureInverse(inverse)) return undefined;
+  validateEditCommand(inverse); return inverse;
+}
+
 /** Existing literal split/clone, selected-media creation and empty-track removal. */
 export function isClipStructureBatch(commands: readonly EditCommand[]): boolean {
   if (!commands.length) return false;
+  if (isOccurrenceSplitBatch(commands)) return true;
   if (commands.length === 1 && overhangHoldExpectedWrites(commands[0])) return true;
   if (isShotGroupDeletionBatch(commands)) return true;
   if (commands.length === 1 && isSelectedMediaCreation(commands[0])) return true;
@@ -267,6 +351,7 @@ export function isClipStructureInverse(command: EditCommand | undefined): boolea
     || Object.keys(command.args).length !== 2 || typeof command.args.publication !== 'string' || !command.args.publication
     || !Array.isArray(command.args.writes) || !command.args.writes.length) return false;
   const writes = command.args.writes;
+  if (isOccurrenceSplitInverse(command)) return true;
   if (writes.every(record) && isGroupDeletionInverse(command)) return true;
   const tracks = writes.every((write: unknown) => record(write) && trackId(write.id));
   if (!writes.every((write: unknown) => record(write) && (tracks ? trackId(write.id) : clipId(write.id))
@@ -285,8 +370,9 @@ export function isShotGroupDeletionInverse(command: EditCommand | undefined): bo
 }
 
 export function clipStructureInverse(commands: readonly EditCommand[], result: {
-  status: string; accepted_publication_id: string | null; change: { direct_writes: unknown[] };
+  status: string; accepted_publication_id: string | null; change: { direct_writes: unknown[] }; canonical_document?: unknown;
 }): EditCommand | null | undefined {
+  if (isOccurrenceSplitBatch(commands) || commands.length === 1 && isClipStructureInverse(commands[0]) && isOccurrenceSplitInverse(commands[0])) return occurrenceSplitInverse(commands, result);
   if (commands.length === 1 && (commands[0].op === 'clip.overhang-to-hold' || isOverhangHoldInverse(commands[0]))) return overhangHoldInverse(commands[0], result);
   const undo = commands.length === 1 && isClipStructureInverse(commands[0]);
   if (!undo && !isClipStructureBatch(commands)) return undefined;

@@ -9032,3 +9032,206 @@ describe('W46 selected generation clone source preparation', () => {
     expect(history).not.toHaveBeenCalled(); expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]); h.unmount();
   });
 });
+
+// This leaf exercises the mounted popup against the current SDK with a private
+// synthetic acceptance port. It makes no live Runtime/Host acceptance claim.
+function popupSplitSource(initial: TimelineData, requests: CommitRequest[], stale = false) {
+  return JSON.parse(execFileSync(process.env.ASTRID_TEST_PYTHON!, ['-B', '-c', `
+import copy,json,os,sys,tempfile
+from pathlib import Path
+sdk=Path(os.environ['ASTRID_CHECKOUT']);sys.path[:0]=[str(sdk),str(sdk/'tests/sdk')]
+from test_timeline_commit import Port
+from astrid.core.timeline import scene_answers
+from astrid.sdk.timeline.checkout import Checkout
+from astrid.sdk.timeline.commit import RuntimeCommitService
+from astrid.sdk.timeline.identity import retain_cut_reservations
+class Answers:
+ def query_scene(self,*,revision_digest,scene,frames):
+  return [dict(frame=f,coverage='COVERED',content='CONTENT',findings=[],layers=[]) for f in frames]
+scene_answers._client=lambda:Answers()
+Checkout._native_outline_integrity=lambda *args:None
+value=json.load(sys.stdin);config=copy.deepcopy(value['config']);clips=config.pop('clips')
+identities=[clip['app']['canonical'] for clip in clips]
+fixture=json.loads((sdk/'tests/fixtures/timeline_editing/tiny_publishable.json').read_text())
+internal=dict(tracks=config['tracks'],clips=[row['sourceClip'] for row in identities],registry=value['registry'])
+for shot in ['A','B']:
+ fixture['shots'][shot].update(shot_id=shot,payload={'name':shot},base_payload={'name':shot},internal_timeline=copy.deepcopy(internal),base_internal_timeline=copy.deepcopy(internal))
+fixture['placements']=[dict(shot_id=shot,occurrence_id='occ-'+shot,placement=dict(start_ms=offset),duration_ms=10000) for shot,offset in [('A',value['occurrenceStartMs']),('B',value['occurrenceStartMs']+10000)]]
+fixture['source_mapping']['shots']['A'].update(revision_id=identities[0]['revisionId'],internal_timeline_revision_id=identities[0]['internalTimelineRevisionId'])
+fixture['parent']=dict(config=config,clips=[dict(id='parent-sentinel',at=0,hold=0.5,track='V1',app={'opaque':[None,False]})],registry=value['registry'])
+retain_cut_reservations(fixture)
+tl=Checkout(fixture);tl.resolve();before=copy.deepcopy(tl.document());document=before
+if value['stale']: document['shots']['A']['internal_timeline']['clips'][0]['opacity']=0.77
+results=[];seen={};counts=[];replays=[];documents=[]
+class Service(RuntimeCommitService):
+ @staticmethod
+ def _load_revision(port,request,revision):return copy.deepcopy(document)
+class CallerPort(Port):
+ def accept(self,prepared):
+  response=super().accept(prepared);result=response['stored_result']
+  if result['status']=='accepted':result.update(accepted_revision_id='parent-r'+str(len(results)+2),accepted_publication_id='pub-parent-r'+str(len(results)+2))
+  self.saved['result']=copy.deepcopy(result);return response
+service=Service()
+for request in value['requests']:
+ if request['request_id'] in seen:
+  old,result=seen[request['request_id']];assert old==request;replays.append(True);continue
+ port=CallerPort(request);port.current=request['base_revision_id']
+ result=service.commit(request,port)
+ assert result['status'] in {'accepted','conflict','refused','no_change'},result
+ assert service.commit(request,port)==result
+ counts.append(len(port.accepts));assert len(port.accepts)==(1 if result['status'] in {'accepted','no_change'} else 0)
+ if result['status']=='accepted':document=copy.deepcopy(result['canonical_document'])
+ results.append(result);documents.append(copy.deepcopy(document));seen[request['request_id']]=(copy.deepcopy(request),copy.deepcopy(result))
+ assert document['parent']==before['parent']
+ assert document['shots']['B']==before['shots']['B']
+ with tempfile.TemporaryDirectory(dir=os.environ['TMPDIR']) as directory:
+  saved=Path(directory)/'split.json';Checkout(copy.deepcopy(document)).save(saved,quiet=True)
+  assert Checkout.load(saved).document()==document
+if len(results)>1:assert documents[1]==before,('undo mismatch',documents[1],before)
+if len(results)>2:assert documents[2]==documents[0],('redo mismatch',documents[2],documents[0])
+print(json.dumps(dict(before=before,result=result,results=results,documents=documents,accept_counts=counts,replays=replays,reload=True,source=str(sdk))))
+`], { input: JSON.stringify({ config: initial.config, registry: initial.registry, requests, stale, occurrenceStartMs: Math.round((initial.config.clips[0].at! - Number((initial.config.clips[0].app!.canonical as CanonicalClipIdentity).sourceClip!.at)) * 1000) }), encoding: 'utf8', env: process.env })) as ReturnType<typeof fadeSource> & { documents: unknown[]; reload: boolean; replays: boolean[] };
+}
+function mountPopupSplit(h: Awaited<ReturnType<typeof setup>>, initial: TimelineData, at = 2) {
+  const id = initial.config.clips[0].id;
+  return render(<ClipAction action={initial.rows.flatMap(row => row.actions).find(action => action.id === id)!}
+    clipMeta={initial.meta[id]} isSelected={true} isPrimary={true} selectedClipIds={[id]} isVideoClip={true} clipWidth={180}
+    onSelect={vi.fn()} onSplitHere={(clipId, clientX) => { expect(clientX).toBe(120); h.result.current.editing.handleSplitClipAtTime(clipId, at); }} />,
+  { wrapper: h.wrapper });
+}
+async function clickPopupSplit(view: ReturnType<typeof mountPopupSplit>, initial: TimelineData) {
+  fireEvent.contextMenu(view.container.querySelector(`[data-clip-id="${initial.config.clips[0].id}"]`)!, { clientX: 120 });
+  fireEvent.click(await screen.findByText('Split Here'));
+}
+function capturePopupSplit(name: string, value: unknown) {
+  if (process.env.E_POPUP_SPLIT_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_POPUP_SPLIT_EVIDENCE_DIR, name + '.json'), JSON.stringify(value, null, 2));
+}
+describe('popup occurrence Split Here', () => {
+  it.each(['hold', 'media', 'reserved-child', 'offset'] as const)('%s mounted acceptance reload Undo receipt-derived Redo and byte-identical retry', async kind => {
+    let initial = await fadeHistoryData(true, 'absent');
+    if (kind === 'media') {
+      const clip = initial.config.clips[0], source: Record<string, unknown> = { ...(clip.app!.canonical as CanonicalClipIdentity).sourceClip, from: 2, to: 6, speed: 2, clipType: 'media' };
+      delete source.hold;
+      initial = await buildTimelineData({ ...initial.config, clips: [{ ...source, id: clip.id,
+        app: { canonical: { ...(clip.app!.canonical as CanonicalClipIdentity), sourceClip: source } } }, { ...initial.config.clips[1], at: 0, hold: 0.5,
+          app: { canonical: { ...(initial.config.clips[1].app!.canonical as CanonicalClipIdentity), sourceClip: { ...(initial.config.clips[1].app!.canonical as CanonicalClipIdentity).sourceClip, at: 0, hold: 0.5 } } } }] } as never,
+      initial.registry, undefined, 1, undefined, initial.head);
+    }
+    if (kind === 'reserved-child') {
+      const clip = initial.config.clips[1], source = { ...(clip.app!.canonical as CanonicalClipIdentity).sourceClip, id: 'clip-1-01', at: 7 };
+      initial = await buildTimelineData({ ...initial.config, clips: [...initial.config.clips, { ...clip, id: 'reserved-display', at: 7,
+        app: { canonical: { ...(clip.app!.canonical as CanonicalClipIdentity), sourceClipId: source.id, sourceClip: source } } }] } as never,
+      initial.registry, undefined, 1, undefined, initial.head);
+    }
+    if (kind === 'offset') initial = await buildTimelineData({ ...initial.config,
+      clips: initial.config.clips.map(clip => ({ ...clip, at: clip.at! + 5 })) }, initial.registry, undefined, 1, undefined, initial.head);
+    const at = kind === 'offset' ? 7 : 2;
+    const requests: CommitRequest[] = []; let proof!: ReturnType<typeof popupSplitSource>;
+    let release!: () => void; const held = new Promise<void>(resolve => { release = resolve; });
+    const h = await setup(async (request, attempt) => {
+      requests.push(request); proof = popupSplitSource(initial, requests);
+      capturePopupSplit(kind, { requests, proof });
+      if (attempt === 1) { await held; return { acceptedResult: proof.result, loseSuccess: true }; }
+      return { acceptedResult: proof.result };
+    }, false, initial, at, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h), view = mountPopupSplit(h, initial, at);
+    await clickPopupSplit(view, initial);
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    expect(history.result.current.canUndo).toBe(false); act(() => history.result.current.undo());
+    expect(h.requests).toHaveLength(1); release();
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expect(h.requests).toHaveLength(2); expect(h.requests[1].bytes).toBe(h.requests[0].bytes);
+    expect(h.requests[1].headers).toEqual(h.requests[0].headers);
+    const forward = h.requests[0].request, call = (forward.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands[0];
+    expect(forward).toMatchObject({ project_id: 'gesture-project', timeline_id: 'gesture-timeline', base_revision_id: 'parent-r1',
+      scope: { target: 'occurrence:occ-A', content: 'this-occurrence', shot_id: 'A', shot_revision_id: 'shot-r1', internal_revision_id: 'internal-r1' } });
+    expect(call).toEqual({ op: 'timeline.split', select: 'occurrence:occ-A/clip:clip-1', resolved: ['occurrence:occ-A/clip:clip-1'],
+      args: { at }, created: [`occurrence:occ-A/clip:clip-1-${kind === 'reserved-child' ? '02' : '01'}`],
+      expect: { 'occurrence:occ-A/clip:clip-1::': { state: 'present', value: (initial.config.clips[0].app!.canonical as CanonicalClipIdentity).sourceClip } } });
+    expect(proof.result.status).toBe('accepted'); expect(proof.accept_counts).toEqual([1]); expect(proof.replays).toEqual([true]);
+    expect(proof.reload).toBe(true); expect(h.readbackHeads).toEqual(['parent-r2']);
+    expect(h.getCurrentConfig()).toEqual(appKeyframeParentConfig(proof.documents[0]));
+    const forwardDocument = structuredClone(proof.documents[0]), forwardReceipt = structuredClone(proof.result);
+    // Malformed copies of this actual receipt must never register native history.
+    for (const variant of ['foreign', 'extra', 'missing', 'duplicate', 'malformed', 'wrong-before', 'wrong-child', 'wrong-point'] as const) {
+      const bad = structuredClone(forwardReceipt), writes = bad.change.direct_writes;
+      if (variant === 'foreign') writes[0].id = 'occurrence:foreign/clip:clip-1';
+      if (variant === 'extra') writes.push({ ...structuredClone(writes[0]), path: 'opacity' });
+      if (variant === 'missing') writes.pop();
+      if (variant === 'duplicate') writes[1] = structuredClone(writes[0]);
+      if (variant === 'malformed') writes[0].before = { state: 'present' } as never;
+      if (variant === 'wrong-before') writes.find(write => write.path !== '')!.before = { state: 'present', value: 99 };
+      if (variant === 'wrong-child') (writes.find(write => write.path === '')!.after as { value: Record<string, unknown> }).value.asset = 'foreign';
+      if (variant === 'wrong-point') {
+        const source = (call.expect!['occurrence:occ-A/clip:clip-1::'] as { value: Record<string, unknown> }).value;
+        const trim = writes.find(write => write.path !== '')!, child = (writes.find(write => write.path === '')!.after as { value: Record<string, unknown> }).value;
+        const end = (Number((trim.before as { value: number }).value) + Number((trim.after as { value: number }).value)) / 2;
+        trim.after = { state: 'present', value: end };
+        child.at = Number(source.at) + (end - (trim.path === 'to' ? Number(source.from ?? 0) : 0)) / Number(source.speed ?? 1);
+        if (trim.path === 'hold') child.hold = Number(source.hold) - end; else child.from = end;
+      }
+      expect(clipStructureInverse([call], bad), variant).toBeUndefined();
+    }
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true)); act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    const inverse = (h.requests[2].request.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands[0];
+    expect(inverse).toEqual({ op: 'timeline.inverse', select: null, args: { publication: 'pub-parent-r2',
+      writes: forwardReceipt.change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })) } });
+    expect(proof.documents[1]).toEqual(proof.before);
+    const inverseReceipt = structuredClone(proof.result);
+    const badUndo = structuredClone(inverseReceipt); badUndo.change.direct_writes.pop();
+    expect(clipStructureInverse([inverse], badUndo)).toBeUndefined();
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true)); act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect((h.requests[3].request.change as { commands: unknown[] }).commands).toEqual([{ op: 'timeline.inverse', select: null,
+      args: { publication: 'pub-parent-r3', writes: inverseReceipt.change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })) } }]);
+    expect(proof.documents[2]).toEqual(forwardDocument); expect(proof.accept_counts).toEqual([1, 1, 1]); expect(proof.reload).toBe(true);
+    expect(h.readbackHeads).toEqual(['parent-r2', 'parent-r3', 'parent-r4']); expect(h.compatibilityRequests).toEqual([]);
+    view.unmount(); history.unmount(); h.unmount();
+  }, 60_000);
+  it.each(['refused', 'foreign', 'extra', 'malformed'] as const)('%s actual receipt never enables mounted Undo or Redo', async variant => {
+    const initial = await fadeHistoryData(true, 'absent'), requests: CommitRequest[] = [];
+    const h = await setup(async request => {
+      requests.push(request);
+      const proof = popupSplitSource(initial, requests, variant === 'refused');
+      const result = structuredClone(proof.result);
+      if (variant === 'foreign') result.change.direct_writes[0].id = 'occurrence:foreign/clip:clip-1';
+      if (variant === 'extra') result.change.direct_writes.push({ ...structuredClone(result.change.direct_writes[0]), path: 'opacity' });
+      if (variant === 'malformed') result.change.direct_writes[0].before = { state: 'present' } as never;
+      capturePopupSplit('receipt-' + variant, { requests, proof, delivered: result });
+      return { acceptedResult: result };
+    }, false, initial, 2, undefined, undefined, initial.config.clips[0].id);
+    const history = mountFadeHistory(h), view = mountPopupSplit(h, initial);
+    await clickPopupSplit(view, initial);
+    await waitFor(() => expect(variant === 'refused' ? h.result.current.persistence.saveStatus : h.savedSeqRef.current).toBe(variant === 'refused' ? 'error' : 1), { timeout: 20_000 });
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    act(() => { history.result.current.undo(); history.result.current.redo(); });
+    expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
+    view.unmount(); history.unmount(); h.unmount();
+  }, 30_000);
+  it.each(['tied', 'legacy tied', 'grouped', 'animated', 'timed words', 'hold-range', 'ambiguous', 'malformed', 'stale-head', 'stale-pin', 'subframe', 'cross-occurrence'] as const)(
+    '%s refuses before local history draft or network effects', async kind => {
+      const initial = await fadeHistoryData(true, 'absent'), first = initial.config.clips[0];
+      const identity = first.app!.canonical as CanonicalClipIdentity, source = identity.sourceClip as Record<string, unknown>;
+      if (kind === 'tied') source.app = { astrid: { on: '"hello"' } };
+      if (kind === 'legacy tied') source.app = { on: '"hello"' };
+      if (kind === 'grouped') initial.config.pinnedShotGroups = [{ shotId: 'A', trackId: 'V1', clipIds: [identity.sourceClipId!], mode: 'images', ownerOccurrenceId: 'occ-A' }];
+      if (kind === 'animated') source.keyframes = {};
+      if (kind === 'timed words') source.app = { astrid: { words: [[0, 0.5, 'before'], [1, 1.5, 'after']] } };
+      if (kind === 'hold-range') source.from = 0;
+      if (kind === 'ambiguous') initial.config.clips.push({ ...first, id: 'other-display' });
+      if (kind === 'malformed') delete (identity as { sourceClipId?: string }).sourceClipId;
+      if (kind === 'stale-head') (identity as { headRevisionId: string }).headRevisionId = 'old';
+      if (kind === 'stale-pin') (identity as { revisionId: string }).revisionId = 'old';
+      if (kind === 'cross-occurrence') (initial.config.clips[1].app!.canonical as { occurrenceId: string }).occurrenceId = 'occ-B';
+      const h = await setup(undefined, false, initial, 2, undefined, undefined, first.id), history = mountFadeHistory(h);
+      const draft = vi.spyOn(draftStorage, 'saveTimelineDraft'), before = structuredClone(h.result.current.data!.config);
+      const view = mountPopupSplit(h, initial, kind === 'subframe' ? 2.001 : 2);
+      if (kind === 'cross-occurrence') act(() => h.result.current.editing.handleSplitClipsAtPlayhead(initial.config.clips.map(clip => clip.id)));
+      else await clickPopupSplit(view, initial);
+      expect(h.result.current.data!.config).toEqual(before); expect(h.result.current.editSeqRef.current).toBe(0);
+      expect(h.savedSeqRef.current).toBe(0); expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]);
+      expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false); expect(draft).not.toHaveBeenCalled();
+      view.unmount(); history.unmount(); h.unmount();
+    });
+});
