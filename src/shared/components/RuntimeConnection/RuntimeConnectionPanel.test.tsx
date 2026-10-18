@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import type { RuntimeNotReadyReason } from '@/integrations/runtime/connection.ts';
 import { RuntimeConnectionPanel } from './RuntimeConnectionPanel.tsx';
@@ -13,8 +13,14 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const CHROME = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 const EDGE = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0';
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+
+// jsdom's own user agent names the host OS ("(darwin)" on a Mac), which reads as a phone: every case starts on desktop Chrome.
+beforeEach(() => {
+  vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(CHROME);
+});
 
 function panel(connection: RuntimeConnectionValue) {
   return render(<RuntimeConnectionPanel connection={connection} />);

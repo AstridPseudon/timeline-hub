@@ -119,6 +119,16 @@ function renderLayout() {
 }
 
 describe('Layout on the hosted build', () => {
+  // jsdom's own user agent names the host OS ("(darwin)" on a Mac), which reads as a phone: start on desktop Chrome.
+  beforeEach(() => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    );
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('holds the shell behind the Runtime gate: LayoutShell hooks never run while the Runtime is unreachable', async () => {
     globalPaneShortcutsMock.mockClear();
     const permissions = { query: vi.fn(async () => ({ state: 'granted', onchange: null })) };
