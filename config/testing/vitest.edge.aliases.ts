@@ -19,6 +19,7 @@ export function buildEdgeAliasMap(mocksDir: string): Record<string, string> {
     '@banodoco/timeline-composition/theme-api': path.resolve(projectRoot, 'vendor/timeline-composition/typescript/src/theme-api.ts'),
     '@banodoco/timeline-composition': path.resolve(projectRoot, 'vendor/timeline-composition'),
     '@banodoco/timeline-schema': path.resolve(projectRoot, 'vendor/timeline-schema/typescript/dist/src/index.js'),
+    [`${ESM}/ajv@6.12.6`]: path.resolve(projectRoot, 'node_modules/ajv'),
     [`${DENO_STD}@0.224.0/http/server.ts`]: mockPath(mocksDir, 'denoHttpServer.ts'),
     [`${DENO_STD}@0.177.0/http/server.ts`]: mockPath(mocksDir, 'denoHttpServer.ts'),
     [`${DENO_STD}@0.168.0/http/server.ts`]: mockPath(mocksDir, 'denoHttpServer.ts'),

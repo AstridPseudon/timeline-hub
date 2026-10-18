@@ -1,6 +1,7 @@
 // deno-lint-ignore-file
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import { TimelineConfig as TimelineConfigSchema } from "@banodoco/timeline-schema";
+import Ajv from "https://esm.sh/ajv@6.12.6";
+import timelineJsonSchema from "../../../vendor/timeline-schema/typescript/dist/timeline.schema.json" with { type: "json" };
 import {
   serializeTimelineConfigSnapshot,
   serializeTimelinePair,
@@ -18,6 +19,24 @@ import type {
   TimelineImportBody,
   TimelineImportResponseBody,
 } from "./types.ts";
+
+// Unknown keys are the canonical domain validator's job: it names them with structured
+// per-path issues (unexpected_clip_key, ...), which a generic schema error would hide. The shape
+// check therefore keeps the vendored schema's types and required fields but not its closed objects.
+function withoutClosedObjects(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(withoutClosedObjects);
+  if (node && typeof node === "object") {
+    return Object.fromEntries(
+      Object.entries(node as Record<string, unknown>)
+        .filter(([key, value]) => !(key === "additionalProperties" && value === false))
+        .map(([key, value]) => [key, withoutClosedObjects(value)]),
+    );
+  }
+  return node;
+}
+
+// Compiled once per isolate from the vendored canonical schema (the TS package only ships types).
+const validateTimelineShape = new Ajv({ allErrors: true }).compile(withoutClosedObjects(timelineJsonSchema) as object);
 
 interface Logger {
   info(message: string, context?: Record<string, unknown>): void;
@@ -97,18 +116,19 @@ export async function handleTimelineImport(
       ? Math.trunc(expectedVersionRaw)
       : null;
 
-  // Shape-validate the timeline against the canonical Zod schema before
+  // Shape-validate the timeline against the canonical JSON Schema before
   // doing anything else. Reigh's runtime treats unknown clipTypes with the
   // loud-placeholder fallback, so we purposely do NOT enforce the strict
   // effect-id registry here — that's the authoring surface's job.
-  const parsed = TimelineConfigSchema.safeParse(body.timeline);
-  if (!parsed.success) {
+  if (!validateTimelineShape(body.timeline)) {
     return {
       status: 400,
       body: {
         ok: false,
         error: "timeline payload failed schema validation",
-        details: parsed.error.message,
+        details: (validateTimelineShape.errors ?? [])
+          .map((issue: { dataPath?: string; message?: string }) => `${issue.dataPath ?? ""} ${issue.message ?? ""}`.trim())
+          .join("; "),
       },
     };
   }
