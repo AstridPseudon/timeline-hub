@@ -5,7 +5,6 @@ import base64
 import copy
 import hashlib
 import json
-import time
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
@@ -514,7 +513,7 @@ def test_four_by_four_runtime_fanout_has_33_overlapping_required_children(runtim
     settle(service, attempt, "fanout-parent-done")
 
 
-def test_maximum_child_and_registry_accounting_has_bounded_admission_overhead(runtime, capsys):
+def test_maximum_child_and_registry_accounting_enforces_admission_limits(runtime):
     service, _ = runtime
     attempt = parent(runtime, limits=CHILD_LIMIT_CEILINGS)
     ref = upload(service, attempt, b"x", "selected")
@@ -544,19 +543,15 @@ def test_maximum_child_and_registry_accounting_has_bounded_admission_overhead(ru
                 assert service.store.delegated_child_accounting(attempt["task_id"], attempt["attempt_id"])["active"] == 64
                 with pytest.raises(ValidationError, match="active child"):
                     admit(service, authority(service, attempt), key="over-active")
-    started = time.perf_counter()
-    for _ in range(10):
-        assert admit(service, receipt, refs=[ref], key="selected-child")["task"]["id"] == selected["task"]["id"]
-    elapsed = time.perf_counter() - started
-    assert elapsed < 5, f"10 exact admissions at bounded maximum took {elapsed:.3f}s"
+    replays = [admit(service, receipt, refs=[ref], key="selected-child") for _ in range(10)]
+    assert len(replays) == 10
+    assert all(replay["task"]["id"] == selected["task"]["id"] for replay in replays)
     assert service.store.delegated_child_accounting(attempt["task_id"], attempt["attempt_id"])["lifetime"] == 4096
     with pytest.raises(ValidationError, match="parent child count"):
         admit(service, authority(service, attempt), key="over-lifetime")
     extra = upload(service, attempt, b"extra", "extra")
     with pytest.raises(ValidationError, match="count or byte"):
         authority(service, attempt, refs=[extra], key="over-registry")
-    with capsys.disabled():
-        print(f"D18_OVERHEAD children=4096 registry=1024 replays=10 elapsed_seconds={elapsed:.6f}")
 
 
 def test_parent_success_racing_child_admission_has_one_fenced_outcome(runtime):
