@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.astrid_checkout import astrid_checkout
+
 from runtime_protocol.errors import ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
@@ -34,11 +36,10 @@ def test_boundary_vectors_match_runtime_byte_for_byte():
 
 @pytest.mark.integration  # compares against a sibling Astrid checkout's copy of the vectors
 def test_shared_astrid_boundary_vectors_match_runtime_byte_for_byte():
-    fixture = os.environ.get("ASTRID_VISUAL_BOUNDARY_FIXTURE")
-    if not fixture or not Path(fixture).is_file():
-        pytest.skip("set ASTRID_VISUAL_BOUNDARY_FIXTURE to the Astrid checkout's visual-boundary-v1.json to compare")
+    fixture = Path(os.environ.get("ASTRID_VISUAL_BOUNDARY_FIXTURE") or astrid_checkout() / "tests/fixtures/visual-boundary-v1.json")
+    assert fixture.is_file(), f"Astrid's visual-boundary-v1.json is unavailable: {fixture}"
     vectors = _fixture(ROOT / "conformance/fixtures/visual-boundary-v1.json")
-    assert vectors == _fixture(Path(fixture))
+    assert vectors == _fixture(fixture)
 
 
 def test_historical_pinned_closure_metadata_is_labeled_and_digest_verified():
