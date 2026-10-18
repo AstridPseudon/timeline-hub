@@ -4480,7 +4480,7 @@ describe('selected move command completion', () => {
 });
 
 
-function selectedMoveSource(initial: TimelineData, requests: CommitRequest[], mediaRecord?: Record<string, unknown>) {
+function selectedMoveSource(initial: TimelineData, requests: CommitRequest[], mediaRecord?: Record<string, unknown>, syntheticSceneAnswers = false) {
   const python = process.env.ASTRID_TEST_PYTHON;
   if (!python) throw new Error('Set ASTRID_TEST_PYTHON to the qualified SDK test interpreter');
   return JSON.parse(execFileSync(python, ['-B', '-c', `
@@ -4491,6 +4491,13 @@ from astrid.sdk.timeline.checkout import Checkout
 from astrid.sdk.timeline import commands
 from astrid.sdk.timeline.chapter_storage import compile_candidate as compile_authoring_candidate
 value=json.load(sys.stdin)
+if value.get('syntheticSceneAnswers'):
+ # This family proves detached SDK commands/compiler/history, not native pixels.
+ # Reuse the same explicit scene-answer fixture as the owning SDK unit suite.
+ sys.path.insert(0,str(Path(os.environ['ASTRID_CHECKOUT'])/'tests/sdk'))
+ import pytest
+ from test_timeline_saved_publish import synthetic_scene_answers
+ synthetic_scene_answers.__wrapped__(pytest.MonkeyPatch())
 fixture=json.loads((Path(os.environ['ASTRID_CHECKOUT'])/'tests/fixtures/timeline_editing/tiny_publishable.json').read_text())
 fixture['parent']={'config':value['config'],'clips':value['config']['clips'],'registry':value['registry']}
 # Display-only projection metadata is never used as authored source.
@@ -4536,7 +4543,7 @@ if value.get('mediaRecord'):
  Path(os.environ['E_SELECTED_MOVE_EVIDENCE_DIR'],'add-media-sdk-diagnostic.json').write_text(json.dumps({'before':before,'documents':documents,'plans':plans}))
 if len(documents)>2:assert documents[2]==documents[0], 'redo document mismatch; exact documents in add-media-sdk-diagnostic.json'
 print(json.dumps({'plans':plans,'before':before,'documents':documents,'publications':publications,'journal':journal_count,'reload':True,'mediaReads':media_reads}))
-`], { input: JSON.stringify({ config: initial.config, registry: initial.registry, requests, mediaRecord }), encoding: 'utf8', env: process.env })) as {
+`], { input: JSON.stringify({ config: initial.config, registry: initial.registry, requests, mediaRecord, syntheticSceneAnswers }), encoding: 'utf8', env: process.env })) as {
     plans: Array<{ writes: CommitResult['change']['direct_writes']; calls: unknown[] }>;
     before: unknown; documents: unknown[]; publications: unknown[]; journal: number; reload: boolean; mediaReads: unknown[];
   };
@@ -5190,7 +5197,7 @@ describe('selected-media insertion native history', () => {
     if (registration === 'registered') initial = await buildTimelineData(initial.config, { assets: { ...initial.registry.assets, selected: registryEntry } }, undefined, 1, undefined, initial.head);
     const record = { ...detached, catalog_digest }; const requests: CommitRequest[] = []; let source!: ReturnType<typeof selectedMoveSource>;
     const h = await setup(async request => {
-      requests.push(request); source = selectedMoveSource(initial, requests, record);
+      requests.push(request); source = selectedMoveSource(initial, requests, record, true);
       const evidence = process.env.E_SELECTED_MOVE_EVIDENCE_DIR;
       if (evidence) writeFileSync(path.join(evidence, `add-media-${caller}-${kind}-${registration}.json`), JSON.stringify({ requests: h.requests, source, detachedAuthorityFixture: record }, null, 2));
       return { directWrites: source.plans.at(-1)!.writes };
