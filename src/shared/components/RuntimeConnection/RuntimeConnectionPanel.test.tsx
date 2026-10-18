@@ -42,7 +42,7 @@ function stubClipboard(writeText: (text: string) => Promise<void>) {
 const shownText = () => document.body.textContent ?? '';
 
 /** What a person must never read on these screens (the agent block is the only place for these words). */
-const ENGINEER_WORDS = /Astrid|Runtime|workspace|realm|gateway|loopback|127\.0\.0\.1|ACP|identity|discovery|profile|process|npm run|banodoco/;
+const ENGINEER_WORDS = /Runtime|workspace|realm|gateway|loopback|127\.0\.0\.1|ACP|identity|discovery|profile|process|npm run|banodoco/;
 
 const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
   ['permission', () => connectionFor({ status: 'cant_reach', firstTime: true }, { awaitingConnect: true })],
@@ -59,6 +59,7 @@ const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
 describe('RuntimeConnectionPanel', () => {
   it.each(ALL_SCREENS)('%s: speaks of Astrid and never names a Runtime, workspace, port or command', (_name, connection) => {
     panel(connection());
+    expect(shownText()).toMatch(/\bAstrid\b/);
     expect(shownText()).not.toMatch(ENGINEER_WORDS);
     expect(shownText()).not.toMatch(/\bport\b|\borigin\b/i);
   });
