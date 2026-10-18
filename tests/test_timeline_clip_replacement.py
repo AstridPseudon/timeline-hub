@@ -7,6 +7,8 @@ import sys
 import urllib.request
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
 from astrid_runtime_client import WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
