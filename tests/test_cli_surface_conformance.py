@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-BUNDLE = json.loads((ROOT / "public-boundary/bundle.json").read_text(encoding="utf-8"))
+BUNDLE = json.loads((ROOT / "schemas/public-boundary/bundle.json").read_text(encoding="utf-8"))
 SURFACE_PATH = ROOT / BUNDLE["files"]["cliSurface"]
 _DATA_ENV = (
     "BANODOCO_LOCAL_DATA_ROOT",

@@ -7,7 +7,7 @@ Coverage: the gateway's top-level command names (astrid.core.gateway.dispatch) a
 (projects, documents, preferences, media, tasks, runs, timelines incl. the nested shots/references mounts), every
 verb with its flags and positionals, walked from the parsers `FAMILY_PARSER_MODULES` builds. The operational
 commands (dev, doctor, backup, setup, status) build their parsers inline; they are listed by name only.
-The exported file is versioned together with diagnostics and behavioral fixtures by public-boundary/bundle.json.
+The exported file is versioned together with diagnostics and behavioral fixtures by schemas/public-boundary/bundle.json.
 """
 
 from __future__ import annotations

@@ -17,7 +17,7 @@ from astrid.core.gateway import diagnostics, main
 from scripts.reshape.ci_doctor import hermetic_env
 
 ROOT = Path(__file__).resolve().parents[1]
-BUNDLE = json.loads((ROOT / "public-boundary/bundle.json").read_text())
+BUNDLE = json.loads((ROOT / "schemas/public-boundary/bundle.json").read_text())
 
 
 def _artifact(name: str):
@@ -114,7 +114,7 @@ def test_bundle_members_are_published_as_one_version() -> None:
     assert BUNDLE["producer"] == "astrid-agent"
     assert BUNDLE["version"] == "1.0.0"
     manifest = json.loads((ROOT / "artifacts.json").read_text())["artifacts"]
-    assert "public-boundary/bundle.json" in manifest
+    assert "schemas/public-boundary/bundle.json" in manifest
     assert set(BUNDLE["files"].values()) <= set(manifest)
     Draft202012Validator.check_schema(VALIDATOR.schema)
     assert diagnostics.COMMAND_EFFECTS == {name: command["effects"] for name, command in COMMANDS.items()}

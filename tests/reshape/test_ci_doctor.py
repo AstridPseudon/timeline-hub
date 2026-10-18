@@ -18,7 +18,7 @@ def _failed_report() -> dict:
 
 def _report(name: str) -> dict:
     root = Path(__file__).resolve().parents[2]
-    bundle = json.loads((root / "public-boundary/bundle.json").read_text())
+    bundle = json.loads((root / "schemas/public-boundary/bundle.json").read_text())
     fixtures = json.loads((root / bundle["files"]["diagnostics"]).read_text())
     return next(case["expected"] for case in fixtures["cases"] if case["id"] == name)
 

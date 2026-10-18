@@ -21,8 +21,8 @@ PRODUCER = "astrid-agent"
 TOOL_CATALOG = "astrid/tools/catalog.json"
 PATTERNS = [
     "cli-surface.json",
-    "public-boundary/**/*.json",
-    "public-boundary/README.md",
+    "schemas/public-boundary/**/*.json",
+    "schemas/public-boundary/README.md",
     "LICENSE",
     TOOL_CATALOG,
     "astrid/packs/rendering/elements/catalog.ts",
