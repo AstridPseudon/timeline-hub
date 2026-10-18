@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
+from astrid.core.contracts.errors import AstridError, AstridValueError
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
 from astrid.packs.h3_av.actions.compile.compile import compile_preparation
 from astrid.packs.h3_av.shared.input_bundle import resolve_preparation_assets
@@ -32,7 +33,7 @@ def main(argv: list[str] | None = None) -> int:
         raise FileExistsError(f"result receipt already exists: {result_manifest_path}; use a fresh output root")
     preparation = json.loads(args.preparation.read_text(encoding="utf-8"))
     if not isinstance(preparation, dict):
-        raise ValueError("preparation must be a JSON object")
+        raise AstridValueError("preparation must be a JSON object")
     preparation = resolve_preparation_assets(
         preparation, args.input_bundle, args.out / "request-assets"
     )
@@ -49,13 +50,13 @@ def main(argv: list[str] | None = None) -> int:
         source = Path(result["workflow"][filename]["path"])
         destination = args.out / filename
         if not source.is_file():
-            raise RuntimeError(f"compiled workflow member {filename!r} is missing")
+            raise AstridError(f"compiled workflow member {filename!r} is missing")
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
         expected = result["workflow"][filename]["sha256"]
         actual = hashlib.sha256(destination.read_bytes()).hexdigest()
         if actual != expected:
-            raise RuntimeError(f"published workflow member {filename!r} failed hash verification")
+            raise AstridError(f"published workflow member {filename!r} failed hash verification")
         published[output_name] = str(destination)
     write_manifest(
         result_manifest_path,

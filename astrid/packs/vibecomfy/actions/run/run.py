@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from astrid.core.contracts.errors import AstridValueError
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 
 guard_canonical_entrypoint('vibecomfy.run')
@@ -108,26 +109,26 @@ def _source_video_input_directory(
         session = readiness_profile["vibecomfy_session"]
         raw_session_dir = session.get("session_dir")
         if not isinstance(raw_session_dir, str) or not raw_session_dir.strip():
-            raise ValueError("checkout_server readiness profile lacks session_dir")
+            raise AstridValueError("checkout_server readiness profile lacks session_dir")
         session_dir = Path(raw_session_dir).expanduser()
         config_path = session_dir / "config.json"
         try:
             config = json.loads(config_path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise ValueError("checkout_server session config is unreadable") from exc
+            raise AstridValueError("checkout_server session config is unreadable") from exc
         raw_input_directory = config.get("input_directory") if isinstance(config, dict) else None
         if not isinstance(raw_input_directory, str) or not raw_input_directory.strip():
-            raise ValueError("checkout_server session config lacks input_directory")
+            raise AstridValueError("checkout_server session config lacks input_directory")
         input_directory = Path(raw_input_directory).expanduser()
     else:
         input_directory = output_root.expanduser().resolve() / "engine-input"
     if not input_directory.is_absolute():
-        raise ValueError("Comfy input_directory must be absolute")
+        raise AstridValueError("Comfy input_directory must be absolute")
     if input_directory.is_symlink():
-        raise ValueError("Comfy input_directory must not be a symlink")
+        raise AstridValueError("Comfy input_directory must not be a symlink")
     input_directory.mkdir(parents=True, exist_ok=True)
     if not input_directory.is_dir():
-        raise ValueError("Comfy input_directory is not a directory")
+        raise AstridValueError("Comfy input_directory is not a directory")
     return input_directory
 
 
@@ -140,12 +141,12 @@ def _stage_source_video(
     """Copy one managed source video into Comfy input custody."""
     source = Path(source_video).expanduser()
     if source.is_symlink() or not source.is_file():
-        raise ValueError(f"source video is not a regular file: {source}")
+        raise AstridValueError(f"source video is not a regular file: {source}")
     source = source.resolve(strict=True)
     input_directory = _source_video_input_directory(readiness_profile, output_root)
     destination = input_directory / source.name
     if destination.exists() and destination.is_symlink():
-        raise ValueError(f"source video destination is a symlink: {destination}")
+        raise AstridValueError(f"source video destination is a symlink: {destination}")
     if destination.exists() and destination.read_bytes() != source.read_bytes():
         digest = hashlib.sha256(source.read_bytes()).hexdigest()[:16]
         destination = input_directory / f"{source.stem}-{digest}{source.suffix}"
@@ -158,9 +159,9 @@ def _workflow_inputs(value: str) -> dict[str, Any]:
     try:
         decoded = json.loads(value or "{}")
     except json.JSONDecodeError as exc:
-        raise ValueError("workflow inputs must be valid JSON") from exc
+        raise AstridValueError("workflow inputs must be valid JSON") from exc
     if not isinstance(decoded, dict) or any(not isinstance(name, str) or not name for name in decoded):
-        raise ValueError("workflow inputs must be a JSON object with non-empty string keys")
+        raise AstridValueError("workflow inputs must be a JSON object with non-empty string keys")
     return decoded
 
 
@@ -176,7 +177,7 @@ def _stage_managed_asset_manifest(
     try:
         resolved = read_archive(archive_path)
     except AssetManifestError as exc:
-        raise ValueError(str(exc)) from exc
+        raise AstridValueError(str(exc)) from exc
     for record in resolved.manifest["assets"]:
         member = str(record["member"])
         data = resolved.members[member]
@@ -184,7 +185,7 @@ def _stage_managed_asset_manifest(
         if destination.exists() and (
             destination.is_symlink() or destination.read_bytes() != data
         ):
-            raise ValueError(f"managed asset destination collision: {destination.name}")
+            raise AstridValueError(f"managed asset destination collision: {destination.name}")
         if not destination.exists():
             destination.write_bytes(data)
     return resolved
@@ -225,7 +226,7 @@ def _materialize_managed_generation_result(
     output_root = output_root.expanduser().resolve()
     envelope_path = Path(production_result.managed_generation_result_path).expanduser()
     if not envelope_path.is_file():
-        raise ValueError(f"managed-generation result is missing: {envelope_path}")
+        raise AstridValueError(f"managed-generation result is missing: {envelope_path}")
     producer_root = envelope_path.resolve().parent
     try:
         result = read_managed_generation_result(
@@ -235,7 +236,7 @@ def _materialize_managed_generation_result(
             expected_attempt_id=attempt_identity,
         )
     except ManagedGenerationResultError as exc:
-        raise ValueError(f"managed-generation result failed validation: {exc}") from exc
+        raise AstridValueError(f"managed-generation result failed validation: {exc}") from exc
     if any(
         result.outcomes[phase].status != expected
         for phase, expected in (
@@ -245,7 +246,7 @@ def _materialize_managed_generation_result(
             ("publication", "not_started"),
         )
     ):
-        raise ValueError("managed-generation result is not publishable")
+        raise AstridValueError("managed-generation result is not publishable")
 
     # Keep the neutral envelope in its own namespace, while placing the
     # host-owned output files under the existing one-level ``outputs``
@@ -261,12 +262,12 @@ def _materialize_managed_generation_result(
         try:
             source.relative_to(producer_root)
         except ValueError as exc:
-            raise ValueError(f"managed output escapes producer custody: {output.path}") from exc
+            raise AstridValueError(f"managed output escapes producer custody: {output.path}") from exc
         if not source.is_file() or source.is_symlink():
-            raise ValueError(f"managed output is not a regular file: {output.path}")
+            raise AstridValueError(f"managed output is not a regular file: {output.path}")
         destination = outputs_root / f"{output.ordinal:04d}-{output.output_port}{source.suffix}"
         if destination.exists():
-            raise ValueError(f"managed output destination collides: {destination.name}")
+            raise AstridValueError(f"managed output destination collides: {destination.name}")
         shutil.copy2(source, destination)
         rebased = output.to_dict()
         rebased["path"] = destination.relative_to(managed_root).as_posix()
@@ -286,7 +287,7 @@ def _materialize_managed_generation_result(
             expected_attempt_id=(attempt_identity or result.attempt_id),
         )
     except ManagedGenerationResultError as exc:
-        raise ValueError(f"rebased managed-generation result failed validation: {exc}") from exc
+        raise AstridValueError(f"rebased managed-generation result failed validation: {exc}") from exc
 
     envelope_ref = staged_envelope.relative_to(output_root).as_posix()
     durable_envelope = outputs_root / "managed-generation-result.json"
@@ -371,14 +372,14 @@ def _t9_child_dispatch(
             or profile_path == "-" or not Path(profile_path).is_absolute()
             or Path(profile_path).is_symlink() or path.resolve() != Path(profile_path).resolve()
             or not isinstance(readiness_profile, dict)):
-        raise ValueError("T9 child requires its exact paired Worker readiness profile")
+        raise AstridValueError("T9 child requires its exact paired Worker readiness profile")
     if any(not isinstance(value, str) or not value.strip() or value == "-"
            for value in (task_identity, attempt_identity, execution_identity)):
-        raise ValueError("T9 child requires task, attempt and execution identities")
+        raise AstridValueError("T9 child requires task, attempt and execution identities")
     profile_bytes = path.read_bytes()
     if (profile_hash != "sha256:" + hashlib.sha256(profile_bytes).hexdigest()
             or json.loads(profile_bytes) != readiness_profile):
-        raise ValueError("T9 child readiness profile differs from the paired Worker bytes")
+        raise AstridValueError("T9 child readiness profile differs from the paired Worker bytes")
     from astrid.packs.h3_av.shared import generation
 
     # Reuse the strict synthetic model/candidate/fixture inventory checks;
@@ -386,7 +387,7 @@ def _t9_child_dispatch(
     generation.character_swap_asset_sha256()
     root = Path(__file__).resolve().parents[5]
     if Path(generation.__file__).resolve().parents[4] != root:
-        raise ValueError("T9 child generation source belongs to another closure")
+        raise AstridValueError("T9 child generation source belongs to another closure")
     candidate_path = Path(os.environ["ASTRID_H3_CANDIDATE_MANIFEST"])
     candidate_bytes = candidate_path.read_bytes()
     candidate = json.loads(candidate_bytes)
@@ -396,7 +397,7 @@ def _t9_child_dispatch(
         source = root / relative
         if (source.is_symlink() or not source.is_file()
                 or source_files.get(relative) != hashlib.sha256(source.read_bytes()).hexdigest()):
-            raise ValueError("T9 child executor source differs from its candidate pin")
+            raise AstridValueError("T9 child executor source differs from its candidate pin")
     boundary = readiness_profile["t9_model_substitute"]
     fixture_path = generation._validated_synthetic_fixture_path(boundary, source_files)
     fixture_bytes = fixture_path.read_bytes()
@@ -404,16 +405,16 @@ def _t9_child_dispatch(
     if (boundary["source_path"] != str(fixture_path.resolve())
             or boundary["source_sha256"] != fixture_hash
             or boundary["candidate_manifest_sha256"] != hashlib.sha256(candidate_bytes).hexdigest()):
-        raise ValueError("T9 child fixture/candidate changed after validation")
+        raise AstridValueError("T9 child fixture/candidate changed after validation")
     bases = [Path(str(boundary.get(key, "")))
              for key in ("activation_marker_path", "calls_path", "evidence_path")]
     if any(not value.is_absolute() or value.is_symlink()
            or not value.parent.is_dir() or value.parent.resolve() != value.parent
            or (value.exists() and not value.is_file()) for value in bases):
-        raise ValueError("T9 child evidence paths must be canonical case-owned files")
+        raise AstridValueError("T9 child evidence paths must be canonical case-owned files")
     marker_base, calls_path, evidence_base = bases
     if len(set(bases)) != 3 or len({value.parent for value in bases}) != 1:
-        raise ValueError("T9 child evidence paths must be distinct siblings")
+        raise AstridValueError("T9 child evidence paths must be distinct siblings")
     token = hashlib.sha256(json.dumps(
         [task_identity, attempt_identity, execution_identity, os.getpid()],
         separators=(",", ":"),
@@ -421,7 +422,7 @@ def _t9_child_dispatch(
     marker_path = marker_base.with_name(marker_base.stem + "-" + token + marker_base.suffix)
     evidence_path = evidence_base.with_name(evidence_base.stem + "-" + token + evidence_base.suffix)
     if marker_path.exists() or marker_path.is_symlink() or evidence_path.exists() or evidence_path.is_symlink():
-        raise ValueError("T9 child activation/evidence already exists")
+        raise AstridValueError("T9 child activation/evidence already exists")
     from astrid.packs.vibecomfy import production_engine
 
     original = production_engine.run_workflow_result_path
@@ -430,15 +431,15 @@ def _t9_child_dispatch(
     try:
         exec(compile(fixture_bytes, str(fixture_path), "exec"), module.__dict__)
         if production_engine.run_workflow_result_path is not original:
-            raise ValueError("T9 fixture must export a local callable, not replace production dispatch")
+            raise AstridValueError("T9 fixture must export a local callable, not replace production dispatch")
     finally:
         production_engine.run_workflow_result_path = original
     run = getattr(module, "_stub_run", None)
     if (not callable(run) or getattr(module, "BOUNDARY_MODE", None) != boundary["mode"]
             or getattr(module, "BOUNDARY_PURPOSE", None) != boundary["purpose"]):
-        raise ValueError("T9 fixture exported an invalid boundary")
+        raise AstridValueError("T9 fixture exported an invalid boundary")
     if path.read_bytes() != profile_bytes:
-        raise ValueError("T9 child paired profile changed during fixture validation")
+        raise AstridValueError("T9 child paired profile changed during fixture validation")
     marker = {
         "schema_version": "h3-t9-child-activation.v1", "child_pid": os.getpid(),
         "task_id": task_identity, "attempt_id": attempt_identity, "execution_id": execution_identity,
@@ -472,23 +473,23 @@ def _run_and_settle(
 ) -> dict[str, Any]:
     """Run *workflow_path*, copy every engine result, and write its receipt."""
     if not isinstance(task_identity, str) or not task_identity.strip():
-        raise ValueError("host-issued task identity is required")
+        raise AstridValueError("host-issued task identity is required")
     from astrid.packs.vibecomfy import production_engine
 
     readiness_profile = None
     if (readiness_profile_path == "-") != (readiness_profile_hash == "-"):
-        raise ValueError("readiness profile path and hash must be supplied together")
+        raise AstridValueError("readiness profile path and hash must be supplied together")
     if readiness_profile_path != "-":
         try:
             profile_bytes = Path(readiness_profile_path).read_bytes()
             actual_hash = "sha256:" + hashlib.sha256(profile_bytes).hexdigest()
             if readiness_profile_hash != actual_hash:
-                raise ValueError("Worker readiness profile hash does not match")
+                raise AstridValueError("Worker readiness profile hash does not match")
             readiness_profile = json.loads(profile_bytes.decode("utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise ValueError("Worker readiness profile could not be read") from exc
+            raise AstridValueError("Worker readiness profile could not be read") from exc
         if not isinstance(readiness_profile, dict):
-            raise ValueError("Worker readiness profile must be an object")
+            raise AstridValueError("Worker readiness profile must be an object")
     profile_id = (
         "checkout_server"
         if isinstance(readiness_profile, dict)
@@ -508,7 +509,7 @@ def _run_and_settle(
                 workflow_input_bindings,
             )
         except AssetManifestError as exc:
-            raise ValueError(str(exc)) from exc
+            raise AstridValueError(str(exc)) from exc
     if source_video:
         source_video_name = _stage_source_video(
             source_video,
@@ -520,7 +521,7 @@ def _run_and_settle(
         # arguments caused the old path to mutate a sealed bundle after its
         # revision had been established.
         if "source_video" in workflow_input_bindings:
-            raise ValueError("source_video was supplied by more than one input path")
+            raise AstridValueError("source_video was supplied by more than one input path")
         workflow_input_bindings["source_video"] = source_video_name
     if "source_video" in workflow_input_bindings:
         from astrid.packs.vibecomfy.invocation_preflight import preflight_invocation
@@ -592,12 +593,12 @@ def _run_and_settle(
     output_root = output_root.expanduser().resolve()
     for ordinal, raw_path in enumerate(inventory):
         if not isinstance(raw_path, (str, Path)) or not str(raw_path):
-            raise ValueError(
+            raise AstridValueError(
                 f"VibeComfy artifact inventory entry {ordinal} is not a path"
             )
         raw_source = Path(raw_path).expanduser()
         if raw_source.is_symlink():
-            raise ValueError(
+            raise AstridValueError(
                 f"VibeComfy artifact inventory entry {ordinal} is a symlink"
             )
         source = raw_source.resolve()
@@ -606,13 +607,13 @@ def _run_and_settle(
                 f"VibeComfy artifact inventory entry {ordinal} escaped output custody: {source}"
             )
         if source.stat().st_nlink != 1:
-            raise ValueError(
+            raise AstridValueError(
                 f"VibeComfy artifact inventory entry {ordinal} is not privately owned"
             )
         sources.append(source)
 
     if not sources:
-        raise ValueError("VibeComfy workflow completed with an empty artifact inventory")
+        raise AstridValueError("VibeComfy workflow completed with an empty artifact inventory")
 
     artifacts_root = output_root / "artifacts"
     artifacts_root.mkdir(parents=True, exist_ok=True)

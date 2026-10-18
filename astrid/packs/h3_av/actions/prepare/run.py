@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from astrid.core.contracts.errors import AstridValueError
 import argparse
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,9 +31,9 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     result_manifest_path = args.out.parent / "manifest.json"
     if args.out.is_symlink():
-        raise ValueError("--out must not be a symbolic link")
+        raise AstridValueError("--out must not be a symbolic link")
     if args.out.name.casefold() == "manifest.json":
-        raise ValueError("--out must not use the reserved result receipt filename manifest.json")
+        raise AstridValueError("--out must not use the reserved result receipt filename manifest.json")
     # A reused receipt cannot certify this attempt, even if domain work fails.
     # Preserve stale bytes and require a fresh assigned output root.
     if result_manifest_path.exists() or result_manifest_path.is_symlink():

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import sys
 
+from astrid.core.contracts.errors import AstridValueError
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 
 guard_canonical_entrypoint('editorial.transcribe')
@@ -25,8 +26,6 @@ from astrid.core.cli_choices import add_choice_arg
 from astrid.core.contracts.errors import AstridError
 from astrid.core.foundation.hash import sha256_file
 from astrid.core.media import ffprobe_duration_seconds, require_runtime_materialized_file
-
-
 from astrid.packs.editorial.shared._common import load_api_key
 
 SILENCE_START_RE = re.compile(r"silence_start:\s*([0-9]+(?:\.[0-9]+)?)")
@@ -255,7 +254,7 @@ def write_transcripts(out_dir: Path, segments: list[dict[str, Any]], audit: Audi
     if asset_id is not None:
         asset_id = asset_id.strip()
         if not asset_id:
-            raise ValueError("asset_id must be a non-empty app media asset ID")
+            raise AstridValueError("asset_id must be a non-empty app media asset ID")
         transcript_document["assetId"] = asset_id
     json_path.write_text(json.dumps(transcript_document, indent=2), encoding="utf-8")
     srt_lines = [item for index, segment in enumerate(segments, start=1) for item in (str(index), f"{srt_timestamp(float(segment['start']))} --> {srt_timestamp(float(segment['end']))}", str(segment.get("text", "")), "")]

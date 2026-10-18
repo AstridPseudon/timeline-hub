@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from astrid.core.contracts.errors import AstridValueError
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
 
 guard_canonical_entrypoint('training.dataset_build')
@@ -156,11 +157,11 @@ def run_pipeline(
     if services.attempt_output_root is None:
         services.attempt_output_root = run_dir
     elif services.attempt_output_root != run_dir:
-        raise ValueError("injected attempt_output_root conflicts with the trusted dataset output root")
+        raise AstridValueError("injected attempt_output_root conflicts with the trusted dataset output root")
 
     source_provider_kwargs = dict(source_provider_kwargs or {})
     if "child_work_meter" in source_provider_kwargs:
-        raise ValueError("source configuration cannot replace the run-scoped child_work_meter")
+        raise AstridValueError("source configuration cannot replace the run-scoped child_work_meter")
     source_provider_kwargs["child_work_meter"] = services.child_work_meter
 
     dataset_id = str(config.get("dataset_id") or deterministic_id(parsed_config.path, config_hash(config), prefix="dataset"))

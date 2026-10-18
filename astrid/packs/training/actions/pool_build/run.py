@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from astrid.core.contracts.errors import AstridError
+from astrid.core.contracts.errors import AstridError, AstridValueError
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
 
 guard_canonical_entrypoint('training.pool_build')
@@ -34,7 +34,7 @@ def _entries_by_id(payload: dict[str, Any], key: str) -> dict[str, dict[str, Any
     else:
         entries = payload.get("candidates")
     if not isinstance(entries, list):
-        raise ValueError(f"{key} payload must contain a list")
+        raise AstridValueError(f"{key} payload must contain a list")
     mapping: dict[str, dict[str, Any]] = {}
     for entry in entries:
         if not isinstance(entry, dict):
@@ -48,7 +48,7 @@ def _entries_by_id(payload: dict[str, Any], key: str) -> dict[str, dict[str, Any
 def _segments(transcript: dict[str, Any] | list[dict[str, Any]]) -> list[dict[str, Any]]:
     segments = transcript.get("segments") if isinstance(transcript, dict) else transcript
     if not isinstance(segments, list):
-        raise ValueError("transcript must be a list or an object with segments")
+        raise AstridValueError("transcript must be a list or an object with segments")
     return segments
 
 
@@ -71,7 +71,7 @@ def build_pool(
     transcript_segments = _segments(transcript)
     quote_rows = quote_candidates.get("candidates")
     if not isinstance(quote_rows, list):
-        raise ValueError("quote_candidates must contain candidates")
+        raise AstridValueError("quote_candidates must contain candidates")
 
     counters: dict[str, int] = {}
     entries: list[dict[str, Any]] = []

@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from astrid.core.contracts.errors import AstridError, AstridValueError, render_astrid_error
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 
 guard_canonical_entrypoint("rendering.timeline_visualize")
@@ -14,7 +15,6 @@ import argparse
 import hashlib
 import json
 import os
-import sys
 import uuid
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -204,13 +204,13 @@ def _execution_authority_context() -> dict[str, Any] | None:
             try:
                 raw = authority_path.read_text(encoding="utf-8")
             except OSError as exc:
-                raise ValueError("timeline visualization execution authority handoff is unreadable") from exc
+                raise AstridValueError("timeline visualization execution authority handoff is unreadable") from exc
     try:
         value = json.loads(raw)
     except (TypeError, json.JSONDecodeError) as exc:
-        raise ValueError("timeline visualization execution authority is invalid JSON") from exc
+        raise AstridValueError("timeline visualization execution authority is invalid JSON") from exc
     if not isinstance(value, dict):
-        raise ValueError("timeline visualization execution authority must be an object")
+        raise AstridValueError("timeline visualization execution authority must be an object")
     return value
 
 
@@ -340,28 +340,28 @@ def _parse_time(value: str) -> float:
     except ValueError:
         parts = raw.split(":")
         if len(parts) not in (2, 3):
-            raise ValueError(f"invalid time {value!r}; use seconds or [HH:]MM:SS[.fff]") from None
+            raise AstridValueError(f"invalid time {value!r}; use seconds or [HH:]MM:SS[.fff]") from None
         try:
             numbers = [float(part) for part in parts]
         except ValueError:
-            raise ValueError(f"invalid time {value!r}; use seconds or [HH:]MM:SS[.fff]") from None
+            raise AstridValueError(f"invalid time {value!r}; use seconds or [HH:]MM:SS[.fff]") from None
         if len(numbers) == 2:
             minutes, tail = numbers
             hours = 0.0
         else:
             hours, minutes, tail = numbers
         if hours < 0 or minutes < 0 or minutes >= 60 or tail < 0 or tail >= 60:
-            raise ValueError(f"invalid time {value!r}; minute/second fields must be within 0..59")
+            raise AstridValueError(f"invalid time {value!r}; minute/second fields must be within 0..59")
         seconds = hours * 3600.0 + minutes * 60.0 + tail
     if seconds < 0:
-        raise ValueError("time values must be non-negative")
+        raise AstridValueError("time values must be non-negative")
     return seconds
 
 
 def _parse_range(value: str) -> tuple[float, float]:
     start_raw, separator, end_raw = value.partition("..")
     if not separator or not start_raw or not end_raw:
-        raise ValueError("range must be START..END")
+        raise AstridValueError("range must be START..END")
     return _parse_time(start_raw), _parse_time(end_raw)
 
 
@@ -410,7 +410,7 @@ def _materialize_kernel_timeline(
             config["app"] = app
         app["shot_composition_graph"] = json.loads(json.dumps(row.composition_graph))
     if not isinstance(config.get("clips"), list) or not isinstance(config.get("tracks"), list):
-        raise ValueError(
+        raise AstridValueError(
             f"kernel timeline {row.slug!r} at version {row.config_version} cannot be "
             "visualized: canonical config must contain top-level tracks and clips arrays; "
             "save a renderable timeline config and retry"
@@ -470,15 +470,15 @@ def execute(argv: list[str] | None = None) -> dict[str, Any]:
             try:
                 args.materialized_objects = json.loads(handoff_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
-                raise ValueError("--materialized-objects must be a JSON object or host handoff path") from None
+                raise AstridValueError("--materialized-objects must be a JSON object or host handoff path") from None
         if isinstance(args.materialized_objects, str):
             handoff_path = Path(args.materialized_objects).expanduser()
             try:
                 args.materialized_objects = json.loads(handoff_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
-                raise ValueError("--materialized-objects must be a JSON object or host handoff path") from None
+                raise AstridValueError("--materialized-objects must be a JSON object or host handoff path") from None
         if not isinstance(args.materialized_objects, Mapping):
-            raise ValueError("--materialized-objects must be a JSON object")
+            raise AstridValueError("--materialized-objects must be a JSON object")
     else:
         args.materialized_objects = None
     # Filmstrip admission is the sole execution path.  Structural rendering
@@ -514,7 +514,7 @@ def main(argv: list[str] | None = None) -> int:
             message = error.get("message") or error.get("type") or "timeline visualization failed"
         else:
             message = "timeline visualization failed"
-        print(message, file=sys.stderr)
+        render_astrid_error(AstridError(str(message)))
     return returncode
 
 
