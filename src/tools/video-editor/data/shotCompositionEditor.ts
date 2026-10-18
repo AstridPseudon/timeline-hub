@@ -3,7 +3,10 @@ import {
   stableOutputIdentity,
   type ShotCompositionContract,
 } from './shotComposition.ts';
+import { createShotCompositionAdapter } from './shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from './shotCompositionProjection.ts';
 import { timelineContentExtentMs } from './shotCompositionTiming.ts';
+import { remapDeclaredVisualPauseEdges } from './visualSeamContract.ts';
 
 type JsonObject = Record<string, unknown>;
 
@@ -467,13 +470,50 @@ export function updateCanonicalShotTimeline(
 ): Promise<ShotCompositionContract> {
   const occurrence = graph.occurrences.find((candidate) => candidate.occurrence_id === occurrenceId);
   if (!occurrence) throw new Error(`canonical occurrence ${occurrenceId} is missing`);
-  return updateCanonicalShotRevision(graph, occurrenceId, {
-    timeline,
-    identitySeed,
-    // The child timeline is authoritative for duration. The next same-lane
-    // occurrence is checked as a hard wall inside updateCanonicalShotRevision.
-    occurrenceDurationMs: timelineContentExtentMs(timeline),
-  });
+  return (async () => {
+    const adapter = createShotCompositionAdapter({load: async () => graph});
+    const previousConfig = projectCanonicalComposition(adapter.prepare(graph)).config;
+    const updated = await updateCanonicalShotRevision(graph, occurrenceId, {
+      timeline,
+      identitySeed,
+      // The child timeline is authoritative for duration. The next same-lane
+      // occurrence is checked as a hard wall inside updateCanonicalShotRevision.
+      occurrenceDurationMs: timelineContentExtentMs(timeline),
+    });
+    const nextConfig = projectCanonicalComposition(adapter.prepare(updated)).config;
+    const gaps = remapDeclaredVisualPauseEdges(previousConfig, nextConfig);
+    if (!gaps) return updated;
+
+    const parentComposition = record(updated.parent_composition);
+    const parentConfig = record(parentComposition?.config);
+    const app = record(parentConfig?.app);
+    const visualSeamContract = record(app?.visualSeamContract);
+    if (!parentComposition || !parentConfig || !app || !visualSeamContract) return updated;
+    const nextParentComposition = {
+      ...parentComposition,
+      config: {
+        ...parentConfig,
+        app: {
+          ...app,
+          visualSeamContract: {...visualSeamContract, gaps},
+        },
+      },
+    };
+    const primaryTimeline = record(updated.primary_timeline);
+    const head = record(primaryTimeline?.head);
+    if (!primaryTimeline || !head) throw new Error('canonical primary timeline head is missing');
+    return {
+      ...updated,
+      parent_composition: nextParentComposition,
+      primary_timeline: {
+        ...primaryTimeline,
+        head: {
+          ...head,
+          content_digest: await digestJson(nextParentComposition),
+        },
+      },
+    } as ShotCompositionContract;
+  })();
 }
 
 export function updateCanonicalShotName(

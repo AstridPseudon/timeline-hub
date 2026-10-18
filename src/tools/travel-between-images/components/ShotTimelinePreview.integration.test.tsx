@@ -60,9 +60,6 @@ function editedGraph(atMs: number, headId: string) {
   return graph;
 }
 
-// known-failure: reigh-app | 2026-10-30 | product bug: seam admission refuses popup edits that move a declared pause's edges (shotCompositionAdapter.publish vs visualSeamContract)
-const itRefusedBySeamAdmission = it.fails;
-
 describe('shot timeline popup real recovery integration', () => {
   beforeEach(async () => {
     vi.restoreAllMocks();
@@ -268,7 +265,7 @@ describe('shot timeline popup real recovery integration', () => {
     view.unmount();
   });
 
-  itRefusedBySeamAdmission('holds H1 while the real mounted editor still shows H0, then edits through H1 without remounting', async () => {
+  it('holds H1 while the real mounted editor still shows H0, then edits through H1 without remounting', async () => {
     await clearTimelineDraft(recoveryKey);
     const graphH0 = editedGraph(200, 'head-mounted-h0');
     const graphH1 = editedGraph(900, 'head-mounted-h1');
