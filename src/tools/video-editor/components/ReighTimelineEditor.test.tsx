@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ReighTimelineEditor } from '@/tools/video-editor/components/ReighTimelineEditor';
 import { getCanonicalLoadState } from '@/tools/video-editor/components/ReighTimelineEditor';
@@ -8,6 +8,8 @@ import {
   createTimelineStore,
   TimelineStoreProvider,
 } from '@/tools/video-editor/hooks/timelineStore';
+import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data';
+import { duplicateGenerationAsset as unavailableDuplicate } from '@/tools/video-editor/adapters/reigh/generationLookup.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data';
 import type { Shot } from '@/domains/generation/types/index.ts';
 import { EMPTY_SHOT_ANCHOR_APP_KEY } from '@/tools/video-editor/lib/shot-group-commands';
@@ -23,7 +25,18 @@ const mocks = vi.hoisted(() => ({
   pinGroup: vi.fn(),
   shots: [] as Shot[],
   selectedProjectId: 'project-1',
+  acquireDuplicate: vi.fn(),
+  duplicateHandler: undefined as undefined | ((id: string) => Promise<void>),
 }));
+
+vi.mock('@/tools/video-editor/lib/generation-utils.ts', () => ({ duplicateGenerationAsset: mocks.acquireDuplicate }));
+vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx')>();
+  return { ...actual, TimelineEditorCore: (props: React.ComponentProps<typeof actual.TimelineEditorCore>) => {
+    mocks.duplicateHandler = props.onDuplicateGenerationClip;
+    return React.createElement(actual.TimelineEditorCore, props);
+  } };
+});
 
 vi.mock('@/tools/video-editor/hooks/usePerfDiagnostics', () => ({
   useRenderDiagnostic: () => undefined,
@@ -466,5 +479,74 @@ describe('ReighTimelineEditor canonical read state', () => {
     expect(screen.queryByText(/explicit legacy shot view/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry canonical read' }));
     expect(refetchShots).toHaveBeenCalledTimes(1);
+  });
+});
+
+
+// Synthetic caller wiring only; no provider/acquisition authentication is claimed.
+describe('W46 duplicate generation acquisition boundary source preparation', () => {
+  async function fixture() {
+    const data = await buildTimelineData({ ...timelineData.config, clips: [
+      { id: 'source', asset: 'old', track: 'V1', at: 1, clipType: 'media', from: 2, to: 6, speed: 2,
+        opacity: 0.7, params: { opaque: null }, app: { reference: { revision: 'unit-r1' } } },
+      { id: 'follower', track: 'V1', at: 5, clipType: 'hold', hold: 1 },
+    ] }, { assets: { old: { type: 'video/mp4', duration: 8, generationId: 'old-g', variantId: 'old-v', file: 'unit-old.mp4' } } });
+    data.head = { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'unit-head' };
+    const selection = { asset: 'new-asset', generation_id: 'new-g', variant_id: 'new-v', object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` };
+    const acquired = { generationId: 'new-g', variantId: 'new-v', variantType: 'video' as const, imageUrl: 'unit-new.mp4', thumbUrl: 'unit-thumb.png',
+      registeredAsset: { projectId: 'project-1', assetId: 'new-asset', entry: { type: 'video/mp4', duration: 8, generationId: 'new-g', variantId: 'new-v', media_id: selection.object_id } } };
+    return { data, selection, acquired };
+  }
+  afterEach(() => { mocks.selectedProjectId = 'project-1'; vi.clearAllMocks(); });
+
+  it('retains the actual unsupported acquisition refusal without calling a selector or mutating', async () => {
+    const { data } = await fixture(); mocks.acquireDuplicate.mockImplementation(unavailableDuplicate);
+    const selector = vi.fn(); const h = renderEditor({ data, runtime: { provider: { getProjectMediaSelection: selector } } });
+    await act(() => mocks.duplicateHandler!('source'));
+    expect(mocks.acquireDuplicate).toHaveBeenCalledWith({ generationId: 'old-g', projectId: 'project-1' });
+    expect(selector).not.toHaveBeenCalled(); expect(h.store.getState().ops.applyEdit).not.toHaveBeenCalled(); h.unmount();
+  });
+
+  it('awaits acquisition then exact request-bound selection before one prepared typed submission', async () => {
+    const { data, selection, acquired } = await fixture();
+    let finishAcquire!: (value: typeof acquired) => void, finishSelect!: (value: typeof selection) => void;
+    mocks.acquireDuplicate.mockImplementation(() => new Promise(resolve => { finishAcquire = resolve; }));
+    const selector = vi.fn(() => new Promise<typeof selection>(resolve => { finishSelect = resolve; }));
+    const h = renderEditor({ data, runtime: { provider: { getProjectMediaSelection: selector } } });
+    let action!: Promise<void>; act(() => { action = mocks.duplicateHandler!('source'); });
+    expect(selector).not.toHaveBeenCalled(); expect(h.store.getState().ops.applyEdit).not.toHaveBeenCalled();
+    await act(async () => finishAcquire(acquired));
+    await waitFor(() => expect(selector).toHaveBeenCalledWith({ projectId: 'project-1', asset: 'new-asset', generationId: 'new-g', variantId: 'new-v' }));
+    expect(h.store.getState().ops.applyEdit).not.toHaveBeenCalled();
+    await act(async () => { finishSelect(selection); await action; });
+    const apply = h.store.getState().ops.applyEdit as ReturnType<typeof vi.fn>;
+    expect(apply).toHaveBeenCalledTimes(1); expect(apply.mock.calls[0][0]).toEqual({ type: 'commands' });
+    const calls = apply.mock.calls[0][1].editCommands;
+    expect(calls.map((call: { op: string }) => call.op)).toEqual(['timeline.add', 'clip.nudge']);
+    expect(calls[0].args.media).toBe(selection); expect(calls[0].args).toEqual({ from: 'parent/clip:source', at: 3, media: selection });
+    expect(calls[0].expect['parent/clip:source::'].value).toEqual(data.config.clips[0]);
+    expect(h.store.getState().data.dataRef.current).toBe(data); h.unmount();
+  });
+
+  it.each(['missing registration', 'wrong project', 'wrong object', 'wrong variant', 'duration', 'stale source', 'project switch'] as const)('%s leaves the entire timeline untouched', async kind => {
+    const { data, selection, acquired } = await fixture();
+    if (kind === 'missing registration') delete (acquired as Partial<typeof acquired>).registeredAsset;
+    if (kind === 'wrong project') acquired.registeredAsset.projectId = 'another-project';
+    if (kind === 'wrong variant') selection.variant_id = 'another-variant';
+    if (kind === 'wrong object') selection.object_id = `sha256:${'c'.repeat(64)}`;
+    if (kind === 'duration') acquired.registeredAsset.entry.duration = 5;
+    const selector = vi.fn(async () => selection);
+    let finish!: (value: typeof acquired) => void;
+    mocks.acquireDuplicate.mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+    const provider = { getProjectMediaSelection: selector };
+    const h = renderEditor({ data, runtime: { provider } });
+    let action!: Promise<void>; act(() => { action = mocks.duplicateHandler!('source'); });
+    if (kind === 'stale source') data.config.clips[0].opacity = 0.2;
+    if (kind === 'project switch') {
+      mocks.selectedProjectId = 'other-project';
+      h.rerender(<TimelineStoreProvider store={h.store}><VideoEditorRuntimeProvider value={{ userId: null, timelineId: 'timeline-1', project: { projectId: 'other-project' }, provider } as never}><ReighTimelineEditor /></VideoEditorRuntimeProvider></TimelineStoreProvider>);
+    }
+    await act(async () => { finish(acquired); await action; });
+    expect(h.store.getState().ops.applyEdit).not.toHaveBeenCalled(); expect(h.store.getState().data.dataRef.current).toBe(data); h.unmount();
   });
 });

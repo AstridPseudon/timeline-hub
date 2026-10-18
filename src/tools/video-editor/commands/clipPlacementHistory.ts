@@ -1,3 +1,5 @@
+import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
+import { readSelectedProjectMediaIdentity, selectedMediaRegistryExpectationPath } from './selectedProjectMedia.ts';
 import { validateEditCommand, type EditCommand } from '@/integrations/runtime/generated.ts';
 
 const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -67,9 +69,32 @@ function isTransferInverseWrites(writes: Array<Record<string, unknown>>): boolea
     || trackId(write.id) && write.path === '' && [before.trackId, after.trackId].includes(String(write.id).split('/track:')[1]));
 }
 
+export function isSelectedCloneBatch(commands: readonly EditCommand[]): boolean {
+  const call = commands[0], media = call && readSelectedProjectMediaIdentity(call.args.media);
+  const child = call?.created?.[0], source = call?.args.from;
+  if (!media || call.op !== 'timeline.add' || call.select !== null || !scoped(source) || !source.startsWith('parent/')
+    || !scoped(child) || !child.startsWith('parent/') || call.created?.length !== 1 || child === source
+    || !exact(call.args, ['from', 'at', 'media']) || typeof call.args.at !== 'number' || !Number.isFinite(call.args.at)
+    || call.args.at < 0 || call.expect?.[`${child}::`]?.state !== 'absent') return false;
+  const row = call.expect[`${source}::`], order = call.expect[`${source}::clip_order`], fps = call.expect['parent::config.output.fps'];
+  const registry = call.expect[selectedMediaRegistryExpectationPath(media.asset)];
+  if (row?.state !== 'present' || !record(row.value) || row.value.id !== source.split('/clip:')[1]
+    || order?.state !== 'present' || !Array.isArray(order.value) || !order.value.every(scoped)
+    || new Set(order.value).size !== order.value.length || !order.value.includes(source) || order.value.includes(child)
+    || fps?.state !== 'present' || typeof fps.value !== 'number' || !Number.isFinite(fps.value) || fps.value <= 0
+    || !registry || registry.state !== 'absent' && (registry.state !== 'present' || !record(registry.value)
+      || registry.value.media_id !== media.object_id)) return false;
+  const orderIds = order.value as string[];
+  const nudges = commands.slice(1);
+  return !nudges.length || isClipPlacementBatch(nudges) && nudges.every(nudge => nudge.op === 'clip.nudge'
+    && nudge.select !== source && nudge.select !== child && orderIds.includes(nudge.select!)
+    && nudge.args.frames === nudges[0].args.frames && Number(nudge.args.frames) > 0
+    && call.expect?.[`${nudge.select}::`]?.state === 'present');
+}
+
 /** Existing ordinary move/edge producers only; relation choices have separate owners. */
 export function isClipPlacementBatch(commands: readonly EditCommand[]): boolean {
-  if (isShotGroupTransferBatch(commands)) return true;
+  if (isShotGroupTransferBatch(commands) || isSelectedCloneBatch(commands)) return true;
   return commands.length > 0 && commands.every((command) => scoped(command.select)
     && command.resolved?.length === 1 && command.resolved[0] === command.select
     && (command.op === 'clip.trim' ? Object.keys(command.args).every((key) => ['in_s', 'out_s'].includes(key)) : Object.keys(command.args).length === 1)
@@ -107,9 +132,64 @@ export function isClipPlacementInverse(command: EditCommand | undefined): boolea
     && new Set(writes.map((write) => `${write.id}::${write.path}`)).size === writes.length;
 }
 
+/** Selected generation clones share the ordinary publication-owned inverse.
+ * Validate every captured child/follower write before enabling whole-batch Undo.
+ */
+function selectedCloneInverse(commands: readonly EditCommand[], result: {
+  status: string; accepted_publication_id: string | null; change: { direct_writes: unknown[] };
+}): EditCommand | undefined {
+  if (!isSelectedCloneBatch(commands)) return undefined;
+  const call = commands[0], media = readSelectedProjectMediaIdentity(call.args.media)!;
+  const child = call.created![0], from = String(call.args.from);
+  const expect = call.expect!;
+  const captured = expect[`${from}::`] as { state: 'present'; value: Record<string, unknown> };
+  const order = (expect[`${from}::clip_order`] as { state: 'present'; value: string[] }).value;
+  const fps = Number((expect['parent::config.output.fps'] as { state: 'present'; value: number }).value);
+  const nudges = commands.slice(1);
+  const writes = result.change.direct_writes;
+  if (result.status !== 'accepted' || !result.accepted_publication_id || writes.length !== commands.length
+    || new Set(writes.filter(record).map(write => `${write.id}::${write.path}`)).size !== writes.length) return undefined;
+  const root = writes.find((write): write is Record<string, unknown> => record(write) && write.id === child && write.path === '');
+  if (!root || !exact(root, ['id', 'path', 'before', 'after']) || !record(root.before) || !exact(root.before, ['state'])
+    || root.before.state !== 'absent' || !record(root.after) || !exact(root.after, ['state', 'value'])
+    || root.after.state !== 'present' || !record(root.after.value)) return undefined;
+  const payload = structuredClone(captured.value);
+  payload.id = child.split('/clip:')[1]; payload.at = call.args.at; payload.asset = media.asset;
+  if (record(payload.app) && record(payload.app.astrid)) delete payload.app.astrid.media_registry_insert;
+  const registration = expect[selectedMediaRegistryExpectationPath(media.asset)];
+  if (registration?.state === 'absent') {
+    const actualApp = root.after.value.app;
+    const mark = record(actualApp) && record(actualApp.astrid) && actualApp.astrid.media_registry_insert;
+    if (!record(mark) || !exact(mark, ['asset', 'entry_digest']) || mark.asset !== media.asset
+      || typeof mark.entry_digest !== 'string' || !/^sha256:[0-9a-f]{64}$/.test(mark.entry_digest)) return undefined;
+    const app: Record<string, unknown> = record(payload.app) ? payload.app : {};
+    const astrid: Record<string, unknown> = record(app.astrid) ? app.astrid : {};
+    astrid.media_registry_insert = mark; app.astrid = astrid; payload.app = app;
+  } else if (registration?.state !== 'present' || !record(registration.value) || registration.value.media_id !== media.object_id) return undefined;
+  const equal = (a: unknown, b: unknown) => canonicalJsonStringify(a) === canonicalJsonStringify(b);
+  if (!equal(root.after.value, payload)) return undefined;
+  for (const nudge of nudges) {
+    const original = expect[`${nudge.select}::`];
+    const write = writes.find((write): write is Record<string, unknown> => record(write) && write.id === nudge.select && write.path === 'at');
+    // The producer captured each follower in exact order with an explicit frame delta.
+    const before = nudge.expect?.at;
+    if (!original || original.state !== 'present' || !record(original.value) || !write
+      || !exact(write, ['id', 'path', 'before', 'after']) || before?.state !== 'present'
+      || !equal(original.value.at, before.value) || !equal(write.before, before) || !record(write.after) || write.after.state !== 'present'
+      || !equal(write.after, { state: 'present', value: Number(nudge.args.frames) / fps + Number(before.value) })) return undefined;
+  }
+  const inverse: EditCommand = { op: 'timeline.inverse', select: null, args: { publication: result.accepted_publication_id,
+    writes: writes.map(value => { const write = value as Record<string, unknown>; return { ...structuredClone(write),
+      before: structuredClone(write.after), after: structuredClone(write.before),
+      ...(write.path === '' ? { order: [...order, child] } : {}) }; }) } };
+  validateEditCommand(inverse); return inverse;
+}
+
 export function clipPlacementInverse(commands: readonly EditCommand[], result: {
   status: string; accepted_publication_id: string | null; change: { direct_writes: unknown[]; commands?: EditCommand[] };
 }): EditCommand | null | undefined {
+  const selectedClone = selectedCloneInverse(commands, result);
+  if (selectedClone) return selectedClone;
   const sourceInverse = commands.length === 1 && isClipPlacementInverse(commands[0]);
   if (!sourceInverse && !isClipPlacementBatch(commands)) return undefined;
   if (result.status === 'no_change') return null;

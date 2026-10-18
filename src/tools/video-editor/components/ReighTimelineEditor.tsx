@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { shallow } from 'zustand/shallow';
 import type { Shot } from '@/domains/generation/types/index.ts';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog.tsx';
@@ -28,14 +28,15 @@ import { useShotGroupHandlers } from '@/tools/video-editor/hooks/useShotGroupHan
 import { useShotGroups } from '@/tools/video-editor/hooks/useShotGroups.ts';
 import { shotGroupVideoKey } from '@/tools/video-editor/hooks/useShotGroups.ts';
 import { useSwitchToFinalVideo } from '@/tools/video-editor/hooks/useSwitchToFinalVideo.ts';
-import { useTimelineCommandsService } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
+import { capturePreparedCloneBase, useTimelineCommandsService } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 import {
   useTimelineDataSelector,
   useTimelineChromeSelector,
   useTimelineConfigVersion,
   useTimelineOpsSelector,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
-import { planGenerationAssetRegistration } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
+import { buildDuplicateClipEdit } from '@/tools/video-editor/lib/duplicate-clip.ts';
+import { readSelectedProjectMediaIdentity } from '@/tools/video-editor/commands/selectedProjectMedia.ts';
 import { duplicateGenerationAsset } from '@/tools/video-editor/lib/generation-utils.ts';
 import {
   duplicateShotGroup,
@@ -100,6 +101,8 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
   const { selectedProjectId } = useProjectSelectionContext();
   const { shots } = useShots();
   const runtime = useVideoEditorRuntime();
+  const duplicateContextRef = useRef({ projectId: selectedProjectId, runtimeProjectId: runtime.project.projectId, timelineId: runtime.timelineId, provider: runtime.provider });
+  duplicateContextRef.current = { projectId: selectedProjectId, runtimeProjectId: runtime.project.projectId, timelineId: runtime.timelineId, provider: runtime.provider };
   const isDocumentShotMode = runtime.userId === null;
   const canonicalOccurrences = runtime.shots?.canonicalOccurrences ?? [];
   const hasCanonicalOccurrences = canonicalOccurrences.length > 0;
@@ -559,39 +562,48 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
       return;
     }
 
+    const base = capturePreparedCloneBase(current);
+    const reserved = assetKey && buildDuplicateClipEdit(current, clipId, assetKey);
+    const context = duplicateContextRef.current;
+    if (!reserved || current.head?.projectId !== selectedProjectId || runtime.project.projectId !== selectedProjectId) return;
     setDuplicatingClipId(clipId);
     try {
       const duplicatedGeneration = await duplicateGenerationAsset({
         generationId,
         projectId: selectedProjectId,
       });
-      const registrationPlan = planGenerationAssetRegistration({
-        generationId: duplicatedGeneration.generationId,
-        variantId: duplicatedGeneration.variantId,
-        variantType: duplicatedGeneration.variantType,
-        imageUrl: duplicatedGeneration.imageUrl,
-        thumbUrl: duplicatedGeneration.thumbUrl,
-        assetDurationSeconds: typeof assetEntry?.duration === 'number' ? assetEntry.duration : undefined,
-        metadata: {
-          content_type: assetEntry?.type ?? (
-            duplicatedGeneration.variantType === 'video' ? 'video/mp4' : 'image/png'
-          ),
-        },
-      });
-
-      if (!registrationPlan.ok) {
-        throw new Error('Failed to register the duplicated asset.');
+      // Acquisition must return a real registered asset. Neither selector creates
+      // or duplicates media; URLs and the old duration cannot supply its identity.
+      const registered = duplicatedGeneration.registeredAsset && structuredClone(duplicatedGeneration.registeredAsset);
+      if (!registered || registered.projectId !== selectedProjectId || registered.assetId === assetKey
+        || duplicatedGeneration.generationId === generationId || registered.entry.generationId !== duplicatedGeneration.generationId
+        || registered.entry.variantId !== duplicatedGeneration.variantId || !runtime.provider.getProjectMediaSelection) {
+        throw new Error('Duplicated generation has no exact registered acquisition.');
+      }
+      const selectedMedia = await runtime.provider.getProjectMediaSelection({ projectId: selectedProjectId,
+        asset: registered.assetId, generationId: duplicatedGeneration.generationId, variantId: duplicatedGeneration.variantId });
+      const identity = readSelectedProjectMediaIdentity(selectedMedia);
+      if (!identity || identity.asset !== registered.assetId || identity.generation_id !== duplicatedGeneration.generationId
+        || identity.variant_id !== duplicatedGeneration.variantId || identity.object_id !== registered.entry.media_id
+        || duplicateContextRef.current.projectId !== context.projectId || duplicateContextRef.current.runtimeProjectId !== context.runtimeProjectId
+        || duplicateContextRef.current.timelineId !== context.timelineId
+        || duplicateContextRef.current.provider !== context.provider || !dataRef.current
+        || capturePreparedCloneBase(dataRef.current) !== base) {
+        throw new Error('Duplicated generation selection or captured timeline changed.');
       }
 
       const result = commands.addClip({
         preparedAsset: {
-          assetKey: registrationPlan.assetId,
+          assetKey: registered.assetId,
           mediaType: duplicatedGeneration.variantType,
-          durationSeconds: registrationPlan.assetEntry.duration ?? null,
-          entry: registrationPlan.assetEntry,
+          durationSeconds: registered.entry.duration ?? null,
+          entry: registered.entry,
+          selectedMedia,
           source: 'registered',
         },
         afterClipId: clipId,
+        clipId: reserved.clipId,
+        preparedCloneBase: base,
       });
       if (!result.ok) {
         throw new Error(result.error.message);
@@ -604,7 +616,7 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
     } finally {
       setDuplicatingClipId((currentClipId) => (currentClipId === clipId ? null : currentClipId));
     }
-  }, [commands, dataRef, selectedProjectId]);
+  }, [commands, dataRef, selectedProjectId, runtime.project.projectId, runtime.provider]);
 
   return (
     <>

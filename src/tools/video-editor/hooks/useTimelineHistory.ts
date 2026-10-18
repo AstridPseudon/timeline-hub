@@ -1,3 +1,4 @@
+import type { EditCommand } from '@/integrations/runtime/generated.ts';
 import { applyManualTextWrites } from '../commands/manualText.ts';
 import { isManualTextBatch, isManualTextCreation, isManualTextInverse } from '../commands/manualTextHistory.ts';
 import { isAppKeyframeHistoryBatch, isAppKeyframeHistoryInverse } from '../commands/appKeyframeHistory.ts';
@@ -10,7 +11,7 @@ import { isClipParamsHistoryBatch, isClipParamsHistoryInverse } from '../command
 import { isTransitionAssignmentBatch, isTransitionAssignmentInverse } from '../commands/transitionAssignmentHistory.ts';
 import { isTrackHistoryBatch, isTrackHistoryInverse } from '../commands/trackHistory.ts';
 import { isSelectedMediaCreation, isClipStructureBatch, isClipStructureInverse } from '../commands/clipStructureHistory.ts';
-import { isClipPlacementBatch, isClipPlacementInverse } from '../commands/clipPlacementHistory.ts';
+import { isSelectedCloneBatch, isClipPlacementBatch, isClipPlacementInverse } from '../commands/clipPlacementHistory.ts';
 import { isTranscriptCaptionBatch } from '../commands/transcriptCaptions.ts';
 import { isTranscriptCaptionInverse } from '../commands/transcriptCaptionHistory.ts';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
@@ -355,7 +356,8 @@ export function useTimelineHistory({
     const replay = mediaReplay ?? reorderReplay;
     const historyCommands = direction === 'redo' && paramsReplay ? structuredClone(paramsReplay)
       : direction === 'redo' && transitionReplay ? structuredClone(transitionReplay)
-      : direction === 'redo' && replay ? [structuredClone(replay)] : inverse ? [inverse] : undefined;
+      : direction === 'redo' && replay ? replay.op === 'timeline.batch'
+        ? structuredClone(replay.args.commands as EditCommand[]) : [structuredClone(replay)] : inverse ? [inverse] : undefined;
     if (entry.nativeRegistration) entry.nativeRegistration = { owner: nextData, ...(transitionReplay ? { transitionReplay } : {}), ...(mediaReplay ? { mediaReplay } : {}), ...(reorderReplay ? { reorderReplay } : {}), ...(paramsReplay ? { paramsReplay } : {}) };
     // Same protection every applyEdit path has: history snapshots never contain
     // transient `uploading-*` skeletons (rowsToConfig drops them from config),
@@ -420,7 +422,11 @@ export function useTimelineHistory({
 
     const commands = options.nativeRegistrationOwner && gestureCommandsFor(options.nativeRegistrationOwner);
     const transitionReplay = commands && isTransitionAssignmentBatch(commands) ? structuredClone([...commands]) : undefined;
-    const mediaReplay = commands?.length === 1 && isSelectedMediaCreation(commands[0]) ? structuredClone(commands[0]) : undefined;
+    // Keep the existing one-command replay slot. Its existing batch envelope
+    // retains the whole clone/ripple transaction; unwrap it only for submission.
+    const mediaReplay: EditCommand | undefined = commands?.length === 1 && isSelectedMediaCreation(commands[0])
+      ? structuredClone(commands[0]) : commands && isSelectedCloneBatch(commands)
+        ? { op: 'timeline.batch', select: null, args: { commands: structuredClone([...commands]) } } : undefined;
     const reorderReplay = commands?.length === 1 && commands[0].op === 'timeline.reorder' && isTrackHistoryBatch(commands)
       ? structuredClone(commands[0]) : undefined;
     // Occurrence Redo stays receipt-only: the original display pins cannot

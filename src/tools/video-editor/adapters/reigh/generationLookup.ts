@@ -1,3 +1,4 @@
+import type { AssetRegistryEntry } from '@/tools/video-editor/types/index.ts';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { fetchGenerationById } from '@/integrations/supabase/repositories/generationRepository.ts';
 import { bridgeCapabilityUnavailable } from '@/integrations/astrid/capability.ts';
@@ -8,6 +9,9 @@ export interface DuplicatedGenerationAsset {
   variantType: 'image' | 'video';
   imageUrl: string;
   thumbUrl: string;
+  /** Required before timeline placement. Selection APIs do not acquire this.
+   * The current unavailable adapter never returns a registered acquisition. */
+  registeredAsset?: { projectId: string; assetId: string; entry: AssetRegistryEntry };
 }
 
 /** The frozen bridge has no generation-create or duplicate command. */
