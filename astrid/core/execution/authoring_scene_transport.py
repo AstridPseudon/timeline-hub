@@ -275,6 +275,13 @@ class AuthoringSceneListener:
                 raise FrameOwnerError("caller_closed_or_cancelled")
 
         guard()
+        if request["operation"] == wire.EMPTY_OPERATION:
+            from astrid.sdk.timeline.check import _require_empty_evaluation_domain
+
+            _require_empty_evaluation_domain(request["candidate"])
+            guard()
+            channel.sendall(wire.encoded(wire.empty_reply(request)) + b"\n")
+            return
         # Root and every name are selected by the Host; no wire paths survive.
         with tempfile.TemporaryDirectory(
             prefix="scene-", dir=self.config.readiness_path.parent

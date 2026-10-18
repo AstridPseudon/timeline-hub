@@ -12,6 +12,8 @@ from .remotion_frame_owner import FrameOwnerError
 
 PROTOCOL = "astrid.authoring-scene/v1"
 OPERATION = "evaluate_scene"
+EMPTY_OPERATION = "complete_empty_scene"
+EMPTY_MODE = "empty-only"
 PURPOSE = "authoring-preflight"
 LIMIT = 1024 * 1024
 CONTEXT_FIELDS = (
@@ -54,6 +56,13 @@ REQUEST_FIELDS = {
     "frames",
 }
 REPLY_FIELDS = (REQUEST_FIELDS - {"scene", "dependencies"}) | {"dependencies_digest", "evaluation"}
+EMPTY_CONTEXT_FIELDS = (set(CONTEXT_FIELDS) - {"renderer_closure", "owner_generation"}) | {"mode"}
+EMPTY_REQUEST_FIELDS = {"protocol", "operation", "purpose", "context", "invocation", "candidate"}
+EMPTY_REPLY_FIELDS = (EMPTY_REQUEST_FIELDS - {"candidate"}) | {"completion"}
+
+
+def empty_only(value):
+    return value.get("mode") == EMPTY_MODE
 
 
 def encoded(value):
@@ -82,7 +91,8 @@ def closed(value, fields):
 
 
 def context(value):
-    closed(value, CONTEXT_FIELDS)
+    empty = type(value) is dict and empty_only(value)
+    closed(value, EMPTY_CONTEXT_FIELDS if empty else CONTEXT_FIELDS)
     for key, item in value.items():
         if key == "owner_generation":
             if type(item) is not int or item < 1:
@@ -98,6 +108,8 @@ def context(value):
         "executor_source_digest",
         "executor_dependency_digest",
     ):
+        if key == "renderer_closure" and empty:
+            continue
         if not sha(value[key]):
             raise FrameOwnerError("context_digest_invalid")
     if value["provider_id"] != "astrid-v1":
@@ -223,11 +235,25 @@ def dependencies(value, expected):
 
 def validate_request(value, expected_context):
     encoded(value)
+    if type(value) is dict and value.get("operation") == EMPTY_OPERATION:
+        closed(value, EMPTY_REQUEST_FIELDS)
+        if (value["protocol"], value["purpose"]) != (PROTOCOL, PURPOSE):
+            raise FrameOwnerError("purpose_mismatch")
+        context(value["context"])
+        if value["context"] != expected_context or not empty_only(expected_context):
+            raise FrameOwnerError("context_mismatch")
+        invocation(value["invocation"])
+        candidate = value["candidate"]
+        if type(candidate) is not dict or digest(candidate) != value["invocation"]["candidate_digest"]:
+            raise FrameOwnerError("candidate_digest_mismatch")
+        if any(candidate.get(k) != value["invocation"][k] for k in ("project_id", "timeline_id")):
+            raise FrameOwnerError("candidate_identity_mismatch")
+        return {}
     closed(value, REQUEST_FIELDS)
     if (value["protocol"], value["operation"], value["purpose"]) != (PROTOCOL, OPERATION, PURPOSE):
         raise FrameOwnerError("purpose_mismatch")
     context(value["context"])
-    if value["context"] != expected_context:
+    if value["context"] != expected_context or empty_only(expected_context):
         raise FrameOwnerError("context_mismatch")
     invocation(value["invocation"])
     frames(value["frames"])
@@ -354,9 +380,27 @@ def reply(request, evaluation):
 
 
 def validate_reply(value, request):
+    if request["operation"] == EMPTY_OPERATION:
+        return validate_empty_reply(value, request)
     encoded(value)
     closed(value, REPLY_FIELDS)
     expected = reply(request, value["evaluation"])
     if value != expected:
         raise FrameOwnerError("reply_binding_mismatch")
     return value["evaluation"]
+
+
+def empty_reply(request):
+    """Construct only after shared SDK verification on the authenticated Host."""
+    return {
+        **{k: v for k, v in request.items() if k != "candidate"},
+        "completion": {"kind": "empty-domain"},
+    }
+
+
+def validate_empty_reply(value, request):
+    encoded(value)
+    closed(value, EMPTY_REPLY_FIELDS)
+    if value != empty_reply(request):
+        raise FrameOwnerError("reply_binding_mismatch")
+    return value

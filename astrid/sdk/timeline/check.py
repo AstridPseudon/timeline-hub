@@ -65,6 +65,36 @@ def _require_complete_evaluation(checkout):
     return spans
 
 
+def _require_empty_evaluation_domain(candidate):
+    """Validate the complete candidate and use publication's shared coverage.
+
+    An empty-only Host must never acquire a renderer, even for an invalid
+    nonempty candidate. The rejecting client also prevents ambient selection.
+    """
+    import copy
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    from astrid.core.timeline import scene_answers
+    from astrid.sdk.timeline.chapter_storage import compile_candidate
+    from astrid.sdk.timeline.checkout import Checkout
+
+    class NoFrames:
+        def query_scene(self, **kwargs):
+            raise FrameOwnerError("empty_only_frame_query")
+
+    previous = scene_answers.use_client(NoFrames())
+    try:
+        snapshot = copy.deepcopy(candidate)
+        compile_candidate(snapshot)  # The same complete, hydrated publication validator.
+        if _require_complete_evaluation(Checkout(snapshot)):
+            raise FrameOwnerError("nonempty_evaluation_domain")
+    except FrameOwnerError:
+        raise
+    except (ValueError, TypeError, KeyError, AttributeError, OverflowError) as exc:
+        raise FrameOwnerError("empty_candidate_invalid") from exc
+    finally:
+        scene_answers.use_client(previous)
+
+
 class _CheckMixin:
     """Checkout: check, lint, picture gaps, stale notes, verify; plus CheckReport and describe_changes."""
 
