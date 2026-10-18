@@ -236,6 +236,21 @@ def test_render_without_draft_is_the_published_render(no_draft, monkeypatch):
     assert "authoring_preview" not in seen["inputs"]
 
 
+def test_render_forwards_half_open_seconds_range_to_executor(no_draft):
+    client = FakeClient()
+    seen = {}
+
+    def invoke_result(name, **kwargs):
+        seen["name"] = name
+        seen["inputs"] = kwargs["inputs"]
+        return _render_result("r")
+
+    client.invoke_result = invoke_result
+    assert _render(["--range", "1..2", "--json"], client) == 0
+    assert seen["name"] == "rendering.render"
+    assert seen["inputs"]["range"] == "1..2"
+
+
 def test_render_draft_without_checkout_fails_before_rendering(no_draft, monkeypatch, capsys):
     from astrid.sdk import authoring_render_preview
 

@@ -882,6 +882,11 @@ actions:
       name: expected_version
       required: false
       type: integer
+    - description: Half-open START..END seconds interval; boundaries round outward
+        to the canonical output frame rate.
+      name: range
+      required: false
+      type: string
     - description: Host-compiled transient audio bound to the admitted snapshot.
       name: compiled_audio
       required: false
@@ -1056,6 +1061,9 @@ actions:
         - --out
         - '{out}/{output_name}'
         input_args:
+        - input: range
+          flag: --range
+          optional: true
         - input: assets_registry
           flag: --assets
           optional: true

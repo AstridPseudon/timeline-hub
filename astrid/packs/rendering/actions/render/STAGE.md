@@ -170,6 +170,8 @@ result = sdk.invoke(
 
 The equivalent product command is
 `astrid timelines render main --project demo --expected-version 4`.
+Add `--range START..END` to render only a half-open seconds interval; its
+boundaries round outward to the resolved output frame boundaries.
 
 ### Render-only tail clock
 
@@ -192,6 +194,7 @@ clock and retain authored clip intervals for provenance.
 | timeline        | file   | conditional | Project-owned Hype timeline JSON admitted through the normal file-input boundary; mutually exclusive with `timeline_ref`. |
 | timeline_ref    | string | conditional | Canonical kernel slug, UUID, or ULID; mutually exclusive with `timeline`. |
 | expected_version | integer | no | Positive stream-head CAS pin; valid only with `timeline_ref`. |
+| range | string | no | Half-open `START..END` seconds interval, rounded outward using the canonical output FPS. |
 | assets_registry | file   | no       | Optional Hype media asset registry JSON. Pass as the `assets_registry` input when the timeline references media assets. If omitted, the runner supplies an empty registry. |
 | theme           | file   | no       | Optional theme configuration. |
 | selector        | string | no       | Qualified renderer id: `rendering.remotion`, `rendering.ffmpeg`, or `rendering.threejs`. Omit to select `rendering.remotion`. |

@@ -68,6 +68,48 @@ def test_render_delegates_to_service_with_default_selector(fake_service: _FakeSe
     assert request.backend_config["rendering.remotion"] == {
         "composition_id": "TimelineComposition"
     }
+    assert request.window is None
+
+
+def test_render_forwards_an_explicit_frame_window(
+    fake_service: _FakeService, tmp_path: Path
+) -> None:
+    timeline, assets, out = _inputs(tmp_path)
+    window = render_run.FrameWindow(
+        start_frame=24, end_frame=48, fps_rational=(24, 1)
+    )
+
+    render_run.render(timeline, assets, out, window=window)
+
+    request = fake_service.calls[0][0][0]
+    assert request.window == window
+
+
+def test_range_resolves_exact_rational_theme_fps_and_rounds_outward(tmp_path: Path) -> None:
+    timeline = tmp_path / "timeline.json"
+    timeline.write_text(
+        json.dumps({
+            "theme_overrides": {"visual": {"canvas": {"fps": [30000, 1001]}}},
+            "tracks": [],
+            "clips": [],
+        }),
+        encoding="utf-8",
+    )
+
+    window = render_run._render_window_for_range(
+        "1001/30000..2003/30000", timeline
+    )
+
+    assert window.start_frame == 1
+    assert window.end_frame == 3
+    assert window.fps_rational == (30000, 1001)
+
+
+def test_range_rejects_negative_start_before_render_admission(tmp_path: Path) -> None:
+    timeline, _assets, _out = _inputs(tmp_path)
+
+    with pytest.raises(ValueError, match="START must not be negative"):
+        render_run._render_window_for_range("-1..2", timeline)
 
 
 def test_render_writes_universal_result_manifest(
@@ -206,6 +248,31 @@ def test_main_accepts_output_name_and_forward_parses_any_order(
     assert capsys.readouterr().out.strip() == str(out)
     assert len(fake_service.calls) == 1
     assert fake_service.calls[0][1]["selector"] == "rendering.ffmpeg"
+
+
+def test_main_translates_range_using_the_timeline_canvas(
+    fake_service: _FakeService, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    timeline, assets, out = _inputs(tmp_path)
+    timeline.write_text(
+        json.dumps({
+            "theme_overrides": {"visual": {"canvas": {"fps": 24}}},
+            "tracks": [],
+            "clips": [],
+        }),
+        encoding="utf-8",
+    )
+    fake_service.sentinel = out
+
+    assert render_run.main([
+        "--timeline", str(timeline), "--assets", str(assets), "--out", str(out),
+        "--range", "1..2",
+    ]) == 0
+    capsys.readouterr()
+    request = fake_service.calls[-1][0][0]
+    assert request.window == render_run.FrameWindow(
+        start_frame=24, end_frame=48, fps_rational=(24, 1)
+    )
 
 
 def test_main_leaves_remotion_project_selection_to_deployment(

@@ -19,6 +19,7 @@ import os
 import stat
 import sys
 from datetime import datetime, timezone
+from fractions import Fraction
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Mapping, Sequence
@@ -28,7 +29,7 @@ from astrid.core._shared.result_manifest import build_manifest, write_manifest
 from astrid.core.foundation.paths import REPO_ROOT
 from astrid.core.media import ffprobe_metadata_strict
 from astrid.core.rendering.errors import RendererException
-from astrid.core.rendering.contracts import RenderRequest, SCHEMA_VERSION
+from astrid.core.rendering.contracts import FrameWindow, RenderRequest, SCHEMA_VERSION
 from astrid.core.rendering.delivery_audio import METADATA_KEY as DELIVERY_AUDIO_KEY, DeliveryAudioTarget
 from astrid.core.rendering.output_policy import (
     DEFAULT_RENDER_OUTPUT_NAME,
@@ -320,6 +321,49 @@ def _previous_render_outputs_for_timeline(
     return tuple(candidates)
 
 
+def _render_window_for_range(
+    range_value: str,
+    timeline_path: Path,
+    theme_path: Path | None = None,
+) -> FrameWindow:
+    """Resolve a half-open seconds range against the timeline's output FPS.
+
+    Range boundaries are rounded outward to frame boundaries: the first
+    output frame whose interval overlaps START is included, and END remains
+    exclusive. FPS comes from the same canonical profile resolver used by
+    rendering, so a partial timeline canvas override and the built-in theme
+    follow the renderer's existing rules.
+    """
+    from astrid.core.rendering.profile import resolve_render_profile
+    from astrid.sdk.timeline_cuts import _parse_range
+
+    # Reuse the public timeline range grammar and its validation first.
+    _parse_range(range_value)
+    start_text, separator, end_text = str(range_value).partition("..")
+    if not separator:
+        raise ValueError("range must be START..END seconds")
+
+    def seconds(text: str) -> Fraction:
+        text = text.strip()
+        if ":" in text:
+            minutes, remainder = text.split(":", 1)
+            return Fraction(minutes) * 60 + Fraction(remainder)
+        return Fraction(text)
+
+    start_seconds, end_seconds = seconds(start_text), seconds(end_text)
+    if start_seconds < 0:
+        raise ValueError("range START must not be negative")
+    profile = resolve_render_profile(timeline_path, theme=theme_path)
+    fps = Fraction(*profile.fps_rational)
+    start_frame = math.floor(start_seconds * fps)
+    end_frame = math.ceil(end_seconds * fps)
+    return FrameWindow(
+        start_frame=start_frame,
+        end_frame=end_frame,
+        fps_rational=profile.fps_rational,
+    )
+
+
 def _parse_bool_arg(value: str | bool | None) -> bool:
     if value is None:
         return True
@@ -426,6 +470,7 @@ def render(
     materialized_objects: Mapping[str, str] | None = None,
     media_dependency: Path | None = None,
     delivery_audio: Mapping[str, Any] | None = None,
+    window: FrameWindow | Mapping[str, Any] | None = None,
 ) -> Path:
     """Render through :class:`RenderService` and publish one locked pair.
 
@@ -470,7 +515,7 @@ def render(
             "timeline_path": str(Path(timeline_path).expanduser().resolve()),
             "assets_registry_path": str(Path(assets_path).expanduser().resolve()),
             "output_name": out_path.name,
-            "window": None,
+            "window": window,
             "audio": None,
             "profile": profile,
             "backend_config": config,
@@ -524,6 +569,10 @@ def _delivery_audio_from_args(args: argparse.Namespace) -> dict[str, Any] | None
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--timeline", type=Path, required=True)
+    parser.add_argument(
+        "--range", default=None, metavar="START..END",
+        help="Render a half-open seconds interval, rounded outward to output-frame boundaries.",
+    )
     parser.add_argument("--assets", type=Path)
     parser.add_argument("--media-dependency", type=Path)
     parser.add_argument("--materialized-root", type=Path)
@@ -612,6 +661,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         if materialized_objects is not None and not isinstance(materialized_objects, Mapping):
             raise ValueError("--materialized-objects must be a JSON object")
         delivery_audio = _delivery_audio_from_args(args)
+        window = (
+            None
+            if args.range is None
+            else _render_window_for_range(args.range, args.timeline, args.theme)
+        )
         if args.assets is None:
             with TemporaryDirectory(prefix="astrid-render-assets-") as tmp_text:
                 assets_path = Path(tmp_text) / "hype.assets.json"
@@ -636,6 +690,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     materialized_objects=materialized_objects,
                     media_dependency=args.media_dependency,
                     delivery_audio=delivery_audio,
+                    window=window,
                 )
         else:
             output = render(
@@ -658,6 +713,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 materialized_objects=materialized_objects,
                 media_dependency=args.media_dependency,
                 delivery_audio=delivery_audio,
+                window=window,
             )
     except RendererException as exc:  # pragma: no cover - CLI path
         print(_renderer_cli_error(exc), file=sys.stderr)

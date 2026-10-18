@@ -2078,6 +2078,9 @@ def _cmd_render(parsed: argparse.Namespace) -> int:
         value = getattr(parsed, name, None)
         if value not in (None, ""):
             inputs[name] = value
+    range_value = getattr(parsed, "range_value", None)
+    if range_value not in (None, ""):
+        inputs["range"] = range_value
     if parsed.backend not in (None, ""):
         # ``--backend`` is the product-language spelling.  The rendering
         # executor's stable input/CLI contract calls this value ``selector``;
@@ -2630,6 +2633,10 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_render(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser, required=False)
+    subparser.add_argument(
+        "--range", dest="range_value", default=None, metavar="START..END",
+        help="Render the half-open seconds interval START..END, rounded outward to output-frame boundaries.",
+    )
     subparser.add_argument("--review", action="store_true", default=None, help="Burn in shot names/time plus pinned authored speech captions at the bottom (Remotion/Three.js).")
     subparser.add_argument("--audio-target", dest="audio_target", type=float, default=None, metavar="LUFS",
                            help="Master the final mix to this integrated loudness (e.g. -14); with --true-peak (default -1 dBTP).")
