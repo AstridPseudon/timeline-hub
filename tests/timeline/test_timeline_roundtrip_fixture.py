@@ -7,10 +7,9 @@ The regression gate for the `Timeline` domain class. Three assertions:
    per-clip animation/transition/effects, mixed clipTypes).
 2. Unknown top-level fields survive load/dump via the passthrough bag.
 3. Astrid's Python allowlists (`_TIMELINE_TOP_ALLOWED`, `_CLIP_ALLOWED`,
-   `_TRACK_ALLOWED`) match the imported `@banodoco/timeline-schema` JSON
-   Schema. The shared schema is the source of truth, with Astrid's documented
-   top-level `app` and clip-level render-provenance extension metadata retained
-   around the renderable shape.
+   `_TRACK_ALLOWED`) match the canonical Runtime-vendored TimelineConfig JSON
+   Schema, with Astrid's documented top-level `app` and clip-level
+   render-provenance extension metadata retained around the renderable shape.
 """
 
 from __future__ import annotations
@@ -28,26 +27,6 @@ _ASTRID_TOP_LEVEL_OVERLAY = frozenset({"app"})
 _ASTRID_CLIP_OVERLAY = frozenset({"shot_id", "shot_occurrence_id", "shot_name", "elementRef"})
 
 
-def _load_shared_schema() -> tuple[dict, str] | None:
-    """Load the schema from the same public package used by Astrid runtime.
-
-    The release verifier places the pinned timeline schema package on the Python
-    path. Resolving sibling workspaces or npm copies here would make this test
-    pass against an unrelated schema revision.
-    """
-    try:
-        import banodoco_timeline_schema
-        from banodoco_timeline_schema import load_schema
-
-        schema = load_schema()
-    except (ImportError, FileNotFoundError):
-        return None
-
-    module_path = Path(banodoco_timeline_schema.__file__).resolve()
-    schema_path = module_path.with_name("timeline.schema.json")
-    return schema, f"module={module_path}; schema={schema_path}"
-
-
 # Make the in-tree astrid package importable when running pytest from
 # the repo root (it already is) — defensive, costs nothing.
 if str(REPO_ROOT) not in sys.path:
@@ -59,6 +38,9 @@ from astrid.core.timeline import (  # noqa: E402
     _TRACK_ALLOWED,
     load_timeline,
     save_timeline,
+)
+from astrid.core.timeline.banodoco_schema import (  # noqa: E402
+    load_vendored_timeline_schema,
 )
 
 
@@ -145,25 +127,26 @@ class TimelineRoundTripFixtureTest(unittest.TestCase):
         )
 
     # ------------------------------------------------------------------
-    # 3. Allowlist parity with the shared schema package
+    # 3. Allowlist parity with the canonical Runtime-vendored schema
     # ------------------------------------------------------------------
-    def test_allowlist_parity_with_shared_schema(self) -> None:
-        loaded = _load_shared_schema()
-        if loaded is None:
-            self.skipTest(
-                "Shared @banodoco/timeline-schema package is unavailable; "
-                "set PYTHONPATH or ASTRID_TIMELINE_SCHEMA_PYTHONPATH to the "
-                "pinned Python package to enable this assertion."
-            )
-        schema, schema_origin = loaded
+    def test_allowlist_parity_with_runtime_vendored_schema(self) -> None:
+        schema = load_vendored_timeline_schema()
+        schema_origin = (
+            REPO_ROOT
+            / "astrid"
+            / "core"
+            / "timeline"
+            / "schema"
+            / "timeline-config.schema.json"
+        )
 
         defs = schema.get("definitions") or schema.get("$defs") or {}
         # Plan-v5 B2: TimelineConfig is the schema ROOT (the old $ref-root was
         # restructured); fall back to the root when no definition is present.
         timeline_def = defs.get("TimelineConfig") or schema
         clip_def = defs.get("TimelineClip")
-        self.assertIsNotNone(timeline_def, "TimelineConfig missing in shared schema")
-        self.assertIsNotNone(clip_def, "TimelineClip missing in shared schema")
+        self.assertIsNotNone(timeline_def, "TimelineConfig missing in Runtime-vendored schema")
+        self.assertIsNotNone(clip_def, "TimelineClip missing in Runtime-vendored schema")
 
         shared_top = set((timeline_def.get("properties") or {}).keys())
         shared_clip = set((clip_def.get("properties") or {}).keys())
@@ -173,7 +156,7 @@ class TimelineRoundTripFixtureTest(unittest.TestCase):
         track_items = tracks_node.get("items") or {}
         shared_track = set((track_items.get("properties") or {}).keys())
 
-        # The shared schema is the source of truth. Astrid retains the
+        # The Runtime-vendored schema is the source of truth. Astrid retains the
         # documented top-level editor metadata overlay and the clip-level
         # render-admission provenance overlay around the shape.
         expected_top = shared_top | _ASTRID_TOP_LEVEL_OVERLAY
@@ -181,7 +164,7 @@ class TimelineRoundTripFixtureTest(unittest.TestCase):
             set(_TIMELINE_TOP_ALLOWED),
             expected_top,
             "Timeline top-level allowlist drift between Astrid "
-            "(_TIMELINE_TOP_ALLOWED) and imported schema (TimelineConfig); "
+            "(_TIMELINE_TOP_ALLOWED) and Runtime-vendored schema (TimelineConfig); "
             f"schema-origin={schema_origin}; "
             f"only-in-astrid={set(_TIMELINE_TOP_ALLOWED) - expected_top}, "
             f"only-in-schema={shared_top - set(_TIMELINE_TOP_ALLOWED)}",
@@ -195,7 +178,7 @@ class TimelineRoundTripFixtureTest(unittest.TestCase):
             set(_CLIP_ALLOWED),
             (shared_clip - {"derived_output"}) | _ASTRID_CLIP_OVERLAY,
             "Clip allowlist drift between Astrid (_CLIP_ALLOWED) and "
-            "the supported subset of imported schema (TimelineClip); "
+            "the supported subset of Runtime-vendored schema (TimelineClip); "
             f"schema-origin={schema_origin}; "
             f"only-in-astrid={set(_CLIP_ALLOWED) - (shared_clip | _ASTRID_CLIP_OVERLAY)}, "
             f"only-in-schema={shared_clip - set(_CLIP_ALLOWED) - {'derived_output'}}",
@@ -204,7 +187,7 @@ class TimelineRoundTripFixtureTest(unittest.TestCase):
             set(_TRACK_ALLOWED),
             shared_track,
             "Track allowlist drift between Astrid (_TRACK_ALLOWED) and "
-            "imported schema (TimelineConfig.tracks[]); "
+            "Runtime-vendored schema (TimelineConfig.tracks[]); "
             f"schema-origin={schema_origin}; "
             f"only-in-astrid={set(_TRACK_ALLOWED) - shared_track}, "
             f"only-in-schema={shared_track - set(_TRACK_ALLOWED)}",
