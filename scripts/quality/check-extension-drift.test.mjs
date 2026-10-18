@@ -457,7 +457,10 @@ export function contributionKindNotYetBridged(k:any){return null;}`;
     const schema = loadCurrentSchema();
     const schemaDefs = schema.definitions || {};
     const renderingSource = readRepoFile('src/sdk/video/rendering/renderability.ts');
-    const sdkIndexSource = readRepoFile('src/sdk/index.ts');
+    // src/sdk/index.ts only re-exports these unions; their declarations live in
+    // commands.ts and video/families/shaders.ts.
+    const commandsSource = readRepoFile('src/sdk/commands.ts');
+    const shadersSource = readRepoFile('src/sdk/video/families/shaders.ts');
 
     it('keeps RenderRoute enum aligned to the SDK RenderRoute union', () => {
       const schemaEnum = schemaDefs.RenderRoute?.enum || [];
@@ -473,7 +476,7 @@ export function contributionKindNotYetBridged(k:any){return null;}`;
 
     it('keeps ContextMenuItemContribution.target aligned to the SDK TargetContext union', () => {
       const schemaEnum = schemaDefs.ContextMenuItemContribution?.properties?.target?.enum || [];
-      const sdkUnion = extractStringUnion(sdkIndexSource, 'TargetContext');
+      const sdkUnion = extractStringUnion(commandsSource, 'TargetContext');
       assert.deepStrictEqual(schemaEnum, sdkUnion);
     });
 
@@ -484,9 +487,9 @@ export function contributionKindNotYetBridged(k:any){return null;}`;
       ) || [];
       const fallbackEnum = schemaDefs.ShaderContribution?.properties?.fallback?.enum || [];
 
-      assert.deepStrictEqual(passEnum, extractStringUnion(sdkIndexSource, 'ShaderPassKind'));
+      assert.deepStrictEqual(passEnum, extractStringUnion(shadersSource, 'ShaderPassKind'));
       assert.deepStrictEqual(sourceKinds, ['inline', 'module']);
-      assert.deepStrictEqual(fallbackEnum, extractStringUnion(sdkIndexSource, 'ShaderFallbackBehavior'));
+      assert.deepStrictEqual(fallbackEnum, extractStringUnion(shadersSource, 'ShaderFallbackBehavior'));
     });
 
     it('keeps shader texture and uniform vocabulary aligned to SDK unions', () => {
@@ -501,11 +504,11 @@ export function contributionKindNotYetBridged(k:any){return null;}`;
       const passColorSpaceEnum =
         schemaDefs.ShaderContribution?.properties?.pass?.oneOf?.[1]?.properties?.colorSpace?.enum || [];
 
-      assert.deepStrictEqual(uniformTypeEnum, extractStringUnion(sdkIndexSource, 'ShaderUniformType'));
-      assert.deepStrictEqual(textureSourceKindEnum, extractStringUnion(sdkIndexSource, 'ShaderTextureSourceKind'));
-      assert.deepStrictEqual(textureFilterEnum, extractStringUnion(sdkIndexSource, 'ShaderTextureFilter'));
-      assert.deepStrictEqual(textureWrapEnum, extractStringUnion(sdkIndexSource, 'ShaderTextureWrap'));
-      assert.deepStrictEqual(passColorSpaceEnum, extractStringUnion(sdkIndexSource, 'ShaderColorSpace'));
+      assert.deepStrictEqual(uniformTypeEnum, extractStringUnion(shadersSource, 'ShaderUniformType'));
+      assert.deepStrictEqual(textureSourceKindEnum, extractStringUnion(shadersSource, 'ShaderTextureSourceKind'));
+      assert.deepStrictEqual(textureFilterEnum, extractStringUnion(shadersSource, 'ShaderTextureFilter'));
+      assert.deepStrictEqual(textureWrapEnum, extractStringUnion(shadersSource, 'ShaderTextureWrap'));
+      assert.deepStrictEqual(passColorSpaceEnum, extractStringUnion(shadersSource, 'ShaderColorSpace'));
     });
   });
 

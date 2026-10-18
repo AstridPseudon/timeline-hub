@@ -64,6 +64,7 @@ temp/
 !docs/extensions/composition-spine/*.md
 !docs/video-editor/*.md
 !docs/extensions/*.md
+!scripts/quality/__fixtures__/**/*.md
 !docs/extensions/ship-evidence/releases/
 !docs/extensions/ship-evidence/releases/**
 /vendor/timeline-schema/python/build/
