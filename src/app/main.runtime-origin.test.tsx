@@ -14,6 +14,11 @@ vi.mock('@/tools/video-editor/browser/initializeVideoEditorExtensionRuntime', ()
   initializeVideoEditorExtensionRuntime: async () => { await record('extension runtime'); },
 }));
 
+// Migration failure/retry is covered separately; this test observes boot order after successful migration.
+vi.mock('@/migrations/astridRenameBrowserMigration.ts', () => ({
+  migrateAstridBrowserStorage: async () => ({ success: true }),
+}));
+
 describe('main entry boot order', () => {
   beforeEach(() => {
     vi.resetModules();
