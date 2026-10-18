@@ -45,7 +45,9 @@ def test_legacy_reservation_reads_without_mutating_and_validates_opaque_collisio
     before = tl.document()
     assert next_cut_id(tl.bundle, 'c1') == 'c1a'
     assert tl.document() == before
-    tl.bundle['parent']['config'].setdefault('app', {}).setdefault('astrid', {})[KEY] = 'opaque'
+    data = tl.document()
+    data['parent']['config'].setdefault('app', {}).setdefault('astrid', {})[KEY] = 'opaque'
+    tl = Checkout(data, path=tl.path)
     with pytest.raises(TimelineEditError, match='reservation object'):
         tl.cut('c1').split(2.0)
     assert tl.bundle['parent']['config']['app']['astrid'][KEY] == 'opaque'
@@ -92,9 +94,13 @@ def test_ambiguous_legacy_occurrence_merge_refuses_instead_of_collapsing(tl):
 
 
 def test_orphan_is_addressable_by_exact_cut_id(tl):
-    for c in tl._cut_clips('c2'):
-        intent.set_cut(c.data, 'c06')
-        intent.set_orphan(c.data, 'its line was removed')
+    data = tl.document()
+    for shot in data['shots'].values():
+        for clip_data in shot['internal_timeline']['clips']:
+            if intent.cut_of(clip_data) == 'c2':
+                intent.set_cut(clip_data, 'c06')
+                intent.set_orphan(clip_data, 'its line was removed')
+    tl = Checkout(data, path=tl.path)
     assert 'c06' not in [g['id'] for g in tl._cut_groups()]
     orphan = tl.cut('c06')
     assert orphan.id == 'c06'
@@ -131,10 +137,16 @@ def test_duplicate_is_replayable_and_collision_forks_are_in_id_map(tl):
 
 def test_detach_audio_keeps_source_identity_range_and_replays(tl):
     pic = tl.cut('c1').picture
-    pic.data.update(clipType='media', asset='video', **{'from': 1.0, 'to': 5.0, 'volume': 0.6})
-    pic.data.pop('hold', None)
-    tl._internal(pic.shot_id)['tracks'].append({'id': 'audio', 'kind': 'audio'})
-    tl._registry(pic.shot_id)['video'] = {**copy.deepcopy(tl._registry(pic.shot_id)['P']), 'type': 'video'}
+    data = tl.document()
+    internal = data['shots'][pic.shot_id]['internal_timeline']
+    picture = next(row for row in internal['clips'] if row['id'] == pic.id)
+    picture.update(clipType='media', asset='video', **{'from': 1.0, 'to': 5.0, 'volume': 0.6})
+    picture.pop('hold', None)
+    internal['tracks'].append({'id': 'audio', 'kind': 'audio'})
+    assets = internal['registry']['assets']
+    assets['video'] = {**copy.deepcopy(assets['P']), 'type': 'video'}
+    tl = Checkout(data, path=tl.path)
+    pic = tl.clip(pic.id)
     base, original_id = tl.document(), pic.id
     call = apply(tl, 'clip.detach-audio', pic.id)
     assert call.resolved == (f'occurrence:occ-A/clip:{original_id}',)
@@ -194,7 +206,10 @@ def test_fixed_seed_full_transition_sequences_do_not_reissue_cut_ids(tl, seed):
                 reserve_cut_id(branch, f'c{fresh_number}')
                 merged, conflicts = store.three_way(base, base, branch, whole=True)
                 assert not conflicts
-                tl.bundle = merged
+                Checkout(branch, path=tl.path).save(quiet=True)
+                tl.save(quiet=True)
+                assert tl.merged
+                assert tl.document() == merged
         tl.save(quiet=True)
         # Restore through actual undo, including the snapshot before allocation.
         tl.undo(len(list(store._history_dir(tl.path).glob('*.json'))))
@@ -211,8 +226,13 @@ def test_add_cannot_recreate_a_reserved_removed_cut(tl):
 
 def test_duplicate_preserves_keyframes_and_opaque_payloads(tl):
     source = tl.clip('c1.rocket')
-    source.data['vendorIdentitySentinel'] = {'id': source.id, 'keep': True}
-    source.data['params']['keyframes'] = [{'frame': 0, 'x': 12}, {'frame': 5, 'x': 36}]
+    data = tl.document()
+    source_data = next(row for row in data['shots'][source.shot_id]['internal_timeline']['clips']
+                       if row['id'] == source.id)
+    source_data['vendorIdentitySentinel'] = {'id': source.id, 'keep': True}
+    source_data['params']['keyframes'] = [{'frame': 0, 'x': 12}, {'frame': 5, 'x': 36}]
+    tl = Checkout(data, path=tl.path)
+    source = tl.clip('c1.rocket')
     original = copy.deepcopy(source.data)
     apply(tl, 'cut.duplicate', 'c1', at=0.0)
     duplicate = next(c for c in tl._cut_clips('c1a') if intent.layer_of(c.data) == intent.layer_of(source.data))
@@ -237,11 +257,18 @@ def test_split_fork_producer_reports_the_new_id_and_keeps_head(tl):
 
 
 def test_split_fork_rewrites_bound_timerefs_and_owned_preconditions(tl):
-    tl.clip('c1.rocket').data['hold'] = 3.0
+    source = tl.clip('c1.rocket')
+    data = tl.document()
+    source_data = next(row for row in data['shots'][source.shot_id]['internal_timeline']['clips']
+                       if row['id'] == source.id)
+    source_data['hold'] = 3.0
+    tl = Checkout(data, path=tl.path)
     base = tl.document()
     split = apply(tl, 'cut.split', 'c1', on=2.0)
     assert intent.until(tl.clip('c1.rocket').data) == 'end of c1a'
-    followup = apply(tl, 'clip.set-duration', 'c1.rocket', seconds=1.5)
+    followup = apply(tl, 'clip.set-duration', 'c1.rocket', seconds=1.5,
+                     relation_choices=[dict(target=commands.scoped_clip(tl, tl.clip('c1.rocket')),
+                                            edge='end', choice='detach')])
     head = copy.deepcopy(base)
     reserve_cut_id(head, 'c1a')
     result = rebase([split, followup], head)
@@ -252,7 +279,9 @@ def test_split_fork_rewrites_bound_timerefs_and_owned_preconditions(tl):
 
 def test_runner_reserves_legacy_cuts_removed_by_direct_ripple_list_edits(tl):
     tl.cut('c1').split(2.0)
-    tl.bundle['parent']['config']['app']['astrid'].pop(KEY)
+    data = tl.document()
+    data['parent']['config']['app']['astrid'].pop(KEY)
+    tl = Checkout(data, path=tl.path)
     tl.ripple_delete(2.0, 4.0)
     assert not tl._cut_clips('c1a')
     assert tl.cut('c1').split(1.0).id == 'c1b'
