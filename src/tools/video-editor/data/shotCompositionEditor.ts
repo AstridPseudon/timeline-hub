@@ -488,7 +488,14 @@ export function updateCanonicalShotTimeline(
     if (!hasDeclaredPauses || timelineContentExtentMs(timeline) <= 0) return updated;
 
     const adapter = createShotCompositionAdapter({load: async () => graph});
-    const previousConfig = projectCanonicalComposition(adapter.prepare(graph)).config;
+    let previousConfig: ReturnType<typeof projectCanonicalComposition>['config'];
+    try {
+      previousConfig = projectCanonicalComposition(adapter.prepare(graph)).config;
+    } catch {
+      // Older compositions can contain an empty shot that prevents projection.
+      // Preserve the valid shot edit and its existing pause contract.
+      return updated;
+    }
     const nextConfig = projectCanonicalComposition(adapter.prepare(updated)).config;
     const gaps = remapDeclaredVisualPauseEdges(previousConfig, nextConfig);
     if (!gaps) return updated;

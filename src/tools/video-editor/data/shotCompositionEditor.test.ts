@@ -83,6 +83,27 @@ describe('canonical shot-composition editor operations', () => {
     expect(updatedGaps.slice(1)).toEqual(originalGaps.slice(1));
   });
 
+  it('keeps the shot edit and authored pauses when the previous composition has an empty shot', async () => {
+    const source = structuredClone(fixture);
+    const betaRevision = source.shot_revisions.find((revision) => revision.shot_id === 'shot-beta');
+    if (!betaRevision) throw new Error('shot-beta fixture revision is missing');
+    betaRevision.internal_timeline_revision.timeline.clips = [];
+    const graph = parseShotComposition(source);
+    const originalGaps = visualPauseGaps(graph);
+
+    const updated = await updateCanonicalShotTimeline(graph, 'occ-1', {
+      tracks: [{ id: 'video', kind: 'visual' }, { id: 'audio', kind: 'audio' }],
+      clips: [
+        { id: 'alpha-video', clip_type: 'media', track: 'video', at: 0, hold: 2.5, asset_id: 'alpha-image' },
+        { id: 'alpha-audio', clip_type: 'media', track: 'audio', at: 0, hold: 2.5, asset_id: 'alpha-audio' },
+      ],
+    });
+
+    expect(updated.occurrences.find((occurrence) => occurrence.occurrence_id === 'occ-1'))
+      .toMatchObject({ duration_ms: 2500 });
+    expect(visualPauseGaps(updated)).toEqual(originalGaps);
+  });
+
   it('moves and trims an occurrence without changing its pinned revision identity', () => {
     const graph = parseShotComposition(fixture);
     const moved = moveCanonicalOccurrence(graph, { occurrenceId: 'occ-1', atMs: 1500 });
