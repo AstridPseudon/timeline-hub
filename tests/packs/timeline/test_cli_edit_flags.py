@@ -597,7 +597,7 @@ def test_current_rehome_cli_routes_preview_apply_skip_and_chapter_openers(tmp_pa
         _parse('rehome')
     assert _run('edit', '--file', str(skipped_path), '--accept-suggestions', '--on', '"back"') == 2
     from astrid.packs.timeline import cli_show
-    parsed = _parse('show', '--as', 'sheet', '--orphans')
+    parsed = _parse('show', 'TL', '--project', 'P', '--as', 'sheet', '--orphans')
     monkeypatch.setattr(cli_show, 'show_checkout', lambda *_: (orphaned, 'WORKING COPY'))
     assert cli_show.print_sheet(parsed, None) == 0
     assert 'cut c2' in capsys.readouterr().out
