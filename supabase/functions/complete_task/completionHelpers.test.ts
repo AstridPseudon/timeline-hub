@@ -154,6 +154,7 @@ describe('completionHelpers', () => {
       category: 'image',
       content_type: 'image',
       variant_type: null,
+      materialized_inputs: null,
     });
   });
 });
