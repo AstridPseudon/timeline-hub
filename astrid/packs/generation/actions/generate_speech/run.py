@@ -59,6 +59,10 @@ def _load_edge_tts() -> Any:
             "edge-tts is not installed in this Astrid environment",
             recovery_command="pip install 'astrid[speech]' (or pip install edge-tts), then retry",
         ) from exc
+    import aiohttp
+    from astrid.core.execution.network_policy import install_aiohttp_no_redirects
+
+    install_aiohttp_no_redirects(aiohttp)
     return edge_tts
 
 

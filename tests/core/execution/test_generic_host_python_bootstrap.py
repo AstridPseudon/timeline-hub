@@ -274,7 +274,8 @@ def test_selected_action_real_command_preparation_confines_exact_files_and_broke
     assert len(captured)==1
 
 
-def test_selected_action_dispatch_bootstrap_and_speech_output_offline_seams(selected_command,monkeypatch):
+@pytest.mark.parametrize('enforcement', ['installed', 'missing'])
+def test_selected_action_dispatch_bootstrap_and_speech_output_offline_seams(selected_command,monkeypatch,enforcement):
     """Actual command/pipe/bootstrap/action with offline external boundaries."""
     f=selected_command
     monkeypatch.setattr(host.sys,'platform','darwin')
@@ -287,7 +288,7 @@ from pathlib import Path
 from types import SimpleNamespace
 launcher=sys.argv[1];arguments=sys.argv[2:]
 spec=importlib.util.spec_from_file_location('offline_launch',launcher);gate=importlib.util.module_from_spec(spec);spec.loader.exec_module(gate)
-handshakes=[]
+handshakes=[];communications=[]
 class Handshake:
  def __enter__(self):return self
  def __exit__(self,*args):pass
@@ -318,8 +319,13 @@ def loaded(self,module):
   assert sys.modules['astrid.core.execution.network_policy']._INSTALLED
   assert os.environ['ASTRID_BROKER_PROXY']=='http://127.0.0.1:43210'
   assert 'BANODOCO_RUNTIME_CREDENTIAL' not in os.environ
+  policy=sys.modules['astrid.core.execution.network_policy']
+  if enforcement=='missing':del policy.install_aiohttp_no_redirects
   class Communicate:
    def __init__(self,text,voice,**kw):
+    import aiohttp
+    assert policy._AIOHTTP_REQUESTS.get(aiohttp.ClientSession) is aiohttp.ClientSession._request
+    communications.append(text)
     assert text=='offline' and voice=='en-US-ChristopherNeural'
     assert kw['rate']=='+0%' and kw['proxy']=='http://127.0.0.1:43210'
    async def stream(self):
@@ -329,12 +335,17 @@ def loaded(self,module):
 gate._SourceLoader.exec_module=loaded
 sys.argv[:]=[launcher,*arguments]
 try:gate._main()
+except ImportError:
+ assert enforcement=='missing' and not communications and not commands
+ raise
 except SystemExit as exc:
  assert exc.code==0
+assert communications==['offline']
 assert [Path(c[0]).name for c in commands].count('ffmpeg')==1
 assert any(Path(c[0]).name=='ffprobe' for c in commands)
 print('OFFLINE_SELECTED_DISPATCH_OK',json.dumps(commands))
 '''
+    program='enforcement='+repr(enforcement)+'\n'+program
     def spawn(argv,**options):
         assert argv[:2]==['/usr/bin/sandbox-exec','-f']
         selected=argv[3:]
@@ -345,6 +356,14 @@ print('OFFLINE_SELECTED_DISPATCH_OK',json.dumps(commands))
         assert options['pass_fds']==()
         return subprocess.Popen(selected,**options,start_new_session=True)
     monkeypatch.setattr(host,'popen_owned_group',spawn)
+    if enforcement=='missing':
+        with pytest.raises(host.HostError, match="cannot import name 'install_aiohttp_no_redirects'"):
+            f.host._run_command_definition(f.record,{'text':'offline','voice':'en-US-ChristopherNeural','rate':'+0%'},
+                f.outputs,f.attempt,network_broker=f.broker,allow_runtime_connection=False)
+        assert not (f.outputs/'manifest.json').exists()
+        assert not (f.outputs/'audio/speech.wav').exists()
+        assert not f.host._active_processes
+        return
     result=f.host._run_command_definition(f.record,{'text':'offline','voice':'en-US-ChristopherNeural','rate':'+0%'},
         f.outputs,f.attempt,network_broker=f.broker,allow_runtime_connection=False)
     assert result.returncode==0
