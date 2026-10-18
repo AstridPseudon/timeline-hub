@@ -3801,8 +3801,11 @@ class ProcessCustody:
                 # separately retained descendants or census uncertainty.
         elif isinstance(handle, tuple):
             authority, reference = handle
+            actor = self.actor
+            if actor is None:
+                raise CustodyError("signal lacks an authenticated cleanup actor")
             try:
-                refreshed = authority.signal(actor=self.actor, generation=reference["generation"],
+                refreshed = authority.signal(actor=actor, generation=reference["generation"],
                                              expected_target=reference["target"], signum=signum,
                                              identity_provider=(default_process_identity if cleanup_deadline is None else
                                                  lambda target_pid: default_process_identity(target_pid, timeout=min(1.0, max(0.0, cleanup_deadline - time.monotonic())))),
@@ -3828,7 +3831,7 @@ class ProcessCustody:
                             raise
                     elif observation["outcome"] != "ABSENT":
                         raise
-                    self.actor.verify()
+                    actor.verify()
                 # No signal was delivered. Retain the exact capability;
                 # census, original waits and final absence still decide cleanup.
                 return

@@ -839,7 +839,7 @@ class _ParkedPackHostPreparer:
         # must match the owner process. Pass only that inherited pin through
         # the policy's parent channel; a conflicting projected value still
         # fails closed.
-        parent_env = {}
+        parent_env: dict[str, str] = {}
         if sys.platform == "darwin":
             cf_encoding = os.environ.get("__CF_USER_TEXT_ENCODING")
             if cf_encoding is not None:
