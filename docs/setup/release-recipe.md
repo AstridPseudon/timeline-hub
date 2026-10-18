@@ -32,7 +32,7 @@ source audit:
 schema: astrid.paired-release-recipe/v1
 status: pending_producer_handoff
 publication_destinations:
-  astrid: https://github.com/peteromallet/astrid-agent.git
+  astrid: https://github.com/banodoco/astrid-agent.git
   runtime: https://github.com/banodoco/astrid-runtime.git
   app: https://github.com/banodoco/astrid-app.git
 source_tuple:

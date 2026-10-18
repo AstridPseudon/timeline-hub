@@ -180,7 +180,7 @@ def _plan_transition(cid: str, local: str, canonical: str, url: str, ref: str, r
     return framed_hash("astrid_runtime.local-to-canonical-repository.v1", [cid, local, canonical, url, ref, reviewed_source_oid])
 
 def plan_component_registry() -> list[dict[str, Any]]:
-    rows = [("NEUTRAL-RUNTIME", "astrid-runtime-oracle", "banodoco/astrid-runtime", "https://github.com/banodoco/astrid-runtime.git"), ("ASTRID-CLIENT", "peteromallet/astrid-agent", "peteromallet/astrid-agent", "https://github.com/peteromallet/astrid-agent.git")]
+    rows = [("NEUTRAL-RUNTIME", "astrid-runtime-oracle", "banodoco/astrid-runtime", "https://github.com/banodoco/astrid-runtime.git"), ("ASTRID-CLIENT", "banodoco/astrid-agent", "banodoco/astrid-agent", "https://github.com/banodoco/astrid-agent.git")]
     return [_nfc({"remote_target_id": f"REMOTE-TARGET:COMPONENT:{cid}", "target_kind": "component", "component_id": cid, "local_repository_identity": local, "repository_identity": canonical, "canonical_url": url, "destination_ref_or_prefix": "refs/heads/main", "expected_old_oid": NONE, "reviewed_source_oid": NONE, "identity_transition_sha256": _plan_transition(cid, local, canonical, url, "refs/heads/main"), "repository_provision_receipt_rows": NONE}) for cid, local, canonical, url in rows]
 
 PLAN_COMPONENT_REGISTRY = tuple(plan_component_registry())

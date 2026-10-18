@@ -39,7 +39,7 @@ Current publication destinations are the Astrid-agent client repository,
 astrid-agent, astrid-runtime and astrid-app repositories:
 
 ```text
-https://github.com/peteromallet/astrid-agent.git
+https://github.com/banodoco/astrid-agent.git
 https://github.com/banodoco/astrid-runtime.git
 https://github.com/banodoco/astrid-app.git
 ```
