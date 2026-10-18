@@ -213,13 +213,14 @@ export function usePollSync({
     });
   }, [configVersionRef]);
 
-  const getPollRejectionReason = useCallback((polledData: TimelineData): string | null => {
+  const getPollRejectionReason = useCallback((polledData: TimelineData, allowInitialSnapshot = false): string | null => {
     if (isConflictExhaustedRef?.current) return 'diverged';
     if (canonicalReloadInProgressRef?.current) return 'reloading';
     if (
       getDataRef().current
       && recoveryActiveRef?.current
       && initialProviderSnapshotHandledRef.current
+      && !allowInitialSnapshot
     ) return 'recovery active';
     const gate = {
       editSeq: editSeqRef.current,
@@ -321,6 +322,11 @@ export function usePollSync({
       logPollRejection('preflight', resolvedPolledData, preflightRejectionReason);
       return;
     }
+    // Mark the initial snapshot as checked as soon as it passes preflight.
+    // A later poll must respect recovery hold even if the initial adoption is
+    // still waiting for its deferred commit.
+    const isInitialSnapshot = !initialProviderSnapshotHandledRef.current;
+    if (isInitialSnapshot) initialProviderSnapshotHandledRef.current = true;
     // We accepted this payload — clear any stale deferred reference.
     deferredPolledDataRef.current = null;
     const dataAtPreflight = getDataRef().current;
@@ -339,7 +345,7 @@ export function usePollSync({
           return;
         }
       }
-      const timeoutRejectionReason = getPollRejectionReason(resolvedPolledData);
+      const timeoutRejectionReason = getPollRejectionReason(resolvedPolledData, isInitialSnapshot);
       if (timeoutRejectionReason) {
         logPollRejection('timeout', resolvedPolledData, timeoutRejectionReason);
         return;
@@ -356,7 +362,6 @@ export function usePollSync({
       logConfigVersionUpdate('poll', resolvedPolledData.configVersion);
       configVersionRef.current = resolvedPolledData.configVersion;
       if (headRevisionRef) headRevisionRef.current = resolvedPolledData.head;
-      initialProviderSnapshotHandledRef.current = true;
       // Mirror into the store's canonical version channel (outside the data
       // object) so reader/ops/sync see the adopted version.
       store?.getState().setConfigVersion(resolvedPolledData.configVersion);

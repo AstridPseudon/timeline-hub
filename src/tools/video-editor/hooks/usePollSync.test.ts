@@ -44,6 +44,55 @@ function getLegacyPollRejectionReason(input: {
 }
 
 describe('usePollSync helpers', () => {
+  it('does not adopt a remote update checked while the recovery draft banner is active', async () => {
+    const provider: DataProvider = {
+      loadTimeline: vi.fn(),
+      saveTimeline: vi.fn(),
+      loadAssetRegistry: vi.fn(),
+      resolveAssetUrl: vi.fn(async (file: string) => file),
+    };
+    const interactionStateRef = { current: createInteractionState() };
+    const currentData = { configVersion: 1, stableSignature: 'view-sig' } as unknown as TimelineData;
+    const dataRef = { current: currentData as TimelineData | null };
+    const commitData = vi.fn();
+    const options = (polledData: TimelineData) => ({
+      queries: {
+        timelineQuery: { data: polledData, isLoading: false },
+        assetRegistryQuery: { data: undefined },
+      },
+      provider,
+      commitData,
+      dataRef,
+      selectedClipIdRef: { current: null },
+      selectedTrackIdRef: { current: null },
+      editSeqRef: { current: 0 },
+      pendingOpsRef: { current: 0 },
+      savedSeqRef: { current: 0 },
+      configVersionRef: { current: 1 },
+      lastSavedSignatureRef: { current: 'saved-sig' },
+      isSavingRef: { current: false },
+      interactionStateRef,
+      recoveryActiveRef: { current: true },
+    });
+    const firstSnapshot = {
+      configVersion: 2,
+      stableSignature: 'first-snapshot',
+      signature: 'first-snapshot',
+    } as unknown as TimelineData;
+    const remoteUpdate = {
+      configVersion: 3,
+      stableSignature: 'remote-update',
+      signature: 'remote-update',
+    } as unknown as TimelineData;
+
+    const hook = renderHook(({ data }) => usePollSync(options(data)), { initialProps: { data: firstSnapshot } });
+    hook.rerender({ data: remoteUpdate });
+    await new Promise((resolve) => window.setTimeout(resolve, 5));
+
+    expect(dataRef.current).toBe(currentData);
+    expect(commitData).not.toHaveBeenCalled();
+  });
+
   it('preserves legacy poll decisions except for the intentional save-in-flight rejection', () => {
     const editSeqValues = [2, 4];
     const savedSeqValues = [1, 2, 4, 6];
