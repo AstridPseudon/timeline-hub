@@ -1,6 +1,6 @@
 import {useState, type ComponentProps, type FC, type ReactNode} from 'react';
 import {useRemotionEnvironment} from 'remotion';
-import {Video} from '@remotion/media';
+import {Video, type MediaErrorAction} from '@remotion/media';
 import {MediaErrorBoundary} from './MediaErrorBoundary.tsx';
 
 type VideoProps = ComponentProps<typeof Video> & {
@@ -29,10 +29,12 @@ const PreviewVideo: FC<VideoProps> = ({clipId, fallback, onError: consumerOnErro
     <button type="button" onClick={() => {setFailed(false); setAttempt(value => value + 1);}}>Retry video</button>
   </div>;
   const failure = fallback ?? defaultFailure;
-  const handleFailure = (error: unknown) => {
+  // Returning undefined keeps Remotion's default error action, as before.
+  const handleFailure = (error: unknown): MediaErrorAction | undefined => {
     setFrameReady(false);
     setFailed(true);
     consumerOnError?.(error as never);
+    return undefined;
   };
   if (failed) return failure;
   return <MediaErrorBoundary key={attempt} clipId={clipId} resetKey={String(attempt)} fallback={failure} onError={handleFailure}>

@@ -482,7 +482,6 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
           compositionHeight={metadata.compositionHeight}
           numberOfSharedAudioTags={PREVIEW_SHARED_AUDIO_TAGS}
           initialFrame={Math.min(Math.max(0, Math.round(initialTime * metadata.fps)), Math.max(0, metadata.durationInFrames - 1))}
-          pauseWhenBuffering={false}
           controls={false}
           clickToPlay={false}
           doubleClickToFullscreen={false}
