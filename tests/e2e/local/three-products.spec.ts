@@ -628,7 +628,16 @@ test('quick: Astrid edit then App edit are visible and readable on the adopted t
   const clips = (base.payload.clips ?? []) as Array<Record<string, any>>;
   expect(clips.length, 'the fixture has an editable media clip').toBeGreaterThan(0);
   const clip = clips[0];
-  const renderedClip = page.locator(`[data-testid="video-editor-preview-surface"] [data-clip-id="${clip.id}"]`).first();
+  const mediaId = base.payload.registry.assets[clip.asset].media_id as string;
+  const mediaUrl = `${harness.gatewayBase}/v1/objects/${encodeURIComponent(mediaId)}`;
+  const preview = page.getByTestId('video-editor-preview-surface');
+  const decodedFrame = preview.locator('[data-preview-media-src]');
+  // ReadinessVideo forwards this marker to the painted media element and reports its decoded source separately.
+  const renderedClip = preview.locator('[data-astrid-retry-token]');
+  await expect(decodedFrame, 'the preview contains the fixture media source').toHaveCount(1);
+  await expect(decodedFrame).toHaveAttribute('data-preview-media-src', mediaUrl);
+  await expect(decodedFrame, 'Chromium decoded the fixture media').toHaveAttribute('data-preview-decoded-frame', 'true');
+  await expect(renderedClip, 'one fixture media surface is rendered').toHaveCount(1);
   await expect(renderedClip, 'the editor visibly renders the fixture media').toBeVisible();
   await expect(renderedClip).toHaveCSS('opacity', '1');
 
