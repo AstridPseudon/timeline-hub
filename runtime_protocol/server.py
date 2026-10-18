@@ -84,7 +84,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             if (self.command not in {"GET", "HEAD"}
                     and urlsplit(self.path).path not in {"/v1/handshake", "/v1/tasks"}
                     and not self._is_timeline_commit() and not self._is_timeline_inspect()
-                    and not self._is_capability_prepare()):
+                    and not self._is_capability_prepare() and not self._is_generation_duplicate()):
                 # Edit/commit admission belongs to its actual producer. Until
                 # connected, a paired session cannot take an older write path.
                 paired_deny("project_grant_operation_unavailable")
@@ -102,6 +102,11 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         parts = [unquote(p) for p in urlsplit(self.path).path.split("/") if p]
         return (self.command == "POST" and len(parts) == 6 and parts[:2] == ["v1", "projects"]
                 and parts[3] == "capabilities" and parts[5] == "prepare")
+
+    def _is_generation_duplicate(self):
+        parts = [unquote(p) for p in urlsplit(self.path).path.split("/") if p]
+        return (self.command == "POST" and len(parts) == 5 and parts[:2] == ["v1", "projects"]
+                and parts[3:] == ["generations", "duplicate"])
 
     def _header_values(self, name):
         if hasattr(self.headers, "get_all"):
@@ -655,6 +660,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 return self._send(200, self.runtime.get_project_media_selection(
                     selector, **{key: values[0] for key, values in query.items()},
                 ))
+            if len(path) == 5 and path[3:] == ["generations", "duplicate"] and method == "POST":
+                identity = self._identity("projects:write")
+                return self._send(201, self.runtime.duplicate_project_generation(
+                    selector, self._body(), idempotency_key=self._idempotency_key(), identity=identity))
             if len(path) == 4 and path[3] == "generations":
                 self._identity("projects:read" if method == "GET" else "projects:write")
                 if method == "GET":

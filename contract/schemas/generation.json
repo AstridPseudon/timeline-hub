@@ -24,6 +24,150 @@
           ]
         }
       }
+    },
+    "DuplicateRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "project-media-selection.json"
+        }
+      }
+    },
+    "DuplicateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation",
+        "variant",
+        "entry",
+        "selection"
+      ],
+      "properties": {
+        "generation": {
+          "$ref": "#"
+        },
+        "variant": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "variant_id",
+            "generation_id",
+            "object_id",
+            "variant_type",
+            "metadata",
+            "created_at"
+          ],
+          "properties": {
+            "variant_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "generation_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "object_id": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "variant_type": {
+              "type": "string"
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "created_at": {
+              "type": "string"
+            },
+            "viewed_at": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "thumbnail": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ThumbnailDescriptor"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "entry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "object_id",
+            "media_type",
+            "size",
+            "filename"
+          ],
+          "properties": {
+            "object_id": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "media_type": {
+              "type": "string"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "filename": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "duration_seconds": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "selection": {
+          "$ref": "project-media-selection.json"
+        }
+      }
+    },
+    "CopyLineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "realm_id",
+        "project_id",
+        "source"
+      ],
+      "properties": {
+        "realm_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "$ref": "project-media-selection.json"
+        }
+      }
     }
   },
   "required": ["generation_id", "project_id", "type", "status", "metadata", "version", "created_at", "updated_at"],
@@ -36,7 +180,8 @@
     "metadata": {
       "type": "object", "additionalProperties": true,
       "properties": {
-        "thumbnail": { "$ref": "#/definitions/ThumbnailDescriptor" }
+        "thumbnail": { "$ref": "#/definitions/ThumbnailDescriptor" },
+        "runtime_metadata_copy": { "$ref": "#/definitions/CopyLineage" }
       }
     },
     "version": { "type": "integer", "minimum": 1 },

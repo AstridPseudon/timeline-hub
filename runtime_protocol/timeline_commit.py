@@ -330,7 +330,7 @@ class TimelineCommitAcceptance:
             raise ConflictError("selected output historical attempt identity changed")
         return association, variant
 
-    def _selected_project_media(self, project_id, selection):
+    def _selected_project_media(self, project_id, selection, _copy_chain=()):
         """Reconstruct one record from managed authority; caller owns the mutex.
 
         This is also called within acceptance's BEGIN IMMEDIATE, never through
@@ -340,6 +340,9 @@ class TimelineCommitAcceptance:
         project = self.store.get_project(project_id)
         if project["id"] != project_id or project["realm_id"] != self.realm["id"]:
             raise AuthorizationError("selected media project is outside the request realm")
+        identity = (selection["generation_id"], selection["variant_id"])
+        if identity in _copy_chain:
+            raise ConflictError("invalid metadata copy lineage")
         row = self.store.conn.execute(
             "SELECT g.type, g.status, g.source_task_id, g.metadata_json AS generation_metadata, "
             "v.variant_type, v.metadata_json AS variant_metadata, o.digest AS object_digest, o.media_type, o.size, o.original_name "
@@ -397,6 +400,20 @@ class TimelineCommitAcceptance:
                                      "metadata": _media_metadata(generation_metadata)},
                       "variant": {"variant_type": row["variant_type"], "metadata": _media_metadata(variant_metadata)},
                       "entry": entry}
+            lineage = generation_metadata.get("runtime_metadata_copy")
+            if "runtime_metadata_copy" in generation_metadata or "runtime_metadata_copy" in variant_metadata:
+                if (not isinstance(lineage, dict) or set(lineage) != {"realm_id", "project_id", "source"}
+                        or lineage != variant_metadata.get("runtime_metadata_copy")
+                        or lineage["realm_id"] != self.realm["id"] or lineage["project_id"] != project_id
+                        or row["source_task_id"] is not None or MANAGED_OUTPUT_ASSOCIATION_KEY in variant_metadata):
+                    raise ConflictError("metadata copy lineage binding changed")
+                _media_selection(lineage["source"], require_digest=True)
+                original = self._selected_project_media(project_id, lineage["source"], (*_copy_chain, identity))
+                if (original["object_id"] != object_id or original["entry"] != entry
+                        or original["generation"]["type"] != row["type"]
+                        or original["variant"]["variant_type"] != row["variant_type"]):
+                    raise ConflictError("metadata copy source identity changed")
+                record["variant"]["copy_source"] = original
             if MANAGED_OUTPUT_ASSOCIATION_KEY in variant_metadata:
                 association, variant = self._output_selection_binding(
                     project_id, variant_metadata[MANAGED_OUTPUT_ASSOCIATION_KEY])

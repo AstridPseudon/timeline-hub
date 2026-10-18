@@ -1400,6 +1400,12 @@ class WorkspaceClient:
         items, next_cursor = self._page(value)
         return [Event.from_json(item) for item in items], next_cursor
 
+    def duplicate_project_generation(self, project_id: str, source: ProjectMediaSelection, *, idempotency_key: str) -> MutationResult:
+        """Copy selected metadata onto server-owned identities; no synthesis."""
+        body = json.dumps({"source": source}, separators=(",", ":")).encode()
+        return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/generations/duplicate",
+            body=body, headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
+
     def get_project_media_selection(self, project_id: str, *, asset: str, generation_id: str, variant_id: str) -> ProjectMediaSelection:
         query = "&".join(f"{key}={_path_part(value)}" for key, value in (
             ("asset", asset), ("generation_id", generation_id), ("variant_id", variant_id),
