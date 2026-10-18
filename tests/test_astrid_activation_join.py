@@ -712,8 +712,11 @@ def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_pat
     wrong_cleanup=wrong["cleanup"]
     assert not wrong_cleanup["cleanup_proven"]
     assert wrong_cleanup["shutdown_error"] is not None and "cleanup is uncertain" in wrong_cleanup["shutdown_error"]["message"]
+    # The host writes .rejected only after its own graph abort returned, so the graph
+    # is gone by now (observing earlier races that abort).
     for role in ("engine","engine_listener"):
-        assert wrong_cleanup["final_process_observation"][role]["independently_absent"], f"rejected-binding {role} process remained"
+        pid=wrong_adapter._current.report_value["processes"][role]["pid"]
+        assert default_process_identity(pid) is None, f"rejected-binding {role} process remained"
 
 
 # Joined contract proof substitutions are explicit and confined to this harness.
