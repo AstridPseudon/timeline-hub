@@ -864,8 +864,9 @@ class Cut(_Suggest):
         self.n = int(raw["index"])
         self.start = float(raw["start"])
         self.end = float(raw["end"])
-        self.shot_id = str(raw["shot_id"])
-        self.shot = str(raw.get("shot") or self.shot_id)
+        # The derived flat-parent picture projection has no authored shot.
+        self.shot_id = str(raw["shot_id"]) or None
+        self.shot = str(raw.get("shot") or self.shot_id or "")
 
     @property
     def duration(self) -> float:

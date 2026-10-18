@@ -68,7 +68,14 @@ class _LookupMixin:
     # ---- look things up ---------------------------------------------------
     @property
     def duration(self) -> float:
-        return _r(max((c.end for c in self.cuts), default=0.0))
+        if not self.bundle.get("placements"):
+            from astrid.core.timeline.duration import timeline_duration_seconds
+            parent = self.bundle.get("parent") or {}
+            return _r(timeline_duration_seconds(parent, self.fps)) if parent.get("clips") else 0.0
+        # A child clip cannot lengthen its own explicit placement (or the
+        # parent's overlay limit). Picture coverage is a separate projection.
+        from astrid.core.timeline.cuts import occurrences_from_bundle
+        return _r(max((row["end"] for row in occurrences_from_bundle(self.bundle)), default=0.0))
 
     @property
     def cut_index(self):

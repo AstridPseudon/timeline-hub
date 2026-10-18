@@ -251,7 +251,13 @@ class _CheckMixin:
             if clip.is_audio:
                 continue
             shot_end = self._shot_start(clip.shot_id) + self._shot_length(clip.shot_id)
-            if clip.end > shot_end + tolerance:
+            visible_end = clip.end
+            if clip.shot_id is None and not self.bundle.get("placements"):
+                # Flat parent Sequences use independently rounded starts and
+                # durations, just like their canonical composition extent.
+                from astrid.core.timeline.duration import clip_end_frame
+                visible_end = clip_end_frame(clip.data, self.fps) / self.fps
+            if visible_end > shot_end + tolerance:
                 out.append(f"{clip.address} ends at {clip.end:.2f} s, after its shot ends at {shot_end:.2f} s: "
                            "the render would cut it off; extend its shot's picture or shorten the clip")
         return out

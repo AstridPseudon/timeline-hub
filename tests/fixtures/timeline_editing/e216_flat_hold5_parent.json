@@ -1,0 +1,95 @@
+{
+  "content_digest": "sha256:6c34e02ac7a85654224fb2ccf2e3ba26c5df30200fb04d0e88d79af187913eae",
+  "created_at": "2026-10-18T19:52:19.622+00:00",
+  "payload": {
+    "clips": [
+      {
+        "asset": "sha256:441dba7f40de57275dd91145190ee45b0fcdc791a4a960ca3c41c3a3fc094d22",
+        "at": 0,
+        "clipType": "hold",
+        "hold": 5,
+        "id": "clip-0",
+        "opacity": 1,
+        "track": "V1"
+      }
+    ],
+    "config": {
+      "clips": [
+        {
+          "asset": "sha256:441dba7f40de57275dd91145190ee45b0fcdc791a4a960ca3c41c3a3fc094d22",
+          "at": 0,
+          "clipType": "hold",
+          "hold": 5,
+          "id": "clip-0",
+          "opacity": 1,
+          "track": "V1"
+        }
+      ],
+      "tracks": [
+        {
+          "app": {
+            "scaleAppliesToPositionedClips": true
+          },
+          "blendMode": "normal",
+          "fit": "cover",
+          "id": "V1",
+          "kind": "visual",
+          "label": "V1",
+          "opacity": 1,
+          "scale": 1
+        },
+        {
+          "app": {
+            "scaleAppliesToPositionedClips": true
+          },
+          "blendMode": "normal",
+          "fit": "contain",
+          "id": "V2",
+          "kind": "visual",
+          "label": "V2",
+          "opacity": 1,
+          "scale": 0.95
+        },
+        {
+          "app": {
+            "scaleAppliesToPositionedClips": true
+          },
+          "blendMode": "normal",
+          "fit": "manual",
+          "id": "V3",
+          "kind": "visual",
+          "label": "V3",
+          "opacity": 1,
+          "scale": 1
+        },
+        {
+          "app": {
+            "scaleAppliesToPositionedClips": true
+          },
+          "blendMode": "normal",
+          "fit": "contain",
+          "id": "A1",
+          "kind": "audio",
+          "label": "A1",
+          "opacity": 1,
+          "scale": 1
+        }
+      ]
+    },
+    "occurrences": [],
+    "registry": {
+      "assets": {
+        "sha256:441dba7f40de57275dd91145190ee45b0fcdc791a4a960ca3c41c3a3fc094d22": {
+          "file": "/api/runtime/v1/objects/sha256%3A441dba7f40de57275dd91145190ee45b0fcdc791a4a960ca3c41c3a3fc094d22",
+          "generationId": "generation-task-968780ba84fa4bb68cd343b1556e0eae",
+          "media_id": "sha256:441dba7f40de57275dd91145190ee45b0fcdc791a4a960ca3c41c3a3fc094d22",
+          "type": "image/png",
+          "variantId": "initial-33900f840327d58178164d656078de953bb199b114f1fa657471aa174af49c34"
+        }
+      }
+    }
+  },
+  "project_id": "f804fbbe42434d1ebed598f94bd0a03b",
+  "revision_id": "reigh.editor.timeline.e67e19f56549781ce7e85485712729f463d132ed5efbbcd075922af8cc2a12a7",
+  "timeline_id": "e213-compact-save-timeline"
+}
