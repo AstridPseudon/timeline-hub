@@ -53,7 +53,7 @@ def media_only_publication(project_id: str, media: Sequence[Mapping[str, Any]]) 
         "project_id": project_id, "timeline_id": TIMELINE_ID, "expected_head": None,
         "parent_revision_id": "parent-1",
         "dependency_manifest": {"media": [{"media_id": m["object_id"], "content_digest": m["digest"]} for m in media]},
-        "parent_composition": {"config": {"tracks": [{"id": "video", "kind": "visual"}], "effects": []},
+        "parent_composition": {"config": {"tracks": [{"id": "video", "kind": "visual", "label": "Video"}], "effects": []},
                                "registry": {"assets": assets}, "clips": clips, "occurrences": []},
     }
 

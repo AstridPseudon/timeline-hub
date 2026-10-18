@@ -13,6 +13,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from astrid.core import timeline
 from astrid.core.dev import journey, reference_realm
 from astrid.core.dev.journey import JourneyFailure, Runner
 
@@ -513,6 +514,8 @@ def test_generator_pure_parts() -> None:
     assert [c["at"] for c in clips] == [0, 4, 8] and {c["clipType"] for c in clips} == {"media"}
     assert [c["asset"] for c in clips] == sorted(publication["parent_composition"]["registry"]["assets"])
     assert publication["expected_head"] is None and len(publication["dependency_manifest"]["media"]) == 3
+    # The render validates the same canonical timeline schema, so an invalid reference fails here, not on a Mac run.
+    timeline.validate_timeline({**publication["parent_composition"]["config"], "clips": clips})
     assert reference_realm.source_manifest(Path("/a"), Path("/r"), "/env") == {
         "profile": "astrid", "source_checkout": "/a", "runtime_checkout": "/r", "runtime_environment": "/env"}
 
