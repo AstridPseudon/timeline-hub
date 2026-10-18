@@ -30,7 +30,7 @@ Tools and knowledge for agents and humans to make art with open models.
 
 **Want to set it up yourself?** [Get started →](docs/setup/README.md)
 
-The CI default lane uses the committed `.test_durations` file to balance its eight pytest shards. After a full default-lane run, refresh it with `python -m pytest -q --store-durations`, then commit the updated file.
+The CI default lane uses the committed `tests/.test_durations` file to balance its eight pytest shards. After a full default-lane run, refresh it with `python -m pytest -q --store-durations --durations-path tests/.test_durations`, then commit the updated file.
 
 ### More info
 
