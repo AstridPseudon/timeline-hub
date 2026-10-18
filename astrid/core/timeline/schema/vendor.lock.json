@@ -1,0 +1,12 @@
+{
+  "files": {
+    "astrid/core/timeline/schema/timeline-config.schema.json": {
+      "from": "contract/schemas/timeline-config.schema.json",
+      "sha256": "sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
+    }
+  },
+  "manifest": "contract/artifacts.json",
+  "producer": "banodoco-workspace-runtime",
+  "producer_version": "sha256:59cc1e9b174af17e539a67a1e12a7b937086eda20e778e03594e92a40fa93be6",
+  "source_commit": "97535360da9bec7c87b508f2bb11f8c5e7ab5c71"
+}

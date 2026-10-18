@@ -59,9 +59,6 @@ try:
     from banodoco_timeline_schema import (
         materialize_output as _materialize_output,
     )
-    from banodoco_timeline_schema import (
-        load_schema as _shared_load_schema,
-    )
     from banodoco_timeline_schema import validate_timeline as _shared_validate_timeline
 except ImportError:  # pragma: no cover
     # Neutralized fallback (plan-v5 B2): there is deliberately NO hand-written
@@ -96,9 +93,6 @@ except ImportError:  # pragma: no cover
     )
 
     def _shared_validate_timeline(config: Any, *, strict: bool = True) -> None:
-        raise ImportError(_MISSING_SCHEMA_MESSAGE)
-
-    def _shared_load_schema() -> dict[str, Any]:
         raise ImportError(_MISSING_SCHEMA_MESSAGE)
 
 
@@ -392,7 +386,7 @@ _CLIP_ALLOWED = frozenset(
     }
 )
 _TRACK_ALLOWED = frozenset(
-    {"id", "kind", "label", "scale", "fit", "opacity", "volume", "muted", "blendMode", "app"}
+    {"id", "kind", "label", "scale", "fit", "opacity", "volume", "muted", "blendMode", "app", "role"}
 )
 _ASSET_ENTRY_ALLOWED = frozenset(
     {
@@ -526,6 +520,21 @@ def _json_safe_copy(value: Any) -> Any:
     return json.loads(json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False))
 
 
+_VENDORED_SCHEMA = Path(__file__).with_name("schema") / "timeline-config.schema.json"
+
+
+@functools.lru_cache(maxsize=1)
+def load_vendored_timeline_schema() -> dict[str, Any]:
+    """Load the TimelineConfig JSON Schema vendored from the Runtime contract.
+
+    The pinned ``banodoco_timeline_schema`` package is 0.0.1 and forbids
+    ``tracks[].role``; the role-extended schema (0.0.2 + ``role`` in
+    ``output|source``) is the Runtime's ``contract/schemas`` artifact, copied
+    here by ``scripts/vendor_lock.py update`` (see ``schema/vendor.lock.json``).
+    """
+    return cast(dict[str, Any], json.loads(_VENDORED_SCHEMA.read_text(encoding="utf-8")))
+
+
 @functools.lru_cache(maxsize=1)
 def _shared_timeline_validator() -> jsonschema.protocols.Validator:
     """Compile the shared TimelineConfig JSON-Schema validator once per process.
@@ -538,7 +547,7 @@ def _shared_timeline_validator() -> jsonschema.protocols.Validator:
     (``validator_for`` selection + ``best_match`` error raising) with no
     per-call schema re-walk.
     """
-    schema = _shared_load_schema()
+    schema = load_vendored_timeline_schema()
     validator_cls = jsonschema.validators.validator_for(schema)
     validator_cls.check_schema(schema)
     return validator_cls(schema)
