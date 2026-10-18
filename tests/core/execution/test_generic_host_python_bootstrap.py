@@ -17,6 +17,212 @@ from tests.test_generic_host import _write_manifest
 launch = confinement.launch
 
 
+@pytest.fixture
+def installed_discovery(tmp_path, monkeypatch):
+    """Real Runtime layout producer and SDK discovery; task-owned files only."""
+    import yaml
+    from runtime_protocol import verified_host_launch as gate
+    from astrid.core.pack import discovery, loader, source_setup
+    from astrid.core.execution import custody_broker
+
+    site = tmp_path / 'site'
+    packs = site / 'astrid/packs'
+    pack = packs / 'demo'
+    pack.mkdir(parents=True)
+    (pack / 'actions').mkdir()
+    (pack / 'actions/action.py').write_text('raise AssertionError("discovery imported action")\n')
+    declaration = {'description': 'Static installed action',
+        'invocation': {'kind': 'python', 'path': 'actions/action.py', 'function': 'run'},
+        'inputs': [], 'outputs': {}, 'metadata': {'resource_keys': ['cpu']}}
+    (pack / 'pack.yaml').write_text(yaml.safe_dump({'schema_version': 3, 'id': 'demo',
+        'name': 'Demo', 'version': '1.0.0', 'actions': {'calculate': declaration, 'unapproved': declaration}}))
+    for name in ('first', 'second'):
+        path = pack / 'executors' / name
+        path.mkdir(parents=True)
+        data = {'id': 'demo.' + name, 'name': name, 'kind': 'external', 'version': '1.0',
+            'command': {'argv': ['echo', name]}, 'cache': {'mode': 'none'}}
+        if name == 'second':
+            data['graph'] = {'depends_on': ['demo.first']}
+        (path / 'executor.yaml').write_text(yaml.safe_dump(data))
+    matrix = tmp_path / 'matrix.json'
+    matrix.write_text(json.dumps({'schema_version': 1, 'capabilities': [
+        {'id': name, 'disposition': 'optional', 'evidence_reason': 'offline fixture',
+         'adapter_family': 'cpu', 'resource_keys': ['cpu']}
+        for name in ('demo.calculate', 'demo.first', 'demo.second', 'demo.stale')]}))
+    # The origin is the one test seam: production loads this module from the
+    # verified mapping. Layout generation and consumer validation remain real.
+    module = site / 'astrid/core/execution/generic_host.py'
+    module.parent.mkdir(parents=True)
+    module.write_text('# task-owned selected module origin\n')
+    monkeypatch.setattr(host, '__file__', str(module))
+    layout = gate.selected_python_layout(site)
+    monkeypatch.setattr(host, '_RETAINED_SELECTED_PYTHON', layout, raising=False)
+    monkeypatch.setattr(sys, 'argv', [str(module), 'run', '--source-checkout', str(site), '--pack-root', str(packs)])
+    monkeypatch.delenv('ASTRID_PACKS_PATH', raising=False)
+    monkeypatch.setenv('ASTRID_SOURCE_STATE', str(tmp_path / 'must-not-read.json'))
+    def forbidden(*args, **kwargs):
+        pytest.fail('installed discovery consulted managed/ambient/Git inventory')
+    monkeypatch.setattr(source_setup, 'active_source_inventory', forbidden)
+    monkeypatch.setattr(source_setup, 'load_source_state', forbidden)
+    monkeypatch.setattr(loader, '_default_pack_roots', forbidden)
+    monkeypatch.setattr(discovery, 'discover_packs', forbidden)
+    monkeypatch.setattr(custody_broker, 'command_inventory_git', forbidden)
+    monkeypatch.setattr(subprocess, 'run', forbidden)
+    # An enclosing repository must never turn this namespace into a checkout.
+    (tmp_path / '.git').mkdir()
+    return SimpleNamespace(site=site, packs=packs, pack=pack, matrix=matrix, module=module,
+                           layout=layout, forbidden=forbidden)
+
+
+@pytest.mark.parametrize('individual_pack', [False, True])
+def test_installed_discovery_retained_layout_preserves_real_projection(installed_discovery, monkeypatch, individual_pack):
+    f = installed_discovery
+    from astrid.core.pack import loader
+    from astrid.sdk.actions import action_executor_definition
+    from astrid.core.pack.discovery import DiscoveredPack
+    children = Path.iterdir
+    def selected_children(path):
+        assert path.is_relative_to(f.packs), 'enumerated outside selected launch roots'
+        return children(path)
+    monkeypatch.setattr(Path, 'iterdir', selected_children)
+    selected = f.pack if individual_pack else f.packs
+    monkeypatch.setattr(sys, 'argv', ['host', '--source-checkout', str(f.site), '--pack-root', str(selected)])
+    h = host.GenericPackHost(pack_roots=[selected], capability_matrix=f.matrix)
+    records = {r.id: r for r in h.discover()}
+    assert set(records) == {'demo.calculate', 'demo.unapproved', 'demo.first', 'demo.second'}
+    assert h.stale_matrix_entries == ('demo.stale',)
+    assert records['demo.unapproved'].approval_reason
+    assert not records['demo.calculate'].approval_reason
+    definition = action_executor_definition(DiscoveredPack(loader.load_pack_manifest(f.pack / 'pack.yaml'), 'extra', 0),
+                                            'calculate', loader.load_pack_manifest(f.pack / 'pack.yaml').actions['calculate'])
+    record = records['demo.calculate']
+    assert record.definition.to_dict() == definition.to_dict()
+    assert record.capability_digest == host._capability_digest(definition.to_dict())
+    assert record.source_digest == host._source_digest_for_roots((f.pack,))
+    assert record.manifest_path == f.pack / 'pack.yaml'
+    assert all(r.dependency_digest == host._dependency_digest(r.definition, records) for r in records.values())
+    assert records['demo.second'].definition.graph.depends_on == ('demo.first',)
+    assert h.source_epoch == host._canonical_digest({'vcs_revision': 'unversioned',
+        'source_digest': host._canonical_digest({k: r.source_digest for k, r in records.items()}),
+        'source_inventory_identity': '', 'matrix_digest': host._canonical_digest(h.matrix)})
+    _, admission = h.admit('executor', 'demo.calculate')
+    host._verify_admitted_source(admission)
+    (f.pack / 'actions/action.py').write_text('# changed declared source\n')
+    with pytest.raises(host.HostError, match='source digest changed'):
+        host._verify_admitted_source(admission)
+
+
+@pytest.mark.parametrize('fault', ['missing-binding', 'forged-binding', 'forged-origin', 'alias-binding', 'missing-root',
+    'unbound-root', 'ambient-root', 'escaped-root', 'missing-selection', 'malformed-selection', 'managed-source'])
+def test_installed_discovery_refuses_unbound_roots_before_scan(installed_discovery, monkeypatch, tmp_path, fault):
+    import copy
+    f = installed_discovery
+    roots = [f.packs]
+    if fault == 'missing-binding':
+        monkeypatch.delattr(host, '_RETAINED_SELECTED_PYTHON')
+        monkeypatch.setattr(host, '_RETAINED_ACTION_LAUNCH', {}, raising=False)
+    elif fault in {'forged-binding', 'forged-origin', 'alias-binding'}:
+        changed = copy.deepcopy(f.layout)
+        if fault in {'forged-binding', 'forged-origin'}:
+            changed['roots']['installed-packages'] = str(tmp_path)
+            if fault == 'forged-origin':
+                changed['root_bindings']['installed-packages'] = host._python_path_binding(tmp_path)
+        else: changed['root_bindings']['installed-packages']['aliases'] = [{'path': 'forged', 'target': 'forged'}]
+        monkeypatch.setattr(host, '_RETAINED_SELECTED_PYTHON', changed)
+    elif fault == 'missing-root':
+        roots = [f.packs / 'absent']
+        monkeypatch.setattr(sys, 'argv', ['host', '--source-checkout', str(f.site), '--pack-root', str(roots[0])])
+    elif fault == 'unbound-root': roots = [f.pack]
+    elif fault == 'ambient-root': monkeypatch.setenv('ASTRID_PACKS_PATH', str(tmp_path))
+    elif fault == 'escaped-root':
+        escaped = f.packs / 'escape'; escaped.symlink_to(tmp_path, target_is_directory=True)
+        roots = [escaped]
+        monkeypatch.setattr(sys, 'argv', ['host', '--source-checkout', str(f.site), '--pack-root', str(escaped)])
+    elif fault == 'missing-selection': monkeypatch.setattr(sys, 'argv', ['host'])
+    elif fault == 'managed-source':
+        (tmp_path / 'managed').mkdir()
+        (tmp_path / 'managed/.git').mkdir()
+        monkeypatch.setattr(sys, 'argv', ['host', '--source-checkout', str(tmp_path / 'managed'), '--pack-root', str(f.packs)])
+    else: monkeypatch.setattr(sys, 'argv', ['host', '--pack-root'])
+    monkeypatch.setattr(host, '_quarantine_scope', f.forbidden)
+    with pytest.raises(host.HostError):
+        host.GenericPackHost(pack_roots=roots, capability_matrix=f.matrix).discover()
+
+
+def test_installed_discovery_preserves_quarantine_and_strict_refusal(installed_discovery):
+    from astrid.core.pack import loader
+    f = installed_discovery
+    broken = f.packs / 'broken'
+    broken.mkdir()
+    (broken / 'pack.yaml').write_text('schema_version: 999\nid: broken\n')
+    optional = loader.scan_packs(f.packs, strict=False)
+    assert [q.pack_id for q in optional.quarantined] == ['broken']
+    assert [p.id for p in host._launch_explicit_packs((f.packs,))] == ['demo']
+    h = host.GenericPackHost(pack_roots=[f.packs], capability_matrix=f.matrix)
+    with pytest.raises(loader.PackValidationError, match='schema_version'):
+        h.discover()
+    assert not h.capabilities
+
+
+@pytest.mark.parametrize('fault', ['declared-file', 'record', 'source-closure', 'ambient-import'])
+def test_installed_discovery_keeps_runtime_inventory_refusals(installed_discovery, monkeypatch, tmp_path, fault):
+    """Reuse unchanged Runtime validators with a small wheel-shaped fixture.
+
+    The one-distribution table is a fixture, not a product dependency/release
+    qualification. No profile, package install, service or child is started.
+    """
+    import base64
+    import csv
+    import io
+    from runtime_protocol import verified_host_launch as gate
+    f = installed_discovery
+    for relative in ('astrid/__init__.py', 'astrid/sdk/__init__.py', 'astrid/omp_agent.py',
+                     'astrid/version.py', 'astrid/__main__.py', 'astrid/runtime_cli.py',
+                     'banodoco_workspace_client/__init__.py'):
+        path = f.site / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('# task-owned source closure component\n')
+    metadata = f.site / 'astrid-1.0.dist-info'
+    metadata.mkdir()
+    (metadata / 'METADATA').write_text('Metadata-Version: 2.1\nName: astrid\nVersion: 1.0\n')
+    stream = io.StringIO(newline='')
+    writer = csv.writer(stream)
+    for path in sorted(f.site.rglob('*')):
+        if path.is_file():
+            data = path.read_bytes()
+            pin = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip('=')
+            writer.writerow([str(path.relative_to(f.site)), 'sha256=' + pin, len(data)])
+    writer.writerow(['astrid-1.0.dist-info/RECORD', '', ''])
+    record = metadata / 'RECORD'
+    record.write_text(stream.getvalue())
+    monkeypatch.setattr(gate, 'HOST_DISTRIBUTIONS', {'astrid': ('astrid', 'banodoco_workspace_client')})
+    inventory = gate.installed_inventory(f.site, python_role='installed-packages', selected_source=f.site)
+    assert gate._local_inventory(inventory) == inventory
+    h = host.GenericPackHost(pack_roots=[f.packs], capability_matrix=f.matrix)
+    h.discover()
+    _, admission = h.admit('executor', 'demo.calculate')
+    closure = host.source_checkout_closure_digest(f.site)
+    if fault == 'ambient-import':
+        ambient = tmp_path / 'ambient'
+        ambient.mkdir()
+        (ambient / 'unreviewed_181.py').write_text('raise AssertionError("ambient imported")\n')
+        monkeypatch.syspath_prepend(str(ambient))
+        with pytest.raises(ModuleNotFoundError):
+            gate.MappedImports({}, trusted_local=True).find_spec('unreviewed_181')
+        return
+    target = f.pack / 'actions/action.py' if fault == 'declared-file' else record if fault == 'record' else f.module
+    target.write_text(target.read_text() + '\n# changed\n')
+    with pytest.raises(gate.HostLaunchError):
+        gate._local_inventory(inventory)
+    if fault == 'declared-file':
+        with pytest.raises(host.HostError, match='source digest changed'):
+            host._verify_admitted_source(admission)
+    elif fault == 'source-closure':
+        with pytest.raises(host.HostError, match='source closure mismatch'):
+            host._startup_identity_attestation(source_checkout=f.site, source_inventory_identity=None,
+                                               expected_source_closure_digest=closure)
+
+
 @pytest.fixture(scope='module')
 def action_installation(tmp_path_factory):
     runtime = os.environ.get('ACTION_CLOSURE_TEST_RUNTIME')

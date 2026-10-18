@@ -60,6 +60,46 @@ def _fixture_repo(root: Path, *, schema_version: int = 2) -> str:
     return _git(root, "rev-parse", "HEAD")
 
 
+def test_shared_discovery_unbound_state_uses_real_policy_refusal(tmp_path, monkeypatch):
+    """Task fixture reproduction, not recovery of the old trace's first call."""
+    import os
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb
+    from astrid.core.pack import source_setup as sources
+    checkout = tmp_path / 'managed'
+    checkout.mkdir()
+    record = sources.InstalledSource('demo', checkout, 'fixture-local', 'a' * 40, '.', 'b' * 64, 'c' * 64)
+    state = tmp_path / 'default-state' / 'astrid/default/pack-sources.json'
+    state.parent.mkdir(parents=True)
+    state.write_text(json.dumps({'version': sources.SOURCE_STATE_VERSION, 'active': {'demo': record.to_dict()},
+                                'cached': {}, 'disabled': []}))
+    monkeypatch.delenv(sources.SOURCE_STATE_ENV, raising=False)
+    monkeypatch.setenv('XDG_STATE_HOME', str(tmp_path / 'default-state'))
+    monkeypatch.delenv('ASTRID_PACKS_PATH', raising=False)
+    owner = cb._CommandInventoryOwner(SimpleNamespace(root=tmp_path, owner_epoch='fixture'), {})
+    operations = []
+    def inventory(args, *, cwd=None):
+        operation = next(name for name, tail in cb._COMMAND_GIT_OPERATIONS.items() if tuple(args[2:]) == tail)
+        operations.append(operation)
+        owner._validate_policy(args[1], str(cwd or Path.cwd()), dict(os.environ), operation)
+        pytest.fail('unbound inventory policy admitted an operation')
+    monkeypatch.setattr(cb, 'command_inventory_git', inventory)
+    monkeypatch.setattr(subprocess, 'run', lambda *a, **kw: pytest.fail('policy refusal reached Git'))
+    with pytest.raises(cb.CustodyError, match='outside the launch binding'):
+        discover_pack_metadata(project_root=tmp_path, extra_pack_roots=(str(tmp_path),))
+    # This fixture observes revision first. The original opaque trace did not
+    # establish an operation identity, and is deliberately not reinterpreted.
+    assert operations == ['revision']
+    explicit = tmp_path / 'explicit-without-git'
+    explicit.mkdir()
+    with pytest.raises(cb.CustodyError, match='outside the launch binding'):
+        GenericPackHost(pack_roots=[explicit]).discover()
+    assert operations == ['revision', 'revision']
+    # Separate policy reproduction only: repository_root is still refused.
+    with pytest.raises(cb.CustodyError, match='outside the launch binding'):
+        owner._validate_policy(str(checkout), str(tmp_path), dict(os.environ), 'repository_root')
+
+
 def test_default_source_policy_uses_full_delivery_hivemind_pin(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -551,4 +591,7 @@ def test_selected_source_real_registry_projections_and_fresh_refusals(tmp_path):
     assert runtime._selected_source_state_binding(repeated) == observations[0]['selected_source_state']
     state.write_bytes(original + b'\n')
     with pytest.raises(runtime.RemotionValidationError, match='changed after'):
+        runtime._registry_inputs(observations[0])
+    state.unlink()
+    with pytest.raises(runtime.RemotionValidationError):
         runtime._registry_inputs(observations[0])
