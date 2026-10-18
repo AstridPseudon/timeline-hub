@@ -14,7 +14,7 @@ from .compiler import (
     compile_wan_2_2_t2i,
     profile_semantics,
 )
-from .executor import (
+from .direct_executor import (
     DirectVibeMediaExecutor,
     DirectWorkflowRunner,
     MediaExecutionError,

@@ -99,3 +99,27 @@ class ExecutorDescriptionAdmissionTest(unittest.TestCase):
 class OrchestratorDescriptionAdmissionTest(unittest.TestCase):
     """Orchestrators go through the same loader as executors (discovery admits them in ``admit``)."""
 
+
+
+class ShippedPackDiscoveryTest(unittest.TestCase):
+    """A helper module must not be named like a folder-executor entry point.
+
+    Discovery treats every ``executor.py`` as a folder executor and runs it as a
+    standalone script, so a package module of that name (with relative imports
+    and no ``EXECUTOR`` metadata) shows up in doctor as a skipped executor.
+    """
+
+    PACKS_ROOT = Path(__file__).resolve().parents[2] / "astrid" / "packs"
+
+    def test_shipped_packs_have_no_executor_py_that_is_a_package_module(self) -> None:
+        offenders = sorted(
+            str(path.relative_to(self.PACKS_ROOT))
+            for path in self.PACKS_ROOT.rglob("executor.py")
+            if "__pycache__" not in path.parts and (path.parent / "__init__.py").is_file()
+        )
+        self.assertEqual(offenders, [])
+
+    def test_shipped_packs_have_no_skipped_executors_or_orchestrators(self) -> None:
+        section = executor_skip_section(pack_roots=[self.PACKS_ROOT])
+        self.assertEqual(section["error"], None)
+        self.assertEqual([(r["kind"], r["folder"]) for r in section["skipped"]], [])

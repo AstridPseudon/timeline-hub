@@ -279,9 +279,8 @@ Phase outcomes follow R-10.
 
 ## Owned debt (outside the cards, recorded so it is never ambient)
 
-- **Astrid structure: 23 distinct violations, now a shrink-only gate** (`scripts/reshape/baselines/structure_astrid.json`, checked in the default lane). A new violation fails; a fixed one must leave the baseline. Removing the rest needs design decisions, not test fixes:
+- **Astrid structure: 15 distinct violations, now a shrink-only gate** (`scripts/reshape/baselines/structure_astrid.json`, checked in the default lane). A new violation fails; a fixed one must leave the baseline. Removing the rest needs design decisions, not test fixes:
   - 9 top-level `astrid/` modules and dirs outside the canonical packages;
-  - `packs/vibecomfy/direct_image` and `media` not converted to executor folders;
   - `core/execution/generic_host.py` importing pack internals (6 sites);
   - 3 `sys.modules` registrations that `importlib` legitimately needs, where the rule allows no exemption.
 - **Astrid ruff/mypy baselines were reset on 16 Oct** (ruff 1,469 → 2,294; mypy 956 → 2,152). The old CI never reached them, so they had drifted. They now only shrink: since B12 both gates are exact like the structure gate (`scripts/reshape/count_baseline.py`), so a lower count fails until the baseline is rewritten and deleted code cannot leave slack for a later regression. The import-cycle baseline was regenerated from 14 stale pairs to the 6 real ones.

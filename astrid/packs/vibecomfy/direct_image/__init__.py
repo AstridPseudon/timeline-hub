@@ -17,7 +17,7 @@ from .compiler import (
     normalize_capability_id,
     portable_execution_digest,
 )
-from .executor import DirectImageExecutor, ImageExecutionError, ImageResult
+from .direct_executor import DirectImageExecutor, ImageExecutionError, ImageResult
 
 __all__ = [
     "CANONICAL_CAPABILITIES",

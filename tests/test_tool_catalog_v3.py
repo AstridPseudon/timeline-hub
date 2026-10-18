@@ -115,6 +115,11 @@ def test_catalog_check_rejects_stale_resource_binding(
     assert "is stale" in capsys.readouterr().err
 
 
+def test_committed_catalog_matches_the_packs(capsys: pytest.CaptureFixture[str]) -> None:
+    # The App build refuses a catalog whose resource hashes are stale, so a pack edit must regenerate it.
+    assert generator.main(["--check"]) == 0, capsys.readouterr().err
+
+
 def test_catalog_rejects_entry_that_retargets_the_host_tool(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
