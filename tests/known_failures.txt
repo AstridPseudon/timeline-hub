@@ -1,3 +1,2 @@
 # Known red tests (testing plan R-6). Format: <node id> | <owner> | <expires YYYY-MM-DD> | <reason>
 # Each runs as a strict xfail; remove the line in the commit that fixes the test.
-tests/test_recorded_responses.py::test_unnormalized_bodies_satisfy_their_contract_schema[validation_error_422] | runtime | 2026-10-30 | contract drift: the Runtime answers 422 with code=validation_error (runtime_protocol/errors.py:28) but contract Error.code (contract/schemas/common.json) does not list it; decide which side changes

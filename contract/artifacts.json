@@ -28,7 +28,7 @@
     "contract/manifest.json": "sha256:088c98862ddf2698240dae5e5ae53aa686b03d187521dd14084ff5870d147957",
     "contract/openapi/workspace-v1.yaml": "sha256:2794fe6a43e26876b7c8f374da94b5fde279762c107411fc4a13d8e0996a113c",
     "contract/schemas/backup.json": "sha256:71ec2f4bc9ad63ac05e8149cf0d1a4f96fa8d5aa4b85bf12a61938fbafb2151e",
-    "contract/schemas/common.json": "sha256:d07a72f61186f197920074252a2b679f3a1ed5b84b6938d2f23c82815ca77ecc",
+    "contract/schemas/common.json": "sha256:65e0196e36a0565f3a2f69e489e4c1fa6114df039eb25666c60591f266e06f19",
     "contract/schemas/doctor.json": "sha256:d0caac9e7bf6a81d68abb52e757b321f7a45d4f2afff43bd4880089ea8dcc243",
     "contract/schemas/document.json": "sha256:6d8fe08563eb96504c874c1d3535527371a8a67f54b06bcd324c32f99cb286e3",
     "contract/schemas/envelope.json": "sha256:3afb9c6346eae95743e102cde2a405790c174a113ac952187c746ed2bef7f7ca",
@@ -61,11 +61,11 @@
     "contract/schemas/timeline.json": "sha256:c4eb8eeba359632e7b3f88fa4b73f1fd9247bbe7bb08f36a970936a0bfe089a4",
     "contract/schemas/worker.json": "sha256:ce9046dd139b5c3368dfbb523ad9f8c1fc17a58749cd2fc8265a5e77a49bfc2b",
     "packages/python/astrid_runtime_client/__init__.py": "sha256:97629bd1b977fb75797d26bcdafe3d3763a7fa12b6c2e738ebb49de1e2f4ffa1",
-    "packages/python/astrid_runtime_client/contract_metadata.py": "sha256:80fc75fd5bb5f8215624306f11b94893321b7d3d5725d9a647b7f13fc6abe3ef",
-    "packages/python/astrid_runtime_client/generated.py": "sha256:0ae65e07e918f018e521bc9563f904b462645681e41e5a0b90255ad619a2c2e3",
-    "packages/typescript/src/contract-metadata.ts": "sha256:dd5f9c081b17c6e071d40658e114638e44d7320a2bb6ce2bcdde2ddb5386a692",
+    "packages/python/astrid_runtime_client/contract_metadata.py": "sha256:3b141ab4bebd723a0721b3ae56fabd9cafed658c2245066f2c072ce4cae87663",
+    "packages/python/astrid_runtime_client/generated.py": "sha256:e1bb3018128ea51355324a230b83be921c550a01586959274baf2c0e2b5955a3",
+    "packages/typescript/src/contract-metadata.ts": "sha256:bf852360f57c15e41a06037d5e78191128d98b5d4909882e06c0e9d40a3479c8",
     "packages/typescript/src/generated.ts": "sha256:82f1b330a257a8414f49f852a8604ed2692ee70c3482a9a45ff51df18bd77325"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:082aea3cf5c3864cf262fe3fac0847a11bbc46d7dce3dc3bca4fe27aec5645b1"
+  "version": "sha256:6350df239bd3f78cae70788021447e4d6be99c59b8f8c6dd36d5ddefc0a48056"
 }

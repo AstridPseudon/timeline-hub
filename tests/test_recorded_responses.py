@@ -34,7 +34,6 @@ SCHEMA_FOR = {
     "validation_error_422": (ERROR, None),
     "invalid_cursor_400": (ERROR, None),
 }
-# The daemon answers validation failures with code "validation_error", which common.json's Error enum omits.
 
 
 @pytest.fixture(scope="module")
