@@ -1221,6 +1221,17 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
             except OSError as exc:
                 failure = (failure + "; " if failure else "") + f"source_change: {exc}"
         if adopt_attempted:
+            if tier == "quick":
+                try:
+                    from astrid.sdk.upgrade import stop_pack_host
+
+                    stopped = runner.phase("quick_host_down", lambda: stop_pack_host(root / "data"))
+                    runner.details["quick_host_shutdown"] = stopped
+                    if stopped.get("forced") is True:
+                        failure = (failure + "; " if failure else "") + "quick_host_down: host required forced SIGKILL cleanup"
+                except Exception as exc:
+                    logging.exception("Journey Astrid host shutdown failed")
+                    failure = (failure + "; " if failure else "") + str(exc)
             try:
                 runner.phase("down", lambda: runner.command("down", [sys.executable, "-m", "astrid_runtime", "down", "--source-manifest", str(manifest_path)] + common, env, unbounded=(tier == "quick")))
             except Exception as exc:

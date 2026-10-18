@@ -78,7 +78,10 @@ def test_cli_quick_branch_defaults_to_generated_one_second_fixture(tmp_path: Pat
 
 
 @pytest.mark.parametrize("leftover", [False, True])
-def test_quick_run_branches_through_browser_render_and_strict_teardown(tmp_path: Path, monkeypatch, leftover: bool) -> None:
+@pytest.mark.parametrize("host_stop", ["normal", "error", "forced"])
+def test_quick_run_branches_through_browser_render_and_strict_teardown(
+    tmp_path: Path, monkeypatch, leftover: bool, host_stop: str,
+) -> None:
     from astrid.core.rendering import node_pin
 
     app = tmp_path / "app"
@@ -109,6 +112,15 @@ def test_quick_run_branches_through_browser_render_and_strict_teardown(tmp_path:
                  "astridRevisionId": "astrid", "savedRevisionId": "app", "astridLabel": "A", "appLabel": "B"})
     monkeypatch.setattr(journey, "_quick_browser_exchange", browser)
 
+    from astrid.sdk import upgrade
+    def stop_host(data_root):
+        assert data_root.is_absolute() and data_root.name == "data"
+        phases.append("quick_host_down")
+        if host_stop == "error":
+            raise upgrade.UpgradeError("host shutdown refused")
+        return {"host_status": "stopped", **({"forced": True} if host_stop == "forced" else {})}
+    monkeypatch.setattr(upgrade, "stop_pack_host", stop_host)
+
     def render(self, _descriptor, _result):
         phases.append("render")
         self.r.details["quick_render"] = {"task_id": "task-1"}
@@ -128,10 +140,17 @@ def test_quick_run_branches_through_browser_render_and_strict_teardown(tmp_path:
                          backend=journey.REMOTION_BACKEND, app_checkout=app)
     report = json.loads(summary.read_text())
     assert "adopt" in phases and "up" in phases and "first_open" in phases and "doctor" in phases
-    assert phases.index("up") < phases.index("quick_browser") < phases.index("render") < phases.index("down")
-    assert report["ok"] is (not leftover)
+    assert phases.index("up") < phases.index("quick_browser") < phases.index("render")
+    assert phases.index("render") < phases.index("quick_host_down") < phases.index("down")
+    expected_ok = not leftover and host_stop == "normal"
+    assert report["ok"] is expected_ok
     if leftover:
         assert status == 1 and "forced process cleanup" in report["error"]
-    else:
+    if host_stop == "error":
+        assert status == 1 and "host shutdown refused" in report["error"]
+        assert "down" in phases
+    elif host_stop == "forced":
+        assert status == 1 and "host required forced SIGKILL cleanup" in report["error"]
+    elif not leftover:
         assert status == 0 and report["task_ids"] == ["task-1"]
 

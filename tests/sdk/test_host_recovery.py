@@ -408,7 +408,7 @@ def test_stop_group_signals_only_the_registered_anchored_group(monkeypatch):
         census.clear()
     monkeypatch.setattr(host_bootstrap, "signal_observed_group", signal_group)
 
-    host_bootstrap._stop_group(4321, grace=0, leader_birth="birth-current")
+    assert host_bootstrap._stop_group(4321, grace=0, leader_birth="birth-current") is False
     assert calls == [(4321, signal.SIGTERM)]
 
     calls.clear()
@@ -443,3 +443,27 @@ def test_stop_group_rechecks_leader_birth_before_escalation(monkeypatch):
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="reused"):
         host_bootstrap._stop_group(4321, grace=0, leader_birth="registered-birth")
     assert calls == [(4321, signal.SIGTERM)]
+
+
+def test_stop_group_reports_sigkill_escalation_without_live_processes(monkeypatch):
+    state = {"alive": True}
+    calls = []
+
+    def survivors(_pgid, *, leader_birth=None):
+        if leader_birth is not None:
+            assert leader_birth == "birth-current"
+        return [4321] if state["alive"] else []
+
+    def killpg(pgid, signum):
+        calls.append((pgid, signum))
+        if signum == signal.SIGKILL:
+            state["alive"] = False
+
+    monkeypatch.setattr(host_bootstrap, "_group_survivors", survivors)
+    monkeypatch.setattr(host_bootstrap.os, "getpgrp", lambda: 8765)
+    monkeypatch.setattr(host_bootstrap.os, "killpg", killpg)
+
+    forced = host_bootstrap._stop_group(4321, grace=0, leader_birth="birth-current")
+
+    assert forced is True
+    assert calls == [(4321, signal.SIGTERM), (4321, signal.SIGKILL)]
