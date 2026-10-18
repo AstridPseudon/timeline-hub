@@ -110,7 +110,7 @@ from astrid.core.execution.guards import (
 )
 from astrid.core.execution.managed_inputs import managed_file_digest
 from astrid.core.execution.declared_executables import (
-    ExecutableAdmission, ExecutableAdmissionError, ExecutableBinding,
+    ExecutableAdmission, ExecutableAdmissionError, ExecutableBinding, FilePin,
 )
 from astrid.core.execution.managed_tool_session import (
     SessionCapacityError,
@@ -1982,6 +1982,7 @@ class _ConfinementPolicy:
     review_listener: Any = None
     retained_profile: bool = False
     host_control_budget: Any = None
+    selected_interpreter: Any = None
 
 
 @dataclass(frozen=True)
@@ -2140,13 +2141,94 @@ def _selected_action_read_files(retained, selection):
             retained['launcher']['path']: retained['launcher']['sha256']}
 
 
+@dataclass(frozen=True)
+class _SelectedActionInterpreter:
+    """The retained lexical invocation and its separately authorized artifact."""
+
+    artifact: FilePin
+    layout: bytes
+    selection: bytes
+    profile_digest: str
+    aliases: tuple[tuple[Path, tuple[int, ...]], ...]
+
+    @staticmethod
+    def _alias_identity(path):
+        value = path.lstat()
+        return (value.st_dev, value.st_ino, value.st_mode, value.st_mtime_ns, value.st_ctime_ns)
+
+    @classmethod
+    def admit(cls, retained, selection, profile):
+        from runtime_protocol.verified_host_launch import canonical
+        artifact = FilePin.measure(Path(os.path.abspath(sys.executable)))
+        layout = retained['selected_python']
+        if (profile.get('host_executable') != str(artifact.path)
+                or profile.get('host_artifact_digest') != artifact.sha256):
+            raise HostError('selected action interpreter differs from Host profile')
+        aliases = tuple((Path(row['path']), cls._alias_identity(Path(row['path'])))
+                        for row in layout['interpreter']['aliases'])
+        binding = cls(artifact, canonical(layout), canonical(selection), retained['profile_digest'], aliases)
+        binding.validate()
+        return binding
+
+    def validate(self, policy=None):
+        from runtime_protocol.verified_host_launch import canonical
+        try:
+            retained = globals().get('_RETAINED_ACTION_LAUNCH')
+            selection = json.loads(self.selection)
+            layout = json.loads(self.layout)
+            boundary = _retained_python_boundary()
+            if (not isinstance(retained, dict) or boundary is None
+                    or retained['profile_digest'] != self.profile_digest
+                    or canonical(retained['actions'].get(selection['action_id'])) != self.selection
+                    or canonical(retained['selected_python']) != self.layout
+                    or canonical(globals().get('_RETAINED_SELECTED_PYTHON')) != self.layout
+                    or retained['source_root'] != str(boundary[0]['installed-packages'])
+                    or layout['interpreter'] != _python_path_binding(self.artifact.path)
+                    or selection['interpreter'] != {'path': os.path.abspath(sys.executable),
+                        'sha256': self.artifact.sha256.removeprefix('sha256:'),
+                        'version': list(sys.version_info[:3])}
+                    or str(self.artifact.path) != os.path.abspath(sys.executable)):
+                raise HostError('selected action interpreter or Python boundary changed')
+            # -S can report the base sys.prefix. Revalidate the retained
+            # owner's startup paths, including absence, rather than deriving a
+            # different venv layout from this isolated Host's sys.prefix.
+            for raw, expected in layout['startup_files'].items():
+                path = Path(raw)
+                if expected is None:
+                    if path.exists() or path.is_symlink():
+                        raise HostError('selected Python startup boundary changed')
+                elif (expected['binding'] != _python_path_binding(path)
+                        or 'sha256:' + expected['sha256'] != FilePin.measure(path).sha256):
+                    raise HostError('selected Python startup file changed')
+            self.artifact.verify()
+            if any(self._alias_identity(path) != identity for path, identity in self.aliases):
+                raise HostError('selected action interpreter alias replaced')
+            if policy is not None:
+                writable = (policy.private_write_root, *policy.project.write_roots)
+                resources = (*self.artifact.aliases, self.artifact.resolved,
+                             *(path for path, _ in self.aliases),
+                             *(Path(raw) for raw in layout['startup_files']))
+                # Check the lexical node as well as the physical parent: a
+                # workload-writable link must never redirect an authorized binary.
+                if any(candidate.is_relative_to(root) for resource in resources
+                       for candidate in (resource, resource.parent.resolve(strict=True) / resource.name)
+                       for raw in writable for root in (raw, raw.resolve(strict=True))):
+                    raise HostError('selected action interpreter alias is workload writable')
+        except HostError:
+            raise
+        except (OSError, ValueError, RuntimeError, KeyError, TypeError) as exc:
+            raise HostError('selected action interpreter binding is unavailable or changed') from exc
+
+
 def _selected_action_policy(policy, retained, read_files):
     installed = Path(retained['source_root'])
     roots = tuple(root for root in policy.bootstrap_roots
         if not (root == installed or root.is_relative_to(installed) or installed.is_relative_to(root)))
     files = tuple(file for file in policy.bootstrap_files if not file.is_relative_to(installed))
+    # Prediction and materialization share these exact Host-selected aliases.
+    interpreter_files = FilePin.measure(Path(os.path.abspath(sys.executable))).aliases
     return replace(policy, bootstrap_roots=roots,
-        bootstrap_files=tuple(dict.fromkeys((*files, *(Path(p) for p in read_files)))),
+        bootstrap_files=tuple(dict.fromkeys((*files, *interpreter_files, *(Path(p) for p in read_files)))),
         bootstrap_search_roots=tuple(dict.fromkeys((*policy.bootstrap_search_roots,
             *(Path(p).parent for p in read_files)))), retained_profile=True)
 
@@ -2260,8 +2342,14 @@ class _ConfinedLaunchPlan:
     child_bridge_launch: Any = None
     renderer_profile: Any = None
     review_listener: Any = None
+    selected_interpreter: Any = None
+    selected_interpreter_policy: Any = None
 
     def subprocess_options(self) -> dict[str, Any]:
+        if self.selected_interpreter is not None:
+            if type(self.selected_interpreter) is not _SelectedActionInterpreter:
+                raise HostError("selected interpreter requires its retained Host binding")
+            self.selected_interpreter.validate(self.selected_interpreter_policy)
         if self.renderer_profile is not None:
             from .renderer_transport import RetainedRendererProfile
 
@@ -2504,6 +2592,16 @@ def _confined_launch_plan(
     if (executable not in bootstrap_files and not within(executable, bootstrap_roots)
             and executable not in {binding.executable.resolved for binding in bindings}):
         raise HostError("command executable is not an enumerated bootstrap resource")
+    invocation = executable
+    selected_interpreter = policy.selected_interpreter
+    if selected_interpreter is not None:
+        if type(selected_interpreter) is not _SelectedActionInterpreter:
+            raise HostError('selected interpreter requires its retained Host binding')
+        selected_interpreter.validate(policy)
+        if (argv[0] != str(selected_interpreter.artifact.path)
+                or executable != selected_interpreter.artifact.resolved):
+            raise HostError('selected action invocation differs from admitted interpreter')
+        invocation = selected_interpreter.artifact.path
     working = private if cwd is None else path(cwd, directory=True)
     if not within(working, (*reads, private, *bootstrap_roots)):
         raise HostError("command cwd exceeds confinement read scope")
@@ -2582,14 +2680,16 @@ def _confined_launch_plan(
         from .renderer_transport import RetainedRendererProfile
 
         retained = RetainedRendererProfile.create(profile, policy)
-        return _ConfinedLaunchPlan((sandbox, "-f", str(retained.path), str(executable), *argv[1:]),
+        return _ConfinedLaunchPlan((sandbox, "-f", str(retained.path), str(invocation), *argv[1:]),
                                    working, tuple(sorted(env.items())), descriptors,
                                    retained_process_only=not policy.workload_process_creation,
-                                   renderer_profile=retained)
-    return _ConfinedLaunchPlan((sandbox, "-p", profile, str(executable), *argv[1:]),
+                                   renderer_profile=retained, selected_interpreter=selected_interpreter,
+                                   selected_interpreter_policy=policy if selected_interpreter is not None else None)
+    return _ConfinedLaunchPlan((sandbox, "-p", profile, str(invocation), *argv[1:]),
                                working, tuple(sorted(env.items())), descriptors,
                                retained_process_only=not policy.workload_process_creation,
-                               review_listener=policy.review_listener)
+                               review_listener=policy.review_listener, selected_interpreter=selected_interpreter,
+                               selected_interpreter_policy=policy if selected_interpreter is not None else None)
 
 
 def _filesystem_sandbox_profile(policy: _FilesystemSandboxPolicy, attempt: Path) -> str:
@@ -6326,6 +6426,8 @@ class GenericPackHost:
         from runtime_protocol.verified_host_launch import prepare_action_binding, canonical
         retained, context = self._selected_action_context(record)
         selection = retained['actions'][record.id]
+        interpreter = _SelectedActionInterpreter.admit(
+            retained, selection, self._selected_action_preparation._request['profile'])
         if argv[:3] != [sys.executable, '-m', selection['module']]:
             raise HostError('selected action command differs from admitted entrypoint')
         environment = {}
@@ -6343,7 +6445,8 @@ class GenericPackHost:
                 raise HostError('selected action lacks admitted Host control storage bound')
         if set(payload['read_files']) != set(_selected_action_read_files(retained, selection)):
             raise HostError('selected action control storage closure differs')
-        self._confinement_policy = _selected_action_policy(policy, retained, payload['read_files'])
+        self._confinement_policy = replace(
+            _selected_action_policy(policy, retained, payload['read_files']), selected_interpreter=interpreter)
         # Use the retained launcher's existing private stdin PIPE. The process
         # custody wrapper rejects unmatched caller pass_fds; this bootstrap is
         # its sole stdin consumer and closes it before importing any action.
@@ -9394,11 +9497,16 @@ class GenericPackHost:
             )
             if selected_channel is not None:
                 sealed = json.loads(selected_channel)
-                if self._selected_action_context(record)[1] != sealed['context']:
+                retained, context = self._selected_action_context(record)
+                if context != sealed['context']:
                     raise HostError('selected action launch context changed before spawn')
                 if record.definition.isolation.network and self._owned_action_broker(
                         network_broker, attempt=attempt, record=record)[1] != sealed['network_environment']:
                     raise HostError('selected action broker changed before spawn')
+                from runtime_protocol.verified_host_launch import prepare_action_binding
+                if prepare_action_binding(retained, action_id=record.id, context=context,
+                        network_environment=sealed['network_environment']) != sealed:
+                    raise HostError('selected action binding changed before spawn')
             process = popen_owned_group(list(plan.argv), **plan.subprocess_options(), text=True)
             self._track_process(process)
             if selected_channel is not None:

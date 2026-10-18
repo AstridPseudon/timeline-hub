@@ -267,13 +267,18 @@ def selected_command(action_installation,tmp_path,monkeypatch,request):
             'mapping': {name: item for name, item in f.retained['mapping'].items()
                         if not Path(item['path']).is_relative_to(f.root)},
             'distribution_metadata': [row for row in f.retained['distribution_metadata'] if row['root'] != str(f.root)]}
+        retained['selected_python'] = gate.selected_python_layout(root)
         f = SimpleNamespace(root=root, retained=retained, matrix=f.matrix)
     h=host.GenericPackHost(pack_roots=[f.root/'astrid/packs/generation'],capability_matrix=f.matrix)
     h.discover();record=h.capabilities['generation.generate_speech']
     retained=copy.deepcopy(f.retained)
-    profile={'host_launch':{'selected_actions':retained['actions']},'profile_digest':'sha256:'+'b'*64}
+    profile={'host_launch':{'selected_actions':retained['actions']},'profile_digest':'sha256:'+'b'*64,
+        'host_executable':os.path.abspath(sys.executable),
+        'host_artifact_digest':'sha256:'+hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest()}
     retained['profile_digest']=gate.raw_digest(profile)
     monkeypatch.setattr(host,'_RETAINED_ACTION_LAUNCH',retained,raising=False)
+    monkeypatch.setattr(host,'_RETAINED_SELECTED_PYTHON',retained['selected_python'],raising=False)
+    monkeypatch.setattr(host,'__file__',str(f.root/'astrid/core/execution/generic_host.py'))
     preparation=host.LocalExecutionPreparation(operation_id='prepare',channel_id='channel')
     owner={'pid':123,'uid':os.getuid(),'birth_id':'runtime-owner'}
     preparation._request={'profile':profile,'runtime_owner':dict(owner),'custody_scope':str(tmp_path/'custody'),
@@ -320,6 +325,171 @@ def selected_command(action_installation,tmp_path,monkeypatch,request):
     context=host._NetworkBrokerContext(broker,policy_network,'evidence-key','task-only-token',attempt,authority.fields)
     fixture.broker=context
     return fixture
+
+
+
+@pytest.fixture
+def selected_venv(selected_command, tmp_path, monkeypatch):
+    """Task-owned venv-shaped alias chain; no interpreter or action is run."""
+    from runtime_protocol import verified_host_launch as gate
+    f = selected_command
+    prefix = tmp_path / 'selected-venv'
+    binary = prefix / 'bin'
+    binary.mkdir(parents=True)
+    (binary / 'python3').symlink_to(Path(sys.executable).resolve(strict=True))
+    python = binary / 'python'
+    python.symlink_to('python3')
+    (prefix / 'pyvenv.cfg').write_text('home = ' + str(Path(sys.base_prefix) / 'bin') + '\n')
+    monkeypatch.setattr(sys, 'executable', str(python))
+    monkeypatch.setattr(sys, 'prefix', str(prefix))
+    selection = f.retained['actions'][f.record.id]
+    selection['interpreter'] = {'path': str(python),
+        'sha256': hashlib.sha256(python.read_bytes()).hexdigest(), 'version': list(sys.version_info[:3])}
+    selection['digest'] = gate.raw_digest({k: v for k, v in selection.items() if k != 'digest'})
+    profile = f.preparation._request['profile']
+    profile.update(host_executable=str(python), host_artifact_digest='sha256:' + selection['interpreter']['sha256'])
+    f.retained['profile_digest'] = gate.raw_digest(profile)
+    f.retained['selected_python'] = gate.selected_python_layout(Path(f.retained['source_root']))
+    monkeypatch.setattr(host, '_RETAINED_SELECTED_PYTHON', f.retained['selected_python'])
+    f.python = python
+    return f
+
+
+def selected_plan(f, monkeypatch, *, retained=True):
+    monkeypatch.setattr(host.sys, 'platform', 'darwin')
+    monkeypatch.setattr(host.shutil, 'which', lambda _: '/usr/bin/sandbox-exec')
+    command, channel = f.host._prepare_selected_action_command(f.record,
+        [sys.executable, '-m', 'astrid.packs.generation.actions.generate_speech.run', '--help'],
+        attempt=f.attempt, network_broker=f.broker)
+    policy = replace(f.host._confinement_policy, retained_profile=retained)
+    return host._confined_launch_plan(command, policy=policy), command, json.loads(channel), policy
+
+
+@pytest.mark.parametrize('retained', [False, True], ids=['inline', 'retained-file'])
+def test_selected_action_genuine_venv_plan_agrees_with_existing_child_verifier(selected_command, monkeypatch, retained):
+    """Offline composed boundary: stop the unchanged verifier before any import."""
+    from runtime_protocol import verified_host_launch as gate
+    f = selected_command
+    lexical = Path(os.path.abspath(sys.executable))
+    assert lexical.is_symlink() and (Path(sys.prefix) / 'pyvenv.cfg').is_file()
+    # Match the Python 3.11 isolated Host: retained venv selection survives
+    # even when -S reports the base prefix. No child process is launched.
+    monkeypatch.setattr(sys, 'prefix', sys.base_prefix)
+    result, command, payload, policy = selected_plan(f, monkeypatch, retained=retained)
+    assert result.argv[:2] == ('/usr/bin/sandbox-exec', '-f' if retained else '-p')
+    assert result.argv[3] == str(lexical) == command[0]
+    assert lexical != lexical.resolve(strict=True)
+    profile = result.renderer_profile.path.read_text() if retained else result.argv[2]
+    for resource in (lexical, lexical.resolve(strict=True)):
+        assert f'(allow file-map-executable (literal "{resource}"))' in profile
+    assert result.selected_interpreter.artifact.resolved == lexical.resolve(strict=True)
+    assert payload['action']['interpreter'] == {'path': result.argv[3],
+        'sha256': hashlib.sha256(lexical.resolve().read_bytes()).hexdigest(),
+        'version': list(sys.version_info[:3])}
+    result.subprocess_options()
+    class InterpreterAccepted(Exception): pass
+    def before_import(path, pin):
+        raise InterpreterAccepted
+    monkeypatch.setattr(gate, '_local_read', before_import)
+    with pytest.raises(InterpreterAccepted):
+        gate.launch_action_from_binding(payload, context_digest=payload['context_digest'], arguments=['--help'])
+    # Canonicalizing argv or selecting a sibling venv still fails the existing
+    # exact lexical comparison, even though all three paths read the same bytes.
+    sibling = f.attempt.parent / 'sibling-venv/bin/python'
+    sibling.parent.mkdir(parents=True)
+    sibling.symlink_to(lexical.resolve())
+    for substitute in (lexical.resolve(), sibling):
+        with monkeypatch.context() as change:
+            change.setattr(sys, 'executable', str(substitute))
+            with pytest.raises(gate.HostLaunchError, match='interpreter changed'):
+                gate.launch_action_from_binding(payload, context_digest=payload['context_digest'], arguments=[])
+
+
+@pytest.mark.parametrize('substitute', ['base', 'sibling'])
+def test_selected_action_plan_refuses_same_binary_interpreter_substitution(selected_venv, monkeypatch, substitute):
+    f = selected_venv
+    _, command, _, policy = selected_plan(f, monkeypatch)
+    alias = f.python.resolve() if substitute == 'base' else f.python.parent.parent.parent / 'other/bin/python'
+    if substitute == 'sibling':
+        alias.parent.mkdir(parents=True)
+        alias.symlink_to(f.python.resolve())
+    with pytest.raises(host.HostError, match='invocation differs'):
+        host._confined_launch_plan([str(alias), *command[1:]], policy=policy)
+
+
+@pytest.mark.parametrize('fault', ['retarget', 'replaced-alias', 'missing', 'hash', 'version',
+    'prefix', 'startup', 'source', 'action', 'context', 'writable-alias'])
+def test_selected_action_final_plan_refuses_interpreter_binding_drift(selected_venv, monkeypatch, fault):
+    f = selected_venv
+    result, _, _, policy = selected_plan(f, monkeypatch)
+    if fault == 'retarget':
+        other = f.python.parent / 'other-python'
+        other.write_bytes(b'changed target'); other.chmod(0o700)
+        f.python.unlink(); f.python.symlink_to(other)
+    elif fault == 'replaced-alias':
+        # Keep the original node allocated so inode reuse cannot hide replacement.
+        f.python.rename(f.python.with_name('old-python'))
+        f.python.symlink_to('python3')
+    elif fault == 'missing':
+        f.python.unlink()
+    elif fault == 'hash':
+        # Inject the measured binary identity, without touching any real Python.
+        original = host.FilePin.measure.__func__
+        measured = []
+        def changed_binary(cls, path):
+            pin = original(cls, path)
+            if path == f.python:
+                measured.append(path)
+                return replace(pin, sha256='sha256:' + '0' * 64)
+            return pin
+        monkeypatch.setattr(host.FilePin, 'measure', classmethod(changed_binary))
+    elif fault == 'version':
+        monkeypatch.setattr(sys, 'version_info', (3, 11, 99))
+    elif fault == 'prefix':
+        monkeypatch.setattr(sys, 'base_prefix', str(f.python.parent.parent))
+    elif fault == 'startup':
+        (f.python.parent.parent / 'pyvenv.cfg').write_text('changed prefix configuration\n')
+    elif fault == 'source':
+        f.retained['source_root'] = str(f.attempt)
+    elif fault == 'action':
+        f.retained['actions'][f.record.id] = {**f.retained['actions'][f.record.id], 'module': 'foreign.action'}
+    elif fault == 'context':
+        f.retained['profile_digest'] = '0' * 64
+    else:
+        result = replace(result, selected_interpreter_policy=replace(policy,
+            project=replace(policy.project, write_roots=(f.python.parent,))))
+    with pytest.raises(host.HostError):
+        result.subprocess_options()
+    if fault == 'hash':
+        assert measured == [f.python]  # Refused the binary, after unchanged startup pins.
+
+
+@pytest.mark.parametrize('fault', ['interpreter', 'context', 'source'])
+def test_selected_action_owned_spawn_revalidates_after_plan(selected_venv, monkeypatch, fault):
+    f = selected_venv
+    monkeypatch.setattr(host.sys, 'platform', 'darwin')
+    monkeypatch.setattr(host.shutil, 'which', lambda _: '/usr/bin/sandbox-exec')
+    original = f.host._workload_launch_plan
+    source = Path(f.retained['source_root']) / 'astrid/core/execution/generic_host.py'
+    original_bytes = source.read_bytes()
+    def changed(*args, **kwargs):
+        result = original(*args, **kwargs)
+        if fault == 'interpreter':
+            f.python.rename(f.python.with_name('old-python')); f.python.symlink_to('python3')
+        elif fault == 'context':
+            f.preparation._request['runtime_owner']['birth_id'] = 'foreign-owner'
+        else:
+            source.write_bytes(original_bytes + b'\n# changed after planning\n')
+        return result
+    monkeypatch.setattr(f.host, '_workload_launch_plan', changed)
+    monkeypatch.setattr(host, 'popen_owned_group', lambda *a, **kw: pytest.fail('unexpected spawn'))
+    try:
+        with pytest.raises((host.HostError, RuntimeError, ValueError)):
+            f.host._run_command_definition(f.record,
+                {'text':'offline','voice':'en-US-ChristopherNeural','rate':'+0%'},
+                f.outputs, f.attempt, network_broker=f.broker, allow_runtime_connection=False)
+    finally:
+        source.write_bytes(original_bytes)
 
 
 @pytest.mark.parametrize('edge',['profile','owner','epoch','generation','operation','channel','capability','declaration','entrypoint',

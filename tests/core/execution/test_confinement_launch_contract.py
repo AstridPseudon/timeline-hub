@@ -380,3 +380,21 @@ def test_descriptor_allowlist_is_explicit_pipe_only_and_closes_others(config):
 def test_invalid_descriptor_allowlist_denied(config, descriptors):
     with pytest.raises(host.HostError, match='descriptor allowlist'):
         plan(replace(config, pass_fds=descriptors))
+
+
+@pytest.mark.parametrize('retained', [False, True])
+def test_nonselected_interpreter_alias_keeps_canonical_invocation(config, tmp_path, retained):
+    alias = tmp_path / 'other-venv/bin/python'
+    alias.parent.mkdir(parents=True)
+    alias.symlink_to(config.bootstrap_files[0])
+    result = host._confined_launch_plan([str(alias), 'fixture'],
+        policy=replace(config, retained_profile=retained))
+    assert result.argv[3] == str(config.bootstrap_files[0].resolve(strict=True))
+    assert result.selected_interpreter is None
+    result.subprocess_options()
+
+
+@pytest.mark.parametrize('binding', [True, '/caller/python', {}, object()])
+def test_selected_interpreter_cannot_be_a_caller_alias(config, binding):
+    with pytest.raises(host.HostError, match='retained Host binding'):
+        plan(replace(config, selected_interpreter=binding))
