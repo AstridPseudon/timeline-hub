@@ -70,11 +70,24 @@ def _create_host_custody_scope(scope: Path) -> None:
         raise ConflictError("host-only custody scope is not owner-only")
 
 
+def _frame_encode(value: Mapping[str, Any]) -> bytes:
+    return json.dumps(dict(value), sort_keys=True, separators=(",", ":"), allow_nan=False).encode() + b"\n"
+
+
+def _prepare_frame_encode(value: Mapping[str, Any]) -> bytes:
+    from .local_execution_supervisor import FRAME_LIMIT
+
+    encoded = _frame_encode(value)
+    if len(encoded) > FRAME_LIMIT:
+        raise ConflictError("local Worker preparation frame is too large")
+    return encoded
+
+
 def _frame_send(channel: socket.socket, value: Mapping[str, Any]) -> None:
-    encoded = json.dumps(dict(value), sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    encoded = _frame_encode(value)
     if len(encoded) > CONTROL_FRAME_LIMIT:
         raise ConflictError("local Worker control frame is too large")
-    channel.sendall(encoded + b"\n")
+    channel.sendall(encoded)
 
 
 def _frame_receive(channel: socket.socket, *, evidence: dict | None = None) -> dict[str, Any]:
@@ -357,16 +370,6 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         pack_roots = tuple(Path(p) for p in [profile.host_launch["pack_root"],
             *(v["path"] for v in profile.host_launch.get("additional_pack_roots", []))])
         capability_matrix = Path(self.config["capability_matrix"]) if self.config.get("capability_matrix") else None
-        inspection_required = renderer is not None
-        if not inspection_required:
-            # Use the SDK's explicit-source discovery and executable declaration
-            # projection, just as its inspection producer does. This reads no
-            # ambient source store and performs no executable/native inspection.
-            from astrid.core.execution.generic_host import _launch_needs_command_inspection
-            inspection_required = _launch_needs_command_inspection(pack_roots, capability_matrix)
-        if inspection_required:
-            from astrid.core.execution.custody_broker import (
-                RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv)
         selected = _selected_profile_payload(profile)
         epoch = self.config.get("runtime_instance_id")
         owner = default_process_identity(os.getpid())
@@ -379,6 +382,17 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         scope = profile.support_root / "local-execution-custody" / operation_id
         request = host_prepare_request(operation_id=operation_id, channel_id=channel_id, owner_epoch=epoch,
             runtime_owner=owner, profile=selected, custody_scope=str(scope))
+        encoded_request = _prepare_frame_encode(request)
+        inspection_required = renderer is not None
+        if not inspection_required:
+            from astrid.core.execution.generic_host import _launch_needs_command_inspection
+            inspection_required = _launch_needs_command_inspection(pack_roots, capability_matrix)
+        if inspection_required:
+            from astrid.core.execution.custody_broker import (
+                RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv)
+            observed_owner = default_process_identity(os.getpid())
+            if observed_owner is None or any(observed_owner.get(key) != owner[key] for key in ("pid", "uid", "birth_id")):
+                raise ConflictError("host-only original Runtime owner changed during preparation")
         from banodoco_local.hosted_contract import readonly_payload
         binding_file = broker = hosted = handle = None
         parent = activation = None
@@ -482,7 +496,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             from banodoco_local.custody_broker import _atomic_owner_json
             _atomic_owner_json(handle.owner_session_config_path, profile.host_launch)
             # The private preparation channel reports no engine allocation.
-            _frame_send(parent, request)
+            parent.sendall(encoded_request)
             raw_evidence = {}
             try:
                 prepared = _frame_receive(parent, evidence=raw_evidence)

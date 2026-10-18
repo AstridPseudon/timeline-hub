@@ -756,6 +756,11 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
     monkeypatch.setattr(module,'_installed_host_release',lambda *args:{})
     monkeypatch.setattr(module.subprocess,'Popen',popen)
     monkeypatch.setattr(module,'_frame_send',lambda channel,value:captures.update(request=value))
+    encode = module._prepare_frame_encode
+    def capture_preparation(value):
+        captures['request'] = value
+        return encode(value)
+    monkeypatch.setattr(module, '_prepare_frame_encode', capture_preparation)
     def receive(channel, **kwargs):
         request = captures['request']
         if request.get('command') == 'abort_local_execution':
@@ -1073,6 +1078,356 @@ def test_preparation_diagnostic_keeps_actual_refusal_and_hashes_arbitrary_values
     assert report["missing_fields"] == ["processes"] and report["differing_fields"] == ["operation_id", "status"]
     assert "unknown" in report["extra_fields"]
     assert "SECRET" not in json.dumps(report) and "TOKEN" not in json.dumps(report)
+class _MemoryFrameChannel:
+    def __init__(self, incoming=b'', *, fragment=4096, dispatch=None):
+        self.incoming = bytearray(incoming)
+        self.fragment = fragment
+        self.dispatch = dispatch
+        self.sent = []
+        self.closed = False
+
+    def recv(self, size):
+        count = min(size, self.fragment, len(self.incoming))
+        data = bytes(self.incoming[:count])
+        del self.incoming[:count]
+        return data
+
+    def sendall(self, data):
+        self.sent.append(data)
+        if self.dispatch is not None:
+            self.incoming.extend(self.dispatch(data))
+
+    def settimeout(self, timeout):
+        pass
+
+    def close(self):
+        self.closed = True
+
+    def fileno(self):
+        return 42
+
+
+@pytest.fixture
+def qualified_preparation_frame():
+    from dataclasses import replace
+    from test_local_worker import host_only_profile_case
+    from runtime_protocol.local_worker import _selected_profile_payload
+    from runtime_protocol.local_execution_supervisor import host_prepare_request
+    root = os.environ.get('J_FRAME_EVIDENCE_ROOT')
+    if not root:
+        pytest.skip('select retained qualified J profile and public source evidence')
+    root = Path(root)
+    qualification = json.loads((root/'profile-qualification.json').read_text())
+    path = Path(qualification['profile_path'])
+    content = path.read_bytes()
+    assert hashlib.sha256(content).hexdigest() == qualification['profile_sha256'] == '4b56987a482aec3a104b50ac3a21a25ff7b3e28cecd98782a2b9ad98c1ad87af'
+    document = json.loads(content)
+    allocation = json.loads((root/'allocation.json').read_text())
+    runtime_path = root/'runtime-catalogue-readiness-continuation.json'
+    assert hashlib.sha256(runtime_path.read_bytes()).hexdigest() == '2cfa1d8a431987a412193875f60c68b0935f6596a762642a976cef90c8a72687'
+    runtime = json.loads(runtime_path.read_text())['runtime']
+    launch = {name: document[name] for name in ('source_checkout', 'pack_root', 'boot_manifest_path',
+        'boot_manifest_hash', 'capability_matrix', 'environment', 'max_concurrency', 'selected_actions')}
+    fields = {name: document[name] for name in ('profile_id', 'machine_id', 'host_artifact_digest',
+        'session_config_digest', 'profile_revision', 'profile_digest', 'release_digest', 'host_protocol', 'host_os_artifact_digest')}
+    profile = replace(host_only_profile_case(), **fields, workspace_uuid=qualification['realm_id'],
+        realm_root=Path(allocation['paths']['realm_root']), support_root=Path(allocation['paths']['support_root']),
+        host_executable=Path(document['host_executable']), host_os_executable=Path(document['host_os_executable']), host_launch=launch)
+    epoch = runtime['runtime_instance_id']
+    owner = dict(pid=runtime['pid'], uid=os.getuid(), birth_id=runtime['process_birth_id'],
+        runtime_instance_id=epoch, coordinator_epoch=epoch)
+    request = host_prepare_request(operation_id='a'*32, channel_id='b'*32, owner_epoch=epoch,
+        runtime_owner=owner, profile=_selected_profile_payload(profile),
+        custody_scope=str(profile.support_root/'local-execution-custody'/('a'*32)))
+    selection = request['profile']['host_launch']['selected_actions']['chiptune.compose']
+    assert selection == document['selected_actions']['chiptune.compose']
+    assert len(selection['distributions']['numpy']['files']) == 1040
+    assert len(json.dumps(selection, sort_keys=True, separators=(',', ':')).encode()) == 111367
+    return SimpleNamespace(profile=profile, request=request, owner=owner, document=document)
+
+
+@pytest.fixture
+def sdk_preparation_receiver(qualified_preparation_frame, monkeypatch):
+    import copy
+    from astrid.core.execution import generic_host as host, custody_broker, hosted_contract
+    from runtime_protocol.verified_host_launch import raw_digest
+    fixture = qualified_preparation_frame
+    request = fixture.request
+    preparation = host.LocalExecutionPreparation(operation_id=request['operation_id'], channel_id=request['channel_id'])
+    actor = SimpleNamespace(verify=lambda: dict(fixture.owner))
+    preparation._retained_relay_actor = actor
+    preparation._hosted_binding = {**{name: request[name] for name in ('operation_id', 'channel_id', 'owner_epoch')},
+        'profile_digest': hosted_contract.digest(hosted_contract.canonical(request['profile'])),
+        'scope': request['custody_scope'], 'generation': 1}
+    class Authority:
+        def __init__(self, *args):
+            pass
+        def reference(self):
+            return {'generation': 1, 'target': {'pid': os.getpid()}}
+        def verify_reference(self, reference, *, expected_actor, owner_epoch):
+            assert expected_actor == fixture.owner
+            assert owner_epoch == request['owner_epoch']
+    monkeypatch.setattr(custody_broker, 'RoleCustodyAuthority', Authority)
+    monkeypatch.setattr(host, 'process_birth_identity', lambda *args: 'offline-host-birth')
+    monkeypatch.setattr(host, '_RETAINED_ACTION_LAUNCH', {
+        'profile_digest': raw_digest(request['profile']),
+        'actions': copy.deepcopy(request['profile']['host_launch']['selected_actions'])}, raising=False)
+    journals = []
+    monkeypatch.setattr(preparation, '_acquire_handoff_journal', lambda scope: journals.append(scope) or True)
+    return SimpleNamespace(host=host, preparation=preparation, fixture=fixture, journals=journals)
+
+
+def test_preparation_frame_full_numpy_inventory_reaches_real_sdk_dispatch(sdk_preparation_receiver):
+    from runtime_protocol import local_worker_composition as module
+    from runtime_protocol.local_execution_supervisor import FRAME_LIMIT
+    receiver = sdk_preparation_receiver
+    wire = module._prepare_frame_encode(receiver.fixture.request)
+    assert module.CONTROL_FRAME_LIMIT < len(wire) < FRAME_LIMIT
+    frame = receiver.host._read_activation_frame(_MemoryFrameChannel(wire, fragment=31), limit=FRAME_LIMIT)
+    assert frame == receiver.fixture.request
+    assert module._frame_encode(frame) == wire
+    reply = receiver.preparation.dispatch(frame)
+    assert reply['status'] == 'prepared'
+    assert reply['operation_id'] == frame['operation_id']
+    assert reply['channel_id'] == frame['channel_id']
+    assert receiver.preparation._request == frame
+    assert len(receiver.journals) == 1
+    print('QUALIFIED_NUMPY_FRAME', json.dumps({'wire_bytes': len(wire), 'sha256': hashlib.sha256(wire).hexdigest(),
+        'numpy_files': 1040, 'selection_bytes': 111367, 'private_ids': 'same-length offline placeholders'}))
+
+
+def test_preparation_frame_actual_sdk_control_reader_uses_large_bound(sdk_preparation_receiver, monkeypatch):
+    from runtime_protocol import local_worker_composition as module
+    from astrid.core.execution import custody_broker
+    receiver = sdk_preparation_receiver
+    channel = _MemoryFrameChannel(module._prepare_frame_encode(receiver.fixture.request), fragment=43)
+    actor = receiver.preparation._retained_relay_actor
+    monkeypatch.setattr(receiver.host.socket, 'socket', lambda **kwargs: channel)
+    monkeypatch.setattr(custody_broker.AuthenticatedCleanupActor, 'private_peer', staticmethod(lambda control: actor))
+    thread = receiver.preparation.serve_control(42)
+    thread.join(5)
+    assert not thread.is_alive() and channel.closed
+    assert len(channel.sent) == 1
+    reply = module._frame_receive(_MemoryFrameChannel(channel.sent[0], fragment=11))
+    assert reply['status'] == 'prepared'
+    assert receiver.preparation._request == receiver.fixture.request
+
+
+def test_preparation_frame_sender_sends_same_preflight_bytes(sdk_preparation_receiver, monkeypatch):
+    import io
+    from runtime_protocol import local_worker_composition as module, local_execution_supervisor, verified_host_launch
+    import banodoco_local.custody_broker as custody
+    import banodoco_local.hosted_contract as hosted
+    receiver = sdk_preparation_receiver
+    fixture = receiver.fixture
+    events = []
+    encoded = []
+    original_encode = module._prepare_frame_encode
+    def encode(value):
+        frame = original_encode(value)
+        encoded.append(frame)
+        events.append('preflight')
+        return frame
+    def dispatch(wire):
+        events.append('send')
+        request = receiver.host._read_activation_frame(_MemoryFrameChannel(wire, fragment=37), limit=1048576)
+        return module._frame_encode(receiver.preparation.dispatch(request))
+    control = _MemoryFrameChannel(dispatch=dispatch)
+    activation = _MemoryFrameChannel()
+    child = SimpleNamespace(pid=os.getpid())
+    identity = {'pid': child.pid, 'uid': os.getuid(), 'birth_id': 'offline-host-birth'}
+    class Payload(io.BytesIO):
+        def fileno(self):
+            return 84
+    class Verifier:
+        def __init__(self, **kwargs):
+            pass
+        def verify(self, **kwargs):
+            assert kwargs['preparation'] == fixture.request
+            return object()
+        def claim(self, proof, **kwargs):
+            return kwargs['host_argv'], b'{}'
+        def bind_child(self, proof, **kwargs):
+            assert kwargs['child'] is child
+        def verify_child(self, proof, **kwargs):
+            assert kwargs['child'] is child
+    class Retained:
+        def __init__(self, process):
+            assert process is child
+        def bind_actor(self):
+            assert 'sealed' in events
+        def verify(self):
+            return dict(identity)
+    class Broker:
+        def __init__(self, **kwargs):
+            events.append('broker')
+            assert events.index('preflight') < events.index('custody')
+            assert kwargs['owner_epoch'] == fixture.request['owner_epoch']
+            self.role_authority = SimpleNamespace(reference=lambda: {'role': 'host'})
+        def create_hosted_launch(self, request):
+            assert request == fixture.request
+            return SimpleNamespace(parents={'control': control, 'activation': activation},
+                children={'control': control, 'activation': activation}, pass_fds=(),
+                environment=lambda *args, **kwargs: {}, close_children=lambda: None)
+        def child_environment(self, *args, **kwargs):
+            return {}
+        def wait_until_sealed(self):
+            events.append('sealed')
+    def mkdir(path, *args, **kwargs):
+        assert path == fixture.profile.support_root/'host-output'
+        events.append('output-directory')
+    def spawn(*args, **kwargs):
+        events.append('spawn')
+        return child
+    monkeypatch.setattr(module, '_prepare_frame_encode', encode)
+    monkeypatch.setattr(module, '_create_host_custody_scope', lambda scope: events.append('custody'))
+    monkeypatch.setattr(module, '_installed_host_release', lambda *args: {})
+    monkeypatch.setattr(receiver.host, '_launch_needs_command_inspection', lambda *args: False)
+    monkeypatch.setattr(custody, 'RoleBoundCustodyBroker', Broker)
+    monkeypatch.setattr(custody, 'default_process_identity', lambda pid: dict(fixture.owner))
+    monkeypatch.setattr(custody, 'custody_wrapper_argv', lambda path: [path])
+    monkeypatch.setattr(custody, '_atomic_owner_json', lambda *args: None)
+    monkeypatch.setattr(hosted, 'readonly_payload', Payload)
+    monkeypatch.setattr(verified_host_launch, 'TrustedLocalHostLaunchVerifier', Verifier)
+    monkeypatch.setattr(local_execution_supervisor, 'RetainedProcess', Retained)
+    monkeypatch.setattr(module.os, 'dup2', lambda *args, **kwargs: None)
+    monkeypatch.setattr(module.Path, 'mkdir', mkdir)
+    monkeypatch.setattr(module.subprocess, 'Popen', spawn)
+    config = {**fixture.profile.host_launch, 'runtime_instance_id': fixture.request['owner_epoch'],
+        'runtime_endpoint': 'http://127.0.0.1:1', 'credential_file': '/offline-unread-credential', 'ready_file': '/offline-ready'}
+    preparer = CrossProcessWorkerPreparer(profile=fixture.profile, config=config, environment={})
+    handle = preparer.prepare(fixture.profile, operation_id=fixture.request['operation_id'], channel_id=fixture.request['channel_id'])
+    assert control.sent[0] is encoded[0]
+    assert len(encoded) == 1
+    assert handle.preparation == fixture.request == receiver.preparation._request
+    assert events.index('preflight') < events.index('custody') < events.index('broker') < events.index('spawn') < events.index('send')
+    assert handle.report_value['profile_binding_digest'] == local_execution_supervisor.digest(fixture.request['profile'])
+
+
+@pytest.mark.parametrize('field', ['operation', 'channel', 'owner', 'epoch', 'profile', 'closure'])
+def test_preparation_frame_binding_refusals_still_precede_journal(sdk_preparation_receiver, field):
+    import copy
+    from runtime_protocol import local_worker_composition as module
+    from runtime_protocol.local_execution_supervisor import FRAME_LIMIT
+    receiver = sdk_preparation_receiver
+    request = copy.deepcopy(receiver.fixture.request)
+    if field == 'operation': request['operation_id'] = 'foreign'
+    elif field == 'channel': request['channel_id'] = 'foreign'
+    elif field == 'owner': request['runtime_owner']['birth_id'] = 'foreign'
+    elif field == 'epoch':
+        request['owner_epoch'] = 'foreign'
+        request['runtime_owner'].update(runtime_instance_id='foreign', coordinator_epoch='foreign')
+    elif field == 'profile': request['profile']['profile_digest'] = _digest('0')
+    else:
+        files = request['profile']['host_launch']['selected_actions']['chiptune.compose']['distributions']['numpy']['files']
+        files[next(iter(files))] = '0'*64
+    frame = receiver.host._read_activation_frame(_MemoryFrameChannel(module._prepare_frame_encode(request)), limit=FRAME_LIMIT)
+    with pytest.raises((receiver.host.HostError, RuntimeError)):
+        receiver.preparation.dispatch(frame)
+    assert receiver.preparation.result is None and not receiver.journals
+
+
+@pytest.mark.parametrize('wire_size', [114291, 1048576])
+def test_preparation_frame_exact_wire_limits_include_newline(wire_size):
+    from astrid.core.execution import generic_host as host
+    from runtime_protocol import local_worker_composition as module
+    from runtime_protocol.local_execution_supervisor import FRAME_LIMIT
+    value = {'value': ''}
+    value['value'] = 'x'*(wire_size - len(module._frame_encode(value)))
+    wire = module._prepare_frame_encode(value)
+    assert len(wire) == wire_size and wire.endswith(b'\n')
+    assert host._read_activation_frame(_MemoryFrameChannel(wire, fragment=257), limit=FRAME_LIMIT) == value
+    if wire_size == FRAME_LIMIT:
+        value['value'] += 'x'
+        with pytest.raises(ConflictError, match='preparation frame is too large'):
+            module._prepare_frame_encode(value)
+        with pytest.raises(host.HostError, match='too large'):
+            host._read_activation_frame(_MemoryFrameChannel(module._frame_encode(value)), limit=FRAME_LIMIT)
+
+
+def test_preparation_frame_ordinary_controls_remain_64k(monkeypatch):
+    from astrid.core.execution import generic_host as host
+    from runtime_protocol import local_worker_composition as module
+    value = {'command': 'prepare_local_execution', 'limit': 1048576, 'value': ''}
+    value['value'] = 'x'*(module.CONTROL_FRAME_LIMIT - len(module._frame_encode(value)))
+    channel = _MemoryFrameChannel()
+    module._frame_send(channel, value)
+    assert len(channel.sent[0]) == 65536
+    assert module._frame_receive(_MemoryFrameChannel(channel.sent[0], fragment=19)) == value
+    assert host._read_activation_frame(_MemoryFrameChannel(channel.sent[0], fragment=17)) == value
+    monkeypatch.setenv('CONTROL_FRAME_LIMIT', '1048576')
+    value['value'] += 'x'
+    with pytest.raises(ConflictError, match='control frame is too large'):
+        module._frame_send(channel, value)
+    assert len(channel.sent) == 1
+    with pytest.raises(ConflictError, match='too large'):
+        module._frame_receive(_MemoryFrameChannel(module._frame_encode(value)))
+    with pytest.raises(host.HostError, match='too large'):
+        host._read_activation_frame(_MemoryFrameChannel(module._frame_encode(value)))
+
+
+@pytest.mark.parametrize('wire', [b'', b'{"missing":"newline"}', b'{"invalid":"\xff"}\n',
+    b'{broken}\n', b'{"key":1,"key":2}\n', b'{"nested":{"key":1,"key":2}}\n',
+    b'{"value":1e10000}\n', b'{"value":NaN}\n', b'{"value":Infinity}\n',
+    b'{"value":-Infinity}\n', b'{}\n{}\n', b'{}\ntrailing', b'[]\n'])
+def test_preparation_frame_malformed_and_unsolicited_input_is_refused(wire):
+    from astrid.core.execution import generic_host as host
+    from runtime_protocol import local_worker_composition as module
+    from runtime_protocol.local_execution_supervisor import FRAME_LIMIT
+    with pytest.raises((host.HostError, ValueError)):
+        host._read_activation_frame(_MemoryFrameChannel(wire), limit=FRAME_LIMIT)
+    with pytest.raises(ConflictError):
+        module._frame_receive(_MemoryFrameChannel(wire))
+
+
+def test_preparation_frame_oversize_fails_before_any_start_obligation(qualified_preparation_frame, monkeypatch, tmp_path):
+    import copy
+    from dataclasses import replace
+    from runtime_protocol import local_worker_composition as module, local_execution_supervisor
+    import banodoco_local.custody_broker as custody
+    from astrid.core.execution import custody_broker as inspection_custody
+    from astrid.core.execution import generic_host as host
+    fixture = qualified_preparation_frame
+    launch = copy.deepcopy(fixture.profile.host_launch)
+    launch['environment']['PATH'] = 'x'*local_execution_supervisor.FRAME_LIMIT
+    profile = replace(fixture.profile, host_launch=launch, support_root=tmp_path/'unused-support',
+        session_config_digest=local_execution_supervisor.digest(launch))
+    preparer = CrossProcessWorkerPreparer(profile=profile, config={'runtime_instance_id': fixture.request['owner_epoch']}, environment={})
+    def forbidden(*args, **kwargs):
+        pytest.fail('oversize preparation created a start obligation')
+    monkeypatch.setattr(custody, 'default_process_identity', lambda pid: dict(fixture.owner))
+    monkeypatch.setattr(inspection_custody, 'default_process_identity', lambda pid: dict(fixture.owner))
+    monkeypatch.setattr(module, '_create_host_custody_scope', forbidden)
+    monkeypatch.setattr(host, '_launch_needs_command_inspection', forbidden)
+    monkeypatch.setattr(custody, 'RoleBoundCustodyBroker', forbidden)
+    monkeypatch.setattr(inspection_custody, 'RoleBoundCustodyBroker', forbidden)
+    monkeypatch.setattr(module.subprocess, 'Popen', forbidden)
+    with pytest.raises(ConflictError, match='preparation frame is too large'):
+        preparer.prepare(profile, operation_id=fixture.request['operation_id'], channel_id=fixture.request['channel_id'])
+    assert preparer._active is None
+    assert not profile.support_root.exists()
+
+
+def test_preparation_frame_inspection_owner_change_refused_before_custody(qualified_preparation_frame, monkeypatch):
+    from runtime_protocol import local_worker_composition as module
+    import banodoco_local.custody_broker as custody
+    from astrid.core.execution import custody_broker as inspection_custody, generic_host as host
+    fixture = qualified_preparation_frame
+    def forbidden(*args, **kwargs):
+        pytest.fail('changed owner created a start obligation')
+    monkeypatch.setattr(custody, 'default_process_identity', lambda pid: dict(fixture.owner))
+    monkeypatch.setattr(inspection_custody, 'default_process_identity', lambda pid: {**fixture.owner, 'birth_id': 'foreign'})
+    monkeypatch.setattr(host, '_launch_needs_command_inspection', lambda *args: True)
+    monkeypatch.setattr(module, '_create_host_custody_scope', forbidden)
+    monkeypatch.setattr(inspection_custody, 'RoleBoundCustodyBroker', forbidden)
+    monkeypatch.setattr(module.subprocess, 'Popen', forbidden)
+    preparer = CrossProcessWorkerPreparer(profile=fixture.profile,
+        config={'runtime_instance_id': fixture.request['owner_epoch']}, environment={})
+    with pytest.raises(ConflictError, match='original Runtime owner changed'):
+        preparer.prepare(fixture.profile, operation_id=fixture.request['operation_id'], channel_id=fixture.request['channel_id'])
+    assert preparer._active is None
+
+
 def test_selected_action_installed_release_projects_real_verified_host_binding(tmp_path,monkeypatch):
     """Offline installed-record/verifier join; no profile or Host is started."""
     import copy,importlib.metadata,json,os,sys
