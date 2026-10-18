@@ -40,7 +40,7 @@ export default defineConfig({
       '@banodoco/timeline-composition/registry.generated': resolvedTimelineCompositionRegistryPath,
       '@banodoco/timeline-composition/theme-api': resolvedTimelineCompositionThemeApiPath,
       '@banodoco/timeline-composition': path.resolve(projectRoot, 'node_modules/@banodoco/timeline-composition'),
-      '@banodoco/timeline-schema': path.resolve(projectRoot, 'node_modules/@banodoco/timeline-schema/typescript/dist/src/index.js'),
+      '@banodoco/timeline-schema': path.resolve(projectRoot, 'vendor/timeline-schema/typescript/dist/src/index.js'),
       // Sprint 5: workspace-primitive aliases for the linked packages.
       // The composition package's animations.generated / transitions.generated
       // / effects.generated import via these aliases. Reigh's bundler needs

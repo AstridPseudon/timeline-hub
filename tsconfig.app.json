@@ -20,7 +20,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@reigh/editor-sdk": ["./src/sdk/index.ts"]
+      "@reigh/editor-sdk": ["./src/sdk/index.ts"],
+      "@banodoco/timeline-schema": ["./vendor/timeline-schema/typescript/dist/src/index.d.ts"]
     }
   },
   "include": ["src"],
