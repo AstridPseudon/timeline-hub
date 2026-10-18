@@ -562,6 +562,7 @@ def test_native_birth_completed_process_preserves_capture_and_absence_semantics(
         adapter._native_lstart_result(command, {"shell": True})
 
 
+@pytest.mark.darwin_native
 @pytest.mark.skipif(sys.platform != "darwin", reason="real Darwin birth observation parity")
 def test_real_selected_source_birth_preimage_spawns_ps_fixed_native_matches_without_spawn(tmp_path, monkeypatch):
     import ast, hashlib, os, subprocess, sys, types

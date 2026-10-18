@@ -1735,6 +1735,7 @@ def test_real_sdk_verified_artifacts_and_managed_outputs(world, form):
     assert world.service.task(world.task["id"])["task"]["status"] == "completed"
 
 
+@pytest.mark.darwin_native
 def test_existing_network_sandbox_preserves_inherited_local_channel(tmp_path):
     """No TCP connection: only the already-connected private socket pair."""
     import subprocess

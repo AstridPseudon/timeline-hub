@@ -175,6 +175,7 @@ def test_fresh_only_child_enters_tree_bookkeeping_before_reparenting(tmp_path, m
     assert groups.observe_tree(process) == {100: "root", 300: "fresh-child"}
 
 
+@pytest.mark.darwin_native
 @pytest.mark.skipif(sys.platform != "darwin", reason="native Darwin exact-token proof")
 def test_native_multiple_exec_keeps_birth_anchor_and_cleans_with_fresh_token():
     source = (
@@ -399,6 +400,7 @@ def test_final_verification_uncertainty_cannot_be_cleared_by_a_later_census(monk
         groups.verify_tree_absent(process)
 
 
+@pytest.mark.darwin_native
 @pytest.mark.skipif(sys.platform != "darwin", reason="Darwin suspended SETEXEC admission proof")
 def test_target_code_waits_until_suspended_launch_observer_is_ready(monkeypatch, tmp_path):
     from astrid.core.execution import custody_broker
@@ -534,6 +536,7 @@ def test_native_census_preserves_terminal_status_and_precise_birth(monkeypatch):
     assert evidence["birth_id"] == custody._ps_lstart_birth(row["start_sec"])
 
 
+@pytest.mark.darwin_native
 @pytest.mark.skipif(sys.platform != "darwin", reason="real Darwin native adapter graph proof")
 def test_native_vibe_birth_observation_owned_child_has_no_helper_descendants(tmp_path):
     import json
@@ -712,6 +715,7 @@ def test_failed_launch_preserves_admission_error_and_original_custody(monkeypatc
     assert process._astrid_tree_uncertain == str(caught.value.__cause__)
 
 
+@pytest.mark.darwin_native
 @pytest.mark.skipif(sys.platform != "darwin", reason="Darwin real suspended admission failure")
 def test_failed_suspended_admission_kills_and_reaps_original_child(monkeypatch):
     admission_error = RuntimeError("injected observer admission failure")
