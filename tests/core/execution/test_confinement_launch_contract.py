@@ -302,28 +302,51 @@ def test_default_network_denies_caller_loopback_without_host_broker(config):
         plan(config, broker_endpoint='http://127.0.0.1:65432')
 
 
-def test_explicit_broker_and_outbound_permissions_are_exact(config):
+@pytest.mark.parametrize('port', [1, 65432, 65535])
+def test_explicit_broker_permission_is_exact(config, port):
+    broker = host._SandboxTcpEndpoint('127.0.0.1', port)
+    config = replace(config, network=host._SandboxNetworkPolicy(broker=broker))
+    profile = plan(config, broker_endpoint=f'http://127.0.0.1:{port}').argv[2]
+    assert '(deny default)' in profile
+    assert [line for line in profile.splitlines() if line.startswith(('(allow network', '(deny network'))] == [
+        f'(allow network-outbound (remote tcp4 "localhost:{port}"))']
+    assert 'remote tcp "127.0.0.1' not in profile
+    for requested in (f'http://localhost:{port}', f'http://127.0.0.1:{port:06d}',
+                      'http://127.0.0.1:65433', f'http://127.0.0.1:{port}/other',
+                      f'https://127.0.0.1:{port}'):
+        with pytest.raises(host.HostError, match='not authorized'):
+            plan(config, broker_endpoint=requested)
+
+
+def test_explicit_outbound_loopback_permission_is_exact(config):
+    broker = host._SandboxTcpEndpoint('127.0.0.1', 65432)
+    config = replace(config, network=host._SandboxNetworkPolicy((broker,)))
+    profile = plan(config).argv[2]
+    assert [line for line in profile.splitlines() if line.startswith(('(allow network', '(deny network'))] == [
+        '(allow network-outbound (remote tcp4 "localhost:65432"))']
+
+
+def test_nonloopback_outbound_with_broker_is_refused(config):
     broker = host._SandboxTcpEndpoint('127.0.0.1', 65432)
     outbound = host._SandboxTcpEndpoint('192.0.2.7', 443)
     config = replace(config, network=host._SandboxNetworkPolicy((outbound,), broker))
-    profile = plan(config, broker_endpoint='http://127.0.0.1:65432').argv[2]
-    assert '(allow network-outbound (remote tcp "127.0.0.1:65432"))' in profile
-    assert '(allow network-outbound (remote tcp "192.0.2.7:443"))' in profile
-    assert 'localhost' not in profile and 'network-inbound' not in profile
-    assert profile.count('network-outbound') == 2
-    for requested in ('http://localhost:65432', 'http://127.0.0.1:65433',
-                      'http://127.0.0.1:65432/other', 'https://127.0.0.1:65432'):
-        with pytest.raises(host.HostError, match='not authorized'):
-            plan(config, broker_endpoint=requested)
+    with pytest.raises(host.HostError, match='endpoint'):
+        plan(config, broker_endpoint='http://127.0.0.1:65432')
 
 
 @pytest.mark.parametrize('address,port', [
     ('localhost', 80), ('*', 80), ('0.0.0.0', 80), ('::1', 80),
     ('224.0.0.1', 80), ('255.255.255.255', 80), ('127.0.0.1', 0),
-    ('127.0.0.1', 65536), ('127.0.0.1', True), ('127.0.0.1', '80'),
+    ('192.0.2.7', 443), ('127.0.0.2', 80), ('127.255.255.254', 80),
+    ('api.msedgeservices.com', 443), ('127.000.0.1', 80), ('127.0.0.1\n', 80),
+    ('127.0.0.1', 65536), ('127.0.0.1', -1), ('127.0.0.1', True),
+    ('127.0.0.1', '80'), ('127.0.0.1', 80.0), ('127.0.0.1', None),
 ])
-def test_invalid_network_authority_denied(config, address, port):
-    network = host._SandboxNetworkPolicy(broker=host._SandboxTcpEndpoint(address, port))
+@pytest.mark.parametrize('role', ['broker', 'outbound'])
+def test_invalid_network_authority_denied(config, address, port, role):
+    endpoint = host._SandboxTcpEndpoint(address, port)
+    network = (host._SandboxNetworkPolicy(broker=endpoint) if role == 'broker'
+               else host._SandboxNetworkPolicy((endpoint,)))
     with pytest.raises(host.HostError, match='endpoint'):
         plan(replace(config, network=network))
 

@@ -34,12 +34,34 @@ def action_installation(tmp_path_factory):
 
 
 @pytest.fixture
-def selected_command(action_installation,tmp_path,monkeypatch):
+def selected_command(action_installation,tmp_path,monkeypatch,request):
     import copy
     from runtime_protocol import verified_host_launch as gate
     from astrid.core.execution import custody_broker,hosted_contract
     from astrid.core.execution.network_broker import ObservableNetworkBroker
     f=action_installation
+    network = getattr(request, 'param', True)
+    if not network:
+        import shutil
+        import yaml
+        from test_selected_python_inventory import write_host_records
+        root = tmp_path/'offline-site'
+        shutil.copytree(f.root, root)
+        manifest = root/'astrid/packs/generation/pack.yaml'
+        declaration = yaml.safe_load(manifest.read_text())
+        declaration['actions']['generate_speech']['isolation']['network'] = False
+        manifest.write_text(yaml.safe_dump(declaration))
+        with monkeypatch.context() as records_patch:
+            records_patch.setattr(gate, 'HOST_DISTRIBUTIONS', {
+                name: gate.HOST_DISTRIBUTIONS[name] for name in ('astrid', 'banodoco-workspace-runtime')})
+            write_host_records(root)
+        actions = gate.qualify_action_closures(root, ['generation.generate_speech'], f.matrix)
+        closure = gate.installed_host_closure(root, action_closures=actions)
+        retained = {**f.retained, 'source_root': str(root), 'host_files': closure['files'], 'actions': actions,
+            'mapping': {name: item for name, item in f.retained['mapping'].items()
+                        if not Path(item['path']).is_relative_to(f.root)},
+            'distribution_metadata': [row for row in f.retained['distribution_metadata'] if row['root'] != str(f.root)]}
+        f = SimpleNamespace(root=root, retained=retained, matrix=f.matrix)
     h=host.GenericPackHost(pack_roots=[f.root/'astrid/packs/generation'],capability_matrix=f.matrix)
     h.discover();record=h.capabilities['generation.generate_speech']
     retained=copy.deepcopy(f.retained)
@@ -74,6 +96,11 @@ def selected_command(action_installation,tmp_path,monkeypatch):
     policy=host._ConfinementPolicy(attempt,outputs,host._SandboxProjectScope(inputs,(inputs,)),
         (Path(sys.executable),), (f.root,), host._SandboxEnvironmentPolicy(),claim_binding=authority.fields)
     h._confinement_policy=policy
+    fixture = SimpleNamespace(host=h,record=record,retained=retained,preparation=preparation,owner=owner,
+        reference=reference,authority=authority,fields=fields,attempt=attempt,outputs=outputs,
+        broker=None,policy=policy,network=network)
+    if not network:
+        return fixture
     admission=dict(task_id='task',attempt_id='attempt',fence=1,network_nonce='nonce',capability_digest=record.capability_digest,
         source_digest=record.source_digest,dependency_digest=record.dependency_digest)
     broker=ObservableNetworkBroker().register_admission(admission,allowed_routes=host._provider_routes(record),
@@ -85,8 +112,8 @@ def selected_command(action_installation,tmp_path,monkeypatch):
     policy_network={**declared,'proxy':broker.endpoint,'allowed_destinations':[broker.endpoint],
         'broker':{**declared['broker'],'evidence_path':str(broker.evidence_path)}}
     context=host._NetworkBrokerContext(broker,policy_network,'evidence-key','task-only-token',attempt,authority.fields)
-    return SimpleNamespace(host=h,record=record,retained=retained,preparation=preparation,owner=owner,
-        reference=reference,authority=authority,fields=fields,attempt=attempt,outputs=outputs,broker=context,policy=policy)
+    fixture.broker=context
+    return fixture
 
 
 @pytest.mark.parametrize('edge',['profile','owner','epoch','generation','operation','channel','capability','declaration','entrypoint',
@@ -133,6 +160,49 @@ def test_selected_action_broker_projection_refuses_substitution(selected_command
         f.host._owned_action_broker(context,attempt=f.attempt,record=f.record)
 
 
+@pytest.mark.parametrize('endpoint', [
+    'http://localhost:43210', 'http://api.msedgeservices.com:443',
+    'http://192.0.2.7:443', 'http://127.0.0.2:43210', 'http://[::1]:43210',
+    'https://127.0.0.1:43210', 'http://127.0.0.1:43210/other',
+    'http://127.0.0.1:43210/', 'http://127.0.0.1:43210?query',
+    'http://user@127.0.0.1:43210', 'http://127.0.0.1:043210',
+    'http://127.0.0.1:0', 'http://127.0.0.1:65536', 'http://127.0.0.1:-1',
+    'http://127.0.0.1:port', 'http://127.0.0.1:', 'http://127.0.0.1',
+    'http://127.0.0.1:43210\n',
+])
+def test_selected_action_command_refuses_unsupported_broker_before_spawn(selected_command,monkeypatch,endpoint):
+    fixture = selected_command
+    monkeypatch.setattr(type(fixture.broker.broker), 'endpoint', property(lambda self: endpoint))
+    fixture.broker.policy['proxy'] = endpoint
+    fixture.broker.policy['allowed_destinations'] = [endpoint]
+    monkeypatch.setattr(host, 'popen_owned_group', lambda *args, **kwargs: pytest.fail('unexpected spawn'))
+    with pytest.raises((host.HostError, ValueError)):
+        fixture.host._run_command_definition(fixture.record,
+            {'text':'offline','voice':'en-US-ChristopherNeural','rate':'+0%'},
+            fixture.outputs,fixture.attempt,network_broker=fixture.broker,allow_runtime_connection=False)
+
+
+@pytest.mark.parametrize('edge', ['wrong-port', 'wrong-attempt', 'outbound-policy', 'broker-policy'])
+def test_selected_action_command_refuses_mixed_or_foreign_broker_before_spawn(selected_command,monkeypatch,edge):
+    fixture = selected_command
+    if edge == 'wrong-port':
+        fixture.broker.policy['proxy'] = 'http://127.0.0.1:43211'
+    elif edge == 'wrong-attempt':
+        fixture.broker.attempt_root = fixture.attempt.parent
+    else:
+        endpoint = host._SandboxTcpEndpoint('127.0.0.1', 43210)
+        network = (host._SandboxNetworkPolicy((endpoint,)) if edge == 'outbound-policy'
+                   else host._SandboxNetworkPolicy(broker=endpoint))
+        fixture.host._confinement_policy = replace(fixture.policy, network=network)
+    monkeypatch.setattr(host.sys, 'platform', 'darwin')
+    monkeypatch.setattr(host.shutil, 'which', lambda _: '/usr/bin/sandbox-exec')
+    monkeypatch.setattr(host, 'popen_owned_group', lambda *args, **kwargs: pytest.fail('unexpected spawn'))
+    with pytest.raises(host.HostError):
+        fixture.host._run_command_definition(fixture.record,
+            {'text':'offline','voice':'en-US-ChristopherNeural','rate':'+0%'},
+            fixture.outputs,fixture.attempt,network_broker=fixture.broker,allow_runtime_connection=False)
+
+
 def test_selected_action_readiness_uses_child_selection_without_host_find_spec(selected_command,monkeypatch):
     f=selected_command
     f.host._executable_admission.require=lambda names:()
@@ -142,6 +212,7 @@ def test_selected_action_readiness_uses_child_selection_without_host_find_spec(s
     assert record.preflight['packages']['ok'] is True
 
 
+@pytest.mark.parametrize('selected_command', [True, False], indirect=True, ids=['broker', 'network-free'])
 def test_selected_action_real_command_preparation_confines_exact_files_and_broker(selected_command,monkeypatch):
     f=selected_command;captured=[]
     monkeypatch.setattr(host.sys,'platform','darwin')
@@ -165,15 +236,30 @@ def test_selected_action_real_command_preparation_confines_exact_files_and_broke
             'profile_bytes':len(policy.encode()),'profile_sha256':hashlib.sha256(policy.encode()).hexdigest()},indent=2)+'\n')
         assert f'(allow file-read* (subpath "{f.retained["source_root"]}"))' not in policy
         assert f'(allow file-read* (literal "{f.retained["source_root"]}/edge_tts/__init__.py"))' in policy
-        assert '(allow network-outbound (remote tcp "127.0.0.1:43210"))' in policy
-        assert 'remote tcp "api.msedgeservices.com' not in policy
+        assert '(deny default)' in policy
+        assert [line for line in policy.splitlines() if line.startswith(('(allow network', '(deny network'))] == (
+            ['(allow network-outbound (remote tcp4 "localhost:43210"))'] if f.network else [])
+        assert 'api.msedgeservices.com' not in policy
+        assert 'speech.platform.bing.com' not in policy
         assert 'BANODOCO_RUNTIME_CREDENTIAL' not in options['env']
         assert 'ASTRID_NETWORK_BROKER_TOKEN' not in options['env']
+        assert 'HTTP_PROXY' not in options['env']
+        assert 'HTTPS_PROXY' not in options['env']
         assert options['pass_fds']==()
         assert options['stdin']==subprocess.PIPE
         payload=captured[0]
-        assert payload['network_environment']['ASTRID_NETWORK_BROKER_TOKEN']=='task-only-token'
-        assert payload['network_environment']['ASTRID_BROKER_PROXY']=='http://127.0.0.1:43210'
+        if f.network:
+            environment = payload['network_environment']
+            assert environment['ASTRID_NETWORK_BROKER_TOKEN']=='task-only-token'
+            assert environment['ASTRID_BROKER_PROXY']=='http://127.0.0.1:43210'
+            assert all(environment[name]=='http://127.0.0.1:43210' for name in (
+                'HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','http_proxy','https_proxy','all_proxy'))
+            network_policy = json.loads(environment['ASTRID_NETWORK_POLICY'])
+            assert network_policy['proxy']=='http://127.0.0.1:43210'
+            assert network_policy['allowed_destinations']==['http://127.0.0.1:43210']
+            assert network_policy['allow_redirects'] is False
+        else:
+            assert payload['network_environment']=={}
         assert payload['context']['task_id']=='task'
         assert payload['context']['channel_id']=='channel'
         assert payload['action']['module']=='astrid.packs.generation.actions.generate_speech.run'
