@@ -57,9 +57,9 @@ test('deterministic Astrid stub serves the typed Runaway contract', async () => 
     assert.deepEqual(await workspaceConfigResponse.json(), {
       schemaVersion: 1,
       endpoint: origin,
-      actorId: 'reigh-product-connector',
-      realmId: 'realm-reigh-editor-e2e',
-      runtimeInstanceId: 'runtime-instance-reigh-editor-e2e',
+      actorId: 'astrid-product-connector',
+      realmId: 'realm-astrid-editor-e2e',
+      runtimeInstanceId: 'runtime-instance-astrid-editor-e2e',
     });
     const healthResponse = await fetch(`${origin}/v1/health`);
     assert.equal(healthResponse.status, 200);
@@ -75,8 +75,8 @@ test('deterministic Astrid stub serves the typed Runaway contract', async () => 
     assert.ok(expectedDigest);
     assert.ok(expectedCapability);
     assert.equal(health.schema_digest, expectedDigest);
-    assert.equal(health.runtime_instance_id, 'runtime-instance-reigh-editor-e2e');
-    assert.equal(health.runtime_session_id, 'session-reigh-editor-e2e');
+    assert.equal(health.runtime_instance_id, 'runtime-instance-astrid-editor-e2e');
+    assert.equal(health.runtime_session_id, 'session-astrid-editor-e2e');
 
     const handshakeResponse = await fetch(`${origin}/v1/handshake`, {
       method: 'POST',
@@ -87,8 +87,8 @@ test('deterministic Astrid stub serves the typed Runaway contract', async () => 
     const handshake = await handshakeResponse.json();
     assert.equal(handshake.protocol, 'workspace.v1');
     assert.equal(handshake.schema_digest, expectedDigest);
-    assert.equal(handshake.actor_id, 'reigh-product-connector');
-    assert.equal(handshake.realm_id, 'realm-reigh-editor-e2e');
+    assert.equal(handshake.actor_id, 'astrid-product-connector');
+    assert.equal(handshake.realm_id, 'realm-astrid-editor-e2e');
     assert.deepEqual(handshake.scopes, expectedScopes);
     assert.deepEqual(handshake.capabilities, [expectedCapability]);
 

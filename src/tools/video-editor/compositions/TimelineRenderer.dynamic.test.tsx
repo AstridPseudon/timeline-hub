@@ -121,7 +121,7 @@ describe('TimelineRenderer — dynamic registry dispatch (FLAG-001/002)', () => 
     });
     expect(screen.getByTestId('unknown-clip-placeholder')).toHaveAttribute('data-clip-type', 'custom:my-seq');
     expect(screen.getByTestId('unknown-clip-placeholder')).toHaveAttribute('data-placeholder-reason', 'unsupported');
-    expect(screen.getByText("clipType 'custom:my-seq' renderer unavailable in this Reigh build")).toBeInTheDocument();
+    expect(screen.getByText("clipType 'custom:my-seq' renderer unavailable in this Astrid build")).toBeInTheDocument();
 
     // The custom component's output must never appear, and its code is never compiled.
     expect(screen.queryByTestId('dynamic-seq')).not.toBeInTheDocument();

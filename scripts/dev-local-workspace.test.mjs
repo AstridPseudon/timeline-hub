@@ -25,7 +25,7 @@ afterEach(async () => {
 });
 
 async function emittedDirectory({ entry = true } = {}) {
-  const directory = await mkdtemp(join(tmpdir(), 'reigh-dev-local-preview-test-'));
+  const directory = await mkdtemp(join(tmpdir(), 'astrid-dev-local-preview-test-'));
   temporaryDirectories.push(directory);
   await mkdir(join(directory, 'assets'));
   await writeFile(join(directory, 'index.html'), '<!doctype html>');
@@ -42,7 +42,7 @@ describe('dev-local gateway options', () => {
   it('passes no --acp-endpoint unless --acp was given, and defaults to port 17340', () => {
     const without = gatewayChildArgs(base);
     assert(!without.includes('--acp-endpoint'), without.join(' '));
-    assert.deepEqual(without, ['--import', 'tsx', 'scripts/reigh-loopback-gateway.ts', '--discovery', '/d/discovery.json', '--token-file', '/d/astrid.json', '--origin', 'https://hosted.test', '--port', '17340']);
+    assert.deepEqual(without, ['--import', 'tsx', 'scripts/astrid-loopback-gateway.ts', '--discovery', '/d/discovery.json', '--token-file', '/d/astrid.json', '--origin', 'https://hosted.test', '--port', '17340']);
     const withAcp = gatewayChildArgs({ ...base, acp: true });
     assert.deepEqual(withAcp.slice(withAcp.indexOf('--acp-endpoint'), withAcp.indexOf('--acp-endpoint') + 2), ['--acp-endpoint', 'http://127.0.0.1:17335']);
     assert.equal(resolveLoopbackPort(undefined), '17340');
@@ -91,7 +91,7 @@ describe('dev-local preview options', () => {
       /must be an absolute path/,
     );
     assert.throws(
-      () => validatePreviewOutputDirectory('/tmp/reigh-no-such-preview-output'),
+      () => validatePreviewOutputDirectory('/tmp/astrid-no-such-preview-output'),
       /does not exist/,
     );
     const missingEntry = await emittedDirectory({ entry: false });
@@ -133,7 +133,7 @@ const run = (args, env) => new Promise((resolve, reject) => {
 });
 
 async function launchFixture(overrides = {}) {
-  const fixture = mkdtempSync(join(tmpdir(), 'reigh-local-launch-check-'));
+  const fixture = mkdtempSync(join(tmpdir(), 'astrid-local-launch-check-'));
   const token = 'synthetic-runtime-test-token';
   const actorId = 'astrid-product-r3';
   const realmId = 'realm-r3';
@@ -202,8 +202,8 @@ async function launchFixture(overrides = {}) {
   writeFileSync(hostedConfig, overrides.hostedOriginConfigRaw ?? JSON.stringify({ origin: overrides.configuredOrigin ?? null }));
   const env = {
     ASTRID_WORKSPACE_DISCOVERY: discovery,
-    REIGH_LOOPBACK_ORIGIN: '',
-    REIGH_HOSTED_ORIGIN_CONFIG: overrides.hostedOriginConfigPath ?? hostedConfig,
+    ASTRID_APP_LOOPBACK_ORIGIN: '',
+    ASTRID_APP_HOSTED_ORIGIN_CONFIG: overrides.hostedOriginConfigPath ?? hostedConfig,
     PATH: noSpawnBin,
   };
   return {
@@ -238,7 +238,7 @@ test('local launcher binds the selected Astrid product credential and profile be
     assert.match(badOrigin.stderr.split('\n')[1], /^Details: /);
     fixture.setAvailable(false);
     const offline = await run(['--check'], fixture.env); assert.equal(offline.code, 1); assert.match(offline.stderr, /HTTP 503/);
-    assert.equal(offline.stderr.split('\n')[0], "Astrid's engine isn't running. Start it first: banodoco-local up --profile astrid");
+    assert.equal(offline.stderr.split('\n')[0], "Astrid's engine isn't running. Start it first: astrid-runtime up --profile astrid");
     assert.match(offline.stderr.split('\n')[1], /^Details: .*HTTP 503/);
     assert(!offline.stderr.includes('dev:local:'), offline.stderr);
   } finally { await fixture.close(); }
@@ -268,7 +268,7 @@ test('local launcher rejects credential, profile, and Runtime identity substitut
       assert.match(result.stderr, expectedError, label);
       assert(!result.stderr.includes(fixture.token), `${label}: credential leaked to stderr`);
       if (label === 'health reports another Runtime instance') {
-        assert.equal(result.stderr.split('\n')[0], 'Astrid changed on this computer. Restart its engine: banodoco-local up --profile astrid');
+        assert.equal(result.stderr.split('\n')[0], 'Astrid changed on this computer. Restart its engine: astrid-runtime up --profile astrid');
         assert.match(result.stderr.split('\n')[1], /^Details: Runtime health instance does not match/);
       }
       assert.equal(existsSync(fixture.spawnMarker), false, `${label}: launched a child`);
@@ -279,7 +279,7 @@ test('local launcher rejects credential, profile, and Runtime identity substitut
 
 test('Runtime discovery selection ignores source checkout and rejects ambiguous roots', () => {
   const home = '/home/fixture';
-  assert.equal(resolveWorkspaceDiscoveryPath({ home }), '/home/fixture/Library/Application Support/Banodoco/runtime/discovery.json');
+  assert.equal(resolveWorkspaceDiscoveryPath({ home }), '/home/fixture/Library/Application Support/Astrid Runtime/runtime/discovery.json');
   assert.equal(resolveWorkspaceDiscoveryPath({ home, supportRoot: '/selected/root', dataRoot: '/selected/root' }), '/selected/root/runtime/discovery.json');
   assert.equal(resolveWorkspaceDiscoveryPath({ home, discovery: '/selected/discovery.json', supportRoot: '/unused/root' }), '/selected/discovery.json');
   assert.throws(() => resolveWorkspaceDiscoveryPath({ home, supportRoot: '/one', dataRoot: '/two' }), /different roots/);
@@ -349,8 +349,8 @@ async function startLauncher({ args = [], env: overrides = {}, shippedConfig = f
   const spawnLog = join(fixture.fixture, 'spawn.log');
   writeFileSync(spawnLog, '');
   writeFileSync(join(fixture.fixture, 'bin', 'npm'), FAKE_NPM(spawnLog), { mode: 0o700 });
-  // The default port is 17340, so REIGH_LOOPBACK_PORT is not inherited from the developer's shell.
-  const { REIGH_LOOPBACK_PORT: _inheritedPort, ASTRID_VERBOSE: _verbose, ...inherited } = process.env;
+  // The default port is 17340, so ASTRID_APP_LOOPBACK_PORT is not inherited from the developer's shell.
+  const { ASTRID_APP_LOOPBACK_PORT: _inheritedPort, ASTRID_VERBOSE: _verbose, ...inherited } = process.env;
   const env = {
     ...inherited,
     ...fixture.env,
@@ -359,7 +359,7 @@ async function startLauncher({ args = [], env: overrides = {}, shippedConfig = f
     ...overrides,
   };
   // The shipped config/hosted-origin.json is read only when a case asks for it; the fixture config is the default otherwise.
-  if (shippedConfig) delete env.REIGH_HOSTED_ORIGIN_CONFIG;
+  if (shippedConfig) delete env.ASTRID_APP_HOSTED_ORIGIN_CONFIG;
   const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...args], { env, stdio: ['ignore', 'pipe', 'pipe'] });
   const seen = { stdout: '', stderr: '' };
   child.stdout.on('data', c => { seen.stdout += c; }); child.stderr.on('data', c => { seen.stderr += c; });
@@ -394,7 +394,7 @@ async function launcherEnds(options) {
 }
 
 async function launchedGatewayLine(extraArgs) {
-  const started = await startLauncher({ args: ['--verbose', ...extraArgs], env: { REIGH_LOOPBACK_ORIGIN: 'https://hosted.test', REIGH_LOOPBACK_PORT: '0' } });
+  const started = await startLauncher({ args: ['--verbose', ...extraArgs], env: { ASTRID_APP_LOOPBACK_ORIGIN: 'https://hosted.test', ASTRID_APP_LOOPBACK_PORT: '0' } });
   try {
     const line = started.stdout.split('\n').find(candidate => candidate.trim().startsWith('{') && candidate.includes('"base"'));
     assert(line, `gateway line not printed: ${started.stdout}${started.stderr}`);
@@ -418,7 +418,7 @@ test('the launcher starts the gateway without ACP by default, and with it only f
 const HEALTHY_OUTPUT = (origin) => ['Starting Astrid…', '', `  Open ${origin}`, '', OPEN_BLOCK_END, ''].join('\n');
 
 test('a healthy start prints exactly the Open block, once Astrid is reachable, and nothing else', async () => {
-  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: String(await freePort()) } });
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
   try {
     assert.equal(started.stdout, HEALTHY_OUTPUT('https://hosted.test'));
     assert.equal(started.stderr, '');
@@ -431,7 +431,7 @@ test('a healthy start prints exactly the Open block, once Astrid is reachable, a
 
 test('the Open block is bold on a terminal only', async () => {
   // The launcher decides from process.stdout.isTTY; piped output (as here) carries no escape codes.
-  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: String(await freePort()) } });
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
   try { assert(!started.stdout.includes('\x1b['), JSON.stringify(started.stdout)); } finally { await started.stop(); }
 });
 
@@ -441,14 +441,14 @@ test('--verbose prints the old technical lines after the Open block, and ASTRID_
     const started = await startLauncher({
       configuredOrigin: 'https://hosted.test',
       ...options,
-      env: { REIGH_LOOPBACK_PORT: String(port), ...options.env },
+      env: { ASTRID_APP_LOOPBACK_PORT: String(port), ...options.env },
       until: (stdout) => stdout.includes('"base"') && stdout.includes('fake-npm'),
     });
     try {
       const { stdout } = started;
       assert(stdout.startsWith(HEALTHY_OUTPUT('https://hosted.test')), stdout);
       const rest = stdout.slice(HEALTHY_OUTPUT('https://hosted.test').length);
-      assert.match(rest, /workspace\.v1 runtime healthy at http:\/\/127\.0\.0\.1:\d+; Reigh will use port \d+/);
+      assert.match(rest, /workspace\.v1 runtime healthy at http:\/\/127\.0\.0\.1:\d+; Astrid App will use port \d+/);
       assert(rest.includes('Runtime discovery proxy listening on 127.0.0.1:'), rest);
       assert(rest.includes(`loopback gateway starting on 127.0.0.1:${port} for https://hosted.test`), rest);
       assert.match(rest, /"base":"http:\/\/127\.0\.0\.1:\d+\/api\/runtime"/);
@@ -463,7 +463,7 @@ test('nothing is printed as Open until the gateway and the app both answer', asy
   const holder = createServer((_req, res) => { res.writeHead(200); res.end('not a gateway'); });
   await new Promise(r => holder.listen(0, '127.0.0.1', r));
   try {
-    const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: String(holder.address().port) } });
+    const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(holder.address().port) } });
     assert.equal(result.code, 1);
     assert.equal(result.stderr.split('\n')[0], "Astrid: Another program is in the way, so Astrid can't start. Close it and try again.");
     assert.match(result.stderr.split('\n')[1], /^Details: port \d+ is already in use by a program that is not the gateway for https:\/\/hosted\.test/);
@@ -479,7 +479,7 @@ test('the app port taken by another program: one friendly line, the details, no 
   await new Promise(r => holder.listen(0, '127.0.0.1', r));
   const appPort = String(holder.address().port);
   try {
-    const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { PORT: appPort, REIGH_LOOPBACK_PORT: String(await freePort()) } });
+    const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { PORT: appPort, ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
     assert.equal(result.code, 1, result.stdout + result.stderr);
     assert.deepEqual(result.stderr.split('\n').slice(0, 2), [
       "Astrid: Another program is in the way, so Astrid can't start. Close it and try again.",
@@ -494,10 +494,10 @@ test('the app port taken by another program: one friendly line, the details, no 
 
 test('a second launcher for the same Astrid says so, prints the same Open block, starts nothing and exits 0', async () => {
   const port = String(await freePort());
-  const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: port } });
+  const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: port } });
   try {
     writeFileSync(first.spawnLog, '');
-    const second = await launcherEnds({ fixture: first.fixture, env: { REIGH_LOOPBACK_PORT: port } });
+    const second = await launcherEnds({ fixture: first.fixture, env: { ASTRID_APP_LOOPBACK_PORT: port } });
     assert.equal(second.code, 0, second.stderr);
     assert.equal(second.stdout, ['Astrid is already running in another window.', '', '  Open https://hosted.test', '', OPEN_BLOCK_END, ''].join('\n'));
     assert.equal(second.stderr, '');
@@ -507,10 +507,10 @@ test('a second launcher for the same Astrid says so, prints the same Open block,
 
 test('a second launcher for another Astrid says to stop the first one', async () => {
   const port = String(await freePort());
-  const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: port } });
+  const first = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: port } });
   const other = await launchFixture({ configuredOrigin: 'https://hosted.test', discoveryRealmId: 'realm-other', catalogSelectedRealmId: 'realm-other', catalogRealmId: 'realm-other', handshakeRealmId: 'realm-other', realmResponseId: 'realm-other' });
   try {
-    const second = await launcherEnds({ fixture: other, env: { REIGH_LOOPBACK_PORT: port } });
+    const second = await launcherEnds({ fixture: other, env: { ASTRID_APP_LOOPBACK_PORT: port } });
     assert.equal(second.code, 1, second.stdout + second.stderr);
     assert.equal(second.stderr.split('\n')[0], 'Astrid: Another Astrid is already running in another window. Stop it there with Ctrl+C first.');
     assert.match(second.stderr.split('\n')[1], /^Details: /);
@@ -524,9 +524,9 @@ test('a second launcher for another Astrid says to stop the first one', async ()
 
 test('the gateway stopping later is one friendly line, then the details', async () => {
   const port = await freePort();
-  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { REIGH_LOOPBACK_PORT: String(port) } });
+  const started = await startLauncher({ configuredOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_PORT: String(port) } });
   try {
-    const pids = execFileSync('pgrep', ['-f', `reigh-loopback-gateway.ts.*--port ${port}`], { encoding: 'utf8' }).split('\n').filter(Boolean).map(Number);
+    const pids = execFileSync('pgrep', ['-f', `astrid-loopback-gateway.ts.*--port ${port}`], { encoding: 'utf8' }).split('\n').filter(Boolean).map(Number);
     assert(pids.length > 0, 'the gateway process');
     for (const pid of pids) process.kill(pid, 'SIGKILL');
     await started.closed;
@@ -540,7 +540,7 @@ test('the gateway stopping later is one friendly line, then the details', async 
 test('the agent chat bridge stopping is its own friendly line', async () => {
   const result = await launcherEnds({
     configuredOrigin: 'https://hosted.test',
-    env: { REIGH_LOOPBACK_PORT: String(await freePort()), FAKE_ACP_EXIT_MS: '200' },
+    env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()), FAKE_ACP_EXIT_MS: '200' },
   });
   assert.equal(result.code, 1);
   assert.equal(result.stderr.split('\n')[0], 'Astrid: Agent chat stopped. Start Astrid again with npm run dev:local.');
@@ -567,7 +567,7 @@ test('a stopped Runtime points to the command that starts it', async () => {
     await new Promise(r => fixture.runtime.close(r));
     const result = await run(['--check'], fixture.env);
     assert.equal(result.code, 1);
-    assert.equal(result.stderr.split('\n')[0], "Astrid's engine isn't running. Start it first: banodoco-local up --profile astrid");
+    assert.equal(result.stderr.split('\n')[0], "Astrid's engine isn't running. Start it first: astrid-runtime up --profile astrid");
     assert.match(result.stderr.split('\n')[1], /^Details: runtime is unavailable at http:\/\/127\.0\.0\.1:\d+ /);
   } finally { rmSync(fixture.fixture, { recursive: true, force: true }); }
 });
@@ -577,12 +577,12 @@ function assertOpenAfterStart(stdout, origin) {
 }
 
 test('the shipped config makes the production origin the default: Open shows it once the gateway and the app answer', async () => {
-  const started = await startLauncher({ shippedConfig: true, env: { REIGH_LOOPBACK_PORT: String(await freePort()) } });
+  const started = await startLauncher({ shippedConfig: true, env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
   try { assertOpenAfterStart(started.stdout, 'https://astrid.haus'); } finally { await started.stop(); }
 });
 
-test('REIGH_LOOPBACK_ORIGIN=off starts no gateway and prints no Open line, even with a configured origin', async () => {
-  const started = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { REIGH_LOOPBACK_ORIGIN: 'off' }, until: (stdout) => stdout.includes('fake-npm run dev --') });
+test('ASTRID_APP_LOOPBACK_ORIGIN=off starts no gateway and prints no Open line, even with a configured origin', async () => {
+  const started = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off' }, until: (stdout) => stdout.includes('fake-npm run dev --') });
   try {
     assert(!started.stdout.includes('loopback gateway'), started.stdout);
     assert(!started.stdout.includes('Open '), started.stdout);
@@ -609,23 +609,23 @@ test("a null configured origin keeps today's behaviour: no gateway unless one is
   } finally { await started.stop(); }
 });
 
-test('an explicit origin wins over the configured one, from REIGH_LOOPBACK_ORIGIN or --hosted-origin', async () => {
-  const fromEnvironment = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { REIGH_LOOPBACK_ORIGIN: 'https://hosted.test', REIGH_LOOPBACK_PORT: String(await freePort()) } });
+test('an explicit origin wins over the configured one, from ASTRID_APP_LOOPBACK_ORIGIN or --hosted-origin', async () => {
+  const fromEnvironment = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { ASTRID_APP_LOOPBACK_ORIGIN: 'https://hosted.test', ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
   try {
     assertOpenAfterStart(fromEnvironment.stdout, 'https://hosted.test');
     assert(!fromEnvironment.stdout.includes('astrid.haus'), fromEnvironment.stdout);
   } finally { await fromEnvironment.stop(); }
-  const fromArgument = await startLauncher({ configuredOrigin: 'https://astrid.haus', args: ['--hosted-origin', 'https://hosted.test'], env: { REIGH_LOOPBACK_PORT: String(await freePort()) } });
+  const fromArgument = await startLauncher({ configuredOrigin: 'https://astrid.haus', args: ['--hosted-origin', 'https://hosted.test'], env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()) } });
   try {
     assertOpenAfterStart(fromArgument.stdout, 'https://hosted.test');
     assert(!fromArgument.stdout.includes('astrid.haus'), fromArgument.stdout);
   } finally { await fromArgument.stop(); }
 });
 
-test('REIGH_LOOPBACK_ORIGIN=off and --hosted-origin cannot both be set', async () => {
+test('ASTRID_APP_LOOPBACK_ORIGIN=off and --hosted-origin cannot both be set', async () => {
   const fixture = await launchFixture({ configuredOrigin: 'https://astrid.haus' });
   try {
-    const result = await run(['--check', '--hosted-origin', 'https://hosted.test'], { ...fixture.env, REIGH_LOOPBACK_ORIGIN: 'off' });
+    const result = await run(['--check', '--hosted-origin', 'https://hosted.test'], { ...fixture.env, ASTRID_APP_LOOPBACK_ORIGIN: 'off' });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /cannot both be set/);
     assert.equal(existsSync(fixture.spawnMarker), false);
@@ -639,7 +639,7 @@ test('a broken hosted origin config stops the launch before the Runtime is check
     ['http origin', { configuredOrigin: 'http://astrid.haus' }],
     ['trailing slash', { configuredOrigin: 'https://astrid.haus/' }],
     ['non-string origin', { hostedOriginConfigRaw: '{"origin": 7}' }],
-    ['missing file', { hostedOriginConfigPath: '/reigh-no-such-dir/hosted-origin.json' }],
+    ['missing file', { hostedOriginConfigPath: '/astrid-no-such-dir/hosted-origin.json' }],
   ];
   for (const [label, overrides] of cases) {
     const fixture = await launchFixture(overrides);
@@ -656,7 +656,7 @@ test('a broken hosted origin config stops the launch before the Runtime is check
 test('an explicit origin does not read a broken config', async () => {
   const fixture = await launchFixture({ hostedOriginConfigRaw: 'not JSON' });
   try {
-    const result = await run(['--check'], { ...fixture.env, REIGH_LOOPBACK_ORIGIN: 'https://hosted.test' });
+    const result = await run(['--check'], { ...fixture.env, ASTRID_APP_LOOPBACK_ORIGIN: 'https://hosted.test' });
     assert.equal(result.code, 0, result.stderr);
   } finally { await fixture.close(); }
 });

@@ -17,7 +17,7 @@ afterEach(() => {
 
 const GATEWAY = 'http://127.0.0.1:17340';
 const IDENTITY = {
-  VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID: 'reigh-product-connector',
+  VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID: 'astrid-product-connector',
   VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID: 'realm-r1',
   VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID: 'runtime-instance-r1',
 };
@@ -87,10 +87,10 @@ describe('gateway origin', () => {
       'http://127.0.0.1:17341/api/runtime/x',
       'http://localhost:17340/api/runtime/x',
       'https://127.0.0.1:17340/api/runtime/x',
-      'https://reigh.example/api/runtime/x',
+      'https://astrid.example/api/runtime/x',
       'https://abc.supabase.co/storage/v1/object/public/a.png',
       'data:image/png;base64,AAAA',
-      'blob:https://reigh.example/0f1e',
+      'blob:https://astrid.example/0f1e',
       'not a url',
       '',
       null,

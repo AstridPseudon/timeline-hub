@@ -10,7 +10,7 @@ vi.mock('@/integrations/runtime/connection.ts', () => ({
 
 import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
 
-const ENGINEER_WORDS = /Reigh|Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/i;
+const ENGINEER_WORDS = /Astrid|Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/i;
 const ENGINEER_MESSAGE = 'Workspace Runtime is unavailable at http://127.0.0.1:17340/api/runtime: http_error: HTTP 503. Start the supported Runtime and configure its authenticated connector, then retry.';
 
 afterEach(() => {

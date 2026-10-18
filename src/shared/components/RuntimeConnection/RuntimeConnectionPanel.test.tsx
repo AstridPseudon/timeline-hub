@@ -42,7 +42,7 @@ function stubClipboard(writeText: (text: string) => Promise<void>) {
 const shownText = () => document.body.textContent ?? '';
 
 /** What a person must never read on these screens (the agent block is the only place for these words). */
-const ENGINEER_WORDS = /Reigh|Runtime|workspace|realm|gateway|loopback|127\.0\.0\.1|ACP|identity|discovery|profile|process|npm run|banodoco/;
+const ENGINEER_WORDS = /Astrid|Runtime|workspace|realm|gateway|loopback|127\.0\.0\.1|ACP|identity|discovery|profile|process|npm run|banodoco/;
 
 const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
   ['permission', () => connectionFor({ status: 'cant_reach', firstTime: true }, { awaitingConnect: true })],
@@ -331,7 +331,7 @@ describe('RuntimeConnectionPanel', () => {
       expect(pasteLine).toHaveClass('text-sm', 'text-muted-foreground');
       const copied = String(writeText.mock.calls[0][0]);
       expect(copied).toBe(COPY.agent.instructions(window.location.origin, 'start'));
-      expect(copied).toContain('banodoco-local up --profile astrid');
+      expect(copied).toContain('astrid-runtime up --profile astrid');
       expect(copied).toContain('npm run dev:local');
       // A person never needs to read the steps: nothing shows them unless the clipboard failed.
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
@@ -370,15 +370,15 @@ describe('RuntimeConnectionPanel', () => {
 
   describe('the agent steps', () => {
     const origin = 'https://astrid.example';
-    const withoutPrefix = (text: string) => text.replace(/REIGH_LOOPBACK_ORIGIN=\S+ /, '');
+    const withoutPrefix = (text: string) => text.replace(/ASTRID_APP_LOOPBACK_ORIGIN=\S+ /, '');
 
     it('start: name Astrid, keep the install, and wait for the Open line the person sees', () => {
       const text = COPY.agent.instructions(window.location.origin, 'start');
       const lines = text.split('\n');
       expect(lines[0]).toBe(`Please start Astrid on this computer so the page open at ${window.location.origin} can connect to it.`);
       expect(text).toContain('Keep any existing installation, profile, data root and workspace as they are. Do not reset, reinstall over or delete anything.');
-      expect(text).toContain("1. Start Astrid's Runtime: banodoco-local up --profile astrid");
-      expect(text).toContain('2. In the Astrid app checkout (the reigh-app repository), run:');
+      expect(text).toContain("1. Start Astrid's Runtime: astrid-runtime up --profile astrid");
+      expect(text).toContain('2. In the Astrid app checkout (the astrid-app repository), run:');
       expect(text).toContain('npm run dev:local');
       expect(text).toContain(`If it is already running but never printed "Open ${window.location.origin}", stop it and start it again this way.`);
       expect(text).toContain('If it says another program is in the way, do not stop that program; report the details line it prints.');
@@ -397,8 +397,8 @@ describe('RuntimeConnectionPanel', () => {
     });
 
     it('names the origin to open only when it differs from the shipped hosted origin', () => {
-      expect(COPY.agent.instructions('https://astrid.haus', 'start')).not.toContain('REIGH_LOOPBACK_ORIGIN');
-      expect(COPY.agent.instructions(origin, 'start')).toContain(`REIGH_LOOPBACK_ORIGIN=${origin} npm run dev:local`);
+      expect(COPY.agent.instructions('https://astrid.haus', 'start')).not.toContain('ASTRID_APP_LOOPBACK_ORIGIN');
+      expect(COPY.agent.instructions(origin, 'start')).toContain(`ASTRID_APP_LOOPBACK_ORIGIN=${origin} npm run dev:local`);
       expect(withoutPrefix(COPY.agent.instructions(origin, 'start'))).toContain('run: npm run dev:local');
     });
   });

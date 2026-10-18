@@ -26,7 +26,7 @@ import type {
   TranscriptSourceRow,
   TranscriptSourceWordView,
   TranscriptWordProjection,
-} from '@reigh/editor-sdk';
+} from '@astrid/editor-sdk';
 
 const sourceWord: TranscriptSourceWordView = {
   id: 'word-1',

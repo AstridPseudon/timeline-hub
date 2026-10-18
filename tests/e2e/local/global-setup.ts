@@ -37,7 +37,7 @@ export function distIsCurrent(dist = path.join(root, 'dist')): boolean {
 }
 
 export default function globalSetup() {
-  if (process.env.REIGH_DIRECT_DIST) return; // a caller-supplied build is used as is
+  if (process.env.ASTRID_APP_DIRECT_DIST) return; // a caller-supplied build is used as is
   if (distIsCurrent()) {
     console.log('[direct] hosted dist is current; skipping the build');
     return;

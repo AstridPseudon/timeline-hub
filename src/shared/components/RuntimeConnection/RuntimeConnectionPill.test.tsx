@@ -153,7 +153,7 @@ describe('RuntimeConnectionPill', () => {
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Astrid stopped' })).toBeInTheDocument());
     expect(status()).toHaveAttribute('data-state', 'stopped');
     expect(isRecoveryCardShowing()).toBe(true);
-    expect(document.body.textContent).not.toMatch(/Reigh|Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/);
+    expect(document.body.textContent).not.toMatch(/Astrid|Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/);
 
     route.answer = healthy('instance-1');
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
@@ -194,10 +194,10 @@ describe('RuntimeConnectionPill', () => {
     await waitFor(() => expect(fetchImpl).toHaveBeenCalled());
     route.answer = unreachable;
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Astrid stopped' })).toBeInTheDocument());
-    expect(document.body.textContent).not.toMatch(/Reigh|Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/);
+    expect(document.body.textContent).not.toMatch(/Astrid|Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/);
     route.answer = healthy('instance-2');
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Astrid restarted' })).toBeInTheDocument());
-    expect(document.body.textContent).not.toMatch(/Reigh|Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/);
+    expect(document.body.textContent).not.toMatch(/Astrid|Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/);
   });
 
   it('renders nothing while not connected, and asks Astrid nothing', () => {

@@ -1,8 +1,8 @@
-# Runtime restart and Reigh relaunch
+# Runtime restart and Astrid App relaunch
 
-Bind one existing absolute support root and retain its selected realm. Set the same ASTRID_SUPPORT_ROOT and BANODOCO_LOCAL_DATA_ROOT, and set ASTRID_WORKSPACE_DISCOVERY to that root's runtime/discovery.json. An explicit discovery path takes precedence. Runtime discovery is independent of ASTRID_CHECKOUT, which selects source inputs. Conflicting support roots fail before launch. Existing roots and user data are not relocated.
+Bind one existing absolute support root and retain its selected realm. Set the same ASTRID_SUPPORT_ROOT and ASTRID_RUNTIME_DATA_ROOT, and set ASTRID_WORKSPACE_DISCOVERY to that root's runtime/discovery.json. An explicit discovery path takes precedence. Runtime discovery is independent of ASTRID_CHECKOUT, which selects source inputs. Conflicting support roots fail before launch. Existing roots and user data are not relocated.
 
-Save the project and record its project/object identities before a supported Runtime stop/restart using the same profile and data root. Close the prior Reigh launcher and browser session. The discovery proxy can follow an endpoint, but the browser's expected instance remains bound to its launch/build; it must not silently accept another Runtime instance.
+Save the project and record its project/object identities before a supported Runtime stop/restart using the same profile and data root. Close the prior Astrid App launcher and browser session. The discovery proxy can follow an endpoint, but the browser's expected instance remains bound to its launch/build; it must not silently accept another Runtime instance.
 
 For development, run `npm run dev:local -- --check`, then `npm run dev:local` against the unchanged selected discovery path. The launcher verifies the product credential, catalog/realm root, health instance, handshake actor/realm/scopes and generated schema before starting Astrid. Relaunch rereads current discovery and supplies the new exact expected instance.
 

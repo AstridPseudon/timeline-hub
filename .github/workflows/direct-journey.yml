@@ -4,7 +4,7 @@
 #
 # Runtime checkout: the Runtime repo is private, so actions/checkout needs a token that can read it. Add a
 # repository secret RUNTIME_READ_TOKEN (a fine-grained PAT, or a deploy-key-backed token, with read access
-# to banodoco/banodoco-workspace-runtime). When the secret is not set, the job falls back to github.token,
+# to banodoco/astrid-runtime). When the secret is not set, the job falls back to github.token,
 # which only works if the Runtime repo is readable by this repository. Pull requests from forks get no
 # secrets, so this lane cannot run for them.
 #
@@ -16,7 +16,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/direct-journey.yml"
-      - "scripts/reigh-loopback-gateway*"
+      - "scripts/astrid-loopback-gateway*"
       - "scripts/runtime-discovery-proxy.mjs"
       - "scripts/dev-local-workspace*"
       - "src/integrations/runtime/**"
@@ -36,43 +36,43 @@ jobs:
   direct-journey:
     runs-on: ubuntu-latest
     steps:
-      # The harness finds the Runtime at ../banodoco-workspace-runtime (BANODOCO_RUNTIME_CHECKOUT overrides),
-      # so both repos are checked out as siblings under $GITHUB_WORKSPACE/..: App in reigh-app, Runtime beside it.
+      # The harness finds the Runtime at ../astrid-runtime (ASTRID_RUNTIME_CHECKOUT overrides),
+      # so both repos are checked out as siblings under $GITHUB_WORKSPACE/..: App in astrid-app, Runtime beside it.
       - uses: actions/checkout@v4
         with:
-          path: reigh-app
+          path: astrid-app
       - uses: actions/checkout@v4
         with:
-          repository: banodoco/banodoco-workspace-runtime
+          repository: banodoco/astrid-runtime
           ref: main
-          path: banodoco-workspace-runtime
+          path: astrid-runtime
           token: ${{ secrets.RUNTIME_READ_TOKEN || github.token }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20.19.0"
           cache: npm
-          cache-dependency-path: reigh-app/package-lock.json
+          cache-dependency-path: astrid-app/package-lock.json
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Build the Runtime venv
-        working-directory: banodoco-workspace-runtime
+        working-directory: astrid-runtime
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install -e .
           .venv/bin/python -m runtime_protocol.cli --help > /dev/null
 
       - name: Install App dependencies, Chromium and ffmpeg
-        working-directory: reigh-app
+        working-directory: astrid-app
         run: |
           npm ci --legacy-peer-deps
           npx playwright install --with-deps chromium
           sudo apt-get install -y --no-install-recommends ffmpeg
 
       - name: Run the journey
-        working-directory: reigh-app
+        working-directory: astrid-app
         env:
           # Written by the JSON reporter itself: the config's globalSetup prints to stdout, so a shell redirect would corrupt the file.
           PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/direct-journey.json
@@ -82,7 +82,7 @@ jobs:
 
       - name: Check the outcome counts
         if: ${{ !cancelled() }}
-        working-directory: reigh-app
+        working-directory: astrid-app
         env:
           REPORT: ${{ runner.temp }}/direct-journey.json
         run: |
@@ -136,16 +136,16 @@ jobs:
       group: three-products-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      # The harness finds Astrid at ../astrid-agent (ASTRID_CHECKOUT overrides) and the Runtime at ../banodoco-workspace-runtime,
+      # The harness finds Astrid at ../astrid-agent (ASTRID_CHECKOUT overrides) and the Runtime at ../astrid-runtime,
       # so all three checkouts are siblings under $GITHUB_WORKSPACE.
       - uses: actions/checkout@v4
         with:
-          path: reigh-app
+          path: astrid-app
       - uses: actions/checkout@v4
         with:
-          repository: banodoco/banodoco-workspace-runtime
+          repository: banodoco/astrid-runtime
           ref: main
-          path: banodoco-workspace-runtime
+          path: astrid-runtime
           token: ${{ secrets.RUNTIME_READ_TOKEN || github.token }}
       - uses: actions/checkout@v4
         with:
@@ -158,13 +158,13 @@ jobs:
         with:
           node-version: "20.19.0"
           cache: npm
-          cache-dependency-path: reigh-app/package-lock.json
+          cache-dependency-path: astrid-app/package-lock.json
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Build the Runtime venv
-        working-directory: banodoco-workspace-runtime
+        working-directory: astrid-runtime
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install -e .
@@ -178,14 +178,14 @@ jobs:
           .venv/bin/python -m astrid.core.dev.cross_client --help > /dev/null
 
       - name: Install App dependencies, Chromium and ffmpeg
-        working-directory: reigh-app
+        working-directory: astrid-app
         run: |
           npm ci --legacy-peer-deps
           npx playwright install --with-deps chromium
           sudo apt-get install -y --no-install-recommends ffmpeg
 
       - name: Run the three-product journey
-        working-directory: reigh-app
+        working-directory: astrid-app
         env:
           ASTRID_CHECKOUT: ${{ github.workspace }}/astrid-agent
           ASTRID_PYTHON: ${{ github.workspace }}/astrid-agent/.venv/bin/python
@@ -199,7 +199,7 @@ jobs:
       # written to three-products-summary.json and recorded, never judged (R-10).
       - name: Check the outcome counts
         if: ${{ !cancelled() }}
-        working-directory: reigh-app
+        working-directory: astrid-app
         env:
           REPORT: ${{ runner.temp }}/three-products.json
         run: |

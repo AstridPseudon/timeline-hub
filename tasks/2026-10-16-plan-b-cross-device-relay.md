@@ -1,6 +1,6 @@
 # Plan B: cross-device through the relay (16 Oct 2026, revision 2)
 
-**Goal.** A person connects the hosted Reigh app to the Runtime on their computer once. After that it just works: across deploys, laptop sleep, Wi-Fi changes, Runtime restarts and app updates, with no re-pairing and no terminal commands. Big saves and big files work. We can ship the hosted app many times a day without breaking anyone's connection.
+**Goal.** A person connects the hosted Astrid App app to the Runtime on their computer once. After that it just works: across deploys, laptop sleep, Wi-Fi changes, Runtime restarts and app updates, with no re-pairing and no terminal commands. Big saves and big files work. We can ship the hosted app many times a day without breaking anyone's connection.
 
 **Builds on Plan A** (`2026-10-16-plan-a-same-machine-direct.md`, revision 3). Plan A ships first: same machine plus the hosted domain, with the browser talking straight to the local gateway. Plan B reuses A's **origin prefix** (`src/integrations/runtime/connection.ts`; the relay is same-origin, so it uses the empty prefix and no App call site changes), its **panel and status pill** (connection states), its **journey harness** (`tests/e2e/local/`), and its **discovery re-read** (`currentRuntime()` in `scripts/runtime-discovery-proxy.mjs`). Two items moved here from Plan A: App-side safe retry with idempotency keys (A's F3) and continuing after a Runtime restart with drafts kept (A's D4).
 
@@ -12,7 +12,7 @@
 |---|---|---|
 | Pairing state | In-memory maps in the relay (`config/vite/pairedRegistry.ts:57-60`) | Every deploy or relay restart un-pairs everyone |
 | Lifetimes | Session and connector expire after 8 h (`pairedRegistry.ts:4-5`; cookie `Max-Age=28800`, `pairedRelay.ts:151`) | Re-pair at least every 8 hours |
-| Pairing flow | The connector prints a fresh pairing URL on every hello (`scripts/reigh-local-connector.ts:136`) | A terminal step, repeatedly |
+| Pairing flow | The connector prints a fresh pairing URL on every hello (`scripts/astrid-local-connector.ts:136`) | A terminal step, repeatedly |
 | Several browsers | A connector holds one `pairId`; a new pairing overwrites it (`pairedRegistry.ts:128`); only that pair's generation follows a reconnect (`:88-89`, `:142`) | Pairing a second browser or computer silently un-pairs the first at the next reconnect |
 | Revoke | Revoking one browser deletes the connector (`pairedRegistry.ts:164`); the connector stops reconnecting (`connector:156`) | One "disconnect" breaks it for everyone until `--reset-pairing` in a terminal |
 | Connector drop | Pending requests wait for the 30 s idle timeout, then 504 (`pairedRelay.ts:218`, `:276`) | 30 s freezes, then errors |
@@ -21,7 +21,7 @@
 | Runtime | Exits if the Runtime is down at start (`connector:85-94`); reads discovery once (`:49-50`) and the token only on socket open (`:125`); demands an exact scope set (`:79`) | Start order matters; a restart or a new scope breaks it |
 | Limits | JSON 128 KiB, upload 64 MiB (`pairedRoutePolicy.ts:4-5`); the Runtime allows 64 MiB JSON (`server.py:30`) and 5 GiB objects (`cas.py:14`) | Big timeline saves and big videos fail |
 | Throughput | Base64 inside JSON frames; no sender backpressure in any direction (`connector:120,148,202`; `pairedRelay.ts:200,242,295-301`) | Small calls stall behind media (probe: 1.7 ms idle, 75 ms median during a 60 MB download); connector memory peaked at 250 MB |
-| ACP | `rpc` waits for a whole agent turn (`scripts/reigh-acp-bridge.ts:635-660`) | Long agent turns hit the 30 s idle timeout |
+| ACP | `rpc` waits for a whole agent turn (`scripts/astrid-acp-bridge.ts:635-660`) | Long agent turns hit the 30 s idle timeout |
 
 Probe numbers come from one loopback run of the real relay and connector against a fake Runtime (`scratchpad/relay-review/probe.mts`).
 
@@ -47,7 +47,7 @@ Probe numbers come from one loopback run of the real relay and connector against
   - It accepts a superset of the product scopes, with no admin or worker scopes.
   - It re-reads discovery and the token on refusal or 401, and waits for the Runtime instead of exiting.
   - It sends a `protocol` integer in hello; the relay has one "too old" state.
-- **Distribution.** Astrid's local install (`astrid-agent/scripts/local_install.py`, which already sets up Node and the app copy) supervises the connector. The connector opens the pairing URL once, while unpaired. `banodoco_local` is zero-dependency Python and cannot host a TS connector.
+- **Distribution.** Astrid's local install (`astrid-agent/scripts/local_install.py`, which already sets up Node and the app copy) supervises the connector. The connector opens the pairing URL once, while unpaired. `astrid_runtime` is zero-dependency Python and cannot host a TS connector.
 
 **Not now** (until there is evidence): credit-window multiplexing, an N-1/N-2 version matrix, the device-code flow, a device list with remote revoke, an offline edit queue, multi-replica routing. (Same-machine users do not need the relay: Plan A gives them a direct path.)
 
@@ -88,7 +88,7 @@ Today's failures go in as owned known failures and come out as each fix lands.
 ## 5. Decisions for the owner
 
 1. **Are hosted users signed in?** If so, bind a pairing to the account and require both the session and the pairing cookie. That is also the main safeguard below.
-2. **The real stake is code execution.** A paired cookie drives an ACP agent whose tool calls are auto-approved and which can open terminals (`scripts/reigh-acp-bridge.ts:442-452`). A stolen 30-day cookie is code execution on the person's machine. Are 30-day cookies acceptable? Should ACP over the relay get its own extra gate?
+2. **The real stake is code execution.** A paired cookie drives an ACP agent whose tool calls are auto-approved and which can open terminals (`scripts/astrid-acp-bridge.ts:442-452`). A stolen 30-day cookie is code execution on the person's machine. Are 30-day cookies acceptable? Should ACP over the relay get its own extra gate?
 3. **Stateless tickets**, where revoking is per connector, and per-browser remote revoke waits for accounts: acceptable?
 4. **Where the connector runs:** Astrid's local-install supervisor (recommended), a compiled binary, or a Python port inside the Runtime?
 5. **Settled by Plan A:** same-machine users take the direct path, so the uplink measurement only concerns cross-device use.

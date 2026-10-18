@@ -11,7 +11,7 @@ import {
 // Dedicated defaults keep this opt-in gate isolated from the ordinary timeline
 // suite and from hand-started acceptance servers.
 const allocatedPorts = new Set<number>();
-const inheritedRunPorts = process.env.REIGH_EXTENSION_PORTS_ALLOCATED === '1';
+const inheritedRunPorts = process.env.ASTRID_APP_EXTENSION_PORTS_ALLOCATED === '1';
 const configuredBaseURL = readCanonicalBaseUrl();
 if (configuredBaseURL && !process.env.PLAYWRIGHT_PORT) process.env.PLAYWRIGHT_PORT = String(configuredBaseURL.port);
 const port = inheritedRunPorts
@@ -26,7 +26,7 @@ const includeEdge = process.env.PLAYWRIGHT_INCLUDE_EDGE === '1';
 process.env.BASE_URL = baseURL;
 process.env.PLAYWRIGHT_BASE_URL = baseURL;
 process.env.ASTRID_BRIDGE_PORT = String(bridgePort);
-process.env.REIGH_EXTENSION_PORTS_ALLOCATED = '1';
+process.env.ASTRID_APP_EXTENSION_PORTS_ALLOCATED = '1';
 
 /**
  * Bounded, opt-in release gate for extension behavior in installed Chrome and
@@ -72,7 +72,7 @@ export default defineConfig({
         // Do not infer this from an ambient token: real bridge requests must
         // continue to fail closed under their dedicated authenticated harness.
         ASTRID_BRIDGE_ALLOW_UNAUTHENTICATED_STUB: '1',
-        REIGH_E2E_EXTENSION_FIXTURES: '1',
+        ASTRID_APP_E2E_EXTENSION_FIXTURES: '1',
       },
     },
     {

@@ -47,9 +47,9 @@ const RUNTIME_CLIENT_SCOPES = /export const RUNTIME_CLIENT_SCOPES = \[([\s\S]*?)
 if (!RUNTIME_SCHEMA_DIGEST || !RUNTIME_TARGETED_EXECUTION_CAPABILITY || !RUNTIME_CLIENT_SCOPES?.length) {
   throw new Error('Could not read the current generated Runtime contract metadata for the editor fixture');
 }
-const RUNTIME_REALM_ID = 'realm-reigh-editor-e2e';
-const RUNTIME_INSTANCE_ID = 'runtime-instance-reigh-editor-e2e';
-const RUNTIME_ACTOR_ID = 'reigh-product-connector';
+const RUNTIME_REALM_ID = 'realm-astrid-editor-e2e';
+const RUNTIME_INSTANCE_ID = 'runtime-instance-astrid-editor-e2e';
+const RUNTIME_ACTOR_ID = 'astrid-product-connector';
 
 // Asset bytes come from the repo's own `public/` directory, resolved relative to
 // this file so the stub works from any cwd.
@@ -315,7 +315,7 @@ const server = http.createServer(async (req, res) => {
       protocol: 'workspace.v1',
       schema_digest: RUNTIME_SCHEMA_DIGEST,
       runtime_epoch: 1,
-      runtime_session_id: 'session-reigh-editor-e2e',
+      runtime_session_id: 'session-astrid-editor-e2e',
       runtime_instance_id: RUNTIME_INSTANCE_ID,
     });
   }
@@ -327,7 +327,7 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, {
       protocol: 'workspace.v1',
       schema_digest: RUNTIME_SCHEMA_DIGEST,
-      session_id: 'session-reigh-editor-e2e',
+      session_id: 'session-astrid-editor-e2e',
       actor_id: RUNTIME_ACTOR_ID,
       realm_id: RUNTIME_REALM_ID,
       scopes: RUNTIME_CLIENT_SCOPES,

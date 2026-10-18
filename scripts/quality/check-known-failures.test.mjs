@@ -32,7 +32,7 @@ function makeRepo(files) {
 }
 
 const comment = (expires = '2026-10-30', reason = 'fixture') =>
-  `// known-failure: reigh-app | ${expires} | ${reason}`;
+  `// known-failure: astrid-app | ${expires} | ${reason}`;
 
 const specWith = (markers, { expires, reason } = {}) => {
   const body = Array.from({ length: markers }, (_, i) =>

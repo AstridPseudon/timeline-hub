@@ -129,10 +129,10 @@ describe('PublicAstridInstallDialog', () => {
     render(<Harness />);
     screen.getByRole('button', { name: 'Open install' }).focus();
     fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
-    expect(window.sessionStorage.getItem('reigh.runtime.autoConnect')).toBeNull();
+    expect(window.sessionStorage.getItem('astrid.runtime.autoConnect')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: label }));
-    expect(window.sessionStorage.getItem('reigh.runtime.autoConnect')).toBe('1');
+    expect(window.sessionStorage.getItem('astrid.runtime.autoConnect')).toBe('1');
   });
 
   it('still goes in when session storage refuses the flag', () => {

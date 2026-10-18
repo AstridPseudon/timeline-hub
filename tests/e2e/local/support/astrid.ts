@@ -72,7 +72,7 @@ export function vendoredDigests(): { app: string; astrid: string } {
   };
   return {
     app: read(path.join(REPO_ROOT, 'src', 'integrations', 'runtime', 'generated-contract-metadata.ts'), /SCHEMA_DIGEST = "(sha256:[0-9a-f]+)"/),
-    astrid: read(path.join(ASTRID_CHECKOUT, 'banodoco_workspace_client', 'contract_metadata.py'), /SCHEMA_DIGEST = '(sha256:[0-9a-f]+)'/),
+    astrid: read(path.join(ASTRID_CHECKOUT, 'astrid_runtime_client', 'contract_metadata.py'), /SCHEMA_DIGEST = '(sha256:[0-9a-f]+)'/),
   };
 }
 
@@ -97,7 +97,7 @@ export function revisionSet(identity?: AstridIdentity) {
     runtimeHead: gitHead(RUNTIME_CHECKOUT),
     vendorLocks: {
       app: vendorLock(path.join(REPO_ROOT, 'src', 'integrations', 'runtime', 'vendor.lock.json')),
-      astrid: vendorLock(path.join(ASTRID_CHECKOUT, 'banodoco_workspace_client', 'vendor.lock.json')),
+      astrid: vendorLock(path.join(ASTRID_CHECKOUT, 'astrid_runtime_client', 'vendor.lock.json')),
     },
     schemaDigest: { app: digests.app, astrid: digests.astrid, runtime: identity?.schema_digest ?? null },
   };
@@ -143,7 +143,7 @@ export class AstridCli {
       PATH: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin',
       HOME: this.home,
       XDG_STATE_HOME: this.state,
-      BANODOCO_LOCAL_DATA_ROOT: this.data,
+      ASTRID_RUNTIME_DATA_ROOT: this.data,
       PYTHONPATH: ASTRID_CHECKOUT,
       PYTHONDONTWRITEBYTECODE: '1',
       PYTHONUNBUFFERED: '1',

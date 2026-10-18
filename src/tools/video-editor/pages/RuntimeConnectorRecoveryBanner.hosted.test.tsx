@@ -13,7 +13,7 @@ import { RuntimeAuthenticationError, RuntimeUnavailableError } from '@/integrati
 import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { RuntimeConnectorRecoveryBanner } from './VideoEditorPage.tsx';
 
-const ENGINEER_WORDS = /Reigh|Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/i;
+const ENGINEER_WORDS = /Astrid|Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/i;
 
 afterEach(() => {
   origin = '';

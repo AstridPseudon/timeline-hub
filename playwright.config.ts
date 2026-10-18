@@ -11,7 +11,7 @@ const allocatedPorts = new Set<number>();
 // Timeline gates are intentionally isolated even when invoked from a shell
 // that has no CI marker.  Explicit ports are validated by the allocator;
 // omitted ports are fresh per run.
-const inheritedRunPorts = process.env.REIGH_TIMELINE_PORTS_ALLOCATED === '1';
+const inheritedRunPorts = process.env.ASTRID_APP_TIMELINE_PORTS_ALLOCATED === '1';
 const configuredBaseURL = readCanonicalBaseUrl();
 if (configuredBaseURL && !process.env.PLAYWRIGHT_PORT) process.env.PLAYWRIGHT_PORT = String(configuredBaseURL.port);
 const readInheritedPort = (envName: string): number => {
@@ -71,7 +71,7 @@ const bridgePort = inheritedRunPorts
 // Playwright reloads this config in worker processes after webServer starts;
 // carry the values across those reloads without probing our own live servers
 // as though they were stale external processes.
-process.env.REIGH_TIMELINE_PORTS_ALLOCATED = '1';
+process.env.ASTRID_APP_TIMELINE_PORTS_ALLOCATED = '1';
 const bridgeServeCommand = 'node tests/e2e/timeline/astrid-bridge-stub.mjs';
 const extensionHarnessDependencies = ['extension-harness-setup'];
 // Release specs require the paired gate's provisioned fixtures and credentials;
@@ -122,7 +122,7 @@ export default defineConfig({
       env: {
         // The editor capability-matrix E2E suite uses a fixed host-owned
         // fixture catalog; the Vite config only aliases it for `serve`.
-        REIGH_E2E_EXTENSION_FIXTURES: '1',
+        ASTRID_APP_E2E_EXTENSION_FIXTURES: '1',
         VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? DEFAULT_DEV_SUPABASE_URL,
         VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? 'test-anon-key',
         VITE_APP_ENV: process.env.VITE_APP_ENV ?? 'web',

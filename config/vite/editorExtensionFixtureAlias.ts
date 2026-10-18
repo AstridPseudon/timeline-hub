@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-export const EDITOR_EXTENSION_FIXTURE_ENV = 'REIGH_E2E_EXTENSION_FIXTURES';
+export const EDITOR_EXTENSION_FIXTURE_ENV = 'ASTRID_APP_E2E_EXTENSION_FIXTURES';
 const EDITOR_EXTENSION_CATALOG_IMPORT = '@/tools/video-editor/dev/localExtensions.ts';
 
 /** Resolve the fixed legacy capability-matrix catalog only for a Vite dev server. */

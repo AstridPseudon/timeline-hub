@@ -13,7 +13,7 @@ import { autoConnectRequested, requestAutoConnect } from './autoConnectRequest.t
 import { runtimeAppUrl, setRuntimeAppUrl } from './runtimeAppUrl.ts';
 
 const REALM = { realm_id: 'realm-1', display_name: 'Direct Journey' };
-const STORAGE_KEY = 'reigh.runtime.connectedBefore';
+const STORAGE_KEY = 'astrid.runtime.connectedBefore';
 
 type Route = () => Response | Promise<Response>;
 
@@ -177,7 +177,7 @@ describe('granted', () => {
     ['runtime_discovery_invalid', 'runtime_stopped'],
     ['runtime_identity_mismatch', 'identity_mismatch'],
     ['a_code_the_page_has_never_heard_of', 'unknown'],
-  ])('a 503 %s (the gateway\'s real codes, scripts/reigh-loopback-gateway.ts) is not_ready with reason %s', async (code, reason) => {
+  ])('a 503 %s (the gateway\'s real codes, scripts/astrid-loopback-gateway.ts) is not_ready with reason %s', async (code, reason) => {
     const gateway = fakeGateway();
     gateway.unavailable(code);
     renderProvider(gateway, fakePermissions('granted').permissions);
@@ -195,7 +195,7 @@ describe('granted', () => {
     expect(latest.state).toEqual({ status: 'not_ready', reason: 'unknown' });
   });
 
-  it('an answer that is not a Reigh gateway (wrong status or body) is cant_reach', async () => {
+  it('an answer that is not a Astrid gateway (wrong status or body) is cant_reach', async () => {
     const gateway = fakeGateway();
     gateway.routes['/v1/health'] = () => json({ error: 'hosted_origin_required' }, 403);
     renderProvider(gateway, fakePermissions('granted').permissions);

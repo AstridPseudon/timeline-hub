@@ -20,19 +20,19 @@ import { deflateSync } from 'node:zlib';
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, '../../../..');
 
-/** The gateway's well-known port (Plan A D1). Override with REIGH_DIRECT_GATEWAY_PORT. */
-export const GATEWAY_PORT = Number(process.env.REIGH_DIRECT_GATEWAY_PORT ?? 17340);
-export const HOSTED_HOST = 'reigh.test';
+/** The gateway's well-known port (Plan A D1). Override with ASTRID_APP_DIRECT_GATEWAY_PORT. */
+export const GATEWAY_PORT = Number(process.env.ASTRID_APP_DIRECT_GATEWAY_PORT ?? 17340);
+export const HOSTED_HOST = 'astrid.test';
 export const OTHER_HOST = 'evil.test';
-export const PRODUCT_ACTOR = 'reigh-e2e-product';
+export const PRODUCT_ACTOR = 'astrid-e2e-product';
 /** The second client of the three-product journey (the Astrid CLI) is its own actor, so the Runtime's history says who wrote what. */
 export const ASTRID_ACTOR = 'astrid-f2';
 export const PRODUCT_SCOPES = ['handshake', 'projects:read', 'projects:write', 'tasks:read', 'tasks:write', 'objects:read', 'objects:write'];
 export const BIG_DOWNLOAD_BYTES = 60 * 1024 * 1024;
 export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
 
-export const RUNTIME_CHECKOUT = path.resolve(process.env.BANODOCO_RUNTIME_CHECKOUT ?? path.join(REPO_ROOT, '..', 'banodoco-workspace-runtime'));
-const DIST_DIR = path.resolve(process.env.REIGH_DIRECT_DIST ?? path.join(REPO_ROOT, 'dist'));
+export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-runtime'));
+const DIST_DIR = path.resolve(process.env.ASTRID_APP_DIRECT_DIST ?? path.join(REPO_ROOT, 'dist'));
 
 export function runtimePython(): string | null {
   const python = path.join(RUNTIME_CHECKOUT, '.venv', 'bin', 'python');
@@ -41,7 +41,7 @@ export function runtimePython(): string | null {
 
 /** Why the harness cannot run here, or null when it can. */
 export function harnessUnavailableReason(): string | null {
-  if (!runtimePython()) return `Runtime venv not found at ${RUNTIME_CHECKOUT}/.venv (set BANODOCO_RUNTIME_CHECKOUT)`;
+  if (!runtimePython()) return `Runtime venv not found at ${RUNTIME_CHECKOUT}/.venv (set ASTRID_RUNTIME_CHECKOUT)`;
   if (!existsSync(path.join(DIST_DIR, 'index.html'))) return `no production build at ${DIST_DIR} (run npm run build, or use npm run test:e2e:direct)`;
   try { execFileSync('openssl', ['version'], { stdio: 'ignore' }); } catch { return 'openssl is required to make the test certificate'; }
   return null;
@@ -66,7 +66,7 @@ async function freePort(): Promise<number> {
 async function assertPortFree(port: number, what: string): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const server = createNetServer();
-    server.once('error', (error: NodeJS.ErrnoException) => reject(new Error(`${what} port ${port} is not free (${error.code}); stop whatever uses it or set REIGH_DIRECT_GATEWAY_PORT`)));
+    server.once('error', (error: NodeJS.ErrnoException) => reject(new Error(`${what} port ${port} is not free (${error.code}); stop whatever uses it or set ASTRID_APP_DIRECT_GATEWAY_PORT`)));
     server.listen(port, '127.0.0.1', () => server.close(() => resolve()));
   });
 }
@@ -402,11 +402,11 @@ export class DirectHarness {
   async start(): Promise<this> {
     process.on('SIGTERM', () => { void this.stop().finally(() => process.exit(143)); });
     try {
-      this.tmp = mkdtempSync(path.join(tmpdir(), 'reigh-direct-'));
+      this.tmp = mkdtempSync(path.join(tmpdir(), 'astrid-direct-'));
       await assertPortFree(this.gatewayPort, 'gateway');
       const tls = makeCertificate(this.tmp);
       this.spki = tls.spki;
-      this.originPort = Number(process.env.REIGH_DIRECT_ORIGIN_PORT ?? 0) || await freePort();
+      this.originPort = Number(process.env.ASTRID_APP_DIRECT_ORIGIN_PORT ?? 0) || await freePort();
       this.https = await startHostedServer(tls, this.originPort, () => this.extensionsMode);
       this.origin = `https://${HOSTED_HOST}:${this.originPort}`;
       this.otherOrigin = `https://${OTHER_HOST}:${this.originPort}`;
@@ -573,13 +573,13 @@ export class DirectHarness {
     const bundle = {
       schema_version: 1,
       itemsBySchemaRef: {
-        'reigh.transcript_segment/v1': transcriptTexts.map((text, index) => ({
+        'astrid.transcript_segment/v1': transcriptTexts.map((text, index) => ({
           id: `transcript-source:${assetKey}:segment:${index}`,
           shape: 'interval', domain: 'source_seconds', extent: { start: index * 2, end: index * 2 + 2 },
-          schemaRef: 'reigh.transcript_segment/v1',
+          schemaRef: 'astrid.transcript_segment/v1',
           payload: { text },
           sourceArtifactRef: { assetId: assetKey },
-          provenance: { adapterId: 'reigh.adaptTranscript', adapterVersion: '2' },
+          provenance: { adapterId: 'astrid.adaptTranscript', adapterVersion: '2' },
         })),
       },
     };
@@ -587,7 +587,7 @@ export class DirectHarness {
     const speechClipId = 'journey-speech-clip';
     const clips = [
       // The scene fills the first five seconds; the media clip (the transcript's carrier) follows it on the same track.
-      { id: sceneClipId, at: 0, track: 'V1', clipType: 'com.reigh.astrid.liveScene', from: 0, to: 5, speed: 1, app: { liveScene } },
+      { id: sceneClipId, at: 0, track: 'V1', clipType: 'haus.astrid.liveScene', from: 0, to: 5, speed: 1, app: { liveScene } },
       { id: speechClipId, at: 5, track: 'V1', clipType: 'media', asset: assetKey, from: 0, to: 6, speed: 1 },
     ];
     const registry = { assets: { [assetKey]: { file: 'journey-speech.webm', type: 'video', duration: 12, media_id: video.objectId, content_sha256: video.digest } } };
@@ -710,10 +710,10 @@ export class DirectHarness {
 
   // -- Gateway -------------------------------------------------------------------------------
 
-  /** `node --import tsx scripts/reigh-loopback-gateway.ts ...` using the repo's tsx; prints one `{base, realm_id, acp}` line when listening. */
+  /** `node --import tsx scripts/astrid-loopback-gateway.ts ...` using the repo's tsx; prints one `{base, realm_id, acp}` line when listening. */
   async startGateway(): Promise<{ base: string; realm_id: string; acp: boolean }> {
     if (this.gateway) throw new Error('gateway already running');
-    const managed = spawnGroup(process.execPath, ['--import', 'tsx', 'scripts/reigh-loopback-gateway.ts',
+    const managed = spawnGroup(process.execPath, ['--import', 'tsx', 'scripts/astrid-loopback-gateway.ts',
       '--discovery', path.join(this.supportDir, 'discovery.json'),
       '--token-file', path.join(this.tmp, 'product-credential.json'),
       '--origin', this.origin,

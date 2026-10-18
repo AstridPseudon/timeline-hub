@@ -128,7 +128,7 @@ function fixtureTransport(options: {
       : undefined;
     requests.push({ method, path, headers, ...(parsedBody ? { body: parsedBody } : {}) });
     if (path === '/v1/health') return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1, runtime_instance_id: 'runtime-instance-shot-composition' }) };
-    if (path === '/v1/handshake') return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session', actor_id: 'reigh-product-connector', realm_id: 'realm', scopes: [...RUNTIME_CLIENT_SCOPES], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
+    if (path === '/v1/handshake') return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session', actor_id: 'astrid-product-connector', realm_id: 'realm', scopes: [...RUNTIME_CLIENT_SCOPES], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
     if (path === '/v1/realm') return { status: 200, headers: {}, body: json({ realm_id: 'realm', display_name: 'fixture', version: 1, created_at: '2026-09-19T00:00:00Z' }) };
     if (method === 'POST' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/inspect`) {
       return {
@@ -564,7 +564,7 @@ describe('Runtime shot-composition port', () => {
     const publishRequest = fixtureRuntime.requests.find((request) => request.method === 'POST' && request.path.includes('/composition-revisions'));
     const generatedKey = publishRequest?.headers['Idempotency-Key'] ?? '';
     expect(generatedKey).toMatch(/^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$/);
-    expect(generatedKey).toMatch(/^reigh\.shot-composition\./);
+    expect(generatedKey).toMatch(/^astrid\.shot-composition\./);
     // The exact receipt head is read after the POST even though the mutable
     // timeline endpoint now reports a newer concurrent head.
     expect(fixtureRuntime.requests.filter((request) => request.method === 'GET' && request.path.includes('/composition-revisions/')).at(-1)?.path)

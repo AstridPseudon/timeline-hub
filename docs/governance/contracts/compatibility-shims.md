@@ -22,7 +22,7 @@ choose it instead of the canonical import or API.
 
 ## Invariants
 
-1. New author-facing extension code imports `@reigh/editor-sdk` or another
+1. New author-facing extension code imports `@astrid/editor-sdk` or another
    documented public entrypoint. It never deep-imports host-owned
    `src/tools/video-editor/**` modules.
 2. A compatibility path has one canonical replacement, a subsystem owner, a
@@ -81,7 +81,7 @@ harnesses) is part of the same product and release unit as the editor, so its
 private implementation imports do not represent extension SDK consumption.
 The gate scans public consumer roots instead: extension examples in
 `src/examples/**` and `src/tools/video-editor/examples/extensions/**` may use
-`@reigh/editor-sdk` and helpers within the bundled examples tree, but may not
+`@astrid/editor-sdk` and helpers within the bundled examples tree, but may not
 reach editor implementation modules. `examples/embed-demo/src/**` and Home's
 public example data modules at `src/pages/Home/publicAstridExample.tsx`,
 `src/pages/Home/astrid-light-study.ts`, and `src/pages/Home/content/**` may use

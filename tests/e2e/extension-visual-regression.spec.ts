@@ -36,7 +36,7 @@ test.describe.configure({ mode: 'serial' });
 
 async function initializeLocalMode(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    localStorage.removeItem('reigh.dev-extensions.disabled');
+    localStorage.removeItem('astrid.dev-extensions.disabled');
   });
 }
 
@@ -92,7 +92,7 @@ async function openComposedEditor(page: Page): Promise<void> {
   await initializeLocalMode(page);
   const response = await page.goto(COMPOSED_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   expect(response?.ok()).toBe(true);
-  await expect(page.locator('[data-lane-kind="reigh.transcript"]')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('runaway-timeline-lane')).toHaveAttribute('data-total-items', '566');
   await expect.poll(() => page.getByTestId('runaway-transition-chip').count()).toBeGreaterThan(0);
   expect(await page.getByTestId('runaway-transition-chip').count()).toBeLessThanOrEqual(128);

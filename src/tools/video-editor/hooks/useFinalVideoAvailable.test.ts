@@ -4,7 +4,7 @@ import type {
   Task as RuntimeTask,
   Transport,
 } from '@/integrations/runtime/generated.ts';
-import { RUNTIME_CLIENT_SCOPES, ReighRuntimeClient } from '@/integrations/runtime/client.ts';
+import { RUNTIME_CLIENT_SCOPES, AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import {
   RUNTIME_SCHEMA_DIGEST,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
@@ -36,7 +36,7 @@ function task(): RuntimeTask {
     version: 2,
     capability_id: 'rendering.render',
     capability_digest: `sha256:${'b'.repeat(64)}`,
-    idempotency_key: 'reigh.render:retained-output',
+    idempotency_key: 'astrid.render:retained-output',
     created_at: '2026-09-13T00:00:00Z',
     updated_at: '2026-09-13T00:01:00Z',
     attempt_id: 'attempt-retained-output',
@@ -105,7 +105,7 @@ describe('Runtime final-video hydration boundary', () => {
         return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 4, runtime_instance_id: 'runtime-instance-retained-output' }) };
       }
       if (path === '/v1/handshake') {
-        return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-retained-output', actor_id: 'reigh-product-connector', realm_id: 'realm-retained-output', scopes: [...RUNTIME_CLIENT_SCOPES], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
+        return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-retained-output', actor_id: 'astrid-product-connector', realm_id: 'realm-retained-output', scopes: [...RUNTIME_CLIENT_SCOPES], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
       }
       if (path === '/v1/realm') {
         return { status: 200, headers: {}, body: json({ realm_id: 'realm-retained-output', display_name: 'Retained output fixture', version: 1, created_at: '2026-09-13T00:00:00Z' }) };
@@ -122,7 +122,7 @@ describe('Runtime final-video hydration boundary', () => {
       throw new Error(`unexpected ${method} ${path}`);
     };
 
-    const client = new ReighRuntimeClient({ baseUrl: '/api/runtime', token: 'fixture-token', transport });
+    const client = new AstridRuntimeClient({ baseUrl: '/api/runtime', token: 'fixture-token', transport });
     const videos = await readRuntimeFinalVideos(client, PROJECT_ID);
 
     expect(videos.get(TIMELINE_ID)).toEqual({

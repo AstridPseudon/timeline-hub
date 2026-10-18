@@ -829,7 +829,7 @@ describe('shot timeline popup persistence', () => {
       });
       expect(recovered?.draftIdentity).toBe('edit-B');
       expect(recovered?.draft.canonicalPublication).toMatchObject({
-        idempotencyKey: expect.stringMatching(/^reigh\.shot-popup\./),
+        idempotencyKey: expect.stringMatching(/^astrid\.shot-popup\./),
       });
 
       const reopened = createShotTimelineDataProvider(config, base, 'occ-1');
