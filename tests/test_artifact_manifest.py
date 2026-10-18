@@ -7,6 +7,8 @@ import json
 import shutil
 from pathlib import Path
 
+from scripts import gen_tool_catalog
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -29,6 +31,19 @@ def test_committed_artifact_manifest_is_current() -> None:
 
 def test_cli_surface_is_current() -> None:
     assert gen_cli_surface.check() == [], "run `python scripts/gen_cli_surface.py`"
+
+
+def test_tool_catalog_is_current() -> None:
+    assert gen_tool_catalog.main(["--check"]) == 0
+
+
+def test_planted_tool_catalog_drift_names_regenerate_command(tmp_path: Path, capsys) -> None:
+    catalog = tmp_path / "catalog.json"
+    shutil.copyfile(ROOT / "astrid/tools/catalog.json", catalog)
+    catalog.write_bytes(catalog.read_bytes() + b" ")
+
+    assert gen_tool_catalog.main([str(catalog), "--check"]) == 1
+    assert "is stale; run scripts/gen_tool_catalog.py" in capsys.readouterr().err
 
 
 def test_cli_surface_covers_the_timelines_verbs_consumers_prompt() -> None:
