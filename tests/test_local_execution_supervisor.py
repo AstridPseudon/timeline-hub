@@ -6,6 +6,7 @@ import json
 import socket
 
 import pytest
+from test_verified_host_launch import selected_action_installation
 
 from runtime_protocol.local_execution_supervisor import (
     HOST_PREPARATION_VERSION, RelayError, host_prepare_request,
@@ -54,6 +55,35 @@ def _prepare_case():
                                  for role, pid, birth in (("engine", 22, "engine-birth"), ("engine_listener", 23, "listener-birth"))},
     }
     return request, response
+
+
+@pytest.mark.parametrize('edge',['valid','source','interpreter','interpreter-pin','matrix','shape','distribution-path','dependency-shape'])
+def test_selected_action_profile_fields_are_bound_before_forwarding(selected_action_installation,edge):
+    from test_local_worker import host_only_profile_case
+    from runtime_protocol.local_worker import _selected_profile_payload
+    from runtime_protocol import verified_host_launch as gate
+    from runtime_protocol.local_execution_supervisor import digest
+    f=selected_action_installation
+    profile=_selected_profile_payload(host_only_profile_case())
+    launch=profile['host_launch']
+    launch.update(source_checkout=str(f.root),pack_root=str(f.root/'astrid/packs'),capability_matrix=str(f.matrix),
+        selected_actions=copy.deepcopy(f.actions))
+    selection=launch['selected_actions']['generation.generate_speech']
+    profile['host_executable']=selection['interpreter']['path']
+    profile['host_artifact_digest']='sha256:'+selection['interpreter']['sha256']
+    if edge=='source':launch.update(source_checkout='/other/site',pack_root='/other/site/astrid/packs')
+    elif edge=='interpreter':profile['host_executable']='/other/python'
+    elif edge=='interpreter-pin':profile['host_artifact_digest']='sha256:'+'0'*64
+    elif edge=='matrix':launch['capability_matrix']='/other/matrix.json'
+    elif edge=='shape':selection['ambient_root']='/ambient'
+    elif edge=='distribution-path':selection['distributions']['certifi']['files']['../outside']='0'*64
+    elif edge=='dependency-shape':selection['declaration']['python']='edge-tts'
+    if edge in {'shape','distribution-path','dependency-shape'}:
+        selection['digest']=gate.raw_digest({k:v for k,v in selection.items() if k!='digest'})
+    profile['session_config_digest']=digest(launch)
+    if edge=='valid':assert validate_selected_profile(profile)==profile
+    else:
+        with pytest.raises(RelayError):validate_selected_profile(profile)
 
 
 def _handoff_case(tmp_path):

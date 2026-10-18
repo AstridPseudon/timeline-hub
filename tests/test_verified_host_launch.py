@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import pickle
 import sys
@@ -14,6 +15,288 @@ from types import ModuleType, SimpleNamespace
 
 import pytest
 from runtime_protocol import verified_host_launch as gate
+
+
+@pytest.fixture(scope='module')
+def selected_action_installation(tmp_path_factory):
+    """Exact retained action artifacts plus receiver source in offline fixtures.
+
+    No install/profile/service is produced. Product RECORDs describe only these
+    test copies; dependency RECORDs retain their original exact identities.
+    """
+    import shutil
+    from test_selected_python_inventory import write_host_records
+    source = os.environ.get('HOST_LAUNCH_TEST_ASTRID_SOURCE')
+    provenance_path = os.environ.get('ACTION_CLOSURE_TEST_PROVENANCE')
+    if not source or not provenance_path:
+        pytest.skip('select admitted SDK and retained action artifact binding')
+    source = Path(source); provenance = json.loads(Path(provenance_path).read_text())
+    root = tmp_path_factory.mktemp('selected-action')/'site'; root.mkdir()
+    def product_ignore(directory, names):
+        ignored = {n for n in names if n == '__pycache__' or n.endswith(('.pyc','.pyo'))}
+        if Path(directory) == source/'astrid/packs':
+            ignored.update(n for n in names if n not in {'generation','__init__.py'})
+        return ignored
+    for name in ('astrid','banodoco_workspace_client','schemas'):
+        shutil.copytree(source/name, root/name, ignore=product_ignore)
+    runtime = Path(__file__).parents[1]
+    for name in ('runtime_protocol','banodoco_local'):
+        shutil.copytree(runtime/name, root/name, ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
+    artifact_root = Path(provenance['artifact_source']['root'])
+    action_names = {re.sub(r'[-_.]+','-',d['distribution_name']).lower():d for d in provenance['artifact_source']['distributions']}
+    dependency_names = set(gate.HOST_DISTRIBUTIONS)-{'astrid','banodoco-workspace-runtime'} | set(action_names)
+    records = {}
+    for name in sorted(dependency_names):
+        distribution = importlib.metadata.distribution(name)
+        origin = Path(distribution.locate_file(''))
+        if name in action_names:
+            expected = action_names[name]
+            assert origin == artifact_root
+            assert distribution.version == expected['version']
+            record = origin/next(p for p in distribution.files if str(p).endswith('.dist-info/RECORD'))
+            assert hashlib.sha256(record.read_bytes()).hexdigest() == expected['record_sha256']
+        for relative in distribution.files:
+            if '..' in relative.parts or '__pycache__' in relative.parts or relative.suffix in {'.pyc','.pyo'}:
+                continue
+            path = origin/relative
+            assert path.is_file() and not path.is_symlink()
+            target = root/relative; target.parent.mkdir(parents=True, exist_ok=True)
+            if target.exists(): assert target.read_bytes() == path.read_bytes()
+            else: shutil.copyfile(path,target)
+        records[name] = {'version':distribution.version,'origin':str(origin)}
+    # Retain exact third-party RECORDs; write wheel-shaped product records only.
+    # The shared helper also preserves bytes of existing third-party RECORDs
+    # by using a temporary narrowed product table for these two source copies.
+    original = gate.HOST_DISTRIBUTIONS
+    gate.HOST_DISTRIBUTIONS = {n:original[n] for n in ('astrid','banodoco-workspace-runtime')}
+    try: write_host_records(root)
+    finally: gate.HOST_DISTRIBUTIONS = original
+    matrix = root.parent/'capabilities.json'
+    matrix.write_bytes((source/'config/astrid-beta-capabilities.json').read_bytes())
+    actions = gate.qualify_action_closures(root, ['generation.generate_speech'], matrix)
+    closure = gate.installed_host_closure(root, action_closures=actions)
+    layout = gate.selected_python_layout(root)
+    # Only stdlib and extension inventories are needed by this cold child.
+    inventories = {gate.raw_digest(v):v for role in ('python-stdlib','python-extensions')
+                   for v in [gate.installed_inventory(layout['roots'][role],python_role=role,selected_source=root)]}
+    host_inventory = {'root':str(root),'files':closure['files']}
+    identity = gate.raw_digest(host_inventory); inventories[identity]=host_inventory
+    entries = [{'path':str(root),'inventory_digest':identity}]
+    entries += [{'path':v['root'],'inventory_digest':pin} for pin,v in inventories.items() if pin != identity]
+    mapping = gate._mapping(entries,inventories,host_inventory,trusted_local=True)
+    launcher = runtime/'runtime_protocol/verified_host_launch.py'
+    retained = {'actions':actions,'profile_digest':'a'*64,'host_files':closure['files'],
+        'source_root':str(root),'mapping':mapping,'distribution_metadata':gate._distribution_metadata(entries,inventories),
+        'selected_python':layout,'launcher':{'path':str(launcher),'sha256':hashlib.sha256(launcher.read_bytes()).hexdigest()}}
+    selection = actions['generation.generate_speech']
+    context = {'profile_digest':retained['profile_digest'],'owner':{'pid':123,'uid':os.getuid(),'birth_id':'owner'},
+        'owner_epoch':'epoch','generation':1,'operation_id':'prepare','channel_id':'channel','task_id':'task',
+        'attempt_id':'attempt','lease_id':'lease','fence':1,'runtime_epoch':1,'operation':selection['action_id'],
+        'executor_id':'host','capability_digest':selection['capability_digest'],'closure_digest':selection['digest']}
+    (root.parent/'provenance.json').write_text(json.dumps({'artifacts':records,'selection':selection,'host_distributions':closure['distributions']},sort_keys=True,indent=2)+'\n')
+    return SimpleNamespace(root=root,actions=actions,closure=closure,retained=retained,context=context,matrix=matrix)
+
+
+def test_selected_action_exact_union_does_not_expand_host_mapping(selected_action_installation):
+    f = selected_action_installation
+    assert set(f.actions['generation.generate_speech']['distributions']) == {
+        'edge-tts','aiohttp','aiohappyeyeballs','aiosignal','attrs','certifi','frozenlist',
+        'multidict','propcache','tabulate','typing-extensions','yarl','idna'}
+    assert set(f.closure['distributions']) == set(gate.HOST_DISTRIBUTIONS)
+    assert 'edge_tts' not in f.retained['mapping']
+    with pytest.raises(ModuleNotFoundError): gate.MappedImports(f.retained['mapping']).find_spec('edge_tts')
+    before = dict(sys.modules)
+    payload = gate.prepare_action_binding(f.retained,action_id='generation.generate_speech',context=f.context,network_environment={})
+    assert payload['mapping']['edge_tts']['path'] == str(f.root/'edge_tts/__init__.py')
+    assert 'astrid.packs.rendering' not in payload['mapping']
+    assert all(sys.modules.get(name) is module for name,module in before.items())
+    assert 'edge_tts' not in sys.modules
+    assert 'certifi/cacert.pem' in f.actions['generation.generate_speech']['distributions']['certifi']['files']
+    assert any(path.endswith(tuple(gate.importlib.machinery.EXTENSION_SUFFIXES)) for path in f.actions['generation.generate_speech']['distributions']['multidict']['files'])
+
+
+@pytest.mark.parametrize('field', sorted(gate.ACTION_CONTEXT_FIELDS))
+def test_selected_action_context_cannot_change(selected_action_installation,field):
+    f = selected_action_installation; context = copy.deepcopy(f.context)
+    context[field] = None
+    with pytest.raises((gate.HostLaunchError,TypeError,KeyError)):
+        gate.prepare_action_binding(f.retained,action_id='generation.generate_speech',context=context,network_environment={})
+
+
+def test_selected_action_cannot_select_another_actions_closure(selected_action_installation):
+    f = selected_action_installation
+    with pytest.raises(gate.HostLaunchError,match='no selected'):
+        gate.prepare_action_binding(f.retained,action_id='generation.generate_video',context=f.context,network_environment={})
+
+
+@pytest.mark.parametrize('edge', ['record','resource','native','version','missing-transitive','undeclared','shared-conflict',
+    'pack','entrypoint','declaration','capability-matrix','interpreter','origin','missing-record-coverage'])
+def test_selected_action_install_union_refuses_drift(selected_action_installation,tmp_path,edge):
+    import shutil
+    f = selected_action_installation
+    root = tmp_path/'site'
+    # Independent writable copies; the immutable module fixture is never edited.
+    shutil.copytree(f.root,root)
+    matrix=tmp_path/'matrix.json';matrix.write_bytes(f.matrix.read_bytes())
+    actions = gate.qualify_action_closures(root,['generation.generate_speech'],matrix)
+    binding = actions['generation.generate_speech']
+    if edge == 'record':
+        identity=binding['distributions']['edge-tts']; (Path(identity['origin'])/'RECORD').write_text('changed')
+    elif edge == 'resource': (root/'certifi/cacert.pem').write_text('changed')
+    elif edge == 'native':
+        native=next(p for p in binding['distributions']['multidict']['files'] if p.endswith(tuple(gate.importlib.machinery.EXTENSION_SUFFIXES)))
+        (root/native).write_bytes(b'changed')
+    elif edge == 'version':
+        path=Path(binding['distributions']['edge-tts']['origin'])/'METADATA'; path.write_text(path.read_text().replace('7.2.8','7.2.9'))
+    elif edge == 'missing-transitive': shutil.rmtree(root/'yarl')
+    elif edge == 'undeclared': (root/'certifi/foreign-resource.bin').write_bytes(b'undeclared')
+    elif edge == 'shared-conflict':
+        binding['distributions']['attrs']['version']='0.0'
+        binding['digest']=gate.raw_digest({k:v for k,v in binding.items() if k!='digest'})
+    elif edge == 'pack':
+        path=root/'astrid/packs/generation/pack.yaml';path.write_text(path.read_text()+'\n')
+    elif edge == 'entrypoint':(root/'astrid/packs/generation/actions/generate_speech/run.py').write_text('raise AssertionError("substitution")')
+    elif edge == 'capability-matrix':matrix.write_text(matrix.read_text()+'\n')
+    elif edge == 'missing-record-coverage':
+        path=Path(binding['distributions']['certifi']['origin'])/'RECORD'
+        path.write_text('\n'.join(line for line in path.read_text().splitlines() if not line.startswith('certifi/cacert.pem,'))+'\n')
+    else:
+        if edge == 'declaration':binding['declaration']['python']=['edge-tts==0']
+        elif edge == 'interpreter':binding['interpreter']['sha256']='0'*64
+        elif edge == 'origin':binding['distributions']['attrs']['origin']=str(tmp_path/'ambient/attrs.dist-info')
+        binding['digest']=gate.raw_digest({k:v for k,v in binding.items() if k!='digest'})
+    with pytest.raises((gate.HostLaunchError,FileNotFoundError)):
+        gate.installed_host_closure(root,action_closures=actions)
+
+
+def test_selected_action_cold_real_module_imports_metadata_resources_and_native(selected_action_installation,tmp_path):
+    f = selected_action_installation
+    payload = gate.prepare_action_binding(f.retained,action_id='generation.generate_speech',context=f.context,network_environment={})
+    path=tmp_path/'binding.json';path.write_bytes(gate.canonical(payload))
+    (tmp_path/'edge_tts.py').write_text('raise AssertionError("ambient CWD imported")')
+    (tmp_path/'sitecustomize.py').write_text('raise AssertionError("ambient site imported")')
+    (tmp_path/'foreign.pth').write_text('import sitecustomize')
+    program = r'''
+import importlib.util,json,sys
+spec=importlib.util.spec_from_file_location('cold_gate',sys.argv[1]);gate=importlib.util.module_from_spec(spec);spec.loader.exec_module(gate)
+payload=json.load(open(sys.argv[2]))
+assert not any(n in sys.modules for n in ('astrid','edge_tts','aiohttp','multidict'))
+try:gate.launch_action_from_binding(payload,context_digest=payload['context_digest'],arguments=['--help'])
+except SystemExit as exc:assert exc.code == 0
+from pathlib import Path
+from importlib.metadata import version
+from importlib.resources import files
+import edge_tts,aiohttp,multidict,frozenlist,propcache,yarl,certifi
+from astrid.core.pack.canonical import validate_canonical_pack
+from astrid.core.pack.discovery import discover_pack_metadata
+from astrid.sdk.actions import validate_action_inputs_definition,action_executor_definition
+from astrid.core.pack.discovery import DiscoveredPack
+from astrid.core.pack.loader import load_pack_manifest
+root=Path(payload['action']['pack_root']);pack=load_pack_manifest(root/'pack.yaml')
+definition=action_executor_definition(DiscoveredPack(pack,'extra',0),'generate_speech',pack.actions['generate_speech'])
+validate_action_inputs_definition(definition,dict(text='offline',provider='edge-tts',voice='en-US-ChristopherNeural',rate='+0%',volume='+0%',pitch='+0Hz'))
+assert validate_canonical_pack(root).id == 'generation'
+assert any(p.pack.id == 'generation' for p in discover_pack_metadata(project_root=root.parent,extra_pack_roots=(str(root),)))
+assert version('edge-tts') == '7.2.8'
+assert len(files('certifi').joinpath('cacert.pem').read_bytes()) > 1000
+assert multidict.CIMultiDict({'A':'b'})['a']=='b'
+assert frozenlist.FrozenList([1]) == [1]
+for name in ('sitecustomize','pytest','astrid.packs.rendering','unselected_action'):
+ try:__import__(name)
+ except ModuleNotFoundError:pass
+ else:raise AssertionError(name+' escaped child closure')
+assert sys.path == []
+print('SELECTED_ACTION_COLD_OK',edge_tts.__file__,version('aiohttp'))
+'''
+    child=subprocess.run([sys.executable,'-I','-S','-B','-c',program,gate.__file__,str(path)],cwd=tmp_path,
+        env={'PATH':os.environ.get('PATH',''),'HOME':str(tmp_path),'PYTHONPATH':str(tmp_path)},capture_output=True,text=True)
+    (tmp_path/'cold-output.json').write_text(json.dumps({'argv':child.args,'exit':child.returncode,'stdout':child.stdout,'stderr':child.stderr},indent=2)+'\n')
+    assert child.returncode == 0, child.stderr
+    assert 'SELECTED_ACTION_COLD_OK' in child.stdout
+
+
+def test_selected_action_union_is_measurable_inside_unchanged_host_mapping(selected_action_installation,tmp_path):
+    f=selected_action_installation
+    path=tmp_path/'host-input.json';path.write_bytes(gate.canonical(f.retained))
+    program=r'''
+import importlib.util,json,sys
+spec=importlib.util.spec_from_file_location('host_gate',sys.argv[1]);gate=importlib.util.module_from_spec(spec);spec.loader.exec_module(gate)
+value=json.load(open(sys.argv[2]));finder=gate.MappedImports(value['mapping'],trusted_local=True)
+sys.path[:]=[];sys.path_hooks[:]=[];sys.path_importer_cache.clear();sys.meta_path[:]=[finder]
+finder._bind_distribution_metadata(value['distribution_metadata'])
+from runtime_protocol.verified_host_launch import installed_host_closure,HOST_DISTRIBUTIONS
+from importlib.metadata import version,PackageNotFoundError
+closure=installed_host_closure(value['source_root'],action_closures=value['actions'])
+assert set(closure['distributions'])==set(HOST_DISTRIBUTIONS)
+try:version('edge-tts')
+except PackageNotFoundError:pass
+else:raise AssertionError('action metadata escaped Host mapping')
+try:import edge_tts
+except ModuleNotFoundError:pass
+else:raise AssertionError('action code escaped Host mapping')
+assert 'edge_tts' not in sys.modules
+print('HOST_UNION_OBSERVATION_OK')
+'''
+    child=subprocess.run([sys.executable,'-I','-S','-B','-c',program,gate.__file__,str(path)],capture_output=True,text=True)
+    assert child.returncode==0,child.stderr
+    assert 'HOST_UNION_OBSERVATION_OK' in child.stdout
+
+
+def test_selected_action_concurrent_children_cannot_import_each_others_dependencies(selected_action_installation,tmp_path):
+    import base64,csv,io,shutil
+    import yaml
+    from test_selected_python_inventory import write_host_records
+    f=selected_action_installation;root=tmp_path/'site';shutil.copytree(f.root,root)
+    pack=root/'astrid/packs/isolated';(pack/'actions').mkdir(parents=True)
+    for path in (pack/'__init__.py',pack/'actions/__init__.py'):path.write_text('')
+    (pack/'actions/run.py').write_text("import other_action_dependency\ntry:\n import edge_tts\nexcept ModuleNotFoundError:pass\nelse:raise AssertionError('cross-child dependency')\nprint('ISOLATED_CHILD_OK')\n")
+    declaration={'schema_version':3,'id':'isolated','name':'Offline isolated child','version':'1.0.0',
+        'actions':{'probe':{'description':'Offline isolated child fixture','invocation':{'kind':'command','command':{'argv':['{python_exec}','-m','astrid.packs.isolated.actions.run']}},
+        'inputs':[],'outputs':[],'metadata':{'execution_dependencies':{'python':['other-action-dependency==1.0']}},
+        'resources':[{'kind':'implementation','path':'actions/run.py'}]}}}
+    (pack/'pack.yaml').write_text(yaml.safe_dump(declaration))
+    package=root/'other_action_dependency';package.mkdir();(package/'__init__.py').write_text('VALUE=42\n')
+    info=root/'other_action_dependency-1.0.dist-info';info.mkdir();(info/'METADATA').write_text('Name: other-action-dependency\nVersion: 1.0\n')
+    stream=io.StringIO(newline='');writer=csv.writer(stream)
+    for path in [package/'__init__.py',info/'METADATA']:
+        content=path.read_bytes();writer.writerow([str(path.relative_to(root)),
+            'sha256='+base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip('='),len(content)])
+    writer.writerow([str(info.relative_to(root))+'/RECORD','','']);(info/'RECORD').write_bytes(stream.getvalue().encode())
+    original=gate.HOST_DISTRIBUTIONS;gate.HOST_DISTRIBUTIONS={n:original[n] for n in ('astrid','banodoco-workspace-runtime')}
+    try:write_host_records(root)
+    finally:gate.HOST_DISTRIBUTIONS=original
+    matrix=json.loads(f.matrix.read_text());matrix['capabilities'].append({'id':'isolated.probe','disposition':'optional',
+        'evidence_reason':'Offline fixture only','adapter_family':'cpu','resource_keys':['cpu'],
+        'required_env':[],'required_binaries':[],'required_packages':[]})
+    path=tmp_path/'matrix.json';path.write_text(json.dumps(matrix))
+    actions=gate.qualify_action_closures(root,['generation.generate_speech','isolated.probe'],path)
+    host=gate.installed_host_closure(root,action_closures=actions)
+    inventory={'root':str(root),'files':host['files']};pin=gate.raw_digest(inventory)
+    mapping=gate._mapping([{'path':str(root),'inventory_digest':pin}],{pin:inventory},inventory,trusted_local=True)
+    for name,item in f.retained['mapping'].items():
+        if not Path(item['path']).is_relative_to(f.root):mapping[name]=item
+    retained={**f.retained,'source_root':str(root),'host_files':host['files'],'actions':actions,'mapping':mapping,
+        'distribution_metadata':gate._distribution_metadata([{'path':str(root),'inventory_digest':pin}],{pin:inventory})}
+    payloads=[]
+    for action_id in ('generation.generate_speech','isolated.probe'):
+        selection=actions[action_id];context={**f.context,'operation':action_id,
+            'capability_digest':selection['capability_digest'],'closure_digest':selection['digest']}
+        payloads.append(gate.prepare_action_binding(retained,action_id=action_id,context=context,network_environment={}))
+    assert 'other_action_dependency' not in payloads[0]['mapping']
+    assert 'edge_tts' not in payloads[1]['mapping']
+    children=[]
+    for index,payload in enumerate(payloads):
+        argv=[sys.executable,'-I','-S','-B',gate.__file__,'--action-binding-fd','0','--context-digest',payload['context_digest']]
+        if index==0:argv.append('--help')
+        children.append(subprocess.Popen(argv,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE))
+    # Start both before observing either. Their stdio/mappings are independent.
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        jobs=[pool.submit(child.communicate,gate.canonical(payload)) for child,payload in zip(children,payloads)]
+        results=[job.result() for job in jobs]
+    assert [child.returncode for child in children]==[0,0],results
+    assert b'ISOLATED_CHILD_OK' in results[1][0]
+    assert 'edge_tts' not in sys.modules and 'other_action_dependency' not in sys.modules
 
 
 def _metadata_binding(tmp_path):
