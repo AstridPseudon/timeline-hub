@@ -101,8 +101,35 @@ def test_journey_render_calls_use_the_backend_and_kill_render_drops_review_for_f
     assert argv[argv.index("--backend") + 1] == backend and ("--review" in argv) is review
 
 
+def test_renderer_install_problem_names_the_missing_install_and_the_fix(tmp_path: Path) -> None:
+    from astrid.core.rendering.remotion_runtime import _REQUIRED_PACKAGES, REMOTION_CLI_RELATIVE_PATH
+    assert "npm ci" in journey.renderer_install_problem(tmp_path)
+    for name in _REQUIRED_PACKAGES:
+        package = tmp_path / "node_modules" / "@banodoco" / name
+        package.mkdir(parents=True)
+        (package / "package.json").write_text("{}")
+    assert "remotion-cli" in journey.renderer_install_problem(tmp_path)
+    cli = tmp_path / REMOTION_CLI_RELATIVE_PATH
+    cli.parent.mkdir(parents=True)
+    cli.write_text("")
+    assert journey.renderer_install_problem(tmp_path) is None
+
+
+def test_uninstalled_renderer_fails_the_preflight_not_render_1(tmp_path: Path, monkeypatch) -> None:
+    from astrid.core.rendering import node_pin
+    monkeypatch.setattr(node_pin, "resolve_pinned_node", lambda *a, **k: node_pin.NodeResolution(
+        Path("/usr/bin/node"), None, "v20.19.4", "path", None))
+    monkeypatch.setattr(journey, "renderer_install_problem", lambda project: "renderer missing: run `npm ci`")
+    monkeypatch.setattr(journey, "disk_preflight", lambda *a: pytest.fail("past the renderer preflight"))
+    reference = tmp_path / "ref"
+    reference.mkdir()
+    with pytest.raises(JourneyFailure, match="preflight: renderer missing"):
+        journey.run(reference, "film/main", tmp_path / "s.json", backend="rendering.remotion")
+
+
 def test_node_pin_preflight_runs_only_for_remotion(tmp_path: Path, monkeypatch) -> None:
     from astrid.core.rendering import node_pin
+    monkeypatch.setattr(journey, "renderer_install_problem", lambda project: None)
     monkeypatch.setattr(node_pin, "resolve_pinned_node", lambda *a, **k: node_pin.NodeResolution(
         None, None, "v20.19.4", "nowhere", "no Node v20.19.4 for the renderer"))
     monkeypatch.setattr(journey, "disk_preflight", lambda *a: {})

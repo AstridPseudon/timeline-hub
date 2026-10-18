@@ -497,6 +497,25 @@ class Runner:
         self.summary.with_suffix(".txt").write_text("\n".join(lines) + "\n")
 
 
+def renderer_install_problem(project: Path) -> str | None:
+    """Why the checkout's Remotion project cannot render yet, or ``None``.
+
+    The pack host only binds a source checkout's ``remotion/`` project when its ``node_modules`` exist
+    (host_bootstrap._provision_render_runtime_env); without them ``rendering.render`` is never ready and
+    the failure surfaces much later as "capability is not ready for admission".
+    """
+    from astrid.core.rendering.remotion_runtime import _REQUIRED_PACKAGES, REMOTION_CLI_RELATIVE_PATH
+    modules = project / "node_modules"
+    missing = [str(modules / "@banodoco" / name) for name in _REQUIRED_PACKAGES
+               if not (modules / "@banodoco" / name / "package.json").is_file()]
+    if not (project / REMOTION_CLI_RELATIVE_PATH).is_file():
+        missing.append(str(project / REMOTION_CLI_RELATIVE_PATH))
+    if not missing:
+        return None
+    return (f"the renderer is not installed ({missing[0]}{' and others' if len(missing) > 1 else ''} missing): "
+            f"run `npm ci` in {project} with the pinned Node on PATH")
+
+
 def _doctor_ready(value: dict[str, Any]) -> bool:
     """Doctor must call the runtime healthy and the pack host's renderer Node usable."""
     if value.get("ok") is False or value.get("healthy") is False:
@@ -891,6 +910,9 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
         node = resolve_pinned_node(checkout / "remotion", search_path=os.environ.get("PATH", ""))
         if not node.ok:
             raise JourneyFailure("preflight", node.problem or "no Node for the renderer")
+        problem = renderer_install_problem(checkout / "remotion")
+        if problem:
+            raise JourneyFailure("preflight", problem)
     tmp_parent = Path(tempfile.gettempdir())
     disk = disk_preflight(shutil.disk_usage(tmp_parent).free, runtime_disk_floor(os.environ),
                           expected_render_scratch(backend, end - start), tmp_parent)
