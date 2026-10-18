@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   SCRIPTED_EXAMPLE_LABEL,
@@ -14,8 +13,12 @@ import {
   type ScriptedReplayState,
 } from './scriptedReplay';
 
-const fixturePath = fileURLToPath(
-  new URL('../../../../scripts/astrid-landing/offline-verifier/fixtures/light-study-v1/scripted-example.json', import.meta.url),
+// Vitest's transformed import.meta.url is not a file URL in the checkout lane.
+// The shared Vitest config fixes its project root to the app checkout, so resolve
+// this repository fixture from that root instead.
+const fixturePath = path.resolve(
+  process.cwd(),
+  'scripts/astrid-landing/offline-verifier/fixtures/light-study-v1/scripted-example.json',
 );
 const script = JSON.parse(readFileSync(fixturePath, 'utf8')) as ScriptedReplayScript;
 
