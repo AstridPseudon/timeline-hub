@@ -431,7 +431,15 @@ class _HostSession:
         frame={**dict(grant),"host":{"pid":self.process.pid,"birth_id":self.host_birth}}
         if self.misbind: frame["channel_id"]="wrong-channel"
         send_frame(self.activation,frame)
-        self._request=receive_frame(self.activation)
+        try:
+            self._request=receive_frame(self.activation)
+        except Exception:
+            if self.misbind:
+                # The rejected-binding assertion below relies on the committed
+                # host having completed its own graph abort before Runtime
+                # begins cleanup. Preserve the actual failed activation read.
+                _wait_for(self.events.with_suffix(".rejected"),timeout=30)
+            raise
         expected={"version":"astrid.local-worker-activation-request/v1","operation_id":grant["operation_id"],
           "channel_id":grant["channel_id"],"grant":{key:grant[key] for key in
           ("activation_id","credential_file","executor_incarnation","evidence_digest")},"host":frame["host"]}
@@ -700,23 +708,20 @@ def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_pat
     wrong=_run_case(wrong_root,astrid_root,misbind=True)
     wrong_credentials=wrong["credentials"]; wrong_adapter=wrong["adapter"]; wrong_events=wrong["events"]
     assert wrong["initiating_error"] is not None
+    assert wrong["cleanup"]["cleanup_proven"], f"rejected-binding cleanup incomplete: {wrong['cleanup']}"
     wrong_record=Path(wrong_adapter._current.custody_scope)/"activation-record.json"
     assert not wrong_record.exists()
     _wait_for(wrong_events.with_suffix(".rejected"),timeout=30)  # the host rejects after its own activation wait
     assert not wrong_events.with_suffix(".ack").exists()
     assert wrong_credentials.actor_metadata("cpu-proof") is None
-    # The host refused the grant and tore down its own graph. The relay saw the host
-    # exchange fail, and by design a failed host exchange forbids the cleanup RPC, so
-    # Runtime must report the cleanup as uncertain instead of claiming it. The test
-    # fixture (not the product) then reaps what the case left.
-    wrong_cleanup=wrong["cleanup"]
-    assert not wrong_cleanup["cleanup_proven"]
-    assert wrong_cleanup["shutdown_error"] is not None and "cleanup is uncertain" in wrong_cleanup["shutdown_error"]["message"]
-    # The host writes .rejected only after its own graph abort returned, so the graph
-    # is gone by now (observing earlier races that abort).
-    for role in ("engine","engine_listener"):
-        pid=wrong_adapter._current.report_value["processes"][role]["pid"]
-        assert default_process_identity(pid) is None, f"rejected-binding {role} process remained"
+    assert wrong_adapter._current.cleanup_result["host_result"]["status"]=="cleaned"
+    assert wrong_adapter.cleanup_evidence["relay_process_absent"]
+    assert wrong_adapter.cleanup_evidence["runtime_control_descriptor_closed"]
+    assert wrong["cleanup"]["host_cleanup"]["control_descriptor_closed"]
+    assert wrong["cleanup"]["host_cleanup"]["activation_descriptor_closed"]
+    assert wrong["cleanup"]["host_cleanup"]["independent_process_absent"]
+    for role,item in wrong_adapter.cleanup_evidence["roles"].items():
+        assert item["independently_absent"], f"rejected-binding {role} process remained"
 
 
 # Joined contract proof substitutions are explicit and confined to this harness.

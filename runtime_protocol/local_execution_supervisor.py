@@ -1286,12 +1286,15 @@ def _host_stream_usable(session, stream):
         return False
 
 
-def _host_call(session, monitor, stream, callback, *, endpoint_call=False, replay_only=False):
+def _host_call(session, monitor, stream, callback, *, channel_name="control", endpoint_call=False, replay_only=False):
     originals = {}
     before = stream.operations
     if stream.state != "idle" and not replay_only:
         raise _HostExchangeFailure(stream.original_failure) from stream.original_failure
-    original_exchange = getattr(session.bridge, "_exchange", None)
+    # The host-control RPC and the one-shot activation handshake are separate
+    # descriptors. A failed activation read must not poison the still-usable
+    # control channel needed to ask the host to abort its retained graph.
+    original_exchange = getattr(session.bridge, "_exchange", None) if channel_name == "control" else None
     if original_exchange is not None:
         def observed_exchange(request):
             exchange_before = stream.operations
@@ -1311,11 +1314,10 @@ def _host_call(session, monitor, stream, callback, *, endpoint_call=False, repla
                         stream.original_failure = exc
                 raise
         session.bridge._exchange = observed_exchange
-    for name in ("control", "activation"):
-        channel = getattr(session, name, None)
-        if isinstance(channel, socket.socket):
-            originals[name] = channel
-            setattr(session, name, _DeadlineIO(channel, monitor, stream))
+    channel = getattr(session, channel_name, None)
+    if isinstance(channel, socket.socket):
+        originals[channel_name] = channel
+        setattr(session, channel_name, _DeadlineIO(channel, monitor, stream))
     try:
         monitor.check()
         result = callback()
@@ -1404,6 +1406,7 @@ def serve_control(channel, *, session_factory=NativeHostSession.create, referenc
     handoff_endpoint = None
     monitor = _RelayFailureMonitor()
     host_stream = _HostStreamState()
+    activation_stream = _HostStreamState()
     channels = {channel: None}
     def retain(value):
         nonlocal session
@@ -1538,7 +1541,8 @@ def serve_control(channel, *, session_factory=NativeHostSession.create, referenc
             elif command == "activate":
                 if set(request) != {"version", "command", "grant"} or session is None or terminal_abort is not None or session.bridge._prepared is None:
                     raise RelayError("relay activation lacks a retained prepared graph")
-                activation_request = _host_call(session, monitor, host_stream, lambda: session.begin_activation(request["grant"]))
+                activation_request = _host_call(session, monitor, activation_stream,
+                    lambda: session.begin_activation(request["grant"]), channel_name="activation")
                 if not respond(channel, {"version": CONTROL_VERSION, "status": "activation_requested", "request": activation_request}):
                     return
                 if channel not in channels:
@@ -1552,7 +1556,8 @@ def serve_control(channel, *, session_factory=NativeHostSession.create, referenc
                 monitor.check()
                 if set(confirmation) != {"version", "command", "receipt"} or confirmation.get("version") != CONTROL_VERSION or confirmation.get("command") != "record_activation_receipt":
                     raise RelayError("relay activation receipt forwarding frame is invalid")
-                accepted = _host_call(session, monitor, host_stream, lambda: session.finish_activation(confirmation["receipt"]))
+                accepted = _host_call(session, monitor, activation_stream,
+                    lambda: session.finish_activation(confirmation["receipt"]), channel_name="activation")
                 response = {"version": CONTROL_VERSION, "status": "ok", "accepted": accepted}
             elif command == "abort":
                 if set(request) != {"version", "command"} or session is None:

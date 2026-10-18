@@ -556,6 +556,63 @@ def test_host_exchange_trickle_exhausts_budget_and_forbids_cleanup(monkeypatch):
         thread.join(2)
 
 
+def test_failed_activation_descriptor_does_not_poison_host_control_cleanup():
+    host, host_peer = socket.socketpair()
+    activation, activation_peer = socket.socketpair()
+    for channel in (host, host_peer, activation, activation_peer):
+        channel.settimeout(2)
+    host_stream = relay._HostStreamState()
+    activation_stream = relay._HostStreamState()
+    abort_requests = []
+
+    class Bridge:
+        def _exchange(self, request):
+            relay.send_frame(session.control, request)
+            return relay.receive_frame(session.control)
+
+        def abort(self):
+            return self._exchange({"command": "abort_local_execution"})
+
+    class Session:
+        pass
+
+    session = Session()
+    session.control = host
+    session.activation = activation
+    session.bridge = Bridge()
+
+    def host_reply():
+        request = relay.receive_frame(host_peer)
+        abort_requests.append(request)
+        relay.send_frame(host_peer, {"status": "cleaned"})
+
+    thread = threading.Thread(target=host_reply)
+    thread.start()
+    activation_peer.close()
+    try:
+        with pytest.raises(relay.RelayError):
+            relay._host_call(session, relay._RelayFailureMonitor(), activation_stream,
+                lambda: relay.receive_frame(session.activation), channel_name="activation")
+        assert activation_stream.state == "failed"
+        assert host_stream.state == "idle"
+
+        called = []
+        with pytest.raises(relay._HostExchangeFailure):
+            relay._host_call(session, relay._RelayFailureMonitor(), activation_stream,
+                lambda: called.append(True), channel_name="activation")
+        assert not called, "a failed activation descriptor must not be reused"
+
+        response = relay._host_call(session, relay._RelayFailureMonitor(), host_stream, session.bridge.abort)
+        assert response == {"status": "cleaned"}
+        assert host_stream.state == "idle"
+        assert abort_requests == [{"command": "abort_local_execution"}]
+    finally:
+        for channel in (host, host_peer, activation):
+            channel.close()
+        thread.join(2)
+        assert not thread.is_alive()
+
+
 def test_accept_syscall_uses_remaining_budget_and_restores_timeout():
     clock = [0.4]
     monitor = relay._RelayFailureMonitor(monotonic=lambda: clock[0], wall_time=lambda: 0.0)
