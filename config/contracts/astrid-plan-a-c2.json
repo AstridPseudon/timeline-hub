@@ -4,7 +4,7 @@
   "revision": "C2",
   "issuedOn": "2026-09-24",
   "status": "frozen-local-contract",
-  "digest": "sha256:6f64835b5c351d7a5ee658f0aefcee598e1e3a0fafdae5a59deeaa6e968cbc24",
+  "digest": "sha256:d5210a9da4fe9f5039d3946aa58a91524a290a8ebd8c40dd9eac47d0261e303d",
   "predecessor": {
     "path": "config/contracts/astrid-plan-a-c1.json",
     "revision": "C1",
@@ -145,7 +145,7 @@
     },
     {
       "repository": "astrid-agent",
-      "head": "00e37f8353a9efa2ee10890e9c5116f993037f8b",
+      "head": "6c989a8602a189a3b080d05dcc0d18fecf138fcd",
       "path": "astrid/core/gateway/dispatch.py",
       "sha256": "3ce0eb8fbc14712c5402493ebe8aa7998f2f4e64d33defa54bc7703b34074f11",
       "role": "public-doctor-consumer",
@@ -153,7 +153,7 @@
     },
     {
       "repository": "astrid-agent",
-      "head": "00e37f8353a9efa2ee10890e9c5116f993037f8b",
+      "head": "6c989a8602a189a3b080d05dcc0d18fecf138fcd",
       "path": "astrid/sdk/workspace_client.py",
       "sha256": "d088d220ec239f545bba5403321093b74e840f6cfe873779f53fcbb429e08a08",
       "role": "Runtime-client-consumer",
