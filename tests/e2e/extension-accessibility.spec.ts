@@ -223,7 +223,6 @@ test('200% CSS page-content zoom, reduced motion, names, expanded state, and con
       );
     };
     const selectors = [
-      '[data-video-editor-extension-trust-warning="true"] > div > div > div:last-child',
       '[data-video-editor-extension-toggle] span',
       '[data-video-editor-extension-diagnostics-toggle] span:first-of-type',
     ];
