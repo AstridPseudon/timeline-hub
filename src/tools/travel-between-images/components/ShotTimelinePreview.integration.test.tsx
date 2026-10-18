@@ -62,8 +62,6 @@ function editedGraph(atMs: number, headId: string) {
 
 // known-failure: reigh-app | 2026-10-30 | product bug: seam admission refuses popup edits that move a declared pause's edges (shotCompositionAdapter.publish vs visualSeamContract)
 const itRefusedBySeamAdmission = it.fails;
-// known-failure: reigh-app | 2026-10-30 | product bug: usePollSync.ts:215 drops the provider-hydrated recovery draft while recovery is active, so the editor shows the canonical clip
-const itRecoveryDraftDropped = it.fails;
 
 describe('shot timeline popup real recovery integration', () => {
   beforeEach(async () => {
@@ -220,7 +218,7 @@ describe('shot timeline popup real recovery integration', () => {
     view.unmount();
   });
 
-  itRecoveryDraftDropped('reopens B with its acknowledged H1 base and retries it through the real popup recovery controls', async () => {
+  it('reopens B with its acknowledged H1 base and retries it through the real popup recovery controls', async () => {
     const graphH0 = editedGraph(200, 'head-retry-h0');
     const graphH1 = editedGraph(900, 'head-retry-h1');
     const adapter = createShotCompositionAdapter({

@@ -154,6 +154,10 @@ export function usePollSync({
   const commitDataRef = useRef(commitData);
   const canonicalShotDraftActiveRef = useRef(canonicalShotDraftActive);
   canonicalShotDraftActiveRef.current = canonicalShotDraftActive;
+  // The first provider snapshot hydrates this editor session. Some providers
+  // include a durable recovery draft in that payload, so the initial recovery
+  // check must not prevent that snapshot from becoming the visible base.
+  const initialProviderSnapshotHandledRef = useRef(false);
   const latestObservedRemoteConfigVersionRef = useRef<number | null>(null);
   // Newest polled timeline data observed while a drag/resize was in flight.
   // Replayed via the normal commit path on gesture end.
@@ -212,7 +216,11 @@ export function usePollSync({
   const getPollRejectionReason = useCallback((polledData: TimelineData): string | null => {
     if (isConflictExhaustedRef?.current) return 'diverged';
     if (canonicalReloadInProgressRef?.current) return 'reloading';
-    if (getDataRef().current && recoveryActiveRef?.current) return 'recovery active';
+    if (
+      getDataRef().current
+      && recoveryActiveRef?.current
+      && initialProviderSnapshotHandledRef.current
+    ) return 'recovery active';
     const gate = {
       editSeq: editSeqRef.current,
       savedSeq: savedSeqRef.current,
@@ -348,6 +356,7 @@ export function usePollSync({
       logConfigVersionUpdate('poll', resolvedPolledData.configVersion);
       configVersionRef.current = resolvedPolledData.configVersion;
       if (headRevisionRef) headRevisionRef.current = resolvedPolledData.head;
+      initialProviderSnapshotHandledRef.current = true;
       // Mirror into the store's canonical version channel (outside the data
       // object) so reader/ops/sync see the adopted version.
       store?.getState().setConfigVersion(resolvedPolledData.configVersion);
