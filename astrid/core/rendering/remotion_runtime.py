@@ -56,6 +56,7 @@ _REQUIRED_SCHEMA_FILES = (
 )
 
 _SCHEMA_PROBE = """
+import json
 import pathlib
 import sys
 
@@ -71,14 +72,17 @@ from banodoco_timeline_schema import (
     TimelineOutput,
     materialize_output,
     resolve_theme,
-    validate_timeline,
 )
 origin = pathlib.Path(schema.__file__).resolve()
 if not origin.is_relative_to(root / "banodoco_timeline_schema"):
     raise RuntimeError(f"schema origin escaped trusted root: {origin}")
 contract = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
 import jsonschema
-jsonschema.validate({"tracks": [], "clips": []}, contract)
+jsonschema.validate(
+    {"tracks": [{"id": "source", "kind": "visual", "label": "Source", "role": "source"}],
+     "clips": []},
+    contract,
+)
 print(origin)
 """
 

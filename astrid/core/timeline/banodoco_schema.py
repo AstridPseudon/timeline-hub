@@ -3,10 +3,10 @@
 
 TimelineConfig / TimelineClip / ThemeOverrides / TimelineOutput / AssetEntry /
 Theme are re-exported from `banodoco_timeline_schema` (the Python package in
-the external banodoco-workspace repo's `packages/timeline-schema/python/` tree); the
-JSON-Schema validator there is the canonical shape check. Everything else in
-this file (pool/arrangement/metadata/registry types, transition validation,
-element registry checks) is Banodoco-only.
+the external banodoco-workspace repo's `packages/timeline-schema/python/` tree).
+The role-aware Runtime JSON Schema vendored beside this module is the canonical
+shape check. Everything else in this file (pool/arrangement/metadata/registry
+types, transition validation, element registry checks) is Banodoco-only.
 """
 
 # Validator exports intentionally remain below the optional schema import.
@@ -59,7 +59,6 @@ try:
     from banodoco_timeline_schema import (
         materialize_output as _materialize_output,
     )
-    from banodoco_timeline_schema import validate_timeline as _shared_validate_timeline
 except ImportError:  # pragma: no cover
     # Neutralized fallback (plan-v5 B2): there is deliberately NO hand-written
     # schema mirror here. The old TypedDict stubs drifted and silently accepted
@@ -80,21 +79,6 @@ except ImportError:  # pragma: no cover
         height = int(canvas.get("height", 1080)) if isinstance(canvas, dict) else 1080
         fps = float(canvas.get("fps", 30)) if isinstance(canvas, dict) else 30.0
         return {"resolution": f"{width}x{height}", "fps": fps, "file": "output.mp4"}
-
-    _MISSING_SCHEMA_MESSAGE = (
-        "banodoco_timeline_schema is required for timeline validation. Install "
-        "the external shared package from a banodoco-workspace repo checkout, for "
-        "example: python -m pip install -e "
-        "/path/to/banodoco-workspace/packages/timeline-schema/python. "
-        "Astrid does not vendor this package; see "
-        "docs/getting-started.md#canonical-timeline-schema. Without the "
-        "canonical JSON Schema artifact, validation is refused, not silently "
-        "degraded."
-    )
-
-    def _shared_validate_timeline(config: Any, *, strict: bool = True) -> None:
-        raise ImportError(_MISSING_SCHEMA_MESSAGE)
-
 
 TimelineClip = SharedTimelineClip
 TimelineConfig = SharedTimelineConfig
@@ -527,10 +511,10 @@ _VENDORED_SCHEMA = Path(__file__).with_name("schema") / "timeline-config.schema.
 def load_vendored_timeline_schema() -> dict[str, Any]:
     """Load the TimelineConfig JSON Schema vendored from the Runtime contract.
 
-    The pinned ``banodoco_timeline_schema`` package is 0.0.1 and forbids
-    ``tracks[].role``; the role-extended schema (0.0.2 + ``role`` in
-    ``output|source``) is the Runtime's ``contract/schemas`` artifact, copied
-    here by ``scripts/vendor_lock.py update`` (see ``schema/vendor.lock.json``).
+    The pinned ``banodoco_timeline_schema`` package does not define
+    ``tracks[].role``. The Runtime's role-aware ``contract/schemas`` artifact
+    is copied here by ``scripts/vendor_lock.py update`` (see
+    ``schema/vendor.lock.json``) and is the validation source.
     """
     return cast(dict[str, Any], json.loads(_VENDORED_SCHEMA.read_text(encoding="utf-8")))
 
@@ -539,8 +523,7 @@ def load_vendored_timeline_schema() -> dict[str, Any]:
 def _shared_timeline_validator() -> jsonschema.protocols.Validator:
     """Compile the shared TimelineConfig JSON-Schema validator once per process.
 
-    ``banodoco_timeline_schema.validate_timeline`` shells out to
-    ``jsonschema.validate``, which re-runs ``check_schema`` (a full walk of the
+    ``jsonschema.validate`` re-runs ``check_schema`` (a full walk of the
     schema's ``$ref`` tree) and rebuilds the validator on every call — the
     dominant per-save cost in the HTTP save path (6–8 full-config validations
     per save).  Compiling once keeps the exact draft-07 semantics
@@ -560,9 +543,8 @@ def _validate_shared_timeline(config: Any) -> None:
     selection, ``check_schema`` at compile time, ``best_match`` error raising)
     but skips the per-call ``check_schema`` + validator construction that
     ``jsonschema.validate`` performs internally.  The shared validator is
-    strict-independent in banodoco_timeline_schema 0.0.2 (both branches of its
-    ``validate_timeline`` run the same ``jsonschema.validate``), so ``strict``
-    is intentionally not threaded through here.
+    strict-independent in the shared TimelineConfig contract, so ``strict`` is
+    intentionally not threaded through here.
     """
     validator = _shared_timeline_validator()
     error = jsonschema.exceptions.best_match(validator.iter_errors(config))
