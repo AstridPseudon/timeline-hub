@@ -375,7 +375,7 @@ class CandidateEvaluator:
 class SelectedHostScene:
     """Closed daemon composition from the launcher-owned retained Host handle."""
 
-    def __init__(self, service, preparer, profile, handle):
+    def __init__(self, service, preparer, profile, handle, *, generation_check=None):
         self.service, self.preparer, self.profile, self.handle = (
             service,
             preparer,
@@ -383,9 +383,13 @@ class SelectedHostScene:
             handle,
         )
         self.relay = None
+        self.generation_check = generation_check
 
     def check(self):
-        if self.preparer.current_handle() is not self.handle or self.handle.closed:
+        if self.generation_check is not None:
+            self.generation_check()
+        if (self.preparer.current_handle() is not self.handle
+                or self.handle.closed or not self.handle.activated):
             raise ConflictError("selected authoring Host lifecycle changed")
         report = self.preparer.report(self.handle)
         if report["owner_epoch"] != self.service.runtime_instance_id:
@@ -445,7 +449,18 @@ class SelectedHostScene:
         ).removeprefix("sha256:"):
             raise ConflictError("authoring endpoint source boot differs")
         relay = AuthoringSceneRelay(config)
-        check_binding(self.service, relay)
-        self.relay = relay
-        self.service._authoring_scene_relay = relay
+        try:
+            with self.service.store._mutex:
+                if getattr(self.service, "_authoring_scene_selection", None) is not self:
+                    raise ConflictError("selected authoring Host changed during resolution")
+                self.check()
+                check_binding(self.service, relay)
+                self.relay = relay
+                self.service._authoring_scene_relay = relay
+        except Exception:
+            try:
+                relay.close()
+            except Exception:
+                pass  # Preserve the binding/resolution failure.
+            raise
         return relay

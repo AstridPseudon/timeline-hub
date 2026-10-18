@@ -42,8 +42,12 @@ def test_production_binding_projects_rich_launch_receipt_and_fences_revocation(r
     monkeypatch.setattr(transport.LocalPreparationRelay, "_paths", lambda self: None)
     profile = SimpleNamespace(execution_mode="host_only_cpu", support_root=tmp_path,
         host_launch={"pack_root": str(tmp_path), "executor_id": "host", "boot_manifest_hash": "e"*64})
-    transport.bind_selected_host(d, profile, handle)
-    relay = d.service._preparation_relay
+    receipt["owner_epoch"] = report["owner_epoch"]
+    d.credentials.provision(WORKER_ACTOR, ["worker:execute"], metadata={"local_launch_receipt": receipt}, rotate=True)
+    staged = transport.bind_selected_host(d, profile, handle)
+    assert d.service._preparation_relay is None
+    staged.check()
+    relay = staged.relay
     assert relay.binding["source_digest"] == source
     assert relay.binding["preparation_source_digest"] == SOURCE
     assert relay.binding["preparation_dependency_digest"] == DEPENDENCY
@@ -85,6 +89,235 @@ CONTRACT = {"mode": "request_estimated", "estimator": ESTIMATOR}
 SPEC = {"family": CAP, "params": {"extra": "é", "nested": [1, None, False]}, "output_policy": {"keep": True}}
 BODY = {"capability_digest": SHA, "schema_version": 1, "spec": SPEC, "input_object_ids": []}
 ACTOR = {"pid": os.getpid(), "uid": os.getuid(), "birth_id": "fixture-birth", "audit_token_sha256": SHA, "audit_token_pidversion": 1}
+
+
+@pytest.fixture
+def source_composition(tmp_path, monkeypatch):
+    """Real source admission/receipt/credentials; no Runtime or native process.
+
+    Static discovery and the retained native launch are the only doubles.
+    No estimator, provider, action, credential outside this fixture or HTTP.
+    """
+    from dataclasses import replace
+    from types import SimpleNamespace
+    from astrid.core.execution import generic_host as hosts
+    from runtime_protocol import local_preparation_relay as transport
+    from runtime_protocol.auth import CredentialStore
+    from runtime_protocol.daemon import WORKER_ACTOR
+    from runtime_protocol.local_worker import _digest, _selected_profile_payload, _receipt_version
+    from test_local_worker import host_only_profile_case
+    from test_shot_composition_runtime import _service
+    s, project = _service(tmp_path)
+    d = RuntimeDaemon(tmp_path / "realm")
+    d.service = s
+    s.runtime_instance_id = d.instance_id
+    d.httpd = SimpleNamespace(server_port=1)  # start_local_worker precondition only; never bound.
+    d.credentials = CredentialStore(tmp_path / "source-credentials")
+    d.credentials._lock = s.store._mutex
+    token, _ = d.credentials.provision("fixture-writer", ["projects:write", "tasks:write", "objects:read"])
+    from runtime_protocol.paired_session import PairedSessionAuthority
+    s.bind_task_authority(PairedSessionAuthority(), d.credentials)
+    principal = {**d.credentials.require(token, "tasks:write"), "_credential_binding": d.credentials._sha256(token.encode())}
+    profile = host_only_profile_case()
+    launch = {**profile.host_launch, "pack_root": str(tmp_path), "source_checkout": str(tmp_path)}
+    profile = replace(profile, workspace_uuid=s.realm["id"], realm_root=d.root, support_root=tmp_path,
+                      host_launch=launch, session_config_digest=_digest(launch))
+    d.local_worker_profiles = {profile.profile_id: profile}
+    d.authoring_profile = "astrid"
+    record = SimpleNamespace(id=CAP, has_request_storage_estimator=True,
+        source_digest=SOURCE.removeprefix("sha256:"), dependency_digest=DEPENDENCY.removeprefix("sha256:"),
+        capability_digest=SHA, request_storage_estimate_contract=copy.deepcopy(CONTRACT))
+    records = [record]
+    real_host_type = hosts.GenericPackHost
+    class Inventory:
+        def __init__(self, **kwargs): pass
+        def discover(self): return records
+        def shutdown(self): pass
+    monkeypatch.setattr(hosts, "GenericPackHost", Inventory)
+    class Actor:
+        def verify(self): return copy.deepcopy(ACTOR)
+    monkeypatch.setattr(transport.AuthenticatedCleanupActor, "current", lambda: Actor())
+    handle = SimpleNamespace(closed=False, activated=True, retained=Actor())
+    report = {"owner_epoch": s.runtime_instance_id,
+              "processes": {"host": {k: ACTOR[k] for k in ("pid", "birth_id")}}}
+    selected = [handle]
+    d.local_worker_preparer = SimpleNamespace(current_handle=lambda: selected[0], report=lambda h: report,
+        timeout_seconds=.01, config={"boot_manifest_hash": launch["boot_manifest_hash"]})
+    d.local_worker_launcher = SimpleNamespace(start=lambda *args: {"state": "active"})
+    d.worker_credential_path = tmp_path / "unused-token"
+    d._remote_worker_custody_unresolved = lambda: False
+    d._local_relinquish_pending = lambda: False
+    receipt = dict(version=_receipt_version(profile), execution_mode=profile.execution_mode,
+        profile_id=profile.profile_id, workspace_uuid=s.realm["id"], realm_root=str(d.root),
+        support_root=str(d.support_root), machine_id=profile.machine_id, uid=ACTOR["uid"],
+        host={k: ACTOR[k] for k in ("pid", "birth_id")},
+        cleanup_groups=[{"role": "generic_pack_host", "leader": "host", "members": ["host"]}],
+        session_config_digest=profile.session_config_digest, profile_revision=profile.profile_revision,
+        profile_digest=profile.profile_digest, release_digest=profile.release_digest,
+        owner_epoch=s.runtime_instance_id, custody_scope=str(tmp_path / "custody"), custody_capabilities={},
+        profile_binding_digest=_digest(_selected_profile_payload(profile)))
+    receipt["evidence_digest"] = _digest({k: v for k, v in receipt.items() if k != "version"})
+    receipt["executor_incarnation"] = "fixture-host"
+    metadata = {"local_launch_receipt": receipt, "execution_binding": {
+        "executor_incarnation": receipt["executor_incarnation"],
+        "verification": {"verified": True, "evidence_digest": receipt["evidence_digest"]}}}
+    def provision():
+        d.credentials.provision(WORKER_ACTOR, ["worker:execute"], metadata=metadata, rotate=True)
+    provision()
+    source = hosts._canonical_digest({CAP: record.source_digest})
+    dependency = hosts._canonical_digest({CAP: record.dependency_digest})
+    descriptor = {"capability_id": CAP, "definition_digest": SHA, "storage_estimate_contract": copy.deepcopy(CONTRACT)}
+    s.register_executor({"executor_id": WORKER_ACTOR, "capabilities": [descriptor], "source_digest": source,
+        "dependency_digest": dependency, "source_epoch": "opaque:E1"}, idempotency_key="source-register")
+    def availability(reason):
+        descriptor.update(status="unavailable", unavailable_reason=reason)
+        s.store.conn.execute("UPDATE capabilities SET status='unavailable',unavailable_reason=? WHERE id=?", (reason, CAP))
+        s.store.conn.execute("UPDATE executors SET capabilities_json=? WHERE id=?", (json.dumps([descriptor]), WORKER_ACTOR))
+    w = SimpleNamespace(d=d, s=s, p=project, profile=profile, handle=handle, selected=selected, report=report,
+        records=records, record=record, descriptor=descriptor, receipt=receipt, metadata=metadata,
+        provision=provision, availability=availability, principal=principal, source=source, dependency=dependency,
+        real_host_type=real_host_type)
+    try:
+        yield w
+    finally:
+        s.close()
+
+
+def test_source_unavailable_is_typed_without_listener_or_publication(source_composition, monkeypatch):
+    from runtime_protocol import local_preparation_relay as transport
+    w = source_composition
+    w.availability("action_child_unavailable:fixture")
+    monkeypatch.setattr(transport.LocalPreparationRelay, "_paths", lambda self: pytest.fail("unavailable listener inspected"))
+    before = db_snapshot(w.s)
+    staged = transport.bind_selected_host(w.d, w.profile, w.handle)
+    assert staged.unavailable == transport.StorageUnavailable(CAP, "action_child_unavailable:fixture")
+    assert staged.relay is None and w.s._preparation_relay is None
+    staged.check()
+    assert db_snapshot(w.s) == before
+    with pytest.raises(RuntimeErrorBase, match="storage preparation unavailable") as caught:
+        w.s.prepare_capability_storage(w.p, CAP, BODY, identity=w.principal)
+    assert caught.value.details["reason"] == "preparation_endpoint_unconfigured"
+    row = next(v for v in w.s.list_capabilities(catalog_version=2)["items"] if v["capability_id"] == CAP)
+    assert row["status"] == "unavailable"
+
+
+@pytest.mark.parametrize("fault", ["owner", "peer", "receipt", "receipt_owner", "credential", "inactive", "handle",
+    "source", "dependency", "dead", "epoch", "executor", "readiness", "capability", "contract", "ambiguous", "reason", "incoherent"])
+def test_source_invalid_binding_never_becomes_operational_unavailability(source_composition, monkeypatch, fault):
+    from runtime_protocol import local_preparation_relay as transport
+    from runtime_protocol.daemon import WORKER_ACTOR
+    w = source_composition
+    w.availability("action_child_unavailable:fixture")
+    if fault == "owner": w.report["owner_epoch"] = "foreign"
+    elif fault == "peer": w.report["processes"]["host"]["birth_id"] = "foreign"
+    elif fault == "receipt":
+        w.receipt["host"]["birth_id"] = "foreign"; w.provision()
+    elif fault == "receipt_owner":
+        w.receipt["owner_epoch"] = "foreign"; w.provision()
+    elif fault == "credential": w.d.credentials.disable_actor(WORKER_ACTOR)
+    elif fault == "inactive": w.handle.activated = False
+    elif fault == "handle": w.selected[0] = object()
+    elif fault in {"source", "dependency"}:
+        w.s.store.conn.execute("UPDATE executors SET " + fault + "_digest='foreign'")
+    elif fault == "dead": w.s.store.conn.execute("UPDATE executors SET last_seen_at='2000-01-01T00:00:00+00:00'")
+    elif fault == "epoch": w.s.store.conn.execute("UPDATE executors SET runtime_epoch=runtime_epoch+1")
+    elif fault == "executor": w.s.store.conn.execute("DELETE FROM executors")
+    elif fault == "readiness": w.s.store.conn.execute("UPDATE executors SET readiness='malformed'")
+    elif fault == "capability": w.s.store.conn.execute("UPDATE capabilities SET definition_digest='foreign'")
+    elif fault == "contract": w.record.request_storage_estimate_contract["estimator"]["version"] = True
+    elif fault == "ambiguous": w.records.append(w.record)
+    elif fault == "reason": w.availability("")
+    elif fault == "incoherent": w.s.store.conn.execute("UPDATE capabilities SET unavailable_reason='other'")
+    monkeypatch.setattr(transport.LocalPreparationRelay, "_paths", lambda self: pytest.fail("invalid binding reached listener"))
+    with pytest.raises((RuntimeErrorBase, OSError)):
+        transport.bind_selected_host(w.d, w.profile, w.handle)
+    assert w.s._preparation_relay is None
+
+
+@pytest.mark.parametrize("field", ["runtime_instance_id", "runtime_session_id", "runtime_epoch", "realm_id", "source_epoch",
+    "source_digest", "dependency_digest", "capability_digest", "executor_id", "storage_estimate_contract"])
+def test_source_unavailability_requires_exact_service_binding(source_composition, field):
+    from runtime_protocol import local_preparation_relay as transport
+    w = source_composition
+    w.availability("action_child_unavailable:fixture")
+    binding = binding_for(w.d, w.profile.support_root)
+    binding.update(executor_id="astrid-pack-host", source_digest=w.source, dependency_digest=w.dependency)
+    binding[field] = (999 if field == "runtime_epoch" else {} if field == "storage_estimate_contract" else "foreign")
+    with pytest.raises(RuntimeErrorBase):
+        context = w.s._preparation_binding_context(binding)
+        w.s._preparation_unavailability(binding, context)
+
+
+def test_source_ready_and_legacy_preparation_remain_authenticated(source_composition, monkeypatch):
+    from runtime_protocol import local_preparation_relay as transport
+    w = source_composition
+    monkeypatch.setattr(transport.LocalPreparationRelay, "_paths", lambda self: None)
+    for reason in (None, "request storage estimator unsupported by legacy catalog; prepare/execute join required"):
+        if reason: w.availability(reason)
+        staged = transport.bind_selected_host(w.d, w.profile, w.handle)
+        assert staged.unavailable is None and staged.relay is not None
+        assert w.s._preparation_relay is None
+        w.s._preparation_context(staged.relay.binding)
+        w.s._preparation_relay = staged.relay
+        calls = []
+        def exchange(request):
+            staged.relay._selected_host_check()
+            calls.append(request)
+            return prepared(request)
+        monkeypatch.setattr(staged.relay, "exchange", exchange)
+        before = db_snapshot(w.s)
+        result = w.s.prepare_capability_storage(w.p, CAP, BODY, identity=w.principal)
+        assert result["storage_estimate"] == {"scratch_bytes": 123, "output_bytes": 456}
+        assert len(calls) == 1 and db_snapshot(w.s) == before
+        w.s._preparation_relay = None
+
+
+@pytest.mark.parametrize("fault", ["rotate", "recommit", "session", "instance", "handle", "source"])
+def test_source_staged_generation_rechecked_before_publication(source_composition, fault):
+    from runtime_protocol import local_preparation_relay as transport
+    from runtime_protocol.daemon import WORKER_ACTOR
+    w = source_composition
+    w.availability("action_child_unavailable:fixture")
+    staged = transport.bind_selected_host(w.d, w.profile, w.handle)
+    if fault == "rotate": w.provision()
+    elif fault == "recommit":
+        token, metadata = w.d.credentials._read_actor(WORKER_ACTOR)
+        w.d.credentials._publish(WORKER_ACTOR, token, metadata)
+    elif fault == "session": w.s.runtime_session_id = "replacement"
+    elif fault == "instance": w.s.runtime_instance_id = "replacement"
+    elif fault == "handle": w.selected[0] = object()
+    elif fault == "source": w.s.store.conn.execute("UPDATE executors SET source_epoch='replacement'")
+    with pytest.raises(RuntimeErrorBase): staged.check()
+    assert w.s._preparation_relay is None
+
+
+@pytest.mark.parametrize("change", ["credential", "worker_generation", "session", "handle", "source", "relay", "contract"])
+def test_source_ready_preparation_rechecks_authority_after_exchange(source_composition, monkeypatch, change):
+    from runtime_protocol import local_preparation_relay as transport
+    w = source_composition
+    monkeypatch.setattr(transport.LocalPreparationRelay, "_paths", lambda self: None)
+    staged = transport.bind_selected_host(w.d, w.profile, w.handle)
+    w.s._preparation_relay = relay = staged.relay
+    calls = []
+    def exchange(request):
+        relay._selected_host_check()
+        calls.append(request)
+        if change == "credential": w.d.credentials.disable_actor(w.principal["actor"])
+        elif change == "worker_generation": w.provision()
+        elif change == "session": w.s.runtime_session_id = "replacement"
+        elif change == "handle": w.selected[0] = object()
+        elif change == "source": w.s.store.conn.execute("UPDATE executors SET source_epoch='replacement'")
+        elif change == "relay": w.s._preparation_relay = None
+        elif change == "contract":
+            w.descriptor["storage_estimate_contract"]["estimator"]["version"] = 2
+            w.s.store.conn.execute("UPDATE executors SET capabilities_json=?", (json.dumps([w.descriptor]),))
+        relay._selected_host_check()
+        return prepared(request)
+    monkeypatch.setattr(relay, "exchange", exchange)
+    with pytest.raises(RuntimeErrorBase):
+        w.s.prepare_capability_storage(w.p, CAP, BODY, identity=w.principal)
+    assert len(calls) == 1
+    assert w.s.store.conn.execute("SELECT count(*) FROM tasks").fetchone()[0] == 0
 
 
 def prepared(request):

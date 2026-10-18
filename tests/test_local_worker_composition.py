@@ -13,6 +13,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from test_storage_preparation_relay import source_composition
+
 from runtime_protocol.errors import ConflictError
 from runtime_protocol.local_worker import LocalWorkerProfile, ProcessIdentity
 from runtime_protocol.local_worker_composition import (
@@ -22,6 +24,102 @@ from runtime_protocol.local_worker_composition import (
     _listening_socket_owner,
     load_local_worker_composition,
 )
+
+
+def _start_source(w):
+    return w.d.start_local_worker(w.profile.profile_id, w.s.realm["id"])
+
+
+def test_source_daemon_unavailable_storage_selects_authoring_and_is_idempotent(source_composition):
+    w = source_composition
+    w.availability("action_child_unavailable:fixture")
+    assert _start_source(w) == {"state": "active"}
+    selection = w.s._authoring_scene_selection
+    assert selection.handle is w.handle and w.s._preparation_relay is None
+    assert _start_source(w) == {"state": "active"}
+    assert w.s._authoring_scene_selection is selection
+    assert w.s._preparation_relay is None
+
+
+@pytest.mark.parametrize("authoring", [None, "astrid"])
+def test_source_daemon_ready_same_generation_preserves_preparation(source_composition, monkeypatch, authoring):
+    from runtime_protocol.local_preparation_relay import LocalPreparationRelay
+    w = source_composition
+    w.d.authoring_profile = authoring
+    monkeypatch.setattr(LocalPreparationRelay, "_paths", lambda self: None)
+    _start_source(w)
+    previous = w.s._preparation_relay
+    _start_source(w)
+    assert w.s._preparation_relay is previous
+    previous._selected_host_check()
+
+
+def test_source_daemon_replacement_clears_stale_storage_and_fences_old_work(source_composition, monkeypatch):
+    from runtime_protocol.local_preparation_relay import LocalPreparationRelay
+    w = source_composition
+    monkeypatch.setattr(LocalPreparationRelay, "_paths", lambda self: None)
+    _start_source(w)
+    previous, selection = w.s._preparation_relay, w.s._authoring_scene_selection
+    closed = []
+    w.s._authoring_scene_relay = SimpleNamespace(close=lambda: closed.append(True))
+    w.selected[0] = SimpleNamespace(**vars(w.handle))
+    w.availability("action_child_unavailable:fixture")
+    _start_source(w)
+    assert w.s._preparation_relay is None and w.s._authoring_scene_relay is None
+    assert w.s._authoring_scene_selection is not selection and closed == [True]
+    with pytest.raises(Exception): previous._selected_host_check()
+    with pytest.raises(Exception): selection.check()
+
+
+@pytest.mark.parametrize("failure", ["staging", "selection", "recheck", "revoke", "credential_generation", "readiness", "publication"])
+def test_source_daemon_fatal_composition_invalidates_references_retains_activation(source_composition, monkeypatch, failure):
+    from runtime_protocol import local_preparation_relay as storage, authoring_scene as authoring
+    from runtime_protocol.daemon import WORKER_ACTOR
+    from runtime_protocol.errors import RuntimeErrorBase
+    w = source_composition
+    if failure in {"readiness", "publication"}:
+        monkeypatch.setattr(storage.LocalPreparationRelay, "_paths", lambda self: None)
+    else:
+        w.availability("action_child_unavailable:fixture")
+    _start_source(w)
+    def close(): raise RuntimeError("secondary close failure")
+    w.s._authoring_scene_relay = SimpleNamespace(close=close)
+    primary = ConflictError("primary composition failure")
+    if failure == "staging":
+        def failed(*args): raise primary
+        monkeypatch.setattr(storage, "bind_selected_host", failed)
+    elif failure == "selection":
+        def failed(*args, **kwargs): raise primary
+        monkeypatch.setattr(authoring, "SelectedHostScene", failed)
+    elif failure == "recheck":
+        original = storage.bind_selected_host
+        def replace(*args):
+            staged = original(*args)
+            w.selected[0] = SimpleNamespace(**vars(w.handle))
+            return staged
+        monkeypatch.setattr(storage, "bind_selected_host", replace)
+    elif failure == "revoke": w.d.credentials.disable_actor(WORKER_ACTOR)
+    elif failure == "readiness":
+        def failed(*args): raise primary
+        monkeypatch.setattr(storage.LocalPreparationRelay, "check_readiness", failed)
+    elif failure == "publication":
+        w.selected[0] = SimpleNamespace(**vars(w.handle))
+        class FailPublication(type(w.s)):
+            def __setattr__(self, name, value):
+                if name == "_authoring_scene_selection" and value is not None:
+                    assert self._preparation_relay is not None  # First write was staged under the mutex.
+                    raise primary
+                super().__setattr__(name, value)
+        monkeypatch.setattr(w.s, "__class__", FailPublication)
+    else: w.provision()
+    with pytest.raises(RuntimeErrorBase) as caught:
+        _start_source(w)
+    if failure in {"staging", "selection", "readiness", "publication"}: assert caught.value is primary
+    assert caught.value.details["local_worker_state"] == "activated_composition_failed"
+    assert w.s._preparation_relay is None and w.s._authoring_scene_selection is None and w.s._authoring_scene_relay is None
+    assert w.handle.activated and not w.handle.closed
+    assert w.d.local_worker_launcher is not None
+    assert w.d.credentials.actor_metadata(WORKER_ACTOR)["local_launch_receipt"] == w.receipt
 
 
 def _digest(char: str) -> str:

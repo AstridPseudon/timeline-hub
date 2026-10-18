@@ -6,6 +6,7 @@ The startup binding is owned by daemon composition, never public request data.
 from __future__ import annotations
 
 import copy
+from dataclasses import dataclass
 import hashlib
 import json
 import os
@@ -15,6 +16,7 @@ import socket
 import stat
 import time
 import uuid
+from typing import Callable
 
 from banodoco_local import custody_broker as custody
 from banodoco_local.custody_broker import (AuthenticatedCleanupActor, CustodyError,
@@ -37,6 +39,21 @@ class InputFactsUnavailableError(CapabilityUnavailableError):
 
 def unavailable(reason):
     return CapabilityUnavailableError("storage preparation unavailable", details={"reason": reason})
+
+
+@dataclass(frozen=True)
+class StorageUnavailable:
+    """Validated operational refusal, never a substitute for binding validation."""
+    capability_id: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class StagedStorageBinding:
+    relay: LocalPreparationRelay | None = None
+    unavailable: StorageUnavailable | None = None
+    check: Callable[[], None] = lambda: None
+    check_authority: Callable[[], None] = lambda: None
 
 
 class InvalidPreparationReplyError(ConflictError):
@@ -310,7 +327,7 @@ class LocalPreparationRelay:
 
 
 def bind_selected_host(daemon, profile, handle):
-    """Compose only the retained authenticated launch, never observed readiness.
+    """Stage only the retained authenticated launch; publish no service state.
 
     Static Astrid discovery supplies capability source scopes from the selected
     immutable launch roots. It starts no process/listener and runs no estimator.
@@ -320,7 +337,7 @@ def bind_selected_host(daemon, profile, handle):
 
     launch = profile.host_launch
     if profile.execution_mode != "host_only_cpu" or not launch:
-        return
+        return StagedStorageBinding()
     inventory = GenericPackHost(pack_roots=[launch["pack_root"],
         *(item["path"] for item in launch.get("additional_pack_roots", []))],
         capability_matrix=launch.get("capability_matrix"))
@@ -328,7 +345,7 @@ def bind_selected_host(daemon, profile, handle):
         records = inventory.discover()
         candidates = [v for v in records if v.has_request_storage_estimator]
         if not candidates:
-            return
+            return StagedStorageBinding()
         if len(candidates) != 1:
             raise unavailable("capability_binding_unavailable")
         record = candidates[0]
@@ -340,8 +357,10 @@ def bind_selected_host(daemon, profile, handle):
     service = daemon.service
     end = time.monotonic() + daemon.local_worker_preparer.timeout_seconds
     root = Path(profile.support_root)
+    expected_generation = None
     while True:
-        if daemon.local_worker_preparer.current_handle() is not handle or handle.closed:
+        if (daemon.local_worker_preparer.current_handle() is not handle
+                or handle.closed or not handle.activated):
             raise unavailable("selected_host_changed")
         report = daemon.local_worker_preparer.report(handle)
         host = handle.retained.verify()
@@ -351,8 +370,16 @@ def bind_selected_host(daemon, profile, handle):
             raise unavailable("selected_host_changed")
         with service.store._mutex:
             from .daemon import WORKER_ACTOR
+            from .local_worker import _credential_commit_generation
+            token, _ = daemon.credentials._read_actor(WORKER_ACTOR)
+            daemon.credentials.require(token, "worker:execute")
             metadata = daemon.credentials.actor_metadata(WORKER_ACTOR)
             receipt = metadata.get("local_launch_receipt") if isinstance(metadata, dict) else None
+            generation = (_credential_commit_generation(daemon.credentials, WORKER_ACTOR), copy.deepcopy(metadata))
+            if expected_generation is None:
+                expected_generation = generation
+            elif generation != expected_generation:
+                raise unavailable("selected_activation_changed")
             rows = service.store.conn.execute("SELECT * FROM executors WHERE readiness='ready'").fetchall()
             # Identity is the fixed launch executor ID, never the first socket.
             executor_id = launch.get("executor_id", "astrid-pack-host")
@@ -360,6 +387,7 @@ def bind_selected_host(daemon, profile, handle):
             if row is not None and receipt is not None:
                 daemon._assert_local_relinquish_receipt(receipt, metadata)
                 if (row["source_digest"] != source or row["dependency_digest"] != dependency
+                        or receipt.get("owner_epoch") != report["owner_epoch"]
                         or any(receipt["host"].get(k) != report["processes"]["host"][k]
                                for k in ("pid", "birth_id"))):
                     raise unavailable("selected_source_changed")
@@ -379,6 +407,39 @@ def bind_selected_host(daemon, profile, handle):
             else:
                 binding = None
         if binding is not None:
+            # Validate the complete startup shape, registration and estimator
+            # before treating any operational refusal as independent of authoring.
+            relay = LocalPreparationRelay(binding)
+            with service.store._mutex:
+                context = service._preparation_binding_context(binding)
+                refusal = service._preparation_unavailability(binding, context)
+            def check_selected_ready():
+                if (daemon.local_worker_preparer.current_handle() is not handle
+                        or handle.closed or not handle.activated):
+                    raise unavailable("selected_host_changed")
+                with service.store._mutex:
+                    token, _ = daemon.credentials._read_actor(WORKER_ACTOR)
+                    daemon.credentials.require(token, "worker:execute")
+                    current = daemon.credentials.actor_metadata(WORKER_ACTOR)
+                    if (_credential_commit_generation(daemon.credentials, WORKER_ACTOR), current) != expected_generation:
+                        raise unavailable("selected_activation_changed")
+                    daemon._assert_local_relinquish_receipt(receipt, current)
+            def check_authority():
+                check_selected_ready()
+                current_report = daemon.local_worker_preparer.report(handle)
+                if (handle.retained.verify() != host
+                        or current_report["owner_epoch"] != service.runtime_instance_id
+                        or any(current_report["processes"]["host"][k] != host[k] for k in ("pid", "birth_id"))):
+                    raise unavailable("host_peer_changed")
+            def check_selected():
+                check_authority()
+                with service.store._mutex:
+                    if service._preparation_binding_context(binding) != context:
+                        raise unavailable("selected_source_changed")
+            check_selected()
+            if refusal is not None:
+                return StagedStorageBinding(unavailable=refusal, check=check_selected,
+                                            check_authority=check_authority)
             readiness = Path(binding["readiness_record_path"])
             try:
                 fd = os.open(readiness, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
@@ -403,32 +464,11 @@ def bind_selected_host(daemon, profile, handle):
             except (FileNotFoundError, OSError):
                 pass
             else:
-                # Install a selected-generation check atomically with the relay.
-                # Registration and caller authority are separately rechecked by
-                # the service before and after IPC. This fences stop/revoke and
-                # replacement even while the old native process is still alive.
-                expected_receipt = copy.deepcopy(receipt)
-                def check_selected_ready():
-                    if (daemon.local_worker_preparer.current_handle() is not handle
-                            or handle.closed or not handle.activated):
-                        raise unavailable("selected_host_changed")
-                    with service.store._mutex:
-                        token, _ = daemon.credentials._read_actor(WORKER_ACTOR)
-                        daemon.credentials.require(token, "worker:execute")
-                        current = daemon.credentials.actor_metadata(WORKER_ACTOR)
-                        if not isinstance(current, dict) or current.get("local_launch_receipt") != expected_receipt:
-                            raise unavailable("selected_activation_changed")
-                        daemon._assert_local_relinquish_receipt(expected_receipt, current)
-                def check_selected():
-                    check_selected_ready()
-                    if handle.retained.verify() != host:
-                        raise unavailable("host_peer_changed")
                 check_selected()
-                with service.store._mutex:
-                    daemon.configure_preparation_relay(binding)
-                    service._preparation_relay._selected_host_check = check_selected
-                    service._preparation_relay._selected_host_ready = check_selected_ready
-                return
+                relay._selected_host_check = check_selected
+                relay._selected_host_ready = check_selected_ready
+                return StagedStorageBinding(relay=relay, check=check_selected,
+                                            check_authority=check_authority)
         if time.monotonic() >= end:
             raise unavailable("preparation_startup_deadline")
         time.sleep(0.05)

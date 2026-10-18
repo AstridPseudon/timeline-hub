@@ -7,11 +7,29 @@ from types import SimpleNamespace
 
 import pytest
 
+from test_storage_preparation_relay import source_composition
+
 from runtime_protocol import authoring_scene as scene
 from runtime_protocol.auth import CredentialStore
 from runtime_protocol.errors import AuthorizationError
 from runtime_protocol.timeline_commit import digest
 from test_timeline_accept import wire, acceptance, count
+
+
+@pytest.fixture
+def scene_native_boundary(monkeypatch):
+    """Synthetic retained identities; real codec/listener/handler, no native probes."""
+    from test_storage_preparation_relay import ACTOR
+    from astrid.core.execution import authoring_scene_transport as transport
+    from astrid.core.execution import custody_broker as custody
+    from banodoco_local import custody_broker as runtime_custody
+    class Actor:
+        def verify(self): return copy.deepcopy(ACTOR)
+    for api in (custody.AuthenticatedCleanupActor, runtime_custody.AuthenticatedCleanupActor):
+        monkeypatch.setattr(api, "current", lambda: Actor())
+        monkeypatch.setattr(api, "private_peer", lambda channel: Actor())
+    monkeypatch.setattr(transport, "_actor", lambda identity: Actor())
+    return ACTOR
 
 
 @pytest.fixture
@@ -369,7 +387,7 @@ def test_empty_timeline_preserves_existing_shared_completeness_semantics(bound, 
 
 
 @pytest.fixture
-def empty_bound(bound, monkeypatch):
+def empty_bound(bound, monkeypatch, scene_native_boundary):
     """Public service/credential path plus real private Host transport.
 
     Selected native activation/source inventory is explicit fixture authority;
@@ -427,6 +445,182 @@ def publish_empty(w):
         args=dict(values={"opacity": .625}, clear=[]),
         expect={"parent/track:V1::opacity": {"state": "present", "value": 1}})]
     return body
+
+
+@pytest.fixture
+def source_empty(source_composition, scene_native_boundary, monkeypatch):
+    """Real static discovery, daemon composition, lazy resolution and empty codec.
+
+    Only retained native/process authority and its action-child readiness
+    observation are synthetic. The registered refusal remains unchanged.
+    """
+    import json
+    import threading
+    from astrid.core.execution import generic_host as hosts
+    from astrid.core.execution import authoring_scene_protocol as protocol, authoring_scene_transport as transport
+    from astrid.core.execution import authoring_scene_startup as startup
+    from astrid.core.execution.storage_preparation_transport import ProcessIdentity
+    from runtime_protocol.daemon import WORKER_ACTOR
+    from test_shot_composition_runtime import _publication
+    w = source_composition
+    monkeypatch.setattr(hosts, "GenericPackHost", w.real_host_type)
+    declaration = {"kind": "generator", "description": "Offline source regression",
+        "invocation": {"kind": "command", "command": {"argv": ["{python_exec}", "-c", "raise RuntimeError('must not execute')"]}},
+        "inputs": {"type": "object", "additionalProperties": True},
+        "outputs": [{"name": "answer", "type": "file", "path_template": "{out}/answer.txt", "artifact_type": "text/plain"}],
+        "metadata": {"adapter_family": "cpu", "resource_keys": ["cpu"], "estimated_scratch_bytes": 0, "estimated_output_bytes": 0}}
+    for pack_id, action in (("synthetic", "bytes"), ("rendering", "timeline_visualize")):
+        root = w.profile.support_root / pack_id
+        root.mkdir()
+        action_value = copy.deepcopy(declaration)
+        if pack_id == "synthetic":
+            (root / "actions").mkdir()
+            (root / "actions" / "estimate.py").write_text("raise RuntimeError('estimator must not import or run')\n")
+            action_value["metadata"]["storage_estimator"] = dict(schema_version=1, id="synthetic.bytes", version=1,
+                policy_version="fixture-v1", path="actions/estimate.py", function="estimate")
+        (root / "pack.yaml").write_text(json.dumps(dict(schema_version=3, id=pack_id, name=pack_id, version="1.0.0",
+                                                       actions={action: action_value})))
+    inventory = w.real_host_type(pack_roots=[w.profile.support_root])
+    try:
+        records = inventory.discover()
+    finally:
+        inventory.shutdown()
+    assert {r.id for r in records} == {"synthetic.bytes", "rendering.timeline_visualize"}
+    source = hosts._canonical_digest({r.id: r.source_digest for r in records})
+    dependency = hosts._canonical_digest({r.id: r.dependency_digest for r in records})
+    storage_record = next(r for r in records if r.id == "synthetic.bytes")
+    # The action-child admission observation is the native boundary. Preserve
+    # the Host's actual stable reason projection; never run that child here.
+    from dataclasses import replace
+    refusal_record = replace(storage_record, preflight={"action_child": {"ok": False, "reason": "selected action child unavailable"}})
+    reason = hosts._preflight_unavailable_reason(refusal_record)
+    descriptors = []
+    for r in records:
+        value = dict(capability_id=r.id, definition_digest=r.capability_digest)
+        if r.has_request_storage_estimator:
+            value.update(storage_estimate_contract=r.request_storage_estimate_contract, status="unavailable", unavailable_reason=reason)
+        descriptors.append(value)
+    w.s.register_executor(dict(executor_id=WORKER_ACTOR, runtime_epoch=w.s.store._current_runtime_epoch(),
+        source_digest=source, dependency_digest=dependency,
+        source_epoch="actual-static-discovery", capabilities=descriptors), idempotency_key="actual-static-register")
+    rendering = next(r for r in records if r.id == "rendering.timeline_visualize")
+    binding = dict(runtime_realm_id=w.s.realm["id"], runtime_instance_id=w.s.runtime_instance_id,
+        runtime_session_id=w.s.runtime_session_id, executor_id=WORKER_ACTOR, host_instance_id=w.receipt["executor_incarnation"],
+        source_epoch="actual-static-discovery", provider_id="astrid-v1", provider_digest=startup.provider_digest(),
+        source_digest="sha256:" + rendering.source_digest, dependency_digest="sha256:" + rendering.dependency_digest,
+        capability_digest=rendering.capability_digest, executor_source_digest="sha256:" + source.removeprefix("sha256:"),
+        executor_dependency_digest="sha256:" + dependency.removeprefix("sha256:"), mode=protocol.EMPTY_MODE)
+    initial = _publication(w.p)
+    initial["parent_composition"]["config"]["tracks"] = [{"id": "video-1", "kind": "visual"}]
+    w.s.publish_parent_composition(w.p, "main", initial, idempotency_key="source-initial")
+    w.identity, w.calls = w.principal, []
+    peer = ProcessIdentity(**scene_native_boundary)
+    config = transport.AuthoringSceneConfig(w.profile.support_root, peer, peer, binding,
+        w.profile.host_launch["boot_manifest_hash"].removeprefix("sha256:"))
+    host = SimpleNamespace(_shutdown=threading.Event(), _authoring_scene_lock=threading.Lock(),
+        _authoring_scene_listener=None, _authoring_scene_session=lambda *a: pytest.fail("renderer acquired"))
+    monkeypatch.setattr(startup, "validate_host", lambda *a: None)
+    listener = w.real_host_type.start_authoring_scene(host, config, {})
+    w.d.start_local_worker(w.profile.profile_id, w.s.realm["id"])
+    # No storage relay, estimator import/action, or eager authoring relay.
+    assert w.s._preparation_relay is None and w.s._authoring_scene_relay is None
+    original = transport.AuthoringSceneRelay.exchange
+    def exchange(relay, request, **kwargs):
+        w.calls.append(copy.deepcopy(request))
+        return original(relay, request, **kwargs)
+    monkeypatch.setattr(transport.AuthoringSceneRelay, "exchange", exchange)
+    w.config, w.listener, w.storage_reason = listener.config, listener, reason
+    try:
+        yield w
+    finally:
+        if w.s._authoring_scene_relay is not None: w.s._authoring_scene_relay.close()
+        listener.close()
+
+
+def test_source_daemon_empty_selection_accepts_with_unavailable_storage(source_empty):
+    from astrid.core.execution import authoring_scene_protocol as protocol
+    w = source_empty
+    body = publish_empty(w)
+    result = w.s.commit_timeline(w.p, "main", body, idempotency_key=body["request_id"], identity=w.identity)
+    assert result["status"] == "accepted", result
+    assert result["canonical_document"]["parent"]["config"]["tracks"][0]["opacity"] == .625
+    assert len(w.calls) == 1 and w.calls[0]["operation"] == protocol.EMPTY_OPERATION
+    assert w.s._preparation_relay is None
+    rows = {v["capability_id"]: v for v in w.s.list_capabilities(catalog_version=2)["items"]}
+    assert rows["synthetic.bytes"]["status"] == "unavailable"
+    assert w.storage_reason in rows["synthetic.bytes"]["unavailable_reason"]
+    selection, relay = w.s._authoring_scene_selection, w.s._authoring_scene_relay
+    w.d.start_local_worker(w.profile.profile_id, w.s.realm["id"])
+    assert w.s._authoring_scene_selection is selection and w.s._authoring_scene_relay is relay
+
+
+def test_source_daemon_empty_selection_refuses_frame_and_nonempty_candidate(source_empty):
+    from astrid.core.execution import authoring_scene_protocol as protocol
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    from astrid.sdk.timeline.commit import create_runtime_commit_service
+    w = source_empty
+    body = wire(w.p)
+    port = scene.RequestSceneEvaluation(w.s, body, w.identity)
+    client = port.evaluator({"nonempty": "candidate"})
+    value = projection()
+    with pytest.raises(FrameOwnerError, match="empty_only_frame_query"):
+        client.query_scene(revision_digest=protocol.digest(value)[7:], scene=value, frames=[0])
+    assert not w.calls
+    port.close()
+    w.s._timeline_commit_provider = create_runtime_commit_service()
+    before = count(w.s, "parent_composition_publications")
+    result = w.s.commit_timeline(w.p, "main", body, idempotency_key=body["request_id"], identity=w.identity)
+    assert result["status"] in {"error", "refused"}, result
+    assert count(w.s, "parent_composition_publications") == before
+    assert w.s.lookup_request(w.p, "main", body["request_id"]) is None
+
+
+def test_source_daemon_replacement_fences_inflight_authoring(source_empty):
+    w = source_empty
+    port = scene.RequestSceneEvaluation(w.s, wire(w.p), w.identity)
+    port.check()
+    w.d.start_local_worker(w.profile.profile_id, w.s.realm["id"])
+    port.check()  # Unchanged start preserves the actual resolved relay.
+    w.selected[0] = SimpleNamespace(**vars(w.handle))
+    w.d.start_local_worker(w.profile.profile_id, w.s.realm["id"])
+    with pytest.raises(AuthorizationError): port.check()
+    assert w.s._authoring_scene_relay is None and w.s._preparation_relay is None
+    port.close()
+
+
+@pytest.mark.parametrize("failure", ["missing_capability", "unavailable_capability", "missing_readiness", "invalid_readiness", "replacement"])
+def test_source_daemon_authoring_dependency_still_refuses_without_publication(source_empty, monkeypatch, failure):
+    import json
+    from astrid.core.execution import authoring_scene_transport as transport
+    w = source_empty
+    body = publish_empty(w)
+    if failure in {"missing_capability", "unavailable_capability"}:
+        row = w.s.store.conn.execute("SELECT id,capabilities_json FROM executors").fetchone()
+        values = json.loads(row["capabilities_json"])
+        if failure == "missing_capability": values = [v for v in values if v["capability_id"] != "rendering.timeline_visualize"]
+        else:
+            for v in values:
+                if v["capability_id"] == "rendering.timeline_visualize": v.update(status="unavailable", unavailable_reason="fixture")
+        w.s.store.conn.execute("UPDATE executors SET capabilities_json=? WHERE id=?", (json.dumps(values), row["id"]))
+    elif failure == "missing_readiness": w.config.readiness_path.unlink()
+    elif failure == "invalid_readiness": w.config.readiness_path.write_text('{}\n')
+    else:
+        original = transport.AuthoringSceneRelay.__init__
+        def replaced(relay, config):
+            original(relay, config)
+            w.s._authoring_scene_selection = None
+        monkeypatch.setattr(transport.AuthoringSceneRelay, "__init__", replaced)
+    before = count(w.s, "parent_composition_publications")
+    try:
+        result = w.s.commit_timeline(w.p, "main", body, idempotency_key=body["request_id"], identity=w.identity)
+    except Exception:
+        # Resolution errors are fatal to this dependent COMMIT, before accept.
+        pass
+    else:
+        assert result["status"] in {"error", "refused"}, result
+    assert count(w.s, "parent_composition_publications") == before
+    assert w.s.lookup_request(w.p, "main", body["request_id"]) is None
+    assert w.s._authoring_scene_relay is None and not w.calls
 
 
 @pytest.mark.parametrize("dry_run", [True, False])

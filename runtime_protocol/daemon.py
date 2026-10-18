@@ -15,7 +15,7 @@ from .auth import CredentialStore
 from .catalog import LiveDiscovery, RealmCatalog, process_birth_identity
 from .backup import restore_backup, verify_backup, verify_restore_candidate
 from .dirfd import capture_parent, close_pinned, validate_parent
-from .errors import ConflictError, NotFoundError, ProtocolError
+from .errors import ConflictError, NotFoundError, ProtocolError, RuntimeErrorBase
 from .server import RuntimeHTTPServer, RuntimeHandler
 from .service import RuntimeService
 from .util import atomic_json_write, now
@@ -834,22 +834,66 @@ class RuntimeDaemon:
             # The listener starts in that authenticated Host only after its live
             # registration. Compose its independent launch expectations here.
             from .local_preparation_relay import bind_selected_host
-            bind_selected_host(self, self.local_worker_profiles[profile_id],
-                               self.local_worker_preparer.current_handle())
-            if self.authoring_profile == "astrid":
+            handle = self.local_worker_preparer.current_handle()
+            profile = self.local_worker_profiles[profile_id]
+            try:
+                if handle is None:
+                    raise ConflictError("activated Host handle is unavailable for composition")
+                same = getattr(self, "_local_composition_handle", None) is handle
+                if same:
+                    self._local_composition_check()
+                staged = bind_selected_host(self, profile, handle)
                 from .authoring_scene import SelectedHostScene
-                handle = self.local_worker_preparer.current_handle()
-                profile = self.local_worker_profiles[profile_id]
+                selection = (SelectedHostScene(self.service, self.local_worker_preparer,
+                             profile, handle, generation_check=staged.check_authority)
+                             if self.authoring_profile == "astrid" else None)
                 with self.service.store._mutex:
+                    if (self.local_worker_preparer.current_handle() is not handle
+                            or handle.closed or not handle.activated):
+                        raise ConflictError("selected Host changed during composition")
+                    staged.check()
+                    if selection is not None:
+                        selection.check()
                     old = getattr(self.service, "_authoring_scene_selection", None)
-                    if old is None or old.handle is not handle:
-                        relay = getattr(self.service, "_authoring_scene_relay", None)
-                        if relay is not None:
-                            relay.close()
-                        self.service._authoring_scene_relay = None
-                        self.service._authoring_scene_selection = SelectedHostScene(
-                            self.service, self.local_worker_preparer, profile, handle)
+                    if same and old is not None:
+                        old.check()
+                    previous = self.service._preparation_relay
+                    preparation = staged.relay
+                    if preparation is not None:
+                        preparation.check_readiness()
+                    if same and previous is not None and preparation is not None and previous.binding == preparation.binding:
+                        previous.check_readiness()
+                        preparation = previous
+                    if not same:
+                        self._invalidate_local_composition()
+                    self.service._preparation_relay = preparation
+                    self.service._authoring_scene_selection = old if same else selection
+                    self._local_composition_handle = handle
+                    self._local_composition_check = staged.check_authority
+            except Exception as exc:
+                # Activation succeeded. Invalidate only composed references;
+                # the retained launcher/receipt/owner still hold the live Host.
+                with self.service.store._mutex:
+                    self._invalidate_local_composition()
+                exc.add_note("Host activated, composition failed; launcher handle and owner custody retained")
+                if isinstance(exc, RuntimeErrorBase):
+                    exc.details = {**(exc.details or {}), "local_worker_state": "activated_composition_failed"}
+                raise
             return result
+
+    def _invalidate_local_composition(self):
+        """Caller holds the store mutex; fence requests before closing a relay."""
+        relay = getattr(self.service, "_authoring_scene_relay", None)
+        self.service._preparation_relay = None
+        self.service._authoring_scene_selection = None
+        self.service._authoring_scene_relay = None
+        self._local_composition_handle = None
+        self._local_composition_check = None
+        if relay is not None:
+            try:
+                relay.close()
+            except Exception:
+                pass  # Invalidation must not replace the primary composition error.
 
     def _cleanup_exact_remote_credential(self, task_id, activation_id):
         """Reconcile interrupted file deletion using committed, secret-free hashes.

@@ -5916,7 +5916,20 @@ class RuntimeService(TimelineCommitAcceptance):
             self._preparation_relay = relay
 
     def _preparation_context(self, binding):
+        from .local_preparation_relay import unavailable
+        context = self._preparation_binding_context(binding)
+        if self._preparation_unavailability(binding, context) is not None:
+            raise unavailable("no_live_matching_executor")
+        return context
+
+    def _preparation_binding_context(self, binding):
+        """Validate identity/contracts independently of operational availability.
+
+        Only trusted startup composition may classify the validated result;
+        request admission still requires a preparable capability above.
+        """
         from .local_preparation_relay import unavailable, canonical
+        from .storage_contract import storage_contract
         expected = {"realm_id": self.realm["id"], "runtime_instance_id": self.runtime_instance_id,
                     "runtime_session_id": self.runtime_session_id,
                     "runtime_epoch": self.store._current_runtime_epoch()}
@@ -5925,11 +5938,7 @@ class RuntimeService(TimelineCommitAcceptance):
         capability = binding["capability_id"]
         row = self.store.conn.execute("SELECT * FROM capabilities WHERE id=?", (capability,)).fetchone()
         executor = self.store.conn.execute("SELECT * FROM executors WHERE id=?", (binding["executor_id"],)).fetchone()
-        pending_reason = "request storage estimator unsupported by legacy catalog; prepare/execute join required"
-        def preparable(status, reason):
-            return status == "ready" or (status == "unavailable" and reason == pending_reason)
         if (not self._verified or row is None or executor is None
-                or not preparable(row["status"], row["unavailable_reason"])
                 or row["definition_digest"] != binding["capability_digest"]
                 or executor["readiness"] != "ready" or not self.store._executor_live(executor)
                 or executor["runtime_epoch"] != expected["runtime_epoch"]):
@@ -5939,12 +5948,33 @@ class RuntimeService(TimelineCommitAcceptance):
                 raise ConflictError("preparation executor source changed")
         descriptor = self.store._executor_capability(executor, capability)
         if (not descriptor or descriptor.get("definition_digest") != binding["capability_digest"]
-                or not preparable(descriptor.get("status", "ready"), descriptor.get("unavailable_reason"))
                 or canonical(descriptor.get("storage_estimate_contract")) != canonical(binding["storage_estimate_contract"])
                 or canonical(self.store.capability_storage_contract(capability, binding["capability_digest"])) != canonical(binding["storage_estimate_contract"])):
             raise ConflictError("preparation descriptor changed")
+        if storage_contract(descriptor)["mode"] != "request_estimated":
+            raise ConflictError("preparation estimator contract changed")
+        for status, reason in ((row["status"], row["unavailable_reason"]),
+                               (descriptor.get("status", "ready"), descriptor.get("unavailable_reason"))):
+            if status not in {"ready", "unavailable"} or (status == "unavailable" and
+                    (not isinstance(reason, str) or not reason.strip())):
+                raise ConflictError("invalid preparation availability")
         return {"runtime": expected, "descriptor": copy.deepcopy(descriptor),
                 "capability": {k: row[k] for k in ("definition_digest", "status", "unavailable_reason", "required_resource_keys_json")}}
+
+    @staticmethod
+    def _preparation_unavailability(binding, context):
+        from .local_preparation_relay import StorageUnavailable
+        pending = "request storage estimator unsupported by legacy catalog; prepare/execute join required"
+        capability, descriptor = context["capability"], context["descriptor"]
+        def preparable(value):
+            return value.get("status", "ready") == "ready" or (
+                value.get("status") == "unavailable" and value.get("unavailable_reason") == pending)
+        if preparable(capability) and preparable(descriptor):
+            return None
+        if (capability["status"] != "unavailable" or descriptor.get("status") != "unavailable"
+                or capability["unavailable_reason"] != descriptor.get("unavailable_reason")):
+            raise ConflictError("incoherent preparation availability")
+        return StorageUnavailable(binding["capability_id"], capability["unavailable_reason"])
 
     def _preparation_authority(self, identity, project, capability):
         # The general credential API retains legacy admin fallback. This new
