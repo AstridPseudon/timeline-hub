@@ -26,7 +26,7 @@ describe('pinned Python runtime resolver', () => {
       fakePython(wrongRoot, '3.14.3');
       const right = fakePython(rightRoot, PINNED_PYTHON_VERSION);
       assert.equal(
-        resolvePinnedPythonExecutable({ pathValue: `${wrongRoot}:${rightRoot}` }),
+        resolvePinnedPythonExecutable({ requested: null, pathValue: `${wrongRoot}:${rightRoot}` }),
         realpathSync(right),
       );
     } finally {
@@ -54,7 +54,7 @@ describe('pinned Python runtime resolver', () => {
       /ASTRID_PYTHON must be an absolute executable path/,
     );
     assert.throws(
-      () => resolvePinnedPythonExecutable({ pathValue: '/path/with/no/python' }),
+      () => resolvePinnedPythonExecutable({ requested: null, pathValue: '/path/with/no/python' }),
       /Pinned Astrid Python .* unavailable.*searched python3\.11, python3, and python on PATH/,
     );
   });
