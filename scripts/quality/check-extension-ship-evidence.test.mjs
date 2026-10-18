@@ -700,7 +700,7 @@ describe('extension ship evidence gate', () => {
       headCommit: controllerCommit,
       provenanceChangedPaths: [evidencePath],
     });
-    assert.match(result.errors.join('\n'), /must be under docs\/extensions\/evidence\/releases/);
+    assert.match(result.errors.join('\n'), /must be under docs\/extensions\/ship-evidence\/releases\//);
 
     result = validateLedger({
       ledger: makeFrozenLedger(),
