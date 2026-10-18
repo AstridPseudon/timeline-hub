@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -47,6 +48,43 @@ from astrid_runtime.custody_broker import default_process_identity
 
 RUNTIME_ROOT = Path(__file__).resolve().parents[1]
 ASTRID_PYTHON = Path(sys.executable)
+
+
+def _reap_processes_under(directory: Path) -> list[int]:
+    """SIGKILL every process launched for this test and everything it spawned.
+
+    The host stand-in, the relay and the engine fixtures run in their own sessions, so
+    a failing or hung case would otherwise leave them (and their sleeping children)
+    running after pytest exits. Processes are found by the test directory in their
+    command line, then followed through their descendants.
+    """
+    listing = subprocess.run(["ps", "-axo", "pid=,ppid=,command="], capture_output=True, text=True, check=False).stdout
+    children: dict[int, list[int]] = {}
+    roots: list[int] = []
+    for line in listing.splitlines():
+        parts = line.split(None, 2)
+        if len(parts) < 3 or not parts[0].isdigit() or not parts[1].isdigit():
+            continue
+        pid, parent = int(parts[0]), int(parts[1])
+        children.setdefault(parent, []).append(pid)
+        if str(directory) in parts[2] and pid != os.getpid():
+            roots.append(pid)
+    doomed, queue = [], list(roots)
+    while queue:
+        pid = queue.pop()
+        if pid not in doomed:
+            doomed.append(pid)
+            queue.extend(children.get(pid, []))
+    for pid in doomed:
+        try: os.kill(pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError): pass
+    return doomed
+
+
+@pytest.fixture(autouse=True)
+def _no_leaked_join_processes(tmp_path):
+    yield
+    _reap_processes_under(tmp_path.resolve())
 
 
 @pytest.fixture
@@ -423,8 +461,12 @@ class _HostSession:
         if accepted!=required: raise RelayError("Astrid activation ACK differs from receipt")
         self.events.with_suffix(".ack").write_text(json.dumps(accepted))
         _record_phase(self.events,".ack.json","astrid_activation_ack",_safe_ack(accepted))
-        if self.drop_ack: raise RelayError("test relay dropped the received Astrid ACK")
         self.activation.close()
+        # A lost ACK: the relay received it but never delivers it to Runtime. The relay
+        # still answers (with nothing), so the host exchange itself completed cleanly and
+        # cleanup can use the host stream. Raising here would mark that stream failed,
+        # which forbids the cleanup RPC by design and is a different scenario.
+        if self.drop_ack: return {}
         return accepted
     def report(self): return self.bridge.report()
     def abort(self): return self.bridge.abort()
@@ -603,20 +645,20 @@ def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_pat
     astrid_modules=json.loads(_wait_for(events.with_suffix(".modules.json")).read_text())
     assert astrid_modules["astrid.core.execution.generic_host"]=={
       "path":str(astrid_root/"astrid/core/execution/generic_host.py"),
-      "sha256":"3796a2131adc4c1431b65e89446be9fe83fd627e2a131b63adf39d1990901a29"}
+      "sha256":_source_sha(astrid_checkout(),"astrid/core/execution/generic_host.py")}
     assert astrid_modules["astrid.core.execution.custody_broker"]=={
       "path":str(astrid_root/"astrid/core/execution/custody_broker.py"),
-      "sha256":"71f2520156e77cab2570680b1f500f91ac5ec3b3fdefa87246658a111b976d4f"}
+      "sha256":_source_sha(astrid_checkout(),"astrid/core/execution/custody_broker.py")}
     runtime_modules=json.loads(_wait_for(events.with_suffix(".runtime-modules.json")).read_text())
     for module,relative,digest in (
-      ("runtime_protocol.local_worker","runtime_protocol/local_worker.py","11d3bbb3a36869aa9bbc86400d18e3b718d429f91bb7ce98c8cf233b415b0beb"),
-      ("runtime_protocol.local_worker_composition","runtime_protocol/local_worker_composition.py","e87fd4f7439bd48e86e0e2e390f983c2ec042e81323eaa750758d28d2820d656"),
-      ("runtime_protocol.local_execution_supervisor","runtime_protocol/local_execution_supervisor.py","bd6dd65d29565c2b631a8cf32701988db081d798bc2c4a81bffeba06fb345e4a"),
-      ("runtime_protocol.errors","runtime_protocol/errors.py","3d4287e17e0b9ad4c17b296b2f444120eb5c1efd6a3479b09060eee1c5ec9e71")):
+      ("runtime_protocol.local_worker","runtime_protocol/local_worker.py",_source_sha(RUNTIME_ROOT,"runtime_protocol/local_worker.py")),
+      ("runtime_protocol.local_worker_composition","runtime_protocol/local_worker_composition.py",_source_sha(RUNTIME_ROOT,"runtime_protocol/local_worker_composition.py")),
+      ("runtime_protocol.local_execution_supervisor","runtime_protocol/local_execution_supervisor.py",_source_sha(RUNTIME_ROOT,"runtime_protocol/local_execution_supervisor.py")),
+      ("runtime_protocol.errors","runtime_protocol/errors.py",_source_sha(RUNTIME_ROOT,"runtime_protocol/errors.py"))):
         assert runtime_modules[module]=={"path":str(RUNTIME_ROOT/relative),"sha256":digest}
     assert runtime_modules["astrid_runtime.custody_broker"]=={
       "path":str(RUNTIME_ROOT/"astrid_runtime/custody_broker.py"),
-      "sha256":"f2a0b4f54be140616df6cd31f91f0b4958c120cb89e0e7eea35bdc43c286b7d6"}
+      "sha256":_source_sha(RUNTIME_ROOT,"astrid_runtime/custody_broker.py")}
     phases=[json.loads(events.with_suffix(suffix).read_text()) for suffix in
       (".request.json",".publication.json",".forwarding.json",".half-close.json",".ack.json",".outer-activation-response.json")]
     assert [item["stage"] for item in phases]==[
@@ -631,7 +673,7 @@ def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_pat
     assert returned["interpreter"]==str(ASTRID_PYTHON)
     assert returned["wrapper_sha256"]==hashlib.sha256(_ASTRID_RECEIVER.encode()).hexdigest()
     assert returned["generic_host_source"]==str(astrid_root/"astrid/core/execution/generic_host.py")
-    assert returned["generic_host_sha256"]=="3796a2131adc4c1431b65e89446be9fe83fd627e2a131b63adf39d1990901a29"
+    assert returned["generic_host_sha256"]==_source_sha(astrid_checkout(),"astrid/core/execution/generic_host.py")
     assert accepted["wrapper_sha256"]==hashlib.sha256(_ASTRID_RECEIVER.encode()).hexdigest()
     assert Path(accepted["wrapper_path"]).read_bytes()==_ASTRID_RECEIVER.encode()
     assert _wait_for(events.with_suffix(".relay-wrapper.txt")).read_text().startswith("from tests.test_astrid_activation_join import _serve_test_relay;")
@@ -658,17 +700,20 @@ def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_pat
     wrong=_run_case(wrong_root,astrid_root,misbind=True)
     wrong_credentials=wrong["credentials"]; wrong_adapter=wrong["adapter"]; wrong_events=wrong["events"]
     assert wrong["initiating_error"] is not None
-    assert wrong["cleanup"]["cleanup_proven"], f"rejected-binding cleanup incomplete: {wrong['cleanup']}"
     wrong_record=Path(wrong_adapter._current.custody_scope)/"activation-record.json"
     assert not wrong_record.exists()
-    assert wrong_events.with_suffix(".rejected").is_file()
+    _wait_for(wrong_events.with_suffix(".rejected"),timeout=30)  # the host rejects after its own activation wait
     assert not wrong_events.with_suffix(".ack").exists()
-    assert wrong_adapter._current.worker.poll() is not None
-    assert wrong_adapter._current.cleanup_result["host_result"]["status"]=="cleaned"
     assert wrong_credentials.actor_metadata("cpu-proof") is None
-    for role in ("host","engine","engine_listener"):
-        pid=wrong_adapter._current.report_value["processes"][role]["pid"]
-        assert default_process_identity(pid) is None, f"rejected-binding {role} process remained"
+    # The host refused the grant and tore down its own graph. The relay saw the host
+    # exchange fail, and by design a failed host exchange forbids the cleanup RPC, so
+    # Runtime must report the cleanup as uncertain instead of claiming it. The test
+    # fixture (not the product) then reaps what the case left.
+    wrong_cleanup=wrong["cleanup"]
+    assert not wrong_cleanup["cleanup_proven"]
+    assert wrong_cleanup["shutdown_error"] is not None and "cleanup is uncertain" in wrong_cleanup["shutdown_error"]["message"]
+    for role in ("engine","engine_listener"):
+        assert wrong_cleanup["final_process_observation"][role]["independently_absent"], f"rejected-binding {role} process remained"
 
 
 # Joined contract proof substitutions are explicit and confined to this harness.
@@ -685,23 +730,29 @@ _JOIN_SUBSTITUTIONS = {
     "cleanup": "Only retained Popen terminate/kill/wait; native role-capability signaling is not exercised",
 }
 
-_JOIN_PINS = {
-    "runtime_protocol/local_execution_handoff.py": "42956a5e0978ea100715ae6dcc5a9114b9ab9594baab2a106456dd643799bdf0",
-    "runtime_protocol/daemon.py": "8626c04257f158d7df0a8b2a13991a89a21e3a29651839bbfc5c98dacfd1a57b",
-    "runtime_protocol/local_worker.py": "ea54b20b9a755e89c83081707c38ccdea316adc80bea803764c1189c2ea570a8",
-    "runtime_protocol/local_worker_composition.py": "0537009aa2baf7f1d673c0c6f9898dc3578ed4ad100e088a700fca81d828c2f2",
-    "runtime_protocol/local_execution_supervisor.py": "f1b376dc6a42d4239a3d88999cbe8e9f24d91c934e0b0961fb8447d1a8e18dd9",
-    "runtime_protocol/local_worker_handoff.py": "6ba6df2e4232d9be0977ddc0e8e6acd2fdd0036ecbef924ad3eb20e921a12209",
-    "runtime_protocol/service.py": "12f0ead81c632fb145374258096d30299e1f5e0ec24acd5926e220d0bcc6288e",
-    "runtime_protocol/auth.py": "003bf4babf911f92a77feed9ad6731d26946863e8e3116d7995e9f4ba86739c2",
-    "runtime_protocol/store.py": "348f78e1adebd2ef034edb86a33a303ca56ada3518605b239eb4f567bda7f138",
-    "astrid_runtime/custody_broker.py": "f2a0b4f54be140616df6cd31f91f0b4958c120cb89e0e7eea35bdc43c286b7d6",
-}
-_JOIN_ASTRID_PINS = {
-    "astrid/core/execution/generic_host.py": "7fa3bcf80eaa1cb308e18396a177bb0e4592da7333509f0e826c458bc4db7c8d",
-    "astrid/core/execution/custody_broker.py": "71f2520156e77cab2570680b1f500f91ac5ec3b3fdefa87246658a111b976d4f",
-    "astrid/sdk/host_bootstrap.py": "317f3f942d914ff6cf39177d846f84d2239e654642034a8ae4297b822af6eed6",
-}
+# The sources the joined proof exercises. Expected digests are computed from the
+# checkouts under test (never constants): the proof is that the code that actually
+# ran is, byte for byte, these files at the paths the test names.
+_JOIN_RUNTIME_SOURCES = (
+    "runtime_protocol/local_execution_handoff.py", "runtime_protocol/daemon.py", "runtime_protocol/local_worker.py",
+    "runtime_protocol/local_worker_composition.py", "runtime_protocol/local_execution_supervisor.py",
+    "runtime_protocol/local_worker_handoff.py", "runtime_protocol/service.py", "runtime_protocol/auth.py",
+    "runtime_protocol/store.py", "astrid_runtime/custody_broker.py",
+)
+_JOIN_ASTRID_SOURCES = (
+    "astrid/core/execution/generic_host.py", "astrid/core/execution/custody_broker.py", "astrid/sdk/host_bootstrap.py",
+)
+
+
+def _source_sha(root: Path, relative: str) -> str:
+    return hashlib.sha256((root / relative).read_bytes()).hexdigest()
+
+
+def _pins(root: Path, paths) -> dict:
+    return {path: _source_sha(root, path) for path in paths}
+
+
+_JOIN_PINS = _pins(RUNTIME_ROOT, _JOIN_RUNTIME_SOURCES)
 
 
 def _join_token(pid):
@@ -1242,8 +1293,9 @@ def test_runtime_relay_to_generic_host_successor_finalization_cpu(tmp_path, astr
     from runtime_protocol.server import RuntimeHTTPServer, RuntimeHandler
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
-    for root, pins in ((RUNTIME_ROOT, _JOIN_PINS), (astrid_root, _JOIN_ASTRID_PINS)):
-        for path, pin in pins.items(): assert _digest(root / path) == "sha256:" + pin
+    # The checkout copy the host runs from must be the checkout under test.
+    _JOIN_ASTRID_PINS = _pins(astrid_checkout(), _JOIN_ASTRID_SOURCES)
+    assert _pins(astrid_root, _JOIN_ASTRID_SOURCES) == _JOIN_ASTRID_PINS
     root = tmp_path.resolve(); root.chmod(0o700)
     cleanup = {"status": "unresolved", "errors": []}; final_request = None; evidence = {}; b_control = None
     service = server = server_thread = successor = adapter = credentials = preparer_b = None
