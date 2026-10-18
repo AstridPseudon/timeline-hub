@@ -7,8 +7,6 @@ import sys
 import urllib.request
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
 from astrid_runtime_client import WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
@@ -18,8 +16,8 @@ from runtime_protocol.service import RuntimeService
 
 
 def _media_bytes(duration: float = 5, *, kind: str = "video") -> bytes:
-    if not shutil.which("ffmpeg"):
-        pytest.skip("ffmpeg is required for media replacement fixtures")
+    missing = [tool for tool in ("ffmpeg", "ffprobe") if shutil.which(tool) is None]
+    assert not missing, f"required media tools are unavailable: {', '.join(missing)}"
     if kind == "video":
         inputs = ["-f", "lavfi", "-i", "color=c=blue:s=16x16:r=10"]
         codec = ["-an", "-c:v", "libx264", "-pix_fmt", "yuv420p"]

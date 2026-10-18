@@ -446,7 +446,7 @@ def test_non_darwin_process_identity_retains_existing_ps_parser(monkeypatch, ret
     assert observed[0][1]["timeout"] == 0.25
 
 
-@pytest.mark.skipif(custody.sys.platform != "darwin", reason="actual native observation requires Darwin")
+@pytest.mark.darwin_native
 def test_actual_darwin_self_identity_and_boundary_use_native_shared_marker(monkeypatch):
     import os
     import sys
