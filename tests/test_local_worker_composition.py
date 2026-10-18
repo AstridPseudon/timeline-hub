@@ -1311,7 +1311,8 @@ def test_preparation_frame_actual_sdk_control_reader_uses_large_bound(sdk_prepar
     assert receiver.preparation._request == receiver.fixture.request
 
 
-def test_preparation_frame_sender_sends_same_preflight_bytes(sdk_preparation_receiver, monkeypatch):
+@pytest.mark.parametrize("failure", [None, "transport", "cleanup", "reporter"])
+def test_preparation_frame_sender_sends_same_preflight_bytes(sdk_preparation_receiver, monkeypatch, capsys, failure):
     import io
     from runtime_protocol import local_worker_composition as module, local_execution_supervisor, verified_host_launch
     import banodoco_local.custody_broker as custody
@@ -1394,6 +1395,30 @@ def test_preparation_frame_sender_sends_same_preflight_bytes(sdk_preparation_rec
     config = {**fixture.profile.host_launch, 'runtime_instance_id': fixture.request['owner_epoch'],
         'runtime_endpoint': 'http://127.0.0.1:1', 'credential_file': '/offline-unread-credential', 'ready_file': '/offline-ready'}
     preparer = CrossProcessWorkerPreparer(profile=fixture.profile, config=config, environment={})
+    if failure is not None:
+        primary = RuntimeError("private-primary-transport-value")
+        before_cleanup = []
+        monkeypatch.setattr(module, "_frame_receive", lambda *_a, **_k: (_ for _ in ()).throw(primary))
+        def abort(handle):
+            events.append("abort")
+            before_cleanup.append(capsys.readouterr().err)
+            if failure == "cleanup":
+                raise TimeoutError("private-cleanup-value")
+        monkeypatch.setattr(preparer, "abort", abort)
+        if failure == "reporter":
+            monkeypatch.setattr(module, "_report_start_failure", lambda *_a, **_k: (_ for _ in ()).throw(OSError("private-reporter-value")), raising=False)
+        with pytest.raises(RuntimeError) as caught:
+            preparer.prepare(fixture.profile, operation_id=fixture.request['operation_id'], channel_id=fixture.request['channel_id'])
+        assert caught.value is primary
+        assert events.count("spawn") == events.count("abort") == 1
+        if failure != "reporter":
+            assert '"event":"local_worker_start_failed"' in before_cleanup[0]
+            assert '"phase":"host_only_prepare"' in before_cleanup[0]
+            assert "private-primary-transport-value" not in before_cleanup[0]
+        if failure == "cleanup":
+            assert preparer.cleanup_uncertain
+        assert "private-cleanup-value" not in capsys.readouterr().err
+        return
     handle = preparer.prepare(fixture.profile, operation_id=fixture.request['operation_id'], channel_id=fixture.request['channel_id'])
     assert control.sent[0] is encoded[0]
     assert len(encoded) == 1

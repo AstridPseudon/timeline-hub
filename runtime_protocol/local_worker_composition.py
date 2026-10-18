@@ -38,6 +38,7 @@ from .local_worker import (
     _selected_profile_payload,
     _host_only,
     _secure_profile,
+    _report_start_failure,
 )
 
 
@@ -515,19 +516,38 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             handle.report_value = self._host_only_report(handle)
             return handle
         except BaseException as primary:
-            if hosted is not None: hosted.close_children()
-            if binding_file is not None: binding_file.close()
+            # Report before any close/abort wait: cleanup is secondary and can
+            # outlive the caller's observation without settling this operation.
+            try:
+                _report_start_failure(primary, phase="host_only_prepare", operation_id=operation_id)
+            except BaseException:
+                pass
+            actions = []
+            if hosted is not None:
+                actions.append(hosted.close_children)
+            if binding_file is not None:
+                actions.append(binding_file.close)
             if handle is None:
-                if parent is not None: parent.close()
-                if activation is not None: activation.close()
-                if broker is not None: broker.abort_before_spawn()
+                if parent is not None:
+                    actions.append(parent.close)
+                if activation is not None:
+                    actions.append(activation.close)
+                if broker is not None:
+                    actions.append(broker.abort_before_spawn)
             else:
                 if handle.inspection_owner is not None and not handle.inspection_owner.released.is_set():
-                    handle.inspection_owner.abort_before_release()
-                try: self.abort(handle)
+                    actions.append(handle.inspection_owner.abort_before_release)
+                actions.append(lambda: self.abort(handle))
+            for cleanup_action in actions:
+                try:
+                    cleanup_action()
                 except BaseException as cleanup:
                     self.cleanup_uncertain = "host-only startup cleanup unresolved"
                     primary.add_note(type(cleanup).__name__ + ": host-only cleanup remains retained")
+                    try:
+                        _report_start_failure(cleanup, phase="cleanup", operation_id=operation_id, secondary=True)
+                    except BaseException:
+                        pass
             raise
 
     def _host_only_report(self, handle):

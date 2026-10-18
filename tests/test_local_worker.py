@@ -80,3 +80,35 @@ def test_host_only_rejects_undeclared_roles_or_mode(change):
         realm_root=profile.realm_root, support_root=profile.support_root)
     with pytest.raises(ValidationError):
         LocalWorkerLauncher._profile(launcher, profile.profile_id, profile.workspace_uuid)
+
+
+@pytest.mark.parametrize("reporter_fails,cleanup_fails", [(False, False), (True, False), (False, True), (True, True)])
+def test_start_diagnostics_and_cleanup_never_replace_first_error(monkeypatch, reporter_fails, cleanup_fails):
+    import threading
+    from runtime_protocol import local_worker as module
+    primary = RuntimeError("private-primary-value")
+    events = []
+    launcher = LocalWorkerLauncher.__new__(LocalWorkerLauncher)
+    launcher._operation_lock = threading.Lock()
+    launcher._state_lock = threading.RLock()
+    launcher._shutdown = threading.Event()
+    launcher._watch_stop = threading.Event()
+    launcher._startup_receipt_rejection = launcher._cleanup_uncertain = None
+    launcher._preparing_handle = launcher._active_handle = None
+    launcher.preparer = SimpleNamespace()
+    launcher._profile = lambda *_: (_ for _ in ()).throw(primary)
+    def report(error, **kwargs):
+        assert error is primary
+        events.append("reported")
+        if reporter_fails:
+            raise OSError("private-reporter-value")
+    def cleanup(handle):
+        events.append("cleanup")
+        if cleanup_fails:
+            raise TimeoutError("private-cleanup-value")
+    monkeypatch.setattr(module, "_report_start_failure", report)
+    launcher._abort = cleanup
+    with pytest.raises(RuntimeError) as caught:
+        launcher.start("fixture", "workspace")
+    assert caught.value is primary and events == ["reported", "cleanup"]
+    assert launcher._active_handle is None and not launcher._operation_lock.locked()

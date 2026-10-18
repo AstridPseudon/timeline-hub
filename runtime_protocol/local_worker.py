@@ -14,6 +14,7 @@ import os
 import re
 import sys
 import threading
+import time
 import uuid
 import weakref
 from dataclasses import asdict, dataclass
@@ -190,22 +191,41 @@ def _digest(value: object) -> str:
     return "sha256:" + hashlib.sha256(_canonical(value)).hexdigest()
 
 
-def _report_start_failure(exc: Exception) -> None:
+def _report_start_failure(exc: BaseException, *, phase="start", operation_id=None, secondary=False) -> None:
     """Best-effort code-location evidence without exception values or locals."""
     try:
         frames = []
         current = exc.__traceback__
         while current is not None:
             code = current.tb_frame.f_code
-            frames.append({"file": Path(code.co_filename).name,
-                           "function": code.co_name, "line": current.tb_lineno})
+            frames.append({"file": Path(code.co_filename).name[:80],
+                           "function": code.co_name[:80], "line": current.tb_lineno})
             frames = frames[-16:]
             current = current.tb_next
-        print(json.dumps({"event": "local_worker_start_failed",
-                          "exception_type": type(exc).__name__, "frames": frames},
-                         sort_keys=True, separators=(",", ":")), file=sys.stderr)
-    except Exception:
+        phases = {"start", "prepare", "host_only_prepare", "observation", "activation", "publication", "cleanup"}
+        if not secondary and not hasattr(exc, "local_worker_start_phase"):
+            exc.local_worker_start_phase = phase
+        first_phase = getattr(exc, "local_worker_start_phase", phase)
+        row = {"event": "local_worker_start_failed", "exception_type": type(exc).__name__[:80], "frames": frames}
+        if phase != "start" or operation_id is not None or secondary:
+            row.update(phase=first_phase if isinstance(first_phase, str) and first_phase in phases else "unknown",
+                       secondary=secondary)
+        if isinstance(operation_id, str) and re.fullmatch(r"[0-9a-f]{32}", operation_id):
+            row["operation_id"] = operation_id
+        print(json.dumps(row, sort_keys=True, separators=(",", ":")), file=sys.stderr, flush=True)
+    except BaseException:
         # Diagnostics cannot replace the original failure or cleanup obligation.
+        pass
+
+
+def _report_start_phase(phase, operation_id, started, outcome):
+    """Sparse observations in the existing stderr sink, never readiness."""
+    try:
+        print(json.dumps({"event": "local_worker_start_phase", "phase": phase,
+            "operation_id": operation_id, "outcome": outcome,
+            "elapsed_ms": max(0, int((time.monotonic() - started) * 1000))},
+            sort_keys=True, separators=(",", ":")), file=sys.stderr, flush=True)
+    except BaseException:
         pass
 
 
@@ -1802,6 +1822,10 @@ class LocalWorkerLauncher:
             raise ConflictError("a local worker launch operation is already in progress")
         handle: object | None = None
         credential_issued = False
+        operation_id = None
+        phase = "start"
+        detailed_start = False
+        started = time.monotonic()
         try:
             if self._shutdown.is_set():
                 raise ConflictError("Runtime owner is shutting down")
@@ -1810,6 +1834,7 @@ class LocalWorkerLauncher:
             if self._cleanup_uncertain is not None or getattr(self.preparer, "cleanup_uncertain", None):
                 raise ConflictError("local Worker graph cleanup is uncertain")
             profile = self._profile(profile_id, expected_workspace_uuid)
+            detailed_start = _secure_profile(profile)
             with self._state_lock:
                 if self._shutdown.is_set():
                     raise ConflictError("Runtime owner is shutting down")
@@ -1832,7 +1857,13 @@ class LocalWorkerLauncher:
 
             operation_id = uuid.uuid4().hex
             channel_id = uuid.uuid4().hex
+            phase = "prepare"
+            if detailed_start:
+                _report_start_phase(phase, operation_id, started, "begun")
             handle = self.preparer.prepare(profile, operation_id=operation_id, channel_id=channel_id)
+            if detailed_start:
+                _report_start_phase(phase, operation_id, started, "completed")
+            phase = "observation"
             with self._state_lock:
                 if self._shutdown.is_set():
                     raise ConflictError("Runtime owner is shutting down")
@@ -1906,7 +1937,12 @@ class LocalWorkerLauncher:
                 bind_generation = getattr(self.preparer, "bind_retained_generation_verifier", None)
                 if callable(bind_generation):
                     bind_generation(handle, lambda: _credential_commit_generation(self.credentials, self.actor))
+            phase = "activation"
+            if detailed_start:
+                _report_start_phase(phase, operation_id, started, "begun")
             self.preparer.activate(handle, grant)
+            if detailed_start:
+                _report_start_phase(phase, operation_id, started, "completed")
             activated = self._validate_observation(
                 profile, self.inspector.observe(handle), report=report,
                 operation_id=operation_id, channel_id=channel_id,
@@ -1921,6 +1957,7 @@ class LocalWorkerLauncher:
             # Publication is last: neither the parked process nor another
             # holder of the file can authenticate before the private grant is
             # accepted and the same process identity is observed once more.
+            phase = "publication"
             self._install_active(handle, profile, activated, receipt)
             self._enable_active_generation(handle)
             self._start_watcher()
@@ -1934,9 +1971,24 @@ class LocalWorkerLauncher:
                 "evidence_digest": second["evidence_digest"],
             }
         except Exception as exc:
-            _report_start_failure(exc)
+            try:
+                _report_start_failure(exc, phase=phase if detailed_start else "start",
+                                      operation_id=operation_id if detailed_start else None)
+            except BaseException:
+                pass
             if credential_issued:
-                self._revoke_actor()
+                try:
+                    self._revoke_actor()
+                except BaseException as cleanup:
+                    self._cleanup_uncertain = "local Worker startup credential cleanup unresolved"
+                    try:
+                        self._latch_cleanup_uncertain(cleanup)
+                    except BaseException:
+                        pass
+                    try:
+                        _report_start_failure(cleanup, phase="cleanup", operation_id=operation_id, secondary=True)
+                    except BaseException:
+                        pass
             with self._state_lock:
                 if self._preparing_handle is handle:
                     self._preparing_handle = None
@@ -1946,7 +1998,18 @@ class LocalWorkerLauncher:
                     self._active_identity = None
                     self._active_receipt = None
                     self._watch_stop.set()
-            self._abort(handle)
+            try:
+                self._abort(handle)
+            except BaseException as cleanup:
+                self._cleanup_uncertain = "local Worker startup cleanup unresolved"
+                try:
+                    self._latch_cleanup_uncertain(cleanup)
+                except BaseException:
+                    pass
+                try:
+                    _report_start_failure(cleanup, phase="cleanup", operation_id=operation_id, secondary=True)
+                except BaseException:
+                    pass
             raise
         finally:
             self._operation_lock.release()
