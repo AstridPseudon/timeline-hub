@@ -13,13 +13,14 @@ import dataclasses
 import difflib
 import io
 import json
+import math
 import re
 import shlex
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, Sequence
 
 import pytest
 import yaml
@@ -130,6 +131,106 @@ class PathResult:
     @property
     def refused(self) -> bool:
         return self.refusal_type is not None or bool(self.error and self.error.startswith("refused:"))
+
+
+@dataclass(frozen=True)
+class PCMComparison:
+    """Result of comparing two PCM windows at the same declared sample range."""
+
+    passed: bool
+    level_delta_db: float | None
+    level_passed: bool
+    alignment_passed: bool
+    best_lag_frames: int | None
+    expected_frames: int
+    actual_frames: int
+
+
+def _pcm_correlation_at_lag(expected: Sequence[float], actual: Sequence[float], channels: int,
+                            frames: int, lag: int) -> float | None:
+    """Pearson correlation at a frame lag; positive lag pairs expected[i] with actual[i + lag]."""
+    start = max(0, -lag)
+    stop = min(frames, frames - lag)
+    count = (stop - start) * channels
+    if count < 2:
+        return None
+    sum_expected = sum_actual = sum_expected_sq = sum_actual_sq = sum_product = 0.0
+    for frame in range(start, stop):
+        for channel in range(channels):
+            left = expected[frame * channels + channel]
+            right = actual[(frame + lag) * channels + channel]
+            sum_expected += left
+            sum_actual += right
+            sum_expected_sq += left * left
+            sum_actual_sq += right * right
+            sum_product += left * right
+    covariance = sum_product - sum_expected * sum_actual / count
+    expected_variance = sum_expected_sq - sum_expected * sum_expected / count
+    actual_variance = sum_actual_sq - sum_actual * sum_actual / count
+    denominator = math.sqrt(expected_variance * actual_variance)
+    return covariance / denominator if denominator > 0 else None
+
+
+def compare_pcm(expected: Sequence[float], actual: Sequence[float], *, channels: int = 1,
+                tolerance_db: float = 0.1) -> PCMComparison:
+    """Compare aligned PCM windows using the existing 0.1 dB bound and a one-frame shift guard.
+
+    The caller supplies windows for the same declared time range. The comparison never shifts the
+    data to make it fit: normalized correlation at frame lags -1, 0, and +1 must have a unique
+    maximum at zero. A nonconstant window is required to establish alignment. This is a focused
+    parity helper, not an audio codec or resampler tolerance model.
+    """
+    if isinstance(channels, bool) or not isinstance(channels, int) or channels < 1:
+        raise ValueError("channels must be a positive integer")
+    if not math.isfinite(tolerance_db) or tolerance_db < 0:
+        raise ValueError("tolerance_db must be a finite, non-negative number")
+    expected_values = tuple(float(value) for value in expected)
+    actual_values = tuple(float(value) for value in actual)
+    if not all(math.isfinite(value) for value in (*expected_values, *actual_values)):
+        raise ValueError("PCM samples must be finite numbers")
+    expected_frames, actual_frames = len(expected_values) // channels, len(actual_values) // channels
+    invalid_shape = len(expected_values) % channels or len(actual_values) % channels
+    if invalid_shape or expected_frames != actual_frames or expected_frames == 0:
+        return PCMComparison(False, None, False, False, None, expected_frames, actual_frames)
+
+    expected_rms = math.sqrt(sum(value * value for value in expected_values) / len(expected_values))
+    actual_rms = math.sqrt(sum(value * value for value in actual_values) / len(actual_values))
+    if expected_rms == 0 and actual_rms == 0:
+        delta_db = 0.0
+        level_passed = True
+    elif expected_rms == 0 or actual_rms == 0:
+        delta_db = None
+        level_passed = False
+    else:
+        delta_db = 20.0 * math.log10(actual_rms / expected_rms)
+        level_passed = abs(delta_db) <= tolerance_db
+
+    if expected_frames < 2 or expected_rms == 0 or actual_rms == 0:
+        best_lag = None
+        alignment_passed = False
+    else:
+        correlations = {
+            lag: _pcm_correlation_at_lag(expected_values, actual_values, channels, expected_frames, lag)
+            for lag in (-1, 0, 1)
+        }
+        if any(value is None for value in correlations.values()):
+            best_lag = None
+            alignment_passed = False
+        else:
+            best = max(correlations.values())
+            best_lags = [lag for lag, value in correlations.items() if value == best]
+            best_lag = best_lags[0] if len(best_lags) == 1 else None
+            alignment_passed = best_lags == [0]
+
+    return PCMComparison(
+        passed=level_passed and alignment_passed,
+        level_delta_db=delta_db,
+        level_passed=level_passed,
+        alignment_passed=alignment_passed,
+        best_lag_frames=best_lag,
+        expected_frames=expected_frames,
+        actual_frames=actual_frames,
+    )
 
 
 # ---- loading -----------------------------------------------------------------------------

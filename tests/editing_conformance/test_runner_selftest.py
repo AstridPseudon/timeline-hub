@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import copy
 import json
+import math
 import shlex
 from types import SimpleNamespace
 
@@ -16,6 +17,7 @@ from tests.editing_conformance.runner import (
     ScenarioError,
     classify,
     comparable_records,
+    compare_pcm,
     load_scenario,
     parse_scenario,
     run_case,
@@ -704,3 +706,52 @@ def test_sheet_transaction_boundary_requires_one_verified_declared_operation(mon
 def test_extension_adapter_rejects_malformed_specs(value):
     with pytest.raises(ScenarioError, match="extension"):
         _scenario(extension=value)
+
+
+def _pcm_signal(frames=4096, channels=2):
+    return tuple(
+        math.sin(frame * 0.071 + channel * 0.37) + 0.31 * math.sin(frame * 0.133 + channel * 0.19)
+        for frame in range(frames)
+        for channel in range(channels)
+    )
+
+
+def test_pcm_comparator_accepts_unchanged_and_inside_0_1_db_windows():
+    expected = _pcm_signal()
+    unchanged = compare_pcm(expected, expected, channels=2)
+    inside = compare_pcm(expected, [sample * 10 ** (0.05 / 20) for sample in expected], channels=2)
+
+    assert unchanged.passed and unchanged.level_delta_db == 0.0
+    assert unchanged.alignment_passed and unchanged.best_lag_frames == 0
+    assert inside.passed and inside.level_passed and inside.alignment_passed
+    assert inside.best_lag_frames == 0
+    assert abs(inside.level_delta_db) < 0.1
+
+
+@pytest.mark.parametrize("gain_db", [-1.0, -0.5, 0.5, 1.0])
+def test_pcm_comparator_rejects_planted_gain_controls(gain_db):
+    expected = _pcm_signal()
+    actual = [sample * 10 ** (gain_db / 20) for sample in expected]
+
+    result = compare_pcm(expected, actual, channels=2)
+
+    assert result.alignment_passed and result.best_lag_frames == 0
+    assert not result.level_passed and not result.passed
+    assert result.level_delta_db == pytest.approx(gain_db, abs=1e-12)
+
+
+@pytest.mark.parametrize("shift_frames", [-1, 1])
+def test_pcm_comparator_rejects_one_frame_alignment_shift(shift_frames):
+    expected = _pcm_signal()
+    shift_samples = abs(shift_frames) * 2
+    actual = (
+        (0.0,) * shift_samples + expected[:-shift_samples]
+        if shift_frames > 0
+        else expected[shift_samples:] + (0.0,) * shift_samples
+    )
+
+    result = compare_pcm(expected, actual, channels=2)
+
+    assert result.level_passed and abs(result.level_delta_db) < 0.1
+    assert not result.alignment_passed and not result.passed
+    assert result.best_lag_frames == shift_frames
