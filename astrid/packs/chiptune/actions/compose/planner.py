@@ -360,6 +360,7 @@ def build_result_manifest(
                 "artifact_type": "audio",
                 "role": "result",
                 "is_primary": True,
+                "ordinal": 0,
                 "media_type": "audio/wav",
                 "duration_seconds": round(plan.sample_count / syn.SAMPLE_RATE, 6),
             },
