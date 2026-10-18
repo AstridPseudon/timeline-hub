@@ -1,3 +1,5 @@
+import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
+import { elementReferenceCommand } from '../commands/elementReferenceHistory.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { TimelineVersionConflictError, type TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
@@ -142,8 +144,10 @@ function findElement(
   ref: ReighElementRef,
   options: { allowDraft?: boolean } = {},
 ): ReighElementCatalogEntry {
-  const entry = context.catalog.find((candidate) => candidate.id === ref.id && candidate.kind === ref.kind
+  const entries = context.catalog.filter((candidate) => candidate.id === ref.id && candidate.kind === ref.kind
     && (ref.packId === undefined || candidate.packId === ref.packId));
+  if (entries.length > 1) throw new ReighElementOperationError(`Element identity is ambiguous: ${ref.id}`);
+  const entry = entries[0];
   if (!entry) {
     throw new ReighElementOperationError(`Element is not registered in the Astrid catalog: ${ref.kind}/${ref.id}`);
   }
@@ -245,6 +249,26 @@ function assertTransitionFits(
   }
 }
 
+function elementParams(clip: TimelineClip, operation: { params?: Record<string, unknown> | null; params_mode?: 'merge' | 'replace' | 'clear' }): Partial<TimelineClip> {
+  if (operation.params_mode === 'clear') return { params: undefined };
+  if (operation.params === undefined) return {};
+  if (operation.params === null || operation.params_mode === 'replace') return { params: operation.params } as Partial<TimelineClip>;
+  if (clip.params != null && !isRecord(clip.params)) throw new ReighElementOperationError('Element merge requires object params');
+  return { params: { ...(clip.params ?? {}), ...operation.params } };
+}
+
+function referenceClip(clip: TimelineClip, operation: { element?: ReighElementRef; params?: Record<string, unknown> | null; params_mode?: 'merge' | 'replace' | 'clear' }, assign: boolean): TimelineClip {
+  const next = { ...clip, ...(operation.element ? { elementRef: operation.element } : {}), ...elementParams(clip, operation) };
+  if (next.params === undefined) delete next.params;
+  const matching = clip.elementRef && clip.entrance?.type === clip.elementRef.id;
+  if (next.elementRef?.kind === 'animation' && (assign || matching)) {
+    const entrance = assign ? { type: next.elementRef.id, duration: 0.4 } : { ...clip.entrance!, type: next.elementRef.id };
+    next.entrance = { ...entrance, ...(Object.prototype.hasOwnProperty.call(next, 'params') ? { params: next.params } : {}) };
+    if (!Object.prototype.hasOwnProperty.call(next, 'params')) delete next.entrance.params;
+  } else if (operation.element && matching) delete next.entrance;
+  return next;
+}
+
 function applyTimelineOperation(
   context: ReighAgentElementContext,
   config: TimelineConfig,
@@ -261,27 +285,7 @@ function applyTimelineOperation(
       }
       if (operation.placement === 'clip') {
         if (!operation.clip_id) throw new ReighElementOperationError('Clip placement requires clip_id');
-        return replaceClip(config, operation.clip_id, (clip) => {
-          return {
-            ...clip,
-            elementRef: operation.element,
-            ...(entry.kind === 'animation'
-              ? {
-                  // Astrid's canonical timeline schema carries animation
-                  // refs in the phase slots. Applying an animation from the
-                  // library uses entrance as the ergonomic default.
-                  entrance: {
-                    type: operation.element.id,
-                    // Match TimelineRenderer's established fallback when the
-                    // operation does not provide an explicit entrance span.
-                    duration: 0.4,
-                    ...(operation.params ? { params: operation.params } : {}),
-                  },
-                }
-              : {}),
-            ...(operation.params ? { params: { ...(clip.params ?? {}), ...operation.params } } : {}),
-          };
-        });
+        return replaceClip(config, operation.clip_id, (clip) => referenceClip(clip, operation, true));
       }
 
       const target = operation.clip_id ? requireClip(config, operation.clip_id) : undefined;
@@ -299,17 +303,13 @@ function applyTimelineOperation(
         clipType: entry.kind === 'effect' ? entry.id : 'effect-layer',
         hold: duration,
         elementRef: operation.element,
-        ...(operation.params ? { params: operation.params } : {}),
+        ...elementParams({} as TimelineClip, operation),
       };
       return { ...config, clips: [...config.clips, overlay] };
     }
     case 'timeline.update_element':
       if (operation.element) findElement(context, operation.element, { allowDraft: true });
-      return replaceClip(config, operation.clip_id, (clip) => ({
-        ...clip,
-        ...(operation.element ? { elementRef: operation.element } : {}),
-        ...(operation.params ? { params: { ...(clip.params ?? {}), ...operation.params } } : {}),
-      }));
+      return replaceClip(config, operation.clip_id, (clip) => referenceClip(clip, operation, false));
     case 'timeline.remove_element':
       return replaceClip(config, operation.clip_id, (clip) => {
         const { elementRef: _elementRef, ...withoutElement } = clip;
@@ -318,10 +318,8 @@ function applyTimelineOperation(
         const nextEntrance = removedId && entrance?.type === removedId
           ? undefined
           : entrance;
-        return {
-          ...withoutElement,
-          ...(nextEntrance ? { entrance: nextEntrance } : { entrance: undefined }),
-        };
+        if (!nextEntrance && removedId && entrance?.type === removedId) delete withoutElement.entrance;
+        return withoutElement;
       });
     case 'timeline.set_clip_fade':
       return replaceClip(config, operation.clip_id, (clip) => ({
@@ -414,6 +412,7 @@ function applyTimelineOperation(
  * the same CAS/conflict machinery as ordinary editor edits.
  */
 export class AstridElementOperationAdapter {
+  private readonly pendingReferences = new Map<string, { signature: string; input: Parameters<ElementTimelineRoutes['save']>[1] }>();
   private readonly drafts = new Map<string, ReighElementCatalogEntry>();
   private readonly draftSources = new Map<string, string>();
   private readonly draftDependencies = new Map<string, readonly string[]>();
@@ -522,6 +521,18 @@ export class AstridElementOperationAdapter {
   private async executeTimelineMutation(
     operation: Extract<ReighElementOperation, { name: `timeline.${string}` }>,
   ): Promise<ReighElementOperationResult> {
+    const referenceMutation = operation.name === 'timeline.apply_element' || operation.name === 'timeline.update_element' || operation.name === 'timeline.remove_element';
+    const signature = referenceMutation ? canonicalJsonStringify(operation) : undefined;
+    const pending = this.pendingReferences.get(operation.timeline);
+    if (referenceMutation && pending) {
+      if (pending.signature !== signature) throw new ReighElementOperationError('An unacknowledged element operation owns this timeline; retry its exact captured input first.');
+      return this.persistTimelineMutation(operation, pending.input, signature);
+    }
+    if (operation.name === 'timeline.apply_element' || operation.name === 'timeline.update_element' && operation.element) {
+      const ref = operation.element!;
+      const entry = findElement({ ...this.context, catalog: [...this.context.catalog, ...this.drafts.values()] }, ref, { allowDraft: true });
+      operation = { ...operation, element: { ...ref, ...(entry.packId ? { packId: entry.packId } : {}) } };
+    }
     const draftRef = operation.name === 'timeline.apply_element'
       ? operation.element
       : operation.name === 'timeline.update_element'
@@ -549,6 +560,7 @@ export class AstridElementOperationAdapter {
       operation,
     );
     const nextConfig = this.attachDraftSource(nextConfigBeforeSources, operation);
+    for (const clip of nextConfig.clips) if (Object.prototype.hasOwnProperty.call(clip, 'params') && clip.params === undefined) delete clip.params;
     // These producers preserve the complete operation, including the coupled
     // effects/entrance/exit fade state. Legacy effects arrays have no matching
     // fade command and retain the whole-operation compatibility path.
@@ -585,19 +597,43 @@ export class AstridElementOperationAdapter {
         if (!editCommands) throw new ReighElementOperationError('Catalog transition requires an exact bound parent clip pair.');
       }
     }
-    const saved = await this.routes.save(operation.timeline, {
+    if (operation.name === 'timeline.apply_element' || operation.name === 'timeline.update_element' || operation.name === 'timeline.remove_element') {
+      const captured = asTimelineConfig(document.config);
+      const overlay = operation.name === 'timeline.apply_element' && operation.placement === 'overlay';
+      const clipId = overlay ? nextConfig.clips[nextConfig.clips.length - 1].id : operation.clip_id!;
+      const paramsMode = operation.name === 'timeline.remove_element' ? 'keep' : operation.params_mode
+        ?? (operation.params === undefined ? 'keep' : operation.params === null ? 'replace' : 'merge');
+      editCommands = [await elementReferenceCommand(captured, nextConfig, clipId,
+        overlay ? 'overlay' : operation.name === 'timeline.remove_element' ? 'clear'
+          : operation.name === 'timeline.apply_element' ? 'assign' : 'update', paramsMode)];
+    }
+    return this.persistTimelineMutation(operation, {
       config: nextConfig,
       registry: asAssetRegistry(document.registry),
       expectedVersion: operation.expected_version,
       ...(document.head ? { head: document.head } : {}),
       ...(editCommands?.length ? { editCommands } : {}),
-    }) as TimelineDocument;
-    return {
-      operation: operation.name,
-      config_version: saved.config_version,
-      config: asTimelineConfig(saved.config),
-      registry: asAssetRegistry(saved.registry),
-    };
+    }, signature);
+  }
+
+  private async persistTimelineMutation(
+    operation: Extract<ReighElementOperation, { name: `timeline.${string}` }>,
+    input: Parameters<ElementTimelineRoutes['save']>[1], signature?: string,
+  ): Promise<ReighElementOperationResult> {
+    // Runtime's existing pending-COMMIT owner is object identity. Retain the
+    // allocated clip, captured source and exact save objects across an unknown
+    // outcome; recomputing an equivalent config would be a different gesture.
+    if (signature) this.pendingReferences.set(operation.timeline, { signature, input });
+    try {
+      const saved = await this.routes.save(operation.timeline, input) as TimelineDocument;
+      const result = { operation: operation.name, config_version: saved.config_version,
+        config: asTimelineConfig(saved.config), registry: asAssetRegistry(saved.registry) };
+      if (signature) this.pendingReferences.delete(operation.timeline);
+      return result;
+    } catch (error) {
+      if (error instanceof TimelineVersionConflictError && signature) this.pendingReferences.delete(operation.timeline);
+      throw error;
+    }
   }
 
   private attachDraftSource(
@@ -615,16 +651,28 @@ export class AstridElementOperationAdapter {
             : undefined;
     if (!ref) return config;
     const source = this.draftSources.get(ref.id);
-    if (!source) return config;
+    if (source && (config.app !== undefined && !isRecord(config.app) || isRecord(config.app) && config.app.elements !== undefined && !isRecord(config.app.elements))) {
+      throw new ReighElementOperationError('Element source container is null or malformed');
+    }
     const app = isRecord(config.app) ? config.app : {};
     const elements = isRecord(app.elements) ? app.elements : {};
+    const existing = elements[ref.id];
+    if (existing !== undefined && (!isRecord(existing) || existing.kind !== ref.kind || existing.revision !== ref.revision
+      || existing.packId !== ref.packId || (source && existing.source !== source))) {
+      throw new ReighElementOperationError(`Element source identity collision: ${ref.id}`);
+    }
+    if (existing !== undefined && config.clips.some(clip => clip.elementRef?.id === ref.id
+      && (clip.elementRef.kind !== ref.kind || clip.elementRef.revision !== ref.revision || clip.elementRef.packId !== ref.packId))) {
+      throw new ReighElementOperationError(`Element source has conflicting remaining reference users: ${ref.id}`);
+    }
+    if (!source) return config;
     const nextConfig: TimelineConfig = {
       ...config,
       app: {
         ...app,
         elements: {
           ...elements,
-          [ref.id]: { kind: ref.kind, revision: ref.revision, source },
+          [ref.id]: existing ?? { kind: ref.kind, revision: ref.revision, ...(ref.packId ? { packId: ref.packId } : {}), source },
         },
       },
     };

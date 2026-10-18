@@ -1,3 +1,4 @@
+import { isElementReferenceBatch, isElementReferenceInverse } from '../commands/elementReferenceHistory.ts';
 import { applyManualTextWrites } from '../commands/manualText.ts';
 import { isManualTextBatch, isManualTextCreation, isManualTextInverse } from '../commands/manualTextHistory.ts';
 import { isAppKeyframeHistoryBatch, isAppKeyframeHistoryInverse } from '../commands/appKeyframeHistory.ts';
@@ -260,7 +261,7 @@ export function useTimelineHistory({
       syncHistoryState();
       return;
     }
-    if (!isPositionResetInverse(inverse) && !isShaderSlotInverse(inverse) && !isTransitionAssignmentInverse(inverse) && !isContinuousHistoryInverse(inverse) && !isAppKeyframeHistoryInverse(inverse) && !isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse) && !isTiedHoldExpansionInverse(inverse) && !isTranscriptCaptionInverse(inverse) && !isClipPlacementInverse(inverse) && !isClipStructureInverse(inverse) && !isTrackHistoryInverse(inverse) && !isFadeHistoryInverse(inverse) && !isClipLookStyleInverse(inverse) && !isClipParamsHistoryInverse(inverse) && !isManualTextInverse(inverse)) return;
+    if (!isElementReferenceInverse(inverse) && !isPositionResetInverse(inverse) && !isShaderSlotInverse(inverse) && !isTransitionAssignmentInverse(inverse) && !isContinuousHistoryInverse(inverse) && !isAppKeyframeHistoryInverse(inverse) && !isAssetRegistrationInverse(inverse) && !isOverlapTrimInverse(inverse) && !isTiedHoldExpansionInverse(inverse) && !isTranscriptCaptionInverse(inverse) && !isClipPlacementInverse(inverse) && !isClipStructureInverse(inverse) && !isTrackHistoryInverse(inverse) && !isFadeHistoryInverse(inverse) && !isClipLookStyleInverse(inverse) && !isClipParamsHistoryInverse(inverse) && !isManualTextInverse(inverse)) return;
     for (const entry of [...undoStackRef.current, ...redoStackRef.current]) {
       if (entry.nativeRegistration?.owner === owner) entry.nativeRegistration.inverse = structuredClone(inverse);
     }
@@ -346,7 +347,7 @@ export function useTimelineHistory({
     const inverse = entry.nativeRegistration?.inverse;
     if (entry.nativeRegistration && !inverse) return false;
     const textClips = isManualTextInverse(inverse) ? applyManualTextWrites(current.config.clips, inverse.args.writes) : undefined;
-    const nextData = textClips ? buildDataFromCurrentRegistry({ ...current.config, clips: textClips }, current) : entry.nativeRegistration && (isPositionResetInverse(inverse) || isShaderSlotInverse(inverse) || isTransitionAssignmentInverse(inverse) || isContinuousHistoryInverse(inverse) || isAppKeyframeHistoryInverse(inverse) || isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse) || isTranscriptCaptionInverse(inverse) || isClipPlacementInverse(inverse) || isClipStructureInverse(inverse) || isTrackHistoryInverse(inverse) || isFadeHistoryInverse(inverse) || isClipLookStyleInverse(inverse) || isClipParamsHistoryInverse(inverse) || isManualTextInverse(inverse))
+    const nextData = textClips ? buildDataFromCurrentRegistry({ ...current.config, clips: textClips }, current) : entry.nativeRegistration && (isElementReferenceInverse(inverse) || isPositionResetInverse(inverse) || isShaderSlotInverse(inverse) || isTransitionAssignmentInverse(inverse) || isContinuousHistoryInverse(inverse) || isAppKeyframeHistoryInverse(inverse) || isOverlapTrimInverse(inverse) || isTiedHoldExpansionInverse(inverse) || isTranscriptCaptionInverse(inverse) || isClipPlacementInverse(inverse) || isClipStructureInverse(inverse) || isTrackHistoryInverse(inverse) || isFadeHistoryInverse(inverse) || isClipLookStyleInverse(inverse) || isClipParamsHistoryInverse(inverse) || isManualTextInverse(inverse))
       ? { ...current } : preserveUploadingClips(current, applyHistoryEntry(current, entry, direction));
     const transitionReplay = entry.nativeRegistration?.transitionReplay;
     const mediaReplay = entry.nativeRegistration?.mediaReplay;
@@ -480,7 +481,8 @@ export function useTimelineHistory({
     const nativeRelation = (entry: UndoEntry) => {
       const nativeCommands = entry.nativeRegistration && gestureCommandsFor(entry.nativeRegistration.owner);
       const command = nativeCommands?.[0];
-      return isManualTextBatch(nativeCommands ?? []) || isManualTextCreation(nativeCommands ?? []) || isManualTextInverse(command) || isManualTextInverse(entry.nativeRegistration?.inverse)
+      return isElementReferenceBatch(nativeCommands ?? []) || isElementReferenceInverse(command) || isElementReferenceInverse(entry.nativeRegistration?.inverse)
+        || isManualTextBatch(nativeCommands ?? []) || isManualTextCreation(nativeCommands ?? []) || isManualTextInverse(command) || isManualTextInverse(entry.nativeRegistration?.inverse)
         || isPositionResetBatch(nativeCommands ?? []) || isPositionResetInverse(command) || isPositionResetInverse(entry.nativeRegistration?.inverse)
         || isShaderSlotBatch(nativeCommands ?? []) || isShaderSlotInverse(command) || isShaderSlotInverse(entry.nativeRegistration?.inverse)
         || isTransitionAssignmentBatch(nativeCommands ?? []) || isTransitionAssignmentInverse(command) || isTransitionAssignmentInverse(entry.nativeRegistration?.inverse)
