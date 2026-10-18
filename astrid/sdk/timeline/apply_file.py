@@ -7,8 +7,26 @@ from typing import Any
 
 from astrid.sdk.timeline.commands import CommandError
 from astrid.sdk.timeline.commands import run as run_command
+from astrid.sdk.timeline import store
 from astrid.sdk.timeline.transaction import edit_transaction
-from astrid.sdk.timeline_sheet import apply_sheet
+from astrid.sdk.timeline_sheet import apply_sheet, parse_sheet
+
+
+def _no_change_operation(sheet: dict[str, Any]) -> str | None:
+    """Return the label for one explicit canonical ordinary OpCall, if eligible."""
+    calls = sheet.get("commands", [])
+    if len(calls) != 1:
+        return None
+    operation_id = calls[0].get("op")
+    from astrid.sdk.timeline.commands import REGISTRY
+
+    operation = REGISTRY.get(operation_id)
+    if (operation is None or operation.op != operation_id
+            or operation.canonical_name != operation_id or operation.boundary != "edit"
+            or operation_id == "timeline.restructure"):
+        # Restructure intentionally keeps the runner's existing silent no-op policy.
+        return None
+    return operation_id
 
 
 def _apply_commands_jsonl(tl: Any, text: str) -> None:
@@ -74,13 +92,17 @@ def apply_file(tl: Any, path: str | Path) -> list[str]:
     source_path = Path(path)
     source = source_path.read_text(encoding="utf-8")
     suffix = source_path.suffix.lower()
+    sheet_operation = None
+    if suffix not in {".py", ".jsonl"}:
+        sheet_operation = _no_change_operation(parse_sheet(source))
+    before_snapshot = store._snapshot(tl) if sheet_operation is not None else None
 
     with edit_transaction(
         tl,
         f"apply {source_path.name}",
         check=False,
         quiet=True,
-        record_no_change=False,
+        record_no_change=sheet_operation is not None,
         record_rollback=False,
     ) as tx:
         tx.canonical = True
@@ -90,5 +112,8 @@ def apply_file(tl: Any, path: str | Path) -> list[str]:
             _apply_commands_jsonl(tl, source)
         else:
             apply_sheet(tl, source)
+            if (sheet_operation is not None and not tx.cancelled
+                    and store._snapshot(tl) == before_snapshot):
+                tx.label = sheet_operation
 
     return list(tx.changes) if tx.changed else []

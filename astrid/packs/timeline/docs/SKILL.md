@@ -144,15 +144,17 @@ tl.publish("Move rocket to went")
 
 ## Reference and extending
 
-Add an SDK mutator in `astrid/sdk/timeline/checkout.py` and its `_commands.register(...)` tuple; `astrid/sdk/timeline/commands.py` owns that registry and `EDIT_FLAG_OPERATIONS`. Add the CLI flag in `astrid/packs/timeline/cli.py`; `tests/sdk/test_timeline_commands.py` checks the flag mapping. Update `tests/parity/edit-command-flags.json`, regenerate the [flag-to-operation table](references/edit-command-flags.md) with `python3 -m tools.parity.edit_flag_reference`, and verify it in `tests/sdk/test_edit_command_contract.py`. For a lint check, follow `astrid/packs/rendering/docs/references/visualize-extend.md`: export `CHECK = Check(...)` from `astrid/packs/<pack>/rendering/visualize_layers/<name>.py`; discovery and `register_check` live in `astrid/packs/rendering/actions/timeline_visualize/layers/base.py`. The guide pattern is tested by `test_the_guide_examples_register_and_run` in `tests/packs/rendering/test_timeline_visualize_motion_views.py` and listed by `python3 -m astrid timelines lint --list-checks`. Add an editing scenario under `tests/editing_scenarios/` and cover it in `tests/editing_conformance/test_conformance.py`. `timelines edit --help` is the compact routine list (≤40 lines); `--help-all` shows every option.
+Add an SDK mutator in `astrid/sdk/timeline/checkout.py` and its `_commands.register(...)` tuple; `astrid/sdk/timeline/commands.py` owns that registry and `EDIT_FLAG_OPERATIONS`. Add an editing scenario under `tests/editing_scenarios/` and cover it in `tests/editing_conformance/test_conformance.py`. Add a CLI flag, flag-map entry, parity fixture row, and generated reference row only when the operation intentionally adds a registered CLI flag. The [flag-to-operation table](references/edit-command-flags.md) is regenerated with `python3 -m tools.parity.edit_flag_reference` and checked by `tests/sdk/test_edit_command_contract.py`.
+
+Command-only OpCalls use the existing CLI `edit --command '<OpCall JSON>'`, sheet `edit <OpCall JSON>`, and Python `commands.run(tl, call)` routes; these do not need a new flag or generated flag row. For a lint check, follow `astrid/packs/rendering/docs/references/visualize-extend.md`: export `CHECK = Check(...)` from `astrid/packs/<pack>/rendering/visualize_layers/<name>.py`; discovery and `register_check` live in `astrid/packs/rendering/actions/timeline_visualize/layers/base.py`. The guide pattern is tested by `test_the_guide_examples_register_and_run` in `tests/packs/rendering/test_timeline_visualize_motion_views.py` and listed by `python3 -m astrid timelines lint --list-checks`. `timelines edit --help` is the compact routine list (≤40 lines); `--help-all` shows every option.
 
 ### Add an operation
 
 1. Choose one canonical OpCall id and add its `Operation` entry in `astrid/sdk/timeline/checkout.py`; name the handler, snapshot inverse, aliases, CLI spelling, SDK adapter, and sheet token.
 2. Keep parser actions, SDK adapters, and sheet command handling explicit. Do not generate flags, methods, tokens, or a second registry.
-3. Add or extend a disposable scenario under `tests/editing_scenarios/` for the CLI, sheet, and Python routes; assert the saved journal uses the canonical id.
-4. Add the explicit flag destination in `commands.py` and refresh `tests/parity/edit-command-flags.json` from the registry.
-5. Regenerate the reference table below with `python3 scripts/generate_timeline_registry_reference.py`, then run the focused scenario and adapter selectors.
+3. Add or extend a disposable scenario for the supported CLI, sheet, and Python routes; assert the saved journal uses the canonical id.
+4. Add an explicit CLI flag destination and refresh `tests/parity/edit-command-flags.json` only when adding a CLI flag.
+5. Regenerate the reference table below only when its canonical flag rows change, then run the focused scenario and adapter selectors.
 
 ### Canonical operation reference
 
