@@ -20,6 +20,7 @@ if sys.pycache_prefix is None:
     atexit.register(lambda: shutil.rmtree(_pycache_prefix, ignore_errors=True))
 
 from astrid.core.foundation import project_paths as paths
+from astrid.core.pack import source_setup
 from astrid.core.subprocess_env import (
     TASK_ITEM_ID_ENV,
     TASK_ITERATION_ENV,
@@ -220,10 +221,19 @@ def _sandboxed_home_and_projects(
     # roots for every test until session end and exhausted disk in the full
     # 7,000+ test suite before the installed-artifact lanes could start.
     astrid_home = tmp_path / "astrid-home"
+    home = tmp_path / "home"
+    xdg_state_home = tmp_path / "xdg-state"
     projects_root = tmp_path / "projects"
     workspace_config_dir = tmp_path / "workspace-config"
-    for root in (astrid_home, projects_root, workspace_config_dir):
+    source_state = tmp_path / "pack-sources.json"
+    for root in (astrid_home, home, xdg_state_home, projects_root, workspace_config_dir):
         root.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("XDG_STATE_HOME", str(xdg_state_home))
+    # Custody's command inventory resolves this selector before its XDG/HOME
+    # fallback. Keep the ambient per-user pack registry out of every test;
+    # tests that exercise source state can replace this value explicitly.
+    monkeypatch.setenv(source_setup.SOURCE_STATE_ENV, str(source_state))
     monkeypatch.setenv("ASTRID_HOME", str(astrid_home))
     monkeypatch.setenv("ASTRID_WORKSPACE_CONFIG_DIR", str(workspace_config_dir))
     # Seed PROJECTS_ROOT to a tmp dir so tests never touch the real

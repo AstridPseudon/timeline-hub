@@ -265,3 +265,78 @@ def test_host_publishes_its_in_flight_task_count(tmp_path):
     assert json.loads(path.read_text())["active"] == 0
     assert oct(path.stat().st_mode & 0o777) == oct(0o600)
 
+
+
+def test_stop_group_signals_anchored_group_and_refuses_a_reused_leader(owned_process_groups):
+    from astrid.core.execution.process_group import process_birth_identity
+    code = ("import subprocess,sys,time;"
+            "subprocess.Popen([sys.executable,'-c','import time;time.sleep(300)']);time.sleep(300)")
+    proc = subprocess.Popen([sys.executable, "-c", code], start_new_session=True)
+    owned_process_groups.record(proc)
+    try:
+        deadline = time.monotonic() + 15
+        while len(host_bootstrap._group_survivors(proc.pid)) < 2 and time.monotonic() < deadline:
+            time.sleep(0.05)
+        birth = process_birth_identity(proc.pid)
+        assert birth and len(host_bootstrap._group_survivors(proc.pid)) == 2
+        with pytest.raises(host_bootstrap.PackHostBootstrapError, match="reused"):
+            host_bootstrap._stop_group(proc.pid, leader_birth=birth + "x")
+        assert proc.poll() is None
+        host_bootstrap._stop_group(proc.pid, grace=2.0, leader_birth=birth)
+        proc.wait(timeout=10)
+        assert not host_bootstrap._group_survivors(proc.pid)
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+        proc.wait()
+
+
+def test_stop_group_signals_only_the_registered_anchored_group(monkeypatch):
+    calls = []
+    census = {
+        4321: SimpleNamespace(pid=4321, pgid=4321, birth="birth-current"),
+        4322: SimpleNamespace(pid=4322, pgid=4321, birth="child-birth"),
+    }
+    monkeypatch.setattr(host_bootstrap, "_process_snapshot", lambda: census)
+    monkeypatch.setattr(host_bootstrap, "_host_pid_alive", lambda _pid: True)
+    monkeypatch.setattr(host_bootstrap.os, "getpid", lambda: 9999)
+    monkeypatch.setattr(host_bootstrap.os, "getpgrp", lambda: 8765)
+    def killpg(*args):
+        calls.append(args)
+        census.clear()
+    monkeypatch.setattr(host_bootstrap.os, "killpg", killpg)
+
+    host_bootstrap._stop_group(4321, grace=0, leader_birth="birth-current")
+    assert calls == [(4321, signal.SIGTERM)]
+
+    calls.clear()
+    census.update({
+        4321: SimpleNamespace(pid=4321, pgid=4321, birth="replacement-birth"),
+        4322: SimpleNamespace(pid=4322, pgid=4321, birth="child-birth"),
+    })
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="reused"):
+        host_bootstrap._stop_group(4321, grace=0, leader_birth="birth-current")
+    assert calls == []
+
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="unsafe"):
+        host_bootstrap._stop_group(8765, grace=0, leader_birth="birth-current")
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="lacks a leader birth anchor"):
+        host_bootstrap._stop_group(4321, grace=0)
+    assert calls == []
+
+
+def test_stop_group_rechecks_leader_birth_before_escalation(monkeypatch):
+    leader = SimpleNamespace(pid=4321, pgid=4321, birth="registered-birth")
+    calls = []
+    monkeypatch.setattr(host_bootstrap, "_process_snapshot", lambda: {4321: leader})
+    monkeypatch.setattr(host_bootstrap, "_host_pid_alive", lambda _pid: True)
+    monkeypatch.setattr(host_bootstrap.os, "getpid", lambda: 9999)
+    monkeypatch.setattr(host_bootstrap.os, "getpgrp", lambda: 8765)
+    def killpg(pgid, signum):
+        calls.append((pgid, signum))
+        leader.birth = "replacement-birth"
+    monkeypatch.setattr(host_bootstrap.os, "killpg", killpg)
+
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="reused"):
+        host_bootstrap._stop_group(4321, grace=0, leader_birth="registered-birth")
+    assert calls == [(4321, signal.SIGTERM)]

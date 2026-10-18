@@ -12,7 +12,8 @@ from typing import Any
 
 import pytest
 
-from astrid.core.execution import process_group
+from astrid.core.execution import custody_broker, process_group
+from astrid.core.pack import source_setup
 from astrid.core.rendering import RenderPlan, RenderResult, SupportReport
 from astrid.core.rendering import transport as transport_module
 from astrid.core.rendering.errors import (
@@ -58,7 +59,7 @@ def _backend_waits_for_custody(monkeypatch: pytest.MonkeyPatch) -> None:
     """Hold the fixture backend until custody has made its first observation of it.
 
     A renderer that exits first is the Linux custody gap owned in
-    tests/known_failures.txt (no stopped launch); under CPU load every instantly
+    the custody broker (no stopped launch); under CPU load every instantly
     exiting backend here hit it. These tests are about the transport's wire and
     lifecycle behaviour, so the backend (see ``launch_gate`` in
     fixtures/transport_backend.py) starts only once ``popen_owned_process`` returns.
@@ -103,6 +104,19 @@ def _run(
         timeout=timeout,
     )
     return selected, value
+
+
+def test_test_harness_isolates_pack_source_inventory(tmp_path: Path) -> None:
+    """Transport tests must not inherit the developer's installed-source registry."""
+    source_state = source_setup.source_state_path()
+    assert source_state.is_relative_to(tmp_path)
+    assert not source_state.exists()
+    assert Path(os.environ["HOME"]).is_relative_to(tmp_path)
+    assert Path(os.environ["XDG_STATE_HOME"]).is_relative_to(tmp_path)
+    fake_bin = tmp_path / "empty-bin"
+    fake_bin.mkdir()
+    environment = dict(os.environ, PATH=str(fake_bin))
+    assert custody_broker._inventory_launch_policy(environment, str(tmp_path)) is None
 
 
 def _assert_pid_disappears(pid: int, *, timeout: float = 3) -> None:
@@ -313,8 +327,8 @@ def test_timeout_kills_process_group_and_reaps_direct_child(tmp_path: Path, monk
     with pytest.raises(RendererTimeoutError) as caught:
         _run(tmp_path, payload, timeout=0.5)
 
-    assert deadlines and all(type(deadline) is float for deadline in deadlines)
-    assert len(set(deadlines)) == 1  # The caller's absolute deadline never resets.
+    # Renderer expiry must not cancel an in-flight custody transaction.
+    assert deadlines and all(deadline is None for deadline in deadlines)
     parent_pid = int(parent_pid_path.read_text(encoding="utf-8"))
     assert caught.value.error.kind == "timeout"
     assert caught.value.error.backend == RENDERER_ID
@@ -380,28 +394,62 @@ def test_detached_tree_timeout_and_interrupt_preserve_host_and_sibling(
         monkeypatch.setenv("ASTRID_RENDER_INHERIT_PROCESS_GROUP", "1")
     else:
         monkeypatch.delenv("ASTRID_RENDER_INHERIT_PROCESS_GROUP", raising=False)
-    sibling = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(15)"])
+    sibling = subprocess.Popen(
+        [sys.executable, "-c", "import os, signal; os.write(1, b'ready\\n'); signal.pause()"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+    )
     original_observe = transport_module.observe_tree
+    original_launch = transport_module.popen_owned_process
     original_killpg = os.killpg
     observed = []
     raised_interrupt = []
 
     def observe(process, **kwargs):
         live = original_observe(process, **kwargs)
-        if not observed:
-            observed.append(process)
-        if interrupted and len(live) == 4 and not raised_interrupt:
+        if (
+            interrupted
+            and not raised_interrupt
+            and len(live) == 4
+            and (registry / "ready.txt").is_file()
+        ):
             raised_interrupt.append(True)
             raise KeyboardInterrupt()
         return live
+
+    def launch_after_readiness(*args, **kwargs):
+        process = original_launch(*args, **kwargs)
+        observed.append(process)
+        while True:
+            live = original_observe(process)
+            try:
+                tree_pids = {
+                    int((registry / f"{role}.pid").read_text())
+                    for role in ("backend", "node", "browser", "worker")
+                }
+            except (OSError, ValueError):
+                tree_pids = set()
+            if (
+                len(tree_pids) == 4
+                and set(live) == tree_pids
+                and (registry / "last-write.txt").is_file()
+                and (registry / "ready.txt").is_file()
+            ):
+                return process
+            if process.poll() is not None:
+                pytest.fail("owned fixture command exited before tree readiness")
+            time.sleep(0.01)
 
     def killpg(pgid, sig):
         assert pgid != os.getpgrp(), "transport signalled its containing group"
         original_killpg(pgid, sig)
 
     monkeypatch.setattr(transport_module, "observe_tree", observe)
+    monkeypatch.setattr(transport_module, "popen_owned_process", launch_after_readiness)
     monkeypatch.setattr(os, "killpg", killpg)
     try:
+        assert sibling.stdout is not None
+        assert sibling.stdout.readline() == b"ready\n"
         expected = KeyboardInterrupt if interrupted else RendererTimeoutError
         with pytest.raises(expected):
             CommandTransport(RENDERER_ID, termination_grace=0.05).run(
@@ -412,6 +460,11 @@ def test_detached_tree_timeout_and_interrupt_preserve_host_and_sibling(
         assert len(observed[0]._astrid_tree_members) == 4
         for pid in observed[0]._astrid_tree_members:
             _assert_pid_disappears(pid)
+        assert all(
+            (registry / f"{role}.pid").is_file()
+            for role in ("backend", "node", "browser", "worker")
+        )
+        assert (registry / "last-write.txt").is_file()
         assert sibling.poll() is None
         assert os.getpid() in process_group._process_snapshot()
         stopped_write = (registry / "last-write.txt").read_text()
@@ -419,15 +472,52 @@ def test_detached_tree_timeout_and_interrupt_preserve_host_and_sibling(
         assert (registry / "last-write.txt").read_text() == stopped_write
         assert hasattr(observed[0], "_astrid_process_group_id") is not inherited
     finally:
-        for process in observed:
-            snapshot = process_group._process_snapshot()
-            for pid, birth in reversed(tuple(getattr(process, "_astrid_tree_members", {}).items())):
-                info = snapshot.get(pid)
-                if info is not None and info.birth == birth:
-                    os.kill(pid, signal.SIGKILL)
-            process.wait(timeout=3)
-        sibling.terminate()
-        sibling.wait(timeout=3)
+        try:
+            for process in observed:
+                snapshot = process_group._process_snapshot()
+                for pid, birth in reversed(tuple(getattr(process, "_astrid_tree_members", {}).items())):
+                    info = snapshot.get(pid)
+                    if info is not None and info.birth == birth:
+                        try:
+                            os.kill(pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass  # An ancestor may reap/exit after its child is killed.
+                process.wait(timeout=3)
+        finally:
+            sibling.terminate()
+            try:
+                sibling.wait(timeout=3)
+            finally:
+                if sibling.stdout is not None:
+                    sibling.stdout.close()
+
+
+def test_owned_tree_worker_ready_marker_follows_identity_and_first_write(tmp_path: Path) -> None:
+    """Verify the leaf handshake with a directly owned worker, without custody launch."""
+    registry = tmp_path / "identities"
+    registry.mkdir()
+    for role in ("backend", "node", "browser"):
+        (registry / f"{role}.pid").write_text("test-parent")
+    worker = subprocess.Popen(
+        [sys.executable, FIXTURE_DIR / "owned_tree_backend.py", "worker", tmp_path, registry],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        while not (registry / "ready.txt").is_file():
+            if worker.poll() is not None:
+                pytest.fail("owned fixture worker exited before readiness")
+            time.sleep(0.01)
+        assert (registry / "ready.txt").read_text() == "ready"
+        assert (registry / "last-write.txt").is_file()
+        assert all(
+            (registry / f"{role}.pid").is_file()
+            for role in ("backend", "node", "browser", "worker")
+        )
+    finally:
+        if worker.poll() is None:
+            worker.kill()
+        worker.wait()
 
 
 def test_absent_result_file_is_protocol_failure(tmp_path: Path) -> None:

@@ -6,19 +6,17 @@ an escrow reference. Numeric PIDs select observations; signals use kernel tokens
 """
 from __future__ import annotations
 
-from contextlib import contextmanager
 import base64
-import errno
-import shutil
 import ctypes
+import errno
 import fcntl
 import hashlib
 import json
 import math
 import os
 import re
-from pathlib import Path
 import select
+import shutil
 import signal
 import socket
 import stat
@@ -27,6 +25,8 @@ import sys
 import tempfile
 import threading
 import time
+from contextlib import contextmanager
+from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
 SOL_LOCAL = 0
@@ -137,6 +137,10 @@ class DarwinProcessExitedError(CustodyError):
 
 class _SignalCaptureTargetGone(DarwinProcessExitedError):
     """Target exited during its initial precommit anchored capture."""
+
+
+class _SignalRetryTargetGone(_SignalCaptureTargetGone):
+    """Target exited during a later capture after only failed signal attempts."""
 
 
 class _SignalTargetGone(DarwinProcessExitedError):
@@ -1316,6 +1320,14 @@ class RoleCustodyAuthority:
                             raise _SignalCaptureTargetGone(
                                 f"initial signal target capture ended (phase={phase}, kernel_call_attempted=false)"
                             ) from exc
+                        # A later start observation follows a definite ESRCH
+                        # from this same retained token. Token and authority
+                        # failures still propagate unchanged.
+                        if phase != "token":
+                            raise _SignalRetryTargetGone(
+                                f"signal retry target capture ended (phase={phase}, "
+                                f"current_kernel_call_attempted=false, prior_attempts_definitely_esrch={attempt})"
+                            ) from exc
                         raise
                 before = _start_anchor(read_capture_target(read_start, "start-before"))
                 if before != anchor:
@@ -2322,6 +2334,7 @@ _COMMAND_CLIENTS_LOCK = threading.Lock()
 def _inventory_launch_policy(environment: Mapping[str, str], cwd: str) -> dict[str, Any] | None:
     """Pin declared managed roots, not a cached verification of their contents."""
     import shutil
+
     from astrid.core.pack import source_setup as sources
     configured = environment.get(sources.SOURCE_STATE_ENV)
     state_home = Path(environment.get('XDG_STATE_HOME', str(Path(environment.get('HOME', str(Path.home()))) / '.local/state')))
@@ -2517,7 +2530,12 @@ class _CommandInventoryOwner:
 
     def _execute(self, frame: Mapping[str, Any], channel: socket.socket) -> Any:
         import selectors
-        from astrid.core.execution.process_group import popen_owned_process, terminate_tree, verify_tree_absent
+
+        from astrid.core.execution.process_group import (
+            popen_owned_process,
+            terminate_tree,
+            verify_tree_absent,
+        )
         required = {'version', 'command', 'binding', 'operation_id', 'operation', 'checkout', 'cwd', 'environment'}
         with self.lock:
             self.failure_detail = None
@@ -2861,9 +2879,14 @@ class ProcessCustody:
                 birth = str(registration["identity"]["birth_id"])
                 self._handles[process.pid] = (birth, self._launch_broker)
             else:
-                from astrid.core.execution.process_group import process_birth_identity
+                from astrid.core.execution.process_group import (
+                    held_child_birth_identity,
+                    process_birth_identity,
+                )
                 self._actor_birth = process_birth_identity()
-                self.register(process.pid, process_birth_identity(process.pid))
+                self.register(process.pid, held_child_birth_identity(process.pid))
+                if process.pid not in self._handles:
+                    raise CustodyError("launch identity unavailable at registration")
         except BaseException as exc:
             self._uncertain = exc
             process._astrid_tree_uncertain = str(exc) or type(exc).__name__
@@ -3050,14 +3073,32 @@ class ProcessCustody:
                             # Optional evidence I/O cannot alter acquired custody.
                             self._command_diagnostic_persist_error = type(diagnostic_error).__name__
                 else:
-                    from astrid.core.execution.process_group import process_birth_identity
-                    if process_birth_identity(pid) != birth:
-                        raise CustodyError("descendant registration identity is uncertain")
+                    from astrid.core.execution.process_group import (
+                        held_child_birth_identity,
+                        process_birth_identity,
+                    )
+                    # Our own unreaped launch may already be a zombie; any other
+                    # candidate that exited (or whose pid was reused) between the
+                    # census and now is simply absent: nothing is left to signal,
+                    # and its children stay fail-closed in the ancestry census.
+                    held = pid == getattr(getattr(self, "process", None), "pid", None)
+                    identify = held_child_birth_identity if held else process_birth_identity
+                    if identify(pid) != birth:
+                        if held:
+                            raise CustodyError("launch registration identity is uncertain")
+                        return
                     stage = "pidfd-bind"
-                    descriptor = os.pidfd_open(pid, 0)
-                    if process_birth_identity(pid) != birth:
+                    try:
+                        descriptor = os.pidfd_open(pid, 0)
+                    except ProcessLookupError:
+                        if held:
+                            raise
+                        return
+                    if identify(pid) != birth:
                         os.close(descriptor)
-                        raise CustodyError("descendant changed during pidfd binding")
+                        if held:
+                            raise CustodyError("descendant changed during pidfd binding")
+                        return
                     os.set_inheritable(descriptor, False)
                     self._handles[pid] = (birth, descriptor)
             except Exception as exc:
@@ -3760,19 +3801,38 @@ class ProcessCustody:
                 # separately retained descendants or census uncertainty.
         elif isinstance(handle, tuple):
             authority, reference = handle
+            actor = self.actor
+            if actor is None:
+                raise CustodyError("signal lacks an authenticated cleanup actor")
             try:
-                refreshed = authority.signal(actor=self.actor, generation=reference["generation"],
+                refreshed = authority.signal(actor=actor, generation=reference["generation"],
                                              expected_target=reference["target"], signum=signum,
                                              identity_provider=(default_process_identity if cleanup_deadline is None else
                                                  lambda target_pid: default_process_identity(target_pid, timeout=min(1.0, max(0.0, cleanup_deadline - time.monotonic())))),
                                              **({"cleanup_deadline": cleanup_deadline} if cleanup_deadline is not None else {}))
-            except _SignalTargetGone:
+            except (_SignalTargetGone, _SignalCaptureTargetGone) as error:
                 if (not isinstance(self._launch_broker, RoleBoundCustodyBroker)
                         or self._launch_broker.role != "command"
                         or self.process is None or pid == self.process.pid
                         or authority.role != f"descendant_{pid}_{hashlib.sha256(birth.encode()).hexdigest()[:12]}"):
                     raise
-                # No kernel call was attempted. Retain the exact capability;
+                if type(error) is _SignalCaptureTargetGone:
+                    # A descendant can finish between its live identity read
+                    # and the first anchored capture, including after TERM.
+                    # An authority error alone is insufficient: require a
+                    # fresh target-only absence or the exact anchored zombie.
+                    observation = ordinary_candidate_observation(pid)
+                    if observation["outcome"] == "OBSERVATION_ERROR":
+                        raise observation["error"]
+                    if observation["outcome"] == "ZOMBIE":
+                        anchor = authority._live_start_anchor
+                        if anchor is None or any(observation["native"].get(key) != anchor[key]
+                                                 for key in ("pid", "uid", "start_sec", "start_usec")):
+                            raise
+                    elif observation["outcome"] != "ABSENT":
+                        raise
+                    actor.verify()
+                # No signal was delivered. Retain the exact capability;
                 # census, original waits and final absence still decide cleanup.
                 return
             self._handles[pid] = (birth, (authority, refreshed))

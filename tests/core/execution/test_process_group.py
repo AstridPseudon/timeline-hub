@@ -843,6 +843,59 @@ def test_tree_parent_deadline_includes_first_census_and_remains_sticky(tmp_path,
     assert 200 not in owner._handles
 
 
+def test_renderer_expiry_during_census_finishes_custody_then_cleans_owned_tree(tmp_path, monkeypatch):
+    from astrid.core.rendering import transport
+    from astrid.core.rendering.errors import RendererTimeoutError
+
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    owner._handles[200] = ("detached-child", object())
+    live = _snapshot()
+    now = [10.0]
+    events, signals, waits = [], [], []
+    process.returncode = None
+    process.poll = lambda: process.returncode
+    process.wait = lambda **kwargs: waits.append(kwargs) or process.returncode
+
+    def snapshot():
+        events.append("census")
+        now[0] = 10.6  # Past renderer expiry, inside the unchanged custody cap.
+        return dict(live)
+
+    def signal_member(pid, birth, signum, **kwargs):
+        assert owner._uncertain is None
+        assert events.count("census") >= 2  # Cleanup takes its own fresh census.
+        assert owner._handles[pid][0] == birth
+        signals.append((pid, signum))
+        live.pop(pid)
+        if pid == process.pid:
+            process.returncode = -signum
+
+    def communicate(*, timeout):
+        assert process.returncode is not None  # No extra renderer wait after expiry.
+        events.append("pipes-after-reap")
+        return "", ""
+
+    owner.signal = signal_member
+    process.communicate = communicate
+    monkeypatch.setattr(groups.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(groups, "_process_snapshot", snapshot)
+    monkeypatch.setattr(transport, "popen_owned_process", lambda *args, **kwargs: process)
+    request = tmp_path / "request.json"
+    request.write_text("{}")
+
+    with pytest.raises(RendererTimeoutError) as caught:
+        transport.CommandTransport("test.renderer", termination_grace=0.05).run(
+            "render", [sys.executable], request_path=request,
+            result_path=tmp_path / "result.json", cwd=tmp_path, timeout=0.5,
+        )
+
+    assert caught.value.details["timeout_seconds"] == 0.5
+    assert signals == [(200, signal.SIGTERM), (100, signal.SIGTERM)]
+    assert live == {900: _snapshot()[900]}  # Host/sibling census member survives.
+    assert waits and events[-1] == "pipes-after-reap"
+    assert owner._uncertain is None and not getattr(process, "_astrid_tree_uncertain", None)
+
+
 def test_termination_passes_existing_total_deadline_without_extension(monkeypatch):
     process = _process()
     monkeypatch.setattr(groups.time, "monotonic", lambda: 10.0)
@@ -1009,3 +1062,24 @@ def test_zombie_witness_requires_the_exact_bound_incarnation():
         assert not groups.launch_exit_witnessed(process, "")
     finally:
         process.wait()
+
+
+def test_instantly_exiting_launches_are_a_known_outcome_not_a_custody_error():
+    # The child can exit (a zombie we hold, not yet reaped) before custody records
+    # its birth identity; that is an ordinary outcome, never a registration failure.
+    for _ in range(40):
+        process = groups.popen_owned_process(["/bin/sh", "-c", "exit 97"], stdout=subprocess.DEVNULL)
+        try:
+            assert process.wait(timeout=10) == 97
+            groups.terminate_group(process)
+        finally:
+            groups.release_group(process)
+
+
+def test_held_child_birth_identity_names_an_exited_unreaped_child(monkeypatch):
+    monkeypatch.setattr(groups.sys, "platform", "linux")
+    monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "")
+    monkeypatch.setattr(groups, "_zombie_birth_identity", lambda *_: "boot:123")
+    assert groups.held_child_birth_identity(7) == "boot:123"
+    monkeypatch.setattr(groups, "_zombie_birth_identity", lambda *_: "")
+    assert groups.held_child_birth_identity(7) == ""

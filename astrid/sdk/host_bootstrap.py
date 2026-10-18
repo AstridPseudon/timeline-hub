@@ -10,7 +10,6 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from numbers import Real
 import os
 import re
 import secrets
@@ -23,16 +22,17 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass
+from numbers import Real
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
+from astrid.core.execution.host_log import rotate_if_needed
 from astrid.core.execution.process_group import (
-    _process_snapshot,
     CleanupUncertainError,
+    _process_snapshot,
     popen_owned_group,
     terminate_group,
 )
-from astrid.core.execution.host_log import rotate_if_needed
 from astrid.core.generation.vibecomfy_dependency import (
     VibeComfyDependencyError,
     dependency_pythonpath,
@@ -576,11 +576,19 @@ def _ps_command(pid: int) -> str:
     return probe.stdout.strip()
 
 
-def _group_survivors(pgid: int) -> list[int]:
+def _group_survivors(pgid: int, *, leader_birth: str | None = None) -> list[int]:
+    """Live members of *pgid* (this process excluded)."""
     try:
         census = _process_snapshot()
     except CleanupUncertainError as exc:
         raise PackHostBootstrapError(f"process census unavailable: {exc}") from exc
+    leader = census.get(pgid)
+    observed_leader_birth = (str(leader.birth) if leader is not None else
+                             getattr(census, "exited", {}).get(pgid))
+    if (leader_birth and observed_leader_birth is not None
+            and (str(observed_leader_birth) != leader_birth
+                 or (leader is not None and leader.pgid != pgid))):
+        raise PackHostBootstrapError("registered host pid was reused; group not signalled")
     members = []
     for info in census.values():
         if info.pgid != pgid or info.pid == os.getpid():
@@ -593,20 +601,21 @@ def _group_survivors(pgid: int) -> list[int]:
     return members
 
 
-def _stop_group(pgid: int, *, grace: float | None = None) -> None:
-    """TERM, wait, KILL the process group a registered leader anchored.
+def _stop_group(pgid: int, *, grace: float | None = None, leader_birth: str | None = None) -> None:
+    """TERM, wait, KILL the members of the group a registered leader anchored.
 
     The leader started its own session, so the group id equals the registered pid.
-    Once the leader is gone its pgid cannot be reallocated while members live; the
-    one residual risk is a pgid reused after the whole group exited, which we only
-    reach when members are observed in it.
+    Its birth token anchors the group. If the pid now names another incarnation,
+    the whole group is refused.
     """
     if pgid <= 1 or pgid == os.getpgrp():
         raise PackHostBootstrapError("refusing to signal an unsafe process group")
     grace = _GROUP_GRACE_SECONDS if grace is None else grace
     for sig, wait in ((signal.SIGTERM, grace), (signal.SIGKILL, 3.0)):
-        if not _group_survivors(pgid):
+        if not _group_survivors(pgid, leader_birth=leader_birth):
             return
+        if not leader_birth:
+            raise PackHostBootstrapError("registered host group lacks a leader birth anchor")
         try:
             os.killpg(pgid, sig)
         except ProcessLookupError:
@@ -626,7 +635,7 @@ def _terminate_old_host(state: Mapping[str, Any]) -> None:
     if status == "foreign":
         raise PackHostBootstrapError("registered pid is not this Astrid pack host; not signalled")
     if status != "reused":
-        _stop_group(int(state["pid"]))
+        _stop_group(int(state["pid"]), leader_birth=str(state.get("process_birth_id") or "") or None)
 
 
 def _retire_host_locked(state: Mapping[str, Any]) -> None:
@@ -738,9 +747,11 @@ def _prepare_render_validation(source_path: Path, env: dict[str, str],
                                support_root: Path, python_executable: str,
                                pack_roots: tuple[Path, ...] = ()) -> str | None:
     from astrid.core.env_vars import (
-        ASTRID_REMOTION_PROJECT_DIR, ASTRID_REMOTION_VALIDATION_PATH,
-        ASTRID_REMOTION_VALIDATION_SHA256, ASTRID_REMOTION_VALIDATION_LAUNCH,
+        ASTRID_REMOTION_PROJECT_DIR,
+        ASTRID_REMOTION_VALIDATION_LAUNCH,
+        ASTRID_REMOTION_VALIDATION_PATH,
         ASTRID_REMOTION_VALIDATION_ROLE,
+        ASTRID_REMOTION_VALIDATION_SHA256,
     )
     from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
     from astrid.core.subprocess_env import build_child_subprocess_env
@@ -823,7 +834,17 @@ class _ParkedPackHostPreparer:
         projected_env = dict(launch.env())
         projected_env.pop("ASTRID_CREDENTIAL_REF", None)  # Already bound by --credential-file.
         projected_env.pop("ASTRID_IDEMPOTENCY_KEY", None)  # Admission remains with Runtime.
-        env = build_child_subprocess_env(parent={}, explicit_env=projected_env)
+        # Keep the launch projection isolated from ambient Astrid task/session
+        # state. On macOS, however, the child's CoreFoundation encoding pin
+        # must match the owner process. Pass only that inherited pin through
+        # the policy's parent channel; a conflicting projected value still
+        # fails closed.
+        parent_env: dict[str, str] = {}
+        if sys.platform == "darwin":
+            cf_encoding = os.environ.get("__CF_USER_TEXT_ENCODING")
+            if cf_encoding is not None:
+                parent_env["__CF_USER_TEXT_ENCODING"] = cf_encoding
+        env = build_child_subprocess_env(parent=parent_env, explicit_env=projected_env)
         env.pop("ASTRID_PACKS_PATH", None)
         if _execution_profile() == "installed":
             origins = _installed_execution_origins(reference.source_checkout, str(launch.argv[0]))
@@ -1365,8 +1386,8 @@ def ensure_pack_host(
             if reuse_env.get("ASTRID_REMOTION_PROJECT_DIR") and reference is None:
                 raise PackHostBootstrapError("prior Remotion host lacks launch validation; reconfigure explicitly")
             if reference is not None:
-                from astrid.core.rendering.remotion_runtime import _validated_runtime
                 from astrid.core.env_vars import ASTRID_REMOTION_PROJECT_DIR
+                from astrid.core.rendering.remotion_runtime import _validated_runtime
                 if ready.get("remotion_validation") != reference:
                     raise PackHostBootstrapError("prior Remotion launch validation marker differs")
                 try:

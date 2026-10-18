@@ -237,6 +237,18 @@ def _zombie_birth_identity(pid: int) -> str:
         return ""
 
 
+def held_child_birth_identity(pid: int) -> str:
+    """Birth token of a child we hold unreaped: live, or an exited zombie.
+
+    An unreaped child's pid cannot be reused, so a child that already exited
+    still has one definite incarnation; its exit is a known outcome, not a
+    custody violation.  Empty only when the pid is gone or unreadable.
+    """
+    if sys.platform.startswith("linux"):
+        return process_birth_identity(pid) or _zombie_birth_identity(pid)
+    return process_birth_identity(pid)
+
+
 def launch_exit_witnessed(process: subprocess.Popen, birth: str) -> bool:
     """True once a census listed *process* as an unreaped zombie of incarnation *birth*.
 
@@ -467,7 +479,11 @@ def _observe_tree(process: subprocess.Popen, *, deadline: float | None = None) -
         known = {}
         process._astrid_tree_members = known
     if not known and process.pid not in snapshot:
-        raise CleanupUncertainError("owned leader exited before ancestry capture")
+        # An unreaped leader that already exited is a known outcome when the
+        # census lists exactly the incarnation custody bound at launch.
+        bound = getattr(process, "_astrid_process_birth", None)
+        if not (bound and getattr(snapshot, "exited", {}).get(process.pid) == bound):
+            raise CleanupUncertainError("owned leader exited before ancestry capture")
     for pid, birth in tuple(known.items()):
         current = snapshot.get(pid)
         if current is not None and current.birth != birth:

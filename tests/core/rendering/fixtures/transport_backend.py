@@ -34,7 +34,7 @@ def main() -> int:
     action = request.get("action", "result")
 
     # Linux has no stopped launch, so a renderer that exits before the parent's first
-    # ancestry observation is a known custody gap (tests/known_failures.txt). A test
+    # ancestry observation was a custody gap, now fixed. A test
     # that is about the wire protocol, not that gap, names a gate file the parent
     # creates once custody has observed this process; waiting is by file, not by time.
     gate = request.get("launch_gate")
