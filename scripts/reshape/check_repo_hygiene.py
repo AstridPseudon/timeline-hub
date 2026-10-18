@@ -76,9 +76,9 @@ ROOT_DIR_ALLOWLIST = {
     # Product configuration and contracts read by code and tests:
     # config/ (capability ledger, runtime, hivemind contract),
     # schemas/ (JSON schemas validated by tests/schemas),
-    # banodoco_workspace_client/ (vendored generated client, imported by
+    # astrid_runtime_client/ (vendored generated client, imported by
     # scripts and astrid), evals/ (timeline eval harness imported by tests/evals).
-    "banodoco_workspace_client",
+    "astrid_runtime_client",
     "config",
     "docs",
     "evals",

@@ -6,7 +6,7 @@
     python scripts/vendor_lock.py update <lock> --producer <checkout> copy from the producer and rewrite the lock
 
 Lock paths are relative to this repo's root. Never hand-edit a lock; run `update`.
-Mirrors reigh-app/scripts/vendor-lock.mjs (same CLI, same messages); kept as a copy on purpose (R-5).
+Mirrors astrid-app/scripts/vendor-lock.mjs (same CLI, same messages); kept as a copy on purpose (R-5).
 """
 
 from __future__ import annotations

@@ -13,13 +13,13 @@ Options beyond `--tier`, `--reference`, `--timeline` and `--summary`:
 
 | Option | Meaning |
 | --- | --- |
-| `--reference generated` | Build a small stopped reference instead of using a film: one project (`journey`), three 4 s ffmpeg test clips and one media-only timeline (`main`), made by `astrid/core/dev/reference_realm.py` (`banodoco_local workspace create` plus an in-process `RuntimeService`, no launcher). `--timeline` defaults to `journey/main` and `--range` to `2 6`. Needs `ffmpeg`. |
+| `--reference generated` | Build a small stopped reference instead of using a film: one project (`journey`), three 4 s ffmpeg test clips and one media-only timeline (`main`), made by `astrid/core/dev/reference_realm.py` (`astrid_runtime workspace create` plus an in-process `RuntimeService`, no launcher). `--timeline` defaults to `journey/main` and `--range` to `2 6`. Needs `ffmpeg`. |
 | `--backend rendering.remotion\|rendering.ffmpeg` | Renderer for every render (default Remotion). With ffmpeg the Node-pin preflight is skipped and `--review` is never passed (the ffmpeg backend takes `--range` but not review); the film must be media-only. |
-| `--app-checkout PATH` | A reigh-app checkout whose HEAD is recorded in the summary. |
+| `--app-checkout PATH` | A astrid-app checkout whose HEAD is recorded in the summary. |
 | `--skip-app-render` | `runtime_restart` restarts the Runtime but does not admit the App-shaped render (on a real film that render is the whole film). |
 
 Before anything starts the journey refuses unless the temp volume has free disk of at least the Runtime floor
-(`BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES`, default 4 GiB) plus the expected scratch of one excerpt render
+(`ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES`, default 4 GiB) plus the expected scratch of one excerpt render
 (an estimate per backend, `SCRATCH_BYTES_PER_SECOND`; the real figure is the capability's and is unreadable before the
 Runtime is up). The numbers are in the refusal and in the summary (`disk_preflight`). Every child process gets a scrubbed
 environment (`scrub_child_env`): no `NODE_OPTIONS`, `NODE_PATH`, `LD_*`, `DYLD_*`, non-interactive `GIT_*`,
@@ -44,9 +44,9 @@ usable renderer Node, render the excerpt (`--range 144 152` by default), append 
    or `task.cancelled`, after the expiry), agreeing with the task's state. The pre-kill and post-settle attempt id and
    lease fence are recorded (`killed_task_lease`). A stale-fence publication is not attempted: it needs the lease id,
    which only the worker holds and the task API does not expose.
-6. `runtime_restart`: `banodoco_local restart`, then, with no Astrid client open, the App's own render request is
+6. `runtime_restart`: `astrid_runtime restart`, then, with no Astrid client open, the App's own render request is
    admitted (`build_app_render_admission`: `POST /v1/tasks` with the `Idempotency-Key`
-   `reigh.render:v1:<timeline>:head:download:<file>`, the bearer token from `credentials/astrid.json`, the digest and storage
+   `astrid.render:v1:<timeline>:head:download:<file>`, the bearer token from `credentials/astrid.json`, the digest and storage
    estimate of `rendering.render` from `GET /v1/capabilities`, the selected backend as `selector`) and must complete.
    The output file is not inspected: the destination is `download`. Then a render succeeds on the restarted Runtime.
 
@@ -63,13 +63,13 @@ logs are kept beside the summary, and a failed command reports both its stderr a
 
 Plumbing tests (no Runtime, Remotion or launcher): `python -m pytest -q tests/journeys`. They cover the helpers above, the
 runner's three outcomes (success, failure, hung) with `true`, `false` and `sleep`, the App request against a loopback
-stand-in for the Runtime, and, when `runtime_protocol`, `banodoco_local` and `ffmpeg` are importable
-(`PYTHONPATH=<banodoco-workspace-runtime>`), the generated reference: it passes `select_reference_realm`, leaves no WAL, and
+stand-in for the Runtime, and, when `runtime_protocol`, `astrid_runtime` and `ffmpeg` are importable
+(`PYTHONPATH=<astrid-runtime>`), the generated reference: it passes `select_reference_realm`, leaves no WAL, and
 opens in-process listing its project, 3 objects and timeline.
 
 ## Where it runs
 
-The full smoke runs on macOS only, for now. The Runtime launcher (`python -m banodoco_local up|restart|down`) takes
+The full smoke runs on macOS only, for now. The Runtime launcher (`python -m astrid_runtime up|restart|down`) takes
 Darwin audit-token custody of the Runtime process, and there is no Linux custody provider yet, so on Linux
 `adopt` is refused with "Darwin audit-token custody is unavailable" (the generated reference is built and cloned up to that
 point). The journey deliberately has no shim for this: it would test a launcher the product does not ship. Separately,
@@ -77,6 +77,6 @@ point). The journey deliberately has no shim for this: it would test a launcher 
 the render but does not remove the Remotion requirement from the Runtime (the `doctor` phase still wants a usable renderer Node). Until the launcher has a Linux custody provider,
 the end-to-end run stays on the reference Mac; Linux CI can run the plumbing tests only.
 
-The three-product thin slice (F2) is not a phase here. It is an App Playwright spec, `reigh-app/tests/e2e/local/three-products.spec.ts`, run by `npm run test:e2e:three-products` and by the nightly `three-products` job in `reigh-app/.github/workflows/direct-journey.yml`; it runs on Linux and drives this package's `astrid` CLI and `astrid.core.dev.cross_client` against a throwaway Runtime. `astrid dev journey --tier full` folds it in with card F2-L2.
+The three-product thin slice (F2) is not a phase here. It is an App Playwright spec, `astrid-app/tests/e2e/local/three-products.spec.ts`, run by `npm run test:e2e:three-products` and by the nightly `three-products` job in `astrid-app/.github/workflows/direct-journey.yml`; it runs on Linux and drives this package's `astrid` CLI and `astrid.core.dev.cross_client` against a throwaway Runtime. `astrid dev journey --tier full` folds it in with card F2-L2.
 
 The wider cross-repo testing plan (what the journeys gate, and the other layers) is in `testing-plan.md`.

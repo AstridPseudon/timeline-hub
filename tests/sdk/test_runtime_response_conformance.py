@@ -31,8 +31,8 @@ from astrid.sdk.exceptions import (
 )
 from astrid.sdk.remote import RemoteTasks
 from astrid.sdk.workspace_client import WorkspaceClient, WorkspaceClientError
-from banodoco_workspace_client import WorkspaceClient as GeneratedWorkspaceClient
-from banodoco_workspace_client import generated
+from astrid_runtime_client import WorkspaceClient as GeneratedWorkspaceClient
+from astrid_runtime_client import generated
 
 TESTS = Path(__file__).resolve().parents[1]
 FIXTURES = TESTS / "fixtures" / "runtime-responses"

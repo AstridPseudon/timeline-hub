@@ -9,10 +9,10 @@ import sys
 
 import pytest
 
-# Both tests need the sibling Runtime checkout (BANODOCO_RUNTIME_CHECKOUT).
+# Both tests need the sibling Runtime checkout (ASTRID_RUNTIME_CHECKOUT).
 pytestmark = pytest.mark.integration
 
-runtime_checkout = os.environ.get("BANODOCO_RUNTIME_CHECKOUT")
+runtime_checkout = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
 if runtime_checkout:
     sys.path.insert(0, runtime_checkout)
 
@@ -51,7 +51,7 @@ def test_first_launch_cli_reads_launcher_credential_file_without_secret_env(
     try:
         credential_file = daemon.credential_path
         assert credential_file is not None
-        monkeypatch.delenv("BANODOCO_RUNTIME_CREDENTIAL", raising=False)
+        monkeypatch.delenv("ASTRID_RUNTIME_CREDENTIAL", raising=False)
         monkeypatch.setattr(
             "astrid.sdk.autobootstrap.ensure_runtime", lambda **_kwargs: _launcher_result(daemon)
         )
@@ -82,7 +82,7 @@ def test_launcher_path_is_forwarded_as_path_not_bearer_text(
 ) -> None:
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
     try:
-        monkeypatch.delenv("BANODOCO_RUNTIME_CREDENTIAL", raising=False)
+        monkeypatch.delenv("ASTRID_RUNTIME_CREDENTIAL", raising=False)
         monkeypatch.setattr(
             "astrid.sdk.autobootstrap.ensure_runtime", lambda **_kwargs: _launcher_result(daemon)
         )

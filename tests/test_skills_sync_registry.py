@@ -207,7 +207,7 @@ class SyncGatewayTest(unittest.TestCase):
             # implicit skill (discovery.list_skills), so it is not composed into the view.
             self.assertFalse((view / "packs" / "references").exists())
             pack_builder = (view / "pack-builder" / "SKILL.md").read_text(encoding="utf-8")
-            self.assertIn("https://github.com/peteromallet/Astrid/blob/main/docs/", pack_builder)
+            self.assertIn("https://github.com/peteromallet/astrid-agent/blob/main/docs/", pack_builder)
             self.assertNotIn("../../../../../docs/", pack_builder)
             registry_text = (view / "creative-work" / "references" / "packs.md").read_text(encoding="utf-8")
             self.assertIn("packs/foley/SKILL.md", registry_text)

@@ -307,7 +307,7 @@ def publish_bundle(candidate: Mapping[str, Any], idempotency_key: str, *, client
                 "idempotency_key": idempotency_key, "merged": merged_note}
 
     # Write through the connection the reads used. Asking the launcher again would send the write to whatever Runtime it
-    # finds (the canonical one, or none: "the Banodoco workspace runtime is not installed") when the caller connected
+    # finds (the canonical one, or none: "the Astrid Runtime is not installed") when the caller connected
     # explicitly, e.g. through ``ASTRID_TIMELINE_EVAL_*``.
     def own_transport(c: Any) -> Any:
         transport = getattr(getattr(c, "_remote", None), "_transport", None)
@@ -330,8 +330,8 @@ def publish_bundle(candidate: Mapping[str, Any], idempotency_key: str, *, client
 
 
 def drafts_root() -> Path:
-    """Where working copies live: Astrid's data root (``BANODOCO_LOCAL_DATA_ROOT``) / drafts."""
-    base = os.environ.get("BANODOCO_LOCAL_DATA_ROOT")
+    """Where working copies live: Astrid's data root (``ASTRID_RUNTIME_DATA_ROOT``) / drafts."""
+    base = os.environ.get("ASTRID_RUNTIME_DATA_ROOT")
     if base:
         return Path(base) / "drafts"
     from astrid.sdk.storage_root import resolve_runtime_data_root

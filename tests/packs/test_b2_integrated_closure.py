@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PACKS = ROOT / "astrid/packs"
 # One source of truth for the shipped pack ids: the first-party validator inventory.
 PACK_IDS = tuple(sorted(_FIRST_PARTY_PACK_IDS))
-RETIRED = {"builtin", "references", "reigh", "runaway", "shots", "timeline"}
+RETIRED = {"builtin", "references", "astrid", "runaway", "shots", "timeline"}
 
 
 def test_current_catalog_is_exact_strict_v3_capability_set() -> None:

@@ -2,7 +2,7 @@
 
 It used to ask the launcher for a Runtime again at the write, so a caller that connected explicitly
 (``ASTRID_TIMELINE_EVAL_*``) had its reads served by one Runtime and its publication sent to another, or failed with
-"the Banodoco workspace runtime is not installed". The fakes are the client's seams; no Runtime starts.
+"the Astrid Runtime is not installed". The fakes are the client's seams; no Runtime starts.
 """
 from __future__ import annotations
 

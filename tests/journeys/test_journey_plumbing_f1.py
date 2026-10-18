@@ -30,7 +30,7 @@ POLLUTED = {
     "PYTHONHOME": "/py", "PYTHONSTARTUP": "/s", "NODE_ICU_DATA": "/i", "OPENSSL_CONF": "/o",
 }
 KEPT = {"PATH": "/usr/bin", "HOME": "/home/x", "TMPDIR": "/tmp", "GIT_EDITOR": "vi", "GIT_TERMINAL_PROMPT": "0",
-        "GIT_AUTHOR_NAME": "n", "ASTRID_PACKS_PATH": "/packs", "BANODOCO_LOCAL_DATA_ROOT": "/data"}
+        "GIT_AUTHOR_NAME": "n", "ASTRID_PACKS_PATH": "/packs", "ASTRID_RUNTIME_DATA_ROOT": "/data"}
 
 
 def test_scrub_removes_what_remotion_refuses_and_keeps_the_rest() -> None:
@@ -260,7 +260,7 @@ def test_app_render_admission_has_the_apps_exact_shape() -> None:
     assert admission == {
         "method": "POST", "path": "/v1/tasks",
         "headers": {"Content-Type": "application/json", "Authorization": "Bearer tok",
-                    "Idempotency-Key": "reigh.render:v1:main:head:download:out.mp4"},
+                    "Idempotency-Key": "astrid.render:v1:main:head:download:out.mp4"},
         "body": {"project": "film", "capability_id": "rendering.render", "capability_digest": "sha256:" + "ab" * 32,
                  "schema_version": "1", "input_object_ids": [],
                  "spec": {"family": "rendering.render",
@@ -273,7 +273,7 @@ def test_app_render_admission_has_the_apps_exact_shape() -> None:
 def test_app_render_admission_with_a_version_and_the_ffmpeg_selector() -> None:
     admission = journey.build_app_render_admission(project="p", timeline_id="t", output_name="o.mp4", capability=CAPABILITY,
                                                    token="x", backend="rendering.ffmpeg", expected_version=7)
-    assert admission["headers"]["Idempotency-Key"] == "reigh.render:v1:t:7:download:o.mp4"
+    assert admission["headers"]["Idempotency-Key"] == "astrid.render:v1:t:7:download:o.mp4"
     assert admission["body"]["spec"]["params"] == {"timeline_ref": "t", "expected_version": 7,
                                                    "selector": "rendering.ffmpeg", "output_name": "o.mp4"}
 
@@ -446,7 +446,7 @@ def test_runtime_restart_restarts_then_admits_the_apps_request_and_waits(tmp_pat
     assert runner.calls == [["restart"]]
     post = next(r for r in server.requests if r["method"] == "POST")
     assert post["path"] == "/v1/tasks" and post["body"]["spec"]["params"]["selector"] == "rendering.remotion"
-    assert post["headers"]["Idempotency-Key"].startswith("reigh.render:v1:main:head:download:v6-app-")
+    assert post["headers"]["Idempotency-Key"].startswith("astrid.render:v1:main:head:download:v6-app-")
     assert runner.details["runtime_restart"]["app_render_state"] == "succeeded"
 
 
@@ -554,7 +554,7 @@ def test_generator_pure_parts() -> None:
 @pytest.mark.integration
 def test_generated_reference_is_a_valid_stopped_reference(tmp_path: Path) -> None:
     pytest.importorskip("runtime_protocol.service")
-    pytest.importorskip("banodoco_local")
+    pytest.importorskip("astrid_runtime")
     if subprocess.run(["which", "ffmpeg"], capture_output=True).returncode:
         pytest.skip("ffmpeg is not installed")
     checkout = Path(journey.__file__).resolve().parents[3]

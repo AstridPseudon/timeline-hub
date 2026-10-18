@@ -1,7 +1,7 @@
 """Release gates for Astrid's vendored workspace client.
 
 The Runtime repository owns generation. Astrid does not invoke that repository's generator at test time: the
-checked-in client is a copy, and ``banodoco_workspace_client/vendor.lock.json`` (written by
+checked-in client is a copy, and ``astrid_runtime_client/vendor.lock.json`` (written by
 ``scripts/vendor_lock.py update``) records the digest of every file and the producer version it came from. This
 gate runs the lock check, so a one-byte local edit fails here, and the CI ``boundary`` job checks the lock
 against the Runtime's main. No hash or schema digest is copied by hand into this file (testing plan C1, R-3).
@@ -16,8 +16,8 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 
-from banodoco_workspace_client import ManagedOutput, ObjectLocation, WorkspaceClient, generated
-from banodoco_workspace_client.contract_metadata import (
+from astrid_runtime_client import ManagedOutput, ObjectLocation, WorkspaceClient, generated
+from astrid_runtime_client.contract_metadata import (
     COMPONENT_MANIFEST_SHA256,
     OPERATIONS,
     PROTOCOL,
@@ -26,7 +26,7 @@ from banodoco_workspace_client.contract_metadata import (
 from astrid.sdk.workspace_client import WorkspaceClient as AstridWorkspaceClient
 
 ROOT = Path(__file__).resolve().parents[2]
-LOCK = ROOT / "banodoco_workspace_client" / "vendor.lock.json"
+LOCK = ROOT / "astrid_runtime_client" / "vendor.lock.json"
 _spec = importlib.util.spec_from_file_location("vendor_lock", ROOT / "scripts" / "vendor_lock.py")
 vendor_lock = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(vendor_lock)
@@ -41,7 +41,7 @@ def _camel_to_snake(value: str) -> str:
 def test_vendored_client_is_the_locked_runtime_artifact() -> None:
     assert vendor_lock.check(LOCK) == []
     assert set(json.loads(LOCK.read_text())["files"]) == {
-        f"banodoco_workspace_client/{name}" for name in ("__init__.py", "generated.py", "contract_metadata.py")
+        f"astrid_runtime_client/{name}" for name in ("__init__.py", "generated.py", "contract_metadata.py")
     }
 
 

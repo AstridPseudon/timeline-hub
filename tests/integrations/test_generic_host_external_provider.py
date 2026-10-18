@@ -32,7 +32,7 @@ if RUNTIME.is_dir():
 # Needs the sibling Runtime package (runtime_protocol), which does not ship with this repo.
 pytestmark = pytest.mark.integration
 pytest.importorskip("runtime_protocol")
-from banodoco_workspace_client import ApiError, WorkspaceClient
+from astrid_runtime_client import ApiError, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from tests.helpers.runtime import initialize_runtime_realm
 

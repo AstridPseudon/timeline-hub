@@ -19,12 +19,12 @@ from pathlib import Path
 
 import pytest
 
-from banodoco_workspace_client.contract_metadata import SCHEMA_DIGEST
+from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
 
 pytestmark = pytest.mark.integration  # a real daemon from a second checkout, and short-lived subprocesses
 
 ASTRID = Path(__file__).resolve().parents[2]
-RUNTIME_COMMIT = json.loads((ASTRID / "banodoco_workspace_client" / "vendor.lock.json").read_text())["source_commit"]
+RUNTIME_COMMIT = json.loads((ASTRID / "astrid_runtime_client" / "vendor.lock.json").read_text())["source_commit"]
 ACTOR = "owner"
 # Spelled out, not imported: this is the contract the App-side harness relies on.
 CONTEXT = {
@@ -38,13 +38,13 @@ CONTEXT = {
 @pytest.fixture(scope="module")
 def runtime_checkout(tmp_path_factory) -> Path:
     """The Runtime at the commit the vendored client was produced from, so the schema digests agree."""
-    override = os.environ.get("BANODOCO_RUNTIME_CHECKOUT")
+    override = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
     if override:
         candidates = [Path(override).expanduser()]
     else:  # a sibling of this tree, or of the main checkout when this is a linked worktree
         common = subprocess.run(["git", "-C", str(ASTRID), "rev-parse", "--path-format=absolute", "--git-common-dir"], capture_output=True, text=True)
         roots = [ASTRID.parent, *([Path(common.stdout.strip()).parent.parent] if common.returncode == 0 else [])]
-        candidates = [root / "banodoco-workspace-runtime" for root in roots]
+        candidates = [root / "astrid-runtime" for root in roots]
     for checkout in candidates:
         done = subprocess.run(["git", "-C", str(checkout), "archive", "--format=tar", RUNTIME_COMMIT], capture_output=True)
         if done.returncode == 0:
@@ -52,7 +52,7 @@ def runtime_checkout(tmp_path_factory) -> Path:
             with tarfile.open(fileobj=io.BytesIO(done.stdout), mode="r:") as tar:
                 tar.extractall(root)
             return root
-    pytest.skip(f"set BANODOCO_RUNTIME_CHECKOUT to a Runtime checkout containing {RUNTIME_COMMIT}")
+    pytest.skip(f"set ASTRID_RUNTIME_CHECKOUT to a Runtime checkout containing {RUNTIME_COMMIT}")
 
 
 @pytest.fixture
@@ -76,7 +76,7 @@ def env(daemon, tmp_path) -> dict[str, str]:
         "PATH": os.environ["PATH"],
         "HOME": str(tmp_path / "home"),
         "XDG_STATE_HOME": str(tmp_path / "state"),
-        "BANODOCO_LOCAL_DATA_ROOT": str(tmp_path / "astrid-data"),
+        "ASTRID_RUNTIME_DATA_ROOT": str(tmp_path / "astrid-data"),
         "PYTHONPATH": str(ASTRID),
         "PYTHONDONTWRITEBYTECODE": "1",
         CONTEXT["endpoint"]: daemon.endpoint,

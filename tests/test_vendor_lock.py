@@ -39,7 +39,7 @@ def _relative(lock: Path) -> str:
 def test_the_known_locks_are_not_dropped() -> None:
     assert {
         "astrid/core/timeline/schema/vendor.lock.json",
-        "banodoco_workspace_client/vendor.lock.json",
+        "astrid_runtime_client/vendor.lock.json",
         "tests/fixtures/runtime-responses/vendor.lock.json",
         "tests/fixtures/vendor.lock.json",
     } <= {_relative(lock) for lock in LOCKS}

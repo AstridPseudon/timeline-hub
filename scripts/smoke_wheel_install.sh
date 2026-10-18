@@ -84,9 +84,9 @@ pack_manifests = sorted(
     path.relative_to(repo_root / "astrid").as_posix()
     for path in (repo_root / "astrid" / "packs").glob("*/pack.yaml")
 )
-vendor_lock = json.loads((repo_root / "banodoco_workspace_client" / "vendor.lock.json").read_text("utf-8"))
+vendor_lock = json.loads((repo_root / "astrid_runtime_client" / "vendor.lock.json").read_text("utf-8"))
 spec = importlib.util.spec_from_file_location(
-    "checkout_contract_metadata", repo_root / "banodoco_workspace_client" / "contract_metadata.py"
+    "checkout_contract_metadata", repo_root / "astrid_runtime_client" / "contract_metadata.py"
 )
 checkout_contract = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(checkout_contract)
@@ -118,8 +118,8 @@ print("package resources: OK", len(required))
 CLIENT_LANE = """
 import hashlib, json, sys, sysconfig
 from pathlib import Path
-import banodoco_workspace_client as client
-from banodoco_workspace_client import contract_metadata as meta
+import astrid_runtime_client as client
+from astrid_runtime_client import contract_metadata as meta
 lock_files = json.loads(sys.argv[1])
 purelib = Path(sysconfig.get_path("purelib")).resolve()
 package = Path(client.__file__).resolve().parent

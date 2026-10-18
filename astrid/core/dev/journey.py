@@ -55,8 +55,8 @@ DISK_BUDGET = 4 * 1024**3
 RECEIPT_BUDGET = 20 * 1024**2
 LOG_BUDGET = 100 * 1024**2
 # The Runtime refuses work when free disk minus the task's estimate falls below this floor
-# (runtime_protocol/store.py, BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES); the journey must not start below it.
-DISK_FLOOR_ENV = "BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES"
+# (runtime_protocol/store.py, ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES); the journey must not start below it.
+DISK_FLOOR_ENV = "ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES"
 DEFAULT_DISK_FLOOR = 4 * 1024**3
 REMOTION_BACKEND, FFMPEG_BACKEND = "rendering.remotion", "rendering.ffmpeg"
 BACKENDS = (REMOTION_BACKEND, FFMPEG_BACKEND)
@@ -338,7 +338,7 @@ def find_ready_capability(items: Iterable[Mapping[str, Any]], capability_id: str
 def build_app_render_admission(*, project: str, timeline_id: str, output_name: str, capability: Mapping[str, Any],
                                token: str, backend: str = REMOTION_BACKEND, expected_version: int | None = None,
                                destination: str = "download") -> dict[str, Any]:
-    """The request the App sends to render a timeline (reigh-app ``enqueueBanodocoRenderTimeline``).
+    """The request the App sends to render a timeline (astrid-app ``enqueueBanodocoRenderTimeline``).
 
     ``capability`` is the ``rendering.render`` row from ``GET /v1/capabilities``: the App takes both the
     digest and the storage estimate from it and invents neither.
@@ -349,7 +349,7 @@ def build_app_render_admission(*, project: str, timeline_id: str, output_name: s
     return {
         "method": "POST", "path": "/v1/tasks",
         "headers": {"Content-Type": "application/json",
-                    "Idempotency-Key": f"reigh.render:v1:{timeline_id}:{version}:{destination}:{output_name}",
+                    "Idempotency-Key": f"astrid.render:v1:{timeline_id}:{version}:{destination}:{output_name}",
                     "Authorization": f"Bearer {token}"},
         "body": {
             "project": project, "capability_id": capability["capability_id"],
@@ -942,7 +942,7 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
     runner = Runner(root, summary, tier)
     runner.details.update({"backend": backend, "disk_preflight": disk})
     env = scrub_child_env(os.environ)
-    env["BANODOCO_LOCAL_DATA_ROOT"] = str(root / "data")
+    env["ASTRID_RUNTIME_DATA_ROOT"] = str(root / "data")
     env["TMPDIR"] = str(root / "tmp")
     (root / "tmp").mkdir()
     changed = False
@@ -965,8 +965,8 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
         manifest["runtime_environment"] = sys.prefix
         manifest_path = root / "source-profile.json"
         manifest_path.write_text(json.dumps(manifest))
-        env["BANODOCO_LOCAL_SOURCE_MANIFEST"] = str(manifest_path)
-        local = [sys.executable, "-m", "banodoco_local"]
+        env["ASTRID_RUNTIME_SOURCE_MANIFEST"] = str(manifest_path)
+        local = [sys.executable, "-m", "astrid_runtime"]
         common = ["--profile", "astrid", "--data-root", str(root / "data"), "--json"]
         adopt_attempted = True
         runner.phase("adopt", lambda: runner.command("adopt", local + ["workspace", "adopt", "--from", str(reference_realm), "--realm-id", realm_id, "--source-manifest", str(manifest_path)] + common, env))
@@ -1013,7 +1013,7 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
                 failure = (failure + "; " if failure else "") + "source_change: journey source changed concurrently; manual restore required"
         if adopt_attempted:
             try:
-                runner.phase("down", lambda: runner.command("down", [sys.executable, "-m", "banodoco_local", "down", "--source-manifest", str(manifest_path)] + common, env))
+                runner.phase("down", lambda: runner.command("down", [sys.executable, "-m", "astrid_runtime", "down", "--source-manifest", str(manifest_path)] + common, env))
             except Exception as exc:
                 failure = (failure + "; " if failure else "") + str(exc)
         try:
@@ -1067,7 +1067,7 @@ def main(args: list[str] | None = None) -> int:
                         help=f"excerpt window in seconds (default 144 152; {GENERATED_RANGE[0]:g} {GENERATED_RANGE[1]:g} for '{GENERATED}')")
     parser.add_argument("--backend", choices=BACKENDS, default=REMOTION_BACKEND,
                         help="renderer for every render; rendering.ffmpeg handles media-only timelines and skips the Node pin check and --review")
-    parser.add_argument("--app-checkout", type=Path, default=None, help="reigh-app checkout whose HEAD is recorded in the summary")
+    parser.add_argument("--app-checkout", type=Path, default=None, help="astrid-app checkout whose HEAD is recorded in the summary")
     parser.add_argument("--skip-app-render", action="store_true",
                         help="runtime_restart restarts the Runtime but does not admit the App-shaped render (a full-film render on a real film)")
     parser.add_argument("--replace-slot", default="BUGNET", help="full tier: asset slot the generated sprite replaces")

@@ -1,7 +1,7 @@
 """A generated, stopped reference data root for ``astrid dev journey --reference generated``.
 
 One project, three short ffmpeg test clips and one media-only timeline.  It is built the way the
-Runtime's own tests build realm content: ``banodoco_local workspace create`` (no launcher, no daemon)
+Runtime's own tests build realm content: ``astrid_runtime workspace create`` (no launcher, no daemon)
 for the catalog, source profile and empty realm, then ``RuntimeService`` in this process to fill it.
 The result is shaped like a real reference (``runtime/catalog.json``, ``runtime/source-profiles/astrid.json``,
 ``runtime/realms/<id>`` with ``realm.sqlite3``), so the journey adopts it exactly as it adopts a film.
@@ -81,8 +81,8 @@ def build_reference(workdir: Path, *, env: Mapping[str, str], source_checkout: P
     clips.mkdir(parents=True)
     manifest = workdir / "reference-source-profile.json"
     manifest.write_text(json.dumps(source_manifest(source_checkout, runtime_checkout, runtime_environment)))
-    child = dict(env, BANODOCO_LOCAL_DATA_ROOT=str(root))
-    _run([sys.executable, "-m", "banodoco_local", "workspace", "create", "--profile", "astrid", "--data-root", str(root),
+    child = dict(env, ASTRID_RUNTIME_DATA_ROOT=str(root))
+    _run([sys.executable, "-m", "astrid_runtime", "workspace", "create", "--profile", "astrid", "--data-root", str(root),
           "--realm-root", str(realm), "--realm-id", REALM_ID, "--source-manifest", str(manifest), "--json"],
          child, "workspace create", 120)
     service = RuntimeService(realm)
