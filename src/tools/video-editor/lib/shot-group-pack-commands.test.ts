@@ -265,8 +265,7 @@ describe('shot-group pack commands', () => {
     });
   });
 
-  // known-failure: reigh-app | 2026-10-30 | product bug: duplicate/promote pack commands use the retired legacy envelope
-  it.fails('duplicates only the explicitly active non-default timeline and never touches relational storage', async () => {
+  it('duplicates only the explicitly active non-default timeline and never touches relational storage', async () => {
     const router = createFakeBridgeRouter();
     const seed = documentFixture();
     delete seed.config.pinnedShotGroups![0]!.videoAssetKey;
@@ -301,6 +300,7 @@ describe('shot-group pack commands', () => {
       .toEqual(['shot-source', 'shot-copy']);
     expect(paths).toContain('GET /api/astrid/projects/demo-project/timelines/active-non-default');
     expect(paths).toContain('POST /api/astrid/projects/demo-project/timelines/active-non-default/save');
+    expect(paths.some((path) => path.startsWith('POST ') && path.endsWith('/tasks'))).toBe(false);
     expect(paths.some((path) => /\/timelines$/.test(path))).toBe(false);
     expect(paths.some((path) => path.includes(forbidden) || path.includes('supabase'))).toBe(false);
   });
