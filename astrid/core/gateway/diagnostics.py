@@ -18,10 +18,15 @@ C2_DEADLINE_MS = 5000
 C2_LIMITS = {"maxEvents": 200, "maxLogBytes": 65536, "maxBundleBytes": 1048576}
 _CAPTURE_KEYS = {"events": "maxEvents", "logBytes": "maxLogBytes", "bundleBytes": "maxBundleBytes"}
 _SENSITIVE_KEYS = re.compile(
-    r"(?:credential|token|secret|password|prompt|environment|env|media|signed.?url|authorization|path|root)$",
+    r"(?:credential|token|secret|password|prompt|environment(?:Value)?|env|media|signed.?url|authorization|api[_-]?key|bearer|path|root)$",
     re.IGNORECASE,
 )
-_PRIVATE_STRING = re.compile(r"(?:/(?:private|Users|home|tmp|var)/|(?:^|[\s(])~[/\\]|(?:file|https?)://|(?:token|secret|password)=|Bearer\s)", re.IGNORECASE)
+_PRIVATE_STRING = re.compile(
+    r"(?:/(?:private|Users|home|opt|mnt|tmp|var)/|(?:^|[\s(])~[/\\]|(?:file|https?)://|"
+    r"(?:api[_-]?key|access[_-]?token|authorization|client[_-]?secret|prompt|token|secret|password)\s*[:=]|"
+    r"[?&](?:sig|signature|x-amz-signature)=|Bearer\s)",
+    re.IGNORECASE,
+)
 
 FACT_NAMES = (
     "workspace", "runtime", "computeWorker", "selectedCapability", "authorization",
