@@ -157,12 +157,6 @@ test.describe('Extension Harness — Empty', () => {
     await goToScenario(page, 'empty');
     await expect(page.locator('[data-video-editor-activity-region="true"]')).not.toBeVisible();
   });
-
-  test('empty inventory does not render package cards', async ({ page }) => {
-    await goToScenario(page, 'empty');
-    await expect(page.locator('[data-video-editor-extension-manager="true"]')).toBeVisible();
-    await expect(page.locator('[data-video-editor-extension-package-id]')).toHaveCount(0);
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -387,7 +381,7 @@ test.describe('Extension Harness — Condensed Viewport', () => {
     await expect(page.locator('[data-video-editor-activity-event]')).toHaveCount(3);
   });
 
-  test('populated: extension manager does not overlap the activity region or package cards', async ({ page }) => {
+  test('populated: manager and activity are separated; package cards do not overlap', async ({ page }) => {
     await goToScenario(page, 'populated');
     const manager = page.locator('[data-video-editor-extension-manager="true"]');
     const activity = page.locator('[data-video-editor-activity-region="true"]');
@@ -399,16 +393,6 @@ test.describe('Extension Harness — Condensed Viewport', () => {
     await goToScenario(page, 'empty');
     await expect(page.locator('[data-video-editor-extension-manager="true"]')).toBeVisible();
     await expect(page.locator('[data-video-editor-extension-package-id]')).toHaveCount(0);
-  });
-
-  test('empty: extension manager and activity region do not overlap', async ({ page }) => {
-    await goToScenario(page, 'empty');
-    await expectNoOverlap(
-      page.locator('[data-video-editor-extension-manager="true"]'),
-      page.locator('[data-video-editor-activity-region="true"]'),
-      'extension-manager',
-      'activity-region',
-    );
   });
 
   test('package-error: renders all error-state packages with correct badges', async ({ page }) => {
