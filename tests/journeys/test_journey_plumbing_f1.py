@@ -102,12 +102,9 @@ def test_journey_render_calls_use_the_backend_and_kill_render_drops_review_for_f
 
 
 def test_renderer_install_problem_names_the_missing_install_and_the_fix(tmp_path: Path) -> None:
-    from astrid.core.rendering.remotion_runtime import (
-        _REQUIRED_PACKAGES,
-        REMOTION_CLI_RELATIVE_PATH,
-    )
+    from astrid.core.rendering.remotion_runtime import REMOTION_CLI_RELATIVE_PATH
     assert "npm ci" in journey.renderer_install_problem(tmp_path)
-    for name in _REQUIRED_PACKAGES:
+    for name in ("timeline-composition", "timeline-schema", "timeline-theme-2rp"):
         package = tmp_path / "node_modules" / "@banodoco" / name
         package.mkdir(parents=True)
         (package / "package.json").write_text("{}")

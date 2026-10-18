@@ -517,19 +517,12 @@ def renderer_install_problem(project: Path) -> str | None:
     (host_bootstrap._provision_render_runtime_env); without them ``rendering.render`` is never ready and
     the failure surfaces much later as "capability is not ready for admission".
     """
-    from astrid.core.rendering.remotion_runtime import (
-        _REQUIRED_PACKAGES,
-        REMOTION_CLI_RELATIVE_PATH,
-    )
-    modules = project / "node_modules"
-    missing = [str(modules / "@banodoco" / name) for name in _REQUIRED_PACKAGES
-               if not (modules / "@banodoco" / name / "package.json").is_file()]
-    if not (project / REMOTION_CLI_RELATIVE_PATH).is_file():
-        missing.append(str(project / REMOTION_CLI_RELATIVE_PATH))
-    if not missing:
+    from astrid.core.rendering.remotion_runtime import remotion_install_problem
+
+    problem = remotion_install_problem(project)
+    if problem is None:
         return None
-    return (f"the renderer is not installed ({missing[0]}{' and others' if len(missing) > 1 else ''} missing): "
-            f"run `npm ci` in {project} with the pinned Node on PATH")
+    return f"{problem}; run `npm ci` in {project} with the pinned Node on PATH"
 
 
 def _doctor_ready(value: dict[str, Any]) -> bool:
