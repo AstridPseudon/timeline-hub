@@ -4,7 +4,7 @@
  * ("<task_id>", "<digest>", ...) back into schema-valid example values.
  *
  * The fixture files are vendored from the Runtime (see
- * `src/integrations/runtime/fixtures/responses/vendor.lock.json`); never edit them.
+ * `runtime.lock.json`); never edit them.
  */
 
 export type RecordedResponse = {
@@ -15,7 +15,7 @@ export type RecordedResponse = {
   body: unknown;
 };
 
-const files = import.meta.glob(['../integrations/runtime/fixtures/responses/*.json', '!**/vendor.lock.json'], {
+const files = import.meta.glob('../integrations/runtime/fixtures/responses/*.json', {
   eager: true,
   import: 'default',
 }) as Record<string, RecordedResponse>;

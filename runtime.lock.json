@@ -35,6 +35,18 @@
     "src/integrations/runtime/fixtures/responses/validation_error_422.json": {
       "from": "conformance/responses/validation_error_422.json",
       "sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"
+    },
+    "src/integrations/runtime/generated-contract-metadata.ts": {
+      "from": "packages/typescript/src/contract-metadata.ts",
+      "sha256": "sha256:bf852360f57c15e41a06037d5e78191128d98b5d4909882e06c0e9d40a3479c8"
+    },
+    "src/integrations/runtime/generated.ts": {
+      "from": "packages/typescript/src/generated.ts",
+      "sha256": "sha256:82f1b330a257a8414f49f852a8604ed2692ee70c3482a9a45ff51df18bd77325"
+    },
+    "vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json": {
+      "from": "contract/schemas/timeline-config.schema.json",
+      "sha256": "sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
     }
   },
   "manifest": "contract/artifacts.json",
