@@ -1,6 +1,6 @@
 // Testing plan C2.2 / R-4: every Runtime response the App parses is held to bytes a REAL daemon
 // produced (vendored in ./fixtures/responses). Two parsing layers are exercised:
-//   1. the generated WorkspaceClient behind ReighRuntimeClient (ApiError decoding, page/mutation guards)
+//   1. the generated WorkspaceClient behind AstridRuntimeClient (ApiError decoding, page/mutation guards)
 //      and the App's conflict classifier `isRuntimeConflict`;
 //   2. the Astrid bridge transport + zod task routes (`AstridLocalTaskRoutes`).
 import { afterEach, describe, expect, it, vi } from 'vitest';

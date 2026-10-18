@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: banodoco/banodoco-workspace-runtime
+          repository: banodoco/astrid-runtime
           ref: main
           path: runtime-producer
       - uses: actions/checkout@v4

@@ -38,7 +38,7 @@
     }
   },
   "manifest": "contract/artifacts.json",
-  "producer": "banodoco-workspace-runtime",
+  "producer": "astrid-runtime",
   "producer_version": "sha256:b3bf5d3fef5d6a0168eb709c4f9b0ac7dab5f241f277d6da8b83f640b39af23e",
   "source_commit": "114d01bbfdc40c6587950eaafcf9b823443d901e"
 }

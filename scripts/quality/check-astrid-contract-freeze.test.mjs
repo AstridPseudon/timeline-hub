@@ -189,8 +189,8 @@ test('CLI emits JSON verification limits and rejects bad arguments with nonzero 
   const report = JSON.parse(success.stdout);
   assert.equal(report.ok, true);
   assert.equal(report.installedAcceptance, false);
-  assert.equal(report.sourceVerification.verified.length, original.sourceEvidence.filter((entry) => entry.repository === 'reigh-app').length);
-  assert.equal(report.sourceVerification.unverified.length, original.sourceEvidence.filter((entry) => entry.repository !== 'reigh-app').length);
+  assert.equal(report.sourceVerification.verified.length, original.sourceEvidence.filter((entry) => entry.repository === 'astrid-app').length);
+  assert.equal(report.sourceVerification.unverified.length, original.sourceEvidence.filter((entry) => entry.repository !== 'astrid-app').length);
   for (const args of [['--unknown'], ['--astrid-root'], ['--runtime-root', '/nonexistent-astrid-cf-fixture']]) {
     const failed = run(...args);
     assert.equal(failed.status, 1);

@@ -201,7 +201,7 @@ describe('shot-group pack commands', () => {
         derived_from: { shot_id: 'shot-a', track_id: 'V1' },
         final_video_media_id: 'media-final',
       },
-    }, 'reigh:shot-pack:v1:duplicate:shot-a:V1:shot-b');
+    }, 'astrid:shot-pack:v1:duplicate:shot-a:V1:shot-b');
   });
 
   it('admits promote-primary with the pinned family and stable receipt key', async () => {
@@ -216,7 +216,7 @@ describe('shot-group pack commands', () => {
     expect(admit).toHaveBeenCalledWith({
       family: PROMOTE_PRIMARY_FAMILY,
       input: { generation_id: 'gen-1', variant_id: 'variant-2' },
-    }, 'reigh:shot-pack:v1:promote-primary:gen-1:variant-2');
+    }, 'astrid:shot-pack:v1:promote-primary:gen-1:variant-2');
   });
 
   it('polls a command at the caller-supplied cadence until succeeded', async () => {
@@ -265,7 +265,7 @@ describe('shot-group pack commands', () => {
     });
   });
 
-  // known-failure: reigh-app | 2026-10-30 | product bug: duplicate/promote pack commands use the retired legacy envelope
+  // known-failure: astrid-app | 2026-10-30 | product bug: duplicate/promote pack commands use the retired legacy envelope
   it.fails('duplicates only the explicitly active non-default timeline and never touches relational storage', async () => {
     const router = createFakeBridgeRouter();
     const seed = documentFixture();
@@ -305,7 +305,7 @@ describe('shot-group pack commands', () => {
     expect(paths.some((path) => path.includes(forbidden) || path.includes('supabase'))).toBe(false);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | product bug: duplicate/promote pack commands use the retired legacy envelope
+  // known-failure: astrid-app | 2026-10-30 | product bug: duplicate/promote pack commands use the retired legacy envelope
   it.fails('promotes and refreshes only the explicit active timeline document', async () => {
     const router = createFakeBridgeRouter();
     const seed = documentFixture();

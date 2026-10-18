@@ -151,7 +151,7 @@ vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx',
   };
 });
 
-// known-failure: reigh-app | 2026-10-30 | product bug: seam admission refuses popup edits that move a declared pause's edges (shotCompositionAdapter.publish vs visualSeamContract)
+// known-failure: astrid-app | 2026-10-30 | product bug: seam admission refuses popup edits that move a declared pause's edges (shotCompositionAdapter.publish vs visualSeamContract)
 const itRefusedBySeamAdmission = it.fails;
 
 describe('shot timeline popup persistence', () => {
@@ -825,7 +825,7 @@ describe('shot timeline popup persistence', () => {
       });
       expect(recovered?.draftIdentity).toBe('edit-B');
       expect(recovered?.draft.canonicalPublication).toMatchObject({
-        idempotencyKey: expect.stringMatching(/^reigh\.shot-popup\./),
+        idempotencyKey: expect.stringMatching(/^astrid\.shot-popup\./),
       });
 
       const reopened = createShotTimelineDataProvider(config, base, 'occ-1');

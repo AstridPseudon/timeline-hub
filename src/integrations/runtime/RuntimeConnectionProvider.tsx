@@ -47,7 +47,7 @@ import type { Realm } from './generated.ts';
 
 const POLL_INTERVAL_MS = 3000;
 const PROBE_TIMEOUT_MS = 5000;
-const CONNECTED_BEFORE_KEY = 'reigh.runtime.connectedBefore';
+const CONNECTED_BEFORE_KEY = 'astrid.runtime.connectedBefore';
 
 type RealmSummary = Pick<Realm, 'realm_id' | 'display_name'>;
 
@@ -58,7 +58,7 @@ export type RuntimeProbeOutcome =
   | { kind: 'not_ready'; reason: RuntimeNotReadyReason };
 
 /**
- * The gateway's 503 body is `{ error: <code> }` (`RuntimeRefusalCode` in `scripts/reigh-loopback-gateway.ts`). A
+ * The gateway's 503 body is `{ error: <code> }` (`RuntimeRefusalCode` in `scripts/astrid-loopback-gateway.ts`). A
  * missing or unreadable discovery file means no Runtime is running, so it reads as stopped. A code the page does
  * not know is `unknown`: it must not promise that the connection comes by itself.
  */
@@ -83,7 +83,7 @@ async function readJson(response: Response): Promise<unknown> {
 
 /**
  * Asks the Runtime who it is, the way the gateway does: health, then realm. Never throws. An answer that is not
- * a Reigh gateway's (another server on the port, a bad body) is `cant_reach`.
+ * a Astrid gateway's (another server on the port, a bad body) is `cant_reach`.
  */
 export async function probeRuntime(
   signal?: AbortSignal,

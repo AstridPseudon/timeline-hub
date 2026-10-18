@@ -4,9 +4,9 @@
 //   node scripts/quality/refresh-astrid-contracts.mjs [--astrid-root <dir>] [--runtime-root <dir>] [--check]
 //
 // C1 (config/contracts/astrid-plan-a-c1.json): recompute every sourceEvidence sha256 whose repository
-//   root is known (reigh-app always; Astrid and workspace-runtime via the flags), then the canonical digest.
+//   root is known (astrid-app always; Astrid and workspace-runtime via the flags), then the canonical digest.
 // C2 (config/contracts/astrid-plan-a-c2.json): recompute predecessor.rawFileSha256 and canonicalDigest from
-//   the C1 file, diagnostic.schemaSha256, the reigh-app sourceApplicability hashes, then the canonical digest.
+//   the C1 file, diagnostic.schemaSha256, the astrid-app sourceApplicability hashes, then the canonical digest.
 //   Entries pinned to other repositories are historical producer evidence and are left as issued.
 // Every hash comes from the checkers' own functions or a plain SHA-256 of the file; nothing is typed by hand.
 // --check writes nothing and exits 1 if a refresh would change a file. Missing source files are reported
@@ -36,11 +36,11 @@ const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const serialize = (value) => `${JSON.stringify(value, null, 2)}\n`;
 
 function parseArgs(argv) {
-  const options = { roots: { 'reigh-app': REPO_ROOT }, check: false };
+  const options = { roots: { 'astrid-app': REPO_ROOT }, check: false };
   for (let index = 0; index < argv.length; index += 1) {
     const flag = argv[index];
     if (flag === '--check') { options.check = true; continue; }
-    const names = { '--astrid-root': ['Astrid'], '--runtime-root': ['workspace-runtime', 'banodoco-workspace-runtime'] }[flag];
+    const names = { '--astrid-root': ['Astrid'], '--runtime-root': ['workspace-runtime', 'astrid-runtime'] }[flag];
     if (!names) throw new Error(`unknown argument: ${flag}`);
     const value = argv[++index];
     if (!value || value.startsWith('--')) throw new Error(`${flag} requires a path`);
@@ -85,7 +85,7 @@ export function refresh({ roots, check = false }) {
   sync('C2 predecessor.canonicalDigest', c2.predecessor, 'canonicalDigest', c1.digest);
   sync('C2 diagnostic.schemaSha256', c2.diagnostic, 'schemaSha256', sha256(readFileSync(SCHEMA_PATH)));
   for (const source of c2.sourceApplicability) {
-    if (source.repository !== 'reigh-app') continue;
+    if (source.repository !== 'astrid-app') continue;
     try {
       // The C1 file's own entry hashes the bytes about to be written, not the ones on disk.
       const next = source.path === 'config/contracts/astrid-plan-a-c1.json' ? sha256(c1Text) : hashSource(REPO_ROOT, source.path);

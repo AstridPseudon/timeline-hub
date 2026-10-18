@@ -27,13 +27,13 @@ export function withBrowser(text: string, browser: string = installBrowserName()
 
 /** Commands and paths the agent block names. Plain strings. */
 const COMMANDS = {
-  runtime: 'banodoco-local up --profile astrid',
+  runtime: 'astrid-runtime up --profile astrid',
   app: 'npm run dev:local',
   /** The installer guide, in the astrid-agent repository: a full URL, so a reader without the repo can open it. */
   installUrl: 'https://github.com/peteromallet/astrid-agent/blob/main/docs/setup/local-source-install.md',
 } as const;
 
-/** The origin `npm run dev:local` opens for by default (`config/hosted-origin.json`); any other needs `REIGH_LOOPBACK_ORIGIN`. */
+/** The origin `npm run dev:local` opens for by default (`config/hosted-origin.json`); any other needs `ASTRID_APP_LOOPBACK_ORIGIN`. */
 const DEFAULT_HOSTED_ORIGIN: string | null = hostedOrigin.origin;
 
 /** Which of the two agent blocks to copy: the page has never reached Astrid, or Astrid changed under a connected page. */
@@ -193,7 +193,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     pasteNext: 'Now paste them into your agent.',
     copyFailed: 'Copy these steps and paste them into your agent.',
     instructions: (pageOrigin, variant) => {
-      const prefix = pageOrigin === DEFAULT_HOSTED_ORIGIN ? '' : `REIGH_LOOPBACK_ORIGIN=${pageOrigin} `;
+      const prefix = pageOrigin === DEFAULT_HOSTED_ORIGIN ? '' : `ASTRID_APP_LOOPBACK_ORIGIN=${pageOrigin} `;
       return [
         `Please start Astrid on this computer so the page open at ${pageOrigin} can connect to it.`,
         'Keep any existing installation, profile, data root and workspace as they are. Do not reset, reinstall over or delete anything.',
@@ -204,7 +204,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
           `1. Start Astrid's Runtime: ${COMMANDS.runtime}`,
           '   If it is already running, leave it running.',
           `   If the command is not found, Astrid is not installed here yet: follow the install guide (${COMMANDS.installUrl}), then come back to this step.`,
-          `2. In the Astrid app checkout (the reigh-app repository), run: ${prefix}${COMMANDS.app}`,
+          `2. In the Astrid app checkout (the astrid-app repository), run: ${prefix}${COMMANDS.app}`,
           `   If it is already running but never printed "Open ${pageOrigin}", stop it and start it again this way.`,
           '   If it says another program is in the way, do not stop that program; report the details line it prints.',
           `3. Leave both running, and report back once ${COMMANDS.app} prints "Open ${pageOrigin}". The page connects by itself; it does not need a reload.`,

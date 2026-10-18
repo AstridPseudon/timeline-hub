@@ -7,10 +7,10 @@
  * Not part of `npm test`. CI runs it from .github/workflows/direct-journey.yml (pull requests touching the gateway,
  * launcher, runtime integration or media helpers; nightly; on demand), which expects exactly the expected failures below.
  *
- * What runs: a production build served over HTTPS at https://reigh.test:<port> (test certificate made at
+ * What runs: a production build served over HTTPS at https://astrid.test:<port> (test certificate made at
  * run time, host mapped by Chromium's --host-resolver-rules, the page marked "public" with
- * --ip-address-space-overrides so Chromium applies its public -> loopback rules), scripts/reigh-loopback-gateway.ts
- * on its well-known port (17340, override with REIGH_DIRECT_GATEWAY_PORT), and a real Runtime daemon on a
+ * --ip-address-space-overrides so Chromium applies its public -> loopback rules), scripts/astrid-loopback-gateway.ts
+ * on its well-known port (17340, override with ASTRID_APP_DIRECT_GATEWAY_PORT), and a real Runtime daemon on a
  * throwaway SQLite realm. See support/harness.ts for how each is started and torn down.
  *
  * Design: tasks/2026-10-16-plan-a-same-machine-direct.md (revision 3): the App reaches the gateway at
@@ -136,7 +136,7 @@ test.describe('zero-click connection (App)', () => {
       await expect(panel.getByRole('button', { name: 'Copied' })).toBeVisible();
       await expect(panel.getByText('Now paste them into your agent.')).toBeVisible();
       const copied = await page.evaluate(() => navigator.clipboard.readText());
-      expect(copied).toContain('banodoco-local up --profile astrid');
+      expect(copied).toContain('astrid-runtime up --profile astrid');
       expect(copied).toContain('npm run dev:local');
       expect(copied).toContain(`prints "Open ${harness.origin}"`);
       await harness.startGateway();
@@ -270,7 +270,7 @@ test.describe('permission gate and readiness (App)', () => {
       await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
       await expect(panel.getByText('Start Astrid on this computer and this page opens by itself.')).toBeVisible();
       await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
-      await expect(panel).not.toContainText(/Reigh|Runtime|workspace|realm|gateway|reload/i);
+      await expect(panel).not.toContainText(/Astrid|Runtime|workspace|realm|gateway|reload/i);
       await harness.startRuntime();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
       expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
@@ -691,7 +691,7 @@ test.describe('security', () => {
     expect(refused.json().error).toBe('hosted_origin_required');
     expect(refused.headers['access-control-allow-origin']).toBeUndefined();
     expect(refused.text).not.toContain(harness.seed.projectId);
-    const sameSite = await harness.gatewayRequest('/v1/projects?limit=100', { origin: `https://${'reigh.test'}.evil.test:${harness.originPort}` });
+    const sameSite = await harness.gatewayRequest('/v1/projects?limit=100', { origin: `https://${'astrid.test'}.evil.test:${harness.originPort}` });
     expect(sameSite.status).toBe(403);
     const plainHttp = await harness.gatewayRequest('/v1/projects?limit=100', { origin: harness.origin.replace('https:', 'http:') });
     expect(plainHttp.status).toBe(403);
@@ -714,7 +714,7 @@ test.describe('security', () => {
 
   test('a rebinding Host is refused on the product routes', async ({ harness }) => {
     const port = harness.gatewayPort;
-    for (const host of [`evil.test:${port}`, `127.0.0.1.evil.test:${port}`, '127.0.0.1', 'localhost', `localhost:${port}`, `127.0.0.1:${port + 1}`, `[::1]:${port}`, `reigh.test:${port}`]) {
+    for (const host of [`evil.test:${port}`, `127.0.0.1.evil.test:${port}`, '127.0.0.1', 'localhost', `localhost:${port}`, `127.0.0.1:${port + 1}`, `[::1]:${port}`, `astrid.test:${port}`]) {
       for (const requestPath of ['/api/runtime/v1/health', '/api/astrid/v1/health']) {
         const refused = await harness.gatewayRequest(requestPath, { host, fromRoot: true });
         expect(refused.status, `Host ${host} ${requestPath}`).toBe(403);
@@ -847,7 +847,7 @@ test.describe('pack extensions (App)', () => {
     harness.extensionsConfig = 'on';
     const { seed } = await openExtensionsTimeline(page, harness);
     // The lane is the bundled transcript extension's (config on): one chip per segment of the bundle read from the Runtime.
-    const lane = page.locator('[data-lane-kind="reigh.transcript"]');
+    const lane = page.locator('[data-lane-kind="astrid.transcript"]');
     await expect(lane).toBeVisible();
     const chips = lane.getByTestId('transcript-lane-occurrence');
     await expect(chips).toHaveCount(seed.transcriptTexts.length);
@@ -901,7 +901,7 @@ test.describe('pack extensions (App)', () => {
       // Wait until the editor has drawn the seeded clips (the ordinary ones, which need no extension), so the absences below are not just "not yet".
       await expect(page.locator(`[data-clip-id="${seed.sceneClipId}"]`).first()).toBeVisible();
       await expect(page.locator(`[data-clip-id="${seed.speechClipId}"]`).first()).toBeVisible();
-      await expect(page.locator('[data-lane-kind="reigh.transcript"]')).toHaveCount(0);
+      await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toHaveCount(0);
       await expect(page.getByTestId('astrid-live-scene-entry')).toHaveCount(0);
       await expect(page.locator('iframe[title^="Live scene"]')).toHaveCount(0);
       // The timeline itself is intact: the same composition was read through the gateway, so it is the extensions that are off.

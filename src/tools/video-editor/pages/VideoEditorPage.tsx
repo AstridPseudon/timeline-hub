@@ -8,7 +8,7 @@ import {
 } from "../hooks/useRuntimeEditorDiscovery.ts";
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 /**
- * Internal Reigh route adapter for the in-app video editor page.
+ * Internal Astrid App route adapter for the in-app video editor page.
  * Not part of the supported public SDK surface.
  */
 import { resolveRuntimeProjectId } from "@/integrations/runtime/resolveProjectSelector.ts";
@@ -62,7 +62,7 @@ import {
   subscribe as subscribeDevDisabled,
 } from "@/tools/video-editor/dev/devExtensionEnablement.ts";
 import { useExtensionLoaderWiring } from "@/tools/video-editor/runtime/useExtensionLoaderWiring";
-import { ReighVideoEditorShell } from "@/tools/video-editor/components/ReighVideoEditorShell.tsx";
+import { AstridVideoEditorShell } from "@/tools/video-editor/components/AstridVideoEditorShell.tsx";
 import { AstridAcpSessionControls } from "@/tools/video-editor/components/AstridAcpSessionControls.tsx";
 import {
   ProjectTimelineSelectors,
@@ -71,7 +71,7 @@ import {
 import { ProjectHeaderActions } from "@/shared/components/ProjectHeaderActions.tsx";
 import { MinkCircle } from "@/pages/Home/components/MinkCircle/MinkCircle.tsx";
 import {
-  ReighRuntimeClient,
+  AstridRuntimeClient,
   RuntimeAuthenticationError,
   RuntimeUnavailableError,
   type RuntimeConnectorError,
@@ -1132,7 +1132,7 @@ export default function VideoEditorPage() {
     try {
       const timelineRef = await ensureProjectHasTimeline(
         localProjectId,
-        new ReighRuntimeClient(),
+        new AstridRuntimeClient(),
       );
       await Promise.all([
         discovery.projectsQuery.refetch(),
@@ -1228,9 +1228,9 @@ export default function VideoEditorPage() {
         {
           name: pending.name,
           timelineId: pending.timelineId,
-          idempotencyKey: `reigh-timeline-create-${localProjectId}-${pending.timelineId}`,
+          idempotencyKey: `astrid-timeline-create-${localProjectId}-${pending.timelineId}`,
         },
-        new ReighRuntimeClient(),
+        new AstridRuntimeClient(),
       );
       await discovery.timelinesQuery.refetch();
       pendingAdditionalTimeline.current = null;
@@ -1459,7 +1459,7 @@ export default function VideoEditorPage() {
     onSelectTimeline: handleSelectRuntimeTimeline,
     onRenameTimeline: async (timelineId: string, name: string) => {
       if (!runtimeProjectId) throw new Error("No Runtime project is selected.");
-      await new ReighRuntimeClient().renameTimeline(runtimeProjectId, timelineId, name);
+      await new AstridRuntimeClient().renameTimeline(runtimeProjectId, timelineId, name);
       await runtimeDiscovery.timelinesQuery.refetch();
     },
     onRetry: () => void handleRuntimeRetry(),
@@ -1660,7 +1660,7 @@ export default function VideoEditorPage() {
                 extensionReleaseFlags.configurationRevision
               }
             >
-              <ReighVideoEditorShell
+              <AstridVideoEditorShell
                 mode="full"
                 timelineId={providerSelection.timelineId}
                 onCreateTimeline={() => navigate("/")}
@@ -1817,7 +1817,7 @@ export default function VideoEditorPage() {
                 extensionReleaseFlags.configurationRevision
               }
             >
-              <ReighVideoEditorShell
+              <AstridVideoEditorShell
                 mode="full"
                 timelineId={providerSelection.timelineId}
                 onCreateTimeline={() => navigate("/")}

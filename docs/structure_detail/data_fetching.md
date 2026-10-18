@@ -10,7 +10,7 @@
 
 **Purpose**: How the hosted App reaches the local Runtime: origin prefix, the boot gate that precedes any Runtime read, and the gateway paths.
 
-**Source of Truth**: `src/integrations/runtime/connection.ts` (origin, bases, state type, `RUNTIME_QUERY_ROOTS`), `src/integrations/runtime/RuntimeConnectionProvider.tsx` (gate), `src/integrations/runtime/localNetworkPermission.ts`, `scripts/reigh-loopback-gateway.ts` (checks), `config/vite/pairedRoutePolicy.ts` (route table).
+**Source of Truth**: `src/integrations/runtime/connection.ts` (origin, bases, state type, `RUNTIME_QUERY_ROOTS`), `src/integrations/runtime/RuntimeConnectionProvider.tsx` (gate), `src/integrations/runtime/localNetworkPermission.ts`, `scripts/astrid-loopback-gateway.ts` (checks), `config/vite/pairedRoutePolicy.ts` (route table).
 
 | Build | `runtimeOrigin()` | `runtimeApiBase()` / `astridBase()` |
 |-------|-------------------|-------------------------------------|
@@ -22,8 +22,8 @@
 | `RuntimeConnectionState` | Set when (permission behavior) |
 |--------------------------|--------------------------------|
 | `connecting` | Permission unread, or `granted` and probing (re-probes every 3 s and on focus until connected) |
-| `connected` (realm) | Health and realm both answer as a Reigh gateway's |
-| `cant_reach` (`firstTime`) | Network error, non-OK, or a non-gateway body; also permission `prompt`/unknown/throws, where nothing is sent until `connect()` sends an untimed probe (that is what makes Chrome ask). `firstTime` holds until `reigh.runtime.connectedBefore` is set |
+| `connected` (realm) | Health and realm both answer as a Astrid App gateway's |
+| `cant_reach` (`firstTime`) | Network error, non-OK, or a non-gateway body; also permission `prompt`/unknown/throws, where nothing is sent until `connect()` sends an untimed probe (that is what makes Chrome ask). `firstTime` holds until `astrid.runtime.connectedBefore` is set |
 | `blocked` | Permission `denied`; nothing is sent |
 | `not_ready` (reason) | Gateway 503: `realm_changed`; `runtime_unavailable` or `runtime_discovery_invalid` gives `runtime_stopped`; `runtime_identity_mismatch` gives `identity_mismatch`; other codes give `unknown` |
 

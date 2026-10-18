@@ -16,7 +16,7 @@ import type {
   BridgeTimelinesPayload,
 } from '@/tools/video-editor/data/bridgeContract.ts';
 import type { AstridBridgeRequestObservation } from '@/tools/video-editor/data/AstridBridgeDataProvider.ts';
-import { ReighRuntimeClient } from '@/integrations/runtime/client.ts';
+import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import { astridBase } from '@/integrations/runtime/connection.ts';
 import {
   astridProjectCollectionPath,
@@ -279,7 +279,7 @@ export function useAstridBridgeDiscovery({
           onBridgeRequest,
         );
         const runtimeProjectId = selectedProject?.project_id ?? null;
-        const runtime = runtimeProjectId ? new ReighRuntimeClient() : null;
+        const runtime = runtimeProjectId ? new AstridRuntimeClient() : null;
         const timelines = await Promise.all(payload.items.map(async (timeline) => {
           let name = timeline.name?.trim() || undefined;
           if ((!name || name === timeline.timeline_id) && runtime && runtimeProjectId && timeline.head_revision_id) {

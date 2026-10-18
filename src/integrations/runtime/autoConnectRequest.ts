@@ -3,7 +3,7 @@
  * should go straight to Chrome's local-network prompt instead of explaining it first. The click sets a one-shot flag in
  * `sessionStorage` (it survives the navigation into the app and goes with the tab); the gate takes it on mount.
  */
-const AUTO_CONNECT_KEY = 'reigh.runtime.autoConnect';
+const AUTO_CONNECT_KEY = 'astrid.runtime.autoConnect';
 
 /** Marks that the next time the gate sees the permission still to be asked, it asks at once. Never throws. */
 export function requestAutoConnect(): void {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as policy from '../../../config/vite/pairedRoutePolicy';
-import { allowedAcpRoute, allowedRoute } from '../../../scripts/reigh-loopback-gateway';
+import { allowedAcpRoute, allowedRoute } from '../../../scripts/astrid-loopback-gateway';
 import { classifyPairedRoute, forwardHeaders, type PairedService } from '../../../config/vite/pairedRoutePolicy';
 import generatedClientSource from '../runtime/generated.ts?raw';
 import runtimeClientSource from '../runtime/client.ts?raw';
@@ -324,7 +324,7 @@ describe('paired route policy', () => {
       'content-type': 'video/mp4', 'idempotency-key': 'k1', 'if-match': '"v1"', 'if-none-match': '"v0"', range: 'bytes=0-9',
       'x-original-name': 'a.mp4', 'x-filename': 'a.mp4', 'x-expected-digest': 'sha256:abc', 'x-expected-version': '3',
       'x-media-width': '1920', 'x-media-height': '1080', 'x-media-duration-seconds': '4.5',
-      authorization: 'Bearer browser', cookie: 'reigh_paired=1', 'x-output-binding': '{}', origin: 'https://x', host: 'x',
+      authorization: 'Bearer browser', cookie: 'astrid_paired=1', 'x-output-binding': '{}', origin: 'https://x', host: 'x',
     });
     expect(forwarded).toMatchObject({
       'x-expected-digest': 'sha256:abc', 'x-media-width': '1920', 'x-media-height': '1080',
@@ -340,7 +340,7 @@ describe('paired route policy', () => {
 // generated client (method + path template per `async op(...)`); the ones the App
 // uses are the `this.client.<op>(` calls in the runtime provider/adapter code.
 describe('paired route policy vs the App\'s Workspace v1 calls', () => {
-  // ReighRuntimeClient is the one place that owns a WorkspaceClient; the providers
+  // AstridRuntimeClient is the one place that owns a WorkspaceClient; the providers
   // (dataProvider.ts etc.) reach the Runtime only through its wrappers.
   const usedOperations = new Set([...runtimeClientSource.matchAll(/\bthis\.client\.(\w+)\(/g)].map((m) => m[1]));
 

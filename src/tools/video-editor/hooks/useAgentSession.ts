@@ -106,8 +106,8 @@ function sceneScopeForRequest(
 }
 
 function removeUnscopedLiveSceneMarkers(content: string): string {
-  const cleaned = content.replace(/<reigh_live_scene_request>[\s\S]*?(?:<\/reigh_live_scene_request>|$)/g, '')
-    .replace(/<reigh_live_scene_(?:context|result)>[\s\S]*?(?:<\/reigh_live_scene_(?:context|result)>|$)/g, '')
+  const cleaned = content.replace(/<astrid_live_scene_request>[\s\S]*?(?:<\/astrid_live_scene_request>|$)/g, '')
+    .replace(/<astrid_live_scene_(?:context|result)>[\s\S]*?(?:<\/astrid_live_scene_(?:context|result)>|$)/g, '')
     .trim();
   if (cleaned === content.trim()) return cleaned;
   return `${cleaned}${cleaned ? '\n\n' : ''}Live-scene request ignored because this turn has no valid selected-timeline scope.`;
@@ -140,9 +140,9 @@ function textFromContent(value: unknown): string {
   return '';
 }
 
-const ELEMENT_OPERATION_MARKER = /<reigh_element_operation>\s*([\s\S]*?)\s*<\/reigh_element_operation>/g;
+const ELEMENT_OPERATION_MARKER = /<astrid_element_operation>\s*([\s\S]*?)\s*<\/astrid_element_operation>/g;
 
-export type ReighElementOperationExtraction = {
+export type AstridElementOperationExtraction = {
   visibleContent: string;
   operations: readonly unknown[];
   parseErrors: readonly string[];
@@ -154,7 +154,7 @@ export type ReighElementOperationExtraction = {
  * turn means the model can still explain its work, but the host never has to
  * scrape shell commands or guess whether prose describes a completed edit.
  */
-export function extractReighElementOperations(content: string): ReighElementOperationExtraction {
+export function extractAstridElementOperations(content: string): AstridElementOperationExtraction {
   const operations: unknown[] = [];
   const parseErrors: string[] = [];
   const visibleContent = content.replace(ELEMENT_OPERATION_MARKER, (_match, payload: string) => {
@@ -169,15 +169,15 @@ export function extractReighElementOperations(content: string): ReighElementOper
 }
 
 /** Keep the transport context model-visible but hide it from the chat UI. */
-export function stripReighEditorContext(content: string): string {
-  if (content.startsWith('<reigh_element_result>')) return '';
-  if (content.startsWith('<reigh_live_scene_result>') || content.startsWith('<reigh_live_scene_context>')) return '';
-  const markerIndex = content.indexOf('<reigh_editor_context>');
+export function stripAstridEditorContext(content: string): string {
+  if (content.startsWith('<astrid_element_result>')) return '';
+  if (content.startsWith('<astrid_live_scene_result>') || content.startsWith('<astrid_live_scene_context>')) return '';
+  const markerIndex = content.indexOf('<astrid_editor_context>');
   if (markerIndex >= 0) return content.slice(0, markerIndex).trimEnd();
 
   // Sessions created before the structured contract used this text prefix.
   // Keep old transcripts readable after the bridge migrates to the new block.
-  const legacyMarker = content.search(/reigh editor context:\s*timeline id:/i);
+  const legacyMarker = content.search(/astrid editor context:\s*timeline id:/i);
   return legacyMarker >= 0 ? content.slice(0, legacyMarker).trimEnd() : content;
 }
 
@@ -272,7 +272,7 @@ type LiveSceneAcpModule = typeof import('../runtime/liveSceneAcpRoundtrip');
 
 export class AstridAgentSessionStore {
   constructor(private readonly client = new AstridLocalClient({
-    projectSlug: 'reigh-acp',
+    projectSlug: 'astrid-acp',
     timeoutMs: ACP_PROMPT_TIMEOUT_MS,
   }), private readonly loadLiveSceneAcpRoundtrip: () => Promise<LiveSceneAcpModule> =
     () => import('../runtime/liveSceneAcpRoundtrip')) {}
@@ -472,7 +472,7 @@ export class AstridAgentSessionStore {
         checkCurrent();
         session.turns.push({
           role: 'user', content: input.message, attachments: input.attachments, timestamp: timestamp(),
-          messageId: `reigh-setting-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          messageId: `astrid-setting-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         });
         this.commitAssistantDraft(session, acknowledgement);
         await this.pullEvents();
@@ -481,10 +481,10 @@ export class AstridAgentSessionStore {
 
       await refreshProjectElementContext(projectId);
       checkCurrent();
-      const reighAgentContext = await import('@/tools/video-editor/runtime/reighAgentContext.ts');
+      const astridAgentContext = await import('@/tools/video-editor/runtime/astridAgentContext.ts');
       if (signal.aborted) return;
-      const contextSnapshot = reighAgentContext.buildReighAgentContextSnapshot(editorContext, input.attachments ?? [], input.requestId);
-      const context = reighAgentContext.serializeReighAgentContext(contextSnapshot);
+      const contextSnapshot = astridAgentContext.buildAstridAgentContextSnapshot(editorContext, input.attachments ?? [], input.requestId);
+      const context = astridAgentContext.serializeAstridAgentContext(contextSnapshot);
       const sceneBinding = sceneScopeForRequest(sessionId, globalThis.crypto.randomUUID(), editorContext);
       if (sceneBinding) {
         sceneScope = sceneBinding.scope;
@@ -513,7 +513,7 @@ export class AstridAgentSessionStore {
         content: input.message,
         attachments: input.attachments,
         timestamp: timestamp(),
-        messageId: `reigh-prompt-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        messageId: `astrid-prompt-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         request_id: contextSnapshot.request_id,
       });
       checkCurrent();
@@ -526,7 +526,7 @@ export class AstridAgentSessionStore {
       await this.pullEvents();
       if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected. Retry the saved message.');
       const draft = trimString(session.assistantDraft);
-      const hasElementOperations = /<reigh_element_operation>/.test(draft);
+      const hasElementOperations = /<astrid_element_operation>/.test(draft);
       let finalContent = draft;
       if (hasElementOperations) {
         finalContent = await runElementAcpRoundtrip({
@@ -649,14 +649,14 @@ export class AstridAgentSessionStore {
         if (replay) {
           const assembled = (replay.get(notification.messageId) ?? '') + content;
           replay.set(notification.messageId, assembled);
-          const visible = stripReighEditorContext(assembled);
+          const visible = stripAstridEditorContext(assembled);
           const turn = session.turns.find(candidate => candidate.role === 'user' && candidate.messageId === notification.messageId);
           if (turn) turn.content = visible;
           else if (visible) session.turns.push({ role: 'user', content: visible, timestamp: at, messageId: notification.messageId });
           return;
         }
       }
-      const visibleContent = role === 'user' ? stripReighEditorContext(content) : content;
+      const visibleContent = role === 'user' ? stripAstridEditorContext(content) : content;
       if (!visibleContent) return;
       // ACP replays persisted user messages, but the live prompt request does
       // not consistently echo the just-sent user message. The local prompt

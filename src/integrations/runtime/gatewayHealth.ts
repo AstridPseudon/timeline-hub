@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /**
- * What the loopback gateway adds to the Runtime's health answer, shared by the gateway (`scripts/reigh-loopback-gateway.ts`,
+ * What the loopback gateway adds to the Runtime's health answer, shared by the gateway (`scripts/astrid-loopback-gateway.ts`,
  * which writes it) and the hosted page (`RuntimeConnectionProvider`, which reads it), so the two cannot drift.
  *
  * `app_url` is the local Astrid app the launcher serves, `http://127.0.0.1:<app port>`. It is present only when the launcher

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import {
-  ReighRuntimeClient,
+  AstridRuntimeClient,
 } from '@/integrations/runtime/client.ts';
 import { isRuntimeMode as isRuntimeApiBase, runtimeApiBase } from '@/integrations/runtime/connection.ts';
 import type {
@@ -37,7 +37,7 @@ type RuntimeFinalVideoMap = Map<string, RuntimeShotFinalVideo> & {
 };
 
 type RuntimeFinalVideoClient = Pick<
-  ReighRuntimeClient,
+  AstridRuntimeClient,
   | 'listProjectTasks'
   | 'getTask'
   | 'listManagedOutputs'
@@ -89,7 +89,7 @@ function isProvenNonVideoOutput(output: ManagedOutput): boolean {
 }
 
 async function listAllRuntimeManagedOutputs(
-  client: Pick<ReighRuntimeClient, 'listManagedOutputs'>,
+  client: Pick<AstridRuntimeClient, 'listManagedOutputs'>,
   taskId: string,
 ): Promise<ManagedOutput[]> {
   const outputs: ManagedOutput[] = [];
@@ -316,7 +316,7 @@ export function useFinalVideoAvailable() {
     isRuntimeMode && canonicalCompositionSettled ? projectSlug : null,
   );
   const runtimeClient = useMemo(
-    () => new ReighRuntimeClient({ baseUrl: runtimeBase }),
+    () => new AstridRuntimeClient({ baseUrl: runtimeBase }),
     [runtimeBase],
   );
   const exportRuntimeManagedOutput = useCallback(async (output: ManagedOutput) => {

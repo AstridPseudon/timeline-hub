@@ -96,7 +96,7 @@ function laneFromParsedItems(
 ): DataLaneView {
   return {
     laneId: 'runaway-scale',
-    kindId: 'reigh.runaway.transitions',
+    kindId: 'astrid.runaway.transitions',
     label: 'Runaway transitions',
     schemaRef: RUNAWAY_SCHEMA_REF,
     shape: 'interval',
@@ -141,7 +141,7 @@ afterEach(() => {
 });
 
 describe('large typed-lane scale contract', () => {
-  // known-failure: reigh-app | 2026-10-30 | product no longer renders the lane density summary
+  // known-failure: astrid-app | 2026-10-30 | product no longer renders the lane density summary
   it.fails.each(SCALE_CASES)(
     '$count intervals stay bounded, navigable, and density-stable',
     ({ count, renderBudgetMs, heapGrowthBytes: heapGrowthBudgetBytes }) => {

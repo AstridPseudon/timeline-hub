@@ -79,7 +79,7 @@ export function runtimeOrigin(): string {
   return configuredOrigin ?? '';
 }
 
-/** Base for `ReighRuntimeClient` and Runtime media: `/api/runtime`, or the gateway's. */
+/** Base for `AstridRuntimeClient` and Runtime media: `/api/runtime`, or the gateway's. */
 export function runtimeApiBase(): string {
   return `${runtimeOrigin()}${RUNTIME_API_PATH}`;
 }

@@ -153,12 +153,12 @@ export function resolveWorkspaceDiscoveryPath({ discovery, supportRoot, dataRoot
   if (roots.some((value) => !isAbsolute(value))) throw new Error('Runtime support root must be an absolute path');
   const canonical = (value) => { try { return realpathSync(value); } catch { return resolve(value); } };
   if (roots.length === 2 && canonical(roots[0]) !== canonical(roots[1])) {
-    throw new Error('ASTRID_SUPPORT_ROOT and BANODOCO_LOCAL_DATA_ROOT select different roots');
+    throw new Error('ASTRID_SUPPORT_ROOT and ASTRID_RUNTIME_DATA_ROOT select different roots');
   }
-  return join(roots[0] || join(home, 'Library', 'Application Support', 'Banodoco'), 'runtime', 'discovery.json');
+  return join(roots[0] || join(home, 'Library', 'Application Support', 'Astrid Runtime'), 'runtime', 'discovery.json');
 }
 
-/** The gateway's well-known port (Plan A D1); `REIGH_LOOPBACK_PORT` overrides it, and tests use 0. */
+/** The gateway's well-known port (Plan A D1); `ASTRID_APP_LOOPBACK_PORT` overrides it, and tests use 0. */
 export const DEFAULT_LOOPBACK_PORT = '17340';
 
 export function resolveLoopbackPort(value) {
@@ -166,14 +166,14 @@ export function resolveLoopbackPort(value) {
 }
 
 /**
- * Arguments for `scripts/reigh-loopback-gateway.ts`. ACP auto-approves tool calls and can open terminals, so the
+ * Arguments for `scripts/astrid-loopback-gateway.ts`. ACP auto-approves tool calls and can open terminals, so the
  * gateway gets `--acp-endpoint` only when the developer passed `--acp` to the launcher. `appPort` is the local app's port: the
  * gateway reports it in its health answer so the hosted page can link to the app.
  */
 export function gatewayChildArgs({ discoveryPath, credentialPath, hostedOrigin, loopbackPort, acp, acpPort, appPort, auditLog, actor }) {
   return [
     '--import', 'tsx',
-    'scripts/reigh-loopback-gateway.ts',
+    'scripts/astrid-loopback-gateway.ts',
     '--discovery', discoveryPath,
     '--token-file', credentialPath,
     '--origin', hostedOrigin,

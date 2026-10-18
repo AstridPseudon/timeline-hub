@@ -60,9 +60,9 @@ function editedGraph(atMs: number, headId: string) {
   return graph;
 }
 
-// known-failure: reigh-app | 2026-10-30 | product bug: seam admission refuses popup edits that move a declared pause's edges (shotCompositionAdapter.publish vs visualSeamContract)
+// known-failure: astrid-app | 2026-10-30 | product bug: seam admission refuses popup edits that move a declared pause's edges (shotCompositionAdapter.publish vs visualSeamContract)
 const itRefusedBySeamAdmission = it.fails;
-// known-failure: reigh-app | 2026-10-30 | product bug: usePollSync.ts:215 drops the provider-hydrated recovery draft while recovery is active, so the editor shows the canonical clip
+// known-failure: astrid-app | 2026-10-30 | product bug: usePollSync.ts:215 drops the provider-hydrated recovery draft while recovery is active, so the editor shows the canonical clip
 const itRecoveryDraftDropped = it.fails;
 
 describe('shot timeline popup real recovery integration', () => {
