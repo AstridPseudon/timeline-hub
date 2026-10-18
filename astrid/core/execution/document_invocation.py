@@ -105,7 +105,8 @@ def _authenticated(client):
     return binding
 
 
-def _invoke(entry, params, *, caller_connection, project_id, request_id, expected_source_digest):
+def _invoke(entry, params, *, caller_connection, project_id, request_id, expected_source_digest,
+            check_source_admission):
     """Called only after Host root selection; returns D's original result object."""
     action, kind = select_transcript_writer(entry, expected_source_digest)
     actor, session, realm = _authenticated(caller_connection)
@@ -160,6 +161,7 @@ def _invoke(entry, params, *, caller_connection, project_id, request_id, expecte
     def check():
         if not active:
             raise ValueError("document invocation has expired")
+        check_source_admission()
         check_document_source(entry)
         if _authenticated(caller_connection) != (actor, session, realm):
             raise ValueError("authenticated caller binding changed")

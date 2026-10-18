@@ -7,6 +7,7 @@ import hashlib
 import json
 import pickle
 import sys
+from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
 import pytest
@@ -237,6 +238,148 @@ def test_dedicated_host_only_dispatches_trusted_publisher(boundary):
             json.dumps(value)
     with pytest.raises(ValueError, match="expired"):
         invocation.documents.get_document(b.prepared.document_id)
+
+
+@pytest.fixture
+def admission_files(boundary, tmp_path):
+    # A private matrix/lock with read-only access to the real source census.
+    # Never change the checkout's policy to exercise withdrawal.
+    checkout = tmp_path / "admission"
+    config = checkout / "config"
+    config.mkdir(parents=True)
+    (checkout / "astrid").symlink_to(Path("astrid").resolve(), target_is_directory=True)
+    matrix = config / "astrid-beta-capabilities.json"
+    matrix.write_bytes(Path("config/astrid-beta-capabilities.json").read_bytes())
+    lock = config / "astrid-capability-census.lock.json"
+    lock.write_bytes(Path("config/astrid-capability-census.lock.json").read_bytes())
+    boundary.host.capability_matrix_path = matrix
+
+    def change(fault):
+        if fault == "missing":
+            matrix.unlink()
+        elif fault == "malformed":
+            matrix.write_text("{")
+        elif fault.startswith("census:"):
+            payload = json.loads(lock.read_text())
+            payload[fault.removeprefix("census:")].append("unreviewed.action")
+            lock.write_text(json.dumps(payload))
+        else:
+            payload = json.loads(matrix.read_text())
+            rows = payload["capabilities"]
+            row = next(row for row in rows if row["id"] == "media.transcript_publish")
+            if fault == "undeclared":
+                rows.remove(row)
+            elif fault == "changed":
+                row["evidence_reason"] += " Changed authority."
+            else:
+                row["disposition"] = fault
+            matrix.write_text(json.dumps(payload))
+    return change
+
+
+@pytest.mark.parametrize("fault", ["undeclared", "unsupported", "retired", "missing", "malformed",
+                                  "census:source_labels", "census:executor_inventory"])
+def test_current_ledger_refuses_before_document_dispatch(boundary, admission_files, fault):
+    b = boundary
+    assert b.invoke() == {"ok": True}  # prior positive is not authority for a retry
+    b.calls.clear()
+    b.generated.calls.clear()
+    admission_files(fault)
+    with pytest.raises(HostError, match="source admission"):
+        b.invoke()
+    assert not b.calls
+    assert not b.generated.calls
+
+
+@pytest.mark.parametrize("fault", ["undeclared", "unsupported", "retired", "changed", "missing", "malformed",
+                                  "census:source_labels", "census:executor_inventory"])
+@pytest.mark.parametrize("operation", ["create", "update", "snapshot"])
+def test_current_ledger_is_rechecked_at_each_publication_effect(boundary, admission_files, fault, operation):
+    b = boundary
+    prepared = dataclasses.replace(b.prepared, expected_document_version=None) if operation == "create" else b.prepared
+
+    def publisher(invocation, request):
+        admission_files(fault)
+        if operation == "create":
+            invocation.documents.create_document(request.document_id, "media.transcript/v1", b.record,
+                                                 idempotency_key=b.document_key)
+        elif operation == "update":
+            invocation.documents.update_document(request.document_id, expected_version=1, content=b.record,
+                                                 kind="media.transcript/v1", idempotency_key=b.document_key)
+        else:
+            invocation.objects.ingest_project_object(b.text.encode(), media_type="application/json",
+                                                      filename="transcript.json", idempotency_key=b.snapshot_key)
+        pytest.fail("publication effect was admitted")
+
+    b.module.publish_transcript_source = publisher
+    with pytest.raises(HostError, match="source admission"):
+        b.invoke(prepared)
+    assert [call[0] for call in b.generated.calls] == ["get_project"]
+
+
+def test_document_only_host_uses_shipped_ledger_and_still_requires_caller(boundary):
+    b = boundary
+    b.host.capability_matrix_path = None
+    b.host.ledger = {"capabilities": []}  # discovery cache cannot grant or withdraw authority
+    with pytest.raises(ValueError, match="WorkspaceClient"):
+        b.invoke(caller_connection=None)
+    assert not b.calls
+    assert not b.generated.calls
+
+
+@pytest.mark.parametrize("during_invocation", [False, True])
+def test_source_census_changes_refuse_without_publication(boundary, monkeypatch, during_invocation):
+    from astrid.core.execution import capability_ledger
+
+    b = boundary
+    original = capability_ledger._census_sets
+
+    def changed_source(root):
+        census = original(root)
+        census["current"]["source_labels"].add("media.unreviewed_writer")
+        return census
+
+    if during_invocation:
+        def publisher(invocation, request):
+            monkeypatch.setattr(capability_ledger, "_census_sets", changed_source)
+            invocation.documents.update_document(request.document_id, expected_version=1, content=b.record,
+                                                 idempotency_key=b.document_key)
+        b.module.publish_transcript_source = publisher
+    else:
+        assert b.invoke() == {"ok": True}
+        b.calls.clear()
+        b.generated.calls.clear()
+        monkeypatch.setattr(capability_ledger, "_census_sets", changed_source)
+    with pytest.raises(HostError, match="reconciliation is incomplete"):
+        b.invoke()
+    assert [call[0] for call in b.generated.calls] == (["get_project"] if during_invocation else [])
+    assert not b.calls
+
+
+def test_ledger_changed_during_caller_validation_never_reaches_publisher(boundary, admission_files, monkeypatch):
+    b = boundary
+    get_project = b.client.get_project
+
+    def change_before_return(project_id):
+        result = get_project(project_id)
+        admission_files("changed")
+        return result
+
+    monkeypatch.setattr(b.client, "get_project", change_before_return)
+    with pytest.raises(HostError, match="source admission changed"):
+        b.invoke()
+    assert not b.calls
+    assert [call[0] for call in b.generated.calls] == ["get_project"]
+
+
+def test_pixel_strip_remains_unavailable_to_document_dispatch(boundary):
+    b = boundary
+    with pytest.raises(HostError, match="not an admitted document writer"):
+        b.host.invoke_document_action("pixel.strip", b.prepared, caller_connection=b.client,
+                                     project_id="project-a", request_id="request-a",
+                                     expected_source_digest=b.digest)
+    assert not b.calls
+    assert not b.generated.calls
 
 
 @pytest.mark.parametrize("caller", [None, {}, "serialized", object(), SimpleNamespace(actor_id="actor-a")])

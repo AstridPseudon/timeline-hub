@@ -124,7 +124,10 @@ from astrid.core.env_vars import (
     ASTRID_INTERNAL_INVOCATION,
     ASTRID_PACKS_PATH,
 )
-from astrid.core.execution.capability_ledger import load_capability_ledger
+from astrid.core.execution.capability_ledger import (
+    capability_execution_admission,
+    load_capability_ledger,
+)
 from astrid.core.execution.host_log import start_stdio_rotator
 from astrid.core.execution.guards import (
     EVIDENCE_STATUS_NAME,
@@ -7087,12 +7090,36 @@ class GenericPackHost:
         root = builtin_media_root()
         if not any(root == admitted or root.is_relative_to(admitted) for admitted in self.pack_roots):
             raise HostError("built-in transcript writer is outside admitted host roots")
+        # The SDK's document-only Host selects just the builtin media root,
+        # so ordinary discovery does not select a default matrix there. This
+        # special dispatch still requires the shipped canonical ledger.
+        matrix_path = self.capability_matrix_path or (
+            Path(__file__).resolve().parents[3] / "config" / "astrid-beta-capabilities.json"
+        )
+
+        def current_admission():
+            try:
+                ledger = load_capability_ledger(matrix_path)
+            except (ValueError, OSError) as exc:
+                raise HostError(f"document writer source admission unavailable: {exc}") from exc
+            decision = capability_execution_admission(ledger, action_id)
+            if decision["executable"] is not True:
+                raise HostError(f"document writer source admission denied: {decision['reason']}")
+            return _canonical_digest(ledger)
+
+        admitted_ledger = current_admission()
+
+        def check_source_admission():
+            if current_admission() != admitted_ledger:
+                raise HostError("document writer source admission changed during invocation")
+
         # Re-admit exact on-disk bytes for every request. No cached action id,
         # contribution string, self.client or task execution credential suffices.
         entry = validate_canonical_pack(root)
         return _invoke(entry, params, caller_connection=caller_connection,
                        project_id=project_id, request_id=request_id,
-                       expected_source_digest=expected_source_digest)
+                       expected_source_digest=expected_source_digest,
+                       check_source_admission=check_source_admission)
 
     def document_facade(self, pack_root, *, documents, project, subject, source,
                         expected_source_digest):
