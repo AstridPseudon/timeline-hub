@@ -729,10 +729,20 @@
     "timelines.edit": {
       "flags": [
         {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "accept_suggestions",
+          "nargs": 0,
+          "options": [
+            "--accept-suggestions"
+          ],
+          "required": false
+        },
+        {
           "action": "_StoreAction",
           "default": null,
           "dest": "add_component",
-          "metavar": "timeline.component/PACK.KEY",
+          "metavar": "CUT|timeline.component/PACK.KEY",
           "nargs": null,
           "options": [
             "--add"
@@ -1179,6 +1189,16 @@
           "nargs": null,
           "options": [
             "--lift"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "like",
+          "nargs": null,
+          "options": [
+            "--like"
           ],
           "required": false
         },
@@ -3841,6 +3861,16 @@
           "nargs": null,
           "options": [
             "--occurrence"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "orphans",
+          "nargs": 0,
+          "options": [
+            "--orphans"
           ],
           "required": false
         },

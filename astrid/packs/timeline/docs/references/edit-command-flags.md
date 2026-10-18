@@ -18,7 +18,7 @@ Each option maps to the existing OpCall operation. Use `timelines edit --help` f
 | `clip.set-beats` | `--beats` |
 | `clip.set-duration` | `--duration`, `--for` |
 | `clip.set-look` | `--entrance`, `--exit`, `--fade-in`, `--fade-out`, `--gain-db`, `--volume` |
-| `clip.set-param` | `--add`, `--component-pack-root`, `--params`, `--instance-id` |
+| `clip.set-param` | `--component-pack-root`, `--params`, `--instance-id` |
 | `clip.slip` | `--slip` |
 | `clip.swap-asset` | `--swap-asset` |
 | `clip.trim` | `--trim-in`, `--trim-out` |
@@ -33,7 +33,7 @@ Each option maps to the existing OpCall operation. Use `timelines edit --help` f
 | `timeline.batch` | `--command`, `--dry-run` |
 | `timeline.close-gap` | `--close-gap-before` |
 | `timeline.crossfade` | `--crossfade`, `--over` |
-| `timeline.edit-flags` | `--clip`, `--cut`, `--draft`, `--file`, `--labels`, `--music`, `--n`, `--near`, `--no-sweep`, `--offset`, `--project`, `--sweep`, `--timings`, `--verify` |
+| `timeline.edit-flags` | `--accept-suggestions`, `--add`, `--clip`, `--cut`, `--draft`, `--file`, `--labels`, `--like`, `--music`, `--n`, `--near`, `--no-sweep`, `--offset`, `--project`, `--sweep`, `--timings`, `--verify` |
 | `timeline.film-end` | `--film-end` |
 | `timeline.insert-line` | `--gap`, `--insert-gap-after`, `--insert-line` |
 | `timeline.insert-time` | `--insert` |

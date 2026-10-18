@@ -1,11 +1,19 @@
 [
   {
     "flags": [
+      "--accept-suggestions"
+    ],
+    "destination": "accept_suggestions",
+    "operation": "timeline.edit-flags",
+    "handler": "Checkout.edit_flags"
+  },
+  {
+    "flags": [
       "--add"
     ],
     "destination": "add_component",
-    "operation": "clip.set-param",
-    "handler": "Clip.set_param"
+    "operation": "timeline.edit-flags",
+    "handler": "Checkout.edit_flags"
   },
   {
     "flags": [
@@ -336,6 +344,14 @@
     "destination": "lift",
     "operation": "cut.lift",
     "handler": "Cut.lift"
+  },
+  {
+    "flags": [
+      "--like"
+    ],
+    "destination": "like",
+    "operation": "timeline.edit-flags",
+    "handler": "Checkout.edit_flags"
   },
   {
     "flags": [

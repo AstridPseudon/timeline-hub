@@ -553,3 +553,51 @@ def test_fit_sequence_cli_and_sdk_share_land_and_report_real_changes(local, caps
     assert 'no change' not in capsys.readouterr().out.lower()
     tl = Checkout.load(local)
     assert intent.sequence_fit(tl.sequence('seq').steps[0].data)['land'] == 'after "viral"'
+
+
+def test_current_rehome_cli_routes_preview_apply_skip_and_chapter_openers(tmp_path, capsys, monkeypatch):
+    from astrid.sdk import timeline_intent as intent
+    from astrid.sdk.timeline import commands
+    from astrid.sdk.timeline_sheet import rehome_orphan_rows
+    from tests.sdk.test_timeline_reflow_golden import film
+    data = film()
+    candidate = Checkout(data)
+    intent.set_orphan(candidate.clip('c2.live').data, 'synthetic orphan')
+    intent.set_orphan(candidate.clip('c1.rocket').data, 'unmatched orphan')
+    tl = Checkout(copy.deepcopy(candidate.bundle))
+    path = tmp_path / 'accept.checkout.json'
+    tl.save(path, quiet=True)
+    tl = Checkout.load(path)
+    rows = rehome_orphan_rows(tl)
+    assert next(r for r in rows if r['clip'] == 'c2.live')['on'] == '"Live"'
+    before_lengths = {c.id: c.duration for c in tl._cut_clips('c2')}
+    before_offset = tl.clip('c2.dot').start - tl.clip('c2.field').start
+    unresolved = {c.id: (c.start, c.duration) for c in tl._cut_clips('c1')}
+    assert _run('edit', '--file', str(path), '--accept-suggestions') == 0
+    output = capsys.readouterr().out
+    assert 're-home suggestion preview' in output and 'c2 → "Live"' in output
+    loaded = Checkout.load(path)
+    assert {c.id: c.duration for c in loaded._cut_clips('c2')} == before_lengths
+    assert loaded.log(outcome='changed')[-1].calls[0]['op'] == 'cut.move'
+    assert loaded.clip('c2.dot').start - loaded.clip('c2.field').start == pytest.approx(before_offset)
+    assert {c.id: (c.start, c.duration) for c in loaded._cut_clips('c1')} == unresolved
+    assert _run('edit', '--file', str(path), '--cut', 'c1', '--on', '"went"') == 0
+    assert Checkout.load(path).clip('c1.field').start == pytest.approx(.5)
+    # Missing identity and absent phrase stay visible and skipped, without changing geometry.
+    orphaned = Checkout(film())
+    orphaned.remove_line('s2')
+    skipped_path = tmp_path / 'skip.checkout.json'
+    orphaned.save(skipped_path, quiet=True)
+    before = orphaned.document()
+    assert _run('edit', '--file', str(skipped_path), '--accept-suggestions') == 3
+    assert 'skipped c2' in capsys.readouterr().out
+    assert Checkout.load(skipped_path).document() == before
+    # The normal parser has no new verb, and mixed acceptance flags refuse early.
+    with pytest.raises(SystemExit):
+        _parse('rehome')
+    assert _run('edit', '--file', str(skipped_path), '--accept-suggestions', '--on', '"back"') == 2
+    from astrid.packs.timeline import cli_show
+    parsed = _parse('show', '--as', 'sheet', '--orphans')
+    monkeypatch.setattr(cli_show, 'show_checkout', lambda *_: (orphaned, 'WORKING COPY'))
+    assert cli_show.print_sheet(parsed, None) == 0
+    assert 'cut c2' in capsys.readouterr().out

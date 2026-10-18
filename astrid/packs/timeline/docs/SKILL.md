@@ -39,13 +39,30 @@ Use the address returned by `find` in every step:
 | Set a parameter or look | `--clip c1.rocket --set x=120` · `--clip c1.rocket --opacity 0.6` | [look.set.rocket-x][sc-set] · [look.opacity.rocket-60][sc-look] |
 | Clear a parameter | `--clip c1.rocket --clear x` | [look.clear.rocket-x](../../../../tests/editing_scenarios/look/look.clear.rocket-x.yaml) |
 | Swap one picture or every use of its key | `--clip c1.rocket --swap-asset P` · `--replace-asset R=task:replace-fixture/sprites#0` | [look.swap-asset.rocket][sc-swap] · [look.replace-asset.everywhere][sc-replace] |
-| Add a layer like another | `--command '{"op":"timeline.add","select":null,"args":{"from":"occurrence:occ-B/clip:b-type","at":"now","clip_id":"b-type-copy","relation_choices":[{"target":"occurrence:occ-B/clip:b-type","edge":"start","choice":"re-anchor","anchor":"now","offset_seconds":0.0},{"target":"occurrence:occ-B/clip:b-type","edge":"end","choice":"keep"}]}}'` | [look.add-like.card][sc-add-like] |
+| Add a layer like another | `--add c2 --like c1.rocket --set x=120` (optional `--on '"now"'`) | [look.add-like.card][sc-add-like] |
 | Add music or an effect | `--add-media Q --track vo --on '"viral"' --for 0.3 --id blip` | [audio.add.sfx-viral][sc-sfx] · [audio.add.media-bed][sc-music] |
 | Remove a layer | `--clip c2.card --remove` | [look.remove.card][sc-remove] |
 | Split a cut | `--split c1 --on '"went"'` | [structure.split.c1-went][sc-split] |
 | Move a cut with its layer offsets | `--cut c2 --on '"now"'` | [structure.cut-on.c2-now][sc-cut-move] |
 | Crossfade two audio clips | `--crossfade A B --over 0.5` | [audio.crossfade.music][sc-crossfade] |
 | Apply many sheet edits together | `timelines apply main edits.sheet --project demo --draft working` | [code.skill.batch-edit][sc-sheet] |
+
+`--add CUT --like ADDRESS [--set KEY=VALUE] [--on MOMENT]` creates a fresh visual
+layer in that destination cut. Default placement follows the destination cut;
+explicit placement must stay inside it. Source cut membership and timing intent
+are not copied. Parameters, look and opaque payload values are copied, and
+validated overrides share the same undo boundary. Cross-owner copies require
+explicit `--track TRACK` and, when the source uses an asset, `--swap-asset KEY`;
+both must already exist in the destination owner. Animated keyframes require an
+explicit placement contract and are refused by this form.
+
+The same `--add` option accepts `timeline.component/PACK.KEY` with `--clip`,
+`--instance-id`, `--params` and explicit `--component-pack-root`. These component
+and layer-copy forms cannot be mixed. Structured callers use existing
+`timeline.add` with exact `from`, `destination_cut`, destination picture identity
+and placement; Python can build it with `commands.layer_copy_call(tl, "c2",
+"c1.rocket")`, then `commands.run(tl, call)`. There is no `timeline.add-like`
+operation or `timelines rehome` verb.
 
 ## Look before publishing
 
@@ -91,7 +108,20 @@ The source path and SHA-256 are saved with the working timeline and shown by
 `timelines status`. `timelines script <timeline>` remains a read-only view;
 `--revision`, `--occurrence`, and `--kind` select its read.
 
-If an old word disappears, `check --all` reports orphaned layers. Inspect the sheet, choose a surviving word or time, and re-anchor each layer with `--clip ADDRESS --on MOMENT`; then check again. This receiver has no automatic suggestion-acceptance option. Remove unwanted picture content with `--remove-line LINE --visuals remove`.
+If an old word disappears, `check --all` reports orphaned layers. Inspect
+`timelines show main --project demo --as sheet --orphans`, edit each cut's `on`
+rows, then apply that versioned sheet. A cut moves as one group, retaining layer
+offsets and lengths. Keep the printed identity comments when editing rows.
+Suggestions use a uniquely surviving prior word identity first, then exactly
+one matching old-text phrase. Missing identities never fall back to an old
+ordinal or nearest time. Blank, ambiguous and conflicting rows stay visible;
+unmoved orphans retain their existing positions and lengths.
+
+`timelines edit main --project demo --accept-suggestions` prints a preview,
+applies the same guarded choices in one transaction, and lists skipped cuts.
+`--cut c2 --on '"now"'` also moves a chapter opener with its entire group.
+Re-check after re-homing. Remove unwanted picture content with
+`--remove-line LINE --visuals remove`.
 
 ## Publish, history, undo, restore, render
 

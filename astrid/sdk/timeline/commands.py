@@ -336,10 +336,13 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         entry = replace(entry, handler=add_element_reference)
     duplicate_source = None
     if entry.op == "timeline.add" and "from" in command.args:
-        entry = replace(entry, kind="timeline", handler=duplicate_clip_source)
+        entry = replace(entry, kind="timeline", handler=copy_cut_layer if "destination_cut" in command.args else duplicate_clip_source)
         duplicate_source = command.args["from"]
         if "from_" in command.args:
             raise CommandError("Use the documented from argument only")
+    layer_copy = duplicate_source is not None and "destination_cut" in command.args
+    if layer_copy:
+        command = guard_layer_copy(tl, command)
     element_add = entry.op == "timeline.add" and entry.kind == "timeline" and duplicate_source is None
     destination = None
     if element_add:
@@ -575,7 +578,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     for key, value in bound.arguments.items():
         if key in {"self", "client"}:
             continue
-        if ((entry.op == "clip.set-element" or entry.op == "timeline.add" and command.args.get("intent") == "overlay")
+        if (layer_copy or (entry.op == "clip.set-element" or entry.op == "timeline.add" and command.args.get("intent") == "overlay")
                 or (entry.op == "timeline.inverse" and key == "writes")
                 or (entry.op in {"clip.set-shader", "timeline.set-shader-postprocess"} and key == "shader")
                 or entry.op == "clip.set-text" or (entry.op == "timeline.add" and "text" in command.args)):
@@ -673,8 +676,8 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         tl._open_edit.calls.append(recorded)
     tl._command_depth = getattr(tl, "_command_depth", 0) + 1
     previous_destination = getattr(tl, "_add_destination", None)
-    if element_add:
-        tl._add_destination = destination
+    if element_add or layer_copy:
+        tl._add_destination = destination if element_add else command.args["destination"]
     try:
         relation_state = []
         if relation_choices is not None and duplicate_source is None:
@@ -1446,7 +1449,7 @@ def capture_binding(tl, text, clip, bindings, *, film_end=None):
         word = tl.word(text.strip())
         if word.id != text.strip():
             raise CommandError(f"Unavailable exact word identity {text!r}")
-        anchor = word.source[3] if word.source is not None else f"word:{word.segment}:{word.index}"
+        anchor = word.source[3] if word.source is not None else f"word:{word.id}"
         if text in bindings and bindings[text] != anchor:
             raise SemanticConflict("dependent", "parent", "bindings", bindings[text], anchor, text)
         bindings[text] = anchor
@@ -1460,7 +1463,7 @@ def capture_binding(tl, text, clip, bindings, *, film_end=None):
             hits = mo.find_words(moment, ctx.words())
             run = hits[(moment.n or 1) - 1]
             word = run[-1] if moment.edge == "end" else run[0]
-            anchor = word.source[3] if word.source is not None else f"word:{word.segment}:{word.index}"
+            anchor = word.source[3] if word.source is not None else f"word:{word.id}"
         elif moment.kind in {"beat", "downbeat"}:
             beats = list(ctx.beats(moment.kind))
             at = resolved_time - moment.offset_s - moment.offset_frames / tl.fps
@@ -1808,11 +1811,11 @@ def _crossfade(self, first: str, second: str, curve: str | None = None,
 # This is an explicit adapter map, not a generated parser. Context/report flags
 # belong to the executable edit-flags entry; mutation flags name their operation.
 _EDIT_FLAG_DECLARATIONS = (
-    ("timeline.edit-flags", "project file draft clip cut near n offset labels timings verify sweep no_sweep music"),
+    ("timeline.edit-flags", "project file draft clip cut near n offset labels timings verify sweep no_sweep music add_component like accept_suggestions"),
     ("timeline.add-media", "add_media track clip_id"),
     ("clip.trim", "trim_in trim_out"), ("clip.slip", "slip"),
     ("clip.set", "set_values allow_new_params"),
-    ("clip.set-param", "add_component instance_id component_params component_pack_roots"),
+    ("clip.set-param", "instance_id component_params component_pack_roots"),
     ("clip.clear", "clear_keys"),
     ("clip.set-look", "entrance exit fade_in fade_out volume gain_db"),
     ("look.opacity", "opacity"),
@@ -2050,6 +2053,124 @@ def _literal_source(clip, *, relation_choices=None):
         )
     clip._tl._require_independent_clip(clip)
     return sid
+
+
+def layer_copy_call(tl, cut, like, *, at=None, set_values=None, track=None, asset=None):
+    """Bind the UI conveniences once; the operation retains exact source/owner identities."""
+    target = tl.cut(cut)
+    picture = target.picture
+    if picture is None or target.id is None:
+        raise CommandError("--add needs a named destination picture cut")
+    return {"op": "timeline.add", "select": None, "args": {
+        "from": scoped_clip(tl, tl.clip(like)), "destination_cut": target.id,
+        "destination": scoped_clip(tl, picture), "at": at if at is not None else target.id,
+        "set_values": set_values or {}, "track": track, "asset": asset}}
+
+
+def guard_layer_copy(tl, call):
+    """Guard the exact destination cut/owner and copied asset/track dependencies."""
+    source_id = call.args.get("from")
+    if not isinstance(source_id, str) or not is_scoped_id(source_id) or "/clip:" not in source_id:
+        raise CommandError("timeline.add from requires an exact clip ScopedId")
+    if {"relation_choices", "relation_affected", "media", "media_record"} & call.args.keys():
+        raise CommandError("destination-cut copy authors fresh placement; duplicate relation/media choices are a separate form")
+    cid, destination = call.args.get("destination_cut"), call.args.get("destination")
+    if not isinstance(cid, str) or not re.fullmatch(r"c\d+[a-z]?", cid):
+        raise CommandError("destination_cut requires an exact named cut id")
+    picture = tl.cut(cid).picture
+    if picture is None or scoped_clip(tl, picture) != destination:
+        raise CommandError("destination cut and recorded picture identity disagree")
+    source = recorded_owner(tl, replace(call, resolved=(call.args["from"],)), "clip")
+    prefix = destination.rsplit("/clip:", 1)[0]
+    if call.created and (len(call.created) != 1 or not call.created[0].startswith(prefix + "/clip:")):
+        raise CommandError("created identity contradicts destination cut owner")
+    if call.resolved and call.resolved != call.created:
+        raise CommandError("resolved identity contradicts destination cut creation")
+    from astrid.sdk.timeline.music_beds import locate
+    locate(tl, destination, {"id": picture.id})  # refuse shared-shot mutation
+    cross_owner = scoped_clip(tl, source).rsplit("/clip:", 1)[0] != prefix
+    if cross_owner and (call.args.get("track") is None or source.asset is not None and call.args.get("asset") is None):
+        raise CommandError("cross-owner layer copy requires explicit destination --track and --swap-asset mapping")
+    track = call.args.get("track") or source.track
+    destination_track = next((row for row in tl._resolved_tracks(picture.shot_id) if row.get("id") == track), None)
+    if destination_track is None:
+        raise CommandError(f"destination owner has no track {track!r}")
+    if destination_track.get("kind") != "visual":
+        raise CommandError("destination layer track must be visual")
+    # The existing asset resolver accepts an explicit destination registry key or
+    # mapping. Never copy the source owner's asset entry behind the user's back.
+    asset = call.args.get("asset") if call.args.get("asset") is not None else source.asset
+    if asset is not None and (not isinstance(asset, str) or asset not in tl._registry(picture.shot_id)):
+        raise CommandError("layer copy asset must be an existing destination registry key")
+    target = tl.cut(cid)
+    members = sorted(scoped_clip(tl, clip) for clip in tl._cut_clips(cid))
+    span = [target.start, target.end]
+    for key, current in (("destination_members", members), ("destination_span", span)):
+        if key in call.args and not _same_value(call.args[key], current):
+            raise CommandError(f"layer copy {key} changed since preview")
+    states, expectations = _recording_states(tl), dict(call.expect or {})
+    for sid in (*members, prefix + "/track:" + str(track)):
+        expectations.setdefault(sid + "::", state_at(states, sid, ""))
+    if prefix.startswith("occurrence:"):
+        expectations.setdefault(prefix + "::", state_at(states, prefix, ""))
+    assets = {"source": copy.deepcopy(tl._registry(source.shot_id).get(source.asset)),
+              "destination": copy.deepcopy(tl._registry(picture.shot_id).get(asset))}
+    if "asset_expectations" in call.args and not _same_value(call.args["asset_expectations"], assets):
+        raise CommandError("layer copy asset mapping changed since preview")
+    return replace(call, args={**call.args, "asset_expectations": assets,
+                               "destination_members": members, "destination_span": span}, expect=expectations)
+
+
+
+def copy_cut_layer(self, *, from_: str, destination_cut: str, destination: str, at: Any,
+                   set_values: Mapping[str, Any] | None = None, track: str | None = None,
+                   asset: str | None = None, clip_id: str | None = None, asset_expectations=None,
+                   destination_members=None, destination_span=None):
+    """A fresh destination-cut layer; ordinary source-owner duplication stays separate."""
+    from astrid.core.timeline.astrid_ns import CLIP_INTENT_KEYS
+    source = recorded_owner(self, EditCommand("timeline.add", None, {}, resolved=(from_,)), "clip")
+    target = self.cut(destination_cut)
+    if source.is_audio:
+        raise CommandError("--add copies a visual layer; use --add-media for independent audio")
+    if any(key in source.data for key in ("keyframes", "keyframeOrigin")):
+        raise CommandError("animated layer copy requires an explicit animation placement contract")
+    start = self._moment_time(at) if isinstance(at, str) and not TIME_RE.fullmatch(at.strip()) else self.time(at)
+    if not target.start <= start < target.end:
+        raise CommandError("layer copy placement must be inside the destination cut")
+    taken = {c.layer_name for c in self._cut_clips(target.id)}
+    layer, suffix = source.layer_name, 2
+    base = layer
+    while layer in taken:
+        layer, suffix = f"{base}-{suffix}", suffix + 1
+    # add() owns allocation, retired-image protection, tracks, placement and cut
+    # intent. Copy stored element/look payload verbatim, keeping opaque app data.
+    clip_id = clip_id or self._new_id(source.element)
+    self._add_destination = destination.rsplit("/clip:", 1)[0] + "/clip:" + clip_id
+    result = self.add(source.element, at=at, asset=asset if asset is not None else source.asset,
+                      track=track or source.track, cut=target.id, layer=layer, clip_id=clip_id)
+    fresh = copy.deepcopy(result.data)
+    payload = copy.deepcopy(source.data)
+    for key in ("id", "at", "hold", "from", "to", "speed", "app"):
+        payload.pop(key, None)
+    result.data.update(payload)
+    app = copy.deepcopy(source.data.get("app", {}))
+    for key in CLIP_INTENT_KEYS:
+        app.pop(key, None)
+        if isinstance(app.get("astrid"), dict):
+            app["astrid"].pop(key, None)
+    app.setdefault("astrid", {}).update(copy.deepcopy(fresh.get("app", {}).get("astrid", {})))
+    result.data["app"] = app
+    result.data["track"] = track or source.track
+    if "asset" in fresh:
+        result.data["asset"] = fresh["asset"]
+    # Default duration belongs to the receiving cut, not to the old source.
+    result.data["hold"] = self.quantize(target.end - start)
+    if source.element == "media" and "to" in source.data:
+        result.data.update({k: copy.deepcopy(source.data[k]) for k in ("from", "to", "speed") if k in source.data})
+    if set_values:
+        result.set(**dict(set_values))
+    self._mcache = None
+    return result
 
 
 def duplicate_clip_source(

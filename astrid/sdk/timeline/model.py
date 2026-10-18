@@ -1516,7 +1516,9 @@ class _MomentContext:
             text = intent.on(target.data) if edge == "start" else intent.until(target.data)
             ctx = _MomentContext(self.tl, target)
             if text:
-                return mo.resolve(text, ctx)
+                # A picture's start uses the same take-in convention as its
+                # placement; dependent layers must read that exact edge too.
+                return mo.resolve(text, ctx, in_point=edge == "start" and self.tl._is_picture(target))
             if edge == "start":
                 return target.start
             start = self.clip_edge(scoped_id, "start")

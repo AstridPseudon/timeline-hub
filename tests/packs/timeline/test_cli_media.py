@@ -212,3 +212,33 @@ def test_canonical_crossfade_preserves_curves_guards_replay_and_one_undo_step(tm
     assert tl.undo(1) and tl.document() == before
     assert tl.redo(1) and tl.document() == after
     assert journal.verify(journal.journal_path("p", "t")) == []
+
+
+@pytest.mark.parametrize('clip_id,gain', [('a-music', .4), ('music-two', .6), ('music-three', .8)])
+def test_current_add_plain_music_keeps_track_source_span_gain_and_no_cut(monkeypatch, clip_id, gain):
+    tl = _tiny()
+    data = copy.deepcopy(tl.bundle)
+    base = next(c for c in data['shots']['A']['internal_timeline']['clips'] if c['id'] == 'a-music')
+    if clip_id != 'a-music':
+        base = copy.deepcopy(base)
+        base.update(id=clip_id, at=1 if clip_id == 'music-two' else 2)
+        data['shots']['A']['internal_timeline']['clips'].append(base)
+    base.update(volume=gain, **{'from': 0, 'to': 3})
+    tl = Checkout(data)
+    start = tl.clip(clip_id).start
+    assert _run(monkeypatch, tl, '--clip', clip_id, '--trim-in', '1', '--trim-out', '2') == 0
+    assert _run(monkeypatch, tl, '--clip', clip_id, '--slip', '1') == 0
+    result = tl.clip(clip_id)
+    assert result.track == 'music' and result.cut_id is None
+    assert result.start == start and (result.data['from'], result.data['to']) == (2, 3)
+    assert result.look['volume'] == pytest.approx(gain)
+    assert all(c.cut_id != 'c01' for c in tl.clips())
+
+
+def test_current_add_media_zero_range_refusal_is_atomic(monkeypatch, capsys):
+    tl = _tiny()
+    before = copy.deepcopy(tl.document())
+    assert _run(monkeypatch, tl, '--add-media', 'Q', '--track', 'music', '--on', '1',
+                '--trim-in', '3', '--trim-out', '3', '--id', 'zero') == 2
+    assert 'source range' in capsys.readouterr().err
+    assert tl.document() == before and all(c.id != 'zero' for c in tl.clips())

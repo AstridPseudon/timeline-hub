@@ -352,3 +352,181 @@ def test_a_cuts_notes_belong_to_the_cut_when_its_picture_changes():
     from astrid.sdk.timeline_checkout import describe_changes
     assert any("c2" in line and "why note" in line for line in describe_changes(before, tl))
     assert intent.cut_notes(tl.bundle)["c2"]["why"] == "s19: the new note" and not intent.why(old_pic.data)
+
+
+def _rehome_fixture(tmp_path=None):
+    from tests.sdk.test_timeline_reflow_golden import film
+    tl = Checkout(film())
+    if tmp_path is not None:
+        tl.save(tmp_path / 'rehome.checkout.json', quiet=True)
+    return tl
+
+
+def test_rehome_sheet_lists_blank_rows_preserves_unresolved_geometry_and_roundtrips():
+    from astrid.sdk.timeline_sheet import render_orphans_sheet, rehome_orphan_rows
+    tl = _rehome_fixture()
+    tl.remove_line('s2')
+    before = copy.deepcopy(tl.document())
+    geometry = {c.id: (c.start, c.duration) for c in tl._cut_clips('c2')}
+    sheet = render_orphans_sheet(tl)
+    assert 'cut c2' in sheet and len(rehome_orphan_rows(tl)) == 3
+    assert 'id=occurrence:occ-F/clip:' in sheet
+    assert all(row['on'] is None for row in rehome_orphan_rows(tl))
+    apply_sheet(tl, sheet)
+    assert tl.document() == before
+    assert {c.id: (c.start, c.duration) for c in tl._cut_clips('c2')} == geometry
+    apply_sheet(tl, render_sheet(tl))
+    assert tl.document() == before
+
+
+def test_rehome_prior_provenance_survives_changed_ordinal_but_disappeared_word_is_not_old_ordinal(tmp_path, monkeypatch):
+    from dataclasses import replace
+    from tests.sdk.test_timeline_transcript_projection_f101 import setup
+    from astrid.core.timeline import moments as mo
+    from astrid.sdk.timeline_sheet import rehome_orphan_rows
+    tl = setup()
+    tl.save(tmp_path / 'bound.checkout.json', quiet=True)
+    word = next(w for w in tl.words() if w.shot_id == 'A')
+    moment = mo.format_moment(mo.word_moment(word, tl.words()))
+    tl.clip('c1.rocket').on(moment)
+    tl.save(quiet=True)
+    records = tl.log(outcome='changed')
+    assert records and records[-1].calls[0]['bindings'][moment] == word.source[3]
+    intent.set_orphan(tl.clip('c1.rocket').data, 'synthetic lost binding')
+    original = list(tl.words())
+    monkeypatch.setattr(tl, '_word_list', lambda: [replace(w, index=9) if w.source == word.source else w for w in original])
+    row = next(r for r in rehome_orphan_rows(tl) if r['clip'] == 'c1.rocket')
+    assert row['on'] and 'survives once' in row['reason']
+    monkeypatch.setattr(tl, '_word_list', lambda: [replace(w, id='replacement-at-old-index') if w.source == word.source else w for w in original])
+    missing = next(r for r in rehome_orphan_rows(tl) if r['clip'] == 'c1.rocket')
+    assert missing['on'] is None and 'does not occur exactly once' in missing['reason']
+
+
+def test_rehome_identity_evidence_missing_ordinal_never_becomes_a_match(monkeypatch):
+    from types import SimpleNamespace
+    from astrid.sdk.timeline import commands
+    from astrid.sdk.timeline_sheet import rehome_orphan_rows
+    tl = _rehome_fixture()
+    picture = tl.clip('c2.field')
+    intent.set_orphan(picture.data, 'synthetic')
+    call = dict(op='clip.on', resolved=[commands.scoped_clip(tl, picture)],
+                args={'moment': '"Live"'}, bindings={'"Live"': 'word:s2:0'})
+    monkeypatch.setattr(tl, 'log', lambda **kw: [SimpleNamespace(outcome='changed', calls=[call])])
+    row = rehome_orphan_rows(tl)[0]
+    assert row['on'] is None
+    assert 'does not occur exactly once' in row['reason']
+
+
+def test_rehome_unique_phrase_ambiguous_phrase_and_conflicting_cut_rows(monkeypatch):
+    from dataclasses import replace
+    from astrid.sdk.timeline_sheet import rehome_orphan_rows
+    tl = _rehome_fixture()
+    text = tl.clip('c2.live')
+    intent.set_orphan(text.data, 'synthetic')
+    monkeypatch.setattr(tl, 'log', lambda **kw: [])
+    row = rehome_orphan_rows(tl)[0]
+    assert row['on'] == '"Live"' and 'one exact phrase' in row['reason']
+    words = list(tl.words())
+    live = next(w for w in words if w.text == 'Live')
+    monkeypatch.setattr(tl, '_word_list', lambda: [*words, replace(live, segment='other', id='other-word')])
+    assert rehome_orphan_rows(tl)[0]['on'] is None
+    from astrid.sdk.timeline_sheet import _orphan_suggestion
+    assert 'matches 2 phrases' in _orphan_suggestion(tl, text, tl.words(), [])[1]
+    monkeypatch.setattr(tl, '_word_list', lambda: words)
+    other = tl.clip('c2.dot')
+    intent.set_orphan(other.data, 'synthetic')
+    intent.set_on(other.data, '"back"')
+    other.data['params']['text'] = 'back'
+    rows = rehome_orphan_rows(tl)
+    assert all(r['on'] is None and 'disagree' in r['reason'] for r in rows)
+
+
+def test_rehome_sheet_moves_group_once_preserves_offsets_lengths_and_undo(tmp_path):
+    from astrid.sdk.timeline_sheet import render_orphans_sheet
+    import re
+    tl = _rehome_fixture(tmp_path)
+    tl.remove_line('s2')
+    tl.save(quiet=True)
+    before = copy.deepcopy(tl.document())
+    members = {c.id: (round(c.start - tl.clip('c2.field').start, 6), c.duration) for c in tl._cut_clips('c2')}
+    sheet = render_orphans_sheet(tl)
+    edited = re.sub(r'(c2\.\S+\s+on)(?=\s+#)', r'\1 "back"', sheet)
+    assert apply_sheet(tl, edited)
+    picture = tl.clip('c2.field')
+    assert picture.start == pytest.approx(tl.word('back').start, abs=1/FPS)
+    assert {c.id: (round(c.start-picture.start, 6), c.duration) for c in tl._cut_clips('c2')} == members
+    tl.save(quiet=True)
+    record = tl.log(outcome='changed')[-1]
+    assert len(record.calls) == 1 and record.calls[0]['op'] == 'cut.move'
+    assert tl.undo(1)
+    from astrid.sdk.timeline.identity import retain_cut_reservations
+    retain_cut_reservations(before, tl.document())
+    assert tl.document() == before
+
+
+def test_rehome_stale_sheet_identity_conflict_and_atomic_rollback(tmp_path):
+    import re
+    from astrid.sdk.timeline_sheet import render_orphans_sheet
+    tl = _rehome_fixture(tmp_path)
+    tl.remove_line('s2')
+    tl.save(quiet=True)
+    sheet = render_orphans_sheet(tl)
+    edited = re.sub(r'(c2\.\S+\s+on)(?=\s+#)', r'\1 "back"', sheet)
+    # A real grouped edit consumes the prior orphan state; an old sheet cannot
+    # reclaim those now-resolved identities merely because the alias survives.
+    tl.cut('c2').move('"work"')
+    before = copy.deepcopy(tl.document())
+    with pytest.raises(SheetError, match='changed both|re-export'):
+        apply_sheet(tl, edited)
+    assert tl.document() == before
+    fresh = _rehome_fixture()
+    fresh.remove_line('s2')
+    sheet = render_orphans_sheet(fresh)
+    changed = re.sub(r'(c2\.\S+\s+on)(?=\s+#)', r'\1 "back"', sheet)
+    changed += '\nedit {"op":"clip.set","select":"c1.rocket","args":{"not_a_field":12}}\n'
+    before = copy.deepcopy(fresh.document())
+    with pytest.raises(ValueError):
+        apply_sheet(fresh, changed)
+    assert fresh.document() == before
+
+
+def test_rehome_two_cut_failure_rolls_back_first_move_and_stale_preview_refuses():
+    from astrid.sdk.timeline import commands
+    from astrid.sdk.timeline_sheet import render_orphans_sheet
+    import re
+    tl = _rehome_fixture()
+    intent.set_orphan(tl.clip('c1.rocket').data, 'first orphan')
+    intent.set_orphan(tl.clip('c2.live').data, 'second orphan')
+    tl = Checkout(copy.deepcopy(tl.bundle))
+    sheet = render_orphans_sheet(tl)
+    edited = re.sub(r'(c1\.rocket\s+on).*?(?=\s+#)', r'\1 "went"', sheet)
+    edited = re.sub(r'(c2\.live\s+on).*?(?=\s+#)', r'\1 1000', edited)
+    before = copy.deepcopy(tl.document())
+    with pytest.raises(SheetError, match='inside its occurrence'):
+        apply_sheet(tl, edited)
+    assert tl.document() == before
+    call = {'op': 'cut.move', 'select': 'c2', 'args': {'on': '"back"'}}
+    preview = commands.run(tl, call, dry_run=True)
+    tl.clip('c2.dot').nudge(.1)
+    before = copy.deepcopy(tl.document())
+    with pytest.raises(commands.CommandError):
+        commands.run(tl, preview.calls[0])
+    assert tl.document() == before
+
+
+@pytest.mark.parametrize('on,target', [('"Live"', 4.0), ('"Live" +0.2s', 4.3), ('after "Live" +0.2s', 4.9)])
+def test_rehome_picture_clip_edges_match_word_placement_and_keep_nonzero_offsets(on, target):
+    from astrid.core.timeline import moments as mo
+    from astrid.sdk.timeline import commands
+    from astrid.sdk.timeline.model import _MomentContext
+    tl = _rehome_fixture()
+    before = {c.id: (round(c.start - tl.clip('c2.field').start, 6), c.duration) for c in tl._cut_clips('c2')}
+    commands.run(tl, {'op': 'cut.move', 'select': 'c2', 'args': {'on': on}})
+    picture = tl.clip('c2.field')
+    assert picture.start == pytest.approx(target)
+    assert intent.on(picture.data) == on
+    assert {c.id: (round(c.start-picture.start, 6), c.duration) for c in tl._cut_clips('c2')} == before
+    sid = commands.scoped_clip(tl, picture)
+    ctx = _MomentContext(tl, None)
+    assert mo.resolve(f'clip-start "{sid}" +0.2s', ctx) == pytest.approx(picture.start + .2)
+    assert mo.resolve(f'clip-end "{sid}" -0.1s', ctx) == pytest.approx(picture.end - .1)
