@@ -1,7 +1,7 @@
 {
   "artifacts": {
-    "clients/typescript/contract-metadata.ts": "sha256:2108e1c6a27adb345410b7ebb0081a8cb4da2b4b49f6d136c566f20eb47ce048",
-    "clients/typescript/generated.ts": "sha256:1ecdc20e5c6b8ae0a2c4137b81654df3ee92e5754e2d6729ad3295150f4d4c58",
+    "clients/typescript/contract-metadata.ts": "sha256:ea888d614fd2bb467c5f669544c0fa4a640026bd56b03e9fe6b2153b908f8148",
+    "clients/typescript/generated.ts": "sha256:1b364af84cd25afedf4b51108930ace6213afb5a8c3ebe8177ba600cda3ea99b",
     "clients/typescript/manifest.json": "sha256:ffacec4707ceb9f36b70ec08e891dc15dbef7335a980938007e8878d56deb36b",
     "conformance/fixtures/canonical-timeline-parity.json": "sha256:8404ad42d817e60f6255113624e0f17a8100e3c6d0c4baf24029e818d8e5ff00",
     "conformance/fixtures/event.json": "sha256:29c739974e7bad256804feaceccd44e5a4633d144c1a6229cfe853737bca8ead",
@@ -67,5 +67,5 @@
     "packages/typescript/src/generated.ts": "sha256:82f1b330a257a8414f49f852a8604ed2692ee70c3482a9a45ff51df18bd77325"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:6350df239bd3f78cae70788021447e4d6be99c59b8f8c6dd36d5ddefc0a48056"
+  "version": "sha256:62e5c5def72da0ac28b954ee0df080ed3d28814862e1f7efcf3f6b8005a67dcc"
 }
