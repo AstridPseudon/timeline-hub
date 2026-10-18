@@ -124,6 +124,34 @@ class TimelineClipView:
         return _classify_clip(self.data, self.registry, theme=self.theme)
 
 
+def _exclude_source_tracks(payload: dict[str, Any]) -> None:
+    """Drop Source-role tracks and the clips on them from a render payload.
+
+    A track with ``role: "source"`` is reference material (the App keeps it
+    for the editor, never for export). ``role`` defaults to ``output``, so
+    documents without it render unchanged. The stored document keeps the
+    Source track; only the render payload excludes it.
+    """
+    tracks = payload.get("tracks")
+    if not isinstance(tracks, list):
+        return
+    source_ids = {
+        track.get("id")
+        for track in tracks
+        if isinstance(track, dict) and track.get("role") == "source"
+    }
+    if not source_ids:
+        return
+    payload["tracks"] = [
+        track for track in tracks if not (isinstance(track, dict) and track.get("id") in source_ids)
+    ]
+    clips = payload.get("clips")
+    if isinstance(clips, list):
+        payload["clips"] = [
+            clip for clip in clips if not (isinstance(clip, dict) and clip.get("track") in source_ids)
+        ]
+
+
 class TimelineRenderView:
     def __init__(self, timeline: "Timeline", *, default_theme: str) -> None:
         self._timeline = timeline
@@ -143,6 +171,7 @@ class TimelineRenderView:
 
     def to_json_data(self) -> dict[str, Any]:
         payload = self._timeline.to_json_data()
+        _exclude_source_tracks(payload)
         payload.setdefault("theme", self._default_theme)
         return payload
 

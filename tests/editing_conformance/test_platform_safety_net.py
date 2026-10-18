@@ -129,7 +129,12 @@ def _source_track_config() -> dict:
 def test_source_role_track_is_excluded_from_render():
     """A track with role "source" is reference material: the render payload must not contain it."""
     config = _source_track_config()
-    payload = Timeline(config).to_json_data()  # the render-side validation must accept the role
+    timeline = Timeline(config)  # validation must accept the role
+    # The render payload is `for_render().to_json_data()` (rendering_backend._serialize_timeline).
+    # `Timeline.to_json_data()` is the persisted form and must keep the Source track for the App.
+    stored = timeline.to_json_data()
+    assert "reference" in {t["id"] for t in stored["tracks"]}, "the stored film lost its Source track"
+    payload = timeline.for_render().to_json_data()
     track_ids = {t["id"] for t in payload["tracks"]}
     clip_ids = {c["id"] for c in payload["clips"]}
     assert "reference" not in track_ids, "the Source track is in the render payload"
