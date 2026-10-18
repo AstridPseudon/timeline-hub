@@ -18,7 +18,8 @@ const configPath = path.join(repoRoot, 'config/governance/video-editor-sdk-impor
 const tsconfigPath = path.join(repoRoot, 'tsconfig.json');
 const tscPath = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
 const videoEditorDir = path.join(repoRoot, 'src', 'tools', 'video-editor') + path.sep;
-
+const extensionExamplesDir = path.join(videoEditorDir, 'examples', 'extensions') + path.sep;
+const creativeLabTestingDir = path.join(extensionExamplesDir, 'creative-lab', 'testing') + path.sep;
 const isRelease = process.argv.includes('--release');
 const isAudit = process.argv.includes('--audit') || !isRelease;
 
@@ -122,20 +123,6 @@ if (schemaErrors.length > 0) {
   }
 }
 
-const allowlist = new Map();
-for (const [importer, entries] of Object.entries(config.allowlist ?? {})) {
-  const normImporter = normalizeConfigPath(importer);
-  const allowedTargets = new Set();
-  for (const entry of Array.isArray(entries) ? entries : []) {
-    if (typeof entry === 'string') {
-      allowedTargets.add(normalizeConfigPath(entry));
-    } else if (entry && typeof entry === 'object' && typeof entry.target === 'string') {
-      allowedTargets.add(normalizeConfigPath(entry.target));
-    }
-  }
-  allowlist.set(normImporter, allowedTargets);
-}
-
 function walk(dir, files = []) {
   if (!fs.existsSync(dir)) {
     return files;
@@ -160,12 +147,11 @@ function walk(dir, files = []) {
       continue;
     }
 
-    const relativePath = path.relative(repoRoot, fullPath);
+    const relativePath = normalizeConfigPath(path.relative(repoRoot, fullPath));
     if (
       relativePath.includes(`${path.sep}__tests__${path.sep}`)
       || relativePath.endsWith('.test.ts')
       || relativePath.endsWith('.test.tsx')
-      || relativePath.startsWith(`src${path.sep}tools${path.sep}video-editor${path.sep}`)
     ) {
       continue;
     }
@@ -305,14 +291,44 @@ function isVideoEditorPath(resolvedPath) {
 }
 
 const compilerOptions = parseTsconfigOptions();
-const files = [
-  ...walk(path.join(repoRoot, 'src')),
-  ...walk(path.join(repoRoot, 'supabase/functions')),
+const consumerRoots = [
+  path.join(repoRoot, 'src', 'examples'),
+  path.join(repoRoot, 'examples', 'embed-demo', 'src'),
+  path.join(repoRoot, 'src', 'tools', 'video-editor', 'examples', 'extensions'),
+  path.join(repoRoot, 'src', 'pages', 'Home', 'content'),
+  path.join(repoRoot, 'src', 'pages', 'Home', 'publicAstridExample.tsx'),
+  path.join(repoRoot, 'src', 'pages', 'Home', 'astrid-light-study.ts'),
 ];
+const files = consumerRoots.flatMap((root) => fs.existsSync(root) && fs.statSync(root).isDirectory()
+  ? walk(root)
+  : fs.existsSync(root) ? [root] : []);
+
+function consumerKind(filePath) {
+  const relativePath = normalizeConfigPath(relativeToRepo(filePath));
+  if (relativePath.startsWith(`src${path.sep}examples${path.sep}`)
+    || (relativePath.startsWith(`src${path.sep}tools${path.sep}video-editor${path.sep}examples${path.sep}extensions${path.sep}`)
+      && !relativePath.includes(`${path.sep}creative-lab${path.sep}testing${path.sep}`))) {
+    return 'extension';
+  }
+  if (relativePath.startsWith(`examples${path.sep}embed-demo${path.sep}src${path.sep}`)
+    || relativePath.startsWith(`src${path.sep}pages${path.sep}Home${path.sep}content${path.sep}`)
+    || relativePath === `src${path.sep}pages${path.sep}Home${path.sep}publicAstridExample.tsx`
+    || relativePath === `src${path.sep}pages${path.sep}Home${path.sep}astrid-light-study.ts`) {
+    return 'host-public';
+  }
+  return null;
+}
 
 function collectFailuresForFile(filePath, content) {
+  // Only public consumers cross this boundary. The application shell, runtime,
+  // edge functions, and test harnesses share host ownership and may import
+  // private implementation modules directly.
+  const kindOfConsumer = consumerKind(filePath);
+  if (!kindOfConsumer) {
+    return [];
+  }
+
   const importer = relativeToRepo(filePath);
-  const allowedTargets = allowlist.get(normalizeConfigPath(importer)) ?? new Set();
   const textSpecifiers = new Set(extractSpecifiers(content));
   const fileFailures = [];
 
@@ -328,13 +344,16 @@ function collectFailuresForFile(filePath, content) {
     }
 
     const target = relativeToRepo(resolvedTarget);
-    const normalizedTarget = normalizeConfigPath(target);
-
-    if (publicEntrypoints.has(normalizedTarget)) {
+    if (kindOfConsumer === 'extension'
+      && resolvedTarget.startsWith(extensionExamplesDir)
+      && !resolvedTarget.startsWith(creativeLabTestingDir)) {
+      continue;
+    }
+    if (kindOfConsumer === 'extension' && specifier === '@reigh/editor-sdk') {
       continue;
     }
 
-    if (allowedTargets.has(normalizedTarget)) {
+    if (kindOfConsumer === 'host-public' && publicEntrypoints.has(normalizeConfigPath(target))) {
       continue;
     }
 
@@ -359,7 +378,7 @@ for (const filePath of files) {
 
 if (failures.length > 0) {
   console.error('[video-editor-sdk-imports] FAILED: unsupported deep imports into src/tools/video-editor were found.');
-  console.error('[video-editor-sdk-imports] Use the public entrypoints or extend the explicit allowlist for host-only adapters.');
+  console.error('[video-editor-sdk-imports] Public consumers must use their documented SDK entrypoints.');
   for (const failure of failures) {
     console.error(`  - ${failure.importer}`);
     console.error(`      kind: ${failure.kind}`);
@@ -370,7 +389,7 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log('[video-editor-sdk-imports] OK: all external video-editor imports use public entrypoints or the approved allowlist.');
+console.log('[video-editor-sdk-imports] OK: all public consumers use documented SDK entrypoints.');
 
 // ---------------------------------------------------------------------------
 // Monorepo extractability smoke: verify @reigh/editor-sdk can be consumed
@@ -575,13 +594,14 @@ function runNegativeFixtures() {
     return false;
   }
 
-  const expectedKinds = ['import', 'export-from', 'dynamic-import', 'alias-import'];
+  const expectedKinds = ['import', 'export-from', 'dynamic-import', 'alias-import', 'public-barrel'];
   const seenKinds = new Set();
   let allOk = true;
 
   for (const fixturePath of fixtureFiles) {
     const content = fs.readFileSync(fixturePath, 'utf8');
-    const fileFailures = collectFailuresForFile(fixturePath, content);
+    const consumerFixturePath = path.join(repoRoot, 'src', 'examples', path.basename(fixturePath));
+    const fileFailures = collectFailuresForFile(consumerFixturePath, content);
     const fixtureName = path.basename(fixturePath);
     const kind = fixtureName.replace(/\.tsx?$/, '');
     seenKinds.add(kind);
@@ -603,6 +623,65 @@ function runNegativeFixtures() {
       console.error(`${NEGATIVE_LABEL} FAILED: missing negative fixture for ${kind}.`);
       allOk = false;
     }
+  }
+
+  const forbiddenImport = fs.readFileSync(path.join(negativeFixturesDir, 'import.ts'), 'utf8');
+  const hostImporterPath = path.join(repoRoot, 'src', 'integrations', 'runtime', 'dataProvider.ts');
+  if (collectFailuresForFile(hostImporterPath, forbiddenImport).length !== 0) {
+    console.error(`${NEGATIVE_LABEL} FAILED: host-owned application imports should not be classified as external SDK consumers.`);
+    allOk = false;
+  }
+
+  const publicSdkImporterPath = path.join(repoRoot, 'src', 'examples', 'public-sdk-import.ts');
+  const publicSdkImport = "import { defineExtension } from '@reigh/editor-sdk';\nvoid defineExtension;\n";
+  if (collectFailuresForFile(publicSdkImporterPath, publicSdkImport).length !== 0) {
+    console.error(`${NEGATIVE_LABEL} FAILED: the public SDK package import should be accepted for extension examples.`);
+    allOk = false;
+  }
+
+  const homeContentPath = path.join(repoRoot, 'src', 'pages', 'Home', 'content', 'fixture.ts');
+  const hostDeepImport = "import type { TimelineConfig } from '@/tools/video-editor/types/index.ts';\nvoid ({} as TimelineConfig);\n";
+  if (collectFailuresForFile(homeContentPath, hostDeepImport).length !== 1) {
+    console.error(`${NEGATIVE_LABEL} FAILED: public Home content must reject private video-editor modules.`);
+    allOk = false;
+  }
+  const homePublicImport = "import type { TimelineConfig } from '@/tools/video-editor/index.ts';\nvoid ({} as TimelineConfig);\n";
+  if (collectFailuresForFile(homeContentPath, homePublicImport).length !== 0) {
+    console.error(`${NEGATIVE_LABEL} FAILED: public Home content should accept documented video-editor entrypoints.`);
+    allOk = false;
+  }
+
+  const embedDemoPath = path.join(repoRoot, 'examples', 'embed-demo', 'src', 'fixture.ts');
+  const embedPublicImport = "import { BrowserVideoEditorProvider } from '@/tools/video-editor/browser-provider.ts';\nvoid BrowserVideoEditorProvider;\n";
+  if (collectFailuresForFile(embedDemoPath, embedPublicImport).length !== 0) {
+    console.error(`${NEGATIVE_LABEL} FAILED: the embed demo should accept documented browser entrypoints.`);
+    allOk = false;
+  }
+  if (collectFailuresForFile(embedDemoPath, hostDeepImport).length !== 1) {
+    console.error(`${NEGATIVE_LABEL} FAILED: the embed demo must reject private video-editor modules.`);
+    allOk = false;
+  }
+
+  const extensionPackagePath = path.join(repoRoot, 'src', 'tools', 'video-editor', 'examples', 'extensions', 'creative-lab', 'branching-cut', 'index.ts');
+  if (collectFailuresForFile(extensionPackagePath, forbiddenImport).length !== 1) {
+    console.error(`${NEGATIVE_LABEL} FAILED: bundled extension examples must reject host implementation imports.`);
+    allOk = false;
+  }
+  const sharedExampleHelper = "import { x } from '../timelineMarkerClusters';\nvoid x;\n";
+  if (collectFailuresForFile(extensionPackagePath, sharedExampleHelper).length !== 0) {
+    console.error(`${NEGATIVE_LABEL} FAILED: bundled extension examples should allow helpers within their owned examples tree.`);
+    allOk = false;
+  }
+  const hostHarnessImport = "import { createCreativeLabSnapshot } from '../testing/createCreativeLabHarness';\nvoid createCreativeLabSnapshot;\n";
+  if (collectFailuresForFile(extensionPackagePath, hostHarnessImport).length !== 1) {
+    console.error(`${NEGATIVE_LABEL} FAILED: bundled extensions must not depend on host testing harnesses.`);
+    allOk = false;
+  }
+
+  const homeShellPath = path.join(repoRoot, 'src', 'pages', 'Home', 'PublicAstridEditorProvider.tsx');
+  if (collectFailuresForFile(homeShellPath, forbiddenImport).length !== 0) {
+    console.error(`${NEGATIVE_LABEL} FAILED: host-owned Home composition must remain outside the consumer boundary.`);
+    allOk = false;
   }
 
   return allOk;

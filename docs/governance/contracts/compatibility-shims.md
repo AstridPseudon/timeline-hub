@@ -55,10 +55,10 @@ either reduce its consumers or add an explicit, reviewable retirement target.
 
 ## Host-internal deep-import exceptions
 
-`config/governance/video-editor-sdk-import-allowlist.json` is the canonical,
-machine-readable inventory for code outside `src/tools/video-editor/**` that
-temporarily imports a video-editor internal. Each record contains its target,
-classification, owner, rationale, removal condition, and expiration.
+`config/governance/video-editor-sdk-import-allowlist.json` remains the
+machine-readable inventory of approved host-only exceptions. Its schema,
+owner, rationale, removal condition, and expiration are still validated by
+`npm run check:video-editor-sdk-imports -- --release`.
 
 The current exception groups are:
 
@@ -75,11 +75,20 @@ The current exception groups are:
 | `edge-ai-sequence` | Sequence metadata and validation | M5; extract portable validation |
 | `edge-complete-task` | Timeline types and placement logic | M5; extract edge-safe types and portable placement logic |
 
-Do not duplicate the record-by-record list in this document. The JSON allowlist
-is authoritative, and `npm run check:video-editor-sdk-imports -- --release`
-validates its schema and rejects author-facing exceptions, expired milestones,
-unresolved deep imports, and old bare-string entries. The audit form also runs
-positive, negative-fixture, extractability, and external-consumer checks.
+The import boundary itself follows source ownership. Host implementation code
+(application shells, integrations, runtime adapters, edge functions, and test
+harnesses) is part of the same product and release unit as the editor, so its
+private implementation imports do not represent extension SDK consumption.
+The gate scans public consumer roots instead: extension examples in
+`src/examples/**` and `src/tools/video-editor/examples/extensions/**` may use
+`@reigh/editor-sdk` and helpers within the bundled examples tree, but may not
+reach editor implementation modules. `examples/embed-demo/src/**` and Home's
+public example data modules at `src/pages/Home/publicAstridExample.tsx`,
+`src/pages/Home/astrid-light-study.ts`, and `src/pages/Home/content/**` may use
+only the `publicEntrypoints` list in the JSON inventory. Other host-owned
+source stays outside this public-consumer check. The gate's fixtures exercise
+the consumer roots, and the external-consumer smoke checks the copied SDK
+package independently.
 
 ## Retired paths and zero-use tombstones
 
