@@ -111,7 +111,7 @@ export interface AssetResolver {
   onTranscode?(request: AssetTranscodeRequest): Promise<File | null | undefined>;
   onMissing?(request: AssetMissingRequest): Promise<void>;
   onProfileLoad?(request: AssetProfileLoadRequest): Promise<AssetProfile | null>;
-  resolveAssetUrl(file: string): Promise<string>;
+  resolveAssetUrl(file: string): string | Promise<string>;
   registerAsset?(timelineId: string, assetId: string, entry: AssetRegistryEntry): Promise<void>;
   /** Prepare bytes and return a durable asset identity without mutating a timeline. */
   prepareAsset?(

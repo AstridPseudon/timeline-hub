@@ -627,6 +627,8 @@ export type ResolvedTimelineConfig = {
   theme_overrides?: ThemeOverrides;
   generation_defaults?: GenerationDefaults;
   app?: TimelineConfigAppMetadata;
+  /** Parent-level effects carried through the resolver's `...config` spread; read by the seam intent and shot projection. */
+  effects?: TimelineClip['effects'];
 };
 
 export type TimelineCompositionProps = {
