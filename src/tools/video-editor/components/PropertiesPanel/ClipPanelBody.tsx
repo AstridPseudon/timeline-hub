@@ -1,3 +1,5 @@
+import { useTimelineCommandsServiceSafe } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
+import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { inlineTextUIType } from '@/tools/video-editor/clip-types/runtime.ts';
 import { useMemo, useState, type ComponentType } from 'react';
 import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
@@ -119,6 +121,9 @@ export function ClipPanelBody({
   timelineFps,
   currentTime = 0,
 }: ClipPanelBodyProps) {
+  const commands = useTimelineCommandsServiceSafe();
+  const runtime = useOptionalVideoEditorRuntime();
+  const [durationError, setDurationError] = useState<string | null>(null);
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [editingEffect, setEditingEffect] = useState<EffectResource | null>(null);
   const visibleTabs = useMemo(() => getVisibleClipTabs(clip, track), [clip, track]);
@@ -296,8 +301,14 @@ export function ClipPanelBody({
                     min={holdTiming.minSeconds}
                     max={holdTiming.maxSeconds}
                     step={holdTiming.stepSeconds}
-                    onChange={(value) => { if (value !== null) onChange({ hold: value }); }}
+                    onChange={(value) => {
+                      if (value === null) return;
+                      if (!runtime?.provider?.semanticCommandSaving) { onChange({ hold: value }); return; }
+                      const result = commands?.updateClip({ clipId: clip.id, patch: { hold: value }, expectedHold: clip.hold });
+                      setDurationError(!result ? 'Timeline commands are unavailable.' : result.ok ? null : result.error.message);
+                    }}
                   />
+                  {durationError && <div role="alert">{durationError}</div>}
                 </div>
               ) : (
                 <>

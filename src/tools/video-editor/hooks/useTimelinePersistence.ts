@@ -905,7 +905,7 @@ export function useTimelinePersistence({
 
       if (isTimelineSchemaIncompatibleError(error)) {
         isSchemaIncompatibleRef.current = true;
-        setSchemaIncompatible(error.issues);
+        setSchemaIncompatible(error.issues.length ? error.issues : [{ message: error.message }]);
         setSaveStatus('error');
         cancelErrorRetryTimer();
         disarmWatchdog();

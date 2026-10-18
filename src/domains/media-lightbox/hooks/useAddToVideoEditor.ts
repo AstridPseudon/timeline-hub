@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import { readGalleryGenerationSelection } from '@/tools/video-editor/commands/selectedProjectMedia.ts';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import type { GenerationRow } from '@/domains/generation/types';
@@ -45,6 +47,9 @@ interface UseAddToVideoEditorResult {
  *    VideoEditorProvider drains the staged queue on mount.
  */
 export function useAddToVideoEditor(media: GenerationRow | undefined): UseAddToVideoEditorResult {
+  const runtime = useOptionalVideoEditorRuntime();
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
   const ops = useTimelineEditorOpsSafe();
   const data = useTimelineEditorDataSafe();
   const commands = useTimelineCommandsServiceSafe();
@@ -78,7 +83,7 @@ export function useAddToVideoEditor(media: GenerationRow | undefined): UseAddToV
     return () => window.removeEventListener('storage', onStorage);
   }, [generationId]);
 
-  const onClick = useCallback(() => {
+  const onClick = useCallback(async () => {
     if (!media || !generationId) return;
 
     const hasMountedCommandSurface = hasMountedEditor
@@ -87,7 +92,22 @@ export function useAddToVideoEditor(media: GenerationRow | undefined): UseAddToV
       && data !== null;
 
     if (hasMountedCommandSurface && commands && ops && data) {
+      // Resolve identity before registration; URLs and generation labels are
+      // not authority for a semantic media command. Capture this mounted base
+      // across the asynchronous selection so it cannot move to another film.
+      const captured = JSON.stringify({ config: data.dataRef.current?.config, head: data.dataRef.current?.head });
+      const selection = runtime?.provider?.semanticCommandSaving
+        ? media.media_id && media.primary_variant_id && runtime.project.projectId
+          ? await readGalleryGenerationSelection(runtime.provider, { projectId: runtime.project.projectId,
+            asset: media.media_id, generationId, variantId: media.primary_variant_id }) : null
+        : undefined;
+      if (!mountedRef.current || selection === null || runtime?.provider?.semanticCommandSaving && !selection
+        || captured !== JSON.stringify({ config: data.dataRef.current?.config, head: data.dataRef.current?.head })) {
+        toast.error('Could not resolve the registered project media selection');
+        return;
+      }
       const registrationPlan = planGenerationAssetRegistration({
+        ...(selection ? { assetId: selection.asset, variantId: selection.variant_id } : {}),
         generationId,
         mediaId: media.media_id,
         variantType: media.type === 'video' ? 'video' : 'image',
@@ -117,6 +137,7 @@ export function useAddToVideoEditor(media: GenerationRow | undefined): UseAddToV
           durationSeconds: registrationPlan.assetEntry.duration ?? null,
           entry: registrationPlan.assetEntry,
           source: 'registered',
+          ...(selection ? { selectedMedia: selection } : {}),
         },
         time: timelineEnd,
       });
@@ -138,7 +159,7 @@ export function useAddToVideoEditor(media: GenerationRow | undefined): UseAddToV
       writePendingAdds([...current, generationId]);
     }
     setPhase('staged');
-  }, [commands, data, generationId, hasMountedEditor, media, navigate, ops, phase, videoSettings?.lastTimelineId]);
+  }, [runtime, commands, data, generationId, hasMountedEditor, media, navigate, ops, phase, videoSettings?.lastTimelineId]);
 
   return { onClick, phase };
 }

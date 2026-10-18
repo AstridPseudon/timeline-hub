@@ -1,3 +1,7 @@
+import { getTimelineDurationInFrames } from '../../../../vendor/timeline-composition/typescript/src/lib/duration.ts';
+import { MemoryRouter } from 'react-router-dom';
+import { useAddToVideoEditor } from '@/domains/media-lightbox/hooks/useAddToVideoEditor.ts';
+import { createGalleryTimelineCommands } from '../contexts/VideoEditorProvider.tsx';
 import { clipPlacementInverse } from '../commands/clipPlacementHistory.ts';
 import { ClipAction } from '../components/TimelineEditor/ClipAction.tsx';
 import { clipStructureInverse, overhangHoldExpectedWrites, shotGroupIdentity } from '../commands/clipStructureHistory.ts';
@@ -35,6 +39,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
+vi.mock('@/shared/hooks/settings/useToolSettings', () => ({ useToolSettings: () => ({ settings: {} }) }));
 vi.mock('@/tools/video-editor/compositions/TimelineRenderer.tsx', () => ({ invalidateReferencedTimelineCache: vi.fn() }));
 import * as draftStorage from '../data/timelineDraftIndexedDb.ts';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
@@ -68,7 +73,8 @@ import { expandTinyClip } from '../lib/expand-tiny-clip.ts';
 import { gestureCommandsFor, groupLeftResizeGestureCommands, tiedStartDragGesture } from '../commands/semanticGestures.ts';
 import { buildDuplicateClipEdit } from '../lib/duplicate-clip.ts';
 import { capturePreparedCloneBase, captureGenerationClonePlan, createTimelineCommands } from './useTimelineCommandsService.ts';
-import type { TimelineStoreApi } from './timelineStore.ts';
+import { createTimelineStore, TimelineStoreProvider, type TimelineStoreApi } from './timelineStore.ts';
+import { ClipPanelBody, type ClipPanelBodyProps } from '../components/PropertiesPanel/ClipPanelBody.tsx';
 import { useTimelineOps } from './useTimelineOps.ts';
 import { createProposalRuntime, createProposalPersistenceBridge, type ProposalServiceBridge } from '../lib/proposal-runtime.ts';
 import { ProposalPanel } from '../components/ProposalPanel/ProposalPanel.tsx';
@@ -9240,4 +9246,125 @@ describe('popup occurrence Split Here', () => {
       expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false); expect(draft).not.toHaveBeenCalled();
       view.unmount(); history.unmount(); h.unmount();
     });
+});
+
+
+describe('flat parent mounted Add and visible duration transactions', () => {
+  const semanticService = (h: Awaited<ReturnType<typeof setup>>) => createGalleryTimelineCommands({ getState: () => ({
+    data: { data: h.result.current.data, dataRef: h.result.current.dataRef }, ops: { applyEdit: h.result.current.applyEdit }, availability: { mounted: true },
+  }) } as unknown as TimelineStoreApi, undefined, true);
+
+  it.each([false, true])('Gallery prepared Add on empty parent, newTrack=%s, emits one authenticated transaction', async newTrack => {
+    const base = await initialData();
+    const initial = await buildTimelineData({ ...base.config, clips: [], tracks: newTrack ? [] : base.config.tracks }, { assets: {} }, undefined, 1, undefined, base.head);
+    const object_id = `sha256:${'a'.repeat(64)}`;
+    const selection = { asset: 'selected', generation_id: 'g', variant_id: 'v', object_id, catalog_digest: `sha256:${'b'.repeat(64)}` };
+    const prepared = { assetKey: 'selected', mediaType: 'image' as const, durationSeconds: null, source: 'external-media' as const,
+      selectedMedia: selection, entry: { type: 'image/png', media_id: object_id, generationId: 'g', variantId: 'v', file: 'https://fixture.test/image.png' } };
+    const h = await setup(undefined, false, initial);
+    const service = semanticService(h);
+    const button = render(<button onClick={() => expect(service.addClip({ preparedAsset: prepared, time: 0, forceNewTrack: newTrack }).ok).toBe(true)}>Gallery Add</button>, { wrapper: h.wrapper });
+    fireEvent.click(screen.getByRole('button', { name: 'Gallery Add' }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests).toHaveLength(1);
+    const calls = h.requests[0].request.change.commands;
+    expect(calls).toHaveLength(newTrack ? 2 : 1);
+    if (newTrack) expect(calls[0]).toMatchObject({ op: 'timeline.add', args: { track: { kind: 'visual' } } });
+    expect(calls.at(-1)).toMatchObject({ op: 'timeline.add', args: { media: selection, at: 0, duration: 5 } });
+    expect(calls.at(-1)!.args).not.toHaveProperty('media_record');
+    calls.forEach(validateEditCommand);
+    expect(h.compatibilityRequests).toEqual([]);
+    expect(h.result.current.data!.config.clips).toHaveLength(1);
+    button.unmount(); h.unmount();
+  });
+
+  it.each(['correct', 'wrong-media', 'changed-base'] as const)('actual mounted Gallery Add callback %s authenticates before media commands', async mode => {
+    const base = await initialData();
+    const initial = await buildTimelineData({ ...base.config, clips: [] }, { assets: {} }, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial);
+    const object_id = `sha256:${'a'.repeat(64)}`;
+    const selection = { asset: object_id, generation_id: 'g', variant_id: 'v', object_id, catalog_digest: `sha256:${'b'.repeat(64)}` };
+    const select = vi.spyOn(h.provider, 'getProjectMediaSelection').mockImplementation(async () => {
+      if (mode === 'changed-base') h.result.current.dataRef.current = { ...initial, head: { ...initial.head!, headRevisionId: 'newer-head' } };
+      return mode === 'wrong-media' ? { ...selection, object_id: `sha256:${'c'.repeat(64)}` } : selection;
+    });
+    const store = createTimelineStore();
+    store.setState({ availability: { mounted: true }, data: { data: initial, dataRef: h.result.current.dataRef, resolvedConfig: initial.resolvedConfig }, ops: { applyEdit: h.result.current.applyEdit } } as never);
+    const runtime = { provider: h.provider, project: { projectId: 'gesture-project' }, timelineId: 'gesture-timeline' } as unknown as VideoEditorRuntimeContextValue;
+    function Gallery() {
+      const add = useAddToVideoEditor({ id: 'g', generation_id: 'g', primary_variant_id: 'v', media_id: object_id, type: 'image', location: 'https://fixture.test/selected.png' } as never);
+      return <button onClick={add.onClick}>Actual Gallery Add</button>;
+    }
+    const view = render(<MemoryRouter><VideoEditorRuntimeProvider value={runtime}><TimelineStoreProvider store={store}><Gallery /></TimelineStoreProvider></VideoEditorRuntimeProvider></MemoryRouter>, { wrapper: h.wrapper });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Actual Gallery Add' })); });
+    if (mode !== 'correct') {
+      expect(select).toHaveBeenCalledOnce(); expect(h.requests).toEqual([]); expect(h.savedSeqRef.current).toBe(0);
+      expect(h.compatibilityRequests).toEqual([]); view.unmount(); h.unmount(); return;
+    }
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(select).toHaveBeenCalledWith({ projectId: 'gesture-project', asset: object_id, generationId: 'g', variantId: 'v' });
+    expect(h.requests).toHaveLength(1); expect(h.requests[0].request.change.commands).toEqual([expect.objectContaining({ op: 'timeline.add', args: expect.objectContaining({ media: selection, duration: 5, at: 0 }) })]);
+    expect(h.compatibilityRequests).toEqual([]); view.unmount(); h.unmount();
+  });
+
+  it('actual Duration field issues guarded HOLD5 to HOLD6 with no legacy publication', async () => {
+    const base = await initialData();
+    const serialized = JSON.parse(readFileSync(path.join(process.env.ASTRID_CHECKOUT!, 'tests/fixtures/timeline_editing/e216_flat_hold5_parent.json'), 'utf8')).payload;
+    const initial = await buildTimelineData({ ...serialized.config, clips: serialized.clips }, serialized.registry, undefined, 1, undefined, base.head);
+    expect(getTimelineDurationInFrames({ ...initial.config, clips: initial.config.clips.map(clip => ({ ...clip, at: 1 })) } as never, 30)).toBe(180);
+    expect(getTimelineDurationInFrames({ ...initial.config, clips: initial.config.clips.map(clip => ({ ...clip, hold: 6 })) } as never, 30)).toBe(180);
+    const h = await setup(undefined, false, initial, 0, undefined, undefined, 'clip-0');
+    const store = createTimelineStore();
+    store.setState({ availability: { mounted: true }, data: { data: initial, dataRef: h.result.current.dataRef }, ops: { applyEdit: h.result.current.applyEdit } } as never);
+    const change = vi.fn();
+    const props = { clip: initial.resolvedConfig.clips[0], track: initial.tracks[0], deviceClass: 'desktop', interactionMode: 'move', precisionEnabled: false,
+      onChange: change, onResetPosition: vi.fn(), onClose: vi.fn(), onToggleMute: vi.fn(), onSplitAtPlayhead: vi.fn(), onMoveTrackUp: vi.fn(), onMoveTrackDown: vi.fn(),
+      onSetInteractionMode: vi.fn(), onSetPrecisionEnabled: vi.fn(), compositionWidth: 1920, compositionHeight: 1080, registry: initial.resolvedConfig.registry,
+      activeTab: 'timing', setActiveTab: vi.fn(), effectResources: { canCreateEffect: false, canUpdateEffect: false, effects: [] } } as unknown as ClipPanelBodyProps;
+    const panel = render(<TimelineStoreProvider store={store}><ClipPanelBody {...props} /></TimelineStoreProvider>, { wrapper: h.wrapper });
+    const fields = screen.getAllByRole('textbox');
+    fireEvent.change(fields[1], { target: { value: '6' } });
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests).toHaveLength(1); expect(h.requests[0].request.change.commands).toEqual([expect.objectContaining({ op: 'clip.set-duration', select: 'parent/clip:clip-0', args: { seconds: 6 }, expect: expect.objectContaining({ hold: { state: 'present', value: 5 } }) })]);
+    expect(change).not.toHaveBeenCalled(); expect(h.compatibilityRequests).toEqual([]);
+    panel.unmount(); h.unmount();
+  });
+
+  it.each(['keep', 'detach', 'stale prompt'] as const)('duration field service preserves tied-end %s choice', async choice => {
+    const base = await initialData();
+    const initial = await buildTimelineData({ ...base.config, clips: [{ id: 'clip-0', clipType: 'hold', hold: 5, track: 'V1', at: 0, app: { astrid: { until: 'clip-end "parent/clip:anchor"' } } },
+      { id: 'anchor', clipType: 'hold', hold: 5, track: 'V2', at: 0 }] }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial);
+    vi.spyOn(window, 'prompt').mockImplementation(() => {
+      if (choice === 'stale prompt') h.result.current.dataRef.current = { ...initial, head: { ...initial.head!, headRevisionId: 'changed-while-prompting' } };
+      return choice === 'keep' ? 'keep' : 'detach';
+    });
+    act(() => expect(semanticService(h).updateClip({ clipId: 'clip-0', patch: { hold: 6 }, expectedHold: 5 }).ok).toBe(choice !== 'stale prompt'));
+    if (choice === 'detach') {
+      await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+      expect(h.requests[0].request.change.commands).toEqual([expect.objectContaining({ op: 'clip.set-duration', args: { seconds: 6,
+        relation_choices: [{ target: 'parent/clip:clip-0', edge: 'end', choice: 'detach' }] }, expect: expect.objectContaining({ hold: { state: 'present', value: 5 }, 'app.astrid.until': { state: 'present', value: 'clip-end "parent/clip:anchor"' } }) })]);
+    } else expect(h.requests).toEqual([]);
+    expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  });
+
+  it('a semantic validation refusal retains its real finding and never publishes a snapshot', async () => {
+    const base = await initialData();
+    const initial = await buildTimelineData({ ...base.config, clips: [{ id: 'clip-0', clipType: 'hold', hold: 5, track: 'V1', at: 0 }] }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(async () => 'refused', false, initial);
+    act(() => expect(semanticService(h).updateClip({ clipId: 'clip-0', patch: { hold: 6 }, expectedHold: 5 }).ok).toBe(true));
+    await waitFor(() => expect(h.result.current.persistence.schemaIncompatible).toEqual([{ message: 'fixture refusal' }]));
+    expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]); expect(h.savedSeqRef.current).toBe(0); h.unmount();
+  });
+
+  it.each(['wrong object', 'wrong generation', 'missing identity', 'stale hold', 'unsupported hold'])('%s refuses the converted row before mutation or wire', async damage => {
+    const initial = await literalLeftData(false); const h = await setup(undefined, false, initial);
+    const service = semanticService(h); const before = h.result.current.data;
+    const selection = { asset: 'selected', generation_id: 'g', variant_id: 'v', object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` };
+    const prepared = { assetKey: 'selected', mediaType: 'image' as const, durationSeconds: null, source: 'external-media' as const,
+      selectedMedia: damage === 'missing identity' ? undefined : selection, entry: { type: 'image/png', media_id: damage === 'wrong object' ? 'foreign' : selection.object_id, generationId: damage === 'wrong generation' ? 'foreign' : 'g', variantId: 'v', file: 'https://fixture.test/image.png' } };
+    act(() => expect(damage.endsWith('hold') ? service.updateClip({ clipId: 'clip-1', patch: { hold: damage === 'unsupported hold' ? -1 : 6 }, expectedHold: 999 }).ok
+      : service.addClip({ preparedAsset: prepared, time: 0 }).ok).toBe(false));
+    expect(h.result.current.data).toBe(before); expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]); h.unmount();
+  });
 });

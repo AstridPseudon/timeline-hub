@@ -83,7 +83,7 @@ import type { ProcessManager } from '@/tools/video-editor/runtime/processes/Proc
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 import type { ResolvedAssetRegistryEntry } from '@/tools/video-editor/types/index.ts';
 import type { SelectedProjectMediaIdentity } from '@/shared/contracts/selectedProjectMedia.ts';
-import { readSelectedProjectMediaIdentity } from '@/tools/video-editor/commands/selectedProjectMedia.ts';
+import { readGalleryGenerationSelection } from '@/tools/video-editor/commands/selectedProjectMedia.ts';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers.ts';
 import { publishLocalTestExtensionDiagnostics } from '@/app/localTestRuntime.ts';
 import {
@@ -180,40 +180,15 @@ function isGenerationRow(value: unknown): value is GenerationRow {
   );
 }
 
-/**
- * Resolve the current Runtime selection for a staged Gallery item. Providers
- * without this capability retain their legacy prepared-media behavior; a
- * present selector is authoritative and any malformed or mismatched response
- * is a refusal.
- */
-export async function readGalleryGenerationSelection(
-  provider: Pick<DataProvider, 'getProjectMediaSelection'>,
-  request: { projectId: string; asset: string; generationId: string; variantId: string },
-): Promise<SelectedProjectMediaIdentity | null | undefined> {
-  if (!provider.getProjectMediaSelection) return undefined;
-  let response: unknown;
-  try {
-    response = await provider.getProjectMediaSelection.call(provider, request);
-  } catch {
-    return null;
-  }
-  const identity = readSelectedProjectMediaIdentity(response);
-  if (!identity || identity.asset !== request.asset
-    || identity.generation_id !== request.generationId
-    || identity.variant_id !== request.variantId
-    || identity.object_id !== request.asset) {
-    return null;
-  }
-  // Keep the exact helper response object. Do not reconstruct its identity.
-  return identity;
-}
+export { readGalleryGenerationSelection } from '@/tools/video-editor/commands/selectedProjectMedia.ts';
 
 /** Build the public mounted command facade for Gallery-to-editor additions. */
 export function createGalleryTimelineCommands(
   store: Parameters<typeof createTimelineCommands>[0],
   timelineEditability?: TimelineEditability,
+  semanticCommandSaving = false,
 ) {
-  return createTimelineCommands(store, { timelineEditability });
+  return createTimelineCommands(store, { timelineEditability, semanticCommandSaving });
 }
 
 function isVideoEditorMediaLightboxProps(
@@ -479,8 +454,8 @@ export function VideoEditorRuntimeContent({
   const runtime = useVideoEditorRuntime();
   const { store, editor, chrome } = sync;
   const galleryCommands = useMemo(
-    () => createGalleryTimelineCommands(store, runtime.timelineEditability),
-    [runtime.timelineEditability, store],
+    () => createGalleryTimelineCommands(store, runtime.timelineEditability, runtime.provider.semanticCommandSaving),
+    [runtime.timelineEditability, runtime.provider.semanticCommandSaving, store],
   );
 
   useEffect(() => {

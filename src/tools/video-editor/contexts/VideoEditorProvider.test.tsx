@@ -820,7 +820,7 @@ describe('VideoEditorProvider', () => {
       catalog_digest: `sha256:${'b'.repeat(64)}`,
     };
     const applyEdit = vi.fn();
-    const commands = createGalleryTimelineCommands(buildCommandTestStore({ applyEdit }));
+    const commands = createGalleryTimelineCommands(buildCommandTestStore({ applyEdit }), undefined, true);
 
     expect(typeof commands.addClip).toBe('function');
     const result = commands.addClip({
@@ -831,6 +831,7 @@ describe('VideoEditorProvider', () => {
         entry: {
           file: 'http://127.0.0.1:57605/v1/objects/image/content',
           type: 'image/png',
+          media_id: selection.object_id,
           generationId: selection.generation_id,
           variantId: selection.variant_id,
         },
@@ -4635,6 +4636,8 @@ describe('VideoEditorProvider clip-type registry scoped cleanup', () => {
   });
 
   it('drops immediately when the mounted timeline store is available', () => {
+    // This empty-queue caller is independent of the prior unmount-preservation case.
+    writePendingAdds([]);
     let materialized = buildCommandTimelineData();
     const applyEdit = vi.fn((...args: unknown[]) => {
       const mutation = args[0] as { type: string; command: PlacePreparedMediaCommand };

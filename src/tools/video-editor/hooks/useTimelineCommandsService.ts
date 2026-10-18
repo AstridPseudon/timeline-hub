@@ -2,7 +2,7 @@ import { manualTextPatch, isManualTextClip } from '../commands/manualText.ts';
 import { readSelectedProjectMediaIdentity, selectedMediaRegistryExpectationPath, buildSelectedProjectMediaAddCommand } from '../commands/selectedProjectMedia.ts';
 import { addTrackGestureCommands, authoredTracks } from '../commands/trackGestures.ts';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
-import { toolTrimGestureCommands, cloneStructuralSource, type CloneRelationChoice, structuralChildId, splitGestureCommands, duplicateGestureCommands, deleteGestureCommands, literalStructuralSource, moveGestureCommands, propertyGestureCommands, rightResizeGestureCommands } from '../commands/semanticGestures.ts';
+import { toolTrimGestureCommands, cloneStructuralSource, type CloneRelationChoice, structuralChildId, splitGestureCommands, duplicateGestureCommands, deleteGestureCommands, literalStructuralSource, moveGestureCommands, propertyGestureCommands, rightResizeGestureCommands, tiedEndResizeGesture } from '../commands/semanticGestures.ts';
 import { getAssetImmediateSource } from '../lib/asset-registry.ts';
 import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
 import { useMemo } from 'react';
@@ -98,6 +98,8 @@ export interface AddClipCommandInput {
 }
 
 export interface UpdateClipCommandInput {
+  /** Value captured by the visible duration field, before any prompt. */
+  expectedHold?: number;
   clipId: string;
   patch: Partial<Omit<TimelineClip, 'id'>>;
 }
@@ -508,6 +510,7 @@ export interface CreateTimelineCommandsOptions {
   managedObjectGuard?: ManagedObjectGuard | null;
   /** Optional host-owned policy that can deny all timeline mutations. */
   timelineEditability?: TimelineEditability;
+  semanticCommandSaving?: boolean;
 }
 
 /**
@@ -687,23 +690,33 @@ export function createTimelineCommands(
           return failure('mutation_failed', 'Failed to place the prepared asset on the timeline.');
         }
         const inserted = preview.nextData.config.clips.find(clip => clip.id === detail.clipId);
-        const track = current.config.tracks?.find(candidate => candidate.id === detail.trackId);
+        const track = preview.nextData.config.tracks?.find(candidate => candidate.id === detail.trackId);
         const duration = inserted && typeof inserted.hold === 'number' ? inserted.hold
           : inserted && typeof inserted.from === 'number' && typeof inserted.to === 'number' ? inserted.to - inserted.from : null;
         const pureInsert = !input.afterClipId && !input.removeClipId && !input.removeClipIds?.length
-          && !input.replaceClipId && input.pinnedShotGroupsOverride === undefined && !input.forceNewTrack && !input.insertAtTop;
+          && !input.replaceClipId && input.pinnedShotGroupsOverride === undefined && !input.insertAtTop;
         const editCommand = pureInsert && input.preparedAsset.selectedMedia && inserted && track && typeof inserted.at === 'number' && duration !== null
           ? buildSelectedProjectMediaAddCommand({ selection: input.preparedAsset.selectedMedia,
             assetKey: input.preparedAsset.assetKey, mediaType: input.preparedAsset.mediaType,
             trackId: track.id, trackKind: track.kind, clipId: detail.clipId, at: inserted.at, durationSeconds: duration,
             intrinsicDurationSeconds: input.preparedAsset.durationSeconds,
-            existingTrackIds: current.config.tracks?.map(candidate => candidate.id) ?? [], existingClipIds: current.config.clips.map(clip => clip.id),
+            existingTrackIds: preview.nextData.config.tracks?.map(candidate => candidate.id) ?? [], existingClipIds: current.config.clips.map(clip => clip.id),
             existingRegistryEntry: current.registry.assets[input.preparedAsset.assetKey], }) : undefined;
+        const newTrack = track && !current.config.tracks?.some(candidate => candidate.id === track.id);
+        const trackCommands = newTrack && track ? addTrackGestureCommands(current, track) : [];
+        const selected = readSelectedProjectMediaIdentity(input.preparedAsset.selectedMedia);
+        const authentic = selected && input.preparedAsset.entry.media_id === selected.object_id
+          && input.preparedAsset.entry.generationId === selected.generation_id
+          && input.preparedAsset.entry.variantId === selected.variant_id;
+        const editCommands = editCommand && trackCommands && authentic ? [...trackCommands, editCommand] : undefined;
+        if (options?.semanticCommandSaving && !editCommands) {
+          return failure('invalid_argument', 'Selected media identity or Add transaction could not be validated.');
+        }
         state.ops.applyEdit({ type: 'prepared-media', command }, {
           selectedClipId: detail.clipId,
           selectedTrackId: detail.trackId,
           semantic: true,
-          ...(editCommand ? { editCommands: [editCommand] } : {}),
+          ...(editCommands ? { editCommands } : {}),
         });
         return success({ clipId: detail.clipId, trackId: detail.trackId });
       }
@@ -840,6 +853,32 @@ export function createTimelineCommands(
       // --- M3 managed-object guard ---
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
+
+      if (options?.semanticCommandSaving && Object.prototype.hasOwnProperty.call(input.patch, 'hold')) {
+        if (Object.keys(input.patch).length !== 1 || typeof input.patch.hold !== 'number'
+          || !Number.isFinite(input.patch.hold) || input.patch.hold <= 0
+          || (input.expectedHold !== undefined && input.expectedHold !== clip.hold)) {
+          return failure('invalid_argument', 'Duration requires a current HOLD value and a positive duration.');
+        }
+        if (input.patch.hold === clip.hold) return success({ clipId: input.clipId });
+        const captured = canonicalJsonStringify({ config: current.config, head: current.head });
+        const tied = tiedEndResizeGesture(current, input.clipId, input.patch.hold);
+        if (tied === null) return success({ clipId: input.clipId });
+        const editCommands = tied?.commands ?? rightResizeGestureCommands(current, input.clipId, input.patch.hold, {});
+        const permission = checkTimelineEditable();
+        if (permission) return permission;
+        const latestState = getMountedState();
+        const latest = latestState && getCurrentData(latestState);
+        if (!editCommands || !latest || captured !== canonicalJsonStringify({ config: latest.config, head: latest.head })) {
+          return failure('invalid_argument', 'Duration intent is unsupported or its captured base changed.');
+        }
+        try {
+          state.ops.applyEdit({ type: 'commands' }, { semantic: true, editCommands, selectedClipId: input.clipId });
+          return success({ clipId: input.clipId });
+        } catch (cause) {
+          return failure('mutation_failed', cause instanceof Error ? cause.message : 'Duration command failed.', { cause });
+        }
+      }
 
       if (input.patch.track) {
         const targetTrack = getTrackById(current.resolvedConfig, input.patch.track);
@@ -1323,8 +1362,10 @@ export function createTimelineCommands(
  */
 export function useTimelineCommandsService(): TimelineCommands {
   const store = useTimelineStoreApi();
-  const editability = useOptionalVideoEditorRuntime()?.timelineEditability;
-  return useMemo(() => createTimelineCommands(store, {timelineEditability: editability}), [store, editability]);
+  const runtime = useOptionalVideoEditorRuntime();
+  const editability = runtime?.timelineEditability;
+  const semanticCommandSaving = runtime?.provider?.semanticCommandSaving;
+  return useMemo(() => createTimelineCommands(store, {timelineEditability: editability, semanticCommandSaving}), [store, editability, semanticCommandSaving]);
 }
 
 /**
@@ -1334,7 +1375,9 @@ export function useTimelineCommandsService(): TimelineCommands {
  * preserve their existing fallback behavior.
  */
 export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
-  const editability = useOptionalVideoEditorRuntime()?.timelineEditability;
+  const runtime = useOptionalVideoEditorRuntime();
+  const editability = runtime?.timelineEditability;
+  const semanticCommandSaving = runtime?.provider?.semanticCommandSaving;
   const store = useTimelineStoreApiSafe();
   const availability = useTimelineAvailabilityState();
 
@@ -1342,6 +1385,6 @@ export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
     if (!store || !hasMountedTimelineAvailability(availability)) {
       return null;
     }
-    return createTimelineCommands(store, {timelineEditability: editability});
-  }, [availability.hasProvider, availability.mounted, store, editability]);
+    return createTimelineCommands(store, {timelineEditability: editability, semanticCommandSaving});
+  }, [availability.hasProvider, availability.mounted, store, editability, semanticCommandSaving]);
 }
