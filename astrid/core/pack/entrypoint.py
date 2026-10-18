@@ -93,17 +93,10 @@ def run_pack_main(
             return render_astrid_error(exc)
         # Pack actions raise bare AstridError/AstridValueError; give them the same
         # recovery hint and snapshot the generic ValueError/RuntimeError path gets.
-        return render_astrid_error(
-            AstridError(
-                exc.cause,
-                valid_options=exc.valid_options,
-                recovery_command=recovery_command or f"python3 -m astrid executors run {capability_id} --help",
-                state_snapshot={**snapshot, **exc.state_snapshot},
-                code=exc.code,
-                degraded=exc.degraded,
-                source_type=exc.source_type,
-            )
-        )
+        exc.recovery_command = recovery_command or f"python3 -m astrid executors run {capability_id} --help"
+        exc.recovery = exc.recovery_command
+        exc.state_snapshot = {**snapshot, **exc.state_snapshot}
+        return render_astrid_error(exc)
     except (ValueError, RuntimeError) as exc:
         return render_astrid_error(
             AstridError(
