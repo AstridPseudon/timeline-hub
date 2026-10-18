@@ -560,7 +560,7 @@ def _run_sheet_path(scenario: Scenario, spec: PathSpec) -> PathResult:
         if scenario.idempotent and exc is None and code == 0:
             second = _rerun(lambda: _apply_sheet_again(sheet_file))
         return _finish(scenario, spec.name, [code], out, err, exc, base, _undo_redo_cli,
-                       second, persistence_before, records_before)
+                       second, persistence_before, records_before, boundary="file-application")
 
 
 def _apply_sheet(sheet_file: Path) -> tuple[int, str, str, str | None]:
@@ -627,13 +627,13 @@ def _run_extension_path(scenario, spec):
                 return [], out, failure
             second = _rerun(again)
         return _finish(scenario, spec.name, [], stdout, stderr, error, base, _undo_redo_python,
-                       second, persistence_before, records_before)
+                       second, persistence_before, records_before, boundary="transactional-edit")
 
 
 def _finish(scenario: Scenario, name: str, exits: list[int], stdout: str, stderr: str, error: str | None,
             base: str, undo_redo, second: _Rerun | None = None,
             persistence_before: dict[str, Any] | None = None,
-            records_before: list[dict] | None = None) -> PathResult:
+            records_before: list[dict] | None = None, *, boundary: str = "implicit-command") -> PathResult:
     # Refusal boundaries require exact persisted-byte evidence before any check,
     # undo, redo, or journal reader can affect the working copy.
     persistence_after = _persistence_snapshot()
@@ -661,7 +661,7 @@ def _finish(scenario: Scenario, name: str, exits: list[int], stdout: str, stderr
         undo_error=undo_error, redo_error=redo_error, checks=checks, records=records,
         records_before=records_before or [], persistence_before=persistence_before,
         persistence_after=persistence_after,
-        boundary="file-application" if name == "sheet" else "transactional-edit",
+        boundary=boundary,
         journal_errors=journal_errors, **extra,
     )
 
@@ -758,13 +758,13 @@ def _refusal_boundary_error(r: PathResult) -> str | None:
     if before is None or after is None:
         return "refusal boundary did not capture persisted state before and after execution"
 
-    if r.boundary == "file-application":
+    if r.boundary in {"file-application", "implicit-command"}:
         changed = [key for key in ("document", "journal", "history", "redo")
                    if before.get(key) != after.get(key)]
         if changed:
-            return "failed file application changed persisted bytes: " + ", ".join(changed)
+            return "failed implicit command/file application changed persisted bytes: " + ", ".join(changed)
         if r.records != r.records_before:
-            return "failed file application changed parsed journal records"
+            return "failed implicit command/file application changed parsed journal records"
         return None
 
     changed = [key for key in ("document", "history", "redo") if before.get(key) != after.get(key)]
@@ -822,14 +822,14 @@ def _evaluate_path(scenario: Scenario, r: PathResult, fail, ref: PathResult | No
     if expect == "change" and ref is not None and name != ref_name and r.after != ref.after:
         fail(name, "equal", f"differs from the reference ({ref_name}):\n" + _diff(ref.after, r.after, ref_name, name))
 
-    same_refusal_boundary = (scenario.expect == "refused" and ref is not None
-                             and r.boundary == ref.boundary)
-    if ref is not None and name != ref_name and (scenario.expect != "refused" or same_refusal_boundary):
+    if ref is not None and name != ref_name:
         left, right = comparable_records(ref.records), comparable_records(r.records)
         if left != right:
             fail(name, "journal", "journal differs from " + str(ref_name) + ":\n" + _diff(canon(left), canon(right), str(ref_name), name))
     if scenario.expect == "change" and not any(row.get("calls") for row in r.records):
         fail(name, "journal", "changed edit has no populated journal calls")
+    if scenario.expect == "refused" and not r.records:
+        fail(name, "journal", "refused edit has no populated journal records")
 
     if r.new_steps >= 1:
         if r.undo_error or r.undone != r.base:

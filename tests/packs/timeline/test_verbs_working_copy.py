@@ -493,17 +493,27 @@ def test_apply_file_formats_share_one_journal_record_and_undo_step(tmp_path, mon
     assert applied.document() == before_document
 
 
-def _fail_during_apply_file(kind, draft, tmp_path, monkeypatch):
+def _fail_during_apply_file(kind, draft, tmp_path, monkeypatch, failure):
     suffix, make_contents = _apply_file_contents(kind)
     if kind == "jsonl":
         valid = {"op": "clip.set", "select": "c1.rocket", "args": {"x": 120}}
         invalid = {"op": "not.registered", "select": None, "args": {}}
         contents = "\n".join(json.dumps(row) for row in (valid, invalid)) + "\n"
+        if failure == "crash":
+            from astrid.sdk.timeline import commands
+            original = commands._invoke
+
+            def crash_after_write(*args, **kwargs):
+                original(*args, **kwargs)
+                raise RuntimeError("injected mid-file failure")
+
+            monkeypatch.setattr(commands, "_invoke", crash_after_write)
     elif kind == "python":
         contents = (
             'tl.clip("c1.rocket").set(x=120)\n'
             'tl.save()\n'
-            'raise RuntimeError("injected mid-file failure")\n'
+            + ('raise RuntimeError("injected mid-file failure")\n' if failure == "crash" else
+               'tl.clip("c2.card").set(zzbogus=2)\n')
         )
     else:
         from astrid.sdk import timeline_sheet
@@ -516,11 +526,14 @@ def _fail_during_apply_file(kind, draft, tmp_path, monkeypatch):
             calls += 1
             result = original(*args, **kwargs)
             if calls == 2:
-                raise RuntimeError("injected mid-file failure")
+                if failure == "crash":
+                    raise RuntimeError("injected mid-file failure")
+                # Exercise an actual typed SDK refusal after earlier sheet writes.
+                args[0].clip("c2.card").set(zzbogus=2)
             return result
 
         monkeypatch.setattr(timeline_sheet, "_update_layer", fail_after_second_layer)
-        contents = make_contents(draft)
+        contents = make_contents(draft).replace("x=75", "x=120")
 
     input_file = tmp_path / f"failed{suffix}"
     input_file.write_text(contents, encoding="utf-8")
@@ -528,27 +541,48 @@ def _fail_during_apply_file(kind, draft, tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("kind", ["sheet", "jsonl", "python"])
-def test_apply_file_mid_file_failure_preserves_document_and_journal_bytes(tmp_path, monkeypatch, capsys, kind):
+@pytest.mark.parametrize("failure", ["refusal", "crash"])
+def test_apply_file_mid_file_failure_preserves_document_and_journal_bytes(tmp_path, monkeypatch, capsys, kind, failure):
     from astrid.sdk.timeline import journal, store
 
     draft = _prepare_apply_file_draft(tmp_path, monkeypatch)
+    draft.clip("c1.rocket").set(x=75)
+    draft.save(quiet=True)
+    draft.clip("c1.rocket").set(y=45)
+    draft.save(quiet=True)
+    draft.undo()
     document_path = Path(draft.path)
     journal_file = journal.journal_path("p", "t")
     history_dir = store._history_dir(document_path)
     before_document_bytes = document_path.read_bytes()
     before_journal_bytes = journal_file.read_bytes()
     before_history = {path.name: path.read_bytes() for path in history_dir.glob("*.json")}
-    input_file = _fail_during_apply_file(kind, draft, tmp_path, monkeypatch)
+    redo_dir = store._redo_dir(document_path)
+    before_redo = _json_files(redo_dir)
+    assert before_history and before_redo
+    input_file = _fail_during_apply_file(kind, draft, tmp_path, monkeypatch, failure)
 
-    if kind in {"sheet", "python"}:
-        with pytest.raises(RuntimeError, match="injected mid-file failure"):
-            _run("apply", "t", "--project", "P", str(input_file))
+    parsed = _parse("apply", "t", "--project", "P", str(input_file))
+    if failure == "crash" and kind != "jsonl":
+        with pytest.raises(RuntimeError, match="injected mid-file failure") as caught:
+            parsed.handler(parsed)
+        assert not isinstance(caught.value, TimelineEditError)
+        assert not getattr(parsed, "_edit_refusal", None)
     else:
-        assert _run("apply", "t", "--project", "P", str(input_file)) == 2
+        assert parsed.handler(parsed) == 2
+        refusal = parsed._edit_refusal
+        assert refusal["type"] in {"CommandError", "TimelineEditError", "SheetError"}
+        # JSONL deliberately wraps line failures in CommandError, including crashes.
+        message = ("injected mid-file failure" if failure == "crash" else
+                   "not.registered" if kind == "jsonl" else "zzbogus")
+        assert message in refusal["message"]
+        assert message in capsys.readouterr().err
     capsys.readouterr()
     assert document_path.read_bytes() == before_document_bytes
     assert journal_file.read_bytes() == before_journal_bytes
     assert {path.name: path.read_bytes() for path in history_dir.glob("*.json")} == before_history
+    assert _json_files(redo_dir) == before_redo
+    assert journal.verify(journal_file) == []
     assert Checkout.draft("P", "t").document() == draft.document()
 
 

@@ -1718,7 +1718,7 @@ def run(tl, value, *, dry_run=False, restore_image=None):
     from astrid.sdk.timeline.transaction import edit_transaction
     with edit_transaction(tl, command.op, dry_run=dry_run, quiet=True,
                           record_no_change=command.op != "timeline.restructure",
-                          record_rollback=command.op != "timeline.restructure") as tx:
+                          record_rollback=False) as tx:
         tx.canonical = True
         _invoke(tl, command, entry)
     return tx.plan

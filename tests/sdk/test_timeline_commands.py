@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import contextlib
 import json
 from pathlib import Path
 
@@ -253,13 +254,94 @@ def test_invalid_commands_are_typed_and_leave_memory_and_file_unchanged(draft, v
 
 
 def test_batch_failure_restores_earlier_writes_and_does_not_make_undo(draft):
+    persisted = files(Path(draft.path).parents[3])
     before, disk = draft.document(), Path(draft.path).read_bytes()
     with pytest.raises(TimelineEditError):
         commands.run(draft, command(op="timeline.batch", select=None, commands=[command(x=120), command(zzbogus=2)]))
     assert draft.document() == before
     assert Path(draft.path).read_bytes() == disk
     assert not draft._journal and not draft._pending_calls
-    assert journal.read(journal.journal_path("p", "t"))[-1].outcome == "rolled-back"
+    assert files(Path(draft.path).parents[3]) == persisted
+
+
+@pytest.mark.parametrize("route", ["run", "execute", "step"])
+@pytest.mark.parametrize("failure", ["refusal", "crash"])
+@pytest.mark.parametrize("explicit", [False, True])
+def test_failed_command_preserves_bytes_and_outer_audit_owner(draft, monkeypatch, route, failure, explicit):
+    # Keep both stacks populated so losing redo or prior history cannot pass.
+    commands.run(draft, command(x=90))
+    commands.run(draft, command(y=44))
+    draft.undo()
+    root = Path(draft.path).parents[3]
+    before, persisted = draft.document(), files(root)
+    assert list(store._history_dir(Path(draft.path)).glob("*.json"))
+    assert list(store._redo_dir(Path(draft.path)).glob("*.json"))
+    records = journal.read(journal.journal_path("p", "t"))
+    if failure == "crash":
+        original = commands._invoke
+
+        def crash_after_mutation(tl, call, entry):
+            result = original(tl, call, entry)
+            if call.op == "clip.set" and call.args.get("x") == 120:
+                raise RuntimeError("injected command fault")
+            return result
+
+        monkeypatch.setattr(commands, "_invoke", crash_after_mutation)
+    batch = command(op="timeline.batch", select=None,
+                    commands=[command(x=120), command(zzbogus=2)])
+    error = RuntimeError if failure == "crash" else TimelineEditError
+    with pytest.raises(error, match="injected command fault" if failure == "crash" else "zzbogus") as caught:
+        with draft.edit("explicit owner", quiet=True) if explicit else contextlib.nullcontext():
+            if route == "step":
+                with draft.step("implicit batch"):
+                    commands.execute(draft, batch)
+            else:
+                getattr(commands, route)(draft, batch)
+    assert isinstance(caught.value, TimelineEditError) is (failure == "refusal")
+    assert draft.document() == before
+    assert not draft._journal and not draft._pending_calls and draft._edit_depth == 0
+    after = files(root)
+    if explicit:
+        journal_key = str(journal.journal_path("p", "t").relative_to(root))
+        assert after.pop(journal_key) != persisted.pop(journal_key)
+        audit = journal.read(journal.journal_path("p", "t"))
+        assert len(audit) == len(records) + 1
+        assert audit[:-1] == records
+        assert audit[-1].outcome == "rolled-back" and audit[-1].error
+        assert audit[-1].undo_step is None
+    assert after == persisted
+    assert journal.verify(journal.journal_path("p", "t")) == []
+
+
+@pytest.mark.parametrize("route", ["invoke_operation", "run"])
+def test_operation_invocation_keeps_its_explicit_rollback_audit(draft, monkeypatch, tmp_path, route):
+    from astrid.core.pack import operations
+
+    operation = operations.resolve_operation(
+        "timeline.operation/beat_tools.fit_to_beats", project_root=tmp_path,
+        extra_pack_roots=(str(FIXTURE.parents[3] / "examples/packs"),))
+    monkeypatch.setattr(operations, "resolve_operation", lambda identity: operation)
+    inputs = {"clips": ["c1.rocket"], "beats": []}
+    root = Path(draft.path).parents[3]
+    before, persisted = draft.document(), files(root)
+    records = journal.read(journal.journal_path("p", "t"))
+    with pytest.raises(TimelineEditError) as caught:
+        if route == "run":
+            commands.run(draft, operations.operation_call(operation, inputs))
+        else:
+            operations.invoke_operation(draft, operation, inputs)
+    assert draft.document() == before
+    after = files(root)
+    journal_key = str(journal.journal_path("p", "t").relative_to(root))
+    assert after.pop(journal_key).startswith(persisted.pop(journal_key))
+    assert after == persisted
+    audit = journal.read(journal.journal_path("p", "t"))
+    assert len(audit) == len(records) + 1 and audit[:-1] == records
+    assert audit[-1].outcome == "rolled-back"
+    assert audit[-1].label == f"{operation.identity}@{operation.implementation_digest}"
+    assert audit[-1].error == journal.one_line(caught.value)
+    assert audit[-1].undo_step is None
+    assert journal.verify(journal.journal_path("p", "t")) == []
 
 
 @pytest.mark.parametrize("mutation", ["curve", "unrelated"])

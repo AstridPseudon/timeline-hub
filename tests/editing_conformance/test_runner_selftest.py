@@ -195,6 +195,60 @@ def test_refusal_parity_on_an_unknown_key():
     assert _failures(scenario) == {}
 
 
+@pytest.mark.parametrize("path", ["cli", "sheet"])
+@pytest.mark.parametrize("field,value", [("label", "different persisted history"),
+                                         ("calls", [{"op": "altered.call"}])])
+def test_refusal_journals_are_compared_across_actual_boundaries(path, field, value):
+    scenario = _repo_scenario("look.set.unknown-key")
+    results = run_scenario(scenario)
+    assert evaluate(scenario, results) == {}
+    assert results["sheet"].boundary != results["python"].boundary
+    assert all(result.records for result in results.values())
+    changed = copy.deepcopy(results)
+    changed[path].records[-1][field] = value
+    changed[path].records_before[-1][field] = value
+    assert (path, "journal") in evaluate(scenario, changed)
+
+
+def test_implicit_refusal_rejects_an_extra_rollback_row():
+    scenario = _repo_scenario("look.set.unknown-key")
+    results = run_scenario(scenario)
+    results["cli"].records.append({"kind": "edit", "outcome": "rolled-back", "error": "refused"})
+    failures = evaluate(scenario, results)
+    assert ("cli", "atomicity") in failures and ("cli", "journal") in failures
+
+
+def test_refusal_cannot_pass_with_equally_empty_journals():
+    scenario = _repo_scenario("look.set.unknown-key")
+    results = run_scenario(scenario)
+    for result in results.values():
+        result.records = []
+        result.records_before = []
+    failures = evaluate(scenario, results)
+    assert all((path, "journal") in failures for path in results)
+
+
+@pytest.mark.parametrize("field", ["document", "journal", "history", "redo"])
+def test_implicit_refusal_requires_all_persisted_bytes_unchanged(field):
+    scenario = _repo_scenario("look.set.unknown-key")
+    results = run_scenario(scenario)
+    assert evaluate(scenario, results) == {}
+    for path in results:
+        changed = copy.deepcopy(results)
+        changed[path].persistence_after[field] = b"corrupted persisted bytes"
+        assert (path, "atomicity") in evaluate(scenario, changed)
+
+
+def test_extension_refusal_retains_explicit_edit_rollback_audit():
+    scenario = _repo_scenario("timing.fit-to-beats.refused")
+    result = run_scenario(scenario)
+    assert evaluate(scenario, result) == {}
+    extension = result["extension"]
+    assert extension.boundary == "transactional-edit"
+    assert len(extension.records) == len(extension.records_before) + 1
+    assert extension.records[-1]["outcome"] == "rolled-back"
+
+
 def test_unexpected_crash_does_not_count_as_a_typed_refusal():
     from tests.editing_conformance.runner import PathResult
 

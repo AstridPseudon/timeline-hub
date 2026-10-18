@@ -364,7 +364,8 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
     def step(self, label: str):
         """One undo step for everything inside (a verb that makes several changes is one edit)."""
         outer = not self._edit_depth
-        with edit_transaction(self, label, check=False, quiet=True, persist=False) as tx:
+        with edit_transaction(self, label, check=False, quiet=True, persist=False,
+                              record_rollback=False) as tx:
             if outer:
                 tx.canonical = True
             yield self
