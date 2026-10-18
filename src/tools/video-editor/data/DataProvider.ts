@@ -48,6 +48,15 @@ export interface TimelineOccurrenceContext {
   readonly internalRevisionId: string;
 }
 
+/** Read-model pins and the one popup-local to timeline-time origin. */
+export interface TimelineOccurrenceMediaContext {
+  readonly context: TimelineOccurrenceContext;
+  readonly atMs: number;
+  readonly durationMs: number;
+  readonly registry: Readonly<Record<string, unknown>>;
+  readonly clipIds: readonly string[];
+}
+
 export interface TimelineSaveReceipt {
   /** Native receipt inverse; null explicitly acknowledges a registration with no authored change. */
   commandInverse?: EditCommand | null;
@@ -456,6 +465,7 @@ export interface DataProvider extends AssetResolver {
   supportsDirectAssetUpload?: boolean;
   /** Explicit false stages catalog media without enabling editor placement or registry edits. */
   preparedMediaPlacementEnabled?: boolean;
+  getTimelineOccurrenceMediaContext?(): TimelineOccurrenceMediaContext;
   loadTimeline(timelineId: string): Promise<LoadedTimeline>;
   /** Associate development timing phases with one shot-popup save attempt. */
   setShotTimelineTraceId?(traceId: string | null): void;

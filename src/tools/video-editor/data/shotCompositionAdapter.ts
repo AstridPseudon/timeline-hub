@@ -94,6 +94,7 @@ export interface ShotCompositionPort {
     options?: MediaImportOptions,
   ): Promise<PreparedMediaImport>;
   getProjectMediaSelection?: DataProvider['getProjectMediaSelection'];
+  getProjectMediaSelectionForOutput?: DataProvider['getProjectMediaSelectionForOutput'];
   saveTimelineAtHead?: DataProvider['saveTimelineAtHead'];
   getTimelineDraftRecoveryMetadata?(request: ShotCompositionReadRequest): TimelineDraftRecoveryMetadata;
   load(request: ShotCompositionReadRequest): Promise<unknown>;
@@ -312,6 +313,7 @@ export function createShotCompositionAdapter(port: ShotCompositionPort) {
         }
       : undefined,
     getProjectMediaSelection: port.getProjectMediaSelection?.bind(port),
+    getProjectMediaSelectionForOutput: port.getProjectMediaSelectionForOutput?.bind(port),
     saveTimelineAtHead: port.saveTimelineAtHead?.bind(port),
     getTimelineDraftRecoveryMetadata: port.getTimelineDraftRecoveryMetadata?.bind(port),
     getSourceFrameThumbnailUrl: port.getSourceFrameThumbnailUrl

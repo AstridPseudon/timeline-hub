@@ -1,8 +1,8 @@
 import { manualTextPatch, isManualTextClip } from '../commands/manualText.ts';
-import { readSelectedProjectMediaIdentity, selectedMediaRegistryExpectationPath, buildSelectedProjectMediaAddCommand } from '../commands/selectedProjectMedia.ts';
+import { readSelectedProjectMediaIdentity, selectedMediaRegistryExpectationPath, buildSelectedProjectMediaAddCommand, buildSelectedProjectMediaSwapCommand } from '../commands/selectedProjectMedia.ts';
 import { addTrackGestureCommands, authoredTracks } from '../commands/trackGestures.ts';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
-import { toolTrimGestureCommands, cloneStructuralSource, type CloneRelationChoice, structuralChildId, splitGestureCommands, duplicateGestureCommands, deleteGestureCommands, literalStructuralSource, moveGestureCommands, propertyGestureCommands, rightResizeGestureCommands, tiedEndResizeGesture } from '../commands/semanticGestures.ts';
+import { occurrenceIdentityFor, toolTrimGestureCommands, cloneStructuralSource, type CloneRelationChoice, structuralChildId, splitGestureCommands, duplicateGestureCommands, deleteGestureCommands, literalStructuralSource, moveGestureCommands, propertyGestureCommands, rightResizeGestureCommands, tiedEndResizeGesture } from '../commands/semanticGestures.ts';
 import { getAssetImmediateSource } from '../lib/asset-registry.ts';
 import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
 import { useMemo } from 'react';
@@ -511,6 +511,7 @@ export interface CreateTimelineCommandsOptions {
   /** Optional host-owned policy that can deny all timeline mutations. */
   timelineEditability?: TimelineEditability;
   semanticCommandSaving?: boolean;
+  getTimelineOccurrenceMediaContext?: import('../data/DataProvider.ts').DataProvider['getTimelineOccurrenceMediaContext'];
 }
 
 /**
@@ -627,6 +628,48 @@ export function createTimelineCommands(
       }
 
       if (input.preparedAsset) {
+        const occurrence = options?.getTimelineOccurrenceMediaContext?.();
+        if (occurrence) {
+          const asset = input.preparedAsset;
+          if (!asset.selectedMedia || asset.selectedMedia.asset !== asset.assetKey || asset.entry.media_id !== asset.selectedMedia.object_id
+            || asset.entry.generationId !== asset.selectedMedia.generation_id || asset.entry.variantId !== asset.selectedMedia.variant_id || input.afterClipId || input.removeClipId || input.removeClipIds?.length
+            || input.forceNewTrack || input.insertAtTop || input.pinnedShotGroupsOverride) return failure('invalid_argument', 'Occurrence media edits require one exact existing track and selection.');
+          const permission = options?.timelineEditability?.check({ clipId: input.replaceClipId, targetTrackId: input.trackId });
+          if (permission && !permission.allowed) return failure('timeline_read_only', 'Occurrence media target is read-only.');
+          if (input.replaceClipId) { const blocked = checkManagedClip(input.replaceClipId); if (blocked) return blocked; }
+          if (!input.replaceClipId && (typeof input.time !== 'number' || !Number.isFinite(input.time))) return failure('invalid_argument', 'Occurrence Add requires an explicit local time.');
+          let call: import('@/integrations/runtime/generated.ts').EditCommand | undefined;
+          let clipId: string;
+          let trackId: string;
+          if (input.replaceClipId) {
+            const identity = occurrenceIdentityFor(current, input.replaceClipId);
+            const source = current.config.clips.find(row => row.id === input.replaceClipId);
+            if (!identity || !source || identity.occurrenceId !== occurrence.context.occurrenceId
+              || identity.headRevisionId !== occurrence.context.headRevisionId || !identity.sourceClipId) return failure('invalid_argument', 'Replacement target changed occurrence or revision.');
+            call = buildSelectedProjectMediaSwapCommand({ selection: asset.selectedMedia, sourceClipId: identity.sourceClipId,
+              sourceClip: identity.sourceClip as Record<string, unknown>, existingRegistryEntry: occurrence.registry[asset.assetKey], occurrence });
+            clipId = source.id; trackId = source.track;
+          } else {
+            const duration = input.clipSpanSeconds ?? Math.min(occurrence.durationMs / 1000 - input.time!,
+              asset.mediaType === 'image' ? 5 : asset.durationSeconds ?? 5);
+            const preview = applyPreparedMediaCommand(current, { type: 'place-prepared-media', payload: { asset,
+              at: input.time!, clipSpanSeconds: duration, ...(input.trackId ? { trackId: input.trackId } : {}),
+              ...(input.clipId ? { clipId: input.clipId } : {}) } });
+            const detail = preview?.commandResult?.detail;
+            const inserted = preview?.nextData.config.clips.find(row => row.id === detail?.clipId);
+            const track = current.config.tracks?.find(row => row.id === detail?.trackId);
+            if (!inserted || !track || typeof detail?.clipId !== 'string' || typeof detail.trackId !== 'string') return failure('invalid_argument', 'Occurrence Add requires one existing film track.');
+            clipId = `${occurrence.context.occurrenceId}:${detail.clipId}`; trackId = detail.trackId;
+            call = buildSelectedProjectMediaAddCommand({ selection: asset.selectedMedia, assetKey: asset.assetKey, mediaType: asset.mediaType,
+              trackId, trackKind: track.kind, clipId: detail.clipId, at: inserted.at, durationSeconds: duration,
+              intrinsicDurationSeconds: asset.durationSeconds, existingTrackIds: current.config.tracks?.map(row => row.id) ?? [],
+              existingClipIds: occurrence.clipIds, existingRegistryEntry: occurrence.registry[asset.assetKey], occurrence });
+          }
+          if (!call) return failure('invalid_argument', 'Occurrence media identity or reservation is invalid.');
+          state.ops.applyEdit({ type: 'commands' }, { semantic: true, editCommands: [call], occurrenceContext: occurrence.context,
+            selectedClipId: clipId, selectedTrackId: trackId });
+          return success({ clipId, trackId });
+        }
         if (input.afterClipId) {
           const source = current.config.clips.find(clip => clip.id === input.afterClipId);
           if (source) {
@@ -1365,7 +1408,7 @@ export function useTimelineCommandsService(): TimelineCommands {
   const runtime = useOptionalVideoEditorRuntime();
   const editability = runtime?.timelineEditability;
   const semanticCommandSaving = runtime?.provider?.semanticCommandSaving;
-  return useMemo(() => createTimelineCommands(store, {timelineEditability: editability, semanticCommandSaving}), [store, editability, semanticCommandSaving]);
+  return useMemo(() => createTimelineCommands(store, {timelineEditability: editability, semanticCommandSaving, getTimelineOccurrenceMediaContext: runtime?.provider?.getTimelineOccurrenceMediaContext}), [store, editability, semanticCommandSaving, runtime?.provider]);
 }
 
 /**
@@ -1385,6 +1428,6 @@ export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
     if (!store || !hasMountedTimelineAvailability(availability)) {
       return null;
     }
-    return createTimelineCommands(store, {timelineEditability: editability, semanticCommandSaving});
-  }, [availability.hasProvider, availability.mounted, store, editability, semanticCommandSaving]);
+    return createTimelineCommands(store, {timelineEditability: editability, semanticCommandSaving, getTimelineOccurrenceMediaContext: runtime?.provider?.getTimelineOccurrenceMediaContext});
+  }, [availability.hasProvider, availability.mounted, store, editability, semanticCommandSaving, runtime?.provider]);
 }

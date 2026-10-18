@@ -1,4 +1,4 @@
-import type { DataProvider } from '../data/DataProvider.ts';
+import type { TimelineOccurrenceContext, TimelineOccurrenceMediaContext, DataProvider } from '../data/DataProvider.ts';
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
 import type { SelectedProjectMediaIdentity } from '@/shared/contracts/selectedProjectMedia.ts';
 
@@ -27,8 +27,10 @@ export function readSelectedProjectMediaIdentity(value: unknown): SelectedProjec
 }
 
 /** Match the admitted SDK property-path grammar without splitting asset keys. */
-export const selectedMediaRegistryExpectationPath = (asset: string): string =>
-  /^[A-Za-z_][\w-]*$/.test(asset) ? `parent::registry.assets.${asset}` : `parent::registry.assets[${JSON.stringify(asset)}]`;
+export const selectedMediaRegistryExpectationPath = (asset: string, occurrenceId?: string): string => {
+  const owner = occurrenceId ? `occurrence:${occurrenceId}/shot::internal_timeline.registry.assets` : 'parent::registry.assets';
+  return /^[A-Za-z_][\w-]*$/.test(asset) ? `${owner}.${asset}` : `${owner}[${JSON.stringify(asset)}]`;
+};
 
 export function buildSelectedProjectMediaAddCommand({
   selection: selectionValue,
@@ -43,6 +45,7 @@ export function buildSelectedProjectMediaAddCommand({
   existingTrackIds,
   existingClipIds,
   existingRegistryEntry,
+  occurrence,
 }: {
   selection: unknown;
   assetKey: string;
@@ -56,6 +59,7 @@ export function buildSelectedProjectMediaAddCommand({
   existingTrackIds: readonly string[];
   existingClipIds: readonly string[];
   existingRegistryEntry?: unknown;
+  occurrence?: TimelineOccurrenceMediaContext;
 }): EditCommand | undefined {
   const selection = readSelectedProjectMediaIdentity(selectionValue);
   if (!selection || selection.asset !== assetKey || !assetKey
@@ -72,23 +76,71 @@ export function buildSelectedProjectMediaAddCommand({
     return undefined;
   }
 
-  const scopedClipId = `parent/clip:${clipId}`;
+  const prefix = occurrence ? `occurrence:${occurrence.context.occurrenceId}` : 'parent';
+  if (occurrence && (!validOccurrenceMediaContext(occurrence.context) || !Number.isSafeInteger(occurrence.atMs) || occurrence.atMs < 0)) return undefined;
+  const scopedClipId = `${prefix}/clip:${clipId}`;
   return {
     op: 'timeline.add',
-    select: `parent/track:${trackId}`,
+    select: `${prefix}/track:${trackId}`,
+    ...(occurrence ? { resolved: [`${prefix}/track:${trackId}`] } : {}),
     args: {
       media: selection,
       clip_id: clipId,
-      at,
+      at: occurrence ? (Math.round(at * 1000) + occurrence.atMs) / 1000 : at,
       duration: durationSeconds,
     },
     created: [scopedClipId],
     expect: {
       [`${scopedClipId}::`]: { state: 'absent' },
-      [selectedMediaRegistryExpectationPath(selection.asset)]: existingRegistryEntry === undefined
+      [selectedMediaRegistryExpectationPath(selection.asset, occurrence?.context.occurrenceId)]: existingRegistryEntry === undefined
         ? { state: 'absent' } : { state: 'present', value: structuredClone(existingRegistryEntry) },
     },
   };
+}
+
+export function validOccurrenceMediaContext(context: TimelineOccurrenceContext): boolean {
+  return ['projectId', 'parentDocumentId', 'headRevisionId', 'occurrenceId', 'shotId', 'shotRevisionId', 'internalRevisionId'].every(key => typeof context[key as keyof TimelineOccurrenceContext] === 'string' && context[key as keyof TimelineOccurrenceContext].length > 0)
+    && !context.occurrenceId.includes('/');
+}
+
+/** Exact selected-media forms admitted by the occurrence import/placement path. */
+export function isOccurrenceMediaCommand(command: EditCommand, context: TimelineOccurrenceContext): boolean {
+  const media = readSelectedProjectMediaIdentity(command.args.media);
+  const prefix = `occurrence:${context.occurrenceId}`;
+  if (!validOccurrenceMediaContext(context) || !media || command.resolved?.length !== 1
+    || command.resolved[0] !== command.select) return false;
+  const registry = command.expect?.[selectedMediaRegistryExpectationPath(media.asset, context.occurrenceId)];
+  if (!registry || !['absent', 'present'].includes(registry.state)) return false;
+  if (command.op === 'timeline.add') {
+    const child = `${prefix}/clip:${command.args.clip_id}`;
+    return typeof command.select === 'string' && command.select.startsWith(`${prefix}/track:`)
+      && command.select.slice(`${prefix}/track:`.length).length > 0
+      && !command.select.slice(`${prefix}/track:`.length).includes('/')
+      && Object.keys(command.args).length === 4 && typeof command.args.clip_id === 'string'
+      && command.args.clip_id.length > 0 && !command.args.clip_id.includes('/')
+      && command.created?.length === 1 && command.created[0] === child
+      && command.expect?.[`${child}::`]?.state === 'absent'
+      && typeof command.args.at === 'number' && Number.isFinite(command.args.at) && command.args.at >= 0
+      && typeof command.args.duration === 'number' && Number.isFinite(command.args.duration) && command.args.duration > 0;
+  }
+  return command.op === 'clip.swap-asset' && typeof command.select === 'string'
+    && command.select.startsWith(`${prefix}/clip:`) && !command.select.slice(`${prefix}/clip:`.length).includes('/')
+    && Object.keys(command.args).length === 1 && !command.created?.length
+    && command.expect?.[`${command.select}::`]?.state === 'present';
+}
+
+export function buildSelectedProjectMediaSwapCommand({ selection, sourceClipId, sourceClip, existingRegistryEntry, occurrence }: {
+  selection: unknown; sourceClipId: string; sourceClip: Record<string, unknown>; existingRegistryEntry?: unknown;
+  occurrence: TimelineOccurrenceMediaContext;
+}): EditCommand | undefined {
+  const media = readSelectedProjectMediaIdentity(selection);
+  if (!media || !validOccurrenceMediaContext(occurrence.context) || !sourceClipId || sourceClipId.includes('/') || sourceClip.id !== sourceClipId) return undefined;
+  const select = `occurrence:${occurrence.context.occurrenceId}/clip:${sourceClipId}`;
+  return { op: 'clip.swap-asset', select, resolved: [select], args: { media }, expect: {
+    [`${select}::`]: { state: 'present', value: structuredClone(sourceClip) },
+    [selectedMediaRegistryExpectationPath(media.asset, occurrence.context.occurrenceId)]: existingRegistryEntry === undefined
+      ? { state: 'absent' } : { state: 'present', value: structuredClone(existingRegistryEntry) },
+  } };
 }
 
 /**

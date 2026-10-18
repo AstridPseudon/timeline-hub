@@ -279,7 +279,9 @@ function tracksFor(
   // alongside the projected shot child lanes. The canonical graph owns shot
   // content, but it does not replace unrelated parent timeline content.
   const tracks = new Map<string, TrackDefinition>(
-    (baseConfig?.tracks ?? []).map((track) => [track.id, track]),
+    (baseConfig?.tracks?.length ? baseConfig.tracks
+      : (record(record(composition.contract.parent_composition)?.config)?.tracks as TrackDefinition[] | undefined) ?? [])
+      .filter(track => trackRole(track) !== 'source').map((track) => [track.id, track]),
   );
   for (const occurrence of occurrences) {
     const timeline = outputTimeline(childTimeline(occurrence));

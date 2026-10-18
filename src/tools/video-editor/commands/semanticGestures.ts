@@ -1,3 +1,4 @@
+import { isOccurrenceMediaCommand } from './selectedProjectMedia.ts';
 import { isElementReferenceBatch, isElementReferenceInverse } from './elementReferenceHistory.ts';
 import { isManualTextCreation, isManualTextInverse } from './manualTextHistory.ts';
 import { setManualTextCommand } from './manualText.ts';
@@ -109,9 +110,19 @@ function contextFor(identity: CanonicalClipIdentity): TimelineOccurrenceContext 
     shotId: identity.shotId, shotRevisionId: identity.revisionId,
     internalRevisionId: identity.internalTimelineRevisionId };
 }
-export function attachGestureCommands(data: TimelineData, commands: readonly EditCommand[], source: TimelineData = data): void {
+export function attachGestureCommands(data: TimelineData, commands: readonly EditCommand[], source: TimelineData = data, mediaContext?: TimelineOccurrenceContext): void {
   authoredCommands.delete(data);
   authoredOccurrences.delete(data);
+  if (mediaContext) {
+    const marker = source.config.app?.canonicalComposition as Record<string, unknown> | undefined;
+    if (mediaContext.projectId !== source.head?.projectId || mediaContext.parentDocumentId !== source.head?.timelineId
+      || mediaContext.headRevisionId !== source.head?.headRevisionId || marker?.headRevisionId !== mediaContext.headRevisionId
+      || !Array.isArray(marker.occurrenceIds) || marker.occurrenceIds.length !== 1 || marker.occurrenceIds[0] !== mediaContext.occurrenceId
+      || !commands.length || !commands.every(command => isOccurrenceMediaCommand(command, mediaContext))) return;
+    authoredOccurrences.set(data, structuredClone(mediaContext));
+    authoredCommands.set(data, structuredClone(commands));
+    return;
+  }
   let context: TimelineOccurrenceContext | undefined;
   let parent = false;
   const transferBatch = isShotGroupTransferBatch(commands);

@@ -187,8 +187,9 @@ export function createGalleryTimelineCommands(
   store: Parameters<typeof createTimelineCommands>[0],
   timelineEditability?: TimelineEditability,
   semanticCommandSaving = false,
+  getTimelineOccurrenceMediaContext?: DataProvider['getTimelineOccurrenceMediaContext'],
 ) {
-  return createTimelineCommands(store, { timelineEditability, semanticCommandSaving });
+  return createTimelineCommands(store, { timelineEditability, semanticCommandSaving, getTimelineOccurrenceMediaContext });
 }
 
 function isVideoEditorMediaLightboxProps(
@@ -454,8 +455,8 @@ export function VideoEditorRuntimeContent({
   const runtime = useVideoEditorRuntime();
   const { store, editor, chrome } = sync;
   const galleryCommands = useMemo(
-    () => createGalleryTimelineCommands(store, runtime.timelineEditability, runtime.provider.semanticCommandSaving),
-    [runtime.timelineEditability, runtime.provider.semanticCommandSaving, store],
+    () => createGalleryTimelineCommands(store, runtime.timelineEditability, runtime.provider.semanticCommandSaving, runtime.provider.getTimelineOccurrenceMediaContext),
+    [runtime.timelineEditability, runtime.provider, store],
   );
 
   useEffect(() => {

@@ -311,6 +311,7 @@ export function buildPlacePreparedMediaCommand({
   insertAtTop,
   removeClipId,
   clipId,
+  clipSpanSeconds,
   pinnedShotGroupsOverride,
 }: {
   prepared: TimelineProvisionedAsset;
@@ -321,6 +322,7 @@ export function buildPlacePreparedMediaCommand({
   insertAtTop: boolean;
   removeClipId?: string;
   clipId?: string;
+  clipSpanSeconds?: number;
   pinnedShotGroupsOverride?: NonNullable<TimelineData['config']['pinnedShotGroups']>;
 }): PlacePreparedMediaCommand {
   return {
@@ -330,6 +332,7 @@ export function buildPlacePreparedMediaCommand({
       ...(trackId !== undefined ? { trackId } : {}),
       ...(selectedTrackId !== undefined ? { selectedTrackId } : {}),
       at: time,
+      ...(clipSpanSeconds !== undefined ? { clipSpanSeconds } : {}),
       forceNewTrack,
       insertAtTop,
       ...(removeClipId !== undefined ? { removeClipId } : {}),
@@ -484,7 +487,7 @@ export function useAssetManagement({
   }, [selectedProjectId]);
 
   const registerGenerationAsset = useCallback((generationData: UploadedGenerationData | null) => {
-    if (runtime.provider.preparedMediaPlacementEnabled === false) return null;
+    if (runtime.provider.preparedMediaPlacementEnabled === false || runtime.provider.getTimelineOccurrenceMediaContext) return null;
     const prepared = prepareGenerationAsset(generationData);
     if (!prepared) {
       return null;
@@ -515,8 +518,20 @@ export function useAssetManagement({
       return false;
     }
 
+    const occurrence = runtime.provider.getTimelineOccurrenceMediaContext?.();
+    if (occurrence && (!prepared.selectedMedia || prepared.selectedMedia.asset !== prepared.assetKey
+      || prepared.entry.media_id !== prepared.selectedMedia.object_id
+      || prepared.entry.generationId !== prepared.selectedMedia.generation_id
+      || prepared.entry.variantId !== prepared.selectedMedia.variant_id || options?.pinnedShotGroup || forceNewTrack || insertAtTop
+      || removeClipId && !removeClipId.startsWith('uploading-'))) return false;
+
+    const remaining = occurrence ? occurrence.durationMs / 1000 - time : undefined;
+    if (remaining !== undefined && (!Number.isFinite(remaining) || remaining <= 0)) return false;
+    const clipSpanSeconds = remaining === undefined ? undefined : Math.min(remaining,
+      prepared.mediaType === 'image' ? 5 : prepared.durationSeconds ?? 5);
     const command = buildPlacePreparedMediaCommand({
       prepared,
+      ...(clipSpanSeconds !== undefined ? { clipSpanSeconds } : {}),
       trackId,
       selectedTrackId: getSelectedTrackId(),
       time,
@@ -586,16 +601,28 @@ export function useAssetManagement({
           trackKind: track.kind,
           clipId,
           at: insertedClip.at,
-          durationSeconds: insertedDuration,
+          durationSeconds: occurrence ? clipSpanSeconds! : insertedDuration,
           intrinsicDurationSeconds: prepared.durationSeconds,
           existingTrackIds: current.config.tracks?.map((candidate) => candidate.id) ?? [],
-          existingClipIds: current.config.clips.map((clip) => clip.id),
-          existingRegistryEntry: current.registry.assets[prepared.assetKey],
+          existingClipIds: occurrence?.clipIds ?? current.config.clips.map((clip) => clip.id),
+          existingRegistryEntry: occurrence ? occurrence.registry[prepared.assetKey] : current.registry.assets[prepared.assetKey],
+          ...(occurrence ? { occurrence } : {}),
         })
       : undefined;
 
     if (prepared.selectedMedia && !editCommand) {
       return false;
+    }
+
+    if (occurrence) {
+      if (!editCommand) return false;
+      if (removeClipId) {
+        getApplyEdit()({ type: 'rows', rows: current.rows.map(row => ({ ...row, actions: row.actions.filter(action => action.id !== removeClipId) })),
+          metaDeletes: [removeClipId] }, { save: false });
+      }
+      getApplyEdit()({ type: 'commands' }, { semantic: true, editCommands: [editCommand], occurrenceContext: occurrence.context,
+        selectedClipId: `${occurrence.context.occurrenceId}:${clipId}`, selectedTrackId: resolvedTrackId });
+      return true;
     }
 
     getApplyEdit()({ type: 'prepared-media', command: preparedMediaCommand }, {
@@ -613,6 +640,7 @@ export function useAssetManagement({
       return placePreparedAsset(preparedAsset, trackId, time, forceNewTrack, insertAtTop, removeClipId, options);
     }
 
+    if (runtime.provider.getTimelineOccurrenceMediaContext) return false;
     const latestDataRef = getDataRef();
     const current = latestDataRef.current;
     const assetEntry = current?.registry.assets[assetKey];

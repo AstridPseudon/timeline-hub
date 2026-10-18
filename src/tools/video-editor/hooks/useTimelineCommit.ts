@@ -78,6 +78,7 @@ export type CommitHistoryOptions = {
 };
 
 export type CommitDataOptions = {
+  occurrenceContext?: import('../data/DataProvider.ts').TimelineOccurrenceContext;
   proposalBase?: import('../data/DataProvider.ts').TimelineHeadRevision;
   editCommands?: readonly EditCommand[];
   save?: boolean;
@@ -159,6 +160,7 @@ export type TimelineEditMutation =
     };
 
 export type ApplyEditOptions = {
+  occurrenceContext?: import('../data/DataProvider.ts').TimelineOccurrenceContext;
   /** Explicit handler intent, captured before local materialization. */
   editCommands?: readonly EditCommand[];
   /**
@@ -395,7 +397,7 @@ export function useTimelineCommit({
     }
     if (shouldSave && options?.editCommands) {
       if (currentData && (isManualTextBatch(options.editCommands) || isManualTextCreation(options.editCommands) || options.editCommands.length === 1 && isManualTextInverse(options.editCommands[0]))) captureManualTextBefore(nextData, { data: currentData, selectedClipId: selectedClipIdRef.current, selectedTrackId: selectedTrackIdRef.current });
-      attachGestureCommands(nextData, options.editCommands, currentData ?? nextData);
+      attachGestureCommands(nextData, options.editCommands, currentData ?? nextData, options.occurrenceContext);
       // Explicit command batches with invalid/mixed occurrence custody must not
       // become local history or silently drop into the compatibility writer.
       if (!gestureCommandsFor(nextData)) return;
@@ -538,8 +540,8 @@ export function useTimelineCommit({
 
     if (mutation.type === 'commands') {
       if (!options?.editCommands?.length) return;
-      const nextData = { ...current };
-      attachGestureCommands(nextData, options.editCommands, current);
+      const nextData = { ...current, config: structuredClone(current.config) };
+      attachGestureCommands(nextData, options.editCommands, current, options.occurrenceContext);
       // Never turn a rejected semantic attachment into a compatibility save.
       if (!gestureCommandsFor(nextData)) return;
       commitData(nextData, options);

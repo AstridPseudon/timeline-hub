@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-// Catalog import/selection forwarding only. The sealed 223 shared-owner probe
-// remains diagnostic evidence; these tests do not claim placement or acceptance.
+// Import/selection forwarding and refusal guards. The sealed 223 probe remains
+// diagnostic evidence; the coupled 226 selector owns prepared SDK acceptance.
 import React, { useEffect } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -96,7 +96,7 @@ beforeEach(() => { vi.stubGlobal('indexedDB', createFakeIndexedDB()); });
 afterEach(() => { resetFakeIndexedDB(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('popup media-import forwarding 224 (catalog only)', () => {
-  it('forwards the actual popup import and selector once without enabling parent placement', async () => {
+  it('forwards import and selection once and stages only a guarded occurrence command', async () => {
     const h = setup();
     const hook = assets(h);
     const original = structuredClone(h.initial);
@@ -107,12 +107,13 @@ describe('popup media-import forwarding 224 (catalog only)', () => {
     expect(prepared.selectedMedia).toBe(uploaded.mediaImport!.selectedMedia);
     expect(prepared.entry.media_id).toBe(selection.object_id);
     expect(prepared.entry.content_sha256).toBe(selection.object_id);
-    expect(hook.result.current.handleAssetDrop(prepared.assetKey, 'video', 0, false, false, prepared)).toBe(false);
+    expect(hook.result.current.handleAssetDrop(prepared.assetKey, 'video', 0, false, false, prepared)).toBe(true);
     expect(hook.result.current.handleAssetDrop(prepared.assetKey, 'video', 0)).toBe(false);
     expect(hook.result.current.registerGenerationAsset(uploaded)).toBeNull();
-    expect(hook.applyEdit).not.toHaveBeenCalled();
+    expect(hook.applyEdit).toHaveBeenCalledTimes(1);
+    expect(hook.applyEdit.mock.calls[0]).toMatchObject([{ type: 'commands' }, { occurrenceContext: { occurrenceId: 'occ-1' }, editCommands: [{ op: 'timeline.add', select: 'occurrence:occ-1/track:video', args: { media: selection } }] }]);
     expect(hook.patchRegistry).not.toHaveBeenCalled();
-    expect(hook.dataRef.current).toEqual(original);
+    expect(hook.dataRef.current?.config.clips).toEqual(original.config.clips);
     expect(h.calls.filter(row => row.path.endsWith('/media-imports'))).toHaveLength(1);
     expect(h.calls.filter(row => row.path.includes('/media-selection?'))).toHaveLength(1);
     expect(h.calls.some(row => row.path.endsWith('/commit') || row.path.endsWith('/composition-revisions'))).toBe(false);

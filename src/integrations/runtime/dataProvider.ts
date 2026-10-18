@@ -1,3 +1,4 @@
+import { isOccurrenceMediaCommand } from '@/tools/video-editor/commands/selectedProjectMedia.ts';
 import { elementReferenceInverse, isElementReferenceBatch, isElementReferenceInverse } from '@/tools/video-editor/commands/elementReferenceHistory.ts';
 import { manualTextInverse } from '@/tools/video-editor/commands/manualTextHistory.ts';
 import { appKeyframeHistoryInverse, isAppKeyframeHistoryBatch, isAppKeyframeHistoryInverse } from '@/tools/video-editor/commands/appKeyframeHistory.ts';
@@ -217,6 +218,7 @@ export class RuntimeDataProvider implements DataProvider {
       return this.prepareMediaImport(file, options);
     },
     getProjectMediaSelection: (request) => this.getProjectMediaSelection(request),
+    getProjectMediaSelectionForOutput: (request) => this.getProjectMediaSelectionForOutput(request),
     // Use this provider's existing client, serializer and retry reservation.
     saveTimelineAtHead: (...args) => this.saveTimelineAtHead(...args),
     getTimelineDraftRecoveryMetadata: (request) => request.projectId === this.projectId
@@ -880,7 +882,7 @@ export class RuntimeDataProvider implements DataProvider {
           ? save.editCommands?.length === 1 && isCapturedShotMetadataCommand(command as EditCommand, occurrence)
           : isTranscriptCaptionBatch(save.editCommands as readonly EditCommand[])
             ? transcriptBindTarget(save.editCommands?.[0] as EditCommand | undefined)?.occurrence_id === occurrence.occurrenceId
-            : command.select?.startsWith(`occurrence:${occurrence.occurrenceId}/clip:`)
+            : isOccurrenceMediaCommand(command, occurrence) || command.select?.startsWith(`occurrence:${occurrence.occurrenceId}/clip:`)
             && command.resolved?.length === 1 && command.resolved[0] === command.select)))) {
       throw new TimelineSchemaIncompatibleError('Semantic occurrence gestures require one captured owner and exact pins.');
     }
@@ -1847,6 +1849,7 @@ function toPreparedMediaImport(
     || typeof imported.generation_id !== 'string'
     || typeof imported.variant_id !== 'string'
     || typeof imported.asset_id !== 'string'
+    || !/^sha256:[0-9a-f]{64}$/.test(imported.entry?.object_id ?? '')
   ) {
     throw new Error('Workspace Runtime returned an incomplete media import descriptor');
   }
@@ -1855,9 +1858,9 @@ function toPreparedMediaImport(
   const filename = imported.entry.filename || fallbackFilename;
   const duration = imported.duration_seconds ?? fallbackDuration;
   const entry: AssetRegistryEntry = {
-    file: client.objectContentUrl(imported.asset_id),
-    media_id: imported.asset_id,
-    content_sha256: imported.asset_id,
+    file: client.objectContentUrl(imported.entry.object_id),
+    media_id: imported.entry.object_id,
+    content_sha256: imported.entry.object_id,
     type: mediaType,
     ...(typeof duration === 'number' && duration > 0 ? { duration } : {}),
     generationId: imported.generation_id,

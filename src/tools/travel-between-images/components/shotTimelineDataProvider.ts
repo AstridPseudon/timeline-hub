@@ -1,4 +1,5 @@
-import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
+import { isOccurrenceMediaCommand, readSelectedProjectMediaIdentity, selectedMediaRegistryExpectationPath } from '@/tools/video-editor/commands/selectedProjectMedia.ts';
+import { TimelineSchemaIncompatibleError, type DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { LoadedTimeline, TimelineOccurrenceContext, TimelineSaveReceipt } from '@/tools/video-editor/data/DataProvider.ts';
 import { occurrenceIdentityFor } from '@/tools/video-editor/commands/semanticGestures.ts';
 import {
@@ -384,10 +385,26 @@ export function createShotTimelineDataProvider(
     },
     persistenceEnabled: Boolean(shotCompositionAdapter?.publish),
     supportsEditorSync: false,
-    // Catalog import is independent of the pending occurrence-local placement
-    // contract. Never fall back to a Cloud upload or parent placement here.
+    // Catalog acquisition uses the existing Runtime client. Occurrence media
+    // edits require the exact pinned semantic route below.
     supportsDirectAssetUpload: true,
-    preparedMediaPlacementEnabled: false,
+    preparedMediaPlacementEnabled: shotCompositionAdapter?.semanticCommandSaving === true && Boolean(shotCompositionAdapter.saveTimelineAtHead),
+    getTimelineOccurrenceMediaContext: () => {
+      assertEditorHeadIsCurrent();
+      const matches = canonicalBase.occurrences.filter(row => row.occurrenceId === occurrenceId);
+      const occurrence = matches.length === 1 ? matches[0] : undefined;
+      const internal = occurrence?.revision.internal_timeline_revision as JsonObject | undefined;
+      const timeline = internal?.timeline as JsonObject | undefined;
+      if (!provider.semanticCommandSaving || !occurrence || typeof internal?.revision_id !== 'string' || !Array.isArray(timeline?.clips)) {
+        throw new Error('The popup requires one exact occurrence media-edit context');
+      }
+      const rawRegistry = timeline.registry as { assets?: Record<string, unknown> } | undefined;
+      return { context: { projectId: composition.projectId, parentDocumentId: composition.parentDocumentId,
+        headRevisionId: canonicalBase.headRevisionId, occurrenceId, shotId: occurrence.shotId,
+        shotRevisionId: occurrence.revisionId, internalRevisionId: internal.revision_id },
+        atMs: occurrence.atMs, durationMs: occurrence.durationMs, registry: structuredClone(rawRegistry?.assets ?? {}),
+        clipIds: timeline.clips.map(clip => String((clip as JsonObject).id)) };
+    },
     prepareMediaImport: shotCompositionAdapter?.prepareMediaImport
       ? async (file, options) => {
           assertEditorHeadIsCurrent();
@@ -411,6 +428,15 @@ export function createShotTimelineDataProvider(
             throw new Error('Runtime media selection belongs to a different project');
           }
           const selected = await shotCompositionAdapter.getProjectMediaSelection!(request);
+          assertEditorHeadIsCurrent();
+          return selected;
+        }
+      : undefined,
+    getProjectMediaSelectionForOutput: shotCompositionAdapter?.getProjectMediaSelectionForOutput
+      ? async (request) => {
+          assertEditorHeadIsCurrent();
+          if (request.projectId !== composition.projectId) throw new Error('Runtime media selection belongs to a different project');
+          const selected = await shotCompositionAdapter.getProjectMediaSelectionForOutput!(request);
           assertEditorHeadIsCurrent();
           return selected;
         }
@@ -443,7 +469,29 @@ export function createShotTimelineDataProvider(
           && context.shotId === prepared?.shotId && context.shotRevisionId === prepared?.revisionId
           && context.internalRevisionId === internal?.revision_id
           && stableStringify(nextConfig.app) === stableStringify(canonicalTimelineConfig.app)
-          && selected.every((clips, index) => {
+          && (commands.length === 1 && isOccurrenceMediaCommand(commands[0], context)
+            ? (() => {
+                const command = commands[0];
+                const media = readSelectedProjectMediaIdentity(command.args.media)!;
+                const owned = provider.getTimelineOccurrenceMediaContext!();
+                const expectedRegistry = command.expect?.[selectedMediaRegistryExpectationPath(media.asset, occurrenceId)];
+                const entry = owned.registry[media.asset];
+                if (stableStringify(expectedRegistry) !== stableStringify(entry === undefined ? { state: 'absent' } : { state: 'present', value: entry })) return false;
+                if (command.op === 'timeline.add') {
+                  const track = command.select!.slice(`occurrence:${occurrenceId}/track:`.length);
+                  const at = Number(command.args.at) - owned.atMs / 1000;
+                  const limit = hardDurationMs(canonicalBase.contract, occurrenceId);
+                  if (limit !== undefined && Math.round((at + Number(command.args.duration)) * 1000) > limit) {
+                    throw new TimelineSchemaIncompatibleError(`Shot content would cross the next shot at ${limit / 1000}s`);
+                  }
+                  return at >= 0 && !owned.clipIds.includes(String(command.args.clip_id))
+                    && canonicalTimelineConfig.tracks?.filter(row => row.id === track).length === 1;
+                }
+                const sourceId = command.select!.slice(`occurrence:${occurrenceId}/clip:`.length);
+                const source = rawClips?.filter(clip => clip.id === sourceId);
+                return source?.length === 1 && stableStringify(command.expect?.[`${command.select}::`]) === stableStringify({ state: 'present', value: source[0] });
+              })()
+            : selected.every((clips, index) => {
             if (clips.length !== 1) return false;
             const identity = occurrenceIdentityFor({ config: nextConfig }, clips[0].id)!;
             const source = rawClips?.filter((clip) => clip.id === identity.sourceClipId);
@@ -455,7 +503,7 @@ export function createShotTimelineDataProvider(
               && source?.length === 1 && stableStringify(source[0]) === stableStringify(identity.sourceClip)
               && ['clip.nudge', 'clip.set-track', 'clip.set-look', 'clip.set-param', 'clip.clear'].includes(commands[index].op)
               && commands[index].resolved?.length === 1 && commands[index].resolved?.[0] === commands[index].select;
-          });
+          }));
         if (valid) {
           const capturedContext = structuredClone(context);
           const capturedHead = structuredClone(expectedHead);
@@ -464,6 +512,9 @@ export function createShotTimelineDataProvider(
             composition.parentDocumentId, nextConfig, capturedHead, nextRegistry, bundle, capturedCommands, capturedContext) };
           semanticAttempts.set(nextConfig, attempt);
         }
+      }
+      if (!attempt && provider.semanticCommandSaving && commands?.length) {
+        throw new TimelineSchemaIncompatibleError('The popup semantic command has inconsistent occurrence ownership, pins or guards');
       }
       if (!attempt) {
         if (expectedHead.headRevisionId !== canonicalBase.headRevisionId) {
