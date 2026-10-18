@@ -529,7 +529,9 @@ def test_timing_cannot_overwrite_an_explicit_param(draft, monkeypatch):
 
 
 def test_future_version_refuses_before_mutation(draft):
-    draft.bundle["parent"]["config"].setdefault("app", {}).setdefault("astrid", {})["v"] = 99
+    bundle = draft.document()
+    bundle["parent"]["config"].setdefault("app", {}).setdefault("astrid", {})["v"] = 99
+    draft = Checkout(bundle)
     before = draft.document()
     with pytest.raises(TimelineEditError, match="unknown Astrid feature version"):
         commands.run(draft, command(x=120))

@@ -280,6 +280,7 @@ def _adapter(entry):
         choices = kwargs.pop("relation_choices", None)
         bound = _signature(entry.handler).bind(owner, *args, **kwargs)
         arguments = {key: (copy.deepcopy(value) if entry.op == "clip.set-continuous"
+                           or (entry.op == "clip.set-beats" and key == "source" and isinstance(value, Mapping))
                            or (entry.op in {"clip.set-shader", "timeline.set-shader-postprocess"} and key == "shader")
                            else _plain(value))
                      for key, value in bound.arguments.items() if key not in {"self", "client"}}
@@ -581,9 +582,11 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             continue
         if (layer_copy or (entry.op == "clip.set-element" or entry.op == "timeline.add" and command.args.get("intent") == "overlay")
                 or (entry.op == "timeline.inverse" and key == "writes")
+                or (entry.op == "clip.set-beats" and key == "source" and isinstance(value, Mapping))
                 or (entry.op in {"clip.set-shader", "timeline.set-shader-postprocess"} and key == "shader")
                 or entry.op == "clip.set-text" or (entry.op == "timeline.add" and "text" in command.args)):
-            # Inverse receipts and App shader/text payloads are literal authored JSON.
+            # These authored JSON payloads, including beats source mappings,
+            # must reproduce the exact saved bundle on detached replay.
             # Preserve opaque values and numeric identity (6.0/6).
             # Keep _plain and the operation/request digest contracts unchanged.
             canonical[key] = copy.deepcopy(value)

@@ -218,6 +218,59 @@ def metadata():
     return [e for row in journal.read(journal.journal_path("p", "t")) for e in row.evidence if isinstance(e, dict)]
 
 
+@pytest.mark.parametrize("bpm", [132, 132.0, 132.5], ids=["integer", "integral-float", "fractional-float"])
+@pytest.mark.parametrize("surface", ["sdk", "command"])
+def test_saved_beats_mapping_retains_numeric_source_and_exact_detached_replay(setup, bpm, surface):
+    draft, runtime = setup
+    source = {"bpm": bpm, "beats": [0.0, 0.5, 1.0], "downbeats": [0.0],
+              "hits": [[1.0, "hit"]], "source": "retained synthetic beats"}
+    original_source = json.dumps(source, sort_keys=True)
+    if surface == "sdk":
+        draft.clip("a-music").set_beats(source)
+        draft.save(quiet=True)
+    else:
+        commands.run(draft, {"op": "clip.set-beats", "select": "a-music", "args": {"source": source}})
+
+    calls = read_saved_calls(Checkout.load(draft.path))
+    assert len(calls) == 1 and calls[0]["op"] == "clip.set-beats"
+    recorded_source = calls[0]["args"]["source"]
+    assert json.dumps(recorded_source, sort_keys=True) == original_source
+    assert type(recorded_source["bpm"]) is type(bpm)
+    assert json.dumps(source, sort_keys=True) == original_source
+    saved = Checkout.load(draft.path)
+    assert type(saved.clip("a-music").data["app"]["astrid"]["beats"]["bpm"]) is type(bpm)
+    assert journal.verify(journal.journal_path("p", "t")) == []
+    assert not runtime.calls  # saved-intent verification is entirely local
+
+
+def test_saved_beats_numeric_tamper_still_refuses_an_exact_digest_mismatch(setup):
+    draft, runtime = setup
+    draft.clip("a-music").set_beats({"bpm": 132.0, "beats": [0.0, 0.5, 1.0]})
+    draft.save(quiet=True)
+    read_saved_calls(Checkout.load(draft.path))
+    saved_bytes = Path(draft.path).read_bytes()
+    path = journal.journal_path("p", "t")
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    changed = 0
+    previous = None
+    for row in rows:
+        for call in row["calls"]:
+            if call["op"] == "clip.set-beats":
+                call["args"]["source"]["bpm"] = 132
+                changed += 1
+        row["prev"] = previous
+        body = {key: value for key, value in row.items() if key != "hash"}
+        row["hash"] = journal._hash(previous, body)
+        previous = row["hash"]
+    assert changed == 1
+    path.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    assert journal.verify(path) == []  # valid chain does not authorize different numeric JSON
+    with pytest.raises(SavedIntentError, match="do not reproduce the recorded save digest"):
+        read_saved_calls(Checkout.load(draft.path))
+    assert Path(draft.path).read_bytes() == saved_bytes
+    assert not runtime.calls
+
+
 def test_saved_two_operations_generated_route_and_exact_receipt_finalize(setup):
     draft, runtime = setup
     edit(draft, x=90)
