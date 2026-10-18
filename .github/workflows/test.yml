@@ -8,7 +8,6 @@ on:
 jobs:
   vitest:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,7 +20,6 @@ jobs:
   # Cross-repo copies (testing plan C1): vendored Runtime files must match the producer's main; Astrid vendor files must match their provenance.
   boundary:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4

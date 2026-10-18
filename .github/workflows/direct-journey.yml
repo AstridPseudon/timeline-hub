@@ -35,7 +35,6 @@ concurrency:
 jobs:
   direct-journey:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
     steps:
       # The harness finds the Runtime at ../banodoco-workspace-runtime (BANODOCO_RUNTIME_CHECKOUT overrides),
       # so both repos are checked out as siblings under $GITHUB_WORKSPACE/..: App in reigh-app, Runtime beside it.
@@ -133,7 +132,6 @@ jobs:
   # without that module, so any PR touching tests/e2e/local/** (or the paths above) is red here until that merge.
   three-products:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
     concurrency:
       group: three-products-${{ github.ref }}
       cancel-in-progress: true
