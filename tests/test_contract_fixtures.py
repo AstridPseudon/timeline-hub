@@ -10,7 +10,7 @@ FIXTURES = ROOT / "conformance" / "fixtures"
 
 
 def test_shared_fixtures_are_canonical_json_and_product_neutral() -> None:
-    forbidden = re.compile(r"astrid|astrid|thread|pack", re.I)
+    forbidden = re.compile(r"astrid|thread|pack", re.I)
     for path in sorted(FIXTURES.glob("*.json")):
         raw = path.read_bytes()
         value = json.loads(raw)

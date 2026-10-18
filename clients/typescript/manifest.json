@@ -3,7 +3,7 @@
     {
       "byte_length": 3342,
       "path": "contract-metadata.ts",
-      "sha256": "3c344a4f12e74a6b62b429d117ced5b99b7ae3caf8cd9b6d26479af9344b8015"
+      "sha256": "2108e1c6a27adb345410b7ebb0081a8cb4da2b4b49f6d136c566f20eb47ce048"
     },
     {
       "byte_length": 215,
@@ -48,12 +48,12 @@
     {
       "byte_length": 22071,
       "path": "generated.ts",
-      "sha256": "ce394fc4557f72aec79a04bcab3b60bd0a61f764651543cdc60e6f6f860e593a"
+      "sha256": "1ecdc20e5c6b8ae0a2c4137b81654df3ee92e5754e2d6729ad3295150f4d4c58"
     }
   ],
   "component_manifest_id": "GENERATOR-CONFORMANCE-ID",
-  "component_manifest_sha256": "43db3374e0235750a3d0dd6590926cccba73e6e67de317573f86fd812cbcf082",
-  "contract_sha256": "73cf9173d68e37f14e4c3d7919b4c44c1afc0b3e1a759f511ea1ec5a03277325",
+  "component_manifest_sha256": "46a1084915781086032f51971bf2f7d10ddbfd7fdda9f20ddf01e33e1cd4cc92",
+  "contract_sha256": "2794fe6a43e26876b7c8f374da94b5fde279762c107411fc4a13d8e0996a113c",
   "generator": "GENERATOR-TYPESCRIPT-CONFORMANCE",
   "operations": [
     "addShotItem",
@@ -194,7 +194,7 @@
     "updateTimeline"
   ],
   "protocol": "workspace.v1",
-  "schema_digest": "sha256:16bb1265d39d8bf82959c65ede08628e9c832832f21d785acaca64256aa3463e",
-  "schema_manifest_sha256": "ef9b12f20ddcb5a1b5315c4d1180aa702b8a196ab9ba044b89a4564ddfc13d50",
+  "schema_digest": "sha256:200c2553f54a7e41a6405518912dc6ee9577de25292afd46fc1fcccf68be0770",
+  "schema_manifest_sha256": "088c98862ddf2698240dae5e5ae53aa686b03d187521dd14084ff5870d147957",
   "schema_version": 1
 }
