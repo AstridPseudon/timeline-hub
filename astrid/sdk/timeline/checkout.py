@@ -618,3 +618,27 @@ _commands.register(Clip, "clip", ("set_text",))
 from astrid.sdk.timeline.element_reference import set_element as _set_element_reference
 # Command-only App projection, using the existing graph-command registry seam.
 _commands.REGISTRY["clip.set-element"] = _commands.Operation("clip.set-element", "clip", "set_element", _set_element_reference)
+
+# These CLI concepts have no one-to-one Checkout method. Their adapters stay
+# explicit and all frontends submit the same OpCall to the shared runner.
+for _entry in (
+    _commands.Operation(
+        op="look.opacity", kind="clip", method="set_look", handler=_commands._set_look_opacity,
+        inverse="working-copy-snapshot", canonical_name="look.opacity", aliases=("--opacity",),
+        canonical_flags=("--set look.opacity=VALUE",), sdk_method="commands.run",
+        sheet_token='edit {"op":"look.opacity","select":"CLIP","args":{"opacity":VALUE}}',
+    ),
+    _commands.Operation(
+        op="timeline.add-media", kind="timeline", method="add_media", handler=_commands._add_media,
+        inverse="working-copy-snapshot", canonical_name="timeline.add-media", canonical_flags=("--add-media",),
+        sdk_method="commands.run",
+        sheet_token='edit {"op":"timeline.add-media","select":null,"args":...}',
+    ),
+    _commands.Operation(
+        op="timeline.crossfade", kind="timeline", method="crossfade", handler=_commands._crossfade,
+        inverse="working-copy-snapshot", canonical_name="timeline.crossfade",
+        canonical_flags=("--crossfade", "--over"), sdk_method="commands.run",
+        sheet_token='edit {"op":"timeline.crossfade","select":null,"args":...}',
+    ),
+):
+    _commands.register_operation(_entry)

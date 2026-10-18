@@ -29,6 +29,14 @@ def test_layer_param_cut_word_time_and_asset(tl):
     assert asset.kind == "asset" and "used by c1.rocket" in describe_target(tl, asset)
 
 
+def test_show_edit_line_uses_canonical_spellings_from_the_registry(tl):
+    text = describe_target(tl, resolve(tl, "c1.rocket"))
+    assert "--clip c1.rocket --set KEY=VALUE" in text
+    assert "--on MOMENT" in text and "--until MOMENT" in text
+    opacity = describe_target(tl, resolve(tl, "c1.rocket.opacity"))
+    assert "--set look.opacity=VALUE" in opacity
+
+
 def test_scoped_word_forms_resolve_and_ambiguity_lists_them(tl):
     assert resolve(tl, '"back" in s3', prefer="time").word.segment == "s3"
     tl.voice("s1").clips[0].data["app"]["astrid"]["words"].append([1.95, 1.99, "back"])

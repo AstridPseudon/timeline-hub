@@ -504,7 +504,13 @@ def describe_target(tl: Any, target: Target, *, timeline: str = "TIMELINE", proj
         said = [w for w in tl.words() if w.start < clip.end and w.end > clip.start]
         if said:
             out.append(f'  while it is on: "{" ".join(w.text for w in said)}"')
-        out.append(f"next: timelines edit {where} --clip {clip.address} --set KEY=VALUE  ·  --on MOMENT  ·  --until MOMENT")
+        from astrid.sdk.timeline.commands import REGISTRY
+
+        clip_flag = REGISTRY["timeline.edit-flags"].canonical_flags[0]
+        set_flag = REGISTRY["clip.set"].canonical_flags[0].replace("path=value", "KEY=VALUE")
+        on_flag = REGISTRY["clip.on"].canonical_flags[0]
+        until_flag = REGISTRY["clip.until"].canonical_flags[0]
+        out.append(f"next: timelines edit {where} {clip_flag} {clip.address} {set_flag}  ·  {on_flag} MOMENT  ·  {until_flag} MOMENT")
     elif target.kind == "asset":
         entry = _registry_entry(tl, target.address) or {}
         res = str(entry.get("resolution") or "?").replace("x", "×")
@@ -537,8 +543,17 @@ def describe_target(tl: Any, target: Target, *, timeline: str = "TIMELINE", proj
             out.append(f"  schema   {_type_of(spec)}" + (f" — {spec.get('description')}" if spec.get("description") else ""))
         elif schema.get("properties"):
             out.append(f"  schema   not declared by {clip.element} (it takes: {', '.join(sorted(schema['properties']))})")
-        hint = f"--set {key}=VALUE" + (" (replaces the formula)  ·  --set '" + key + "=ƒ(MARK ±px)' (keeps it computed)" if expr else "")
-        out.append(f"next: timelines edit {where} --clip {clip.address} {hint}")
+        from astrid.sdk.timeline.commands import REGISTRY
+
+        declared = schema.get("properties") or {}
+        look_operation = f"look.{key}"
+        operation = look_operation if key not in declared and look_operation in REGISTRY else "clip.set"
+        canonical = REGISTRY[operation].canonical_flags[0]
+        hint = canonical if operation != "clip.set" else canonical.replace("path=value", f"{key}=VALUE")
+        if expr:
+            hint += " (replaces the formula)  ·  --set '" + key + "=ƒ(MARK ±px)' (keeps it computed)"
+        clip_flag = REGISTRY["timeline.edit-flags"].canonical_flags[0]
+        out.append(f"next: timelines edit {where} {clip_flag} {clip.address} {hint}")
     elif target.kind == "word":
         word = target.word
         try:

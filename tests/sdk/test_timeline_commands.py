@@ -64,6 +64,138 @@ def test_registry_covers_every_inventory_and_current_edit_flag():
             assert commands.EDIT_FLAG_OPERATIONS[action.dest] in commands.REGISTRY
 
 
+def test_registry_entries_declare_execution_and_adapter_metadata():
+    from astrid.sdk.timeline_checkout import Checkout as RegisteredCheckout  # noqa: F401
+
+    assert commands.REGISTRY["timeline.add-media"].canonical_flags == ("--add-media",)
+    assert commands.REGISTRY["timeline.crossfade"].canonical_flags == ("--crossfade", "--over")
+    for op, entry in commands.REGISTRY.items():
+        assert callable(entry.handler), op
+        assert entry.inverse, op
+        assert entry.canonical_name in commands.REGISTRY, op
+        assert isinstance(entry.aliases, tuple), op
+        assert entry.sdk_method and entry.sheet_token, op
+    assert "clip.hold-for" in commands.REGISTRY["clip.set-duration"].aliases
+    assert "--duration" in commands.REGISTRY["clip.set-duration"].aliases
+
+
+def test_alias_spelling_journals_as_the_canonical_operation(draft):
+    plan = commands.run(draft, command(op="clip.for", seconds=0.75))
+    assert plan.changed
+    record = journal.read(journal.journal_path("p", "t"))[-1]
+    assert record.calls[0]["op"] == "clip.set-duration"
+
+
+def test_edit_help_and_skill_reference_show_registry_canonical_spellings():
+    from astrid.sdk.timeline.commands import (
+        render_canonical_flag_reference,
+        render_cli_alias_reference,
+        replace_skill_reference,
+    )
+
+    parser = cli.build_parser(None)._subparsers._group_actions[0].choices["edit"]
+    help_text = parser._astrid_full_help()
+    assert "Canonical edit spellings (registry):" in help_text
+    assert " ".join(render_canonical_flag_reference().split()) in " ".join(help_text.split())
+    assert "--add-media" in help_text and "--crossfade" in help_text
+    assert "--duration" in render_cli_alias_reference() and "--duration" in help_text
+    assert "--opacity" in render_cli_alias_reference() and "look.opacity" in help_text
+    skill = Path("astrid/packs/timeline/docs/SKILL.md").read_text(encoding="utf-8")
+    assert replace_skill_reference(skill) == skill
+
+
+def test_edit_flag_adapter_rejects_missing_and_duplicate_mappings():
+    inventory = json.loads((Path(__file__).parents[1] / "parity/inventory.json").read_text())
+    assert commands.flag_inventory_table(inventory)
+    with pytest.raises(commands.CommandError, match="duplicate edit flag mapping: set_values"):
+        commands.build_edit_flag_operations((("clip.set", "set_values"), ("look.opacity", "set_values")))
+    broken = copy.deepcopy(inventory)
+    broken["commands"]["timelines.edit"]["flags"].append(
+        copy.deepcopy(broken["commands"]["timelines.edit"]["flags"][0]))
+    with pytest.raises(commands.CommandError, match="duplicate edit flag inventory destination"):
+        commands.flag_inventory_table(broken)
+
+
+def test_cli_sdk_and_sheet_adapters_journal_the_same_look_opacity(draft, monkeypatch, tmp_path):
+    from astrid.sdk.timeline_checkout import Checkout as RegisteredCheckout  # noqa: F401
+
+    def clone(suffix):
+        bundle = copy.deepcopy(draft.document())
+        bundle["project_id"] = f"p-{suffix}"
+        bundle["timeline_id"] = f"t-{suffix}"
+        timeline = Checkout(bundle, path=tmp_path / f"{suffix}.json")
+        timeline.save(quiet=True)
+        return timeline
+
+    cli_tl, opacity_tl, sdk_tl, sheet_tl = (clone(suffix) for suffix in ("cli", "opacity", "sdk", "sheet"))
+    from astrid.sdk.timeline_address import element_schema
+
+    rocket = cli_tl.clip("c1.rocket")
+    assert "opacity" not in (element_schema(rocket.element).get("properties") or {})
+
+    def cli_edit(timeline, *flags):
+        monkeypatch.setattr(cli, "_edit_checkout", lambda _parsed: timeline)
+        parsed = cli.build_parser(None).parse_args(["edit", "t", "--project", "P", *flags, "--no-sweep"])
+        assert parsed.handler(parsed) == 0
+
+    cli_edit(cli_tl, "--clip", "c1.rocket", "--set", "opacity=0.6")
+    cli_edit(opacity_tl, "--clip", "c1.rocket", "--opacity", "0.6")
+    sdk_tl.clip("c1.rocket").set(opacity=0.6)
+    apply_sheet(sheet_tl, 'edit {"op":"look.opacity","select":"a-rocket","args":{"opacity":0.6}}')
+    for timeline in (sdk_tl, sheet_tl):
+        timeline.save(quiet=True)
+
+    def latest_calls(timeline):
+        sidecar = Path(timeline.path).with_suffix(Path(timeline.path).suffix + ".journal.jsonl")
+        return journal.read(sidecar)[-1].calls
+
+    calls = latest_calls(cli_tl)
+    assert calls == latest_calls(opacity_tl) == latest_calls(sdk_tl) == latest_calls(sheet_tl)
+    assert calls[0]["op"] == "look.opacity"
+    assert calls[0]["args"] == {"opacity": 0.6}
+
+
+def test_cli_sdk_and_sheet_adapters_journal_the_same_add_media(monkeypatch, tmp_path):
+    from astrid.sdk.timeline_checkout import Checkout as RegisteredCheckout  # noqa: F401
+
+    def clone(suffix):
+        fixture = Path(__file__).parents[1] / "fixtures/timeline_editing/tiny.json"
+        bundle = json.loads(fixture.read_text(encoding="utf-8"))
+        bundle["shots"]["A"]["internal_timeline"]["registry"]["assets"]["Q"]["duration"] = 10.0
+        timeline = Checkout(bundle, path=tmp_path / f"{suffix}.json")
+        timeline.save(quiet=True)
+        return timeline
+
+    cli_tl, sdk_tl, sheet_tl = (clone(suffix) for suffix in ("cli-media", "sdk-media", "sheet-media"))
+    monkeypatch.setattr(cli, "_edit_checkout", lambda _parsed: cli_tl)
+    parsed = cli.build_parser(None).parse_args([
+        "edit", "t", "--project", "P", "--add-media", "Q", "--track", "music",
+        "--on", "1", "--for", "1", "--id", "added-bed", "--no-sweep",
+    ])
+    assert parsed.handler(parsed) == 0
+
+    add_media = {
+        "op": "timeline.add-media",
+        "select": None,
+        "args": {"asset": "Q", "track": "music", "at": 1.0, "for_seconds": 1.0, "clip_id": "added-bed"},
+    }
+    commands.run(sdk_tl, add_media)
+    apply_sheet(sheet_tl, 'edit {"op":"timeline.add-media","select":null,"args":'
+                '{"asset":"Q","track":"music","at":1.0,"for_seconds":1.0,"clip_id":"added-bed"}}')
+    sdk_tl.save(quiet=True)
+    sheet_tl.save(quiet=True)
+
+    def latest_calls(timeline):
+        sidecar = Path(timeline.path).with_suffix(Path(timeline.path).suffix + ".journal.jsonl")
+        return journal.read(sidecar)[-1].calls
+
+    calls = latest_calls(cli_tl)
+    assert calls == latest_calls(sdk_tl) == latest_calls(sheet_tl)
+    assert calls[0]["op"] == "timeline.add-media"
+    assert calls[0]["args"]["clip_id"] == "added-bed"
+    assert cli_tl.document() == sdk_tl.document() == sheet_tl.document()
+
+
 def test_skill_edit_flag_reference_matches_canonical_sources():
     from tools.parity.edit_flag_reference import TARGET, render_reference
 

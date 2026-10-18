@@ -83,9 +83,70 @@ class Operation:
     method: str
     handler: Any
     boundary: str = "edit"
+    inverse: str = "working-copy-snapshot"
+    canonical_name: str | None = None
+    aliases: tuple[str, ...] = ()
+    canonical_flags: tuple[str, ...] = ()
+    sdk_method: str | None = None
+    sheet_token: str | None = None
+
+    def __post_init__(self):
+        # Local undo remains snapshot based; semantic inverses for rebase are a
+        # separate contract. This names the inverse currently used here.
+        if self.canonical_name is None:
+            object.__setattr__(self, "canonical_name", _CANONICAL_OPERATION.get(self.op, self.op))
+        canonical = self.canonical_name
+        if not self.aliases and canonical == self.op:
+            object.__setattr__(self, "aliases", _OPERATION_ALIASES.get(canonical, ()))
+        if not self.canonical_flags:
+            object.__setattr__(self, "canonical_flags", _CANONICAL_FLAGS.get(canonical, ()))
+        if self.sdk_method is None:
+            object.__setattr__(self, "sdk_method", "commands.run")
+        if self.sheet_token is None:
+            selector = "null" if self.kind == "timeline" else '"CLIP"'
+            object.__setattr__(self, "sheet_token",
+                               f'edit {{"op":"{canonical}","select":{selector},"args":...}}')
 
 
 REGISTRY: dict[str, Operation] = {}
+
+_CANONICAL_OPERATION = {
+    "clip.for": "clip.set-duration",
+    "clip.hold-for": "clip.set-duration",
+}
+_OPERATION_ALIASES = {
+    "clip.set-duration": ("clip.for", "clip.hold-for", "--duration"),
+    "voice.replace": ("--line",),
+    "timeline.insert-line": ("--gap", "--line-text"),
+    "timeline.apply-script": ("--script-gaps",),
+    "look.opacity": ("--opacity",),
+}
+_CANONICAL_FLAGS = {
+    "timeline.edit-flags": ("--clip", "--cut", "--file", "--project", "--draft", "--dry-run"),
+    "clip.on": ("--on",),
+    "clip.until": ("--until",),
+    "clip.set-duration": ("--for",),
+    "clip.nudge": ("--nudge",),
+    "clip.set": ("--set path=value",),
+    "look.opacity": ("--set look.opacity=VALUE",),
+    "timeline.add-media": ("--add-media",),
+    "timeline.crossfade": ("--crossfade", "--over"),
+    "clip.trim": ("--trim-in", "--trim-out"),
+    "clip.slip": ("--slip",),
+    "clip.swap-asset": ("--swap-asset",),
+    "timeline.replace-asset": ("--replace-asset",),
+    "cut.split": ("--split",),
+    "timeline.close-gap": ("--close-gap-before",),
+    "timeline.retime": ("--retime",),
+    "timeline.insert-time": ("--insert",),
+    "timeline.film-end": ("--film-end",),
+    "sequence.fit": ("--fit-sequence",),
+    "voice.replace": ("--replace-line",),
+    "timeline.insert-line": ("--insert-line",),
+    "timeline.remove-line": ("--remove-line",),
+    "voice.set-gap-after": ("--gap-after",),
+    "timeline.apply-script": ("--from-script",),
+}
 
 
 def restore_spec(value):
@@ -161,9 +222,32 @@ def register(cls, kind, names, *, boundary="edit"):
     for name in names:
         function = getattr(cls, name)
         op = f"{kind}.{name.replace('_', '-').rstrip('-')}"
-        entry = Operation(op, kind, name, function, boundary)
-        REGISTRY[op] = entry
+        canonical = _CANONICAL_OPERATION.get(op, op)
+        inverse = "storage-boundary" if boundary == "storage" else "working-copy-snapshot"
+        entry = Operation(
+            op=op,
+            kind=kind,
+            method=name,
+            handler=function,
+            boundary=boundary,
+            inverse=inverse,
+            canonical_name=canonical,
+            aliases=_OPERATION_ALIASES.get(canonical, ()) if op == canonical else (),
+            canonical_flags=_CANONICAL_FLAGS.get(canonical, ()),
+            sdk_method=f"{cls.__name__}.{name}",
+        )
+        register_operation(entry)
         setattr(cls, name, _adapter(entry))
+
+
+def register_operation(entry: Operation) -> Operation:
+    """Install one explicit command adapter without generating front-end APIs."""
+    if not isinstance(entry, Operation) or not callable(entry.handler):
+        raise TypeError("a registry operation needs an Operation and a callable handler")
+    if entry.op in REGISTRY:
+        raise RuntimeError(f"duplicate operation registry id: {entry.op}")
+    REGISTRY[entry.op] = entry
+    return entry
 
 
 def _signature(function):
@@ -455,17 +539,19 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             for path in paths:
                 expectations.setdefault(sid + "::" + path, state_at(before_entities, sid, path))
         command = replace(command, expect=expectations)
-    check_expectations(tl, command, command.resolved if entry.op == "timeline.add" and "media" in command.args else selected)
+    check_expectations(tl, command, command.resolved if (
+        entry.op == "timeline.add" and "media" in command.args or entry.op == "timeline.add-media"
+    ) else selected)
     args = copy.deepcopy(dict(command.args))
     relation_choices = args.pop("relation_choices", None)
     relation_affected = args.pop("relation_affected", None)
-    if entry.op == "timeline.add" and command.created and not isinstance(command.args.get("track"), Mapping):
+    if entry.op in {"timeline.add", "timeline.add-media"} and command.created and not isinstance(command.args.get("track"), Mapping):
         clips = [sid for sid in command.created if "/clip:" in sid]
         if len(clips) != 1:
-            raise CommandError("timeline.add requires exactly one recorded created clip")
+            raise CommandError(f"{entry.op} requires exactly one recorded created clip")
         local = clips[0].split("/clip:", 1)[1]
         if args.get("clip_id") is not None and args["clip_id"] != local:
-            raise CommandError("timeline.add clip_id contradicts created identity")
+            raise CommandError(f"{entry.op} clip_id contradicts created identity")
         args["clip_id"] = local
     if command.created and any(sid in before_entities for sid in command.created):
         raise SemanticConflict("dependent", command.select or "", "created", None,
@@ -522,7 +608,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         canonical["clear"] = list(args.get("clear", []))
     if "music" in canonical:
         canonical["music"] = str(canonical["music"] or tl.music).replace("-", "_")
-    if entry.op == "timeline.add" and isinstance(canonical.get("at"), str):
+    if entry.op in {"timeline.add", "timeline.add-media"} and isinstance(canonical.get("at"), str):
         from astrid.sdk.timeline._common import TIME_RE
         if TIME_RE.fullmatch(canonical["at"].strip()):
             canonical["at"] = tl.time(canonical["at"])
@@ -561,7 +647,8 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         selector = owner.scoped_id
     if entry.op in {"clip.set-element", "clip.set-fade", "clip.set-transition", "clip.set-continuous", "clip.set-shader", "clip.set-text", "clip.overhang-to-hold"} or app_keys:
         selector = selected[0]
-    recorded = replace(command, select=selector, args=canonical, version=command.version or TOOL_VERSION,
+    recorded = replace(command, op=entry.canonical_name, select=selector, args=canonical,
+                       version=command.version or TOOL_VERSION,
                        resolved=resolved)
     bindings = dict(command.bindings or {})
     capture_argument_bindings(tl, command, owner, bindings)
@@ -641,14 +728,15 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             moment = intent.on(owner.data)
             if moment:
                 tl._open_edit.calls[index] = replace(recorded, op="clip.on", args={"moment": moment})
-        elif entry.op in {"clip.set", "clip.set-look"}:
+        elif entry.op in {"clip.set", "clip.set-look", "look.opacity"}:
             from astrid.core.timeline import clip_fields as cf
             from astrid.sdk.timeline_address import element_schema
             declared = element_schema(owner.element).get("properties") or {}
-            if canonical and not clear_args and all(key in cf.FIELDS and key not in declared for key in canonical):
+            look_fields = {key: value for key, value in canonical.items() if key != "_allow_new"}
+            if look_fields and not clear_args and all(key in cf.FIELDS and key not in declared for key in look_fields):
                 # The codec supplies a canonical, replayable authoring spelling.
                 fields = {}
-                for key, value in canonical.items():
+                for key, value in look_fields.items():
                     path, stored = cf.coerce(key, value, fps=tl.fps, audio=owner.is_audio)
                     normalized_key = next((name for name, spec in cf.FIELDS.items()
                                            if spec.stored_at == path and spec.kind != "fade"), key)
@@ -664,8 +752,11 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
                                                   else spec.from_stored(stored, fps=tl.fps))
                     else:
                         fields[normalized_key] = stored
-                tl._open_edit.calls[index] = replace(recorded, op="clip.set-look", args=fields)
-        elif entry.op == "timeline.add" and not isinstance(canonical.get("track"), Mapping):
+                operation = ("look.opacity" if entry.op == "look.opacity"
+                             or (entry.op == "clip.set" and set(fields) == {"opacity"})
+                             else "clip.set-look")
+                tl._open_edit.calls[index] = replace(recorded, op=operation, args=fields)
+        elif entry.op in {"timeline.add", "timeline.add-media"} and not isinstance(canonical.get("track"), Mapping):
             canonical["clip_id"] = result.id
             canonical["at"] = intent.on(result.data) or result.start
             recorded = replace(recorded, args=canonical, resolved=(scoped_clip(tl, result),))
@@ -1408,7 +1499,7 @@ def capture_argument_bindings(tl, call, owner, bindings):
             if call.op == "cut.move" and TIME_RE.fullmatch(value.strip().removeprefix("@")):
                 continue  # absolute address, resolved by Checkout.time, has no anchor
             # These keys are TimeRefs only on the corresponding timing handlers.
-            if call.op in {"clip.on", "clip.until", "clip.enter-at", "clip.end-at", "timeline.add",
+            if call.op in {"clip.on", "clip.until", "clip.enter-at", "clip.end-at", "timeline.add", "timeline.add-media",
                            "cut.split", "cut.move", "timeline.add-cut", "timeline.close-gap", "sequence.fit"}:
                 capture_binding(tl, value, clip, bindings)
     # Original exact text survives canonical spelling changes on replay.
@@ -1639,44 +1730,181 @@ def execute(tl, value):
         return _invoke(tl, command, entry)
 
 
+def _set_look_opacity(self, opacity: Any):
+    """The explicit OpCall for the clip-level opacity field."""
+    return self.set_look(opacity=opacity)
+
+
+def _add_media(self, asset: Any, track: str, at: Any, clip_id: str | None = None,
+               until: Any = None, for_seconds: float | None = None,
+               trim_in: float | None = None, trim_out: float | None = None):
+    """One transaction for the legacy ``--add-media`` edit."""
+    clip = self.add("media", at=at, asset=asset, track=track, hold=for_seconds,
+                    clip_id=clip_id, cut=None)
+    if not clip.is_audio:
+        raise CommandError(f"--track {track!r} is not an audio track")
+    if until is not None:
+        clip.until(until)
+    source_in = trim_in if trim_in is not None else 0.0
+    speed = float(clip.data.get("speed") or 1.0)
+    if trim_out is not None:
+        source_out = trim_out
+    elif for_seconds is None and until is None:
+        source_out = clip._source_duration()
+    else:
+        source_out = source_in + clip.duration * speed
+    clip.trim(in_s=source_in, out_s=source_out)
+    return clip
+
+
+def _crossfade(self, first: str, second: str, curve: str | None = None,
+               overlap: float | None = None):
+    """One timeline OpCall for the legacy ``--crossfade`` edit."""
+    from astrid.core.timeline.audio_curves import validate
+
+    a, b = self.clip(first), self.clip(second)
+    if not a.is_audio or not b.is_audio:
+        raise CommandError("--crossfade requires two audio clips")
+    if a.track != b.track:
+        raise CommandError(f"--crossfade requires the same audio track ({a.track!r} vs {b.track!r})")
+    if b.start < a.start:
+        raise CommandError("--crossfade requires A to start before B")
+    try:
+        selected_curve = validate(curve or "equal-power")
+    except ValueError as exc:
+        raise CommandError(str(exc)) from None
+    if overlap is not None:
+        overlap = float(overlap)
+        if overlap <= 0:
+            raise CommandError("--over must be a positive number of seconds")
+        if overlap > min(a.duration, b.duration):
+            raise CommandError("--over cannot exceed either clip's duration")
+        b.enter_at(a.start + a.duration - overlap)
+        print(f"crossfade overlap {overlap:g}s: moved {b.address} start; {a.address} stayed in place")
+    else:
+        if b.end < a.end:
+            raise CommandError("--crossfade requires B to continue through A's end; use --over to position B")
+        overlap = min(a.start + a.duration, b.start + b.duration) - max(a.start, b.start)
+        if overlap <= 0:
+            raise CommandError("clips do not overlap; supply --over SECONDS to move B's start")
+    a.set_look(fade_out=f"{overlap}s curve={selected_curve}")
+    b.set_look(fade_in=f"{overlap}s curve={selected_curve}")
+    print(f"crossfade {a.address} → {b.address}: {overlap:g}s, curve={selected_curve}")
+    return {"first": a.id, "second": b.id, "overlap": overlap, "curve": selected_curve}
+
+
 # This is an explicit adapter map, not a generated parser. Context/report flags
 # belong to the executable edit-flags entry; mutation flags name their operation.
-EDIT_FLAG_OPERATIONS = {}
-for _operation, _names in {
-    "timeline.edit-flags": "project file draft clip cut near n offset labels timings verify sweep no_sweep music crossfade overlap",
-    "timeline.add": "add_media track clip_id",
-    "clip.trim": "trim_in trim_out", "clip.slip": "slip",
-    "clip.set": "set_values allow_new_params",
-    "clip.set-param": "add_component instance_id component_params component_pack_roots", "clip.clear": "clear_keys",
-    "clip.set-look": "entrance exit fade_in fade_out opacity volume gain_db",
-    "clip.on": "on", "clip.enter-at": "at at_word", "clip.until": "until",
-    "clip.set-duration": "for_seconds", "clip.extend": "extend", "clip.nudge": "nudge nudge_frames",
-    "cut.lift": "lift layers",
-    "timeline.close-gap": "close_gap_before", "cut.split": "split cut_id picture", "timeline.add-cut": "add_cut after",
-    "timeline.set-cut-note": "why hold", "sequence.fit": "fit_sequence shape_from",
-    "timeline.film-end": "film_end", "timeline.retime": "retime", "timeline.insert-time": "insert",
-    "clip.keep": "keep", "clip.clear-asset": "clear_asset", "clip.set-beats": "beats",
-    "voice.set-gap-after": "gap_after", "timeline.remove-line": "remove_line visuals",
-    "voice.replace": "replace_line take words line_text", "timeline.insert-line": "insert_line insert_gap_after",
-    "timeline.apply-script": "from_script takes script_gaps", "clip.swap-asset": "swap_asset",
-    "timeline.replace-asset": "replace_asset", "clip.remove-layer": "remove",
-    "timeline.batch": "command dry_run",
-}.items():
-    for _name in _names.split():
-        if _name in EDIT_FLAG_OPERATIONS:
-            raise RuntimeError(f"duplicate edit flag mapping: {_name}")
-        EDIT_FLAG_OPERATIONS[_name] = _operation
+_EDIT_FLAG_DECLARATIONS = (
+    ("timeline.edit-flags", "project file draft clip cut near n offset labels timings verify sweep no_sweep music"),
+    ("timeline.add-media", "add_media track clip_id"),
+    ("clip.trim", "trim_in trim_out"), ("clip.slip", "slip"),
+    ("clip.set", "set_values allow_new_params"),
+    ("clip.set-param", "add_component instance_id component_params component_pack_roots"),
+    ("clip.clear", "clear_keys"),
+    ("clip.set-look", "entrance exit fade_in fade_out volume gain_db"),
+    ("look.opacity", "opacity"),
+    ("clip.on", "on"), ("clip.enter-at", "at at_word"), ("clip.until", "until"),
+    ("clip.set-duration", "for_seconds"), ("clip.extend", "extend"), ("clip.nudge", "nudge nudge_frames"),
+    ("cut.lift", "lift layers"),
+    ("timeline.close-gap", "close_gap_before"), ("cut.split", "split cut_id picture"),
+    ("timeline.add-cut", "add_cut after"), ("timeline.set-cut-note", "why hold"),
+    ("sequence.fit", "fit_sequence shape_from"), ("timeline.film-end", "film_end"),
+    ("timeline.retime", "retime"), ("timeline.insert-time", "insert"),
+    ("clip.keep", "keep"), ("clip.clear-asset", "clear_asset"), ("clip.set-beats", "beats"),
+    ("voice.set-gap-after", "gap_after"), ("timeline.remove-line", "remove_line visuals"),
+    ("voice.replace", "replace_line take words line_text"),
+    ("timeline.insert-line", "insert_line insert_gap_after"),
+    ("timeline.apply-script", "from_script takes script_gaps"), ("clip.swap-asset", "swap_asset"),
+    ("timeline.replace-asset", "replace_asset"), ("clip.remove-layer", "remove"),
+    ("timeline.batch", "command dry_run"), ("timeline.crossfade", "crossfade overlap"),
+)
+
+
+def build_edit_flag_operations(declarations=_EDIT_FLAG_DECLARATIONS):
+    """Build a closed destination map and reject duplicate adapter declarations."""
+    operations = {}
+    for operation, names in declarations:
+        for name in names.split():
+            if name in operations:
+                raise CommandError(f"duplicate edit flag mapping: {name}")
+            operations[name] = operation
+    return operations
+
+
+EDIT_FLAG_OPERATIONS = build_edit_flag_operations()
 
 
 def flag_inventory_table(inventory):
     rows = []
+    seen = set()
     for flag in inventory["commands"]["timelines.edit"]["flags"]:
         destination = flag["dest"]
+        if destination in seen:
+            raise CommandError(f"duplicate edit flag inventory destination: {destination}")
+        seen.add(destination)
         operation = EDIT_FLAG_OPERATIONS.get(destination)
-        if operation not in REGISTRY:
+        entry = REGISTRY.get(operation)
+        if entry is None or not callable(entry.handler):
             raise CommandError(f"unmapped edit flag: {destination}")
-        rows.append({"flags": flag["options"], "destination": destination, "operation": operation})
+        rows.append({"flags": flag["options"], "destination": destination,
+                     "operation": entry.canonical_name, "handler": entry.sdk_method})
     return rows
+
+
+def registry_aliases() -> frozenset[str]:
+    """CLI aliases stay parseable but are hidden from canonical generated help."""
+    return frozenset(alias for entry in REGISTRY.values() for alias in entry.aliases
+                     if alias.startswith("--"))
+
+
+def render_cli_alias_reference() -> str:
+    """Render retained parser aliases and their canonical operation names."""
+    rows = {}
+    for entry in REGISTRY.values():
+        for alias in entry.aliases:
+            if alias.startswith("--"):
+                rows[alias] = entry.canonical_name
+    return "\n".join(f"  {alias:<30} {operation}" for alias, operation in sorted(rows.items()))
+
+
+def canonical_flag_rows():
+    """Canonical spellings projected from the registry, one row per flag."""
+    rows = []
+    seen = set()
+    for entry in REGISTRY.values():
+        if entry.canonical_name != entry.op:
+            continue
+        for flag in entry.canonical_flags:
+            key = (flag, entry.canonical_name)
+            if key not in seen:
+                seen.add(key)
+                rows.append({"flag": flag, "operation": entry.canonical_name,
+                             "sdk": entry.sdk_method, "sheet": entry.sheet_token})
+    return sorted(rows, key=lambda row: (row["flag"], row["operation"]))
+
+
+def render_canonical_flag_reference(*, markdown=False):
+    """Render the same registry projection for ``edit --help`` and the skill."""
+    rows = canonical_flag_rows()
+    if markdown:
+        return "\n".join(
+            f"| `{row['flag']}` | `{row['operation']}` | `{row['sdk']}` | `{row['sheet']}` |"
+            for row in rows
+        )
+    return "\n".join(f"  {row['flag']:<30} {row['operation']}" for row in rows)
+
+
+def replace_skill_reference(text: str) -> str:
+    """Replace the marked generated operation table in the timeline skill."""
+    begin, end = "<!-- timeline-operation-registry:begin -->", "<!-- timeline-operation-registry:end -->"
+    if text.count(begin) != 1 or text.count(end) != 1:
+        raise ValueError("timeline skill must contain exactly one operation-registry marker pair")
+    before, remainder = text.split(begin, 1)
+    _generated, after = remainder.split(end, 1)
+    table = ("| Canonical flag | OpCall | SDK adapter | Sheet token |\n|---|---|---|---|\n"
+             + render_canonical_flag_reference(markdown=True))
+    return before + begin + "\n" + table + "\n" + end + after
 
 
 # Any new public callable must be explicitly classified; the census test fails

@@ -130,7 +130,12 @@ def apply_look(tl: Any, clip: Any, values: Mapping[str, str]) -> list[str]:
     audio = clip.is_audio
     fps = tl.fps
     before = cf.describe(clip.data, fps=fps)
-    clip.set_look(**dict(values))
+    if set(values) == {"opacity"}:
+        from astrid.sdk.timeline.commands import execute
+
+        execute(tl, {"op": "look.opacity", "select": clip.id, "args": {"opacity": values["opacity"]}})
+    else:
+        clip.set_look(**dict(values))
     after = cf.describe(clip.data, fps=fps)
     lines: list[str] = []
     for name in values:
