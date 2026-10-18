@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const bootstrapMocks = vi.hoisted(() => ({
   initializeVideoEditorExtensionRuntime: vi.fn(),
@@ -6,6 +8,11 @@ const bootstrapMocks = vi.hoisted(() => ({
   migrateAstridBrowserStorage: vi.fn(),
   renderApp: vi.fn(),
 }));
+
+const indexHtml = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8');
+const indexDocument = new DOMParser().parseFromString(indexHtml, 'text/html');
+const bootMarkup = indexDocument.getElementById('boot');
+const bootStyles = Array.from(indexDocument.querySelectorAll('style')).find((style) => style.textContent?.includes('#boot {'));
 
 // Mock both supported import paths to one deferred implementation. This keeps
 // the test focused on the real entry's initialization-before-render sequence.
@@ -68,7 +75,11 @@ describe('main entry bootstrap order', () => {
 
     const root = document.createElement('div');
     root.id = 'root';
-    document.body.append(root);
+    expect(bootMarkup).not.toBeNull();
+    expect(bootStyles).toBeDefined();
+    const boot = document.importNode(bootMarkup!, true);
+    document.head.append(document.importNode(bootStyles!, true));
+    document.body.append(boot, root);
 
     await import('@/app/main');
     await vi.waitFor(() => expect(root.textContent).toContain('IndexedDB astrid.timeline-drafts'));
@@ -76,8 +87,12 @@ describe('main entry bootstrap order', () => {
     expect(bootstrapMocks.renderApp).not.toHaveBeenCalled();
     expect(bootstrapMocks.initializeVideoEditorExtensionRuntime).not.toHaveBeenCalled();
     expect(bootstrapMocks.initializeWorkspaceRuntimeIdentity).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(boot.classList.contains('boot-done')).toBe(true));
+    expect(getComputedStyle(boot.querySelector('.boot-paper')!).opacity).toBe('0');
     const retry = Array.from(root.querySelectorAll('button')).find((button) => button.textContent === 'Retry migration');
     expect(retry).toBeDefined();
+    expect(retry?.isConnected).toBe(true);
+    expect(getComputedStyle(retry!).visibility).toBe('visible');
     retry?.click();
 
     await vi.waitFor(() => expect(bootstrapMocks.renderApp).toHaveBeenCalledOnce());

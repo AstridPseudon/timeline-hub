@@ -87,6 +87,7 @@ async function startApp(rootElement: HTMLElement): Promise<void> {
   const migration = await migrateAstridBrowserStorage();
   if (!migration.success) {
     showMigrationFailure(rootElement, migration.store, () => startApp(rootElement));
+    releaseBootLayerWhenReady(rootElement);
     return;
   }
 
