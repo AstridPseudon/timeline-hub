@@ -4,7 +4,7 @@
   "revision": "C1",
   "issuedOn": "2026-09-23",
   "status": "frozen-semantics-pending-ack",
-  "digest": "sha256:38307a07134e3da89a887768d7b0c91be36175d5d02ef5ae2e316d7821523a20",
+  "digest": "sha256:5d8135b6265595e1515539dd6439a54ad4c5d9f288309aa40889d985e737aa48",
   "scope": {
     "owner": "CF",
     "consumers": [
@@ -849,7 +849,7 @@
       "workerArtifactRef": "execution-delivery",
       "dependencyClosureRef": "dependency-closure",
       "evidenceRefs": [
-        "run-capability",
+        "pack-vibecomfy",
         "engine-profile",
         "execution-request",
         "capability-profile",
@@ -1135,7 +1135,7 @@
       "id": "astrid-agent",
       "repository": "Astrid",
       "path": "astrid/omp_agent.py",
-      "sha256": "346639170c37d5c7914d5c80e4699ea572ca1239374bfb7bbaa6b1421b7b70b0",
+      "sha256": "21bba74b5fb2105349bd2d611dee6d681b7dc8927cbc2739eba13d5986971e6d",
       "summary": "Existing auth aliases, top-level contributor status and prompt fallback."
     },
     {
@@ -1149,119 +1149,112 @@
       "id": "capability-profile",
       "repository": "Astrid",
       "path": "config/astrid-beta-capabilities.json",
-      "sha256": "8ee9b5a5729add64460942465216b050d1f6c8dc04e4a9cc6d7d00a7410cc75d",
+      "sha256": "7aad14959c790730c5efdb1f00900b1e9f70dad395224328102520b0b9f00dd0",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
       "id": "default-sources",
       "repository": "Astrid",
       "path": "astrid/core/pack/source_setup.py",
-      "sha256": "7ceaf1e91933b1e31226c91e577764c07b4ccab5056a708017da7e0ec79d7f7a",
+      "sha256": "5254361dc877385fcee1f4fa58e094cd8566a9fe1dc68d1f4d9fb2106d9fbbf2",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
       "id": "pack-discovery",
       "repository": "Astrid",
       "path": "astrid/core/pack/discovery.py",
-      "sha256": "ca5174735c57cc31c19ef1679b15e196e600e0c74f32de238a897c848287e89b",
+      "sha256": "076bd6ba127b9c49c0c4432fef806d20f7509e6ef2200e4612c38e3c816ab52f",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
       "id": "skill-defaults",
       "repository": "Astrid",
       "path": "astrid/skills/__init__.py",
-      "sha256": "2a0b7f2a08667a5c36f69ff748eaf5a48daeae74219970845cc87905622dee3d",
+      "sha256": "439f644abc824f4467a619ac7c33c482489ed51afe3f40e66e03f53c74ab7b82",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
       "id": "generic-pack-host",
       "repository": "Astrid",
       "path": "astrid/core/execution/generic_host.py",
-      "sha256": "d92c240a998b822bd229b9b5662ae56e44af77ac875596f03d7299851c8ca875",
+      "sha256": "098577b58bc4344728792299a4fd6554ccb20d493c6389f0b1d8c0c96f992e27",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
       "id": "engine-dependency",
       "repository": "Astrid",
       "path": "astrid/core/generation/vibecomfy_dependency.py",
-      "sha256": "282b760f9ec40475ea301cb69f38a03f25a1790507f3df4291dc1fd4e44b9993",
-      "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
-    },
-    {
-      "id": "run-capability",
-      "repository": "Astrid",
-      "path": "astrid/packs/vibecomfy/executors/run/executor.yaml",
-      "sha256": "0f71cad8be565a61370229cde45bce07bc6f80c0b725ded84cf66967a44fd62f",
+      "sha256": "7deb357d6ce6c8dc7f3bb82e46342f3974eed69fd05c48cf24e25434b6ddb747",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
       "id": "engine-profile",
       "repository": "Astrid",
-      "path": "astrid/packs/vibecomfy/executors/run/run.py",
-      "sha256": "70a5ce9d655803576a67310fab215d5b4f294cd694f0931c5c332bc847c28b4b",
+      "path": "astrid/packs/vibecomfy/actions/run/run.py",
+      "sha256": "a6ea2a57f23f1e61f92f5a70b18243ae47a1513219977a2308361798b4d18694",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
       "id": "engine-requirements",
       "repository": "Astrid",
-      "path": "astrid/packs/vibecomfy/executors/run/requirements.txt",
-      "sha256": "c3e8ec952ba843574d1e40eb6fcd422dc83ed3c392f112f73718b1f3d000bc97",
+      "path": "astrid/packs/vibecomfy/actions/run/requirements.txt",
+      "sha256": "358af9332230b9b080ad5ff38f3b48c54aa1d731916ccb7c4072ee3a5ef55a1a",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
       "id": "execution-request",
       "repository": "Astrid",
       "path": "astrid/sdk/execution_request.py",
-      "sha256": "9cd8bc5749f587575d979d2eca361341e8b6840f5e6d64c5cdee4220c0e4dfc8",
+      "sha256": "b01c4702bc22f94d87b9b11b91a395be91668aa78e9e1e581a977bef1e8b401f",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
       "id": "gateway-dispatch",
       "repository": "Astrid",
       "path": "astrid/core/gateway/dispatch.py",
-      "sha256": "329caff2fe2b5ceeb1c08031a79874eafc6743ddc28e291e247ced5a271a04ac",
+      "sha256": "356fabd16c82258d328883926ca3278b4d9a9bc1fab7e77649e9ba2f55f9ee26",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
       "id": "tasks-cli",
       "repository": "Astrid",
       "path": "astrid/core/cli/domain_tasks.py",
-      "sha256": "a9b5a9bd2de4c76e4b815516a187ac2e4a569857c032bbb3d39d4f2c26d44ef1",
+      "sha256": "3fec878aaa9f40b71b65a1981db077eb62a860b4417420a9f48689026c462593",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
       "id": "runs-cli",
       "repository": "Astrid",
       "path": "astrid/core/cli/domain_runs.py",
-      "sha256": "bbbb2887bf1bc127be9878ae350bdee3271db548ca84388ca02f0e91e3bd7ec1",
+      "sha256": "984a52dae0373c4e531cc04d89f59d97c7b3e5ca41301a55a10f88a1447417ae",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
       "id": "storage-root",
       "repository": "Astrid",
       "path": "astrid/sdk/storage_root.py",
-      "sha256": "825d3ea9ddc9b0cd2df35a8c9670c2d713eaffeeaa95e30060913c09d128c984",
+      "sha256": "0adc034825420c9cfe1b93508d150a24052ec52b668ec59532f9abcae8c78305",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
       "id": "astrid-client",
       "repository": "Astrid",
       "path": "astrid/sdk/client.py",
-      "sha256": "88b030cd26819498eb929988f6a534ca336ef956738f4c54f901314127556ab9",
+      "sha256": "1cbffb620ee2ea00805592849c0154fa68ad82f0366221507feea7c76e790948",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
       "id": "runtime-autobootstrap",
       "repository": "Astrid",
       "path": "astrid/sdk/autobootstrap.py",
-      "sha256": "5eb37524d53fc312b514fdecdf7d0ad14bee15e7224fe073e3b5a3576a86402c",
+      "sha256": "310ffabbb5091a2a732bb14912a6b03f472f072f67fa65a613ed01f18a06edb8",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
       "id": "runtime-cli",
       "repository": "workspace-runtime",
       "path": "banodoco_local/cli.py",
-      "sha256": "105e238ffddd1fa05a9e8bf91088fb8f4aadbe5b1075e96a0eaa5812db3a7305",
+      "sha256": "9b95c01c385f06ca4b862678650e73b2e96d39b5212c4e9fc24b071c4afc8823",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
@@ -1275,21 +1268,21 @@
       "id": "runtime-bootstrap",
       "repository": "workspace-runtime",
       "path": "banodoco_local/bootstrap.py",
-      "sha256": "ce262af2595f4117d54bf0632da307d750ae7030a2b56efdb14c78b271a1efff",
+      "sha256": "3d4ec2b78a6ea693af51cc6bb95c22d27f96267efd0751b35666dd89207572f5",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
       "id": "runtime-contract",
       "repository": "workspace-runtime",
       "path": "contract/openapi/workspace-v1.yaml",
-      "sha256": "bcb448b25d1516454560476115f7fdbcb21d48b330c46b7292bbe247fce0d896",
+      "sha256": "73cf9173d68e37f14e4c3d7919b4c44c1afc0b3e1a759f511ea1ec5a03277325",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
       "id": "runtime-task",
       "repository": "workspace-runtime",
       "path": "contract/schemas/task.json",
-      "sha256": "e96ad4349e0a8b9f36b3ce8d8c1ca3d3b69456b60b4e5ab3541c31dc31449a44",
+      "sha256": "bcf1fa6b2fcc10ca8d30860bc6a53b0f0ff06de1cbc0148523035e1ad7a16c24",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
@@ -1310,7 +1303,7 @@
       "id": "runtime-worker",
       "repository": "workspace-runtime",
       "path": "contract/schemas/worker.json",
-      "sha256": "62da42817cf4ca1dbcb5d8e588267ef827c8bd12e5d828c36828e4760fb1e6ec",
+      "sha256": "4af1918f9db57daac7823b89f1cc05ea303325b672ce80349a88e122dd14caf8",
       "summary": "Read-only existing declaration; Runtime remains wire/state authority."
     },
     {
@@ -1324,133 +1317,133 @@
       "id": "pack-blender",
       "repository": "Astrid",
       "path": "astrid/packs/blender/pack.yaml",
-      "sha256": "e63ffd50160fa3fddbc6e023011364cc5bb433d7c424636af6eb03c6e87d8448",
+      "sha256": "3c2765dfee3ad0930cb2d791087001af980a809abc7fbef2f777b3c08ea80804",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-comfy_wrap",
       "repository": "Astrid",
       "path": "astrid/packs/comfy_wrap/pack.yaml",
-      "sha256": "697188ea719199227d252b0ab8533f1b87e129d8849676cdbc77358cffb368ab",
+      "sha256": "59a50f6c63baf51e6a3ff7a7c9f1884eb61de8c318dd733badaa99a32c7a2116",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-editorial",
       "repository": "Astrid",
       "path": "astrid/packs/editorial/pack.yaml",
-      "sha256": "6e170175eb985578a545ea4eb6780674c0d4bcac759b7a12ef9f603810226fea",
+      "sha256": "1f6b77de490f5307563d1dd22870e34ea4486c2d8f96fb4057d70454b7ea6052",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-fal",
       "repository": "Astrid",
       "path": "astrid/packs/fal/pack.yaml",
-      "sha256": "cf97b46b7382b57ad1a99c82602eba7ef5ca9ad307beed76ea2ccf388420ea18",
+      "sha256": "aee140a84833b2bc7d322fe5096d5e93bf2f0e8729c47bc2904990ea21796b1d",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-foley",
       "repository": "Astrid",
       "path": "astrid/packs/foley/pack.yaml",
-      "sha256": "46ee651fc1e3f6a2b8a730c09f87b0bb2e5dd95e676a221a146493112a4798c2",
+      "sha256": "02bc7661b431ca2d85b2a69f760a376996f18291f5e19991129c2874c4aeca8b",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-generation",
       "repository": "Astrid",
       "path": "astrid/packs/generation/pack.yaml",
-      "sha256": "2e642b5857b57d0e9469bfff3123b34536ba10a27b99785e9dae47f2f822684c",
+      "sha256": "00a166528fbcf403ae69037ef4cc20152edbcb32bcaf0d5e3e987fb0bd84df2a",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-iteration",
       "repository": "Astrid",
       "path": "astrid/packs/iteration/pack.yaml",
-      "sha256": "ff36a474125d792de99470a2bb586a0429042f1087f36810afc94f7a2d9f5477",
+      "sha256": "4c0f77eb26aaca3e6a2b0e5985587e82a70315aef835da92e63ad0afbb478b00",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-media",
       "repository": "Astrid",
       "path": "astrid/packs/media/pack.yaml",
-      "sha256": "2c4649de4574b8e6c9868215ef4ff7d78dee86f3dddad8b7d816e1d12a62c9df",
+      "sha256": "6026981380d1174a827fac9d5b3b72581eb68195dea85429396ddd4c059d78c1",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-moirae",
       "repository": "Astrid",
       "path": "astrid/packs/moirae/pack.yaml",
-      "sha256": "0a72dc035d38e88edd167df590c92fd3720873ae1c6c294d4b4cada327330353",
+      "sha256": "7f846503f60aab0db45d8bba345e7d086757010c884a8fc2ef8420546b824f1a",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-rendering",
       "repository": "Astrid",
       "path": "astrid/packs/rendering/pack.yaml",
-      "sha256": "b8bc225bac3e7d82569b7caca24412c9ce2d80d0068440b026505fe8ef123b4f",
+      "sha256": "c2765aa4c2485702e6b0b92999d9364e0973a95eaad0110199163276c6e26d78",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-runpod",
       "repository": "Astrid",
       "path": "astrid/packs/runpod/pack.yaml",
-      "sha256": "7a110beb1468c4ba14879c6960da101b36b7cf1685a6a237602fe37af43ea737",
+      "sha256": "1d40e426e70e99f3d3d9902af878df4110c17124f41d067ae69e410dfa957e65",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-stream_content",
       "repository": "Astrid",
       "path": "astrid/packs/stream_content/pack.yaml",
-      "sha256": "10977dcf398d8c6c515e1a931c373448d6c579fade4bdf58d7d81ec98f74bd15",
+      "sha256": "47bdbbae50ba336a311ddd8b2969a7fb8562dadddaa83d1e2dbe64ad10a09d0f",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-training",
       "repository": "Astrid",
       "path": "astrid/packs/training/pack.yaml",
-      "sha256": "2da84f1d87adbcb329bc00d180c84aaade69c0927d94a5ab3a3dcbc8394b09a2",
+      "sha256": "980f8a310c65b22b40685f24f33e700e82530c94c45e0ea10473996f7af53e6f",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-typed_timeline",
       "repository": "Astrid",
       "path": "astrid/packs/typed_timeline/pack.yaml",
-      "sha256": "449fc6061ac13c77981cc657ae5abe872fd3d79f4574ddc0065e13357c944c9c",
+      "sha256": "422ba31767aeb70ffc6ea8a53fc7c05cf8a05c70e0c7b0586fb67b0741029357",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-understanding",
       "repository": "Astrid",
       "path": "astrid/packs/understanding/pack.yaml",
-      "sha256": "aace0830ca003561684286735a3c3ea49061de415e09d69e1e8d4cef7b0fc6c9",
+      "sha256": "ac24a734c5ddaa603942b07bb6e23f6f05b13970a0b4a22bfba159c85ca874d2",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-vibecomfy",
       "repository": "Astrid",
       "path": "astrid/packs/vibecomfy/pack.yaml",
-      "sha256": "ca6acee6089bbebff68c5b1db7231f8fadcf68be59ad4d57f547258f3a5ce045",
+      "sha256": "c1a684cd2df3a705ecb994b698a593d3e0a22e60d94eb5615317397e8279b5f7",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-video_editing",
       "repository": "Astrid",
       "path": "astrid/packs/video_editing/pack.yaml",
-      "sha256": "3ae3740e1145fe68e79605b45e244fae234f494481a161d9e6b203b7f19a7b26",
+      "sha256": "9dfee222817c255b8877a6c6743cd3d925bf7895abc9d20a753a126e92d74737",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-wan2gp",
       "repository": "Astrid",
       "path": "astrid/packs/wan2gp/pack.yaml",
-      "sha256": "a99d2f69d3270e6aa54a549cab21e5863ae334cddd66da618e6ede1b8f0b599a",
+      "sha256": "25f6de6be412593a7fa4e8caf118c3b3f27b812e2a4ffc8d7bd3ad44c33c9095",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     },
     {
       "id": "pack-youtube",
       "repository": "Astrid",
       "path": "astrid/packs/youtube/pack.yaml",
-      "sha256": "af4cada3bb599378ba33b63c40a59923176f9bcdbbe406da5de758e54e593171",
+      "sha256": "c4e36b291fdfa0b4f98eedfe178a2676cfc53b3238ea0b24bbb1ce24c5a01f0a",
       "summary": "Shipped v2 pack manifest; availability is not installed readiness."
     }
   ],
