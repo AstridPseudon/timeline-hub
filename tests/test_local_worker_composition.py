@@ -1073,3 +1073,50 @@ def test_preparation_diagnostic_keeps_actual_refusal_and_hashes_arbitrary_values
     assert report["missing_fields"] == ["processes"] and report["differing_fields"] == ["operation_id", "status"]
     assert "unknown" in report["extra_fields"]
     assert "SECRET" not in json.dumps(report) and "TOKEN" not in json.dumps(report)
+def test_selected_action_installed_release_projects_real_verified_host_binding(tmp_path,monkeypatch):
+    """Offline installed-record/verifier join; no profile or Host is started."""
+    import copy,importlib.metadata,json,os,sys
+    from pathlib import Path
+    from types import SimpleNamespace
+    from runtime_protocol import verified_host_launch as gate
+    from runtime_protocol.local_worker import _selected_profile_payload
+    from runtime_protocol.local_worker_composition import _installed_host_release
+    from test_local_worker import host_only_profile_case
+    # Reuse the same immutable exact-artifact fixture producer used by the
+    # child tests without enabling a real installed profile/setup path.
+    from test_verified_host_launch import selected_action_installation
+    class Factory:
+        def mktemp(self,name):
+            directory=tmp_path/name;directory.mkdir();return directory
+    f=selected_action_installation.__wrapped__(Factory())
+    selected=_selected_profile_payload(host_only_profile_case())
+    launch={**selected['host_launch'],'source_checkout':str(f.root),'pack_root':str(f.root/'astrid/packs'),
+        'capability_matrix':str(f.matrix),'selected_actions':copy.deepcopy(f.actions)}
+    selected.update(host_launch=launch,host_executable=os.path.abspath(sys.executable),
+        host_artifact_digest='sha256:'+f.actions['generation.generate_speech']['interpreter']['sha256'],
+        host_os_executable=str(Path(sys.executable).resolve()),
+        host_os_artifact_digest='sha256:'+f.actions['generation.generate_speech']['interpreter']['sha256'],
+        session_config_digest='sha256:'+gate.raw_digest(launch),release_digest='sha256:'+gate.raw_digest(f.closure['distributions']),
+        host_protocol={'version':gate.CURRENT_ROLES_VERSION,'module':gate.HOST_MODULE,
+            'source_closure_digest':gate.source_checkout_closure(f.root)['digest']})
+    profile=SimpleNamespace(**selected)
+    distributions={name:importlib.metadata.PathDistribution(f.root/(name.replace('-','_')+'-1.0.dist-info'))
+                   for name in ('astrid','banodoco-workspace-runtime')}
+    original=importlib.metadata.distribution
+    monkeypatch.setattr(importlib.metadata,'distribution',lambda name:distributions[name] if name in distributions else original(name))
+    monkeypatch.setattr(sys,'prefix',str(f.root.parent))
+    config={**launch,'support_root':selected['support_root']}
+    record=_installed_host_release(profile,config)
+    verifier=gate.TrustedLocalHostLaunchVerifier(installed_release=record)
+    arguments=dict(preparation={'profile':_selected_profile_payload(profile)},config=config,
+        host_argv=[sys.executable,'-m',gate.HOST_MODULE],environment={
+            'ASTRID_OUTPUT_ROOT':str(Path(selected['support_root'])/'host-output'),'BANODOCO_LOCAL_DATA_ROOT':selected['realm_root']})
+    proof=verifier.verify(**arguments)
+    argv,data=verifier.claim(proof,**arguments,binding_fd=3)
+    payload=json.loads(data)
+    assert argv[1:3]==['-I','-S']
+    assert payload['action_launch']['actions']==f.actions
+    assert payload['action_launch']['profile_digest']==gate.raw_digest(arguments['preparation']['profile'])
+    assert 'edge_tts' not in payload['mapping']
+    assert set(f.closure['distributions'])==set(gate.HOST_DISTRIBUTIONS)
+    (tmp_path/'verified-host-action-projection.json').write_bytes(gate.canonical(payload['action_launch']))

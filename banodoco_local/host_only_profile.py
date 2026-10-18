@@ -27,6 +27,7 @@ from runtime_protocol.local_worker_composition import (
 from runtime_protocol.verified_host_launch import (
     CURRENT_ROLES_VERSION, HOST_MODULE, raw_digest, source_checkout_closure, installed_host_closure,
     HOST_DISTRIBUTIONS,
+    qualify_action_closures,
 )
 
 PRODUCER_VERSION = "host-only-installed/v1"
@@ -49,7 +50,7 @@ def _hash(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _installed_inputs() -> tuple[Path, dict[str, Any]]:
+def _installed_inputs(*, action_closures=None) -> tuple[Path, dict[str, Any]]:
     """Observe metadata AND import origins; never infer an install from a path."""
     root = _path(sysconfig.get_path("purelib"))
     if not root.is_relative_to(Path(sys.prefix)) or not root.is_dir():
@@ -87,7 +88,7 @@ def _installed_inputs() -> tuple[Path, dict[str, Any]]:
                     if not rows.get(str(file), "").startswith("sha256="):
                         raise BootstrapError("installed package file is missing from RECORD")
         _installed_record_bytes(dist)
-    closure = installed_host_closure(root)
+    closure = installed_host_closure(root, action_closures=action_closures)
     for name, modules in HOST_DISTRIBUTIONS.items():
         if name in _PACKAGES:
             continue
@@ -133,7 +134,7 @@ def qualify_host_only_profile(path: Path | str, *, workspace_uuid: str,
         raise BootstrapError("setup requires host_only_cpu")
     profile = composition.profiles[raw["profile_id"]]
     _selected_profile_payload(profile)
-    root, _ = _installed_inputs()
+    root, _ = _installed_inputs(action_closures=raw.get('selected_actions'))
     if raw["source_checkout"] != str(root) or raw["pack_root"] != str(root / "astrid" / "packs"):
         raise BootstrapError("profile source/pack root differs from installed packages")
     _verify_installed_host_records(profile, profile.host_launch)
@@ -166,7 +167,8 @@ def provision_host_only_profile(*, worker_profile: Path, source_manifest: Path,
                                workspace_uuid: str, realm_root: Path, support_root: Path,
                                max_concurrency: int, capability_matrix: Path | None,
                                environment: Mapping[str, str] | None = None,
-                               additional_pack_roots: tuple[Path, ...] = (), renderer_selection=None) -> SourceProfile:
+                               additional_pack_roots: tuple[Path, ...] = (), renderer_selection=None,
+                               selected_actions: tuple[str, ...] = ()) -> SourceProfile:
     """Atomically provision a private worker profile and existing SourceProfile.
 
     Run with the selected installed Runtime interpreter. No checkout/environment
@@ -182,7 +184,9 @@ def provision_host_only_profile(*, worker_profile: Path, source_manifest: Path,
         raise BootstrapError("profile outputs must be distinct")
     if type(max_concurrency) is not int or not 1 <= max_concurrency <= 16:
         raise BootstrapError("Host concurrency must be explicitly bounded")
-    root, records = _installed_inputs()
+    root = _path(sysconfig.get_path('purelib'))
+    actions = qualify_action_closures(root, selected_actions, capability_matrix)
+    root, records = _installed_inputs(action_closures=actions)
     if capability_matrix is not None:
         capability_matrix = _path(capability_matrix)
         from astrid.core.execution.capability_ledger import load_capability_ledger
@@ -198,6 +202,8 @@ def provision_host_only_profile(*, worker_profile: Path, source_manifest: Path,
               "boot_manifest_path": str(boot), "boot_manifest_hash": "sha256:" + normalize_sha256_digest(manifest_hash(manifest)),
               "capability_matrix": str(capability_matrix) if capability_matrix else None,
               "environment": dict(environment or {}), "max_concurrency": max_concurrency}
+    if actions:
+        launch['selected_actions'] = actions
     if renderer_selection is not None:
         from astrid.core.execution.host_renderer_selection import HostRendererSelection
         if type(renderer_selection) is not HostRendererSelection:

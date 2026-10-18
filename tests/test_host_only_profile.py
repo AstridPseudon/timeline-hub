@@ -25,6 +25,17 @@ def test_identity_has_no_digest_self_reference(tmp_path):
     assert _identity(raw, **{**kwargs, "workspace_uuid": "other"}) != expected
 
 
+def test_identity_binds_selected_action_closure_without_expanding_host_release(tmp_path):
+    import copy
+    raw={'capability_matrix':None,'release_digest':'sha256:'+'a'*64,
+         'selected_actions':{'offline.probe':{'digest':'b'*64,'distributions':{'dependency':{'files':{'resource.bin':'c'*64}}}}}}
+    kwargs=dict(workspace_uuid='workspace',realm_root=tmp_path/'realm',support_root=tmp_path/'support')
+    before=_identity(raw,**kwargs)
+    changed=copy.deepcopy(raw);changed['selected_actions']['offline.probe']['distributions']['dependency']['files']['resource.bin']='d'*64
+    assert changed['release_digest']==raw['release_digest']
+    assert _identity(changed,**kwargs)!=before
+
+
 def test_setup_rejects_alias_before_writing(tmp_path):
     target = tmp_path / "target"; target.mkdir()
     alias = tmp_path / "alias"; alias.symlink_to(target)

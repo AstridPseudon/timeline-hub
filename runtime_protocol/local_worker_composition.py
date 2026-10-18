@@ -1363,7 +1363,7 @@ def load_local_worker_composition(path: str | Path, *, workspace_uuid: str, real
         "engine_artifact_digest", "engine_listener_artifact_digest", "session_config_digest", "profile_revision",
         "profile_digest", "release_digest", "source_checkout", "pack_root", "boot_manifest_path",
         "boot_manifest_hash", "capability_matrix", "environment", "worker_timeout_seconds",
-        "engine_launch", "host_os_executable", "host_os_artifact_digest", "host_protocol", "execution_mode", "additional_pack_roots", "max_concurrency", "renderer_selection",
+        "engine_launch", "host_os_executable", "host_os_artifact_digest", "host_protocol", "execution_mode", "additional_pack_roots", "max_concurrency", "renderer_selection", "selected_actions",
     }
     unknown = sorted(set(raw) - allowed)
     if unknown:
@@ -1371,7 +1371,7 @@ def load_local_worker_composition(path: str | Path, *, workspace_uuid: str, real
     mode = raw.get("execution_mode", "worker_engine")
     if mode not in {"worker_engine", "host_only_cpu"}:
         raise ValidationError("unsupported local execution mode")
-    if mode != "host_only_cpu" and set(raw) & {"additional_pack_roots", "max_concurrency", "renderer_selection"}:
+    if mode != "host_only_cpu" and set(raw) & {"additional_pack_roots", "max_concurrency", "renderer_selection", "selected_actions"}:
         raise ValidationError("additional pack declarations require host-only mode")
     if mode == "host_only_cpu":
         return _load_host_only_composition(raw, workspace_uuid=workspace_uuid, realm_root=realm_root,
@@ -1515,7 +1515,7 @@ def _verify_installed_host_records(profile, config):
             if algorithm != "sha256" or hashlib.sha256(target.read_bytes()).digest() != base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)):
                 raise ConflictError("installed release file differs from RECORD")
     try:
-        records = installed_host_closure(config["source_checkout"])["distributions"]
+        records = installed_host_closure(config["source_checkout"], action_closures=config.get('selected_actions'))["distributions"]
     except HostLaunchError as exc:
         raise ConflictError(str(exc)) from exc
     if "sha256:" + raw_digest(records) != profile.release_digest:
@@ -1534,7 +1534,8 @@ def _installed_host_release(profile, config):
     layout = selected_python_layout(source)
     inventories = {}; entries = []; runtime_identity = None
     for role, root in layout["roots"].items():
-        inventory = installed_inventory(root, python_role=role, selected_source=source)
+        inventory = installed_inventory(root, python_role=role, selected_source=source,
+            action_closures=config.get('selected_actions') if role == 'installed-packages' else None)
         identity = raw_digest(inventory); inventories[identity] = inventory
         if role == "python-runtime":
             runtime_identity = identity
@@ -1569,6 +1570,9 @@ def _load_host_only_composition(raw, *, workspace_uuid, realm_root, support_root
         "environment": raw.get("environment", {}), "max_concurrency": raw.get("max_concurrency")}
     if "additional_pack_roots" in raw:
         launch["additional_pack_roots"] = raw["additional_pack_roots"]
+    if 'selected_actions' in raw:
+        from .verified_host_launch import validate_action_closures
+        launch['selected_actions'] = validate_action_closures(raw['selected_actions'])
     if "renderer_selection" in raw:
         from astrid.core.execution.host_renderer_selection import validate_renderer_selection
         validate_renderer_selection(raw["renderer_selection"])

@@ -50,7 +50,242 @@ HOST_DISTRIBUTIONS = {
 }
 
 
-def installed_host_closure(root):
+def _requirements():
+    # Canonical admission owns this grammar. Never maintain an action/package
+    # table here or silently ignore constraints the grammar cannot evaluate.
+    from astrid.core.pack.canonical import execution_requirement, execution_version_matches
+    return execution_requirement, execution_version_matches
+
+
+def _installed_index(root):
+    result = {}
+    # Do not use meta_path distribution discovery here: the running Host's
+    # finder deliberately exposes ONLY Host metadata. Measure explicit pinned
+    # installation entries as data, never import them into that Host.
+    for directory in sorted(root.glob('*.dist-info')):
+        _no_alias(directory)
+        _bounded_source(directory/'METADATA')
+        distribution = importlib.metadata.PathDistribution(directory)
+        name = re.sub(r'[-_.]+', '-', distribution.metadata.get('Name', '')).lower()
+        if not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', name) or name in result:
+            raise HostLaunchError('installed distribution name/origin is invalid or duplicated')
+        result[name] = distribution
+    return result
+
+
+def _action_distribution(root, name, distribution):
+    import base64
+    import csv
+    if Path(distribution.locate_file('')).resolve() != root or not distribution.version:
+        raise HostLaunchError('action distribution origin/version differs')
+    entries = [str(p) for p in distribution.files or () if str(p).endswith('.dist-info/RECORD')]
+    if len(entries) != 1 or len(Path(entries[0]).parts) != 2:
+        raise HostLaunchError('action distribution lacks a unique canonical RECORD')
+    record = entries[0]; directory = Path(record).parent
+    content = _bounded_source(root / record)
+    if content.decode().splitlines() != (distribution.read_text('RECORD') or '').splitlines():
+        raise HostLaunchError('action RECORD metadata differs')
+    files = {}
+    for row in csv.reader(content.decode().splitlines()):
+        if len(row) != 3:
+            raise HostLaunchError('invalid action RECORD row')
+        relative, checksum, size = row
+        path = Path(relative)
+        if '..' in path.parts and not path.is_absolute():
+            # Outside-site console scripts are not import/native grants.
+            continue
+        if path.is_absolute() or str(path) != relative or not path.parts or relative in files:
+            raise HostLaunchError('invalid or duplicate action RECORD path')
+        if '__pycache__' in path.parts or path.suffix in {'.pyc', '.pyo'}:
+            continue
+        if path.suffix == '.pth' or (path.parts[0].endswith('.dist-info') and path.parts[0] != str(directory)):
+            raise HostLaunchError('action RECORD cannot grant startup or foreign metadata')
+        data = _bounded_source(root / relative)
+        pin = hashlib.sha256(data).hexdigest()
+        if relative == record:
+            if checksum or size:
+                raise HostLaunchError('invalid action RECORD self identity')
+        elif checksum != 'sha256='+base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip('=') or size != str(len(data)):
+            raise HostLaunchError('action file differs from RECORD or lacks coverage')
+        files[relative] = pin
+    if record not in files or str(directory/'METADATA') not in files:
+        raise HostLaunchError('action RECORD/METADATA coverage is missing')
+    direct = distribution.read_text('direct_url.json')
+    if direct and json.loads(direct).get('dir_info', {}).get('editable'):
+        raise HostLaunchError('editable action distribution is forbidden')
+    return {'name': name, 'version': distribution.version, 'origin': str(root/directory),
+            'record_sha256': hashlib.sha256(content).hexdigest(), 'files': files}
+
+
+def action_contract(root, action_id, capability_matrix):
+    """Re-admit the canonical declaration and the actual command projection."""
+    from astrid.core.pack.canonical import validate_canonical_pack, validate_execution_dependencies
+    from astrid.core.pack.discovery import DiscoveredPack
+    from astrid.core.pack.loader import load_pack_manifest
+    from astrid.core.execution.executor.actions import action_executor_definition
+    from astrid.core.foundation.hash import executor_definition_digest
+    if not isinstance(action_id, str) or not re.fullmatch(r'[a-z][a-z0-9_]*\.[a-z][a-z0-9_-]*', action_id):
+        raise HostLaunchError('selected action identity is invalid')
+    pack_id, local_id = action_id.split('.')
+    pack_root = _absolute(str(root))/'astrid/packs'/pack_id
+    entry = validate_canonical_pack(pack_root)
+    pack = load_pack_manifest(pack_root/'pack.yaml')
+    declaration = entry.definition.to_dict()['actions'].get(local_id)
+    if declaration is None:
+        raise HostLaunchError('selected action is absent from canonical metadata')
+    dependencies = validate_execution_dependencies(declaration.get('metadata', {}).get('execution_dependencies'))
+    definition = action_executor_definition(DiscoveredPack(pack, 'extra', 0), local_id, pack.actions[local_id])
+    command = definition.command
+    if command is None:
+        raise HostLaunchError('selected action requires its canonical command boundary')
+    argv = list(command.argv)
+    if len(argv) < 3 or argv[:2] != ['{python_exec}', '-m'] or not re.fullmatch(r'[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+', argv[2]):
+        raise HostLaunchError('selected action command must be an explicit Python module')
+    module = argv[2]
+    if not module.startswith('astrid.packs.'+pack_id+'.'):
+        raise HostLaunchError('selected action entrypoint is outside its pack')
+    matrix_path = _absolute(str(capability_matrix)) if capability_matrix is not None else None
+    matrix_bytes = _bounded_source(matrix_path) if matrix_path else None
+    if matrix_bytes is None:
+        raise HostLaunchError('selected action requires an explicit capability matrix')
+    from astrid.core.execution.capability_ledger import load_capability_ledger
+    # Use the canonical ledger validator before binding its exact row/bytes.
+    load_capability_ledger(matrix_path)
+    matrix = json.loads(matrix_bytes)
+    rows = matrix.get('capabilities', [])
+    row = next((r for r in rows if r['id'] == action_id), None)
+    if row is None or row.get('disposition') not in {'required', 'optional'}:
+        raise HostLaunchError('selected action is not admitted by capability matrix')
+    return {'action_id': action_id, 'pack_id': pack_id, 'pack_root': str(pack_root),
+            'pack_sha256': hashlib.sha256(_bounded_source(pack_root/'pack.yaml')).hexdigest(),
+            'declaration': dependencies, 'declaration_sha256': raw_digest(declaration),
+            'capability_digest': 'sha256:'+executor_definition_digest(definition.to_dict()),
+            'capability_matrix': str(matrix_path), 'capability_matrix_sha256': hashlib.sha256(matrix_bytes).hexdigest(),
+            'capability_row_sha256': raw_digest(row), 'module': module,
+            'entrypoint_sha256': hashlib.sha256(_bounded_source(root/Path(*module.split('.')).with_suffix('.py'))).hexdigest()}
+
+
+def qualify_action_closures(root, action_ids, capability_matrix):
+    """Observe exact transitive RECORD closures; no install or code import."""
+    root = _absolute(str(root)); _no_alias(root)
+    if not isinstance(action_ids, (tuple, list)) or len(set(action_ids)) != len(action_ids):
+        raise HostLaunchError('selected action list is invalid or duplicated')
+    index = _installed_index(root)
+    parse, matches = _requirements()
+    result = {}
+    for action_id in sorted(action_ids):
+        contract = action_contract(root, action_id, capability_matrix)
+        pending = list(contract['declaration']['python']); selected = {}
+        while pending:
+            requirement = pending.pop()
+            try:
+                name, constraints, active = parse(requirement)
+                if not active:
+                    continue
+                distribution = index.get(name)
+                if distribution is None:
+                    raise HostLaunchError('missing selected action transitive dependency: '+name)
+                if not matches(distribution.version, constraints):
+                    raise HostLaunchError('incompatible selected action dependency: '+name)
+            except ValueError as exc:
+                raise HostLaunchError(str(exc)) from exc
+            if name in selected:
+                continue
+            selected[name] = _action_distribution(root, name, distribution)
+            # Installed SDK/Runtime optional extras are never action roots.
+            if name in {'astrid', 'banodoco-workspace-runtime'}:
+                raise HostLaunchError('action dependency cannot select a product distribution')
+            pending.extend(distribution.requires or ())
+        body = {**contract, 'distributions': selected,
+                'interpreter': {'path': os.path.abspath(sys.executable),
+                    'sha256': hashlib.sha256(_bounded_source(Path(sys.executable).resolve())).hexdigest(),
+                    'version': list(sys.version_info[:3])}}
+        result[action_id] = {**body, 'digest': raw_digest(body)}
+    return result
+
+
+def validate_action_closures(value):
+    if not isinstance(value, dict) or len(value) > 64:
+        raise HostLaunchError('selected action closure map is invalid')
+    for action_id, binding in value.items():
+        required = {'action_id','pack_id','pack_root','pack_sha256','declaration','declaration_sha256',
+                    'capability_digest','capability_matrix','capability_matrix_sha256','capability_row_sha256',
+                    'module','entrypoint_sha256','distributions','interpreter','digest'}
+        if (not isinstance(binding, dict) or set(binding) != required or binding.get('action_id') != action_id
+                or not _raw(binding.get('digest')) or raw_digest({k:v for k,v in binding.items() if k != 'digest'}) != binding['digest']
+                or not isinstance(binding['distributions'], dict) or not binding['distributions']):
+            raise HostLaunchError('selected action closure binding is invalid')
+        if (not isinstance(action_id, str) or not re.fullmatch(r'[a-z][a-z0-9_]*\.[a-z][a-z0-9_-]*', action_id)
+                or binding['pack_id'] != action_id.split('.')[0]
+                or not isinstance(binding['module'], str) or not binding['module'].startswith('astrid.packs.'+binding['pack_id']+'.')
+                or not re.fullmatch(r'sha256:[0-9a-f]{64}', str(binding['capability_digest']))
+                or any(not _raw(binding[k]) for k in ('pack_sha256','declaration_sha256','capability_matrix_sha256',
+                                                       'capability_row_sha256','entrypoint_sha256'))):
+            raise HostLaunchError('selected action declaration identity is invalid')
+        pack_root = _absolute(binding['pack_root']); _absolute(binding['capability_matrix'])
+        declaration = binding['declaration']
+        # This structural validator is also used by the stdlib-only child
+        # before installing its finder. Canonical semantic admission happened
+        # in action_contract; do not import Astrid ahead of that boundary.
+        if (not isinstance(declaration, dict) or set(declaration) != {'python'}
+                or not isinstance(declaration['python'], list) or not 1 <= len(declaration['python']) <= 64
+                or any(not isinstance(v,str) or not v or len(v)>4096 for v in declaration['python'])):
+            raise HostLaunchError('selected action dependency declaration is invalid')
+        interpreter = binding['interpreter']
+        if (not isinstance(interpreter, dict) or set(interpreter) != {'path','sha256','version'}
+                or not _raw(interpreter['sha256']) or not isinstance(interpreter['version'], list)
+                or len(interpreter['version']) != 3 or any(type(v) is not int or v < 0 for v in interpreter['version'])):
+            raise HostLaunchError('selected action interpreter identity is invalid')
+        _absolute(interpreter['path'])
+        for name, identity in binding['distributions'].items():
+            if (not isinstance(name, str) or not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', name)
+                    or not isinstance(identity, dict) or set(identity) != {'name','version','origin','record_sha256','files'}
+                    or identity['name'] != name or not re.fullmatch(r'\d+(?:\.\d+)*', str(identity['version']))
+                    or not _raw(identity['record_sha256']) or not isinstance(identity['files'], dict) or not identity['files']):
+                raise HostLaunchError('selected action distribution identity is invalid')
+            origin = _absolute(identity['origin'])
+            if origin.parent != pack_root.parents[2] or not origin.name.endswith('.dist-info'):
+                raise HostLaunchError('selected action distribution origin differs from selected installation')
+            for relative, pin in identity['files'].items():
+                path = Path(relative) if isinstance(relative,str) else None
+                if (path is None or not relative or path.is_absolute() or '..' in path.parts or str(path) != relative
+                        or '__pycache__' in path.parts or path.suffix in {'.pyc','.pyo','.pth'} or not _raw(pin)):
+                    raise HostLaunchError('selected action file binding is invalid')
+    return json.loads(canonical(value))
+
+
+def _action_files(root, action_closures):
+    value = validate_action_closures(action_closures)
+    files = {}; identities = {}
+    for action_id, binding in value.items():
+        measured = qualify_action_closures(root, [action_id], binding['capability_matrix'])[action_id]
+        if measured != binding:
+            raise HostLaunchError('selected action closure changed')
+        for name, identity in binding['distributions'].items():
+            if name in identities and identities[name] != identity:
+                raise HostLaunchError('selected actions conflict on shared distribution identity')
+            for relative, pin in identity['files'].items():
+                previous = files.get(relative)
+                if previous is not None and (previous != pin or name not in identities):
+                    raise HostLaunchError('selected action distributions conflict on file ownership')
+                files[relative] = pin
+            identities[name] = identity
+    return files, identities
+
+
+def validate_action_selection(value, *, source_root, interpreter, interpreter_digest, capability_matrix):
+    actions = validate_action_closures(value)
+    root = _absolute(str(source_root))
+    for binding in actions.values():
+        if (binding['pack_root'] != str(root/'astrid/packs'/binding['pack_id'])
+                or binding['capability_matrix'] != capability_matrix
+                or binding['interpreter']['path'] != str(interpreter)
+                or 'sha256:'+binding['interpreter']['sha256'] != interpreter_digest):
+            raise HostLaunchError('selected action differs from profile source/interpreter/capability selection')
+    return actions
+
+
+def installed_host_closure(root, *, action_closures=None):
     """Select RECORD-covered Host distributions without importing their code.
 
     This is an observation of trusted local installed artifacts, not a resolver,
@@ -60,12 +295,12 @@ def installed_host_closure(root):
     import base64
     import csv
     root = _absolute(str(root))
+    action_files, action_identities = _action_files(root, action_closures or {})
     if any(p.is_symlink() for p in (root, *root.parents)):
         raise HostLaunchError("installed Host origin contains a symlink")
     normalize = lambda name: re.sub(r"[-_.]+", "-", name).lower()
     selected = {}
-    for dist in importlib.metadata.distributions(path=[str(root)]):
-        name = normalize(dist.metadata.get("Name", ""))
+    for name, dist in _installed_index(root).items():
         if name not in HOST_DISTRIBUTIONS:
             continue
         if name in selected:
@@ -129,32 +364,24 @@ def installed_host_closure(root):
             "origin": str(root / directory), "record_sha256": hashlib.sha256(record_bytes).hexdigest(),
             "files": covered}
         files.update(covered)
+    for name, identity in action_identities.items():
+        if name in identities and identity != identities[name]:
+            raise HostLaunchError('Host/action shared distribution identities conflict')
+        for relative in identity['files']:
+            if relative in files and name not in identities:
+                raise HostLaunchError('Host/action file ownership conflicts')
     for name, dist in selected.items():
         if name in {"astrid", "banodoco-workspace-runtime"}:
             # Their full optional SDK surface is not the eager Host closure.
             continue
         for requirement in dist.requires or ():
-            spec, _, marker = requirement.partition(";")
-            if marker:
-                marker = marker.strip()
-                if re.fullmatch(r"extra\s*==\s*['\"][\w-]+['\"]", marker):
-                    continue
-                match = re.fullmatch(r"python_version\s*<\s*['\"](\d+)\.(\d+)['\"]", marker)
-                if not match:
-                    raise HostLaunchError("unreviewed Host dependency marker")
-                if sys.version_info[:2] >= tuple(map(int, match.groups())):
-                    continue
-            match = re.fullmatch(r"\s*([\w.-]+)\s*(?:>=\s*(\d+(?:\.\d+)*))?\s*", spec)
-            if not match or normalize(match[1]) not in selected:
-                raise HostLaunchError("missing or unreviewed transitive Host dependency")
-            if match[2]:
-                version = selected[normalize(match[1])].version
-                if not re.fullmatch(r"\d+(?:\.\d+)*", version):
-                    raise HostLaunchError("unreviewed Host dependency version")
-                actual, minimum = (tuple(map(int, v.split('.'))) for v in (version, match[2]))
-                length = max(len(actual), len(minimum))
-                if actual + (0,) * (length-len(actual)) < minimum + (0,) * (length-len(minimum)):
-                    raise HostLaunchError("installed Host transitive dependency version is incompatible")
+            try:
+                parse, matches = _requirements()
+                dependency, constraints, active = parse(requirement)
+                if active and (dependency not in selected or not matches(selected[dependency].version, constraints)):
+                    raise HostLaunchError('missing or incompatible transitive Host dependency')
+            except ValueError as exc:
+                raise HostLaunchError(str(exc)) from exc
     # No unrecorded source, resource, metadata or native artifact may acquire
     # authority, including additions inside an otherwise admitted package.
     for path in root.rglob("*"):
@@ -162,7 +389,7 @@ def installed_host_closure(root):
             continue
         if path.is_symlink():
             raise HostLaunchError("installed Host origin contains a symlink")
-        if path.is_file() and str(path.relative_to(root)) not in files:
+        if path.is_file() and str(path.relative_to(root)) not in files and str(path.relative_to(root)) not in action_files:
             if path.suffix == ".pth" and path.parent == root:
                 continue  # -S never executes it; it grants no mapped imports.
             raise HostLaunchError("installed Host has an undeclared file outside RECORD coverage")
@@ -503,6 +730,13 @@ class HostLaunchVerifier:
             payload["distribution_metadata"] = _distribution_metadata(binding["import_roots"], inventories)
             if selected_python is not None:
                 payload["selected_python"] = selected_python
+                actions = profile.get('host_launch', {}).get('selected_actions', {})
+                if actions:
+                    payload['action_launch'] = {
+                        'actions': validate_action_closures(actions), 'profile_digest': raw_digest(profile),
+                        'host_files': source_inventory['files'], 'source_root': config['source_checkout'],
+                        'launcher': launcher, 'mapping': mapping,
+                        'distribution_metadata': payload['distribution_metadata'], 'selected_python': selected_python}
         if len(canonical(payload)) > LIMIT: raise HostLaunchError("retained launcher binding exceeds its bound")
         context = {"preparation": preparation, "config": config, "host_argv": host_argv, "environment": environment}
         lease.verify()
@@ -634,7 +868,7 @@ def _excluded(path, layout):
                path.is_relative_to(Path(row["resolved"])) for row in layout["excluded_roots"])
 
 
-def installed_inventory(root, *, python_role=None, selected_source=None):
+def installed_inventory(root, *, python_role=None, selected_source=None, action_closures=None):
     """Exact installed non-bytecode inventory, for trusted caller review.
 
     Bytecode is excluded because the isolated launcher never uses it. .pth and
@@ -645,9 +879,12 @@ def installed_inventory(root, *, python_role=None, selected_source=None):
     layout = selected_python_layout(selected_source) if python_role is not None else None
     policy = _selected_inventory_policy(root, python_role, layout) if layout is not None else None
     if python_role == "installed-packages":
-        closure = installed_host_closure(root)
-        return {"root": str(root), "files": closure["files"],
-                "distributions": closure["distributions"], "selection": policy}
+        closure = installed_host_closure(root, action_closures=action_closures)
+        result = {"root": str(root), "files": closure["files"],
+                  "distributions": closure["distributions"], "selection": policy}
+        if action_closures:
+            result['action_closures'] = validate_action_closures(action_closures)
+        return result
     files = {}; aliases = {}
     def walk(directory):
         for path in sorted(directory.iterdir()):
@@ -686,7 +923,7 @@ def installed_inventory(root, *, python_role=None, selected_source=None):
 
 def _local_inventory(value):
     if (not isinstance(value, dict) or not {"root", "files"} <= set(value)
-            or set(value) - {"root", "files", "aliases", "selection", "distributions"}):
+            or set(value) - {"root", "files", "aliases", "selection", "distributions", "action_closures"}):
         raise HostLaunchError("installed inventory shape is invalid")
     root = _absolute(value["root"])
     selection = value.get("selection")
@@ -718,7 +955,7 @@ def _local_inventory(value):
                                              for p in layout["roots"].values()):
             raise HostLaunchError("selected Python file escapes admitted roots")
         _local_read(root / relative, pin)
-    if installed_inventory(root, python_role=role, selected_source=source) != value:
+    if installed_inventory(root, python_role=role, selected_source=source, action_closures=value.get('action_closures')) != value:
         raise HostLaunchError("installed inventory has missing, changed or unexpected files")
     return json.loads(canonical(value))
 
@@ -728,6 +965,7 @@ class _LocalInstallationObservation:
     def __init__(self, profile, launcher, layout=None):
         self._layout = layout
         self._release_digest = profile.get("release_digest")
+        self._actions = profile.get('host_launch', {}).get('selected_actions', {})
         self._renderer = profile.get("host_launch", {}).get("renderer_selection")
         self._renderer_binding = None
         self._pins = [(profile["host_executable"], profile["host_artifact_digest"][7:]),
@@ -738,7 +976,7 @@ class _LocalInstallationObservation:
         if self._layout is not None and selected_python_layout(self._layout["roots"]["installed-packages"]) != self._layout:
             raise HostLaunchError("selected Python startup or inclusion boundary changed")
         if self._layout is not None:
-            closure = installed_host_closure(self._layout["roots"]["installed-packages"])
+            closure = installed_host_closure(self._layout["roots"]["installed-packages"], action_closures=self._actions)
             if "sha256:" + raw_digest(closure["distributions"]) != self._release_digest:
                 raise HostLaunchError("selected Host dependency release changed")
         if self._renderer is not None:
@@ -807,6 +1045,8 @@ class TrustedLocalHostLaunchVerifier(HostLaunchVerifier):
                 raise HostLaunchError("host-only inventory has changed or duplicate selection")
             if role == "installed-packages" and "sha256:" + raw_digest(inventory.get("distributions")) != profile["release_digest"]:
                 raise HostLaunchError("host-only dependency selection differs from selected release")
+            if role == 'installed-packages' and inventory.get('action_closures', {}) != profile.get('host_launch', {}).get('selected_actions', {}):
+                raise HostLaunchError('host-only selected actions differ from installed inventory')
             roles[role] = pin
         if set(roles) != set(layout["roots"]):
             raise HostLaunchError("host-only inventory selection is incomplete")
@@ -881,9 +1121,10 @@ class _MappedDistribution(importlib.metadata.Distribution):
 
 
 class MappedImports(importlib.abc.MetaPathFinder):
-    def __init__(self, mapping, *, trusted_local=False, distribution_metadata=None):
+    def __init__(self, mapping, *, trusted_local=False, distribution_metadata=None, optional_discovery=False):
         self.mapping = mapping
         self.trusted_local = trusted_local
+        self.optional_discovery = optional_discovery
         self._bind_distribution_metadata(distribution_metadata)
 
     def _bind_distribution_metadata(self, distribution_metadata):
@@ -928,6 +1169,11 @@ class MappedImports(importlib.abc.MetaPathFinder):
             for importer in (importlib.machinery.BuiltinImporter, importlib.machinery.FrozenImporter):
                 spec = importer.find_spec(fullname)
                 if spec is not None: return spec
+            if self.optional_discovery:
+                # The action child installs this as its ONLY finder with an
+                # empty path. Optional find_spec probes can observe absence;
+                # ordinary imports still fail without a fallback importer.
+                return None
             raise ModuleNotFoundError("module is outside the reviewed import mapping: " + fullname)
         if item["kind"] == "source": loader = _SourceLoader(item, trusted_local=self.trusted_local)
         elif item["kind"] == "namespace":
@@ -951,6 +1197,8 @@ def launch_from_binding(payload):
         fields.add("distribution_metadata")
         if "selected_python" in payload:
             fields.add("selected_python")
+        if 'action_launch' in payload:
+            fields.add('action_launch')
     if (not isinstance(payload, dict) or set(payload) != fields
             or type(payload["schema_version"]) is not int or payload["schema_version"] != 1
             or payload["mode"] not in (MODE, TRUSTED_LOCAL_MODE) or payload["module"] != HOST_MODULE
@@ -978,6 +1226,8 @@ def launch_from_binding(payload):
     # It cannot be selected by Host CLI, task arguments, CWD or environment.
     if "selected_python" in payload:
         module.__dict__["_RETAINED_SELECTED_PYTHON"] = json.loads(canonical(payload["selected_python"]))
+    if 'action_launch' in payload:
+        module.__dict__['_RETAINED_ACTION_LAUNCH'] = json.loads(canonical(payload['action_launch']))
     sys.modules['__main__'] = module
     # Host collaborators import the canonical name. Keep one execution and one
     # retained owner binding while preserving the CLI's __main__ entry point.
@@ -988,7 +1238,136 @@ def launch_from_binding(payload):
     _SourceLoader(item, trusted_local=payload["mode"] == TRUSTED_LOCAL_MODE).exec_module(module)
 
 
+ACTION_CONTEXT_FIELDS = frozenset({'profile_digest', 'owner', 'owner_epoch', 'generation',
+    'operation_id', 'channel_id', 'task_id', 'attempt_id', 'lease_id', 'fence', 'runtime_epoch',
+    'operation', 'executor_id', 'capability_digest', 'closure_digest'})
+ACTION_ENV_KEYS = frozenset({'ASTRID_NETWORK_POLICY', 'ASTRID_NETWORK_EVIDENCE',
+    'ASTRID_NETWORK_ADMISSION_DIGEST', 'ASTRID_NETWORK_NONCE', 'ASTRID_NETWORK_BROKER_TOKEN',
+    'ASTRID_BROKER_PROXY', 'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy'})
+
+
+def validate_action_context(context, *, selection, profile_digest):
+    if (not isinstance(context, dict) or set(context) != ACTION_CONTEXT_FIELDS
+            or context['profile_digest'] != profile_digest or not _raw(profile_digest)
+            or context['operation'] != selection['action_id']
+            or context['capability_digest'] != selection['capability_digest']
+            or context['closure_digest'] != selection['digest']
+            or any(type(context[k]) is not int or context[k] < 1 for k in ('generation', 'fence', 'runtime_epoch'))
+            or any(not isinstance(context[k], str) or not context[k] or '\0' in context[k]
+                   for k in ('owner_epoch','operation_id','channel_id','task_id','attempt_id','lease_id','executor_id'))
+            or not isinstance(context['owner'], dict) or not context['owner']):
+        raise HostLaunchError('selected action authenticated launch context differs')
+    return json.loads(canonical(context))
+
+
+def prepare_action_binding(retained, *, action_id, context, network_environment):
+    """Build one fresh child map from the privately retained Host selection.
+
+    The caller must authenticate the current owner/claim before and after this
+    measurement. Task input, environment and serialized profile files cannot
+    supply ``retained``. The only child transport is an owned inherited pipe.
+    """
+    actions = validate_action_closures(retained['actions'])
+    if action_id not in actions:
+        raise HostLaunchError('action has no selected child closure')
+    selection = actions[action_id]
+    validate_action_context(context, selection=selection, profile_digest=retained['profile_digest'])
+    root = _absolute(retained['source_root'])
+    # Recheck the installed union as well as this action, retaining fixed Host
+    # mappings while detecting foreign additions and conflicting shared pins.
+    installed = installed_host_closure(root, action_closures=actions)
+    if installed['files'] != retained['host_files']:
+        raise HostLaunchError('selected action base Host files changed')
+    pack_prefix = 'astrid/packs/'+selection['pack_id']+'/'
+    def admitted(relative):
+        return not relative.startswith('astrid/packs/') or relative == 'astrid/packs/__init__.py' or relative.startswith(pack_prefix)
+    files = {p:pin for p,pin in retained['host_files'].items() if admitted(p)}
+    for identity in selection['distributions'].values():
+        files.update(identity['files'])
+    inventory = {'root': str(root), 'files': files}
+    pin = raw_digest(inventory)
+    roots = [{'path': str(root), 'inventory_digest': pin}]
+    mapping = _mapping(roots, {pin: inventory}, inventory, trusted_local=True)
+    # The parent map contains fixed stdlib/extension origins only. Never add
+    # any sibling action's installed dependency or filesystem import fallback.
+    for name, item in retained['mapping'].items():
+        if not Path(item['path']).is_relative_to(root):
+            mapping[name] = item
+    metadata = _distribution_metadata(roots, {pin: inventory})
+    metadata.extend(row for row in retained['distribution_metadata'] if row['root'] != str(root))
+    if (not isinstance(network_environment, dict) or set(network_environment) - ACTION_ENV_KEYS
+            or any(not isinstance(v, str) or '\0' in v for v in network_environment.values())):
+        raise HostLaunchError('selected action environment is not the owned broker projection')
+    launcher = retained['launcher']
+    _local_read(Path(launcher['path']), launcher['sha256'])
+    read_files = {str(root/relative): pin for relative,pin in files.items()}
+    read_files[launcher['path']] = launcher['sha256']
+    return {'schema_version': 1, 'mode': TRUSTED_LOCAL_MODE, 'action': selection,
+            'context': context, 'context_digest': raw_digest(context), 'mapping': mapping,
+            'distribution_metadata': metadata, 'read_files': read_files,
+            'network_environment': dict(network_environment)}
+
+
+def launch_action_from_binding(payload, *, context_digest, arguments):
+    required = {'schema_version','mode','action','context','context_digest','mapping',
+                'distribution_metadata','read_files','network_environment'}
+    if (not isinstance(payload, dict) or set(payload) != required or payload['schema_version'] != 1
+            or payload['mode'] != TRUSTED_LOCAL_MODE or payload['context_digest'] != context_digest
+            or raw_digest(payload['context']) != context_digest):
+        raise HostLaunchError('selected action bootstrap binding differs')
+    selection = payload['action']
+    validate_action_closures({selection['action_id']: selection})
+    validate_action_context(payload['context'], selection=selection, profile_digest=payload['context']['profile_digest'])
+    if (selection['interpreter'] != {'path': os.path.abspath(sys.executable),
+            'sha256': hashlib.sha256(_bounded_source(Path(sys.executable).resolve())).hexdigest(),
+            'version': list(sys.version_info[:3])}):
+        raise HostLaunchError('selected action interpreter changed')
+    for path, pin in payload['read_files'].items():
+        _local_read(_absolute(path), pin)
+    mapping = payload['mapping']; module_name = selection['module']
+    if module_name not in mapping or mapping[module_name]['sha256'] != selection['entrypoint_sha256']:
+        raise HostLaunchError('selected action entrypoint mapping differs')
+    if any(name in sys.modules for name in mapping if name.split('.')[0] in {'astrid','banodoco_workspace_client'}):
+        raise HostLaunchError('selected action was imported before filtered bootstrap')
+    finder = MappedImports(mapping, trusted_local=True, optional_discovery=True)
+    sys.path[:] = []; sys.path_hooks[:] = []; sys.path_importer_cache.clear(); sys.meta_path[:] = [finder]
+    finder._bind_distribution_metadata(payload['distribution_metadata'])
+    sys.dont_write_bytecode = True
+    environment = payload['network_environment']
+    if not isinstance(environment, dict) or set(environment) - ACTION_ENV_KEYS:
+        raise HostLaunchError('invalid selected action broker environment')
+    os.environ.update(environment)
+    # Install enforcement before importing the pack or any action dependency.
+    if environment:
+        policy = importlib.import_module('astrid.core.execution.network_policy')
+        policy.install_from_environment(strict=True, broker_required=True)
+    os.environ['ASTRID_INTERNAL_INVOCATION'] = '1'
+    __import__(module_name.rpartition('.')[0])
+    item = mapping[module_name]
+    module = type(sys)('__main__'); module.__package__ = module_name.rpartition('.')[0]
+    module.__spec__ = importlib.util.spec_from_file_location(module_name, item['path'], loader=_SourceLoader(item, trusted_local=True))
+    sys.modules['__main__'] = module
+    sys.argv[:] = [item['path'], *arguments]
+    _SourceLoader(item, trusted_local=True).exec_module(module)
+
+
 def _main():
+    if (sys.flags.isolated and sys.flags.no_site and len(sys.argv) >= 5
+            and sys.argv[1] == '--action-binding-fd' and sys.argv[3] == '--context-digest'):
+        fd = int(sys.argv[2]); expected = sys.argv[4]; arguments = sys.argv[5:]
+        payload = bytearray()
+        try:
+            while True:
+                chunk = os.read(fd, min(1024*1024, LIMIT+1-len(payload)))
+                if not chunk: break
+                payload.extend(chunk)
+                if len(payload) > LIMIT: raise HostLaunchError('action binding exceeds its bound')
+        finally:
+            os.close(fd)
+        value = json.loads(bytes(payload))
+        if canonical(value) != bytes(payload):
+            raise HostLaunchError('action binding is not canonical JSON')
+        return launch_action_from_binding(value, context_digest=expected, arguments=arguments)
     if not sys.flags.isolated or not sys.flags.no_site or len(sys.argv) != 3 or sys.argv[1] != "--binding-fd":
         raise HostLaunchError("launcher requires the exact isolated binding descriptor mode")
     fd = int(sys.argv[2]); payload = bytearray()

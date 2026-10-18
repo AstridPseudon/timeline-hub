@@ -136,7 +136,7 @@ def validate_selected_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
                 if not Path(value).is_absolute() or ".." in Path(value).parts:
                     raise RelayError("host-only selected path is invalid")
         launch = profile["host_launch"]
-        if not isinstance(launch, Mapping) or set(launch) - {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "additional_pack_roots", "max_concurrency", "renderer_selection"} or not {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "max_concurrency"} <= set(launch):
+        if not isinstance(launch, Mapping) or set(launch) - {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "additional_pack_roots", "max_concurrency", "renderer_selection", "selected_actions"} or not {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "max_concurrency"} <= set(launch):
             raise RelayError("host-only launch binding is invalid")
         if type(launch["max_concurrency"]) is not int or not 1 <= launch["max_concurrency"] <= 16:
             raise RelayError("host-only concurrency must be explicitly bounded")
@@ -162,6 +162,14 @@ def validate_selected_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
             for relative, pin in extra["files"].items():
                 if not isinstance(relative, str) or not relative or Path(relative).is_absolute() or ".." in Path(relative).parts or not isinstance(pin, str) or not re.fullmatch(r"[0-9a-f]{64}", pin):
                     raise RelayError("host-only additional pack inventory is invalid")
+        if 'selected_actions' in launch:
+            from .verified_host_launch import validate_action_selection, HostLaunchError
+            try:
+                validate_action_selection(launch['selected_actions'], source_root=launch['source_checkout'],
+                    interpreter=profile['host_executable'], interpreter_digest=profile['host_artifact_digest'],
+                    capability_matrix=launch['capability_matrix'])
+            except HostLaunchError as exc:
+                raise RelayError(str(exc)) from exc
         if "renderer_selection" in launch:
             from astrid.core.execution.host_renderer_selection import renderer_selection_payload
             try:
