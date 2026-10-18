@@ -90,9 +90,16 @@ export type ShaderUniformType =
   | 'vec4'
   | 'color'
   | 'enum'
+  | 'object'
   | 'textureRef'
   | 'frame'
   | 'time';
+
+/**
+ * M13: Sub-field value kinds for structured `object` uniforms. Mirrors the
+ * manifest schema's `fields[].type` enum, which excludes `object` (no nesting).
+ */
+export type ShaderUniformFieldType = Exclude<ShaderUniformType, 'object'>;
 
 /** M13: Enum option for shader uniform controls. */
 export interface ShaderUniformEnumOption {
@@ -113,7 +120,26 @@ export type ShaderUniformDefaultValue =
   | boolean
   | string
   | readonly number[]
-  | ShaderTextureRef;
+  | ShaderTextureRef
+  | ShaderUniformObjectValue;
+
+/** M13: Value of a structured `object` uniform, keyed by sub-field name. */
+export interface ShaderUniformObjectValue {
+  readonly [fieldName: string]: ShaderUniformDefaultValue;
+}
+
+/** M13: A bounded sub-field of a structured `object` uniform. */
+export interface ShaderUniformFieldDefinition {
+  readonly name: string;
+  readonly label: string;
+  readonly description?: string;
+  readonly type: ShaderUniformFieldType;
+  readonly default?: ShaderUniformDefaultValue;
+  readonly min?: number;
+  readonly max?: number;
+  readonly step?: number;
+  readonly options?: readonly ShaderUniformEnumOption[];
+}
 
 /** M13: A host-rendered shader uniform definition. */
 export interface ShaderUniformDefinition {
@@ -126,6 +152,8 @@ export interface ShaderUniformDefinition {
   readonly max?: number;
   readonly step?: number;
   readonly options?: readonly ShaderUniformEnumOption[];
+  /** Bounded sub-field definitions; only meaningful when `type` is `object`. */
+  readonly fields?: readonly ShaderUniformFieldDefinition[];
 }
 
 /** M13: Ordered shader uniform schema. */
