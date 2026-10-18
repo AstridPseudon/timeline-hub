@@ -30,7 +30,7 @@ import {
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { EditorRuntimeProvider } from '@/tools/video-editor/contexts/EditorRuntimeProvider';
 import type { VideoEditorScopedServices } from '@/tools/video-editor/browser/scopedServices';
-import { buildVideoEditorLightboxMedia, readGalleryGenerationSelection, VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider';
+import { buildVideoEditorLightboxMedia, createGalleryTimelineCommands, readGalleryGenerationSelection, VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider';
 import { ExtensionSettingsPanel } from '@/tools/video-editor/components/ExtensionSettings/ExtensionSettingsPanel';
 import type { EffectRegistryRecord } from '@/tools/video-editor/effects/registry/types';
 import { useEffectRegistryContext } from '@/tools/video-editor/effects/registry/EffectRegistryContext';
@@ -809,6 +809,57 @@ describe('VideoEditorProvider', () => {
     getProjectMediaSelection.mockResolvedValueOnce({ ...response, generation_id: 'other-generation' });
     await expect(readGalleryGenerationSelection(provider, request)).resolves.toBeNull();
     expect(getProjectMediaSelection).toHaveBeenCalledTimes(2);
+  });
+
+  it('routes a prepared Gallery selection through the mounted typed timeline command facade', () => {
+    const selection = {
+      asset: `sha256:${'a'.repeat(64)}`,
+      generation_id: 'generation-gallery',
+      variant_id: 'variant-gallery',
+      object_id: `sha256:${'a'.repeat(64)}`,
+      catalog_digest: `sha256:${'b'.repeat(64)}`,
+    };
+    const applyEdit = vi.fn();
+    const commands = createGalleryTimelineCommands(buildCommandTestStore({ applyEdit }));
+
+    expect(typeof commands.addClip).toBe('function');
+    const result = commands.addClip({
+      preparedAsset: {
+        assetKey: selection.asset,
+        mediaType: 'image',
+        durationSeconds: null,
+        entry: {
+          file: 'http://127.0.0.1:57605/v1/objects/image/content',
+          type: 'image/png',
+          generationId: selection.generation_id,
+          variantId: selection.variant_id,
+        },
+        source: 'registered',
+        selectedMedia: selection,
+      },
+      time: 2,
+      trackId: 'V1',
+    });
+
+    expect(result).toMatchObject({ ok: true, data: { trackId: 'V1' } });
+    expect(applyEdit).toHaveBeenCalledOnce();
+    const [edit, options] = applyEdit.mock.calls[0] as [
+      { type: string; command: PlacePreparedMediaCommand },
+      { semantic?: boolean; editCommands?: Array<Record<string, unknown>> },
+    ];
+    expect(edit).toMatchObject({
+      type: 'prepared-media',
+      command: { payload: { asset: { selectedMedia: selection }, at: 2, trackId: 'V1' } },
+    });
+    expect(edit.command.payload.asset.selectedMedia).toBe(selection);
+    expect(options.semantic).toBe(true);
+    expect(options.editCommands).toEqual([
+      expect.objectContaining({
+        op: 'timeline.add',
+        select: 'parent/track:V1',
+        args: expect.objectContaining({ media: selection }),
+      }),
+    ]);
   });
 
 

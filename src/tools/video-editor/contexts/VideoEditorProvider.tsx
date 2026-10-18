@@ -51,6 +51,7 @@ import { isOpenableAssetType } from '@/tools/video-editor/lib/editor-utils.ts';
 import { getAssetDisplayReference, getAssetResolvedSource } from '@/tools/video-editor/lib/asset-registry.ts';
 import { loadGenerationForLightbox } from '@/tools/video-editor/lib/generation-utils.ts';
 import { getClipTimelineDuration } from '@/tools/video-editor/lib/config-utils.ts';
+import { createTimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 import { useTimelineConfigVersion, useTimelineEditorData } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useEffectResources } from '@/tools/video-editor/hooks/useEffectResources.ts';
 import { useSequenceResources } from '@/tools/video-editor/hooks/useSequenceResources.ts';
@@ -205,6 +206,14 @@ export async function readGalleryGenerationSelection(
   }
   // Keep the exact helper response object. Do not reconstruct its identity.
   return identity;
+}
+
+/** Build the public mounted command facade for Gallery-to-editor additions. */
+export function createGalleryTimelineCommands(
+  store: Parameters<typeof createTimelineCommands>[0],
+  timelineEditability?: TimelineEditability,
+) {
+  return createTimelineCommands(store, { timelineEditability });
 }
 
 function isVideoEditorMediaLightboxProps(
@@ -469,6 +478,10 @@ export function VideoEditorRuntimeContent({
 }) {
   const runtime = useVideoEditorRuntime();
   const { store, editor, chrome } = sync;
+  const galleryCommands = useMemo(
+    () => createGalleryTimelineCommands(store, runtime.timelineEditability),
+    [runtime.timelineEditability, store],
+  );
 
   useEffect(() => {
     onSaveStatusChange?.(chrome.saveStatus);
@@ -641,7 +654,7 @@ export function VideoEditorRuntimeContent({
             (max, clip) => Math.max(max, clip.at + getClipTimelineDuration(clip)),
             0,
           );
-          const placed = editorForDrop.commands.addClip({
+          const placed = galleryCommands.addClip({
             preparedAsset: {
               assetKey: registrationPlan.assetId,
               mediaType,
