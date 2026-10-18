@@ -153,6 +153,8 @@ def validate_diagnostic(report: Mapping[str, Any]) -> list[str]:
             effects = action.get("effects")
             if command not in COMMAND_EFFECTS or effects != COMMAND_EFFECTS[command] or any(effect not in C2_ALLOWED_EFFECTS for effect in effects if isinstance(effects, list)) or not isinstance(action.get("arguments"), list) or not isinstance(action.get("authorizationRequired"), bool) or not isinstance(action.get("executable"), bool):
                 errors.append("next action command/effects are invalid")
+            if isinstance(effects, list) and any(effect != "observe" for effect in effects) and action.get("authorizationRequired") is not True:
+                errors.append("effectful next actions require authorization")
             if any("<redacted" in str(arg).lower() or "[redacted" in str(arg).lower() for arg in action.get("arguments", [])) and action.get("executable"):
                 errors.append("redacted next action cannot be executable")
     return errors

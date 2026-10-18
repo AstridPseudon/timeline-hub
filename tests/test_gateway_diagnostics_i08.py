@@ -74,6 +74,12 @@ def test_c2_rejects_unpaired_failure_and_over_limit_capture() -> None:
     assert any("bounded field events" in error for error in validate_diagnostic(bounded))
 
 
+def test_c2_rejects_effectful_action_without_authorization() -> None:
+    report = build_diagnostic(mode="local", facts={}, next_actions=[_action()])
+    report["nextActions"][0]["authorizationRequired"] = False
+    assert "effectful next actions require authorization" in validate_diagnostic(report)
+
+
 @dataclass
 class _Observer:
     inspect_data: dict[str, object] | None = None
