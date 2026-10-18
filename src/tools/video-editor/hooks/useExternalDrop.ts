@@ -364,6 +364,47 @@ async function dispatchTimelineDrop({
     if (!shot || !resolvedTarget.ok || shotImages.length === 0) {
       return;
     }
+
+    // A single image already present in the selected project's registry is a
+    // Runtime media source, not a new unbound shot image. Resolve its exact
+    // selection before preparing or registering it, as the final-video path
+    // above does. A refused selection must not fall through to legacy rows.
+    if (shotImages.length === 1 && prepareGenerationAssetForDrop) {
+      const shotImage = shotImages[0];
+      const generationId = shotImage.generation_id;
+      const imageUrl = getMediaUrl(shotImage);
+      const hasRegisteredSource = Boolean(generationId && Object.values(
+        selectionBase?.registry.assets ?? {},
+      ).some((entry) => entry.generationId === generationId));
+
+      if (generationId && imageUrl && hasRegisteredSource) {
+        const generationData = {
+          generationId,
+          variantType: 'image' as const,
+          imageUrl,
+          thumbUrl: getThumbnailUrl(shotImage) ?? imageUrl,
+          metadata: {
+            content_type: shotImage.contentType ?? shotImage.type ?? 'image/png',
+          },
+        };
+        const preparedAsset = await prepareGenerationAssetForDrop(generationData);
+        if (preparedAsset === null || dataRef.current !== selectionBase) {
+          return;
+        }
+        if (preparedAsset) {
+          dropAsset(
+            preparedAsset.assetKey,
+            dropPosition.isNewTrack ? undefined : dropPosition.trackId,
+            dropPosition.time,
+            dropPosition.isNewTrack,
+            insertAtTop,
+            preparedAsset,
+          );
+          return;
+        }
+      }
+    }
+
     const priorDataRef = dataRef.current;
     let workingData = resolvedTarget.preparedCurrent;
     const metaUpdates: Record<string, TimelineData['meta'][string]> = {};

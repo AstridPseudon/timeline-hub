@@ -1961,4 +1961,235 @@ describe('useExternalDrop', () => {
     expect(applyEdit).not.toHaveBeenCalled();
     expect(dataRef.current).toBe(initialData);
   });
+
+  it('refuses a registered shot image when its exact Runtime media selection is stale', async () => {
+    const projectId = 'fa20eee1bee84789b1351b9e821933af';
+    const selection = {
+      asset: 'sha256:a95bc2abe67e7de50fb4572334e15b0c59ad6bd08731f8602ac86ca4a6c03791',
+      generation_id: 'generation-task-9a054f1451c94e22913bc9636277c9c0',
+      variant_id: 'initial-4e27a08f18d5bd16f7b4eb027cc7a74578bd8294706af363d4010dad20d7e364',
+      object_id: 'sha256:a95bc2abe67e7de50fb4572334e15b0c59ad6bd08731f8602ac86ca4a6c03791',
+      catalog_digest: 'sha256:364606acc40be05292f44c220c7f566260578d3c8f1fadbf15ce6fe838428429',
+    };
+    mockRuntime.project.projectId = projectId;
+    const getProjectMediaSelection = vi.fn().mockRejectedValue(new Error('stale catalog digest'));
+    mockRuntime.provider = { persistenceEnabled: true, getProjectMediaSelection };
+    mockUseShots.mockReturnValue({
+      shots: [{
+        id: 'shot-196',
+        name: 'Visual import',
+        images: [{
+          generation_id: selection.generation_id,
+          imageUrl: 'https://runtime.test/c196-local.png',
+          thumbUrl: 'https://runtime.test/c196-local.png',
+          contentType: 'image/png',
+          type: 'image',
+        }],
+      }],
+      isLoading: false,
+      error: null,
+      refetchShots: vi.fn(),
+    });
+
+    const initialData = makeDropTestData();
+    initialData.head = { projectId, timelineId: 'c196-visual', headRevisionId: 'revision-1' };
+    initialData.registry.assets[selection.asset] = {
+      file: 'https://runtime.test/c196-local.png',
+      type: 'image/png',
+      generationId: selection.generation_id,
+      variantId: selection.variant_id,
+      media_id: selection.object_id,
+    } as never;
+    const dataRef = { current: initialData } as unknown as React.MutableRefObject<TimelineData | null>;
+    const registerGenerationAsset = vi.fn((generation: GenerationDropData) => {
+      const assetId = 'fallback-unbound-image';
+      initialData.registry.assets[assetId] = {
+        file: generation.imageUrl,
+        type: 'image/png',
+      } as never;
+      return assetId;
+    });
+    const prepareGenerationAsset = vi.fn();
+    const handleAssetDrop = vi.fn();
+    const applyEdit = vi.fn();
+    const coordinator = {
+      update: vi.fn(),
+      showSecondaryGhosts: vi.fn(),
+      end: vi.fn(),
+      lastPosition: {
+        time: 12,
+        rowIndex: 0,
+        trackId: 'V1',
+        trackKind: 'visual',
+        trackName: 'V1',
+        isNewTrack: false,
+        isNewTrackTop: false,
+        isReject: false,
+        newTrackKind: null,
+        screenCoords: { rowTop: 0, rowLeft: 0, rowWidth: 0, rowHeight: 0, clipLeft: 0, clipWidth: 0, ghostCenter: 0 },
+      },
+      editAreaRef: { current: null },
+    };
+    const { result } = renderHook(() => useExternalDrop({
+      dataRef,
+      timelineId: 'c196-visual',
+      pendingOpsRef: { current: 0 },
+      scale: 1,
+      scaleWidth: 1,
+      selectedTrackId: 'V1',
+      applyEdit,
+      invalidateAssetRegistry: vi.fn(),
+      resolveAssetUrl: vi.fn(),
+      coordinator,
+      registerGenerationAsset,
+      prepareGenerationAsset,
+      uploadImageGeneration: vi.fn(),
+      uploadVideoGeneration: vi.fn(),
+      handleAssetDrop,
+      shots: mockUseShots().shots,
+      finalVideoMap: new Map(),
+    }));
+
+    await act(async () => {
+      await result.current.onTimelineDrop(createDropEvent(
+        createStoredShotPayload({ shotId: 'shot-196', shotName: 'Visual import', imageGenerationIds: [selection.generation_id] }),
+        ['application/x-shot', 'text/plain'],
+      ));
+    });
+
+    expect(getProjectMediaSelection).toHaveBeenCalledExactlyOnceWith({
+      projectId,
+      asset: selection.asset,
+      generationId: selection.generation_id,
+      variantId: selection.variant_id,
+    });
+    expect(prepareGenerationAsset).not.toHaveBeenCalled();
+    expect(registerGenerationAsset).not.toHaveBeenCalled();
+    expect(handleAssetDrop).not.toHaveBeenCalled();
+    expect(applyEdit).not.toHaveBeenCalled();
+    expect(dataRef.current).toBe(initialData);
+  });
+
+  it('passes the exact Runtime selection for a registered shot image into prepared timeline placement', async () => {
+    const projectId = 'fa20eee1bee84789b1351b9e821933af';
+    const selection = {
+      asset: 'sha256:a95bc2abe67e7de50fb4572334e15b0c59ad6bd08731f8602ac86ca4a6c03791',
+      generation_id: 'generation-task-9a054f1451c94e22913bc9636277c9c0',
+      variant_id: 'initial-4e27a08f18d5bd16f7b4eb027cc7a74578bd8294706af363d4010dad20d7e364',
+      object_id: 'sha256:a95bc2abe67e7de50fb4572334e15b0c59ad6bd08731f8602ac86ca4a6c03791',
+      catalog_digest: 'sha256:364606acc40be05292f44c220c7f566260578d3c8f1fadbf15ce6fe838428429',
+    };
+    mockRuntime.project.projectId = projectId;
+    const getProjectMediaSelection = vi.fn().mockResolvedValue(selection);
+    mockRuntime.provider = { persistenceEnabled: true, getProjectMediaSelection };
+    mockUseShots.mockReturnValue({
+      shots: [{
+        id: 'shot-196',
+        name: 'Visual import',
+        images: [{
+          generation_id: selection.generation_id,
+          imageUrl: 'https://runtime.test/c196-local.png',
+          thumbUrl: 'https://runtime.test/c196-local.png',
+          contentType: 'image/png',
+          type: 'image',
+        }],
+      }],
+      isLoading: false,
+      error: null,
+      refetchShots: vi.fn(),
+    });
+
+    const initialData = makeDropTestData();
+    initialData.head = { projectId, timelineId: 'c196-visual', headRevisionId: 'revision-1' };
+    initialData.registry.assets[selection.asset] = {
+      file: 'https://runtime.test/c196-local.png',
+      type: 'image/png',
+      generationId: selection.generation_id,
+      variantId: selection.variant_id,
+      media_id: selection.object_id,
+    } as never;
+    const dataRef = { current: initialData } as unknown as React.MutableRefObject<TimelineData | null>;
+    const preparedAsset = {
+      assetKey: selection.asset,
+      mediaType: 'image' as const,
+      durationSeconds: null,
+      entry: {
+        file: 'https://runtime.test/c196-local.png',
+        type: 'image/png',
+        generationId: selection.generation_id,
+        variantId: selection.variant_id,
+        media_id: selection.object_id,
+      },
+      source: 'registered' as const,
+      selectedMedia: selection,
+    };
+    const prepareGenerationAsset = vi.fn().mockReturnValue(preparedAsset);
+    const registerGenerationAsset = vi.fn();
+    const handleAssetDrop = vi.fn();
+    const applyEdit = vi.fn();
+    const coordinator = {
+      update: vi.fn(),
+      showSecondaryGhosts: vi.fn(),
+      end: vi.fn(),
+      lastPosition: {
+        time: 12,
+        rowIndex: 0,
+        trackId: 'V1',
+        trackKind: 'visual',
+        trackName: 'V1',
+        isNewTrack: false,
+        isNewTrackTop: false,
+        isReject: false,
+        newTrackKind: null,
+        screenCoords: { rowTop: 0, rowLeft: 0, rowWidth: 0, rowHeight: 0, clipLeft: 0, clipWidth: 0, ghostCenter: 0 },
+      },
+      editAreaRef: { current: null },
+    };
+    const { result } = renderHook(() => useExternalDrop({
+      dataRef,
+      timelineId: 'c196-visual',
+      pendingOpsRef: { current: 0 },
+      scale: 1,
+      scaleWidth: 1,
+      selectedTrackId: 'V1',
+      applyEdit,
+      invalidateAssetRegistry: vi.fn(),
+      resolveAssetUrl: vi.fn(),
+      coordinator,
+      registerGenerationAsset,
+      prepareGenerationAsset,
+      uploadImageGeneration: vi.fn(),
+      uploadVideoGeneration: vi.fn(),
+      handleAssetDrop,
+      shots: mockUseShots().shots,
+      finalVideoMap: new Map(),
+    }));
+
+    await act(async () => {
+      await result.current.onTimelineDrop(createDropEvent(
+        createStoredShotPayload({ shotId: 'shot-196', shotName: 'Visual import', imageGenerationIds: [selection.generation_id] }),
+        ['application/x-shot', 'text/plain'],
+      ));
+    });
+
+    expect(getProjectMediaSelection).toHaveBeenCalledExactlyOnceWith({
+      projectId,
+      asset: selection.asset,
+      generationId: selection.generation_id,
+      variantId: selection.variant_id,
+    });
+    expect(prepareGenerationAsset).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      generationId: selection.generation_id,
+      variantType: 'image',
+      assetId: selection.asset,
+      variantId: selection.variant_id,
+      mediaId: selection.object_id,
+      selectedMedia: selection,
+    }));
+    expect(registerGenerationAsset).not.toHaveBeenCalled();
+    expect(handleAssetDrop).toHaveBeenCalledExactlyOnceWith(selection.asset, 'V1', 12, false, false, preparedAsset);
+    expect(handleAssetDrop.mock.calls[0][5].selectedMedia).toBe(selection);
+    expect(applyEdit).not.toHaveBeenCalled();
+    expect(dataRef.current).toBe(initialData);
+  });
 });
