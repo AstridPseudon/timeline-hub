@@ -146,6 +146,54 @@ tl.publish("Move rocket to went")
 
 Add an SDK mutator in `astrid/sdk/timeline/checkout.py` and its `_commands.register(...)` tuple; `astrid/sdk/timeline/commands.py` owns that registry and `EDIT_FLAG_OPERATIONS`. Add the CLI flag in `astrid/packs/timeline/cli.py`; `tests/sdk/test_timeline_commands.py` checks the flag mapping. Update `tests/parity/edit-command-flags.json`, regenerate the [flag-to-operation table](references/edit-command-flags.md) with `python3 -m tools.parity.edit_flag_reference`, and verify it in `tests/sdk/test_edit_command_contract.py`. For a lint check, follow `astrid/packs/rendering/docs/references/visualize-extend.md`: export `CHECK = Check(...)` from `astrid/packs/<pack>/rendering/visualize_layers/<name>.py`; discovery and `register_check` live in `astrid/packs/rendering/actions/timeline_visualize/layers/base.py`. The guide pattern is tested by `test_the_guide_examples_register_and_run` in `tests/packs/rendering/test_timeline_visualize_motion_views.py` and listed by `python3 -m astrid timelines lint --list-checks`. Add an editing scenario under `tests/editing_scenarios/` and cover it in `tests/editing_conformance/test_conformance.py`. `timelines edit --help` is the compact routine list (≤40 lines); `--help-all` shows every option.
 
+### Add an operation
+
+1. Choose one canonical OpCall id and add its `Operation` entry in `astrid/sdk/timeline/checkout.py`; name the handler, snapshot inverse, aliases, CLI spelling, SDK adapter, and sheet token.
+2. Keep parser actions, SDK adapters, and sheet command handling explicit. Do not generate flags, methods, tokens, or a second registry.
+3. Add or extend a disposable scenario under `tests/editing_scenarios/` for the CLI, sheet, and Python routes; assert the saved journal uses the canonical id.
+4. Add the explicit flag destination in `commands.py` and refresh `tests/parity/edit-command-flags.json` from the registry.
+5. Regenerate the reference table below with `python3 scripts/generate_timeline_registry_reference.py`, then run the focused scenario and adapter selectors.
+
+### Canonical operation reference
+
+The canonical edit spellings below come from the same registry. Accepted aliases stay parseable and journal under their canonical operation.
+
+<!-- timeline-operation-registry:begin -->
+| Canonical flag | OpCall | SDK adapter | Sheet token |
+|---|---|---|---|
+| `--add-media` | `timeline.add-media` | `commands.run` | `edit {"op":"timeline.add-media","select":null,"args":...}` |
+| `--clip` | `timeline.edit-flags` | `Checkout.edit_flags` | `edit {"op":"timeline.edit-flags","select":null,"args":...}` |
+| `--close-gap-before` | `timeline.close-gap` | `Checkout.close_gap` | `edit {"op":"timeline.close-gap","select":null,"args":...}` |
+| `--crossfade` | `timeline.crossfade` | `commands.run` | `edit {"op":"timeline.crossfade","select":null,"args":...}` |
+| `--cut` | `timeline.edit-flags` | `Checkout.edit_flags` | `edit {"op":"timeline.edit-flags","select":null,"args":...}` |
+| `--draft` | `timeline.edit-flags` | `Checkout.edit_flags` | `edit {"op":"timeline.edit-flags","select":null,"args":...}` |
+| `--dry-run` | `timeline.edit-flags` | `Checkout.edit_flags` | `edit {"op":"timeline.edit-flags","select":null,"args":...}` |
+| `--file` | `timeline.edit-flags` | `Checkout.edit_flags` | `edit {"op":"timeline.edit-flags","select":null,"args":...}` |
+| `--film-end` | `timeline.film-end` | `Checkout.film_end` | `edit {"op":"timeline.film-end","select":null,"args":...}` |
+| `--fit-sequence` | `sequence.fit` | `StepSequence.fit` | `edit {"op":"sequence.fit","select":"CLIP","args":...}` |
+| `--for` | `clip.set-duration` | `Clip.set_duration` | `edit {"op":"clip.set-duration","select":"CLIP","args":...}` |
+| `--from-script` | `timeline.apply-script` | `Checkout.apply_script` | `edit {"op":"timeline.apply-script","select":null,"args":...}` |
+| `--gap-after` | `voice.set-gap-after` | `Voice.set_gap_after` | `edit {"op":"voice.set-gap-after","select":"CLIP","args":...}` |
+| `--insert` | `timeline.insert-time` | `Checkout.insert_time` | `edit {"op":"timeline.insert-time","select":null,"args":...}` |
+| `--insert-line` | `timeline.insert-line` | `Checkout.insert_line` | `edit {"op":"timeline.insert-line","select":null,"args":...}` |
+| `--nudge` | `clip.nudge` | `Clip.nudge` | `edit {"op":"clip.nudge","select":"CLIP","args":...}` |
+| `--on` | `clip.on` | `Clip.on` | `edit {"op":"clip.on","select":"CLIP","args":...}` |
+| `--over` | `timeline.crossfade` | `commands.run` | `edit {"op":"timeline.crossfade","select":null,"args":...}` |
+| `--project` | `timeline.edit-flags` | `Checkout.edit_flags` | `edit {"op":"timeline.edit-flags","select":null,"args":...}` |
+| `--remove-line` | `timeline.remove-line` | `Checkout.remove_line` | `edit {"op":"timeline.remove-line","select":null,"args":...}` |
+| `--replace-asset` | `timeline.replace-asset` | `Checkout.replace_asset` | `edit {"op":"timeline.replace-asset","select":null,"args":...}` |
+| `--replace-line` | `voice.replace` | `Voice.replace` | `edit {"op":"voice.replace","select":"CLIP","args":...}` |
+| `--retime` | `timeline.retime` | `Checkout.retime` | `edit {"op":"timeline.retime","select":null,"args":...}` |
+| `--set look.opacity=VALUE` | `look.opacity` | `commands.run` | `edit {"op":"look.opacity","select":"CLIP","args":{"opacity":VALUE}}` |
+| `--set path=value` | `clip.set` | `Clip.set` | `edit {"op":"clip.set","select":"CLIP","args":...}` |
+| `--slip` | `clip.slip` | `Clip.slip` | `edit {"op":"clip.slip","select":"CLIP","args":...}` |
+| `--split` | `cut.split` | `Cut.split` | `edit {"op":"cut.split","select":"CLIP","args":...}` |
+| `--swap-asset` | `clip.swap-asset` | `Clip.swap_asset` | `edit {"op":"clip.swap-asset","select":"CLIP","args":...}` |
+| `--trim-in` | `clip.trim` | `Clip.trim` | `edit {"op":"clip.trim","select":"CLIP","args":...}` |
+| `--trim-out` | `clip.trim` | `Clip.trim` | `edit {"op":"clip.trim","select":"CLIP","args":...}` |
+| `--until` | `clip.until` | `Clip.until` | `edit {"op":"clip.until","select":"CLIP","args":...}` |
+<!-- timeline-operation-registry:end -->
+
 The batch scenario previews before applying; both commands are one transaction and one undo step. A failed batch rolls back. The [preview scenario][sc-sheet] and [apply scenario](../../../../tests/editing_scenarios/code/code.skill.batch-edit.yaml) execute these exact commands. A single structured edit can preview without writing; the [structured-edit scenario](../../../../tests/editing_scenarios/code/code.skill.structured-edit.yaml) covers it.
 
 ```bash

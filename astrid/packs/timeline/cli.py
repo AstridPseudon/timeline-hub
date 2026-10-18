@@ -2940,7 +2940,7 @@ def _edit_duration(value: str) -> float:
 
 def _crossfade(tl: Any, parsed: argparse.Namespace) -> None:
     """--crossfade A B [curve=NAME] [--over S]: matching fades on two overlapping audio clips of one track."""
-    from astrid.core.timeline.audio_curves import validate
+    from astrid.sdk.timeline.commands import CommandError, execute
 
     args = list(parsed.crossfade)
     if len(args) not in (2, 3):
@@ -2948,37 +2948,14 @@ def _crossfade(tl: Any, parsed: argparse.Namespace) -> None:
     curve_arg = args[2][6:] if len(args) == 3 and args[2].startswith("curve=") else None
     if len(args) == 3 and curve_arg is None:
         raise _VerbError("the optional --crossfade argument must be curve=NAME", 2)
-    a, b = tl.clip(args[0]), tl.clip(args[1])
-    if not a.is_audio or not b.is_audio:
-        raise _VerbError("--crossfade requires two audio clips", 2)
-    if a.track != b.track:
-        raise _VerbError(f"--crossfade requires the same audio track ({a.track!r} vs {b.track!r})", 2)
-    if b.start < a.start:
-        raise _VerbError("--crossfade requires A to start before B", 2)
     try:
-        curve = validate(curve_arg or "equal-power")
-    except ValueError as exc:
+        return execute(tl, {
+            "op": "timeline.crossfade",
+            "select": None,
+            "args": {"first": args[0], "second": args[1], "curve": curve_arg, "overlap": parsed.overlap},
+        })
+    except CommandError as exc:
         raise _VerbError(str(exc), 2) from None
-    if parsed.overlap is not None:
-        overlap = float(parsed.overlap)
-        if overlap <= 0:
-            raise _VerbError("--over must be a positive number of seconds", 2)
-        if overlap > min(a.duration, b.duration):
-            raise _VerbError("--over cannot exceed either clip's duration", 2)
-        # Keep A fixed and move B so its start is exactly the requested overlap before A ends.
-        b.enter_at(a.start + a.duration - overlap)
-        print(f"crossfade overlap {overlap:g}s: moved {b.address} start; {a.address} stayed in place")
-    else:
-        if b.end < a.end:
-            raise _VerbError("--crossfade requires B to continue through A's end; use --over to position B", 2)
-        overlap = min(a.start + a.duration, b.start + b.duration) - max(a.start, b.start)
-        if overlap <= 0:
-            raise _VerbError("clips do not overlap; supply --over SECONDS to move B's start", 2)
-    # Record each complete fade through the shared codec so prefix evidence and
-    # authenticated replay include its curve as well as its duration.
-    a.set_look(fade_out=f"{overlap}s curve={curve}")
-    b.set_look(fade_in=f"{overlap}s curve={curve}")
-    print(f"crossfade {a.address} → {b.address}: {overlap:g}s, curve={curve}")
 
 
 # One error type and one guard for every timelines verb (cli_common's, which also covers SheetError).
@@ -3446,23 +3423,25 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
 
 def _add_media(tl: Any, parsed: argparse.Namespace) -> None:
     """--add-media FILE|HANDLE|KEY --track T --on MOMENT: one audio clip, independent of picture cuts."""
-    from astrid.sdk.timeline_editing import TimelineEditError
+    from astrid.sdk.timeline.commands import CommandError, execute
 
-    clip = tl.add("media", at=parsed.on, asset=parsed.add_media, track=parsed.track,
-                  hold=parsed.for_seconds, clip_id=parsed.clip_id, cut=None)
-    if not clip.is_audio:
-        raise TimelineEditError(f"--track {parsed.track!r} is not an audio track")
-    if parsed.until is not None:
-        clip.until(parsed.until)
-    source_in = parsed.trim_in if parsed.trim_in is not None else 0.0
-    speed = float(clip.data.get("speed") or 1.0)
-    if parsed.trim_out is not None:
-        source_out = parsed.trim_out
-    elif parsed.for_seconds is None and parsed.until is None:
-        source_out = clip._source_duration()
-    else:
-        source_out = source_in + clip.duration * speed
-    clip.trim(in_s=source_in, out_s=source_out)
+    try:
+        clip = execute(tl, {
+            "op": "timeline.add-media",
+            "select": None,
+            "args": {
+                "asset": parsed.add_media,
+                "track": parsed.track,
+                "at": parsed.on,
+                "clip_id": parsed.clip_id,
+                "until": parsed.until,
+                "for_seconds": parsed.for_seconds,
+                "trim_in": parsed.trim_in,
+                "trim_out": parsed.trim_out,
+            },
+        })
+    except CommandError as exc:
+        raise _VerbError(str(exc), 2) from None
     from astrid.packs.timeline.cli_look import apply_look, look_values
 
     values = look_values(parsed)
@@ -3682,6 +3661,59 @@ def _edit_compact_help(parser: argparse.ArgumentParser) -> str:
     ))
 
 
+class _RegistryEditHelpFormatter(argparse.HelpFormatter):
+    """Keep parser declarations manual while showing canonical registry spellings."""
+
+    def __init__(self, prog, indent_increment=2, max_help_position=24, width=120):
+        super().__init__(prog, indent_increment=indent_increment,
+                         max_help_position=max_help_position, width=width)
+
+    def _fill_text(self, text, width, indent):
+        return indent + text.replace("\n", "\n" + indent)
+
+    @staticmethod
+    def _visible_option_strings(action):
+        from astrid.sdk.timeline.commands import registry_aliases
+
+        aliases = registry_aliases()
+        return [option for option in action.option_strings if option not in aliases]
+
+    def _format_action_invocation(self, action):
+        if not action.option_strings:
+            return super()._format_action_invocation(action)
+        visible = self._visible_option_strings(action)
+        if not visible:
+            return ""
+        original = action.option_strings
+        action.option_strings = visible
+        try:
+            return super()._format_action_invocation(action)
+        finally:
+            action.option_strings = original
+
+    def _format_actions_usage(self, actions, groups):
+        visible_actions = []
+        originals = []
+        for action in actions:
+            if action.option_strings:
+                visible = self._visible_option_strings(action)
+                if not visible:
+                    continue
+                originals.append((action, action.option_strings))
+                action.option_strings = visible
+            visible_actions.append(action)
+        try:
+            return super()._format_actions_usage(visible_actions, groups)
+        finally:
+            for action, option_strings in originals:
+                action.option_strings = option_strings
+
+    def _format_action(self, action):
+        if action.option_strings and not self._visible_option_strings(action):
+            return ""
+        return super()._format_action(action)
+
+
 def _configure_edit_help(subparser: argparse.ArgumentParser) -> None:
     """Keep routine help compact and expose the complete parser as ``--help-all``."""
     full_help = subparser.format_help
@@ -3726,7 +3758,8 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
                            help="Set a media clip's source out point; its film start stays and its length follows.")
     subparser.add_argument("--slip", type=float, default=None, metavar="SECONDS",
                            help="Move a media clip's source window while its film position and length stay fixed.")
-    subparser.add_argument("--set", dest="set_values", action="append", default=[])
+    subparser.add_argument("--set", dest="set_values", action="append", default=[], metavar="PATH=VALUE",
+                           help="Set a param; an undeclared clip field such as opacity resolves through look.*.")
     subparser.add_argument("--clear", dest="clear_keys", action="append", default=[], metavar="KEY",
                            help="Remove a param's presence so its element default applies.")
     subparser.add_argument("--command", help="Execute one JSON EditCommand (OpCall).")
@@ -3817,6 +3850,11 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--remove", action="store_true")
     from astrid.packs.timeline.cli_sweep import add_edit_sweep_flags
     add_edit_sweep_flags(subparser)
+    from astrid.sdk.timeline_checkout import Checkout as _Checkout  # noqa: F401 - registers SDK operation entries
+    from astrid.sdk.timeline.commands import render_canonical_flag_reference, render_cli_alias_reference
+    subparser.formatter_class = _RegistryEditHelpFormatter
+    subparser.epilog = ("Canonical edit spellings (registry):\n" + render_canonical_flag_reference()
+                        + "\n\nRetained aliases (registry):\n" + render_cli_alias_reference())
     _configure_edit_help(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_edit))
 
