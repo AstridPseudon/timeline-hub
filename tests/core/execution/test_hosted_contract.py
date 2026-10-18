@@ -65,7 +65,7 @@ def test_hosted_binding_is_digest_bound_readonly_consumed_and_unlinked(launch):
     assert set(selected.pass_fds)=={fd,*(c.fileno() for c in selected.children.values())}
 
 
-def test_host_inspection_pipes_require_selected_renderer_and_bind_exact_endpoints(tmp_path):
+def test_host_inspection_pipes_require_cpu_selection_and_bind_exact_endpoints(tmp_path):
     reads = os.pipe(); writes = os.pipe()
     selected = None
     try:
@@ -80,7 +80,7 @@ def test_host_inspection_pipes_require_selected_renderer_and_bind_exact_endpoint
                 '--host-control-fd', str(selected.children['control'].fileno()),
                 '--activation-fd', str(selected.children['activation'].fileno()),
                 '--activation-operation-id', 'op', '--activation-channel-id', 'channel']
-        with pytest.raises(contract.HostedContractError, match='renderer selection'):
+        with pytest.raises(contract.HostedContractError, match='selected CPU Host'):
             selected.environment(argv)
         selected.close(); selected = contract.HostedLaunch(broker, preparation)
         preparation['profile'].update(execution_mode='host_only_cpu', host_launch={'renderer_selection':{'selected':True}})
@@ -103,12 +103,20 @@ def test_host_inspection_pipes_require_selected_renderer_and_bind_exact_endpoint
         for descriptor in (*reads, *writes): os.close(descriptor)
 
 
-@pytest.mark.parametrize('mutation',['owner','generation','operation','profile'])
-def test_hosted_preparation_fences_before_dispatch(launch,mutation):
-    selected,_,_=launch;value=copy.deepcopy(selected.value);request=copy.deepcopy(selected.preparation)
+@pytest.mark.parametrize('launch_fixture', ['launch', 'cpu_launch'])
+@pytest.mark.parametrize('mutation',['owner','generation','operation','channel','profile'])
+def test_hosted_preparation_fences_before_dispatch(request,launch_fixture,mutation):
+    case = request.getfixturevalue(launch_fixture)
+    if launch_fixture == 'cpu_launch':
+        selected = case.selected
+        selected.environment(case.argv)
+    else:
+        selected,_,_ = case
+    value=copy.deepcopy(selected.value);request=copy.deepcopy(selected.preparation)
     if mutation=='owner':request['owner_epoch']='foreign'
     if mutation=='generation':value['generation']=3
     if mutation=='operation':request['operation_id']='foreign'
+    if mutation=='channel':request['channel_id']='foreign'
     if mutation=='profile':request['profile']['changed']=True
     authority=SimpleNamespace(reference=lambda:{'generation':1,'target':{'pid':os.getpid()}},
         verify_reference=lambda *a,**kw:pytest.fail('invalid preparation reached authority verification'))
@@ -173,3 +181,118 @@ def test_actual_consumer_rejects_inherited_other_process_incarnation(launch,tmp_
         assert child.wait(timeout=4)!=0 and not marker.exists()
         assert custody.default_process_identity(child.pid) is None
     finally:proof.close()
+
+
+@pytest.fixture
+def cpu_launch(tmp_path, monkeypatch):
+    """The real SDK HostedLaunch owns real sockets and anonymous pipes."""
+    from astrid.core.execution import host_renderer_selection, generic_host
+    from astrid.core.rendering import remotion_runtime
+    def forbidden(*args, **kwargs):
+        pytest.fail('CPU static inspection activated renderer or executed a probe')
+    monkeypatch.setattr(host_renderer_selection, 'activate_renderer_selection', forbidden)
+    monkeypatch.setattr(remotion_runtime, 'prepare_remotion_validation', forbidden)
+    monkeypatch.setattr(generic_host.subprocess, 'run', forbidden)
+    packs = tmp_path/'packs'; packs.mkdir()
+    extra = tmp_path/'extra'; extra.mkdir()
+    manifest = {'schema_version': 1, 'id': 'test.cpu', 'name': 'CPU', 'kind': 'external', 'version': '1.0',
+        'command': {'argv': ['{python_exec}', '-c', 'pass']}, 'outputs': [],
+        'isolation': {'mode': 'subprocess', 'network': False, 'binaries': ['missing-optional']}}
+    manifest_path = packs/'executor.yaml'; manifest_path.write_text(json.dumps(manifest))
+    pipes = [os.pipe(), os.pipe()]
+    broker = SimpleNamespace(role='host', owner_epoch='epoch', run_id='run', custody_generation=1,
+        authority_scope_root=tmp_path, child_pipe_binding=[contract._pipe_identity(pipes[0][0], os.O_RDONLY),
+                                                         contract._pipe_identity(pipes[1][1], os.O_WRONLY)])
+    launch = {'pack_root': str(packs), 'capability_matrix': None}
+    profile = {'host_executable': sys.executable, 'execution_mode': 'host_only_cpu', 'host_launch': launch,
+               'session_config_digest': contract.digest(contract.canonical(launch))}
+    request = {'owner_epoch': 'epoch', 'operation_id': 'op', 'channel_id': 'channel',
+               'profile': profile, 'custody_scope': str(tmp_path)}
+    selected = contract.HostedLaunch(broker, request)
+    argv = [sys.executable, '-m', 'astrid.core.execution.generic_host', 'run',
+            '--host-control-fd', str(selected.children['control'].fileno()),
+            '--activation-fd', str(selected.children['activation'].fileno()),
+            '--activation-operation-id', 'op', '--activation-channel-id', 'channel']
+    try:
+        yield SimpleNamespace(selected=selected, argv=argv, profile=profile, launch=launch,
+                              manifest=manifest, manifest_path=manifest_path, packs=packs, extra=extra)
+    finally:
+        selected.close()
+        for pair in pipes:
+            for fd in pair: os.close(fd)
+
+
+@pytest.mark.parametrize('selection', ['root', 'additional', 'matrix'])
+def test_cpu_binary_declarations_admit_real_pipes_without_renderer(cpu_launch, selection, tmp_path):
+    case = cpu_launch
+    if selection == 'additional':
+        case.manifest_path.rename(case.extra/'executor.yaml')
+        case.launch['additional_pack_roots'] = [{'path': str(case.extra), 'files': {}}]
+    elif selection == 'matrix':
+        case.manifest['isolation']['binaries'] = []
+        case.manifest_path.write_text(json.dumps(case.manifest))
+        matrix = tmp_path/'matrix.json'
+        matrix.write_text(json.dumps({'schema_version': 1, 'capabilities': [{'id': 'test.cpu',
+            'disposition': 'required', 'evidence_reason': 'offline test', 'required_binaries': ['missing-optional']}]}))
+        case.launch['capability_matrix'] = str(matrix)
+    case.profile['session_config_digest'] = contract.digest(contract.canonical(case.launch))
+    env = case.selected.environment(case.argv)
+    assert 'renderer_selection' not in case.launch
+    assert case.selected.value['profile_digest'] == contract.digest(contract.canonical(case.profile))
+    assert case.selected.value['inspection_pipes'] == case.selected.broker.child_pipe_binding
+    assert {p['fd'] for p in case.selected.value['inspection_pipes']} <= set(case.selected.pass_fds)
+    assert contract.read_payload(int(env[contract.FD_KEY]), env[contract.DIGEST_KEY]) == contract.canonical(case.selected.value)
+    # Loading the bootstrap standalone must never need package discovery.
+    import runpy
+    import builtins
+    original_import = builtins.__import__
+    def stdlib_only(name, *args, **kwargs):
+        assert name != 'astrid' and not name.startswith('astrid.')
+        return original_import(name, *args, **kwargs)
+    with pytest.MonkeyPatch.context() as standalone_imports:
+        standalone_imports.setattr(builtins, '__import__', stdlib_only)
+        standalone = runpy.run_path(contract.__file__)
+    assert standalone['validate'](case.selected.value, role='host') == contract.validate(case.selected.value, role='host')
+
+
+@pytest.mark.parametrize('fault', ['mode', 'role', 'no-needs', 'unselected-matrix', 'profile-launch', 'argv', 'executable'])
+def test_cpu_inspection_refuses_unselected_or_changed_authority(cpu_launch, fault, tmp_path):
+    case = cpu_launch
+    if fault == 'mode': case.profile['execution_mode'] = 'engine'
+    elif fault == 'role':
+        case.selected.broker.role = 'relay'
+        case.profile['worker_executable'] = sys.executable
+        case.argv = [sys.executable, '-I', '-S', '/offline/local_execution_supervisor.py',
+                     '--prepared-control-fd', str(case.selected.children['control'].fileno())]
+    elif fault in {'no-needs', 'unselected-matrix'}:
+        case.manifest['isolation']['binaries'] = []
+        case.manifest_path.write_text(json.dumps(case.manifest))
+        if fault == 'unselected-matrix':
+            matrix = tmp_path/'matrix.json'
+            matrix.write_text(json.dumps({'schema_version': 1, 'capabilities': [{'id': 'foreign.cpu',
+                'disposition': 'required', 'evidence_reason': 'offline test', 'required_binaries': ['helper']}]}))
+            case.launch['capability_matrix'] = str(matrix)
+        case.profile['session_config_digest'] = contract.digest(contract.canonical(case.launch))
+    elif fault == 'profile-launch': case.launch['additional_pack_roots'] = [{'path': str(case.extra)}]
+    elif fault == 'argv': case.argv[-1] = 'foreign-channel'
+    elif fault == 'executable': case.argv[0] = '/foreign/python'
+    with pytest.raises(contract.HostedContractError): case.selected.environment(case.argv)
+    assert case.selected.binding is None
+
+
+@pytest.mark.parametrize('fault', ['inode', 'substituted', 'direction', 'collision', 'socket'])
+def test_cpu_inspection_rejects_pipe_tampering(cpu_launch, fault):
+    case = cpu_launch
+    case.selected.environment(case.argv)
+    forged = copy.deepcopy(case.selected.value)
+    pipes = forged['inspection_pipes']
+    other = os.pipe()
+    try:
+        if fault == 'inode': pipes[0]['inode'] += 1
+        elif fault == 'substituted': pipes[0]['fd'] = other[0]
+        elif fault == 'direction': pipes[0]['direction'] = os.O_WRONLY
+        elif fault == 'collision': pipes[1] = dict(pipes[0])
+        elif fault == 'socket': pipes[0]['fd'] = case.selected.children['control'].fileno()
+        with pytest.raises(contract.HostedContractError): contract.validate(forged, role='host')
+    finally:
+        for fd in other: os.close(fd)

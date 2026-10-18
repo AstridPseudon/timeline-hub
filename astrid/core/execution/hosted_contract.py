@@ -255,9 +255,20 @@ class HostedLaunch:
             'launch_binding': None if launch_binding is None else {
                 'identity': file_identity(launch_binding.fileno()), 'digest': digest(os.pread(launch_binding.fileno(), LIMIT + 1, 0))}}
         if getattr(broker, 'child_pipe_binding', None):
-            if (broker.role != 'host' or profile.get('execution_mode') != 'host_only_cpu'
-                    or not profile.get('host_launch', {}).get('renderer_selection')):
-                raise HostedContractError('inspection requires an authenticated renderer selection')
+            if broker.role != 'host' or profile.get('execution_mode') != 'host_only_cpu':
+                raise HostedContractError('inspection requires the selected CPU Host')
+            launch = profile.get('host_launch') or {}
+            if not launch.get('renderer_selection'):
+                # Parent-side static discovery only. The stdlib trampoline and
+                # consumer validate the sealed descriptors without SDK imports.
+                if profile.get('session_config_digest') != digest(canonical(launch)):
+                    raise HostedContractError('inspection launch differs from selected profile')
+                from astrid.core.execution.generic_host import _launch_needs_command_inspection
+                roots = (Path(launch['pack_root']),
+                         *(Path(root['path']) for root in launch.get('additional_pack_roots', [])))
+                matrix = Path(launch['capability_matrix']) if launch.get('capability_matrix') else None
+                if not _launch_needs_command_inspection(roots, matrix):
+                    raise HostedContractError('inspection requires selected binary declarations')
             self.value['inspection_pipes'] = broker.child_pipe_binding
         validate(self.value, role=broker.role, argv=argv)
         data = canonical(self.value)

@@ -1649,6 +1649,12 @@ def _launch_static_records(pack_roots: tuple[Path, ...], capability_matrix: Path
     return records
 
 
+def _launch_needs_command_inspection(pack_roots: tuple[Path, ...], capability_matrix: Path | None = None) -> bool:
+    """Static binary declarations from selected launch sources only; no probes."""
+    records = _launch_static_records(tuple(root.resolve(strict=True) for root in pack_roots), capability_matrix)
+    return any(_binary_requirements(record) for record in records.values())
+
+
 def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment: Mapping[str, str],
                                      capability_matrix: Path | None = None) -> list[dict[str, str]]:
     """Project only fixed launch-known inputs; never expand task placeholders."""

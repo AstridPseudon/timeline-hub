@@ -241,7 +241,16 @@ def test_cli_starts_after_discovery_and_registration_and_closes_on_exit(selected
     monkeypatch.setattr(h, "discover", discover)
     monkeypatch.setattr(h, "register", register)
     monkeypatch.setattr(h, "run", claim_loop)
-    monkeypatch.setattr(hosts, "GenericPackHost", lambda **kwargs: h)
+    from astrid.core.execution import host_renderer_selection
+    from astrid.core.rendering import remotion_runtime
+    def no_renderer(*args, **kwargs):
+        pytest.fail("no-renderer CPU startup activated renderer setup")
+    monkeypatch.setattr(host_renderer_selection, "activate_renderer_selection", no_renderer)
+    monkeypatch.setattr(remotion_runtime, "prepare_remotion_validation", no_renderer)
+    def construct_host(**kwargs):
+        assert kwargs["remotion_closure_binding"] is None
+        return h
+    monkeypatch.setattr(hosts, "GenericPackHost", construct_host)
     monkeypatch.setattr(hosts, "LocalExecutionPreparation", lambda **kwargs: p)
     monkeypatch.setattr(p, "serve_control", lambda fd: None)
     monkeypatch.setattr(p, "attach_claim_host", lambda owner: None if owner is h else pytest.fail("foreign owner"))
