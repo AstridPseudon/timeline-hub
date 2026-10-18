@@ -1597,6 +1597,10 @@ actions:
     - edge-tts
     - voiceover
     metadata:
+      generation_publication:
+        version: 1
+        modality: audio
+        output_port: speech
       execution_dependencies:
         python:
         - edge-tts==7.2.8
