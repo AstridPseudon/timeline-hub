@@ -1395,6 +1395,7 @@
           "action": "_AppendAction",
           "default": [],
           "dest": "set_values",
+          "metavar": "PATH=VALUE",
           "nargs": null,
           "options": [
             "--set"

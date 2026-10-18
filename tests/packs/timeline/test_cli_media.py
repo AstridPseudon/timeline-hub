@@ -126,13 +126,77 @@ def test_crossfade_records_curves_for_exact_replay_and_one_undo_step(tmp_path, m
             assert clip.params[key] == expected_curve
     records = journal.read(journal.journal_path("p", "t"))
     calls = records[-1].calls
-    assert [call["op"] for call in calls] == ["clip.enter-at", "clip.set-look", "clip.set-look"]
-    for call, field in zip(calls[1:], ("fade_out", "fade_in")):
-        assert call["args"][field] == (0.5 if expected_curve == "linear" else f"0.5s curve={expected_curve}")
-    for call, side in zip(calls[1:], ("Out", "In")):
+    assert [call["op"] for call in calls] == ["timeline.crossfade"]
+    assert calls[0]["args"] == {"first": "a-music", "second": "next-bed", "curve": curve, "overlap": 0.5}
+    for clip_id, side in (("a-music", "Out"), ("next-bed", "In")):
         for key, value in ((f"params.fade{side}", 0.2), (f"params.fade{side}Curve", "equal-power")):
-            assert call["expect"][key] == {"state": "present", "value": value}
-            assert call["authorship"][key] == "direct"
+            path = f"occurrence:occ-A/clip:{clip_id}::{key}"
+            assert calls[0]["expect"][path] == {"state": "present", "value": value}
+            assert calls[0]["authorship"][path] == "direct"
+    batch = {"op": "timeline.batch", "select": None, "args": {"commands": list(calls)}}
+    replay = Checkout(copy.deepcopy(before))
+    commands.run(replay, batch)
+    assert replay.document() == after
+    for key, value in (("fadeOut", 0.3), ("fadeOutCurve", "exponential")):
+        stale = Checkout(copy.deepcopy(before))
+        stale.clip("a-music").params[key] = value
+        stale_before = stale.document()
+        with pytest.raises(commands.SemanticConflict, match="same-property"):
+            commands.run(stale, batch)
+        assert stale.document() == stale_before and not stale._journal
+    assert len(list(store._history_dir(Path(tl.path)).glob("*.json"))) == 1
+    assert tl.undo(1) and tl.document() == before
+    assert tl.redo(1) and tl.document() == after
+    assert journal.verify(journal.journal_path("p", "t")) == []
+
+
+@pytest.mark.parametrize("curve", [None, "linear", "s-curve"])
+def test_canonical_crossfade_preserves_curves_guards_replay_and_one_undo_step(tmp_path, monkeypatch, curve):
+    from astrid.sdk import timeline_checkout as tc
+    from astrid.sdk.timeline import commands, journal, store
+
+    bundle = _tiny().bundle
+    clips = bundle["shots"]["A"]["internal_timeline"]["clips"]
+    a = next(clip for clip in clips if clip["id"] == "a-music")
+    a["params"] = {"fadeOut": 0.2, "fadeOutCurve": "equal-power"}
+    b = copy.deepcopy(a)
+    b.update(id="next-bed", at=3.5, params={"fadeIn": 0.2, "fadeInCurve": "equal-power"})
+    clips.append(b)
+    bundle["parent"]["config"].setdefault("app", {}).setdefault("astrid", {})["cut_id_high_water"] = {
+        "number": 2, "suffixes": {}}
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(tmp_path / "data"))
+    monkeypatch.setattr(tc, "resolve_ids", lambda *a, **k: ("p", "t", "rev-0"))
+    monkeypatch.setattr(tc, "fetch_bundle", lambda *a, **k: copy.deepcopy(bundle))
+    tl = Checkout.draft("p", "t")
+    before = tl.document()
+    argv = ["edit", "t", "--project", "p", "--crossfade", "a-music", "next-bed"]
+    if curve is not None:
+        argv.append(f"curve={curve}")
+    parsed = timeline_cli.build_parser(None).parse_args([*argv, "--over", "0.5", "--no-sweep"])
+    assert parsed.handler(parsed) == 0
+
+    tl = Checkout.draft("p", "t")
+    after = tl.document()
+    assert tl.bundle["base_parent"] == before["base_parent"] == {"revision_id": "rev-0"}
+    assert tl.clip("a-music").start == 0 and tl.clip("next-bed").start == 3.5
+    assert tl.clip("a-music").duration == tl.clip("next-bed").duration == 4
+    assert tl.clip("a-music").params["fadeOut"] == tl.clip("next-bed").params["fadeIn"] == 0.5
+    expected_curve = curve or "equal-power"
+    for clip, key in ((tl.clip("a-music"), "fadeOutCurve"), (tl.clip("next-bed"), "fadeInCurve")):
+        if expected_curve == "linear":
+            assert key not in clip.params
+        else:
+            assert clip.params[key] == expected_curve
+    records = journal.read(journal.journal_path("p", "t"))
+    calls = records[-1].calls
+    assert [call["op"] for call in calls] == ["timeline.crossfade"]
+    assert calls[0]["args"]["curve"] == curve
+    assert calls[0]["args"]["overlap"] == 0.5
+    for clip_id, side in (("a-music", "Out"), ("next-bed", "In")):
+        for key, value in ((f"params.fade{side}", 0.2), (f"params.fade{side}Curve", "equal-power")):
+            path = f"occurrence:occ-A/clip:{clip_id}::{key}"
+            assert calls[0]["expect"][path] == {"state": "present", "value": value}
+            assert calls[0]["authorship"][path] == "direct"
     batch = {"op": "timeline.batch", "select": None, "args": {"commands": list(calls)}}
     replay = Checkout(copy.deepcopy(before))
     commands.run(replay, batch)
