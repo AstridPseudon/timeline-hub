@@ -1,6 +1,6 @@
 """Retired legacy shot grouping boundary.
 
-Shot grouping used to read and rewrite mutable timeline documents.  Canonical
+Shot grouping reads and rewrites mutable timeline documents.  Canonical
 parent compositions are now immutable current-head data, so the old operation
 is intentionally retained only as a typed 410 for callers that have not yet
 removed the symbol.  It performs no Runtime reads or writes.

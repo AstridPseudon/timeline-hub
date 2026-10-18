@@ -139,7 +139,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     scenes = detect_scenes(video_path, args.threshold)
     write_outputs(scenes, json_path, csv_path, items_path)
 
-    # --- universal result manifest (output-contract M1) -----------------------
+    # --- universal result manifest -----------------------
     output_specs = (
         ("scenes", json_path.name),
         ("scene_items", items_path.name),

@@ -413,7 +413,7 @@ def install(policy: Mapping[str, Any], evidence_path: str | Path, *, admission: 
 
 
 def install_from_environment(*, strict: bool = False, broker_required: bool = False) -> bool:
-    """Return proven installation; strict D18 callers treat absence as fatal."""
+    """Return proven installation; strict callers treat absence as fatal."""
     raw = os.environ.get("ASTRID_NETWORK_POLICY")
     evidence = os.environ.get("ASTRID_NETWORK_EVIDENCE")
     if not raw or not evidence:

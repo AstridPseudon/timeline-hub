@@ -413,7 +413,7 @@ def _initial_facts(args: argparse.Namespace) -> set[str]:
         facts.update({"source_audio", "audio", "source_media"})
     if getattr(args, "target_duration", None) is not None:
         facts.add("target_duration")
-    # Phase 3 SD-003 precedence: explicit CLI --allow-generative-effects wins,
+    # Precedence: explicit CLI --allow-generative-effects wins,
     # else the brief's allow_generative_visuals frontmatter, else False.
     if getattr(args, "allow_generative_effects", False) or getattr(
         args, "brief_allow_generative_visuals", False

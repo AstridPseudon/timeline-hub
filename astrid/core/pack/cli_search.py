@@ -1,6 +1,6 @@
 """:mod:`astrid.core.pack.cli_search` — Agent-index and search command handlers.
 
-Extracted from ``astrid/core/pack/cli.py`` during M4 giant-file split.
+Extracted from ``astrid/core/pack/cli.py``.
 Contains ``_handle_agent_index`` (packs agent-index), ``_handle_search``
 (packs search), and the search scoring/ranking helpers.
 """

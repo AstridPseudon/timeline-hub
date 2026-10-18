@@ -107,7 +107,7 @@ class DirectVibeMediaExecutor:
             raise MediaExecutionError("task_identity must be a non-empty string")
         # Keep the CPU-compiled node graph available for tests and diagnostics,
         # while adding the canonical ready-template envelope consumed by the
-        # production engine.  Passing only ``compiled.workflow`` used to make
+        # production engine.  Passing only ``compiled.workflow`` makes
         # the runtime reject these tasks before it could resolve a ready
         # template.
         execution_workflow = dict(compiled.workflow)

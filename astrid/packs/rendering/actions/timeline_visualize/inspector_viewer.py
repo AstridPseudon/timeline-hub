@@ -1,6 +1,6 @@
 """Legacy HTML inspector renderer.
 
-The timeline visualization executor no longer emits this surface.  It remains
+The timeline visualization executor does not emit this surface.  It remains
 isolated as a library seam while the replacement inspection tool is developed.
 """
 from pathlib import Path

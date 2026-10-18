@@ -2,9 +2,9 @@
 """Generate images from text prompts using local (vibecomfy) or cloud (fal) backends.
 
 
-v2: model → mode → backend taxonomy.  ``--mode`` is required (SD-005).
-Backend dispatch goes through ``BackendAdapter`` (SD-004).
-Features are validated per-mode (SD-003).
+v2: model → mode → backend taxonomy.  ``--mode`` is required.
+Backend dispatch goes through ``BackendAdapter``.
+Features are validated per-mode.
 """
 
 from __future__ import annotations
@@ -235,7 +235,7 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
         help="Generation mode: t2i (text-to-image), i2i (image-to-image), "
         "edit (instruction-guided edit), inpaint, outpain, upscale.  "
-        "Only t2i, i2i, edit are wired this sprint (SD-005).",
+        "Only t2i, i2i, edit are wired so far.",
     )
     prompt_group = p.add_mutually_exclusive_group()
     prompt_group.add_argument(
@@ -409,7 +409,7 @@ def generate_core(
             recovery_command="invoke generation.generate_image with a runtime project, or pass --out for explicit isolated tooling",
         )
 
-    mode_name: str = args.mode  # SD-005: explicit --mode required
+    mode_name: str = args.mode  # explicit --mode required
 
     # --- load backend registry ----------------------------------------------
     try:
@@ -550,7 +550,7 @@ def generate_core(
             )
         prompts = [{"prompt": args.prompt, "model": args.model}]
 
-    # --- build adapter (SD-004: dispatch through BackendAdapter) -------------
+    # --- build adapter (dispatch through BackendAdapter) -------------
     adapter = _create_backend_adapter(
         backend_registry,
         args.execution,
@@ -723,7 +723,7 @@ def generate_core(
         else:
             bounded_policy = None
 
-        # --- dispatch to adapter (SD-004) ------------------------------------
+        # --- dispatch to adapter ------------------------------------
         try:
             result: GenerationResult = adapter.generate(
                 entry=entry,
@@ -820,7 +820,7 @@ def generate_core(
                     manifest_path = out / "manifest.json"
                     if loras_parsed:
                         manifest["loras"] = loras_parsed
-                    # Route output metadata through the shared contract (M1).
+                    # Route output metadata through the shared contract.
                     manifest["outputs"] = complete_output_metadata(
                         manifest["outputs"], root_dir=out,
                     )
@@ -868,7 +868,7 @@ def generate_core(
     manifest_path = out / "manifest.json"
     if loras_parsed:
         manifest["loras"] = loras_parsed
-    # Route output metadata through the shared contract (M1).
+    # Route output metadata through the shared contract.
     manifest["outputs"] = complete_output_metadata(
         manifest["outputs"], root_dir=out,
     )

@@ -90,7 +90,7 @@ class ReplayBundle:
     partial_result: Any = None
     payload: dict[str, Any] | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-    # Batch 7 rework (T7.3/T7.4): additive capture fields.
+    # Additive capture fields.
     support_report: Any = None
     backend_config: dict[str, Any] | None = None
     result_path: str | None = None

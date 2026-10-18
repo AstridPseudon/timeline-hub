@@ -31,7 +31,7 @@ from .config import (
 )
 from .filter_stages import canonical_source_id, get_filter_stage
 from ...shared.items import config_hash, deterministic_id, utc_now_iso
-from .phases import (  # phase helpers extracted during M4 T76
+from .phases import (  # phase helpers extracted from this module
     _acquire_candidates,
     _enabled_filter_stages,
     _finalized_summary,

@@ -26,7 +26,7 @@ Sampling rules (same input -> same outputs, every run):
   tests skip when it is missing.  **ffmpeg-version boundary**: extracted PNG
   *bytes* may differ across ffmpeg versions for the same input, so tests
   compare file counts and decoded pixel hashes, never raw bytes.
-* **Audio**: no filmstrip in M1 — returns ``[]`` (see
+* **Audio**: no filmstrip yet — returns ``[]`` (see
   :data:`AUDIO_FILMSTRIP_NOTE`); spectral/waveform rendering is out of scope.
 
 Rendered-video sampling (:func:`sample_rendered_filmstrip`) is a **separate,
@@ -76,7 +76,7 @@ MAX_N_FRAMES = DEFAULT_N_FRAMES
 
 #: Deterministic note returned with the empty audio filmstrip.
 AUDIO_FILMSTRIP_NOTE = (
-    "audio filmstrips are not produced in M1: spectral and waveform rendering is out of scope"
+    "audio filmstrips are not produced yet: spectral and waveform rendering is out of scope"
 )
 
 _READ_CHUNK = 1024 * 1024

@@ -329,7 +329,7 @@ class CloudI2IStoragePolicy:
         execution: str,
         params: Mapping[str, Any],
     ) -> None:
-        """Validate the immutable HC-04 values before host stringification."""
+        """Validate the immutable values before host stringification."""
         if (model, mode, execution) != ("z-image", "i2i", "cloud"):
             raise ImageStoragePolicyError(
                 f"request is outside bounded storage policy {self.version}"

@@ -1,6 +1,6 @@
 """Immutable domain result envelopes, error objects, and identity helpers.
 
-(m4 plan step 3, task T3.) This module implements the frozen SDK contract
+This module implements the frozen SDK contract
 the platform contract as executable types:
 
 - :class:`DomainResult` — the immutable generic domain result envelope with

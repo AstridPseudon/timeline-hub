@@ -540,7 +540,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.open_result:
         subprocess.run(["open", str(manifest["selected_scene"])], check=False)
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     result_manifest_path = args.produces_dir / "result_manifest.json"
     result_manifest = build_manifest(
         kind="script_pipeline",

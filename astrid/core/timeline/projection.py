@@ -502,7 +502,7 @@ _LIFECYCLE_NOOP_KINDS: frozenset[str] = frozenset({
     "timeline.default_set",
     "timeline.tombstoned",
     "timeline.deleted",
-    # M9: ops/lifecycle events that don't change assembly state
+    # Ops/lifecycle events that don't change assembly state
     "timeline.reverted",
     "timeline.branched_from",
     "timeline.erased",

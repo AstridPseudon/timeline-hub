@@ -30,7 +30,6 @@ import os
 import shlex
 import sys
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -38,6 +37,7 @@ from runpod_lifecycle import (
     RunPodConfig,
 )
 
+from astrid.core.util.time import utc_now_iso
 from astrid.packs.runpod.worker_preparation import (
     AcquiredRunPodTarget,
     acquire_target,
@@ -97,12 +97,8 @@ PY
     }
 
 
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-
-
 def _log(message: str) -> None:
-    print(f"{_utc_now()} {message}", file=sys.stderr, flush=True)
+    print(f"{utc_now_iso()} {message}", file=sys.stderr, flush=True)
 
 
 def _existing_handle_error(path: Path) -> RuntimeError:
@@ -256,7 +252,7 @@ def _start_allocation_attempt(
         "state": "allocation_ready" if pod_id is None else "attachment_pending",
         "operation_id": operation_id,
         "request_name": request_name,
-        "requested_at": _utc_now(),
+        "requested_at": utc_now_iso(),
         "reconciliation_required": True,
         "api_key_ref": "RUNPOD_API_KEY",
         "provider_account_ref": args.provider_account_ref,
@@ -493,7 +489,7 @@ async def _finish_claim(
             ssh=ssh,
             config=config,
             volume=volume,
-            claimed_at=_utc_now(),
+            claimed_at=utc_now_iso(),
             preflight=preflight,
             attempt=final_attempt,
         )
@@ -508,7 +504,7 @@ async def _finish_claim(
             "state": "allocated_unverified",
             "failure_phase": failure_phase,
             "failure_type": type(exc).__name__,
-            "failed_at": _utc_now(),
+            "failed_at": utc_now_iso(),
             "reconciliation_required": True,
         }
         _replace_allocation_attempt(handle_path, failed, operation_id=operation_id)

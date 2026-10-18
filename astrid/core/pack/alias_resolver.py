@@ -185,7 +185,7 @@ def create_shared_alias_resolver() -> AliasResolver:
 
     All three registries call this from ``load_default_registry()`` so
     that alias resolution infrastructure is wired in from the start,
-    even when no aliases have been declared yet (M1: empty dicts).
+    even when no aliases have been declared yet.
     """
     return AliasResolver()
 
@@ -224,7 +224,7 @@ def _register_pack_aliases(
     """Register every pack's declared aliases into *resolver*.
 
     *pack_aliases* maps ``pack_id`` to a list of alias entry dicts.
-    For M1 this dict is empty — the helpers exists so that
+    For now this dict is empty — the helpers exist so that
     ``load_default_registry()`` can call it unconditionally and
     future milestones only need to change the data, not the wiring.
     """

@@ -1,4 +1,4 @@
-"""Product runs family CLI (m4 plan step 29, task T32).
+"""Product runs family CLI.
 
 This module is the product parser for the plural ``runs`` family: every verb
 is **argument parsing plus exactly one SDK call** on the composed

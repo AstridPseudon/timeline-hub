@@ -40,9 +40,8 @@ def build_project(
     slug = validate_project_slug(slug)
     payload: dict[str, Any] = {
         "created_at": now,
-        # Sprint 1 sentinel: Sprint 2 will populate this when timelines become a
-        # first-class container; emitted even when None so the field is
-        # discoverable.
+        # Sentinel until timelines become a first-class container; emitted even
+        # when None so the field is discoverable.
         "default_timeline_id": _validate_default_timeline_id(default_timeline_id),
         "name": name or slug,
         "schema_version": PROJECT_SCHEMA_VERSION,

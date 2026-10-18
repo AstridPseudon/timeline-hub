@@ -1887,7 +1887,7 @@ runpy.run_module(config['module'], run_name='__main__', alter_sys=True)
 
 
 def _network_startup_argv(argv: list[str], attempt: Path, env: Mapping[str, str], *, broker_required: bool) -> list[str]:
-    """Host-selected strict D18 startup, independent of action environment flags."""
+    """Host-selected strict startup, independent of action environment flags."""
     arguments = list(argv[1:])
     flags = []
     while arguments and arguments[0] in {"-u", "-B"}:
@@ -2548,7 +2548,7 @@ def _interactive_review_authority(
     host: Any, task: Mapping[str, Any], record: CapabilityRecord, *,
     attempt_id: str, lease_id: str, fence: int, runtime_epoch: int,
 ) -> Callable[[], None] | None:
-    """Fail closed unless public Runtime reads prove the entire M09 conjunction.
+    """Fail closed unless public Runtime reads prove the entire conjunction.
 
     Private lineage stays in this closure. No worker input or environment carries
     it, and no authority issuance or parent heartbeat is needed by a child.
@@ -2656,7 +2656,7 @@ def _interactive_review_authority(
                            "max_recoverable_bytes", "max_snapshot_bytes"}
         if policy is None or set(policy.get("limits", {})) != required_limits:
             return None
-        # These are the admitted D18 readback ceilings, not execution defaults.
+        # These are the admitted readback ceilings, not execution defaults.
         ceilings = {"max_children": 4096, "max_active_children": 64, "max_derived_objects": 1024,
                     "max_derived_bytes": 4 * 1024**3, "max_child_inputs": 256, "max_child_bytes": 256 * 1024**2,
                     "max_recoverable_snapshots": 1024, "max_recoverable_bytes": 4 * 1024**3,
@@ -4617,7 +4617,7 @@ class RuntimeProtocolClient:
                     ordered_inputs: list[Mapping[str, Any]], derived_inputs: list[Mapping[str, Any]],
                     task_id: str, attempt_id: str, lease_id: str, fence: int, runtime_epoch: int,
                     run_id: str, project_id: str | None):
-        """Exact D18 issuance/admission pair; signed receipt stays in this frame."""
+        """Exact issuance/admission pair; signed receipt stays in this frame."""
         from ._child_bridge import ChildBridgeError, resource
 
         with self._heartbeat_lock:
@@ -5168,7 +5168,7 @@ class GenericPackHost:
         # A command child is short-lived while the manager-owned VibeComfy
         # server persists across tasks.  Keep only the last successful,
         # verified session/model hint in the host; it is revalidated by the
-        # child adapter against the HC-03 registry before reuse.
+        # child adapter against the readiness-profile registry before reuse.
         self._vibecomfy_warmth_hint: str | None = None
         self._vibecomfy_current_warmth_hint: str | None = None
         self._vibecomfy_requested_warmth_hint: str | None = None
@@ -6404,17 +6404,17 @@ class GenericPackHost:
                 )
         if task_param_ports is not None:
             if not isinstance(params, Mapping):
-                raise HostError("HC-04 task spec params must be an object")
+                raise HostError("task spec params must be an object")
             declared = tuple(str(name) for name in task_param_ports)
             declared_set = set(declared)
             unknown = sorted(str(name) for name in params if str(name) not in declared_set)
             if unknown:
-                raise HostError("HC-04 task spec contains undeclared parameter(s): " + ", ".join(unknown))
+                raise HostError("task spec contains undeclared parameter(s): " + ", ".join(unknown))
             for name in declared:
                 if name not in params:
                     continue
                 if name in values and values[name] != params[name]:
-                    raise HostError(f"HC-04 task parameter conflicts with input binding: {name}")
+                    raise HostError(f"task parameter conflicts with input binding: {name}")
                 values[name] = params[name]
         for key in _HOST_OWNED_ENVELOPE_PORTS + ("family", "params", "output_policy"):
             if key in spec and not values.get(key):
@@ -6450,7 +6450,7 @@ class GenericPackHost:
                     continue
                 if not isinstance(candidate, Mapping) or not isinstance(candidate.get("digest"), str):
                     raise HostError(
-                        f"HC-04 CAS parameter {name!r} must be an object containing a digest"
+                        f"CAS parameter {name!r} must be an object containing a digest"
                     )
 
         # Runtime continuation admission stores the authoritative child result
@@ -6588,7 +6588,7 @@ class GenericPackHost:
                 name = str(item["name"])
                 if task_param_ports is not None and name not in declared_set:
                     raise HostError(
-                        f"HC-04 input_digests contains undeclared input: {name}"
+                        f"input_digests contains undeclared input: {name}"
                     )
                 values.setdefault(name, {"digest": str(item["digest"])})
         declared_cas_ports = (
@@ -6617,7 +6617,7 @@ class GenericPackHost:
         if ordered_cas_ports:
             if len(authorized_digests) != len(ordered_cas_ports):
                 raise HostError(
-                    "HC-04 ordered CAS inputs must match the capability's CAS port count"
+                    "ordered CAS inputs must match the capability's CAS port count"
                 )
             ordered_authorized = tuple(
                 str(object_id).removeprefix("sha256:")
@@ -6626,11 +6626,11 @@ class GenericPackHost:
             for index, name in enumerate(ordered_cas_ports):
                 candidate = values.get(name)
                 if not isinstance(candidate, Mapping) or not isinstance(candidate.get("digest"), str):
-                    raise HostError(f"HC-04 ordered CAS parameter {name!r} is missing a digest")
+                    raise HostError(f"ordered CAS parameter {name!r} is missing a digest")
                 normalized = require_authorized(str(candidate["digest"]), name)
                 if normalized != ordered_authorized[index]:
                     raise HostError(
-                        f"HC-04 CAS parameter {name!r} does not match ordered input_object_ids[{index}]"
+                        f"CAS parameter {name!r} does not match ordered input_object_ids[{index}]"
                     )
         for name in values:
             input_name = Path(str(name))
@@ -6760,7 +6760,7 @@ class GenericPackHost:
                     filename = value.get("filename") if isinstance(value, Mapping) else None
                     if not isinstance(filename, str) or not filename or Path(filename).name != filename:
                         raise HostError(
-                            f"HC-04 CAS parameter {name!r} requires a safe filename"
+                            f"CAS parameter {name!r} requires a safe filename"
                         )
                     if len(ordered_cas_ports) > 1:
                         # Preserve role identity even when two CAS objects
@@ -6850,7 +6850,7 @@ class GenericPackHost:
         # Bind the concrete dynamic destinations into the signed admission so
         # route evidence cannot be replayed under a different URL input.
         admission["allowed_routes"] = list(routes)
-        # D18 keeps the complete admission and signed observations in host
+        # The host keeps the complete admission and signed observations in host
         # memory until the action and its contained descendants have ended.
         if private_runtime_context:
             evidence_path.unlink(missing_ok=True)
@@ -7319,7 +7319,7 @@ class GenericPackHost:
         explicit = dict(explicit_env or {})
         # A worker may deliberately execute a qualified, local VibeComfy
         # snapshot rather than the normal published dependency pin.  The
-        # candidate is selected only by the digest-bound HC-03 profile; never
+        # candidate is selected only by the digest-bound readiness profile; never
         # accept an ambient candidate variable from the pod environment.
         if record.id in {"vibecomfy.run", "vibecomfy.validate"}:
             # Canonical bundle loading imports VibeComfy custom-node modules
@@ -7399,7 +7399,7 @@ class GenericPackHost:
             declared_secrets=declared_secrets,
         )
         if not allow_runtime_connection:
-            # A D18 parent has only its inherited three-operation channel.
+            # A parent has only its inherited three-operation channel.
             # Also remove manifest passthrough aliases of the worker secret.
             for name in ("ASTRID_NETWORK_ADMISSION", "ASTRID_NETWORK_BROKER_EVIDENCE",
                          "ASTRID_NETWORK_ADMISSION_DIGEST", "ASTRID_NETWORK_NONCE",
@@ -7753,7 +7753,7 @@ class GenericPackHost:
         if admission is not None:
             _verify_admitted_source(admission)
         # Checkout-server VibeComfy is intentionally bound to the manager's
-        # HC-03 output root. Keep the task's generated spool inside that
+        # VibeComfy output root. Keep the task's generated spool inside that
         # attested root instead of handing the child an arbitrary attempt
         # directory, which the adapter must correctly reject.
         if record.id == "vibecomfy.run":
@@ -7763,7 +7763,7 @@ class GenericPackHost:
             if isinstance(profile_output_root, str) and profile_output_root:
                 managed_root = Path(profile_output_root).expanduser().resolve()
                 if managed_root.is_symlink() or not managed_root.is_absolute():
-                    raise HostError("HC-03 VibeComfy output_root must be an absolute non-symlink path")
+                    raise HostError("VibeComfy output_root must be an absolute non-symlink path")
                 task_label = str(inputs.get("task_identity") or attempt.name)
                 safe_label = "".join(char if char.isalnum() or char in "-_." else "_" for char in task_label)
                 output_root = managed_root / "astrid-tasks" / safe_label / "outputs"
@@ -7944,7 +7944,7 @@ class GenericPackHost:
             if not isinstance(process_id, int) or process_id <= 0:
                 raise HostError(f"capability {record.id!r} child process_id is missing")
             # The managed VibeComfy session must write inside its attested
-            # HC-03 release root while running, but Astrid's settlement
+            # VibeComfy release root while running, but Astrid's settlement
             # contract owns an attempt-local output spool. Copy final regular
             # files (including the result manifest) back into that spool before
             # harvesting so typed-output custody remains inside the attempt.
@@ -9086,7 +9086,7 @@ class GenericPackHost:
                 )
                 if not isinstance(vibe_session, Mapping):
                     # pip_embedded is a valid local, non-persistent route. It
-                    # has no HC-03 session binding, so bind reuse to the
+                    # has no VibeComfy session binding, so bind reuse to the
                     # admitted workflow's resident requirements plus the
                     # pinned dependency/source identity instead.
                     session_identity_fields = {
@@ -9124,7 +9124,7 @@ class GenericPackHost:
                 )
                 # A changed resident identity must release the current owned
                 # server before we construct a replacement adapter.  The
-                # owner restart mutates the in-memory HC-03 session binding
+                # owner restart mutates the in-memory VibeComfy session binding
                 # after verifying the fresh registry; re-read that binding
                 # before any new adapter/session object is admitted.
                 current_binding = self.managed_tool_session.current_binding
@@ -9140,7 +9140,7 @@ class GenericPackHost:
                         else None
                     )
                     if not isinstance(refreshed_session, Mapping):
-                        raise HostError("vibecomfy owner restart did not provide a fresh HC-03 session")
+                        raise HostError("vibecomfy owner restart did not provide a fresh VibeComfy session")
                     vibe_session = refreshed_session
                     fresh_facts = (
                         readiness_profile.get("verified_facts", {}).get("exact", {})
@@ -9328,7 +9328,7 @@ class GenericPackHost:
                         allow_runtime_connection=not private_runtime_context,
                     )
                     # Checkout-server VibeComfy commands run inside the
-                    # attested HC-03 output root. Carry that effective root
+                    # attested VibeComfy output root. Carry that effective root
                     # back to the outer settlement layer; otherwise harvest
                     # falls back to the empty attempt-local directory and
                     # reports a missing manifest after Comfy completed.
@@ -13121,7 +13121,7 @@ def _cli() -> int:
     parser.add_argument("--boot-manifest-path", help="existing explicit boot-manifest path")
     parser.add_argument("--remotion-validation-launch-id", help=argparse.SUPPRESS)
     parser.add_argument("--boot-manifest-hash", help="expected SHA-256 hash of the boot manifest")
-    parser.add_argument("--readiness-profile-path", help="Worker-published HC-03 readiness profile")
+    parser.add_argument("--readiness-profile-path", help="Worker-published readiness profile")
     parser.add_argument("--readiness-profile-hash", help="expected SHA-256 hash of the readiness profile")
     parser.add_argument("--execution-target-json", help="explicit target JSON used for claim binding")
     parser.add_argument(

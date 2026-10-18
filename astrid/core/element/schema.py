@@ -431,7 +431,7 @@ def _optional_capability_string_list(
 
 
 # ---------------------------------------------------------------------------
-# Inline port/output parsers for element manifest I/O (T5)
+# Inline port/output parsers for element manifest I/O
 # ---------------------------------------------------------------------------
 
 

@@ -1,4 +1,4 @@
-"""Private GenericPackHost service for the D18 SDK operations.
+"""Private GenericPackHost service for the SDK operations.
 
 The socket is communication only. All authority is taken from the claimed
 attempt retained here; requests never supply a Runtime context.

@@ -1,4 +1,4 @@
-"""Kernel identifiers: lowercase Crockford-base32 ULIDs (m1 plan step 11).
+"""Kernel identifiers: lowercase Crockford-base32 ULIDs.
 
 The kernel's canonical identifier for project aggregates is a 26-character
 lowercase Crockford-base32 ULID: 48 bits of millisecond timestamp followed

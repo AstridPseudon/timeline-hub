@@ -9,7 +9,6 @@ import copy
 import hashlib
 import json
 import re
-import shlex
 from typing import Any, Iterable
 
 from astrid.core.timeline import clip_fields as cf
@@ -59,55 +58,6 @@ def _clip_row(c, *, is_picture=False):
     timing=(f"on {on}" if on else f"until {until}" if until else f"for {c.duration:g}s" if c.duration and not is_picture else "")
     bits.extend([timing," ".join(extras)])
     return bits
-
-
-def _align(rows):
-    if not rows:return []
-    order=(1,2,3,4,5,6)
-    widths={i:max(len(r[i]) for r in rows) for i in order}
-    return [(f"{r[0]:>6}   " + "  ".join(r[i].ljust(widths[i]) for i in order[:-1]) + ("  " if r[5] and r[6] else "") + r[6]).rstrip() for r in rows]
-
-
-def _legacy_render_sheet(tl: Checkout, *, start=None, end=None, banner=None, film=None, cuts: Iterable[str]|None=None, detail=False):
-    groups=tl._cut_groups()
-    if not groups: return "this timeline has no named cuts yet (import its intent first)\n"
-    spans=tl._cut_spans()
-    ids=set(cuts) if cuts is not None else None
-    selected=[g for g in groups if ids is None or g["id"] in ids]
-    out=[f"film {film or tl.bundle.get('project_id','')} · {tl.bundle.get('timeline_id','')} · {_canvas(tl)} · {tl.fps:g} fps · v {tl.bundle.get('base_parent',{}).get('revision_id','0')}"]
-    if banner: out.append(banner)
-    # Narration projection, retaining stable segment names and opaque app data.
-    voices=[]
-    for c in tl.clips(audio=True):
-        segment=intent.line(c.data)
-        if segment and segment not in voices: voices.append(segment)
-    if voices:
-        out += ["", "lines                                            # the narration: everything hangs on it"]
-        for seg in voices:
-            text=next((intent._get(c.data,"text","") for c in tl.clips(audio=True) if intent.line(c.data)==seg),"")
-            gap=tl.voice(seg).gap_after
-            out.append(f"  {seg}  {_quote(text)}"+(f"  gap {gap:g}" if gap is not None else ""))
-    sound=[c for c in tl.clips(audio=True) if not intent.line(c.data) and not intent.cut_of(c.data)]
-    if sound:
-        out += ["", "sound                                            # under the film, in no cut: asset, for, volume= (the grid: --beats)"]
-        for c in sound:
-            extra=f"volume={c.data['volume']:g}" if isinstance(c.data.get("volume"),(int,float)) else ""
-            element=c.element or 'media'; element=element[3:] if element.startswith('am-') else element
-            out.append(f"{c.start:6.2f}   {c.track or 'sfx'}  {c.layer_name}  {element}  {c.asset or ''}  for {c.duration:g}s{(' '+extra) if extra else ''}")
-    for g in selected:
-        cut_start, cut_end = spans[g["id"]]
-        cut_end = tl.duration if cut_end is None else cut_end
-        out += [f"{g['start']:6.2f} ┃ {g['id']:<5}"+" "*55+f"· {cut_end-g['start']:.2f} s"]
-        said=" ".join(w.text for w in tl.words(between=(g["start"],cut_end)))
-        if said: out.append(f"       > {said}")
-        rows=[]
-        for c in g["clips"]:
-            if c.start+1e-6 < g["start"]: continue
-            rows.append(_clip_row(c,is_picture=(c.track=="plate")))
-        out.extend(_align(rows))
-        note=next((intent._get(c.data,"why") for c in g["clips"] if intent._get(c.data,"why")),None)
-        if note: out.append(f"         why: {note}")
-    return "\n".join(out)+"\n"
 
 
 def render_sheet(tl: Checkout, *, start=None, end=None, banner=None, film=None, cuts: Iterable[str]|None=None, detail=False):
@@ -312,27 +262,6 @@ def _align(rows):
     order = (1, 2, 3, 4, 6, 5)
     widths = {i: max(len(row[i]) for row in rows) for i in order}
     return [(f"{row[0]:>6}   " + "  ".join(row[i].ljust(widths[i]) for i in order[:-1]) + "  " + row[5]).rstrip() for row in rows]
-
-
-def _legacy_parse_sheet(text: str):
-    parsed={"lines":{},"cuts":[],"rows":[]}; section=None; active_cut=None
-    for number,line in enumerate(text.splitlines(),1):
-        stripped=line.strip()
-        if not stripped or stripped.startswith("#") or stripped.startswith("film "): continue
-        if stripped.startswith("lines"):
-            section="lines"; continue
-        if stripped.startswith("sound"):
-            section="sound"; continue
-        m=re.match(r"^\s*([0-9.]+)\s*┃\s*(\S+)(?:\s+on\s+(.+?))?(?:\s+·.*)?\s*$",line)
-        if m:
-            section="cut"; active_cut=m.group(2); parsed["cuts"].append({"time":float(m.group(1)),"id":active_cut,"on":m.group(3),"line":number}); continue
-        if section=="lines":
-            m=re.match(r'^\s+(\S+)\s+"(.*)"(?:\s+gap\s+([0-9.]+))?\s*$',line)
-            if m: parsed["lines"][m.group(1)]={"text":m.group(2),"gap":float(m.group(3)) if m.group(3) else None,"line":number}
-            continue
-        if section in {"cut","sound"} and line[:1].isspace() and not stripped.startswith(">") and not stripped.startswith("why:"):
-            parsed["rows"].append({"line":number,"section":section,"cut":active_cut,"text":stripped})
-    return parsed
 
 
 def parse_sheet(text: str) -> dict[str, Any]:
@@ -584,90 +513,6 @@ def range_cuts(tl: Any, text: str) -> list[str]:
             if (hi is None or start < hi - 1e-6) and (lo is None or end > lo + 1e-6):
                 chosen.add(cut_id)
     return [cut_id for cut_id in order if cut_id in chosen]
-
-
-def _legacy_apply_sheet(tl: Checkout, text: str) -> list[str]:
-    parsed=parse_sheet(text); before=tl.document(); report=[]
-    try:
-        touched={}
-        existing={g["id"] for g in tl._cut_groups()}
-        for header in parsed["cuts"]:
-            if header["id"] in existing and header.get("on"):
-                picture=tl.cut(header["id"]).picture
-                if picture is not None: picture.on(header["on"])
-            elif header["id"] not in existing and header.get("on"):
-                tl.add_cut(header["on"],id=header["id"])
-                existing.add(header["id"])
-        for line in parsed["rows"]:
-            words=shlex.split(line["text"])
-            if len(words)<4: continue
-            if words and re.fullmatch(r"[0-9]+(?:\.[0-9]+)?",words[0]): words=words[1:]
-            if len(words)<4: continue
-            track,layer,element,asset=words[:4]
-            if line["section"]=="sound":
-                address=next((c for c in tl.clips(audio=True) if (intent.layer_of(c.data) or c.id)==layer),None)
-            else:
-                address=next((c for c in tl.clips() if intent.cut_of(c.data)==line.get("cut") and (intent.layer_of(c.data) or c.id)==layer),None)
-            params={}; i=4; timing={}
-            while i<len(words):
-                token=words[i]
-                if token in {"on","until","for"}:
-                    if i+1<len(words):
-                        val=words[i+1]
-                        timing[token]=val
-                        i+=2; continue
-                if "=" in token:
-                    k,v=token.split("=",1)
-                    try: params[k]=json.loads(v)
-                    except Exception: params[k]=v
-                i+=1
-            if address is None:
-                if line["section"]=="sound": continue
-                at=timing.get("on")
-                if at and at not in {"end"} and not re.fullmatch(r"[0-9.]+",at) and not at.startswith('"'): at=_quote(at)
-                if at is None: at=next((g["start"] for g in tl._cut_groups() if g["id"]==line.get("cut")),0)
-                hold=float(timing["for"].rstrip("s")) if "for" in timing else 1.0
-                if element in {"type","sprite","snap-plate"}: element="am-"+element
-                if element=="am-type": params["text"]=asset
-                address=tl.add(element,at=at,hold=hold,params={**params,**({"text":asset.strip('"')} if asset.startswith('"') else {})},layer=layer,track=track,asset=None if asset.startswith('"') or element=="am-type" else asset)
-                touched.setdefault(line.get("cut"),set()).add(address.data.get("id"))
-            elif line["section"]!="sound":
-                touched.setdefault(line.get("cut"),set()).add(address.data.get("id"))
-                address.data["track"]=track
-                if element in {"type", "am-type"}:
-                    params["text"]=asset
-                elif asset and asset!=address.asset: address.data["asset"]=asset
-                if params: address.set(**params)
-                if "on" in timing:
-                    val=timing["on"]; address.on(val if val in {"end"} or re.fullmatch(r"[0-9.]+",val) else _quote(val))
-                if "until" in timing:
-                    val=timing["until"]; address.until(val if val in {"end"} or re.fullmatch(r"[0-9.]+",val) else _quote(val))
-                if "for" in timing:
-                    duration=float(timing["for"].rstrip("s"))
-                    if abs(address.duration-duration)>0.5/tl.fps: address.set_duration(duration)
-            if line["section"]=="sound" and address:
-                if "volume" in params: address.data["volume"]=params["volume"]
-                if "for" in timing:
-                    duration=float(timing["for"].rstrip("s"))
-                    if abs(address.duration-duration)>0.5/tl.fps: address.set_duration(duration)
-        # A complete cut section can delete omitted layers; the picture row is
-        # required to remain present. A fragment without a cut header is never
-        # interpreted as a deletion request.
-        for cut in {entry["id"] for entry in parsed["cuts"]}:
-            keep=touched.get(cut,set())
-            group=next((g for g in tl._cut_groups() if g["id"]==cut),None)
-            if group and keep:
-                for c in list(group["clips"]):
-                    if c.data.get("id") not in keep and c.track!="plate": c.remove()
-        # Apply explicit line gap edits, never line deletion as an accidental action.
-        for seg,data in parsed["lines"].items():
-            if data["gap"] is not None and tl.voice(seg).clips: tl.voice(seg).set_gap_after(data["gap"])
-        if before!=tl.document():
-            tl.save(quiet=True); report.append("applied sheet edits")
-        return report
-    except Exception as exc:
-        tl.bundle=before; tl._refresh()
-        raise SheetError(f"line {line.get('line', '?')}: «{line.get('text','')}» — {exc}; use a valid clip address and editable field") from exc
 
 
 def apply_sheet(tl: Checkout, text: str) -> list[str]:

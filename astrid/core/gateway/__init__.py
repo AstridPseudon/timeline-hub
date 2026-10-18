@@ -101,8 +101,7 @@ def _main_impl(raw: list[str]) -> int:
     if first_arg in {"-h", "--help"}:
         _print_entrypoint_help()
         return 0
-    # `astrid help` is the product-focused executable help (m4 plan step
-    # 24, task T26): the seven core families, external pack routes, nested mounts, the --json envelope
+    # `astrid help` is the product-focused executable help: the seven core families, external pack routes, nested mounts, the --json envelope
     # convention, and stable exit codes. It is session-free by construction
     # (help is documentation).
     if first_arg == "help":

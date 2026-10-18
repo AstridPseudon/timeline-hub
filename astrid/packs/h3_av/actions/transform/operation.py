@@ -57,8 +57,9 @@ class OperationJournal:
                     raise OperationJournalError("operation journal submission identity is malformed")
                 self.submission_id = submission_id
             elif isinstance(admission_digest, str) and admission_digest:
-                # Preserve the identity of a pre-D10 journal while refusing to
-                # use its saved DTO as authority. A new journal always gets a
+                # A journal written before submission ids existed has only an
+                # admission digest: keep it as the identity, but refuse to
+                # use the saved DTO as authority. A new journal always gets a
                 # fresh nonce above.
                 self.submission_id = admission_digest
 

@@ -44,7 +44,6 @@ __all__ = [
     # constants
     "_PRICING_TABLE",
     # private helpers
-    "_utc_now_iso",
     "_get_hourly_rate",
     "_write_json",
     "_cost_entry",
@@ -92,11 +91,6 @@ _PRICING_TABLE: dict[str, float] = {
     "NVIDIA H100-SXM-80GB": 2.99,
     "NVIDIA H100 80GB HBM3": 2.99,
 }
-
-
-def _utc_now_iso() -> str:
-    """Return current UTC timestamp in ISO 8601 with milliseconds."""
-    return utc_now_milliseconds()
 
 
 def _get_hourly_rate(api_key: str, gpu_type) -> float:
@@ -165,7 +159,7 @@ def _create_json_exclusive(path: Path, payload: dict[str, Any]) -> None:
 
 
 def _cost_entry(amount: float, source: str, basis: str) -> dict[str, Any]:
-    """Build a cost sidecar dict matching the Sprint 3 CostEntry shape."""
+    """Build a cost sidecar dict matching the CostEntry shape."""
     return {
         "amount": round(amount, 6),
         "currency": "USD",
@@ -622,7 +616,7 @@ def _mark_cleanup_pending(
             "cleanup_pending": True,
             "cleanup_phase": phase,
             "cleanup_error": reason,
-            "cleanup_pending_at": _utc_now_iso(),
+            "cleanup_pending_at": utc_now_milliseconds(),
         }
     )
     operation_id = handle.get("operation_id")
@@ -728,7 +722,7 @@ def _start_allocation_attempt(
         "api_key_ref": api_key_ref,
         "gpu_type": gpu_type,
         "storage_name": storage_name,
-        "requested_at": _utc_now_iso(),
+        "requested_at": utc_now_milliseconds(),
         "reconciliation_required": True,
     }
     try:
@@ -748,7 +742,7 @@ def _record_allocation_unknown(
         "storage_name_attempted": exc.storage_name,
         "storage_volume_id_attempted": exc.storage_volume_id,
         "reconciliation_required": True,
-        "unresolved_at": _utc_now_iso(),
+        "unresolved_at": utc_now_milliseconds(),
     })
     _replace_custody_record(
         handle_path,
@@ -774,7 +768,7 @@ def _record_nonretryable_launch_failure(
 ) -> AstridError:
     """Retain custody when a fatal launch error may have created a known pod."""
     pod_id = getattr(exc, "pod_id", None)
-    failed_at = _utc_now_iso()
+    failed_at = utc_now_milliseconds()
     attempt.update({
         "state": "allocated_unverified" if pod_id else "allocation_unknown",
         "failure_type": type(exc).__name__,
@@ -1109,7 +1103,7 @@ def cmd_provision(args: argparse.Namespace, produces_dir: Path) -> int:
     )
 
     hourly_rate = _get_hourly_rate(api_key, gpu_type)
-    provisioned_at = _utc_now_iso()
+    provisioned_at = utc_now_milliseconds()
     t0 = time.monotonic()
 
     handle_path = produces_dir / "pod_handle.json"
@@ -1174,7 +1168,7 @@ def cmd_provision(args: argparse.Namespace, produces_dir: Path) -> int:
         raise AstridError(str(exc), recovery_command="check RunPod capacity and configuration before retry") from exc
     except Exception as exc:
         if pod_id is None:
-            attempt.update({"state": "allocation_unknown", "unresolved_at": _utc_now_iso()})
+            attempt.update({"state": "allocation_unknown", "unresolved_at": utc_now_milliseconds()})
             _replace_custody_record(handle_path, attempt, operation_id=operation_id)
         _mark_cleanup_pending(
             handle_path,
@@ -1434,7 +1428,7 @@ def cmd_teardown(args: argparse.Namespace, produces_dir: Path) -> int:
 
     duration = time.monotonic() - t0
 
-    receipt["terminated_at"] = _utc_now_iso()
+    receipt["terminated_at"] = utc_now_milliseconds()
     _write_json(produces_dir / "teardown_receipt.json", receipt)
     _write_cost_sidecar(produces_dir, duration_seconds=duration, hourly_rate=hourly_rate, basis_prefix="teardown")
 
@@ -1548,7 +1542,7 @@ def cmd_session(args: argparse.Namespace, produces_dir: Path) -> int:
     )
 
     hourly_rate = _get_hourly_rate(api_key, gpu_type)
-    provisioned_at = _utc_now_iso()
+    provisioned_at = utc_now_milliseconds()
 
     t0 = time.monotonic()
     pod_id: str | None = None
@@ -1711,7 +1705,7 @@ def cmd_session(args: argparse.Namespace, produces_dir: Path) -> int:
             else:
                 _remove_custody_record(handle_path, operation_id=operation_id)
         elif pod_id is None:
-            attempt.update({"state": "allocation_unknown", "unresolved_at": _utc_now_iso()})
+            attempt.update({"state": "allocation_unknown", "unresolved_at": utc_now_milliseconds()})
             _replace_custody_record(handle_path, attempt, operation_id=operation_id)
         total_duration = time.monotonic() - t0
         _write_cost_sidecar(produces_dir, duration_seconds=total_duration, hourly_rate=hourly_rate, basis_prefix="session (failed)")

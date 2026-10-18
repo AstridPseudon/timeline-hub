@@ -18,7 +18,7 @@ from astrid.core import timeline
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 from astrid.core.audit import register_outputs
 from astrid.core.element import catalog as effects_catalog
-from astrid.core.util.time import _utc_now, utc_now_seconds
+from astrid.core.util.time import utc_now_seconds
 
 
 def _stable_pool_id(effect_id: str) -> str:
@@ -28,7 +28,7 @@ def _stable_pool_id(effect_id: str) -> str:
 def _skeleton() -> dict[str, Any]:
     return {
         "version": timeline.POOL_VERSION,
-        "generated_at": _utc_now(),
+        "generated_at": utc_now_seconds(),
         "entries": [],
     }
 
@@ -77,7 +77,7 @@ def merge_pool(pool: dict[str, Any], *, theme: str | Path | None = None) -> dict
         entries.append(upserts[entry_id])
     merged = dict(pool)
     merged["version"] = timeline.POOL_VERSION
-    merged.setdefault("generated_at", _utc_now())
+    merged.setdefault("generated_at", utc_now_seconds())
     merged["entries"] = entries
     if not kept_stale_theme_entries:
         timeline.validate_pool(merged)
@@ -105,7 +105,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     print(args.out)
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     out_file = args.out.resolve()
     manifest_path = out_file.parent / "manifest.json"
     manifest = build_manifest(

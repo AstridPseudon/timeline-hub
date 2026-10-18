@@ -18,7 +18,7 @@ from typing import Any, Sequence
 from astrid.core import timeline
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 from astrid.core.audit import register_outputs
-from astrid.core.util.time import _utc_now, utc_now_seconds
+from astrid.core.util.time import utc_now_seconds
 
 AUDIO_EVENT_RE = re.compile(r"\b(applause|laughter|cheer|audience)\b", re.IGNORECASE)
 KIND_LETTER = {"dialogue": "d", "visual": "v", "reaction": "r", "applause": "a", "music": "m"}
@@ -171,7 +171,7 @@ def build_pool(
 
     payload: timeline.Pool = {
         "version": timeline.POOL_VERSION,
-        "generated_at": _utc_now(),
+        "generated_at": utc_now_seconds(),
         "source_slug": source_slug,
         "entries": entries,
     }
@@ -219,7 +219,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         print(out_path)
 
-        # --- universal result manifest (output-contract M1) -----------------------
+        # --- universal result manifest -----------------------
         manifest_outputs: list[dict[str, Any]] = [
             {"path": str(out_path), "type": "file"},
         ]

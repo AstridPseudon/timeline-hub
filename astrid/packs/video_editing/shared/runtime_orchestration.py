@@ -302,7 +302,7 @@ def build_runtime_handoff(
     child_settlement_effect: Mapping[str, Any] | None = None,
     stitch_settlement_effect: Mapping[str, Any] | None = None,
 ) -> RuntimeOrchestrationHandoff:
-    """Build one producer-consumable HC-04 orchestration handoff."""
+    """Build one producer-consumable orchestration handoff."""
 
     if root_name not in ROOT_CAPABILITIES:
         raise OrchestrationContractError(f"unknown orchestration root {root_name!r}")
@@ -355,7 +355,7 @@ def _task_id(result: Any) -> str:
 
 
 def admit_runtime_task(client: Any, admission: RuntimeAdmission) -> str:
-    """Admit one HC-04 record through the generated Runtime task client."""
+    """Admit one record through the generated Runtime task client."""
 
     body = admission.body
     tasks = getattr(client, "tasks", None)

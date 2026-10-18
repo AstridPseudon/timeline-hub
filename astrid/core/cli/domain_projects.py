@@ -1,4 +1,4 @@
-"""Product projects family CLI (m4 plan step 25, task T27).
+"""Product projects family CLI.
 
 This module is the product parser for the ``projects`` family: every verb is
 **argument parsing plus exactly one SDK call** on the composed

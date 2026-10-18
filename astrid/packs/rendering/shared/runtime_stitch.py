@@ -39,7 +39,7 @@ def build_stitch_admission(
     render: Mapping[str, Any] | None = None,
     idempotency_key: str,
 ) -> RuntimeAdmission:
-    """Create the finalizer HC-04 body with Runtime event dependencies."""
+    """Create the finalizer body with Runtime event dependencies."""
 
     if stitch_name not in STITCH_CAPABILITIES:
         raise OrchestrationContractError(f"unknown stitch finalizer {stitch_name!r}")

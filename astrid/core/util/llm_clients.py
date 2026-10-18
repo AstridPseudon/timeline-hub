@@ -14,7 +14,7 @@ from typing import Any, Protocol
 
 from astrid.core.contracts.errors import AstridError
 from astrid.core.util.credentials_scope import CredentialsScope
-from astrid.core.util.time import _utc_now, utc_now_seconds
+from astrid.core.util.time import utc_now_seconds
 
 _IMAGE_BLOCK_ALLOWED_KEYS = frozenset({"type", "source", "cache_control"})
 _LLM_DEBUG_LOCK = threading.Lock()
@@ -156,7 +156,7 @@ def _finish_debug_log(
     request_path, response_path, seq, stage = context
     response_path.write_text(json.dumps({"provider": provider, **payload}, indent=2) + "\n", encoding="utf-8")
     summary = {
-        "ts": _utc_now(),
+        "ts": utc_now_seconds(),
         "provider": provider,
         "stage": stage,
         "seq": seq,

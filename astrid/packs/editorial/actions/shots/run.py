@@ -120,7 +120,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     print(f"wrote_shots={len(shots)} shots_json={shots_path}")
 
-    # --- universal result manifest (output-contract M1) -----------------------
+    # --- universal result manifest -----------------------
     manifest_outputs: list[dict[str, Any]] = [
         {"path": str(shots_path), "type": "file"},
     ]

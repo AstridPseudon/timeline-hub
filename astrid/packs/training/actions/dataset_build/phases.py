@@ -1,6 +1,6 @@
 """Dataset build pipeline phase implementations.
 
-Extracted from `run.py` during M4 T76 to keep the orchestrator module
+Extracted from `run.py` to keep the orchestrator module
 focused on `main()` and `run_pipeline()` adapter glue.
 """
 

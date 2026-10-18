@@ -68,7 +68,7 @@ def validate_repo_structure(root: str | Path = REPO_ROOT) -> StructureReport:
     errors.extend(validate_migration_completion(repo_root))
     # Top-level astrid/packs/ modules: only __init__.py is allowed.
     errors.extend(_validate_packs_top_level_modules(repo_root / "astrid" / "packs"))
-    # Deterministic pack/writer/runtime-authority lint (m1 plan step 22).
+    # Deterministic pack/writer/runtime-authority lint.
     errors.extend(validate_authority_boundaries(repo_root))
     return StructureReport(errors=tuple(errors), warnings=tuple(warnings))
 
@@ -588,7 +588,7 @@ def _resolve_import_from_module(node: ast.ImportFrom, *, module_name: str) -> st
     return ".".join(parts)
 
 
-# The rendering capability pack remains in-tree (plan step 22.3): kernel
+# The rendering capability pack remains in-tree: kernel
 # CLI/gateway modules legitimately import it. The retired builtin shell is
 # deliberately absent from this allowlist and cannot re-enter the source graph.
 _LEGACY_PACK_PREFIXES = ("astrid.packs.rendering.",)
@@ -631,7 +631,7 @@ def _is_concrete_pack_implementation_module(module: str) -> bool:
 
 
 # astrid/core/gateway/dispatch.py is the m1 serve composition root: the one
-# documented kernel-to-pack composition exemption (plan step 22) — it is the
+# documented kernel-to-pack composition exemption — it is the
 # generic runtime composition root for the reviewed product mount edges.
 _IMPORT_LAYERING_EXEMPT_REL = frozenset(
     {
@@ -779,7 +779,7 @@ def _live_import_map(repo_root: Path) -> dict[str, set[str]]:
 
 
 def validate_authority_boundaries(root: str | Path = REPO_ROOT) -> list[str]:
-    """Run the deterministic pack/writer/runtime-authority lint (plan step 22).
+    """Run the deterministic pack/writer/runtime-authority lint.
 
     Delegates to :mod:`scripts.reshape.authority_lint`, which detects
     kernel-to-pack and pack-to-pack imports, SQLite writers outside the

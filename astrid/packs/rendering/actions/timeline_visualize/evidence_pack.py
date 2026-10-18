@@ -346,7 +346,7 @@ def _build_manifest(
                 "reason": None if primary_png else "no pages were laid out for this scope",
             },
             # The closed manifest schema still requires the key; SVG output
-            # was removed, so it is always null with a stable reason.
+            # is not produced, so it is always null with a stable reason.
             "svg": {"path": None, "reason": _SVG_NULL_REASON},
             "structure": {
                 "path": structure_path,

@@ -1,4 +1,4 @@
-"""Sprint 5b: thumbnail_maker orchestrator — plan v2 emission + direct step execution."""
+"""thumbnail_maker orchestrator — plan v2 emission + direct step execution."""
 
 
 from __future__ import annotations

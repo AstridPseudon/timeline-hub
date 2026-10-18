@@ -796,7 +796,7 @@ def run(args: argparse.Namespace) -> int:
 
     output = {**payload_preview, "results": results}
 
-    # --- universal result manifest (output-contract M1) -----------------------
+    # --- universal result manifest -----------------------
     manifest_path = (args.out.parent / "manifest.json") if args.out else (args.out_dir / "manifest.json")
     output["schema_version"] = 1
     output["kind"] = "understanding.visual_understand"

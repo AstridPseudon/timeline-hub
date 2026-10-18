@@ -1,6 +1,6 @@
 """Model registry schema — frozen dataclasses and validation.
 
-schema_version: 2 — model → mode → backend taxonomy (SD-001, SD-003).
+schema_version: 2 — model → mode → backend taxonomy.
 
 Each model entry declares a ``modes`` map whose keys are canonical mode
 names (``t2i``, ``i2i``, ``edit``, ``inpaint``, ``outpaint``, ``upscale``
@@ -93,7 +93,7 @@ class ModeSpec:
     """Per-mode capabilities and backend wiring for one model.
 
     A mode represents a specific generation capability (e.g. ``t2i``,
-    ``i2i``, ``edit``).  Features live on the mode (SD-003), not on the
+    ``i2i``, ``edit``).  Features live on the mode, not on the
     model — the same model can expose different feature sets across its
     modes.
     """
@@ -120,7 +120,7 @@ class ModelEntry:
     """A registered generation model with per-mode backend wiring.
 
     Each entry maps to exactly one real-world model checkpoint or vendor
-    offering (SD-001).  The ``modes`` dict keys are canonical mode names;
+    offering.  The ``modes`` dict keys are canonical mode names;
     each value is a :class:`ModeSpec` declaring what that mode supports,
     requires, and which backends are available.
     """
@@ -139,7 +139,7 @@ class ModelEntry:
 
     #: When ``True``, this is a closed-weight model (e.g. Recraft,
     #: Ideogram).  Closed entries are retained in the registry for backend
-    #: selection and policy checks (SD-008).
+    #: selection and policy checks.
     #: ``None`` is treated as falsy / open-weight.
     closed: bool | None = None
 
@@ -180,7 +180,7 @@ def validate_registry_with_backends(
         if schema_version == 1:
             raise ValueError(
                 "Schema version 1 is no longer supported.  "
-                "Sprint 2 replaced the flat model-entry schema with a "
+                "The flat model-entry schema was replaced with a "
                 "model → mode → backend taxonomy (schema_version: 2).  "
                 "Please rewrite your model entries in the v2 shape: "
                 "each model declares a 'modes' dict whose values carry "

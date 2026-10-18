@@ -1,4 +1,4 @@
-"""Sprint 5b: event_talks orchestrator — plan v2 emission + direct step execution."""
+"""event_talks orchestrator — plan v2 emission + direct step execution."""
 
 
 from __future__ import annotations

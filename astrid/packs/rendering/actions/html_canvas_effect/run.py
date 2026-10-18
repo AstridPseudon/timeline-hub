@@ -315,7 +315,7 @@ def main(argv: list[str] | None = None) -> int:
             recovery_command="check the effect id, file paths, and permissions, then rerun",
         ) from exc
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     out_file = args.out.resolve()
     manifest_path = out_file.parent / "manifest.json"
     manifest_dir = manifest_path.parent

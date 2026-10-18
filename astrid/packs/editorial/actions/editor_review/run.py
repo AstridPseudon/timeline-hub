@@ -823,7 +823,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         audit.register_node(stage="editor_review", label="Review rendered cut", outputs=[review_id])
     print(out_path)
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     manifest_path = out_dir / "manifest.json"
     manifest = build_manifest(
         kind="editor_review",

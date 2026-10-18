@@ -1,4 +1,4 @@
-"""Product timelines family CLI (m4 plan step 26, task T28).
+"""Product timelines family CLI.
 
 This module is the product parser for the runtime-owned ``timelines``
 family. Every verb is **argument parsing plus exactly one SDK
@@ -13,8 +13,8 @@ contract.
 The parser also mounts the runtime-owned nested ``shots`` family beneath
 ``timelines``: ``astrid timelines shots <verb>`` embeds the shots
 product parser (``astrid/packs/shots/cli.py``) so project-level reusable shot
-``list/create/show/add/remove/reorder`` commands are executable only beneath timelines
-(plan step 26, task T29). There is **no top-level shots family**.
+``list/create/show/add/remove/reorder`` commands are executable only beneath timelines.
+There is **no top-level shots family**.
 
 Verbs (the product routes plus the nested ``shots`` mount; reads resolve the
 Runtime-owned canonical current head. The detached working-copy verbs use the

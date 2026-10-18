@@ -17,7 +17,7 @@ from typing import Any, Sequence
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 from astrid.core.audit import register_outputs
 from astrid.core.util.llm_clients import ClaudeClient, build_claude_client
-from astrid.core.util.time import _utc_now, utc_now_seconds
+from astrid.core.util.time import utc_now_seconds
 
 QUOTE_CANDIDATES_VERSION = 1
 RESPONSE_SCHEMA = {
@@ -111,7 +111,7 @@ def build_quote_candidates(
     candidates = response.get("candidates")
     if not isinstance(candidates, list):
         raise AstridValueError("Claude quote scout response is missing candidates")
-    payload = {"version": QUOTE_CANDIDATES_VERSION, "generated_at": _utc_now(), "candidates": candidates}
+    payload = {"version": QUOTE_CANDIDATES_VERSION, "generated_at": utc_now_seconds(), "candidates": candidates}
     validate_quote_candidates(payload)
     return payload
 
@@ -142,7 +142,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         print(out_path)
 
-        # --- universal result manifest (output-contract M1) -----------------------
+        # --- universal result manifest -----------------------
         manifest_outputs: list[dict[str, Any]] = [
             {"path": str(out_path), "type": "file"},
         ]

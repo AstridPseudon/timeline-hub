@@ -54,7 +54,7 @@ class CapabilityIdentity:
 
 @dataclass(frozen=True)
 class RuntimeAdmission:
-    """Logical HC-04 body plus its transport-only idempotency key."""
+    """Logical body plus its transport-only idempotency key."""
 
     body: Mapping[str, Any]
     idempotency_key: str

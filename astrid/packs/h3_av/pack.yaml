@@ -16,8 +16,10 @@ permissions:
 - id: accelerator
   reason: H3 generation requires a CUDA-capable ComfyUI runtime.
 - id: network
-  reason: VibeComfy may contact the managed ComfyUI/RunPod runtime and resolve declared model
-    assets.
+  reason: The transform process opens no sockets itself; it coordinates runpod.* and vibecomfy
+    child capabilities, which declare their own network_policy for the RunPod control plane
+    (api.runpod.io and related hosts) and the managed ComfyUI session. Model and custom-node
+    sources (huggingface.co, github.com) are declared for the managed worker, not fetched here.
 - id: external_services
   reason: The transform may target a managed RunPod worker through the existing runtime contract.
 description: Prepare, compile, execute, compose, and verify flexible MiniMax H3 audiovisual

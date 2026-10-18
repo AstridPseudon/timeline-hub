@@ -7,7 +7,7 @@ import importlib
 from .version import __version__
 
 _SDK_EXPORTS = (
-    # Curated public SDK surface (m4 plan step 19, task T20): lazy
+    # Curated public SDK surface: lazy
     # discovery, typed invoke, generate, and protocol rendering entrypoint, and the
     # public DTO/exception taxonomy. The raw runner seams
     # (``run_executor``/``run_orchestrator``) and caller registry-injection

@@ -1,6 +1,6 @@
 """Resume-mode helpers for the hype cut executor.
 
-Extracted from ``run.py`` during M4 batch 79 (T80). Handles the
+Extracted from ``run.py``. Handles the
 ``--timeline`` resume path where an existing hype.timeline.json is
 re-processed for re-render or asset rebasing.
 """
@@ -188,7 +188,7 @@ def execute_resume_mode(args: argparse.Namespace) -> ResumeModeResult:
         metadata={"mode": "timeline_resume", "renderer": args.renderer},
         rendered_path=rendered_path,
     )
-    # --- universal result manifest (output-contract M2) -------------------
+    # --- universal result manifest -------------------
     manifest_outputs = [
         {"path": "hype.timeline.json", "type": "file"},
         {"path": "hype.assets.json", "type": "file"},

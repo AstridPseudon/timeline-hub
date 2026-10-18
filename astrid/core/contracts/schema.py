@@ -83,7 +83,7 @@ class IsolationMetadata:
 
 
 # ---------------------------------------------------------------------------
-# M1 Capability Identity dataclasses
+# Capability identity dataclasses
 # ---------------------------------------------------------------------------
 
 

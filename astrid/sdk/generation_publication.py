@@ -2,7 +2,7 @@
 
 The helper in this module is deliberately a compose-only boundary.  It
 validates the small ordinary text-to-image request, resolves the shipped
-capability and model registries, and returns the complete HC-04 admission
+capability and model registries, and returns the complete admission
 document that the host adapter can pass to Runtime.  It does not admit a
 task, contact a provider, read a project, or execute a capability.
 
@@ -257,7 +257,7 @@ def _capability_digest(capability: Any) -> str:
 
 
 def compose_image_publication_request(request: Mapping[str, Any]) -> dict[str, Any]:
-    """Compose one closed, deterministic HC-04 image publication request.
+    """Compose one closed, deterministic image publication request.
 
     The only accepted input keys are ``project``, ``capability_digest``, and
     ``params``.  The caller cannot provide a generation intent, settlement

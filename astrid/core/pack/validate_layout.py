@@ -1,6 +1,6 @@
 """Pack layout contract validation.
 
-Extracted from ``astrid.core.pack.validate`` during M4 T26.
+Extracted from ``astrid.core.pack.validate``.
 Provides layout exception types, canonical layout rules, and standalone
 validation functions that PackValidator delegates to.
 """
@@ -119,12 +119,12 @@ CANONICAL_PACK_LAYOUT_RULES: tuple[CanonicalLayoutRule, ...] = (
 # Relocated / removed directories (validated by contract tests)
 # ---------------------------------------------------------------------------
 #   astrid/packs/schemas/
-#       status:      relocated to astrid/core/pack/schemas/ (M2 T10)
+#       status:      relocated to astrid/core/pack/schemas/
 #       contract:    ``test_schemas_directory_absent_from_pack_tree`` in
 #                    ``tests/test_pack_layout_contract.py`` enforces
 #                    continued absence.
 #   astrid/core/pack/schemas/
-#       status:      relocated to astrid/core/pack/schemas/ (M2 T10)
+#       status:      relocated to astrid/core/pack/schemas/
 #       contract:    ``test_schemas_relocated_to_pack`` in
 #                    ``tests/test_pack_layout_contract.py`` enforces
 #                    presence at the new canonical location.

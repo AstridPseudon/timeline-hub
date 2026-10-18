@@ -102,7 +102,7 @@ def main(argv: list[str] | None = None, *, runner: Runner = subprocess.run) -> i
                 state_snapshot={"ffmpeg_stderr": result.stderr} if result.stderr else None,
             )
 
-        # --- universal result manifest (output-contract M2) -------------------
+        # --- universal result manifest -------------------
         manifest_path = out.parent / "manifest.json"
         manifest = build_manifest(
             kind="clip_extract",

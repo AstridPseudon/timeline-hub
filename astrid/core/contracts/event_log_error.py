@@ -7,5 +7,5 @@ class EventLogError(RuntimeError):
     """Base for all event-log errors across task and timeline domains.
 
     Timeline storage errors are returned by the generated workspace client;
-    Astrid no longer exposes a product-side timeline event-log hierarchy.
+    Astrid does not expose a product-side timeline event-log hierarchy.
     """

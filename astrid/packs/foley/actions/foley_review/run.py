@@ -173,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
     out_path.write_text(page, encoding="utf-8")
     print(f"wrote_review={out_path}")
 
-    # --- universal result manifest (output-contract M2) -----------------------
+    # --- universal result manifest -----------------------
     result_manifest_path = out_path.parent / "manifest.json"
     manifest = build_manifest(
         kind="foley_review",

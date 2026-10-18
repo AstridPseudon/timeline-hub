@@ -1,4 +1,4 @@
-"""Product media family CLI (m4 plan step 27, task T30).
+"""Product media family CLI.
 
 This module is the product parser for the ``media`` family: every verb is
 **argument parsing plus exactly one SDK call** on the composed
@@ -33,7 +33,7 @@ The parser also mounts the reviewed runtime-owned nested ``references`` family
 beneath ``media`` (``references: media references``): ``astrid media references <verb>``
 embeds the references product parser (``astrid/packs/references/cli.py``)
 so reference ``create/update/archive/associate/link/set-primary/list/show`` are
-executable only beneath media (plan step 27, task T30). There is **no
+executable only beneath media. There is **no
 top-level references family** (sense check SC30).
 
 This module contains **no SQL**, **no repository logic**, and **no domain

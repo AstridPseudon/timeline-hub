@@ -4,8 +4,7 @@ Both :mod:`astrid.core.execution.executor.cli` and :mod:`astrid.core.execution.o
 implement a ``new`` subcommand that writes a component skeleton (manifest +
 ``run.py`` + ``STAGE.md`` + optional extras) into an existing pack. The bulk of
 that logic is identical; it lives here so neither CLI has to import private
-symbols across the executor/orchestrator package boundary (which previously
-forced a circular-import workaround in ``orchestrator/cli.py``).
+symbols across the executor/orchestrator package boundary.
 
 The pack-validation step imports :mod:`astrid.core.pack.validate` lazily inside
 :func:`scaffold_component` so that ``astrid.core`` keeps its import-layering

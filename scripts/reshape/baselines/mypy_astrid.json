@@ -15,23 +15,23 @@
     "--no-pretty",
     "--show-error-codes"
   ],
-  "finding_count": 2086,
+  "finding_count": 2079,
   "code_counts": {
     "arg-type": 423,
-    "assignment": 163,
-    "attr-defined": 541,
+    "assignment": 162,
+    "attr-defined": 539,
     "call-arg": 1,
     "call-overload": 38,
     "dict-item": 34,
     "func-returns-value": 1,
     "has-type": 129,
     "import-untyped": 23,
-    "index": 151,
+    "index": 150,
     "list-item": 5,
     "method-assign": 2,
     "misc": 36,
     "name-defined": 20,
-    "no-redef": 18,
+    "no-redef": 17,
     "operator": 24,
     "override": 8,
     "return": 4,
@@ -41,6 +41,6 @@
     "typeddict-item": 6,
     "union-attr": 350,
     "valid-type": 17,
-    "var-annotated": 59
+    "var-annotated": 57
   }
 }

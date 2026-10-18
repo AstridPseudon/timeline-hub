@@ -21,6 +21,8 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Mapping
 
+from astrid.core.util.time import utc_now_iso
+
 
 class TargetObservationError(RuntimeError):
     """Provider state was absent, ambiguous, or could not be verified safely."""
@@ -67,10 +69,6 @@ class AcquiredRunPodTarget:
     attempt: dict[str, Any]
     observation: RunPodTargetObservation
     acquisition_mode: str
-
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def write_target_record(path: Path, value: dict[str, Any]) -> None:
@@ -434,7 +432,7 @@ def _write_target_failure(
         "state": "allocated_unverified",
         "failure_phase": phase,
         "failure_type": type(exc).__name__,
-        "failed_at": _utc_now(),
+        "failed_at": utc_now_iso(),
         "reconciliation_required": True,
     }
     replace_target_record(handle_path, failed, operation_id=operation_id)
@@ -695,7 +693,7 @@ async def _release_exact_target_after_quiescence(
     pending = {
         **attempt,
         "state": "release_pending",
-        "release_requested_at": _utc_now(),
+        "release_requested_at": utc_now_iso(),
         "reconciliation_required": True,
     }
     replace_target_record(handle_path, pending, operation_id=operation_id)
@@ -718,7 +716,7 @@ async def _release_exact_target_after_quiescence(
             blocked = {
                 **attempt,
                 "last_release_gate_failure_type": type(exc).__name__,
-                "last_release_gate_failure_at": _utc_now(),
+                "last_release_gate_failure_at": utc_now_iso(),
             }
             replace_target_record(handle_path, blocked, operation_id=operation_id)
             raise
@@ -728,7 +726,7 @@ async def _release_exact_target_after_quiescence(
         attempt = {
             **attempt,
             "release_quiescence": quiescence,
-            "release_quiescence_recorded_at": _utc_now(),
+            "release_quiescence_recorded_at": utc_now_iso(),
         }
         replace_target_record(handle_path, attempt, operation_id=operation_id)
 
@@ -752,7 +750,7 @@ async def _release_exact_target_after_quiescence(
                 **attempt,
                 "state": "cleanup_pending",
                 "cleanup_failure_type": type(exc).__name__,
-                "cleanup_failure_at": _utc_now(),
+                "cleanup_failure_at": utc_now_iso(),
                 "reconciliation_required": True,
             }
             replace_target_record(handle_path, unresolved, operation_id=operation_id)
@@ -765,7 +763,7 @@ async def _release_exact_target_after_quiescence(
             **attempt,
             "state": "cleanup_pending" if resume else "release_pending",
             "cleanup_failure_type": type(exc).__name__,
-            "cleanup_failure_at": _utc_now(),
+            "cleanup_failure_at": utc_now_iso(),
             "reconciliation_required": True,
         }
         replace_target_record(handle_path, unresolved, operation_id=operation_id)
@@ -777,7 +775,7 @@ async def _release_exact_target_after_quiescence(
             **attempt,
             "state": "release_pending",
             "release_pod_observation": asdict(observed),
-            "release_delete_started_at": _utc_now(),
+            "release_delete_started_at": utc_now_iso(),
         }
         replace_target_record(handle_path, releasing, operation_id=operation_id)
         attempt = releasing
@@ -794,7 +792,7 @@ async def _release_exact_target_after_quiescence(
                 **attempt,
                 "state": "cleanup_pending",
                 "cleanup_failure_type": type(exc).__name__,
-                "cleanup_failure_at": _utc_now(),
+                "cleanup_failure_at": utc_now_iso(),
                 "reconciliation_required": True,
             }
             replace_target_record(handle_path, unresolved, operation_id=operation_id)
@@ -805,7 +803,7 @@ async def _release_exact_target_after_quiescence(
         "status": cleanup_status,
         "backup_volume_id": str(volume.get("id")),
         "backup_volume_preserved": True,
-        "confirmed_at": _utc_now(),
+        "confirmed_at": utc_now_iso(),
     }
     complete = {
         **attempt,
@@ -881,7 +879,7 @@ async def acquire_target(
                 "state": "attached_unverified",
                 "requested_pod_id": requested_pod_id,
                 "failure_type": type(exc).__name__,
-                "failed_at": _utc_now(),
+                "failed_at": utc_now_iso(),
                 "reconciliation_required": True,
             }
             replace_target_record(handle_path, unresolved, operation_id=operation_id)
@@ -938,7 +936,7 @@ async def acquire_target(
                         "state": "capacity_exhausted",
                         "reconciliation_required": False,
                         "safe_to_retry": True,
-                        "completed_at": _utc_now(),
+                        "completed_at": utc_now_iso(),
                     }
                     replace_target_record(
                         handle_path, exhausted, operation_id=operation_id
@@ -956,7 +954,7 @@ async def acquire_target(
                 "create_attempts": int(attempt.get("create_attempts", 0)) + 1,
                 "reconciliation_required": True,
                 "safe_to_retry": False,
-                "last_create_started_at": _utc_now(),
+                "last_create_started_at": utc_now_iso(),
             }
             replace_target_record(handle_path, pending, operation_id=operation_id)
             attempt = pending
@@ -972,7 +970,7 @@ async def acquire_target(
                     **attempt,
                     "state": "allocation_unknown",
                     "reconciliation_required": True,
-                    "unresolved_at": _utc_now(),
+                    "unresolved_at": utc_now_iso(),
                     "gpu_type_attempted": exc.gpu_type,
                     "ram_tier_attempted": exc.ram_tier,
                     "storage_name_attempted": exc.storage_name,
@@ -987,7 +985,7 @@ async def acquire_target(
                         **attempt,
                         "state": "allocated_unverified" if known_pod_id else "allocation_unknown",
                         "failure_type": type(exc).__name__,
-                        "failed_at": _utc_now(),
+                        "failed_at": utc_now_iso(),
                         "reconciliation_required": True,
                     }
                     if known_pod_id:
@@ -999,7 +997,7 @@ async def acquire_target(
                     "state": "capacity_retry_ready",
                     "reconciliation_required": False,
                     "safe_to_retry": True,
-                    "last_capacity_rejection_at": _utc_now(),
+                    "last_capacity_rejection_at": utc_now_iso(),
                     "last_failure_type": type(exc).__name__,
                 }
                 replace_target_record(
@@ -1013,7 +1011,7 @@ async def acquire_target(
                 "state": "allocated_unverified",
                 "pod_id": str(pod.id),
                 "name": str(pod.name),
-                "allocated_at": _utc_now(),
+                "allocated_at": utc_now_iso(),
                 "reconciliation_required": True,
                 "safe_to_retry": False,
             }
@@ -1026,7 +1024,7 @@ async def acquire_target(
             "state": "attached_unverified",
             "pod_id": str(pod.id),
             "name": str(pod.name),
-            "allocated_at": _utc_now(),
+            "allocated_at": utc_now_iso(),
             "reconciliation_required": True,
         }
         replace_target_record(handle_path, allocated, operation_id=operation_id)
@@ -1044,7 +1042,7 @@ async def acquire_target(
             "state": "allocated_unverified",
             "failure_phase": "readiness",
             "failure_type": type(exc).__name__,
-            "failed_at": _utc_now(),
+            "failed_at": utc_now_iso(),
             "reconciliation_required": True,
         }
         replace_target_record(handle_path, failed, operation_id=operation_id)
@@ -1066,7 +1064,7 @@ async def acquire_target(
             "state": "allocated_unverified",
             "failure_phase": "provider_contract",
             "failure_type": type(exc).__name__,
-            "failed_at": _utc_now(),
+            "failed_at": utc_now_iso(),
             "reconciliation_required": True,
         }
         replace_target_record(handle_path, failed, operation_id=operation_id)
@@ -1128,7 +1126,7 @@ async def reconcile_target(
         started = {
             **attempt,
             "state": "allocation_unknown",
-            "last_reconcile_started_at": _utc_now(),
+            "last_reconcile_started_at": utc_now_iso(),
             "reconciliation_required": True,
         }
         replace_target_record(handle_path, started, operation_id=operation_id)
@@ -1138,7 +1136,7 @@ async def reconcile_target(
         except Exception as exc:
             failed_observation = {
                 **attempt,
-                "last_reconciled_at": _utc_now(),
+                "last_reconciled_at": utc_now_iso(),
                 "last_reconciliation_failure_type": type(exc).__name__,
             }
             replace_target_record(
@@ -1162,7 +1160,7 @@ async def reconcile_target(
             unresolved = {
                 **attempt,
                 "state": "allocation_unknown",
-                "last_reconciled_at": _utc_now(),
+                "last_reconciled_at": utc_now_iso(),
                 "last_reconciliation_match_count": len(matches),
                 "last_reconciliation_candidate_ids": [
                     value
@@ -1182,7 +1180,7 @@ async def reconcile_target(
             unresolved = {
                 **attempt,
                 "state": "allocation_unknown",
-                "last_reconciled_at": _utc_now(),
+                "last_reconciled_at": utc_now_iso(),
                 "last_reconciliation_failure_type": "MissingPodId",
                 "reconciliation_required": True,
             }
@@ -1200,7 +1198,7 @@ async def reconcile_target(
         "state": "attached_unverified" if mode == "attach" else "allocated_unverified",
         "pod_id": pod_id,
         "name": expected_name,
-        "reconciled_pod_id_at": _utc_now(),
+        "reconciled_pod_id_at": utc_now_iso(),
         "reconciliation_required": True,
     }
     replace_target_record(handle_path, bound, operation_id=operation_id)
@@ -1262,7 +1260,7 @@ async def reconcile_target(
         "name": observation.pod_name,
         "provider_observation": observation.to_dict(),
         "target_identity_verified": True,
-        "last_reconciled_at": _utc_now(),
+        "last_reconciled_at": utc_now_iso(),
     }
     replace_target_record(handle_path, verified, operation_id=operation_id)
     return AcquiredRunPodTarget(

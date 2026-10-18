@@ -595,7 +595,7 @@ class VibeComfyBackend(BackendAdapter):
         params: dict[str, Any],
         out_dir: Path,
     ) -> GenerationResult:
-        # Lazy-import VibeComfy (SD-009), and snapshot only its repository
+        # Lazy-import VibeComfy, and snapshot only its repository
         # template corpus.  Dynamic/user template discovery is forbidden.
         import vibecomfy  # noqa: F401
         from vibecomfy.registry.ready import (
@@ -1169,7 +1169,7 @@ class VibeComfyEngine:
         artifact_sha256: str | None = None,
         cold: bool = False,
     ) -> dict[str, Any]:
-        """M2 host-ABI spelling for :meth:`prepare_session`."""
+        """Host-ABI spelling for :meth:`prepare_session`."""
         return self.prepare_session(
             fingerprint,
             warmth_identity,
@@ -1385,7 +1385,7 @@ class CheckoutServerAdapter(VibeComfyBackend):
         invocation_identity: str,
         expected_comfyui_version: str | None = None,
     ) -> "CheckoutServerAdapter":
-        """Bind one manager-owned Vibe session to the verified HC-03 facts.
+        """Bind one manager-owned Vibe session to the verified facts.
 
         ``hc03_profile.vibecomfy_session`` is a deliberately narrow extension
         to the engine-neutral readiness document.  It is produced by the
@@ -1395,18 +1395,18 @@ class CheckoutServerAdapter(VibeComfyBackend):
         admissible checkout server.
         """
         if not isinstance(hc03_profile, Mapping):
-            raise ValueError("checkout_server requires a verified HC-03 profile")
+            raise ValueError("checkout_server requires a verified VibeComfy readiness profile")
         if hc03_profile.get("schema_version") != "hc03-worker-readiness.v1":
-            raise ValueError("checkout_server HC-03 profile has an unsupported schema")
+            raise ValueError("checkout_server readiness profile has an unsupported schema")
         if hc03_profile.get("status") != "ready":
-            raise ValueError("checkout_server requires a ready HC-03 profile")
+            raise ValueError("checkout_server requires a ready VibeComfy readiness profile")
         facts = hc03_profile.get("verified_facts")
         if not isinstance(facts, Mapping):
-            raise ValueError("checkout_server HC-03 profile lacks verified facts")
+            raise ValueError("checkout_server readiness profile lacks verified facts")
         exact = facts.get("exact")
         minimum = facts.get("minimum")
         if not isinstance(exact, Mapping) or not isinstance(minimum, Mapping):
-            raise ValueError("checkout_server HC-03 verified facts are malformed")
+            raise ValueError("checkout_server verified facts are malformed")
         expected_exact = {
             "interpreter",
             "runtime_lock",
@@ -1419,17 +1419,17 @@ class CheckoutServerAdapter(VibeComfyBackend):
         }
         expected_minimum = {"vram_bytes", "scratch_bytes"}
         if set(exact) != expected_exact or set(minimum) != expected_minimum:
-            raise ValueError("checkout_server HC-03 verified facts are incomplete")
+            raise ValueError("checkout_server verified facts are incomplete")
         facts_digest = hc03_profile.get("verified_facts_digest")
         if not isinstance(facts_digest, str) or _canonical_sha256(
             {"exact": dict(sorted(exact.items())), "minimum": dict(sorted(minimum.items()))}
         ) != facts_digest:
-            raise ValueError("checkout_server HC-03 verified facts digest does not match")
+            raise ValueError("checkout_server verified facts digest does not match")
         runtime = hc03_profile.get("runtime")
         launch = hc03_profile.get("launch")
         session = hc03_profile.get("vibecomfy_session")
         if not isinstance(runtime, Mapping) or not isinstance(launch, Mapping):
-            raise ValueError("checkout_server HC-03 runtime/launch facts are missing")
+            raise ValueError("checkout_server runtime/launch facts are missing")
         try:
             model_root_binding = model_root_binding_from_profile(
                 hc03_profile, verify_files=False
@@ -1553,7 +1553,7 @@ class CheckoutServerAdapter(VibeComfyBackend):
             or marker.get("comfy_pid") != comfy_pid
             or marker.get("comfy_process_start_identity") != comfy_process_birth_id
         ):
-            raise ValueError("checkout_server launch marker does not match the HC-03 binding")
+            raise ValueError("checkout_server launch marker does not match the VibeComfy binding")
         observed_source_revision, observed_source_content_digest = (
             _observed_source_identity(source_revision, source_content_digest)
         )
@@ -1761,7 +1761,7 @@ class CheckoutServerAdapter(VibeComfyBackend):
 
     @property
     def runtime_instance_id(self) -> str | None:
-        """Canonical instance identity supplied by M2 health/bootstrap."""
+        """Canonical instance identity supplied by the health/bootstrap handshake."""
         return (
             self._engine.runtime_instance_id
             or self._engine.prepared_runtime_instance_id
@@ -1779,8 +1779,8 @@ class CheckoutServerAdapter(VibeComfyBackend):
     def _probe_system_stats(self) -> None:
         """Verify the pinned ComfyUI version only.
 
-        Runtime instance identity is supplied by canonical M2
-        health/bootstrap; a system-stats digest is never an identity fence.
+        Runtime instance identity is supplied by the health/bootstrap
+        handshake; a system-stats digest is never an identity fence.
         """
         self._system_stats_verified = False
         request = urllib_request.Request(f"{self._origin}/system_stats", method="GET")
@@ -2073,7 +2073,7 @@ class CheckoutServerAdapter(VibeComfyBackend):
         try:
             destination.relative_to(self._output_root)
         except ValueError as exc:
-            raise ValueError("checkout_server output directory escaped HC-03 output root") from exc
+            raise ValueError("checkout_server output directory escaped the VibeComfy output root") from exc
         destination.mkdir(parents=True, exist_ok=True)
         self._last_run_result = None
 
@@ -2116,7 +2116,7 @@ class CheckoutServerAdapter(VibeComfyBackend):
             refresh = getattr(target_schema, "refresh", None)
             if callable(refresh):
                 refresh()
-            # HC-03 owns the release model volume.  The live Comfy session
+            # The VibeComfy release owns the model volume.  The live Comfy session
             # reads it through extra_model_paths.yaml, but bundle approval
             # performs its own local asset preflight and must be given the
             # same verified root explicitly.  Without this, a worker with an
@@ -2132,7 +2132,7 @@ class CheckoutServerAdapter(VibeComfyBackend):
             environment_model_root = os.environ.get(MODEL_ROOT_ENV)
             if environment_model_root is not None and environment_model_root != str(bound_model_root.path):
                 raise ValueError(
-                    "checkout_server environment model root disagrees with its HC-03 binding"
+                    "checkout_server environment model root disagrees with its VibeComfy binding"
                 )
             compile_kwargs: dict[str, Any] = {
                 "schema_provider": target_schema,

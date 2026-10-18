@@ -254,7 +254,7 @@ def load_default_registry(
         tuple(str(Path(root).resolve()) for root in extra_pack_roots),
     )
     resolver = create_shared_alias_resolver()
-    _register_pack_aliases(resolver, {})  # M1: no aliases yet
+    _register_pack_aliases(resolver, {})  # no aliases yet
     registry = ElementRegistry(
         alias_resolver=resolver,
         element_kind_registry=element_kind_registry,

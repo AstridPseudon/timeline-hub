@@ -1,8 +1,8 @@
 """
-M0 Contract Interfaces — Python Protocol definitions.
+Contract Interfaces — Python Protocol definitions.
 
-This is the single M0 handoff contract for interface signatures.
-M1 MUST port or import from this shape rather than creating a competing
+This is the single handoff contract for interface signatures.
+Implementations MUST port or import from this shape rather than creating a competing
 contracts.py location under builtin/dataset_build/.
 
 These are Protocol classes — non-runtime, no registration, no package creation.
