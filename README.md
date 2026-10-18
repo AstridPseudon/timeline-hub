@@ -1,5 +1,11 @@
 # Astrid Runtime
 
+## Running tests
+
+Run locally with `python -m pytest -q -n 2`; avoid `-n auto` on small machines.
+Run the full default lane (`python -m pytest -q -n 2`) before pushing.
+Run the nightly lane with `ASTRID_CHECKOUT` set: `python -m pytest -q -m "integration or darwin_native or live"`.
+
 Independent neutral runtime and protocol repository for the Astrid Stage 1 beta and later Astrid App integration.
 
 The repository contains the first independently runnable neutral-runtime slice. It is dependency-free Python and can be exercised without any product checkout or hosted service. The daemon owns one realm's canonical SQLite database, append-only SHA-256 CAS, task/event ledger, credentials, and loopback HTTP boundary. Realm creation is explicit; startup and doctor never migrate or repair an existing root.
