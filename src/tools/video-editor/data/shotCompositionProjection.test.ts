@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import fixture from './shotComposition.fixture.json';
 import orderFixture from './shotTrackOrder.fixture.json';
 import { createShotCompositionAdapter, type PreparedShotComposition } from './shotCompositionAdapter.ts';
-import { createAudioReactiveColourFixtures } from '@/test/bridgeFixtures.mjs';
+import { createAudioReactiveColourFixtures } from '@/test/fakeRuntimeSeed.mjs';
 import {
   CanonicalCompositionProjectionError,
   managedOutputMatchesOccurrence,

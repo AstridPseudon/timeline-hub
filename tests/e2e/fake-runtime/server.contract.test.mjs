@@ -7,8 +7,10 @@
 // server's own promises: auth, dispatch, the seed, content addressing, reset, atomic saves, ports and env.
 //
 // It also carries what the retired stub contract test asserted:
-// the Runaway block 1:1, the empty task/generation envelopes, object GET/HEAD, the ACP reads, and the
-// mutate-then-reset behaviour of all three timelines. Its legacy non-/v1 routes (`/projects/...`, `/save`,
+// the Runaway block 1:1, the empty task/generation envelopes, object GET/HEAD, the ACP reads, the
+// mutate-then-reset behaviour of all three timelines, the editor connection binding (schema digest,
+// connector scopes and targeted-execution capability read from src/integrations/runtime), and the
+// canonical audio compositions bound to the committed WAV. Its legacy non-/v1 routes (`/projects/...`, `/save`,
 // registry PUT, `X-Astrid-Bridge-Version` on every reply) have no Runtime equivalent and are not ported.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -18,7 +20,7 @@ import { dirname, relative, resolve } from 'node:path';
 import { after, before, beforeEach, describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { AUDIO_REACTIVE_FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_OFFSET_START_FRAME, FIXTURE_TIMELINE_ID, createAudioReactiveColourFixtures, createOffsetAudioReactiveColourFixtures } from '../../../src/test/fakeRuntimeSeed.mjs';
+import { AUDIO_REACTIVE_FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_OFFSET_START_FRAME, FIXTURE_TIMELINE_ID, createAudioReactiveColourFixtures, createOffsetAudioReactiveColourFixtures, createTimelineFixtures } from '../../../src/test/fakeRuntimeSeed.mjs';
 import {
   FAKE_RUNTIME_ACTOR_ID,
   FAKE_RUNTIME_INSTANCE_ID,
@@ -29,6 +31,7 @@ import { fakeRuntimeEnv, startFakeRuntime } from './launch.mjs';
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const SLUG = 'demo-project';
 const PROJECT_ID = 'demo-project-id';
+const read = (relative) => readFileSync(resolve(REPO, relative), 'utf8');
 const sha256 = (bytes) => `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
 
 let fake;
@@ -121,6 +124,42 @@ describe('identity and auth', () => {
     assert.equal(handshake.actor_id, FAKE_RUNTIME_ACTOR_ID);
     assert.equal(handshake.realm_id, FAKE_RUNTIME_REALM_ID);
     assert.equal((await json('/v1/realm')).realm_id, FAKE_RUNTIME_REALM_ID);
+  });
+
+  test('the editor connection is bound to the Runtime contract the app ships: digest, connector scopes, capability, realm, projects', async () => {
+    // Read from the app's own sources as text, so a drifted fake cannot agree with itself.
+    const expectedScopes = /export const RUNTIME_CLIENT_SCOPES = \[([\s\S]*?)\];/
+      .exec(read('src/integrations/runtime/client.ts'))?.[1].match(/'([^']+)'/g)?.map((scope) => scope.slice(1, -1));
+    const expectedDigest = /SCHEMA_DIGEST = "(sha256:[0-9a-f]+)"/.exec(read('src/integrations/runtime/generated-contract-metadata.ts'))?.[1];
+    const expectedCapability = /RUNTIME_TARGETED_EXECUTION_CAPABILITY = '([^']+)'/.exec(read('src/integrations/runtime/contract-metadata.ts'))?.[1];
+    assert.ok(expectedScopes?.length);
+    assert.ok(expectedDigest);
+    assert.ok(expectedCapability);
+
+    const health = await json('/v1/health');
+    assert.equal(health.status, 'ok');
+    assert.equal(health.protocol, 'workspace.v1');
+    assert.equal(health.schema_digest, expectedDigest);
+    assert.equal(health.runtime_instance_id, FAKE_RUNTIME_INSTANCE_ID);
+
+    const handshakeResponse = await postJson('/v1/handshake', {
+      protocol: 'workspace.v1', client_name: 'contract-test', client_version: '1', requested_scopes: expectedScopes,
+    });
+    assert.equal(handshakeResponse.status, 200);
+    const handshake = await handshakeResponse.json();
+    assert.equal(handshake.protocol, 'workspace.v1');
+    assert.equal(handshake.schema_digest, expectedDigest);
+    assert.equal(handshake.actor_id, FAKE_RUNTIME_ACTOR_ID);
+    assert.equal(handshake.realm_id, FAKE_RUNTIME_REALM_ID);
+    assert.deepEqual(handshake.scopes, expectedScopes);
+    assert.deepEqual(handshake.capabilities, [expectedCapability]);
+
+    const realm = await call('/v1/realm');
+    assert.equal(realm.status, 200);
+    assert.equal((await realm.json()).realm_id, handshake.realm_id);
+    const projects = await call('/v1/projects?limit=200');
+    assert.equal(projects.status, 200);
+    assert.equal((await projects.json()).next_cursor, null);
   });
 
   test('an unknown route is a logged 404, never an invented body', async () => {
@@ -242,6 +281,36 @@ describe('projects, timelines and the seed', () => {
     assert.equal(offset.config.clips[0].hold, 0.6);
     assert.equal(offset.config.clips[0].params.initialColor, '#102030');
     assert.deepEqual(offset.config.clips[0].params.events.map((event) => event.frame), [2, 4]);
+  });
+
+  test('the audio timelines carry canonical shot compositions bound to the committed WAV, each with its own parent identity', async () => {
+    const wav = readFileSync(resolve(REPO, 'public/audio-reactive-colour-tone.wav'));
+    const wavDigest = sha256(wav);
+    const audioPristine = createAudioReactiveColourFixtures();
+    const offsetPristine = createOffsetAudioReactiveColourFixtures();
+    const audio = audioPristine.shotComposition;
+    const offset = offsetPristine.shotComposition;
+
+    for (const [composition, expectedAtMs, initialColor] of [
+      [audio, 0, '#000000'],
+      [offset, AUDIO_REACTIVE_OFFSET_START_FRAME * (1000 / 30), '#102030'],
+    ]) {
+      const revision = composition.shot_revisions[0];
+      assert.equal(composition.occurrences[0].at_ms, Math.round(expectedAtMs));
+      assert.equal(revision.internal_timeline_revision.timeline.clips[0].params.initialColor, initialColor);
+      // The digest is the SHA-256 of the file the Runtime serves, not a literal that merely looks like one.
+      assert.equal(revision.assets[0].digest, wavDigest);
+      assert.equal(revision.audio.digest, wavDigest);
+    }
+    assert.notEqual(offset.project.document_id, audio.project.document_id);
+    assert.notEqual(offset.primary_timeline.head.revision_id, audio.primary_timeline.head.revision_id);
+
+    // The same bytes are what the seeded registry serves, so the canonical audio resolves through /v1/objects.
+    for (const timelineId of [AUDIO_REACTIVE_FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID]) {
+      const { payload } = await revision(timelineId, await head(timelineId));
+      assert.equal(payload.registry.assets.source_audio.media_id, wavDigest, timelineId);
+    }
+    assert.equal(createTimelineFixtures().shotComposition, undefined);
   });
 });
 

@@ -12,7 +12,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 
-import { type BridgeTimelineFixtures, AUDIO_REACTIVE_FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID, FIXTURE_PROJECT, FIXTURE_TIMELINE_ID, createAudioReactiveColourFixtures, createOffsetAudioReactiveColourFixtures, createTimelineFixtures } from '../../../src/test/fakeRuntimeSeed.mjs';
+import { type BridgeShotComposition, type BridgeTimelineFixtures, AUDIO_REACTIVE_FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID, FIXTURE_PROJECT, FIXTURE_TIMELINE_ID, createAudioReactiveColourFixtures, createOffsetAudioReactiveColourFixtures, createTimelineFixtures } from '../../../src/test/fakeRuntimeSeed.mjs';
 import type { FakeObjectStore } from '../../../src/test/fakeObjectStore.ts';
 
 /** The canonical id of the one seeded project; its slug is `FIXTURE_PROJECT.slug`. */
@@ -28,6 +28,12 @@ export type SeededTimeline = {
   summary: Record<string, unknown> & { timeline_id: string };
   /** The parent composition the timeline starts from (registry rewritten to sha256 identities). */
   parentComposition: { config: Record<string, unknown>; registry: Record<string, unknown>; clips: unknown[]; occurrences: unknown[] };
+  /**
+   * The canonical shot composition of the audio-reactive timelines (the demo timeline has none). It is
+   * not part of the parent: the parent's clips are the non-shot clips the canonical projection keeps
+   * beside the occurrence's clips, so listing the occurrence on the parent too would render every clip twice.
+   */
+  shotComposition?: BridgeShotComposition;
 };
 
 type SeedAsset = { bytes: Uint8Array; mediaType: string; filename: string };
@@ -43,7 +49,7 @@ function readAsset(file: string, mediaType: string): SeedAsset & { digest: strin
   return asset;
 }
 
-function seedTimeline(fixture: BridgeTimelineFixtures): SeededTimeline {
+function seedTimeline(fixture: BridgeTimelineFixtures & { shotComposition?: BridgeShotComposition }): SeededTimeline {
   for (const clip of fixture.config.clips) {
     if ('media_id' in clip && !SHA256_ID.test(String(clip.media_id))) {
       throw new Error(`seed clip ${String(clip.id)} carries a non-sha256 media_id; the seed rewrites registry entries only`);
@@ -54,8 +60,17 @@ function seedTimeline(fixture: BridgeTimelineFixtures): SeededTimeline {
     const asset = readAsset(entry.file, entry.type);
     return [key, { ...kept, media_id: asset.digest, content_sha256: asset.digest }];
   }));
+  // The canonical audio is the committed WAV, byte for byte: its digest is the one the registry serves it under.
+  for (const revision of fixture.shotComposition?.shot_revisions ?? []) {
+    const served = (assets['source_audio'] as { media_id: string } | undefined)?.media_id;
+    const declared = [...revision.assets.map((asset) => asset.digest), revision.audio.digest];
+    if (declared.some((digest) => digest !== served)) {
+      throw new Error(`seed ${fixture.timelineSummary.timeline_id}: the canonical audio digest ${declared.join(', ')} is not the digest of the WAV served from public/ (${String(served)})`);
+    }
+  }
   return {
     summary: fixture.timelineSummary,
+    ...(fixture.shotComposition ? { shotComposition: fixture.shotComposition } : {}),
     parentComposition: {
       config: fixture.config,
       registry: { ...fixture.registry, assets },
