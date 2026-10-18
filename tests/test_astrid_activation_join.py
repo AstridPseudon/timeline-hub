@@ -1125,7 +1125,7 @@ def _serve_joined_relay(descriptor, events_value, config_value):
     def factory(preparation, launch_config, *, retain):
         session = _JoinedHostSession.__new__(_JoinedHostSession)
         state["session"] = session; retain(session)
-        session.__init__(preparation, preparation["profile"], launch_config, events=events, drop_ack=False,
+        session.__init__(preparation, preparation["profile"], launch_config, events=events, drop_ack=False, astrid_root=Path(config["astrid_root"]),
             receiver_program=_JOINED_RECEIVER, receiver_config={"runtime_endpoint": config["runtime_endpoint"]},
             credential_actor="astrid-pack-host")
         _join_designate(custody, preparation["custody_scope"], "host", target_pid=session.process.pid, owner_pid=os.getpid())
@@ -1209,7 +1209,8 @@ class _JoinedAdapter(_Adapter):
             profile=_selected_profile_payload(profile), custody_scope=str(scope))
         config_file = self.events.parent / "joined-relay-config.json"
         config_file.write_text(json.dumps({"source_pid": os.getpid(), "successor_pid": self.successor.pid,
-                                          "runtime_endpoint": self.endpoint}))
+                                          "runtime_endpoint": self.endpoint,
+                                          "astrid_root": str(self.astrid_root)}))
         wrapper = "from tests.test_astrid_activation_join import _serve_joined_relay; import sys; _serve_joined_relay(int(sys.argv[1]),sys.argv[2],sys.argv[3])"
         self.events.with_suffix(".relay-wrapper.txt").write_text(wrapper)
         env = dict(os.environ); env["PYTHONPATH"] = str(RUNTIME_ROOT) + os.pathsep + str(self.astrid_root)
@@ -1218,7 +1219,7 @@ class _JoinedAdapter(_Adapter):
             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, start_new_session=True)
         relay_end.close()
         # Retain the launch before any fallible seal/report RPC.
-        handle = SimpleNamespace(worker=process, control=_ObservedChannel(runtime_end, self.events), rpc_lock=threading.RLock(),
+        handle = SimpleNamespace(host_only=False, worker=process, control=_ObservedChannel(runtime_end, self.events), rpc_lock=threading.RLock(),
             relay=True, closed=False, activated=False, retained=_JoinedRetainedRelay(process, events=self.events), owner_epoch="A",
             custody_scope=str(scope), preparation=preparation, report_value=None)
         self._active = self._current = handle
