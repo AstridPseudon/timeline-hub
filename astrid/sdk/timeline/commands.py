@@ -191,7 +191,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     if getattr(tl._open_edit, "cancelled", False):
         return owner
     app_keys = entry.op == "clip.set" and bool({"keyframes", "keyframeOrigin"} & command.args.keys())
-    if ((entry.op in {"clip.set-fade", "clip.set-transition", "clip.set-continuous", "clip.set-shader", "clip.set-text"} or app_keys) and owner is None
+    if ((entry.op in {"clip.set-element", "clip.set-fade", "clip.set-transition", "clip.set-continuous", "clip.set-shader", "clip.set-text"} or app_keys) and owner is None
             and (not command.select or not is_scoped_id(command.select) or "/clip:" not in command.select)):
         raise CommandError(f"{entry.op} requires an exact clip ScopedId")
     if (entry.op == "clip.set-shader" and owner is None and command.resolved
@@ -202,6 +202,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     if entry.op == "timeline.add" and "text" in command.args:
         from astrid.sdk.timeline.manual_text import add as add_manual_text
         entry = replace(entry, handler=add_manual_text)
+    if entry.op == "timeline.add" and command.args.get("intent") == "overlay":
+        from astrid.sdk.timeline.element_reference import add as add_element_reference
+        entry = replace(entry, handler=add_element_reference)
     duplicate_source = None
     if entry.op == "timeline.add" and "from" in command.args:
         entry = replace(entry, handler=duplicate_clip_source)
@@ -369,6 +372,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         if any(row["choice"] == "cancel" for row in command.args["relation_choices"]):
             tl._open_edit.cancelled = True
             return owner
+    if entry.op == "clip.set-element" or (entry.op == "timeline.add" and command.args.get("intent") == "overlay"):
+        from astrid.sdk.timeline.element_reference import guard as guard_element_reference
+        command = guard_element_reference(tl, command, owner, before_entities)
     if entry.op == "clip.set-transition":
         from astrid.sdk.timeline.composite_effects import guard_call
         command = guard_call(tl, command, owner, before_entities, selected)
@@ -423,7 +429,8 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     for key, value in bound.arguments.items():
         if key in {"self", "client"}:
             continue
-        if ((entry.op == "timeline.inverse" and key == "writes")
+        if ((entry.op == "clip.set-element" or entry.op == "timeline.add" and command.args.get("intent") == "overlay")
+                or (entry.op == "timeline.inverse" and key == "writes")
                 or (entry.op in {"clip.set-shader", "timeline.set-shader-postprocess"} and key == "shader")
                 or entry.op == "clip.set-text" or (entry.op == "timeline.add" and "text" in command.args)):
             # Inverse receipts and App shader/text payloads are literal authored JSON.
@@ -489,7 +496,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         getattr(recording_owner, "id", None) or getattr(recording_owner, "segment", None) or getattr(recording_owner, "seq_id", None) or command.select)
     if entry.kind == "track":
         selector = owner.scoped_id
-    if entry.op in {"clip.set-fade", "clip.set-transition", "clip.set-continuous", "clip.set-shader", "clip.set-text", "clip.overhang-to-hold"} or app_keys:
+    if entry.op in {"clip.set-element", "clip.set-fade", "clip.set-transition", "clip.set-continuous", "clip.set-shader", "clip.set-text", "clip.overhang-to-hold"} or app_keys:
         selector = selected[0]
     recorded = replace(command, select=selector, args=canonical, version=command.version or TOOL_VERSION,
                        resolved=resolved)
@@ -1149,6 +1156,9 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
     if entry.op == "clip.set-text":
         from astrid.sdk.timeline.manual_text import direct_paths as text_paths
         return text_paths(selected[0], before[selected[0]])
+    if entry.op == "clip.set-element" or (entry.op == "timeline.add" and args.get("intent") == "overlay"):
+        from astrid.sdk.timeline.element_reference import direct_paths as reference_paths
+        return reference_paths(args, selected)
     if entry.op == "clip.set-transition":
         return {(selected[0], path) for path in ("transition", "elementRef")}
     if entry.op == "clip.set-continuous":
@@ -1456,7 +1466,8 @@ def finish_recording(tl, tx, entry):
         authorship[key] = kind
         tx.calls[cause] = replace(call, authorship=authorship)
         recorded_path = path
-        if (path.startswith("modifiers[") or call.op in {"clip.set-fade", "clip.set-transition", "clip.set-continuous", "clip.set-shader", "timeline.set-shader-postprocess", "clip.set-text", "timeline.register-asset", "timeline.inverse"}
+        if (path.startswith("modifiers[") or call.op in {"clip.set-element", "clip.set-fade", "clip.set-transition", "clip.set-continuous", "clip.set-shader", "timeline.set-shader-postprocess", "clip.set-text", "timeline.register-asset", "timeline.inverse"}
+                or (call.op == "timeline.add" and call.args.get("intent") == "overlay")
                 or (call.op == "clip.set" and "keyframes" in call.args)) and kind != "direct":
             # A whole-instance/params replacement (including inverse restore)
             # owns its changed descendants.
