@@ -108,12 +108,13 @@ def test_missing_picture_orphan_and_carried_alias_resolve_same_cut():
 
 @pytest.mark.parametrize('layers', ['stay', 'remove'])
 def test_lift_preserves_film_and_cut_free_sound_and_reservations(layers):
-    tl = Checkout(named())
+    data = named()
+    intent.set_chapters(data, [{'name': 'next', 'from': 'c2'}])
+    tl = Checkout(data)
     tl.resolve()
     original_duration = tl.duration
     audio = {c.id: copy.deepcopy(c.data) for c in tl.clips(audio=True)}
     original_ids = {c.id for c in tl.clips()}
-    intent.set_chapters(tl.bundle, [{'name': 'next', 'from': 'c2'}])
     tl.cut('c2').lift(layers=layers)
     assert tl.duration == original_duration
     assert tl.cut('c1').end == original_duration
@@ -280,19 +281,22 @@ def test_lint_diff_sweep_filmstrip_and_editorial_share_windows(monkeypatch):
 @pytest.mark.parametrize('next_start', [2., 4.])
 def test_split_preserves_picture_gap_or_overlap(next_start):
     data = named()
+    data['source_mapping'] = {'shots': {}, 'placements': {}}
+    from astrid.sdk.timeline_structure import one_shot
+    staging = Checkout(data)
+    one_shot(staging, shot_id='film', name='FILM')
+    data = staging.document()
+    clips = data['shots']['film']['internal_timeline']['clips']
     # Keep all clips in one shot and explicit picture coverage. c1 ends at
     # 3, while c2 either overlaps it from 2 or follows a one-second gap.
-    from astrid.sdk.timeline_structure import one_shot
+    p1 = next(clip for clip in clips if clip['id'] == 'a-plate')
+    p2 = next(clip for clip in clips if clip['id'] == 'b-plate')
+    p1['hold'] = 3
+    intent.set_for(p1, 3)
+    p2['at'] = next_start
+    intent.set_for(p2, 8 - next_start)
+    p2['hold'] = 8 - next_start
     tl = Checkout(data)
-    data['source_mapping'] = {'shots': {}, 'placements': {}}
-    tl = Checkout(data)
-    one_shot(tl, shot_id='film', name='FILM')
-    p1, p2 = tl.clip('c1.plate'), tl.clip('c2.plate')
-    p1.data['hold'] = 3
-    intent.set_for(p1.data, 3)
-    p2.data['at'] = next_start
-    intent.set_for(p2.data, 8 - next_start)
-    p2.data['hold'] = 8 - next_start
     before_duration = tl.duration
     tl.cut('c1').split(1.0)
     assert tl.clip('c1.plate').end == 1
@@ -302,11 +306,16 @@ def test_split_preserves_picture_gap_or_overlap(next_start):
 
 
 def test_lift_extends_an_explicit_picture_end_and_rebinds_layer_cut_anchors():
-    tl = Checkout(named())
-    intent.set_for(tl.clip('c1.plate').data, 4)
+    data = named()
+    clips = [clip for shot in data['shots'].values()
+             for clip in shot['internal_timeline']['clips']]
+    picture = next(clip for clip in clips if clip['id'] == 'a-plate')
+    card = next(clip for clip in clips if clip['id'] == 'b-type')
+    intent.set_for(picture, 4)
+    intent.set_on(card, 'c2 +0.5s')
+    intent.set_until(card, 'end of c2')
+    tl = Checkout(data)
     card = tl.clip('c2.card')
-    intent.set_on(card.data, 'c2 +0.5s')
-    intent.set_until(card.data, 'end of c2')
     tl.resolve()
     at, end, id = card.start, card.end, card.id
     tl.cut('c2').lift()
