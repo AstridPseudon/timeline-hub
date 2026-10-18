@@ -2726,8 +2726,8 @@ fresh console collection.
   starts. The stub likewise serializes reset/save/registry mutations. Treat
   setup mutations as sequential and do not parallelize writers against the
   serving bridge. Evidence: `0d631aad4`,
-  `tests/e2e/timeline/real-bridge-serve.mjs` lines 302–305,
-  `tests/e2e/timeline/astrid-bridge-stub.mjs`.
+  `tests/e2e/timeline/real-bridge-serve.mjs` lines 302–305, and the
+  since-retired timeline bridge stub.
 - Disposable browser evidence and transformed-test caches can exhaust the host
   volume even when the implementation is healthy. Preserve logs, remove only
   verified task-owned pytest/Astrid temporary roots, confirm at least 11 GiB

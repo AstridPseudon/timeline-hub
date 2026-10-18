@@ -110,7 +110,7 @@ bundles (an `astrid serve` that writes and returns them) is an explicitly
 out-of-scope follow-up outside this repo.
 
 Supabase posture (two halves proven): the client sends the bundle inside the
-config-replaced POST body on save (`SupabaseDataProvider.saveTimeline`) and
+config-replaced POST body on save (the since-retired Supabase provider's `saveTimeline`) and
 parses the row's `data_bundle` column fail-closed to `null` plus a warning on
 load. The SQL side is shipped: migration
 `supabase/migrations/20260822000000_add_timeline_data_bundle.sql` adds the

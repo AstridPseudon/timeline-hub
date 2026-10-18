@@ -73,7 +73,7 @@ This contract is backed by the [supported/deferred matrix](./extension-platform-
 | Accept/reject with stale base version detection | S-032 |
 | Undo/rollback for patch batches | S-033 |
 | Relative/fractional ordering for clip positioning | S-034 |
-| Provider version behaviours tested (InMemory, Supabase, Astrid) | S-035 |
+| Provider version behaviours tested (InMemory, Runtime) | S-035 |
 | Patch extension mechanism with validation, serialization, previewability | S-038 |
 | Extension project-data persistence, oversized payload rejection with diagnostics | S-039 |
 | Source-to-timeline and timeline-to-source navigation metadata | S-040 |
@@ -353,13 +353,12 @@ The `astrid-extension.json` format is frozen for V1 (S-153). New optional fields
 
 ### 8.3 Provider compatibility
 
-Three data providers are supported (S-140–S-143):
+Two data providers are supported (S-140, S-141):
 
 | Provider | Support level | Evidence |
 |---|---|---|
 | InMemory | Full M3 support, ephemeral Map-backed | S-140 |
-| Supabase | Full M3 support, durable DB + append service | S-141 |
-| Astrid Bridge | Partial M3 support, local filesystem + bridge API | S-142 |
+| Runtime | Full M3 support except the checkpoint API (history is Runtime composition revisions) | S-141 |
 
 Extension authors must not assume a specific provider. Use the public `TimelineReader.snapshot()` and `TimelineOps.apply()` interfaces — they abstract over provider differences.
 

@@ -120,7 +120,7 @@ Commands run against the reconciled release tree. The final focused source rerun
 npx vitest run src/tools/video-editor/runtime/extensionReleaseControls.test.ts src/tools/video-editor/pages/VideoEditorPage.test.tsx
 Result: 2 files passed, 48 tests passed
 
-PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=2222 BASE_URL=http://127.0.0.1:2222 ASTRID_BRIDGE_PORT=17334 npx playwright test --config playwright.config.ts --project=timeline-devices --workers=1 tests/e2e/timeline/desktop-interaction.spec.ts
+PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=2222 BASE_URL=http://127.0.0.1:2222 FAKE_RUNTIME_PORT=17334 npx playwright test --config playwright.config.ts --project=timeline-devices --workers=1 tests/e2e/timeline/desktop-interaction.spec.ts
 Result: 1 passed (19.2 s); zero forbidden Supabase calls; zero console/page errors
 
 PATH=/Users/peteromalley/.nvm/versions/node/v20.19.4/bin:$PATH npm run test:e2e:extension-cross-browser
@@ -132,7 +132,7 @@ Result: PASS under Node v20.19.4; 5,310 modules transformed in 4m 03s; runtime/s
 npx vitest run src/tools/video-editor/dev/runaway-timeline/runawayTimelineData.test.ts src/tools/video-editor/components/TimelineEditor/DataLaneList.test.tsx src/tools/video-editor/runtime/dataKindRegistrationService.test.ts src/tools/video-editor/dev/transcript-lane/__tests__/transcriptLane.test.tsx src/tools/video-editor/components/TimelineEditor/TimelineExtensionOverlayHost.integration.test.tsx
 Result: PASS; 5 files, 77 tests
 
-PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=2222 ASTRID_BRIDGE_PORT=17334 npx playwright test --config playwright.config.ts --project=timeline-devices --workers=1 tests/e2e/timeline/runaway-degraded-states.spec.ts tests/e2e/timeline/lane-action-responsive.spec.ts tests/e2e/timeline/marker-layer-pagination.spec.ts
+PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=2222 FAKE_RUNTIME_PORT=17334 npx playwright test --config playwright.config.ts --project=timeline-devices --workers=1 tests/e2e/timeline/runaway-degraded-states.spec.ts tests/e2e/timeline/lane-action-responsive.spec.ts tests/e2e/timeline/marker-layer-pagination.spec.ts
 Result: PASS under Node v20.19.4; 8 tests in 1.4m; zero unexpected page errors/console errors in the asserted flows
 
 PLAYWRIGHT_OUTPUT_DIR=artifacts/playwright/chrome-acceptance-bkey-fixed-isolated ... extension-overlays.spec.ts --grep "B key marks"
