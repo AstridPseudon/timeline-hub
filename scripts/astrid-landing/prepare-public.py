@@ -128,7 +128,7 @@ def main() -> int:
     evidence = args.evidence.resolve()
     preparation_root = args.preparation_root.resolve()
     patch_path = args.patch.resolve()
-    BASE.require_repository(astrid_repo, "https://github.com/peteromallet/astrid-agent.git", BASE.ASTRID_COMMIT)
+    BASE.require_repository(astrid_repo, "https://github.com/banodoco/astrid-agent.git", BASE.ASTRID_COMMIT)
     BASE.require_repository(app_repo, "https://github.com/banodoco/astrid-app", BASE.APP_COMMIT)
 
     preserved = {

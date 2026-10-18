@@ -35,7 +35,7 @@ jobs:
           path: astrid-app-main
       - uses: actions/checkout@v4
         with:
-          repository: peteromallet/astrid-agent
+          repository: banodoco/astrid-agent
           path: astrid
       - uses: actions/setup-python@v5
         with:

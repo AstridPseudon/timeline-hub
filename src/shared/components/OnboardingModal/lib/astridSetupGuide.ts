@@ -8,7 +8,7 @@
  * reaches main), update MANUAL_SETUP_STEPS and RECONNECT_COMMAND to match.
  */
 
-export const ASTRID_REPO = 'https://github.com/peteromallet/astrid-agent';
+export const ASTRID_REPO = 'https://github.com/banodoco/astrid-agent';
 export const ASTRID_SETUP_REF = 'main';
 
 const blobUrl = (path: string) => `${ASTRID_REPO}/blob/${ASTRID_SETUP_REF}/${path}`;
@@ -128,7 +128,7 @@ export const MANUAL_SETUP_STEPS: Record<SetupPlatform, readonly ManualSetupStep[
       detail: 'In a new folder. The Runtime is pinned to the revision this version of Astrid was tested with.',
       command: [
         'mkdir ~/astrid-local && cd ~/astrid-local',
-        'git clone https://github.com/peteromallet/astrid-agent.git Astrid',
+        'git clone https://github.com/banodoco/astrid-agent.git Astrid',
         'git clone https://github.com/banodoco/astrid-runtime.git Runtime',
         `git -C Runtime checkout ${RUNTIME_PIN}`,
         'python3 -m venv .venv && source .venv/bin/activate',
@@ -173,7 +173,7 @@ export const MANUAL_SETUP_STEPS: Record<SetupPlatform, readonly ManualSetupStep[
       detail: 'In a new folder. The Runtime is pinned to the revision this version of Astrid was tested with.',
       command: [
         'mkdir ~\\astrid-local; cd ~\\astrid-local',
-        'git clone https://github.com/peteromallet/astrid-agent.git Astrid',
+        'git clone https://github.com/banodoco/astrid-agent.git Astrid',
         'git clone https://github.com/banodoco/astrid-runtime.git Runtime',
         `git -C Runtime checkout ${RUNTIME_PIN}`,
         'py -3.11 -m venv .venv; .\\.venv\\Scripts\\Activate.ps1',
