@@ -7388,9 +7388,15 @@ class GenericPackHost:
         with self._storage_preparation_lock:
             if self._shutdown.is_set() or self._storage_preparation_listener is not None:
                 raise HostError("storage preparation cannot start on this host lifecycle")
-            listener = StoragePreparationListener(self, config).start()
+            listener = StoragePreparationListener(self, config)
+            # Retain custody before start can create sockets/thread obligations.
             self._storage_preparation_listener = listener
-            return listener
+            try:
+                return listener.start()
+            except BaseException:
+                if getattr(listener, "startup_cleanup", {}).get("status") == "complete":
+                    self._storage_preparation_listener = None
+                raise
 
     def _retire_changed_storage_preparation(self, runtime_state=None) -> None:
         """Withdraw the owned endpoint when discovery/registration changes it."""
@@ -12993,7 +12999,14 @@ class LocalExecutionPreparation:
                 self.control_error = exc
             if len(self.control_diagnostics) < 5:
                 self.control_diagnostics.append(diagnostic)
-        _LOGGER.error("local preparation %s: %s", "first cause" if primary else "secondary", json.dumps(diagnostic, sort_keys=True))
+        try:
+            _LOGGER.error("local preparation %s: %s", "first cause" if primary else "secondary", json.dumps(diagnostic, sort_keys=True))
+        except BaseException:
+            # The retained first cause and custody survive secondary sink failure.
+            diagnostic["logging_status"] = "failed"
+            diagnostic["secondary_error_stage"] = "logging"
+        else:
+            diagnostic["logging_status"] = "written"
 
     def construct_claim_host(self, factory: Callable) -> "GenericPackHost":
         # The constructor can create obligations before attach_claim_host. Keep
