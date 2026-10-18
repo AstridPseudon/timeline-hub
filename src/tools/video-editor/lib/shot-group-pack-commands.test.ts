@@ -9,8 +9,6 @@ import type { PlacementDocument } from '@/shared/lib/placement/documentPlacement
 import { deriveTimelineShotGroupViews } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { createFakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
 import {
-  DUPLICATE_SHOT_GROUP_FAMILY,
-  admitDuplicateShotGroupPackCommand,
   deepCopyShotGroupInDocument,
   duplicateShotGroup,
   promotePrimaryVariant,
@@ -180,26 +178,46 @@ describe('shot-group pack commands', () => {
     expect((sourceClip.params!.nested as { strength: number }).strength).toBe(0.5);
   });
 
-  it('admits duplicate with the pinned family and explicit source lineage', async () => {
-    const admit = vi.fn(async () => admissionResponse());
-    const client = commandClient({ tasks: { admit, get: vi.fn() } });
-
-    await admitDuplicateShotGroupPackCommand(client, {
-      source: { shotId: 'shot-a', trackId: 'V1' },
-      destinationShotId: 'shot-b',
-      destinationTrackId: 'V2',
-      finalVideoMediaId: 'media-final',
+  it('refuses media-bearing duplicates before task admission or timeline mutation', async () => {
+    const router = createFakeBridgeRouter();
+    const seed = documentFixture();
+    router.state.config = seed.config;
+    router.state.registry = seed.registry;
+    router.state.configVersion = 11;
+    const stateBefore = structuredClone({
+      config: router.state.config,
+      registry: router.state.registry,
+      galleryDetails: router.state.galleryDetails,
+      configVersion: router.state.configVersion,
     });
+    const paths: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const raw = input instanceof Request ? input.url : String(input);
+      const url = raw.startsWith('http') ? raw : `http://bridge.fake${raw}`;
+      const request = new Request(url, init);
+      paths.push(`${request.method} ${new URL(url).pathname}`);
+      return await router.handle(request);
+    }));
 
-    expect(admit).toHaveBeenCalledWith({
-      family: DUPLICATE_SHOT_GROUP_FAMILY,
-      input: {
-        source_group: { shot_id: 'shot-a', track_id: 'V1' },
-        destination_group: { shot_id: 'shot-b', track_id: 'V2' },
-        derived_from: { shot_id: 'shot-a', track_id: 'V1' },
-        final_video_media_id: 'media-final',
-      },
-    }, 'reigh:shot-pack:v1:duplicate:shot-a:V1:shot-b');
+    await expect(duplicateShotGroup({
+      projectSlug: 'demo-project',
+      timelineRef: 'active-non-default',
+      configVersion: 11,
+      source: { shotId: 'shot-source', trackId: 'V1' },
+      destinationShotId: 'shot-copy',
+    }, { wait: async () => undefined })).rejects.toThrow(
+      'Legacy task family duplicate is unsupported; submit the canonical HC-04 admission envelope',
+    );
+
+    expect(paths).toEqual(['GET /api/astrid/projects/demo-project/timelines/active-non-default']);
+    expect(paths.some((path) => path.startsWith('POST '))).toBe(false);
+    expect(paths.some((path) => path.includes(forbidden) || path.includes('supabase'))).toBe(false);
+    expect({
+      config: router.state.config,
+      registry: router.state.registry,
+      galleryDetails: router.state.galleryDetails,
+      configVersion: router.state.configVersion,
+    }).toEqual(stateBefore);
   });
 
   it('polls a command at the caller-supplied cadence until succeeded', async () => {
