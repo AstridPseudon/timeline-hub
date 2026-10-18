@@ -27,11 +27,9 @@ const repoRoot = path.resolve(readOption('--repo-root') ?? process.cwd());
 const maturityPath = path.join(repoRoot, 'config/extensions/family-maturity.json');
 const maturityDocs = [
   path.join(repoRoot, 'docs/extensions/phase4-readiness.md'),
-  path.join(repoRoot, 'docs/extensions/foundation-closure-assessment.md'),
 ];
 const claimDocs = [
   path.join(repoRoot, 'docs/extensions/phase4-readiness.md'),
-  path.join(repoRoot, 'docs/extensions/foundation-closure-assessment.md'),
   path.join(repoRoot, 'docs/extensions/composition-spine/m0-release-examples.md'),
 ];
 
@@ -40,7 +38,7 @@ const startMarker = '<!-- family-maturity-table-start -->';
 const endMarker = '<!-- family-maturity-table-end -->';
 
 const DENIAL_CONTEXT_RE =
-  /\b(does not|do not|did not|must not|must avoid|avoid implying|avoids implying|cannot|can't|should not|should avoid|is not|are not|no\b|not\b|never|without|unsupported|out of scope|anti-scope|excluded|exclusion|deferred|blocked|not cleared|not yet|reserved|planning-only|compatibility-only|source material only|future callers|future milestone|future deliverable|only as exclusions|explicitly scoped outside|remains blocked|stay outside)\b/i;
+  /\b(does not|do not|did not|must not|must avoid|avoid implying|avoids implying|cannot|can't|should not|should avoid|is not|are not|no\b|not\b|never|without|unsupported|out of scope|anti-scope|excluded|exclusion|deferred|blocked|absent|not cleared|not yet|reserved|planning-only|compatibility-only|source material only|future callers|future milestone|future deliverable|only as exclusions|explicitly scoped outside|remains blocked|stay outside)\b/i;
 const POSITIVE_CLAIM_RE =
   /\b(supports?|supported|implements?|implemented|provides?|enabled?|enables?|allows?|uses?|includes?|brokers?|enforces?|isolates?|reviews?|installs?|loads?|discovers?|runs?|renders?|previews?|exports?|materializes?|executes?|certif(?:y|ies|ied)|controls?|safe|safely)\b/i;
 
@@ -216,6 +214,8 @@ function normalizeClaimUnit(text) {
     .trim();
 }
 
+const LIST_ITEM_RE = /^(?:[-*+]|\d+[.)])\s/;
+
 function extractClaimUnits(markdown) {
   const text = stripCodeBlocks(markdown);
   const lines = text.split('\n');
@@ -250,6 +250,12 @@ function extractClaimUnits(markdown) {
     if (trimmed.startsWith('#')) {
       flushCurrent();
       continue;
+    }
+
+    // A list item is its own claim unit: a denial in one bullet must not
+    // suppress a positive claim in the next bullet.
+    if (LIST_ITEM_RE.test(trimmed)) {
+      flushCurrent();
     }
 
     if (trimmed.startsWith('|') && trimmed.endsWith('|')) {

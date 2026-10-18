@@ -89,22 +89,6 @@ ${baselineTable()}<!-- family-maturity-table-end -->
 `;
 }
 
-function baselineFoundationDoc() {
-  return `# Foundation Closure Assessment
-
-## Trust Posture
-
-- No sandbox, permission broker, marketplace, remote install, or signing claims
-  are made in the docs, examples, or manager surfaces.
-- The current posture remains trusted/unsandboxed local packages only.
-
-## Family Maturity Snapshot
-
-<!-- family-maturity-table-start -->
-${baselineTable()}<!-- family-maturity-table-end -->
-`;
-}
-
 function baselineReleaseExamplesDoc() {
   return `# Release Examples
 
@@ -124,11 +108,6 @@ function setupTempRepo() {
 
   writeRepoFile(root, 'config/extensions/family-maturity.json', baselineMaturityRegistry());
   writeRepoFile(root, 'docs/extensions/phase4-readiness.md', baselinePhase4Doc());
-  writeRepoFile(
-    root,
-    'docs/extensions/foundation-closure-assessment.md',
-    baselineFoundationDoc(),
-  );
   writeRepoFile(
     root,
     'docs/extensions/composition-spine/m0-release-examples.md',
@@ -224,9 +203,9 @@ describe('check-docs-maturity-sync', () => {
     try {
       replaceInFile(
         root,
-        'docs/extensions/foundation-closure-assessment.md',
-        'No sandbox, permission broker, marketplace, remote install, or signing claims\n  are made in the docs, examples, or manager surfaces.',
-        'Marketplace integration remains under discussion.',
+        'docs/extensions/phase4-readiness.md',
+        '- Docs must avoid implying marketplace review or safe third-party execution.',
+        '- Marketplace integration remains under discussion.',
       );
 
       const result = runGate(root);
@@ -262,8 +241,8 @@ describe('check-docs-maturity-sync', () => {
       replaceInFile(
         root,
         'docs/extensions/composition-spine/m0-release-examples.md',
-        'process execution support, preview support, or runtime certification for\n  machine-path / executable-package profiles.',
-        'preview support and runtime certification for machine-path / executable-package profiles.',
+        'It does not claim sandboxing, marketplace, headless rendering,\n  process execution support, preview support, or runtime certification for\n  machine-path / executable-package profiles.',
+        'It provides preview support and runtime certification for machine-path / executable-package profiles.',
       );
 
       const result = runGate(root);
