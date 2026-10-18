@@ -232,7 +232,8 @@ class RequestSceneEvaluation:
 class CandidateEvaluator:
     def __init__(self, invocation, candidate):
         self.invocation = invocation
-        self.candidate_digest = digest(candidate)
+        self.candidate = copy.deepcopy(candidate)
+        self.candidate_digest = digest(self.candidate)
         self.binding = dict(
             invocation_id=uuid.uuid4().hex,
             actor=invocation.principal["actor"],
@@ -255,6 +256,8 @@ class CandidateEvaluator:
             if self.closed or self.invocation.active is not self:
                 raise FrameOwnerError("evaluation_closed")
             self.invocation.check()
+            if wire.empty_only(self.invocation.context):
+                raise FrameOwnerError("empty_only_frame_query")
             scene = copy.deepcopy(scene)
             if revision_digest != wire.digest(scene)[7:]:
                 raise FrameOwnerError("scene_digest_mismatch")
@@ -332,6 +335,7 @@ class CandidateEvaluator:
             raise FrameOwnerError("authoring_evaluation_refused") from exc
 
     def complete(self, *, empty=False):
+        from astrid.core.execution import authoring_scene_protocol as wire
         from astrid.core.execution.remotion_frame_owner import FrameOwnerError
 
         self.invocation.check()
@@ -342,6 +346,26 @@ class CandidateEvaluator:
             or empty != (self.queries == 0)
         ):
             raise FrameOwnerError("evaluation_incomplete")
+        if wire.empty_only(self.invocation.context):
+            request = dict(
+                protocol=wire.PROTOCOL,
+                operation=wire.EMPTY_OPERATION,
+                purpose=wire.PURPOSE,
+                context=copy.deepcopy(self.invocation.context),
+                invocation=copy.deepcopy(self.binding),
+                candidate=copy.deepcopy(self.candidate),
+            )
+            wire.validate_request(request, self.invocation.context)
+            try:
+                response = self.invocation.relay.exchange(
+                    request, guard=self.invocation.check, cancelled=self.invocation.cancelled,
+                )
+            except (EOFError, OSError, ValueError) as exc:
+                raise FrameOwnerError("empty_completion_refused") from exc
+            wire.validate_empty_reply(response, request)
+            self.invocation.check()
+            if self.closed or self.invocation.active is not self:
+                raise FrameOwnerError("evaluation_superseded")
         self.invocation.proof = self.candidate_digest
 
     def close(self):

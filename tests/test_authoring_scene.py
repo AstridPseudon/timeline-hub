@@ -11,7 +11,23 @@ from runtime_protocol import authoring_scene as scene
 from runtime_protocol.auth import CredentialStore
 from runtime_protocol.errors import AuthorizationError
 from runtime_protocol.timeline_commit import digest
-from test_timeline_accept import fixture, wire, acceptance, count  # noqa: F401
+from test_timeline_accept import wire, acceptance, count
+
+
+@pytest.fixture
+def fixture(tmp_path):
+    from test_shot_composition_runtime import _service, _publication
+    service, project = _service(tmp_path)
+    publication = _publication(project)
+    # Current shared SDK track semantics require the fixture's picture track.
+    # Keep the clip/domain and all production validation unchanged.
+    publication["parent_composition"]["config"]["tracks"] = [
+        {"id": "video-1", "kind": "visual"}]
+    service.publish_parent_composition(project, "main", publication, idempotency_key="initial")
+    try:
+        yield service, project
+    finally:
+        service.close()
 
 
 def projection():
@@ -252,7 +268,7 @@ def test_installed_provider_uses_request_port_without_global_scene_client(bound,
     body = wire(w.p, dry_run=dry_run)
     before = count(w.s, 'parent_composition_publications')
     result = w.s.commit_timeline(w.p, 'main', body, idempotency_key=body['request_id'], identity=w.identity)
-    assert result['status'] in ({'preview'} if dry_run else {'accepted', 'no_change'}), result
+    assert result['status'] in ({'preview'} if dry_run else {'accepted', 'no_change'}), result.get('error', result)
     assert w.calls
     assert {v['invocation']['candidate_digest'] for v in w.calls} == {digest(result['canonical_document'])}
     assert getattr(scene_answers._local, 'client', None) is None
@@ -348,5 +364,219 @@ def test_empty_timeline_preserves_existing_shared_completeness_semantics(bound, 
     head = w.s.head(w.p, 'main')
     body.update(base_revision_id=head['revision_id'], base_publication_id=head['publication_id'])
     result = w.s.commit_timeline(w.p, 'main', body, idempotency_key=body['request_id'], identity=w.identity)
-    assert result['status'] in ({'preview'} if dry_run else {'accepted', 'no_change'}), result
+    assert result['status'] in ({'preview'} if dry_run else {'accepted', 'no_change'}), result.get('error', result)
     assert not w.calls  # zero sampled frames; no manufactured answer
+
+
+@pytest.fixture
+def empty_bound(bound, monkeypatch):
+    """Public service/credential path plus real private Host transport.
+
+    Selected native activation/source inventory is explicit fixture authority;
+    there is no installed Host/profile or C live COMMIT in this offline proof.
+    """
+    import tempfile
+    import threading
+    from pathlib import Path
+    from astrid.core.execution import authoring_scene_protocol as protocol
+    from astrid.core.execution import authoring_scene_transport as transport
+    from astrid.core.execution import authoring_scene_startup as startup
+    from astrid.core.execution.custody_broker import AuthenticatedCleanupActor
+    from astrid.core.execution.storage_preparation_transport import ProcessIdentity
+    from astrid.core.execution.generic_host import GenericPackHost
+    w = bound
+    binding = {**{k: v for k, v in w.relay.config.binding.items()
+                  if k not in {"renderer_closure", "owner_generation"}}, "mode": protocol.EMPTY_MODE}
+    with tempfile.TemporaryDirectory(prefix="rt171-", dir="/private/tmp") as temporary:
+        identity = ProcessIdentity(**AuthenticatedCleanupActor.current().verify())
+        config = transport.AuthoringSceneConfig(Path(temporary), identity, identity, binding, "a" * 64)
+        host = SimpleNamespace(_shutdown=threading.Event(), _authoring_scene_lock=threading.Lock(),
+            _authoring_scene_listener=None,
+            _authoring_scene_session=lambda *a: pytest.fail("empty commit acquired renderer"))
+        monkeypatch.setattr(startup, "validate_host", lambda *a: None)
+        listener = GenericPackHost.start_authoring_scene(host, config, {})
+        relay = transport.AuthoringSceneRelay(listener.config)
+        w.s._authoring_scene_relay = w.relay = relay
+        original = relay.exchange
+        def exchange(request, **kwargs):
+            w.calls.append(copy.deepcopy(request))
+            return original(request, **kwargs)
+        monkeypatch.setattr(relay, "exchange", exchange)
+        try:
+            yield w
+        finally:
+            relay.close()
+            listener.close()
+
+
+def publish_empty(w):
+    from test_shot_composition_runtime import _publication
+    head = w.s.head(w.p, "main")
+    value = _publication(w.p, expected_head=head["revision_id"], parent_revision_id="empty-scene",
+                         config={"tracks": [{"id": "V1", "kind": "visual", "opacity": 1}]})
+    value["parent_composition"]["occurrences"] = []
+    value["shot_revisions"] = []
+    value["internal_timeline_revisions"] = []
+    w.s.publish_parent_composition(w.p, "main", value, idempotency_key="empty-scene")
+    from astrid.sdk.timeline.commit import create_runtime_commit_service
+    w.s._timeline_commit_provider = create_runtime_commit_service()
+    body = wire(w.p)
+    head = w.s.head(w.p, "main")
+    body.update(base_revision_id=head["revision_id"], base_publication_id=head["publication_id"])
+    body["change"]["commands"] = [dict(op="timeline.set", select="parent/track:V1",
+        args=dict(values={"opacity": .625}, clear=[]),
+        expect={"parent/track:V1::opacity": {"state": "present", "value": 1}})]
+    return body
+
+
+@pytest.mark.parametrize("dry_run", [True, False])
+def test_public_empty_commit_requires_typed_authenticated_completion(empty_bound, dry_run):
+    from astrid.core.execution import authoring_scene_protocol as protocol
+    w = empty_bound
+    body = publish_empty(w)
+    body["dry_run"] = dry_run
+    before = count(w.s, "parent_composition_publications")
+    result = w.s.commit_timeline(w.p, "main", body, idempotency_key=body["request_id"], identity=w.identity)
+    assert result["status"] == ("preview" if dry_run else "accepted"), result
+    assert result["canonical_document"]["parent"]["config"]["tracks"][0]["opacity"] == .625
+    assert len(w.calls) == 1 and w.calls[0]["operation"] == protocol.EMPTY_OPERATION
+    invocation = w.calls[0]["invocation"]
+    assert invocation["request_hash"] == digest(body)
+    assert invocation["candidate_digest"] == digest(result["canonical_document"])
+    assert w.calls[0]["candidate"] == result["canonical_document"]
+    assert invocation["actor"] == w.identity["actor"]
+    assert count(w.s, "parent_composition_publications") == before + (not dry_run)
+    if dry_run:
+        assert w.s.lookup_request(w.p, "main", body["request_id"]) is None
+    else:
+        w.s._authoring_scene_relay = None
+        assert w.s.commit_timeline(w.p, "main", body, idempotency_key=body["request_id"], identity=w.identity) == result
+
+
+@pytest.mark.parametrize("change", ["missing", "forged", "candidate", "request", "actor", "fence", "mode",
+    "realm", "session", "executor", "owner", "source", "channel", "credential", "selection", "superseded"])
+def test_empty_public_commit_refuses_forgery_and_inflight_authority_change(empty_bound, monkeypatch, change):
+    from astrid.core.execution import authoring_scene_protocol as protocol
+    w = empty_bound
+    body = publish_empty(w)
+    original = w.relay.exchange
+    def changed(request, **kwargs):
+        result = original(request, **kwargs)
+        if change == "forged": return {"empty": True}
+        if change in {"candidate", "request", "actor", "fence"}:
+            field = {"candidate": "candidate_digest", "request": "request_hash"}.get(change, change)
+            result["invocation"][field] = "foreign"
+        elif change == "mode": result["context"]["mode"] = "renderer"
+        elif change in {"realm", "session", "executor", "owner", "source"}:
+            field = {"realm": "runtime_realm_id", "session": "runtime_session_id", "executor": "executor_id",
+                     "owner": "host_instance_id", "source": "source_digest"}[change]
+            w.relay.config.binding[field] = "foreign"
+        elif change == "channel": w.relay.close()
+        elif change == "credential": w.credentials.disable_actor(w.identity["actor"])
+        elif change == "selection": w.s._authoring_scene_relay = SimpleNamespace(close=lambda: None)
+        elif change == "superseded": kwargs["cancelled"].set()
+        return result
+    if change == "missing": w.s._authoring_scene_relay = None
+    else: monkeypatch.setattr(w.relay, "exchange", changed)
+    before = count(w.s, "parent_composition_publications")
+    try:
+        result = w.s.commit_timeline(w.p, "main", body, idempotency_key=body["request_id"], identity=w.identity)
+        assert result["status"] in {"error", "refused"}, result
+    except AuthorizationError:
+        pass
+    assert count(w.s, "parent_composition_publications") == before
+    assert w.s.lookup_request(w.p, "main", body["request_id"]) is None
+
+
+def test_empty_mode_refuses_frame_queries_and_nonempty_public_candidate(empty_bound):
+    from astrid.core.execution import authoring_scene_protocol as protocol
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    from astrid.sdk.timeline.commit import create_runtime_commit_service
+    w = empty_bound
+    body = wire(w.p)
+    port = scene.RequestSceneEvaluation(w.s, body, w.identity)
+    client = port.evaluator({"candidate": "not-empty-proof"})
+    value = projection()
+    with pytest.raises(FrameOwnerError, match="empty_only_frame_query"):
+        client.query_scene(revision_digest=protocol.digest(value)[7:], scene=value, frames=[0])
+    assert not w.calls
+    port.close()
+    w.s._timeline_commit_provider = create_runtime_commit_service()
+    before = count(w.s, "parent_composition_publications")
+    result = w.s.commit_timeline(w.p, "main", body, idempotency_key=body["request_id"], identity=w.identity)
+    assert result["status"] in {"error", "refused"}, result
+    assert count(w.s, "parent_composition_publications") == before
+    assert w.s.lookup_request(w.p, "main", body["request_id"]) is None
+
+
+def test_empty_proof_cannot_survive_rebase_onto_nonempty_head(empty_bound):
+    from astrid.sdk.timeline.commit import RuntimeCommitService
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    from test_shot_composition_runtime import _publication
+    w = empty_bound
+    body = publish_empty(w)
+    port = w.s._request_commit_port(body, w.identity)
+    candidate = RuntimeCommitService._load_revision(port, body, body["base_revision_id"])
+    first = port.scene_evaluator(candidate)
+    first.complete(empty=True)
+    head = w.s.head(w.p, "main")
+    value = _publication(w.p, expected_head=head["revision_id"], parent_revision_id="nonempty-head",
+                         config={"tracks": [{"id": "V1", "kind": "visual", "opacity": 1},
+                                            {"id": "video-1", "kind": "visual"}]})
+    w.s.publish_parent_composition(w.p, "main", value, idempotency_key="nonempty-head")
+    # A fresh complete post-rebase candidate contains the current head's domain.
+    assert port.head()["revision_id"] == "nonempty-head"
+    rebased = RuntimeCommitService._load_revision(port, body, "nonempty-head")
+    second = port.scene_evaluator(rebased)
+    with pytest.raises(FrameOwnerError): second.complete(empty=True)
+    with pytest.raises(FrameOwnerError): first.complete(empty=True)
+    assert second.invocation.proof is None
+    port.close()
+
+
+def test_public_retry_rebases_empty_candidate_onto_nonempty_head_and_refuses(empty_bound, monkeypatch):
+    from test_shot_composition_runtime import _publication
+    w = empty_bound
+    body = publish_empty(w)
+    original = w.s.accept
+    attempts = []
+    def move_head(prepared, **kwargs):
+        attempts.append(copy.deepcopy(prepared))
+        assert len(attempts) == 1  # Rebased nonempty evaluation never reaches acceptance.
+        head = w.s.head(w.p, "main")
+        value = _publication(w.p, expected_head=head["revision_id"], parent_revision_id="concurrent-nonempty",
+            config={"tracks": [{"id": "V1", "kind": "visual", "opacity": 1},
+                               {"id": "video-1", "kind": "visual"}]})
+        w.s.publish_parent_composition(w.p, "main", value, idempotency_key="concurrent-nonempty")
+        return original(prepared, **kwargs)  # Real StaleHead drives the provider's ordinary rebase.
+    monkeypatch.setattr(w.s, "accept", move_head)
+    result = w.s.commit_timeline(w.p, "main", body, idempotency_key=body["request_id"], identity=w.identity)
+    assert result["status"] in {"error", "refused"}, result
+    assert result["rebased_onto"] == "concurrent-nonempty", result
+    assert len(attempts) == 1 and len(w.calls) == 1
+    assert w.calls[0]["candidate"]["placements"] == []
+    assert w.s.head(w.p, "main")["revision_id"] == "concurrent-nonempty"
+    assert w.s.lookup_request(w.p, "main", body["request_id"]) is None
+
+
+@pytest.mark.parametrize("change", ["credential", "channel", "source"])
+def test_empty_authority_rechecked_at_atomic_accept_after_valid_completion(empty_bound, monkeypatch, change):
+    w = empty_bound
+    body = publish_empty(w)
+    original = w.s.accept
+    def revoke(prepared, **kwargs):
+        assert len(w.calls) == 1
+        if change == "credential": w.credentials.disable_actor(w.identity["actor"])
+        elif change == "channel": w.relay.close()
+        elif change == "source": w.relay.config.binding["source_epoch"] = "foreign"
+        return original(prepared, **kwargs)
+    monkeypatch.setattr(w.s, "accept", revoke)
+    before = count(w.s, "parent_composition_publications")
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    try:
+        result = w.s.commit_timeline(w.p, "main", body, idempotency_key=body["request_id"], identity=w.identity)
+        assert result["status"] in {"error", "refused"}, result
+    except (AuthorizationError, FrameOwnerError):
+        pass
+    assert count(w.s, "parent_composition_publications") == before
+    assert w.s.lookup_request(w.p, "main", body["request_id"]) is None
