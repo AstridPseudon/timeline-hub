@@ -100,6 +100,22 @@ class TimelineRoundTripFixtureTest(unittest.TestCase):
                 f"section {section!r} drifted after round-trip",
             )
 
+    def test_track_roles_survive_round_trip(self) -> None:
+        for role in ("output", "source"):
+            with self.subTest(role=role), tempfile.TemporaryDirectory() as tmp:
+                injected = json.loads(self.original_text)
+                injected["tracks"][0]["role"] = role
+                in_path = Path(tmp) / "with_role.json"
+                in_path.write_text(json.dumps(injected, indent=2) + "\n", encoding="utf-8")
+
+                config = load_timeline(in_path)
+                out_path = Path(tmp) / "after_roundtrip.json"
+                save_timeline(config, out_path)
+                after = json.loads(out_path.read_text(encoding="utf-8"))
+
+                self.assertEqual(after, injected)
+                self.assertEqual(after["tracks"][0]["role"], role)
+
     # ------------------------------------------------------------------
     # 2. Unknown top-level field preservation
     # ------------------------------------------------------------------

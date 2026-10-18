@@ -279,9 +279,13 @@ class TimelineDigestGoldenTest(unittest.TestCase):
     The digest is a sha256 over the canonically-sorted, minified JSON of the
     validated timeline config. If the digest changes, something in the
     validate→canonicalize→serialize chain shifted.
+
+    Commit ``fb9e8a31`` added the explicit default track role to the shared
+    fixture, changing its authored JSON and digest. Keep this characterization
+    input frozen; optional role coverage lives in the round-trip test.
     """
 
-    # Golden: pre-migration digest computed from the fixture.
+    # Golden: pre-migration digest computed from the original fixture.
     # This hash pins the exact stable serialization contract.
     GOLDEN_DIGEST = "872b50fab9248ef3497490f88fdc772526c74a391c5286040367e25fada10f9a"
 

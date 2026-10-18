@@ -100,6 +100,10 @@ class SchemaContractTest(unittest.TestCase):
         config = timeline.load_timeline(EXAMPLES / "hype.timeline.full.json")
         registry = timeline.load_registry(EXAMPLES / "hype.assets.full.json")
 
+        # Exercise the optional Runtime 0.0.2 track role on this local copy so
+        # the shared characterization fixture keeps its original digest input.
+        config["tracks"][0]["role"] = "output"
+
         self.assertIn("generation_defaults", timeline._TIMELINE_TOP_ALLOWED)
         clip_keys = {key for clip in config["clips"] for key in timeline._normalize_clip_for_validation(clip)}
         track_keys = {key for track in config.get("tracks", []) for key in track}
