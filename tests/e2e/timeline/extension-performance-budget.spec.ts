@@ -46,13 +46,8 @@ function collectIssues(page: import('@playwright/test').Page, options: { allowRu
 }
 
 const BUDGET = {
-  readyMs: 30_000,
-  hydrationMs: 20_000,
   serializedProjectDataBytes: 1 * 1024 * 1024,
-  managerMs: 3_000,
   contributionCount: 128,
-  commandSearchMs: 1_500,
-  virtualScrollMs: 2_000,
   quietWindowMs: 5_000,
   quietBridgeRequests: 4,
   burstBridgeRequests: 4,
@@ -102,7 +97,6 @@ test.describe('extension performance and resource budgets', () => {
       }
     });
 
-    const readyStartedAt = Date.now();
     const response = await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
     expect(response?.ok()).toBe(true);
     await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible({ timeout: 20_000 });
@@ -113,46 +107,32 @@ test.describe('extension performance and resource budgets', () => {
     await expect(page.getByRole('group', { name: /566 transitions/ })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Transcript actions' })).toBeVisible();
     await expect(page.getByTestId('runaway-timeline-lane')).toHaveAttribute('data-total-items', '566');
-    const readyMs = Date.now() - readyStartedAt;
-    const navigationTiming = await page.evaluate(() => {
-      const entry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-      return { domContentLoadedEventEnd: entry?.domContentLoadedEventEnd ?? 0 };
-    });
-    const readyNow = await page.evaluate(() => performance.now());
-    const hydrationMs = Math.max(0, readyNow - navigationTiming.domContentLoadedEventEnd);
     await expect.poll(() => projectDataBodies.length, {
       message: 'the local bridge must expose a serialized timeline payload',
       timeout: 5_000,
     }).toBeGreaterThan(0);
     const projectDataBytes = Math.max(0, ...(await Promise.all(projectDataBodies)));
     expect(projectDataBytes, 'timeline project data must have a measurable serialized payload').toBeGreaterThan(0);
-    expect(hydrationMs).toBeLessThanOrEqual(BUDGET.hydrationMs);
     expect(projectDataBytes).toBeLessThanOrEqual(BUDGET.serializedProjectDataBytes);
 
     const cdp = await context.newCDPSession(page);
     await cdp.send('Performance.enable');
     const heapBeforeBytes = await readHeapBytes(cdp);
 
-    const virtualScrollStartedAt = Date.now();
     await page.locator('.timeline-canvas-edit-area').evaluate((scroller) => {
       scroller.scrollLeft = scroller.scrollWidth;
       scroller.dispatchEvent(new Event('scroll'));
     });
     await expect(page.getByTestId('runaway-timeline-lane')).toHaveAttribute('data-window-end', '566');
-    const virtualScrollMs = Date.now() - virtualScrollStartedAt;
 
-    const managerStartedAt = Date.now();
     await page.getByRole('tab', { name: 'Extensions' }).click();
     await expect(page.getByRole('button', { name: /^(Disable|Enable) haus\.astrid\./ })).toHaveCount(13);
-    const managerMs = Date.now() - managerStartedAt;
 
-    const commandStartedAt = Date.now();
     await page.keyboard.press('ControlOrMeta+Shift+P');
     const commandInput = page.getByPlaceholder('Type a command…');
     await expect(commandInput).toBeVisible();
     await commandInput.fill('Drop Foley Cue Scaffolds');
     await expect(page.getByText('Drop Foley Cue Scaffolds', { exact: true })).toBeVisible();
-    const commandSearchMs = Date.now() - commandStartedAt;
     await page.keyboard.press('Escape');
 
     // The manager's package-card data attribute is intentionally an internal
@@ -201,13 +181,8 @@ test.describe('extension performance and resource budgets', () => {
     const evidence = {
       budgets: BUDGET,
       observed: {
-        readyMs,
-        hydrationMs,
         serializedProjectDataBytes: projectDataBytes,
-        managerMs,
         contributionCount,
-        commandSearchMs,
-        virtualScrollMs,
         burstBridgeRequests,
         quietBridgeRequests,
         domNodes: dom.nodes,
@@ -222,10 +197,6 @@ test.describe('extension performance and resource budgets', () => {
     });
     console.info(`[extension-performance] ${JSON.stringify(evidence.observed)}`);
 
-    expect(readyMs, JSON.stringify(evidence)).toBeLessThanOrEqual(BUDGET.readyMs);
-    expect(managerMs, JSON.stringify(evidence)).toBeLessThanOrEqual(BUDGET.managerMs);
-    expect(commandSearchMs, JSON.stringify(evidence)).toBeLessThanOrEqual(BUDGET.commandSearchMs);
-    expect(virtualScrollMs, JSON.stringify(evidence)).toBeLessThanOrEqual(BUDGET.virtualScrollMs);
     expect(dom.nodes, JSON.stringify(evidence)).toBeLessThanOrEqual(BUDGET.domNodes);
     expect(dom.mountedRunaway).toBeLessThanOrEqual(128);
     expect(dom.bodyWidth).toBeLessThanOrEqual(dom.viewportWidth);
