@@ -226,6 +226,11 @@
         "runtime_file": "actions/compose/run.py",
         "runtime_module": "astrid.packs.chiptune.actions.compose.run",
         "output_result_manifest": true,
+        "execution_dependencies": {
+          "python": [
+            "numpy"
+          ]
+        },
         "storage_estimator": {
           "mode": "request_estimated",
           "estimator": {

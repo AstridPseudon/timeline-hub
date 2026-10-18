@@ -1597,6 +1597,9 @@ actions:
     - edge-tts
     - voiceover
     metadata:
+      execution_dependencies:
+        python:
+        - edge-tts==7.2.8
       output_result_manifest: true
       requires_timeline: false
       api_provider: edge-tts
@@ -1621,10 +1624,9 @@ actions:
           observable: true
           route: declared-tcp-routes
           wrapper: astrid-generic-host
-      runtime_entrypoint: run_sdk
-      runtime_entrypoint_note: run_sdk is the in-process entrypoint returning a JSON-safe
-        payload dict; subprocess / CLI compatibility remains via main() and the __main__
-        guard at the bottom of run.py.
+      runtime_entrypoint: main
+      runtime_entrypoint_note: The canonical command invokes this module in an isolated
+        action child; run_sdk is an alternate Python facade over the same synthesis core.
       runtime_file: actions/generate_speech/run.py
       runtime_module: astrid.packs.generation.actions.generate_speech.run
     name: Generate Speech

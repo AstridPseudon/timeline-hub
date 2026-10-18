@@ -11,6 +11,8 @@ import hashlib
 import json
 import math
 import re
+import platform
+import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path, PurePosixPath
@@ -53,6 +55,115 @@ class CanonicalPackError(ValueError):
 
 class CanonicalPackValidationError(CanonicalPackError):
     """A manifest or its declared resource tree violates its pack schema."""
+
+
+def execution_requirement(value: str) -> tuple[str, tuple[tuple[str, str], ...], bool]:
+    """Parse the supported, deliberately bounded execution requirement grammar.
+
+    Numeric release comparisons and their comma intersections are supported.
+    Markers support parentheses and and/or over explicit environment names.
+    Extras, URLs, wildcards, arbitrary equality and unreviewed operators refuse;
+    even an inactive marker never hides an unsupported requirement/constraint.
+    This parser is shared with installed action qualification, not a resolver.
+    """
+    if not isinstance(value, str) or len(value) > 4096:
+        raise CanonicalPackValidationError("invalid execution dependency requirement")
+    requirement, sep, marker = value.partition(';')
+    match = re.fullmatch(r'\s*([A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)\s*(.*?)\s*', requirement)
+    if not match:
+        raise CanonicalPackValidationError("invalid execution dependency name")
+    name = re.sub(r'[-_.]+', '-', match[1]).lower()
+    constraints = []
+    if match[2]:
+        for constraint in match[2].split(','):
+            item = re.fullmatch(r'\s*(==|!=|<=|>=|<|>)\s*(\d+(?:\.\d+)*)\s*', constraint)
+            if not item:
+                raise CanonicalPackValidationError("unsupported execution dependency constraint or extras")
+            constraints.append((item[1], item[2]))
+    if not sep:
+        return name, tuple(constraints), True
+    environment = {'python_version': '.'.join(map(str, sys.version_info[:2])),
+                   'python_full_version': platform.python_version(), 'sys_platform': sys.platform,
+                   'os_name': __import__('os').name, 'platform_system': platform.system(),
+                   'platform_machine': platform.machine(), 'platform_python_implementation': platform.python_implementation(),
+                   'implementation_name': sys.implementation.name, 'extra': ''}
+    # Tokenize every byte, including inactive branches, before evaluation.
+    tokens = []
+    pattern = re.compile(r'''\s*(\(|\)|==|!=|<=|>=|<|>|\band\b|\bor\b|[A-Za-z_][A-Za-z_0-9]*|'[^'\x00-\x1f]*'|"[^"\x00-\x1f]*")''')
+    rest = marker.strip()
+    while rest:
+        token = pattern.match(rest)
+        if not token:
+            raise CanonicalPackValidationError("unsupported execution dependency marker")
+        tokens.append(token[1]); rest = rest[token.end():]
+    index = 0
+    def comparison():
+        nonlocal index
+        if index < len(tokens) and tokens[index] == '(':
+            index += 1
+            result = expression()
+            if index >= len(tokens) or tokens[index] != ')':
+                raise CanonicalPackValidationError("unbalanced execution dependency marker")
+            index += 1
+            return result
+        if index+2 >= len(tokens):
+            raise CanonicalPackValidationError("incomplete execution dependency marker")
+        key, op, literal = tokens[index:index+3]; index += 3
+        if key not in environment or op not in {'==','!=','<','<=','>','>='} or literal[0] not in {'\"', "'"}:
+            raise CanonicalPackValidationError("unsupported execution dependency marker comparison")
+        expected = literal[1:-1]
+        if key.startswith('python_'):
+            return execution_version_matches(environment[key], ((op, expected),))
+        if op not in {'==','!='}:
+            raise CanonicalPackValidationError("non-version execution marker requires equality")
+        return (environment[key] == expected) == (op == '==')
+    def conjunction():
+        nonlocal index
+        result = comparison()
+        while index < len(tokens) and tokens[index] == 'and':
+            index += 1
+            right = comparison(); result = result and right
+        return result
+    def expression():
+        nonlocal index
+        result = conjunction()
+        while index < len(tokens) and tokens[index] == 'or':
+            index += 1
+            right = conjunction(); result = result or right
+        return result
+    active = expression()
+    if index != len(tokens):
+        raise CanonicalPackValidationError("unsupported compound execution dependency marker")
+    return name, tuple(constraints), active
+
+
+def execution_version_matches(version: str, constraints) -> bool:
+    if not isinstance(version, str) or not re.fullmatch(r'\d+(?:\.\d+)*', version):
+        raise CanonicalPackValidationError("unsupported execution dependency version")
+    actual = tuple(map(int, version.split('.')))
+    for op, value in constraints:
+        if not re.fullmatch(r'\d+(?:\.\d+)*', value):
+            raise CanonicalPackValidationError("unsupported execution dependency version constraint")
+        expected = tuple(map(int, value.split('.')))
+        length = max(len(actual), len(expected))
+        left, right = actual+(0,)*(length-len(actual)), expected+(0,)*(length-len(expected))
+        if not {'==': left == right, '!=': left != right, '<': left < right,
+                '<=': left <= right, '>': left > right, '>=': left >= right}[op]:
+            return False
+    return True
+
+
+def validate_execution_dependencies(value) -> dict[str, list[str]]:
+    if (not isinstance(value, Mapping) or set(value) != {'python'}
+            or not isinstance(value['python'], (list, tuple)) or not 1 <= len(value['python']) <= 64):
+        raise CanonicalPackValidationError("execution_dependencies requires a nonempty python requirement array")
+    names = set()
+    for requirement in value['python']:
+        name, _, _ = execution_requirement(requirement)
+        if name in names:
+            raise CanonicalPackValidationError("duplicate execution dependency distribution")
+        names.add(name)
+    return {'python': list(value['python'])}
 
 
 def _mapping(value: Any, path: str) -> dict[str, Any]:
@@ -484,6 +595,9 @@ def _normalize_declarations(data: dict[str, Any]) -> dict[str, Mapping[str, Any]
                 raise CanonicalPackValidationError(f"{location} duplicates public identity {identity!r}")
             identities.add(identity)
             if section == "actions":
+                metadata = item.get('metadata', {})
+                if 'execution_dependencies' in metadata:
+                    validate_execution_dependencies(metadata['execution_dependencies'])
                 invocation = dict(item["invocation"])
                 if invocation["kind"] == "python":
                     invocation["path"] = _role_path(
