@@ -246,11 +246,15 @@ class AstridClient:
         client_name: str | None = None,
         client_version: str | None = None,
         protocol_version: str | None = None,
+        timeout: float | None = None,
     ) -> Self:
         """Connect using a fully explicit, validated runtime context.
 
         Cold launch belongs to the explicit Astrid launcher boundary. An
         ordinary SDK construction never retries by invoking a process.
+        ``timeout`` sets the finite positive transport timeout in seconds for
+        each request, including COMMIT previews. Omit it (or pass ``None``) to
+        retain the generated client's 30-second default. No request is retried.
         """
         from astrid.sdk.exceptions import ServiceUnavailableError
         from astrid.sdk.remote import RemoteAstridClient
@@ -323,7 +327,11 @@ class AstridClient:
             )
 
         def connect(endpoint_value: str, token: str) -> Any:
-            workspace = WorkspaceClient(endpoint_value, token)
+            workspace = (
+                WorkspaceClient(endpoint_value, token)
+                if timeout is None
+                else WorkspaceClient(endpoint_value, token, timeout=timeout)
+            )
             try:
                 _validate_health(workspace.health(), expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST)
             except Exception as exc:

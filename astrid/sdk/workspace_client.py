@@ -215,9 +215,18 @@ class WorkspaceClient:
     It translates only generated exceptions into Astrid's stable error type.
     """
 
-    def __init__(self, endpoint: str, token: str):
+    def __init__(self, endpoint: str, token: str, *, timeout: float | None = None):
+        """Use a finite positive timeout in seconds, or the generated 30s default.
+
+        The generated transport owns timeout validation and error reporting;
+        configuring a longer timeout does not enable retries.
+        """
         self.endpoint, self.token = resolve_runtime_connection(endpoint, token)
-        self._generated = GeneratedWorkspaceClient(self.endpoint, self.token)
+        self._generated = (
+            GeneratedWorkspaceClient(self.endpoint, self.token)
+            if timeout is None
+            else GeneratedWorkspaceClient(self.endpoint, self.token, timeout=timeout)
+        )
         # Populated after the explicit Astrid handshake.  On-demand local
         # Runtime work must use the authenticated actor as its executor.
         self.actor_id: str | None = None
