@@ -18,7 +18,7 @@ ASTRID_SOURCE = Path(__file__).resolve().parents[2]
 # The acceptance revision is the Runtime commit the vendored workspace client was
 # produced from, so the daemon's schema digest cannot drift from the client's.
 RUNTIME_COMMIT = json.loads(
-    (ASTRID_SOURCE / "astrid_runtime_client" / "vendor.lock.json").read_text(encoding="utf-8")
+    (ASTRID_SOURCE / "runtime.lock.json").read_text(encoding="utf-8")
 )["source_commit"]
 
 
