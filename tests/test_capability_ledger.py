@@ -54,7 +54,7 @@ def test_host_consumes_the_reconciled_ledger_before_readiness_matrix():
 
     host = GenericPackHost(pack_roots=[Path("astrid/packs")])
     assert host.ledger["sources"]["counts"]["pack_labels"] == 107
-    assert len(host.matrix) == 111
+    assert len(host.matrix) == 112
     finalizer = host.matrix["h3_av.publication_finalizer"]
     assert finalizer["adapter_family"] == "cpu"
     assert finalizer["resource_keys"] == ["cpu"]
@@ -90,7 +90,6 @@ def test_historical_executor_rows_are_explicitly_not_installed():
 
     assert set(absent) == {
         "iteration.prepare",
-        "media.transcript_publish",
         "pixel.strip",
         "reigh.open_in_reigh",
         "reigh.publish",
@@ -98,7 +97,7 @@ def test_historical_executor_rows_are_explicitly_not_installed():
         "reigh.spatial_audio_page",
         "training.asset_cache",
     }
-    undeclared = {"media.transcript_publish", "pixel.strip"}
+    undeclared = {"pixel.strip"}
     external = {row["id"]: row for row in absent.values() if row["id"].split(".", 1)[0] in {"discord_local", "hivemind", "seedance_local"}}
     historical = {
         row["id"]: row for row in absent.values()
@@ -122,6 +121,20 @@ def test_historical_source_labels_preserve_retirements_and_replacement():
     assert rows["iteration.collect_thread_provenance"]["executable"] is False
     assert rows["reigh.publish_timeline"]["disposition"] == "unsupported"
     assert rows["typed_timeline.typed_timeline.render"]["disposition"] == "retired"
+
+
+def test_transcript_declaration_admits_only_source_not_runtime_authority():
+    from astrid.core.execution.capability_ledger import capability_execution_admission
+
+    ledger = load_capability_ledger(Path("config/astrid-beta-capabilities.json"))
+    admitted = capability_execution_admission(ledger, "media.transcript_publish")
+    assert admitted["executable"] is True
+    assert admitted["requires_runtime_readiness"] is True
+    assert capability_execution_admission(ledger, "pixel.strip")["executable"] is False
+    row = next(row for row in ledger["capabilities"] if row["id"] == "media.transcript_publish")
+    assert row["adapter_family"] == "cpu"
+    assert row["resource_keys"] == ["cpu"]
+    assert row["required_env"] == row["required_binaries"] == row["required_packages"] == []
 
 
 def test_removed_reigh_registry_is_historical_and_inert():

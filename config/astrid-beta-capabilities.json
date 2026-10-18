@@ -614,6 +614,16 @@
    "required_packages": []
   },
   {
+   "id": "media.transcript_publish",
+   "disposition": "required",
+   "evidence_reason": "Caller-bound local timed-record publication through the builtin Host document adapter; requires the selected authenticated caller's project/document write authority, frozen request, immutable CAS snapshot, expected version and verified receipt. Direct pack-runner execution is unavailable.",
+   "adapter_family": "cpu",
+   "resource_keys": ["cpu"],
+   "required_env": [],
+   "required_binaries": [],
+   "required_packages": []
+  },
+  {
    "id": "media.clip_extract",
    "disposition": "required",
    "evidence_reason": "Required local FFmpeg media capability; binary preflight is explicit.",
