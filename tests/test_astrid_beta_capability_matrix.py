@@ -1,30 +1,92 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
-from astrid.core.execution.generic_host import GenericPackHost
+from astrid.core.execution.capability_ledger import capability_execution_admission
+from astrid.core.execution.executor.actions import (
+    action_executor_definition,
+    action_is_local_orchestrator,
+    action_orchestrator_definition,
+)
+from astrid.core.execution.executor.schema import ExecutorValidationError
+from astrid.core.execution.generic_host import GenericPackHost, HostError, _preflight_unavailable_reason
+from astrid.core.pack.canonical import validate_canonical_pack
 
 
 def test_beta_matrix_covers_every_discovered_capability_and_declaration():
     host = GenericPackHost(pack_roots=[Path("astrid/packs")])
     records = host.discover()
-    uninstalled_external_contracts = {
-        capability_id
-        for capability_id in host.matrix
-        if capability_id.startswith("hivemind.")
+    discovered = {record.id: record for record in records}
+    assert len(discovered) == len(records), "discovered action identities must be unique"
+    external_contracts = {
+        "hivemind.contribute", "hivemind.get_item", "hivemind.ingest_article",
+        "hivemind.ingest_workflow", "hivemind.ingest_youtube",
+        "hivemind.refresh_media", "hivemind.search",
     }
-    assert len(records) == 77
-    assert {record.id for record in records} == set(host.matrix) - uninstalled_external_contracts
-    assert {record.matrix["disposition"] for record in records} <= {"required", "optional", "unsupported", "retired"}
-    for record in records:
+    assert {key for key in host.matrix if key.startswith("hivemind.")} == external_contracts
+    assert set(host.matrix) - set(discovered) == external_contracts | {"h3_av.transform"}
+    assert host.stale_matrix_entries == ("h3_av.transform",)
+
+    # The sole matrix-only local parent is not a Host executor. Verify its
+    # owning projection and exact children before excluding it from equality.
+    entry = validate_canonical_pack(Path("astrid/packs/h3_av"))
+    pack = SimpleNamespace(id=entry.id, root=entry.root, version=entry.definition.version)
+    action = entry.definition.actions["transform"]
+    assert action_is_local_orchestrator(action) is True
+    with pytest.raises(ExecutorValidationError, match="not a host executor"):
+        action_executor_definition(pack, "transform", action)
+    parent = action_orchestrator_definition(pack, "transform", action)
+    assert parent.id == "h3_av.transform"
+    assert parent.child_executors == (
+        "h3_av.prepare", "h3_av.compile", "vibecomfy.validate", "vibecomfy.run",
+        "h3_av.compose", "h3_av.verify", "h3_av.publication_finalizer",
+    )
+    with pytest.raises(HostError, match="capability not discovered: h3_av.transform"):
+        host.admit("executor", parent.id)
+
+    # Discovery keeps unapproved actions visible; it does not authorize them.
+    assert set(discovered) - set(host.matrix) == {"pixel.strip"}
+    approved = {key: record for key, record in discovered.items() if not record.approval_reason}
+    assert set(approved) == set(host.matrix) - external_contracts - {parent.id}
+    assert set(parent.child_executors) <= set(approved)
+    assert {record.matrix["disposition"] for record in approved.values()} <= {
+        "required", "optional", "unsupported", "retired",
+    }
+    for record in approved.values():
+        assert record.matrix == host.matrix[record.id]
+        admission = capability_execution_admission(host.ledger, record.id)
+        assert admission["executable"] is True
+        assert admission["requires_runtime_readiness"] is True
         assert record.matrix["evidence_reason"]
         assert record.matrix["adapter_family"] == record.adapter.family
         assert isinstance(record.resource_keys, tuple) and record.resource_keys
         assert record.capability_digest and record.source_digest
         assert isinstance(record.manifest()["inputs"], list)
         assert isinstance(record.manifest()["outputs"], list)
+
+    publication = approved["media.transcript_publish"]
+    assert publication.definition.metadata["requires_caller_document_adapter"] is True
+    assert publication.ready is False  # declaration/discovery is not readiness
+
+    pixel = discovered["pixel.strip"]
+    assert pixel.matrix == {}
+    assert "no approved capability-matrix row" in pixel.approval_reason
+    denied = capability_execution_admission(host.ledger, pixel.id)
+    assert denied["executable"] is False
+    assert denied["reason"] == "capability is not declared in the canonical matrix"
+    [pixel] = host.preflight(pixel.id)
+    assert pixel.ready is False
+    assert pixel.preflight["approval"] == {"ok": False, "reason": pixel.approval_reason}
+    assert "no approved capability-matrix row" in _preflight_unavailable_reason(pixel)
+    manifest = pixel.manifest()  # the owning registration metadata projection
+    assert manifest["disposition"] == "unclassified"
+    assert manifest["ready"] is False
+    assert manifest["preflight"]["approval"]["ok"] is False
+    with pytest.raises(HostError, match="no approved capability-matrix row"):
+        host.admit("executor", pixel.id)
 
 
 def test_beta_reference_family_preflight_is_truthful_on_this_machine():
