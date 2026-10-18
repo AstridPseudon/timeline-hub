@@ -277,11 +277,11 @@ def test_document_write_openapi_schemas_reference_the_typed_transcript_contract(
     registry = Registry().with_resource(schema["$id"], Resource.from_contents(schema))
     components = openapi["components"]["schemas"]
     create_validator = Draft202012Validator(
-        {"$schema": schema["$schema"], "$id": "https://banodoco.dev/workspace/v1/CreateDocument", **components["CreateDocument"]},
+        {"$schema": schema["$schema"], "$id": "https://astrid.haus/workspace/v1/CreateDocument", **components["CreateDocument"]},
         registry=registry,
     )
     update_validator = Draft202012Validator(
-        {"$schema": schema["$schema"], "$id": "https://banodoco.dev/workspace/v1/UpdateDocument", **components["UpdateDocument"]},
+        {"$schema": schema["$schema"], "$id": "https://astrid.haus/workspace/v1/UpdateDocument", **components["UpdateDocument"]},
         registry=registry,
     )
     content = _content("sha256:" + "b" * 64)

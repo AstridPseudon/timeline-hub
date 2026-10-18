@@ -9,9 +9,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
 
-from banodoco_local import BootstrapConfig, LocalRuntimeBoundary, RuntimePaths, SourceProfile, bootstrap, configure_workspace
-from banodoco_local.bootstrap import restart
-from banodoco_workspace_client import WorkspaceClient
+from astrid_runtime import BootstrapConfig, LocalRuntimeBoundary, RuntimePaths, SourceProfile, bootstrap, configure_workspace
+from astrid_runtime.bootstrap import restart
+from astrid_runtime_client import WorkspaceClient
 
 
 def _config() -> BootstrapConfig:

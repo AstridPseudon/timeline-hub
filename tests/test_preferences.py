@@ -201,7 +201,7 @@ def test_http_derives_owner_and_rejects_caller_ownership(tmp_path):
 
 
 def test_generated_clients_decode_user_null_and_project_committed_receipts(tmp_path):
-    from banodoco_workspace_client import WorkspaceClient
+    from astrid_runtime_client import WorkspaceClient
     root = tmp_path / 'realm'
     RealmStore.initialize(root).close()
     daemon = RuntimeDaemon(root, support_root=tmp_path / 'support').start()

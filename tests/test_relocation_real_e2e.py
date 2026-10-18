@@ -7,10 +7,10 @@ import sys
 
 import pytest
 
-from banodoco_local.bootstrap import BootstrapConfig, SourceProfile, bootstrap
-from banodoco_local.relocation import RelocationError, relocate
-from banodoco_local.runtime_boundary import LocalRuntimeBoundary
-from banodoco_local import RuntimePaths, configure_workspace
+from astrid_runtime.bootstrap import BootstrapConfig, SourceProfile, bootstrap
+from astrid_runtime.relocation import RelocationError, relocate
+from astrid_runtime.runtime_boundary import LocalRuntimeBoundary
+from astrid_runtime import RuntimePaths, configure_workspace
 
 
 def _config(repo: Path) -> BootstrapConfig:

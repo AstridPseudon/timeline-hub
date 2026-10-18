@@ -728,7 +728,7 @@ class RuntimeService:
             raise ValidationError(f"whole-realm purge requires confirmation exactly {required!r}")
         if self.store.realm_lifecycle()["state"] != "tombstoned":
             raise ConflictError("whole-realm purge requires a tombstoned realm")
-        raise ConflictError("whole-realm purge is offline-only; stop the runtime and use the purge command", details={"next_action": "banodoco-runtime purge --root <realm> --confirm 'PURGE <realm_id>'"})
+        raise ConflictError("whole-realm purge is offline-only; stop the runtime and use the purge command", details={"next_action": "astrid-runtime-protocol purge --root <realm> --confirm 'PURGE <realm_id>'"})
 
     def health(self):
         # ``doctor`` performs the full quick-check, foreign-key, event-chain,

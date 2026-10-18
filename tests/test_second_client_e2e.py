@@ -67,8 +67,8 @@ def test_second_client_core_journey_is_executable(daemon: RuntimeDaemon) -> None
     # The actor receives the scoped credential explicitly, as a real client would;
     # no product-specific or ambient token injection is permitted for this journey.
     env = os.environ.copy()
-    env.pop("BANODOCO_RUNTIME_OWNER_TOKEN", None)
-    env.pop("BANODOCO_LOCAL_OWNER_TOKEN", None)
+    env.pop("ASTRID_RUNTIME_OWNER_TOKEN", None)
+    env.pop("ASTRID_RUNTIME_LOCAL_OWNER_TOKEN", None)
     completed = subprocess.run(
         ["node", str(ACTOR), "--endpoint", daemon.endpoint, "--token", daemon.token, "--worker-token", daemon.worker_token, "--executor-id", WORKER_ACTOR],
         cwd=ROOT,

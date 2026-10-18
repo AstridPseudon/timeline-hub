@@ -25,7 +25,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, sys.argv[2])
-from banodoco_workspace_client import ApiError, WorkspaceClient
+from astrid_runtime_client import ApiError, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
 from runtime_protocol.util import now

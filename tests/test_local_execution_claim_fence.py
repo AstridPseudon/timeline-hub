@@ -134,7 +134,7 @@ def _finalization_case(tmp_path, monkeypatch):
     Native authentication is covered by the earlier frozen transport selectors.
     """
     import hashlib
-    from banodoco_local import custody_broker as custody
+    from astrid_runtime import custody_broker as custody
     from runtime_protocol.local_execution_handoff import VERSION, digest, write_protected
     from runtime_protocol.local_worker_handoff import FreshSuccessorPeer, successor_authentication_digest, relay_transition_id, transfer_relay_to_successor
     from test_local_execution_supervisor import _handoff_case
@@ -245,7 +245,7 @@ def test_finalize_releases_only_exact_durable_successor_outcome(tmp_path, monkey
 
 @pytest.mark.parametrize("changed", ["wrong_B", "registration", "generation", "host_missing", "host_changed", "relay_missing", "relay_changed", "runtime_missing", "runtime_changed", "activation", "fence_digest", "registered_digest", "roles", "unknown"])
 def test_finalize_unknown_or_changed_evidence_keeps_claims_fenced(tmp_path, monkeypatch, changed):
-    from banodoco_local import custody_broker as custody
+    from astrid_runtime import custody_broker as custody
     from runtime_protocol.local_execution_handoff import write_protected
     daemon, request, ack, fence, identity, body, actors, calls = _finalization_case(tmp_path, monkeypatch)
     service = daemon.service; scope = Path(request["binding"]["custody_scope"])

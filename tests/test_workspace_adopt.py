@@ -7,9 +7,9 @@ import sqlite3
 
 import pytest
 
-from banodoco_local.bootstrap import BootstrapConfig, SourceProfile
-from banodoco_local.paths import RuntimePaths
-from banodoco_local.workspace_adopt import WorkspaceAdoptError, adopt_workspace
+from astrid_runtime.bootstrap import BootstrapConfig, SourceProfile
+from astrid_runtime.paths import RuntimePaths
+from astrid_runtime.workspace_adopt import WorkspaceAdoptError, adopt_workspace
 from runtime_protocol.store import RealmStore
 from runtime_protocol.upgrade import inspect_canonical_schema
 from runtime_protocol.store import SCHEMA_VERSION
@@ -53,8 +53,8 @@ def _fingerprints(root):
 
 
 def _adopt(root, paths, config, monkeypatch):
-    monkeypatch.setattr("banodoco_local.workspace_adopt.bootstrap", lambda *_: object())
-    monkeypatch.setattr("banodoco_local.workspace_adopt._verify_running", lambda *_: {"health": True})
+    monkeypatch.setattr("astrid_runtime.workspace_adopt.bootstrap", lambda *_: object())
+    monkeypatch.setattr("astrid_runtime.workspace_adopt._verify_running", lambda *_: {"health": True})
     return adopt_workspace(paths, _Boundary(), config, source=root.parent.parent.parent, realm_id="film")
 
 
@@ -81,8 +81,8 @@ def test_refuses_live_source_with_stop_instruction(tmp_path, monkeypatch):
 def test_copy_fallback_and_interrupted_retry(tmp_path, monkeypatch):
     root, paths, config = _setup(tmp_path)
     monkeypatch.setattr("runtime_protocol.fsclone.clone_file", lambda *_: False)
-    monkeypatch.setattr("banodoco_local.workspace_adopt.clone_file", lambda *_: False)
-    from banodoco_local import workspace_adopt
+    monkeypatch.setattr("astrid_runtime.workspace_adopt.clone_file", lambda *_: False)
+    from astrid_runtime import workspace_adopt
     original = workspace_adopt._materialize
     calls = 0
     def fail_once(*args):
@@ -103,12 +103,12 @@ def test_copy_fallback_and_interrupted_retry(tmp_path, monkeypatch):
 
 def test_retries_launch_after_published_attach(tmp_path, monkeypatch):
     root, paths, config = _setup(tmp_path)
-    monkeypatch.setattr("banodoco_local.workspace_adopt.bootstrap", lambda *_: (_ for _ in ()).throw(RuntimeError("launch failed")))
-    with pytest.raises(WorkspaceAdoptError, match="finish with banodoco-local up"):
+    monkeypatch.setattr("astrid_runtime.workspace_adopt.bootstrap", lambda *_: (_ for _ in ()).throw(RuntimeError("launch failed")))
+    with pytest.raises(WorkspaceAdoptError, match="finish with astrid-runtime up"):
         adopt_workspace(paths, _Boundary(), config, source=root, realm_id="film")
     assert (paths.realms_dir / "film").is_dir()
-    monkeypatch.setattr("banodoco_local.workspace_adopt.bootstrap", lambda *_: object())
-    monkeypatch.setattr("banodoco_local.workspace_adopt._verify_running", lambda *_: {"health": True})
+    monkeypatch.setattr("astrid_runtime.workspace_adopt.bootstrap", lambda *_: object())
+    monkeypatch.setattr("astrid_runtime.workspace_adopt._verify_running", lambda *_: {"health": True})
     result = adopt_workspace(paths, _Boundary(), config, source=root, realm_id="film")
     assert result["ok"]
     assert result["target_version"] == SCHEMA_VERSION
@@ -117,7 +117,7 @@ def test_retries_launch_after_published_attach(tmp_path, monkeypatch):
 def test_mirror_directories_keeps_empty_storage_roots_and_modes(tmp_path):
     # Real realms have an empty staging/ and 0700 storage roots; admission
     # refuses a realm without them ("realm storage roots are incomplete").
-    from banodoco_local.workspace_adopt import _mirror_directories
+    from astrid_runtime.workspace_adopt import _mirror_directories
 
     source = tmp_path / "source"
     for relative in ("cas/sha256/ab", "staging", "presentations"):
@@ -144,8 +144,8 @@ def test_completed_adoption_rerun_reuses_destination_without_clone_or_migration(
     assert json.loads(journal.read_text())["state"] == "complete"
     def unexpected(*args, **kwargs):
         pytest.fail("completed adoption must not reclone or remigrate the destination")
-    monkeypatch.setattr("banodoco_local.workspace_adopt._materialize", unexpected)
-    monkeypatch.setattr("banodoco_local.workspace_adopt.migrate_canonical_to_current", unexpected)
+    monkeypatch.setattr("astrid_runtime.workspace_adopt._materialize", unexpected)
+    monkeypatch.setattr("astrid_runtime.workspace_adopt.migrate_canonical_to_current", unexpected)
     second = _adopt(root, paths, config, monkeypatch)
     assert second["destination"] == first["destination"]
     assert second["migration"] == first["migration"]
@@ -173,8 +173,8 @@ def _live_backup(tmp_path):
 
 
 def _adopt_from(source, paths, config, monkeypatch, realm_id="film"):
-    monkeypatch.setattr("banodoco_local.workspace_adopt.bootstrap", lambda *_: object())
-    monkeypatch.setattr("banodoco_local.workspace_adopt._verify_running", lambda *_: {"health": True})
+    monkeypatch.setattr("astrid_runtime.workspace_adopt.bootstrap", lambda *_: object())
+    monkeypatch.setattr("astrid_runtime.workspace_adopt._verify_running", lambda *_: {"health": True})
     return adopt_workspace(paths, _Boundary(), config, source=source, realm_id=realm_id)
 
 
@@ -275,7 +275,7 @@ def test_backup_wrong_realm_authentication_and_database_refused(tmp_path, monkey
 @pytest.mark.parametrize("mutation", ["database", "cas", "extra", "missing", "symlink", "manifest", "cas_manifest", "directory"])
 def test_backup_changed_between_verification_and_copy_never_migrates(tmp_path, monkeypatch, mutation):
     import shutil
-    from banodoco_local import workspace_adopt
+    from astrid_runtime import workspace_adopt
     store, backup, paths, config = _live_backup(tmp_path)
     original = workspace_adopt._materialize_backup
     obj = next((backup / "cas" / "sha256").glob("*/*"))
@@ -320,7 +320,7 @@ def test_backup_changed_between_verification_and_copy_never_migrates(tmp_path, m
 @pytest.mark.parametrize("component", ["database", "cas"])
 def test_copy_bytes_are_checked_against_retained_evidence_before_migration(tmp_path, monkeypatch, component):
     import os
-    from banodoco_local import workspace_adopt
+    from astrid_runtime import workspace_adopt
     store, backup, paths, config = _live_backup(tmp_path)
     original = workspace_adopt.copy_file_at
     changed = False
@@ -361,7 +361,7 @@ def test_authenticated_older_backup_with_unsupported_shape_or_second_issue_is_re
             "foreign_key": ["INSERT INTO project_objects(project_id, digest, relation, created_at) VALUES ('missing', 'missing', 'managed', 'now')"],
         }
         _rewrite_backup_database(backup, statements[issue])
-        monkeypatch.setattr("banodoco_local.workspace_adopt.migrate_canonical_to_current", lambda *a, **k: pytest.fail("unsafe old backup must not migrate"))
+        monkeypatch.setattr("astrid_runtime.workspace_adopt.migrate_canonical_to_current", lambda *a, **k: pytest.fail("unsafe old backup must not migrate"))
         with pytest.raises((WorkspaceAdoptError, RuntimeErrorBase)):
             _adopt_from(backup, paths, config, monkeypatch)
     finally:
@@ -370,7 +370,7 @@ def test_authenticated_older_backup_with_unsupported_shape_or_second_issue_is_re
 
 
 def test_backup_interrupted_copy_can_retry_and_completed_evolved_destination_is_reused(tmp_path, monkeypatch):
-    from banodoco_local import workspace_adopt
+    from astrid_runtime import workspace_adopt
     store, backup, paths, config = _live_backup(tmp_path)
     original = workspace_adopt._materialize_backup
     calls = 0
@@ -444,7 +444,7 @@ def test_different_authenticated_backup_at_same_path_cannot_resume(tmp_path, mon
 @pytest.mark.parametrize("clone_capable", [False, True])
 def test_space_budget_preserves_floor_and_admits_migration_scratch_before_copy(tmp_path, monkeypatch, clone_capable):
     from collections import namedtuple
-    from banodoco_local import workspace_adopt
+    from astrid_runtime import workspace_adopt
     root, paths, config = _setup(tmp_path)
     monkeypatch.setattr(workspace_adopt, "clone_file", lambda *_: clone_capable)
     # Above the free floor but below fallback + migration scratch admission.
@@ -457,7 +457,7 @@ def test_space_budget_preserves_floor_and_admits_migration_scratch_before_copy(t
 
 
 def test_final_private_integrity_failure_prevents_publication_and_attachment(tmp_path, monkeypatch):
-    from banodoco_local import workspace_adopt
+    from astrid_runtime import workspace_adopt
     store, backup, paths, config = _live_backup(tmp_path)
     original = workspace_adopt.migrate_canonical_to_current
 

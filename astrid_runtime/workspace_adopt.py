@@ -30,8 +30,8 @@ class WorkspaceAdoptError(BootstrapError):
     """Adoption stopped before changing source or selecting an unsafe realm."""
 
 
-_LIVE_SOURCE = ("source realm is live; stop the old runtime first: banodoco-local down --profile astrid, "
-                "or take a backup with banodoco-local backup --destination DIR and adopt --from DIR")
+_LIVE_SOURCE = ("source realm is live; stop the old runtime first: astrid-runtime down --profile astrid, "
+                "or take a backup with astrid-runtime backup --destination DIR and adopt --from DIR")
 
 
 @contextlib.contextmanager
@@ -199,7 +199,7 @@ def _materialize(root: Path, temporary: Path, files: list[tuple[Path, Path, int]
 
 def _inspect_source_snapshot(root: Path, realm_id: str) -> dict[str, object]:
     """Inspect SQLite sidecars on a private copy; ordinary read-only SQLite may checkpoint the source WAL."""
-    with tempfile.TemporaryDirectory(prefix="banodoco-adopt-inspect-") as scratch:
+    with tempfile.TemporaryDirectory(prefix="astrid-runtime-adopt-inspect-") as scratch:
         snapshot = Path(scratch)
         for name in ("realm.sqlite3", "realm.sqlite3-wal", "realm.sqlite3-shm", "realm.sqlite3-journal"):
             candidate = root / name
@@ -333,7 +333,7 @@ def _adopt_workspace(
         _journal(journal_path, state="complete", verification=verification)
     except Exception as exc:
         _journal(journal_path, state="failed", error=str(exc))
-        raise WorkspaceAdoptError(f"realm materialized at {destination}; finish with banodoco-local up after resolving: {exc}") from exc
+        raise WorkspaceAdoptError(f"realm materialized at {destination}; finish with astrid-runtime up after resolving: {exc}") from exc
     return {"ok": True, "source": str(root), "source_kind": "backup" if backup else "realm", "destination": str(destination), "realm_id": realm_id,
             "source_version": int(identity["version"]), "target_version": SCHEMA_VERSION, **counts,
             "elapsed_seconds": round(time.monotonic() - started, 3), "migration": migration, "verification": verification}

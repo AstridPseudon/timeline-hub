@@ -4,7 +4,7 @@ purpose: Prove the neutral contract with a non-Astrid TypeScript actor.
 actor:
   language: typescript
   product_name: neutral-gallery
-  forbidden_symbols: [Astrid, astrid, REIGH, reigh, pack, thread]
+  forbidden_symbols: [Astrid, astrid, pack, thread]
 steps:
   - id: health
     request: GET /v1/health

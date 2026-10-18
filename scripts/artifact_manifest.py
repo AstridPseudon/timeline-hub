@@ -13,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = "contract/artifacts.json"
-PRODUCER = "banodoco-workspace-runtime"
+PRODUCER = "astrid-runtime"
 PATTERNS = [
     "contract/openapi/workspace-v1.yaml",
     "contract/schemas/*.json",
@@ -22,9 +22,9 @@ PATTERNS = [
     "conformance/fixtures/*.json",
     "conformance/responses/*.json",
     "conformance/*.yaml",
-    "packages/python/banodoco_workspace_client/__init__.py",
-    "packages/python/banodoco_workspace_client/generated.py",
-    "packages/python/banodoco_workspace_client/contract_metadata.py",
+    "packages/python/astrid_runtime_client/__init__.py",
+    "packages/python/astrid_runtime_client/generated.py",
+    "packages/python/astrid_runtime_client/contract_metadata.py",
     "packages/typescript/src/generated.ts",
     "packages/typescript/src/contract-metadata.ts",
     "clients/typescript/generated.ts",

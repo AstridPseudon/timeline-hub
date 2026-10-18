@@ -46,7 +46,7 @@ def recorded(tmp_path_factory):
 def _validator(ref: str) -> Draft202012Validator:
     schemas = [json.loads(path.read_text()) for path in sorted(SCHEMAS.glob("*.json")) if "$id" in json.loads(path.read_text())]
     registry = Registry().with_resources((schema["$id"], Resource.from_contents(schema)) for schema in schemas)
-    return Draft202012Validator({"$ref": "https://banodoco.dev/workspace/v1/schemas/" + ref}, registry=registry)
+    return Draft202012Validator({"$ref": "https://astrid.haus/workspace/v1/schemas/" + ref}, registry=registry)
 
 
 def test_every_case_is_committed_and_nothing_else(recorded) -> None:

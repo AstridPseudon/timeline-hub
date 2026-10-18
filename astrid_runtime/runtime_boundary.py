@@ -44,7 +44,7 @@ PROTOCOL_VERSION = "workspace.v1"
 WIRE_PROTOCOL = PROTOCOL_VERSION
 SCHEMA_VERSION = "workspace-schema-v1"
 WAIT_SECONDS = 10.0
-ADMISSION_TIMEOUT_ENV = "BANODOCO_RUNTIME_ADMISSION_TIMEOUT_SECONDS"
+ADMISSION_TIMEOUT_ENV = "ASTRID_RUNTIME_ADMISSION_TIMEOUT_SECONDS"
 DEFAULT_ADMISSION_TIMEOUT_SECONDS = 120.0
 STARTUP_WAIT_MARGIN_SECONDS = 5.0
 
@@ -575,9 +575,9 @@ class LocalRuntimeBoundary:
         except ValueError as exc:
             raise BootstrapError("runtime endpoint must be an HTTP loopback authority") from exc
         try:
-            from banodoco_workspace_client import WorkspaceClient
+            from astrid_runtime_client import WorkspaceClient
         except ImportError as exc:
-            raise BootstrapError("The installed generated workspace client is unavailable; install banodoco-workspace-client.") from exc
+            raise BootstrapError("The installed generated workspace client is unavailable; install astrid-runtime-client.") from exc
         connection = RuntimeConnection(endpoint, credential, self._bootstrap_credential)
         connection._client = WorkspaceClient(endpoint, credential)
         return connection
@@ -801,7 +801,7 @@ class LocalRuntimeBoundary:
     def prepare_restart(self, *, source_profile: SourceProfile, realm_id: str, realm_root: Path, support_root: Path, pid: int) -> None:
         """Adopt a detached daemon for an operator restart.
 
-        ``banodoco-local up`` intentionally leaves the daemon in its own
+        ``astrid-runtime up`` intentionally leaves the daemon in its own
         process group, so a later CLI invocation has no ``Popen`` handle.  The
         support lock/discovery record is the only durable hand-off; adopting
         it here lets restart terminate exactly that owner and relaunch the

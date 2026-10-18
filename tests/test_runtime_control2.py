@@ -395,7 +395,7 @@ def test_hc04_admission_rejects_unready_duplicate_and_foreign_inputs(tmp_path):
 
 
 def test_storage_admission_sets_exact_waiting_reason(tmp_path, monkeypatch):
-    monkeypatch.setenv("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
+    monkeypatch.setenv("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
     service = _service(tmp_path / "realm")
     try:
         service.register_capability({"capability_id": "render.large", "definition_digest": _digest("render.large-v1"), "estimated_output_bytes": 1024})
@@ -415,7 +415,7 @@ def test_storage_admission_sets_exact_waiting_reason(tmp_path, monkeypatch):
 
 
 def test_storage_admission_below_default_floor_is_refused(tmp_path, monkeypatch):
-    monkeypatch.delenv("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", raising=False)
+    monkeypatch.delenv("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", raising=False)
     service = _service(tmp_path / "realm")
     try:
         service.register_capability({"capability_id": "render.large", "definition_digest": _digest("render.large-v1"), "estimated_output_bytes": 1024})

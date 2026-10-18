@@ -150,7 +150,7 @@ def fixture_authority(tmp_path):
         'astrid/__main__.py': '', 'astrid/runtime_cli.py': '', 'astrid/omp_agent.py': '',
         'astrid/core/__init__.py': '', 'astrid/core/execution/__init__.py': '',
         'astrid/core/execution/generic_host.py': 'ANSWER=7\n',
-        'astrid/sdk/__init__.py': '', 'banodoco_workspace_client/__init__.py': '',
+        'astrid/sdk/__init__.py': '', 'astrid_runtime_client/__init__.py': '',
     }
     for relative, content in source_files.items():
         path=source/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(content)
@@ -506,7 +506,7 @@ def test_host_only_trusted_local_variant_still_requires_owner_record_and_origina
     f=fixture_authority(tmp_path)
     profile=f.args['preparation']['profile']
     profile.update(execution_mode='host_only_cpu',support_root=f.args['config']['support_root'],realm_root=str(tmp_path/'realm'))
-    f.args['environment'].update(ASTRID_OUTPUT_ROOT=str(tmp_path/'support/host-output'),BANODOCO_LOCAL_DATA_ROOT=str(tmp_path/'realm'))
+    f.args['environment'].update(ASTRID_OUTPUT_ROOT=str(tmp_path/'support/host-output'),ASTRID_RUNTIME_DATA_ROOT=str(tmp_path/'realm'))
     f.record['selected_profile_digest']=gate.raw_digest(profile)
     f.record['import_binding']['mode']=gate.TRUSTED_LOCAL_MODE
     verifier=gate.TrustedLocalHostLaunchVerifier(installed_release=f.record)
@@ -524,18 +524,18 @@ def host_only_environment_fixture(tmp_path):
     f=fixture_authority(tmp_path)
     profile=f.args['preparation']['profile']
     profile.update(execution_mode='host_only_cpu',support_root=f.args['config']['support_root'],realm_root=str(tmp_path/'realm'))
-    f.args['environment'].update(ASTRID_OUTPUT_ROOT=str(tmp_path/'support/host-output'),BANODOCO_LOCAL_DATA_ROOT=str(tmp_path/'realm'))
+    f.args['environment'].update(ASTRID_OUTPUT_ROOT=str(tmp_path/'support/host-output'),ASTRID_RUNTIME_DATA_ROOT=str(tmp_path/'realm'))
     f.record['selected_profile_digest']=gate.raw_digest(profile)
     f.record['import_binding']['mode']=gate.TRUSTED_LOCAL_MODE
     f.verifier=gate.TrustedLocalHostLaunchVerifier(installed_release=f.record)
     return f
 
 
-@pytest.mark.parametrize('edge',['output','realm','missing','config','PYTHONPATH','PYTHONDONTWRITEBYTECODE','BANODOCO_RUNTIME_OWNER_TOKEN'])
+@pytest.mark.parametrize('edge',['output','realm','missing','config','PYTHONPATH','PYTHONDONTWRITEBYTECODE','ASTRID_RUNTIME_OWNER_TOKEN'])
 def test_host_only_environment_rejects_unadmitted_roots_and_ambient_before_inventory(tmp_path,monkeypatch,edge):
     f=host_only_environment_fixture(tmp_path)
     if edge=='output': f.args['environment']['ASTRID_OUTPUT_ROOT']=str(tmp_path/'other')
-    elif edge=='realm': f.args['environment']['BANODOCO_LOCAL_DATA_ROOT']=str(tmp_path/'other')
+    elif edge=='realm': f.args['environment']['ASTRID_RUNTIME_DATA_ROOT']=str(tmp_path/'other')
     elif edge=='missing': del f.args['environment']['ASTRID_OUTPUT_ROOT']
     elif edge=='config': f.args['config']['support_root']=str(tmp_path/'other')
     else: f.args['environment'][edge]='/ambient'

@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from banodoco_local import cli
-from banodoco_local.paths import RuntimePaths
+from astrid_runtime import cli
+from astrid_runtime.paths import RuntimePaths
 
 
 class _TypedClient:

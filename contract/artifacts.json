@@ -60,12 +60,12 @@
     "contract/schemas/timeline-view.json": "sha256:50deac61b80e12d35f800df57e2861a05f65d5f74cfc02740684c93e44da090c",
     "contract/schemas/timeline.json": "sha256:999c131e21dae3288e7d4e8b13303f833a4bb7248c7006016041b21e1025608c",
     "contract/schemas/worker.json": "sha256:4af1918f9db57daac7823b89f1cc05ea303325b672ce80349a88e122dd14caf8",
-    "packages/python/banodoco_workspace_client/__init__.py": "sha256:97629bd1b977fb75797d26bcdafe3d3763a7fa12b6c2e738ebb49de1e2f4ffa1",
-    "packages/python/banodoco_workspace_client/contract_metadata.py": "sha256:eac584dff918170b9b69ef360e9c93cee58a8e99efa2d581d97f12f8a03fdb8d",
-    "packages/python/banodoco_workspace_client/generated.py": "sha256:55a05c55d000822a35badd4a739ee55b3d30e876fb700ae2fe318f4914f7b19f",
+    "packages/python/astrid_runtime_client/__init__.py": "sha256:97629bd1b977fb75797d26bcdafe3d3763a7fa12b6c2e738ebb49de1e2f4ffa1",
+    "packages/python/astrid_runtime_client/contract_metadata.py": "sha256:eac584dff918170b9b69ef360e9c93cee58a8e99efa2d581d97f12f8a03fdb8d",
+    "packages/python/astrid_runtime_client/generated.py": "sha256:55a05c55d000822a35badd4a739ee55b3d30e876fb700ae2fe318f4914f7b19f",
     "packages/typescript/src/contract-metadata.ts": "sha256:c94220a530e25c2198c650113b258d04172a37270e9a6dee0d8525e77788a0d7",
     "packages/typescript/src/generated.ts": "sha256:82f1b330a257a8414f49f852a8604ed2692ee70c3482a9a45ff51df18bd77325"
   },
-  "producer": "banodoco-workspace-runtime",
+  "producer": "astrid-runtime",
   "version": "sha256:59cc1e9b174af17e539a67a1e12a7b937086eda20e778e03594e92a40fa93be6"
 }

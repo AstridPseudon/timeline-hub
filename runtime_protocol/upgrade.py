@@ -883,7 +883,7 @@ def _reclaim_after_migration(connection: sqlite3.Connection) -> dict[str, object
     Spec deduplication (v28/v29) frees most of a long-lived realm (the film's
     1.1 GB database was 77% free pages). The schema change is already
     committed, so a VACUUM that cannot run (e.g. low disk) is reported, not fatal;
-    ``banodoco-runtime compact`` can reclaim the space later.
+    ``astrid-runtime-protocol compact`` can reclaim the space later.
     """
     page_size = int(connection.execute("PRAGMA page_size").fetchone()[0])
     free_bytes = page_size * int(connection.execute("PRAGMA freelist_count").fetchone()[0])

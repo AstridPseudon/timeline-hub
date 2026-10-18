@@ -12,7 +12,7 @@ from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_inspection import MAX_RESPONSE_BYTES
 from runtime_protocol.util import canonical_json
 
-from banodoco_workspace_client import WorkspaceClient
+from astrid_runtime_client import WorkspaceClient
 
 
 def _service(tmp_path):
@@ -78,7 +78,7 @@ def test_config_only_parent_clips_project_maple_and_parent_media_rows(tmp_path):
         publication["parent_composition"]["config"]["clips"] = [
             _parent_clip(
                 "live-scene-import",
-                clip_type="com.reigh.astrid.liveScene",
+                clip_type="haus.astrid.liveScene",
                 duration_ms=176500,
             ),
             _parent_clip("audio-bed", clip_type="audio", track="A1", at_ms=125),
@@ -96,7 +96,7 @@ def test_config_only_parent_clips_project_maple_and_parent_media_rows(tmp_path):
         assert maple["start"] == [0, 1]
         assert maple["duration"] == [353, 2]
         assert maple["track_id"] == "V1"
-        assert maple["clip_type"] == "com.reigh.astrid.liveScene"
+        assert maple["clip_type"] == "haus.astrid.liveScene"
         assert maple["track_ref"] == {"scope": "parent_composition", "scope_id": "parent-1", "track_id": "V1"}
         assert result["parent_clip_count"] == 3
     finally:

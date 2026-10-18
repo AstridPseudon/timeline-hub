@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://banodoco.dev/workspace/v1/schemas/project.json",
+  "$id": "https://astrid.haus/workspace/v1/schemas/project.json",
   "title": "Project",
   "type": "object", "additionalProperties": false,
   "required": ["project_id", "realm_id", "slug", "name", "metadata", "version", "created_at", "updated_at"],

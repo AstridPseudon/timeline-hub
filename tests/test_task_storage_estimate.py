@@ -59,7 +59,7 @@ def _claim(service: RuntimeService, key: str):
 def test_task_estimate_overrides_capability_fallback_at_admission_and_claim(tmp_path, monkeypatch):
     # Pin the free-space floor to zero so this test exercises estimate
     # precedence alone, not the 4 GiB default floor.
-    monkeypatch.setenv("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
+    monkeypatch.setenv("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
     try:
@@ -97,7 +97,7 @@ def test_task_estimate_overrides_capability_fallback_at_admission_and_claim(tmp_
 
 
 def test_missing_task_estimate_uses_capability_fallback(tmp_path, monkeypatch):
-    monkeypatch.setenv("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
+    monkeypatch.setenv("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
     try:
@@ -130,7 +130,7 @@ def test_missing_task_estimate_uses_capability_fallback(tmp_path, monkeypatch):
 
 
 def test_task_storage_failure_is_not_mislabeled_as_capability_unavailable(tmp_path, monkeypatch):
-    monkeypatch.setenv("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
+    monkeypatch.setenv("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
     try:

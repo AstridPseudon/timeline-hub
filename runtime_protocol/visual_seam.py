@@ -20,7 +20,7 @@ from .seam_intent import (boundary_intent_owners, intent_context, cue_identity a
 
 MAX_METADATA_CLIPS = 20_000
 AUXILIARY = frozenset({"end-spanning-layer", "effect-layer", "frame-overlay", "text"})
-PICTURE = frozenset({"media", "hold", "video", "image", "animated-media-transform", "com.reigh.astrid.liveScene"})
+PICTURE = frozenset({"media", "hold", "video", "image", "animated-media-transform", "haus.astrid.liveScene"})
 
 
 def active(clip):

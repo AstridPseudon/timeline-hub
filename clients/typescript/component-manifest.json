@@ -3,9 +3,9 @@
     {
       "generator": "GENERATOR-PYTHON-INREPO",
       "language": "python",
-      "metadata_output": "packages/python/banodoco_workspace_client/contract_metadata.py",
-      "metadata_source": "packages/python/banodoco_workspace_client/contract_metadata.py",
-      "output": "packages/python/banodoco_workspace_client/generated.py",
+      "metadata_output": "packages/python/astrid_runtime_client/contract_metadata.py",
+      "metadata_source": "packages/python/astrid_runtime_client/contract_metadata.py",
+      "output": "packages/python/astrid_runtime_client/generated.py",
       "source": "generators/python_client_template.py"
     },
     {

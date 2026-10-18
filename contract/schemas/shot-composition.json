@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://banodoco.dev/workspace/v1/schemas/shot-composition.json",
+  "$id": "https://astrid.haus/workspace/v1/schemas/shot-composition.json",
   "title": "Canonical one-level shot composition publication",
   "description": "Runtime-owned immutable publication envelope. Nested TimelineConfig and ordinary timeline-clip semantics remain owned by @banodoco/timeline-schema and are intentionally not duplicated here.",
-  "x-banodoco-owner": "workspace-runtime",
-  "x-banodoco-canonical-timeline-owner": "@banodoco/timeline-schema",
-  "x-banodoco-generated-boundary": "Materialize or reference the pinned TimelineConfig schema during generation; do not maintain a second TimelineConfig or TimelineClip definition in this schema.",
+  "x-astrid-runtime-owner": "astrid-runtime",
+  "x-astrid-runtime-canonical-timeline-owner": "@banodoco/timeline-schema",
+  "x-astrid-runtime-generated-boundary": "Materialize or reference the pinned TimelineConfig schema during generation; do not maintain a second TimelineConfig or TimelineClip definition in this schema.",
   "type": "object",
   "additionalProperties": false,
   "required": ["project_id", "timeline_id", "expected_head", "parent_composition"],
@@ -33,13 +33,13 @@
         "config": {
           "$ref": "timeline-config.schema.json",
           "description": "Canonical TimelineConfig, materialized from the pinned @banodoco/timeline-schema package.",
-          "x-banodoco-schema-owner": "@banodoco/timeline-schema#TimelineConfig",
-          "x-banodoco-schema-sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
+          "x-astrid-runtime-schema-owner": "@banodoco/timeline-schema#TimelineConfig",
+          "x-astrid-runtime-schema-sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
         },
         "registry": {
           "type": "object",
           "description": "Runtime-managed media registry carried by the publication envelope; Runtime-specific and outside the canonical TimelineConfig owned by @banodoco/timeline-schema.",
-          "x-banodoco-schema-owner": "workspace-runtime#ManagedMediaRegistry",
+          "x-astrid-runtime-schema-owner": "astrid-runtime#ManagedMediaRegistry",
           "additionalProperties": true
         },
         "clips": {
@@ -160,8 +160,8 @@
         "payload": {
           "$ref": "timeline-config.schema.json",
           "description": "Carries the canonical TimelineConfig fields owned by @banodoco/timeline-schema.",
-          "x-banodoco-schema-owner": "@banodoco/timeline-schema#TimelineConfig",
-          "x-banodoco-schema-sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
+          "x-astrid-runtime-schema-owner": "@banodoco/timeline-schema#TimelineConfig",
+          "x-astrid-runtime-schema-sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
         }
       }
     },

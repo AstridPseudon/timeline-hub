@@ -4,9 +4,9 @@ import os
 
 import pytest
 
-from banodoco_local import RuntimePaths
-from banodoco_local.bootstrap import BootstrapConfig, BootstrapResult, SourceProfile
-from banodoco_local.relocation import (
+from astrid_runtime import RuntimePaths
+from astrid_runtime.bootstrap import BootstrapConfig, BootstrapResult, SourceProfile
+from astrid_runtime.relocation import (
     RelocationError,
     catalog_with_relocated_root,
     plan_relocation,
@@ -170,7 +170,7 @@ def test_relocation_moves_support_root_and_preserves_catalog_realms(tmp_path, mo
                 fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         return BootstrapResult("started", "realm-1", "One", "http://127.0.0.1:1", "actor", "astrid")
 
-    monkeypatch.setattr("banodoco_local.relocation._bootstrap_locked", cold_start)
+    monkeypatch.setattr("astrid_runtime.relocation._bootstrap_locked", cold_start)
     result = relocate(paths, _StoppedBoundary(), _config(tmp_path, str(environment)), object(), destination=destination, backup=tmp_path / "unused-backup", confirmation="RELOCATE realm-1")
 
     assert result["status"] == "relocated"
@@ -197,7 +197,7 @@ def test_relocation_restores_old_support_root_when_cutover_fails(tmp_path, monke
             raise RuntimeError("injected cold-start failure")
         return BootstrapResult("started", "realm-1", "Realm", "http://127.0.0.1:1", "actor", "astrid")
 
-    monkeypatch.setattr("banodoco_local.relocation._bootstrap_locked", fail_candidate_then_restore)
+    monkeypatch.setattr("astrid_runtime.relocation._bootstrap_locked", fail_candidate_then_restore)
 
     try:
         relocate(paths, _StoppedBoundary(), _config(tmp_path), object(), destination=destination, backup=tmp_path / "unused-backup", confirmation="RELOCATE realm-1")
@@ -229,8 +229,8 @@ def test_relocation_restores_target_aux_when_root_rename_fails(tmp_path, monkeyp
             raise OSError("injected root rename failure")
         return original_replace(source, target)
 
-    monkeypatch.setattr("banodoco_local.relocation.os.replace", fail_root_rename)
-    monkeypatch.setattr("banodoco_local.relocation._bootstrap_locked", lambda *_args, **_kwargs: BootstrapResult("started", "realm-1", "Realm", "http://127.0.0.1:1", "actor", "astrid"))
+    monkeypatch.setattr("astrid_runtime.relocation.os.replace", fail_root_rename)
+    monkeypatch.setattr("astrid_runtime.relocation._bootstrap_locked", lambda *_args, **_kwargs: BootstrapResult("started", "realm-1", "Realm", "http://127.0.0.1:1", "actor", "astrid"))
 
     with pytest.raises(RelocationError, match="rolled back"):
         relocate(paths, _StoppedBoundary(), _config(tmp_path), object(), destination=destination, confirmation="RELOCATE realm-1")

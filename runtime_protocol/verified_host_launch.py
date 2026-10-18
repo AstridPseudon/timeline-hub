@@ -32,7 +32,7 @@ _COMPONENTS = {
     "sdk": "astrid/sdk", "launcher": "astrid/omp_agent.py",
     "astrid_entrypoint": "astrid/__init__.py", "astrid_version": "astrid/version.py",
     "astrid_main": "astrid/__main__.py", "astrid_runtime_cli": "astrid/runtime_cli.py",
-    "vendored_workspace_client": "banodoco_workspace_client",
+    "vendored_workspace_client": "astrid_runtime_client",
 }
 
 
@@ -179,7 +179,7 @@ def _mapping(import_roots, inventories, runtime_inventory, *, trusted_local=Fals
                 # source/dependency roots cannot smuggle native representations.
                 if not trusted_local and (not path.is_relative_to(runtime_root) or runtime_inventory["files"].get(str(path.relative_to(runtime_root))) != pin):
                     raise HostLaunchError("native dependency is outside protected Python runtime inventory")
-            if trusted_local and name.split('.')[0] in {"astrid", "banodoco_workspace_client"} and root != source_root:
+            if trusted_local and name.split('.')[0] in {"astrid", "astrid_runtime_client"} and root != source_root:
                 # These selected namespaces are closed over the first, exact
                 # installed host root. An older site copy cannot fill gaps.
                 continue
@@ -233,7 +233,7 @@ def _distribution_metadata(import_roots, inventories):
             if not name or not candidate.version:
                 raise HostLaunchError("reviewed distribution identity is incomplete")
             normalized = re.sub(r"[-_.]+", "-", name).lower()
-            if normalized in {"astrid", "banodoco-workspace-client"} and str(root) != import_roots[0]["path"]:
+            if normalized in {"astrid", "astrid-runtime-client"} and str(root) != import_roots[0]["path"]:
                 raise HostLaunchError("selected distribution is outside the selected host root")
             if normalized in names:
                 raise HostLaunchError("reviewed distribution has duplicate origins")
@@ -499,7 +499,7 @@ class TrustedLocalHostLaunchVerifier(HostLaunchVerifier):
         support = _absolute(profile.get("support_root"))
         realm = _absolute(profile.get("realm_root"))
         expected = {"ASTRID_OUTPUT_ROOT": str(support / "host-output"),
-                    "BANODOCO_LOCAL_DATA_ROOT": str(realm)}
+                    "ASTRID_RUNTIME_DATA_ROOT": str(realm)}
         if config.get("support_root") != str(support) or any(environment.get(k) != v for k, v in expected.items()):
             raise HostLaunchError("host-only environment differs from selected owner roots")
         return super()._validate_environment(profile, config, {k: v for k, v in environment.items() if k not in expected})
@@ -645,7 +645,7 @@ def launch_from_binding(payload):
         raise HostLaunchError("retained launcher payload is invalid")
     mapping = payload["mapping"]
     # Reject a selected module that was executed before the mapping was set.
-    if any(name in sys.modules for name in mapping if name.split('.')[0] in {"astrid", "banodoco_workspace_client"}):
+    if any(name in sys.modules for name in mapping if name.split('.')[0] in {"astrid", "astrid_runtime_client"}):
         raise HostLaunchError("selected packages were imported before isolated mapping")
     finder = MappedImports(mapping, trusted_local=payload["mode"] == TRUSTED_LOCAL_MODE)
     sys.path[:] = []

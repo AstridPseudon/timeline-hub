@@ -1000,7 +1000,7 @@ def test_snapshot_restart_fresh_authorized_generated_reads_return_exact_bytes(ru
     from runtime_protocol.auth import CredentialStore
     from runtime_protocol.server import RuntimeHandler
     sys.path.insert(0, str(Path(__file__).parents[1] / "packages/python"))
-    from banodoco_workspace_client import WorkspaceClient
+    from astrid_runtime_client import WorkspaceClient
 
     service, _ = runtime
     p = snapshot_parent(runtime)

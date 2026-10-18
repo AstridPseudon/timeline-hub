@@ -49,7 +49,7 @@ LEGACY_NEXT_ACTION = (
 )
 RECONFIGURE_NEXT_ACTION = (
     "Restart the runtime with a compatible source profile: "
-    "banodoco-local restart --profile astrid"
+    "astrid-runtime restart --profile astrid"
 )
 MULTI_REALM_NEXT_ACTION = (
     "Stage 1 supports one realm only; use the Stage 2 multi-realm workflow."
@@ -456,11 +456,11 @@ def _read_catalog(paths: RuntimePaths) -> dict[str, Any]:
     if catalog is None:
         return {"version": CATALOG_VERSION, "selected_realm_id": None, "realms": [], "source_profiles": {}}
     if catalog.get("version") != CATALOG_VERSION:
-        raise BootstrapError("Neutral realm catalog version is unsupported; run banodoco-local doctor.")
+        raise BootstrapError("Neutral realm catalog version is unsupported; run astrid-runtime doctor.")
     if not isinstance(catalog.get("realms", []), list):
         raise BootstrapError("Neutral realm catalog is invalid; recover or remove catalog.json.")
     if not isinstance(catalog.get("source_profiles", {}), Mapping):
-        raise BootstrapError("Neutral realm catalog source profiles are invalid; run banodoco-local doctor.")
+        raise BootstrapError("Neutral realm catalog source profiles are invalid; run astrid-runtime doctor.")
     for profile_name, manifest in catalog.get("source_profiles", {}).items():
         try:
             if str(profile_name) != "astrid":
@@ -469,25 +469,25 @@ def _read_catalog(paths: RuntimePaths) -> dict[str, Any]:
         except BootstrapError:
             raise
         except (TypeError, ValueError) as exc:
-            raise BootstrapError("Neutral realm catalog source profile is invalid; run banodoco-local doctor.") from exc
+            raise BootstrapError("Neutral realm catalog source profile is invalid; run astrid-runtime doctor.") from exc
     if len(catalog["realms"]) > 1:
         raise UnsupportedRealmError(MULTI_REALM_NEXT_ACTION)
     seen: set[str] = set()
     for realm in catalog["realms"]:
         if not isinstance(realm, Mapping):
-            raise BootstrapError("Neutral realm catalog contains an invalid realm entry; run banodoco-local doctor.")
+            raise BootstrapError("Neutral realm catalog contains an invalid realm entry; run astrid-runtime doctor.")
         realm_id = str(realm.get("realm_id") or "")
         data_root = Path(str(realm.get("data_root") or "")).expanduser()
         if (not realm_id or realm_id in seen or any(char in realm_id for char in "/\\")
                 or not data_root.is_absolute() or _has_symlink_component(data_root)
                 or data_root.is_symlink() or (data_root.exists() and not data_root.is_dir())):
-            raise BootstrapError("Neutral realm catalog contains an unsafe realm root; run banodoco-local doctor.")
+            raise BootstrapError("Neutral realm catalog contains an unsafe realm root; run astrid-runtime doctor.")
         if not str(realm.get("display_name") or ""):
-            raise BootstrapError("Neutral realm catalog contains an unnamed realm; run banodoco-local doctor.")
+            raise BootstrapError("Neutral realm catalog contains an unnamed realm; run astrid-runtime doctor.")
         seen.add(realm_id)
     selected = catalog.get("selected_realm_id")
     if selected is not None and str(selected) not in seen:
-        raise BootstrapError("Catalog selected realm is inconsistent; run banodoco-local doctor.")
+        raise BootstrapError("Catalog selected realm is inconsistent; run astrid-runtime doctor.")
     return catalog
 
 
@@ -502,7 +502,7 @@ def _selected_realm(catalog: dict[str, Any]) -> dict[str, Any] | None:
         return None
     realm = realms[0]
     if selected and str(selected) != str(realm.get("realm_id")):
-        raise BootstrapError("Catalog selected realm is inconsistent; run banodoco-local doctor.")
+        raise BootstrapError("Catalog selected realm is inconsistent; run astrid-runtime doctor.")
     return realm
 
 
@@ -709,7 +709,7 @@ def bootstrap(
     boundary: RuntimeBoundary,
     config: BootstrapConfig | None = None,
 ) -> BootstrapResult:
-    """Perform ``banodoco-local up`` for the one current-Mac realm."""
+    """Perform ``astrid-runtime up`` for the one current-Mac realm."""
     config = config or BootstrapConfig()
     _validate_support_paths(paths)
     # Collision detection is deliberately before the mutex/support directory:
@@ -722,7 +722,7 @@ def bootstrap(
         raise LegacyRootCollisionError(LEGACY_NEXT_ACTION.format(legacy_root=collision))
     if _selected_realm(_read_catalog(paths)) is None:
         raise BootstrapError(
-            "No workspace is configured; run banodoco-local workspace create or workspace attach."
+            "No workspace is configured; run astrid-runtime workspace create or workspace attach."
         )
     config.resolve_source_profile(paths)
     with _bootstrap_mutex(paths):
@@ -798,7 +798,7 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
             if not endpoint or not instance_id:
                 raise DuplicateOwnerError(
                     "A runtime owner is active but its discovery record is incomplete; "
-                    "stop that owner, then run banodoco-local restart --profile astrid."
+                    "stop that owner, then run astrid-runtime restart --profile astrid."
                 )
             endpoint = _validate_loopback_endpoint(endpoint)
             try:
@@ -816,12 +816,12 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
             if not valid_owner or selected_root is None or discovered_root != selected_root or not discovery.get("process_birth_id") or not _lock_matches(paths, int(pid), instance_id, str(discovery["active_realm"]), str(discovery.get("process_birth_id")), selected_root):
                 raise DuplicateOwnerError(
                     "A different runtime owner is active for the selected realm; "
-                    "stop it before retrying banodoco-local up --profile astrid."
+                    "stop it before retrying astrid-runtime up --profile astrid."
                 )
             if not boundary.health(endpoint=endpoint, pid=int(pid), instance_id=instance_id):
                 raise BootstrapError("The selected runtime owner is unhealthy; next action: " + RECONFIGURE_NEXT_ACTION)
             if realm is None or str(realm.get("realm_id")) != str(discovery["active_realm"]):
-                raise BootstrapError("Discovery does not match the selected catalog realm; run banodoco-local doctor.")
+                raise BootstrapError("Discovery does not match the selected catalog realm; run astrid-runtime doctor.")
             actor_id, token = _credential(paths)
             connection = boundary.connect(endpoint=endpoint, credential=token)
             realm_id = str(discovery["active_realm"])
@@ -851,7 +851,7 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
     if marker and _pid_alive(boundary, marker.get("pid")):
         raise DuplicateOwnerError(
             "A different runtime owner is active for the selected realm; "
-            "stop it before retrying banodoco-local up --profile astrid."
+            "stop it before retrying astrid-runtime up --profile astrid."
         )
 
     realm_id = str(realm["realm_id"])
@@ -980,7 +980,7 @@ def connect(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCon
     realm = _selected_realm(catalog)
     discovery = _read_support_json(paths.discovery_path)
     if realm is None or not discovery:
-        raise BootstrapError("No healthy selected runtime. Next action: banodoco-local up --profile astrid")
+        raise BootstrapError("No healthy selected runtime. Next action: astrid-runtime up --profile astrid")
     source = config.resolve_source_profile(paths)
     _compatible(discovery, config, source)
     try:
@@ -988,13 +988,13 @@ def connect(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCon
         endpoint = _validate_loopback_endpoint(str(discovery["endpoint"]))
         instance_id = str(discovery["runtime_instance_id"])
     except (KeyError, TypeError, ValueError) as exc:
-        raise BootstrapError("Runtime discovery is incomplete; run banodoco-local restart --profile astrid.") from exc
+        raise BootstrapError("Runtime discovery is incomplete; run astrid-runtime restart --profile astrid.") from exc
     if not _pid_alive(boundary, pid) or not boundary.validate_owner(endpoint=endpoint, pid=pid, instance_id=instance_id, owner_lock=paths.instance_lock_path):
-        raise BootstrapError("Runtime discovery is stale or owned by another process; run banodoco-local up --profile astrid.")
+        raise BootstrapError("Runtime discovery is stale or owned by another process; run astrid-runtime up --profile astrid.")
     if not boundary.health(endpoint=endpoint, pid=pid, instance_id=instance_id):
-        raise BootstrapError("The selected runtime is unhealthy; run banodoco-local restart --profile astrid.")
+        raise BootstrapError("The selected runtime is unhealthy; run astrid-runtime restart --profile astrid.")
     if str(realm.get("realm_id")) != str(discovery.get("active_realm")):
-        raise BootstrapError("Discovery does not match the selected catalog realm; run banodoco-local doctor.")
+        raise BootstrapError("Discovery does not match the selected catalog realm; run astrid-runtime doctor.")
     actor_id, token = _credential(paths)
     connection = boundary.connect(endpoint=endpoint, credential=token)
     _provision_connection(connection, actor_id, token, str(realm["realm_id"]))

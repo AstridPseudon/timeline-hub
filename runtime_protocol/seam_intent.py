@@ -26,7 +26,7 @@ def relevant_intent_owners(owners, boundary_owners, cues):
 def boundary_intent_owners(owners):
     """Index adjacent/furthest picture owners by seam frame, once per closure.
 
-    This mirrors Reigh's portable boundary-owner rule. An owner on another
+    This mirrors Astrid App's portable boundary-owner rule. An owner on another
     lane participates only when that lane has its own cut at this frame; a
     spanning owner is not pulled in merely because it overlaps the guard
     window around an occurrence seam.

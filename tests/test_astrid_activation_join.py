@@ -41,7 +41,7 @@ from runtime_protocol.local_worker import (
     _selected_profile_payload,
 )
 from runtime_protocol.local_worker_composition import CrossProcessWorkerPreparer, _actual_executable, _file_digest
-from banodoco_local.custody_broker import default_process_identity
+from astrid_runtime.custody_broker import default_process_identity
 
 
 RUNTIME_ROOT = Path(__file__).resolve().parents[1]
@@ -607,8 +607,8 @@ def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_pat
       ("runtime_protocol.local_execution_supervisor","runtime_protocol/local_execution_supervisor.py","bd6dd65d29565c2b631a8cf32701988db081d798bc2c4a81bffeba06fb345e4a"),
       ("runtime_protocol.errors","runtime_protocol/errors.py","3d4287e17e0b9ad4c17b296b2f444120eb5c1efd6a3479b09060eee1c5ec9e71")):
         assert runtime_modules[module]=={"path":str(RUNTIME_ROOT/relative),"sha256":digest}
-    assert runtime_modules["banodoco_local.custody_broker"]=={
-      "path":str(RUNTIME_ROOT/"banodoco_local/custody_broker.py"),
+    assert runtime_modules["astrid_runtime.custody_broker"]=={
+      "path":str(RUNTIME_ROOT/"astrid_runtime/custody_broker.py"),
       "sha256":"f2a0b4f54be140616df6cd31f91f0b4958c120cb89e0e7eea35bdc43c286b7d6"}
     phases=[json.loads(events.with_suffix(suffix).read_text()) for suffix in
       (".request.json",".publication.json",".forwarding.json",".half-close.json",".ack.json",".outer-activation-response.json")]
@@ -688,7 +688,7 @@ _JOIN_PINS = {
     "runtime_protocol/service.py": "12f0ead81c632fb145374258096d30299e1f5e0ec24acd5926e220d0bcc6288e",
     "runtime_protocol/auth.py": "003bf4babf911f92a77feed9ad6731d26946863e8e3116d7995e9f4ba86739c2",
     "runtime_protocol/store.py": "348f78e1adebd2ef034edb86a33a303ca56ada3518605b239eb4f567bda7f138",
-    "banodoco_local/custody_broker.py": "f2a0b4f54be140616df6cd31f91f0b4958c120cb89e0e7eea35bdc43c286b7d6",
+    "astrid_runtime/custody_broker.py": "f2a0b4f54be140616df6cd31f91f0b4958c120cb89e0e7eea35bdc43c286b7d6",
 }
 _JOIN_ASTRID_PINS = {
     "astrid/core/execution/generic_host.py": "7fa3bcf80eaa1cb308e18396a177bb0e4592da7333509f0e826c458bc4db7c8d",
@@ -923,7 +923,7 @@ def _joined_host_main(argv):
     try:
         from astrid.core.execution import generic_host as host_module
         from astrid.core.execution import custody_broker as custody
-        from banodoco_workspace_client import ApiError
+        from astrid_runtime_client import ApiError
         control_stat = os.fstat(control_fd)
         control_identity = (control_stat.st_dev, control_stat.st_ino)
         _install_join_providers(custody, current_pid=os.getpid, peer_pid=lambda _sock: os.getppid())
@@ -1048,7 +1048,7 @@ def _joined_host_main(argv):
 
 def _serve_joined_relay(descriptor, events_value, config_value):
     import signal
-    from banodoco_local import custody_broker as custody
+    from astrid_runtime import custody_broker as custody
     from runtime_protocol import local_execution_supervisor as supervisor
     from runtime_protocol.local_worker_handoff import HandoffSuccessorListener
     channel = socket.socket(fileno=descriptor); channel.settimeout(15)
@@ -1140,7 +1140,7 @@ class _JoinedAdapter(_Adapter):
         self.endpoint, self.successor = endpoint, successor
 
     def prepare(self, profile, *, operation_id, channel_id):
-        from banodoco_local import custody_broker as custody
+        from astrid_runtime import custody_broker as custody
         from runtime_protocol.local_execution_supervisor import host_prepare_request
         runtime_end, relay_end = socket.socketpair(); runtime_end.settimeout(5)
         scope = profile.support_root / "custody" / operation_id; scope.mkdir(parents=True, mode=0o700); scope.chmod(0o700)
@@ -1226,7 +1226,7 @@ def test_runtime_relay_to_generic_host_successor_finalization_cpu(tmp_path, astr
     """One joined journey, four scenarios; no ACK/journal validator substitute."""
     import copy
     from dataclasses import replace
-    from banodoco_local import custody_broker as custody
+    from astrid_runtime import custody_broker as custody
     from runtime_protocol.daemon import RuntimeDaemon, WORKER_ACTOR, WORKER_SCOPES
     from runtime_protocol.errors import ConflictError
     from runtime_protocol.local_execution_handoff import VERSION, digest, read_protected

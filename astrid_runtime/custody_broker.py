@@ -1338,7 +1338,7 @@ class RoleBoundCustodyBroker:
 
 
 def custody_wrapper_argv(executable: str) -> list[str]:
-    return [executable, "-I", "-m", "banodoco_local.custody_broker", "--custody-exec"]
+    return [executable, "-I", "-m", "astrid_runtime.custody_broker", "--custody-exec"]
 
 
 def child_exec_from_environment() -> int:

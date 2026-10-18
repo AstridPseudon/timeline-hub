@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
-from banodoco_workspace_client import ApiError, WorkspaceClient  # noqa: E402
+from astrid_runtime_client import ApiError, WorkspaceClient  # noqa: E402
 from runtime_protocol.errors import ConflictError, ValidationError
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.service import RuntimeService, _canonical_managed_output_filename

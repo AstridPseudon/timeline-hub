@@ -10,7 +10,7 @@ FIXTURES = ROOT / "conformance" / "fixtures"
 
 
 def test_shared_fixtures_are_canonical_json_and_product_neutral() -> None:
-    forbidden = re.compile(r"astrid|reigh|thread|pack", re.I)
+    forbidden = re.compile(r"astrid|astrid|thread|pack", re.I)
     for path in sorted(FIXTURES.glob("*.json")):
         raw = path.read_bytes()
         value = json.loads(raw)
@@ -48,7 +48,7 @@ def test_python_and_typescript_operation_indexes_are_identical() -> None:
     manifest = json.loads((ROOT / "contract" / "manifest.json").read_text())
     openapi = (ROOT / "contract" / manifest["openapi"]).read_text()
     operations = [line.split(":", 1)[1].strip() for line in openapi.splitlines() if line.startswith("      operationId:")]
-    py = (ROOT / "packages/python/banodoco_workspace_client/contract_metadata.py").read_text()
+    py = (ROOT / "packages/python/astrid_runtime_client/contract_metadata.py").read_text()
     ts = (ROOT / "packages/typescript/src/contract-metadata.ts").read_text()
     for operation in operations:
         assert operation in py and operation in ts
@@ -57,5 +57,5 @@ def test_python_and_typescript_operation_indexes_are_identical() -> None:
 
 def test_fake_actor_has_no_product_shaped_symbols() -> None:
     source = (ROOT / "conformance/fake-second-product.ts").read_text()
-    assert not re.search(r"\bAstrid\b|\bREIGH\b|\bthread\b|\bpack\b", source, re.I)
+    assert not re.search(r"\bAstrid\b|\bASTRID\b|\bthread\b|\bpack\b", source, re.I)
     assert "WorkspaceClient" in source and "render.neutral" in source
