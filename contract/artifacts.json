@@ -62,10 +62,10 @@
     "contract/schemas/worker.json": "sha256:ce9046dd139b5c3368dfbb523ad9f8c1fc17a58749cd2fc8265a5e77a49bfc2b",
     "packages/python/astrid_runtime_client/__init__.py": "sha256:97629bd1b977fb75797d26bcdafe3d3763a7fa12b6c2e738ebb49de1e2f4ffa1",
     "packages/python/astrid_runtime_client/contract_metadata.py": "sha256:3b141ab4bebd723a0721b3ae56fabd9cafed658c2245066f2c072ce4cae87663",
-    "packages/python/astrid_runtime_client/generated.py": "sha256:e1bb3018128ea51355324a230b83be921c550a01586959274baf2c0e2b5955a3",
+    "packages/python/astrid_runtime_client/generated.py": "sha256:2f7609a906cd1e142971988a926c94504202ef0fe5414c28351be14eeefd5b1c",
     "packages/typescript/src/contract-metadata.ts": "sha256:bf852360f57c15e41a06037d5e78191128d98b5d4909882e06c0e9d40a3479c8",
     "packages/typescript/src/generated.ts": "sha256:82f1b330a257a8414f49f852a8604ed2692ee70c3482a9a45ff51df18bd77325"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:62e5c5def72da0ac28b954ee0df080ed3d28814862e1f7efcf3f6b8005a67dcc"
+  "version": "sha256:281f05b198be17ce0e55d3958c0116c757daec5947db2c7e96bb76fc2a4192b1"
 }
