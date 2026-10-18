@@ -7079,6 +7079,232 @@ describe('W40 pinned literal media group left resize', () => {
   }, 90_000);
 });
 
+// E005: each ordering exercises the production group-left planner and hook.
+const mixedLeftCases = [
+  { name: 'hold media leading hold', kinds: ['hold', 'media'], edge: 0, type: 'video/mp4' },
+  { name: 'media hold leading media', kinds: ['media', 'hold'], edge: 0, type: 'audio/wav' },
+  { name: 'hold media hold middle media', kinds: ['hold', 'media', 'hold'], edge: 1, type: 'video/mp4' },
+  { name: 'media hold media middle hold', kinds: ['media', 'hold', 'media'], edge: 1, type: 'audio/wav' },
+] as const;
+type MixedLeftCase = typeof mixedLeftCases[number];
+async function mixedLeftData(test: MixedLeftCase = mixedLeftCases[2]) {
+  const base = await leftMediaGroupData();
+  const clips = test.kinds.map((kind, index) => {
+    const clip = { ...base.config.clips[index % 2], id: `clip-${index + 1}`, at: 1 + index * 2,
+      params: { opaque: { index, presentNull: null, array: [false, 0, 'keep'] } } };
+    if (kind === 'hold') {
+      delete clip.from; delete clip.to; delete clip.speed; delete clip.asset;
+      clip.clipType = 'hold'; clip.hold = 2;
+    }
+    return clip;
+  });
+  const ids = clips.map(clip => clip.id);
+  return buildTimelineData({ ...base.config, clips: [...clips, ...base.config.clips.slice(2)],
+    pinnedShotGroups: base.config.pinnedShotGroups!.map(group => group.shotId === 'shot-1'
+      ? { ...group, clipIds: [...ids].reverse(), memberSelectors: [...ids].reverse().map(id => `parent/clip:${id}`) } : group),
+  }, { assets: { ...base.registry.assets, 'group-left-source': { ...base.registry.assets['group-left-source'], type: test.type } } },
+  undefined, 1, undefined, base.head);
+}
+
+function mixedLeftPlan(initial: TimelineData, test: MixedLeftCase = mixedLeftCases[2]) {
+  const ids = test.kinds.map((_, index) => `clip-${index + 1}`);
+  const row = initial.rows.find(row => row.id === 'V1')!;
+  const children = ids.map(id => row.actions.find(action => action.id === id)!);
+  const context: GroupClipEdgeResizeContext = { kind: 'group', shotId: 'shot-1', trackId: 'V1',
+    draggedClipId: ids[test.edge], draggedIndex: test.edge, groupClipIds: ids,
+    groupChildrenSnapshot: children.map(action => ({ clipId: action.id, start: action.start, end: action.end })) };
+  const updates = applyClipEdgeMove(context, 'left', children[test.edge].start + 0.5).updates;
+  const rows = initial.rows.map(row => ({ ...row, actions: row.actions.map(action => {
+    const update = updates.find(update => update.clipId === action.id); return update ? { ...action, start: update.start, end: update.end } : { ...action };
+  }) }));
+  const patches = Object.fromEntries(ids.map((id, index) => [id, test.kinds[index] === 'media'
+    ? { track: 'V1', from: index === test.edge ? 3 : 2, to: 6, speed: 2 } : { track: 'V1', hold: index === test.edge ? 1.5 : 2 }]));
+  return { ids, row, children, context, updates, rows, patches };
+}
+function resizeMixedLeft(h: Awaited<ReturnType<typeof setup>>, test: MixedLeftCase, cancelled = false, afterStart?: () => void, missing = false) {
+  const plan = mixedLeftPlan(h.result.current.data!, test), action = plan.children[test.edge];
+  act(() => h.result.current.resize.onActionResizeStart({ action, row: plan.row, dir: 'left' }));
+  afterStart?.();
+  act(() => h.result.current.resize.onClipEdgeResizeEnd({
+    session: { pointerId: 1, rowId: plan.row.id, clipId: action.id, edge: 'left', started: true,
+      startClientX: 0, startLocalX: 0, startTime: action.start, lastStart: action.start + 0.5, lastEnd: action.end,
+      snapTargets: [], context: plan.context }, updates: missing ? [] : plan.updates, cancelled,
+  }));
+}
+function expectMixedLeftCommands(calls: ReturnType<typeof gestureCommandsFor>, initial: TimelineData, test: MixedLeftCase) {
+  const expected = [];
+  for (let index = 0; index <= test.edge; index++) {
+    const clip = initial.config.clips[index], select = `parent/clip:${clip.id}`;
+    if (index === test.edge && test.kinds[index] === 'media') expected.push({ op: 'clip.trim', select, resolved: [select],
+      args: { in_s: 3, out_s: 6 }, expect: { '': { state: 'present', value: clip } } });
+    expected.push({ op: 'clip.nudge', select, resolved: [select], args: { frames: 15 }, expect: {
+      at: { state: 'present', value: clip.at }, 'app.astrid.on': { state: 'absent' }, 'app.astrid.until': { state: 'absent' },
+      ...(index !== test.edge || test.kinds[index] === 'hold' ? { '': { state: 'present', value: clip } } : {}),
+    } });
+    if (index === test.edge && test.kinds[index] === 'hold') expected.push({ op: 'clip.set-duration', select, resolved: [select],
+      args: { seconds: 1.5 }, expect: { hold: { state: 'present', value: 2 }, 'app.astrid.until': { state: 'absent' }, 'app.astrid.for': { state: 'absent' } } });
+  }
+  expect(calls).toEqual(expected); calls!.forEach(call => expect(validateEditCommand(call)).toBe(call));
+}
+
+describe('W40 pinned mixed hold media group left resize', () => {
+  it.each(mixedLeftCases)('$name saves exact scoped commands and whole-document receipt Undo Redo', async test => {
+    const initial = await mixedLeftData(test), requests: CommitRequest[] = []; let proof!: ReturnType<typeof groupDeleteSource>;
+    const h = await setup(async request => {
+      requests.push(request); proof = groupDeleteSource(initial, requests);
+      writeGroupDeleteProof(`w40-mixed-${test.name}-chain`, { requests, proof });
+      expect(proof.result.status).toBe('accepted'); return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = bulkHistory(h), accepted = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', accepted);
+    resizeMixedLeft(h, test);
+    expectMixedLeftCommands(gestureCommandsFor(h.result.current.data!), initial, test);
+    expect(h.result.current.editSeqRef.current).toBe(1); expect(history.result.current.canUndo).toBe(false);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expect(requests).toHaveLength(1);
+    expectMixedLeftCommands('commands' in requests[0].change ? requests[0].change.commands : undefined, initial, test);
+    expect(requests[0]).toMatchObject({ base_revision_id: 'parent-r1', source: { via: 'app' }, dry_run: false });
+    const expected = structuredClone(proof.before) as unknown as typeof proof.persisted_documents[number];
+    for (let index = 0; index <= test.edge; index++) expected.parent.clips[index].at! += 0.5;
+    if (test.kinds[test.edge] === 'hold') expected.parent.clips[test.edge].hold = 1.5;
+    else { expected.parent.clips[test.edge].from = 3; expected.parent.clips[test.edge].hold = 3; }
+    expect(proof.persisted_documents).toEqual([expected]); expect(proof.result.canonical_document).toEqual(expected);
+    expect(h.getCurrentConfig()).toEqual({ ...expected.parent.config, clips: expected.parent.clips });
+    expect(h.result.current.data!.rows.find(row => row.id === 'V1')!.actions.filter(action => test.kinds.some((_, index) => action.id === `clip-${index + 1}`))
+      .map(action => [action.start, action.end])).toEqual(test.kinds.map((_, index) => [1 + index * 2 + (index <= test.edge ? 0.5 : 0), 3 + index * 2 + (index < test.edge ? 0.5 : 0)]));
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true));
+    act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    expect(proof.result.canonical_document).toEqual(proof.before);
+    expect(h.getCurrentConfig()).toEqual({ ...proof.before.parent.config, clips: (proof.before as unknown as typeof expected).parent.clips });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true)); act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(proof.persisted_documents).toEqual([expected, proof.before, expected]);
+    expect(h.getCurrentConfig()).toEqual({ ...expected.parent.config, clips: expected.parent.clips });
+    expect(requests.map(request => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2', 'parent-r3']);
+    for (const index of [1, 2]) expect(requests[index].change).toEqual({ commands: [{ op: 'timeline.inverse', select: null, args: {
+      publication: proof.results[index - 1].accepted_publication_id,
+      writes: proof.results[index - 1].change.direct_writes.map(write => ({ ...write, before: write.after, after: write.before })),
+    } }] });
+    expect(proof.accept_counts).toEqual([1, 1, 1]); expect(h.readbackHeads).toEqual(['parent-r2', 'parent-r3', 'parent-r4']);
+    expect(accepted).toHaveBeenCalledTimes(3); expect(h.compatibilityRequests).toEqual([]);
+    writeGroupDeleteProof(`w40-mixed-${test.name}-final`, { requests, proof, readback: h.getCurrentConfig(), readbackHeads: h.readbackHeads });
+    history.unmount(); h.unmount();
+  }, 180_000);
+
+  it.each(mixedLeftCases)('$name stale member atomically refuses without acceptance or history', async test => {
+    const initial = await mixedLeftData(test), server = { ...initial, config: structuredClone(initial.config) };
+    server.config.clips[test.edge].params!.opaque = { changed: 'server' };
+    let proof!: ReturnType<typeof groupDeleteSource>, completed = false;
+    const h = await setup(async request => {
+      proof = groupDeleteSource(server, [request]); completed = true;
+      writeGroupDeleteProof(`w40-mixed-${test.name}-stale`, { request, proof }); return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = bulkHistory(h), accepted = vi.fn(); h.eventBus.on('nativeRegistrationAccepted', accepted);
+    resizeMixedLeft(h, test); await waitFor(() => expect(completed).toBe(true), { timeout: 60_000 });
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+    expect(proof.result.status).toBe('refused'); expect(proof.attempted_accept_count).toBe(0);
+    expect(proof.result.change.direct_writes).toEqual([]); expect(proof.document).toEqual(proof.before); expect(proof.persisted_documents).toEqual([]);
+    expect(h.savedSeqRef.current).toBe(0); expect(accepted).not.toHaveBeenCalled(); expect(h.acceptedCount()).toBe(0);
+    expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+    act(() => { history.result.current.undo(); history.result.current.redo(); });
+    expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]); history.unmount(); h.unmount();
+  }, 90_000);
+
+  it.each(['invalid hold', 'empty hold', 'nonfinite hold', 'hold source', 'hold speed', 'missing duration', 'nonfinite duration',
+    'missing source', 'negative source', 'empty source', 'out of range', 'source off grid', 'missing speed', 'zero speed', 'wrong asset type',
+    'incomplete group', 'duplicate member', 'ambiguous group', 'duplicate source', 'duplicate action', 'missing member', 'cross track',
+    'relation', 'null relation', 'outside relation', 'bed ownership', 'sequence', 'keyframes', 'modifiers', 'param modifiers', 'occurrence',
+    'owner occurrence', 'stale selectors', 'noncontiguous before', 'noncontiguous after', 'two resized', 'outside sibling', 'overlap',
+    'changed out', 'changed speed', 'invalid trim', 'off grid', 'zero fps', 'invalid start', 'right edge changed', 'no movement'] as const)(
+    '%s preserves refusal without compiler mutation', async kind => {
+      const initial = await mixedLeftData(), plan = mixedLeftPlan(initial), hold = initial.config.clips[0], media = initial.config.clips[1], group = initial.config.pinnedShotGroups![1];
+      if (kind === 'invalid hold') hold.hold = -1;
+      if (kind === 'empty hold') hold.hold = 0;
+      if (kind === 'nonfinite hold') hold.hold = Infinity;
+      if (kind === 'hold source') hold.from = 0;
+      if (kind === 'hold speed') hold.speed = 2;
+      if (kind === 'missing duration') delete initial.registry.assets['group-left-source'].duration;
+      if (kind === 'nonfinite duration') initial.registry.assets['group-left-source'].duration = Infinity;
+      if (kind === 'missing source') delete media.to;
+      if (kind === 'negative source') media.from = -1;
+      if (kind === 'empty source') media.from = 6;
+      if (kind === 'out of range') media.to = 11;
+      if (kind === 'source off grid') media.from = 2.001;
+      if (kind === 'missing speed') delete media.speed;
+      if (kind === 'zero speed') media.speed = 0;
+      if (kind === 'wrong asset type') initial.registry.assets['group-left-source'].type = 'image/png';
+      if (kind === 'incomplete group') plan.ids.pop();
+      if (kind === 'duplicate member') group.clipIds[0] = group.clipIds[1];
+      if (kind === 'ambiguous group') initial.config.pinnedShotGroups!.push({ ...group, shotId: 'ambiguous' });
+      if (kind === 'duplicate source') initial.config.clips.push({ ...hold });
+      if (kind === 'duplicate action') initial.rows[0].actions.push({ ...initial.rows[0].actions[0] });
+      if (kind === 'missing member') initial.config.clips.splice(0, 1);
+      if (kind === 'cross track') hold.track = 'V2';
+      if (kind === 'relation') hold.app = { ...hold.app, astrid: { on: '"viral"' } };
+      if (kind === 'null relation') hold.app = { ...hold.app, astrid: { on: null } } as never;
+      if (kind === 'outside relation') initial.config.clips[3].app!.astrid = { on: '"viral"' };
+      if (kind === 'bed ownership') initial.config.app = { ...initial.config.app, astrid: { v: 2, music_beds: { 'parent/clip:clip-1': { source: structuredClone(hold) } } } } as never;
+      if (kind === 'sequence') hold.app = { ...hold.app, astrid: { sequence: 'keep' } } as never;
+      if (kind === 'keyframes') Reflect.set(hold, 'keyframes', {});
+      if (kind === 'modifiers') Reflect.set(media, 'modifiers', []);
+      if (kind === 'param modifiers') hold.params!.modifiers = [];
+      if (kind === 'occurrence') hold.app = { ...hold.app, canonical: { occurrenceId: 'occ-A' } } as never;
+      if (kind === 'owner occurrence') group.ownerOccurrenceId = 'occ-A';
+      if (kind === 'stale selectors') group.memberSelectors![0] = 'parent/clip:missing';
+      if (kind === 'noncontiguous before') initial.rows[0].actions[1].start += 0.5;
+      if (kind === 'noncontiguous after') plan.rows[0].actions[2].start += 0.5;
+      if (kind === 'two resized') plan.rows[0].actions[0].start += 0.5;
+      if (kind === 'outside sibling') plan.rows[0].actions[3].end += 0.5;
+      if (kind === 'overlap') initial.rows[0].actions[3].start = 2;
+      if (kind === 'changed out') plan.patches['clip-2'].to = 7;
+      if (kind === 'changed speed') plan.patches['clip-2'].speed = 3;
+      if (kind === 'invalid trim') plan.patches['clip-2'].from = 6;
+      if (kind === 'off grid') plan.rows[0].actions[0].start += 0.001;
+      if (kind === 'zero fps') initial.output.fps = 0;
+      if (kind === 'invalid start') plan.rows[0].actions[0].start = NaN;
+      if (kind === 'right edge changed') plan.rows[0].actions[1].end += 0.5;
+      if (kind === 'no movement') plan.rows = initial.rows;
+      const before = structuredClone(initial);
+      expect(groupLeftResizeGestureCommands(initial, plan.ids, plan.rows, plan.patches)).toBeUndefined(); expect(initial).toEqual(before);
+    });
+
+  it.each(['head', 'config', 'fps', 'cancelled', 'missing update', 'locked sibling', 'read only'] as const)(
+    '%s refuses the pointer before mutation or native history', async kind => {
+      const initial = await mixedLeftData(); let blocked = false;
+      const editability: TimelineEditability = { check: ({ clipId }) => ({ allowed: !(blocked && (kind === 'read only' || clipId === 'clip-1')) }) };
+      const h = await setup(undefined, false, initial, 1, editability), history = bulkHistory(h);
+      const before = vi.fn(), accepted = vi.fn(); h.eventBus.on('beforeCommit', before); h.eventBus.on('nativeRegistrationAccepted', accepted);
+      const draft = vi.spyOn(draftStorage, 'saveTimelineDraft');
+      resizeMixedLeft(h, mixedLeftCases[2], kind === 'cancelled', () => {
+        if (kind === 'head') h.result.current.dataRef.current = { ...initial, head: { ...initial.head!, headRevisionId: 'new-head' } };
+        if (kind === 'config') h.result.current.dataRef.current = { ...initial, config: { ...initial.config, clips: [...initial.config.clips].reverse() } };
+        if (kind === 'fps') h.result.current.dataRef.current = { ...initial, output: { ...initial.output, fps: 24 } };
+        if (kind === 'locked sibling' || kind === 'read only') blocked = true;
+      }, kind === 'missing update');
+      expect(h.result.current.editSeqRef.current).toBe(0); expect(h.savedSeqRef.current).toBe(0);
+      expect(before).not.toHaveBeenCalled(); expect(draft).not.toHaveBeenCalled(); expect(accepted).not.toHaveBeenCalled(); expect(h.requests).toEqual([]);
+      expect(h.result.current.data).toBe(initial); expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+      history.unmount(); h.unmount();
+    });
+
+  it.each(['invalid hold', 'dual source hold', 'missing registry', 'relation', 'bed', 'sequence', 'occurrence'] as const)(
+    'production pointer %s preserves fallback without typed acceptance', async kind => {
+      const initial = await mixedLeftData(), hold = initial.config.clips[0];
+      if (kind === 'invalid hold') hold.hold = 0;
+      if (kind === 'dual source hold') hold.from = 0;
+      if (kind === 'missing registry') delete initial.registry.assets['group-left-source'];
+      if (kind === 'relation') hold.app = { ...hold.app, astrid: { on: '"viral"' } };
+      if (kind === 'bed') initial.config.app = { ...initial.config.app, astrid: { v: 2, music_beds: { 'parent/clip:clip-1': { source: structuredClone(hold) } } } } as never;
+      if (kind === 'sequence') hold.app = { ...hold.app, astrid: { sequence: 'keep' } } as never;
+      if (kind === 'occurrence') hold.app = { ...hold.app, canonical: { occurrenceId: 'occ-A' } } as never;
+      const h = await setup(undefined, false, initial), history = bulkHistory(h), accepted = vi.fn();
+      h.eventBus.on('nativeRegistrationAccepted', accepted); resizeMixedLeft(h, mixedLeftCases[2]);
+      expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined(); expect(h.requests).toEqual([]);
+      expect(h.savedSeqRef.current).toBe(0); expect(h.acceptedCount()).toBe(0); expect(accepted).not.toHaveBeenCalled();
+      expect(history.result.current.canRedo).toBe(false); history.unmount(); h.unmount();
+    });
+});
+
 describe('W29 mounted bulk Remove SDK receipt history', () => {
   async function capturedData(reference: ReturnType<typeof transitionReference>) {
     const initial = await bulkTransitionData(reference, true);

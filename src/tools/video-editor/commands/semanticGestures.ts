@@ -1132,18 +1132,27 @@ export function groupLeftResizeGestureCommands(
       && JSON.stringify(before) !== JSON.stringify(next.find(after => after.action.id === before.action.id)))) return undefined;
   const members = ids.map(id => ({ id, clip: originalClip(data, id),
     before: old.find(item => item.action.id === id), after: next.find(item => item.action.id === id) }));
+  const mixed = members.some(({ clip }) => hasOwn(clip, 'hold'));
+  if (mixed && (members.length < 2 || !members.some(({ clip }) => !hasOwn(clip, 'hold')))) return undefined;
   for (const { id, clip, before, after } of members) {
     const asset = clip?.asset && data.registry.assets[clip.asset];
-    if (!literalStructuralSource(data, id) || clip.clipType !== 'media' || hasOwn(clip, 'hold')
+    const hold = mixed && hasOwn(clip, 'hold');
+    if (!literalStructuralSource(data, id)
       || !before || !after || before.row !== group.trackId || after.row !== group.trackId || clip.track !== group.trackId
+      || ['keyframes', 'modifiers', 'keyframeOrigin'].some(key => hasOwn(clip.params ?? {}, key))
+      || before.action.start !== clip.at
+      || [before.action.start, before.action.end, after.action.start, after.action.end].some(time => !onGrid(time))
+      || after.action.start < 0 || after.action.end <= after.action.start) return undefined;
+    if (hold) {
+      if (typeof clip.hold !== 'number' || !Number.isFinite(clip.hold) || clip.hold <= 0
+        || hasOwn(clip, 'from') || hasOwn(clip, 'to') || (clip.speed ?? 1) !== 1
+        || !same(before.action.end - before.action.start, clip.hold)) return undefined;
+    } else if (clip.clipType !== 'media' || hasOwn(clip, 'hold')
       || typeof clip.from !== 'number' || typeof clip.to !== 'number' || typeof clip.speed !== 'number'
       || !Number.isFinite(clip.speed) || clip.speed <= 0 || !onGrid(clip.from) || !onGrid(clip.to)
       || clip.from < 0 || clip.to <= clip.from || !asset || !['video', 'audio'].some(type => asset.type?.startsWith(type))
       || typeof asset.duration !== 'number' || !Number.isFinite(asset.duration) || asset.duration <= 0 || clip.to > asset.duration
-      || ['keyframes', 'modifiers', 'keyframeOrigin'].some(key => hasOwn(clip.params ?? {}, key))
-      || before.action.start !== clip.at || !same(before.action.end - before.action.start, (clip.to - clip.from) / clip.speed)
-      || [before.action.start, before.action.end, after.action.start, after.action.end].some(time => !onGrid(time))
-      || after.action.start < 0 || after.action.end <= after.action.start) return undefined;
+      || !same(before.action.end - before.action.start, (clip.to - clip.from) / clip.speed)) return undefined;
   }
   // Exactly one member changes length; preceding members translate and later
   // members stay still. Stored membership order is preserved, never rewritten.
@@ -1163,7 +1172,7 @@ export function groupLeftResizeGestureCommands(
     const shift = before!.action.start < edge.before!.action.start ? delta : member === edge ? delta : 0;
     if (!same(after!.action.start, before!.action.start + shift)
       || (member !== edge && !same(after!.action.end, before!.action.end + shift))) return undefined;
-    if (member === edge) {
+    if (member === edge && !hasOwn(clip, 'hold')) {
       const from = clip.from! + delta * clip.speed!, patch = patches[id];
       if (!onGrid(from) || from < 0 || from >= clip.to! || !patch || typeof patch.from !== 'number'
         || !same(patch.from, from) || patch.to !== clip.to || typeof patch.speed !== 'number' || !same(patch.speed, clip.speed!)) return undefined;
@@ -1172,7 +1181,15 @@ export function groupLeftResizeGestureCommands(
     if (shift) {
       const move = moveGestureCommands(data, id, after!.action.start, group.trackId);
       if (!move?.length) return undefined;
+      // Mixed prefixes and holds retain their complete captured source shape.
+      // A media edge already checks that shape in trim, before its nudge.
+      if (mixed && (member !== edge || hasOwn(clip, 'hold'))) move[0].expect![''] = state(clip, true);
       result.push(...move);
+    }
+    if (member === edge && hasOwn(clip, 'hold')) {
+      const resize = rightResizeGestureCommands(data, id, after!.action.end - after!.action.start, patches[id] ?? {});
+      if (!resize?.length) return undefined;
+      result.push(...resize);
     }
   }
   return result;
