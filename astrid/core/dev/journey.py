@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import logging
 import os
 import shutil
 import signal
@@ -1204,6 +1205,7 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
             if tier == "full":
                 j.full(replace_slot, expect_duration)
     except Exception as exc:
+        logging.exception("Journey failed before teardown")
         failure = str(exc)
         hung = getattr(exc, "kind", None) == "hung"
     finally:
@@ -1221,6 +1223,7 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
             try:
                 runner.phase("down", lambda: runner.command("down", [sys.executable, "-m", "astrid_runtime", "down", "--source-manifest", str(manifest_path)] + common, env, unbounded=(tier == "quick")))
             except Exception as exc:
+                logging.exception("Journey Runtime shutdown failed")
                 failure = (failure + "; " if failure else "") + str(exc)
         try:
             if tier == "quick":
@@ -1233,6 +1236,7 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
             if leftovers:
                 failure = (failure + "; " if failure else "") + f"cleanup: rooted processes remain: {leftovers}"
         except Exception as exc:
+            logging.exception("Journey process cleanup failed")
             failure = (failure + "; " if failure else "") + str(exc)
         runner.details["receipts_bytes"] = _tree_bytes(root, lambda p: "receipt" in p.name.lower())
         runner.details["logs_bytes"] = _tree_bytes(root, lambda p: ".log" in p.name)
@@ -1298,6 +1302,7 @@ def main(args: list[str] | None = None) -> int:
                      end=end, replace_slot=parsed.replace_slot, expect_duration=parsed.expect_duration,
                      backend=parsed.backend, app_checkout=parsed.app_checkout, app_render=not parsed.skip_app_render)
     except Exception as exc:
+        logging.exception("Journey preflight failed")
         summary = parsed.summary.resolve()
         summary.parent.mkdir(parents=True, exist_ok=True)
         summary.write_text(json.dumps({"ok": False, "outcome": "failure", "error": str(exc), "phase_seconds": {}}, indent=2) + "\n")
