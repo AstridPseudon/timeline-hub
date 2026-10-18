@@ -36,14 +36,8 @@ Output:
 - report JSON at `--out`
 - preview `timeline.json` and `assets.json` next to the report
 
-Render the preview through the normal renderer:
-
-```bash
-ASTRID_INTERNAL_INVOCATION=1 python3 -m astrid.packs.rendering.actions.render.run \
-  --timeline runs/html-canvas-effect/timeline.json \
-  --assets runs/html-canvas-effect/assets.json \
-  --out runs/html-canvas-effect/preview.mp4
-```
+Render the preview through the normal renderer, the `rendering.render` executor, with the preview
+`timeline.json` and `assets.json` as its inputs (invocation and modes: `../render/STAGE.md`).
 
 Rendering note:
 
