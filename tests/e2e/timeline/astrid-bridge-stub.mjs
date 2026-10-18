@@ -53,12 +53,14 @@ const timelineStates = new Map([
     timelineSummary: audioReactiveFixtures.timelineSummary,
     config: audioReactiveFixtures.config,
     registry: audioReactiveFixtures.registry,
+    shotComposition: audioReactiveFixtures.shotComposition,
     configVersion: 1,
   }],
   [AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID, {
     timelineSummary: audioReactiveOffsetFixtures.timelineSummary,
     config: audioReactiveOffsetFixtures.config,
     registry: audioReactiveOffsetFixtures.registry,
+    shotComposition: audioReactiveOffsetFixtures.shotComposition,
     configVersion: 1,
   }],
 ]);
@@ -107,8 +109,10 @@ function resetPristineState() {
   defaultState.registry = pristine.registry;
   audioState.config = audioPristine.config;
   audioState.registry = audioPristine.registry;
+  audioState.shotComposition = audioPristine.shotComposition;
   audioOffsetState.config = audioOffsetPristine.config;
   audioOffsetState.registry = audioOffsetPristine.registry;
+  audioOffsetState.shotComposition = audioOffsetPristine.shotComposition;
   projectChatDraft = { text: '', revision: 0, queued_messages: [] };
   // Versions are store history, not fixture contents. Never rewind them: a
   // client holding a pre-reset version must remain stale after every reset.
@@ -385,6 +389,7 @@ const server = http.createServer(async (req, res) => {
       config: state.config,
       config_version: state.configVersion,
       registry: state.registry,
+      ...(state.shotComposition ? { shot_composition: state.shotComposition } : {}),
     });
   }
 

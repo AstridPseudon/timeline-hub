@@ -245,6 +245,9 @@ test('deterministic Astrid stub serves the typed Runaway contract', async () => 
     assert.deepEqual(audioInitial.config, audioPristine.config);
     assert.deepEqual(audioInitial.registry, audioPristine.registry);
     assert.equal(audioInitial.config.output.fps, 30);
+    assert.deepEqual(audioInitial.shot_composition, audioPristine.shotComposition);
+    assert.equal(audioInitial.shot_composition.occurrences[0].at_ms, 0);
+    assert.equal(audioInitial.shot_composition.shot_revisions[0].internal_timeline_revision.timeline.clips[0].params.initialColor, '#000000');
     assert.deepEqual(
       audioInitial.config.clips[0].params.events.map((event) => event.frame),
       [2, 4],
@@ -266,12 +269,16 @@ test('deterministic Astrid stub serves the typed Runaway contract', async () => 
     const audioAfterReset = await (await fetch(audioTimelineUrl)).json();
     assert.deepEqual(audioAfterReset.config, audioPristine.config);
     assert.deepEqual(audioAfterReset.registry, audioPristine.registry);
+    assert.deepEqual(audioAfterReset.shot_composition, audioPristine.shotComposition);
 
     const offsetTimelineUrl = `${origin}/projects/demo-project/timelines/${AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID}`;
     const offsetPristine = createOffsetAudioReactiveColourFixtures({ assetSrcBaseUrl: origin });
     const offsetInitial = await (await fetch(offsetTimelineUrl)).json();
     assert.deepEqual(offsetInitial.config, offsetPristine.config);
     assert.deepEqual(offsetInitial.registry, offsetPristine.registry);
+    assert.deepEqual(offsetInitial.shot_composition, offsetPristine.shotComposition);
+    assert.equal(offsetInitial.shot_composition.occurrences[0].at_ms, AUDIO_REACTIVE_OFFSET_START_FRAME * (1000 / 30));
+    assert.equal(offsetInitial.shot_composition.shot_revisions[0].internal_timeline_revision.timeline.clips[0].params.initialColor, '#102030');
     assert.equal(offsetInitial.config.clips[0].at, AUDIO_REACTIVE_OFFSET_START_FRAME / 30);
     assert.equal(offsetInitial.config.clips[0].hold, 0.6);
     assert.equal(offsetInitial.config.clips[0].params.initialColor, '#102030');

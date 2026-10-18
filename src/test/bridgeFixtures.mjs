@@ -30,6 +30,55 @@ export const AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID = 'audio-reactive-colour-
 export const AUDIO_REACTIVE_OFFSET_START_FRAME = 6;
 export const AUDIO_REACTIVE_OFFSET_INITIAL_COLOR = '#102030';
 
+function createAudioReactiveColourShotComposition({ atSeconds = 0, initialColor = '#000000' } = {}) {
+  const projectId = FIXTURE_PROJECT.slug;
+  const parentDocumentId = `${AUDIO_REACTIVE_FIXTURE_TIMELINE_ID}-document`;
+  const shotId = 'audio-reactive-colour-shot';
+  const revisionId = 'audio-reactive-colour-shot-rev-1';
+  const occurrenceId = 'audio-reactive-colour-occurrence-1';
+  const outputIdentity = `project/${projectId}/document/${parentDocumentId}/occurrence/${occurrenceId}/output/final-video`;
+  const stableDeepLink = `project/${projectId}/document/${parentDocumentId}/shot/${shotId}/revision/${revisionId}/occurrence/${occurrenceId}`;
+  const audioDigest = `sha256:${'a'.repeat(64)}`;
+  const durationMs = 600;
+  return {
+    schema_version: 1,
+    project: { project_id: projectId, document_id: parentDocumentId, role: 'project' },
+    primary_timeline: {
+      document_id: parentDocumentId,
+      role: 'primary_timeline',
+      head: { revision_id: `${AUDIO_REACTIVE_FIXTURE_TIMELINE_ID}-head-1`, content_digest: `sha256:${'b'.repeat(64)}` },
+    },
+    shot_revisions: [{
+      shot_id: shotId,
+      revision_id: revisionId,
+      document_role: 'shot_revision',
+      content_digest: `sha256:${'c'.repeat(64)}`,
+      internal_timeline_revision: {
+        revision_id: `${revisionId}-timeline`,
+        content_digest: `sha256:${'d'.repeat(64)}`,
+        timeline: {
+          tracks: [{ id: 'colour', kind: 'visual' }, { id: 'audio', kind: 'audio' }],
+          clips: [
+            { id: 'colour_map', clip_type: 'audio-reactive-colour', track: 'colour', at_ms: 0, duration_ms: durationMs, params: { schemaVersion: 1, initialColor, events: [{ id: 'first', frame: 2, color: '#203040' }, { id: 'second', frame: 4, color: '#405060' }] } },
+            { id: 'audio_source', clip_type: 'media', track: 'audio', at_ms: 0, duration_ms: durationMs, asset_id: 'source_audio' },
+          ],
+        },
+      },
+      dependencies: [],
+      assets: [{ asset_id: 'source_audio', object_id: 'fixture-media-audio', media_type: 'audio/wav', digest: audioDigest, scope: { project_id: projectId, shot_id: shotId }, role: 'source' }],
+      generation_inputs: [],
+      timing: { duration_ms: durationMs },
+      audio: { track_id: 'audio', object_id: 'fixture-media-audio', digest: audioDigest, scope: { project_id: projectId } },
+      provenance: { source: 'audio-reactive-colour-export-fixture', created_by: 'test' },
+    }],
+    occurrences: [{ occurrence_id: occurrenceId, parent_document_id: parentDocumentId, shot_id: shotId, revision_id: revisionId, ordinal: 0, at_ms: Math.round(atSeconds * 1000), duration_ms: durationMs, stable_deep_link: stableDeepLink, output_identity: outputIdentity }],
+    cases: {
+      missing_dependency: { shot_id: 'missing-shot', revision_id: 'missing-revision', expected: 'missing_dependency' },
+      stale_write_rejection: { expected_head_revision_id: `${AUDIO_REACTIVE_FIXTURE_TIMELINE_ID}-head-1`, submitted_head_revision_id: `${AUDIO_REACTIVE_FIXTURE_TIMELINE_ID}-head-0`, expected_status: 409 },
+    },
+  };
+}
+
 /**
  * Timeline document + registry exactly as the editor's Local mode expects
  * them. `assetSrcBaseUrl` lets the node stub point display `src` fields at
@@ -128,6 +177,7 @@ export function createAudioReactiveColourFixtures({ assetSrcBaseUrl = '' } = {})
         },
       },
     },
+    shotComposition: createAudioReactiveColourShotComposition(),
     config: {
       output: {
         resolution: '640x360',
@@ -200,6 +250,10 @@ export function createOffsetAudioReactiveColourFixtures({ assetSrcBaseUrl = '' }
           : {}),
       })),
     },
+    shotComposition: createAudioReactiveColourShotComposition({
+      atSeconds: offsetSeconds,
+      initialColor: AUDIO_REACTIVE_OFFSET_INITIAL_COLOR,
+    }),
   };
 }
 
