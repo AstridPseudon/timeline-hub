@@ -94,6 +94,16 @@
           "required": false
         },
         {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
           "action": "_StoreAction",
           "default": null,
           "dest": "project",
@@ -286,6 +296,16 @@
         {
           "action": "_StoreTrueAction",
           "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
           "dest": "labels",
           "nargs": 0,
           "options": [
@@ -391,7 +411,7 @@
         },
         {
           "action": "_StoreTrueAction",
-          "default": true,
+          "default": false,
           "dest": "json",
           "nargs": 0,
           "options": [
@@ -1150,6 +1170,16 @@
         {
           "action": "_StoreTrueAction",
           "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
           "dest": "keep",
           "nargs": 0,
           "options": [
@@ -1678,6 +1708,16 @@
         {
           "action": "_StoreTrueAction",
           "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
           "dest": "last",
           "nargs": 0,
           "options": [
@@ -1761,7 +1801,7 @@
       "flags": [
         {
           "action": "_StoreTrueAction",
-          "default": true,
+          "default": false,
           "dest": "json",
           "nargs": 0,
           "options": [
@@ -2317,7 +2357,7 @@
         },
         {
           "action": "_StoreTrueAction",
-          "default": true,
+          "default": false,
           "dest": "json",
           "nargs": 0,
           "options": [
@@ -2486,7 +2526,7 @@
         },
         {
           "action": "_StoreTrueAction",
-          "default": true,
+          "default": false,
           "dest": "json",
           "nargs": 0,
           "options": [
@@ -2774,7 +2814,7 @@
         },
         {
           "action": "_StoreTrueAction",
-          "default": true,
+          "default": false,
           "dest": "json",
           "nargs": 0,
           "options": [
@@ -3090,6 +3130,16 @@
           "nargs": null,
           "options": [
             "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
           ],
           "required": false
         },
@@ -4026,7 +4076,7 @@
         },
         {
           "action": "_StoreTrueAction",
-          "default": true,
+          "default": false,
           "dest": "json",
           "nargs": 0,
           "options": [
@@ -4118,6 +4168,16 @@
           "nargs": null,
           "options": [
             "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
           ],
           "required": false
         },
@@ -5019,7 +5079,7 @@
       },
       {
         "action": "_StoreTrueAction",
-        "default": true,
+        "default": false,
         "dest": "json",
         "nargs": 0,
         "options": [
