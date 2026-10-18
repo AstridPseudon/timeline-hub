@@ -134,6 +134,17 @@ def test_subset_policy_does_not_inherit_default_operations(bound):
     handle = authority.issue(policy)
     assert authority.decide(handle, **request)["code"] == "project_grant_operation_denied"
     assert authority.decide(handle, **{**request, "operation": "timeline.update"})["allowed"] is True
+    assert authority.decide(handle, **{**request, "operation": "generation.duplicate"})["code"] == "project_grant_operation_denied"
+
+
+def test_duplicate_operation_is_explicit_and_does_not_confer_timeline_write(bound):
+    authority, policy, request, clock = bound
+    handle = authority.issue({**policy, "operations": ["generation.duplicate"]})
+    duplicate = {**request, "operation": "generation.duplicate"}
+    assert authority.decide(handle, **duplicate)["allowed"] is True
+    assert authority.decide(handle, **{**duplicate, "operation": "timeline.update"})["code"] == "project_grant_operation_denied"
+    clock[0] = 111
+    assert authority.decide(handle, **duplicate)["allowed"] is False
 
 
 def test_missing_host_session_binding_is_refused():

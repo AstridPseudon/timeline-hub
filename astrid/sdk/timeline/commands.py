@@ -2131,6 +2131,29 @@ def duplicate_clip_source(
         state = [(c, edge, action, old, text, source.start if edge == "start" else source.end)
                  for c, edge, action, old, text, pos in state]
         relations.finish(tl, state)
+    if media is not None:
+        # Choice resolution is allowed to edit copied timing intent, but it
+        # must not silently retime/trim the selected clone or move its anchor.
+        # This runs inside the existing runner transaction, after resolution.
+        expected = copy.deepcopy(source.data)
+        expected.update(id=data["id"], asset=data["asset"], at=start - tl._shot_start(source.shot_id))
+
+        def preserved_payload(value):
+            value = copy.deepcopy(value)
+            app = value.get("app")
+            if isinstance(app, dict):
+                astrid = app.get("astrid")
+                if isinstance(astrid, dict):
+                    for key in ("on", "until", "for", "fixed_start", "media_registry_insert"):
+                        astrid.pop(key, None)
+                    if not astrid:
+                        app.pop("astrid", None)
+                if not app:
+                    value.pop("app", None)
+            return value
+
+        if preserved_payload(result.data) != preserved_payload(expected):
+            raise CommandError("Selected clone choices must preserve full source range, style, track and insertion anchor")
     return result
 
 

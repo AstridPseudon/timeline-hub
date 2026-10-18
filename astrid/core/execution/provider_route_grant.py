@@ -132,7 +132,7 @@ class ProviderRouteGrantAuthority:
 # capabilities are declared in the canonical Astrid capability matrix. This
 # policy check does not establish executor readiness or authorize publication.
 SELECTED_PROJECT_OPERATIONS = frozenset({
-    "timeline.update", "rendering.timeline_visualize", "rendering.render",
+    "timeline.update", "rendering.timeline_visualize", "rendering.render", "generation.duplicate",
 })
 
 

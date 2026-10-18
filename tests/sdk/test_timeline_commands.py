@@ -680,3 +680,40 @@ def test_w46_later_child_prevents_whole_inverse(kind):
             commands.execute(tl, {"op": "timeline.inverse", "select": None,
                                  "args": {"publication": "unit-publication", "writes": writes}})
     assert tl.document() == before
+
+
+@pytest.mark.parametrize('edge,choice,offset,accepted', [
+    ('start', 'keep', None, False), ('start', 'detach', None, True),
+    ('start', 'adjust-offset', -2, True), ('start', 're-anchor', -2, True),
+    ('start', 'adjust-offset', 0, False), ('start', 're-anchor', 0, False),
+    ('end', 'keep', None, False), ('end', 'detach', None, True),
+    ('end', 'adjust-offset', 0, True), ('end', 're-anchor', 0, True),
+    ('end', 'adjust-offset', 2, False), ('end', 're-anchor', 2, False),
+])
+def test_w46_selected_clone_choices_preserve_full_range_and_anchor(edge, choice, offset, accepted):
+    tl, record, call = w46_clone_fixture()
+    source = tl.bundle['parent']['clips'][0]
+    relation = 'on' if edge == 'start' else 'until'
+    source['app']['astrid'] = {relation: 'clip-start "parent/clip:follower" -' + ('4s' if edge == 'start' else '2s')}
+    call['expect']['parent/clip:source::']['value'] = copy.deepcopy(source)
+    row = dict(target='parent/clip:source', edge=edge, choice=choice)
+    if offset is not None:
+        row['offset_seconds'] = offset
+    if choice == 're-anchor':
+        row['anchor'] = 'clip-start "parent/clip:follower"'
+    call['args']['relation_choices'] = [row]
+    before = copy.deepcopy(tl.document())
+    captured = w46_capture(tl, record, [call])
+    if accepted:
+        with tl.edit('W46 chosen selected clone', quiet=True):
+            commands.execute(tl, captured[0])
+        child = tl.bundle['parent']['clips'][-1]
+        assert child['at'] == 3 and child['from'] == source['from'] and child['to'] == source['to']
+        for key in ('speed', 'track', 'opacity', 'volume', 'params', 'entrance'):
+            assert child[key] == source[key]
+        assert child['app']['reference'] == source['app']['reference']
+    else:
+        with pytest.raises(TimelineEditError):
+            with tl.edit('W46 chosen clone refused', quiet=True):
+                commands.execute(tl, captured[0])
+        assert tl.document() == before
