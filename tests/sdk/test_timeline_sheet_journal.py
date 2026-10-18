@@ -156,8 +156,9 @@ def test_apply_file_single_opcall_noop_audits_but_declarative_sheets_stay_silent
     assert len(changed_records) == len(before_records) + 2
     changed_record = changed_records[-1]
     assert changed_record.outcome == "changed"
-    assert changed_record.label == f"apply {changed_source.name}"
+    assert changed_record.label == 'clip.set a-rocket {"x":120}'
     assert changed_record.undo_step is not None
+    assert len(_history_files(history_dir)) == len(before_history) + 1
 
 
 @pytest.mark.parametrize("suffix", [".jsonl", ".py"])

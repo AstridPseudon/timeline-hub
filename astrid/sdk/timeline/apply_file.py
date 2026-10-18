@@ -105,9 +105,7 @@ def apply_file(tl: Any, path: str | Path) -> list[str]:
         record_no_change=sheet_operation is not None,
         record_rollback=False,
     ) as tx:
-        # Eligible singleton sheets keep the file label when they commit; their
-        # explicit no-change label is selected after comparing snapshots below.
-        tx.canonical = sheet_operation is None
+        tx.canonical = True
         if suffix == ".py":
             _apply_python(tl, source_path, source)
         elif suffix == ".jsonl":
