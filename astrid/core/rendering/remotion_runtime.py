@@ -657,8 +657,6 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
 @_validation_timing("registry_settle")
 def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, *, expected_state: Any = None) -> dict[bytes, Any]:
     from astrid.packs.rendering.rendering.renderers.remotion import run, lock
-    if not lock.remotion_render_lock_held():
-        raise RemotionValidationError('registry settling requires the original held Remotion lock')
     if run._timeline_composition_src(project) is None:
         raise RemotionValidationError('launch validation needs the installed composition output directory')
     output_paths = run._registry_output_paths(project)
@@ -675,6 +673,8 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
                                  'state_file': _file_binding(project / run._REGISTRY_STATE_PATH)
                                  if (project / run._REGISTRY_STATE_PATH).exists() else None}
         return selected
+    if not lock.remotion_render_lock_held():
+        raise RemotionValidationError('registry settling requires the original held Remotion lock')
     probes: dict[bytes, Any] = {}
     expected = expected_state
     generator_env = None
@@ -735,10 +735,15 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
 
 @_validation_timing("launch_transaction")
 def _prepare_remotion_validation(**kwargs: Any) -> dict[str, str]:
-    from astrid.packs.rendering.rendering.renderers.remotion.lock import remotion_render_lock
-    # Keep the existing lock continuously through all four-file readback,
-    # owned validation, final bindings and exclusive readiness publication.
-    with remotion_render_lock():
+    from astrid.packs.rendering.rendering.renderers.remotion import run, lock
+    # Provisioned wheel registries are read-only. Their complete bindings and
+    # final publication fence need no writer lock, which would mutate the
+    # authenticated installed package tree. No source writer uses this lane.
+    if run.gen_effect_registry is None:
+        return _prepare_remotion_validation_locked(**kwargs)
+    # Source generators retain the shared writer lock continuously through
+    # readback, owned validation, final bindings and exclusive publication.
+    with lock.remotion_render_lock():
         return _prepare_remotion_validation_locked(**kwargs)
 
 
