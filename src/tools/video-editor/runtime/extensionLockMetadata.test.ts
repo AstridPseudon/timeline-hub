@@ -722,14 +722,12 @@ describe('edge cases', () => {
 
   it('updatedAt is set to now when building lock entry', async () => {
     const packRecord = makePackRecord({ extensionId: 'time.ext' });
-    const entry = buildLockEntryFromPackRecord(packRecord);
-
     const before = new Date();
+    const entry = buildLockEntryFromPackRecord(packRecord);
     const entryTime = new Date(entry.updatedAt!);
     const after = new Date();
 
-    // Within 5 seconds (generous for CI)
-    const diffMs = Math.abs(entryTime.getTime() - before.getTime());
-    expect(diffMs).toBeLessThan(5000);
+    expect(entryTime.getTime()).toBeGreaterThanOrEqual(before.getTime());
+    expect(entryTime.getTime()).toBeLessThanOrEqual(after.getTime());
   });
 });

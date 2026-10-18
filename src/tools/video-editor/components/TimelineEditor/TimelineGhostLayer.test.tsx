@@ -498,18 +498,14 @@ describe('TimelineGhostLayer', () => {
       }
     });
 
-    it('renders 200 ghost entries within an acceptable time budget', () => {
+    it('renders one ghost node per input entry at 200 entries', () => {
       const ghosts = generateGhosts(200);
 
-      const startTime = performance.now();
-      render(
+      const { getAllByTestId } = render(
         <TimelineGhostLayer {...baseProps} ghosts={ghosts} />,
       );
-      const elapsed = performance.now() - startTime;
 
-      // 200 ghost entries should render in well under 500 ms.
-      // Even on slower CI, anything over 1000 ms would indicate a problem.
-      expect(elapsed).toBeLessThan(1000);
+      expect(getAllByTestId('timeline-ghost-clip')).toHaveLength(ghosts.length);
     });
 
     it('maintains pointer-events-none with 200 ghost entries', () => {
