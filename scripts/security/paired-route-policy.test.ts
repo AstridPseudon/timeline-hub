@@ -2,7 +2,13 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createServer, request, type IncomingHttpHeaders } from 'node:http';
 import { once } from 'node:events';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawn, execFile } from 'node:child_process';
+import { createInterface } from 'node:readline';
+import { promisify } from 'node:util';
 import ts from 'typescript';
 import { WebSocket } from 'ws';
 import { ACP_ROUTE_ENTRIES } from '../../src/integrations/astrid/acpRouteContract.ts';
@@ -10,7 +16,7 @@ import { PAIRED_CONSUMER_ROUTES } from '../../config/vite/pairedConsumerPolicy.g
 import * as policy from '../../config/vite/pairedRoutePolicy.ts';
 import { PAIRED_SESSION_HEADER, validatedPairedSession } from '../../config/vite/pairedSessionContext.ts';
 import { PairedRelay } from '../../config/vite/pairedRelay.ts';
-import { allowedAcpRoute, allowedRoute } from '../reigh-loopback-gateway.ts';
+import { allowedAcpRoute, allowedRoute, loopbackEndpoint, PRODUCT_SCOPES } from '../reigh-loopback-gateway.ts';
 
 const samples = PAIRED_CONSUMER_ROUTES.map(route => ({ ...route, path: route.path.replace(/:[A-Za-z]+/g, 'disposable') }));
 const acpSamples = ACP_ROUTE_ENTRIES.map(route => ({ service: 'acp', method: route.method, path: route.template.replace(/:[A-Za-z]+/g, 'disposable') }));
@@ -74,6 +80,141 @@ function call(port: number, path: string, method: string, headers: Record<string
     req.end();
   });
 }
+
+test('local-helper CLI canary enforces exact hosted origin, host, identity and loopback binding', { timeout: 30_000 }, async t => {
+  // Exercise main(), including discovery/credential validation and its real listen().
+  // lsof observes only this test-owned PID; it detects a wildcard listener even if
+  // the CLI advertises a loopback URL. No production listen/handler is mocked.
+  const scratch = mkdtempSync(join(tmpdir(), 'helper-origin-'));
+  const token = 'synthetic-helper-product-credential';
+  const actor = 'synthetic-helper-actor';
+  const realm = 'synthetic-helper-realm';
+  const origin = 'https://hosted.test';
+  const tokenFile = join(scratch, 'credential.json');
+  const auditFile = join(scratch, 'audit.jsonl');
+  writeFileSync(tokenFile, JSON.stringify({ token, actor_id: actor }), { mode: 0o600 });
+  const identity = { protocol: 'workspace.v1', actor_id: actor, realm_id: realm, scopes: PRODUCT_SCOPES };
+  let handshakeIdentity: Record<string, unknown> = identity;
+  let handshakes = 0;
+  const forwarded: Array<{ path: string; method: string; authenticated: boolean; loopback: boolean }> = [];
+  const backend = createServer(async (req, res) => {
+    if (req.url === '/v1/handshake') {
+      handshakes += 1;
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) chunks.push(Buffer.from(chunk));
+      assert(req.headers.authorization === `Bearer ${token}`, 'synthetic handshake credential');
+      assert.deepEqual(JSON.parse(Buffer.concat(chunks).toString()), {
+        protocol: 'workspace.v1', client_name: 'reigh-loopback-gateway', client_version: '1', requested_scopes: PRODUCT_SCOPES,
+      });
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(handshakeIdentity));
+      return;
+    }
+    forwarded.push({ path: req.url!, method: req.method!, authenticated: req.headers.authorization === `Bearer ${token}`, loopback: req.socket.localAddress === '127.0.0.1' && req.socket.remoteAddress === '127.0.0.1' });
+    res.writeHead(206, { 'Content-Type': 'application/octet-stream', 'Content-Range': 'bytes 0-2/6', ETag: '"synthetic-local"', 'Set-Cookie': 'synthetic=not-forwarded' });
+    res.end('PNG');
+  });
+  const children: Array<{ child: ReturnType<typeof spawn>; closed: Promise<unknown> }> = [];
+  let launchNumber = 0;
+  const launch = async (endpoint: string) => {
+    const discoveryFile = join(scratch, `discovery-${++launchNumber}.json`);
+    writeFileSync(discoveryFile, JSON.stringify({ endpoint, actor_id: actor, realm_id: realm }), { mode: 0o600 });
+    // An allowlisted environment prevents ambient Runtime/ACP credentials, Node
+    // preload hooks or proxy configuration from entering this synthetic fixture.
+    const env = Object.fromEntries(['PATH', 'TMPDIR', 'TMP', 'TEMP', 'SystemRoot'].flatMap(key => process.env[key] ? [[key, process.env[key]!]] : []));
+    const child = spawn(process.execPath, ['--import', import.meta.resolve('tsx'), fileURLToPath(new URL('../reigh-loopback-gateway.ts', import.meta.url)), '--discovery', discoveryFile, '--token-file', tokenFile, '--origin', origin, '--port', '0', '--audit-log', auditFile], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+    const closed = once(child, 'close');
+    children.push({ child, closed });
+    let stderr = '';
+    child.stderr!.on('data', chunk => { stderr += chunk; });
+    const lines = createInterface({ input: child.stdout! });
+    const outcome = await new Promise<{ ready?: { base: string; realm_id: string }; code?: number | null; error?: string }>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('test-owned helper startup did not settle')), 5000);
+      const finish = (result: { ready?: { base: string; realm_id: string }; code?: number | null; error?: string }) => { clearTimeout(timer); resolve(result); };
+      lines.once('line', line => {
+        try { finish({ ready: JSON.parse(line) }); } catch { clearTimeout(timer); reject(new Error('invalid helper startup record')); }
+      });
+      child.once('error', () => { clearTimeout(timer); reject(new Error('test-owned helper failed to spawn')); });
+      child.once('close', code => finish({ code, error: stderr.trim() }));
+    });
+    return { child, outcome };
+  };
+  try {
+    await new Promise<void>(resolve => backend.listen(0, '127.0.0.1', resolve));
+    const endpoint = `http://127.0.0.1:${(backend.address() as {port: number}).port}`;
+    assert.equal(loopbackEndpoint(endpoint).origin, endpoint);
+    const endpointNegatives = [
+      'http://0.0.0.0:1234', 'http://localhost:1234', 'http://[::1]:1234', 'http://192.0.2.1:1234',
+      'https://127.0.0.1:1234', 'http://127.0.0.1', 'http://user:pass@127.0.0.1:1234',
+      `${endpoint}/redirect`, `${endpoint}/?target=remote`, `${endpoint}/#fragment`,
+    ];
+    for (const invalid of endpointNegatives) assert.throws(() => loopbackEndpoint(invalid), /Runtime must be a fixed/);
+    const endpointRefused = await launch('http://0.0.0.0:1234');
+    assert.equal(endpointRefused.outcome.code, 1);
+    assert.equal(endpointRefused.outcome.error, 'Runtime must be a fixed http://127.0.0.1:PORT origin');
+    assert.equal(handshakes, 0, 'invalid discovery endpoint never contacted');
+    for (const mismatch of [
+      { ...identity, protocol: 'wrong.v1' }, { ...identity, actor_id: 'different-actor' },
+      { ...identity, realm_id: 'different-realm' }, { ...identity, scopes: ['handshake'] },
+    ]) {
+      handshakeIdentity = mismatch;
+      const refused = await launch(endpoint);
+      assert.equal(refused.outcome.code, 1);
+      assert.equal(refused.outcome.error, 'Scoped runtime product identity did not match');
+      assert.equal(forwarded.length, 0, 'identity refusal never forwards product requests');
+    }
+    handshakeIdentity = identity;
+    const { child, outcome } = await launch(endpoint);
+    assert(outcome.ready, 'valid synthetic discovery identity starts helper');
+    assert.equal(outcome.ready.realm_id, realm);
+    const base = new URL(outcome.ready.base);
+    assert.equal(base.hostname, '127.0.0.1');
+    const port = Number(base.port);
+    const { stdout: listeners } = await promisify(execFile)('lsof', ['-nP', '-a', '-p', String(child.pid), '-iTCP', '-sTCP:LISTEN', '-Fn'], { timeout: 3000 });
+    const bound = listeners.split('\n').filter(line => line.startsWith('n')).map(line => line.slice(1));
+    assert.deepEqual(bound, [`127.0.0.1:${port}`]);
+    const path = `${base.pathname}/v1/objects/synthetic`;
+    const refusals: Array<{ case: string; status: number; error: string; upstream_calls: number }> = [];
+    const refuse = async (name: string, headers: Record<string, string>, status = 403, error = 'hosted_origin_required', method = 'GET', target = path) => {
+      const result = await call(port, target, method, headers);
+      assert.equal(result.status, status, name);
+      assert.equal(JSON.parse(result.body).error, error, name);
+      assert.equal(forwarded.length, 0, name);
+      refusals.push({ case: name, status: result.status, error, upstream_calls: forwarded.length });
+    };
+    for (const hostile of ['https://evil.test', 'https://hosted.test.evil.test', 'http://hosted.test', 'https://hosted.test:444', 'https://hosted.test/', 'null']) {
+      await refuse(hostile, { Origin: hostile, Referer: `${origin}/editor` });
+    }
+    await refuse('missing-origin-and-referer', {});
+    await refuse('hostile-preflight', { Origin: 'https://evil.test', 'Access-Control-Request-Method': 'GET' }, 403, 'hosted_origin_required', 'OPTIONS');
+    for (const host of [`localhost:${port}`, 'hosted.test', `127.0.0.1:${port + 1}`]) await refuse('invalid-host', { Origin: origin, Host: host }, 403, 'invalid_host');
+    await refuse('missing-session', { Origin: origin }, 401, 'session_required', 'GET', '/session/wrong/api/runtime/v1/health');
+    await refuse('browser-credential', { Origin: origin, Authorization: 'Bearer synthetic-browser' }, 403, 'browser_credentials_forbidden');
+    await refuse('unsupported-route', { Origin: origin }, 404, 'route_not_allowed', 'GET', `${base.pathname}/v1/doctor`);
+    const positive = await call(port, path, 'GET', { Origin: origin, Range: 'bytes=0-2' });
+    assert.equal(positive.status, 206); assert.equal(positive.body, 'PNG');
+    assert.equal(positive.headers['content-range'], 'bytes 0-2/6');
+    assert.equal(positive.headers.etag, '"synthetic-local"');
+    assert.equal(positive.headers['access-control-allow-origin'], origin);
+    assert.equal(positive.headers['set-cookie'], undefined);
+    assert.deepEqual(forwarded, [{ path: '/v1/objects/synthetic', method: 'GET', authenticated: true, loopback: true }]);
+    const audit = readFileSync(auditFile, 'utf8');
+    assert(!audit.includes(token), 'audit redacts product credential');
+    assert(!audit.includes(base.pathname.split('/')[2]), 'audit redacts session capability');
+    assert(!audit.includes('synthetic-browser'), 'audit redacts browser credential');
+    const entries = audit.trim().split('\n').map(line => JSON.parse(line));
+    assert(entries.some(entry => entry.status === 403 && entry.origin === 'https://evil.test'));
+    assert(entries.some(entry => entry.status === 206 && entry.response_bytes === 3));
+    t.diagnostic(JSON.stringify({ helper_pid: child.pid, listener: bound[0], endpoint_negatives: endpointNegatives.length, identity_refusals: 4, handshakes, refusals, positive: { status: positive.status, body: positive.body, upstream_calls: forwarded.length, fixed_loopback: true }, audit_entries: entries.length, audit_credentials_redacted: true, second_machine_LAN: 'not exercised; remains open' }));
+  } finally {
+    for (const { child } of children) if (child.exitCode === null && child.signalCode === null) child.kill('SIGTERM');
+    await Promise.all(children.map(({ closed }) => closed));
+    backend.closeAllConnections();
+    await new Promise<void>(resolve => backend.close(() => resolve()));
+    rmSync(scratch, { recursive: true, force: true });
+    t.diagnostic(JSON.stringify({ owned_children: children.map(({ child }) => ({ pid: child.pid, exit_code: child.exitCode, signal: child.signalCode })), fixture_removed: true }));
+  }
+});
 
 async function withRelay(run: (venue: {port: number; origin: string; cookie: string; frames: Record<string, any>[]; waitForFrame(type: string): Promise<void>}) => Promise<void>) {
   const config = { origin: '', loopbackTest: true, enabled: true };
