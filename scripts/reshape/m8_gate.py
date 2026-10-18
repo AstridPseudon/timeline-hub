@@ -1,8 +1,7 @@
 """Fail-closed validation, publication, and installed-lane collection for m8.
 
 The gate is deliberately a small evidence boundary.  It does not rerun source
-tests, infer a release matrix from the host, or turn retained m7 evidence into
-packaged proof.  A caller supplies records produced by the installed-artifact
+tests or infer a release matrix from the host.  A caller supplies records produced by the installed-artifact
 lanes and this module checks that every blocking record is complete, current,
 and bound to the one wheel selected by :mod:`installed_artifact`.
 
@@ -128,7 +127,7 @@ GA_ITEM_SELECTOR_MAP: dict[int, dict[str, Any]] = {
     10: {
         "description": "clean credential-free local-first journey",
         "installed_selector": "installed-journey:ga-item-10",
-        "source_selectors": ("tests/v10/test_m7_dogfood.py",),
+        "source_selectors": ("tests/journeys/test_smoke_plumbing.py",),
         "evidence_class": "clean_account",
     },
     11: {
