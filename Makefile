@@ -37,7 +37,7 @@ preflight:
 	@echo "✓ local gate preflight ($(PY))"
 
 structure:
-	@$(PY) scripts/reshape/compare_structure_baseline.py
+	@$(PY) -m scripts.reshape.compare_structure_baseline
 	@echo "✓ repo structure: no violation beyond the shrink-only baseline"
 
 doc-refs:
