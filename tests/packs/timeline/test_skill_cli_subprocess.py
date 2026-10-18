@@ -186,7 +186,8 @@ def test_skill_cli_recipe_scenarios_run_built_entrypoint(scenario, tmp_path, mon
                 after_refresh["data"]["accepted_revision"],
                 after_refresh["data"]["observed_head"]) == ("R2", accepted_revision, "R2")
         transport_rows = [json.loads(line) for line in calls.read_text(encoding="utf-8").splitlines()]
-        accepted_calls = [row for row in transport_rows if row["route"] == "commit_timeline"]
+        accepted_calls = [row for row in transport_rows
+                          if row["route"] == "commit_timeline" and not row["dry_run"]]
         assert len(accepted_calls) == 1
         assert accepted_calls[0]["accepted_revision_id"] == accepted_revision
         assert accepted_calls[0]["observed_head"] == "R2"

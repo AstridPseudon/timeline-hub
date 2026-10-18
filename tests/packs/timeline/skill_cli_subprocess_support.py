@@ -170,6 +170,22 @@ def install() -> None:
             state = self.state()
 
             class Port:
+                def scene_evaluator(_self, candidate):
+                    from astrid.core.timeline import scene_answers
+
+                    client = scene_answers._client()
+
+                    class Evaluator:
+                        query_scene = staticmethod(client.query_scene)
+
+                        def complete(self, *, empty=False):
+                            pass
+
+                        def close(self):
+                            pass
+
+                    return Evaluator()
+
                 def lookup_request(_self):
                     return copy.deepcopy(state.get("requests", {}).get(body["request_id"]))
 

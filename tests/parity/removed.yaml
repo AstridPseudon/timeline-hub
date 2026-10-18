@@ -119,3 +119,80 @@
   card: RUNNER-LITERAL-REMAINING-182
   reason: "The duplicate all-or-nothing test double and failure injection now follow the current pinned-closure duplication protocol instead of obsolete copy_content. Invalid head still refuses before create, and the injected post-create failure still archives the exact acknowledged new timeline. Source revision and publication selection plus bootstrap revision, publication, and resource-version rollback fences remain asserted; no product behavior or safety assertion is removed."
   alias: "astrid.sdk.timeline_duplicate.duplicate_timeline"
+
+- feature: "flag:timelines.archive:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.create:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.diff:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.duplicate:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.history:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.log:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.purge-execute:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.purge-plan:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.recover:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.replace-parent-media:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.shots.add:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.shots.create:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.shots.list:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.shots.remove:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.shots.reorder:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.shots.show:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.shots.text.list:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.shots.text.set:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"
+- feature: "flag:timelines.shots.text.show:--project"
+  card: UX-LOOP
+  reason: "The UX-LOOP current-project route relaxes --project requiredness for this command while preserving explicit selection; missing or ambiguous selection still refuses with named choices."
+  alias: "--project"

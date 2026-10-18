@@ -194,7 +194,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         },
         {
           "action": "_StoreTrueAction",
@@ -506,7 +506,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         },
         {
           "action": "_StoreAction",
@@ -622,7 +622,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         },
         {
           "action": "_StoreTrueAction",
@@ -722,7 +722,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         },
         {
           "action": "_StoreAction",
@@ -1828,7 +1828,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         }
       ],
       "positionals": [
@@ -2448,7 +2448,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         },
         {
           "action": "_StoreAction",
@@ -2607,7 +2607,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         }
       ],
       "positionals": []
@@ -2642,7 +2642,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         },
         {
           "action": "_StoreAction",
@@ -2687,7 +2687,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         }
       ],
       "positionals": [
@@ -2979,7 +2979,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         },
         {
           "action": "_StoreAction",
@@ -3325,7 +3325,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         },
         {
           "action": "_StoreAction",
@@ -3401,7 +3401,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         }
       ],
       "positionals": []
@@ -3426,7 +3426,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         }
       ],
       "positionals": []
@@ -3461,7 +3461,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         }
       ],
       "positionals": [
@@ -3524,7 +3524,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         }
       ],
       "positionals": [
@@ -3558,7 +3558,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         }
       ],
       "positionals": [
@@ -3611,7 +3611,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         },
         {
           "action": "_StoreAction",
@@ -3692,7 +3692,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         },
         {
           "action": "_StoreAction",
@@ -3756,7 +3756,7 @@
           "options": [
             "--project"
           ],
-          "required": true
+          "required": false
         }
       ],
       "positionals": [
