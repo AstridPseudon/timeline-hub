@@ -1502,6 +1502,10 @@ def capture_argument_bindings(tl, call, owner, bindings):
             # authored TimeRef. Bind the resulting moment (including offset).
             continue
         if isinstance(value, str) and not TIME_RE.fullmatch(value.strip()):
+            if call.op == "clip.until" and key == "moment" and re.match(r"^\s*for\s+", value):
+                # Clip.until delegates this literal duration to hold_for; it
+                # has no word/cut anchor to capture before the handler runs.
+                continue
             if call.op == "cut.move" and TIME_RE.fullmatch(value.strip().removeprefix("@")):
                 continue  # absolute address, resolved by Checkout.time, has no anchor
             # These keys are TimeRefs only on the corresponding timing handlers.

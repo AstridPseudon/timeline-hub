@@ -1,4 +1,8 @@
 # Deliberate r4 changes. Keep one reason and the replacement spelling for each.
+- feature: "deliberate: tests/sdk/test_timeline_checkout.py::test_a_longer_take_reflows_the_film_and_keeps_the_gap_overlays_and_music plural beats report substring"
+  card: RUNNER-REFUSAL-JOURNAL-175
+  reason: "The current shared music-bed materializer reports the selected seam as 'cut on the beat at 1.50 s' and 'repeats 1.20 s', rather than the legacy planner's parenthesized beat count containing plural 'beats'. Require that exact beat-aligned seam phrase alongside the original repeat amount. Placement, narration gap, downstream anchor, source offset, overlap/fade and music-piece assertions remain unchanged; no music or reporting implementation is altered."
+  alias: "astrid.sdk.timeline.music_beds.materialize"
 - feature: "deliberate: test_fast_lane_words.py::test_a_changed_layer_under_an_opaque_higher_layer_is_named_as_hidden"
   card: CHANGE-VIEW
   reason: "Cached component boxes/kinds cannot prove opacity, sprite holes, crop/mask or occlusion. Remove the private hidden-under guess; the actual shared scene answer is explicit unknown offline. The admitted evaluator does not supply an occluder identity."

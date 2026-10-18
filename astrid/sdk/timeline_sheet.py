@@ -887,7 +887,9 @@ def _apply_parsed(tl, sheet, before):
     # complete cut section and remove it through the normal journaled edit API.
     line_removals = set()
     if sheet.get("has_lines_section") and sheet["cuts"]:
-        spans = tl._cut_spans()
+        # Match render_sheet's projection exactly. A partial legacy cut can
+        # end before the film; lines outside its exported span are not omitted.
+        spans = tl.cut_index.spans()
         scoped_segments = set()
         for cut in sheet["cuts"]:
             if cut["id"] not in spans:

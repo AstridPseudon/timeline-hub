@@ -311,38 +311,90 @@ def test_diff_without_from_compares_head_with_working_copy(draft_with_edit, caps
 
 
 
-def test_duplicate_is_all_or_nothing(monkeypatch):
+def test_duplicate_is_all_or_nothing(monkeypatch, tmp_path):
     """A refused duplicate leaves no empty timeline: an invalid head is refused before creating, a failure
     after creating archives what was created."""
     from types import SimpleNamespace
 
     from astrid.sdk import timeline_duplicate as td
 
-    calls = []
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(tmp_path / "data"))
+    calls, heads = [], []
 
     class Timelines:
+        def head_canonical(self, project, ref):
+            assert project == "p" and ref in {"t", "dup-1"}
+            heads.append(ref)
+            return SimpleNamespace(ok=True, data={
+                "revision_id": "rev-0" if ref == "t" else "dup-rev-0",
+                "publication_id": "pub-source" if ref == "t" else "pub-bootstrap",
+            })
+
         def create_empty(self, **kw):
+            assert kw["duplicate_source"] == {
+                "timeline_id": "t", "expected_revision_id": "rev-0",
+                "expected_publication_id": "pub-source",
+            }
             calls.append("create")
             return SimpleNamespace(ok=True, data={"timeline_id": "dup-1"})
 
-        def archive(self, project, ref):
+        def _call_generated(self, operation, project, ref):
+            assert (operation, project, ref) == ("get_project_timeline", "p", "dup-1")
+            return {"version": 7}
+
+        def open_composition(self, project, ref):
+            assert (project, ref) == ("p", "dup-1")
+            return SimpleNamespace(ok=True, data={
+                "native_inspection": {"project_id": project, "timeline_id": ref},
+                "summary": {"head_revision_id": "dup-rev-0"},
+            })
+
+        def open_bundle(self, project, ref, *, revision_id=None):
+            assert (project, ref) == ("p", "dup-1")
+            return SimpleNamespace(ok=True, data={"bundle": {
+                "project_id": project, "timeline_id": ref,
+                "base_parent": {"revision_id": "dup-rev-0"},
+                "parent": {"config": {}, "clips": []}, "placements": [], "shots": {},
+                "source_mapping": {"placements": {}, "shots": {}},
+            }})
+
+        def list_project_parent_composition_revisions(self, project, ref, *, limit):
+            assert (project, ref, limit) == ("p", "t", 200)
+            # The current duplicate path imports a pinned closure, rather
+            # than calling the legacy copy_content helper.
+            raise TimelineEditError("the copy failed")
+
+        def archive(self, project, ref, **kw):
+            assert (project, ref) == ("p", "dup-1")
+            assert kw == {
+                "expected_version": 7,
+                "withdraw_publication": {
+                    "expected_revision_id": "dup-rev-0",
+                    "expected_publication_id": "pub-bootstrap",
+                },
+                "idempotency_key": "duplicate-rollback-dup-1-dup-rev-0",
+            }
             calls.append(f"archive {ref}")
             return SimpleNamespace(ok=True)
 
     client = SimpleNamespace(timelines=Timelines())
+    client._transport = client.timelines
     bad = Checkout(bundle())
     bad.clip("a-rocket").data["params"]["scale"] = '"oops"'  # text in a number: check blocks it
     monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None: Checkout(copy.deepcopy(bad.bundle))))
     with pytest.raises(TimelineEditError, match="nothing was created"):
         td._duplicate(client, "p", "t", slug=None)
     assert calls == []
+    assert heads == []
     good = Checkout(bundle())
     good.check = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
     monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None: good))
-    monkeypatch.setattr(td, "copy_content", lambda *a, **k: (_ for _ in ()).throw(TimelineEditError("the copy failed")))
-    with pytest.raises(TimelineEditError, match="archived again"):
+    # Keep the same safety predicate, using the current acknowledged-archive
+    # wording and retaining the injected copy failure in the diagnostic.
+    with pytest.raises(TimelineEditError, match=r"the copy failed .*new timeline 'dup-1' was archived"):
         td._duplicate(client, "p", "t", slug=None)
     assert calls == ["create", "archive dup-1"]
+    assert heads == ["t", "dup-1"]
 
 
 

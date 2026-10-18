@@ -2818,8 +2818,8 @@ def _cmd_status(parsed: argparse.Namespace) -> int:
     if getattr(parsed, "text", False):
         from astrid.packs.timeline.cli_common import status_text
         from astrid.packs.timeline.cli_sync import sync_lines
-        print("\n".join(sync_lines(fields)))
         result = status_text(parsed, project_id, timeline_id, current_head, draft_name, path if path.is_file() else None)
+        print("\n".join(sync_lines(fields)))
         for draft in drafts:
             print(f'working copy "{draft["draft"]}" · {draft["change_state"]}'
                   + (" · leased" if draft["leased"] else ""))
