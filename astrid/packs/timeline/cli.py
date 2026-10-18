@@ -136,7 +136,7 @@ def _add_idempotency_key(subparser: argparse.ArgumentParser) -> None:
 
 
 def _add_project_arg(
-    subparser: argparse.ArgumentParser, *, required: bool = True
+    subparser: argparse.ArgumentParser, *, required: bool = False
 ) -> None:
     subparser.add_argument(
         "--project",

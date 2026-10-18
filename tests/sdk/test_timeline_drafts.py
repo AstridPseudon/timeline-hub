@@ -52,10 +52,11 @@ def age(path, seconds=DAYS * 86400 + 1):
 
 def status(capsys, *argv):
     capsys.readouterr()
-    parsed = cli.build_parser(None).parse_args(["status", "t", "--project", "P", *argv])
+    presentation = [] if "--text" in argv or "--human" in argv else ["--json"]
+    parsed = cli.build_parser(None).parse_args(["status", "t", "--project", "P", *presentation, *argv])
     assert parsed.handler(parsed) == 0
     output = capsys.readouterr().out
-    return output if "--text" in argv else json.loads(output)["data"]
+    return output if "--text" in argv or "--human" in argv else json.loads(output)["data"]
 
 
 def test_status_expires_clean_draft_with_local_journal_and_markers_only(drafts, tmp_path, capsys):

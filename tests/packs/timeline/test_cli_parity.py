@@ -1,17 +1,22 @@
 """Features that work on the live line and must stay on the combined trunk."""
 from __future__ import annotations
 
+import argparse
 import json
 
 import pytest
 
 from astrid.packs.timeline import cli as timeline_cli
+from astrid.packs.timeline.cli_parser import CURRENT_PROJECT_VERBS
 from astrid.sdk.contracts import DomainResult, ErrorObject
 
 
 class _Projects:
     def __init__(self, project):
         self._project = project
+
+    def list(self):
+        return DomainResult.success([{"slug": "demo", "name": "Demo"}])
 
     def current(self, **_kwargs):
         if self._project is None:
@@ -152,12 +157,28 @@ VERBS = {
     "check": ["check", "main"],
     "discard": ["discard", "main"],
     "find": ["find", "main", "hello"],
+    "history": ["history", "main"],
     "lines": ["lines", "main"],
     "publish": ["publish", "main", "-m", "why"],
     "redo": ["redo", "main"],
     "status": ["status", "main"],
     "undo": ["undo", "main"],
 }
+
+
+def test_every_timeline_project_flag_is_optional_and_resolves_from_selection() -> None:
+    parser = timeline_cli.build_parser(_Client("demo"))
+
+    def visit(current, command_path=()):
+        for action in current._actions:
+            if isinstance(action, argparse._SubParsersAction):
+                for name, child in action.choices.items():
+                    visit(child, (*command_path, name))
+            elif action.dest == "project":
+                assert action.required is False, "/".join(command_path)
+                assert command_path[0] in CURRENT_PROJECT_VERBS, "/".join(command_path)
+
+    visit(parser)
 
 
 @pytest.mark.parametrize("verb", sorted(VERBS))
@@ -182,6 +203,26 @@ def test_no_current_project_is_a_clear_error(verb, capsys) -> None:
     assert exc.value.code == 2
     err = capsys.readouterr().err
     assert "no current project" in err and "--project" in err
+
+
+def test_ambiguous_current_project_lists_choices_and_refuses_to_guess(capsys) -> None:
+    class TwoProjects(_Projects):
+        def list(self):
+            return DomainResult.success([
+                {"slug": "alpha", "name": "Alpha"},
+                {"slug": "beta", "name": "Beta"},
+            ])
+
+    client = _Client(None)
+    client.projects = TwoProjects(None)
+    with pytest.raises(SystemExit) as exc:
+        timeline_cli.build_parser(client).parse_args(["history", "main"])
+
+    assert exc.value.code == 2
+    err = capsys.readouterr().err
+    assert "history: no --project" in err
+    assert "Choices: alpha (Alpha), beta (Beta)." in err
+    assert "Pass --project P" in err
 
 
 def test_publish_requires_a_message(capsys) -> None:

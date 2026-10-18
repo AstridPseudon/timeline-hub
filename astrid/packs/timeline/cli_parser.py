@@ -10,7 +10,13 @@ from typing import Any
 
 # Verbs whose --project is optional: omitted, it is the workspace runtime's current project.
 CURRENT_PROJECT_VERBS = frozenset(
-    {"lift", "checkout", "apply", "assets", "check", "discard", "find", "lines", "publish", "redo", "status", "undo", "revert", "restore"}
+    {
+        "archive", "apply", "assets", "check", "checkout", "create", "diff", "discard",
+        "duplicate", "edit", "find", "history", "lift", "lines", "list", "log", "publish",
+        "purge-execute", "purge-plan", "recover", "redo", "render", "replace-parent-media",
+        "restructure", "restore", "revert", "script", "shots", "show", "status", "undo",
+        "visualize", "words", "lint",
+    }
 )
 
 
@@ -32,6 +38,35 @@ def resolve_current_project(parsed: argparse.Namespace) -> str | None:
         return None
     ref = row.get("project_id") or row.get("id") or row.get("slug")
     return ref.strip() if isinstance(ref, str) and ref.strip() else None
+
+
+def _project_choices(parsed: argparse.Namespace) -> list[str]:
+    """Return names for a useful no-selection error without assuming a default."""
+    projects = getattr(getattr(parsed, "client", None), "projects", None)
+    list_projects = getattr(projects, "list", None)
+    if not callable(list_projects):
+        return []
+    try:
+        result = list_projects()
+    except Exception:  # noqa: BLE001 - a choice list is optional error context
+        return []
+    if not getattr(result, "ok", False):
+        return []
+    rows = getattr(result, "data", None)
+    if isinstance(rows, tuple) and rows and isinstance(rows[0], list):
+        rows = rows[0]
+    if not isinstance(rows, list):
+        return []
+    choices: list[str] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        name = row.get("slug") or row.get("project_id") or row.get("id")
+        if not isinstance(name, str) or not name.strip():
+            continue
+        display = row.get("name")
+        choices.append(f"{name} ({display})" if isinstance(display, str) and display else name)
+    return choices
 
 
 class TimelinesParser(argparse.ArgumentParser):
@@ -95,9 +130,11 @@ class TimelinesParser(argparse.ArgumentParser):
         if getattr(parsed, "command", None) in CURRENT_PROJECT_VERBS and not getattr(parsed, "project", None) and not getattr(parsed, "file", None):
             project = resolve_current_project(parsed)  # an explicit --project always wins
             if project is None:
+                choices = _project_choices(parsed)
+                available = f" Choices: {', '.join(choices)}." if choices else ""
                 self.error(
-                    f"{parsed.command}: no --project given and no current project is selected "
-                    "(pass --project P, or run: astrid projects select <project>)"
+                    f"{parsed.command}: no --project given and no current project is selected."
+                    f"{available} Pass --project P or run: astrid projects select <project>."
                 )
             parsed.project = project
         return parsed

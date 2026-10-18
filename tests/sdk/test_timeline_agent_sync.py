@@ -193,7 +193,7 @@ def test_apply_file_batch_sync_conflict_and_publication_undo_journey(agents, tmp
 
     ticks = iter([0.0, 1.0])
     watch = parser.parse_args(['status', 't', '--project', 'p', '--draft', 'bob', '--watch',
-                               '--poll-seconds', '1', '--timeout-seconds', '1'])
+                               '--poll-seconds', '1', '--timeout-seconds', '1', '--json'])
     with monkeypatch.context() as watch_patch:
         watch_patch.setattr(cli_sync.time, 'monotonic', lambda: next(ticks))
         assert watch.handler(watch) == 0
@@ -389,7 +389,7 @@ def test_refresh_keeps_explicit_clear_and_opaque_upstream_fields_and_undo(agents
 
 
 @pytest.mark.parametrize('flags', [[], ['--json'], ['--text'], ['--human'], ['--text', '--all'], ['--text', '--render']])
-def test_status_all_presentations_expose_sync_fields(agents, flags, monkeypatch, capsys):
+def test_status_explicit_formats_expose_sync_fields_and_default_is_human(agents, flags, monkeypatch, capsys):
     alice, bob, runtime, client = agents
     edit(alice, x=90)
     alice.publish(client=client)
@@ -397,7 +397,11 @@ def test_status_all_presentations_expose_sync_fields(agents, flags, monkeypatch,
     args = cli.build_parser(client).parse_args(['status', 't', '--project', 'p', '--draft', 'bob', *flags])
     assert args.handler(args) == 0
     text = capsys.readouterr().out
-    if '--text' in flags or '--human' in flags:
+    if '--text' in flags or '--human' in flags or not flags:
+        if not flags:
+            assert text.startswith('timeline_id: t\n')
+            assert not text.lstrip().startswith('{')
+            return
         for label in ('checkout base:', 'observed head:', 'accepted revision: absent', 'unimported external revisions:', 'conflicts: []'):
             assert label in text
     else:
@@ -423,7 +427,7 @@ def test_watch_one_compact_call_per_tick_and_no_closure_or_history(agents, monke
     monkeypatch.setattr(store, '_file_lock', no_lock)
     monkeypatch.setattr(journal, '_locked', no_lock)
     args = cli.build_parser(client).parse_args(['status', 't', '--project', 'p', '--draft', 'bob',
-        '--watch', '--poll-seconds', '1', '--timeout-seconds', '2', *(['--text'] if text else [])])
+        '--watch', '--poll-seconds', '1', '--timeout-seconds', '2', *(['--text'] if text else ['--json'])])
     assert args.handler(args) == 0
     assert runtime.head_reads == 2 and runtime.history_reads == 0 and runtime.reads == []
     assert bytes_now(bob) == before
@@ -471,7 +475,7 @@ def test_compact_api_refuses_closure_fallback_and_empty_unknown_identity():
 
 @pytest.mark.parametrize('flags', [[], ['--json'], ['--text'], ['--human'], ['--text', '--all'], ['--text', '--render']])
 @pytest.mark.parametrize('state', ['absent', 'unknown'])
-def test_status_absent_and_unknown_are_distinct_in_every_format(agents, flags, state, monkeypatch, capsys):
+def test_status_absent_and_unknown_are_distinct_with_human_default(agents, flags, state, monkeypatch, capsys):
     _alice, bob, runtime, client = agents
     if state == 'absent':
         bob.path.unlink()
@@ -481,7 +485,11 @@ def test_status_absent_and_unknown_are_distinct_in_every_format(agents, flags, s
     args = cli.build_parser(client).parse_args(['status', 't', '--project', 'p', '--draft', 'bob', *flags])
     assert args.handler(args) == 0
     output = capsys.readouterr().out
-    if '--text' in flags or '--human' in flags:
+    if '--text' in flags or '--human' in flags or not flags:
+        if not flags:
+            assert output.startswith('timeline_id: t\n')
+            assert not output.lstrip().startswith('{')
+            return
         assert f'accepted revision: {state}' in output
         assert f'unimported external revisions: {state}' in output
         assert f'conflicts: {state}' in output
@@ -535,7 +543,7 @@ def test_refresh_cli_and_incompatible_flags_preserve_draft(agents, capsys):
     edit(bob, y=180)
     alice.publish(client=client)
     parser = cli.build_parser(client)
-    args = parser.parse_args(['checkout', 't', '--project', 'p', '--draft', 'bob', '--refresh'])
+    args = parser.parse_args(['checkout', 't', '--project', 'p', '--draft', 'bob', '--refresh', '--json'])
     assert args.handler(args) == 0
     assert json.loads(capsys.readouterr().out)['data']['status'] == 'refreshed'
     before = bytes_now(bob)
