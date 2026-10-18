@@ -166,7 +166,7 @@ export const Layout: React.FC = () => {
           mainContent
         )}
 
-        {/* The local Astrid app hides the legacy tool-navigation sidebar. The
+        {/* The local Astrid App hides the legacy tool-navigation sidebar. The
             task/status and editor panes remain available to the user. */}
         <>
           <EditorPane />

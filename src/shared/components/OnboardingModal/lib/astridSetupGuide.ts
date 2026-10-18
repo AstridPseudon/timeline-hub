@@ -53,7 +53,7 @@ export const ASTRID_STUDIO_MESSAGE = `Hi Astrid, I've just installed you. Please
 2. If local: ask whether I already use ComfyUI and where my model files are, and point Astrid at my existing model folders (extra_model_paths.yaml) instead of downloading them again. Ask which models I like, offer the local ones your catalog supports, and tell me each download's size before fetching it.
 3. For APIs or RunPod: have me store each key with astrid-credential, never in chat, and tell me roughly what generations cost.
 4. Ask if I have ComfyUI workflows to bring in. Import each with vibecomfy, and wrap simple prompt-driven ones with comfy_wrap so I can use them by name.
-5. Create a first project and make one quick test generation, so I can see it in the Astrid app.
+5. Create a first project and make one quick test generation, so I can see it in the Astrid App.
 
 Then summarise what's set up and ask what I'd like to make.`;
 
@@ -83,7 +83,7 @@ Rules:
 - Keep any existing Astrid install, credentials and agent instructions; don't use --force.
 - Never ask me to paste API keys into chat. When a key is needed, have me enter it locally: astrid-credential set <provider>
 - Leave Astrid's Runtime running when you finish; I'll be using it.
-The install is done when every check in the guide's "Check the complete setup" section passes. Report each briefly, and never mark a blocked or skipped check as passed. The Astrid app watches the Runtime itself and shows me "You're set up", so you don't need to ask me to refresh anything.
+The install is done when every check in the guide's "Check the complete setup" section passes. Report each briefly, and never mark a blocked or skipped check as passed. The Astrid App watches the Runtime itself and shows me "You're set up", so you don't need to ask me to refresh anything.
 
 FINALLY: HAND OVER TO ASTRID
 Astrid has its own agent (the astrid command, which runs on oh-my-pi). Make sure running astrid opens it; if something it needs is missing, install that too. Then run astrid --onboard with me so I can choose the AI model Astrid uses.
