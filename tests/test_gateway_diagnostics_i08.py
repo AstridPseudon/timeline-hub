@@ -11,67 +11,10 @@ import pytest
 from astrid.core.gateway import main
 from astrid.core.gateway.diagnostics import (
     C2_DEADLINE_MS,
-    build_diagnostic,
     collect_diagnostic,
     validate_diagnostic,
 )
 from astrid.runtime_cli import RuntimeResult
-
-
-def _fact(value: object, *, observed: bool = True) -> dict[str, object]:
-    if observed:
-        return {
-            "observed": True,
-            "value": value,
-            "observedAt": "2026-09-24T12:00:00Z",
-            "unavailableReason": None,
-        }
-    return {
-        "observed": False,
-        "value": None,
-        "observedAt": None,
-        "unavailableReason": "fixture-not-observed",
-    }
-
-
-def _action() -> dict[str, object]:
-    return {
-        "commandId": "runtime-up",
-        "arguments": ["--data-root", "/Users/private/runtime-data"],
-        "effects": [
-            "start-stop-local-service",
-            "configure-install",
-            "write-relocate-change-data",
-        ],
-        "authorizationRequired": True,
-        "executable": True,
-    }
-
-
-def test_c2_healthy_pairing_limits_and_local_shared_redaction() -> None:
-    facts = {"workspace": _fact("/Users/private/runtime-data"), "runtime": _fact("ready")}
-    local = build_diagnostic(mode="local", facts=facts, next_actions=[_action()])
-    shared = build_diagnostic(mode="shared", facts=facts, next_actions=[_action()])
-
-    assert validate_diagnostic(local) == []
-    assert validate_diagnostic(shared) == []
-    assert local["facts"]["workspace"]["value"] == "/Users/private/runtime-data"
-    assert shared["facts"]["workspace"]["value"] == "<redacted>"
-    assert shared["nextActions"][0]["arguments"][-1] == "<redacted>"
-    assert shared["nextActions"][0]["executable"] is False
-    assert shared["actionsExecuted"] == []
-    assert shared["limits"] == {"maxEvents": 200, "maxLogBytes": 65536, "maxBundleBytes": 1048576}
-    assert shared["captured"] == {"events": 0, "logBytes": 0, "bundleBytes": 0}
-
-
-def test_c2_rejects_unpaired_failure_and_over_limit_capture() -> None:
-    report = build_diagnostic(mode="local", facts={})
-    report["problemCode"] = "runtime_unavailable"
-    assert any("paired" in error for error in validate_diagnostic(report))
-
-    bounded = build_diagnostic(mode="local", facts={})
-    bounded["captured"]["events"] = bounded["limits"]["maxEvents"] + 1
-    assert any("bounded field events" in error for error in validate_diagnostic(bounded))
 
 
 @dataclass

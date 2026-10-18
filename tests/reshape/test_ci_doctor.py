@@ -2,30 +2,25 @@
 
 from __future__ import annotations
 
-from astrid.core.gateway import diagnostics
+import json
+from pathlib import Path
+
 from scripts.reshape import ci_doctor
 
 
 def _healthy_report() -> dict:
-    return diagnostics.build_diagnostic(mode="local", facts={})
+    return _report("status-healthy-local")
 
 
 def _failed_report() -> dict:
-    return diagnostics.build_diagnostic(
-        mode="local",
-        facts={},
-        problem_code="runtime_unavailable",
-        failure_boundary="runtime-contact",
-        next_actions=[
-            {
-                "commandId": "runtime-up",
-                "arguments": [],
-                "effects": diagnostics.COMMAND_EFFECTS["runtime-up"],
-                "authorizationRequired": True,
-                "executable": True,
-            }
-        ],
-    )
+    return _report("status-unknown-local")
+
+
+def _report(name: str) -> dict:
+    root = Path(__file__).resolve().parents[2]
+    bundle = json.loads((root / "schemas/public-boundary/bundle.json").read_text())
+    fixtures = json.loads((root / bundle["files"]["diagnostics"]).read_text())
+    return next(case["expected"] for case in fixtures["cases"] if case["id"] == name)
 
 
 def test_ci_doctor_accepts_observed_report_shape() -> None:
