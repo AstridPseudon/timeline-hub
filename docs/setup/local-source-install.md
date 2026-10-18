@@ -5,7 +5,7 @@ Bun, the supported OMP agent executable, and FFmpeg with both `ffmpeg` and `ffpr
 media import, including still images. For a Homebrew installation, the media
 prerequisite is `brew install ffmpeg`. This command installs the app from
 prepared prerequisites; it is not a zero-prerequisite machine bootstrap.
-Check out the matching Astrid, Workspace Runtime, and Astrid App app branches and
+Check out the matching Astrid, Astrid Runtime, and Astrid App branches and
 commit any local changes. The installer records all three exact commits and
 refuses dirty checkouts. Select a new installation directory outside all three
 checkouts; an existing installation or workspace is never replaced.

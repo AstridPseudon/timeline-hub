@@ -108,7 +108,7 @@ python3 scripts/gen_editor_extension_catalog.py --check
 
 When a declared editor entry changes, regenerate the projection from the same checkout root with `python3 scripts/gen_editor_extension_catalog.py`; it writes `astrid/packs/rendering/editor/catalog.ts`. The V3 validator checks declarations and declared paths. The generator calls `discover_packs()` rooted at that checkout's `astrid/packs`; setting `ASTRID_PACKS_PATH` does not add packs to this editor projection. Do not edit `editor/catalog.ts` by hand.
 
-From the Astrid App app root, set `ASTRID_CHECKOUT` to the disposable checkout to select it for local preview:
+From the Astrid App root, set `ASTRID_CHECKOUT` to the disposable checkout to select it for local preview:
 
 ```sh
 cd /path/to/astrid-app

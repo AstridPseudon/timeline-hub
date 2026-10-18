@@ -20,7 +20,7 @@ RECONFIGURE_ACTION = "run `astrid-runtime up --profile astrid`"
 INSTALL_RUNTIME_ACTION = (
     "python3 -m pip install 'astrid-runtime @ "
     "git+https://github.com/banodoco/astrid-runtime.git@"
-    "bc74a4b2179de83ace55c35fa6371f10e1e58610'"
+    "3b21334366fa8124f1a7b0d371cc4295821616f5'"
 )
 
 

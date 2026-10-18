@@ -35,11 +35,11 @@ service/protocol and its lifecycle; do not install an order-dependent second
 client owner. I08/I09 must verify the installed import origin and generated
 client/schema digest for the final tuple.
 
-Current publication destinations are the Astrid-agent client repository,
-Astrid Runtime repository, and Astrid App app consumer repository:
+Current publication destinations are the `astrid-agent` client repository,
+`astrid-agent`, `astrid-runtime` and `astrid-app` repositories:
 
 ```text
-https://github.com/peteromallet/astrid-agent.git
+https://github.com/banodoco/astrid-agent.git
 https://github.com/banodoco/astrid-runtime.git
 https://github.com/banodoco/astrid-app.git
 ```
