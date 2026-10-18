@@ -1,3 +1,7 @@
+import { ClipAction } from '../components/TimelineEditor/ClipAction.tsx';
+import { clipStructureInverse, overhangHoldExpectedWrites, shotGroupIdentity } from '../commands/clipStructureHistory.ts';
+import { convertClipOverhangToHold, overhangToHoldGestureCommands } from '../commands/semanticGestures.ts';
+import { convertOverhangToHold } from '../lib/overhang.ts';
 import { ClipContinuousEffectField } from '../components/PropertiesPanel/ClipContinuousEffectField.tsx';
 import { ClipEffectsTab } from '../components/PropertiesPanel/ClipEffectsTab.tsx';
 import { BulkClipPanelBody } from '../components/PropertiesPanel/BulkClipPanelBody.tsx';
@@ -8651,4 +8655,263 @@ describe('W30 typed fallback custody', () => {
     });
     expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]); h.unmount();
   });
+});
+
+
+// W44 exercises the same production action called by both editor cores. Only
+// scene inspection and atomic storage are synthetic; command execution,
+// compilation, receipts, file persistence and inverse replay use the pinned SDK.
+const w44Python = String.raw`
+import copy,json,os,sys,tempfile
+from pathlib import Path
+sdk=Path(os.environ['ASTRID_CHECKOUT'])
+sys.path[:0]=[str(sdk),str(sdk/'tests/sdk')]
+from test_timeline_commit import Port
+from astrid.core.timeline import scene_answers
+from astrid.sdk.timeline.checkout import Checkout
+from astrid.sdk.timeline.commit import RuntimeCommitService
+from astrid.sdk.timeline.identity import retain_cut_reservations
+class Answers:
+ def query_scene(self,*,revision_digest,scene,frames):
+  return [dict(frame=f,coverage='COVERED',content='CONTENT',findings=[],layers=[]) for f in frames]
+scene_answers._client=lambda:Answers()
+Checkout._native_outline_integrity=lambda *args:None
+value=json.load(sys.stdin)
+fixture=json.loads((sdk/'tests/fixtures/timeline_editing/tiny_publishable.json').read_text())
+config=copy.deepcopy(value['config']);clips=config.pop('clips')
+fixture['parent']=dict(config=config,clips=clips,registry=value['registry'])
+retain_cut_reservations(fixture)
+tl=Checkout(fixture);tl.resolve();before=copy.deepcopy(tl.document());document=before
+results=[];documents=[];accepts=[];readbacks=[]
+class Service(RuntimeCommitService):
+ @staticmethod
+ def _load_revision(port,request,revision):return copy.deepcopy(document)
+class CallerPort(Port):
+ def accept(self,prepared):
+  response=super().accept(prepared);result=response['stored_result']
+  if result['status']=='accepted':
+   result.update(accepted_revision_id='parent-r'+str(len(results)+2),accepted_publication_id='pub-parent-r'+str(len(results)+2))
+  self.saved['result']=copy.deepcopy(result)
+  return response
+service=Service()
+for request in value['requests']:
+ port=CallerPort(request);port.current=request['base_revision_id']
+ result=service.commit(request,port)
+ assert result['status'] in {'accepted','no_change','refused','conflict'},result
+ assert service.commit(request,port)==result,'idempotent replay changed receipt'
+ if result['status']=='accepted':document=copy.deepcopy(result['canonical_document'])
+ results.append(result);documents.append(copy.deepcopy(document));accepts.append(len(port.accepts))
+ with tempfile.TemporaryDirectory(dir=os.environ['TMPDIR']) as d:
+  saved=Path(d)/'w44.json';Checkout(document).save(saved,quiet=True)
+  readback=Checkout.load(saved).document()
+  assert json.dumps(readback,sort_keys=True)==json.dumps(document,sort_keys=True)
+  readbacks.append(readback)
+# The App's JSON transport has one number type (10 and 10.0 have identical
+# values). Compare every document key/value; retain raw SDK lexical witnesses
+# separately, rather than pretending this transport preserves float spelling.
+if len(documents)>1:assert documents[1]==before,'whole-document Undo mismatch'
+if len(documents)>2:assert documents[2]==documents[0],'whole-document Redo mismatch'
+later_child_refusal=None
+if len(documents)>1:
+ changed=copy.deepcopy(documents[0]);child=value['requests'][0]['change']['commands'][0]['created'][0].split('/clip:')[1]
+ row=next(row for row in changed['parent']['clips'] if row['id']==child);row['x']=row.get('x',0)+1
+ snapshot=json.dumps(changed,sort_keys=True)
+ try:RuntimeCommitService._apply(changed,value['requests'][1]['change']['commands'])
+ except Exception as error:
+  assert json.dumps(changed,sort_keys=True)==snapshot
+  later_child_refusal=dict(error_type=type(error).__name__,message=str(error),document_unchanged=True)
+ else:raise AssertionError('inverse overwrote a later child edit')
+controls=[]
+if value.get('controls'):
+ call=copy.deepcopy(value['controls'])
+ for variant in ['range','asset','order','owner','missing source','missing asset','ambiguous source','missing group keep','contradictory group keep','missing inventory','missing relation choice','contradictory relation choice','music bed','generated']:
+  doc=copy.deepcopy(before);c=copy.deepcopy(call);source=doc['parent']['clips'][0]
+  if variant=='range':source['to']+=1
+  if variant=='asset':doc['parent']['registry']['assets'][source['asset']]['duration']+=1
+  if variant=='order':doc['parent']['clips'].reverse()
+  if variant=='owner':source['track']='V2'
+  if variant=='missing source':doc['parent']['clips'].pop(0)
+  if variant=='missing asset':del doc['parent']['registry']['assets'][source['asset']]
+  if variant=='ambiguous source':doc['parent']['clips'].append(copy.deepcopy(source))
+  if variant=='missing group keep':c['args']['group_choices']=[]
+  if variant=='contradictory group keep':c['args']['group_choices'][0]['choice']='detach'
+  if variant=='missing inventory':del c['args']['relation_inventory']
+  if variant in ['missing relation choice','contradictory relation choice']:
+   source.setdefault('app',{}).setdefault('astrid',{})['until']='8s'
+   from astrid.sdk.timeline import commands
+   from astrid.sdk.timeline.overhang import _inventory
+   captured=Checkout(copy.deepcopy(doc));states=commands.entity_states(captured)
+   c['expect'][c['select']+'::']=commands.state_at(states,c['select'],'')
+   c['args']['relation_inventory']=_inventory(captured,c['select'])
+   if variant=='contradictory relation choice':c['args']['relation_choices']=[dict(target=c['select'],edge='end',choice='keep')]
+  if variant=='music bed':
+   doc['parent']['config'].setdefault('app',{}).setdefault('astrid',{})['music_beds']={c['select']:dict(source=copy.deepcopy(source))}
+  if variant=='generated':source.setdefault('app',{}).setdefault('astrid',{})['loop']=dict(count=2)
+  snapshot=json.dumps(doc,sort_keys=True)
+  try:
+   RuntimeCommitService._apply(doc,[c])
+  except Exception as error:
+   assert json.dumps(doc,sort_keys=True)==snapshot
+   controls.append(dict(variant=variant,error_type=type(error).__name__,message=str(error),document_unchanged=True))
+  else:raise AssertionError('SDK accepted refusal control '+variant)
+print(json.dumps(dict(before=before,documents=documents,results=results,result=results[-1] if results else None,readbacks=readbacks,accept_counts=accepts,controls=controls,later_child_refusal=later_child_refusal,lexical_redo_equal=json.dumps(documents[2],sort_keys=True)==json.dumps(documents[0],sort_keys=True) if len(documents)>2 else None,source=str(sdk))))
+`;
+
+async function w44Source(initial: TimelineData, requests: CommitRequest[], controls?: import('@/integrations/runtime/generated.ts').EditCommand) {
+  const input = JSON.stringify({ config: initial.config, registry: initial.registry, requests, controls });
+  const digest = createHash('sha256').update(input).digest('hex');
+  w44Evidence(`sdk-input-${digest}`, { input, python: process.env.ASTRID_TEST_PYTHON, sdk: process.env.ASTRID_CHECKOUT });
+  const output = await new Promise<string>((resolve, reject) => {
+    const child = execFile(process.env.ASTRID_TEST_PYTHON!, ['-B', '-c', w44Python], { encoding: 'utf8', env: process.env }, (error, stdout, stderr) => {
+      w44Evidence(`sdk-output-${digest}`, { stdout, stderr, error: error?.message });
+      if (error) reject(new Error(`${error.message}\n${stderr}`)); else resolve(stdout);
+    });
+    child.stdin!.end(input);
+  });
+  return JSON.parse(output) as { before: unknown; documents: unknown[]; readbacks: unknown[]; accept_counts: number[];
+    results: CommitResult[]; result: CommitResult; later_child_refusal?: { document_unchanged: boolean }; controls: Array<{ variant: string; document_unchanged: boolean }> };
+}
+function w44Evidence(name: string, data: unknown) {
+  if (process.env.E_W44_EVIDENCE_DIR) writeFileSync(path.join(process.env.E_W44_EVIDENCE_DIR, `${name}.json`), JSON.stringify(data, null, 2));
+}
+async function w44Data() {
+  const base = await literalLeftData(true);
+  const config = { ...base.config, clips: base.config.clips.map((clip, index) => index ? { ...clip, at: 7 }
+    : { ...clip, to: 12, cropLeft: 0.1, x: 17, app: { opaque: [null, false, { retained: 'W44' }] } }),
+    pinnedShotGroups: [{ shotId: 'w44-pinned', trackId: 'V1', clipIds: ['clip-1'], mode: 'images' as const, name: 'Retained pin' }] };
+  return buildTimelineData(config, { assets: { 'left-source': { ...base.registry.assets['left-source'], media_id: 'sha256:' + 'a'.repeat(64), fps: 30 } } }, undefined, 1, undefined, base.head);
+}
+function w44Conversion(initial: TimelineData) {
+  const asset = initial.registry.assets['left-source'];
+  return convertOverhangToHold({ current: initial, clipId: 'clip-1', sourceDurationSeconds: asset.duration, frameRate: asset.fps })!;
+}
+function w44Choices(initial: TimelineData) {
+  return initial.config.pinnedShotGroups!.map(group => ({ group: shotGroupIdentity(group.shotId, group.trackId), choice: 'keep' as const }));
+}
+
+describe('W44 overhang-to-hold App adapter', () => {
+  it('W44 overhang-to-hold accepted App command has exact receipt and full-document Undo Redo', async () => {
+    const initial = await w44Data(), requests: CommitRequest[] = []; let proof!: Awaited<ReturnType<typeof w44Source>>;
+    const h = await setup(async request => {
+      requests.push(request); proof = await w44Source(initial, requests);
+      return { acceptedResult: proof.result };
+    }, false, initial);
+    const history = mountFadeHistory(h);
+    vi.spyOn(window, 'prompt').mockReturnValue('keep');
+    const view = render(<ClipAction action={initial.rows[0].actions.find(action => action.id === 'clip-1')!} clipMeta={initial.meta['clip-1']}
+      isSelected={true} isPrimary={true} isInPinnedShotGroup={true} selectedClipIds={['clip-1']} isVideoClip={true} clipWidth={180}
+      onSelect={vi.fn()} overhangDurationSeconds={1} overhangEndFraction={0.8}
+      onConvertOverhangToHold={id => convertClipOverhangToHold(h.result.current.dataRef, h.result.current.applyEdit, id)} />, { wrapper: h.wrapper });
+    fireEvent.contextMenu(view.container.querySelector('[data-clip-id="clip-1"]')!);
+    fireEvent.click(await screen.findByText('Hold last frame'));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 60_000 });
+    expect(h.requests).toHaveLength(1); expect(h.compatibilityRequests).toEqual([]);
+    const calls = (h.requests[0].request.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands;
+    expect(calls).toHaveLength(1); const call = calls[0], child = call.created![0];
+    expect(call).toMatchObject({ op: 'clip.overhang-to-hold', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { child, source_duration: 10, frame_rate: 30, out_s: 10, hold_from: 10 - 1 / 30, hold_to: 10, hold_duration: 1, kind: 'hold',
+        relation_inventory: { authored: [], groups: JSON.parse(JSON.stringify(initial.config.pinnedShotGroups)), beds: {} }, group_choices: w44Choices(initial) } });
+    expect(proof.result.status).toBe('accepted'); expect(proof.accept_counts).toEqual([1]);
+    expect(proof.result.change.direct_writes).toEqual(expect.arrayContaining(overhangHoldExpectedWrites(call)!));
+    expect(proof.result.change.direct_writes).toHaveLength(2);
+    expect(proof.result.change.commands[0].created).toEqual([child]);
+    expect(h.getCurrentConfig()).toEqual(appKeyframeParentConfig(proof.documents[0]));
+    expect(h.getCurrentConfig().pinnedShotGroups).toEqual(initial.config.pinnedShotGroups);
+    expect(h.result.current.selectedClipId).toBe(child.slice('parent/clip:'.length));
+    expect(h.result.current.selectedTrackId).toBe('V1');
+    // Tamper only copies of an actual SDK receipt; no synthetic acceptance or
+    // fabricated inverse can qualify a failed direct-write discriminator.
+    const guardResults: Record<string, boolean> = {};
+    for (const mode of ['missing', 'extra', 'duplicate', 'foreign', 'malformed', 'wrong before', 'wrong after', 'missing publication']) {
+      const result = structuredClone(proof.result), writes = result.change.direct_writes;
+      if (mode === 'missing') writes.pop();
+      if (mode === 'extra') writes.push({ ...writes[0], id: 'parent/clip:extra' });
+      if (mode === 'duplicate') writes[1] = structuredClone(writes[0]);
+      if (mode === 'foreign') writes[0].id = 'occurrence:foreign/clip:clip-1';
+      if (mode === 'malformed') writes[0].before = { value: 12 } as never;
+      if (mode === 'wrong before') writes[0].before = { state: 'present', value: 'wrong' };
+      if (mode === 'wrong after') writes[0].after = { state: 'present', value: 'wrong' };
+      if (mode === 'missing publication') result.accepted_publication_id = null;
+      guardResults[mode] = clipStructureInverse(calls, result) === undefined; expect(guardResults[mode]).toBe(true);
+    }
+    await waitFor(() => expect(history.result.current.canUndo).toBe(true)); act(() => history.result.current.undo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 60_000 });
+    await waitFor(() => expect(history.result.current.canRedo).toBe(true)); act(() => history.result.current.redo());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(3), { timeout: 60_000 });
+    expect(proof.documents[1]).toEqual(proof.before); expect(proof.documents[2]).toEqual(proof.documents[0]);
+    expect(proof.readbacks).toEqual(proof.documents); expect(proof.accept_counts).toEqual([1, 1, 1]);
+    expect(proof.later_child_refusal?.document_unchanged).toBe(true);
+    const undoCall = (h.requests[1].request.change as { commands: import('@/integrations/runtime/generated.ts').EditCommand[] }).commands;
+    const missingUndo = structuredClone(proof.results[1]); missingUndo.change.direct_writes.pop();
+    expect(clipStructureInverse(undoCall, missingUndo)).toBeUndefined();
+    expect(clipStructureInverse(calls, { ...proof.results[0], status: 'no_change' })).toBeNull();
+    expect(clipStructureInverse(calls, { ...proof.results[0], status: 'refused' })).toBeUndefined();
+    expect(h.requests).toHaveLength(3); expect(h.compatibilityRequests).toEqual([]);
+    expect(h.requests.slice(1).map(row => (row.request.change as { commands: Array<{ op: string }> }).commands[0].op)).toEqual(['timeline.inverse', 'timeline.inverse']);
+    expect(h.getCurrentConfig()).toEqual(appKeyframeParentConfig(proof.documents[0]));
+    w44Evidence('accepted-history', { requests: h.requests, proof, guardResults, readback: h.getCurrentConfig() });
+    view.unmount(); history.unmount(); h.unmount();
+  }, 180_000);
+
+  it('W44 overhang-to-hold stale source refusal preserves all effects', async () => {
+    const evidence: unknown[] = [];
+    for (const variant of ['range', 'owner', 'asset', 'order', 'head']) {
+      const initial = await w44Data(), h = await setup(undefined, false, initial), history = mountFadeHistory(h);
+      const draft = vi.spyOn(draftStorage, 'saveTimelineDraft'), beforeCommit = vi.fn(); h.eventBus.on('beforeCommit', beforeCommit);
+      const saved = h.getCurrentConfig(), head = h.getCurrentHead();
+      vi.spyOn(window, 'prompt').mockImplementation(() => {
+        const changed = structuredClone(initial);
+        if (variant === 'range') changed.config.clips[0].to = 13;
+        if (variant === 'owner') changed.config.clips[0].track = 'V2';
+        if (variant === 'asset') changed.registry.assets['left-source'].duration = 11;
+        if (variant === 'order') changed.config.clips.reverse();
+        if (variant === 'head') changed.head!.headRevisionId = 'intervening-head';
+        h.result.current.dataRef.current = changed; return 'keep';
+      });
+      act(() => convertClipOverhangToHold(h.result.current.dataRef, h.result.current.applyEdit, 'clip-1'));
+      expect(h.result.current.data).toBe(initial); expect(h.result.current.editSeqRef.current).toBe(0); expect(h.savedSeqRef.current).toBe(0);
+      expect(h.getCurrentHead()).toBe(head); expect(h.getCurrentConfig()).toEqual(saved);
+      expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]); expect(draft).not.toHaveBeenCalled(); expect(beforeCommit).not.toHaveBeenCalled();
+      expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false); expect(h.result.current.persistence.saveStatus).toBe('saved');
+      evidence.push({ variant, requests: h.requests, editSeq: 0, savedSeq: 0, history: false, draftWrites: draft.mock.calls.length, head });
+      draft.mockRestore(); history.unmount(); h.unmount();
+    }
+    w44Evidence('stale-before-effects', evidence);
+  });
+
+  it('W44 overhang-to-hold unsupported relation and group choices refuse without effects', async () => {
+    const initial = await w44Data(), conversion = w44Conversion(initial), call = overhangToHoldGestureCommands(initial, 'clip-1', conversion, w44Choices(initial))![0];
+    const defaults = structuredClone(initial); delete defaults.config.clips[0].clipType; delete defaults.meta['clip-1'].clipType;
+    delete defaults.registry.assets['left-source'].fps;
+    const defaultCall = overhangToHoldGestureCommands(defaults, 'clip-1', w44Conversion(defaults), w44Choices(defaults))![0];
+    expect(defaultCall.args).toMatchObject({ frame_rate: null, hold_from: 10 - 1 / 30 });
+    expect(overhangToHoldGestureCommands(initial, 'clip-1', conversion, [])).toBeUndefined();
+    expect(overhangToHoldGestureCommands(initial, 'clip-1', conversion, [{ ...w44Choices(initial)[0], choice: 'detach' as never }])).toBeUndefined();
+    const local: unknown[] = [];
+    for (const variant of ['no overhang', 'missing source', 'ambiguous source', 'missing asset', 'invalid asset', 'range', 'music bed', 'generated', 'relation', 'occurrence', 'cancel', 'contradictory keep']) {
+      let data = await w44Data();
+      if (variant === 'no overhang') data = await buildTimelineData({ ...data.config, clips: data.config.clips.map((clip, index) => index ? clip : { ...clip, to: 8 }) }, data.registry, undefined, 1, undefined, data.head);
+      if (variant === 'missing source') data.config.clips.shift();
+      if (variant === 'ambiguous source') data.config.clips.push(structuredClone(data.config.clips[0]));
+      if (variant === 'missing asset') delete data.registry.assets['left-source'];
+      if (variant === 'invalid asset') data.registry.assets['left-source'].duration = NaN;
+      if (variant === 'range') data.config.clips[0].from = -1;
+      if (variant === 'music bed') data.config.app = { ...data.config.app, astrid: { music_beds: { 'parent/clip:clip-1': {} } } };
+      if (variant === 'generated') data.config.clips[0].app = { astrid: { loop: { count: 2 } } };
+      if (variant === 'relation') data.config.clips[0].app = { astrid: { until: '8s' } };
+      if (variant === 'occurrence') data.config.clips[0].app = { canonical: { occurrenceId: 'occ-A' } };
+      const h = await setup(undefined, false, data), history = mountFadeHistory(h), beforeCommit = vi.fn(); h.eventBus.on('beforeCommit', beforeCommit);
+      const draft = vi.spyOn(draftStorage, 'saveTimelineDraft');
+      vi.spyOn(window, 'prompt').mockReturnValue(variant === 'cancel' ? null : variant === 'contradictory keep' ? 'detach' : 'keep');
+      act(() => convertClipOverhangToHold(h.result.current.dataRef, h.result.current.applyEdit, 'clip-1'));
+      expect(h.result.current.data).toBe(data); expect(h.result.current.editSeqRef.current).toBe(0); expect(h.savedSeqRef.current).toBe(0);
+      expect(h.requests).toEqual([]); expect(h.compatibilityRequests).toEqual([]); expect(beforeCommit).not.toHaveBeenCalled(); expect(draft).not.toHaveBeenCalled();
+      expect(h.getCurrentHead()).toBe('parent-r1'); expect(history.result.current.canUndo).toBe(false); expect(history.result.current.canRedo).toBe(false);
+      local.push({ variant, requests: h.requests, editSeq: 0, draftWrites: draft.mock.calls.length, history: false });
+      draft.mockRestore(); history.unmount(); h.unmount();
+    }
+    const sdk = await w44Source(initial, [], call);
+    expect(sdk.controls).toHaveLength(14); expect(sdk.controls.every(row => row.document_unchanged)).toBe(true);
+    w44Evidence('refusal-controls', { local, sdk });
+  }, 120_000);
 });

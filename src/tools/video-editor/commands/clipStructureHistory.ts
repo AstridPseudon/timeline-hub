@@ -44,6 +44,113 @@ const wholeSource = (command: EditCommand, id: string): boolean => {
   return state?.state === 'present' && record(state.value) && state.value.id === id.replace(/^.*\/(?:clip|track):/, '');
 };
 
+const holdAppearance = ['opacity', 'x', 'y', 'width', 'height', 'cropTop', 'cropBottom', 'cropLeft', 'cropRight'];
+const positive = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0;
+const equal = (a: unknown, b: unknown) => canonicalJsonStringify(a) === canonicalJsonStringify(b);
+type HoldWrite = { id: string; path: string; before: { state: 'absent' } | { state: 'present'; value: unknown }; after: { state: 'absent' } | { state: 'present'; value: unknown } };
+
+/** Expected authorship, never an inverse or an acceptance receipt. The current
+ * App action has no relation resolver or pinned occurrence allocation surface.
+ * Those owners must refuse before an optimistic edit rather than guess pins.
+ */
+export function overhangHoldExpectedWrites(call: EditCommand | undefined): HoldWrite[] | undefined {
+  if (!call || call.op !== 'clip.overhang-to-hold' || !clipId(call.select)
+    || call.resolved?.length !== 1 || call.resolved[0] !== call.select
+    || call.created?.length !== 1 || !clipId(call.created[0]) || call.args.child !== call.created[0]
+    || call.created[0] === call.select || !record(call.expect)) return undefined;
+  const sid = call.select, child = call.created[0], args = call.args;
+  const captured = call.expect[`${sid}::`], order = call.expect[`${sid}::clip_order`];
+  if (captured?.state !== 'present' || !record(captured.value) || !wholeSource(call, sid)
+    || order?.state !== 'present' || !clipPermutation(order.value) || !order.value.includes(sid)
+    || order.value.includes(child) || call.expect[`${child}::`]?.state !== 'absent') return undefined;
+  const source = captured.value;
+  if (source.clipType != null && source.clipType !== 'media' || typeof source.asset !== 'string' || !source.asset
+    || typeof source.track !== 'string' || !source.track || source.track.includes('/')
+    || typeof source.at !== 'number' || !Number.isFinite(source.at) || source.at < 0
+    || !positive(source.to) || (source.from !== undefined && (typeof source.from !== 'number' || !Number.isFinite(source.from) || source.from < 0))
+    || (source.speed !== undefined && !positive(source.speed)) || (source.hold !== undefined && !positive(source.hold))) return undefined;
+  const app = source.app;
+  if (app !== undefined && !record(app)) return undefined;
+  const intent = { ...app, ...(record(app?.astrid) ? app.astrid : {}) };
+  if (intent.canonical || ['on', 'until', 'for', 'cut', 'sequence', 'sequence_fit', 'segment', 'formulas', 'loop', 'orphan'].some(key => intent[key] != null)) return undefined;
+  const track = call.expect[`parent/track:${source.track}::`];
+  const asset = call.expect[`parent::registry.assets[${JSON.stringify(source.asset)}]`];
+  if (track?.state !== 'present' || !record(track.value) || track.value.id !== source.track
+    || asset?.state !== 'present' || !record(asset.value) || typeof asset.value.type !== 'string'
+    || !asset.value.type.startsWith('video') || !positive(asset.value.duration)
+    || args.source_duration !== asset.value.duration || !equal(args.frame_rate, asset.value.fps ?? null)) return undefined;
+  const fps = positive(asset.value.fps) ? asset.value.fps : 30;
+  const start = source.from ?? 0, speed = source.speed ?? 1;
+  const playable = Math.max(0.05, Math.max(0, asset.value.duration - Number(start)) / Number(speed));
+  const duration = Number(source.hold ?? Number(source.to) - Number(start)) / Number(speed);
+  if (args.kind !== 'hold' || !positive(args.hold_duration) || Number(args.hold_duration) <= 0.0001
+    || !equal(args.out_s, Number(start) + playable * Number(speed))
+    || !equal(args.hold_from, Math.max(0, asset.value.duration - 1 / fps))
+    || args.hold_to !== asset.value.duration || Math.abs(Number(args.hold_duration) - (duration - playable)) > 1e-9
+    || Object.keys(args).some(key => !['child', 'kind', 'source_duration', 'frame_rate', 'out_s', 'hold_from', 'hold_to', 'hold_duration', 'relation_inventory', 'group_choices'].includes(key))) return undefined;
+  const inventory = args.relation_inventory;
+  if (!record(inventory) || Object.keys(inventory).length !== 3 || !equal(inventory.authored, []) || !equal(inventory.beds, {})
+    || !Array.isArray(inventory.groups)) return undefined;
+  const groups: string[] = [];
+  for (const group of inventory.groups) {
+    if (!record(group) || typeof group.shotId !== 'string' || !group.shotId || typeof group.trackId !== 'string' || !group.trackId
+      || !Array.isArray(group.clipIds) || !group.clipIds.includes(source.id)) return undefined;
+    const id = shotGroupIdentity(group.shotId, group.trackId);
+    const capturedGroup = call.expect[`${id}::`];
+    if (groups.includes(id) || capturedGroup?.state !== 'present' || !equal(capturedGroup.value, group)) return undefined;
+    groups.push(id);
+  }
+  if (!equal(args.group_choices, groups.map(group => ({ group, choice: 'keep' })))) return undefined;
+  const payload: Record<string, unknown> = { id: child.slice('parent/clip:'.length), asset: source.asset, track: source.track,
+    clipType: 'hold', at: source.at + playable, from: args.hold_from, to: args.hold_to, hold: args.hold_duration, speed: 1, volume: 0 };
+  for (const key of holdAppearance) if (Object.prototype.hasOwnProperty.call(source, key)) payload[key] = structuredClone(source[key]);
+  const writes: HoldWrite[] = [{ id: child, path: '', before: { state: 'absent' }, after: { state: 'present', value: payload } }];
+  for (const [path, value] of [['to', args.out_s], ...('hold' in source ? [['hold', playable * Number(speed)]] : [])]) {
+    if (!equal(source[String(path)], value)) writes.push({ id: sid, path: String(path), before: { state: 'present', value: source[String(path)] }, after: { state: 'present', value } });
+  }
+  return writes.length > 1 ? writes : undefined;
+}
+
+function isOverhangHoldInverse(call: EditCommand): boolean {
+  if (!isClipStructureInverse(call)) return false;
+  const writes = call.args.writes as Array<Record<string, unknown>>;
+  const roots = writes.filter(write => write.path === '');
+  if (roots.length !== 1 || writes.length < 2 || writes.length > 3) return false;
+  const root = roots[0], payload = [root.before, root.after].find(value => record(value) && value.state === 'present');
+  if (!record(payload) || !record(payload.value) || payload.value.clipType !== 'hold' || payload.value.speed !== 1 || payload.value.volume !== 0
+    || !clipPermutation(root.order) || !root.order.includes(String(root.id))) return false;
+  const fields = writes.filter(write => write !== root);
+  return new Set(fields.map(write => write.id)).size === 1 && fields[0].id !== root.id
+    && root.order.includes(String(fields[0].id))
+    && fields.every(write => ['to', 'hold'].includes(String(write.path)) && record(write.before) && write.before.state === 'present'
+      && record(write.after) && write.after.state === 'present');
+}
+
+function overhangHoldInverse(call: EditCommand, result: { status: string; accepted_publication_id: string | null; change: { direct_writes: unknown[] } }): EditCommand | null | undefined {
+  const forward = overhangHoldExpectedWrites(call);
+  const undo = !forward && isOverhangHoldInverse(call);
+  if (!forward && !undo) return undefined;
+  if (result.status === 'no_change') return null;
+  if (result.status !== 'accepted' || !result.accepted_publication_id || undo && result.accepted_publication_id === call.args.publication) return undefined;
+  const expected = forward ?? call.args.writes as HoldWrite[];
+  const actual = result.change.direct_writes;
+  if (!Array.isArray(actual) || actual.length !== expected.length || new Set(actual.filter(record).map(write => `${write.id}::${write.path}`)).size !== expected.length
+    || actual.some(value => !record(value) || Object.keys(value).some(key => !['id', 'path', 'before', 'after'].includes(key))
+      || !expected.some(write => write.id === value.id && write.path === value.path && equal(write.before, value.before) && equal(write.after, value.after)))) return undefined;
+  const captured = call.expect?.[`${call.select}::clip_order`];
+  const order = forward && captured?.state === 'present' ? [...captured.value as string[]] : undefined;
+  if (order) order.splice(order.indexOf(call.select!) + 1, 0, call.created![0]);
+  const inverse: EditCommand = { op: 'timeline.inverse', select: null, args: { publication: result.accepted_publication_id,
+    writes: actual.map(value => {
+      const write = value as HoldWrite;
+      const prior = undo ? (call.args.writes as Array<Record<string, unknown>>).find(row => row.id === write.id && row.path === write.path) : undefined;
+      return { ...structuredClone(write), before: structuredClone(write.after), after: structuredClone(write.before),
+        ...(write.path === '' ? { order: structuredClone(order ?? prior!.order) } : {}) };
+    }) } };
+  if (!isOverhangHoldInverse(inverse)) return undefined;
+  validateEditCommand(inverse); return inverse;
+}
+
 /** A group delete owns only its explicit clip roots and the stored group row. */
 export function isShotGroupDeletionBatch(commands: readonly EditCommand[]): boolean {
   const command = commands[0];
@@ -107,6 +214,7 @@ export function isSelectedMediaCreation(command: EditCommand | undefined): boole
 /** Existing literal split/clone, selected-media creation and empty-track removal. */
 export function isClipStructureBatch(commands: readonly EditCommand[]): boolean {
   if (!commands.length) return false;
+  if (commands.length === 1 && overhangHoldExpectedWrites(commands[0])) return true;
   if (isShotGroupDeletionBatch(commands)) return true;
   if (commands.length === 1 && isSelectedMediaCreation(commands[0])) return true;
   if (commands.length > 1 && commands[0].op === 'timeline.add' && clipId(commands[0].args.from)) {
@@ -179,6 +287,7 @@ export function isShotGroupDeletionInverse(command: EditCommand | undefined): bo
 export function clipStructureInverse(commands: readonly EditCommand[], result: {
   status: string; accepted_publication_id: string | null; change: { direct_writes: unknown[] };
 }): EditCommand | null | undefined {
+  if (commands.length === 1 && (commands[0].op === 'clip.overhang-to-hold' || isOverhangHoldInverse(commands[0]))) return overhangHoldInverse(commands[0], result);
   const undo = commands.length === 1 && isClipStructureInverse(commands[0]);
   if (!undo && !isClipStructureBatch(commands)) return undefined;
   if (result.status === 'no_change') return null;

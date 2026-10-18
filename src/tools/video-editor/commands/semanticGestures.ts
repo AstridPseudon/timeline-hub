@@ -7,7 +7,10 @@ import { isPositionResetInverse } from './positionReset.ts';
 import { isFadeHistoryInverse } from './fadeHistory.ts';
 import { isTransitionAssignmentBatch } from './transitionAssignmentHistory.ts';
 import { isTrackHistoryInverse } from './trackHistory.ts';
-import { isClipStructureInverse, isShotGroupDeletionBatch } from './clipStructureHistory.ts';
+import { isClipStructureInverse, isShotGroupDeletionBatch, overhangHoldExpectedWrites, shotGroupIdentity } from './clipStructureHistory.ts';
+import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
+import { convertOverhangToHold, type ConvertOverhangToHoldResult } from '../lib/overhang.ts';
+import type { TimelineApplyEdit, TimelineDataRef } from '../hooks/timeline-state-types.ts';
 import { isClipPlacementInverse, isShotGroupTransferBatch } from './clipPlacementHistory.ts';
 import { isTranscriptCaptionInverse } from './transcriptCaptionHistory.ts';
 import { isTranscriptCaptionBatch, transcriptBindTarget } from './transcriptCaptions.ts';
@@ -197,6 +200,76 @@ function originalClip(data: Pick<TimelineData, 'config'>, id: string) {
   const clip = data.config.clips.find((candidate) => candidate.id === id);
   if (!clip) throw new Error(`Gesture clip '${id}' is not in its captured base.`);
   return clip;
+}
+
+type HoldGroupChoice = { group: string; choice: 'keep' };
+
+/** Capture only an exact ordinary owner. The row conversion cannot allocate a
+ * child in a pinned occurrence or resolve authored inbound timing relations. */
+export function overhangToHoldGestureCommands(data: TimelineData, id: string, conversion: ConvertOverhangToHoldResult,
+  groupChoices: readonly HoldGroupChoice[]): EditCommand[] | undefined {
+  const target = gestureTarget(data, id);
+  if (!target || id.includes('/') || occurrenceIdentityFor(data, id) || data.config.clips.some(clip => clip.app?.canonical)
+    || new Set(data.config.clips.map(clip => clip.id)).size !== data.config.clips.length
+    || data.rows.flatMap(row => row.actions).filter(action => action.id === id).length !== 1) return undefined;
+  const source = gestureSource(data, id), meta = data.meta[id];
+  const asset = source.asset && data.registry.assets[source.asset];
+  const actions = data.rows.flatMap(row => row.actions).filter(action => action.id === id);
+  const track = data.config.tracks?.filter(track => track.id === source.track);
+  if (!meta || meta.asset !== source.asset || meta.track !== source.track || !asset || !track || track.length !== 1
+    || actions[0].start !== source.at || Math.abs(actions[0].end - actions[0].start - getClipTimelineDuration(source)) > 1e-9
+    || ['from', 'to', 'speed', 'hold', 'clipType', ...['opacity', 'x', 'y', 'width', 'height', 'cropTop', 'cropBottom', 'cropLeft', 'cropRight']]
+      .some(key => canonicalJsonStringify(meta[key as keyof ClipMeta]) !== canonicalJsonStringify(source[key as keyof typeof source]))) return undefined;
+  // An empty inventory is defensible only without any authored relation in the
+  // captured closure. Never approximate the SDK's transitive anchor resolver.
+  if (data.config.clips.some(clip => {
+    const intent = { ...clip.app, ...(clip.app?.astrid as Record<string, unknown> | undefined) };
+    return ['on', 'until', 'for', 'cut', 'sequence', 'sequence_fit', 'segment', 'formulas', 'loop', 'orphan'].some(key => intent[key] != null);
+  })) return undefined;
+  const beds = (data.config.app?.astrid as Record<string, unknown> | undefined)?.music_beds;
+  if (beds != null && (!isRecord(beds) || Object.keys(beds).length)) return undefined;
+  const groups = data.config.pinnedShotGroups?.filter(group => group.clipIds.includes(id)) ?? [];
+  if (new Set((data.config.pinnedShotGroups ?? []).map(group => shotGroupIdentity(group.shotId, group.trackId))).size !== (data.config.pinnedShotGroups?.length ?? 0)) return undefined;
+  const exact = convertOverhangToHold({ current: data, clipId: id, sourceDurationSeconds: asset.duration, frameRate: asset.fps });
+  if (!exact || canonicalJsonStringify(exact) !== canonicalJsonStringify(conversion)) return undefined;
+  const sid = scopedGestureClipId(target), child = scopedGestureClipId(conversion.holdClipId), hold = conversion.metaUpdates[conversion.holdClipId];
+  if (data.config.clips.some(clip => clip.id === conversion.holdClipId) || !hold) return undefined;
+  const call: EditCommand = { op: 'clip.overhang-to-hold', select: sid, resolved: [sid], created: [child], args: {
+    child, source_duration: asset.duration, frame_rate: asset.fps ?? null, out_s: conversion.metaUpdates[id].to,
+    kind: 'hold', hold_from: hold.from, hold_to: hold.to, hold_duration: hold.hold,
+    relation_inventory: { authored: [], groups: structuredClone(groups), beds: {} }, group_choices: structuredClone([...groupChoices]),
+  }, expect: {
+    [`${sid}::`]: state(source, true), [`${sid}::clip_order`]: state(data.config.clips.map(clip => scopedGestureClipId(clip.id)), true),
+    [`parent/track:${source.track}::`]: state(track[0], true),
+    [`parent::registry.assets[${JSON.stringify(source.asset)}]`]: state(asset, true), [`${child}::`]: state(undefined, false),
+    ...Object.fromEntries(groups.map(group => [`${shotGroupIdentity(group.shotId, group.trackId)}::`, state(group, true)])),
+  } };
+  return overhangHoldExpectedWrites(call) ? [call] : undefined;
+}
+
+/** Both editor callbacks use this same action and the existing rows/history path. */
+export function convertClipOverhangToHold(dataRef: TimelineDataRef, applyEdit: TimelineApplyEdit, clipId: string): void {
+  const current = dataRef.current;
+  if (!current) return;
+  const meta = current.meta[clipId], asset = meta?.asset && current.registry.assets[meta.asset];
+  if (!meta || !asset || !asset.type?.startsWith('video') || typeof asset.duration !== 'number') return;
+  const conversion = convertOverhangToHold({ current, clipId, sourceDurationSeconds: asset.duration, frameRate: asset.fps });
+  if (!conversion) return;
+  const groups = current.config.pinnedShotGroups?.filter(group => group.clipIds.includes(clipId)) ?? [];
+  const choices: HoldGroupChoice[] = groups.map(group => ({ group: shotGroupIdentity(group.shotId, group.trackId), choice: 'keep' }));
+  // Qualify before prompting; an unsupported source must have no side effects.
+  const commands = overhangToHoldGestureCommands(current, clipId, conversion, choices);
+  if (!commands) return;
+  const capture = () => canonicalJsonStringify({ config: current.config, registry: current.registry, rows: current.rows,
+    meta: current.meta, order: current.clipOrder, head: current.head, output: current.output });
+  const before = capture();
+  for (const group of groups) {
+    if (window.prompt(`Keep pinned group ${group.shotId} unchanged while holding the last frame? Enter keep to continue. Cancel leaves everything unchanged.`, 'keep') !== 'keep') return;
+  }
+  if (dataRef.current !== current || capture() !== before) return;
+  applyEdit({ type: 'rows', rows: conversion.rows, metaUpdates: conversion.metaUpdates, clipOrderOverride: conversion.clipOrderOverride }, {
+    selectedClipId: conversion.holdClipId, selectedTrackId: conversion.trackId, semantic: true, editCommands: commands,
+  });
 }
 
 export type FadeGestureArgs = {

@@ -1,3 +1,4 @@
+import { convertClipOverhangToHold } from '../../commands/semanticGestures.ts';
 import { isManualTextClip } from '../../commands/manualText.ts';
 import { trimClipToMediaEnd } from '../../lib/trim-to-media-end.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
@@ -37,7 +38,6 @@ import { useStaleVariants } from '@/tools/video-editor/hooks/useStaleVariants.ts
 import { useAddVariantAsGeneration } from '@/tools/video-editor/hooks/useAddVariantAsGeneration.ts';
 import { useTimelineScale } from '@/tools/video-editor/hooks/useTimelineScale.ts';
 import {
-  convertOverhangToHold,
   detectClipOverhang,
 } from '@/tools/video-editor/lib/overhang.ts';
 import { insertEffectLayerAt } from '@/tools/video-editor/lib/external-drop-utils.ts';
@@ -653,38 +653,7 @@ function TimelineEditorCoreComponent({
   }, [applyEdit, dataRef]);
 
   const handleConvertClipOverhangToHold = useCallback((clipId: string) => {
-    const current = dataRef.current;
-    if (!current) {
-      return;
-    }
-
-    const clipMeta = current.meta[clipId];
-    const assetKey = clipMeta?.asset;
-    const assetEntry = assetKey ? current.registry.assets[assetKey] : undefined;
-    if (!clipMeta || !assetEntry?.type?.startsWith('video') || typeof assetEntry.duration !== 'number') {
-      return;
-    }
-
-    const conversion = convertOverhangToHold({
-      current,
-      clipId,
-      sourceDurationSeconds: assetEntry.duration,
-      frameRate: assetEntry.fps,
-    });
-    if (!conversion) {
-      return;
-    }
-
-    applyEdit({
-      type: 'rows',
-      rows: conversion.rows,
-      metaUpdates: conversion.metaUpdates,
-      clipOrderOverride: conversion.clipOrderOverride,
-    }, {
-      selectedClipId: conversion.holdClipId,
-      selectedTrackId: conversion.trackId,
-      semantic: true,
-    });
+    convertClipOverhangToHold(dataRef, applyEdit, clipId);
   }, [applyEdit, dataRef]);
 
   const shouldStackOverlappingActions = useCallback((action: TimelineAction) => {
