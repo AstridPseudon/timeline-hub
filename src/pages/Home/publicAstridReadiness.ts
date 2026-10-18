@@ -126,5 +126,10 @@ function withSignal(
     [`${signal}Fallback`]: fallback,
     lastEvent: signal,
   } as PublicAstridReadiness;
-  return { ...next, phase: phaseBeforePresentation(next) };
+  return {
+    ...next,
+    phase: state.phase === 'presenting' || state.phase === 'settled'
+      ? state.phase
+      : phaseBeforePresentation(next),
+  };
 }
