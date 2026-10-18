@@ -1227,7 +1227,7 @@ def test_candidate_video_retains_original_working_artifact_and_rejects_wrong_aut
 
 @pytest.mark.integration  # imports runtime_protocol from the sibling Runtime checkout
 @pytest.mark.parametrize("base_policy", ["clean", "historical", "review", "profile", "canvas"])
-def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(tmp_path, monkeypatch, base_policy):
+def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(tmp_path, monkeypatch, request, base_policy):
     """Only transport/kernel are fake: real admission, wait and DTO projection.
 
     Retained T410 bytes/descriptor reconstruct the output boundary. Its caller
@@ -1263,7 +1263,6 @@ def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(
     candidate["parent"]["config"]["clips"][0]["params"]["content"] = "frozen-WORKING"
     candidate["parent"]["clips"] = deepcopy(candidate["parent"]["config"]["clips"])
     produced = {}
-    import sqlite3
     from runtime_protocol.service import RuntimeService
     def result(value): return SimpleNamespace(ok=True, data=value)
 
@@ -1274,19 +1273,11 @@ def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(
             # Exact T412 retained public projection: run.completed, task.succeeded.
             # RuntimeService.run and _task_resource remain real; only transport
             # storage/kernel admission are fixture-owned.
-            connection = sqlite3.connect(":memory:")
-            connection.row_factory = sqlite3.Row
-            connection.execute("CREATE TABLE runs (id TEXT, project_id TEXT, capability TEXT, status TEXT, spec_json TEXT)")
-            connection.execute("CREATE TABLE tasks (id TEXT, run_id TEXT, created_at TEXT)")
-            connection.execute("CREATE TABLE events (id INTEGER, task_id TEXT, kind TEXT, payload_json TEXT)")
             original_runs = [("base-run", "base-task"), ("candidate", "candidate-task")]
             if base_policy == "historical": original_runs.append(("newer-run", "newer-task"))
-            for run_id, task_id in original_runs:
-                connection.execute("INSERT INTO runs VALUES (?,?,?,?,?)", (run_id, "p", "rendering.render", "completed", "{}"))
-                connection.execute("INSERT INTO tasks VALUES (?,?,?)", (task_id, run_id, "fixture"))
+            store = _seed_terminal_projection_runtime(tmp_path / "runtime-realm", "p", original_runs, request)
             self.public_service = RuntimeService.__new__(RuntimeService)
-            self.public_service.store = SimpleNamespace(conn=connection,
-                execution_binding=lambda task: None, _current_runtime_epoch=lambda: 1)
+            self.public_service.store = store
             self.projects = SimpleNamespace(show=lambda ref: result(self.get_project(ref)))
             self.timelines = SimpleNamespace(list=lambda project, **kwargs: result(self.list_timelines(project)),
                 inspect=lambda project, timeline, **kwargs: result({"representation": "canonical_head", "is_current_head": True, "revision_id": "saved-revision", "timeline_id": "tl"}))
@@ -1604,10 +1595,9 @@ def test_normal_candidate_preview_keeps_review_default_and_allows_verification_o
 
 @pytest.mark.integration  # imports runtime_protocol from the sibling Runtime checkout
 @pytest.mark.parametrize("failure", [None, "wrong_run", "wrong_snapshot", "wrong_project", "wrong_task", "wrong_task_digest", "pending_task", "preview", "missing_ref", "digest", "bytes", "no_media"])
-def test_base_video_materializes_only_exact_managed_media_through_real_public_client(tmp_path, failure):
+def test_base_video_materializes_only_exact_managed_media_through_real_public_client(tmp_path, request, failure):
     """Real SDK public families normalize only transport-owned Runtime rows/CAS."""
     import hashlib
-    import sqlite3
     from copy import deepcopy
     from types import SimpleNamespace
     from runtime_protocol.service import RuntimeService
@@ -1619,15 +1609,9 @@ def test_base_video_materializes_only_exact_managed_media_through_real_public_cl
     snapshot = {"render_run_id": "base-run", "video_digest": digest, "metadata": {"selection": "explicit_current_render"}}
     authority = {"render_run_id": "base-run", "project_id": "project", "include_media": True,
                  "filmstrip_snapshot": snapshot, "video_digest": digest, "video_object_id": digest}
-    connection = sqlite3.connect(":memory:")
-    connection.row_factory = sqlite3.Row
-    connection.execute("CREATE TABLE runs (id TEXT, project_id TEXT, capability TEXT, status TEXT, spec_json TEXT)")
-    connection.execute("CREATE TABLE tasks (id TEXT, run_id TEXT, created_at TEXT)")
-    connection.execute("CREATE TABLE events (id INTEGER, task_id TEXT, kind TEXT, payload_json TEXT)")
-    connection.execute("INSERT INTO runs VALUES (?,?,?,?,?)", ("base-run", "project", "rendering.render", "completed", "{}"))
-    connection.execute("INSERT INTO tasks VALUES (?,?,?)", ("base-task", "base-run", "fixture"))
+    store = _seed_terminal_projection_runtime(tmp_path / "runtime-realm", "project", [("base-run", "base-task")], request)
     producer = RuntimeService.__new__(RuntimeService)
-    producer.store = SimpleNamespace(conn=connection, execution_binding=lambda task: None, _current_runtime_epoch=lambda: 1)
+    producer.store = store
     raw = {"id": "base-task", "status": "completed", "capability": "rendering.render", "spec": {}, "result": {"outputs": [{"name": "video", "digest": digest}]},
            "created_at": "2026-10-13T18:10:25.451Z", "updated_at": "2026-10-13T18:10:25.451Z"}
     task = producer._task_resource({"task": raw, "run": {"id": "base-run", "project_id": "project"}})
@@ -1664,4 +1648,33 @@ def test_base_video_materializes_only_exact_managed_media_through_real_public_cl
         assert video.parent.parent == tmp_path
         assert receipt == {"render_run_id": "base-run", "digest": digest, "selection": "explicit_current_render", "verified": True}
     assert authority == before
-    connection.close()
+
+
+def _seed_terminal_projection_runtime(root, project_id, run_tasks, request):
+    """Build a real Runtime store containing only terminal projection rows."""
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.util import now
+
+    store = RealmStore.initialize(root)
+    request.addfinalizer(store.close)
+    with store._transaction():
+        realm_id = store.conn.execute("SELECT id FROM realm").fetchone()[0]
+        timestamp = now()
+        store.conn.execute(
+            "INSERT INTO projects (id, realm_id, slug, name, metadata_json, version, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,1,?,?)",
+            (project_id, realm_id, project_id, project_id, "{}", timestamp, timestamp),
+        )
+        spec_digest = store._store_spec({})
+        for run_id, task_id in run_tasks:
+            store.conn.execute(
+                "INSERT INTO runs (id, project_id, capability, spec_digest, status, created_at, updated_at) "
+                "VALUES (?,?,?,?,?,?,?)",
+                (run_id, project_id, "rendering.render", spec_digest, "completed", timestamp, timestamp),
+            )
+            store.conn.execute(
+                "INSERT INTO tasks (id, run_id, capability, spec_digest, status, created_at, updated_at) "
+                "VALUES (?,?,?,?,?,?,?)",
+                (task_id, run_id, "rendering.render", spec_digest, "completed", timestamp, timestamp),
+            )
+    return store
