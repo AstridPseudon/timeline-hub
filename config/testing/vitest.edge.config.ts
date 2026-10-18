@@ -3,8 +3,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createEdgeVitestTestConfig } from './vitest.edge.shared';
 import { buildEdgeAliasMap } from './vitest.edge.aliases';
+import { resolveAstridSource } from '../vite/astridSource';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const astridSource = resolveAstridSource();
 
 const EDGE_UNIT_INCLUDE = [
   'supabase/functions/_shared/**/*.test.ts',
@@ -63,6 +65,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '../../src'),
+      ...(astridSource ? { '@astrid': astridSource.sourceRoot } : {}),
       ...buildEdgeAliasMap(MOCKS_DIR),
       [STRIPE_ESM_SPECIFIER]: path.resolve(
         MOCKS_DIR,
