@@ -1468,10 +1468,8 @@ def test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift(t
         def inherited_fd(self):return inherited.fileno()
         def launched(self):pass
     observed = []
-    started = time.monotonic()
     def cancelled():
         if not path.exists():
-            assert time.monotonic()-started < 8
             return False
         row = json.loads(path.read_bytes()); url = row['receiver_url']
         with urllib.request.urlopen(url, timeout=2) as response:

@@ -487,11 +487,15 @@ def test_a_command_that_exits_nonzero_is_a_failure_not_a_hang(tmp_path: Path) ->
 
 def test_a_command_that_never_exits_is_hung_at_the_ceiling(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setitem(journey.HANG_SECONDS, "adopt", 0.5)
-    kind, summary = _outcome(tmp_path, ["sleep", "30"])
+    child_pid = tmp_path / "child.pid"
+    code = "import os, pathlib, time; pathlib.Path(%r).write_text(str(os.getpid())); time.sleep(30)" % str(child_pid)
+    kind, summary = _outcome(tmp_path, [sys.executable, "-c", code])
     assert (kind, summary["ok"], summary["outcome"]) == ("hung", False, "hung")
     assert "hung (no exit after 0.5s)" in summary["error"]
     assert "FAIL (hung)" in (tmp_path / "summary.txt").read_text()
-    assert summary["phase_seconds"]["adopt"] < 10  # stopped at the ceiling, not after the 30 s sleep
+    child = int(child_pid.read_text())
+    with pytest.raises(ProcessLookupError):
+        os.kill(child, 0)
 
 
 # -- 5 (cli). options ----------------------------------------------------------------------------------

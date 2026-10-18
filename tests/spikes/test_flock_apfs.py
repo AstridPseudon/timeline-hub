@@ -136,51 +136,58 @@ def test_flock_exclusive_prevents_interleaved_writes() -> None:
 
 
 def test_flock_blocks_until_release() -> None:
-    """First process holds lock 0.5s, second blocks, assert second proceeds only after release."""
+    """A contender sees the held lock, then acquires only after the holder releases it."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as tf:
         events_path = tf.name
 
+    p1 = p2 = None
+    release = None
     try:
         ctx = multiprocessing.get_context("spawn")
-        barrier = ctx.Barrier(2)
-        result_queue: multiprocessing.Queue = ctx.Queue()
-
-        # Worker 1 holds the lock for 0.5s
-        p1 = ctx.Process(
-            target=_append_worker,
-            args=(events_path, barrier, result_queue, 1, 1, 0.5),
-        )
-        # Worker 2 tries to acquire (blocking)
-        p2 = ctx.Process(
-            target=_append_worker,
-            args=(events_path, barrier, result_queue, 2, 1, 0.0),
-        )
-
-        start = time.time()
+        held, attempted, release, acquired = (ctx.Event() for _ in range(4))
+        p1 = ctx.Process(target=_flock_event_holder, args=(events_path, held, release))
+        p2 = ctx.Process(target=_flock_event_contender, args=(events_path, held, attempted, acquired))
         p1.start()
         p2.start()
-
+        assert attempted.wait(10), "contender did not observe the held lock"
+        assert not acquired.is_set(), "contender acquired while the holder owned the lock"
+        release.set()
+        assert acquired.wait(10), "contender did not acquire after release"
         p1.join(timeout=10)
         p2.join(timeout=10)
-
-        elapsed = time.time() - start
-
-        # Collect results
-        results = []
-        while not result_queue.empty():
-            results.append(result_queue.get_nowait())
-
-        assert len(results) == 2, f"Expected 2 results, got {len(results)}"
-        assert all(r["status"] == "ok" for r in results), f"Some workers failed: {results}"
-
-        # P2 should have been blocked until P1 released (elapsed >= 0.5s for both)
-        # P1 holds for 0.5s, P2 blocks, so total wall time >= 0.5s
-        assert elapsed >= 0.4, (
-            f"Expected elapsed time >= 0.4s (blocking behavior), got {elapsed:.2f}s. "
-            "If P2 didn't block, flock blocking semantics may be broken."
-        )
+        assert p1.exitcode == 0 and p2.exitcode == 0
     finally:
+        if release is not None:
+            release.set()
+        for process in (p1, p2):
+            if process is not None:
+                process.join(timeout=5)
+                if process.is_alive():
+                    process.terminate()
+                    process.join(timeout=5)
         os.unlink(events_path)
+
+
+def _flock_event_holder(path: str, held, release) -> None:
+    with open(path, "a", encoding="utf-8") as fh:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+        held.set()
+        assert release.wait(10)
+        fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+
+
+def _flock_event_contender(path: str, held, attempted, acquired) -> None:
+    assert held.wait(10)
+    with open(path, "a", encoding="utf-8") as fh:
+        try:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            attempted.set()
+        else:
+            raise AssertionError("nonblocking flock succeeded while holder owned lock")
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+        acquired.set()
+        fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
 
 
 def _flock_holder(path: str, barrier: multiprocessing.Barrier, nb_queue: multiprocessing.Queue) -> None:
