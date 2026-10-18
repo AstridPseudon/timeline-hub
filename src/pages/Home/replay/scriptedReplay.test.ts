@@ -15,7 +15,7 @@ import {
 
 const fixturePath = path.resolve(
   process.cwd(),
-  '../../runs/astrid-2026-09-25/evidence/C01/light-study-v1/scripted-example.json',
+  '../../scripts/astrid-landing/offline-verifier/fixtures/light-study-v1/scripted-example.json',
 );
 const script = JSON.parse(readFileSync(fixturePath, 'utf8')) as ScriptedReplayScript;
 
