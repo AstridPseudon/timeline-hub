@@ -36,13 +36,18 @@ LISTING = "\n".join([
     "  106     1 /usr/local/bin/node " + f"{SERVE}/remotion/x.mjs --out-dir /Users/me/Documents/bundle-0123456789abcdef.tmp-1",
     "  107     1 /bin/sleep 600",
     "  108     1 " + f"{DEV}/remotion/node_modules/.remotion/chrome-headless-shell/x/chrome-headless-shell",
-    "  109     1 " + os.path.expanduser("~/Library/Caches/astrid-remotion-browser/9.9.9/chrome-headless-shell/mac-arm64/x/chrome-headless-shell") + " about:blank",
-    "  110   100 " + os.path.expanduser("~/Library/Caches/astrid-remotion-browser/9.9.9/chrome-headless-shell/mac-arm64/x/chrome-headless-shell") + " about:blank",
+    "  109     1 /__TEST_HOME__/Library/Caches/astrid-remotion-browser/9.9.9/chrome-headless-shell/mac-arm64/x/chrome-headless-shell about:blank",
+    "  110   100 /__TEST_HOME__/Library/Caches/astrid-remotion-browser/9.9.9/chrome-headless-shell/mac-arm64/x/chrome-headless-shell about:blank",
 ])
 
 
+def _listing() -> str:
+    """Build the shared-browser paths under the currently selected test HOME."""
+    return LISTING.replace("/__TEST_HOME__", os.path.expanduser("~"))
+
+
 def test_finder_reports_only_orphaned_astrid_chromium_and_bundles() -> None:
-    found = find_orphan_render_processes(LISTING, checkouts=CHECKOUTS)
+    found = find_orphan_render_processes(_listing(), checkouts=CHECKOUTS)
     assert [pid for pid, _ in found] == [100, 104, 108, 109]
 
 
@@ -50,7 +55,7 @@ def test_reaper_signals_exact_pids_with_sigkill_and_nothing_else() -> None:
     killed: list[tuple[int, int]] = []
     reaped = reap_orphan_render_processes(
         checkouts=CHECKOUTS,
-        list_fn=lambda: LISTING,
+        list_fn=_listing,
         kill_fn=lambda pid, sig: killed.append((pid, sig)),
     )
     assert killed == [(100, signal.SIGKILL), (104, signal.SIGKILL), (108, signal.SIGKILL), (109, signal.SIGKILL)]
@@ -59,12 +64,13 @@ def test_reaper_signals_exact_pids_with_sigkill_and_nothing_else() -> None:
 
 def test_reaper_skips_a_pid_whose_command_changed_before_the_signal() -> None:
     # The first read finds the candidates; from then on pid 100 belongs to another process.
-    reads = [LISTING]
+    listing = _listing()
+    reads = [listing]
 
     def list_fn() -> str:
         if reads:
             return reads.pop()
-        return LISTING.replace(CHROME, "/usr/bin/reused-pid-process")
+        return listing.replace(CHROME, "/usr/bin/reused-pid-process")
 
     killed: list[int] = []
     reaped = reap_orphan_render_processes(

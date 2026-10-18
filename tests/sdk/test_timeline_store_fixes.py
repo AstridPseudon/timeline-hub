@@ -23,7 +23,8 @@ def test_drafts_root_follows_the_env_override(monkeypatch, tmp_path):
 
 
 def test_drafts_root_without_env_is_the_sdk_data_root_never_home_astrid(monkeypatch, tmp_path):
-    home = tmp_path / "home"
+    # The suite fixture already creates tmp_path / "home" for HOME isolation.
+    home = tmp_path / "synthetic-home"
     home.mkdir()
     monkeypatch.delenv("ASTRID_RUNTIME_DATA_ROOT", raising=False)
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
