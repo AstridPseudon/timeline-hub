@@ -136,8 +136,9 @@ class State:
 
     def collection(self, owner, kind):
         config = self.config(owner)
-        if owner == "parent" and kind == "clip" and "clips" in self.bundle["parent"]:
-            return self.bundle["parent"]["clips"]
+        if owner == "parent" and kind == "clip":
+            parent = self.bundle["parent"]
+            return parent.get("clips") or config.get("clips", parent.get("clips", []))
         return config.get(kind + "s", [])
 
     def entity(self, ref, *, optional=False):
@@ -156,7 +157,17 @@ class State:
         if ref.endswith('/source'):
             return self.config(ref.removesuffix('/source'))
         if ref.endswith('/shot'):
-            return {"shot_id": self.occurrence(ref.removesuffix('/shot'))["shot_id"]}
+            owner = ref.removesuffix('/shot')
+            row = self.occurrence(owner)
+            source = self.bundle['source_mapping']['shots'][row['shot_id']]['shot_id']
+            from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+            identity = _authoring_shot_id(
+                self.bundle['project_id'], self.bundle['timeline_id'], row['occurrence_id'],
+                source, shared=True)
+            if row['shot_id'] not in (source, identity):
+                raise CommandError('occurrence authoring owner changed', kind='identity_conflict',
+                                   ref=owner, path=['shot_id'])
+            return {"shot_id": source}
         if ref.startswith("occurrence:") and '/' not in ref:
             return self.occurrence(ref)
         raise CommandError(f"unsupported entity reference {ref!r}")
@@ -173,6 +184,22 @@ class State:
             else:
                 return copy.deepcopy(ABSENT)
         return present(value)
+
+    def matches(self, ref, path, expected):
+        actual = self.get(ref, path)
+        if equal(actual, expected):
+            return True
+        if (ref.endswith('/shot') and list(path) == ['shot_id']
+                and expected['state'] == actual['state'] == 'present'
+                and isinstance(expected.get('value'), str)):
+            from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+            # The only admitted source change is this occurrence's exact main
+            # materialization of the original source, never a prefix heuristic.
+            return actual['value'] == _authoring_shot_id(
+                self.bundle['project_id'], self.bundle['timeline_id'],
+                self.occurrence(ref.removesuffix('/shot'))['occurrence_id'],
+                expected['value'], shared=True)
+        return False
 
     def set(self, ref, path, state):
         if not path:

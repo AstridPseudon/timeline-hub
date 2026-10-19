@@ -87,7 +87,7 @@ class Recording:
             raise CommandError('structural create requires an authored entity collection', ref=owner)
         if owner != 'parent':
             self.read(owner, ['occurrence_id'])
-            self.read(owner, ['shot_id'])
+            self.read(owner + '/shot', ['shot_id'])
             self.bind('create.owner', owner)
         self.select('track.create', owner)
         ref = owner + '/' + kind + ':' + row['id']
@@ -97,6 +97,30 @@ class Recording:
         self.write(ref, [], row)
         self.record['created'].append({"ref": ref, "kind": kind, "owner": owner})
         return ref
+
+    def compile_inputs(self):
+        # The compiler retains this immutable input closure. These pins do not
+        # imply that the move evaluated an anchor or any document settings.
+        mapping = self.state.bundle.get('source_mapping', {})
+        retained = mapping.get('_runtime_document', {}).get('dependency_manifest', {}).get('documents', [])
+        from astrid.core.timeline.authoring_bundle import _digest
+        for capture in mapping.get('pinned_documents', []):
+            pin = capture['pin']
+            if pin in retained:
+                kind = 'transcript' if capture['document']['kind'] == 'media.transcript' else 'source'
+                self.dependency('compile.document:' + _digest(pin), kind, pin)
+
+    def compile_mirrors(self):
+        parent = self.state.bundle['parent']
+        config = parent.get('config', {})
+        if parent.get('clips') and config.get('clips'):
+            before = self.state.get('parent', ['config', 'clips'])
+            after = present(parent['clips'])
+            if not equal(before, after):
+                self.record['derived_writes'].append({
+                    "ref": "parent", "path": ['config', 'clips'], "before": before,
+                    "after": after, "cause": self.record['ordinal']})
+                self.state.set('parent', ['config', 'clips'], after)
 
     def finish(self, *, capture=False):
         command = self.record['command']
@@ -117,6 +141,6 @@ class Recording:
 
 def guard(state, ref, path, expected, *, kind='dependency_changed'):
     actual = state.get(ref, path)
-    if not equal(actual, expected):
+    if not state.matches(ref, path, expected):
         raise CommandError("original authored guard changed", kind=kind, ref=ref, path=path,
                            base=expected, theirs=actual)

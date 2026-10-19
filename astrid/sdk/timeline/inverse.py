@@ -52,7 +52,10 @@ def check_intervening(records, intervening_records, *, include_reads=True):
             raise CommandError('complete accepted recorder history is required', kind='history_unavailable')
         guarded.extend((w['ref'], tuple(w['path'])) for w in record['writes'])
         if include_reads:
-            guarded.extend((r['ref'], tuple(r['path'])) for r in record['reads'])
+            for read in record['reads']:
+                guarded.append((read['ref'], tuple(read['path'])))
+                if read['ref'].endswith('/shot'):
+                    guarded.append((read['ref'].removesuffix('/shot'), ('shot_id',)))
     for record in intervening_records:
         if not isinstance(record, dict) or 'writes' not in record:
             raise CommandError("complete intervening write history is required", kind='history_unavailable')

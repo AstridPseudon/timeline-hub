@@ -118,6 +118,7 @@ def test_quantization_once_with_rational_fps_and_ms_codec():
     original = bundle(fps={'numerator': 30000, 'denominator': 1001})
     target = clip(original)
     target['at_ms'] = target.pop('at') * 1000
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
     plan = execute(original, [capture_move(original, 'parent/clip:direct', 1001 / 60000)])
     assert clip(plan.bundle)['at_ms'] == pytest.approx(1001 / 30)
     pin = next(d['pin'] for d in plan.records[0]['dependencies'] if d['key'] == 'move.quantization')
@@ -237,9 +238,11 @@ def test_group_coalesces_intermediate_writes_without_capturing_other_work():
     group = execute(original, [a.commands[0], b])
     head = copy.deepcopy(group.bundle)
     clip(head)['opaque_clip'] = {'later': True}
+    head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
     undone = inverse(head, group.records)
     expected = copy.deepcopy(original)
     clip(expected)['opaque_clip'] = {'later': True}
+    expected['parent']['config']['clips'] = copy.deepcopy(expected['parent']['clips'])
     assert undone.bundle == expected
     assert inverse(undone.bundle, undone.records).bundle == head
 
@@ -301,7 +304,7 @@ def test_paths_json_equality_claims_and_frozen_schema():
         inverse(original, [{'writes': []}], [None])
 
 
-@pytest.mark.parametrize('name', ['recipe_m1_move.json', 'recipe_m1_occurrence.json'])
+@pytest.mark.parametrize('name', ['recipe_m1_move.json', 'recipe_m1_occurrence.json', 'recipe_m1_shared.json'])
 def test_published_capture_golden_fixture(name):
     fixture = json.loads((FIXTURES / name).read_text())
     command = capture_move(fixture['bundle'], fixture['select'], fixture['on'])
@@ -316,9 +319,10 @@ def test_duration_codec_uses_main_positive_speed_semantics(codec):
     target.pop('hold')
     target[codec] = 4 if codec == 'duration' else 4000
     target['speed'] = 2
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
     plan = execute(original, [capture_move(original, 'parent/clip:direct', 4)])
     assert clip(plan.bundle)['app']['astrid']['for'] == 2
-    assert plan.semantic_events[0]['payload']['duration'] == 2
+    assert plan.semantic_events == []
     assert inverse(plan.bundle, plan.records).bundle == original
 
 
@@ -425,5 +429,126 @@ def test_output_blockers_capture_activity_role_and_negative_membership():
     plan = execute(original, [capture_move(original, ref, 22)])
     head = copy.deepcopy(original)
     head['parent']['config']['tracks'][0]['kind'] = 'visual'
+    with pytest.raises(CommandError):
+        replay(plan, head)
+
+
+@pytest.mark.parametrize('layout', ['both', 'payload', 'config', 'empty-payload', 'empty-config'])
+def test_parent_clip_layout_and_recorded_mirror_survive_readback_inverse(layout):
+    from astrid.core.timeline.shot_composition_projection import (
+        project_runtime_parent_composition,
+    )
+
+    original = bundle()
+    parent = original['parent']
+    if layout == 'payload':
+        parent['config'].pop('clips')
+    elif layout == 'config':
+        parent.pop('clips')
+    elif layout == 'empty-payload':
+        parent['clips'] = []
+    elif layout == 'empty-config':
+        parent['config']['clips'] = []
+    command = capture_move(original, 'parent/clip:direct', 4)
+    assert command['intent'] == {'ripple': 'none', 'anchor': 'fixed', 'position': 'absolute'}
+    plan = execute(original, [command])
+    derived = plan.records[0]['derived_writes']
+    if layout == 'both':
+        assert derived == [{'ref': 'parent', 'path': ['config', 'clips'],
+                            'before': present(original['parent']['config']['clips']),
+                            'after': present(plan.bundle['parent']['clips']), 'cause': 0}]
+        assert plan.bundle['parent']['config']['clips'] == plan.bundle['parent']['clips']
+    else:
+        assert derived == []
+    assert plan.semantic_events == []
+    publication = compile_authoring_candidate(plan.bundle).publication
+    project_runtime_parent_composition(
+        {'project_id': original['project_id'], 'timeline_id': original['timeline_id'],
+         'revision_id': publication['parent_revision_id'], 'payload': publication['parent_composition']},
+        shot_revisions=publication['shot_revisions'],
+        internal_timeline_revisions=publication['internal_timeline_revisions'])
+    assert inverse(plan.bundle, plan.records).bundle == original
+    assert replay(plan, original).records == plan.records
+
+
+def test_semantic_owner_refuses_actual_source_change_and_inverse_source_aba():
+    original = bundle()
+    ref = 'occurrence:occ-1/clip:picture-1'
+    plan = execute(original, [capture_move(original, ref, 12)])
+    changed = copy.deepcopy(original)
+    shot_id = changed['placements'][0]['shot_id']
+    changed['source_mapping']['shots'][shot_id]['shot_id'] = 'different-source'
+    with pytest.raises(CommandError):
+        replay(plan, changed)
+    with pytest.raises(CommandError) as error:
+        inverse(plan.bundle, plan.records, [later('occurrence:occ-1', ['shot_id'], shot_id)])
+    assert error.value.kind == 'intervening_write'
+
+
+@pytest.mark.parametrize('kind', ['transcript', 'config'])
+def test_compiler_records_exact_retained_document_pin_without_evaluating_anchor(kind):
+    original = bundle(app={'astrid': {'on': 'word:old-source:word-1'}})
+    content = {'retained': True}
+    pin = {'document_id': 'retained:' + kind, 'version': 1, 'content_digest': _digest(content)}
+    unused = dict(pin, document_id='unused')
+    document_kind = 'media.transcript' if kind == 'transcript' else 'timeline.config'
+    original['source_mapping'].update(
+        _runtime_document={'dependency_manifest': {'documents': [pin]}},
+        pinned_documents=[{'pin': p, 'document': {'kind': document_kind, 'content': content}}
+                          for p in (pin, unused)])
+    command = capture_move(original, 'parent/clip:direct', 4)
+    plan = execute(original, [command])
+    dependencies = plan.records[0]['dependencies']
+    assert [d for d in dependencies if d['kind'] in ('transcript', 'source')] == [
+        {'key': 'compile.document:' + _digest(pin),
+         'kind': 'transcript' if kind == 'transcript' else 'source', 'pin': pin, 'policy': 'exact'}]
+    assert not any(d['pin'] == unused for d in dependencies)
+    assert next(d for d in dependencies if d['key'] == 'move.images')['kind'] == 'entity'
+    assert clip(plan.bundle)['app']['astrid'].get('on') is None
+    assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_shared_first_materialization_golden_preserves_original_sibling_capture():
+    fixture = json.loads((FIXTURES / 'recipe_m1_shared.json').read_text())
+    original, head = fixture['bundle'], fixture['head_bundle']
+    ref = fixture['select']
+    owner = ref.rsplit('/', 1)[0]
+    assert State(original).occurrence(owner)['shot_id'] != State(head).occurrence(owner)['shot_id']
+    assert State(original).entity(owner + '/shot') == State(head).entity(owner + '/shot')
+    plan = execute(original, [fixture['command']])
+    rebased = replay(plan, head)
+    assert rebased.commands == [fixture['command']]
+    assert rebased.bundle == fixture['rebased_bundle']
+    undone = inverse(rebased.bundle, rebased.records)
+    assert undone.bundle == head
+    assert inverse(undone.bundle, undone.records).bundle == rebased.bundle
+
+
+
+def test_materialization_alias_is_exact_for_arbitrary_source_ids():
+    from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+
+    parent, shots, internals = _closure()
+    source = 'shot-placement-' + 'a' * 64
+    shots[0]['shot_id'] = source
+    for index, row in enumerate(parent['payload']['occurrences']):
+        row.update(shot_id=source, source_offset=0, speed=1)
+        row['placement']['start_ms'] = index * 10000
+    parent['content_digest'] = _digest(parent['payload'])
+    original = open_authoring_bundle(parent, shot_revisions=shots,
+                                     internal_timeline_revisions=internals)
+    ref = 'occurrence:occ-1/clip:picture-1'
+    command = capture_move(original, ref, 1)
+    plan = execute(original, [command])
+    read = next(r for r in command['reads'] if r['ref'] == 'occurrence:occ-1/shot')
+    assert read['state'] == present(source)
+    head = copy.deepcopy(original)
+    old = head['placements'][0]['shot_id']
+    materialized = _authoring_shot_id(original['project_id'], original['timeline_id'],
+                                     'occ-1', source, shared=True)
+    assert old == materialized
+    head['source_mapping']['shots'][old]['shot_id'] = materialized
+    assert replay(plan, head).commands == [command]
+    head['source_mapping']['shots'][old]['shot_id'] = 'shot-placement-' + 'b' * 64
     with pytest.raises(CommandError):
         replay(plan, head)

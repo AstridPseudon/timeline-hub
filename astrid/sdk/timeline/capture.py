@@ -9,7 +9,7 @@ from astrid.core.timeline.duration import clip_start_frame, clip_timeline_durati
 
 from ._command_state import CommandError
 
-MOVE_INTENT = {"ripple": "none", "anchor": "fixed", "ownership": "occurrence", "position": "absolute"}
+MOVE_INTENT = {"ripple": "none", "anchor": "fixed", "position": "absolute"}
 CLIP_FIELDS = ('id', 'at', 'at_ms', 'track', 'asset', 'asset_id', 'media_id', 'object_id',
                'clipType', 'clip_type', 'enabled', 'active', 'disabled', 'hidden', 'deleted',
                'from', 'to', 'from_ms', 'to_ms', 'hold', 'duration', 'duration_ms', 'speed', 'time_map', 'timeMap',
@@ -174,7 +174,7 @@ def move(ctx, command):
     origin = 0.0
     if owner != 'parent':
         ctx.read(owner, ['occurrence_id'])
-        ctx.read(owner, ['shot_id'])
+        ctx.read(owner + '/shot', ['shot_id'])
         row = ctx.state.occurrence(owner)
         for path in MAP_FIELDS:
             ctx.read(owner, path)
@@ -231,10 +231,17 @@ def _capture(bundle, command):
     return execute(bundle, [command]).commands[0]
 
 
+def move_intent(select):
+    intent = dict(MOVE_INTENT)
+    if isinstance(select, str) and select.startswith('occurrence:'):
+        intent['ownership'] = 'occurrence'
+    return intent
+
+
 def capture_move(bundle, select, on):
     """Capture on the original authored bundle; `on` is absolute global seconds."""
     return _capture(bundle, {'schema_version': 1, 'op': 'clip.move', 'version': '1',
-                             'select': select, 'args': {'on': on}, 'intent': dict(MOVE_INTENT)})
+                             'select': select, 'args': {'on': on}, 'intent': move_intent(select)})
 
 
 def capture_track_create(bundle, owner, row):
