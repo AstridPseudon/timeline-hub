@@ -5,7 +5,7 @@ https://astrid.haus connects to it. Work through the journeys below in order; to
 OS. When a step fails, write down what you did and what you saw (the exact words, or a screenshot), and attach a
 doctor bundle (see [Reporting](#reporting)). The bundle is a small zip with Astrid's status, its versions and the
 last part of its logs. Passwords, tokens, keys and credentials are removed before anything is written. File paths
-in the logs stay, so they can show your user name.
+in the logs and tool details stay, so they can show your user name.
 
 ## Before you start
 
@@ -540,7 +540,7 @@ installer line succeeds when the bundle is written. If no installed version exis
 finished or Astrid was uninstalled), attach the install log from the table above instead.
 
 **What the bundle holds:** `status.json` (Astrid's health check, with secrets and most paths removed), `versions.json`,
-`install-manifest.json` (only version numbers and source revisions), and `logs/` (the last 256 KB of each Astrid log,
+`install-manifest.json` (version numbers, source revisions, and selected FFmpeg/FFprobe paths and provenance), and `logs/` (the last 256 KB of each Astrid log,
 1 MB at most). Passwords, tokens, keys and credentials are removed from the logs. File paths in the logs stay.
 
 ## Known gaps
@@ -559,8 +559,8 @@ These are known. Report what you see, but don't stop testing for them.
   the line fails or its window closes, report the exact message and attach the install log.
 - Coming back after the Runtime is killed relies on Task Scheduler's restart on failure. It hasn't been confirmed.
 - Windows may retain the bootstrap directory while an Astrid terminal is open. If uninstall prints
-  `Close Astrid terminals, then remove the remaining program folder: <path>`, close those terminals, remove that folder,
-  and check that it is gone.
+  `After this line returns, run: Remove-Item …`, wait for the installer to exit, close Astrid terminals, run each
+  printed cleanup command, and check that those paths are gone.
 - Windows on ARM can't install: the pinned downloads have no Bun or FFmpeg build for it. The log says
   `There is no qualified bun build for windows-arm64.`
 - A PC whose execution policy is set by the organization stops with a message asking the administrator to allow the installer.
