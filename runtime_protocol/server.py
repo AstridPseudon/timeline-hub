@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import inspect
 import re
 import socket
 import sys
@@ -11,6 +12,23 @@ from urllib.parse import unquote, urlsplit, parse_qs
 from .errors import RuntimeErrorBase, AuthorizationError, BodyTooLargeError, ConflictError, ForbiddenError, NotFoundError, ProtocolError, InvalidRequestError, RetiredRouteError
 from .service import validate_idempotency_key
 from .cas import IO_CHUNK_BYTES
+
+
+class _DuplicateJSONKey(ValueError):
+    pass
+
+
+def _reject_duplicate_json_keys(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise _DuplicateJSONKey(key)
+        result[key] = value
+    return result
+
+
+def _reject_non_finite_json(value):
+    raise ValueError(f"non-finite JSON value {value!r}")
 
 
 class RuntimeHTTPServer(ThreadingHTTPServer):
@@ -169,6 +187,71 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise ProtocolError("request body must be valid JSON") from exc
 
+    def _commit_body(self):
+        """Parse and validate the route-owned part of CommitRequest.
+
+        Semantic command validation remains Agent-provider work. The Runtime
+        still owns framing, duplicate-key/non-finite rejection and immutable
+        path identity so retries cannot change what was hashed.
+        """
+        raw = self._raw_body()
+        if len(raw) > 1024 * 1024:
+            raise BodyTooLargeError("commit request exceeds 1048576 byte limit")
+        try:
+            body = json.loads(
+                raw.decode("utf-8"),
+                object_pairs_hook=_reject_duplicate_json_keys,
+                parse_constant=_reject_non_finite_json,
+            ) if raw else {}
+        except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise ProtocolError("commit request must be finite JSON without duplicate fields") from exc
+        if not isinstance(body, dict):
+            raise InvalidRequestError("commit request must be a JSON object")
+        required = {
+            "api_version", "project_id", "timeline_id", "base_revision_id",
+            "base_publication_id", "commands",
+        }
+        optional = {"dry_run", "source", "label", "rationale", "group_id"}
+        if set(body) - required - optional or required - set(body):
+            raise InvalidRequestError("commit request has missing or unknown fields")
+        if type(body["api_version"]) is not int or body["api_version"] != 1:
+            raise InvalidRequestError("commit api_version must be 1")
+        for field in ("project_id", "timeline_id", "base_revision_id", "base_publication_id"):
+            if not isinstance(body[field], str) or not body[field]:
+                raise InvalidRequestError(f"commit {field} must be a nonempty string")
+        if not isinstance(body["commands"], list) or body["commands"] == []:
+            raise InvalidRequestError("commit commands must be a nonempty array")
+        if "dry_run" in body and type(body["dry_run"]) is not bool:
+            raise InvalidRequestError("commit dry_run must be a boolean")
+        for field in ("label", "rationale"):
+            if field in body and not isinstance(body[field], str):
+                raise InvalidRequestError(f"commit {field} must be a string")
+        if "group_id" in body and (not isinstance(body["group_id"], str) or not body["group_id"]):
+            raise InvalidRequestError("commit group_id must be a nonempty string")
+        if "source" in body:
+            source = body["source"]
+            if not isinstance(source, dict) or set(source) - {"via", "detail"} or "via" not in source:
+                raise InvalidRequestError("commit source has unknown or missing fields")
+            if source["via"] not in {"cli", "python", "app", "script", "sheet"}:
+                raise InvalidRequestError("commit source.via is invalid")
+            if "detail" in source and not isinstance(source["detail"], str):
+                raise InvalidRequestError("commit source.detail must be a string")
+        for command in body["commands"]:
+            if not isinstance(command, dict):
+                raise InvalidRequestError("commit commands must contain objects")
+            required_command = {"schema_version", "op", "version", "select", "args"}
+            if required_command - set(command):
+                raise InvalidRequestError("commit command has missing fields")
+            if type(command["schema_version"]) is not int or command["schema_version"] != 1:
+                raise InvalidRequestError("commit command schema_version must be 1")
+            if not all(isinstance(command[field], str) and command[field] for field in ("op", "version")):
+                raise InvalidRequestError("commit command op and version must be nonempty strings")
+            if command["select"] is not None and not isinstance(command["select"], str):
+                raise InvalidRequestError("commit command select must be a string or null")
+            if not isinstance(command["args"], dict):
+                raise InvalidRequestError("commit command args must be an object")
+        return body
+
     def _project_mutation_body(self):
         body = self._body()
         if not isinstance(body, dict):
@@ -189,6 +272,68 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             return validate_idempotency_key(key)
         except InvalidRequestError as exc:
             raise ProtocolError(str(exc)) from exc
+
+    def _commit_idempotency_key(self):
+        values = self._header_values("Idempotency-Key")
+        if len(values) != 1:
+            raise ProtocolError("one Idempotency-Key header is required")
+        try:
+            return validate_idempotency_key(values[0])
+        except InvalidRequestError as exc:
+            raise ProtocolError(str(exc)) from exc
+
+    def _authorize_timeline_commit(self, publisher):
+        identity = self._identity("projects:write")
+        if identity.get("actor") != publisher:
+            raise AuthorizationError("authenticated publisher changed during commit")
+        return identity
+
+    def _timeline_commit(self, project_id, timeline_id, path):
+        if urlsplit(self.path).query:
+            raise ProtocolError("timeline commit does not accept a query string")
+        identity = self._identity("projects:write")
+        body = self._commit_body()
+        if body["project_id"] != project_id or body["timeline_id"] != timeline_id:
+            raise ConflictError("commit project/timeline identity does not match the route")
+        key = self._commit_idempotency_key()
+        commit = getattr(self.runtime, "commit_timeline", None)
+        if not callable(commit):
+            from .timeline_commit_provider import TimelineCommitUnavailable
+            raise TimelineCommitUnavailable()
+        publisher = identity["actor"]
+
+        def authorize():
+            return self._authorize_timeline_commit(publisher)
+
+        return self._send(200, commit(
+            project_id,
+            timeline_id,
+            body,
+            idempotency_key=key,
+            publisher=publisher,
+            invocation_path="/" + "/".join(path),
+            authorize=authorize,
+        ))
+
+    @staticmethod
+    def _restore_kwargs(method, *, publisher, invocation_path, authorize):
+        """Pass frozen Invocation identity to newer restore adapters.
+
+        Main's pre-M1 service remains callable while the acceptance worker
+        installs its adapter. A bound method with ``**kwargs`` also accepts the
+        new seam.
+        """
+        try:
+            parameters = inspect.signature(method).parameters
+        except (TypeError, ValueError):
+            parameters = {}
+        accepts_any = any(parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in parameters.values())
+        values = {
+            "publisher": publisher,
+            "invocation_path": invocation_path,
+            "authorize": authorize,
+        }
+        return {key: value for key, value in values.items() if accepts_any or key in parameters}
 
     def _send(self, status, payload=None, *, headers=None, body=None, error=None, receipt=None, idempotency_key=None):
         if getattr(self, "_defer_response", False):
@@ -251,6 +396,16 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             return True
         return (self.command == "POST" and len(path) == 4 and path[:2] == ["v1", "projects"]
                 and path[3] in ("objects", "media-imports"))
+
+    def _is_timeline_commit(self):
+        path = [unquote(x) for x in urlsplit(getattr(self, "path", "")).path.split("/") if x]
+        return (
+            getattr(self, "command", None) == "POST"
+            and len(path) == 6
+            and path[:2] == ["v1", "projects"]
+            and path[3] == "timelines"
+            and path[5] == "commit"
+        )
 
     def _error(self, exc):
         if isinstance(exc, RuntimeErrorBase):
@@ -361,6 +516,8 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             project_id = value["project"]["project_id"]
             aggregate_id = f"{identity['actor']}:{value['scope']}"
             return self._send(200, {"data": value, "receipt": self.runtime.committed_receipt("project.select", aggregate_id, key, project_id=project_id)})
+        if len(path) == 6 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "commit" and method == "POST":
+            return self._timeline_commit(path[2], path[4], path)
         if len(path) == 4 and path[:2] == ["v1", "projects"] and path[3] == "timelines":
             self._identity("projects:read" if method == "GET" else "projects:write")
             if method == "POST":
@@ -380,6 +537,31 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 return self._send(200, self.runtime.get_project_timeline(path[2], path[4]))
             if method == "PATCH":
                 return self._send(200, self.runtime.rename_timeline(path[2], path[4], self._project_mutation_body(), idempotency_key=self._idempotency_key()))
+        if len(path) == 6 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "commits" and method == "GET":
+            self._identity("projects:read")
+            query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+            return self._send(200, self.runtime.list_timeline_commits(
+                path[2], path[4], cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0],
+            ))
+        if len(path) == 4 and path[:2] == ["v1", "projects"] and path[3] == "media-selection" and method == "GET":
+            self._identity("projects:read")
+            raw_query = urlsplit(self.path).query
+            try:
+                if re.search(r"%(?![0-9a-fA-F]{2})", raw_query):
+                    raise ValueError("invalid percent encoding")
+                query = parse_qs(raw_query, keep_blank_values=True, strict_parsing=True, errors="strict")
+            except (ValueError, UnicodeError) as exc:
+                raise ProtocolError("invalid media selection query encoding") from exc
+            forms = ({"asset", "generation_id", "variant_id"}, {"association_id", "object_id", "version"})
+            if set(query) not in forms or any(len(values) != 1 or not values[0].strip() for values in query.values()):
+                raise ProtocolError("exactly one complete media selection selector form is required")
+            if "version" in query:
+                if not re.fullmatch(r"[1-9][0-9]*", query["version"][0]):
+                    raise ProtocolError("output version must be a positive integer")
+                query["version"] = [int(query["version"][0])]
+            return self._send(200, self.runtime.get_project_media_selection(
+                path[2], **{key: values[0] for key, values in query.items()},
+            ))
         if len(path) == 4 and path[:2] == ["v1", "projects"] and path[3] == "timeline-documents" and method == "POST":
             self._identity("projects:write")
             raise RetiredRouteError(
@@ -408,9 +590,25 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             self._identity("projects:read")
             return self._send(200, self.runtime.get_project_parent_composition_revision(path[2], path[4], path[6]))
         if len(path) == 8 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "composition-revisions" and path[7] == "restore" and method == "POST":
-            self._identity("projects:write")
-            return self._send(200, self.runtime.restore_project_parent_composition_revision(
-                path[2], path[4], path[6], self._project_mutation_body(), idempotency_key=self._idempotency_key(),
+            identity = self._identity("projects:write")
+            body = self._project_mutation_body()
+            restore = self.runtime.restore_project_parent_composition_revision
+
+            def authorize():
+                current = self._identity("projects:write")
+                if current.get("actor") != identity.get("actor"):
+                    raise AuthorizationError("authenticated publisher changed during restore")
+                return current
+
+            return self._send(200, restore(
+                path[2], path[4], path[6], body,
+                idempotency_key=self._idempotency_key(),
+                **self._restore_kwargs(
+                    restore,
+                    publisher=identity["actor"],
+                    invocation_path="/" + "/".join(path),
+                    authorize=authorize,
+                ),
             ))
         if len(path) == 7 and path[:2] == ["v1", "projects"] and path[5] == "revisions" and method == "GET":
             self._identity("projects:read")
@@ -974,9 +1172,11 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     # outside the SQLite mutex. Credential authentication and
                     # publication use CredentialStore's short internal lock.
                     self._local_worker_control()
-                elif self._is_remote_credential_control() or self._is_binary_io():
+                elif self._is_remote_credential_control() or self._is_binary_io() or self._is_timeline_commit():
                     # Both routes own short store sections. Transfer, hashing,
                     # and daemon actor ownership must stay outside this lock.
+                    if self._is_timeline_commit():
+                        self._prefetch_body()
                     self._route()
                 else:
                     self._prefetch_body()

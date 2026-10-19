@@ -54,6 +54,7 @@ def _parser():
     start.add_argument("--bootstrap-token-file")
     start.add_argument("--admission-timeout", type=float, help="bounded startup integrity budget in seconds")
     start.add_argument("--worker-profile", help="absolute installed local Worker composition profile")
+    start.add_argument("--authoring-profile", choices=("neutral", "astrid"), default="neutral", help="trusted semantic authoring provider profile")
     start.add_argument("--door-origin", help="exact HTTPS origin of the hosted page; opens the browser door")
     start.add_argument("--door-port", type=int, default=DEFAULT_DOOR_PORT, help="the browser door's loopback port")
     start.add_argument("--door-credential-file", help="absolute scoped product credential the browser door acts with")
@@ -371,6 +372,7 @@ def main(argv=None):
             local_worker_preparer=composition.preparer if composition else None,
             local_worker_inspector=composition.inspector if composition else None,
             door=door,
+            authoring_profile=args.authoring_profile,
         ).start()
     except KeyboardInterrupt:
         raise

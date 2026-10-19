@@ -50,7 +50,7 @@ def _authority_path(value, label):
 class RuntimeDaemon:
     """Loopback-only daemon owning one realm and its storage."""
 
-    def __init__(self, root, *, support_root=None, export_root=None, display_name="Workspace", host="127.0.0.1", port=0, realm_id=None, owner_lock=None, bootstrap_token_file=None, reboot_executor=None, reboot_allowlist=None, production_worker_credentials=False, admission_timeout=None, local_worker_profiles=None, local_worker_preparer=None, local_worker_inspector=None, door=None):
+    def __init__(self, root, *, support_root=None, export_root=None, display_name="Workspace", host="127.0.0.1", port=0, realm_id=None, owner_lock=None, bootstrap_token_file=None, reboot_executor=None, reboot_allowlist=None, production_worker_credentials=False, admission_timeout=None, local_worker_profiles=None, local_worker_preparer=None, local_worker_inspector=None, door=None, authoring_profile=None):
         if host not in ("127.0.0.1", "localhost", "::1"):
             raise ValueError("runtime daemon only binds to loopback")
         self.root = _authority_path(root, "realm root").resolve()
@@ -73,6 +73,9 @@ class RuntimeDaemon:
         # that administrator credential to the production host.
         self.production_worker_credentials = bool(production_worker_credentials)
         self.admission_timeout = admission_timeout
+        if authoring_profile not in (None, "neutral", "astrid"):
+            raise ValueError("unsupported authoring profile")
+        self.authoring_profile = authoring_profile
         self.instance_id = uuid.uuid4().hex
         self.service = None
         self.httpd = None
@@ -233,10 +236,28 @@ class RuntimeDaemon:
             raise ConflictError("runtime epoch floor is invalid")
         atomic_json_write(self._epoch_floor_path(), {"format_version": 1, "runtime_epoch_floor": floor})
 
+    def _load_installed_timeline_commit_provider(self):
+        """Load the fixed authoring profile before Runtime admission."""
+        from .timeline_commit_provider import load_timeline_commit_provider
+        return load_timeline_commit_provider(self.authoring_profile)
+
     def _start(self, *, rotate_credentials=False):
         cancellation.check()
+        provider = self._load_installed_timeline_commit_provider()
         epoch_floor = self._read_epoch_floor()
         self.service = RuntimeService(self.root, display_name=self.display_name, realm_id=self.realm_id, support_root=self.support_root, export_root=self.export_root, reboot_executor=self.reboot_executor, reboot_allowlist=self.reboot_allowlist, runtime_epoch_floor=epoch_floor, admission_timeout=self.admission_timeout)
+        if provider is not None:
+            register = getattr(self.service, "register_timeline_commit_provider", None)
+            if not callable(register):
+                self.service.close()
+                self.service = None
+                raise ConflictError("selected authoring profile is unsupported by this Runtime")
+            try:
+                register(provider)
+            except Exception:
+                self.service.close()
+                self.service = None
+                raise
         cancellation.check()
         self.service.set_readiness_callback(self._revoke_readiness)
         self.service.set_local_claim_generation_verifier(self._verify_local_claim_generation, actor=WORKER_ACTOR)
