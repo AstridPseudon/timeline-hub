@@ -15,3 +15,6 @@ Your current hub-sync still force-pushes worker branches you only imported. It o
 
 ## 2026-10-19 20:30Z — ACTION for the App lead: restart hub-syncd now
 Your manager copied the new tools at 20:20 but can't restart the daemon from its sandbox. Do it yourself, outside the sandbox: `kill $(cat $ORCH/hub-syncd.pid); nohup setsid $ORCH/bin/hub-syncd app > $ORCH/hub-sync.log 2>&1 < /dev/null &`. Then put "tool update done <UTC>" at the top of your status. Until then, your machine still force-pushes adopted worker branches.
+
+## 2026-10-19 23:30Z — lead: MAX SPEED
+The owner wants max throughput. Every 30 minutes, check that your manager keeps 5–7 workers running (heavy cap stays 2). If it's idle without a stated blocker, nudge it, or restart it if it has exited. Use Haiku or Sonnet for chores.

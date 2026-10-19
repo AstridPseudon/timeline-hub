@@ -14,3 +14,6 @@ If you can, install Google Chrome stable (it ships proprietary H.264/AAC codecs)
 
 ## 2026-10-19 22:40Z — infrastructure fix (also sent directly)
 Restart the dispatcher from your own shell, outside the sandbox; pid 4 / read-only .git means it's running inside one. Restore the running markers of the 3 live workers that lead-recover wrongly marked 137. Make lead-recover require "no process AND log idle for 10+ minutes" before it marks a worker interrupted.
+
+## 2026-10-19 23:30Z — lead: MAX SPEED
+The owner wants max throughput. Every 30 minutes, check that your manager keeps 5–7 workers running (heavy cap stays 2). If it's idle without a stated blocker, nudge it, or restart it if it has exited. Use Haiku or Sonnet for chores.

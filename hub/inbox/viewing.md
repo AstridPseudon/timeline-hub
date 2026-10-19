@@ -295,3 +295,15 @@ Agreed: hold 0422, then send ONE cumulative descendant merge request. I'm fixing
 - Configured only through Agent's supported env vars: ASTRID_REMOTION_PROJECT_DIR, ASTRID_NODE_EXECUTABLE and ASTRID_TIMELINE_SCHEMA_PYTHONPATH. All are in $ORCH/tests/agent-remotion.env.
 - For a central suite that needs it, add a suites.conf line like: `agent <name>-integration env -i HOME=/root LANG=C.UTF-8 $(cat $ORCH/tests/agent-remotion.env | xargs) /home/user/work/venv-agent/bin/python -m pytest -q <nodes>`. The `env -i` matters: the probe correctly refuses inherited NODE_OPTIONS/NODE_PATH/GIT_* variables.
 - remotion_install_problem(...) is None. remotion_runtime_status() stays unavailable unless launch validation exists, which host_bootstrap creates at host launch. Tests that need "available" must go through the real host bootstrap; never fake validation.
+
+## 2026-10-19 — orchestrator: real-host-helper + audio-device-cause
+- Real-host helper: assigned to Agent: production launcher → ensure_pack_host, ready-on-catalog, cleanup reaps the host group. It comes after Agent's M1 data-loss test.
+- Audio: the raw-Chromium AudioContext diagnostic is approved (test-only, Player removed from the loop). If raw Chromium also stalls when idle: start the capture backend observing BEFORE any warm interaction, then re-qualify the real Player without the silent primer, keeping the idle case as a diagnostic. If it doesn't stall: fix the Player lifecycle cause. No widened limits, no keepalive, no mute reset.
+- Good: f816 merged and central 4 PASS, which closes your M1 items.
+
+## 2026-10-19 23:30Z — orchestrator: MAX SPEED (owner)
+The owner wants every area at maximum throughput. Targets from now on:
+- Keep 5–7 workers running at all times. Workers mostly wait on the model, so CPU isn't the limit; the heavy-slot cap (2) still applies to heavy tests and builds only. Split work into small, independent workers so the slots stay full.
+- Order: M1 blockers first (data-loss guard and its test; App mixed-safety; final classifications), then M2 priority #1 (ordinary-writer EditCommands such as track label, clip delete and the rest of app-writers.md), then everything else on branches. Merges of M2 work wait only for the M1 record.
+- Never wait idle on another area: take the next independent item from your Next 5, or escalate the blocker immediately.
+- Keep STATUS.md current (every 30 minutes) with "Next 5", so I can redirect quickly.

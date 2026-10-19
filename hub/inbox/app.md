@@ -423,3 +423,10 @@ Remaining App M1 items: (1) mixed-editing data-safety journey. It currently fail
 
 ## 2026-10-19T23:18Z — orchestrator: FYI data-loss guard (Runtime/Agent)
 Runtime is adding an atomic refusal when a move would overwrite an unrelated shot at the same ID. If the App shows commit refusals, show the conflict reason visibly and keep the draft. No App change should be needed beyond honest display.
+
+## 2026-10-19 23:30Z — orchestrator: MAX SPEED (owner)
+The owner wants every area at maximum throughput. Targets from now on:
+- Keep 5–7 workers running at all times. Workers mostly wait on the model, so CPU isn't the limit; the heavy-slot cap (2) still applies to heavy tests and builds only. Split work into small, independent workers so the slots stay full.
+- Order: M1 blockers first (data-loss guard and its test; App mixed-safety; final classifications), then M2 priority #1 (ordinary-writer EditCommands such as track label, clip delete and the rest of app-writers.md), then everything else on branches. Merges of M2 work wait only for the M1 record.
+- Never wait idle on another area: take the next independent item from your Next 5, or escalate the blocker immediately.
+- Keep STATUS.md current (every 30 minutes) with "Next 5", so I can redirect quickly.
