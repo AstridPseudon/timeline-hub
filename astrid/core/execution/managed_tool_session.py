@@ -241,6 +241,11 @@ class ManagedToolSession:
             return self._active.binding if self._active is not None else None
 
     @property
+    def current_capability(self) -> CapabilityDescriptor | None:
+        with self._lock:
+            return self._active.capability if self._active is not None else None
+
+    @property
     def current_adapter(self) -> Any:
         with self._lock:
             return self._active.adapter if self._active is not None else None

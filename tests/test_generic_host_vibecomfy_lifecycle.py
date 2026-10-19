@@ -194,6 +194,47 @@ def test_generic_host_run_task_keeps_same_resident_identity_warm(tmp_path: Path,
     host.managed_tool_session.close()
 
 
+def test_idle_expiry_frees_the_warm_vibecomfy_session_and_the_next_task_starts_cold(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from astrid.core.execution.warm_hold import WarmHolds
+    from astrid.core.generation.backends import vibecomfy
+    from tests.core.execution.test_warm_hold import Timers
+
+    digest, data = _install_fixture(tmp_path)
+    runtime = FakeRuntime()
+    runtime.get_object = lambda requested: data  # type: ignore[method-assign]
+    monkeypatch.delenv("ASTRID_WARM_IDLE_SECONDS", raising=False)
+    monkeypatch.setattr(generic_host, "_read_readiness_profile_document", lambda: {
+        **_profile(), "vibecomfy_session": {**_profile()["vibecomfy_session"], "pid": 100}})  # type: ignore[dict-item]
+    monkeypatch.setattr(generic_host, "_prepare_vibecomfy_execution_identity", lambda *args: (
+        "execution-a", "model-a", "template-a", {"model_id": "model-a", "resident_metadata": {"model_assets": ["model-a"]}}))
+    events: list[str] = []
+    monkeypatch.setattr(vibecomfy.CheckoutServerAdapter, "from_host_session", classmethod(
+        lambda cls, **kwargs: _FakeCheckout(events, spawn_child=False, **kwargs)))
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+    host.discover()
+    timers = Timers()
+    host.warm_holds = WarmHolds(timer=timers)
+    try:
+        for released, task_id in enumerate(("before-idle", "after-idle")):
+            task = _task(task_id, digest)
+            runtime.tasks[task_id] = task
+            assert host.run_task(task, lease_token=f"lease-{task_id}")["task"]["status"] == "completed"
+            (hold,) = host.warm_holds.status()
+            assert (hold["holding"], hold["leases"], hold["idle_seconds"]) == ("vibecomfy.run", 0, 600.0)
+            assert timers.live().seconds == 600 and events.count("release:idle") == released
+            assert host._vibecomfy_warmth_hint is not None
+            timers.fire()
+            # Models are unloaded through the session's own release; the slot is empty.
+            assert events[-1] == "release:idle"
+            assert not host.managed_tool_session.occupied and host.warm_holds.status() == []
+            assert host._vibecomfy_warmth_hint is None
+        assert events.count("construct") == 2, "the task after idle release binds a fresh, cold session"
+    finally:
+        host.managed_tool_session.close()
+
+
 def test_vibecomfy_child_receives_only_the_profile_model_root_binding(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

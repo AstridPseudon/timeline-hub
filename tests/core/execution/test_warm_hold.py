@@ -1,7 +1,14 @@
 """Idle release of warm holders, driven by explicit timers instead of sleeps."""
+import os
+import subprocess
+import sys
 import threading
 
 from astrid.core.env_vars import ASTRID_WARM_IDLE_SECONDS
+from astrid.core.execution import generic_host
+from astrid.core.execution.generic_host import GenericPackHost
+from astrid.core.execution.managed_tool_session import CapabilityDescriptor, SessionBinding
+from astrid.core.execution.process_group import popen_owned_group
 from astrid.core.execution.remotion_host_session import frame_owner_idle_seconds
 from astrid.core.execution.warm_hold import WarmHolds, idle_seconds
 
@@ -132,3 +139,69 @@ def test_request_wins_then_the_one_knob_then_each_holders_default(monkeypatch):
     for invalid in ("soon", "-1", "nan", "inf"):
         monkeypatch.setenv(ASTRID_WARM_IDLE_SECONDS, invalid)
         assert idle_seconds(600) == 600
+
+
+def test_idle_expiry_ends_the_warm_wan_child_through_its_session_release(tmp_path):
+    host = GenericPackHost(pack_roots=[tmp_path])
+    timers = Timers()
+    host.warm_holds = WarmHolds(timer=timers)
+    binding = SessionBinding(session_id=str(tmp_path), runtime_instance_id="runtime", process_birth_id="birth",
+                             endpoint="pipe:birth", source_digest="source", config_digest="config",
+                             execution_identity="wan-spec")
+    adapter = generic_host._ManagedWanChildAdapter(
+        spec={}, binding=binding, readiness_timeout=5.0, release_timeout=5.0,
+        track=host._track_process, untrack=host._untrack_process)
+    # A real child that exits on the adapter's close frame, as the Wan session does.
+    adapter.process = popen_owned_group([sys.executable, "-c", "import sys; sys.stdin.readline()"],
+                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    os.set_blocking(adapter.process.stdin.fileno(), False)
+    host._track_process(adapter.process)
+    reasons = []
+    release = adapter.release
+    adapter.release = lambda *, reason: (reasons.append(reason), release(reason=reason))[1]
+    host.managed_tool_session.open(
+        capability=CapabilityDescriptor("wan2gp.generate_video", warm_reuse_expected=True),
+        binding=binding, adapter=adapter)
+    try:
+        # A settled Wan task whose request asked for 42 s leaves the child warm.
+        hold = host._hold_session_slot()
+        host._requested_idle_seconds = 42
+        host._settle_session_hold(hold)
+        assert [(entry["holding"], entry["idle_seconds"]) for entry in host.warm_holds.status()] == [
+            ("wan2gp.generate_video", 42.0)]
+        # The next task reuses it and cancels the expiry; its end re-arms it.
+        stale = timers.live()
+        host._settle_session_hold(host._hold_session_slot())
+        assert stale.cancelled
+        stale.callback()
+        assert reasons == [] and adapter.process.poll() is None
+        timers.fire()
+        assert reasons == ["idle"]
+        assert adapter.process.returncode == 0, "idle release ends the child process"
+        assert not host.managed_tool_session.occupied and host.warm_holds.status() == []
+    finally:
+        if adapter.process.poll() is None:
+            adapter.process.kill()
+            adapter.process.wait()
+        host.managed_tool_session.close()
+
+
+def test_failed_idle_release_is_recorded_and_keeps_the_slot_occupied(tmp_path):
+    host = GenericPackHost(pack_roots=[tmp_path])
+    timers = Timers()
+    host.warm_holds = WarmHolds(timer=timers)
+    notes = []
+    host._latch_cleanup_uncertainty = notes.append
+    binding = SessionBinding(session_id=str(tmp_path), runtime_instance_id="runtime", process_birth_id="birth",
+                             endpoint="pipe:birth", source_digest="source", config_digest="config")
+    adapter = generic_host._ManagedWanChildAdapter(
+        spec={}, binding=binding, readiness_timeout=5.0, release_timeout=5.0,
+        track=host._track_process, untrack=host._untrack_process)
+    adapter.release = lambda *, reason: {"ok": False, "released": False, "reason": reason}
+    host.managed_tool_session.open(
+        capability=CapabilityDescriptor("wan2gp.generate_video", warm_reuse_expected=True),
+        binding=binding, adapter=adapter)
+    host._settle_session_hold(host._hold_session_slot())
+    timers.fire()
+    assert notes and "idle session release" in notes[0]
+    assert host.managed_tool_session.occupied, "an unverified release never forgets the child"

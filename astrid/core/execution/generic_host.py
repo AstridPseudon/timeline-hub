@@ -115,6 +115,7 @@ from astrid.core.execution.managed_tool_session import (
     ManagedToolSession,
     SessionBinding,
 )
+from astrid.core.execution.warm_hold import DEFAULT_IDLE_SECONDS, WarmHolds, WarmLease, idle_seconds
 from astrid.core.execution.process_group import (
     CLEANUP_LATCH_NAME,
     CleanupUncertainError,
@@ -921,6 +922,12 @@ class _ManagedWanChildAdapter:
             self._owner_lock = None
         self.ready = False
         return {"ok": True, "released": True, "exit_code": process.returncode if process else None}
+
+
+# The sessions the slot keeps warm after a settled task; every other session is
+# released when its task ends.
+_WARM_SESSION_ADAPTERS = (_ManagedVibeSessionAdapter, _ManagedWanChildAdapter)
+
 
 class HostRegistrationError(HostError):
     """A typed, request-correlated executor registration failure."""
@@ -5230,6 +5237,11 @@ class GenericPackHost:
         self.evidence_status_path: Path | None = None
         self._evidence_observation_binding: dict[str, Any] = {}
         self._evidence_observation_lock = threading.RLock()
+        # Idle release for everything this host keeps warm between tasks: the
+        # session slot (Wan2GP, VibeComfy) and the Remotion frame owner.
+        self.warm_holds = WarmHolds(on_change=self._publish_evidence_status)
+        # A request's lifecycle.idle_timeout_seconds, for the task in flight.
+        self._requested_idle_seconds: float | None = None
         # Queued tasks already reported as unclaimable, as (task_id, reason).
         self._reported_blocked_claims: set[tuple[str, str]] = set()
         self._last_cleanup_receipt: dict[str, Any] | None = None
@@ -5495,8 +5507,49 @@ class GenericPackHost:
                     root_parent=str(self.attempt_base) if self.attempt_base else None,
                     account=self._renderer_scratch_account,
                     retire=lambda root: self.execution_policy.evidence_budget.release(str(root)),
-                    report=self._latch_cleanup_uncertainty)
-            return self._remotion_host_session.lease(environment, attempt=attempt)
+                    report=self._latch_cleanup_uncertainty, holds=self.warm_holds)
+            return self._remotion_host_session.lease(
+                environment, attempt=attempt, requested_idle=self._requested_idle_seconds)
+
+    def _hold_session_slot(self) -> WarmLease:
+        """Hold the session slot for one task, cancelling any idle expiry.
+
+        Taken before the task inspects the slot, so expiry can never release a
+        warm session the task is about to reuse or replace.
+        """
+        manager = self.managed_tool_session
+        return self.warm_holds.lease(manager, stop=self._release_idle_session, lock=manager._lock)
+
+    def _settle_session_hold(self, hold: WarmLease) -> None:
+        """At task end, arm idle release for whatever the slot still keeps warm."""
+        self.warm_holds.release(hold, holding=self._warm_session(), idle_seconds=idle_seconds(
+            DEFAULT_IDLE_SECONDS, requested=self._requested_idle_seconds))
+
+    def _warm_session(self) -> str | None:
+        """The capability the session slot keeps warm between tasks, if any."""
+        manager = self.managed_tool_session
+        with manager._lock:
+            capability = manager.current_capability
+            if (capability is not None and manager.active
+                    and isinstance(manager.current_adapter, _WARM_SESSION_ADAPTERS)):
+                return capability.capability_id
+        return None
+
+    def _release_idle_session(self) -> None:
+        """Idle expiry of the session slot; the warm hold runs it under the slot's lock.
+
+        Wan2GP's release ends its child.  VibeComfy's unloads models and frees
+        memory but keeps the engine process: the host cannot restart an engine
+        the Runtime selected for it, so ending it would strand the capability.
+        """
+        if self._warm_session() is None:
+            return
+        self._vibecomfy_warmth_hint = None
+        try:
+            self.managed_tool_session.release(reason="idle")
+        except Exception as exc:
+            # The slot stays poisoned and occupied, as after any unverified release.
+            self._latch_cleanup_uncertainty(f"idle session release: {exc}")
 
     def prepare_wan_session(
         self, *, owner_dir: str | Path, root: str | Path, python: str | Path,
@@ -5596,6 +5649,7 @@ class GenericPackHost:
         """Stop the host and every currently owned capability process."""
         with self.managed_tool_session._lock:
             self._shutdown.set()
+        self.warm_holds.close()
         errors: list[BaseException] = []
         # Fence every serving slot before any session release can block or
         # report uncertainty. A failed release must not leave a sibling live.
@@ -8897,6 +8951,7 @@ class GenericPackHost:
         managed_token = None
         managed_settled = False
         managed_opened = False
+        self._requested_idle_seconds = ((execution_contract or {}).get("lifecycle") or {}).get("idle_timeout_seconds")
         execution_identity = ""
         model_id = "vibecomfy.run"
         template_id = "vibecomfy.run"
@@ -9047,7 +9102,9 @@ class GenericPackHost:
         )
         pump_thread.start()
         child_bridge = None
+        session_hold = None
         try:
+            session_hold = self._hold_session_slot()
             # Admission readback is bounded transport work under the lease pump.
             # Decide exactly once, retaining the original start and setup bound.
             lifetime.authority = _interactive_review_authority(
@@ -9825,10 +9882,7 @@ class GenericPackHost:
                         cleanup_errors.append(f"managed fence: {exc}")
             if managed_opened:
                 retain_persistent_session = (
-                    (
-                        isinstance(managed_adapter, _ManagedVibeSessionAdapter)
-                        or isinstance(managed_adapter, _ManagedWanChildAdapter)
-                    )
+                    isinstance(managed_adapter, _WARM_SESSION_ADAPTERS)
                     and managed_settled
                     and settled
                 )
@@ -9853,6 +9907,13 @@ class GenericPackHost:
                 self._vibecomfy_warmth_hint = None
                 self._vibecomfy_current_warmth_hint = None
                 self._vibecomfy_requested_warmth_hint = None
+            try:
+                if session_hold is not None:
+                    self._settle_session_hold(session_hold)
+            except Exception:
+                # Never let idle bookkeeping mask the task's own outcome.
+                _LOGGER.exception("warm session hold was not armed")
+            self._requested_idle_seconds = None
             if capability_id == "generation.generate_image_codex":
                 # A force-killed child cannot run its credential finally.
                 # Scrub before retaining any attempt evidence as well.
