@@ -19,9 +19,78 @@ export const copy = <T>(value: T): T => structuredClone(value);
 export const has = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
 export const object = (value: unknown): value is ObjectValue =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
+
+export function assertFiniteJson(value: unknown, ancestors = new Set<object>()): void {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean' ||
+    (typeof value === 'number' && Number.isFinite(value))) return;
+  if (typeof value !== 'object' || value === null || ancestors.has(value)) {
+    throw new ClipMoveError('capture values must be finite JSON');
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (!Array.isArray(value) && prototype !== null && Object.getPrototypeOf(prototype) !== null) {
+    throw new ClipMoveError('capture values must be finite JSON');
+  }
+  ancestors.add(value);
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index++) assertFiniteJson(value[index], ancestors);
+  } else {
+    for (const child of Object.values(value)) assertFiniteJson(child, ancestors);
+  }
+  ancestors.delete(value);
+}
+
+export function freezeJson<T>(value: T): T {
+  if (value !== null && typeof value === 'object') {
+    Object.values(value).forEach(freezeJson);
+    Object.freeze(value);
+  }
+  return value;
+}
 const active = (row: ObjectValue): boolean => row.enabled !== false && row.active !== false &&
   !['disabled', 'hidden', 'deleted'].some((key) => row[key] === true);
 const AUDIO_KINDS = new Set(['audio', 'vo', 'music', 'sfx', 'voice', 'voiceover']);
+
+// The synchronous gesture port needs main's SHA-256 authoring IDs before drop.
+// WebCrypto is asynchronous; this hashes only the small identity/pin strings.
+const SHA256_K = [
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+];
+const rotate = (value: number, bits: number): number => (value >>> bits) | (value << (32 - bits));
+
+function sha256(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  const padded = new Uint8Array(Math.ceil((bytes.length + 9) / 64) * 64);
+  padded.set(bytes);
+  padded[bytes.length] = 0x80;
+  const view = new DataView(padded.buffer);
+  view.setUint32(padded.length - 8, Math.floor(bytes.length / 0x20000000));
+  view.setUint32(padded.length - 4, bytes.length * 8);
+  const hash = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+  const words = new Uint32Array(64);
+  for (let offset = 0; offset < padded.length; offset += 64) {
+    for (let i = 0; i < 16; i++) words[i] = view.getUint32(offset + i * 4);
+    for (let i = 16; i < 64; i++) {
+      const a = words[i - 15], b = words[i - 2];
+      words[i] = words[i - 16] + (rotate(a, 7) ^ rotate(a, 18) ^ (a >>> 3)) + words[i - 7] +
+        (rotate(b, 17) ^ rotate(b, 19) ^ (b >>> 10));
+    }
+    let [a, b, c, d, e, f, g, h] = hash;
+    for (let i = 0; i < 64; i++) {
+      const first = h + (rotate(e, 6) ^ rotate(e, 11) ^ rotate(e, 25)) + ((e & f) ^ (~e & g)) + SHA256_K[i] + words[i];
+      const second = (rotate(a, 2) ^ rotate(a, 13) ^ rotate(a, 22)) + ((a & b) ^ (a & c) ^ (b & c));
+      [a, b, c, d, e, f, g, h] = [(first + second) >>> 0, a, b, c, (d + first) >>> 0, e, f, g];
+    }
+    [a, b, c, d, e, f, g, h].forEach((value, i) => { hash[i] = (hash[i] + value) >>> 0; });
+  }
+  return hash.map((value) => value.toString(16).padStart(8, '0')).join('');
+}
 
 export function equal(a: unknown, b: unknown): boolean {
   if (Array.isArray(a) && Array.isArray(b)) {
@@ -46,6 +115,12 @@ function one(rows: JSON, key: string, id: string, optional = false): ObjectValue
 export class AuthoredState {
   constructor(readonly bundle: AuthoredBundle) {}
 
+  isolatedOwner(owner: string, source: string): string {
+    return 'shot-placement-' + sha256(
+      ['shot-placement', ...[this.bundle.project_id, this.bundle.timeline_id, this.occurrence(owner).occurrence_id, source]
+        .map((part) => JSON.stringify(part))].join('\0'));
+  }
+
   occurrence(owner: string): ObjectValue {
     return one(this.bundle.placements, 'occurrence_id', owner.slice('occurrence:'.length))!;
   }
@@ -66,8 +141,10 @@ export class AuthoredState {
       const colon = entity.indexOf(':');
       const kind = entity.slice(0, colon);
       const id = entity.slice(colon + 1);
-      const rows = owner === 'parent' && kind === 'clip' && has(this.bundle.parent, 'clips')
-        ? this.bundle.parent.clips : this.config(owner)[`${kind}s`] ?? [];
+      const direct = this.bundle.parent.clips;
+      const rows = owner === 'parent' && kind === 'clip'
+        ? (Array.isArray(direct) && direct.length ? direct : this.config(owner).clips ?? direct ?? [])
+        : this.config(owner)[`${kind}s`] ?? [];
       return one(rows, 'id', id, optional);
     }
     if (ref === 'parent') return this.bundle.parent;
@@ -88,7 +165,18 @@ export class AuthoredState {
       return (direct ?? nested ?? { assets: {} }) as ObjectValue;
     }
     if (ref.endsWith('/source')) return this.config(ref.slice(0, -'/source'.length));
-    if (ref.endsWith('/shot')) return { shot_id: this.occurrence(ref.slice(0, -'/shot'.length)).shot_id };
+    if (ref.endsWith('/shot')) {
+      const row = this.occurrence(ref.slice(0, -'/shot'.length));
+      const mapping = this.bundle.source_mapping as ObjectValue;
+      const sources = mapping.shots as ObjectValue;
+      const source = (sources[String(row.shot_id)] as ObjectValue).shot_id;
+      if (typeof source !== 'string') throw new ClipMoveError('missing occurrence source identity');
+      const identity = this.isolatedOwner(ref.slice(0, -'/shot'.length), source);
+      if (row.shot_id !== source && row.shot_id !== identity) {
+        throw new ClipMoveError('occurrence authoring owner changed', 'identity_conflict');
+      }
+      return { shot_id: source };
+    }
     if (ref.startsWith('occurrence:') && !ref.includes('/')) return this.occurrence(ref);
     throw new ClipMoveError(`unsupported entity reference ${ref}`);
   }
@@ -103,6 +191,14 @@ export class AuthoredState {
       else return { state: 'absent' };
     }
     return { state: 'present', value: copy(value) };
+  }
+
+  matches(ref: string, path: string[], expected: AgentState): boolean {
+    const actual = this.get(ref, path);
+    if (equal(actual, expected)) return true;
+    return ref.endsWith('/shot') && equal(path, ['shot_id']) && expected.state === 'present' &&
+      actual.state === 'present' && typeof expected.value === 'string' &&
+      actual.value === this.isolatedOwner(ref.slice(0, -'/shot'.length), expected.value);
   }
 
   set(ref: string, path: string[], state: AgentState): void {
@@ -167,6 +263,31 @@ export class MoveRecording {
 
   dependency(key: string, kind: AgentDependency['kind'], pin: ObjectValue): void {
     this.record.dependencies.push({ key, kind, pin: copy(pin), policy: 'exact' });
+  }
+
+  compile(): void {
+    const mapping = this.state.bundle.source_mapping as ObjectValue | undefined;
+    const document = mapping?._runtime_document as ObjectValue | undefined;
+    const manifest = document?.dependency_manifest as ObjectValue | undefined;
+    const retained = manifest?.documents as JSON[] | undefined ?? [];
+    for (const capture of mapping?.pinned_documents as ObjectValue[] | undefined ?? []) {
+      const pin = capture.pin as ObjectValue;
+      if (retained.some((other) => equal(pin, other))) {
+        const canonical = JSON.stringify({ content_digest: pin.content_digest, document_id: pin.document_id, version: pin.version });
+        this.dependency('compile.document:sha256:' + sha256(canonical),
+          (capture.document as ObjectValue).kind === 'media.transcript' ? 'transcript' : 'source', pin);
+      }
+    }
+    const parent = this.state.bundle.parent;
+    const config = this.state.config('parent');
+    if (Array.isArray(parent.clips) && parent.clips.length && Array.isArray(config.clips) && config.clips.length) {
+      const before = this.state.get('parent', ['config', 'clips']);
+      const after: AgentState = { state: 'present', value: copy(parent.clips) };
+      if (!equal(before, after)) {
+        this.record.derived_writes.push({ ref: 'parent', path: ['config', 'clips'], before, after, cause: 0 });
+        this.state.set('parent', ['config', 'clips'], after);
+      }
+    }
   }
 
   assign(ref: string, path: string[], after: AgentState): void {

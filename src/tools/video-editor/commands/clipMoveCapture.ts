@@ -1,5 +1,5 @@
 import type { EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
-import { AuthoredState, ClipMoveError, MoveRecording, copy, equal, has, object } from './clipMovePrimitives.ts';
+import { AuthoredState, ClipMoveError, MoveRecording, assertFiniteJson, copy, equal, freezeJson, has, object } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
 
 export { ClipMoveError } from './clipMovePrimitives.ts';
@@ -7,7 +7,9 @@ export type { AuthoredBundle } from './clipMovePrimitives.ts';
 
 // Built-in clip.move v1, ported from Agent sdk/timeline/capture.py::move.
 // The recorder supplies metadata; this recipe supplies only reads and authored writes.
-const INTENT = { ripple: 'none', anchor: 'fixed', ownership: 'occurrence', position: 'absolute' } as const;
+const INTENT = { ripple: 'none', anchor: 'fixed', position: 'absolute' } as const;
+const moveIntent = (select: string): EditCommand['intent'] => select.startsWith('occurrence:')
+  ? { ...INTENT, ownership: 'occurrence' } : { ...INTENT };
 const CLIP_FIELDS = ['id', 'at', 'at_ms', 'track', 'asset', 'asset_id', 'media_id', 'object_id',
   'clipType', 'clip_type', 'enabled', 'active', 'disabled', 'hidden', 'deleted',
   'from', 'to', 'from_ms', 'to_ms', 'hold', 'duration', 'duration_ms', 'speed', 'time_map', 'timeMap', 'clips', 'children'];
@@ -97,7 +99,7 @@ function occurrenceStart(row: Record<string, JSON>): number {
 
 function move(bundle: AuthoredBundle, command: EditCommand) {
   if (command.schema_version !== 1 || command.op !== 'clip.move' || command.version !== '1' ||
-    !equal(Object.keys(command.args), ['on']) || !equal({ ...INTENT, ...command.intent }, INTENT)) {
+    !equal(Object.keys(command.args), ['on'])) {
     throw new ClipMoveError('unsupported clip.move v1 command');
   }
   const ref = command.select;
@@ -105,7 +107,9 @@ function move(bundle: AuthoredBundle, command: EditCommand) {
     throw new ClipMoveError('clip.move requires a stable scoped clip identity');
   }
   const owner = ref.slice(0, ref.lastIndexOf('/'));
-  const ctx = new MoveRecording(bundle, { ...command, intent: { ...INTENT } });
+  const intent = moveIntent(ref);
+  if (!equal({ ...intent, ...command.intent }, intent)) throw new ClipMoveError('unsupported clip.move v1 intention');
+  const ctx = new MoveRecording(bundle, { ...command, intent });
   if (!equal(ctx.select('move.target', owner, [ref]), [ref])) throw new ClipMoveError('move target disappeared', 'identity_conflict');
   for (const key of CLIP_FIELDS) ctx.read(ref, [key]);
   const clip = ctx.state.entity(ref)!;
@@ -158,7 +162,7 @@ function move(bundle: AuthoredBundle, command: EditCommand) {
   let origin = 0;
   if (owner !== 'parent') {
     ctx.read(owner, ['occurrence_id']);
-    ctx.read(owner, ['shot_id']);
+    ctx.read(`${owner}/shot`, ['shot_id']);
     const row = ctx.state.occurrence(owner);
     for (const path of MAP_FIELDS) ctx.read(owner, path);
     if (row.time_map != null || row.timeMap != null ||
@@ -189,7 +193,7 @@ function move(bundle: AuthoredBundle, command: EditCommand) {
     const shots = object(mapping) && object(mapping.shots) ? mapping.shots : {};
     pin.source = copy(shots[String(ctx.state.occurrence(owner).shot_id)] ?? {});
   }
-  ctx.dependency('move.images', 'source', pin);
+  ctx.dependency('move.images', 'entity', pin);
   ctx.bind('move.target', ref, ['move.images', 'move.quantization', ...sourceDependencies]);
   const msOnly = has(clip, 'at_ms') && !has(clip, 'at');
   ctx.write(ref, [msOnly ? 'at_ms' : 'at'], number(msOnly ? local * 1000 : local, 'authored start'));
@@ -201,26 +205,40 @@ function move(bundle: AuthoredBundle, command: EditCommand) {
   }
   ctx.write(ref, ['app', 'astrid', 'fixed_start'], true);
   ctx.write(ref, ['app', 'astrid', 'for'], length);
+  ctx.compile();
   return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record, previewAt: quantized };
 }
 
 /** Local authored execution only. Runtime/Agent remains the accepted compiler and rebase authority. */
 export function executeClipMove(bundle: AuthoredBundle, command: EditCommand) {
+  assertFiniteJson(bundle);
+  assertFiniteJson(command);
   const result = move(bundle, command);
   for (const key of ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'] as const) {
-    if (has(command, key) && !equal(command[key], result.command[key])) {
+    let matches = equal(command[key], result.command[key]);
+    if (key === 'reads' && Array.isArray(command.reads)) {
+      const actual = result.command.reads!;
+      const state = new AuthoredState(bundle);
+      matches = command.reads.length === actual.length && command.reads.every((claimed, index) => {
+        const read = actual[index];
+        return claimed.ref === read.ref && equal(claimed.path, read.path) &&
+          (equal(claimed.state, read.state) || (read.ref.endsWith('/shot') && state.matches(read.ref, read.path, claimed.state)));
+      });
+    }
+    if (has(command, key) && !matches) {
       throw new ClipMoveError(`submitted ${key} does not match original capture`, 'capture_mismatch');
     }
   }
+  Object.assign(result.command, copy(command), { intent: result.command.intent });
   return result;
 }
 
-declare const basisBrand: unique symbol;
-export type ClipMoveBasis = { readonly [basisBrand]: true };
-const bases = new WeakMap<ClipMoveBasis, { bundle: AuthoredBundle; command: EditCommand }>();
+// Local capture data, never a wire field. Both values survive the UI port's JSON clone.
+export type ClipMoveBasis = { readonly bundle: AuthoredBundle; readonly command: EditCommand };
 
 /** Freeze original reads before preview. Pass the previous local result.bundle for dependent B. */
 export function captureClipMove(bundle: AuthoredBundle, select: string): ClipMoveBasis {
+  assertFiniteJson(bundle);
   const snapshot = copy(bundle);
   const state = new AuthoredState(snapshot);
   const target = state.entity(select)!;
@@ -228,15 +246,19 @@ export function captureClipMove(bundle: AuthoredBundle, select: string): ClipMov
   const current = has(target, 'at') ? number(target.at, 'clip.at') : number(target.at_ms, 'clip.at_ms') / 1000;
   const origin = owner === 'parent' ? 0 : occurrenceStart(state.occurrence(owner));
   const { command } = move(snapshot, { schema_version: 1, op: 'clip.move', version: '1', select,
-    args: { on: current + origin }, intent: { ...INTENT } });
-  const basis = Object.freeze({}) as ClipMoveBasis;
-  bases.set(basis, { bundle: snapshot, command });
-  return basis;
+    args: { on: current + origin }, intent: moveIntent(select) });
+  return freezeJson({ bundle: snapshot, command });
 }
 
 /** Drop supplies absolute global seconds. No ACK or refreshed document enters this operation. */
-export function finishClipMove(basis: ClipMoveBasis, on: number) {
-  const original = bases.get(basis);
-  if (!original) throw new ClipMoveError('unknown clip move basis');
-  return executeClipMove(original.bundle, { ...copy(original.command), args: { on } });
+export function finishClipMove(basis: unknown, on: number) {
+  assertFiniteJson(basis);
+  if (!object(basis)) throw new ClipMoveError('incomplete clip move basis');
+  const { bundle, command } = basis;
+  if (!object(bundle) || !object(command) ||
+    !['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created']
+      .every((key) => has(command, key))) {
+    throw new ClipMoveError('incomplete clip move basis');
+  }
+  return executeClipMove(bundle as AuthoredBundle, { ...copy(command as EditCommand), args: { on } });
 }
