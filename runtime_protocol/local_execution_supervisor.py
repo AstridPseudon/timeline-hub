@@ -1020,7 +1020,7 @@ class NativeHostSession:
                 self.binding_file.flush()
                 self.binding_file.seek(0)
             environment.update(self.broker.child_environment(argv, start_new_session=True))
-            child = runtime_platform.spawn_tree(custody_wrapper_argv(preparation["profile"]["worker_executable"]), start_new_session=False, env=environment,
+            child = runtime_platform.spawn_tree(custody_wrapper_argv(runtime_platform.handoff_custody_executable(preparation["profile"]["worker_executable"], argv[0])), start_new_session=False, env=environment,
                 cwd=config["support_root"], stdin=subprocess.DEVNULL, close_fds=True,
                 pass_fds=(control_child.fileno(), activation_child.fileno(), *((self.binding_file.fileno(),) if self.binding_file is not None else ())))
             # Publish the exact owned child before fallible sealing/binding.
@@ -1178,6 +1178,10 @@ class _DeadlineIO:
 
     def __getattr__(self, name):
         return getattr(self.channel, name)
+
+    @property
+    def _handoff_channel(self):
+        return self.channel
 
     def _call(self, name, *args):
         deadline = self.monitor.current_deadline()
@@ -1650,8 +1654,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.prepared_control_fd < 0:
         raise RelayError("relay private descriptor is invalid")
-    channel = socket.socket(fileno=args.prepared_control_fd)
-    os.set_inheritable(channel.fileno(), False)
+    channel = runtime_platform.handoff_adopt_socket(args.prepared_control_fd)
     try:
         serve_control(channel)
     except _RelaySupervisionFailure as exc:

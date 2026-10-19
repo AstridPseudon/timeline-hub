@@ -1,17 +1,12 @@
-"""Private POSIX descriptor custody for an orderly local Worker handoff."""
+"""Bounded, transport-independent authority exchange for a local Worker handoff."""
 
 from __future__ import annotations
 
-import array
 import ipaddress
 import json
 import math
-from .dirfd import filesystem as os
 from pathlib import Path
 import socket
-import struct
-import subprocess
-import sys
 from dataclasses import dataclass
 from typing import Any, Mapping
 
@@ -57,8 +52,8 @@ def _canonical_frame(value: Mapping[str, Any]) -> bytes:
 
 def _set_and_verify_cloexec(descriptor: int) -> None:
     try:
-        os.set_inheritable(descriptor, False)
-        observed = os.get_inheritable(descriptor)
+        runtime_platform.handoff_set_inheritable(descriptor, False)
+        observed = runtime_platform.handoff_get_inheritable(descriptor)
     except OSError as exc:
         raise ConflictError("cannot normalize inherited handoff descriptor") from exc
     if observed:
@@ -68,74 +63,17 @@ def _set_and_verify_cloexec(descriptor: int) -> None:
 def _close_descriptors(descriptors: list[int] | tuple[int, ...]) -> None:
     for descriptor in descriptors:
         try:
-            os.close(descriptor)
+            runtime_platform.handoff_close(descriptor)
         except OSError:
             pass
 
 
-def peer_uid(channel: socket.socket) -> int:
-    """Return the kernel-authenticated UID of a connected Unix peer."""
-
-    if channel.family != socket.AF_UNIX:
-        raise ConflictError("handoff transfer channel must be a Unix socket")
-    if os.name == "nt":
-        raise ConflictError("handoff peer authentication is unavailable on Windows")
-    getpeereid = getattr(channel, "getpeereid", None)
-    if callable(getpeereid):
-        try:
-            uid, _ = getpeereid()
-            return int(uid)
-        except OSError as exc:
-            raise ConflictError("cannot authenticate handoff transfer peer") from exc
-    local_peercred = getattr(socket, "LOCAL_PEERCRED", None)
-    if local_peercred is not None:
-        # Darwin exposes struct xucred through SOL_LOCAL (numeric level 0) but
-        # does not expose getpeereid(3) through every Python build.  Its first
-        # two unsigned fields are the ABI version and authenticated UID.
-        try:
-            credentials = channel.getsockopt(
-                getattr(socket, "SOL_LOCAL", 0), local_peercred, struct.calcsize("2I")
-            )
-            version, uid = struct.unpack("2I", credentials)
-            if version != 0:
-                raise ConflictError("handoff transfer peer credentials have an invalid version")
-            return int(uid)
-        except OSError as exc:
-            raise ConflictError("cannot authenticate handoff transfer peer") from exc
-    option = getattr(socket, "SO_PEERCRED", None)
-    if option is None:
-        raise ConflictError("platform cannot authenticate handoff transfer peer")
-    try:
-        credentials = channel.getsockopt(socket.SOL_SOCKET, option, struct.calcsize("3i"))
-        _, uid, _ = struct.unpack("3i", credentials)
-        return int(uid)
-    except (OSError, struct.error) as exc:
-        raise ConflictError("cannot authenticate handoff transfer peer") from exc
+def peer_uid(channel) -> int:
+    return runtime_platform.handoff_peer_uid(channel)
 
 
-def peer_pid(channel: socket.socket) -> int:
-    """Return the kernel-authenticated PID of a connected Unix peer."""
-
-    if channel.family != socket.AF_UNIX:
-        raise ConflictError("handoff transfer channel must be a Unix socket")
-    if os.name == "nt":
-        raise ConflictError("handoff peer authentication is unavailable on Windows")
-    if sys.platform == "darwin":
-        try:
-            # LOCAL_PEERPID is Darwin's SOL_LOCAL option 2. Python does not
-            # expose the symbolic constant in every supported build.
-            return int(struct.unpack("i", channel.getsockopt(0, 2, 4))[0])
-        except (OSError, struct.error) as exc:
-            raise ConflictError("cannot authenticate handoff transfer peer PID") from exc
-    option = getattr(socket, "SO_PEERCRED", None)
-    if option is None:
-        raise ConflictError("platform cannot authenticate handoff transfer peer PID")
-    try:
-        credentials = channel.getsockopt(socket.SOL_SOCKET, option, struct.calcsize("3i"))
-        pid, _, _ = struct.unpack("3i", credentials)
-        return int(pid)
-    except (OSError, struct.error) as exc:
-        raise ConflictError("cannot authenticate handoff transfer peer PID") from exc
+def peer_pid(channel) -> int:
+    return runtime_platform.handoff_peer_pid(channel)
 
 
 def send_authority_transfer(
@@ -149,19 +87,9 @@ def send_authority_transfer(
 
     if frame.get("version") != TRANSFER_VERSION:
         raise ValidationError("handoff transfer version is invalid")
-    if os.name == "nt":
-        raise ConflictError("descriptor handoff is unavailable on Windows")
-    descriptors = array.array("i", [int(worker_control_fd), int(listener_fd)])
     encoded = _canonical_frame(frame)
     try:
-        sent = channel.sendmsg(
-            [encoded],
-            [(socket.SOL_SOCKET, socket.SCM_RIGHTS, descriptors.tobytes())],
-        )
-        if sent <= 0:
-            raise ConflictError("handoff authority transfer was incomplete")
-        if sent < len(encoded):
-            channel.sendall(encoded[sent:])
+        runtime_platform.handoff_send(channel, encoded, (int(worker_control_fd), int(listener_fd)))
     except OSError as exc:
         raise ConflictError("handoff authority transfer failed") from exc
 
@@ -170,24 +98,19 @@ def send_frame(channel: socket.socket, frame: Mapping[str, Any]) -> None:
     """Send one bounded canonical newline frame without authority FDs."""
 
     try:
-        channel.sendall(_canonical_frame(frame))
+        runtime_platform.handoff_send(channel, _canonical_frame(frame))
     except OSError as exc:
         raise ConflictError("handoff control frame could not be sent") from exc
 
 
-def _receive_frame(channel: socket.socket) -> tuple[dict[str, Any], list[tuple[int, int, bytes]]]:
-    ancillary_size = socket.CMSG_SPACE(AUTHORITY_FD_COUNT * array.array("i").itemsize)
+def _receive_frame(channel: socket.socket) -> tuple[dict[str, Any], list[int]]:
     try:
-        payload, ancillary, flags, _ = channel.recvmsg(TRANSFER_FRAME_LIMIT + 2, ancillary_size)
+        payload, descriptors = runtime_platform.handoff_receive(channel, TRANSFER_FRAME_LIMIT + 2)
     except OSError as exc:
         raise ConflictError("handoff authority transfer could not be read") from exc
     try:
         if not payload:
             raise ConflictError("handoff authority transfer channel closed")
-        if flags & getattr(socket, "MSG_CTRUNC", 0):
-            raise ConflictError("handoff authority descriptors were truncated")
-        if flags & getattr(socket, "MSG_TRUNC", 0):
-            raise ConflictError("handoff authority frame was truncated")
         frame_bytes = bytearray(payload)
         while b"\n" not in frame_bytes:
             if len(frame_bytes) > TRANSFER_FRAME_LIMIT:
@@ -206,51 +129,21 @@ def _receive_frame(channel: socket.socket) -> tuple[dict[str, Any], list[tuple[i
             raise ConflictError("handoff transfer frame is malformed") from exc
         if not isinstance(value, dict):
             raise ConflictError("handoff transfer frame must be an object")
-        return value, ancillary
+        return value, descriptors
     except BaseException:
-        _close_descriptors(_all_rights_descriptors(ancillary))
+        _close_descriptors(descriptors)
         raise
 
 
-def _all_rights_descriptors(ancillary: list[tuple[int, int, bytes]]) -> list[int]:
-    """Extract every complete received SCM_RIGHTS integer for cleanup."""
-
-    descriptors: list[int] = []
-    itemsize = array.array("i").itemsize
-    for level, kind, payload in ancillary:
-        if level != socket.SOL_SOCKET or kind != socket.SCM_RIGHTS:
-            continue
-        usable = len(payload) - (len(payload) % itemsize)
-        if usable:
-            values = array.array("i")
-            values.frombytes(payload[:usable])
-            descriptors.extend(values)
-    return descriptors
-
-
-def _received_descriptors(ancillary: list[tuple[int, int, bytes]]) -> list[int]:
-    if len(ancillary) != 1:
-        raise ConflictError("handoff transfer must carry one descriptor record")
-    level, kind, payload = ancillary[0]
-    itemsize = array.array("i").itemsize
-    if level != socket.SOL_SOCKET or kind != socket.SCM_RIGHTS or len(payload) % itemsize:
-        raise ConflictError("handoff transfer descriptor record is invalid")
-    descriptors = array.array("i")
-    descriptors.frombytes(payload)
-    return list(descriptors)
-
-
 def receive_frame(channel: socket.socket) -> dict[str, Any]:
-    """Receive one bounded frame and reject any attached descriptor."""
-
-    frame, ancillary = _receive_frame(channel)
-    leaked = _all_rights_descriptors(ancillary)
+    """Receive one bounded frame and reject any attached authority."""
+    frame, descriptors = _receive_frame(channel)
     try:
-        if ancillary:
+        if descriptors or getattr(descriptors, "authority_present", False):
             raise ConflictError("handoff control frame carried unexpected authority")
         return frame
     finally:
-        _close_descriptors(leaked)
+        _close_descriptors(descriptors)
 
 
 def _validate_deadline(value: object) -> None:
@@ -261,57 +154,11 @@ def _validate_deadline(value: object) -> None:
         raise ConflictError("handoff transfer deadline is invalid")
 
 
-def _inspect_socket(descriptor: int, *, listener: bool) -> tuple[int, int, Any]:
-    duplicate = os.dup(descriptor)
+def _inspect_socket(descriptor: int, *, listener: bool):
     try:
-        inspected = socket.socket(fileno=duplicate)
-        family = inspected.family
-        kind = inspected.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)
-        address = inspected.getsockname()
-        if listener:
-            try:
-                accepting = inspected.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN)
-            except OSError as exc:
-                if sys.platform != "darwin":
-                    raise
-                # Darwin does not implement SO_ACCEPTCONN.  Observe the exact
-                # descriptor's kernel LISTEN state without calling accept(2)
-                # (which could consume a queued client during transfer).
-                observed = subprocess.run(
-                    [
-                        "/usr/sbin/lsof",
-                        "-a",
-                        "-p",
-                        str(os.getpid()),
-                        "-d",
-                        str(duplicate),
-                        "-n",
-                        "-P",
-                        "-iTCP",
-                        "-sTCP:LISTEN",
-                        "-Ff",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                if observed.returncode not in (0, 1):
-                    raise ConflictError("cannot observe inherited listener state") from exc
-                accepting = int(f"f{duplicate}" in observed.stdout.splitlines())
-            detail = (accepting, address)
-        else:
-            # A connected Unix socketpair is the only valid Worker-control
-            # authority.  SO_ACCEPTCONN is unavailable for AF_UNIX on Darwin,
-            # so connected-peer observation supplies the stronger role check.
-            detail = (inspected.getpeername(), address)
-        inspected.close()
-        duplicate = -1
-        return family, kind, detail
+        return runtime_platform.handoff_inspect_socket(descriptor, listener=listener)
     except OSError as exc:
         raise ConflictError("handoff authority descriptor is not an observable socket") from exc
-    finally:
-        if duplicate >= 0:
-            os.close(duplicate)
 
 
 def _validate_authority_sockets(
@@ -320,13 +167,11 @@ def _validate_authority_sockets(
     *,
     expected_listener: tuple[str, int],
 ) -> None:
-    if os.name == "nt":
-        raise ConflictError("descriptor handoff is unavailable on Windows")
     try:
         worker_family, worker_kind, _ = _inspect_socket(worker_control_fd, listener=False)
     except ConflictError as exc:
         raise ConflictError("handoff Worker-control descriptor identity is invalid") from exc
-    if worker_family != socket.AF_UNIX or worker_kind != socket.SOCK_STREAM:
+    if not runtime_platform.handoff_control_family(worker_family) or worker_kind != socket.SOCK_STREAM:
         raise ConflictError("handoff Worker-control descriptor identity is invalid")
 
     try:
@@ -393,15 +238,14 @@ def receive_authority_transfer(
     abort.
     """
 
-    if os.name == "nt":
-        raise ConflictError("descriptor handoff is unavailable on Windows")
     if peer_uid(channel) != int(expected_uid):
         raise ConflictError("handoff transfer peer UID is invalid")
-    frame, ancillary = _receive_frame(channel)
-    descriptors = _all_rights_descriptors(ancillary)
+    frame, descriptors = _receive_frame(channel)
     try:
-        strict_descriptors = _received_descriptors(ancillary)
-        if strict_descriptors != descriptors or len(descriptors) != AUTHORITY_FD_COUNT:
+        record_error = getattr(descriptors, "record_error", None)
+        if record_error is not None:
+            raise record_error
+        if len(descriptors) != AUTHORITY_FD_COUNT:
             raise ConflictError("handoff transfer must carry exactly two authority descriptors")
         for descriptor in descriptors:
             _set_and_verify_cloexec(descriptor)
@@ -473,19 +317,22 @@ class HandoffSuccessorListener:
     authorize B; every accept pins the exact selected kernel incarnation.
     """
     def __init__(self, binding, sealed_record_digest, *, timeout=5.0):
-        if os.name == "nt":
-            raise ConflictError("descriptor handoff is unavailable on Windows")
         from astrid_runtime.custody_broker import _create_compact_socket_root
         from .local_execution_handoff import digest, write_protected
         self.binding = dict(binding); self.sealed_record_digest = sealed_record_digest
-        self.root = _create_compact_socket_root(); self.path = self.root / "s"
-        self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.socket.set_inheritable(False); self.socket.settimeout(timeout)
+        self.transport = runtime_platform.handoff_listener(binding["new_owner"], timeout=timeout)
+        if self.transport is None:
+            self.root = _create_compact_socket_root(); self.path = self.root / "s"
+            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.socket.set_inheritable(False); self.socket.settimeout(timeout)
+        else:
+            self.root = None; self.path = self.transport.endpoint; self.socket = self.transport.socket
         self.timeout = timeout; self.closed = False
         self.manifest_path = Path(binding["custody_scope"]) / "successor-transport.json"
         self.manifest = {"version": "runtime.local-execution-successor-transport/v1", "path": str(self.path), "binding_digest": digest(binding), "sealed_record_digest": sealed_record_digest, "successor": binding["new_owner"], "relay": binding["source_relay_reference"]["target"]}
         try:
-            self.socket.bind(str(self.path)); runtime_platform.owner_only(self.path); self.socket.listen(4)
+            if self.transport is None:
+                self.socket.bind(str(self.path)); runtime_platform.owner_only(self.path); self.socket.listen(4)
             write_protected(self.manifest_path, self.manifest)
         except BaseException:
             self.close(); raise
@@ -493,7 +340,11 @@ class HandoffSuccessorListener:
     def accept(self):
         frame_io = getattr(self, "_frame_io", None)
         acceptor = self.socket if frame_io is None else frame_io(self.socket)
-        channel, _ = acceptor.accept()
+        transport = getattr(self, "transport", None)
+        if transport is None:
+            channel, _ = acceptor.accept()
+        else:
+            channel = transport.accept(acceptor=acceptor, frame_io=frame_io)
         channel.set_inheritable(False); channel.settimeout(self.timeout)
         try:
             frame = receive_frame(channel if frame_io is None else frame_io(channel))
@@ -512,8 +363,9 @@ class HandoffSuccessorListener:
         self.closed = True; self.socket.close()
         # Only this listener's generated socket/root; no donor or installed
         # state is renamed/deleted. A manifest is retained as nonauthority.
-        self.path.unlink(missing_ok=True)
-        self.root.rmdir()
+        if getattr(self, "transport", None) is None:
+            self.path.unlink(missing_ok=True)
+            self.root.rmdir()
 
 
 def connect_fresh_successor(binding, sealed_record_digest, *, timeout=5.0):
@@ -526,6 +378,15 @@ def connect_fresh_successor(binding, sealed_record_digest, *, timeout=5.0):
         raise ConflictError("selected successor transport manifest differs")
     if AuthenticatedCleanupActor.current().verify() != binding["new_owner"]:
         raise ConflictError("this Runtime is not the selected successor incarnation")
+    channel = runtime_platform.handoff_connect(manifest["path"], expected=manifest["relay"], timeout=timeout)
+    if channel is not None:
+        try:
+            relay = AuthenticatedCleanupActor.private_peer(channel)
+            if relay.verify() != manifest["relay"]:
+                raise ConflictError("fresh successor channel is not the retained relay")
+            return channel, relay
+        except BaseException:
+            channel.close(); raise
     path = Path(manifest["path"])
     observed = path.lstat(); parent = path.parent.lstat()
     import stat

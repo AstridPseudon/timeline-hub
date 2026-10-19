@@ -999,7 +999,7 @@ class RealmStore:
                 json.dump(state, target, sort_keys=True)
                 target.flush()
                 os.fsync(target.fileno())
-            os.replace(temporary, path)
+            platform.durable_replace(temporary, path)
             directory = os.open(self.root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
             try:
                 os.fsync(directory)

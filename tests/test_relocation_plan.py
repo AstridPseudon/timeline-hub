@@ -229,7 +229,7 @@ def test_relocation_restores_target_aux_when_root_rename_fails(tmp_path, monkeyp
             raise OSError("injected root rename failure")
         return original_replace(source, target)
 
-    monkeypatch.setattr("astrid_runtime.relocation.os.replace", fail_root_rename)
+    monkeypatch.setattr("astrid_runtime.relocation.platform.durable_replace", fail_root_rename)
     monkeypatch.setattr("astrid_runtime.relocation._bootstrap_locked", lambda *_args, **_kwargs: BootstrapResult("started", "realm-1", "Realm", "http://127.0.0.1:1", "actor", "astrid"))
 
     with pytest.raises(RelocationError, match="rolled back"):

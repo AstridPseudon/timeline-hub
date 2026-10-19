@@ -81,7 +81,7 @@ class CredentialStore:
                 handle.write(value)
                 handle.flush()
                 os.fsync(handle.fileno())
-            os.replace(temporary, path)
+            platform.durable_replace(temporary, path)
             platform.owner_only(path)
         finally:
             temporary.unlink(missing_ok=True)

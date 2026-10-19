@@ -67,8 +67,23 @@ jobs:
           python -m pytest -q -m ""
           tests/test_platform.py
           tests/test_platform_windows.py
+          tests/test_windows_worker_handoff.py
           tests/test_platform_filesystem.py
+          tests/test_dirfd_windows.py
           tests/test_m1_review.py
           tests/test_foreground.py
           tests/test_native_custody.py
           tests/test_portable_lifecycle.py
+
+  windows-worker-handoff:
+    # Keep native IPC qualification required while the broader Windows port
+    # still permits failures in the filesystem/service jobs.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install -e '.[test]'
+      - run: python -m pytest -q -n 2 -m "" tests/test_windows_worker_handoff.py

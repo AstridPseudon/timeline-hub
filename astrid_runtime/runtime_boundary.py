@@ -248,7 +248,7 @@ class LocalRuntimeBoundary:
         else:
             python = sys.executable
             if source.runtime_environment:
-                candidate = Path(source.runtime_environment).expanduser().resolve() / ("Scripts" if sys.platform == "win32" else "bin") / ("python.exe" if sys.platform == "win32" else "python")
+                candidate = platform.venv_python(Path(source.runtime_environment).expanduser().resolve())
                 if not candidate.is_file() or not os.access(candidate, os.X_OK):
                     raise BootstrapError(
                         "Configured runtime environment is missing its installed Python: "
@@ -307,7 +307,7 @@ class LocalRuntimeBoundary:
             raise BootstrapError("explicit realm creation requires the pinned runtime environment")
         python = sys.executable
         if source_profile.runtime_environment:
-            candidate = Path(source_profile.runtime_environment).expanduser().resolve() / ("Scripts" if sys.platform == "win32" else "bin") / ("python.exe" if sys.platform == "win32" else "python")
+            candidate = platform.venv_python(Path(source_profile.runtime_environment).expanduser().resolve())
             if not candidate.is_file() or not os.access(candidate, os.X_OK):
                 raise BootstrapError(
                     "Configured runtime environment is missing its installed Python: "
