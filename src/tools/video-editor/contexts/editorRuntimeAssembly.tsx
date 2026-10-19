@@ -26,8 +26,9 @@
  * and extra host-owned unmount disposal. Everything else is owned here once.
  */
 import { useOwnedResourceDisposal } from '@/tools/video-editor/hooks/useOwnedResourceDisposal';
+import { subscribeToDataKindProjectionCleanup } from './dataKindProjectionCleanup.ts';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
 import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { createEditorAssetSurface } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
@@ -490,10 +491,14 @@ export function useEditorRuntimeAssembly({
   // Keep the host's extra finalizer after all assembly-owned resource cleanup.
   useOwnedResourceDisposal(onUnmountRef, (callback) => callback.current?.());
 
+  const previousResolvedConfig = useRef<VideoEditorExtensionRuntimeConfig>();
   const resolvedExtensionsConfig = useMemo(
-    () => resolveRegisteredRenderers(extensionRuntime, rendererRegistrySnapshot),
+    () => resolveRegisteredRenderers(extensionRuntime, rendererRegistrySnapshot, previousResolvedConfig.current),
     [extensionRuntime, rendererRegistrySnapshot],
   );
+  useLayoutEffect(() => {
+    previousResolvedConfig.current = resolvedExtensionsConfig;
+  }, [resolvedExtensionsConfig]);
 
   const getRecoveryKey = useCallback(
     (extensionId: string) =>
@@ -648,21 +653,23 @@ export function useEditorRuntimeSync({
     () => new Set(extensionRuntime.extensions.map((ext) => ext.manifest.id as string)),
     [extensionRuntime.extensions],
   );
+  const priorExtensionsRef = useRef(extensionRuntime.extensions);
   useEffect(() => {
+    const previousExtensions = priorExtensionsRef.current;
+    const currentExtensions = extensionRuntime.extensions;
+    priorExtensionsRef.current = currentExtensions;
     const host = lifecycleHostRef.current;
     if (!host) return;
-    const handle = host.onLifecycleDisposed((extensionId) => {
+    const projectionHandle = subscribeToDataKindProjectionCleanup(
+      host,
+      store.getState().dataKindItemsHost,
+      previousExtensions,
+      currentExtensions,
+    );
+    const pendingWorkHandle = host.onLifecycleDisposed((extensionId) => {
       store.getState().pendingWorkRegistry?.clear(extensionId);
-      // Projections belong to the extension activation that supplied them.
-      const items = store.getState().dataKindItemsHost;
-      for (const contribution of extensionRuntime.extensions
-        .find((extension) => extension.manifest.id === extensionId)?.manifest.contributions ?? []) {
-        if (contribution.kind === 'dataKind' && contribution.schemaRef) {
-          items?.replaceTransient(contribution.schemaRef, []);
-        }
-      }
     });
-    return () => handle.dispose();
+    return () => { projectionHandle.dispose(); pendingWorkHandle.dispose(); };
   }, [extensionRuntime.extensions, lifecycleHostRef, store]);
 
   // ---- M3: live creative context for extensions ----------------------------

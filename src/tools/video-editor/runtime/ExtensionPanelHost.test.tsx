@@ -1,7 +1,7 @@
 import { createElement, useEffect, useState } from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { defineExtension, type ContributionId, type ExtensionId, type PanelRenderProps } from '@astrid/editor-sdk';
+import { defineExtension, type AstridExtension, type ContributionId, type ExtensionId, type PanelRenderProps } from '@astrid/editor-sdk';
 import { ExtensionPanelHost, getPanelKey } from './ExtensionPanelHost';
 import { normalizeExtensionRuntime, type VideoEditorPanelDescriptor } from './extensionSurface';
 import { createRendererRegistry } from './extensionRendererRegistry';
@@ -9,6 +9,7 @@ import { createExtensionUiService, resolveRegisteredRenderers } from './extensio
 import { ASTRID_EDITOR_EXTENSION_CATALOG } from '@astrid/packs/rendering/editor/catalog';
 import { createDataKindRegistry } from '@/tools/video-editor/data-kinds/DataKindRegistry.ts';
 import { createDataKindRegistrationService } from '@/tools/video-editor/runtime/dataKindRegistrationService.ts';
+import { useEditorRuntimeAssembly } from '@/tools/video-editor/contexts/editorRuntimeAssembly';
 
 vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
   useOptionalVideoEditorRuntime: () => null,
@@ -17,6 +18,57 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
 afterEach(cleanup);
 
 describe('registered panel lifecycle', () => {
+  it('keeps the last panel and its draft visible during renderer re-registration, then removes an undeclared panel', () => {
+    const extensionId = 'com.test.reconnecting' as ExtensionId;
+    const unmount = vi.fn();
+    function Transcript({ revision }: { revision: string }) {
+      const [draft, setDraft] = useState('Last good transcript');
+      useEffect(() => () => unmount(), []);
+      return <label>{revision}<textarea aria-label="Transcript draft" value={draft} onChange={(event) => setDraft(event.target.value)} /></label>;
+    }
+    const extension = (renderId: string, declared = true) => defineExtension({
+      manifest: {
+        id: extensionId, version: '1.0.0', apiVersion: 1,
+        contributions: declared ? [{ id: 'transcript' as ContributionId, kind: 'panel', placement: 'asset-panel', render: renderId }] : [],
+      },
+      activate: () => {},
+    });
+    let assembly!: ReturnType<typeof useEditorRuntimeAssembly>;
+    function Host({ extensions }: { extensions: readonly AstridExtension[] }) {
+      assembly = useEditorRuntimeAssembly({ extensions, commandRegistryCallbacks: {} });
+      const panels = assembly.resolvedExtensionsConfig.registry.panels;
+      return <ExtensionPanelHost panels={panels} visiblePanelKeys={new Set(panels.map(getPanelKey))} />;
+    }
+    const first = extension('first-renderer');
+    const view = render(<Host extensions={[first]} />);
+    expect(screen.queryByRole('textbox')).toBeNull();
+    act(() => { assembly.rendererRegistryRef.current.register(extensionId, 'first-renderer', () => <Transcript revision="First bundle" />); });
+    const draft = screen.getByRole('textbox', { name: 'Transcript draft' });
+    fireEvent.change(draft, { target: { value: 'Unsent correction' } });
+
+    // A replacement manifest can arrive before its renderer, including a new
+    // render ID. Neither that commit nor unregisterAll may blank the panel.
+    const replacement = extension('replacement-renderer');
+    view.rerender(<Host extensions={[replacement]} />);
+    expect(screen.getByRole('textbox')).toBe(draft);
+    act(() => { assembly.rendererRegistryRef.current.unregisterAll(extensionId); });
+    expect(draft).toBeVisible();
+    expect(draft).toHaveValue('Unsent correction');
+    expect(unmount).not.toHaveBeenCalled();
+    act(() => { assembly.rendererRegistryRef.current.register(extensionId, 'replacement-renderer', () => <Transcript revision="Reconnected bundle" />); });
+    expect(screen.getByText('Reconnected bundle')).toBeVisible();
+    expect(screen.getByRole('textbox')).toBe(draft);
+    expect(draft).toHaveValue('Unsent correction');
+
+    // A real contribution removal still ends its lifetime and its fallback.
+    view.rerender(<Host extensions={[extension('replacement-renderer', false)]} />);
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(unmount).toHaveBeenCalledTimes(1);
+    act(() => { assembly.rendererRegistryRef.current.unregisterAll(extensionId); });
+    view.rerender(<Host extensions={[replacement]} />);
+    expect(screen.queryByRole('textbox')).toBeNull();
+  });
+
   it('loads the actual rendering-pack transcript entry through its scoped renderer registration', async () => {
     const transcriptEntry = ASTRID_EDITOR_EXTENSION_CATALOG.find((entry) =>
       entry.packId === 'rendering' && entry.entryPath === 'ui/transcript/extension.tsx');

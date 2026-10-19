@@ -7,6 +7,7 @@ import {
 import { buildTimelineData } from "./timeline-data.ts";
 import { buildDataFromSnapshot } from "./timeline-save-utils.ts";
 import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
+import { createTranscriptPanelAdapter } from './transcript-panel-adapter.ts';
 import {
   normalizeTranscriptSource,
   TRANSCRIPT_SCHEMA_REF,
@@ -714,6 +715,55 @@ describe("canonical project transcript consistency", () => {
     ).toMatchObject({ hasDraft: true, status: "conflict" });
     await a.host.resolveSourceConflict(id, "reapply");
     expect(documents.get(id)!.content.segments[0].text).toBe("typed world");
+  });
+
+  it("keeps the last transcript snapshot and typing draft through a temporary source disconnect, then adopts the recovered source", async () => {
+    const { r, documents } = repository();
+    const a = await editor(r, "alias", vi.fn(async () => undefined), true);
+    const id = docId(await a.host.importTranscript({
+      document: handoff,
+      associationAssetId: "alias",
+    }));
+    const adapter = createTranscriptPanelAdapter({
+      getData: () => a.dataRef.current,
+      getTransientItems: () => a.items!.readTransient(TRANSCRIPT_SCHEMA_REF),
+      subscribe: () => ({ dispose() {} }),
+      video: { view: { getSnapshot: () => ({ playhead: { time: 0 } }) } as never, seek: () => {} },
+    });
+    expect(adapter.getSnapshot().sources.map((source) => source.text)).toEqual(["hello world"]);
+    expect(a.host.stageTextDraft({
+      ...edit("typed"),
+      documentId: id,
+      baseVersion: 1,
+      assetId: "alias",
+    })).toMatchObject({ ok: true });
+
+    const original = documents.get(id)!;
+    await r.update(id, {
+      ...original.content,
+      segments: original.content.segments.map((segment) => ({
+        ...segment,
+        text: "remote winner",
+      })),
+    }, 1, "remote");
+    vi.mocked(r.get).mockRejectedValueOnce(new Error("Runtime disconnected"));
+    await a.host.refreshSources();
+
+    expect(adapter.getSnapshot().sources.map((source) => source.text)).toEqual(["hello world"]);
+    expect(a.host.getProjectState().sources[0]).toMatchObject({
+      hasDraft: true,
+      status: "error",
+      draftPreview: { text: "typed world" },
+    });
+
+    await a.host.refreshSources();
+    expect(adapter.getSnapshot().sources.map((source) => source.text)).toEqual(["remote winner"]);
+    expect(a.host.getProjectState().sources[0]).toMatchObject({
+      hasDraft: true,
+      status: "conflict",
+      version: 2,
+      draftPreview: { text: "typed world" },
+    });
   });
   it.each(["reapply", "discard"] as const)("retains a first stale-base proposal for explicit %s without implicit writes", async (choice) => {
     const { r, documents } = repository();

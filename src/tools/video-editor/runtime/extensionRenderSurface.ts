@@ -144,15 +144,16 @@ export function createInternalExtensionRenderSurface(args: {
  *   projected overlay descriptor is matched against the renderer registered by
  *   its owning extension. Overlays whose renderer was never registered (or was
  *   disposed) are omitted from the resolved list.
- * - Panels use that same scoped lookup and retain their contribution ID for
- *   per-instance React state. Unregistered panel descriptors are omitted,
- *   causing their React instances to unmount.
+ * - Panels use that same scoped lookup. A still-declared panel keeps its last
+ *   registered renderer during reactivation, until the replacement registers.
+ *   Removing its declaration (disable/uninstall) ends its lifetime immediately.
  *
  * Returns the original `extensionRuntime.config` when nothing changed.
  */
 export function resolveRegisteredRenderers(
   extensionRuntime: ExtensionRuntime,
   rendererSnapshot: RendererRegistrySnapshot,
+  previousConfig?: VideoEditorExtensionRuntimeConfig,
 ): VideoEditorExtensionRuntimeConfig {
   const hasOverlays = extensionRuntime.config.overlays.length > 0;
   const hasPanels = extensionRuntime.config.registry.panels.some((panel) => panel.renderId);
@@ -163,9 +164,12 @@ export function resolveRegisteredRenderers(
     const renderer = panel.extensionId
       ? rendererSnapshot.get(panel.extensionId, panel.renderId)
       : undefined;
-    return renderer ? [Object.freeze({
+    const previous = previousConfig?.registry.panels.find((candidate) =>
+      candidate.extensionId === panel.extensionId && candidate.id === panel.id);
+    const render = renderer ?? previous?.render;
+    return render ? [Object.freeze({
       ...panel,
-      render: renderer as typeof panel.render,
+      render: render as typeof panel.render,
     })] : [];
   });
 
