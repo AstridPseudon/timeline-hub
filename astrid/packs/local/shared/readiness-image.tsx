@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useRef, useState, type ComponentProps, type ReactElement} from 'react';
-import {Img, useRemotionEnvironment} from 'remotion';
+import {useRemotionEnvironment} from 'remotion';
+import {ManagedImg as Img} from '../../rendering/shared/managed-media';
 
 type ImageProps = ComponentProps<typeof Img> & {mediaId?: string};
 type PreviewPhase = 'pending' | 'ready' | 'error';

@@ -4533,7 +4533,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:d09bb23d444848ca58b1257a6f204bf9b8f6f74656cfcab96a99d752ac287889",
+    "revision": "sha256:a72f70853ac09087f52f1844343e6ee8adda7e12667d45fa423ed937e6221b5f",
     "runtime": {},
     "schema": {
       "additionalProperties": false,
@@ -4740,7 +4740,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:6b6a4f23b0dbe8c107a3aa95abbbab94dcde81f635e9df6515a3e2d336a242a1",
+    "revision": "sha256:5053d3157757bf66e9ec7f060ef5f600d399d2bdf0eea1a6a634fb996b02fab6",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -4772,7 +4772,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:94f03e6cd78273afd33a34357ac86827951c09e682e11d9605919d0bfb840ee2",
+    "revision": "sha256:3370201d9a37a557c11ca17fa63228e999acaddbcbc4074f563bce602cffe068",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -4804,7 +4804,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:2b69cb8e427ffa89d781684516db7c89d0c266eae7602ec58f1accc92db2a86f",
+    "revision": "sha256:e6416e08a4f99a50ac3d65a05d233c7af102fa5833200d84be4de621b800ccec",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -4899,7 +4899,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:30e00b95b62667a81f26fb6e6eca419e41a3e81ea7b76d04876a84fec674c57a",
+    "revision": "sha256:d4abf1f3d88b599f0766840707eae45b0eeeda3c5b0b7ac548f292975da6c9a1",
     "runtime": {
       "adapter": "remotion"
     },
@@ -5094,7 +5094,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:ff72957df8de60aa4bd16226de4dbc692d6993ecf1f0e7ac37fdc3c511bef2f0",
+    "revision": "sha256:55fde3ed74fee7dca3ece34812788b287c419d6d97cbce49279cfdd8a572a8fe",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -5233,7 +5233,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:a4d929a4c325886fe0abac9ca152ef73f942983bb93404211fb3eb2e0398ad9b",
+    "revision": "sha256:a4488eb6b7fd883d5dc33111f1661eae87c8ddef3923b521bcd4d3577692ff06",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -5678,7 +5678,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:fede33b134e6b021eba1ef5db846e7e1feb844dc13c2efa012105abcf60ed11c",
+    "revision": "sha256:fb5a64ebdecf00e0fbe45a519d8ebff130d89431d3a544417db51c9680cd9a50",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -5895,7 +5895,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:937bc4a7f73d3b76f9e313ce8d33be3341cfb719d8d20cc205898d83d4ff761f",
+    "revision": "sha256:eea7fdd338804aabfd46dd081c806fe5e0b190d1e0d629d7d93029d154eefba8",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -5990,7 +5990,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:49faeec4044b643a523e48f6817b70846108ee3249386ba63a9b9097b1239d77",
+    "revision": "sha256:a891d427c1acb9fadc6169d8264115abe3dadcb1bd31885bbc86518e0874f7c3",
     "runtime": {},
     "schema": {
       "additionalProperties": true,

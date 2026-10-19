@@ -1,11 +1,6 @@
+import {ManagedImg as Img} from '../../../../../rendering/shared/managed-media';
 import type {ReactElement} from 'react';
-import {
-  Img,
-  interpolate,
-  staticFile,
-  useCurrentFrame,
-  useVideoConfig,
-} from 'remotion';
+import {interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {
   type ElementComponentProps,
   narrowParams,
