@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T19:22:34Z | dispatcher heartbeat 1s -->
+<!-- main | 2026-10-19T19:22:56Z | dispatcher heartbeat 5s -->
 # app — 2026-10-19 19:19 UTC
 Milestone: M1 OPEN — Checkpoint A APPROVED read; M0 COMPLETE retained. Building real guard capture + crash-safe outbox first; no M2 widening.
 Integrated: app tl/integration 4ec487cc6 — outbox core+review ACK/send-race fix bbb6146ec (23 tests manager+worker pass), real service/drag thin port+raw scoped identities (409 tests worker/67 manager pass). Actual concrete capture/session not mounted; unsupported/missing capture refuses, no migrated-move fallback. Browser gates not claimed.

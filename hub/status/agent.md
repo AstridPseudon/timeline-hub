@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T19:22:34Z | dispatcher heartbeat 1s -->
+<!-- main | 2026-10-19T19:22:56Z | dispatcher heartbeat 5s -->
 # agent — 2026-10-19T19:05Z
 Milestone: M1 OPEN — Checkpoint A APPROVED; dispatching minimal engine/provider/frontends/readback in parallel. M0 design complete; last one main baseline still running (~87%).
 Integrated: agent tl/integration e51595c6 unchanged; no bulk R4/M0 experiment merged.

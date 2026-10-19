@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T19:22:34Z | dispatcher heartbeat 1s -->
+<!-- main | 2026-10-19T19:22:56Z | dispatcher heartbeat 5s -->
 # viewing — 2026-10-19 19:21 UTC
 Milestone: M1 OPEN — Checkpoint A approved; M0 COMPLETE. Exact snapshot labels and early Player-audio feasibility dispatched.
 Integrated: composition tl/integration ee22449fd9cf07e382f23d226e3f8a45372340fd — honest whole-source build/test, unused schema dependency and 43 stale dist files removed. M0 commands npm ci; npm run gen-registry:check; npm run build; npm run build:ts; npm test pass (9 worker cases/4 modules manager rerun). Negative compiler/planner mutations failed correctly then restored. Agent tl/integration a6502806 — b9b5deb8 + candidate-base fix2eabac75 merged. Manager six-file pytest97 pass/1 existing Pillow warning/17.23s; diff-check clean. Agent integration full queued: agent-full-1019191532-6465.
