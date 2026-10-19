@@ -30,7 +30,6 @@ const mockShotGenerations = [
 
 const mockNot = vi.fn();
 const mockSupabaseFrom = vi.hoisted(() => vi.fn());
-const mockIsDeferredCloudDataAuthority = vi.hoisted(() => vi.fn(() => true));
 
 vi.mock('@/integrations/supabase/client', () => ({
   getSupabaseClient: () => ({

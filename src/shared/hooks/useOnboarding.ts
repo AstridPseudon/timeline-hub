@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { normalizeAndPresentError } from "@/shared/lib/errorHandling/runtimeError";
 import { isLocalTestMode } from "@/app/localTestRuntime";
 import { hasRuntimeDocumentIdentity } from "@/app/runtime/runtimeDocument";
-import { checkAstridDoctorAvailability } from "@/integrations/astrid/doctorAvailability.ts";
+import { checkAstridRuntimeReachable } from "@/integrations/astrid/doctorAvailability.ts";
 
 /**
  * - `first-run`: Astrid has never been set up in this browser. The whole flow (setup, brightness, text
@@ -72,7 +72,7 @@ export function useOnboarding() {
           open("first-run");
           return;
         }
-        const availability = await checkAstridDoctorAvailability();
+        const availability = await checkAstridRuntimeReachable();
         if (!cancelled && availability.status === "unavailable")
           open("reconnect");
       } catch (error) {

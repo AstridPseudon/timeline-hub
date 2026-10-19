@@ -3,40 +3,6 @@ import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
-
-// Mock supabase
-vi.mock('@/integrations/supabase/client', () => {
-  const mockFrom = vi.fn((table: string) => {
-    const chain: Record<string, ReturnType<typeof vi.fn>> = {};
-    chain.select = vi.fn().mockReturnValue(chain);
-    chain.eq = vi.fn().mockReturnValue(chain);
-
-    if (table === 'shot_statistics') {
-      chain.eq = vi.fn().mockResolvedValue({
-        data: [
-          { shot_id: 'shot-1', video_count: 3, final_video_count: 1 },
-          { shot_id: 'shot-2', video_count: 0, final_video_count: 0 },
-        ],
-        error: null,
-      });
-    } else if (table === 'shots') {
-      chain.eq = vi.fn().mockResolvedValue({
-        data: [
-          { id: 'shot-1', settings: null },
-          { id: 'shot-2', settings: { 'travel-structure-video': { structure_video_path: '/path' } } },
-        ],
-        error: null,
-      });
-    }
-
-    return chain;
-  });
-
-  return {
-    supabase: { from: mockFrom },
-  };
-});
-
 // Mock smart polling
 vi.mock('@/shared/hooks/useSmartPolling', () => ({
   useSmartPollingConfig: vi.fn(() => ({

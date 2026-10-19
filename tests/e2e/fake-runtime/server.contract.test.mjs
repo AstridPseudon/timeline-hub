@@ -529,9 +529,10 @@ describe('ACP chat reads', () => {
     assert.deepEqual(await json('/local-test-connection/events'), { notifications: [], disconnected: false });
   });
 
-  test('the agent and model catalogs are canned: one ready Astrid, no providers', async () => {
+  test('the agent and model catalogs are canned: one ready Astrid, no providers; setting a model is not served', async () => {
     assert.deepEqual(await json('/agents'), { agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null }] });
     assert.deepEqual(await json('/models'), { providers: [], currentModel: null });
+    assert.equal((await postJson('/model', { model: 'any' })).status, 404);
   });
 });
 

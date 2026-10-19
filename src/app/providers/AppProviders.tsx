@@ -103,7 +103,7 @@ function SelectionStoreBoundary({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Sprint 3 adapter boundary: these app-level providers remain part of the
+// Adapter boundary: these app-level providers remain part of the
 // Astrid host shell. The headless video-editor core must not depend on this
 // provider tree directly; it should receive any required host behavior through
 // adapter props/ports instead. `AgentChatProvider` intentionally stays here so

@@ -7,40 +7,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 
-
 // Use vi.hoisted for variables referenced inside vi.mock factories
-const {
-  mockGetUserId,
-  mockSupabaseSelect,
-  mockUpdateToolSettings,
-} = vi.hoisted(() => ({
+const { mockGetUserId } = vi.hoisted(() => ({
   mockGetUserId: vi.fn().mockReturnValue('user-123'),
-  mockSupabaseSelect: vi.fn(),
-  mockUpdateToolSettings: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../AuthContext', () => ({
   useAuth: () => ({ userId: mockGetUserId() }),
-}));
-
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: mockSupabaseSelect,
-        }),
-      }),
-    }),
-  }),
-}));
-
-vi.mock('@/shared/hooks/settings/useToolSettings', () => ({
-  updateToolSettingsSupabase: mockUpdateToolSettings,
-}));
-
-vi.mock('@/shared/hooks/useMobileTimeoutFallback', () => ({
-  useMobileTimeoutFallback: vi.fn(),
 }));
 
 import { UserSettingsProvider, useUserSettings } from '../UserSettingsContext';
@@ -60,14 +33,6 @@ describe('UserSettingsContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserId.mockReturnValue('user-123');
-    mockSupabaseSelect.mockResolvedValue({
-      data: {
-        settings: {
-          'user-preferences': { theme: 'dark', lastProject: 'proj-1' },
-        },
-      },
-      error: null,
-    });
     window.history.replaceState({}, '', '/');
   });
 
@@ -117,7 +82,7 @@ describe('UserSettingsContext', () => {
       expect(screen.getByTestId('settings')).toHaveTextContent('undefined');
     });
 
-    it('does not read or write Supabase in local Astrid editor mode', async () => {
+    it('leaves user settings empty after an update in local Astrid editor mode', async () => {
       window.history.replaceState({}, '', '/tools/video-editor?project=demo-project&timeline=demo-timeline');
 
       function UpdateConsumer() {
@@ -146,12 +111,10 @@ describe('UserSettingsContext', () => {
         screen.getByTestId('local-update').click();
       });
 
-      expect(mockSupabaseSelect).not.toHaveBeenCalled();
-      expect(mockUpdateToolSettings).not.toHaveBeenCalled();
+      expect(screen.getByTestId('settings')).toHaveTextContent('undefined');
     });
 
-    it('does not read or write Supabase under default Astrid authority', async () => {
-
+    it('leaves user settings empty after an update on the Runtime path', async () => {
       function UpdateConsumer() {
         const { updateUserSettings } = useUserSettings();
         return (
@@ -178,8 +141,7 @@ describe('UserSettingsContext', () => {
         screen.getByTestId('astrid-update').click();
       });
 
-      expect(mockSupabaseSelect).not.toHaveBeenCalled();
-      expect(mockUpdateToolSettings).not.toHaveBeenCalled();
+      expect(screen.getByTestId('settings')).toHaveTextContent('undefined');
     });
   });
 });
