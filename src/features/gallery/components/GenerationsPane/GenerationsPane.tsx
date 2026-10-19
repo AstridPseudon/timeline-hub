@@ -114,7 +114,7 @@ function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneCon
         zIndex: UI_Z_LAYERS.GENERATIONS_PANE,
       }}
       className={cn(
-        'fixed bottom-0 bg-zinc-900/95 border-t border-zinc-700 shadow-xl transform transition-all duration-300 ease-smooth flex flex-col pointer-events-auto',
+        'fixed bottom-0 bg-zinc-900/95 border-t border-zinc-700 shadow-xl transform transition-[transform,left,right] duration-300 ease-smooth flex flex-col pointer-events-auto',
         pane.transformClass,
       )}
     >

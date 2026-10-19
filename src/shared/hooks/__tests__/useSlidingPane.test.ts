@@ -55,6 +55,53 @@ describe('useSlidingPane', () => {
     expect(result.current.isOpen).toBe(false);
   });
 
+  it('keeps a peek open while an overlay owns it, then closes after the viewer is closed', () => {
+    vi.useFakeTimers();
+    const { result, rerender } = renderHook(
+      ({ overlayOpen }: { overlayOpen: boolean }) => useSlidingPane({
+        side: 'bottom',
+        isLocked: false,
+        onToggleLock: mockToggleLock,
+        overlayOpen,
+      }),
+      { initialProps: { overlayOpen: true } },
+    );
+
+    act(() => result.current.handlePaneLeave());
+    act(() => vi.advanceTimersByTime(1000));
+    expect(result.current.isOpen).toBe(true);
+
+    rerender({ overlayOpen: false });
+    act(() => result.current.handlePaneLeave());
+    act(() => vi.advanceTimersByTime(300));
+    expect(result.current.isOpen).toBe(false);
+  });
+
+  it('cancels a pending leave when a viewer opens and restores normal leave behavior when it closes', () => {
+    vi.useFakeTimers();
+    const { result, rerender } = renderHook(
+      ({ overlayOpen }: { overlayOpen: boolean }) => useSlidingPane({
+        side: 'bottom',
+        isLocked: false,
+        onToggleLock: mockToggleLock,
+        overlayOpen,
+      }),
+      { initialProps: { overlayOpen: false } },
+    );
+
+    act(() => result.current.openPane());
+    act(() => result.current.handlePaneLeave());
+    act(() => vi.advanceTimersByTime(100));
+    rerender({ overlayOpen: true });
+    act(() => vi.advanceTimersByTime(1000));
+    expect(result.current.isOpen).toBe(true);
+
+    rerender({ overlayOpen: false });
+    act(() => result.current.handlePaneLeave());
+    act(() => vi.advanceTimersByTime(300));
+    expect(result.current.isOpen).toBe(false);
+  });
+
   it('returns expected shape', () => {
     const { result } = renderHook(() =>
       useSlidingPane({

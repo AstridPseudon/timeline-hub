@@ -175,7 +175,7 @@ export const MediaDisplayWithCanvas: React.FC<MediaDisplayWithCanvasProps> = ({
           : '55vw';
         return { 
           maxWidth: adjustedMaxWidth, 
-          maxHeight: '98vh',
+          maxHeight: '100%',
           transition: 'max-width 300ms ease', // Smooth resize when tasks pane opens/closes
         };
       }

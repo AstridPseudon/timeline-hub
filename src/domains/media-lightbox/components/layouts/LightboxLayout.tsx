@@ -410,8 +410,8 @@ function CenteredLayoutView({ props }: { props: LightboxLayoutProps }) {
           'touch-none'
         )}
         style={{
-          height: 'calc(100vh - 220px)',
-          maxHeight: 'calc(100vh - 220px)',
+          height: 'calc(var(--lightbox-available-height, 100dvh) - 220px)',
+          maxHeight: '100%',
           transform: navigation.swipeNavigation.isSwiping
             ? `translateX(${navigation.swipeNavigation.swipeOffset}px)`
             : undefined,

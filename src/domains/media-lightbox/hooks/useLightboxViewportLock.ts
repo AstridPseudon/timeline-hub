@@ -8,12 +8,13 @@ interface UseLightboxViewportLockArgs {
 
 export function useLightboxViewportLock({ isActuallyModal }: UseLightboxViewportLockArgs): void {
   useEffect(() => {
-    if (isActuallyModal) return;
     const releaseLightboxOpen = acquireLightboxOpenState();
-    const unlockViewport = getViewportLockRuntime().lockLightboxViewport();
+    const unlockViewport = isActuallyModal
+      ? undefined
+      : getViewportLockRuntime().lockLightboxViewport();
 
     return () => {
-      unlockViewport();
+      unlockViewport?.();
       releaseLightboxOpen();
     };
   }, [isActuallyModal]);

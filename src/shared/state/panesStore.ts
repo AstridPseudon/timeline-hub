@@ -5,6 +5,7 @@ import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { createStore } from 'zustand/vanilla';
 import { PANE_CONFIG } from '@/shared/config/panes';
 import { usePaneLockPolicyState } from '@/shared/contexts/usePaneLockPolicyState';
+import { useLightboxOpenState } from '@/shared/state/lightboxOpenState';
 
 export type PaneLockKey = 'shots' | 'tasks' | 'gens' | 'editor';
 
@@ -24,6 +25,7 @@ export interface PanesStoreState {
   isGenerationsPaneLocked: boolean;
   setIsGenerationsPaneLocked: (isLocked: boolean) => void;
   isGenerationsPaneOpen: boolean;
+  isLightboxOpen: boolean;
   setIsGenerationsPaneOpen: (isOpen: boolean) => void;
   generationsPaneHeight: number;
   effectiveGenerationsPaneHeight: number;
@@ -54,6 +56,7 @@ export interface PanesStoreState {
 
 interface PanesStoreBootstrapSnapshot {
   viewportHeight: number;
+  isLightboxOpen?: boolean;
   locks: PaneLocksState;
   isGenerationsPaneOpen: boolean;
   isEditorPaneOpen: boolean;
@@ -125,6 +128,7 @@ function getEffectivePaneHeights(params: {
 
 function deriveLayout(params: {
   viewportHeight: number;
+  isLightboxOpen?: boolean;
   generationsPaneHeight: number;
   isGenerationsPaneLocked: boolean;
   isGenerationsPaneOpen: boolean;
@@ -138,11 +142,22 @@ function deriveLayout(params: {
     isGenerationsPaneOpen,
     isEditorPaneLocked,
     isEditorPaneOpen,
+    isLightboxOpen,
   } = params;
 
   const editorVisible = isEditorPaneLocked || isEditorPaneOpen;
   const generationsVisible = isGenerationsPaneLocked || isGenerationsPaneOpen;
   const editorPaneHeight = Math.round(viewportHeight * 0.5);
+
+  // Preserve the preferred gallery height so closing the viewer restores it.
+  // Both fixed surfaces use this effective height to meet without overlapping.
+  if (isLightboxOpen && generationsVisible) {
+    return {
+      editorPaneHeight,
+      effectiveEditorPaneHeight: editorPaneHeight,
+      effectiveGenerationsPaneHeight: Math.min(generationsPaneHeight, PANE_CONFIG.dimensions.LIGHTBOX_GALLERY_HEIGHT),
+    };
+  }
 
   // When both panes are LOCKED, split the viewport 50/50 so they meet in the
   // middle instead of leaving a gap when their preferred heights fall short.
@@ -183,6 +198,7 @@ function createInitialSnapshot() {
     generationsPaneHeight,
     isGenerationsPaneLocked: false,
     isGenerationsPaneOpen: false,
+    isLightboxOpen: false,
     isEditorPaneLocked: false,
     isEditorPaneOpen: false,
   });
@@ -191,6 +207,7 @@ function createInitialSnapshot() {
     availability: { bootstrapped: false } as PanesStoreAvailability,
     isGenerationsPaneLocked: false,
     isGenerationsPaneOpen: false,
+    isLightboxOpen: false,
     generationsPaneHeight,
     effectiveGenerationsPaneHeight: layout.effectiveGenerationsPaneHeight,
     isEditorPaneLocked: false,
@@ -212,6 +229,7 @@ function areBootstrapInputsEqual(
 ): boolean {
   return previous?.owner === next.owner
     && previous.viewportHeight === next.viewportHeight
+    && previous.isLightboxOpen === next.isLightboxOpen
     && previous.locks.shots === next.locks.shots
     && previous.locks.tasks === next.locks.tasks
     && previous.locks.gens === next.locks.gens
@@ -251,6 +269,7 @@ function buildBootstrappedState(
 ) {
   const layout = deriveLayout({
     viewportHeight: input.viewportHeight,
+    isLightboxOpen: input.isLightboxOpen,
     generationsPaneHeight: currentState.generationsPaneHeight,
     isGenerationsPaneLocked: input.locks.gens,
     isGenerationsPaneOpen: input.isGenerationsPaneOpen,
@@ -262,6 +281,7 @@ function buildBootstrappedState(
     availability: { bootstrapped: true } as PanesStoreAvailability,
     isGenerationsPaneLocked: input.locks.gens,
     isGenerationsPaneOpen: input.isGenerationsPaneOpen,
+    isLightboxOpen: input.isLightboxOpen ?? false,
     generationsPaneHeight: currentState.generationsPaneHeight,
     effectiveGenerationsPaneHeight: layout.effectiveGenerationsPaneHeight,
     isEditorPaneLocked: input.locks.editor,
@@ -287,6 +307,7 @@ function buildStateWithUpdatedGenerationsHeight(
     | 'activeTaskId'
     | 'isGenerationsPaneLocked'
     | 'isGenerationsPaneOpen'
+    | 'isLightboxOpen'
     | 'isEditorPaneLocked'
     | 'isEditorPaneOpen'
     | 'isShotsPaneLocked'
@@ -298,6 +319,7 @@ function buildStateWithUpdatedGenerationsHeight(
   const viewportHeight = activeBootstrapSnapshot?.viewportHeight ?? getViewportHeight();
   const layout = deriveLayout({
     viewportHeight,
+    isLightboxOpen: state.isLightboxOpen,
     generationsPaneHeight,
     isGenerationsPaneLocked: state.isGenerationsPaneLocked,
     isGenerationsPaneOpen: state.isGenerationsPaneOpen,
@@ -444,6 +466,7 @@ export function resetPanesStore(): void {
  * - reads outside bootstrap intentionally return the unlocked default snapshot
  */
 export function useBootstrapPanesStore(): void {
+  const isLightboxOpen = useLightboxOpenState();
   const ownerRef = useRef<symbol | null>(null);
   if (ownerRef.current === null) {
     ownerRef.current = Symbol('panes-store-bootstrap-owner');
@@ -467,6 +490,7 @@ export function useBootstrapPanesStore(): void {
   const bootstrapInput = useMemo<PanesStoreBootstrapInput>(() => ({
     owner: ownerRef.current as symbol,
     viewportHeight: getViewportHeight(),
+    isLightboxOpen,
     locks,
     isGenerationsPaneOpen: isGenerationsPaneOpenState,
     isEditorPaneOpen: isEditorPaneOpenState,
@@ -480,6 +504,7 @@ export function useBootstrapPanesStore(): void {
     setIsTasksPaneOpen,
     resetAllPaneLocks,
   }), [
+    isLightboxOpen,
     locks,
     isGenerationsPaneOpenState,
     isEditorPaneOpenState,

@@ -1,6 +1,7 @@
 export const PANE_CONFIG = {
   dimensions: {
     DEFAULT_HEIGHT: 350,
+    LIGHTBOX_GALLERY_HEIGHT: 240,
     DEFAULT_WIDTH: 300,
   },
   timing: {
@@ -37,4 +38,4 @@ export interface PanePosition {
   dimension: number;
   offsets: PaneOffsets;
   isVisible: boolean;
-} 
+}
