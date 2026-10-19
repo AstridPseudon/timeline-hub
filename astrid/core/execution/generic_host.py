@@ -9981,9 +9981,10 @@ class GenericPackHost:
             )
 
     def _publish_evidence_status(self) -> None:
-        """Expose the live evidence charge for ``astrid doctor``; never fails a task."""
+        """Expose the live evidence charge and warm holds for ``astrid doctor``; never fails a task."""
         if self.evidence_status_path is None:
             return
+        owner = self._handoff_accounting_owner
         # Shared slots serialize the measured snapshot and its atomic write,
         # so an older sample cannot overwrite a newer charge observation.
         with self._evidence_observation_lock:
@@ -9997,6 +9998,8 @@ class GenericPackHost:
                         "observation_kind": "measured_live_evidence_budget",
                         **budget.live_observation(),
                         "cap_bytes": self.execution_policy.evidence_cap_bytes,
+                        "warm_holds": [entry for host in (owner, *owner._claim_slots)
+                                       for entry in host.warm_holds.status()],
                         "updated_at": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
                     },
                 )

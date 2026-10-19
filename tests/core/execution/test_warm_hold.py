@@ -7,6 +7,7 @@ import threading
 from astrid.core.env_vars import ASTRID_WARM_IDLE_SECONDS
 from astrid.core.execution import generic_host
 from astrid.core.execution.generic_host import GenericPackHost
+from astrid.core.execution.guards import EVIDENCE_STATUS_NAME, read_evidence_status
 from astrid.core.execution.managed_tool_session import CapabilityDescriptor, SessionBinding
 from astrid.core.execution.process_group import popen_owned_group
 from astrid.core.execution.remotion_host_session import frame_owner_idle_seconds
@@ -205,3 +206,25 @@ def test_failed_idle_release_is_recorded_and_keeps_the_slot_occupied(tmp_path):
     timers.fire()
     assert notes and "idle session release" in notes[0]
     assert host.managed_tool_session.occupied, "an unverified release never forgets the child"
+
+
+def test_host_status_names_each_warm_hold_and_when_it_expires(tmp_path, monkeypatch):
+    monkeypatch.delenv(ASTRID_WARM_IDLE_SECONDS, raising=False)
+    host = GenericPackHost(pack_roots=[tmp_path])
+    host.evidence_status_path = tmp_path / "runtime" / EVIDENCE_STATUS_NAME
+    timers = Timers()
+    host.warm_holds = WarmHolds(timer=timers, clock=lambda: 0.0, on_change=host._publish_evidence_status)
+    binding = SessionBinding(session_id=str(tmp_path), runtime_instance_id="runtime", process_birth_id="birth",
+                             endpoint="pipe:birth", source_digest="source", config_digest="config")
+    adapter = generic_host._ManagedWanChildAdapter(
+        spec={}, binding=binding, readiness_timeout=5.0, release_timeout=5.0,
+        track=host._track_process, untrack=host._untrack_process)
+    host.managed_tool_session.open(
+        capability=CapabilityDescriptor("wan2gp.generate_video", warm_reuse_expected=True),
+        binding=binding, adapter=adapter)
+    host._settle_session_hold(host._hold_session_slot())
+    assert read_evidence_status(host.evidence_status_path)["warm_holds"] == [
+        {"holding": "wan2gp.generate_video", "leases": 0, "idle_seconds": 600.0,
+         "expires_at": "1970-01-01T00:10:00+00:00"}]
+    timers.fire()
+    assert read_evidence_status(host.evidence_status_path)["warm_holds"] == []

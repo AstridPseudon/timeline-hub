@@ -338,11 +338,15 @@ def test_host_live_evidence_publication_uses_measured_charge_and_private_atomic_
     host.evidence_status_path = tmp_path / "generic-host.evidence.json"
     host._evidence_observation_lock = threading.RLock()
     host._evidence_observation_binding = {"process_birth_id": "original", "runtime_instance_id": "instance", "source_closure_digest": "closure"}
+    host._handoff_accounting_owner, host._claim_slots = host, ()
+    from astrid.core.execution.warm_hold import WarmHolds
+    host.warm_holds = WarmHolds()
     attempt = tmp_path / "attempt"; attempt.mkdir()
     budget.account(str(attempt), 23, 100)
     host._publish_evidence_status()
     record = json.loads(host.evidence_status_path.read_text())
     assert record["charged_bytes"] == 23 and record["live_attempts"] == 1
+    assert record["warm_holds"] == []
     assert record["pid"] == os.getpid() and record["process_birth_id"] == "original"
     assert record["runtime_instance_id"] == "instance" and record["source_closure_digest"] == "closure"
     assert record["observation_kind"] == "measured_live_evidence_budget"

@@ -278,7 +278,7 @@ def collect_product_observations(support_root: str, runtime_data: Mapping[str, A
                                         and health.get("schema_digest") == SCHEMA_DIGEST
                                         and (not ready.get("runtime_instance_id") or instance == ready["runtime_instance_id"]))}
     # Terminal task receipts and one-time readiness are not live observations.
-    budget = None
+    budget = warm_holds = None
     from astrid.sdk.host_bootstrap import _host_birth_identity
     if observation is not None:
         try:
@@ -294,6 +294,9 @@ def collect_product_observations(support_root: str, runtime_data: Mapping[str, A
                 budget = {"run_observed_bytes": observation["charged_bytes"], "cap_bytes": observation["cap_bytes"],
                           "live_attempts": observation["live_attempts"], "updated_at": observation["updated_at"],
                           "authority": "current_host_measured_observation"}
+            # Expiry times are absolute, so they stay true for as long as the bound host lives.
+            if bound and private and isinstance(observation.get("warm_holds"), list):
+                warm_holds = observation["warm_holds"]
         except (OSError, ValueError, KeyError, TypeError):
             pass
     latch_path = runtime_root / CLEANUP_LATCH_NAME
@@ -305,6 +308,7 @@ def collect_product_observations(support_root: str, runtime_data: Mapping[str, A
         "packQuarantine": pack_quarantine_section(),
         "elementSkips": element_skip_section(),
         "liveEvidenceBudget": {"observed": isinstance(budget, Mapping), "value": dict(budget) if isinstance(budget, Mapping) else None},
+        "warmHolds": {"observed": warm_holds is not None, "value": warm_holds},
         "authority": "read_only_observations; absence does not prove installed execution or cleanup",
     }
 

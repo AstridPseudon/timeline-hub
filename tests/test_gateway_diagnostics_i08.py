@@ -279,10 +279,16 @@ def test_doctor_live_budget_binds_exact_c06_ready_path(monkeypatch, tmp_path, no
     if nomination == "alias":
         alias = root / "alias.ready.json"; alias.symlink_to(ready); ready = alias
     if nomination == "missing": ready = root / "missing.ready.json"
+    hold = {"holding": "wan2gp.generate_video", "leases": 0, "idle_seconds": 600.0,
+            "expires_at": "2026-10-19T12:10:00+00:00"}
     write_evidence_status(root / EVIDENCE_STATUS_NAME, {**identity, "ready_file": str(ready),
-        "charged_bytes": 23, "cap_bytes": 42, "live_attempts": 1,
+        "charged_bytes": 23, "cap_bytes": 42, "live_attempts": 1, "warm_holds": [hold],
         "observation_kind": "measured_live_evidence_budget", "updated_at": datetime.now(timezone.utc).isoformat()})
-    observed = collect_product_observations(str(tmp_path), {})["liveEvidenceBudget"]
+    observations = collect_product_observations(str(tmp_path), {})
+    observed = observations["liveEvidenceBudget"]
     assert observed["observed"] is (nomination == "selected")
     if nomination == "selected": assert observed["value"]["run_observed_bytes"] == 23
     else: assert observed["value"] is None
+    # Only the bound host's warm holds are reported: what each keeps warm and when it expires.
+    assert observations["warmHolds"] == ({"observed": True, "value": [hold]} if nomination == "selected"
+                                         else {"observed": False, "value": None})
