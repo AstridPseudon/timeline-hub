@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import { isAbsolute } from 'node:path';
+import { dirname, isAbsolute, join } from 'node:path';
+import { chatStoreIdentity } from './astrid-project-chat.ts';
 import { createAstridAcpHttpServer, resolveAstridAcpBridgeConfig } from './astrid-acp-bridge.ts';
 import { chatRegistration, chatRegistrationPath, removeChatRegistration, writeChatRegistration } from './chat-registration.ts';
 
@@ -11,7 +12,10 @@ export async function runChatService(env = process.env, createServer = createAst
     ASTRID_ACP_BRIDGE_TOKEN: env.ASTRID_ACP_BRIDGE_TOKEN?.trim() || randomBytes(32).toString('base64url'),
     ASTRID_ACP_LOCAL_MEDIA_ONLY: '1',
   });
-  const { server, bridge } = createServer({ config });
+  const { server, bridge } = createServer({ config: {
+    ...config,
+    modelStateFile: join(dirname(discovery), `chat-models-${chatStoreIdentity(config)}.json`),
+  } });
   const path = chatRegistrationPath(discovery);
   const registration = chatRegistration(config.port, config.token);
   const release = () => removeChatRegistration(path, value => value?.endpoint === registration.endpoint && value?.token === registration.token);

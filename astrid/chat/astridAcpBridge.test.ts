@@ -224,7 +224,7 @@ describe('Astrid App ACP HTTP bridge', () => {
     }).sessionDir).toBe('/tmp/astrid-legacy-sessions');
   });
 
-  it('limits session config changes to advertised model/thinking values on an owned session', async () => {
+  it('limits session config changes to advertised thinking values on an owned session', async () => {
     const fakeProcess = new FakeProcess();
     const { bridge, server } = createAstridAcpHttpServer({
       config: {
@@ -265,19 +265,19 @@ describe('Astrid App ACP HTTP bridge', () => {
     const setting = fetch(`${base}/${connectionId}/rpc`, {
       method: 'POST', headers: headers(),
       body: JSON.stringify({ method: 'session/set_config_option', params: {
-        sessionId: 'owned-session', configId: 'model', value: 'openai-codex/gpt-5.6-luna',
+        sessionId: 'owned-session', configId: 'thinking', value: 'xhigh',
       } }),
     });
     await waitForRequest(fakeProcess, afterResume);
-    const setModel = lastRequest(fakeProcess);
-    expect(setModel).toMatchObject({
+    const setThinking = lastRequest(fakeProcess);
+    expect(setThinking).toMatchObject({
       method: 'session/set_config_option',
-      params: { sessionId: 'owned-session', configId: 'model', value: 'openai-codex/gpt-5.6-luna' },
+      params: { sessionId: 'owned-session', configId: 'thinking', value: 'xhigh' },
     });
     const updatedOptions = [
-      { ...options[0], currentValue: 'openai-codex/gpt-5.6-luna' }, options[1],
+      options[0], { ...options[1], currentValue: 'xhigh' },
     ];
-    respond(fakeProcess, setModel.id, { configOptions: updatedOptions });
+    respond(fakeProcess, setThinking.id, { configOptions: updatedOptions });
     await expect((await setting).json()).resolves.toEqual({ result: { configOptions: updatedOptions } });
 
     const afterSet = fakeProcess.stdin.writes.length;

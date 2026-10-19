@@ -22,22 +22,27 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {
   },
 };
 
+const agentModelSchema = z.object({
+  modelId: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().nullable().optional(),
+});
+
 export const localAgentCatalogSchema = z.object({
+  defaultAgent: localAgentIdSchema,
   agents: z.array(z.strictObject({
     id: localAgentIdSchema,
     name: z.string(),
     state: z.enum(['ready', 'sign-in', 'not-installed']),
     line: z.string().nullable(),
+    models: z.array(agentModelSchema),
+    defaultModel: z.string().nullable(),
   })),
 });
-export type LocalAgentChoice = z.infer<typeof localAgentCatalogSchema>['agents'][number];
+export type LocalAgentChoice = Pick<z.infer<typeof localAgentCatalogSchema>['agents'][number], 'id' | 'name' | 'state' | 'line'>;
 
 export const localAgentModelsSchema = z.object({
-  availableModels: z.array(z.object({
-    modelId: z.string().min(1),
-    name: z.string().min(1),
-    description: z.string().nullable().optional(),
-  })),
+  availableModels: z.array(agentModelSchema),
   currentModelId: z.string(),
 });
 export type LocalAgentModels = z.infer<typeof localAgentModelsSchema>;

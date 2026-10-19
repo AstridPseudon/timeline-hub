@@ -1,23 +1,17 @@
-import { test } from 'bun:test';
+import { describe, test } from 'bun:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { bridgeTestClient } from './bridge-test-client.ts';
 import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
 import { ProjectChatRegistry } from './astrid-project-chat.ts';
 import { AcpProcessHostError } from './acpProcessHost.ts';
 import type { Project } from './runtime-client.ts';
 
-async function listen(server: import('node:http').Server): Promise<string> {
-  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
-  return `http://127.0.0.1:${(server.address() as { port: number }).port}`;
-}
-
-test('local ACP models are scoped, selectable and used as the connection default for new sessions', async t => {
-  for (const adapter of ['config', 'models'] as const) await t.test(`${adapter} adapter`, async () => {
+describe('local ACP models are scoped and fixed from the connection default at new session creation', () => {
+  for (const adapter of ['config', 'models'] as const) test(`${adapter} adapter`, async () => {
     const calls: Array<{ method: string; params: unknown }> = [];
-    let failSet = false;
-    let returnedSetModel: string | undefined;
     let releasePrompt: (() => void) | undefined;
     let signalPromptStarted: (() => void) | undefined;
     let nextSession = 0;
@@ -42,11 +36,10 @@ test('local ACP models are scoped, selectable and used as the connection default
             await new Promise<void>(resolve => { releasePrompt = resolve; });
           }
           if (method === 'session/set_model' || method === 'session/set_config_option') {
-            if (failSet) throw new Error('adapter rejected model');
-            const modelId = returnedSetModel ?? (params as { modelId?: string; value?: string }).modelId ?? (params as { value?: string }).value!;
+            const modelId = (params as { modelId?: string; value?: string }).modelId ?? (params as { value?: string }).value!;
             return adapter === 'config'
               ? { configOptions: [{ id: 'model', currentValue: modelId, options: [{ group: 'g', options: [{ value: 'alpha', name: 'Alpha' }, { value: 'beta', name: 'Beta' }] }] }], models: { currentModelId: `legacy/${modelId}-high`, availableModels: [{ modelId: `legacy/${modelId}-high`, name: 'legacy' }] } }
-              : returnedSetModel === undefined ? {} : { models: { currentModelId: modelId, availableModels: [{ modelId: 'alpha', name: 'Alpha' }, { modelId: 'beta', name: 'Beta' }] } };
+              : {}; // Legacy setters may acknowledge without returning model metadata.
           }
           return {};
         },
@@ -55,11 +48,7 @@ test('local ACP models are scoped, selectable and used as the connection default
       } as never),
     });
     try {
-      const base = await listen(server);
-      const call = (path: string, body?: unknown, method = body === undefined ? 'GET' : 'POST') => fetch(base + path, {
-        method, headers: { Authorization: 'Bearer local-model-token', 'X-Astrid-Bridge-Version': 'v1', 'Content-Type': 'application/json' },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-      });
+      const call = bridgeTestClient(bridge, 'local-model-token');
       const connected = await call('/connect', { agent: 'claude-code', defaultModelId: 'beta' });
       assert.equal(connected.status, 200);
       const created = await call('/c1/rpc', { method: 'session/new', params: {} });
@@ -74,32 +63,22 @@ test('local ACP models are scoped, selectable and used as the connection default
       assert.equal(initialModelState.models.currentModelId, 'beta');
       assert.deepEqual(initialModelState.models.availableModels.map(model => model.modelId), ['alpha', 'beta']);
       assert.equal((await call('/c1/models?sessionId=foreign')).status, 400);
-      assert.equal((await call('/c1/model', { sessionId: 'foreign', modelId: 'alpha' })).status, 403);
-      assert.equal((await call('/c1/model', { sessionId: 'claude-code:s1', modelId: 'missing' })).status, 409);
-
-      failSet = true;
-      assert.equal((await call('/c1/model', { sessionId: 'claude-code:s1', modelId: 'alpha' })).status, 500);
-      assert.equal((await (await call('/c1/models?sessionId=claude-code%3As1')).json() as { models: { currentModelId: string } }).models.currentModelId, 'beta');
-      failSet = false;
-      assert.equal((await call('/c1/model', { sessionId: 'claude-code:s1', modelId: 'alpha' })).status, 200);
-      returnedSetModel = 'alpha';
-      assert.equal((await call('/c1/model', { sessionId: 'claude-code:s1', modelId: 'beta' })).status, 409);
-      assert.equal((await (await call('/c1/models?sessionId=claude-code%3As1')).json() as { models: { currentModelId: string } }).models.currentModelId, 'alpha');
-      returnedSetModel = undefined;
-
+      const beforeRejectedChanges = calls.length;
+      assert.equal((await call('/c1/model', { sessionId: 'claude-code:s1', modelId: 'alpha' })).status, 404);
+      assert.equal((await call('/c1/rpc', { method: 'session/set_config_option', params: { sessionId: 'claude-code:s1', configId: 'model', value: 'alpha' } })).status, 409);
+      assert.equal(calls.length, beforeRejectedChanges);
       const promptStarted = new Promise<void>(resolve => { signalPromptStarted = resolve; });
       const pending = call('/c1/rpc', { method: 'session/prompt', params: { sessionId: 'claude-code:s1', prompt: [] } });
       await promptStarted;
-      assert.equal((await call('/c1/model', { sessionId: 'claude-code:s1', modelId: 'beta' })).status, 409);
+      assert.equal((await call('/c1/model', { sessionId: 'claude-code:s1', modelId: 'alpha' })).status, 404);
       releasePrompt?.();
       assert.equal((await pending).status, 200);
-
       const nextCreated = await call('/c1/rpc', { method: 'session/new', params: {} });
       assert.equal(nextCreated.status, 200);
       const nextSet = calls.filter(call => call.method === (adapter === 'config' ? 'session/set_config_option' : 'session/set_model')).at(-1)!;
       assert.deepEqual(nextSet.params, adapter === 'config'
-        ? { sessionId: 'claude-code:s2', configId: 'model', value: 'alpha' }
-        : { sessionId: 'claude-code:s2', modelId: 'alpha' });
+        ? { sessionId: 'claude-code:s2', configId: 'model', value: 'beta' }
+        : { sessionId: 'claude-code:s2', modelId: 'beta' });
 
       // Loading a saved chat retains its reported model and ignores the connection default.
       const loaded = await call('/c1/rpc', { method: 'session/load', params: { sessionId: 'claude-code:saved' } });
@@ -129,12 +108,8 @@ test('local ACP connections without advertised models keep the ordinary session 
     } as never),
   });
   try {
-    const base = await listen(server);
-    const call = (path: string, body?: unknown) => fetch(base + path, {
-      method: body === undefined ? 'GET' : 'POST', headers: { Authorization: 'Bearer local-model-token', 'X-Astrid-Bridge-Version': 'v1', 'Content-Type': 'application/json' },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    });
-    assert.equal((await call('/connect', { agent: 'codex', defaultModelId: 'missing' })).status, 200);
+    const call = bridgeTestClient(bridge, 'local-model-token');
+    assert.equal((await call('/connect', { agent: 'codex' })).status, 200);
     assert.equal((await call('/c1/rpc', { method: 'session/new', params: {} })).status, 200);
     assert.deepEqual(calls, ['session/new']);
     assert.deepEqual(await (await call('/c1/models?sessionId=codex%3Aplain')).json(), { models: null });
@@ -143,8 +118,8 @@ test('local ACP connections without advertised models keep the ordinary session 
   }
 });
 
-test('shared external session model catalog follows the writer and takeover for config and legacy model APIs', async t => {
-  for (const adapter of ['config', 'models'] as const) await t.test(`${adapter} adapter`, async () => {
+describe('shared external session model catalog follows the writer and takeover for config and legacy model APIs', () => {
+  for (const adapter of ['config', 'models'] as const) test(`${adapter} adapter`, async () => {
     const hostCalls: Array<Array<{ method: string; params: unknown }>> = [];
     const nativeNotify: Array<((notification: unknown) => void) | undefined> = [];
     let hostNumber = 0;
@@ -182,12 +157,7 @@ test('shared external session model catalog follows the writer and takeover for 
       },
     });
     try {
-      const base = await listen(server);
-      const call = (path: string, body?: unknown) => fetch(base + path, {
-        method: body === undefined ? 'GET' : 'POST',
-        headers: { Authorization: 'Bearer shared-model-token', 'X-Astrid-Bridge-Version': 'v1', 'Content-Type': 'application/json' },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-      });
+      const call = bridgeTestClient(bridge, 'shared-model-token');
       assert.equal((await call('/connect', { agent: 'claude-code' })).status, 200);
       assert.equal((await call('/connect', { agent: 'claude-code' })).status, 200);
       const sessionId = 'claude-code:shared-model-session';
@@ -204,35 +174,18 @@ test('shared external session model catalog follows the writer and takeover for 
       const update = async (clientId: string, modelId: string) => adapter === 'config'
         ? call(`/${clientId}/rpc`, { method: 'session/set_config_option', params: { sessionId, configId: 'model', value: modelId } })
         : call(`/${clientId}/model`, { sessionId, modelId });
-      assert.equal((await update('c1', 'beta')).status, 200);
-      assert.equal(((await (await call(modelsUrl)).json() as { models: { currentModelId: string } }).models.currentModelId), 'beta');
-      const setterEvents = (await (await call('/c2/events')).json() as { notifications: Array<{ params?: { update?: Record<string, unknown> } }> }).notifications;
-      const setterUpdate = setterEvents.find(event => event.params?.update?.sessionUpdate === (adapter === 'config' ? 'config_option_update' : 'current_model_update'))?.params?.update;
-      assert.ok(setterUpdate);
-      if (adapter === 'config') assert.equal((setterUpdate!.configOptions as Array<{ currentValue: string }>)[0]!.currentValue, 'beta');
-      else assert.equal(setterUpdate!.currentModelId, 'beta');
       const callsBeforeDenied = hostCalls.flat().length;
-      const denied = await update('c2', 'alpha');
-      assert.equal(denied.status, 409);
-      assert.equal((await denied.json() as { error: string }).error, 'session_read_only');
+      for (const client of ['c1', 'c2']) {
+        const denied = await update(client, 'beta');
+        assert.equal(denied.status, adapter === 'config' ? 409 : 404);
+      }
       assert.equal(hostCalls.flat().length, callsBeforeDenied);
-      await call('/c1/events'); // consume the first writer's beta update before takeover
-
       assert.equal((await call('/c2/rpc', { method: 'session/takeover', params: { sessionId } })).status, 200);
-      assert.equal((await update('c2', 'alpha')).status, 200);
-      const writerState = await (await call(modelsUrl)).json() as { models: { currentModelId: string } };
-      assert.equal(writerState.models.currentModelId, 'alpha');
-      const formerWriterEvents = (await (await call('/c1/events')).json() as { notifications: Array<{ params?: { update?: Record<string, unknown> } }> }).notifications;
-      const alphaUpdate = formerWriterEvents.find(event => event.params?.update?.sessionUpdate === (adapter === 'config' ? 'config_option_update' : 'current_model_update'))?.params?.update;
-      assert.ok(alphaUpdate);
-      if (adapter === 'config') assert.equal((alphaUpdate!.configOptions as Array<{ currentValue: string }>)[0]!.currentValue, 'alpha');
-      else assert.equal(alphaUpdate!.currentModelId, 'alpha');
+      assert.equal((await update('c2', 'beta')).status, adapter === 'config' ? 409 : 404);
+      assert.equal(hostCalls.flat().length, callsBeforeDenied);
+      assert.equal(((await (await call(modelsUrl)).json() as { models: { currentModelId: string } }).models.currentModelId), 'alpha');
+      await call('/c1/events');
       await call('/c2/events');
-      const expectedSetter = adapter === 'config' ? 'session/set_config_option' : 'session/set_model';
-      const nativeUpdates = hostCalls[0]!.filter(item => item.method === expectedSetter);
-      assert.equal(nativeUpdates.length, 2);
-      assert.equal(hostCalls[1]!.length, 0);
-      assert.equal((nativeUpdates[1]!.params as Record<string, unknown>).sessionId, sessionId);
 
       const changedCatalog = adapter === 'config'
         ? { sessionUpdate: 'config_option_update', configOptions: configOptions('gamma').map(item => ({ ...item, options: [{ group: 'models', options: ['beta', 'gamma'].map(value => ({ value, name: value.toUpperCase() })) }] })) }
@@ -287,11 +240,7 @@ test('project registry session creation applies the connection default and rejec
     } as never),
   });
   try {
-    const base = await listen(server);
-    const call = (path: string, body?: unknown) => fetch(base + path, {
-      method: body === undefined ? 'GET' : 'POST', headers: { Authorization: 'Bearer local-model-token', 'X-Astrid-Bridge-Version': 'v1', 'Content-Type': 'application/json' },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    });
+    const call = bridgeTestClient(bridge, 'local-model-token');
     assert.equal((await call('/connect', { agent: 'claude-code', defaultModelId: 'alpha' })).status, 200);
     const created = await call('/projects/p1/chat/sessions', { connection_id: 'c1', mode: 'new', operation_id: 'project-create' });
     assert.equal(created.status, 200);
@@ -308,12 +257,12 @@ test('project registry session creation applies the connection default and rejec
   }
 });
 
-test('missing Claude and Codex persisted sessions recover in place with the agent default model', async t => {
+describe('missing Claude and Codex persisted sessions recover in place with the agent default model', () => {
   const cases = [
     { agent: 'claude-code' as const, oldId: 'claude-code:empty', freshId: 'claude-code:fresh', adapterError: 'Resource not found' },
     { agent: 'codex' as const, oldId: 'codex:empty', freshId: 'codex:fresh', adapterError: 'No rollout found for thread ID empty' },
   ];
-  for (const { agent, oldId, freshId, adapterError } of cases) await t.test(agent, async () => {
+  for (const { agent, oldId, freshId, adapterError } of cases) test(agent, async () => {
     const projectId = `p-${agent}`;
     let project: Project = {
       project_id: projectId, realm_id: 'r', slug: projectId, name: projectId, metadata: {
@@ -359,12 +308,7 @@ test('missing Claude and Codex persisted sessions recover in place with the agen
       },
     });
     try {
-      const base = await listen(server);
-      const call = (path: string, body?: unknown) => fetch(base + path, {
-        method: body === undefined ? 'GET' : 'POST',
-        headers: { Authorization: 'Bearer recovery-token', 'X-Astrid-Bridge-Version': 'v1', 'Content-Type': 'application/json' },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-      });
+      const call = bridgeTestClient(bridge, 'recovery-token');
       assert.equal((await call('/connect', { agent, defaultModelId: 'beta' })).status, 200);
       const resumed = await call(`/projects/${projectId}/chat/sessions`, {
         connection_id: 'c1', mode: 'ensure', operation_id: `reload-${agent}`, recover_session_id: oldId,
@@ -436,12 +380,7 @@ test('targeted recovery retains each same-agent chat model and leaves started mi
     },
   });
   try {
-    const base = await listen(server);
-    const call = (path: string, body?: unknown) => fetch(base + path, {
-      method: body === undefined ? 'GET' : 'POST',
-      headers: { Authorization: 'Bearer recovery-token', 'X-Astrid-Bridge-Version': 'v1', 'Content-Type': 'application/json' },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    });
+    const call = bridgeTestClient(bridge, 'recovery-token');
     assert.equal((await call('/connect', { agent: 'codex', defaultModelId: 'alpha' })).status, 200);
     const recover = async (sessionId: string, operationId: string) => call(`/projects/${projectId}/chat/sessions`, {
       connection_id: 'c1', mode: 'ensure', operation_id: operationId, recover_session_id: sessionId,
@@ -495,11 +434,7 @@ test('config model update notifications refresh only an owned session model cach
     },
   });
   try {
-    const base = await listen(server);
-    const call = (path: string, body?: unknown) => fetch(base + path, {
-      method: body === undefined ? 'GET' : 'POST', headers: { Authorization: 'Bearer local-model-token', 'X-Astrid-Bridge-Version': 'v1', 'Content-Type': 'application/json' },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    });
+    const call = bridgeTestClient(bridge, 'local-model-token');
     assert.equal((await call('/connect', { agent: 'claude-code' })).status, 200);
     assert.equal((await call('/notify-connection/rpc', { method: 'session/load', params: { sessionId: 'claude-code:owned' } })).status, 200);
     assert.deepEqual(await (await call('/notify-connection/models?sessionId=claude-code%3Aowned')).json(), {

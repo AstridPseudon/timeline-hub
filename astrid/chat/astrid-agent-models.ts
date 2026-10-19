@@ -6,7 +6,7 @@ import { ASTRID_ACP_COMMAND } from './astridAcpLauncher.ts';
 const execFileAsync = promisify(execFile);
 type UsageLimit = NonNullable<AcpModelCatalog['providers'][number]['usage']>['limits'][number];
 
-/** The documented `astrid agent models/use --json` v1 response. */
+/** The documented `astrid agent models --json` v1 response. */
 type AstridModelSnapshot = {
   schemaVersion: 1;
   currentModel: string | null;
@@ -71,10 +71,4 @@ function modelCatalog(output: string): AcpModelCatalog {
 
 export async function getAstridAgentModelCatalog(options: AstridModelOptions): Promise<AcpModelCatalog> {
   return modelCatalog(await runAstrid(options, ['models']));
-}
-
-export async function setAstridAgentDefaultModel(options: AstridModelOptions, model: string): Promise<string> {
-  const catalog = modelCatalog(await runAstrid(options, ['use', model]));
-  if (catalog.currentModel !== model) throw new Error('Astrid did not confirm the requested default model.');
-  return catalog.currentModel;
 }

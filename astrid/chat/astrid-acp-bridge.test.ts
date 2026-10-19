@@ -127,7 +127,7 @@ test('real HTTP bridge enforces RPC and project policy for hosted calls and pres
     assert.equal((await created.json()).operation_session_id, 's1');
     assert.equal((await registry.get('p1')).selected_session_id, 's1');
     const rpc = (connection: string, configId: string, value: string, sessionId = 's1') => call(`/${connection}/rpc`, { method: 'session/set_config_option', params: { sessionId, configId, value } });
-    assert.equal((await rpc('c1', 'model', 'model-a')).status, 200);
+    assert.equal((await rpc('c1', 'model', 'model-a')).status, 409);
     assert.equal((await rpc('c1', 'thinking', 'high')).status, 200);
     const protectedState = await registry.get('p1');
     const forwardedBeforeMedia = forwarded.length;

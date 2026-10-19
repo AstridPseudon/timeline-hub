@@ -1,260 +1,250 @@
-import { test } from 'bun:test';
-import assert from 'node:assert/strict';
-import { chmodSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { createServer } from 'node:http';
+import { test, expect } from 'bun:test';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
+import { bridgeTestClient } from './bridge-test-client.ts';
+import { LOCAL_AGENT_TABLE, localAgentCatalogSchema, type LocalAgentChoice, type LocalAgentId } from './localAgents.ts';
 import type { ProjectChatRegistry } from './astrid-project-chat.ts';
 
-const token = 'test-bridge-token';
-const protocolHeader = 'X-Astrid-Bridge-Version';
-const configOptions = [{
-  id: 'model',
-  currentValue: 'openai/gpt-4.1',
-  options: [
-    { value: 'openai/gpt-4.1', name: 'GPT 4.1' },
-    { value: 'openai/gpt-4.1-mini', name: 'GPT 4.1 mini' },
-  ],
-}];
-
-type HostCall = { connection: string; method: string; params: unknown };
-type HostRecord = { connection: string; calls: HostCall[]; disposed: number; releasePrompt?: () => void; promptStarted?: () => void };
-type CliInvocation = { args: string[]; cwd: string; profile: string | null };
-
-function invocations(path: string): CliInvocation[] {
-  return readFileSync(path, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line) as CliInvocation);
+const ids: LocalAgentId[] = ['astrid', 'claude-code', 'codex'];
+const names = ['Alpha', 'Beta'];
+const modelIds = (agent: LocalAgentId) => agent === 'astrid' ? ['provider/alpha', 'provider/beta'] : ['alpha', 'beta'];
+const choices = (ready: LocalAgentId[] = ids): LocalAgentChoice[] => ids.map(id => ({
+  id, name: LOCAL_AGENT_TABLE[id].name, state: ready.includes(id) ? 'ready' : 'not-installed',
+  line: ready.includes(id) ? null : LOCAL_AGENT_TABLE[id].notInstalledLine ?? LOCAL_AGENT_TABLE[id].signInLine,
+}));
+function metadata(agent: LocalAgentId, current = modelIds(agent)[0]!, available = modelIds(agent)) {
+  return { configOptions: [{ id: 'model', currentValue: current,
+    options: [{ group: 'models', options: available.map((value, index) => ({ value, name: names[index] ?? value })) }],
+  }, { id: 'thinking', currentValue: 'high', options: [{ value: 'high', name: 'High' }, { value: 'low', name: 'Low' }] }] };
 }
-
-function fakeAstrid(directory: string): { command: string; invocationsPath: string; selectedPath: string } {
-  const executable = join(directory, 'astrid');
-  const invocationsPath = join(directory, 'invocations.jsonl');
-  const selectedPath = join(directory, 'selected-model.txt');
-  writeFileSync(selectedPath, 'openai/gpt-4.1');
-  const script = `#!/usr/bin/env node
-const fs = require('node:fs');
-const args = process.argv.slice(2);
-fs.appendFileSync(${JSON.stringify(invocationsPath)}, JSON.stringify({args, cwd:process.cwd(), profile:process.env.OMP_PROFILE ?? null}) + '\\n');
-const snapshot = currentModel => ({schemaVersion:1,currentModel,providers:[
-  {id:'openai',name:'OpenAI',signedIn:true,models:[
-    {id:'gpt-4.1',name:'GPT 4.1',selector:'openai/gpt-4.1'},
-    {id:'gpt-4.1-mini',name:'GPT 4.1 mini',selector:'openai/gpt-4.1-mini'}
-  ]},
-  {id:'anthropic',name:'Anthropic',signedIn:false,models:[{id:'claude-sonnet',name:'Claude Sonnet',selector:'anthropic/claude-sonnet'}]}
-]});
-if (process.env.ASTRID_FAKE_FAIL === '1' && args[1] === 'use') {
-  process.stderr.write('credential-secret-should-never-escape');
-  process.exit(7);
-}
-if (args.length === 3 && args[0] === 'agent' && args[1] === 'models' && args[2] === '--json') {
-  process.stdout.write(JSON.stringify(snapshot(fs.readFileSync(${JSON.stringify(selectedPath)},'utf8'))));
-} else if (args.length === 4 && args[0] === 'agent' && args[1] === 'use' && args[3] === '--json') {
-  if (!['openai/gpt-4.1', 'openai/gpt-4.1-mini', 'anthropic/claude-sonnet'].includes(args[2])) {
-    process.stderr.write('credential-secret-should-never-escape');
-    process.exit(7);
-  }
-  fs.writeFileSync(${JSON.stringify(selectedPath)}, args[2]);
-  process.stdout.write(JSON.stringify(snapshot(args[2])));
-} else {
-  process.stderr.write('credential-secret-should-never-escape');
-  process.exit(7);
-}
-`;
-  writeFileSync(executable, script, { mode: 0o755 });
-  chmodSync(executable, 0o755);
-  return { command: executable, invocationsPath, selectedPath };
-}
-
-async function listen(server: ReturnType<typeof createServer>): Promise<string> {
-  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
-  return `http://127.0.0.1:${(server.address() as { port: number }).port}`;
-}
-
-async function fixture(advertisedModels?: string[]) {
-  const directory = realpathSync(mkdtempSync(join(tmpdir(), 'astrid-acp-model-http-')));
-  const astrid = fakeAstrid(directory);
-  const hosts: HostRecord[] = [];
-  let nextConnection = 0;
-  const registry = {
-    assertOwned: async (projectId: string, sessionId: string) => {
-      assert.equal(projectId, 'project-1');
-      assert.equal(sessionId, 'saved-session');
-    },
-    markSessionStarted: async (projectId: string, sessionId: string) => {
-      assert.equal(projectId, 'project-1');
-      assert.equal(sessionId, 'saved-session');
-    },
-  } satisfies Pick<ProjectChatRegistry, 'assertOwned' | 'markSessionStarted'>;
-  const { server, bridge } = createAstridAcpHttpServer({
-    config: { token, port: 0, cwd: directory, command: astrid.command, profile: 'test-profile' },
-    chatRegistry: registry as unknown as ProjectChatRegistry,
-    idFactory: () => `c${++nextConnection}`,
-    hostFactory: () => {
-      const record: HostRecord = { connection: `c${nextConnection}`, calls: [], disposed: 0 };
-      hosts.push(record);
-      return {
-        initialize: async () => ({ protocolVersion: 1 }),
-        request: async (method: string, params: unknown) => {
-          record.calls.push({ connection: record.connection, method, params });
-          if (method === 'session/load' || method === 'session/resume') {
-            return { sessionId: 'saved-session', configOptions: advertisedModels
-              ? [{ ...configOptions[0], options: configOptions[0].options.filter(option => advertisedModels.includes(option.value)) }]
-              : configOptions };
-          }
-          if (method === 'session/prompt' && record.promptStarted) {
-            record.promptStarted();
-            await new Promise<void>(resolve => { record.releasePrompt = resolve; });
-          }
-          return {};
-        },
-        cancel: async () => {},
-        dispose: async () => { record.disposed++; },
-      } as never;
-    },
+type HostCall = { method: string; params: Record<string, unknown> };
+type Host = { agent: LocalAgentId; calls: HostCall[]; disposed: number };
+function fixture(options: { ready?: LocalAgentId[]; stateFile?: string; nativeSessions?: string[]; noModels?: boolean; astridSignedIn?: boolean; legacy?: boolean } = {}) {
+  const sessionMetadata = (agent: LocalAgentId, current = modelIds(agent)[0]!) => options.legacy
+    ? { models: { currentModelId: current, availableModels: modelIds(agent).map((modelId, index) => ({ modelId, name: names[index]! })) } }
+    : metadata(agent, current);
+  const hosts: Host[] = [];
+  const nativeSessions = options.nativeSessions ?? [];
+  let newSession = nativeSessions.length;
+  let connection = 0;
+  let newResult: ((agent: LocalAgentId) => Promise<unknown>) | undefined;
+  let setter: ((params: Record<string, unknown>) => unknown) | undefined;
+  let discovered = 0;
+  const hostFactory = (agent: LocalAgentId) => {
+    const host = { agent, calls: [] as HostCall[], disposed: 0 };
+    hosts.push(host);
+    return {
+      initialize: async () => ({ protocolVersion: 1 }),
+      request: async (method: string, raw: unknown) => {
+        const params = (raw ?? {}) as Record<string, unknown>;
+        host.calls.push({ method, params });
+        if (method === 'session/new') {
+          if (newResult) return newResult(agent);
+          const sessionId = `${agent === 'astrid' ? '' : `${agent}:`}new-${++newSession}`;
+          nativeSessions.push(sessionId);
+          return { sessionId, ...(options.noModels ? {} : sessionMetadata(agent)) };
+        }
+        if (method === 'session/list') return { sessions: [...nativeSessions, `${agent === 'astrid' ? '' : `${agent}:`}saved`].map(sessionId => ({ sessionId })) };
+        if (method === 'session/load' || method === 'session/resume') return { sessionId: params.sessionId, ...metadata(agent) };
+        if (method === 'session/set_model' || method === 'session/set_config_option') return method === 'session/set_model' || params.configId === 'model' ? (setter ? setter(params) : sessionMetadata(agent, String(params.value ?? params.modelId))) : {};
+        return {};
+      },
+      cancel: async () => {},
+      dispose: async () => { host.disposed++; },
+    } as never;
+  };
+  const { bridge } = createAstridAcpHttpServer({
+    config: { token: 'models-token', cwd: '/tmp/model-service', port: 0, ...(options.stateFile ? { modelStateFile: options.stateFile } : {}) },
+    hostFactory: () => hostFactory('astrid'),
+    localAgentHostFactory: async agent => hostFactory(agent),
+    discoverAgents: async () => { discovered++; return choices(options.ready); },
+    astridModelCatalog: async () => ({ providers: options.astridSignedIn === false ? [] : [{ id: 'provider', name: 'Provider', signedIn: true, models: [{ id: 'alpha', name: 'Alpha' }] }], currentModel: 'provider/alpha' }),
+    idFactory: () => `c${++connection}`,
+    chatRegistry: {
+      unassigned: async (_project: string, candidates: unknown[]) => candidates,
+      assertOwned: async () => {}, markSessionStarted: async () => {},
+    } as unknown as ProjectChatRegistry,
   });
-  const base = await listen(server);
-  const call = (path: string, body?: unknown, init: { method?: string; auth?: boolean; protocol?: string } = {}) => fetch(base + path, {
-    method: init.method ?? (body === undefined ? 'GET' : 'POST'),
-    headers: {
-      ...(init.auth === false ? {} : { Authorization: `Bearer ${token}` }),
-      [protocolHeader]: init.protocol ?? 'v1',
-      'Content-Type': 'application/json',
-    },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-  });
-  return { directory, astrid, hosts, server, bridge, call };
+  const call = bridgeTestClient(bridge, 'models-token');
+  const rpc = (id: string, method: string, params: unknown = {}) => call(`/${id}/rpc`, { method, params });
+  return { bridge, call, rpc, hosts, nativeSessions,
+    setNew: (fn: typeof newResult) => { newResult = fn; },
+    setSetter: (fn: typeof setter) => { setter = fn; },
+    discoveries: () => discovered,
+  };
 }
 
-async function closeFixture(value: Awaited<ReturnType<typeof fixture>>): Promise<void> {
-  try { await value.bridge.close(); }
-  finally {
-    value.server.closeAllConnections();
-    await new Promise<void>(resolve => value.server.close(() => resolve()));
-    rmSync(value.directory, { recursive: true, force: true });
-  }
-}
-
-test('model HTTP routes require the bridge token and protocol, reject unavailable selectors without fallback, and redact CLI stderr', async () => {
-  const value = await fixture();
+for (const agent of ids) test(`${agent} applies its model once when created and preserves it through attach, takeover and prompts`, async () => {
+  const value = fixture();
   try {
-    assert.equal((await value.call('/models', undefined, { auth: false })).status, 401);
-    assert.equal((await value.call('/models', undefined, { protocol: 'v0' })).status, 400);
-    const modelsResponse = await value.call('/models');
-    assert.equal(modelsResponse.status, 200);
-    const models = await modelsResponse.json() as { providers: Array<{ id: string; signedIn: boolean; models: Array<{ id: string }> }>; currentModel: string };
-    assert.equal(models.currentModel, 'openai/gpt-4.1');
-    assert.ok(models.providers.some(provider => provider.id === 'openai' && provider.signedIn && provider.models.some(model => model.id === 'gpt-4.1-mini')));
-    assert.deepEqual(invocations(value.astrid.invocationsPath), [{
-      args: ['agent', 'models', '--json'], cwd: value.directory, profile: 'test-profile',
-    }]);
-
-    const unavailable = await value.call('/model', { model: 'openai/not-available' });
-    assert.equal(unavailable.status, 500);
-    const errorBody = await unavailable.text();
-    assert.equal(errorBody.includes('credential-secret'), false);
-    assert.equal(readFileSync(value.astrid.selectedPath, 'utf8'), 'openai/gpt-4.1');
-    process.env.ASTRID_FAKE_FAIL = '1';
-    try {
-      const failed = await value.call('/model', { model: 'openai/gpt-4.1-mini' });
-      assert.equal(failed.status, 500);
-      assert.equal((await failed.text()).includes('credential-secret'), false);
-    } finally { delete process.env.ASTRID_FAKE_FAIL; }
-    assert.deepEqual(invocations(value.astrid.invocationsPath).map(({ args, cwd, profile }) => ({ args, cwd, profile })), [
-      { args: ['agent', 'models', '--json'], cwd: value.directory, profile: 'test-profile' },
-      { args: ['agent', 'use', 'openai/not-available', '--json'], cwd: value.directory, profile: 'test-profile' },
-      { args: ['agent', 'use', 'openai/gpt-4.1-mini', '--json'], cwd: value.directory, profile: 'test-profile' },
-    ]);
-    assert.equal((await value.call('/model', { model: 'openai/gpt-4.1-mini' }, { auth: false })).status, 401);
-    assert.equal((await value.call('/model', { model: 'openai/gpt-4.1-mini' }, { protocol: 'v0' })).status, 400);
-  } finally { await closeFixture(value); }
+    const selected = modelIds(agent)[1]!;
+    expect((await value.call('/connect', { agent, defaultModelId: selected })).status).toBe(200);
+    const created = await value.rpc('c1', 'session/new');
+    expect(created.status).toBe(200);
+    const result = (await created.json() as { result: { sessionId: string; models: { currentModelId: string } } }).result;
+    expect(result.models.currentModelId).toBe(selected);
+    expect((await value.call('/connect', { agent, defaultModelId: modelIds(agent)[0] })).status).toBe(200);
+    expect((await value.rpc('c2', 'session/load', { sessionId: result.sessionId })).status).toBe(200);
+    expect((await value.rpc('c2', 'session/takeover', { sessionId: result.sessionId })).status).toBe(200);
+    expect((await value.call('/projects/p/chat/prompt', { connection_id: 'c2', session_id: result.sessionId, prompt: [] })).status).toBe(200);
+    expect((await value.rpc('c2', 'session/prompt', { sessionId: result.sessionId, prompt: [] })).status).toBe(200);
+    expect((await value.rpc('c2', 'session/set_config_option', { sessionId: result.sessionId, configId: 'model', value: modelIds(agent)[0] })).status).toBe(409);
+    expect((await value.call('/model', { model: modelIds(agent)[0] })).status).toBe(404);
+    expect((await value.call('/c2/model', { sessionId: result.sessionId, modelId: modelIds(agent)[0] })).status).toBe(404);
+    expect((await value.rpc('c2', 'session/set_config_option', { sessionId: result.sessionId, configId: 'thinking', value: 'low' })).status).toBe(200);
+    const setters = value.hosts.flatMap(host => host.calls).filter(call => call.method === 'session/set_config_option' && call.params.configId === 'model');
+    expect(setters).toEqual([{ method: 'session/set_config_option', params: { sessionId: result.sessionId, configId: 'model', value: selected } }]);
+    const snapshot = await value.call(`/c2/models?sessionId=${encodeURIComponent(result.sessionId)}`);
+    expect((await snapshot.json() as { models: { currentModelId: string } }).models.currentModelId).toBe(selected);
+    expect(value.hosts.every(host => host.disposed === 0)).toBe(true);
+  } finally { await value.bridge.close(); }
 });
 
-test('a valid model switch retires old hosts and project prompts load the same transcript with the selected model first', async () => {
-  const value = await fixture();
+test('agents lazily share one bootstrap per ready agent, hide native sessions, and recheck readiness on menu refresh', async () => {
+  const value = fixture();
   try {
-    await value.call('/models');
-    assert.equal((await value.call('/connect', {})).status, 200);
-    const loaded = await value.call('/c1/rpc', { method: 'session/load', params: { sessionId: 'saved-session', cwd: '/client/must/not/override' } });
-    assert.equal(loaded.status, 200);
-
-    const switched = await value.call('/model', { model: 'openai/gpt-4.1-mini' });
-    assert.equal(switched.status, 200);
-    assert.equal(readFileSync(value.astrid.selectedPath, 'utf8'), 'openai/gpt-4.1-mini');
-    assert.deepEqual(invocations(value.astrid.invocationsPath).map(({ args, cwd, profile }) => ({ args, cwd, profile })), [
-      { args: ['agent', 'models', '--json'], cwd: value.directory, profile: 'test-profile' },
-      { args: ['agent', 'use', 'openai/gpt-4.1-mini', '--json'], cwd: value.directory, profile: 'test-profile' },
-    ]);
-    assert.equal(value.hosts[0]?.disposed, 1);
-    const oldEvents = await value.call('/c1/events');
-    assert.equal(oldEvents.status, 200);
-    assert.equal((await oldEvents.json() as { disconnected: boolean }).disconnected, true);
-
-    assert.equal((await value.call('/connect', {})).status, 200);
-    assert.equal((await value.call('/c2/rpc', { method: 'session/load', params: { sessionId: 'saved-session' } })).status, 200);
-    const prompted = await value.call('/projects/project-1/chat/prompt', { connection_id: 'c2', session_id: 'saved-session', prompt: [{ type: 'text', text: 'continue' }] });
-    assert.equal(prompted.status, 200);
-    assert.deepEqual(value.hosts[1]?.calls.map(call => call.method), [
-      'session/load', 'session/set_config_option', 'session/prompt',
-    ]);
-    assert.deepEqual(value.hosts[1]?.calls[1]?.params, {
-      sessionId: 'saved-session', configId: 'model', value: 'openai/gpt-4.1-mini',
-    });
-    assert.deepEqual(value.hosts[1]?.calls[2]?.params, {
-      sessionId: 'saved-session', prompt: [{ type: 'text', text: 'continue' }],
-    });
-  } finally { await closeFixture(value); }
+    expect(value.hosts).toHaveLength(0);
+    const responses = await Promise.all([value.call('/agents'), value.call('/agents'), value.call('/agents')]);
+    for (const response of responses) {
+      expect(response.status).toBe(200);
+      const catalog = localAgentCatalogSchema.parse(await response.json());
+      expect(catalog.defaultAgent).toBe('astrid');
+      for (const agent of catalog.agents) {
+        expect(agent.models.map(model => model.modelId)).toEqual(modelIds(agent.id));
+        expect(agent.defaultModel).toBe(modelIds(agent.id)[0]!);
+      }
+    }
+    expect(value.hosts).toHaveLength(3);
+    for (const host of value.hosts) {
+      expect(host.calls.map(call => call.method)).toEqual(['session/new', 'session/close']);
+      expect(host.disposed).toBe(1);
+    }
+    await value.call('/agents');
+    expect(value.hosts).toHaveLength(3);
+    expect(value.discoveries()).toBe(4);
+    for (const [index, agent] of ids.entries()) {
+      await value.call('/connect', { agent });
+      const connection = `c${index + 1}`;
+      const listed = await value.rpc(connection, 'session/list');
+      expect((await listed.json() as { result: { sessions: Array<{ sessionId: string }> } }).result.sessions.every(item => !value.nativeSessions.includes(item.sessionId))).toBe(true);
+      const unassigned = await value.call(`/projects/p/chat/unassigned?connection_id=${connection}`);
+      expect((await unassigned.json() as { sessions: Array<{ id: string }> }).sessions.every(item => !value.nativeSessions.includes(item.id))).toBe(true);
+      const hidden = value.nativeSessions[index]!;
+      expect((await value.rpc(connection, 'session/load', { sessionId: hidden })).status).toBe(404);
+      expect((await value.call('/projects/p/chat/associate', { connection_id: connection, session_id: hidden, expected_revision: 0 })).status).toBe(404);
+    }
+  } finally { await value.bridge.close(); }
 });
 
-test('model switching returns conflict while an ACP prompt is active', async () => {
-  const value = await fixture();
-  let notifyPromptStarted: () => void = () => {};
-  const promptStarted = new Promise<void>(resolve => { notifyPromptStarted = resolve; });
+test('a real new session fills and refreshes its service catalog without a bootstrap', async () => {
+  const value = fixture({ ready: ['codex'], astridSignedIn: false });
   try {
-    await value.call('/models');
-    assert.equal((await value.call('/connect', {})).status, 200);
-    await value.call('/c1/rpc', { method: 'session/load', params: { sessionId: 'saved-session' } });
-    value.hosts[0]!.promptStarted = notifyPromptStarted;
-    const prompt = value.call('/c1/rpc', { method: 'session/prompt', params: { sessionId: 'saved-session', prompt: [{ type: 'text', text: 'busy' }] } });
-    await promptStarted;
-    const switched = await value.call('/model', { model: 'openai/gpt-4.1-mini' });
-    assert.equal(switched.status, 409);
-    assert.equal((await switched.json() as { error: string }).error, 'model_change_during_request');
-    assert.equal(readFileSync(value.astrid.selectedPath, 'utf8'), 'openai/gpt-4.1');
-    value.hosts[0]!.releasePrompt?.();
-    assert.equal((await prompt).status, 200);
-  } finally {
-    value.hosts[0]?.releasePrompt?.();
-    await closeFixture(value);
-  }
+    await value.call('/connect', { agent: 'codex', defaultModelId: 'beta' });
+    expect((await value.rpc('c1', 'session/new')).status).toBe(200);
+    let catalog = localAgentCatalogSchema.parse(await (await value.call('/agents')).json());
+    expect(value.hosts).toHaveLength(1);
+    expect(catalog.defaultAgent).toBe('codex');
+    expect(catalog.agents.find(agent => agent.id === 'codex')?.defaultModel).toBe('beta');
+    value.setNew(async () => ({ sessionId: 'codex:refresh', ...metadata('codex', 'gamma', ['gamma']) }));
+    await value.call('/connect', { agent: 'codex', defaultModelId: 'gamma' });
+    expect((await value.rpc('c2', 'session/new')).status).toBe(200);
+    catalog = localAgentCatalogSchema.parse(await (await value.call('/agents')).json());
+    expect(catalog.agents.find(agent => agent.id === 'codex')?.models).toEqual([{ modelId: 'gamma', name: 'Alpha' }]);
+    expect(catalog.agents.find(agent => agent.id === 'codex')?.defaultModel).toBe('gamma');
+    expect(value.hosts.flatMap(host => host.calls).filter(call => call.method === 'session/new')).toHaveLength(2);
+  } finally { await value.bridge.close(); }
 });
 
-test('an ACP session missing the selected model cannot silently prompt on its old model', async () => {
-  const value = await fixture(['openai/gpt-4.1']);
+test('service remembers successful choices and bootstrap exclusions across restarts without changing the CLI default', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'chat-models-state-'));
+  const stateFile = join(directory, 'models.json');
+  const nativeSessions: string[] = [];
+  let value = fixture({ stateFile, nativeSessions, ready: ['astrid', 'codex'] });
   try {
-    assert.equal((await value.call('/model', { model: 'openai/gpt-4.1-mini' })).status, 200);
-    assert.equal((await value.call('/connect', {})).status, 200);
-    assert.equal((await value.call('/c1/rpc', { method: 'session/load', params: { sessionId: 'saved-session' } })).status, 200);
-    const response = await value.call('/projects/project-1/chat/prompt', {
-      connection_id: 'c1', session_id: 'saved-session', prompt: [{ type: 'text', text: 'hello' }],
-    });
-    assert.equal(response.status, 409);
-    assert.equal((await response.json() as { error: string }).error, 'model_unavailable');
-    assert.equal(value.hosts[0].calls.some(call => call.method === 'session/prompt'), false);
-  } finally { await closeFixture(value); }
+    await value.call('/agents');
+    const hiddenIds = [...nativeSessions];
+    await value.call('/connect', { agent: 'codex', defaultModelId: 'beta' });
+    expect((await value.rpc('c1', 'session/new')).status).toBe(200);
+    await value.bridge.close();
+    value = fixture({ stateFile, nativeSessions, ready: ['codex'], astridSignedIn: false });
+    expect((await value.call('/connect', {})).status).toBe(200);
+    const newSession = await value.rpc('c1', 'session/new');
+    expect((await newSession.json() as { result: { models: { currentModelId: string } } }).result.models.currentModelId).toBe('beta');
+    expect(value.hosts[0]?.agent).toBe('codex');
+    const list = await value.rpc('c1', 'session/list');
+    const sessions = (await list.json() as { result: { sessions: Array<{ sessionId: string }> } }).result.sessions;
+    expect(sessions.some(item => hiddenIds.includes(item.sessionId))).toBe(false);
+    expect((await value.call('/models')).status).toBe(200);
+    expect(await (await value.call('/models')).json()).toMatchObject({ currentModel: 'provider/alpha' });
+    expect(JSON.parse(readFileSync(stateFile, 'utf8'))).toMatchObject({ defaultAgent: 'codex', defaults: { codex: 'beta' } });
+  } finally { await value.bridge.close(); rmSync(directory, { recursive: true, force: true }); }
 });
 
-test('reading the CLI saved default does not change a loaded session model', async () => {
-  const value = await fixture(['openai/gpt-4.1-mini']);
+test('non-ready agents do not bootstrap and every recovery row has its service line', async () => {
+  const value = fixture({ ready: [], astridSignedIn: false });
   try {
-    const modelsResponse = await value.call('/models');
-    assert.equal(modelsResponse.status, 200);
-    assert.equal((await modelsResponse.json() as { currentModel: string }).currentModel, 'openai/gpt-4.1');
-    assert.equal((await value.call('/connect', {})).status, 200);
-    assert.equal((await value.call('/c1/rpc', { method: 'session/load', params: { sessionId: 'saved-session' } })).status, 200);
-    const prompted = await value.call('/projects/project-1/chat/prompt', {
-      connection_id: 'c1', session_id: 'saved-session', prompt: [{ type: 'text', text: 'continue' }],
-    });
-    assert.equal(prompted.status, 200);
-    assert.deepEqual(value.hosts[0]?.calls.map(call => call.method), ['session/load', 'session/prompt']);
-  } finally { await closeFixture(value); }
+    const catalog = localAgentCatalogSchema.parse(await (await value.call('/agents')).json());
+    expect(value.hosts).toHaveLength(0);
+    expect(catalog.agents.every(agent => agent.state !== 'ready' && Boolean(agent.line))).toBe(true);
+    expect(catalog.agents.find(agent => agent.id === 'astrid')).toMatchObject({ state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine, models: [], defaultModel: null });
+  } finally { await value.bridge.close(); }
+});
+
+test('bootstrap failures release hosts and retry only on the next explicit menu refresh', async () => {
+  const value = fixture({ ready: ['codex'], astridSignedIn: false });
+  try {
+    value.setNew(async () => { throw new Error('adapter temporarily unavailable'); });
+    const responses = await Promise.all([value.call('/agents'), value.call('/agents')]);
+    expect(responses.map(response => response.status)).toEqual([200, 200]);
+    expect(value.hosts).toHaveLength(1);
+    expect(value.hosts[0]?.disposed).toBe(1);
+    value.setNew(undefined);
+    const catalog = localAgentCatalogSchema.parse(await (await value.call('/agents')).json());
+    expect(value.hosts).toHaveLength(2);
+    expect(catalog.agents.find(agent => agent.id === 'codex')?.models).toHaveLength(2);
+  } finally { await value.bridge.close(); }
+});
+
+test('a completed empty bootstrap does not create throwaway sessions on every menu opening', async () => {
+  const value = fixture({ ready: ['codex'], astridSignedIn: false, noModels: true });
+  try {
+    await value.call('/agents');
+    await value.call('/agents');
+    expect(value.hosts).toHaveLength(1);
+    expect(value.hosts[0]?.disposed).toBe(1);
+  } finally { await value.bridge.close(); }
+});
+
+for (const legacy of [false, true]) for (const failure of ['unavailable', 'missing-metadata', 'rejected', 'mismatch'] as const) test(`a ${failure} ${legacy ? 'legacy' : 'config'} model choice fails before any prompt and does not become the remembered agent`, async () => {
+  const value = fixture({ legacy, noModels: failure === 'missing-metadata' });
+  try {
+    if (failure === 'rejected') value.setSetter(() => { throw new Error('selection failed'); });
+    if (failure === 'mismatch') value.setSetter(() => legacy ? { models: { currentModelId: 'alpha', availableModels: [{ modelId: 'alpha', name: 'Alpha' }, { modelId: 'beta', name: 'Beta' }] } } : metadata('codex', 'alpha'));
+    await value.call('/connect', { agent: 'codex', defaultModelId: failure === 'unavailable' ? 'unknown' : 'beta' });
+    const response = await value.rpc('c1', 'session/new');
+    expect(response.status).toBe(failure === 'rejected' ? 500 : 409);
+    expect(value.hosts[0]?.calls.at(-1)?.method).toBe('session/close');
+    expect((await value.rpc('c1', 'session/load', { sessionId: value.nativeSessions[0] })).status).toBe(404);
+    expect(value.hosts.flatMap(host => host.calls).some(call => call.method === 'session/prompt')).toBe(false);
+    // Connecting again without an agent must still use Astrid.
+    await value.call('/connect', {});
+    expect(value.hosts.at(-1)?.agent).toBe('astrid');
+  } finally { await value.bridge.close(); }
+});
+
+test('model discovery and retired mutation routes retain bearer and protocol protections', async () => {
+  const value = fixture();
+  try {
+    for (const path of ['/agents', '/models', '/model']) {
+      expect((await value.call(path, path === '/model' ? { model: 'provider/beta' } : undefined, { auth: false })).status).toBe(401);
+      expect((await value.call(path, path === '/model' ? { model: 'provider/beta' } : undefined, { protocol: 'v0' })).status).toBe(400);
+    }
+    expect(value.hosts).toHaveLength(0);
+    expect((await value.call('/model', { model: 'provider/beta' })).status).toBe(404);
+    expect(value.hosts).toHaveLength(0);
+    expect((await value.call('/connect', { agent: 'astrid', defaultModelId: '' })).status).toBe(400);
+    expect((await value.call('/connect', { agent: 'astrid', defaultModelId: 'provider/beta', persist: true })).status).toBe(400);
+  } finally { await value.bridge.close(); }
 });
