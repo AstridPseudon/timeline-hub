@@ -73,23 +73,23 @@ def _read_media_kind(managed_media: dict) -> str:
     return "unknown"
 
 
-def test_schema_declares_two_owner_boundary_without_a_second_timeline_schema() -> None:
+def test_schema_declares_raw_container_boundary_without_a_second_compiled_schema() -> None:
     schema = _schema()
     Draft202012Validator.check_schema(schema)
 
     assert schema["x-astrid-runtime-owner"] == "astrid-runtime"
     assert schema["x-astrid-runtime-canonical-timeline-owner"] == "@banodoco/timeline-schema"
     config = schema["$defs"]["ParentComposition"]["properties"]["config"]
-    assert config["$ref"] == "timeline-config.schema.json"
-    assert config["x-astrid-runtime-schema-owner"] == "@banodoco/timeline-schema#TimelineConfig"
-    assert config["x-astrid-runtime-schema-sha256"] == hashlib.sha256(TIMELINE_SCHEMA_PATH.read_bytes()).hexdigest()
+    assert config["$ref"] == "#/$defs/RawTimelinePayload"
     registry = schema["$defs"]["ParentComposition"]["properties"]["registry"]
     assert registry["x-astrid-runtime-schema-owner"] == "astrid-runtime#ManagedMediaRegistry"
     assert "outside the canonical TimelineConfig" in registry["description"]
     assert registry["additionalProperties"] is True
     internal = schema["$defs"]["InternalTimelineRevisionInput"]["properties"]["payload"]
-    assert internal["$ref"] == "timeline-config.schema.json"
-    assert internal["x-astrid-runtime-schema-owner"] == "@banodoco/timeline-schema#TimelineConfig"
+    assert internal["$ref"] == "#/$defs/RawTimelinePayload"
+    raw = schema["$defs"]["RawTimelinePayload"]
+    assert raw["additionalProperties"] is True
+    assert "required" not in raw
     assert "TimelineConfig" not in schema["$defs"]
     assert "TimelineClip" not in schema["$defs"]
 
@@ -116,7 +116,7 @@ def test_empty_and_ordinary_only_composition_fixtures_validate_losslessly() -> N
         assert case["publication"] == original
 
 
-def test_materialized_canonical_timeline_schema_is_the_nested_runtime_contract() -> None:
+def test_pinned_compiled_timeline_schema_remains_strict() -> None:
     canonical = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
     Draft7Validator.check_schema(canonical)
     assert canonical["required"] == ["clips", "tracks"]
@@ -138,20 +138,18 @@ def test_materialized_canonical_timeline_schema_is_the_nested_runtime_contract()
     assert list(Draft7Validator(canonical).iter_errors(role_config))
 
 
-def test_materialized_timeline_schema_provenance_tracks_role_extension_and_nested_hashes() -> None:
+def test_materialized_timeline_schema_provenance_and_compatible_raw_field_reuse() -> None:
     schema = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
     provenance = json.loads(TIMELINE_SCHEMA_PROVENANCE_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(TIMELINE_SCHEMA_PATH.read_bytes()).hexdigest()
     composition = _schema()
-    parent_config = composition["$defs"]["ParentComposition"]["properties"]["config"]
-    internal_payload = composition["$defs"]["InternalTimelineRevisionInput"]["properties"]["payload"]
+    raw_role = composition["$defs"]["RawTrack"]["properties"]["role"]
 
     assert schema["properties"]["tracks"]["items"]["properties"]["role"]["enum"] == ["output", "source"]
     assert provenance["sha256"] == digest
     assert provenance["role_extension"]["source_commit"] == "3bd1d019715de79cd54aa208cf26de10427c29d5"
     assert provenance["role_extension"]["source_artifact_sha256"] == digest
-    assert parent_config["x-astrid-runtime-schema-sha256"] == digest
-    assert internal_payload["x-astrid-runtime-schema-sha256"] == digest
+    assert raw_role == {"$ref": "timeline-config.schema.json#/properties/tracks/items/properties/role"}
 
 
 def test_supported_silent_voiceover_legacy_audio_and_extension_payloads_validate() -> None:
