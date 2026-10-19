@@ -72,6 +72,15 @@ def render() -> dict[str, str]:
             )
         if kind == "array":
             item = expression(schema.get("items", {}), language)
+            min_items = schema.get("minItems")
+            max_items = schema.get("maxItems")
+            if (
+                not py
+                and isinstance(min_items, int)
+                and min_items == max_items
+                and min_items <= 16
+            ):
+                return "[" + ", ".join([item] * min_items) + "]"
             return f"list[{item}]" if py else f"Array<{item}>"
         if kind == "object":
             if "properties" in schema:
