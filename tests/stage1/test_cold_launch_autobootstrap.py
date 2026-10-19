@@ -182,7 +182,7 @@ def test_default_runtime_connection_still_starts_pack_host(monkeypatch, tmp_path
     worker.write_text("worker-secret", encoding="utf-8")
     credential = tmp_path / "astrid.json"
     credential.write_text("{}", encoding="utf-8")
-    seen: list[bool] = []
+    seen: list[dict[str, object]] = []
 
     def fake_run(command, **kwargs):
         return subprocess.CompletedProcess(
@@ -209,14 +209,14 @@ def test_default_runtime_connection_still_starts_pack_host(monkeypatch, tmp_path
     monkeypatch.setattr(
         host_bootstrap,
         "ensure_pack_host",
-        lambda *args, **kwargs: seen.append(True) or {"host_status": "ready"},
+        lambda *args, **kwargs: seen.append(dict(kwargs)) or {"host_status": "ready"},
         raising=False,
     )
 
     result = autobootstrap.ensure_runtime()
 
     assert result["host_status"] == "ready"
-    assert seen == [True]
+    assert seen == [{"reconfigure_action": autobootstrap.RECONFIGURE_ACTION, "attach_healthy": True}]
 
 
 def test_real_worker_source_handoff_starts_pack_host_after_lifecycle_filter(
@@ -805,7 +805,9 @@ def test_real_cold_launch_projects_installed_startup_policy_only(monkeypatch, tm
             return original_setattr(target, name, observe, *args, **kwargs)
         return original_setattr(target, name, value, *args, **kwargs)
     monkeypatch.setattr = bind
-    try: original_test(monkeypatch, tmp_path)
-    finally: monkeypatch.setattr = original_setattr
+    try:
+        original_test(monkeypatch, tmp_path)
+    finally:
+        monkeypatch.setattr = original_setattr
     assert len(seen) == 1
     assert "startup_idle_seconds" not in seen[0]

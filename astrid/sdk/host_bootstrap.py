@@ -289,7 +289,7 @@ def _host_birth_identity(pid: Any) -> str:
         return ""
     try:
         info = _process_snapshot().get(value)
-    except Exception:
+    except (CleanupUncertainError, OSError, ValueError):
         info = None
     return str(info.birth) if info is not None else ""
 
@@ -315,6 +315,8 @@ def _parked_host_identity_matches(state: Mapping[str, Any]) -> bool:
     pid = state.get("pid")
     if sys.platform == "darwin":
         try:
+            if pid is None:
+                raise ValueError("missing pid")
             value = int(pid)
         except (TypeError, ValueError) as exc:
             raise PackHostBootstrapError("host native launch identity invalid; retirement blocked") from exc
@@ -520,7 +522,7 @@ def _descendant_snapshot(pid: int) -> dict[int, tuple[str, int]]:
     """Descendant birth/PGID pairs of *pid*; empty when it has no children."""
     try:
         snapshot = _process_snapshot()
-    except Exception:
+    except (CleanupUncertainError, OSError, ValueError):
         return {}
     descendants: dict[int, tuple[str, int]] = {}
     frontier = [pid]
@@ -543,8 +545,11 @@ def _registered_host_status(state: Mapping[str, Any]) -> str:
                 the registration is unusable: nothing may be signalled;
     ``foreign`` the registered process is alive but is not this host.
     """
+    raw_pid = state.get("pid")
+    if raw_pid is None:
+        return "reused"
     try:
-        pid = int(state.get("pid"))
+        pid = int(raw_pid)
     except (TypeError, ValueError):
         return "reused"
     birth = str(state.get("process_birth_id") or "")
@@ -1146,7 +1151,7 @@ class _ParkedPackHostInspector:
             result["output_root"] = str(output.resolve(strict=True))
         return result
 
-    def observe_ready(self, handle: object) -> Mapping[str, Any]:
+    def observe_ready(self, handle: Any) -> Mapping[str, Any]:
         """Combine OS/artifact measurements with authenticated resident state."""
         from astrid.core.execution.generic_host import (
             GenericPackHost,
@@ -1215,9 +1220,100 @@ class _ParkedPackHostInspector:
 _STALE_VALIDATION = object()  # sentinel: reuse refused; replace the host when idle
 
 
+def _attach_resident_host(
+    current: Mapping[str, Any], ready: Mapping[str, Any], *,
+    expected: Mapping[str, Any], worker_path: Path, runtime_epoch: Any,
+    runtime_instance_id: str, inventory_identity: str,
+) -> Mapping[str, Any] | None:
+    """Return a receipt for a live Runtime-registered host from another checkout."""
+    checkout = Path(str(current.get("source_checkout") or ""))
+    attachable_keys = (
+        "endpoint", "executor_id", "ready_file", "credential_file",
+        "support_root", "runtime_instance_id", "runtime_epoch", "schema_digest",
+    )
+    if not (
+        checkout.is_dir()
+        and current.get("source_checkout_digest")
+        and current.get("source_closure_digest")
+        and current.get("source_inventory_identity", "") == inventory_identity
+        and all(current.get(key) == expected.get(key) for key in attachable_keys)
+        and all(ready.get(key) == current.get(key) for key in (
+            *attachable_keys, "source_checkout", "source_checkout_digest",
+            "source_closure_digest", "source_inventory_identity",
+            "boot_manifest_path", "boot_manifest_hash", "python_executable",
+        ))
+        and ready.get("status") == "ready"
+        and str(ready.get("pid")) == str(current.get("pid"))
+        and str(ready.get("process_birth_id")) == str(current.get("process_birth_id"))
+    ):
+        return None
+    resident_token = ""
+    try:
+        from astrid.core.execution.generic_host import (
+            RuntimeProtocolClient,
+            source_checkout_closure_digest,
+            source_checkout_digest,
+        )
+
+        if (source_checkout_digest(checkout) != current["source_checkout_digest"]
+                or source_checkout_closure_digest(checkout) != current["source_closure_digest"]):
+            return None
+        from astrid.core._shared.boot_manifest import load_boot_manifest_hash
+
+        manifest = Path(str(current.get("boot_manifest_path") or ""))
+        if load_boot_manifest_hash(manifest, support_root=Path(str(current["support_root"]))) != current["boot_manifest_hash"]:
+            return None
+        resident_token = worker_path.read_text(encoding="utf-8").strip()
+        resident_client = RuntimeProtocolClient(str(expected["endpoint"]), resident_token)
+        resident_client._authenticate_worker(PACK_HOST_ACTOR)
+        registration = resident_client.generated.get_executor(PACK_HOST_ACTOR)
+        def field(name: str):
+            return registration.get(name) if isinstance(registration, Mapping) else getattr(registration, name, None)
+        ready_registration = ready.get("registration")
+        def ready_field(name: str):
+            return ready_registration.get(name) if isinstance(ready_registration, Mapping) else getattr(ready_registration, name, None)
+        caps = field("capabilities") or ()
+        if not (
+            field("executor_id") == PACK_HOST_ACTOR
+            and field("readiness") == "ready"
+            and field("runtime_epoch") == runtime_epoch
+            and isinstance(ready.get("source_epoch"), str)
+            and bool(ready.get("source_epoch"))
+            and field("source_epoch") == ready.get("source_epoch") == ready_field("source_epoch")
+            and bool(field("source_digest"))
+            and field("source_digest") == ready_field("source_digest")
+            and bool(field("dependency_digest"))
+            and field("dependency_digest") == ready_field("dependency_digest")
+            and any(
+                (cap.get("status") if isinstance(cap, Mapping) else getattr(cap, "status", None)) == "ready"
+                for cap in caps
+            )
+        ):
+            return None
+    except (RuntimeError, OSError, ValueError, TypeError, KeyError, AttributeError, ImportError):
+        return None
+    finally:
+        resident_token = ""
+    return {
+        "host_status": "ready",
+        "host_pid": int(current["pid"]),
+        "host_executor_id": PACK_HOST_ACTOR,
+        "host_ready_file": str(expected["ready_file"]),
+        "host_ready_capabilities": list(ready.get("ready_capabilities", [])),
+        "host_runtime_instance_id": runtime_instance_id,
+        "host_runtime_epoch": runtime_epoch,
+        "host_source_checkout_digest": current["source_checkout_digest"],
+        "host_source_closure_digest": current["source_closure_digest"],
+        "host_source_inventory_identity": current.get("source_inventory_identity", ""),
+        "host_boot_manifest_path": current["boot_manifest_path"],
+        "host_boot_manifest_hash": current["boot_manifest_hash"],
+    }
+
+
 def ensure_pack_host(
     value: Mapping[str, Any], *, reconfigure_action: str,
     startup_idle_seconds: float = HOST_STARTUP_IDLE_SECONDS,
+    attach_healthy: bool = False,
 ) -> Mapping[str, Any]:
     """Ensure the runtime-issued host is ready, waiting while it makes progress.
 
@@ -1327,16 +1423,6 @@ def ensure_pack_host(
     runtime_support = worker_path.parent.parent
     host_root = runtime_support / "astrid-host"
     boot_manifest_path = host_root / "boot-manifest.json"
-    from astrid.core.gateway.dispatch import compose_profile_handoff
-    try:
-        boot_handoff = compose_profile_handoff(
-            boot_manifest_path, support_root=runtime_support
-        )
-    except Exception as exc:
-        raise PackHostBootstrapError(
-            f"generic Astrid pack boot manifest could not be composed; {reconfigure_action}"
-        ) from exc
-    boot_manifest_hash = str(boot_handoff["sha256"])
     state_path = runtime_support / "generic-host.json"
     ready_path = runtime_support / "generic-host.ready.json"
     lock_path = runtime_support / "generic-host.lock"
@@ -1354,6 +1440,37 @@ def ensure_pack_host(
             raise PackHostBootstrapError(f"generic Astrid pack host lock is unavailable; {reconfigure_action}") from exc
         current = _read_object(state_path)
         ready = _read_object(ready_path)
+        status = _registered_host_status(current) if current else None
+        if attach_healthy and current and ready and status == "ours":
+            receipt = _attach_resident_host(
+                current, ready,
+                expected={
+                    "endpoint": endpoint,
+                    "executor_id": PACK_HOST_ACTOR,
+                    "ready_file": str(ready_path),
+                    "credential_file": str(worker_path),
+                    "support_root": str(runtime_support),
+                    "runtime_instance_id": str(runtime_instance_id),
+                    "runtime_epoch": runtime_epoch,
+                    "schema_digest": schema_digest,
+                },
+                worker_path=worker_path,
+                runtime_epoch=runtime_epoch,
+                runtime_instance_id=str(runtime_instance_id),
+                inventory_identity=inventory_identity,
+            )
+            if receipt is not None:
+                return receipt
+        from astrid.core.gateway.dispatch import compose_profile_handoff
+        try:
+            boot_handoff = compose_profile_handoff(
+                boot_manifest_path, support_root=runtime_support
+            )
+        except Exception as exc:
+            raise PackHostBootstrapError(
+                f"generic Astrid pack boot manifest could not be composed; {reconfigure_action}"
+            ) from exc
+        boot_manifest_hash = str(boot_handoff["sha256"])
         expected = {
             # Preserve the venv executable path: resolving its symlink would
             # collapse different dependency environments to the base Python.
@@ -1373,7 +1490,6 @@ def ensure_pack_host(
             "boot_manifest_path": str(boot_manifest_path),
             "boot_manifest_hash": boot_manifest_hash,
         }
-        status = _registered_host_status(current) if current else None
         if (current and ready
                 and all(current.get(key) == expected_value for key, expected_value in expected.items())
                 and status == "ours"
@@ -1393,7 +1509,7 @@ def ensure_pack_host(
                 try:
                     _validated_runtime(Path(reuse_env[ASTRID_REMOTION_PROJECT_DIR]),
                                        environment={**reuse_env, **reference}, python_executable=host_python)
-                except Exception:
+                except (RuntimeError, OSError, ValueError, TypeError, ImportError, subprocess.SubprocessError):
                     # This caller's render context wasn't validated by that launch
                     # (different PATH, packs, interpreter...): replace the host below,
                     # when idle, instead of refusing.
