@@ -111,9 +111,7 @@ def _write_project(tmp_path: Path) -> Path:
     project = tmp_path / "remotion"
     packages = project / "node_modules" / "@banodoco"
     for package in (
-        "timeline-composition/typescript/src",
-        "timeline-schema",
-        "timeline-theme-2rp",
+        "timeline-composition",
     ):
         (packages / package).mkdir(parents=True)
     (project / "package.json").write_text("{}\n", encoding="utf-8")
@@ -829,12 +827,9 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
     def _write_fake_remotion_project(self, tmp: Path) -> tuple[Path, Path]:
         project_dir = tmp / "remotion"
         banodoco_root = project_dir / "node_modules" / "@banodoco"
-        composition_src = banodoco_root / "timeline-composition" / "typescript" / "src"
+        composition_src = project_dir / "src"
         composition_src.mkdir(parents=True)
-        # _validate_project_dir requires all three @banodoco adapter packages
-        # (see docs/reference/render-adapter.md).  Create stub directories for the other two.
-        (banodoco_root / "timeline-schema").mkdir(parents=True)
-        (banodoco_root / "timeline-theme-2rp").mkdir(parents=True)
+        (banodoco_root / "timeline-composition").mkdir(parents=True)
         (project_dir / "package.json").write_text('{"scripts":{}}\n', encoding="utf-8")
         cli = project_dir / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
         cli.parent.mkdir(parents=True)
@@ -915,7 +910,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
         self.assertEqual(kwargs["cwd"], str(ROOT))
         env = kwargs["env"]
         self.assertIsInstance(env, dict)
-        self.assertEqual(env["ASTRID_TIMELINE_COMPOSITION_SRC"], str(composition_src))
+        self.assertEqual(env["ASTRID_REMOTION_PROJECT_DIR"], str(project_dir))
         self.assertNotIn("ASTRID_RENDER_UNDECLARED", env)
         self.assertTrue(kwargs["capture_output"])
         self.assertTrue(kwargs["check"])
@@ -1425,8 +1420,8 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
         # Required Node and Astrid runtime variables must be preserved/propagated.
         self.assertEqual(env["PATH"], "/usr/bin:/bin")
         self.assertEqual(env["ASTRID_TASK_RUN_ID"], "task-run-9")
-        # The Remotion-specific build-tool addition is the composition source.
-        self.assertEqual(env["ASTRID_TIMELINE_COMPOSITION_SRC"], str(composition_src))
+        # The Remotion-specific build-tool addition selects the host project.
+        self.assertEqual(env["ASTRID_REMOTION_PROJECT_DIR"], str(project_dir))
 
 
 # ---------------------------------------------------------------------------

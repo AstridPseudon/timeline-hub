@@ -43,8 +43,18 @@ _NODE_PROBE_TIMEOUT_SECONDS = 5
 _REGISTRY_PROBE_TIMEOUT_SECONDS = 90
 _REQUIRED_PACKAGES = (
     "timeline-composition",
-    "timeline-schema",
-    "timeline-theme-2rp",
+)
+_COMPOSITION_PACKAGE_NAME = "@banodoco/timeline-composition"
+_COMPOSITION_PACKAGE_VERSION = "0.0.8"
+_REQUIRED_COMPOSITION_EXPORTS = (
+    ".",
+    "./evaluation",
+    "./theme-api",
+    "./registries",
+    "./effects.generated",
+    "./animations.generated",
+    "./transitions.generated",
+    "./registry.generated",
 )
 _REQUIRED_SCHEMA_FILES = (
     "__init__.py",
@@ -284,6 +294,90 @@ def _tree_files(root: Path) -> list[Path]:
     return list(found.values())
 
 
+def _composition_package_problem(project: Path) -> str | None:
+    """Validate the locked Composition package without importing JavaScript."""
+
+    package = project / "node_modules" / "@banodoco" / "timeline-composition"
+    manifest_path = package / "package.json"
+    if not manifest_path.is_file():
+        return f"installed Remotion package is missing: {manifest_path}"
+    try:
+        package_root = package.resolve(strict=True)
+        project_root = project.resolve(strict=True)
+    except OSError as exc:
+        return f"installed Remotion package manifest is unreadable: {manifest_path} ({exc})"
+    try:
+        package_root.relative_to(project_root)
+    except ValueError:
+        return f"installed Remotion package escapes the project: {package_root}"
+    try:
+        manifest_path.resolve(strict=True).relative_to(package_root)
+    except (OSError, ValueError):
+        return f"installed Remotion package manifest escapes the package: {manifest_path}"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        return f"installed Remotion package manifest is unreadable: {manifest_path} ({exc})"
+    if not isinstance(manifest, Mapping):
+        return f"installed Remotion package manifest is not an object: {manifest_path}"
+    if manifest.get("name") != _COMPOSITION_PACKAGE_NAME:
+        return (f"installed Remotion package manifest has unexpected name: "
+                f"{manifest.get('name')!r}")
+    if manifest.get("version") != _COMPOSITION_PACKAGE_VERSION:
+        return (f"installed Remotion package manifest has unexpected version: "
+                f"{manifest.get('version')!r}; expected {_COMPOSITION_PACKAGE_VERSION}")
+    exports = manifest.get("exports")
+    if not isinstance(exports, Mapping):
+        return f"installed Remotion package manifest has no exports map: {manifest_path}"
+
+    dist_root = package_root / "dist"
+    try:
+        dist_resolved = dist_root.resolve(strict=True)
+        dist_resolved.relative_to(package_root)
+    except (OSError, ValueError):
+        return f"installed Remotion package dist directory is missing or outside package: {dist_root}"
+    if not dist_resolved.is_dir():
+        return f"installed Remotion package dist path is not a directory: {dist_root}"
+
+    def targets(value: Any, condition: str = "") -> list[tuple[str, str]]:
+        if isinstance(value, str):
+            return [(condition, value)]
+        if isinstance(value, Mapping):
+            result: list[tuple[str, str]] = []
+            for key, nested in value.items():
+                if not isinstance(key, str):
+                    return []
+                result.extend(targets(nested, f"{condition}/{key}" if condition else key))
+            return result
+        return []
+
+    for export in _REQUIRED_COMPOSITION_EXPORTS:
+        if export not in exports:
+            return f"installed Remotion package export is missing: {export}"
+        export_targets = targets(exports[export])
+        if not export_targets:
+            return f"installed Remotion package export has no file targets: {export}"
+        for condition, target in export_targets:
+            label = f"{export} ({condition})" if condition else export
+            if target.startswith("../") or target.startswith("/") or ".." in Path(target).parts:
+                return (f"installed Remotion package export target escapes the package: "
+                        f"{label} -> {target!r}")
+            if not target.startswith("./dist/"):
+                return (f"installed Remotion package export target is not built: "
+                        f"{label} -> {target!r}")
+            target_path = package_root / target[2:]
+            try:
+                resolved = target_path.resolve(strict=True)
+                resolved.relative_to(dist_resolved)
+            except (OSError, ValueError):
+                return (f"installed Remotion package export target is missing or outside dist: "
+                        f"{label} -> {target!r}")
+            if not resolved.is_file():
+                return (f"installed Remotion package export target is not a file: "
+                        f"{label} -> {target!r}")
+    return None
+
+
 @_validation_timing("complete_inputs")
 def _runtime_inputs(project_dir: Path, environment: Mapping[str, str], python: str,
                     closure: Mapping[str, Any], *, digest_memo: dict | None = None) -> dict[str, Any]:
@@ -298,9 +392,9 @@ def _runtime_inputs(project_dir: Path, environment: Mapping[str, str], python: s
     schema = Path(schema_raw).resolve(strict=True)
     cli = project / REMOTION_CLI_RELATIVE_PATH
     cli.resolve(strict=True).relative_to(project)
-    for name in _REQUIRED_PACKAGES:
-        if not (project / "node_modules" / "@banodoco" / name / "package.json").is_file():
-            raise RemotionValidationError("installed Remotion package is missing")
+    composition_problem = _composition_package_problem(project)
+    if composition_problem:
+        raise RemotionValidationError(composition_problem)
     for name in _REQUIRED_SCHEMA_FILES:
         if not (schema / "banodoco_timeline_schema" / name).is_file():
             raise RemotionValidationError("installed timeline schema is incomplete")
@@ -700,8 +794,6 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
     from astrid.packs.rendering.rendering.renderers.remotion import run, lock
     if not lock.remotion_render_lock_held():
         raise RemotionValidationError('registry settling requires the original held Remotion lock')
-    if run._timeline_composition_src(project) is None:
-        raise RemotionValidationError('launch validation needs the installed composition output directory')
     output_paths = run._registry_output_paths(project)
     selected: dict[bytes, Any] = {}
     if run.gen_effect_registry is None:
@@ -709,7 +801,7 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
         for paths in contexts.values():
             for environment in ([paths] if isinstance(paths, Mapping) else paths):
                 context = _registry_context(environment, generator=False)
-                context['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(run._timeline_composition_src(project))
+                context[REMOTION_PROJECT_DIR_ENV] = str(project)
                 key = _canonical(context)
                 selected[key] = {'mode': 'provisioned_only', 'outputs': [_file_binding(p) for p in output_paths],
                                  'state_file': _file_binding(project / run._REGISTRY_STATE_PATH)
@@ -722,11 +814,11 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
     for paths in contexts.values():
         for environment in ([paths] if isinstance(paths, Mapping) else paths):
             renderer = _registry_context(environment, generator=False)
-            renderer['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(run._timeline_composition_src(project))
+            renderer[REMOTION_PROJECT_DIR_ENV] = str(project)
             # The generator is only run (below) to repair outputs, which are then
             # hash-checked against the expected state; it is not probed separately.
             generator_env = _registry_context(environment, generator=True)
-            generator_env['ASTRID_TIMELINE_COMPOSITION_SRC'] = renderer['ASTRID_TIMELINE_COMPOSITION_SRC']
+            generator_env[REMOTION_PROJECT_DIR_ENV] = str(project)
             key = _canonical({'environment': renderer, 'generator_startup': False})
             if key not in probes:
                 started_ns = time.time_ns()
@@ -807,7 +899,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
     def validate_context(environment: Mapping[str, str]) -> dict[str, Any]:
         context = probe_context(environment=environment, python_executable=python_executable)
         registry_context = _registry_context(environment, generator=False)
-        registry_context['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(project / 'node_modules/@banodoco/timeline-composition/typescript/src')
+        registry_context[REMOTION_PROJECT_DIR_ENV] = str(project)
         context['registry_context'] = registry_context
         context['configuration'] = {k: environment.get(k) for k in
                                     (NODE_EXECUTABLE_ENV, REMOTION_PROJECT_DIR_ENV, TIMELINE_SCHEMA_PYTHONPATH_ENV)}
@@ -992,7 +1084,7 @@ def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | No
     python = sys.executable if python_executable is None else python_executable
     context = probe_context(environment=env, python_executable=python)
     registry_context = _registry_context(env, generator=False)
-    registry_context['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(project_dir / 'node_modules/@banodoco/timeline-composition/typescript/src')
+    registry_context[REMOTION_PROJECT_DIR_ENV] = str(project_dir)
     context['registry_context'] = registry_context
     context['configuration'] = {k: env.get(k) for k in
                                 (NODE_EXECUTABLE_ENV, REMOTION_PROJECT_DIR_ENV, TIMELINE_SCHEMA_PYTHONPATH_ENV)}
@@ -1153,15 +1245,15 @@ def remotion_install_problem(project: Path) -> str | None:
     fix = f"run `npm ci` in {project} with {f'Node {pin}' if pin else 'the pinned Node'} on PATH"
     if not node_modules.is_dir():
         return f"Remotion node_modules is missing: {node_modules}; {fix}"
-    missing = [
-        f"@banodoco/{name}"
-        for name in _REQUIRED_PACKAGES
-        if not (node_modules / "@banodoco" / name / "package.json").is_file()
-    ]
+    missing = [f"@banodoco/{name}" for name in _REQUIRED_PACKAGES
+               if not (node_modules / "@banodoco" / name / "package.json").is_file()]
     if missing:
         return "required Remotion package(s) missing: " + ", ".join(missing) + f"; {fix}"
     if not (project / REMOTION_CLI_RELATIVE_PATH).is_file():
         return f"locked Remotion CLI is missing: {project / REMOTION_CLI_RELATIVE_PATH}; {fix}"
+    composition_problem = _composition_package_problem(project)
+    if composition_problem:
+        return f"{composition_problem}; {fix}"
     return None
 
 

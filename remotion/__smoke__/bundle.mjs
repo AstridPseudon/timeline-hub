@@ -5,7 +5,7 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 
 import {bundle} from '@remotion/bundler';
 import {selectComposition} from '@remotion/renderer';
-import {applyWorkspaceEffectsAlias} from '../webpack-alias.mjs';
+import {remotionPrimitiveAliasesFor} from '../webpack-alias.mjs';
 import ts from 'typescript';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -177,7 +177,7 @@ const main = async () => {
   const bundleLocation = await bundle({
     entryPoint,
     onProgress: () => undefined,
-    webpackOverride: applyWorkspaceEffectsAlias,
+    webpackOverride: remotionPrimitiveAliasesFor(projectDir),
   });
 
   const allowedArrays = await importGeneratedAllowedArrays();

@@ -1,6 +1,3 @@
-import type {TransitionResult} from '../../../../shared/element_contracts';
+import {TRANSITION_REGISTRY} from '@banodoco/timeline-composition/transitions.generated';
 
-// Builtin null-pair: themes override this with real transition presentation/timing.
-export default function CrossFade(): TransitionResult {
-  return {presentation: null, timing: null};
-}
+export default TRANSITION_REGISTRY['cross-fade'];

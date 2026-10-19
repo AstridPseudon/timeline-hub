@@ -22,20 +22,13 @@ class RemotionElementGenerationTest(unittest.TestCase):
     def test_generated_registries_use_element_scope_aliases(self) -> None:
         for kind in ("effects", "animations", "transitions"):
             generated = gen_effect_registry.generate_element_registry(kind)
-            self.assertIn("./effects-types", generated)
+            self.assertIn("@banodoco/timeline-composition/theme-api", generated)
             self.assertNotIn("./effects.types", generated)
             self.assertRegex(generated, r"@(pack-(local|rendering)|managed)-elements-")
             self.assertNotIn("@workspace-", generated)
             self.assertNotIn("primitive-root", generated)
 
     def test_remotion_alias_files_do_not_reference_workspace_element_aliases(self) -> None:
-        # `@workspace-*` aliases must be resolvable by the bundler because
-        # `@banodoco/timeline-composition`'s codegenned `animations.generated.ts`
-        # imports them transitively from `<TimelineComposition>`. They are
-        # registered in `webpack-alias.mjs` (smoke bundle) and `remotion.config.ts`
-        # (npx remotion render). The invariant we still enforce: AA's own
-        # generator and tsconfig must not reference them — those are orthogonal
-        # compile/codegen surfaces.
         checked = [
             ROOT / "scripts" / "gen_effect_registry.py",
             ROOT / "remotion" / "tsconfig.json",
