@@ -203,6 +203,22 @@ def snapshot(identity: dict[str, str], target: Path, env: dict[str, str]) -> Non
     shutil.rmtree(target / "build", ignore_errors=True)
 
 
+def write_launchers(root: Path, env: dict[str, str]) -> None:
+    """Write the environment wrapper and the one-command local app launcher."""
+    start = root / "start"
+    env["ASTRID_START_COMMAND"] = str(start)
+    script = ["#!/bin/sh", "unset PYTHONPATH PYTHONHOME ASTRID_PACKS_PATH ASTRID_WORKSPACE_ENDPOINT ASTRID_WORKSPACE_CREDENTIAL ASTRID_SDK_ENABLE_ROOT_FALLBACK"]
+    script += [f"export {k}={shlex.quote(v)}" for k, v in env.items() if k not in {"HOME", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT"}]
+    script += [f"cd {shlex.quote(str(root / 'work'))}", 'exec "$@"']
+    wrapper = root / "with-env"
+    wrapper.write_text("\n".join(script) + "\n")
+    wrapper.chmod(0o700)
+
+    command = f"cd {shlex.quote(str(root / 'sources' / 'app'))} && exec npm run dev:local"
+    start.write_text(f"#!/bin/sh\nexec {shlex.quote(str(wrapper))} sh -c {shlex.quote(command)}\n")
+    start.chmod(0o700)
+
+
 def wheel_parity(wheel: Path, source: Path, prefixes: tuple[str, ...]) -> dict[str, object]:
     with zipfile.ZipFile(wheel) as bundle:
         members = [n for n in bundle.namelist() if n.startswith(prefixes) and not n.endswith("/")]
@@ -387,10 +403,7 @@ def install(args: argparse.Namespace) -> None:
     receipt["tools"]["python"] = {"path": sys.executable, "sha256": digest(Path(sys.executable))}
     receipt["tools"].update({name: {**tool, "invoked_path": str(root / "venv/bin" / name)} for name, tool in {**decoders, **agents}.items()})
     (root / "install.json").write_text(json.dumps(receipt, indent=2) + "\n")
-    script = ["#!/bin/sh", "unset PYTHONPATH PYTHONHOME ASTRID_PACKS_PATH ASTRID_WORKSPACE_ENDPOINT ASTRID_WORKSPACE_CREDENTIAL ASTRID_SDK_ENABLE_ROOT_FALLBACK"]
-    script += [f"export {k}={shlex.quote(v)}" for k, v in env.items() if k not in {"HOME", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT"}]
-    script += [f"cd {shlex.quote(str(work))}", 'exec "$@"']
-    wrapper = root / "with-env"; wrapper.write_text("\n".join(script) + "\n"); wrapper.chmod(0o700)
+    write_launchers(root, env)
     run(["npm", "ci"], cwd=copies["app"], env=env)
     run(["npm", "run", "build"], cwd=copies["app"], env=env)
     try:
@@ -401,7 +414,7 @@ def install(args: argparse.Namespace) -> None:
             runtime = json.loads((root / "runtime-receipt.json").read_text())
             check_app(["npm", "run", "dev:local"], cwd=copies["app"], env=env, root=root,
                       url=receipt["url"], runtime_instance_id=runtime["health"]["runtime_instance_id"])
-        print(f"Installed local workspace: {root}\nApp: {receipt['url']}", flush=True)
+        print(f"Installed Astrid in {root}. Start it again later with {root}/start", flush=True)
         if not args.check_only:
             run(["npm", "run", "dev:local"], cwd=copies["app"], env=env)
     finally:

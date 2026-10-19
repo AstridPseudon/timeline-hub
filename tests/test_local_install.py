@@ -14,6 +14,25 @@ spec.loader.exec_module(installer)
 
 
 class LocalInstallBoundaries(unittest.TestCase):
+    def test_start_launcher_uses_installed_app_and_exports_its_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "local install's root"
+            (root / "work").mkdir(parents=True)
+            app = root / "sources" / "app"
+            app.mkdir(parents=True)
+            fake_bin = root / "fake-bin"
+            fake_bin.mkdir()
+            npm = fake_bin / "npm"
+            npm.write_text('#!/bin/sh\nprintf "%s\\n%s\\n%s\\n" "$PWD" "$*" "$ASTRID_START_COMMAND"\n')
+            npm.chmod(0o700)
+
+            installer.write_launchers(root, {"PATH": f"{fake_bin}:/bin:/usr/bin"})
+
+            start = root / "start"
+            self.assertTrue(os.access(start, os.X_OK))
+            result = subprocess.run([start], check=True, text=True, capture_output=True)
+            self.assertEqual(result.stdout.splitlines(), [str(app), "run dev:local", str(start)])
+
     def test_cleanup_eperm_requires_no_live_group_members(self):
         from unittest.mock import patch
         with patch.object(installer.os, "killpg", side_effect=PermissionError(1, "Operation not permitted")), patch.object(installer.subprocess, "check_output", return_value="9833 Z\n42 S\n"):
