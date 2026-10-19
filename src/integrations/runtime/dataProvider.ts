@@ -29,6 +29,7 @@ import {
   type TimelineAcceptedIdentity,
   type TimelineCommitCapability,
   type TimelineCommitResult,
+  type TimelineCommandBasis,
   type TimelineRecoveryIdentity,
   type LoadedReferencedTimeline,
   type ProjectObjectStorage,
@@ -686,7 +687,7 @@ export class RuntimeDataProvider implements DataProvider {
       request,
       idempotencyKey,
     );
-    if (response.data.status === 'preview') {
+    if (response.receipt === null) {
       throw new TimelineSchemaIncompatibleError('Timeline preview is not an accepted commit');
     }
     return this.acceptedCommitResult(response, request.timeline_id);
@@ -766,6 +767,55 @@ export class RuntimeDataProvider implements DataProvider {
       this.activeRegistry = normalizeRegistry(parentPayload.registry);
     }
     return { response, accepted, canonicalDocument, graph, receipt };
+  }
+
+  async resolveTimelineCommandAsset(file: string, registry: AssetRegistry): Promise<string> {
+    return this.resolveAssetUrlFromRegistry(file, registry);
+  }
+
+  /** Public verified history pins plus scoped immutable reads, never projected rows. */
+  async loadTimelineCommandBasis(timelineId: string): Promise<TimelineCommandBasis> {
+    const history = await this.listTimelineCommits(timelineId);
+    const head = history.head;
+    if (!head?.revision_id || !head.publication_id) {
+      throw new TimelineSchemaIncompatibleError('Timeline has no verified authoring history head');
+    }
+    const parent = await this.readParentCompositionAtHead(this.projectId, timelineId, head.revision_id);
+    const manifest = requiredRecord(parent.dependency_manifest, 'verified parent dependency manifest');
+    const shots = await Promise.all(array(manifest.shots, 'baseline shots').map(async (value) => {
+      const pin = requiredRecord(value, 'baseline shot pin');
+      const shotId = requiredString(pin.shot_id, 'baseline shot_id');
+      const revision = requiredString(pin.revision_id, 'baseline shot revision_id');
+      const shot = await this.client.getProjectShotRevision(this.projectId, shotId, revision);
+      assertRuntimeIdentity(shot, this.projectId, shotId, 'shot revision');
+      assertRevisionIdentity(shot, revision, 'shot revision');
+      if (shot.shot_id !== shotId || shot.content_digest !== pin.content_digest
+        || shot.internal_timeline_revision_id !== pin.internal_timeline_revision_id) {
+        throw new TimelineSchemaIncompatibleError('Baseline shot pin mismatch');
+      }
+      return { shot_id: pin.shot_id, revision_id: pin.revision_id, internal_timeline_revision_id: pin.internal_timeline_revision_id,
+        content_digest: pin.content_digest, payload: requiredRecord(shot.payload, 'shot payload') };
+    }));
+    const internals = await Promise.all(array(manifest.internal_timelines, 'baseline internals').map(async (value) => {
+      const pin = requiredRecord(value, 'baseline internal pin');
+      const scope = requiredString(pin.timeline_id, 'baseline internal timeline_id');
+      const revision = requiredString(pin.revision_id, 'baseline internal revision_id');
+      const internal = await this.client.getProjectTimelineRevision(this.projectId, scope, revision);
+      assertRuntimeIdentity(internal, this.projectId, scope, 'internal timeline revision');
+      assertRevisionIdentity(internal, revision, 'internal timeline revision');
+      if (internal.content_digest !== pin.content_digest) throw new TimelineSchemaIncompatibleError('Baseline internal pin mismatch');
+      return { timeline_id: pin.timeline_id, revision_id: pin.revision_id, content_digest: pin.content_digest,
+        payload: requiredRecord(internal.payload, 'internal payload') };
+    }));
+    const raw = { schema_version: 1, project_id: this.projectId, timeline_id: timelineId,
+        parent_revision: { revision_id: head.revision_id, content_digest: parent.content_digest, payload: parent.payload },
+        shot_revisions: shots, internal_timeline_revisions: internals,
+        dependency_manifest: manifest };
+    const canonicalDocument = validateAcceptedCanonicalDocument(raw as CanonicalDocument, this.projectId, timelineId, head.revision_id);
+    return {
+      head: { revisionId: head.revision_id, publicationId: head.publication_id }, canonicalDocument, history,
+      graph: runtimeGraphToContractFromCanonicalDocument(this.projectId, timelineId, canonicalDocument, head.publication_id),
+    };
   }
 
   async loadTimeline(timelineId: string, options?: { poll?: boolean }): Promise<LoadedTimeline> {

@@ -1653,6 +1653,40 @@ describe('TimelineEditorShellCore — recovery draft banner', () => {
     __chromeOverrides = {};
   });
 
+  it('requires an explicit persisted editor choice before command recovery', () => {
+    const recover = vi.fn(async () => {});
+    __chromeOverrides = { commandSession: { recover, retry: vi.fn(async () => {}), state: {
+      status: 'recovery', error: null, recoverableOwners: ['owner-a', 'owner-b'], ownerId: null, canUndo: false,
+    } } };
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(recover).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Recover editor 2' }));
+    expect(recover).toHaveBeenCalledWith('owner-b');
+    expect(screen.queryByRole('button', { name: 'Discard' })).toBeNull();
+  });
+
+  it('offers exact command retry without legacy snapshot recovery actions', () => {
+    const retry = vi.fn(async () => {});
+    __chromeOverrides = { commandSession: { recover: vi.fn(), retry, state: {
+      status: 'retry', error: 'Acknowledgement unknown', recoverableOwners: [], ownerId: 'owner', canUndo: false,
+    } } };
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(screen.getByText('Acknowledgement unknown')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry timeline edits' }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it('shows a retained command conflict without snapshot replacement choices', () => {
+    __chromeOverrides = { isConflictExhausted: true, commandSession: { recover: vi.fn(), retry: vi.fn(), state: {
+      status: 'conflict', error: 'read changed', recoverableOwners: [], ownerId: 'owner', canUndo: false,
+    } } };
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(screen.getByText('These timeline edits conflict with another change. Your edits are retained.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Retry timeline edits' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Use latest version' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Keep my changes' })).toBeNull();
+  });
+
   it('offers Save them and Discard for a recovered draft, naming only the time of day', () => {
     const retry = vi.fn();
     const discard = vi.fn();
