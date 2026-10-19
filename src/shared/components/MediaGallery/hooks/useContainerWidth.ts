@@ -1,5 +1,22 @@
 import { useState, useEffect, useRef, useCallback, RefCallback, RefObject } from 'react';
 
+const RESIZE_DEBOUNCE_MS = 150;
+
+/** Trailing-edge timer for ResizeObserver bursts: each schedule replaces the pending callback. */
+function createResizeDebouncer() {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  return {
+    schedule(callback: () => void) {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(callback, RESIZE_DEBOUNCE_MS);
+    },
+    cancel() {
+      if (timer) clearTimeout(timer);
+      timer = null;
+    },
+  };
+}
+
 /**
  * Hook to measure a container's width using ResizeObserver.
  * Returns the current width and a ref to attach to the container.
@@ -25,7 +42,7 @@ export function useContainerWidth(): [RefCallback<HTMLDivElement>, number] {
     const element = containerRef.current;
     if (!element) return;
 
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncer = createResizeDebouncer();
 
     // Set up ResizeObserver - this is the source of truth for width
     // Debounced to avoid rapid recalculations during animated resizes (e.g. pane lock/unlock)
@@ -41,8 +58,7 @@ export function useContainerWidth(): [RefCallback<HTMLDivElement>, number] {
           setWidth(newWidth);
         } else {
           // Subsequent measurements: debounce for smooth animated resizes
-          if (debounceTimer) clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(() => setWidth(newWidth), 150);
+          debouncer.schedule(() => setWidth(newWidth));
         }
       }
     });
@@ -59,7 +75,7 @@ export function useContainerWidth(): [RefCallback<HTMLDivElement>, number] {
     return () => {
       resizeObserver.disconnect();
       clearTimeout(fallbackTimeout);
-      if (debounceTimer) clearTimeout(debounceTimer);
+      debouncer.cancel();
     };
   }, [initialEstimate]);
 
@@ -142,11 +158,8 @@ export function useContainerDimensions(
       }
     };
 
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    const debouncedUpdate = () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(updateDimensions, 150);
-    };
+    const debouncer = createResizeDebouncer();
+    const debouncedUpdate = () => debouncer.schedule(updateDimensions);
 
     // Set up ResizeObserver for container width changes
     // Debounced to avoid rapid recalculations during animated resizes (e.g. pane lock/unlock)
@@ -170,7 +183,7 @@ export function useContainerDimensions(
       resizeObserver.disconnect();
       window.removeEventListener('resize', debouncedUpdate);
       clearTimeout(fallbackTimeout);
-      if (debounceTimer) clearTimeout(debounceTimer);
+      debouncer.cancel();
     };
   }, [initialWidthEstimate, heightOffset, skipHeaderDetection]);
 

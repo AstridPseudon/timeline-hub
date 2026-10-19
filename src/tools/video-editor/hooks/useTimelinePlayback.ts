@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import type { PreviewHandle } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
 import { useTimelineSync } from '@/tools/video-editor/hooks/useTimelineSync.ts';
 import type { TimelineCanvasHandle } from '@/tools/video-editor/types/timeline-canvas.ts';
+import { CENTISECOND_TIME_OPTIONS, formatTime } from '@/shared/lib/timeFormatting';
 
 export interface UseTimelinePlaybackResult {
   currentTime: number;
@@ -34,12 +35,10 @@ export function useTimelinePlayback(): UseTimelinePlaybackResult {
     isSyncingFromTimeline,
   });
 
-  const formatTime = useCallback((time: number) => {
-    const mins = Math.floor(time / 60);
-    const secs = Math.floor(time % 60);
-    const ms = Math.floor((time % 1) * 100);
-    return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
-  }, []);
+  const formatPlaybackTime = useCallback(
+    (time: number) => formatTime(time, CENTISECOND_TIME_OPTIONS),
+    [],
+  );
 
   return {
     currentTime,
@@ -51,6 +50,6 @@ export function useTimelinePlayback(): UseTimelinePlaybackResult {
     onPreviewTimeUpdate,
     onCursorDrag,
     onClickTimeArea,
-    formatTime,
+    formatTime: formatPlaybackTime,
   };
 }

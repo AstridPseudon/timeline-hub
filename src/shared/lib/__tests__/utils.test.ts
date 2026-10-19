@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { cropFilename, truncateText } from '../stringFormatting';
-import { formatTime } from '../timeFormatting';
+import { CENTISECOND_TIME_OPTIONS, formatClockTime, formatTime } from '../timeFormatting';
 
 describe('cropFilename', () => {
   it('returns short filenames unchanged', () => {
@@ -89,5 +89,31 @@ describe('formatTime', () => {
     expect(formatTime(1.123, { showMilliseconds: true, millisecondsDigits: 1 })).toBe('0:01.1');
     expect(formatTime(1.123, { showMilliseconds: true, millisecondsDigits: 2 })).toBe('0:01.12');
     expect(formatTime(1.123, { showMilliseconds: true, millisecondsDigits: 3 })).toBe('0:01.123');
+  });
+});
+
+describe('formatTime centisecond timecodes', () => {
+  it('matches the ruler and playback m:ss.cc format', () => {
+    expect(formatTime(0, CENTISECOND_TIME_OPTIONS)).toBe('0:00.00');
+    expect(formatTime(5, CENTISECOND_TIME_OPTIONS)).toBe('0:05.00');
+    expect(formatTime(65.5, CENTISECOND_TIME_OPTIONS)).toBe('1:05.50');
+    expect(formatTime(1.239, CENTISECOND_TIME_OPTIONS)).toBe('0:01.23');
+  });
+
+  it('pads the invalid-input zero to the requested digit count', () => {
+    expect(formatTime(NaN, CENTISECOND_TIME_OPTIONS)).toBe('0:00.00');
+  });
+});
+
+describe('formatClockTime', () => {
+  const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' } as const;
+
+  it('returns "never" for the unset timestamp 0', () => {
+    expect(formatClockTime(0)).toBe('never');
+  });
+
+  it('formats an epoch timestamp as a clock time', () => {
+    const epochMs = Date.UTC(2026, 9, 19, 12, 30, 15);
+    expect(formatClockTime(epochMs)).toBe(new Date(epochMs).toLocaleTimeString(undefined, options));
   });
 });

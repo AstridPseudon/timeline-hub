@@ -15,6 +15,7 @@
  * - Interactive elements have accessible labels
  */
 
+import { formatClockTime } from '@/shared/lib/timeFormatting';
 import {
   useCallback,
   useMemo,
@@ -108,18 +109,6 @@ const DIFF_KIND_COLOR: Record<string, string> = {
   modified: 'text-yellow-400',
   reordered: 'text-blue-400',
 };
-
-function formatTimestamp(epochMs: number): string {
-  try {
-    return new Date(epochMs).toLocaleTimeString(undefined, {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-  } catch {
-    return 'unknown';
-  }
-}
 
 /**
  * Sparse before/after summary for a diff entry.
@@ -584,7 +573,7 @@ export function ProposalPanel({
                       </div>
                       {/* Timestamp */}
                       <div className="mt-0.5 text-[9px] text-zinc-600">
-                        {formatTimestamp(proposal.updatedAt)}
+                        {formatClockTime(proposal.updatedAt)}
                       </div>
                     </div>
                   </button>
@@ -883,7 +872,7 @@ function ImportDiagnosticsSection({
           Import
         </span>
         <span className="text-[9px] text-zinc-500 tabular-nums">
-          {formatTimestamp(diagnostics.timestamp)}
+          {formatClockTime(diagnostics.timestamp)}
         </span>
         <span className="flex items-center gap-1.5 ml-auto">
           {diagnostics.imported > 0 && (
@@ -963,7 +952,7 @@ function ImportSummarySection({
           Import
         </span>
         <span className="text-[9px] text-zinc-500 tabular-nums">
-          {formatTimestamp(diagnostics.timestamp)}
+          {formatClockTime(diagnostics.timestamp)}
         </span>
         <span className="flex items-center gap-1.5 ml-auto">
           {diagnostics.imported > 0 && (

@@ -23,20 +23,6 @@ export const isEditableTarget = (target: EventTarget | null): boolean => {
   return Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
 };
 
-export const formatTime = (time: number): string => {
-  const mins = Math.floor(time / 60);
-  const secs = Math.floor(time % 60);
-  const ms = Math.floor((time % 1) * 100);
-  return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
-};
-
-/** `m:ss` — the ruler's phone tick label; `formatTime`'s centiseconds are for the readout. */
-export const formatTimeCompact = (time: number): string => {
-  const mins = Math.floor(time / 60);
-  const secs = Math.floor(time % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
-
 export const updateClipOrder = (
   current: ClipOrderMap,
   trackId: string,

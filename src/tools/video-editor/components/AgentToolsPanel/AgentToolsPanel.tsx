@@ -22,6 +22,7 @@
  * @milestone M10
  */
 
+import { formatClockTime } from '@/shared/lib/timeFormatting';
 import {
   useCallback,
   useMemo,
@@ -123,19 +124,6 @@ const SEVERITY_BG: Record<string, string> = {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatTimestamp(epochMs: number): string {
-  if (epochMs === 0) return 'never';
-  try {
-    return new Date(epochMs).toLocaleTimeString(undefined, {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-  } catch {
-    return 'unknown';
-  }
-}
 
 /** Extract displayable diagnostics from a tool result. */
 function extractResultDiagnostics(
@@ -631,7 +619,7 @@ export function AgentToolsPanel({
                                   <AlertCircle className="h-3 w-3" aria-hidden="true" />
                                 )}
                                 <span>
-                                  Last run: {formatTimestamp(status.lastRunAt)}
+                                  Last run: {formatClockTime(status.lastRunAt)}
                                   {!status.lastRunOk && status.lastError && (
                                     <span className="ml-1">— {status.lastError}</span>
                                   )}

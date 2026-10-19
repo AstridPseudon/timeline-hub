@@ -4,7 +4,7 @@ import {
   resolveTravelPresetName,
   useVideoTravelTaskData,
 } from './hooks/useVideoTravelTaskData';
-import { useCopyToClipboard } from './hooks/useCopyToClipboard';
+import { useKeyedCopyToClipboard } from '@/shared/hooks/clipboard/useCopyToClipboard';
 import { TaskGuidanceImages } from './components/TaskGuidanceImages';
 import { TaskPromptDetails } from './components/TaskPromptDetails';
 import { TaskLoraDetails } from './components/TaskLoraDetails';
@@ -32,9 +32,9 @@ export const VideoTravelDetails: React.FC<TaskDetailsProps> = ({
   const [videoLoaded, setVideoLoaded] = useState(false);
 
   const { copiedValue: copiedPromptValue, copyText: copyPromptText } =
-    useCopyToClipboard<'prompt'>();
+    useKeyedCopyToClipboard<'prompt'>();
   const { copiedValue: copiedLoraUrl, copyText: copyLoraUrl } =
-    useCopyToClipboard<string>();
+    useKeyedCopyToClipboard<string>();
 
   const handleCopyPrompt = useCallback(
     (text: string) => {

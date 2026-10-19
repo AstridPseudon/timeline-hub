@@ -23,6 +23,7 @@
  * @milestone M10
  */
 
+import { formatClockTime } from '@/shared/lib/timeFormatting';
 import {
   useCallback,
   useMemo,
@@ -294,19 +295,6 @@ export function filterCopilotTools(
   }
 
   return { tools, chatSurfaceDiagnostics };
-}
-
-function formatTimestamp(epochMs: number): string {
-  if (epochMs === 0) return 'never';
-  try {
-    return new Date(epochMs).toLocaleTimeString(undefined, {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-  } catch {
-    return 'unknown';
-  }
 }
 
 function createHistoryEntry(
@@ -847,7 +835,7 @@ export function CopilotPrompt({
                         : entry.prompt}
                     </span>
                     <span className="shrink-0 text-[9px] text-zinc-600 ml-auto">
-                      {formatTimestamp(entry.timestamp)}
+                      {formatClockTime(entry.timestamp)}
                     </span>
                   </div>
                   <div className="mt-0.5 flex items-center gap-1.5">

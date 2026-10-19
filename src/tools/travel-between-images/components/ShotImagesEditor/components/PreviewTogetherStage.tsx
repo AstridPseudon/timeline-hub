@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import type { PreviewSegment } from './PreviewTogetherTypes';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
+import { formatTime } from '@/shared/lib/timeFormatting';
 
 interface PreviewTogetherStageProps {
   currentSegment: PreviewSegment;
@@ -34,12 +35,6 @@ interface PreviewTogetherStageProps {
   };
   onToggleAudio: () => void;
   onSeek: (time: number) => void;
-}
-
-function formatTime(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, '0');
-  return `${minutes}:${seconds}`;
 }
 
 export function PreviewTogetherStage({

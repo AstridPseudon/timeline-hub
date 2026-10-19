@@ -9,7 +9,7 @@ vi.mock('../useTimestampUpdater', () => ({
   useTimestampUpdater: (...args: unknown[]) => useTimestampUpdaterMock(...args),
 }));
 
-import { useLiveRelativeTimestamp } from '../useLiveRelativeTimestamp';
+import { useLiveRelativeTimestamp } from '../useUpdatingTimestamp';
 
 describe('useLiveRelativeTimestamp', () => {
   beforeEach(() => {
