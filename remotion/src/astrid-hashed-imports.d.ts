@@ -57,3 +57,8 @@ declare module '@pack-rendering-elements-transitions/*' {
   const component: import('@banodoco/timeline-composition/theme-api').TransitionComponent;
   export default component;
 }
+
+declare module '@pack-astrid_motion-elements-effects/*' {
+  const component: import('@banodoco/timeline-composition/theme-api').EffectComponent;
+  export default component;
+}

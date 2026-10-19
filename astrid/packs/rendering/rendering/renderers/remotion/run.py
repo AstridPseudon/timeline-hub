@@ -32,7 +32,7 @@ from astrid.core.audit import AuditContext
 from astrid.core.element.registry import load_default_registry
 from astrid.core.element.schema import ElementDefinition
 from astrid.core.foundation.atomic_io import write_json_atomic
-from astrid.core.foundation.paths import REPO_ROOT, WORKSPACE_ROOT
+from astrid.core.foundation.paths import REPO_ROOT
 from astrid.core.rendering import assets as _rendering_assets
 from astrid.core.rendering.artifacts import validate_render_result
 from astrid.core.rendering.storage import remotion_frame_format
@@ -275,8 +275,6 @@ def _validate_project_dir(project_dir: Path) -> RemotionRuntimeTools:
     banodoco_root = node_modules / "@banodoco"
     required_packages = (
         "timeline-composition",
-        "timeline-schema",
-        "timeline-theme-2rp",
     )
     missing = [
         f"@banodoco/{package}"
@@ -294,13 +292,6 @@ def _validate_project_dir(project_dir: Path) -> RemotionRuntimeTools:
         raise FileNotFoundError(tools_error)
     assert runtime_tools is not None
     return runtime_tools
-
-
-def _timeline_composition_src(project_dir: Path) -> Path | None:
-    composition_src = (
-        project_dir / "node_modules" / "@banodoco" / "timeline-composition" / "typescript" / "src"
-    )
-    return composition_src if composition_src.is_dir() else None
 
 
 def _resize_frame_outputs(
@@ -333,14 +324,10 @@ def _resize_frame_outputs(
 
 
 def _registry_output_paths(project_dir: Path) -> list[Path]:
-    composition_src = _timeline_composition_src(project_dir)
-    package_src = composition_src or (
-        WORKSPACE_ROOT / "packages" / "timeline-composition" / "typescript" / "src"
-    )
-    paths = [
-        package_src / f"{kind}.generated.ts" for kind in ("effects", "animations", "transitions")
+    return [
+        project_dir / "src" / f"{kind}.generated.ts"
+        for kind in ("effects", "animations", "transitions")
     ]
-    return paths
 
 
 def _registry_outputs_exist(project_dir: Path) -> bool:
@@ -471,9 +458,7 @@ def _regenerate_element_registries_locked(
     generator = REPO_ROOT / "scripts" / "gen_effect_registry.py"
     cmd = [sys.executable, str(generator)]
     env: dict[str, str] = {}
-    composition_src = _timeline_composition_src(project_dir)
-    if composition_src is not None:
-        env["ASTRID_TIMELINE_COMPOSITION_SRC"] = str(composition_src)
+    env["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir.resolve())
     env.update(remotion_lock.remotion_render_lock_child_env())
     subprocess.run(
         cmd,
@@ -1207,9 +1192,7 @@ def _execute_remotion_locked(
                 # root.  Ambient PYTHONPATH entries can point at editable
                 # worktrees and must never be inherited by the render child.
                 remotion_env_additions["PYTHONPATH"] = schema_pythonpath
-            composition_src = _timeline_composition_src(project_dir)
-            if composition_src is not None:
-                remotion_env_additions["ASTRID_TIMELINE_COMPOSITION_SRC"] = str(composition_src)
+            remotion_env_additions["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir.resolve())
             remotion_args = [
                 str(runtime_tools.node_executable),
                 str(runtime_tools.remotion_cli),

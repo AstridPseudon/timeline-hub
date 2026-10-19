@@ -134,12 +134,12 @@ def renderer_environment_identity() -> str:
     paths.append(("package-lock", project / "package-lock.json"))
     paths.append((
         "generated-effects",
-        project / "node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+        project / "src/effects.generated.ts",
     ))
     # "-source" labels admit the node_modules files (see _digest_candidates).
     paths.append((
         "timeline-composition-source",
-        project / "node_modules/@banodoco/timeline-composition/typescript/src",
+        project / "node_modules/@banodoco/timeline-composition/dist",
     ))
     paths.append((
         "timeline-composition-package-source",

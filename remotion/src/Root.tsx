@@ -2,6 +2,7 @@ import type {ReactElement} from 'react';
 import {Composition, Sequence, useVideoConfig} from 'remotion';
 import {Video} from '@remotion/media';
 import {
+  DEFAULT_THEME,
   TimelineComposition,
   getTimelineDurationInFrames,
 } from '@banodoco/timeline-composition';
@@ -12,6 +13,7 @@ import type {
   VisualOverrides,
 } from './types.augmentations';
 import {FontProvider} from './fonts';
+import {resolveHostRegistries} from './host-registries';
 import {ReviewOverlay} from './ReviewOverlay';
 import {FrameDiagnostics} from './FrameDiagnostics';
 import {BoundsProbe} from './BoundsProbe';
@@ -79,7 +81,7 @@ const RenderClockTail = ({props}: {props: TimelineCompositionProps}): ReactEleme
 };
 
 const ReviewedTimelineWithRenderTail = (props: ReviewProps): ReactElement => <>
-  <TimelineComposition {...props} />
+  <TimelineComposition {...props} registries={resolveHostRegistries(props.theme ?? DEFAULT_THEME)} />
   <RenderClockTail props={props} />
   <ReviewOverlay review={props.review} />
   {props.astridFrameDiagnostics && <FrameDiagnostics />}
@@ -90,7 +92,7 @@ const ReviewedTimelineWithRenderTail = (props: ReviewProps): ReactElement => <>
 // the Three.js scene out of the 2D film's page load and JS parse path.
 const loadReviewedThree = () => import('./ThreeTimelineComposition').then(({ThreeTimelineComposition}) => ({
   default: (props: ReviewProps): ReactElement => <>
-    <ThreeTimelineComposition {...props} />
+    <ThreeTimelineComposition {...props} registries={resolveHostRegistries(props.theme ?? DEFAULT_THEME)} />
     <RenderClockTail props={props} />
     <ReviewOverlay review={props.review} />
     {props.astridFrameDiagnostics && <FrameDiagnostics />}

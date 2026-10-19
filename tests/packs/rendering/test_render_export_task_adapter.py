@@ -255,25 +255,19 @@ def test_forced_caption_uses_server_owned_executable_routing_and_isolation(
     (tmp_path / "render-project").mkdir(parents=True, exist_ok=True)
     runtime = tmp_path / "installed-remotion"
     (runtime / "node_modules" / "@banodoco").mkdir(parents=True)
-    for package in ("timeline-composition", "timeline-schema", "timeline-theme-2rp"):
+    for package in ("timeline-composition",):
         package_dir = runtime / "node_modules" / "@banodoco" / package
         package_dir.mkdir()
         package_dir.joinpath("package.json").write_text(
             json.dumps({"name": f"@banodoco/{package}", "version": "0.0.0"}),
             encoding="utf-8",
         )
-    generated_src = runtime / "node_modules" / "@banodoco" / "timeline-composition" / "typescript" / "src"
+    generated_src = runtime / "src"
     generated_src.mkdir(parents=True)
-    generated_runtime_src = runtime / "src"
-    generated_runtime_src.mkdir()
     for kind in ("effects", "animations", "transitions"):
-        provisioned = Path(remotion_runtime.REPO_ROOT) / 'remotion/node_modules/@banodoco/timeline-composition/typescript/src' / f'{kind}.generated.ts'
+        provisioned = Path(remotion_runtime.REPO_ROOT) / 'remotion/src' / f'{kind}.generated.ts'
         assert provisioned.is_file(), 'the pinned provisioned registry is required'
         (generated_src / f"{kind}.generated.ts").write_bytes(provisioned.read_bytes())
-        for extension in (".ts", ".js", ".d.ts", ".js.map", ".d.ts.map"):
-            (generated_runtime_src / f"{kind}.generated{extension}").write_text(
-                "export {};\n", encoding="utf-8"
-            )
     (runtime / "package.json").write_text('{"private":true}\n', encoding="utf-8")
     cli = runtime / REMOTION_CLI_RELATIVE_PATH
     cli.parent.mkdir(parents=True)
@@ -464,7 +458,7 @@ def test_trusted_schema_readiness_requires_complete_install(
             shutil.copy2(source, schema_package / source.name)
     runtime = tmp_path / "installed-remotion"
     (runtime / "node_modules" / "@banodoco").mkdir(parents=True)
-    for package in ("timeline-composition", "timeline-schema", "timeline-theme-2rp"):
+    for package in ("timeline-composition",):
         package_dir = runtime / "node_modules" / "@banodoco" / package
         package_dir.mkdir()
         package_dir.joinpath("package.json").write_text("{}", encoding="utf-8")
@@ -494,7 +488,7 @@ def test_trusted_schema_readiness_requires_complete_install(
 def _runtime_with_locked_packages(tmp_path: Path) -> Path:
     runtime = tmp_path / "runtime"
     packages_root = runtime / "node_modules" / "@banodoco"
-    for package in ("timeline-composition", "timeline-schema", "timeline-theme-2rp"):
+    for package in ("timeline-composition",):
         package_dir = packages_root / package
         package_dir.mkdir(parents=True)
         (package_dir / "package.json").write_text("{}", encoding="utf-8")
@@ -681,7 +675,6 @@ def _owned_validation_fixture(tmp_path, monkeypatch, *, environment_overrides=No
         path.write_text('{}')
     from astrid.packs.rendering.rendering.renderers.remotion import run as registry_run
     monkeypatch.setattr(registry_run, 'gen_effect_registry', None)
-    (runtime / 'node_modules/@banodoco/timeline-composition/typescript/src').mkdir(parents=True)
     for output in registry_run._registry_output_paths(runtime):
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text('// provisioned registry')
@@ -1009,7 +1002,7 @@ def test_launch_validation_loaded_bytecode_change_refuses_without_fallback(tmp_p
 def _registry_settling_fixture(tmp_path, monkeypatch):
     from astrid.packs.rendering.rendering.renderers.remotion import run, lock
     project = tmp_path / 'remotion'
-    src = project / 'node_modules/@banodoco/timeline-composition/typescript/src'
+    src = project / 'src'
     src.mkdir(parents=True)
     corpus = tmp_path / 'packs'
     corpus.mkdir()

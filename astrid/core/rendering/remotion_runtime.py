@@ -43,8 +43,6 @@ _NODE_PROBE_TIMEOUT_SECONDS = 5
 _REGISTRY_PROBE_TIMEOUT_SECONDS = 90
 _REQUIRED_PACKAGES = (
     "timeline-composition",
-    "timeline-schema",
-    "timeline-theme-2rp",
 )
 _REQUIRED_SCHEMA_FILES = (
     "__init__.py",
@@ -700,8 +698,6 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
     from astrid.packs.rendering.rendering.renderers.remotion import run, lock
     if not lock.remotion_render_lock_held():
         raise RemotionValidationError('registry settling requires the original held Remotion lock')
-    if run._timeline_composition_src(project) is None:
-        raise RemotionValidationError('launch validation needs the installed composition output directory')
     output_paths = run._registry_output_paths(project)
     selected: dict[bytes, Any] = {}
     if run.gen_effect_registry is None:
@@ -709,7 +705,7 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
         for paths in contexts.values():
             for environment in ([paths] if isinstance(paths, Mapping) else paths):
                 context = _registry_context(environment, generator=False)
-                context['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(run._timeline_composition_src(project))
+                context[REMOTION_PROJECT_DIR_ENV] = str(project)
                 key = _canonical(context)
                 selected[key] = {'mode': 'provisioned_only', 'outputs': [_file_binding(p) for p in output_paths],
                                  'state_file': _file_binding(project / run._REGISTRY_STATE_PATH)
@@ -722,11 +718,11 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
     for paths in contexts.values():
         for environment in ([paths] if isinstance(paths, Mapping) else paths):
             renderer = _registry_context(environment, generator=False)
-            renderer['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(run._timeline_composition_src(project))
+            renderer[REMOTION_PROJECT_DIR_ENV] = str(project)
             # The generator is only run (below) to repair outputs, which are then
             # hash-checked against the expected state; it is not probed separately.
             generator_env = _registry_context(environment, generator=True)
-            generator_env['ASTRID_TIMELINE_COMPOSITION_SRC'] = renderer['ASTRID_TIMELINE_COMPOSITION_SRC']
+            generator_env[REMOTION_PROJECT_DIR_ENV] = str(project)
             key = _canonical({'environment': renderer, 'generator_startup': False})
             if key not in probes:
                 started_ns = time.time_ns()
@@ -807,7 +803,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
     def validate_context(environment: Mapping[str, str]) -> dict[str, Any]:
         context = probe_context(environment=environment, python_executable=python_executable)
         registry_context = _registry_context(environment, generator=False)
-        registry_context['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(project / 'node_modules/@banodoco/timeline-composition/typescript/src')
+        registry_context[REMOTION_PROJECT_DIR_ENV] = str(project)
         context['registry_context'] = registry_context
         context['configuration'] = {k: environment.get(k) for k in
                                     (NODE_EXECUTABLE_ENV, REMOTION_PROJECT_DIR_ENV, TIMELINE_SCHEMA_PYTHONPATH_ENV)}
@@ -992,7 +988,7 @@ def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | No
     python = sys.executable if python_executable is None else python_executable
     context = probe_context(environment=env, python_executable=python)
     registry_context = _registry_context(env, generator=False)
-    registry_context['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(project_dir / 'node_modules/@banodoco/timeline-composition/typescript/src')
+    registry_context[REMOTION_PROJECT_DIR_ENV] = str(project_dir)
     context['registry_context'] = registry_context
     context['configuration'] = {k: env.get(k) for k in
                                 (NODE_EXECUTABLE_ENV, REMOTION_PROJECT_DIR_ENV, TIMELINE_SCHEMA_PYTHONPATH_ENV)}

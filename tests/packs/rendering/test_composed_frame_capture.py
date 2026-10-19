@@ -290,3 +290,18 @@ def test_native_render_primary_survives_secondary_cleanup_failure(tmp_path, boun
     assert caught.value is primary and caught.value.__cause__ is cleanup
     assert renderer.calls == 1 and worker._closed and not worker.started
     assert not list(tmp_path.glob("astrid-frame-capture-*"))
+
+
+@pytest.mark.parametrize("relative", [
+    "node_modules/@banodoco/timeline-composition/dist/index.js",
+    "src/effects.generated.ts",
+])
+def test_cache_identity_tracks_built_package_and_host_registry(tmp_path, monkeypatch, relative):
+    project = tmp_path / "remotion"
+    source = project / relative
+    source.parent.mkdir(parents=True)
+    source.write_text("export const version = 1;\n")
+    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(project))
+    first = frame_cache_key(_snapshot(), 1, [32, 18])
+    source.write_text("export const version = 2;\n")
+    assert first != frame_cache_key(_snapshot(), 1, [32, 18])
