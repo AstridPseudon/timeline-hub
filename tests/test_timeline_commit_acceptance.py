@@ -16,7 +16,7 @@ from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit import CommitRejected, StaleHead
 from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest, request_identity
 from runtime_protocol.util import canonical_json
-from test_timeline_commit_integration import agent, film  # noqa: F401 (shared fixtures)
+from test_timeline_commit_integration import agent  # noqa: F401 (shared fixture)
 
 
 def validate_prepared(prepared):
@@ -758,6 +758,13 @@ def test_nonmanaged_project_media_relation_cannot_authorize_commit(realm):
     assert commits.head(project, "main") == head
 
 
+@pytest.fixture
+def film(tmp_path):
+    from project_isolation_fixture import load_project_isolation_fixture
+
+    return load_project_isolation_fixture(tmp_path)
+
+
 @pytest.mark.integration
 def test_real_provider_two_projects_keep_local_ids_and_commit_authority_isolated(film, request):
     from types import SimpleNamespace
@@ -765,52 +772,12 @@ def test_real_provider_two_projects_keep_local_ids_and_commit_authority_isolated
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.timeline_commit_port import route_path
     from test_timeline_commit_integration import Editing, assert_json_equal, inverse, rows
-    from timeline_commit_film_fixture import _publication, _transcript, read_object_from_realm
 
     service = RuntimeService(film.fixture.duplicate_root)
     try:
-        project = service.create_project({"slug": "isolated-film", "name": "Isolated Film"},
-                                         idempotency_key="isolated-project")["id"]
-        timeline = "isolated-film"
-        service.create_timeline(project, timeline, name="Film Assembly", idempotency_key="isolated-timeline")
-        media = []
-        for index, media_id in enumerate(film.fixture.media_ids[:4]):
-            imported = service.ingest(
-                project, read_object_from_realm(film.fixture.duplicate_root, media_id),
-                media_type="video/mp4" if index < 3 else "audio/wav",
-                idempotency_key=f"isolated-media-{index}",
-            )["data"]["object_id"]
-            assert imported == media_id
-            media.append(imported)
-        transcript = _transcript(media[0])
-        transcript_id = service._transcript_document_id(project, media[0], transcript["source_id"])
-        service.create_document(project, {"document_id": transcript_id, "kind": "media.transcript", "content": transcript},
-                                idempotency_key="isolated-transcript")
-        shots = tuple(service.create_project_shot(
-            project, {"shot_id": f"isolated-shot-{index}", "name": f"Shot {index}", "metadata": {"scene": index}},
-            idempotency_key=f"isolated-shot-{index}",
-        )["data"] for index in range(1, 4))
-        binding = service.set_project_shot_text_binding(
-            project, {"shot_id": shots[0]["shot_id"], "kind": "transcript", "text": "Open on the river", "expected_head": 0},
-            idempotency_key="isolated-binding",
-        )["data"]
-        seed = _publication(project, timeline, video_ids=tuple(media[:3]), music_id=media[3],
-                            shots=shots, binding=binding, transcript_document_id=transcript_id)
-        # Allocate global identities at fixture construction, never in a retry.
-        seed["parent_revision_id"] = "isolated-parent-v1"
-        for index, (internal, shot, occurrence) in enumerate(zip(
-                seed["internal_timeline_revisions"], seed["shot_revisions"],
-                seed["parent_composition"]["occurrences"]), 1):
-            internal["revision_id"] = f"isolated-internal-{index}"
-            shot["revision_id"] = f"isolated-shot-revision-{index}"
-            shot["internal_timeline_revision_id"] = internal["revision_id"]
-            occurrence["shot_revision_id"] = shot["revision_id"]
-        parent = service.get_project_parent_composition_revision(
-            film.fixture.project_id, film.fixture.timeline_id, film.publication["data"]["new_head"],
-        )["payload"]
-        for field in ("config", "registry", "clips"):
-            seed["parent_composition"][field] = copy.deepcopy(parent[field])
-        publication = service.publish_parent_composition(project, timeline, seed, idempotency_key="isolated-publication")
+        project = film.isolated.fixture.project_id
+        timeline = film.isolated.fixture.timeline_id
+        publication = film.isolated.publication
 
         # The shared Agent fixture disables rendering only after both Main API seeds.
         actual_agent = request.getfixturevalue("agent")
