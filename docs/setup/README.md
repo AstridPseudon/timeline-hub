@@ -19,6 +19,10 @@ irm https://astrid.haus/install.ps1 | iex
 Then open [astrid.haus](https://astrid.haus) and follow the on-screen setup
 steps. The [setup checklist](SKILL.md) gives agents the same instructions.
 
+Astrid Runtime runs on this computer and owns workspace projects, media,
+timelines, tasks, and run records. Use Astrid at astrid.haus to work with them;
+do not edit Runtime storage directly.
+
 Developers building Astrid's toolkit, packs, Runtime integration, or local app
 should use the developer documentation in the relevant repository. Those build
 instructions are not user installation paths.
