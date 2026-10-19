@@ -13,9 +13,9 @@ import { useOnAstridAnswers } from '@/shared/components/RuntimeConnection/useRun
  *
  * On the hosted build (a gateway origin is configured) the failure is almost
  * always "Astrid is not answering", and the raw message names the Runtime, the
- * workspace and the loopback address. A person gets the connection cards' frame
- * and one friendly line instead, never the message, and the load is tried again
- * by itself as soon as Astrid answers.
+ * workspace and the loopback address. A person gets the connection cards' words
+ * inside the timeline panel's surface instead, never the message, and the load is
+ * tried again by itself as soon as Astrid answers.
  */
 export function TimelineLoadErrorCard({
   message,
@@ -27,21 +27,27 @@ export function TimelineLoadErrorCard({
   return runtimeOrigin() !== '' ? <HostedLoadErrorCard onRetry={onRetry} /> : <LoadErrorCard message={message} onRetry={onRetry} />;
 }
 
-/** The connection panel's frame (RuntimeConnectionPanel's PanelFrame): centred, a serif heading, one filled primary button. */
+/**
+ * The timeline panel's own surface (the loaded timeline and its loading state use the same rounded card), so the
+ * editor's frame stays whole and the message sits where the timeline would be. Inside it, the connection cards' words:
+ * a serif heading, one sentence and one filled primary button, centred. A short panel (a narrow window) scrolls
+ * rather than clipping the heading or the button.
+ */
 function HostedLoadErrorCard({ onRetry }: { onRetry: () => void }) {
   useOnAstridAnswers(onRetry);
   return (
-    <div className="flex h-full min-h-0 items-center justify-center overflow-auto p-4">
-      <section role="alert" className="w-full max-w-md space-y-5 rounded-2xl border border-border bg-card p-6 text-center text-card-foreground sm:p-8">
-        <div className="space-y-3">
-          <h2 className="text-balance font-serif font-theme-heading text-2xl leading-tight text-foreground">{COPY.loadFailed.title}</h2>
-          <p className="text-balance text-base leading-7 text-muted-foreground">{COPY.loadFailed.sentence}</p>
+    <section role="alert" className="flex h-full min-h-0 flex-col overflow-auto rounded-xl border border-border bg-card/95 p-4 text-center text-card-foreground sm:p-6">
+      {/* `m-auto` centres the block, and unlike `justify-center` never pushes its top out of reach when space runs short. */}
+      <div className="m-auto w-full max-w-md space-y-4 sm:space-y-5">
+        <div className="space-y-2 sm:space-y-3">
+          <h2 className="text-balance font-serif font-theme-heading text-xl leading-tight text-foreground sm:text-2xl">{COPY.loadFailed.title}</h2>
+          <p className="text-balance text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">{COPY.loadFailed.sentence}</p>
         </div>
         <div className="flex flex-col items-center">
           <Button type="button" className="w-full sm:w-auto" onClick={onRetry}>{COPY.loadFailed.button}</Button>
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
   );
 }
 

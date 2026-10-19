@@ -46,14 +46,17 @@ describe('TimelineLoadErrorCard on the hosted build', () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it('has the connection cards\' frame: centred, a serif heading, and one filled primary button', () => {
+  it('sits in the timeline panel\'s own surface, with the connection cards\' words: centred, a serif heading, and one filled primary button', () => {
     origin = 'http://127.0.0.1:17340';
     stubGateway();
     render(<TimelineLoadErrorCard message={ENGINEER_MESSAGE} onRetry={vi.fn()} />);
 
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveClass('text-center', 'rounded-2xl', 'border-border', 'bg-card', 'max-w-md');
-    expect(screen.getByRole('heading', { name: "Couldn't load this timeline" })).toHaveClass('font-serif', 'font-theme-heading', 'text-2xl');
+    // The same rounded card the loaded timeline fills (TimelineEditorCoreBody), so the editor's frame stays whole.
+    expect(alert).toHaveClass('h-full', 'overflow-auto', 'rounded-xl', 'border-border', 'bg-card/95', 'text-center');
+    const heading = screen.getByRole('heading', { name: "Couldn't load this timeline" });
+    expect(heading).toHaveClass('font-serif', 'font-theme-heading', 'sm:text-2xl');
+    expect(heading.closest('.max-w-md')).not.toBeNull();
     const buttons = screen.getAllByRole('button');
     expect(buttons).toHaveLength(1);
     expect(buttons[0]).toHaveClass('w-full', 'sm:w-auto', 'bg-primary');
