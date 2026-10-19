@@ -1,32 +1,9 @@
-import {
-  describe,
-  it,
-  expect,
-  vi
-} from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-// We need to control environment flags before importing the module.
-// The logger module reads env flags at import time and during function calls.
-
-vi.stubGlobal('window', {
-  addEventListener: vi.fn(),
-  location: { pathname: '/test' },
+// The logger is local-only: it must never load the Supabase client or ship logs anywhere.
+vi.mock('@/integrations/supabase/client', () => {
+  throw new Error('logger must not load the Supabase client');
 });
-
-vi.stubGlobal('localStorage', {
-  getItem: vi.fn().mockReturnValue(null),
-});
-
-vi.stubGlobal('navigator', {
-  userAgent: 'test-agent',
-});
-
-// Mock the dynamic supabase import used by flushLogs
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    rpc: vi.fn().mockResolvedValue({ error: null }),
-  }),
-}));
 
 // Mock debugConfig used by reactProfilerOnRender
 vi.mock('../debug/debugConfig', () => ({
@@ -35,35 +12,111 @@ vi.mock('../debug/debugConfig', () => ({
   },
 }));
 
+// The logger reads VITE_DEBUG_LOGS at call time; re-import per test so the runtime's
+// one-time initialisation does not leak between cases.
+async function loadLogger() {
+  vi.resetModules();
+  return import('../logger');
+}
+
+const originalConsole = {
+  log: console.log,
+  info: console.info,
+  debug: console.debug,
+  warn: console.warn,
+  error: console.error,
+};
+
 describe('logger', () => {
-  // Since the module has side effects on import and uses getEnvFlag at runtime,
-  // we test the exported functions by importing them after setup.
+  afterEach(() => {
+    Object.assign(console, originalConsole);
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
 
   describe('log function', () => {
     it('is a function', async () => {
-      const { log } = await import('../logger');
+      const { log } = await loadLogger();
       expect(typeof log).toBe('function');
     });
 
-    it('does not throw when called', async () => {
-      const { log } = await import('../logger');
-      expect(() => log('TestTag', 'test message', { extra: 'data' })).not.toThrow();
+    it('prints a tagged line when VITE_DEBUG_LOGS is true', async () => {
+      vi.stubEnv('VITE_DEBUG_LOGS', 'true');
+      const sink = vi.fn();
+      console.log = sink;
+      const { log } = await loadLogger();
+
+      log('TestTag', 'test message', { extra: 'data' });
+
+      expect(sink).toHaveBeenCalledWith('[TestTag]', 'test message', { extra: 'data' });
+    });
+
+    it('prints nothing when VITE_DEBUG_LOGS is not true', async () => {
+      vi.stubEnv('VITE_DEBUG_LOGS', 'false');
+      const sink = vi.fn();
+      console.log = sink;
+      const { log } = await loadLogger();
+
+      log('TestTag', 'hidden');
+
+      expect(sink).not.toHaveBeenCalled();
     });
 
     it('accepts various argument types', async () => {
-      const { log } = await import('../logger');
+      vi.stubEnv('VITE_DEBUG_LOGS', 'true');
+      console.log = vi.fn();
+      const { log } = await loadLogger();
       expect(() => log('Tag', 'string', 42, true, null, undefined, { obj: 1 })).not.toThrow();
+    });
+  });
+
+  describe('initializeLoggerRuntime', () => {
+    it('silences console.log/info/debug/warn and keeps console.error when VITE_DEBUG_LOGS is off', async () => {
+      vi.stubEnv('VITE_DEBUG_LOGS', 'false');
+      vi.stubGlobal('window', { location: { pathname: '/test' } });
+      const sink = vi.fn();
+      const errorSink = vi.fn();
+      console.log = sink;
+      console.info = sink;
+      console.debug = sink;
+      console.warn = sink;
+      console.error = errorSink;
+      const { initializeLoggerRuntime } = await loadLogger();
+
+      initializeLoggerRuntime();
+      console.log('a');
+      console.info('b');
+      console.debug('c');
+      console.warn('d');
+      console.error('boom');
+
+      expect(sink).not.toHaveBeenCalled();
+      expect(errorSink).toHaveBeenCalledWith('boom');
+    });
+
+    it('leaves the console untouched when VITE_DEBUG_LOGS is true', async () => {
+      vi.stubEnv('VITE_DEBUG_LOGS', 'true');
+      vi.stubGlobal('window', { location: { pathname: '/test' } });
+      const sink = vi.fn();
+      console.log = sink;
+      const { initializeLoggerRuntime } = await loadLogger();
+
+      initializeLoggerRuntime();
+      console.log('visible');
+
+      expect(sink).toHaveBeenCalledWith('visible');
     });
   });
 
   describe('reactProfilerOnRender', () => {
     it('is a function', async () => {
-      const { reactProfilerOnRender } = await import('../logger');
+      const { reactProfilerOnRender } = await loadLogger();
       expect(typeof reactProfilerOnRender).toBe('function');
     });
 
     it('does not throw when called with profiler args', async () => {
-      const { reactProfilerOnRender } = await import('../logger');
+      const { reactProfilerOnRender } = await loadLogger();
       expect(() =>
         reactProfilerOnRender(
           'ComponentId',
@@ -78,7 +131,7 @@ describe('logger', () => {
     });
 
     it('handles missing/undefined arguments gracefully', async () => {
-      const { reactProfilerOnRender } = await import('../logger');
+      const { reactProfilerOnRender } = await loadLogger();
       expect(() => reactProfilerOnRender()).not.toThrow();
       expect(() => reactProfilerOnRender('id', undefined, undefined)).not.toThrow();
     });
