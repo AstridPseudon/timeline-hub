@@ -724,6 +724,20 @@ export class RuntimeDataProvider implements DataProvider {
     return { projectId: this.projectId, timelineId, headRevisionId };
   }
 
+  /**
+   * The version Runtime's render admission compares `expected_version` to: the timeline document's own
+   * version. Parent-composition publishes do not bump it, so the editor's local save counter
+   * (`canonicalTimelineState.version`) drifts from it after the first save and must not be sent.
+   */
+  async readRuntimeTimelineVersion(timelineId: string): Promise<number> {
+    const timeline = await this.client.getProjectTimeline(this.projectId, timelineId);
+    const version = timeline.version;
+    if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 1) {
+      throw new Error('Workspace Runtime timeline did not report a valid version');
+    }
+    return version;
+  }
+
   async saveTimelineAtHead(
     timelineId: string,
     config: TimelineConfig,

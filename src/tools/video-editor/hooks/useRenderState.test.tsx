@@ -776,7 +776,8 @@ describe('useRenderState render routing', () => {
     const runtimeValue = {
       project: { projectId: 'demo-project' },
       timelineId: 'timeline-1',
-      provider: { apiBaseUrl: '/api/runtime' },
+      // Runtime's own timeline version (1) differs from the editor's local save counter (7).
+      provider: { apiBaseUrl: '/api/runtime', readRuntimeTimelineVersion: vi.fn(async () => 1) },
       telemetry: { warn: vi.fn() },
     } as unknown as VideoEditorRuntimeContextValue;
     const wrapper = ({ children }: { children: ReactNode }) => (
@@ -795,7 +796,7 @@ describe('useRenderState render routing', () => {
     expect(flushPendingSave).toHaveBeenCalledTimes(1);
     expect(renderRouterMocks.enqueueAstridRuntimeRenderTimeline).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ expectedVersion: 7, destination: 'download' }),
+      expect.objectContaining({ expectedVersion: 1, destination: 'download' }),
     );
     // The provider is the Runtime's (`/api/runtime`); the Astrid-API client must still use `/api/astrid`.
     const admissionOptions = renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mock.calls[0][1] as {

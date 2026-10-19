@@ -862,6 +862,20 @@ export function useRenderState(
     }
 
     renderRevisionRef.current = expectedVersion;
+    // Runtime admits against its own timeline version, not the editor's local save counter.
+    const readRuntimeVersion = (runtimeContext?.provider as { readRuntimeTimelineVersion?: (id: string) => Promise<number> } | undefined)
+      ?.readRuntimeTimelineVersion;
+    let admissionVersion = expectedVersion;
+    if (readRuntimeVersion) {
+      try {
+        admissionVersion = await readRuntimeVersion.call(runtimeContext.provider, timelineId);
+      } catch (error) {
+        setRenderStatus('error');
+        setRenderProgress(null);
+        setRenderLog(`Could not read the saved timeline version: ${error instanceof Error ? error.message : String(error)}`);
+        return true;
+      }
+    }
     setRenderStatus('rendering');
     setRenderProgress({
       current: 0,
@@ -913,7 +927,7 @@ export function useRenderState(
     const admission = await renderRouter.enqueueAstridRuntimeRenderTimeline(built.payload, {
       client,
       destination: renderDestination,
-      expectedVersion,
+      expectedVersion: admissionVersion,
       operationId,
     });
     if (admission.status === 'error' || !admission.task_id) {
