@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { execFileSync, spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync, rmSync, mkdirSync, chmodSync, existsSync, readFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, appendFileSync, rmSync, mkdirSync, chmodSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, it, test } from 'node:test';
@@ -14,6 +14,7 @@ import {
   validatePreviewOutputDirectory,
   viteChildArgs,
   resolveWorkspaceDiscoveryPath,
+  resolveRuntimeCommand,
   gatewayChildArgs,
   resolveLoopbackPort,
 } from './dev-local-workspace-options.mjs';
@@ -125,8 +126,78 @@ describe('dev-local preview options', () => {
     assert(!viteChildArgs({ preview: false, previewDir: null, quiet: false }).includes('--silent'));
   });
 });
+
+describe('dev-local Runtime options', () => {
+  it('parses the four Runtime and checkout paths, leaving relative resolution to the launcher', () => {
+    assert.deepEqual(parseDevLocalWorkspaceArgs([
+      '--data-root', 'state/runtime', '--runtime', '../Runtime', '--astrid', '../Astrid', '--source-manifest', 'profiles/astrid.json',
+    ]), {
+      checkOnly: false,
+      paired: false,
+      resetPairing: false,
+      acp: false,
+      preview: false,
+      previewDir: null,
+      dataRoot: 'state/runtime',
+      runtimeCheckout: '../Runtime',
+      astridCheckout: '../Astrid',
+      sourceManifest: 'profiles/astrid.json',
+    });
+    // Existing callers keep the original result shape when no new option is used.
+    assert.deepEqual(Object.keys(parseDevLocalWorkspaceArgs([])), [
+      'checkOnly', 'paired', 'resetPairing', 'acp', 'preview', 'previewDir',
+    ]);
+  });
+
+  it('rejects missing values and duplicate value flags', () => {
+    for (const option of ['--data-root', '--runtime', '--astrid', '--source-manifest']) {
+      assert.throws(() => parseDevLocalWorkspaceArgs([option]), new RegExp(`${option} requires a path`));
+      assert.throws(() => parseDevLocalWorkspaceArgs([option, '--check']), new RegExp(`${option} requires a path`));
+      assert.throws(() => parseDevLocalWorkspaceArgs([option, 'first', option, 'second']), new RegExp(`${option} may be provided only once`));
+    }
+  });
+
+  it('uses explicit Runtime Python, then the selected checkout venv, then PATH', () => {
+    assert.deepEqual(resolveRuntimeCommand({ runtimePython: 'python-from-env' }), {
+      command: 'python-from-env', args: ['-m', 'astrid_runtime.cli'],
+    });
+
+    const checkout = mkdtempSync(join(tmpdir(), 'astrid-runtime-command-test-'));
+    temporaryDirectories.push(checkout);
+    const python = join(checkout, '.venv', 'bin', 'python');
+    mkdirSync(join(checkout, '.venv', 'bin'), { recursive: true });
+    writeFileSync(python, '');
+    assert.deepEqual(resolveRuntimeCommand({ runtimeCheckout: checkout }), {
+      command: python, args: ['-m', 'astrid_runtime.cli'], cwd: checkout,
+    });
+    assert.deepEqual(resolveRuntimeCommand({ runtimeCheckout: checkout, runtimePython: 'selected-python' }), {
+      command: 'selected-python', args: ['-m', 'astrid_runtime.cli'], cwd: checkout,
+    });
+
+    assert.deepEqual(resolveRuntimeCommand({}), { command: 'astrid-runtime', args: [], cwd: undefined });
+  });
+
+  it('requires an explicit Python override when a selected Runtime checkout lacks its venv', () => {
+    const checkout = mkdtempSync(join(tmpdir(), 'astrid-runtime-no-venv-test-'));
+    temporaryDirectories.push(checkout);
+    assert.throws(() => resolveRuntimeCommand({ runtimeCheckout: checkout }), /no \.venv\/bin\/python/);
+  });
+});
+const TEST_DATA_ENV_KEYS = [
+  'BANODOCO_LOCAL_DATA_ROOT', 'BANODOCO_LOCAL_SOURCE_MANIFEST', 'ASTRID_LOCAL_DATA_ROOT',
+  'ASTRID_RUNTIME_DATA_ROOT', 'ASTRID_LOCAL_SOURCE_MANIFEST', 'BANODOCO_RUNTIME_DATA_ROOT',
+  'ASTRID_DATA_ROOT', 'ASTRID_SUPPORT_ROOT', 'ASTRID_RUNTIME_PYTHON',
+  'ASTRID_RUNTIME_CHECKOUT', 'ASTRID_RUNTIME_SOURCE_MANIFEST',
+];
+
+function cleanInheritedEnvironment(source = process.env) {
+  const clean = { ...source };
+  for (const key of TEST_DATA_ENV_KEYS) delete clean[key];
+  return clean;
+}
+
 const run = (args, env) => new Promise((resolve, reject) => {
-  const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...args], { env: { ...process.env, ...env } });
+  const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...args], { env: { ...cleanInheritedEnvironment(), ...env } });
   let stdout = '', stderr = '';
   child.stdout.on('data', c => { stdout += c; }); child.stderr.on('data', c => { stderr += c; });
   child.on('error', reject); child.on('exit', code => resolve({ code, stdout, stderr }));
@@ -169,11 +240,11 @@ async function launchFixture(overrides = {}) {
     const digest = readGeneratedSchemaDigest(resolve('src/integrations/runtime/generated-contract-metadata.ts'));
     const json = (value) => { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
     if (req.url === '/v1/health') return json({
-      status: 'ok', protocol: 'workspace.v1', schema_digest: digest,
+      status: 'ok', protocol: overrides.healthProtocol ?? 'workspace.v1', schema_digest: overrides.healthDigest ?? digest,
       runtime_instance_id: overrides.healthInstanceId ?? runtimeInstanceId,
     });
     if (req.url === '/v1/handshake') return json({
-      protocol: 'workspace.v1', schema_digest: digest, session_id: 'session-r3',
+      protocol: overrides.handshakeProtocol ?? 'workspace.v1', schema_digest: overrides.handshakeDigest ?? digest, session_id: 'session-r3',
       actor_id: overrides.handshakeActorId ?? actorId,
       realm_id: overrides.handshakeRealmId ?? realmId,
       scopes: overrides.handshakeScopes ?? ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write'],
@@ -183,13 +254,22 @@ async function launchFixture(overrides = {}) {
   });
   await new Promise(r => runtime.listen(0, '127.0.0.1', r));
   const discovery = join(fixture, 'discovery.json');
-  writeFileSync(discovery, JSON.stringify({
+  const discoveryDocument = JSON.stringify({
     endpoint: `http://127.0.0.1:${runtime.address().port}`,
     credential_file: credential,
     runtime_instance_id: runtimeInstanceId,
     active_realm: overrides.discoveryRealmId ?? realmId,
     realm_root: overrides.discoveryRealmRoot ?? realmRoot,
-  }));
+  });
+  writeFileSync(discovery, discoveryDocument);
+  if (overrides.discoveryState === 'missing') rmSync(discovery, { force: true });
+  if (overrides.discoveryState === 'stale') {
+    const unusedPort = await freePort();
+    writeFileSync(discovery, JSON.stringify({
+      endpoint: `http://127.0.0.1:${unusedPort}`, credential_file: credential,
+      runtime_instance_id: 'stale-runtime', active_realm: realmId, realm_root: realmRoot,
+    }));
+  }
   if (overrides.credential) writeFileSync(credential, typeof overrides.credential === 'string' ? overrides.credential : JSON.stringify(overrides.credential), { mode: 0o600 });
   if (overrides.catalogSelectedRealmId || overrides.catalogRealmId || overrides.catalogRoot || overrides.sourceProfile) {
     writeFileSync(catalog, JSON.stringify({
@@ -205,9 +285,75 @@ async function launchFixture(overrides = {}) {
     ASTRID_APP_LOOPBACK_ORIGIN: '',
     ASTRID_APP_HOSTED_ORIGIN_CONFIG: overrides.hostedOriginConfigPath ?? hostedConfig,
     PATH: noSpawnBin,
+    FAKE_RUNTIME_CLI_LOG: join(fixture, 'runtime-cli.log'),
+    FAKE_RUNTIME_LIFECYCLE_LOG: join(fixture, 'lifecycle.log'),
+    FAKE_RUNTIME_DISCOVERY_JSON: discoveryDocument,
+    FAKE_RUNTIME_CATALOG_JSON: readFileSync(catalog, 'utf8'),
+    FAKE_RUNTIME_DISCOVERY_PATH: discovery,
+    FAKE_RUNTIME_APP_ENV: join(fixture, 'app-env.json'),
   };
+  writeFileSync(env.FAKE_RUNTIME_LIFECYCLE_LOG, '');
+  const fakeRuntimeCli = `#!${process.execPath}
+const fs = require('node:fs');
+const path = require('node:path');
+const args = process.argv.slice(2);
+const log = process.env.FAKE_RUNTIME_CLI_LOG;
+const action = args[0] || 'unknown';
+fs.appendFileSync(log, JSON.stringify({ args, action, cwd: process.cwd(), astridCheckout: process.env.ASTRID_CHECKOUT || null }) + '\\n');
+if (action === 'up' && process.env.FAKE_RUNTIME_UP_EXIT !== '1') {
+  const dataRootIndex = args.indexOf('--data-root');
+  const dataRoot = dataRootIndex >= 0 ? args[dataRootIndex + 1] : null;
+  const discovery = process.env.FAKE_RUNTIME_DISCOVERY_PATH || process.env.ASTRID_WORKSPACE_DISCOVERY;
+  const target = dataRoot ? path.join(dataRoot, 'runtime', 'discovery.json') : discovery;
+  const publish = () => {
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, process.env.FAKE_RUNTIME_DISCOVERY_JSON + '\\n');
+    fs.writeFileSync(path.join(path.dirname(target), 'catalog.json'), process.env.FAKE_RUNTIME_CATALOG_JSON + '\\n');
+    console.log(JSON.stringify({ status: process.env.FAKE_RUNTIME_UP_STATUS || 'started', discovery_path: target }));
+    process.exit(0);
+  };
+  const gate = process.env.FAKE_RUNTIME_UP_RELEASE_FILE;
+  if (!gate) publish();
+  else {
+    const released = () => fs.readFileSync(gate, 'utf8').includes('release Runtime up');
+    const watcher = fs.watch(gate, () => {
+      if (released()) {
+        watcher.close();
+        publish();
+      }
+    });
+    fs.writeFileSync(process.env.FAKE_RUNTIME_UP_STARTED_FILE, 'up is waiting for release\\n');
+    if (released()) {
+      watcher.close();
+      publish();
+    }
+  }
+} else if (action === 'down' && process.env.FAKE_RUNTIME_DOWN_EXIT !== '1') {
+  const net = require('node:net');
+  const listening = (port) => new Promise((resolve) => {
+    if (!port) return resolve(false);
+    const socket = net.createConnection({ host: '127.0.0.1', port: Number(port) });
+    socket.once('connect', () => { socket.destroy(); resolve(true); });
+    socket.once('error', () => resolve(false));
+    socket.setTimeout(500, () => { socket.destroy(); resolve(false); });
+  });
+  Promise.all([
+    listening(process.env.PORT),
+    listening(process.env.VITE_ASTRID_DYNAMIC_PROXY_PORT),
+    listening(process.env.ASTRID_APP_LOOPBACK_PORT),
+  ]).then(([vite, proxy, gateway]) => {
+    fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'runtime:down viteOpen=' + vite + ' proxyOpen=' + proxy + ' gatewayOpen=' + gateway + '\\n');
+    console.log(JSON.stringify({ status: 'stopped' }));
+    process.exit(0);
+  });
+} else {
+  process.stderr.write('fake Runtime CLI failure\\n');
+  process.exit(7);
+}
+`;
+  writeFileSync(join(noSpawnBin, 'astrid-runtime'), fakeRuntimeCli, { mode: 0o700 });
   return {
-    fixture, token, actorId, realmId, runtimeInstanceId, realmRoot, catalog,
+    fixture, token, actorId, realmId, runtimeInstanceId, realmRoot, catalog, discoveryDocument,
     discovery, spawnMarker, requests, runtime, env,
     setAvailable(value) { available = value; },
     async close() {
@@ -331,10 +477,15 @@ function freePort() {
 
 const FAKE_NPM = (spawnLog) => `#!${process.execPath}
 const args = process.argv.slice(2);
-require('node:fs').appendFileSync(${JSON.stringify(spawnLog)}, args.join(' ') + '\\n');
+const fs = require('node:fs');
+const kind = args.includes('dev:astrid-acp') ? 'acp' : (args.includes('dev') || args.includes('preview') ? 'vite' : 'other');
+fs.appendFileSync(${JSON.stringify(spawnLog)}, args.join(' ') + '\\n');
+fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, kind + ':start\\n');
+if (kind === 'vite') fs.writeFileSync(process.env.FAKE_RUNTIME_APP_ENV, JSON.stringify({ args, astridCheckout: process.env.ASTRID_CHECKOUT }));
 console.log(['fake-npm', ...args].join(' '));
 if (args.includes('dev') || args.includes('preview')) require('node:net').createServer(() => {}).listen(Number(process.env.PORT), '127.0.0.1');
 if (args.includes('dev:astrid-acp') && process.env.FAKE_ACP_EXIT_MS) setTimeout(() => process.exit(3), Number(process.env.FAKE_ACP_EXIT_MS));
+for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => { fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, kind + ':stop\\n'); process.exit(0); });
 setInterval(() => {}, 1000);
 `;
 
@@ -344,13 +495,13 @@ const OPEN_BLOCK_END = 'Keep this window open while you work. Press Ctrl+C to st
  * The launcher against a fake Runtime. Resolves once `until(stdout, stderr, exitCode)` holds, with what it printed; `stop()`
  * ends it and cleans up. The default free ports keep a developer's own gateway (17340) and app (2222) out of it.
  */
-async function startLauncher({ args = [], env: overrides = {}, shippedConfig = false, until = (stdout) => stdout.includes(OPEN_BLOCK_END), fixture: given, ...fixtureOverrides } = {}) {
+async function startLauncher({ args = [], env: overrides = {}, shippedConfig = false, until = (stdout) => stdout.includes(OPEN_BLOCK_END) || stdout.includes('Local App: http://127.0.0.1:'), fixture: given, ...fixtureOverrides } = {}) {
   const fixture = given ?? await launchFixture(fixtureOverrides);
   const spawnLog = join(fixture.fixture, 'spawn.log');
   writeFileSync(spawnLog, '');
   writeFileSync(join(fixture.fixture, 'bin', 'npm'), FAKE_NPM(spawnLog), { mode: 0o700 });
   // The default port is 17340, so ASTRID_APP_LOOPBACK_PORT is not inherited from the developer's shell.
-  const { ASTRID_APP_LOOPBACK_PORT: _inheritedPort, ASTRID_VERBOSE: _verbose, ...inherited } = process.env;
+  const { ASTRID_APP_LOOPBACK_PORT: _inheritedPort, ASTRID_VERBOSE: _verbose, ...inherited } = cleanInheritedEnvironment();
   const env = {
     ...inherited,
     ...fixture.env,
@@ -360,14 +511,18 @@ async function startLauncher({ args = [], env: overrides = {}, shippedConfig = f
   };
   // The shipped config/hosted-origin.json is read only when a case asks for it; the fixture config is the default otherwise.
   if (shippedConfig) delete env.ASTRID_APP_HOSTED_ORIGIN_CONFIG;
-  const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...args], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...args], { env, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' });
   const seen = { stdout: '', stderr: '' };
   child.stdout.on('data', c => { seen.stdout += c; }); child.stderr.on('data', c => { seen.stderr += c; });
   const closed = new Promise(resolveClose => child.once('close', resolveClose));
   const stop = async () => {
-    child.kill('SIGTERM');
+    if (child.exitCode === null) child.kill('SIGTERM');
     await closed;
     if (!given) await fixture.close();
+  };
+  const signal = async (name) => {
+    if (child.exitCode === null) child.kill(name);
+    await closed;
   };
   try {
     const deadline = Date.now() + 60_000;
@@ -377,7 +532,7 @@ async function startLauncher({ args = [], env: overrides = {}, shippedConfig = f
       }
       await new Promise(r => setTimeout(r, 50));
     }
-    return { stdout: seen.stdout, stderr: seen.stderr, child, closed, env, fixture, spawnLog, stop, seen };
+    return { stdout: seen.stdout, stderr: seen.stderr, child, closed, env, fixture, spawnLog, stop, signal, seen };
   } catch (error) {
     await stop();
     throw error;
@@ -658,5 +813,320 @@ test('an explicit origin does not read a broken config', async () => {
   try {
     const result = await run(['--check'], { ...fixture.env, ASTRID_APP_LOOPBACK_ORIGIN: 'https://hosted.test' });
     assert.equal(result.code, 0, result.stderr);
+  } finally { await fixture.close(); }
+});
+
+function runtimeCliCalls(fixture) {
+  if (!existsSync(fixture.env.FAKE_RUNTIME_CLI_LOG)) return [];
+  return readFileSync(fixture.env.FAKE_RUNTIME_CLI_LOG, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
+}
+
+test('normal launch auto-starts with the selected Runtime, Astrid, data root and source manifest', async () => {
+  const fixture = await launchFixture({ discoveryState: 'missing' });
+  const dataRoot = join(fixture.fixture, 'selected-data');
+  const ambientRoot = join(fixture.fixture, 'ambient-data');
+  const runtimeCheckout = join(fixture.fixture, 'Runtime');
+  const astridCheckout = join(fixture.fixture, 'Astrid');
+  const sourceManifest = join(fixture.fixture, 'source-manifest.json');
+  mkdirSync(join(runtimeCheckout, '.venv', 'bin'), { recursive: true });
+  mkdirSync(astridCheckout);
+  writeFileSync(sourceManifest, '{}\n');
+  writeFileSync(join(runtimeCheckout, '.venv', 'bin', 'python'), `#!${process.execPath}
+const { spawnSync } = require('node:child_process');
+const result = spawnSync('astrid-runtime', process.argv.slice(4), { stdio: 'inherit', env: process.env });
+process.exit(result.status ?? 1);
+`, { mode: 0o700 });
+  let started;
+  try {
+    started = await startLauncher({
+      fixture,
+      args: ['--data-root', dataRoot, '--runtime', runtimeCheckout, '--astrid', astridCheckout, '--source-manifest', sourceManifest],
+      env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off', ASTRID_RUNTIME_DATA_ROOT: ambientRoot },
+    });
+    assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up']);
+    assert.deepEqual(runtimeCliCalls(fixture)[0].args, [
+      'up', '--profile', 'astrid', '--data-root', dataRoot, '--source-manifest', sourceManifest, '--json',
+    ]);
+    assert.equal(runtimeCliCalls(fixture)[0].cwd, realpathSync(runtimeCheckout));
+    assert.equal(JSON.parse(readFileSync(fixture.env.FAKE_RUNTIME_APP_ENV, 'utf8')).astridCheckout, astridCheckout);
+    assert.equal(existsSync(join(dataRoot, 'runtime', 'discovery.json')), true);
+    assert.equal(existsSync(join(ambientRoot, 'runtime', 'discovery.json')), false);
+    await started.stop();
+    assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up', 'down']);
+    assert.deepEqual(runtimeCliCalls(fixture)[1].args, [
+      'down', '--profile', 'astrid', '--data-root', dataRoot, '--source-manifest', sourceManifest, '--json',
+    ]);
+  } finally {
+    if (started) await started.stop();
+    await fixture.close();
+  }
+});
+
+test('Runtime environment selectors choose temporary data, checkout, Python, source manifest and Astrid paths', async () => {
+  const fixture = await launchFixture({ discoveryState: 'missing' });
+  const dataRoot = join(fixture.fixture, 'env-selected-data');
+  const runtimeCheckout = join(fixture.fixture, 'Runtime env checkout');
+  const astridCheckout = join(fixture.fixture, 'Astrid env checkout');
+  const runtimePython = join(fixture.fixture, 'python with spaces');
+  const sourceManifest = join(fixture.fixture, 'env-source-manifest.json');
+  mkdirSync(runtimeCheckout);
+  mkdirSync(astridCheckout);
+  writeFileSync(sourceManifest, '{}\n');
+  writeFileSync(runtimePython, `#!${process.execPath}
+const { spawnSync } = require('node:child_process');
+const result = spawnSync('astrid-runtime', process.argv.slice(4), { stdio: 'inherit', env: process.env });
+process.exit(result.status ?? 1);
+`, { mode: 0o700 });
+  let started;
+  try {
+    started = await startLauncher({
+      fixture,
+      env: {
+        ASTRID_APP_LOOPBACK_ORIGIN: 'off',
+        ASTRID_RUNTIME_DATA_ROOT: dataRoot,
+        ASTRID_RUNTIME_CHECKOUT: runtimeCheckout,
+        ASTRID_RUNTIME_PYTHON: runtimePython,
+        ASTRID_RUNTIME_SOURCE_MANIFEST: sourceManifest,
+        ASTRID_CHECKOUT: astridCheckout,
+        ASTRID_WORKSPACE_DISCOVERY: join(dataRoot, 'runtime', 'discovery.json'),
+      },
+    });
+    assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up']);
+    assert.deepEqual(runtimeCliCalls(fixture)[0].args, [
+      'up', '--profile', 'astrid', '--data-root', dataRoot, '--source-manifest', sourceManifest, '--json',
+    ]);
+    assert.equal(runtimeCliCalls(fixture)[0].cwd, realpathSync(runtimeCheckout));
+    assert.equal(runtimeCliCalls(fixture)[0].astridCheckout, astridCheckout);
+    await started.stop();
+    assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up', 'down']);
+    assert.equal(runtimeCliCalls(fixture)[1].astridCheckout, astridCheckout);
+  } finally { if (started) await started.stop(); await fixture.close(); }
+});
+
+test('a Runtime data root conflicting with legacy discovery is rejected before attach or CLI control', async () => {
+  const fixture = await launchFixture();
+  try {
+    const result = await launcherEnds({
+      fixture,
+      args: ['--check'],
+      env: { ASTRID_RUNTIME_DATA_ROOT: join(fixture.fixture, 'other-data-root') },
+    });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /ASTRID_WORKSPACE_DISCOVERY and ASTRID_RUNTIME_DATA_ROOT select different roots/);
+    assert.deepEqual(runtimeCliCalls(fixture), []);
+    assert.equal(result.spawned, '');
+  } finally { await fixture.close(); }
+});
+
+test('a compatible live Runtime is attached without CLI up or down', async () => {
+  const fixture = await launchFixture();
+  let started;
+  try {
+    started = await startLauncher({ fixture, env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off' } });
+    assert.deepEqual(runtimeCliCalls(fixture), []);
+    await started.stop();
+    assert.deepEqual(runtimeCliCalls(fixture), []);
+  } finally { if (started) await started.stop(); await fixture.close(); }
+});
+
+test('missing and stale discovery plus a dead endpoint trigger up, then full Runtime validation', async () => {
+  for (const discoveryState of ['missing', 'stale']) {
+    const fixture = await launchFixture({ discoveryState });
+    let started;
+    try {
+      started = await startLauncher({ fixture, env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off' } });
+      assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up']);
+      assert.deepEqual(fixture.requests.slice(-3).map(({ method, path }) => `${method} ${path}`), [
+        'GET /v1/health', 'POST /v1/handshake', 'GET /v1/realm',
+      ]);
+      await started.stop();
+      assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up', 'down']);
+    } finally { if (started) await started.stop(); await fixture.close(); }
+  }
+
+  const dead = await launchFixture();
+  let started;
+  try {
+    const staleEndpoint = JSON.parse(dead.discoveryDocument);
+    staleEndpoint.endpoint = `http://127.0.0.1:${await freePort()}`;
+    writeFileSync(dead.discovery, JSON.stringify(staleEndpoint));
+    started = await startLauncher({ fixture: dead, env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off' } });
+    assert.deepEqual(runtimeCliCalls(dead).map(({ action }) => action), ['up']);
+    await started.stop();
+    assert.deepEqual(runtimeCliCalls(dead).map(({ action }) => action), ['up', 'down']);
+  } finally { if (started) await started.stop(); await dead.close(); }
+});
+
+test('an exited Runtime owner PID is treated as stale discovery and replaced by up', async () => {
+  const fixture = await launchFixture();
+  const exitedOwner = spawn(process.execPath, ['-e', 'process.exit(0)'], { env: cleanInheritedEnvironment() });
+  const deadPid = exitedOwner.pid;
+  await new Promise((resolveExit) => exitedOwner.once('exit', resolveExit));
+  try {
+    writeFileSync(fixture.discovery, JSON.stringify({ ...JSON.parse(fixture.discoveryDocument), pid: deadPid }));
+    const started = await startLauncher({ fixture, env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off' } });
+    assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up']);
+    await started.stop();
+    assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up', 'down']);
+  } finally { await fixture.close(); }
+});
+
+test('live protocol, schema and scope incompatibilities stop before app start with an actionable one-line diagnostic', async () => {
+  const expectedDigest = readGeneratedSchemaDigest(resolve('src/integrations/runtime/generated-contract-metadata.ts'));
+  const cases = [
+    ['protocol', { healthProtocol: 'workspace.v0' }, 'workspace.v0'],
+    ['schema', { healthDigest: 'sha256:runtime-old-schema' }, 'sha256:runtime-old-schema'],
+    ['scopes', { handshakeScopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write', 'admin'] }, 'workspace.v1'],
+  ];
+  for (const [label, overrides, actual] of cases) {
+    const fixture = await launchFixture(overrides);
+    const runtimeEnv = { ASTRID_APP_LOOPBACK_ORIGIN: 'off' };
+    let expectedRestart;
+    try {
+      if (label === 'protocol') {
+        const dataRoot = join(fixture.fixture, "data root's");
+        const runtimeCheckout = join(fixture.fixture, "Runtime checkout's");
+        const runtimePython = join(fixture.fixture, "Python runner's");
+        const sourceManifest = join(fixture.fixture, "source manifest's.json");
+        const discoveryDirectory = join(dataRoot, 'runtime');
+        mkdirSync(discoveryDirectory, { recursive: true });
+        writeFileSync(join(discoveryDirectory, 'discovery.json'), fixture.discoveryDocument);
+        writeFileSync(join(discoveryDirectory, 'catalog.json'), readFileSync(fixture.catalog, 'utf8'));
+        const shellQuote = (value) => `'${value.replaceAll("'", "'\"'\"'")}'`;
+        runtimeEnv.ASTRID_RUNTIME_DATA_ROOT = dataRoot;
+        runtimeEnv.ASTRID_WORKSPACE_DISCOVERY = join(discoveryDirectory, 'discovery.json');
+        runtimeEnv.ASTRID_RUNTIME_CHECKOUT = runtimeCheckout;
+        runtimeEnv.ASTRID_RUNTIME_PYTHON = runtimePython;
+        runtimeEnv.ASTRID_RUNTIME_SOURCE_MANIFEST = sourceManifest;
+        expectedRestart = `restart: cd ${shellQuote(runtimeCheckout)} && ${shellQuote(runtimePython)} -m astrid_runtime.cli restart --profile astrid --data-root ${shellQuote(dataRoot)} --source-manifest ${shellQuote(sourceManifest)}`;
+      }
+      const result = await launcherEnds({ fixture, env: runtimeEnv });
+      assert.equal(result.code, 1, `${label}: ${result.stderr}`);
+      const lines = result.stderr.trim().split('\n');
+      assert.equal(lines.length, 1, `${label}: ${result.stderr}`);
+      assert.match(lines[0], new RegExp(actual.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+      assert.match(lines[0], /App workspace\.v1 schema/);
+      assert.match(lines[0], new RegExp(expectedDigest.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+      if (expectedRestart) assert(lines[0].includes(expectedRestart), lines[0]);
+      else assert.match(lines[0], /restart: astrid-runtime restart --profile astrid --data-root/);
+      assert.deepEqual(runtimeCliCalls(fixture), []);
+      assert.equal(result.spawned, '', `${label}: app/bridge spawned`);
+    } finally { await fixture.close(); }
+  }
+});
+
+test('only a Runtime newly started by this launcher is stopped on exit', async () => {
+  for (const status of ['started', 'reconnected']) {
+    const fixture = await launchFixture({ discoveryState: 'missing' });
+    let started;
+    try {
+      started = await startLauncher({ fixture, env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off', FAKE_RUNTIME_UP_STATUS: status } });
+      await started.stop();
+      assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), status === 'started' ? ['up', 'down'] : ['up']);
+    } finally { if (started) await started.stop(); await fixture.close(); }
+  }
+});
+
+test('shutdown stops Vite and bridge services before Runtime down', async () => {
+  const fixture = await launchFixture({ discoveryState: 'missing' });
+  let started;
+  try {
+    started = await startLauncher({ fixture, args: ['--acp'], env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off' } });
+    await started.stop();
+    const lifecycle = readFileSync(fixture.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'utf8').trim().split('\n');
+    assert(lifecycle.indexOf('vite:stop') >= 0, lifecycle.join('\n'));
+    assert(lifecycle.indexOf('acp:stop') >= 0, lifecycle.join('\n'));
+    const down = lifecycle.find((line) => line.startsWith('runtime:down '));
+    assert(down, lifecycle.join('\n'));
+    assert(lifecycle.indexOf('vite:stop') < lifecycle.indexOf('acp:stop'), lifecycle.join('\n'));
+    assert(lifecycle.indexOf('acp:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
+    assert.equal(down, 'runtime:down viteOpen=false proxyOpen=false gatewayOpen=false');
+  } finally { if (started) await started.stop(); await fixture.close(); }
+});
+
+test('SIGINT stops services and then shuts down the Runtime this launcher started', async () => {
+  const fixture = await launchFixture({ discoveryState: 'missing' });
+  let started;
+  try {
+    started = await startLauncher({ fixture, env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off' } });
+    await started.signal('SIGINT');
+    assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up', 'down']);
+    const lifecycle = readFileSync(fixture.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'utf8').trim().split('\n');
+    assert(lifecycle.indexOf('vite:stop') >= 0, lifecycle.join('\n'));
+    const down = lifecycle.find((line) => line.startsWith('runtime:down '));
+    assert(down, lifecycle.join('\n'));
+    assert(lifecycle.indexOf('vite:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
+    assert.equal(down, 'runtime:down viteOpen=false proxyOpen=false gatewayOpen=false');
+  } finally { if (started) await started.stop(); await fixture.close(); }
+});
+
+test('SIGINT during Runtime up waits for ownership handoff, then brings that Runtime down before app startup', async () => {
+  const fixture = await launchFixture({ discoveryState: 'missing' });
+  const startedMarker = join(fixture.fixture, 'up-waiting');
+  const releaseFile = join(fixture.fixture, 'release-up');
+  writeFileSync(releaseFile, 'hold');
+  let started;
+  try {
+    started = await startLauncher({
+      fixture,
+      env: {
+        ASTRID_APP_LOOPBACK_ORIGIN: 'off',
+        FAKE_RUNTIME_UP_STARTED_FILE: startedMarker,
+        FAKE_RUNTIME_UP_RELEASE_FILE: releaseFile,
+      },
+      until: () => existsSync(startedMarker),
+    });
+    assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up']);
+    if (process.platform === 'win32') started.child.kill('SIGINT');
+    else process.kill(-started.child.pid, 'SIGINT');
+    appendFileSync(releaseFile, ' release Runtime up');
+    await started.closed;
+    assert.equal(started.child.exitCode, 130, started.seen.stderr);
+    assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up', 'down']);
+    assert.equal(readFileSync(started.spawnLog, 'utf8'), '', 'Vite and ACP must not start after interrupted up');
+    assert.equal(readFileSync(fixture.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'utf8'), 'runtime:down viteOpen=false proxyOpen=false gatewayOpen=false\n', 'only Runtime down should run');
+  } finally {
+    if (started && started.child.exitCode === null) {
+      appendFileSync(releaseFile, ' release Runtime up');
+      await started.signal('SIGINT');
+    }
+    await fixture.close();
+  }
+});
+
+test('Runtime identity replacement prevents the launcher from stopping the replacement', async () => {
+  const fixture = await launchFixture({ discoveryState: 'missing' });
+  let started;
+  try {
+    started = await startLauncher({ fixture, env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off' } });
+    const replacement = JSON.parse(fixture.discoveryDocument);
+    replacement.runtime_instance_id = 'replacement-instance';
+    writeFileSync(join(fixture.fixture, 'runtime', 'discovery.json'), JSON.stringify(replacement));
+    await started.stop();
+    assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up']);
+  } finally { if (started) await started.stop(); await fixture.close(); }
+});
+
+test('--check and --build do not auto-start a missing Runtime', async () => {
+  const fixture = await launchFixture({ discoveryState: 'missing' });
+  try {
+    for (const args of [['--check'], ['--build']]) {
+      const result = await launcherEnds({ fixture, args });
+      assert.equal(result.code, 1);
+      assert.deepEqual(runtimeCliCalls(fixture), []);
+      assert.equal(result.spawned, '', `${args[0]} launched an app child`);
+    }
+  } finally { await fixture.close(); }
+});
+
+test('a failed Runtime up leaves the App, gateway and bridges stopped', async () => {
+  const fixture = await launchFixture({ discoveryState: 'missing' });
+  try {
+    const result = await launcherEnds({ fixture, env: { FAKE_RUNTIME_UP_EXIT: '1' } });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /Runtime up failed: fake Runtime CLI failure/);
+    assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up']);
+    assert.equal(result.spawned, '');
+    assert.equal(readFileSync(fixture.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'utf8'), '');
   } finally { await fixture.close(); }
 });

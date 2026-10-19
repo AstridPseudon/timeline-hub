@@ -10,6 +10,13 @@ export function parseDevLocalWorkspaceArgs(args) {
   let paired = false;
   let resetPairing = false;
   let acp = false;
+  const runtimeOptions = {};
+  const valueOptions = new Map([
+    ['--data-root', 'dataRoot'],
+    ['--runtime', 'runtimeCheckout'],
+    ['--astrid', 'astridCheckout'],
+    ['--source-manifest', 'sourceManifest'],
+  ]);
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -45,6 +52,19 @@ export function parseDevLocalWorkspaceArgs(args) {
       index += 1;
       continue;
     }
+    const optionName = valueOptions.get(argument);
+    if (optionName) {
+      if (Object.hasOwn(runtimeOptions, optionName)) {
+        throw new Error(`${argument} may be provided only once`);
+      }
+      const value = args[index + 1];
+      if (!value || value.startsWith('--')) {
+        throw new Error(`${argument} requires a path`);
+      }
+      runtimeOptions[optionName] = value;
+      index += 1;
+      continue;
+    }
     // Preserve the launcher's historical behavior for unrelated arguments;
     // npm/Vite-owned options are not interpreted by this wrapper.
   }
@@ -60,7 +80,29 @@ export function parseDevLocalWorkspaceArgs(args) {
     acp,
     preview,
     previewDir,
+    ...runtimeOptions,
   });
+}
+
+/** Resolve the Runtime CLI invocation without a shell, preserving explicit Python selection. */
+export function resolveRuntimeCommand({ runtimeCheckout, runtimePython } = {}) {
+  const checkout = runtimeCheckout?.trim();
+  const python = runtimePython?.trim();
+  if (python) {
+    return {
+      command: python,
+      args: ['-m', 'astrid_runtime.cli'],
+      ...(checkout ? { cwd: checkout } : {}),
+    };
+  }
+  if (checkout) {
+    const checkoutPython = join(checkout, '.venv', 'bin', 'python');
+    if (!existsSync(checkoutPython)) {
+      throw new Error(`Runtime checkout has no .venv/bin/python: ${checkoutPython}; set ASTRID_RUNTIME_PYTHON to an explicit Python executable`);
+    }
+    return { command: checkoutPython, args: ['-m', 'astrid_runtime.cli'], cwd: checkout };
+  }
+  return { command: 'astrid-runtime', args: [], cwd: undefined };
 }
 
 /**

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Start Astrid App against the already-managed neutral workspace.v1 runtime.
+ * Start Astrid App with the developer's neutral workspace.v1 Runtime.
  *
- * The runtime owns its endpoint and credential; this launcher only reads the
- * published profile and validates its product-scoped credential before passing
+ * The Runtime owns its endpoint and credential; this launcher starts or attaches
+ * to it and validates its published profile and product credential before passing
  * it to Vite's server-side proxy. The token is never printed or exposed as a
  * VITE_ value.
  */
@@ -11,13 +11,14 @@ import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { homedir } from 'node:os';
-import { delimiter, dirname, resolve } from 'node:path';
+import { basename, delimiter, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createConnection } from 'node:net';
 import { request as httpRequest } from 'node:http';
 import { readGeneratedSchemaDigest, schemaDigestMismatch } from './runtime-schema-guard.mjs';
 import {
   parseDevLocalWorkspaceArgs,
+  resolveRuntimeCommand,
   validatePreviewOutputDirectory,
   viteChildArgs,
   resolveWorkspaceDiscoveryPath,
@@ -53,35 +54,138 @@ function fail(friendly, details) {
   return null;
 }
 
-const configuredAstridCheckout = process.env.ASTRID_CHECKOUT?.trim();
+class LauncherExit extends Error {
+  constructor(code) { super('Launcher finished'); this.code = code; }
+}
+const exit = (code) => { throw new LauncherExit(code); };
+const services = [];
+let runtimeSettings;
+let ownedRuntime;
+let runtimeCliChild;
+let cleanupPromise;
+let interrupted = false;
+
+function spawnService(command, args, { kind = 'bridge', ...options }) {
+  if (interrupted) exit(130);
+  const child = spawn(command, args, { ...options, detached: process.platform !== 'win32' });
+  const service = { child, kind, closed: false };
+  service.done = new Promise((resolveClosed) => child.once('close', () => { service.closed = true; resolveClosed(); }));
+  child.on('error', () => {}); // Callers report errors; close still releases the owned service.
+  services.push(service);
+  return child;
+}
+
+async function stopService(service, signal) {
+  if (!service.closed && service.child.pid) {
+    try {
+      if (process.platform === 'win32') service.child.kill(signal);
+      else process.kill(-service.child.pid, signal);
+    } catch (error) { if (error.code !== 'ESRCH') throw error; }
+  }
+  await service.done;
+}
+
+function runtimeCommand(action) {
+  const { command, args, cwd } = resolveRuntimeCommand(runtimeSettings);
+  return { command, cwd, args: [...args, action, '--profile', 'astrid', '--data-root', runtimeSettings.dataRoot,
+    ...(runtimeSettings.sourceManifest ? ['--source-manifest', runtimeSettings.sourceManifest] : []), '--json'] };
+}
+
+async function runRuntimeCommand(action) {
+  const { command, args, cwd } = runtimeCommand(action);
+  const child = spawn(command, args, { cwd, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'], env: {
+    ...process.env,
+    ...(runtimeSettings.astridCheckout ? { ASTRID_CHECKOUT: runtimeSettings.astridCheckout } : {}),
+  } });
+  runtimeCliChild = child;
+  let stdout = '', stderr = '';
+  child.stdout?.on('data', (chunk) => { stdout += chunk; });
+  child.stderr?.on('data', (chunk) => { stderr += chunk; });
+  try {
+    await new Promise((resolveClosed, reject) => {
+      child.once('error', reject);
+      child.once('close', (code, signal) => code === 0 ? resolveClosed()
+        : reject(new Error(`exited ${signal ? `with ${signal}` : `with code ${code}`}`)));
+    });
+    return JSON.parse(stdout);
+  }
+  catch (error) {
+    let reported;
+    try { reported = JSON.parse(stdout).error; } catch { /* not a structured CLI error */ }
+    throw new Error(`Runtime ${action} failed: ${reported || stderr.trim() || error.message}`);
+  }
+  finally { runtimeCliChild = null; }
+}
+
+function cleanup(signal = 'SIGTERM') {
+  return cleanupPromise ??= (async () => {
+    for (const service of services.filter(({ kind }) => kind === 'vite')) await stopService(service, signal);
+    for (const service of services.filter(({ kind }) => kind !== 'vite')) await stopService(service, signal);
+    if (ownedRuntime) {
+      let current;
+      try { current = JSON.parse(readFileSync(ownedRuntime.discoveryPath, 'utf8')); } catch { return; }
+      // A replacement owner belongs to whoever started it, even at the same data root.
+      if (current.runtime_instance_id === ownedRuntime.instanceId) await runRuntimeCommand('down');
+    }
+  })();
+}
+
+for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
+  interrupted = true;
+  if (signal === 'SIGINT' && !process.exitCode) process.exitCode = 130;
+  if (cleanupPromise) return;
+  // Let up complete its custody/readiness handoff before deciding whether we own
+  // an owner to stop. Killing that CLI could strand a daemon before its JSON reply.
+  if (!runtimeCliChild) void cleanup(signal).catch((error) => fail(CANT_START, error.message));
+});
+
+async function main() {
+let launcherOptions;
+try { launcherOptions = parseDevLocalWorkspaceArgs(process.argv.slice(2)); }
+catch (error) { fail(CANT_START, error.message); exit(1); }
+const configuredAstridCheckout = launcherOptions.astridCheckout
+  ? resolve(launcherOptions.astridCheckout) : process.env.ASTRID_CHECKOUT?.trim();
 const siblingAstridCheckout = resolve(process.cwd(), '..', 'Astrid');
 const astridCheckout = configuredAstridCheckout
   || (existsSync(resolve(siblingAstridCheckout, '.astrid-data', 'runtime', 'discovery.json'))
     ? siblingAstridCheckout
     : null);
 const configuredAstridPublicCheckout = process.env.ASTRID_PUBLIC_CHECKOUT?.trim();
+const selectedDataRoot = launcherOptions.dataRoot
+  ? resolve(launcherOptions.dataRoot) : process.env.ASTRID_RUNTIME_DATA_ROOT?.trim();
 let discoveryPath;
 try {
-  discoveryPath = resolveWorkspaceDiscoveryPath({
-    discovery: process.env.ASTRID_WORKSPACE_DISCOVERY,
-    supportRoot: process.env.ASTRID_SUPPORT_ROOT,
-    dataRoot: process.env.ASTRID_RUNTIME_DATA_ROOT,
+  const rootOptions = {
+    supportRoot: launcherOptions.dataRoot ? undefined : process.env.ASTRID_SUPPORT_ROOT,
+    dataRoot: selectedDataRoot,
     home: homedir(),
+  };
+  const rootedDiscovery = resolveWorkspaceDiscoveryPath(rootOptions);
+  discoveryPath = resolveWorkspaceDiscoveryPath({
+    ...rootOptions,
+    discovery: launcherOptions.dataRoot ? undefined : process.env.ASTRID_WORKSPACE_DISCOVERY,
   });
+  if (selectedDataRoot && discoveryPath !== rootedDiscovery) {
+    throw new Error('ASTRID_WORKSPACE_DISCOVERY and ASTRID_RUNTIME_DATA_ROOT select different roots');
+  }
 } catch (error) {
-  process.exit(fail(CANT_START, error instanceof Error ? error.message : String(error)) ? 1 : 1);
+  exit(fail(CANT_START, error instanceof Error ? error.message : String(error)) ? 1 : 1);
 }
 const buildOnly = process.argv.includes('--build');
 const port = process.env.PORT ?? '2222';
-let launcherOptions;
-try {
-  launcherOptions = parseDevLocalWorkspaceArgs(process.argv.slice(2));
-} catch (error) {
-  process.exit(fail(CANT_START, error instanceof Error ? error.message : String(error)) ? 1 : 1);
-}
+runtimeSettings = {
+  dataRoot: selectedDataRoot || process.env.ASTRID_SUPPORT_ROOT?.trim()
+      || (basename(dirname(discoveryPath)) === 'runtime' ? dirname(dirname(discoveryPath)) : dirname(discoveryPath)),
+  runtimeCheckout: launcherOptions.runtimeCheckout || process.env.ASTRID_RUNTIME_CHECKOUT?.trim(),
+  runtimePython: process.env.ASTRID_RUNTIME_PYTHON?.trim(),
+  astridCheckout,
+  sourceManifest: launcherOptions.sourceManifest || process.env.ASTRID_RUNTIME_SOURCE_MANIFEST?.trim(),
+};
+if (runtimeSettings.runtimeCheckout) runtimeSettings.runtimeCheckout = resolve(runtimeSettings.runtimeCheckout);
+if (runtimeSettings.sourceManifest) runtimeSettings.sourceManifest = resolve(runtimeSettings.sourceManifest);
 const checkOnly = launcherOptions.checkOnly;
 if (buildOnly && launcherOptions.preview) {
-  process.exit(fail(CANT_START, '--build and --preview are separate rebuild and launch steps') ? 1 : 1);
+  exit(fail(CANT_START, '--build and --preview are separate rebuild and launch steps') ? 1 : 1);
 }
 const paired = launcherOptions.paired;
 const resetPairing = launcherOptions.resetPairing;
@@ -90,7 +194,7 @@ if (launcherOptions.preview) {
   try {
     previewDirectory = validatePreviewOutputDirectory(launcherOptions.previewDir);
   } catch (error) {
-    process.exit(fail(CANT_START, error instanceof Error ? error.message : String(error)) ? 1 : 1);
+    exit(fail(CANT_START, error instanceof Error ? error.message : String(error)) ? 1 : 1);
   }
 }
 const pairedRelayOrigin = process.env.ASTRID_APP_PAIRED_RELAY_ORIGIN?.trim();
@@ -100,12 +204,12 @@ const hostedOriginArgument = hostedOriginArgumentIndex >= 0
   : undefined;
 if (hostedOriginArgumentIndex >= 0 && (!hostedOriginArgument || hostedOriginArgument.startsWith('--'))) {
   fail(BAD_HOSTED_ORIGIN, '--hosted-origin requires an exact HTTPS origin');
-  process.exit(1);
+  exit(1);
 }
 const hostedOriginEnvironment = process.env.ASTRID_APP_LOOPBACK_ORIGIN?.trim() || undefined;
 if (hostedOriginEnvironment === 'off' && hostedOriginArgument !== undefined) {
   fail('Choose one: turn the hosted address off, or give one.', 'ASTRID_APP_LOOPBACK_ORIGIN=off and --hosted-origin cannot both be set');
-  process.exit(1);
+  exit(1);
 }
 const hostedOrigin = resolveHostedOrigin({
   explicit: hostedOriginEnvironment ?? hostedOriginArgument,
@@ -120,11 +224,11 @@ function requireExactHttpsOrigin(value, details, friendly = BAD_HOSTED_ORIGIN) {
     parsed = new URL(value);
   } catch {
     fail(friendly, details);
-    process.exit(1);
+    exit(1);
   }
   if (parsed.protocol !== 'https:' || parsed.origin !== value) {
     fail(friendly, details);
-    process.exit(1);
+    exit(1);
   }
   return value;
 }
@@ -142,13 +246,13 @@ function resolveHostedOrigin({ explicit, configPath }) {
     config = JSON.parse(readFileSync(configPath, 'utf8'));
   } catch (error) {
     fail(CANT_START, `cannot read the hosted origin at ${configPath}: ${error instanceof Error ? error.message : String(error)}`);
-    process.exit(1);
+    exit(1);
   }
   const configured = config?.origin;
   if (configured === null) return null;
   if (typeof configured !== 'string') {
     fail(CANT_START, message);
-    process.exit(1);
+    exit(1);
   }
   return requireExactHttpsOrigin(configured, message, CANT_START);
 }
@@ -250,7 +354,8 @@ function requireLoopbackEndpoint(raw) {
   return endpoint;
 }
 
-async function verifyRuntime(endpoint, token, expectedIdentity) {
+const NOT_RUNNING = Symbol('Runtime is not running');
+async function verifyRuntime(endpoint, token, expectedIdentity, allowStart = false) {
   let expectedSchemaDigest;
   try {
     expectedSchemaDigest = readGeneratedSchemaDigest(generatedMetadataPath);
@@ -265,14 +370,23 @@ async function verifyRuntime(endpoint, token, expectedIdentity) {
     });
     if (!response.ok) return fail(ENGINE_STOPPED, `runtime health check returned HTTP ${response.status}`);
     const health = await response.json();
+    const incompatible = (actual, reason) => {
+      const selected = runtimeCommand('restart');
+      const quote = (value) => /^[A-Za-z0-9_./:=+-]+$/.test(value) ? value : `'${value.replaceAll("'", "'\"'\"'")}'`;
+      const invocation = [selected.command, ...selected.args.filter((value) => value !== '--json')].map(quote).join(' ');
+      const restart = `${selected.cwd ? `cd ${quote(selected.cwd)} && ` : ''}${invocation}`;
+      console.error(`Astrid: Runtime ${actual?.protocol ?? 'unknown'} schema ${actual?.schema_digest ?? 'unknown'} is incompatible with App workspace.v1 schema ${expectedSchemaDigest}; ${reason}; restart: ${restart}`);
+      process.exitCode = 1;
+      return null;
+    };
     if (health?.status !== 'ok' || health?.protocol !== 'workspace.v1') {
-      return fail(CANT_START, 'runtime health check did not report workspace.v1/ok');
+      return incompatible(health, 'runtime health check did not report workspace.v1/ok');
     }
     if (health?.runtime_instance_id !== expectedIdentity.runtimeInstanceId) {
       return fail(ENGINE_CHANGED, 'Runtime health instance does not match the selected Astrid profile');
     }
     const digestError = schemaDigestMismatch(health?.schema_digest, expectedSchemaDigest);
-    if (digestError) return fail(CANT_START, digestError);
+    if (digestError) return incompatible(health, 'runtime schema digest mismatch');
 
     const handshakeResponse = await fetch(new URL('/v1/handshake', endpoint), {
       method: 'POST',
@@ -288,13 +402,13 @@ async function verifyRuntime(endpoint, token, expectedIdentity) {
     if (!handshakeResponse.ok) return fail(CANT_START, `Runtime identity handshake returned HTTP ${handshakeResponse.status}`);
     const handshake = await handshakeResponse.json();
     const handshakeDigestError = schemaDigestMismatch(handshake?.schema_digest, expectedSchemaDigest);
-    if (handshakeDigestError) return fail(CANT_START, handshakeDigestError);
+    if (handshakeDigestError) return incompatible(handshake, 'Runtime handshake schema digest mismatch');
     if (handshake?.protocol !== 'workspace.v1'
       || handshake?.actor_id !== expectedIdentity.actorId
       || FORBIDDEN_ACTORS.has(handshake?.actor_id)
       || handshake?.realm_id !== expectedIdentity.realmId
       || !exactStringList(handshake?.scopes, RUNTIME_SCOPES)) {
-      return fail(CANT_START, 'Runtime handshake actor, realm, protocol, or product scopes do not match the selected Astrid profile');
+      return incompatible(handshake, 'Runtime handshake actor, realm, protocol, or product scopes do not match the selected Astrid profile');
     }
 
     const realmResponse = await fetch(new URL('/v1/realm', endpoint), {
@@ -308,28 +422,58 @@ async function verifyRuntime(endpoint, token, expectedIdentity) {
     }
     return true;
   } catch (error) {
+    if (allowStart && error.cause?.code === 'ECONNREFUSED') return NOT_RUNNING;
     return fail(ENGINE_STOPPED, `runtime is unavailable at ${endpoint.origin} (run astrid-runtime up --profile astrid): ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
-const discovery = readJson(discoveryPath, 'runtime discovery', NOT_SET_UP);
-if (!discovery) process.exit(process.exitCode ?? 1);
-const endpoint = requireLoopbackEndpoint(discovery.endpoint);
-if (!endpoint) process.exit(process.exitCode ?? 1);
-const credentialPath = discovery.credential_file;
-if (typeof credentialPath !== 'string' || !credentialPath.trim()) process.exit(fail(CANT_START, 'discovery has no credential_file') ? 1 : 1);
-const credential = readProductCredential(credentialPath, 'runtime credential');
-if (!credential) process.exit(process.exitCode ?? 1);
-const expectedIdentity = requireIdentity(discovery, discoveryPath, credential);
-if (!expectedIdentity) process.exit(process.exitCode ?? 1);
-if (!(await verifyRuntime(endpoint, credential.token, expectedIdentity))) process.exit(process.exitCode ?? 1);
-if (paired && !pairedRelayOrigin) process.exit(fail(CANT_START, '--paired requires ASTRID_APP_PAIRED_RELAY_ORIGIN') ? 1 : 1);
+function validateDiscovery(discovery) {
+  const endpoint = requireLoopbackEndpoint(discovery.endpoint);
+  if (!endpoint) return null;
+  const credentialPath = discovery.credential_file;
+  if (typeof credentialPath !== 'string' || !credentialPath.trim()) return fail(CANT_START, 'discovery has no credential_file');
+  const credential = readProductCredential(credentialPath, 'runtime credential');
+  if (!credential) return null;
+  const expectedIdentity = requireIdentity(discovery, discoveryPath, credential);
+  return expectedIdentity ? { endpoint, credentialPath, credential, expectedIdentity } : null;
+}
+
+let discovery = existsSync(discoveryPath) || checkOnly || buildOnly
+  ? readJson(discoveryPath, 'runtime discovery', NOT_SET_UP) : null;
+if (process.exitCode) exit(1);
+if (Number.isInteger(discovery?.pid) && discovery.pid > 0) {
+  try { process.kill(discovery.pid, 0); }
+  catch (error) { if (error.code === 'ESRCH') discovery = null; else throw error; }
+}
+let selected = discovery ? validateDiscovery(discovery) : null;
+if (discovery && !selected) exit(1);
+let verified = selected ? await verifyRuntime(selected.endpoint, selected.credential.token, selected.expectedIdentity, !checkOnly && !buildOnly) : NOT_RUNNING;
+if (interrupted) exit(130);
+if (verified === NOT_RUNNING && !checkOnly && !buildOnly) {
+  const result = await runRuntimeCommand('up'); // CLI publishes discovery only after its owner passes readiness.
+  if (!['started', 'reconnected'].includes(result.status)) throw new Error('Runtime up did not report started or reconnected');
+  // Runtime publishes here after readiness; CLI output cannot redirect our data root.
+  discoveryPath = resolve(runtimeSettings.dataRoot, 'runtime', 'discovery.json');
+  discovery = readJson(discoveryPath, 'runtime discovery', NOT_SET_UP);
+  if (result.status === 'started' && discovery?.runtime_instance_id) {
+    ownedRuntime = { discoveryPath, instanceId: discovery.runtime_instance_id };
+  }
+  if (!discovery) exit(1);
+  selected = validateDiscovery(discovery);
+  if (!selected) exit(1);
+  verified = await verifyRuntime(selected.endpoint, selected.credential.token, selected.expectedIdentity);
+}
+if (verified === NOT_RUNNING) exit(fail(NOT_SET_UP, `no live Runtime discovery at ${discoveryPath}`) ? 1 : 1);
+if (!verified) exit(process.exitCode ?? 1);
+if (interrupted) exit(130);
+const { endpoint, credentialPath, credential, expectedIdentity } = selected;
+if (paired && !pairedRelayOrigin) exit(fail(CANT_START, '--paired requires ASTRID_APP_PAIRED_RELAY_ORIGIN') ? 1 : 1);
 
 const acpToken = process.env.ASTRID_ACP_BRIDGE_TOKEN?.trim() || randomBytes(32).toString('base64url');
 const acpPort = process.env.VITE_ASTRID_ACP_BRIDGE_PORT ?? '17335';
 const runtimeProxyPort = process.env.VITE_ASTRID_DYNAMIC_PROXY_PORT?.trim() || '17336';
 if (!/^\d+$/.test(runtimeProxyPort) || Number(runtimeProxyPort) < 1 || Number(runtimeProxyPort) > 65535) {
-  process.exit(fail(CANT_START, 'VITE_ASTRID_DYNAMIC_PROXY_PORT must be an integer from 1 to 65535') ? 1 : 1);
+  exit(fail(CANT_START, 'VITE_ASTRID_DYNAMIC_PROXY_PORT must be an integer from 1 to 65535') ? 1 : 1);
 }
 
 /** Resolves true once something listens on the port, false at the deadline or when `aborted()` turns true. */
@@ -393,24 +537,18 @@ const healthyLine = `workspace.v1 runtime healthy at ${endpoint.origin}; Astrid 
 if (checkOnly) {
   if (verbose) console.log(healthyLine);
   console.log('Astrid is ready.');
-  process.exit(0);
+  exit(0);
 }
 
 // The build retains this identity for hosted/paired fallback. Local preview
 // serves a fresh discovery-backed binding on each page load.
 if (buildOnly) {
   if (verbose) console.log(healthyLine);
-  const build = spawn('npm', ['run', 'build'], { stdio: 'inherit', env });
-  process.on('SIGINT', () => build.kill('SIGINT'));
-  process.on('SIGTERM', () => build.kill('SIGTERM'));
+  const build = spawnService('npm', ['run', 'build'], { kind: 'vite', stdio: 'inherit', env });
   build.on('error', (error) => { fail(CANT_START, `could not build Astrid App: ${error.message}`); process.exitCode = 1; });
-  build.on('exit', async (code, signal) => {
-    if (code === 0 && !signal && !(await verifyRuntime(endpoint, credential.token, expectedIdentity))) {
-      process.exitCode = 1;
-      return;
-    }
-    process.exitCode = code ?? 1;
-  });
+  const [code, signal] = await new Promise((resolveExit) => build.once('close', (...result) => resolveExit(result)));
+  if (code === 0 && !signal && !(await verifyRuntime(endpoint, credential.token, expectedIdentity))) process.exitCode = 1;
+  else process.exitCode = process.exitCode || (code ?? 1);
 } else {
 
 const COULDNT_START = "Astrid couldn't start. Run npm run dev:local -- --verbose to see why.";
@@ -465,17 +603,18 @@ if (hostedOrigin && loopbackPort !== '0') {
     // A second launcher for the same Astrid: the first one is serving, so start nothing and point to the same place.
     console.log('Astrid is already running in another window.');
     printOpenBlock();
-    process.exit(0);
+    exit(0);
   }
-  if (holder.kind === 'other_astrid') process.exit(fail(OTHER_ASTRID_RUNNING, holder.details) ? 1 : 1);
-  if (holder.kind === 'program') process.exit(fail(PROGRAM_IN_THE_WAY, holder.details) ? 1 : 1);
+  if (holder.kind === 'other_astrid') exit(fail(OTHER_ASTRID_RUNNING, holder.details) ? 1 : 1);
+  if (holder.kind === 'program') exit(fail(PROGRAM_IN_THE_WAY, holder.details) ? 1 : 1);
 }
 
 // The app's own port, checked the way the gateway's was: if anything already listens there, Vite (`--strictPort`) cannot
-// start, and whatever answers would otherwise look like Astrid's app. Nothing has been started yet, so nothing needs stopping.
+// start, and whatever answers would otherwise look like Astrid's app. No App services have started; cleanup releases any owned Runtime.
 if (port !== '0' && await waitForPort(port, 0)) {
-  process.exit(fail(PROGRAM_IN_THE_WAY, `port ${port} is in use`) ? 1 : 1);
+  exit(fail(PROGRAM_IN_THE_WAY, `port ${port} is in use`) ? 1 : 1);
 }
+if (interrupted) exit(130);
 
 // With a hosted address, the technical lines are held back (`--verbose` prints them after the Open block). Without one
 // there is no Open block, so the launcher prints what it always did.
@@ -527,20 +666,21 @@ if (hostedOrigin) console.log('Starting Astrid…');
 technical(healthyLine);
 
 let connector;
-const runtimeProxy = spawn(process.execPath, ['scripts/runtime-discovery-proxy.mjs'], {
+const runtimeProxy = spawnService(process.execPath, ['scripts/runtime-discovery-proxy.mjs'], {
   stdio: piped,
   env: serviceEnvironment({ ASTRID_RUNTIME_PROXY_PORT: runtimeProxyPort, ASTRID_WORKSPACE_DISCOVERY: discoveryPath }),
 });
 const proxyOutput = watch(runtimeProxy);
-if (!(await waitForPort(runtimeProxyPort))) {
-  runtimeProxy.kill('SIGTERM');
+const proxyReady = await waitForPort(runtimeProxyPort);
+if (interrupted) exit(130);
+if (!proxyReady) {
   flushHeld();
-  process.exit(fail(COULDNT_START, `runtime discovery proxy did not start on port ${runtimeProxyPort}${withLast(proxyOutput)}`) ? 1 : 1);
+  exit(fail(COULDNT_START, `runtime discovery proxy did not start on port ${runtimeProxyPort}${withLast(proxyOutput)}`) ? 1 : 1);
 }
-const acpBridge = spawn('npm', [...npmQuiet, 'run', 'dev:astrid-acp'], { stdio: piped, env: serviceEnvironment() });
+const acpBridge = spawnService('npm', [...npmQuiet, 'run', 'dev:astrid-acp'], { stdio: piped, env: serviceEnvironment() });
 const acpOutput = watch(acpBridge);
 const gateway = hostedOrigin
-  ? spawn(process.execPath, gatewayChildArgs({
+  ? spawnService(process.execPath, gatewayChildArgs({
     discoveryPath,
     credentialPath,
     hostedOrigin,
@@ -566,18 +706,18 @@ const gatewayOutput = gateway
   : null;
 if (hostedOrigin) technical(`loopback gateway starting on 127.0.0.1:${loopbackPort} for ${hostedOrigin}${launcherOptions.acp ? ' (ACP on)' : ''}`);
 if (paired) {
-  connector = spawn('npx', ['tsx', 'scripts/astrid-local-connector.ts', '--discovery', discoveryPath, '--relay-origin', pairedRelayOrigin, ...(resetPairing ? ['--reset-pairing'] : [])], {
+  connector = spawnService('npx', ['tsx', 'scripts/astrid-local-connector.ts', '--discovery', discoveryPath, '--relay-origin', pairedRelayOrigin, ...(resetPairing ? ['--reset-pairing'] : [])], {
     stdio: 'inherit',
     env,
   });
 }
 
-const child = spawn('npm', [...npmQuiet, ...viteChildArgs({
+const child = spawnService('npm', [...npmQuiet, ...viteChildArgs({
   preview: launcherOptions.preview,
   previewDir: previewDirectory,
   quiet: !showTechnical,
 })], {
-  stdio: piped,
+  kind: 'vite', stdio: piped,
   // The local Vite process is the connector's fixed compose/ACP destination;
   // it must not install another relay and accidentally loop back to itself.
   env: serviceEnvironment(paired ? { ASTRID_APP_PAIRED_RELAY_ENABLED: '0', ASTRID_LOCAL_COMPOSE_URL: `http://127.0.0.1:${port}/api/astrid/generation/compose` } : {}),
@@ -587,12 +727,8 @@ const viteOutput = watch(child);
 const shutdown = (signal) => {
   if (shuttingDown) return;
   shuttingDown = true;
-  if (child.exitCode === null) child.kill(signal);
-  if (connector?.exitCode === null) connector.kill(signal);
-  if (acpBridge.exitCode === null) acpBridge.kill(signal);
-  if (gateway?.exitCode === null) gateway.kill(signal);
-  if (runtimeProxy.exitCode === null) runtimeProxy.kill(signal);
   gatewayListening(null);
+  void cleanup(signal).catch((error) => fail(CANT_START, error.message));
 };
 /** A failure: the technical output held back so far is shown, then the friendly line and its details. */
 const stopWith = (friendly, details) => {
@@ -609,12 +745,8 @@ child.on('exit', (code, signal) => {
     // Vite never listened: usually the app's port is taken (`--strictPort`).
     stopWith(/already in use|EADDRINUSE/i.test(viteOutput.tail) ? PROGRAM_IN_THE_WAY : COULDNT_START, `Vite exited${signal ? ` with ${signal}` : ` with code ${code}`}${withLast(viteOutput)}`);
   }
-  if (connector?.exitCode === null) connector.kill('SIGTERM');
-  if (acpBridge.exitCode === null) acpBridge.kill('SIGTERM');
-  if (gateway?.exitCode === null) gateway.kill('SIGTERM');
-  if (runtimeProxy.exitCode === null) runtimeProxy.kill('SIGTERM');
-  if (signal && !shuttingDown) process.kill(process.pid, signal);
-  else process.exitCode = process.exitCode || (code ?? 0);
+  shutdown('SIGTERM');
+  process.exitCode = process.exitCode || (code ?? 0);
 });
 connector?.on('error', (error) => { fail(CANT_START, `could not start paired connector: ${error.message}`); });
 acpBridge.on('error', (error) => stopWith(AGENT_CHAT_STOPPED, `could not start Astrid ACP bridge: ${error.message}`));
@@ -649,6 +781,18 @@ if (hostedOrigin) {
       stopWith(COULDNT_START, `nothing listened on 127.0.0.1:${gatewayPort} and 127.0.0.1:${port} in time`);
     }
   }
+} else if (await waitForPort(port, VITE_START_TIMEOUT_MS, () => shuttingDown)) {
+  console.log(`Local App: http://127.0.0.1:${port}`);
+}
+await services.find(({ child: owned }) => owned === child).done;
+
+}
 }
 
+try { await main(); }
+catch (error) {
+  if (error instanceof LauncherExit) process.exitCode = error.code;
+  else fail(CANT_START, error.message);
+} finally {
+  try { await cleanup(); } catch (error) { fail(CANT_START, error.message); }
 }
