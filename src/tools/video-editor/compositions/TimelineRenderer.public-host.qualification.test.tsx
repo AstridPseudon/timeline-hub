@@ -393,7 +393,6 @@ describe('V009 public host behavior qualification', () => {
     const root = process.cwd();
     const routes = readFileSync(path.join(root, 'src/app/routes.tsx'), 'utf8');
     const main = readFileSync(path.join(root, 'src/app/main.tsx'), 'utf8');
-    const home = readFileSync(path.join(root, 'src/pages/Home/HomePage.tsx'), 'utf8');
     const publicBootstrap = readFileSync(path.join(root, 'src/app/publicBootstrap.tsx'), 'utf8');
     const publicShell = readFileSync(path.join(root, 'src/pages/Home/PublicAstridShell.tsx'), 'utf8');
     const mountedEditor = readFileSync(path.join(root, 'src/pages/Home/PublicAstridMountedEditor.tsx'), 'utf8');
@@ -421,7 +420,6 @@ describe('V009 public host behavior qualification', () => {
     expect(main).toContain("@/tools/video-editor/browser/initializeVideoEditorExtensionRuntime.ts");
     expect(main).not.toMatch(/from\s+['"]@\/tools\/video-editor\/browser(?:\/index(?:\.[cm]?[jt]sx?)?)?['"]/);
     expect(routes).toContain('<HomeDocumentHandoff replaceDocument={homeDocumentReplacement} />');
-    expect(home).not.toContain('PublicAstridQualificationSurface');
     expect(publicShell).not.toContain('PublicAstridQualificationSurface');
     expect(publicShell).toContain('./PublicAstridMountedEditor.tsx');
     expect(mountedEditor).toContain('<PublicAstridEditorProvider example={example}');

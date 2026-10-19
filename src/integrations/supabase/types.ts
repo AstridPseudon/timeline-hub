@@ -2004,10 +2004,6 @@ export type Database = {
         Args: { p_shot_id: string }
         Returns: number
       }
-      create_referral_from_session: {
-        Args: { p_fingerprint: string; p_session_id: string }
-        Returns: string
-      }
       create_shot_with_image: {
         Args: {
           p_generation_id: string
@@ -2438,15 +2434,6 @@ export type Database = {
           last_updated: string
           record_id: string
         }[]
-      }
-      track_referral_visit: {
-        Args: {
-          p_referrer_username: string
-          p_session_id?: string
-          p_visitor_fingerprint?: string
-          p_visitor_ip?: unknown
-        }
-        Returns: string
       }
       unposition_and_normalize: {
         Args: { p_shot_generation_id: string; p_shot_id: string }
