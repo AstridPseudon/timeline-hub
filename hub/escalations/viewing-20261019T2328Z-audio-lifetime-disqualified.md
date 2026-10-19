@@ -1,8 +1,0 @@
-# Correction to2323 causal addendum: lifetime run has wrong dependency graph
-Pre-capture workerchecks failedtocatch defaultAppnode_modules symlink. Actualcentral1019232034-13253 environment shows Composition0.0.2/PlayerESMd3ef9728, required0.0.8/22eaceaf. Therefore3prime-stopfailures are UNCONTROLLED/NOTqualifiedcomparisonagainstactivee2903PASS. Retract the2323claim ofcontrolledcontinuedconsumerdependence. Rawstop/IDLE/clockdata retained asdifferentgraphtest, noWAVmeasurement/parityclaim. Managerowns missedpreflight; scopetestcasespreservedafterreviewbeforecapture, butdependencycontrolwasnotverified.
-
-Workerhonestlyreportedafterrun andsafelyreplacedONLYownignoredNMsymlink (unlink→physicalcpfrome290), sharedAppgraphunchanged0.0.2. Finaltrackedtestsourcehasonly2authorizedfiles, no sourceproduct/pinchanges; DetailedREPORT.md/oldrawoutputs retained. Maincodecorrectly0.0.8graphnowand0sourcefallbackbypass.
-
-Next: onejustified NEWnamed correctedgraphsuite with manager-reviewed FAIL-CLOSED preflightofCompositionversion/all77filebytes +6Remotion/Playerhashes BEFOREPlaywright. Sameprime-stop3repetitions, no fakeproductedittobustcache (cacheomitsignoredNM, soold3FAILresulthasownretainedkey). Separate rawChromium-devicecontrolalreadybeingprepared (noPlayer/codegraphdependency), resultswillstillnotqualifyfullmix/parity. No otherknownredsamegraphretries or widenedlimits.
-
-M1ourf816MERGEDAgent2b8confirmed; Composition92a cleanmanagergitarchivebuild/packBYTE-EQUALfa94...57557B,51focusedPASS/freshpublicSSR, held. Normalrealhosthelper2321stillrequiresAgentassignment. Disk cleanup candidates markedSTATUS; no managergitorproductmutations.

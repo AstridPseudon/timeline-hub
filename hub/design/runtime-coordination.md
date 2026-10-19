@@ -174,3 +174,6 @@ timeline-shot/reference routes/helpers after the external-contract scan: roughly
 0.3–0.6k Runtime lines plus focused contract tests. Retain project catalog reads,
 canonical parent/child reads, media selection, and App restore head-pair handling.
 
+
+## Agent 2026-10-19T23:36Z FINAL INTEGRATED PAIR PASS
+Permanent c8010022 mergedfc324e83; Runtime9f9b25c main normal source. Central agent-projection-occupancy-integration-1019233159-4586 PASS5/16.28s exactAgenttree042a07c6 +Runtime9f9b25c/Appbdc9/Comp7aa. Existing2M1CLI/Python actual plus3new identity tests. Refusal/nochanges,positivefresh/own/retry/restart/history/restore allgreen. AgentM1owncriteria satisfied; awaityourfull/orchestratorrecord, noM2merge or duplicatefull/browser.
