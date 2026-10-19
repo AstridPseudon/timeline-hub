@@ -55,6 +55,7 @@ import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineO
 import { ExtensionActivityRegion, type ExtensionStatusEvent } from '@/tools/video-editor/components/ExtensionActivityRegion';
 import { ProposalPanel } from '@/tools/video-editor/components/ProposalPanel/ProposalPanel.tsx';
 import { TimelineEditorShellToolbar } from './TimelineEditorShellToolbar.tsx';
+import { TimelineCommandRecovery } from './TimelineCommandRecovery.tsx';
 import { TimelineExportMenu } from './TimelineExportMenu.tsx';
 import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
 import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
@@ -818,30 +819,7 @@ function TimelineEditorShellCoreComponent({
   ) : null;
 
   const commandSession = chrome.commandSession;
-  const commandState = commandSession?.state;
-  const commandBanner = commandSession && commandState && (
-    commandState.recoverableOwners.length > 0 || ['retry', 'error', 'conflict'].includes(commandState.status)
-  ) ? (
-    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-2 text-sm text-foreground">
-      <span>{commandState.recoverableOwners.length > 0
-        ? 'Unsaved timeline edits were found. Choose an editor session to recover.'
-        : commandState.status === 'conflict'
-          ? 'These timeline edits conflict with another change. Your edits are retained.'
-          : commandState.error ?? 'These timeline edits are still unsaved.'}</span>
-      <div className="flex items-center gap-2">
-        {commandState.recoverableOwners.map((ownerId, index) => (
-          <Button key={ownerId} type="button" size="sm" variant="outline" onClick={() => {
-            void commandSession.recover(ownerId).catch((error) => runtime.toast.error(String(error)));
-          }}>Recover editor {index + 1}</Button>
-        ))}
-        {commandState.recoverableOwners.length === 0 && commandState.status !== 'conflict' && (
-          <Button type="button" size="sm" variant="outline" onClick={() => {
-            void commandSession.retry().catch((error) => runtime.toast.error(String(error)));
-          }}>Retry timeline edits</Button>
-        )}
-      </div>
-    </div>
-  ) : null;
+  const commandRecoveryKey = `${runtime.hostContext?.projectId ?? runtime.project?.projectId ?? ''}:${runtime.timelineId ?? timelineId}`;
 
   /** The timeline region, contained so a render throw under it cannot take the
    *  toolbar (and therefore undo) down with it. Shared by all three layout
@@ -858,7 +836,7 @@ function TimelineEditorShellCoreComponent({
       {incompatibleBanner}
       {watchdogBanner}
       {recoveryBanner}
-      {commandBanner}
+      <TimelineCommandRecovery key={commandRecoveryKey} commandSession={commandSession} />
       {chrome.loadError && !(recoveryCardShowing && hasLoadedTimeline) ? (
         // The hosted build's "Astrid stopped" / "restarted" card already says what to do about the same failure.
         recoveryCardShowing ? null : <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />

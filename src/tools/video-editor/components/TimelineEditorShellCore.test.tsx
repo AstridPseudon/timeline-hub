@@ -1653,27 +1653,31 @@ describe('TimelineEditorShellCore — recovery draft banner', () => {
     __chromeOverrides = {};
   });
 
-  it('requires an explicit persisted editor choice before command recovery', () => {
+  it('mounts one recovery surface and requires an explicit persisted editor choice', async () => {
     const recover = vi.fn(async () => {});
     __chromeOverrides = { commandSession: { recover, retry: vi.fn(async () => {}), state: {
       status: 'recovery', error: null, recoverableOwners: ['owner-a', 'owner-b'], ownerId: null, canUndo: false,
     } } };
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
     expect(recover).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Recover editor 2' }));
-    expect(recover).toHaveBeenCalledWith('owner-b');
+    expect(screen.getAllByTestId('timeline-command-recovery')).toHaveLength(1);
+    const button = screen.getByRole('button', { name: 'Recover saved edits (session 2)' });
+    expect(button).toHaveAttribute('data-owner-id', 'owner-b');
+    fireEvent.click(button);
+    await waitFor(() => expect(recover).toHaveBeenCalledWith('owner-b'));
     expect(screen.queryByRole('button', { name: 'Discard' })).toBeNull();
   });
 
-  it('offers exact command retry without legacy snapshot recovery actions', () => {
+  it('offers exact command retry through the final Retry save control', async () => {
     const retry = vi.fn(async () => {});
     __chromeOverrides = { commandSession: { recover: vi.fn(), retry, state: {
       status: 'retry', error: 'Acknowledgement unknown', recoverableOwners: [], ownerId: 'owner', canUndo: false,
     } } };
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
-    expect(screen.getByText('Acknowledgement unknown')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Retry timeline edits' }));
-    expect(retry).toHaveBeenCalledOnce();
+    expect(screen.getByRole('alert')).toHaveTextContent('Acknowledgement unknown');
+    expect(screen.getByTestId('timeline-command-retry')).toHaveTextContent('Retry save');
+    fireEvent.click(screen.getByTestId('timeline-command-retry'));
+    await waitFor(() => expect(retry).toHaveBeenCalledOnce());
   });
 
   it('shows a retained command conflict without snapshot replacement choices', () => {
@@ -1681,8 +1685,8 @@ describe('TimelineEditorShellCore — recovery draft banner', () => {
       status: 'conflict', error: 'read changed', recoverableOwners: [], ownerId: 'owner', canUndo: false,
     } } };
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
-    expect(screen.getByText('These timeline edits conflict with another change. Your edits are retained.')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Retry timeline edits' })).toBeNull();
+    expect(screen.getByText('Your saved edits conflict with another change and are retained for resolution.')).toBeTruthy();
+    expect(screen.queryByTestId('timeline-command-retry')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Use latest version' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Keep my changes' })).toBeNull();
   });
