@@ -18,8 +18,8 @@ describe('WorkspaceConnectionRecovery', () => {
     expect(screen.getByTestId('workspace-connection-diagnostic').closest('details')).not.toHaveAttribute('open');
     fireEvent.click(screen.getByText('Show full connection error'));
     expect(screen.getByTestId('workspace-connection-diagnostic').closest('details')).toHaveAttribute('open');
-    expect(screen.getByRole('button', { name: 'Give restart instructions to my agent' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /restart it myself/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy restart instructions' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show restart steps' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
     expect(onRetry).toHaveBeenCalledOnce();
 
@@ -37,7 +37,7 @@ describe('WorkspaceConnectionRecovery', () => {
       onRetry={vi.fn()}
     />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Give restart instructions to my agent' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy restart instructions' }));
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
     const brief = String(writeText.mock.calls[0][0]);
     expect(brief).toContain('npm run dev:local');
@@ -57,7 +57,7 @@ describe('WorkspaceConnectionRecovery', () => {
     });
     render(<WorkspaceConnectionRecovery retrying={false} error="Bridge timeout." onRetry={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Give restart instructions to my agent' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy restart instructions' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Clipboard access is unavailable'));
     expect((screen.getByLabelText('Restart brief') as HTMLTextAreaElement).value).toContain('Bridge timeout.');
   });
@@ -65,12 +65,22 @@ describe('WorkspaceConnectionRecovery', () => {
   it('reveals manual restart steps that preserve the existing installation and Runtime data', () => {
     render(<WorkspaceConnectionRecovery retrying={false} error="Runtime is offline." onRetry={vi.fn()} />);
     expect(screen.queryByText(/Return to the same Astrid App checkout/)).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: /restart it myself/i }));
+    const toggle = screen.getByRole('button', { name: 'Show restart steps' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
 
     expect(screen.getByText(/Return to the same Astrid App checkout/)).toBeInTheDocument();
     expect(screen.getByText('npm run dev:local')).toBeInTheDocument();
     expect(screen.getByText(/restart that same Runtime with its current command, profile, and data-root configuration/)).toBeInTheDocument();
     expect(screen.getByText(/Do not reset or reinstall the workspace/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy restart instructions' }));
+    expect(screen.getByText(/Return to the same Astrid App checkout/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Hide restart steps' }));
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText(/Return to the same Astrid App checkout/)).toBeNull();
+    expect(screen.getByLabelText('Restart brief')).toBeInTheDocument();
   });
 
   it('builds the agent brief with only a sanitized HTTP(S) target', () => {
