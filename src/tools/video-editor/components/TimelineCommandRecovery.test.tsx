@@ -74,12 +74,26 @@ describe('TimelineCommandRecovery', () => {
 
   it('keeps a native lock failure readable while retaining the unsaved-work warning', () => {
     render(<TimelineCommandRecovery commandSession={session({
-      status: 'error', recoverableOwners: [], ownerId: null, error: 'Exclusive browser locks are unavailable',
+      status: 'error', recoverableOwners: [], ownerId: 'owner-a', error: 'Exclusive browser locks are unavailable',
     })} />);
 
     expect(screen.getByRole('alert')).toHaveTextContent('Your unsaved changes are still here');
     expect(screen.getByRole('alert')).toHaveTextContent('could not safely hold the recovery session');
     expect(screen.getByRole('alert')).not.toHaveTextContent(/exclusive|browser locks|outbox/i);
+  });
+
+  it('offers retry for an initialization error without claiming work was retained', async () => {
+    const retry = vi.fn(async () => {});
+    const commandSession = session({
+      status: 'error', recoverableOwners: [], ownerId: null, canUndo: false, error: 'IndexedDB is unavailable',
+    });
+    commandSession.retry = retry;
+    render(<TimelineCommandRecovery commandSession={commandSession} />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Saving is unavailable. Retry to try again.');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('unsaved changes are still here');
+    fireEvent.click(screen.getByRole('button', { name: 'Retry save' }));
+    await waitFor(() => expect(retry).toHaveBeenCalledOnce());
   });
 
   it('distinguishes a retained conflict from an uncertain retry and avoids clash wording for retry errors', () => {

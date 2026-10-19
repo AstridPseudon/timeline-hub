@@ -1,28 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import type { TimelineCommandSessionSurface } from '../hooks/useTimelineCommandSession.ts';
 
-export type TimelineCommandSessionStatus =
-  | 'loading'
-  | 'saved'
-  | 'dirty'
-  | 'saving'
-  | 'retry'
-  | 'conflict'
-  | 'error'
-  | 'recovery';
-
-export type TimelineCommandRecoverySession = {
-  state: {
-    status: TimelineCommandSessionStatus;
-    error: string | null;
-    ownerId: string | null;
-    recoverableOwners: string[];
-    canUndo: boolean;
-  };
-  retry: () => Promise<void>;
-  recover: (ownerId: string) => Promise<void>;
-};
+export type TimelineCommandRecoverySession = TimelineCommandSessionSurface;
 
 export interface TimelineCommandRecoveryProps {
   commandSession?: TimelineCommandRecoverySession;
@@ -63,6 +44,7 @@ export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecov
 
   const isConflict = state.status === 'conflict';
   const isRetry = state.status === 'retry';
+  const hasRetainedWork = Boolean(state.ownerId || state.canUndo || hasRecoveryChoices);
   const isBusy = busyAction !== null;
   const stateError = readableError(state.error);
   const message = hasRecoveryChoices
@@ -71,6 +53,8 @@ export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecov
       ? 'Your changes are retained and need resolution before they can be saved.'
       : isRetry
         ? 'The save result is uncertain. Retry save to check it without creating another edit.'
+        : state.status === 'error' && !hasRetainedWork
+          ? 'Saving is unavailable. Retry to try again.'
         : state.status === 'saving'
           ? 'Your timeline changes are being saved.'
           : state.status === 'dirty'
@@ -104,7 +88,7 @@ export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecov
     >
       <div className="min-w-0">
         <p>{message}</p>
-        {stateError && stateError !== message && !hasRecoveryChoices && !isConflict && (
+        {stateError && stateError !== message && hasRetainedWork && !hasRecoveryChoices && !isConflict && (
           <p className="mt-1 text-xs text-muted-foreground">{stateError}</p>
         )}
         {actionError && <p className="mt-1 text-xs text-destructive">{actionError}</p>}
@@ -129,7 +113,7 @@ export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecov
             );
           })}
         </div>
-      ) : isRetry ? (
+      ) : isRetry || state.status === 'error' ? (
         <Button
           type="button"
           size="sm"
