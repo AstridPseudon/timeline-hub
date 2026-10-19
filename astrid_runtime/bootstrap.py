@@ -24,6 +24,7 @@ import uuid
 
 from .io import atomic_write_json, owner_only, read_json, remove_file
 from runtime_protocol import platform as runtime_platform
+from runtime_protocol import cancellation
 from .paths import RuntimePaths
 from runtime_protocol.lifecycle import interruption_fence
 
@@ -299,6 +300,8 @@ def _legacy_collision(paths: RuntimePaths, configured: tuple[Path, ...]) -> Path
 
 
 def _read_json_regular(path: Path) -> Any:
+    if runtime_platform.sys.platform == "win32" and path.name in {"astrid.json", "discovery.json"}:
+        return json.loads(runtime_platform.read_private_file(path).decode("utf-8"))
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     fd = os.open(path, flags)
     try:
@@ -389,7 +392,7 @@ def _worker_handoff(value: Mapping[str, Any] | None) -> dict[str, Any]:
         raise BootstrapError("Runtime worker credential handoff is unsafe; " + RECONFIGURE_NEXT_ACTION)
     if not pending:
         try:
-            if not runtime_platform.is_owner_only(path.stat()):
+            if not runtime_platform.is_owner_only(path if runtime_platform.sys.platform == "win32" else path.stat()):
                 raise BootstrapError("Runtime worker credential file must be owner-only; " + RECONFIGURE_NEXT_ACTION)
         except OSError as exc:
             raise BootstrapError("Runtime worker credential handoff is unavailable; " + RECONFIGURE_NEXT_ACTION) from exc
@@ -455,7 +458,8 @@ def _read_support_json(path: Path) -> dict[str, Any] | None:
     except FileNotFoundError:
         return None
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise BootstrapError(f"Neutral support file is missing, malformed, or unsafe: {path}") from exc
+        detail = f": {exc}" if runtime_platform.sys.platform == "win32" else ""
+        raise BootstrapError(f"Neutral support file is missing, malformed, or unsafe: {path}{detail}") from exc
     if not isinstance(value, Mapping):
         raise BootstrapError(f"Neutral support file must contain an object: {path}")
     return dict(value)
@@ -521,8 +525,11 @@ def _selected_realm(catalog: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def _credential(paths: RuntimePaths) -> tuple[str, str]:
-    paths.credentials_dir.mkdir(parents=True, exist_ok=True)
-    owner_only(paths.credentials_dir, directory=True)
+    if runtime_platform.sys.platform == "win32":
+        runtime_platform.private_directory(paths.credentials_dir)
+    else:
+        paths.credentials_dir.mkdir(parents=True, exist_ok=True)
+        owner_only(paths.credentials_dir, directory=True)
     path = paths.credentials_dir / "astrid.json"
     current = _read_support_json(path)
     if current and current.get("scope") == "astrid" and isinstance(current.get("token"), str):
@@ -608,16 +615,26 @@ def _lock_matches(
 @contextmanager
 def _bootstrap_mutex(paths: RuntimePaths):
     """Serialize launchers so two clean launches cannot both start a daemon."""
-    paths.runtime_support.mkdir(parents=True, exist_ok=True)
-    owner_only(paths.runtime_support, directory=True)
+    if runtime_platform.sys.platform == "win32":
+        runtime_platform.private_directory(paths.runtime_support)
+    else:
+        paths.runtime_support.mkdir(parents=True, exist_ok=True)
+        owner_only(paths.runtime_support, directory=True)
     handle = paths.bootstrap_lock_path.open("a+")
-    owner_only(paths.bootstrap_lock_path)
+    locked = False
     try:
+        if runtime_platform.sys.platform == "win32":
+            runtime_platform.owner_only(handle.fileno())
+        else:
+            owner_only(paths.bootstrap_lock_path)
         runtime_platform.lock_file(handle.fileno())
+        locked = True
+        cancellation.check()
         yield
     finally:
         try:
-            runtime_platform.unlock_file(handle.fileno())
+            if locked:
+                runtime_platform.unlock_file(handle.fileno())
         except OSError:
             pass
         handle.close()
@@ -651,7 +668,8 @@ def _rollback_failed_bootstrap(paths: RuntimePaths, boundary: RuntimeBoundary, *
     stop = getattr(boundary, "stop", None)
     if callable(stop):
         try:
-            stop()
+            with cancellation.cleanup_scope():
+                stop()
         except Exception as exc:
             # Removing any support/credential/catalog/realm state here would
             # strand the owner whose cleanup just failed. Keep its controller
@@ -876,7 +894,7 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
     # ``realm`` was synthesized above only when the catalog was empty. Keep
     # this explicit ownership bit so rollback can remove only a fresh root.
     credential_path = paths.credentials_dir / "astrid.json"
-    credential_before = credential_path.read_bytes() if credential_path.is_file() and not credential_path.is_symlink() else None
+    credential_before = runtime_platform.read_private_file(credential_path) if credential_path.is_file() and not credential_path.is_symlink() else None
     source_manifest_path = paths.source_profiles_dir / f"{source.profile}.json"
     source_before = source_manifest_path.read_bytes() if source_manifest_path.is_file() and not source_manifest_path.is_symlink() else None
     try:

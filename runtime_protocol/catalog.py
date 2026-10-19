@@ -190,7 +190,12 @@ class LiveDiscovery:
 
     def publish(self, **fields):
         allowed = {"version", "endpoint", "pid", "process_birth_id", "active_realm", "realm_root", "runtime_instance_id", "protocol_version", "schema_version", "coordinator_epoch", "credential_file", "worker_credential_file", "worker_credential_pending", "worker_actor", "worker_scopes", "door_endpoint", "door_origin"}
-        atomic_json_write(self.path, {k: fields[k] for k in allowed if k in fields})
+        value = {k: fields[k] for k in allowed if k in fields}
+        if platform.sys.platform == "win32":
+            from astrid_runtime.io import atomic_write_json
+            atomic_write_json(self.path, value)
+        else:
+            atomic_json_write(self.path, value)
 
     def clear(self, instance_id: str | None = None):
         if self.path.is_symlink():
@@ -204,6 +209,8 @@ class LiveDiscovery:
                 pass
 
     def read(self):
+        if platform.sys.platform == "win32":
+            return json.loads(platform.read_private_file(self.path).decode("utf-8"))
         fd = os.open(self.path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
         try:
             metadata = os.fstat(fd)

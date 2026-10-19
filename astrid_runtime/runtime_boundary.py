@@ -12,11 +12,11 @@ import json
 import uuid
 from runtime_protocol.dirfd import filesystem as os
 from runtime_protocol import platform
+from runtime_protocol import cancellation
 from pathlib import Path
 import stat
 import subprocess
 import sys
-import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -230,9 +230,8 @@ class LocalRuntimeBoundary:
     @staticmethod
     def _token_file(support_root: Path, token: str) -> Path:
         LocalRuntimeBoundary._validate_path(support_root, "runtime support root")
-        support_root.mkdir(parents=True, exist_ok=True)
-        platform.owner_only(support_root)
-        fd, name = tempfile.mkstemp(prefix=".bootstrap-token-", dir=support_root)
+        platform.private_directory(support_root)
+        fd, name = platform.private_temporary(support_root, ".bootstrap-token-")
         path = Path(name)
         platform.owner_only(path)
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
@@ -489,6 +488,14 @@ class LocalRuntimeBoundary:
 
     @classmethod
     def _read_discovery_file(cls, path: Path) -> dict[str, Any]:
+        if platform.sys.platform == "win32":
+            try:
+                value = json.loads(platform.read_private_file(path).decode("utf-8"))
+            except FileNotFoundError:
+                return {}
+            except OSError as exc:
+                raise BootstrapError(f"Runtime discovery access refused: {exc}") from exc
+            return value if isinstance(value, dict) else {}
         try:
             flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
             fd = os.open(path, flags)
@@ -544,6 +551,7 @@ class LocalRuntimeBoundary:
     def _wait_endpoint(self, support_root: Path, process: subprocess.Popen[str]) -> str:
         deadline = time.monotonic() + self.wait_seconds
         while time.monotonic() < deadline:
+            cancellation.check()
             if process.poll() is not None:
                 cause = self._startup_failure(self._log_path(support_root), self._log_offset)
                 raise BootstrapError(
@@ -561,12 +569,13 @@ class LocalRuntimeBoundary:
             except (TypeError, ValueError):
                 advertised_pid = 0
             if advertised_pid and advertised_pid != process.pid:
-                time.sleep(0.05)
+                cancellation.pause(0.05) if cancellation.active() else time.sleep(0.05)
                 continue
             endpoint = str(discovery.get("endpoint", ""))
             if endpoint and self._http_health(endpoint):
+                cancellation.check()
                 return endpoint
-            time.sleep(0.05)
+            cancellation.pause(0.05) if cancellation.active() else time.sleep(0.05)
         self._terminate(process)
         raise BootstrapError("Runtime daemon did not become healthy before the bounded startup deadline.")
 
@@ -588,8 +597,10 @@ class LocalRuntimeBoundary:
             return None
         request = urllib.request.Request(str(endpoint).rstrip("/") + "/v1/health", headers={"Accept": "application/json"})
         try:
-            with urlopen_loopback(request, timeout=LocalRuntimeBoundary.HEALTH_TIMEOUT_SECONDS) as response:
-                value = json.loads(response.read().decode("utf-8"))
+            def read(timeout):
+                with urlopen_loopback(request, timeout=timeout) as response:
+                    return json.loads(response.read().decode("utf-8"))
+            value = cancellation.retry_timeouts(read, LocalRuntimeBoundary.HEALTH_TIMEOUT_SECONDS)
             if isinstance(value, dict) and value.get("protocol") == WIRE_PROTOCOL:
                 status = value.get("status")
                 if status in ("ok", "degraded"):
@@ -636,18 +647,21 @@ class LocalRuntimeBoundary:
             return {}
         try:
             credential_path = self._validate_path(Path(credential_file), "runtime credential")
-            fd = os.open(credential_path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
-            try:
-                if not stat.S_ISREG(os.fstat(fd).st_mode):
-                    return {}
-                raw = bytearray()
-                while True:
-                    chunk = os.read(fd, 1024 * 1024)
-                    if not chunk:
-                        break
-                    raw.extend(chunk)
-            finally:
-                os.close(fd)
+            if platform.sys.platform == "win32":
+                raw = platform.read_private_file(credential_path)
+            else:
+                fd = os.open(credential_path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+                try:
+                    if not stat.S_ISREG(os.fstat(fd).st_mode):
+                        return {}
+                    raw = bytearray()
+                    while True:
+                        chunk = os.read(fd, 1024 * 1024)
+                        if not chunk:
+                            break
+                        raw.extend(chunk)
+                finally:
+                    os.close(fd)
             token = bytes(raw).decode("utf-8").strip()
             if not token:
                 return {}
@@ -660,7 +674,9 @@ class LocalRuntimeBoundary:
             if not isinstance(realm, Mapping) or not realm.get("realm_id"):
                 return {}
             return {**health, "realm_id": str(realm["realm_id"])}
-        except (BootstrapError, OSError, UnicodeDecodeError, ValueError, json.JSONDecodeError):
+        except (BootstrapError, OSError, UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
+            if platform.sys.platform == "win32" and isinstance(exc, OSError) and not isinstance(exc, FileNotFoundError):
+                raise BootstrapError(f"Runtime credential access refused: {exc}") from exc
             return {}
 
     def validate_owner(
@@ -1093,6 +1109,7 @@ class ForegroundRuntimeBoundary(LocalRuntimeBoundary):
         from runtime_protocol.door import DoorConfig
         from runtime_protocol.local_worker_composition import load_local_worker_composition
 
+        cancellation.check()
         if self.daemon is not None:
             raise BootstrapError("foreground Runtime already owns a daemon")
         self._validate_source(source_profile)
@@ -1122,7 +1139,9 @@ class ForegroundRuntimeBoundary(LocalRuntimeBoundary):
                 local_worker_preparer=composition.preparer if composition else None,
                 local_worker_inspector=composition.inspector if composition else None, door=door)
             self.daemon = daemon
+            cancellation.check()
             daemon.start()
+            cancellation.check()
             identity = default_process_identity(os.getpid())
             if identity is None:
                 raise BootstrapError("foreground Runtime process identity is unavailable")
@@ -1132,7 +1151,8 @@ class ForegroundRuntimeBoundary(LocalRuntimeBoundary):
             return {**self._read_discovery(support), "protocol_version": PROTOCOL_VERSION,
                 "schema_version": SCHEMA_VERSION, "capability_digest": source_profile.capability_digest}
         except BaseException:
-            self.stop()
+            with cancellation.cleanup_scope():
+                self.stop()
             raise
         finally:
             token_file.unlink(missing_ok=True)

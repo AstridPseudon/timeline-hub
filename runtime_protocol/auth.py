@@ -5,7 +5,6 @@ import json
 from .dirfd import filesystem as os
 import secrets
 import stat
-import tempfile
 import threading
 import uuid
 from pathlib import Path
@@ -19,8 +18,7 @@ class CredentialStore:
 
     def __init__(self, root: str | Path):
         self.root = Path(root).resolve()
-        self.root.mkdir(parents=True, exist_ok=True)
-        platform.owner_only(self.root, directory=True)
+        platform.private_directory(self.root)
         self._lock = threading.RLock()
         self._disabled_actors: set[str] = set()
 
@@ -56,11 +54,26 @@ class CredentialStore:
             raise ValidationError(f"{label} is unavailable") from exc
         if path.is_symlink() or not stat.S_ISREG(value.st_mode):
             raise ValidationError(f"{label} must be a regular non-symlink file")
-        if not platform.is_owner_only(value):
+        if platform.sys.platform == "win32":
+            from .windows_security import validate
+            try:
+                validate(path)
+            except OSError as exc:
+                raise ValidationError(f"{label} access refused: {exc}") from exc
+        elif not platform.is_owner_only(value):
             raise ValidationError(f"{label} must be owner-only")
 
+    @staticmethod
+    def _read_bytes(path):
+        if platform.sys.platform != "win32":
+            return path.read_bytes()
+        try:
+            return platform.read_private_file(path)
+        except OSError as exc:
+            raise ValidationError(f"unsafe credential access: {exc}") from exc
+
     def _atomic_replace(self, path: Path, value: bytes) -> None:
-        descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=self.root)
+        descriptor, temporary_name = platform.private_temporary(self.root, f".{path.name}.")
         temporary = Path(temporary_name)
         try:
             platform.owner_only(descriptor)
@@ -85,9 +98,9 @@ class CredentialStore:
         for path, label in ((token_path, "credential token"), (metadata_path, "credential metadata"), (commit_path, "credential commit")):
             self._safe_file(path, label)
         try:
-            token_bytes = token_path.read_bytes()
-            metadata_bytes = metadata_path.read_bytes()
-            commit = json.loads(commit_path.read_text(encoding="utf-8"))
+            token_bytes = self._read_bytes(token_path)
+            metadata_bytes = self._read_bytes(metadata_path)
+            commit = json.loads(self._read_bytes(commit_path).decode("utf-8"))
             metadata = json.loads(metadata_bytes.decode("utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise ValidationError("credential generation is unreadable") from exc
@@ -119,8 +132,8 @@ class CredentialStore:
         self._safe_file(token_path, "credential token")
         self._safe_file(metadata_path, "credential metadata")
         try:
-            token = token_path.read_text(encoding="utf-8").strip()
-            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            token = self._read_bytes(token_path).decode("utf-8").strip()
+            metadata = json.loads(self._read_bytes(metadata_path).decode("utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             return None
         return (token, metadata) if token and isinstance(metadata, dict) else None
@@ -152,8 +165,8 @@ class CredentialStore:
             if current is not None and current[1] == expected:
                 token = current[0]
                 if not commit_path.exists():
-                    token_bytes = token_path.read_bytes()
-                    metadata_bytes = metadata_path.read_bytes()
+                    token_bytes = self._read_bytes(token_path)
+                    metadata_bytes = self._read_bytes(metadata_path)
                     self._atomic_replace(commit_path, self._commit_value(token_bytes, metadata_bytes))
                 if enabled:
                     self._disabled_actors.discard(actor)

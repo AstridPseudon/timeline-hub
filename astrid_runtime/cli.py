@@ -33,6 +33,7 @@ from .bootstrap import (
 )
 from .io import read_json
 from .loopback_http import urlopen_loopback
+from runtime_protocol import cancellation
 from .paths import DATA_ROOT_ENV, RuntimePaths
 from .runtime_boundary import LocalRuntimeBoundary, ForegroundRuntimeBoundary
 from runtime_protocol import platform
@@ -253,8 +254,10 @@ def _credential(paths: RuntimePaths) -> str:
     # the launcher.
     owner = paths.runtime_support / "credentials" / "owner.token"
     try:
-        token = owner.read_text(encoding="utf-8").strip()
-    except OSError:
+        token = platform.read_private_file(owner).decode("utf-8").strip()
+    except OSError as exc:
+        if platform.sys.platform == "win32" and not isinstance(exc, FileNotFoundError):
+            raise BootstrapError(f"Runtime owner credential access refused: {exc}") from exc
         token = ""
     if not token:
         raise BootstrapError("No runtime owner credential is available; run astrid-runtime up --profile astrid.")
@@ -327,14 +330,17 @@ def _load_state(raw: str) -> Mapping[str, Any]:
 def _door_json(endpoint: str, origin: str, path: str) -> Mapping[str, Any]:
     request = urllib.request.Request(endpoint.rstrip("/") + path,
         headers={"Origin": origin, "Accept": "application/json"})
-    with urlopen_loopback(request, timeout=2.0) as response:
-        value = json.loads(response.read(1024 * 1024).decode("utf-8"))
+    def read(timeout):
+        with urlopen_loopback(request, timeout=timeout) as response:
+            return json.loads(response.read(1024 * 1024).decode("utf-8"))
+    value = cancellation.retry_timeouts(read, 2.0)
     if not isinstance(value, Mapping):
         raise BootstrapError("browser door returned invalid metadata")
     return value
 
 
 def _wait_for_door(paths: RuntimePaths, result: BootstrapResult, boundary: LocalRuntimeBoundary) -> None:
+    cancellation.check()
     if not result.door_endpoint or not result.door_origin:
         raise BootstrapError("the selected Runtime has no browser door; restart it with the hosted origin enabled")
     endpoint = _validate_loopback_endpoint(result.door_endpoint)
@@ -347,13 +353,16 @@ def _wait_for_door(paths: RuntimePaths, result: BootstrapResult, boundary: Local
     deadline = time.monotonic() + boundary.wait_seconds
     reason = "browser door is unavailable"
     while time.monotonic() < deadline:
+        cancellation.check()
         current = _read_support_json(paths.discovery_path) or {}
         if any(current.get(key) != expected.get(key) for key in
                ("pid", "process_birth_id", "runtime_instance_id", "active_realm", "door_endpoint", "door_origin")):
             raise BootstrapError("Runtime identity changed while waiting for the browser door")
         try:
             health = _door_json(endpoint, result.door_origin, "/api/runtime/v1/health")
+            cancellation.check()
             realm = _door_json(endpoint, result.door_origin, "/api/runtime/v1/realm")
+            cancellation.check()
             if health.get("runtime_instance_id") != instance or realm.get("realm_id") != result.realm_id:
                 raise BootstrapError("browser door belongs to a different Runtime instance or realm")
             if health.get("status") == "ok":
@@ -365,7 +374,10 @@ def _wait_for_door(paths: RuntimePaths, result: BootstrapResult, boundary: Local
             reason = str(exc)
         if not boundary.is_pid_alive(int(expected.get("pid") or 0)):
             raise BootstrapError("Runtime exited before its browser door became ready: " + reason)
-        time.sleep(0.05)
+        if cancellation.active():
+            cancellation.pause(0.05)
+        else:
+            time.sleep(0.05)
     raise BootstrapError("browser door did not become ready before the startup deadline: " + reason)
 
 
@@ -383,10 +395,13 @@ def _run_foreground(paths: RuntimePaths, config: BootstrapConfig, *, json_mode: 
             platform.owner_only(log_path)
             with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
                 try:
-                    result = bootstrap(paths, boundary, config)
-                    boundary.check_running()
-                    _wait_for_door(paths, result, boundary)
-                    _emit_ready(result, json_mode=json_mode)
+                    with cancellation.startup_scope(stopped):
+                        result = bootstrap(paths, boundary, config)
+                        cancellation.check()
+                        boundary.check_running()
+                        _wait_for_door(paths, result, boundary)
+                        cancellation.check()
+                        _emit_ready(result, json_mode=json_mode)
                     while not stopped.wait(0.2):
                         boundary.check_running()
                 except Exception as exc:

@@ -192,6 +192,7 @@ def test_run_foreground_stops_only_when_handler_event_is_set(tmp_path, monkeypat
     registration = {}
     class FakeEvent:
         def __init__(self): self.stopped = False
+        def is_set(self): return self.stopped
         def wait(self, _timeout):
             if not self.stopped:
                 registration["handler"]()
@@ -219,6 +220,7 @@ def test_run_command_routes_to_in_process_foreground_owner(tmp_path, monkeypatch
     registration = {}
     class FakeEvent:
         def __init__(self): self.stopped = False
+        def is_set(self): return self.stopped
         def wait(self, _timeout):
             if not self.stopped:
                 registration["handler"]()

@@ -15,6 +15,7 @@ python -m pytest -q -m "" \
   tests/test_platform.py \
   tests/test_platform_windows.py \
   tests/test_platform_filesystem.py \
+  tests/test_m1_review.py \
   tests/test_foreground.py \
   tests/test_native_custody.py \
   tests/test_portable_lifecycle.py
@@ -45,16 +46,37 @@ identity-checked process handles, and kill-on-close Job Objects. Children start
 suspended until assigned to their Job. A detached owner inherits the Job handle
 and clears its inheritance before launching descendants.
 
-The existing `dirfd.py` filesystem boundary also has a Windows implementation:
-retained native directory handles reject reparse points and prevent parent
-renames while descriptor-relative operations execute. SQLite connections close
+The existing `dirfd.py` Windows filesystem adapter is **M2 (unqualified)**.
+It remains in place for subsequent native qualification; it is not part of
+M1's completed portability claims. Its intended design uses retained native
+directory handles to reject reparse points and prevent parent renames.
+SQLite connections close
 across fresh-realm publication on Windows while the owner file lock remains
 held. Backup verification copies pinned SQLite bytes to a private immutable
 snapshot; it never relies on `/dev/fd` there.
 
-Windows permission helpers are intentional no-ops. The installation and logs
-must be in the user's private profile (normally LOCALAPPDATA); this port does
-not configure ACLs for arbitrary shared data roots. Windows directory admission
+Windows credential and discovery directories and files are created with an
+explicit protected DACL granting access only to the token owner and SYSTEM.
+Existing credential/discovery files are read through the same handle whose
+owner and DACL are validated with `GetSecurityInfo`. Unsafe owners, public or
+unprotected/NULL DACLs, unfamiliar ACEs and reparse points fail closed with a
+reason; existing shared credential directories are rejected. Stat metadata
+alone cannot authorize Windows credentials. This uses ctypes and native APIs,
+without new dependencies. See Microsoft's [handle-based security API](https://learn.microsoft.com/windows/win32/api/aclapi/nf-aclapi-getsecurityinfo).
+
+Both Windows listeners disable address reuse and enable exclusive address use
+before binding. POSIX socket options are unchanged. Linux tree teardown holds
+the Popen wait lock and observes the leader using `waitid(WNOWAIT)` until the
+final group signal, then reaps it. Already-reaped or externally-reaped children
+cannot authorize group signals. macOS keeps its previous tree teardown path.
+
+Foreground startup scopes cancellation through launcher/admission locks,
+snapshot copying, SQLite progress, CAS inspection and readiness polling.
+Cancellation exits nonzero with a reason and runs cleanup outside the scope.
+Readiness GETs poll with short transport timeouts during this scope, retaining
+their original total request budgets. Outside startup their timeouts are unchanged.
+
+Windows directory admission
 uses an abandoned-aware named mutex plus an in-process gate; those directory
 locks must be released by their acquiring thread. Ordinary file locks use
 LockFileEx. Windows sends CTRL_BREAK for cooperative stopping where a console
@@ -101,6 +123,35 @@ also passed. The pytest session's pre-existing process guard could not invoke
 ```
 
 ## Files left uncommitted
+
+Review follow-up safe verification: **470 passed, 18 skipped, 15 deselected**
+on macOS, using the preceding safe selection plus `tests/test_m1_review.py`.
+The 18 skips require native Windows APIs; the deselections cover integration,
+Darwin-native, and real TCP health checks. All six new integrations collected
+successfully without execution. Compilation, artifact-manifest verification,
+and `git diff --check` passed. The existing pytest process inventory guard
+could not run `ps` in this sandbox.
+
+The list below describes the original portability branch. The independent
+review follow-up changes `.github/workflows/ci.yml`, `tests/lanes.py`,
+`tests/test_foreground.py`, and the following runtime files:
+
+- `runtime_protocol/server.py`, `platform.py`, `windows_security.py` (new),
+  `cancellation.py` (new), `auth.py`, `catalog.py`, `daemon.py`, `door.py`,
+  `store.py`, and the M2 qualification docstring in `dirfd.py`.
+- `astrid_runtime/bootstrap.py`, `cli.py`, `paths.py`, `io.py`,
+  `runtime_boundary.py`, and `custody_broker.py`.
+- New `tests/test_m1_review.py` contains mocked regressions, Windows security
+  checks, a Windows rebind integration, a Linux exited-leader integration,
+  and SIGTERM/SIGINT startup lock/door integrations.
+- This document records the scope and native qualification limits.
+
+Regression tests were added and observed failing before fixes where runnable
+on macOS. Windows-native tests are written but cannot execute here. No port
+binds, signals, or commits were performed in this follow-up. The safe selection
+excludes all integration/Darwin-native/live tests and the existing real TCP
+health test. Native Windows security/socket tests, Linux group cleanup, and
+SIGTERM/SIGINT startup integrations require their native unrestricted runners.
 
 ### Runtime source
 

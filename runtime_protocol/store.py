@@ -24,6 +24,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from . import platform
+from . import cancellation
 from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestError, LeaseError, NotFoundError, OwnerBusyError, RealmAdmissionError, ValidationError
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .cas import ContentAddressedStore
@@ -757,9 +758,11 @@ class RealmStore:
         try:
             descriptor = os.open(self.root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
             platform.lock_file(descriptor)
-        except OSError as exc:
+        except BaseException as exc:
             if "descriptor" in locals():
                 os.close(descriptor)
+            if not isinstance(exc, OSError):
+                raise
             raise RealmAdmissionError(
                 "realm admission lock is unavailable",
                 details=self._integrity_failure("unreadable", str(exc)),
@@ -830,6 +833,7 @@ class RealmStore:
         flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
         source_fd = os.open(source, flags)
         try:
+            cancellation.check()
             metadata = os.fstat(source_fd)
             if not stat.S_ISREG(metadata.st_mode):
                 raise OSError(f"realm SQLite component is not a regular file: {source.name}")
@@ -846,6 +850,7 @@ class RealmStore:
                     destination.unlink(missing_ok=True)
             with destination.open("wb") as target:
                 while True:
+                    cancellation.check()
                     if time.monotonic() >= deadline:
                         raise TimeoutError("realm inspection timed out")
                     block = os.read(source_fd, 1024 * 1024)
@@ -868,6 +873,7 @@ class RealmStore:
         The incident's physical corruption trigger is not proven.  Admission
         therefore diagnoses and stops; it never attempts automatic salvage.
         """
+        cancellation.check()
         root = Path(root).expanduser().resolve()
         db_path = root / "realm.sqlite3"
         if timeout_seconds <= 0:
@@ -5722,15 +5728,19 @@ class RealmStore:
         def progress():
             nonlocal timed_out
             timed_out = time.monotonic() >= deadline
-            return 1 if timed_out else 0
+            return 1 if timed_out or cancellation.requested() else 0
 
         with self._mutex:
             self.conn.set_progress_handler(progress, 1000)
             try:
-                return self._integrity_report(catalog_path=catalog_path, deadline=deadline, deep=deep, admission_state=admission_state)
+                cancellation.check()
+                result = self._integrity_report(catalog_path=catalog_path, deadline=deadline, deep=deep, admission_state=admission_state)
+                cancellation.check()
+                return result
             except TimeoutError as exc:
                 return self._integrity_not_checked(timeout_seconds, str(exc))
             except (sqlite3.DatabaseError, OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+                cancellation.check()
                 if timed_out:
                     return self._integrity_not_checked(timeout_seconds, str(exc))
                 return self._integrity_failure("timeout" if timed_out else "malformed", str(exc))
@@ -5742,12 +5752,14 @@ class RealmStore:
             quick_rows = [str(row[0]) for row in self.conn.execute("PRAGMA quick_check").fetchall()]
             quick = "ok" if quick_rows == ["ok"] else quick_rows
         except sqlite3.DatabaseError as exc:
+            cancellation.check()
             if deadline is not None and time.monotonic() >= deadline:
                 raise TimeoutError("realm inspection timed out") from exc
             quick = f"error: {exc}"
         try:
             fk_rows = self.conn.execute("PRAGMA foreign_key_check").fetchall()
         except sqlite3.DatabaseError as exc:
+            cancellation.check()
             if deadline is not None and time.monotonic() >= deadline:
                 raise TimeoutError("realm inspection timed out") from exc
             fk_rows = [("error", str(exc))]
@@ -6384,6 +6396,7 @@ class RealmStore:
                     raise OSError("CAS entry is not a regular file")
                 digest_value = hashlib.sha256()
                 while True:
+                    cancellation.check()
                     if deadline is not None and time.monotonic() >= deadline:
                         raise TimeoutError("realm inspection timed out")
                     block = os.read(fd, 1024 * 1024)
@@ -6402,6 +6415,7 @@ class RealmStore:
         digest_value = hashlib.sha256()
         with path.open("rb") as handle:
             while True:
+                cancellation.check()
                 if deadline is not None and time.monotonic() >= deadline:
                     raise TimeoutError("realm inspection timed out")
                 block = handle.read(1024 * 1024)
@@ -6446,6 +6460,7 @@ class RealmStore:
                 return []
             orphaned = []
             for prefix in os.listdir(cas_root_fd):
+                cancellation.check()
                 if deadline is not None and time.monotonic() >= deadline:
                     raise TimeoutError("realm inspection timed out")
                 try:
@@ -6458,6 +6473,7 @@ class RealmStore:
                     continue
                 try:
                     for name in os.listdir(prefix_fd):
+                        cancellation.check()
                         if deadline is not None and time.monotonic() >= deadline:
                             raise TimeoutError("realm inspection timed out")
                         try:
@@ -6474,6 +6490,7 @@ class RealmStore:
         orphaned = []
         if self.cas_root.exists():
             for path in self.cas_root.glob("*/*"):
+                cancellation.check()
                 if deadline is not None and time.monotonic() >= deadline:
                     raise TimeoutError("realm inspection timed out")
                 if path.is_file():

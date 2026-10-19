@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import re
+import socket
+import sys
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlsplit, parse_qs
@@ -21,6 +23,12 @@ class RuntimeHTTPServer(ThreadingHTTPServer):
     # control-plane fan-in.
     request_queue_size = 64
     accepting_authenticated_requests = True
+
+    def server_bind(self):
+        if sys.platform == "win32":
+            self.allow_reuse_address = False
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        return super().server_bind()
 
 
 class RuntimeHandler(BaseHTTPRequestHandler):

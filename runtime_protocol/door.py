@@ -326,7 +326,7 @@ def _owner_only_json(path: Path) -> dict | None:
         return None
     try:
         metadata = os.fstat(descriptor)
-        if (not stat.S_ISREG(metadata.st_mode) or not platform.is_owner_only(metadata)
+        if (not stat.S_ISREG(metadata.st_mode) or not platform.is_owner_only(descriptor)
                 or metadata.st_size > _MAX_LOCAL_FILE_BYTES):
             return None
         raw = b""

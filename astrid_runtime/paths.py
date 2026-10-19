@@ -78,5 +78,4 @@ class RuntimePaths:
             self.realms_dir,
             self.source_profiles_dir,
         ):
-            directory.mkdir(parents=True, exist_ok=True)
-            platform.owner_only(directory, directory=True)
+            platform.private_directory(directory)

@@ -27,7 +27,10 @@ _WIN_NONBLOCK = 0
 
 
 class _WindowsFilesystem:
-    """Small Windows dir-fd adapter backed by pinned Win32 directory handles.
+    """M2 (UNQUALIFIED): Windows dir-fd adapter using pinned directory handles.
+
+    Retained for subsequent M2 qualification; its presence is not an M1
+    security or filesystem portability claim. Do not expand it for M1.
 
     Windows has no Python ``dir_fd`` support.  A directory descriptor here is
     a CRT descriptor for a CreateFile handle opened without FILE_SHARE_DELETE;

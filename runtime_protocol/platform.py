@@ -1,8 +1,7 @@
 """The Runtime's native OS boundary (stdlib only).
 
-Windows permission helpers deliberately do nothing: installations live under the
-user-private LOCALAPPDATA directory. They do not implement ACLs for arbitrary
-shared locations. Process identities are observations, never signal authority;
+Windows permissions use owner/SYSTEM protected DACLs and handle-based checks.
+Process identities are observations, never signal authority;
 ``signal_process`` pins a kernel handle before comparing an expected identity.
 """
 from __future__ import annotations
@@ -19,6 +18,8 @@ import subprocess
 import sys
 import threading
 import time
+
+from . import cancellation
 
 TERM = int(signal.SIGTERM)
 KILL = int(getattr(signal, "SIGKILL", 9))
@@ -54,8 +55,10 @@ def log_dir(home: Path | str | None = None) -> Path:
 
 
 def owner_only(path_or_fd, *, directory: bool | None = None) -> None:
-    """Apply 0600/0700; Windows relies on the enclosing user-profile ACL."""
+    """Apply 0600/0700 or a protected owner/SYSTEM DACL."""
     if sys.platform == "win32":
+        from .windows_security import restrict
+        restrict(path_or_fd)
         return
     value = os.fstat(path_or_fd) if isinstance(path_or_fd, int) else os.stat(path_or_fd, follow_symlinks=False)
     if stat.S_ISLNK(value.st_mode):
@@ -68,9 +71,16 @@ def owner_only(path_or_fd, *, directory: bool | None = None) -> None:
 
 
 def is_owner_only(path_or_fd_or_stat, *, directory: bool | None = None) -> bool:
-    """Check owner and exact POSIX mode; documented no-op on Windows."""
+    """Check native owner and access permissions; stat alone cannot check a DACL."""
     if sys.platform == "win32":
-        return True
+        if isinstance(path_or_fd_or_stat, os.stat_result):
+            return False
+        from .windows_security import validate
+        try:
+            validate(path_or_fd_or_stat)
+            return True
+        except OSError:
+            return False
     try:
         value = path_or_fd_or_stat
         if not isinstance(value, os.stat_result):
@@ -88,7 +98,42 @@ def is_current_user(metadata) -> bool:
     return sys.platform == "win32" or metadata.st_uid == current_user()
 
 
+def private_directory(path) -> None:
+    if sys.platform == "win32":
+        from .windows_security import private_directory as create
+        create(path)
+    else:
+        Path(path).mkdir(parents=True, exist_ok=True)
+        owner_only(path, directory=True)
+
+
+def private_temporary(directory, prefix):
+    if sys.platform == "win32":
+        from .windows_security import private_temporary as create
+        return create(directory, prefix)
+    import tempfile
+    return tempfile.mkstemp(dir=directory, prefix=prefix)
+
+
+def read_private_file(path):
+    if sys.platform == "win32":
+        from .windows_security import read_private
+        return read_private(path)
+    return Path(path).read_bytes()
+
+
 def lock_file(fd: int, *, exclusive: bool = True, blocking: bool = True) -> None:
+    if blocking and cancellation.active():
+        while True:
+            cancellation.check()
+            try:
+                return _lock_file(fd, exclusive=exclusive, blocking=False)
+            except BlockingIOError:
+                cancellation.pause(0.05)
+    return _lock_file(fd, exclusive=exclusive, blocking=blocking)
+
+
+def _lock_file(fd: int, *, exclusive: bool = True, blocking: bool = True) -> None:
     if sys.platform != "win32":
         import fcntl
         fcntl.flock(fd, (fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH) | (0 if blocking else fcntl.LOCK_NB))
@@ -599,7 +644,12 @@ def spawn_tree(argv, *, detached=False, **kwargs):
 
 def signal_tree(process_or_pid, signum):
     pid = process_or_pid if isinstance(process_or_pid, int) else process_or_pid.pid
-    if sys.platform != "win32":
+    if sys.platform == "linux":
+        if isinstance(process_or_pid, int):
+            raise ProcessLookupError("process-group custody requires an unreaped child")
+        with getattr(process_or_pid, "_waitpid_lock", nullcontext()):
+            _signal_linux_group(process_or_pid, signum)
+    elif sys.platform != "win32":
         os.killpg(pid, signum)
     elif signum == KILL:
         job = getattr(process_or_pid, "_runtime_job", None)
@@ -615,6 +665,8 @@ def signal_tree(process_or_pid, signum):
 
 
 def stop_tree(process, grace=5.0):
+    if sys.platform == "linux":
+        return _stop_linux_tree(process, grace)
     try:
         if process.poll() is None:
             try:
@@ -637,6 +689,48 @@ def stop_tree(process, grace=5.0):
         job = getattr(process, "_runtime_job", None)
         if job:
             job.close()
+
+
+def _stop_linux_tree(process, grace):
+    # poll()/wait() reap the leader and release its numeric PID/PGID. Hold
+    # Popen's wait lock and use WNOWAIT until the final descendant signal.
+    with getattr(process, "_waitpid_lock", nullcontext()):
+        if process.returncode is not None:
+            return
+        try:
+            exited = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+        except ChildProcessError:
+            return  # externally reaped: no authority to signal a bare PGID
+        if exited is None:
+            try:
+                _signal_linux_group(process, TERM)
+            except ProcessLookupError:
+                pass
+            deadline = time.monotonic() + grace
+            while time.monotonic() < deadline:
+                try:
+                    exited = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+                except ChildProcessError:
+                    return
+                if exited is not None:
+                    break
+                time.sleep(min(0.05, max(0, deadline - time.monotonic())))
+        try:
+            _signal_linux_group(process, KILL)
+        except ProcessLookupError:
+            pass
+    process.wait(timeout=max(2.0, grace))
+
+
+def _signal_linux_group(process, signum):
+    """Caller holds Popen's wait lock until killpg has consumed the PGID."""
+    if process.returncode is not None:
+        raise ProcessLookupError("process-group custody lost: child was reaped")
+    try:
+        os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+    except ChildProcessError as exc:
+        raise ProcessLookupError("process-group custody lost: child is no longer waitable") from exc
+    os.killpg(process.pid, signum)
 
 
 def signal_process(expected, signum):

@@ -5,13 +5,15 @@ from __future__ import annotations
 import json
 from runtime_protocol.dirfd import filesystem as os
 from pathlib import Path
-import tempfile
 
 from runtime_protocol import platform
 from typing import Any
 
 
 def owner_only(path: Path, directory: bool = False) -> None:
+    if platform.sys.platform == "win32":
+        platform.owner_only(path, directory=directory)
+        return  # Windows security failures must never be suppressed.
     try:
         platform.owner_only(path, directory=directory)
     except OSError:
@@ -19,10 +21,13 @@ def owner_only(path: Path, directory: bool = False) -> None:
 
 
 def atomic_write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    owner_only(path.parent, directory=True)
+    if platform.sys.platform == "win32":
+        platform.private_directory(path.parent)
+    else:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        owner_only(path.parent, directory=True)
     payload = json.dumps(value, sort_keys=True, indent=2) + "\n"
-    fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    fd, temporary = platform.private_temporary(path.parent, f".{path.name}.")
     temporary_path = Path(temporary)
     try:
         owner_only(temporary_path)

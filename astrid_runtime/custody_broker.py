@@ -250,6 +250,10 @@ def _write_all(descriptor: int, value: bytes) -> None:
 
 
 def _atomic_owner_json(path: Path, value: Mapping[str, object]) -> None:
+    if platform.sys.platform == "win32":
+        from .io import atomic_write_json
+        atomic_write_json(path, dict(value))
+        return
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     platform.owner_only(path.parent)
     descriptor, name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
@@ -420,7 +424,7 @@ def _read_owner_file(path: Path) -> tuple[bytes, os.stat_result]:
         observed = os.fstat(descriptor)
         if (
             not stat.S_ISREG(observed.st_mode)
-            or not platform.is_owner_only(observed)
+            or not platform.is_owner_only(descriptor)
         ):
             raise CustodyError("custody file is not an owner-only regular file")
         chunks: list[bytes] = []

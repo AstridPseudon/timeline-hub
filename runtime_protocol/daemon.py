@@ -4,6 +4,7 @@ import json
 import hashlib
 from .dirfd import filesystem as os
 from . import platform
+from . import cancellation
 import shutil
 import threading
 import time
@@ -178,7 +179,7 @@ class RuntimeDaemon:
             # the production host.
             self.worker_token = self.token
         if self.bootstrap_token_file and self.bootstrap_token_file.exists():
-            bootstrap_token = self.bootstrap_token_file.read_text(encoding="utf-8").strip()
+            bootstrap_token = platform.read_private_file(self.bootstrap_token_file).decode("utf-8").strip()
             self.credentials.provision_static("bootstrap", bootstrap_token, ["admin", "credentials:provision"])
             self.bootstrap_token_file.unlink(missing_ok=True)
 
@@ -233,12 +234,15 @@ class RuntimeDaemon:
         atomic_json_write(self._epoch_floor_path(), {"format_version": 1, "runtime_epoch_floor": floor})
 
     def _start(self, *, rotate_credentials=False):
+        cancellation.check()
         epoch_floor = self._read_epoch_floor()
         self.service = RuntimeService(self.root, display_name=self.display_name, realm_id=self.realm_id, support_root=self.support_root, export_root=self.export_root, reboot_executor=self.reboot_executor, reboot_allowlist=self.reboot_allowlist, runtime_epoch_floor=epoch_floor, admission_timeout=self.admission_timeout)
+        cancellation.check()
         self.service.set_readiness_callback(self._revoke_readiness)
         self.service.set_local_claim_generation_verifier(self._verify_local_claim_generation, actor=WORKER_ACTOR)
         self.catalog.bind_owner(self._catalog_owner_valid)
         self._provision_credentials(rotate=rotate_credentials)
+        cancellation.check()
         if self.local_worker_profiles and not self._local_worker_deferred:
             self._create_local_worker_launcher()
         self.httpd = RuntimeHTTPServer((self.host, self.port), RuntimeHandler)

@@ -24,19 +24,26 @@ LANE_MARKERS = {
     "live": "needs real provider credentials",
 }
 
+requires_windows_security = pytest.mark.skipif(
+    sys.platform != "win32", reason="native Windows socket exclusivity and file DACL APIs"
+)
+requires_linux_tree_custody = pytest.mark.skipif(
+    sys.platform != "linux", reason="Linux waitid WNOWAIT process-group custody"
+)
+
 # Platform-specific test lanes. Keep skip reasons here so test modules express
 # the capability they require without calling pytest's skip APIs directly.
 requires_posix_inherited_descriptors = pytest.mark.skipif(
     os.name == "nt", reason="relay integration requires POSIX inherited descriptors"
 )
 requires_posix_uid_metadata = pytest.mark.skipif(
-    os.name == "nt", reason="Windows owner-only checks use profile ACLs, not POSIX uid metadata"
+    os.name == "nt", reason="Windows owner-only checks use native DACLs, not POSIX uid metadata"
 )
 requires_posix_file_modes_native_custody = pytest.mark.skipif(
-    sys.platform == "win32", reason="Windows uses profile ACLs instead of POSIX file modes"
+    sys.platform == "win32", reason="Windows uses native DACLs instead of POSIX file modes"
 )
 requires_posix_private_modes = pytest.mark.skipif(
-    sys.platform == "win32", reason="Windows uses profile ACLs rather than POSIX modes"
+    sys.platform == "win32", reason="Windows uses native DACLs rather than POSIX modes"
 )
 requires_windows_token_process_times = pytest.mark.skipif(
     sys.platform != "win32", reason="Windows token and process-time APIs"
