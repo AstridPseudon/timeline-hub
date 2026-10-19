@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createElement, type ReactNode } from 'react';
+import { createElement, useEffect, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { createInteractionState } from '../lib/interaction-state.ts';
@@ -11,11 +11,18 @@ import { createTimelineStore } from './timelineStore.ts';
 import { useTimelineSave } from './useTimelineSave.ts';
 import { loadTimelineDraft } from '../data/timelineDraftIndexedDb.ts';
 import { createTimelineCommands } from './useTimelineCommandsService.ts';
+import { useTimelineHistory } from './useTimelineHistory.ts';
+import { compileTimelinePatch } from '../lib/timeline-patch.ts';
+import * as timelineData from '../lib/timeline-data.ts';
+import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
+import { useTimelineCommit } from './useTimelineCommit.ts';
+import { TimelineEventBus } from './useTimelineEventBus.ts';
+import type { DataProvider } from '../data/DataProvider.ts';
+import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 
-afterEach(() => { vi.unstubAllGlobals(); });
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-async function mounted() {
-  const env = await environment();
+function installStorage(env: Awaited<ReturnType<typeof environment>>) {
   vi.stubGlobal('indexedDB', env.factory);
   const held = new Set<string>();
   vi.stubGlobal('navigator', { locks: { request: async (key: string, _options: unknown, work: (lock: unknown) => Promise<unknown>) => {
@@ -23,6 +30,11 @@ async function mounted() {
     held.add(key);
     try { return await work({ name: key }); } finally { held.delete(key); }
   } } });
+}
+
+async function mounted() {
+  const env = await environment();
+  installStorage(env);
   const snapshotSaves = vi.fn();
   const saveTimeline = vi.spyOn(env.provider, 'saveTimeline');
   const saveTimelineAtHead = vi.spyOn(env.provider, 'saveTimelineAtHead');
@@ -31,6 +43,7 @@ async function mounted() {
   const initial = env.current();
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const runtime = { provider: env.provider, timelineId: 'timeline-commit', shots: { canonicalDraft: null },
+    project: { projectId: 'project-commit' }, toast: { error: vi.fn(), success: vi.fn() },
     assetResolver: { resolveAssetUrl: async (value: string) => value } } as unknown as VideoEditorRuntimeContextValue;
   const queries = { timelineQuery: { data: initial, isLoading: false }, assetRegistryQuery: { data: initial.registry } };
   const interactionStateRef = { current: createInteractionState() };
@@ -38,11 +51,15 @@ async function mounted() {
     createElement(VideoEditorRuntimeProvider, { value: runtime }, children));
   const hook = renderHook(() => {
     const save = useTimelineSave(queries, env.provider, interactionStateRef, store, initial);
+    const history = useTimelineHistory({ dataRef: save.dataRef, commitData: save.commitData,
+      interactionStateRef, pendingOpsRef: save.pendingOpsRef });
+    useEffect(() => save.eventBus.on('beforeCommit', history.onBeforeCommit), [save.eventBus, history.onBeforeCommit]);
+    useEffect(() => save.eventBus.on('remoteCommit', history.onRemoteData), [save.eventBus, history.onRemoteData]);
     store.getState().syncSlices({
       data: { ...store.getState().data, data: save.data, resolvedConfig: save.data?.resolvedConfig ?? null, dataRef: save.dataRef },
       ops: { ...store.getState().ops, clipMove: save.commands.port },
     });
-    return { commands: save.commands, commit: save };
+    return { commands: save.commands, commit: save, history };
   }, { wrapper });
   hook.result.current.commit.eventBus.on('scheduleSave', snapshotSaves);
   await waitFor(() => expect(hook.result.current.commands.port).toBeDefined());
@@ -50,7 +67,108 @@ async function mounted() {
   return { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead };
 }
 
+async function scoped() {
+  const env = await environment();
+  installStorage(env);
+  const initial = env.current();
+  const snapshotWriteBlockedRef = { current: false };
+  const headRevisionRef = { current: initial.head };
+  const configVersionRef = { current: initial.configVersion };
+  const lastSavedSignatureRef = { current: initial.stableSignature };
+  const store = createTimelineStore();
+  const eventBus = new TimelineEventBus();
+  const hook = renderHook(({ provider, timelineId }: { provider: DataProvider; timelineId: string }) => {
+    const commit = useTimelineCommit({ eventBus, lastSavedSignatureRef, initialData: initial, snapshotWriteBlockedRef });
+    const commands = useTimelineCommandSession({ provider, timelineId, commit, legacyClean: () => true,
+      resolveAssetUrl: async (file) => file, loaded: undefined, snapshotWriteBlockedRef, headRevisionRef,
+      configVersionRef, lastSavedSignatureRef, store, shots: { shots: undefined, isLoading: false, error: null,
+        refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn(), canonicalDraft: null } });
+    return { commit, commands };
+  }, { initialProps: { provider: env.provider, timelineId: 'timeline-commit' } });
+  await waitFor(() => expect(hook.result.current.commands.port).toBeDefined());
+  const neutral: DataProvider = { persistenceEnabled: false, loadTimeline: vi.fn(), loadAssetRegistry: vi.fn(),
+    saveTimeline: vi.fn(), resolveAssetUrl: async (file) => file };
+  return { env, hook, neutral, snapshotWriteBlockedRef, headRevisionRef, configVersionRef, store };
+}
+
 describe('mounted timeline command session', () => {
+  it('clears command ownership and the snapshot block on provider cleanup, fencing an old ACK', async () => {
+    const { env, hook, neutral, snapshotWriteBlockedRef } = await scoped();
+    const gate = env.pause();
+    act(() => { submitClipMove(captureClipMove(hook.result.current.commands.port, hook.result.current.commit.data!, 'x'), 5); });
+    await waitFor(() => expect(env.commits()).toHaveLength(1));
+    expect(snapshotWriteBlockedRef.current).toBe(true);
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(true);
+    const old = hook.result.current.commands;
+    const finished = expect(old.flush()).rejects.toThrow('not acknowledged');
+    hook.rerender({ provider: neutral, timelineId: 'other' });
+    expect(snapshotWriteBlockedRef.current).toBe(false);
+    expect(hook.result.current.commands.activeRef.current).toBe(false);
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(false);
+    const next = compileTimelinePatch({ version: 1,
+      operations: [{ op: 'clip.move', target: 'x', payload: { at: 9 } }] }, hook.result.current.commit.data!).nextData!;
+    act(() => { hook.result.current.commit.commitData(next); });
+    await act(async () => { gate.resolve(); await finished; });
+    expect(hook.result.current.commit.dataRef.current).toBe(next);
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(false);
+    hook.unmount();
+  });
+  it('fences an in-progress async projection across a timeline switch', async () => {
+    const { env, hook, headRevisionRef, configVersionRef, store, snapshotWriteBlockedRef } = await scoped();
+    let finishProjection!: () => void;
+    const gate = new Promise<void>((resolve) => { finishProjection = resolve; });
+    const build = timelineData.buildTimelineData;
+    const projecting = vi.fn();
+    vi.spyOn(timelineData, 'buildTimelineData').mockImplementation(async (...args) => {
+      projecting();
+      await gate;
+      return build(...args);
+    });
+    act(() => { submitClipMove(captureClipMove(hook.result.current.commands.port, hook.result.current.commit.data!, 'x'), 5); });
+    const finished = expect(hook.result.current.commands.flush()).rejects.toThrow('not acknowledged');
+    await waitFor(() => expect(projecting).toHaveBeenCalledOnce());
+    vi.spyOn(env.provider, 'loadTimelineCommandBasis').mockResolvedValue({ ...env.initial,
+      canonicalDocument: { ...env.initial.canonicalDocument, timeline_id: 'other' } });
+    hook.rerender({ provider: env.provider, timelineId: 'other' });
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('saved'));
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(false);
+    expect(snapshotWriteBlockedRef.current).toBe(false);
+    const next = compileTimelinePatch({ version: 1,
+      operations: [{ op: 'clip.move', target: 'x', payload: { at: 9 } }] }, hook.result.current.commit.data!).nextData!;
+    const nextHead = { projectId: 'other-project', timelineId: 'other', headRevisionId: 'new-r', headPublicationId: 'new-p' };
+    act(() => {
+      hook.result.current.commit.commitData(next);
+      headRevisionRef.current = nextHead;
+      configVersionRef.current = 42;
+      store.getState().setConfigVersion(42);
+    });
+    await act(async () => { finishProjection(); await finished; });
+    expect(hook.result.current.commit.dataRef.current).toBe(next);
+    expect(headRevisionRef.current).toBe(nextHead);
+    expect(configVersionRef.current).toBe(42);
+    expect(store.getState().configVersion).toBe(42);
+    expect(hook.result.current.commands.state.status).toBe('saved');
+    hook.unmount();
+  });
+  it('leaves clean legacy undo available until an actual command owns history', async () => {
+    const { env, hook, snapshotSaves } = await mounted();
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(false);
+    const original = hook.result.current.commit.data!;
+    const edited = compileTimelinePatch({ version: 1,
+      operations: [{ op: 'clip.move', target: 'x', payload: { at: 3 } }] }, original).nextData!;
+    act(() => {
+      hook.result.current.history.onBeforeCommit(original, {});
+      // An existing, clean legacy edit has no command intent to recover.
+      hook.result.current.commit.commitData(edited, { save: false });
+    });
+    expect(hook.result.current.history.canUndo).toBe(true);
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(false);
+    act(() => { hook.result.current.history.undo(); });
+    expect(hook.result.current.commit.data?.config.clips[0].at).toBe(1);
+    expect(snapshotSaves).toHaveBeenCalledOnce();
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
   it('moves through the actual command service with save:false and hydrates the accepted raw closure', async () => {
     const { hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
     await act(async () => {
@@ -60,12 +178,15 @@ describe('mounted timeline command session', () => {
     expect(hook.result.current.commit.data?.config.clips[0].at).toBe(5);
     expect(hook.result.current.commit.data?.head?.headPublicationId).toBe('p1');
     expect(hook.result.current.commands.state.status).toBe('saved');
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(true);
     expect(snapshotSaves).not.toHaveBeenCalled();
     expect(saveTimeline).not.toHaveBeenCalled();
     expect(saveTimelineAtHead).not.toHaveBeenCalled();
     expect(await loadTimelineDraft('timeline-commit')).toBeNull();
     await act(async () => { await hook.result.current.commands.undo(); await hook.result.current.commands.flush(); });
     expect(hook.result.current.commit.data?.config.clips[0].at).toBe(1);
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
     expect(snapshotSaves).not.toHaveBeenCalled();
     hook.unmount();
   });
@@ -99,7 +220,11 @@ describe('mounted timeline command session', () => {
     });
     await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
     expect(hook.result.current.commit.data?.config.clips[0].at).toBe(7);
-    expect(() => hook.result.current.commit.commitData(hook.result.current.commit.data!)).toThrow('pending timeline commands');
+    const before = hook.result.current.commit.dataRef.current;
+    const overlap = compileTimelinePatch({ version: 1,
+      operations: [{ op: 'clip.move', target: 'x', payload: { at: 9 } }] }, before!).nextData!;
+    expect(() => hook.result.current.commit.commitData(overlap)).toThrow('pending timeline commands');
+    expect(hook.result.current.commit.dataRef.current).toBe(before);
     expect(snapshotSaves).not.toHaveBeenCalled();
     await act(async () => { await hook.result.current.commands.retry(); });
     expect(hook.result.current.commit.data?.config.clips[0].at).toBe(7);

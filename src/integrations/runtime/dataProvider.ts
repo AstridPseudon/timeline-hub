@@ -687,7 +687,7 @@ export class RuntimeDataProvider implements DataProvider {
       request,
       idempotencyKey,
     );
-    if (response.data.status === 'preview') {
+    if (response.receipt === null) {
       throw new TimelineSchemaIncompatibleError('Timeline preview is not an accepted commit');
     }
     return this.acceptedCommitResult(response, request.timeline_id);

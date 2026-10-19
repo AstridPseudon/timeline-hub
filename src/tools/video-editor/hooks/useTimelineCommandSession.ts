@@ -25,7 +25,7 @@ export function useTimelineCommandSession(options: {
   store: TimelineStoreApi;
   shots: VideoEditorShotsHost;
 }) {
-  const { provider, timelineId } = options;
+  const { provider, timelineId, snapshotWriteBlockedRef } = options;
   const latest = useRef(options);
   latest.current = options;
   const sessionRef = useRef<TimelineCommandSession | null>(null);
@@ -40,10 +40,14 @@ export function useTimelineCommandSession(options: {
     let disposed = false;
     let session: TimelineCommandSession | undefined;
     let projectGeneration = 0;
+    const disposeSession = () => {
+      void session?.dispose().catch((error) => console.error('[TimelineCommandSession] Unsaved moves on close', error));
+    };
     const changed = (next: CommandSessionState) => {
       if (disposed) return;
       activeRef.current = next.status !== 'saved' && (!!next.ownerId || next.recoverableOwners.length > 0);
-      latest.current.snapshotWriteBlockedRef.current = activeRef.current;
+      snapshotWriteBlockedRef.current = activeRef.current;
+      if (activeRef.current || next.canUndo) ownsHistoryRef.current = true;
       setState(next);
     };
     void (async () => {
@@ -56,6 +60,7 @@ export function useTimelineCommandSession(options: {
         send: (request, key) => provider.commitTimeline!(request, key),
         changed,
         preview: (patch) => {
+          if (disposed) throw new Error('Timeline command session is closed');
           const { commit } = latest.current;
           if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
           const compiled = compileTimelinePatch(patch, commit.dataRef.current);
@@ -65,6 +70,7 @@ export function useTimelineCommandSession(options: {
           commit.commitData(compiled.nextData, { save: false, skipHistory: true });
         },
         project: async (accepted, previews) => {
+          if (disposed) return;
           const generation = ++projectGeneration;
           const context = latest.current;
           const document = accepted.canonicalDocument;
@@ -100,7 +106,7 @@ export function useTimelineCommandSession(options: {
           if (composition && !previews.length) context.shots.adoptCanonicalComposition?.(composition);
         },
       });
-      if (disposed) await session.dispose();
+      if (disposed) disposeSession();
       else {
         const realPort = session.port;
         session.port = { ...realPort, capture: (input) => {
@@ -108,7 +114,6 @@ export function useTimelineCommandSession(options: {
           return realPort.capture(input);
         } };
         sessionRef.current = session;
-        ownsHistoryRef.current = true;
         setState({ ...session.getState() });
       }
     })().catch((error) => changed({ status: 'error', error: error instanceof Error ? error.message : String(error),
@@ -119,9 +124,10 @@ export function useTimelineCommandSession(options: {
       projectGeneration++;
       sessionRef.current = null;
       activeRef.current = false;
-      void session?.dispose();
+      snapshotWriteBlockedRef.current = false;
+      disposeSession();
     };
-  }, [provider, timelineId, enabled, attempt]);
+  }, [provider, timelineId, enabled, attempt, snapshotWriteBlockedRef]);
   useEffect(() => {
     if (!enabled || !options.loaded?.head || !sessionRef.current) return;
     let cancelled = false;

@@ -120,4 +120,3 @@ export async function environment(initialDocument = document()) {
     pause: () => { pause = deferred(); return pause; },
     commits: () => calls.filter((call) => call.path.endsWith('/commit')) };
 }
-

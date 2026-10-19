@@ -41,6 +41,7 @@ export async function createTimelineCommandSession(options: Options) {
   let box: ClaimedOutbox | undefined;
   let record: OutboxRecord | undefined;
   let stopped = false;
+  let closing: Promise<void> | undefined;
   let release: (() => void) | undefined;
   let lifetime: Promise<unknown> | undefined;
   let chain = Promise.resolve();
@@ -49,6 +50,7 @@ export async function createTimelineCommandSession(options: Options) {
   let localGeneration = 0;
   let appendedGeneration = 0;
   let persistenceFailed = false;
+  let persistenceError: string | undefined;
   const latestOwn = options.initial.history?.next_cursor == null ? options.initial.history?.items.slice().reverse().find((entry) => entry.publisher === options.scope.actorId
     && entry.intent === 'recorded' && entry.records) : undefined;
   const undos: string[] = latestOwn ? [latestOwn.publication_id] : [];
@@ -66,6 +68,7 @@ export async function createTimelineCommandSession(options: Options) {
     }
   }
   async function project(basis: TimelineCommandBasis, previews: TimelinePatch[]) {
+    if (stopped) return;
     projecting = true;
     projectionPending = basis;
     try {
@@ -103,6 +106,7 @@ export async function createTimelineCommandSession(options: Options) {
             commands: (intent.payload as unknown as Payload).commands, source: { via: 'app' } } satisfies CommitRequest),
         }), async (request) => {
           try {
+            if (stopped) throw new Error('Timeline command session is closed');
             const result = await options.send(JSON.parse(request.body) as CommitRequest, request.key);
             return { kind: 'accepted', head: result.accepted, value: json(result) };
           } catch (error) {
@@ -150,7 +154,7 @@ export async function createTimelineCommandSession(options: Options) {
   }
   const pendingAppends: Array<{ localId: string; predecessor?: string; head: OutboxHead; payload: Payload; generation: number }> = [];
   async function persistAppends() {
-    if (persistenceFailed || stopped || !box) return;
+    if (persistenceFailed || !box) return;
     try {
       while (pendingAppends.length) {
         const entry = pendingAppends[0];
@@ -162,7 +166,11 @@ export async function createTimelineCommandSession(options: Options) {
         pendingAppends.shift();
         record = await box.read();
       }
-    } catch (error) { persistenceFailed = true; publish('error', `Unsaved move: ${message(error)}`); }
+    } catch (error) {
+      persistenceFailed = true;
+      persistenceError = `Unsaved move: ${message(error)}`;
+      publish('error', persistenceError);
+    }
   }
   function enqueue(payload: Payload, preview: TimelinePatch | null, capturedBasis?: OutboxBasis) {
     assertReady();
@@ -216,6 +224,7 @@ export async function createTimelineCommandSession(options: Options) {
     },
   };
   async function claim(owner?: string) {
+    if (stopped) throw new Error('Timeline command session is closed');
     if (lifetime) throw new Error('An outbox is already claimed');
     let ready!: () => void;
     let fail!: (error: unknown) => void;
@@ -270,6 +279,7 @@ export async function createTimelineCommandSession(options: Options) {
       await pump();
     },
     async retry() {
+      if (stopped) throw new Error('Timeline command session is closed');
       persistenceFailed = false;
       chain = chain.then(persistAppends);
       await chain;
@@ -321,7 +331,24 @@ export async function createTimelineCommandSession(options: Options) {
         }).catch((error) => publish('error', message(error)));
       }
     },
-    async dispose() { stopped = true; release?.(); await lifetime; },
+    dispose() {
+      stopped = true;
+      closing ??= (async () => {
+        try {
+          // Drain accepted gestures, never wait for an unknown network outcome.
+          await chain;
+          if (pendingAppends.length) {
+            const error = persistenceError ?? 'Unsaved move: durable append did not finish';
+            state = { ...state, status: 'error', error, canUndo: false };
+            throw new Error(error);
+          }
+        } finally {
+          release?.();
+          await lifetime;
+        }
+      })();
+      return closing;
+    },
   };
 }
 export type TimelineCommandSession = Awaited<ReturnType<typeof createTimelineCommandSession>>;
