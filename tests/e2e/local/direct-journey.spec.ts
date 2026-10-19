@@ -236,25 +236,19 @@ test.describe('first time and returning panels (App)', () => {
   });
 });
 
-// Revision 3 (D3): the hosted build reads the local-network permission first and sends nothing to the door until it
-// is granted. These cases use their own browser context, because the fixture context is granted up front.
+// Fresh profiles see setup before any local-network prompt or door request. The installer handoff remains explicit.
 test.describe('permission gate and readiness (App)', () => {
-  test('a first visit without the local-network permission sends nothing to the door until Connect, then connects', async ({ browser, harness }) => {
+  test('a fresh profile sees setup before any permission prompt or door request', async ({ browser, harness }) => {
     const context = await browser.newContext(); // no grant: the permission reads `prompt`
     try {
       const page = await context.newPage();
       const doorRequests = await openApp(page, harness);
       expect(await readLocalNetworkState(page)).toBe('prompt');
       const panel = page.locator(UI.panel);
-      await expect(panel.getByRole('heading', { name: 'Connect to Astrid on this computer' })).toBeVisible();
-      await expect(panel.getByRole('button', { name: UI.connect })).toBeVisible();
-      expect(doorRequests, 'nothing is sent to the door before Connect').toEqual([]);
-      // Headless Chromium cannot answer Chrome's prompt, so the click is followed by the grant the prompt would give.
-      // The grant comes after the click: a granted permission connects by itself, and Connect would be gone.
-      await panel.getByRole('button', { name: UI.connect }).click();
-      await context.grantPermissions([LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
-      await expectConnected(page);
-      expect(doorRequests.length).toBeGreaterThan(0);
+      await expect(panel).toHaveAttribute('data-state', 'set_up');
+      await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
+      await expect(panel.getByRole('button', { name: UI.connect })).toHaveCount(0);
+      expect(doorRequests, 'a fresh profile does not probe the door while showing setup').toEqual([]);
     } finally {
       await context.close();
     }

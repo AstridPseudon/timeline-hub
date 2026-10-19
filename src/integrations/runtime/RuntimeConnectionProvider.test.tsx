@@ -347,18 +347,26 @@ describe('app entry preference', () => {
 });
 
 describe('prompt', () => {
-  it('sends nothing until connect(), then connects', async () => {
+  it('shows setup on a fresh browser without probing or asking permission', async () => {
     const gateway = fakeGateway();
     renderProvider(gateway, fakePermissions('prompt').permissions);
 
     await waitFor(() => expect(latest.isBooting).toBe(false));
     expect(latest.awaitingConnect).toBe(true);
-    expect(latest.state).toEqual({ status: 'connecting' });
+    expect(latest.state).toEqual({ status: 'set_up' });
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)); });
     window.dispatchEvent(new Event('focus'));
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing until an explicit connect(), then connects', async () => {
+    const gateway = fakeGateway();
+    renderProvider(gateway, fakePermissions('prompt').permissions);
+
+    await waitFor(() => expect(latest.state.status).toBe('set_up'));
 
     act(() => latest.connect());
+    await waitFor(() => expect(latest.isChecking).toBe(true));
     await waitFor(() => expect(status()).toBe('connected'));
     expect(latest.awaitingConnect).toBe(false);
   });
@@ -389,7 +397,7 @@ describe('prompt', () => {
 
     act(() => latest.connect());
     await waitFor(() => expect(latest.isChecking).toBe(false));
-    expect(latest.state).toEqual({ status: 'connecting' });
+    expect(latest.state).toEqual({ status: 'set_up' });
     expect(latest.awaitingConnect).toBe(true);
   });
 
@@ -559,8 +567,10 @@ describe('gate', () => {
 
 describe('gate: the landing page already asked to go in', () => {
   /** A panel that shows the state the gate hands it, so the test sees explainer versus Chrome's prompt. */
-  const panel = ({ awaitingConnect, isChecking, connect }: RuntimeConnectionValue) => (
-    awaitingConnect && !isChecking
+  const panel = ({ state, awaitingConnect, isChecking, connect }: RuntimeConnectionValue) => (
+    state.status === 'set_up' && !isChecking
+      ? <p data-testid="setup">set_up</p>
+      : awaitingConnect && !isChecking
       ? <button type="button" data-testid="explainer" onClick={connect}>Connect</button>
       : <p data-testid="panel-state">{awaitingConnect ? 'pending' : 'other'}</p>
   );
@@ -595,7 +605,7 @@ describe('gate: the landing page already asked to go in', () => {
     expect(autoConnectRequested()).toBe(false);
   });
 
-  it('shows the pending screen, not the explainer, while Chrome\'s prompt is open', async () => {
+  it('keeps the installer handoff on the permission screen while Chrome\'s prompt is open', async () => {
     requestAutoConnect();
     const gateway = fakeGateway();
     gateway.routes['/v1/health'] = () => new Promise<Response>(() => {});
@@ -605,14 +615,13 @@ describe('gate: the landing page already asked to go in', () => {
     expect(screen.queryByTestId('explainer')).toBeNull();
   });
 
-  it('shows the explainer for a direct visit, and asks Chrome only when Connect is pressed', async () => {
+  it('shows setup on a fresh direct visit without asking permission or probing', async () => {
     const gateway = fakeGateway();
     renderGate(gateway, 'prompt');
 
-    await waitFor(() => expect(screen.getByTestId('explainer')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId('setup')).toBeInTheDocument());
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
-    act(() => screen.getByTestId('explainer').click());
-    await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
+    expect(screen.queryByTestId('explainer')).toBeNull();
   });
 
   it('with the permission already granted or denied the flag has nothing to do, and does not linger', async () => {
@@ -629,6 +638,7 @@ describe('gate: the landing page already asked to go in', () => {
     requestAutoConnect();
     const gateway = fakeGateway();
     gateway.down();
+    window.localStorage.setItem(STORAGE_KEY, '1');
     const permissions = fakePermissions('prompt');
     render(
       <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions.permissions} pollIntervalMs={10}>

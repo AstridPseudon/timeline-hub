@@ -214,7 +214,11 @@ export function RuntimeConnectionPanel({ connection }: RuntimeConnectionPanelPro
   const phone = useMemo(isMobileDevice, []);
   const { state } = connection;
   if (state.status === 'connected') return null;
-  if (connection.awaitingConnect) return phone ? <PhonePanel /> : <PermissionPanel connection={connection} />;
+  // A first-time profile gets setup guidance before any permission request. An explicit installer handoff
+  // temporarily marks the permission request as checking, while previously connected profiles recover directly.
+  if (connection.awaitingConnect && (state.status !== 'set_up' || connection.isChecking)) {
+    return phone ? <PhonePanel /> : <PermissionPanel connection={connection} />;
+  }
   switch (state.status) {
     case 'connecting':
       return <ConnectingPanel phone={phone} />;

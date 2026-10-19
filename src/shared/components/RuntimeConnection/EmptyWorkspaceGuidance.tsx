@@ -4,7 +4,7 @@ import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
-import { AGENT_SEARCHES, RUNTIME_CONNECTION_COPY } from './copy.ts';
+import { AGENT_SEARCHES, installCommand, RUNTIME_CONNECTION_COPY } from './copy.ts';
 
 type WorkspaceIdentity = { name: string; realmId: string };
 
@@ -19,8 +19,8 @@ function emptyWorkspaceDiagnostic(identity: WorkspaceIdentity, pageOrigin: strin
     '1. Find out which Astrid is running now, and the folder it runs from.',
     '2. Look for the others. Each Astrid install keeps its own workspace:',
     `     ${AGENT_SEARCHES.install}`,
-    `   A developer setup may also keep one in ${AGENT_SEARCHES.runtimeDataFolder}.`,
-    "3. Tell me what you found, and ask me which one holds my work before you change anything. To switch, stop the Astrid that's running and start that one (an install starts with <folder>/start, where <folder> holds its install.json). Then I'll reload this page.",
+    `3. Tell me what you found, and ask me which one holds my work before you change anything. Once I choose, use this one-line Astrid install/repair command to bring that installation up: ${installCommand('install')}`,
+    "   Don't reset, replace or delete any existing data. Then I'll reload this page.",
     '',
     'Never create, reset or delete a workspace, project or install to work around this.',
   ].join('\n');

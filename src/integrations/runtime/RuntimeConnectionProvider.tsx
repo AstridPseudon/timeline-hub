@@ -314,7 +314,15 @@ export function RuntimeConnectionProvider({
     const notConnected = { ...base, isConnected: false, realmName: null, schemaDigest: null, awaitingConnect: permission === 'prompt' };
     if (permission === null) return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
     if (permission === 'denied') return { ...notConnected, state: { status: 'blocked' }, isBooting: false };
-    if (permission === 'prompt') return { ...notConnected, state: { status: 'connecting' }, isBooting: false };
+    // A fresh browser should see the safe, idempotent setup line before it can ask for local-network access.
+    // The installer handoff still carries `awaitingConnect`; RuntimeConnectionGate consumes that only when
+    // `?connect=1` explicitly requested the permission prompt. Browsers that connected before keep their
+    // permission recovery screen when the grant is reset.
+    if (permission === 'prompt') return {
+      ...notConnected,
+      state: { status: connectedBefore || isChecking ? 'connecting' : 'set_up' },
+      isBooting: false,
+    };
     if (outcome?.kind === 'restart') return { ...notConnected, state: { status: 'restart_needed' }, isBooting: false };
     if (outcome?.kind === 'update_needed') return { ...notConnected, state: { status: 'update_needed' }, isBooting: false };
     if (failedReadings >= 2) {

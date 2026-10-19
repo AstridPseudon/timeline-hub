@@ -46,8 +46,7 @@ export function installCommand(mode: CommandMode): string {
 
 /** Search hints are only included in the separate empty-workspace diagnostic for a coding agent. */
 export const AGENT_SEARCHES = {
-  install: 'find ~ -maxdepth 6 -name install.json -not -path "*/node_modules/*" -exec grep -l astrid.local-source-install {} + 2>/dev/null',
-  runtimeDataFolder: '~/Library/Application Support/Astrid Runtime',
+  install: 'find ~ -maxdepth 6 -name install.json -not -path "*/node_modules/*" -exec grep -l \'"owner"[[:space:]]*:[[:space:]]*"haus.astrid.runtime"\' {} + 2>/dev/null',
 } as const;
 
 /** A heading and the one sentence under it. */
