@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AstridRuntimeClient, RuntimeAuthenticationError, RUNTIME_CLIENT_SCOPES } from './client.ts';
+import type { MediaSelection, MediaSelectionQuery } from './generated.ts';
 import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
 import { RuntimeDataProvider, toRuntimePublication } from './dataProvider.ts';
 import { TimelineSchemaIncompatibleError, TimelineVersionConflictError, isOwnUnacknowledgedSaveError } from '@/tools/video-editor/data/DataProvider.ts';
@@ -68,6 +69,99 @@ function compactParentComposition() {
 
 
 describe('RuntimeDataProvider', () => {
+  it('reads both immutable selection query variants with exact pins and query encoding', async () => {
+    const cases: Array<{
+      query: MediaSelectionQuery;
+      selection: MediaSelection;
+      expectedPath: string;
+    }> = [
+      {
+        query: { asset: 'asset/音 +', generation_id: 'generation/1', variant_id: 'variant?#' },
+        selection: {
+          asset: 'asset/音 +', generation_id: 'generation/1', variant_id: 'variant?#',
+          object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}`,
+        },
+        expectedPath: `/v1/projects/${encodeURIComponent(PROJECT_ID)}/media-selection?asset=asset%2F%E9%9F%B3%20%2B&generation_id=generation%2F1&variant_id=variant%3F%23`,
+      },
+      {
+        query: { association_id: 'association/1', object_id: `sha256:${'c'.repeat(64)}`, version: 7 },
+        selection: {
+          asset: 'asset', generation_id: 'generation', variant_id: 'variant',
+          object_id: `sha256:${'c'.repeat(64)}`, catalog_digest: `sha256:${'d'.repeat(64)}`,
+        },
+        expectedPath: `/v1/projects/${encodeURIComponent(PROJECT_ID)}/media-selection?association_id=association%2F1&object_id=sha256%3A${'c'.repeat(64)}&version=7`,
+      },
+    ];
+
+    for (const { query, selection, expectedPath } of cases) {
+      const fixture = runtimeFixture();
+      const selectionRequests: string[] = [];
+      const provider = new RuntimeDataProvider({
+        projectId: PROJECT_ID,
+        transport: async (method, path, headers, body) => {
+          if (method === 'GET' && path.includes('/media-selection?')) {
+            selectionRequests.push(path);
+            return { status: 200, headers: {}, body: json(selection) };
+          }
+          return fixture.transport(method, path, headers, body);
+        },
+      });
+
+      await expect(provider.getProjectMediaSelection!(query)).resolves.toEqual(selection);
+      expect(selectionRequests).toEqual([expectedPath]);
+      expect(fixture.requests.filter((request) => request.path.includes('/media-selection?'))).toEqual([]);
+    }
+  });
+
+  it.each([
+    ['missing required pin', { asset: 'asset', generation_id: 'generation', variant_id: 'variant', object_id: `sha256:${'a'.repeat(64)}` }],
+    ['invalid digest', { asset: 'asset', generation_id: 'generation', variant_id: 'variant', object_id: 'not-a-digest', catalog_digest: `sha256:${'b'.repeat(64)}` }],
+    ['mismatched variant identity', { asset: 'asset', generation_id: 'generation', variant_id: 'newest', object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` }],
+    ['mismatched association object pin', { asset: 'asset', generation_id: 'generation', variant_id: 'variant', object_id: `sha256:${'c'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` }],
+  ])('fails closed for %s without a latest-media fallback', async (_label, selection) => {
+    const fixture = runtimeFixture();
+    const query: MediaSelectionQuery = _label === 'mismatched association object pin'
+      ? { association_id: 'association', object_id: `sha256:${'d'.repeat(64)}`, version: 2 }
+      : { asset: 'asset', generation_id: 'generation', variant_id: 'variant' };
+    let selectionReads = 0;
+    const provider = new RuntimeDataProvider({
+      projectId: PROJECT_ID,
+      transport: async (method, path, headers, body) => {
+        if (method === 'GET' && path.includes('/media-selection?')) {
+          selectionReads += 1;
+          return { status: 200, headers: {}, body: json(selection) };
+        }
+        return fixture.transport(method, path, headers, body);
+      },
+    });
+
+    await expect(provider.getProjectMediaSelection!(query)).rejects.toMatchObject({ code: 'schema_incompatible' });
+    expect(selectionReads).toBe(1);
+  });
+
+  it.each([
+    [404, 'not_found'],
+    [409, 'selection_race'],
+  ])('propagates immutable selection HTTP refusal %s unchanged', async (status, code) => {
+    const fixture = runtimeFixture();
+    let selectionReads = 0;
+    const provider = new RuntimeDataProvider({
+      projectId: PROJECT_ID,
+      transport: async (method, path, headers, body) => {
+        if (method === 'GET' && path.includes('/media-selection?')) {
+          selectionReads += 1;
+          return { status, headers: {}, body: json({ code, message: 'selection refused' }) };
+        }
+        return fixture.transport(method, path, headers, body);
+      },
+    });
+
+    await expect(provider.getProjectMediaSelection!({
+      asset: 'asset', generation_id: 'generation', variant_id: 'variant',
+    })).rejects.toMatchObject({ status, code });
+    expect(selectionReads).toBe(1);
+  });
+
   it('reads placements from the parent payload already used by timeline rows', async () => {
     const fixture = runtimeFixture({ parentComposition: {
       ...compactParentComposition(),

@@ -6,6 +6,8 @@ import type {
   CommitRequest,
   EditCommand,
   HistoryPage,
+  MediaSelection,
+  MediaSelectionQuery,
 } from './generated.ts';
 import {
   AstridRuntimeClient,
@@ -731,6 +733,12 @@ export class RuntimeDataProvider implements DataProvider {
     return this.client.listTimelineCommits(this.projectId, timelineId, cursor, limit);
   }
 
+  /** Read and retain the exact Runtime-selected media identity and catalog pin. */
+  async getProjectMediaSelection(query: MediaSelectionQuery): Promise<MediaSelection> {
+    const selection = await this.client.getProjectMediaSelection(this.projectId, query);
+    return validateMediaSelection(selection, query);
+  }
+
   private acceptedCommitResult(response: CommitAcceptedMutation, timelineId: string): TimelineCommitResult {
     const data = response.data;
     const receipt = response.receipt;
@@ -1403,6 +1411,46 @@ function asRecord(value: unknown): RuntimeRecord | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
     ? value as RuntimeRecord
     : null;
+}
+
+function validateMediaSelection(
+  value: MediaSelection,
+  query: MediaSelectionQuery,
+): MediaSelection {
+  const selection = asRecord(value);
+  const fields = ['asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'];
+  if (!selection || Object.keys(selection).length !== fields.length
+    || fields.some((field) => !Object.prototype.hasOwnProperty.call(selection, field))) {
+    throw new TimelineSchemaIncompatibleError('Workspace Runtime returned an invalid media selection shape');
+  }
+
+  const asset = mediaSelectionString(selection.asset, 'asset');
+  const generationId = mediaSelectionString(selection.generation_id, 'generation_id');
+  const variantId = mediaSelectionString(selection.variant_id, 'variant_id');
+  mediaSelectionDigest(selection.object_id, 'object_id');
+  mediaSelectionDigest(selection.catalog_digest, 'catalog_digest');
+
+  if ('asset' in query && (asset !== query.asset || generationId !== query.generation_id || variantId !== query.variant_id)) {
+    throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a media selection for a different asset generation variant');
+  }
+  if ('association_id' in query && selection.object_id !== query.object_id) {
+    throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a media selection for a different association object');
+  }
+
+  return value;
+}
+
+function mediaSelectionString(value: unknown, label: string): string {
+  if (typeof value !== 'string' || value.length === 0 || !/\S/.test(value)) {
+    throw new TimelineSchemaIncompatibleError(`Workspace Runtime media selection ${label} is invalid`);
+  }
+  return value;
+}
+
+function mediaSelectionDigest(value: unknown, label: string): void {
+  if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/.test(value)) {
+    throw new TimelineSchemaIncompatibleError(`Workspace Runtime media selection ${label} is invalid`);
+  }
 }
 
 function normalizeRegistry(value: unknown): AssetRegistry {

@@ -26,6 +26,8 @@ import type {
   CommitAcceptedMutation,
   CommitRequest,
   HistoryPage,
+  MediaSelection,
+  MediaSelectionQuery,
   MutationReceipt,
 } from '@/integrations/runtime/generated.ts';
 export type {
@@ -454,6 +456,8 @@ export interface DataProvider extends AssetResolver {
   shotComposition?: ShotCompositionPort;
   /** Optional provider-owned generation lookup for editor asset actions. */
   loadGenerationForLightbox?(generationId: string): Promise<GenerationRow | null>;
+  /** Read an exact immutable managed-media selection for this provider's project. */
+  getProjectMediaSelection?(query: MediaSelectionQuery): Promise<MediaSelection>;
   /** Existing Runtime-managed object plane for editable project sources. */
   projectObjects?: ProjectObjectStorage;
   persistenceEnabled?: boolean;
