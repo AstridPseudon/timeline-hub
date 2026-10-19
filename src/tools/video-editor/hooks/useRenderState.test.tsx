@@ -528,6 +528,54 @@ describe('useRenderState render routing', () => {
     expect(result.current.renderStatus).toBe('idle');
   });
 
+  it('exposes the structured seam report when local render admission is blocked', async () => {
+    const seamReport = {
+      version: 1 as const,
+      fps: 30,
+      guardFrames: 2,
+      boundaries: [{
+        frame: 30,
+        timeSeconds: 1,
+        participants: [{ownerId: 'b', clipId: 'b', path: ['clip', 'b'], behavior: 'source-change' as const}],
+        structuralIssues: [],
+        unacknowledgedRisk: true,
+        requiresIntent: true,
+      }],
+      opaqueElements: [],
+      structuralIssues: [],
+      cues: [],
+      warningCount: 1,
+      blocked: true,
+    };
+    renderRouterMocks.buildRenderTimelinePayload.mockReturnValueOnce({
+      error: 'Visual seam admission blocked',
+      seamReport,
+    });
+    const runtimeValue = {
+      project: { projectId: 'demo-project' },
+      timelineId: 'timeline-1',
+      provider: { apiBaseUrl: '/api/astrid' },
+      telemetry: { warn: vi.fn() },
+    } as unknown as VideoEditorRuntimeContextValue;
+    const wrapper = ({children}: {children: ReactNode}) => (
+      <VideoEditorRuntimeContext.Provider value={runtimeValue}>{children}</VideoEditorRuntimeContext.Provider>
+    );
+    const {result} = renderHook(() => useRenderState(
+      {...buildConfig({id: 'clip-native', clipType: 'media', track: 'V1', at: 0, hold: 1}),
+        app: {visualSeamContract: {mode: 'enforced'}}},
+      null,
+      undefined,
+      undefined,
+      vi.fn(async () => 7),
+    ), {wrapper});
+
+    await act(async () => { await result.current.startRender(); });
+
+    expect(result.current.renderStatus).toBe('error');
+    expect(result.current.visualSeamReport).toEqual(seamReport);
+    expect(renderRouterMocks.enqueueAstridRuntimeRenderTimeline).not.toHaveBeenCalled();
+  });
+
   it('uses an injected exporter instead of the client renderer when one is supplied', async () => {
     const exporter = {
       render: vi.fn(async () => ({

@@ -106,13 +106,45 @@ export function TimelineRenderControls({
       )}
       {chrome.renderStatus === 'error' && chrome.renderLog && (
         <div
-          className="absolute right-0 top-full mt-1 w-72 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1.5 text-[10px] text-red-300 backdrop-blur-sm"
+          className="absolute right-0 top-full z-40 mt-1 w-80 max-w-[calc(100vw-2rem)] rounded-md border border-red-500/30 bg-zinc-950/95 px-3 py-2 text-[11px] text-red-200 shadow-lg backdrop-blur-sm"
           data-video-editor-render-blocker="true"
         >
           <div className="flex items-start gap-1">
             <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
-            <span className="line-clamp-3">{chrome.renderLog.split('\n')[0]}</span>
+            <span>{chrome.renderLog.split('\n')[0]}</span>
           </div>
+          {chrome.visualSeamReport && (
+            <section className="mt-2 space-y-2 border-t border-red-500/20 pt-2" aria-label="Visual seam admission report">
+              <p className="font-medium text-zinc-100">Visual boundary report</p>
+              {chrome.visualSeamReport.boundaries.filter((boundary) => boundary.unacknowledgedRisk || boundary.structuralIssues.length > 0).map((boundary) => (
+                <div key={boundary.frame} className="rounded border border-white/10 bg-white/5 px-2 py-1.5 text-zinc-200">
+                  <p>Frame {boundary.frame} · {boundary.timeSeconds.toFixed(2)}s</p>
+                  <p className="text-zinc-400">
+                    {boundary.participants.map((participant) => participant.cue?.kind ?? participant.behavior).join(', ') || 'Boundary'}
+                  </p>
+                  {boundary.structuralIssues.map((issue) => <p key={issue} className="text-red-300">{issue}</p>)}
+                </div>
+              ))}
+              {chrome.visualSeamReport.structuralIssues.map((issue) => (
+                <p key={issue} className="text-red-300">Structural issue: {issue}</p>
+              ))}
+              {chrome.visualSeamReport.opaqueElements.length > 0 && (
+                <p className="text-amber-200">
+                  Opaque visual elements: {chrome.visualSeamReport.opaqueElements.map((element) => element.clipType).join(', ')}
+                </p>
+              )}
+              {chrome.canDeclareSeamsAsHardCuts && (
+                <Button type="button" size="sm" variant="outline" onClick={() => void chrome.declareSeamsAsHardCuts()}>
+                  Declare flagged boundaries as hard cuts
+                </Button>
+              )}
+              {chrome.canAcknowledgeVisualCues && (
+                <Button type="button" size="sm" variant="outline" onClick={() => void chrome.acknowledgeVisualCuesAsSynchronized()}>
+                  Acknowledge listed cues as synchronized
+                </Button>
+              )}
+            </section>
+          )}
         </div>
       )}
     </>

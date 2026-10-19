@@ -85,6 +85,78 @@ describe('TimelineRenderControls', () => {
 
     expect(screen.getByRole('button', { name: 'Cancel render' })).toBeTruthy();
   });
+
+  it('shows a structured seam report and separate eligible declaration actions', () => {
+    const declareHardCuts = vi.fn();
+    const acknowledgeCues = vi.fn();
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({
+      renderStatus: 'error',
+      renderLog: 'Visual seam admission blocked: boundary at frame 30 has undeclared visual cues',
+      visualSeamReport: {
+        version: 1,
+        fps: 30,
+        guardFrames: 2,
+        boundaries: [{
+          frame: 30,
+          timeSeconds: 1,
+          intent: undefined,
+          participants: [{
+            ownerId: 'clip-b', clipId: 'clip-b', path: ['clip', 'clip-b'], behavior: 'motion-start',
+            cue: {frame: 30, kind: 'motion-start', id: 'motion', path: ['clip', 'clip-b']},
+          }],
+          structuralIssues: [],
+          unacknowledgedRisk: true,
+          requiresIntent: true,
+        }],
+        opaqueElements: [],
+        structuralIssues: [],
+        cues: [],
+        warningCount: 1,
+        blocked: true,
+      },
+      canDeclareSeamsAsHardCuts: false,
+      declareSeamsAsHardCuts: declareHardCuts,
+      canAcknowledgeVisualCues: true,
+      acknowledgeVisualCuesAsSynchronized: acknowledgeCues,
+    }));
+
+    render(<TimelineRenderControls previewActionButtonClass="" />);
+
+    expect(screen.getByRole('region', {name: 'Visual seam admission report'})).toBeTruthy();
+    expect(screen.getByText('Frame 30 · 1.00s')).toBeTruthy();
+    expect(screen.getByText('motion-start')).toBeTruthy();
+    expect(screen.queryByRole('button', {name: 'Declare flagged boundaries as hard cuts'})).toBeNull();
+    fireEvent.click(screen.getByRole('button', {name: 'Acknowledge listed cues as synchronized'}));
+    expect(acknowledgeCues).toHaveBeenCalledOnce();
+    expect(declareHardCuts).not.toHaveBeenCalled();
+  });
+
+  it('offers the hard-cut declaration only when the hook marks all flagged boundaries eligible', () => {
+    const declareHardCuts = vi.fn();
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({
+      renderStatus: 'error',
+      renderLog: 'Visual seam admission blocked',
+      visualSeamReport: {
+        version: 1, fps: 30, guardFrames: 2,
+        boundaries: [{
+          frame: 30, timeSeconds: 1,
+          participants: [{ownerId: 'b', clipId: 'b', path: ['clip', 'b'], behavior: 'source-change'}],
+          structuralIssues: [], unacknowledgedRisk: true, requiresIntent: true,
+        }],
+        opaqueElements: [], structuralIssues: [], cues: [], warningCount: 1, blocked: true,
+      },
+      canDeclareSeamsAsHardCuts: true,
+      declareSeamsAsHardCuts: declareHardCuts,
+      canAcknowledgeVisualCues: false,
+      acknowledgeVisualCuesAsSynchronized: vi.fn(),
+    }));
+
+    render(<TimelineRenderControls previewActionButtonClass="" />);
+
+    fireEvent.click(screen.getByRole('button', {name: 'Declare flagged boundaries as hard cuts'}));
+    expect(declareHardCuts).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', {name: 'Acknowledge listed cues as synchronized'})).toBeNull();
+  });
 });
 
 

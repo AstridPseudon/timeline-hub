@@ -37,7 +37,10 @@ import {
   type GeneratedLaneClipShape,
 } from '@/tools/video-editor/lib/generated-lanes.ts';
 import { materializeSequenceConfig } from '@/tools/video-editor/sequences/materialize.ts';
-import { assertVisualSeamAdmission } from '@/tools/video-editor/data/visualSeamContract.ts';
+import {
+  assertVisualSeamAdmission,
+  type VisualSeamReport,
+} from '@/tools/video-editor/data/visualSeamContract.ts';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import {
   planRender,
@@ -846,7 +849,7 @@ function newCorrelationId(): string {
 
 export function buildRenderTimelinePayload(
   input: BuildRenderPayloadInput,
-): { payload?: AstridRuntimeRenderTimelinePayload; error?: string } {
+): { payload?: AstridRuntimeRenderTimelinePayload; error?: string; seamReport?: VisualSeamReport } {
   const { request } = input;
   if (!request?.timelineId) return { error: 'timelineId is required' };
   if (!request?.renderRuntime?.projectId) return { error: 'projectId is required' };
@@ -864,7 +867,13 @@ export function buildRenderTimelinePayload(
     try {
       assertVisualSeamAdmission(outputConfig, { enforceIntent: true });
     } catch (error) {
-      return { error: error instanceof Error ? error.message : 'visual seam admission blocked' };
+      const seamReport = error && typeof error === 'object' && 'report' in error
+        ? (error as { report?: VisualSeamReport }).report
+        : undefined;
+      return {
+        error: error instanceof Error ? error.message : 'visual seam admission blocked',
+        ...(seamReport ? { seamReport } : {}),
+      };
     }
   }
 
@@ -894,6 +903,7 @@ export interface EnqueueRenderResult {
   task_id?: string;
   correlation_id?: string;
   message: string;
+  seamReport?: VisualSeamReport;
 }
 
 export type RenderExportDestination = 'download' | 'project-media';
@@ -1011,8 +1021,24 @@ export async function enqueueAstridRuntimeRenderTimeline(
       status: 'error',
       correlation_id: payload.correlation_id,
       message: `Astrid render admission failed: ${error instanceof Error ? error.message : String(error)}`,
+      ...(readRuntimeVisualSeamReport(error) ? { seamReport: readRuntimeVisualSeamReport(error) } : {}),
     };
   }
+}
+
+function readRuntimeVisualSeamReport(error: unknown): VisualSeamReport | undefined {
+  if (!(error instanceof BridgeRouteError)) return undefined;
+  const details = error.envelope?.details;
+  if (!details || typeof details !== 'object' || Array.isArray(details)) return undefined;
+  const report = (details as Record<string, unknown>).report;
+  if (!report || typeof report !== 'object' || Array.isArray(report)) return undefined;
+  const candidate = report as Partial<VisualSeamReport>;
+  return candidate.version === 1
+    && Array.isArray(candidate.boundaries)
+    && Array.isArray(candidate.structuralIssues)
+    && typeof candidate.blocked === 'boolean'
+    ? candidate as VisualSeamReport
+    : undefined;
 }
 
 /**
