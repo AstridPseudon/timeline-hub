@@ -24,7 +24,7 @@ for read-only comparison, not attribution. The full suite was not rerun.
 All 63 nodes are accounted for below. Counts are pytest nodes, including
 parameterized cases.
 
-### Environment/setup/toolchain — 23 failures and 15 errors
+### Environment/setup/toolchain — 9 failures and 15 errors
 
 * **15 errors, missing external VibeComfy fixture:** every node in
   `tests/packs/runpod/test_worker_staging.py` failed in the module-scoped
@@ -63,7 +63,15 @@ parameterized cases.
   dependency-only Agent venv does not install `runtime_protocol`. This needs
   Runtime/test-environment wiring, not an Agent product change.
 
-### Pre-existing main product/test or documentation issues outside Timeline M1 — 25 failures
+* **1 xdist/execnet reporting failure:**
+  `tests/packs/test_vibecomfy_metadata.py::VibeComfyStructuredMetadataTest::test_run_rejects_missing_or_empty_engine_inventory`
+  reaches `subTest(inventory=...)`, then xdist cannot serialize its
+  `PosixPath` value (`execnet.gateway_base.DumpError`). This is an observed
+  reporting/toolchain failure with Python3.13/pytest9.0.2/xdist3.8.0; exact
+  version causality was not isolated. It does not report the asserted
+  production behavior.
+
+### Pre-existing main product/test or documentation issues outside Timeline M1 — 39 failures
 
 * **34 RunPod executor-path failures (one shared stale path mismatch):**
   `tests/packs/runpod/test_ensure_storage.py` has 2 nodes
@@ -109,12 +117,6 @@ parameterized cases.
   `::test_stop_requires_pinned_exit_proof_before_stopped_receipt[True]`, and
   `[False]` fail before exercising the subject because the test references
   `signal` without importing it. The product module itself imports `signal`.
-* **1 xdist/execnet reporting failure:**
-  `tests/packs/test_vibecomfy_metadata.py::VibeComfyStructuredMetadataTest::test_run_rejects_missing_or_empty_engine_inventory`
-  reaches `subTest(inventory=...)`, then xdist cannot serialize its
-  `PosixPath` value (`execnet.gateway_base.DumpError`). This is a
-  Python3.13/pytest9.0.2/xdist3.8.0 reporting/toolchain incompatibility, not
-  the asserted production behavior.
 * **1 pre-existing generic-host contract mismatch:**
   `tests/test_generic_host.py::test_failed_worker_release_retains_original`
   expects `CleanupUncertainError`, but unchanged `generic_host.py` converts the
@@ -128,7 +130,7 @@ parameterized cases.
   200, over the allowed 50). Neither the source nor rationale changed in
   `e51595c6..a6502806`; this is a pre-existing core documentation drift.
 
-The arithmetic is 23 setup/toolchain failures + 25 pre-existing main/core
+The arithmetic is 9 setup/toolchain failures + 39 pre-existing main/core
 failures + 15 setup errors = 48 failures and 15 errors.
 
 ## Ownership and Viewing check
@@ -141,8 +143,8 @@ failures + 15 setup errors = 48 failures and 15 errors.
   checkout/package exposure in the full-suite environment. It is not evidence
   against the Agent commit/provider contract.
 * **Viewing:** no baseline failure is in the Viewing-modified files. The only
-  `e51595c6..a6502806` source changes are the six
-  `astrid/packs/rendering/actions/timeline_visualize/*` / fast-lane files and
+  `e51595c6..a6502806` source changes are five
+  `astrid/packs/rendering/actions/timeline_visualize/*` files plus
   `tests/packs/rendering/test_fast_lane.py`; none appears in the 48/15 node
   list. Candidate Viewing regressions: **0**.
 * **Platform limit:** this was Linux only. No macOS, live RunPod/provider,

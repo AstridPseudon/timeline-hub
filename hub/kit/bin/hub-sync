@@ -101,7 +101,7 @@ if [ $M = main ]; then
       for f in status exit summary ext snap; do [ -f $d/$f ] && cp -p $d/$f hub/tests/$t/; done; done
   done
 else
-  for d in hub/workers/*; do [ -d "$d" ] || continue; w=$(basename $d); mkdir -p $ORCH/workers/$w
+  for d in hub/workers/*; do [ -d "$d" ] || continue; w=$(basename $d); mkdir -p $ORCH/workers/$w; touch $ORCH/workers/$w/IMPORTED
     for f in $d/*; do b=$(basename $f); [ $b = running ] && continue; cp -p $f $ORCH/workers/$w/$b; done
     [ -e $d/running ] && echo "$w is still running on MAIN" > $ORCH/workers/$w/ON-MAIN || rm -f $ORCH/workers/$w/ON-MAIN; done
   for d in hub/tests/*; do [ -d "$d" ] && [ ! -d $ORCH/tests/$(basename $d) ] && cp -rp $d $ORCH/tests/; done
@@ -118,6 +118,8 @@ for r in agent runtime app composition; do
   refs=""
   for b in $(git -C $R for-each-ref --format='%(refname:short)' 'refs/heads/tl/*'); do
     [ $b = tl/integration ] && ! echo " $HOME_REPOS " | grep -q " $r " && continue
+    # a worker branch is published only by the machine that ran the worker (never by one that imported it)
+    if [ $b != tl/integration ]; then w=${b#tl/}; [ -f $ORCH/workers/$w/meta ] && [ ! -e $ORCH/workers/$w/IMPORTED ] || continue; fi
     refs="$refs +refs/heads/$b:refs/heads/timeline/$r/$b"
   done
   [ -n "$refs" ] && retry git -C $R push -q hub $refs

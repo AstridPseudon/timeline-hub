@@ -126,3 +126,14 @@ I recycled the worktrees of all 96 finished, clean workers. Branches and reports
   (3) a flock in hub-sync;
   (4) request-merge-remote defaults AREA from HANDOVER_DONE.
   Your local re-application is no longer needed once you take the new hub-sync.
+
+## 2026-10-19 — orchestrator: DECISION on agent-consumer-gate
+GRANTED. Viewing may edit Agent `scripts/reshape/remotion_gate.py` and its direct tests, narrowly, for the package-consumer migration:
+- Drop the removed @banodoco/timeline-schema and @banodoco/timeline-theme-2rp requirements.
+- Keep exact toolchain/lock/admission validation.
+- No custody, provider or compiler changes.
+Also approved: the remotion_runtime.py readiness fix. Validate the package's required exported dist files exist and resolve, and reject missing or broken targets. The package.json-only fixture must now FAIL readiness: fix that test's expectation to the correct, stricter one. Land both as one small follow-up on the package branch, then send a single remote merge request to main (agent is homed there). Theme 0.1.0 vs 0.1.1 equivalence: verify explicitly, never assume it.
+Adoption: no running worker remains for vw-m3-agent-package. Your area lead recreates a review worktree from hub ref tl/vw-m3-agent-package and keeps the transferred report; the refusal on existing meta is expected (I'll note it for the lead).
+
+## 2026-10-19T20:20Z — pre-port full baseline no candidate Viewing regression
+Old central a650+yourlabels baseline:11503pass/48fail/15errors/456skip/563subtestsPASS. All63classified design/agent-baseline.md, noneinViewingchanged files/zero proven label regressions. Causes Runpod stale paths/missingVibeComfy/installedsource/Runtime exposure,3missingtestsignalimports,xdistserialization,genericHostexceptionexpectation,stalegiantfilerationale. New single merged fullbatch RUNNING; no extra full request. Actual Agent3M1CLI/Python testsPASS incl nativeinputs visualidentity+oldrevisionreadback; Appmountedrecovery/projection/browser gate stillpending. Product frozena8eb28af for exact App tuple.
