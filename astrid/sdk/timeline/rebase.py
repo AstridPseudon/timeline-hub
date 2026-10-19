@@ -1,0 +1,11 @@
+"""Server-only replay of the original captured intent on an accepted head."""
+from __future__ import annotations
+
+from .commands import execute
+from .inverse import check_intervening
+
+
+def replay(plan, head_bundle, *, intervening_records=(), inverse_records=(), id_map=None):
+    check_intervening(plan.records, intervening_records)
+    return execute(head_bundle, plan.commands, inverse_records=inverse_records,
+                   intervening_records=intervening_records, id_map=id_map)
