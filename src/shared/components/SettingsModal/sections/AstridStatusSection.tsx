@@ -40,6 +40,14 @@ function StatusRow({ label, value }: { label: string; value: string | number }) 
   );
 }
 
+function serviceMetadata(service: RuntimeService): string[] {
+  return [
+    COPY.restartCount(service.restart_count),
+    service.last_exit !== null ? COPY.lastExit(service.last_exit) : null,
+    service.reason ? COPY.reason(service.reason) : null,
+  ].filter((value): value is string => value !== null);
+}
+
 export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
   const connection = useRuntimeConnection();
   const [details, setDetails] = useState<RuntimeDetails | null>(null);
@@ -136,19 +144,20 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
                     <p className="text-sm text-muted-foreground">{COPY.noServices}</p>
                   ) : (
                     <ul className="space-y-2">
-                      {services.map((service) => (
-                        <li key={service.name} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm">
-                          <span className="font-medium">{COPY.serviceName(service.name)}</span>
-                          <span className={service.state === 'failed' ? 'text-destructive' : 'text-muted-foreground'}>
-                            {COPY.serviceStates[service.state]}
-                          </span>
-                          <span className="basis-full text-xs text-muted-foreground">
-                            {COPY.restartCount(service.restart_count)}
-                            {service.last_exit !== null && ` · ${COPY.lastExit(service.last_exit)}`}
-                            {service.reason && ` · ${COPY.reason(service.reason)}`}
-                          </span>
-                        </li>
-                      ))}
+                      {services.map((service) => {
+                        const metadata = serviceMetadata(service);
+                        return (
+                          <li key={service.name} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm">
+                            <span className="font-medium">{COPY.serviceName(service.name)}</span>
+                            <span className={service.state === 'failed' ? 'text-destructive' : 'text-muted-foreground'}>
+                              {COPY.serviceStates[service.state]}
+                            </span>
+                            {metadata.length > 0 && (
+                              <span className="basis-full text-xs text-muted-foreground">{metadata.join(' · ')}</span>
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </div>

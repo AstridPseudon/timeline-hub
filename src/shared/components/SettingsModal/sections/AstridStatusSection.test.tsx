@@ -103,13 +103,19 @@ describe('AstridStatusSection', () => {
         status: 'ok',
         protocol: 'workspace.v1',
         schema_digest: `sha256:${'b'.repeat(64)}`,
-        services: [{ name: 'custom-worker', state: 'running', last_exit: null, restart_count: 0 }],
+        services: [
+          { name: 'custom-worker', state: 'running', last_exit: null, restart_count: 0 },
+          { name: 'retrying-worker', state: 'running', last_exit: 1, restart_count: 0, reason: 'exited' },
+        ],
       },
       realm: { realm_id: 'realm-1', display_name: 'Studio', version: 4, created_at: '2026-01-01T00:00:00Z' },
     });
     render(<AstridStatusSection isOpen />);
 
-    expect(await screen.findByText('custom-worker')).toBeInTheDocument();
+    const customWorker = await screen.findByText('custom-worker');
+    expect(customWorker.closest('li')?.querySelector('span.basis-full')).toBeNull();
+    expect(screen.getByText('Last exit code: 1 · Reason: exited')).toBeInTheDocument();
+    expect(screen.queryByText(/^ · /)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Copy' })).not.toBeInTheDocument();
     expect(screen.queryByText('curl -fsSL https://astrid.haus/install | sh')).not.toBeInTheDocument();
     expect(screen.queryByText(/Restarts:/)).not.toBeInTheDocument();
