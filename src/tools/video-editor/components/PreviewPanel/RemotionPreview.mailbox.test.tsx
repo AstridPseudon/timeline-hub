@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import React, { createRef } from 'react';
-import { act, cleanup, render } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { RemotionPreview, type PreviewHandle } from './RemotionPreview';
+import type { PreviewRevision } from './previewRevision';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 
 vi.mock('@/tools/video-editor/compositions/TimelineRenderer', () => ({ TimelineRenderer: () => null }));
@@ -79,13 +80,25 @@ function settle() {
   }
   expect(raf.size, 'finite RAF work exhausted').toBe(0);
 }
-function preview(initial: ResolvedTimelineConfig) {
+function preview(initial: ResolvedTimelineConfig, initialRevision?: PreviewRevision) {
   const ref = createRef<PreviewHandle>();
   const container = createRef<HTMLDivElement>();
   const onTimeUpdate = vi.fn();
-  const draw = (c: ResolvedTimelineConfig) => <RemotionPreview ref={ref} config={c} onTimeUpdate={onTimeUpdate} playerContainerRef={container} />;
+  const draw = (c: ResolvedTimelineConfig, revision = initialRevision) => (
+    <RemotionPreview
+      ref={ref}
+      config={c}
+      previewRevision={revision}
+      onTimeUpdate={onTimeUpdate}
+      playerContainerRef={container}
+    />
+  );
   const view = render(draw(initial));
-  return { ref, view, replace: (c: ResolvedTimelineConfig) => view.rerender(draw(c)) };
+  return {
+    ref,
+    view,
+    replace: (c: ResolvedTimelineConfig, revision?: PreviewRevision) => view.rerender(draw(c, revision)),
+  };
 }
 beforeEach(() => {
   vi.useFakeTimers();
@@ -209,4 +222,88 @@ it('cancels pending mailbox and paused timer work on unmount', () => {
   expect(raf.size).toBe(0);
   settle();
   expect(boundary.applied).not.toContain(b);
+});
+
+it('labels a delivered historical committed revision', () => {
+  preview(config('historical'), { kind: 'committed', revisionId: 'R1' });
+
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
+});
+
+it('labels a delivered local draft with its committed base', () => {
+  preview(config('draft'), { kind: 'local', baseRevisionId: 'R1' });
+
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R1');
+});
+
+it('keeps the old label until the throttled config and its metadata arrive together', () => {
+  const first = config('label-first');
+  const draft = config('label-draft');
+  const h = preview(first, { kind: 'committed', revisionId: 'R1' });
+
+  h.replace(draft, { kind: 'local', baseRevisionId: 'R1' });
+  expect(boundary.props.inputProps.config).toBe(first);
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
+
+  advance(149);
+  expect(boundary.props.inputProps.config).toBe(first);
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
+
+  advance(1);
+  expect(boundary.props.inputProps.config).toBe(draft);
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R1');
+});
+
+it('does not let a late acknowledgement relabel a delivered local suffix', () => {
+  const local = config('local-prefix');
+  const suffix = config('local-suffix');
+  const h = preview(local, { kind: 'local', baseRevisionId: 'R1' });
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R1');
+
+  // The acknowledgement changes host metadata but not the Player input.
+  h.replace(local, { kind: 'committed', revisionId: 'R2' });
+  expect(boundary.props.inputProps.config).toBe(local);
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R1');
+
+  h.replace(suffix, { kind: 'local', baseRevisionId: 'R2' });
+  advance(150);
+  expect(boundary.props.inputProps.config).toBe(suffix);
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R2');
+});
+
+it('ignores stale paused generation completion and its stale label', () => {
+  const first = config('stale-first');
+  const stale = config('stale-generation');
+  const newest = config('newest-generation');
+  const h = preview(first, { kind: 'committed', revisionId: 'R1' });
+
+  h.replace(stale, { kind: 'committed', revisionId: 'R2' });
+  advance(100);
+  h.replace(newest, { kind: 'local', baseRevisionId: 'R2' });
+  advance(150);
+
+  expect(boundary.props.inputProps.config).toBe(newest);
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R2');
+});
+
+it('keeps cached committed pixels labelled while a target is unavailable', () => {
+  const h = preview(config('cached-r1'), {
+    kind: 'committed',
+    revisionId: 'R1',
+    unavailableTarget: { targetRevisionId: 'R2', reason: 'Runtime read failed' },
+  });
+
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
+  expect(screen.getByTestId('preview-revision-unavailable')).toHaveTextContent('Preview of R2 unavailable');
+  expect(boundary.props.inputProps.previewRevision).toMatchObject({ kind: 'committed', revisionId: 'R1' });
+});
+
+it('shows an unavailable target without inventing a committed revision when there is no cache', () => {
+  preview(config('no-cache'), {
+    kind: 'unavailable',
+    unavailableTarget: { targetRevisionId: 'R2', reason: 'Runtime read failed' },
+  });
+
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Preview of R2 unavailable');
+  expect(screen.queryByText('Committed R2')).toBeNull();
 });

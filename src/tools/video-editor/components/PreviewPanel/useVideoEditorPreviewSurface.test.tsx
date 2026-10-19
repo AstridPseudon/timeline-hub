@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
   useTimelineDataSelector: (selector: (timeline: unknown) => unknown) => selector(mocks.timeline),
+  useTimelineChromeSelector: (selector: (chrome: unknown) => unknown) => selector({ saveStatus: 'saved' }),
   useTimelinePlaybackSelector: (selector: (playback: unknown) => unknown) => selector(mocks.playback),
 }));
 
@@ -64,6 +65,10 @@ describe('useVideoEditorPreviewSurface', () => {
     const previewElement = (result.current.portal as unknown as { children: React.ReactElement }).children;
 
     expect(previewElement.props.config).toEqual(expectedDraftConfig);
+    expect(previewElement.props.previewRevision).toMatchObject({
+      kind: 'local',
+      baseRevisionId: canonical.headRevisionId,
+    });
     expect(previewElement.props.currentTime).toBeUndefined();
   });
 
