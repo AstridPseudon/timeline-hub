@@ -1,5 +1,4 @@
 import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/databasePublicTypes';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { cropImageToProjectAspectRatio } from '@/shared/lib/media/imageCropper';
@@ -7,6 +6,7 @@ import { parseRatio } from '@/shared/lib/media/aspectRatios';
 import { createGenerationForLocalFile, createGenerationForUploadedImage } from '@/shared/lib/media/createGenerationFromFile';
 import { IMAGE_INLINE_UPLOAD_LIMIT_BYTES } from '@/shared/lib/media/dropToGenerationConfig';
 import type { PersistedLocalMediaHandle } from '@/shared/lib/media/localHandleStore';
+import type { UploadedGenerationRow } from '@/shared/types/uploadedGenerationRow';
 import { assertDeferredCloudShotOperation } from './shotAuthority';
 
 function isPersistedLocalFileHandle(
@@ -36,7 +36,7 @@ export interface UploadedGenerationMetadata {
   thumbnail_url: string | null;
   type: string | null;
   created_at: string;
-  params: Database['public']['Tables']['generations']['Row']['params'];
+  params: UploadedGenerationRow['params'];
   primary_variant_id: string | null;
   shot_generation_id: string;
   timeline_frame: number | null;
@@ -180,7 +180,7 @@ async function ensureTargetShotId(
 
 async function attachGenerationToShot(input: {
   shotId: string;
-  generation: Database['public']['Tables']['generations']['Row'];
+  generation: UploadedGenerationRow;
   projectId: string;
   thumbnailUrl?: string | null;
   fileIndex: number;
@@ -284,7 +284,7 @@ async function processSingleDroppedImage(input: {
     handle,
   } = input;
 
-  let generation: Database['public']['Tables']['generations']['Row'];
+  let generation: UploadedGenerationRow;
   try {
     if (imageFile.size >= IMAGE_INLINE_UPLOAD_LIMIT_BYTES && handle != null && isPersistedLocalFileHandle(handle)) {
       generation = await createGenerationForLocalFile({

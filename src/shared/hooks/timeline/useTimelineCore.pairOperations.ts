@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import type { GenerationRow } from '@/domains/generation/types';
-import { toJson } from '@/shared/lib/supabaseTypeHelpers';
+import { toJson } from '@/shared/lib/json/jsonGuards';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import type { useEnqueueGenerationsInvalidation } from '@/shared/hooks/invalidation/useGenerationInvalidation';
 import { readSegmentOverrides, writeSegmentOverrides } from '@/shared/lib/settingsMigration';

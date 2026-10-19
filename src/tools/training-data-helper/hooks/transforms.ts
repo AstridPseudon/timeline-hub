@@ -3,7 +3,7 @@
  * Pure functions: snake_case DB rows -> camelCase client types.
  */
 import type { TrainingDataBatch, TrainingDataVideo, TrainingDataSegment } from './types';
-import type { Json } from '@/integrations/supabase/jsonTypes';
+import type { Json } from '@/shared/types/json';
 
 function toRecord(value: Json): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {

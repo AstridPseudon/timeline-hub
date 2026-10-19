@@ -3,7 +3,7 @@ import type { GenerationRow } from '@/domains/generation/types';
 import type { GenerationRowDto } from '@/domains/generation/types/generationRowDto';
 import { mapGenerationRowDtoToRow } from '@/domains/generation/mappers/generationRowMapper';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
-import { toJson } from '@/shared/lib/supabaseTypeHelpers';
+import { toJson } from '@/shared/lib/json/jsonGuards';
 import {
   DEFAULT_STRUCTURE_GUIDANCE_CONTROLS,
   DEFAULT_STRUCTURE_VIDEO,

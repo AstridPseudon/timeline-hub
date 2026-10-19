@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   normalizeAndPresentError: vi.fn(),
 }));
 
-vi.mock('@/integrations/supabase/repositories/generationRepository', () => ({
+vi.mock('@/integrations/astrid/repositories/generationRepository', () => ({
   fetchGenerationById: (...args: unknown[]) => mocks.fetchGenerationById(...args),
 }));
 

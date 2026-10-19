@@ -8,7 +8,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/integrations/supabase/repositories/generationRepository', () => ({
+vi.mock('@/integrations/astrid/repositories/generationRepository', () => ({
   fetchGenerationRecordById: async () => null,
 }));
 
@@ -19,7 +19,7 @@ vi.mock('@/shared/lib/errorHandling/runtimeError', () => ({
 }));
 
 import { createTask } from '@/shared/lib/taskCreation/createTask';
-import { fetchTaskInProject } from '@/integrations/supabase/repositories/taskRepository';
+import { fetchTaskInProject } from '@/integrations/astrid/repositories/taskRepository';
 import { fetchPaginatedTasks } from '@/shared/hooks/tasks/paginatedTaskRepository';
 import { getBridgeTaskClient, mapBridgeTaskStatus } from '@/integrations/astrid/bridgeTaskReads';
 import { cancelBridgeTask } from '@/shared/hooks/tasks/useTaskCancellation';

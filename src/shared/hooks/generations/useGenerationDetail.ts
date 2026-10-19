@@ -1,7 +1,7 @@
 import { useQuery, type QueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import {
   fetchGenerationDetailById,
-} from '@/integrations/supabase/repositories/generationRepository';
+} from '@/integrations/astrid/repositories/generationRepository';
 import {
   fetchRuntimeGenerationSnapshot,
   runtimeSnapshotToDetail,

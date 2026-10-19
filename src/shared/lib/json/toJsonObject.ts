@@ -1,4 +1,4 @@
-import type { Json } from '@/integrations/supabase/jsonTypes';
+import type { Json } from '@/shared/types/json';
 
 export function toJsonObject(value: unknown): Record<string, Json | undefined> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {

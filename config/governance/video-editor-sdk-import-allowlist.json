@@ -98,7 +98,7 @@
         "expiration": "M5"
       }
     ],
-    "src/integrations/supabase/repositories/derivedItemsRepository.ts": [
+    "src/integrations/astrid/repositories/derivedItemsRepository.ts": [
       {
         "target": "src/tools/video-editor/data/bridgeContract.ts",
         "classification": "host-facing",
@@ -108,7 +108,7 @@
         "expiration": "M5"
       }
     ],
-    "src/integrations/supabase/repositories/generationRepository.ts": [
+    "src/integrations/astrid/repositories/generationRepository.ts": [
       {
         "target": "src/tools/video-editor/data/bridgeContract.ts",
         "classification": "host-facing",

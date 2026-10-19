@@ -20,7 +20,7 @@ import {
 } from '@/shared/lib/operationResult';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { SETTINGS_IDS } from '@/shared/lib/settingsIds';
-import { toJson } from '@/shared/lib/supabaseTypeHelpers';
+import { toJson } from '@/shared/lib/json/jsonGuards';
 import type {
   HydratedReferenceImage,
   ProjectImageSettings,

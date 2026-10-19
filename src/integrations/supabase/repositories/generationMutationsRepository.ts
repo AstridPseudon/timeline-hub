@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '@/integrations/supabase/client';
-import type { Json } from '@/integrations/supabase/jsonTypes';
+import type { Json } from '@/shared/types/json';
 import type { PersistedGenerationParams } from '@/domains/generation/types/generationParams';
 import type { GenerationRowDto } from '@/domains/generation/types/generationRowDto';
 import { VARIANT_TYPE } from '@/shared/constants/variantTypes';

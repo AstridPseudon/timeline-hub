@@ -4,7 +4,7 @@ import { Shot } from '@/domains/generation/types';
 import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { queryKeys } from '@/shared/lib/queryKeys';
-import { toJson } from '@/shared/lib/supabaseTypeHelpers';
+import { toJson } from '@/shared/lib/json/jsonGuards';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { assertDeferredCloudShotOperation } from './shotAuthority';
 

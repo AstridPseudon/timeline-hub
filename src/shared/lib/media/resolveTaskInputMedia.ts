@@ -1,4 +1,4 @@
-import { fetchGenerationRecordById } from '@/integrations/supabase/repositories/generationRepository';
+import { fetchGenerationRecordById } from '@/integrations/astrid/repositories/generationRepository';
 import {
   ensurePermission,
   loadHandle,

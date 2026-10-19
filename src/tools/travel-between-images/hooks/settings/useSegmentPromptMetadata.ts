@@ -10,7 +10,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
-import { toJson } from '@/shared/lib/supabaseTypeHelpers';
+import { toJson } from '@/shared/lib/json/jsonGuards';
 import type { ShotGeneration } from '@/shared/hooks/timeline/useTimelineCore';
 import { GenerationRow } from '@/domains/generation/types';
 import { readSegmentOverrides, writeSegmentOverrides } from '@/shared/lib/settingsMigration';

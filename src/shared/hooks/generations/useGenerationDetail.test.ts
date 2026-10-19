@@ -3,7 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 
 const fetchGenerationDetailByIdMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/integrations/supabase/repositories/generationRepository', () => ({
+vi.mock('@/integrations/astrid/repositories/generationRepository', () => ({
   fetchGenerationDetailById: (...args: unknown[]) => fetchGenerationDetailByIdMock(...args),
 }));
 

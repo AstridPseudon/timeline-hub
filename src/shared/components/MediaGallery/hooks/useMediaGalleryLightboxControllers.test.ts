@@ -24,7 +24,7 @@ vi.mock('@/shared/lib/media/mediaTypeHelpers', () => ({
   getGenerationId: (...args: unknown[]) => mocks.getGenerationId(...args),
 }));
 
-vi.mock('@/integrations/supabase/repositories/generationRepository', () => ({
+vi.mock('@/integrations/astrid/repositories/generationRepository', () => ({
   fetchGenerationRecordById: (...args: unknown[]) => mocks.fetchGenerationRecordById(...args),
 }));
 

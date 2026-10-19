@@ -12,7 +12,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
-import { toJson } from '@/shared/lib/supabaseTypeHelpers';
+import { toJson } from '@/shared/lib/json/jsonGuards';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { updateToolSettingsSupabase } from '@/shared/hooks/settings/useToolSettings';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';

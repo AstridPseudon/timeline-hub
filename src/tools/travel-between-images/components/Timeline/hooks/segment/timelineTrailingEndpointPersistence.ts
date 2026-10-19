@@ -1,5 +1,5 @@
 import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
-import type { Json } from '@/integrations/supabase/jsonTypes';
+import type { Json } from '@/shared/types/json';
 import type { GenerationRow } from '@/domains/generation/types';
 import { runTimelineWriteWithTimeout } from '@/shared/lib/timelineWriteQueue';
 

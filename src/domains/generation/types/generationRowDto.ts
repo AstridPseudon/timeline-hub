@@ -1,5 +1,5 @@
 import type { PersistedGenerationRow } from './generationRow';
-import type { Json } from '@/integrations/supabase/jsonTypes';
+import type { Json } from '@/shared/types/json';
 
 /**
  * Transport aliases that appear on DB/API payloads.

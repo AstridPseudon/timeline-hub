@@ -3,7 +3,7 @@ import {
   createInvalidRowShapeError,
   createRepositoryQueryError,
   isRepositoryNoRowsError,
-} from './repositoryErrors';
+} from '@/integrations/astrid/repositories/repositoryErrors';
 
 interface PresetResourceRecord<TMetadata = unknown> {
   id: string;

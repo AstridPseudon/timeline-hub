@@ -1,4 +1,3 @@
-import type { Database } from '@/integrations/supabase/databasePublicTypes';
 import { bridgeCapabilityUnavailable } from '@/integrations/astrid/capability';
 import { createExternalUploadGeneration } from '@/integrations/supabase/repositories/generationMutationsRepository';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
@@ -6,12 +5,12 @@ import { uploadBlobToStorage, uploadImageToStorage } from '@/shared/lib/media/im
 import { extractVideoPosterFrame } from '@/shared/lib/media/videoPosterExtractor';
 import { uploadVideoToStorage } from '@/shared/lib/media/videoUploader';
 import type { PersistedLocalMediaHandle } from '@/shared/lib/media/localHandleStore';
+import type { UploadedGenerationRow } from '@/shared/types/uploadedGenerationRow';
 import {
   generateClientThumbnail,
   uploadImageWithThumbnail,
 } from '@/shared/media/clientThumbnailGenerator';
 
-type GenerationRow = Database['public']['Tables']['generations']['Row'];
 type GenerationParams = Parameters<typeof createExternalUploadGeneration>[0]['generationParams'];
 
 interface CreateGenerationForUploadedImageInput {
@@ -66,7 +65,7 @@ async function insertUploadedGeneration(input: {
   location: string;
   thumbnailUrl: string;
   generationParams: GenerationParams;
-}): Promise<GenerationRow> {
+}): Promise<UploadedGenerationRow> {
   const generation = await createExternalUploadGeneration({
     imageUrl: input.location,
     thumbnailUrl: input.thumbnailUrl,
@@ -75,12 +74,12 @@ async function insertUploadedGeneration(input: {
     generationParams: input.generationParams,
   });
 
-  return generation as unknown as GenerationRow;
+  return generation as unknown as UploadedGenerationRow;
 }
 
 export async function createGenerationForLocalFile(
   input: CreateLocalGenerationInput,
-): Promise<GenerationRow> {
+): Promise<UploadedGenerationRow> {
   // This route is unavailable in the frozen bridge contract. Fail before
   // thumbnail generation, handle persistence, storage upload, or any other
   // externally visible work. Capability errors must be side-effect free.
@@ -93,7 +92,7 @@ export async function createGenerationForLocalFile(
 
 export async function createGenerationForUploadedImage(
   input: CreateGenerationForUploadedImageInput,
-): Promise<GenerationRow> {
+): Promise<UploadedGenerationRow> {
   const { imageFile, projectId, onProgress } = input;
   const { imageUrl, thumbnailUrl } = await uploadImageForVariant(imageFile, projectId, {
     onProgress,
@@ -125,7 +124,7 @@ async function uploadVideoPosterFrame(videoFile: File): Promise<string> {
 
 export async function createGenerationForUploadedVideo(
   input: CreateGenerationForUploadedVideoInput,
-): Promise<GenerationRow> {
+): Promise<UploadedGenerationRow> {
   const { videoFile, projectId, onProgress } = input;
   const videoUrl = await uploadVideoToStorage(videoFile, { onProgress });
 

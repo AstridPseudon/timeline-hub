@@ -4,7 +4,7 @@ import { getGenerationId } from "@/shared/lib/media/mediaTypeHelpers";
 import { toast } from "@/shared/components/ui/runtime/sonner";
 import { normalizeAndPresentError } from "@/shared/lib/errorHandling/runtimeError";
 import { expandShotData } from '@/shared/lib/shots/shotData';
-import { fetchGenerationRecordById } from '@/integrations/supabase/repositories/generationRepository';
+import { fetchGenerationRecordById } from '@/integrations/astrid/repositories/generationRepository';
 import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
 import { AstridRuntimeClient } from '@/integrations/runtime/client';
 import {

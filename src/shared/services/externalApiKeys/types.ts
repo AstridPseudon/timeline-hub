@@ -1,4 +1,4 @@
-import type { Json } from '@/integrations/supabase/jsonTypes';
+import type { Json } from '@/shared/types/json';
 
 export type ExternalService = 'huggingface' | 'replicate' | 'civitai';
 

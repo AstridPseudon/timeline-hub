@@ -10,7 +10,7 @@ import type { GenerationRow } from '@/domains/generation/types';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { VARIANT_TYPE } from '@/shared/constants/variantTypes';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
-import { toJson } from '@/shared/lib/supabaseTypeHelpers';
+import { toJson } from '@/shared/lib/json/jsonGuards';
 import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
 
 /** Extended media fields that may be present at runtime from gallery/query layer */

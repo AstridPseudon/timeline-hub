@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
-import { toJson } from '@/shared/lib/supabaseTypeHelpers';
+import { toJson } from '@/shared/lib/json/jsonGuards';
 import { useEnqueueGenerationsInvalidation } from '@/shared/hooks/invalidation/useGenerationInvalidation';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 

@@ -1,5 +1,5 @@
 import type { GenerationRow } from '@/domains/generation/types';
-import { fetchGenerationById } from '@/integrations/supabase/repositories/generationRepository';
+import { fetchGenerationById } from '@/integrations/astrid/repositories/generationRepository';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 
 interface NavigateToGenerationOptions {

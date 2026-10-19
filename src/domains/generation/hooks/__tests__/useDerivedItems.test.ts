@@ -7,7 +7,7 @@ import { initializeProjectSelectionStore } from '@/shared/contexts/projectSelect
 
 const fetchGenerationDetailByIdMock = vi.fn();
 
-vi.mock('@/integrations/supabase/repositories/generationRepository', () => ({
+vi.mock('@/integrations/astrid/repositories/generationRepository', () => ({
   fetchGenerationDetailById: (...args: unknown[]) => fetchGenerationDetailByIdMock(...args),
 }));
 

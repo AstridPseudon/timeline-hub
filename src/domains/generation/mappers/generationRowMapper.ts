@@ -1,4 +1,4 @@
-import type { Json } from '@/integrations/supabase/jsonTypes';
+import type { Json } from '@/shared/types/json';
 import type { GenerationMetadata, GenerationRow } from '@/domains/generation/types';
 import type { GenerationRowDto } from '@/domains/generation/types/generationRowDto';
 import { asRecord, asNullableString, asNullableNumber } from '@/shared/lib/typeCoercion';

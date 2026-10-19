@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isJsonValue, toJson } from '../supabaseTypeHelpers';
+import { isJsonValue, toJson } from './jsonGuards';
 
 describe('toJson', () => {
   it('returns the same object reference', () => {

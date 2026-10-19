@@ -1,4 +1,4 @@
-import type { Json } from '@/integrations/supabase/jsonTypes';
+import type { Json } from '@/shared/types/json';
 
 function isJsonPrimitive(value: unknown): value is string | number | boolean | null {
   return value === null || typeof value === 'string' || typeof value === 'boolean'
@@ -52,7 +52,7 @@ function sanitizeToJson(value: unknown): Json {
 }
 
 /**
- * Cast a value to Supabase's Json type.
+ * Cast a value to the shared Json type.
  *
  * Accepts already-valid JSON structures directly. For mixed runtime shapes,
  * falls back to JSON stringify/parse sanitization (dropping non-JSON values).

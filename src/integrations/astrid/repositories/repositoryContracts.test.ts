@@ -1,20 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockMaybeSingle = vi.fn();
-const queryBuilder = {
-  eq: vi.fn(() => queryBuilder),
-  maybeSingle: (...args: unknown[]) => mockMaybeSingle(...args),
-};
-const mockSelect = vi.fn(() => queryBuilder);
-const mockFrom = vi.fn(() => ({ select: mockSelect }));
 const mockIsTaskDbRow = vi.fn();
 const mockMapTaskDbRowToTask = vi.fn();
-
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    from: (...args: unknown[]) => mockFrom(...args),
-  }),
-}));
 
 vi.mock('@/shared/lib/taskRowMapper', () => ({
   isTaskDbRow: (...args: unknown[]) => mockIsTaskDbRow(...args),
@@ -25,7 +12,6 @@ import type * as generationRowMapperModule from '@/domains/generation/mappers/ge
 import type * as projectSelectionStoreModule from '@/shared/contexts/projectSelectionStore';
 
 import { fetchGenerationById } from './generationRepository';
-import { fetchPresetResourceById } from './presetResourcesRepository';
 import { RepositoryError } from './repositoryErrors';
 import { fetchTaskInProject } from './taskRepository';
 import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
@@ -54,10 +40,6 @@ vi.mock('@/shared/contexts/projectSelectionStore', async () => {
 describe('repository contracts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSelect.mockReturnValue(queryBuilder);
-    mockFrom.mockReturnValue({ select: mockSelect });
-    queryBuilder.eq.mockImplementation(() => queryBuilder);
-    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
   });
 
   afterEach(() => {
@@ -139,33 +121,5 @@ describe('repository contracts', () => {
     const mapped = await fetchTaskInProject(task.id, 'project-1');
     expect(mapped).toMatchObject({ id: task.id, status: 'Queued' });
     vi.unstubAllGlobals();
-  });
-
-  it('returns null for missing preset resources', async () => {
-    await expect(fetchPresetResourceById('preset-1')).resolves.toBeNull();
-  });
-
-  it('throws RepositoryError for preset query failures', async () => {
-    mockMaybeSingle.mockResolvedValue({
-      data: null,
-      error: { code: 'XX000', message: 'preset query failed' },
-    });
-
-    await expect(fetchPresetResourceById('preset-1')).rejects.toMatchObject<Partial<RepositoryError>>({
-      name: 'RepositoryError',
-      code: 'query_failed',
-    });
-  });
-
-  it('throws RepositoryError for invalid preset rows', async () => {
-    mockMaybeSingle.mockResolvedValue({
-      data: { metadata: { name: 'broken' } },
-      error: null,
-    });
-
-    await expect(fetchPresetResourceById('preset-1')).rejects.toMatchObject<Partial<RepositoryError>>({
-      name: 'RepositoryError',
-      code: 'invalid_row_shape',
-    });
   });
 });

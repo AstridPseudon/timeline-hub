@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '@/integrations/supabase/client';
-import { toJson } from '@/shared/lib/supabaseTypeHelpers';
+import { toJson } from '@/shared/lib/json/jsonGuards';
 
 export async function findChildGenerationIdByPair(
   parentGenerationId: string,

@@ -40,4 +40,4 @@ export async function findGenerationByVariantLocation(
 }
 import { AstridLocalClient } from '@/integrations/astrid/client';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
-import { bridgeDetailToGenerationRecord } from '@/integrations/supabase/repositories/generationRepository';
+import { bridgeDetailToGenerationRecord } from '@/integrations/astrid/repositories/generationRepository';

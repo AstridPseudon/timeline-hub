@@ -2,4 +2,4 @@ export {
   fetchDerivedItemsFromRepository,
   mapDerivedItemsFromGenerationDetail,
   type DerivedItem,
-} from '@/integrations/supabase/repositories/derivedItemsRepository';
+} from '@/integrations/astrid/repositories/derivedItemsRepository';

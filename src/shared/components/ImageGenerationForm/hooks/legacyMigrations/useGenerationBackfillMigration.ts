@@ -8,7 +8,7 @@ import { invalidateShotsQueries } from '@/shared/hooks/shots/cacheUtils';
 import { placeGeneration } from '@/shared/lib/placement/placementService';
 import { generationQueryKeys } from '@/shared/lib/queryKeys/generations';
 import { resourceQueryKeys } from '@/shared/lib/queryKeys/resources';
-import { toJson } from '@/shared/lib/supabaseTypeHelpers';
+import { toJson } from '@/shared/lib/json/jsonGuards';
 import type { ReferenceImage } from '../../types';
 
 interface GenerationBackfillMigrationInput {

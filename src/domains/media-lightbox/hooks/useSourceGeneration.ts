@@ -4,7 +4,7 @@ import { GenerationRow } from '@/domains/generation/types';
 import { expandShotData } from '@/shared/lib/shots/shotData';
 import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
-import { bridgeDetailToGenerationRecord } from '@/integrations/supabase/repositories/generationRepository';
+import { bridgeDetailToGenerationRecord } from '@/integrations/astrid/repositories/generationRepository';
 import { useGenerationDetail } from '@/shared/hooks/generations/useGenerationDetail';
 import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
 import type { RuntimeGenerationDetail } from '@/integrations/runtime/generationAccess';

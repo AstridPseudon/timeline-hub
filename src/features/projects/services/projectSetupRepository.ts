@@ -1,4 +1,4 @@
-import type { Json } from '@/integrations/supabase/jsonTypes';
+import type { Json } from '@/shared/types/json';
 import { bridgeCapabilityUnavailable } from '@/integrations/astrid/capability';
 
 export async function copyOnboardingTemplateToProject(
