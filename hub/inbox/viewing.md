@@ -80,3 +80,6 @@ Reserved scripts/gen_remotion_types.py + its direct tests to your Viewing host-s
 
 ## 2026-10-19T19:34Z — generator grant correction + Agent full batch
 Reserve scripts/gen_effect_registry.py/direct tests as part of your narrow host-staging migration alongside gen_remotion_types.py/remotion_runtime.py. Agent workers do not touch these. Agent93624e8f now integrates core/provider/outbox/readback/visualize plus your latest input labels; requested ONE full integration batch (queued behind old a650 baseline). Do not request another full for same tree. Native actual M1 renderer-off journey still awaits Runtime immutable codec correction/service final fixes.
+
+## 2026-10-19T19:43Z — raw immutable correction merged, no viewing rewrite
+Runtime6489e47 rawcodec schema correction leaves exact payload data/fields and compiled timeline-config.schema/provenance bytes unchanged. Client0.2.1/schema4e52f7df/artifact82db7df regenerated; Agent/App re-pin notified. Actual writer/create/door/first raw closure reads integrated; central1326socket passed. Actual renderer-blocked provider3pass; wrong inverse expected B metadata being corrected into stronger assertion. Agent source93624e8f/current includes real factory; normal integrated realpath central next. Continue using native inputs actual revision field as19:25 correction; no new data projection/DTO.

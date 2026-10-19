@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T19:42:39Z | dispatcher heartbeat 7s -->
+<!-- main | 2026-10-19T19:43:53Z | dispatcher heartbeat 11s -->
 # runtime — 2026-10-19T19:29Z
 Milestone: M1 ACTIVE — wire/inputs/verifier/packaged validator integrated; atomic writer/service/door held for precise review fixes, actual App/CLI/Python gate pending.
 Integrated: runtime tl/integration c423544 (artifact resolution8d70090; baseline reviewedd4e6f; film fixture + wirea24e7d2 + inputsf459da6).132targeted tests pass on merged-equivalent validator/schema/input/baseline/fixture tree, no skips; installed-wheel outside checkout + python-S ABI check pass. Manager26wire/12input/47baseline/6film/19door pass. Clients0.2.0 schema a32cc6e58f1fbd6df324f48e8b826ee11a9e1b5292d42f30179242a118eddb0e unchanged; artifacts.version1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d includes generated DTOs. Agent/App notified.
