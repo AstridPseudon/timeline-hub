@@ -7,6 +7,7 @@ import pytest
 
 from astrid.core.timeline.authoring_bundle import AuthoringBundleError
 from astrid.sdk.timeline import commands
+from astrid.sdk.timeline._collections import AcceptedRecords
 from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
 from astrid.sdk.timeline._recording import Recording
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
@@ -204,6 +205,13 @@ def inverse_command():
             'args': {'publications': ['trusted-records-fixture']}}
 
 
+def accepted_input_boundary(records, before, after):
+    """Model the provider's accepted records plus its captured input boundary."""
+    entry = {'records': {'commands': records,
+                         'undo_of': inverse_command()['args']['publications']}}
+    return AcceptedRecords([entry], records, lambda _: (before, after))
+
+
 def test_creation_inverse_restores_original_root_absence(root_ops):
     original = bundle_from_document(document_fixture())
     plan = commands.execute(original, [create_command()])
@@ -212,13 +220,54 @@ def test_creation_inverse_restores_original_root_absence(root_ops):
     assert document_from_bundle(undone.bundle) == document_fixture()
 
 
-@pytest.mark.xfail(strict=True, reason='Exact pre-create parent revision identity needs an authenticated input boundary; bare root records contain no parent pin')
 def test_creation_inverse_after_compiled_reload_restores_original_absence(root_ops):
+    original = bundle_from_document(document_fixture())
+    plan = commands.execute(original, [create_command()])
+    accepted_document = document_from_bundle(plan.bundle)
+    reloaded = bundle_from_document(accepted_document)
+    accepted = accepted_input_boundary(plan.records, original, reloaded)
+    undone = commands.execute(reloaded, [inverse_command()], inverse_records=accepted)
+    restored = document_from_bundle(undone.bundle, source_bundles=(original, reloaded))
+    assert restored == document_fixture()
+
+
+def test_record_only_inverse_restores_authored_closure_but_not_parent_pin(root_ops):
     original = bundle_from_document(document_fixture())
     plan = commands.execute(original, [create_command()])
     reloaded = bundle_from_document(document_from_bundle(plan.bundle))
     undone = commands.execute(reloaded, [inverse_command()], inverse_records=plan.records)
-    assert document_from_bundle(undone.bundle) == document_fixture()
+    restored = document_from_bundle(undone.bundle)
+    expected = document_fixture()
+
+    assert restored['parent_revision']['payload'] == expected['parent_revision']['payload']
+    assert restored['parent_revision']['content_digest'] == expected['parent_revision']['content_digest']
+    assert restored['shot_revisions'] == expected['shot_revisions']
+    assert restored['internal_timeline_revisions'] == expected['internal_timeline_revisions']
+    assert restored['dependency_manifest'] == expected['dependency_manifest']
+    assert restored['parent_revision']['revision_id'] != expected['parent_revision']['revision_id']
+
+
+def test_record_only_inverse_cannot_distinguish_original_parent_revision_names(root_ops):
+    first = document_fixture()
+    second = copy.deepcopy(first)
+    second['parent_revision']['revision_id'] = 'different-original-parent'
+    plans = [commands.execute(bundle_from_document(source), [create_command()])
+             for source in (first, second)]
+    accepted_documents = [document_from_bundle(plan.bundle) for plan in plans]
+
+    assert plans[0].records == plans[1].records
+    assert accepted_documents[0] == accepted_documents[1]
+
+    restored = []
+    for document in accepted_documents:
+        reloaded = bundle_from_document(document)
+        undone = commands.execute(reloaded, [inverse_command()],
+                                  inverse_records=plans[0].records)
+        restored.append(document_from_bundle(undone.bundle))
+
+    assert restored[0] == restored[1]
+    assert restored[0]['parent_revision']['revision_id'] not in {
+        first['parent_revision']['revision_id'], second['parent_revision']['revision_id']}
 
 
 def test_creation_inverse_redo_reuses_exact_roots(root_ops):
@@ -228,6 +277,64 @@ def test_creation_inverse_redo_reuses_exact_roots(root_ops):
     redone = commands.execute(undone.bundle, [inverse_command()], inverse_records=undone.records)
     assert redone.bundle == plan.bundle
     assert document_from_bundle(redone.bundle) == document_from_bundle(plan.bundle)
+
+
+def bound_creation(monkeypatch, bindings):
+    operations = commands.operations()
+    operation = operations['test.create-roots']
+
+    def create(ctx, command):
+        operation.handler(ctx, command)
+        for index, ref in enumerate(bindings):
+            ctx.bind('test.binding:' + str(index), ref)
+
+    monkeypatch.setattr(commands, 'operations', lambda: {
+        **operations, 'test.create-roots': commands.Operation(operation.parameters, create, {}),
+    })
+    original = bundle_from_document(document_fixture())
+    return original, commands.execute(original, [create_command()])
+
+
+def test_created_owner_bindings_validate_at_output_and_external_bindings_at_input(root_ops, monkeypatch):
+    bindings = ['shot:new-shot', 'occurrence:new-occ', 'occurrence:new-occ/clip:title',
+                'occurrence:new-occ/track:picture', 'parent/clip:clip-a']
+    original, plan = bound_creation(monkeypatch, bindings)
+    assert [binding['ref'] for binding in plan.records[0]['bindings']] == bindings
+    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
+    undone = commands.execute(reloaded, [inverse_command()], inverse_records=plan.records)
+    assert document_from_bundle(undone.bundle, source_bundles=[original]) == document_fixture()
+
+
+@pytest.mark.parametrize('binding', ['occurrence:new-occ/clip:missing',
+    'occurrence:new-occ/track:missing', 'parent/clip:title',
+    'occurrence:new-occ-suffix/clip:title'])
+def test_created_owner_does_not_exempt_missing_or_prefix_collision_bindings(root_ops, monkeypatch, binding):
+    _, plan = bound_creation(monkeypatch, [binding])
+    before = copy.deepcopy(plan.bundle)
+    with pytest.raises(CommandError):
+        commands.execute(plan.bundle, [inverse_command()], inverse_records=plan.records)
+    assert plan.bundle == before
+
+
+def test_created_owner_does_not_exempt_disappeared_external_binding(root_ops, monkeypatch):
+    _, plan = bound_creation(monkeypatch, ['occurrence:new-occ/clip:title', 'parent/clip:clip-a'])
+    State(plan.bundle).set('parent/clip:clip-a', [], ABSENT)
+    before = copy.deepcopy(plan.bundle)
+    with pytest.raises(CommandError, match='bound identity disappeared'):
+        commands.execute(plan.bundle, [inverse_command()], inverse_records=plan.records)
+    assert plan.bundle == before
+
+
+def test_new_shot_inverse_refuses_surviving_occurrence(root_ops):
+    original = bundle_from_document(document_fixture())
+    plan = commands.execute(original, [create_command()])
+    dependent = copy.deepcopy(root_values()[1]['value'])
+    dependent['occurrence_id'] = 'dependent'
+    State(plan.bundle).set('occurrence:dependent', [], present(dependent))
+    before = copy.deepcopy(plan.bundle)
+    with pytest.raises(CommandError, match='surviving occurrences'):
+        commands.execute(plan.bundle, [inverse_command()], inverse_records=plan.records)
+    assert plan.bundle == before
 
 
 def test_public_registry_and_closed_track_args_are_unchanged():

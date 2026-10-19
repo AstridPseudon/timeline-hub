@@ -191,7 +191,7 @@ def _legacy_inverse_sites(records, record):
     return reads, selections
 
 
-def _validate_inputs(state, record, records):
+def _validate_inputs(state, record, records, output_state):
     legacy = None
     for read in record['reads']:
         if state.matches(read['ref'], read['path'], read['state']):
@@ -212,7 +212,15 @@ def _validate_inputs(state, record, records):
     created = {item['ref'] for item in record['created']}
     for binding in record.get('bindings', []):
         ref = binding['ref']
-        if ref not in created and state.entity(ref, optional=True) is None:
+        entity = member(ref)
+        # A scoped child of a recorded new occurrence only exists at the output
+        # stage, just like an explicitly created row. Do not infer ownership
+        # from arbitrary string prefixes or exempt external source bindings.
+        created_owner = (entity is not None and entity[0] in created
+                         and root_identity(entity[0]) is not None
+                         and root_identity(entity[0])[0] == 'occurrence')
+        bound_state = output_state if ref in created or created_owner else state
+        if bound_state.entity(ref, optional=True) is None:
             raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
 
 
@@ -233,6 +241,7 @@ def apply_inverse(ctx, records, intervening_records):
         guard(ctx.state, write['ref'], write['path'], write['after'], kind='inverse_conflict')
     scratch = State(copy.deepcopy(ctx.state.bundle), closures=ctx.state.closures)
     for record in reversed(records):
+        output_state = State(copy.deepcopy(scratch.bundle), closures=scratch.closures)
         staged = Recording(scratch.bundle, record['command'], record['ordinal'], closures=scratch.closures)
         scratch = staged.state
         staged_orders = restoration_orders(records, only=record)
@@ -253,7 +262,7 @@ def apply_inverse(ctx, records, intervening_records):
         for (owner, kind), (original, _) in staged_orders.items():
             arrange(scratch, owner, kind, original)
         staged.compile_mirrors()
-        _validate_inputs(scratch, record, records)
+        _validate_inputs(scratch, record, records, output_state)
 
     # Historical checks above are internal. Public claims describe H even when
     # the same address is read after another reversal during installation.

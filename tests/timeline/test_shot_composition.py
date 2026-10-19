@@ -90,6 +90,36 @@ def test_contract_rejects_legacy_group_and_shot_clip_shapes() -> None:
         parse_shot_composition(legacy_clip)
 
 
+@pytest.mark.parametrize('field', [{'pinnedShotGroups': []}, {'clipType': 'shot'}])
+@pytest.mark.parametrize('site', ['root', 'occurrence', 'timeline', 'clip', 'provenance',
+                                 'migration-sibling', 'shot-provenance', 'collision-key'])
+def test_migration_provenance_does_not_admit_legacy_fields_elsewhere(field, site):
+    graph = load_fixture()
+    occurrence = graph['occurrences'][0]
+    shot = graph['shot_revisions'][0]
+    timeline = shot['internal_timeline_revision']['timeline']
+    if site == 'root':
+        target = graph
+    elif site == 'occurrence':
+        target = occurrence
+    elif site == 'timeline':
+        target = timeline
+    elif site == 'clip':
+        target = timeline['clips'][0]
+    elif site == 'provenance':
+        target = occurrence.setdefault('provenance', {})
+    elif site == 'migration-sibling':
+        target = occurrence.setdefault('provenance', {}).setdefault('group_migration', {})
+        target['legacy_group'] = copy.deepcopy(field)
+    elif site == 'shot-provenance':
+        target = shot.setdefault('provenance', {}).setdefault('group_migration', {}).setdefault('legacy_group', {})
+    else:
+        target = graph.setdefault('occurrences[0].provenance.group_migration.legacy_group', {})
+    target.update(field)
+    with pytest.raises(ShotCompositionValidationError, match='migration-only'):
+        parse_shot_composition(graph)
+
+
 def test_prepare_normalizes_typed_source_records_and_stable_identities() -> None:
     fixture = load_fixture()
     occurrences = copy.deepcopy(fixture["occurrences"])

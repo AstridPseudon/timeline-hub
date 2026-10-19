@@ -26,7 +26,7 @@ FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_group_migration.json'
 GROUPS = [{'legacy_shot_id': 'legacy', 'shot_id': 'new-shot', 'occurrence_id': 'new-occ'}]
 
 
-def legacy_document():
+def legacy_document(*, opaque_variant=False):
     clips = [{'id': 'before', 'track': 'V1', 'at': 10, 'hold': 1, 'text': 'ungrouped'},
              {'id': 'c1', 'track': 'V1', 'at': 0, 'hold': 2, 'asset': 'image',
               'clipType': 'media', 'params': None, 'app': {'astrid': None},
@@ -37,6 +37,14 @@ def legacy_document():
     group = {'shotId': 'legacy', 'trackId': 'V1', 'clipIds': ['c1', 'c2'], 'mode': 'images',
              'items': [], 'nullable': None, 'unknown': {'pinnedShotGroups': [None], 'clipType': 'shot'},
              'imageClipSnapshot': copy.deepcopy(clips[1:3])}
+    if opaque_variant:
+        group['unknown'].update({
+            'provenance': {'group_migration': {'legacy_group': {
+                'pinnedShotGroups': [None, [], {'clipType': 'shot'}]}}},
+            'occurrences[0].provenance.group_migration.legacy_group': {
+                'clipType': 'shot', 'ordered': [False, None, {}, ['c2', 'c1']]},
+            'absent_sibling': None,
+        })
     payload = {'config': {'clips': copy.deepcopy(clips), 'tracks': [
                    {'id': 'V1', 'kind': 'visual', 'label': 'Picture', 'unknown': [None]},
                    {'id': 'A1', 'kind': 'audio', 'label': 'Audio', 'opaque': False}],
@@ -193,16 +201,20 @@ def test_closed_contract(damage):
         validate_command(command)
 
 
-@pytest.mark.xfail(strict=True, reason='Migration requires inverse validation of destination bindings at their creation stage; current inverse validates them after deleting the created owner')
-def test_compiled_reload_guarded_inverse_restores_exact_legacy_then_redo_same_ids():
-    original, plan = plan_for()
+@pytest.mark.parametrize('opaque_variant', [False, True])
+def test_compiled_reload_guarded_inverse_restores_exact_legacy_then_redo_same_ids(opaque_variant):
+    document = legacy_document(opaque_variant=opaque_variant)
+    original, plan = plan_for(document)
     canonical = document_from_bundle(plan.bundle)
     reloaded = bundle_from_document(canonical)
     undone = inverse(reloaded, plan.records)
     assert undone.bundle['parent'] == original['parent']
     assert undone.bundle['placements'] == [] and undone.bundle['shots'] == {}
     restored = document_from_bundle(undone.bundle, source_bundles=[original])
-    assert restored == legacy_document()
+    assert restored == document
+    assert json.dumps(restored, sort_keys=True) == json.dumps(document, sort_keys=True)
+    assert json.dumps(restored['parent_revision']['payload']['config']['pinnedShotGroups']) == json.dumps(
+        document['parent_revision']['payload']['config']['pinnedShotGroups'])
     accepted = accepted_boundaries(undone.records, reloaded, undone.bundle)
     redone = inverse(undone.bundle, accepted)
     assert document_from_bundle(redone.bundle, source_bundles=[plan.bundle]) == canonical
@@ -216,16 +228,17 @@ def test_inverse_refuses_overlapping_aba_without_mutation():
     assert plan.bundle == before
 
 
-@pytest.mark.xfail(strict=True, reason='Lossless migration provenance requires the canonical graph validator to reject retired structural fields by scope rather than recursively in opaque JSON')
-def test_canonical_graph_accepts_complete_opaque_migration_provenance():
+@pytest.mark.parametrize('opaque_variant', [False, True])
+def test_canonical_graph_accepts_complete_opaque_migration_provenance(opaque_variant):
     from astrid.core.timeline.shot_composition import parse_shot_composition
     from tests.timeline.test_shot_composition import load_fixture
 
-    _, plan = plan_for()
+    _, plan = plan_for(legacy_document(opaque_variant=opaque_variant))
     graph = load_fixture()
     provenance = copy.deepcopy(plan.bundle['placements'][0]['provenance'])
     graph['occurrences'][0]['provenance'] = provenance
     assert parse_shot_composition(graph)['occurrences'][0]['provenance'] == provenance
+    assert json.dumps(parse_shot_composition(graph)['occurrences'][0]['provenance']) == json.dumps(provenance)
 
 
 def test_captured_legacy_basis_cannot_be_used_for_ordinary_edits_or_batches():
