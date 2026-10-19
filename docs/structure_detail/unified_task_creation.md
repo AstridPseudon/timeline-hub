@@ -17,8 +17,8 @@ UI producer
 
 This path is the authority for supported image, video, character-animation, and related producers. Input identity, ordered inputs, output validation, idempotency, and publication are carried by the admitted Runtime task and its settlement fence.
 
-The former `supabase/functions/ai-timeline-agent` editing endpoint is retired.
-Timeline authoring uses App command capture and the Runtime `/v1` commit door;
+The former edge editing endpoint is retired. Timeline authoring uses App
+command capture and the Runtime `/v1` commit door;
 it does not use a Supabase append/import route or publish a whole timeline
 configuration. Immutable CAS media returned by Runtime can still be referenced
 by a normal guarded timeline command.

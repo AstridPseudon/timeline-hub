@@ -132,5 +132,4 @@ export const strictLintDebtFiles = [
   "src/tools/video-editor/transitions/validation.ts",
   "src/tools/video-editor/types/timeline-canvas.ts",
   "src/types/ai.ts",
-  "supabase/functions/ai-timeline-agent/tools/registry.ts",
 ];

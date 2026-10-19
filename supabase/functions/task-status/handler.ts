@@ -37,8 +37,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * the well-known fields (correlation_id, message, failure_code) into the
  * top-level response and passes the remaining fields through under `result`.
  *
- * Authentication and ownership are handled by the caller (see ./index.ts):
- * we mirror `timeline-import` and assume `verifyOwnership` has already passed.
+ * Authentication and ownership are handled by the caller (see ./index.ts),
+ * which has already completed the task-actor check.
  */
 export async function handleTaskStatus(
   input: HandleTaskStatusInput,

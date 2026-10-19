@@ -59,9 +59,9 @@ App gesture or authoring client
   -> accepted revision and timeline readback
 ```
 
-The retired AI timeline handler, timeline-import endpoint, append helper, and
-whole-configuration publication path are not authoring routes. Producers that
-need to affect a timeline must emit the published command contract and use
+Retired edge authoring handlers, append helpers, and whole-configuration
+publication paths are not authoring routes. Producers that need to affect a
+timeline must emit the published command contract and use
 the Runtime commit door; completion and media preparation alone do not grant a
 canonical write.
 
