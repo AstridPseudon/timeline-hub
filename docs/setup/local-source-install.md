@@ -1,50 +1,35 @@
 # Install Astrid
 
-Astrid runs on your own computer, and https://astrid.haus connects to it.
+Astrid Runtime and the agent run on your computer. Open the app at
+https://astrid.haus.
 
-On macOS, first install CPython 3.11 or 3.12, Node 20.19 or newer, npm, Git,
-Bun, FFmpeg (`brew install ffmpeg`) and OMP, the coding agent Astrid chats
-through (`bun install -g @oh-my-pi/pi-coding-agent`, which provides `omp`).
-Chat also needs your existing provider authentication.
-
-Then, in the folder where you keep source code, run:
+On macOS or Linux:
 
 ```sh
-git clone https://github.com/banodoco/astrid-agent.git
-git clone https://github.com/banodoco/astrid-runtime.git
-git clone https://github.com/banodoco/astrid-app.git
-python3 astrid-agent/scripts/local_install.py --root ~/Astrid \
-  --runtime-root astrid-runtime --app-root astrid-app
+curl -fsSL https://astrid.haus/install | sh
 ```
 
-The installer builds Astrid into `~/Astrid` with a fresh workspace, then starts
-it in this terminal. When it prints `Open https://astrid.haus`, open that page;
-it connects by itself. Keep the terminal open while you work; Ctrl-C stops
-Astrid. The first run needs network access to download dependencies.
+On Windows, from PowerShell 5.1 or later:
 
-To start Astrid again later, run:
-
-```sh
-~/Astrid/start
+```powershell
+& ([scriptblock]::Create((Invoke-RestMethod https://astrid.haus/install.ps1)))
 ```
 
-The installer never replaces anything: `--root` must be a new or empty folder
-outside the three checkouts, and it refuses checkouts with uncommitted changes.
-Runtime data and caches stay in that folder; your existing workspace and global
-agent settings are left alone. Checkouts you already have work too, if they
-are on matching commits.
+Run the same line to repair or restart an existing installation. It keeps the
+installed version and your workspace. To update, pass `--update` to the script
+(`sh -s -- --update` after the pipe on macOS/Linux). Updates back up the selected
+workspace and keep the previous program version until the new door is verified.
 
-Options:
+The scripts get pinned uv and Python, then invoke the shared `astrid install`
+core. It installs user-local tools and registers a login service. No administrator
+access is needed. Without a systemd user service on Linux, run the line to restart.
+Installation ends with `Open https://astrid.haus` and opens the connection page.
+On failure, report the sentence and the `Details:` log path.
 
-- `--ffmpeg /path/to/ffmpeg --ffprobe /path/to/ffprobe` and
-  `--bun /path/to/bun --omp /path/to/omp`: tools that are not on `PATH`.
-- `--port`, `--proxy-port`, `--acp-port`: other ports, when another local
-  installation is running.
-- `--wheelhouse /path/to/dependency-cache`: reuse hash-verified dependency
-  wheels offline.
-- `--check-only`: install, check startup, workspace access, image import and
-  one chat reply with your configured model, then stop, leaving no servers
-  running.
+`astrid install uninstall` stops and unregisters the service and removes owned
+program files. It keeps data unless you explicitly add `--delete-data`; locked
+files are reported for removal after their processes exit.
 
-Rendering and creative providers need their own artifacts and credentials;
-this install does not set them up.
+The app is hosted; installation does not clone or build it. App developers use
+`npm run dev:local` in their app checkout. Creative providers still need their
+own credentials and qualified artifacts.

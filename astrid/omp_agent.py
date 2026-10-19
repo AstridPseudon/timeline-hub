@@ -32,7 +32,7 @@ _PRODUCT_TOOLKIT_FAMILIES = frozenset(
     {"projects", "timelines", "media", "tasks", "runs", "documents", "preferences", "doctor", "backup"}
 )
 _PACK_ROUTE_BLOCKLIST = frozenset(
-    {"agent", "auth", "help", "login", "status", "logout", "revoke"}
+    {"agent", "auth", "help", "install", "login", "setup", "status", "logout", "revoke"}
 )
 
 
@@ -559,6 +559,9 @@ def _exec_omp_with_packaged_profile(omp_bin: str, flags: list[str], message: lis
 
 def main(argv: list[str] | None = None) -> int:
     rest = list(sys.argv[1:] if argv is None else argv)
+
+    if rest and rest[0] in {"install", "setup"}:
+        return _dispatch_toolkit(rest)
 
     # The console script is now the unified Astrid surface.  ``--help`` is
     # intentionally launcher help (not OMP help), while ``help`` remains the

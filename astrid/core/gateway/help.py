@@ -44,7 +44,7 @@ Latest project render:
   python3 -m astrid runs open [RUN_ID] [--project PROJECT] [--json]
 
 Operational families:
-  python3 -m astrid setup [--input FILE | --create | --attach] [--apply]
+  python3 -m astrid install [--repair | --update | --uninstall]
   python3 -m astrid status [--json]
   python3 -m astrid doctor [--json]
   python3 -m astrid backup {create,restore,export,tombstone,recover,purge} [--json]
@@ -109,7 +109,8 @@ Product families:
   timelines   [pack: timeline] timelines list/show/replace-parent-media/archive/recover/history/diff/visualize/render
 
 Operational families:
-  setup       [runtime] preview/check/apply one explicit Create-or-Attach plan
+  install     [runtime] install, repair, update or uninstall Astrid
+  setup       [runtime] alias of install
   status      [runtime] read-only workspace/Runtime/readiness status
   preferences [runtime] user/project Markdown defaults; checkout/checkin/edit
   documents   [runtime] reusable project documents; list/create/show/checkout/checkin

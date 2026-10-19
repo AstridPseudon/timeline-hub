@@ -1,0 +1,281 @@
+"""Login service definitions and operations; all OS branching lives here."""
+
+from __future__ import annotations
+
+import os
+import platform as system_platform
+import plistlib
+import shlex
+import subprocess
+import sys
+import time
+from pathlib import Path
+from xml.sax.saxutils import escape
+
+from .core import Version, absolute, read_json, write_json
+
+LABEL = "haus.astrid.runtime"
+TASK = "Astrid Runtime"
+
+
+def platform_target() -> str:
+    system = {"darwin": "macos", "linux": "linux", "win32": "windows"}.get(sys.platform)
+    machine = system_platform.machine().lower()
+    arch = {"x86_64": "x64", "amd64": "x64", "aarch64": "arm64", "arm64": "arm64"}.get(machine)
+    if not system or not arch:
+        raise ValueError(f"Unsupported operating system or CPU: {sys.platform}/{machine}")
+    return f"{system}-{arch}"
+
+
+def venv_python(root: Path) -> Path:
+    return root / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
+
+
+def default_program_root(home: Path, system: str) -> Path:
+    if system == "win32":
+        return Path(os.environ.get("LOCALAPPDATA") or home / "AppData" / "Local") / "Astrid"
+    return home / ".local" / "share" / "astrid"
+
+
+def legacy_roots(home: Path, default: Path) -> list[Path]:
+    return list(dict.fromkeys([default.with_name("banodoco_local"),
+                              home / "Library" / "Application Support" / "banodoco_local",
+                              home / ".local" / "share" / "banodoco_local",
+                              home / ".banodoco_local"]))
+
+
+def command(version: Version, data: Path, *, windows: bool = False, log: Path | None = None) -> list[str]:
+    python = version.python.with_name("pythonw.exe") if windows else version.python
+    module = version.env.get("ASTRID_INSTALL_RUNTIME_MODULE", "astrid_runtime")
+    if module not in {"astrid_runtime", "banodoco_local"}:
+        raise ValueError("Unknown Runtime module in the installation record.")
+    arguments = ["run", "--profile", "astrid", "--data-root", str(data),
+                 "--source-manifest", str(version.profile)]
+    if not windows:
+        return [str(python), "-I", "-m", module, *arguments]
+    # Task Scheduler cannot set an environment and Hidden does not hide a
+    # console. pythonw executes the foreground Runtime in this same process.
+    script = ("import os,sys; "
+              f"os.environ.update({version.env!r}); "
+              f"sys.stdout=sys.stderr=open({str(log)!r},'a',encoding='utf-8',buffering=1); "
+              f"from {module}.cli import main; "
+              f"sys.exit(main({arguments!r}))")
+    return [str(python), "-I", "-c", script]
+
+
+def systemd_quote(value: str) -> str:
+    # systemd performs specifier expansion even inside double quotes.
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"').replace("%", "%%").replace("\n", "\\n") + '"'
+
+
+def render(system: str, version: Version, data: Path, log: Path, *, user: str = "") -> str:
+    argv = command(version, data, windows=system == "win32", log=log)
+    if system == "darwin":
+        return plistlib.dumps({
+            "Label": LABEL, "ProgramArguments": argv, "RunAtLoad": True,
+            "KeepAlive": True, "ExitTimeOut": 90,
+            "EnvironmentVariables": version.env,
+            "StandardOutPath": str(log), "StandardErrorPath": str(log),
+        }, sort_keys=True).decode("utf-8")
+    if system == "linux":
+        executable = " ".join(systemd_quote(s).replace("$", "$$") for s in argv)
+        environment = "".join("Environment=" + systemd_quote(k + "=" + v) + "\n" for k, v in sorted(version.env.items()))
+        return ("[Unit]\nDescription=Astrid Runtime\n\n[Service]\n"
+                f"ExecStart={executable}\n{environment}Restart=on-failure\nRestartSec=5\n"
+                "KillMode=mixed\nTimeoutStopSec=90\n"
+                f"StandardOutput={systemd_quote('append:' + str(log))}\n"
+                f"StandardError={systemd_quote('append:' + str(log))}\n"
+                "\n[Install]\nWantedBy=default.target\n")
+    if system != "win32":
+        raise ValueError(f"Unsupported operating system: {system}")
+    arguments = subprocess.list2cmdline(argv[1:])
+    return f'''<?xml version="1.0" encoding="UTF-8"?>
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo><Description>Astrid Runtime</Description></RegistrationInfo>
+  <Triggers><LogonTrigger><Enabled>true</Enabled><UserId>{escape(user)}</UserId></LogonTrigger></Triggers>
+  <Principals><Principal id="Owner"><UserId>{escape(user)}</UserId><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries><StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate><StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <IdleSettings><StopOnIdleEnd>false</StopOnIdleEnd><RestartOnIdle>false</RestartOnIdle></IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand><Enabled>true</Enabled>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle><WakeToRun>false</WakeToRun><ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <RestartOnFailure><Interval>PT1M</Interval><Count>999</Count></RestartOnFailure>
+  </Settings>
+  <Actions Context="Owner"><Exec><Command>{escape(argv[0])}</Command><Arguments>{escape(arguments)}</Arguments><WorkingDirectory>{escape(str(version.root))}</WorkingDirectory></Exec></Actions>
+</Task>
+'''
+
+
+class Service:
+    def __init__(self, root: Path, log: Path, run, *, home: Path | None = None,
+                 system: str | None = None, say=print):
+        self.root, self.log, self.run = root, log, run
+        self.home, self.system, self.say = home or Path.home(), system or sys.platform, say
+        self.registry = default_program_root(self.home, self.system) / "service.json"
+        if self.system == "darwin":
+            self.path = self.home / "Library" / "LaunchAgents" / f"{LABEL}.plist"
+        elif self.system == "linux":
+            self.path = Path(os.environ.get("XDG_CONFIG_HOME") or self.home / ".config") / "systemd" / "user" / "astrid.service"
+        else:
+            self.path = root / "task.xml"
+
+    def recorded(self) -> dict:
+        record = read_json(self.registry)
+        if record and record.get("owner") != LABEL:
+            raise ValueError("The service record belongs to another installer.")
+        if record:
+            return record
+        # Adopt a service written by the earlier POSIX line, preserving its root.
+        if self.system == "darwin" and self.path.exists():
+            definition = plistlib.loads(self.path.read_bytes())
+            data = definition.get("EnvironmentVariables", {}).get("ASTRID_RUNTIME_DATA_ROOT")
+            if data:
+                return {"data_root": str(absolute(data))}
+            return self._old_wrapper_root(definition.get("ProgramArguments", []))
+        if self.system == "linux" and self.path.exists():
+            for line in self.path.read_text(encoding="utf-8").splitlines():
+                if line.startswith("Environment="):
+                    for item in shlex.split(line.partition("=")[2]):
+                        if item.startswith("ASTRID_RUNTIME_DATA_ROOT="):
+                            return {"data_root": str(absolute(item.partition("=")[2]))}
+                if line.startswith("ExecStart="):
+                    record = self._old_wrapper_root(shlex.split(line.partition("=")[2]))
+                    if record:
+                        return record
+        return {}
+
+    @staticmethod
+    def _old_wrapper_root(argv: list[str]) -> dict:
+        for argument in argv:
+            executable = Path(argument)
+            if not executable.is_absolute() or executable.name != "astrid-service":
+                continue
+            env_file = executable.parent.parent / "env"
+            if env_file.is_file():
+                for line in env_file.read_text(encoding="utf-8").splitlines():
+                    words = shlex.split(line)
+                    if words and words[0] == "export":
+                        words = words[1:]
+                    for word in words:
+                        # The old name is accepted only to migrate an install.
+                        name, _, value = word.partition("=")
+                        if name in {"ASTRID_RUNTIME_DATA_ROOT", "BANODOCO_LOCAL_DATA_ROOT"}:
+                            return {"data_root": str(absolute(value))}
+        return {}
+
+    def powershell(self, script: str) -> str:
+        executable = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+        return self.run([executable, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+                         "-Command", "$ErrorActionPreference='Stop'; " + script])
+
+    def systemd(self) -> bool:
+        if self.system != "linux":
+            return False
+        try:
+            self.run(["systemctl", "--user", "show-environment"])
+            return True
+        except (OSError, subprocess.SubprocessError):
+            return False
+
+    def disable(self) -> None:
+        if self.system == "darwin":
+            if self.path.exists():
+                # bootout both disables KeepAlive and waits for the foreground owner.
+                target = f"gui/{os.getuid()}/{LABEL}"
+                try:
+                    self.run(["launchctl", "print", target])
+                except subprocess.CalledProcessError as exc:
+                    if "Could not find service" not in str(exc.output) and "Could not find specified service" not in str(exc.output):
+                        raise
+                    return  # A missing/unloaded login item is already stopped.
+                self.run(["launchctl", "bootout", target])
+        elif self.system == "linux":
+            if self.systemd() and self.path.exists():
+                self.run(["systemctl", "--user", "disable", "astrid.service"])
+        else:
+            self.powershell(f"$t=Get-ScheduledTask -TaskName '{TASK}' -ErrorAction SilentlyContinue; if ($t) {{ $t | Disable-ScheduledTask | Out-Null }}")
+
+    def stop(self) -> None:
+        if self.system == "linux" and self.systemd() and self.path.exists():
+            self.run(["systemctl", "--user", "stop", "astrid.service"])
+        elif self.system == "win32":
+            # Runtime's birth-checked down has already drained its children.
+            self.powershell(f"$t=Get-ScheduledTask -TaskName '{TASK}' -ErrorAction SilentlyContinue; if ($t -and $t.State -eq 'Running') {{ $t | Stop-ScheduledTask }}")
+            deadline = time.monotonic() + 90
+            while time.monotonic() < deadline:
+                state = self.powershell(f"$t=Get-ScheduledTask -TaskName '{TASK}' -ErrorAction SilentlyContinue; if ($t) {{ $t.State }}").strip()
+                if state != "Running":
+                    return
+                time.sleep(0.2)
+            raise RuntimeError("The Astrid sign-in task did not stop.")
+        foreground = self.recorded().get("foreground")
+        if foreground:
+            from runtime_protocol import platform
+            deadline = time.monotonic() + 90
+            while time.monotonic() < deadline:
+                identity = platform.process_identity(int(foreground["pid"]))
+                if identity is None or identity.get("birth_id") != foreground["birth_id"]:
+                    return
+                time.sleep(0.2)
+            raise RuntimeError("The foreground Astrid Runtime did not finish stopping.")
+
+    def register(self, version: Version, data: Path) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        user = self.powershell("[Security.Principal.WindowsIdentity]::GetCurrent().User.Value").strip() if self.system == "win32" else ""
+        self.path.write_text(render(self.system, version, data, self.log, user=user), encoding="utf-8", newline="\n")
+        if self.system == "darwin":
+            self.run(["launchctl", "bootstrap", f"gui/{os.getuid()}", self.path])
+        elif self.system == "linux":
+            if self.systemd():
+                self.run(["systemctl", "--user", "daemon-reload"])
+                self.run(["systemctl", "--user", "enable", "astrid.service"])
+            else:
+                self.say("There is no systemd user service; run the install line to restart Astrid.")
+        else:
+            xml_path = str(self.path).replace("'", "''")
+            self.powershell(f"Register-ScheduledTask -TaskName '{TASK}' -Xml ([IO.File]::ReadAllText('{xml_path}')) -Force | Out-Null")
+        write_json(self.registry, {"owner": LABEL, "program_root": str(self.root),
+                                  "data_root": str(data), "version": version.document()})
+
+    def start(self) -> bool:
+        if self.system == "darwin":
+            self.run(["launchctl", "kickstart", f"gui/{os.getuid()}/{LABEL}"])
+        elif self.system == "linux":
+            if not self.systemd():
+                return False
+            self.run(["systemctl", "--user", "start", "astrid.service"])
+        else:
+            self.powershell(f"Enable-ScheduledTask -TaskName '{TASK}' | Out-Null; Start-ScheduledTask -TaskName '{TASK}'")
+        return True
+
+    def start_foreground(self, version: Version, data: Path) -> None:
+        """No systemd: detach Runtime's own supervisor; the line is the restart."""
+        from runtime_protocol import platform
+        env = {k: v for k, v in os.environ.items() if k not in {
+            "PYTHONPATH", "PYTHONHOME", "ASTRID_WORKSPACE_ENDPOINT",
+            "ASTRID_WORKSPACE_CREDENTIAL", "ASTRID_RUNTIME_SOURCE_MANIFEST",
+            "ASTRID_RUNTIME_DATA_ROOT", "ASTRID_PACKS_PATH"}}
+        env.update(version.env)
+        with self.log.open("a", encoding="utf-8") as stream:
+            process = platform.spawn_tree(command(version, data), detached=True,
+                                          cwd=version.root, env=env, stdin=subprocess.DEVNULL,
+                                          stdout=stream, stderr=subprocess.STDOUT)
+        identity = platform.process_identity(process.pid)
+        if identity is None:
+            raise RuntimeError("The foreground Astrid Runtime exited before startup.")
+        record = self.recorded()
+        write_json(self.registry, {**record, "foreground": {
+            "pid": process.pid, "birth_id": identity["birth_id"]}})
+
+    def unregister(self) -> None:
+        if self.system == "win32":
+            self.powershell(f"$t=Get-ScheduledTask -TaskName '{TASK}' -ErrorAction SilentlyContinue; if ($t) {{ $t | Unregister-ScheduledTask -Confirm:$false }}")
+        self.path.unlink(missing_ok=True)
+        if self.system == "linux" and self.systemd():
+            self.run(["systemctl", "--user", "daemon-reload"])
+        self.registry.unlink(missing_ok=True)
+
+

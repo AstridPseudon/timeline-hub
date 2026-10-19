@@ -1,0 +1,123 @@
+"""`astrid install`: the one install, repair, update and uninstall entry point."""
+
+from __future__ import annotations
+
+import argparse
+import contextlib
+import os
+import sys
+import traceback
+from pathlib import Path
+
+from .backend import Backend
+from .core import Installer, absolute, current, find_data_root, read_json, write_json
+from .service import LABEL, default_program_root, legacy_roots
+from .tools import download, validate_manifest
+
+
+def parser() -> argparse.ArgumentParser:
+    result = argparse.ArgumentParser(prog="astrid install", description="Install or restart Astrid for astrid.haus.")
+    result.add_argument("operation", nargs="?", choices=("install", "repair", "update", "uninstall"), default="install")
+    mode = result.add_mutually_exclusive_group()
+    mode.add_argument("--update", action="store_true", help="back up and install the pinned version")
+    mode.add_argument("--repair", action="store_true", help="restart the installed version without upgrading")
+    mode.add_argument("--uninstall", action="store_true")
+    result.add_argument("--delete-data", action="store_true", help="also delete the selected data root during uninstall")
+    result.add_argument("--root", type=Path, help="absolute managed program directory")
+    result.add_argument("--data-root", type=Path, help="absolute workspace support directory")
+    result.add_argument("--manifest", type=Path, help="local copy of the pinned hosted install manifest")
+    result.add_argument("--uv", type=Path, help="absolute pinned uv executable supplied by the bootstrap")
+    return result
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parser().parse_args(argv)
+    mode = "update" if args.update else "repair" if args.repair else "uninstall" if args.uninstall else args.operation
+    if args.operation != "install" and any((args.update, args.repair, args.uninstall)):
+        parser().error("Choose either an operation or a mode flag.")
+    if args.delete_data and mode != "uninstall":
+        parser().error("--delete-data is only valid for uninstall.")
+    from runtime_protocol import platform
+    log = platform.log_dir() / "install.log"
+    try:
+        platform.private_directory(log.parent)
+        root = absolute(args.root or default_program_root(Path.home(), sys.platform))
+        uv = args.uv or Path(os.environ.get("ASTRID_INSTALL_UV", root / "bootstrap" / ("uv.exe" if sys.platform == "win32" else "uv")))
+        backend = Backend(root, log, uv)
+        recorded = backend.service.recorded()
+        if not recorded:
+            prior = read_json(root / "install.json")
+            if prior.get("owner") == LABEL and prior.get("data_root"):
+                recorded = {"data_root": prior["data_root"]}
+        if recorded.get("program_root"):
+            recorded_root = absolute(recorded["program_root"])
+            if args.root and recorded_root != root:
+                raise ValueError(f"The login service already belongs to {recorded_root}.")
+            root = recorded_root
+            backend = Backend(root, log, uv)
+        # The lock lives outside the removable program directory (Windows keeps
+        # open files locked). One per user also serializes custom-root installs.
+        lock_path = default_program_root(Path.home(), sys.platform).parent / "astrid-install.lock"
+        platform.private_directory(lock_path.parent)
+        with lock_path.open("a+b") as lock:
+            platform.lock_file(lock.fileno(), blocking=False)
+            try:
+                data, relocate = find_data_root(
+                    Path(recorded["data_root"]) if recorded.get("data_root") else None,
+                    args.data_root, platform.data_root(), legacy_roots(Path.home(), platform.data_root()))
+                if root == data or root in data.parents or data in root.parents:
+                    raise ValueError("Keep program files and the workspace in separate directories.")
+                if sys.platform == "win32" and len(str(root)) > 90:
+                    raise ValueError("Choose a shorter program directory (under 90 characters) for Windows tools.")
+                marker = read_json(root / "install.json")
+                if marker and marker.get("owner") != LABEL:
+                    raise ValueError("The program directory belongs to another installer.")
+                if not marker and root.exists() and any(p.name != "bootstrap" for p in root.iterdir()):
+                    raise ValueError("The program directory contains files Astrid does not own.")
+                if mode == "uninstall" and not marker:
+                    raise ValueError("No managed Astrid installation was found to uninstall.")
+                platform.private_directory(root)
+                write_json(root / "install.json", {"owner": LABEL, "data_root": str(data)})
+                if relocate and mode != "uninstall":
+                    old = backend.existing(data)
+                    if old is None:
+                        raise ValueError("The old workspace has no source profile; select it with --data-root for recovery.")
+                    realm = backend.workspace(old, data)
+                    print(f"Moving the existing workspace from {data} to {platform.data_root()} with a backup.")
+                    try:
+                        backend.stop(old, data)
+                        backup = backend.backup(old, data, realm)
+                        backend.runtime(old, data, "up", "--hosted-origin", "off", profile=True)
+                        backend.runtime(old, data, "relocate", "--destination", str(platform.data_root()),
+                                        "--backup", str(Path(backup["root"]) / "realm"),
+                                        "--confirm", "RELOCATE " + realm["realm_id"], profile=True)
+                    except (Exception, KeyboardInterrupt):
+                        backend.stop(old, data)
+                        backend.register(old, data)
+                        backend.start(old, data)
+                        backend.verify(old, data, realm["realm_id"])
+                        raise
+                    data = platform.data_root()
+                    old = backend.existing(data)
+                    backend.stop(old, data)
+                    write_json(root / "install.json", {"owner": LABEL, "data_root": str(data)})
+                print(f"Using your workspace at {data}.")
+                manifest = {}
+                if mode != "uninstall" and (mode == "update" or not (current(root) or backend.existing(data))):
+                    if not args.manifest:
+                        args.manifest = root / "install-manifest.json"
+                        download("https://astrid.haus/install-manifest.json", args.manifest)
+                    manifest = validate_manifest(read_json(args.manifest))
+                    if not uv.is_absolute() or not uv.is_file():
+                        raise ValueError("Run the install line to provide the pinned user-local uv.")
+                Installer(root, data, backend).run(mode, manifest, delete_data=args.delete_data)
+            finally:
+                platform.unlock_file(lock.fileno())
+        return 0
+    except (Exception, KeyboardInterrupt):
+        with contextlib.suppress(OSError):
+            with log.open("a", encoding="utf-8") as stream:
+                traceback.print_exc(file=stream)
+        print("Astrid could not finish; your workspace and any update backup have been kept.")
+        print(f"Details: {log}")
+        return 1

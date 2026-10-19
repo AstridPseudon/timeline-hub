@@ -61,6 +61,7 @@ SPRINT1_UNBOUND_ALLOWLIST_CONTRACT: tuple[tuple[str, ...], ...] = (
     ("doctor",),
     ("backup",),
     ("setup",),
+    ("install",),
     ("status",),
     ("auth",),
     ("login",),
@@ -113,6 +114,9 @@ def _main_impl(raw: list[str]) -> int:
     # Reserved setup/status commands sit outside the long-standing seven
     # gateway families so pack discovery cannot claim them and product-family
     # census consumers remain stable.
+    if first_arg == "install":
+        from astrid.installer.cli import main as install_main
+        return install_main(raw[1:])
     if first_arg == "setup":
         return _dispatch_setup(raw[1:])
     if first_arg == "status":

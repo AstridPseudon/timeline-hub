@@ -1,4 +1,4 @@
-"""Plan and apply Astrid's one-workspace setup composition.
+"""Legacy workspace composition API; the command delegates to `astrid install`.
 
 Workspace identity and lifecycle are delegated to the installed Runtime CLI.
 Astrid composes its existing source and skill setup only after Runtime has
@@ -644,24 +644,8 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = _parser().parse_args(argv)
-    try:
-        request = _request_from_args(args)
-        code, result = execute_setup(
-            request,
-            apply=args.apply,
-            check=args.check,
-            offline=args.offline,
-            declarations=args.declarations,
-            deep=args.deep,
-            disable_pack=args.disable_pack,
-            restore_pack=args.restore_pack,
-        )
-    except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as exc:
-        code = 2
-        result = {"ok": False, "problem_code": "invalid_setup_input", "error": str(exc)}
-    print(json.dumps(result, indent=2, sort_keys=True, default=str))
-    return code
+    from astrid.installer.cli import main as install_main
+    return install_main(argv)
 
 
 __all__ = [
