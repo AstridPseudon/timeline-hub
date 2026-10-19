@@ -1,4 +1,48 @@
-# Astrid Plan A contract freeze
+# Astrid public boundary
+
+The App selects Astrid's public CLI/diagnostic bundle through the single
+`source_commit` in `config/astrid-cli-surface/vendor.lock.json`. The same lock
+covers the CLI export and every member of `config/astrid-public-boundary/bundle.json`.
+The existing vendor checker verifies the selected bytes; no source-file hash,
+C1/C2 digest, or bundle version decides diagnostic compatibility.
+
+Run `npm run check:astrid-conformance` (also included in `check:contracts`).
+The dependency-free Node conformance suite runs in the boundary CI job after
+the producer checkout and vendored bytes have been verified. To select a new
+release, change the lock's commit, check out that immutable commit, then run
+`node scripts/vendor-lock.mjs update config/astrid-cli-surface/vendor.lock.json --producer <checkout>`.
+
+`scripts/quality/astrid-public-boundary.test.mjs` replaces the diagnostic freeze
+assertions using the pinned producer's fixtures:
+
+| Rule | Conformance test |
+|---|---|
+| Valid/invalid producer cases | every pinned producer diagnostic fixture conforms, and every invalid case is rejected |
+| Closed object shapes, required fields, finite primitive values and field types | projection objects require their declared keys and primitive types |
+| Exact ordered command effects; scoped authorization for every effectful suggestion | every public command keeps its exact effect sequence and authorization rule |
+| Unknown commands, malformed arguments, duplicate effects, inert redacted placeholders | actions reject unknown commands, malformed arguments, duplicate effects, and redacted executable values |
+| Independent observations; unknown value/time stay null with an unavailable reason; observed values need timestamps | all independent facts preserve observed and unavailable semantics |
+| Healthy null/null pair, failed non-null pair, closed codes and boundaries | healthy and failure codes are paired and restricted to known values |
+| Five-second total helper deadline; event/log/bundle caps; capture within declared limits | deadlines, declared limits, and captured counts or bytes enforce inclusive bounds |
+| No collection actions; shared content redaction; inert shared suggestions | diagnostic collection executes no actions and shared output is redacted and inert |
+| Digest format remains metadata, without equality admission | digest syntax is checked without admitting a particular contract identity |
+
+The C2 fact projection supersedes C1's nullable references, structured progress,
+freshness, and terminal-result fields. Their old shape is historical; the C2
+projection validates each observation independently and never infers provider
+execution, billing, authorization, or settlement from another healthy fact.
+
+## Historical C1/C2 design record
+
+The manifests `config/contracts/astrid-plan-a-c1.json` and
+`config/contracts/astrid-plan-a-c2.json`, their diagnostic schema, and
+`tests/fixtures/astrid-plan-a/c2/` remain unchanged as historical evidence.
+They are removed from the active contract registry. Their source/client hashes,
+pending decisions, acceptance gates, and digest references describe the original
+snapshot. The freeze checkers, source-hash tests, and digest refresher have been
+removed; the commands in the original record below are historical and unavailable.
+
+### Original contract record
 
 Purpose: give Setup/Lifecycle (SL) and Execution/Worker (EW) one reviewable CF
 input, without implementing either lane. The source of truth is

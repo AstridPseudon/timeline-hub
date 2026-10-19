@@ -33,7 +33,7 @@ It prints the editor URL; open it and the timeline is there.
 - Supabase runtime contract: [`docs/governance/contracts/supabase-runtime.md`](docs/governance/contracts/supabase-runtime.md)
 - Error handling contract: [`docs/governance/contracts/error-handling.md`](docs/governance/contracts/error-handling.md)
 - Compatibility shims and migration gates: [`docs/governance/contracts/compatibility-shims.md`](docs/governance/contracts/compatibility-shims.md)
-- Astrid Plan A C1 composition and handoff: [`docs/governance/contracts/astrid-plan-a.md`](docs/governance/contracts/astrid-plan-a.md)
+- Astrid public boundary and historical C1/C2 evidence: [`docs/governance/contracts/astrid-plan-a.md`](docs/governance/contracts/astrid-plan-a.md)
 
 ### Contract Status Matrix
 
@@ -67,7 +67,7 @@ Run these in CI and before merging facade/contract changes:
 
 | Gate | Required Surface Coverage | Expected Assertion |
 |---|---|---|
-| `npm run check:astrid-contract-freeze` | `config/contracts/astrid-plan-a-c1.json`, `scripts/quality/check-astrid-contract-freeze.mjs`, `scripts/quality/lib/astrid-contract-schema.mjs`, `docs/governance/contracts/astrid-plan-a.md` | C1 schema, digest, references, frozen semantics and available declaration hashes; no installed acceptance claim |
+| `npm run check:astrid-conformance` | `config/astrid-cli-surface/vendor.lock.json`, `config/astrid-public-boundary/bundle.json`, `scripts/quality/lib/astrid-public-boundary.mjs`, `scripts/quality/astrid-public-boundary.test.mjs`, `docs/governance/contracts/astrid-plan-a.md` | Pinned producer bytes and diagnostic behavior: authorization, unknown facts, bounds, redaction and inert suggestions |
 | `npm run test:contracts` | `src/sdk/index.ts`, `src/tools/video-editor/index.ts`, `src/tools/video-editor/browser.ts`, `src/tools/video-editor/testing.ts`, `src/shared/components/ui/contracts/cn.ts`, `src/shared/lib/errorHandling/runtimeError.ts`, `src/domains/generation/types/index.ts` | Public contract API shape and behavior stays stable |
 | `npm run test:arch` | `scripts/quality/check-video-editor-sdk-imports.mjs`, `scripts/quality/check-sdk-no-barrel-imports.mjs`, `config/governance/video-editor-sdk-import-allowlist.json`, `src/shared/lib/errorHandling/runtimeError.ts`, `src/integrations/supabase/client.ts`, `docs/governance/contracts/compatibility-shims.md` | Contract and shim usage rules are enforced |
 | `npm run quality:check` | `src/sdk/index.ts`, `src/tools/video-editor/index.ts`, `src/tools/video-editor/browser.ts`, `src/tools/video-editor/testing.ts`, `scripts/quality/check-video-editor-sdk-imports.mjs`, `scripts/quality/check-sdk-public-exports.mjs`, `scripts/quality/check-sdk-no-barrel-imports.mjs`, `config/governance/video-editor-sdk-import-allowlist.json`, `config/governance/sdk-public-export-allowlist.json`, `src/integrations/supabase/client.ts`, `src/shared/lib/errorHandling/runtimeError.ts`, `src/shared/components/ui/contracts/cn.ts` | Integrated lint/typecheck/governance checks pass for touched contract surfaces |

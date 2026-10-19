@@ -963,32 +963,15 @@
       ]
     },
     {
-      "id": "astrid-plan-a-c1",
+      "id": "astrid-public-boundary",
       "class": "composition_contract",
-      "path": "config/contracts/astrid-plan-a-c1.json",
+      "path": "config/astrid-public-boundary/bundle.json",
       "requiredTags": [
-        "\"kind\": \"astrid-contract-composition\"",
-        "\"revision\": \"C1\""
-      ],
-      "expectedExports": []
-    },
-    {
-      "id": "astrid-plan-a-c2",
-      "class": "composition_contract",
-      "path": "config/contracts/astrid-plan-a-c2.json",
-      "requiredTags": [
-        "\"kind\": \"astrid-contract-diagnostic-projection\"",
-        "\"revision\": \"C2\""
-      ],
-      "expectedExports": []
-    },
-    {
-      "id": "astrid-plan-a-diagnostic-c2-schema",
-      "class": "composition_contract",
-      "path": "config/contracts/astrid-plan-a-diagnostic-c2.schema.json",
-      "requiredTags": [
-        "\"title\": \"Astrid Plan A C2 diagnostic projection\"",
-        "\"contractRevision\""
+        "\"producer\": \"astrid-agent\"",
+        "\"diagnosticSchema\"",
+        "\"commandEffects\"",
+        "\"diagnostics\"",
+        "\"redaction\""
       ],
       "expectedExports": []
     }

@@ -93,7 +93,21 @@ describe('runtime.lock.json', () => {
     ].every((file) => !existsSync(path.join(ROOT, file)))).toBe(true);
   });
 
-  it('keeps the Astrid CLI pin separate and checks all consumer locks locally', () => {
+  it('pins the entire Astrid public boundary and CLI export under one separate commit', () => {
+    const lock = JSON.parse(readFileSync(path.join(ROOT, 'config/astrid-cli-surface/vendor.lock.json'), 'utf8')) as VendorLock;
+    const bundle = JSON.parse(readFileSync(path.join(ROOT, 'config/astrid-public-boundary/bundle.json'), 'utf8')) as {
+      producer: string; files: Record<string, string>;
+    };
+    expect(lock.producer).toBe(bundle.producer);
+    expect(lock.source_commit).toMatch(/^[0-9a-f]{40}$/);
+    expect(Object.values(lock.files).map((entry) => entry.from).sort()).toEqual([
+      'schemas/public-boundary/README.md',
+      'schemas/public-boundary/bundle.json',
+      ...Object.values(bundle.files),
+    ].sort());
+  });
+
+  it('checks all consumer locks locally', () => {
     expect(LOCKS).toContain('config/astrid-cli-surface/vendor.lock.json');
     for (const lock of LOCKS) {
       const local = { ...fixture(), lockFile: path.join(ROOT, lock), consumer: ROOT } as Fixture;

@@ -46,4 +46,5 @@ jobs:
       - run: |
           node scripts/vendor-lock.mjs check runtime.lock.json --producer runtime-producer
       - run: node scripts/vendor-lock.mjs check config/astrid-cli-surface/vendor.lock.json --producer astrid-producer
+      - run: node --test scripts/quality/astrid-public-boundary.test.mjs
       - run: node scripts/build/verify-astrid-vendor-sources.mjs

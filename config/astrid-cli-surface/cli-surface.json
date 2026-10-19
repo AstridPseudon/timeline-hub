@@ -1929,6 +1929,9 @@
             "--add-cut": {
               "required": false
             },
+            "--add-layer": {
+              "required": false
+            },
             "--add-media": {
               "required": false
             },
@@ -2036,6 +2039,12 @@
               "required": false
             },
             "--labels": {
+              "required": false
+            },
+            "--layer": {
+              "required": false
+            },
+            "--layer-asset": {
               "required": false
             },
             "--line": {

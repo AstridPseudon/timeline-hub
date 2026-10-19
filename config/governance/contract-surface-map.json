@@ -38,10 +38,11 @@
     "src/sdk/core/families/maturity.ts",
     "src/sdk/core/families/conformance.ts"
   ],
-  "check:astrid-contract-freeze": [
-    "config/contracts/astrid-plan-a-c1.json",
-    "scripts/quality/check-astrid-contract-freeze.mjs",
-    "scripts/quality/lib/astrid-contract-schema.mjs",
+  "check:astrid-conformance": [
+    "config/astrid-cli-surface/vendor.lock.json",
+    "config/astrid-public-boundary/bundle.json",
+    "scripts/quality/lib/astrid-public-boundary.mjs",
+    "scripts/quality/astrid-public-boundary.test.mjs",
     "docs/governance/contracts/astrid-plan-a.md"
   ]
 }
