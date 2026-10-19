@@ -188,6 +188,7 @@ test('shared external session model catalog follows the writer and takeover for 
       assert.equal((await call('/c1/rpc', { method: 'session/new', params: {} })).status, 200);
       assert.equal((await call('/c2/rpc', { method: 'session/load', params: { sessionId } })).status, 200);
       const modelsUrl = `/c2/models?sessionId=${encodeURIComponent(sessionId)}`;
+      const formerWriterModelsUrl = `/c1/models?sessionId=${encodeURIComponent(sessionId)}`;
       await call('/c2/events');
       const attachedModels = await (await call(modelsUrl)).json() as { models: { currentModelId: string; availableModels: Array<{ modelId: string }> } };
       assert.equal(attachedModels.models.currentModelId, 'alpha');
@@ -209,11 +210,18 @@ test('shared external session model catalog follows the writer and takeover for 
       assert.equal(denied.status, 409);
       assert.equal((await denied.json() as { error: string }).error, 'session_read_only');
       assert.equal(hostCalls.flat().length, callsBeforeDenied);
+      await call('/c1/events'); // consume the first writer's beta update before takeover
 
       assert.equal((await call('/c2/rpc', { method: 'session/takeover', params: { sessionId } })).status, 200);
       assert.equal((await update('c2', 'alpha')).status, 200);
       const writerState = await (await call(modelsUrl)).json() as { models: { currentModelId: string } };
       assert.equal(writerState.models.currentModelId, 'alpha');
+      const formerWriterEvents = (await (await call('/c1/events')).json() as { notifications: Array<{ params?: { update?: Record<string, unknown> } }> }).notifications;
+      const alphaUpdate = formerWriterEvents.find(event => event.params?.update?.sessionUpdate === (adapter === 'config' ? 'config_option_update' : 'current_model_update'))?.params?.update;
+      assert.ok(alphaUpdate);
+      if (adapter === 'config') assert.equal((alphaUpdate!.configOptions as Array<{ currentValue: string }>)[0]!.currentValue, 'alpha');
+      else assert.equal(alphaUpdate!.currentModelId, 'alpha');
+      await call('/c2/events');
       const expectedSetter = adapter === 'config' ? 'session/set_config_option' : 'session/set_model';
       const nativeUpdates = hostCalls[0]!.filter(item => item.method === expectedSetter);
       assert.equal(nativeUpdates.length, 2);
@@ -224,7 +232,7 @@ test('shared external session model catalog follows the writer and takeover for 
         ? { sessionUpdate: 'config_option_update', configOptions: configOptions('gamma').map(item => ({ ...item, options: [{ group: 'models', options: ['beta', 'gamma'].map(value => ({ value, name: value.toUpperCase() })) }] })) }
         : { sessionUpdate: 'current_model_update', currentModelId: 'gamma', models: modelList('gamma', ['beta', 'gamma']) };
       nativeNotify[0]?.({ jsonrpc: '2.0', method: 'session/update', params: { sessionId, update: changedCatalog } });
-      const nativeEvents = (await (await call('/c2/events')).json() as { notifications: Array<{ params?: { update?: Record<string, unknown> } }> }).notifications;
+      const nativeEvents = (await (await call('/c1/events')).json() as { notifications: Array<{ params?: { update?: Record<string, unknown> } }> }).notifications;
       const nativeUpdate = nativeEvents.find(event => event.params?.update?.sessionUpdate === changedCatalog.sessionUpdate)?.params?.update;
       assert.ok(nativeUpdate);
       if (adapter === 'config') {
@@ -235,13 +243,13 @@ test('shared external session model catalog follows the writer and takeover for 
         assert.deepEqual(((nativeUpdate!.models as { availableModels: Array<{ modelId: string }> }).availableModels).map(item => item.modelId), ['beta', 'gamma']);
       }
       const nativeLoadCount = hostCalls[0]!.filter(item => item.method === 'session/load').length;
-      const reload = await call('/c2/rpc', { method: 'session/load', params: { sessionId } });
+      const reload = await call('/c1/rpc', { method: 'session/load', params: { sessionId } });
       assert.equal(reload.status, 200);
       const reloadResult = (await reload.json() as { result: Record<string, unknown> }).result;
       if (adapter === 'config') assert.equal((reloadResult.configOptions as Array<{ currentValue: string }>)[0]!.currentValue, 'gamma');
       else assert.equal((reloadResult.models as { currentModelId: string }).currentModelId, 'gamma');
       assert.equal(hostCalls[0]!.filter(item => item.method === 'session/load').length, nativeLoadCount);
-      assert.equal(((await (await call(modelsUrl)).json() as { models: { currentModelId: string } }).models.currentModelId), 'gamma');
+      assert.equal(((await (await call(formerWriterModelsUrl)).json() as { models: { currentModelId: string } }).models.currentModelId), 'gamma');
     } finally {
       await bridge.close(); server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve()));
     }
