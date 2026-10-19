@@ -5,7 +5,7 @@
 | # | Situation | Signal | Screen |
 |---|---|---|---|
 | 1 | First visit, never installed | `prompt` → Connect → Allow → 2× `silent` | permission → pending → set_up |
-| 2 | Installed, never connected from this browser (or a private window) | as 1 | set_up. The footer and the setup block find the install first. |
+| 2 | Installed, never connected from this browser (a cleared browser, a private window, another browser) | as 1 | set_up. It says only "you might not be set up yet"; the setup block searches for an install, then a checkout, before installing. |
 | 3 | Returning, Astrid stopped | `granted`, 2× `silent`, `connectedBefore` | not_running |
 | 4 | Astrid starting | fewer than 2 failed readings | connecting → app. If slower, row 3 or row 1 until ready. |
 | 5 | Launcher up, Runtime down | `down` | not_running, whatever the history |
@@ -21,13 +21,18 @@
 | 15 | Connected, Astrid stops | 2 failed health readings | stopped card. It clears itself when the same instance answers. |
 | 16 | Connected, Astrid restarts | new `runtime_instance_id` | restarted card → Reload |
 | 17 | Connected, realm changes | 503 `realm_changed` | restarted card → Reload → row 12. Rare, and each step is true. |
-| 18 | Timeline won't load | load error | loadFailed. It retries by itself when Astrid answers. |
+| 18 | Timeline won't load | load error | loadFailed. It retries a few times when Astrid answers; Try again always works. |
 | 19 | Connected, no projects | — | EmptyWorkspaceGuidance |
 
 The page polls every three seconds and on focus. A `restart` signal shows immediately; otherwise it stays on
 `connecting` until two readings in a row fail. Then it shows `not_running` if this browser connected before or any
 probe gave a `down` reading, and `set_up` otherwise. Background checks do not change visible content until
 the screen itself changes. Non-Chromium desktop browsers skip the Chrome permission step.
+
+Both agent blocks (`copy.ts`, `AGENT_SEARCHES`) look before they act: first for an install folder (its
+`install.json` carries `astrid.local-source-install`; it starts with `<folder>/start`), then, only if there is none,
+for an astrid-app checkout (`scripts/dev-local-workspace.mjs`; `npm run dev:local`). More than one: ask which. The
+setup block installs only when it finds nothing and no sign that Astrid ran here before; the start block asks.
 
 Run `npm run dev:local` from this App checkout, then open
 `https://astrid.haus/tools/video-editor`. The local gateway on port 17340 connects

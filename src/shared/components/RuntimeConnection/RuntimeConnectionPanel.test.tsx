@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { RuntimeConnectionPanel } from './RuntimeConnectionPanel.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY } from './copy.ts';
+import { AGENT_SEARCHES, RUNTIME_CONNECTION_COPY as COPY } from './copy.ts';
 import { CONNECTED_REALM, connectionFor } from './connectionFixture.ts';
 
 afterEach(() => {
@@ -186,7 +186,7 @@ describe('RuntimeConnectionPanel', () => {
 
     panel(connectionFor({ status: 'blocked' }));
     expect(screen.getByRole('heading', { name: 'Allow Astrid in Edge' })).toBeInTheDocument();
-    expect(screen.getByText('Edge is set to stop this page reaching Astrid on your computer.')).toBeInTheDocument();
+    expect(screen.getByText('Edge is blocking this page from reaching Astrid on your computer.')).toBeInTheDocument();
     expect(shownText()).not.toContain('Chrome');
     expect(shownText()).not.toContain('{browser}');
   });
@@ -196,7 +196,7 @@ describe('RuntimeConnectionPanel', () => {
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'blocked');
     expect(screen.getByRole('heading', { name: 'Allow Astrid in Chrome' })).toBeInTheDocument();
-    expect(screen.getByText('Chrome is set to stop this page reaching Astrid on your computer.')).toBeInTheDocument();
+    expect(screen.getByText('Chrome is blocking this page from reaching Astrid on your computer.')).toBeInTheDocument();
     const steps = screen.getAllByRole('listitem');
     expect(steps.map((step) => step.textContent)).toEqual([
       'Click the icon at the left of the address bar, then Site settings.',
@@ -213,23 +213,28 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('first visit with nothing running: set up Astrid, one agent button, and the install guide in the footer', () => {
+  it("first visit with nothing running: hedges that you might not be set up yet and never says Astrid isn't installed", () => {
     panel(connectionFor({ status: 'set_up' }));
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up');
     expect(screen.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeInTheDocument();
-    expect(screen.getByText("Astrid runs on your own computer, and it isn't running here yet.")).toBeInTheDocument();
+    const sentence = screen.getByText("This browser hasn't found Astrid here, so it looks like you might not be set up yet.");
+    expect(sentence).toHaveClass('text-base', 'leading-7', 'text-muted-foreground');
+    const installed = screen.getByText('Already installed? Start Astrid and this page opens by itself.');
+    expect(installed).toHaveClass('text-base', 'leading-7', 'text-muted-foreground');
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Copy setup steps for your agent' })).toBeInTheDocument();
-    const footer = screen.getByText(/Already installed\?/).closest('p') as HTMLElement;
-    expect(footer.textContent).toBe('Already installed? Start Astrid and this page opens by itself. To set it up yourself, follow the install guide.');
+    const footer = screen.getByRole('link', { name: 'the install guide' }).closest('p') as HTMLElement;
+    expect(footer.textContent).toBe('Or set it up yourself with the install guide.');
     expect(footer).toHaveClass('text-sm', 'text-muted-foreground');
     const link = screen.getByRole('link', { name: 'the install guide' });
     expect(link).toHaveAttribute('href', COPY.commands.installUrl);
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveClass('underline');
     expect(document.body.textContent).not.toContain('docs/setup/local-source-install.md');
-    expect(screen.queryByText("Astrid isn't running")).not.toBeInTheDocument();
+    const panelText = screen.getByTestId('runtime-not-connected').textContent ?? '';
+    expect(panelText).not.toContain("isn't installed");
+    expect(panelText).not.toContain("isn't running");
   });
 
   const NOT_RUNNING: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
@@ -340,7 +345,7 @@ describe('RuntimeConnectionPanel', () => {
       expect(pasteLine).toHaveClass('text-sm', 'text-muted-foreground');
       const copied = String(writeText.mock.calls[0][0]);
       expect(copied).toBe(COPY.agent.instructions(window.location.origin, 'start'));
-      expect(copied).toContain('install.json says "astrid.local-source-install"');
+      expect(copied).toContain(AGENT_SEARCHES.install);
       expect(copied).toContain('npm run dev:local');
       // A person never needs to read the steps: nothing shows them unless the clipboard failed.
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
@@ -382,25 +387,38 @@ describe('RuntimeConnectionPanel', () => {
   describe('the agent steps', () => {
     const origin = 'https://astrid.example';
 
-    it('setup: looks for an install before suggesting installation and waits for the Open line', () => {
+    it('setup: searches for existing Astrid before suggesting installation and waits for the Open line', () => {
       const text = COPY.agent.instructions(window.location.origin, 'setup');
       const lines = text.split('\n');
-      expect(lines[0]).toBe(`Please start Astrid on this computer so the page open at ${window.location.origin} can connect to it, installing it first only if it isn't installed. Don't reset, reinstall over or delete anything that's already here.`);
-      expect(text).toContain('Start Astrid with the command that fits what you find');
-      expect(text).toContain('<that folder>/start');
-      expect(text).toContain('astrid-app repository');
-      expect(text).toContain('npm run dev:local');
+      expect(lines[0]).toBe(`Please start Astrid on this computer so the page open at ${window.location.origin} can connect to it. It may already be set up here, so look before you install anything, and never reset, reinstall over or delete what you find.`);
+      expect(lines).toContain(`     ${AGENT_SEARCHES.install}`);
+      expect(lines).toContain(`     ${AGENT_SEARCHES.checkout}`);
+      expect(text).toContain("Only if there's no install");
+      expect(text).toContain("If you find more than one, ask me which to start.");
+      expect(text).toContain(COPY.commands.installUrl);
+      expect(text).toContain(`${AGENT_SEARCHES.runtimeDataFolder} exists or ${AGENT_SEARCHES.runtimeCommand} is on your PATH, Astrid has run here before: ask me how I start it.`);
+      expect(text).not.toContain('astrid-runtime up');
       expect(text).toContain(`Once it prints "Open ${window.location.origin}", tell me. The page connects by itself.`);
       expect(text).toContain('If it says another Astrid is already running, stop that one and run the command again.');
-      expect(text).toContain(COPY.commands.installUrl);
-      expect(text).not.toContain('astrid-runtime');
+      expect(lines[lines.length - 2]).toBe(`4. Astrid keeps running until it's stopped, so start it where it can keep running and don't wait for it to exit. Once it prints "Open ${window.location.origin}", tell me. The page connects by itself.`);
+      expect(lines[lines.length - 1]).toBe('5. If it says another Astrid is already running, stop that one and run the command again. If it stops with any other message, tell me that message and the "Details:" line under it.');
     });
 
-    it('start: does not offer installation and asks where Astrid is if no install is found', () => {
+    it('start: searches existing installs and asks where Astrid is if none are found', () => {
       const text = COPY.agent.instructions(origin, 'start');
-      expect(text.split('\n')[0]).toBe(`Please start Astrid on this computer so the page open at ${origin} can connect to it. Astrid is already installed here: don't install it again, and don't reset or delete anything.`);
-      expect(text).toContain('neither: ask me where Astrid is.');
+      const lines = text.split('\n');
+      expect(lines[0]).toBe(`Please start Astrid on this computer so the page open at ${origin} can connect to it. It's already set up here, so don't install it again, and never reset or delete what you find.`);
+      expect(lines).toContain(`     ${AGENT_SEARCHES.install}`);
+      expect(lines).toContain(`     ${AGENT_SEARCHES.checkout}`);
+      expect(text).toContain("Only if there's no install");
+      expect(text).toContain("If you find more than one, ask me which to start.");
+      expect(text).toContain('If you find neither, ask me where Astrid is.');
+      expect(text).toContain(`Once it prints "Open ${origin}", tell me. The page connects by itself.`);
+      expect(text).toContain('If it says another Astrid is already running, stop that one and run the command again.');
+      expect(lines[lines.length - 2]).toBe(`4. Astrid keeps running until it's stopped, so start it where it can keep running and don't wait for it to exit. Once it prints "Open ${origin}", tell me. The page connects by itself.`);
+      expect(lines[lines.length - 1]).toBe('5. If it says another Astrid is already running, stop that one and run the command again. If it stops with any other message, tell me that message and the "Details:" line under it.');
       expect(text).not.toContain(COPY.commands.installUrl);
+      expect(text).not.toContain('~/Library');
     });
 
     it.each(['setup', 'start'] as const)('%s: prefixes all start commands only for non-hosted origins', (variant) => {
@@ -408,9 +426,19 @@ describe('RuntimeConnectionPanel', () => {
       expect(hosted).not.toContain('ASTRID_APP_LOOPBACK_ORIGIN');
       const text = COPY.agent.instructions(origin, variant);
       const prefix = `ASTRID_APP_LOOPBACK_ORIGIN=${origin} `;
-      expect(text).toContain(`${prefix}<that folder>/start`);
-      expect(text).toContain(`${prefix}<that folder>/with-env npm --prefix <that folder>/sources/app run dev:local`);
-      expect(text).toContain(`${prefix}npm run dev:local, run inside it`);
+      const lines = text.split('\n');
+      const startCommands = lines
+        .map((line) => line.trim())
+        .filter((line) => line.endsWith('<folder>/start') || line.endsWith('<folder>/with-env npm --prefix <folder>/sources/app run dev:local') || line.endsWith('npm run dev:local'));
+      expect(startCommands).toEqual([
+        `${prefix}<folder>/start`,
+        `${prefix}<folder>/with-env npm --prefix <folder>/sources/app run dev:local`,
+        `${prefix}npm run dev:local`,
+      ]);
+      expect(lines).toContain(`     ${AGENT_SEARCHES.install}`);
+      expect(lines).toContain(`     ${AGENT_SEARCHES.checkout}`);
+      expect(lines.filter((line) => line.includes(AGENT_SEARCHES.install) || line.includes(AGENT_SEARCHES.checkout)))
+        .toEqual([`     ${AGENT_SEARCHES.install}`, `     ${AGENT_SEARCHES.checkout}`]);
     });
   });
 });

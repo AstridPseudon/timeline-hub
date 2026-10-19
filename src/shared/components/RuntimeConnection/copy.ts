@@ -34,6 +34,24 @@ const COMMANDS = {
   installUrl: 'https://github.com/banodoco/astrid-agent/blob/main/docs/setup/local-source-install.md',
 } as const;
 
+/**
+ * How an agent finds an Astrid that is already set up, before anything is installed. A browser only knows it hasn't
+ * found Astrid: a cleared browser, a private window or another browser looks like a new computer.
+ * - `install`: the installer's folder (agent, Runtime and the app's launcher), the setup that serves the hosted page.
+ *   Its install.json carries `"schema": "astrid.local-source-install.v1"`; `-exec grep {} +` survives spaces in paths.
+ * - `checkout`: a developer checkout of astrid-app (package.json's name is generic, so the launcher file marks it).
+ *   Searched only when there is no install, because every install holds a copy of the app under sources/app.
+ * - `runtimeDataFolder`, `runtimeCommand`: signs that Astrid has run here without either (the Runtime's default data
+ *   folder on macOS, and its command). Neither starts the bridge the page needs, and a fresh install would open an
+ *   empty workspace beside the person's work, so the setup block asks instead of installing.
+ */
+export const AGENT_SEARCHES = {
+  install: 'find ~ -maxdepth 6 -name install.json -not -path "*/node_modules/*" -exec grep -l astrid.local-source-install {} + 2>/dev/null',
+  checkout: 'find ~ -maxdepth 6 -path "*/scripts/dev-local-workspace.mjs" -not -path "*/node_modules/*" 2>/dev/null',
+  runtimeDataFolder: '~/Library/Application Support/Astrid Runtime',
+  runtimeCommand: 'astrid-runtime',
+} as const;
+
 /** The origin `npm run dev:local` opens for by default (`config/hosted-origin.json`); any other needs `ASTRID_APP_LOOPBACK_ORIGIN`. */
 const DEFAULT_HOSTED_ORIGIN: string | null = hostedOrigin.origin;
 
@@ -63,9 +81,14 @@ export interface RuntimeConnectionCopy {
     readonly steps: readonly [string, string];
     readonly footer: string;
   };
-  /** Nothing answers and this page has never connected: the install path. */
+  /**
+   * Nothing answers and this browser has never connected. The browser can't tell a new computer from a cleared
+   * browser, a private window or another browser, so the screen never says Astrid isn't installed.
+   */
   readonly setUp: Message & {
-    /** `linkText` links to `COMMANDS.installUrl`. */
+    /** The second line under the title, for someone who is set up: as prominent as the sentence. */
+    readonly installed: string;
+    /** The quiet line under the button: the other way to set up. `linkText` links to `COMMANDS.installUrl`. */
     readonly footer: { readonly before: string; readonly linkText: string; readonly after: string };
   };
   /** Nothing answers on a return visit, or the gateway answered on this page. */
@@ -124,7 +147,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   blocked: {
     title: 'Allow Astrid in {browser}',
-    sentence: '{browser} is set to stop this page reaching Astrid on your computer.',
+    sentence: '{browser} is blocking this page from reaching Astrid on your computer.',
     steps: [
       'Click the icon at the left of the address bar, then Site settings.',
       'Set Local network access to Allow.',
@@ -134,9 +157,10 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   setUp: {
     title: 'Set up Astrid on this computer',
-    sentence: "Astrid runs on your own computer, and it isn't running here yet.",
+    sentence: "This browser hasn't found Astrid here, so it looks like you might not be set up yet.",
+    installed: 'Already installed? Start Astrid and this page opens by itself.',
     footer: {
-      before: 'Already installed? Start Astrid and this page opens by itself. To set it up yourself, follow ',
+      before: 'Or set it up yourself with ',
       linkText: 'the install guide',
       after: '.',
     },
@@ -176,7 +200,9 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   loadFailed: {
     title: "Couldn't load this timeline",
-    sentence: "Astrid on this computer didn't answer. This timeline loads by itself when it does.",
+    // No promise that it loads by itself: the automatic retries stop after a few tries, and the button is the way on.
+    // A stopped Astrid shows the stopped card instead of this one, so the sentence doesn't ask anyone to start it.
+    sentence: "Astrid on this computer didn't answer in time.",
     button: 'Try again',
     retrying: 'Trying again…',
   },
@@ -191,19 +217,24 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
       const prefix = pageOrigin === DEFAULT_HOSTED_ORIGIN ? '' : `ASTRID_APP_LOOPBACK_ORIGIN=${pageOrigin} `;
       return [
         variant === 'setup'
-          ? `Please start Astrid on this computer so the page open at ${pageOrigin} can connect to it, installing it first only if it isn't installed. Don't reset, reinstall over or delete anything that's already here.`
-          : `Please start Astrid on this computer so the page open at ${pageOrigin} can connect to it. Astrid is already installed here: don't install it again, and don't reset or delete anything.`,
+          ? `Please start Astrid on this computer so the page open at ${pageOrigin} can connect to it. It may already be set up here, so look before you install anything, and never reset, reinstall over or delete what you find.`
+          : `Please start Astrid on this computer so the page open at ${pageOrigin} can connect to it. It's already set up here, so don't install it again, and never reset or delete what you find.`,
         '',
-        '1. Start Astrid with the command that fits what you find:',
-        `   - an Astrid install (a folder whose install.json says "astrid.local-source-install"): ${prefix}<that folder>/start`,
-        `     (an older install without a start file: ${prefix}<that folder>/with-env npm --prefix <that folder>/sources/app run dev:local)`,
-        `   - a checkout of the astrid-app repository: ${prefix}${COMMANDS.app}, run inside it`,
+        '1. Look for an Astrid install:',
+        `     ${AGENT_SEARCHES.install}`,
+        '   Each result is <folder>/install.json. Start that install with:',
+        `     ${prefix}<folder>/start`,
+        "   or, if it's an older install with no start file:",
+        `     ${prefix}<folder>/with-env npm --prefix <folder>/sources/app run dev:local`,
+        "2. Only if there's no install, look for a developer checkout of astrid-app:",
+        `     ${AGENT_SEARCHES.checkout}`,
+        '   Each result is <checkout>/scripts/dev-local-workspace.mjs. Start that checkout by running this inside it:',
+        `     ${prefix}${COMMANDS.app}`,
         variant === 'setup'
-          ? `   - neither: install Astrid with ${COMMANDS.installUrl}. Its last step starts it.`
-          : '   - neither: ask me where Astrid is.',
-        "2. Astrid keeps running until it's stopped, so start it where it can stay running and don't wait for it to exit.",
-        `3. Once it prints "Open ${pageOrigin}", tell me. The page connects by itself.`,
-        '4. If it says another Astrid is already running, stop that one and run the command again. If it stops with any other message, tell me that message and the "Details:" line under it.',
+          ? `3. If you find more than one, ask me which to start. If you find neither, but ${AGENT_SEARCHES.runtimeDataFolder} exists or ${AGENT_SEARCHES.runtimeCommand} is on your PATH, Astrid has run here before: ask me how I start it. Otherwise install Astrid by following ${COMMANDS.installUrl}. Its last step starts it.`
+          : '3. If you find more than one, ask me which to start. If you find neither, ask me where Astrid is.',
+        `4. Astrid keeps running until it's stopped, so start it where it can keep running and don't wait for it to exit. Once it prints "Open ${pageOrigin}", tell me. The page connects by itself.`,
+        '5. If it says another Astrid is already running, stop that one and run the command again. If it stops with any other message, tell me that message and the "Details:" line under it.',
       ].join('\n');
     },
   },

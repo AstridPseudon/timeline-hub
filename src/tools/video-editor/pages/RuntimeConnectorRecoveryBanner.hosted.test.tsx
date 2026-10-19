@@ -35,7 +35,7 @@ describe('RuntimeConnectorRecoveryBanner on the hosted build', () => {
 
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent("Couldn't load this timeline");
-    expect(alert).toHaveTextContent("Astrid on this computer didn't answer. This timeline loads by itself when it does.");
+    expect(alert).toHaveTextContent("Astrid on this computer didn't answer in time.");
     expect(document.body.textContent).not.toMatch(ENGINEER_WORDS);
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Try again' }));

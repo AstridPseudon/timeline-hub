@@ -25,6 +25,8 @@ interface PanelFrameProps {
   readonly dataState: string;
   readonly title: string;
   readonly sentence: string;
+  /** A second line under the sentence, in the same voice (set up's "Already installed?"). */
+  readonly detail?: string;
   /** The state's one primary action. */
   readonly action?: ReactNode;
   /** The one quiet line under the action. */
@@ -37,9 +39,10 @@ interface PanelFrameProps {
 
 /**
  * The one layout every not-connected card shares, in the install dialog's style: the avatar, a serif heading, one
- * sentence, at most one primary button and at most one quiet line. Everything is centred.
+ * sentence (two only on set up), at most one primary button and at most one quiet line. Everything is centred, and
+ * balanced so no line ends on a lone word at phone width.
  */
-function PanelFrame({ dataState, title, sentence, action, footer, children, pointer }: PanelFrameProps) {
+function PanelFrame({ dataState, title, sentence, detail, action, footer, children, pointer }: PanelFrameProps) {
   return (
     <section
       aria-label={COPY.panelLabel}
@@ -51,12 +54,13 @@ function PanelFrame({ dataState, title, sentence, action, footer, children, poin
         {/* The icon file carries its own rounded tile and shadow, as the install dialog shows it at this size. */}
         <img src={AVATAR_SRC} alt="" className="mx-auto h-[76px] w-[76px]" />
         <div className="space-y-3">
-          <h1 className="font-serif font-theme-heading text-2xl leading-tight text-foreground">{title}</h1>
-          <p className="text-base leading-7 text-muted-foreground">{sentence}</p>
+          <h1 className="text-balance font-serif font-theme-heading text-2xl leading-tight text-foreground">{title}</h1>
+          <p className="text-balance text-base leading-7 text-muted-foreground">{sentence}</p>
+          {detail && <p className="text-balance text-base leading-7 text-muted-foreground">{detail}</p>}
         </div>
         {children}
         {action && <div className="flex flex-col items-center">{action}</div>}
-        {footer && <p className="text-sm text-muted-foreground">{footer}</p>}
+        {footer && <p className="text-balance text-sm text-muted-foreground">{footer}</p>}
         {pointer && <ToolbarPointer label={pointer} corner="top-left" tone="page" />}
       </div>
     </section>
@@ -147,7 +151,10 @@ function BlockedPanel() {
   );
 }
 
-/** Nothing answers and this page has never connected: the install path. */
+/**
+ * Nothing answers and this browser has never connected. That is also what a set-up computer looks like from a new
+ * browser or a private window, so the screen hedges, and the setup steps find an existing install before installing.
+ */
 function SetUpPanel({ pageOrigin }: { pageOrigin: string }) {
   const { setUp } = COPY;
   return (
@@ -155,6 +162,7 @@ function SetUpPanel({ pageOrigin }: { pageOrigin: string }) {
       dataState="set_up"
       title={setUp.title}
       sentence={setUp.sentence}
+      detail={setUp.installed}
       action={<CopyAgentInstructions pageOrigin={pageOrigin} label={COPY.agent.copySetup} variant="setup" />}
       footer={(
         <>

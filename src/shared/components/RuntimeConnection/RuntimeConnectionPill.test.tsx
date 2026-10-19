@@ -107,7 +107,7 @@ describe('RuntimeConnectionPill', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Copy steps for your agent' }));
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
       expect(String(writeText.mock.calls[0][0])).toBe(COPY.agent.instructions(window.location.origin, 'start'));
-      expect(String(writeText.mock.calls[0][0])).toContain('<that folder>/start');
+      expect(String(writeText.mock.calls[0][0])).toContain('<folder>/start');
   });
 
   it('one dropped reading is not a stop', async () => {

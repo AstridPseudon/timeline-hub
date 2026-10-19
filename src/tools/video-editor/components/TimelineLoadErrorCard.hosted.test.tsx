@@ -38,7 +38,7 @@ describe('TimelineLoadErrorCard on the hosted build', () => {
 
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent("Couldn't load this timeline");
-    expect(alert).toHaveTextContent("Astrid on this computer didn't answer. Start it and try again.");
+    expect(alert).toHaveTextContent("Astrid on this computer didn't answer in time.");
     expect(document.body.textContent).not.toMatch(ENGINEER_WORDS);
     expect(document.body.textContent).not.toMatch(/toolbar/);
 

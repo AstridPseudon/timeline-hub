@@ -22,7 +22,7 @@ function CardText({ title, sentence }: { title: string; sentence: string }) {
   return (
     <div className="space-y-1">
       <h2 className="font-serif font-theme-heading text-base text-foreground">{title}</h2>
-      <p className="text-sm text-muted-foreground">{sentence}</p>
+      <p className="text-balance text-sm text-muted-foreground">{sentence}</p>
     </div>
   );
 }

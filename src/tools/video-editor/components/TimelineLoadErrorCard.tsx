@@ -34,8 +34,8 @@ function HostedLoadErrorCard({ onRetry }: { onRetry: () => void }) {
     <div className="flex h-full min-h-0 items-center justify-center overflow-auto p-4">
       <section role="alert" className="w-full max-w-md space-y-5 rounded-2xl border border-border bg-card p-6 text-center text-card-foreground sm:p-8">
         <div className="space-y-3">
-          <h2 className="font-serif font-theme-heading text-2xl leading-tight text-foreground">{COPY.loadFailed.title}</h2>
-          <p className="text-base leading-7 text-muted-foreground">{COPY.loadFailed.sentence}</p>
+          <h2 className="text-balance font-serif font-theme-heading text-2xl leading-tight text-foreground">{COPY.loadFailed.title}</h2>
+          <p className="text-balance text-base leading-7 text-muted-foreground">{COPY.loadFailed.sentence}</p>
         </div>
         <div className="flex flex-col items-center">
           <Button type="button" className="w-full sm:w-auto" onClick={onRetry}>{COPY.loadFailed.button}</Button>
