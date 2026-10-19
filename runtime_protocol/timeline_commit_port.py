@@ -119,14 +119,50 @@ class RequestCommitPort:
         self.__timeline = self.__request["timeline_id"]
         self.__observed = {}
         self.__declared = list(objects(self.__request["commands"]))
-        if self.__context["invocation"]["operation"] == "restoreProjectParentCompositionRevision":
-            def normalize_restore():
+        adapter = self.__context["invocation"]["operation"] == "restoreProjectParentCompositionRevision"
+        if adapter or self.__request["commands"][0].get("op") == "timeline.restore":
+            def prepare_restore():
                 args = self.__request["commands"][0]["args"]
-                source = self.__store.revision_closure(self.__project, self.__timeline, args["revision_id"])
+                self._restore_integrity(args["revision_id"])
+                try:
+                    source = self.__store.revision_closure(self.__project, self.__timeline, args["revision_id"])
+                except NotFoundError as exc:
+                    raise refused("dependency_unavailable", "restore source dependency is missing") from exc
+                content_digest = source["parent_revision"]["content_digest"]
+                if adapter:
+                    args["content_digest"] = content_digest
+                elif args["content_digest"] != content_digest:
+                    raise refused("dependency_unavailable", "restore source content digest disagrees with immutable revision")
                 self.__closures[args["revision_id"]] = copy.deepcopy(source)
-                args["content_digest"] = source["parent_revision"]["content_digest"]
-                self.__declared = list(objects(self.__request["commands"]))
-            self._read(normalize_restore)
+                self.__declared = list(objects(self.__request["commands"])) + list(objects(source))
+            self._read(prepare_restore)
+
+    def _restore_integrity(self, revision_id):
+        # Preserve main's bounded preflight before semantic execution. Accepted
+        # retries are resolved by the coordinator before constructing this port.
+        report = self.__service.store.integrity_report(timeout_seconds=self.__service.store.admission_timeout)
+        checks = report.get("checks", {}) if isinstance(report, dict) else {}
+        errors = []
+        complete = isinstance(checks, dict)
+        for name in ("revisions", "event_chain"):
+            check = checks.get(name) if isinstance(checks, dict) else None
+            if (not isinstance(check, dict) or type(check.get("ok")) is not bool
+                    or not isinstance(check.get("errors"), list) or check.get("reason") == "not_checked"
+                    or (not check["ok"] and not check["errors"])):
+                complete = False
+                continue
+            for error in check["errors"]:
+                if isinstance(error, dict) and (
+                        (name == "revisions" and (str(error.get("identity", "")) == revision_id
+                         or str(error.get("identity", "")).startswith(revision_id + ":")))
+                        or (name == "event_chain" and error.get("timeline_id") == self.__timeline)):
+                    errors.append(error)
+        if not complete:
+            errors.append({"reason": "integrity_report_unavailable"})
+        if errors:
+            raise ConflictError("historical parent composition dependency closure failed immutable verification",
+                                details={"status": "refused", "reason": "dependency_unavailable",
+                                         "revision_id": revision_id, "errors": errors})
 
     def _provider_context(self):
         return copy.deepcopy(self.__context)
