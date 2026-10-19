@@ -765,7 +765,7 @@ test('a failed app start uses ASTRID_VERBOSE with the installed start command', 
     env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()), ASTRID_START_COMMAND: '/installed/Astrid/start', FAKE_NPM_VITE_EXIT: '7' },
   });
   assert.equal(result.code, 1);
-  assert.equal(result.stderr.split('\n')[0], "Astrid: Astrid couldn't start. Run ASTRID_VERBOSE=1 /installed/Astrid/start to see why.");
+  assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run ASTRID_VERBOSE=1 /installed/Astrid/start to see why.");
 });
 
 test('a failed app start uses the default npm command with ASTRID_VERBOSE', async () => {
@@ -774,7 +774,7 @@ test('a failed app start uses the default npm command with ASTRID_VERBOSE', asyn
     env: { ASTRID_APP_LOOPBACK_PORT: String(await freePort()), FAKE_NPM_VITE_EXIT: '7' },
   });
   assert.equal(result.code, 1);
-  assert.equal(result.stderr.split('\n')[0], "Astrid: Astrid couldn't start. Run ASTRID_VERBOSE=1 npm run dev:local to see why.");
+  assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run ASTRID_VERBOSE=1 npm run dev:local to see why.");
 });
 
 test('a machine without Astrid set up points to the install guide, and every error line names Astrid once', async () => {
