@@ -1653,6 +1653,19 @@ describe('TimelineEditorShellCore — recovery draft banner', () => {
     __chromeOverrides = {};
   });
 
+  it('mounts command-session recovery controls without adopting an owner', async () => {
+    const recover = vi.fn(async () => {});
+    __chromeOverrides = { commandSession: { recover, retry: vi.fn(async () => {}), state: {
+      status: 'recovery', error: null, recoverableOwners: ['owner-a', 'owner-b'], ownerId: null, canUndo: false,
+    } } };
+
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+
+    expect(recover).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Recover saved edits (session 2)' }));
+    await waitFor(() => expect(recover).toHaveBeenCalledWith('owner-b'));
+  });
+
   it('offers Save them and Discard for a recovered draft, naming only the time of day', () => {
     const retry = vi.fn();
     const discard = vi.fn();

@@ -55,6 +55,7 @@ import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineO
 import { ExtensionActivityRegion, type ExtensionStatusEvent } from '@/tools/video-editor/components/ExtensionActivityRegion';
 import { ProposalPanel } from '@/tools/video-editor/components/ProposalPanel/ProposalPanel.tsx';
 import { TimelineEditorShellToolbar } from './TimelineEditorShellToolbar.tsx';
+import { TimelineCommandRecovery, type TimelineCommandRecoverySession } from './TimelineCommandRecovery.tsx';
 import { TimelineExportMenu } from './TimelineExportMenu.tsx';
 import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
 import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
@@ -283,6 +284,12 @@ function TimelineEditorShellCoreComponent({
     onKeepLocalChanges: chrome.retrySaveAfterConflict,
     onDiscardRemoteChanges: chrome.reloadFromServer,
   });
+  // The command-session surface is supplied by the M1 editor wiring. Keep the
+  // recovery UI structurally typed here until that wiring's public type lands
+  // on the integration branch.
+  const commandSession = (chrome as typeof chrome & {
+    commandSession?: TimelineCommandRecoverySession;
+  }).commandSession;
 
   useEffect(() => {
     bootDiagnostics();
@@ -753,7 +760,7 @@ function TimelineEditorShellCoreComponent({
   // A save conflict is a choice between two versions, not an error: neutral, not destructive red.
   // The dialog and this bar offer the same two buttons: the dialog is the one place while it is open, and this bar is
   // the way back to the choice once it was dismissed.
-  const conflictBanner = chrome.isConflictExhausted && !conflict.isOpen ? (
+  const conflictBanner = chrome.isConflictExhausted && commandSession?.state.status !== 'conflict' && !conflict.isOpen ? (
     <div
       role="alert"
       className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-2 text-sm text-foreground"
@@ -817,6 +824,8 @@ function TimelineEditorShellCoreComponent({
     </div>
   ) : null;
 
+  const commandRecovery = <TimelineCommandRecovery commandSession={commandSession} />;
+
   /** The timeline region, contained so a render throw under it cannot take the
    *  toolbar (and therefore undo) down with it. Shared by all three layout
    *  branches — the boundary is per-branch instance, which is what we want: a
@@ -832,6 +841,7 @@ function TimelineEditorShellCoreComponent({
       {incompatibleBanner}
       {watchdogBanner}
       {recoveryBanner}
+      {commandRecovery}
       {chrome.loadError && !(recoveryCardShowing && hasLoadedTimeline) ? (
         // The hosted build's "Astrid stopped" / "restarted" card already says what to do about the same failure.
         recoveryCardShowing ? null : <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />
