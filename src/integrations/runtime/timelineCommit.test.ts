@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Transport } from './generated.ts';
+import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
+import type { CanonicalDocument, Transport } from './generated.ts';
 import { classifyRuntimeCommitFailure, AstridRuntimeClient } from './client.ts';
 import { ApiError } from './generated.ts';
 import { RuntimeDataProvider } from './dataProvider.ts';
@@ -13,51 +14,12 @@ function json(value: unknown): Uint8Array {
 }
 
 function accepted(revisionId: string, publicationId: string, baseRevisionId: string, basePublicationId: string, idMap: Record<string, string> = {}) {
-  const parentPayload = {
-    config: { clips: [], opaque: { keep: null } },
-    registry: { assets: {} },
-    clips: [],
-    occurrences: [],
-    bundle: null,
-    unknown: { nested: ['value'] },
-  };
-  return {
-    data: {
-      status: 'accepted',
-      base_revision_id: baseRevisionId,
-      base_publication_id: basePublicationId,
-      previous_revision_id: baseRevisionId,
-      previous_publication_id: basePublicationId,
-      accepted_revision_id: revisionId,
-      rebased_onto: null,
-      canonical_document: {
-        schema_version: 1,
-        project_id: PROJECT_ID,
-        timeline_id: TIMELINE_ID,
-        parent_revision: { revision_id: revisionId, content_digest: 'sha256:parent', payload: parentPayload },
-        shot_revisions: [],
-        internal_timeline_revisions: [],
-        dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] },
-      },
-      document_digest: 'sha256:document',
-      commands: [{ schema_version: 1, op: 'clip.move', version: '1', select: 'parent/clip:x', args: { on: 7 } }],
-      id_map: idMap,
-      provider_version: 'provider-1',
-      compiler_version: 'compiler-1',
-      publisher: 'actor-1',
-    },
-    receipt: {
-      receipt_id: publicationId,
-      command_kind: 'timeline.commit',
-      idempotency_key: `key-${publicationId}`,
-      request_hash: `hash-${publicationId}`,
-      project_id: PROJECT_ID,
-      project_seq: [1, 1],
-      event_ids: [`event-${publicationId}`],
-      result: {},
-      created_at: '2026-10-19T00:00:00Z',
-    },
-  };
+  const response = acceptedCommit(
+    { revision_id: revisionId, publication_id: publicationId },
+    { revision_id: baseRevisionId, publication_id: basePublicationId },
+  );
+  response.data.id_map = idMap;
+  return response;
 }
 
 function transportFor(response: unknown, requests: Array<{ method: string; path: string; body?: unknown }>): Transport {
@@ -93,11 +55,14 @@ describe('Runtime timeline commit capability', () => {
       token: 'token',
       transport: transportFor(accepted('r1', 'p1', 'r0', 'p0'), requests),
     });
-    const result = await provider.commitTimeline(request(), 'retry-1');
+    const result = await provider.commitTimeline(request(), 'key-p1');
     expect(result.accepted).toEqual({ revisionId: 'r1', publicationId: 'p1' });
     expect(result.receipt.receipt_id).toBe('p1');
+    expect(result.receipt.result).toEqual(result.response.data);
+    expect(result.response.data.document_digest).toBe(fixtureDigest(result.canonicalDocument));
+    expect(result.canonicalDocument.parent_revision.content_digest).toBe(fixtureDigest(result.canonicalDocument.parent_revision.payload));
     expect(Object.keys(result)).toContain('receipt');
-    expect(result.canonicalDocument.parent_revision.payload).toMatchObject({ bundle: null, unknown: { nested: ['value'] } });
+    expect(result.canonicalDocument.parent_revision.payload).toMatchObject({ bundle: null, unknown: { nested: ['value', null] } });
     expect(result.graph).toMatchObject({
       accepted_identity: { revision_id: 'r1', publication_id: 'p1' },
       primary_timeline: { head: { revision_id: 'r1', publication_id: 'p1' } },
@@ -113,16 +78,19 @@ describe('Runtime timeline commit capability', () => {
       return transportFor(accepted('r1', 'p1', 'r0', 'p0'), requests)(...args);
     };
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport });
-    const first = await provider.commitTimeline(request(), 'retry-1');
-    const second = await provider.commitTimeline(request('r1', 'p1'), 'retry-2');
+    const first = await provider.commitTimeline(request(), 'key-p1');
+    const second = await provider.commitTimeline(request('r1', 'p1'), 'key-p2');
     expect(first.accepted).toEqual({ revisionId: 'r1', publicationId: 'p1' });
     expect(second.accepted).toEqual({ revisionId: 'r1', publicationId: 'p2' });
   });
 
   it('builds an explicit timeline.inverse command through the same capability', async () => {
     const requests: Array<{ method: string; path: string; body?: unknown }> = [];
-    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport: transportFor(accepted('r2', 'p2', 'r1', 'p1'), requests) });
-    await provider.undoTimeline({ projectId: PROJECT_ID, timelineId: TIMELINE_ID, headRevisionId: 'r1', headPublicationId: 'p1' }, ['p-a', 'p-b'], 'undo-key');
+    const response = accepted('r2', 'p2', 'r1', 'p1');
+    response.data.commands = [{ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: ['p-a', 'p-b'] } }];
+    response.receipt.request_hash = fixtureDigest({ operation: 'commitTimeline', path: `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/commit`, publisher: 'actor-1', request: { ...request('r1', 'p1'), commands: response.data.commands } }).slice(7);
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport: transportFor(response, requests) });
+    await provider.undoTimeline({ projectId: PROJECT_ID, timelineId: TIMELINE_ID, headRevisionId: 'r1', headPublicationId: 'p1' }, ['p-a', 'p-b'], 'key-p2');
     const commit = requests.find((entry) => entry.path.endsWith('/commit'));
     expect(commit?.body).toMatchObject({
       base_revision_id: 'r1',
@@ -133,11 +101,161 @@ describe('Runtime timeline commit capability', () => {
 
   it('rejects a nonidentity id_map and classifies typed failures', async () => {
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport: transportFor(accepted('r1', 'p1', 'r0', 'p0', { 'parent/clip:x': 'parent/clip:y' }), []) });
-    await expect(provider.commitTimeline(request(), 'retry-1')).rejects.toThrow('non-identity id_map');
+    await expect(provider.commitTimeline(request(), 'key-p1')).rejects.toThrow('non-identity id_map');
     expect(classifyRuntimeCommitFailure(new ApiError(409, 'conflict', 'conflict', '', { status: 'conflict' }))).toBe('conflict');
-    expect(classifyRuntimeCommitFailure(new ApiError(409, 'conflict', 'busy', '', { status: 'refused', reason: 'head_busy' }))).toBe('refused');
+    expect(classifyRuntimeCommitFailure(new ApiError(409, 'conflict', 'busy', '', { status: 'refused', reason: 'head_busy' }))).toBe('unknown');
     expect(classifyRuntimeCommitFailure(new ApiError(422, 'invalid', 'bad'))).toBe('validation');
     expect(classifyRuntimeCommitFailure(new ApiError(503, 'not_ready', 'unknown'))).toBe('unknown');
+  });
+
+  it('preserves repeated occurrences, scoped child images, opaque fields and explicit nulls', async () => {
+    const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' }, { children: true });
+    const requests: Array<{ method: string; path: string; body?: unknown }> = [];
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport: transportFor(response, requests) });
+    const result = await provider.commitTimeline(request(), response.receipt.idempotency_key);
+    const document = response.data.canonical_document;
+    expect(result.canonicalDocument).toEqual(document);
+    expect(result.graph.canonical_document).toEqual(document);
+    expect(result.graph.parent_composition).toEqual(document.parent_revision.payload);
+    expect(result.graph.occurrences).toMatchObject(document.parent_revision.payload.occurrences as object[]);
+    expect(result.graph.shot_revisions).toMatchObject([{
+      ...document.shot_revisions[0].payload,
+      internal_timeline_revision: {
+        timeline_id: 'child-timeline',
+        revision_id: 'internal-r1',
+        content_digest: document.internal_timeline_revisions[0].content_digest,
+        timeline: document.internal_timeline_revisions[0].payload,
+      },
+    }]);
+    expect(document.internal_timeline_revisions[0].content_digest).toBe(fixtureDigest(document.internal_timeline_revisions[0].payload));
+    expect(document.shot_revisions[0].content_digest).toBe(fixtureDigest(document.shot_revisions[0].payload));
+    expect(requests.filter(({ path }) => path.includes('/revisions/') || path.includes('/inspect'))).toEqual([]);
+  });
+
+  const malformedClosures: Array<[string, (document: CanonicalDocument) => void]> = [
+    ['wrong project', (d) => { d.project_id = 'other'; }],
+    ['wrong timeline', (d) => { d.timeline_id = 'other'; }],
+    ['wrong accepted revision', (d) => { d.parent_revision.revision_id = 'other'; }],
+    ['malformed parent digest', (d) => { d.parent_revision.content_digest = 'sha256:parent'; }],
+    ['missing shot manifest', (d) => { d.dependency_manifest.shots = []; }],
+    ['duplicate shot manifest', (d) => { d.dependency_manifest.shots.push(d.dependency_manifest.shots[0]); }],
+    ['mismatched shot manifest', (d) => { d.dependency_manifest.shots[0].internal_timeline_revision_id = 'other'; }],
+    ['missing internal manifest', (d) => { d.dependency_manifest.internal_timelines = []; }],
+    ['duplicate internal manifest', (d) => { d.dependency_manifest.internal_timelines.push(d.dependency_manifest.internal_timelines[0]); }],
+    ['wrong internal scope', (d) => { d.dependency_manifest.internal_timelines[0].timeline_id = 'other'; }],
+    ['mismatched internal digest', (d) => { d.dependency_manifest.internal_timelines[0].content_digest = fixtureDigest('other'); }],
+    ['missing shot image', (d) => { d.shot_revisions = []; }],
+    ['duplicate shot image', (d) => { d.shot_revisions.push(d.shot_revisions[0]); }],
+    ['malformed shot payload', (d) => { d.shot_revisions[0].payload = null as unknown as Record<string, unknown>; }],
+    ['malformed shot digest', (d) => { d.shot_revisions[0].content_digest = 'sha256:shot'; d.dependency_manifest.shots[0].content_digest = 'sha256:shot'; }],
+    ['mismatched payload internal pin', (d) => { d.shot_revisions[0].payload.internal_timeline_revision_id = 'other'; }],
+    ['missing internal image', (d) => { d.internal_timeline_revisions = []; }],
+    ['duplicate internal image', (d) => { d.internal_timeline_revisions.push(d.internal_timeline_revisions[0]); }],
+    ['ambiguous internal link', (d) => {
+      d.internal_timeline_revisions.push({ ...d.internal_timeline_revisions[0], timeline_id: 'other-child' });
+      d.dependency_manifest.internal_timelines.push({ ...d.dependency_manifest.internal_timelines[0], timeline_id: 'other-child' });
+    }],
+    ['missing linked internal', (d) => {
+      d.internal_timeline_revisions[0].revision_id = 'other';
+      d.dependency_manifest.internal_timelines[0].revision_id = 'other';
+    }],
+    ['malformed internal payload', (d) => { d.internal_timeline_revisions[0].payload = [] as unknown as Record<string, unknown>; }],
+    ['missing occurrences', (d) => { delete d.parent_revision.payload.occurrences; }],
+    ['missing occurrence pin', (d) => { delete (d.parent_revision.payload.occurrences as Record<string, unknown>[])[0].shot_revision_id; }],
+    ['unresolved occurrence', (d) => { (d.parent_revision.payload.occurrences as Record<string, unknown>[])[0].shot_id = 'other'; }],
+    ['duplicate occurrence', (d) => {
+      const occurrences = d.parent_revision.payload.occurrences as Record<string, unknown>[];
+      occurrences.push(occurrences[0]);
+    }],
+    ['duplicate media pin', (d) => {
+      const pin = { media_id: fixtureDigest('media'), content_digest: fixtureDigest('media') };
+      d.dependency_manifest.media = [pin, pin];
+    }],
+    ['duplicate document pin', (d) => {
+      const pin = { document_id: 'transcript', version: 1, content_digest: fixtureDigest('words') };
+      d.dependency_manifest.documents = [pin, pin];
+    }],
+  ];
+  it.each(malformedClosures)('refuses %s without a readback fallback', async (_label, mutate) => {
+    const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' }, { children: true });
+    mutate(response.data.canonical_document);
+    const requests: Array<{ method: string; path: string; body?: unknown }> = [];
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport: transportFor(response, requests) });
+    await expect(provider.commitTimeline(request(), response.receipt.idempotency_key)).rejects.toThrow();
+    expect(requests.filter(({ path }) => path.includes('/revisions/') || path.includes('/inspect'))).toEqual([]);
+  });
+
+  it('returns late A exactly without regressing an independently observed newer C cache', async () => {
+    const a = accepted('r1', 'p1', 'r0', 'p0');
+    const c = accepted('r3', 'p3', 'r2', 'p2');
+    c.data.canonical_document.parent_revision.payload.registry = { assets: {}, marker: 'C' };
+    c.data.canonical_document.parent_revision.content_digest = fixtureDigest(c.data.canonical_document.parent_revision.payload);
+    c.data.document_digest = fixtureDigest(c.data.canonical_document);
+    let release!: (response: Awaited<ReturnType<Transport>>) => void;
+    let started!: () => void;
+    const startedCommit = new Promise<void>((resolve) => { started = resolve; });
+    let parentReads = 0;
+    const transport: Transport = async (...args) => {
+      const path = args[1];
+      if (path.endsWith('/commit')) {
+        started();
+        return new Promise((resolve) => { release = resolve; });
+      }
+      if (path.endsWith('/inspect')) return { status: 200, headers: {}, body: json({
+        project_id: PROJECT_ID, timeline_id: TIMELINE_ID, representation: 'canonical_head',
+        authority: 'runtime_parent_composition', is_current_head: true,
+        head_revision_id: 'r3', revision_id: 'r3', head_publication_id: 'p3',
+      }) };
+      if (path.endsWith('/composition-revisions/r3')) {
+        parentReads += 1;
+        return { status: 200, headers: {}, body: json({ project_id: PROJECT_ID, timeline_id: TIMELINE_ID, ...c.data.canonical_document.parent_revision }) };
+      }
+      return transportFor(a, [])(...args);
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport });
+    const pendingA = provider.commitTimeline(request(), a.receipt.idempotency_key);
+    await startedCommit;
+    const knownC = await provider.loadTimeline(TIMELINE_ID);
+    release({ status: 200, headers: {}, body: json(a) });
+    const resultA = await pendingA;
+    expect(resultA.response).toEqual(a);
+    expect(resultA.accepted).toEqual({ revisionId: 'r1', publicationId: 'p1' });
+    const stillC = await provider.loadTimeline(TIMELINE_ID);
+    expect(stillC.head).toEqual(knownC.head);
+    expect(stillC.configVersion).toBe(knownC.configVersion);
+    expect(parentReads).toBe(1);
+    expect(await provider.loadAssetRegistry(TIMELINE_ID)).toMatchObject({ marker: 'C' });
+  });
+
+  it.each([
+    [409, 'head_busy'],
+    [503, 'runtime_unavailable'],
+  ])('keeps %s %s retryable with its typed reason and exact request', async (status, reason) => {
+    const response = accepted('r1', 'p1', 'r0', 'p0');
+    const requests: Array<{ body: unknown; key: string | undefined }> = [];
+    const transport: Transport = async (...args) => {
+      if (!args[1].endsWith('/commit')) return transportFor(response, [])(...args);
+      requests.push({ body: JSON.parse(new TextDecoder().decode(args[3] as Uint8Array)), key: args[2]['Idempotency-Key'] });
+      if (requests.length === 1) return { status, headers: {}, body: json({ code: status === 409 ? 'conflict' : 'not_ready', message: 'arbitrary prose', details: { status: 'refused', reason } }) };
+      return { status: 200, headers: {}, body: json(response) };
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport });
+    const error = await provider.commitTimeline(request(), response.receipt.idempotency_key).catch((failure: unknown) => failure);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(classifyRuntimeCommitFailure(error)).toBe('unknown');
+    expect((error as ApiError).details.reason).toBe(reason);
+    await expect(provider.commitTimeline(request(), response.receipt.idempotency_key)).resolves.toHaveProperty('accepted');
+    expect(requests).toHaveLength(2);
+    expect(requests[1]).toEqual(requests[0]);
+  });
+
+  it.each(['project', 'command kind', 'document digest'])('refuses a malformed acceptance %s', async (field) => {
+    const response = accepted('r1', 'p1', 'r0', 'p0');
+    if (field === 'project') response.receipt.project_id = 'other';
+    if (field === 'command kind') response.receipt.command_kind = 'other';
+    if (field === 'document digest') response.data.document_digest = 'sha256:document';
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport: transportFor(response, []) });
+    await expect(provider.commitTimeline(request(), response.receipt.idempotency_key)).rejects.toThrow('invalid');
   });
 
   it('keeps recoverable identity scoped to the authenticated actor and realm', async () => {

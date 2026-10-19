@@ -227,7 +227,7 @@ export class RuntimeDataProvider implements DataProvider {
       const expectedHead = nullableString(inspection.head_revision_id, 'canonical timeline inspection.head_revision_id');
       const expectedPublication = optionalNullableString((inspection as unknown as RuntimeRecord).head_publication_id, 'canonical timeline inspection.head_publication_id');
       if (!expectedHead || !expectedPublication) {
-        throw new ShotCompositionUnavailableError('Workspace Runtime timeline has no current head to compare before restoring history');
+        throw new ShotCompositionUnavailableError('Workspace Runtime timeline requires a verified revision and publication before restoring history');
       }
       const restored = await this.client.restoreProjectParentCompositionRevision(
         request.projectId,
@@ -237,19 +237,11 @@ export class RuntimeDataProvider implements DataProvider {
         expectedPublication,
         generateUUID(),
       );
-      const newHead = requiredString(restored.data.accepted_revision_id, 'parent composition restore.accepted_revision_id');
-      if (!newHead) {
-        throw new ShotCompositionUnavailableError('Workspace Runtime restore receipt omitted the new canonical head');
-      }
+      // The ACK contains the exact restored closure, even if head has moved
+      // again before the response arrives.
+      const result = this.acceptedCommitResult(restored, request.parentDocumentId);
       this.invalidatePolledHead(request.projectId, request.parentDocumentId);
-      // Resolve the exact committed closure now so a malformed historical
-      // revision cannot appear to have restored successfully in the editor.
-      await this.loadRuntimeShotCompositionAtHead({
-        projectId: request.projectId,
-        parentDocumentId: request.parentDocumentId,
-        headRevisionId: newHead,
-      });
-      return { newHead };
+      return { newHead: result.accepted.revisionId };
     },
     publish: async (request) => {
       const publishStartedAt = import.meta.env.DEV ? performance.now() : 0;
@@ -740,6 +732,11 @@ export class RuntimeDataProvider implements DataProvider {
   private acceptedCommitResult(response: CommitAcceptedMutation, timelineId: string): TimelineCommitResult {
     const data = response.data;
     const receipt = response.receipt;
+    if ((data.status !== 'accepted' && data.status !== 'rebased')
+      || receipt.project_id !== this.projectId || receipt.command_kind !== 'timeline.commit') {
+      throw new TimelineSchemaIncompatibleError('Workspace Runtime returned an invalid timeline acceptance envelope');
+    }
+    acceptedDigest(data.document_digest, 'document_digest');
     const publicationId = requiredString(receipt.receipt_id, 'timeline commit receipt.receipt_id');
     const canonicalDocument = validateAcceptedCanonicalDocument(data.canonical_document, this.projectId, timelineId, data.accepted_revision_id);
     assertIdentityMap(data.id_map);
@@ -1546,6 +1543,22 @@ function assertIdentityMap(idMap: Record<string, string>): void {
   }
 }
 
+function acceptedDigest(value: unknown, label: string): void {
+  if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/.test(value)) {
+    throw new TimelineSchemaIncompatibleError(`Workspace Runtime returned an invalid accepted ${label}`);
+  }
+}
+
+function acceptedManifest(entries: RuntimeRecord[], keyFor: (entry: RuntimeRecord) => string): Map<string, RuntimeRecord> {
+  const result = new Map<string, RuntimeRecord>();
+  for (const entry of entries) {
+    const key = keyFor(entry);
+    if (result.has(key)) throw new TimelineSchemaIncompatibleError(`Workspace Runtime returned duplicate manifest entry ${key}`);
+    result.set(key, entry);
+  }
+  return result;
+}
+
 function validateAcceptedCanonicalDocument(
   value: CanonicalDocument,
   projectId: string,
@@ -1560,23 +1573,27 @@ function validateAcceptedCanonicalDocument(
   if (requiredString(parent.revision_id, 'accepted canonical document.parent_revision.revision_id') !== acceptedRevisionId) {
     throw new TimelineSchemaIncompatibleError('Workspace Runtime accepted revision does not match its canonical closure');
   }
-  requiredString(parent.content_digest, 'accepted canonical document.parent_revision.content_digest');
-  requiredRecord(parent.payload, 'accepted canonical document.parent_revision.payload');
+  acceptedDigest(parent.content_digest, 'parent content_digest');
+  const parentPayload = requiredRecord(parent.payload, 'accepted canonical document.parent_revision.payload');
   const manifest = requiredRecord(document.dependency_manifest, 'accepted canonical document.dependency_manifest');
   const shots = array(document.shot_revisions, 'accepted canonical document.shot_revisions');
   const internals = array(document.internal_timeline_revisions, 'accepted canonical document.internal_timeline_revisions');
-  const shotManifest = new Map(array(manifest.shots, 'accepted canonical document.dependency_manifest.shots').map((entry) => [
-    `${requiredString(entry.shot_id, 'accepted shot manifest.shot_id')}\u0000${requiredString(entry.revision_id, 'accepted shot manifest.revision_id')}`,
-    entry,
-  ]));
-  const internalManifest = new Map(array(manifest.internal_timelines, 'accepted canonical document.dependency_manifest.internal_timelines').map((entry) => [
-    `${requiredString(entry.timeline_id, 'accepted internal manifest.timeline_id')}\u0000${requiredString(entry.revision_id, 'accepted internal manifest.revision_id')}`,
-    entry,
-  ]));
+  const shotManifest = acceptedManifest(array(manifest.shots, 'accepted canonical document.dependency_manifest.shots'), (entry) =>
+    `${requiredString(entry.shot_id, 'accepted shot manifest.shot_id')}\u0000${requiredString(entry.revision_id, 'accepted shot manifest.revision_id')}`
+  );
+  const internalManifest = acceptedManifest(array(manifest.internal_timelines, 'accepted canonical document.dependency_manifest.internal_timelines'), (entry) =>
+    `${requiredString(entry.timeline_id, 'accepted internal manifest.timeline_id')}\u0000${requiredString(entry.revision_id, 'accepted internal manifest.revision_id')}`
+  );
   const seenShots = new Set<string>();
   for (const shot of shots) {
     const shotId = requiredString(shot.shot_id, 'accepted shot image.shot_id');
     const revisionId = requiredString(shot.revision_id, 'accepted shot image.revision_id');
+    acceptedDigest(shot.content_digest, 'shot content_digest');
+    const payload = requiredRecord(shot.payload, 'accepted shot image.payload');
+    const internalRevision = requiredString(shot.internal_timeline_revision_id, 'accepted shot image.internal_timeline_revision_id');
+    if (payload.internal_timeline_revision_id !== internalRevision) {
+      throw new TimelineSchemaIncompatibleError('Workspace Runtime shot payload disagrees with its internal revision pin');
+    }
     const key = `${shotId}\u0000${revisionId}`;
     if (seenShots.has(key)) throw new TimelineSchemaIncompatibleError(`Workspace Runtime returned duplicate shot closure ${shotId}/${revisionId}`);
     seenShots.add(key);
@@ -1593,6 +1610,8 @@ function validateAcceptedCanonicalDocument(
   for (const internal of internals) {
     const timeline = requiredString(internal.timeline_id, 'accepted internal image.timeline_id');
     const revision = requiredString(internal.revision_id, 'accepted internal image.revision_id');
+    acceptedDigest(internal.content_digest, 'internal content_digest');
+    requiredRecord(internal.payload, 'accepted internal image.payload');
     const key = `${timeline}\u0000${revision}`;
     if (seenInternals.has(key)) throw new TimelineSchemaIncompatibleError(`Workspace Runtime returned duplicate internal closure ${timeline}/${revision}`);
     seenInternals.add(key);
@@ -1604,8 +1623,31 @@ function validateAcceptedCanonicalDocument(
   for (const key of internalManifest.keys()) {
     if (!seenInternals.has(key)) throw new TimelineSchemaIncompatibleError(`Workspace Runtime manifest has no internal image for ${key.replace('\u0000', '/')}`);
   }
-  array(manifest.media, 'accepted canonical document.dependency_manifest.media');
-  array(manifest.documents, 'accepted canonical document.dependency_manifest.documents');
+  const occurrences = array(parentPayload.occurrences, 'accepted parent occurrences');
+  const seenOccurrences = new Set<string>();
+  for (const occurrence of occurrences) {
+    const id = requiredString(occurrence.occurrence_id, 'accepted occurrence.occurrence_id');
+    if (seenOccurrences.has(id)) throw new TimelineSchemaIncompatibleError(`Workspace Runtime returned duplicate occurrence ${id}`);
+    seenOccurrences.add(id);
+    const shotId = requiredString(occurrence.shot_id, 'accepted occurrence.shot_id');
+    const revisionId = requiredString(occurrence.shot_revision_id, 'accepted occurrence.shot_revision_id');
+    if (!seenShots.has(`${shotId}\u0000${revisionId}`)) {
+      throw new TimelineSchemaIncompatibleError(`Workspace Runtime occurrence references an unresolved shot revision ${shotId}/${revisionId}`);
+    }
+  }
+  acceptedManifest(array(manifest.media, 'accepted canonical document.dependency_manifest.media'), (entry) => {
+    acceptedDigest(entry.media_id, 'media media_id');
+    acceptedDigest(entry.content_digest, 'media content_digest');
+    return String(entry.media_id);
+  });
+  acceptedManifest(array(manifest.documents, 'accepted canonical document.dependency_manifest.documents'), (entry) => {
+    const id = requiredString(entry.document_id, 'accepted document pin.document_id');
+    acceptedDigest(entry.content_digest, 'document content_digest');
+    if (!Number.isInteger(entry.version) || Number(entry.version) < 1) {
+      throw new TimelineSchemaIncompatibleError('Workspace Runtime returned an invalid document pin version');
+    }
+    return `${id}\u0000${entry.version}\u0000${entry.content_digest}`;
+  });
   return value;
 }
 
@@ -1993,6 +2035,7 @@ function runtimeGraphToContract(
     const durationMs = Number(occurrence.duration_ms ?? occurrence.duration ?? 0);
     const occurrenceId = requiredString(occurrence.occurrence_id, `parent composition occurrence[${ordinal}].occurrence_id`);
     return {
+      ...occurrence,
       occurrence_id: occurrenceId,
       parent_document_id: timelineId,
       shot_id: shotId,
@@ -2069,21 +2112,21 @@ function runtimeGraphToContractFromCanonicalDocument(
       throw new TimelineSchemaIncompatibleError(`Workspace Runtime shot closure is missing internal revision ${shot.internal_timeline_revision_id}`);
     }
     return {
-    shot: {
-      project_id: projectId,
-      shot_id: shot.shot_id,
-      revision_id: shot.revision_id,
-      internal_timeline_revision_id: shot.internal_timeline_revision_id,
-      content_digest: shot.content_digest,
-      payload: shot.payload,
-    } as RuntimeRecord,
-    internal: {
-      project_id: projectId,
-      timeline_id: internalImage.timeline_id,
-      revision_id: shot.internal_timeline_revision_id,
-      content_digest: internalImage.content_digest,
-      payload: internalImage.payload,
-    } as RuntimeRecord,
+      shot: {
+        project_id: projectId,
+        shot_id: shot.shot_id,
+        revision_id: shot.revision_id,
+        internal_timeline_revision_id: shot.internal_timeline_revision_id,
+        content_digest: shot.content_digest,
+        payload: shot.payload,
+      } as RuntimeRecord,
+      internal: {
+        project_id: projectId,
+        timeline_id: internalImage.timeline_id,
+        revision_id: shot.internal_timeline_revision_id,
+        content_digest: internalImage.content_digest,
+        payload: internalImage.payload,
+      } as RuntimeRecord,
     };
   });
   const graph = runtimeGraphToContract(
