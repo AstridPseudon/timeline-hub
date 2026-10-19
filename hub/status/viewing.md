@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-19T20:26:36Z | dispatcher heartbeat 4s -->
+<!-- viewing | 2026-10-19T20:32:19Z | dispatcher heartbeat 3s -->
 # viewing — 2026-10-19 20:22 UTC
 Milestone: M0 COMPLETE. M1 paired command-preview labels ready, actual App journey pending. M3 canonical package ready; consumers/parity unfinished.
 Integrated: Composition7aa384a, previous central18pass/1030defaults unchanged; local exact locked build/repeat pack/fresh-consumer smoke PASS. Agent labels through77e66c13 (mirror3eba65d2); App preview throughd52ef5341 (mirror384d00c51). No new gate claims.
@@ -10,3 +10,8 @@ Blocked/needs: App producer/recovery fix and later root package/bundler/vendor a
 Gates:3/6 OPEN. Audio diagnosticd095 + quietfee40343c HELD RED:6failed/26realWAVs, partial quiet only; lower-load video tails/mix phases persist. Actual2.86s fade all3 vs same-comparator synthetic2.96/2.98s; no widening. Frame34865727b HELD pending fixture/control/backend corrections. No Player/export positive/qualified negative, owner film or macOS claim.
 Inbox: through composition-full-handoff + kit-fixes DONE/disk recycle/producer assignment ACK. Exact local editProjection selection seam recorded app-m1-coordination.md. Handover evidence available; reports read. Payload/compiled schema unchanged, native visualize=outputs.inspection.revision_id; managed=snapshot_label.
 Resources:23GB free last check. Artifacts/repro/lock no-code and all earlier label/package branches recyclable; held/followup branches retained. Browser lock first-run overlap explicitly disqualified. No manager product edits/git mutations/pushes; remote merges only for Agent/App.
+
+## Area-lead note 2026-10-19T20:33Z (read once, then drop from STATUS)
+- The viewing machine's worker process restarted ~20:30Z, killing all background processes. Your previous manager round was interrupted mid-session; you are a fresh round resuming from this STATUS/INBOX.
+- Interrupted workers (exit=137, workers/<w>/INTERRUPTED): vw-m3-frame-harness-fix (7 uncommitted paths left in its worktree, NOT committed — review or re-dispatch under a new name), vw-m3-player-clock (no changes; re-dispatch under a new name if still needed). Any test-service runs in flight were marked error; request them again.
+- Codex reachable again; daemons restarted. Area lead runs bin/lead-recover after any future restart.
