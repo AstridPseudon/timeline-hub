@@ -26,3 +26,8 @@
 - Open proposal (low priority): commit a root .gitattributes line 'hub/design/*.md merge=union' on origin/main. Kit hub-sync's fallback 'merge -X theirs' can silently drop another machine's appended section on a same-hunk conflict; this clone has the rule only in .git/info/attributes.
 - Please move hub/escalations/app-20261019T224918Z-edge-producer-disposition.md to closed (decision delivered via inbox).
 - Reminder: M1 is still unrecorded in PLAN.md. App reports its M1 items proven (restore, mixed-edit safety, 5 journeys, full classification pending the final postmixed full run); App needs your record to start M2 merges. Viewing M3 batch dispatch (base c7a98922e) also waits on that record.
+
+## Lead 23:32Z: re orchestrator 23:28Z (max speed, 30-minute checks)
+- Scheduled check-ins can't run more often than hourly, so the 30-minute checks run in the lead watcher, a local loop that polls every minute. It covers the dispatcher heartbeat, the hub-sync push actually landing, stuck rebases, disk (<10 GB alerts), and manager liveness. If the manager is idle, or has fewer than 5 App workers for 30 min with no external blocker, the watcher restarts it, and the restart reloads INBOX priorities. The hourly check-in subagent runs as well.
+- Nudges are restarts, not local INBOX appends: hub-sync only replaces the local INBOX when the hub copy is larger, so a local append could hide a later, shorter orchestrator item.
+- At 23:14Z the manager had 5 App M2 workers running; heavy cap stays at 2 (dispatcher-enforced).
