@@ -8,11 +8,16 @@ import re
 
 import pytest
 
+from astrid.packs.timeline import cli
 from astrid.sdk.contracts import DomainResult
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_cuts import build_cut_table, decimal_seconds, page_rows
-from astrid.sdk.timeline_views import render_at, render_asset_provenance, render_clips, render_script
-from astrid.packs.timeline import cli
+from astrid.sdk.timeline_views import (
+    render_asset_provenance,
+    render_at,
+    render_clips,
+    render_script,
+)
 
 FPS = 30
 
@@ -230,3 +235,74 @@ def test_working_copy_banner_and_edit_marks(tmp_path, monkeypatch, capsys):
     code, out = run(capsys, doc, published=True)
     assert not out.startswith("WORKING COPY")
     assert not any(line.lstrip().startswith("✎") for line in out.splitlines())
+
+
+def test_exact_published_show_uses_loaded_revision_after_head_moves(monkeypatch, capsys):
+    doc = bundle()
+    doc["base_parent"]["revision_id"] = "accepted-revision"
+    calls = []
+
+    def open_exact(project, ref, revision_id=None):
+        calls.append(revision_id)
+        return DomainResult.success({
+            "bundle": copy.deepcopy(doc),
+            "project_id": "p",
+            "timeline_id": "t",
+            # Simulate an adapter carrying a stale/requested head label. The
+            # immutable bundle is the authority for the displayed revision.
+            "revision_id": "newer-head",
+            "head_revision_id": "newer-head",
+            "is_current_head": True,
+        })
+
+    def no_draft(*args, **kwargs):
+        pytest.fail("an exact published read must not inspect a local draft")
+
+    monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", no_draft)
+    code = cli._print_cut_table(ns(published=True, revision_id="accepted-revision"), open_exact)
+    out = capsys.readouterr().out
+
+    assert code == 0
+    assert calls == ["accepted-revision"]
+    assert "saved revision (current head is newer-head)" in out
+    assert "revision accepted-revision" in out
+    assert "revision newer-head" not in out
+
+    # The machine envelope must carry the same immutable identity as the
+    # human view, even when Runtime head metadata has advanced.
+    code = cli._print_cut_table(ns(published=True, revision_id="accepted-revision", json=True), open_exact)
+    payload = json.loads(capsys.readouterr().out)["data"]
+    assert code == 0
+    assert payload["revision_id"] == "accepted-revision"
+
+
+def test_exact_published_show_rejects_a_different_loaded_revision(capsys):
+    doc = bundle()
+    doc["base_parent"]["revision_id"] = "loaded-revision"
+
+    def open_wrong(project, ref, revision_id=None):
+        return DomainResult.success({"bundle": copy.deepcopy(doc), "project_id": "p", "timeline_id": "t"})
+
+    code = cli._print_cut_table(ns(published=True, revision_id="requested-revision"), open_wrong)
+    captured = capsys.readouterr()
+    out = captured.out + captured.err
+
+    assert code == 1
+    assert "different revision than requested" in out
+
+
+def test_published_show_rejects_missing_immutable_revision_identity(capsys):
+    doc = bundle()
+    doc["base_parent"].pop("revision_id")
+
+    def open_missing(project, ref, revision_id=None):
+        return DomainResult.success({
+            "bundle": copy.deepcopy(doc), "revision_id": revision_id, "head_revision_id": revision_id,
+        })
+
+    code = cli._print_cut_table(ns(published=True, revision_id="requested-revision"), open_missing)
+    captured = capsys.readouterr()
+    out = captured.out + captured.err
+
+    assert code == 1
+    assert "omitted its revision identity" in out
