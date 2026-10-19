@@ -109,7 +109,11 @@ class TimelineCommitStore:
             data, records = json.loads(row["result_json"]), json.loads(edge["records_json"])
             previous = {"revision_id": edge["previous_revision_id"], "publication_id": edge["previous_publication_id"]}
             document = data["canonical_document"]
-            valid = (row["first_project_seq"] == row["last_project_seq"] == edge["project_seq"]
+            valid = (edge["intent"] == "recorded" and row["command_kind"] == "timeline.commit"
+                     and row["txn_id"] == edge["publication_id"]
+                     and row["aggregate_id"] == canonical_json([edge["project_id"], edge["timeline_id"]])
+                     and row["primary_stream_id"] == edge["timeline_id"]
+                     and row["first_project_seq"] == row["last_project_seq"] == edge["project_seq"]
                      and data["accepted_revision_id"] == document["parent_revision"]["revision_id"] == edge["revision_id"]
                      and document["project_id"] == edge["project_id"] and document["timeline_id"] == edge["timeline_id"]
                      and data["document_digest"] == digest(document)
@@ -123,6 +127,21 @@ class TimelineCommitStore:
             valid = valid and data["status"] == ("accepted" if previous == base else "rebased")
             valid = valid and data["rebased_onto"] == (None if previous == base else previous)
             ids = json.loads(row["event_ids_json"])
+            events = self.conn.execute("SELECT * FROM timeline_events WHERE timeline_id=? ORDER BY id",
+                                       (edge["timeline_id"],)).fetchall()
+            seq = row["resulting_stream_seq"]
+            valid = valid and isinstance(ids, list) and 0 < len(ids) <= seq <= len(events)
+            valid = valid and ids == [str(e["id"]) for e in events[seq - len(ids):seq]]
+            project_seq = self.conn.execute("SELECT next_seq FROM project_sequences WHERE project_id=?",
+                                            (edge["project_id"],)).fetchone()
+            valid = valid and project_seq is not None and 0 < edge["project_seq"] < project_seq[0]
+            previous_hash = ""
+            for event in events:
+                hashed = {"timeline_id": edge["timeline_id"], "kind": event["kind"],
+                          "payload": json.loads(event["payload_json"]), "previous_hash": previous_hash,
+                          "created_at": event["created_at"]}
+                valid = valid and event["previous_hash"] == previous_hash and event["event_hash"] == digest(hashed)[7:]
+                previous_hash = event["event_hash"]
             event = self.conn.execute("SELECT * FROM timeline_events WHERE id=? AND timeline_id=?",
                                       (ids[-1], edge["timeline_id"])).fetchone()
             valid = valid and event is not None and event["kind"] == "timeline.commit.accepted"
@@ -130,7 +149,8 @@ class TimelineCommitStore:
                 payload = json.loads(event["payload_json"])
                 valid = payload == {"project_id": edge["project_id"], "timeline_id": edge["timeline_id"],
                                     "previous": previous, "revision_id": edge["revision_id"],
-                                    "publisher": edge["publisher"], "intent": "recorded"}
+                                    "publisher": edge["publisher"], "intent": "recorded",
+                                    "records_digest": digest(records)}
             if not valid:
                 raise ValueError()
         except (KeyError, TypeError, ValueError, IndexError) as exc:
@@ -173,7 +193,7 @@ class TimelineCommitStore:
             ledger = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (publication_id,)).fetchone()
             if ledger is None or ledger["first_project_seq"] != row["project_seq"]:
                 reject("history_unavailable")
-            if row["intent"] == "recorded":
+            if row["intent"] == "recorded" or ledger["command_kind"] == "timeline.commit":
                 self._verify_accepted(ledger, row)
             previous = None if row["previous_publication_id"] is None else {
                 "revision_id": row["previous_revision_id"], "publication_id": row["previous_publication_id"]}
@@ -636,7 +656,7 @@ class TimelineCommitStore:
                 {"project_id": project_id, "timeline_id": timeline_id, "publisher": context["publisher"], **event}))
         event_ids.append(self.store._append_timeline_event(timeline_id, "timeline.commit.accepted",
             {"project_id": project_id, "timeline_id": timeline_id, "previous": previous, "revision_id": revision_id,
-             "publisher": context["publisher"], "intent": "recorded"}))
+             "publisher": context["publisher"], "intent": "recorded", "records_digest": digest(records)}))
         seq = self.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
         publication_id = self.store._record_command_receipt("timeline.commit", scope(context), context["idempotency_key"], context["request_hash"],
             data, project_id=project_id, event_ids=event_ids, primary_stream_id=timeline_id, resulting_stream_seq=seq)

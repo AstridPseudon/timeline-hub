@@ -10,7 +10,7 @@ from referencing import Registry, Resource
 from referencing.jsonschema import DRAFT202012
 
 from runtime_protocol import timeline_commit as abi
-from runtime_protocol.errors import ProtocolError, ValidationError
+from runtime_protocol.errors import ProtocolError, RealmAdmissionError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit import CommitRejected, StaleHead
@@ -88,6 +88,67 @@ def accept(commits, ctx, value):
     return commits.accept(ctx, value, authorize=lambda: None)
 
 
+def accepted_recorder(realm):
+    from runtime_protocol.timeline_commit_inputs import capture_document_input, persist_document_input, validate_captured_document_inputs
+
+    service, commits, project, head, _ = realm
+    content = {"schema": "fixture.config/v1", "value": 1}
+    service.create_document(project, {"document_id": "config", "kind": "fixture.config", "content": content}, idempotency_key="config")
+    pin = {"document_id": "config", "version": 1, "content_digest": digest(content)}
+    capture = capture_document_input(service.store.conn, project, pin, expected_kind="fixture.config", expected_schema=content["schema"])
+    class Inputs:
+        def validate(self, candidate):
+            validate_captured_document_inputs(service.store.conn, [capture])
+        def persist(self, candidate, publication_id, revision_id):
+            persist_document_input(service.store.conn, capture, project_id=project, timeline_id="main", publication_id=publication_id,
+                                   revision_id=revision_id, dependency_kind="source")
+    ctx = context(service, project, head)
+    value = prepared(commits, ctx)
+    value["canonical_document"]["dependency_manifest"]["documents"] = [pin]
+    value["document_digest"] = digest(value["canonical_document"])
+    record = value["records"]["commands"][0]
+    record["reads"] = [{"ref": "parent/clip:clip", "path": ["hold"], "state": {"state": "present", "value": 1}}]
+    record["selections"] = [{"key": "clips", "query_version": 1, "owner": "parent", "members": ["parent/clip:clip"],
+                              "order": ["parent/clip:clip"], "boundaries": ["cut:opening"], "policy": "guard-membership"}]
+    record["bindings"] = [{"key": "target", "ref": "parent/clip:clip", "policy": "fixed", "dependencies": ["input"]}]
+    record["created"] = [{"ref": "parent/clip:clip", "kind": "clip", "owner": "parent"}]
+    record["dependencies"] = [{"key": "input", "kind": "source", "pin": pin, "policy": "exact"}]
+    record["derived_writes"] = [{"ref": "parent/clip:clip", "path": ["compiled_start"], "before": {"state": "absent"},
+                                 "after": {"state": "present", "value": 2}, "cause": 0}]
+    value["records"]["undo_of"] = [head["publication_id"]]
+    source = commits.revision_closure(project, "main", head["revision_id"])
+    value["records"]["restored_from"] = {"revision_id": head["revision_id"], "content_digest": source["parent_revision"]["content_digest"]}
+    result = commits.accept(ctx, value, authorize=lambda: None, inputs=Inputs())
+    return ctx, value, result
+
+
+RECORD_CORRUPTIONS = [
+    (("commands", 0, "writes", 0, "before", "value"), 99),
+    (("commands", 0, "writes", 0, "after", "value"), 99),
+    (("commands", 0, "reads", 0, "state", "value"), 99),
+    (("commands", 0, "selections", 0, "members", 0), "parent/clip:other"),
+    (("commands", 0, "selections", 0, "order", 0), "parent/clip:other"),
+    (("commands", 0, "selections", 0, "boundaries", 0), "cut:other"),
+    (("commands", 0, "bindings", 0, "ref"), "parent/clip:other"),
+    (("commands", 0, "created", 0, "ref"), "parent/clip:other"),
+    (("commands", 0, "dependencies", 0, "pin", "version"), 99),
+    (("commands", 0, "derived_writes", 0, "after", "value"), 99),
+    (("undo_of", 0), "other-publication"),
+    (("restored_from", "content_digest"), "sha256:" + "0" * 64),
+]
+
+
+def corrupt_recorder(service, value, result, path, replacement):
+    changed = copy.deepcopy(value)
+    leaf = changed["records"]
+    for token in path[:-1]:
+        leaf = leaf[token]
+    leaf[path[-1]] = replacement
+    validate_prepared(changed)  # Corruption still satisfies the authoritative schema.
+    service.store.conn.execute("UPDATE timeline_commit_history SET records_json=? WHERE publication_id=?",
+                               (canonical_json(changed["records"]), result["receipt"]["receipt_id"]))
+
+
 def test_atomic_acceptance_exact_recorder_projection_and_same_content_edge(realm):
     service, commits, project, head, _ = realm
     ctx = context(service, project, head)
@@ -103,6 +164,7 @@ def test_atomic_acceptance_exact_recorder_projection_and_same_content_edge(realm
     event = service.store.conn.execute("SELECT * FROM timeline_events WHERE id=?", (receipt["event_ids"][0],)).fetchone()
     assert event["kind"] == "timeline.commit.accepted"
     assert json.loads(event["payload_json"])["previous"] == head
+    assert json.loads(event["payload_json"])["records_digest"] == digest(value["records"])
     next_head = commits.head(project, "main")
     second_ctx = context(service, project, next_head, "unchanged")
     second = accept(commits, second_ctx, prepared(commits, second_ctx, reuse=True))
@@ -132,6 +194,29 @@ def test_identical_retry_after_restart_and_head_advance(realm):
         assert counts(restarted) == before
     finally:
         restarted.close()
+
+
+def test_recorder_digest_preserves_main_event_ids_and_stream_sequence(realm):
+    service, commits, project, head, _ = realm
+    ctx = context(service, project, head)
+    value = prepared(commits, ctx)
+    events = [{"command_ordinal": 0, "kind": "fixture.clip.moved", "subject_ref": "parent/clip:clip", "payload": {"on": 2}}]
+    validated = []
+    commits.validate_event = validated.append
+    value["semantic_events"] = events
+    result = accept(commits, ctx, value)
+    assert validated == events
+    ids = result["receipt"]["event_ids"]
+    assert len(ids) == 2
+    rows = service.store.conn.execute("SELECT * FROM timeline_events WHERE timeline_id='main' ORDER BY id").fetchall()
+    assert ids == [str(row["id"]) for row in rows[-2:]]
+    assert [row["kind"] for row in rows[-2:]] == [events[0]["kind"], "timeline.commit.accepted"]
+    ledger = service.store.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (result["receipt"]["receipt_id"],)).fetchone()
+    assert ledger["resulting_stream_seq"] == len(rows)
+    assert [ledger["first_project_seq"], ledger["last_project_seq"]] == result["receipt"]["project_seq"]
+    assert commits.lookup(ctx, authorize=lambda: None) == result
+    assert commits.history_entry(project, "main", result["receipt"]["receipt_id"])["records"] == value["records"]
+    assert commits.integrity_errors() == []
 
 
 def test_changed_payload_and_publication_only_cas_refuse_without_writes(realm):
@@ -327,6 +412,127 @@ def test_commit_integrity_detects_missing_history_and_corrupt_record(realm):
     report = service.store.integrity_report()
     assert not report["ok"]
     assert any(error["table"] == "timeline_commit_history" for error in report["checks"]["revisions"]["errors"])
+
+
+def assert_corrupt_acceptance(service, commits, ctx, value, result):
+    project = ctx["request"]["project_id"]
+    publication = result["receipt"]["receipt_id"]
+    through = {"revision_id": result["data"]["accepted_revision_id"], "publication_id": publication}
+    before = counts(service)
+    head = tuple(service.store.conn.execute("SELECT * FROM parent_composition_heads WHERE timeline_id='main'").fetchone())
+    for read in (lambda: commits.lookup(ctx, authorize=lambda: None),
+                 lambda: commits.history_entry(project, "main", publication),
+                 lambda: commits.history(project, "main", through),
+                 lambda: commits.head(project, "main"),
+                 lambda: accept(commits, ctx, value)):
+        with pytest.raises(ProtocolError, match="corrupt"):
+            read()
+    assert any(error["id"] == publication for error in commits.integrity_errors())
+    assert not service.store.integrity_report()["ok"]
+    assert counts(service) == before
+    assert tuple(service.store.conn.execute("SELECT * FROM parent_composition_heads WHERE timeline_id='main'").fetchone()) == head
+
+
+def assert_corrupt_restart(service, root):
+    import sqlite3
+
+    service.close()
+    def snapshot():
+        with sqlite3.connect(f"file:{root / 'realm.sqlite3'}?mode=ro", uri=True) as conn:
+            return list(conn.iterdump())
+    before = snapshot()
+    with pytest.raises(RealmAdmissionError) as error:
+        RuntimeService(root)
+    assert not error.value.details["ok"]
+    assert any(item["table"] == "timeline_commit_history" for item in error.value.details["checks"]["revisions"]["errors"])
+    assert snapshot() == before
+
+
+def test_complete_recorder_roundtrip_and_replay_after_restart(realm):
+    service, commits, project, _, root = realm
+    ctx, value, result = accepted_recorder(realm)
+    before = counts(service)
+    service.close()
+    reopened = RuntimeService(root)
+    try:
+        persisted = TimelineCommitStore(reopened.store, validate_prepared=lambda _: pytest.fail("replay validated a new candidate"))
+        assert persisted.history_entry(project, "main", result["receipt"]["receipt_id"])["records"] == value["records"]
+        assert persisted.lookup(ctx, authorize=lambda: None) == result
+        assert accept(persisted, ctx, value) == result
+        assert persisted.integrity_errors() == []
+        assert reopened.store.integrity_report()["ok"]
+        assert counts(reopened) == before
+    finally:
+        reopened.close()
+
+
+@pytest.mark.parametrize("path,replacement", RECORD_CORRUPTIONS)
+def test_valid_json_recorder_corruption_fails_every_durable_read_after_restart(realm, path, replacement):
+    service, commits, _, _, root = realm
+    ctx, value, result = accepted_recorder(realm)
+    corrupt_recorder(service, value, result, path, replacement)
+    assert_corrupt_acceptance(service, commits, ctx, value, result)
+    assert_corrupt_restart(service, root)
+
+
+@pytest.mark.parametrize("bad", ["missing_digest", "changed_digest", "unknown_digest", "event_hash", "previous_hash",
+                                "records_and_digest", "missing_event", "event_ids", "stream_seq", "primary_stream", "intent"])
+def test_corrupt_acceptance_event_and_receipt_facts_fail_closed_after_restart(realm, bad):
+    service, commits, _, _, root = realm
+    ctx, value, result = accepted_recorder(realm)
+    publication, event_id = result["receipt"]["receipt_id"], result["receipt"]["event_ids"][-1]
+    conn = service.store.conn
+    if bad in {"missing_digest", "changed_digest", "unknown_digest", "records_and_digest"}:
+        payload = json.loads(conn.execute("SELECT payload_json FROM timeline_events WHERE id=?", (event_id,)).fetchone()[0])
+        if bad == "missing_digest":
+            del payload["records_digest"]
+        elif bad == "records_and_digest":
+            path, replacement = RECORD_CORRUPTIONS[0]
+            corrupt_recorder(service, value, result, path, replacement)
+            records = json.loads(conn.execute("SELECT records_json FROM timeline_commit_history WHERE publication_id=?", (publication,)).fetchone()[0])
+            payload["records_digest"] = digest(records)
+        else:
+            payload["records_digest"] = "unknown" if bad == "unknown_digest" else "sha256:" + "0" * 64
+        conn.execute("UPDATE timeline_events SET payload_json=? WHERE id=?", (canonical_json(payload), event_id))
+        if bad != "records_and_digest":
+            event = conn.execute("SELECT * FROM timeline_events WHERE id=?", (event_id,)).fetchone()
+            hashed = {"timeline_id": event["timeline_id"], "kind": event["kind"], "payload": payload,
+                      "previous_hash": event["previous_hash"], "created_at": event["created_at"]}
+            conn.execute("UPDATE timeline_events SET event_hash=? WHERE id=?", (digest(hashed)[7:], event_id))
+    elif bad in {"event_hash", "previous_hash"}:
+        conn.execute(f"UPDATE timeline_events SET {bad}=? WHERE id=?", ("0" * 64, event_id))
+    elif bad == "missing_event":
+        conn.execute("DELETE FROM timeline_events WHERE id=?", (event_id,))
+    elif bad == "event_ids":
+        conn.execute("UPDATE command_idempotency SET event_ids_json='[]' WHERE txn_id=?", (publication,))
+    elif bad == "stream_seq":
+        conn.execute("UPDATE command_idempotency SET resulting_stream_seq=resulting_stream_seq-1 WHERE txn_id=?", (publication,))
+    elif bad == "primary_stream":
+        conn.execute("UPDATE command_idempotency SET primary_stream_id='other' WHERE txn_id=?", (publication,))
+    else:
+        conn.execute("UPDATE timeline_commit_history SET intent='legacy_unknown' WHERE publication_id=?", (publication,))
+    assert_corrupt_acceptance(service, commits, ctx, value, result)
+    assert_corrupt_restart(service, root)
+
+
+@pytest.mark.parametrize("position", ["predecessor", "successor"])
+def test_retry_checks_full_event_chain_without_repair(realm, position):
+    service, commits, project, head, _ = realm
+    ctx = context(service, project, head)
+    value = prepared(commits, ctx)
+    result = accept(commits, ctx, value)
+    if position == "successor":
+        next_ctx = context(service, project, commits.head(project, "main"), "next")
+        later = accept(commits, next_ctx, prepared(commits, next_ctx, revision="next-parent", on=3))
+        event_id = later["receipt"]["event_ids"][-1]
+    else:
+        event_id = service.store.conn.execute("SELECT MIN(id) FROM timeline_events WHERE timeline_id='main'").fetchone()[0]
+    service.store.conn.execute("UPDATE timeline_events SET event_hash=? WHERE id=?", ("0" * 64, event_id))
+    before = counts(service)
+    with pytest.raises(ProtocolError, match="corrupt"):
+        commits.lookup(ctx, authorize=lambda: None)
+    assert counts(service) == before
+    assert service.store.conn.execute("SELECT event_hash FROM timeline_events WHERE id=?", (event_id,)).fetchone()[0] == "0" * 64
 
 
 def test_v30_schema_migration_installs_empty_history_without_invented_baselines(tmp_path):

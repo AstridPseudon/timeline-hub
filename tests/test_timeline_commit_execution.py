@@ -10,7 +10,7 @@ from runtime_protocol.errors import AuthorizationError, ProtocolError
 from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_execution import CommitExecutionCoordinator, CommitOutcomeUnknown
 from runtime_protocol.timeline_commit_store import request_identity
-from test_timeline_commit_acceptance import accept, context, counts, prepared, realm
+from test_timeline_commit_acceptance import RECORD_CORRUPTIONS, accept, accepted_recorder, assert_corrupt_restart, context, corrupt_recorder, counts, prepared, realm
 
 
 class Port:
@@ -276,3 +276,23 @@ def test_durable_original_wins_while_changed_hash_is_active_before_lookup(realm,
         assert error.value.failure["details"]["reason"] == "idempotency_mismatch"
     assert must_not_run.calls == 0
     assert not coordinator._entries
+
+
+@pytest.mark.parametrize("path,replacement", RECORD_CORRUPTIONS)
+def test_corrupt_durable_recorder_never_reruns_provider_even_after_restart(realm, path, replacement):
+    service, commits, _, _, root = realm
+    ctx, value, result = accepted_recorder(realm)
+    corrupt_recorder(service, value, result, path, replacement)
+    coordinator = CommitExecutionCoordinator(commits)
+    provider = Provider(lambda *_: pytest.fail("corrupt accepted key reran provider"))
+    before = counts(service)
+    head = tuple(service.store.conn.execute("SELECT * FROM parent_composition_heads WHERE timeline_id='main'").fetchone())
+    with pytest.raises(CommitOutcomeUnknown) as error:
+        coordinator.execute(ctx, provider, lambda _: pytest.fail("corrupt accepted key constructed semantic port"), authorize=lambda: None)
+    assert error.value.status == 503
+    assert isinstance(error.value.__cause__, ProtocolError)
+    assert provider.calls == 0
+    assert not coordinator._entries
+    assert counts(service) == before
+    assert tuple(service.store.conn.execute("SELECT * FROM parent_composition_heads WHERE timeline_id='main'").fetchone()) == head
+    assert_corrupt_restart(service, root)
