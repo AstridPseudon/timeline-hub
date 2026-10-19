@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "agent": {
+    "sha": "d63dd4f0642e9dbcbd42fad650cffddb2e0dab6d"
+  },
+  "runtime": {
+    "sha": "3fab27040ee069d1c0c82621921c603d76203801"
+  },
+  "tools": {
+    "uv": {
+      "version": "0.8.22"
+    },
+    "python": {
+      "version": "3.11.13"
+    },
+    "bun": {
+      "version": "1.2.22",
+      "assets": {
+        "linux-x64": {
+          "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.2.22/bun-linux-x64.zip"
+        },
+        "linux-arm64": {
+          "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.2.22/bun-linux-arm64.zip"
+        },
+        "macos-x64": {
+          "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.2.22/bun-darwin-x64.zip"
+        },
+        "macos-arm64": {
+          "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.2.22/bun-darwin-arm64.zip"
+        },
+        "windows-x64": {
+          "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.2.22/bun-windows-x64.zip"
+        }
+      }
+    },
+    "omp": {
+      "version": "12.0.0"
+    },
+    "node": {
+      "version": "20.19.4",
+      "assets": {
+        "linux-x64": {
+          "url": "https://nodejs.org/dist/v20.19.4/node-v20.19.4-linux-x64.tar.gz"
+        },
+        "linux-arm64": {
+          "url": "https://nodejs.org/dist/v20.19.4/node-v20.19.4-linux-arm64.tar.gz"
+        },
+        "macos-x64": {
+          "url": "https://nodejs.org/dist/v20.19.4/node-v20.19.4-darwin-x64.tar.gz"
+        },
+        "macos-arm64": {
+          "url": "https://nodejs.org/dist/v20.19.4/node-v20.19.4-darwin-arm64.tar.gz"
+        },
+        "windows-x64": {
+          "url": "https://nodejs.org/dist/v20.19.4/node-v20.19.4-win-x64.zip"
+        },
+        "windows-arm64": {
+          "url": "https://nodejs.org/dist/v20.19.4/node-v20.19.4-win-arm64.zip"
+        }
+      }
+    },
+    "ffmpeg": {
+      "version": "7.0.2",
+      "assets": {
+        "linux-x64": {
+          "url": "https://johnvansickle.com/ffmpeg/releases/ffmpeg-7.0.2-amd64-static.tar.xz"
+        },
+        "linux-arm64": {
+          "url": "https://johnvansickle.com/ffmpeg/releases/ffmpeg-7.0.2-arm64-static.tar.xz"
+        },
+        "macos-x64": {
+          "urls": [
+            "https://evermeet.cx/ffmpeg/ffmpeg-7.0.2.zip",
+            "https://evermeet.cx/ffmpeg/ffprobe-7.0.2.zip"
+          ]
+        },
+        "macos-arm64": {
+          "urls": [
+            "https://ffmpeg.martin-riedl.de/redirect/7.0.2/macos/arm64/release/ffmpeg.zip",
+            "https://ffmpeg.martin-riedl.de/redirect/7.0.2/macos/arm64/release/ffprobe.zip"
+          ]
+        },
+        "windows-x64": {
+          "url": "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-7.0.2-full_build.zip"
+        }
+      }
+    }
+  }
+}
