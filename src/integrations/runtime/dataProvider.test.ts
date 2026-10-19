@@ -703,6 +703,8 @@ describe('RuntimeDataProvider', () => {
   it.each([
     ['entry revision', (page: HistoryPage) => { page.items[0].revision_id = ''; }],
     ['entry publication', (page: HistoryPage) => { page.items[0].publication_id = ''; }],
+    ['receipt identity', (page: HistoryPage) => { page.items[0].receipt.receipt_id = ''; }],
+    ['mismatched receipt identity', (page: HistoryPage) => { page.items[0].receipt.receipt_id = 'another-publication'; }],
     ['head revision', (page: HistoryPage) => { page.head.revision_id = ''; }],
     ['head publication', (page: HistoryPage) => { page.head.publication_id = ''; }],
     ['receipt project', (page: HistoryPage) => { page.items[0].receipt.project_id = ''; }],

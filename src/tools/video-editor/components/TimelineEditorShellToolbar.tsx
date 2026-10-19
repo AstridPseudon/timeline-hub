@@ -144,6 +144,7 @@ export function TimelineEditorShellToolbar({
               chrome.canonicalHistory.map((entry) => (
                 <DropdownMenuItem
                   key={entry.publicationId}
+                  data-publication-id={entry.publicationId}
                   className="flex flex-col items-start gap-1 py-2"
                   disabled={entry.isCurrentHead || chrome.restoringCanonicalRevisionId !== null}
                   onClick={() => void chrome.restoreCanonicalRevision(entry.revisionId)}

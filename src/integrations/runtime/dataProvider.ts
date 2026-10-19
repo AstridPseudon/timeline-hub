@@ -219,6 +219,9 @@ export class RuntimeDataProvider implements DataProvider {
           const revisionId = requiredString(value.revision_id, 'composition history.revision_id');
           const publicationId = requiredString(value.publication_id, 'composition history.publication_id');
           const receipt = requiredRecord(value.receipt, 'composition history.receipt');
+          if (requiredString(receipt.receipt_id, 'composition history.receipt.receipt_id') !== publicationId) {
+            throw new ShotCompositionUnavailableError('Workspace Runtime history publication does not match its receipt');
+          }
           if (requiredString(receipt.project_id, 'composition history.receipt.project_id') !== projectId) {
             throw new ShotCompositionUnavailableError('Workspace Runtime returned history outside the requested project');
           }
