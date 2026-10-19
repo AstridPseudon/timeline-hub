@@ -34,7 +34,7 @@ def coalesce(records):
                 ancestor['after'] = _patch(ancestor['after'], write['path'][len(ancestor['path']):],
                                            write['after'])
                 continue
-            descendants = [old for old in result if overlaps(
+            descendants = [old for old in result if old['ref'] == address[0] and overlaps(
                 (old['ref'], tuple(old['path'])), address)]
             for old in reversed(descendants):
                 write['before'] = _patch(write['before'], old['path'][len(write['path']):], old['before'])

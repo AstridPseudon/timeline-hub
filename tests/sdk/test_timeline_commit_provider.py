@@ -452,13 +452,18 @@ def test_runtime_refusal_and_exception_propagate_for_ledger_reconciliation(monke
         assert caught.value is error
 
 
-def test_restore_is_sole_and_strictly_pair_guarded_until_adapter_lands():
+def test_restore_is_recorded_sole_and_strictly_pair_guarded():
     realm = DetachedRealm()
     restore = {"schema_version": 1, "op": "timeline.restore", "version": "1", "select": None,
-               "args": {"revision_id": "parent-1", "content_digest": MEDIA}}
-    with pytest.raises(CommitRejected) as error:
-        realm.call([restore])
-    assert error.value.failure["details"]["reason"] == "unsupported_operation"
+               "args": {key: realm.documents["parent-1"]["parent_revision"][key]
+                        for key in ("revision_id", "content_digest")}}
+    original = detached(realm.documents["parent-1"])
+    realm.call([realm.move()])
+    restored = realm.call([restore])
+    assert restored["data"]["canonical_document"] == original
+    assert realm.entries[-1]["records"]["restored_from"] == restore["args"]
+    assert realm.entries[-1]["records"]["commands"][0]["writes"]
+    assert restored["data"]["status"] == "accepted"
     with pytest.raises(CommitRejected) as error:
         realm.call([restore, realm.move()])
     assert error.value.failure["details"]["reason"] == "invalid_commands"
@@ -633,12 +638,15 @@ class Blocked:
             raise AssertionError('renderer dependency: ' + fullname)
 sys.meta_path.insert(0, Blocked())
 import pytest
-from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse, runtime_abi
+from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse, restore, runtime_abi
 runtime_abi.__wrapped__(pytest.MonkeyPatch())
 realm = DetachedRealm()
 first = realm.call([realm.move()])
 realm.call([inverse([first['receipt']['receipt_id']])])
-assert len(realm.entries) == 3
+restored = realm.call([restore(realm.documents['parent-1'])])
+undone = realm.call([inverse([restored['receipt']['receipt_id']])])
+realm.call([inverse([undone['receipt']['receipt_id']])])
+assert len(realm.entries) == 6
 '''
     result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True,
                             env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
@@ -775,3 +783,203 @@ def test_batch_inverse_delete_cannot_reallocate_its_retired_identity():
         realm.call([inverse([head["publication_id"]]), track_create()])
     assert error.value.failure["details"]["reason"] == "identity_collision"
     assert realm.head == head and len(realm.accepted) == len(realm.prepared) == 1
+
+
+def restore(document):
+    return {"schema_version": 1, "op": "timeline.restore", "version": "1", "select": None,
+            "args": {key: document["parent_revision"][key]
+                     for key in ("revision_id", "content_digest")}}
+
+
+def test_restore_dry_run_digest_and_accept_race():
+    realm = DetachedRealm()
+    original = detached(realm.documents["parent-1"])
+    command = restore(original)
+    realm.call([realm.move()])
+    head = detached(realm.head)
+    preview = realm.call([command], dry_run=True)
+    assert preview["receipt"] is None
+    assert preview["data"]["canonical_document"] == original
+    assert realm.head == head and len(realm.accepted) == 1
+    bad = detached(command)
+    bad["args"]["content_digest"] = MEDIA
+    with pytest.raises(CommitRejected) as error:
+        realm.call([bad])
+    assert error.value.failure["details"]["reason"] == "invalid_document"
+    assert realm.head == head
+    realm.before_accept = lambda: realm.call([realm.move(on=4.004)])
+    with pytest.raises(CommitRejected) as error:
+        realm.call([command])
+    assert error.value.failure["details"]["reason"] == "stale_head"
+    assert len(realm.accepted) == 2
+    assert len([p for p in realm.prepared if p["records"]["restored_from"]]) == 1
+
+
+def test_restore_undo_redo_exact_full_closure_and_unknown_fields():
+    document = document_fixture()
+    for occurrence in document['parent_revision']['payload']['occurrences']:
+        occurrence.update(source_offset=0, speed=1)
+    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+    realm = DetachedRealm(document)
+    original = detached(realm.documents["parent-1"])
+    realm.call([realm.move("occurrence:occ-a/clip:clip-a")])
+    changed = realm.call([realm.move()])["data"]["canonical_document"]
+    restored = realm.call([restore(original)])
+    assert restored["data"]["canonical_document"] == original
+    record = realm.entries[-1]["records"]["commands"][0]
+    assert record["created"] == []  # Historical authority is not a fresh allocation.
+    assert record["writes"] == [{"ref": "timeline", "path": [],
+        "before": {"state": "present", "value": restore(changed)["args"]},
+        "after": {"state": "present", "value": restore(original)["args"]}}]
+    undone = realm.call([inverse([restored["receipt"]["receipt_id"]])])
+    assert undone["data"]["canonical_document"] == changed
+    redone = realm.call([inverse([undone["receipt"]["receipt_id"]])])
+    assert redone["data"]["canonical_document"] == original
+    assert realm.entries[-1]["records"]["restored_from"] is None
+
+
+@pytest.mark.parametrize("later", ["overlap", "same-value", "aba", "child", "create"])
+def test_restore_inverse_refuses_all_intervening_writes(later):
+    document = document_fixture()
+    for occurrence in document['parent_revision']['payload']['occurrences']:
+        occurrence.update(source_offset=0, speed=1)
+    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+    realm = DetachedRealm(document)
+    original = detached(realm.documents["parent-1"])
+    realm.call([realm.move()])
+    restored = realm.call([restore(original)])
+    if later == "aba":
+        realm.call([realm.move(on=4.004)])
+    if later == "create":
+        realm.call([track_create()])
+    else:
+        ref = "occurrence:occ-a/clip:clip-a" if later == "child" else "parent/clip:clip-a"
+        realm.call([realm.move(ref, on=1 if later in {"same-value", "aba"} else 3.003)])
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([restored["receipt"]["receipt_id"]])])
+    assert error.value.failure["details"]["reason"] == "intervening_write"
+    assert realm.head == head
+
+
+def test_restore_is_intervening_write_for_ordinary_inverse_and_rebase():
+    realm = DetachedRealm()
+    first = realm.call([realm.move()])
+    stale = detached(realm.head)
+    command = realm.move("parent/clip:clip-b", on=6.006)
+    realm.call([restore(realm.documents[stale["revision_id"]])])  # Intentional same value.
+    for calls, base in [([inverse([first["receipt"]["receipt_id"]])], None), ([command], stale)]:
+        with pytest.raises(CommitRejected) as error:
+            realm.call(calls, base=base)
+        assert error.value.failure["details"]["reason"] == "intervening_write"
+
+
+def test_restore_historical_ids_keep_ordinary_reservations():
+    realm = DetachedRealm()
+    created = realm.call([track_create()])["data"]["canonical_document"]
+    realm.call([restore(realm.documents["parent-1"])])
+    with pytest.raises(CommitRejected) as error:
+        realm.call([track_create()])
+    assert error.value.failure["details"]["reason"] == "identity_collision"
+    restored = realm.call([restore(created)])
+    assert restored["data"]["canonical_document"] == created
+    assert realm.entries[-1]["records"]["commands"][0]["created"] == []
+
+
+@pytest.mark.parametrize("kind", ["transcript", "config"])
+def test_restore_and_inverse_capture_only_resulting_retained_inputs(kind):
+    source = source_fixture(kind)
+    original = document_fixture()
+    original["dependency_manifest"]["documents"] = [source["pin"]]
+    clean = document_fixture()
+    clean["parent_revision"]["revision_id"] = "without-inputs"
+    realm = DetachedRealm(original)
+    realm.documents["without-inputs"] = detached(clean)
+    realm.retained_sources[_digest(source["pin"])] = detached(source)
+    # Restore must work after the live producer document is gone.
+    removed = realm.call([restore(clean)])
+    assert removed["data"]["canonical_document"] == clean
+    assert not any(row[0] in {"transcript", "config"} for row in realm.reads)
+    returned = realm.call([inverse([removed["receipt"]["receipt_id"]])])
+    assert returned["data"]["canonical_document"] == original
+    redone = realm.call([inverse([returned["receipt"]["receipt_id"]])])
+    assert redone["data"]["canonical_document"] == clean
+    restored = realm.call([restore(original)])
+    assert restored["data"]["canonical_document"] == original
+    assert realm.entries[-1]["records"]["commands"][0]["dependencies"][0]["pin"] == source["pin"]
+
+
+@pytest.mark.parametrize("damage", ["digest", "missing_child", "media", "scope", "revision"])
+def test_restore_rejects_tampered_or_foreign_historical_closure(damage):
+    realm = DetachedRealm()
+    command = restore(realm.documents["parent-1"])
+    realm.call([realm.move()])
+    source = realm.documents["parent-1"]
+    if damage == "digest":
+        source["shot_revisions"][0]["payload"]["unknown"] = "tampered"
+    elif damage == "missing_child":
+        source["internal_timeline_revisions"] = []
+    elif damage == "media":
+        source["dependency_manifest"]["media"] = []
+    elif damage == "scope":
+        source["project_id"] = "foreign-project"
+    else:
+        source["parent_revision"]["revision_id"] = "different-revision"
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([command])
+    assert error.value.failure["details"]["reason"] == "invalid_document"
+    assert realm.head == head and len(realm.accepted) == 1
+
+
+def test_restore_same_revision_new_publication_rejects_old_pair():
+    realm = DetachedRealm()
+    command = restore(realm.documents["parent-1"])
+    old = detached(realm.head)
+    result = realm.call([command])
+    assert realm.head["revision_id"] == old["revision_id"]
+    assert realm.head["publication_id"] != old["publication_id"]
+    with pytest.raises(CommitRejected) as error:
+        realm.call([command], base=old)
+    assert error.value.failure["details"]["reason"] == "stale_head"
+    assert realm.accepted == [result]
+
+
+@pytest.mark.parametrize("intent", ["bootstrap", "legacy_unknown"])
+def test_restore_preserves_verified_legacy_history_boundary(intent):
+    realm = DetachedRealm()
+    realm.entries[0]["intent"] = intent
+    original = detached(realm.documents["parent-1"])
+    realm.call([realm.move()])
+    restored = realm.call([restore(original)])
+    assert restored["data"]["canonical_document"] == original
+    assert realm.entries[0]["intent"] == intent and realm.entries[0]["records"] is None
+    undone = realm.call([inverse([restored["receipt"]["receipt_id"]])])
+    assert undone["data"]["canonical_document"] != original
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse(["bootstrap"])])
+    assert error.value.failure["details"]["reason"] == "history_unavailable"
+
+
+@pytest.mark.parametrize("damage", ["missing", "digest", "project", "pin"])
+def test_restore_refuses_unavailable_or_corrupt_retained_input(damage):
+    realm = DetachedRealm()
+    realm.call([realm.move()])
+    source = source_fixture("config")
+    historical = realm.documents["parent-1"]
+    historical["dependency_manifest"]["documents"] = [source["pin"]]
+    if damage != "missing":
+        capture = detached(source)
+        if damage == "digest":
+            capture["document"]["content"]["settings"] = "corrupt"
+        elif damage == "project":
+            capture["document"]["project_id"] = "foreign"
+        else:
+            capture["pin"]["version"] += 1
+        realm.retained_sources[_digest(source["pin"])] = capture
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([restore(historical)])
+    assert error.value.failure["details"]["reason"] == (
+        "dependency_unavailable" if damage == "missing" else "invalid_document")
+    assert realm.head == head and len(realm.accepted) == 1

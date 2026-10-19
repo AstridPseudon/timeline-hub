@@ -361,6 +361,7 @@ class RuntimeCommitService:
         from runtime_protocol.timeline_commit import CommitRejected, StaleHead
 
         from astrid.sdk.timeline.commands import CommandError, execute
+        from astrid.sdk.timeline.inverse import coalesce
         from astrid.sdk.timeline.rebase import replay
 
         context = copy.deepcopy(context)
@@ -370,7 +371,8 @@ class RuntimeCommitService:
         current = None
         try:
             calls = request["commands"]
-            if any(call["op"] == "timeline.restore" for call in calls):
+            restore = any(call["op"] == "timeline.restore" for call in calls)
+            if restore:
                 current = port.head()
                 if len(calls) != 1:
                     raise CommitRejected(_failure("invalid_commands", "restore must be the sole command",
@@ -378,15 +380,12 @@ class RuntimeCommitService:
                 if current != base:
                     raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
                                                   base, current))
-                raise CommitRejected(_failure("unsupported_operation", "restore adapter is not installed",
-                                              base, current))
             bundle = _load(port, context, base["revision_id"])
             current = port.head()
             base_entry = port.history_entry(base["publication_id"])
             if base_entry["revision_id"] != base["revision_id"]:
                 raise CommitRejected(_failure("history_unavailable", "base publication/revision mismatch",
                                               base, current))
-            _hydrate(port, bundle)
             undo_of = []
             if sum(call["op"] == "timeline.inverse" for call in calls) > 1:
                 raise CommitRejected(_failure("unsupported_operation",
@@ -422,27 +421,58 @@ class RuntimeCommitService:
                 inverse_intervening = _records([entry for entry in ordered
                                                 if entry["publication_id"] not in undo_of],
                                                CommitRejected, base, current)
+            closures, restored_from = {}, None
+            if restore:
+                from astrid.sdk.timeline.commands import validate_command
+                validate_command(calls[0])
+                restored_from = copy.deepcopy(calls[0]['args'])
+                source = _load(port, context, restored_from['revision_id'])
+                image = source['source_mapping']['_runtime_document']['parent_revision']
+                _require(image['content_digest'] == restored_from['content_digest'],
+                         "restore source digest mismatch")
+                closures[restored_from['revision_id']] = source
+            else:
+                # Only authenticated accepted writes can authorize an inverse
+                # closure replacement. Never accept a caller-supplied image.
+                for write in coalesce(inverse_records):
+                    if write['ref'] == 'timeline' and not write['path']:
+                        pin = write['before']['value']
+                        source = _load(port, context, pin['revision_id'])
+                        image = source['source_mapping']['_runtime_document']['parent_revision']
+                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+                                 "inverse historical closure pin mismatch")
+                        closures[pin['revision_id']] = source
+            # The port captures exactly the resulting document inputs. Discarded
+            # current/source closures must not retain unrelated document pins.
+            for source in closures.values():
+                _hydrate(port, source)
+            if not closures:
+                _hydrate(port, bundle)
             original = execute(bundle, calls, inverse_records=inverse_records,
-                               intervening_records=inverse_intervening)
+                               intervening_records=inverse_intervening, closures=closures)
             for attempt in range(3):
                 if attempt:
                     current = port.head()
                 if current == base:
                     plan = original
                 else:
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                      base, current))
                     entries = _history(port, current, base, CommitRejected, base)
                     head_bundle = _load(port, context, current["revision_id"])
-                    _hydrate(port, head_bundle)
+                    if not closures:
+                        _hydrate(port, head_bundle)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
-                                      entries, CommitRejected, base, current)])
+                                      entries, CommitRejected, base, current)], closures=closures)
                 _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle)
                 prepared = {
                     "expected_head": copy.deepcopy(current), "canonical_document": document,
                     "document_digest": _digest(document),
                     "records": {"schema_version": 1, "commands": copy.deepcopy(plan.records),
-                                "undo_of": undo_of, "restored_from": None},
+                                "undo_of": undo_of, "restored_from": restored_from},
                     "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
                     "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
                 }
@@ -451,6 +481,9 @@ class RuntimeCommitService:
                             else port.accept(prepared))
                 except StaleHead as exc:
                     current = copy.deepcopy(exc.current_head)
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore head changed at acceptance",
+                                                      base, current)) from exc
                     continue
             raise CommitRejected(_failure("head_busy", "timeline head changed on three attempts",
                                           base, current))
