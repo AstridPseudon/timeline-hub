@@ -62,6 +62,11 @@ export function useTimelineCommandSession(options: {
           if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
           projectGeneration++;
           ownsHistoryRef.current = true;
+          const current = commit.dataRef.current;
+          const base = current.editProjection?.kind === 'local' ? current.editProjection.base
+            : current.head?.headRevisionId && current.head.headPublicationId
+              ? { revisionId: current.head.headRevisionId, publicationId: current.head.headPublicationId } : undefined;
+          compiled.nextData.editProjection = base ? { kind: 'local', base, generation: projectGeneration } : undefined;
           commit.commitData(compiled.nextData, { save: false, skipHistory: true });
         },
         project: async (accepted, previews) => {
@@ -93,6 +98,9 @@ export function useTimelineCommandSession(options: {
             data = compiled.nextData;
           }
           if (disposed || generation !== projectGeneration) return;
+          data.editProjection = accepted.head.revisionId && accepted.head.publicationId
+            ? previews.length ? { kind: 'local', base: { ...accepted.head }, generation }
+              : { kind: 'accepted', head: { ...accepted.head } } : undefined;
           context.configVersionRef.current = data.configVersion;
           context.headRevisionRef.current = head;
           context.store.getState().setConfigVersion(data.configVersion);
