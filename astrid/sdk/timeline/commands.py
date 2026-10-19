@@ -59,7 +59,7 @@ def validate_command(command):
         raise CommandError(errors[0].message)
     if command['version'] != '1':
         raise CommandError("unsupported operation version", kind='unsupported_version')
-    if command['op'] not in ('clip.move', 'track.create', 'timeline.inverse'):
+    if command['op'] not in ('clip.move', 'track.create', 'timeline.inverse', 'timeline.restore'):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
     operation = operations().get(command['op'])
     if operation is not None:
@@ -108,7 +108,8 @@ def _verify_claims(ctx, command):
             raise CommandError("original selection membership/order changed", kind='selection_changed', ref=selected['owner'])
 
 
-def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None):
+def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
+            closures=None):
     """Execute atomically. History inputs must already be authenticated by provider.
 
     Empty intervening_records means proven empty ancestry, never unavailable
@@ -121,10 +122,12 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         raise CommandError("command batch must not be empty")
     if id_map and any(key != value for key, value in id_map.items()):
         raise CommandError("id_map must contain identity pairs only", kind='identity_collision')
+    if any(call.get('op') == 'timeline.restore' for call in commands) and len(commands) != 1:
+        raise CommandError("restore must be the sole command", kind='invalid_commands')
     candidate, records = copy.deepcopy(bundle), []
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
-        ctx = Recording(candidate, command, ordinal)
+        ctx = Recording(candidate, command, ordinal, closures=closures)
         _verify_claims(ctx, command)
         operation = operations().get(command['op'])
         if operation is not None:
@@ -136,6 +139,11 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
             ctx.record['command']['intent'] = dict(intent)
             operation.handler(ctx, command)
             ctx.record['command']['resolved'] = [command['select']] if operation.singleton else []
+        elif command['op'] == 'timeline.restore':
+            ctx.read('timeline')
+            ctx.write('timeline', [], command['args'])
+            ctx.record['command']['intent'] = {}
+            ctx.record['command']['resolved'] = []
         else:
             apply_inverse(ctx, inverse_records, intervening_records)
             ctx.record['command']['intent'] = {}

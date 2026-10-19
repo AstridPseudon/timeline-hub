@@ -107,7 +107,8 @@ def address(key, resolved):
 
 
 def overlaps(a, b):
-    return a[0] == b[0] and a[1][:len(b[1])] == b[1][:len(a[1])]
+    return (a == ("timeline", ()) or b == ("timeline", ())
+            or (a[0] == b[0] and a[1][:len(b[1])] == b[1][:len(a[1])]))
 
 
 def one(rows, key, identity, *, optional=False):
@@ -122,8 +123,9 @@ def one(rows, key, identity, *, optional=False):
 
 
 class State:
-    def __init__(self, bundle):
+    def __init__(self, bundle, *, closures=None):
         self.bundle = bundle
+        self.closures = closures or {}
 
     def occurrence(self, owner):
         return one(self.bundle["placements"], "occurrence_id", owner.removeprefix("occurrence:"))
@@ -173,6 +175,12 @@ class State:
         raise CommandError(f"unsupported entity reference {ref!r}")
 
     def get(self, ref, path):
+        if ref == "timeline":
+            if path:
+                raise CommandError("timeline replacement requires the whole closure")
+            from .commit import document_from_bundle
+            image = document_from_bundle(self.bundle)['parent_revision']
+            return present({key: image[key] for key in ('revision_id', 'content_digest')})
         value = self.entity(ref, optional=True)
         if value is None:
             return copy.deepcopy(ABSENT)
@@ -202,6 +210,19 @@ class State:
         return False
 
     def set(self, ref, path, state):
+        if ref == "timeline":
+            pin = state.get('value', {})
+            target = self.closures.get(pin.get('revision_id'))
+            if path or state.get('state') != 'present' or target is None:
+                raise CommandError("timeline replacement requires a verified historical closure",
+                                   kind='history_unavailable', ref=ref)
+            image = target['source_mapping']['_runtime_document']['parent_revision']
+            if pin != {key: image[key] for key in ('revision_id', 'content_digest')}:
+                raise CommandError("historical closure pin mismatch", ref=ref)
+            replacement = copy.deepcopy(target)
+            self.bundle.clear()
+            self.bundle.update(replacement)
+            return
         if not path:
             owner, entity = ref.rsplit('/', 1)
             kind, identity = entity.split(':', 1)

@@ -34,8 +34,8 @@ def selection(state, key, owner, members=()):
 
 
 class Recording:
-    def __init__(self, bundle, command, ordinal):
-        self.state = State(bundle)
+    def __init__(self, bundle, command, ordinal, *, closures=None):
+        self.state = State(bundle, closures=closures)
         self.record = {"ordinal": ordinal, "command": copy.deepcopy(command), "writes": [],
                        "reads": [], "selections": [], "bindings": [], "created": [],
                        "dependencies": [], "derived_writes": []}
@@ -133,6 +133,10 @@ class Recording:
             command['created'] = [item['ref'] for item in self.record['created']]
             command['expect'], command['authorship'] = {}, {}
             for write in self.record['writes']:
+                # Whole-closure guards use the schema's general read refs. The
+                # legacy authored-property TargetKey cannot spell this scope.
+                if write['ref'] == 'timeline':
+                    continue
                 key = write['ref'] + '::' + spelling(write['path'])
                 command['expect'].setdefault(key, copy.deepcopy(write['before']))
                 command['authorship'][key] = 'direct'
