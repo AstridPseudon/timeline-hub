@@ -108,6 +108,25 @@ it.each(['add', 'swap'])('mounted popup %s traverses import/selection/scheduleSa
   expect({ saved: h.savedSeqRef.current, status: h.result.current.persistence.saveStatus }).toEqual({ saved: 1, status: 'saved' });
   const state = JSON.parse(readFileSync(h.statefile, 'utf8'));
   expect(state.result.status).toBe('accepted');
+  const baseClosure = state.closures['rev-0'];
+  const acceptedClosure = state.closures[state.current];
+  const baseParent = baseClosure.parent_revision.payload;
+  const acceptedParent = acceptedClosure.parent_revision.payload;
+  expect({ ...acceptedParent, occurrences: undefined }).toEqual({ ...baseParent, occurrences: undefined });
+  expect(acceptedParent.occurrences.filter((row: any) => row.occurrence_id !== 'occ-copy'))
+    .toEqual(baseParent.occurrences.filter((row: any) => row.occurrence_id !== 'occ-copy'));
+  const baseTarget = baseParent.occurrences.find((row: any) => row.occurrence_id === 'occ-copy');
+  const acceptedTarget = acceptedParent.occurrences.find((row: any) => row.occurrence_id === 'occ-copy');
+  expect(acceptedTarget.shot_revision_id).not.toBe(baseTarget.shot_revision_id);
+  // The selected occurrence forks; both the sibling's shared immutable revision
+  // and every pre-existing internal revision remain unchanged.
+  for (const row of baseClosure.shot_revisions) {
+    expect(acceptedClosure.shot_revisions.find((next: any) => next.revision_id === row.revision_id)).toEqual(row);
+  }
+  for (const row of baseClosure.internal_timeline_revisions) {
+    expect(acceptedClosure.internal_timeline_revisions.find((next: any) => next.revision_id === row.revision_id)).toEqual(row);
+  }
+
   const body = state.requests[0];
   expect(body.scope).toMatchObject({ target: 'occurrence:occ-copy', content: 'this-occurrence' });
   expect(body.change.commands).toHaveLength(1);

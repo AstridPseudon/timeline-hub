@@ -30,6 +30,7 @@ import {
 } from './shotTimelineDataProvider.ts';
 
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
+vi.mock('./ShotTimelineMediaControls.tsx', () => ({ ShotTimelineMediaControls: () => null }));
 const popupChrome = vi.hoisted(() => ({
   saveStatus: 'saved' as const,
   isConflictExhausted: false,

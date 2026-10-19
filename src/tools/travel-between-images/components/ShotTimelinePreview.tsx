@@ -22,6 +22,7 @@ import type {
   CanonicalShotTimelinePublication,
   CanonicalShotTimelineScope,
 } from '@/tools/video-editor/runtime/ports.ts';
+import { ShotTimelineMediaControls } from './ShotTimelineMediaControls.tsx';
 import { hardDurationMs } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 import {
@@ -262,6 +263,7 @@ function ShotTimelineEditorSurface({
       data-shot-timeline-current-time={currentTime}
     >
       <ShotTimelineRecoveryControls />
+      <ShotTimelineMediaControls />
       {isAdoptingCanonicalHead ? (
         <div role="status" data-shot-timeline-head-adoption="pending" className="text-xs text-muted-foreground">
           Updating canonical shot; editing is paused.

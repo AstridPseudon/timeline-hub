@@ -383,3 +383,102 @@ describe('shot timeline popup real recovery integration', () => {
     await clearTimelineDraft(recoveryKey);
   });
 });
+
+
+describe('shot timeline popup visible media controls', () => {
+  beforeEach(async () => { vi.restoreAllMocks(); resetFakeIndexedDB(); await clearTimelineDraft(shotTimelineRecoveryId('document-primary', 'occ-2')); });
+
+  function mediaAdapter(importer = vi.fn()) {
+    const media = { asset: `sha256:${'a'.repeat(64)}`, object_id: `sha256:${'a'.repeat(64)}`,
+      generation_id: 'imported-generation', variant_id: 'imported-variant', catalog_digest: `sha256:${'b'.repeat(64)}` };
+    const imported = { provider: 'runtime', project: fixture.project.project_id,
+      importOperationId: 'import-op', assetId: media.asset, generationId: media.generation_id, variantId: media.variant_id,
+      entry: { file: 'https://runtime.fixture/import.png', media_id: media.object_id, type: 'image/png' } };
+    const prepareMediaImport = importer.mockResolvedValue(imported);
+    const getProjectMediaSelection = vi.fn().mockResolvedValue(media);
+    // Keep the request pending so assertions examine the captured public command before readback.
+    const saveTimelineAtHead = vi.fn(() => new Promise<never>(() => {}));
+    const load = vi.fn().mockResolvedValue(fixture);
+    const adapter = createShotCompositionAdapter({ load, publish: vi.fn(), semanticCommandSaving: true,
+      prepareMediaImport, getProjectMediaSelection, saveTimelineAtHead });
+    return { adapter, load, media, imported, prepareMediaImport, getProjectMediaSelection, saveTimelineAtHead };
+  }
+
+  it.each(['add', 'swap'] as const)('visible %s targets only the opened occurrence through the semantic provider', async mode => {
+    const h = mediaAdapter();
+    const composition = h.adapter.prepare(fixture);
+    const before = structuredClone(composition.contract);
+    const { container, unmount } = render(<ShotTimelinePreview composition={composition} occurrenceId="occ-2" shotCompositionAdapter={h.adapter} />, { wrapper: wrapper() });
+    await waitFor(() => expect(container.querySelector('.clip-action')).toBeTruthy());
+    const swap = screen.getByRole('button', { name: 'Swap selected clip' });
+    expect(swap).toBeDisabled();
+    if (mode === 'swap') {
+      fireEvent.keyDown(container.querySelector('.clip-action')!, { key: 'Enter' });
+      await waitFor(() => expect(swap).not.toBeDisabled());
+      expect(screen.getByText('Selected clip: occ-2:alpha-video')).toBeTruthy();
+    }
+    fireEvent.click(screen.getByRole('button', { name: mode === 'swap' ? 'Swap selected clip' : 'Add media' }));
+    fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), { target: { files: [new File(['image'], 'picked.png', { type: 'image/png' })] } });
+    await waitFor(() => expect(h.saveTimelineAtHead).toHaveBeenCalledTimes(1), { timeout: 5000 });
+    expect(h.prepareMediaImport).toHaveBeenCalledWith({ projectId: composition.projectId }, expect.any(File), { filename: 'picked.png', mediaType: 'image/png' });
+    expect(h.getProjectMediaSelection).toHaveBeenCalledWith({ projectId: composition.projectId, asset: h.media.asset,
+      generationId: h.media.generation_id, variantId: h.media.variant_id });
+    const [parentId, config, head, , , commands, context] = h.saveTimelineAtHead.mock.calls[0] as unknown as [string, any, any, unknown, unknown, any[], any];
+    expect(parentId).toBe(composition.parentDocumentId);
+    expect(head.headRevisionId).toBe(composition.headRevisionId);
+    expect(context).toMatchObject({ occurrenceId: 'occ-2', shotId: 'shot-alpha', shotRevisionId: 'rev-a', internalRevisionId: 'timeline-alpha-a', headRevisionId: composition.headRevisionId });
+    expect(commands).toHaveLength(1);
+    expect(commands[0]).toMatchObject({ op: mode === 'swap' ? 'clip.swap-asset' : 'timeline.add',
+      select: mode === 'swap' ? 'occurrence:occ-2/clip:alpha-video' : 'occurrence:occ-2/track:video', args: { media: h.media } });
+    if (mode === 'swap') expect(commands[0].expect['occurrence:occ-2/clip:alpha-video::']).toEqual({ state: 'present', value: before.shot_revisions.find(row => row.shot_id === 'shot-alpha' && row.revision_id === 'rev-a')!.internal_timeline_revision.timeline.clips[0] });
+    // No parent or shared sibling snapshot is rewritten by the child UI. The scoped
+    // command delegates immutable child forking to the existing public provider.
+    expect(composition.contract).toEqual(before);
+    expect(config.clips.every((clip: any) => clip.id.startsWith('occ-2:'))).toBe(true);
+    expect(config.clips.find((clip: any) => clip.id === 'occ-2:alpha-audio')).toBeTruthy();
+    unmount();
+  }, 10000);
+
+  it('refuses the captured target when the canonical head changes during import', async () => {
+    const h = mediaAdapter();
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    h.prepareMediaImport.mockImplementation(async () => { await gate; return h.imported; });
+    const composition = h.adapter.prepare(fixture);
+    const view = render(<ShotTimelinePreview composition={composition} occurrenceId="occ-2" shotCompositionAdapter={h.adapter} />, { wrapper: wrapper() });
+    await waitFor(() => expect(view.container.querySelector('.clip-action')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Add media' }));
+    fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), { target: { files: [new File(['image'], 'picked.png', { type: 'image/png' })] } });
+    await waitFor(() => expect(h.prepareMediaImport).toHaveBeenCalledTimes(1));
+    const nextGraph = editedGraph(0, 'head-changed-during-import');
+    h.load.mockResolvedValue(nextGraph);
+    view.rerender(<ShotTimelinePreview composition={h.adapter.prepare(nextGraph)} occurrenceId="occ-2" shotCompositionAdapter={h.adapter} />);
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Shot timeline' })).toHaveAttribute('data-shot-timeline-head-revision-id', 'head-changed-during-import'));
+    await act(async () => { release(); });
+    expect(await screen.findByRole('alert')).toHaveTextContent(/changed while choosing media|still adopting the latest canonical revision/);
+    expect(h.saveTimelineAtHead).not.toHaveBeenCalled();
+    view.unmount();
+  });
+
+  it('refuses an unsupported provider before opening an import', async () => {
+    const adapter = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() });
+    render(<ShotTimelinePreview composition={adapter.prepare(fixture)} occurrenceId="occ-2" shotCompositionAdapter={adapter} />, { wrapper: wrapper() });
+    expect(screen.getByRole('button', { name: 'Add media' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Swap selected clip' })).toBeDisabled();
+    expect(screen.getByText('This provider does not support shot media Add or swap.')).toBeTruthy();
+  });
+
+  it('shows import failure without a semantic write or snapshot change', async () => {
+    const h = mediaAdapter();
+    h.prepareMediaImport.mockRejectedValue(new Error('Import unavailable'));
+    const composition = h.adapter.prepare(fixture);
+    const before = structuredClone(composition.contract);
+    const { container } = render(<ShotTimelinePreview composition={composition} occurrenceId="occ-2" shotCompositionAdapter={h.adapter} />, { wrapper: wrapper() });
+    await waitFor(() => expect(container.querySelector('.clip-action')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Add media' }));
+    fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), { target: { files: [new File(['image'], 'picked.png', { type: 'image/png' })] } });
+    expect(await screen.findByText('Import unavailable')).toHaveAttribute('role', 'alert');
+    expect(h.saveTimelineAtHead).not.toHaveBeenCalled();
+    expect(composition.contract).toEqual(before);
+  });
+});
