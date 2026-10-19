@@ -24,6 +24,7 @@ from astrid.core.execution.generic_host import (
     _assert_live_storage_envelope,
     _attempt_tree_bytes,
     _completed_process_evidence,
+    _managed_asset_identity,
     _storage_tree_bytes,
     _task_storage_envelope,
     _terminate_process_group,
@@ -764,6 +765,28 @@ def test_input_materialization_rejects_foreign_nested_digest(tmp_path):
             tmp_path / "attempt",
         )
     assert runtime.fetches == []
+
+
+def test_managed_asset_identity_accepts_runtime_canonical_film_media_id():
+    media_id = "sha256:95fc75f6ef87b32177308d0bb34a699f07a1960c443edc630377d1dec88f0602"
+    assert _managed_asset_identity("film", {
+        "media_id": media_id,
+        "thumbnailUrl": "/api/runtime/v1/media/sha256:thumbnail",
+        "generationId": "generation-film",
+    }) == (media_id, media_id.removeprefix("sha256:"))
+
+
+def test_managed_asset_identity_keeps_locator_rejection_and_explicit_opaque_digest():
+    media_id = "opaque-runtime-media-id"
+    digest = hashlib.sha256(b"managed test object").hexdigest()
+    assert _managed_asset_identity("asset", {"media_id": media_id, "digest": digest}) == (media_id, digest)
+    with pytest.raises(HostError, match="unmanaged locator"):
+        _managed_asset_identity("film", {
+            "media_id": "sha256:" + "0" * 64,
+            "file": "file:///Users/example/film.mov",
+        })
+    with pytest.raises(HostError, match="requires object_id and digest"):
+        _managed_asset_identity("asset", {"media_id": media_id})
 
 
 def test_command_cwd_must_stay_in_attempt_or_source_scope(tmp_path):

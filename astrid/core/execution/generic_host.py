@@ -183,6 +183,35 @@ class HostCancelled(HostError):
     """The runtime cancelled the attempt while the subprocess was running."""
 
 
+_CONTENT_ADDRESSED_MEDIA_ID = re.compile(r"sha256:[0-9a-f]{64}\Z")
+_MANAGED_ASSET_LOCATOR_KEYS = frozenset({"url", "uri", "path", "source_path", "locator", "realm", "file"})
+
+
+def _managed_asset_identity(key: str, raw: Mapping[str, Any]) -> tuple[str, str]:
+    """Validate a frozen registry asset and return its CAS ID and digest hex.
+
+    A SHA-256 media_id is already a content identity, so it may supply the
+    digest when no explicit digest field is present. Opaque media IDs still
+    require an explicit digest. Display metadata such as thumbnailUrl and
+    generationId is permitted; locator-shaped fields remain forbidden.
+    """
+    if not isinstance(raw, Mapping):
+        raise HostError(f"managed asset {key!r} is invalid")
+    if _MANAGED_ASSET_LOCATOR_KEYS.intersection(raw):
+        raise HostError(f"managed asset {key!r} contains an unmanaged locator")
+    object_id = raw.get("object_id") or raw.get("media_id")
+    raw_digest = raw.get("digest") or raw.get("content_sha256") or raw.get("sha256") or raw.get("hash")
+    media_id = raw.get("media_id")
+    if not raw_digest and isinstance(media_id, str) and _CONTENT_ADDRESSED_MEDIA_ID.fullmatch(media_id):
+        raw_digest = media_id
+    if not isinstance(object_id, str) or not object_id.strip() or not isinstance(raw_digest, str):
+        raise HostError(f"managed asset {key!r} requires object_id and digest")
+    digest_hex = raw_digest.removeprefix("sha256:")
+    if len(digest_hex) != 64 or any(char not in "0123456789abcdef" for char in digest_hex):
+        raise HostError(f"invalid managed digest for {key}")
+    return object_id, digest_hex
+
+
 _VIDEO_SUFFIX_MEDIA_TYPES = {
     ".mp4": "video/mp4",
     ".mov": "video/quicktime",
@@ -6821,16 +6850,7 @@ class GenericPackHost:
             derived = dict(registry)
             derived_assets: dict[str, Any] = {}
             for key, raw in registry["assets"].items():
-                if not isinstance(raw, Mapping):
-                    raise HostError(f"managed asset {key!r} is invalid")
-                forbidden = {"url", "uri", "path", "source_path", "locator", "realm", "file"}
-                if forbidden.intersection(raw):
-                    raise HostError(f"managed asset {key!r} contains an unmanaged locator")
-                object_id = raw.get("object_id") or raw.get("media_id")
-                raw_digest = raw.get("digest") or raw.get("content_sha256") or raw.get("sha256") or raw.get("hash")
-                if not isinstance(object_id, str) or not object_id.strip() or not isinstance(raw_digest, str):
-                    raise HostError(f"managed asset {key!r} requires object_id and digest")
-                digest_hex = raw_digest.removeprefix("sha256:")
+                object_id, digest_hex = _managed_asset_identity(str(key), raw)
                 destination = fetch_object(object_id, digest_hex, str(key))
                 materialized_objects[object_id] = str(destination)
                 materialized_objects[digest_hex] = str(destination)
