@@ -53,8 +53,8 @@ def fixture(tmp_path, monkeypatch):
         requests.append(url)
         return io.BytesIO(payloads[url])
 
-    def run(argv, *, extra_env=None, cwd=None):
-        calls.append(([str(v) for v in argv], dict(extra_env or {}), cwd))
+    def run(argv, *, extra_env=None, cwd=None, clean_bun_env=False):
+        calls.append(([str(v) for v in argv], dict(extra_env or {}), cwd, clean_bun_env))
         if "link" in argv:
             folder = Path(extra_env["BUN_INSTALL_BIN"])
             folder.mkdir(parents=True, exist_ok=True)
@@ -69,7 +69,12 @@ def fixture(tmp_path, monkeypatch):
 
 def test_source_recipe_freezes_graph_generates_only_views_and_links_real_cli(tmp_path, monkeypatch):
     recipe, _payloads, requests, calls, run, env = fixture(tmp_path, monkeypatch)
-    build_env = dict(env)
+    build_env = {**env, "BUN_INSTALL_GLOBAL_DIR": str(tmp_path / "omp/install/global"),
+                 "HOME": str(tmp_path / "omp/build-home"),
+                 "USERPROFILE": str(tmp_path / "omp/build-home"),
+                 "XDG_CONFIG_HOME": str(tmp_path / "omp/build-home/config")}
+    if "BUN_INSTALL_CACHE_DIR" in tools.os.environ:
+        build_env["BUN_INSTALL_CACHE_DIR"] = tools.os.environ["BUN_INSTALL_CACHE_DIR"]
     tools._install_omp_source(recipe, tmp_path / "omp", "linux-x64", run, env)
     source = tmp_path / "omp/source"
     assert requests == [recipe["source"]["url"], recipe["native"]["linux-x64"]["url"]]
@@ -87,6 +92,7 @@ def test_source_recipe_freezes_graph_generates_only_views_and_links_real_cli(tmp
     assert calls[3][0] == ["/qualified/bun", "link", "--frozen-lockfile", "--ignore-scripts", "--no-save"]
     assert calls[3][2] == source / "packages/coding-agent"
     assert all(row[1] == build_env for row in calls)
+    assert all(row[3] is True for row in calls)
     assert env["ASTRID_INSTALL_OMP_SOURCE"] == "fork"
     assert env["ASTRID_INSTALL_OMP_VERSION"] == "17.4.0"
     assert env["ASTRID_INSTALL_OMP_BASE_COMMIT"] == recipe["base_commit"]
@@ -244,3 +250,21 @@ def test_bundled_patch_corruption_is_refused(tmp_path, monkeypatch):
     monkeypatch.setattr(tools, "__file__", str(tmp_path / "tools.py"))
     with pytest.raises(ValueError, match="patch checksum"):
         tools.load_omp_recipe()
+
+
+def test_inherited_bun_registration_paths_are_overridden_only_during_build(tmp_path, monkeypatch):
+    recipe, _payloads, _requests, calls, run, env = fixture(tmp_path, monkeypatch)
+    outside = tmp_path / "unrelated-global"
+    monkeypatch.setenv("BUN_INSTALL_GLOBAL_DIR", str(outside))
+    user_home = tmp_path / "user-home"
+    user_home.mkdir()
+    monkeypatch.setenv("HOME", str(user_home))
+    user_config = user_home / ".bunfig.toml"
+    user_config.write_text('[install]\nglobalDir="outside-global"\nglobalBinDir="outside-bin"\n')
+    before = (user_config.read_bytes(), user_config.stat().st_mtime_ns)
+    tools._install_omp_source(recipe, tmp_path / "omp", "linux-x64", run, env)
+    assert all(row[1]["BUN_INSTALL_GLOBAL_DIR"] == str(tmp_path / "omp/install/global") for row in calls)
+    assert all(row[1]["BUN_INSTALL_BIN"] == str(tmp_path / "omp/bin") for row in calls)
+    assert "BUN_INSTALL_GLOBAL_DIR" not in env
+    assert not outside.exists()
+    assert (user_config.read_bytes(), user_config.stat().st_mtime_ns) == before

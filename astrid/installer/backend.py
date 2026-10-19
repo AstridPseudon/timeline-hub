@@ -34,12 +34,13 @@ class Backend:
         self.root, self.log, self.uv = root, log, uv
         self.service = Service(root, log, self.run, say=say)
 
-    def run(self, argv, *, extra_env=None, cwd=None, timeout=1800) -> str:
+    def run(self, argv, *, extra_env=None, cwd=None, timeout=1800, clean_bun_env=False) -> str:
         # Never inherit a developer's Python import path or Runtime connection.
         env = {k: v for k, v in os.environ.items() if k not in {
             "PYTHONPATH", "PYTHONHOME", "ASTRID_WORKSPACE_ENDPOINT",
             "ASTRID_WORKSPACE_CREDENTIAL", "ASTRID_RUNTIME_SOURCE_MANIFEST",
-            "ASTRID_RUNTIME_DATA_ROOT", "ASTRID_PACKS_PATH"}}
+            "ASTRID_RUNTIME_DATA_ROOT", "ASTRID_PACKS_PATH"}
+               and not (clean_bun_env and (k.startswith("BUN_") or k == "NODE_OPTIONS"))}
         env.update({"PYTHONIOENCODING": "utf-8"})
         env.update(extra_env or {})
         result = subprocess.run([str(s) for s in argv], cwd=cwd, env=env, check=False,

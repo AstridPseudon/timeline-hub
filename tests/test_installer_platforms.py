@@ -27,6 +27,38 @@ def sample(system='linux'):
     return version, data, log
 
 
+def test_bun_build_environment_scrubs_ambient_policy_but_keeps_explicit_cache_and_ca(tmp_path, monkeypatch):
+    ambient = {
+        "BUN_INSTALL_GLOBAL_DIR": str(tmp_path / "outside"),
+        "BUN_INSTALL_BIN": str(tmp_path / "outside-bin"),
+        "BUN_CONFIG_NO_VERIFY": "1", "BUN_CONFIG_SKIP_LOAD_LOCKFILE": "1",
+        "BUN_CONFIG_SKIP_SAVE_LOCKFILE": "1", "BUN_INSTALL_GLOBAL_STORE": "1",
+        "BUN_INSTALL_CACHE_DIR": str(tmp_path / "ambient-cache"),
+        "BUN_OPTIONS": "--preload=/outside/bun.ts", "NODE_OPTIONS": "--require=/outside/node.js",
+        "HTTPS_PROXY": "http://proxy.invalid:8080", "NODE_EXTRA_CA_CERTS": "/chosen/ca.pem",
+    }
+    for key, value in ambient.items():
+        monkeypatch.setenv(key, value)
+    captured = []
+
+    def execute(argv, **kwargs):
+        captured.append(kwargs["env"])
+        return subprocess.CompletedProcess(argv, 0, stdout="done")
+
+    monkeypatch.setattr("astrid.installer.backend.subprocess.run", execute)
+    backend = Backend(tmp_path / "program", tmp_path / "install.log", tmp_path / "uv")
+    controlled = {"BUN_INSTALL_GLOBAL_DIR": str(tmp_path / "owned/global"),
+                  "BUN_INSTALL_BIN": str(tmp_path / "owned/bin"),
+                  "BUN_INSTALL_CACHE_DIR": str(tmp_path / "chosen-cache")}
+    assert backend.run(["bun", "link"], extra_env=controlled, clean_bun_env=True) == "done"
+    assert {key: value for key, value in captured[0].items() if key.startswith("BUN_")} == controlled
+    assert "NODE_OPTIONS" not in captured[0]
+    assert captured[0]["HTTPS_PROXY"] == ambient["HTTPS_PROXY"]
+    assert captured[0]["NODE_EXTRA_CA_CERTS"] == ambient["NODE_EXTRA_CA_CERTS"]
+    assert backend.run(["another-command"]) == "done"
+    assert all(captured[1][key] == value for key, value in ambient.items())
+
+
 @pytest.mark.parametrize('system,fixture', [('darwin','launchd.plist'), ('linux','systemd.service'), ('win32','task.xml')])
 def test_service_definitions_match_reviewed_snapshots(system, fixture):
     version, data, log = sample(system)

@@ -358,10 +358,26 @@ def _install_omp_source(recipe: dict, root: Path, target: str, run, env: dict,
     _check_omp_lock(source_root, recipe["bun_lock_sha256"])
     _apply_omp_patch(source_root, recipe["patch"])
     bun = env["ASTRID_BUN_EXECUTABLE"]
+    # Ignore user Bun policy/preloads and global config for these build commands.
+    # Keep only the deliberately selected download cache; never inherit lock or
+    # integrity bypasses, global-store links, or registration paths. The private
+    # build home/config does not change the user's files or the service env.
+    build_home = root / "build-home"
+    build_config = build_home / "config"
+    build_config.mkdir(parents=True)
+    build_env = {key: value for key, value in env.items()
+                 if not key.startswith("BUN_") and key != "NODE_OPTIONS"}
+    build_env.update({"BUN_INSTALL": str(root), "BUN_INSTALL_BIN": str(root / "bin"),
+                      "BUN_INSTALL_GLOBAL_DIR": str(root / "install/global"),
+                      "HOME": str(build_home), "USERPROFILE": str(build_home),
+                      "XDG_CONFIG_HOME": str(build_config)})
+    cache = env.get("BUN_INSTALL_CACHE_DIR", os.environ.get("BUN_INSTALL_CACHE_DIR"))
+    if cache:
+        build_env["BUN_INSTALL_CACHE_DIR"] = cache
     run([bun, "install", "--frozen-lockfile", "--ignore-scripts", "--omit", "optional"],
-        extra_env=env, cwd=source_root)
+        extra_env=build_env, cwd=source_root, clean_bun_env=True)
     _check_omp_lock(source_root, recipe["bun_lock_sha256"])
-    run([bun, "run", "gen:tool-views"], extra_env=env, cwd=source_root)
+    run([bun, "run", "gen:tool-views"], extra_env=build_env, cwd=source_root, clean_bun_env=True)
     _check_omp_lock(source_root, recipe["bun_lock_sha256"])
     native_archive = root / "native-archive"
     fetch_archive(native["url"], native_archive, sha256=native["sha256"])
@@ -381,9 +397,10 @@ def _install_omp_source(recipe: dict, root: Path, target: str, run, env: dict,
     probe = ("import {pathToFileURL} from 'node:url';"
              "const b=await import(pathToFileURL(process.argv[1]).href);"
              "if(typeof b.__piNativesV17_4_0!=='function')throw Error('OMP native ABI mismatch');")
-    run([bun, "-e", probe, destination / "index.js"], extra_env=env, cwd=source_root)
+    run([bun, "-e", probe, destination / "index.js"], extra_env=build_env, cwd=source_root,
+        clean_bun_env=True)
     run([bun, "link", "--frozen-lockfile", "--ignore-scripts", "--no-save"],
-        extra_env=env, cwd=source_root / "packages/coding-agent")
+        extra_env=build_env, cwd=source_root / "packages/coding-agent", clean_bun_env=True)
     _check_omp_lock(source_root, recipe["bun_lock_sha256"])
     (root / "source-provenance.json").write_text(json.dumps({
         "source": "fork", "version": recipe["version"], "base_commit": recipe["base_commit"],
