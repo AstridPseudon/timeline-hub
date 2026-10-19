@@ -189,6 +189,9 @@ def test_second_daemon_on_a_held_door_port_names_the_astrid_runtime_and_releases
         assert f"port {world_a.port} is already served by another Astrid Runtime for realm" in message
         assert "Door Realm" in message
         assert world_a.daemon.service.realm["id"] in message
+        # The hosted page only ever looks on the well-known port: the way out is stopping the holder, never another port.
+        assert "stop that one first (astrid-runtime down)" in message
+        assert "--door-port" not in message
         assert second.httpd is None
     finally:
         if second is not None:
@@ -253,7 +256,8 @@ def test_daemon_cli_reports_a_taken_door_port_as_a_named_failure(tmp_path):
     value = json.loads(result.stdout.strip().splitlines()[-1])
     assert value["ok"] is False
     assert value["error"]["code"] == "door_port_taken"
-    assert "is already in use by a program that is not an Astrid Runtime" in value["error"]["message"]
+    assert "is already in use by a program that is not an Astrid Runtime; stop it" in value["error"]["message"]
+    assert "--door-port" not in value["error"]["message"]
 
 
 def test_daemon_cli_refuses_a_non_https_hosted_origin(tmp_path):

@@ -6,6 +6,7 @@ Every test starts its own daemon with a door on an ephemeral port (see tests/doo
 from __future__ import annotations
 
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -416,5 +417,35 @@ def test_audit_lines_without_credentials(tmp_path):
         assert foreign["origin"] == EVIL
 
         assert world.product_token not in audit.read_text(encoding="utf-8")
+    finally:
+        world.stop()
+
+
+# 10. Preflight refuses what a browser would never send, rather than reading it as nothing.
+
+
+def _raw_options(world, headers):
+    """OPTIONS with repeatable headers, as (name, value) pairs."""
+    connection = http.client.HTTPConnection("127.0.0.1", world.port, timeout=30)
+    try:
+        connection.putrequest("OPTIONS", f"{API_RUNTIME}/v1/projects", skip_host=True, skip_accept_encoding=True)
+        for name, value in [("Host", f"127.0.0.1:{world.port}"), ("Origin", HOSTED), ("Access-Control-Request-Method", "POST"), *headers]:
+            connection.putheader(name, value)
+        connection.endheaders()
+        response = connection.getresponse()
+        return response.status, json.loads(response.read() or b"null")
+    finally:
+        connection.close()
+
+
+def test_preflight_refuses_repeated_request_headers_and_browser_credentials(tmp_path):
+    world = start_door_world(tmp_path)
+    try:
+        assert _raw_options(world, [("Access-Control-Request-Headers", "content-type")])[0] == 204
+        for repeated in ([("Access-Control-Request-Headers", "content-type"), ("Access-Control-Request-Headers", "authorization")],
+                         [("Access-Control-Request-Headers", "content-type"), ("Access-Control-Request-Headers", "content-type")]):
+            assert _raw_options(world, repeated) == (403, {"error": "header_not_allowed"}), repeated
+        for credential in [("Authorization", "Bearer browser"), ("Cookie", "a=b")]:
+            assert _raw_options(world, [("Access-Control-Request-Headers", "content-type"), credential]) == (403, {"error": "browser_credentials_forbidden"}), credential
     finally:
         world.stop()

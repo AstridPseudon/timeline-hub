@@ -309,19 +309,37 @@ CHAT_FILE_NAME = "chat.json"
 _LOOPBACK_URL = re.compile(r"http://127\.0\.0\.1:([0-9]{1,5})")
 
 
+_MAX_LOCAL_FILE_BYTES = 64 * 1024
+
+
 def _owner_only_json(path: Path) -> dict | None:
-    """A JSON object from a regular file only this user can read or write, or None."""
+    """A JSON object from a regular file only this user can read or write, or None.
+
+    The file is opened once without following a symlink, and that open file is
+    what is checked and read (bounded), so it cannot be swapped in between.
+    """
     try:
-        metadata = path.lstat()
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | getattr(os, "O_CLOEXEC", 0))
     except OSError:
         return None
-    if (not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid()
-            or stat.S_IMODE(metadata.st_mode) & 0o077):
-        return None
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        metadata = os.fstat(descriptor)
+        if (not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid()
+                or stat.S_IMODE(metadata.st_mode) & 0o077 or metadata.st_size > _MAX_LOCAL_FILE_BYTES):
+            return None
+        raw = b""
+        while len(raw) <= _MAX_LOCAL_FILE_BYTES:
+            chunk = os.read(descriptor, _MAX_LOCAL_FILE_BYTES + 1 - len(raw))
+            if not chunk:
+                break
+            raw += chunk
+        if len(raw) > _MAX_LOCAL_FILE_BYTES:
+            return None
+        value = json.loads(raw.decode("utf-8"))
     except (OSError, UnicodeDecodeError, ValueError):
         return None
+    finally:
+        os.close(descriptor)
     return value if isinstance(value, dict) else None
 
 
@@ -372,7 +390,35 @@ class DoorHTTPServer(RuntimeHTTPServer):
         self.credentials = credentials
         self.chat_file = Path(chat_file)
         self.audit_lock = threading.Lock()
+        # Chat connections forwarded right now, so closing the listener also closes them.
+        self._upstreams: set[socket.socket] = set()
+        self._upstreams_lock = threading.Lock()
+        self._closed = False
         super().__init__(("127.0.0.1", config.port), DoorHandler)
+
+    def track_upstream(self, upstream: socket.socket) -> bool:
+        """Registers a forwarded chat connection; False once the listener has closed."""
+        with self._upstreams_lock:
+            if self._closed:
+                return False
+            self._upstreams.add(upstream)
+            return True
+
+    def untrack_upstream(self, upstream: socket.socket) -> None:
+        with self._upstreams_lock:
+            self._upstreams.discard(upstream)
+
+    def server_close(self):
+        with self._upstreams_lock:
+            self._closed = True
+            upstreams, self._upstreams = self._upstreams, set()
+        for upstream in upstreams:
+            # Shutdown, not close: it wakes a handler blocked reading from it.
+            try:
+                upstream.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+        super().server_close()
 
 
 def open_door(config: DoorConfig, *, runtime, daemon_runtime, credentials: CredentialStore, chat_file: Path) -> DoorHTTPServer:
@@ -408,8 +454,11 @@ def _probe(port: int, origin: str, path: str) -> tuple[int, dict | None] | None:
 
 
 def describe_port_holder(port: int, origin: str) -> str:
-    """One sentence for a taken door port, asking the holder who it is the way the hosted page would."""
-    hint = "or start this one with another --door-port"
+    """One sentence for a taken door port, asking the holder who it is the way the hosted page would.
+
+    The page only ever looks on the well-known port, so the advice is to stop the holder, never to use another port.
+    """
+    stop_runtime = "stop that one first (astrid-runtime down)"
     health = _probe(port, origin, "/api/runtime/v1/health")
     if health is not None:
         status, body = health
@@ -419,13 +468,13 @@ def describe_port_holder(port: int, origin: str) -> str:
                 name = _printable(realm[1]["realm_id"])
                 if realm[1].get("display_name"):
                     name = f'"{_printable(realm[1]["display_name"])}" ({name})'
-                return f"port {port} is already served by another Astrid Runtime for realm {name}; stop that one first (astrid-runtime down), {hint}"
-            return f"port {port} is already served by another Astrid Runtime; stop that one first (astrid-runtime down), {hint}"
+                return f"port {port} is already served by another Astrid Runtime for realm {name}; {stop_runtime}"
+            return f"port {port} is already served by another Astrid Runtime; {stop_runtime}"
         if body is not None and body.get("error") in ("runtime_unavailable", "runtime_identity_mismatch"):
-            return f"port {port} is already served by another Astrid Runtime that is not ready; stop that one first (astrid-runtime down), {hint}"
+            return f"port {port} is already served by another Astrid Runtime that is not ready; {stop_runtime}"
         if status == 403 and body is not None and body.get("error") == "hosted_origin_required":
-            return f"port {port} is already served by another Astrid Runtime for a different hosted origin; stop that one first (astrid-runtime down), {hint}"
-    return f"port {port} is already in use by a program that is not an Astrid Runtime; stop it, {hint}"
+            return f"port {port} is already served by another Astrid Runtime for a different hosted origin; {stop_runtime}"
+    return f"port {port} is already in use by a program that is not an Astrid Runtime; stop it, then start Astrid again"
 
 
 class DoorHandler(RuntimeHandler):
@@ -489,9 +538,10 @@ class DoorHandler(RuntimeHandler):
         if declared and int(declared[0]) > limit:
             raise _Refusal(413, "payload_too_large")
         self._door_route = route
+        # Chat is behind the same authority and readiness as every other route.
+        self._door_token = self._product_token()
         if route.service == "acp":
             return self._forward_acp(route)
-        self._door_token = self._product_token()
         self.path = route.path
         for name in {key.lower() for key in self.headers.keys()}:
             if name not in REQUEST_HEADERS and name not in _FRAMING_HEADERS:
@@ -504,7 +554,13 @@ class DoorHandler(RuntimeHandler):
         requested_method = self._single("Access-Control-Request-Method") or ""
         if classify(self.path, requested_method) is None:
             raise _Refusal(404, "route_not_allowed")
-        requested = [name.strip().lower() for name in (self._single("Access-Control-Request-Headers") or "").split(",") if name.strip()]
+        if self._header_values("Authorization") or self._header_values("Cookie"):
+            raise _Refusal(403, "browser_credentials_forbidden")
+        # A browser sends the list once; anything else is not read as an empty list.
+        listed = self._header_values("Access-Control-Request-Headers")
+        if len(listed) > 1:
+            raise _Refusal(403, "header_not_allowed")
+        requested = [name.strip().lower() for name in (listed[0] if listed else "").split(",") if name.strip()]
         if any(name not in REQUEST_HEADERS for name in requested):
             raise _Refusal(403, "header_not_allowed")
         self._door_extra = [
@@ -529,7 +585,7 @@ class DoorHandler(RuntimeHandler):
         if not isinstance(token, str) or not token or not isinstance(actor, str) or not actor:
             raise _Refusal(503, "runtime_unavailable")
         try:
-            identity = self.server.credentials.load(token)
+            identity = self.server.credentials.require(token, "handshake")
         except AuthorizationError:
             raise _Refusal(503, "runtime_unavailable") from None
         if (identity.get("actor") != actor or actor in NON_PRODUCT_ACTORS
@@ -628,7 +684,7 @@ class DoorHandler(RuntimeHandler):
     def _forward_acp(self, route: DoorRoute):
         """Forward to the registered chat endpoint, streaming its answer back as it comes."""
         door = self.server.door
-        chat = chat_endpoint(self.server.chat_file) if self.server.accepting_authenticated_requests else None
+        chat = chat_endpoint(self.server.chat_file)
         if chat is None:
             raise _Refusal(503, "acp_unavailable")
         port, token = chat
@@ -649,10 +705,17 @@ class DoorHandler(RuntimeHandler):
             # Calls through the door always select the hosted, local-media-only policy.
             ACP_LOCAL_MEDIA_ONLY_HEADER: "1",
         })
+        # A browser that goes away while the chat service is silent is noticed on the next write, or by this idle
+        # timeout (acp_idle_timeout, 300 s by default): nothing reads the browser's socket while waiting upstream.
         self.connection.settimeout(door.acp_idle_timeout)
         upstream = http.client.HTTPConnection("127.0.0.1", port, timeout=door.acp_idle_timeout)
+        tracked = None
         try:
             try:
+                upstream.connect()
+                tracked = upstream.sock
+                if not self.server.track_upstream(tracked):
+                    raise _Refusal(503, "acp_unavailable")
                 upstream.request(self.command, route.path[len("/acp"):] or "/", body=body, headers=headers)
                 response = upstream.getresponse()
             except (socket.timeout, TimeoutError):
@@ -682,6 +745,8 @@ class DoorHandler(RuntimeHandler):
                 # Either side went away mid-stream: the browser sees a cut connection, never a second status.
                 self.close_connection = True
         finally:
+            if tracked is not None:
+                self.server.untrack_upstream(tracked)
             upstream.close()
 
     def do_OPTIONS(self):

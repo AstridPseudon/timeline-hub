@@ -368,3 +368,80 @@ def test_response_headers_are_allowlisted(make_world, chat):
     assert (reply.status, reply.json()) == (200, {"agents": []})
     assert "set-cookie" not in reply.headers
     assert "x-secret" not in reply.headers
+
+
+# 10. Chat is behind the same product authority and readiness as every other route.
+
+
+def test_chat_needs_the_product_credential_and_a_ready_runtime(make_world, chat):
+    world = make_world()
+    _point_chat_at(world, chat.endpoint)
+    assert world.call(AGENTS).status == 200
+    forwarded = len(chat.requests)
+
+    credential = world.credential_file.read_bytes()
+    world.credential_file.unlink()
+    reply = world.call(AGENTS)
+    assert (reply.status, reply.json()) == (503, {"error": "runtime_unavailable"})
+    world.credential_file.write_bytes(credential)
+    os.chmod(world.credential_file, 0o600)
+
+    world.daemon.service._verified = False
+    reply = world.call(AGENTS)
+    assert (reply.status, reply.json()) == (503, {"error": "runtime_unavailable"})
+    assert len(chat.requests) == forwarded, "nothing reached the chat service while the product could not act"
+
+
+# 11. Closing the listener closes the chat streams it forwards.
+
+
+def test_listener_shutdown_closes_inflight_chat_streams(make_world, chat):
+    world = make_world()
+    _point_chat_at(world, chat.endpoint)
+    upstream_closed = threading.Event()
+    first_event_sent = threading.Event()
+
+    def events(handler):
+        handler.send_response(200)
+        handler.send_header("Content-Type", "text/event-stream")
+        handler.end_headers()
+        handler.wfile.write(b"data: one\n\n")
+        handler.wfile.flush()
+        first_event_sent.set()
+        # Blocks until the door closes its end of this connection.
+        handler.rfile.read(1)
+        upstream_closed.set()
+
+    chat.hooks[("GET", "/connection-1/events")] = events
+    connection = http.client.HTTPConnection("127.0.0.1", world.port, timeout=GUARD_SECONDS)
+    try:
+        connection.putrequest("GET", "/api/astrid/acp/connection-1/events", skip_host=True, skip_accept_encoding=True)
+        connection.putheader("Host", f"127.0.0.1:{world.port}")
+        connection.putheader("Origin", HOSTED)
+        connection.endheaders()
+        response = connection.getresponse()
+        assert response.status == 200
+        assert first_event_sent.wait(GUARD_SECONDS)
+
+        world.daemon.stop()
+
+        assert upstream_closed.wait(GUARD_SECONDS), "the chat stream outlived the listener that forwarded it"
+    finally:
+        connection.close()
+
+
+# 12. The registration is read once, bounded.
+
+
+def test_an_oversized_registration_is_ignored(make_world, chat):
+    world = make_world()
+    padded = json.dumps({"endpoint": chat.endpoint, "token": CHAT_TOKEN}) + " " * (65 * 1024)
+    path = world.support / "chat.json"
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        handle.write(padded)
+
+    reply = world.call(AGENTS)
+
+    assert (reply.status, reply.json()) == (503, {"error": "acp_unavailable"})
+    assert chat.requests == []
