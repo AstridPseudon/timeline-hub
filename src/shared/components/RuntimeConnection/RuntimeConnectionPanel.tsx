@@ -144,7 +144,7 @@ function BlockedPanel() {
   return (
     // No agent button: the fix is a browser site setting, which an agent cannot change.
     <PanelFrame dataState="blocked" title={withBrowser(blocked.title)} sentence={withBrowser(blocked.sentence)} footer={blocked.footer}>
-      <ol className="list-decimal space-y-2 pl-5 text-left text-sm leading-6 text-muted-foreground">
+      <ol className="list-decimal space-y-2 pl-5 text-left text-sm leading-6 text-muted-foreground text-pretty">
         {blocked.steps.map((step) => <li key={step}>{step}</li>)}
       </ol>
     </PanelFrame>
