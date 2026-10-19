@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-19T20:05:57Z | dispatcher heartbeat 5s -->
+<!-- viewing | 2026-10-19T20:11:05Z | dispatcher heartbeat 13s -->
 # viewing — 2026-10-19 20:05 UTC
 Milestone: M1 labels integrated; paired command-projection consumer underway, real App journey pending. M0 COMPLETE. M3 package complete; consumers/parity unfinished.
 Integrated: Composition7aa384a: prior central18pass,1030default samples unchanged; local exact locked build/repeated pack/fresh-consumer smoke PASS. Agent rendering through77e66c13 (current mirror3eba65d2 adds other owners), prior manager151pass. App preview throughd52ef5341 (mirror d47eac0e6), prior manager68pass. Runtime mirror82df3cf. No new gate claim.
