@@ -62,7 +62,7 @@ def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_pa
     package_json.write_text(json.dumps(manifest))
     problem = remotion_runtime.remotion_install_problem(tmp_path)
     assert problem is not None
-    assert "built" in problem or "target" in problem
+    assert "dist directory is missing" in problem
 
     package, staged_manifest = _stage_locked_package(tmp_path / "valid")
     assert staged_manifest == manifest
