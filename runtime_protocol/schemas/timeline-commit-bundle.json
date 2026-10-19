@@ -945,10 +945,8 @@
               "type": "string"
             },
             "payload": {
-              "$ref": "timeline-config.schema.json",
-              "description": "Carries the canonical TimelineConfig fields owned by @banodoco/timeline-schema.",
-              "x-astrid-runtime-schema-owner": "@banodoco/timeline-schema#TimelineConfig",
-              "x-astrid-runtime-schema-sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
+              "$ref": "#/$defs/RawTimelinePayload",
+              "description": "Exact main immutable internal payload, including authored and opaque siblings."
             },
             "revision_id": {
               "minLength": 1,
@@ -1061,14 +1059,15 @@
           "additionalProperties": true,
           "properties": {
             "clips": {
-              "description": "Ordinary timeline clips. Clip field semantics are owned by @banodoco/timeline-schema.",
+              "description": "Raw authored ordinary clips; Agent owns command, timing and reference validation.",
+              "items": {
+                "$ref": "#/$defs/RawClip"
+              },
               "type": "array"
             },
             "config": {
-              "$ref": "timeline-config.schema.json",
-              "description": "Canonical TimelineConfig, materialized from the pinned @banodoco/timeline-schema package.",
-              "x-astrid-runtime-schema-owner": "@banodoco/timeline-schema#TimelineConfig",
-              "x-astrid-runtime-schema-sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
+              "$ref": "#/$defs/RawTimelinePayload",
+              "description": "Exact authored parent config; partial output and opaque fields are preserved."
             },
             "occurrences": {
               "items": {
@@ -1089,6 +1088,154 @@
             "clips",
             "occurrences"
           ],
+          "type": "object"
+        },
+        "RawClip": {
+          "additionalProperties": true,
+          "properties": {
+            "clipType": {
+              "$ref": "timeline-config.schema.json#/definitions/TimelineClip/properties/clipType"
+            },
+            "effects": {
+              "items": {
+                "$ref": "#/$defs/OpenMap"
+              },
+              "type": "array"
+            },
+            "id": {
+              "$ref": "timeline-config.schema.json#/definitions/TimelineClip/properties/id"
+            },
+            "track": {
+              "$ref": "timeline-config.schema.json#/definitions/TimelineClip/properties/track"
+            }
+          },
+          "type": "object"
+        },
+        "RawOutput": {
+          "additionalProperties": true,
+          "description": "Authored output may be partial. Frame rate representations are preserved; Agent owns their timing semantics.",
+          "properties": {
+            "background": {
+              "$ref": "timeline-config.schema.json#/definitions/TimelineOutput/properties/background"
+            },
+            "background_scale": {
+              "$ref": "timeline-config.schema.json#/definitions/TimelineOutput/properties/background_scale"
+            },
+            "file": {
+              "$ref": "timeline-config.schema.json#/definitions/TimelineOutput/properties/file"
+            },
+            "fps": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "additionalProperties": true,
+                  "properties": {
+                    "denominator": {
+                      "type": "number"
+                    },
+                    "numerator": {
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                }
+              ]
+            },
+            "resolution": {
+              "$ref": "timeline-config.schema.json#/definitions/TimelineOutput/properties/resolution"
+            }
+          },
+          "type": "object"
+        },
+        "RawTimelinePayload": {
+          "additionalProperties": true,
+          "description": "Main immutable authoring payload, not a compiled Player configuration. Known containers are typed; missing fields, explicit opaque nulls and unknown siblings are preserved. Agent validates and compiles command/document/timing/reference semantics.",
+          "properties": {
+            "assets": {
+              "items": {
+                "$ref": "#/$defs/OpenMap"
+              },
+              "type": "array"
+            },
+            "audio": {
+              "items": {
+                "$ref": "#/$defs/OpenMap"
+              },
+              "type": "array"
+            },
+            "clips": {
+              "items": {
+                "$ref": "#/$defs/RawClip"
+              },
+              "type": "array"
+            },
+            "effects": {
+              "items": {
+                "$ref": "#/$defs/OpenMap"
+              },
+              "type": "array"
+            },
+            "layout": {
+              "$ref": "#/$defs/OpenMap"
+            },
+            "output": {
+              "$ref": "#/$defs/RawOutput"
+            },
+            "playback": {
+              "$ref": "#/$defs/OpenMap"
+            },
+            "registry": {
+              "$ref": "#/$defs/OpenMap"
+            },
+            "theme": {
+              "$ref": "timeline-config.schema.json#/properties/theme"
+            },
+            "tracks": {
+              "items": {
+                "$ref": "#/$defs/RawTrack"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "RawTrack": {
+          "additionalProperties": true,
+          "properties": {
+            "id": {
+              "$ref": "timeline-config.schema.json#/properties/tracks/items/properties/id"
+            },
+            "kind": {
+              "$ref": "timeline-config.schema.json#/properties/tracks/items/properties/kind"
+            },
+            "label": {
+              "$ref": "timeline-config.schema.json#/properties/tracks/items/properties/label"
+            },
+            "role": {
+              "$ref": "timeline-config.schema.json#/properties/tracks/items/properties/role"
+            },
+            "volume": {
+              "anyOf": [
+                {
+                  "$ref": "timeline-config.schema.json#/properties/tracks/items/properties/volume"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
           "type": "object"
         },
         "ShotAsset": {
@@ -1215,7 +1362,7 @@
       "$id": "https://astrid.haus/workspace/v1/schemas/shot-composition.json",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
-      "description": "Runtime-owned immutable publication envelope. Nested TimelineConfig and ordinary timeline-clip semantics remain owned by @banodoco/timeline-schema and are intentionally not duplicated here.",
+      "description": "Runtime-owned immutable publication envelope. Raw immutable containers preserve authored and opaque data. Compiled TimelineConfig semantics remain owned by @banodoco/timeline-schema.",
       "properties": {
         "content_digest": {
           "pattern": "^sha256:[0-9a-f]{64}$",
@@ -1267,7 +1414,7 @@
       "title": "Canonical one-level shot composition publication",
       "type": "object",
       "x-astrid-runtime-canonical-timeline-owner": "@banodoco/timeline-schema",
-      "x-astrid-runtime-generated-boundary": "Materialize or reference the pinned TimelineConfig schema during generation; do not maintain a second TimelineConfig or TimelineClip definition in this schema.",
+      "x-astrid-runtime-generated-boundary": "Use the pinned TimelineConfig only for compiled data; raw containers reuse compatible common fields without requiring Player completeness.",
       "x-astrid-runtime-owner": "astrid-runtime"
     },
     "https://astrid.haus/workspace/v1/schemas/timeline-commit.json": {
@@ -2080,7 +2227,7 @@
               "$ref": "#/$defs/Digest"
             },
             "payload": {
-              "$ref": "#/$defs/TimelineConfig"
+              "$ref": "#/$defs/RawTimelinePayload"
             },
             "revision_id": {
               "$ref": "#/$defs/ID"
@@ -2412,6 +2559,9 @@
             "semantic_events"
           ],
           "type": "object"
+        },
+        "RawTimelinePayload": {
+          "$ref": "shot-composition.json#/$defs/RawTimelinePayload"
         },
         "Recorder": {
           "additionalProperties": false,

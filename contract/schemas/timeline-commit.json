@@ -54,6 +54,9 @@
     "TimelineConfig": {
       "$ref": "timeline-config.schema.json"
     },
+    "RawTimelinePayload": {
+      "$ref": "shot-composition.json#/$defs/RawTimelinePayload"
+    },
     "Document": {
       "$ref": "document.json"
     },
@@ -283,7 +286,7 @@
           "$ref": "#/$defs/Digest"
         },
         "payload": {
-          "$ref": "#/$defs/TimelineConfig"
+          "$ref": "#/$defs/RawTimelinePayload"
         }
       },
       "required": [
