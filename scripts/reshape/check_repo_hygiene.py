@@ -31,10 +31,12 @@ ROOT_FILE_ALLOWLIST = {
     # scripts/gen_cli_surface.py write them; tests/test_artifact_manifest.py
     # checks them. candidate-dependencies.json is pinned by the pack
     # requirements.txt files under astrid/packs/{comfy_wrap,vibecomfy}.
+    # runtime.lock.json pins the Runtime commit this checkout is tested against.
     "artifacts.json",
     "candidate-dependencies.json",
     "cli-surface.json",
     "pyproject.toml",
+    "runtime.lock.json",
 }
 
 # Legacy scratch notes the owner committed at the repo root. They are not
