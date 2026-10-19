@@ -1,7 +1,3 @@
-# check=skip=SecretsUsedInArgOrEnv
-# VITE_SUPABASE_ANON_KEY is public Vite client config. Docker's stock secret
-# check flags the ARG name, so scripts/quality/check-dockerfile-sensitive-env.mjs
-# enforces the narrower rule this app needs: no sensitive Docker ENV layers.
 # Pinned to satisfy package-lock.json's ^20.19.0 || >=22.12.0 engine constraint.
 # Bumping the FROM tag is the ONLY Node-version authority for production —
 # .nvmrc and engines.node must track this value.
@@ -26,12 +22,8 @@ COPY . .
 # The hosted editor reaches each visitor’s existing Runtime through the local
 # authenticated gateway. The same app serves the public site and all tool routes.
 # Runtime credentials stay outside the image; visitor identity binds at connection.
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
 ARG VITE_API_TARGET_URL
 RUN node scripts/build/verify-astrid-vendor-sources.mjs && \
-    VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
-    VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
     VITE_API_TARGET_URL="$VITE_API_TARGET_URL" \
     VITE_RUNTIME_ORIGIN="http://127.0.0.1:17340" \
     VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID="" \
