@@ -193,6 +193,19 @@ def test_runtime_get_and_head_and_missing_revision():
         store.get("P", "TL", "authoring-parent-revision-missing")
 
 
+@pytest.mark.parametrize("returned_id", [None, B])
+def test_runtime_get_requires_exact_loaded_revision_identity(returned_id):
+    class Timelines:
+        def open_composition(self, project, timeline, *, revision_id=None, **_):
+            summary = {"head_revision_id": A}
+            if returned_id is not None:
+                summary["revision_id"] = returned_id
+            return DomainResult.success({"summary": summary})
+
+    with pytest.raises(TimelineEditError, match="did not prove requested revision"):
+        RuntimeRevisions(Timelines()).get("P", "TL", A)
+
+
 def test_prev_through_runtime_adapter_uses_the_parent_walk():
     store = RuntimeRevisions(FakeTimelines({A: B, B: None}))
     assert resolve_revision("P", "TL", "prev", store=store) == B
@@ -269,6 +282,18 @@ def test_runtime_commit_history_does_not_bypass_public_client_for_private_genera
     store = RuntimeRevisions(Wrapped())
     assert store.head("project", "main") == A
     assert [revision.id for revision in store.list("project", "main")] == [A, B]
+
+
+def test_runtime_commit_history_error_does_not_fall_back_to_parent_links():
+    class Client:
+        def history(self, project, timeline, *, cursor=None, limit=50):
+            return DomainResult.failure(ErrorObject("unavailable", "immutable history is unavailable", {}))
+
+        def open_composition(self, *args, **kwargs):
+            pytest.fail("a present immutable history route must not fall back")
+
+    with pytest.raises(TimelineEditError, match="could not list revisions.*unavailable"):
+        RuntimeRevisions(Client()).list("P", "TL")
 
 
 def test_frozen_history_rejects_duplicate_publication_ids():

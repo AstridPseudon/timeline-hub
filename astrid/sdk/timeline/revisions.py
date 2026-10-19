@@ -8,6 +8,7 @@ model.  Older Runtime clients still get the parent-link fallback below.
 
 from __future__ import annotations
 
+import inspect
 from dataclasses import dataclass
 from typing import Any, Mapping, Protocol
 
@@ -62,6 +63,20 @@ def _text(value: Any) -> str | None:
     return str(value) if isinstance(value, str) and value else None
 
 
+def _supports_history_page(reader: Any, project: str, timeline: str) -> bool:
+    """Recognize the public scoped immutable history signature.
+
+    Older clients may expose a legacy ``history(project, ref)`` helper under
+    the same name. It is not the immutable route and must retain the parent
+    link fallback until the public method grows its cursor/limit contract.
+    """
+    try:
+        inspect.signature(reader).bind(project, timeline, cursor=None, limit=50)
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
 class RuntimeRevisions(RevisionStore):
     """Read immutable revisions and accepted history through the timelines client."""
 
@@ -95,7 +110,11 @@ class RuntimeRevisions(RevisionStore):
     def get(self, project: str, timeline: str, revision_id: str) -> Revision:
         data = self._open(project, timeline, revision_id)
         summary = data.get("summary") or {}
-        actual_id = _text(summary.get("revision_id")) or revision_id
+        actual_id = _text(summary.get("revision_id"))
+        if actual_id != revision_id:
+            raise TimelineEditError(
+                f"Runtime did not prove requested revision {revision_id!r} on {timeline!r}"
+            )
         return Revision(
             id=actual_id,
             source=revision_source(actual_id),
@@ -125,10 +144,20 @@ class RuntimeRevisions(RevisionStore):
         return out
 
     def _commit_reader(self, project: str, timeline: str) -> Any | None:
-        """Find the public frozen commit-history method, if this client has it."""
+        """Find the public immutable history method, if this client has it.
+
+        ``RemoteTimelines`` scopes its public ``history`` call from a project
+        and timeline reference.  ``WorkspaceClient`` exposes the same frozen
+        route directly for callers that already hold canonical IDs.  Once
+        either method exists, errors from that route must propagate instead of
+        silently downgrading to the legacy parent-link walk.
+        """
         direct = getattr(self._client, "list_timeline_commits", None)
         if callable(direct):
             return direct
+        scoped = getattr(self._client, "history", None)
+        if callable(scoped) and _supports_history_page(scoped, project, timeline):
+            return scoped
         return None
 
     @staticmethod

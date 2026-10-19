@@ -9,11 +9,27 @@ import json
 from types import SimpleNamespace
 
 from astrid.packs.timeline import cli, cli_history
+from astrid.sdk import workspace_client
 from astrid.sdk.contracts import DomainResult, ErrorObject
+from astrid.sdk.remote import RemoteAstridClient
 
 A = "authoring-parent-revision-aaaa1111"
 B = "authoring-parent-revision-bbbb2222"
 C = "astrid.editor.timeline.cccc3333"
+
+
+def _history_item(publication_id, revision_id, previous=None):
+    return {
+        "publication_id": publication_id,
+        "revision_id": revision_id,
+        "previous": previous,
+        "receipt": {"created_at": f"{publication_id}-time"},
+        "intent": "recorded",
+        "records": {},
+        "provider_version": "astrid-v1",
+        "compiler_version": "compiler-v1",
+        "publisher": "actor-1",
+    }
 
 
 class FakeTimelines:
@@ -94,6 +110,50 @@ def test_history_routes_through_the_cli_handler(capsys):
     lines = capsys.readouterr().out.splitlines()
     assert code == 0
     assert len(lines) == 3  # header plus the two newest
+
+
+def test_history_uses_real_remote_facade_and_keeps_repeated_publications(monkeypatch, capsys):
+    """Exercise RemoteAstridClient -> RemoteTimelines.history -> WorkspaceClient."""
+
+    same = "authoring-parent-revision-same"
+    later = "authoring-parent-revision-later"
+    pages = {
+        "timelines": ([{"project_id": "project-id", "timeline_id": "timeline-id", "slug": "main"}], None),
+        "history": {
+            "items": [
+                _history_item("pub-0", same),
+                _history_item("pub-1", same, {"publication_id": "pub-0", "revision_id": same}),
+                _history_item("pub-2", later, {"publication_id": "pub-1", "revision_id": same}),
+            ],
+            "next_cursor": None,
+            "head": {"revision_id": later, "publication_id": "pub-2"},
+        },
+    }
+
+    class GeneratedFixture:
+        def __init__(self, endpoint, token):
+            self.endpoint = endpoint
+            self.token = token
+
+        def list_timelines(self, project_id, *, cursor=None, limit=50):
+            assert (project_id, cursor, limit) == ("project", None, 50)
+            return pages["timelines"]
+
+        def list_timeline_commits(self, project_id, timeline_id, *, cursor=None, limit=50):
+            assert (project_id, timeline_id, cursor, limit) == ("project-id", "timeline-id", None, 50)
+            return pages["history"]
+
+    monkeypatch.setattr(workspace_client, "GeneratedWorkspaceClient", GeneratedFixture)
+    workspace = workspace_client.WorkspaceClient("http://127.0.0.1:8765", "token")
+
+    parsed = _parsed(
+        RemoteAstridClient(workspace).timelines,
+        project="project",
+        ref="main",
+    )
+    assert cli_history.run_history(parsed) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert [line.split()[0] for line in lines[1:]] == ["later", "same", "same"]
 
 
 def test_show_ref_resolves_prev_into_revision_id():
