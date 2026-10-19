@@ -37,6 +37,32 @@ async function status(command: string | null, args: string[], env: NodeJS.Proces
   return 'unknown';
 }
 
+async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?: string): Promise<LocalAgentChoice['authStatus']> {
+  if (!command) return 'unknown';
+  try {
+    const { stdout } = await execFileAsync(command, ['auth', 'status'], { env, cwd, encoding: 'utf8' });
+    try {
+      const result: unknown = JSON.parse(stdout);
+      if (typeof result === 'object' && result !== null && typeof Reflect.get(result, 'loggedIn') === 'boolean') {
+        return Reflect.get(result, 'loggedIn') ? 'signed-in' : 'signed-out';
+      }
+      return 'unknown';
+    } catch { /* Older Claude versions may emit text; use their explicit text status. */ }
+  } catch (error) {
+    const stdout = typeof error === 'object' && error !== null ? Reflect.get(error, 'stdout') : undefined;
+    if (typeof stdout === 'string') {
+      try {
+        const result: unknown = JSON.parse(stdout);
+        if (typeof result === 'object' && result !== null && typeof Reflect.get(result, 'loggedIn') === 'boolean') {
+          return Reflect.get(result, 'loggedIn') ? 'signed-in' : 'signed-out';
+        }
+        return 'unknown';
+      } catch { /* Fall back to text only when the JSON output cannot be parsed. */ }
+    }
+  }
+  return status(command, ['auth', 'status', '--text'], env, /Logged in|Authenticated/i, /Not logged in|Run `?claude auth login/i, cwd);
+}
+
 export async function discoverLocalAgents(options: Options = {}): Promise<LocalAgentChoice[]> {
   const env = options.env ?? process.env;
   const [astrid, claude, codex, claudeAdapter, codexAdapter] = await Promise.all([
@@ -44,7 +70,7 @@ export async function discoverLocalAgents(options: Options = {}): Promise<LocalA
     executable('claude-agent-acp', env), executable('codex-acp', env),
   ]);
   const [claudeAuth, codexAuth] = await Promise.all([
-    status(claude, ['auth', 'status', '--text'], env, /Logged in|Authenticated/i, /Not logged in|Run `?claude auth login/i, options.cwd),
+    claudeStatus(claude, env, options.cwd),
     status(codex, ['login', 'status'], env, /Logged in using/i, /Not logged in|Run `?codex login/i, options.cwd),
   ]);
   return [

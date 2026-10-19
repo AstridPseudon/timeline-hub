@@ -157,7 +157,7 @@ export function AgentChatModelSelector({ catalog, onSelectModel, selectionError 
     const authLabel = agent.authStatus === 'signed-in' ? 'Signed in' : agent.authStatus === 'signed-out' ? 'Signed out' : 'Sign-in status unknown';
     if (!agent.adapterInstalled) return { disabled: true, status: 'Available to install', installCommand: agent.installCommand ?? undefined, loginCommand: agent.authStatus === 'signed-out' ? agent.loginCommand ?? undefined : undefined, authLabel };
     if (agent.authStatus === 'signed-out') return { disabled: true, status: 'Signed out', loginCommand: agent.loginCommand ?? undefined, authLabel };
-    if (agent.authStatus === 'unknown') return { disabled: true, status: 'Sign-in status unknown', authLabel };
+    if (agent.authStatus === 'unknown') return { disabled: busy, status: 'Sign-in status unknown', authLabel };
     return { disabled: busy, status: 'Signed in', authLabel };
   };
   const selectAgent = (id: LocalAgentId) => {

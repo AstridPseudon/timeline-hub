@@ -407,7 +407,7 @@ export class AstridAgentSessionStore {
     }
     const choice = catalog.agents.find(candidate => candidate.id === agent);
     if (!choice?.installed || !choice.adapterInstalled) throw new Error(`${choice?.name ?? agent} is not installed or its adapter is unavailable.`);
-    if (choice.authStatus !== 'signed-in') throw new Error(`${choice.name} is not signed in.`);
+    if (choice.authStatus === 'signed-out') throw new Error(`${choice.name} is not signed in.`);
     globalThis.localStorage?.setItem(LOCAL_AGENT_SETTING_KEY, agent);
     return { ...catalog, selectedAgent: agent };
   }
