@@ -1,5 +1,6 @@
 import {prepareCompositionScene, toRuntimeTheme} from '@banodoco/timeline-composition';
 import type {TimelineCompositionProps} from '@banodoco/timeline-composition';
+import * as timelineComposition from '@banodoco/timeline-composition';
 import {resolveHostRegistries} from './host-registries';
 
 // Root's props and the selected composition's frame basis, without a second
@@ -15,11 +16,16 @@ export const prepareHostScene = (props: TimelineCompositionProps,
   if (app?.astrid_render_clock) {
     throw new Error('scene preparation does not evaluate Root RenderClockTail');
   }
+  if (props.compiledTransitions !== undefined
+    && typeof timelineComposition.compileCanonicalTransitions !== 'function') {
+    throw new Error('scene compiled transition carrier unavailable in installed Composition API');
+  }
   // TimelineComposition paints visual tracks in reverse authored order. Clip
   // sorting and all transition/default resolution belong to the public prepare.
   const tracks = [...props.timeline.tracks].reverse().filter(track => track.kind === 'visual')
     .map(track => ({track, clips: props.timeline.clips.filter(clip => clip.track === track.id)}));
   const theme = toRuntimeTheme(props.theme);
   return prepareCompositionScene(tracks, props.assets, basis.fps, theme,
-    basis.width, basis.height, undefined, roles, {}, '', {}, resolveHostRegistries(theme));
+    basis.width, basis.height, undefined, roles, {}, '', {}, resolveHostRegistries(theme),
+    props.compiledTransitions);
 };
