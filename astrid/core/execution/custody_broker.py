@@ -2537,8 +2537,9 @@ class _CommandInventoryOwner:
             raise CustodyError('command inventory Git artifact changed')
 
     def _execute(self, frame: Mapping[str, Any], channel: socket.socket) -> Any:
-        import selectors
+        import queue
 
+        from astrid.core.execution.pipe_io import PipeReader, close_pipe_workers
         from astrid.core.execution.process_group import (
             popen_owned_process,
             terminate_tree,
@@ -2564,6 +2565,7 @@ class _CommandInventoryOwner:
                 'owner_epoch': self.custody.owner_epoch, 'root_generation': binding['generation'],
                 'operation': frame['operation'], 'checkout_sha256': _digest_bytes(os.fsencode(frame['checkout']))})
         process = None
+        readers = []
         try:
             argv = [self.policy['git'], '-C', frame['checkout'], *_COMMAND_GIT_OPERATIONS[frame['operation']]]
             env = dict(frame['environment'])
@@ -2575,37 +2577,37 @@ class _CommandInventoryOwner:
             with self.lock:
                 self.helpers[self.pending] = process
             self.failure_stage = 'helper_stream'
-            selector = selectors.DefaultSelector()
+            events = queue.Queue(maxsize=16)
             output = {'stdout': bytearray(), 'stderr': bytearray()}
             for name in output:
-                selector.register(getattr(process, name), selectors.EVENT_READ, name)
+                readers.append(PipeReader(getattr(process, name), chunk_size=8192, events=events, name=name))
+            open_pipes = set(output)
             deadline = time.monotonic() + 120
-            try:
-                while selector.get_map() or process.poll() is None:
-                    if self.cancelled.is_set() or time.monotonic() >= deadline:
-                        raise CustodyError('command inventory operation cancelled or timed out')
-                    self._authenticate(channel)
-                    self.failure_stage = 'helper_stream'
-                    try:
-                        queued = channel.recv(1, socket.MSG_PEEK | socket.MSG_DONTWAIT)
-                        if queued == b'':
-                            raise CustodyError('command inventory caller disconnected')
-                        if queued:
-                            raise CustodyError('command inventory concurrent operation is forbidden')
-                    except BlockingIOError:
-                        pass
-                    for key, _ in selector.select(.05):
-                        value = os.read(key.fd, 8192)
-                        if not value:
-                            selector.unregister(key.fileobj)
-                        else:
-                            output[key.data].extend(value)
-                            if len(output[key.data]) > (16 * 1024 * 1024 if key.data == 'stdout' else 1024 * 1024):
-                                raise CustodyError('command inventory output exceeded its bound')
-                self.failure_stage = 'helper_original_wait'
-                code = process.wait(timeout=0)
-            finally:
-                selector.close()
+            while open_pipes or process.poll() is None:
+                if self.cancelled.is_set() or time.monotonic() >= deadline:
+                    raise CustodyError('command inventory operation cancelled or timed out')
+                self._authenticate(channel)
+                self.failure_stage = 'helper_stream'
+                try:
+                    queued = channel.recv(1, socket.MSG_PEEK | socket.MSG_DONTWAIT)
+                    if queued == b'':
+                        raise CustodyError('command inventory caller disconnected')
+                    if queued:
+                        raise CustodyError('command inventory concurrent operation is forbidden')
+                except BlockingIOError:
+                    pass
+                try:
+                    name, value = PipeReader.receive(events, deadline=min(deadline, time.monotonic() + .05))
+                except TimeoutError:
+                    continue
+                if not value:
+                    open_pipes.remove(name)
+                else:
+                    output[name].extend(value)
+                    if len(output[name]) > (16 * 1024 * 1024 if name == 'stdout' else 1024 * 1024):
+                        raise CustodyError('command inventory output exceeded its bound')
+            self.failure_stage = 'helper_original_wait'
+            code = process.wait(timeout=0)
             observer = getattr(process._astrid_custody, '_observer', None)
             if observer is not None:
                 observer.join(2)
@@ -2639,11 +2641,17 @@ class _CommandInventoryOwner:
             self.error = self.error or error
             raise CustodyError('command inventory ownership remains uncertain') from error
         finally:
-            if process is not None:
-                for name in ('stdout', 'stderr'):
-                    stream = getattr(process, name, None)
-                    if stream is not None:
-                        stream.close()
+            try:
+                close_pipe_workers(*readers)
+            except Exception as error:
+                self._retain_first_failure(error)
+                raise CustodyError('command inventory ownership remains uncertain') from error
+            finally:
+                if process is not None:
+                    for name in ('stdout', 'stderr'):
+                        stream = getattr(process, name, None)
+                        if stream is not None:
+                            stream.close()
 
     def abort_before_release(self) -> None:
         with self.lock:

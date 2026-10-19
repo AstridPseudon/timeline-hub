@@ -10,7 +10,6 @@ import hashlib
 import shutil
 import stat
 import os
-import select
 import socket
 import subprocess
 import tempfile
@@ -20,6 +19,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from astrid.core.subprocess_env import build_child_subprocess_env
+from .pipe_io import PipeReader, PipeWriter, close_pipe_workers
 from .process_group import popen_owned_group, observe_tree, verify_tree_absent, release_group, terminate_tree
 from .warm_hold import WarmHolds, idle_seconds
 
@@ -71,13 +71,10 @@ class _PipeReader:
         self.stream, self.deadline, self.guard = stream, time.monotonic() + timeout, guard
 
     def recv(self, count):
-        while True:
-            remaining = self.deadline - time.monotonic()
-            if remaining <= 0:
-                raise TimeoutError("original Remotion worker response timed out")
-            self.guard()
-            if select.select([self.stream], [], [], min(0.1, remaining))[0]:
-                return os.read(self.stream.fileno(), count)
+        try:
+            return self.stream.read(count, deadline=self.deadline, guard=self.guard, poll_interval=0.1)
+        except TimeoutError as error:
+            raise TimeoutError("original Remotion worker response timed out") from error
 
 
 def _file_identity(path):
@@ -105,7 +102,7 @@ class HostRemotionSession:
         self._leases = set()
         self._holds = holds if holds is not None else WarmHolds()
         self._stderr = bytearray()
-        self._stderr_thread = None
+        self._stdout_reader = self._stderr_reader = self._stdin_writer = None
         self._idle_seconds = 45.0
 
     def lease(self, environment, *, attempt, requested_idle=None):
@@ -150,6 +147,10 @@ class HostRemotionSession:
                 verify_tree_absent(process)
             except BaseException as exc:
                 note += f"; old process group {getattr(process, 'pid', '?')} not confirmed gone: {exc}"
+            try:
+                self._close_pipes()
+            except Exception as exc:
+                note += f"; old process pipes not confirmed closed: {exc}"
             self._untrack(process)
             for stream in (process.stdin, process.stdout, process.stderr):
                 try:
@@ -159,17 +160,18 @@ class HostRemotionSession:
         if root is not None:
             self._retire(root)
         self.process = self.identity = self.root = self._root_identity = None
+        self._stdout_reader = self._stderr_reader = self._stdin_writer = None
         self.uncertain = None
         self._report(note)
 
-    def _capture_stderr(self, process):
-        while True:
-            chunk = process.stderr.read(4096)
-            if not chunk:
-                return
-            # Retain only bounded original-child diagnostics, never env values.
-            self._stderr.extend(chunk)
-            del self._stderr[:-65536]
+    def _capture_stderr(self, chunk):
+        # Retain only bounded original-child diagnostics, never env values.
+        self._stderr.extend(chunk)
+        del self._stderr[:-65536]
+
+    def _close_pipes(self):
+        close_pipe_workers(self._stdout_reader, self._stderr_reader, self._stdin_writer)
+        self._stdout_reader = self._stderr_reader = self._stdin_writer = None
 
     def _start(self, lease, identity):
         # Caller renderer identity is only one cache input, never authority to
@@ -209,8 +211,8 @@ class HostRemotionSession:
             raise
         self.identity = identity
         self._track(self.process)
-        self._stderr_thread = threading.Thread(target=self._capture_stderr, args=(self.process,), daemon=True)
-        self._stderr_thread.start()
+        self._stdout_reader = PipeReader(self.process.stdout)
+        self._stderr_reader = PipeReader(self.process.stderr, chunk_size=4096, sink=self._capture_stderr)
 
     def _exchange(self, request, *, timeout=300.0):
         process = self.process
@@ -218,27 +220,19 @@ class HostRemotionSession:
         data = json.dumps(request, separators=(",", ":")).encode() + b"\n"
         if len(data) > _LIMIT:
             raise ValueError("renderer request exceeds bound")
-        descriptor = process.stdin.fileno()
-        blocking = os.get_blocking(descriptor)
         deadline = time.monotonic() + timeout
+        self._guard()
+        if deadline <= time.monotonic():
+            raise TimeoutError("original Remotion worker request write timed out")
+        if self._stdin_writer is None:
+            self._stdin_writer = PipeWriter(process.stdin)
         try:
-            os.set_blocking(descriptor, False)
-            pending = memoryview(data)
-            while pending:
-                self._guard()
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise TimeoutError("original Remotion worker request write timed out")
-                if not select.select([], [descriptor], [], min(0.1, remaining))[1]:
-                    continue
-                try:
-                    written = os.write(descriptor, pending)
-                except BlockingIOError:
-                    continue
-                pending = pending[written:]
-        finally:
-            os.set_blocking(descriptor, blocking)
-        response = _read(_PipeReader(process.stdout, timeout=max(0, deadline-time.monotonic()), guard=self._guard))
+            self._stdin_writer.write(data, deadline=deadline, guard=self._guard, poll_interval=0.1)
+        except TimeoutError as error:
+            raise TimeoutError("original Remotion worker request write timed out") from error
+        if self._stdout_reader is None:
+            self._stdout_reader = PipeReader(process.stdout)
+        response = _read(_PipeReader(self._stdout_reader, timeout=max(0, deadline-time.monotonic()), guard=self._guard))
         observe_tree(process)
         if response.get("cleanup_uncertain") is True:
             self.uncertain = RuntimeError(str(response.get("cleanup_error") or "original Chrome cleanup unresolved"))
@@ -359,11 +353,14 @@ class HostRemotionSession:
         except BaseException as error:
             self.uncertain = self.uncertain or error
             raise
+        finally:
+            if process.poll() is not None:
+                try:
+                    self._close_pipes()
+                except BaseException as error:
+                    self.uncertain = self.uncertain or error
+                    raise
         try:
-            if self._stderr_thread:
-                self._stderr_thread.join(timeout=1.0)
-                if self._stderr_thread.is_alive():
-                    raise RuntimeError("original Remotion stderr pipe remains live")
             self._retire_root()
         except BaseException as error:
             self.uncertain = self.uncertain or error
