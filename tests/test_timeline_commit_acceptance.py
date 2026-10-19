@@ -35,8 +35,7 @@ def realm(tmp_path):
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
     project = service.create_project({"slug": "acceptance", "name": "Acceptance"}, idempotency_key="project")["id"]
-    service.create_timeline_document(project, {"timeline_id": "main", "slug": "main", "name": "Main", "config": {}, "registry": {}},
-                                     idempotency_key="timeline")
+    service.create_timeline(project, "main", name="Main", idempotency_key="timeline")
     commits = TimelineCommitStore(service.store, validate_prepared=validate_prepared)
     head = commits.bootstrap(project, "main", authorize=lambda: None)
     yield service, commits, project, head, root
