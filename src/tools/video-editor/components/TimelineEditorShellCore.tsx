@@ -3,7 +3,8 @@ import { useDataKindRegistrySnapshot } from '@/tools/video-editor/data-kinds/Dat
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CommandPalette } from '@/tools/video-editor/components/CommandPalette/CommandPalette.tsx';
-import { Eye, Maximize2, SlidersHorizontal } from 'lucide-react';
+import { Maximize2 } from 'lucide-react';
+import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/shared/components/ui/alert-dialog.tsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -19,6 +20,7 @@ import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManag
 import {
   HOST_PROPERTIES_PANEL_KEY,
   VideoEditorRightPanelDock,
+  type VideoEditorRightPanelTab,
 } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorRightPanelDock.tsx';
 import { ElementsLibraryPanel } from '@/tools/video-editor/components/ElementsLibraryPanel.tsx';
 import {
@@ -246,7 +248,7 @@ function TimelineEditorShellCoreComponent({
     onDividerLostPointerCapture,
     gridTemplateRows,
   } = useTimelineShellDividerDrag(hasActivityRegion);
-  const [condensedRightPanel, setCondensedRightPanel] = useState<'preview' | 'properties'>('preview');
+  const [condensedRightPanel, setCondensedRightPanel] = useState<VideoEditorRightPanelTab>('video');
   const [isMobilePropertiesOpen, setIsMobilePropertiesOpen] = useState(false);
   const [isElementsOpen, setIsElementsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -409,11 +411,9 @@ function TimelineEditorShellCoreComponent({
   }, [forceCondensed, aspectRatio, isTimelineMaximized]);
 
   const mobileSinglePane = isPhone && !forceCondensed;
-  // Keep the full editable timeline branch while the existing generations
-  // pane is open.  The pane consumes bottom height; switching to the
-  // condensed branch at that point collapses the timeline to zero height and
-  // prevents the supported gallery-to-timeline drag flow.
-  const condensed = forceCondensed || (tooSmall && !isGenerationsPaneOpen) || mobileSinglePane || (isOnEditorPage && isEditorPaneLocked);
+  // Give the timeline the available height and move Video into the sidebar
+  // when the generations pane is pinned or there isn't room to stack both.
+  const condensed = forceCondensed || tooSmall || (isGenerationsPaneOpen && isGenerationsPaneLocked) || mobileSinglePane || (isOnEditorPage && isEditorPaneLocked);
   const hasClipSelection = selectedClipIdsList.length > 0;
   const mobilePropertiesTitle = hasClipSelection
     ? selectedClipIdsList.length > 1
@@ -465,12 +465,13 @@ function TimelineEditorShellCoreComponent({
   }, [editorData.inspectorTarget, editorData.selectedTrackId, editorData.selectedDataItems, editorOps, inspectorTarget, selectedClipIdsList]);
 
   useEffect(() => {
-    if (isTablet && condensed && hasClipSelection && condensedRightPanel !== 'properties') {
-      setCondensedRightPanel('properties');
-    }
-  }, [condensed, condensedRightPanel, hasClipSelection, isTablet]);
+    if (condensed) setCondensedRightPanel('video');
+  }, [condensed, isGenerationsPaneOpen, isGenerationsPaneLocked]);
 
   const previewSurface = useVideoEditorPreviewSurface({ compact: condensed, touchChrome });
+  // The shell owns the portal outside the changing layout branches. Panels
+  // only provide slots, so moving the host preserves the mounted player.
+  const previewPanelSurface = useMemo(() => ({ ...previewSurface, portal: null }), [previewSurface]);
 
   const {
     compileOnlyExportFormats,
@@ -505,7 +506,6 @@ function TimelineEditorShellCoreComponent({
     ?? 'dock';
   const hasCustomRightPanelSlot = Boolean(rightPanelSlot || inspectorPanelSlot);
   const hostPaneClosed = !hasCustomRightPanelSlot && !selectedRightPanelExists;
-  const visibleCondensedRightPanel = hostPaneClosed ? 'preview' : condensedRightPanel;
   const showFullHeightHostDock = !hasCustomRightPanelSlot
     && selectedRightPanelExists
     && rightPanelLayout === 'dock';
@@ -548,18 +548,14 @@ function TimelineEditorShellCoreComponent({
     return getTimelineDurationInFrames(outputConfig, outputConfig.output.fps) / outputConfig.output.fps;
   }, [editorData.resolvedConfig]);
 
-  const openInspector = useCallback(() => {
-    editorOps.setSelectedRightPanelId(HOST_PROPERTIES_PANEL_KEY);
-    editorOps.setInspectorTarget(inspectorTarget);
-    editorOps.setContextTarget(inspectorTarget);
-
-    if (mobileSinglePane) {
-      setIsMobilePropertiesOpen(true);
-      return;
-    }
-
-    setCondensedRightPanel('properties');
-  }, [editorOps, inspectorTarget, mobileSinglePane]);
+  // The condensed desktop/tablet layout hosts Video in the right dock, whose
+  // tabs replace the overlay's Inspector button and panel reopen control.
+  const sidebarVideo = condensed && !mobileSinglePane;
+  // Expand returns Video to the main area: unlock the pinned gallery on the
+  // editor page, or open the editor from elsewhere. Otherwise there's no bigger view.
+  const expandsByUnlocking = Boolean(isOnEditorPage && isGenerationsPaneLocked && onSetGenerationsPaneLocked);
+  const showExpandVideo = sidebarVideo && (expandsByUnlocking || (!isOnEditorPage && Boolean(onOpenEditorRoute)));
+  const expandVideoLabel = expandsByUnlocking ? 'Expand video' : 'Open editor';
 
   const handleInteractionModeChange = useCallback((mode: TimelineSwitchableMode) => {
     editorOps.setInteractionMode(mode);
@@ -653,13 +649,21 @@ function TimelineEditorShellCoreComponent({
         // whole layout, but the app's right-hand pane tab lands exactly on this
         // chip row there and was covering the Render button. Inset the row alone.
         mobileSinglePane && 'pr-14',
+        // Desktop reserves no rail gutter, so in the sidebar the same tab
+        // floats over the dock's right edge. Keep Render clear of it.
+        sidebarVideo && mainPaddingInline === undefined && 'pr-10',
       )}
       data-shell-interaction="true"
     >
       <div className="pointer-events-auto flex min-w-0 max-w-[min(75%,32rem)] flex-col items-start gap-1">
         {previewControls && (
           <div
-            className="flex min-w-0 max-w-full flex-wrap items-center gap-2"
+            className={cn(
+              'flex min-w-0 max-w-full flex-wrap items-center gap-2',
+              // The sidebar is too narrow for the picker's captions; the
+              // selector names its timeline and New timeline keeps its icon.
+              sidebarVideo && '[&_[data-picker-label]]:sr-only',
+            )}
             data-testid="video-editor-editor-navigation-controls"
           >
             {previewControls}
@@ -682,37 +686,23 @@ function TimelineEditorShellCoreComponent({
             mobilePropertiesDescription={mobilePropertiesDescription}
           />
         )}
-        {condensed && !mobileSinglePane && !hostPaneClosed && (
-          <Button
-            type="button"
-            size="sm"
-            variant={condensedRightPanel === 'properties' ? 'secondary' : hasClipSelection ? 'outline' : 'ghost'}
-            className={cn(
-              `gap-1.5 ${previewActionButtonClass}`,
-              hasClipSelection && condensedRightPanel !== 'properties' && 'border-sky-400/60 text-sky-100 hover:bg-sky-500/10',
-            )}
-            onClick={openInspector}
-          >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            {inspectorButtonLabel}
-          </Button>
-        )}
-        {condensed && !mobileSinglePane && (
+        {showExpandVideo && (
           <Button
             type="button"
             size="sm"
             variant="outline"
-            className={`gap-1.5 ${previewActionButtonClass}`}
+            aria-label={expandVideoLabel}
+            title={expandVideoLabel}
+            className={cn(previewActionButtonClass, 'aspect-square px-0')}
             onClick={() => {
-              if (isOnEditorPage && isGenerationsPaneLocked && onSetGenerationsPaneLocked) {
-                onSetGenerationsPaneLocked(false);
+              if (expandsByUnlocking) {
+                onSetGenerationsPaneLocked?.(false);
               } else {
                 onOpenEditorRoute?.(timelineId);
               }
             }}
           >
-            <Maximize2 className="h-3 w-3" />
-            Editor
+            <Maximize2 className="h-3.5 w-3.5" />
           </Button>
         )}
         {hasAnyExportFormat && (
@@ -724,7 +714,7 @@ function TimelineEditorShellCoreComponent({
         )}
         <TimelineRenderControls
           previewActionButtonClass={previewActionButtonClass}
-          afterRenderControl={!hasCustomRightPanelSlot ? <VideoEditorPanelDisplayControl visible={hostPaneClosed} className="video-editor-panel-reopen-motion" /> : undefined}
+          afterRenderControl={!hasCustomRightPanelSlot && !sidebarVideo ? <VideoEditorPanelDisplayControl visible={hostPaneClosed} className="video-editor-panel-reopen-motion" /> : undefined}
         />
       </div>
     </div>
@@ -890,7 +880,7 @@ function TimelineEditorShellCoreComponent({
             <div className="flex min-h-0 min-w-0 flex-col gap-3">
               <div className="relative min-h-0 flex-1">
                 {previewOverlay}
-                <PreviewPanel surface={previewSurface} />
+                <PreviewPanel surface={previewPanelSurface} />
               </div>
               <div className="rounded-xl border border-border bg-card/80 px-3 py-2">
                 <PlaybackSlider max={Math.max(1, totalSeconds)} />
@@ -915,71 +905,47 @@ function TimelineEditorShellCoreComponent({
           <main
             data-layout-settling={layoutSettling ? '' : undefined}
             className={cn(
-              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 duration-200 motion-reduce:animate-none motion-reduce:transition-none grid-cols-[minmax(0,1fr)_320px] gap-3 overflow-x-clip p-3 transition-opacity',
+              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-y-3 overflow-x-clip p-3 transition-opacity',
               shellEntrance,
               hasActivityRegion ? 'grid-rows-[auto_auto_minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
             )}
-            style={{ paddingInline: mainPaddingInline }}
+            style={{
+              paddingInline: mainPaddingInline,
+              gridTemplateColumns: 'minmax(0,1fr) minmax(0, calc(min(420px, 32vw, calc(100vw - 24px)) + 12px))',
+            }}
           >
-            <div className="col-span-1">
-              {toolbar}
+            <div style={{ gridColumn: 1, gridRow: 1 }}>
+              {toolbarSlot ?? toolbar}
             </div>
 
             {/* Extension activity region — only mounted when it has content. */}
-            {hasActivityRegion && <div className="col-span-1">{activityRegion}</div>}
+            {hasActivityRegion && <div style={{ gridColumn: 1, gridRow: 2 }}>{activityRegion}</div>}
 
-            <div className={cn(
-              hasActivityRegion ? 'row-span-3' : 'row-span-2',
-              'flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95',
-            )}>
-              {!hostPaneClosed && <div className="flex items-center border-b border-border">
-                <button
-                  type="button"
-                  className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.12em] transition-colors motion-reduce:transition-none ${condensedRightPanel === 'preview' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                  onClick={() => setCondensedRightPanel('preview')}
-                >
-                  <Eye className="h-3 w-3" />
-                  Preview
-                </button>
-                <button
-                  type="button"
-                  className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 border px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.12em] transition-colors motion-reduce:transition-none ${condensedRightPanel === 'properties' ? 'border-transparent bg-accent text-foreground' : editorData.selectedClipIds.size > 0 ? 'border-sky-400 text-muted-foreground hover:text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
-                  onClick={openInspector}
-                >
-                  <SlidersHorizontal className="h-3 w-3" />
-                  {inspectorButtonLabel}
-                </button>
-              </div>}
-
-              <div
-                className={cn('relative flex min-h-0 flex-1 flex-col', visibleCondensedRightPanel !== 'preview' && 'hidden')}
-                aria-hidden={visibleCondensedRightPanel !== 'preview'}
-              >
-                {previewOverlay}
-                <div className="min-h-0 flex-1">
-                  <div ref={previewSurface.slotRef} className="flex h-full w-full min-h-0 items-center justify-center" />
-                </div>
-                <div className="border-t border-border px-3 py-2">
-                  <PlaybackSlider max={Math.max(1, totalSeconds)} />
-                </div>
-              </div>
-              <div
-                className={cn('min-h-0 flex-1 overflow-auto p-3', visibleCondensedRightPanel !== 'properties' && 'hidden')}
-                aria-hidden={visibleCondensedRightPanel !== 'properties'}
-              >
-                <PropertiesPanel />
-              </div>
-            </div>
-
-            <div className="relative col-span-1 min-h-0 overflow-hidden">
+            <div className="relative min-h-0 min-w-0 overflow-hidden" {...shellRegionAttrs('timeline')} style={{ gridColumn: 1, gridRow: hasActivityRegion ? 3 : 2 }}>
               {timelineRegion}
+              {timelineFooterSlot}
             </div>
 
             <VideoEditorRightPanelDock
               key="video-editor-right-panel-dock"
               leftPanelPresent={false}
-              responsive
-              rightInset={isTablet ? APP_PANE_RAIL_GUTTER_PX : 12}
+              video={{
+                activeTab: condensedRightPanel,
+                onTabChange: setCondensedRightPanel,
+                content: <>
+                  {/* One continuous stage: letterbox bars share the frame's
+                      black instead of showing slivers of panel. */}
+                  <div className="relative min-h-0 flex-1 bg-[var(--video-editor-stage-bg)]" style={VIDEO_EDITOR_THEME_VARS} {...shellRegionAttrs('preview')}>
+                    {previewOverlay}
+                    <div ref={previewSurface.slotRef} data-testid="video-editor-preview-surface" className="flex h-full w-full min-h-0 items-center justify-center" />
+                  </div>
+                  {/* Pointer layouts scrub on the adjacent timeline, as the
+                      main preview does; touch keeps a larger scrub target. */}
+                  {touchChrome && <div className="shrink-0 border-t border-border px-3 py-2">
+                    <PlaybackSlider max={Math.max(1, totalSeconds)} />
+                  </div>}
+                </>,
+              }}
               onOpenExtensionManager={openExtensionManager}
               extensionManagerOpen={isExtensionManagerOpen}
             />
@@ -1017,7 +983,7 @@ function TimelineEditorShellCoreComponent({
 
             <div ref={previewAreaRef} className="relative min-h-0" {...shellRegionAttrs('preview')} style={{ gridColumn: leftPanelSlot ? '2' : '1', gridRow: '1' }}>
               {previewOverlay}
-              <PreviewPanel surface={previewSurface} />
+              <PreviewPanel surface={previewPanelSurface} />
             </div>
 
             {hasCustomRightPanelSlot && (
@@ -1058,13 +1024,7 @@ function TimelineEditorShellCoreComponent({
 
         {reservedSlots}
       </div>
-      {/* Render the shared preview portal here only when the rendered layout
-          hosts it on a bare `previewSurface.slotRef` — that is the condensed
-          branch alone. `condensed` is also true for single-pane phone, but
-          that branch renders <PreviewPanel>, which mounts this same portal
-          itself, so it has to be excluded or the phone layout mounts a second
-          <RemotionPreview> beside the first. */}
-      {condensed && !mobileSinglePane && previewPortal}
+      {previewPortal}
       {/* Extension-contributed dialog slot */}
       {dialogsSlot}
       <Dialog open={isExtensionManagerOpen} onOpenChange={setIsExtensionManagerOpen}>

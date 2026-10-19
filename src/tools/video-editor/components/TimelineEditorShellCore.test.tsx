@@ -400,13 +400,12 @@ describe('TimelineEditorShellCore surface slots', () => {
   });
 
   // ---- Shared preview portal ownership --------------------------------------
-  it('does not mount the shared preview portal next to PreviewPanel on phone', () => {
+  it('keeps a single shell-owned preview portal on phone', () => {
     __deviceClass = 'phone';
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
 
-    // PreviewPanel mounts the portal itself, so the shell must not mount a second one.
     expect(screen.getAllByTestId('preview-panel')).toHaveLength(1);
-    expect(screen.queryByTestId('preview-portal')).toBeNull();
+    expect(screen.getAllByTestId('preview-portal')).toHaveLength(1);
   });
 
   it('mounts the shared preview portal for the condensed layout, which has no PreviewPanel', () => {
@@ -422,12 +421,96 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(screen.queryByTestId('preview-panel')).toBeNull();
 
     rerender(<TimelineEditorShellCore timelineId="test-timeline" />);
-    expect(screen.queryByTestId('preview-portal')).toBeNull();
+    expect(screen.getAllByTestId('preview-portal')).toHaveLength(1);
     expect(screen.getAllByTestId('preview-panel')).toHaveLength(1);
 
     rerender(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed />);
     expect(screen.getAllByTestId('preview-portal')).toHaveLength(1);
     expect(screen.queryByTestId('preview-panel')).toBeNull();
+  });
+
+  it.each(['dock', 'compact'])('uses the sidebar Video tab when locked and restores the %s layout on unlock', (layout) => {
+    __editorPreferences = { ...__editorPreferences, rightPanelLayoutSlotsByPanelId: { 'host:properties': layout } };
+    const { rerender } = render(<TimelineEditorShellCore timelineId="test-timeline" isGenerationsPaneOpen />);
+    expect(screen.getByTestId('preview-panel')).toBeInTheDocument();
+
+    rerender(<TimelineEditorShellCore timelineId="test-timeline" isGenerationsPaneOpen isGenerationsPaneLocked />);
+    const dock = screen.getByRole('region', { name: 'Video editor right panel' });
+    const tabs = within(dock).getAllByRole('tab');
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Video', 'Inspector', 'Extensions']);
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    expect(within(dock).getByTestId('video-editor-preview-surface')).toBeInTheDocument();
+    expect(screen.queryByTestId('preview-panel')).toBeNull();
+    expect(dock.style.gridRow).toBe('1 / -1');
+    const timeline = screen.getByTestId('timeline-editor').parentElement;
+    expect(timeline).toHaveAttribute('data-video-editor-shell-region', 'timeline');
+    expect(timeline?.style.gridColumn).toBe('1');
+    expect(timeline?.style.gridRow).toBe('2');
+
+    fireEvent.click(tabs[1]);
+    expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
+    rerender(<TimelineEditorShellCore timelineId="test-timeline" isGenerationsPaneOpen />);
+    expect(screen.queryByRole('tab', { name: 'Video' })).toBeNull();
+    expect(screen.getByTestId('preview-panel')).toBeInTheDocument();
+    expect(dock).toHaveAttribute('data-layout', layout);
+    rerender(<TimelineEditorShellCore timelineId="test-timeline" isGenerationsPaneOpen isGenerationsPaneLocked />);
+    expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('moves Video into the sidebar when space is tight with generations open and restores it when space returns', () => {
+    let reportSize: (width: number, height: number) => void = () => { throw new Error('Shell was not observed'); };
+    const OriginalResizeObserver = globalThis.ResizeObserver;
+    globalThis.ResizeObserver = class {
+      constructor(private callback: ResizeObserverCallback) {}
+      observe(target: Element) {
+        if (target.hasAttribute('data-video-editor-instance')) {
+          reportSize = (width, height) => this.callback(
+            [{ target, contentRect: { width, height } } as ResizeObserverEntry],
+            this as unknown as ResizeObserver,
+          );
+        }
+      }
+      unobserve() {}
+      disconnect() {}
+    };
+    try {
+      render(<TimelineEditorShellCore timelineId="test-timeline" isGenerationsPaneOpen />);
+      act(() => reportSize(1200, 300));
+      expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByTestId('video-editor-right-panel-dock')).toContainElement(screen.getByTestId('video-editor-preview-surface'));
+      expect(screen.getByTestId('timeline-editor')).toBeInTheDocument();
+      act(() => reportSize(1200, 900));
+      expect(screen.queryByRole('tab', { name: 'Video' })).toBeNull();
+      expect(screen.getByTestId('preview-panel')).toBeInTheDocument();
+    } finally {
+      globalThis.ResizeObserver = OriginalResizeObserver;
+    }
+  });
+
+  it('requires the generations pane to be open for its lock to move Video', () => {
+    render(<TimelineEditorShellCore timelineId="test-timeline" isGenerationsPaneLocked />);
+    expect(screen.queryByRole('tab', { name: 'Video' })).toBeNull();
+    expect(screen.getByTestId('preview-panel')).toBeInTheDocument();
+  });
+
+  it('keeps keyboard focus and selection together across all three sidebar tabs', () => {
+    render(<TimelineEditorShellCore timelineId="test-timeline" isGenerationsPaneOpen isGenerationsPaneLocked />);
+    const [video, inspector, extensions] = within(screen.getByRole('tablist', { name: 'Right panel surface' })).getAllByRole('tab');
+    expect(video).toHaveAttribute('tabindex', '0');
+    expect(inspector).toHaveAttribute('tabindex', '-1');
+    fireEvent.keyDown(video, { key: 'ArrowRight' });
+    expect(inspector).toHaveFocus();
+    expect(inspector).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(inspector, { key: 'End' });
+    expect(extensions).toHaveFocus();
+    expect(extensions).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(extensions, { key: 'ArrowRight' });
+    expect(video).toHaveFocus();
+    fireEvent.keyDown(video, { key: 'ArrowLeft' });
+    expect(extensions).toHaveFocus();
+    fireEvent.keyDown(extensions, { key: 'Home' });
+    expect(video).toHaveFocus();
+    expect(video).toHaveAttribute('aria-selected', 'true');
   });
 
   // ---- Baseline rendering ---------------------------------------------------
@@ -746,9 +829,18 @@ describe('TimelineEditorShellCore surface slots', () => {
     __editorPreferences = { selectedRightPanelId: null, rightPanelLayoutSlotsByPanelId: {}, showDataLanes: false };
     render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed={device === 'desktop'} />);
     expect(screen.queryByRole('button', { name: /Inspector|Properties/ })).toBeNull();
-    expect(screen.queryByRole('tablist', { name: 'Right panel surface' })).toBeNull();
-    expect(screen.getAllByRole('button', { name: 'Panel display' })).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Render' }).nextElementSibling).toBe(screen.getByRole('button', { name: 'Panel display' }));
+    if (device === 'desktop') {
+      expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
+    } else {
+      expect(screen.queryByRole('tablist', { name: 'Right panel surface' })).toBeNull();
+    }
+    if (device === 'desktop') {
+      // The sidebar stays open around Video; its tabs reopen Inspector and Extensions.
+      expect(screen.queryByRole('button', { name: 'Panel display' })).toBeNull();
+    } else {
+      expect(screen.getAllByRole('button', { name: 'Panel display' })).toHaveLength(1);
+      expect(screen.getByRole('button', { name: 'Render' }).nextElementSibling).toBe(screen.getByRole('button', { name: 'Panel display' }));
+    }
   });
   it('keeps the retained extension dock across condensed and desktop layouts', () => {
     const panelId = 'haus.astrid.transcript-lane:transcript-lane-panel';
@@ -756,7 +848,9 @@ describe('TimelineEditorShellCore surface slots', () => {
     __editorPreferences = { selectedRightPanelId: panelId, rightPanelLayoutSlotsByPanelId: { [panelId]: 'compact' }, showDataLanes: false };
     const { rerender } = render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed />);
     const dock = screen.getByRole('region', { name: 'Video editor right panel' });
-    expect(dock).toHaveAttribute('data-responsive', 'true'); expect(dock).toHaveAttribute('data-open', 'true');
+    expect(dock).toHaveAttribute('data-responsive', 'false'); expect(dock).toHaveAttribute('data-open', 'true');
+    expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Extensions' }));
     expect(screen.getByRole('button', { name: 'Active extension' })).toHaveTextContent('Active · Transcript');
     rerender(<TimelineEditorShellCore timelineId="test-timeline" />);
     expect(screen.getByRole('region', { name: 'Video editor right panel' })).toBe(dock);

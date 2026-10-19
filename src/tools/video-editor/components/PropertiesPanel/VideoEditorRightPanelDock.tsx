@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { ChevronDown, Settings2 } from 'lucide-react';
 import { PropertiesPanel } from './PropertiesPanel';
 import { VideoEditorAssetPanelSurface } from './VideoEditorAssetPanelSurface';
@@ -8,12 +8,14 @@ import { useVideoEditorAssetPanels } from '@/tools/video-editor/runtime/useVideo
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { defaultPreferences } from '@/tools/video-editor/hooks/useEditorPreferences';
 import { shellRegionAttrs } from '@/tools/video-editor/lib/timeline-dom';
+import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/shared/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManager';
 
 import { HOST_PROPERTIES_PANEL_KEY, VideoEditorPanelDisplayControl } from './VideoEditorPanelDisplayControl';
 export { HOST_PROPERTIES_PANEL_KEY } from './VideoEditorPanelDisplayControl';
+export type VideoEditorRightPanelTab = 'video' | 'inspector' | 'extensions';
 export interface VideoEditorRightPanelDockProps {
   readonly leftPanelPresent: boolean;
   readonly responsive?: boolean;
@@ -26,6 +28,12 @@ export interface VideoEditorRightPanelDockProps {
   /** Use the editor shell's shared Extension Manager dialog. */
   readonly onOpenExtensionManager?: () => void;
   readonly extensionManagerOpen?: boolean;
+  /** The condensed shell's transient Video surface; host panel preferences stay intact. */
+  readonly video?: {
+    content: ReactNode;
+    activeTab: VideoEditorRightPanelTab;
+    onTabChange: (tab: VideoEditorRightPanelTab) => void;
+  };
 }
 const control = 'flex h-8 min-h-10 sm:min-h-8 min-w-0 items-center gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
@@ -39,6 +47,7 @@ export function VideoEditorRightPanelDock({
   measuredHeight,
   onOpenExtensionManager,
   extensionManagerOpen,
+  video,
 }: VideoEditorRightPanelDockProps) {
   const panels = useVideoEditorAssetPanels();
   const runtime = useOptionalVideoEditorRuntime();
@@ -63,7 +72,7 @@ export function VideoEditorRightPanelDock({
   const [manageTooltipOpen, setManageTooltipOpen] = useState(false);
   const manageTooltipId = useId();
   const selected = preferences.selectedRightPanelId;
-  const tab = selected ? selected === HOST_PROPERTIES_PANEL_KEY ? 'inspector' : 'extensions' : preferences.rightPanelTab ?? 'inspector';
+  const tab = video?.activeTab ?? (selected ? selected === HOST_PROPERTIES_PANEL_KEY ? 'inspector' : 'extensions' : preferences.rightPanelTab ?? 'inspector');
   const remembered = panels.find((panel) => getPanelKey(panel) === preferences.lastExtensionPanelId) ?? panels[0];
   const tool = panels.find((panel) => getPanelKey(panel) === selected) ?? remembered;
   const toolKey = tool ? getPanelKey(tool) : null;
@@ -73,18 +82,21 @@ export function VideoEditorRightPanelDock({
   const layout = preferences.rightPanelLayoutSlotsByPanelId[HOST_PROPERTIES_PANEL_KEY]
     ?? preferences.rightPanelLayoutSlotsByPanelId[currentKey]
     ?? 'dock';
-  const open = selected !== null && (tab === 'inspector' || panels.some((panel) => getPanelKey(panel) === selected));
-  const dock = layout === 'dock';
-  const compactInGrid = open && layout === 'compact' && compactDock && !responsive;
+  const open = Boolean(video) || (selected !== null && (tab === 'inspector' || panels.some((panel) => getPanelKey(panel) === selected)));
+  const dock = Boolean(video) || layout === 'dock';
+  const compactInGrid = !video && open && layout === 'compact' && compactDock && !responsive;
   const inGrid = !responsive;
   const retainClosedSurface = enabled;
   const hidden = !enabled || (!open && !retainClosedSurface);
   // The outer grid track clips while it changes width. Keep the retained
   // reading surface at its final width so reflow cannot move its scroll anchor.
-  const contentWidth = inGrid
+  const contentWidth = inGrid && !video
     ? 'max(0px, calc(min(420px, 32vw, calc(100vw - 24px)) - 2px))'
     : undefined;
-  const showTab = (next: 'inspector' | 'extensions', displayMode: 'compact' | 'dock' = layout) => {
+  const tabs: readonly VideoEditorRightPanelTab[] = video ? ['video', 'inspector', 'extensions'] : ['inspector', 'extensions'];
+  const showTab = (next: VideoEditorRightPanelTab, displayMode: 'compact' | 'dock' = layout) => {
+    video?.onTabChange(next);
+    if (next === 'video') return;
     // Capture the visible mode before changing the selected panel. This
     // promotes legacy per-panel state to the shared placement slot.
     ops.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, displayMode);
@@ -117,7 +129,7 @@ export function VideoEditorRightPanelDock({
     else setLocalManagerOpen(true);
   };
   return <section hidden={hidden} aria-hidden={!enabled || !open} role="region" aria-label="Video editor right panel"
-    data-testid="video-editor-right-panel-dock" data-layout={layout} data-open={String(open)} data-responsive={String(responsive)}
+    data-testid="video-editor-right-panel-dock" data-layout={video ? 'dock' : layout} data-open={String(open)} data-responsive={String(responsive)}
     {...shellRegionAttrs('rightPanel')}
     data-placement={compactInGrid ? 'upper-right-grid' : dock ? 'full-height-grid' : 'overlay'}
     className={`video-editor-right-panel-motion ${inGrid ? 'row-span-full' : 'absolute z-40'} ${hidden ? 'hidden' : 'flex'} min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95 ${inGrid ? '' : 'shadow-xl'}`}
@@ -127,18 +139,24 @@ export function VideoEditorRightPanelDock({
         ? { top: 12, right: rightInset, width: open ? `calc(100% - ${12 + rightInset}px)` : 0, height: 'calc(100% - 24px)', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }
         : { top: 12, right: rightInset, width: open ? `calc(100vw - ${12 + rightInset}px)` : 0, maxWidth: 420, maxHeight: 'min(70dvh, 620px)', height: 'min(70dvh, 620px)', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }}>
     <div className="flex shrink-0 items-center gap-1 border-b border-border/70 px-2 py-1.5" style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
-      <div role="tablist" aria-label="Right panel surface" className="flex min-w-0 flex-1 gap-1">
-        {(['inspector', 'extensions'] as const).map((value) => {
-          const showInspectorHint = value === 'inspector' && tab === 'extensions' && hasInspectableSelection;
-          return <button key={value} type="button" role="tab" tabIndex={tab === value ? 0 : -1} aria-selected={tab === value} aria-label={showInspectorHint ? 'Inspector — selection available' : value === 'inspector' ? 'Inspector' : 'Extensions'} onKeyDown={(event) => {
-          if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const next = event.key === 'Home' ? 'inspector' : event.key === 'End' ? 'extensions' : value === 'inspector' ? 'extensions' : 'inspector'; showTab(next); event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`[data-surface-tab="${next}"]`)?.focus(); }
+      <div role="tablist" aria-label="Right panel surface" className="flex min-w-0 flex-1 gap-1" style={VIDEO_EDITOR_THEME_VARS}>
+        {tabs.map((value) => {
+          const showInspectorHint = value === 'inspector' && tab !== 'inspector' && hasInspectableSelection;
+          return <button key={value} type="button" role="tab" tabIndex={tab === value ? 0 : -1} aria-selected={tab === value} aria-label={showInspectorHint ? 'Inspector — selection available' : value === 'video' ? 'Video' : value === 'inspector' ? 'Inspector' : 'Extensions'} onKeyDown={(event) => {
+          if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+            event.preventDefault();
+            const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs[tabs.length - 1]
+              : tabs[(tabs.indexOf(value) + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+            showTab(next);
+            event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`[data-surface-tab="${next}"]`)?.focus();
+          }
         }} data-surface-tab={value} onClick={() => showTab(value)} className={`min-h-10 sm:min-h-8 rounded-md px-2.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${tab === value ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-            {value === 'inspector' ? 'Inspector' : 'Extensions'}
-            {showInspectorHint && <span data-testid="inspector-selection-hint" aria-hidden="true" className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-primary align-middle" />}
+            {value === 'video' ? 'Video' : value === 'inspector' ? 'Inspector' : 'Extensions'}
+            {showInspectorHint && <span data-testid="inspector-selection-hint" aria-hidden="true" className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[var(--video-editor-accent-border-strong)] align-middle" />}
           </button>;
         })}
       </div>
-      <VideoEditorPanelDisplayControl visible={open} />
+      {!video && <VideoEditorPanelDisplayControl visible={open} />}
     </div>
     {tab === 'extensions' && <div className="flex shrink-0 items-center gap-1.5 border-b border-border/60 p-2" style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
       <>
@@ -160,6 +178,7 @@ export function VideoEditorRightPanelDock({
     </div>}
     <div className="min-h-0 flex-1 overflow-hidden" style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
       {enabled && <>
+        {video && <div className="flex h-full min-h-0 flex-col" hidden={tab !== 'video'} style={{ display: tab === 'video' ? undefined : 'none' }}>{video.content}</div>}
         <div className="h-full min-h-0 overflow-auto p-3" hidden={tab !== 'inspector'}><PropertiesPanel /></div>
         <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}>{contentReady && <VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' ? toolKey : null} settingsByPanelKey={settingsByPanelKey} />}</div>
       </>}

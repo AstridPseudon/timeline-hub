@@ -333,7 +333,7 @@ export function ProjectTimelinePicker({
           projectsError,
         )}
       {showTimelineSelector && (
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className="text-xs font-medium text-muted-foreground" data-picker-label="">
           Timeline
         </span>
       )}
@@ -363,7 +363,7 @@ export function ProjectTimelinePicker({
           onClick={onCreateTimeline}
         >
           <Plus className="h-3.5 w-3.5" />
-          New timeline
+          <span data-picker-label="">New timeline</span>
         </button>
       )}
     </div>
