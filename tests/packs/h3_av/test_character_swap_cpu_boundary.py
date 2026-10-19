@@ -641,15 +641,21 @@ def test_candidate_manifest_reaches_declared_orchestrator_child_environment(
     monkeypatch.setenv("ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE", model_profile)
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", support)
     monkeypatch.setenv("ASTRID_H3_UNDECLARED_TEST_VALUE", "must-not-cross")
+    inherited_owner_pin = "__CF_USER_TEXT_ENCODING"
+    parent = (
+        {inherited_owner_pin: os.environ[inherited_owner_pin]}
+        if inherited_owner_pin in os.environ
+        else {}
+    )
     child_env = build_child_subprocess_env(
         base=os.environ,
-        parent={},
+        parent=parent,
         passthrough=allowed,
         declared_passthrough=allowed,
     )
     compile_child_env = build_child_subprocess_env(
         base=os.environ,
-        parent={},
+        parent=parent,
         passthrough=compile_allowed,
         declared_passthrough=compile_allowed,
     )
