@@ -6,6 +6,9 @@ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
+import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
+import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
+import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
@@ -228,6 +231,55 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const trackLabelPort: TrackLabelCapturePort = {
+    capture({ trackId, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      if (current.resolvedConfig.tracks.filter((track) => track.id === trackId).length !== 1
+        || Object.values(bundle.shots).some((shot) =>
+          Array.isArray(shot.internal_timeline.tracks) && shot.internal_timeline.tracks.some((track) =>
+            track !== null && typeof track === 'object' && !Array.isArray(track) && track.id === trackId))) {
+        throw new Error('Track label requires one unambiguous parent track identity');
+      }
+      return json({ ...captureTrackLabel(bundle, `parent/track:${trackId}`), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<TrackLabelCapturePort['capture']>;
+    },
+    finish(basis, args) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the label edit');
+      const result = finishTrackLabel(basis, args);
+      const next = new AuthoredState(copy(bundle));
+      // Remote changes during typing may advance the closure, but never refresh these guards.
+      if (!result.command.reads!.every((read) => next.matches(read.ref, read.path, read.state))
+        || !result.record.writes.every((write) => next.matches(write.ref, write.path, write.before))) {
+        throw new Error('Track label changed during the label edit');
+      }
+      for (const write of result.record.writes) next.set(write.ref, write.path, write.after);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: next.bundle, preview: null,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'track.set' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Track label was not captured by this session or the timeline changed');
+      }
+      const args = command.args as TrackLabelArgs;
+      const trackId = command.select!.slice('parent/track:'.length);
+      if (preview.version !== 1 || !equal(preview.operations, [{ op: 'track.update', target: trackId,
+        payload: { label: 'label' in args.values ? args.values.label : trackId } }])) {
+        throw new Error('Track label requires one label-only preview');
+      }
+      prepared.delete(key);
+      enqueue({ ...entry.payload, preview }, preview, entry.basis);
+    },
+  };
   async function claim(owner?: string) {
     if (stopped) throw new Error('Timeline command session is closed');
     if (lifetime) throw new Error('An outbox is already claimed');
@@ -283,6 +335,7 @@ export async function createTimelineCommandSession(options: Options) {
   } else await claim();
   return {
     port,
+    trackLabelPort,
     getState: () => state,
     async recover(ownerId: string) {
       if (!state.recoverableOwners.includes(ownerId)) throw new Error('Unknown persisted outbox owner');

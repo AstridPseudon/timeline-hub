@@ -129,6 +129,15 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
           return realPort.capture(input);
         } };
+        const labelPort = session.trackLabelPort;
+        const requireCleanLabelEdit = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a track label');
+        };
+        session.trackLabelPort = {
+          capture(input) { requireCleanLabelEdit(); return labelPort.capture(input); },
+          finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
+          submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
+        };
         sessionRef.current = session;
         setState({ ...session.getState() });
       }
@@ -182,6 +191,7 @@ export function useTimelineCommandSession(options: {
   const flush = useCallback(async () => { await requireSession().flush(); }, [requireSession]);
   const recover = useCallback(async (ownerId: string) => { await requireSession().recover(ownerId); }, [requireSession]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
+    trackLabelPort: sessionRef.current?.trackLabelPort,
     retry, undo, flush, recover };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>;

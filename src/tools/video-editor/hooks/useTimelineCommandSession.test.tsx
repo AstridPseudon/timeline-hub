@@ -20,6 +20,7 @@ import { useTimelineCommit } from './useTimelineCommit.ts';
 import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/DataProvider.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
+import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLabelGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -80,9 +81,10 @@ async function scoped() {
   const store = createTimelineStore();
   const eventBus = new TimelineEventBus();
   const recoveryConfig = createRecoveryConfig();
+  let legacyClean = true;
   const hook = renderHook(({ provider, timelineId }: { provider: DataProvider; timelineId: string }) => {
     const commit = useTimelineCommit({ eventBus, lastSavedSignatureRef, initialData: initial, snapshotWriteBlockedRef });
-    const commands = useTimelineCommandSession({ provider, timelineId, commit, legacyClean: () => true,
+    const commands = useTimelineCommandSession({ provider, timelineId, commit, legacyClean: () => legacyClean,
       resolveAssetUrl: async (file) => file, loaded: undefined, snapshotWriteBlockedRef, headRevisionRef,
       configVersionRef, lastSavedSignatureRef, store, recoveryConfig, shots: { shots: undefined, isLoading: false, error: null,
         refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn(), canonicalDraft: null } });
@@ -91,10 +93,87 @@ async function scoped() {
   await waitFor(() => expect(hook.result.current.commands.port).toBeDefined());
   const neutral: DataProvider = { persistenceEnabled: false, loadTimeline: vi.fn(), loadAssetRegistry: vi.fn(),
     saveTimeline: vi.fn(), resolveAssetUrl: async (file) => file };
-  return { env, hook, neutral, snapshotWriteBlockedRef, headRevisionRef, configVersionRef, store, recoveryConfig };
+  return { env, hook, neutral, snapshotWriteBlockedRef, headRevisionRef, configVersionRef, store, recoveryConfig,
+    setLegacyClean: (clean: boolean) => { legacyClean = clean; } };
 }
 
 describe('mounted timeline command session', () => {
+  it('fences track-label capture, completion and submission behind earlier legacy saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.trackLabelPort!;
+    const current = hook.result.current.commit.data!;
+    const args = { values: { label: 'kept typing' }, clear: [] } as const;
+    setLegacyClean(false);
+    expect(() => captureTrackLabelEdit(port, current, 'V1')).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const captured = captureTrackLabelEdit(port, current, 'V1');
+    setLegacyClean(false);
+    expect(() => submitTrackLabelEdit(captured, { values: args.values, clear: [] })).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const prepared = port.finish(captured.basis, { values: args.values, clear: [] });
+    setLegacyClean(false);
+    expect(() => port.submit({ command: prepared.command,
+      preview: { version: 1, operations: [{ op: 'track.update', target: 'V1', payload: args.values }] } })).toThrow('earlier timeline saves');
+    expect(args.values.label).toBe('kept typing');
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('shares move → label projection and guarded undo without any snapshot save', async () => {
+    const { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    await act(async () => {
+      expect(service.moveClip({ clipId: 'x', time: 5 }).ok).toBe(true);
+      await hook.result.current.commands.flush();
+    });
+    const captured = captureTrackLabelEdit(hook.result.current.commands.trackLabelPort, hook.result.current.commit.data!, 'V1');
+    await act(async () => {
+      submitTrackLabelEdit(captured, { values: { label: '' }, clear: [] });
+      expect(hook.result.current.commit.dataRef.current!.config.tracks[0].label).toBe('');
+      await hook.result.current.commands.flush();
+    });
+    expect(hook.result.current.commit.data!.config.tracks[0].label).toBe('');
+    expect(hook.result.current.commit.data!.config.clips[0].at).toBe(5);
+    expect(hook.result.current.commit.data!.head?.headPublicationId).toBe('p2');
+    expect(env.commits()[1].body!.commands[0]).toMatchObject({ op: 'track.set',
+      args: { values: { label: '' }, clear: [] }, expect: { 'parent/track:V1::label': { state: 'absent' } } });
+    await act(async () => { await hook.result.current.commands.undo(); await hook.result.current.commands.flush(); });
+    expect(hook.result.current.commit.data!.config.clips[0].at).toBe(5);
+    expect(hook.result.current.commit.data!.config.tracks[0]).not.toHaveProperty('label');
+    expect(env.commits()[2].body!.commands[0]).toMatchObject({ op: 'timeline.inverse', args: { publications: ['p2'] } });
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+  it('recovers move → clear with the original pending request and a display-only label fallback', async () => {
+    const env = await environment();
+    const first = await mounted(env);
+    env.setFault('lost');
+    act(() => {
+      expect(first.service.moveClip({ clipId: 'x', time: 5 }).ok).toBe(true);
+      submitTrackLabelEdit(captureTrackLabelEdit(first.hook.result.current.commands.trackLabelPort,
+        first.hook.result.current.commit.dataRef.current!, 'V1'), { values: {}, clear: ['label'] });
+    });
+    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('retry'));
+    const original = structuredClone(env.commits()[0]);
+    const owner = first.hook.result.current.commands.state.ownerId!;
+    expect(first.hook.result.current.commands.activeRef.current).toBe(true);
+    expect(first.hook.result.current.commit.data!.config.tracks[0].label).toBe('V1');
+    first.hook.unmount();
+    const second = await mounted(env);
+    await waitFor(() => expect(second.hook.result.current.commands.state.status).toBe('recovery'));
+    await act(async () => { await second.hook.result.current.commands.recover(owner); });
+    expect(env.commits()[1]).toEqual(original);
+    expect(env.commits()[2].body).toMatchObject({ base_publication_id: 'p1', commands: [{ op: 'track.set',
+      args: { values: {}, clear: ['label'] }, expect: { 'parent/track:V1::label': { state: 'absent' } } }] });
+    expect(second.hook.result.current.commit.data!.config.clips[0].at).toBe(5);
+    expect(second.hook.result.current.commands.state.status).toBe('saved');
+    expect(first.snapshotSaves).not.toHaveBeenCalled();
+    expect(second.snapshotSaves).not.toHaveBeenCalled();
+    expect(first.saveTimeline).not.toHaveBeenCalled();
+    expect(first.saveTimelineAtHead).not.toHaveBeenCalled();
+    second.hook.unmount();
+  });
   it('clears command ownership and the snapshot block on provider cleanup, fencing an old ACK', async () => {
     const { env, hook, neutral, snapshotWriteBlockedRef } = await scoped();
     const gate = env.pause();
