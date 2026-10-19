@@ -39,6 +39,7 @@ function VideoEditorAssetPanelSurfaceComponent({
   const { data, preferences, resolvedConfig } = useTimelineEditorData();
   const previewComposition = useVideoEditorPreviewComposition(resolvedConfig);
   const framePreview = usePanelFramePreview();
+  const surfaceRef = useRef<HTMLDivElement>(null);
   const latestRuntime = useRef(runtime);
   latestRuntime.current = runtime;
   const panelVideo = useMemo(() => {
@@ -99,10 +100,10 @@ function VideoEditorAssetPanelSurfaceComponent({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div ref={surfaceRef} className="flex h-full min-h-0 flex-col">
       {builtInPanel}
       <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} settingsByPanelKey={settingsByPanelKey} onError={handleContributionError} />
-      <TimelineFramePreview config={previewComposition.config} request={framePreview.request} />
+      <TimelineFramePreview config={previewComposition.config} request={framePreview.request} bounds={surfaceRef} />
     </div>
   );
 }
