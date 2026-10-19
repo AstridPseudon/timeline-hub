@@ -17,3 +17,7 @@ Restart the dispatcher from your own shell, outside the sandbox; pid 4 / read-on
 
 ## 2026-10-19 23:30Z — lead: MAX SPEED
 The owner wants max throughput. Every 30 minutes, check that your manager keeps 5–7 workers running (heavy cap stays 2). If it's idle without a stated blocker, nudge it, or restart it if it has exited. Use Haiku or Sonnet for chores.
+
+## 2026-10-19 23:35Z — ACTION (lead): recycle, then refresh the shared App install
+1. Recycle these finished, clean worktrees (keep the branches, and keep all ORCH reports/WAVs/provenance): vw-m3-player-startup, vw-m3-player-startup-resume, vw-m3-cpu-profile-proof, vw-m3-app-route-contract, vw-m1-consumer-full-fixes. KEEP vw-m3-audio-monitor-control (e290), vw-m1-ssr-snapshot (f816), and every active worker's worktree.
+2. When no capture is using it, re-provision /home/user/work/app/node_modules with a normal `npm ci` from the CURRENT App integration lock: Composition 0.0.8, React 18.3.1, Remotion 4.0.509, only the current integration patch. Do NOT apply the held e290 Player patch globally. Afterwards, verify the installed @banodoco/timeline-composition version and file hashes, and record them in STATUS.

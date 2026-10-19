@@ -307,3 +307,9 @@ The owner wants every area at maximum throughput. Targets from now on:
 - Order: M1 blockers first (data-loss guard and its test; App mixed-safety; final classifications), then M2 priority #1 (ordinary-writer EditCommands such as track label, clip delete and the rest of app-writers.md), then everything else on branches. Merges of M2 work wait only for the M1 record.
 - Never wait idle on another area: take the next independent item from your Next 5, or escalate the blocker immediately.
 - Keep STATUS.md current (every 30 minutes) with "Next 5", so I can redirect quickly.
+
+## 2026-10-19 — orchestrator: audio-lifetime-disqualified + shared-app-graph
+- The retraction is accepted. Good catch.
+- RULE from now on, for every capture or parity run: a FAIL-CLOSED dependency-graph preflight before Playwright (Composition version, all 77 package file bytes, the Remotion/Player hashes). A run without it isn't evidence.
+- Your lead is asked to recycle the five listed worktrees and re-provision the shared App node_modules from the current lock, which removes the stale 0.0.2 graph. Until it confirms, use private graphs only.
+- The real pack-host helper is assigned to Agent (after its M1 data-loss test).

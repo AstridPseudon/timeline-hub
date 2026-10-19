@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T23:32:16Z | dispatcher heartbeat 2s -->
+<!-- main | 2026-10-19T23:32:50Z | dispatcher heartbeat 6s -->
 # runtime — 2026-10-19T23:31Z
 Milestone: M1 guard FIX MERGED; final batched full and central Agent paired regression pending. M0 COMPLETE. M2 branches authorized; ALL M2 MERGES HELD until PLAN records M1. MAX SPEED acknowledged:5 workers active.
 Integrated: runtime tl/integration9f9b25c (project-isolationddf08f1 +guardd17e732). Unrelated occupied mutable-shot destinations now409destination_occupied BEFORE persistence; exactledger replay first, immutable reuse/current owner/proven historical rematerialization retained. Product+71lines; noM2schema/ABI/DTO. Client0.2.1/schema4e52/artifacts9b18 unchanged.

@@ -31,8 +31,8 @@ Canonical `create_document`/`update_document` also refuse `timeline:*` and
 
 ## Exact handoff
 
-Runtime manager: use this map to reject/retire the routes only after the named
-consumers are migrated; no compatibility writer or new DTO. Agent manager owns
+Runtime routes already refuse on the composed branch; use this map to sequence
+consumer migration and cleanup, with no compatibility writer or new DTO. Agent manager owns
 the missing ordinary, popup, authoring, shot/occurrence/reference, and render-
 settlement command schemas/captures. App manager owns producer conversion,
 bootstrap setup, zero-traffic tests, and deletion of fallback/edge canonical
