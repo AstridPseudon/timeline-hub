@@ -10,7 +10,7 @@ import copy
 import hashlib
 import json
 import math
-from collections import defaultdict
+from collections import ChainMap, defaultdict
 
 from .errors import ConflictError, NotFoundError, ValidationError
 from .util import canonical_json
@@ -256,6 +256,20 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         if child is None:
             raise NotFoundError("canonical internal closure is incomplete")
         body = child["payload"]
+        # Resolve aliases from their nearest pinned owner, as inspection does.
+        # A child may reference a shot asset or an inherited parent asset;
+        # qualifying that reference must not replace its metadata with {}.
+        shot_assets = {}
+        for asset in shot.get("payload", {}).get("assets", []):
+            if isinstance(asset, dict) and isinstance(asset.get("asset_id"), str):
+                shot_assets[asset["asset_id"]] = {
+                    **asset, "media_id": asset.get("object_id"), "content_sha256": asset.get("digest"),
+                    "type": asset.get("media_type"),
+                }
+        child_registry = {"assets": ChainMap(
+            (body.get("registry", {}).get("assets") or {}), shot_assets,
+            (parent.get("registry", {}).get("assets") or {}),
+        )}
         # Flattening keeps the parent's definition when lane IDs collide.
         child_tracks = {**{t["id"]: t for t in body.get("tracks", []) if isinstance(t, dict) and "id" in t}, **tracks}
         clips = body.get("clips", body.get("local_clips", []))
@@ -291,7 +305,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
             definition = child_tracks.get(track, {})
             if explicit is None and definition.get("kind") == "visual" and picture_clip(c, definition, declared=track in picture_tracks):
                 continuity.add(track)
-            add(c, body.get("registry", {}), path + ["clip", str(c.get("id", "?"))], offset=offset, bound=(offset, end), inherited_speed=inherited_speed,
+            add(c, child_registry, path + ["clip", str(c.get("id", "?"))], offset=offset, bound=(offset, end), inherited_speed=inherited_speed,
                 inherited_track=o["track"], source_offset=source_offset, inherited_gain=o.get("gain", 1), muted=o.get("muted", o.get("mute", False)),
                 track_definitions=child_tracks)
         # Occurrence ownership cannot stand in for picture output. Verify the
@@ -325,7 +339,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
                     "localCount": len(local_effects), "timeline": copy.deepcopy(body["effects"])}
         for i, e in enumerate(body.get("effects", [])):
             add({**e, "id": e.get("id", str(i)), "clipType": e.get("type", "unknown"), "hold": e.get("hold", end - offset), "track": e.get("track", "fx")},
-                body.get("registry", {}), path + ["effect", str(e.get("id", i))], offset=offset, bound=(offset, end), render=False)
+                child_registry, path + ["effect", str(e.get("id", i))], offset=offset, bound=(offset, end), render=False)
     for i, e in enumerate(config.get("effects", [])):
         if isinstance(e, dict):
             add({**e, "id": e.get("id", str(i)), "clipType": e.get("type", "unknown"), "hold": e.get("hold", max((s["endFrame"] / fps for s in spans), default=1)), "track": e.get("track", "fx")},

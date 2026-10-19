@@ -746,6 +746,69 @@ def test_managed_render_freezes_child_effects_and_offset_from_pinned_closure(tmp
         service.close()
 
 
+@pytest.mark.parametrize("scope", ["parent", "shot", "internal"])
+def test_managed_render_preserves_asset_identity_from_the_pinned_asset_scope(tmp_path, scope):
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    try:
+        project = service.create_project({"slug": "scoped-assets", "name": "Scoped Assets"}, idempotency_key="project")
+        service.create_timeline(project["id"], "main", idempotency_key="timeline")
+        capability = "sha256:" + hashlib.sha256(b"rendering.render").hexdigest()
+        service.register_capability({"capability_id": "rendering.render", "definition_digest": capability})
+        service.register_executor({"executor_id": "worker", "capabilities": ["rendering.render"]})
+        media = service.ingest(project["id"], b"pinned-picture", media_type="image/png", idempotency_key="media")["data"]["object_id"]
+        asset = {"media_id": media, "content_sha256": media, "type": "image/png", "file": "/api/runtime/v1/objects/" + media}
+        publication = _unsafe_publication(project["id"])
+        child = publication["internal_timeline_revisions"][0]["payload"]
+        child["clips"] = [{"id": "picture", "clipType": "media", "at": 0, "hold": 1, "track": "v", "asset": "shared"}]
+        if scope == "parent":
+            publication["parent_composition"]["registry"] = {"assets": {"shared": asset}}
+        elif scope == "shot":
+            publication["shot_revisions"][0]["payload"]["assets"] = [
+                {"asset_id": "shared", "object_id": media, "digest": media, "media_type": "image/png"}]
+        else:
+            child["registry"] = {"assets": {"shared": asset}}
+        service.publish_parent_composition(project["id"], "main", publication, idempotency_key="publish")
+        authored = service.get_project_parent_composition_revision(project["id"], "main", "unsafe-parent")
+        task = service.create_task({"project": project["id"], "capability_id": "rendering.render", "capability_digest": capability,
+                                    "input_object_ids": [], "idempotency_key": "render", "spec": {"family": "render", "params": {"timeline_ref": "main"}}})
+        spec = task["task"]["spec"]
+        snapshot = json.loads(service.object(spec["spec"]["timeline_snapshot_ref"]["digest"])[1])
+        rendered_asset = snapshot["registry"]["assets"][snapshot["config"]["clips"][0]["asset"]]
+        assert rendered_asset["media_id"] == media
+        assert rendered_asset["content_sha256"] == media
+        if scope != "shot":
+            assert rendered_asset == asset
+        assert media in spec["input_object_ids"]
+        assert service.get_project_parent_composition_revision(project["id"], "main", "unsafe-parent") == authored
+    finally:
+        service.close()
+
+
+@pytest.mark.parametrize("local", [None, {"object_id": "sha256:" + "c" * 64, "type": "image/png"},
+                                   {"file": "/display-only-child.png"}])
+def test_pinned_asset_resolution_preserves_nearest_scope_without_mixing_metadata(local):
+    parent = _unsafe_publication("p")["parent_composition"]
+    parent["registry"] = {"assets": {"shared": {"media_id": "sha256:" + "a" * 64, "parentOnly": True}}}
+    shot_asset = {"asset_id": "shared", "object_id": "sha256:" + "b" * 64,
+                  "digest": "sha256:" + "b" * 64, "media_type": "image/png"}
+    shot = {"internal_timeline_revision_id": "unsafe-child", "payload": {"assets": [shot_asset]}}
+    child = {"clips": [{"id": "picture", "clipType": "media", "track": "v", "at": 0, "hold": 1, "asset": "shared"}],
+             "registry": {"assets": {"shared": local} if local is not None else {}}}
+    original = copy.deepcopy((parent, shot, child))
+    _, metadata = admit_closure(parent, {("s", "unsafe-shot"): shot}, {"unsafe-child": {"payload": child}},
+                               timeline_id="main", materialize=True)
+    rendered = metadata["render_registry"]["assets"]["o:shared"]
+    if local is not None:
+        assert rendered == local
+    else:
+        assert rendered["media_id"] == shot_asset["object_id"]
+        assert rendered["content_sha256"] == shot_asset["digest"]
+    assert "parentOnly" not in rendered
+    assert (parent, shot, child) == original
+
+
 @pytest.mark.parametrize("clips,code", [
     pytest.param([], "boundary/empty-child-picture", id="clips0"),
     pytest.param([{"id": "picture", "clipType": "media", "at": 0.2, "hold": 1, "track": "v"}], "boundary/child-picture-gap", id="clips1"),
