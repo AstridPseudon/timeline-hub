@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties, type FC, type ReactNode } from 'react';
-import { AbsoluteFill, Sequence, interpolate, useCurrentFrame, useRemotionEnvironment, useVideoConfig } from 'remotion';
+import { AbsoluteFill, Freeze, Sequence, interpolate, useCurrentFrame, useRemotionEnvironment, useVideoConfig } from 'remotion';
+import { queryDrawFrame, type DrawPlan } from '@banodoco/timeline-composition/evaluation';
 import { ReadinessImage } from '@astrid/packs/rendering/shared/readiness-image';
 import { ReadinessVideo } from './ReadinessVideo.tsx';
 import {
@@ -36,6 +37,7 @@ import {
   type ShaderEffectRegistrySnapshot,
 } from '@/tools/video-editor/shaders/registry/index.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
+import { preparePlayerTrack } from './playerEvaluation.ts';
 
 // SD-025 (Sprint 3): inline missing-asset placeholder body. Mirrors the
 // styling of UnknownClipPlaceholder so the two loud cases look like a pair.
@@ -192,6 +194,7 @@ type VisualClipProps = {
   track: TrackDefinition;
   fps: number;
   predecessor?: ResolvedTimelineClip | null;
+  drawPlan?: DrawPlan | null;
   effectRegistrySnapshot?: EffectRegistrySnapshot;
   shaderRegistrySnapshot?: ShaderEffectRegistrySnapshot;
   materialRefs?: readonly RenderMaterialRef[];
@@ -498,6 +501,7 @@ export const VisualClip: FC<VisualClipProps> = ({
   materialRefs,
   materialStatuses,
   materialDiagnostics,
+  drawPlan,
 }) => {
   const environment = useRemotionEnvironment();
   const providerRegistryContext = useOptionalEffectRegistryContext();
@@ -555,7 +559,7 @@ export const VisualClip: FC<VisualClipProps> = ({
   );
 
   let transitionStyle: CSSProperties | undefined;
-  if (clip.transition) {
+  if (clip.transition && !drawPlan) {
     const record = resolveTransition(clip.transition.type, mergedTransitionSnapshot);
     if (record) {
       const transitionProgress = interpolate(
@@ -626,6 +630,19 @@ const LazyGuard: FC<{ durationInFrames: number; children: ReactNode }> = ({ dura
   return <>{children}</>;
 };
 
+const EvaluatedVisualContent: FC<{ plan: DrawPlan; children: ReactNode }> = ({ plan, children }) => {
+  const frame = useCurrentFrame();
+  const evaluated = queryDrawFrame(plan, frame);
+  // Extended plans are admitted only for silent images. Native video stays on
+  // its playing clock, including its unchanged premount and audio behavior.
+  const extended = plan.ownOffset !== 0 || plan.drawDuration !== plan.ownDuration;
+  return (
+    <AbsoluteFill style={{ opacity: evaluated.opacity }}>
+      {extended ? <Freeze frame={evaluated.ownFrame}>{children}</Freeze> : children}
+    </AbsoluteFill>
+  );
+};
+
 export const VisualClipSequence: FC<VisualClipProps> = ({
   clip,
   track,
@@ -636,7 +653,38 @@ export const VisualClipSequence: FC<VisualClipProps> = ({
   materialRefs,
   materialStatuses,
   materialDiagnostics,
+  drawPlan,
 }) => {
+  const { width, height } = useVideoConfig();
+  const plan = useMemo(() => drawPlan !== undefined ? drawPlan
+    : preparePlayerTrack(track, predecessor ? [predecessor, clip] : [clip], fps, width, height)
+      .plans.get(clip.id) ?? null, [drawPlan, track, predecessor, clip, fps, width, height]);
+  const content = (
+    <VisualClip
+      clip={clip}
+      track={track}
+      fps={fps}
+      predecessor={predecessor}
+      drawPlan={plan}
+      effectRegistrySnapshot={effectRegistrySnapshot}
+      shaderRegistrySnapshot={shaderRegistrySnapshot}
+      materialRefs={materialRefs}
+      materialStatuses={materialStatuses}
+      materialDiagnostics={materialDiagnostics}
+    />
+  );
+  if (plan) {
+    return (
+      <Sequence key={clip.id} from={plan.drawStart} durationInFrames={plan.drawDuration} premountFor={fps}>
+        <LazyGuard durationInFrames={plan.drawDuration}>
+          <EvaluatedVisualContent plan={plan}>{content}</EvaluatedVisualContent>
+        </LazyGuard>
+      </Sequence>
+    );
+  }
+
+  // Host-only transitions keep their original timing until their picture and
+  // audible subtree clocks can be declared to the shared evaluator.
   const durationInFrames = getClipDurationInFrames(clip, fps);
   const transitionFrames = predecessor && clip.transition
     ? secondsToFrames(clip.transition.duration, fps)
@@ -671,17 +719,7 @@ export const VisualClipSequence: FC<VisualClipProps> = ({
       premountFor={fps}
     >
       <LazyGuard durationInFrames={effectiveDuration}>
-        <VisualClip
-          clip={clip}
-          track={track}
-          fps={fps}
-          predecessor={predecessor}
-          effectRegistrySnapshot={effectRegistrySnapshot}
-          shaderRegistrySnapshot={shaderRegistrySnapshot}
-          materialRefs={materialRefs}
-          materialStatuses={materialStatuses}
-          materialDiagnostics={materialDiagnostics}
-        />
+        {content}
       </LazyGuard>
     </Sequence>
   );

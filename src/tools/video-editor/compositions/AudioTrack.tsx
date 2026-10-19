@@ -1,4 +1,4 @@
-import { memo, useContext, useEffect, useMemo, useReducer, useRef, useState, type FC } from 'react';
+import { memo, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type FC } from 'react';
 import { Audio as Html5Audio, Internals, Sequence, useBufferState, useRemotionEnvironment } from 'remotion';
 import { Audio as MediaAudio } from '@remotion/media';
 import {
@@ -9,11 +9,12 @@ import {
   getSanitizedVolume,
   secondsToFrames,
 } from '@/tools/video-editor/lib/config-utils.ts';
-import { getAudioFade, getAudioVolumeProp, type AudioVolumeProp } from '@/tools/video-editor/lib/audioFade.ts';
+import { AudioEnvelopeError, audioEnvelopeAt, compileAudioEnvelope, type AudioEnvelope } from '@banodoco/timeline-composition/evaluation';
 import { MediaErrorBoundary } from '@/tools/video-editor/compositions/MediaErrorBoundary.tsx';
 import { useOptionalPreviewAudioFailureReporter } from '@/tools/video-editor/compositions/PreviewMediaFailureContext.tsx';
 import type { ResolvedTimelineClip, TrackDefinition } from '@/tools/video-editor/types/index.ts';
 import { boundCanonicalClipToOccurrence } from '@/tools/video-editor/lib/canonicalRenderBounds.ts';
+import { playerEvaluationClip } from '@/tools/video-editor/compositions/playerEvaluation.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 /**
@@ -78,12 +79,53 @@ type PreviewAudioProps = {
   trimBefore: number;
   trimAfter?: number;
   playbackRate: number;
-  volume: AudioVolumeProp;
+  volume: number | ((frame: number) => number);
   amplify: boolean;
 };
 
+function isCanonicalAudioEnvelopeError(error: Error): boolean {
+  return error instanceof AudioEnvelopeError
+    || (error as Error & { code?: unknown }).code === 'ENVELOPE_UNRENDERED'
+    || (error as Error & { code?: unknown }).code === 'DUCK_UNRENDERED';
+}
+
 /** Events after which an element's ability to play may have changed. */
 const READINESS_EVENTS = ['loadstart', 'emptied', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'seeking', 'seeked'] as const;
+
+const authoredAudioSemantics = (clip: ResolvedTimelineClip) => {
+  const authoredAudio = (clip as ResolvedTimelineClip & { audio?: unknown }).audio;
+  const authoredEnvelope = authoredAudio && typeof authoredAudio === 'object'
+    ? (authoredAudio as { envelope?: unknown }).envelope
+    : undefined;
+  // Keep this fallback identical to compileAudioEnvelope's public contract.
+  const authoredDuck = (clip.app?.astrid as { duck?: unknown } | undefined)?.duck ?? clip.app?.duck;
+  const params = clip.params;
+
+  return {
+    authoredEnvelope,
+    authoredDuck,
+    clipType: clip.clipType,
+    from: clip.from,
+    hold: clip.hold,
+    speed: clip.speed,
+    to: clip.to,
+    fadeIn: params?.fadeIn,
+    fadeInCurve: params?.fadeInCurve,
+    fadeOut: params?.fadeOut,
+    fadeOutCurve: params?.fadeOutCurve,
+  };
+};
+
+const authoredAudioIdentity = (clip: ResolvedTimelineClip): string => JSON.stringify(authoredAudioSemantics(clip));
+
+// Validated curves stay between their keyframe values. If every node is <=1,
+// multiplication/minimum cannot amplify. A declared boost conservatively uses
+// Web Audio even when base gain or other envelope nodes would attenuate it.
+const envelopeMayAmplify = (envelope: AudioEnvelope): boolean => (
+  envelope.keyframes.some(({ value }) => value > 1)
+  || (envelope.multiply ?? []).some(envelopeMayAmplify)
+  || (envelope.minimum ?? []).some(envelopeMayAmplify)
+);
 
 /**
  * Interactive-preview audio that plays like the render: buffered ahead, in
@@ -227,6 +269,10 @@ const AudioTrackComponent: FC<{
 }> = ({ track, clips, fps }) => {
   const environment = useRemotionEnvironment();
   const isRendering = environment.isRendering || environment.isClientSideRendering;
+  const previewFailureReporter = useOptionalPreviewAudioFailureReporter();
+  const reportCanonicalAudioFailure = useCallback((clipId: string, source: string, error: Error) => {
+    if (isCanonicalAudioEnvelopeError(error)) previewFailureReporter?.reportFailure({ clipId, source });
+  }, [previewFailureReporter]);
 
   return (
     <>
@@ -247,6 +293,19 @@ const AudioTrackComponent: FC<{
         const effectiveVolume = track.muted ? 0 : getSanitizedVolume(track.volume) * getSanitizedVolume(renderClip.volume);
         const playbackRate = getSanitizedPlaybackRate(renderClip.speed);
         const trimProps = getSanitizedMediaTrimProps(renderClip, fps);
+        const clipAudio = (source: string) => (
+          <ClipAudio
+            clip={clip}
+            renderClip={renderClip}
+            fps={fps}
+            baseVolume={effectiveVolume}
+            isRendering={isRendering}
+            src={source}
+            trimBefore={trimProps.trimBefore}
+            trimAfter={trimProps.trimAfter}
+            playbackRate={playbackRate}
+          />
+        );
 
         return (
           <Sequence
@@ -257,23 +316,14 @@ const AudioTrackComponent: FC<{
             durationInFrames={getClipDurationInFrames(renderClip, fps)}
             premountFor={Math.ceil(fps * AUDIO_PREMOUNT_SECONDS)}
           >
-            {mediaSrc && isPlayableAudio ? (
+            {mediaSrc && isPlayableAudio ? isRendering ? clipAudio(mediaSrc) : (
               <MediaErrorBoundary
                 clipId={renderClip.id}
-                resetKey={`${renderClip.id}:${mediaSrc}:${trimProps.trimBefore}:${trimProps.trimAfter ?? 'none'}:${playbackRate}:${effectiveVolume}:audio`}
+                resetKey={`${renderClip.id}:${mediaSrc}:${trimProps.trimBefore}:${trimProps.trimAfter ?? 'none'}:${playbackRate}:${effectiveVolume}:${fps}:${authoredAudioIdentity(clip)}:audio`}
                 fallback={null}
+                onError={(error) => reportCanonicalAudioFailure(renderClip.id, mediaSrc, error)}
               >
-                <ClipAudio
-                  clip={clip}
-                  renderClip={renderClip}
-                  fps={fps}
-                  baseVolume={effectiveVolume}
-                  isRendering={isRendering}
-                  src={mediaSrc}
-                  trimBefore={trimProps.trimBefore}
-                  trimAfter={trimProps.trimAfter}
-                  playbackRate={playbackRate}
-                />
+                {clipAudio(mediaSrc)}
               </MediaErrorBoundary>
             ) : null}
           </Sequence>
@@ -296,21 +346,24 @@ const ClipAudio: FC<{
   trimAfter?: number;
   playbackRate: number;
 }> = ({ clip, renderClip, fps, baseVolume, isRendering, src, trimBefore, trimAfter, playbackRate }) => {
-  const fade = getAudioFade(clip, fps);
-  const fadeInFrames = fade?.fadeInFrames ?? 0;
-  const fadeOutFrames = fade?.fadeOutFrames ?? 0;
-  const durationFrames = fade?.durationFrames ?? 0;
-  const frameOffset = secondsToFrames(renderClip.at, fps) - secondsToFrames(clip.at, fps);
-  // A stable function identity matters: Remotion re-derives a per-frame
-  // volume table whenever the `volume` prop changes.
-  const volume = useMemo(
-    () => getAudioVolumeProp(
-      baseVolume,
-      fadeInFrames > 0 || fadeOutFrames > 0 ? { fadeInFrames, fadeOutFrames, durationFrames } : null,
-      frameOffset,
-    ),
-    [baseVolume, durationFrames, fadeInFrames, fadeOutFrames, frameOffset],
+  const { authoredDuck } = authoredAudioSemantics(clip);
+  const audioIdentity = authoredAudioIdentity(clip);
+  // The public compiler reads only authored audio/app/params and timing fields;
+  // keep those semantic dependencies so equivalent clip objects stay stable.
+  /* eslint-disable react-hooks/exhaustive-deps */
+  const envelope = useMemo(
+    () => compileAudioEnvelope(playerEvaluationClip(clip), fps),
+    [authoredDuck, audioIdentity, fps],
   );
+  /* eslint-enable react-hooks/exhaustive-deps */
+  const frameOffset = secondsToFrames(renderClip.at, fps) - secondsToFrames(clip.at, fps);
+  const volume = useMemo(
+    () => envelope
+      ? (frame: number) => baseVolume * audioEnvelopeAt(envelope, (frame + frameOffset) / fps)
+      : baseVolume,
+    [baseVolume, envelope, frameOffset, fps],
+  );
+  const amplify = baseVolume > 0 && (baseVolume > 1 || (envelope !== undefined && envelopeMayAmplify(envelope)));
 
   if (isRendering) {
     return (
@@ -335,7 +388,7 @@ const ClipAudio: FC<{
         playbackRate,
         getClipDurationInFrames(renderClip, fps),
         fps,
-        baseVolume > 1,
+        amplify,
       ])}
       clipId={renderClip.id}
       src={src}
@@ -343,7 +396,7 @@ const ClipAudio: FC<{
       trimAfter={trimAfter}
       playbackRate={playbackRate}
       volume={volume}
-      amplify={baseVolume > 1}
+      amplify={amplify}
     />
   );
 };

@@ -58,6 +58,7 @@ import { boundCanonicalConfigClips } from '@/tools/video-editor/lib/canonicalRen
 import { resolveEndSpanningLayerPreviewParams } from '@/tools/video-editor/sequences/components/EndSpanningLayerSequence.tsx';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
+import { preparePlayerTrack } from './playerEvaluation.ts';
 
 const AstridElementHostContext = createContext<AstridElementHost | null>(null);
 const useAstridElementHost = () => requireAstridElementHost(useContext(AstridElementHostContext));
@@ -1289,7 +1290,20 @@ const VisualTrack: FC<VisualTrackProps> = ({
   const host = useAstridElementHost();
   const { entries: dynamicEntries } = useSequenceComponentRegistrySnapshot();
   const clipTypeRegistry = useClipTypeRegistrySnapshot();
-  const sortedClips = sortClipsByAt(clips);
+  const { width, height } = parseResolution(resolution);
+  const evaluation = preparePlayerTrack(track, clips, fps, width, height, clip => {
+    const descriptor = host.describeClipCapability(clip, dynamicEntries);
+    return !(liveBindingRecordsByClip.get(clip.id)?.length)
+      && !isGeneratedRemotionModuleClip(clip)
+      && descriptor?.source !== 'generated-module'
+      && descriptor?.capabilities.preview !== 'placeholder'
+      && (!clip.clipType || (
+        !(!clip.elementRef && host.resolveComponent(clip.clipType, 'effect'))
+        && !isSequenceComponentClipType(host, clip.clipType, dynamicEntries)
+        && !clipTypeRegistry.get(clip.clipType)
+      ));
+  });
+  const sortedClips = evaluation.clips;
   if (sortedClips.length === 0) {
     return null;
   }
@@ -1556,6 +1570,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
             track={track}
             fps={fps}
             predecessor={predecessor}
+            drawPlan={evaluation.plans.get(clip.id) ?? null}
           />
         );
       })}
