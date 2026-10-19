@@ -1,3 +1,4 @@
+import { EmptyWorkspaceGuidance } from '@/shared/components/RuntimeConnection/EmptyWorkspaceGuidance.tsx';
 import { useNativeEditorRecovery } from '../hooks/useNativeEditorRecovery.ts';
 import { assertNativeEditorConnection } from "@/integrations/astrid/nativeEditorConnection.ts";
 import type { ExtensionPendingWorkState } from "@/sdk/context.ts";
@@ -1738,6 +1739,9 @@ export default function VideoEditorPage() {
                         timeline here.
                       </CardDescription>
                     </CardHeader>
+                    <CardContent>
+                      <EmptyWorkspaceGuidance onRefresh={() => void discovery.projectsQuery.refetch()} />
+                    </CardContent>
                   </Card>
                 ) : (
                   <Card className="w-full max-w-md">

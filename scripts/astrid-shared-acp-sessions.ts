@@ -1,5 +1,5 @@
 import { ACP_SESSION_CONTROL_FIELD, ACP_SESSION_CONTROL_UPDATE } from '../src/integrations/astrid/acpSessionControl.ts';
-import { sessionAgentId, type LocalAgentId } from '../src/integrations/astrid/localAgents.ts';
+import { localAgentModelsSchema, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '../src/integrations/astrid/localAgents.ts';
 import { ChatError } from './astrid-project-chat.ts';
 import type { AcpProcessHost, AcpRpcNotification } from '../src/tools/video-editor/runtime/processes/acpProcessHost.ts';
 import { randomUUID } from 'node:crypto';
@@ -28,10 +28,33 @@ type Session = {
   loading: Promise<unknown> | null;
   loadedResult: unknown;
   loaded: boolean;
+  changing: boolean;
 };
 
 function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+export function sharedSessionModels(value: unknown): LocalAgentModels | null {
+  const record = object(value);
+  const models = object(record?.models);
+  const configOptions = Array.isArray(record?.configOptions) ? record.configOptions : [];
+  const modelConfig = configOptions.map(object).find(item => item?.id === 'model');
+  if (modelConfig) {
+    const options = Array.isArray(modelConfig?.options) ? modelConfig.options : [];
+    const groupedOptions = options.flatMap(item => {
+      const option = object(item);
+      if (typeof option?.value === 'string') return [option];
+      return Array.isArray(option?.options) ? option.options.map(object).filter((nested): nested is JsonRecord => Boolean(nested)) : [];
+    });
+    const availableModels = groupedOptions.flatMap(option => typeof option.value === 'string'
+      ? [{ modelId: option.value, name: typeof option.name === 'string' ? option.name : option.value, ...(typeof option.description === 'string' || option.description === null ? { description: option.description } : {}) }]
+      : []);
+    const parsedConfigModels = localAgentModelsSchema.safeParse({ availableModels, currentModelId: modelConfig.currentValue });
+    return parsedConfigModels.success ? parsedConfigModels.data : null;
+  }
+  const parsed = localAgentModelsSchema.safeParse(models);
+  return parsed.success ? parsed.data : null;
 }
 
 function sessionId(value: unknown): string | null {
@@ -133,23 +156,30 @@ export class SharedAcpSessions {
     if (!id) return client.host.request(method, params);
     const session = this.requireSession(client, id);
     if (method === 'session/prompt') return this.prompt(client, session, params);
-    if (method === 'session/close' || method === 'session/fork' || method === 'session/set_config_option') {
+    if (method === 'session/close' || method === 'session/fork' || method === 'session/set_config_option' || method === 'session/set_model') {
       this.requireWriter(session, client);
       this.requireIdle(session);
-      const result = await session.host.request(method, params);
-      if (method === 'session/close') this.delete(session);
-      if (method === 'session/set_config_option') this.updateCachedConfig(session, params, result);
-      if (method === 'session/fork') {
-        const forkId = sessionId(result);
-        if (forkId) {
-          this.assertAgent(client, forkId);
-          const forked = this.create(forkId, session.hostClient, result, client);
-          return withControl(result, forked, client);
+      session.changing = true;
+      try {
+        const result = await session.host.request(method, params);
+        if (method === 'session/close') this.delete(session);
+        if (method === 'session/set_config_option' || method === 'session/set_model') this.updateCachedConfig(session, method, params, result);
+        if (method === 'session/fork') {
+          const forkId = sessionId(result);
+          if (forkId) {
+            this.assertAgent(client, forkId);
+            const forked = this.create(forkId, session.hostClient, result, client);
+            return withControl(result, forked, client);
+          }
         }
-      }
-      return result;
+        return result;
+      } finally { session.changing = false; }
     }
     return session.host.request(method, params);
+  }
+
+  snapshot(client: SharedAcpSessionClient, id: string): unknown {
+    return this.requireSession(client, id).loadedResult;
   }
 
   async cancel(client: SharedAcpSessionClient, id: string): Promise<void> {
@@ -174,6 +204,7 @@ export class SharedAcpSessions {
       return;
     }
     const update = object(params?.update);
+    if (update?.sessionUpdate === 'config_option_update' || update?.sessionUpdate === 'current_model_update') this.mergeMetadata(session, update);
     const marked: AcpRpcNotification = session.activeRequestId && update
       ? { ...notification, params: { ...params, update: { ...update, live: true, requestId: session.activeRequestId } } }
       : notification;
@@ -193,7 +224,7 @@ export class SharedAcpSessions {
 
   retainsHost(client: SharedAcpSessionClient): boolean {
     for (const session of this.sessions.values()) {
-      if (session.hostClient === client && (session.subscribers.size > 0 || session.activeRequestId !== null || session.loading !== null)) return true;
+      if (session.hostClient === client && (session.subscribers.size > 0 || session.activeRequestId !== null || session.loading !== null || session.changing)) return true;
     }
     return false;
   }
@@ -221,7 +252,7 @@ export class SharedAcpSessions {
     if (!session) {
       session = this.create(id, client);
       const nativeParams = { ...(object(params) ?? {}), sessionId: id };
-      session.loading = session.host.request(method, nativeParams).then(result => { session!.loadedResult = result; session!.loaded = true; return result; }, error => {
+      session.loading = session.host.request(method, nativeParams).then(result => { session!.loadedResult = { ...(object(result) ?? {}), ...(object(session!.loadedResult) ?? {}) }; session!.loaded = true; return session!.loadedResult; }, error => {
         this.delete(session!);
         throw error;
       });
@@ -274,29 +305,50 @@ export class SharedAcpSessions {
   private create(id: string, client: SharedAcpSessionClient, loadedResult?: unknown, writer = client): Session {
     if (this.sessions.has(id)) throw new ChatError(409, 'session_already_attached', 'This native session is already attached to the bridge.');
     this.assertAgent(writer, id);
-    const session: Session = { id, agent: client.agent, host: client.host, hostClient: client, subscribers: new Set([writer]), journalCursor: new Map([[writer, 0]]), journal: [], dedupe: new Map(), writer, activeRequestId: null, loading: null, loadedResult, loaded: loadedResult !== undefined };
+    const session: Session = { id, agent: client.agent, host: client.host, hostClient: client, subscribers: new Set([writer]), journalCursor: new Map([[writer, 0]]), journal: [], dedupe: new Map(), writer, activeRequestId: null, loading: null, loadedResult, loaded: loadedResult !== undefined, changing: false };
     this.sessions.set(id, session);
     return session;
   }
 
-  private updateCachedConfig(session: Session, params: unknown, result: unknown): void {
-    const output = object(result);
-    const current = object(session.loadedResult);
-    if (!current) return;
-    if (Array.isArray(output?.configOptions)) {
-      session.loadedResult = { ...current, ...output };
-      return;
+  private mergeMetadata(session: Session, update: JsonRecord): void {
+    const current = object(session.loadedResult) ?? {};
+    const next = { ...current };
+    if (Array.isArray(update.configOptions)) next.configOptions = update.configOptions;
+    if (object(update.models)) next.models = update.models;
+    if (typeof update.currentModelId === 'string') {
+      const models = sharedSessionModels(next);
+      if (models) next.models = { ...models, currentModelId: update.currentModelId };
+      if (Array.isArray(next.configOptions)) next.configOptions = next.configOptions.map(option => {
+        const item = object(option);
+        return item?.id === 'model' ? { ...item, currentValue: update.currentModelId } : option;
+      });
     }
-    const input = object(params);
-    if (typeof input?.configId !== 'string') return;
-    const configOptions = Array.isArray(current.configOptions) ? current.configOptions : [];
-    session.loadedResult = {
-      ...current,
-      configOptions: configOptions.map(option => {
+    session.loadedResult = next;
+  }
+
+  private updateCachedConfig(session: Session, method: string, params: unknown, result: unknown): void {
+    const output = object(result) ?? {};
+    const input = object(params) ?? {};
+    this.mergeMetadata(session, output);
+    const current = object(session.loadedResult) ?? {};
+    if (method === 'session/set_config_option' && !Array.isArray(output.configOptions)) {
+      const configOptions = Array.isArray(current.configOptions) ? current.configOptions : [];
+      this.mergeMetadata(session, { configOptions: configOptions.map(option => {
         const item = object(option);
         return item?.id === input.configId ? { ...item, currentValue: input.value } : option;
-      }),
-    };
+      }) });
+    } else if (method === 'session/set_model' && !object(output.models)) {
+      this.mergeMetadata(session, { currentModelId: input.modelId });
+    }
+    const metadata = object(session.loadedResult) ?? {};
+    const models = sharedSessionModels(metadata);
+    // Adapters may acknowledge a setter with an empty response and no event.
+    // Publish the accepted state so every attached tab sees the same selection.
+    this.notification(session.hostClient, { jsonrpc: '2.0', method: 'session/update', params: { sessionId: session.id, update: {
+      sessionUpdate: method === 'session/set_config_option' ? 'config_option_update' : 'current_model_update',
+      ...(Array.isArray(metadata.configOptions) ? { configOptions: metadata.configOptions } : {}),
+      ...(models ? { models, ...(method === 'session/set_model' ? { currentModelId: models.currentModelId } : {}) } : {}),
+    } } });
   }
 
   private requireSession(client: SharedAcpSessionClient, id: string): Session {
@@ -322,7 +374,7 @@ export class SharedAcpSessions {
   }
 
   private requireIdle(session: Session): void {
-    if (session.activeRequestId !== null) throw new ChatError(409, 'session_busy', 'This session has an active request.');
+    if (session.activeRequestId !== null || session.changing) throw new ChatError(409, 'session_busy', 'This session has an active request.');
   }
 
   private broadcast(session: Session, notification: AcpRpcNotification): void {

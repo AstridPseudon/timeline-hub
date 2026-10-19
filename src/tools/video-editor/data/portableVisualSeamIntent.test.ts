@@ -4,7 +4,7 @@ import {resolve} from 'node:path';
 import {describe, expect, it} from 'vitest';
 import type {ResolvedTimelineConfig} from '@/tools/video-editor/types/index.ts';
 import {analyzeVisualSeams, withVisualSeamIntent, withVisualSeamPause} from './visualSeamContract.ts';
-import {portableVisualSeamIntent} from './portableVisualSeamIntent.ts';
+import {portableVisualSeamIntent, visualSeamOwners} from './portableVisualSeamIntent.ts';
 import {cueIdentity} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/seam-intent';
 import type {BoundaryCue} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/boundary';
 import fixture from './shotComposition.fixture.json';
@@ -41,6 +41,56 @@ function config(): ResolvedTimelineConfig {
     ]};
 }
 describe('portable Astrid intent admitted by authoritative Runtime', () => {
+  it('matches Runtime picture ownership for explicitly declared custom picture tracks', () => {
+    const base = config();
+    base.tracks.push(
+      {id: 'plate', kind: 'visual', label: 'Plate'},
+      {id: 'source', kind: 'visual', role: 'source', label: 'Source'},
+      {id: 'audio', kind: 'audio', label: 'Audio'},
+    );
+    base.clips.push(
+      {id: 'plate', clipType: 'am-footage', track: 'plate', at: 0.9, hold: 0.2},
+      {id: 'unlisted', clipType: 'am-sprite', track: 'v', at: 0.9, hold: 0.2},
+      {id: 'text', clipType: 'text', track: 'plate', at: 0.9, hold: 0.2},
+      {id: 'effect', clipType: 'am-snap-plate', track: 'plate', at: 0.9, hold: 0.2,
+        elementRef: {id: 'effect', revision: 'sha256:abc', kind: 'effect'}},
+      {id: 'source', clipType: 'media', track: 'source', at: 0, hold: 2},
+      {id: 'audio-clip', clipType: 'media', track: 'audio', at: 0, hold: 2},
+    );
+    base.app = {visualSeamContract: {pictureTracks: ['plate'], continuityTracks: ['v']}};
+
+    const owners = visualSeamOwners(base);
+    const primary = owners.filter((owner) => owner.primary).map((owner) => owner.clipId).sort();
+    expect(primary).toEqual(['a', 'b', 'plate']);
+    expect(owners.some((owner) => owner.clipId === 'plate' && owner.disclosure.opaque.length > 0)).toBe(true);
+    expect(owners.some((owner) => owner.clipId === 'plate' && owner.disclosure.cues.some((cue) => cue.kind === 'activation'))).toBe(false);
+
+    const authoritative = report(base);
+    const runtimeBoundary = authoritative.boundaries.find((boundary) => boundary.frame === 30)!;
+    expect(authoritative.structuralIssues).toEqual([]);
+    expect(authoritative.opaqueElements).toEqual(expect.arrayContaining([
+      expect.objectContaining({span: expect.objectContaining({path: expect.arrayContaining(['plate'])})}),
+    ]));
+    expect(portableVisualSeamIntent(base, 30, 'synchronized').context).toEqual(runtimeBoundary.canonicalContext);
+  });
+
+  it('clips occurrence timeline effects at the nearest frame for fractional-second bounds', () => {
+    const base = config();
+    base.clips = [{
+      id: 'occ:child', clipType: 'media', track: 'v', at: 0, hold: 0.081,
+      app: {
+        canonical: {parentDocumentId: 'main', occurrenceId: 'occ'},
+        canonicalTiming: {occurrenceStartMs: 0, occurrenceDurationMs: 81},
+        canonicalEffects: {localCount: 0, timeline: [{id: 'tail', type: 'custom-process', at: 0, hold: 0.2, track: 'v'}]},
+      },
+    }];
+
+    const timelineEffect = visualSeamOwners(base).find((owner) => owner.path.includes('tail'));
+
+    expect(timelineEffect?.startFrame).toBe(0);
+    expect(timelineEffect?.endFrame).toBe(2);
+  });
+
   it('acknowledges only the same context and named cues', () => {
     const base = config();
     expect(report(base).blocked).toBe(true);

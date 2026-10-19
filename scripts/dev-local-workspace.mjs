@@ -24,6 +24,7 @@ import {
   resolveWorkspaceDiscoveryPath,
   gatewayChildArgs,
   resolveLoopbackPort,
+  loadLocalRuntimeEnvironment,
 } from './dev-local-workspace-options.mjs';
 
 // What the person sees is a few friendly lines. Everything technical is behind `--verbose` (or ASTRID_VERBOSE=1), and every
@@ -141,7 +142,10 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
 
 async function main() {
 let launcherOptions;
-try { launcherOptions = parseDevLocalWorkspaceArgs(process.argv.slice(2)); }
+try {
+  loadLocalRuntimeEnvironment(process.cwd(), process.env);
+  launcherOptions = parseDevLocalWorkspaceArgs(process.argv.slice(2), process.env);
+}
 catch (error) { fail(CANT_START, error.message); exit(1); }
 const configuredAstridCheckout = launcherOptions.astridCheckout
   ? resolve(launcherOptions.astridCheckout) : process.env.ASTRID_CHECKOUT?.trim();

@@ -214,3 +214,31 @@ test('session agent IDs remain isolated across Astrid, Claude Code, and Codex an
   loadingRegistry.close();
   registry.close();
 });
+
+test('a model switch reserves the native session across takeover until its acknowledgement', async () => {
+  const setter = deferred<unknown>();
+  const host = fakeHost(method => method === 'session/new'
+    ? { sessionId: 'codex:model-change', models: { currentModelId: 'a', availableModels: [{ modelId: 'a', name: 'A' }, { modelId: 'b', name: 'B' }] } }
+    : method === 'session/set_model' ? setter.promise : {});
+  const registry = new SharedAcpSessions(() => {});
+  const writer = client('writer', 'codex', host.host);
+  const follower = client('follower', 'codex', fakeHost().host);
+  const params = { sessionId: 'codex:model-change' };
+  await registry.request(writer, 'session/new');
+  await registry.request(follower, 'session/load', params);
+  const switching = registry.request(writer, 'session/set_model', { ...params, modelId: 'b' });
+  await registry.takeover(follower, params.sessionId);
+  const fail = failures();
+  await fail(registry.request(follower, 'session/prompt', { ...params, prompt: [] }), 'session_busy');
+  await fail(registry.request(follower, 'session/set_model', { ...params, modelId: 'a' }), 'session_busy');
+  await fail(registry.request(writer, 'session/set_model', { ...params, modelId: 'a' }), 'session_read_only');
+  registry.detach(writer);
+  assert.equal(registry.retainsHost(writer), true);
+  setter.resolve({}); // legacy ACP adapters may acknowledge without an event
+  await switching;
+  assert.equal((registry.snapshot(follower, params.sessionId) as { models: { currentModelId: string } }).models.currentModelId, 'b');
+  assert.deepEqual(host.requests.map(item => item.method), ['session/new', 'session/set_model']);
+  await registry.request(follower, 'session/prompt', { ...params, prompt: [] });
+  assert.equal(host.requests.at(-1)?.method, 'session/prompt');
+  registry.close();
+});

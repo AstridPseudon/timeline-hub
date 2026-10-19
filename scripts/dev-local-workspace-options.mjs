@@ -1,15 +1,35 @@
-import { existsSync, readdirSync, realpathSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
+import { parseEnv } from 'node:util';
 
 const VITE_ENTRY_RE = /^index-[A-Za-z0-9_-]+\.js$/;
 
-export function parseDevLocalWorkspaceArgs(args) {
+export const LOCAL_RUNTIME_ENV_KEYS = Object.freeze([
+  'ASTRID_RUNTIME_DATA_ROOT', 'ASTRID_SUPPORT_ROOT', 'ASTRID_WORKSPACE_DISCOVERY',
+  'ASTRID_RUNTIME_CHECKOUT', 'ASTRID_RUNTIME_PYTHON', 'ASTRID_RUNTIME_SOURCE_MANIFEST',
+  'ASTRID_CHECKOUT', 'ASTRID_APP_ACP_ENABLED',
+]);
+
+/** Persist the installation selection in the existing ignored Vite local env file.
+ * Only launcher settings are loaded; unrelated app/port/secrets remain Vite's concern.
+ * Explicit shell values (including empty values) and command-line arguments win.
+ */
+export function loadLocalRuntimeEnvironment(cwd, env) {
+  const path = join(cwd, '.env.local');
+  if (!existsSync(path)) return;
+  const local = parseEnv(readFileSync(path, 'utf8'));
+  for (const key of LOCAL_RUNTIME_ENV_KEYS) {
+    if (!Object.hasOwn(env, key) && Object.hasOwn(local, key)) env[key] = local[key];
+  }
+}
+
+export function parseDevLocalWorkspaceArgs(args, env = {}) {
   let preview = false;
   let previewDir = null;
   let checkOnly = false;
   let paired = false;
   let resetPairing = false;
-  let acp = false;
+  let acp = env.ASTRID_APP_ACP_ENABLED === '1';
   const runtimeOptions = {};
   const valueOptions = new Map([
     ['--data-root', 'dataRoot'],

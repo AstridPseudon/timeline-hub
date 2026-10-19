@@ -1,10 +1,9 @@
 import { refreshProjectElementContext } from '../runtime/admitted-elements';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
+import type { AcpModelCatalog, ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
-import { agentChatDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
 import type { AgentChatEditorContext } from '@/shared/contexts/AgentChatContext.tsx';
 import type { AgentTurn, AgentTurnAttachment, AgentSessionStatus } from '@/tools/video-editor/types/agent-session.ts';
 import { timelineQueryKey, assetRegistryQueryKey } from '@/tools/video-editor/hooks/useTimeline.ts';
@@ -16,6 +15,9 @@ import { acceptedReplayRequestIds } from '../runtime/agentRequestReceipts';
 import { readAstridTaskRefs, mergeAstridTaskRefs, type AgentTaskLink } from '../runtime/agentTaskLinks';
 import { LOCAL_AGENT_SETTING_KEY, savedLocalAgent, sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { ACP_SESSION_CONTROL_FIELD, ACP_SESSION_CONTROL_UPDATE, type AcpSessionControl } from '@/integrations/astrid/acpSessionControl.ts';
+import { localAgentModelSettingKey, savedLocalAgentModel, type LocalAgentModels } from '@/integrations/astrid/localAgents.ts';
+
+type AgentModelCatalog = AcpModelCatalog & { localModels?: LocalAgentModels | null };
 
 type SendMessageInput = { message: string; attachments?: AgentTurnAttachment[]; requestId?: string };
 type CapturedSendInput = { input: SendMessageInput; projectId: string | null; sessionId: string; context: AgentChatEditorContext };
@@ -39,6 +41,11 @@ const ACP_PROMPT_TIMEOUT_MS = 5 * 60_000;
 const ACP_ACTIVE_POLL_MS = 500;
 const ACP_IDLE_POLL_MS = 15_000;
 const ACP_TASK_ACTIVE_POLL_MS = 1_000;
+const sessionModelListeners = new Map<string, Set<() => void>>();
+
+function notifySessionModelChanged(sessionId: string): void {
+  for (const listener of sessionModelListeners.get(sessionId) ?? []) listener();
+}
 
 type CapturedAgentRequest = {
   input: SendMessageInput;
@@ -310,7 +317,7 @@ export class AstridAgentSessionStore {
     const pending = this.connectionPromises.get(agent);
     if (pending) return pending;
 
-    const connect = agent === 'astrid' ? this.client.acp.connect() : this.client.acp.connect(agent);
+    const connect = agent === 'astrid' ? this.client.acp.connect() : this.client.acp.connect(agent, savedLocalAgentModel(agent));
     const promise = connect
       .then((connection) => {
         this.connectionIds.set(agent, connection.connection_id);
@@ -427,7 +434,18 @@ export class AstridAgentSessionStore {
   }
 
   async projectChat(projectId: string) { return this.client.acp.projectChat(projectId); }
-  async models() { return this.client.acp.models(); }
+  async models(sessionId?: string | null, projectId?: string | null): Promise<AgentModelCatalog> {
+    const agent = sessionId ? sessionAgentId(sessionId) : savedLocalAgent();
+    if (agent === 'astrid') return this.client.acp.models();
+    if (!sessionId) return { providers: [], currentModel: null, localModels: null };
+    if (!projectId) throw new Error('Select a project to choose this chat’s model.');
+    await this.assertOwned(projectId, sessionId);
+    const connectionId = await this.connection(agent);
+    await this.load(connectionId, sessionId);
+    await this.pullEvents();
+    const { models } = await this.client.acp.sessionModels(connectionId, sessionId);
+    return { providers: [], currentModel: null, localModels: models };
+  }
   async agents() { return { ...(await this.client.acp.agents()), selectedAgent: savedLocalAgent() }; }
   async setAgent(agent: LocalAgentId) {
     if (this.activePrompts.size > 0) throw new Error('Wait for the active agent turn before switching agents.');
@@ -438,13 +456,32 @@ export class AstridAgentSessionStore {
     }
     const choice = catalog.agents.find(candidate => candidate.id === agent);
     if (!choice?.installed || !choice.adapterInstalled) throw new Error(`${choice?.name ?? agent} is not installed or its adapter is unavailable.`);
-    if (choice.authStatus !== 'signed-in') throw new Error(`${choice.name} is not signed in.`);
+    if (choice.authStatus === 'signed-out') throw new Error(`${choice.name} is not signed in.`);
     globalThis.localStorage?.setItem(LOCAL_AGENT_SETTING_KEY, agent);
     return { ...catalog, selectedAgent: agent };
   }
-  async setModel(model: string) {
+  async setModel(model: string, sessionId?: string | null, projectId?: string | null) {
     if (this.activePrompts.size > 0) throw new Error('Wait for the active agent turn before switching models.');
+    const agent = sessionId ? sessionAgentId(sessionId) : savedLocalAgent();
+    if (sessionId) {
+      if (!projectId) throw new Error('Select a project to choose this chat’s model.');
+      await this.assertOwned(projectId, sessionId);
+      const connectionId = await this.connection(agent);
+      await this.load(connectionId, sessionId);
+      await this.pullEvents();
+      this.assertWriter(sessionId);
+    }
+    if (agent !== 'astrid') {
+      if (!sessionId || !projectId) throw new Error('Select a chat to choose its model.');
+      const connectionId = await this.connection(agent);
+      const { models } = await this.client.acp.setSessionModel(connectionId, sessionId, model);
+      if (!models) throw new Error('This agent did not report a model selection.');
+      await this.pullEvents();
+      globalThis.localStorage?.setItem(localAgentModelSettingKey(agent), models.currentModelId);
+      return { currentModel: models.currentModelId };
+    }
     const result = await this.client.acp.setModel(model);
+    await this.pullEvents();
     // The bridge restarts ACP to refresh its authenticated provider catalog.
     // Reload this conversation by its existing ID on the next request.
     const astridConnection = this.connectionIds.get('astrid');
@@ -754,6 +791,10 @@ export class AstridAgentSessionStore {
     const content = textFromContent(notification.update.content);
     const at = timestamp();
 
+    if (updateType === 'config_option_update' || updateType === 'current_model_update') {
+      notifySessionModelChanged(notification.sessionId);
+    }
+
     if (updateType === ACP_SESSION_CONTROL_UPDATE) {
       const control = sessionControl(notification.update);
       if (control) this.applySessionControl(notification.sessionId, control);
@@ -886,11 +927,11 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * ACP chat is the local Astrid implementation, not the retired Supabase surface. It is off on the hosted
- * build, whose loopback gateway never serves ACP (Plan A, D2): nothing may request the project-chat routes there.
+ * ACP chat uses the authenticated local bridge, reached either through the dev proxy or the hosted
+ * page's loopback gateway. The shared transport resolves the configured origin for every request.
  */
 export function isTimelineAgentSessionsAvailable(): boolean {
-  return agentChatDisabledReason() === null;
+  return true;
 }
 
 const agentModelsQueryKey = ['agent-models'] as const;
@@ -904,23 +945,40 @@ export function useSetLocalAgent() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (agent: LocalAgentId) => agentStore.setAgent(agent),
-    onSuccess: (result) => { queryClient.setQueryData(localAgentsQueryKey, result); void queryClient.invalidateQueries({ queryKey: localAgentsQueryKey }); },
+    onSuccess: (result) => {
+      queryClient.setQueryData(localAgentsQueryKey, result);
+      void queryClient.invalidateQueries({ queryKey: localAgentsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: agentModelsQueryKey });
+    },
   });
 }
 
-export function useAgentModels(enabled = true) {
+export function useAgentModels(enabled = true, sessionId?: string | null, projectId?: string | null) {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!sessionId) return;
+    const listeners = sessionModelListeners.get(sessionId) ?? new Set<() => void>();
+    const invalidate = () => { void queryClient.invalidateQueries({ queryKey: [...agentModelsQueryKey, sessionId, projectId ?? null] }); };
+    listeners.add(invalidate);
+    sessionModelListeners.set(sessionId, listeners);
+    return () => {
+      listeners.delete(invalidate);
+      if (listeners.size === 0) sessionModelListeners.delete(sessionId);
+    };
+  }, [projectId, queryClient, sessionId]);
   return useQuery({
-    queryKey: agentModelsQueryKey,
+    queryKey: [...agentModelsQueryKey, sessionId ?? null, projectId ?? null],
     enabled: enabled && isTimelineAgentSessionsAvailable(),
-    queryFn: () => agentStore.models(),
+    queryFn: () => sessionId ? agentStore.models(sessionId, projectId) : agentStore.models(),
+    refetchInterval: false,
     retry: false,
   });
 }
 
-export function useSetAgentModel() {
+export function useSetAgentModel(sessionId?: string | null, projectId?: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (model: string) => agentStore.setModel(model),
+    mutationFn: (model: string) => sessionId ? agentStore.setModel(model, sessionId, projectId) : agentStore.setModel(model),
     onSuccess: () => { void queryClient.invalidateQueries({ queryKey: agentModelsQueryKey }); },
   });
 }

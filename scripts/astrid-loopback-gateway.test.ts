@@ -102,6 +102,7 @@ test('gateway forwards only typed ACP lifecycle routes with its dedicated bridge
     for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     calls.push({ path: req.url, auth: req.headers.authorization, protocol: typeof req.headers['x-astrid-bridge-version'] === 'string' ? req.headers['x-astrid-bridge-version'] : undefined, body: Buffer.concat(chunks).toString() });
     res.setHeader('Content-Type', 'application/json');
+    if (req.url === '/agents') return res.end(JSON.stringify({ agents: [] }));
     if (req.url === '/connect') return res.end(JSON.stringify({ connection_id: 'connection-1', initialize: {} }));
     if (req.url === '/connection-1/rpc') return res.end(JSON.stringify({ result: { ok: true } }));
     res.statusCode = 404;
@@ -136,6 +137,11 @@ test('gateway forwards only typed ACP lifecycle routes with its dedicated bridge
   });
   try {
     assert(allowedAcpRoute('/acp/connect', 'POST'));
+    assert(allowedAcpRoute('/acp/agents', 'GET'));
+    assert(!allowedAcpRoute('/acp/agents', 'DELETE'));
+    const agents = await call(`${base}/acp/agents`, 'GET');
+    assert.equal(agents.status, 200);
+    assert.deepEqual(JSON.parse(agents.body), { agents: [] });
     assert(!allowedAcpRoute('/acp/connection-1/rpc', 'GET'));
     assert.equal((await call(`${base}/acp/connect`, 'OPTIONS', undefined, {
       'Access-Control-Request-Method': 'POST',
@@ -149,6 +155,7 @@ test('gateway forwards only typed ACP lifecycle routes with its dedicated bridge
     assert.deepEqual(JSON.parse(rpc.body), { result: { ok: true } });
     assert.equal((await call(`${base}/acp/connect`, 'POST', '{}', { Authorization: 'Bearer browser', 'Content-Type': 'application/json' })).status, 403);
     assert.deepEqual(calls.map(call => ({ path: call.path, auth: call.auth, protocol: call.protocol })), [
+      { path: '/agents', auth: 'Bearer acp-token', protocol: 'v1' },
       { path: '/connect', auth: 'Bearer acp-token', protocol: 'v1' },
       { path: '/connection-1/rpc', auth: 'Bearer acp-token', protocol: 'v1' },
     ]);

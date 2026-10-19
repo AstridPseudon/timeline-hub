@@ -128,6 +128,8 @@ export const RUNTIME_QUERY_ROOTS: readonly string[] = [
   'runtime-tasks',
   'runtime-final-videos',
   'astrid-bridge',
+  'agent-models',
+  'local-agents',
   'timeline-agent-sessions',
   'timeline-agent-session',
   'project-agent-chat',

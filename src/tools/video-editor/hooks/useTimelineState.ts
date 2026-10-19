@@ -63,7 +63,8 @@ import {
   resolveInputModalityFromPointerType,
   resolveTimelineDeviceClass,
 } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
-import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import { buildTimelineData, type TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { useTimelineTrackManagement } from '@/tools/video-editor/hooks/useTimelineTrackManagement.ts';
 import { useTimelineOps } from '@/tools/video-editor/hooks/useTimelineOps';
 import type { TimelineHostServiceHooks } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
@@ -414,7 +415,7 @@ function useTimelineChromeContextValue({
   schemaIncompatible: ReturnType<typeof useTimelineSave>['schemaIncompatible'];
   loadError: Error | null;
   retryLoad: () => void;
-  render: Pick<RenderStateHook, 'renderStatus' | 'renderLog' | 'renderDirty' | 'renderProgress' | 'renderResultUrl' | 'renderResultFilename' | 'renderResultInfo' | 'activeRenderTaskId' | 'renderDestination' | 'setRenderDestination' | 'cancelRender'>;
+  render: Pick<RenderStateHook, 'renderStatus' | 'renderLog' | 'renderDirty' | 'renderProgress' | 'renderResultUrl' | 'renderResultFilename' | 'renderResultInfo' | 'activeRenderTaskId' | 'renderDestination' | 'setRenderDestination' | 'cancelRender' | 'visualSeamReport' | 'canDeclareSeamsAsHardCuts' | 'declareSeamsAsHardCuts' | 'canAcknowledgeVisualCues' | 'acknowledgeVisualCuesAsSynchronized'>;
   queuedRender: TimelineQueuedRender;
   renderRequest: TimelineRenderRequest;
   history: Pick<TimelineHistoryHook, 'undo' | 'redo' | 'canUndo' | 'canRedo' | 'historyPausedForUploads' | 'checkpoints' | 'jumpToCheckpoint' | 'createManualCheckpoint' | 'canonicalHistory' | 'canonicalHistorySupported' | 'canonicalHistoryError' | 'refreshCanonicalHistory' | 'restoringCanonicalRevisionId' | 'restoreCanonicalRevision'>;
@@ -439,6 +440,11 @@ function useTimelineChromeContextValue({
     schemaIncompatible,
     renderStatus: render.renderStatus,
     renderLog: render.renderLog,
+    visualSeamReport: render.visualSeamReport,
+    canDeclareSeamsAsHardCuts: render.canDeclareSeamsAsHardCuts,
+    declareSeamsAsHardCuts: render.declareSeamsAsHardCuts,
+    canAcknowledgeVisualCues: render.canAcknowledgeVisualCues,
+    acknowledgeVisualCuesAsSynchronized: render.acknowledgeVisualCuesAsSynchronized,
     renderDirty: render.renderDirty,
     renderProgress: render.renderProgress,
     queuedRender,
@@ -511,6 +517,11 @@ function useTimelineChromeContextValue({
     render.renderResultInfo,
     render.renderResultUrl,
     render.renderStatus,
+    render.visualSeamReport,
+    render.canDeclareSeamsAsHardCuts,
+    render.declareSeamsAsHardCuts,
+    render.canAcknowledgeVisualCues,
+    render.acknowledgeVisualCuesAsSynchronized,
     queuedRender,
     renderRequest,
     render.activeRenderTaskId,
@@ -636,12 +647,46 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     editability: runtime.timelineEditability,
   });
   const derived = useDerivedTimeline(save.data, save.selectedClipId, save.selectedTrackId);
+  const timelineDataRef = save.dataRef;
+  const commitTimelineData = save.commitData;
+  const flushTimelineSave = save.flushPendingSave;
+  const canPersistVisualSeamConfig = runtime.timelineEditability?.checkTimeline?.().allowed ?? true;
+  const persistVisualSeamConfig = useCallback(async (acknowledgedConfig: ResolvedTimelineConfig) => {
+    const current = timelineDataRef.current;
+    if (!current) throw new Error('Timeline data is no longer available.');
+    const permission = runtime.timelineEditability?.checkTimeline?.();
+    if (permission && !permission.allowed) {
+      throw new Error(`Timeline edits are temporarily unavailable (${permission.reason ?? 'read-only'}).`);
+    }
+    const contract = acknowledgedConfig.app?.visualSeamContract;
+    if (!contract || typeof contract !== 'object' || Array.isArray(contract)) {
+      throw new Error('Visual seam declarations are missing from the acknowledged configuration.');
+    }
+    const config = {
+      ...current.config,
+      app: { ...current.config.app, visualSeamContract: contract },
+    };
+    const nextData = await buildTimelineData(
+      config,
+      current.registry,
+      resolveAssetUrl,
+      current.configVersion,
+      current.sourceItemsBySchemaRef,
+      current.head,
+      current.transcriptReferences,
+    );
+    if (timelineDataRef.current !== current) throw new Error('Timeline changed while saving visual boundary declarations.');
+    commitTimelineData(nextData, { save: true, semantic: true });
+    await flushTimelineSave();
+  }, [commitTimelineData, flushTimelineSave, resolveAssetUrl, runtime.timelineEditability, timelineDataRef]);
   const render = useRenderState(
     derived.resolvedConfig,
     derived.renderMetadata,
     runtime.exporter ?? null,
     runtime.extensionRuntime,
     save.flushPendingSave,
+    persistVisualSeamConfig,
+    canPersistVisualSeamConfig,
   );
   const assetOperations = useAssetOperations(
     runtime.provider,
@@ -686,6 +731,11 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     renderDestination,
     setRenderDestination,
     cancelRender,
+    visualSeamReport,
+    canDeclareSeamsAsHardCuts,
+    declareSeamsAsHardCuts,
+    canAcknowledgeVisualCues,
+    acknowledgeVisualCuesAsSynchronized,
     setRenderDirty,
     startRender,
   } = render;
@@ -1197,6 +1247,11 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
       renderDestination,
       setRenderDestination,
       cancelRender,
+      visualSeamReport,
+      canDeclareSeamsAsHardCuts,
+      declareSeamsAsHardCuts,
+      canAcknowledgeVisualCues,
+      acknowledgeVisualCuesAsSynchronized,
     },
     queuedRender: null,
     renderRequest,

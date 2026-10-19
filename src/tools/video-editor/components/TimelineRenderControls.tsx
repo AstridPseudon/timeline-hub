@@ -6,6 +6,21 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
+function diagnosticRecord(value: unknown): Record<string, unknown> | undefined {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : undefined;
+}
+
+function diagnosticText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
 /** Render button, render blocker message, and cancellation control. */
 export function TimelineRenderControls({
   previewActionButtonClass,
@@ -106,13 +121,79 @@ export function TimelineRenderControls({
       )}
       {chrome.renderStatus === 'error' && chrome.renderLog && (
         <div
-          className="absolute right-0 top-full mt-1 w-72 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1.5 text-[10px] text-red-300 backdrop-blur-sm"
+          className="absolute right-0 top-full z-40 mt-1 max-h-[70vh] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-md border border-red-500/30 bg-zinc-950/95 px-3 py-2 text-[11px] text-red-200 shadow-lg backdrop-blur-sm"
           data-video-editor-render-blocker="true"
         >
           <div className="flex items-start gap-1">
             <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
-            <span className="line-clamp-3">{chrome.renderLog.split('\n')[0]}</span>
+            <span>{chrome.renderLog.split('\n')[0]}</span>
           </div>
+          {chrome.visualSeamReport && (
+            <section className="mt-2 space-y-2 border-t border-red-500/20 pt-2" aria-label="Visual seam admission report">
+              <p className="font-medium text-zinc-100">Visual boundary report</p>
+              {chrome.visualSeamReport.boundaries.filter((boundary) => boundary.unacknowledgedRisk || boundary.structuralIssues.length > 0).map((boundary) => (
+                <div key={boundary.frame} className="rounded border border-white/10 bg-white/5 px-2 py-1.5 text-zinc-200">
+                  <p>Frame {boundary.frame} · {boundary.timeSeconds.toFixed(2)}s</p>
+                  <p className="text-zinc-400">
+                    {boundary.participants.map((participant) => participant.cue?.kind ?? participant.behavior).join(', ') || 'Boundary'}
+                  </p>
+                  {boundary.participants.map((participant) => (
+                    <p key={`${participant.ownerId}:${participant.path.join('/')}:${participant.behavior}:${participant.cue?.kind ?? ''}:${participant.cue?.id ?? ''}:${participant.cue?.frame ?? ''}`} className="break-all text-zinc-500">
+                      {participant.path.join(' / ')}
+                    </p>
+                  ))}
+                  {boundary.structuralIssues.map((issue) => <p key={issue} className="text-red-300">{issue}</p>)}
+                </div>
+              ))}
+              {chrome.visualSeamReport.structuralIssues.map((issue) => (
+                <p key={issue} className="text-red-300">Structural issue: {issue}</p>
+              ))}
+              {chrome.visualSeamReport.opaqueElements.length > 0 && (
+                <p className="text-amber-200">
+                  Opaque visual elements ({chrome.visualSeamReport.opaqueElements.length}): {[...new Set(chrome.visualSeamReport.opaqueElements.map((element) => element.clipType))].join(', ')}
+                </p>
+              )}
+              {(() => {
+                const raw = chrome.visualSeamReport.rawDiagnostics;
+                const rawBoundaries = Array.isArray(raw?.boundaries) ? raw.boundaries : [];
+                const boundaryOpaquePaths = rawBoundaries.flatMap((item) => {
+                  const paths = diagnosticRecord(item)?.opaquePaths;
+                  return Array.isArray(paths) ? paths : [];
+                });
+                const opaquePaths = [...(Array.isArray(raw?.opaquePaths) ? raw.opaquePaths : []), ...boundaryOpaquePaths];
+                const rawIssues = Array.isArray(raw?.structuralIssues) ? raw.structuralIssues : [];
+                return (
+                  <>
+                    {opaquePaths.length > 0 && (
+                      <div className="text-amber-200">
+                        Opaque owner paths ({opaquePaths.length}):
+                        {opaquePaths.slice(0, 12).map((path, index) => (
+                          <p key={`${diagnosticText(path)}:${index}`} className="break-all text-zinc-400">{Array.isArray(path) ? path.join(' / ') : diagnosticText(path)}</p>
+                        ))}
+                        {opaquePaths.length > 12 && <p className="text-zinc-500">And {opaquePaths.length - 12} more. Expand Runtime details for the full report.</p>}
+                      </div>
+                    )}
+                    {(rawIssues.length > 0 || opaquePaths.length > 0) && (
+                      <details className="text-zinc-400">
+                        <summary className="cursor-pointer">Runtime diagnostic details</summary>
+                        <pre className="mt-1 whitespace-pre-wrap break-all">{diagnosticText({structuralIssues: rawIssues, opaquePaths})}</pre>
+                      </details>
+                    )}
+                  </>
+                );
+              })()}
+              {chrome.canDeclareSeamsAsHardCuts && (
+                <Button type="button" size="sm" variant="outline" onClick={() => void chrome.declareSeamsAsHardCuts()}>
+                  Declare flagged boundaries as hard cuts
+                </Button>
+              )}
+              {chrome.canAcknowledgeVisualCues && (
+                <Button type="button" size="sm" variant="outline" onClick={() => void chrome.acknowledgeVisualCuesAsSynchronized()}>
+                  Acknowledge listed cues as synchronized
+                </Button>
+              )}
+            </section>
+          )}
         </div>
       )}
     </>
