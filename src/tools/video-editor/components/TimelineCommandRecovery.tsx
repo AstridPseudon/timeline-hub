@@ -31,6 +31,18 @@ function actionErrorMessage(error: unknown): string {
   return readableError(message) ?? 'The recovery action could not finish. Your unsaved changes are still here.';
 }
 
+function conflictLocation(ref: string, path: string[]): string {
+  const scoped = /^(parent|occurrence:([^/]+))\/(clip|track):([^/]+)$/.exec(ref);
+  const target = scoped
+    ? `${scoped[3] === 'clip' ? 'Clip' : 'Track'} ${scoped[4]} (${scoped[1] === 'parent' ? 'timeline' : `occurrence ${scoped[2]}`})`
+    : `Target ${ref}`;
+  const labels = new Map([['at', 'Start time'], ['track', 'Track'], ['label', 'Name'], ['name', 'Name']]);
+  const property = path.length === 0
+    ? 'Target itself changed'
+    : (path.length === 1 ? labels.get(path[0]) : undefined) ?? `Field ${path.join(' → ')}`;
+  return `${target} · ${property}`;
+}
+
 export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecoveryProps) {
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -92,7 +104,7 @@ export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecov
           <ul className="mt-1 text-xs text-muted-foreground" aria-label="Changed timeline properties">
             {state.conflicts.map((conflict, index) => (
               <li key={index}>
-                Changed target: {conflict.ref}{conflict.path.length > 0 ? ` · Property: ${conflict.path.join('.')}` : ' · Target itself changed'}
+                {conflictLocation(conflict.ref, conflict.path)}
               </li>
             ))}
           </ul>

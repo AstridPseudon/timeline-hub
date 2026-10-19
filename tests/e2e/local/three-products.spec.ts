@@ -980,33 +980,64 @@ test('M1 real dependency conflict retains B original guards and pending identity
   expect(wire.posts[2].response.details.reason).not.toBe('stale_head');
   const conflict = wire.posts[2].response.details.conflicts;
   expect(conflict.length, JSON.stringify(wire.posts[2].response)).toBeGreaterThan(0);
+  const conflictTargets = (conflict as Array<{ kind: string; ref: string; path: string[] }>)
+    .map(({ kind, ref, path }) => ({ kind, ref, path }));
+  const conflictLabels = conflictTargets.map(({ ref, path }) => {
+    expect(ref, 'the Runtime names the actual clip whose dependency changed').toBe(`parent/clip:${seed3.appClipId}`);
+    expect(path, 'the Runtime names the changed start time').toEqual(['at']);
+    return `Clip ${ref.slice('parent/clip:'.length)} (timeline) · Start time`;
+  });
+  const retainedError = { kind: 'conflict', message: expect.any(String), details: {
+    status: wire.posts[2].response.details.status, reason: wire.posts[2].response.details.reason, conflicts: conflictTargets,
+  } };
+  const recoveryNotice = page.getByTestId('timeline-command-recovery');
+  const locations = recoveryNotice.getByRole('list', { name: 'Changed timeline properties' }).getByRole('listitem');
   await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)?.pending?.outcome?.kind, CEILING).toBe('rejected');
   await expect(page.getByTestId('timeline-command-recovery')).toContainText('Your changes are retained and need resolution before they can be saved.');
+  await expect(recoveryNotice).toHaveRole('alert');
+  await expect(locations).toHaveText(conflictLabels);
+  await expect(page.getByRole('button', { name: 'Retry save', exact: true })).toHaveCount(0);
   const retained = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)!;
   expect(retained.intents).toHaveLength(1);
   expect(retained.intents[0].id).toBe(owner.intents[1].id);
   expect(retained.intents[0].payload).toEqual(owner.intents[1].payload);
   expect(retained.intents[0].conflict).toBeTruthy();
+  expect(retained.intents[0].conflict, 'durable intent keeps locations only, without authored states, choices or headers').toEqual(retainedError);
   expect(retained.pending?.outcome?.kind).toBe('rejected');
+  expect(retained.pending?.outcome, 'durable pending rejection is sanitized too').toEqual({ kind: 'rejected', error: retainedError });
   expect(retained.pending?.request.body).toBe(wire.posts[2].body);
+  expect(retained.pending?.request).toEqual({ method: wire.posts[2].method, path: wire.posts[2].path,
+    body: wire.posts[2].body, key: wire.posts[2].key });
+  expect(retained.pending?.intentId).toBe(owner.intents[1].id);
   expect(JSON.parse(wire.posts[2].body).commands).toEqual(commandsOf(owner.intents[1].payload));
   expect(wire.posts[2].key).not.toBe(wire.posts[0].key);
   expect((await history(harness, seed3)).head.revision_id).toBe(pinOf(c).revision_id);
   expect((await history(harness, seed3)).items).toHaveLength(before.items.length + 2);
+  expect(wire.attempts, 'a rejected save is never retried automatically').toBe(3);
   await page.reload();
   await expectConnected(page);
   const reloaded = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)!;
   expect(reloaded.pending).toEqual(retained.pending);
   expect(reloaded.intents).toEqual(retained.intents);
+  expect(wire.posts, 'reload does not send the rejected request').toHaveLength(3);
+  expect(wire.attempts).toBe(3);
   const recoverConflict = page.getByRole('button', { name: /^Recover saved edits/ })
     .and(page.locator(`[data-owner-id="${owner.ownerId}"]`));
   await expect(recoverConflict).toBeVisible(CEILING);
   await recoverConflict.click();
   await expect(page.getByTestId('timeline-command-recovery')).toContainText('Your changes are retained and need resolution before they can be saved.');
+  await expect(recoveryNotice).toHaveRole('alert');
+  await expect(locations).toHaveText(conflictLabels);
+  await expect(page.getByRole('button', { name: 'Retry save', exact: true })).toHaveCount(0);
   const recoveredConflict = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)!;
   expect(recoveredConflict.intents).toEqual(retained.intents);
   expect(recoveredConflict.pending).toEqual(retained.pending);
+  expect(recoveredConflict.intents[0].conflict).toEqual(retainedError);
+  expect(recoveredConflict.pending?.outcome).toEqual({ kind: 'rejected', error: retainedError });
+  expect(recoveredConflict.pending?.request.key).toBe(wire.posts[2].key);
+  expect(JSON.parse(recoveredConflict.pending!.request.body).commands).toEqual(commandsOf(owner.intents[1].payload));
   expect(wire.posts).toHaveLength(3);
+  expect(wire.attempts, 'explicit recovery restores the rejection without another POST').toBe(3);
   expect(wire.legacy).toEqual([]);
   expect(legacy, 'the reset move must also use the commit path exclusively').toEqual([]);
   await expectOpaqueDataKept(harness, seed3);
