@@ -467,13 +467,13 @@ export class AstridAgentSessionStore {
   async setAgent(agent: LocalAgentId) {
     if (this.activePrompts.size > 0) throw new Error('Wait for the active agent turn before switching agents.');
     const catalog = await this.client.acp.agents();
+    const choice = catalog.agents.find(candidate => candidate.id === agent);
+    if (!choice || choice.state === 'not-installed') throw new Error(`${choice?.name ?? agent} is not installed.`);
+    if (choice.state === 'sign-in') throw new Error(`${choice.name} is not signed in.`);
     if (agent === 'astrid') {
       globalThis.localStorage?.setItem(LOCAL_AGENT_SETTING_KEY, agent);
       return { ...catalog, selectedAgent: agent };
     }
-    const choice = catalog.agents.find(candidate => candidate.id === agent);
-    if (!choice?.installed || !choice.adapterInstalled) throw new Error(`${choice?.name ?? agent} is not installed or its adapter is unavailable.`);
-    if (choice.authStatus === 'signed-out') throw new Error(`${choice.name} is not signed in.`);
     globalThis.localStorage?.setItem(LOCAL_AGENT_SETTING_KEY, agent);
     return { ...catalog, selectedAgent: agent };
   }
@@ -983,7 +983,7 @@ const agentModelsQueryKey = ['agent-models'] as const;
 export const localAgentsQueryKey = ['local-agents'] as const;
 
 export function useLocalAgents() {
-  return useQuery({ queryKey: localAgentsQueryKey, queryFn: () => agentStore.agents(), retry: false });
+  return useQuery({ queryKey: localAgentsQueryKey, queryFn: () => agentStore.agents(), retry: false, refetchOnWindowFocus: true });
 }
 
 export function useSetLocalAgent() {

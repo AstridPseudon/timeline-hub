@@ -28,7 +28,8 @@ interface AgentChatNewChatButtonProps {
   /** The agent the last chat started with; the main click reuses it. */
   defaultAgent: LocalAgentId;
   agents?: LocalAgentChoice[];
-  astridSignedIn: boolean;
+  /** Current model names when existing model-list plumbing has reported them. */
+  agentModelNames?: Partial<Record<LocalAgentId, string | null>>;
   agentsLoading?: boolean;
   agentsError?: string | null;
   disabled?: boolean;
@@ -44,12 +45,19 @@ interface AgentChatNewChatButtonProps {
 
 const matches = (query: string, text: string) => query.toLowerCase().split(/\s+/).filter(Boolean).every(token => text.toLowerCase().includes(token));
 
+function AgentLine({ line }: { line: string }) {
+  return <>{line.split(/`([^`]+)`/g).map((part, index) => index % 2 === 1
+    ? <code key={index} className={KEYCAP}>{part}</code>
+    : part)}</>;
+}
+
 /** "New chat" with the last-used agent; its menu starts a chat with any agent, or drills into one to pick the model too. */
-export function AgentChatNewChatButton({ defaultAgent, agents, astridSignedIn, agentsLoading = false, agentsError = null, disabled = false, onNewChat, onMenuOpenChange, onBrowseAgent, agentModels = null, attachExisting }: AgentChatNewChatButtonProps) {
+export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, agentsLoading = false, agentsError = null, disabled = false, onNewChat, onMenuOpenChange, onBrowseAgent, agentModels = null, attachExisting }: AgentChatNewChatButtonProps) {
   const [open, setOpen] = useState(false);
   const [browsing, setBrowsing] = useState<LocalAgentId | null>(null);
   const [highlighted, setHighlighted] = useState(`agent:${defaultAgent}`);
   const [query, setQuery] = useState('');
+  const [copied, setCopied] = useState<LocalAgentId | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const landOnModel = useRef(false);
   const browse = (agent: LocalAgentId | null) => {
@@ -67,7 +75,25 @@ export function AgentChatNewChatButton({ defaultAgent, agents, astridSignedIn, a
     onMenuOpenChange?.(next);
   };
   const start = (agent?: LocalAgentId, model?: string) => { changeOpen(false); onNewChat(agent, model); };
-  const availability = (id: LocalAgentId) => agentAvailability(id, agents?.find(choice => choice.id === id), { astridSignedIn, loading: agentsLoading });
+  const availability = (id: LocalAgentId) => agentAvailability(agents?.find(choice => choice.id === id));
+  const copyLine = async (id: LocalAgentId, line: string) => {
+    const text = line.replaceAll('`', '');
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const input = document.createElement('textarea');
+      input.value = text;
+      input.style.position = 'fixed';
+      input.style.opacity = '0';
+      document.body.append(input);
+      input.select();
+      const copiedText = document.execCommand?.('copy') ?? false;
+      input.remove();
+      if (!copiedText) return;
+    }
+    setCopied(id);
+    window.setTimeout(() => setCopied(current => current === id ? null : current), 1_500);
+  };
 
   // The agent list has no search field, so it holds focus for the arrow keys (the popover focuses it on
   // open); a submenu focuses its search, and coming back returns focus to the list.
@@ -125,16 +151,18 @@ export function AgentChatNewChatButton({ defaultAgent, agents, astridSignedIn, a
                     const last = id === defaultAgent;
                     return (
                       <Fragment key={id}>
-                        <CommandItem value={`agent:${id}`} disabled={!state.usable} aria-current={last ? 'true' : undefined}
-                          className="items-start gap-2 pr-1 data-[disabled=true]:opacity-100" onSelect={() => start(id)}>
+                        <CommandItem value={`agent:${id}`} aria-current={last ? 'true' : undefined}
+                          className="items-start gap-2 pr-1" onSelect={() => state.usable ? start(id) : state.line && void copyLine(id, state.line)}>
                           <AgentIcon agent={id} className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', state.usable ? 'text-foreground/80' : 'text-muted-foreground/60')} />
                           <span className="flex min-w-0 flex-1 flex-col">
                             <span className="flex items-baseline gap-2">
-                              <span className={cn('normal-case', !state.usable && 'text-muted-foreground')}>{agentNames[id]}</span>
+                              <span className="normal-case">{agentNames[id]}</span>
                               {last && <Check className="h-3 w-3 shrink-0 self-center text-muted-foreground" aria-label="Last used" />}
-                              <span className="ml-auto shrink-0 text-[10px] text-muted-foreground normal-case">{state.status}</span>
+                              <span aria-label={state.usable && agentModelNames?.[id] ? `Ready, using ${agentModelNames[id]}` : undefined} className="ml-auto shrink-0 text-[10px] text-muted-foreground normal-case">
+                                {copied === id ? 'Copied' : state.usable ? agentModelNames?.[id] ?? 'Ready' : state.state === 'sign-in' ? 'Sign in' : 'Not installed'}
+                              </span>
                             </span>
-                            <span className="truncate text-[11px] text-muted-foreground normal-case">{state.detail}</span>
+                            {state.line && <span className="text-[11px] text-muted-foreground normal-case"><AgentLine line={state.line} /></span>}
                           </span>
                           {state.usable && (
                             <button type="button" tabIndex={-1} aria-label={`Choose a ${agentNames[id]} model`} title="Choose a model (→)"
@@ -145,12 +173,6 @@ export function AgentChatNewChatButton({ defaultAgent, agents, astridSignedIn, a
                             </button>
                           )}
                         </CommandItem>
-                        {state.installCommand && (
-                          <p className="pb-1 pl-[1.875rem] pr-2 text-[11px] text-muted-foreground">Install adapter <code className={KEYCAP}>{state.installCommand}</code></p>
-                        )}
-                        {state.loginCommand && (
-                          <p className="pb-1 pl-[1.875rem] pr-2 text-[11px] text-muted-foreground">Sign in: run <code className={KEYCAP}>{state.loginCommand}</code></p>
-                        )}
                       </Fragment>
                     );
                   })}
@@ -186,6 +208,9 @@ export function AgentChatNewChatButton({ defaultAgent, agents, astridSignedIn, a
                     )}
                     {submenu && !submenu.loading && submenu.models.length === 0 && (
                       <p className="px-2 py-1.5 text-[11px] text-muted-foreground">{submenu.note ?? `${agentNames[browsing]} reports its models once a chat starts.`}</p>
+                    )}
+                    {browsing === 'astrid' && (
+                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: run <code className={KEYCAP}>omp</code>, then <code className={KEYCAP}>/login</code>.</p>
                     )}
                   </CommandGroup>
                   {submenu && submenu.models.length > 0 && <CommandEmpty className="py-4 text-center text-xs text-muted-foreground">No models match.</CommandEmpty>}

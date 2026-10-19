@@ -46,52 +46,51 @@ persist connection or session IDs. Reconnect while the host is live reuses the
 same ACP process and opaque session authority; it does not create a second
 session registry.
 
-The agent header's model chip uses `astrid agent models --json` to list
-providers and usable models, including providers that need no sign-in.
-Sign in to another provider in a terminal: run
-`omp`, then `/login` (use the same `--profile` as the bridge when configured).
-Choose **ChatGPT Plus/Pro (Codex Subscription)** for the `openai-codex` route.
-Reopen the picker after signing in. Provider billing, authentication and quota
-errors also offer **Switch model** beside the failed turn.
+## Agent readiness and selection
 
-The authenticated `/acp/models` and `/acp/model` routes share the existing
-bridge token and protocol boundary. The bridge calls the same configured
-Astrid command for ACP and model management, using `OMP_PROFILE` for model
-commands when an isolated profile is configured. `astrid agent use PROVIDER/MODEL`
-owns validation and persistence of OMP's `modelRoles.default`. Listing the
-saved default leaves existing chat models and project defaults unchanged.
-After an explicit App selection, the bridge restarts ACP to discover newly
-authenticated providers, then loads the same
-conversation ID and applies the chosen model before the next prompt. Switching
-waits until the current request finishes. The browser receives provider/model
-metadata and usage limits, never credentials or account tokens.
+The New chat menu reads `GET /acp/agents` whenever it opens and when the window
+regains focus. The bridge finds `claude` and `codex` on the person's login-shell
+PATH (`$SHELL -lic`), then falls back to its own PATH. It asks
+`claude auth status` (with a text fallback) and `codex login status` whether
+each is signed in. Claude Code uses your Claude login; Codex uses your Codex
+CLI login, including ChatGPT. Unknown sign-in counts as ready. Status errors
+and child diagnostics never cross into the App.
 
-## Other agents already on this computer
+The service reports one state per agent: **Ready**, **Sign in**, or
+**Not installed**. A ready row starts a chat. Clicking either other row copies
+its displayed recovery line and shows **Copied**. The lines are:
 
-The picker has an **Agent** section above Astrid's OMP models. It detects
-`claude` and `codex` on the bridge process's PATH, then asks only
-`claude auth status --text` and `codex login status` whether each is signed in.
-Claude Code uses your Claude login; Codex uses your Codex CLI login (including
-ChatGPT). These are separate from OMP's provider logins. Status errors appear as
-unknown, and child diagnostics and credential files never cross into the App.
+- Claude Code sign-in: Run `claude auth login`, then come back.
+- Claude Code not installed: Install with `curl -fsSL https://claude.ai/install.sh | bash`.
+- Codex sign-in: Run `codex login`, then come back.
+- Codex not installed: Install with `npm install -g @openai/codex`.
+- Astrid without a signed-in provider: Run `omp`, then `/login`.
 
-Neither CLI currently exposes a native ACP mode. Install its standard adapter
-explicitly in a terminal if the picker says **Available to install**:
+OpenAI documents the Codex CLI install command in its [Codex setup guide](https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex).
+Use the same `--profile` as the bridge when configured.
+
+The bridge launches each ACP adapter through Bun, pinned in
+`scripts/astrid-local-agent-adapters.ts`:
 
 ```sh
-npm install -g @agentclientprotocol/claude-agent-acp
-npm install -g @agentclientprotocol/codex-acp
+bun x --bun @agentclientprotocol/claude-agent-acp@0.93.0
+bun x --bun @agentclientprotocol/codex-acp@2.2.2
 ```
 
-These are the current packages maintained at
-[Claude Agent ACP](https://github.com/agentclientprotocol/claude-agent-acp) and
-[Codex ACP](https://github.com/agentclientprotocol/codex-acp), successors to the
-Zed-scoped packages. The bridge runs the installed `claude-agent-acp` or
-`codex-acp` executable directly, pins it to the detected CLI, and never invokes
-an installer or `npx`. To sign in, run `claude auth login` or `codex login`, then
-reopen the picker. Restart the bridge if its PATH needs updating.
-The current Claude adapter requires Node 22 or newer on that PATH; the App's
-Node 20 checks use fake adapters and do not establish live adapter compatibility.
+The first chat caches the adapter (about 250 MB for Claude Code and 330 MB for
+Codex with native binaries). Bun's `--bun` runtime handles Claude's Node 22
+requirement. The bridge passes the detected Claude executable as
+`pathToClaudeCodeExecutable` and Codex as `CODEX_PATH`, so both adapters use the
+person's installed CLI and login. The app does not install either CLI. While a
+chat starts, the menu reports **Getting Claude Code ready…** (or the chosen
+agent); a failed start shows **Claude Code didn't start.**, its details, and
+**Try again**.
+
+The header shows plain text such as `Claude Code · Sonnet 4.5`, with the
+tooltip “To use another model, start a new chat.” Model choice is available in
+the New chat menu. Existing model-list plumbing remains in place: Astrid's
+provider catalog is loaded from `astrid agent models --json`, and Claude Code
+and Codex lists are remembered after a session reports them.
 
 The choice is saved in this App origin's local settings and applies to new
 chats. Existing project chats keep their original agent. Only external session
@@ -112,10 +111,9 @@ adapter-enforced system policy. The OMP overlay that disables native image
 tools applies to Astrid only. Permission requests retain the bridge's existing
 host-side decisions; this change does not add an approval dialog.
 
-Live verification after explicitly installing the adapters: reopen the picker,
-start a new chat with each signed-in agent, read a disposable project's timeline
-through Astrid, exercise a tool approval and cancellation, then reload and
-continue each saved chat after selecting a different default agent.
+The ACP adapters are resolved with Bun at the pinned versions in the bridge
+launch path; no separate adapter install is needed. Live verification on the
+owner's Mac: reopen the picker and start a prompt with each signed-in agent.
 
 The installed OMP build does not make sessions stored under a custom
 `--session-dir` discoverable to a newly spawned ACP process. Astrid App therefore

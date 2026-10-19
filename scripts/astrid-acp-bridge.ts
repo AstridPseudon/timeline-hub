@@ -9,7 +9,7 @@ import { getAstridAgentModelCatalog, setAstridAgentDefaultModel } from './astrid
 import { discoverLocalAgents } from './astrid-local-agents.ts';
 import { createLocalAgentAcpProcessHost } from './astrid-local-agent-host.ts';
 import { SharedAcpSessions, sharedSessionModels } from './astrid-shared-acp-sessions.ts';
-import { localAgentIdSchema, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '../src/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_TABLE, localAgentIdSchema, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '../src/integrations/astrid/localAgents.ts';
 
 import {
   AcpProcessHost,
@@ -415,7 +415,14 @@ export class AstridAcpBridge {
         return;
       }
       if (request.method === 'GET' && url.pathname === '/agents') {
-        jsonResponse(response, 200, { agents: await discoverLocalAgents({ cwd: this.config.cwd }) });
+        const [agents, astridModels] = await Promise.all([
+          discoverLocalAgents({ cwd: this.config.cwd }),
+          getAstridAgentModelCatalog({ command: this.config.command, cwd: this.config.cwd, profile: this.config.profile }).catch(() => null),
+        ]);
+        const astridReady = astridModels?.providers.some(provider => provider.signedIn || provider.models.length > 0) ?? true;
+        jsonResponse(response, 200, { agents: agents.map(agent => agent.id === 'astrid' && !astridReady
+          ? { ...agent, state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine }
+          : agent) });
         return;
       }
       if (request.method === 'GET' && url.pathname === '/models') {

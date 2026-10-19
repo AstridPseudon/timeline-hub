@@ -2,15 +2,32 @@ import { z } from 'zod';
 
 export const localAgentIdSchema = z.enum(['astrid', 'claude-code', 'codex']);
 export type LocalAgentId = z.infer<typeof localAgentIdSchema>;
+
+/** One shared table for the service's agent names and the exact recovery lines shown in the menu. */
+export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {
+  name: string;
+  signInLine: string;
+  notInstalledLine?: string;
+}> = {
+  astrid: { name: 'Astrid', signInLine: 'Run `omp`, then `/login`.' },
+  'claude-code': {
+    name: 'Claude Code',
+    signInLine: 'Run `claude auth login`, then come back.',
+    notInstalledLine: 'Install with `curl -fsSL https://claude.ai/install.sh | bash`',
+  },
+  codex: {
+    name: 'Codex',
+    signInLine: 'Run `codex login`, then come back.',
+    notInstalledLine: 'Install with `npm install -g @openai/codex`',
+  },
+};
+
 export const localAgentCatalogSchema = z.object({
   agents: z.array(z.strictObject({
     id: localAgentIdSchema,
     name: z.string(),
-    installed: z.boolean(),
-    authStatus: z.enum(['signed-in', 'signed-out', 'unknown']),
-    adapterInstalled: z.boolean(),
-    installCommand: z.string().nullable(),
-    loginCommand: z.string().nullable(),
+    state: z.enum(['ready', 'sign-in', 'not-installed']),
+    line: z.string().nullable(),
   })),
 });
 export type LocalAgentChoice = z.infer<typeof localAgentCatalogSchema>['agents'][number];

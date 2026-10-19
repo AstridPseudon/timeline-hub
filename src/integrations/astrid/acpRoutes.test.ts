@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { AstridLocalAcpRoutes } from './acpRoutes.ts';
+import { LOCAL_AGENT_TABLE } from './localAgents.ts';
 import type { AstridBridgeTransport } from './transport.ts';
 
 describe('AstridLocalAcpRoutes', () => {
@@ -29,7 +30,7 @@ describe('AstridLocalAcpRoutes', () => {
     ]);
   });
   it('discovers local agents and launches the exact selected agent', async () => {
-    const catalog = { agents: [{ id: 'codex', name: 'Codex', installed: true, authStatus: 'signed-in', adapterInstalled: false, installCommand: 'npm install -g @agentclientprotocol/codex-acp', loginCommand: 'codex login' }] };
+    const catalog = { agents: [{ id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'ready' as const, line: null }] };
     const requestJson = vi.fn(async (path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) => schema.parse(path === '/acp/agents' ? catalog : { connection_id: 'c1', initialize: {} }));
     const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
     await expect(routes.agents()).resolves.toEqual(catalog);

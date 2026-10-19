@@ -1,7 +1,8 @@
+// @vitest-environment jsdom
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   appendAcpAssistantDraft,
   appendAcpTextTurn,
@@ -25,7 +26,7 @@ import {
 } from './useAgentSession.ts';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
-import { LOCAL_AGENT_SETTING_KEY, localAgentModelSettingKey, savedLocalAgentModel } from '@/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_SETTING_KEY, LOCAL_AGENT_TABLE, localAgentModelSettingKey, savedLocalAgentModel } from '@/integrations/astrid/localAgents.ts';
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -38,10 +39,29 @@ function wrapperWithClient(client: QueryClient) {
   };
 }
 
+function createStorage(): Storage {
+  const values = new Map<string, string>();
+  return {
+    get length() { return values.size; },
+    clear: () => values.clear(),
+    getItem: (key) => values.get(key) ?? null,
+    key: (index) => [...values.keys()][index] ?? null,
+    removeItem: (key) => { values.delete(key); },
+    setItem: (key, value) => { values.set(key, String(value)); },
+  };
+}
+
+let testStorage: Storage;
+beforeEach(() => {
+  testStorage = createStorage();
+  vi.stubGlobal('localStorage', testStorage);
+});
+
 afterEach(() => {
   vi.restoreAllMocks();
-  localStorage.removeItem(LOCAL_AGENT_SETTING_KEY);
-  for (const agent of ['astrid', 'claude-code', 'codex'] as const) localStorage.removeItem(localAgentModelSettingKey(agent));
+  testStorage.removeItem(LOCAL_AGENT_SETTING_KEY);
+  for (const agent of ['astrid', 'claude-code', 'codex'] as const) testStorage.removeItem(localAgentModelSettingKey(agent));
+  vi.unstubAllGlobals();
 });
 
 describe('timeline agent ACP chat', () => {
@@ -209,11 +229,11 @@ describe('timeline agent ACP chat', () => {
     hook.unmount();
   });
 
-  it('persists a usable local agent default and rejects unavailable or signed-out choices', async () => {
+  it('persists a ready local agent default and rejects non-ready choices', async () => {
     const acp = {
       agents: vi.fn(async () => ({ agents: [
-        { id: 'claude-code', name: 'Claude Code', installed: true, adapterInstalled: true, authStatus: 'signed-in' },
-        { id: 'codex', name: 'Codex', installed: true, adapterInstalled: true, authStatus: 'signed-out' },
+        { id: 'claude-code', name: 'Claude Code', state: 'ready' as const, line: null },
+        { id: 'codex', name: 'Codex', state: 'sign-in' as const, line: LOCAL_AGENT_TABLE.codex.signInLine },
       ] })),
     };
     const store = new AstridAgentSessionStore({ acp } as never);
@@ -221,7 +241,7 @@ describe('timeline agent ACP chat', () => {
     await store.setAgent('claude-code');
     expect(localStorage.getItem(LOCAL_AGENT_SETTING_KEY)).toBe('claude-code');
     await expect(store.setAgent('codex')).rejects.toThrow('not signed in');
-    acp.agents.mockResolvedValue({ agents: [{ id: 'claude-code', name: 'Claude Code', installed: false, adapterInstalled: false, authStatus: 'signed-in' }] });
+    acp.agents.mockResolvedValue({ agents: [{ id: 'claude-code', name: 'Claude Code', state: 'not-installed', line: LOCAL_AGENT_TABLE['claude-code'].notInstalledLine! }] });
     await expect(store.setAgent('claude-code')).rejects.toThrow('not installed');
   });
 
@@ -281,7 +301,7 @@ describe('timeline agent ACP chat', () => {
     expect(connects).toEqual(['codex']);
   });
 
-  it('loads the model catalog and refreshes the chip after a selection', async () => {
+  it('loads the model catalog and refreshes it after a model selection', async () => {
     let currentModel = 'deepseek/deepseek-chat';
     const models = vi.spyOn(AstridAgentSessionStore.prototype, 'models').mockImplementation(async () => ({
       currentModel,

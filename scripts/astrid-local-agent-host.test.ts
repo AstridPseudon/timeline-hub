@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
 import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
 import { createLocalAgentAcpProcessHost } from './astrid-local-agent-host.ts';
 
@@ -23,17 +24,21 @@ function fixture(directory: string) {
   writeFileSync(profile, '# Packaged Astrid profile\nPROFILE_SENTINEL');
   executable(join(bin, 'claude'), `#!${process.execPath}\nprocess.stdout.write('Logged in\\n');\n`);
   executable(join(bin, 'codex'), `#!${process.execPath}\nprocess.stderr.write('Logged in using ChatGPT\\n');\n`);
-  for (const name of ['claude-agent-acp', 'codex-acp']) {
-    executable(join(bin, name), `#!${process.execPath}
+  const shell = join(directory, 'login-shell');
+  executable(shell, `#!/bin/sh\n[ "$1" = "-lic" ] || exit 98\nprintf '\\n__ASTRID_LOGIN_PATH__%s\\n' "$ASTRID_TEST_LOGIN_PATH"\n`);
+  executable(join(bin, 'bun'), `#!${process.execPath}
 const fs = require('node:fs');
 const readline = require('node:readline');
 const log = ${JSON.stringify(logs)};
-const agent = ${JSON.stringify(name)};
+const adapter = process.argv[4];
+const expected = ${JSON.stringify(LOCAL_AGENT_ADAPTERS)};
+if (process.argv[2] !== 'x' || process.argv[3] !== '--bun' || !Object.values(expected).includes(adapter)) process.exit(98);
+const agent = adapter === expected['claude-code'] ? 'claude-agent-acp' : 'codex-acp';
 const write = value => process.stdout.write(JSON.stringify(value) + '\\n');
 const record = value => fs.appendFileSync(log, JSON.stringify({agent, value}) + '\\n');
 const waiting = new Map();
 let nextPermission = 0;
-record({startup: true, cliPath: process.env.CODEX_PATH ?? null});
+record({startup: true, cliPath: process.env.CODEX_PATH ?? null, adapter});
 const askPermission = params => new Promise(resolve => {
   const id = 'permission-' + (++nextPermission);
   waiting.set(id, resolve);
@@ -70,8 +75,7 @@ rl.on('line', async line => {
 });
 rl.on('close', () => process.exit(0));
 `);
-  }
-  return { bin, cwd, logs, profile };
+  return { bin, cwd, logs, profile, shell };
 }
 
 async function listen(server: import('node:http').Server): Promise<string> {
@@ -83,7 +87,7 @@ function records(path: string): Json[] {
   return readFileSync(path, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line) as Json);
 }
 
-test('external ACP bridge namespaces sessions and routes context, permissions, and cancellation through real adapter processes', async () => {
+test('external ACP bridge namespaces sessions and routes context, permissions, and cancellation through its Bun launch shim', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'astrid-local-agent-host-'));
   const f = fixture(directory);
   let nextConnection = 0;
@@ -92,7 +96,7 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
     idFactory: () => `connection-${++nextConnection}`,
     localAgentHostFactory: (agent, options) => createLocalAgentAcpProcessHost(agent, {
       ...options,
-      env: { PATH: f.bin, ...options.env },
+      env: { ...options.env, PATH: f.bin, SHELL: f.shell, ASTRID_TEST_LOGIN_PATH: f.bin },
       profileFileForCommand: () => f.profile,
     }),
   });
@@ -152,6 +156,8 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
     const logged = records(f.logs);
     const claudeRecords = logged.filter(row => row.agent === 'claude-agent-acp').map(row => row.value as Json);
     const codexRecords = logged.filter(row => row.agent === 'codex-acp').map(row => row.value as Json);
+    assert.equal((claudeRecords.find(row => row.startup)!).adapter, LOCAL_AGENT_ADAPTERS['claude-code']);
+    assert.equal((codexRecords.find(row => row.startup)!).adapter, LOCAL_AGENT_ADAPTERS.codex);
     const claudeNew = claudeRecords.find(row => row.method === 'session/new')!.params as Json;
     assert.equal((((claudeNew._meta as Json).claudeCode as Json).options as Json).pathToClaudeCodeExecutable, join(f.bin, 'claude'));
     const claudePrompt = claudeRecords.find(row => row.receivedPrompt)!.receivedPrompt as Json[];
@@ -182,19 +188,22 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
   }
 });
 
-test('external agent readiness fails closed for missing CLIs, sign-in, or adapter without starting an installer', async () => {
+test('external agent readiness fails closed for missing CLIs and sign-in, but does not require a local adapter install', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'astrid-local-agent-readiness-'));
   try {
     const bin = join(directory, 'bin');
     const cwd = join(directory, 'project');
+    mkdirSync(directory, { recursive: true });
     mkdirSync(bin); mkdirSync(cwd);
-    const options = { cwd, env: { PATH: bin }, profileFileForCommand: () => join(directory, 'unused-profile.md') };
+    writeFileSync(join(directory, 'unused-profile.md'), 'profile');
+    const shell = join(directory, 'login-shell');
+    executable(shell, `#!/bin/sh\n[ "$1" = "-lic" ] || exit 98\nprintf '\\n__ASTRID_LOGIN_PATH__%s\\n' "$ASTRID_TEST_LOGIN_PATH"\n`);
+    const options = { cwd, env: { PATH: bin, SHELL: shell, ASTRID_TEST_LOGIN_PATH: bin }, profileFileForCommand: () => join(directory, 'unused-profile.md') };
     await assert.rejects(createLocalAgentAcpProcessHost('claude-code', options), /not installed on PATH/);
     executable(join(bin, 'claude'), `#!${process.execPath}\nprocess.stdout.write('Not logged in. Run claude auth login to authenticate.');\n`);
-    executable(join(bin, 'claude-agent-acp'), `#!${process.execPath}\nprocess.exit(99);\n`);
     await assert.rejects(createLocalAgentAcpProcessHost('claude-code', options), /sign-in is required/);
     executable(join(bin, 'claude'), `#!${process.execPath}\nprocess.stdout.write('Logged in');\n`);
-    rmSync(join(bin, 'claude-agent-acp'));
-    await assert.rejects(createLocalAgentAcpProcessHost('claude-code', options), /Install the ACP adapter explicitly/);
+    executable(join(bin, 'bun'), `#!${process.execPath}\nprocess.exit(99);\n`);
+    await createLocalAgentAcpProcessHost('claude-code', options);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });

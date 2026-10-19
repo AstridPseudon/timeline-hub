@@ -65,9 +65,8 @@ class LocalAgentAcpHost extends AcpProcessHost {
 export async function createLocalAgentAcpProcessHost(agent: ExternalAgent, options: AstridAcpLauncherOptions): Promise<AcpProcessHost> {
   const env = { ...process.env, ...options.env };
   const choice = (await discoverLocalAgents({ env, cwd: options.cwd })).find(item => item.id === agent)!;
-  if (!choice.installed) throw new AcpProcessHostError(`${choice.name} is not installed on PATH.`, { code: 'acp_unavailable' });
-  if (choice.authStatus === 'signed-out') throw new AcpProcessHostError(`${choice.name} sign-in is required. Run \`${choice.loginCommand}\` in a terminal.`, { code: 'acp_unavailable' });
-  if (!choice.adapterInstalled) throw new AcpProcessHostError(`Install the ACP adapter explicitly: ${choice.installCommand}`, { code: 'acp_unavailable' });
+  if (choice.state === 'not-installed') throw new AcpProcessHostError(`${choice.name} is not installed on PATH.`, { code: 'acp_unavailable' });
+  if (choice.state === 'sign-in') throw new AcpProcessHostError(`${choice.name} sign-in is required. ${choice.line}`, { code: 'acp_unavailable' });
   const launch = await localAgentLaunch(agent, env);
   const profilePath = (options.profileFileForCommand ?? resolveAstridAcpSystemPromptFile)(options.command ?? ASTRID_ACP_COMMAND, env);
   const profile = readFileSync(profilePath, 'utf8');

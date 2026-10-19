@@ -40,7 +40,6 @@ import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup, type Ag
 import { useChatScroll } from './useChatScroll';
 import { AgentTaskResults } from './AgentTaskResults';
 import { AgentChatSessionSelector } from './AgentChatSessionSelector';
-import { AgentChatModelSelector } from './AgentChatModelSelector';
 import { AgentChatNewChatButton, type NewChatAgentModels } from './AgentChatNewChatButton';
 import { AgentIcon, agentNames } from './agentIdentity';
 import { readAgentModels, readChatModels, rememberAgentModels, rememberChatModel } from './chatModelMemory';
@@ -68,17 +67,6 @@ type OptimisticMessage = QueuedMessage & {
 };
 
 const unsavedProjectChatDrafts = new Map<string, { text: string; queue: QueuedMessage[]; dirty: boolean; scopeKey: string; persistence: ProjectChatDraftPersistence<QueuedMessage> }>();
-const emptyModelCatalog = { providers: [], currentModel: null } as import('@/integrations/astrid/acpRoutes.ts').AcpModelCatalog;
-
-function isProviderAccessError(error: unknown): boolean {
-  if (!error) return false;
-  const record = isRecord(error) ? error : {};
-  const status = record.status;
-  if (typeof status === 'number' && [401, 402, 403, 429].includes(status)) return true;
-  const message = error instanceof Error ? error.message : String(record.message ?? error);
-  return /\b(?:401|402|403|429|billing|auth(?:entication|orization)?|unauthorized|forbidden|quota|rate[ -]?limit|too many requests|payment required|insufficient[ _-]?(?:balance|credits))\b/i.test(message);
-}
-
 type AgentSessionView = {
   durableAcceptedRequestIds?: string[];
   recordedEditorResults?: import('../../runtime/editorRequestPresentation').RecordedEditorResult[];
@@ -310,6 +298,21 @@ function AvailableAgentChatPanel({
   const describeSession = useCallback((sessionId: string) => ({ agent: sessionAgentId(sessionId), model: chatModels[sessionId] ?? null }), [chatModels]);
   // Claude Code and Codex report their models per session, so remember each list for New chat's submenu.
   const [agentModelLists, setAgentModelLists] = useState(() => ({ 'claude-code': readAgentModels('claude-code'), codex: readAgentModels('codex') }));
+  const agentModelNames = useMemo(() => {
+    const catalog = modelCatalog.data;
+    const astridCurrent = catalog?.providers.flatMap(provider => provider.models.map(model => ({ id: `${provider.id}/${model.id}`, name: model.name })))
+      .find(model => model.id === catalog.currentModel)?.name ?? null;
+    const externalName = (agent: 'claude-code' | 'codex') => {
+      if (chatAgent === agent && chatModelName) return chatModelName;
+      const saved = savedLocalAgentModel(agent);
+      return saved ? agentModelLists[agent].find(model => model.id === saved)?.name ?? null : null;
+    };
+    return {
+      astrid: chatAgent === 'astrid' ? chatModelName : astridCurrent,
+      'claude-code': externalName('claude-code'),
+      codex: externalName('codex'),
+    };
+  }, [agentModelLists, chatAgent, chatModelName, modelCatalog.data]);
   const rememberModelList = useCallback((agent: LocalAgentId, models: Array<{ modelId: string; name: string; description?: string | null }> | undefined) => {
     if (agent === 'astrid' || !models?.length) return;
     const list = models.map(model => ({ id: model.modelId, name: model.name, description: model.description ?? null }));
@@ -328,14 +331,8 @@ function AvailableAgentChatPanel({
   const pausedQueuedIdsRef = useRef(new Set<string>());
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
-  const [modelListOpen, setModelListOpen] = useState(false);
-  const openModelList = useCallback((open: boolean) => {
-    setModelListOpen(open);
-    if (open) {
-      void modelCatalog.refetch();
-      void localAgents.refetch();
-    }
-  }, [modelCatalog, localAgents]);
+  const [startingAgent, setStartingAgent] = useState<LocalAgentId | null>(null);
+  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; model?: string; details: string } | null>(null);
   // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
   // and decoupled from pane open state so the close-path bug from the rev-4
   // setIsTasksPaneOpenProgrammatic approach can't recur.
@@ -568,7 +565,7 @@ function AvailableAgentChatPanel({
         : 'Type or press Cmd+Shift+R to talk...';
   const optimisticTurnAlreadyMaterialized = optimisticMessage !== null
     && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.request_id === optimisticMessage.id));
-  const chatFailures = [activeSession.error, sendMessage.localError, createSession.error, createNewSession.error, setLocalAgent.error, sessions.error, projectChat.error];
+  const chatFailures = [activeSession.error, sendMessage.localError, createSession.error, sessions.error, projectChat.error];
   // No chat service on this computer is a state, not a failure: the pane says so in one plain line, with no alert or retry.
   const chatUnavailable = chatFailures.some(isAcpUnavailable);
   const showEmptyState = !activeSession.isLoading && renderedTurns.length === 0 && !isProcessing && !sendMessage.isPending;
@@ -944,12 +941,20 @@ function AvailableAgentChatPanel({
   const pendingModelRef = useRef<{ sessionId: string; model: string } | null>(null);
   const startChatWith = useCallback(async (agent?: LocalAgentId, model?: string) => {
     const chosen = agent ?? defaultAgent;
-    if (chosen !== defaultAgent) await setLocalAgent.mutateAsync(chosen);
-    // Without a pick, Claude Code and Codex start on their remembered default when it is still on offer.
-    const saved = chosen === 'astrid' ? undefined : savedLocalAgentModel(chosen);
-    const target = model ?? (saved && chosen !== 'astrid' && agentModelLists[chosen].some(choice => choice.id === saved) ? saved : undefined);
-    const sessionId = await handleNewSession();
-    if (sessionId && target) pendingModelRef.current = { sessionId, model: target };
+    setStartFailure(null);
+    setStartingAgent(chosen);
+    try {
+      if (chosen !== defaultAgent) await setLocalAgent.mutateAsync(chosen);
+      // Without a pick, Claude Code and Codex start on their remembered default when it is still on offer.
+      const saved = chosen === 'astrid' ? undefined : savedLocalAgentModel(chosen);
+      const target = model ?? (saved && chosen !== 'astrid' && agentModelLists[chosen].some(choice => choice.id === saved) ? saved : undefined);
+      const sessionId = await handleNewSession();
+      if (sessionId && target) pendingModelRef.current = { sessionId, model: target };
+    } catch (error) {
+      setStartFailure({ agent: chosen, model, details: error instanceof Error ? error.message : String(error) });
+    } finally {
+      setStartingAgent(null);
+    }
   }, [agentModelLists, defaultAgent, handleNewSession, setLocalAgent]);
   useEffect(() => {
     const pending = pendingModelRef.current;
@@ -1010,27 +1015,16 @@ function AvailableAgentChatPanel({
       {/* Header */}
       <div data-testid="agent-chat-header" className="@container/agent-header relative flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-2">
         <div className="flex shrink-0 items-center gap-2">
-          {/* The chat's agent is its identity, not a choice. With both pickers in a narrow panel, only the icon stays. */}
-          <span className="flex min-w-0 items-center gap-1.5" title={`Agent: ${agentNames[chatAgent]}`}>
+          {/* The chat's agent and model are fixed when it starts. */}
+          <span className="flex min-w-0 items-center gap-1.5" title="To use another model, start a new chat.">
             <AgentIcon agent={chatAgent} className="h-3.5 w-3.5 shrink-0 text-foreground/80" />
-            <span data-testid="agent-chat-identity" className={`text-sm font-medium normal-case ${showSessionSelector ? 'sr-only @[22rem]/agent-header:not-sr-only' : ''}`}>{agentNames[chatAgent]}</span>
+            <span data-testid="agent-chat-identity" className="truncate text-sm font-medium normal-case" title="To use another model, start a new chat.">
+              {agentNames[chatAgent]}{chatModelName ? ` · ${chatModelName}` : ''}
+            </span>
           </span>
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </div>
         <div className="flex min-w-0 shrink items-center justify-end gap-1">
-          <AgentChatModelSelector
-            catalog={modelCatalog.data ?? emptyModelCatalog}
-            selectedAgent={chatAgent}
-            localModels={modelCatalog.data?.localModels}
-            onSelectLocalModel={(model) => setAgentModel.mutateAsync(model).then(() => undefined)}
-            busy={isFollower || isProcessing || sendMessage.isPending || setAgentModel.isPending}
-            open={modelListOpen}
-            onOpenChange={openModelList}
-            loading={modelCatalog.isLoading}
-            catalogError={modelCatalog.error instanceof Error ? modelCatalog.error.message : null}
-            selectionError={setAgentModel.error instanceof Error ? setAgentModel.error.message : null}
-            onSelectModel={(model) => setAgentModel.mutateAsync(model).then(() => undefined)}
-          />
           {showSessionSelector && projectChat.data && (
             <AgentChatSessionSelector
               sessions={sessionOptions}
@@ -1069,18 +1063,26 @@ function AvailableAgentChatPanel({
           <AgentChatNewChatButton
             defaultAgent={defaultAgent}
             agents={localAgents.data?.agents}
-            astridSignedIn={modelCatalog.data?.providers.some(provider => provider.signedIn) ?? false}
+            agentModelNames={agentModelNames}
             agentsLoading={localAgents.isLoading}
             agentsError={localAgents.error instanceof Error ? localAgents.error.message : null}
-            disabled={createNewSession.isPending || setLocalAgent.isPending || !hasProject}
+            disabled={startingAgent !== null || createNewSession.isPending || setLocalAgent.isPending || !hasProject}
             onMenuOpenChange={(open) => { if (open) void localAgents.refetch(); }}
             onBrowseAgent={setBrowseAgent}
             agentModels={newChatModels}
-            onNewChat={(agent, model) => void startChatWith(agent, model).catch(() => undefined)}
+            onNewChat={(agent, model) => void startChatWith(agent, model)}
             attachExisting={projectId ? { open: showAttachSessions, toggle: () => setShowAttachSessions((open) => !open) } : undefined}
           />
         </div>
       </div>
+      {startingAgent && startingAgent !== 'astrid' && <p role="status" className="border-b border-border/70 px-3 py-1.5 text-xs text-muted-foreground">Getting {agentNames[startingAgent]} ready…</p>}
+      {startFailure && (
+        <div role="alert" className="border-b border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          <p>{agentNames[startFailure.agent]} didn't start.</p>
+          <p>Details: {startFailure.details}</p>
+          <button type="button" className="mt-1 underline" onClick={() => void startChatWith(startFailure.agent, startFailure.model)}>Try again</button>
+        </div>
+      )}
       {showAttachSessions && projectId && (
         <div id="unassigned-project-chats" className="border-b border-border/70 px-4 py-2" aria-label="Unassigned existing chats">
           <div className="flex max-h-28 flex-col gap-1 overflow-y-auto">
@@ -1345,9 +1347,6 @@ function AvailableAgentChatPanel({
         {!isProcessing && !sendMessage.isPending && !isCancelled && !chatUnavailable && (turnFailure || activeStatus === 'error') && (
           <div role="alert" className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
             {turnFailureMessage}
-            {isProviderAccessError(turnFailure) && (
-              <button type="button" className="ml-2 underline" onClick={() => openModelList(true)}>Switch model</button>
-            )}
             {(sessions.error || projectChat.error) && (
               <button type="button" className="ml-2 underline" disabled={sessions.isFetching || projectChat.isFetching}
                 onClick={() => { void sessions.refetch(); void projectChat.refetch(); }}>

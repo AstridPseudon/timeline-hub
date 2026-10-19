@@ -2,13 +2,40 @@ import { execFile } from 'node:child_process';
 import { access, constants } from 'node:fs/promises';
 import { delimiter, join } from 'node:path';
 import { promisify } from 'node:util';
-import type { LocalAgentChoice, LocalAgentId } from '../src/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_TABLE, type LocalAgentChoice, type LocalAgentId } from '../src/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
 
 type Options = { env?: NodeJS.ProcessEnv; cwd?: string };
+type AuthStatus = 'signed-in' | 'signed-out' | 'unknown';
+type ExternalAgent = Exclude<LocalAgentId, 'astrid'>;
 const execFileAsync = promisify(execFile);
+const LOGIN_PATH_MARKER = '__ASTRID_LOGIN_PATH__';
 
-async function executable(name: string, env: NodeJS.ProcessEnv): Promise<string | null> {
-  for (const directory of (env.PATH ?? '').split(delimiter)) {
+function combinedPath(...paths: Array<string | undefined>): string {
+  return [...new Set(paths.flatMap(path => path?.split(delimiter) ?? []).filter(Boolean))].join(delimiter);
+}
+
+/** Resolve the PATH a person sees in their interactive login shell. */
+async function loginShellPath(env: NodeJS.ProcessEnv): Promise<string> {
+  if (!env.SHELL) return env.PATH ?? '';
+  try {
+    const { stdout } = await execFileAsync(env.SHELL, ['-lic', `printf '\\n${LOGIN_PATH_MARKER}%s\\n' "$PATH"`], {
+      env,
+      encoding: 'utf8',
+      timeout: 5_000,
+      maxBuffer: 1024 * 1024,
+    });
+    const marker = stdout.lastIndexOf(LOGIN_PATH_MARKER);
+    if (marker < 0) return env.PATH ?? '';
+    const value = stdout.slice(marker + LOGIN_PATH_MARKER.length).split(/\r?\n/, 1)[0]?.trim();
+    return value || env.PATH || '';
+  } catch {
+    return env.PATH ?? '';
+  }
+}
+
+async function executable(name: string, pathValue: string): Promise<string | null> {
+  for (const directory of pathValue.split(delimiter)) {
     if (!directory) continue;
     const candidate = join(directory, name);
     try {
@@ -19,7 +46,7 @@ async function executable(name: string, env: NodeJS.ProcessEnv): Promise<string 
   return null;
 }
 
-async function status(command: string | null, args: string[], env: NodeJS.ProcessEnv, signedIn: RegExp, signedOut: RegExp, cwd?: string): Promise<LocalAgentChoice['authStatus']> {
+async function status(command: string | null, args: string[], env: NodeJS.ProcessEnv, signedIn: RegExp, signedOut: RegExp, cwd?: string): Promise<AuthStatus> {
   if (!command) return 'unknown';
   try {
     const { stdout, stderr } = await execFileAsync(command, args, { env, cwd, encoding: 'utf8' });
@@ -37,7 +64,7 @@ async function status(command: string | null, args: string[], env: NodeJS.Proces
   return 'unknown';
 }
 
-async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?: string): Promise<LocalAgentChoice['authStatus']> {
+async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?: string): Promise<AuthStatus> {
   if (!command) return 'unknown';
   try {
     const { stdout } = await execFileAsync(command, ['auth', 'status'], { env, cwd, encoding: 'utf8' });
@@ -63,39 +90,46 @@ async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?
   return status(command, ['auth', 'status', '--text'], env, /Logged in|Authenticated/i, /Not logged in|Run `?claude auth login/i, cwd);
 }
 
+function choice(id: LocalAgentId, state: LocalAgentChoice['state']): LocalAgentChoice {
+  const definition = LOCAL_AGENT_TABLE[id];
+  const line = state === 'ready' ? null
+    : state === 'sign-in' ? definition.signInLine
+      : definition.notInstalledLine ?? definition.signInLine;
+  return { id, name: definition.name, state, line };
+}
+
 export async function discoverLocalAgents(options: Options = {}): Promise<LocalAgentChoice[]> {
-  const env = options.env ?? process.env;
-  const [astrid, claude, codex, claudeAdapter, codexAdapter] = await Promise.all([
-    executable('astrid', env), executable('claude', env), executable('codex', env),
-    executable('claude-agent-acp', env), executable('codex-acp', env),
+  const baseEnv = options.env ?? process.env;
+  const loginPath = await loginShellPath(baseEnv);
+  const path = combinedPath(loginPath, baseEnv.PATH);
+  const env = { ...baseEnv, PATH: path };
+  const [claude, codex] = await Promise.all([
+    executable('claude', path), executable('codex', path),
   ]);
   const [claudeAuth, codexAuth] = await Promise.all([
     claudeStatus(claude, env, options.cwd),
     status(codex, ['login', 'status'], env, /Logged in using/i, /Not logged in|Run `?codex login/i, options.cwd),
   ]);
   return [
-    { id: 'astrid', name: 'Astrid', installed: Boolean(astrid), authStatus: 'unknown', adapterInstalled: Boolean(astrid), installCommand: null, loginCommand: null },
-    { id: 'claude-code', name: 'Claude Code', installed: Boolean(claude), authStatus: claudeAuth, adapterInstalled: Boolean(claudeAdapter), installCommand: 'npm install -g @agentclientprotocol/claude-agent-acp', loginCommand: 'claude auth login' },
-    { id: 'codex', name: 'Codex', installed: Boolean(codex), authStatus: codexAuth, adapterInstalled: Boolean(codexAdapter), installCommand: 'npm install -g @agentclientprotocol/codex-acp', loginCommand: 'codex login' },
+    choice('astrid', 'ready'),
+    choice('claude-code', !claude ? 'not-installed' : claudeAuth === 'signed-out' ? 'sign-in' : 'ready'),
+    choice('codex', !codex ? 'not-installed' : codexAuth === 'signed-out' ? 'sign-in' : 'ready'),
   ];
 }
 
-export async function localAgentLaunch(agentId: Exclude<LocalAgentId, 'astrid'>, env: NodeJS.ProcessEnv = process.env): Promise<{ command: string; args: string[]; env: Record<string, string | undefined>; cliPath: string }> {
-  const adapterName = agentId === 'claude-code' ? 'claude-agent-acp' : 'codex-acp';
-  const [adapter, cli] = await Promise.all([
-    executable(adapterName, env), executable(agentId === 'claude-code' ? 'claude' : 'codex', env),
+export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.ProcessEnv = process.env): Promise<{ command: string; args: string[]; env: Record<string, string | undefined>; cliPath: string }> {
+  const loginPath = await loginShellPath(env);
+  const path = combinedPath(loginPath, env.PATH);
+  const [bun, cli] = await Promise.all([
+    executable('bun', path),
+    executable(agentId === 'claude-code' ? 'claude' : 'codex', path),
   ]);
-  if (!cli) throw new Error(`${agentId} CLI is not installed or not executable on PATH.`);
-  if (!adapter) {
-    const installCommand = agentId === 'claude-code'
-      ? 'npm install -g @agentclientprotocol/claude-agent-acp'
-      : 'npm install -g @agentclientprotocol/codex-acp';
-    throw new Error(`${adapterName} is not installed or executable. Install it explicitly with: ${installCommand}`);
-  }
+  if (!cli) throw new Error(`${LOCAL_AGENT_TABLE[agentId].name} is not installed on PATH.`);
+  if (!bun) throw new Error('Bun is not installed on PATH.');
   return {
-    command: adapter,
-    args: [],
-    env: agentId === 'codex' ? { CODEX_PATH: cli } : {},
+    command: bun,
+    args: ['x', '--bun', LOCAL_AGENT_ADAPTERS[agentId]],
+    env: { PATH: path, ...(agentId === 'codex' ? { CODEX_PATH: cli } : {}) },
     cliPath: cli,
   };
 }
