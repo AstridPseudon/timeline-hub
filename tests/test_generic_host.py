@@ -469,7 +469,8 @@ def test_hc04_cas_param_materializes_authorized_image_reference(tmp_path):
         cas_param_ports=("image_ref",),
     )
     staged = Path(values["image_ref"])
-    assert staged == tmp_path / "attempt" / "inputs" / "source.jpg"
+    port_digest = hashlib.sha256(b"image_ref").hexdigest()[:16]
+    assert staged == tmp_path / "attempt" / "inputs" / f"managed-{port_digest}-{digest}.jpg"
     assert staged.read_bytes() == payload
 
 
@@ -502,8 +503,10 @@ def test_hc04_multi_cas_materialization_preserves_role_order_and_names(tmp_path)
     )
     image_path = Path(values["reference_image_ref"])
     video_path = Path(values["driving_video_ref"])
-    assert image_path.name == "reference_image_ref--source.bin"
-    assert video_path.name == "driving_video_ref--source.bin"
+    image_port = hashlib.sha256(b"reference_image_ref").hexdigest()[:16]
+    video_port = hashlib.sha256(b"driving_video_ref").hexdigest()[:16]
+    assert image_path == tmp_path / "attempt-ordered" / "inputs" / f"managed-{image_port}-{image_digest}.bin"
+    assert video_path == tmp_path / "attempt-ordered" / "inputs" / f"managed-{video_port}-{video_digest}.bin"
     assert image_path.read_bytes() == image
     assert video_path.read_bytes() == video
 
@@ -1501,7 +1504,7 @@ def test_vendored_runtime_client_timeout_is_bounded_and_request_correlated(monke
         captured["request_id"] = request.get_header("X-request-id")
         raise TimeoutError("fixture timeout")
 
-    monkeypatch.setattr("urllib.request.urlopen", timed_out)
+    monkeypatch.setattr("astrid_runtime_client.generated._urlopen_loopback", timed_out)
 
     with pytest.raises(ApiError) as failure:
         WorkspaceClient("http://127.0.0.1:8765", timeout=0.125).health()

@@ -89,7 +89,7 @@ def _install_fixture(tmp_path: Path) -> tuple[str, bytes]:
     capability.mkdir()
     command = (
         "from pathlib import Path; out=Path('{out}'); out.mkdir(parents=True,exist_ok=True); "
-        "(out/'result.txt').write_bytes((out.parent/'inputs'/'workflow').read_bytes())"
+        "(out/'result.txt').write_bytes(Path('{workflow}').read_bytes())"
     )
     manifest = {
         "schema_version": 1,
