@@ -1,5 +1,4 @@
 import React from 'react';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { LoraManagerState } from '@/domains/lora/types/loraManager';
 import type { EditModePanelState } from '../../hooks/useEditModePanelState';
 import { Img2ImgControls } from './Img2ImgControls';
@@ -9,14 +8,12 @@ interface Img2ImgPanelProps {
   state: EditModePanelState;
   handleGenerateImg2Img: () => void;
   img2imgLoraManager?: LoraManagerState;
-  availableLoras: LoraModel[];
 }
 
 export const Img2ImgPanel: React.FC<Img2ImgPanelProps> = ({
   state,
   handleGenerateImg2Img,
   img2imgLoraManager,
-  availableLoras,
 }) => (
   <Img2ImgControls
     isMobile={state.isMobile}
@@ -29,7 +26,6 @@ export const Img2ImgPanel: React.FC<Img2ImgPanelProps> = ({
     img2imgGenerateSuccess={state.img2imgGenerateSuccess}
     handleGenerateImg2Img={handleGenerateImg2Img}
     img2imgLoraManager={img2imgLoraManager}
-    availableLoras={availableLoras}
     SectionLabel={({ children }) => <SectionLabel isMobile={state.isMobile}>{children}</SectionLabel>}
   />
 );

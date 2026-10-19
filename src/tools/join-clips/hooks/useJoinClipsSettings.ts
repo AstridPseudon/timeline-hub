@@ -2,7 +2,6 @@ import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   extractSettingsFromCache,
-  updateToolSettingsSupabase,
   useToolSettings,
 } from '@/shared/hooks/settings/useToolSettings';
 import { joinClipsSettings, type JoinClipsSettings } from '@/shared/lib/joinClips/defaults';
@@ -75,16 +74,6 @@ const joinClipsStore = createEntityStore<JoinClipsSettings>({
     }
 
     const snapshot = cloneSettings(data);
-
-    await updateToolSettingsSupabase(
-      {
-        scope: 'project',
-        id: entityId,
-        toolId: TOOL_IDS.JOIN_CLIPS,
-        patch: snapshot,
-      },
-      { mode: 'immediate' }
-    );
 
     joinClipsStoreRuntime.authoritativeSettings.set(entityId, snapshot);
     writeCachedSettings(joinClipsStoreRuntime.queryClient, entityId, snapshot);

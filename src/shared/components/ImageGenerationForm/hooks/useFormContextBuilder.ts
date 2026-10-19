@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { ActiveLora } from '@/domains/lora/types/lora';
 import type { ImageGenerationFormUIState, FormUIActions } from '../state/useFormUIState';
 import { useContextValue } from '../ImageGenerationFormContext';
@@ -35,14 +34,13 @@ interface UseFormContextBuilderProps {
   referenceManagement: Pick<
     ReturnType<typeof import('./useReferenceManagement').useReferenceManagement>,
     'referenceMode' | 'styleReferenceStrength' | 'subjectStrength' | 'subjectDescription' |
-    'inThisScene' | 'inThisSceneStrength' | 'styleBoostTerms' | 'isUploadingStyleReference' |
+    'inThisScene' | 'inThisSceneStrength' | 'styleBoostTerms' |
     'styleReferenceImageDisplay' | 'handleSelectReference' | 'handleDeleteReference' |
-    'handleUpdateReferenceName' | 'handleStyleReferenceUpload' | 'handleRemoveStyleReference' |
+    'handleRemoveStyleReference' |
     'handleStyleStrengthChange' | 'handleSubjectStrengthChange' | 'handleSubjectDescriptionChange' |
     'handleSubjectDescriptionFocus' | 'handleSubjectDescriptionBlur' |
     'handleInThisSceneChange' | 'handleInThisSceneStrengthChange' |
-    'handleReferenceModeChange' | 'handleStyleBoostTermsChange' |
-    'handleToggleVisibility' | 'handleResourceSelect'
+    'handleReferenceModeChange' | 'handleStyleBoostTermsChange'
   >;
   references: {
     hydratedReferences: import('../types').HydratedReferenceImage[];
@@ -50,8 +48,6 @@ interface UseFormContextBuilderProps {
   };
   loras: {
     selectedLoras: ActiveLora[];
-    availableLoras: LoraModel[];
-    handleAddLora: (lora: LoraModel) => void;
     handleRemoveLora: (id: string) => void;
     handleLoraStrengthChange: (id: string, strength: number) => void;
   };
@@ -105,15 +101,12 @@ export function useFormContextBuilder({
     inThisScene: rm.inThisScene,
     inThisSceneStrength: rm.inThisSceneStrength,
     styleBoostTerms: rm.styleBoostTerms,
-    isUploadingStyleReference: rm.isUploadingStyleReference,
     styleReferenceImageDisplay: rm.styleReferenceImageDisplay,
-  }), [refs.hydratedReferences, refs.displayedReferenceId, rm.referenceMode, rm.styleReferenceStrength, rm.subjectStrength, rm.subjectDescription, rm.inThisScene, rm.inThisSceneStrength, rm.styleBoostTerms, rm.isUploadingStyleReference, rm.styleReferenceImageDisplay]);
+  }), [refs.hydratedReferences, refs.displayedReferenceId, rm.referenceMode, rm.styleReferenceStrength, rm.subjectStrength, rm.subjectDescription, rm.inThisScene, rm.inThisSceneStrength, rm.styleBoostTerms, rm.styleReferenceImageDisplay]);
 
   const referenceHandlersValue = useMemo<FormReferenceHandlers>(() => ({
     onSelectReference: rm.handleSelectReference,
     onDeleteReference: rm.handleDeleteReference,
-    onUpdateReferenceName: rm.handleUpdateReferenceName,
-    onStyleUpload: rm.handleStyleReferenceUpload,
     onStyleRemove: rm.handleRemoveStyleReference,
     onStyleStrengthChange: rm.handleStyleStrengthChange,
     onSubjectStrengthChange: rm.handleSubjectStrengthChange,
@@ -124,20 +117,16 @@ export function useFormContextBuilder({
     onInThisSceneStrengthChange: rm.handleInThisSceneStrengthChange,
     onReferenceModeChange: rm.handleReferenceModeChange,
     onStyleBoostTermsChange: rm.handleStyleBoostTermsChange,
-    onToggleVisibility: rm.handleToggleVisibility,
-    onResourceSelect: rm.handleResourceSelect,
-  }), [rm.handleSelectReference, rm.handleDeleteReference, rm.handleUpdateReferenceName, rm.handleStyleReferenceUpload, rm.handleRemoveStyleReference, rm.handleStyleStrengthChange, rm.handleSubjectStrengthChange, rm.handleSubjectDescriptionChange, rm.handleSubjectDescriptionFocus, rm.handleSubjectDescriptionBlur, rm.handleInThisSceneChange, rm.handleInThisSceneStrengthChange, rm.handleReferenceModeChange, rm.handleStyleBoostTermsChange, rm.handleToggleVisibility, rm.handleResourceSelect]);
+  }), [rm.handleSelectReference, rm.handleDeleteReference, rm.handleRemoveStyleReference, rm.handleStyleStrengthChange, rm.handleSubjectStrengthChange, rm.handleSubjectDescriptionChange, rm.handleSubjectDescriptionFocus, rm.handleSubjectDescriptionBlur, rm.handleInThisSceneChange, rm.handleInThisSceneStrengthChange, rm.handleReferenceModeChange, rm.handleStyleBoostTermsChange]);
 
   const loraState = useMemo<FormLoraState>(() => ({
     selectedLoras: loras.selectedLoras,
-    availableLoras: loras.availableLoras,
-  }), [loras.selectedLoras, loras.availableLoras]);
+  }), [loras.selectedLoras]);
 
   const loraHandlersValue = useMemo<FormLoraHandlers>(() => ({
-    handleAddLora: loras.handleAddLora,
     handleRemoveLora: loras.handleRemoveLora,
     handleLoraStrengthChange: loras.handleLoraStrengthChange,
-  }), [loras.handleAddLora, loras.handleRemoveLora, loras.handleLoraStrengthChange]);
+  }), [loras.handleRemoveLora, loras.handleLoraStrengthChange]);
 
   return useContextValue({
     uiState,

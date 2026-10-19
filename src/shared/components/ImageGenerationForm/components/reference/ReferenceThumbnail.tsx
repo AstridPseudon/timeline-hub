@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
-import { Images, X, Globe, Lock } from "lucide-react";
+import { Images, X } from "lucide-react";
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
@@ -14,26 +8,18 @@ interface ReferenceThumbnailProps {
   name: string;
   imageUrl: string | null;
   isSelected: boolean;
-  isOwner?: boolean;
-  isPublic?: boolean;
-  resourceId?: string;
   isGenerating: boolean;
   onSelect: () => void;
   onDelete: () => void;
-  onToggleVisibility?: () => void;
 }
 
 export const ReferenceThumbnail: React.FC<ReferenceThumbnailProps> = ({
   name,
   imageUrl,
   isSelected,
-  isOwner,
-  isPublic,
-  resourceId,
   isGenerating,
   onSelect,
   onDelete,
-  onToggleVisibility,
 }) => {
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [isTouched, setIsTouched] = React.useState(false);
@@ -137,36 +123,6 @@ export const ReferenceThumbnail: React.FC<ReferenceThumbnailProps> = ({
             isTouched || isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           )}
         >
-          {/* Visibility toggle */}
-          {onToggleVisibility && resourceId && isOwner && (
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleVisibility();
-                    }}
-                    className={cn(
-                      "rounded-full p-1 transition-colors",
-                      isPublic
-                        ? "bg-green-500 text-white hover:bg-green-600"
-                        : "bg-gray-500 text-white hover:bg-gray-600"
-                    )}
-                  >
-                    {isPublic ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  {isPublic
-                    ? "Public - visible to others. Click to make private."
-                    : "Private - only you can see this. Click to make public."}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-
           {/* Delete button */}
           <button
             type="button"

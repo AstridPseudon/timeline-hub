@@ -29,9 +29,8 @@ export const ReferenceModeControls: React.FC<ReferenceModeControlsProps> = ({
     onSubjectDescriptionBlur,
     styleBoostTerms,
     onStyleBoostTermsChange,
-    isUploadingStyleReference,
   } = useFormReferencesContext();
-  const isDisabled = isGenerating || isUploadingStyleReference;
+  const isDisabled = isGenerating;
   const isSliderDisabled = isDisabled || !hasSelectedReference;
 
   // Validation helper for custom mode

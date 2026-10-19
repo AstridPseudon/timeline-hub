@@ -8,7 +8,7 @@ import type {
   VideoPortionEditorLoraProps,
   VideoPortionEditorMotionProps,
 } from '@/shared/components/VideoPortionEditor/types';
-import { BUILTIN_VACE_PRESET, VACE_FEATURED_PRESET_IDS } from '@/shared/lib/vaceDefaults';
+import { BUILTIN_VACE_PRESET } from '@/shared/lib/vaceDefaults';
 
 interface AdvancedSettingsSectionProps {
   contextFrames: number;
@@ -30,7 +30,6 @@ export function AdvancedSettingsSection({
   motion,
 }: AdvancedSettingsSectionProps) {
   const {
-    availableLoras,
     projectId,
     loraManager,
   } = lora;
@@ -92,8 +91,6 @@ export function AdvancedSettingsSection({
 
       <MotionPresetSelector
         builtinPreset={BUILTIN_VACE_PRESET}
-        featuredPresetIds={VACE_FEATURED_PRESET_IDS}
-        generationTypeMode="vace"
         selectedPhasePresetId={selectedPhasePresetId}
         phaseConfig={phaseConfig}
         motionMode={motionMode}
@@ -101,20 +98,16 @@ export function AdvancedSettingsSection({
         onPresetRemove={onPhasePresetRemove}
         onModeChange={onMotionModeChange}
         onPhaseConfigChange={onPhaseConfigChange}
-        availableLoras={availableLoras}
         randomSeed={randomSeed}
         onRandomSeedChange={onRandomSeedChange}
-        queryKeyPrefix="edit-video-presets"
         renderBasicModeContent={() => (
           <LoraManager
-            availableLoras={availableLoras}
             projectId={projectId || undefined}
             persistenceScope="project"
             enableProjectPersistence={true}
             persistenceKey={TOOL_IDS.EDIT_VIDEO}
             externalLoraManager={loraManager}
             title="Additional LoRA Models (Optional)"
-            addButtonText="Add or manage LoRAs"
           />
         )}
       />

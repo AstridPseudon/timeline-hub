@@ -52,7 +52,6 @@ import {
   resolveGenerationPolicy,
   type SelectedModel,
 } from '../settings';
-import type { ActiveLora, LoraModel } from '@/domains/lora/types/lora';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { queryKeys } from '@/shared/lib/queryKeys';
 
@@ -81,9 +80,6 @@ interface VideoTravelSettingsContextValue {
   // Save operations
   save: () => Promise<void>;
   saveImmediate: () => Promise<void>;
-
-  // LoRAs (passed through from parent)
-  availableLoras: LoraModel[];
 }
 
 interface VideoTravelSettingsStatusValue {
@@ -103,7 +99,6 @@ interface VideoTravelSettingsStatusValue {
 const VideoTravelSettingsDataContext = createContext<VideoTravelSettings | null>(null);
 const VideoTravelSettingsHandlersContext = createContext<VideoTravelSettingsHandlers | null>(null);
 const VideoTravelSettingsStatusContext = createContext<VideoTravelSettingsStatusValue | null>(null);
-const VideoTravelSettingsLorasContext = createContext<LoraModel[] | null>(null);
 
 function requireVideoTravelSettingsContext<T>(value: T | null, hookName: string): T {
   if (!value) {
@@ -149,7 +144,6 @@ interface VideoTravelSettingsProviderProps {
   projectId: string | null | undefined;
   shotId: string | null | undefined;
   selectedShot: Shot | null;
-  availableLoras: LoraModel[];
   /** Function to optimistically update generation mode cache (from useProjectGenerationModesCache) */
   updateShotMode: (shotId: string, mode: 'batch' | 'timeline' | 'by-pair') => void;
   /** Optional document-native persistence used by embedded canonical shot editors. */
@@ -161,7 +155,6 @@ export const VideoTravelSettingsProvider: React.FC<VideoTravelSettingsProviderPr
   projectId,
   shotId,
   selectedShot,
-  availableLoras,
   updateShotMode,
   shotSettingsPersistence,
   children,
@@ -361,9 +354,7 @@ export const VideoTravelSettingsProvider: React.FC<VideoTravelSettingsProviderPr
     <VideoTravelSettingsStatusContext.Provider value={statusValue}>
       <VideoTravelSettingsDataContext.Provider value={shotSettings.settings}>
         <VideoTravelSettingsHandlersContext.Provider value={providerHandlers}>
-          <VideoTravelSettingsLorasContext.Provider value={availableLoras}>
-            {children}
-          </VideoTravelSettingsLorasContext.Provider>
+          {children}
         </VideoTravelSettingsHandlersContext.Provider>
       </VideoTravelSettingsDataContext.Provider>
     </VideoTravelSettingsStatusContext.Provider>
@@ -407,13 +398,6 @@ function useVideoTravelSettingsData() {
   );
 }
 
-function useVideoTravelSettingsLoras() {
-  return requireVideoTravelSettingsContext(
-    useContext(VideoTravelSettingsLorasContext),
-    'useVideoTravelSettingsLoras',
-  );
-}
-
 /** @deprecated Migrate production code to the narrower video-travel settings hooks. */
 export function useVideoTravelSettings(): VideoTravelSettingsContextValue {
   const settings = useVideoTravelSettingsData();
@@ -429,7 +413,6 @@ export function useVideoTravelSettings(): VideoTravelSettingsContextValue {
     updateField,
     updateFields,
   } = useVideoTravelSettingsStatus();
-  const availableLoras = useVideoTravelSettingsLoras();
 
   return {
     settings,
@@ -443,7 +426,6 @@ export function useVideoTravelSettings(): VideoTravelSettingsContextValue {
     updateFields,
     save,
     saveImmediate,
-    availableLoras,
   };
 }
 
@@ -477,7 +459,6 @@ export function usePromptSettings() {
 export function useMotionSettings() {
   const settings = useVideoTravelSettingsData();
   const handlers = useVideoTravelSettingsHandlers();
-  const availableLoras = useVideoTravelSettingsLoras();
   return useMemo(() => ({
     amountOfMotion: settings.amountOfMotion ?? 50,
     motionMode: settings.motionMode || 'basic',
@@ -487,8 +468,7 @@ export function useMotionSettings() {
     setMotionMode: handlers.handleMotionModeChange,
     setTurboMode: handlers.handleTurboModeChange,
     setSmoothContinuations: handlers.handleSmoothContinuationsChange,
-    availableLoras,
-  }), [settings.amountOfMotion, settings.motionMode, settings.turboMode, settings.smoothContinuations, handlers, availableLoras]);
+  }), [settings.amountOfMotion, settings.motionMode, settings.turboMode, settings.smoothContinuations, handlers]);
 }
 
 /**
@@ -557,24 +537,7 @@ export function useLoraSettings() {
   const settings = useVideoTravelSettingsData();
   const handlers = useVideoTravelSettingsHandlers();
   const { updateField } = useVideoTravelSettingsStatus();
-  const availableLoras = useVideoTravelSettingsLoras();
   return useMemo(() => {
-    const handleAddLora = (lora: LoraModel) => {
-      const newLora: ActiveLora = {
-        id: (lora['Model ID'] || '') as string,
-        name: (lora.Name || '') as string,
-        path: (lora.link || '') as string,
-        strength: 1,
-        previewImageUrl: lora['Preview Image URL'] as string | undefined,
-        trigger_word: lora['Trigger Word'] as string | undefined,
-      };
-
-      const currentLoras = settings.loras || [];
-      if (!currentLoras.some((existingLora) => existingLora.id === newLora.id)) {
-        updateField('loras', [...currentLoras, newLora]);
-      }
-    };
-
     const handleRemoveLora = (loraId: string) => {
       updateField(
         'loras',
@@ -601,14 +564,12 @@ export function useLoraSettings() {
 
     return {
       selectedLoras: settings.loras || [],
-      availableLoras,
       setSelectedLoras: handlers.handleSelectedLorasChange,
-      handleAddLora,
       handleRemoveLora,
       handleLoraStrengthChange,
       handleAddTriggerWord,
     };
-  }, [settings.loras, settings.prompt, availableLoras, handlers, updateField]);
+  }, [settings.loras, settings.prompt, handlers, updateField]);
 }
 
 /**

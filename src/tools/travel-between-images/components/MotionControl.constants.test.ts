@@ -5,7 +5,6 @@ import {
   BUILTIN_DEFAULT_VACE_ID,
   BUILTIN_I2V_PRESET,
   BUILTIN_VACE_PRESET,
-  FEATURED_PRESET_IDS,
 } from './MotionControl.constants';
 
 describe('MotionControl.constants', () => {
@@ -30,12 +29,5 @@ describe('MotionControl.constants', () => {
         phaseConfig: DEFAULT_VACE_PHASE_CONFIG,
       },
     });
-  });
-
-  it('keeps the featured preset allowlist stable', () => {
-    expect(FEATURED_PRESET_IDS).toEqual([
-      'e1aad8bf-add9-4d7b-883b-d67d424028c4',
-      '18b879a5-1251-41dc-b263-613358ced541',
-    ]);
   });
 });

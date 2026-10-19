@@ -15,7 +15,6 @@ const mocks = vi.hoisted(() => ({
   useShotSettings: vi.fn(),
   useToolSettings: vi.fn(),
   useProjectGenerationModesCache: vi.fn(),
-  usePublicLoras: vi.fn(),
   useShotImages: vi.fn(),
   isPositioned: vi.fn(),
   isVideoGeneration: vi.fn(),
@@ -68,10 +67,6 @@ vi.mock('@/shared/hooks/settings/useToolSettings', () => ({
 
 vi.mock('@/shared/hooks/projects/useProjectGenerationModesCache', () => ({
   useProjectGenerationModesCache: (...args: unknown[]) => mocks.useProjectGenerationModesCache(...args),
-}));
-
-vi.mock('@/features/resources/hooks/useResources', () => ({
-  usePublicLoras: (...args: unknown[]) => mocks.usePublicLoras(...args),
 }));
 
 vi.mock('@/shared/hooks/shots/useShotImages', () => ({
@@ -162,9 +157,6 @@ describe('useVideoGenerationModalController', () => {
       status: 'ready',
       updateField: vi.fn(),
     });
-    mocks.usePublicLoras.mockReturnValue({
-      data: [{ 'Model ID': 'lora-1', Name: 'Lora One', link: '/lora-1' }],
-    });
     mocks.useShotImages.mockReturnValue({
       data: [
         {
@@ -223,24 +215,11 @@ describe('useVideoGenerationModalController', () => {
     expect(result.current.selectedLoras).toEqual([
       expect.objectContaining({ id: 'lora-1', strength: 0.8 }),
     ]);
-    expect(result.current.selectedLorasForModal).toEqual([
-      expect.objectContaining({ 'Model ID': 'lora-1', strength: 0.8 }),
-    ]);
-
-    act(() => {
-      result.current.openLoraModal();
-    });
-    expect(result.current.isLoraModalOpen).toBe(true);
 
     act(() => {
       result.current.handleDialogOpenChange(false);
     });
-    expect(onClose).toHaveBeenCalledTimes(0);
-
-    act(() => {
-      result.current.closeLoraModal();
-    });
-    expect(result.current.isLoraModalOpen).toBe(false);
+    expect(onClose).toHaveBeenCalledTimes(1);
 
     act(() => {
       result.current.handleNavigateToShot();
@@ -250,7 +229,7 @@ describe('useVideoGenerationModalController', () => {
     expect(mocks.useShotNavigation.mock.results[0]?.value.navigateToShot).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'shot-1' }),
     );
-    expect(onClose).toHaveBeenCalledTimes(2);
+    expect(onClose).toHaveBeenCalledTimes(3);
   });
 
   it('derives guidanceKind from canonical travel guidance state', () => {

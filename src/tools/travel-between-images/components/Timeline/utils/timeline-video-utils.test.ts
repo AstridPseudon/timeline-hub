@@ -1,29 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { calculateNewVideoPlacement, findTrailingVideoInfo } from './timeline-video-utils';
+import { findTrailingVideoInfo } from './timeline-video-utils';
 
 describe('timeline-video-utils', () => {
-  it('starts new videos at frame zero when the timeline has no prior videos', () => {
-    expect(calculateNewVideoPlacement(24, undefined, 80)).toEqual({
-      start_frame: 0,
-      end_frame: 24,
-      lastVideoUpdate: undefined,
-    });
-  });
-
-  it('clips the last video when the timeline is full and there is still safe room to trim', () => {
-    expect(calculateNewVideoPlacement(15, [
-      { path: 'one.mp4', start_frame: 0, end_frame: 40 },
-      { path: 'two.mp4', start_frame: 40, end_frame: 80 },
-    ], 75)).toEqual({
-      start_frame: 70,
-      end_frame: 85,
-      lastVideoUpdate: {
-        index: 1,
-        newEndFrame: 70,
-      },
-    });
-  });
-
   it('finds trailing videos from the FK column or legacy params and ignores incomplete outputs', () => {
     expect(findTrailingVideoInfo([
       { type: 'video/mp4', location: null, pair_shot_generation_id: 'shot-gen-9' },

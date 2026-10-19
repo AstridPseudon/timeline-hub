@@ -1,5 +1,4 @@
 import type { PhaseConfig } from '@/shared/types/phaseConfig';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { LoraManagerState } from '@/domains/lora/types/loraManager';
 import type { PresetMetadata } from '@/shared/components/MotionPresetSelector/types';
 
@@ -56,7 +55,6 @@ export interface JoinClipsClipSettings {
 }
 
 export interface JoinClipsMotionConfig {
-  availableLoras: LoraModel[];
   projectId: string | null;
   loraPersistenceKey: string;
   /** Optional external loraManager. If provided, uses this instead of creating a new one. */
@@ -74,8 +72,6 @@ export interface JoinClipsMotionConfig {
   selectedPhasePresetId?: string | null;
   onPhasePresetSelect?: (presetId: string, config: PhaseConfig, presetMetadata?: PresetMetadata) => void;
   onPhasePresetRemove?: () => void;
-
-  featuredPresetIds?: string[];
 }
 
 /** Per-boundary crossfade status for the join form to display */

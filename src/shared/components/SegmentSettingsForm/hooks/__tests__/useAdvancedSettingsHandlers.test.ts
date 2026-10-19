@@ -40,7 +40,6 @@ describe('useAdvancedSettingsHandlers', () => {
         settings: buildSettings({ selectedPhasePresetId: null, phaseConfig: undefined }) as never,
         shotDefaults: { phaseConfig: shotPhaseConfig } as never,
         effectiveLoras: [],
-        openLoraModal: vi.fn(),
       }),
     );
 
@@ -82,7 +81,6 @@ describe('useAdvancedSettingsHandlers', () => {
         settings: buildSettings({ motionMode: 'basic' }) as never,
         shotDefaults: undefined,
         effectiveLoras: [],
-        openLoraModal: vi.fn(),
       }),
     );
 
@@ -100,7 +98,6 @@ describe('useAdvancedSettingsHandlers', () => {
         settings: buildSettings({ motionMode: 'advanced' }) as never,
         shotDefaults: undefined,
         effectiveLoras: [],
-        openLoraModal: vi.fn(),
       }),
     );
 
@@ -110,9 +107,8 @@ describe('useAdvancedSettingsHandlers', () => {
     expect(onChange).toHaveBeenCalledWith({ selectedPhasePresetId: null });
   });
 
-  it('forwards random seed + lora modal actions and appends new loras uniquely', () => {
+  it('forwards random seed changes', () => {
     const onChange = vi.fn();
-    const openLoraModal = vi.fn();
 
     const { result } = renderHook(() =>
       useAdvancedSettingsHandlers({
@@ -120,52 +116,13 @@ describe('useAdvancedSettingsHandlers', () => {
         settings: buildSettings() as never,
         shotDefaults: undefined,
         effectiveLoras: [{ id: 'existing', name: 'Existing', path: '/existing', strength: 0.8 }],
-        openLoraModal,
       }),
     );
 
     act(() => {
       result.current.handleRandomSeedChange(false);
-      result.current.handleAddLoraClick();
     });
     expect(onChange).toHaveBeenCalledWith({ randomSeed: false });
-    expect(openLoraModal).toHaveBeenCalledTimes(1);
-
-    act(() => {
-      result.current.handleLoraSelect({
-        'Model ID': 'new-id',
-        Name: 'New Lora',
-        Author: 'a',
-        Images: [],
-        'Model Files': [{ path: '/new', url: '/new' }],
-      } as never);
-    });
-    expect(onChange).toHaveBeenLastCalledWith({
-      loras: [
-        { id: 'existing', name: 'Existing', path: '/existing', strength: 0.8 },
-        { id: 'new-id', name: 'New Lora', path: '/new', strength: 1.0 },
-      ],
-    });
-
-    const callCountAfterNew = onChange.mock.calls.length;
-    act(() => {
-      result.current.handleLoraSelect({
-        'Model ID': 'existing',
-        Name: 'Existing',
-        Author: 'a',
-        Images: [],
-        'Model Files': [{ path: '/existing', url: '/existing' }],
-      } as never);
-      result.current.handleLoraSelect({
-        'Model ID': 'no-path',
-        Name: 'No Path',
-        Author: 'a',
-        Images: [],
-        'Model Files': [],
-      } as never);
-    });
-
-    expect(onChange).toHaveBeenCalledTimes(callCountAfterNew);
   });
 
   it('removes loras by id/path and updates lora strengths by id/path', () => {
@@ -181,7 +138,6 @@ describe('useAdvancedSettingsHandlers', () => {
         settings: buildSettings() as never,
         shotDefaults: undefined,
         effectiveLoras,
-        openLoraModal: vi.fn(),
       }),
     );
 

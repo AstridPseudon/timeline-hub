@@ -2,9 +2,8 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLoraManager } from '@/domains/lora/hooks/useLoraManager';
 import type { LoraManagerState } from '@/domains/lora/types/loraManager';
 import { SETTINGS_IDS } from '@/shared/lib/settingsIds';
-import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { writeLastEditedLora } from '@/shared/lib/lastEditedLora';
-import type { ActiveLora, LoraModel } from '@/domains/lora/types/lora';
+import type { ActiveLora } from '@/domains/lora/types/lora';
 import { ShotLora, type SelectedModel } from '@/tools/travel-between-images/settings';
 
 interface UseLoRASyncProps {
@@ -16,7 +15,6 @@ interface UseLoRASyncProps {
   projectId?: string;
 
   // Available loras for lookup
-  availableLoras: LoraModel[];
 
   // Prompt integration
   batchVideoPrompt: string;
@@ -52,7 +50,6 @@ export const useLoraSync = ({
   selectedLoras: selectedLorasFromProps,
   onSelectedLorasChange,
   projectId,
-  availableLoras,
   batchVideoPrompt,
   onBatchVideoPromptChange,
   selectedModel,
@@ -68,17 +65,7 @@ export const useLoraSync = ({
   }, [onSelectedLorasChange]);
 
   const persistLastEditedLora = useCallback((lora: ActiveLora | null) => {
-    if (!projectId) {
-      return;
-    }
-
-    void writeLastEditedLora(projectId, lora).catch((error) => {
-      normalizeAndPresentError(error, {
-        context: 'useLoraSync.persistLastEditedLora',
-        showToast: false,
-        logData: { projectId, loraId: lora?.id ?? null },
-      });
-    });
+    writeLastEditedLora(projectId, lora);
   }, [projectId]);
 
   useEffect(() => {
@@ -92,7 +79,7 @@ export const useLoraSync = ({
   // Disable auto-load: shot settings are the source of truth for selected LoRAs.
   // Without this, the project persistence auto-load fights with intentional removal
   // by re-adding project LoRAs whenever the selection becomes empty.
-  const loraManager = useLoraManager(availableLoras, {
+  const loraManager = useLoraManager({
     projectId,
     persistenceScope: 'project',
     persistenceKey: SETTINGS_IDS.PROJECT_LORAS,

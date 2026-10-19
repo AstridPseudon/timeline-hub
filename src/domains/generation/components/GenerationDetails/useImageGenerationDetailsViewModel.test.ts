@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { useImageGenerationDetailsViewModel } from './useImageGenerationDetailsViewModel';
 
 vi.mock('@/domains/lora/lib/loraUtils', () => ({
-  getDisplayNameFromUrl: (url: string, _unused?: unknown, fallback?: string) =>
+  getDisplayNameFromUrl: (url: string, fallback?: string) =>
     fallback || `display:${url.split('/').pop()}`,
 }));
 

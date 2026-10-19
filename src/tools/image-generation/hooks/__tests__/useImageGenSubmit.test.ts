@@ -4,18 +4,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
 const mockCreateImageGenerationTasks = vi.fn();
-const mockGetApiKey = vi.fn();
 const mockHandleError = vi.fn();
 const mockToastError = vi.fn();
 
 vi.mock('@/shared/lib/taskCreation', () => ({
   createImageGenerationTasks: (...args: unknown[]) => mockCreateImageGenerationTasks(...args),
-}));
-
-vi.mock('@/features/settings/hooks/useApiKeys', () => ({
-  useApiKeys: () => ({
-    getApiKey: mockGetApiKey,
-  }),
 }));
 
 vi.mock('@/shared/lib/queryKeys', () => ({
@@ -55,7 +48,6 @@ function createWrapper() {
 describe('useImageGenSubmit', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetApiKey.mockReturnValue('test-api-key');
     mockCreateImageGenerationTasks.mockResolvedValue({
       task_id: 'task-1',
       task_ids: ['task-1', 'task-2'],
@@ -63,23 +55,13 @@ describe('useImageGenSubmit', () => {
     });
   });
 
-  it('returns handleNewGenerate and openaiApiKey', () => {
+  it('returns handleNewGenerate', () => {
     const { result } = renderHook(
       () => useImageGenSubmit({ projectId: 'proj-1', effectiveProjectId: 'proj-1' }),
       { wrapper: createWrapper() },
     );
 
     expect(typeof result.current.handleNewGenerate).toBe('function');
-    expect(result.current.openaiApiKey).toBe('test-api-key');
-  });
-
-  it('calls getApiKey with openai_api_key', () => {
-    renderHook(
-      () => useImageGenSubmit({ projectId: 'proj-1', effectiveProjectId: 'proj-1' }),
-      { wrapper: createWrapper() },
-    );
-
-    expect(mockGetApiKey).toHaveBeenCalledWith('openai_api_key');
   });
 
   it('creates tasks and returns task IDs on success', async () => {

@@ -155,10 +155,9 @@ describe('useSegmentSlotPresentationAdapter', () => {
     expect(setSegmentSlotLightboxIndex).toHaveBeenCalledWith(2);
   });
 
-  it('debounces frame updates and resolves overlapping structure videos in timeline mode', () => {
+  it('debounces frame updates in timeline mode', () => {
     vi.useFakeTimers();
     const updatePairFrameCount = vi.fn(async () => ({ finalFrameCount: 33 }));
-    const onSetStructureVideos = vi.fn();
     const { result } = renderHook(() =>
       useSegmentSlotPresentationAdapter({
         props: {
@@ -174,7 +173,6 @@ describe('useSegmentSlotPresentationAdapter', () => {
           structureVideos: [
             { path: 'existing.mp4', start_frame: 0, end_frame: 100 },
           ] as never,
-          onSetStructureVideos,
           maxFrameLimit: 120,
           loadPositions: vi.fn(async () => {}),
           navigateWithTransition: (cb: () => void) => cb(),
@@ -215,19 +213,6 @@ describe('useSegmentSlotPresentationAdapter', () => {
     });
     expect(updatePairFrameCount).toHaveBeenCalledWith('pair-1', 33);
 
-    act(() => {
-      result.current?.onAddSegmentStructureVideo({
-        path: 'new.mp4',
-        start_frame: 20,
-        end_frame: 40,
-      } as never);
-    });
-
-    expect(onSetStructureVideos).toHaveBeenCalledWith([
-      expect.objectContaining({ path: 'existing.mp4', start_frame: 0, end_frame: 20 }),
-      expect.objectContaining({ path: 'existing.mp4', start_frame: 40, end_frame: 100 }),
-      expect.objectContaining({ path: 'new.mp4', start_frame: 20, end_frame: 40 }),
-    ]);
     vi.useRealTimers();
   });
 });

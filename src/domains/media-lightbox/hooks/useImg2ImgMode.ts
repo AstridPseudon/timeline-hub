@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { GenerationRow } from '@/domains/generation/types';
 import { createImageToImageTask } from '@/shared/lib/taskCreation/imageGeneration';
-import type { ActiveLora, FalLoraConfig, LoraModel } from '@/domains/lora/types/lora';
+import type { ActiveLora, FalLoraConfig } from '@/domains/lora/types/lora';
 import type { LoraManagerState } from '@/domains/lora/types/loraManager';
 import { useLoraManager } from '@/domains/lora/hooks/useLoraManager';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
@@ -36,7 +36,6 @@ interface UseImg2ImgModeProps {
   media: GenerationRow;
   selectedProjectId: string | null;
   isVideo: boolean;
-  availableLoras?: LoraModel[];
   state: Img2ImgPersistedState;
   source: Img2ImgSourceContext;
   options?: Img2ImgTaskOptions;
@@ -73,7 +72,6 @@ export const useImg2ImgMode = ({
   media,
   selectedProjectId,
   isVideo,
-  availableLoras = [],
   state,
   source,
   options,
@@ -116,7 +114,7 @@ export const useImg2ImgMode = ({
   }, [img2imgPromptHasBeenSet, img2imgPrompt, baseGenerationPrompt, setImg2imgPrompt]);
 
   // Use the shared LoRA manager hook
-  const loraManager = useLoraManager(availableLoras, {
+  const loraManager = useLoraManager({
     projectId: selectedProjectId || undefined,
     persistenceScope: 'none', // Don't persist for img2img - it's a quick tool
     enableProjectPersistence: false,

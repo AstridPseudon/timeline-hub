@@ -1,4 +1,3 @@
-import { apiQueryKeys } from './api';
 import { finalVideoQueryKeys } from './finalVideos';
 import { generationQueryKeys } from './generations';
 import { presetQueryKeys } from './presets';
@@ -19,7 +18,6 @@ export const queryKeys = {
   tasks: taskQueryKeys,
   settings: settingsQueryKeys,
   resources: resourceQueryKeys,
-  api: apiQueryKeys,
   presets: presetQueryKeys,
   projectStats: projectStatsQueryKeys,
 } as const;

@@ -1,6 +1,5 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { QueryClient } from '@tanstack/react-query';
-import type { Resource } from '@/features/resources/hooks/useResources';
 import type {
   HydratedReferenceImage,
   HiresFixConfig,
@@ -15,16 +14,13 @@ export interface ReferenceManagementInput {
   selectedReferenceId: string | null;
   selectedReferenceIdByShot: Record<string, string | null>;
   referencePointers: ReferenceImage[];
-  hydratedReferences: HydratedReferenceImage[];
   selectedReference: HydratedReferenceImage | null;
-  isLoadingProjectSettings: boolean;
   isLocalGenerationEnabled: boolean;
   updateProjectImageSettings: (
     scope: 'project' | 'shot',
     updates: Partial<ProjectImageSettings>
   ) => Promise<void>;
   markAsInteracted: () => void;
-  privacyDefaults: { resourcesPublic: boolean };
   associatedShotId: string | null;
   shotPromptSettings?: {
     updateField: <T>(field: string, value: T) => void;
@@ -61,22 +57,16 @@ export interface ReferenceManagementOutput {
   inThisSceneStrength: number;
   referenceMode: ReferenceMode;
   styleBoostTerms: string;
-  isUploadingStyleReference: boolean;
-  styleReferenceOverride: string | null | undefined;
 
   styleReferenceImageDisplay: string | null;
   styleReferenceImageGeneration: string | null;
 
-  handleStyleReferenceUpload: (files: File[]) => Promise<void>;
-  handleResourceSelect: (resource: Resource) => Promise<void>;
   handleSelectReference: (referenceId: string) => Promise<void>;
   handleDeleteReference: (referenceId: string) => Promise<void>;
   handleUpdateReference: (
     referenceId: string,
     updates: Partial<HydratedReferenceImage>
   ) => Promise<void>;
-  handleUpdateReferenceName: (referenceId: string, name: string) => Promise<void>;
-  handleToggleVisibility: (resourceId: string, currentIsPublic: boolean) => Promise<void>;
   handleRemoveStyleReference: () => Promise<void>;
   handleStyleStrengthChange: (value: number) => Promise<void>;
   handleSubjectStrengthChange: (value: number) => Promise<void>;
@@ -125,7 +115,6 @@ export interface ReferenceActionMutations {
   markAsInteracted: () => void;
   pendingReferenceModeUpdate: MutableRefObject<ReferenceMode | null>;
   queryClient: QueryClient;
-  handleDeleteReference: (referenceId: string) => Promise<void>;
 }
 
 export interface ReferenceActionHandlersInput {
@@ -137,6 +126,7 @@ export interface ReferenceActionHandlersInput {
 
 export interface ReferenceActionHandlersOutput {
   handleSelectReference: (referenceId: string) => Promise<void>;
+  handleDeleteReference: (referenceId: string) => Promise<void>;
   handleUpdateReference: (
     referenceId: string,
     updates: Partial<HydratedReferenceImage>

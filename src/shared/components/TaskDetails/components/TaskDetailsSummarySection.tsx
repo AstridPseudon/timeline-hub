@@ -1,5 +1,4 @@
 import React from 'react';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import { Task } from '@/types/tasks';
 import {
   TaskDetailsSummaryAndParams,
@@ -24,7 +23,6 @@ interface TaskDetailsSummarySectionProps {
   inputImages: string[];
   detailsVariant: 'modal' | 'panel';
   isMobile: boolean;
-  availableLoras?: LoraModel[];
   controls: TaskDetailsSummaryControls;
   showCopyButtons?: boolean;
   renderGenerationDetails?: (props: TaskGenerationDetailsRendererProps) => React.ReactNode;
@@ -36,7 +34,6 @@ export function TaskDetailsSummarySection({
   inputImages,
   detailsVariant,
   isMobile,
-  availableLoras,
   controls,
   showCopyButtons,
   renderGenerationDetails,
@@ -48,7 +45,6 @@ export function TaskDetailsSummarySection({
       inputImages={inputImages}
       detailsVariant={detailsVariant}
       isMobile={isMobile}
-      availableLoras={availableLoras}
       showAllImages={controls.showAllImages}
       onShowAllImagesChange={controls.onShowAllImagesChange}
       showFullPrompt={controls.showFullPrompt}

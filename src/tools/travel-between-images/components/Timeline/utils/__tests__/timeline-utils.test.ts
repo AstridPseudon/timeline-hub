@@ -6,7 +6,6 @@ import {
   getTimelineDimensions,
   getPairInfo,
   applyFluidTimelineMulti,
-  calculateNewVideoPlacement,
   findTrailingVideoInfo,
   getTrailingEffectiveEnd,
   TRAILING_ENDPOINT_KEY,
@@ -190,42 +189,6 @@ describe('applyFluidTimelineMulti', () => {
     const cPos = result.get('c')!;
     // After shrinkOversizedGaps the positions may shift, but the bundle should be close
     expect(Math.abs(cPos - bPos)).toBeLessThanOrEqual(10);
-  });
-});
-
-describe('calculateNewVideoPlacement', () => {
-  it('places first video at start', () => {
-    const result = calculateNewVideoPlacement(100, undefined, 200);
-    expect(result.start_frame).toBe(0);
-    expect(result.end_frame).toBe(100);
-    expect(result.lastVideoUpdate).toBeUndefined();
-  });
-
-  it('places after existing videos', () => {
-    const existing = [{ path: '/v1.mp4', start_frame: 0, end_frame: 50 }];
-    const result = calculateNewVideoPlacement(80, existing, 200);
-    expect(result.start_frame).toBe(50);
-    expect(result.end_frame).toBe(130);
-  });
-
-  it('clips last video when no space on timeline', () => {
-    const existing = [{ path: '/v1.mp4', start_frame: 0, end_frame: 200 }];
-    const result = calculateNewVideoPlacement(80, existing, 200);
-
-    // start_frame >= fullMax, so should clip
-    expect(result.lastVideoUpdate).toBeDefined();
-    expect(result.lastVideoUpdate!.newEndFrame).toBeLessThan(200);
-    expect(result.start_frame).toBeLessThan(200);
-  });
-
-  it('handles multiple existing videos', () => {
-    const existing = [
-      { path: '/v1.mp4', start_frame: 0, end_frame: 50 },
-      { path: '/v2.mp4', start_frame: 50, end_frame: 100 },
-    ];
-    const result = calculateNewVideoPlacement(60, existing, 200);
-    expect(result.start_frame).toBe(100);
-    expect(result.end_frame).toBe(160);
   });
 });
 

@@ -17,7 +17,6 @@ import { installRuntimeErrorPresenter } from '@/shared/lib/errorHandling/runtime
 import { initializeViewportLockRuntime } from '@/shared/runtime/viewportLockRuntime';
 import { initializeProjectSelectionStore } from '@/shared/contexts/projectSelectionStore';
 import { initializePreloadingService } from '@/shared/lib/preloading';
-import { initializeToolSettingsWriteRuntime } from '@/shared/settings';
 import { initializeNetworkStatusManager } from '@/shared/services/network/networkStatusManager';
 import { initializeLocalTestRuntime, isLocalTestMode } from '@/app/localTestRuntime';
 import { hasRuntimeDocumentSelectors, isRuntimeDocumentMode } from '@/app/runtime/runtimeDocument';
@@ -75,7 +74,6 @@ export function initializeAppEnvironment(): void {
   registerToastErrorPresenter();
   initializeViewportLockRuntime();
   initializeProjectSelectionStore();
-  initializeToolSettingsWriteRuntime();
   initializePreloadingService();
   if (typeof window !== 'undefined' && !localTestMode) {
     initializeNetworkStatusManager();

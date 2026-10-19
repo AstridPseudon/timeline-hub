@@ -1,7 +1,6 @@
 import React from 'react';
 import { Check, Copy } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import { Task } from '@/types/tasks';
 
 export interface TaskGenerationDetailsRendererProps {
@@ -9,7 +8,6 @@ export interface TaskGenerationDetailsRendererProps {
   inputImages: string[];
   variant: 'modal' | 'panel';
   isMobile: boolean;
-  availableLoras: LoraModel[] | undefined;
   showAllImages: boolean;
   onShowAllImagesChange: (show: boolean) => void;
   showFullPrompt: boolean;
@@ -24,7 +22,6 @@ interface TaskDetailsSummaryAndParamsProps {
   inputImages: string[];
   detailsVariant: 'modal' | 'panel';
   isMobile: boolean;
-  availableLoras: LoraModel[] | undefined;
   showAllImages: boolean;
   onShowAllImagesChange: (show: boolean) => void;
   showFullPrompt: boolean;
@@ -45,7 +42,6 @@ export const TaskDetailsSummaryAndParams: React.FC<TaskDetailsSummaryAndParamsPr
   inputImages,
   detailsVariant,
   isMobile,
-  availableLoras,
   showAllImages,
   onShowAllImagesChange,
   showFullPrompt,
@@ -77,7 +73,6 @@ export const TaskDetailsSummaryAndParams: React.FC<TaskDetailsSummaryAndParamsPr
     onShowFullPromptChange,
     showFullNegativePrompt,
     onShowFullNegativePromptChange,
-    availableLoras,
     showCopyButtons,
   } as const;
 

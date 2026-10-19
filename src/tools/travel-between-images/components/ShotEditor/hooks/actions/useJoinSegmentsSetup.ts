@@ -10,10 +10,9 @@
  * - Join LoRA manager interface
  */
 
-import { useMemo, useCallback, useRef, useState } from 'react';
+import { useMemo, useCallback, useRef } from 'react';
 import { useJoinSegmentsSettings } from '../../../../hooks/settings/useJoinSegmentsSettings';
 import type { PhaseConfig } from '@/shared/types/phaseConfig';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { JoinSettingsForTask } from './joinSegments.types';
 
 interface SelectedLora {
@@ -36,9 +35,6 @@ interface UseJoinSegmentsSetupOptions {
 interface JoinLoraManager {
   selectedLoras: SelectedLora[];
   setSelectedLoras: (loras: SelectedLora[]) => void;
-  isLoraModalOpen: boolean;
-  setIsLoraModalOpen: (open: boolean) => void;
-  handleAddLora: (loraToAdd: LoraModel, isManualAction?: boolean, initialStrength?: number) => void;
   handleRemoveLora: (loraId: string) => void;
   handleLoraStrengthChange: (loraId: string, newStrength: number) => void;
   hasEverSetLoras: boolean;
@@ -90,7 +86,6 @@ export function useJoinSegmentsSetup({
   swapButtonRef,
 }: UseJoinSegmentsSetupOptions): UseJoinSegmentsSetupReturn {
   // Join-specific LoRA modal state (used by JoinClipsSettingsForm via external lora manager)
-  const [isJoinLoraModalOpen, setIsJoinLoraModalOpen] = useState(false);
 
   // Join Segments settings (shot-level persistence)
   const joinSettings = useJoinSegmentsSettings(selectedShotId, projectId);
@@ -193,35 +188,6 @@ export function useJoinSegmentsSetup({
     setSelectedLoras: (loras: SelectedLora[]) => {
       joinUpdateField('selectedLoras', loras);
     },
-    isLoraModalOpen: isJoinLoraModalOpen,
-    setIsLoraModalOpen: (open: boolean) => setIsJoinLoraModalOpen(open),
-    handleAddLora: (loraToAdd: LoraModel, _isManualAction = true, initialStrength?: number) => {
-      const currentLoras = joinSelectedLorasRef.current;
-      if (currentLoras.find(sl => sl.id === loraToAdd["Model ID"])) {
-        return; // Already exists
-      }
-      if (loraToAdd["Model Files"] && loraToAdd["Model Files"].length > 0) {
-        const loraName = loraToAdd.Name !== "N/A" ? loraToAdd.Name : loraToAdd["Model ID"];
-        const hasHighNoise = !!loraToAdd.high_noise_url;
-        const hasLowNoise = !!loraToAdd.low_noise_url;
-        const isMultiStage = hasHighNoise || hasLowNoise;
-        const primaryPath = isMultiStage
-          ? (loraToAdd.high_noise_url || loraToAdd.low_noise_url)
-          : (loraToAdd["Model Files"][0].url || loraToAdd["Model Files"][0].path);
-
-        const newLora: SelectedLora = {
-          id: loraToAdd["Model ID"],
-          name: loraName,
-          path: (hasHighNoise ? loraToAdd.high_noise_url : primaryPath) ?? '',
-          strength: initialStrength || 1.0,
-          previewImageUrl: loraToAdd.Images?.[0]?.url,
-          trigger_word: loraToAdd.trigger_word,
-          lowNoisePath: hasLowNoise ? loraToAdd.low_noise_url : undefined,
-          isMultiStage,
-        };
-        joinUpdateField('selectedLoras', [...currentLoras, newLora]);
-      }
-    },
     handleRemoveLora: (loraId: string) => {
       joinUpdateField('selectedLoras', joinSelectedLorasRef.current.filter(l => l.id !== loraId));
     },
@@ -233,7 +199,7 @@ export function useJoinSegmentsSetup({
     hasEverSetLoras: joinSelectedLoras.length > 0,
     shouldApplyDefaults: false,
     markAsUserSet: () => {},
-  }), [joinSelectedLoras, joinUpdateField, isJoinLoraModalOpen]);
+  }), [joinSelectedLoras, joinUpdateField]);
 
   return useMemo(() => ({
     // Raw settings

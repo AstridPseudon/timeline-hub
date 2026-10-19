@@ -14,13 +14,12 @@ vi.mock('@/shared/hooks/settings/useToolSettings', async () => {
   return {
     ...actual,
     useToolSettings: vi.fn(),
-    updateToolSettingsSupabase: vi.fn().mockResolvedValue(undefined),
   };
 });
 
 import {
+  extractSettingsFromCache,
   useToolSettings,
-  updateToolSettingsSupabase,
 } from '@/shared/hooks/settings/useToolSettings';
 import { useJoinClipsSettings } from '../useJoinClipsSettings';
 
@@ -34,7 +33,13 @@ type ToolSettingsResult = {
 };
 
 const mockUseToolSettings = vi.mocked(useToolSettings);
-const mockUpdateToolSettingsSupabase = vi.mocked(updateToolSettingsSupabase);
+
+// Join clips settings have no backend write: `save` reconciles the settings cache.
+function cachedPrompt(queryClient: QueryClient, projectId: string): string | undefined {
+  return extractSettingsFromCache<JoinClipsSettings>(
+    queryClient.getQueryData(queryKeys.settings.tool(TOOL_IDS.JOIN_CLIPS, projectId, undefined)),
+  )?.prompt;
+}
 
 function makeSettings(overrides: Partial<JoinClipsSettings> = {}): JoinClipsSettings {
   return {
@@ -57,7 +62,7 @@ function createToolSettingsResult(overrides: Partial<ToolSettingsResult> = {}): 
 
 function createWrapper() {
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) =>
@@ -95,7 +100,7 @@ describe('useJoinClipsSettings', () => {
   });
 
   it('exposes the existing public API and keeps nullish entities inert', async () => {
-    const { wrapper } = createWrapper();
+    const { wrapper, queryClient } = createWrapper();
     const { result, rerender } = renderHook(
       ({ projectId }: { projectId: string | null | undefined }) => useJoinClipsSettings(projectId),
       {
@@ -141,7 +146,7 @@ describe('useJoinClipsSettings', () => {
 
     expect(result.current.status).toBe('idle');
     expect(result.current.settings).toEqual(joinClipsSettings.defaults);
-    expect(mockUpdateToolSettingsSupabase).not.toHaveBeenCalled();
+    expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
 
     toolSettingsByProjectId.set(
       'proj-transition',
@@ -182,7 +187,7 @@ describe('useJoinClipsSettings', () => {
         isLoading: true,
       })
     );
-    const { wrapper } = createWrapper();
+    const { wrapper, queryClient } = createWrapper();
     const { result, rerender } = renderHook(() => useJoinClipsSettings('proj-debounce'), {
       wrapper,
     });
@@ -209,27 +214,16 @@ describe('useJoinClipsSettings', () => {
 
     expect(result.current.settings.prompt).toBe('edited prompt');
     expect(result.current.isDirty).toBe(true);
-    expect(mockUpdateToolSettingsSupabase).not.toHaveBeenCalled();
+    expect(cachedPrompt(queryClient, 'proj-debounce')).toBeUndefined();
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 200));
     });
-    expect(mockUpdateToolSettingsSupabase).not.toHaveBeenCalled();
+    expect(cachedPrompt(queryClient, 'proj-debounce')).toBeUndefined();
 
     await waitFor(() => {
-      expect(mockUpdateToolSettingsSupabase).toHaveBeenCalledTimes(1);
+      expect(cachedPrompt(queryClient, 'proj-debounce')).toBe('edited prompt');
     }, { timeout: 1000 });
-    expect(mockUpdateToolSettingsSupabase).toHaveBeenCalledWith(
-      {
-        scope: 'project',
-        id: 'proj-debounce',
-        toolId: TOOL_IDS.JOIN_CLIPS,
-        patch: expect.objectContaining({
-          prompt: 'edited prompt',
-        }),
-      },
-      { mode: 'immediate' }
-    );
   });
 
   it('supports initializeFrom as a no-op plus revert and reset(newDefaults) without leaving dirty state behind', async () => {
@@ -308,19 +302,6 @@ describe('useJoinClipsSettings', () => {
       await result.current.saveImmediate(nextSettings);
     });
 
-    expect(mockUpdateToolSettingsSupabase).toHaveBeenCalledWith(
-      {
-        scope: 'project',
-        id: 'proj-save-immediate',
-        toolId: TOOL_IDS.JOIN_CLIPS,
-        patch: expect.objectContaining({
-          prompt: 'saved immediately',
-          negativePrompt: 'new negative',
-        }),
-      },
-      { mode: 'immediate' }
-    );
-
     expect(
       queryClient.getQueryData(queryKeys.settings.tool(TOOL_IDS.JOIN_CLIPS, 'proj-save-immediate', undefined))
     ).toEqual({
@@ -342,7 +323,7 @@ describe('useJoinClipsSettings', () => {
       'proj-flush-b',
       createToolSettingsResult({ settings: makeSettings({ prompt: 'project b' }) })
     );
-    const { wrapper } = createWrapper();
+    const { wrapper, queryClient } = createWrapper();
     const { result, rerender, unmount } = renderHook(
       ({ projectId }: { projectId: string | null }) => useJoinClipsSettings(projectId),
       {
@@ -362,15 +343,7 @@ describe('useJoinClipsSettings', () => {
     rerender({ projectId: 'proj-flush-b' });
 
     await waitFor(() => {
-      expect(mockUpdateToolSettingsSupabase).toHaveBeenCalledWith(
-        {
-          scope: 'project',
-          id: 'proj-flush-a',
-          toolId: TOOL_IDS.JOIN_CLIPS,
-          patch: expect.objectContaining({ prompt: 'dirty before switch' }),
-        },
-        { mode: 'immediate' }
-      );
+      expect(cachedPrompt(queryClient, 'proj-flush-a')).toBe('dirty before switch');
     });
 
     await waitFor(() => {
@@ -386,15 +359,7 @@ describe('useJoinClipsSettings', () => {
       await Promise.resolve();
     });
 
-    expect(mockUpdateToolSettingsSupabase).toHaveBeenCalledWith(
-      {
-        scope: 'project',
-        id: 'proj-flush-b',
-        toolId: TOOL_IDS.JOIN_CLIPS,
-        patch: expect.objectContaining({ prompt: 'dirty before unload' }),
-      },
-      { mode: 'immediate' }
-    );
+        expect(cachedPrompt(queryClient, 'proj-flush-b')).toBe('dirty before unload');
 
     act(() => {
       result.current.updateField('prompt', 'dirty before unmount');
@@ -402,18 +367,10 @@ describe('useJoinClipsSettings', () => {
     unmount();
 
     await waitFor(() => {
-      expect(mockUpdateToolSettingsSupabase).toHaveBeenCalledWith(
-        {
-          scope: 'project',
-          id: 'proj-flush-b',
-          toolId: TOOL_IDS.JOIN_CLIPS,
-          patch: expect.objectContaining({ prompt: 'dirty before unmount' }),
-        },
-        { mode: 'immediate' }
-      );
+      expect(cachedPrompt(queryClient, 'proj-flush-b')).toBe('dirty before unmount');
     });
 
-    const callCountAfterRealEntities = mockUpdateToolSettingsSupabase.mock.calls.length;
+    const cacheAfterRealEntities = JSON.stringify(queryClient.getQueryCache().getAll().map((query) => [query.queryKey, query.state.data]));
     const disabledHook = renderHook(() => useJoinClipsSettings(null), { wrapper });
 
     await act(async () => {
@@ -422,6 +379,8 @@ describe('useJoinClipsSettings', () => {
     });
     disabledHook.unmount();
 
-    expect(mockUpdateToolSettingsSupabase).toHaveBeenCalledTimes(callCountAfterRealEntities);
+    expect(
+      JSON.stringify(queryClient.getQueryCache().getAll().map((query) => [query.queryKey, query.state.data])),
+    ).toBe(cacheAfterRealEntities);
   });
 });

@@ -171,7 +171,7 @@ export function useImageGenerationDetailsViewModel({
 
     const lorasToDisplay = activeLoras && activeLoras.length > 0
       ? activeLoras.map((lora) => ({
-          name: getDisplayNameFromUrl(lora.path, undefined, lora.name || lora.id) || 'Unknown',
+          name: getDisplayNameFromUrl(lora.path, lora.name || lora.id) || 'Unknown',
           strength: `${lora.strength}%`,
         }))
       : additionalLoras && Object.keys(additionalLoras).length > 0

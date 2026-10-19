@@ -9,7 +9,6 @@ import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { useCancelTask } from '@/shared/hooks/tasks/useTaskCancellation';
 import { useTaskType } from '@/shared/hooks/tasks/useTaskType';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
 import { taskSupportsProgress } from '@/shared/lib/tasks/taskConfig';
 import { taskQueryKeys } from '@/shared/lib/queryKeys/tasks';
 import { parseTaskParamsForDisplay, extractShotId } from './utils/task-utils';
@@ -86,7 +85,6 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
     });
   }, [cancelTaskMutation, queryClient, selectedProjectId, task.id]);
   const { data: taskTypeInfo } = useTaskType(task.taskType);
-  const { data: availableLoras = [] } = usePublicLoras();
 
   const taskParams = useMemo(() => parseTaskParamsForDisplay(task.params), [task.params]);
   const parsedTaskParams = taskParams.parsed as Record<string, unknown>;
@@ -305,7 +303,6 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
       onOpenVideoLightbox={onOpenVideoLightbox}
       onOpenImageLightbox={onOpenImageLightbox}
       onResetHoverState={resetHoverState}
-      availableLoras={availableLoras}
     >
       {taskItemContent}
     </TaskItemTooltip>

@@ -5,10 +5,9 @@ import { Textarea } from '@/shared/components/ui/textarea';
 import { Switch } from '@/shared/components/ui/switch';
 import { Label } from '@/shared/components/ui/primitives/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
-import { XCircle, Layers, Plus } from 'lucide-react';
+import { XCircle, Layers } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { ActiveLoRAsDisplay } from '@/domains/lora/components';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { LoraManagerState } from '@/domains/lora/types/loraManager';
 import type { EditAdvancedSettings as EditAdvancedSettingsType } from '../../hooks/useGenerationEditSettings';
 import type { EditModePanelState } from '../../hooks/useEditModePanelState';
@@ -31,12 +30,6 @@ function isLoraMode(value: string): value is LoraMode {
   return value === 'none' || value === 'in-scene' || value === 'next-scene' || value === 'custom';
 }
 
-function blurActiveElement() {
-  if (document.activeElement instanceof HTMLElement) {
-    document.activeElement.blur();
-  }
-}
-
 function useSelectPortalContainer<T extends HTMLElement>() {
   const sectionRef = React.useRef<T | null>(null);
   const [container, setContainer] = React.useState<HTMLElement | null>(null);
@@ -53,7 +46,6 @@ export interface SharedEditPanelProps {
   state: EditModePanelState;
   isCloudMode?: boolean;
   editLoraManager?: LoraManagerState;
-  availableLoras: LoraModel[];
   advancedSettings?: EditAdvancedSettingsType;
   setAdvancedSettings?: (updates: Partial<EditAdvancedSettingsType>) => void;
   isLocalGeneration?: boolean;
@@ -132,26 +124,25 @@ interface ModelAndLoraSectionProps {
   state: EditModePanelState;
   isCloudMode?: boolean;
   editLoraManager?: LoraManagerState;
-  availableLoras: LoraModel[];
 }
 
 export const ModelAndLoraSection: React.FC<ModelAndLoraSectionProps> = ({
   state,
   isCloudMode,
   editLoraManager,
-  availableLoras,
 }) => {
   const { sectionRef, container } = useSelectPortalContainer<HTMLDivElement>();
 
-  if (!editLoraManager && !state.setQwenEditModel) {
+  const isKleinModel = state.qwenEditModel?.startsWith('flux-klein-');
+  const showsActiveLoras = !!editLoraManager && !isKleinModel && editLoraManager.selectedLoras.length > 0;
+
+  if (!state.setQwenEditModel && !showsActiveLoras) {
     return null;
   }
 
-  const isKleinModel = state.qwenEditModel?.startsWith('flux-klein-');
-
   return (
     <div ref={sectionRef} className={state.generationsSpacing}>
-      <SectionLabel isMobile={state.isMobile}>{isKleinModel ? 'Model' : 'Model & LoRAs'}</SectionLabel>
+      <SectionLabel isMobile={state.isMobile}>{showsActiveLoras ? 'Model & LoRAs' : 'Model'}</SectionLabel>
       <div className={cn('flex items-center gap-2', state.isMobile ? 'mb-1' : 'mb-2')}>
         {state.setQwenEditModel && (
           <Select
@@ -181,32 +172,14 @@ export const ModelAndLoraSection: React.FC<ModelAndLoraSectionProps> = ({
             </SelectContent>
           </Select>
         )}
-        {editLoraManager && !isKleinModel && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              blurActiveElement();
-              editLoraManager.setIsLoraModalOpen(true);
-            }}
-            className={cn(
-              'flex h-10 w-[40%] items-center justify-center gap-1 px-2 text-xs',
-              state.isMobile && 'h-6 text-[10px]',
-            )}
-          >
-            <Plus className={cn(state.isMobile ? 'h-2.5 w-2.5' : 'h-3 w-3')} />
-            <span>LoRA</span>
-          </Button>
-        )}
       </div>
 
-      {editLoraManager && !isKleinModel && editLoraManager.selectedLoras.length > 0 && (
+      {showsActiveLoras && (
         <ActiveLoRAsDisplay
           selectedLoras={editLoraManager.selectedLoras}
           onRemoveLora={editLoraManager.handleRemoveLora}
           onLoraStrengthChange={editLoraManager.handleLoraStrengthChange}
           isGenerating={state.isGeneratingInpaint || state.isCreatingMagicEditTasks}
-          availableLoras={availableLoras}
           className={state.isMobile ? 'mt-1' : 'mt-2'}
         />
       )}
@@ -394,7 +367,6 @@ export const StandardEditPanelContent: React.FC<StandardEditPanelContentProps> =
   mode,
   isCloudMode,
   editLoraManager,
-  availableLoras,
   advancedSettings,
   setAdvancedSettings,
   isLocalGeneration,
@@ -407,7 +379,6 @@ export const StandardEditPanelContent: React.FC<StandardEditPanelContentProps> =
       state={state}
       isCloudMode={isCloudMode}
       editLoraManager={editLoraManager}
-      availableLoras={availableLoras}
     />
     <LegacyLoraSection state={state} hasManagedLoras={Boolean(editLoraManager)} />
     <AdvancedSettingsSection

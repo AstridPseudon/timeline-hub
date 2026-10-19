@@ -20,8 +20,6 @@ interface ModelSectionProps {
   onGenerationSourceChange?: (source: GenerationSource) => void;
   selectedTextModel?: TextToImageModel;
   onTextModelChange?: (model: TextToImageModel) => void;
-  // LoRA modal opener (managed by loraManager in parent)
-  onOpenLoraModal?: () => void;
   // Loading state for reference data (calculated in parent)
   isLoadingReferenceData?: boolean;
   referenceCount?: number;
@@ -31,11 +29,9 @@ interface ModelSectionProps {
 const JustTextSection: React.FC<{
   selectedTextModel: TextToImageModel;
   onTextModelChange: (model: TextToImageModel) => void;
-  onOpenLoraModal: () => void;
 }> = ({
   selectedTextModel,
   onTextModelChange,
-  onOpenLoraModal,
 }) => {
   const { isGenerating } = useFormCoreContext();
 
@@ -65,10 +61,7 @@ const JustTextSection: React.FC<{
         </RadioGroup>
       </div>
 
-      {/* LoRA Grid */}
-      <LoraGrid
-        onOpenLoraModal={onOpenLoraModal}
-      />
+      <LoraGrid />
     </div>
   );
 };
@@ -79,7 +72,6 @@ export const ModelSection: React.FC<ModelSectionProps> = ({
   onGenerationSourceChange,
   selectedTextModel = "qwen-image",
   onTextModelChange,
-  onOpenLoraModal,
   isLoadingReferenceData = false,
   referenceCount = 0,
 }) => {
@@ -103,17 +95,15 @@ export const ModelSection: React.FC<ModelSectionProps> = ({
       {/* Content based on generation source */}
       {generationSource === "by-reference" ? (
         <ReferenceSection
-          onOpenLoraModal={onOpenLoraModal!}
           referenceCount={referenceCount}
           isLoadingReferenceData={isLoadingReferenceData}
         />
       ) : (
         // Just-text mode
-        onTextModelChange && onOpenLoraModal && (
+        onTextModelChange && (
           <JustTextSection
             selectedTextModel={selectedTextModel}
             onTextModelChange={onTextModelChange}
-            onOpenLoraModal={onOpenLoraModal}
           />
         )
       )}

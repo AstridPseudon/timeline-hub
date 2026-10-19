@@ -1,27 +1,18 @@
 /**
  * Img2ImgControls - Img2Img mode form controls
  *
- * Prompt, strength slider, LoRA selector, and generate button for img2img mode.
+ * Prompt, strength slider, selected LoRAs, and generate button for img2img mode.
  */
 
-import React, { Suspense } from 'react';
+import React from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
-import { CheckCircle, Loader2, Plus, Wand2 } from 'lucide-react';
+import { CheckCircle, Loader2, Wand2 } from 'lucide-react';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { ActiveLoRAsDisplay } from '@/domains/lora/components';
-import { mapSelectedLorasForModal } from '@/shared/components/lora/mapSelectedLorasForModal';
-import { LoraSelectorModal } from '@/domains/lora/components';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { LoraManagerState } from '@/domains/lora/types/loraManager';
 import { composeDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
-
-function blurActiveElement() {
-  if (document.activeElement instanceof HTMLElement) {
-    document.activeElement.blur();
-  }
-}
 
 interface Img2ImgControlsProps {
   isMobile: boolean;
@@ -37,7 +28,6 @@ interface Img2ImgControlsProps {
   handleGenerateImg2Img: () => void;
   // LoRA
   img2imgLoraManager?: LoraManagerState;
-  availableLoras: LoraModel[];
   // Responsive config
   SectionLabel: React.FC<{ children: React.ReactNode }>;
 }
@@ -53,7 +43,6 @@ export const Img2ImgControls: React.FC<Img2ImgControlsProps> = ({
   img2imgGenerateSuccess,
   handleGenerateImg2Img,
   img2imgLoraManager,
-  availableLoras,
   SectionLabel,
 }) => {
   const spacing = isMobile ? 'space-y-2' : 'space-y-4';
@@ -123,37 +112,17 @@ export const Img2ImgControls: React.FC<Img2ImgControlsProps> = ({
           </div>
         </div>
 
-        {/* LoRA Selector */}
-        {img2imgLoraManager && (
+        {/* Selected LoRAs */}
+        {img2imgLoraManager && img2imgLoraManager.selectedLoras.length > 0 && (
           <div className={generationsSpacing}>
             <SectionLabel>Style LoRAs</SectionLabel>
-            <div className={cn("flex items-center gap-2", isMobile ? "mb-1" : "mb-2")}>
-              {!isMobile && <label className={`${labelSize} font-medium`}>LoRAs:</label>}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  blurActiveElement();
-                  img2imgLoraManager.setIsLoraModalOpen(true);
-                }}
-                className={cn("h-10 px-2 text-xs flex flex-col items-center justify-center leading-tight", isMobile && "h-6 text-[10px]")}
-              >
-                <Plus className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />
-                <span className="text-[10px]">LoRA</span>
-              </Button>
-            </div>
-
-            {/* Display selected LoRAs */}
-            {img2imgLoraManager.selectedLoras.length > 0 && (
-              <ActiveLoRAsDisplay
-                selectedLoras={img2imgLoraManager.selectedLoras}
-                onRemoveLora={img2imgLoraManager.handleRemoveLora}
-                onLoraStrengthChange={img2imgLoraManager.handleLoraStrengthChange}
-                isGenerating={isGeneratingImg2Img}
-                availableLoras={availableLoras}
-                className={isMobile ? "mt-1" : "mt-2"}
-              />
-            )}
+            <ActiveLoRAsDisplay
+              selectedLoras={img2imgLoraManager.selectedLoras}
+              onRemoveLora={img2imgLoraManager.handleRemoveLora}
+              onLoraStrengthChange={img2imgLoraManager.handleLoraStrengthChange}
+              isGenerating={isGeneratingImg2Img}
+              className={isMobile ? "mt-1" : "mt-2"}
+            />
           </div>
         )}
       </div>
@@ -189,22 +158,6 @@ export const Img2ImgControls: React.FC<Img2ImgControlsProps> = ({
       </Button>
       {disabledReason && (
         <p role="note" className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>{disabledReason}</p>
-      )}
-
-      {/* Img2Img LoRA Selector Modal */}
-      {img2imgLoraManager && (
-        <Suspense fallback={null}>
-          <LoraSelectorModal
-            isOpen={img2imgLoraManager.isLoraModalOpen}
-            onClose={() => img2imgLoraManager.setIsLoraModalOpen(false)}
-            loras={availableLoras}
-            onAddLora={img2imgLoraManager.handleAddLora}
-            onRemoveLora={img2imgLoraManager.handleRemoveLora}
-            onUpdateLoraStrength={img2imgLoraManager.handleLoraStrengthChange}
-            selectedLoras={mapSelectedLorasForModal(img2imgLoraManager.selectedLoras, availableLoras)}
-            loraType="z-image"
-          />
-        </Suspense>
       )}
     </>
   );

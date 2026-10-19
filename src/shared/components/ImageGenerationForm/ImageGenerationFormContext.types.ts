@@ -2,8 +2,6 @@ import type { ImageGenerationFormUIState, FormUIActions } from './state/useFormU
 import type { PromptEntry, HydratedReferenceImage, ReferenceMode } from './types';
 import type { PromptHandlersContract } from './hooks/promptManagement/types';
 import type { ActiveLora } from '@/domains/lora/types/lora';
-import type { LoraModel } from '@/domains/lora/types/lora';
-import type { Resource } from '@/features/resources/hooks/useResources';
 
 /** Core form state */
 export interface FormCoreState {
@@ -39,7 +37,6 @@ export interface FormReferenceState {
   inThisScene: boolean;
   inThisSceneStrength: number;
   styleBoostTerms: string;
-  isUploadingStyleReference: boolean;
   styleReferenceImageDisplay: string | null;
 }
 
@@ -47,8 +44,6 @@ export interface FormReferenceState {
 export interface FormReferenceHandlers {
   onSelectReference: (id: string) => void | Promise<void>;
   onDeleteReference: (id: string) => void | Promise<void>;
-  onUpdateReferenceName: (id: string, name: string) => void | Promise<void>;
-  onStyleUpload: (files: File[]) => Promise<void>;
   onStyleRemove: () => void | Promise<void>;
   onStyleStrengthChange: (value: number) => void | Promise<void>;
   onSubjectStrengthChange: (value: number) => void | Promise<void>;
@@ -59,19 +54,15 @@ export interface FormReferenceHandlers {
   onInThisSceneStrengthChange: (value: number) => void | Promise<void>;
   onReferenceModeChange: (mode: ReferenceMode) => void | Promise<void>;
   onStyleBoostTermsChange: (terms: string) => void | Promise<void>;
-  onToggleVisibility: (resourceId: string, isPublic: boolean) => void | Promise<void>;
-  onResourceSelect: (resource: Resource) => void | Promise<void>;
 }
 
 /** LORA-related state */
 export interface FormLoraState {
   selectedLoras: ActiveLora[];
-  availableLoras: LoraModel[];
 }
 
 /** LORA handlers */
 export interface FormLoraHandlers {
-  handleAddLora: (lora: LoraModel) => void;
   handleRemoveLora: (id: string) => void;
   handleLoraStrengthChange: (id: string, strength: number) => void;
 }

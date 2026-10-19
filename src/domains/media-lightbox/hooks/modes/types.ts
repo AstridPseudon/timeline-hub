@@ -2,7 +2,6 @@ import type { GenerationRow } from '@/domains/generation/types';
 import type { PortionSelection } from '@/shared/components/VideoPortionTimeline';
 import { useEditVideoSettings } from '@/shared/settings/hooks/useEditVideoSettings';
 import { useLoraManager } from '@/domains/lora/hooks/useLoraManager';
-import type { LoraModel } from '@/domains/lora/types/lora';
 
 export interface UseVideoEditingProps {
   media: GenerationRow | null;
@@ -42,7 +41,6 @@ export interface UseVideoEditingReturn {
 
   // LoRA management
   loraManager: ReturnType<typeof useLoraManager>;
-  availableLoras: LoraModel[];
 
   // Generation
   handleGenerate: () => void;

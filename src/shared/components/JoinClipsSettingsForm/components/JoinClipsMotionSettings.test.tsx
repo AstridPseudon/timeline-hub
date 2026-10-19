@@ -38,7 +38,6 @@ describe('JoinClipsMotionSettings', () => {
 
     render(
       <JoinClipsMotionSettings
-        availableLoras={[{ id: 'lora-1' } as never]}
         projectId="project-1"
         loraPersistenceKey="join-clips"
         loraManager={{ id: 'external' } as never}
@@ -51,7 +50,6 @@ describe('JoinClipsMotionSettings', () => {
         selectedPhasePresetId="preset-1"
         onPhasePresetSelect={onPhasePresetSelect}
         onPhasePresetRemove={onPhasePresetRemove}
-        featuredPresetIds={['preset-1', 'preset-2']}
       />,
     );
 
@@ -66,8 +64,6 @@ describe('JoinClipsMotionSettings', () => {
     const selectorProps = mocks.MotionPresetSelector.mock.calls[0][0];
     expect(selectorProps).toEqual(expect.objectContaining({
       builtinPreset: { id: 'builtin-join-clips' },
-      featuredPresetIds: ['preset-1', 'preset-2'],
-      generationTypeMode: 'vace',
       selectedPhasePresetId: 'preset-1',
       motionMode: 'advanced',
       onPresetSelect: onPhasePresetSelect,
@@ -76,34 +72,29 @@ describe('JoinClipsMotionSettings', () => {
       onPhaseConfigChange,
       randomSeed: true,
       onRandomSeedChange,
-      queryKeyPrefix: 'join-clips-presets',
       renderBasicModeContent: expect.any(Function),
     }));
 
     render(selectorProps.renderBasicModeContent());
     expect(mocks.LoraManager).toHaveBeenCalledWith(expect.objectContaining({
-      availableLoras: [{ id: 'lora-1' }],
       projectId: 'project-1',
       persistenceScope: 'project',
       enableProjectPersistence: true,
       persistenceKey: 'join-clips',
       externalLoraManager: { id: 'external' },
       title: 'Additional LoRA Models (Optional)',
-      addButtonText: 'Add or manage LoRAs',
     }), {});
   });
 
   it('uses no-op handler fallbacks and normalizes null project id for lora manager', () => {
     render(
       <JoinClipsMotionSettings
-        availableLoras={[]}
         projectId={null}
         loraPersistenceKey="join-clips"
         motionMode="basic"
         phaseConfig={undefined}
         randomSeed={false}
         selectedPhasePresetId={undefined}
-        featuredPresetIds={[]}
       />,
     );
 

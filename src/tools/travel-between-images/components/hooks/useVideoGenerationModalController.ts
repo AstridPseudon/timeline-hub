@@ -1,13 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { Shot } from '@/domains/generation/types';
 import type { ActiveLora } from '@/domains/lora/types/lora';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import { useProjectCrudContext, useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { useShotNavigation } from '@/shared/hooks/shots/useShotNavigation';
 import { useShotSettings } from '../../hooks/settings/useShotSettings';
 import { coerceSelectedModel } from '@/tools/travel-between-images/settings';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
 import { useShotImages } from '@/shared/hooks/shots/useShotImages';
 import { isPositioned, isVideoGeneration } from '@/shared/lib/typeGuards';
 import { findClosestAspectRatio } from '@/shared/lib/media/aspectRatios';
@@ -25,14 +23,12 @@ import type { TravelGuidanceMode } from '@/shared/lib/tasks/travelGuidance';
 import {
   BUILTIN_DEFAULT_I2V_ID,
   BUILTIN_DEFAULT_VACE_ID,
-  FEATURED_PRESET_IDS,
 } from '../MotionControl.constants';
 import { useVideoUiSettings } from './useVideoUiSettings';
 
 const knownPresetIds = [
   BUILTIN_DEFAULT_I2V_ID,
   BUILTIN_DEFAULT_VACE_ID,
-  ...FEATURED_PRESET_IDS,
 ];
 
 function resolveGuidanceKind(
@@ -98,35 +94,11 @@ function mapSelectedLorasToActiveLoras(
 
 // --- Extracted hooks: only where there's a genuine independent boundary ---
 
-/** LoRA selection modal + CRUD handlers. Own state (modal open), cohesive unit. */
+/** Handlers for the LoRAs already selected in the shot settings. */
 function useVideoGenerationLoras(
   settings: ReturnType<typeof useShotSettings>['settings'],
   updateField: ReturnType<typeof useShotSettings>['updateField'],
-  availableLoras: NonNullable<ReturnType<typeof usePublicLoras>['data']> | undefined,
-  selectedLoras: ActiveLora[],
 ) {
-  const [isLoraModalOpen, setIsLoraModalOpen] = useState(false);
-
-  const handleAddLora = useCallback(
-    (lora: LoraModel) => {
-      const newLora = {
-        id: (lora['Model ID'] || '') as string,
-        name: (lora.Name || '') as string,
-        path: (lora.link || '') as string,
-        strength: 1,
-        previewImageUrl: lora['Preview Image URL'] as string | undefined,
-        trigger_word: lora['Trigger Word'] as string | undefined,
-      };
-
-      const currentLoras = settings.loras || [];
-      if (!currentLoras.some((existingLora) => existingLora.id === newLora.id)) {
-        updateField('loras', [...currentLoras, newLora]);
-      }
-      setIsLoraModalOpen(false);
-    },
-    [settings.loras, updateField],
-  );
-
   const handleRemoveLora = useCallback(
     (loraId: string) => {
       updateField(
@@ -160,26 +132,10 @@ function useVideoGenerationLoras(
     [settings.prompt, updateField],
   );
 
-  const selectedLorasForModal = useMemo(() => {
-    const catalog = availableLoras || [];
-    return selectedLoras.flatMap((selectedLora) => {
-      const fullLora = catalog.find((model) => model['Model ID'] === selectedLora.id);
-      if (!fullLora) {
-        return [];
-      }
-      return [{ ...fullLora, strength: selectedLora.strength }];
-    });
-  }, [availableLoras, selectedLoras]);
-
   return {
-    isLoraModalOpen,
-    openLoraModal: useCallback(() => setIsLoraModalOpen(true), []),
-    closeLoraModal: useCallback(() => setIsLoraModalOpen(false), []),
-    handleAddLora,
     handleRemoveLora,
     handleLoraStrengthChange,
     handleAddTriggerWord,
-    selectedLorasForModal,
   };
 }
 
@@ -205,7 +161,6 @@ export function useVideoGenerationModalController({ isOpen, onClose, shot }: {
     selectedProjectId,
   );
 
-  const { data: availableLoras } = usePublicLoras();
   const { data: shotGenerations, isLoading: generationsLoading } = useShotImages(
     isOpen ? shot.id : null,
   );
@@ -254,8 +209,8 @@ export function useVideoGenerationModalController({ isOpen, onClose, shot }: {
   const isLoading =
     (status !== 'ready' && status !== 'saving' && status !== 'error') || generationsLoading;
 
-  // LoRA management (extracted — has own modal state)
-  const loras = useVideoGenerationLoras(settings, updateField, availableLoras, selectedLoras);
+  // LoRA management (extracted)
+  const loras = useVideoGenerationLoras(settings, updateField);
 
   // Navigation callbacks
   const handleNavigateToShot = useCallback(() => {
@@ -268,11 +223,11 @@ export function useVideoGenerationModalController({ isOpen, onClose, shot }: {
 
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {
-      if (!open && !loras.isLoraModalOpen) {
+      if (!open) {
         onClose();
       }
     },
-    [loras.isLoraModalOpen, onClose],
+    [onClose],
   );
 
   return {
@@ -281,7 +236,6 @@ export function useVideoGenerationModalController({ isOpen, onClose, shot }: {
     settings,
     status,
     updateField,
-    availableLoras,
     positionedImages,
     isLoading,
     isDisabled: isLoading || positionedImages.length < 1,

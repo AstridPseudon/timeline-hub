@@ -25,7 +25,6 @@ import { Label } from '@/shared/components/ui/primitives/label';
 import { normalizeTaskDetailsPayload } from '@/shared/components/TaskDetails/hooks/normalizeTaskDetailsPayload';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useGenerationTaskDetails } from '@/shared/components/TaskDetails/hooks/useGenerationTaskDetails';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
 import {
   TaskDetailsEmptyState,
   TaskDetailsErrorState,
@@ -73,7 +72,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     }
   };
   const { selectedProjectId } = useProjectSelectionContext();
-  const { data: availableLoras } = usePublicLoras();
 
   const {
     taskId,
@@ -189,7 +187,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 inputImages={detailInputImages}
                 detailsVariant="modal"
                 isMobile={isMobile}
-                availableLoras={availableLoras}
                 controls={summaryControls}
                 renderGenerationDetails={renderGenerationDetails}
               />

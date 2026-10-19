@@ -1,5 +1,4 @@
 import React from "react";
-import { LogOut } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +7,6 @@ import {
   DialogFooter,
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
-import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from "@/shared/hooks/mobile";
 import { useLargeModal } from '@/shared/hooks/useModal';
 import { useScrollFade } from "@/shared/hooks/useScrollFade";
@@ -31,11 +29,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     debug: false,
     preloadFade: modal.isMobile
   });
-
-  const handleSignOut = async () => {
-    await supabase().auth.signOut();
-    onOpenChange(false); // Close the modal after signing out
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -90,12 +83,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           )}
 
           <DialogFooter className={`${modal.isMobile ? 'px-2 pt-6 pb-3 flex-row justify-between' : 'px-2 pt-7 pb-3'} border-t relative z-20`}>
-            <div className="flex gap-2 mr-auto">
-              <Button variant="retro-secondary" size="retro-sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign out
-              </Button>
-            </div>
             <Button variant="retro" size="retro-sm" onClick={() => onOpenChange(false)}>
               Close
             </Button>

@@ -19,7 +19,6 @@ vi.mock('@/shared/contexts/ProjectContext', () => ({
   })),
   useProjectIdentityContext: vi.fn(() => ({ userId: null })),
 }));
-vi.mock('@/features/resources/hooks/useResources', () => ({ usePublicLoras: vi.fn(() => ({ data: [] })), usePublicStyleReferences: vi.fn(() => ({ data: [] })), useMyStyleReferences: vi.fn(() => ({ data: [] })) }));
 import ImageGenerationToolPage from '../ImageGenerationToolPage';
 
 describe('ImageGenerationToolPage', () => {

@@ -57,7 +57,7 @@ const { showFade, scrollRef } = useScrollFade({ isOpen });
 // Attach scrollRef to scrollable container, render fade overlay in footer wrapper
 ```
 
-Used by: SettingsModal, PromptEditorModal, ReferralModal, LoraSelectorModal, and other custom-layout modals.
+Used by: SettingsModal, PromptEditorModal, ReferralModal, and other custom-layout modals.
 
 ---
 

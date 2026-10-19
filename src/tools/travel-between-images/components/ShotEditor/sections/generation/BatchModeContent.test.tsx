@@ -150,7 +150,6 @@ vi.mock('../../ShotSettingsContext', () => ({
       onAcceleratedChange: vi.fn(),
       randomSeed: null,
       onRandomSeedChange: vi.fn(),
-      currentMotionSettings: {},
       isSteerableMotionEnqueuing: false,
       steerableMotionJustQueued: false,
       isGenerationDisabled: false,

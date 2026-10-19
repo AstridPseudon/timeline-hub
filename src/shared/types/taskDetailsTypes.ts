@@ -6,7 +6,6 @@
  */
 
 import { Task } from '@/types/tasks';
-import type { LoraModel } from '@/domains/lora/types/lora';
 
 /**
  * Props for task details display components
@@ -22,8 +21,6 @@ export interface TaskDetailsProps {
   onShowFullPromptChange?: (show: boolean) => void;
   showFullNegativePrompt?: boolean;
   onShowFullNegativePromptChange?: (show: boolean) => void;
-  // Available LoRAs for proper name display
-  availableLoras?: LoraModel[];
   // Show copy buttons next to prompts (only in variant selector tooltip)
   showCopyButtons?: boolean;
 }

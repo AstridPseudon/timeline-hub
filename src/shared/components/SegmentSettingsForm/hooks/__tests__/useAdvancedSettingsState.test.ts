@@ -1,10 +1,8 @@
-import { act, renderHook } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
   BUILTIN_I2V_PRESET,
   BUILTIN_VACE_PRESET,
-  SEGMENT_I2V_FEATURED_PRESET_IDS,
-  SEGMENT_VACE_FEATURED_PRESET_IDS,
 } from '../../segmentSettingsUtils';
 import { useAdvancedSettingsState } from '../useAdvancedSettingsState';
 
@@ -25,7 +23,7 @@ function buildSettings(overrides: Record<string, unknown> = {}) {
 }
 
 describe('useAdvancedSettingsState', () => {
-  it('uses i2v generation mode and i2v preset defaults when model is not vace', () => {
+  it('uses the i2v preset default when model is not vace', () => {
     const { result } = renderHook(() =>
       useAdvancedSettingsState({
         modelName: 'Wan 2.2 I2V',
@@ -33,12 +31,10 @@ describe('useAdvancedSettingsState', () => {
       }),
     );
 
-    expect(result.current.generationMode).toBe('i2v');
     expect(result.current.builtinPreset).toBe(BUILTIN_I2V_PRESET);
-    expect(result.current.featuredPresetIds).toEqual(SEGMENT_I2V_FEATURED_PRESET_IDS);
   });
 
-  it('switches to vace mode/presets and supports lora modal toggling', () => {
+  it('switches to the vace preset when the model is vace', () => {
     const { result } = renderHook(() =>
       useAdvancedSettingsState({
         modelName: 'WAN VACE Model',
@@ -46,20 +42,7 @@ describe('useAdvancedSettingsState', () => {
       }),
     );
 
-    expect(result.current.generationMode).toBe('vace');
     expect(result.current.builtinPreset).toBe(BUILTIN_VACE_PRESET);
-    expect(result.current.featuredPresetIds).toEqual(SEGMENT_VACE_FEATURED_PRESET_IDS);
-    expect(result.current.isLoraModalOpen).toBe(false);
-
-    act(() => {
-      result.current.openLoraModal();
-    });
-    expect(result.current.isLoraModalOpen).toBe(true);
-
-    act(() => {
-      result.current.closeLoraModal();
-    });
-    expect(result.current.isLoraModalOpen).toBe(false);
   });
 
   it('derives effective loras from settings first, then shot defaults', () => {

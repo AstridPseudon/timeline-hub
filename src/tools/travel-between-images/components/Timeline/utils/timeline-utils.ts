@@ -4,7 +4,7 @@ import { TRAILING_ENDPOINT_KEY } from './timeline-constants';
 export { PENDING_POSITION_KEY, TRAILING_ENDPOINT_KEY } from './timeline-constants';
 export { getTimelineDimensions, getTrailingEffectiveEnd } from './timeline-dimensions';
 export { getPairInfo } from './timeline-pairs';
-export { calculateNewVideoPlacement, findTrailingVideoInfo } from './timeline-video-utils';
+export { findTrailingVideoInfo } from './timeline-video-utils';
 
 /** Sort a positions map by frame number (ascending), returning [id, frame] entries. */
 export const sortPositionEntries = (positions: Map<string, number>): [string, number][] =>

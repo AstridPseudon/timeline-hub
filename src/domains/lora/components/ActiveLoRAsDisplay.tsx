@@ -5,7 +5,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Label } from '@/shared/components/ui/primitives/label';
 import { SliderWithValue } from '@/shared/components/ui/composed/slider-with-value';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
-import { getDisplayNameFromUrl, type LoraDisplayModel } from '@/domains/lora/lib/loraUtils';
+import { getDisplayNameFromUrl } from '@/domains/lora/lib/loraUtils';
 import type { ActiveLora } from '@/domains/lora/types/lora';
 
 interface ActiveLoRAsDisplayProps {
@@ -13,7 +13,6 @@ interface ActiveLoRAsDisplayProps {
   onRemoveLora: (loraId: string) => void;
   onLoraStrengthChange: (loraId: string, newStrength: number) => void;
   isGenerating?: boolean;
-  availableLoras?: LoraDisplayModel[];
   className?: string;
   onAddTriggerWord?: (triggerWord: string) => void;
   renderHeaderActions?: () => React.ReactNode;
@@ -24,7 +23,6 @@ const ActiveLoRAsDisplayComponent: React.FC<ActiveLoRAsDisplayProps> = ({
   onRemoveLora,
   onLoraStrengthChange,
   isGenerating = false,
-  availableLoras = [],
   className = "",
   onAddTriggerWord,
   renderHeaderActions,
@@ -44,11 +42,8 @@ const ActiveLoRAsDisplayComponent: React.FC<ActiveLoRAsDisplayProps> = ({
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
           {selectedLoras.map((lora) => {
-            const isVideo = lora.previewImageUrl && (
-              lora.previewImageUrl.match(/\.(mp4|webm|mov|avi)(\?|$)/i) ||
-              availableLoras.find((item) => item["Model ID"] === lora.id)?.Images?.some((image) => image.type?.startsWith('video'))
-            );
-            const displayName = getDisplayNameFromUrl(lora.path, availableLoras, lora.name);
+            const isVideo = lora.previewImageUrl?.match(/\.(mp4|webm|mov|avi)(\?|$)/i);
+            const displayName = getDisplayNameFromUrl(lora.path, lora.name);
 
             return (
               <div key={lora.id} className="p-3 border rounded-md shadow-sm bg-muted/50">
@@ -80,8 +75,7 @@ const ActiveLoRAsDisplayComponent: React.FC<ActiveLoRAsDisplayProps> = ({
                           {displayName}
                         </Label>
                         {(() => {
-                          const triggerWord = lora.trigger_word ||
-                            availableLoras.find((item) => item["Model ID"] === lora.id)?.trigger_word;
+                          const triggerWord = lora.trigger_word;
 
                           return triggerWord ? (
                             <div className="flex items-center mt-0.5">

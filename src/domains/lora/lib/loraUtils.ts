@@ -6,19 +6,6 @@
  * because these are generic utilities used across shared components.
  */
 
-/**
- * Minimal LoRA model shape used by display helpers.
- * Keep this local to avoid pulling UI modules into shared/lib.
- */
-export interface LoraDisplayModel {
-  "Model ID"?: string;
-  Name?: string;
-  huggingface_url?: string;
-  trigger_word?: string;
-  Images?: Array<{ type?: string; [key: string]: unknown }>;
-  [key: string]: unknown;
-}
-
 const HF_SCHEME = 'https';
 const HF_HOST = 'huggingface.co';
 const HF_RESOLVE_MAIN = 'resolve/main';
@@ -218,25 +205,16 @@ function cleanFilename(filename: string): string {
 
 /**
  * Get display name from LoRA URL
- * Checks predefined LoRAs first, then availableLoras, then falls back to cleaned filename
+ * Checks predefined LoRAs first, then falls back to the given name, then to the cleaned filename
  * @param url - The LoRA URL/path
- * @param availableLoras - Optional array of available LoRAs to check against
  * @param fallbackName - Optional name to use if URL doesn't match anything
  */
-export function getDisplayNameFromUrl(url: string, availableLoras?: LoraDisplayModel[], fallbackName?: string): string {
+export function getDisplayNameFromUrl(url: string, fallbackName?: string): string {
   // Check if this is a predefined LoRA
   if (url) {
     const predefinedLora = PREDEFINED_LORAS.find(lora => lora.url === url);
     if (predefinedLora?.displayName) {
       return predefinedLora.displayName;
-    }
-  }
-
-  // Check if this is a lora from the search/database
-  if (url && availableLoras) {
-    const availableLora = availableLoras.find(lora => lora.huggingface_url === url);
-    if (availableLora?.Name && availableLora.Name !== "N/A") {
-      return availableLora.Name;
     }
   }
 

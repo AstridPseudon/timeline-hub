@@ -92,8 +92,6 @@ function buildProps(overrides: Record<string, unknown> = {}) {
 
   return {
     builtinPreset: { metadata: { phaseConfig: buildPhaseConfig({ flow_shift: 4 }) } },
-    featuredPresetIds: ['preset-1'],
-    generationMode: 'i2v' as const,
     settings,
     onChange: vi.fn(),
     shotDefaults: {
@@ -102,15 +100,12 @@ function buildProps(overrides: Record<string, unknown> = {}) {
       selectedPhasePresetId: 'default-preset',
       loras: [{ id: 'default-lora', name: 'Default LoRA', path: '/d', strength: 0.6 }],
     },
-    queryKeyPrefix: 'segment-test',
-    availableLoras: [],
     effectiveLoras: [{ id: 'lora-a', name: 'LoRA A', path: '/a', strength: 0.5 }],
     onMotionModeChange: vi.fn(),
     onPhaseConfigChange: vi.fn(),
     onPhasePresetSelect: vi.fn(),
     onPhasePresetRemove: vi.fn(),
     onRandomSeedChange: vi.fn(),
-    onAddLoraClick: vi.fn(),
     onRemoveLora: vi.fn(),
     onLoraStrengthChange: vi.fn(),
     onSaveFieldAsDefault: vi.fn(),
@@ -139,16 +134,12 @@ describe('MotionPresetSection', () => {
     expect(passedProps.selectedPhasePresetId).toBe('default-preset');
     expect(passedProps.motionMode).toBe('advanced');
     expect(passedProps.phaseConfig).toEqual(props.shotDefaults.phaseConfig);
-    expect(passedProps.generationTypeMode).toBe('i2v');
-    expect(passedProps.queryKeyPrefix).toBe('segment-test');
 
     fireEvent.click(screen.getByRole('button', { name: 'remove-lora-a' }));
     fireEvent.click(screen.getByRole('button', { name: 'update-lora-a' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Add or manage LoRAs' }));
 
     expect(props.onRemoveLora).toHaveBeenCalledWith('lora-a');
     expect(props.onLoraStrengthChange).toHaveBeenCalledWith('lora-a', 0.77);
-    expect(props.onAddLoraClick).toHaveBeenCalledTimes(1);
   });
 
   it('executes use-default and set-as-default handlers for motion and lora controls', async () => {

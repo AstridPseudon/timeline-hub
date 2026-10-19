@@ -11,7 +11,6 @@ import { TaskPromptDetails } from './TaskPromptDetails';
 import { TaskTravelMetadata } from './TaskTravelMetadata';
 import { getVariantConfig } from '../../../types/taskDetailsTypes';
 import type { Task } from '../../../../types/tasks';
-import type { LoraModel } from '../../../../domains/lora/types/lora';
 import type { TaskGenerationDetailsRendererProps } from './TaskDetailsSummaryAndParams';
 
 const generationDetailsPropsSpy = vi.fn();
@@ -38,17 +37,6 @@ function createTask(overrides: Partial<Task> = {}): Task {
     ...overrides,
   };
 }
-
-const availableLoras: LoraModel[] = [
-  {
-    'Model ID': 'lora-1',
-    Name: 'Painterly',
-    Author: 'OpenAI',
-    Images: [],
-    'Model Files': [],
-    huggingface_url: 'https://cdn.example.com/loras/painterly.safetensors',
-  },
-];
 
 describe('TaskDetails coverage', () => {
   it('renders guidance images and structure video metadata', () => {
@@ -107,7 +95,6 @@ describe('TaskDetails coverage', () => {
           additionalLoras={{
             'https://cdn.example.com/loras/painterly.safetensors': 0.75,
           }}
-          availableLoras={availableLoras}
           copiedLoraUrl={null}
           onCopyLoraUrl={onCopyLoraUrl}
         />
@@ -134,7 +121,6 @@ describe('TaskDetails coverage', () => {
           }}
           phaseStepsDisplay="12 -> 14 (26 total)"
           showSummary
-          availableLoras={availableLoras}
           copiedLoraUrl={null}
           onCopyLoraUrl={onCopyLoraUrl}
         />
@@ -142,7 +128,7 @@ describe('TaskDetails coverage', () => {
     );
     const scope = within(container);
 
-    expect(scope.getAllByText('Painterly')).toHaveLength(2);
+    expect(scope.getAllByText('painterly')).toHaveLength(2);
     expect(scope.getByText('0.8')).toBeTruthy();
     expect(scope.getByText('Phase Settings')).toBeTruthy();
     expect(scope.getByText('12 -> 14 (26 total)')).toBeTruthy();
@@ -229,7 +215,6 @@ describe('TaskDetails coverage', () => {
           inputImages={['image-a.png']}
           detailsVariant="modal"
           isMobile={false}
-          availableLoras={availableLoras}
           showAllImages={false}
           onShowAllImagesChange={() => {}}
           showFullPrompt={false}

@@ -14,9 +14,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
-import { AlertTriangle, Download, Search, Trash2 } from 'lucide-react';
+import { AlertTriangle, Download, Trash2 } from 'lucide-react';
 import { PREDEFINED_LORAS, getDisplayNameFromUrl } from '@/domains/lora/lib/loraUtils';
-import { validateHuggingFaceUrl } from '@/domains/lora/components/LoraSelectorModal/utils/validation-utils';
+import { validateHuggingFaceUrl } from '@/domains/lora/lib/validation-utils';
 import { updateLoraField } from '../PhaseConfigVertical.helpers';
 import type { PerPhaseCardProps } from '../types';
 
@@ -38,10 +38,8 @@ export const PerPhaseCard: React.FC<PerPhaseCardProps> = ({
   phaseIdx,
   phase,
   label,
-  availableLoras,
   focusedLoraInput,
   onFocusLoraInput,
-  onOpenLoraModal,
   onBlurSave,
 }) => {
   return (
@@ -106,11 +104,7 @@ export const PerPhaseCard: React.FC<PerPhaseCardProps> = ({
 
           <div className="col-span-2">
             <Label className="text-sm font-medium mb-1.5 block">LoRAs:</Label>
-            <div className="grid grid-cols-2 gap-2 mb-1.5 w-full">
-              <Button size="sm" variant="outline" onClick={() => onOpenLoraModal(phaseIdx)} type="button">
-                <Search className="h-3 w-3 mr-1" /> Search
-              </Button>
-
+            <div className="mb-1.5 w-full">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" type="button">
@@ -167,7 +161,7 @@ export const PerPhaseCard: React.FC<PerPhaseCardProps> = ({
                     <div className="relative flex-1 min-w-0">
                       <Input
                         placeholder="LoRA URL"
-                        value={isFocused ? lora.url : getDisplayNameFromUrl(lora.url, availableLoras)}
+                        value={isFocused ? lora.url : getDisplayNameFromUrl(lora.url)}
                         className={`pr-8 ${
                           loraValidation && !loraValidation.isValid
                             ? 'border-yellow-500 focus-visible:ring-yellow-500'

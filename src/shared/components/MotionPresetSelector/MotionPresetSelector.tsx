@@ -1,15 +1,12 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Label } from '@/shared/components/ui/primitives/label';
 import { Settings, Pencil } from 'lucide-react';
 import { HoverScrubVideo } from '@/shared/components/media/HoverScrubVideo';
 import { PhaseConfigVertical } from '@/shared/components/PhaseConfigSelectorModal';
-import { PhaseConfigSelectorModal } from '@/shared/components/PhaseConfigSelectorModal';
 import { PhaseConfig } from '@/shared/types/phaseConfig';
 import { MotionPresetSectionHeader } from './MotionPresetSectionHeader';
-import { SelectedPresetCard } from './SelectedPresetCard';
-import { useMotionPresets } from './useMotionPresets';
-import type { MotionPresetSelectorProps, Preset, MotionMode, PresetMetadata } from './types';
+import type { MotionPresetSelectorProps, MotionMode, PresetMetadata } from './types';
 
 // Re-export BuiltinPreset type (used externally for preset definitions)
 ;
@@ -18,16 +15,14 @@ import type { MotionPresetSelectorProps, Preset, MotionMode, PresetMetadata } fr
  * Shared component for Basic/Advanced motion settings with preset selection.
  * 
  * Features:
- * - Basic mode: Preset chips for quick selection + optional custom content (e.g., LoRAs)
+ * - Basic mode: the built-in preset chip plus Custom, and optional custom content (e.g., LoRAs)
  * - Advanced mode: Full PhaseConfigVertical editor
- * - Browse modal for discovering more presets
  * - Persists selections via callbacks
  * 
  * @example
  * ```tsx
  * <MotionPresetSelector
  *   builtinPreset={BUILTIN_JOIN_CLIPS_PRESET}
- *   generationTypeMode="vace"
  *   selectedPhasePresetId={selectedPhasePresetId}
  *   phaseConfig={phaseConfig}
  *   motionMode={motionMode}
@@ -44,9 +39,7 @@ import type { MotionPresetSelectorProps, Preset, MotionMode, PresetMetadata } fr
 export const MotionPresetSelector: React.FC<MotionPresetSelectorProps> = ({
   // Core config
   builtinPreset,
-  featuredPresetIds = [],
-  generationTypeMode,
-  
+
   // State
   selectedPhasePresetId,
   phaseConfig,
@@ -60,7 +53,6 @@ export const MotionPresetSelector: React.FC<MotionPresetSelectorProps> = ({
   onRestoreDefaults,
   
   // Advanced mode props
-  availableLoras = [],
   randomSeed = true,
   onRandomSeedChange,
   
@@ -69,7 +61,6 @@ export const MotionPresetSelector: React.FC<MotionPresetSelectorProps> = ({
   advancedDisabledReason,
   presetTooltip = 'Select a motion preset to control generation settings.\nUse "Custom" to configure your own settings in Advanced mode.',
   renderBasicModeContent,
-  queryKeyPrefix = 'motion-presets',
   labelSuffix,
 }) => {
   // Defensive: some callsites may pass non-functions (e.g. via `any`).
@@ -100,20 +91,8 @@ export const MotionPresetSelector: React.FC<MotionPresetSelectorProps> = ({
   const normalizedMotionMode: MotionMode =
     advancedDisabled ? 'basic' : (motionMode === 'advanced' ? 'advanced' : 'basic');
 
-  // Preset modal state
-  const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
-
-  // Use shared preset hook
-  const {
-    allPresets,
-    shouldShowPresetChips,
-    isCustomConfig,
-  } = useMotionPresets({
-    builtinPreset,
-    featuredPresetIds,
-    selectedPhasePresetId,
-    queryKeyPrefix,
-  });
+  // Custom mode = no preset selected
+  const isCustomConfig = !selectedPhasePresetId;
 
   // Handle motion mode change
   const handleModeChange = useCallback((newMode: string) => {
@@ -131,24 +110,18 @@ export const MotionPresetSelector: React.FC<MotionPresetSelectorProps> = ({
     safeOnModeChange('advanced');
   }, [safeOnPhaseConfigChange, safeOnPresetRemove, safeOnModeChange]);
 
-  // Handle preset selection (from chips or modal)
-  const handlePresetSelect = useCallback((preset: Preset) => {
-    if (preset.metadata?.phaseConfig) {
-      safeOnPresetSelect(preset.id, preset.metadata.phaseConfig, preset.metadata);
-    }
-    setIsPresetModalOpen(false);
-  }, [safeOnPresetSelect]);
-
-  // Adapter for modal's onSelectPreset (it passes a Resource type)
-  const handleModalPresetSelect = useCallback((resource: { id: string; metadata: PresetMetadata }) => {
-    handlePresetSelect(resource as Preset);
-  }, [handlePresetSelect]);
+  // Handle preset selection from the chip
+  const handlePresetSelect = useCallback(() => {
+    safeOnPresetSelect(builtinPreset.id, builtinPreset.metadata.phaseConfig, builtinPreset.metadata);
+  }, [builtinPreset, safeOnPresetSelect]);
 
   // Handle switching to custom/advanced mode
   const handleCustomClick = useCallback(() => {
     safeOnPresetRemove();
     safeOnModeChange('advanced');
   }, [safeOnPresetRemove, safeOnModeChange]);
+
+  const builtinSampleVideo = builtinPreset.metadata.sample_generations?.find((g) => g.type === 'video');
 
   // Handle restore defaults for phase config
   const handleRestorePhaseConfigDefaults = useCallback(() => {
@@ -181,95 +154,64 @@ export const MotionPresetSelector: React.FC<MotionPresetSelectorProps> = ({
             <MotionPresetSectionHeader
               tooltipContent={presetTooltip}
               tooltipContentClassName="whitespace-pre-line"
-              onBrowsePresets={() => setIsPresetModalOpen(true)}
             />
 
-            {/* Preset chips - show if no selection or selection is a known preset */}
-            {shouldShowPresetChips ? (
-              <div className="grid grid-cols-3 gap-2 items-stretch">
-                {/* Built-in + additional presets */}
-                {allPresets.map((preset) => {
-                  const isSelected = !isCustomConfig && selectedPhasePresetId === preset.id;
-                  const isBuiltinDefault = preset.id === builtinPreset.id;
-                  const metadata = preset.metadata;
-                  const sampleVideo = metadata?.sample_generations?.find((g) => g.type === 'video');
-                  
-                  return (
-                    <div key={preset.id} className="relative group h-full">
-                      <button
-                        onClick={() => handlePresetSelect(preset)}
-                        className={`
-                          w-full h-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors
-                          ${isSelected 
-                            ? 'bg-primary/20 border-primary text-primary ring-2 ring-primary/30' 
-                            : isBuiltinDefault
-                              ? 'bg-muted border-primary/30 hover:border-primary/50 hover:bg-muted/80'
-                              : 'bg-muted/50 border-border hover:border-primary/50 hover:bg-muted'
-                          }
-                        `}
-                      >
-                        {/* Thumbnail for database presets with sample video */}
-                        {sampleVideo && (
-                          <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0">
-                            <HoverScrubVideo
-                              src={sampleVideo.url}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex min-w-0 flex-col justify-center items-start text-left flex-1">
-                          {isBuiltinDefault ? (
-                            <span className="text-sm font-medium leading-tight preserve-case">
-                              {metadata?.name || 'Preset'}{' '}
-                              <span className="font-normal text-muted-foreground">(default)</span>
-                            </span>
-                          ) : (
-                            <span className="text-sm font-medium leading-tight line-clamp-2 preserve-case">
-                              {metadata?.name || 'Preset'}
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                      {/* Edit button - appears on hover */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditPreset(metadata?.phaseConfig);
-                        }}
-                        className="absolute top-1 right-1 p-1 rounded bg-muted/80 border border-border opacity-0 group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground transition-all"
-                        title="Edit in Advanced mode"
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </button>
-                    </div>
-                  );
-                })}
-
-                {/* Custom chip - explicitly goes to advanced mode */}
+            <div className="grid grid-cols-3 gap-2 items-stretch">
+              {/* Built-in preset */}
+              <div className="relative group h-full">
                 <button
-                  onClick={handleCustomClick}
+                  onClick={handlePresetSelect}
                   className={`
-                    relative group flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors
-                    ${isCustomConfig
-                      ? 'bg-primary/20 border-primary text-primary ring-2 ring-primary/30' 
-                      : 'bg-muted/50 border-border hover:border-primary/50 hover:bg-muted'
+                    w-full h-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors
+                    ${!isCustomConfig && selectedPhasePresetId === builtinPreset.id
+                      ? 'bg-primary/20 border-primary text-primary ring-2 ring-primary/30'
+                      : 'bg-muted border-primary/30 hover:border-primary/50 hover:bg-muted/80'
                     }
                   `}
                 >
-                  <Settings className="h-4 w-4" />
-                  <span className="text-sm font-medium">Custom</span>
+                  {builtinSampleVideo && (
+                    <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0">
+                      <HoverScrubVideo
+                        src={builtinSampleVideo.url}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex min-w-0 flex-col justify-center items-start text-left flex-1">
+                    <span className="text-sm font-medium leading-tight preserve-case">
+                      {builtinPreset.metadata.name || 'Preset'}{' '}
+                      <span className="font-normal text-muted-foreground">(default)</span>
+                    </span>
+                  </div>
+                </button>
+                {/* Edit button - appears on hover */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditPreset(builtinPreset.metadata.phaseConfig);
+                  }}
+                  className="absolute top-1 right-1 p-1 rounded bg-muted/80 border border-border opacity-0 group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground transition-all"
+                  title="Edit in Advanced mode"
+                >
+                  <Pencil className="h-3 w-3" />
                 </button>
               </div>
-            ) : (
-              // Non-known preset selected (from Browse) - show selected preset info
-              <SelectedPresetCard
-                presetId={selectedPhasePresetId!}
-                onSwitchToAdvanced={handleCustomClick}
-                onChangePreset={() => setIsPresetModalOpen(true)}
-                onRemove={onPresetRemove}
-                queryKeyPrefix={queryKeyPrefix}
-              />
-            )}
+
+              {/* Custom chip - explicitly goes to advanced mode */}
+              <button
+                onClick={handleCustomClick}
+                className={`
+                  relative group flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors
+                  ${isCustomConfig
+                    ? 'bg-primary/20 border-primary text-primary ring-2 ring-primary/30'
+                    : 'bg-muted/50 border-border hover:border-primary/50 hover:bg-muted'
+                  }
+                `}
+              >
+                <Settings className="h-4 w-4" />
+                <span className="text-sm font-medium">Custom</span>
+              </button>
+            </div>
           </div>
 
           {/* Optional custom content for Basic mode (e.g., LoRA manager) */}
@@ -288,14 +230,7 @@ export const MotionPresetSelector: React.FC<MotionPresetSelectorProps> = ({
               onPhaseConfigChange={onPhaseConfigChange}
               randomSeed={randomSeed}
               onRandomSeedChange={onRandomSeedChange || (() => {})}
-              availableLoras={availableLoras}
-              generationTypeMode={generationTypeMode}
               onRestoreDefaults={onRestoreDefaults || handleRestorePhaseConfigDefaults}
-              selectedPhasePresetId={selectedPhasePresetId}
-              onPhasePresetSelect={(presetId, config, presetMetadata) => {
-                onPresetSelect(presetId, config, presetMetadata as PresetMetadata | undefined);
-              }}
-              onPhasePresetRemove={onPresetRemove}
             />
           ) : (
             <div className="text-sm text-muted-foreground p-4 border rounded-lg bg-muted/30">
@@ -304,19 +239,7 @@ export const MotionPresetSelector: React.FC<MotionPresetSelectorProps> = ({
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Phase Config Selector Modal */}
-      <PhaseConfigSelectorModal
-        isOpen={isPresetModalOpen}
-        onClose={() => setIsPresetModalOpen(false)}
-        onSelectPreset={handleModalPresetSelect}
-        onRemovePreset={onPresetRemove}
-        selectedPresetId={selectedPhasePresetId}
-        currentPhaseConfig={phaseConfig}
-        generationTypeMode={generationTypeMode}
-      />
     </div>
   );
 };
 
-// Note: SelectedPresetCard and useMotionPresets are internal - not exported

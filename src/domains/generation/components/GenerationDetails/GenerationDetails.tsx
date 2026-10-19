@@ -21,7 +21,6 @@ import { VideoEnhanceDetails } from '@/shared/components/TaskDetails/VideoEnhanc
 import { isJoinClipsTaskType, isCharacterAnimateTaskType, isTravelTaskType } from '@/shared/lib/taskTypeUtils';
 import { ImageGenerationDetails } from '@/domains/generation/components/GenerationDetails/ImageGenerationDetails';
 import { Task } from '@/types/tasks';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { DisplayableMetadata } from '@/shared/types/displayableMetadata';
 
 // Types
@@ -47,7 +46,6 @@ interface GenerationDetailsProps {
   onShowFullPromptChange?: (show: boolean) => void;
   showFullNegativePrompt?: boolean;
   onShowFullNegativePromptChange?: (show: boolean) => void;
-  availableLoras?: LoraModel[];
   showCopyButtons?: boolean;
 }
 
@@ -82,7 +80,6 @@ export const GenerationDetails: React.FC<GenerationDetailsProps> = ({
   onShowFullPromptChange,
   showFullNegativePrompt,
   onShowFullNegativePromptChange,
-  availableLoras,
   showCopyButtons,
 }) => {
   // Use hook for data fetching and preparation
@@ -115,7 +112,6 @@ export const GenerationDetails: React.FC<GenerationDetailsProps> = ({
     onShowFullPromptChange,
     showFullNegativePrompt,
     onShowFullNegativePromptChange,
-    availableLoras,
     showCopyButtons,
   };
 

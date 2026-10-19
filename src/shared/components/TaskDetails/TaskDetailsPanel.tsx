@@ -5,7 +5,6 @@ import { useIsMobile } from '@/shared/hooks/mobile';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { Task } from '@/types/tasks';
 import { CornerDownLeft, ImageIcon } from 'lucide-react';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import {
   TaskDetailsEmptyState,
@@ -63,7 +62,6 @@ const TaskDetailsPanel: React.FC<TaskDetailsPanelProps> = ({
   const [showFullNegativePrompt, setShowFullNegativePrompt] = useState(false);
   const [paramsCopied, setParamsCopied] = useState(false);
   const [idCopied, setIdCopied] = useState(false);
-  const { data: availableLoras } = usePublicLoras();
 
   const handleCopyParams = useCallback(async () => {
     if (!task?.params) return;
@@ -188,7 +186,6 @@ const TaskDetailsPanel: React.FC<TaskDetailsPanelProps> = ({
           inputImages={inputImages}
           detailsVariant="panel"
           isMobile={isMobile}
-          availableLoras={availableLoras}
           controls={summaryControls}
           showCopyButtons={true}
           renderGenerationDetails={renderGenerationDetails}

@@ -6,7 +6,6 @@ let origin = '';
 vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeOrigin: () => origin }));
 vi.mock('@/domains/lora/components', () => ({
   ActiveLoRAsDisplay: () => null,
-  LoraSelectorModal: () => null,
 }));
 
 import { Img2ImgControls } from './Img2ImgControls';

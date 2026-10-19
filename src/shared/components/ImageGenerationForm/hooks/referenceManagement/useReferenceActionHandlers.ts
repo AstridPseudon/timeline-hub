@@ -20,7 +20,7 @@ export function useReferenceActionHandlers(
   } = stateSetters;
   const {
     updateProjectImageSettings, markAsInteracted,
-    pendingReferenceModeUpdate, queryClient, handleDeleteReference,
+    pendingReferenceModeUpdate, queryClient,
   } = mutations;
 
   const handleUpdateReference = useReferenceUpdater({
@@ -29,17 +29,21 @@ export function useReferenceActionHandlers(
     markAsInteracted,
   });
 
-  const { handleSelectReference, handleRemoveStyleReference } = useReferenceSelectionHandlers({
+  const {
+    handleSelectReference,
+    handleDeleteReference,
+    handleRemoveStyleReference,
+  } = useReferenceSelectionHandlers({
     selectedReferenceId,
     selectedReferenceIdByShot,
     effectiveShotId,
+    referencePointers,
     selectedProjectId,
     associatedShotId,
     shotPromptSettings,
     updateProjectImageSettings,
     markAsInteracted,
     queryClient,
-    handleDeleteReference,
   });
 
   const {
@@ -80,6 +84,7 @@ export function useReferenceActionHandlers(
 
   return {
     handleSelectReference,
+    handleDeleteReference,
     handleUpdateReference,
     handleRemoveStyleReference,
     handleStyleStrengthChange,

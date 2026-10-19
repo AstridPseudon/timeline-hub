@@ -43,16 +43,6 @@ export const BUILTIN_VACE_PRESET: BuiltinPreset = {
   }
 };
 
-// Featured preset IDs from database (shown after built-in default)
-export const SEGMENT_I2V_FEATURED_PRESET_IDS: string[] = [
-  'e1aad8bf-add9-4d7b-883b-d67d424028c4',
-  '18b879a5-1251-41dc-b263-613358ced541',
-];
-
-export const SEGMENT_VACE_FEATURED_PRESET_IDS: string[] = [
-  'd72377eb-6d57-4af1-80a3-9b629da28a47',
-];
-
 interface DefaultableFieldResult {
   isUsingDefault: boolean;
   displayValue: string;

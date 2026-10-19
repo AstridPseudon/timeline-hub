@@ -28,7 +28,7 @@ type ShotSettingsMediaValue = Pick<
 
 type ShotSettingsGenerationValue = Pick<
   ShotSettingsContextValue,
-  'loraManager' | 'availableLoras' | 'generationMode' | 'generationHandlers' | 'joinState' | 'queryClient'
+  'loraManager' | 'generationMode' | 'generationHandlers' | 'joinState' | 'queryClient'
 >;
 
 const ShotSettingsIdentityContext = createContext<ShotSettingsIdentityValue | null>(null);
@@ -113,7 +113,6 @@ export const ShotSettingsProvider: React.FC<{
   };
   const generationValue: ShotSettingsGenerationValue = {
     loraManager: value.loraManager,
-    availableLoras: value.availableLoras,
     generationMode: value.generationMode,
     generationHandlers: value.generationHandlers,
     joinState: value.joinState,

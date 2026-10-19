@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
+import type { MutableRefObject } from 'react';
 import type { HydratedReferenceImage, ReferenceMode } from '../../types';
 import type { ReferenceActionStateSetters } from './types';
 
@@ -15,8 +15,6 @@ interface ReferenceDisplayStateInput extends Pick<
 > {
   selectedReference: HydratedReferenceImage | null;
   selectedReferenceId: string | null;
-  styleReferenceOverride: string | null | undefined;
-  setStyleReferenceOverride: Dispatch<SetStateAction<string | null | undefined>>;
 }
 
 interface ReferenceDisplayStateOutput {
@@ -32,8 +30,6 @@ export function useReferenceDisplayState(
   const {
     selectedReference,
     selectedReferenceId,
-    styleReferenceOverride,
-    setStyleReferenceOverride,
     setReferenceMode,
     setStyleReferenceStrength,
     setSubjectStrength,
@@ -52,17 +48,13 @@ export function useReferenceDisplayState(
     selectedReference?.styleReferenceImageOriginal || null;
 
   const styleReferenceImageDisplay = useMemo(() => {
-    if (styleReferenceOverride !== undefined) {
-      return styleReferenceOverride;
-    }
-
     const imageToDisplay = rawStyleReferenceImageOriginal || rawStyleReferenceImage;
     if (!imageToDisplay) return null;
     if (imageToDisplay.startsWith('http')) return imageToDisplay;
     if (imageToDisplay.startsWith('data:image/')) return null;
 
     return imageToDisplay;
-  }, [styleReferenceOverride, rawStyleReferenceImageOriginal, rawStyleReferenceImage]);
+  }, [rawStyleReferenceImageOriginal, rawStyleReferenceImage]);
 
   const styleReferenceImageGeneration = useMemo(() => {
     if (!rawStyleReferenceImage) {
@@ -79,10 +71,6 @@ export function useReferenceDisplayState(
 
     return rawStyleReferenceImage;
   }, [rawStyleReferenceImage]);
-
-  useEffect(() => {
-    setStyleReferenceOverride(undefined);
-  }, [rawStyleReferenceImage, setStyleReferenceOverride]);
 
   useEffect(() => {
     if (prevSelectedReferenceId.current !== selectedReferenceId) {
