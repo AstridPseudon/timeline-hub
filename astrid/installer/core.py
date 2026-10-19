@@ -99,7 +99,12 @@ def current(root: Path) -> Version | None:
     if not pointer.exists():
         return None
     name = version_id(pointer.read_text(encoding="utf-8").strip())
-    version = Version.load(read_json(root / "versions" / name / "version.json"))
+    record = root / "versions" / name / "version.json"
+    # Removal can delete version metadata before a locked pointer is released.
+    # The service's retained selection can still finish uninstalling this root.
+    if not record.exists() and not linked(record):
+        return None
+    version = Version.load(read_json(record))
     if version.root != root / "versions" / name:
         raise ValueError("The current version points outside the managed directory.")
     return version
