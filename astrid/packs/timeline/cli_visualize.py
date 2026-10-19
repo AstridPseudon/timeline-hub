@@ -669,6 +669,7 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
         head = _head_revision(parsed)
         if head:
             parsed.after_revision_id = head
+    view_was_explicit = getattr(parsed, "view", None) is not None
     try:
         at_note = _resolve_visualize_addresses(parsed)
     except ValueError as exc:
@@ -768,6 +769,13 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
         mode = "inputs"
     else:
         mode = getattr(parsed, "mode", "auto")
+    if mode == "inputs" and not view_was_explicit:
+        # Native input inspection only admits the filmstrip view.  Keep the
+        # ordinary contact default for composed/auto requests, but do not let
+        # it leak into an inputs request assembled from --show/--hide either.
+        inputs["view"] = "filmstrip"
+        if not getattr(parsed, "resolution", None) and not getattr(parsed, "size", None):
+            inputs.pop("resolution", None)
 
     validation_error = None
     revision_selectors = ("before_revision_id", "after_revision_id")
