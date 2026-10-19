@@ -1,4 +1,6 @@
 import { __resetSelectionStoreForTests, userSelectTimelineItems } from '@/shared/state/selectionStore';
+import type { ClipMoveCapturePort } from '../commands/semanticGestures.ts';
+import { toast } from '@/shared/components/ui/toast.tsx';
 import { commitDraggingSession } from './useClipDrag.helpers.ts';
 // @vitest-environment jsdom
 import { act, fireEvent, renderHook } from '@testing-library/react';
@@ -18,6 +20,8 @@ import type {
   TimelineEditorDataContextValue,
   TimelineEditorOpsContextValue,
 } from '@/tools/video-editor/hooks/useTimelineState.types';
+
+vi.mock('@/shared/components/ui/toast.tsx', () => ({ toast: { error: vi.fn() } }));
 
 const selectionMocks = vi.hoisted(() => ({
   userSelectTimelineClip: vi.fn(),
@@ -299,6 +303,7 @@ type ClipDragScenario =
     | 'scaleWidth'
   >
   & Partial<Pick<TimelineEditorDataContextValue, 'interactionStateRef'>>
+  & Pick<TimelineEditorOpsContextValue, 'clipMove'>
   & Pick<
     TimelineEditorOpsContextValue,
     | 'setGestureOwner'
@@ -337,6 +342,7 @@ function renderClipDrag(scenario: ClipDragScenario) {
       selectClip: scenario.selectClip,
       selectClips: scenario.selectClips,
       applyEdit: scenario.applyEdit,
+      clipMove: scenario.clipMove,
     },
   });
 
@@ -820,7 +826,7 @@ describe('useClipDrag', () => {
     }
   });
 
-  it('commits a config edit when a free multi-clip drag drops onto a new bottom track', () => {
+  it('refuses a free multi-clip drag onto a new bottom track in move v1', () => {
 
     const applyEdit = vi.fn();
     const selectClips = vi.fn();
@@ -893,19 +899,10 @@ describe('useClipDrag', () => {
         });
       });
 
-      expect(applyEdit).toHaveBeenCalledTimes(1);
-      const [edit, options] = applyEdit.mock.calls[0];
-      expect(edit.type).toBe('config');
-      expect(options).toMatchObject({ transactionId: expect.any(String) });
-      expect(edit.resolvedConfig.tracks.map((track: TrackDefinition) => track.id)).toEqual(['V1', 'V2', 'V3']);
-      expect(edit.resolvedConfig.clips).toEqual(expect.arrayContaining([
-        expect.objectContaining({ id: 'clip-1', track: 'V2', at: 1, hold: 2 }),
-        expect.objectContaining({ id: 'clip-2', track: 'V3', at: 3, hold: 2 }),
-      ]));
-      expect(edit.pinnedShotGroupsOverride).toBeUndefined();
-      expect(selectionMocks.userSelectTimelineClips).toHaveBeenCalledWith(['clip-2', 'clip-1'], { additive: false });
-      expect(coordinator.showSecondaryGhosts).toHaveBeenCalled();
-
+      expect(applyEdit).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith('Clip move unavailable', {
+        description: 'clip.move v1 does not support group or multi-clip moves.',
+      });
     } finally {
       cleanup();
     }
@@ -1166,7 +1163,7 @@ describe('useClipDrag', () => {
     }
   });
 
-  it('updates pinnedShotGroupsOverride when a pinned group is dragged across tracks', () => {
+  it('refuses a pinned group drag across tracks in move v1', () => {
 
     const applyEdit = vi.fn();
     const selectClips = vi.fn();
@@ -1236,46 +1233,16 @@ describe('useClipDrag', () => {
         });
       });
 
-      expect(applyEdit).toHaveBeenCalledTimes(1);
-      const [edit, options] = applyEdit.mock.calls[0];
-      expect(edit).toEqual({
-        type: 'rows',
-        rows: [
-          { id: 'V1', actions: [] },
-          {
-            id: 'V2',
-            actions: [
-              { id: 'clip-1', start: 1, end: 3, effectId: 'effect-clip-1' },
-              { id: 'clip-2', start: 3, end: 5, effectId: 'effect-clip-2' },
-            ],
-          },
-        ],
-        metaUpdates: {
-          'clip-1': { track: 'V2' },
-          'clip-2': { track: 'V2' },
-        },
-        clipOrderOverride: { V1: [], V2: ['clip-1', 'clip-2'] },
-        pinnedShotGroupsOverride: [expect.objectContaining({
-          shotId: 'shot-1',
-          trackId: 'V2',
-          clipIds: ['clip-1', 'clip-2'],
-          mode: 'images',
-        })],
+      expect(applyEdit).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith('Clip move unavailable', {
+        description: 'clip.move v1 does not support group or multi-clip moves.',
       });
-      expect(edit.pinnedShotGroupsOverride).toEqual([expect.objectContaining({
-        shotId: 'shot-1',
-        trackId: 'V2',
-        clipIds: ['clip-1', 'clip-2'],
-        mode: 'images',
-      })]);
-      expect(options).toMatchObject({ transactionId: expect.any(String) });
-      expect(selectionMocks.userSelectTimelineClips).toHaveBeenCalledWith(['clip-1', 'clip-2'], { additive: false });
     } finally {
       cleanup();
     }
   });
 
-  it('updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track', () => {
+  it('refuses a pinned group drag onto a new track in move v1', () => {
 
     const applyEdit = vi.fn();
     const coordinator = makeCoordinator({
@@ -1347,15 +1314,10 @@ describe('useClipDrag', () => {
         });
       });
 
-      expect(applyEdit).toHaveBeenCalledTimes(1);
-      const [edit] = applyEdit.mock.calls[0];
-      expect(edit.type).toBe('config');
-      expect(edit.pinnedShotGroupsOverride).toEqual([expect.objectContaining({
-        shotId: 'shot-1',
-        trackId: 'V3',
-        clipIds: ['clip-1', 'clip-2'],
-        mode: 'images',
-      })]);
+      expect(applyEdit).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith('Clip move unavailable', {
+        description: 'clip.move v1 does not support group or multi-clip moves.',
+      });
     } finally {
       cleanup();
     }
@@ -1365,6 +1327,15 @@ describe('useClipDrag', () => {
     const interactionStateRef = { current: createInteractionState() };
     const moveClipToRow = vi.fn();
     const setGestureOwner = vi.fn();
+    const submit = vi.fn();
+    const originalBasis = { originalAt: 0 };
+    const capture = vi.fn(() => originalBasis);
+    const finish = vi.fn((basis, on) => ({
+      command: { schema_version: 1 as const, op: 'clip.move' as const, version: '1' as const,
+        select: 'parent/clip:clip-1', args: { on }, expect: { at: { state: 'present', value: basis.originalAt } } },
+      previewAt: on,
+    }));
+    const clipMove: ClipMoveCapturePort = { capture, finish, submit };
     const { clip, wrapper, cleanup } = setupDom();
     const timelineWrapperRef = { current: wrapper };
     const dataRef = { current: makeData() };
@@ -1381,6 +1352,7 @@ describe('useClipDrag', () => {
         setGestureOwner,
         setInputModalityFromPointerType: vi.fn(() => 'mouse'),
         moveClipToRow,
+        clipMove,
         createTrackAndMoveClip: vi.fn(),
         selectClip: vi.fn(),
         selectClips: vi.fn(),
@@ -1400,6 +1372,9 @@ describe('useClipDrag', () => {
           clientY: 12,
         });
       });
+
+      expect(capture).toHaveBeenCalledTimes(1);
+      originalBasis.originalAt = 99;
 
       act(() => {
         fireEvent.pointerMove(window, {
@@ -1421,8 +1396,14 @@ describe('useClipDrag', () => {
       });
 
       expect(interactionStateRef.current.drag).toBe(false);
-      expect(moveClipToRow).toHaveBeenCalledTimes(1);
-      expect(moveClipToRow).toHaveBeenCalledWith('clip-1', 'V1', expect.any(Number), expect.any(String));
+      expect(capture).toHaveBeenCalledTimes(1);
+      expect(finish).toHaveBeenCalledWith({ originalAt: 0 }, expect.any(Number));
+      expect(submit).toHaveBeenCalledWith({
+        command: expect.objectContaining({ op: 'clip.move', args: { on: expect.any(Number) } }),
+        preview: { version: 1, operations: [{ op: 'clip.move', target: 'clip-1', payload: { at: expect.any(Number) } }] },
+        transactionId: expect.any(String),
+      });
+      expect(moveClipToRow).not.toHaveBeenCalled();
     } finally {
       cleanup();
     }
@@ -1526,7 +1507,7 @@ it.each(['data_lane_target', 'timeline_layout_unavailable'])('rejects %s before 
   const callbacks = { applyEdit: vi.fn(), applyResolvedClipMove: vi.fn(), moveClipToRow: vi.fn(), createTrackAndMoveClip: vi.fn() };
   const args = { session: {}, nextStart: 5, dropPosition: { isReject: true, plan: { rejectReason: reason } }, crossTrackActive: true,
     liveData: null, callbacks, lastPlan: null } as unknown as Parameters<typeof commitDraggingSession>[0];
-  expect(commitDraggingSession(args)).toEqual({ deferDeactivate: false });
+  expect(commitDraggingSession(args)).toEqual({ deferDeactivate: false, refusal: 'The clip drop target is unavailable.' });
   Object.values(callbacks).forEach(callback => expect(callback).not.toHaveBeenCalled());
 });
 

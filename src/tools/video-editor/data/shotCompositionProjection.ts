@@ -53,8 +53,16 @@ export type CanonicalClipIdentity = Readonly<{
 
 export type CanonicalCompositionProjection = Readonly<{
   config: ResolvedTimelineConfig;
-  clipIdentities: ReadonlyMap<string, CanonicalClipIdentity>;
+  clipIdentities: ReadonlyMap<string, CanonicalProjectedClipIdentity>;
   occurrenceIdentities: ReadonlyMap<string, CanonicalClipIdentity>;
+}>;
+
+export type CanonicalProjectedClipIdentity = CanonicalClipIdentity & Readonly<{
+  /** Authored ID, never the display prefix or child-N fallback. */
+  rawClipId: string | null;
+  ownerRef: string;
+  /** Null for missing, duplicate or unaddressable authored identities. */
+  clipRef: string | null;
 }>;
 
 function record(value: unknown): JsonObject | null {
@@ -319,13 +327,24 @@ function projectClip(
   rawClip: JsonObject,
   occurrence: CanonicalShotOccurrence,
   clipIndex: number,
-  clipIdentities: Map<string, CanonicalClipIdentity>,
+  clipIdentities: Map<string, CanonicalProjectedClipIdentity>,
   clampToOccurrenceDuration: boolean,
 ): TimelineClip | null {
   assertSupportedChildClip(rawClip, occurrence);
-  const identity = identityForOccurrence(occurrence);
-  const clipId = text(rawClip.id) ?? `child-${clipIndex}`;
+  const rawClipId = text(rawClip.id) ?? null;
+  const clipId = rawClipId ?? `child-${clipIndex}`;
   const id = `${occurrence.occurrenceId}:${clipId}`;
+  const ownerRef = `occurrence:${occurrence.occurrenceId}`;
+  const addressable = [rawClipId, occurrence.occurrenceId].every((part) => (
+    part !== null && !part.includes('/') && !part.includes('::')
+  ));
+  const previousIdentity = clipIdentities.get(id);
+  const identity: CanonicalProjectedClipIdentity = Object.freeze({
+    ...identityForOccurrence(occurrence),
+    rawClipId,
+    ownerRef,
+    clipRef: addressable && !previousIdentity ? `${ownerRef}/clip:${rawClipId}` : null,
+  });
   // Runtime canonical revisions use one of two timeline encodings:
   // - the transport form (`at_ms`/`duration_ms`), or
   // - the editor form (`at`/`from`/`to`/`hold`), whose times are seconds.
@@ -475,7 +494,7 @@ export function projectCanonicalComposition(
   ));
   assertDependencies(composition);
   const clips: TimelineClip[] = [];
-  const clipIdentities = new Map<string, CanonicalClipIdentity>();
+  const clipIdentities = new Map<string, CanonicalProjectedClipIdentity>();
   const occurrenceIdentities = new Map<string, CanonicalClipIdentity>();
 
   for (const occurrence of outputOccurrences) {

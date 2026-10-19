@@ -58,6 +58,35 @@ function withOccurrenceRevision(
 }
 
 describe('canonical shot-composition downstream projection', () => {
+  it('retains raw clip IDs with isolated occurrence owners for repeated sources', () => {
+    const projection = projectCanonicalComposition(prepared);
+    expect(projection.clipIdentities.get('occ-1:alpha-video')).toMatchObject({
+      rawClipId: 'alpha-video', ownerRef: 'occurrence:occ-1', clipRef: 'occurrence:occ-1/clip:alpha-video',
+    });
+    expect(projection.clipIdentities.get('occ-2:alpha-video')).toMatchObject({
+      rawClipId: 'alpha-video', ownerRef: 'occurrence:occ-2', clipRef: 'occurrence:occ-2/clip:alpha-video',
+    });
+    expect(projection.config.clips.find((clip) => clip.id === 'occ-2:alpha-video')?.at).toBe(4);
+  });
+
+  it('keeps fallback and ambiguous display identities unaddressable for commands', () => {
+    const composition = withOccurrenceRevision(prepared, 0, (timeline) => ({
+      ...timeline,
+      clips: [
+        { track: 'video', at: 0, hold: 0.1 },
+        { id: 'duplicate', track: 'video', at: 0.1, hold: 0.1 },
+        { id: 'duplicate', track: 'video', at: 0.2, hold: 0.1 },
+        { id: 'bad/id', track: 'video', at: 0.3, hold: 0.1 },
+        { id: 'bad::id', track: 'video', at: 0.4, hold: 0.1 },
+      ],
+    }));
+    const projection = projectCanonicalComposition(composition);
+    expect(projection.clipIdentities.get('occ-1:child-0')).toMatchObject({ rawClipId: null, clipRef: null });
+    expect(projection.clipIdentities.get('occ-1:duplicate')).toMatchObject({ rawClipId: 'duplicate', clipRef: null });
+    expect(projection.clipIdentities.get('occ-1:bad/id')?.clipRef).toBeNull();
+    expect(projection.clipIdentities.get('occ-1:bad::id')?.clipRef).toBeNull();
+  });
+
   it('merges shot-only lanes around shared picture layers and preserves authored properties', () => {
     const composition = withOccurrenceRevision(prepared, 0, (timeline) => ({
       ...timeline,

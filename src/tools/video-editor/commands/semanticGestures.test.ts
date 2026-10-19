@@ -1,0 +1,210 @@
+// @vitest-environment jsdom
+import { describe, expect, it, vi } from 'vitest';
+import { createTimelineStore } from '../hooks/timelineStore.ts';
+import { createTimelineCommands } from '../hooks/useTimelineCommandsService.ts';
+import { buildPendingDragSession, commitDraggingSession } from '../hooks/useClipDrag.helpers.ts';
+import { compileTimelinePatch } from '../lib/timeline-patch.ts';
+import { buildTimelineCommandData } from './timelineData.ts';
+import {
+  captureClipMove,
+  submitClipMove,
+  type ClipMoveCapturePort,
+  type ClipMoveProposal,
+} from './semanticGestures.ts';
+
+function data() {
+  return buildTimelineCommandData({
+    output: { resolution: '1920x1080', fps: 30, file: 'test.mp4' },
+    tracks: [{ id: 'picture', kind: 'visual' }, { id: 'other', kind: 'visual' }],
+    clips: [{ id: 'c', track: 'picture', at: 2, from: 10, to: 14, speed: 2, clipType: 'media' }],
+  }, { assets: {} });
+}
+
+// Adapter-only claims. These are deliberately not a substitute for Agent's
+// Python/TS fixtures or proof that framework capture produces these claims.
+function proposal(at: number): ClipMoveProposal {
+  return {
+    schema_version: 1, op: 'clip.move', version: '1', select: 'parent/clip:c', args: { on: at },
+    resolved: ['parent/clip:c'], created: [], bindings: { old: 'cut:old:start' },
+    expect: { at: { state: 'present', value: at }, 'app.on': { state: 'present', value: null } },
+    authorship: { at: 'direct', 'app.on': 'direct' },
+    reads: [{ ref: 'parent/clip:c', path: ['speed'], state: { state: 'present', value: 2 } }],
+    selections: [{ key: 'move.target', query_version: 1, owner: 'parent', members: ['parent/clip:c'],
+      order: ['parent/clip:c'], boundaries: ['parent/clip:c'], policy: 'guard-membership' }],
+    intent: { ripple: 'none', anchor: 'fixed', ownership: 'occurrence', position: 'absolute' },
+  };
+}
+
+function host() {
+  let current = data();
+  const port: ClipMoveCapturePort = {
+    capture: vi.fn(({ current }) => ({ command: proposal(current.config.clips[0].at) })),
+    finish: vi.fn((basis, on) => ({
+      command: { ...basis.command as ClipMoveProposal, args: { on } }, previewAt: on,
+    })),
+    submit: vi.fn(({ preview }) => {
+      const result = compileTimelinePatch(preview, current);
+      expect(result.valid).toBe(true);
+      expect(result.nextData).not.toBeNull();
+      current = result.nextData!;
+      store.getState().data.dataRef.current = current;
+    }),
+  };
+  const store = createTimelineStore();
+  const initial = store.getState();
+  const applyEdit = vi.fn();
+  initial.syncSlices({
+    data: { ...initial.data, dataRef: { current } },
+    ops: { ...initial.ops, applyEdit, clipMove: port },
+  });
+  return { port, store, applyEdit, commands: createTimelineCommands(store), current: () => current };
+}
+
+describe('clip.move gesture adapters', () => {
+  it('real service captures sequential B from the preceding local A without rewriting claims', () => {
+    const h = host();
+    expect(h.commands.moveClip({ clipId: 'c', time: 5 })).toEqual({
+      ok: true, data: { clipId: 'c', trackId: 'picture', time: 5 },
+    });
+    expect(h.commands.moveClip({ clipId: 'c', time: 7 }).ok).toBe(true);
+    const [a, b] = vi.mocked(h.port.submit).mock.calls.map(([input]) => input.command);
+    expect(a).toEqual({ ...proposal(2), args: { on: 5 } });
+    expect(b).toEqual({ ...proposal(5), args: { on: 7 } });
+    expect(h.current().config.clips[0]).toMatchObject({ at: 7, from: 10, to: 14, speed: 2 });
+    expect(h.applyEdit).not.toHaveBeenCalled();
+    expect(JSON.parse(JSON.stringify(b))).toEqual(b);
+  });
+
+  it('freezes tagged original guards at pointerdown and passes only drop time to finish', () => {
+    const h = host();
+    const original = { command: proposal(2), provenance: { revision: 'original' } };
+    vi.mocked(h.port.capture).mockReturnValue(original);
+    const clipTarget = document.createElement('div');
+    const { session } = buildPendingDragSession({
+      clipId: 'c', rowId: 'picture', sourceKind: 'visual',
+      sourceAction: { id: 'c', start: 2, end: 4, effectId: 'effect-c' },
+      current: h.current(), clipTarget, labelTarget: null,
+      event: { pointerId: 1, clientX: 0, clientY: 0, ctrlKey: false, metaKey: false } as PointerEvent,
+      selectedClipIds: new Set(), additiveSelection: false, dragAllowed: true,
+      inputModality: 'mouse', pixelsPerSecond: 100, clipMove: h.port,
+    });
+    original.command.expect = { at: { state: 'present', value: 99 } };
+    original.provenance.revision = 'ack-or-later-head';
+    expect(h.port.capture).toHaveBeenCalledTimes(1);
+    const result = commitDraggingSession({
+      session, nextStart: 7, dropPosition: null, crossTrackActive: false,
+    });
+    expect(result).toEqual({ deferDeactivate: false });
+    expect(h.port.finish).toHaveBeenCalledWith({ command: proposal(2), provenance: { revision: 'original' } }, 7);
+    const sent = vi.mocked(h.port.submit).mock.calls[0][0];
+    expect(sent.command).toEqual({ ...proposal(2), args: { on: 7 } });
+    expect(sent.preview.operations).toEqual([{ op: 'clip.move', target: 'c', payload: { at: 7 } }]);
+    expect(Object.isFrozen(session.moveCapture?.basis.command)).toBe(true);
+    expect(Object.isFrozen(sent.command.expect)).toBe(true);
+  });
+
+  it('does not discard a same-value move or change opaque clear/read/selection claims', () => {
+    const h = host();
+    expect(h.commands.moveClip({ clipId: 'c', time: 2 }).ok).toBe(true);
+    expect(h.port.submit).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(h.port.submit).mock.calls[0][0].command).toEqual(proposal(2));
+  });
+
+  it('uses the operation target resolver for preview quantization without changing absolute intent', () => {
+    const h = host();
+    vi.mocked(h.port.finish).mockImplementation((basis, on) => ({
+      command: { ...basis.command as ClipMoveProposal, args: { on } }, previewAt: 5,
+    }));
+    expect(h.commands.moveClip({ clipId: 'c', time: 5.001 }).ok).toBe(true);
+    expect(vi.mocked(h.port.submit).mock.calls[0][0]).toMatchObject({
+      command: { args: { on: 5.001 } }, preview: { operations: [{ payload: { at: 5 } }] },
+    });
+  });
+
+  it('refuses absent capture without applying a patch-only move', () => {
+    const h = host();
+    h.store.setState((state) => ({ ops: { ...state.ops, clipMove: undefined } }));
+    expect(h.commands.moveClip({ clipId: 'c', time: 5 })).toMatchObject({ ok: false,
+      error: { message: 'clip.move capture is unavailable.' } });
+    expect(h.applyEdit).not.toHaveBeenCalled();
+    expect(h.current().config.clips[0].at).toBe(2);
+  });
+
+  it.each([-1, Infinity, NaN])('refuses invalid absolute time %s without normalization', (time) => {
+    const h = host();
+    expect(h.commands.moveClip({ clipId: 'c', time }).ok).toBe(false);
+    expect(h.port.finish).not.toHaveBeenCalled();
+    expect(h.port.submit).not.toHaveBeenCalled();
+    expect(h.applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('refuses cross-track moves before finishing or submitting', () => {
+    const h = host();
+    expect(h.commands.moveClip({ clipId: 'c', time: 5, trackId: 'other' })).toMatchObject({ ok: false,
+      error: { message: 'clip.move v1 does not support cross-track moves.' } });
+    expect(h.port.finish).not.toHaveBeenCalled();
+    expect(h.port.submit).not.toHaveBeenCalled();
+    expect(h.applyEdit).not.toHaveBeenCalled();
+  });
+
+  it.each(['source', 'map', 'owner', 'selection', 'boundary'])('retains a host %s refusal without fallback', (kind) => {
+    const h = host();
+    vi.mocked(h.port.finish).mockImplementation(() => { throw new Error(`Unsupported ${kind}`); });
+    expect(h.commands.moveClip({ clipId: 'c', time: 5 })).toMatchObject({ ok: false,
+      error: { message: `Unsupported ${kind}` } });
+    expect(h.port.submit).not.toHaveBeenCalled();
+    expect(h.applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('refuses ambiguous display IDs before capture', () => {
+    const h = host();
+    h.current().resolvedConfig.clips.push({ ...h.current().resolvedConfig.clips[0] });
+    expect(() => captureClipMove(h.port, h.current(), 'c')).toThrow('unambiguous');
+    expect(h.port.capture).not.toHaveBeenCalled();
+  });
+
+  it('refuses projection fallback IDs before capture', () => {
+    const h = host();
+    h.current().resolvedConfig.clips[0].app = {
+      canonical: { occurrenceId: 'o', rawClipId: null, clipRef: null },
+    };
+    expect(h.commands.moveClip({ clipId: 'c', time: 5 })).toMatchObject({ ok: false,
+      error: { message: 'clip.move requires an addressable raw clip identity.' } });
+    expect(h.port.capture).not.toHaveBeenCalled();
+    expect(h.port.submit).not.toHaveBeenCalled();
+  });
+
+  it('propagates local outbox refusal and never invokes applyEdit', () => {
+    const h = host();
+    vi.mocked(h.port.submit).mockImplementation(() => { throw new Error('Outbox unavailable'); });
+    expect(h.commands.moveClip({ clipId: 'c', time: 5 })).toMatchObject({ ok: false,
+      error: { message: 'Outbox unavailable' } });
+    expect(h.applyEdit).not.toHaveBeenCalled();
+    expect(h.current().config.clips[0].at).toBe(2);
+  });
+
+  it('does not allow the capture implementation to substitute a different operation or target time', () => {
+    const h = host();
+    const captured = captureClipMove(h.port, h.current(), 'c');
+    vi.mocked(h.port.finish).mockReturnValue({ command: proposal(99), previewAt: 7 });
+    expect(() => submitClipMove(captured, 7)).toThrow('Unsupported clip.move');
+    expect(h.port.submit).not.toHaveBeenCalled();
+  });
+
+  it.each(['sibling-start', 'sibling-end', 'hard-duration-end'] as const)(
+    'refuses an unrecorded %s snap query at drop', (snapEdgeType) => {
+      const h = host();
+      const captured = captureClipMove(h.port, h.current(), 'c');
+      const session = {
+        clipId: 'c', draggedClipIds: ['c'], groupDragEntry: null, moveCapture: captured,
+      } as Parameters<typeof commitDraggingSession>[0]['session'];
+      const lastPlan = {
+        valid: true, snapped: true, snapEdgeType,
+      } as NonNullable<Parameters<typeof commitDraggingSession>[0]['lastPlan']>;
+      expect(commitDraggingSession({ session, nextStart: 7, dropPosition: null, crossTrackActive: false, lastPlan }))
+        .toEqual({ deferDeactivate: false, refusal: 'clip.move v1 cannot capture this snap query.' });
+      expect(h.port.finish).not.toHaveBeenCalled();
+      expect(h.port.submit).not.toHaveBeenCalled();
+    },
+  );
+});
