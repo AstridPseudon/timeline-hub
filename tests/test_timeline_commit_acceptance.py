@@ -515,24 +515,69 @@ def test_corrupt_acceptance_event_and_receipt_facts_fail_closed_after_restart(re
     assert_corrupt_restart(service, root)
 
 
-@pytest.mark.parametrize("position", ["predecessor", "successor"])
-def test_retry_checks_full_event_chain_without_repair(realm, position):
+def test_retry_checks_accepted_event_prefix_without_repair(realm):
     service, commits, project, head, _ = realm
     ctx = context(service, project, head)
     value = prepared(commits, ctx)
     result = accept(commits, ctx, value)
-    if position == "successor":
-        next_ctx = context(service, project, commits.head(project, "main"), "next")
-        later = accept(commits, next_ctx, prepared(commits, next_ctx, revision="next-parent", on=3))
-        event_id = later["receipt"]["event_ids"][-1]
-    else:
-        event_id = service.store.conn.execute("SELECT MIN(id) FROM timeline_events WHERE timeline_id='main'").fetchone()[0]
+    event_id = service.store.conn.execute("SELECT MIN(id) FROM timeline_events WHERE timeline_id='main'").fetchone()[0]
     service.store.conn.execute("UPDATE timeline_events SET event_hash=? WHERE id=?", ("0" * 64, event_id))
     before = counts(service)
     with pytest.raises(ProtocolError, match="corrupt"):
         commits.lookup(ctx, authorize=lambda: None)
     assert counts(service) == before
     assert service.store.conn.execute("SELECT event_hash FROM timeline_events WHERE id=?", (event_id,)).fetchone()[0] == "0" * 64
+
+
+@pytest.mark.parametrize("column,replacement", [("event_hash", "0" * 64), ("payload_json", '{"corrupt":true}')])
+def test_original_retry_ignores_corrupt_later_acceptance(realm, column, replacement):
+    import sqlite3
+    from types import SimpleNamespace
+    from runtime_protocol.timeline_commit_execution import CommitExecutionCoordinator, CommitOutcomeUnknown
+
+    service, commits, project, head, _ = realm
+    ctx = context(service, project, head)
+    value = prepared(commits, ctx)
+    original = accept(commits, ctx, value)
+    accepted_head = commits.head(project, "main")
+    next_ctx = context(service, project, accepted_head, "next")
+    later = accept(commits, next_ctx, prepared(commits, next_ctx, revision="next-parent", on=3))
+    event_id = later["receipt"]["event_ids"][-1]
+    conn = service.store.conn
+    conn.execute(f"UPDATE timeline_events SET {column}=? WHERE id=?", (replacement, event_id))
+    before = list(conn.iterdump())
+    coordinator = CommitExecutionCoordinator(commits)
+    provider = SimpleNamespace(commit=lambda *_: pytest.fail("accepted retry ran provider"))
+    def no_port(_):
+        pytest.fail("accepted retry constructed semantic port")
+    allowed = {"projects", "timelines", "command_idempotency", "timeline_commit_history", "timeline_events", "project_sequences"}
+    denied = []
+    def replay_reads_only(action, table, *_):
+        if action == sqlite3.SQLITE_SELECT or (action == sqlite3.SQLITE_READ and table in allowed):
+            return sqlite3.SQLITE_OK
+        denied.append((action, table))
+        return sqlite3.SQLITE_DENY
+    conn.set_authorizer(replay_reads_only)
+    try:
+        replay = coordinator.execute(ctx, provider, no_port, authorize=lambda: None)
+        assert canonical_json(replay) == canonical_json(original)
+        assert commits.history_entry(project, "main", accepted_head["publication_id"])["records"] == value["records"]
+        with pytest.raises(ProtocolError, match="corrupt"):
+            commits.lookup(next_ctx, authorize=lambda: None)
+        with pytest.raises(CommitOutcomeUnknown) as error:
+            coordinator.execute(next_ctx, provider, no_port, authorize=lambda: None)
+        assert isinstance(error.value.__cause__, ProtocolError)
+    finally:
+        conn.set_authorizer(None)
+    assert denied == []  # No writes or mutable head/source/dependency reads.
+    assert not coordinator._entries
+    report = service.store.integrity_report()
+    assert not report["ok"]
+    assert any(str(error.get("event_id")) == event_id and error["reason"] == "hash_mismatch"
+               for error in report["checks"]["event_chain"]["errors"])
+    assert any(error["id"] == later["receipt"]["receipt_id"] for error in report["checks"]["revisions"]["errors"])
+    assert not any(error["id"] == original["receipt"]["receipt_id"] for error in report["checks"]["revisions"]["errors"])
+    assert list(conn.iterdump()) == before
 
 
 def test_v30_schema_migration_installs_empty_history_without_invented_baselines(tmp_path):
