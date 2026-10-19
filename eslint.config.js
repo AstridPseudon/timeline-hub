@@ -119,7 +119,7 @@ export default tseslint.config(
       },
     }]
     : []),
-  // Utility boundary rule: keep URL + file-conversion helpers in their dedicated modules.
+  // Utility boundary rule: keep URL helpers in their dedicated module.
   // Avoid importing these from shared/lib/utils (which now only hosts generic helpers).
   {
     files: ["**/*.{ts,tsx}"],
@@ -128,18 +128,18 @@ export default tseslint.config(
         paths: [
           {
             name: "@/shared/lib/utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
+            importNames: ["getDisplayUrl", "stripQueryParameters"],
+            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
           },
           {
             name: "./utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
+            importNames: ["getDisplayUrl", "stripQueryParameters"],
+            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
           },
           {
             name: "../utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
+            importNames: ["getDisplayUrl", "stripQueryParameters"],
+            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
           },
         ],
       }],
@@ -161,18 +161,18 @@ export default tseslint.config(
         paths: [
           {
             name: "@/shared/lib/utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
+            importNames: ["getDisplayUrl", "stripQueryParameters"],
+            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
           },
           {
             name: "./utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
+            importNames: ["getDisplayUrl", "stripQueryParameters"],
+            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
           },
           {
             name: "../utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
+            importNames: ["getDisplayUrl", "stripQueryParameters"],
+            message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
           },
         ],
         patterns: [{

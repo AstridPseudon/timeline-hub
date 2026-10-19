@@ -1,4 +1,4 @@
-import type { AuthoredVideoMetadata } from '@/shared/lib/media/videoUploader';
+import type { AuthoredVideoMetadata } from '@/shared/lib/media/videoMetadata';
 import type { StructureVideoConfigWithMetadata } from '@/shared/lib/tasks/travelBetweenImages';
 import type { TravelGuidanceMode } from '@/shared/lib/tasks/travelGuidance';
 

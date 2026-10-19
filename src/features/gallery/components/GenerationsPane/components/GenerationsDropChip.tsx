@@ -52,12 +52,11 @@ export function GenerationsDropChip({
       onDrop={(event) => {
         event.preventDefault();
         const files = Array.from(event.dataTransfer?.files ?? []);
-        const items = Array.from(event.dataTransfer?.items ?? []);
         setDragging(false);
         if (files.length === 0) {
           return;
         }
-        void dropToGeneration(files, { items });
+        void dropToGeneration(files);
       }}
       style={{
         ...dynamicStyle,

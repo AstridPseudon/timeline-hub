@@ -1,4 +1,4 @@
-import type { VideoMetadata } from '@/shared/lib/media/videoUploader';
+import type { VideoMetadata } from '@/shared/lib/media/videoMetadata';
 
 interface SourceRange {
   start: number;

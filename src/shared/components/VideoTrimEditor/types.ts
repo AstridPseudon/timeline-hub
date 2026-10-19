@@ -8,11 +8,6 @@ export interface TrimControlsPanelProps {
   onResetTrim: () => void;
   trimmedDuration: number;
   hasTrimChanges: boolean;
-  onSave: () => void;
-  isSaving: boolean;
-  saveProgress: number;
-  saveError: string | null;
-  saveSuccess: boolean;
   onClose: () => void;
   variant: 'desktop' | 'mobile';
   videoUrl?: string;

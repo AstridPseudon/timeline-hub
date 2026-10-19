@@ -2,12 +2,9 @@
  * useLegacyMigrations - Handles one-time data migrations for legacy formats
  */
 
-import { useBase64Migration } from './legacyMigrations/useBase64Migration';
-import { useGenerationBackfillMigration } from './legacyMigrations/useGenerationBackfillMigration';
 import { useInvalidPointerCleanup } from './legacyMigrations/useInvalidPointerCleanup';
 import { useLoraCategoryMigration } from './legacyMigrations/useLoraCategoryMigration';
 import { useReferenceStructureMigration } from './legacyMigrations/useReferenceStructureMigration';
-import { useResourceMigration } from './legacyMigrations/useResourceMigration';
 import { useSceneModeMigration } from './legacyMigrations/useSceneModeMigration';
 import type { LegacyMigrationsInput } from './legacyMigrations/types';
 
@@ -22,20 +19,10 @@ export function useLegacyMigrations(input: LegacyMigrationsInput): void {
     effectiveShotId,
     referencePointers,
     hydratedReferences,
-    hasLegacyReferences,
-    rawStyleReferenceImage,
-    isLoadingReferences,
     selectedReferenceIdByShot,
     projectImageSettings,
     updateProjectImageSettings,
-    privacyDefaults,
   } = input;
-
-  useBase64Migration({
-    rawStyleReferenceImage,
-    selectedProjectId,
-    updateProjectImageSettings,
-  });
 
   useLoraCategoryMigration({
     projectImageSettings,
@@ -57,23 +44,8 @@ export function useLegacyMigrations(input: LegacyMigrationsInput): void {
     updateProjectImageSettings,
   });
 
-  useResourceMigration({
-    hasLegacyReferences,
-    selectedProjectId,
-    referencePointers,
-    privacyDefaults,
-    updateProjectImageSettings,
-  });
-
-  useGenerationBackfillMigration({
-    selectedProjectId,
-    effectiveShotId,
-    referencePointers,
-  });
-
   useInvalidPointerCleanup({
     selectedProjectId,
-    isLoadingReferences,
     projectImageSettings,
     referencePointers,
     hydratedReferences,

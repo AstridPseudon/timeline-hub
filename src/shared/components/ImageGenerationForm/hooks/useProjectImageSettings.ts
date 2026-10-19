@@ -11,7 +11,6 @@ import {
   useProjectSelectionContext,
 } from '@/shared/contexts/ProjectContext';
 import { useToolSettings, extractSettingsFromCache } from '@/shared/hooks/settings/useToolSettings';
-import { useUserUIState } from '@/shared/hooks/useUserUIState';
 import { useQueryClient } from '@tanstack/react-query';
 import { settingsQueryKeys } from '@/shared/lib/queryKeys/settings';
 import { ASPECT_RATIO_TO_RESOLUTION } from '@/shared/lib/media/aspectRatios';
@@ -36,9 +35,6 @@ export function useProjectImageSettings(associatedShotId: string | null) {
     const resolution = ASPECT_RATIO_TO_RESOLUTION[aspectRatio] ?? '902x508';
     return { projectAspectRatio: aspectRatio, projectResolution: resolution };
   }, [projects, selectedProjectId]);
-
-  // Privacy defaults for new resources
-  const { value: privacyDefaults } = useUserUIState('privacyDefaults', { resourcesPublic: true, generationsPublic: false });
 
   // The current Astrid App admission route is Astrid cloud generation only. Keep
   // this compatibility value for form consumers that still use it to hide
@@ -75,8 +71,8 @@ export function useProjectImageSettings(associatedShotId: string | null) {
   const selectedReferenceIdByShot = effectiveProjectImageSettings?.selectedReferenceIdByShot ?? {};
   const selectedReferenceId = selectedReferenceIdByShot[effectiveShotId] ?? null;
 
-  // Hydrate references with data from resources table
-  const { hydratedReferences, isLoading: isLoadingReferences, hasLegacyReferences } = useHydratedReferences(referencePointers);
+  // Hydrate reference pointers (only pointers with inline image data resolve)
+  const { hydratedReferences } = useHydratedReferences(referencePointers);
 
   // Reference selection (auto-select, display ID)
   const {
@@ -89,11 +85,7 @@ export function useProjectImageSettings(associatedShotId: string | null) {
     selectedReferenceId,
     hydratedReferences,
     isLoadingProjectSettings,
-    isLoadingReferences,
   });
-
-  // For backward compatibility with single reference - used in legacy migration
-  const rawStyleReferenceImage = selectedReference?.styleReferenceImage || rawProjectImageSettings?.styleReferenceImage || null;
 
   // Legacy migrations (runs effects to migrate old reference formats)
   useLegacyMigrations({
@@ -101,20 +93,15 @@ export function useProjectImageSettings(associatedShotId: string | null) {
     effectiveShotId,
     referencePointers,
     hydratedReferences,
-    hasLegacyReferences,
-    rawStyleReferenceImage,
-    isLoadingReferences,
     selectedReferenceIdByShot,
     projectImageSettings: projectImageSettings ?? null,
     updateProjectImageSettings,
-    privacyDefaults,
   });
 
   return {
     selectedProjectId,
     projectAspectRatio,
     projectResolution,
-    privacyDefaults,
     isLocalGenerationEnabled,
     projectImageSettings: (projectImageSettings as ProjectImageSettings | null),
     updateProjectImageSettings,

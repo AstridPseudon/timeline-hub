@@ -1,4 +1,4 @@
-/** Shared types for video trim controls and save-state hooks. */
+/** Shared types for video trim controls. */
 
 export interface TrimState {
   startTrim: number;
@@ -21,13 +21,4 @@ export interface UseVideoTrimmingReturn {
   previewEndTime: number;
   /** Whether any trimming has been applied */
   hasTrimChanges: boolean;
-}
-
-export interface UseTrimSaveReturn {
-  isSaving: boolean;
-  saveProgress: number;
-  saveError: string | null;
-  saveSuccess: boolean;
-  saveTrimmedVideo: () => Promise<void>;
-  resetSaveState: () => void;
 }

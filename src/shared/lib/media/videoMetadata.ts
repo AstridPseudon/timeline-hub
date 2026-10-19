@@ -117,7 +117,7 @@ export const extractVideoMetadataFromUrl = (videoUrl: string): Promise<VideoMeta
     };
 
     video.onerror = () => {
-      normalizeAndPresentError(new Error('Failed to load video metadata from URL'), { context: 'videoUploader:extractMetadata', showToast: false });
+      normalizeAndPresentError(new Error('Failed to load video metadata from URL'), { context: 'videoMetadata:extractMetadata', showToast: false });
       reject(new Error('Failed to load video metadata from URL'));
     };
 

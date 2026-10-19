@@ -30,7 +30,6 @@ describe('TrimTimelineDisplay', () => {
         onEndTrimChange={onEndTrimChange}
         currentTime={1}
         videoRef={videoRef}
-        isSaving
         labelSize="text-xs"
       />,
     );
@@ -51,7 +50,6 @@ describe('TrimTimelineDisplay', () => {
         onEndTrimChange,
         currentTime: 1,
         videoRef,
-        disabled: true,
       }),
     );
   });
@@ -69,7 +67,6 @@ describe('TrimTimelineDisplay', () => {
         onEndTrimChange={vi.fn()}
         currentTime={3}
         videoRef={{ current: null }}
-        isSaving={false}
         labelSize="text-sm"
       />,
     );

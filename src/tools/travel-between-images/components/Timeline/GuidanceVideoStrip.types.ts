@@ -1,4 +1,4 @@
-import type { AuthoredVideoMetadata, VideoMetadata } from '@/shared/lib/media/videoUploader';
+import type { AuthoredVideoMetadata, VideoMetadata } from '@/shared/lib/media/videoMetadata';
 
 export interface GuidanceVideoStripProps {
   videoUrl: string;

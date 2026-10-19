@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { VideoMetadata, extractVideoMetadataFromUrl, type AuthoredVideoMetadata } from '@/shared/lib/media/videoUploader';
+import { VideoMetadata, extractVideoMetadataFromUrl, type AuthoredVideoMetadata } from '@/shared/lib/media/videoMetadata';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 
 interface UseVideoMetadataOptions {
