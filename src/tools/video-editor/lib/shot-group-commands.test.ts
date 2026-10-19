@@ -11,6 +11,7 @@ import {
   buildUnpinShotGroupMutation,
   buildUpdatePinnedShotGroupMutation,
   buildUpdateShotGroupToLatestVideoMutation,
+  clonePinnedShotGroup,
 } from '@/tools/video-editor/lib/shot-group-commands';
 import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types';
 
@@ -137,6 +138,35 @@ function makeStaleVideoGroupData(): TimelineData {
 }
 
 describe('shot-group-commands', () => {
+  it('deep-clones opaque group and image metadata values', () => {
+    const source = {
+      shotId: 'shot-legacy',
+      trackId: 'V1',
+      clipIds: ['clip-1'],
+      mode: 'images',
+      opaque: { nested: { value: 'original' } },
+      imageClipSnapshot: [{
+        clipId: 'clip-1',
+        meta: {
+          clipType: 'hold',
+          opaqueMetadata: { nested: { value: 'original' }, presentNull: null },
+        },
+      }],
+    } as unknown as Parameters<typeof clonePinnedShotGroup>[0];
+
+    const cloned = clonePinnedShotGroup(source);
+
+    expect(cloned).toEqual(source);
+    expect(cloned.opaque).not.toBe(source.opaque);
+    expect(cloned.imageClipSnapshot![0]!.meta.opaqueMetadata).not.toBe(
+      source.imageClipSnapshot![0]!.meta.opaqueMetadata,
+    );
+    cloned.opaque.nested.value = 'changed';
+    cloned.imageClipSnapshot![0]!.meta.opaqueMetadata.nested.value = 'changed';
+    expect(source.opaque.nested.value).toBe('original');
+    expect(source.imageClipSnapshot![0]!.meta.opaqueMetadata.nested.value).toBe('original');
+  });
+
   it('buildPinShotGroupMutation orders clip ids by live timeline position', () => {
     const currentData = makeTimelineData(
       {

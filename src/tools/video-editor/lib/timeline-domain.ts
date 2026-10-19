@@ -282,26 +282,13 @@ const cloneTimelineExtras = (config: TimelineConfig): TimelineExtras => ({
   ...(config.app !== undefined ? { app: cloneAppExtension(config.app) } : {}),
 });
 
-const clonePinnedShotImageSnapshots = (
-  imageClipSnapshot: PinnedShotGroup['imageClipSnapshot'],
-): PinnedShotGroup['imageClipSnapshot'] => imageClipSnapshot?.map((snapshot) => ({
-  ...snapshot,
-  meta: { ...snapshot.meta },
-}));
+export const clonePinnedShotGroup = (group: PinnedShotGroup): PinnedShotGroup => (
+  cloneAppExtension(group as unknown as Record<string, unknown>) as PinnedShotGroup
+);
 
 export const clonePinnedShotGroups = (
   pinnedShotGroups: TimelineConfig['pinnedShotGroups'],
-): TimelineConfig['pinnedShotGroups'] => pinnedShotGroups?.map((group) => ({
-  shotId: group.shotId,
-  name: group.name,
-  trackId: group.trackId,
-  clipIds: [...group.clipIds],
-  mode: group.mode,
-  videoAssetKey: group.videoAssetKey,
-  imageClipSnapshot: clonePinnedShotImageSnapshots(group.imageClipSnapshot),
-  poolGenerationIds: group.poolGenerationIds ? [...group.poolGenerationIds] : undefined,
-  derivedFrom: group.derivedFrom ? { ...group.derivedFrom } : undefined,
-}));
+): TimelineConfig['pinnedShotGroups'] => pinnedShotGroups?.map(clonePinnedShotGroup);
 
 /** One positioned or pooled generation derived from the timeline document. */
 export interface TimelineShotGroupMemberView {
@@ -891,16 +878,12 @@ export const repairConfig = (
       ? legacy.children.map((child) => child.clipId).filter((id): id is string => typeof id === 'string' && id.length > 0)
       : [...group.clipIds];
 
+    const repairedGroup = clonePinnedShotGroup(group) as LegacyPinnedShotGroup;
+    delete repairedGroup.start;
+    delete repairedGroup.children;
     return {
-      shotId: group.shotId,
-      name: group.name,
-      trackId: group.trackId,
+      ...repairedGroup,
       clipIds: derivedClipIds,
-      mode: group.mode,
-      videoAssetKey: group.videoAssetKey,
-      imageClipSnapshot: clonePinnedShotImageSnapshots(group.imageClipSnapshot),
-      poolGenerationIds: group.poolGenerationIds ? [...group.poolGenerationIds] : undefined,
-      derivedFrom: group.derivedFrom ? { ...group.derivedFrom } : undefined,
     };
   });
 

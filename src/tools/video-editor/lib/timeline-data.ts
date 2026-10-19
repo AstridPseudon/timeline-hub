@@ -34,6 +34,7 @@ import type {
 } from '@/tools/video-editor/types/index.ts';
 import {
   canonicalizeTimelinePair,
+  clonePinnedShotGroups,
   serializeTimelineConfigSnapshot,
 } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { buildAssetReferenceMap } from '@/tools/video-editor/lib/asset-registry.ts';
@@ -144,23 +145,6 @@ const TIMELINE_TIME_FACTOR = 10 ** TIMELINE_TIME_PRECISION;
 export const roundTimelineTime = (value: number): number => Math.round(value * TIMELINE_TIME_FACTOR) / TIMELINE_TIME_FACTOR;
 
 const effectIdForClip = (clipId: string): string => `effect-${clipId}`;
-const clonePinnedShotGroups = (
-  pinnedShotGroups: TimelineConfig['pinnedShotGroups'],
-): TimelineConfig['pinnedShotGroups'] => pinnedShotGroups?.map((group) => ({
-  shotId: group.shotId,
-  name: group.name,
-  trackId: group.trackId,
-  clipIds: [...group.clipIds],
-  mode: group.mode,
-  videoAssetKey: group.videoAssetKey,
-  imageClipSnapshot: group.imageClipSnapshot?.map((snapshot) => ({
-    ...snapshot,
-    meta: { ...snapshot.meta },
-  })),
-  poolGenerationIds: group.poolGenerationIds ? [...group.poolGenerationIds] : undefined,
-  derivedFrom: group.derivedFrom ? { ...group.derivedFrom } : undefined,
-}));
-
 const getClipDurationSeconds = (clip: TimelineClip): number => {
   return getClipSourceDuration(clip) / (clip.speed ?? 1);
 };

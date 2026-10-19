@@ -133,6 +133,55 @@ describe('timeline data sequence clip persistence', () => {
     });
   });
 
+  it('round-trips opaque legacy group data without aliasing nested values', async () => {
+    const legacyGroup = {
+      shotId: 'shot-legacy',
+      trackId: 'V1',
+      clipIds: ['clip-legacy'],
+      mode: 'images',
+      opaqueNull: null,
+      opaqueUndefined: undefined,
+      opaqueNested: { order: ['last', 'first'], metadata: { presentNull: null } },
+      imageClipSnapshot: [{
+        clipId: 'clip-legacy',
+        assetKey: null,
+        meta: {
+          clipType: 'hold',
+          hold: 2,
+          opaqueMetadata: { nested: { value: 'preserved' }, presentUndefined: undefined },
+        },
+      }],
+    } as unknown as NonNullable<TimelineConfig['pinnedShotGroups']>[number];
+    const config: TimelineConfig = {
+      output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+      clips: [{ id: 'clip-legacy', at: 0, track: 'V1', clipType: 'hold', hold: 2 }],
+      pinnedShotGroups: [legacyGroup],
+    };
+
+    const data = await buildTimelineData(config, registry);
+    const roundTripped = rowsToConfig(
+      data.rows,
+      data.meta,
+      data.output,
+      data.clipOrder,
+      data.tracks,
+      data.config.pinnedShotGroups,
+      data.config,
+    );
+
+    expect(roundTripped.pinnedShotGroups).toEqual([legacyGroup]);
+    expect(roundTripped.pinnedShotGroups![0]!.opaqueNested).not.toBe(legacyGroup.opaqueNested);
+    expect(roundTripped.pinnedShotGroups![0]!.imageClipSnapshot![0]!.meta.opaqueMetadata).not.toBe(
+      legacyGroup.imageClipSnapshot![0]!.meta.opaqueMetadata,
+    );
+
+    roundTripped.pinnedShotGroups![0]!.opaqueNested.metadata.presentNull = 'changed';
+    roundTripped.pinnedShotGroups![0]!.imageClipSnapshot![0]!.meta.opaqueMetadata.nested.value = 'changed';
+    expect(legacyGroup.opaqueNested.metadata.presentNull).toBeNull();
+    expect(legacyGroup.imageClipSnapshot![0]!.meta.opaqueMetadata.nested.value).toBe('preserved');
+  });
+
   it('round-trips trusted generation provenance additively while preserving legacy no-generation clips', async () => {
     const config: TimelineConfig = {
       output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },

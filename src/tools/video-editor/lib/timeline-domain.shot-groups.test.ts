@@ -55,6 +55,63 @@ describe('timeline-domain document-native shot groups', () => {
     expect(cloned[0]!.derivedFrom).not.toBe(source[0]!.derivedFrom);
   });
 
+  it('preserves opaque JSON group fields and exact nested presence while cloning', () => {
+    const source = [{
+      shotId: 'shot-legacy',
+      trackId: 'V1',
+      clipIds: ['clip-2', 'clip-1'],
+      mode: 'images',
+      opaqueNull: null,
+      opaqueUndefined: undefined,
+      opaqueNested: {
+        ordered: ['second', 'first'],
+        metadata: {
+          presentNull: null,
+          presentUndefined: undefined,
+        },
+      },
+      imageClipSnapshot: [
+        {
+          clipId: 'clip-2',
+          assetKey: null,
+          meta: {
+            clipType: 'hold',
+            opaqueMetadata: {
+              value: 'kept',
+              presentNull: null,
+              presentUndefined: undefined,
+            },
+          },
+        },
+        {
+          clipId: 'clip-1',
+          meta: {
+            clipType: 'hold',
+            opaqueMetadata: { value: 'also-kept' },
+          },
+        },
+      ],
+    }] as unknown as NonNullable<TimelineConfig['pinnedShotGroups']>;
+
+    const cloned = clonePinnedShotGroups(source)!;
+
+    expect(cloned).toEqual(source);
+    expect(Object.keys(cloned[0]!)).toEqual(Object.keys(source[0]!));
+    expect(Object.keys(cloned[0]!.imageClipSnapshot![0]!.meta)).toEqual(
+      Object.keys(source[0]!.imageClipSnapshot![0]!.meta),
+    );
+    expect(cloned[0]!.opaqueNested).not.toBe(source[0]!.opaqueNested);
+    expect(cloned[0]!.opaqueNested.metadata).not.toBe(source[0]!.opaqueNested.metadata);
+    expect(cloned[0]!.imageClipSnapshot![0]!.meta.opaqueMetadata).not.toBe(
+      source[0]!.imageClipSnapshot![0]!.meta.opaqueMetadata,
+    );
+
+    cloned[0]!.opaqueNested.metadata.presentNull = 'changed';
+    cloned[0]!.imageClipSnapshot![0]!.meta.opaqueMetadata.value = 'changed';
+    expect(source[0]!.opaqueNested.metadata.presentNull).toBeNull();
+    expect(source[0]!.imageClipSnapshot![0]!.meta.opaqueMetadata.value).toBe('kept');
+  });
+
   it('projects placed, pooled, current-primary, final-video, and lineage facts from one document pair', () => {
     const [view] = deriveTimelineShotGroupViews(config, registry);
 
