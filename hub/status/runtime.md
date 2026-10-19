@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T23:21:54Z | dispatcher heartbeat 2s -->
+<!-- main | 2026-10-19T23:27:05Z | dispatcher heartbeat 12s -->
 # runtime — 2026-10-19T23:02Z
 Milestone: M1 RUNTIME EVIDENCE READY, zero new Runtime failures. Global M1 waits App mixed-edit safety/postrestore full, Agent consumer corrections and orchestrator record. M0 COMPLETE. M2 build authorized on branches; ALL M2 MERGES HELD until PLAN records M1.
 Integrated: runtime tl/integration80973d3/tree858797c7. Historical restore/source/integrity-budget +actual-provider tests merged; final artifact test import fix is test-only. Product unchanged fromff0ae58. Client0.2.1/schema4e52/artifacts9b18; no new DTO/ABI/renderer/journal.
