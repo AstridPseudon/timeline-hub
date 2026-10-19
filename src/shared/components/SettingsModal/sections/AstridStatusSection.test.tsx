@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AstridStatusSection } from './AstridStatusSection.tsx';
-import { RUNTIME_CONNECTION_COPY as CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
+import { RUNTIME_CONNECTION_COPY as CONNECTION_COPY, installCommand } from '@/shared/components/RuntimeConnection/copy.ts';
 
 const mocks = vi.hoisted(() => ({
   readStatus: vi.fn(),
+  clipboard: vi.fn(),
   connect: vi.fn(),
   connection: {
     state: { status: 'connected', realm: { realm_id: 'realm-1', display_name: 'Studio' } },
@@ -22,12 +23,17 @@ vi.mock('@/integrations/runtime/RuntimeConnectionProvider.tsx', () => ({
   useRuntimeConnection: () => mocks.connection,
 }));
 
+vi.mock('@/shared/lib/browser/clipboard.ts', () => ({
+  writeClipboardTextSafe: mocks.clipboard,
+}));
+
 describe('AstridStatusSection', () => {
   beforeEach(() => {
     mocks.connection.state = { status: 'connected', realm: { realm_id: 'realm-1', display_name: 'Studio' } };
     mocks.connection.awaitingConnect = false;
     mocks.connection.isChecking = false;
     mocks.connection.connect = mocks.connect.mockReset();
+    mocks.clipboard.mockReset().mockResolvedValue(true);
     mocks.readStatus.mockReset().mockResolvedValue({
       health: {
         status: 'ok',
@@ -72,20 +78,68 @@ describe('AstridStatusSection', () => {
     expect(mocks.readStatus).not.toHaveBeenCalled();
   });
 
-  it('shows the connected workspace, actual versions, and every reported service state', async () => {
+  it('shows the connected workspace and readable service states without inventing versions', async () => {
     render(<AstridStatusSection isOpen />);
 
     expect(await screen.findByText('Studio')).toBeInTheDocument();
     expect(screen.getByText('workspace.v1')).toBeInTheDocument();
-    expect(screen.getByText("Astrid doesn't report its versions here yet.")).toBeInTheDocument();
-    expect(screen.getByText('pack-host')).toBeInTheDocument();
-    expect(screen.getByText('comfyui')).toBeInTheDocument();
-    expect(screen.getByText('astrid-chat')).toBeInTheDocument();
+    expect(screen.queryByText('Versions')).not.toBeInTheDocument();
+    expect(screen.getByText('Task host')).toBeInTheDocument();
+    expect(screen.getByText('ComfyUI')).toBeInTheDocument();
+    expect(screen.getByText('Chat')).toBeInTheDocument();
     expect(screen.getByText('Starting…')).toBeInTheDocument();
     expect(screen.getByText('Running')).toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
     expect(screen.getByText(/Restarts: 3/)).toBeInTheDocument();
+    expect(screen.queryByText('Restarts: 0')).not.toBeInTheDocument();
     expect(screen.getByText(/Last exit code: 2/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(screen.getByText('curl -fsSL https://astrid.haus/install | sh')).toBeInTheDocument();
+  });
+
+  it('keeps unknown service names and hides repair when health is healthy', async () => {
+    mocks.readStatus.mockResolvedValue({
+      health: {
+        status: 'ok',
+        protocol: 'workspace.v1',
+        schema_digest: `sha256:${'b'.repeat(64)}`,
+        services: [{ name: 'custom-worker', state: 'running', last_exit: null, restart_count: 0 }],
+      },
+      realm: { realm_id: 'realm-1', display_name: 'Studio', version: 4, created_at: '2026-01-01T00:00:00Z' },
+    });
+    render(<AstridStatusSection isOpen />);
+
+    expect(await screen.findByText('custom-worker')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copy' })).not.toBeInTheDocument();
+    expect(screen.queryByText('curl -fsSL https://astrid.haus/install | sh')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Restarts:/)).not.toBeInTheDocument();
+  });
+
+  it('shows the shared repair command for degraded health even without a failed service', async () => {
+    mocks.readStatus.mockResolvedValue({
+      health: {
+        status: 'degraded',
+        protocol: 'workspace.v1',
+        schema_digest: `sha256:${'c'.repeat(64)}`,
+        services: [{ name: 'pack-host', state: 'running', last_exit: null, restart_count: 1 }],
+      },
+      realm: { realm_id: 'realm-1', display_name: 'Studio', version: 4, created_at: '2026-01-01T00:00:00Z' },
+    });
+    render(<AstridStatusSection isOpen />);
+
+    expect(await screen.findByRole('status')).toHaveTextContent("Connected, but part of Astrid isn't working.");
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(screen.getByText('curl -fsSL https://astrid.haus/install | sh')).toBeInTheDocument();
+  });
+
+  it('copies the same install command shown in the repair control', async () => {
+    render(<AstridStatusSection isOpen />);
+    expect(await screen.findByRole('button', { name: 'Copy' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+
+    await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledWith(installCommand('install')));
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
   });
 
   it('shows the connection state without requesting details while offline', () => {

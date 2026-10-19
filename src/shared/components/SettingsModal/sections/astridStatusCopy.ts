@@ -14,8 +14,6 @@ export const ASTRID_STATUS_COPY = {
   restartNeeded: 'Needs a restart',
   workspace: 'Workspace',
   workspaceName: 'Name',
-  versions: 'Versions',
-  versionsUnavailable: "Astrid doesn't report its versions here yet.",
   connectionDetails: 'Connection details',
   protocol: 'Protocol',
   schema: 'Schema',
@@ -28,7 +26,15 @@ export const ASTRID_STATUS_COPY = {
     restarting: 'Restarting…',
     failed: 'Failed',
   },
-  restartCount: (count: number) => `Restarts: ${count}`,
+  serviceName: (name: string) => {
+    switch (name) {
+      case 'pack-host': return 'Task host';
+      case 'astrid-chat': return 'Chat';
+      case 'comfyui': return 'ComfyUI';
+      default: return name;
+    }
+  },
+  restartCount: (count: number) => count > 0 ? `Restarts: ${count}` : null,
   lastExit: (code: number) => `Last exit code: ${code}`,
   reason: (value: string) => `Reason: ${value}`,
 } as const;

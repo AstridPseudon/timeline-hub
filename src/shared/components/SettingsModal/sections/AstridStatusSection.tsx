@@ -8,6 +8,7 @@ import { SetupStatusLine } from '@/shared/components/OnboardingModal/components/
 import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 import { connectionStatus } from './ConnectionSection.tsx';
 import { Card } from '@/shared/components/ui/card';
+import { CopyInstallCommand } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
 import { ASTRID_STATUS_COPY as COPY, connectionStatusCopy } from './astridStatusCopy.ts';
 
 const POLL_INTERVAL_MS = 5_000;
@@ -88,6 +89,7 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
   const rawServices = details?.health.services;
   const hasServiceDetails = Array.isArray(rawServices) && rawServices.every(isRuntimeService);
   const services = Array.isArray(rawServices) ? rawServices.filter(isRuntimeService) : [];
+  const needsRepair = details?.health.status === 'degraded' || services.some((service) => service.state === 'failed');
   const statusText = connected
     ? loadFailed ? COPY.unavailable : details?.health.status === 'degraded' ? COPY.degraded : details ? COPY.connected : COPY.checking
     : connectionStatusCopy(status);
@@ -107,6 +109,9 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
             {summary.checks && <SetupStatusLine checks={summary.checks} mink={false} announce={false} />}
             {!connected && summary.detail && <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{summary.detail}</p>}
             {summary.connect && <Button type="button" variant="retro-secondary" size="retro-sm" onClick={() => connection.connect()}>{RUNTIME_CONNECTION_COPY.permission.connect}</Button>}
+            {connected && details && needsRepair && (
+              <CopyInstallCommand label={RUNTIME_CONNECTION_COPY.agent.copy} mode="install" />
+            )}
 
             {connected && details && (
               <div className="space-y-4 border-t pt-3">
@@ -115,10 +120,6 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
                   <dl className="space-y-1.5">
                     <StatusRow label={COPY.workspaceName} value={details.realm.display_name} />
                   </dl>
-                </div>
-                <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{COPY.versions}</h3>
-                  <p className="text-sm text-muted-foreground">{COPY.versionsUnavailable}</p>
                 </div>
                 <div>
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{COPY.connectionDetails}</h3>
@@ -137,7 +138,7 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
                     <ul className="space-y-2">
                       {services.map((service) => (
                         <li key={service.name} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm">
-                          <span className="font-medium">{service.name}</span>
+                          <span className="font-medium">{COPY.serviceName(service.name)}</span>
                           <span className={service.state === 'failed' ? 'text-destructive' : 'text-muted-foreground'}>
                             {COPY.serviceStates[service.state]}
                           </span>
