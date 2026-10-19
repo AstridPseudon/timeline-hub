@@ -1149,10 +1149,12 @@ def request(world, *, key="child", value="scalar", descriptors=None, request_id=
             "input_descriptors": descriptors or [], "child_key": key, "wait": True, "timeout_seconds": 0.5, "poll_seconds": 0.01}
 
 
-def serve_one(world):
+def serve_one(world, *, ready=None):
     """Independent host instance serves the same target/registered executor."""
     host = GenericPackHost(pack_roots=[world.root], client=world.client, executor_id="worker", max_concurrency=2)
     host.discover()
+    if ready is not None:
+        ready.set()
     deadline = time.monotonic() + 4
     while time.monotonic() < deadline:
         with world.lock:
@@ -1873,8 +1875,10 @@ while not Path('outputs/descendant-ready').exists():
                                   "broker_artifact_absent_before_finalization": True})
         original_finalize(broker)
     monkeypatch.setattr(ObservableNetworkBroker, "finalize_evidence", finalize)
+    ready = threading.Event()
     with ThreadPoolExecutor(max_workers=1) as pool:
-        future = pool.submit(serve_one, world)
+        future = pool.submit(serve_one, world, ready=ready)
+        assert ready.wait(5), "independent child host did not finish discovery"
         c = world.claim
         result = host.run_task({"task": world.task}, lease_token=c["lease_id"], attempt_id=c["attempt_id"], fence=c["fence"],
                                provider_route_grant=grant)
