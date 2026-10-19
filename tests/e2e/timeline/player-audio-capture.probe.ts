@@ -1,10 +1,11 @@
 import { expect, test as base, type Page } from '@playwright/test';
 import type { PlayerRef } from '@remotion/player';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CAPTURE_TIMELINE, TONES, createManagedTones, publishCaptureFixture, type Backend } from './player-audio-fixture';
-import { decodeMonitor, privateMonitor } from './player-audio-monitor';
+import { audibleEdges, decodeMonitor, privateMonitor, requireAudibleDuration } from './player-audio-monitor';
 import { editorUrl, resetFakeRuntimeBaseline } from './support';
 
 type Monitor = Awaited<ReturnType<typeof privateMonitor>>;
@@ -24,6 +25,8 @@ declare global {
     __capturePlayer: PlayerRef;
     __captureBackends: { elements: string[]; buffers: number };
     __captureFrames: { frame: number; time: number }[];
+    __captureEvents: Record<string, unknown>[];
+    __captureContexts: BaseAudioContext[];
   }
 }
 
@@ -54,21 +57,18 @@ async function findPlayer(page: Page) {
 // Soft integrity assertions retain a failing test verdict while collecting the
 // remaining backend/control recordings. Empty capture is still a hard stop.
 function audibleMetrics(capture: Awaited<ReturnType<typeof decodeMonitor>>, frequencies: number[]) {
-  const active: number[] = [];
-  for (let step = 0; step < 300; step++) {
-    if (capture.rms(step * 0.02, (step + 1) * 0.02) > 0.004) active.push(step);
-  }
+  const { active, onset, offset } = audibleEdges(capture);
   expect(active.length, 'silent/empty capture').toBeGreaterThan(135);
-  const onset = active[0] * 0.02;
-  const offset = (active.at(-1)! + 1) * 0.02;
   console.log('CAPTURE_TIMING', JSON.stringify({ onset, offset, activeBlocks: active.length }));
-  expect.soft(offset - onset, 'three-second live media duration').toBeGreaterThan(2.88);
-  expect.soft(offset - onset).toBeLessThan(3.12);
+  requireAudibleDuration(offset - onset, expect.soft);
   // One onset for the whole capture; no per-source shifting or realignment.
   const start = onset + 0.5;
   const end = onset + 2.5;
+  let silentBlocks = 0;
   for (let time = start; time < end; time += 0.005) {
-    expect.soft(capture.rms(time, time + 0.005), 'dropped/silent interior block').toBeGreaterThan(0.004);
+    const rms = capture.rms(time, time + 0.005);
+    if (rms <= 0.004) silentBlocks++;
+    expect.soft(rms, 'dropped/silent interior block').toBeGreaterThan(0.004);
   }
   const left = capture.rms(start, end);
   const right = capture.rms(start, end, 1);
@@ -94,7 +94,7 @@ function audibleMetrics(capture: Awaited<ReturnType<typeof decodeMonitor>>, freq
     expect.soft(otherChannel / amplitude).toBeLessThan(0.80);
     return amplitude;
   });
-  return { sampleCount: capture.sampleCount, onset, offset, left, right, amplitudes, phaseSteps };
+  return { sampleCount: capture.sampleCount, onset, offset, left, right, amplitudes, phaseSteps, silentBlocks };
 }
 
 function gainDifferenceDb(actual: number, reference: number) {
@@ -107,13 +107,20 @@ function requireUnchangedGain(actual: number, reference: number) {
 }
 
 for (const mode of ['mixed output controls', 'amplified fade timing'] as const) {
-  test(`captures real Player ${mode}`, async ({ context, monitor }, testInfo) => {
+  test(`captures real Player ${mode}`, async ({ browser, context, monitor }, testInfo) => {
     test.setTimeout(360_000);
     expect(await resetFakeRuntimeBaseline()).toBeNull();
     const directory = await mkdtemp(join(tmpdir(), 'player-audio-media-'));
-    const results: Record<string, unknown> = {};
+    const results: Record<string, unknown> = { environment: {
+      repeatIndex: testInfo.repeatEachIndex, browser: browser.version(), node: process.version,
+      launchOptions: testInfo.project.use.launchOptions,
+      packageLockSha256: createHash('sha256').update(await readFile('package-lock.json')).digest('hex'),
+      composition: JSON.parse(await readFile('node_modules/@banodoco/timeline-composition/package.json', 'utf8')).version,
+    } };
+    const cdp = await browser.newBrowserCDPSession();
     try {
       const objects = await createManagedTones(directory);
+      results.objects = objects;
       let fixtureKey = '';
       let revision: Awaited<ReturnType<typeof publishCaptureFixture>>;
       const run = async (name: string, backends: Backend[], options: { volume?: number; muted?: boolean; captureGain?: number; fallback?: boolean; fade?: boolean } = {}) => {
@@ -137,15 +144,31 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
         try {
           await page.addInitScript(({ fallback }) => {
             window.__captureBackends = { elements: [], buffers: 0 };
+            window.__captureEvents = [];
+            window.__captureContexts = [];
+            for (const type of ['click', 'playing', 'waiting', 'stalled', 'canplay', 'seeking', 'seeked', 'pause', 'ended', 'visibilitychange']) {
+              document.addEventListener(type, event => {
+                const media = event.target instanceof HTMLMediaElement ? event.target : null;
+                window.__captureEvents.push({ type, epochMs: performance.timeOrigin + performance.now(), src: media?.currentSrc, currentTime: media?.currentTime, readyState: media?.readyState, visibility: document.visibilityState });
+              }, true);
+            }
             const mediaSource = AudioContext.prototype.createMediaElementSource;
             AudioContext.prototype.createMediaElementSource = function (element) {
               window.__captureBackends.elements.push(element.src);
+              if (!window.__captureContexts.includes(this)) window.__captureContexts.push(this);
               return mediaSource.call(this, element);
             };
             const bufferSource = AudioContext.prototype.createBufferSource;
             AudioContext.prototype.createBufferSource = function () {
               window.__captureBackends.buffers++;
-              return bufferSource.call(this);
+              if (!window.__captureContexts.includes(this)) window.__captureContexts.push(this);
+              const source = bufferSource.call(this);
+              const start = source.start.bind(source);
+              source.start = (...args: Parameters<typeof start>) => {
+                window.__captureEvents.push({ type: 'buffer-start', epochMs: performance.timeOrigin + performance.now(), args, contextTime: this.currentTime, contextState: this.state, bufferDuration: source.buffer?.duration });
+                start(...args);
+              };
+              return source;
             };
             if (fallback) Object.defineProperty(window, 'VideoDecoder', { value: undefined });
           }, { fallback: options.fallback ?? false });
@@ -183,8 +206,30 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
             });
           });
           await expect.poll(() => page.evaluate(() => window.__capturePlayer.getCurrentFrame())).toBe(0);
+          if (backends.some(backend => backend !== 'video')) {
+            await expect.poll(() => page.locator('audio[src]').evaluateAll(elements => elements.length > 0 && elements.every(element => (element as HTMLAudioElement).readyState >= 2)), { timeout: 20_000 }).toBe(true);
+          }
+          if (backends.includes('video') && !options.fallback) {
+            await expect(page.locator('[data-preview-decoded-frame="true"]')).toHaveCount(1, { timeout: 20_000 });
+          }
+          const readiness = await page.evaluate(() => ({
+            epochMs: performance.timeOrigin + performance.now(), timeOrigin: performance.timeOrigin, visibility: document.visibilityState,
+            media: Array.from(document.querySelectorAll('audio[src], video')).map(element => {
+              const media = element as HTMLMediaElement;
+              return { src: media.currentSrc, readyState: media.readyState, currentTime: media.currentTime, seeking: media.seeking, paused: media.paused, error: media.error?.message, buffered: Array.from({ length: media.buffered.length }, (_, index) => [media.buffered.start(index), media.buffered.end(index)]) };
+            }),
+            contexts: window.__captureContexts.map(context => ({ state: context.state, currentTime: context.currentTime, sampleRate: context.sampleRate, baseLatency: (context as AudioContext).baseLatency, outputLatency: (context as AudioContext).outputLatency })),
+          }));
+          results[name] = { revision: revision.headRevisionId, readiness };
           const path = testInfo.outputPath(`${name}.wav`);
-          await monitor.record(path, () => play.click(), options.captureGain);
+          try {
+            await monitor.record(path, () => play.click(), options.captureGain, () => cdp.send('SystemInfo.getProcessInfo'));
+          } finally {
+            const recording = JSON.parse(await readFile(`${path}.diagnostics.json`, 'utf8'));
+            const events = await page.evaluate(() => window.__captureEvents);
+            results[name] = { revision: revision.headRevisionId, readiness, recording, events };
+            await testInfo.attach(`${name}-recording-diagnostics`, { body: JSON.stringify(results[name], null, 2), contentType: 'application/json' });
+          }
           await page.evaluate(() => window.__capturePlayer.pause());
           const frames = await page.evaluate(() => window.__captureFrames);
           const moving = frames.filter(frame => frame.frame > 0);
@@ -201,14 +246,14 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
             expect(requests.some(request => decodeURIComponent(request.url).includes(objects[backend]) && [200, 206].includes(request.status)), `managed ${backend} fetched`).toBe(true);
           }
           const backendState = await page.evaluate(() => window.__captureBackends);
-          results[name] = { revision: revision.headRevisionId, clock, backendState, requests };
+          results[name] = { ...results[name] as object, clock, frames, backendState, requests };
           if (backends.includes('amplified')) expect(backendState.elements.some(url => decodeURIComponent(url).includes(objects.amplified))).toBe(true);
           if (backends.includes('native')) expect(backendState.elements.some(url => decodeURIComponent(url).includes(objects.native))).toBe(false);
           if (backends.includes('video') && !options.fallback && !options.muted) expect(backendState.buffers).toBeGreaterThan(0);
           expect(errors).toEqual([]);
           expect(await page.getByTestId('preview-media-error').count()).toBe(0);
           const metrics = options.muted ? { sampleCount: capture.sampleCount, left: capture.rms(), right: capture.rms(0, 6, 1) } : audibleMetrics(capture, backends.map(backend => TONES[backend]));
-          results[name] = { revision: revision.headRevisionId, ...metrics, clock, backendState, requests };
+          results[name] = { ...results[name] as object, ...metrics };
           console.log('PLAYER_CAPTURE', name, JSON.stringify(metrics));
           return { capture, metrics };
         } finally { await page.close(); }
@@ -219,8 +264,11 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
         if (!('onset' in faded.metrics)) throw new Error('Missing fade onset');
         const fadeOnset = faded.metrics.onset;
         const plateau = faded.capture.rms(fadeOnset + 1, fadeOnset + 2);
-        expect(faded.capture.rms(fadeOnset + 0.06, fadeOnset + 0.16) / plateau).toBeLessThan(0.6);
-        expect(faded.capture.rms(fadeOnset + 2.8, fadeOnset + 2.9) / plateau).toBeLessThan(0.6);
+        const early = faded.capture.rms(fadeOnset + 0.06, fadeOnset + 0.16) / plateau;
+        const late = faded.capture.rms(fadeOnset + 2.8, fadeOnset + 2.9) / plateau;
+        results.fadeEnvelope = { plateau, early, late };
+        expect(early).toBeLessThan(0.6);
+        expect(late).toBeLessThan(0.6);
         return;
       }
       for (const backend of Object.keys(TONES) as Backend[]) await run(backend, [backend]);
@@ -228,18 +276,19 @@ for (const mode of ['mixed output controls', 'amplified fade timing'] as const) 
       const backends = Object.keys(TONES) as Backend[];
       const mixed = await run('mixed', backends);
       const half = await run('mixed-player-half', backends, { volume: 0.5 });
-      expect(gainDifferenceDb(half.metrics.left, mixed.metrics.left)).toBeCloseTo(-6.0206, 0);
+      expect.soft(gainDifferenceDb(half.metrics.left, mixed.metrics.left)).toBeCloseTo(-6.0206, 0);
       const muted = await run('mixed-player-muted', backends, { muted: true });
       expect(muted.metrics.left).toBeLessThan(0.0001);
       expect(muted.metrics.right).toBeLessThan(0.0001);
       const planted = await run('mixed-capture-half', backends, { captureGain: 0.5 });
-      expect(gainDifferenceDb(planted.metrics.left, mixed.metrics.left)).toBeCloseTo(-6.0206, 0);
-      expect(() => requireUnchangedGain(planted.metrics.left, mixed.metrics.left)).toThrow(/captured output gain mismatch: -6\./);
+      expect.soft(gainDifferenceDb(planted.metrics.left, mixed.metrics.left)).toBeCloseTo(-6.0206, 0);
+      expect.soft(() => requireUnchangedGain(planted.metrics.left, mixed.metrics.left)).toThrow(/captured output gain mismatch: -6\./);
       // An independent unmodified playback must pass the same comparator.
       const repeated = await run('mixed-repeat', backends);
       requireUnchangedGain(repeated.metrics.left, mixed.metrics.left);
     } finally {
       await testInfo.attach('player-capture-metrics', { body: JSON.stringify(results, null, 2), contentType: 'application/json' });
+      await cdp.detach();
       await rm(directory, { recursive: true, force: true });
     }
   });

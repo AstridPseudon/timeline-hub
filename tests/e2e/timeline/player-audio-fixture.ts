@@ -24,7 +24,9 @@ export async function createManagedTones(directory: string): Promise<Record<Back
       '-f', 'lavfi', '-i', `sine=frequency=${frequency}:sample_rate=48000:duration=3`,
       '-af', 'pan=stereo|c0=c0|c1=0.75*c0',
       ...(video ? ['-c:v', 'libvpx', '-deadline', 'realtime', '-cpu-used', '8', '-b:v', '300k', '-pix_fmt', 'yuv420p', '-c:a', 'libopus', '-b:a', '128k'] : ['-c:a', 'pcm_s16le']),
-      '-threads', '1', file,
+      // Omit random WebM container IDs so independent repetitions ingest the
+      // same bytes, without changing the encoded video/audio or clip inputs.
+      '-threads', '1', '-fflags', '+bitexact', file,
     ]);
     const bytes = await readFile(file);
     const id = `sha256:${createHash('sha256').update(bytes).digest('hex')}`;

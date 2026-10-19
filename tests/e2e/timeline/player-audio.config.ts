@@ -23,6 +23,8 @@ export default defineConfig({
       ignoreDefaultArgs: ['--mute-audio'],
       args: [
         ...(base.use?.launchOptions?.args ?? []),
+        '--disable-background-timer-throttling',
+        '--disable-renderer-backgrounding',
         ...(process.env.PLAYER_AUDIO_CAPTURE === 'tab' ? [
           '--auto-accept-this-tab-capture',
           '--enable-usermedia-screen-capturing',

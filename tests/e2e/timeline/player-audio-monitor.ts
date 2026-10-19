@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { execFile, spawn, type ChildProcess } from 'node:child_process';
-import { chmod, mkdtemp, rm } from 'node:fs/promises';
+import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cpus, hostname, loadavg } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
@@ -38,28 +39,73 @@ export async function privateMonitor() {
     }, { timeout: 10_000 }).toContain('player');
     return {
       directory, env,
-      async record(path: string, play: () => Promise<void>, gain = 1) {
+      async record(path: string, play: () => Promise<void>, gain = 1, browserCpu: () => Promise<unknown> = async () => null) {
         // This live monitor belongs to one browser only. Its recorder gain
         // plants a defect after Player mixing, without changing any inputs.
         let log = '';
+        const spawnedAtMs = Date.now();
+        let outputDeclaredAtMs: number | undefined;
         const recorder = spawn('ffmpeg', [
           '-hide_banner', '-y', '-f', 'pulse', '-sample_rate', String(SAMPLE_RATE), '-channels', '2',
           '-i', 'player.monitor', '-af', `volume=${gain},atrim=end_sample=288000`, '-c:a', 'pcm_s16le', path,
         ], { env, stdio: ['pipe', 'ignore', 'pipe'] });
         const deadline = setTimeout(() => recorder.kill('SIGTERM'), 15_000);
-        recorder.stderr.on('data', bytes => { log += bytes.toString(); });
+        recorder.stderr.on('data', bytes => {
+          log += bytes.toString();
+          if (!outputDeclaredAtMs && log.includes('Output #0')) outputDeclaredAtMs = Date.now();
+        });
         const completed = new Promise<void>((resolve, reject) => {
           recorder.once('error', reject);
           recorder.once('exit', code => code === 0 ? resolve() : reject(new Error(`ffmpeg ${code}: ${log}`)));
         });
         // Attach the rejection handler before readiness polling.
         void completed.catch(() => {});
+        const samples: unknown[] = [];
+        const sample = async () => {
+          const [host, pulse, ffmpeg, browser] = await Promise.all([
+            readFile('/proc/stat', 'utf8'),
+            readFile(`/proc/${daemon.pid}/stat`, 'utf8').catch(() => null),
+            readFile(`/proc/${recorder.pid}/stat`, 'utf8').catch(() => null),
+            browserCpu(),
+          ]);
+          samples.push({ epochMs: Date.now(), load: loadavg(), host: host.split('\n')[0], pulse, ffmpeg, browser });
+        };
+        const processStart = (await exec('ps', ['-eo', 'pid,ppid,comm,pcpu,cputimes', '--sort=-pcpu'])).stdout;
+        const ticksPerSecond = Number((await exec('getconf', ['CLK_TCK'])).stdout);
+        let sampling = true;
+        const samplingDone = (async () => {
+          while (sampling) {
+            await sample();
+            if (sampling) await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        })();
+        void samplingDone.catch(() => {});
+        let playRequestedAtMs: number | undefined;
+        let playCompletedAtMs: number | undefined;
         try {
           await expect.poll(() => log, { timeout: 10_000 }).toContain('Output #0');
+          playRequestedAtMs = Date.now();
           await play();
+          playCompletedAtMs = Date.now();
           await completed;
           expect(log).not.toMatch(/corrupt|non.monoton|overrun|underrun|dropp/i);
-        } finally { clearTimeout(deadline); await stop(recorder); }
+        } finally {
+          clearTimeout(deadline);
+          sampling = false;
+          await stop(recorder);
+          await samplingDone;
+          await sample();
+          const processEnd = (await exec('ps', ['-eo', 'pid,ppid,comm,pcpu,cputimes', '--sort=-pcpu'])).stdout;
+          // Keep raw clocks/logs even on errors; Pulse's input timestamp is not
+          // assumed to be a calibrated physical output latency.
+          const diagnostics = {
+            hostname: hostname(), cpuCount: cpus().length, ticksPerSecond,
+            spawnedAtMs, outputDeclaredAtMs, playRequestedAtMs, playCompletedAtMs,
+            completedAtMs: Date.now(), pulseInputStartSeconds: Number(log.match(/start: ([\d.]+)/)?.[1]),
+            processStart, processEnd, samples, recorderLog: log, daemonLog,
+          };
+          await writeFile(`${path}.diagnostics.json`, JSON.stringify(diagnostics, null, 2));
+        }
       },
       async close() {
         await stop(daemon);
@@ -82,6 +128,10 @@ export async function decodeMonitor(path: string) {
   expect(raw.length % 4).toBe(0);
   expect(raw.length / 4).toBe(6 * SAMPLE_RATE);
   const pcm = new Int16Array(raw.buffer, raw.byteOffset, raw.length / 2);
+  return monitorSamples(pcm);
+}
+
+export function monitorSamples(pcm: Int16Array) {
   return {
     pcm,
     sampleCount: pcm.length / 2,
@@ -104,4 +154,17 @@ export async function decodeMonitor(path: string) {
       return { amplitude: 2 * Math.hypot(sin, cos) / (last - first), phase: Math.atan2(sin, cos) };
     },
   };
+}
+
+export function audibleEdges(capture: ReturnType<typeof monitorSamples>) {
+  const active: number[] = [];
+  for (let step = 0; step < 300; step++) {
+    if (capture.rms(step * 0.02, (step + 1) * 0.02) > 0.004) active.push(step);
+  }
+  return { active, onset: active[0] * 0.02, offset: (active.at(-1)! + 1) * 0.02 };
+}
+
+export function requireAudibleDuration(duration: number, check: typeof expect.soft = expect) {
+  check(duration, 'three-second live media duration').toBeGreaterThan(2.88);
+  check(duration).toBeLessThan(3.12);
 }
