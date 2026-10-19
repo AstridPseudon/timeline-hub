@@ -1908,16 +1908,26 @@ class RuntimeService:
         self._record_timeline_revision(timeline_id, resource)
         self._record_legacy_timeline_revision(timeline_id, resource)
         event_id = self.store._append_timeline_event(timeline_id, "timeline.created", {"project_id": project["id"]})
-        if self._timeline_commit_provider is not None:
-            commits, _ = self._timeline_commits()
-            commits.bootstrap(project["id"], timeline_id, authorize=self._assert_mutation_admitted)
-            resource = self._timeline_resource(timeline_id)
         event_seq = self.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
-        return self._command_record(
+        result = self._command_record(
             "timeline.create", "timelines", idempotency_key, request_hash,
             resource, project_id=project["id"], event_ids=(event_id,),
             primary_stream_id=timeline_id, resulting_stream_seq=event_seq,
         )
+        if self._timeline_commit_provider is not None:
+            # Allocate creation's receipt before the separate publication.
+            # Finalize its editable head inside this same outer transaction.
+            commits, _ = self._timeline_commits()
+            commits.bootstrap(project["id"], timeline_id, authorize=self._assert_mutation_admitted)
+            resource = self._timeline_resource(timeline_id)
+            if idempotency_key is not None:
+                self.store.conn.execute(
+                    "UPDATE command_idempotency SET result_json=? WHERE txn_id=?",
+                    (compact_result("timeline.create", resource), result["receipt"]["receipt_id"]),
+                )
+                return self._command_replay("timeline.create", "timelines", idempotency_key, request_hash, project_id=project["id"])
+            return resource
+        return result
 
     @_durable_mutation
     def create_timeline_document(self, project_id, body, *, idempotency_key=None):

@@ -12,6 +12,7 @@ from runtime_protocol.errors import AuthorizationError, RuntimeErrorBase, Valida
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit import CommitRejected
+from runtime_protocol.timeline_commit_baseline import verify_baseline
 from runtime_protocol.timeline_commit_port import digest, route_path
 from runtime_protocol.util import canonical_json
 
@@ -24,7 +25,7 @@ def service(tmp_path):
     runtime.test_provider = PreparedProvider()
     runtime.register_timeline_commit_provider(runtime.test_provider)
     project = runtime.create_project({"slug": "commit-port", "name": "Commit port"})["id"]
-    runtime.create_timeline(project, "main", idempotency_key="create-main")
+    runtime.test_created = runtime.create_timeline(project, "main", idempotency_key="create-main")
     runtime.test_project = project
     try:
         yield runtime
@@ -112,6 +113,124 @@ def test_create_has_real_atomic_empty_bootstrap(service):
     assert entry["publication_id"] == entry["receipt"]["receipt_id"]
     assert entry["receipt"]["command_kind"] == "parent_composition.publish"
     assert entry["intent"] == "bootstrap" and entry["records"] is None and entry["previous"] is None
+
+
+def test_created_timeline_provenance_and_exact_retry_survive_restart(service):
+    created = service.test_created
+    project, root = service.test_project, service.store.root
+    before = rows(service)
+    facts = verify_baseline(service.store.conn, project, "main", read_object=service.cas.read)
+    assert rows(service) == before
+    head = facts["head"]
+    assert created["data"]["head_revision_id"] == head["revision_id"]
+    assert created["data"]["head_publication_id"] == head["publication_id"]
+    assert created["receipt"]["result"] == created["data"]
+    receipts = service.store.conn.execute(
+        "SELECT * FROM command_idempotency WHERE primary_stream_id=? ORDER BY resulting_stream_seq", ("main",)
+    ).fetchall()
+    events = service.store.conn.execute("SELECT * FROM timeline_events WHERE timeline_id=? ORDER BY id", ("main",)).fetchall()
+    assert [row["command_kind"] for row in receipts] == ["timeline.create", "parent_composition.publish"]
+    assert [row["kind"] for row in events] == ["timeline.created", "parent.composition.published"]
+    assert [row["resulting_stream_seq"] for row in receipts] == [1, 2]
+    assert [row["first_project_seq"] for row in receipts] == sorted({row["first_project_seq"] for row in receipts})
+    for row, event in zip(receipts, events):
+        assert json.loads(row["event_ids_json"]) == [str(event["id"])]
+        assert row["first_project_seq"] == row["last_project_seq"]
+    assert receipts[0]["txn_id"] == created["receipt"]["receipt_id"]
+    assert receipts[1]["txn_id"] == head["publication_id"]
+    assert len(facts["entries"]) == 1
+    assert facts["entries"][0]["publication_id"] == head["publication_id"]
+    assert facts["entries"][0]["receipt"]["event_ids"] == [str(events[1]["id"])]
+    original = canonical_json(created).encode()
+    assert canonical_json(service.create_timeline(project, "main", idempotency_key="create-main")).encode() == original
+    service.close()
+    restarted = RuntimeService(root)
+    try:
+        assert restarted.store.admission_report["ok"]
+        restarted.register_timeline_commit_provider(PreparedProvider())
+        before = rows(restarted)
+        assert verify_baseline(restarted.store.conn, project, "main", read_object=restarted.cas.read) == facts
+        assert canonical_json(restarted.create_timeline(project, "main", idempotency_key="create-main")).encode() == original
+        assert rows(restarted) == before
+        restarted.test_project = project
+        commit(restarted, request(restarted))
+        assert restarted.get_project_timeline(project, "main")["head_publication_id"] != head["publication_id"]
+        before = rows(restarted)
+        assert canonical_json(restarted.create_timeline(project, "main", idempotency_key="create-main")).encode() == original
+        assert rows(restarted) == before
+    finally:
+        restarted.close()
+
+
+def test_bootstrap_failure_rolls_back_creation_and_both_receipts(service, monkeypatch):
+    commits, _ = service._timeline_commits()
+    install = commits._install_entries
+    def fail_after_install(project, timeline, plan):
+        install(project, timeline, plan)
+        assert service.store.conn.execute(
+            "SELECT COUNT(*) FROM command_idempotency WHERE primary_stream_id=?", (timeline,)
+        ).fetchone()[0] == 2
+        raise RuntimeError("bootstrap installation failed")
+    before = list(service.store.conn.iterdump())
+    with monkeypatch.context() as patch:
+        patch.setattr(commits, "_install_entries", fail_after_install)
+        with pytest.raises(RuntimeError, match="bootstrap installation failed"):
+            service.create_timeline(service.test_project, "failed", idempotency_key="failed-create")
+    assert list(service.store.conn.iterdump()) == before
+    created = service.create_timeline(service.test_project, "failed", idempotency_key="failed-create")
+    facts = verify_baseline(service.store.conn, service.test_project, "failed", read_object=service.cas.read)
+    assert created["data"]["head_publication_id"] == facts["head"]["publication_id"]
+
+
+def test_history_remains_read_only_when_mutation_admission_revoked(service):
+    before = list(service.store.conn.iterdump())
+    service._verified = False
+    history = service.list_timeline_commits(service.test_project, "main", authorize=lambda: None)
+    assert history["head"]["publication_id"] == service.test_created["data"]["head_publication_id"]
+    assert list(service.store.conn.iterdump()) == before
+
+
+@pytest.mark.parametrize("key", [None, "atomic-create"])
+def test_editable_create_has_one_outer_commit(service, key):
+    statements = []
+    service.store.conn.set_trace_callback(statements.append)
+    try:
+        created = service.create_timeline(service.test_project, "atomic", idempotency_key=key)
+    finally:
+        service.store.conn.set_trace_callback(None)
+    assert sum(sql == "BEGIN IMMEDIATE" for sql in statements) == 1
+    assert sum(sql == "COMMIT" for sql in statements) == 1
+    resource = created if key is None else created["data"]
+    facts = verify_baseline(service.store.conn, service.test_project, "atomic", read_object=service.cas.read)
+    assert resource["head_revision_id"] == facts["head"]["revision_id"]
+    assert resource["head_publication_id"] == facts["head"]["publication_id"]
+
+
+def test_revoked_admission_prevents_startup_baseline_migration_and_history_writes(tmp_path):
+    root = tmp_path / "revoked"
+    RealmStore.initialize(root).close()
+    runtime = RuntimeService(root)
+    try:
+        project = runtime.create_project({"slug": "revoked", "name": "Revoked"})["id"]
+        runtime.create_timeline(project, "main", idempotency_key="legacy-create")
+        runtime.publish_parent_composition(project, "main", {
+            "project_id": project, "timeline_id": "main", "expected_head": None,
+            "parent_revision_id": "legacy-parent", "parent_composition": {
+                "config": {"clips": [], "tracks": []}, "registry": {}, "clips": [], "occurrences": [],
+            },
+        }, idempotency_key="legacy-publish")
+        runtime._verified = False
+        before = list(runtime.store.conn.iterdump())
+        with pytest.raises(RuntimeErrorBase):
+            runtime.list_timeline_commits(project, "main", authorize=lambda: None)
+        assert list(runtime.store.conn.iterdump()) == before
+        runtime.register_timeline_commit_provider(PreparedProvider())
+        assert list(runtime.store.conn.iterdump()) == before
+        with pytest.raises(RuntimeErrorBase):
+            runtime.list_timeline_commits(project, "main", authorize=lambda: None)
+        assert list(runtime.store.conn.iterdump()) == before
+    finally:
+        runtime.close()
 
 
 def test_neutral_runtime_refuses_without_writes(tmp_path):
