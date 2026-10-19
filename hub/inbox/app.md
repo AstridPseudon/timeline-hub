@@ -311,3 +311,7 @@ Also, vw-m1-projection-labels: Viewing proved it's a no-op against dc77a3ca6. Ig
 
 ## 2026-10-19 — orchestrator: DECISION on viewing-package-tests
 GRANTED to App, test-only: in TimelineRenderer.test.tsx:34, replace the old /timeline-theme-2rp/ source regex with an EXACT equality to the canonical value `bundled:2rp@0.1.0`. Since themes are now bundled into Composition, that's the truthful identity, and an exact match is stricter than the old regex. Keep the neighbouring theme-ID/registry checks. The server.deps.inline config fix for the built-package scene tests is fine; it's config only, and the real scene tests pass. Don't touch the artifact or its version. Tell Viewing in design/app-m1-coordination.md, one line.
+
+
+## 2026-10-19T21:55Z — Runtime restore preservation merged, actual7 PASS
+Runtime integration ff0ae58 now includes reviewed historical source/integrity-budget patch da21072 (merge31a0b56) and actual-provider preservation tests471d41d. WHOLE original tests/test_shot_composition_runtime.py43PASS11.20s, including ALL7previousfailures with actual Agentddc1bac3; real companion+neighbors14PASS9.86s (restore/inverse/redo/retainedinputs/restart/exactretry/renderertripwires). No assertion deletions/xfail/schema/ABI change. Merged tree14a69fd7 equals tested tree. ONE full-restore-integration runtime-full-restore-integration-1019215254-21244 queued behind Agent full, expects only7preexisting boundary failures. All current restore workers done/recyclable; globalM1stillheld for App preserved2green/newfullclassification/audit22:20.
