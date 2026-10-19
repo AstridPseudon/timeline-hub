@@ -12,7 +12,10 @@ import pytest
 from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest, request_identity
+from runtime_protocol.timeline_commit_validation import validate_commit_value
 from runtime_protocol.util import canonical_json
+from test_timeline_commit_port import PreparedProvider
 
 
 def _digest(data):
@@ -26,6 +29,7 @@ def canonical_scene(tmp_path):
     service = RuntimeService(root)
     try:
         project = service.create_project({"slug": "scene-render", "name": "Scene"}, idempotency_key="project")
+        service.register_timeline_commit_provider(PreparedProvider())
         service.create_timeline(project["id"], "main", idempotency_key="timeline")
         service.register_capability({"capability_id": "rendering.render", "definition_digest": _digest("rendering.render")})
         service.register_executor({"executor_id": "worker", "capabilities": ["rendering.render"]})
@@ -70,13 +74,67 @@ def _publication(fixture, *, revision="parent-1", expected_head=None):
 
 def _publish(fixture, **kwargs):
     publication = _publication(fixture, **kwargs)
-    return fixture["service"].publish_parent_composition(fixture["project"], "main", publication, idempotency_key="publish-" + publication["parent_revision_id"])
+    return _accept_publication(fixture, publication, idempotency_key="publish-" + publication["parent_revision_id"])
+
+
+def _accept_publication(fixture, publication, *, idempotency_key):
+    """Install exact render inputs at the host acceptance boundary, not Agent semantics.
+
+    Like PreparedProvider, this fixture supplies prepared data to real persistence.
+    Scene packages and registry metadata stay opaque until actual Task admission.
+    """
+    service = fixture["service"]
+    commits = TimelineCommitStore(
+        service.store, validate_prepared=lambda value: validate_commit_value(value, "PreparedCommit"),
+    )
+    head = commits.head(fixture["project"], "main")
+    if publication["expected_head"] is not None:
+        assert head["revision_id"] == publication["expected_head"]
+    document = commits.revision_closure(fixture["project"], "main", head["revision_id"])
+    before = document["parent_revision"]["payload"]
+    payload = copy.deepcopy(publication["parent_composition"])
+    document["parent_revision"] = {
+        "revision_id": publication["parent_revision_id"], "payload": payload, "content_digest": digest(payload),
+    }
+    document["dependency_manifest"] = {
+        "shots": [], "internal_timelines": [], "documents": [],
+        **copy.deepcopy(publication["dependency_manifest"]),
+    }
+    command = {"schema_version": 1, "op": "fixture.install-render-parent", "version": "1",
+               "select": None, "args": {"canonical_document": copy.deepcopy(document)}}
+    request = {"api_version": 1, "project_id": fixture["project"], "timeline_id": "main",
+               "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
+               "commands": [command]}
+    context = {"request": request, "invocation": {"operation": "commitTimeline",
+               "path": f"/v1/projects/{fixture['project']}/timelines/main/commit", "body": copy.deepcopy(request)},
+               "idempotency_key": idempotency_key, "realm_id": service.realm["id"], "publisher": "render-fixture"}
+    context["request_hash"] = request_identity(context)
+    record = {"ordinal": 0, "command": command,
+              "writes": [{"ref": "parent", "path": [key],
+                          "before": {"state": "present", "value": before[key]} if key in before else {"state": "absent"},
+                          "after": {"state": "present", "value": value}} for key, value in payload.items()],
+              "reads": [], "selections": [], "bindings": [], "created": [], "dependencies": [], "derived_writes": []}
+    prepared = {"expected_head": head, "canonical_document": document, "document_digest": digest(document),
+                "records": {"schema_version": 1, "commands": [record], "undo_of": [], "restored_from": None},
+                "id_map": {}, "semantic_events": [], "provider_version": "prepared-fixture-1", "compiler_version": "fixture-1"}
+    accepted = commits.accept(context, prepared, authorize=service._assert_mutation_admitted)
+    return _fixture_image_view(accepted)
+
+
+def _fixture_image_view(accepted):
+    """Read-only image view for existing assertions; never a legacy publish response."""
+    parent = accepted["data"]["canonical_document"]["parent_revision"]
+    return {"accepted": accepted, "data": {
+        "payload": copy.deepcopy(parent["payload"]), "content_digest": parent["content_digest"],
+        "new_head": accepted["data"]["accepted_revision_id"],
+    }}
 
 
 def _request(fixture, *, head="parent-1", key="render"):
+    version = fixture["service"].get_project_timeline(fixture["project"], "main")["version"]
     return {
         "project": fixture["project"], "capability_id": "rendering.render", "capability_digest": _digest("rendering.render"), "input_object_ids": [], "idempotency_key": key,
-        "spec": {"family": "render", "params": {"timeline_ref": "main", "expected_version": 1, "canonical_project_id": fixture["project"], "canonical_parent_document_id": "main", "canonical_head_revision_id": head, "canonical_occurrence_ids": [], "selector": "rendering.remotion"}},
+        "spec": {"family": "render", "params": {"timeline_ref": "main", "expected_version": version, "canonical_project_id": fixture["project"], "canonical_parent_document_id": "main", "canonical_head_revision_id": head, "canonical_occurrence_ids": [], "selector": "rendering.remotion"}},
     }
 
 
@@ -143,8 +201,8 @@ def test_canonical_long_media_and_hold_admission_covers_selected_fallback(canoni
         publication["parent_composition"]["config"]["metadata"] = {
             "astrid_layer": {"alpha": True},
         }
-    f["service"].publish_parent_composition(
-        f["project"], "main", publication, idempotency_key="publish-long-fallback",
+    _accept_publication(
+        f, publication, idempotency_key="publish-long-fallback",
     )
     monkeypatch.setattr(f["service"].store, "storage_preflight", lambda *_args, **_kwargs: {"ok": True})
     admitted = f["service"].create_task(_request(f, key="long-fallback"))
@@ -174,7 +232,7 @@ def test_frozen_managed_asset_canonicalizes_the_runtime_object_locator(canonical
              "thumbnailUrl": "/api/runtime/v1/objects/thumbnail", "generationId": "film-generation"}
     publication["parent_composition"]["registry"]["assets"] = {asset_id: asset}
     publication["parent_composition"]["clips"][-1]["asset"] = asset_id
-    f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
+    _accept_publication(f, publication, idempotency_key="publish")
     authored = f["service"].get_project_parent_composition_revision(f["project"], "main", "parent-1")
     admitted = f["service"].create_task(_request(f))
     spec = admitted["task"]["spec"]
@@ -201,7 +259,7 @@ def test_frozen_asset_retains_render_characteristics_without_editor_metadata(can
         "source": "/retired/authoring/source.wav", "pixel_provenance": {"drawn_block": 13},
     }
     publication["parent_composition"]["registry"]["assets"]["music"] = asset
-    f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
+    _accept_publication(f, publication, idempotency_key="publish")
     authored = f["service"].get_project_parent_composition_revision(f["project"], "main", "parent-1")
     spec = f["service"].create_task(_request(f))["task"]["spec"]
     assert _snapshot(f["service"], spec)["registry"]["assets"]["music"] == {
@@ -218,7 +276,7 @@ def test_opaque_media_identity_without_a_digest_still_fails_admission(canonical_
     publication = _publication(f)
     publication["parent_composition"]["registry"]["assets"]["music"] = {
         "media_id": "opaque-media-id", "file": "/api/runtime/v1/objects/" + f["audio"]["object_id"], "type": "audio/wav"}
-    f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
+    _accept_publication(f, publication, idempotency_key="publish")
     _assert_rejected(f, _request(f), ValidationError, "no runtime content digest")
 
 
@@ -233,7 +291,7 @@ def test_managed_asset_real_or_mismatched_locators_are_refused(canonical_scene, 
     publication = _publication(f)
     publication["parent_composition"]["registry"]["assets"]["music"] = {
         "media_id": f["audio"]["object_id"], "file": locator.format(id=f["audio"]["object_id"]) if locator else locator}
-    f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
+    _accept_publication(f, publication, idempotency_key="publish")
     _assert_rejected(f, _request(f), ValidationError, "unmanaged locator")
 
 
@@ -243,7 +301,7 @@ def test_matching_runtime_file_url_never_exempts_an_additional_locator(canonical
     publication = _publication(f)
     publication["parent_composition"]["registry"]["assets"]["music"] = {
         "media_id": f["audio"]["object_id"], "file": "/v1/objects/" + f["audio"]["object_id"], field: "/unmanaged/source.wav"}
-    f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
+    _accept_publication(f, publication, idempotency_key="publish")
     _assert_rejected(f, _request(f), ValidationError, "unmanaged locator")
 
 
@@ -277,8 +335,8 @@ def test_saved_source_tracks_remain_authored_but_are_removed_from_render_project
         "media_id": source["object_id"], "content_digest": source["digest"],
     })
 
-    saved = service.publish_parent_composition(
-        f["project"], "main", publication, idempotency_key="publish-source-role"
+    saved = _accept_publication(
+        f, publication, idempotency_key="publish-source-role"
     )
     authored = service.get_project_parent_composition_revision(
         f["project"], "main", saved["data"]["new_head"]
@@ -316,8 +374,8 @@ def test_nonempty_source_only_timeline_cannot_be_admitted_for_render(canonical_s
     body["parent_composition"]["clips"] = [{
         "id": "source-clip", "clipType": "text", "at": 0, "hold": 1, "track": "source",
     }]
-    f["service"].publish_parent_composition(
-        f["project"], "main", body, idempotency_key="publish-source-only"
+    _accept_publication(
+        f, body, idempotency_key="publish-source-only"
     )
 
     _assert_rejected(f, _request(f), ValidationError, "source-only")
@@ -460,7 +518,7 @@ def test_canonical_conflicting_populated_clip_lists_fail_closed(canonical_scene)
     publication = _publication(f)
     publication["parent_composition"]["config"]["clips"] = [{"id": "different", "clipType": "text", "at": 0, "hold": 1}]
     with pytest.raises(ConflictError, match="clips"):
-        f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="conflicting-clips")
+        _accept_publication(f, publication, idempotency_key="conflicting-clips")
     assert f["service"].store.conn.execute("SELECT COUNT(*) FROM parent_composition_revisions").fetchone()[0] == 0
 
 
