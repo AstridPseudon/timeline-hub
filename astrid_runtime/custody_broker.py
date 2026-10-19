@@ -275,11 +275,6 @@ def _atomic_owner_json(path: Path, value: Mapping[str, object]) -> None:
         os.close(descriptor)
         descriptor = -1
         platform.durable_replace(temporary, path)
-        directory = os.open(str(path.parent), os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-        try:
-            os.fsync(directory)
-        finally:
-            os.close(directory)
     finally:
         if descriptor >= 0:
             os.close(descriptor)
@@ -1228,7 +1223,8 @@ class RoleBoundCustodyBroker:
         connection: socket.socket | None = None
         try:
             if sys.platform == "win32":
-                connection, _ = self.listener.accept_child(self.launch_parent.verify())
+                deadline = time.monotonic() + self.timeout
+                connection, _ = self.listener.accept_child(self.launch_parent.verify(), deadline=deadline)
             else:
                 connection, _ = self.listener.accept()
             connection.settimeout(self.timeout)

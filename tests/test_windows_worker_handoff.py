@@ -39,7 +39,8 @@ class Channel:
         del self.data[:count]
         return result
     def close(self): self.closed = True
-    def settimeout(self, timeout): pass
+    def settimeout(self, timeout):
+        self.timeouts = [*getattr(self, "timeouts", []), timeout]
     def set_inheritable(self, value): pass
 
 
@@ -106,14 +107,21 @@ def test_windows_tcp_table_rejects_truncation(data):
         windows.tcp_peer_from_table(data, ("127.0.0.1", 3141), ("127.0.0.1", 2718))
 
 
-def _listener(channel, token="a" * 64):
+def _listener(channel, *following, token="a" * 64):
     listener = windows.Listener.__new__(windows.Listener)
     listener.expected = PEER
     listener.token = token
     listener.used = False
     listener._token_lock = threading.Lock()
     listener.timeout = 1
-    listener.socket = SimpleNamespace(accept=lambda: (channel, None))
+    channels = iter((channel, *following))
+    def accept():
+        value = next(channels, None)
+        if value is None:
+            raise TimeoutError("no authenticated client arrived")
+        return value, None
+    listener.socket = SimpleNamespace(accept=accept, settimeout=lambda timeout: None)
+    listener.socket.close = lambda: setattr(listener.socket, "closed", True)
     return listener
 
 
@@ -124,15 +132,125 @@ def test_windows_token_is_one_time_and_only_consumed_after_authentication(native
     assert listener.used and channel.sent == b"\x01"
     with pytest.raises(ConflictError, match="already consumed"):
         listener.accept()
-    assert channel.closed
+    assert not channel.closed
 
 
 @pytest.mark.parametrize("token", [b"b" * 64, b"a" * 63])
 def test_windows_bad_or_truncated_token_closes_connection(native_peer, token):
     channel = Channel(token)
     listener = _listener(channel)
-    with pytest.raises(ConflictError): listener.accept()
+    with pytest.raises(TimeoutError): listener.accept()
     assert channel.closed and not listener.used and not channel.sent
+
+
+@pytest.mark.parametrize("failure", ["identity", "token", "truncated", "reset", "ack"])
+def test_windows_listener_discards_rogue_before_accepting_selected_child(native_peer, monkeypatch, failure):
+    rogue = Channel(b"b" * 64 if failure == "token" else b"a" * (63 if failure == "truncated" else 64))
+    child = Channel(b"a" * 64)
+    listener = _listener(rogue, child)
+    if failure == "identity":
+        monkeypatch.setattr(windows, "tcp_peer_pid", lambda channel: 53 if channel is rogue else PEER["pid"])
+        monkeypatch.setattr(platform, "process_identity", lambda pid: {**PEER, "pid": pid})
+    if failure in ("reset", "ack"):
+        def reset(*args):
+            raise ConnectionResetError("rogue disconnected")
+        if failure == "reset":
+            rogue.recv = reset
+        else:
+            rogue.sendall = reset
+    assert listener.accept() is child
+    assert rogue.closed and not rogue.sent
+    assert listener.used and child.sent == b"\x01" and not child.closed
+
+
+def test_windows_rejected_connections_share_accept_and_read_deadline(native_peer, monkeypatch):
+    moments = iter([0.0, 0.1, 0.7, 1.05])
+    monkeypatch.setattr(windows.time, "monotonic", lambda: next(moments))
+    rogue, child = Channel(b"b" * 64), Channel(b"a" * 64)
+    listener = _listener(rogue, child)
+    timeouts = []
+    listener.socket.settimeout = timeouts.append
+    with pytest.raises(TimeoutError, match="authentication timed out"):
+        listener.accept()
+    assert timeouts == pytest.approx([0.9])
+    assert rogue.timeouts == pytest.approx([0.3])
+    assert rogue.closed and not child.closed and child.data == b"a" * 64
+    assert not listener.used
+
+
+def test_windows_accept_wait_and_final_ack_use_the_same_deadline(native_peer, monkeypatch):
+    now = [0.0]
+    monkeypatch.setattr(windows.time, "monotonic", lambda: now[0])
+    channel = Channel(b"a" * 64)
+    listener = _listener(channel)
+    def accept():
+        now[0] = 0.8
+        return channel, None
+    listener.socket.accept = accept
+    read = channel.recv
+    def recv(count):
+        now[0] = 1.1
+        return read(count)
+    channel.recv = recv
+    with pytest.raises(TimeoutError, match="authentication timed out"):
+        listener.accept()
+    assert channel.timeouts == pytest.approx([0.2])
+    assert channel.closed and not listener.used and not channel.sent
+
+
+def test_windows_worker_authentication_retries_without_resetting_bootstrap_ack_budget(native_peer, monkeypatch):
+    now = [0.0]
+    monkeypatch.setattr(windows.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(platform, "handoff_child_identity", lambda process: PEER)
+    rogue, child = Channel(b"b" * 64), Channel(b"a" * 64 + b"\x02")
+    launch = windows.InheritedHandles.__new__(windows.InheritedHandles)
+    launch.listener = _listener(rogue, child)
+    accept = launch.listener.socket.accept
+    def delayed_accept():
+        now[0] += 0.35
+        return accept()
+    launch.listener.socket.accept = delayed_accept
+    launch.authenticate(SimpleNamespace(pid=PEER["pid"]))
+    assert rogue.closed and child.closed and launch.listener.used
+    assert child.timeouts[-1] == pytest.approx(0.3)
+    assert child.data == b""
+
+
+@pytest.mark.parametrize("failure", ["token", "lineage"])
+def test_windows_role_broker_rejects_rogue_then_seals_real_child(native_peer, monkeypatch, failure):
+    from astrid_runtime import custody_broker as custody
+    parent = {**PEER, "pid": 99}
+    selected = {**PEER, "parent_pid": parent["pid"]}
+    monkeypatch.setattr(platform, "process_identity", lambda pid: selected if pid == PEER["pid"] else {
+        **selected, "pid": pid, "parent_pid": 100,
+    })
+    monkeypatch.setattr(custody, "sys", SimpleNamespace(platform="win32"))
+    token = {"pid": PEER["pid"], "uid": PEER["uid"], "pidversion": 1,
+             "sha256": "token-digest", "words": [1] * 8}
+    monkeypatch.setattr(custody, "_peer_token", lambda channel: token)
+    frame = {"version": custody.PROTOCOL_VERSION, "command": "register_pre_exec",
+             "run_id": "run", "role": "relay", "pid": PEER["pid"],
+             "ppid": parent["pid"], "argv_digest": "argv-digest"}
+    rogue = Channel(b"b" * 64 if failure == "token" else b"a" * 64)
+    child = Channel(b"a" * 64 + custody._canonical(frame) + b"\n")
+    if failure == "lineage":
+        monkeypatch.setattr(windows, "tcp_peer_pid", lambda channel: 53 if channel is rogue else PEER["pid"])
+    events = []
+    broker = SimpleNamespace(
+        listener=_listener(rogue, child), timeout=1, error=None, state="accepting",
+        run_id="run", role="relay", launch_parent=SimpleNamespace(verify=lambda: parent),
+        identity_provider=lambda pid: selected, cleanup_actor=object(), custody_generation=1,
+        role_authority=SimpleNamespace(bind_pending=lambda **kwargs: None, bind_target=lambda **kwargs: None),
+        chain_head="chain", authority_journal=None, _persist=events.append,
+        _ready=threading.Event(), socket_path=SimpleNamespace(unlink=lambda **kwargs: None),
+        socket_root=SimpleNamespace(rmdir=lambda: None), _release_authority_scope=lambda: None,
+    )
+    custody.RoleBoundCustodyBroker._serve(broker)
+    assert broker.error is None and broker.state == "sealed"
+    assert events == ["registration_pre_exec", "registration_ack_checkpoint", "registration_post_exec", "admission_sealed"]
+    assert broker.registration["identity"] == selected
+    assert broker.listener.used and broker.listener.socket.closed
+    assert rogue.closed and child.closed and broker._ready.is_set()
 
 
 class SharedSocket:
@@ -341,7 +459,7 @@ def test_windows_real_connection_refuses_unselected_process_identity(wrong):
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         expected = windows.identity(platform.process_identity(process.pid))
         expected[wrong] = expected[wrong] + 1 if wrong != "birth_id" else "windows-creation:0"
-        with pytest.raises(ConflictError, match="incarnation"):
+        with pytest.raises(TimeoutError):
             source.accept(expected)
         assert not source.used
         assert process.wait(timeout=15) != 0
@@ -436,6 +554,37 @@ def test_windows_worker_launch_authenticates_after_job_assignment_and_cleans_fai
 
 @pytest.mark.integration
 @requires_windows_process_and_lock_apis
+def test_windows_worker_launch_ignores_a_rogue_first_connection(tmp_path, monkeypatch):
+    listeners, rogues = [], []
+    original = windows.Listener
+    class AttackedListener(original):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            listeners.append(self)
+            rogues.append(socket.create_connection(("127.0.0.1", json.loads(self.endpoint)["port"]), timeout=10))
+    monkeypatch.setattr(windows, "Listener", AttackedListener)
+    process = None
+    try:
+        with (tmp_path / "binding").open("w+b") as binding:
+            binding.write(b"worker-binding"); binding.flush(); binding.seek(0)
+            code = "import os,sys; assert os.read(int(sys.argv[1]),64)==b'worker-binding'"
+            process = platform.spawn_tree([sys.executable, "-c", code, str(binding.fileno())],
+                                         pass_fds=(binding.fileno(),), close_fds=True)
+            assert process.wait(timeout=15) == 0
+        assert len(listeners) == 1 and listeners[0].used
+        assert rogues[0].recv(1) == b""
+    finally:
+        for rogue in rogues:
+            rogue.close()
+        if process is not None:
+            try:
+                if process.poll() is None: platform.stop_tree(process, grace=1)
+            finally:
+                process._runtime_job.close()
+
+
+@pytest.mark.integration
+@requires_windows_process_and_lock_apis
 def test_windows_role_broker_seals_the_same_child_creation_identity(tmp_path):
     from astrid_runtime import custody_broker as custody
     control, inherited = socket.socketpair()
@@ -447,8 +596,12 @@ def test_windows_role_broker_seals_the_same_child_creation_identity(tmp_path):
     target = [sys.executable, "-I", "-c",
         "import socket,sys; s=socket.socket(fileno=int(sys.argv[1])); s.sendall(b'ready'); assert s.recv(1)==b'x'", str(inherited.fileno())]
     environment = {**os.environ, **broker.child_environment(target, start_new_session=True)}
-    process = None
+    process = rogue = None
     try:
+        port = json.loads(broker.listener.endpoint)["port"]
+        rogue = socket.create_connection(("127.0.0.1", port), timeout=10)
+        assert rogue.recv(1) == b""
+        assert not broker.listener.used
         process = platform.spawn_tree(custody.custody_wrapper_argv(sys.executable), env=environment,
                                      close_fds=True, pass_fds=(inherited.fileno(),))
         inherited.close(); control.settimeout(15)
@@ -460,6 +613,8 @@ def test_windows_role_broker_seals_the_same_child_creation_identity(tmp_path):
         control.sendall(b"x")
         assert process.wait(timeout=15) == 0
     finally:
+        if rogue is not None:
+            rogue.close()
         control.close(); inherited.close()
         if process is None:
             broker.abort_before_spawn()

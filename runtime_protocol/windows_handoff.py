@@ -151,41 +151,55 @@ class Listener:
         return json.dumps({"port": self.socket.getsockname()[1], "token": self.token,
                            "owner": self.owner}, separators=(",", ":"))
 
-    def accept(self, expected=None, *, acceptor=None, frame_io=None):
-        channel, _ = (self.socket if acceptor is None else acceptor).accept()
-        channel.settimeout(self.timeout)
-        channel.set_inheritable(False)
-        deadline = time.monotonic() + self.timeout
-        try:
+    def accept(self, expected=None, *, acceptor=None, frame_io=None, deadline=None):
+        if deadline is None:
+            deadline = time.monotonic() + self.timeout
+        acceptor = self.socket if acceptor is None else acceptor
+        while True:
             if self.used:
                 raise ConflictError("handoff transport token was already consumed")
-            selected = expected if expected is not None else self.expected
-            if callable(selected):
-                selected = selected(observe_peer(channel))
-            pin_peer(channel, selected)
-            reader = channel if frame_io is None else frame_io(channel)
-            supplied = read_exact(reader, 64, deadline=deadline)
-            if not hmac.compare_digest(supplied, self.token.encode("ascii")):
-                raise ConflictError("handoff transport token is invalid")
-            verify_peer(channel)
-            with self._token_lock:
-                if self.used:
-                    raise ConflictError("handoff transport token was already consumed")
-                self.used = True
-            channel.sendall(b"\x01")
-            channel.settimeout(self.timeout)
-            return channel
-        except BaseException:
-            channel.close()
-            raise
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("handoff transport authentication timed out")
+            acceptor.settimeout(remaining)
+            channel, _ = acceptor.accept()
+            try:
+                channel.set_inheritable(False)
+                selected = expected if expected is not None else self.expected
+                if callable(selected):
+                    selected = selected(observe_peer(channel))
+                pin_peer(channel, selected)
+                reader = channel if frame_io is None else frame_io(channel)
+                supplied = read_exact(reader, 64, deadline=deadline)
+                if not hmac.compare_digest(supplied, self.token.encode("ascii")):
+                    raise ConflictError("handoff transport token is invalid")
+                verify_peer(channel)
+                with self._token_lock:
+                    if self.used:
+                        raise ConflictError("handoff transport token was already consumed")
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise TimeoutError("handoff transport authentication timed out")
+                    channel.settimeout(remaining)
+                    channel.sendall(b"\x01")
+                    self.used = True
+                channel.settimeout(self.timeout)
+                return channel
+            except (ConflictError, OSError):
+                # A local connection is not admission. Keep the capability for
+                # the selected child, with no new budget for rejected peers.
+                channel.close()
+            except BaseException:
+                channel.close()
+                raise
 
-    def accept_child(self, parent):
+    def accept_child(self, parent, *, deadline=None):
         def select(observed):
             actual = platform.process_identity(observed["pid"])
             if actual is None or actual.get("parent_pid") != parent["pid"]:
                 raise ConflictError("handoff child launch lineage is invalid")
             return observed
-        return self.accept(select), None
+        return self.accept(select, deadline=deadline), None
 
     def close(self):
         self.socket.close()
@@ -326,10 +340,11 @@ class InheritedHandles:
             raise
 
     def authenticate(self, process):
+        deadline = time.monotonic() + self.listener.timeout
         expected = identity(platform.handoff_child_identity(process))
-        channel = self.listener.accept(expected)
+        channel = self.listener.accept(expected, deadline=deadline)
         try:
-            if read_exact(channel, 1) != b"\x02":
+            if read_exact(channel, 1, deadline=deadline) != b"\x02":
                 raise ConflictError("worker bootstrap authentication was incomplete")
         finally:
             channel.close()
