@@ -382,6 +382,20 @@ class Backend:
                 shutil.rmtree(data_path)
             except OSError:
                 residue.append(data_path)
+        # The thin line bootstraps under the default root even when the managed
+        # program uses --root. Only remove that exact supplied bootstrap.
+        bootstrap = self.service.registry.parent / "bootstrap"
+        if root != bootstrap.parent and self.uv.parent == bootstrap and bootstrap.exists():
+            try:
+                absolute(bootstrap)
+                shutil.rmtree(bootstrap)
+            except (OSError, ValueError):
+                residue.append(bootstrap)
+            else:
+                try:
+                    bootstrap.parent.rmdir()
+                except OSError:
+                    pass  # Other files in the default root remain untouched.
         return residue
 
     def open(self) -> None:

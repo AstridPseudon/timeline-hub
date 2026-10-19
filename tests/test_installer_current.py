@@ -15,6 +15,8 @@ def test_partial_uninstall_can_finish_after_version_metadata_was_removed(tmp_pat
     from runtime_protocol import platform
 
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path / "home"))
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local-app-data"))
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg-data"))
     monkeypatch.setattr(platform, "log_dir", lambda: tmp_path / "logs")
     root, data = tmp_path / "program", tmp_path / "workspace"
