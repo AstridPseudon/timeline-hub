@@ -300,3 +300,67 @@ hard blocker vs M1 >; group/order inverse support; real CLI/Python/sheet adapter
 These are proposals/evidence, not M1 fixes or parity claims. M1 original capture
 and single-move semantics remain unchanged. No repository product/test edits,
 new agents, product tests, git mutation or merge. M1 always wins conflicts.
+
+## Merged Agent full-suite delta — triage required (2026-10-19T20:53Z)
+
+Central `agent-full-1019193420-11899` on the frozen Agent tree
+`3c67145375d72f2507a22cdce54146ed240e45ad` completed with **11,652 passed,
+116 failed, 456 skipped, 15 errors, 563 subtests passed, 13 warnings, in
+2,392.19s (0:39:52)**. Exact command was
+`/home/user/work/venv-agent/bin/python -m pytest -q -n 3`. The pre-port
+`agent-full-1019191532-6465` was 11,503 passed, 48 failed, 456 skipped, 15
+errors, 563 subtests in 3,433.42s (0:57:13). Set comparison found all 63 old
+non-passing nodes still present, no resolved nodes, and 68 newly failing
+nodes.
+
+Two M1 integration regressions are concrete and need owner follow-up; no code
+was changed here:
+
+* `tests/test_artifact_manifest.py::test_cli_surface_is_current` and
+  `::test_planted_cli_surface_drift_is_named` now report `timelines undo:
+  changed`. M1 changed `astrid/packs/timeline/cli.py` to expose publication
+  undo, but did not update the generated `cli-surface.json`. This is a stale
+  generated artifact, not an inherited RunPod/setup failure.
+* The existing structure node
+  `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale`
+  still fails, but its cause changed. Baseline complained about the inherited
+  `generic_host.py` rationale count; merged M1 now reports missing rationale
+  for `astrid/sdk/workspace_client.py`, which grew from 1,191 to 1,243 lines
+  (+52 net) in the M1 client change. Add/update the inventory as a delivery
+  fix; do not hide the failure or alter the threshold.
+
+The other newly failing M1-adjacent nodes are contract/fixture compatibility
+breaks, not yet proof of a live product defect; preserve their expectations
+and resolve them against the settled contract:
+
+* 61 `tests/core/execution/test_generic_host_child_bridge_d18.py` nodes fail
+  before the mocked transport runs because M1's generated client now calls
+  `_require_loopback`, while these unchanged fixtures construct
+  `WorkspaceClient("http://runtime", "shared-auth")`. The concrete error is
+  `ValueError: refusing to send a runtime credential to non-loopback host
+  'runtime'`. The fixture alias is outside the local-door policy, so live
+  loopback behavior is unverified; either use an allowed loopback fixture or
+  an explicit test transport without weakening the policy.
+* `tests/test_generic_host.py::test_vendored_runtime_client_timeout_is_bounded_and_request_correlated`
+  fails because the new `_urlopen_loopback` uses `build_opener().open`, so its
+  old `urllib.request.urlopen` monkeypatch sees no call (`captured` has no
+  `timeout`). The source still passes `self.timeout` to `opener.open`; this is
+  an internal test seam compatibility break, and a live timeout/request-ID
+  assertion was not established by this full run.
+* `tests/packs/rendering/test_timeline_visualize_motion_views.py::test_visualize_prints_page_counts_timing_and_next_commands`
+  now sees the deliberate `revision unavailable` provenance line before the
+  timing line because the fixture supplies no snapshot/inspection revision.
+  This is a stale output fixture under the revision-label contract, not
+  evidence that a real revision was mislabeled.
+* The three `tests/sdk/test_timeline_cuts.py` nodes fail with
+  `immutable timeline read omitted its revision identity`: the fixture puts
+  `revision_id` only in the envelope, while M1 intentionally accepts identity
+  only from `bundle.base_parent.revision_id`. This is the required immutable
+  readback hardening; the test fixture does not prove a live readback defect.
+
+No newly non-passing node was observed in the M1 registry/provider/outbox,
+editing-conformance, commit-runtime, sync, or workspace-client M1 test files.
+That focused fact is not a green M1/full-suite claim. The 63 still-failing
+baseline nodes retain their prior setup/inherited classifications except for
+the structure node's M1-induced rationale cause above. Full details and the
+machine comparison are in `design/agent-m1-full-review.md`.
