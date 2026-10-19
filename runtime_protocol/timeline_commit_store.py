@@ -251,8 +251,15 @@ class TimelineCommitStore:
             self._membership(project_id, timeline_id)
             parent = self.conn.execute("SELECT * FROM parent_composition_revisions WHERE id=? AND project_id=? AND timeline_id=?",
                                        (revision_id, project_id, timeline_id)).fetchone()
-            if parent is None or parent["commit_manifest_json"] is None:
+            if parent is None:
                 reject("history_unavailable")
+            if parent["commit_manifest_json"] is None:
+                from .cas import ContentAddressedStore
+                from .timeline_commit_baseline import verify_revision_source
+                document = verify_revision_source(self.conn, project_id, timeline_id, revision_id,
+                                                   read_object=ContentAddressedStore(self.store.cas_root).read)
+                self._validate_closure(document)
+                return document
             manifest = json.loads(parent["commit_manifest_json"])
             document = {"schema_version": 1, "project_id": project_id, "timeline_id": timeline_id,
                         "parent_revision": self._image(parent), "shot_revisions": [],
