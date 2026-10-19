@@ -1,7 +1,7 @@
 import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 import { reorderTimelineRows } from '@/tools/video-editor/lib/timeline-row-layout.ts';
 import { trackRole } from '@/tools/video-editor/data/timelineOutputProjection.ts';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
 import { addTrack, getTrackIndex } from '@/tools/video-editor/lib/editor-utils.ts';
 import { DEFAULT_VIDEO_TRACKS } from '@/tools/video-editor/lib/defaults.ts';
@@ -20,6 +20,7 @@ import type { TimelineApplyEdit } from '@/tools/video-editor/hooks/timeline-stat
 import type { TimelineEventBus } from '@/tools/video-editor/hooks/useTimelineEventBus.ts';
 import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
 import { allowTimelineEdits, type TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
+import { captureTrackLabelEdit, submitTrackLabelEdit, type TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 import { toast } from '@/shared/components/ui/toast.tsx';
 
 const NO_PROTECTED_TRACKS: ReadonlySet<string> = new Set();
@@ -30,6 +31,7 @@ export interface UseTimelineTrackManagementArgs {
   selectedClipId: string | null;
   setSelectedTrackId: React.Dispatch<React.SetStateAction<string | null>>;
   applyEdit: TimelineApplyEdit;
+  trackLabelPort?: TrackLabelCapturePort;
   /**
    * Optional event bus for surfacing dropped edits (the null-data
    * moveClipToRow early return). Optional so tests and embed hosts that
@@ -43,6 +45,7 @@ export interface UseTimelineTrackManagementArgs {
 
 export interface UseTimelineTrackManagementResult {
   handleAddTrack: (kind: TrackKind) => void;
+  handleTrackLabelEditStart: (trackId: string) => (label: string) => void;
   handleTrackPopoverChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
   handleMoveTrack: (activeId: string, overId: string, lanes?: readonly DataLaneView[]) => void;
   handleRemoveTrack: (trackId: string) => void;
@@ -242,10 +245,13 @@ export function useTimelineTrackManagement({
   selectedClipId,
   setSelectedTrackId,
   applyEdit,
+  trackLabelPort,
   eventBus,
   editability = allowTimelineEdits,
   protectedTrackIds = NO_PROTECTED_TRACKS,
 }: UseTimelineTrackManagementArgs): UseTimelineTrackManagementResult {
+  const editabilityRef = useRef(editability);
+  editabilityRef.current = editability;
   const applyResolvedClipMove = useCallback((
     clipId: string,
     targetRowId: string,
@@ -897,7 +903,32 @@ export function useTimelineTrackManagement({
     applyEdit({ type: 'config', resolvedConfig: nextResolvedConfig }, { selectedTrackId: nextTrack?.id ?? null });
   }, [applyEdit, resolvedConfig]);
 
+  const handleTrackLabelEditStart = useCallback((trackId: string) => {
+    const current = dataRef.current;
+    if (!current) throw new Error('Timeline data is not ready.');
+    const checkEditable = () => {
+      const guard = editabilityRef.current;
+      const timelineDecision = guard.checkTimeline?.();
+      if (timelineDecision?.allowed === false) {
+        throw new Error(timelineDecision.reason ?? 'Timeline editing is unavailable.');
+      }
+      const trackDecision = guard.check({
+        clipId: '__track-label__', sourceTrackId: trackId, targetTrackId: trackId,
+      });
+      if (!trackDecision.allowed) throw new Error(trackDecision.reason ?? 'Track editing is unavailable.');
+    };
+    checkEditable();
+    const captured = captureTrackLabelEdit(trackLabelPort, current, trackId);
+    return (label: string) => {
+      checkEditable();
+      submitTrackLabelEdit(captured, { values: { label }, clear: [] });
+    };
+  }, [dataRef, trackLabelPort]);
+
   const handleTrackPopoverChange = useCallback((trackId: string, patch: Partial<TrackDefinition>) => {
+    if (Object.prototype.hasOwnProperty.call(patch, 'label')) {
+      throw new Error('Track names require a captured label edit; mixed track changes are unsupported.');
+    }
     if (!resolvedConfig) {
       return;
     }
@@ -1042,6 +1073,7 @@ export function useTimelineTrackManagement({
 
   return {
     handleAddTrack,
+    handleTrackLabelEditStart,
     handleTrackPopoverChange,
     handleMoveTrack,
     handleRemoveTrack,
