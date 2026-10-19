@@ -10,11 +10,19 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from astrid.core.rendering.remotion_runtime import (
-    RemotionValidationError,
-    probe_context,
-    remotion_runtime_status,
-)
+
+def remotion_runtime_status(*args, **kwargs):
+    """Resolve renderer admission only when a native scene query is requested."""
+    from astrid.core.rendering.remotion_runtime import remotion_runtime_status as _status
+
+    return _status(*args, **kwargs)
+
+
+def probe_context(*args, **kwargs):
+    """Resolve renderer environment probing only when a native scene query is requested."""
+    from astrid.core.rendering.remotion_runtime import probe_context as _probe
+
+    return _probe(*args, **kwargs)
 
 
 class SceneQueryUnavailable(RuntimeError):
@@ -35,6 +43,11 @@ def frames_at(scene: Mapping[str, Any], frames: Iterable[int]) -> list[dict[str,
 
 
 def _query(payload: dict[str, Any], frames: Iterable[int]) -> list[dict[str, Any]]:
+    try:
+        from astrid.core.rendering.remotion_runtime import RemotionValidationError
+    except ImportError as exc:
+        raise SceneQueryUnavailable(f"scene evaluation unavailable: {exc}") from exc
+
     try:
         runtime = remotion_runtime_status(require_explicit_project=True)
         if not runtime.available or runtime.project_dir is None or runtime.node_executable is None:

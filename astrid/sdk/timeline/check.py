@@ -6,6 +6,7 @@ import dataclasses
 import json
 import re
 from dataclasses import dataclass
+from types import SimpleNamespace
 from typing import Any, Iterable, Mapping
 
 from astrid.core.timeline import moments as mo
@@ -79,10 +80,11 @@ class _CheckMixin:
 
     def _on_screen(self, answers=None, *, unavailable="exact compiled Root props and resolved runtime theme unavailable") -> list:
         """Scene findings are advisory; raw checkout clips are not render props."""
-        from astrid.core.timeline.scene_answers import Span, spans_from_frames
-
         if answers is None:
-            return [Span(0, int(round(self.duration * self.fps)), "UNAVAILABLE", None, (), (unavailable,))]
+            return [SimpleNamespace(start_frame=0, end_frame=int(round(self.duration * self.fps)),
+                                    cls="UNAVAILABLE", content=None, clips=(), findings=(unavailable,))]
+        from astrid.core.timeline.scene_answers import spans_from_frames
+
         return spans_from_frames(answers)
 
     def _showing(self, a: float, b: float) -> list[str]:

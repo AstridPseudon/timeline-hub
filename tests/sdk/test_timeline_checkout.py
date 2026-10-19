@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import copy
-from pathlib import Path
 import json
+import os
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -1704,3 +1707,38 @@ def test_sprite_scale_and_source_integrity_diagnostics_remain_renderer_free(monk
     assert any("DAMAGED-ART" in line and "hourglass" in line and "0.56" in line for line in lines)
     internal["registry"]["assets"]["H"]["pixel_provenance"]["outline_integrity"]["fraction"] = 0.02
     assert not any("DAMAGED-ART" in line and "hourglass" in line for line in Checkout(data).check().problems)
+
+
+def test_default_check_reports_scene_unavailable_without_renderer_imports():
+    script = r'''
+import builtins
+import json
+from pathlib import Path
+
+blocked = ("astrid.core.timeline.scene_answers", "astrid.core.rendering")
+real_import = builtins.__import__
+
+def guarded_import(name, *args, **kwargs):
+    if any(name == prefix or name.startswith(prefix + ".") for prefix in blocked):
+        raise AssertionError(f"renderer import during default check: {name}")
+    return real_import(name, *args, **kwargs)
+
+builtins.__import__ = guarded_import
+from astrid.sdk.timeline_checkout import Checkout
+
+candidate = json.loads(Path("tests/fixtures/timeline_editing/tiny_publishable.json").read_text())
+report = Checkout(candidate).check()
+assert report.valid
+assert any("UNAVAILABLE" in line for line in report.problems)
+invalid = json.loads(Path("tests/fixtures/timeline_editing/tiny_publishable.json").read_text())
+invalid["shots"]["B"]["internal_timeline"]["clips"][0]["hold"] = 0
+assert not Checkout(invalid).check().valid
+print("ok")
+'''
+    root = Path(__file__).resolve().parents[2]
+    environment = dict(os.environ)
+    environment["PYTHONPATH"] = str(root)
+    result = subprocess.run([sys.executable, "-c", script], cwd=root, env=environment,
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.strip() == "ok"
