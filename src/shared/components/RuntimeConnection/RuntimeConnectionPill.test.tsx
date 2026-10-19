@@ -78,8 +78,8 @@ describe('RuntimeConnectionPill', () => {
     expect(onReload).toHaveBeenCalledOnce();
   });
 
-  it('a different realm after connecting is the same restart card, not a second message', async () => {
-    const fetchImpl = healthRoute(healthy('instance-1'), json({ error: 'realm_changed' }, 503));
+  it('another identity behind the door after connecting is the same restart card, not a second message', async () => {
+    const fetchImpl = healthRoute(healthy('instance-1'), json({ error: 'runtime_identity_mismatch' }, 503));
     render(<RuntimeConnectionPill connection={connected()} fetchImpl={fetchImpl} restartCheckIntervalMs={5} />);
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Astrid restarted' })).toBeInTheDocument());

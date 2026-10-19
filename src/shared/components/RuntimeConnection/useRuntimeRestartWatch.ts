@@ -6,11 +6,12 @@ import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
  *
  * The client fences a restarted Runtime only when a request reaches it, and a connected page that is reading
  * nothing would never make one. So this asks the health route on an interval and on focus: the instance id seen
- * at the first answer is the baseline, and a different id is a restart. A gateway 503 `realm_changed` is a
- * different workspace. Both are sticky: once seen, the page keeps its drafts and waits for Reload.
+ * at the first answer is the baseline, and a different id is a restart. The door's 503 `runtime_identity_mismatch` (its
+ * credential now names another identity) is Astrid changed under the page. Both are sticky: once seen, the page keeps its
+ * drafts and waits for Reload.
  *
  * Two readings in a row that fail are `stopped`. A failed reading is a network error (nothing answers, about 6 seconds),
- * a 503 that is not a realm change (the launcher's gateway still answers but the engine behind it is down), or any other
+ * a 503 that is not an identity change (the Runtime's door answers but the Runtime is not ready), or any other
  * answer that is not ok. That one is not sticky: a reading with the same instance clears it, and a new instance is a
  * restart. An ok answer that names no instance is not a restart and changes nothing.
  */
@@ -54,8 +55,8 @@ async function readHealth(fetchImpl: FetchLike): Promise<HealthReading> {
   if (response.status === 503) {
     const body = await readJson(response);
     const code = typeof body === 'object' && body !== null ? (body as { error?: unknown }).error : undefined;
-    // A gateway that answers 503 while the engine behind it is down is as stopped as one that does not answer at all.
-    return code === 'realm_changed' ? { kind: 'realm_changed' } : { kind: 'unreachable' };
+    // A door that answers 503 because the Runtime is not ready is as stopped as one that does not answer at all.
+    return code === 'runtime_identity_mismatch' ? { kind: 'realm_changed' } : { kind: 'unreachable' };
   }
   if (!response.ok) return { kind: 'unreachable' };
   const body = await readJson(response);

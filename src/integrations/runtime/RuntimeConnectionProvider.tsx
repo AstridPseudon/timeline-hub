@@ -40,26 +40,23 @@ import {
   runtimeOrigin,
   type RuntimeConnectionState,
 } from './connection.ts';
-import { appUrlFromHealth, type RuntimeRefusalCode } from './gatewayHealth.ts';
-import { setRuntimeAppUrl } from './runtimeAppUrl.ts';
 import { autoConnectRequested, takeAutoConnectRequest } from './autoConnectRequest.ts';
 import type { Realm } from './generated.ts';
 
 const POLL_INTERVAL_MS = 3000;
 const PROBE_TIMEOUT_MS = 5000;
 const CONNECTED_BEFORE_KEY = 'astrid.runtime.connectedBefore';
+/** The `error` codes of the Runtime door's refusals (astrid-runtime runtime_protocol/door.py): the only error bodies the page reads as the door's. */
+export type RuntimeRefusalCode = 'runtime_unavailable' | 'runtime_identity_mismatch';
 const GATEWAY_REFUSAL_OUTCOMES: Readonly<Record<RuntimeRefusalCode, 'down' | 'restart'>> = Object.freeze({
   runtime_unavailable: 'down',
-  runtime_discovery_invalid: 'down',
-  realm_changed: 'restart',
   runtime_identity_mismatch: 'restart',
 });
 
 type RealmSummary = Pick<Realm, 'realm_id' | 'display_name'>;
 
 export type RuntimeProbeOutcome =
-  /** `appUrl`: the local app address the gateway reported in its health answer (`gatewayHealth.ts`), null when it gave none. */
-  | { kind: 'connected'; realm: RealmSummary; appUrl: string | null }
+  | { kind: 'connected'; realm: RealmSummary }
   | { kind: 'restart' }
   | { kind: 'down' }
   | { kind: 'silent' };
@@ -106,7 +103,7 @@ export async function probeRuntime(
   if ('kind' in realm) return realm;
   const { realm_id, display_name } = (realm.body ?? {}) as Partial<RealmSummary>;
   if (typeof realm_id !== 'string' || typeof display_name !== 'string') return { kind: 'silent' };
-  return { kind: 'connected', realm: { realm_id, display_name }, appUrl: appUrlFromHealth(health.body) };
+  return { kind: 'connected', realm: { realm_id, display_name } };
 }
 
 function readConnectedBefore(): boolean {
@@ -238,7 +235,6 @@ export function RuntimeConnectionProvider({
     // interval tick or focus event that lands before that render would otherwise start a second probe.
     if (result.kind === 'connected') {
       connectedRef.current = true;
-      setRuntimeAppUrl(result.appUrl);
     }
     setFailedReadings((previous) => result.kind === 'connected' ? 0 : previous + 1);
     if (result.kind === 'down') setGatewayAnswered(true);

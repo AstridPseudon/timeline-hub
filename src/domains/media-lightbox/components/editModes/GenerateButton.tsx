@@ -10,7 +10,6 @@ import { Button } from '@/shared/components/ui/button';
 import { CheckCircle, Loader2, Paintbrush, Pencil, Sparkles } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { BrushStroke } from '../../hooks/inpainting/types';
-import { LocalAppNote } from '@/shared/components/RuntimeConnection/LocalAppNote.tsx';
 import { composeDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
 
 interface GenerateButtonProps {
@@ -100,7 +99,7 @@ export const GenerateButton: React.FC<GenerateButtonProps> = ({
       )}
     </Button>
     {disabledReason && (
-      <LocalAppNote message={disabledReason} className={isMobile ? 'text-[10px]' : 'text-xs'} />
+      <p role="note" className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>{disabledReason}</p>
     )}
     </>
   );

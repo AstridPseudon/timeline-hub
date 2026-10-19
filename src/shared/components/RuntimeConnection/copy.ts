@@ -118,10 +118,8 @@ export interface RuntimeConnectionCopy {
     /** One block an agent can act on. `pageOrigin` is `window.location.origin`, the origin the gateway must accept. */
     readonly instructions: (pageOrigin: string, variant: AgentInstructionsVariant) => string;
   };
-  /** Next to the compose controls the hosted build disables (card A2.X); followed by `openApp` when the app address is known. */
+  /** Next to the compose controls the hosted build disables (card A2.X). */
   readonly composeDisabled: string;
-  /** The link text after `composeDisabled`; it never shows the address. */
-  readonly openApp: string;
 }
 
 export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
@@ -240,8 +238,6 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   },
 
   composeDisabled: "Making new images isn't on this page yet.",
-
-  openApp: 'Open the full editor',
 };
 
 /**

@@ -10,7 +10,6 @@ import {
 } from './RuntimeConnectionProvider.tsx';
 import type { PermissionsLike } from './localNetworkPermission.ts';
 import { autoConnectRequested, requestAutoConnect } from './autoConnectRequest.ts';
-import { runtimeAppUrl, setRuntimeAppUrl } from './runtimeAppUrl.ts';
 import { RuntimeConnectionPanel } from '@/shared/components/RuntimeConnection/RuntimeConnectionPanel.tsx';
 
 const REALM = { realm_id: 'realm-1', display_name: 'Direct Journey' };
@@ -97,7 +96,6 @@ beforeEach(() => {
   vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
   );
-  setRuntimeAppUrl(null);
 });
 
 afterEach(() => {
@@ -233,7 +231,8 @@ describe('granted', () => {
     expect(latest.state).toEqual({ status: 'not_running' });
   });
 
-  it.each(['realm_changed', 'runtime_identity_mismatch'])('shows %s as restart_needed immediately', async (code) => {
+  it('shows runtime_identity_mismatch as restart_needed immediately', async () => {
+    const code = 'runtime_identity_mismatch';
     const gateway = fakeGateway();
     gateway.gatewayDown(code);
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
@@ -615,28 +614,6 @@ describe('gate: the landing page already asked to go in', () => {
     vi.spyOn(Object.getPrototypeOf(window.localStorage), 'setItem').mockImplementation(() => { throw new Error('blocked'); });
     expect(() => requestAutoConnect()).not.toThrow();
     expect(autoConnectRequested()).toBe(false);
-  });
-});
-
-describe('the local app address', () => {
-  it('is taken from the gateway\'s health answer when it connects', async () => {
-    const gateway = fakeGateway();
-    gateway.routes['/v1/health'] = () => json({ status: 'ok', protocol: 'workspace.v1', app_url: 'http://127.0.0.1:2222' });
-    renderProvider(gateway, fakePermissions('granted').permissions);
-
-    await waitFor(() => expect(status()).toBe('connected'));
-    expect(runtimeAppUrl()).toBe('http://127.0.0.1:2222');
-  });
-
-  it('is absent when the gateway does not report one, or reports something that is not a loopback app address', async () => {
-    for (const body of [{ status: 'ok', protocol: 'workspace.v1' }, { status: 'ok', protocol: 'workspace.v1', app_url: 'https://evil.test' }]) {
-      const gateway = fakeGateway();
-      gateway.routes['/v1/health'] = () => json(body);
-      const view = renderProvider(gateway, fakePermissions('granted').permissions);
-      await waitFor(() => expect(status()).toBe('connected'));
-      expect(runtimeAppUrl()).toBeNull();
-      view.unmount();
-    }
   });
 });
 

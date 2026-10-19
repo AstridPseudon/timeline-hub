@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
-import { setRuntimeAppUrl } from '@/integrations/runtime/runtimeAppUrl.ts';
 
 let origin = '';
 vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeOrigin: () => origin }));
@@ -21,25 +20,12 @@ function renderControls() {
   );
 }
 
-afterEach(() => setRuntimeAppUrl(null));
-
 describe('GenerateControls on the hosted build', () => {
-  it('follows the compose line with an "Open the full editor" link to the local app, without showing its address', () => {
-    origin = 'http://127.0.0.1:17340';
-    setRuntimeAppUrl('http://127.0.0.1:2222');
-    renderControls();
-
-    expect(screen.getByText("Making new images isn't on this page yet.")).toBeInTheDocument();
-    const link = screen.getByRole('link', { name: 'Open the full editor' });
-    expect(link).toHaveAttribute('href', 'http://127.0.0.1:2222');
-    expect(screen.getByRole('note').textContent).not.toContain('127.0.0.1');
-  });
-
-  it('renders no link when the gateway did not report the app address', () => {
+  it('shows the plain disabled-reason note with no link to a local app', () => {
     origin = 'http://127.0.0.1:17340';
     renderControls();
 
-    expect(screen.getByText(RUNTIME_CONNECTION_COPY.composeDisabled)).toBeInTheDocument();
+    expect(screen.getByRole('note')).toHaveTextContent("Making new images isn't on this page yet.");
     expect(screen.queryByRole('link')).toBeNull();
   });
 
