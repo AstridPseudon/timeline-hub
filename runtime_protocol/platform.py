@@ -899,6 +899,54 @@ def _signal_linux_group(process, signum):
     os.killpg(process.pid, signum)
 
 
+def _linux_pidfd_syscall(operation, *arguments):
+    """Use verified Linux syscall ABIs when Python lacks a pidfd wrapper."""
+    if sys.platform != "linux":
+        raise NotImplementedError("identity-safe process signaling requires Linux pidfd support")
+    machine = os.uname().machine
+    widths = (ctypes.sizeof(ctypes.c_void_p), ctypes.sizeof(ctypes.c_long))
+    # Linux's x86, ARM EABI, powerpc and s390 syscall tables agree with
+    # asm-generic/unistd.h (used by arm64, riscv and loongarch) for these calls.
+    # x32 adds __X32_SYSCALL_BIT; MIPS uses ABI-specific syscall bases.
+    # Neither is safe to infer from the kernel's machine name alone.
+    native_width = {
+        "x86_64": 8, "i386": 4, "i486": 4, "i586": 4, "i686": 4,
+        "aarch64": 8, "armv6l": 4, "armv7l": 4,
+        "ppc64": 8, "ppc64le": 8, "s390x": 8, "riscv64": 8, "loongarch64": 8,
+    }.get(machine)
+    multiarch = getattr(sys.implementation, "_multiarch", "")
+    x32 = "x32" in multiarch  # PER_LINUX32 can make x32 report an i686 machine.
+    arm_eabi = machine not in {"armv6l", "armv7l"} or multiarch.endswith(
+        ("-gnueabi", "-gnueabihf", "-musleabi", "-musleabihf")
+    )
+    if native_width is None or widths != (native_width, native_width) or x32 or not arm_eabi:
+        raise NotImplementedError(
+            f"Linux pidfd syscall fallback does not support ABI {machine} "
+            f"(pointer/long bytes {widths}, multiarch {multiarch!r})"
+        )
+    values = []
+    for argument in arguments:
+        if argument is None:
+            values.append(ctypes.c_void_p())
+        else:
+            value = ctypes.c_int(argument)
+            if value.value != argument:
+                raise OverflowError("pidfd syscall argument does not fit a C int")
+            values.append(value)
+    try:
+        syscall = ctypes.CDLL(None, use_errno=True).syscall
+    except AttributeError as exc:
+        raise NotImplementedError("Linux pidfd syscall fallback requires libc syscall support") from exc
+    syscall.argtypes = [ctypes.c_long]
+    syscall.restype = ctypes.c_long
+    number = {"pidfd_open": 434, "pidfd_send_signal": 424}[operation]
+    result = syscall(number, *values)
+    if result == -1:
+        error = ctypes.get_errno()
+        raise OSError(error, f"{operation} failed: {os.strerror(error)}")
+    return int(result)
+
+
 def signal_process(expected, signum):
     """Signal one incarnation via pidfd / retained Windows handle, never a bare PID."""
     if not expected:
@@ -949,14 +997,19 @@ def signal_process(expected, signum):
         finally:
             kernel.CloseHandle(handle)
         return
-    if not hasattr(os, "pidfd_open") or not hasattr(signal, "pidfd_send_signal"):
+    opener = getattr(os, "pidfd_open", None)
+    sender = getattr(signal, "pidfd_send_signal", None)
+    if sys.platform != "linux" and (opener is None or sender is None):
         raise NotImplementedError("identity-safe process signaling requires Linux pidfd support")
-    fd = os.pidfd_open(pid)
+    fd = opener(pid) if opener is not None else _linux_pidfd_syscall("pidfd_open", pid, 0)
     try:
         observed = process_identity(pid)
         if observed is None or any(observed.get(k) != expected.get(k) for k in ("pid", "uid", "birth_id")):
             raise OSError("process incarnation changed")
-        signal.pidfd_send_signal(fd, signum)
+        if sender is not None:
+            sender(fd, signum)
+        else:
+            _linux_pidfd_syscall("pidfd_send_signal", fd, signum, None, 0)
     finally:
         os.close(fd)
 
