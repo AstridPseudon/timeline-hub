@@ -22,14 +22,17 @@ PATTERNS = [
     "conformance/fixtures/*.json",
     "conformance/responses/*.json",
     "conformance/*.yaml",
+    "generators/release.json",
+    "packages/python/pyproject.toml",
     "packages/python/astrid_runtime_client/__init__.py",
     "packages/python/astrid_runtime_client/generated.py",
     "packages/python/astrid_runtime_client/contract_metadata.py",
     "packages/typescript/src/generated.ts",
     "packages/typescript/src/contract-metadata.ts",
-    "clients/typescript/generated.ts",
-    "clients/typescript/contract-metadata.ts",
-    "clients/typescript/manifest.json",
+    "packages/typescript/src/index.ts",
+    "packages/typescript/package.json",
+    "packages/typescript/package-lock.json",
+    "packages/typescript/tsconfig.json",
 ]
 
 

@@ -795,13 +795,68 @@ def test_preferences_generated_client_rejects_invalid_scope_and_user_project_sel
     {"data": {**_preference_fixture(), "actor_id": None}, "receipt": None},
     {"data": {**_preference_fixture(), "project_id": "forged"}, "receipt": None},
     {"data": {**_preference_fixture(), "document_id": "other"}, "receipt": None},
-    {"data": {**_preference_fixture(), "extra": "value"}, "receipt": None},
-    {"data": _preference_fixture(), "receipt": None, "extra": "value"},
+    {"data": {key: value for key, value in _preference_fixture().items() if key != "version"}, "receipt": None},
 ])
-def test_preferences_user_null_receipt_decoder_is_narrow(response) -> None:
+def test_preferences_user_null_receipt_decoder_validates_known_fields(response) -> None:
     client = WorkspaceClient("http://runtime", transport=lambda *args: (200, {}, json.dumps(response).encode()))
     with pytest.raises(ApiError, match="invalid_response"):
         client.update_preferences("user", "content", 0, "key")
+
+
+def test_python_response_extensions_are_tolerated_and_opaque_payloads_survive() -> None:
+    resource = _preference_fixture()
+    future_payload = {"nested": [1, {"opaque": True}]}
+    calls = []
+
+    def transport(method, path, headers, body):
+        calls.append((method, path, json.loads(body) if body else None))
+        if path == "/v1/projects":
+            data = {
+                "project_id": "p", "realm_id": "r", "name": "Project",
+                "version": 1, "created_at": "t", "updated_at": "t",
+                "future_payload": future_payload,
+            }
+            return 201, {}, json.dumps({
+                "data": data, "receipt": {"receipt_id": "receipt-1"},
+                "future_envelope": future_payload,
+            }).encode()
+        data = {**resource, "future_payload": future_payload}
+        return 200, {}, json.dumps({
+            "data": data, "receipt": None, "future_envelope": future_payload,
+        }).encode()
+
+    client = WorkspaceClient("http://runtime", transport=transport)
+    mutation = client.create_project("Project", idempotency_key="create-1")
+    assert mutation.future_payload == future_payload
+    assert mutation.receipt == {"receipt_id": "receipt-1"}
+    assert calls[0][2] == {"name": "Project"}
+    preference = client.update_preferences("user", resource["content"], 1, "write-1")
+    assert preference.content == resource["content"]
+    assert preference.data.content == resource["content"]
+    assert calls[1][2] == {"content": resource["content"], "expected_version": 1}
+
+
+def test_preferences_get_tolerates_extensions_but_validates_known_fields() -> None:
+    invalid_resource = {
+        **_preference_fixture(),
+        "version": True,
+        "future_extension": {"opaque": [1, 2, 3]},
+    }
+    client = WorkspaceClient(
+        "http://runtime",
+        transport=lambda *args: (200, {}, json.dumps(invalid_resource).encode()),
+    )
+    with pytest.raises(ApiError, match="invalid_response"):
+        client.get_preferences("user")
+
+
+@pytest.mark.parametrize("data,receipt", [({}, "committed"), ({}, []), ([], {}), ("project", {})])
+def test_ordinary_mutation_extensions_do_not_bypass_known_field_types(data, receipt) -> None:
+    client = WorkspaceClient("http://runtime", transport=lambda *args: (201, {}, json.dumps({
+        "data": data, "receipt": receipt, "future_envelope": True,
+    }).encode()))
+    with pytest.raises(ApiError, match="invalid_response"):
+        client.create_project("Project", idempotency_key="key")
 
 
 def test_preferences_project_and_ordinary_mutations_still_require_receipts() -> None:

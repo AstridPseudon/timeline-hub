@@ -1,11 +1,13 @@
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
-import { ApiError, WorkspaceClient } from "../dist/generated.js";
+import { ApiError, CONTRACT_VERSION, WorkspaceClient } from "@astrid/runtime-client";
 
 const json = (value) => new TextEncoder().encode(JSON.stringify(value));
 
 test("generated TypeScript client performs scoped handshake and idempotent project admission", async () => {
+  const release = JSON.parse(readFileSync(new URL("../../../generators/release.json", import.meta.url), "utf8"));
+  assert.equal(CONTRACT_VERSION, release.contract_version);
   const calls = [];
   const transport = async (method, path, headers, body) => {
     calls.push({ method, path, headers, body });
@@ -21,6 +23,24 @@ test("generated TypeScript client performs scoped handshake and idempotent proje
   assert.equal(project.receipt.command_kind, "project.create");
   assert.equal(calls[1].headers.Authorization, "Bearer token");
   assert.equal(calls[1].headers["Idempotency-Key"], "idempotency-1");
+});
+
+test("public package exports the client and preserves response extensions without echoing envelope fields", async () => {
+  const extension = { vendor_payload: { nested: ["opaque", 3] } };
+  const extendedPreference = { ...preference, extension };
+  const calls = [];
+  const transport = async (method, path, headers, body) => {
+    calls.push({ method, path, body: body && JSON.parse(new TextDecoder().decode(body)) });
+    if (method === "GET") return { status: 200, headers: {}, body: json({ ...extendedPreference, response_extension: { retained: true } }) };
+    return { status: 200, headers: {}, body: json({ data: extendedPreference, receipt: null, envelope_extension: { ignored: true } }) };
+  };
+  const client = new WorkspaceClient("http://runtime", undefined, transport);
+  const received = await client.getPreferences("user");
+  assert.deepEqual(received.extension, extension);
+  assert.equal(received.response_extension.retained, true);
+  const updated = await client.updatePreferences("user", "edited", 0, "extension-write");
+  assert.deepEqual(updated.extension, extension);
+  assert.deepEqual(calls[1].body, { content: "edited", expected_version: 0 });
 });
 
 test("generated TypeScript client preserves inclusive range and strong ETag", async () => {
@@ -121,12 +141,11 @@ test("preference clients reject caller ownership and malformed null receipt resu
     { data: preference, receipt: {} },
     { data: preference },
     { data: { ...preference, content: {} }, receipt: null },
-    { data: { ...preference, version: true }, receipt: null },
+    { data: { ...preference, version: true, future_extension: { opaque: true } }, receipt: null, future_envelope: true },
+    { data: Object.fromEntries(Object.entries(preference).filter(([key]) => key !== "content")), receipt: null },
     { data: { ...preference, actor_id: null }, receipt: null },
     { data: { ...preference, project_id: "forged" }, receipt: null },
     { data: { ...preference, document_id: "other" }, receipt: null },
-    { data: { ...preference, extra: "value" }, receipt: null },
-    { data: preference, receipt: null, extra: "value" },
   ]) {
     const client = new WorkspaceClient("http://runtime", undefined, async () => ({ status: 200, headers: {}, body: json(response) }));
     await assert.rejects(() => client.updatePreferences("user", "text", 0, "key"), /invalid/);
@@ -138,6 +157,22 @@ test("null preference receipts do not weaken ordinary or project mutation decodi
   const client = new WorkspaceClient("http://runtime", undefined, async () => ({ status: 200, headers: {}, body: json({ data, receipt: null }) }));
   await assert.rejects(() => client.updatePreferences("project", "text", 0, "key"), /committed receipt/);
   await assert.rejects(() => client.updateDocument("p", "d", 1, "key", "text"), /committed receipt/);
+});
+
+test("ordinary mutation extensions do not bypass known data and receipt types", async () => {
+  for (const response of [
+    null, [], { data: {}, receipt: "committed" }, { data: {}, receipt: [] },
+    { data: [], receipt: {} }, { data: "project", receipt: {} },
+  ]) {
+    const body = response && !Array.isArray(response) ? { ...response, future_field: true } : response;
+    const client = new WorkspaceClient("http://runtime", undefined, async () => ({ status: 201, headers: {}, body: json(body) }));
+    await assert.rejects(() => client.createProject("Project", "key"), /invalid mutation response/);
+  }
+  const client = new WorkspaceClient("http://runtime", undefined, async () => ({ status: 201, headers: {}, body: json({ data: { project_id: "p", metadata: { opaque: [1, { future: true }] } }, receipt: { receipt_id: "r", future_receipt: true }, future_envelope: true }) }));
+  const result = await client.createProject("Project", "key");
+  assert.deepEqual(result.metadata, { opaque: [1, { future: true }] });
+  assert.equal(result.receipt.future_receipt, true);
+  assert.equal(result.future_envelope, undefined);
 });
 
 test("document kind filter preserves existing pagination arguments and escapes query values", async () => {

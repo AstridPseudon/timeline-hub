@@ -18,6 +18,15 @@ def test_committed_artifact_manifest_is_current() -> None:
     assert artifact_manifest.check() == [], "run `python scripts/artifact_manifest.py`"
 
 
+def test_release_manifest_contains_only_public_client_packages() -> None:
+    artifacts = artifact_manifest.build()["artifacts"]
+    assert "generators/release.json" in artifacts
+    assert "packages/python/pyproject.toml" in artifacts
+    assert "packages/typescript/package.json" in artifacts
+    assert "packages/typescript/src/index.ts" in artifacts
+    assert not any(path.startswith(("clients/", "conformance/typescript/")) for path in artifacts)
+
+
 def test_planted_one_byte_change_is_detected_and_named(tmp_path: Path) -> None:
     for relative in SAMPLE:
         target = tmp_path / relative

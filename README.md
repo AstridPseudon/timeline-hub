@@ -21,6 +21,45 @@ The repository contains the first independently runnable neutral-runtime slice. 
 
 The runtime owns durable structured state, task/lease semantics, capability registration, append-only CAS accounting, verified backup/restore/replacement, and the language-neutral protocol. Product repositories consume generated clients and never open its database or storage directly.
 
+## Client contract releases
+
+`generators/release.json` owns the contract version. Run
+`python generators/generate.py` to stamp the Python package, the TypeScript
+package and its lockfile, and their public `CONTRACT_VERSION` exports.
+`packages/python` (`astrid_runtime_client`) and `packages/typescript`
+(`@astrid/runtime-client`) are the two language packages in one release.
+The independent TypeScript client under `conformance/typescript` is test
+coverage, not a distributable. Shared fixtures and recorded responses live
+under `conformance/`.
+
+Before release, run:
+
+```bash
+python generators/generate.py --check
+node tools/generate_typescript_conformance.mjs \
+  --contract contract/openapi/workspace-v1.yaml \
+  --schema-manifest contract/manifest.json \
+  --component-manifest contract/component-manifest.json \
+  --fixture-root conformance/fixtures --check
+python scripts/artifact_manifest.py --check
+python -m pytest -q -n 2
+(cd packages/typescript && npm ci && npm test)
+```
+
+After changing released artifacts, regenerate `contract/artifacts.json` with
+`python scripts/artifact_manifest.py`. Its hashes verify the selected bytes;
+they are not interoperability admission rules. Release both packages, schemas
+and conformance fixtures together from a `contract-v<version>` Git tag
+(initially `contract-v0.1.0`). The release coordinator creates the tag after
+verification. Consumers resolve it to an immutable commit and record that
+commit as the sole dependency selector in `runtime.lock.json`; version, paths
+and hashes describe the selected release.
+
+Compatible additions increment the minor version, fixes increment the patch
+version, and incompatible wire changes require a protocol major. The release
+version is not a handshake admission gate. Response readers accept unknown
+fields while validating known fields; request shapes remain unchanged.
+
 ## Run it
 
 The local launcher accepts an absolute `--data-root` support directory on
