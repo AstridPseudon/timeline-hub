@@ -1,0 +1,13 @@
+# M1 preview consumer remote merge refused for missing metadata
+
+App home result hub/merge-results/app/vw-m1-projection-labels:
+`REFUSED .../bin/merge: line4: .../workers/vw-m1-projection-labels/meta: No such file or directory`.
+This is infrastructure adoption, NOT a code conflict/rejection. Branch timeline/app/tl/vw-m1-projection-labels is completed/reviewed at5c7ff0a8b. Narrow3PreviewPanel files; manager8files80pass previously. Producer/recovery now Appmirror dc77a3ca6 (b8cf6423e +34b9cfc93), so original code dependency is resolved.
+
+Recommend App AREA LEAD runs existing outside-sandbox `$ORCH/bin/adopt-remote-worker vw-m1-projection-labels app` (only if metadata absent), then preserves transferred review evidence rather than generic report. It creates metadata/worktree/branch based on fetched final hub ref. Home manager reviews diff/re-runs mounted consumer+producer, then request-merge and actual e2e-m1-gesture. Tool currently has no automatic remote adoption before bin/merge; do not keep retrying same missing-meta request. If metadata already exists by then but worktree absent, use documented area-lead recreation instead of rerunning worker. This machine must not mutate home integration.
+
+No test assertion/expectation change needed; no duplicate App full requested. Original consumer review evidence/source seam in design/app-m1-coordination.md. App published STATUS remains20:20 as of20:52, despite mirror code20:31; please ensure home manager/lead receives request. We continue independent audio-evaluator deletion while waiting.
+
+Tool evidence: bin/hub-sync lines134–142 fetches requested branch then directly queues MERGE, without creating worker meta/worktree or calling adopt. It then keeps existing merge-results forever. A retry needs home adoption + manager review + requeue AND stale refusal result cleared/updated by home lead; avoid blind repeated remote requests. Same issue may affect new Agent7a68b7ed request (home review/freeze ordering must remain Agent-controlled).
+
+RESOLVED AS PRODUCT BLOCKER21:11: final-basis worker on EXACTdc77a3ca6 proves no-op: all3consumer paths byte-identical5c7ff0a8b already. Newly received App20:45 STATUS confirms App composed producer+Viewing patch in b8cf6423e (116PASS11files); exact old worker commit is notancestor, but actualpatchcontent integrated. Manager had mistaken stale REFUSED/ancestry for missingproduct. No need adopt/retry/merge original5c; treat originalbranch superseded/recyclable and remote requestobsolete. Current paired consumer+producer118PASS8files onexactdc77. Actual M1 browser blocked by App HTTPSnavigationunderowneddiagnosis, not Viewingconsumer. Generalhub-sync metadata omission can be fixedbytoolowner later, no M1blockclaim.
