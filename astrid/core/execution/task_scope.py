@@ -189,11 +189,12 @@ def reap_orphans(path: Path | str) -> list[str]:
 def spawn(argv: Sequence[str], **popen_kwargs: Any) -> subprocess.Popen:
     """Start ``argv`` as the leader of a new session and group."""
     process = platform.spawn_tree(list(argv), **{**popen_kwargs, "start_new_session": True})
-    process._astrid_task_scope = True  # type: ignore[attr-defined]
-    process._astrid_scope_birth = _birth(process.pid)
+    setattr(process, "_astrid_task_scope", True)
+    birth = _birth(process.pid)
+    setattr(process, "_astrid_scope_birth", birth)
     _owners[process.pid] = process
     if _journal is not None:
-        entry = {"pid": process.pid, "pgid": process.pid, "start": process._astrid_scope_birth,
+        entry = {"pid": process.pid, "pgid": process.pid, "start": birth,
                  "task": str(popen_kwargs.get("cwd") or "")}
         _journal_edit(_journal, lambda entries: [*entries, entry])
     return process
@@ -248,7 +249,7 @@ def _killpg(pgid: int, sig: int) -> str:
         except ProcessLookupError:
             # Some command callers already reaped the leader. Reconcile the
             # recorded birth before Runtime binds each remaining member.
-            signal_observed_group(pgid, sig, leader_birth=process._astrid_scope_birth)
+            signal_observed_group(pgid, sig, leader_birth=getattr(process, "_astrid_scope_birth"))
     except ProcessLookupError:
         return ""
     except PermissionError as exc:  # a zombie-only group can answer EPERM on macOS

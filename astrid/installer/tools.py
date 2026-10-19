@@ -52,18 +52,18 @@ def extract(archive: Path, destination: Path) -> None:
     destination.mkdir(parents=True, exist_ok=True)
     if zipfile.is_zipfile(archive):
         with zipfile.ZipFile(archive) as bundle:
-            for member in bundle.infolist():
-                relative = archive_path(member.filename)
-                if stat.S_ISLNK(member.external_attr >> 16):
-                    raise ValueError(f"Archive contains a link: {member.filename}")
+            for zip_member in bundle.infolist():
+                relative = archive_path(zip_member.filename)
+                if stat.S_ISLNK(zip_member.external_attr >> 16):
+                    raise ValueError(f"Archive contains a link: {zip_member.filename}")
                 target = destination / relative
-                if member.is_dir():
+                if zip_member.is_dir():
                     target.mkdir(parents=True, exist_ok=True)
                 else:
                     target.parent.mkdir(parents=True, exist_ok=True)
-                    with bundle.open(member) as source, target.open("wb") as output:
+                    with bundle.open(zip_member) as source, target.open("wb") as output:
                         shutil.copyfileobj(source, output)
-                    target.chmod(0o755 if member.external_attr >> 16 & 0o111 else 0o644)
+                    target.chmod(0o755 if zip_member.external_attr >> 16 & 0o111 else 0o644)
         return
     with tarfile.open(archive) as bundle:
         for member in bundle:
@@ -72,8 +72,11 @@ def extract(archive: Path, destination: Path) -> None:
                 target.mkdir(parents=True, exist_ok=True)
             elif member.isfile():
                 target.parent.mkdir(parents=True, exist_ok=True)
-                with bundle.extractfile(member) as source, target.open("wb") as output:
-                    shutil.copyfileobj(source, output)
+                tar_source = bundle.extractfile(member)
+                if tar_source is None:
+                    raise ValueError(f"Archive regular entry cannot be read: {member.name}")
+                with tar_source, target.open("wb") as output:
+                    shutil.copyfileobj(tar_source, output)
                 target.chmod(0o755 if member.mode & 0o111 else 0o644)
             elif member.issym() or member.islnk():
                 # Official Node archives contain npm/npx links. The installer

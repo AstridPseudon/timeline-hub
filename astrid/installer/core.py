@@ -18,7 +18,7 @@ def linked(path: Path) -> bool:
         # Path.is_junction is unavailable on the pinned Python 3.11. This
         # also rejects other Windows reparse points before recursive copies.
         attributes = getattr(path.lstat(), "st_file_attributes", 0)
-        return bool(attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+        return bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT"))
     except FileNotFoundError:
         return False
 
