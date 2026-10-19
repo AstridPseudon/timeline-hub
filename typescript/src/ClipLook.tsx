@@ -3,6 +3,8 @@
 // clip's Sequence, so useCurrentFrame() is clip-local.
 
 import type {CSSProperties, ReactNode} from 'react';
+import type {AnimationRegistries} from './registries';
+import {useElementRegistries} from './RegistryContext';
 import {AbsoluteFill, Freeze, useCurrentFrame} from 'remotion';
 import {composeClipAnimationPhase} from './ClipAnimationPhase';
 import {
@@ -23,6 +25,7 @@ const IDENTITY_CROP_PATH = 'inset(0% 0% 0% 0%)';
 export type ClipLookProps = {
   clip: TimelineClip;
   fps: number;
+  registries?: AnimationRegistries;
   kind: 'element' | 'media';
   children: ReactNode;
   modifierRegistry?: ModifierRegistry;
@@ -33,7 +36,7 @@ export type ClipLookProps = {
 
 export const composeClipLook = ({clip, fps, kind, children, modifierRegistry = MODIFIER_REGISTRY,
   modifierBounds = {status: 'unknown', reason: 'Target has no declared bounds evaluator'},
-  globalFrame, onModifierFinding}: ClipLookProps, frame: number, theme: RuntimeTheme) => {
+  globalFrame, onModifierFinding, registries}: ClipLookProps, frame: number, theme: RuntimeTheme) => {
   const clipFrames = getClipDurationInFrames(clip, fps);
   const hasModifiers = (clip.modifiers?.length ?? 0) > 0;
 
@@ -74,8 +77,8 @@ export const composeClipLook = ({clip, fps, kind, children, modifierRegistry = M
     ? <Freeze frame={targetFrame}>{modified}</Freeze>
     : modified;
 
-  let content: ReactNode = composeClipAnimationPhase({clip, fps, theme, clipFrames, phase: 'entrance', reference: clip.entrance, children: body}, frame);
-  content = composeClipAnimationPhase({clip, fps, theme, clipFrames, phase: 'exit', reference: clip.exit, children: content}, frame);
+  let content: ReactNode = composeClipAnimationPhase({clip, fps, theme, clipFrames, registries, phase: 'entrance', reference: clip.entrance, children: body}, frame);
+  content = composeClipAnimationPhase({clip, fps, theme, clipFrames, registries, phase: 'exit', reference: clip.exit, children: content}, frame);
 
   return (
     <AbsoluteFill data-clip-id={clip.id} style={style}>
@@ -85,4 +88,7 @@ export const composeClipLook = ({clip, fps, kind, children, modifierRegistry = M
 };
 
 // A single hook adapter: no modifier component starts another clip clock.
-export const ClipLook = (props: ClipLookProps) => composeClipLook(props, useCurrentFrame(), useTheme());
+export const ClipLook = (props: ClipLookProps) => {
+  const registries = useElementRegistries();
+  return composeClipLook({...props, registries: props.registries ?? registries}, useCurrentFrame(), useTheme());
+};

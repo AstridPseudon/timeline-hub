@@ -2,6 +2,7 @@
 // The theme-api re-export now points at this in-package module.
 
 import type {ReactNode} from 'react';
+import type {AnimationRegistries} from '../registries';
 import {
   ANIMATION_DEFAULTS,
   ANIMATION_META,
@@ -12,7 +13,6 @@ import type {
   AnimationPhase,
   AnimationReference,
   AnimationReferenceList,
-  AnimationMeta,
   HookAnimationComponent,
   HookAnimationResult,
   WrapperAnimationComponent,
@@ -45,21 +45,19 @@ export type ComposeAnimationsInput = {
   theme: RuntimeTheme;
   fps: number;
   elapsedFrames: number;
+  registries?: AnimationRegistries;
 };
 
 const isObjectReference = (value: unknown): value is Exclude<AnimationReference, string> => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
-const animationRegistry = ANIMATION_REGISTRY as Record<string, AnimationComponent | undefined>;
-const animationDefaults = ANIMATION_DEFAULTS as Record<string, Record<string, unknown> | undefined>;
-const animationMeta = ANIMATION_META as Record<string, AnimationMeta | undefined>;
-
-const hasAnimationId = (id: string): boolean => Object.prototype.hasOwnProperty.call(animationRegistry, id);
-
 export const normalizeAnimationReferences = (
   refs: AnimationReferenceList | undefined,
+  registries: AnimationRegistries = {},
 ): NormalizedAnimationReference[] => {
+  const animationRegistry = registries.animations ?? ANIMATION_REGISTRY;
+  const hasAnimationId = (id: string) => Object.prototype.hasOwnProperty.call(animationRegistry, id);
   if (refs === undefined) {
     return [];
   }
@@ -91,8 +89,12 @@ export const normalizeAnimationReferences = (
 export const resolveAnimationReferences = (
   refs: AnimationReferenceList | undefined,
   phase: AnimationPhase,
+  registries: AnimationRegistries = {},
 ): ResolvedAnimation[] => {
-  return normalizeAnimationReferences(refs).map((ref) => {
+  const animationRegistry = registries.animations ?? ANIMATION_REGISTRY;
+  const animationDefaults = registries.animationDefaults ?? ANIMATION_DEFAULTS;
+  const animationMeta = registries.animationMeta ?? ANIMATION_META;
+  return normalizeAnimationReferences(refs, registries).map((ref) => {
     const meta = animationMeta[ref.id];
     if (!meta) {
       throw new Error(`Unknown animation id '${ref.id}'`);
@@ -157,8 +159,9 @@ export const composeAnimations = ({
   theme,
   fps,
   elapsedFrames,
+  registries,
 }: ComposeAnimationsInput): ReactNode => {
-  const resolved = resolveAnimationReferences(refs, phase);
+  const resolved = resolveAnimationReferences(refs, phase, registries);
   const hookAnimations = resolved.filter((animation) => animation.kind === 'hook');
   const wrapperAnimations = resolved.filter((animation) => animation.kind === 'wrapper');
 
@@ -168,7 +171,7 @@ export const composeAnimations = ({
 
   for (const animation of hookAnimations) {
     const progress = resolvedProgress(animation, elapsedFrames);
-    const HookComponent = progress !== undefined && animation.id === 'type-on'
+    const HookComponent = progress !== undefined && animation.id === 'type-on' && animation.component === ANIMATION_REGISTRY[animation.id]
       ? progressTypeOn : animation.component as HookAnimationComponent<Record<string, unknown>>;
     const result = HookComponent({
       clip,
@@ -194,7 +197,7 @@ export const composeAnimations = ({
 
   return wrapperAnimations.reduceRight((children, animation) => {
     const progress = resolvedProgress(animation, elapsedFrames);
-    const WrapperComponent = progress === undefined
+    const WrapperComponent = progress === undefined || animation.component !== ANIMATION_REGISTRY[animation.id]
       ? animation.component as WrapperAnimationComponent<Record<string, unknown>>
       : progressWrapper(animation.id, animation.component as WrapperAnimationComponent<Record<string, unknown>>);
     return (

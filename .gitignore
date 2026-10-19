@@ -1,3 +1,5 @@
 node_modules/
 typescript/dist/
 typescript/test-dist/
+dist/
+*.tgz

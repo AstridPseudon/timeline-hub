@@ -101,6 +101,7 @@ export type HypeCompositionProps = {
   timeline: TimelineConfig;
   assets: AssetRegistry;
   theme?: import('./ThemeContext').Theme;
+  registries?: import('./registries').CompositionRegistries;
   modifierRegistry?: import('./modifier-types').ModifierRegistry;
   onModifierFinding?: (finding: import('./modifier-types').ModifierFinding) => void;
 };
