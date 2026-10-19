@@ -405,6 +405,89 @@
       ],
       "additionalProperties": false
     },
+    "TrackSetArgs": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "clear": {
+          "type": "array",
+          "items": {
+            "const": "label"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "values",
+        "clear"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "values": {
+              "minProperties": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "clear": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "description": "Set raw track.label or explicitly remove it. Null is not a label. Unmentioned fields survive."
+    },
+    "ClipSetParamsArgs": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JSON"
+          }
+        },
+        "clear": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "values",
+        "clear"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "values": {
+              "minProperties": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "clear": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "description": "Patch raw clip.params by literal top-level JSON keys in stored units, never dotted paths or expressions. Null is a value; clear removes presence. Set/clear overlap is refused by the handler. Preserve unmentioned keys."
+    },
     "EditCommand": {
       "type": "object",
       "properties": {
@@ -508,6 +591,66 @@
       "additionalProperties": false,
       "description": "Client recorder fields are claims only. Provider verifies/reconstructs all observations; authorship is write classification, never authenticated actor identity. Unknown operations pass the envelope only and require installed registered schemas/handlers.",
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "track.set"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/track:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/TrackSetArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.set-params"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipSetParamsArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
