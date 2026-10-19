@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 import tarfile
 from pathlib import Path
 
@@ -17,6 +18,20 @@ ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
 SHA256 = "93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa"
 INTEGRITY = "sha512-dzRWuIgeSjKt6ko64AJ7F8aaiSBBxtEzwS0WBFkVi7XB+z2wHLKArlA9fWle/KlwZlXjFDzq2oBi9QJLy1HHUw=="
+REQUIRED_EXPORTS = (".", "./evaluation", "./theme-api", "./registries", "./effects.generated",
+                    "./animations.generated", "./transitions.generated", "./registry.generated")
+
+
+def _stage_locked_package(project: Path) -> tuple[Path, dict]:
+    cli = project / remotion_runtime.REMOTION_CLI_RELATIVE_PATH
+    cli.parent.mkdir(parents=True)
+    cli.write_text("// CLI")
+    package = project / "node_modules/@banodoco/timeline-composition"
+    package.parent.mkdir(parents=True)
+    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.8.tgz") as archive:
+        archive.extractall(project)
+    (project / "package").rename(package)
+    return package, json.loads((package / "package.json").read_text())
 
 
 def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_path):
@@ -33,8 +48,7 @@ def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_pa
         manifest = json.load(manifest_file)
         files = set(archive.getnames())
     assert not any(name.startswith("package/typescript/") for name in files)
-    for export in (".", "./evaluation", "./theme-api", "./registries", "./effects.generated",
-                   "./animations.generated", "./transitions.generated", "./registry.generated"):
+    for export in REQUIRED_EXPORTS:
         for target in manifest["exports"][export].values():
             assert target.startswith("./dist/")
             assert "package/" + target.removeprefix("./") in files
@@ -46,7 +60,57 @@ def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_pa
     package_json = tmp_path / "node_modules/@banodoco/timeline-composition/package.json"
     package_json.parent.mkdir(parents=True)
     package_json.write_text(json.dumps(manifest))
-    assert remotion_runtime.remotion_install_problem(tmp_path) is None
+    problem = remotion_runtime.remotion_install_problem(tmp_path)
+    assert problem is not None
+    assert "built" in problem or "target" in problem
+
+    package, staged_manifest = _stage_locked_package(tmp_path / "valid")
+    assert staged_manifest == manifest
+    assert remotion_runtime.remotion_install_problem(package.parents[2]) is None
+
+
+@pytest.mark.parametrize("mutation, expected", [
+    ("delete", "evaluation"),
+    ("missing", "missing"),
+    ("outside", "escapes the package"),
+])
+def test_installed_package_refuses_incomplete_or_unsafe_built_exports(tmp_path, mutation, expected):
+    project = tmp_path / mutation
+    package, manifest = _stage_locked_package(project)
+    if mutation == "delete":
+        (package / "dist/evaluation.js").unlink()
+    else:
+        target = manifest["exports"]["./evaluation"]
+        if mutation == "missing":
+            target["import"] = "./dist/missing-evaluation.js"
+        else:
+            target["import"] = "../evaluation.js"
+        (package / "package.json").write_text(json.dumps(manifest))
+    problem = remotion_runtime.remotion_install_problem(project)
+    assert problem is not None
+    assert expected in problem
+
+
+def test_launch_input_binding_reuses_built_package_readiness(tmp_path):
+    project = tmp_path / "runtime"
+    _stage_locked_package(project)
+    (project / "package.json").write_text("{}")
+    (project / "package-lock.json").write_text("{}")
+    schema = tmp_path / "schema" / "banodoco_timeline_schema"
+    schema.mkdir(parents=True)
+    for name in remotion_runtime._REQUIRED_SCHEMA_FILES:
+        (schema / name).write_text("{}")
+    node = tmp_path / "node"
+    node.write_text("#!/bin/sh\n")
+    node.chmod(0o755)
+    environment = {
+        remotion_runtime.NODE_EXECUTABLE_ENV: str(node),
+        remotion_runtime.TIMELINE_SCHEMA_PYTHONPATH_ENV: str(schema.parent),
+    }
+    assert remotion_runtime._runtime_inputs(project, environment, sys.executable, {})
+    (project / "node_modules/@banodoco/timeline-composition/dist/evaluation.js").unlink()
+    with pytest.raises(remotion_runtime.RemotionValidationError, match="evaluation"):
+        remotion_runtime._runtime_inputs(project, environment, sys.executable, {})
 
 
 @pytest.mark.integration

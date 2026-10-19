@@ -10,6 +10,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tarfile
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -39,6 +40,17 @@ from astrid.sdk.workspace_client import WorkspaceClient
 
 FIXTURE_VIDEO = Path(__file__).resolve().parents[2] / "fixtures" / "reshape" / "hype_regression" / "broll.mp4"
 TS = "2026-08-25T00:00:00.000000+00:00"
+COMPOSITION_ARTIFACT = (Path(remotion_runtime.REPO_ROOT) /
+                        "remotion/artifacts/banodoco-timeline-composition-0.0.8.tgz")
+
+
+def _install_composition_package(runtime: Path) -> Path:
+    package = runtime / "node_modules/@banodoco/timeline-composition"
+    package.parent.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(COMPOSITION_ARTIFACT) as archive:
+        archive.extractall(runtime)
+    (runtime / "package").rename(package)
+    return package
 
 
 def _timeline_config() -> dict:
@@ -254,14 +266,7 @@ def test_forced_caption_uses_server_owned_executable_routing_and_isolation(
 
     (tmp_path / "render-project").mkdir(parents=True, exist_ok=True)
     runtime = tmp_path / "installed-remotion"
-    (runtime / "node_modules" / "@banodoco").mkdir(parents=True)
-    for package in ("timeline-composition",):
-        package_dir = runtime / "node_modules" / "@banodoco" / package
-        package_dir.mkdir()
-        package_dir.joinpath("package.json").write_text(
-            json.dumps({"name": f"@banodoco/{package}", "version": "0.0.0"}),
-            encoding="utf-8",
-        )
+    _install_composition_package(runtime)
     generated_src = runtime / "src"
     generated_src.mkdir(parents=True)
     for kind in ("effects", "animations", "transitions"):
@@ -457,11 +462,7 @@ def test_trusted_schema_readiness_requires_complete_install(
         if source.name != missing_file and source.is_file():
             shutil.copy2(source, schema_package / source.name)
     runtime = tmp_path / "installed-remotion"
-    (runtime / "node_modules" / "@banodoco").mkdir(parents=True)
-    for package in ("timeline-composition",):
-        package_dir = runtime / "node_modules" / "@banodoco" / package
-        package_dir.mkdir()
-        package_dir.joinpath("package.json").write_text("{}", encoding="utf-8")
+    _install_composition_package(runtime)
     (runtime / "package.json").write_text("{}", encoding="utf-8")
     cli = runtime / REMOTION_CLI_RELATIVE_PATH
     cli.parent.mkdir(parents=True)
@@ -487,11 +488,7 @@ def test_trusted_schema_readiness_requires_complete_install(
 
 def _runtime_with_locked_packages(tmp_path: Path) -> Path:
     runtime = tmp_path / "runtime"
-    packages_root = runtime / "node_modules" / "@banodoco"
-    for package in ("timeline-composition",):
-        package_dir = packages_root / package
-        package_dir.mkdir(parents=True)
-        (package_dir / "package.json").write_text("{}", encoding="utf-8")
+    _install_composition_package(runtime)
     (runtime / "package.json").write_text("{}", encoding="utf-8")
     return runtime
 
@@ -669,10 +666,7 @@ def test_generated_runtime_attempt_settlement_round_trip(monkeypatch: pytest.Mon
 def _owned_validation_fixture(tmp_path, monkeypatch, *, environment_overrides=None, schema_result_transform=None, worker_contexts=None):
     """Production-shaped inputs and successful original wait receipts; no launch."""
     runtime = tmp_path / 'runtime'
-    for name in remotion_runtime._REQUIRED_PACKAGES:
-        path = runtime / 'node_modules' / '@banodoco' / name / 'package.json'
-        path.parent.mkdir(parents=True)
-        path.write_text('{}')
+    _install_composition_package(runtime)
     from astrid.packs.rendering.rendering.renderers.remotion import run as registry_run
     monkeypatch.setattr(registry_run, 'gen_effect_registry', None)
     for output in registry_run._registry_output_paths(runtime):
