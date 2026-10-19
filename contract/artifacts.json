@@ -71,10 +71,10 @@
     "packages/typescript/src/contract-metadata.ts": "sha256:d3c36d3621b9c76c84bb47cf33efe0b0d482e4214353d10b72eb4ecb42943b8e",
     "packages/typescript/src/generated.ts": "sha256:a98eddf3560097d4ad5547efe7d923576f1bc7cf449da28d7ae49393630e838c",
     "packages/typescript/src/index.ts": "sha256:6b6dff85e4199007c8890802e0c228171285114fa2f862999c6741c632c5d1a5",
-    "packages/typescript/src/timeline-commit-types.ts": "sha256:eb3f4a065ed593dc3129489c025757bc7c7dbfd1098948c4cd3a4e05f79f235b",
+    "packages/typescript/src/timeline-commit-types.ts": "sha256:715a9487adf1a56b865bb818be8e6d7007823d54fef1952cd7d12454c554d32d",
     "packages/typescript/tsconfig.json": "sha256:48bc718286b70c7ff5af00d1adfea37ad7c7f8820d3050117dc9d6aea239181b",
     "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:822f1c71ce5f1747b0d96af7e02fe4bdf094ce0cc98867b93118c9e128103395"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:82db7dfef7e6a09af94b78de384f672f9c202f4d3c80d1128775cfab1ddb4acf"
+  "version": "sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d"
 }
