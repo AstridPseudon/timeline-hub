@@ -38,10 +38,6 @@ same user path.
 
 ## Start here
 
-The command examples below are developer/operator workflows for a prepared
-Astrid Python environment. They are not user installation instructions; use
-the OS installer and astrid.haus setup path above on a new computer.
-
 ## Preferences and project documents
 
 Read the user's preferences at the start of work and the selected project's
@@ -86,9 +82,8 @@ python3 -m astrid runs open
 payload. Use it when structured results help; ordinary commands and examples
 for users can omit it.
 
-For developer work on the source checkout, use Python/runtime setup documented
-in the developer reference. For product use, follow the user setup path above
-and work through astrid.haus.
+After installation, the commands below work with the installed Runtime. For a
+new machine, follow the setup path above and open astrid.haus.
 
 ```bash
 python3 -m astrid doctor --json
