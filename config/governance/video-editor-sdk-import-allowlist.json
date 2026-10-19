@@ -391,34 +391,6 @@
         "removalCondition": "Move report types to shared or expose via a host contract.",
         "expiration": "M5"
       }
-    ],
-    "supabase/functions/complete_task/handler.ts": [
-      {
-        "target": "src/tools/video-editor/types/index.ts",
-        "classification": "host-facing",
-        "owner": "edge-complete-task",
-        "rationale": "Edge function imports video-editor runtime types.",
-        "removalCondition": "Extract shared edge-safe types.",
-        "expiration": "M5"
-      }
-    ],
-    "supabase/functions/complete_task/placement.ts": [
-      {
-        "target": "src/tools/video-editor/lib/timeline-domain.ts",
-        "classification": "host-facing",
-        "owner": "edge-complete-task",
-        "rationale": "Edge function imports video-editor timeline domain logic.",
-        "removalCondition": "Extract portable placement logic to a shared package.",
-        "expiration": "M5"
-      },
-      {
-        "target": "src/tools/video-editor/types/index.ts",
-        "classification": "host-facing",
-        "owner": "edge-complete-task",
-        "rationale": "Edge function imports video-editor timeline domain logic.",
-        "removalCondition": "Extract portable placement logic to a shared package.",
-        "expiration": "M5"
-      }
     ]
   }
 }

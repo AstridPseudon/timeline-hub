@@ -63,6 +63,3 @@ Dockerfile
 **/*.test.tsx
 **/*.spec.ts
 **/*.spec.tsx
-
-# Deno lockfile is for supabase edge fns, not the Vite build
-deno.lock

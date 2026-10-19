@@ -95,7 +95,6 @@ export default defineConfig({
       : ['src/**/*.test.{ts,tsx}'],
     exclude: [
       ...(checkoutLane ? [] : CHECKOUT_LANE),
-      'supabase/functions/**',
       // This suite imports Astrid's selected Remotion composition and has its
       // own config so its linked workspace aliases resolve to Astrid's pack.
       'src/tools/video-editor/runtime/astridSceneComposition.test.tsx',

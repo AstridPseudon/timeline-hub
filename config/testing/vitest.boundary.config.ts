@@ -68,7 +68,6 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     include: ['src/sdk/__tests__/*.test.{ts,tsx}'],
-    exclude: ['supabase/functions/**'],
     setupFiles: [path.resolve(projectRoot, 'src/test/setup.ts')],
   },
 });

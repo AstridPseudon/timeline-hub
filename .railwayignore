@@ -1,6 +1,3 @@
-# Supabase Edge Functions (use Deno, not needed for frontend build)
-supabase/functions/
-supabase/migrations/
 register_worker.sql
 
 # Database and backend files

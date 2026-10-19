@@ -2,7 +2,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const roots = ['src', 'supabase/functions'];
+const roots = ['src'];
 const smokePattern = /(coverage smoke:|has direct test coverage entry|expect\(true\)\.toBe\(true\))/;
 
 function walk(dir, out = []) {
