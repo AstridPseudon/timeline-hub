@@ -27,6 +27,7 @@ from .audio_analysis import (
     project_waveform,
 )
 from .inspection_contract import canonical_clip_identity, compact_render_receipt, project_input_window
+from .provenance import snapshot_label
 from .inspector_navigation import build_inspector_navigation
 
 
@@ -1019,8 +1020,10 @@ def plan_filmstrip(snapshot: dict, options: dict) -> dict:
         motion_info = {key: motion_cut.get(key) for key in ('index', 'start', 'end', 'duration', 'clip_id', 'shot', 'occurrence_id', 'deliberate_hold')}
         motion_info.update({'preset': motion_window['preset'], 'window': [motion_window['start'], motion_window['end']],
                             'cuts_in': motion_window['cuts_in'], 'labels': {str(k): v for k, v in window_labels.items()}})
+    provenance = {k: snapshot.get(k) for k in ('project_slug', 'timeline_id', 'timeline_name', 'render_run_id', 'video_digest', 'fps_rational', 'duration_frames', 'metadata')}
+    provenance['revision'] = snapshot_label(snapshot)
     return {'navigation': navigation, 'schema': 'astrid.filmstrip.v1', 'view': options.get('view') or 'filmstrip', 'contact': contact_info, 'motion': motion_info,
-            'provenance': {k: snapshot.get(k) for k in ('project_slug', 'timeline_id', 'timeline_name', 'render_run_id', 'video_digest', 'fps_rational', 'duration_frames', 'metadata')},
+            'provenance': provenance,
             'audio': snapshot.get('audio') if isinstance(snapshot.get('audio'), dict) else navigation['audio'],
             'boundary_index': boundary_index,
             'coverage': coverage,

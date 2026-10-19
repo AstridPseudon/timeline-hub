@@ -26,6 +26,7 @@ from .filmstrip_cards import (
 )
 from .filmstrip_options import filmstrip_options
 from .inspection_contract import canonical_clip_identity, compact_render_receipt, project_input_window
+from .provenance import snapshot_label
 from .shot_selector import resolve_shot_selector
 
 
@@ -218,7 +219,10 @@ def execute_input_only(args, authority):
         index_target = None
     index = {
         "schema": "astrid.timeline-input-inspection.v1",
-        "provenance": {key: snapshot.get(key) for key in ("project_slug", "timeline_id", "timeline_name", "render_run_id", "fps_rational", "duration_frames", "metadata")},
+        "provenance": {
+            **{key: snapshot.get(key) for key in ("project_slug", "timeline_id", "timeline_name", "render_run_id", "fps_rational", "duration_frames", "metadata")},
+            "revision": snapshot_label(snapshot),
+        },
         "sampling": {"mode": "input_only", "window": projection["window"], "shared_window": [float(Fraction(start_frame, 1) / fps), float(Fraction(end_frame, 1) / fps)], "range": [float(Fraction(start_frame, 1) / fps), float(Fraction(end_frame, 1) / fps)], "step_frames_rational": [1, 1], "include_cuts": False, "explicit_interval": False, "options": options},
         "input_projection": projection, "cards": [], "navigation": {"frames": [], "tracks": [], "clips": [], "shots": [], "phrases": [], "gaps": [], "waveforms": [], "targets": {}},
         "components": options.get("components"), "render": {"status": "not_requested", "auto_render": False},
@@ -312,7 +316,9 @@ def execute_input_only(args, authority):
             entrypoints=outer_entrypoints,
         ),
     )
-    return {"returncode": 0, "run_root": str(out_root), "manifest_path": str(pack_root / "manifest.json"), "timeline_ids": [snapshot.get("timeline_id")], "outputs": {"pack_root": str(pack_root), "manifest_path": str(pack_root / "manifest.json"), "frame_index": str(pack_root / "frame-index.json"), "pages": [str(path) for path in png_pages], "filmstrip_bundle": str(bundle), "render_requested": False}}
+    return {"returncode": 0, "run_root": str(out_root), "manifest_path": str(pack_root / "manifest.json"), "timeline_ids": [snapshot.get("timeline_id")],
+            "snapshot_label": snapshot_label(snapshot),
+            "outputs": {"pack_root": str(pack_root), "manifest_path": str(pack_root / "manifest.json"), "frame_index": str(pack_root / "frame-index.json"), "pages": [str(path) for path in png_pages], "filmstrip_bundle": str(bundle), "render_requested": False}}
 
 
 def _materialize_input_previews(projection: Mapping, pack_root: Path) -> None:
@@ -2004,10 +2010,12 @@ def execute_filmstrip(args, *, authority=None):
     timing['total_s'] = round(finished_at - started_at, 3)
     return {'returncode': 0, 'run_root': str(out_root),
             'manifest_path': str(manifest_path), 'timeline_ids': [snapshot['timeline_id']],
+            'snapshot_label': snapshot_label(snapshot),
             'identity': identity, 'cas': cas, 'entrypoints': entrypoints,
             'request': options.get('request'), 'timing': timing,
             'outputs': {'pack_root': str(pack_root), 'manifest_path': str(manifest_path),
                         'identity': identity, 'cas': cas, 'entrypoints': entrypoints,
+                        'snapshot_label': snapshot_label(snapshot),
                         'request': options.get('request'), 'timing': timing,
                         **result['paths'], 'pages': result['paths']['png'],
                         'primary_page': (result['paths']['png'] or [None])[0],
