@@ -1,4 +1,4 @@
-<!-- app | 2026-10-19T21:16:58Z | dispatcher heartbeat 2s -->
+<!-- app | 2026-10-19T21:22:05Z | dispatcher heartbeat 11s -->
 # app — 2026-10-19 21:16 UTC
 Milestone: M1 APP EXIT PROVEN — real mounted mouse/capture/outbox/commit/lostACK/reload/Runtime-restart/exactretry/undo/readback +retained conflict BOTH PASS. Final main-machine integrated qualification requested from Runtime. M0 COMPLETE. No M2 product.
 Integrated: app tl/integration dd376d5e0 (READY FOR RUNTIME FINAL RUN): product throughdc77a3ca6 (safe port/drain/original-display-basis/typedrefusal/projection+Viewing paired labels/sole recovery UI), approved relay test04ffb3c20, final4testfiles chain3e70+e5df4c4d8+76558255f+8249c9a60. Paired policy product UNCHANGED; exact3drag success requirements still it.fails with strict3exceptions.

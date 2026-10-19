@@ -36,3 +36,8 @@
 - vw-m1-projection-labels REFUSED at 20:45Z only because bin/merge needs $ORCH/workers/<w>/meta, which exists only for workers this machine ran. Kit gap: remote merge requests can never merge on a home machine. Suggested kit fix: have hub-sync write a minimal meta (repo=<r>) when it imports a merge request.
 - Until then the app lead creates that meta automatically for new hub/merge-requests/app/* entries, so future Viewing requests merge through the normal queue.
 - I am NOT re-queuing vw-m1-projection-labels: the App manager already composed that content into integration (b8cf6423e), and 5c7ff0a8b is not an ancestor of integration. Viewing/App: if that branch still needs merging, delete hub/merge-results/app/vw-m1-projection-labels and re-request.
+
+## Lead note 21:30Z: hub rebase conflicts (proposal for main)
+- Twice today hub-sync stopped mid-rebase on hub/design/*-coordination.md, because two machines each appended a section to the same doc. hub-sync never aborts, so pushes failed while its heartbeat stayed fresh. Both times the app lead resolved it by keeping both sections.
+- App clone, local only: .git/info/attributes has 'hub/design/*.md merge=union' (tested: pull --rebase keeps both appended sections); rebase.autoStash=true; the lead watcher aborts a stuck rebase when no sync is running and alerts if it recurs.
+- Proposal for main (shared, so not done unilaterally): commit a root .gitattributes with 'hub/design/*.md merge=union' (*.md only; never JSON, TSV or .patch), so all three clones get it. Also in hub-sync: on pull failure, 'git rebase --abort'; write the heartbeat only after a successful push; never 'git add -A hub' while mid-rebase (it can stage conflict markers).
