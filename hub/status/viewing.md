@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-19T23:14:21Z | dispatcher heartbeat 14s -->
+<!-- viewing | 2026-10-19T23:19:30Z | dispatcher heartbeat 7s -->
 # viewing — 2026-10-19 23:08 UTC
 Milestone: M0 COMPLETE. M1 label/renderer-off slice PASS; urgent2ownedfullfixes ready cumulativef8164bef CENTRAL4PASS, ownermergepending. GlobalM1 OPEN (Appmixededit/full/audit/record). M2branchworkallowed, integrationwaitsM1; M3 independentbranches active.
 Integrated: Composition tl/integration7aa384a/0.0.8 — lockedbuild/repeatpack/freshconsumerPASS, central npmtest22PASS0FAIL0SKIP. Agentmirror4ffbb8b0 lastverified includesreviewed7a package/gate/readiness+normalownermetadata/summary/M1restore/browserenv. App9d0a383a1 includeslabels/pairedfacts/recovery/public0.0.8+restoreheadpair. Runtime80973d3 productequalsff0ae58, full3773PASS7oldFAIL18SKIP/0new. Ownershandlefullbatches, no duplicates.
