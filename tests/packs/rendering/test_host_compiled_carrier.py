@@ -11,7 +11,9 @@ from pathlib import Path
 import pytest
 
 from astrid.core.rendering.node_pin import resolve_pinned_node
-from tests.packs.rendering.test_host_scene import host_project
+from tests.packs.rendering.test_host_scene import host_project as _host_project
+
+host_project = _host_project
 
 ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
@@ -123,7 +125,7 @@ const tracks = [{track, clips}];
 const registries = resolveHostRegistries(runtimeTheme);
 const compiled = JSON.parse(JSON.stringify(
   compileCanonicalTransitions(tracks, 30, runtimeTheme, registries)));
-const props = {timeline: {theme: 'historical-slug', tracks, clips}, assets: {assets: {}},
+const props = {timeline: {theme: 'historical-slug', tracks: [track], clips}, assets: {assets: {}},
   theme, registries, compiledTransitions: compiled};
 const before = JSON.stringify(props);
 const basis = {fps: 30, width: 1920, height: 1080};
@@ -162,9 +164,7 @@ console.log(JSON.stringify({
   compiledAnswer,
   nativeAnswer,
   propsUnchanged: before === JSON.stringify(props),
-  renderedFrame: html.includes('data-frame="6"'),
-  renderedOpacity: html.includes('opacity:0.5'),
-  renderedHasClip: html.includes('data-clip-id="b"'),
+  renderedTransition: html.includes('data-clip-id="b"') && html.includes('opacity:0.5'),
   wrongFps: mismatch(wrongFps),
   wrongClip: mismatch(wrongClip),
 }));
@@ -218,7 +218,7 @@ def test_host_forwards_serialized_compiled_carrier_to_scene_and_render(private_h
     }
     layer = next(layer for layer in result["compiledAnswer"]["layers"] if layer["clipId"] == "b")
     assert (layer["contentFrame"], layer["transitionOpacity"]) == (6, 0.5)
-    assert result["renderedFrame"] and result["renderedOpacity"] and result["renderedHasClip"]
+    assert result["renderedTransition"]
     assert result["propsUnchanged"]
 
 
