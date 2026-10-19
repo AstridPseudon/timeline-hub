@@ -1321,6 +1321,7 @@ def ensure_pack_host(
     value: Mapping[str, Any], *, reconfigure_action: str,
     startup_idle_seconds: float = HOST_STARTUP_IDLE_SECONDS,
     attach_healthy: bool = False,
+    _foreground: bool = False,
 ) -> Mapping[str, Any]:
     """Ensure the runtime-issued host is ready, waiting while it makes progress.
 
@@ -1355,6 +1356,8 @@ def ensure_pack_host(
             or worker_path.stat().st_mode & 0o777 != 0o600):
         raise PackHostBootstrapError(f"generic Astrid pack host handoff is unavailable; {reconfigure_action}")
     host_python = _pack_host_python_executable()
+    if _foreground and host_python != _venv_interpreter_name(os.path.abspath(sys.executable)):
+        raise PackHostBootstrapError("foreground pack host must run with its selected Python interpreter")
     execution_origins = _installed_execution_origins(source_path, host_python) if _execution_profile() == "installed" else {}
     try:
         from astrid.core.pack.source_setup import active_source_inventory
@@ -1447,7 +1450,7 @@ def ensure_pack_host(
         current = _read_object(state_path)
         ready = _read_object(ready_path)
         status = _registered_host_status(current) if current else None
-        if attach_healthy and current and ready and status == "ours":
+        if not _foreground and attach_healthy and current and ready and status == "ours":
             receipt = _attach_resident_host(
                 current, ready,
                 expected={
@@ -1496,7 +1499,7 @@ def ensure_pack_host(
             "boot_manifest_path": str(boot_manifest_path),
             "boot_manifest_hash": boot_manifest_hash,
         }
-        if (current and ready
+        if (not _foreground and current and ready
                 and all(current.get(key) == expected_value for key, expected_value in expected.items())
                 and status == "ours"
                 and str(ready.get("status")) == "ready"
@@ -1584,6 +1587,21 @@ def ensure_pack_host(
             (pack_root, *managed_inventory.roots))
         if validation_launch is not None:
             argv.extend(("--remotion-validation-launch-id", validation_launch))
+        if _foreground:
+            process_state = {
+                "execution_profile": _execution_profile(), "execution_origins": execution_origins,
+                **expected,
+                "version": 2,
+                "pid": os.getpid(),
+                "process_birth_id": _host_birth_identity(os.getpid()),
+                "remotion_validation": {k: v for k, v in child_env.items() if k.startswith("ASTRID_REMOTION_VALIDATION_")} or None,
+            }
+            if not process_state["process_birth_id"]:
+                raise PackHostBootstrapError("foreground pack host identity could not be captured")
+            _write_object(state_path, process_state)
+            # Unwind the bootstrap lock before entering the worker loop. The
+            # Runtime owns this process, including its eventual exit/restart.
+            raise _ForegroundHost(argv, child_env, runtime_support if execution_origins else source_path)
         try:
             log = log_path.open("ab")
             process = popen_owned_group(
@@ -1720,4 +1738,27 @@ def ensure_pack_host(
         lock_handle.close()
 
 
-__all__ = ["PACK_HOST_ACTOR", "PACK_HOST_SCOPES", "PackHostBootstrapError", "ensure_pack_host"]
+class _ForegroundHost(Exception):
+    def __init__(self, argv: list[str], env: dict[str, str], cwd: Path):
+        self.argv, self.env, self.cwd = argv, env, cwd
+
+
+def run_pack_host_foreground(value: Mapping[str, Any]) -> int:
+    """Run the ordinary pack host in the Runtime-supervised process."""
+    try:
+        ensure_pack_host(value, reconfigure_action="restart Astrid", _foreground=True)
+    except _ForegroundHost as launch:
+        from astrid.core.execution.generic_host import _cli
+
+        os.chdir(launch.cwd)
+        os.environ.clear()
+        os.environ.update(launch.env)
+        for path in reversed(launch.env.get("PYTHONPATH", "").split(os.pathsep)):
+            if path and path not in sys.path:
+                sys.path.insert(0, path)
+        sys.argv = launch.argv[launch.argv.index("astrid.core.execution.generic_host"):]
+        return _cli()
+    raise PackHostBootstrapError("foreground pack host requires a complete Runtime worker handoff")
+
+
+__all__ = ["PACK_HOST_ACTOR", "PACK_HOST_SCOPES", "PackHostBootstrapError", "ensure_pack_host", "run_pack_host_foreground"]

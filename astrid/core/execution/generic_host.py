@@ -13844,6 +13844,11 @@ def _cli() -> int:
 
 if __name__ == "__main__":
     try:
+        if sys.argv[1:2] == ["--service"]:
+            sys.modules.setdefault("astrid.core.execution.generic_host", sys.modules[__name__])
+            from astrid.services import main as service_main
+
+            raise SystemExit(service_main(["pack-host", *sys.argv[2:]]))
         raise SystemExit(_cli())
     except BaseException as exc:
         if isinstance(exc, SystemExit):

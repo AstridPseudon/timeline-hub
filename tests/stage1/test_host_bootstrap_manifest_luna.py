@@ -19,7 +19,7 @@ _RUNTIME_WORKER_SCOPES = (
 )
 
 
-@pytest.mark.parametrize("validation_mode", ["plain", "reference", "refuse", "stale"])
+@pytest.mark.parametrize("validation_mode", ["plain", "reference", "refuse", "stale", "foreground"])
 def test_host_bootstrap_binds_manifest_in_argv_and_reuses_exact_binding(
     tmp_path: Path, monkeypatch, validation_mode
 ) -> None:
@@ -156,6 +156,35 @@ def test_host_bootstrap_binds_manifest_in_argv_and_reuses_exact_binding(
         monkeypatch.setattr(host_bootstrap, '_provision_render_runtime_env', provision)
         monkeypatch.setattr(host_bootstrap, '_prepare_render_validation', prepared)
         monkeypatch.setattr(remotion_runtime, '_validated_runtime', verify)
+    if validation_mode == "foreground":
+        from astrid.core.execution import generic_host
+
+        entered = []
+        monkeypatch.setattr(sys, "argv", [])
+        monkeypatch.setattr(sys, "path", list(sys.path))
+        monkeypatch.setattr(os, "environ", dict(os.environ))
+        monkeypatch.chdir(source)
+
+        def foreground_loop():
+            from runtime_protocol import platform as runtime_platform
+
+            # The long-running worker must not retain the bootstrap lock.
+            with runtime_platform.file_lock(support / "generic-host.lock", blocking=False):
+                pass
+            state = json.loads((support / "generic-host.json").read_text())
+            assert state["pid"] == os.getpid()
+            assert state["process_birth_id"] == "birth-4242"
+            assert "--register" in sys.argv
+            assert sys.argv[sys.argv.index("--credential-file") + 1] == str(worker_file)
+            assert sys.argv[sys.argv.index("--runtime-endpoint") + 1] == value["endpoint"]
+            entered.append(True)
+            return 7
+
+        monkeypatch.setattr(generic_host, "_cli", foreground_loop)
+        assert host_bootstrap.run_pack_host_foreground(value) == 7
+        assert entered == [True]
+        assert captured == [], "the foreground entry point must not spawn a detached host"
+        return
     first = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
     manifest = support / "astrid-host" / "boot-manifest.json"
     assert manifest.is_file()
