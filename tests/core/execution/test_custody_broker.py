@@ -2769,7 +2769,9 @@ def test_command_inventory_execute_retains_original_helper_on_each_failure(tmp_p
         clock=iter([0,121]);monkeypatch.setattr(cb.time,"monotonic",lambda:next(clock,121))
     elif fault in {"overflow","cleanup"}:
         owner.cancelled.set() if fault=="cleanup" else None
-        if fault=="overflow":monkeypatch.setattr(cb.os,"read",lambda fd,n:b"x"*(16*1024*1024+1))
+        if fault=="overflow":
+            from astrid.core.execution.pipe_io import PipeReader
+            monkeypatch.setattr(PipeReader,"receive",lambda *a,**kw:("stdout",b"x"*(16*1024*1024+1)))
     frame={"version":cb._COMMAND_INVENTORY_VERSION,"command":"inventory_git","binding":binding,
         "operation_id":1,"operation":"revision","checkout":str(checkout),"cwd":str(tmp_path),"environment":environment}
     try:

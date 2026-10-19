@@ -1,5 +1,4 @@
 """Idle release of warm holders, driven by explicit timers instead of sleeps."""
-import os
 import subprocess
 import sys
 import threading
@@ -197,7 +196,6 @@ def test_idle_expiry_ends_the_warm_wan_child_through_its_session_release(tmp_pat
     # A real child that exits on the adapter's close frame, as the Wan session does.
     adapter.process = popen_owned_group([sys.executable, "-c", "import sys; sys.stdin.readline()"],
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    os.set_blocking(adapter.process.stdin.fileno(), False)
     host._track_process(adapter.process)
     reasons = []
     release = adapter.release

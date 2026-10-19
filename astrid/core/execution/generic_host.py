@@ -22,7 +22,6 @@ import mimetypes
 import queue
 import re
 import secrets as secrets_module
-import select
 import shutil
 import signal
 import socket
@@ -43,6 +42,7 @@ from urllib.parse import quote, urlsplit
 from runtime_protocol import platform
 from runtime_protocol.dirfd import filesystem as os
 
+from astrid.core.execution.pipe_io import PipeReader, PipeWriter, close_pipe_workers
 from astrid.core.execution.platform_helpers import owned_by_current_user
 
 # Startup observations use only the existing private stderr sink. Regular-file
@@ -665,6 +665,7 @@ class _ManagedWanChildAdapter:
         self._terminal_frame: dict[str, Any] | None = None
         self._owner_lock: Any = None
         self._diagnostic: Any = None
+        self._pipe_reader = self._pipe_writer = None
 
     def start(self) -> None:
 
@@ -698,7 +699,8 @@ class _ManagedWanChildAdapter:
             env=environment, pass_fds=(fd,), cwd=owner_dir,
         )
         self.track(self.process)
-        os.set_blocking(self.process.stdin.fileno(), False)
+        self._pipe_reader = PipeReader(self.process.stdout)
+        self._pipe_writer = PipeWriter(self.process.stdin)
         deadline = time.monotonic() + self.readiness_timeout
         self._write({"birth": self.binding.process_birth_id, "root": self.spec["root"],
                      "init": self.spec["init"]}, deadline)
@@ -714,36 +716,35 @@ class _ManagedWanChildAdapter:
         if self.process is None or self.process.stdin is None:
             raise HostError("Wan child is absent")
         with self._write_lock:
-            fd = self.process.stdin.fileno()
-            while data:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise TimeoutError("Wan child write timed out")
+            def guard():
                 if self.process.poll() is not None:
                     raise HostError("Wan child exited before command")
-                if select.select([], [fd], [], min(0.05, remaining))[1]:
-                    try:
-                        data = data[os.write(fd, data):]
-                    except BlockingIOError:
-                        pass
+            if self._pipe_writer is None:
+                self._pipe_writer = PipeWriter(self.process.stdin)
+            try:
+                self._pipe_writer.write(data, deadline=deadline, guard=guard)
+            except TimeoutError as error:
+                raise TimeoutError("Wan child write timed out") from error
 
     def _read(self, deadline: float) -> dict[str, Any]:
         if self.process is None or self.process.stdout is None:
             raise HostError("Wan child is absent")
-        while b"\n" not in self._buffer:
+        if self._pipe_reader is None:
+            self._pipe_reader = PipeReader(self.process.stdout)
+        def guard():
             if self.fenced.is_set():
                 raise HostError("Wan invocation cancelled or fenced")
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                raise TimeoutError("Wan child observation timed out")
-            fd = self.process.stdout.fileno()
-            if select.select([fd], [], [], min(0.05, remaining))[0]:
-                data = os.read(fd, 65536)
-                if not data:
-                    raise HostError("Wan child exited without terminal evidence")
-                self._buffer.extend(data)
-                if len(self._buffer) > self.MAX_FRAME_BYTES:
-                    raise HostError("Wan child frame exceeds bound")
+        while b"\n" not in self._buffer:
+            guard()
+            try:
+                data = self._pipe_reader.read(deadline=deadline, guard=guard)
+            except TimeoutError as error:
+                raise TimeoutError("Wan child observation timed out") from error
+            if not data:
+                raise HostError("Wan child exited without terminal evidence")
+            self._buffer.extend(data)
+            if len(self._buffer) > self.MAX_FRAME_BYTES:
+                raise HostError("Wan child frame exceeds bound")
         line, _, remainder = self._buffer.partition(b"\n")
         self._buffer = bytearray(remainder)
         frame = json.loads(line)
@@ -892,14 +893,18 @@ class _ManagedWanChildAdapter:
         self.fence(reason=reason)
         process = self.process
         if process is not None:
-            if process.poll() is None:
-                try:
-                    self._write({"birth": self.binding.process_birth_id, "op": "close"},
-                                time.monotonic() + self.release_timeout)
-                    process.wait(timeout=self.release_timeout)
-                except (OSError, ValueError, HostError, TimeoutError, subprocess.TimeoutExpired):
-                    _terminate_process_group(process, grace_seconds=self.release_timeout)
-            _release_owned_group(process)
+            try:
+                if process.poll() is None:
+                    try:
+                        self._write({"birth": self.binding.process_birth_id, "op": "close"},
+                                    time.monotonic() + self.release_timeout)
+                        process.wait(timeout=self.release_timeout)
+                    except (OSError, ValueError, HostError, TimeoutError, subprocess.TimeoutExpired):
+                        _terminate_process_group(process, grace_seconds=self.release_timeout)
+                _release_owned_group(process)
+            finally:
+                if process.poll() is not None:
+                    close_pipe_workers(self._pipe_reader, self._pipe_writer, timeout=self.release_timeout)
             # Close() or a clean leader exit alone cannot prove group release.
             snapshot = _process_snapshot()
             if not snapshot:
@@ -921,6 +926,7 @@ class _ManagedWanChildAdapter:
             if not self._command_lock.acquire(timeout=self.release_timeout):
                 return {"ok": False, "released": False, "reason": reason}
             try:
+                self._pipe_reader = self._pipe_writer = None
                 self.untrack(process)
                 for pipe in (process.stdin, process.stdout):
                     if pipe is not None:
