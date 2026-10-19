@@ -392,19 +392,19 @@ beforeEach(() => {
 });
 
 describe('TimelineRenderer registered sequences', () => {
-  it('passes shared image transition plans through native media dispatch', () => {
+  it('passes shared image crossfade plans through native media dispatch', () => {
     const config = buildConfig();
     config.clips = [
       { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
         assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
       { id: 'b', clipType: 'hold', track: 'V1', at: 1, hold: 1,
         assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
-        transition: { type: 'fade', duration: 0.4 } },
+        transition: { type: 'crossfade', duration: 0.4 } },
     ];
     render(<TimelineRenderer config={config} />);
     expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
       clip: expect.objectContaining({ id: 'a' }),
-      drawPlan: expect.objectContaining({ drawStart: 0, drawDuration: 30, fadeOut: { from: 18, to: 24, kind: 'dip' } }),
+      drawPlan: expect.objectContaining({ drawStart: 0, drawDuration: 30, fadeOut: null }),
     }));
     expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
       clip: expect.objectContaining({ id: 'b' }),

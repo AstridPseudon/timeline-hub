@@ -40,7 +40,9 @@ vi.mock('remotion', async () => {
 
 vi.mock('@astrid/packs/rendering/shared/readiness-image', async () => {
   const { useCurrentFrame } = await import('remotion');
-  return { ReadinessImage: () => <div data-testid="picture" data-frame={useCurrentFrame()} /> };
+  return { ReadinessImage: ({ mediaId }: { mediaId: string }) => (
+    <div data-testid="picture" data-clip-id={mediaId} data-frame={useCurrentFrame()} />
+  ) };
 });
 vi.mock('./ReadinessVideo.tsx', async () => {
   const { useCurrentFrame } = await import('remotion');
@@ -62,9 +64,9 @@ beforeEach(() => {
 });
 
 describe('VisualClip shared draw plans', () => {
-  it('mounts the image before its boundary and renders shared opacity with the correct own clock', () => {
+  it.each(['crossfade', 'cross-fade'])('mounts the image before its %s boundary with shared opacity and the correct own clock', type => {
     const previous = image('a', 2);
-    const clip = image('b', 3, { transition: { type: 'crossfade', duration: 0.4 } });
+    const clip = image('b', 3, { transition: { type, duration: 0.4 } });
     const plan = preparePlayerTrack(track, [previous, clip], 30, 1920, 1080).plans.get('b')!;
     currentFrame = 87;
     const { rerender } = render(<VisualClipSequence clip={clip} track={track} fps={30} drawPlan={plan} />);
@@ -82,14 +84,42 @@ describe('VisualClip shared draw plans', () => {
     expect(screen.queryByTestId('picture')).not.toBeInTheDocument();
   });
 
-  it('applies the outgoing half of a shared fade through background', () => {
-    const clip = image('a', 0);
-    const incoming = image('b', 1, { transition: { type: 'fade', duration: 0.4 } });
-    const plan = preparePlayerTrack(track, [clip, incoming], 30, 1920, 1080).plans.get('a')!;
-    currentFrame = 21;
-    const { container } = render(<VisualClipSequence clip={clip} track={track} fps={30} drawPlan={plan} />);
-    expect(container.querySelector('[style*="opacity"]')).toHaveStyle({ opacity: 0.5 });
-    expect(screen.getByTestId('picture')).toHaveAttribute('data-frame', '21');
+  it('preserves the mounted image fade pair with outgoing opacity one and the legacy incoming clock', () => {
+    const previous = image('outgoing', 2);
+    const incoming = image('incoming', 3, { transition: { type: 'fade', duration: 0.4 } });
+    const player = preparePlayerTrack(track, [previous, incoming], 30, 1920, 1080);
+    const renderPair = () => <>
+      <VisualClipSequence clip={previous} track={track} fps={30}
+        drawPlan={player.plans.get(previous.id) ?? null} />
+      <VisualClipSequence clip={incoming} predecessor={previous} track={track} fps={30}
+        drawPlan={player.plans.get(incoming.id) ?? null} />
+    </>;
+    const view = render(renderPair());
+    // App fade is incoming-only. Public DIP would darken the outgoing image
+    // and freeze the incoming clock, changing existing films.
+    for (const [frame, local, opacity] of [[77, -1, 0], [78, 0, 0], [84, 6, 0.5], [90, 12, 1]]) {
+      currentFrame = frame;
+      view.rerender(renderPair());
+      const outgoing = view.container.querySelector('[data-clip-id="outgoing"]')!;
+      const picture = view.container.querySelector('[data-clip-id="incoming"]')!;
+      expect(outgoing).toHaveAttribute('data-frame', String(frame - 60));
+      expect(picture).toHaveAttribute('data-frame', String(local));
+      const outgoingSequence = outgoing.closest('[data-testid="sequence"]')!;
+      const incomingSequence = picture.closest('[data-testid="sequence"]')!;
+      expect(outgoingSequence).toHaveAttribute('data-from', '60');
+      expect(outgoingSequence).toHaveAttribute('data-duration', '31');
+      expect(outgoingSequence.querySelector<HTMLElement>('[style*="opacity"]')?.style.opacity ?? '1').toBe('1');
+      expect(incomingSequence).toHaveAttribute('data-from', '78');
+      expect(incomingSequence).toHaveAttribute('data-duration', '43');
+      expect(incomingSequence).toHaveAttribute('data-active', String(frame >= 78));
+      expect(incomingSequence).toHaveAttribute('data-premount', '30');
+      expect(picture.parentElement).toHaveStyle({ opacity });
+      expect(screen.queryByTestId('freeze')).not.toBeInTheDocument();
+    }
+    currentFrame = 91;
+    view.rerender(renderPair());
+    expect(view.container.querySelector('[data-clip-id="outgoing"]')).not.toBeInTheDocument();
+    expect(view.container.querySelector('[data-clip-id="incoming"]')).toHaveAttribute('data-frame', '13');
   });
 
   it('keeps trimmed video on its playing own clock with unchanged premount, speed and audio controls', () => {

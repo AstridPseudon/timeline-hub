@@ -48,7 +48,8 @@ export const preparePlayerTrack = (
     const { type, duration } = incoming.transition;
     if (outgoing && evaluatedMedia(outgoing) && evaluatedMedia(incoming)
       && isSilentImage(outgoing) && isSilentImage(incoming)
-      && ['crossfade', 'cross-fade', 'fade'].includes(type)
+      // App fade is incoming-only; the public DIP policy changes its picture.
+      && ['crossfade', 'cross-fade'].includes(type)
       && Number.isFinite(duration) && duration > 0 && Math.round(duration * fps) > 0) {
       transitions[index - 1] = declareAppTransition(track.id, outgoing.id,
         { ...incoming.transition, params: incoming.transition.params ?? undefined },

@@ -40,15 +40,15 @@ describe('Player planning with the built Composition evaluator', () => {
       .plans.get('invalid-trim')?.ownDuration).toBe(1);
   });
 
-  it.each(['crossfade', 'cross-fade', 'fade'])('uses shared %s windows and clamps own-frame before a nonzero boundary', type => {
+  it.each(['crossfade', 'cross-fade'])('uses shared %s windows and clamps own-frame before a nonzero boundary', type => {
     const { scene, plans } = prepare([image('a', 2), image('b', 3, { transition: { type, duration: 0.4 } })]);
     const incoming = plans.get('b')!;
     expect(incoming).toMatchObject({ drawStart: 78, drawDuration: 42, ownOffset: 12, ownDuration: 30 });
-    expect(queryDrawFrame(incoming, 9)).toMatchObject({ ownFrame: 0, opacity: type === 'fade' ? 0.5 : 0.75 });
+    expect(queryDrawFrame(incoming, 9)).toMatchObject({ ownFrame: 0, opacity: 0.75 });
     expect(queryDrawFrame(incoming, 17).ownFrame).toBe(5);
     const middle = querySceneFrame(scene, 84);
     expect(middle.layers.map(layer => layer.clipId)).toEqual(['a', 'b']);
-    expect(middle.layers.map(layer => layer.transitionOpacity)).toEqual(type === 'fade' ? [0, 0] : [1, 0.5]);
+    expect(middle.layers.map(layer => layer.transitionOpacity)).toEqual([1, 0.5]);
     expect(querySceneFrame(scene, 120).layers).toEqual([]);
   });
 
@@ -70,10 +70,19 @@ describe('Player planning with the built Composition evaluator', () => {
   it('does not partly share a transition chain touching video or an injected effect', () => {
     for (const last of [image('c', 2, { assetEntry: { type: 'video/mp4', src: 'video.mp4' } }),
       image('c', 2, { continuous: { type: 'custom:audible', params: {} } })]) {
-      const { plans } = prepare([image('a', 0), image('b', 1, { transition: { type: 'fade', duration: 0.3 } }),
+      const { plans } = prepare([image('a', 0), image('b', 1, { transition: { type: 'crossfade', duration: 0.3 } }),
         { ...last, transition: { type: 'crossfade', duration: 0.3 } }, image('unrelated', 5)]);
       expect([...plans.keys()]).toEqual(['unrelated']);
     }
+  });
+
+  it('keeps both sides of a shared image transition chain on the host clock when it touches fade', () => {
+    const { plans, scene } = prepare([image('a', 0),
+      image('b', 1, { transition: { type: 'crossfade', duration: 0.3 } }),
+      image('c', 2, { transition: { type: 'fade', duration: 0.3 } }),
+      image('d', 3, { transition: { type: 'cross-fade', duration: 0.3 } }), image('unrelated', 5)]);
+    expect([...plans.keys()]).toEqual(['unrelated']);
+    expect(scene.tracks[0].prepared.plans.every(plan => !plan.fadeIn && !plan.fadeOut)).toBe(true);
   });
 
   it('keeps undeclared custom and typed component internals unknown and present', () => {
@@ -87,9 +96,9 @@ describe('Player planning with the built Composition evaluator', () => {
     }
   });
 
-  it('respects the host dispatch when a native clip name is served by a custom component', () => {
+  it.each(['fade', 'crossfade', 'cross-fade'])('respects %s host dispatch when a native clip name is served by a custom component', type => {
     const { plans, scene } = preparePlayerTrack(track,
-      [image('a', 0), image('b', 1, { transition: { type: 'fade', duration: 0.5 } })],
+      [image('a', 0), image('b', 1, { transition: { type, duration: 0.5 } })],
       30, 1920, 1080, clip => clip.id !== 'a');
     expect(plans.size).toBe(0);
     expect(querySceneFrame(scene, 15).layers[0].visible).toBe('unknown');
