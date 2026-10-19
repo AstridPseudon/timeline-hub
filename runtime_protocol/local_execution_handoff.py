@@ -272,13 +272,13 @@ class HandoffJournal:
     @contextlib.contextmanager
     def locked(self, *, transition_authority=None):
         parent = self.path.parent.lstat()
-        if not stat.S_ISDIR(parent.st_mode) or self.path.parent.is_symlink() or not runtime_platform.is_owner_only(parent, directory=True):
+        if not stat.S_ISDIR(parent.st_mode) or self.path.parent.is_symlink() or not runtime_platform.is_owner_only(self.path.parent, directory=True):
             raise ConflictError("handoff journal scope is unprotected")
         fd = os.open(self.path.with_suffix(".lock"), os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
         locked = False
         try:
             observed = os.fstat(fd)
-            if not stat.S_ISREG(observed.st_mode) or not runtime_platform.is_owner_only(observed):
+            if not stat.S_ISREG(observed.st_mode) or not runtime_platform.is_owner_only(fd):
                 raise ConflictError("handoff journal lock is unprotected")
             deadline = time.monotonic() + self.timeout
             while True:

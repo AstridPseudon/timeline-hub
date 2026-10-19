@@ -30,6 +30,8 @@ import time
 from typing import Callable, Mapping, Sequence
 
 
+_windows_registration_channels = []
+
 PROTOCOL_VERSION = 1
 CAPABILITY_VERSION = "runtime.role-bound-custody/v2"
 ACTIVE_CAPABILITY_NAME = "runtime-custody-active.json"
@@ -138,6 +140,8 @@ def _token_from_words(words: Sequence[int]) -> _AuditToken:
 
 
 def audit_token_details(words: Sequence[int]) -> dict[str, object]:
+    if sys.platform == "win32":
+        return platform.handoff_token_details(list(words))
     if sys.platform != "darwin":
         raise CustodyError("Darwin audit-token custody is unavailable")
     token = _token_from_words(words)
@@ -156,6 +160,8 @@ def audit_token_details(words: Sequence[int]) -> dict[str, object]:
 
 
 def _peer_token(connection: socket.socket) -> dict[str, object]:
+    if sys.platform == "win32":
+        return platform.handoff_peer_token(connection)
     if sys.platform != "darwin":
         raise CustodyError("Darwin audit-token custody is unavailable")
     raw = connection.getsockopt(SOL_LOCAL, LOCAL_PEERTOKEN, TOKEN_BYTES)
@@ -167,8 +173,10 @@ def _peer_token(connection: socket.socket) -> dict[str, object]:
 
 
 def current_process_audit_token(pid: int) -> dict[str, object]:
-    """Read one live process token through a retained Mach task-name port."""
+    """Read a live Darwin audit token or native Windows creation identity."""
 
+    if sys.platform == "win32":
+        return platform.handoff_token(pid)
     if sys.platform != "darwin" or int(pid) <= 0:
         raise CustodyError("Darwin audit-token custody is unavailable")
     library = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True)
@@ -223,6 +231,8 @@ def current_process_audit_token(pid: int) -> dict[str, object]:
 def signal_audit_token(words: Sequence[int], signum: int) -> None:
     if int(signum) not in _admitted_signals():
         raise CustodyError("custody signal is outside the admitted set")
+    if sys.platform == "win32":
+        return platform.handoff_signal_token(words, signum)
     if sys.platform != "darwin":
         raise CustodyError("Darwin audit-token custody is unavailable")
     token = _token_from_words(words)
@@ -286,7 +296,7 @@ def _append_owner_jsonl(path: Path, value: Mapping[str, object]) -> None:
     if (
         stat.S_ISLNK(parent.st_mode)
         or not stat.S_ISDIR(parent.st_mode)
-        or not platform.is_owner_only(parent)
+        or not platform.is_owner_only(path.parent if sys.platform == "win32" else parent)
     ):
         raise CustodyError("custody authority journal parent is not owner-only")
     encoded = _canonical(dict(value)) + b"\n"
@@ -301,7 +311,7 @@ def _append_owner_jsonl(path: Path, value: Mapping[str, object]) -> None:
         observed = os.fstat(descriptor)
         if (
             not stat.S_ISREG(observed.st_mode)
-            or not platform.is_owner_only(observed)
+            or not platform.is_owner_only(descriptor if sys.platform == "win32" else observed)
         ):
             raise CustodyError("custody authority journal is not owner-only")
         if os.write(descriptor, encoded) != len(encoded):
@@ -315,11 +325,14 @@ def _open_authority_scope_lock(scope_root: Path) -> int:
     root = Path(os.path.abspath(scope_root))
     if not root.is_absolute() or root.is_symlink():
         raise CustodyError("custody authority scope is unsafe")
-    root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if sys.platform == "win32":
+        platform.private_directory(root)
+    else:
+        root.mkdir(parents=True, exist_ok=True, mode=0o700)
     observed_root = os.lstat(root)
     if (
         not stat.S_ISDIR(observed_root.st_mode)
-        or not platform.is_owner_only(observed_root)
+        or not platform.is_owner_only(root if sys.platform == "win32" else observed_root)
     ):
         raise CustodyError("custody authority scope is not owner-only")
     descriptor = os.open(
@@ -330,7 +343,7 @@ def _open_authority_scope_lock(scope_root: Path) -> int:
     observed = os.fstat(descriptor)
     if (
         not stat.S_ISREG(observed.st_mode)
-        or not platform.is_owner_only(observed)
+        or not platform.is_owner_only(descriptor if sys.platform == "win32" else observed)
     ):
         os.close(descriptor)
         raise CustodyError("custody authority scope lock is not owner-only")
@@ -502,6 +515,10 @@ class AuthenticatedCleanupActor:
                 raise CustodyError("retained child already has an exit observation")
             observed_before = identity_provider(child.pid)
             before = dict(observed_before) if observed_before is not None else None
+            if sys.platform == "win32":
+                launched = platform.handoff_child_identity(child)
+                if before is None or any(before.get(key) != launched.get(key) for key in ("pid", "uid", "birth_id")):
+                    raise CustodyError("retained child creation identity differs from launch")
             if before is None or before.get("parent_pid") != os.getpid():
                 raise CustodyError("retained child launch lineage is unavailable")
             actor = cls(lambda: token_provider(child.pid), identity_provider)
@@ -563,7 +580,7 @@ class RoleCustodyAuthority:
         descriptor = os.open(self.root / "cleanup.lock", os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
         try:
             observed = os.fstat(descriptor)
-            if not stat.S_ISREG(observed.st_mode) or not platform.is_owner_only(observed):
+            if not stat.S_ISREG(observed.st_mode) or not platform.is_owner_only(descriptor if sys.platform == "win32" else observed):
                 raise CustodyError("custody cleanup guard is unsafe")
             deadline = time.monotonic() + self.timeout
             while True:
@@ -893,7 +910,7 @@ class RoleBoundCustodyBroker:
     ) -> None:
         if not role or any(c not in "abcdefghijklmnopqrstuvwxyz0123456789_-" for c in role):
             raise CustodyError("custody role is invalid")
-        if sys.platform != "darwin":
+        if sys.platform not in ("darwin", "win32"):
             raise CustodyError("Darwin audit-token custody is unavailable")
         self.role = role
         self.identity_provider = identity_provider
@@ -911,6 +928,8 @@ class RoleBoundCustodyBroker:
         self._authority_scope_descriptor: int | None = None
         self._authority_scope_guard = threading.Lock()
         self.run_id = _digest_bytes(os.urandom(32))
+        if sys.platform == "win32":
+            platform.private_directory(ledger_root.parent)
         ledger_root.mkdir(parents=True, exist_ok=False, mode=0o700)
         platform.owner_only(ledger_root)
         self.root = ledger_root
@@ -923,15 +942,21 @@ class RoleBoundCustodyBroker:
         self.custody_generation = 1
         self.role_authority.reserve_before_spawn(actor=self.cleanup_actor, owner_epoch=self.owner_epoch,
                                                  admission_id=self.run_id)
-        self.socket_root = _create_compact_socket_root()
+        self.socket_root = (Path(tempfile.mkdtemp(prefix="runtime-cb-"))
+                            if sys.platform == "win32" else _create_compact_socket_root())
+        platform.owner_only(self.socket_root)
         self.socket_path = self.socket_root / "s"
         listener: socket.socket | None = None
         try:
-            listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            listener.bind(str(self.socket_path))
-            platform.owner_only(self.socket_path)
-            listener.listen(1)
-            listener.settimeout(timeout)
+            listener = platform.handoff_listener(timeout=timeout)
+            if listener is None:
+                listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                listener.bind(str(self.socket_path))
+                platform.owner_only(self.socket_path)
+                listener.listen(1)
+                listener.settimeout(timeout)
+            else:
+                _atomic_owner_json(self.socket_path, {"endpoint": listener.endpoint})
         except BaseException:
             if listener is not None:
                 listener.close()
@@ -1202,7 +1227,10 @@ class RoleBoundCustodyBroker:
     def _serve(self) -> None:
         connection: socket.socket | None = None
         try:
-            connection, _ = self.listener.accept()
+            if sys.platform == "win32":
+                connection, _ = self.listener.accept_child(self.launch_parent.verify())
+            else:
+                connection, _ = self.listener.accept()
             connection.settimeout(self.timeout)
             frame = _read_frame(connection)
             required = {"version", "command", "run_id", "role", "pid", "ppid", "argv_digest"}
@@ -1270,7 +1298,7 @@ class RoleBoundCustodyBroker:
             post: dict[str, object] | None = None
             while time.monotonic() < deadline:
                 candidate = _peer_token(connection)
-                if candidate["pidversion"] != pre["pidversion"]:
+                if candidate["pidversion"] != pre["pidversion"] or sys.platform == "win32":
                     post = candidate
                     break
                 time.sleep(0.005)
@@ -1358,13 +1386,18 @@ def child_exec_from_environment() -> int:
         raise CustodyError("custody registration timeout is invalid") from exc
     if not math.isfinite(timeout) or timeout <= 0 or timeout > 60:
         raise CustodyError("custody registration timeout is invalid")
-    connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    if sys.platform == "win32":
+        endpoint = json.loads(_read_owner_file(Path(os.environ["ASTRID_RUNTIME_CUSTODY_SOCKET"]))[0])["endpoint"]
+        connection = platform.handoff_connect(endpoint, timeout=timeout)
+    else:
+        connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     # The broker durably checkpoints the pre-exec registration before its ACK.
     # Use the broker's own bounded timeout so a slow fsync cannot make the child
     # abandon a registration the broker is still entitled to complete.
     connection.settimeout(timeout)
-    connection.connect(os.environ.get("ASTRID_RUNTIME_CUSTODY_SOCKET", ""))
-    os.set_inheritable(connection.fileno(), True)
+    if sys.platform != "win32":
+        connection.connect(os.environ.get("ASTRID_RUNTIME_CUSTODY_SOCKET", ""))
+        os.set_inheritable(connection.fileno(), True)
     frame = {
         "version": PROTOCOL_VERSION, "command": "register_pre_exec",
         "run_id": os.environ.get("ASTRID_RUNTIME_CUSTODY_RUN_ID", ""),
@@ -1383,6 +1416,14 @@ def child_exec_from_environment() -> int:
     for name in tuple(os.environ):
         if name.startswith("ASTRID_RUNTIME_CUSTODY_"):
             os.environ.pop(name, None)
+    if sys.platform == "win32":
+        # Windows has no same-PID exec. Enter the selected installed module in
+        # this already authenticated child, preserving its creation-time pin.
+        # Keep the registration connection alive while the broker seals its
+        # exact same-PID creation-time observation, as Darwin does across exec.
+        _windows_registration_channels.append(connection)
+        from runtime_protocol.windows_handoff import enter_module
+        return enter_module(argv)
     descriptor = connection.detach()
     os.set_inheritable(descriptor, True)
     os.execve(argv[0], argv, dict(os.environ))
