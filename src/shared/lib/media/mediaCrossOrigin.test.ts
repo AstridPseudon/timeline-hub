@@ -7,13 +7,14 @@ type Connection = typeof import('@/integrations/runtime/connection');
 type MediaCrossOrigin = typeof import('./mediaCrossOrigin');
 let connection: Connection;
 let mediaCrossOrigin: MediaCrossOrigin['mediaCrossOrigin'];
+let mediaFetchCredentials: MediaCrossOrigin['mediaFetchCredentials'];
 
 const GATEWAY = 'http://127.0.0.1:17340';
 
 beforeEach(async () => {
   vi.resetModules();
   connection = await import('@/integrations/runtime/connection');
-  ({ mediaCrossOrigin } = await import('./mediaCrossOrigin'));
+  ({ mediaCrossOrigin, mediaFetchCredentials } = await import('./mediaCrossOrigin'));
 });
 
 describe('mediaCrossOrigin', () => {
@@ -22,12 +23,18 @@ describe('mediaCrossOrigin', () => {
       connection.setRuntimeOrigin({ VITE_RUNTIME_ORIGIN: GATEWAY });
     });
 
+    it('keeps gateway media fetches free of browser credentials while preserving other fetch contracts', () => {
+      expect(mediaFetchCredentials(`${GATEWAY}/api/astrid/v1/objects/a`, 'include')).toBe('omit');
+      expect(mediaFetchCredentials('/api/runtime/v1/objects/a', 'include')).toBe('omit');
+      expect(mediaFetchCredentials('https://cloud.example/a?signature=abc', 'include')).toBe('include');
+      expect(mediaFetchCredentials('https://cloud.example/a')).toBe('same-origin');
+    });
+
     it("returns 'anonymous' for a gateway URL", () => {
-      expect(mediaCrossOrigin(`${GATEWAY}/api/runtime/v1/objects/a/content`)).toBe('anonymous');
+      expect(mediaCrossOrigin(`${GATEWAY}/api/runtime/v1/objects/a`)).toBe('anonymous');
     });
 
     it.each([
-      ['same-origin path', '/api/runtime/v1/objects/a/content'],
       ['Supabase storage', 'https://abc.supabase.co/storage/v1/object/public/image_uploads/a.png'],
       ['CDN', 'https://cdn.example.com/a.png'],
       ['another loopback port', 'http://127.0.0.1:17341/a.png'],
@@ -41,7 +48,7 @@ describe('mediaCrossOrigin', () => {
     });
 
     it('renders crossorigin on a gateway <img> and omits it elsewhere', () => {
-      const gatewaySrc = `${GATEWAY}/api/runtime/v1/objects/a/content`;
+      const gatewaySrc = `${GATEWAY}/api/runtime/v1/objects/a`;
       const otherSrc = 'https://cdn.example.com/a.png';
       const { container } = render(
         createElement('div', null,
@@ -59,15 +66,15 @@ describe('mediaCrossOrigin', () => {
       connection.setRuntimeOrigin({});
     });
 
-    it('returns undefined for every URL, including a loopback gateway-shaped one', () => {
-      expect(mediaCrossOrigin(`${GATEWAY}/api/runtime/v1/objects/a/content`)).toBeUndefined();
-      expect(mediaCrossOrigin('/api/runtime/v1/objects/a/content')).toBeUndefined();
+    it('recognizes managed object routes without depending on app boot configuration', () => {
+      expect(mediaCrossOrigin(`${GATEWAY}/api/runtime/v1/objects/a`)).toBe('anonymous');
+      expect(mediaCrossOrigin('/api/runtime/v1/objects/a')).toBe('anonymous');
     });
 
-    it('renders a non-gateway <img> without the attribute', () => {
-      const src = '/api/runtime/v1/objects/a/content';
+    it('renders a same-origin managed <img> in anonymous mode', () => {
+      const src = '/api/runtime/v1/objects/a';
       const { container } = render(createElement('img', { alt: '', src, crossOrigin: mediaCrossOrigin(src) }));
-      expect(container.querySelector('img')?.hasAttribute('crossorigin')).toBe(false);
+      expect(container.querySelector('img')?.getAttribute('crossorigin')).toBe('anonymous');
     });
   });
 });

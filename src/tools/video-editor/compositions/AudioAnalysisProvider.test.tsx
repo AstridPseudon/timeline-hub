@@ -370,6 +370,15 @@ describe('AudioAnalysisProvider', () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
+  it('warms hosted Runtime media without browser credentials or a credentialed CORS response', async () => {
+    const url = 'http://127.0.0.1:17340/api/astrid/v1/objects/sha256:abc';
+    const fetchMock = vi.fn(async () => new Response(new Uint8Array(8)));
+    vi.stubGlobal('fetch', fetchMock);
+    render(<AudioAnalysisProvider clips={[createAudioClip({ assetEntry: { ...createAudioClip().assetEntry!, src: url } })]} fps={FPS} totalDurationInFrames={3} enabled={false}><AnalysisSummary /></AudioAnalysisProvider>);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    expect(fetchMock).toHaveBeenCalledWith(url, expect.objectContaining({ credentials: 'omit', priority: 'low' }));
+  });
+
   it('does not add a warm fetch when analysis already fetches the audio', async () => {
     MockOfflineAudioContext.decodedBuffer = createRenderedFixtureBuffer();
     render(

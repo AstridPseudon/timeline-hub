@@ -11,6 +11,7 @@ import {
 import { continueRender, delayRender, useRemotionEnvironment } from 'remotion';
 import type { ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
 import { getSanitizedMediaSrc } from '@/tools/video-editor/lib/config-utils.ts';
+import { mediaFetchCredentials } from '@/shared/lib/media/mediaCrossOrigin.ts';
 import { AUDIO_HALF_FFT_SIZE, type PackedAudioAnalysis } from './audio-analysis/audioAnalysis.protocol.ts';
 import {
   acquireAudioAnalysis,
@@ -163,7 +164,7 @@ function WarmAudioCache({ clips, fps }: { clips: ResolvedTimelineClip[]; fps: nu
       while (!controller.signal.aborted && next < urls.length) {
         const url = urls[next++];
         try {
-          const response = await fetch(url, { signal: controller.signal, credentials: 'include', priority: 'low' });
+          const response = await fetch(url, { signal: controller.signal, credentials: mediaFetchCredentials(url, 'include'), priority: 'low' });
           const reader = response.body?.getReader();
           if (reader) {
             while (!(await reader.read()).done) { /* Discard each chunk. */ }

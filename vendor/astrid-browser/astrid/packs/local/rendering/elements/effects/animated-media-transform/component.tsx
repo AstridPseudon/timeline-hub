@@ -1,6 +1,7 @@
+import {ManagedVideo as Video} from '../../../../../rendering/shared/managed-media';
 import {useMemo, type ReactElement} from 'react';
 import {Sequence, useCurrentFrame} from 'remotion';
-import {Video} from '@remotion/media';
+
 import {type ElementComponentProps, narrowParams} from '../../../../../rendering/shared/element_contracts';
 import {ReadinessImage} from '../../../../shared/readiness-image';
 import {sourceSegmentsAtFps, transformAt, validateKeyframes} from './motion';

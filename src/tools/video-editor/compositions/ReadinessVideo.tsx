@@ -1,6 +1,7 @@
 import {useState, type ComponentProps, type FC, type ReactNode} from 'react';
 import {useRemotionEnvironment} from 'remotion';
-import {Video, type MediaErrorAction} from '@remotion/media';
+import {type MediaErrorAction} from '@remotion/media';
+import {ManagedVideo as Video} from '@astrid/packs/rendering/shared/managed-media';
 import {MediaErrorBoundary} from './MediaErrorBoundary.tsx';
 
 type VideoProps = ComponentProps<typeof Video> & {
