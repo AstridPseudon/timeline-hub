@@ -969,7 +969,8 @@ describe('AgentChat', () => {
     renderAgentChat();
     const trigger = screen.getByRole('combobox', { name: 'Agent model' });
     await waitFor(() => expect(trigger).toHaveAttribute('title', 'Agent: Codex · Alpha Precise'));
-    expect(mocks.useAgentModels).toHaveBeenLastCalledWith(true, sessionId, 'project-1');
+    // The chat's own catalog; the New chat submenu reads other agents' models through a second, idle query.
+    expect(mocks.useAgentModels).toHaveBeenCalledWith(true, sessionId, 'project-1');
     expect(mocks.useSetAgentModel).toHaveBeenLastCalledWith(sessionId, 'project-1');
     expect(screen.getByRole('button', { name: 'Active in another tab — take over' })).toBeEnabled();
 
