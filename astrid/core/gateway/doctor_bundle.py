@@ -6,6 +6,7 @@ import json
 import os
 import re
 import stat
+import sys
 import uuid
 import zipfile
 from pathlib import Path
@@ -87,7 +88,7 @@ def _installed_record() -> tuple[Path | None, Path | None]:
         from astrid.installer.core import current, read_json
         from astrid.installer.service import LABEL, default_program_root
 
-        default_root = default_program_root(Path.home(), os.sys.platform)
+        default_root = default_program_root(Path.home(), sys.platform)
         record = read_json(default_root / "service.json")
         if record.get("owner") != LABEL:
             return None, None
@@ -180,8 +181,8 @@ def _installed_runtime_version() -> str | None:
             return None
         site_paths = list((installed.python.parent.parent / "lib").glob("python*/site-packages"))
         site_paths += [installed.python.parent.parent / "Lib" / "site-packages"]
-        runtime_distribution = next((item for item in distributions(path=site_paths)
-                                     if item.metadata.get("Name", "").lower() == "astrid-runtime"), None)
+        runtime_distribution = next((item for item in distributions(path=[str(path) for path in site_paths])
+                                     if "Name" in item.metadata and item.metadata["Name"].lower() == "astrid-runtime"), None)
         return runtime_distribution.version if runtime_distribution else None
     except (ImportError, OSError, ValueError, KeyError):
         return None
@@ -192,7 +193,7 @@ def write_bundle(destination: Path, report: dict, support_root: Path | None) -> 
     destination = destination.expanduser().resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
     payload = _redact_log_value(redact_for_shared(report))
-    versions = {"astrid": None, "astrid_runtime": None, "astrid_runtime_client": None}
+    versions: dict[str, str | None] = {"astrid": None, "astrid_runtime": None, "astrid_runtime_client": None}
     try:
         from importlib.metadata import PackageNotFoundError, version
         for name, package in (("astrid", "astrid"), ("astrid_runtime", "astrid-runtime"),

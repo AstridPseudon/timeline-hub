@@ -665,7 +665,8 @@ class _ManagedWanChildAdapter:
         self._terminal_frame: dict[str, Any] | None = None
         self._owner_lock: Any = None
         self._diagnostic: Any = None
-        self._pipe_reader = self._pipe_writer = None
+        self._pipe_reader: PipeReader | None = None
+        self._pipe_writer: PipeWriter | None = None
 
     def start(self) -> None:
 

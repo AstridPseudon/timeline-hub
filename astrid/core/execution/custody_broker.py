@@ -2577,7 +2577,7 @@ class _CommandInventoryOwner:
             with self.lock:
                 self.helpers[self.pending] = process
             self.failure_stage = 'helper_stream'
-            events = queue.Queue(maxsize=16)
+            events: queue.Queue[tuple[str, bytes | Exception]] = queue.Queue(maxsize=16)
             output = {'stdout': bytearray(), 'stderr': bytearray()}
             for name in output:
                 readers.append(PipeReader(getattr(process, name), chunk_size=8192, events=events, name=name))
