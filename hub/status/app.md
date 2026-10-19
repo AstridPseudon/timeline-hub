@@ -1,4 +1,4 @@
-<!-- app | 2026-10-19T22:59:55Z | dispatcher heartbeat 6s -->
+<!-- app | 2026-10-19T23:05:06Z | dispatcher heartbeat 13s -->
 # app — 2026-10-19 22:56 UTC
 Milestone: M1 ACTIVE — restorefix integrated/realproofPASS; NEW AUDIT2216 mixedediting data-safety journey +minimalfixifneeded in flight, ahead of M2. OverallM1 held for this proof/finalfullclassification+record. M0 COMPLETE. ACK22:35: M2 IMPLEMENTATION ON BRANCHES authorized, all M2 MERGES HELD until M1 recorded.
 Integrated: App tl/integration9d0a383a1 CLEAN, tree d27f9992672c2c5d54d4dbe6fa0d9328cea5971a EXACT passing restore candidatefa1f7965e. Minimal5dec fix reads BOTH guards from ONE getProjectTimeline response, validates scope/nonempty pair, removes fictional inspection publication cast/fixture; unchanged strict restore adapter/exactACK closure. Test-only0ca/fa1 explicitly classify normal health+handshakes, no traffic filtering. Original5journeys untouched;3original group/multi/retrack it.fails+exact3exceptions remain.
