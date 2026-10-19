@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from runtime_protocol import platform
 from runtime_protocol.dirfd import filesystem
 from tests.lanes import (
     requires_windows_dirfd_adapter,
@@ -18,6 +19,31 @@ def test_platform_filesystem_exports_shared_os_api():
     """The facade forwards ordinary os calls on every supported platform."""
     assert filesystem.path is os.path
     assert filesystem.fspath(Path("sample")) == os.fspath(Path("sample"))
+
+
+def test_transaction_publication_returns_before_directory_flush(tmp_path, monkeypatch):
+    source = tmp_path / "source"
+    destination = tmp_path / "destination"
+    source.write_bytes(b"published")
+
+    def failed_flush(_parent):
+        raise OSError("directory flush failed")
+
+    monkeypatch.setattr(platform, "fsync_directory", failed_flush)
+    platform.replace_path(source, destination)
+    assert not source.exists()
+    assert destination.read_bytes() == b"published"
+    with pytest.raises(OSError, match="directory flush failed"):
+        platform.flush_replace(source, destination)
+
+
+def test_support_json_publication_has_one_directory_flush_owner(tmp_path, monkeypatch):
+    from astrid_runtime.io import atomic_write_json
+
+    flushed = []
+    monkeypatch.setattr(platform, "fsync_directory", flushed.append)
+    atomic_write_json(tmp_path / "support.json", {"version": 1})
+    assert flushed == [tmp_path]
 
 
 @requires_windows_dirfd_adapter

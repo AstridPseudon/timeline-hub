@@ -11,12 +11,36 @@ from types import SimpleNamespace
 import pytest
 
 import runtime_protocol.dirfd as dirfd
+from runtime_protocol import platform
 from runtime_protocol.dirfd import _retry_windows_sharing_violation
 from runtime_protocol.dirfd import _WindowsFilesystem as WindowsFilesystem
 from runtime_protocol.errors import ConflictError
 from tests.lanes import requires_windows_dirfd_adapter, skip_windows_symlink_creation_unavailable
 
 _PARENT_FD = 1000010
+
+
+def test_windows_dirfd_and_path_replacement_share_retry_policy():
+    assert dirfd._retry_windows_sharing_violation is platform._retry_windows_sharing_violation
+
+
+def test_windows_sharing_retry_stops_at_deadline():
+    ticks = [0.0]
+    attempts = []
+
+    def operation():
+        attempts.append(ticks[0])
+        error = PermissionError("sharing violation")
+        error.winerror = 32
+        raise error
+
+    def sleep(delay):
+        ticks[0] += delay
+
+    with pytest.raises(PermissionError, match="sharing violation"):
+        _retry_windows_sharing_violation(operation, clock=lambda: ticks[0], sleep=sleep)
+    assert 1 < len(attempts) < 20
+    assert ticks[0] == pytest.approx(0.25)
 
 
 def test_windows_replace_is_explicit_and_rename_remains_no_replace(monkeypatch):

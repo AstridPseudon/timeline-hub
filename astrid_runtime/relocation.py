@@ -144,19 +144,12 @@ def _restore_metadata(root: Path, snapshot: Mapping[Path, bytes]) -> None:
     for relative, payload in snapshot.items():
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(payload)
+        with path.open("wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
         owner_only(path)
-
-
-def _fsync_directory(path: Path) -> None:
-    try:
-        fd = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-        try:
-            os.fsync(fd)
-        finally:
-            os.close(fd)
-    except OSError:
-        pass
+        platform.fsync_directory(path.parent)
 
 
 def _validate_move(old_root: Path, new_root: Path) -> None:
@@ -315,12 +308,12 @@ def relocate(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCo
         merged_aux: list[Path] = []
         try:
             if new_support.exists():
-                platform.durable_replace(new_support, target_aux)
+                platform.replace_path(new_support, target_aux)
                 target_staged = True
-            platform.durable_replace(old_support, new_support)
+                platform.flush_replace(new_support, target_aux)
+            platform.replace_path(old_support, new_support)
             moved = True
-            _fsync_directory(old_support.parent)
-            _fsync_directory(new_support.parent)
+            platform.flush_replace(old_support, new_support)
             atomic_write_json(target_paths.catalog_path, _catalog_for_support_root(catalog, old_support, new_support))
             for profile_path in sorted(target_paths.source_profiles_dir.glob("*.json")):
                 if profile_path.is_symlink() or not profile_path.is_file():
@@ -331,8 +324,9 @@ def relocate(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCo
             atomic_write_json(new_support / "relocation-handoff.json", {"version": 1, "state": "moved", "realm_id": realm_id, "old_support_root": str(old_support), "new_support_root": str(new_support), "catalog_sha256": hashlib.sha256(target_paths.catalog_path.read_bytes()).hexdigest()})
             if target_staged:
                 for entry in sorted(target_aux.iterdir(), key=lambda item: item.name):
-                    platform.durable_replace(entry, new_support / entry.name)
+                    platform.replace_path(entry, new_support / entry.name)
                     merged_aux.append(entry)
+                    platform.flush_replace(entry, new_support / entry.name)
             # The renamed bootstrap.lock is the same inode we already hold.
             # Calling bootstrap() would acquire it again and deadlock.
             relocated_source = replace(source, runtime_environment=_rewrite_path(source.runtime_environment, old_support, new_support))
@@ -348,6 +342,16 @@ def relocate(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCo
             return {"status": "relocated", "realm_id": realm_id, "support_root": str(new_support), "data_root": str(new_support / Path(str(realm["data_root"])).relative_to(old_support)), "old_support_root": str(old_support)}
         except Exception as exc:
             try:
+                flush_errors = []
+
+                def flush_rollback(source, destination):
+                    # Finish reversing the namespace even if its durability is
+                    # uncertain. No owner may restart after a failed flush.
+                    try:
+                        platform.flush_replace(source, destination)
+                    except OSError as flush_exc:
+                        flush_errors.append(flush_exc)
+
                 if moved and new_support.exists() and not old_support.exists():
                     candidate_discovery = _read_support_json(target_paths.discovery_path) or {}
                     if candidate_discovery.get("pid"):
@@ -365,14 +369,18 @@ def relocate(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCo
                             raise RelocationError("relocation rollback cannot proceed while the candidate owner is live") from stop_exc
                     if target_staged:
                         for entry in reversed(merged_aux):
-                            platform.durable_replace(new_support / entry.name, target_aux / entry.name)
-                    platform.durable_replace(new_support, old_support)
+                            platform.replace_path(new_support / entry.name, target_aux / entry.name)
+                            flush_rollback(new_support / entry.name, target_aux / entry.name)
+                    platform.replace_path(new_support, old_support)
+                    moved = False
+                    flush_rollback(new_support, old_support)
                 # If staging the pre-existing target succeeded but the first
                 # root rename failed, the old root is still in place and the
                 # target auxiliary tree must be put back before restarting.
                 if target_staged and target_aux.exists() and not new_support.exists():
-                    platform.durable_replace(target_aux, new_support)
+                    platform.replace_path(target_aux, new_support)
                     target_staged = False
+                    flush_rollback(target_aux, new_support)
                 if not old_support.exists():
                     raise OSError("old support root is missing during rollback")
                 runtime_relative = {
@@ -383,12 +391,16 @@ def relocate(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCo
                     relative: payload for relative, payload in snapshot.items()
                     if relative not in runtime_relative
                 })
+                if flush_errors:
+                    raise RelocationError("rollback rename durability is uncertain") from flush_errors[0]
                 restored = _bootstrap_locked(paths, boundary, config)
                 if not restored.ready or restored.realm_id != realm_id:
                     raise RelocationError("old owner could not be restored after relocation failure")
-                _fsync_directory(old_support.parent)
             except Exception as rollback_exc:
-                raise RelocationError(f"relocation failed and rollback failed: {rollback_exc}") from exc
+                raise RelocationError(
+                    f"relocation failed and rollback failed: {rollback_exc}; "
+                    f"recovery material retained at {old_support}, {new_support}, {target_aux}"
+                ) from exc
             raise RelocationError(f"relocation rolled back: {exc}") from exc
 
 

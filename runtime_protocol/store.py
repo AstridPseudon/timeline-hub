@@ -1000,11 +1000,6 @@ class RealmStore:
                 target.flush()
                 os.fsync(target.fileno())
             platform.durable_replace(temporary, path)
-            directory = os.open(self.root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-            try:
-                os.fsync(directory)
-            finally:
-                os.close(directory)
         finally:
             Path(temporary).unlink(missing_ok=True)
 

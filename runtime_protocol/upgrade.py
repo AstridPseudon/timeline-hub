@@ -26,7 +26,6 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from . import platform
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .cas import ContentAddressedStore
 from .catalog import _safe_path
@@ -221,20 +220,11 @@ def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = N
             connection.close()
         before_bytes = db.stat().st_size
         after_bytes = output.stat().st_size
-        output_fd = os.open(output, os.O_RDONLY)
-        try:
-            os.fsync(output_fd)
-        finally:
-            os.close(output_fd)
+        _fsync_file(output)
         try:
             platform.durable_replace(output, db)
         finally:
             output.unlink(missing_ok=True)
-        directory = os.open(root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-        try:
-            os.fsync(directory)
-        finally:
-            os.close(directory)
     return {"ok": True, "realm_id": realm_id, "removed_session_rows": removed,
             **retired,
             "expired_results": changed, "retained_rows": after_count,
@@ -1043,8 +1033,11 @@ def _archive_source(root: Path, archive: Path) -> dict:
             _regular(source_path, f"realm.sqlite3{suffix}")
             target = archive / source_path.name
             shutil.copy2(source_path, target)
+            _fsync_file(target)
             size, digest = _file_digest(target)
             components[source_path.name] = {"size": size, "sha256": digest}
+    _fsync_directory(archive)
+    _fsync_directory(archive.parent)
     return {"components": components}
 
 
@@ -1079,16 +1072,13 @@ def _checkpoint_source_wal(source_db: Path) -> None:
 
 
 def _fsync_file(path: Path) -> None:
-    with path.open("rb") as handle:
+    # FlushFileBuffers (and consequently Windows os.fsync) needs write access.
+    with path.open("r+b") as handle:
         os.fsync(handle.fileno())
 
 
 def _fsync_directory(path: Path) -> None:
-    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-    try:
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)
+    platform.fsync_directory(path)
 
 
 def _copy_shared(source: sqlite3.Connection, target: sqlite3.Connection, columns: dict[str, list[str]], *, deadline: float | None = None) -> dict[str, dict[str, object]]:
@@ -1176,7 +1166,6 @@ def _write_manifest(archive: Path, metadata: dict) -> None:
     platform.owner_only(temporary)
     _fsync_file(temporary)
     platform.durable_replace(temporary, archive / "manifest.json")
-    _fsync_directory(archive)
 
 
 def upgrade_realm(
@@ -1213,7 +1202,7 @@ def upgrade_realm(
         source = None
         stage_dir = None
         target = None
-        swapped = False
+        restore_required = False
         archive = None
         temporary_archive_parent = None
         preserve_temporary_archive = False
@@ -1231,7 +1220,14 @@ def upgrade_realm(
             # connection may create/update a WAL shared-memory sidecar; the
             # source tree must remain byte-identical on every rejected plan.
             archive_meta = _archive_source(root, archive)
-            source = _open_readonly(archive / "realm.sqlite3")
+            # Read from a disposable copy as SQLite may modify its SHM even
+            # in read-only mode. The recovery image and its hashes stay exact.
+            stage_dir = Path(tempfile.mkdtemp(prefix=".realm-upgrade-", dir=root.parent))
+            source_copy = stage_dir / "source"
+            source_copy.mkdir()
+            for name in archive_meta["components"]:
+                shutil.copy2(archive / name, source_copy / name)
+            source = _open_readonly(source_copy / "realm.sqlite3")
             tables, columns, source_version = _source_shape(source)
             source_check = _quick_check(source, timeout_seconds)
             if source_check != "ok":
@@ -1250,7 +1246,6 @@ def upgrade_realm(
                 count, digest = _row_digest(source, table, table_columns, deadline=time.monotonic() + timeout_seconds)
                 legacy[table] = {"columns": table_columns, "rows": count, "sha256": digest}
             archive_meta["legacy_tables"] = legacy
-            stage_dir = Path(tempfile.mkdtemp(prefix=".realm-upgrade-", dir=root.parent))
             stage_db = stage_dir / "realm.sqlite3"
             target = sqlite3.connect(stage_db)
             target.executescript(CANONICAL_SCHEMA_SQL)
@@ -1269,6 +1264,7 @@ def upgrade_realm(
             # The source WAL is part of the archived evidence.  Checkpoint it
             # before replacing the DB so a crash cannot make SQLite apply an
             # old WAL to the newly activated canonical file.
+            restore_required = True
             _checkpoint_source_wal(source_db)
             archive_meta.update({
                 "format": "runtime-realm-upgrade/v1",
@@ -1290,9 +1286,10 @@ def upgrade_realm(
             platform.owner_only(stage_db)
             _fsync_file(stage_db)
             _fsync_directory(stage_dir)
-            platform.durable_replace(stage_db, source_db)
-            swapped = True
-            _fsync_directory(root)
+            platform.replace_path(stage_db, source_db)
+            # The completed publication is now covered by restore_required;
+            # a failed directory flush must take the rollback path too.
+            platform.flush_replace(stage_db, source_db)
             archive_meta.update({"state": "activated", "activated_at": now()})
             _write_manifest(archive, archive_meta)
             return {
@@ -1313,7 +1310,7 @@ def upgrade_realm(
         except Exception:
             if target is not None:
                 target.close()
-            if swapped and archive is not None:
+            if restore_required and archive is not None:
                 # A post-swap sidecar or manifest failure must not strand a
                 # half-activated realm. Restore the archived byte snapshot;
                 # the archive remains available for operator inspection.
@@ -1321,25 +1318,29 @@ def upgrade_realm(
                     rollback = root.parent / f".{source_db.name}.rollback-{uuid.uuid4().hex}"
                     shutil.copy2(archive / source_db.name, rollback)
                     platform.owner_only(rollback)
+                    _fsync_file(rollback)
                     platform.durable_replace(rollback, source_db)
                     for suffix in ("-wal", "-shm", "-journal"):
                         archived_sidecar = archive / f"{source_db.name}{suffix}"
                         restored_sidecar = root / f"{source_db.name}{suffix}"
                         if archived_sidecar.exists():
-                            shutil.copy2(archived_sidecar, restored_sidecar)
+                            rollback_sidecar = root / f".{restored_sidecar.name}.rollback-{uuid.uuid4().hex}"
+                            shutil.copy2(archived_sidecar, rollback_sidecar)
+                            platform.owner_only(rollback_sidecar)
+                            _fsync_file(rollback_sidecar)
+                            platform.durable_replace(rollback_sidecar, restored_sidecar)
                         elif restored_sidecar.exists() or restored_sidecar.is_symlink():
                             restored_sidecar.unlink()
+                    _fsync_directory(root)
                 except Exception as rollback_error:
                     # Keep the only rollback image if restoration itself
                     # fails. Its path is deterministic from this exception's
                     # operation id and the operator can recover it manually.
                     preserve_temporary_archive = temporary_archive_parent is not None
-                    if preserve_temporary_archive:
-                        raise RuntimeError(
-                            "realm upgrade rollback failed; recovery snapshot preserved at "
-                            f"{archive}"
-                        ) from rollback_error
-                    raise
+                    raise RuntimeError(
+                        "realm upgrade rollback failed; recovery snapshot preserved at "
+                        f"{archive}"
+                    ) from rollback_error
             if stage_dir is not None:
                 staged = stage_dir / "realm.sqlite3"
                 if staged.exists():

@@ -152,22 +152,35 @@ def fsync_directory(path):
         os.close(descriptor)
 
 
-def durable_replace(source, destination):
-    """Atomically replace a path, with per-OS durability and retry semantics.
+def replace_path(source, destination):
+    """Publish a rename without a subsequent, fallible directory flush.
 
-    POSIX callers fsync their parent directory after publication. Windows has
-    no portable directory-fsync operation, so MoveFileExW's
-    MOVEFILE_WRITE_THROUGH completes the move before returning. Its sharing
-    and access failures receive a short bounded retry for scanners/readers.
+    Transactions must record the completed rename before calling
+    ``flush_replace``. Windows includes write-through in the native move:
+    there is no separate portable directory flush on that platform.
     """
     if sys.platform == "win32":
         return _retry_windows_sharing_violation(
             lambda: _move_file_write_through(source, destination)
         )
     os.replace(source, destination)
+
+
+def flush_replace(source, destination):
+    """Persist both renamed entries after the caller records publication."""
     parents = {Path(source).parent, Path(destination).parent}
     for parent in parents:
         fsync_directory(parent)
+
+
+def durable_replace(source, destination):
+    """Publish and persist a path; owns all parent-directory durability.
+
+    Use ``replace_path`` followed by ``flush_replace`` when transaction
+    bookkeeping must distinguish a rename from a subsequent flush failure.
+    """
+    replace_path(source, destination)
+    flush_replace(source, destination)
 
 
 def read_private_file(path):

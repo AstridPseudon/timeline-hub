@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import stat
 import threading
 import time
 import uuid
@@ -1249,6 +1250,71 @@ def test_host_only_transaction_durable_acceptance_precedes_enable(tmp_path):
     assert store.load(store.path_for(WORKER_ACTOR).read_text())
     assert launcher.start(profile.profile_id,profile.workspace_uuid)['state']=='reconnected'
     launcher.finish_shutdown(launcher.begin_shutdown())
+
+
+def test_activation_acceptance_replay_flushes_record_with_writable_handle(tmp_path, monkeypatch):
+    import runtime_protocol.local_worker as worker_module
+    from runtime_protocol.local_worker import RELAY_PREPARATION_VERSION, _digest, _selected_profile_payload
+
+    profile, observation = _host_only_fixture(tmp_path)
+    credentials = CredentialStore(tmp_path / "credentials")
+    replay_flushes = []
+
+    class ReplayPreparer(FakePreparer):
+        def report(self, handle):
+            return {
+                "version": RELAY_PREPARATION_VERSION, "execution_mode": "host_only_cpu",
+                "operation_id": self.operation_id, "channel_id": self.channel_id,
+                "processes": {"host": {"pid": observation.host.pid, "birth_id": observation.host.birth_id}},
+                "session_config_digest": profile.session_config_digest,
+                "owner_epoch": observation.owner_epoch, "custody_scope": observation.custody_scope,
+                "custody_capabilities": observation.custody_capabilities,
+                "profile_binding_digest": _digest(_selected_profile_payload(profile)),
+            }
+
+        def bind_activation_acceptor(self, handle, grant, acceptor):
+            self.acceptor = acceptor
+
+        def activate(self, handle, grant):
+            request = {
+                "version": "astrid.local-worker-activation-request/v1",
+                "operation_id": grant["operation_id"], "channel_id": grant["channel_id"],
+                "grant": {key: grant[key] for key in (
+                    "activation_id", "credential_file", "executor_incarnation", "evidence_digest",
+                )},
+                "host": {"pid": observation.host.pid, "birth_id": observation.host.birth_id},
+            }
+            recorded = self.acceptor(request)
+            real_fsync = worker_module.os.fsync
+
+            def writable_fsync(fd):
+                if stat.S_ISREG(os.fstat(fd).st_mode):
+                    os.write(fd, b"")
+                    replay_flushes.append(fd)
+                return real_fsync(fd)
+
+            with monkeypatch.context() as replay_patch:
+                replay_patch.setattr(worker_module.os, "fsync", writable_fsync)
+                assert self.acceptor(request) == recorded
+
+    class ReplayInspector(FakeInspector):
+        def observe(self, handle):
+            # Both acceptance observations happen before credential enable.
+            if self.calls >= 5:
+                self.calls += 1
+                return self.observation
+            return super().observe(handle)
+
+    preparer = ReplayPreparer(credentials, observation)
+    inspector = ReplayInspector(credentials, observation)
+    launcher = _launcher(credentials, profile, preparer, inspector, 77)
+    launcher._start_watcher = lambda: None
+    try:
+        assert launcher.start(profile.profile_id, profile.workspace_uuid)["state"] == "active"
+        assert len(replay_flushes) == 1
+        assert inspector.calls == 6
+    finally:
+        launcher.finish_shutdown(launcher.begin_shutdown())
 
 
 @pytest.mark.parametrize('field,value',[('machine_id','other'),('engine_endpoint','http://127.0.0.1:8188'),('session_config_digest','sha256:'+'3'*64)])

@@ -31,24 +31,11 @@ from contextlib import contextmanager
 from typing import Any, Mapping
 
 from .errors import ConflictError
+from .platform import _retry_windows_sharing_violation
 
 _WIN_DIRECTORY = 0x10000000
 _WIN_NOFOLLOW = 0x20000000
 _WIN_NONBLOCK = 0
-
-
-def _retry_windows_sharing_violation(operation, *, clock=time.monotonic, sleep=time.sleep):
-    """Retry only transient Windows sharing/access failures for a short budget."""
-    deadline = clock() + 0.25
-    delay = 0.01
-    while True:
-        try:
-            return operation()
-        except OSError as exc:
-            if getattr(exc, "winerror", None) not in (5, 32, 33) or clock() >= deadline:
-                raise
-            sleep(min(delay, max(0, deadline - clock())))
-            delay = min(delay * 2, 0.05)
 
 
 class _WindowsFilesystem:
