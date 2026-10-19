@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T19:55:00Z | dispatcher heartbeat 11s -->
+<!-- main | 2026-10-19T19:59:32Z | dispatcher heartbeat 14s -->
 # app — 2026-10-19 19:35 UTC
 Milestone: M1 ACTIVE — priority restore real mounted move immediately (orchestrator redirect acknowledged). M0 COMPLETE. No M2 widening or behavior removals without replacement.
 Integrated: app tl/integration0dfb38965 — actual JSON-clone-safe capture56b46f67d (manager78pass+28 exact command/bundle/record goldens, rerun against NOW merged Agent93624e8f); authoringBundle50b35d967 (manager23pass+5 exact Python bundle goldens); native IndexedDB/Web Locks persistent-Chromium-restart testdaf820bc1 (central1pass17.3s, actual outbox bytes identical); official Runtime DTO13-file pinc423544/0.2.0 (central52pass). Earlier outbox23pass, UI409/67pass, consumer203/103pass, Viewing preview68pass. Actual mounted port still in flight; integration move refusal short transition.

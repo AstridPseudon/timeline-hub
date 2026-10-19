@@ -66,3 +66,5 @@ states that changes are retained and need resolution; transport, lock, and
 storage failures remain unsaved-work/error states and are not labelled as
 conflicts. The surface is absent when the command-session surface is absent or
 already saved.
+
+19:56 wiring manager review: original candidate DONE165neighbor/16focused/95shell, held for app-m1-wiring-fix (small lifecycle fix only): drain already-submitted durable appends before dispose without waiting uncertain network; avoid owning old clean history merely on initialization; official0.2.1 actual source typecheck/nested preview narrowing. Current candidate ALSO added inline Shell recovery controls (Recover editor1 / Retry timeline edits) after separate UI worker dispatch; manager will compose ONE UI with app-m1-recovery-ui's human labels/data-owner-id, no duplicate banners or uncontrolled overlap. New UI worker must be based/composed onto safe wiring before merge; do not infer controls already on integration. Actual mouse cases remain priority; no browser pass yet. Preview accepted/local fact seam proposal sent Viewing, not implemented until agreed.

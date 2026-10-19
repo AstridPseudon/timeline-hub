@@ -1,400 +1,400 @@
-    def get(self, kind: ElementKind, element_id: str, *, pack_id: str | None = None) -> ElementDefinition:
-        normalized_kind = self.element_kind_registry.normalize(kind, error_cls=ElementRegistryError)
-        key = (normalized_kind, element_id)
-        try:
-import type { TransitionComponent } from './effects-types.js';
-export declare const ACTIVE_THEME_ID: null;
-export declare const TRANSITION_IDS: readonly ["cross-fade", "fade"];
-export type TransitionId = typeof TRANSITION_IDS[number];
-export declare const TRANSITION_REGISTRY: Readonly<Record<string, TransitionComponent>>;
-export declare const TRANSITION_DEFAULTS: Readonly<Record<string, Record<string, unknown>>>;
-export declare const TRANSITION_META: Readonly<Record<string, Record<string, unknown>>>;
-import type { ReactNode } from 'react';
-import type { AnimationRegistries } from '../registries.js';
-import type { AnimationComponent, AnimationPhase, AnimationReferenceList } from '../effects-types.js';
-import type { RuntimeTheme } from '../ThemeContext.js';
-import type { TimelineClip } from '../types.js';
-export type NormalizedAnimationReference = {
-    id: string;
-    durationFrames?: number;
-    easing?: string;
-    params: Record<string, unknown>;
-};
-export type ResolvedAnimation = NormalizedAnimationReference & {
-    component: AnimationComponent;
-    kind: 'wrapper' | 'hook';
-    phase: AnimationPhase;
-    durationFrames: number;
-};
-export type ComposeAnimationsInput = {
-    clip: TimelineClip;
-    refs: AnimationReferenceList | undefined;
-    phase: AnimationPhase;
-    content: ReactNode;
-    text?: string;
-    theme: RuntimeTheme;
-    fps: number;
-    elapsedFrames: number;
-    registries?: AnimationRegistries;
-};
-export declare const normalizeAnimationReferences: (refs: AnimationReferenceList | undefined, registries?: AnimationRegistries) => NormalizedAnimationReference[];
-export declare const resolveAnimationReferences: (refs: AnimationReferenceList | undefined, phase: AnimationPhase, registries?: AnimationRegistries) => ResolvedAnimation[];
-export declare const composeAnimations: ({ clip, refs, phase, content, text, theme, fps, elapsedFrames, registries, }: ComposeAnimationsInput) => ReactNode;
-
-exec
-/bin/bash -lc "sed -n '55,98p' astrid/core/element/schema.py; cat /home/user/work/composition/typescript/tests/registries.test.ts" in /home/user/work/wt/vw-m3-agent-package
- succeeded in 0ms:
-class ElementAsset:
-    name: str
-    path: Path
-
-
-@dataclass(frozen=True)
-class ElementDefinition:
-    id: str
-    kind: ElementKind
-    root: Path
-    source: str
-    editable: bool
-    priority: int
-    component: Path
-    schema: dict[str, Any]
-    defaults: dict[str, Any]
-    metadata: dict[str, Any] = field(default_factory=dict)
-    dependencies: ElementDependencies = field(default_factory=ElementDependencies)
-    description: str = ""
-    short_description: str = ""
-    keywords: tuple[str, ...] = ()
-    inputs: tuple[Port, ...] = ()
-    outputs: tuple[Output, ...] = ()
-    runtime: dict[str, Any] = field(default_factory=dict)
-    assets: tuple[ElementAsset, ...] = ()
-    support_files: tuple[Path, ...] = ()
-
-    def to_dict(self) -> dict[str, Any]:
-        data = asdict(self)
-        data["root"] = str(self.root)
-        data["component"] = str(self.component)
-        if self.support_files:
-            data["support_files"] = [str(path) for path in self.support_files]
-        else:
-            data.pop("support_files", None)
-        if self.assets:
-            data["assets"] = {asset.name: asset.path.as_posix() for asset in self.assets}
-        else:
-            data.pop("assets", None)
-        return data
-
-    def to_json(self, *, indent: int | None = 2) -> str:
-        return json.dumps(self.to_dict(), indent=indent, sort_keys=True)
-
-import assert from 'node:assert/strict';
-import {test} from 'node:test';
-import {createElement, type ReactElement} from 'react';
-import {renderToStaticMarkup} from 'react-dom/server';
-import {Internals} from 'remotion';
-import {TimelineComposition, prepareCompositionScene, renderVisualClipContent} from '../src/TimelineComposition';
-import {DEFAULT_THEME, ThemeProvider, toRuntimeTheme} from '../src/ThemeContext';
-import {resolveElementRegistries, ElementRegistryProvider, type CompositionRegistries} from '../src/registries';
-import {composeAnimations, resolveAnimationReferences} from '../src/lib/animations';
-import {resolveTransitionReference} from '../src/lib/transitions';
-import {querySceneFrame} from '../src/evaluation';
-import {BUNDLED_THEMES, BUNDLED_THEME_VERSIONS} from '../src/registry.generated';
-import type {EffectProps, HookAnimationProps} from '../src/effects-types';
-import type {AssetRegistry, TimelineClip, TrackDefinition} from '../src/types';
-
-const theme = toRuntimeTheme(DEFAULT_THEME);
-const branded = toRuntimeTheme(BUNDLED_THEMES['2rp']);
-const assets: AssetRegistry = {assets: {}};
-const track: TrackDefinition = {id: 'visual', kind: 'visual', label: 'Visual'};
-const clip: TimelineClip = {id: 'title', track: 'visual', at: 0, hold: 2, clipType: 'text-card',
-  params: {content: 'Title', typewriter: false, entrance: 'none', exit: 'none'}};
-const prepare = (clips: TimelineClip[], registries?: CompositionRegistries, selectedTheme = theme) =>
-  prepareCompositionScene([{track, clips}], assets, 30, selectedTheme, 1920, 1080, undefined,
-    Object.fromEntries(clips.map(clip => [clip.id, 'picture'])), {}, 'renderer@1', {}, registries);
-
-// Remotion's ordinary contexts supply the same frame/config used by Player.
-// No browser or alternate copy of the component implementation is involved.
-const render = (content: ReactElement, selectedTheme = DEFAULT_THEME, registries: CompositionRegistries = {}) => {
-  const video = {id: 'test', width: 1920, height: 1080, fps: 30, durationInFrames: 60,
-    defaultProps: {}, folderName: null, parentFolderName: null, component: () => null,
-    nonce: [], schema: null, calculateMetadata: null, stack: null};
-  return renderToStaticMarkup(createElement(Internals.CompositionManager.Provider, {
-    value: {compositions: [video], currentCompositionMetadata: null, folders: [],
-      canvasContent: {type: 'composition', compositionId: 'test'}},
-  }, createElement(Internals.TimelineContext.Provider, {
-    value: {frame: {test: 24}, playing: false, imperativePlaying: {current: false}, audioAndVideoTags: {current: []}},
-  }, createElement(Internals.CanUseRemotionHooksProvider, null,
-    createElement(ThemeProvider, {value: selectedTheme, children:
-      createElement(ElementRegistryProvider, {value: registries, children: content})})))));
-
-};
-
-test('bundled core and selected theme effects use the same scoped dispatch and stay conservative', () => {
-  assert.equal(BUNDLED_THEME_VERSIONS['2rp'], '0.1.0');
-  assert.deepEqual(Object.keys(resolveElementRegistries(theme).effects), ['text-card']);
-  assert.equal(resolveElementRegistries(theme).clipTypeAliases.text, 'text-card');
-  const text = renderVisualClipContent(track, {...clip, clipType: 'text', text: {content: 'Alias'}},
-    assets, 30, theme, 0, {width: 1920, height: 1080});
-  assert.deepEqual((text?.props as {children: ReactElement<EffectProps>}).children.props.params, {content: 'Alias'});
-  assert.equal(Object.keys(resolveElementRegistries(branded).effects).length, 5);
-  for (const id of ['text-card', 'art-card', 'cta-card', 'resource-card', 'section-hook']) {
-    const scene = prepare([{...clip, clipType: id}], undefined, branded);
-    assert.ok(scene.elements.has(id));
-    assert.equal(querySceneFrame(scene, 0).layers[0].visible, 'unknown');
-    assert.ok(querySceneFrame(scene, 0).findings.some(finding => finding.code === 'unknown-component-internals'));
-    const node = renderVisualClipContent(track, {...clip, clipType: id}, assets, 30, branded, 0, {width: 1920, height: 1080});
-    assert.ok(node);
-  }
-  const unknown = querySceneFrame(prepare([{...clip, clipType: 'not-installed'}]), 0);
-  assert.equal(unknown.coverage, 'UNKNOWN');
-  assert.ok(unknown.findings.some(finding => finding.code === 'unknown-component-internals'));
-});
-
-test('host effects, aliases and capabilities are instance scoped, including default overrides', () => {
-  const seen: EffectProps[] = [];
-  const Custom = Object.assign((props: EffectProps) => {seen.push(props); return createElement('b', null, 'host');}, {
-    prepareSceneCapability: ({rendererIdentity}: {rendererIdentity: string}) => ({
-      identity: rendererIdentity,
-      frame: () => ({presence: 'present' as const, opaqueSupport: 'rect' as const,
-        bounds: {status: 'known' as const, rect: {x: 0, y: 0, width: 1920, height: 1080}}}),
-    }),
-  });
-  const registries = {effects: {'text-card': Custom}, clipTypeAliases: {custom: 'text-card'}};
-  const alias = {...clip, clipType: 'custom'};
-  assert.equal(querySceneFrame(prepare([alias], registries), 0).coverage, 'COVERED');
-  assert.equal(querySceneFrame(prepare([alias]), 0).coverage, 'UNKNOWN');
-  assert.equal(querySceneFrame(prepare([clip], registries), 0).layers[0].visible, true);
-  assert.equal(querySceneFrame(prepare([clip]), 0).layers[0].visible, 'unknown');
-  const content = renderVisualClipContent(track, alias, assets, 30, theme, 7, {width: 1920, height: 1080, registries});
-  assert.ok(content);
-  const effect = (content.props as {children: ReactElement<EffectProps>}).children;
-  assert.strictEqual(effect.type, Custom);
-  assert.equal(effect.props.globalFrame, 7);
-  assert.deepEqual(effect.props.params, clip.params);
-  assert.equal(seen.length, 0);
-  assert.deepEqual(Object.keys(resolveElementRegistries(branded, {effects: {}}).effects), []);
-});
-
-test('host animation maps keep defaults, phase validation and unknown errors scoped', () => {
-  const custom = ({text}: HookAnimationProps) => ({text, content: 'host animation'});
-  const registries: CompositionRegistries = {animations: {custom}, animationDefaults: {custom: {durationFrames: 3}},
-    animationMeta: {custom: {kind: 'hook', phase: 'entrance'}}};
-  assert.equal(resolveAnimationReferences('custom', 'entrance', registries)[0].durationFrames, 3);
-  assert.throws(() => resolveAnimationReferences('custom', 'exit', registries), /phase/);
-  assert.throws(() => resolveAnimationReferences('custom', 'entrance'), /Unknown animation/);
-  assert.throws(() => resolveAnimationReferences('fade', 'exit', registries), /Unknown animation/);
-  assert.throws(() => resolveAnimationReferences('toString', 'exit'), /Unknown animation/);
-  assert.equal(composeAnimations({clip, refs: 'custom', phase: 'entrance', content: 'default',
-    theme, fps: 30, elapsedFrames: 2, registries}), 'host animation');
-  assert.equal(resolveAnimationReferences('fade', 'exit')[0].durationFrames, 12);
-  const override = {animations: {'type-on': custom}};
-  assert.equal(composeAnimations({clip, refs: {id: 'type-on', easing: 'linear'}, phase: 'entrance',
-    content: 'default', theme, fps: 30, elapsedFrames: 2, registries: override}), 'host animation');
-});
-
-test('host transition resolution reaches preparation without changing another instance', () => {
-  const calls: number[] = [];
-  const registries: CompositionRegistries = {transitions: {custom: props => {
-    calls.push(props.durationFrames); return {presentation: null, timing: null};
-  }}, transitionDefaults: {custom: {durationFrames: 8}}};
-  const pair = [{...clip, transition: 'custom'}, {...clip, id: 'next', at: 2}];
-  const prepared = prepare(pair, registries);
-  assert.equal(prepared.tracks[0].prepared.plans[1].drawStart, 52);
-  assert.deepEqual(calls, [8]);
-  assert.throws(() => prepare(pair), /Unknown transition/);
-  assert.throws(() => resolveTransitionReference('toString', theme, 30), /Unknown transition/);
-});
-
-test('default animations retain real motion and type-on output', () => {
-  const animated = composeAnimations({clip, refs: 'fade-up', phase: 'entrance', content: 'title',
-    theme, fps: 30, elapsedFrames: 0}) as ReactElement;
-  const wrapper = (animated.type as (props: unknown) => ReactElement)(animated.props);
-  assert.equal((wrapper.props as {style: {opacity: number}}).style.opacity, 0);
-  const early = composeAnimations({clip, refs: 'type-on', phase: 'entrance', text: 'hello', content: 'hello',
-    theme, fps: 30, elapsedFrames: 0});
-  const late = composeAnimations({clip, refs: 'type-on', phase: 'entrance', text: 'hello', content: 'hello',
-    theme, fps: 30, elapsedFrames: 120});
-  assert.notDeepEqual(early, late);
-});
-
-test('packaged effect internal animations and clip animations honor the rendering scope', () => {
-  const Custom = ({children}: {children?: unknown}) => createElement('mark', null, 'scoped');
-  const registries: CompositionRegistries = {animations: {'fade-up': Custom, fade: Custom, 'type-on': Custom},
-    animationMeta: {'fade-up': {kind: 'wrapper', phase: 'entrance'}, fade: {kind: 'wrapper', phase: 'exit'},
-      'type-on': {kind: 'wrapper', phase: 'entrance'}},
-    animationDefaults: {'fade-up': {durationFrames: 18}, fade: {durationFrames: 12}, 'type-on': {durationFrames: 60}}};
-  const content = renderVisualClipContent(track, {...clip, params: {content: 'Title', typewriter: false}}, assets,
-    30, theme, 24, {width: 1920, height: 1080, registries});
-  assert.ok(content);
-  assert.match(render(content, DEFAULT_THEME, registries), /<mark>scoped<\/mark>/);
-  const composition = createElement(TimelineComposition, {timeline: {theme: 'default', tracks: [track], clips: [clip]},
-    assets, registries: {effects: {'text-card': () => createElement('b', null, 'host composition')}}});
-  assert.match(render(composition), /host composition/);
-  const animatedClip = createElement(TimelineComposition, {
-    timeline: {theme: 'default', tracks: [track], clips: [{...clip, entrance: {id: 'fade-up', durationFrames: 60}}]}, assets,
-    registries: {...registries, effects: {'text-card': () => createElement('b', null, 'host composition')}},
-  });
-  assert.match(render(animatedClip), /<mark>scoped<\/mark>/);
-});
-
-exec
-/bin/bash -lc 'PATH=/home/user/work/node-v20.19.4-linux-x64/bin:$PATH npm ci --prefix remotion --cache /tmp/vw-m3-agent-package-npm-cache --no-audit --no-fund' in /home/user/work/wt/vw-m3-agent-package
- exited 1 in 82444ms:
-
-> typecheck
-> tsc --noEmit
-
-...........F................................ss....ss.................... [ 67%]
-...................................                                      [100%]
-=================================== FAILURES ===================================
-___________ test_native_defaults_and_explicit_roots_ignore_later_cwd ___________
-
-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-215/test_native_defaults_and_expli0')
-
-    def test_native_defaults_and_explicit_roots_ignore_later_cwd(tmp_path: Path) -> None:
-        result = _node_json(
-            """
-            import {pathToFileURL} from 'node:url';
-            import assert from 'node:assert/strict';
-            const mod = await import(pathToFileURL(process.argv[2]).href);
-            const deferred = mod.remotionPrimitiveAliasesFor(process.argv[1] + '/remotion');
-            assert.throws(() => mod.remotionPrimitiveAliasesFor(undefined), /absolute/);
-            assert.throws(() => mod.remotionPrimitiveAliasesFor('relative'), /absolute/);
-            process.chdir(process.argv[3]);
-            const native = mod.applyRemotionPrimitiveAliases({});
-            const explicit = deferred({});
-            assert.deepEqual(native, explicit);
-            assert.equal(explicit.resolve.alias['@theme-effects'], process.argv[1] + '/_active_theme/effects');
-            assert.equal(explicit.resolve.modules.at(-1), process.argv[1] + '/remotion/node_modules');
-            console.log(JSON.stringify(explicit.resolve.alias));
-            """, str(ROOT), str(MODULE), str(tmp_path),
+        ownership = AudioOwnership.RENDERED
+        descriptor, staged_name = tempfile.mkstemp(
+            prefix=f".{output_name}.remotion-stage-",
+            suffix=Path(output_name).suffix,
+            dir=str(outputs_dir),
         )
->       assert result['@workspace-effects'].startswith(str(ROOT / 'astrid/packs/rendering/'))
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E       KeyError: '@workspace-effects'
-
-tests/packs/rendering/test_remotion_v3_aliases.py:111: KeyError
-=========================== short test summary info ============================
-FAILED tests/packs/rendering/test_remotion_v3_aliases.py::test_native_defaults_and_explicit_roots_ignore_later_cwd
-1 failed, 102 passed, 4 skipped, 1 deselected in 76.30s (0:01:16)
+        os.close(descriptor)
+        staged_video = Path(staged_name)
+        staged_video.unlink(missing_ok=True)
+        try:
 
 exec
-/bin/bash -lc "python3 - <<'PY'
-from pathlib import Path
-p=Path('scripts/gen_effect_registry.py'); s=p.read_text(); a=s.index('        \"function selectOwnedEffect'); b=s.index('        *imports,',a); s=s[:a]+'''        \"import type {SceneCapableComponent, ComponentCapabilityContext} from '@banodoco/timeline-composition/evaluation';\",
-        \"\",
-        \"function selectOwnedEffect(id: string, winner: EffectComponent, owners: Record<string, EffectComponent>): EffectComponent {\",
-        \"  const select = (clip: {elementRef?: {id: string; kind: string; packId?: string}}): EffectComponent & SceneCapableComponent => {\",
-        \"    const ref = clip.elementRef;\",
-        \"    if ("'!ref || ref.kind !== '"'effect' || ref.id "'!== id || !('"'packId' in ref)) return winner;\",
-        \"    const component = typeof ref.packId === 'string' && Object.prototype.hasOwnProperty.call(owners, ref.packId) ? owners[ref.packId] : undefined;\",
-        \"    if ("'!component) throw new Error(`Unknown effect owner ${String(ref.packId)} for ${id}`);",
-        "    return component;",
-        "  };",
-        "  return Object.assign((props: Parameters<EffectComponent>[0]) => createElement(select(props.clip), props), {",
-        "    prepareSceneCapability: (context: ComponentCapabilityContext) => select(context.clip).prepareSceneCapability?.(context),",
-        "  });",
-        "}",
-'"'''+s[b:]; p.write_text(s)
-PY
-PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python scripts/gen_remotion_types.py --include-element-registries
-PATH=/home/user/work/node-v20.19.4-linux-x64/bin:$PATH npm run typecheck --prefix remotion' in /home/user/work/wt/vw-m3-agent-package
- succeeded in 13870ms:
+/bin/bash -lc "rg -n 'composition_clip_types|THEME_PACKAGE|_composition_clip' astrid/packs/rendering/rendering/renderers/remotion/run.py; sed -n '1480,1575p' astrid/packs/rendering/rendering/renderers/remotion/run.py; rg -n 'composition.*clip|theme.*package' astrid/core/rendering -g '*.py'" in /home/user/work/wt/vw-m3-agent-package
+ exited 1 in 40ms:
+739:    composition_clip_types: frozenset[str] = frozenset(),
+765:            and clip.get("clipType") not in composition_clip_types
+929:    composition_clip_types: frozenset[str] = frozenset(),
+958:                composition_clip_types=composition_clip_types,
+998:                composition_clip_types=composition_clip_types,
+1028:    composition_clip_types: frozenset[str] = frozenset(),
+1163:                composition_clip_types=composition_clip_types,
+def support(request: RenderRequest, *, workspace: Path) -> SupportReport:
+    """Return request-specific evidence for the timeline Remotion can render."""
 
-> postinstall
-> node scripts/apply-renderer-darwin-cpu-patch.mjs
+    reasons: list[str] = []
+    features: dict[str, bool | str] = {
+        "timeline_composition": True,
+        "full_timeline": True,
+        "windows": True,
+        "effects": True,
+        "asset_serving": "invocation-scoped",
+        "alpha_output": True,
+    }
+    try:
+        settings = _settings_from_request(request, workspace)
+    except (TypeError, ValueError) as exc:
+        settings = _RenderSettings(
+            project_dir=REPO_ROOT / "remotion",
+            composition_id=DEFAULT_COMPOSITION_ID,
+            theme_path=None,
+            min_free_gb=None,
+        )
+        reasons.append(str(exc))
 
-{"package":"@remotion/renderer","version":"4.0.509","patchedFiles":2}
+    timeline_path = _input_path(request.timeline_path, workspace)
+    assets_path = (
+        _input_path(request.assets_registry_path, workspace)
+        if request.assets_registry_path is not None
+        else None
+    )
+    timeline_data: dict[str, Any] | None = None
+    assets_data: dict[str, Any] | None = None
+    try:
+        timeline_data = _serialize_timeline(timeline_path)
+    except Exception as exc:  # noqa: BLE001 - support report normalizes renderer failures
+        reasons.append(f"timeline is not renderable: {exc}")
+    try:
+        assets_data = _load_registry_mapping(assets_path)
+    except Exception as exc:  # noqa: BLE001 - support report normalizes renderer failures
+        reasons.append(f"assets registry is not renderable: {exc}")
+    if assets_path is not None and assets_data is not None:
+        # Validate local sources during the service's support probe, before a
+        # kernel run is admitted.  AssetMaterializer applies the project-root
+        # boundary plus the exact kernel-owned managed-media allowlist; it
+        # stages only in its disposable probe directory and closes immediately.
+        try:
+            with AssetMaterializer(
+                assets_path,
+                materialized_objects=request.materialized_objects,
+                materialized_root=request.materialized_root,
+                allow_derived_files=request.materialized_root is not None,
+            ):
+                pass
+        except Exception as exc:  # noqa: BLE001 - support report normalizes registry failures
+            reasons.append(f"local assets are not renderable: {exc}")
 
-added 280 packages in 14s
-
- succeeded in 8978ms:
-
-> typecheck
-> tsc --noEmit
-
+    if timeline_data is not None and assets_data is not None:
+        registered_assets = assets_data.get("assets", {})
+        missing_asset_ids = sorted(
+            {
+                str(clip.get("asset"))
+                for clip in timeline_data.get("clips", [])
+                if isinstance(clip, dict)
+                and isinstance(clip.get("asset"), str)
+                and clip.get("asset") not in registered_assets
+            }
+        )
+        if missing_asset_ids:
+            reasons.append("timeline references missing asset ids: " + ", ".join(missing_asset_ids))
+        dynamic_clip_types = sorted(
+            {
+                str(clip.get("clipType"))
+                for clip in timeline_data.get("clips", [])
+                if isinstance(clip, dict)
+                and clip.get("clipType", "media") not in _BUILTIN_MEDIA_CLIP_TYPES
+            }
+        )
+        if dynamic_clip_types:
+            try:
+                effects, aliases = _effect_registry_for_assets(settings.theme_path)
+            except Exception as exc:  # noqa: BLE001 - support report normalizes registry failures
+                reasons.append(f"Remotion element registry cannot be resolved: {exc}")
+            else:
+                unknown_clip_types = [
+                    clip_type
+                    for clip_type in dynamic_clip_types
+                    if clip_type not in effects and clip_type not in aliases
+                ]
+                if unknown_clip_types:
+                    reasons.append(
+                        "timeline uses unregistered Remotion clip types: "
+                        + ", ".join(unknown_clip_types)
+                    )
+        try:
+            _resolve_timeline_element_references(
+                timeline_data,
+                theme_path=settings.theme_path,
 
 exec
-/bin/bash -lc "python3 - <<'PY'
-from pathlib import Path
-p=Path('tests/packs/rendering/test_remotion_v3_aliases.py'); s=p.read_text().replace(\"result['@workspace-effects']\", \"result['@pack-rendering-elements-effects']\"); p.write_text(s)
-PY
-PATH=/home/user/work/node-v20.19.4-linux-x64/bin:"'$PATH npm ls --prefix remotion @banodoco/timeline-composition react react-dom remotion @remotion/media @remotion/layout-utils --all' in /home/user/work/wt/vw-m3-agent-package
- succeeded in 786ms:
-tools-remotion@ /home/user/work/wt/vw-m3-agent-package/remotion
-├─┬ @banodoco/timeline-composition@0.0.8
-│ ├── @remotion/layout-utils@4.0.509 deduped
-│ ├── @remotion/media@4.0.509 deduped
-│ ├── react-dom@18.3.1 deduped
-│ ├── react@18.3.1 deduped
-│ └── remotion@4.0.509 deduped
-├─┬ @react-three/fiber@8.18.0
-│ ├─┬ its-fine@1.2.5
-│ │ └── react@18.3.1 deduped
-│ ├── react-dom@18.3.1 deduped
-│ ├─┬ react-reconciler@0.27.0
-│ │ └── react@18.3.1 deduped
-│ ├─┬ react-use-measure@2.1.7
-│ │ ├── react-dom@18.3.1 deduped
-│ │ └── react@18.3.1 deduped
-│ ├── react@18.3.1 deduped
-│ ├─┬ suspend-react@0.1.3
-│ │ └── react@18.3.1 deduped
-│ └─┬ zustand@3.7.2
-│   └── react@18.3.1 deduped
-├─┬ @remotion/bundler@4.0.509
-│ ├─┬ @remotion/studio-shared@4.0.509
-│ │ └── remotion@4.0.509 deduped
-│ ├─┬ @remotion/studio@4.0.509
-│ │ ├─┬ @remotion/web-renderer@4.0.509
-│ │ │ ├── react-dom@18.3.1 deduped
-│ │ │ ├── react@18.3.1 deduped
-│ │ │ └── remotion@4.0.509 deduped
-│ │ ├─┬ @remotion/zod-types@4.0.509
-│ │ │ └── remotion@4.0.509 deduped
-│ │ ├── react-dom@18.3.1 deduped
-│ │ ├── react@18.3.1 deduped
-│ │ └── remotion@4.0.509 deduped
-│ ├── react-dom@18.3.1 deduped
-│ ├── react@18.3.1 deduped
-│ └── remotion@4.0.509 deduped
-├─┬ @remotion/cli@4.0.509
-│ ├─┬ @remotion/media-utils@4.0.509
-│ │ ├── react-dom@18.3.1 deduped
-│ │ ├── react@18.3.1 deduped
-│ │ └── remotion@4.0.509 deduped
-│ ├─┬ @remotion/player@4.0.509
-│ │ ├── react-dom@18.3.1 deduped
-│ │ ├── react@18.3.1 deduped
-│ │ └── remotion@4.0.509 deduped
-│ ├─┬ @remotion/studio-server@4.0.509
-│ │ ├─┬ @remotion/studio-codemods@4.0.509
-│ │ │ └── remotion@4.0.509 deduped
-│ │ └── remotion@4.0.509 deduped
-│ ├── react-dom@18.3.1 deduped
-│ ├── react@18.3.1 deduped
-│ └── remotion@4.0.509 deduped
-├─┬ @remotion/google-fonts@4.0.509
-│ └── remotion@4.0.509 deduped
-├── @remotion/layout-utils@4.0.509
-├─┬ @remotion/media@4.0.509
-│ ├── react-dom@18.3.1 deduped
-│ ├── react@18.3.1 deduped
-│ └── remotion@4.0.509 deduped
-├─┬ @remotion/renderer@4.0.509
-│ ├── react-dom@18.3.1 deduped
-│ ├── react@18.3.1 deduped
-│ └── remotion@4.0.509 deduped
-├─┬ @remotion/three@4.0.509
-│ ├── react-dom@18.3.1 deduped
-│ ├── react@18.3.1 deduped
-│ └── remotion@4.0.509 deduped
-├─┬ react-dom@18.3.1
-│ └── react@18.3.1 deduped
-├── react@18.3.1
-└─┬ remotion@4.0.509
-  ├── react-dom@18.3.1 deduped
-  └── react@18.3.1 deduped
+/bin/bash -lc "ls /home/user/work/composition/typescript/src/builtins/themes/2rp/effects/art-card; cat /home/user/work/composition/typescript/src/builtins/themes/2rp/effects/art-card/meta.json; cat /home/user/work/composition/typescript/src/builtins/themes/2rp/effects/art-card/defaults.json; sed -n '145,225p' astrid/core/element/schema.py; sed -n '1255,1365p' astrid/packs/rendering/pack.yaml" in /home/user/work/wt/vw-m3-agent-package
+ succeeded in 0ms:
+component.tsx
+defaults.json
+meta.json
+{
+  "id": "art-card",
+  "name": "2RP Art Card",
+  "description": "Framed art beat with Renaissance-inspired captioning.",
+  "whenToUse": "Use for every individual art-piece reveal — fields are title (work name) + creator (handle). Always use this for art showcase beats; never use text-card for art reveals."
+}
+{"title":"Patronage returns","caption":"The studio becomes a cathedral for new tools.","entrance":["slide-left"],"exit":["fade"]}
+    *,
+    kind: str,
+    source: str,
+    editable: bool,
+    priority: int,
+    manifest_path: str | Path | None = None,
+    element_kind_registry: ElementKindRegistry | None = None,
+) -> ElementDefinition:
+    element_root = Path(root)
+    folder_kind = _normalize_kind(kind, element_kind_registry=element_kind_registry)
+    if manifest_path is None:
+        manifest_path = _element_manifest_path(element_root)
+    else:
+        manifest_path = Path(manifest_path).resolve()
+        if manifest_path.parent != element_root.resolve() or not manifest_path.is_file():
+            raise ElementValidationError(f"element manifest must be a regular file in {element_root}")
+    if manifest_path is None:
+        raise ElementValidationError(f"missing element manifest in {element_root}")
+    payload = _read_manifest(manifest_path)
+    element_id = str(payload.get("id") or element_root.name)
+    declared_kind = payload.get("kind")
+    if declared_kind is not None:
+        normalized = _normalize_kind(
+            str(declared_kind),
+            element_kind_registry=element_kind_registry,
+        )
+        if normalized != folder_kind:
+            raise ElementValidationError(
+                f"element {element_id!r} declared kind {declared_kind!r} does not match folder kind {folder_kind!r}"
+            )
+    metadata_section = payload.get("metadata", {})
+    if not isinstance(metadata_section, dict):
+        raise ElementValidationError(f"{manifest_path}: metadata must be an object")
+    metadata = dict(metadata_section)
+    metadata.setdefault("id", element_id)
+    pack_id = payload.get("pack_id")
+    if pack_id is not None:
+        metadata["pack_id"] = pack_id
+    schema_section = payload.get("schema", {})
+    defaults_section = payload.get("defaults", {})
+    if not isinstance(schema_section, dict):
+        raise ElementValidationError(f"{manifest_path}: schema must be an object")
+    if not isinstance(defaults_section, dict):
+        raise ElementValidationError(f"{manifest_path}: defaults must be an object")
+    dependencies = _parse_dependencies(payload.get("dependencies", {}), path=f"{manifest_path}.dependencies")
+    component = (element_root / "component.tsx").resolve()
+    # component.tsx is optional when runtime.adapter is declared in the manifest
+    _has_runtime_adapter = isinstance(payload.get("runtime"), dict) and bool(
+        payload["runtime"].get("adapter")
+    )
+    if not _has_runtime_adapter and not component.is_file():
+        raise ElementValidationError(f"element {element_id!r} missing component.tsx")
+    description = _optional_capability_string(payload, "description", manifest_path)
+    short_description = _optional_capability_string(payload, "short_description", manifest_path)
+    keywords = _optional_capability_string_list(payload, "keywords", manifest_path)
+    element_inputs = tuple(
+        _parse_element_port(item, f"{manifest_path}.inputs[{index}]")
+        for index, item in enumerate(payload.get("inputs") or ())
+    )
+    element_outputs = tuple(
+        _parse_element_output(item, f"{manifest_path}.outputs[{index}]")
+        for index, item in enumerate(payload.get("outputs") or ())
+    )
+    runtime = _parse_runtime(payload.get("runtime"), path=f"{manifest_path}.runtime")
+    assets = _parse_assets(payload.get("assets"), element_root=element_root, path=f"{manifest_path}.assets")
+    definition = ElementDefinition(
+        id=element_id,
+        kind=folder_kind,
+        root=element_root.resolve(),
+        source=source,
+        editable=editable,
+        priority=priority,
+        component=component,
+        schema=dict(schema_section),
+        defaults=dict(defaults_section),
+        metadata=metadata,
+        dependencies=dependencies,
+        description=description,
+        short_description=short_description,
+        keywords=keywords,
+        inputs=element_inputs,
+    - kind: implementation
+      path: rendering/finalizers/compositor/run.py
+  ffmpeg-finalizer:
+    type: finalizer
+    path: rendering/finalizers/ffmpeg/finalizer.yaml
+    resources:
+    - kind: implementation
+      path: rendering/finalizers/ffmpeg/__init__.py
+    - kind: implementation
+      path: rendering/finalizers/ffmpeg/run.py
+  animations/fade:
+    type: element
+    path: rendering/elements/animations/fade/element.yaml
+    resources:
+    - kind: implementation
+      path: rendering/elements/animations/fade/component.tsx
+  animations/fade-up:
+    type: element
+    path: rendering/elements/animations/fade-up/element.yaml
+    resources:
+    - kind: implementation
+      path: rendering/elements/animations/fade-up/component.tsx
+  animations/scale-in:
+    type: element
+    path: rendering/elements/animations/scale-in/element.yaml
+    resources:
+    - kind: implementation
+      path: rendering/elements/animations/scale-in/component.tsx
+  animations/slide-left:
+    type: element
+    path: rendering/elements/animations/slide-left/element.yaml
+    resources:
+    - kind: implementation
+      path: rendering/elements/animations/slide-left/component.tsx
+  animations/slide-up:
+    type: element
+    path: rendering/elements/animations/slide-up/element.yaml
+    resources:
+    - kind: implementation
+      path: rendering/elements/animations/slide-up/component.tsx
+  animations/type-on:
+    type: element
+    path: rendering/elements/animations/type-on/element.yaml
+    resources:
+    - kind: implementation
+      path: rendering/elements/animations/type-on/component.tsx
+  effects/audio-reactive-colour:
+    type: element
+    path: rendering/elements/effects/audio-reactive-colour/element.yaml
+    resources:
+    - kind: implementation
+      path: rendering/elements/effects/audio-reactive-colour/component.tsx
+  effects/text-card:
+    type: element
+    path: rendering/elements/effects/text-card/element.yaml
+    resources:
+    - kind: implementation
+      path: rendering/elements/effects/text-card/component.tsx
+  transitions/cross-fade:
+    type: element
+    path: rendering/elements/transitions/cross-fade/element.yaml
+    resources:
+    - kind: implementation
+      path: rendering/elements/transitions/cross-fade/component.tsx
+  transitions/fade:
+    type: element
+    path: rendering/elements/transitions/fade/element.yaml
+    resources:
+    - kind: implementation
+      path: rendering/elements/transitions/fade/component.tsx
+ui:
+  transcript:
+    type: editor
+    entry: ui/transcript/extension.tsx
+    target: video-editor
+    compatibility:
+      sdk: '1'
+    resources:
+    - kind: support
+      path: ui/transcript/TranscriptPanel.tsx
+    - kind: support
+      path: ui/transcript-lane/TranscriptLane.tsx
+  live-scenes:
+    type: editor
+    entry: ui/live-scenes/extension.tsx
+    target: video-editor
+    compatibility:
+      sdk: '1'
+    resources:
+    - kind: support
+      path: ui/live-scenes/SceneSurface.tsx
+    - kind: support
+      path: ui/live-scenes/authoring.ts
+    - kind: support
+      path: ui/live-scenes/diagnostics.ts
+    - kind: support
+      path: ui/live-scenes/identity.ts
+    - kind: support
+      path: ui/live-scenes/runtime.ts
+resources:
+- kind: support
+  path: shared/element_contracts.ts
+- kind: support
+  path: shared/live_scenes/__init__.py
+- kind: support
+  path: shared/live_scenes/maple.py
+- kind: support
+  path: shared/live_scenes/package.py
+- kind: support
+  path: shared/rendering_backend/__init__.py
+- kind: support
 
+codex
+The wider focused run passed 224 tests and failed nine: five registry-settling fixtures still wrote to the old package-source path, and four existing render probes became active after npm was installed but refused render admission. I’ve corrected the fixture destination; those five checks now pass. I’ll leave browser/render validation to the test service. Lint comparison against the base shows no new diagnostics in the three touched production Python files.
+exec
+/bin/bash -lc "rg -n '_workspace_root|WORKSPACE_ROOT|_component_name|ID_RE' scripts/gen_effect_registry.py tests/packs/rendering tests/core/element tests/reshape/test_remotion_gate.py; cat tests/packs/rendering/test_timeline_visualize_cache.py 2>/dev/null | head -25; rg --files tests/packs/rendering | rg '(composed_frame|frame_cache|cache)'" in /home/user/work/wt/vw-m3-agent-package
+ succeeded in 97ms:
+scripts/gen_effect_registry.py:23:WORKSPACE_ROOT = TOOLS_DIR.parent
+scripts/gen_effect_registry.py:25:HOST_SRC = (Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or TOOLS_DIR / "remotion")
+scripts/gen_effect_registry.py:31:ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+scripts/gen_effect_registry.py:52:def _component_name(plugin_id: str) -> str:
+scripts/gen_effect_registry.py:81:def _workspace_root(kind: ElementKind) -> Path:
+scripts/gen_effect_registry.py:83:    return WORKSPACE_ROOT / kind
+scripts/gen_effect_registry.py:294:        f"import {_component_name(plugin_id)} from '{_import_path(plugins[plugin_id])}';"
+scripts/gen_effect_registry.py:298:        f"  '{plugin_id}': {_component_name(plugin_id)},"
+scripts/gen_effect_registry.py:353:        f"import {_component_name(effect_id)} from '{_import_path(effects[effect_id])}';"
+scripts/gen_effect_registry.py:357:        f"  '{effect_id}': {_component_name(effect_id)},"
+scripts/gen_effect_registry.py:372:            symbol = _component_name(element.id)
+scripts/gen_effect_registry.py:379:        f"{_component_name(effect_id)}, {{{', '.join(_ts_string(owner) + ': ' + symbol for owner, symbol in sorted(owners[effect_id].items()))}}}),"
+tests/packs/rendering/test_remotion_render_contract.py:352:if (process.env.ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES === '-1') {
+tests/packs/rendering/test_remotion_render_contract.py:369:  if (process.env.ASTRID_REMOTION_STREAM_FRAMES === '0') assert.equal(gate.shouldUseParallelEncoding, original);
+tests/packs/rendering/test_remotion_render_contract.py:373:    const budget = Number(process.env.ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES ?? 0);
+tests/packs/rendering/test_remotion_render_contract.py:381:    env = {k:v for k,v in os.environ.items() if k not in {'NODE_OPTIONS','NODE_PATH','ASTRID_PACKS_PATH','ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES','ASTRID_REMOTION_PCM_AAC_OUTPUT'}}
+tests/packs/rendering/test_remotion_render_contract.py:382:    env['ASTRID_REMOTION_STREAM_FRAMES'] = stream
+tests/packs/rendering/test_remotion_render_contract.py:383:    if budget is not None: env['ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES'] = budget
+tests/packs/rendering/test_remotion_render_contract.py:405:                            env={**os.environ, 'ASTRID_REMOTION_STREAM_FRAMES':'0'})
+tests/packs/rendering/test_remotion_render_contract.py:421:process.env.ASTRID_REMOTION_STREAM_FRAMES = '1';
+tests/packs/rendering/test_remotion_render_contract.py:430:    env = {k:v for k,v in os.environ.items() if k not in {'ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES','NODE_OPTIONS','NODE_PATH'}}
+tests/packs/rendering/test_remotion_render_contract.py:479:    env = {k:v for k,v in os.environ.items() if k not in {'NODE_PATH','NODE_OPTIONS','ASTRID_PACKS_PATH','ASTRID_REMOTION_PCM_AAC_OUTPUT'}}
+tests/packs/rendering/test_remotion_render_contract.py:480:    env['ASTRID_REMOTION_STREAM_FRAMES'] = '0'
+tests/packs/rendering/test_remotion_native_window.py:81: monkeypatch.setenv('ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES',allocation);monkeypatch.delenv('ASTRID_PROGRESS_PATH',raising=False)
+tests/packs/rendering/test_remotion_native_window.py:90:  assert (kwargs['env'].get('ASTRID_REMOTION_STREAM_FRAMES')=='1')==(allocation!='0')
+tests/packs/rendering/test_remotion_native_window.py:130: monkeypatch.delenv('ASTRID_PROGRESS_PATH',raising=False);monkeypatch.setenv('ASTRID_REMOTION_PCM_AAC_OUTPUT','/ambient/forbidden.mov')
+tests/packs/rendering/test_remotion_native_window.py:137:   assert cli.name=='capture.mov' and cli.parent==Path(env['TMPDIR']) and env['ASTRID_REMOTION_PCM_AAC_OUTPUT']==str(cli)
+tests/packs/rendering/test_remotion_native_window.py:139:  else:assert 'ASTRID_REMOTION_PCM_AAC_OUTPUT' not in env
+tests/packs/rendering/test_remotion_backend.py:898:                mock.patch.dict(render_remotion.os.environ, {"ASTRID_RENDER_UNDECLARED": "host"}, clear=True),
+tests/packs/rendering/test_remotion_backend.py:913:        self.assertEqual(env["ASTRID_REMOTION_PROJECT_DIR"], str(project_dir))
+tests/packs/rendering/test_remotion_backend.py:914:        self.assertNotIn("ASTRID_RENDER_UNDECLARED", env)
+tests/packs/rendering/test_remotion_backend.py:1424:        self.assertEqual(env["ASTRID_REMOTION_PROJECT_DIR"], str(project_dir))
+tests/packs/rendering/test_remotion_backend.py:1679:        mock.patch.dict(os.environ, {"ASTRID_REMOTION_PCM_AAC_OUTPUT": "/ambient/unrelated.mov"}),
+tests/packs/rendering/test_remotion_backend.py:1701:        assert env["ASTRID_REMOTION_PCM_AAC_OUTPUT"] == str(cli_video)
+tests/packs/rendering/test_remotion_backend.py:1707:        assert "ASTRID_REMOTION_PCM_AAC_OUTPUT" not in env
+tests/packs/rendering/test_remotion_backend.py:1903:    from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH
+tests/packs/rendering/test_remotion_backend.py:1905:    monkeypatch.setenv(ASTRID_REMOTION_VALIDATION_LAUNCH, 'a' * 32)
+tests/packs/rendering/test_remotion_backend.py:1923:    from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH
+tests/packs/rendering/test_remotion_backend.py:1925:    monkeypatch.setenv(ASTRID_REMOTION_VALIDATION_LAUNCH, 'a' * 32)
+tests/packs/rendering/test_effect_registry_target.py:15:    env = {**os.environ, "ASTRID_REMOTION_PROJECT_DIR": str(tmp_path),
+tests/packs/rendering/test_effect_registry_target.py:30:                            env={**os.environ, "ASTRID_REMOTION_PROJECT_DIR": str(tmp_path)},
+tests/packs/rendering/test_ffmpeg_compositor.py:161:    monkeypatch.setenv("ASTRID_RENDER_BACKEND", "rendering.ffmpeg-compositor")
+tests/packs/rendering/test_ffmpeg_compositor.py:165:    monkeypatch.setenv("ASTRID_RENDER_BACKEND", "rendering.ffmpeg-finalizer")
+tests/packs/rendering/test_render_export_task_adapter.py:145:        assert "ASTRID_REMOTION_PROJECT_DIR" not in os.environ
+tests/packs/rendering/test_render_export_task_adapter.py:155:    monkeypatch.delenv("ASTRID_REMOTION_PROJECT_DIR", raising=False)
+tests/packs/rendering/test_render_export_task_adapter.py:312:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(runtime))
+tests/packs/rendering/test_render_export_task_adapter.py:428:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(tmp_path / "missing-remotion"))
+tests/packs/rendering/test_render_export_task_adapter.py:479:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(runtime))
+tests/packs/rendering/test_render_export_task_adapter.py:522:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(runtime))
+tests/packs/rendering/test_render_export_task_adapter.py:695:           'ASTRID_REMOTION_PROJECT_DIR': str(runtime), 'ASTRID_NODE_EXECUTABLE': str(node),
+tests/packs/rendering/test_render_export_task_adapter.py:744:    worker['ASTRID_REMOTION_VALIDATION_ROLE'] = 'worker'
+tests/packs/rendering/test_render_export_task_adapter.py:748:    raw = Path(ref['ASTRID_REMOTION_VALIDATION_PATH']).read_text()
+tests/packs/rendering/test_render_export_task_adapter.py:753:                                     ('TMPDIR', '/other'), ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'b' * 32),
+tests/packs/rendering/test_render_export_task_adapter.py:754:                                     ('ASTRID_REMOTION_VALIDATION_ROLE', 'foreign')])
+tests/packs/rendering/test_render_export_task_adapter.py:884:    child['ASTRID_REMOTION_VALIDATION_ROLE'] = 'worker'
+tests/packs/rendering/test_render_export_task_adapter.py:890:        build_child_subprocess_env(parent=parent, explicit_env={'ASTRID_REMOTION_VALIDATION_PATH': '/task/foreign'})
+tests/packs/rendering/test_render_export_task_adapter.py:906:    p = Path(ref['ASTRID_REMOTION_VALIDATION_PATH'])
+tests/packs/rendering/test_render_export_task_adapter.py:1025:        assert env['ASTRID_REMOTION_LOCK_OWNER'].startswith(str(os.getpid()) + ':')
+tests/packs/rendering/test_render_export_task_adapter.py:1161:    artifact = Path(reference['ASTRID_REMOTION_VALIDATION_PATH'])
+tests/packs/rendering/test_render_export_task_adapter.py:1177:    Path(reference['ASTRID_REMOTION_VALIDATION_PATH']).unlink()
+tests/packs/rendering/test_render_export_task_adapter.py:1304:    artifact = json.loads(Path(reference['ASTRID_REMOTION_VALIDATION_PATH']).read_text())
+tests/packs/rendering/test_render_export_task_adapter.py:1313:                    'ASTRID_REMOTION_VALIDATION_ROLE': 'worker'}
+tests/packs/rendering/test_render_export_task_adapter.py:1341:    artifact = json.loads(Path(reference['ASTRID_REMOTION_VALIDATION_PATH']).read_text())
+tests/packs/rendering/test_render_export_task_adapter.py:1352:    assert first[-2]['ASTRID_REMOTION_VALIDATION_PATH'] != second[-2]['ASTRID_REMOTION_VALIDATION_PATH']
+tests/packs/rendering/test_composed_frame_capture.py:149:    monkeypatch.setenv("ASTRID_RENDERER_SOURCE_ROOT", str(source_root))
+tests/packs/rendering/test_composed_frame_capture.py:180:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(project))
+tests/packs/rendering/test_composed_frame_capture.py:192:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(project))
+tests/packs/rendering/test_render_facade.py:225:        "ASTRID_REMOTION_PROJECT_DIR",
+tests/packs/rendering/test_render_remotion_registry.py:172:                    src = env.get("ASTRID_REMOTION_PROJECT_DIR")
+tests/packs/rendering/test_composed_frame_capture.py
 
