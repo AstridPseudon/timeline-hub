@@ -113,15 +113,83 @@ def _data_faces(tracks: Sequence[Any], t: float) -> list[model.Box]:
     return found
 
 
+def _scene_cover(
+    elements: Sequence[model.Element], t: float, fps: float, shared: Mapping[str, Any],
+) -> tuple[list[tuple[model.Element, model.Element]], list[str]]:
+    """Join public .98 answers by exact compiled ID, never by label or suffix."""
+    frame = int(round(t * fps))
+    frames = shared.get("scene_frames")
+    row = frames.get(str(frame)) if isinstance(frames, Mapping) else None
+    if not isinstance(row, Mapping) or row.get("frame") != frame:
+        return [], [f"COVER unavailable at frame {frame}: "
+                    f"{shared.get('scene_unavailable') or 'exact scene frame is missing'}"]
+    layers = row.get("layers")
+    if not isinstance(layers, list) or any(not isinstance(layer, Mapping) or not isinstance(layer.get("clipId"), str) for layer in layers):
+        return [], [f"COVER unavailable at frame {frame}: invalid public scene layers"]
+    occlusions = shared.get("scene_occlusions")
+    policy = occlusions.get("0.98") if isinstance(occlusions, Mapping) else None
+    answers = policy.get(str(frame)) if isinstance(policy, Mapping) else None
+    answers = answers if isinstance(answers, Mapping) else {}
+    identities = shared.get("scene_clip_identities")
+    identities = identities if isinstance(identities, Mapping) else {}
+    visual = [element for element in elements if not element.audio]
+    layer_ids = [layer["clipId"] for layer in layers]
+    joined: dict[str, list[model.Element]] = {}
+    for clip_id in layer_ids:
+        identity = identities.get(clip_id)
+        matches = []
+        for element in visual:
+            # Compiled snapshot IDs already identify their occurrence. Raw
+            # source IDs require the captured Root's explicit occurrence join.
+            exact = element.id == clip_id and sum(e.id == element.id for e in visual) == 1
+            if isinstance(identity, Mapping):
+                exact = exact and identity.get("occurrence_id") == element.occurrence_id
+                mapped = (identity.get("clip_id") == element.clip.get("id", element.id)
+                          and identity.get("occurrence_id") == element.occurrence_id)
+            else:
+                mapped = False
+            if exact or mapped:
+                matches.append(element)
+        joined[clip_id] = matches if layer_ids.count(clip_id) == 1 else []
+    covers, unavailable = [], []
+    for lower in visual:
+        if not lower.start <= t < lower.end:
+            continue
+        candidates = [clip_id for clip_id, matches in joined.items() if len(matches) == 1 and matches[0] is lower]
+        if len(candidates) != 1:
+            unavailable.append(f"COVER unavailable for {lower.label} at frame {frame}: exact compiled clip identity is missing or ambiguous")
+            continue
+        answer = answers.get(candidates[0])
+        if (not isinstance(answer, Mapping) or answer.get("status") != "known" or "occluderId" not in answer
+                or (answer["occluderId"] is not None and not isinstance(answer["occluderId"], str))):
+            reason = answer.get("reason") if isinstance(answer, Mapping) else None
+            unavailable.append(f"COVER unavailable for {lower.label} at frame {frame}: {reason or 'public 0.98 occlusion answer is missing'}")
+            continue
+        upper_id = answer["occluderId"]
+        if upper_id is None:
+            continue
+        if len(joined.get(upper_id, [])) != 1:
+            unavailable.append(f"COVER unavailable for {lower.label} at frame {frame}: occluder compiled clip identity is missing or ambiguous")
+            continue
+        covers.append((joined[upper_id][0], lower))
+    # Preserve the existing upper-then-lower finding order at the same time.
+    order = {id(element): index for index, element in enumerate(elements)}
+    covers.sort(key=lambda pair: (order[id(pair[0])], order[id(pair[1])]))
+    return covers, unavailable
+
+
 def composition(
     cut: Mapping[str, Any], elements: Sequence[model.Element], fps: float, *,
     track_order: Sequence[str] = (), min_text_px: float | None = None,
     params: Mapping[str, Any] | None = None, tracks: Sequence[Any] = (),
+    shared: Mapping[str, Any] | None = None,
 ) -> list[Finding]:
     """FACE / FRAME / SAFE / SMALL / COVER / EDGE for one cut.
 
     A ``face`` boxes data track (real footage) wins over faces derived from
-    presenter anchors.
+    presenter anchors. With ``shared``, COVER consumes only exact public .98
+    occlusion facts; missing facts are advisory SCENE findings. The bundle-only
+    CLI still uses the legacy path until its owner supplies admitted facts.
     """
     index = int(cut["index"])
     title = model.safe_rect(model.TITLE_SAFE)
@@ -176,6 +244,16 @@ def composition(
                 if over[worst] > 6:
                     add("EDGE", box.element.id, t, f"{box.label} runs {over[worst]:.0f} px past the {worst} edge "
                         "(a crop; fine if intended)", "info")
+        if shared is not None:
+            covers, unavailable = _scene_cover(elements, t, fps, shared)
+            for upper, lower in covers:
+                add("COVER", str((lower.occurrence_id, lower.id, upper.occurrence_id, upper.id)), t,
+                    f"{upper.label} fully covers {lower.label}")
+            for message in unavailable:
+                add("SCENE", message, t, message, "info")
+            continue
+        # Kept for unmigrated bundle-only callers; delete with their exact-fact
+        # handoff and named public equivalents for the legacy overlap behavior.
         opaque = [b for b in boxes if b.kind in ("card", "panel") and b.rect != (0, 0, model.CANVAS[0], model.CANVAS[1])]
         for upper in opaque:
             for lower in boxes:
