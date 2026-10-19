@@ -33,9 +33,11 @@ class Operation:
 
 def operations():
     """M1 native recipe entries; the full extensible registry belongs to M2."""
+    from ._track_commands import track_set
     from .capture import MOVE_INTENT, move, track_create
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
-            'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {})}
+            'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+            'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True)}
 
 
 @dataclass
@@ -59,7 +61,8 @@ def validate_command(command):
         raise CommandError(errors[0].message)
     if command['version'] != '1':
         raise CommandError("unsupported operation version", kind='unsupported_version')
-    if command['op'] not in ('clip.move', 'track.create', 'timeline.inverse', 'timeline.restore'):
+    if command['op'] not in ('clip.move', 'track.create', 'track.set',
+                             'timeline.inverse', 'timeline.restore'):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
     operation = operations().get(command['op'])
     if operation is not None:
@@ -78,7 +81,8 @@ def validate_command(command):
 def _normalize(command):
     command = copy.deepcopy(command)
     validate_command(command)
-    resolved = command.get('resolved', [command['select']] if command['op'] == 'clip.move' else [])
+    operation = operations().get(command['op'])
+    resolved = command.get('resolved', [command['select']] if operation and operation.singleton else [])
     for field in ('expect', 'authorship'):
         if field not in command:
             continue
