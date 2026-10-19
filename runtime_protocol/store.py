@@ -2225,6 +2225,18 @@ class RealmStore:
             spec["required_facts"] = normalize_execution_facts(spec["required_facts"], field="required_facts")
         with self._mutex, (self._transaction() if capability == "rendering.render" else nullcontext()):
             project_id = self._project(project)["id"] if project else None
+            if expected_effect is not None and expected_effect != {}:
+                # Exact-key replay is checked against persisted identity below.
+                # New admissions, including render reuse under a new key, must
+                # refuse unsupported effects before publishing any snapshots.
+                replay = idempotency_key and self.conn.execute(
+                    "SELECT 1 FROM runs WHERE project_id IS ? AND idempotency_key=? "
+                    "UNION ALL SELECT 1 FROM command_idempotency "
+                    "WHERE command_kind='task.create' AND aggregate_id=? AND idempotency_key=? LIMIT 1",
+                    (project_id, idempotency_key, project_id or "unscoped", idempotency_key),
+                ).fetchone()
+                if not replay:
+                    self._settlement_effect_kind(expected_effect)
             if capability == "rendering.render":
                 admitted_spec = spec.get("spec") if isinstance(spec, dict) else None
                 admitted_spec, frozen_inputs, frozen_snapshot = self._freeze_managed_render_inputs(
@@ -3677,10 +3689,20 @@ class RealmStore:
             row = self.conn.execute("SELECT * FROM executors WHERE id=?", (executor_id,)).fetchone()
             return self._executor_result(row)
 
-    def _validate_settlement_effect(self, effect, *, project_id=None, result=None, input_object_ids=None):
+    @staticmethod
+    def _settlement_effect_kind(effect):
         if not isinstance(effect, dict):
             raise ValidationError("settlement effect must be an object")
         kind = effect.get("effect_type")
+        if kind not in (
+            "generation.publish_v1", "generation.create_with_variant",
+            "generation.variant.append", "generation.thumbnail.attach", "project.update",
+        ):
+            raise ValidationError("unsupported settlement effect_type")
+        return kind
+
+    def _validate_settlement_effect(self, effect, *, project_id=None, result=None, input_object_ids=None):
+        kind = self._settlement_effect_kind(effect)
         if kind == "generation.publish_v1":
             return self._validate_generation_publish_v1_effect(
                 effect,
@@ -3716,8 +3738,6 @@ class RealmStore:
                 result=result,
                 input_object_ids=input_object_ids,
             )
-        if kind != "project.update":
-            raise ValidationError("unsupported settlement effect_type")
         try:
             current = self._project(str(target))
         except NotFoundError as exc:
@@ -4494,7 +4514,7 @@ class RealmStore:
         settled_at=None,
         attempt_id=None,
     ):
-        kind = effect.get("effect_type")
+        kind = self._settlement_effect_kind(effect)
         if kind == "generation.publish_v1":
             plan = self._validate_settlement_effect(
                 effect,
@@ -4771,8 +4791,6 @@ class RealmStore:
                 "version": int(generation["version"]) + (1 if changed else 0),
             }
         if kind != "project.update":
-            if kind != "generation.variant.append":
-                raise ValidationError("unsupported settlement effect_type")
             plan = self._validate_settlement_effect(
                 effect,
                 project_id=project_id,

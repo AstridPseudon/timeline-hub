@@ -7,7 +7,7 @@ import pytest
 from http_helpers import Api
 from runtime_protocol import service as service_module
 from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.errors import ValidationError
+from runtime_protocol.errors import ConflictError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.util import canonical_json
@@ -27,10 +27,6 @@ from tests.test_timeline_commit_port import PreparedProvider
 
 
 FORBIDDEN = ("timeline.update", "shot.update", "reference.update", "shot.text_binding.set")
-ADMISSION_GAP = (
-    "M2 commit-contract §5 requires unknown/canonical effects to refuse before admission; "
-    "current create_task only validates publish_v1 and thumbnail.attach"
-)
 
 
 def _no_scene(*args, **kwargs):
@@ -164,10 +160,6 @@ def _assert_denied(boundary, action, *, match):
     assert match in str(error)
 
 
-# These preserve the required refusal expectation. Admission currently writes
-# task/run/receipt/event rows; settlement's closed dispatch does not excuse that
-# §5 gap. No canonical execution escape has been found to authorize a writer fix.
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=ADMISSION_GAP)
 @pytest.mark.parametrize("kind", FORBIDDEN)
 @pytest.mark.parametrize("fresh", [False, True], ids=["existing", "fresh"])
 def test_canonical_effect_admission_is_zero_write(boundary, kind, fresh):
@@ -175,13 +167,68 @@ def test_canonical_effect_admission_is_zero_write(boundary, kind, fresh):
     _assert_denied(boundary, lambda: _admit(boundary, _task_body(boundary, settlement_effect=effect)), match="effect")
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=ADMISSION_GAP)
 @pytest.mark.parametrize("kind", FORBIDDEN)
 def test_store_canonical_effect_admission_is_zero_write(boundary, kind):
     _assert_denied(boundary, lambda: boundary["service"].store.create_task(
         GENERATION, {}, project=boundary["project"]["id"], idempotency_key="store-task",
         expected_effect=_effect(boundary, kind), capability_digest=digest(GENERATION),
     ), match="effect")
+
+
+@pytest.mark.parametrize("effect", [{"effect_type": "fixture.effect"}, {"target_id": "main"},
+                                   "timeline.update", []])
+@pytest.mark.parametrize("direct_store", [False, True], ids=["admit", "store"])
+def test_unknown_effect_refuses_before_inline_snapshot_publication(boundary, effect, direct_store):
+    spec = {"timeline_snapshot": {"config": {"clips": []}, "registry": {}}}
+    if direct_store:
+        action = lambda: boundary["service"].store.create_task(
+            GENERATION, spec, project=boundary["project"]["id"], expected_effect=effect,
+        )
+    else:
+        action = lambda: _admit(boundary, _task_body(boundary, settlement_effect=effect, spec=spec))
+    _assert_denied(boundary, action, match="effect")
+
+
+def test_forbidden_effect_refuses_before_managed_render_freeze(boundary, monkeypatch):
+    monkeypatch.setattr(boundary["service"].store, "_freeze_managed_render_inputs", _no_scene)
+    body = _task_body(boundary, capability_id="rendering.render", settlement_effect=_effect(boundary, "timeline.update"))
+    _assert_denied(boundary, lambda: _admit(boundary, body), match="unsupported settlement effect_type")
+
+
+@pytest.mark.parametrize("kind", FORBIDDEN)
+@pytest.mark.parametrize("receipt", ["current", "stale", "absent"])
+def test_accepted_forbidden_effect_replays_exact_key_but_cannot_reuse_a_new_key(boundary, monkeypatch, kind, receipt):
+    service = boundary["service"]
+    body = _task_body(boundary, capability_id="rendering.render", capability_digest=digest("rendering.render"),
+                      settlement_effect=_effect(boundary, kind))
+    # Controlled legacy admission fixture: only the new kind check is bypassed
+    # during setup. Settlement and all replay checks retain their real fences.
+    with monkeypatch.context() as setup:
+        setup.setattr(service.store, "_settlement_effect_kind", lambda effect: effect["effect_type"])
+        admitted = _admit(boundary, body)
+    if receipt == "stale":
+        service.store.conn.execute("UPDATE command_idempotency SET request_hash='legacy-stale-hash' WHERE command_kind='task.create'")
+    elif receipt == "absent":
+        service.store.conn.execute("DELETE FROM command_idempotency WHERE command_kind='task.create'")
+    before = _state(service)
+    assert _admit(boundary, body) == admitted
+    after = _state(service)
+    assert after[1] == before[1]
+    # Reconstructing an absent receipt allocates one project sequence without
+    # emitting a task event, as for ordinary accepted-task replay.
+    assert after[0]["project_sequences"] == [
+        (boundary["project"]["id"], before[0]["project_sequences"][0][1] + (receipt == "absent"))
+    ]
+    assert {name: rows for name, rows in after[0].items() if name not in {"command_idempotency", "project_sequences"}} == {
+        name: rows for name, rows in before[0].items() if name not in {"command_idempotency", "project_sequences"}
+    }
+    assert _admit(boundary, body) == admitted
+    assert _state(service) == after
+    with pytest.raises((ConflictError, RuntimeError), match="different input") as error:
+        _admit(boundary, {**body, "settlement_effect": None})
+    assert error.value.status == 409
+    assert _state(service) == after
+    _assert_denied(boundary, lambda: _admit(boundary, body, key="new-key"), match="unsupported settlement effect_type")
 
 
 def _final_policy(effect):
