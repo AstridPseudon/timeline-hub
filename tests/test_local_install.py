@@ -33,11 +33,15 @@ class LocalInstallBoundaries(unittest.TestCase):
             result = subprocess.run([start], check=True, text=True, capture_output=True)
             self.assertEqual(result.stdout.splitlines(), [str(app), "run dev:local", str(start)])
 
-    def test_cleanup_eperm_requires_no_live_group_members(self):
+    def test_cleanup_requires_no_live_group_members(self):
         from unittest.mock import patch
-        with patch.object(installer.os, "killpg", side_effect=PermissionError(1, "Operation not permitted")), patch.object(installer.subprocess, "check_output", return_value="9833 Z\n42 S\n"):
+        from types import SimpleNamespace
+        from astrid.core.execution import process_group
+        zombie = SimpleNamespace(pgid=9833, status=5)
+        other = SimpleNamespace(pgid=42, status=1)
+        with patch.object(process_group, "_process_snapshot", return_value={1: zombie, 2: other}):
             self.assertFalse(installer.owned_group_alive(9833))
-        with patch.object(installer.os, "killpg", side_effect=PermissionError(1, "Operation not permitted")), patch.object(installer.subprocess, "check_output", return_value="9833 S\n"):
+        with patch.object(process_group, "_process_snapshot", return_value={1: SimpleNamespace(pgid=9833, status=1)}):
             self.assertTrue(installer.owned_group_alive(9833))
 
     def test_failed_app_process_cannot_pass_startup_check(self):

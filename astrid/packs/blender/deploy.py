@@ -46,6 +46,8 @@ import time
 from pathlib import Path
 from typing import Any, NamedTuple
 
+from runtime_protocol import platform
+
 from astrid.core.cli_choices import StaticChoices
 
 PACK_DIR = Path(__file__).resolve().parent
@@ -95,7 +97,7 @@ def _remember_token(label: str, token: str) -> Path:
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
         fh.write(token + "\n")
-    os.chmod(path, 0o600)
+    platform.owner_only(path)
     return path
 
 
@@ -524,12 +526,12 @@ def _schedule_ttl_teardown(pod_id: str, ttl_seconds: int) -> None:
         f"{shlex.quote(sys.executable)} -m {mod} teardown-runpod --pod-id {pod_id}"
     )
     log = "/tmp/astrid-blender-runpod-ttl.log"
-    subprocess.Popen(
+    platform.spawn_tree(
         ["bash", "-c", cmd],
         stdout=open(log, "ab"),
         stderr=subprocess.STDOUT,
         stdin=subprocess.DEVNULL,
-        start_new_session=True,
+        detached=True,
     )
 
 

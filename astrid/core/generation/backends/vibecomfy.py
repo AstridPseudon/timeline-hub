@@ -28,6 +28,8 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
+from runtime_protocol import platform
+
 from astrid.core.generation.backends.base import (
     BackendAdapter,
     GenerationResult,
@@ -125,7 +127,8 @@ def _owner_session_command(
 def _assert_process_incarnation_gone(pid: int, expected_identity: str) -> None:
     """Require an OS-confirmed absence; unknown probes are not success."""
     try:
-        os.kill(pid, 0)
+        if platform.process_identity(pid) is None:
+            raise ProcessLookupError(pid)
     except ProcessLookupError:
         return
     except PermissionError as exc:
@@ -1565,7 +1568,8 @@ class CheckoutServerAdapter(VibeComfyBackend):
         ):
             raise ValueError("checkout_server source revision does not match the live VibeComfy checkout")
         try:
-            os.kill(pid, 0)
+            if platform.process_identity(pid) is None:
+                raise ProcessLookupError(pid)
         except (OSError, ProcessLookupError) as exc:
             raise ValueError("checkout_server session process is not alive") from exc
         _verify_owned_vibe_session(session_dir, pid)
@@ -1997,8 +2001,10 @@ class CheckoutServerAdapter(VibeComfyBackend):
         if not isinstance(comfy_pid, int) or comfy_pid <= 0:
             raise ValueError("checkout_server host-session comfy pid is invalid")
         try:
-            os.kill(pid, 0)
-            os.kill(comfy_pid, 0)
+            if platform.process_identity(pid) is None:
+                raise ProcessLookupError(pid)
+            if platform.process_identity(comfy_pid) is None:
+                raise ProcessLookupError(comfy_pid)
             marker = json.loads(
                 (session_dir / "launch.json").read_text(encoding="utf-8")
             )

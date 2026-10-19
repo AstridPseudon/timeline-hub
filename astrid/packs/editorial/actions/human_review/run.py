@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+
 from astrid.core.contracts.errors import AstridError, render_astrid_error
+from astrid.core.execution.platform_helpers import owned_by_current_user
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 
 guard_canonical_entrypoint('editorial.human_review')
@@ -715,11 +717,11 @@ def _managed_receiver_path(out_path: Path) -> Path | None:
         raise HumanReviewInputError("managed review paths do not match the admitted attempt")
     for directory in (progress.parent, out_path.parent):
         info = directory.lstat()
-        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o022:
+        if not stat.S_ISDIR(info.st_mode) or not owned_by_current_user(directory, info, forbidden=0o022):
             raise HumanReviewInputError("managed review directory is not owner controlled")
     if progress.exists() or progress.is_symlink():
         info = progress.lstat()
-        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1:
+        if not stat.S_ISREG(info.st_mode) or not owned_by_current_user(progress, info) or info.st_nlink != 1:
             raise HumanReviewInputError("managed review progress path is not a private regular file")
     return progress.parent / _RECEIVER_SESSION_NAME
 
@@ -774,8 +776,7 @@ def _retire_receiver_session(owner: tuple[Path, int, int, bytes]) -> None:
         info = os.fstat(stream.fileno())
         raw = stream.read(8193)
     expected = json.loads(payload)
-    if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-            or stat.S_IMODE(info.st_mode) != 0o600 or info.st_nlink != 1
+    if (not stat.S_ISREG(info.st_mode) or not owned_by_current_user(path, info, mode=0o600) or info.st_nlink != 1
             or (info.st_dev, info.st_ino) != (device, inode) or raw != payload
             or expected["process_pid"] != os.getpid()
             or expected["process_birth_id"] != process_birth_identity()

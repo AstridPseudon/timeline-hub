@@ -26,7 +26,7 @@ Saves are versioned: a save must carry the ``base_state_version`` it was built
 from; the server increments ``state_version`` and rejects a stale base with
 :class:`StaleStateConflict` (HTTP 409) so concurrent editors cannot silently
 clobber one another.  The read-check-increment-write transaction is serialized
-by a small POSIX file lock so the compare-and-swap is safe across **two server
+by a native file lock so the compare-and-swap is safe across **two server
 processes**, not merely threads in one process.
 """
 
@@ -48,10 +48,7 @@ from astrid.core.util.time import utc_now_iso
 
 EXPERIMENT_REVIEW_STATE_KIND = "experiment_review_state"
 
-try:  # POSIX only — Windows has no fcntl; see ``_state_file_lock``.
-    import fcntl as _fcntl
-except ImportError:  # pragma: no cover - non-POSIX fallback path
-    _fcntl = None
+from runtime_protocol import platform
 
 
 class StaleStateConflict(Exception):
@@ -281,30 +278,17 @@ def _state_file_lock(state_path: Path) -> Iterator[None]:
     inode even though the state file itself is atomically replaced on each
     write.
 
-    Portability contract: on POSIX this is a genuine blocking exclusive
-    ``flock``.  On platforms without ``fcntl`` (e.g. Windows) this **fails
-    closed** with an actionable :class:`AstridError` rather than degrading to
-    a no-op: a no-op lock would let two processes both initialize (or both win
-    a CAS), silently corrupting a review.  POSIX is the supported deployment
-    target.
+    Runtime supplies native cross-process locks on every supported OS.
     """
-    if _fcntl is None:  # pragma: no cover - non-POSIX fallback path
-        raise AstridError(
-            "experiment-review state requires POSIX cross-process locking (fcntl), "
-            "which is unavailable on this platform",
-            recovery_command=(
-                "run the review session on a POSIX host (the supported deployment target)"
-            ),
-        )
     lock_path = Path(str(state_path) + ".lock")
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
     try:
-        _fcntl.flock(fd, _fcntl.LOCK_EX)
+        platform.lock_file(fd)
         yield
     finally:
         try:
-            _fcntl.flock(fd, _fcntl.LOCK_UN)
+            platform.unlock_file(fd)
         except OSError:
             pass
         os.close(fd)

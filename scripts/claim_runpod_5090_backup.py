@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import fcntl
+from runtime_protocol import platform
 import hashlib
 import json
 import os
@@ -289,7 +289,7 @@ def _start_allocation_attempt(
         }
         try:
             with path.open("rb") as stream:
-                fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+                platform.lock_file(stream.fileno())
                 opened = os.fstat(stream.fileno())
                 current_path = path.stat()
                 if (opened.st_dev, opened.st_ino) != (

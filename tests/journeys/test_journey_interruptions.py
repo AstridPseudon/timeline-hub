@@ -102,7 +102,7 @@ def test_reaper_escalates_only_after_fresh_group_ownership_scan(tmp_path: Path, 
     root = tmp_path / "private-journey"
     own_group = 300
     mixed_group = 400
-    current_group = journey.os.getpgrp()
+    current_group = journey.platform.process_group(journey.os.getpid())
     owned_rows = [
         {"pid": 101, "ppid": 1, "pgid": own_group, "command": "generic_host --root private"},
         {"pid": 201, "ppid": 1, "pgid": mixed_group, "command": "node --root private"},
@@ -120,7 +120,12 @@ def test_reaper_escalates_only_after_fresh_group_ownership_scan(tmp_path: Path, 
     ps_scans = iter([term_process_rows, kill_process_rows])
     monkeypatch.setattr(journey, "_ps_rows", lambda: next(ps_scans))
     signaled: list[tuple[int, int]] = []
-    monkeypatch.setattr(journey.os, "killpg", lambda pgid, sig: signaled.append((pgid, sig)))
+    from astrid.core.execution import platform_helpers, process_group
+    monkeypatch.setattr(process_group, "process_birth_identity", lambda pid: f"birth-{pid}")
+    def signal_group(pgid, sig, *, leader_birth):
+        assert leader_birth == f"birth-{pgid}"
+        signaled.append((pgid, sig))
+    monkeypatch.setattr(platform_helpers, "signal_observed_group", signal_group)
 
     waits = iter([False, True])
 
@@ -163,12 +168,15 @@ def test_runner_command_interruption_terminates_child_group(monkeypatch, term_ra
     process = FakeProcess()
     monkeypatch.setattr(journey.subprocess, "Popen", lambda *args, **kwargs: process)
 
-    def killpg(pgid, signum):
-        calls.append((pgid, signum))
+    def stop(child, *, grace):
+        assert child is process and grace == 3
+        calls.append((child.pid, signal.SIGTERM))
+        # Runtime owns the exit-during-signal race and still reaps its child.
         if term_race:
-            raise ProcessLookupError
+            child.returncode = -signal.SIGTERM
+        child.wait(timeout=grace)
 
-    monkeypatch.setattr(journey.os, "killpg", killpg)
+    monkeypatch.setattr(journey.platform, "stop_tree", stop)
     runner = journey.Runner(Path("/private/journey"), Path("/tmp/summary"))
 
     with pytest.raises(journey.JourneyFailure, match="interrupted: received SIGTERM"):

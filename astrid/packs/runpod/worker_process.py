@@ -18,11 +18,9 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import fcntl
 import hashlib
 import json
 import math
-import os
 import re
 import secrets
 import select
@@ -39,6 +37,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol
 
+from runtime_protocol import platform
+from runtime_protocol.dirfd import filesystem as os
+
+from astrid.core.execution.platform_helpers import owned_by_current_user
 from astrid.core.execution.process_group import process_birth_identity
 
 OWNERSHIP_ROOT = "/tmp/astrid-runpod-worker-owners"
@@ -83,7 +85,7 @@ def _private_dir(path: Path, *, exclusive: bool = False) -> None:
     _safe_path(str(path))
     path.mkdir(mode=0o700, parents=True, exist_ok=not exclusive)
     info = path.stat()
-    if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid():
+    if not stat.S_ISDIR(info.st_mode) or not owned_by_current_user(path, info):
         raise WorkerProcessError("ownership directory has a different owner")
     if stat.S_IMODE(info.st_mode) != 0o700:
         raise WorkerProcessError("ownership directory must have mode 0700")
@@ -186,11 +188,11 @@ class TargetProcessLock:
         self.marker_path = directory / (binding.physical_key + ".json")
         self.fd = os.open(self.path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
         info = os.fstat(self.fd)
-        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.getuid():
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or not owned_by_current_user(self.fd, info):
             os.close(self.fd)
             raise WorkerProcessError("unsafe ownership lock file")
         try:
-            fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            platform.lock_file(self.fd, blocking=False)
         except BlockingIOError as exc:
             os.close(self.fd)
             raise WorkerOwnerConflict("physical pod already has a managed host") from exc
@@ -212,16 +214,16 @@ def _target_transition_guard(binding: WorkerBinding, root: str):
     try:
         info = os.fstat(fd)
         if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
-                or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o600):
+                or not owned_by_current_user(fd, info, mode=0o600)):
             raise WorkerProcessError("unsafe physical target transition lock")
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            platform.lock_file(fd, blocking=False)
         except BlockingIOError as exc:
             raise WorkerOwnerConflict("another physical target transition is in progress") from exc
         yield directory
     finally:
         try:
-            fcntl.flock(fd, fcntl.LOCK_UN)
+            platform.unlock_file(fd)
         finally:
             os.close(fd)
 
@@ -236,7 +238,7 @@ def _read_release_fence(path: Path) -> dict[str, Any] | None:
     try:
         info = path.lstat()
         if (not stat.S_ISREG(info.st_mode) or path.is_symlink() or info.st_nlink != 1
-                or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o600):
+                or not owned_by_current_user(path, info, mode=0o600)):
             raise WorkerProcessError("physical target release fence is unsafe")
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
@@ -250,7 +252,7 @@ def _write_release_fence(path: Path, value: Mapping[str, Any]) -> None:
     payload = (json.dumps(dict(value), sort_keys=True, separators=(",", ":")) + "\n").encode()
     fd, temporary = tempfile.mkstemp(dir=path.parent, prefix=".release-")
     try:
-        os.fchmod(fd, 0o600)
+        platform.owner_only(fd)
         with os.fdopen(fd, "wb") as stream:
             stream.write(payload)
             stream.flush()
@@ -309,10 +311,10 @@ def retire_owned_process_for_release(
                 try:
                     lock_info = os.fstat(lock_fd)
                     if (not stat.S_ISREG(lock_info.st_mode) or lock_info.st_nlink != 1
-                            or lock_info.st_uid != os.getuid()):
+                            or not owned_by_current_user(lock_fd, lock_info)):
                         raise WorkerProcessError("physical owner lock file is unsafe")
                     try:
-                        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        platform.lock_file(lock_fd, blocking=False)
                     except BlockingIOError as exc:
                         raise WorkerOwnerConflict("another process owns this physical RunPod target") from exc
                     if _exact_incarnation_state(handle) not in {"absent", "different"}:
@@ -322,7 +324,7 @@ def retire_owned_process_for_release(
                     fence_digest = _digest(fence)
                 finally:
                     try:
-                        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                        platform.unlock_file(lock_fd)
                     finally:
                         os.close(lock_fd)
             else:
@@ -450,7 +452,7 @@ def stop_owned_process(
             raise WorkerProcessError("exact process identity became unresolved before stop")
         observe_owned_process(handle)
         try:
-            signal.pidfd_send_signal(fd, signal.SIGTERM)
+            signal.pidfd_send_signal(fd, platform.TERM)
         except ProcessLookupError:
             # It may exit between inspection and signal; prove exit on the same
             # pinned kernel handle rather than guessing from the integer PID.
@@ -526,12 +528,12 @@ def launch_owned_process(request: Mapping[str, Any]) -> dict[str, Any]:
         if _read_release_fence(_release_fence_path(binding, root)) is not None:
             raise WorkerOwnerConflict("physical pod is retired for release")
         payload = base64.b64encode(json.dumps(request, sort_keys=True).encode()).decode()
-        child = subprocess.Popen(
+        child = platform.spawn_tree(
             [request["python_executable"], str(Path(__file__).resolve()), "--owned-host", payload],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            start_new_session=True,
+            detached=True,
             close_fds=True,
         )
         marker_path = root / (binding.physical_key + ".json")
@@ -664,8 +666,7 @@ def _secret_fact(path: Path) -> dict[str, Any]:
         if (
             not stat.S_ISREG(info.st_mode)
             or info.st_nlink != 1
-            or info.st_uid != os.getuid()
-            or stat.S_IMODE(info.st_mode) != 0o600
+            or not owned_by_current_user(fd, info, mode=0o600)
         ):
             raise WorkerProcessError("credential target is not an owned regular 0600 file")
         digest = hashlib.sha256()
@@ -702,7 +703,7 @@ def _read_ready_file(path_value: str) -> dict[str, Any] | None:
         return None
     try:
         info = os.fstat(fd)
-        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_size > 1024 * 1024:
+        if not stat.S_ISREG(info.st_mode) or not owned_by_current_user(fd, info) or info.st_size > 1024 * 1024:
             raise WorkerProcessError("host readiness file is not a bounded owned regular file")
         with os.fdopen(os.dup(fd), "rb") as stream:
             payload = stream.read(1024 * 1024 + 1)
@@ -806,9 +807,8 @@ def _bootstrap_host(request: Mapping[str, Any]) -> dict[str, Any]:
         parent_info = socket_path.parent.stat()
     except OSError as exc:
         raise WorkerProcessError("activation socket is unavailable") from exc
-    if (not stat.S_ISSOCK(socket_info.st_mode) or socket_info.st_uid != os.getuid()
-            or not stat.S_ISDIR(parent_info.st_mode) or parent_info.st_uid != os.getuid()
-            or stat.S_IMODE(parent_info.st_mode) != 0o700):
+    if (not stat.S_ISSOCK(socket_info.st_mode) or not owned_by_current_user(socket_path, socket_info)
+            or not stat.S_ISDIR(parent_info.st_mode) or not owned_by_current_user(socket_path.parent, parent_info, mode=0o700)):
         raise WorkerProcessError("activation socket identity is unsafe")
 
     grant = {
@@ -947,7 +947,7 @@ def dispatch(operation: str, request: Mapping[str, Any]) -> dict[str, Any]:
         except FileNotFoundError:
             return {"removed": True}
         if (not stat.S_ISDIR(root_info.st_mode) or root.is_symlink()
-                or root_info.st_uid != os.getuid() or stat.S_IMODE(root_info.st_mode) != 0o700):
+                or not owned_by_current_user(root, root_info, mode=0o700)):
             raise WorkerProcessError("unissued credential directory identity is unsafe")
         try:
             entries = list(root.iterdir())

@@ -7,13 +7,14 @@ the exact pod id in the finalizer.
 """
 from __future__ import annotations
 
+from runtime_protocol import platform
+
 import atexit
 import json
 import os
 import re
 import shlex
 import shutil
-import signal
 import subprocess
 import time
 import threading
@@ -206,8 +207,7 @@ def exit_handler(*_args: Any) -> None:
 def install_exit_handlers() -> None:
     """Own the process's exit and signals; only the CLI entry point may, never an importer."""
     atexit.register(exit_handler)
-    signal.signal(signal.SIGTERM, exit_handler)
-    signal.signal(signal.SIGINT, exit_handler)
+    platform.install_stop_handlers(exit_handler)
 
 
 def launch(deadline: float) -> dict[str, Any]:
@@ -529,28 +529,7 @@ def _stop_tunnel_process(process: subprocess.Popen[str] | None) -> None:
     """Stop the complete SSH process group and reap its leader."""
     if process is None:
         return
-    try:
-        if process.poll() is None:
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-    except (OSError, ProcessLookupError):
-        try:
-            process.terminate()
-        except (OSError, ProcessLookupError):
-            pass
-    try:
-        process.wait(timeout=10)
-    except (OSError, subprocess.TimeoutExpired):
-        try:
-            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-        except (OSError, ProcessLookupError):
-            try:
-                process.kill()
-            except (OSError, ProcessLookupError):
-                pass
-        try:
-            process.wait(timeout=5)
-        except (OSError, subprocess.TimeoutExpired):
-            pass
+    platform.stop_tree(process, grace=10)
 
 
 def _spawn_reverse_runtime_tunnel(handle: dict[str, Any]) -> subprocess.Popen[str]:
@@ -564,14 +543,14 @@ def _spawn_reverse_runtime_tunnel(handle: dict[str, Any]) -> subprocess.Popen[st
     runtime_port = int(urlsplit(str(discovery.get("endpoint") or "http://127.0.0.1:50603")).port or 50603)
     log_path = RECEIPTS / "e2e-ssh-tunnel.log"
     stream = log_path.open("a", encoding="utf-8")
-    process = subprocess.Popen([
+    process = platform.spawn_tree([
         "ssh", "-N", "-T", "-o", "ExitOnForwardFailure=yes",
         "-o", "StrictHostKeyChecking=no", "-o", "ServerAliveInterval=30",
         "-i", str(SSH_KEY), "-p", match.group(2),
         "-R", f"127.0.0.1:{REMOTE_TUNNEL_PORT}:127.0.0.1:{runtime_port}",
         f"root@{match.group(1)}",
     ], stdin=subprocess.DEVNULL, stdout=stream, stderr=subprocess.STDOUT,
-       start_new_session=True, text=True)
+       text=True)
     time.sleep(2)
     if process.poll() is not None:
         raise RuntimeError(f"runtime SSH reverse tunnel exited: {log_path.read_text()[-1000:]}")

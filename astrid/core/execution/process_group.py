@@ -4,21 +4,28 @@ from __future__ import annotations
 
 import json
 import os
-import signal
 import subprocess
 import sys
 import time
-from contextlib import nullcontext
 from collections.abc import Mapping
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from runtime_protocol import platform
 
 from astrid.core.execution.custody_broker import (
-    CustodyError as CleanupUncertainError, CustodyLockBusy, ProcessCustody, RoleBoundCustodyBroker,
-    _darwin_process_records, _ps_lstart_birth, _atomic_owner_json,
+    CustodyError as CleanupUncertainError,
+)
+from astrid.core.execution.custody_broker import (
+    CustodyLockBusy,
+    ProcessCustody,
+    RoleBoundCustodyBroker,
+    _atomic_owner_json,
     _candidate_reconciliation_deadline,
+    _darwin_process_records,
+    _ps_lstart_birth,
 )
 
 
@@ -70,6 +77,8 @@ def _census_message(message: str, census: Mapping[int, _ProcessInfo]) -> str:
 
 def _process_snapshot() -> dict[int, _ProcessInfo]:
     """Read a process census without invoking a shell."""
+    if sys.platform == "win32":
+        raise CleanupUncertainError("Windows process trees require retained Job custody, not a POSIX census")
     if sys.platform == "darwin":
         return {
             row["pid"]: _ProcessInfo(row["pid"], row["parent_pid"], row["pgid"],
@@ -139,10 +148,11 @@ def write_cleanup_latch(path: Path, *, notes: list[str], since: str) -> None:
     """
     try:
         pid = os.getpid()
-        info = _process_snapshot().get(pid)
+        info = _process_snapshot().get(pid) if sys.platform != "win32" else None
         record = {
             "pid": pid,
-            "process_birth_id": info.birth if info is not None else None,
+            "process_birth_id": (process_birth_identity(pid) if sys.platform == "win32"
+                                 else info.birth if info is not None else None),
             "since": since,
             "notes": list(notes),
         }
@@ -166,6 +176,14 @@ def read_cleanup_latch(path: Path) -> dict[str, Any] | None:
         return None
     if not isinstance(record, dict) or not isinstance(record.get("pid"), int):
         return None
+    if sys.platform == "win32":
+        try:
+            birth = process_birth_identity(record["pid"])
+        except OSError as exc:
+            return {**record, "liveness": f"unverified: {exc}"}
+        if not birth or record.get("process_birth_id") not in (None, birth):
+            return None
+        return {**record, "liveness": "verified" if record.get("process_birth_id") else "unverified: birth unknown"}
     try:
         census = _process_snapshot()
     except CleanupUncertainError as exc:
@@ -197,6 +215,9 @@ def process_birth_identity(pid: int | None = None) -> str:
     process_id = int(pid if pid is not None else os.getpid())
     if process_id <= 0:
         return ""
+    if sys.platform == "win32":
+        identity = platform.process_identity(process_id)
+        return str(identity["birth_id"]) if identity is not None else ""
     if sys.platform.startswith("linux"):
         try:
             with open("/proc/%d/stat" % process_id, encoding="ascii") as stream:
@@ -264,6 +285,7 @@ def popen_owned_process(argv: list[str], **kwargs: Any) -> subprocess.Popen:
     """Launch with retained custody while preserving the requested session."""
     options = dict(kwargs)
     new_session = bool(options.pop("start_new_session", False))
+    detached = bool(options.pop("detached", False))
     delegate_inventory = options.pop("_delegate_inventory", True)
     if type(delegate_inventory) is not bool:
         raise CleanupUncertainError("inventory launch selection must be explicit")
@@ -272,12 +294,13 @@ def popen_owned_process(argv: list[str], **kwargs: Any) -> subprocess.Popen:
     wrapped, registration_env = custody.prepare_launch(argv, start_new_session=new_session, inventory_context=context)
     if registration_env:
         options["env"] = {**(os.environ if options.get("env") is None else options["env"]), **registration_env}
+        options["start_new_session"] = False  # The Darwin custody wrapper creates it.
     else:
         options["start_new_session"] = new_session
     try:
-        process = subprocess.Popen(wrapped, **options)
+        process = platform.spawn_tree(wrapped, detached=detached, **options)
     except BaseException:
-        custody.cleanup_failed_launch(signum=signal.SIGTERM)
+        custody.cleanup_failed_launch(signum=platform.TERM)
         raise
     process._astrid_custody = custody
     if new_session:
@@ -285,6 +308,8 @@ def popen_owned_process(argv: list[str], **kwargs: Any) -> subprocess.Popen:
     try:
         custody.bind_launch(process)
         process._astrid_process_birth = custody._handles[process.pid][0]
+        if sys.platform == "win32":
+            return process
         observe_tree(process)
         custody.start_observer()
         custody.start_inventory_owner()
@@ -294,7 +319,7 @@ def popen_owned_process(argv: list[str], **kwargs: Any) -> subprocess.Popen:
         error.process = process
         error.custody = custody
         try:
-            custody.cleanup_failed_launch(signum=signal.SIGTERM)
+            custody.cleanup_failed_launch(signum=platform.TERM)
         except BaseException as cleanup_error:
             custody._uncertain = custody._uncertain or cleanup_error
             process._astrid_tree_uncertain = str(cleanup_error) or type(cleanup_error).__name__
@@ -379,6 +404,11 @@ def group_exists(process: subprocess.Popen) -> bool:
 
 def signal_group(process: subprocess.Popen, sig: int) -> None:
     """Signal registered incarnations; a PGID is never signal authority."""
+    if sys.platform == "win32":
+        if getattr(process, "_runtime_job", None) is None:
+            raise CleanupUncertainError("Windows signal lacks retained Job custody")
+        platform.signal_tree(process, sig)
+        return
     live = observe_tree(process)
     _signal_valid_tree_members(process, live, sig, strict=True)
 
@@ -447,6 +477,12 @@ def observe_tree(process: subprocess.Popen, *, deadline: float | None = None) ->
     An empty or failed census is never evidence of absence.
     Never adopt children of a missing or recycled previously observed parent.
     """
+    if sys.platform == "win32":
+        job = getattr(process, "_runtime_job", None)
+        if job is None:
+            raise CleanupUncertainError("Windows process lacks retained Job custody")
+        return ({process.pid: process._astrid_process_birth}
+                if process.poll() is None else {})
     custody = getattr(process, "_astrid_custody", None)
     ordinary = _ordinary_command_custody(custody)
     bounded = (isinstance(custody, ProcessCustody) and sys.platform == "darwin"
@@ -540,6 +576,11 @@ def verify_tree_absent(process: subprocess.Popen, *, deadline: float | None = No
 
 
 def _verify_tree_absent(process: subprocess.Popen, *, deadline: float | None = None) -> None:
+    if sys.platform == "win32":
+        job = getattr(process, "_runtime_job", None)
+        if job is None or job.handle or process.poll() is None:
+            raise CleanupUncertainError("Windows Job cleanup is unproved")
+        return
     custody = getattr(process, "_astrid_custody", None)
     if isinstance(custody, ProcessCustody) and process.poll() is not None:
         custody.finish_inventory_owner()
@@ -618,7 +659,7 @@ def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: flo
     members = tuple(row for row in reversed(frozen) if row[0] != process.pid)
     members += tuple(row for row in frozen if row[0] == process.pid)
     report["retained_members"] = [{"pid": pid, "birth": birth} for pid, birth in members]
-    for signum in (signal.SIGTERM, signal.SIGKILL):
+    for signum in (platform.TERM, platform.KILL):
         for pid, birth in members:
             if time.monotonic() >= cleanup_deadline:
                 report["errors"].append({"stage": "signal", "pid": pid, "signal": int(signum), "error": "deadline expired"})
@@ -629,7 +670,7 @@ def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: flo
             except BaseException as exc:
                 report["errors"].append({"stage": "signal", "pid": pid, "signal": int(signum),
                                          "error_type": type(exc).__name__, "error": str(exc)[:600]})
-        if signum == signal.SIGTERM:
+        if signum == platform.TERM:
             remaining = max(0.0, cleanup_deadline - time.monotonic())
             try:
                 report["original_wait"] = process.wait(timeout=remaining / 2)
@@ -652,6 +693,11 @@ def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: flo
 
 def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
                     cleanup_deadline: float | None = None) -> None:
+    if sys.platform == "win32":
+        if getattr(process, "_runtime_job", None) is None:
+            raise CleanupUncertainError("Windows process lacks retained Job custody")
+        platform.stop_tree(process, grace=max(0.0, grace_seconds))
+        return
     if cleanup_deadline is None:
         cleanup_deadline = time.monotonic() + max(0.0, grace_seconds) + max(_CLEANUP_FLOOR_SECONDS, grace_seconds)
     custody = getattr(process, "_astrid_custody", None)
@@ -662,7 +708,7 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
     live = observe_tree(process, **observation_options)
     known = process._astrid_tree_members
     descendants = {pid: birth for pid, birth in live.items() if pid != process.pid}
-    _signal_valid_tree_members(process, descendants, signal.SIGTERM, strict=True,
+    _signal_valid_tree_members(process, descendants, platform.TERM, strict=True,
                               **({"cleanup_deadline": cleanup_deadline} if observation_options else {}))
     deadline = min(cleanup_deadline, time.monotonic() + max(0.0, grace_seconds))
     while time.monotonic() < deadline:
@@ -675,14 +721,14 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
     live = observe_tree(process, **observation_options)
     _signal_valid_tree_members(
         process, {pid: birth for pid, birth in live.items() if pid != process.pid},
-        signal.SIGKILL, strict=True,
+        platform.KILL, strict=True,
         **({"cleanup_deadline": cleanup_deadline} if observation_options else {}),
     )
     # kill_deadline times the root's escalation (how long SIGTERM gets before SIGKILL);
     # signalling and reaping get the whole cleanup budget, because each signal waits for
     # the custody lock, which a census on a busy host can hold for over a second.
     kill_deadline = min(cleanup_deadline, time.monotonic() + max(1.0, grace_seconds))
-    _signal_valid_tree_members(process, {process.pid: known[process.pid]}, signal.SIGTERM,
+    _signal_valid_tree_members(process, {process.pid: known[process.pid]}, platform.TERM,
                               strict=True, cleanup_deadline=cleanup_deadline)
     # Wait only on the original child, reserving half the root budget for KILL.
     root_grace = min(max(0.0, grace_seconds), max(0.0, kill_deadline - time.monotonic()) / 2)
@@ -696,7 +742,7 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
         live = observe_tree(process, **observation_options)
         if not live:
             break
-        _signal_valid_tree_members(process, live, signal.SIGKILL,
+        _signal_valid_tree_members(process, live, platform.KILL,
                                   strict=True, cleanup_deadline=cleanup_deadline)
         time.sleep(0.02)
     try:

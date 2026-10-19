@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from astrid.core.contracts.errors import AstridError
 import argparse
-import fcntl
 import hashlib
 import json
-import os
 import re
 import shutil
 import zipfile
@@ -16,6 +13,10 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Mapping
 
+from runtime_protocol import platform
+from runtime_protocol.dirfd import filesystem as os
+
+from astrid.core.contracts.errors import AstridError
 from astrid.core.execution.worker_qualification import (
     WorkerQualificationError,
     ensure_runpod_worker,
@@ -23,7 +24,6 @@ from astrid.core.execution.worker_qualification import (
     qualification_digest,
 )
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
-from astrid.packs.h3_av.shared.input_bundle import build_input_bundle, materialize_input_bundle
 from astrid.packs.h3_av.actions.transform.operation import OperationJournal, OperationJournalError
 from astrid.packs.h3_av.actions.transform.receipt import (
     attest_runtime_managed_composition,
@@ -31,6 +31,7 @@ from astrid.packs.h3_av.actions.transform.receipt import (
     build_final_receipt,
     write_final_receipt,
 )
+from astrid.packs.h3_av.shared.input_bundle import build_input_bundle, materialize_input_bundle
 from astrid.packs.h3_av.shared.request import load_request_document, normalize_request
 from astrid.packs.h3_av.shared.request_v2 import branch_for
 from astrid.sdk import AstridClient, observe_task_invocation
@@ -1673,7 +1674,7 @@ def _operation_directory_writer_lock(root: Path):
     )
     try:
         try:
-            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            platform.lock_file(descriptor, blocking=False)
         except BlockingIOError as exc:
             raise AstridError("H3 operation directory is already in use") from exc
         yield

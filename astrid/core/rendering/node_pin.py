@@ -26,6 +26,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Mapping, Sequence
 
+from runtime_protocol import platform
+
 OVERRIDE_ENV = "ASTRID_NODE_EXECUTABLE"
 _PROBE_TIMEOUT_S = 5
 
@@ -182,7 +184,8 @@ def doctor_section(support_root: Path | str | None) -> dict[str, object]:
     alive = False
     if pid:
         try:
-            os.kill(pid, 0)
+            if platform.process_identity(pid) is None:
+                raise ProcessLookupError(pid)
             alive = True
         except OSError:
             alive = False

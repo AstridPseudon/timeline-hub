@@ -421,7 +421,6 @@ class AstridClient:
         import json
         import os
         import stat
-        import sys
 
         from astrid.runtime_cli import RuntimeCLI, RuntimeCLIError, validate_selected_workspace
         from astrid.sdk.exceptions import ServiceUnavailableError
@@ -533,15 +532,12 @@ class AstridClient:
             with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
                 if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
                     raise unavailable("Runtime Astrid credential is not a regular file", reason="credential_invalid")
-                if sys.platform == "darwin":
-                    import fcntl
-
-                    raw_path = fcntl.fcntl(handle.fileno(), fcntl.F_GETPATH, bytes(1024))
-                    opened_path = os.fsdecode(raw_path.split(b"\0", 1)[0])
-                elif sys.platform.startswith("linux"):
+                if os.name == "posix" and Path("/proc/self/fd").is_dir():
                     opened_path = os.readlink(f"/proc/self/fd/{handle.fileno()}")
                 else:
                     opened_path = str(credential_path.resolve(strict=True))
+                    if not os.path.samestat(os.fstat(handle.fileno()), credential_path.stat()):
+                        opened_path = ""
                 if opened_path != str(credential_path):
                     raise unavailable("Runtime Astrid credential path is unsafe", reason="credential_invalid")
                 metadata = json.load(handle)

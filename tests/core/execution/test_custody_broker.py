@@ -166,7 +166,8 @@ def test_isolated_wrapper_target_restores_network_hook_and_original_environment(
     target = [sys.executable, "-c", target_source]
     env = _wrapper_environment(tmp_path, broker, role=role, target=target, port=port)
     shim = (
-        "import runpy,os,json; from pathlib import Path; "
+        "import runpy,os,json,sys; from pathlib import Path; "
+        f"sys.path[:0]={[str(Path(custody.__file__).resolve().parents[3]), str(Path(custody.platform.__file__).resolve().parent.parent)]!r}; "
         f"m=runpy.run_path({custody.__file__!r},run_name='wrapper_fixture'); "
         "g=m['child_exec_from_environment'].__globals__\n"
         "def spawn(argv,environment):\n"
@@ -4096,10 +4097,11 @@ def test_retained_reference_deadline_bounds_a_held_cleanup_guard(tmp_path, monke
     clock = [10.0]
     monkeypatch.setattr(custody.time, "monotonic", lambda: clock[0])
     monkeypatch.setattr(custody.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0]+seconds))
-    def held(_fd, operation):
-        if operation != custody.fcntl.LOCK_UN:
-            raise BlockingIOError("held by another cleanup owner")
-    monkeypatch.setattr(custody.fcntl, "flock", held)
+    def held(_fd, **kwargs):
+        assert kwargs == {"exclusive": False, "blocking": False}
+        raise BlockingIOError("held by another cleanup owner")
+    monkeypatch.setattr(custody.platform, "lock_file", held)
+    monkeypatch.setattr(custody.platform, "unlock_file", lambda _fd: None)
     monkeypatch.setattr(authority, "_read", lambda: pytest.fail("held reference guard read a designation"))
     with pytest.raises(custody.CustodyError, match="timed out"):
         authority.reference(cleanup_deadline=10.02)

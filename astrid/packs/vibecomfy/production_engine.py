@@ -8,7 +8,6 @@ import importlib
 import json
 import os
 import shutil
-import signal
 import sys
 import tempfile
 from collections.abc import Mapping
@@ -16,6 +15,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from runtime_protocol import platform
 
 _PROFILE_CONFIGS = {
     "pip_embedded": {
@@ -677,7 +678,6 @@ def _embedded_session_config(
 @contextmanager
 def _checkout_cancellation(control: Any):
     cancelled = False
-    previous: dict[signal.Signals, Any] = {}
 
     def cancel(signum: int, _frame: Any) -> None:
         nonlocal cancelled
@@ -685,14 +685,11 @@ def _checkout_cancellation(control: Any):
         control.cancel()
         raise SystemExit(128 + signum)
 
-    for signum in (signal.SIGINT, signal.SIGTERM):
-        previous[signum] = signal.getsignal(signum)
-        signal.signal(signum, cancel)
+    restore = platform.install_stop_handlers(cancel)
     try:
         yield lambda: cancelled
     finally:
-        for signum, handler in previous.items():
-            signal.signal(signum, handler)
+        restore()
 
 
 def _result_from_runtime_result(

@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import inspect
 import json
-import os
-from pathlib import Path
 import re
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable, Mapping
+
+from runtime_protocol import platform
 
 C2_SCHEMA_VERSION = 2
 C2_CONTRACT_REVISION = "C2"
@@ -287,7 +288,7 @@ def collect_product_observations(support_root: str, runtime_data: Mapping[str, A
             bound = (all(ready.get(key) not in (None, "") and observation.get(key) == ready[key] for key in fields)
                      and type(observation.get("pid")) is int and observation["pid"] > 0
                      and observation["process_birth_id"] == _host_birth_identity(observation["pid"]))
-            private = (observation_path.stat().st_uid == os.getuid() and observation_path.stat().st_mode & 0o777 == 0o600)
+            private = platform.is_owner_only(observation_path)
             counts = all(type(observation.get(key)) is int and observation[key] >= 0 for key in ("charged_bytes", "cap_bytes", "live_attempts"))
             if (bound and private and counts and 0 <= age <= C2_DEADLINE_MS / 1000
                     and observation.get("observation_kind") == "measured_live_evidence_budget"):

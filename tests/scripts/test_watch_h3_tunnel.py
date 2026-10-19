@@ -35,14 +35,16 @@ class _Process:
 
 
 def test_tunnel_shutdown_signals_and_reaps_the_owned_process_group(monkeypatch) -> None:
-    signals: list[tuple[int, int]] = []
-    monkeypatch.setattr(watcher.os, "getpgid", lambda pid: pid + 1)
-    monkeypatch.setattr(watcher.os, "killpg", lambda pgid, signum: signals.append((pgid, signum)))
+    calls = []
+    def stop(child, *, grace):
+        calls.append((child, grace))
+        child.wait(timeout=grace)
+    monkeypatch.setattr(watcher.platform, "stop_tree", stop)
     process = _Process(alive=True)
 
     watcher._stop_tunnel_process(process)
 
-    assert signals == [(4243, watcher.signal.SIGTERM)]
+    assert calls == [(process, 10)]
     assert process.waited is True
 
 
@@ -111,6 +113,8 @@ def test_importing_the_watcher_leaves_signals_and_atexit_to_the_importer() -> No
         f"""
         import atexit, signal, sys, types
         sys.path.insert(0, {str(root)!r})
+        # Initialize the required OS boundary before observing watcher hooks.
+        from runtime_protocol import platform
         sys.modules.setdefault("paramiko", types.ModuleType("paramiko"))
         registered = []
         atexit.register = registered.append

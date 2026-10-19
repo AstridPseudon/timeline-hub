@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+
+from astrid.core.execution.platform_helpers import owned_by_current_user
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 
 guard_canonical_entrypoint("rendering.render")
@@ -14,7 +16,6 @@ import argparse
 import ast
 import hashlib
 import json
-import os
 import stat
 import sys
 from datetime import datetime, timezone
@@ -22,12 +23,15 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Mapping, Sequence
 
+from runtime_protocol.dirfd import filesystem as os
+
 from astrid.core import timeline
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 from astrid.core.foundation.paths import REPO_ROOT
+from astrid.core.rendering.contracts import SCHEMA_VERSION, RenderRequest
+from astrid.core.rendering.delivery_audio import METADATA_KEY as DELIVERY_AUDIO_KEY
+from astrid.core.rendering.delivery_audio import DeliveryAudioTarget
 from astrid.core.rendering.errors import RendererException
-from astrid.core.rendering.contracts import RenderRequest, SCHEMA_VERSION
-from astrid.core.rendering.delivery_audio import METADATA_KEY as DELIVERY_AUDIO_KEY, DeliveryAudioTarget
 from astrid.core.rendering.output_policy import (
     DEFAULT_RENDER_OUTPUT_NAME,
     validate_output_basename,
@@ -387,7 +391,7 @@ def _validate_media_dependency(assets_path: Path, dependency: Path | None) -> No
     fd = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
         before = os.fstat(fd)
-        if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or before.st_uid != os.getuid()
+        if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or not owned_by_current_user(fd, before)
                 or before.st_size != expected_size):
             raise ValueError("media_dependency is not an admitted regular file of the registry size")
         total, sha = 0, hashlib.sha256()

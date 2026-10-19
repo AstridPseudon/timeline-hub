@@ -1,6 +1,6 @@
 """Process-isolated generic executor host for the local runtime protocol.
 
-This module deliberately contains no runtime/database/storage imports.  It is a
+This module contains no Runtime database or storage implementation. It is a
 pack-side process: discovery and execution happen here, while admission,
 leases, reservations, and settlement remain protocol operations on the daemon.
 """
@@ -19,11 +19,10 @@ import io
 import json
 import logging
 import mimetypes
-import os
 import queue
-import select
 import re
 import secrets as secrets_module
+import select
 import shutil
 import signal
 import socket
@@ -40,6 +39,11 @@ from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence
 from urllib.parse import quote, urlsplit
+
+from runtime_protocol import platform
+from runtime_protocol.dirfd import filesystem as os
+
+from astrid.core.execution.platform_helpers import owned_by_current_user
 
 # Startup observations use only the existing private stderr sink. Regular-file
 # latency is not bounded; this diagnostic never changes descriptor flags.
@@ -64,8 +68,7 @@ def _emit_startup_phase(phase: str) -> None:
         return
     try:
         info = os.fstat(2)
-        if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-                or stat.S_IMODE(info.st_mode) != 0o600):
+        if (not stat.S_ISREG(info.st_mode) or not owned_by_current_user(2, info, mode=0o600)):
             return
         elapsed = max(0, int((time.monotonic() - _STARTUP_OBSERVATION_STARTED) * 1000))
         row = {"diagnostic": "astrid.host_startup_phase", "phase": phase,
@@ -654,7 +657,6 @@ class _ManagedWanChildAdapter:
         self._diagnostic: Any = None
 
     def start(self) -> None:
-        import fcntl
 
         owner_dir = Path(self.spec["owner_dir"])
         owner_dir.mkdir(parents=True, exist_ok=True)
@@ -671,7 +673,7 @@ class _ManagedWanChildAdapter:
         fd = os.open(owner_dir / "wan-child.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
         self._owner_lock = os.fdopen(fd, "a+b")
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            platform.lock_file(fd, blocking=False)
         except BlockingIOError as exc:
             self._owner_lock.close()
             self._owner_lock = None
@@ -1503,8 +1505,7 @@ def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
     with os.fdopen(fd, "rb") as stream:
         info = os.fstat(stream.fileno())
         raw = stream.read(8193)
-    if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-            or stat.S_IMODE(info.st_mode) != 0o600 or info.st_nlink != 1 or len(raw) > 8192):
+    if (not stat.S_ISREG(info.st_mode) or not owned_by_current_user(path, info, mode=0o600) or info.st_nlink != 1 or len(raw) > 8192):
         raise HostError("review receiver observation is not private")
     snapshot = info.st_dev, info.st_ino, raw
     if previous is not None:
@@ -1540,8 +1541,7 @@ def _retire_owned_review_session(attempt: Path, snapshot: tuple[int, int, bytes]
     with os.fdopen(fd, "rb") as stream:
         info = os.fstat(stream.fileno())
         raw = stream.read(8193)
-    if (snapshot is None or not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-            or stat.S_IMODE(info.st_mode) != 0o600 or info.st_nlink != 1
+    if (snapshot is None or not stat.S_ISREG(info.st_mode) or not owned_by_current_user(path, info, mode=0o600) or info.st_nlink != 1
             or (info.st_dev, info.st_ino, raw) != snapshot
             or (path.lstat().st_dev, path.lstat().st_ino) != snapshot[:2]):
         raise HostError("review receiver cleanup owner mismatch; attempt retained")
@@ -5283,10 +5283,19 @@ class GenericPackHost:
             root = self.attempt_base / f"{task_id}-{attempt_id}"
             if root.exists() or root.is_symlink():
                 raise HostError(f"attempt-base allocation already exists: {root.name}")
-            root.mkdir()
+            if sys.platform == "win32":
+                platform.private_directory(root)
+            else:
+                root.mkdir()
+            return root.resolve()
+        if self.attempt_root is None and sys.platform == "win32":
+            root = Path(tempfile.gettempdir()) / f"astrid-attempt-{task_id}-{secrets_module.token_hex(16)}"
+            platform.private_directory(root)
             return root.resolve()
         root = self.attempt_root or Path(tempfile.mkdtemp(prefix=f"astrid-attempt-{task_id}-")).resolve()
         root.mkdir(parents=True, exist_ok=True)
+        if sys.platform == "win32":
+            platform.owner_only(root)
         return root
 
     @property
@@ -6017,8 +6026,7 @@ class GenericPackHost:
             reference = Path(configuration[runtime.ASTRID_REMOTION_VALIDATION_PATH])
             before = reference.stat()
             if (not reference.is_absolute() or reference.is_symlink()
-                    or not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid()
-                    or stat.S_IMODE(before.st_mode) != 0o600
+                    or not stat.S_ISREG(before.st_mode) or not owned_by_current_user(reference, before, mode=0o600)
                     or before.st_size > runtime._VALIDATION_MAX_BYTES):
                 return None
             raw = reference.read_bytes()
@@ -10897,14 +10905,13 @@ def _handoff_read_protected_json(scope: Path, name: str, *, limit: int = 1_048_5
             or any(parent.is_symlink() for parent in scope.parents)):
         raise HostError("handoff evidence scope or filename is unsafe")
     scope_info = scope.stat(follow_symlinks=False)
-    if (not scope.is_dir() or scope_info.st_uid != os.getuid() or scope_info.st_mode & 0o077):
+    if (not scope.is_dir() or not owned_by_current_user(scope, scope_info, forbidden=0o077)):
         raise HostError("handoff evidence scope is not owner-only")
     path = scope / name
     descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     try:
         info = os.fstat(descriptor)
-        if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-                or info.st_mode & 0o077 or info.st_size <= 0 or info.st_size > limit):
+        if (not stat.S_ISREG(info.st_mode) or not owned_by_current_user(descriptor, info, forbidden=0o077) or info.st_size <= 0 or info.st_size > limit):
             raise HostError("handoff evidence file is not bounded owner-only state")
         chunks = bytearray()
         while len(chunks) <= limit:
@@ -10936,8 +10943,7 @@ def _handoff_read_private_bytes(path: Path, *, limit: int) -> bytes:
     descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     try:
         info = os.fstat(descriptor)
-        if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-                or info.st_mode & 0o077 or info.st_size <= 0 or info.st_size > limit):
+        if (not stat.S_ISREG(info.st_mode) or not owned_by_current_user(descriptor, info, forbidden=0o077) or info.st_size <= 0 or info.st_size > limit):
             raise HostError("handoff protected file is not bounded owner-only state")
         chunks = bytearray()
         while len(chunks) <= limit:
@@ -11126,24 +11132,23 @@ class LocalExecutionPreparation:
             return self._handoff_journal_ready
         lock_fd = None
         try:
-            from fcntl import LOCK_EX, LOCK_NB, flock
-
             if not scope.is_absolute() or any(parent.is_symlink() for parent in scope.parents):
                 raise HostError("host handoff custody scope contains a symlink")
             if not scope.exists():
-                os.mkdir(scope, 0o700)
+                platform.private_directory(scope)
             scope_stat = scope.stat(follow_symlinks=False)
-            if (not scope.is_dir() or scope.is_symlink() or scope_stat.st_uid != os.getuid()
-                    or scope_stat.st_mode & 0o077):
+            if (not scope.is_dir() or scope.is_symlink() or not owned_by_current_user(scope, scope_stat, forbidden=0o077)):
                 raise HostError("host handoff custody scope is not owner-only")
             journal = scope / "host-handoff-state.json"
             lock_path = scope / "host-handoff-state.lock"
             lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
+            if sys.platform == "win32":
+                platform.owner_only(lock_fd)
             lock_stat = os.fstat(lock_fd)
             if (not stat.S_ISREG(lock_stat.st_mode) or lock_stat.st_nlink != 1
-                    or lock_stat.st_uid != os.getuid() or lock_stat.st_mode & 0o077):
+                    or not owned_by_current_user(lock_fd, lock_stat, forbidden=0o077)):
                 raise HostError("host handoff lock file is not owner-only")
-            flock(lock_fd, LOCK_EX | LOCK_NB)
+            platform.lock_file(lock_fd, blocking=False)
             if journal.exists() or journal.is_symlink():
                 raise HostError("retained host handoff journal requires authenticated reconciliation")
             self._handoff_journal_path = journal
@@ -11874,6 +11879,8 @@ class LocalExecutionPreparation:
         descriptor = None
         try:
             descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
+            if sys.platform == "win32":
+                platform.owner_only(descriptor)
             view = memoryview(encoded)
             while view:
                 written = os.write(descriptor, view)
@@ -12970,12 +12977,12 @@ class _NativeEngineGraph:
         # Let the selected daemon execute its original listener cleanup and
         # positively await/reap that exact child before the engine exits.
         if self.process.poll() is None:
-            self._signal_owned_role(self.engine, signal.SIGTERM, expected_pid=self.process.pid)
+            self._signal_owned_role(self.engine, platform.TERM, expected_pid=self.process.pid)
         try:
             exit_code = self.process.wait(timeout=5)
         except subprocess.TimeoutExpired as exc:
             if self.listener is not None and self.listener._post_exec_authority_validated:
-                self._signal_owned_role(self.listener, signal.SIGKILL, expected_pid=int(self.listener.registration["pid"]))
+                self._signal_owned_role(self.listener, platform.KILL, expected_pid=int(self.listener.registration["pid"]))
             raise CleanupUncertainError("engine cleanup deadline expired; obligations retained") from exc
         if self._listener_exit is None:
             try:
@@ -13024,7 +13031,7 @@ class _NativeEngineGraph:
             raise CleanupUncertainError("listener cleanup lacks retained registration")
         pid = int(listener.registration["pid"])
         expected = listener.registration["identity"]
-        self._signal_owned_role(listener, signal.SIGTERM, expected_pid=pid)
+        self._signal_owned_role(listener, platform.TERM, expected_pid=pid)
         deadline = time.monotonic() + 1.0  # Existing descendant TERM grace.
         while time.monotonic() < deadline:
             # Observation and waits grant no authority and occur outside the
@@ -13035,7 +13042,7 @@ class _NativeEngineGraph:
             if any(observed.get(key) != expected.get(key) for key in ("pid", "uid", "birth_id")):
                 raise CleanupUncertainError("listener incarnation changed during cleanup")
             time.sleep(min(0.02, max(0.0, deadline - time.monotonic())))
-        self._signal_owned_role(listener, signal.SIGKILL, expected_pid=pid)
+        self._signal_owned_role(listener, platform.KILL, expected_pid=pid)
 
 
 def _retain_unresolved_owner(preparation: LocalExecutionPreparation) -> None:
@@ -13230,14 +13237,12 @@ def _await_worker_activation_socket(
     try:
         parent.mkdir(mode=0o700)
         parent_info = parent.stat()
-        if (not stat.S_ISDIR(parent_info.st_mode) or parent_info.st_uid != os.getuid()
-                or stat.S_IMODE(parent_info.st_mode) != 0o700):
+        if (not stat.S_ISDIR(parent_info.st_mode) or not owned_by_current_user(parent, parent_info, mode=0o700)):
             raise HostError("parked activation socket directory is not private")
         listener.bind(str(path))
-        os.chmod(path, 0o600)
+        platform.owner_only(path)
         created = path.lstat()
-        if (not stat.S_ISSOCK(created.st_mode) or created.st_uid != os.getuid()
-                or stat.S_IMODE(created.st_mode) != 0o600):
+        if (not stat.S_ISSOCK(created.st_mode) or not owned_by_current_user(path, created, mode=0o600)):
             raise HostError("parked activation socket identity is unsafe")
         listener.listen(1)
         listener.settimeout(timeout_seconds)
@@ -13396,8 +13401,7 @@ def _cli() -> int:
                 preparation.control_error = exc
                 return  # Unresolved custody keeps this designated owner alive.
             raise SystemExit(128 + signum)
-        signal.signal(signal.SIGTERM, parked_shutdown)
-        signal.signal(signal.SIGINT, parked_shutdown)
+        platform.install_stop_handlers(parked_shutdown)
     activation = None
     if has_activation_transport:
         if not args.credential_file:
@@ -13602,12 +13606,12 @@ def _cli() -> int:
         owned_output = support_root / "host-output"
         if (not output_root or Path(output_root) != owned_output
                 or owned_output.resolve() != owned_output or not owned_output.is_dir()
-                or owned_output.stat().st_uid != os.getuid()):
+                or not owned_by_current_user(owned_output, owned_output.stat())):
             parser.error("host-only output root must be the canonical owned host-output directory")
         owned_attempts = owned_output / "attempts"
         if (owned_attempts.resolve() != owned_attempts
                 or (owned_attempts.exists() and (not owned_attempts.is_dir()
-                    or owned_attempts.stat().st_uid != os.getuid()))):
+                    or not owned_by_current_user(owned_attempts, owned_attempts.stat())))):
             parser.error("host-only attempts directory must be canonical and owned")
         try:
             for directory in (owned_output, owned_attempts) if owned_attempts.exists() else (owned_output,):
@@ -13665,13 +13669,12 @@ def _cli() -> int:
     def handle_shutdown(_signum, _frame):
         _handle_host_shutdown_signal(host, _signum)
 
-    signal.signal(signal.SIGTERM, handle_shutdown)
-    signal.signal(signal.SIGINT, handle_shutdown)
+    platform.install_stop_handlers(handle_shutdown)
     # `kill -USR1 <pid>` writes every thread's Python stack to the host log,
     # so a host that looks stuck can be diagnosed without stopping it.
-    if hasattr(signal, "SIGUSR1"):
+    if platform.USER1 is not None:
         try:
-            faulthandler.register(signal.SIGUSR1, all_threads=True, chain=False)
+            faulthandler.register(platform.USER1, all_threads=True, chain=False)
         except (OSError, ValueError, RuntimeError):
             # stderr has no file descriptor (an embedding or test harness).
             pass
