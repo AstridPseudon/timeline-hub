@@ -279,7 +279,7 @@ function TimelineEditorShellCoreComponent({
   });
   const conflict = useTimelineRealtime({
     timelineId,
-    conflictExhausted: chrome.isConflictExhausted,
+    conflictExhausted: chrome.isConflictExhausted && chrome.commandSession?.state.status !== 'conflict',
     onKeepLocalChanges: chrome.retrySaveAfterConflict,
     onDiscardRemoteChanges: chrome.reloadFromServer,
   });
@@ -753,7 +753,7 @@ function TimelineEditorShellCoreComponent({
   // A save conflict is a choice between two versions, not an error: neutral, not destructive red.
   // The dialog and this bar offer the same two buttons: the dialog is the one place while it is open, and this bar is
   // the way back to the choice once it was dismissed.
-  const conflictBanner = chrome.isConflictExhausted && !conflict.isOpen ? (
+  const conflictBanner = chrome.isConflictExhausted && chrome.commandSession?.state.status !== 'conflict' && !conflict.isOpen ? (
     <div
       role="alert"
       className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-2 text-sm text-foreground"
@@ -817,6 +817,32 @@ function TimelineEditorShellCoreComponent({
     </div>
   ) : null;
 
+  const commandSession = chrome.commandSession;
+  const commandState = commandSession?.state;
+  const commandBanner = commandSession && commandState && (
+    commandState.recoverableOwners.length > 0 || ['retry', 'error', 'conflict'].includes(commandState.status)
+  ) ? (
+    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-2 text-sm text-foreground">
+      <span>{commandState.recoverableOwners.length > 0
+        ? 'Unsaved timeline edits were found. Choose an editor session to recover.'
+        : commandState.status === 'conflict'
+          ? 'These timeline edits conflict with another change. Your edits are retained.'
+          : commandState.error ?? 'These timeline edits are still unsaved.'}</span>
+      <div className="flex items-center gap-2">
+        {commandState.recoverableOwners.map((ownerId, index) => (
+          <Button key={ownerId} type="button" size="sm" variant="outline" onClick={() => {
+            void commandSession.recover(ownerId).catch((error) => runtime.toast.error(String(error)));
+          }}>Recover editor {index + 1}</Button>
+        ))}
+        {commandState.recoverableOwners.length === 0 && commandState.status !== 'conflict' && (
+          <Button type="button" size="sm" variant="outline" onClick={() => {
+            void commandSession.retry().catch((error) => runtime.toast.error(String(error)));
+          }}>Retry timeline edits</Button>
+        )}
+      </div>
+    </div>
+  ) : null;
+
   /** The timeline region, contained so a render throw under it cannot take the
    *  toolbar (and therefore undo) down with it. Shared by all three layout
    *  branches — the boundary is per-branch instance, which is what we want: a
@@ -832,6 +858,7 @@ function TimelineEditorShellCoreComponent({
       {incompatibleBanner}
       {watchdogBanner}
       {recoveryBanner}
+      {commandBanner}
       {chrome.loadError && !(recoveryCardShowing && hasLoadedTimeline) ? (
         // The hosted build's "Astrid stopped" / "restarted" card already says what to do about the same failure.
         recoveryCardShowing ? null : <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />

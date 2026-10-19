@@ -1,3 +1,4 @@
+import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
 import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import type { RegistrationSaveOwner } from './timeline-state-types.ts';
 import {
@@ -61,12 +62,14 @@ export function useTimelineSave(
   const invalidateRecoveryAction = useCallback(() => {
     recoveryActionGenerationRef.current += 1;
   }, []);
+  const snapshotWriteBlockedRef = useRef(false);
   const commit = useTimelineCommit({
     eventBus: eventBusRef.current,
     lastSavedSignatureRef,
     editability: timelineEditability,
     initialData,
     resolveAssetUrl,
+    snapshotWriteBlockedRef,
   });
   const persistence = useTimelinePersistence({
     store,
@@ -89,13 +92,22 @@ export function useTimelineSave(
     interactionStateRef,
     onCanonicalReloadStart: invalidateRecoveryAction,
   });
+  const commands = useTimelineCommandSession({ provider, timelineId, commit, resolveAssetUrl,
+    legacyClean: () => commit.editSeqRef.current <= savedSeqRef.current && !persistence.isSavingRef.current
+      && !recoveryActiveRef.current,
+    snapshotWriteBlockedRef, loaded: queries.timelineQuery.data, configVersionRef, headRevisionRef, lastSavedSignatureRef, store, shots });
+  snapshotWriteBlockedRef.current = commands.activeRef.current;
   const { clearDeferredRecoverySave, resumeDeferredRecoverySave } = persistence;
   const resumeDeferredRecoverySaveRef = useRef(resumeDeferredRecoverySave);
   resumeDeferredRecoverySaveRef.current = resumeDeferredRecoverySave;
 
+  const scheduleSnapshotSave = persistence.scheduleSave;
   useEffect(() => {
-    return eventBusRef.current.on('scheduleSave', persistence.scheduleSave);
-  }, [persistence.scheduleSave]);
+    return eventBusRef.current.on('scheduleSave', (data, options) => {
+      if (commands.activeRef.current) throw new Error('Resolve pending timeline commands before snapshot edits');
+      scheduleSnapshotSave(data, options);
+    });
+  }, [scheduleSnapshotSave, commands.activeRef]);
 
   usePollSync({
     store,
@@ -118,6 +130,7 @@ export function useTimelineSave(
     isConflictExhaustedRef: persistence.isConflictExhaustedRef,
     interactionStateRef,
     canonicalShotDraftActive: Boolean(shots.canonicalDraft),
+    commandSessionActiveRef: commands.activeRef,
   });
 
   // One-slot recovery draft (plan-v5 B9): after the timeline data loads, offer
@@ -309,6 +322,7 @@ export function useTimelineSave(
 
   const reloadCanonicalFromServer = persistence.reloadFromServer;
   const reloadFromServer = useCallback(async (options?: { clearDraft?: boolean; preserveDraft?: boolean }) => {
+    if (commands.activeRef.current) throw new Error('Resolve pending timeline commands before reload');
     await reloadCanonicalFromServer(options);
     const shouldClearRecovery = options?.clearDraft ?? !options?.preserveDraft;
     if (shouldClearRecovery) {
@@ -319,7 +333,7 @@ export function useTimelineSave(
       clearDeferredRecoverySave();
       resumeDeferredRecoverySave();
     }
-  }, [clearDeferredRecoverySave, reloadCanonicalFromServer, resumeDeferredRecoverySave]);
+  }, [clearDeferredRecoverySave, reloadCanonicalFromServer, resumeDeferredRecoverySave, commands.activeRef]);
   const discardRecoveredDraft = useCallback(async () => {
     try {
       // Reload first. The persistence path clears the slot only after it has
@@ -375,15 +389,26 @@ export function useTimelineSave(
   }), [captureSaveTarget, flushSaveTarget, discardUncommittedSaveTarget, patchRegistryOwned,
     ownsRegistryMutation, canRollbackRegistryMutation, rollbackRegistryMutation]);
 
+  const { ownsHistoryRef: commandHistoryRef, activeRef: commandActiveRef, flush: flushCommands } = commands;
+  const flushSnapshotSave = persistence.flushPendingSave;
+  const flushPendingSave = useCallback(async () => {
+    if (commandHistoryRef.current || commandActiveRef.current) await flushCommands();
+    return flushSnapshotSave();
+  }, [commandHistoryRef, commandActiveRef, flushCommands, flushSnapshotSave]);
+
   return {
+    commands,
     data: commit.data,
     dataRef: commit.dataRef,
-    isConflictExhausted: persistence.isConflictExhausted,
+    isConflictExhausted: persistence.isConflictExhausted || commands.state.status === 'conflict',
     selectedClipId: commit.selectedClipId,
     selectedTrackId: commit.selectedTrackId,
-    saveStatus: recoveredAsDirty && persistence.saveStatus === 'saved' ? 'dirty' : persistence.saveStatus,
+    saveStatus: commands.enabled && commands.state.status !== 'saved'
+      ? (commands.state.status === 'saving' ? 'saving' : commands.state.status === 'retry' ? 'retrying'
+        : commands.state.status === 'error' || commands.state.status === 'conflict' ? 'error' : 'dirty') as import('./useTimelinePersistence.ts').SaveStatus
+      : recoveredAsDirty && persistence.saveStatus === 'saved' ? 'dirty' : persistence.saveStatus,
     schemaIncompatible: persistence.schemaIncompatible,
-    flushPendingSave: persistence.flushPendingSave,
+    flushPendingSave,
     registrationOwner,
     setSelectedTrackId: commit.setSelectedTrackId,
     applyEdit: commit.applyEdit,
