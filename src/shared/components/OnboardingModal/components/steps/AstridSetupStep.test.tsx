@@ -10,6 +10,7 @@ import { OnboardingModal } from '@/shared/components/modals/OnboardingModal';
 import type { ReactElement } from 'react';
 import { Dialog, DialogContent } from '@/shared/components/ui/dialog';
 import { AstridSetupStep, resetSetupChecksForTests, setupChecksFrom } from './AstridSetupStep';
+import { LOCAL_AGENT_SETTING_KEY, savedLocalAgent } from '@/integrations/astrid/localAgents.ts';
 
 const renderInDialog = (ui: ReactElement) => render(<Dialog open><DialogContent>{ui}</DialogContent></Dialog>);
 import { AGENT_SETUP_BRIEF, ASTRID_LAUNCH_COMMANDS, ASTRID_STUDIO_MESSAGE, MANUAL_SETUP_STEPS, RECONNECT_COMMANDS } from '@/shared/components/OnboardingModal/lib/astridSetupGuide';
@@ -53,6 +54,7 @@ describe('AstridSetupStep', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetSetupChecksForTests();
+    localStorage.removeItem(LOCAL_AGENT_SETTING_KEY);
   });
 
   it('guides the agent through choosing and saving Astrid’s model', () => {
@@ -74,7 +76,7 @@ Don't set up generation (GPU, models, API keys, workflows) yourself: Astrid does
     inspectMock.mockResolvedValue(down);
     const user = userEvent.setup();
     render(<OnboardingModal isOpen onClose={vi.fn()} />);
-    const agentOption = await screen.findByRole('radio', { name: /give this to my agent/i });
+    const agentOption = await screen.findByRole('radio', { name: 'Claude Code' });
     await waitFor(() => {
       expect(document.activeElement).toContainElement(screen.getByRole('heading', { name: 'Set up Astrid' }));
       expect(agentOption).not.toHaveFocus();
@@ -97,6 +99,50 @@ Don't set up generation (GPU, models, API keys, workflows) yourself: Astrid does
     expect(writeText).toHaveBeenCalledWith(AGENT_SETUP_BRIEF);
   });
 
+  it.each([
+    ['Claude Code', 'claude-code'],
+    ['Codex', 'codex'],
+    ['Hermes', 'hermes'],
+  ] as const)('saves %s and offers a brief addressed to it', async (name, id) => {
+    inspectMock.mockResolvedValue(down);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
+    await act(async () => {});
+
+    expect(screen.getByText('Already use an agent?')).toBeTruthy();
+    expect(screen.getByRole('radiogroup', { name: 'Already use an agent?' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name }));
+    expect(savedLocalAgent()).toBe(id);
+    expect(screen.getByText(`Paste this into ${name}`)).toBeTruthy();
+    const tailoredLine = `I'll use Astrid from ${name}, so sync Astrid's skills into ${name}.`;
+    expect(screen.getByText((_, element) => element?.tagName === 'PRE' && element.textContent?.includes(tailoredLine))).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /copy brief/i }));
+    await act(async () => {});
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining(tailoredLine));
+  });
+
+  it('maps None yet to Astrid and selects the manual setup route', async () => {
+    inspectMock.mockResolvedValue(down);
+    renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
+    await act(async () => {});
+    fireEvent.click(screen.getByRole('radio', { name: 'None yet' }));
+    expect(savedLocalAgent()).toBe('astrid');
+    expect(screen.getByRole('radio', { name: 'I’ll set it up myself' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText(/check what you already have/i)).toBeTruthy();
+  });
+
+  it('leaves the existing default untouched when no agent is selected', async () => {
+    inspectMock.mockResolvedValue(down);
+    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'codex');
+    renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
+    await act(async () => {});
+
+    expect(savedLocalAgent()).toBe('codex');
+    expect(screen.getByText('Brief for your agent to set everything up')).toBeTruthy();
+  });
+
   it('lists the manual steps when the person sets it up themselves', async () => {
     inspectMock.mockResolvedValue(down);
     renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
@@ -117,6 +163,8 @@ Don't set up generation (GPU, models, API keys, workflows) yourself: Astrid does
     renderInDialog(<AstridSetupStep onNext={onNext} onClose={vi.fn()} />);
     await act(async () => {});
 
+    fireEvent.click(screen.getByRole('radio', { name: 'Hermes' }));
+    expect(savedLocalAgent()).toBe('hermes');
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
     expect(onNext).toHaveBeenCalled();
   });

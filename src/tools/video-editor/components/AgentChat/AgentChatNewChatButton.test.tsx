@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { LOCAL_AGENT_TABLE, type LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 import { AgentChatNewChatButton, type NewChatAgentModels } from './AgentChatNewChatButton.tsx';
 
 beforeAll(() => {
@@ -10,7 +10,7 @@ beforeAll(() => {
 afterEach(cleanup);
 const plainLine = (line: string) => line.replaceAll('`', '');
 
-const ready: LocalAgentChoice[] = (['astrid', 'claude-code', 'codex'] as const)
+const ready: LocalAgentChoice[] = LOCAL_AGENT_IDS
   .map(id => ({ id, name: LOCAL_AGENT_TABLE[id].name, state: 'ready', line: null }));
 const claudeModels: NewChatAgentModels = {
   agent: 'claude-code',
@@ -38,6 +38,15 @@ describe('AgentChatNewChatButton', () => {
     expect(main).toHaveAttribute('title', 'New chat with Codex');
     fireEvent.click(main);
     expect(onNewChat).toHaveBeenCalledWith();
+  });
+
+  it.each(['sign-in', 'not-installed'] as const)('shows Hermes and opens the menu when the default agent is %s', (state) => {
+    const onNewChat = vi.fn();
+    render(<AgentChatNewChatButton defaultAgent="hermes" agents={[{ id: 'hermes', name: 'Hermes', state, line: state === 'sign-in' ? LOCAL_AGENT_TABLE.hermes.signInLine : LOCAL_AGENT_TABLE.hermes.notInstalledLine }]} onNewChat={onNewChat} />);
+    expect(screen.getByRole('button', { name: 'New chat' })).toHaveAttribute('title', 'New chat with Hermes');
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+    expect(onNewChat).not.toHaveBeenCalled();
+    expect(screen.getByRole('option', { name: /Hermes/ })).toHaveTextContent(state === 'sign-in' ? 'Sign in' : 'Not installed');
   });
 
   it('copies the service line for every non-ready row without disabling it', async () => {
@@ -77,6 +86,29 @@ describe('AgentChatNewChatButton', () => {
   it('shows a known current model on the ready row', () => {
     openMenu({ agentModelNames: { 'claude-code': 'Sonnet 4.5' } });
     expect(screen.getByLabelText('Ready, using Sonnet 4.5')).toHaveTextContent('Sonnet 4.5');
+  });
+
+  it('starts Hermes directly and omits model drill-in until a model list is reported', () => {
+    const { onNewChat } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: false } });
+    expect(screen.getByRole('option', { name: /Hermes/ })).toHaveTextContent('Ready');
+    expect(screen.queryByRole('button', { name: 'Choose a Hermes model' })).toBeNull();
+    fireEvent.click(screen.getByRole('option', { name: /Hermes/ }));
+    expect(onNewChat).toHaveBeenCalledWith('hermes', undefined);
+  });
+
+  it('does not enter Hermes model browsing with ArrowRight until models are reported', () => {
+    const { onBrowseAgent } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: false } });
+    fireEvent.keyDown(document.querySelector('[cmdk-root]') as HTMLElement, { key: 'ArrowRight' });
+    expect(onBrowseAgent).not.toHaveBeenCalledWith('hermes');
+    expect(screen.queryByPlaceholderText('Search Hermes models...')).toBeNull();
+  });
+
+  it('closes the Hermes model picker when a session reports an empty list', async () => {
+    const { onNewChat, onBrowseAgent, view } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: true } });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Hermes model' }));
+    view.rerender(<AgentChatNewChatButton defaultAgent="hermes" agents={ready} onNewChat={onNewChat} onBrowseAgent={onBrowseAgent} agentCanBrowse={{ hermes: true }} agentModels={{ agent: 'hermes', models: [], loading: false }} />);
+    await waitFor(() => expect(screen.queryByPlaceholderText('Search Hermes models...')).toBeNull());
+    expect(onBrowseAgent).toHaveBeenLastCalledWith(null);
   });
 
   it('disables both halves while a chat cannot start', () => {

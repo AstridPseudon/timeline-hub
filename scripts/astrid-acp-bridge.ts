@@ -9,7 +9,7 @@ import { getAstridAgentModelCatalog, setAstridAgentDefaultModel } from './astrid
 import { discoverLocalAgents } from './astrid-local-agents.ts';
 import { createLocalAgentAcpProcessHost } from './astrid-local-agent-host.ts';
 import { SharedAcpSessions, sharedSessionModels } from './astrid-shared-acp-sessions.ts';
-import { LOCAL_AGENT_TABLE, localAgentIdSchema, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '../src/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, localAgentIdSchema, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '../src/integrations/astrid/localAgents.ts';
 
 import {
   AcpProcessHost,
@@ -473,7 +473,7 @@ export class AstridAcpBridge {
         const agent = localAgentIdSchema.safeParse(body?.agent ?? 'astrid');
         const defaultModelId = body?.defaultModelId;
         if (!agent.success || !body || Object.keys(body).some(key => key !== 'agent' && key !== 'defaultModelId') || (defaultModelId !== undefined && (typeof defaultModelId !== 'string' || !defaultModelId || agent.data === 'astrid'))) {
-          jsonResponse(response, 400, { error: 'invalid_body', detail: 'Choose astrid, claude-code or codex.' });
+          jsonResponse(response, 400, { error: 'invalid_body', detail: `Choose ${LOCAL_AGENT_IDS.map(id => LOCAL_AGENT_TABLE[id].name).join(', ')}.` });
           return;
         }
         this.connecting++;

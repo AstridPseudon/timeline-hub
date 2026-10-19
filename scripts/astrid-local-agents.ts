@@ -2,12 +2,12 @@ import { execFile } from 'node:child_process';
 import { access, constants } from 'node:fs/promises';
 import { delimiter, join } from 'node:path';
 import { promisify } from 'node:util';
-import { LOCAL_AGENT_TABLE, type LocalAgentChoice, type LocalAgentId } from '../src/integrations/astrid/localAgents.ts';
+import { EXTERNAL_AGENT_IDS, LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, localAgentInstallLine, type LocalAgentChoice, type LocalAgentId } from '../src/integrations/astrid/localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
 
 type Options = { env?: NodeJS.ProcessEnv; cwd?: string };
 type AuthStatus = 'signed-in' | 'signed-out' | 'unknown';
-type ExternalAgent = Exclude<LocalAgentId, 'astrid'>;
+type ExternalAgent = typeof EXTERNAL_AGENT_IDS[number];
 const execFileAsync = promisify(execFile);
 const LOGIN_PATH_MARKER = '__ASTRID_LOGIN_PATH__';
 
@@ -94,7 +94,7 @@ function choice(id: LocalAgentId, state: LocalAgentChoice['state']): LocalAgentC
   const definition = LOCAL_AGENT_TABLE[id];
   const line = state === 'ready' ? null
     : state === 'sign-in' ? definition.signInLine
-      : definition.notInstalledLine ?? definition.signInLine;
+      : localAgentInstallLine(id, process.platform === 'win32' ? 'windows' : 'posix') ?? definition.signInLine;
   return { id, name: definition.name, state, line };
 }
 
@@ -103,28 +103,41 @@ export async function discoverLocalAgents(options: Options = {}): Promise<LocalA
   const loginPath = await loginShellPath(baseEnv);
   const path = combinedPath(loginPath, baseEnv.PATH);
   const env = { ...baseEnv, PATH: path };
-  const [claude, codex] = await Promise.all([
+  const [claude, codex, hermes] = await Promise.all([
     executable('claude', path), executable('codex', path),
+    executable('hermes', path),
   ]);
-  const [claudeAuth, codexAuth] = await Promise.all([
+  const [claudeAuth, codexAuth, hermesAuth] = await Promise.all([
     claudeStatus(claude, env, options.cwd),
     status(codex, ['login', 'status'], env, /Logged in using/i, /Not logged in|Run `?codex login/i, options.cwd),
+    hermesStatus(hermes, env, options.cwd),
   ]);
-  return [
-    choice('astrid', 'ready'),
-    choice('claude-code', !claude ? 'not-installed' : claudeAuth === 'signed-out' ? 'sign-in' : 'ready'),
-    choice('codex', !codex ? 'not-installed' : codexAuth === 'signed-out' ? 'sign-in' : 'ready'),
-  ];
+  const installed: Record<typeof EXTERNAL_AGENT_IDS[number], string | null> = { 'claude-code': claude, codex, hermes };
+  const auth: Record<typeof EXTERNAL_AGENT_IDS[number], AuthStatus> = { 'claude-code': claudeAuth, codex: codexAuth, hermes: hermesAuth };
+  return LOCAL_AGENT_IDS.map(id => id === 'astrid'
+    ? choice(id, 'ready')
+    : choice(id, !installed[id] ? 'not-installed' : auth[id] === 'signed-out' ? 'sign-in' : 'ready'));
+}
+
+async function hermesStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?: string): Promise<AuthStatus> {
+  if (!command) return 'unknown';
+  try {
+    await execFileAsync(command, ['acp', '--check'], { env, cwd, encoding: 'utf8', timeout: 3_000, maxBuffer: 1024 * 1024 });
+    return 'signed-in';
+  } catch (error) {
+    if (typeof error === 'object' && error !== null && !Reflect.get(error, 'killed') && typeof Reflect.get(error, 'code') === 'number') return 'signed-out';
+    // A slow check or an unfamiliar CLI response is inconclusive; keep the native CLI usable.
+    return 'unknown';
+  }
 }
 
 export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.ProcessEnv = process.env): Promise<{ command: string; args: string[]; env: Record<string, string | undefined>; cliPath: string }> {
   const loginPath = await loginShellPath(env);
   const path = combinedPath(loginPath, env.PATH);
-  const [bun, cli] = await Promise.all([
-    executable('bun', path),
-    executable(agentId === 'claude-code' ? 'claude' : 'codex', path),
-  ]);
+  const cli = await executable(agentId === 'claude-code' ? 'claude' : agentId === 'codex' ? 'codex' : 'hermes', path);
   if (!cli) throw new Error(`${LOCAL_AGENT_TABLE[agentId].name} is not installed on PATH.`);
+  if (agentId === 'hermes') return { command: cli, args: ['acp'], env: { PATH: path }, cliPath: cli };
+  const bun = await executable('bun', path);
   if (!bun) throw new Error('Bun is not installed on PATH.');
   return {
     command: bun,

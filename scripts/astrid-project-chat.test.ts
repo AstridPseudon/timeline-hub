@@ -5,6 +5,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ProjectChatRegistry } from './astrid-project-chat.ts';
 import { ApiError, type Project } from '../src/integrations/runtime/generated.ts';
+import { isExternalAgentSession, sessionAgentId } from '../src/integrations/astrid/localAgents.ts';
+
+test('routes prefixed external sessions, including Hermes, to their own agent identity', () => {
+  assert.equal(isExternalAgentSession('hermes:session-1'), true);
+  assert.equal(isExternalAgentSession('hermes:session-1', 'hermes'), true);
+  assert.equal(isExternalAgentSession('astrid:session-1'), false);
+  assert.equal(sessionAgentId('hermes:session-1'), 'hermes');
+  assert.equal(sessionAgentId('codex:session-1'), 'codex');
+});
 
 function registryFor(project: Project) {
   const claimDirectory = mkdtempSync(join(tmpdir(), 'project-chat-test-'));

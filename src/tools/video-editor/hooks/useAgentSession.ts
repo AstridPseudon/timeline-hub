@@ -13,7 +13,7 @@ import { recordedEditorResults, type RecordedEditorResult } from '../runtime/edi
 import { runElementAcpRoundtrip } from '../runtime/elementAcpRoundtrip';
 import { acceptedReplayRequestIds } from '../runtime/agentRequestReceipts';
 import { readAstridTaskRefs, mergeAstridTaskRefs, type AgentTaskLink } from '../runtime/agentTaskLinks';
-import { LOCAL_AGENT_SETTING_KEY, savedLocalAgent, sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_CHANGED_EVENT, localAgentIdSchema, saveLocalAgent, savedLocalAgent, sessionAgentId, type LocalAgentChoice, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { ACP_SESSION_CONTROL_FIELD, ACP_SESSION_CONTROL_UPDATE, type AcpSessionControl } from '@/integrations/astrid/acpSessionControl.ts';
 import { localAgentModelSettingKey, savedLocalAgentModel, type LocalAgentModels } from '@/integrations/astrid/localAgents.ts';
 
@@ -470,11 +470,7 @@ export class AstridAgentSessionStore {
     const choice = catalog.agents.find(candidate => candidate.id === agent);
     if (!choice || choice.state === 'not-installed') throw new Error(`${choice?.name ?? agent} is not installed.`);
     if (choice.state === 'sign-in') throw new Error(`${choice.name} is not signed in.`);
-    if (agent === 'astrid') {
-      globalThis.localStorage?.setItem(LOCAL_AGENT_SETTING_KEY, agent);
-      return { ...catalog, selectedAgent: agent };
-    }
-    globalThis.localStorage?.setItem(LOCAL_AGENT_SETTING_KEY, agent);
+    saveLocalAgent(agent);
     return { ...catalog, selectedAgent: agent };
   }
   async setModel(model: string, sessionId?: string | null, projectId?: string | null) {
@@ -984,8 +980,20 @@ export function isTimelineAgentSessionsAvailable(): boolean {
 
 const agentModelsQueryKey = ['agent-models'] as const;
 export const localAgentsQueryKey = ['local-agents'] as const;
+type LocalAgentsQueryData = { agents: LocalAgentChoice[]; selectedAgent: LocalAgentId };
 
 export function useLocalAgents() {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    const onDefaultAgentChanged = (event: Event) => {
+      const parsed = localAgentIdSchema.safeParse((event as CustomEvent<unknown>).detail);
+      if (!parsed.success) return;
+      queryClient.setQueryData<LocalAgentsQueryData>(localAgentsQueryKey, current => current ? { ...current, selectedAgent: parsed.data } : current);
+      void queryClient.invalidateQueries({ queryKey: localAgentsQueryKey });
+    };
+    window.addEventListener(LOCAL_AGENT_CHANGED_EVENT, onDefaultAgentChanged);
+    return () => window.removeEventListener(LOCAL_AGENT_CHANGED_EVENT, onDefaultAgentChanged);
+  }, [queryClient]);
   return useQuery({ queryKey: localAgentsQueryKey, queryFn: () => agentStore.agents(), retry: false, refetchOnWindowFocus: true });
 }
 

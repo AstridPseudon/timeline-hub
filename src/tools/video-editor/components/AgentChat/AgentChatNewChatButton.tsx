@@ -30,6 +30,8 @@ interface AgentChatNewChatButtonProps {
   agents?: LocalAgentChoice[];
   /** Current model names when existing model-list plumbing has reported them. */
   agentModelNames?: Partial<Record<LocalAgentId, string | null>>;
+  /** Hide model drill-in for agents that have no reported or queryable model list. */
+  agentCanBrowse?: Partial<Record<LocalAgentId, boolean>>;
   agentsLoading?: boolean;
   agentsError?: string | null;
   disabled?: boolean;
@@ -52,7 +54,7 @@ function AgentLine({ line }: { line: string }) {
 }
 
 /** "New chat" with the last-used agent; its menu starts a chat with any agent, or drills into one to pick the model too. */
-export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, agentsLoading = false, agentsError = null, disabled = false, onNewChat, onMenuOpenChange, onBrowseAgent, agentModels = null, attachExisting }: AgentChatNewChatButtonProps) {
+export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, agentCanBrowse, agentsLoading = false, agentsError = null, disabled = false, onNewChat, onMenuOpenChange, onBrowseAgent, agentModels = null, attachExisting }: AgentChatNewChatButtonProps) {
   const [open, setOpen] = useState(false);
   const [browsing, setBrowsing] = useState<LocalAgentId | null>(null);
   const [highlighted, setHighlighted] = useState(`agent:${defaultAgent}`);
@@ -104,7 +106,7 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!browsing && event.key === 'ArrowRight') {
       const agent = AGENT_IDS.find(id => `agent:${id}` === highlighted);
-      if (agent && availability(agent).usable) { event.preventDefault(); browse(agent); }
+      if (agent && availability(agent).usable && agentCanBrowse?.[agent] !== false) { event.preventDefault(); browse(agent); }
     } else if (browsing && event.key === 'ArrowLeft' && query === '') {
       event.preventDefault();
       browse(null);
@@ -112,6 +114,15 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
   };
 
   const submenu = browsing && agentModels?.agent === browsing ? agentModels : null;
+  useEffect(() => {
+    if (browsing !== 'hermes' || !submenu || submenu.loading || submenu.models.length > 0) return;
+    // Hermes may not publish a model catalog. Return to the agent list once an
+    // empty result is known, so the menu never leaves an empty model picker open.
+    setBrowsing(null);
+    setQuery('');
+    setHighlighted('agent:hermes');
+    onBrowseAgent?.(null);
+  }, [browsing, onBrowseAgent, submenu]);
   // A submenu opens on the agent's default model (or its first), not on the back row.
   useEffect(() => {
     if (!landOnModel.current || !submenu || submenu.models.length === 0) return;
@@ -125,7 +136,7 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
   return (
     <div className="flex shrink-0 items-center rounded-md">
       <button type="button" disabled={disabled} aria-label="New chat" title={`New chat with ${agentNames[defaultAgent]}`}
-        className={cn(SEGMENT, 'gap-1.5 rounded-l-md pl-2 pr-1')} onClick={() => onNewChat()}>
+        className={cn(SEGMENT, 'gap-1.5 rounded-l-md pl-2 pr-1')} onClick={() => availability(defaultAgent).usable ? onNewChat() : changeOpen(true)}>
         {/* Narrow panels keep the label short and leave the agent to the tooltip. */}
         <AgentIcon agent={defaultAgent} className="hidden h-3.5 w-3.5 shrink-0 @[24rem]/agent-header:block" />
         <span className="normal-case">New<span className="hidden @[24rem]/agent-header:inline"> chat</span></span>
@@ -164,7 +175,7 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
                             </span>
                             {state.line && <span className="text-[11px] text-muted-foreground normal-case"><AgentLine line={state.line} /></span>}
                           </span>
-                          {state.usable && (
+                          {state.usable && agentCanBrowse?.[id] !== false && (
                             <button type="button" tabIndex={-1} aria-label={`Choose a ${agentNames[id]} model`} title="Choose a model (→)"
                               className="-my-0.5 shrink-0 self-center rounded p-1 text-muted-foreground hover:bg-background/40 hover:text-foreground"
                               onPointerDown={(event) => event.preventDefault()}

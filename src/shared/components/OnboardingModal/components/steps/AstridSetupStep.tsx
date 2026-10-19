@@ -5,8 +5,9 @@ import { DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { Button } from '@/shared/components/ui/button';
 import { SegmentedControl, SegmentedControlItem } from '@/shared/components/ui/segmented-control';
 import { inspectAstridCapabilities, type AstridCapabilityCensus } from '@/integrations/astrid/capabilityCensus.ts';
+import { LOCAL_AGENT_TABLE, saveLocalAgent, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import {
-  AGENT_SETUP_BRIEF,
+  agentSetupBriefFor,
   ASTRID_LAUNCH_COMMANDS,
   ASTRID_STUDIO_MESSAGE,
   detectSetupPlatform,
@@ -217,6 +218,22 @@ export function SetupFooterStatus() {
 
 type SetupRoute = 'agent' | 'manual';
 
+function AgentChoice({ value, onChange }: { value: LocalAgentId | undefined; onChange: (value: string) => void }) {
+  return (
+    <div className="space-y-1.5 text-center">
+      <p className="text-xs text-muted-foreground">Already use an agent?</p>
+      <div className="flex justify-center">
+        <SegmentedControl value={value === 'astrid' ? 'none' : value ?? ''} onValueChange={onChange} variant="pill" size="sm" aria-label="Already use an agent?">
+          <SegmentedControlItem value="claude-code">Claude Code</SegmentedControlItem>
+          <SegmentedControlItem value="codex">Codex</SegmentedControlItem>
+          <SegmentedControlItem value="hermes">Hermes</SegmentedControlItem>
+          <SegmentedControlItem value="none">None yet</SegmentedControlItem>
+        </SegmentedControl>
+      </div>
+    </div>
+  );
+}
+
 /**
  * First-run setup: the person picks between handing a brief to their agent or doing the steps
  * themselves (in their own platform's shell), while the modal's status line shows the checks ticking off
@@ -226,7 +243,17 @@ type SetupRoute = 'agent' | 'manual';
 export function AstridSetupStep({ onNext, reconnect = false }: OnboardingStepProps & { reconnect?: boolean }) {
   const [route, setRoute] = useState<SetupRoute>('agent');
   const [platform, setPlatform] = useState<SetupPlatform>(detectSetupPlatform);
+  const [chosenAgent, setChosenAgent] = useState<LocalAgentId | undefined>();
   const checks = useSetupChecks();
+  const chosenAgentName = chosenAgent && chosenAgent !== 'astrid' ? LOCAL_AGENT_TABLE[chosenAgent].name : undefined;
+  const agentBrief = agentSetupBriefFor(chosenAgentName);
+
+  const chooseAgent = (value: string) => {
+    const agent = value === 'none' ? 'astrid' : value as LocalAgentId;
+    setChosenAgent(agent);
+    setRoute(agent === 'astrid' ? 'manual' : 'agent');
+    saveLocalAgent(agent);
+  };
 
   useEffect(() => {
     if (reconnect && checks.ready) onNext();
@@ -244,6 +271,7 @@ export function AstridSetupStep({ onNext, reconnect = false }: OnboardingStepPro
           </DialogTitle>
         </DialogHeader>
         {reconnect ? <SetupStatusLine checks={checks} /> : <MeetAstrid platform={platform} />}
+        {!reconnect && <AgentChoice value={chosenAgent} onChange={chooseAgent} />}
         <Button variant="retro" size="retro-sm" onClick={onNext} className="w-full sm:w-auto">
           {reconnect ? 'Back to Astrid' : 'Continue'}
         </Button>
@@ -290,6 +318,8 @@ export function AstridSetupStep({ onNext, reconnect = false }: OnboardingStepPro
         </div>
       </div>
 
+      <AgentChoice value={chosenAgent} onChange={chooseAgent} />
+
       <div className="flex justify-center">
         <SegmentedControl value={route} onValueChange={(value) => setRoute(value as SetupRoute)} variant="pill">
           <SegmentedControlItem value="agent" icon={<Bot className="h-4 w-4" />}>I’ll give this to my agent</SegmentedControlItem>
@@ -299,7 +329,7 @@ export function AstridSetupStep({ onNext, reconnect = false }: OnboardingStepPro
 
       {route === 'agent' ? (
         <div className="space-y-2">
-          <PastePanel title="Brief for your agent to set everything up" text={AGENT_SETUP_BRIEF} copyLabel="Copy brief" />
+          <PastePanel title={chosenAgentName ? `Paste this into ${chosenAgentName}` : 'Brief for your agent to set everything up'} text={agentBrief} copyLabel="Copy brief" />
         </div>
       ) : (
         <div className="space-y-4">

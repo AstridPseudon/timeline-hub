@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Info, Loader2, Mic, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
-import { savedLocalAgentModel, sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { EXTERNAL_AGENT_IDS, savedLocalAgentModel, sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { isAcpUnavailable } from '@/integrations/astrid/acpRoutes.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -299,25 +299,26 @@ function AvailableAgentChatPanel({
     if (activeSessionId && chatModelName && chatModels[activeSessionId] !== chatModelName) setChatModels(rememberChatModel(activeSessionId, chatModelName));
   }, [activeSessionId, chatModelName, chatModels]);
   const describeSession = useCallback((sessionId: string) => ({ agent: sessionAgentId(sessionId), model: chatModels[sessionId] ?? null }), [chatModels]);
-  // Claude Code and Codex report their models per session, so remember each list for New chat's submenu.
-  const [agentModelLists, setAgentModelLists] = useState(() => ({ 'claude-code': readAgentModels('claude-code'), codex: readAgentModels('codex') }));
+  // External agents report models per session, so remember each list for New chat's submenu.
+  const [agentModelLists, setAgentModelLists] = useState(() => Object.fromEntries(
+    EXTERNAL_AGENT_IDS.map(agent => [agent, readAgentModels(agent)]),
+  ) as Record<typeof EXTERNAL_AGENT_IDS[number], ReturnType<typeof readAgentModels>>);
   const agentModelNames = useMemo(() => {
     const catalog = modelCatalog.data;
     const astridCurrent = catalog?.providers.flatMap(provider => provider.models.map(model => ({ id: `${provider.id}/${model.id}`, name: model.name })))
       .find(model => model.id === catalog.currentModel)?.name ?? null;
-    const externalName = (agent: 'claude-code' | 'codex') => {
+    const externalName = (agent: typeof EXTERNAL_AGENT_IDS[number]) => {
       if (chatAgent === agent && chatModelName) return chatModelName;
       const saved = savedLocalAgentModel(agent);
       return saved ? agentModelLists[agent].find(model => model.id === saved)?.name ?? null : null;
     };
     return {
       astrid: chatAgent === 'astrid' ? chatModelName : astridCurrent,
-      'claude-code': externalName('claude-code'),
-      codex: externalName('codex'),
+      ...Object.fromEntries(EXTERNAL_AGENT_IDS.map(agent => [agent, externalName(agent)])),
     };
   }, [agentModelLists, chatAgent, chatModelName, modelCatalog.data]);
   const rememberModelList = useCallback((agent: LocalAgentId, models: Array<{ modelId: string; name: string; description?: string | null }> | undefined) => {
-    if (agent === 'astrid' || !models?.length) return;
+    if (agent === 'astrid' || !models) return;
     const list = models.map(model => ({ id: model.modelId, name: model.name, description: model.description ?? null }));
     setAgentModelLists(current => {
       if (JSON.stringify(current[agent]) === JSON.stringify(list)) return current;
@@ -325,7 +326,7 @@ function AvailableAgentChatPanel({
       return { ...current, [agent]: list };
     });
   }, []);
-  useEffect(() => { rememberModelList(chatAgent, modelCatalog.data?.localModels?.availableModels); }, [chatAgent, modelCatalog.data, rememberModelList]);
+  useEffect(() => { rememberModelList(chatAgent, modelCatalog.data ? modelCatalog.data.localModels?.availableModels ?? [] : undefined); }, [chatAgent, modelCatalog.data, rememberModelList]);
   const [draft, setDraft] = useState('');
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueuedMessage[]>([]);
@@ -385,7 +386,7 @@ function AvailableAgentChatPanel({
         : [...sessionOptions].reverse().find(session => sessionAgentId(session.id) === browseAgent)?.id ?? null;
   const browseModels = useAgentModels(Boolean(browseSessionId), browseSessionId, projectId);
   useEffect(() => {
-    if (browseAgent) rememberModelList(browseAgent, browseModels.data?.localModels?.availableModels);
+    if (browseAgent) rememberModelList(browseAgent, browseModels.data ? browseModels.data.localModels?.availableModels ?? [] : undefined);
   }, [browseAgent, browseModels.data, rememberModelList]);
   // Another tab may have seen this agent's models since this one loaded.
   useEffect(() => {
@@ -415,6 +416,10 @@ function AvailableAgentChatPanel({
       note: `${agentNames[browseAgent]} lists its models once it has a chat. Start one, then pick a model inside it.`,
     };
   }, [agentModelLists, browseAgent, browseModels.data, browseModels.error, browseModels.isFetching, browseModels.isLoading, browseSessionId]);
+  const agentCanBrowse = useMemo(() => ({
+    ...Object.fromEntries(EXTERNAL_AGENT_IDS.filter(agent => agent !== 'hermes').map(agent => [agent, true])),
+    hermes: agentModelLists.hermes.length > 0,
+  }), [agentModelLists.hermes.length]);
   const hydratedProjectDraftRef = useRef(false);
   const draftPersistenceRef = useRef<ProjectChatDraftPersistence<QueuedMessage> | null>(null);
   const draftScopeRef = useRef<string | null>(null);
@@ -1079,6 +1084,7 @@ function AvailableAgentChatPanel({
             defaultAgent={defaultAgent}
             agents={localAgents.data?.agents}
             agentModelNames={agentModelNames}
+            agentCanBrowse={agentCanBrowse}
             agentsLoading={localAgents.isLoading}
             agentsError={localAgents.error instanceof Error ? localAgents.error.message : null}
             disabled={startingAgent !== null || createNewSession.isPending || setLocalAgent.isPending || !hasProject}

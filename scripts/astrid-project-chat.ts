@@ -5,6 +5,7 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { ApiError, WorkspaceClient, type Project } from '../src/integrations/runtime/generated.ts';
 import { currentRuntime } from './runtime-discovery-proxy.mjs';
+import { isExternalAgentSession } from '../src/integrations/astrid/localAgents.ts';
 
 const KEY = 'astrid_agent_chat_v1';
 export class ChatError extends Error {
@@ -209,7 +210,7 @@ export class ProjectChatRegistry {
     if (!state.sessions.some(s => s.id === sessionId)) throw new ChatError(403, 'session_not_owned', 'Session does not belong to this project');
   }
   async markSessionStarted(projectId: string, sessionId: string): Promise<void> {
-    if (!/^(claude-code|codex):/.test(sessionId)) return;
+    if (!isExternalAgentSession(sessionId)) return;
     await this.change(projectId, state => {
       const session = state.sessions.find(item => item.id === sessionId);
       if (!session || session.pending_first_message === false) return false;
@@ -304,7 +305,7 @@ export class ProjectChatRegistry {
         if (state.selected_session_id === recoverableSession.id) state.selected_session_id = sessionId;
         if (state.main_session_id === recoverableSession.id) state.main_session_id = sessionId;
       } else {
-        state.sessions.push({ id: sessionId, ...(modelId ? { model_id: modelId } : {}), ...(/^(claude-code|codex):/.test(sessionId) ? { pending_first_message: true } : {}) });
+        state.sessions.push({ id: sessionId, ...(modelId ? { model_id: modelId } : {}), ...(isExternalAgentSession(sessionId) ? { pending_first_message: true } : {}) });
       }
       // New promotes itself unless the user chose a different Main after this claim began.
       if (mode === 'new') {
