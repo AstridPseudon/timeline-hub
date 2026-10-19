@@ -43,7 +43,7 @@ session registry.
 ## Agent readiness and selection
 
 The New chat menu reads `GET /acp/agents` whenever it opens and when the window
-regains focus. The bridge finds `claude` and `codex` on the person's login-shell
+regains focus. The bridge finds `claude`, `codex`, and `hermes` on the person's login-shell
 PATH (`$SHELL -lic`), then falls back to its own PATH. It asks
 `claude auth status` (with a text fallback) and `codex login status` whether
 each is signed in. Claude Code uses your Claude login; Codex uses your Codex
@@ -51,14 +51,11 @@ CLI login, including ChatGPT. Unknown sign-in counts as ready. Status errors
 and child diagnostics never cross into the App.
 
 The service reports one state per agent: **Ready**, **Sign in**, or
-**Not installed**. A ready row starts a chat. Clicking either other row copies
-its displayed recovery line and shows **Copied**. The lines are:
-
-- Claude Code sign-in: Run `claude auth login`, then come back.
-- Claude Code not installed: Install with `curl -fsSL https://claude.ai/install.sh | bash`.
-- Codex sign-in: Run `codex login`, then come back.
-- Codex not installed: Install with `npm install -g @openai/codex`.
-- Astrid without a signed-in provider: Run `omp`, then `/login`.
+**Not installed**. A ready row opens its service-owned model catalog. The main
+New button repeats the service's last successful agent and model. Each command
+inside a non-ready row has a **Copy command** button; only the command is copied.
+Install and sign-in lines come from the service, including the installed Astrid
+launcher and platform-specific Hermes instructions.
 
 OpenAI documents the Codex CLI install command in its [Codex setup guide](https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex).
 Use the same `--profile` as the bridge when configured.
@@ -80,25 +77,26 @@ chat starts, the menu reports **Getting Claude Code ready…** (or the chosen
 agent); a failed start shows **Claude Code didn't start.**, its details, and
 **Try again**.
 
-The header shows plain text such as `Claude Code · Sonnet 4.5`, with the
-tooltip “To use another model, start a new chat.” Model choice is available in
-the New chat menu. Existing model-list plumbing remains in place: Astrid's
-provider catalog is loaded from `astrid agent models --json`, and Claude Code
-and Codex lists are remembered after a session reports them.
+The header shows the fixed agent and model, with an information tooltip for the
+chosen thinking level. Model choice is available only in the New chat menu.
+The service owns each catalog and its defaults, bootstrapping discovery when
+needed; the browser does not keep another model list or model preference.
+Models expose a thinking-level submenu only after that exact model has advertised
+one. Startup validates the newly created chat's live options before applying the
+chosen level, and keeps its composer locked until the agent confirms it.
 
-The choice is saved in this App origin's local settings and applies to new
-chats. Existing project chats keep their original agent. Only external session
-IDs are prefixed (`claude-code:` or `codex:`) at the bridge boundary, so native
-IDs from different stores cannot collide; the prefix never reaches an adapter.
-OMP's IDs and model default are unchanged. External agents use their own
-default model; the OMP model list applies only to Astrid.
+Existing project chats keep their original agent and model. External session IDs
+are prefixed (`claude-code:`, `codex:`, or `hermes:`) at the bridge boundary; the
+prefix never reaches an adapter. New chats attach their regular browser connection
+before a temporary creator connection is released, retaining the live native host
+even when an empty chat has not been saved by its adapter yet.
 
-Every external turn receives the installed Astrid packaged profile from
-`astrid --agent-profile-file`, the editor integration instructions, and the same
-scoped editor context. Astrid skills installed by the setup guide remain
-available to the local agent; chat never installs skills or changes global
-agent configuration. Project associations, replay, cancellation, and terminal
-and permission callbacks use the existing ACP bridge.
+Each new external chat receives the installed Astrid packaged profile from
+`astrid --agent-profile-file` and the editor integration instructions once. Each
+turn receives the same scoped editor context, refreshed for the captured selection.
+Chat never installs skills or changes global agent configuration. Project
+associations, replay, cancellation, and terminal and permission callbacks use the
+existing ACP bridge.
 
 The external profile and media policy are prompt context, rather than an
 adapter-enforced system policy. The OMP overlay that disables native image
@@ -117,7 +115,7 @@ remain an explicit same-process limitation.
 
 ## Sharing a chat between tabs
 
-The bridge keeps one native ACP session for every live chat, across all three
+The bridge keeps one native ACP session for every live chat, across all four
 agents. A second tab loading that chat follows the existing host's transcript
 and updates without opening another native writer. Each browser connection
 has its own event queue, so polling one tab never drains another tab's stream.
@@ -162,7 +160,7 @@ The editor's canonical local data path is the existing authenticated Runtime
 proxy, not the legacy Astrid REST timeline route. Start Astrid App with
 `VITE_WORKSPACE_RUNTIME_URL` and `WORKSPACE_RUNTIME_TOKEN_FILE`, then open:
 
-`/tools/video-editor?runtime=1&runtimeProject=<Runtime project_id>&runtimeTimeline=<timeline_id>`
+`/tools/video-editor?project=<Runtime project_id>&timeline=<timeline_id>`
 
 For disposable Runtime setup, use the generated client's atomic
 `createTimelineDocument` operation with the chosen project and timeline IDs.

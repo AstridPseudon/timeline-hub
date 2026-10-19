@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { EXTERNAL_AGENT_IDS, LOCAL_AGENT_IDS, LOCAL_AGENT_SETTING_KEY, LOCAL_AGENT_TABLE, isExternalAgentSession, localAgentInstallLine, saveLocalAgent, savedLocalAgent, sessionAgentId } from './localAgents.ts';
+import { EXTERNAL_AGENT_IDS, LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, isExternalAgentSession, localAgentInstallLine, localAgentCatalogSchema, sessionAgentId } from './localAgents.ts';
 
 afterEach(() => localStorage.clear());
 
@@ -14,10 +14,10 @@ describe('local agent registry', () => {
     expect(sessionAgentId('opaque-astrid-chat')).toBe('astrid');
   });
 
-  it('persists Hermes in the existing default-agent setting', () => {
-    saveLocalAgent('hermes');
-    expect(localStorage.getItem(LOCAL_AGENT_SETTING_KEY)).toBe('hermes');
-    expect(savedLocalAgent()).toBe('hermes');
+  it('accepts Hermes as the service-owned default without browser storage', () => {
+    const catalog = localAgentCatalogSchema.parse({ defaultAgent: 'hermes', agents: [{ id: 'hermes', name: 'Hermes', state: 'ready', line: null, models: [], defaultModel: null }] });
+    expect(catalog.defaultAgent).toBe('hermes');
+    expect(localStorage.length).toBe(0);
   });
 
   it('offers one platform-specific Hermes installer command', () => {

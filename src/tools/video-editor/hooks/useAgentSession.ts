@@ -13,11 +13,12 @@ import { recordedEditorResults, type RecordedEditorResult } from '../runtime/edi
 import { runElementAcpRoundtrip } from '../runtime/elementAcpRoundtrip';
 import { acceptedReplayRequestIds } from '../runtime/agentRequestReceipts';
 import { readAstridTaskRefs, mergeAstridTaskRefs, type AgentTaskLink } from '../runtime/agentTaskLinks';
-import { LOCAL_AGENT_CHANGED_EVENT, localAgentIdSchema, saveLocalAgent, savedLocalAgent, sessionAgentId, type LocalAgentChoice, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { defaultThoughtLevel, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '@/integrations/astrid/localAgents.ts';
+import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { ACP_SESSION_CONTROL_FIELD, ACP_SESSION_CONTROL_UPDATE, type AcpSessionControl } from '@/integrations/astrid/acpSessionControl.ts';
-import { defaultThoughtLevel, localAgentModelSettingKey, savedLocalAgentModel, type LocalAgentModels } from '@/integrations/astrid/localAgents.ts';
 
 type AgentModelCatalog = AcpModelCatalog & { localModels?: LocalAgentModels | null };
+export type NewAgentSessionChoice = { agent?: LocalAgentId; defaultModelId?: string };
 
 type SendMessageInput = { message: string; attachments?: AgentTurnAttachment[]; requestId?: string };
 type CapturedSendInput = { input: SendMessageInput; projectId: string | null; sessionId: string; context: AgentChatEditorContext };
@@ -328,13 +329,14 @@ export class AstridAgentSessionStore {
   private readonly sessionProjects = new Map<string, string>();
   private readonly replayMessages = new Map<string, Map<string, string>>();
 
-  private async connection(agent: LocalAgentId = savedLocalAgent()): Promise<string> {
+  private async connection(agent: LocalAgentId): Promise<string> {
     const current = this.connectionIds.get(agent);
     if (current) return current;
     const pending = this.connectionPromises.get(agent);
     if (pending) return pending;
 
-    const connect = agent === 'astrid' ? this.client.acp.connect() : this.client.acp.connect(agent, savedLocalAgentModel(agent));
+    // Existing sessions choose their own agent and keep their stored model.
+    const connect = this.client.acp.connect(agent);
     const promise = connect
       .then((connection) => {
         this.connectionIds.set(agent, connection.connection_id);
@@ -383,7 +385,8 @@ export class AstridAgentSessionStore {
       await this.pullEvents();
       return options;
     }
-    const connectionId = await this.connection();
+    const { defaultAgent } = await this.agents();
+    const connectionId = await this.connection(defaultAgent);
     const result = await this.client.acp.listSessions(connectionId);
     const options: AgentSessionOption[] = [];
     for (const item of sessionItemsFromValue(result)) {
@@ -452,68 +455,44 @@ export class AstridAgentSessionStore {
 
   async projectChat(projectId: string) { return this.client.acp.projectChat(projectId); }
   async models(sessionId?: string | null, projectId?: string | null): Promise<AgentModelCatalog> {
-    const agent = sessionId ? sessionAgentId(sessionId) : savedLocalAgent();
-    if (agent === 'astrid' && (!sessionId || sessionId === 'astrid-model-catalog')) return this.client.acp.models();
     if (!sessionId) return { providers: [], currentModel: null, localModels: null };
-    if (!projectId) throw new Error('Select a project to choose this chat’s model.');
+    if (!projectId) throw new Error(AGENT_CHAT_COPY.selectProjectToReadModel);
     await this.assertOwned(projectId, sessionId);
-    const connectionId = await this.connection(agent);
+    const connectionId = await this.connection(sessionAgentId(sessionId));
     await this.load(connectionId, sessionId);
     await this.pullEvents();
     const { models } = await this.client.acp.sessionModels(connectionId, sessionId);
-    const catalog = agent === 'astrid' ? await this.client.acp.models() : { providers: [], currentModel: null };
-    return { ...catalog, ...(agent === 'astrid' && models ? { currentModel: models.currentModelId } : {}), localModels: models };
+    return { providers: [], currentModel: null, localModels: models };
   }
-  async agents() { return { ...(await this.client.acp.agents()), selectedAgent: savedLocalAgent() }; }
-  async setAgent(agent: LocalAgentId) {
-    if (this.activePrompts.size > 0) throw new Error('Wait for the active agent turn before switching agents.');
-    const catalog = await this.client.acp.agents();
-    const choice = catalog.agents.find(candidate => candidate.id === agent);
-    if (!choice || choice.state === 'not-installed') throw new Error(`${choice?.name ?? agent} is not installed.`);
-    if (choice.state === 'sign-in') throw new Error(`${choice.name} is not signed in.`);
-    saveLocalAgent(agent);
-    return { ...catalog, selectedAgent: agent };
-  }
-  async setModel(model: string, sessionId?: string | null, projectId?: string | null) {
-    if (sessionId && this.activePrompts.has(sessionId)) throw new Error('Wait for the active agent turn before switching models.');
-    if (!sessionId || !projectId) throw new Error('Select a project and chat to choose its model.');
-    const agent = sessionAgentId(sessionId);
-    await this.assertOwned(projectId, sessionId);
-    const connectionId = await this.connection(agent);
-    await this.load(connectionId, sessionId);
-    await this.pullEvents();
-    this.assertCanStartTurn(sessionId);
-    const { models } = await this.client.acp.setSessionModel(connectionId, sessionId, model, projectId);
-    if (!models) throw new Error('This agent did not report a model selection.');
-    await this.pullEvents();
-    try { globalThis.localStorage?.setItem(localAgentModelSettingKey(agent), models.currentModelId); } catch { /* Preference only. */ }
-    return { currentModel: models.currentModelId };
-  }
+  async agents() { return this.client.acp.agents(); }
 
-  /** Configure a newly created chat in order: model, refreshed per-model levels, then effort. */
+  /** Confirm the created model, then apply only its freshly advertised thinking control. */
   async configureSessionSelection(sessionId: string, projectId: string | null | undefined, model?: string, thoughtLevel?: string) {
+    if (this.activePrompts.has(sessionId)) throw new Error('Wait for the active agent turn before changing settings.');
     if (!projectId) throw new Error('Select a project to configure this chat.');
     await this.assertOwned(projectId, sessionId);
     const connectionId = await this.connection(sessionAgentId(sessionId));
     await this.load(connectionId, sessionId);
     await this.pullEvents();
     this.assertCanStartTurn(sessionId);
-    if (model) await this.setModel(model, sessionId, projectId);
-    // Model setters return a new option list. Never apply effort using the previous model's list.
     const { models } = await this.client.acp.sessionModels(connectionId, sessionId);
+    if (model && models?.currentModelId !== model) throw new Error('The agent did not confirm the selected model.');
     const level = models?.thoughtLevel;
     if (thoughtLevel && !level) throw new Error('This model no longer advertises thinking levels.');
     if (level) {
       const value = thoughtLevel ?? defaultThoughtLevel(level);
       if (!level.options.some(option => option.value === value)) throw new Error('The selected thinking level is unavailable for this model.');
+      if (level.configId === 'model' || level.configId === models.modelConfigId) throw new Error(AGENT_CHAT_COPY.fixedModel);
       await this.client.acp.setConfigOption(connectionId, sessionId, level.configId, value);
       await this.pullEvents();
       const updated = await this.client.acp.sessionModels(connectionId, sessionId);
       if (updated.models?.thoughtLevel?.currentValue !== value) throw new Error('The agent did not confirm the selected thinking level.');
     }
   }
+
   async unassignedProjectSessions(projectId: string) {
-    return this.client.acp.unassignedProjectSessions(projectId, await this.connection());
+    const { defaultAgent } = await this.agents();
+    return this.client.acp.unassignedProjectSessions(projectId, await this.connection(defaultAgent));
   }
   async associateProjectSession(projectId: string, expectedRevision: number, sessionId: string) {
     return this.client.acp.associateProjectSession(projectId, await this.connection(sessionAgentId(sessionId)), expectedRevision, sessionId);
@@ -541,20 +520,44 @@ export class AstridAgentSessionStore {
     return this.client.acp.saveProjectDraft(projectId, expectedRevision, text, queuedMessages);
   }
 
-  async create(projectId: string, mode: 'ensure' | 'ensure_main' | 'new', operationId: string): Promise<{ id: string; projectChat: ProjectChatState }> {
+  async create(projectId: string, mode: 'ensure' | 'ensure_main' | 'new', operationId: string, choice: NewAgentSessionChoice = {}): Promise<{ id: string; projectChat: ProjectChatState }> {
     const chatBeforeCreate = mode === 'new' ? null : await this.client.acp.projectChat(projectId);
     const existingId = mode === 'ensure_main'
       ? chatBeforeCreate?.main_session_id
       : chatBeforeCreate?.selected_session_id ?? chatBeforeCreate?.main_session_id;
-    const agent = existingId ? sessionAgentId(existingId) : savedLocalAgent();
-    const connectionId = await this.connection(agent);
-    const chat = await this.client.acp.createProjectSession(projectId, connectionId, mode, operationId);
-    const id = (mode === 'ensure_main' ? chat.main_session_id : null) ?? chat.operation_session_id ?? chat.selected_session_id;
-    if (!id) throw new Error('Astrid ACP did not return a session ID.');
-    this.state(id);
-    this.sessionProjects.set(id, projectId);
-    await this.pullEvents();
-    return { id, projectChat: chat };
+    const connectionAgent = existingId ? sessionAgentId(existingId) : choice.agent;
+    // New sessions always connect with the requested choices. Omitting both lets the service repeat
+    // its last successful choices, even when another tab has changed them.
+    const connectionId = existingId
+      ? await this.connection(sessionAgentId(existingId))
+      : (await this.client.acp.connect(choice.agent, choice.defaultModelId)).connection_id;
+    let keepConnection = Boolean(existingId);
+    try {
+      const chat = await this.client.acp.createProjectSession(projectId, connectionId, mode, operationId);
+      const id = (mode === 'ensure_main' ? chat.main_session_id : null) ?? chat.operation_session_id ?? chat.selected_session_id;
+      if (!id) throw new Error('Astrid ACP did not return a session ID.');
+      const agent = sessionAgentId(id);
+      if (this.connectionIds.get(agent) === connectionId) keepConnection = true;
+      // Ensure and operation replay can return another agent's existing session. An omitted-agent
+      // connect does not report its agent, so only a known matching connection can be adopted.
+      if (connectionAgent === agent && !this.connectionIds.has(agent)) {
+        this.connectionIds.set(agent, connectionId);
+        keepConnection = true;
+      }
+      this.state(id);
+      this.sessionProjects.set(id, projectId);
+      // Empty external sessions may not exist on disk yet. Attach the regular connection while
+      // the creator still owns its live host, preserving its model, thinking controls and context.
+      if (!keepConnection) await this.load(await this.connection(agent), id);
+      await this.pullEvents();
+      return { id, projectChat: chat };
+    } finally {
+      // Detaching the creator promotes its remaining subscriber without replacing another host.
+      if (!keepConnection) {
+        await this.client.acp.disconnect(connectionId).catch(() => undefined);
+        await this.pullEvents();
+      }
+    }
   }
 
   async recoverEmptyProjectSession(projectId: string, sessionId: string): Promise<{ id: string; projectChat: ProjectChatState; session: AgentSessionView } | null> {
@@ -651,8 +654,8 @@ export class AstridAgentSessionStore {
       if (signal.aborted) return;
       checkCurrent();
 
-      const isSessionConfigCommand = !input.attachments?.length
-        && /^\/(?:model|thinking)(?:\s|$)/.test(input.message.trim());
+      const isSessionConfigCommand = /^\/model(?:\s|$)/.test(input.message.trim())
+        || (!input.attachments?.length && /^\/thinking(?:\s|$)/.test(input.message.trim()));
       if (isSessionConfigCommand) {
         this.assertCanStartTurn(sessionId);
         const { setSessionConfigOption } = await import('../runtime/agentSessionSettings');
@@ -998,33 +1001,8 @@ export function isTimelineAgentSessionsAvailable(): boolean {
 
 const agentModelsQueryKey = ['agent-models'] as const;
 export const localAgentsQueryKey = ['local-agents'] as const;
-type LocalAgentsQueryData = { agents: LocalAgentChoice[]; selectedAgent: LocalAgentId };
-
 export function useLocalAgents() {
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    const onDefaultAgentChanged = (event: Event) => {
-      const parsed = localAgentIdSchema.safeParse((event as CustomEvent<unknown>).detail);
-      if (!parsed.success) return;
-      queryClient.setQueryData<LocalAgentsQueryData>(localAgentsQueryKey, current => current ? { ...current, selectedAgent: parsed.data } : current);
-      void queryClient.invalidateQueries({ queryKey: localAgentsQueryKey });
-    };
-    window.addEventListener(LOCAL_AGENT_CHANGED_EVENT, onDefaultAgentChanged);
-    return () => window.removeEventListener(LOCAL_AGENT_CHANGED_EVENT, onDefaultAgentChanged);
-  }, [queryClient]);
   return useQuery({ queryKey: localAgentsQueryKey, queryFn: () => agentStore.agents(), retry: false, refetchOnWindowFocus: true });
-}
-
-export function useSetLocalAgent() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (agent: LocalAgentId) => agentStore.setAgent(agent),
-    onSuccess: (result) => {
-      queryClient.setQueryData(localAgentsQueryKey, result);
-      void queryClient.invalidateQueries({ queryKey: localAgentsQueryKey });
-      void queryClient.invalidateQueries({ queryKey: agentModelsQueryKey });
-    },
-  });
 }
 
 export function useAgentModels(enabled = true, sessionId?: string | null, projectId?: string | null) {
@@ -1049,11 +1027,10 @@ export function useAgentModels(enabled = true, sessionId?: string | null, projec
   });
 }
 
-export function useSetAgentModel(sessionId?: string | null, projectId?: string | null) {
+export function useConfigureAgentSession(projectId?: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (selection: string | { sessionId: string; model?: string; thoughtLevel?: string }) => {
-      if (typeof selection === 'string') return sessionId ? agentStore.setModel(selection, sessionId, projectId) : agentStore.setModel(selection);
+    mutationFn: async (selection: { sessionId: string; model?: string; thoughtLevel?: string }) => {
       // Join the new session's initial options read if the panel already started
       // it. Use its explicit ID rather than the previous render's active chat.
       await queryClient.fetchQuery({
@@ -1281,15 +1258,18 @@ export function useProjectAgentTaskLinks(projectId: string | null | undefined) {
 export function useCreateSession(timelineId: string | null | undefined, projectId?: string | null, mode: 'ensure' | 'ensure_main' | 'new' = 'ensure') {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (operationId?: string) => {
+    mutationFn: async (input?: string | (NewAgentSessionChoice & { operationId: string })) => {
       if (!projectId) throw new Error('Select a project or timeline to start chatting.');
       const capturedProjectId = projectId;
       const capturedTimelineId = timelineId;
-      const session = await agentStore.create(capturedProjectId, mode, operationId ?? globalThis.crypto.randomUUID());
+      const operationId = typeof input === 'string' ? input : input?.operationId ?? globalThis.crypto.randomUUID();
+      const choice = typeof input === 'object' ? { agent: input.agent, defaultModelId: input.defaultModelId } : undefined;
+      const session = await agentStore.create(capturedProjectId, mode, operationId, choice);
       return { ...session, projectId: capturedProjectId, timelineId: capturedTimelineId };
     },
     onSuccess: (session) => {
       cacheProjectChat(queryClient, session.projectChat);
+      void queryClient.invalidateQueries({ queryKey: localAgentsQueryKey });
       void queryClient.invalidateQueries({ queryKey: agentSessionsQueryKey(session.timelineId, session.projectId) });
       void queryClient.invalidateQueries({ queryKey: agentSessionQueryKey(session.id, session.projectId) });
       void queryClient.invalidateQueries({ queryKey: projectChatQueryKey(session.projectId) });

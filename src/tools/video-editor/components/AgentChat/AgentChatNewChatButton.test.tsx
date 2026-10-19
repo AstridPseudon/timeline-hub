@@ -12,7 +12,7 @@ afterEach(() => { cleanup(); localStorage.clear(); });
 const plainLine = (line: string) => line.replaceAll('`', '');
 
 const ready: LocalAgentChoice[] = LOCAL_AGENT_IDS
-  .map(id => ({ id, name: LOCAL_AGENT_TABLE[id].name, state: 'ready', line: null }));
+  .map(id => ({ id, name: LOCAL_AGENT_TABLE[id].name, state: 'ready', line: null, models: [], defaultModel: null }));
 const claudeModels: NewChatAgentModels = {
   agent: 'claude-code',
   defaultModel: 'sonnet',
@@ -54,9 +54,9 @@ describe('AgentChatNewChatButton', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     const { onNewChat } = openMenu({ agents: [
-      { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine },
-      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'sign-in', line: LOCAL_AGENT_TABLE['claude-code'].signInLine },
-      { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'not-installed', line: LOCAL_AGENT_TABLE.codex.notInstalledLine! },
+      { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine, models: [], defaultModel: null },
+      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'sign-in', line: LOCAL_AGENT_TABLE['claude-code'].signInLine, models: [], defaultModel: null },
+      { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'not-installed', line: LOCAL_AGENT_TABLE.codex.notInstalledLine!, models: [], defaultModel: null },
     ] });
     const astrid = screen.getByRole('option', { name: /Astrid/ });
     const claude = screen.getByRole('option', { name: /Claude Code/ });
@@ -110,16 +110,17 @@ describe('AgentChatNewChatButton', () => {
     expect(writeText).toHaveBeenNthCalledWith(1, 'omp');
   });
 
-  it('starts ready agents and treats unknown sign-in as ready', async () => {
-    const { onNewChat } = openMenu({ agents: [
-      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'not-installed', line: LOCAL_AGENT_TABLE['claude-code'].notInstalledLine! },
-      { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'ready', line: null },
+  it('opens the model menu for a ready agent before starting a chat', async () => {
+    const { onNewChat, onBrowseAgent } = openMenu({ agents: [
+      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'not-installed', line: LOCAL_AGENT_TABLE['claude-code'].notInstalledLine!, models: [], defaultModel: null },
+      { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'ready', line: null, models: [], defaultModel: null },
     ] });
     expect(screen.getByRole('option', { name: /Claude Code/ })).not.toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByRole('option', { name: /Codex/ })).toHaveTextContent('Ready');
     fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
-    await waitFor(() => expect(onNewChat).toHaveBeenCalledWith('codex', undefined));
-    expect(screen.queryByRole('option', { name: /Codex/ })).toBeNull();
+    expect(onBrowseAgent).toHaveBeenLastCalledWith('codex');
+    expect(onNewChat).not.toHaveBeenCalled();
+    expect(screen.getByPlaceholderText('Search Codex models…')).toBeTruthy();
   });
 
   it('shows a known current model on the ready row', () => {
@@ -154,6 +155,12 @@ describe('AgentChatNewChatButton', () => {
     render(<AgentChatNewChatButton defaultAgent="astrid" agents={ready} onNewChat={vi.fn()} disabled />);
     expect(screen.getByRole('button', { name: 'New chat' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'New chat with…' })).toBeDisabled();
+  });
+
+  it('only offers the agents returned by the service', () => {
+    openMenu({ agents: ready.filter(agent => agent.id === 'codex') });
+    expect(screen.getByRole('option', { name: /Codex/ })).toBeTruthy();
+    expect(screen.queryByRole('option', { name: /Astrid|Claude Code/ })).toBeNull();
   });
 
   it('opens an agent\'s models with → and starts the chat with the picked model', async () => {
@@ -291,6 +298,21 @@ describe('AgentChatNewChatButton', () => {
     fireEvent.keyDown(screen.getByRole('option', { name: 'Low' }), { key: 'Escape' });
     fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
     expect(reopened.onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
+  });
+
+  it('keeps the explicit thinking choice when storage is unavailable', () => {
+    const save = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Storage blocked'); });
+    try {
+      const { onNewChat } = openMenu({ agentModels: effortModels });
+      fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Choose a thinking level for Opus' }));
+      fireEvent.click(screen.getByRole('option', { name: 'Low' }));
+      fireEvent.keyDown(screen.getByPlaceholderText('Search Claude Code models…'), { key: 'ArrowLeft' });
+      fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+      expect(screen.getByRole('button', { name: 'Choose a thinking level for Opus' })).toHaveTextContent('Low');
+      fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
+      expect(onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
+    } finally { save.mockRestore(); }
   });
 
   it.each(['ArrowRight', ' '])('opens with %j, navigates levels, selects without starting, and returns with Esc', async key => {

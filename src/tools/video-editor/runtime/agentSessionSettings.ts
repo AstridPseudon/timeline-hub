@@ -1,6 +1,6 @@
 import type { AstridLocalAcpRoutes } from '@/integrations/astrid/acpRoutes';
+import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy';
 
-type SessionConfigId = 'model' | 'thinking';
 type JsonRecord = Record<string, unknown>;
 
 function asRecord(value: unknown): JsonRecord | null {
@@ -17,10 +17,11 @@ export async function setSessionConfigOption(
   sessionId: string,
   command: string,
 ): Promise<string> {
-  const match = command.trim().match(/^\/(model|thinking)\s+(\S+)$/);
-  if (!match) throw new Error('Use `/model <provider/model>` or `/thinking <level>` to update this session.');
-  const configId = match[1] as SessionConfigId;
-  const value = match[2];
+  if (/^\/model(?:\s|$)/.test(command.trim())) throw new Error(AGENT_CHAT_COPY.fixedModel);
+  const match = command.trim().match(/^\/thinking\s+(\S+)$/);
+  if (!match) throw new Error(AGENT_CHAT_COPY.thinkingUsage);
+  const configId = 'thinking';
+  const value = match[1];
   const result = asRecord(await acp.setConfigOption<unknown>(connectionId, sessionId, configId, value));
   const options = Array.isArray(result?.configOptions) ? result.configOptions : [];
   const config = options.map(asRecord).find((option) => option?.id === configId);
@@ -28,5 +29,5 @@ export async function setSessionConfigOption(
   if (currentValue !== value) {
     throw new Error(`ACP did not confirm ${configId}=${value}; current value is ${currentValue ?? 'unavailable'}.`);
   }
-  return `${configId === 'model' ? 'Model' : 'Thinking level'} set to ${currentValue} for this session only.`;
+  return `Thinking level set to ${currentValue} for this session only.`;
 }

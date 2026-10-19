@@ -15,22 +15,20 @@ describe('AstridLocalAcpRoutes', () => {
       { path: '/acp/projects/p/chat/prompt', request: { method: 'POST', body: { connection_id: 'second-tab', session_id: 'codex:chat-3', prompt: [{ type: 'text', text: 'hello' }], request_id: 'queued-1' } } },
     ]);
   });
-  it('carries a local agent default and scopes model discovery and selection to the chat', async () => {
+  it('passes a new chat model at connect and keeps model discovery read-only', async () => {
     const models = { availableModels: [{ modelId: 'model/a', name: 'Model A', description: 'A model' }], currentModelId: 'model/a' };
     const requestJson = vi.fn(async (path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) =>
       schema.parse(path === '/acp/connect' ? { connection_id: 'c 1', initialize: {} } : { models }));
     const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
     await routes.connect('codex', 'model/a');
     await expect(routes.sessionModels('c 1', 'codex:chat/1')).resolves.toEqual({ models });
-    await expect(routes.setSessionModel('c 1', 'codex:chat/1', 'model/a')).resolves.toEqual({ models });
     expect(requestJson.mock.calls.map(([path, request]) => ({ path, request }))).toEqual([
       { path: '/acp/connect', request: { method: 'POST', body: { agent: 'codex', defaultModelId: 'model/a' } } },
       { path: '/acp/c%201/models?sessionId=codex%3Achat%2F1', request: { method: 'GET' } },
-      { path: '/acp/c%201/model', request: { method: 'POST', body: { sessionId: 'codex:chat/1', modelId: 'model/a' } } },
     ]);
   });
   it('discovers local agents and launches the exact selected agent', async () => {
-    const catalog = { agents: [{ id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'ready' as const, line: null }] };
+    const catalog = { defaultAgent: 'codex', agents: [{ id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'ready' as const, line: null, models: [{ modelId: 'vendor/exact', name: 'Exact' }], defaultModel: 'vendor/exact' }] };
     const requestJson = vi.fn(async (path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) => schema.parse(path === '/acp/agents' ? catalog : { connection_id: 'c1', initialize: {} }));
     const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
     await expect(routes.agents()).resolves.toEqual(catalog);
@@ -40,16 +38,22 @@ describe('AstridLocalAcpRoutes', () => {
       { path: '/acp/connect', request: { method: 'POST', body: { agent: 'codex' } } },
     ]);
   });
-  it('reads the provider catalog through the shared ACP transport', async () => {
-    const catalog = { currentModel: 'openai/gpt-5', providers: [{ id: 'openai', name: 'OpenAI', signedIn: true, models: [{ id: 'gpt-5', name: 'GPT 5' }], usage: { limits: [{ usedFraction: 0.5, unit: 'percent' }] } }] };
-    const requestJson = vi.fn(async (path: string, request: unknown, schema: { parse: (value: unknown) => unknown }) => {
-      if (path === '/acp/models') return schema.parse(catalog);
-      expect(request).toMatchObject({ method: 'POST', body: { model: 'openai/gpt-5' } });
-      return schema.parse({ currentModel: 'openai/gpt-5' });
-    });
+  it('supports Astrid model choices at creation and omits choices for service defaults', async () => {
+    const requestJson = vi.fn(async (_path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) => schema.parse({ connection_id: 'c1', initialize: {} }));
     const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
-    await expect(routes.models()).resolves.toEqual(catalog);
-    expect(requestJson.mock.calls.map(([path]) => path)).toEqual(['/acp/models']);
+    await routes.connect('astrid', 'openai/gpt-5');
+    await routes.connect();
+    expect(requestJson.mock.calls.map(([, request]) => request)).toEqual([
+      { method: 'POST', body: { agent: 'astrid', defaultModelId: 'openai/gpt-5' } },
+      { method: 'POST', body: {} },
+    ]);
+  });
+
+  it('rejects raw model config without sending a mutation request', async () => {
+    const requestJson = vi.fn();
+    const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
+    await expect(routes.setConfigOption('c1', 'saved', 'model' as 'thinking', 'other')).rejects.toThrow('To use another model, start a new chat.');
+    expect(requestJson).not.toHaveBeenCalled();
   });
 
   it('keeps project chat association, durable drafts, and owned prompts on the ACP transport', async () => {

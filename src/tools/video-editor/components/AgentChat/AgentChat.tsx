@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Info, Loader2, Mic, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
-import { EXTERNAL_AGENT_IDS, savedLocalAgentModel, sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { isAcpUnavailable } from '@/integrations/astrid/acpRoutes.ts';
+import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
@@ -26,9 +27,8 @@ import {
   useCreateSession,
   useSendMessage,
   useAgentModels,
-  useSetAgentModel,
+  useConfigureAgentSession,
   useLocalAgents,
-  useSetLocalAgent,
 } from '@/tools/video-editor/hooks/useAgentSession.ts';
 import { useAgentVoice } from '@/tools/video-editor/hooks/useAgentVoice.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
@@ -44,7 +44,6 @@ import { AgentTaskResults } from './AgentTaskResults';
 import { AgentChatSessionSelector } from './AgentChatSessionSelector';
 import { AgentChatNewChatButton, type NewChatAgentModels } from './AgentChatNewChatButton';
 import { AgentIcon, agentNames } from './agentIdentity';
-import { readAgentModels, readChatModels, rememberAgentModels, rememberChatModel, readModelThoughtLevels, rememberModelThoughtLevel } from './chatModelMemory';
 import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
 
 export type ToolCallPair = {
@@ -264,7 +263,6 @@ function AvailableAgentChatPanel({
   const projectId = editorContext?.projectId ?? null;
   const sessions = useAgentSessions(timelineId, projectId);
   const localAgents = useLocalAgents();
-  const setLocalAgent = useSetLocalAgent();
   const projectChat = useProjectChat(projectId);
   const saveDraft = useSaveProjectDraft(projectId);
   const selectSession = useSelectProjectSession(projectId);
@@ -282,69 +280,30 @@ function AvailableAgentChatPanel({
   const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const modelCatalog = useAgentModels(true, activeSessionId, projectId);
-  const setAgentModel = useSetAgentModel(activeSessionId, projectId);
+  const configureSession = useConfigureAgentSession(projectId);
   // A chat's agent is fixed by its session; with no chat yet, the next one uses the last-used agent.
-  const defaultAgent: LocalAgentId = localAgents.data?.selectedAgent ?? 'astrid';
+  const defaultAgent: LocalAgentId = localAgents.data?.defaultAgent ?? 'astrid';
   const chatAgent = activeSessionId ? sessionAgentId(activeSessionId) : defaultAgent;
+  const modelName = useCallback((sessionId: string, modelId: string) => {
+    const agent = localAgents.data?.agents.find(choice => choice.id === sessionAgentId(sessionId));
+    return agent?.models.find(model => model.modelId === modelId)?.name ?? modelId;
+  }, [localAgents.data]);
   const chatModelName = useMemo(() => {
-    const catalog = modelCatalog.data;
-    if (!catalog) return null;
-    const sessionModel = catalog.localModels?.availableModels.find(model => model.modelId === catalog.localModels?.currentModelId);
-    if (sessionModel) return sessionModel.name;
-    if (chatAgent !== 'astrid') return null;
-    const current = catalog.providers.flatMap(provider => provider.models.map(model => ({ id: `${provider.id}/${model.id}`, name: model.name })))
-      .find(model => model.id === catalog.currentModel);
-    return current?.name ?? catalog.currentModel;
-  }, [chatAgent, modelCatalog.data]);
+    if (!activeSessionId) return null;
+    const models = modelCatalog.data?.localModels;
+    const modelId = models?.currentModelId ?? projectChat.data?.sessions.find(session => session.id === activeSessionId)?.model_id;
+    if (!modelId) return null;
+    return models?.availableModels.find(model => model.modelId === modelId)?.name ?? modelName(activeSessionId, modelId);
+  }, [activeSessionId, modelCatalog.data, modelName, projectChat.data]);
   const chatThoughtLevel = modelCatalog.data?.localModels?.thoughtLevel;
-  // "Opus 5.5 · High"; Claude's bare "Default" level adds nothing.
   const chatModelDescription = [chatModelName, chatThoughtLevel?.currentValue === 'default' ? null : chatThoughtLevel?.options.find(level => level.value === chatThoughtLevel.currentValue)?.name].filter(Boolean).join(' · ');
-  const [modelThoughtLevels, setModelThoughtLevels] = useState(() => Object.fromEntries(
-    (['astrid', ...EXTERNAL_AGENT_IDS] as LocalAgentId[]).map(agent => [agent, readModelThoughtLevels(agent)]),
-  ) as Record<LocalAgentId, ReturnType<typeof readModelThoughtLevels>>);
-  type CatalogLocalModels = NonNullable<typeof modelCatalog.data>['localModels'];
-  const rememberThoughtLevels = useCallback((agent: LocalAgentId, models: CatalogLocalModels) => {
-    if (!models) return;
-    setModelThoughtLevels(current => {
-      const level = models.thoughtLevel ?? null;
-      if (JSON.stringify(current[agent][models.currentModelId]) === JSON.stringify(level)) return current;
-      return { ...current, [agent]: rememberModelThoughtLevel(agent, models.currentModelId, models.thoughtLevel) };
-    });
-  }, []);
-  useEffect(() => { rememberThoughtLevels(chatAgent, modelCatalog.data?.localModels); }, [chatAgent, modelCatalog.data, rememberThoughtLevels]);
-  const [chatModels, setChatModels] = useState(readChatModels);
-  useEffect(() => {
-    if (activeSessionId && chatModelName && chatModels[activeSessionId] !== chatModelName) setChatModels(rememberChatModel(activeSessionId, chatModelName));
-  }, [activeSessionId, chatModelName, chatModels]);
-  const describeSession = useCallback((sessionId: string) => ({ agent: sessionAgentId(sessionId), model: chatModels[sessionId] ?? null }), [chatModels]);
-  // External agents report models per session, so remember each list for New chat's submenu.
-  const [agentModelLists, setAgentModelLists] = useState(() => Object.fromEntries(
-    EXTERNAL_AGENT_IDS.map(agent => [agent, readAgentModels(agent)]),
-  ) as Record<typeof EXTERNAL_AGENT_IDS[number], ReturnType<typeof readAgentModels>>);
-  const agentModelNames = useMemo(() => {
-    const catalog = modelCatalog.data;
-    const astridCurrent = catalog?.providers.flatMap(provider => provider.models.map(model => ({ id: `${provider.id}/${model.id}`, name: model.name })))
-      .find(model => model.id === catalog.currentModel)?.name ?? null;
-    const externalName = (agent: typeof EXTERNAL_AGENT_IDS[number]) => {
-      if (chatAgent === agent && chatModelName) return chatModelName;
-      const saved = savedLocalAgentModel(agent);
-      return saved ? agentModelLists[agent].find(model => model.id === saved)?.name ?? null : null;
-    };
-    return {
-      astrid: chatAgent === 'astrid' ? chatModelName : astridCurrent,
-      ...Object.fromEntries(EXTERNAL_AGENT_IDS.map(agent => [agent, externalName(agent)])),
-    };
-  }, [agentModelLists, chatAgent, chatModelName, modelCatalog.data]);
-  const rememberModelList = useCallback((agent: LocalAgentId, models: Array<{ modelId: string; name: string; description?: string | null }> | undefined) => {
-    if (agent === 'astrid' || !models) return;
-    const list = models.map(model => ({ id: model.modelId, name: model.name, description: model.description ?? null }));
-    setAgentModelLists(current => {
-      if (JSON.stringify(current[agent]) === JSON.stringify(list)) return current;
-      rememberAgentModels(agent, list);
-      return { ...current, [agent]: list };
-    });
-  }, []);
-  useEffect(() => { rememberModelList(chatAgent, modelCatalog.data ? modelCatalog.data.localModels?.availableModels ?? [] : undefined); }, [chatAgent, modelCatalog.data, rememberModelList]);
+  const describeSession = useCallback((sessionId: string) => {
+    const modelId = projectChat.data?.sessions.find(session => session.id === sessionId)?.model_id;
+    return { agent: sessionAgentId(sessionId), model: sessionId === activeSessionId ? chatModelName : modelId ? modelName(sessionId, modelId) : null };
+  }, [activeSessionId, chatModelName, modelName, projectChat.data]);
+  const agentModelNames = useMemo(() => Object.fromEntries((localAgents.data?.agents ?? []).map(agent => [
+    agent.id, agent.models.find(model => model.modelId === agent.defaultModel)?.name ?? agent.defaultModel,
+  ])), [localAgents.data]);
   const [draft, setDraft] = useState('');
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueuedMessage[]>([]);
@@ -353,14 +312,14 @@ function AvailableAgentChatPanel({
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
   const [startingAgent, setStartingAgent] = useState<LocalAgentId | null>(null);
-  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; details: string } | null>(null);
+  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; choice?: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; details: string } | null>(null);
   // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
   // and decoupled from pane open state so the close-path bug from the rev-4
   // setIsTasksPaneOpenProgrammatic approach can't recur.
   const [userEngaged, setUserEngaged] = useState(false);
   const hasAutoCreatedSessionRef = useRef(false);
   const autoCreateOperationIdRef = useRef<string | null>(null);
-  const manualCreateOperationIdRef = useRef<{ projectId: string; id: string } | null>(null);
+  const manualCreateOperationIdRef = useRef<{ projectId: string; id: string; agent?: LocalAgentId; model?: string } | null>(null);
   // A completion from an earlier project visit must never select its chat here.
   if (manualCreateOperationIdRef.current?.projectId !== projectId) manualCreateOperationIdRef.current = null;
   const lightboxRequestIdRef = useRef(0);
@@ -403,55 +362,19 @@ function AvailableAgentChatPanel({
     }]);
   }, [sessions.data, projectChat.data?.sessions]);
   const showSessionSelector = sessionOptions.length > 0 && Boolean(projectChat.data) && (sessionOptions.length > 1 || hasMainContract);
-  // New chat's submenu: Astrid's catalog is global (the store serves it for any Astrid-scoped key without
-  // loading a chat); the other agents list models per session, so read the latest chat of that agent.
   const [browseAgent, setBrowseAgent] = useState<LocalAgentId | null>(null);
-  const browseSessionId = browseAgent === null ? null
-    : browseAgent === 'astrid' ? 'astrid-model-catalog'
-      : activeSessionId && sessionAgentId(activeSessionId) === browseAgent ? activeSessionId
-        : [...sessionOptions].reverse().find(session => sessionAgentId(session.id) === browseAgent)?.id ?? null;
-  const browseModels = useAgentModels(Boolean(browseSessionId), browseSessionId, projectId);
-  useEffect(() => {
-    if (browseAgent) rememberModelList(browseAgent, browseModels.data ? browseModels.data.localModels?.availableModels ?? [] : undefined);
-  }, [browseAgent, browseModels.data, rememberModelList]);
-  useEffect(() => {
-    if (browseAgent) rememberThoughtLevels(browseAgent, browseModels.data?.localModels);
-  }, [browseAgent, browseModels.data, rememberThoughtLevels]);
-  // Another tab may have seen this agent's models since this one loaded.
-  useEffect(() => {
-    if (!browseAgent) return;
-    const levels = readModelThoughtLevels(browseAgent);
-    setModelThoughtLevels(current => JSON.stringify(current[browseAgent]) === JSON.stringify(levels) ? current : { ...current, [browseAgent]: levels });
-    if (browseAgent === 'astrid') return;
-    const stored = readAgentModels(browseAgent);
-    if (stored.length) setAgentModelLists(current => JSON.stringify(current[browseAgent]) === JSON.stringify(stored) ? current : { ...current, [browseAgent]: stored });
-  }, [browseAgent]);
+  const agentCanBrowse = useMemo(() => ({ hermes: Boolean(localAgents.data?.agents.find(agent => agent.id === 'hermes')?.models.length) }), [localAgents.data]);
   const newChatModels = useMemo<NewChatAgentModels | null>(() => {
     if (!browseAgent) return null;
-    if (browseAgent === 'astrid') {
-      const catalog = browseModels.data;
-      return {
-        agent: 'astrid',
-        models: (catalog?.providers ?? []).filter(provider => provider.signedIn || provider.models.length > 0)
-          .flatMap(provider => provider.models.map(model => ({ id: `${provider.id}/${model.id}`, name: model.name, detail: provider.name, thoughtLevel: modelThoughtLevels.astrid[`${provider.id}/${model.id}`] }))),
-        defaultModel: savedLocalAgentModel('astrid') ?? catalog?.currentModel ?? null,
-        loading: browseModels.isLoading,
-        note: browseModels.error ? 'Could not load Astrid models.' : 'No models available.',
-      };
-    }
-    const remembered = agentModelLists[browseAgent];
+    const agent = localAgents.data?.agents.find(choice => choice.id === browseAgent);
     return {
       agent: browseAgent,
-      models: remembered.map(model => ({ id: model.id, name: model.name, detail: model.description, thoughtLevel: modelThoughtLevels[browseAgent][model.id] })),
-      defaultModel: savedLocalAgentModel(browseAgent) ?? null,
-      loading: remembered.length === 0 && Boolean(browseSessionId) && !browseModels.error && (browseModels.isLoading || browseModels.isFetching),
-      note: `${agentNames[browseAgent]} lists its models after its first chat starts. Pick a model here for the next chat.`,
+      models: (agent?.models ?? []).map(model => ({ id: model.modelId, name: model.name, detail: model.description, thoughtLevel: model.thoughtLevel })),
+      defaultModel: agent?.defaultModel ?? null,
+      loading: localAgents.isLoading || (!agent && localAgents.isFetching),
+      note: localAgents.error ? AGENT_CHAT_COPY.modelsFailed : AGENT_CHAT_COPY.noModels,
     };
-  }, [agentModelLists, modelThoughtLevels, browseAgent, browseModels.data, browseModels.error, browseModels.isFetching, browseModels.isLoading, browseSessionId]);
-  const agentCanBrowse = useMemo(() => ({
-    ...Object.fromEntries(EXTERNAL_AGENT_IDS.filter(agent => agent !== 'hermes').map(agent => [agent, true])),
-    hermes: agentModelLists.hermes.length > 0,
-  }), [agentModelLists.hermes.length]);
+  }, [browseAgent, localAgents.data, localAgents.error, localAgents.isFetching, localAgents.isLoading]);
   const hydratedProjectDraftRef = useRef(false);
   const draftPersistenceRef = useRef<ProjectChatDraftPersistence<QueuedMessage> | null>(null);
   const draftScopeRef = useRef<string | null>(null);
@@ -961,11 +884,13 @@ function AvailableAgentChatPanel({
     })();
   }, [queue, pausedQueueHeadId, startingAgent, configurationFailed, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
 
-  const handleNewSession = useCallback(async (): Promise<string | null> => {
+  const handleNewSession = useCallback(async (agent?: LocalAgentId, model?: string): Promise<string | null> => {
     if (!projectId) return null;
-    manualCreateOperationIdRef.current ??= { projectId, id: createMessageId() };
+    if (!manualCreateOperationIdRef.current || manualCreateOperationIdRef.current.agent !== agent || manualCreateOperationIdRef.current.model !== model) {
+      manualCreateOperationIdRef.current = { projectId, id: createMessageId(), agent, model };
+    }
     const operation = manualCreateOperationIdRef.current;
-    const session = await createNewSession.mutateAsync(operation.id);
+    const session = await createNewSession.mutateAsync({ operationId: operation.id, ...(agent ? { agent } : {}), ...(model ? { defaultModelId: model } : {}) });
     if (!isPanelMountedRef.current || manualCreateOperationIdRef.current !== operation
       || currentContextRef.current?.projectId !== operation.projectId) return null;
     manualCreateOperationIdRef.current = null;
@@ -979,27 +904,22 @@ function AvailableAgentChatPanel({
     return sessionId ?? null;
   }, [createNewSession, projectId, setIsTasksPaneOpen]);
 
-  // Keep startup locked until the model and its freshly reported thinking level are applied.
-  const startChatWith = useCallback(async (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => {
+  const startChatWith = useCallback(async (agent?: LocalAgentId, model?: string, thoughtLevel?: string, recoverySessionId?: string) => {
     const chosen = agent ?? defaultAgent;
     let sessionId: string | null = null;
     setStartFailure(null);
     setStartingAgent(chosen);
     try {
-      if (chosen !== defaultAgent) await setLocalAgent.mutateAsync(chosen);
-      // Without a pick, reuse this agent's remembered model when it is still on offer.
-      const saved = savedLocalAgentModel(chosen);
-      const target = model ?? (saved && (chosen === 'astrid' || agentModelLists[chosen].some(choice => choice.id === saved)) ? saved : undefined);
-      sessionId = await handleNewSession();
-      // The selection mutation awaits this session's first options read before
-      // setting the model, refreshing its options, and applying the level.
-      if (sessionId) await setAgentModel.mutateAsync({ sessionId, model: target, thoughtLevel });
+      sessionId = recoverySessionId ?? await handleNewSession(agent, model);
+      // Join this chat's initial options read before validating its fixed model
+      // and applying the selected thinking level.
+      if (sessionId) await configureSession.mutateAsync({ sessionId, model, thoughtLevel });
     } catch (error) {
-      setStartFailure({ agent: chosen, model, thoughtLevel, sessionId: sessionId ?? undefined, details: error instanceof Error ? error.message : String(error) });
+      setStartFailure({ agent: chosen, choice: agent, model, thoughtLevel, sessionId: sessionId ?? undefined, details: error instanceof Error ? error.message : String(error) });
     } finally {
       setStartingAgent(null);
     }
-  }, [agentModelLists, defaultAgent, handleNewSession, setAgentModel, setLocalAgent]);
+  }, [defaultAgent, handleNewSession, configureSession]);
 
   // ==========================================================================
   // Actions registry — exposes stable handlers the parent (TasksPane split
@@ -1059,10 +979,11 @@ function AvailableAgentChatPanel({
       {/* Header */}
       <div data-testid="agent-chat-header" className="@container/agent-header relative flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-2">
         <div className="flex shrink-0 items-center gap-2">
-          <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
-            <AgentIcon agent={startingAgent ?? chatAgent} className="h-3.5 w-3.5 shrink-0" />
-            <span data-testid="agent-chat-identity" className="truncate text-xs normal-case">
-              {agentNames[startingAgent ?? chatAgent]}
+          {/* The chat's agent and model are fixed when it starts. */}
+          <span className="flex min-w-0 items-center gap-1.5" title={AGENT_CHAT_COPY.fixedModel}>
+            <AgentIcon agent={startingAgent ?? chatAgent} className="h-3.5 w-3.5 shrink-0 text-foreground/80" />
+            <span data-testid="agent-chat-identity" className="truncate text-sm font-medium normal-case" title={AGENT_CHAT_COPY.fixedModel}>
+              {agentNames[startingAgent ?? chatAgent]}{!startingAgent && chatModelName ? ` · ${chatModelName}` : ''}
             </span>
             {!startingAgent && chatModelName && (
               <Tooltip>
@@ -1125,7 +1046,7 @@ function AvailableAgentChatPanel({
             agentCanBrowse={agentCanBrowse}
             agentsLoading={localAgents.isLoading}
             agentsError={localAgents.error instanceof Error ? localAgents.error.message : null}
-            disabled={startingAgent !== null || createNewSession.isPending || setLocalAgent.isPending || !hasProject}
+            disabled={startingAgent !== null || createNewSession.isPending || !hasProject}
             onMenuOpenChange={(open) => { if (open) void localAgents.refetch(); }}
             onBrowseAgent={setBrowseAgent}
             agentModels={newChatModels}
@@ -1138,7 +1059,7 @@ function AvailableAgentChatPanel({
         <div role="alert" className="border-b border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           <p>{agentNames[startFailure.agent]} didn't start.</p>
           <p>Details: {startFailure.details}</p>
-          <button type="button" className="mt-1 underline" onClick={() => void startChatWith(startFailure.agent, startFailure.model, startFailure.thoughtLevel)}>Try again</button>
+          <button type="button" className="mt-1 underline" onClick={() => void startChatWith(startFailure.choice, startFailure.model, startFailure.thoughtLevel, startFailure.sessionId)}>Try again</button>
         </div>
       )}
       {showAttachSessions && projectId && (
@@ -1229,7 +1150,7 @@ function AvailableAgentChatPanel({
                   ? <p className="mt-1 text-xs">Tap the mic to talk</p>
                   : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>}
                 <p data-testid="agent-chat-runs-with" className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px] normal-case">
-                  <AgentIcon agent={chatAgent} className="h-3 w-3 shrink-0" />
+                  <AgentIcon agent={startingAgent ?? chatAgent} className="h-3 w-3 shrink-0" />
                   {agentNames[chatAgent]} · {chatModelName ?? 'default model'}
                 </p>
               </>
