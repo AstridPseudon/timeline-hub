@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 
+from ._collections import KINDS, order, rows
 from ._command_state import ABSENT, CommandError, State, equal, present, spelling
 from ._common import AUDIO_KINDS
 
@@ -15,8 +16,8 @@ def active(row):
 def selection(state, key, owner, members=()):
     if key == "move.target":
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
-    elif key == "track.create":
-        result = [owner + '/track:' + row['id'] for row in state.collection(owner, 'track')]
+    elif key in KINDS:
+        result = order(state, owner, KINDS[key])
     elif key == "move.blockers":
         origin = state.occurrence(owner)
         lane = (origin.get('placement') or {}).get('track', origin.get('track'))
@@ -36,6 +37,11 @@ def selection(state, key, owner, members=()):
 class Recording:
     def __init__(self, bundle, command, ordinal, *, closures=None):
         self.state = State(bundle, closures=closures)
+        parent = bundle['parent']
+        config = parent.get('config')
+        self.mirrored_clips = (isinstance(parent.get('clips'), list)
+                               and isinstance(config, dict) and isinstance(config.get('clips'), list)
+                               and equal(parent['clips'], config['clips']))
         self.record = {"ordinal": ordinal, "command": copy.deepcopy(command), "writes": [],
                        "reads": [], "selections": [], "bindings": [], "created": [],
                        "dependencies": [], "derived_writes": []}
@@ -50,6 +56,12 @@ class Recording:
     def select(self, key, owner, members=()):
         value = selection(self.state, key, owner, members)
         if value not in self.record['selections']:
+            if key.startswith('collection.'):
+                self.read(owner + '/collection:' + KINDS[key])
+                if owner != 'parent':
+                    self.read(owner, ['occurrence_id'])
+                    self.read(owner + '/shot', ['shot_id'])
+                    self.bind('collection.owner:' + key, owner)
             self.record['selections'].append(value)
         return value['members']
 
@@ -82,14 +94,14 @@ class Recording:
             raise CommandError("intent container must be object or null", ref=ref, path=path)
         self.write(ref, path, {})
 
-    def create(self, owner, kind, row):
-        if not isinstance(self.state.config(owner).get(kind + 's'), list):
-            raise CommandError('structural create requires an authored entity collection', ref=owner)
+    def create(self, owner, kind, row, *, restoring=False):
+        rows(self.state, owner, kind, check_mirrors=not restoring)
         if owner != 'parent':
             self.read(owner, ['occurrence_id'])
             self.read(owner + '/shot', ['shot_id'])
             self.bind('create.owner', owner)
-        self.select('track.create', owner)
+        if not restoring:
+            self.select('track.create' if kind == 'track' else 'collection.' + kind + 's', owner)
         ref = owner + '/' + kind + ':' + row['id']
         if self.state.get(ref, []) != ABSENT:
             raise CommandError("created identity is occupied", kind="identity_collision", ref=ref)
@@ -112,8 +124,7 @@ class Recording:
 
     def compile_mirrors(self):
         parent = self.state.bundle['parent']
-        config = parent.get('config', {})
-        if parent.get('clips') and config.get('clips'):
+        if self.mirrored_clips:
             before = self.state.get('parent', ['config', 'clips'])
             after = present(parent['clips'])
             if not equal(before, after):

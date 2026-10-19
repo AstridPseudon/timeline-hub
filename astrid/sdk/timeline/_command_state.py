@@ -106,7 +106,30 @@ def address(key, resolved):
     return resolved[0], tokens(key)
 
 
+def logical_address(ref, path):
+    path = tuple(path)
+    if '/collection:' in ref:
+        owner, kind = ref.rsplit('/collection:', 1)
+        from ._collections import container
+        root, prefix = container(owner, kind)
+        return root, (*prefix, ('shape',), *path)
+    if '/clip:' in ref or '/track:' in ref:
+        owner, entity = ref.rsplit('/', 1)
+        kind, identity = entity.split(':', 1)
+        prefix = ('config' if owner == 'parent' else 'source', kind + 's')
+        return owner, (*prefix, ('id', identity), *path)
+    if ref.endswith('/source'):
+        owner = ref.removesuffix('/source')
+        return owner, ('config' if owner == 'parent' else 'source', *path)
+    if ref.endswith('/shot') and path[:1] == ('shot_id',):
+        return ref.removesuffix('/shot'), path
+    if ref == 'parent' and path[:1] == ('clips',):
+        path = ('config', *path)
+    return ref, path
+
+
 def overlaps(a, b):
+    a, b = logical_address(*a), logical_address(*b)
     return (a == ("timeline", ()) or b == ("timeline", ())
             or (a[0] == b[0] and a[1][:len(b[1])] == b[1][:len(a[1])]))
 
@@ -126,6 +149,12 @@ class State:
     def __init__(self, bundle, *, closures=None):
         self.bundle = bundle
         self.closures = closures or {}
+        parent = bundle['parent']
+        config = parent.get('config')
+        primary = parent.get('clips')
+        mirror = config.get('clips') if isinstance(config, dict) else None
+        self.parent_clip_path = ('clips',) if isinstance(primary, list) and (
+            primary or not isinstance(mirror, list) or not mirror) else ('config', 'clips')
 
     def occurrence(self, owner):
         return one(self.bundle["placements"], "occurrence_id", owner.removeprefix("occurrence:"))
@@ -133,6 +162,8 @@ class State:
     def config(self, owner):
         if owner == "parent":
             return self.bundle["parent"].get("config", {})
+        if not owner.startswith('occurrence:') or '/' in owner:
+            raise CommandError('collection requires an exact owner', kind='identity_conflict', ref=owner)
         row = self.occurrence(owner)
         return self.bundle["shots"][row["shot_id"]]["internal_timeline"]
 
@@ -140,7 +171,8 @@ class State:
         config = self.config(owner)
         if owner == "parent" and kind == "clip":
             parent = self.bundle["parent"]
-            return parent.get("clips") or config.get("clips", parent.get("clips", []))
+            return (parent.get('clips', []) if self.parent_clip_path == ('clips',)
+                    else config.get('clips', []))
         return config.get(kind + "s", [])
 
     def entity(self, ref, *, optional=False):
@@ -175,6 +207,12 @@ class State:
         raise CommandError(f"unsupported entity reference {ref!r}")
 
     def get(self, ref, path):
+        if '/collection:' in ref:
+            from ._collections import shape
+            owner, kind = ref.rsplit('/collection:', 1)
+            if path:
+                raise CommandError('collection shape requires the whole guard', ref=ref)
+            return present(shape(self, owner, kind))
         if ref == "timeline":
             if path:
                 raise CommandError("timeline replacement requires the whole closure")
@@ -228,6 +266,10 @@ class State:
             kind, identity = entity.split(':', 1)
             rows = self.collection(owner, kind)
             existing = self.entity(ref, optional=True)
+            if state['state'] == 'present' and (not isinstance(state['value'], dict)
+                                               or state['value'].get('id') != identity):
+                raise CommandError('row identity differs from its scoped reference',
+                                   kind='identity_conflict', ref=ref)
             if existing is not None:
                 index = rows.index(existing)
                 if state["state"] == "absent":

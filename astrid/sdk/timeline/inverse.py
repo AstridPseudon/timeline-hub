@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import copy
 
-from ._command_state import ABSENT, CommandError, overlaps, present
+from ._collections import KINDS, arrange, restoration_orders, selection_overlap
+from ._command_state import ABSENT, CommandError, logical_address, overlaps, present
 from ._recording import guard, selection
 
 
@@ -13,7 +14,35 @@ def _patch(state, path, replacement):
     value = copy.deepcopy(state.get('value', {}))
     node = value
     for token in path[:-1]:
-        node = node.setdefault(token, {})
+        if isinstance(token, tuple):
+            matches = [row for row in node if row.get('id') == token[1]]
+            if len(matches) != 1:
+                raise CommandError('ambiguous collection alias', kind='identity_conflict')
+            node = matches[0]
+        elif isinstance(node, list):
+            node = node[int(token)]
+        else:
+            node = node.setdefault(token, {})
+    if isinstance(path[-1], tuple):
+        identity = path[-1][1]
+        indices = [i for i, row in enumerate(node) if row.get('id') == identity]
+        if len(indices) > 1:
+            raise CommandError('ambiguous collection alias', kind='identity_conflict')
+        if replacement['state'] == 'absent':
+            if indices:
+                node.pop(indices[0])
+        elif indices:
+            node[indices[0]] = copy.deepcopy(replacement['value'])
+        else:
+            raise CommandError('collection alias insertion needs historical order', kind='history_unavailable')
+        return present(value)
+    if isinstance(node, list):
+        index = int(path[-1])
+        if replacement['state'] == 'absent':
+            node.pop(index)
+        else:
+            node[index] = copy.deepcopy(replacement['value'])
+        return present(value)
     if replacement['state'] == 'absent':
         node.pop(path[-1], None)
     else:
@@ -23,21 +52,30 @@ def _patch(state, path, replacement):
 
 def coalesce(records):
     """Retain first-before/last-after, folding descendants into authored roots."""
+    def value_address(write):
+        ref, path = logical_address(write['ref'], write['path'])
+        # Source rows are owned by an occurrence, but aren't JSON children of
+        # its placement row. Ownership overlap must not fold them into that row.
+        if ref.startswith('occurrence:') and path[:1] == ('source',):
+            return ref + '/source', path[1:]
+        return ref, path
+
     result = []
     for record in records:
         for raw in record['writes']:
             write = copy.deepcopy(raw)
-            address = write['ref'], tuple(write['path'])
-            ancestor = next((old for old in result if old['ref'] == address[0]
-                             and address[1][:len(old['path'])] == tuple(old['path'])), None)
+            address = value_address(write)
+            ancestor = next((old for old in result if value_address(old)[0] == address[0]
+                             and address[1][:len(value_address(old)[1])] == value_address(old)[1]), None)
             if ancestor is not None:
-                ancestor['after'] = _patch(ancestor['after'], write['path'][len(ancestor['path']):],
+                ancestor['after'] = _patch(ancestor['after'], address[1][len(value_address(ancestor)[1]):],
                                            write['after'])
                 continue
-            descendants = [old for old in result if old['ref'] == address[0] and overlaps(
-                (old['ref'], tuple(old['path'])), address)]
+            descendants = [old for old in result
+                           if value_address(old)[0] == address[0]
+                           and value_address(old)[1][:len(address[1])] == address[1]]
             for old in reversed(descendants):
-                write['before'] = _patch(write['before'], old['path'][len(write['path']):], old['before'])
+                write['before'] = _patch(write['before'], value_address(old)[1][len(address[1]):], old['before'])
                 result.remove(old)
             result.append(write)
     return result
@@ -47,21 +85,26 @@ def check_intervening(records, intervening_records, *, include_reads=True):
     if intervening_records is None:
         raise CommandError('complete intervening history is required', kind='history_unavailable')
     guarded = []
+    selections = []
     for record in records:
         if not isinstance(record, dict) or any(key not in record for key in ('writes', 'reads', 'selections', 'created')):
             raise CommandError('complete accepted recorder history is required', kind='history_unavailable')
         guarded.extend((w['ref'], tuple(w['path'])) for w in record['writes'])
+        selections.extend(record['selections'])
         if include_reads:
             for read in record['reads']:
                 guarded.append((read['ref'], tuple(read['path'])))
                 if read['ref'].endswith('/shot'):
                     guarded.append((read['ref'].removesuffix('/shot'), ('shot_id',)))
+                    if read['path'] == ['shot_id'] and isinstance(read['state'].get('value'), str):
+                        guarded.append(('shot:' + read['state']['value'], ()))
     for record in intervening_records:
         if not isinstance(record, dict) or 'writes' not in record:
             raise CommandError("complete intervening write history is required", kind='history_unavailable')
         for write in record['writes']:
             address = write['ref'], tuple(write['path'])
-            if any(overlaps(address, prior) for prior in guarded):
+            if (any(overlaps(address, prior) for prior in guarded)
+                    or any(selection_overlap(s, write) for s in selections)):
                 raise CommandError("an intervening publication wrote a guarded address",
                                    kind='intervening_write', ref=address[0], path=address[1])
             if not write['path']:
@@ -109,6 +152,12 @@ def apply_inverse(ctx, records, intervening_records):
         raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
     check_intervening(records, intervening_records)
     changes = coalesce(records)
+    orders = restoration_orders(records)
+    for (owner, kind), (_, expected) in orders.items():
+        actual = ctx.select('collection.' + kind + 's', owner)
+        if actual != expected:
+            raise CommandError('inverse collection membership/order changed',
+                               kind='selection_changed', ref=owner)
     for write in changes:
         guard(ctx.state, write['ref'], write['path'], write['after'], kind='inverse_conflict')
     # Selection and identity guards remain relevant; value reads changed by the
@@ -120,19 +169,10 @@ def apply_inverse(ctx, records, intervening_records):
                 guard(ctx.state, read['ref'], read['path'], read['state'], kind='inverse_dependency_changed')
                 ctx.read(read['ref'], read['path'])
         for selected in record['selections']:
-            expected = copy.deepcopy(selected)
-            if selected['key'] == 'track.create':
-                members = list(selected['members'])
-                for change in changes:
-                    if change['path'] or not change['ref'].startswith(selected['owner'] + '/track:'):
-                        continue
-                    if change['before'] == ABSENT and change['ref'] not in members:
-                        members.append(change['ref'])
-                    elif change['after'] == ABSENT and change['ref'] in members:
-                        members.remove(change['ref'])
-                expected.update(members=members, order=list(members), boundaries=list(members))
+            if (selected['owner'], KINDS.get(selected['key'])) in orders:
+                continue
             actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
-            if actual != expected:
+            if actual != selected:
                 raise CommandError("inverse selection changed", kind='selection_changed', ref=selected['owner'])
             ctx.select(selected['key'], selected['owner'], selected['members'])
         for created in record['created']:
@@ -143,6 +183,8 @@ def apply_inverse(ctx, records, intervening_records):
         ctx.read(write['ref'], write['path'])
         if not write['path'] and write['after'] == ABSENT:
             owner, entity = write['ref'].rsplit('/', 1)
-            ctx.create(owner, entity.split(':', 1)[0], write['before']['value'])
+            ctx.create(owner, entity.split(':', 1)[0], write['before']['value'], restoring=True)
         else:
             ctx.assign(write['ref'], write['path'], write['before'])
+    for (owner, kind), (original, _) in orders.items():
+        arrange(ctx.state, owner, kind, original)

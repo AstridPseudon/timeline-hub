@@ -360,6 +360,7 @@ class RuntimeCommitService:
     def commit(self, context, port):
         from runtime_protocol.timeline_commit import CommitRejected, StaleHead
 
+        from astrid.sdk.timeline._collections import AcceptedRecords
         from astrid.sdk.timeline.commands import CommandError, execute
         from astrid.sdk.timeline.inverse import coalesce
         from astrid.sdk.timeline.rebase import replay
@@ -415,9 +416,22 @@ class RuntimeCommitService:
                     raise CommitRejected(_failure("invalid_inverse_order",
                                                   "inverse publications must be oldest to newest",
                                                   base, current))
-                inverse_records = _records([entry for entry in ordered
-                                            if entry["publication_id"] in undo_of],
-                                           CommitRejected, base, current)
+                accepted = [entry for entry in ordered if entry['publication_id'] in undo_of]
+
+                def load_boundary(entry):
+                    previous = entry.get('previous')
+                    if not previous:
+                        raise CommandError('inverse input boundary is unavailable', kind='history_unavailable')
+                    prior = port.history_entry(previous['publication_id'])
+                    if prior['revision_id'] != previous['revision_id']:
+                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
+                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
+                    _history(port, pin, previous, CommitRejected, base)
+                    return (_load(port, context, previous['revision_id']),
+                            _load(port, context, entry['revision_id']))
+
+                inverse_records = AcceptedRecords(accepted, _records(
+                    accepted, CommitRejected, base, current), load_boundary)
                 inverse_intervening = _records([entry for entry in ordered
                                                 if entry["publication_id"] not in undo_of],
                                                CommitRejected, base, current)

@@ -552,3 +552,247 @@ def test_materialization_alias_is_exact_for_arbitrary_source_ids():
     head['source_mapping']['shots'][old]['shot_id'] = 'shot-placement-' + 'b' * 64
     with pytest.raises(CommandError):
         replay(plan, head)
+
+
+def recorded_removal(original, owner, kind, identities):
+    from astrid.sdk.timeline._recording import Recording
+
+    candidate = copy.deepcopy(original)
+    ctx = Recording(candidate, {'schema_version': 1, 'op': kind + '.remove', 'version': '1',
+                                 'select': owner, 'args': {}}, 0)
+    ctx.select('collection.' + kind + 's', owner)
+    for identity in identities:
+        ctx.clear(owner + '/' + kind + ':' + identity, [])
+    ctx.compile_mirrors()
+    return candidate, [ctx.finish(capture=True)]
+
+
+def accepted_boundaries(records, before, after):
+    from astrid.sdk.timeline._collections import AcceptedRecords
+
+    entry = {'records': {'commands': records,
+                         'undo_of': records[0]['command']['args']['publications']}}
+    return AcceptedRecords([entry], records, lambda _: (before, after))
+
+
+@pytest.mark.parametrize('owner', ['parent', 'occurrence:occ-1'])
+@pytest.mark.parametrize('kind', ['track', 'clip'])
+@pytest.mark.parametrize('removed', [('a',), ('b',), ('c',), ('a', 'b'), ('a', 'b', 'c')])
+def test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order(owner, kind, removed):
+    original = bundle()
+    rows = [{'id': identity, 'kind': 'visual', 'track': 'picture', 'at': index, 'hold': 1,
+             'opaque': {'order': [None, False, 0], 'unknown': {'id': identity}},
+             **({'nullable': None} if identity == 'b' else {})}
+            for index, identity in enumerate(('a', 'b', 'c'))]
+    if owner == 'parent' and kind == 'clip':
+        original['parent']['clips'] = copy.deepcopy(rows)
+    State(original).config(owner)[kind + 's'] = copy.deepcopy(rows)
+    removed_bundle, records = recorded_removal(original, owner, kind, removed)
+    immutable_records = copy.deepcopy(records)
+    head = copy.deepcopy(removed_bundle)
+    remaining = State(head).collection(owner, kind)
+    if remaining:
+        remaining[-1]['opaque']['later'] = 'untouched author'
+    if owner == 'parent' and kind == 'clip':
+        head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
+    undone = inverse(head, records)
+    restored = State(undone.bundle).collection(owner, kind)
+    expected = copy.deepcopy(rows)
+    if remaining:
+        next(row for row in expected if row['id'] == remaining[-1]['id'])['opaque']['later'] = 'untouched author'
+    assert json.dumps(restored) == json.dumps(expected)
+    assert records == immutable_records
+    assert undone.records[0]['selections'][0]['order'] == [
+        owner + '/' + kind + ':' + row['id'] for row in remaining]
+    redone = inverse(undone.bundle, accepted_boundaries(undone.records, head, undone.bundle))
+    assert redone.bundle == head
+
+
+@pytest.mark.parametrize('layout', ['payload', 'config', 'both', 'null-payload', 'null-config'])
+def test_remove_last_clip_keeps_exact_container_shape(layout):
+    original = bundle()
+    parent = original['parent']
+    if layout == 'payload':
+        parent['config'].pop('clips')
+    elif layout == 'config':
+        parent.pop('clips')
+    elif layout == 'null-payload':
+        parent['clips'] = None
+    elif layout == 'null-config':
+        parent['config']['clips'] = None
+    removed, records = recorded_removal(original, 'parent', 'clip', ['direct'])
+    assert State(removed).collection('parent', 'clip') == []
+    undone = inverse(removed, records)
+    assert undone.bundle == original
+    assert inverse(undone.bundle, accepted_boundaries(undone.records, removed, undone.bundle)).bundle == removed
+
+
+@pytest.mark.parametrize('shape', ['absent', None, []])
+def test_collection_shape_is_guarded_without_reading_untouched_member_bytes(shape):
+    from astrid.sdk.timeline._recording import Recording, guard
+
+    original = bundle()
+    ctx = Recording(original, {}, 0)
+    ctx.select('collection.tracks', 'parent')
+    head = copy.deepcopy(original)
+    head['parent']['config']['tracks'][0]['opaque'] = 'later author'
+    for read in ctx.record['reads']:
+        guard(State(head), read['ref'], read['path'], read['state'])
+    if shape == 'absent':
+        head['parent']['config'].pop('tracks')
+    else:
+        head['parent']['config']['tracks'] = shape
+    if shape == []:
+        # A list remains a list; the selection supplies the membership guard.
+        assert State(head).get('parent/collection:track', []) == ctx.record['reads'][0]['state']
+    else:
+        with pytest.raises(CommandError):
+            guard(State(head), ctx.record['reads'][0]['ref'], [], ctx.record['reads'][0]['state'])
+        with pytest.raises(CommandError):
+            execute(head, [capture_track_create(original, 'parent', {'id': 'new', 'kind': 'visual'})])
+
+
+@pytest.mark.parametrize('damage', ['duplicate', 'missing', 'foreign', 'divergent-mirror'])
+def test_structural_collections_refuse_ambiguous_scoped_identities(damage):
+    from astrid.sdk.timeline._recording import selection
+
+    original = bundle()
+    if damage == 'divergent-mirror':
+        original['parent']['config']['clips'] = []
+    else:
+        rows = State(original).collection('parent', 'clip')
+        if damage == 'duplicate':
+            rows.append(copy.deepcopy(rows[0]))
+        elif damage == 'missing':
+            rows[0].pop('id')
+        else:
+            rows[0]['id'] = 'occurrence:foreign/clip:direct'
+        original['parent']['config']['clips'] = copy.deepcopy(rows)
+    with pytest.raises(CommandError):
+        selection(State(original), 'collection.clips', 'parent')
+
+
+def test_foreign_historical_order_and_missing_order_proof_refuse():
+    original = bundle()
+    removed, records = recorded_removal(original, 'parent', 'clip', ['direct'])
+    for damage in ('missing', 'foreign', 'duplicate'):
+        broken = copy.deepcopy(records)
+        if damage == 'missing':
+            broken[0]['selections'] = []
+        else:
+            refs = ['occurrence:occ-1/clip:direct'] if damage == 'foreign' else ['parent/clip:direct'] * 2
+            broken[0]['selections'][0].update(members=refs, order=refs, boundaries=refs)
+        with pytest.raises(CommandError) as error:
+            inverse(removed, broken)
+        assert error.value.kind == 'history_unavailable'
+
+
+@pytest.mark.parametrize('address', [('parent', ['config', 'tracks']),
+                                     ('parent/track:other', []),
+                                     ('parent/track:picture', ['id'])])
+def test_collection_selection_detects_structural_publications_even_when_json_returns(address):
+    original = bundle()
+    plan = execute(original, [capture_track_create(original, 'parent', {'id': 'new', 'kind': 'visual'})])
+    with pytest.raises(CommandError) as error:
+        inverse(plan.bundle, plan.records, [later(*address, [])])
+    assert error.value.kind == 'intervening_write'
+    head = copy.deepcopy(plan.bundle)
+    head['parent']['config']['tracks'][0]['opaque'] = 'other author'
+    undone = inverse(head, plan.records, [later('parent/track:picture', ['opaque'], 'other author')])
+    assert undone.bundle['parent']['config']['tracks'][0]['opaque'] == 'other author'
+
+
+@pytest.mark.parametrize('ref,path', [('parent', ['clips']), ('parent', ['config', 'clips']),
+                                     ('parent', ['config']),
+                                     ('occurrence:occ-1/source', ['clips']),
+                                     ('occurrence:occ-1', [])])
+def test_member_and_container_aliases_share_overlap_for_replay_and_inverse(ref, path):
+    original = bundle()
+    target = 'parent/clip:direct' if ref == 'parent' else 'occurrence:occ-1/clip:picture-1'
+    on = 4 if ref == 'parent' else 12
+    plan = execute(original, [capture_move(original, target, on)])
+    for operation, state in ((replay, original), (inverse, plan.bundle)):
+        with pytest.raises(CommandError) as error:
+            if operation is replay:
+                replay(plan, state, intervening_records=[later(ref, path, [])])
+            else:
+                inverse(state, plan.records, [later(ref, path, [])])
+        assert error.value.kind == 'intervening_write'
+
+
+def test_explicit_shared_source_overlap_does_not_bind_other_occurrence_owners():
+    original = bundle()
+    ref = 'occurrence:occ-1/clip:picture-1'
+    plan = execute(original, [capture_move(original, ref, 12)])
+    source = State(original).entity('occurrence:occ-1/shot')['shot_id']
+    with pytest.raises(CommandError):
+        inverse(plan.bundle, plan.records, [later('shot:' + source, ['unknown'], None)])
+    inverse(plan.bundle, plan.records, [later('occurrence:occ-2/source', ['clips'], [])])
+
+
+@pytest.mark.parametrize('container_ref,container_path,member_ref', [
+    ('parent', ['clips'], 'parent/clip:direct'),
+    ('parent', ['config', 'clips'], 'parent/clip:direct'),
+    ('parent', ['config', 'tracks'], 'parent/track:direct'),
+    ('occurrence:occ-1/source', ['clips'], 'occurrence:occ-1/clip:direct'),
+])
+def test_coalescing_aliases_folds_actual_execution_order(container_ref, container_path, member_ref):
+    from astrid.sdk.timeline.inverse import coalesce
+
+    old = [{'id': 'direct', 'opaque': {'values': [None, 0]}}]
+    replaced = [{'id': 'direct', 'opaque': {'values': [None, 1]}}]
+    final = [{'id': 'direct', 'opaque': {'values': [None, 2]}}]
+    root = {'ref': container_ref, 'path': container_path, 'before': present(old), 'after': present(replaced)}
+    leaf = {'ref': member_ref, 'path': ['opaque', 'values', '1'],
+            'before': present(1), 'after': present(2)}
+    folded = coalesce([{'writes': [root, leaf]}])
+    assert folded == [dict(root, after=present(final))]
+    first_leaf = dict(leaf, before=present(0), after=present(1))
+    later_root = dict(root, before=present(replaced), after=present(final))
+    assert coalesce([{'writes': [first_leaf, later_root]}]) == [dict(later_root, before=present(old))]
+
+
+@pytest.mark.parametrize('key', ['collection.tracks', 'collection.clips',
+                                 'collection.occurrences', 'collection.shots'])
+def test_shared_collection_queries_include_empty_and_exact_owner_scopes(key):
+    from astrid.sdk.timeline._recording import selection
+
+    original = bundle()
+    selected = selection(State(original), key, 'parent')
+    assert selected['members'] == selected['order'] == selected['boundaries']
+    if key == 'collection.tracks':
+        original['parent']['config']['tracks'] = []
+    elif key == 'collection.clips':
+        original['parent']['clips'] = original['parent']['config']['clips'] = []
+    elif key == 'collection.occurrences':
+        original['placements'] = []
+    else:
+        original['shots'] = {}
+    assert selection(State(original), key, 'parent')['order'] == []
+    if key in ('collection.tracks', 'collection.clips'):
+        a = selection(State(original), key, 'occurrence:occ-1')
+        b = selection(State(original), key, 'occurrence:occ-2')
+        assert a['order'] and b['order'] and set(a['order']).isdisjoint(b['order'])
+
+
+def test_owner_overlap_does_not_coalesce_child_rows_into_placement_json():
+    from astrid.sdk.timeline.inverse import coalesce
+
+    placement = {'ref': 'occurrence:occ-1', 'path': [],
+                 'before': present({'occurrence_id': 'occ-1', 'shot_id': 's'}), 'after': ABSENT}
+    child = {'ref': 'occurrence:occ-1/clip:c', 'path': ['opaque'],
+             'before': present(None), 'after': present(True)}
+    assert overlaps((placement['ref'], ()), (child['ref'], tuple(child['path'])))
+    assert coalesce([{'writes': [child, placement]}]) == [child, placement]
+    assert coalesce([{'writes': [placement, child]}]) == [placement, child]
+    for ref in ('parent/collection:track', 'occurrence:occ-1/collection:clip', 'shot:s'):
+        assert overlaps(('timeline', ()), (ref, ()))
+        assert overlaps((ref, ()), ('timeline', ()))
+
+
+def test_inverse_collection_capture_uses_existing_schema():
+    original = bundle()
+    removed, records = recorded_removal(original, 'parent', 'clip', ['direct'])
+    command = inverse(removed, records).commands[0]
+    schema = json.loads((Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json').read_text())
+    Draft202012Validator(schema).validate(command)
