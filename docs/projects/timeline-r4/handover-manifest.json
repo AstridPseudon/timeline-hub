@@ -465,16 +465,17 @@
       ]
     },
     {
-      "delivered_bytes": 72772,
-      "delivered_sha256": "f6d65cf7d442c1b6e5cd6d75e2e86ebbb781ea2d95bc39115148d8a7fc998df1",
+      "delivered_bytes": 72376,
+      "delivered_sha256": "5f11386f9de1b7141d575e7551cd2e3a2455e0adc458340099e1b70a6c084d26",
       "destination": "public/docs/projects/timeline-r4/source-refs.json",
       "disposition": "post-audit receiving metadata",
       "mode": "0644",
-      "source_bytes": 72772,
+      "source_bytes": 72376,
       "source_relative_to_control_root": "source-refs.json post-audit metadata only; all source ref identities unchanged",
-      "source_sha256": "f6d65cf7d442c1b6e5cd6d75e2e86ebbb781ea2d95bc39115148d8a7fc998df1",
+      "source_sha256": "5f11386f9de1b7141d575e7551cd2e3a2455e0adc458340099e1b70a6c084d26",
       "transformations": [
-        "post-audit metadata correction"
+        "post-audit metadata correction",
+        "remove two completed handover inputs from operative missing_inputs; preserve outstanding product entry"
       ]
     },
     {
@@ -2162,14 +2163,6 @@
     }
   },
   "missing_inputs": [
-    {
-      "item": "Final public control commit/tree and private ZIP pin",
-      "status": "not yet available; prepare the stable public files first, commit the control branch, then finalize against its actual SHA/tree"
-    },
-    {
-      "item": "Fresh final handover audit",
-      "status": "planned after control publication, archive generation and independent portability validation"
-    },
     {
       "item": "Outstanding product criteria and releases",
       "status": "portfolio remains 29/95 accepted and 0/3 releases; see exact current consumer checkpoints"

@@ -48,14 +48,6 @@
   },
   "missing_inputs": [
     {
-      "item": "Final public control commit/tree and private ZIP pin",
-      "status": "not yet available; prepare the stable public files first, commit the control branch, then finalize against its actual SHA/tree"
-    },
-    {
-      "item": "Fresh final handover audit",
-      "status": "planned after control publication, archive generation and independent portability validation"
-    },
-    {
       "item": "Outstanding product criteria and releases",
       "status": "portfolio remains 29/95 accepted and 0/3 releases; see exact current consumer checkpoints"
     }
