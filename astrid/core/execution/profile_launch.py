@@ -41,6 +41,7 @@ class _ProfileLaunchOwner:
             "primary_error_type": type(self.primary_error).__name__,
             "cleanup_error_type": type(self.cleanup_error).__name__ if self.cleanup_error else None,
             "cleanup_complete": self.cleanup_complete,
+            "pending": self.process is not None and not self.cleanup_complete,
         })
 
     def _retain_before_cleanup(self, error):

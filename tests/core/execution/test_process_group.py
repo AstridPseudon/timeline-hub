@@ -1150,6 +1150,7 @@ def test_profile_wrapper_retains_actual_admission_owner_before_guarded_cleanup(
         record = json.loads(receipt.read_text())
         assert record["phase"] == "launch-refused" and record["primary_error_type"] == "CustodyError"
         assert record["cleanup_complete"] is wrapper.cleanup_complete
+        assert record["pending"] is not wrapper.cleanup_complete
         assert record["cleanup_error_type"] == (type(wrapper.cleanup_error).__name__ if wrapper.cleanup_error else None)
         assert "private primary" not in receipt.read_text() and "private cleanup" not in receipt.read_text()
         assert "audit_token_words" not in receipt.read_text()
