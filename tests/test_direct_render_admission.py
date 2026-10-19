@@ -67,7 +67,7 @@ def test_direct_managed_render_admission_freezes_snapshot_before_claim(tmp_path)
         # The render projection (_project_output_timeline) always materializes the output track list.
         assert json.loads(service.object(snapshot_ref["digest"])[1]) == {
             "config": {**timeline["config"], "tracks": []},
-            "registry": {"assets": {"source": {**timeline["registry"]["assets"]["source"], "digest": source_id}}},
+            "registry": {"assets": {"source": {**timeline["registry"]["assets"]["source"], "content_sha256": source_id}}},
         }
         assert snapshot_ref["project_id"] == project["id"]
         assert snapshot_ref["timeline_id"] == "main"
