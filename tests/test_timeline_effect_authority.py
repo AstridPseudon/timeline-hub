@@ -201,8 +201,8 @@ def test_accepted_forbidden_effect_replays_exact_key_but_cannot_reuse_a_new_key(
     service = boundary["service"]
     body = _task_body(boundary, capability_id="rendering.render", capability_digest=digest("rendering.render"),
                       settlement_effect=_effect(boundary, kind))
-    # Controlled legacy admission fixture: only the new kind check is bypassed
-    # during setup. Settlement and all replay checks retain their real fences.
+    # Controlled forbidden-kind fixture, not evidence of historical admission
+    # or film history. Only kind validation is bypassed during setup.
     with monkeypatch.context() as setup:
         setup.setattr(service.store, "_settlement_effect_kind", lambda effect: effect["effect_type"])
         admitted = _admit(boundary, body)
@@ -230,6 +230,99 @@ def test_accepted_forbidden_effect_replays_exact_key_but_cannot_reuse_a_new_key(
     assert _state(service) == after
     _assert_denied(boundary, lambda: _admit(boundary, body, key="new-key"), match="unsupported settlement effect_type")
 
+
+@pytest.mark.parametrize("receipt", ["current", "stale", "absent"])
+@pytest.mark.parametrize("seam", ["inline", "managed-render"])
+@pytest.mark.parametrize("changed", ["effect", "snapshot", "both"])
+def test_same_key_changed_admission_refuses_without_snapshot_writes(boundary, receipt, seam, changed):
+    service = boundary["service"]
+    snapshot = {"config": {"clips": [], "metadata": {"candidate": "original"}}, "registry": {}}
+    if seam == "managed-render":
+        service.create_timeline_document(boundary["project"]["id"], {
+            "timeline_id": "render-source", "slug": "render-source", "name": "Render source",
+            **snapshot,
+        }, idempotency_key="render-source")
+        body = _task_body(boundary, capability_id="rendering.render", capability_digest=digest("rendering.render"),
+                          spec={"params": {"timeline_ref": "render-source"}})
+    else:
+        body = _task_body(boundary, spec={"timeline_snapshot": snapshot})
+    # The original task is an ordinary, supported admission under the same key.
+    _admit(boundary, body)
+    if receipt == "stale":
+        service.store.conn.execute("UPDATE command_idempotency SET request_hash='legacy-stale-hash' WHERE command_kind='task.create'")
+    elif receipt == "absent":
+        service.store.conn.execute("DELETE FROM command_idempotency WHERE command_kind='task.create'")
+    changed_body = copy.deepcopy(body)
+    if changed in {"effect", "both"}:
+        changed_body["settlement_effect"] = _effect(boundary, "timeline.update")
+    if changed in {"snapshot", "both"}:
+        if seam == "managed-render":
+            # A real second timeline is part of setup, before the refusal
+            # baseline; admission must not publish its different snapshot.
+            service.create_timeline_document(boundary["project"]["id"], {
+                "timeline_id": "changed-source", "slug": "changed-source", "name": "Changed source",
+                "config": {"clips": [], "metadata": {"candidate": "changed"}}, "registry": {},
+            }, idempotency_key="changed-render-source")
+            changed_body["spec"]["params"]["timeline_ref"] = "changed-source"
+        else:
+            changed_body["spec"]["timeline_snapshot"]["config"]["metadata"]["candidate"] = "changed"
+    before = _state(service)
+    with pytest.raises((ConflictError, RuntimeError), match="different input") as error:
+        _admit(boundary, changed_body)
+    assert error.value.status == 409
+    assert _state(service) == before
+
+
+@pytest.mark.parametrize("receipt", ["current", "stale", "absent"])
+@pytest.mark.parametrize("legacy_forbidden", [False, True], ids=["allowed", "controlled-forbidden-fixture"])
+def test_exact_managed_snapshot_replay_keeps_identity(boundary, monkeypatch, receipt, legacy_forbidden):
+    service = boundary["service"]
+    service.create_timeline_document(boundary["project"]["id"], {
+        "timeline_id": "render-source", "slug": "render-source", "name": "Render source",
+        "config": {"clips": []}, "registry": {},
+    }, idempotency_key="render-source")
+    body = _task_body(boundary, capability_id="rendering.render", capability_digest=digest("rendering.render"),
+                      spec={"params": {"timeline_ref": "render-source"}})
+    if legacy_forbidden:
+        body["settlement_effect"] = _effect(boundary, "timeline.update")
+    # Controlled forbidden-kind fixture only; no claim of historical admission.
+    with monkeypatch.context() as setup:
+        if legacy_forbidden:
+            setup.setattr(service.store, "_settlement_effect_kind", lambda effect: effect["effect_type"])
+        admitted = _admit(boundary, body)
+    original_hash = service.store.conn.execute("SELECT request_hash FROM command_idempotency WHERE command_kind='task.create'").fetchone()[0]
+    if receipt == "stale":
+        service.store.conn.execute("UPDATE command_idempotency SET request_hash='legacy-stale-hash' WHERE command_kind='task.create'")
+    elif receipt == "absent":
+        service.store.conn.execute("DELETE FROM command_idempotency WHERE command_kind='task.create'")
+    before = _state(service)
+    assert _admit(boundary, body) == admitted
+    after = _state(service)
+    assert after[1] == before[1]
+    assert {name: rows for name, rows in after[0].items() if name not in {"command_idempotency", "project_sequences"}} == {
+        name: rows for name, rows in before[0].items() if name not in {"command_idempotency", "project_sequences"}}
+    assert service.store.conn.execute("SELECT request_hash FROM command_idempotency WHERE command_kind='task.create'").fetchone()[0] == original_hash
+    assert _admit(boundary, body) == admitted
+    assert _state(service) == after
+
+
+@pytest.mark.parametrize("receipt", ["current", "stale"])
+def test_render_receipt_alias_cannot_publish_a_changed_snapshot(boundary, receipt):
+    service = boundary["service"]
+    body = _task_body(boundary, capability_id="rendering.render", capability_digest=digest("rendering.render"),
+                      spec={"timeline_snapshot": {"config": {"clips": []}, "registry": {}}})
+    admitted = _admit(boundary, body)
+    assert _admit(boundary, body, key="alias") == admitted
+    assert service.store.conn.execute("SELECT 1 FROM runs WHERE idempotency_key='alias'").fetchone() is None
+    if receipt == "stale":
+        service.store.conn.execute("UPDATE command_idempotency SET request_hash='legacy-stale-hash' WHERE command_kind='task.create' AND idempotency_key='alias'")
+    changed = copy.deepcopy(body)
+    changed["spec"]["timeline_snapshot"]["config"]["metadata"] = {"changed": True}
+    changed["settlement_effect"] = _effect(boundary, "timeline.update")
+    before = _state(service)
+    with pytest.raises((ConflictError, RuntimeError), match="different input"):
+        _admit(boundary, changed, key="alias")
+    assert _state(service) == before
 
 def _final_policy(effect):
     capability = {"capability_id": CHILD, "capability_digest": digest(CHILD)}
