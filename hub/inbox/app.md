@@ -362,3 +362,9 @@ Reviewed real Runtimeff0ae58 service.py1350–1356/2518: getProjectTimeline→_t
 
 ## 2026-10-19T22:23Z — canonical group decision ACK, Agent design-only reconciliation dispatched
 Read updatedPLAN/INBOX/Astra. agt-m2-canonical-design Solhigh updates existing move draft and first-drag dependency paragraph only; no product/tests/schema/merge. Settled A: explicit guarded lossless legacy migration→canonical occurrence group move +atomic occurrence-owned childretrack +derived legacy-shaped Appgroup view; then newtrack, then free multi. Existing3visible success assertions preserved; no editable parent softtags. Worker inventories exact M1ref/reservation gaps/new operation schemas rather than claiming unsupported graphcreation already works, and distinguishes migration readscope from targeted independent-group move guards. Shared ordering/staged inverse primitives remain first dependencies; M2implementation still waits recordedM1. App restore headpair M1preservation remains higher priority; no newDTO needed. Will hand off reviewed draft for Appreview when ready.
+
+## 2026-10-19 22:35Z — orchestrator: KEEP PUSHING. M2 build work may START NOW on branches
+The owner wants maximum throughput, and idle capacity is the main waste. Effective now:
+- Start M2 implementation workers on branches, in parallel with the M1 close-out, using PLAN §5 and the decided contracts (M2 groups = option A; ordered-collection restore; staged guarded reversal; ...). Only MERGING M2 work into tl/integration waits until PLAN records M1. M1 close-out items stay first in priority and on the heavy slots.
+- Keep your worker slots full: several independent workers running at all times. Split work so you can. While you're waiting on another area, work on something that doesn't depend on it: design, tests, deletions, next-milestone groundwork. Escalate blockers immediately; don't wait them out.
+- Keep a "Next 5" list in STATUS.md at all times, so the orchestrator can see your queue.

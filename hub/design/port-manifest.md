@@ -243,7 +243,7 @@ At this inspected SHA, `commit.py:373–381` still refuses that adapter. Consume
 its reviewed implementation before widening; do not build another restore path.
 No M2 product implementation is authorized by this queue.
 
-**First M2 dependency (DECIDED A; design only until M1 is recorded):** follow
+**First M2 dependency (DECIDED A; merging waits for recorded M1):** follow
 `m2-move-draft.md`: approved order/staged-inverse groundwork, then explicit
 recorded lossless legacy-group→canonical-shot migration + whole-occurrence move
 to an existing lane + explicitly owner-bound derived App group view. Retrack
@@ -253,8 +253,9 @@ separately add free multi-clip move-set. Preserve all three original App success
 assertions; local patch/group-array shapes are compatibility output only. Refresh
 new command/ref schemas and reservation semantics through the existing artifact
 handoff, without new Runtime DTO/ABI. This supersedes pending group-choice language
-below, not historical M0 observations. Later rows are bounded source/test slices,
-not one registry-wide PR; M1 restore preservation and closure remain prerequisites.
+below, not historical M0 observations. The 22:35 INBOX allows branch implementation;
+this task stays design only. Later rows are bounded source/test slices, not one
+registry-wide PR; M1 restore preservation and closure remain merge prerequisites.
 
 ### What “full registry” must cover
 

@@ -1,15 +1,18 @@
 # M2 design — migrate legacy groups, then move canonical occurrences
 
 2026-10-19, `agt-m2-canonical-design`; Agent base `4ffbb8b081a57eb5f6d8962c30d02b30660491ae`.
-**Design only while M1 remains open.** PLAN's decisions log and latest Agent
+**This task is design only; M1 remains open.** PLAN's decisions log and Agent
 INBOX **DECISION on M2 group representation** settle option A. The earlier
 soft-tag recommendation in [m2-group-ownership.md](m2-group-ownership.md) is
 superseded by [Astra's review](../reviews/astra-m2-groups.md). No implementation,
-merge or M1 closure is authorized here. `clip.move` v1 remains unchanged.
+merge or M1 closure is authorized by this task. The newer 22:35 INBOX permits
+separate M2 implementation branches; merging still waits for recorded M1 closure.
+`clip.move` v1 remains unchanged.
 
 Canonical shots and occurrences own groups. `config.pinnedShotGroups` is only
 an explicit migration input; clearing it consumes that input, never edits a
-second group store. No load-time conversion. Sequence after M1 is recorded:
+second group store. No load-time conversion. Implementation dependency sequence
+(branch work per 22:35 INBOX; integration only after M1 is recorded):
 
 1. Approved order/staged-inverse groundwork; recorded lossless migration of the
    existing two-clip group; occurrence move to an existing lane; derived App view.
@@ -78,7 +81,7 @@ Unsupported timing/source maps remain explicit refusals pending their later slic
 
 | Recorder part | Exact proposed observation/effect |
 | --- | --- |
-| Reads | Tagged state of `parent.config.pinnedShotGroups`, config/container presence, every consumed full member row, parent clip mirror/layout presence and equality, source lane definitions/output fps/registry keys and any shot metadata actually consumed. Original parent fields stay in place. Read the full original legacy field once; it is migration input, not a future editable array. |
+| Reads | Tagged state of `parent.config.pinnedShotGroups`, config/container presence, every consumed full member row, parent clip mirror/layout presence and equality, every copied full track row plus track order, full copied output context/fps, consumed registry keys and any shot metadata actually consumed. Original parent fields stay in place. Read the full original legacy field once; it is migration input, not a future editable array. |
 | Selections | New v1 `migration.groups` (owner parent, ordered proposed occurrence refs from args, boundaries the same; complete legacy rows guarded by the read above), `collection.clips` and `collection.occurrences` (entire original membership/order), and `collection.shots` (existing shot identities). Query results, including empty, use existing members/order/boundaries/policy:guard-membership. Uniqueness and all exclusion predicates are verified before writes. |
 | Bindings/dependencies | Fixed `migration.group:<i>` → new occurrence ref, `migration.shot:<i>` → new shot ref, and `migration.member:<i>:<j>` → exact source parent clip ref with its destination occurrence/clip ref recorded as a separate binding. Capture immutable media, transcript DocumentPins, authority and source/map pins through existing dependency kinds. Source/destination mapping is explicit, never inferred from display IDs. |
 | Creates | One `shot:S` aggregate per group (full authored shot payload plus internal timeline), then one `occurrence:O` root pointing to it. No new stable clip IDs, internal timeline document IDs, group IDs or shot-item IDs are needed: raw child IDs and existing valid item IDs remain; internal revisions use the existing parent timeline_id. New content-addressed revision IDs/digests are compiler outputs, not random allocations. Unsupported legacy items lacking canonical identity refuse; no index IDs. |
@@ -294,7 +297,8 @@ Keep schema_version1 and old operation/query semantics; new versions are explici
 
 IDs are allocated/captured once before outbox sealing; migration destinations and
 new bottom lane ID are in original args/created claims. Extend reservation checks
-to typed scopes: shots project-wide, occurrences timeline-wide, tracks owner-wide.
+to typed scopes: shots project-wide, occurrences timeline-wide, tracks owner-wide; validate
+materialized item identity occupancy against Runtime's existing item-ID scope too.
 Check current occupancy AND all trusted accepted creations across inverse/redo
 lineage; no slash-prefix assumption or treating bootstrap as allocation proof.
 Undo never frees reservations. Ordinary reuse of retired ID refuses; only trusted
@@ -302,9 +306,28 @@ inverse/redo restores the same identity. Preserve original command.created/recor
 created consistency, duplicate-in-batch refusal and unavailable-history failure.
 No random replay IDs, prefix guessing or broadening id_map: it remains identity
 pairs only (empty is valid), never legacy→canonical remapping. The explicit
-migration provenance/bindings carry that different mapping. Main's deterministic
-occurrence isolation/item remapping must remain exactly validated, not replaced
-with provider id_map rewrites; new-shot/reload proof is required before dispatch.
+migration provenance/bindings carry that different mapping.
+
+Repeated-shot retrack needs an additional explicit creation case: main's
+`_authoring_shot_id` / `_copy_shot_for_placement` already compute exact independent
+shot/item identities while opening the bundle. These working slots are not proof
+that the IDs were accepted/reserved. Before sealing capture, record those exact
+identities if they become persistent creations: shot:S via kind shot above and
+`shot:S/item:I` via kind item, owner shot:S. Add this item spelling to ScopedId,
+EntityRef/TargetKey/AnchorIdentity and its State resolver/shot-root overlap; existing
+item IDs otherwise remain unchanged. No arbitrary new allocation or provider
+id_map rewrite. This is required semantic/schema work, not current M1 support.
+
+Creation occupancy must compare the authenticated input CanonicalDocument plus
+staged accepted-kind creates, distinct from virtual authoring-slot existence.
+Record full newly materialized shot aggregate absent→present before its owned
+child writes; item creation facts are contained effects of that aggregate with
+exact IDs, not a second items-array writer. Bind the original source and exact
+main mapping. Extend common alias/overlap/staged inverse accordingly. Preserve
+older M1 records through their verified closure/mapping compatibility path, not
+retroactively invented created claims. Repeated-shot accepted reload/reservation
+proof blocks that case until this distinction is implemented; singleton migrated
+groups do not require these isolation/item creates.
 
 Exact retry after lost ACK/restart returns the same accepted publication/result;
 changed same-key payload refuses. Dependent unsent B waits for A ACK, then submits
@@ -413,7 +436,7 @@ no service/full/socket test is authorized by this design task.
 
 ## Ready implementation split and blockers
 
-| Order / owner | Files and exit boundary after M1 is recorded |
+| Order / owner | Files and exit boundary (branch work allowed; merges wait M1) |
 | --- | --- |
 | 1 Agent shared primitives | `astrid/sdk/timeline/{_command_state,_recording,inverse,rebase}.py`, adjacent conformance/provider tests: shared overlap/order and staged reversal with M1 record compatibility, no new fields. |
 | 2 Agent schema + migration | `astrid/core/timeline/schema/edit-command.schema.json`; `astrid/sdk/timeline/{commands,capture,commit}.py`; bounded `astrid/core/timeline/{shot_composition_migration,shot_composition,authoring_bundle}.py` adapters. Register shot/occurrence identity/ref semantics and reservations; replace sanitized conversion/new-shot fabricated-source assumption with exact recorded creation. Exit: legacy→canonical→accepted reload→exact inverse. Core shared-file edits coordinated by Agent manager. |
@@ -422,11 +445,12 @@ no service/full/socket test is authorized by this design task.
 | 5 Agent/App new-track composition | Reuse track.create, record child-lane creates and own-consumer staged inverse. Parent/child V3 removal/redo/reservations + second group success, central accepted journey. |
 | 6 Agent/App free set + frontends | Separate clip.move-set schema/handler/capture and existing planner/CLI/Python/sheet adapters; third original success and cross-frontend conformance. No editing of group provenance/store. |
 
-Concrete blockers: M1 remains open; root shot/occurrence recorder support,
+Concrete blockers: M1 remains open for integration; root shot/occurrence recorder support,
 lossless scoped legacy validation, new-shot materialization and accepted projection
 are unimplemented. `_check_reservations` sees one timeline's history; that cannot
 prove project-wide shot absence/reservation by itself. Runtime currently rejects
-foreign-project shot scope but upserts a same-project project_shots row. **Required
+foreign-project shot scope but upserts a same-project project_shots row; shot_items
+also has persisted identity constraints, not an assumed owner-local namespace. **Required
 bounded Runtime change**: atomically refuse a claimed new shot ID already used or
 retired anywhere relevant (using existing rows/history), while trusted inverse
 restoration/materialized existing sources stay valid. Agent's timeline-local
@@ -445,6 +469,9 @@ PYTHONDONTWRITEBYTECODE=1 and this worktree's PYTHONPATH: exit0. It observes cur
 schema acceptance but State refusal of missing occurrence/shot roots, unsupported
 shot-group resolution, recursive sanitizer loss, contiguous/order refusal, missing
 collection/member overlap and existing global timeline-root overlap. See probe.log.
+The separate stdlib `notes/check_assertions.py` source comparison exited0: all
+three assertion blocks equal App main `60aa26b95` exactly (ignoring terminal blank
+space), still it.fails; see source-check.log. Hooks were not executed.
 Those are observations of missing support, not implemented M2 tests. No pytest,
 make check, vitest, browser, full suite, service, network or install was run.
-No product/test/schema/generated files changed; no merge or commit requested.
+No product/test/schema/generated files changed; no git merge/commit was run.

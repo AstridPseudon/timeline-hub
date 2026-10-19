@@ -220,3 +220,30 @@ Agentbbb5f529 merged4ffbb8b0. Exactly one ASTRID_REMOTION_BROWSER_EXECUTABLE par
 
 ## 2026-10-19T21:59Z — check-import-fence remote request ACK/HELD
 Received6f2b5536. Its explicit request says Agent review ONLY AFTER M1 recorded per21:50, so held without review/merge until that gate; not silently blocked on package ancestry (separate7a68b7ed already integrated). Agent current4ffbb8b0 only adds authorized browserenv fix to restorequalifiedsource. Full80%, App journeys+Runtime full+audit stillhold overallM1. Will review exact coupled scene/check/onscreen deletion diff and strict expected failures after orchestrator release.
+
+
+## 2026-10-19T22:30Z — Runtime exact Agent postrestore full node diff
+Agent full agent-full-1019214054-26553 DONE11746PASS52FAIL15ERROR456SKIP2844.65s. Manager parsed exact FAILED/ERROR headings against untouched preport agent-full-1019191532-6465: ALL63old remain, exactly4additional nodes:
+- tests/core/test_editor_element_catalog.py::test_checked_in_typescript_projection_is_current
+- tests/core/timeline/test_clip_fields.py::test_render_status_defaults_to_pinned_union_composition
+- tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix
+- tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup
+No baseline node stopped failing; cannot labelthese4oldbyname. All68previousM1addednodes gone. Agent owns review/triage, Viewing owns rendering conclusions/grants; coordinate narrow fixes/no muted assertions or duplicatefull untilmeaningfulbatch. RuntimefullfinallyRUNNING22:29 onff0ae58 tree14a69fd7 +actualAgent4ffbb8b0, expects7only. ApprestoreHistory preservation directive remains active; no Runtime wirechange needed.
+
+## 2026-10-19 22:35Z — orchestrator: KEEP PUSHING. M2 build work may START NOW on branches
+The owner wants maximum throughput, and idle capacity is the main waste. Effective now:
+- Start M2 implementation workers on branches, in parallel with the M1 close-out, using PLAN §5 and the decided contracts (M2 groups = option A; ordered-collection restore; staged guarded reversal; ...). Only MERGING M2 work into tl/integration waits until PLAN records M1. M1 close-out items stay first in priority and on the heavy slots.
+- Keep your worker slots full: several independent workers running at all times. Split work so you can. While you're waiting on another area, work on something that doesn't depend on it: design, tests, deletions, next-milestone groundwork. Escalate blockers immediately; don't wait them out.
+- Keep a "Next 5" list in STATUS.md at all times, so the orchestrator can see your queue.
+
+Runtime22:31 trace triage addendum (read-only; owner review still needed): catalog projection generator--check says elements/catalog.ts stale; clip_fields default test explicitly hardcodes0.0.6 though integratedpackage0.0.8 now renders am-type opacity; journey install fixture writes{} manifests then expectsstrict actualpackagegate succeeds (unexpected nameNone); TextCardVisibleMarkupTest reads thin re-export source and expects literalcontent/JSX that nowlivesincanonicalpackage. Do not weaken packagegate/visible-markup proof; migrate stalefixtures/assertions to actualpublicartifact behavior, regenerate catalog viaownedsources ifconsistent. Exacttracebacks in currentfulllog; no Runtime changes.
+
+
+## 2026-10-19T22:30Z — Agent full new4 consumer failures, your correction needed
+Fullfinished11746PASS52FAIL15ERR456SKIP/2844.65s, tree36d86ed3/ddc1bac3. All68priorM1newnodes fixed, old63persist, NEW4packageconsumer nodes. Details/tracebacks in escalations/agent-20261019T223054Z-consumer-full-four.md +tests/agent-full-1019214054-26553/log.txt. Please own normal regeneration astrid/packs/rendering/elements/catalog.ts (freshness --check fails) and TextCardVisibleMarkupTest adaptation to ACTUAL installed public component/visiblecontent (localwrappernowreexport, oldstaticJSXtestinvalid; no mereimportassertion). Requested narrow orchestrator grant for single journey renderer-install fixture (empty{}removedschema/themepackages no longer real pinned readiness); keep npmci/remotioncli hints +strongpositiveinstall and no readiness relaxation. Agent owns current-defaultclip_fields test update only, retaining oldversionmatrix. No duplicatefull; correctionsfocused thenreviewincomingdiff asowner. All4mustclose forM1failureclassification; no newxfail/skip/positive deletion.
+
+## 2026-10-19 — orchestrator: two Agent full-suite failures are yours (M1 exit items, urgent)
+From agent-full-1019214054-26553 (Agent ddc1bac3):
+1. tests/core/test_editor_element_catalog.py::test_checked_in_typescript_projection_is_current. astrid/packs/rendering/elements/catalog.ts is stale after the package wrappers. Regenerate it with the normal gen_element_catalog.py; the freshness test stays.
+2. tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup. The wrapper now re-exports EFFECT_REGISTRY['text-card'] from the package. Prove visible markup by rendering the actual installed public component, and don't weaken it to an import/string check.
+Send ONE remote merge request to agent with both fixes. Prioritise this above M3 work; it blocks M1.

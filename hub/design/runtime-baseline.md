@@ -98,3 +98,6 @@ work on untouched main. No product/test/environment/dependency change was
 made. Detailed report and both logs:
 `workers/rt-m1-baseline-proof/report.md` and
 `tests/rt-m1-baseline-proof-targeted-1019215409-28828/log.txt`.
+
+## Runtime postrestore full — 2026-10-19T22:32Z
+Source-aware runtime-full-restore-integration-1019215254-21244 onff0ae58/tree14a69fd7, currentAgent4ffbb8b0, command env ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=$PWD:/home/user/work/agent /home/user/work/venv-runtime/bin/python -m pytest -q -n 3: **3772PASS8FAIL18SKIP137.55s**. All7restore regressions corrected with actualprovider;50new source/budget tests pass. Seven remaining baseline nodes are directly reproduced on untouched8c1830d above. Eighth NEW failure test_bundle_matches_canonical_resources_and_generator imports Agent's scripts.artifact_manifest via mixed-source Python module namespace; returned artifactpaths are astrid/* rather than Runtime client/schema resources. Narrow test-only origin isolation rt-m1-artifact-import dispatched; existing membership/generatedbyte/closedresources assertions stay. No product/generated/contractchange and no pass claim yet. ONE postfixfull afterreview/merge, notunchanged-tree retry.
