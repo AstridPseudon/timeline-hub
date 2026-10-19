@@ -3335,7 +3335,10 @@ class RuntimeService(TimelineCommitAcceptance):
                 raise ValidationError("internal timeline timeline_id is required")
             timeline_identity = self.store.conn.execute("SELECT project_id FROM timelines WHERE id=?", (timeline_key,)).fetchone()
             if timeline_identity is None:
-                if timeline_key != timeline_id or timeline is not None:
+                # Public project shots own virtual internal timelines without a timeline aggregate.
+                scoped_shot = timeline_key.removeprefix("shot:") if timeline_key.startswith("shot:") else None
+                scoped = scoped_shot and self.store.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (scoped_shot,)).fetchone()
+                if (not scoped or scoped["project_id"] != project["id"]) and (timeline_key != timeline_id or timeline is not None):
                     raise NotFoundError("internal timeline dependency is missing", details={"timeline_id": timeline_key})
             elif timeline_identity["project_id"] != project["id"]:
                 raise ConflictError("internal timeline belongs to a different project", details={"timeline_id": timeline_key})

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import io
 import json
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -15,6 +17,7 @@ from banodoco_workspace_client import ApiError, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
 from runtime_protocol.service import RuntimeService
+from runtime_protocol.server import RuntimeHandler
 from runtime_protocol.store import RealmStore
 from runtime_protocol.util import canonical_json
 
@@ -67,6 +70,127 @@ def _publication(project_id, *, expected_head=None, parent_revision_id="parent-1
             }],
         },
     }
+
+
+def _publication_route(service, project_id, body, key):
+    """Real route and JSON validation without a listener or credentials."""
+    handler = object.__new__(RuntimeHandler)
+    handler.server = SimpleNamespace(runtime=service)
+    handler.path = f"/v1/projects/{project_id}/timelines/{body['timeline_id']}/composition-revisions"
+    handler.command = "POST"
+    payload = json.dumps(body).encode()
+    handler.headers = {"Content-Type": "application/json", "Content-Length": str(len(payload)),
+                       "Idempotency-Key": key}
+    handler.rfile = io.BytesIO(payload)
+    scopes = []
+    handler._identity = lambda scope: scopes.append(scope) or {"actor": "offline-owner"}
+    handler._send = lambda status, value=None, **kwargs: (status, value)
+    try:
+        return handler._route()
+    finally:
+        assert scopes == ["projects:write"]
+
+
+def _public_shot_publication(service, project_id, *, expected_head):
+    media = service.ingest(project_id, b"offline-owned-image", media_type="image/png",
+        original_name="fixture.png", idempotency_key="public-shot-media")["data"]["object_id"]
+    shot = service.create_project_shot(project_id, {"name": "Public shot"}, idempotency_key="public-shot")["data"]
+    added = service.add_shot_item(project_id, shot["shot_id"], {"media_id": media},
+        idempotency_key="public-shot-item")["data"]
+    immutable = service.get_project_shot_revision(project_id, shot["shot_id"], added["revision_id"])
+    internal = service.get_project_timeline_revision(project_id, immutable["internal_timeline_id"],
+        immutable["internal_timeline_revision_id"])
+    assert internal["timeline_id"] == f"shot:{shot['shot_id']}"
+    with pytest.raises(NotFoundError):
+        service.get_project_timeline(project_id, internal["timeline_id"])
+    # The App preserves this immutable child's virtual locator while producing
+    # a new canonical child and two occurrences of the same shot revision.
+    body = _publication(project_id, expected_head=expected_head,
+        parent_revision_id="parent-public-shot", shot_revision_id="public-shot-revision")
+    child = body["internal_timeline_revisions"][0]
+    child.update(timeline_id=internal["timeline_id"], revision_id="public-internal-revision",
+        payload={"tracks": [{"id": "video", "kind": "visual"}], "clips": [{
+            "id": immutable["payload"]["items"][0]["item_id"], "clip_type": "media",
+            "asset_id": "fixture-image", "at_ms": 0, "duration_ms": 1000, "track": "video"}]})
+    revision = body["shot_revisions"][0]
+    revision.update(shot_id=shot["shot_id"], internal_timeline_revision_id=child["revision_id"])
+    revision["payload"]["items"] = copy.deepcopy(immutable["payload"]["items"])
+    revision["payload"]["assets"] = [{"asset_id": "fixture-image", "object_id": media,
+        "digest": media, "role": "source", "media_type": "image/png"}]
+    revision["payload"]["provenance"] = {"source_revision_id": immutable["revision_id"],
+        "source_internal_revision_id": internal["revision_id"]}
+    occurrence = body["parent_composition"]["occurrences"][0]
+    occurrence.update(shot_id=shot["shot_id"], track="video", at_ms=0)
+    second = copy.deepcopy(occurrence)
+    second.update(occurrence_id="occurrence-2", at_ms=1000, placement={"start_ms": 1000})
+    body["parent_composition"]["occurrences"].append(second)
+    return body, immutable, internal
+
+
+@pytest.mark.parametrize("locator", ["same-project", "missing-shot", "foreign-shot",
+    "malformed-shot", "empty-shot", "mismatched-revision", "mismatched-project", "stale-head"])
+def test_public_shot_scoped_new_child_publication_route(tmp_path, locator):
+    service, project_id = _service(tmp_path)
+    try:
+        first = service.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="initial-parent")["data"]
+        body, immutable, internal = _public_shot_publication(service, project_id, expected_head=first["revision_id"])
+        before = service.get_project_timeline(project_id, "main")
+        expected_error = NotFoundError
+        if locator == "missing-shot":
+            body["internal_timeline_revisions"][0]["timeline_id"] = "shot:missing-shot"
+        elif locator == "foreign-shot":
+            other = service.create_project({"slug": "foreign", "name": "Foreign"}, idempotency_key="foreign-project")
+            foreign = service.create_project_shot(other["id"], {"name": "Foreign shot"}, idempotency_key="foreign-shot")["data"]
+            body["internal_timeline_revisions"][0]["timeline_id"] = f"shot:{foreign['shot_id']}"
+        elif locator == "malformed-shot":
+            body["internal_timeline_revisions"][0]["timeline_id"] = f"shot/{immutable['shot_id']}"
+        elif locator == "empty-shot":
+            body["internal_timeline_revisions"][0]["timeline_id"] = "shot:"
+        elif locator == "mismatched-revision":
+            body["internal_timeline_revisions"][0]["revision_id"] = internal["revision_id"]
+            body["shot_revisions"][0]["internal_timeline_revision_id"] = internal["revision_id"]
+            expected_error = ConflictError
+        elif locator == "mismatched-project":
+            body["project_id"] = "different-project"
+            expected_error = ConflictError
+        elif locator == "stale-head":
+            body["expected_head"] = "stale-parent-head"
+            expected_error = ConflictError
+        if locator == "same-project":
+            status, response = _publication_route(service, project_id, body, "new-public-child")
+            result = response["data"]
+            assert status == 200 and result["revision_id"] == "parent-public-shot"
+            exact = service.get_project_parent_composition_revision(project_id, "main", result["revision_id"])
+            assert len(exact["payload"]["occurrences"]) == 2
+            assert {row["shot_revision_id"] for row in exact["payload"]["occurrences"]} == {"public-shot-revision"}
+            child = service.get_project_timeline_revision(project_id, internal["timeline_id"], "public-internal-revision")
+            assert child["timeline_id"] == internal["timeline_id"]
+            assert service.get_project_timeline(project_id, "main")["head_revision_id"] == result["revision_id"]
+        else:
+            with pytest.raises(expected_error):
+                _publication_route(service, project_id, body, f"refused-{locator}")
+            assert service.get_project_timeline(project_id, "main") == before
+            with pytest.raises(NotFoundError):
+                service.get_project_parent_composition_revision(project_id, "main", "parent-public-shot")
+            with pytest.raises(NotFoundError):
+                service.get_project_timeline_revision(project_id, internal["timeline_id"], "public-internal-revision")
+        assert service.get_project_shot_revision(project_id, immutable["shot_id"], immutable["revision_id"]) == immutable
+        assert service.get_project_timeline_revision(project_id, internal["timeline_id"], internal["revision_id"]) == internal
+    finally:
+        service.close()
+
+
+def test_first_publication_retains_parent_internal_identity(tmp_path):
+    root = tmp_path / "bootstrap-realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    try:
+        project = service.create_project({"slug": "bootstrap", "name": "Bootstrap"}, idempotency_key="bootstrap-project")
+        status, response = _publication_route(service, project["id"], _publication(project["id"]), "bootstrap-publication")
+        assert status == 200 and response["data"]["revision_id"] == "parent-1"
+        assert service.get_project_timeline(project["id"], "main")["head_revision_id"] == "parent-1"
+    finally:
+        service.close()
 
 
 def _publish_with_explicit_media(service, project_id, *, parent_revision_id="parent-media"):
