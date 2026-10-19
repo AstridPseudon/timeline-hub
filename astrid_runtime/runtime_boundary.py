@@ -169,6 +169,9 @@ class LocalRuntimeBoundary:
         self._display_name = "Astrid Workspace"
         self._bootstrap_credential: str | None = None
         self._detached_pid: int | None = None
+        self._door: tuple[Any, Path] | None = None
+        # Where this start's own lines begin in runtime.log, so a startup failure is reported by its cause.
+        self._log_offset = 0
 
     @staticmethod
     def _validate_source(source: SourceProfile) -> None:
@@ -217,6 +220,10 @@ class LocalRuntimeBoundary:
 
     def configure_source(self, source: SourceProfile) -> None:
         self._source = source
+
+    def configure_door(self, door, credential_file: Path) -> None:
+        """Open the hosted page's browser door (``DoorSettings``, or None) in every daemon this boundary starts."""
+        self._door = None if door is None else (door, Path(credential_file))
 
     @staticmethod
     def _token_file(support_root: Path, token: str) -> Path:
@@ -272,6 +279,9 @@ class LocalRuntimeBoundary:
             argv += ["--admission-timeout", str(self.admission_timeout_seconds)]
         if source.worker_profile and "--worker-profile" not in argv:
             argv += ["--worker-profile", str(Path(source.worker_profile).expanduser().resolve())]
+        if self._door is not None and "--door-origin" not in argv:
+            door, credential_file = self._door
+            argv += ["--door-origin", door.origin, "--door-port", str(door.port), "--door-credential-file", str(credential_file)]
         return argv
 
     def create(self, *, realm_id: str, realm_root: Path, display_name: str, source_profile: SourceProfile) -> Mapping[str, Any]:
@@ -408,6 +418,7 @@ class LocalRuntimeBoundary:
         argv = self._argv(source_profile, realm_id=realm_id, realm_root=realm_root, support_root=support_root, display_name=self._display_name, owner_lock=owner_lock, token_file=token_file)
         log_path = support_root / "runtime.log"
         log = log_path.open("ab")
+        self._log_offset = log.tell()
         try:
             # Do not derive imports from either checkout.  The selected
             # runtime_environment is an installed environment and the child
@@ -454,6 +465,8 @@ class LocalRuntimeBoundary:
             "worker_credential_pending": bool(discovery.get("worker_credential_pending")),
             "worker_actor": discovery.get("worker_actor"),
             "worker_scopes": discovery.get("worker_scopes", ()),
+            "door_endpoint": discovery.get("door_endpoint"),
+            "door_origin": discovery.get("door_origin"),
         }
 
     def _read_discovery(self, support_root: Path) -> dict[str, Any]:
@@ -508,11 +521,34 @@ class LocalRuntimeBoundary:
             pass
         return None
 
+    @staticmethod
+    def _startup_failure(log_path: Path, offset: int) -> str | None:
+        """The daemon's own structured startup error, from what it logged after ``offset``."""
+        try:
+            with log_path.open("rb") as handle:
+                handle.seek(max(offset, log_path.stat().st_size - 65536))
+                lines = handle.read().decode("utf-8", "replace").splitlines()
+        except OSError:
+            return None
+        for line in reversed(lines):
+            try:
+                value = json.loads(line)
+            except ValueError:
+                continue
+            error = value.get("error") if isinstance(value, dict) and value.get("ok") is False else None
+            if isinstance(error, dict) and isinstance(error.get("message"), str):
+                return error["message"]
+        return None
+
     def _wait_endpoint(self, support_root: Path, process: subprocess.Popen[str]) -> str:
         deadline = time.monotonic() + self.wait_seconds
         while time.monotonic() < deadline:
             if process.poll() is not None:
-                raise BootstrapError(f"Runtime daemon exited during startup (see {support_root / 'runtime.log'}).")
+                cause = self._startup_failure(support_root / "runtime.log", self._log_offset)
+                raise BootstrapError(
+                    f"Runtime daemon exited during startup: {cause} (see {support_root / 'runtime.log'})." if cause
+                    else f"Runtime daemon exited during startup (see {support_root / 'runtime.log'})."
+                )
             discovery = self._read_discovery(support_root)
             # A support root may still advertise a healthy incumbent while a
             # replacement candidate is starting.  Never adopt that endpoint:

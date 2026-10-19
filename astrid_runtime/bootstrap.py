@@ -7,7 +7,7 @@ that boundary and legacy roots are always rejected.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 import errno
 import hashlib
 import json
@@ -222,6 +222,14 @@ class SourceProfile:
 
 
 @dataclass(frozen=True)
+class DoorSettings:
+    """The hosted page's browser door that a started daemon opens (``runtime_protocol.door``)."""
+
+    origin: str
+    port: int
+
+
+@dataclass(frozen=True)
 class BootstrapConfig:
     profile: str = "astrid"
     display_name: str = "Astrid Workspace"
@@ -231,6 +239,7 @@ class BootstrapConfig:
     schema_version: str = SCHEMA_VERSION
     capability_digest: str = ""
     legacy_roots: tuple[Path, ...] = ()
+    door: DoorSettings | None = None
 
     def resolve_source_profile(self, paths: RuntimePaths) -> SourceProfile:
         if self.source_profile is not None:
@@ -258,6 +267,9 @@ class BootstrapResult:
     worker_actor: str | None = field(default=None, compare=False)
     worker_scopes: tuple[str, ...] = field(default=(), compare=False)
     source_checkout: str | None = field(default=None, compare=False)
+    # The browser door of the running daemon, when it has one: the page to open and where it listens.
+    door_origin: str | None = field(default=None, compare=False)
+    door_endpoint: str | None = field(default=None, compare=False)
 
     @property
     def ready(self) -> bool:
@@ -775,6 +787,10 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
     configure = getattr(boundary, "configure_source", None)
     if configure is not None:
         configure(source)
+    configure_door = getattr(boundary, "configure_door", None)
+    if configure_door is not None:
+        # The door acts with the product credential this launcher provisions below.
+        configure_door(config.door, paths.credentials_dir / "astrid.json")
     collision = _legacy_collision(paths, config.legacy_roots)
     if collision is not None:
         raise LegacyRootCollisionError(LEGACY_NEXT_ACTION.format(legacy_root=collision))
@@ -830,6 +846,11 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
             catalog["source_profiles"][source.profile] = source.as_dict()
             _commit_source_profile_metadata(paths, source, catalog)
             diagnostics.append("runtime checkout differences are provenance only")
+            if config.door is not None and discovery.get("door_origin") != config.door.origin:
+                diagnostics.append(
+                    f"the running Runtime's browser door serves {discovery.get('door_origin') or 'no hosted page'}; "
+                    f"restart it to serve {config.door.origin}"
+                )
             worker = _worker_handoff(discovery)
             return BootstrapResult(
                 "reconnected", realm_id,
@@ -838,6 +859,7 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
                 paths.discovery_path, paths.credentials_dir / "astrid.json",
                 worker.get("worker_credential_file"), worker.get("worker_actor"),
                 worker.get("worker_scopes", ()), source.source_checkout,
+                discovery.get("door_origin"), discovery.get("door_endpoint"),
             )
         # A dead advertisement is ephemeral support state.  Remove it before
         # starting so a crash cannot be mistaken for a live owner.
@@ -944,6 +966,7 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
         "worker_actor": str(handle.get("worker_actor") or ""),
         "worker_scopes": list(handle.get("worker_scopes") or ()),
         "advertised_at": time.time(),
+        **({"door_endpoint": handle["door_endpoint"], "door_origin": handle["door_origin"]} if handle.get("door_endpoint") else {}),
     }
     try:
         _commit_bootstrap_metadata(paths, source, catalog, discovery_value)
@@ -969,6 +992,7 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
         paths.credentials_dir / "astrid.json",
         worker.get("worker_credential_file"), worker.get("worker_actor"),
         worker.get("worker_scopes", ()), source.source_checkout,
+        handle.get("door_origin") if handle.get("door_endpoint") else None, handle.get("door_endpoint"),
     )
 
 
@@ -1006,6 +1030,7 @@ def connect(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCon
         paths.credentials_dir / "astrid.json",
         worker.get("worker_credential_file"), worker.get("worker_actor"),
         worker.get("worker_scopes", ()), source.source_checkout,
+        discovery.get("door_origin"), discovery.get("door_endpoint"),
     )
 
 
@@ -1132,13 +1157,7 @@ def restart(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCon
     with _bootstrap_mutex(paths):
         _interrupt_owner_locked(paths, boundary)
         result = _bootstrap_locked(paths, boundary, config)
-    return BootstrapResult(
-        "restarted", result.realm_id, result.display_name, result.endpoint,
-        result.actor_id, result.source_profile, result.diagnostics,
-        result.discovery_path, result.credential_file,
-        result.worker_credential_file, result.worker_actor,
-        result.worker_scopes, result.source_checkout,
-    )
+    return replace(result, status="restarted")
 
 
 def _doctor_observation(paths: RuntimePaths, boundary: RuntimeBoundary | None = None) -> tuple[dict[str, Any], dict[str, Any] | None]:

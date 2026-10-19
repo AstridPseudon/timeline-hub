@@ -14,6 +14,11 @@ from tests.astrid_checkout import astrid_importable  # noqa: F401  (fixture)
 from tests.lanes import pytest_collection_modifyitems, pytest_configure  # noqa: F401  (lanes)
 from tests.process_groups import ProcessGroups
 
+# A real `astrid-runtime up` in a test opens its browser door on an ephemeral
+# port, never the well-known 17340 that this machine's own Runtime, or a
+# parallel test, may hold.
+os.environ["ASTRID_RUNTIME_DOOR_PORT"] = "0"
+
 
 @pytest.fixture
 def owned_process_groups():

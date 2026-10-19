@@ -15,6 +15,8 @@ from . import __version__
 from .bootstrap import (
     BootstrapConfig,
     BootstrapError,
+    BootstrapResult,
+    DoorSettings,
     SourceProfile,
     _read_catalog,
     _read_support_json,
@@ -31,6 +33,7 @@ from .loopback_http import urlopen_loopback
 from .paths import DATA_ROOT_ENV, RuntimePaths
 from .runtime_boundary import LocalRuntimeBoundary
 from .workspace import configure_workspace, inspect_workspace
+from runtime_protocol.door import DEFAULT_DOOR_PORT, DEFAULT_HOSTED_ORIGIN, exact_https_origin
 from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.upgrade import DEFAULT_UPGRADE_TIMEOUT_SECONDS
 
@@ -145,11 +148,31 @@ def parser() -> argparse.ArgumentParser:
     return root
 
 
+DOOR_PORT_ENV = "ASTRID_RUNTIME_DOOR_PORT"
+
+
+def _hosted_origin(value: str) -> str:
+    if value == "off":
+        return value
+    try:
+        return exact_https_origin(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
+
+
+def _door_port(value: str) -> int:
+    if not value.isdigit() or not 0 <= int(value) <= 65535:
+        raise argparse.ArgumentTypeError(f"door port must be an integer from 0 to 65535, got {value!r}")
+    return int(value)
+
+
 def _profile_args(command: argparse.ArgumentParser, *, data_root_required: bool = False) -> None:
     command.add_argument("--profile", default="astrid", choices=["astrid"])
     command.add_argument("--display-name", default="Astrid Workspace")
     command.add_argument("--source-manifest", type=Path)
     command.add_argument("--data-root", type=Path, required=data_root_required, help=f"explicit support root (or {DATA_ROOT_ENV})")
+    command.add_argument("--hosted-origin", type=_hosted_origin, default=DEFAULT_HOSTED_ORIGIN, help="the hosted page the browser door answers, or 'off' for no door")
+    command.add_argument("--door-port", type=_door_port, default=os.environ.get(DOOR_PORT_ENV, str(DEFAULT_DOOR_PORT)), help=f"the browser door's loopback port (default {DOOR_PORT_ENV} or {DEFAULT_DOOR_PORT})")
     command.add_argument("--json", action="store_true")
 
 
@@ -203,7 +226,16 @@ def _config(args: argparse.Namespace, paths: RuntimePaths) -> BootstrapConfig:
     if manifest is None:
         configured = os.environ.get("ASTRID_RUNTIME_SOURCE_MANIFEST")
         manifest = Path(configured) if configured else None
-    return BootstrapConfig(profile=getattr(args, "profile", "astrid"), display_name=getattr(args, "display_name", "Astrid Workspace"), source_manifest=manifest)
+    origin = getattr(args, "hosted_origin", "off")
+    door = None if origin == "off" else DoorSettings(origin=origin, port=args.door_port)
+    return BootstrapConfig(profile=getattr(args, "profile", "astrid"), display_name=getattr(args, "display_name", "Astrid Workspace"), source_manifest=manifest, door=door)
+
+
+def _emit_ready(result: BootstrapResult, *, json_mode: bool) -> None:
+    """The bootstrap result, then the one line a person needs: the page to open."""
+    _emit(result, json_mode=json_mode)
+    if not json_mode and result.door_origin:
+        print(f"\nOpen {result.door_origin}")
 
 
 def _credential(paths: RuntimePaths) -> str:
@@ -332,7 +364,7 @@ def main(argv: list[str] | None = None) -> int:
             # BaseException and intentionally remains interruptible.
             _emit({"ok": False, "error": str(exc)}, json_mode=True)
             return 1
-        _emit(result, json_mode=args.json)
+        _emit_ready(result, json_mode=args.json)
         return 0
     try:
         if args.command == "connect":
@@ -353,8 +385,10 @@ def main(argv: list[str] | None = None) -> int:
             if not realm or not discovery.get("pid"):
                 raise BootstrapError("No selected runtime owner to restart; run astrid-runtime up --profile astrid.")
             boundary.prepare_restart(source_profile=source, realm_id=realm_id, realm_root=Path(str(realm["data_root"])), support_root=paths.runtime_support, pid=int(discovery["pid"]))
-            result = restart(paths, boundary, config) if args.command == "restart" else down(paths, boundary)
-            _emit(result, json_mode=args.json)
+            if args.command == "restart":
+                _emit_ready(restart(paths, boundary, config), json_mode=args.json)
+            else:
+                _emit(down(paths, boundary), json_mode=args.json)
             return 0
         if args.command == "status":
             _validate_support_paths(paths)
