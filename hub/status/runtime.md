@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T22:15:56Z | dispatcher heartbeat 2s -->
+<!-- main | 2026-10-19T22:19:53Z | dispatcher heartbeat 14s -->
 # runtime — 2026-10-19T22:10Z
 Milestone: M1 ACTIVE — walking-skeleton proof PASS; App integratedALL5PASS inclrestored2; closure WAITS allnewfullfailuresfixed/preexisting +nextdeepaudit~22:20 no blocker. Restore7regressions now AUTHORIZED M1preservation; M2 DESIGN ONLY. M0 COMPLETE. No M2 product started.
 Integrated: runtime tl/integration ff0ae58 — source da21072/merge31a0b56 +tests471d41d merged. Historical restore goes through actual Agent ddc1bac3 sole recorder/provider, exact source/closure/media verification, selected integrity budget, guarded inverse/redo and durable retry; no DTO/ABI/renderer/legacy writer. Contract0.2.1/schema4e52/artifact9b18 unchanged.
