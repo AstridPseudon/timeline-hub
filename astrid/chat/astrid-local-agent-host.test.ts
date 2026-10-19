@@ -87,6 +87,16 @@ function records(path: string): Json[] {
   return readFileSync(path, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line) as Json);
 }
 
+async function waitForRecord(path: string, matches: (record: Json) => boolean): Promise<Json> {
+  const deadline = Date.now() + 2_000;
+  while (Date.now() < deadline) {
+    const record = records(path).find(matches);
+    if (record) return record;
+    await new Promise(resolve => setTimeout(resolve, 5));
+  }
+  throw new Error('Expected adapter record was not written before the deadline.');
+}
+
 test('external ACP bridge namespaces sessions and routes context, permissions, and cancellation through its Bun launch shim', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'astrid-local-agent-host-'));
   const f = fixture(directory);
@@ -150,6 +160,7 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
 
     const cancel = await call(`/${codexId}/cancel`, { sessionId: 'codex:shared-native-id' });
     assert.equal(cancel.status, 200);
+    await waitForRecord(f.logs, row => row.agent === 'codex-acp' && (row.value as Json).notification !== undefined);
     assert.equal((await call(`/${claudeId}`, {}, 'DELETE')).status, 200);
     assert.equal((await call(`/${codexId}`, {}, 'DELETE')).status, 200);
 

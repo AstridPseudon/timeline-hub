@@ -8,12 +8,14 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {
   name: string;
   signInLine: string;
   notInstalledLine?: string;
+  windowsNotInstalledLine?: string;
 }> = {
-  astrid: { name: 'Astrid', signInLine: 'Run `omp`, then `/login`.' },
+  astrid: { name: 'Astrid', signInLine: 'Run `astrid`, then `/login`.' },
   'claude-code': {
     name: 'Claude Code',
     signInLine: 'Run `claude auth login`, then come back.',
     notInstalledLine: 'Install with `curl -fsSL https://claude.ai/install.sh | bash`',
+    windowsNotInstalledLine: 'Install with `npm install -g @anthropic-ai/claude-code`',
   },
   codex: {
     name: 'Codex',

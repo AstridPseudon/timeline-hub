@@ -9,8 +9,8 @@ import type { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
 import { executableNames } from './astrid-local-agents.ts';
 
 test('Windows executable discovery keeps native exe names', () => {
-  expect(executableNames('bun', 'win32')).toEqual(['bun.exe', 'bun']);
-  expect(executableNames('claude', 'win32')).toEqual(['claude.exe', 'claude']);
+  expect(executableNames('bun', 'win32')).toEqual(['bun.com', 'bun.exe', 'bun.bat', 'bun.cmd', 'bun']);
+  expect(executableNames('claude', 'win32', '.CMD;.EXE')).toEqual(['claude.CMD', 'claude.EXE', 'claude']);
   expect(executableNames('codex', 'linux')).toEqual(['codex']);
 });
 

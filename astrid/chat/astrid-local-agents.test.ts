@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { LOCAL_AGENT_TABLE } from './localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
-import { discoverLocalAgents, localAgentLaunch } from './astrid-local-agents.ts';
+import { defaultShellFromPasswd, discoverLocalAgents, executableNames, localAgentLaunch, windowsLoginPath } from './astrid-local-agents.ts';
 
 function executable(directory: string, name: string, contents: string): string {
   const path = join(directory, name);
@@ -42,6 +42,53 @@ test('reports Not installed when external CLIs are absent and has no adapter fie
     ]);
     assert.equal('adapterInstalled' in agents[1]!, false);
     assert.equal('installCommand' in agents[1]!, false);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('Windows PATH uses expanded user and machine registry values without starting a shell', async () => {
+  const calls: string[] = [];
+  const env = { USERPROFILE: 'C:\\Users\\Astrid', SystemRoot: 'C:\\Windows' };
+  const registryReader = async (key: string) => {
+    calls.push(key);
+    return key.startsWith('HKCU')
+      ? 'HKEY_CURRENT_USER\\Environment\r\n    LocalBin    REG_EXPAND_SZ    %USERPROFILE%\\bin\r\n    Path    REG_EXPAND_SZ    %LOCALBIN%;%SystemRoot%\\UserTools\r\n'
+      : 'HKEY_LOCAL_MACHINE\\Environment\r\n    Path    REG_EXPAND_SZ    %SystemRoot%\\System32\r\n';
+  };
+  assert.equal(await windowsLoginPath(env, registryReader), 'C:\\Users\\Astrid\\bin;C:\\Windows\\UserTools;C:\\Windows\\System32');
+  assert.deepEqual(calls.sort(), [
+    'HKCU\\Environment',
+    'HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment',
+  ]);
+  assert.deepEqual(executableNames('claude', 'win32', '.CMD;.EXE;.BAT'), ['claude.CMD', 'claude.EXE', 'claude.BAT', 'claude']);
+  const missing = await discoverLocalAgents({ env: { ...process.env, PATH: '' }, platform: 'win32', registryReader: async () => '' });
+  assert.equal(missing.find(agent => agent.id === 'claude-code')?.line, 'Install with `npm install -g @anthropic-ai/claude-code`');
+});
+
+test('Windows discovery finds a user CLI .cmd shim from the registry PATH', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-windows-path-'));
+  try {
+    executable(directory, 'claude.CMD', '@echo off\r\n');
+    executable(directory, 'codex.EXE', '');
+    const env = { ...process.env, PATH: '', PATHEXT: '.EXE;.CMD' };
+    const registryReader = async (key: string) => key.startsWith('HKCU')
+      ? `Path    REG_SZ    ${directory}\r\n`
+      : '';
+    const agents = await discoverLocalAgents({ env, platform: 'win32', registryReader, cwd: directory });
+    assert.equal(agents.find(agent => agent.id === 'claude-code')?.state, 'ready');
+    assert.equal(agents.find(agent => agent.id === 'claude-code')?.line, null);
+    assert.equal(agents.find(agent => agent.id === 'codex')?.state, 'ready');
+    assert.equal(agents.find(agent => agent.id === 'claude-code')?.state === 'not-installed', false);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('falls back to the default passwd shell when SHELL is unset', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-passwd-shell-'));
+  try {
+    const shell = loginShell(directory);
+    assert.equal(defaultShellFromPasswd(`astrid:x:${process.getuid?.() ?? 1234}:100:User:/home/astrid:${shell}\n`, 'astrid', String(process.getuid?.() ?? 1234)), shell);
+    const env = { ...process.env, SHELL: undefined, PATH: directory, ASTRID_TEST_LOGIN_PATH: directory };
+    const agents = await discoverLocalAgents({ env, platform: 'linux', passwdReader: () => `astrid:x:${process.getuid?.() ?? 1234}:100:User:/home/astrid:${shell}\n`, cwd: directory });
+    assert.equal(agents.find(agent => agent.id === 'claude-code')?.state, 'not-installed');
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 

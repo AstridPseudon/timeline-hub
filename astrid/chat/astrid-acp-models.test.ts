@@ -21,7 +21,7 @@ function metadata(agent: LocalAgentId, current = modelIds(agent)[0]!, available 
 }
 type HostCall = { method: string; params: Record<string, unknown> };
 type Host = { agent: LocalAgentId; calls: HostCall[]; disposed: number };
-function fixture(options: { ready?: LocalAgentId[]; stateFile?: string; nativeSessions?: string[]; noModels?: boolean; astridSignedIn?: boolean; legacy?: boolean } = {}) {
+function fixture(options: { ready?: LocalAgentId[]; stateFile?: string; nativeSessions?: string[]; noModels?: boolean; astridSignedIn?: boolean; astridModelsWithoutAuth?: boolean; astridCatalogUnavailable?: boolean; legacy?: boolean } = {}) {
   const sessionMetadata = (agent: LocalAgentId, current = modelIds(agent)[0]!) => options.legacy
     ? { models: { currentModelId: current, availableModels: modelIds(agent).map((modelId, index) => ({ modelId, name: names[index]! })) } }
     : metadata(agent, current);
@@ -60,7 +60,12 @@ function fixture(options: { ready?: LocalAgentId[]; stateFile?: string; nativeSe
     hostFactory: () => hostFactory('astrid'),
     localAgentHostFactory: async agent => hostFactory(agent),
     discoverAgents: async () => { discovered++; return choices(options.ready); },
-    astridModelCatalog: async () => ({ providers: options.astridSignedIn === false ? [] : [{ id: 'provider', name: 'Provider', signedIn: true, models: [{ id: 'alpha', name: 'Alpha' }] }], currentModel: 'provider/alpha' }),
+    astridModelCatalog: async () => {
+      if (options.astridCatalogUnavailable) throw new Error('catalog unavailable');
+      return { providers: options.astridSignedIn === false
+        ? options.astridModelsWithoutAuth ? [{ id: 'provider', name: 'Provider', signedIn: false, models: [{ id: 'alpha', name: 'Alpha' }] }] : []
+        : [{ id: 'provider', name: 'Provider', signedIn: true, models: [{ id: 'alpha', name: 'Alpha' }] }], currentModel: 'provider/alpha' };
+    },
     idFactory: () => `c${++connection}`,
     chatRegistry: {
       unassigned: async (_project: string, candidates: unknown[]) => candidates,
@@ -200,6 +205,17 @@ test('non-ready agents do not bootstrap and every recovery row has its service l
     expect(catalog.agents.every(agent => agent.state !== 'ready' && Boolean(agent.line))).toBe(true);
     expect(catalog.agents.find(agent => agent.id === 'astrid')).toMatchObject({ state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine, models: [], defaultModel: null });
   } finally { await value.bridge.close(); }
+});
+
+test('Astrid sign-in follows OMP credentials even when models exist; unknown auth remains ready', async () => {
+  const unsigned = fixture({ astridSignedIn: false, astridModelsWithoutAuth: true });
+  const unknown = fixture({ astridCatalogUnavailable: true });
+  try {
+    const unsignedCatalog = localAgentCatalogSchema.parse(await (await unsigned.call('/agents')).json());
+    expect(unsignedCatalog.agents.find(agent => agent.id === 'astrid')).toMatchObject({ state: 'sign-in', line: 'Run `astrid`, then `/login`.' });
+    const unknownCatalog = localAgentCatalogSchema.parse(await (await unknown.call('/agents')).json());
+    expect(unknownCatalog.agents.find(agent => agent.id === 'astrid')?.state).toBe('ready');
+  } finally { await unsigned.bridge.close(); await unknown.bridge.close(); }
 });
 
 test('bootstrap failures release hosts and retry only on the next explicit menu refresh', async () => {
