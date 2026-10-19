@@ -11,7 +11,6 @@ const mockPath = (mocksDir: string, fileName: string): string =>
 export function buildEdgeAliasMap(mocksDir: string): Record<string, string> {
   const projectRoot = path.resolve(mocksDir, '../../../../');
   return {
-    '@astrid/editor-sdk': path.resolve(projectRoot, 'src/sdk/index.ts'),
     '@workspace-effects': path.resolve(projectRoot, 'vendor/banodoco-effects'),
     '@workspace-animations': path.resolve(projectRoot, 'vendor/banodoco-animations'),
     '@workspace-transitions': path.resolve(projectRoot, 'vendor/banodoco-transitions'),
