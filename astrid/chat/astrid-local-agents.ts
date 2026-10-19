@@ -42,17 +42,21 @@ async function defaultShellFromDirectoryService(username: string): Promise<strin
   return stdout.match(/^UserShell:\s*(.+)$/m)?.[1]?.trim() || null;
 }
 
-async function windowsClaudeEntryPoint(command: string, platform: NodeJS.Platform): Promise<string | null> {
+async function windowsNpmEntryPoint(command: string, platform: NodeJS.Platform, packageEntry: string[]): Promise<string | null> {
   if (platform !== 'win32' || !command.toLowerCase().endsWith('.cmd')) return command;
-  // npm's global Windows shim points to this package entry under the same prefix.
-  // The Claude SDK launches .js paths through its Node/Bun executable, while it
-  // treats .cmd as a native binary and fails to spawn the shim without a shell.
-  const entryPoint = join(dirname(command), 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
+  // npm's global Windows shim points to its package entry under the same prefix.
+  // JavaScript entrypoints run through Node/Bun, while Windows .cmd shims need a shell.
+  const entryPoint = join(dirname(command), 'node_modules', ...packageEntry);
   try {
     await access(entryPoint, constants.F_OK);
     return entryPoint;
   } catch { return null; }
 }
+
+const windowsClaudeEntryPoint = (command: string, platform: NodeJS.Platform) =>
+  windowsNpmEntryPoint(command, platform, ['@anthropic-ai', 'claude-code', 'cli.js']);
+const windowsCodexEntryPoint = (command: string, platform: NodeJS.Platform) =>
+  windowsNpmEntryPoint(command, platform, ['@openai', 'codex', 'bin', 'codex.js']);
 
 function parseRegistryEnvironment(output: string): Record<string, string> {
   const values: Record<string, string> = {};
@@ -155,10 +159,13 @@ async function executable(name: string, pathValue: string, platform: NodeJS.Plat
   return null;
 }
 
-async function status(command: string | null, args: string[], env: NodeJS.ProcessEnv, signedIn: RegExp, signedOut: RegExp, cwd?: string): Promise<AuthStatus> {
+async function status(command: string | null, args: string[], env: NodeJS.ProcessEnv, signedIn: RegExp, signedOut: RegExp, cwd?: string, platform = process.platform): Promise<AuthStatus> {
   if (!command) return 'unknown';
   try {
-    const { stdout, stderr } = await execFileAsync(command, args, { env, cwd, encoding: 'utf8' });
+    const script = platform === 'win32' && command.toLowerCase().endsWith('.js');
+    const { stdout, stderr } = script
+      ? await execFileAsync(process.execPath, [command, ...args], { env, cwd, encoding: 'utf8' })
+      : await execFileAsync(command, args, { env, cwd, encoding: 'utf8' });
     const output = `${stdout}\n${stderr}`;
     if (signedOut.test(output)) return 'signed-out';
     if (signedIn.test(output)) return 'signed-in';
@@ -232,10 +239,13 @@ export async function discoverLocalAgents(options: Options = {}): Promise<LocalA
   const [claudeShim, codex] = await Promise.all([
     executable('claude', path, platform, baseEnv.PATHEXT), executable('codex', path, platform, baseEnv.PATHEXT),
   ]);
-  const claude = claudeShim ? await windowsClaudeEntryPoint(claudeShim, platform) : null;
+  const [claude, codexEntryPoint] = await Promise.all([
+    claudeShim ? windowsClaudeEntryPoint(claudeShim, platform) : null,
+    codex ? windowsCodexEntryPoint(codex, platform) : null,
+  ]);
   const [claudeAuth, codexAuth] = await Promise.all([
     claudeStatus(claude, env, options.cwd, platform),
-    status(codex, ['login', 'status'], env, /Logged in using/i, /Not logged in|Run `?codex login/i, options.cwd),
+    status(codexEntryPoint, ['login', 'status'], env, /Logged in using/i, /Not logged in|Run `?codex login/i, options.cwd, platform),
   ]);
   return [
     choice('astrid', 'ready', platform),

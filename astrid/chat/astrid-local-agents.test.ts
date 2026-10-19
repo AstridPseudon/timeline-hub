@@ -109,6 +109,32 @@ test('Windows Claude npm shims resolve to the JavaScript entrypoint used by auth
   } finally { rmSync(prefix, { recursive: true, force: true }); }
 });
 
+test('Windows Codex npm shims run the package entrypoint for auth status and retain the shim for ACP launch', async () => {
+  const prefix = mkdtempSync(join(tmpdir(), 'astrid-windows-codex-'));
+  const packageDirectory = join(prefix, 'node_modules', '@openai', 'codex', 'bin');
+  try {
+    mkdirSync(packageDirectory, { recursive: true });
+    const shim = executable(prefix, 'codex.CMD', '@echo off\r\n');
+    executable(prefix, 'bun.EXE', '');
+    const entryPoint = join(packageDirectory, 'codex.js');
+    writeFileSync(entryPoint, `process.stdout.write(process.env.ASTRID_TEST_CODEX_SIGNED_IN === '1' ? 'Logged in using ChatGPT' : 'Not logged in. Run codex login to authenticate.');\n`);
+    const env = { ...process.env, PATH: '', PATHEXT: '.CMD;.EXE', ASTRID_TEST_CODEX_SIGNED_IN: '0' };
+    const registryReader = async (key: string) => key.startsWith('HKCU') ? `Path    REG_SZ    ${prefix}\r\n` : '';
+
+    let agents = await discoverLocalAgents({ env, platform: 'win32', registryReader });
+    assert.equal(agents.find(agent => agent.id === 'codex')?.state, 'sign-in');
+    env.ASTRID_TEST_CODEX_SIGNED_IN = '1';
+    agents = await discoverLocalAgents({ env, platform: 'win32', registryReader });
+    assert.equal(agents.find(agent => agent.id === 'codex')?.state, 'ready');
+    assert.deepEqual(await localAgentLaunch('codex', env, { platform: 'win32', registryReader }), {
+      command: join(prefix, 'bun.EXE'),
+      args: ['x', '--bun', LOCAL_AGENT_ADAPTERS.codex],
+      env: { PATH: prefix, CODEX_PATH: shim },
+      cliPath: shim,
+    });
+  } finally { rmSync(prefix, { recursive: true, force: true }); }
+});
+
 test('falls back to the default passwd shell when SHELL is unset', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'astrid-passwd-shell-'));
   try {
