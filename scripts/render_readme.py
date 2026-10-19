@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Render README.md — the copyable "give this to your agent" banner.
+"""Render the marked "give this to your agent" banner in README.md.
 
 The banner is a monospace box whose borders MUST stay aligned. Hand-editing the
 ASCII broke the border before, so the box is GENERATED here: every row is padded
 to one width by code and an assertion guarantees alignment. Edit the ``LINES``
-list (content only) and re-run; never hand-edit the box in README.md.
+list (content only) and re-run. The writer replaces only its marked banner and
+preserves the rest of README.md.
 
-    python3 scripts/render_readme.py        # rewrites README.md
+    python3 scripts/render_readme.py        # updates only the marked banner
 """
 from __future__ import annotations
 
@@ -14,6 +15,8 @@ from html import escape
 from pathlib import Path
 
 W = 60  # inner content width (chars between the │ borders)
+START_MARKER = "<!-- BEGIN GENERATED AGENT BANNER -->"
+END_MARKER = "<!-- END GENERATED AGENT BANNER -->"
 
 
 def center(s: str) -> str:
@@ -50,18 +53,20 @@ LINES = [
     ("agents harnessed, humans free —", "│", False),
     ("open tools for what could be:", "│", False),
     ("moving image, voice, and frame,", "│", False),
-    ("clone it, run it, stake your claim.", "│", False),
+    ("open Astrid, make something, share its flame.", "│", False),
     ("", "│", False),
     ("·  ·  ·", "│", False),
     ("", "│", False),
-    ("$ git clone https://github.com/banodoco/Astrid", "│", True),
-    ("$ cd Astrid && pip install -e .", "│", True),
-    ("$ python3 -m astrid --help", "│", True),
+    ("Agent instructions: docs/setup/SKILL.md", "│", False),
+    ("", "│", False),
+    ("$ curl -fsSL https://astrid.haus/install | sh", "│", True),
+    ("$ irm https://astrid.haus/install.ps1 | iex", "│", True),
+    ("open https://astrid.haus to begin.", "│", True),
     ("", "│", False),
     ("·  ·  ·", "│", False),
     ("", "│", False),
     ("ask the maker what to do,", "│", False),
-    ("runs/ holds all it makes for you —", "│", False),
+    ("bring a spark and see it through —", "│", False),
     ("no map, no plan, no perfect day:", "│", False),
     ("begin, hold fast  — you'll find your way.", "│", False),
     ("", "│", False),
@@ -92,31 +97,24 @@ def render_box(*, html: bool = False) -> str:
     return "\n".join(rows)
 
 
-README = """# Astrid
-
-A Python SDK for building and running open-source agentic UXes — a harness for agents and humans to make art.
-
-**Give this to your agent to get started:**
-
-<div align="center">
-
-<pre>
-{box}
-</pre>
-
-</div>
-
-## License
-
-Open Source Native License (OSNL) v0.2 — see [`LICENSE`](LICENSE).
-"""
+def replace_banner(readme: str, box: str) -> str:
+    if readme.count(START_MARKER) != 1 or readme.count(END_MARKER) != 1:
+        raise ValueError("README must contain exactly one pair of generated-banner markers")
+    start = readme.index(START_MARKER) + len(START_MARKER)
+    end = readme.index(END_MARKER, start)
+    if end < start:
+        raise ValueError("README generated-banner markers are out of order")
+    banner = f"\n\n### Give this to your agent\n\n```text\n{box}\n```\n\n"
+    return readme[:start] + banner + readme[end:]
 
 
 def main() -> None:
     plain_box = render_box()
-    html_box = render_box(html=True)
     out = Path(__file__).resolve().parents[1] / "README.md"
-    out.write_text(README.format(box=html_box), encoding="utf-8")
+    readme = out.read_text(encoding="utf-8")
+    updated = replace_banner(readme, plain_box)
+    if updated != readme:
+        out.write_text(updated, encoding="utf-8")
     print(plain_box)
     print(f"\n[OK] aligned box ({len(plain_box.splitlines())} rows, width {len(plain_box.splitlines()[0])}) → {out}")
 

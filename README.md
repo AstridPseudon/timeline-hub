@@ -2,31 +2,39 @@
 
 Tools and knowledge for agents and humans to make art with open models.
 
+<!-- BEGIN GENERATED AGENT BANNER -->
+
 ### Give this to your agent
 
 ```text
-╭────────────────────────────────── ◇ ───────────────────────────────────╮
-│                                                                        │
-│                         A   S   T   R   I   D                          │
-│                                                                        │
-│                    agents harnessed, humans free —                     │
-│                     open tools for what could be:                      │
-│                    moving image, voice, and frame,                     │
-│                  clone it, shape it, share the flame.                  │
-│                                                                        │
-│                                ·  ·  ·                                 │
-│                                                                        │
-│  https://github.com/banodoco/astrid-agent/blob/main/docs/setup/SKILL.md  │
-│                                                                        │
-│                                ·  ·  ·                                 │
-│                                                                        │
-│                     Set up Astrid on this machine;                     │
-│              check what’s there, keep its work pristine.               │
-│                  Follow the skill and see what’s new;                  │
-│                test every step, then guide me through.                 │
-│                                                                        │
-╰────────────────────────────────── ◇ ───────────────────────────────────╯
+╭──────────────────────────── ◇ ─────────────────────────────╮
+│                                                            │
+│                   A   S   T   R   I   D                    │
+│                                                            │
+│              agents harnessed, humans free —               │
+│               open tools for what could be:                │
+│              moving image, voice, and frame,               │
+│       open Astrid, make something, share its flame.        │
+│                                                            │
+│                          ·  ·  ·                           │
+│                                                            │
+│          Agent instructions: docs/setup/SKILL.md           │
+│                                                            │
+│       $ curl -fsSL https://astrid.haus/install | sh        │
+│        $ irm https://astrid.haus/install.ps1 | iex         │
+│             open https://astrid.haus to begin.             │
+│                                                            │
+│                          ·  ·  ·                           │
+│                                                            │
+│                 ask the maker what to do,                  │
+│             bring a spark and see it through —             │
+│              no map, no plan, no perfect day:              │
+│         begin, hold fast  — you'll find your way.          │
+│                                                            │
+╰──────────────────────────── ◇ ─────────────────────────────╯
 ```
+
+<!-- END GENERATED AGENT BANNER -->
 
 **Set up Astrid:** run the installer for your operating system, then open
 [astrid.haus](https://astrid.haus).
