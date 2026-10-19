@@ -1177,13 +1177,15 @@ test('M2 real history UI restores an exact revision and keeps repeated publicati
   expect(pinOf(moved).revision_id).not.toBe(target.revision_id);
   expect(position(moved.data.canonical_document, seed3.appClipId)).toBe(movedAt);
   await expectImmutableClosure(harness, seed3, moved);
-  expect((await history(harness, seed3)).head).toEqual(pinOf(moved));
+  const movedHistory = await history(harness, seed3);
+  expect(movedHistory.head).toEqual(pinOf(moved));
+  const revisionsBeforeTraffic = await allRevisions(harness, seed3);
 
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);
-  const writes: Request[] = [];
+  const timelinePosts: Request[] = [];
   page.on('request', (request) => {
-    if (request.method() === 'POST' && request.url().startsWith(`${harness.doorBase}${timelineBase(harness, seed3)}/`)) writes.push(request);
+    if (request.method() === 'POST' && request.url().startsWith(`${harness.doorBase}${timelineBase(harness, seed3)}/`)) timelinePosts.push(request);
   });
   await openCommandTimeline(page, harness, seed3);
   journey.facts.sameRealm = await expectSameRealm(page, harness, astrid);
@@ -1203,6 +1205,9 @@ test('M2 real history UI restores an exact revision and keeps repeated publicati
   await expect(earlier).not.toHaveAttribute('aria-disabled', 'true');
   await expect(row(pinOf(moved).publication_id)).toContainText('Current');
   const restorePath = `${timelineBase(harness, seed3)}/composition-revisions/${encodeURIComponent(target.revision_id)}/restore`;
+  const inspectPath = `${timelineBase(harness, seed3)}/inspect`;
+  expect(await history(harness, seed3), 'timeline inspection does not change current history').toEqual(movedHistory);
+  expect(await allRevisions(harness, seed3), 'timeline inspection does not change revision bytes').toEqual(revisionsBeforeTraffic);
   const restoring = page.waitForResponse((response) => response.request().method() === 'POST'
     && response.url() === `${harness.doorBase}${restorePath}`, CEILING);
   await earlier.click();
@@ -1251,10 +1256,40 @@ test('M2 real history UI restores an exact revision and keeps repeated publicati
   await expect(row(pinOf(restored).publication_id)).toHaveAttribute('aria-disabled', 'true');
   await expect(row(pinOf(restored).publication_id)).toContainText('Current');
   await expect(menu.getByText('Current', { exact: true })).toHaveCount(1);
-  expect(writes.map((write) => write.url()), 'the history UI alone submits one strict restore, without a snapshot or extra commit').toEqual([`${harness.doorBase}${restorePath}`]);
+  const timelinePostPath = (post: Request) => new URL(post.url()).pathname.replace(/^\/api\/runtime/, '');
+  const restorePosts = timelinePosts.filter((post) => timelinePostPath(post) === restorePath);
+  const inspectionPosts = timelinePosts.filter((post) => timelinePostPath(post) === inspectPath);
+  const unknownPosts = timelinePosts.filter((post) => ![restorePath, inspectPath].includes(timelinePostPath(post)));
+  expect(restorePosts, 'the history UI submits exactly one strict restore').toHaveLength(1);
+  expect(unknownPosts.map((post) => `${post.method()} ${new URL(post.url()).pathname}`),
+    'every timeline POST other than the scoped inspection read and strict restore is rejected by this proof').toEqual([]);
+  expect(inspectionPosts.length, 'the history UI performs at least one canonical inspection read').toBeGreaterThan(0);
+  const restoreIndex = timelinePosts.indexOf(restorePosts[0]);
+  const verifiedInspectionReads: Array<{ post: Request; inspection: Record<string, unknown> }> = [];
+  for (const [index, post] of timelinePosts.entries()) {
+    if (timelinePostPath(post) !== inspectPath) continue;
+    const response = await post.response();
+    expect(response, 'the scoped inspection POST has an HTTP response').not.toBeNull();
+    expect(response!.status(), 'timeline inspection is an actual successful read').toBe(200);
+    expect(post.postDataJSON()).toEqual({ limit: 1 });
+    const inspection = await response!.json() as Record<string, unknown>;
+    const expectedRevision = index < restoreIndex ? moved.data.canonical_document.parent_revision : document.parent_revision;
+    expect(inspection).toMatchObject({
+      schema: 'runtime.timeline.declared_inputs/v1', evidence_kind: 'declared_inputs', render_requested: false,
+      representation: 'canonical_head', authority: 'runtime_parent_composition', project_id: harness.seed.projectId,
+      timeline_id: seed3.timelineId, revision_id: expectedRevision.revision_id, head_revision_id: expectedRevision.revision_id,
+      is_current_head: true, parent_content_digest: expectedRevision.content_digest,
+      head_content_digest: expectedRevision.content_digest,
+    });
+    expect(inspection.snapshot_digest).toMatch(/^sha256:[0-9a-f]{64}$/);
+    verifiedInspectionReads.push({ post, inspection });
+  }
+  expect(after.items.filter((entry) => ![pinOf(moved).publication_id, pinOf(restored).publication_id].includes(entry.publication_id)))
+    .toEqual(before.items);
   await expectOpaqueDataKept(harness, seed3);
   journey.facts = { ...journey.facts, sourceTuple: revisionSet(journey.identity), renderer: 'not started',
     authoringLaunch: { profile: 'astrid', python: ASTRID_PYTHON }, target, moved: pinOf(moved), restored: pinOf(restored),
-    restoreRequest: { method: request.method(), path: restorePath, body, key }, publicationCount: after.items.length };
+    restoreRequest: { method: request.method(), path: restorePath, body, key }, publicationCount: after.items.length,
+    observedInspectionReads: verifiedInspectionReads.length };
   await sniff.expectClean(page, seed3.timelineId);
 });
