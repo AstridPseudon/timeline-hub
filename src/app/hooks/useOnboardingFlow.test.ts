@@ -55,6 +55,7 @@ describe('useOnboardingFlow', () => {
   });
 
   it('closes, checks Astrid, enters the local tool, and starts the tour', async () => {
+    window.history.replaceState({}, '', '/');
     const { result, unmount } = renderHook(() => useOnboardingFlow());
 
     await act(async () => {
@@ -119,6 +120,46 @@ describe('useOnboardingFlow', () => {
     expect(closeOnboardingModalMock).toHaveBeenCalledTimes(1);
     expect(checkAstridDoctorAvailabilityMock).not.toHaveBeenCalled();
     expect(navigateMock).not.toHaveBeenCalled();
+    expect(startTourMock).not.toHaveBeenCalled();
+
+    unmount();
+    window.history.replaceState({}, '', '/');
+    vi.useRealTimers();
+  });
+
+  it('keeps a Runtime document editor link open after first-run setup completes', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/tools/video-editor?runtime=1&runtimeProject=owned-project&runtimeTimeline=owned-timeline&skip-setup=1',
+    );
+    const { result, unmount } = renderHook(() => useOnboardingFlow());
+
+    await act(async () => {
+      await result.current.handleOnboardingClose();
+    });
+
+    expect(closeOnboardingModalMock).toHaveBeenCalledTimes(1);
+    expect(checkAstridDoctorAvailabilityMock).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
+    expect(startTourMock).not.toHaveBeenCalled();
+
+    unmount();
+    window.history.replaceState({}, '', '/');
+    vi.useRealTimers();
+  });
+
+  it('continues normal onboarding for an ordinary nonlocal URL', async () => {
+    window.history.replaceState({}, '', '/home?skip-setup=1');
+    const { result, unmount } = renderHook(() => useOnboardingFlow());
+
+    await act(async () => {
+      await result.current.handleOnboardingClose();
+    });
+
+    expect(closeOnboardingModalMock).toHaveBeenCalledTimes(1);
+    expect(checkAstridDoctorAvailabilityMock).toHaveBeenCalledTimes(1);
+    expect(navigateMock).toHaveBeenCalledWith('/tools/travel-between-images');
     expect(startTourMock).not.toHaveBeenCalled();
 
     unmount();
