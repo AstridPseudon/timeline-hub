@@ -1,10 +1,11 @@
 import { randomBytes } from 'node:crypto';
 import { dirname, isAbsolute, join } from 'node:path';
+import type { Readable } from 'node:stream';
 import { chatStoreIdentity } from './astrid-project-chat.ts';
 import { createAstridAcpHttpServer, resolveAstridAcpBridgeConfig } from './astrid-acp-bridge.ts';
 import { chatRegistration, chatRegistrationPath, removeChatRegistration, writeChatRegistration } from './chat-registration.ts';
 
-export async function runChatService(env = process.env, createServer = createAstridAcpHttpServer): Promise<void> {
+export async function runChatService(env = process.env, createServer = createAstridAcpHttpServer, stdin: Readable = process.stdin): Promise<void> {
   const discovery = env.ASTRID_WORKSPACE_DISCOVERY?.trim();
   if (!discovery || !isAbsolute(discovery)) throw new Error('ASTRID_WORKSPACE_DISCOVERY must be an explicit absolute path');
   const config = resolveAstridAcpBridgeConfig({
@@ -31,18 +32,28 @@ export async function runChatService(env = process.env, createServer = createAst
       server.once('error', reject);
       server.listen(config.port, '127.0.0.1', resolve);
     });
-    // Publish only after our own listener bound successfully.
-    writeChatRegistration(path, registration);
-    process.once('exit', release);
-    process.once('SIGINT', stop);
-    process.once('SIGTERM', stop);
-    console.log(`Astrid chat listening on 127.0.0.1:${config.port}`);
-    await new Promise<void>((resolve, reject) => {
+    const closed = new Promise<void>((resolve, reject) => {
       server.once('close', resolve);
       server.once('error', reject);
     });
+    if (stdin.readableEnded) await stop();
+    else {
+      // Publish only after our own listener bound successfully.
+      writeChatRegistration(path, registration);
+      process.once('exit', release);
+      process.once('SIGINT', stop);
+      process.once('SIGTERM', stop);
+      // Runtime owns this pipe. EOF requests the same cleanup as SIGTERM,
+      // including native ACP hosts and terminals in the service's group.
+      stdin.once('end', stop);
+      stdin.resume();
+      console.log(`Astrid chat listening on 127.0.0.1:${config.port}`);
+    }
+    await closed;
   } finally {
     await stop();
+    stdin.removeListener('end', stop);
+    stdin.pause();
     process.removeListener('exit', release);
     process.removeListener('SIGINT', stop);
     process.removeListener('SIGTERM', stop);
