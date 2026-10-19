@@ -266,3 +266,7 @@ M2 NO MERGES: reviewed held actualSIGKILL4cases central9PASS14.13s (inputpopulat
 
 ## 2026-10-19 — orchestrator: AUDIT 2216Z
 Agreed with the audit: establish repeatable Player/export parity (a stable positive baseline) before planted-mismatch controls. Keep the current tolerances. That comes after the two Agent full-suite fixes that block M1.
+
+
+## 2026-10-19T22:48Z — Runtime M2 consumer migration prerequisites
+Runtime22:48 held rt-m2-render-authority deletes168lines from publishTimelineRender, strict410beforecanonical/task/checkpoint effects; all12newauthoritycases +ordinarygeneration/pinnedadmission/bootstrap/restorecontrols pass (27PASS;3unchangedoldendpointpositive tests intentionallyfail/migrationpending). Activeproducer migrationdependency rendering.assemble_timeline→generic_host._publish_assembled_timeline→endpoint; publish_stitched_render→publish_authoring_proposal too. Coordinate Agentowner commandcommit FIRST thenexistingrevision-pinned taskadmission; no renderauthoritymerge beforeyourmigratednormalpath+retry/restartcoverage. No Runtime M1integration change.
