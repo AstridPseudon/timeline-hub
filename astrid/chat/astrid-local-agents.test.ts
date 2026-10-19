@@ -1,7 +1,7 @@
 import { test } from 'bun:test';
 import assert from 'node:assert/strict';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir, userInfo } from 'node:os';
 import { join } from 'node:path';
 import { LOCAL_AGENT_TABLE } from './localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
@@ -69,6 +69,9 @@ test('Windows discovery finds a user CLI .cmd shim from the registry PATH', asyn
   try {
     executable(directory, 'claude.CMD', '@echo off\r\n');
     executable(directory, 'codex.EXE', '');
+    const claudePackage = join(directory, 'node_modules', '@anthropic-ai', 'claude-code');
+    mkdirSync(claudePackage, { recursive: true });
+    writeFileSync(join(claudePackage, 'cli.js'), `process.stdout.write(JSON.stringify({ loggedIn: true }));\n`);
     const env = { ...process.env, PATH: '', PATHEXT: '.EXE;.CMD' };
     const registryReader = async (key: string) => key.startsWith('HKCU')
       ? `Path    REG_SZ    ${directory}\r\n`
@@ -81,6 +84,31 @@ test('Windows discovery finds a user CLI .cmd shim from the registry PATH', asyn
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
+test('Windows Claude npm shims resolve to the JavaScript entrypoint used by auth checks and ACP launch', async () => {
+  const prefix = mkdtempSync(join(tmpdir(), 'astrid-windows-npm-'));
+  const packageDirectory = join(prefix, 'node_modules', '@anthropic-ai', 'claude-code');
+  try {
+    mkdirSync(packageDirectory, { recursive: true });
+    executable(prefix, 'claude.CMD', '@echo off\r\n');
+    executable(prefix, 'bun.EXE', '');
+    const entryPoint = join(packageDirectory, 'cli.js');
+    writeFileSync(entryPoint, `process.stdout.write(JSON.stringify({ loggedIn: false }));\n`);
+    const env = { ...process.env, PATH: '', PATHEXT: '.CMD;.EXE' };
+    const registryReader = async (key: string) => key.startsWith('HKCU') ? `Path    REG_SZ    ${prefix}\r\n` : '';
+
+    const agents = await discoverLocalAgents({ env, platform: 'win32', registryReader });
+    assert.equal(agents.find(agent => agent.id === 'claude-code')?.state, 'sign-in');
+    const launch = await localAgentLaunch('claude-code', env, { platform: 'win32', registryReader });
+    assert.deepEqual(launch, {
+      command: join(prefix, 'bun.EXE'),
+      args: ['x', '--bun', LOCAL_AGENT_ADAPTERS['claude-code']],
+      env: { PATH: prefix },
+      cliPath: entryPoint,
+    });
+    assert.equal(launch.cliPath.endsWith('.js'), true);
+  } finally { rmSync(prefix, { recursive: true, force: true }); }
+});
+
 test('falls back to the default passwd shell when SHELL is unset', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'astrid-passwd-shell-'));
   try {
@@ -89,6 +117,26 @@ test('falls back to the default passwd shell when SHELL is unset', async () => {
     const env = { ...process.env, SHELL: undefined, PATH: directory, ASTRID_TEST_LOGIN_PATH: directory };
     const agents = await discoverLocalAgents({ env, platform: 'linux', passwdReader: () => `astrid:x:${process.getuid?.() ?? 1234}:100:User:/home/astrid:${shell}\n`, cwd: directory });
     assert.equal(agents.find(agent => agent.id === 'claude-code')?.state, 'not-installed');
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('macOS falls back to the account shell from Directory Service when passwd lacks the user', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-directory-shell-'));
+  try {
+    const loginBin = join(directory, 'login-bin');
+    mkdirSync(loginBin);
+    const shell = loginShell(directory);
+    fake(loginBin, 'claude', { json: '{"loggedIn":true}', text: '' });
+    const env = { ...process.env, SHELL: undefined, PATH: directory, ASTRID_TEST_LOGIN_PATH: loginBin };
+    let lookedUp: string | undefined;
+    const agents = await discoverLocalAgents({
+      env,
+      platform: 'darwin',
+      passwdReader: () => '',
+      systemShellReader: async username => { lookedUp = username; return shell; },
+    });
+    assert.equal(lookedUp, userInfo().username);
+    assert.equal(agents.find(agent => agent.id === 'claude-code')?.state, 'ready');
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 

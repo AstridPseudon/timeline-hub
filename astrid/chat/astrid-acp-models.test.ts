@@ -207,15 +207,18 @@ test('non-ready agents do not bootstrap and every recovery row has its service l
   } finally { await value.bridge.close(); }
 });
 
-test('Astrid sign-in follows OMP credentials even when models exist; unknown auth remains ready', async () => {
-  const unsigned = fixture({ astridSignedIn: false, astridModelsWithoutAuth: true });
+test('Astrid sign-in preserves keyless model access; unknown auth remains ready', async () => {
+  const unsigned = fixture({ astridSignedIn: false });
+  const keyless = fixture({ astridSignedIn: false, astridModelsWithoutAuth: true });
   const unknown = fixture({ astridCatalogUnavailable: true });
   try {
     const unsignedCatalog = localAgentCatalogSchema.parse(await (await unsigned.call('/agents')).json());
     expect(unsignedCatalog.agents.find(agent => agent.id === 'astrid')).toMatchObject({ state: 'sign-in', line: 'Run `astrid`, then `/login`.' });
+    const keylessCatalog = localAgentCatalogSchema.parse(await (await keyless.call('/agents')).json());
+    expect(keylessCatalog.agents.find(agent => agent.id === 'astrid')?.state).toBe('ready');
     const unknownCatalog = localAgentCatalogSchema.parse(await (await unknown.call('/agents')).json());
     expect(unknownCatalog.agents.find(agent => agent.id === 'astrid')?.state).toBe('ready');
-  } finally { await unsigned.bridge.close(); await unknown.bridge.close(); }
+  } finally { await unsigned.bridge.close(); await keyless.bridge.close(); await unknown.bridge.close(); }
 });
 
 test('bootstrap failures release hosts and retry only on the next explicit menu refresh', async () => {

@@ -2,13 +2,15 @@ import { execFile } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { access, constants } from 'node:fs/promises';
 import { userInfo } from 'node:os';
-import { delimiter, join, win32 as win32Path } from 'node:path';
+import { delimiter, dirname, join, win32 as win32Path } from 'node:path';
 import { promisify } from 'node:util';
 import { LOCAL_AGENT_TABLE, type LocalAgentChoice, type LocalAgentId } from './localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
 
 type RegistryReader = (key: string, env: NodeJS.ProcessEnv) => Promise<string>;
-type Options = { env?: NodeJS.ProcessEnv; cwd?: string; platform?: NodeJS.Platform; registryReader?: RegistryReader; passwdReader?: () => string };
+type SystemShellReader = (username: string) => Promise<string | null>;
+type Options = { env?: NodeJS.ProcessEnv; cwd?: string; platform?: NodeJS.Platform; registryReader?: RegistryReader; passwdReader?: () => string; systemShellReader?: SystemShellReader };
+type LaunchOptions = Pick<Options, 'platform' | 'registryReader' | 'passwdReader' | 'systemShellReader'>;
 type AuthStatus = 'signed-in' | 'signed-out' | 'unknown';
 type ExternalAgent = Exclude<LocalAgentId, 'astrid'>;
 const execFileAsync = promisify(execFile);
@@ -31,6 +33,25 @@ export function defaultShellFromPasswd(passwd = readFileSync('/etc/passwd', 'utf
     }
   }
   return null;
+}
+
+async function defaultShellFromDirectoryService(username: string): Promise<string | null> {
+  const { stdout } = await execFileAsync('/usr/bin/dscl', ['.', '-read', `/Users/${username}`, 'UserShell'], {
+    encoding: 'utf8', timeout: 5_000, maxBuffer: 64 * 1024,
+  });
+  return stdout.match(/^UserShell:\s*(.+)$/m)?.[1]?.trim() || null;
+}
+
+async function windowsClaudeEntryPoint(command: string, platform: NodeJS.Platform): Promise<string | null> {
+  if (platform !== 'win32' || !command.toLowerCase().endsWith('.cmd')) return command;
+  // npm's global Windows shim points to this package entry under the same prefix.
+  // The Claude SDK launches .js paths through its Node/Bun executable, while it
+  // treats .cmd as a native binary and fails to spawn the shim without a shell.
+  const entryPoint = join(dirname(command), 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
+  try {
+    await access(entryPoint, constants.F_OK);
+    return entryPoint;
+  } catch { return null; }
 }
 
 function parseRegistryEnvironment(output: string): Record<string, string> {
@@ -81,11 +102,14 @@ export async function windowsLoginPath(env: NodeJS.ProcessEnv, registryReader: R
 }
 
 /** Resolve the PATH a person sees in their interactive login shell. */
-async function loginShellPath(env: NodeJS.ProcessEnv, platform: NodeJS.Platform, registryReader?: RegistryReader, passwdReader?: () => string): Promise<string> {
+async function loginShellPath(env: NodeJS.ProcessEnv, platform: NodeJS.Platform, registryReader?: RegistryReader, passwdReader?: () => string, systemShellReader?: SystemShellReader): Promise<string> {
   if (platform === 'win32') return windowsLoginPath(env, registryReader);
   let shell = env.SHELL;
   if (!shell) {
     try { shell = defaultShellFromPasswd(passwdReader?.()) ?? undefined; } catch { /* passwd may not be readable in a service context. */ }
+  }
+  if (!shell && platform === 'darwin') {
+    try { shell = await (systemShellReader ?? defaultShellFromDirectoryService)(userInfo().username) ?? undefined; } catch { /* Directory Service may be unavailable in a service context. */ }
   }
   if (!shell) return env.PATH ?? '';
   try {
@@ -149,10 +173,14 @@ async function status(command: string | null, args: string[], env: NodeJS.Proces
   return 'unknown';
 }
 
-async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?: string): Promise<AuthStatus> {
+async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?: string, platform = process.platform): Promise<AuthStatus> {
   if (!command) return 'unknown';
+  const script = platform === 'win32' && command.toLowerCase().endsWith('.js');
+  const run = (args: string[]) => script
+    ? execFileAsync(process.execPath, [command, ...args], { env, cwd, encoding: 'utf8' })
+    : execFileAsync(command, args, { env, cwd, encoding: 'utf8' });
   try {
-    const { stdout } = await execFileAsync(command, ['auth', 'status'], { env, cwd, encoding: 'utf8' });
+    const { stdout } = await run(['auth', 'status']);
     try {
       const result: unknown = JSON.parse(stdout);
       if (typeof result === 'object' && result !== null && typeof Reflect.get(result, 'loggedIn') === 'boolean') {
@@ -172,7 +200,18 @@ async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?
       } catch { /* Fall back to text only when the JSON output cannot be parsed. */ }
     }
   }
-  return status(command, ['auth', 'status', '--text'], env, /Logged in|Authenticated/i, /Not logged in|Run `?claude auth login/i, cwd);
+  try {
+    const { stdout, stderr } = await run(['auth', 'status', '--text']);
+    const output = `${stdout}\n${stderr}`;
+    if (/Not logged in|Run `?claude auth login/i.test(output)) return 'signed-out';
+    if (/Logged in|Authenticated/i.test(output)) return 'signed-in';
+  } catch (error) {
+    const output = typeof error === 'object' && error !== null
+      ? [Reflect.get(error, 'stdout'), Reflect.get(error, 'stderr')].filter(value => typeof value === 'string').join('\n')
+      : '';
+    return /Not logged in|Run `?claude auth login/i.test(output) ? 'signed-out' : 'unknown';
+  }
+  return 'unknown';
 }
 
 function choice(id: LocalAgentId, state: LocalAgentChoice['state'], platform: NodeJS.Platform): LocalAgentChoice {
@@ -187,14 +226,15 @@ function choice(id: LocalAgentId, state: LocalAgentChoice['state'], platform: No
 export async function discoverLocalAgents(options: Options = {}): Promise<LocalAgentChoice[]> {
   const baseEnv = options.env ?? process.env;
   const platform = options.platform ?? process.platform;
-  const loginPath = await loginShellPath(baseEnv, platform, options.registryReader, options.passwdReader);
+  const loginPath = await loginShellPath(baseEnv, platform, options.registryReader, options.passwdReader, options.systemShellReader);
   const path = combinedPath(platform, loginPath, baseEnv.PATH);
   const env = { ...baseEnv, PATH: path };
-  const [claude, codex] = await Promise.all([
+  const [claudeShim, codex] = await Promise.all([
     executable('claude', path, platform, baseEnv.PATHEXT), executable('codex', path, platform, baseEnv.PATHEXT),
   ]);
+  const claude = claudeShim ? await windowsClaudeEntryPoint(claudeShim, platform) : null;
   const [claudeAuth, codexAuth] = await Promise.all([
-    claudeStatus(claude, env, options.cwd),
+    claudeStatus(claude, env, options.cwd, platform),
     status(codex, ['login', 'status'], env, /Logged in using/i, /Not logged in|Run `?codex login/i, options.cwd),
   ]);
   return [
@@ -204,15 +244,16 @@ export async function discoverLocalAgents(options: Options = {}): Promise<LocalA
   ];
 }
 
-export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.ProcessEnv = process.env): Promise<{ command: string; args: string[]; env: Record<string, string | undefined>; cliPath: string }> {
-  const platform = process.platform;
-  const loginPath = await loginShellPath(env, platform);
+export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.ProcessEnv = process.env, options: LaunchOptions = {}): Promise<{ command: string; args: string[]; env: Record<string, string | undefined>; cliPath: string }> {
+  const platform = options.platform ?? process.platform;
+  const loginPath = await loginShellPath(env, platform, options.registryReader, options.passwdReader, options.systemShellReader);
   const path = combinedPath(platform, loginPath, env.PATH);
   const bunPath = combinedPath(platform, env.PATH, loginPath);
-  const [bun, cli] = await Promise.all([
+  const [bun, cliShim] = await Promise.all([
     executable('bun', bunPath, platform, env.PATHEXT),
     executable(agentId === 'claude-code' ? 'claude' : 'codex', path, platform, env.PATHEXT),
   ]);
+  const cli = cliShim && agentId === 'claude-code' ? await windowsClaudeEntryPoint(cliShim, platform) : cliShim;
   if (!cli) throw new Error(`${LOCAL_AGENT_TABLE[agentId].name} is not installed on PATH.`);
   if (!bun) throw new Error('Bun is not installed on PATH.');
   return {

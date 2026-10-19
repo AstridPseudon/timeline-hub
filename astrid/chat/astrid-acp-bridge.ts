@@ -427,9 +427,9 @@ export class AstridAcpBridge {
           this.discoverAgents({ cwd: this.config.cwd }),
           this.astridModelCatalog({ command: this.config.command, cwd: this.config.cwd, profile: this.config.profile }).catch(() => null),
         ]);
-        // OMP's signedIn flag reflects configured provider credentials. A failed
-        // catalog lookup is unknown, and unknown sign-in counts as ready.
-        const astridReady = astridModels?.providers.some(provider => provider.signedIn) ?? true;
+        // A provider with available models can be used without a configured key.
+        // A failed catalog lookup is unknown, and unknown sign-in counts as ready.
+        const astridReady = astridModels?.providers.some(provider => provider.signedIn || provider.models.length > 0) ?? true;
         const choices = agents.map(agent => agent.id === 'astrid' && !astridReady
           ? { ...agent, state: 'sign-in' as const, line: LOCAL_AGENT_TABLE.astrid.signInLine }
           : agent);
