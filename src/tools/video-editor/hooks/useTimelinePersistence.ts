@@ -95,6 +95,7 @@ interface UseTimelinePersistenceOptions {
   savedSeqRef: MutableRefObject<number>;
   configVersionRef: MutableRefObject<number>;
   headRevisionRef?: MutableRefObject<TimelineHeadRevision | undefined>;
+  recoveryConfig?: ReturnType<typeof import('./useTimelineSave.draftConfig.ts').createRecoveryConfig>;
   /** Freeze writes until a recovery draft has been explicitly retried/discarded. */
   recoveryPendingRef?: MutableRefObject<boolean>;
   /** Freeze writes while the initial recovery slot is still being discovered. */
@@ -240,6 +241,7 @@ export function useTimelinePersistence({
   savedSeqRef,
   configVersionRef,
   headRevisionRef: suppliedHeadRevisionRef,
+  recoveryConfig,
   recoveryPendingRef,
   recoveryActiveRef,
   lastSavedSignatureRef,
@@ -966,7 +968,7 @@ export function useTimelinePersistence({
       : cloneAttemptValue(loadedBundleRef.current);
     const wireBundle = effectiveBundle ?? undefined;
     const draft = {
-      config: cloneAttemptValue(nextData.config),
+      config: recoveryConfig?.snapshot(head, nextData.config) ?? cloneAttemptValue(nextData.config),
       registry: cloneAttemptValue(nextData.registry),
       bundle: effectiveBundle,
     };
@@ -1004,7 +1006,7 @@ export function useTimelinePersistence({
     };
     latestScheduledSaveRef.current = scheduledSave;
     return scheduledSave;
-  }, [configVersionRef, headRevisionRef, provider, session, timelineId]);
+  }, [configVersionRef, headRevisionRef, provider, session, timelineId, recoveryConfig]);
 
   const scheduleSave = useCallback<ScheduleSaveFn>((nextData, options) => {
     // Recovery is an explicit CAS decision. Do not replace the recovered

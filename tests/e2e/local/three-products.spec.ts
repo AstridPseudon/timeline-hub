@@ -1064,8 +1064,7 @@ test('M1 mixed editing: an accepted pointer move followed by a refused legacy re
   expect(kept).toMatchObject({ baseHeadRevisionId: moved.head.revision_id,
     baseHeadProjectId: harness.seed.projectId, baseHeadTimelineId: seed3.timelineId });
   expect(kept.draft.config?.clips?.find((clip: any) => clip.id === seed3.appClipId)?.at).toBe(to);
-  // projectCanonicalComposition selects display config fields; recovery stores that projection
-  // plus its scoped immutable base. saveTimelineAtHead merges it over the original raw config.
+  expect(kept.draft.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
   const authoredBase = move.data.canonical_document;
   expect(kept.baseHeadRevisionId).toBe(authoredBase.parent_revision.revision_id);
   expect(authoredBase.parent_revision.payload.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
