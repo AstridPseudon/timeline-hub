@@ -1,0 +1,617 @@
+from __future__ import annotations
+
+import copy
+import json
+import sys
+import types
+
+import pytest
+
+from astrid.sdk.timeline.commit import (
+    _digest,
+    bundle_from_document,
+    create_runtime_commit_service,
+)
+from tests.sdk.test_timeline_commit_provider_document import MEDIA, document_fixture
+
+
+class CommitRejected(Exception):
+    def __init__(self, failure):
+        self.failure = copy.deepcopy(failure)
+        super().__init__(failure["message"])
+
+
+class StaleHead(Exception):
+    def __init__(self, current_head):
+        self.current_head = copy.deepcopy(current_head)
+        super().__init__("timeline head changed")
+
+
+@pytest.fixture(autouse=True)
+def runtime_abi(monkeypatch):
+    # Agent's dependency-only environment need not install Runtime. Only its
+    # two ABI exceptions/metadata are faked; all command execution is real.
+    runtime = types.ModuleType("runtime_protocol")
+    runtime.__path__ = []
+    metadata = types.ModuleType("runtime_protocol.contract_metadata")
+    metadata.SCHEMA_DIGEST = "exact-installed-runtime-digest"
+    abi = types.ModuleType("runtime_protocol.timeline_commit")
+    abi.CommitRejected, abi.StaleHead = CommitRejected, StaleHead
+    for module in (runtime, metadata, abi):
+        monkeypatch.setitem(sys.modules, module.__name__, module)
+
+
+def detached(value):
+    return json.loads(json.dumps(value, allow_nan=False))
+
+
+def refusal(reason):
+    return CommitRejected({"http_status": 409, "code": "conflict", "message": reason,
+                           "details": {"status": "refused", "reason": reason,
+                                       "base": None, "current": None, "conflicts": []}})
+
+
+class DetachedRealm:
+    """Small scoped in-memory Runtime with immutable reads and acceptance CAS."""
+
+    def __init__(self, document=None):
+        document = document or document_fixture()
+        revision = document["parent_revision"]["revision_id"]
+        self.documents = {revision: detached(document)}
+        self.head = {"revision_id": revision, "publication_id": "bootstrap"}
+        receipt = {"receipt_id": "bootstrap", "command_kind": "timeline.create",
+                   "idempotency_key": "bootstrap-key", "request_hash": _digest(document),
+                   "project_id": "project-1", "project_seq": [0], "event_ids": ["event-bootstrap"],
+                   "result": {"parent_revision_id": revision}, "created_at": "2026-10-18T00:00:00Z"}
+        self.entries = [{"publication_id": "bootstrap", "revision_id": revision,
+                         "previous": None, "intent": "bootstrap", "records": None, "receipt": receipt,
+                         "provider_version": None, "compiler_version": None, "publisher": "actor-1"}]
+        self.live_sources, self.retained_sources = {}, {}
+        self.accepted, self.prepared, self.reads = [], [], []
+        self.before_accept = None
+        self.page_size = 100
+        self.request_count = 0
+
+    def context(self, calls, *, base=None, dry_run=False):
+        base = base or self.head
+        body = {"api_version": 1, "project_id": "project-1", "timeline_id": "film",
+                "base_revision_id": base["revision_id"],
+                "base_publication_id": base["publication_id"], "commands": detached(calls),
+                "dry_run": dry_run, "source": {"via": "python"}, "rationale": "test intent"}
+        invocation = {"operation": "commitTimeline",
+                      "path": "/v1/projects/project-1/timelines/film/commit", "body": body}
+        self.request_count += 1
+        return {"request": body, "invocation": invocation,
+                "idempotency_key": "request-" + str(self.request_count),
+                "request_hash": _digest(invocation), "realm_id": "realm-1", "publisher": "actor-1"}
+
+    def call(self, calls, *, base=None, dry_run=False):
+        context = self.context(calls, base=base, dry_run=dry_run)
+        return create_runtime_commit_service().commit(context, DetachedPort(self, context))
+
+    def move(self, ref="parent/clip:clip-a", on=3.003, *, base=None):
+        from astrid.sdk.timeline.capture import capture_move
+        base = base or self.head
+        bundle = bundle_from_document(self.documents[base["revision_id"]])
+        return capture_move(bundle, ref, on)
+
+
+class DetachedPort:
+    def __init__(self, realm, context):
+        self.realm, self.context = realm, detached(context)
+        self.captures = {}
+
+    def head(self):
+        return detached(self.realm.head)
+
+    def revision_closure(self, revision):
+        self.realm.reads.append(("revision", revision))
+        if revision not in self.realm.documents:
+            raise refusal("history_unavailable")
+        return detached(self.realm.documents[revision])
+
+    def history_entry(self, publication):
+        self.realm.reads.append(("entry", publication))
+        for entry in self.realm.entries:
+            if entry["publication_id"] == publication:
+                return detached(entry)
+        raise refusal("history_unavailable")
+
+    def history(self, through, after_publication_id=None, cursor=None, limit=100):
+        entries = self.realm.entries
+        try:
+            start = next(i + 1 for i, entry in enumerate(entries)
+                         if entry["publication_id"] == after_publication_id)
+            end = next(i + 1 for i, entry in enumerate(entries)
+                       if entry["publication_id"] == through["publication_id"])
+        except StopIteration:
+            raise refusal("history_unavailable") from None
+        if start > end:
+            raise refusal("history_unavailable")
+        offset = int(cursor or start)
+        next_offset = min(end, offset + min(limit, self.realm.page_size))
+        return {"head": detached(through), "items": detached(entries[offset:next_offset]),
+                "next_cursor": str(next_offset) if next_offset < end else None}
+
+    def _source(self, pin, kind):
+        self.realm.reads.append((kind, detached(pin)))
+        key = _digest(pin)
+        capture = self.realm.retained_sources.get(key, self.realm.live_sources.get(key))
+        if capture is None:
+            raise refusal("dependency_unavailable")
+        self.captures[key] = detached(capture)
+        return detached(capture)
+
+    def transcript_source(self, pin):
+        return self._source(pin, "transcript")
+
+    def config_source(self, pin):
+        return self._source(pin, "config")
+
+    def shot_closure(self, *args):
+        raise AssertionError("M1 move cannot read mutable or unrelated source shots")
+
+    def selected_media(self, *args):
+        raise AssertionError("M1 move cannot refresh existing immutable media")
+
+    def narration_take(self, *args):
+        raise AssertionError("M1 move cannot invoke narration")
+
+    def _candidate(self, prepared):
+        assert set(prepared) == {"expected_head", "canonical_document", "document_digest",
+                                 "records", "id_map", "semantic_events", "provider_version",
+                                 "compiler_version"}
+        assert prepared["document_digest"] == _digest(prepared["canonical_document"])
+        records = prepared["records"]["commands"]
+        assert [record["ordinal"] for record in records] == list(range(len(records)))
+        for record in records:
+            assert set(record) == {"ordinal", "command", "writes", "reads", "selections",
+                                   "bindings", "created", "dependencies", "derived_writes"}
+        assert all(key == value for key, value in prepared["id_map"].items())
+        assert prepared["semantic_events"] == []
+        document = prepared["canonical_document"]
+        pins = document["dependency_manifest"]["documents"]
+        assert {_digest(pin) for pin in pins} == self.captures.keys()
+        for pin in pins:
+            assert any(dep["pin"] == pin and dep["kind"] in {"transcript", "source"}
+                       for record in records for dep in record["dependencies"])
+        return {**{key: detached(prepared[key]) for key in (
+            "canonical_document", "document_digest", "id_map", "provider_version", "compiler_version")},
+            "commands": [detached(record["command"]) for record in records]}
+
+    def preview(self, prepared):
+        request = self.context["request"]
+        assert request["dry_run"]
+        return {"data": {"status": "preview", "evaluated_head": self.head(),
+                         "base_revision_id": request["base_revision_id"],
+                         "base_publication_id": request["base_publication_id"],
+                         **self._candidate(prepared)}, "receipt": None}
+
+    def accept(self, prepared):
+        realm, request = self.realm, self.context["request"]
+        realm.prepared.append(detached(prepared))
+        callback, realm.before_accept = realm.before_accept, None
+        if callback:
+            callback()
+        if prepared["expected_head"] != realm.head:
+            raise StaleHead(realm.head)
+        candidate = self._candidate(prepared)
+        previous = detached(realm.head)
+        revision = candidate["canonical_document"]["parent_revision"]["revision_id"]
+        base = {"revision_id": request["base_revision_id"],
+                "publication_id": request["base_publication_id"]}
+        data = {**candidate, "status": "accepted" if previous == base else "rebased",
+                "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
+                "previous_revision_id": previous["revision_id"],
+                "previous_publication_id": previous["publication_id"], "accepted_revision_id": revision,
+                "rebased_onto": None if previous == base else previous, "publisher": "actor-1",
+                "source": request["source"], "rationale": request["rationale"]}
+        publication = "publication-" + str(len(realm.entries))
+        receipt = {"receipt_id": publication, "command_kind": "timeline.commit",
+                   "idempotency_key": self.context["idempotency_key"],
+                   "request_hash": self.context["request_hash"], "project_id": "project-1",
+                   "project_seq": [len(realm.entries)], "event_ids": ["event-" + publication],
+                   "result": data, "created_at": "2026-10-19T00:00:00Z"}
+        result = {"data": data, "receipt": receipt}
+        realm.documents[revision] = detached(candidate["canonical_document"])
+        realm.entries.append({"publication_id": publication, "revision_id": revision,
+                              "previous": previous, "intent": "recorded",
+                              "records": detached(prepared["records"]), "receipt": detached(receipt),
+                              "provider_version": prepared["provider_version"],
+                              "compiler_version": prepared["compiler_version"], "publisher": "actor-1",
+                              "source": request["source"], "rationale": request["rationale"]})
+        realm.head = {"revision_id": revision, "publication_id": publication}
+        realm.retained_sources.update(detached(self.captures))
+        realm.accepted.append(result)
+        return result
+
+
+def inverse(publications):
+    return {"schema_version": 1, "op": "timeline.inverse", "version": "1",
+            "select": None, "args": {"publications": publications}}
+
+
+def test_factory_matches_fixed_installed_runtime_contract():
+    provider = create_runtime_commit_service()
+    assert provider.provider_id == "astrid-v1"
+    assert type(provider.interface_version) is int and provider.interface_version == 1
+    assert provider.contract_digest == "exact-installed-runtime-digest"
+    assert not hasattr(provider, "requires_scene_evaluation")
+
+
+def test_move_inverse_returns_exact_runtime_result_and_complete_original_state():
+    realm = DetachedRealm()
+    original = copy.deepcopy(realm.documents["parent-1"])
+    result = realm.call([realm.move()])
+    assert result is realm.accepted[-1]
+    assert result["receipt"]["result"] == result["data"]
+    assert result["data"]["commands"] == [realm.entries[-1]["records"]["commands"][0]["command"]]
+    assert result["data"]["canonical_document"]["shot_revisions"] == original["shot_revisions"]
+    undo = realm.call([inverse([realm.head["publication_id"]])])
+    assert undo is realm.accepted[-1]
+    restored = undo["data"]["canonical_document"]
+    assert restored["parent_revision"]["payload"] == original["parent_revision"]["payload"]
+    assert restored["shot_revisions"] == original["shot_revisions"]
+    assert restored["internal_timeline_revisions"] == original["internal_timeline_revisions"]
+    assert realm.entries[-1]["records"]["undo_of"] == [result["receipt"]["receipt_id"]]
+    redo = realm.call([inverse([realm.head["publication_id"]])])
+    assert redo["data"]["canonical_document"]["parent_revision"]["payload"] == (
+        result["data"]["canonical_document"]["parent_revision"]["payload"])
+
+
+def test_stale_disjoint_rebases_and_same_clip_conflicts():
+    realm = DetachedRealm()
+    base = copy.deepcopy(realm.head)
+    stale = realm.move("parent/clip:clip-b", 8.008)
+    conflicting = realm.move(on=4.004)
+    first = realm.call([realm.move()])
+    result = realm.call([stale], base=base)
+    assert result["data"]["status"] == "rebased"
+    assert result["data"]["rebased_onto"]["publication_id"] == first["receipt"]["receipt_id"]
+    positions = {row["id"]: row["at"] for row in result["data"]["canonical_document"][
+        "parent_revision"]["payload"]["config"]["clips"]}
+    assert positions == {"clip-a": 3.003, "clip-b": 8.008}
+    count = len(realm.entries)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([conflicting], base=base)
+    assert error.value.failure["details"]["status"] == "conflict"
+    assert len(realm.entries) == count
+
+
+def test_stale_head_retries_original_plan_and_created_ids_once(monkeypatch):
+    from astrid.sdk.timeline import commands
+    from astrid.sdk.timeline.capture import capture_track_create
+
+    realm = DetachedRealm()
+    original_execute, executions = commands.execute, []
+
+    def execute(bundle, calls, **kwargs):
+        if sys._getframe(1).f_globals["__name__"] == "astrid.sdk.timeline.commit":
+            executions.append(detached(calls))
+        return original_execute(bundle, calls, **kwargs)
+
+    monkeypatch.setattr(commands, "execute", execute)
+    command = capture_track_create(bundle_from_document(realm.documents["parent-1"]), "parent",
+                                   {"id": "created-track", "kind": "visual"})
+    realm.before_accept = lambda: realm.call([realm.move()])
+    result = realm.call([command])
+    # Provider records this request once; the other call is the intervening
+    # request. Frontend capture and core replay use the real same engine.
+    assert len(executions) == 2
+    assert result["data"]["status"] == "rebased"
+    attempts = [row for row in realm.prepared
+                if row["records"]["commands"][0]["command"]["op"] == "track.create"]
+    assert len(attempts) == 2
+    assert attempts[0]["records"] == attempts[1]["records"]
+    assert attempts[0]["id_map"] == attempts[1]["id_map"] == {}
+
+
+def test_dry_run_uses_runtime_preview_and_writes_nothing():
+    realm = DetachedRealm()
+    result = realm.call([realm.move()], dry_run=True)
+    assert result["receipt"] is None and result["data"]["status"] == "preview"
+    assert realm.head["publication_id"] == "bootstrap"
+    assert realm.accepted == realm.prepared == []
+
+
+def test_original_capture_claims_are_verified_before_refresh():
+    realm = DetachedRealm()
+    command = realm.move()
+    realm.call([realm.move(on=4.004)])
+    with pytest.raises(CommitRejected) as error:
+        realm.call([command])
+    assert error.value.failure["details"]["reason"] == "dependency_changed"
+    assert error.value.failure["details"]["status"] == "conflict"
+    assert len(realm.accepted) == 1
+
+
+def test_undo_detects_aba_and_unchanged_write_publications():
+    for unchanged in (False, True):
+        realm = DetachedRealm()
+        first = realm.call([realm.move()])
+        target = first["receipt"]["receipt_id"]
+        if not unchanged:
+            realm.call([realm.move(on=4.004)])
+        before = detached(realm.head)
+        realm.call([realm.move(on=3.003)])
+        if unchanged:
+            assert realm.head["revision_id"] == before["revision_id"]
+            assert realm.head["publication_id"] != before["publication_id"]
+        with pytest.raises(CommitRejected) as error:
+            realm.call([inverse([target])])
+        assert error.value.failure["details"]["reason"] == "intervening_write"
+
+
+def test_dependent_unsent_original_guards_allow_equal_state_aba_at_fresh_base():
+    realm = DetachedRealm()
+    realm.call([realm.move()])
+    original = realm.move(on=5.005)
+    realm.call([realm.move(on=4.004)])
+    realm.call([realm.move(on=3.003)])
+    result = realm.call([original])
+    assert result["data"]["status"] == "accepted"
+    assert result["data"]["commands"][0]["expect"] == original["expect"]
+    assert result["data"]["commands"][0]["reads"] == original["reads"]
+
+
+def test_paged_history_and_multiple_target_publications_are_one_inverse():
+    realm = DetachedRealm()
+    realm.page_size = 1
+    initial = detached(realm.documents["parent-1"]["parent_revision"]["payload"])
+    first = realm.call([realm.move()])
+    second = realm.call([realm.move("parent/clip:clip-b", 8.008)])
+    result = realm.call([inverse([first["receipt"]["receipt_id"], second["receipt"]["receipt_id"]])])
+    assert result["data"]["canonical_document"]["parent_revision"]["payload"] == initial
+
+
+def test_reversed_inverse_target_order_is_refused_without_partial_acceptance():
+    realm = DetachedRealm()
+    first = realm.call([realm.move()])
+    second = realm.call([realm.move("parent/clip:clip-b", 8.008)])
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([second["receipt"]["receipt_id"], first["receipt"]["receipt_id"]])])
+    assert error.value.failure["details"]["reason"] == "invalid_inverse_order"
+    assert realm.head == head and len(realm.accepted) == 2
+
+
+def test_client_cannot_supply_inverse_writes():
+    realm = DetachedRealm()
+    first = realm.call([realm.move()])
+    head = detached(realm.head)
+    command = inverse([first["receipt"]["receipt_id"]])
+    command["args"]["writes"] = [{"ref": "parent/clip:clip-b", "path": ["at"],
+                                  "after": {"state": "present", "value": 999}}]
+    with pytest.raises(CommitRejected) as error:
+        realm.call([command])
+    assert error.value.failure["details"]["reason"] == "invalid_edit_command"
+    assert realm.head == head and len(realm.accepted) == 1
+
+
+@pytest.mark.parametrize("damage", ["missing_base_entry", "unknown_writes", "missing_target",
+                                   "broken_ancestry", "foreign_scope"])
+def test_missing_or_inconsistent_history_and_scope_fail_closed(damage):
+    realm = DetachedRealm()
+    base = detached(realm.head)
+    stale = realm.move("parent/clip:clip-b", 8.008)
+    first = realm.call([realm.move()])
+    if damage == "missing_base_entry":
+        realm.entries.pop(0)
+    elif damage == "unknown_writes":
+        realm.entries[-1].update(intent="legacy_unknown", records=None)
+    elif damage == "missing_target":
+        stale = inverse(["unknown-publication"])
+    elif damage == "broken_ancestry":
+        realm.entries[-1]["previous"]["publication_id"] = "other-history"
+    elif damage == "foreign_scope":
+        realm.documents[base["revision_id"]]["project_id"] = "foreign-project"
+    with pytest.raises(CommitRejected):
+        realm.call([stale], base=base)
+    assert realm.accepted == [first]
+
+
+def test_runtime_refusal_and_exception_propagate_for_ledger_reconciliation(monkeypatch):
+    realm = DetachedRealm()
+    context = realm.context([realm.move()])
+    port = DetachedPort(realm, context)
+    provider = create_runtime_commit_service()
+    for error in (refusal("authority_revoked"), OSError("ambiguous post-commit hook")):
+        def fail(prepared):
+            raise error
+        monkeypatch.setattr(port, "accept", fail)
+        with pytest.raises(type(error)) as caught:
+            provider.commit(context, port)
+        assert caught.value is error
+
+
+def test_restore_is_sole_and_strictly_pair_guarded_until_adapter_lands():
+    realm = DetachedRealm()
+    restore = {"schema_version": 1, "op": "timeline.restore", "version": "1", "select": None,
+               "args": {"revision_id": "parent-1", "content_digest": MEDIA}}
+    with pytest.raises(CommitRejected) as error:
+        realm.call([restore])
+    assert error.value.failure["details"]["reason"] == "unsupported_operation"
+    with pytest.raises(CommitRejected) as error:
+        realm.call([restore, realm.move()])
+    assert error.value.failure["details"]["reason"] == "invalid_commands"
+    with pytest.raises(CommitRejected) as error:
+        realm.call([restore], base={**realm.head, "publication_id": "older-publication"})
+    assert error.value.failure["details"]["reason"] == "stale_head"
+
+
+def source_fixture(kind):
+    from astrid.sdk.media_transcript import transcript_document_id
+
+    if kind == "transcript":
+        content = {"schema": "media.transcript/v1", "media_id": MEDIA, "source_id": "whisper",
+                   "lines": [{"id": "line-1", "words": [
+                       {"id": "word-1", "start": 4, "end": 5, "text": "original"}]}]}
+        document_id = transcript_document_id("project-1", MEDIA, "whisper")
+        document_kind = "media.transcript"
+    else:
+        content = {"schema": "timeline.config/v1", "settings": {"original": True}}
+        document_id, document_kind = "timeline:config", "timeline.config"
+    pin = {"document_id": document_id, "version": 1, "content_digest": _digest(content)}
+    return {"pin": pin, "document": {
+        "document_id": document_id, "project_id": "project-1", "kind": document_kind,
+        "version": 1, "content": content, "created_at": "2026-10-18T00:00:00Z",
+        "updated_at": "2026-10-18T00:00:00Z"}}
+
+
+@pytest.mark.parametrize("kind", ["transcript", "config"])
+def test_retained_input_closure_survives_document_overwrite_and_new_provider(kind):
+    source = source_fixture(kind)
+    document = document_fixture()
+    document["dependency_manifest"]["documents"] = [source["pin"]]
+    shot = document["shot_revisions"][0]
+    shot["payload"]["text_bindings"][0]["source_document"] = detached(source["pin"])
+    shot["payload"]["text_bindings"][0]["source_window"] = {"start": 4, "end": 9}
+    if kind == "transcript":
+        shot["payload"]["text_bindings"][0]["word_ids"] = ["word-1"]
+    shot["content_digest"] = _digest(shot["payload"])
+    document["dependency_manifest"]["shots"][0]["content_digest"] = shot["content_digest"]
+    realm = DetachedRealm(document)
+    key = _digest(source["pin"])
+    realm.live_sources[key] = detached(source)
+    first = realm.call([realm.move()])
+    target = first["receipt"]["receipt_id"]
+    assert realm.retained_sources[key] == source
+    # Producer overwrites live Documents. Fresh ports/providers must still
+    # consume accepted v1 bytes, including the original word/source identity.
+    updated = detached(source)
+    updated["document"]["version"] = updated["pin"]["version"] = 2
+    updated["document"]["content"]["replacement"] = "v2"
+    updated["pin"]["content_digest"] = _digest(updated["document"]["content"])
+    realm.live_sources = {_digest(updated["pin"]): updated}
+    second = realm.call([realm.move("parent/clip:clip-b", 8.008)])
+    undo = realm.call([inverse([target])])
+    assert undo["data"]["canonical_document"]["shot_revisions"] == document["shot_revisions"]
+    assert second["data"]["canonical_document"]["dependency_manifest"]["documents"] == [source["pin"]]
+    assert undo["data"]["canonical_document"]["dependency_manifest"]["documents"] == [source["pin"]]
+    assert realm.retained_sources[key] == source
+    assert sum(call[0] == kind for call in realm.reads) == 3
+
+
+@pytest.mark.parametrize("damage", ["missing", "version", "digest", "project", "source_identity",
+                                   "kind", "pin"])
+def test_missing_or_malformed_transcript_source_is_refused(damage):
+    source = source_fixture("transcript")
+    document = document_fixture()
+    document["dependency_manifest"]["documents"] = [source["pin"]]
+    realm = DetachedRealm(document)
+    key = _digest(source["pin"])
+    if damage != "missing":
+        realm.live_sources[key] = detached(source)
+        row = realm.live_sources[key]
+        if damage == "version":
+            row["document"]["version"] = 2
+        elif damage == "digest":
+            row["document"]["content"]["lines"] = []
+        elif damage == "project":
+            row["document"]["project_id"] = "foreign-project"
+        elif damage == "source_identity":
+            row["document"]["content"]["source_id"] = "other-source"
+            row["pin"]["content_digest"] = _digest(row["document"]["content"])
+            document["dependency_manifest"]["documents"] = [detached(row["pin"])]
+            realm.documents["parent-1"] = detached(document)
+            realm.live_sources = {_digest(row["pin"]): row}
+        elif damage == "kind":
+            row["document"]["kind"] = "arbitrary.document"
+        elif damage == "pin":
+            row["pin"]["document_id"] = "foreign-source"
+    with pytest.raises(CommitRejected):
+        realm.call([realm.move()])
+    assert realm.accepted == [] and realm.head["publication_id"] == "bootstrap"
+
+
+def test_three_head_races_exhaust_budget_without_changing_plan(monkeypatch):
+    realm = DetachedRealm()
+    context = realm.context([realm.move()])
+    port = DetachedPort(realm, context)
+    attempts = []
+
+    def stale(prepared):
+        attempts.append(detached(prepared))
+        raise StaleHead(realm.head)
+
+    monkeypatch.setattr(port, "accept", stale)
+    with pytest.raises(CommitRejected) as error:
+        create_runtime_commit_service().commit(context, port)
+    assert error.value.failure["details"]["reason"] == "head_busy"
+    assert len(attempts) == 3
+    assert attempts == [attempts[0]] * 3
+    assert realm.accepted == []
+
+
+def test_inverse_rebases_only_over_proven_disjoint_new_writes():
+    realm = DetachedRealm()
+    original = detached(realm.documents["parent-1"]["parent_revision"]["payload"])
+    first = realm.call([realm.move()])
+    base = detached(realm.head)
+    other = realm.call([realm.move("parent/clip:clip-b", 8.008)])
+    undo = realm.call([inverse([first["receipt"]["receipt_id"]])], base=base)
+    assert undo["data"]["status"] == "rebased"
+    assert undo["data"]["rebased_onto"]["publication_id"] == other["receipt"]["receipt_id"]
+    clips = undo["data"]["canonical_document"]["parent_revision"]["payload"]["config"]["clips"]
+    assert clips[0] == original["config"]["clips"][0]
+    assert clips[1]["at"] == 8.008
+
+
+def test_shared_occurrence_move_does_not_replace_unedited_sibling():
+    document = document_fixture()
+    for occurrence in document["parent_revision"]["payload"]["occurrences"]:
+        occurrence.update(source_offset=0, speed=1)
+    document["parent_revision"]["content_digest"] = _digest(document["parent_revision"]["payload"])
+    realm = DetachedRealm(document)
+    original = detached(realm.documents["parent-1"])
+    first = realm.call([realm.move("occurrence:occ-a/clip:clip-a", 3.003)])
+    changed = first["data"]["canonical_document"]
+    occurrences = changed["parent_revision"]["payload"]["occurrences"]
+    assert occurrences[1] == original["parent_revision"]["payload"]["occurrences"][1]
+    assert original["shot_revisions"][0] in changed["shot_revisions"]
+    assert original["internal_timeline_revisions"][0] in changed["internal_timeline_revisions"]
+    undo = realm.call([inverse([first["receipt"]["receipt_id"]])])
+    reopened = bundle_from_document(undo["data"]["canonical_document"])
+    shot = reopened["shots"][reopened["placements"][0]["shot_id"]]
+    assert shot["internal_timeline"] == original["internal_timeline_revisions"][0]["payload"]
+
+
+def test_shared_sibling_move_rebases_after_other_occurrence_materializes():
+    document = document_fixture()
+    for occurrence in document["parent_revision"]["payload"]["occurrences"]:
+        occurrence.update(source_offset=0, speed=1)
+    document["parent_revision"]["content_digest"] = _digest(document["parent_revision"]["payload"])
+    realm = DetachedRealm(document)
+    base = detached(realm.head)
+    stale = realm.move("occurrence:occ-b/clip:clip-a", 13.013)
+    first = realm.call([realm.move("occurrence:occ-a/clip:clip-a", 3.003)])
+    result = realm.call([stale], base=base)
+    assert result["data"]["status"] == "rebased"
+    assert result["data"]["rebased_onto"]["publication_id"] == first["receipt"]["receipt_id"]
+
+
+def test_move_reload_and_inverse_import_no_renderer():
+    import os
+    import subprocess
+
+    script = r'''
+import sys
+class Blocked:
+    def find_spec(self, fullname, *args):
+        if (fullname.startswith(('astrid.packs.rendering', 'astrid.core.rendering',
+                                 'astrid.sdk.authoring_render_preview',
+                                 'astrid.core.timeline.compatibility', 'composition'))
+                or 'scene' in fullname or fullname.startswith(('node', 'remotion'))):
+            raise AssertionError('renderer dependency: ' + fullname)
+sys.meta_path.insert(0, Blocked())
+import pytest
+from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse, runtime_abi
+runtime_abi.__wrapped__(pytest.MonkeyPatch())
+realm = DetachedRealm()
+first = realm.call([realm.move()])
+realm.call([inverse([first['receipt']['receipt_id']])])
+assert len(realm.entries) == 3
+'''
+    result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True,
+                            env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+    assert result.returncode == 0, result.stderr
