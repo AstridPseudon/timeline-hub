@@ -420,7 +420,7 @@ class Backend:
                 if (health.get("status") != "ok" or realm.get("realm_id") != realm_id
                         or discovery.get("active_realm") != realm_id
                         or health.get("runtime_instance_id") != discovery.get("runtime_instance_id")
-                        or status.get("discovery", {}).get("runtime_instance_id") != discovery.get("runtime_instance_id")
+                        or (status.get("discovery") or {}).get("runtime_instance_id") != discovery.get("runtime_instance_id")
                         or status.get("support", {}).get("pid_alive") is not True):
                     raise ValueError("The browser door belongs to a different Runtime or workspace.")
                 return

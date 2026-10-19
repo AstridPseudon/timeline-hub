@@ -434,6 +434,36 @@ def test_door_verification_requires_selected_realm_recorded_instance_and_live_ow
         assert all(call.args[0].headers['Origin'] == 'https://astrid.haus' for call in opener.open.call_args_list)
 
 
+def test_door_verification_retries_status_observed_before_discovery_was_published(tmp_path, monkeypatch):
+    from astrid.installer import backend as module
+
+    program, data = tmp_path / "program", tmp_path / "data"
+    version = Version(program / "versions/old", tmp_path / "python", tmp_path / "profile", {})
+    discovery = {"active_realm": "selected", "runtime_instance_id": "owned-instance",
+                 "door_endpoint": "http://127.0.0.1:17340"}
+    write_json(data / "runtime/discovery.json", discovery)
+    health = {"status": "ok", "runtime_instance_id": "owned-instance"}
+    realm = {"realm_id": "selected"}
+    opener = Mock()
+    opener.open.side_effect = lambda request, timeout: io.BytesIO(json.dumps(
+        health if request.full_url.endswith("/health") else realm).encode())
+    monkeypatch.setattr(module.urllib.request, "build_opener", Mock(return_value=opener))
+    monkeypatch.setattr(module.time, "monotonic", lambda: 0)
+    sleep = Mock()
+    monkeypatch.setattr(module.time, "sleep", sleep)
+    backend = Backend(program, tmp_path / "log", tmp_path / "uv")
+    backend.runtime = Mock(side_effect=[
+        {"discovery": None, "support": {"pid_alive": True}},
+        {"discovery": discovery, "support": {"pid_alive": True}},
+    ])
+
+    backend.verify(version, data, "selected")
+
+    assert backend.runtime.call_count == 2
+    assert opener.open.call_count == 4
+    sleep.assert_called_once_with(0.25)
+
+
 def test_source_archives_are_flattened_to_shallow_managed_paths(tmp_path, monkeypatch):
     def unpack(url, destination):
         child = destination / ('astrid-agent-' + 'a' * 40)
