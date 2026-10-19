@@ -137,6 +137,24 @@ describe('useTimelineQueries', () => {
   });
 
 
+  it('does not poll a load that failed with nothing loaded, so the error stays put', async () => {
+    const loadTimeline = vi.fn(async () => { throw new Error('HTTP 500'); });
+    const provider = makeProvider(loadTimeline) as DataProvider & { refreshIntervalMs: number };
+    provider.refreshIntervalMs = 30;
+
+    const { result } = renderHook(
+      () => useTimelineQueries(provider, 'timeline-1'),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.timelineQuery.isError).toBe(true));
+    expect(loadTimeline).toHaveBeenCalledTimes(1);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(loadTimeline).toHaveBeenCalledTimes(1);
+    expect(result.current.timelineQuery.isError).toBe(true);
+    expect(result.current.timelineQuery.error).toBeInstanceOf(Error);
+  });
+
   it('surfaces a rejected loadTimeline as timelineQuery.error', async () => {
     const failure = new Error('Astrid bridge returned a malformed timeline payload: config: expected object, received string');
     const provider = makeProvider(async () => { throw failure; });

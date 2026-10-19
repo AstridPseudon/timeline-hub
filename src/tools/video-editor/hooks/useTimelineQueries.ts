@@ -31,6 +31,14 @@ export function getTimelineRefreshOptions(provider: DataProvider) {
   } as const;
 }
 
+/**
+ * The poll only catches a loaded timeline up with the head. A read that failed with nothing loaded is not polled: TanStack v5
+ * resets an errored query with no data to pending when a fetch starts, so a timer would blink the load-error card away and
+ * retry in a loop. That failure waits for the person (Try again) or for Astrid answering again (the card retries once).
+ */
+const pollOnlyLoaded = (interval: number) => (query: { state: { status: string; data: unknown } }) =>
+  query.state.status === 'error' && query.state.data === undefined ? false : interval;
+
 export function useTimelineQueries(
   provider: DataProvider,
   timelineId: string,
@@ -50,6 +58,7 @@ export function useTimelineQueries(
       : loadTimelineJsonFromProvider(provider, timelineId, resolveAssetUrl, undefined, true),
     ...(initialData ? { initialData } : {}),
     ...refreshOptions,
+    refetchInterval: pollOnlyLoaded(refreshOptions.refetchInterval),
   });
 
   const assetRegistryKey = queryIdentity === undefined
@@ -61,6 +70,7 @@ export function useTimelineQueries(
     queryFn: () => provider.loadAssetRegistry(timelineId, { poll: true }),
     ...(initialData ? { initialData: initialData.registry } : {}),
     ...refreshOptions,
+    refetchInterval: pollOnlyLoaded(refreshOptions.refetchInterval),
   });
 
   return {
