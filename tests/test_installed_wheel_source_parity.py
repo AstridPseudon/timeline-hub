@@ -34,6 +34,7 @@ def test_installed_runtime_wheel_contains_selected_source(stage1_runtime_environ
     probe = subprocess.run(
         [
             str(python),
+            "-I",
             "-c",
             (
                 "import importlib, inspect, pathlib; "
