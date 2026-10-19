@@ -271,10 +271,24 @@ INLINE_OUTPUT_MAX_BYTES = 8 * 1024 * 1024
 def _settlement_media_type(descriptor: Mapping[str, Any]) -> str:
     """Publish a MIME media type while retaining internal artifact semantics."""
 
+    from astrid.core.contracts.artifact_types import ARTIFACT_TYPE_REGISTRY
+
+    def transport_type(value: Any) -> bool:
+        if not isinstance(value, str) or any(ord(char) < 32 for char in value):
+            return False
+        base_type = value.split(";", 1)[0].strip()
+        if ARTIFACT_TYPE_REGISTRY.is_known(base_type.lower()):
+            return False
+        return bool(re.fullmatch(
+            r"(?:application|audio|font|image|message|model|multipart|text|video)/[A-Za-z0-9!#$&^_.+\-]+",
+            base_type,
+            re.IGNORECASE,
+        ))
+
     explicit = descriptor.get("media_type")
     if isinstance(explicit, str) and explicit.strip():
         explicit = explicit.strip()
-        if explicit.lower() != "application/octet-stream":
+        if transport_type(explicit) and explicit.lower() != "application/octet-stream":
             return explicit
     artifact_type = str(descriptor.get("artifact_type") or "")
     filename = descriptor.get("filename")
@@ -285,7 +299,7 @@ def _settlement_media_type(descriptor: Mapping[str, Any]) -> str:
         guessed_media_type = mimetypes.guess_type(filename)[0]
         if guessed_media_type and guessed_media_type.lower() != "application/octet-stream":
             return guessed_media_type
-    return artifact_type or "application/octet-stream"
+    return artifact_type if transport_type(artifact_type) else "application/octet-stream"
 
 
 def _runtime_output_filename(value: str) -> str:
