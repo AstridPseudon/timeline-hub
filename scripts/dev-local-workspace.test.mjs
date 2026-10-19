@@ -17,9 +17,30 @@ import {
   resolveRuntimeCommand,
   gatewayChildArgs,
   resolveLoopbackPort,
+  loadLocalRuntimeEnvironment,
+  LOCAL_RUNTIME_ENV_KEYS,
 } from './dev-local-workspace-options.mjs';
 
 const temporaryDirectories = [];
+
+test('local launcher settings persist without importing app secrets or overriding the shell', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-local-settings-'));
+  temporaryDirectories.push(directory);
+  writeFileSync(join(directory, '.env.local'), [
+    'ASTRID_RUNTIME_DATA_ROOT="/existing/workspace with spaces"',
+    'ASTRID_RUNTIME_PYTHON=/existing/python', 'ASTRID_APP_ACP_ENABLED=1',
+    'PORT=9999', 'UNRELATED_SECRET=synthetic-test-secret',
+  ].join('\n'));
+  const env = { ASTRID_RUNTIME_PYTHON: '/shell/python' };
+  loadLocalRuntimeEnvironment(directory, env);
+  assert.deepEqual(env, {
+    ASTRID_RUNTIME_DATA_ROOT: '/existing/workspace with spaces',
+    ASTRID_RUNTIME_PYTHON: '/shell/python', ASTRID_APP_ACP_ENABLED: '1',
+  });
+  assert.equal(parseDevLocalWorkspaceArgs([], env).acp, true);
+  assert.equal(parseDevLocalWorkspaceArgs([], { ASTRID_APP_ACP_ENABLED: '0' }).acp, false);
+  assert.equal(parseDevLocalWorkspaceArgs(['--data-root', '/explicit'], env).dataRoot, '/explicit');
+});
 
 afterEach(async () => {
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
@@ -193,6 +214,8 @@ const TEST_DATA_ENV_KEYS = [
 function cleanInheritedEnvironment(source = process.env) {
   const clean = { ...source };
   for (const key of TEST_DATA_ENV_KEYS) delete clean[key];
+  // The developer's persisted installation is never a test fixture.
+  for (const key of LOCAL_RUNTIME_ENV_KEYS) clean[key] = '';
   return clean;
 }
 
