@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
+import os
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
 from runtime_protocol.errors import NotFoundError
+from runtime_protocol import platform
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore, IDEMPOTENCY_RESULT_MARKER, IdempotencyWindowExpired, command_result
 from runtime_protocol.snapshot_refs import restore_spec_snapshots
@@ -17,13 +23,50 @@ def _digest(value):
     return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
 
 
+def _materialize_with_astrid(spec, attempt, checkout, service):
+    """Run the checked-out host with its own interpreter when that env exists."""
+    checkout = Path(checkout)
+    candidate = platform.venv_python(checkout / ".venv")
+    interpreter = candidate if candidate.is_file() else Path(sys.executable)
+    objects = {}
+    for digest in spec.get("input_object_ids", []):
+        encoded = base64.b64encode(service.object(digest)[1]).decode("ascii")
+        objects[digest] = encoded
+        objects[digest.removeprefix("sha256:")] = encoded
+    input_file = attempt.parent / "host-input.json"
+    input_file.write_text(json.dumps({"spec": spec, "objects": objects}))
+    script = r'''
+import base64, json, sys
+from pathlib import Path
+from astrid.core.execution.generic_host import GenericPackHost
+payload = json.loads(Path(sys.argv[1]).read_text())
+class Client:
+    def get_object(self, digest):
+        return base64.b64decode(payload["objects"][digest])
+host = GenericPackHost(pack_roots=[], client=Client())
+values = host._materialize_inputs(payload["spec"], Path(sys.argv[2]))
+print(json.dumps(values))
+'''
+    runtime_root = Path(__file__).resolve().parents[1]
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(
+        part for part in (str(checkout), str(runtime_root), env.get("PYTHONPATH", "")) if part
+    )
+    completed = subprocess.run(
+        [str(interpreter), "-c", script, str(input_file), str(attempt)],
+        cwd=runtime_root, env=env, capture_output=True, text=True, timeout=60,
+    )
+    assert completed.returncode == 0, (
+        f"Astrid host materialization failed under {interpreter}:\n{completed.stderr}"
+    )
+    return json.loads(completed.stdout)
+
+
 @pytest.mark.integration
 def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source(tmp_path, astrid_importable):
     # This crosses task admission, CAS custody, task readback, and Astrid's
-    # actual host materializer. A fake Runtime *transport* delegates to the
-    # real service, so neither the admission nor the hydration layer is mocked.
-    from astrid.core.execution.generic_host import GenericPackHost
-
+    # actual host materializer. The child receives bytes read from the real
+    # Runtime service, so admission, custody, and hydration stay real.
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
@@ -60,14 +103,9 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
         assert ref["revision_digest"] == _digest(parent)
         assert ref["digest"] in spec["input_object_ids"]
 
-        class Client:
-            def get_object(self, digest):
-                return service.object(digest)[1]
-
-        host = GenericPackHost(pack_roots=[], client=Client())
         attempt = tmp_path / "attempt"
         attempt.mkdir()
-        values = host._materialize_inputs(spec, attempt)
+        values = _materialize_with_astrid(spec, attempt, astrid_importable, service)
         assert json.loads((attempt / "inputs" / "timeline.json").read_text()) == snapshot["config"]
         assert json.loads(values["filmstrip_authority"])["capture_snapshot"] == snapshot
 
@@ -82,8 +120,6 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
 
 @pytest.mark.integration
 def test_render_hydration_reads_named_revision_after_head_moves(tmp_path, astrid_importable):
-    from astrid.core.execution.generic_host import GenericPackHost
-
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
@@ -116,14 +152,9 @@ def test_render_hydration_reads_named_revision_after_head_moves(tmp_path, astrid
                     "parent_revision_id": "old", "parent_content_digest": _digest(parent1)}},
             },
         })["task"]
-        class Client:
-            def get_object(self, digest):
-                return service.object(digest)[1]
-
-        host = GenericPackHost(pack_roots=[], client=Client())
         attempt = tmp_path / "attempt"
         attempt.mkdir()
-        host._materialize_inputs(task["spec"], attempt)
+        _materialize_with_astrid(task["spec"], attempt, astrid_importable, service)
         assert task["spec"]["spec"]["timeline_snapshot_ref"]["revision_id"] == "old"
         assert json.loads((attempt / "inputs" / "timeline.json").read_text()) == snapshot["config"]
         with service.store._transaction():

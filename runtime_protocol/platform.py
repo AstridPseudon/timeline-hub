@@ -1076,6 +1076,11 @@ def handoff_inspect_socket(descriptor, *, listener):
         borrowed.detach()
 
 
+def handoff_socket_parent() -> Path:
+    """Return the short native temp parent for private POSIX sockets."""
+    return Path("/private/tmp") if sys.platform == "darwin" else Path("/tmp")
+
+
 def handoff_listener(expected=None, *, timeout=5.0):
     if sys.platform == "win32":
         return _handoff_transport().Listener(expected, timeout=timeout)

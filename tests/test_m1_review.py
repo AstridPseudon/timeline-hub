@@ -7,6 +7,7 @@ import sys
 import threading
 import time
 import json
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -367,13 +368,22 @@ def unavailable(*_): raise OSError("still starting")
 cli._door_json = unavailable
 raise SystemExit(cli._run_foreground(paths, cli.BootstrapConfig(), json_mode=True))
 '''
+    # pytest's pythonpath setting applies only to this interpreter. The child
+    # exercises the generated client too, so give it the same SDK source root.
+    client_root = str(Path(__file__).resolve().parents[1] / "packages" / "python")
+    child_environment = dict(os.environ)
+    child_environment["PYTHONPATH"] = os.pathsep.join(
+        filter(None, (client_root, child_environment.get("PYTHONPATH")))
+    )
     with platform.file_lock(paths.bootstrap_lock_path):
         process = platform.spawn_tree([sys.executable, "-c", script, str(paths.app_support), stage],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=child_environment)
         try:
             deadline = time.monotonic() + 10
             while not (paths.app_support / "waiting").exists() and time.monotonic() < deadline:
-                assert process.poll() is None
+                if process.poll() is not None:
+                    output, errors = process.communicate(timeout=3)
+                    pytest.fail(f"Runtime exited before waiting at {stage}:\n{output}\n{errors}")
                 time.sleep(0.02)
             assert (paths.app_support / "waiting").exists()
             process.send_signal(stop_signal)

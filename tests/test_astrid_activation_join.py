@@ -1,6 +1,6 @@
 """CPU-only Runtime-to-committed-Astrid activation interoperability proof.
 
-The graph and role-custody references are deterministic fixtures. Runtime's
+The graph and native custody/identity providers are explicit CPU fixtures. Runtime's
 launcher, durable receipt publisher, credential store, relay framing, and the
 selected Astrid GenericHost activation/control receiver remain real.
 """
@@ -27,6 +27,7 @@ from tests.lanes import requires_posix_inherited_descriptors
 pytestmark = pytest.mark.integration  # needs the sibling Astrid checkout and its venv
 
 from tests.astrid_checkout import astrid_checkout
+from runtime_protocol import platform as runtime_platform
 from runtime_protocol.auth import CredentialStore
 from runtime_protocol.errors import AuthorizationError
 from runtime_protocol.local_execution_supervisor import (
@@ -49,7 +50,12 @@ from astrid_runtime.custody_broker import default_process_identity
 
 
 RUNTIME_ROOT = Path(__file__).resolve().parents[1]
-ASTRID_PYTHON = Path(sys.executable)
+RUNTIME_PYTHON = Path(sys.executable)
+
+
+def _astrid_python() -> Path:
+    interpreter = runtime_platform.venv_python(astrid_checkout() / ".venv")
+    return interpreter if interpreter.is_file() else RUNTIME_PYTHON
 
 
 def _reap_processes_under(directory: Path) -> list[int]:
@@ -91,20 +97,28 @@ def _no_leaked_join_processes(tmp_path):
 
 @pytest.fixture
 def astrid_root(tmp_path):
-    source = astrid_checkout() / "astrid"
+    checkout = astrid_checkout()
+    source = checkout / "astrid"
     root = tmp_path / "astrid-checkout"
     shutil.copytree(source, root / "astrid", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    # Source imports resolve the canonical version from the checkout metadata.
+    shutil.copy2(checkout / "pyproject.toml", root / "pyproject.toml")
     return root
 
 
-# Explicit child program: this is the only graph substitution. It still enters
+# Explicit child program: graph and native identity providers are fixtures. It still enters
 # committed LocalExecutionPreparation.serve_control and
 # _await_worker_activation; it does not synthesize activation frames or ACKs.
 _ASTRID_RECEIVER = r'''import hashlib, json, os, signal, subprocess, sys, time
 from pathlib import Path
+from astrid.core.execution import generic_host as host_module
+from astrid.core.execution import custody_broker as custody
 from astrid.core.execution.generic_host import LocalExecutionPreparation, _await_worker_activation
-from astrid.core.execution.custody_broker import default_process_identity
+from astrid_runtime.custody_broker import default_process_identity
 from runtime_protocol.local_worker_composition import _actual_executable
+from tests.test_astrid_activation_join import _install_join_providers
+
+_install_join_providers(custody, current_pid=os.getpid, peer_pid=lambda _sock: os.getppid(), host_module=host_module)
 
 control_fd, activation_fd = map(int, sys.argv[1:3])
 operation_id, channel_id, credential_file, scope, config_path = sys.argv[3:]
@@ -288,16 +302,23 @@ def _fixture_profile(root: Path) -> LocalWorkerProfile:
     config = {"runtime_root":str(root),"cwd":str(root),"server_log_path":str(session_root/"comfy.log"),
               "port":18888,"locality":"managed_local_server","warm_policy":"auto","ready_timeout_sec":5}
     session_digest="sha256:"+hashlib.sha256(json.dumps(config,indent=2,sort_keys=True).encode()).hexdigest()
-    py=Path(_actual_executable(os.getpid())); exe_digest=_digest(py)
+    worker_py=Path(_actual_executable(os.getpid())); worker_digest=_digest(worker_py)
+    # Pin the selected host interpreter before launch, independently from the
+    # later graph observations. Runtime and Astrid may use different Pythons.
+    env = dict(os.environ); env["PYTHONPATH"] = str(RUNTIME_ROOT)
+    selected = subprocess.run([str(_astrid_python()), "-c",
+        "import os; from runtime_protocol.local_worker_composition import _actual_executable; print(_actual_executable(os.getpid()))"],
+        cwd=RUNTIME_ROOT, env=env, capture_output=True, text=True, check=True, timeout=5)
+    py=Path(selected.stdout.strip()); exe_digest=_digest(py)
     launch={"module":"vibecomfy.commands.session","session_root":str(session_root),"config":config,
             "source_revision":"1"*40,"source_content_digest":"sha256:"+"3"*64,
             "listener_argv":[str(py),"-c","pass"],
             "adapter_pins":{key:"sha256:"+"4"*64 for key in
                 ("session_source_sha256","spawn_sha256","cleanup_sha256","stop_sha256","adapter_source_sha256")}}
     return LocalWorkerProfile(profile_id="cpu-proof",workspace_uuid="workspace-cpu-proof",realm_root=root/"realm",
-      support_root=root/"support",machine_id="cpu-proof-machine",worker_executable=py,host_executable=py,
+      support_root=root/"support",machine_id="cpu-proof-machine",worker_executable=worker_py,host_executable=py,
       engine_executable=py,engine_listener_executable=py,engine_endpoint="http://127.0.0.1:18888",
-      worker_artifact_digest=exe_digest,host_artifact_digest=exe_digest,engine_artifact_digest=exe_digest,
+      worker_artifact_digest=worker_digest,host_artifact_digest=exe_digest,engine_artifact_digest=exe_digest,
       engine_listener_artifact_digest=exe_digest,session_config_digest=session_digest,profile_revision="fixture-r1",
       profile_digest="sha256:"+"5"*64,release_digest="sha256:"+"6"*64,
       engine_launch=launch)
@@ -332,7 +353,7 @@ class _Adapter(CrossProcessWorkerPreparer):
                       "s=__import__('sys'); _serve_test_relay(int(s.argv[1]),s.argv[2],s.argv[3]=='1',s.argv[4]=='1',s.argv[5])")
         self.events.with_suffix(".relay-wrapper.txt").write_text(relay_script)
         env=dict(os.environ); env["PYTHONPATH"]=str(RUNTIME_ROOT)+os.pathsep+str(self.astrid_root)
-        process=subprocess.Popen([str(ASTRID_PYTHON),"-c",relay_script,str(relay_end.fileno()),str(self.events),
+        process=subprocess.Popen([str(RUNTIME_PYTHON),"-c",relay_script,str(relay_end.fileno()),str(self.events),
           "1" if self.drop_ack else "0", "1" if self.misbind else "0", str(self.astrid_root)],cwd=str(RUNTIME_ROOT),env=env,stdin=subprocess.DEVNULL,
           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,close_fds=True,pass_fds=(relay_end.fileno(),),start_new_session=True)
         relay_end.close()
@@ -408,7 +429,7 @@ class _HostSession:
         config_file.write_text(json.dumps({"events":str(events),"astrid_root":str(self.astrid_root),
                                           **(receiver_config or {})}))
         env=dict(os.environ); env["PYTHONPATH"]=str(RUNTIME_ROOT)+os.pathsep+str(self.astrid_root)
-        self.process=subprocess.Popen([str(ASTRID_PYTHON),str(receiver),str(self.control_child.fileno()),
+        self.process=subprocess.Popen([str(_astrid_python()),str(receiver),str(self.control_child.fileno()),
           str(self.activation_child.fileno()),preparation["operation_id"],preparation["channel_id"],
           str(Path(profile["support_root"])/"credentials"/(credential_actor+".token")),preparation["custody_scope"],str(config_file)],
           cwd=str(self.astrid_root),env=env,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,
@@ -681,14 +702,14 @@ def test_runtime_relay_to_committed_generic_host_activation_receiver_cpu(tmp_pat
     for key in ("operation_id","channel_id","activation_id","executor_incarnation","evidence_digest"):
         assert returned[key]==ack.get(key,record["receipt"].get(key,record["receipt"]["grant"].get(key)))
     assert returned["host_pid"]==ack["host"]["pid"] and returned["host_birth_id"]==ack["host"]["birth_id"]
-    assert returned["interpreter"]==str(ASTRID_PYTHON)
+    assert returned["interpreter"]==str(_astrid_python())
     assert returned["wrapper_sha256"]==hashlib.sha256(_ASTRID_RECEIVER.encode()).hexdigest()
     assert returned["generic_host_source"]==str(astrid_root/"astrid/core/execution/generic_host.py")
     assert returned["generic_host_sha256"]==_source_sha(astrid_checkout(),"astrid/core/execution/generic_host.py")
     assert accepted["wrapper_sha256"]==hashlib.sha256(_ASTRID_RECEIVER.encode()).hexdigest()
     assert Path(accepted["wrapper_path"]).read_bytes()==_ASTRID_RECEIVER.encode()
     assert _wait_for(events.with_suffix(".relay-wrapper.txt")).read_text().startswith("from tests.test_astrid_activation_join import _serve_test_relay;")
-    assert accepted["interpreter"]==str(ASTRID_PYTHON)
+    assert accepted["interpreter"]==str(_astrid_python())
 
     lost_root=tmp_path/"lost-ack"
     lost_root.mkdir()
@@ -781,7 +802,7 @@ def _join_actor(custody, pid):
     return custody.AuthenticatedCleanupActor(lambda: _join_token(pid), default_process_identity)
 
 
-def _install_join_providers(custody, *, current_pid, peer_pid, patch=None):
+def _install_join_providers(custody, *, current_pid, peer_pid, patch=None, host_module=None):
     """Replace only native identity providers; retain their real consumers."""
     def assign(owner, name, value):
         if patch is None: setattr(owner, name, value)
@@ -793,6 +814,15 @@ def _install_join_providers(custody, *, current_pid, peer_pid, patch=None):
         return {k: value[k] for k in ("pid", "uid", "pidversion", "sha256")}
     assign(custody, "audit_token_details", details)
     assign(custody, "current_process_audit_token", _join_token)
+    # These CPU graphs use Runtime's live native identities on every platform.
+    # Astrid's legacy Linux providers use different birth-token encodings; all
+    # protocol validators still compare the complete independently read token.
+    assign(custody, "default_process_identity", default_process_identity)
+    if host_module is not None:
+        def birth(pid=None):
+            observed = default_process_identity(os.getpid() if pid is None else pid)
+            return observed["birth_id"] if observed is not None else ""
+        assign(host_module, "_process_birth_identity", birth)
     assign(custody.AuthenticatedCleanupActor, "current",
            classmethod(lambda cls, **_kwargs: _join_actor(custody, current_pid())))
     assign(custody.AuthenticatedCleanupActor, "private_peer",
@@ -995,7 +1025,7 @@ def _joined_host_main(argv):
         from astrid_runtime_client import ApiError
         control_stat = os.fstat(control_fd)
         control_identity = (control_stat.st_dev, control_stat.st_ino)
-        _install_join_providers(custody, current_pid=os.getpid, peer_pid=lambda _sock: os.getppid())
+        _install_join_providers(custody, current_pid=os.getpid, peer_pid=lambda _sock: os.getppid(), host_module=host_module)
         prep = host_module.LocalExecutionPreparation(operation_id=operation, channel_id=channel, graph_factory=_JoinCpuGraph)
         metrics = {"gate_openings": 0, "registration_publications": 0, "dispatch_calls": {}}
         original_dispatch = prep.dispatch
@@ -1034,7 +1064,7 @@ def _joined_host_main(argv):
         host.source_epoch = "joined-empty-pack-source"
         record = SimpleNamespace(id="cpu-cap", capability_digest="sha256:" + "d" * 64,
                                  source_digest="e" * 64, dependency_digest="f" * 64,
-                                 matrix={}, ready=True, resource_keys=(), estimated_scratch_bytes=0,
+                                 matrix={}, preflight={}, ready=True, resource_keys=(), estimated_scratch_bytes=0,
                                  estimated_output_bytes=0, manifest=lambda: {"id": "cpu-cap", "ready": True})
         host.capabilities = {record.id: record}
         host.discover = lambda: None  # Named synthetic empty pack/readiness, not registration.
@@ -1225,7 +1255,7 @@ class _JoinedAdapter(_Adapter):
         wrapper = "from tests.test_astrid_activation_join import _serve_joined_relay; import sys; _serve_joined_relay(int(sys.argv[1]),sys.argv[2],sys.argv[3])"
         self.events.with_suffix(".relay-wrapper.txt").write_text(wrapper)
         env = dict(os.environ); env["PYTHONPATH"] = str(RUNTIME_ROOT) + os.pathsep + str(self.astrid_root)
-        process = subprocess.Popen([str(ASTRID_PYTHON), "-c", wrapper, str(relay_end.fileno()), str(self.events), str(config_file)],
+        process = subprocess.Popen([str(RUNTIME_PYTHON), "-c", wrapper, str(relay_end.fileno()), str(self.events), str(config_file)],
             cwd=RUNTIME_ROOT, env=env, pass_fds=(relay_end.fileno(),), close_fds=True, stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, start_new_session=True)
         relay_end.close()
@@ -1326,7 +1356,7 @@ def test_runtime_relay_to_generic_host_successor_finalization_cpu(tmp_path, astr
         daemon.credentials = credentials; server.credentials = credentials
         service.set_local_claim_generation_verifier(daemon._verify_local_claim_generation, actor=WORKER_ACTOR)
         server_thread = threading.Thread(target=server.serve_forever, daemon=True); server_thread.start()
-        successor = subprocess.Popen([str(ASTRID_PYTHON), "-c", "import time; time.sleep(60)"], close_fds=True)
+        successor = subprocess.Popen([str(RUNTIME_PYTHON), "-c", "import time; time.sleep(60)"], close_fds=True)
         actor_state = {"pid": os.getpid()}; selected_relay = {"pid": None}
         _install_join_providers(custody, current_pid=lambda: actor_state["pid"], peer_pid=lambda _sock: selected_relay["pid"], patch=monkeypatch)
         profile = replace(_fixture_profile(root), workspace_uuid=service.realm["id"])

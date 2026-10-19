@@ -42,7 +42,6 @@ TASK_AUDIT_TOKEN = 15
 TASK_AUDIT_TOKEN_COUNT = 8
 FRAME_LIMIT = 16 * 1024
 DARWIN_UNIX_SOCKET_PATH_MAX_BYTES = 103
-DARWIN_CUSTODY_SOCKET_PARENT = Path("/private/tmp")
 AUTHORITY_SCOPE_LOCK = "admission.lock"
 AUTHORITY_SCOPE_CLOSED = "admission.closed.json"
 PENDING_AUTHORITY_VERSION = "astrid.plan-a.authority-admission-pending/v1"
@@ -56,9 +55,9 @@ class CustodyError(RuntimeError):
 
 
 def _create_compact_socket_root() -> Path:
-    """Create an owner-only socket directory below Darwin's short temp alias."""
+    """Create an owner-only socket directory below the native short temp parent."""
 
-    parent = DARWIN_CUSTODY_SOCKET_PARENT
+    parent = platform.handoff_socket_parent()
     try:
         parent_stat = os.lstat(parent)
     except OSError as exc:
@@ -76,7 +75,7 @@ def _create_compact_socket_root() -> Path:
         try:
             root.rmdir()
         finally:
-            raise CustodyError("custody socket path exceeds Darwin AF_UNIX limit")
+            raise CustodyError("custody socket path exceeds AF_UNIX limit")
     return root
 
 
