@@ -842,6 +842,15 @@ def test_preferences_get_tolerates_extensions_but_validates_known_fields() -> No
         client.get_preferences("user")
 
 
+@pytest.mark.parametrize("data,receipt", [({}, "committed"), ({}, []), ([], {}), ("project", {})])
+def test_ordinary_mutation_extensions_do_not_bypass_known_field_types(data, receipt) -> None:
+    client = WorkspaceClient("http://runtime", transport=lambda *args: (201, {}, json.dumps({
+        "data": data, "receipt": receipt, "future_envelope": True,
+    }).encode()))
+    with pytest.raises(ApiError, match="invalid_response"):
+        client.create_project("Project", idempotency_key="key")
+
+
 def test_preferences_project_and_ordinary_mutations_still_require_receipts() -> None:
     resource = {**_preference_fixture(), "scope": "project", "actor_id": None, "project_id": "p", "document_id": "preferences:project:p"}
     client = WorkspaceClient("http://runtime", transport=lambda *args: (200, {}, json.dumps({"data": resource, "receipt": None}).encode()))

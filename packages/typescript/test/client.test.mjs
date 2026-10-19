@@ -159,6 +159,22 @@ test("null preference receipts do not weaken ordinary or project mutation decodi
   await assert.rejects(() => client.updateDocument("p", "d", 1, "key", "text"), /committed receipt/);
 });
 
+test("ordinary mutation extensions do not bypass known data and receipt types", async () => {
+  for (const response of [
+    null, [], { data: {}, receipt: "committed" }, { data: {}, receipt: [] },
+    { data: [], receipt: {} }, { data: "project", receipt: {} },
+  ]) {
+    const body = response && !Array.isArray(response) ? { ...response, future_field: true } : response;
+    const client = new WorkspaceClient("http://runtime", undefined, async () => ({ status: 201, headers: {}, body: json(body) }));
+    await assert.rejects(() => client.createProject("Project", "key"), /invalid mutation response/);
+  }
+  const client = new WorkspaceClient("http://runtime", undefined, async () => ({ status: 201, headers: {}, body: json({ data: { project_id: "p", metadata: { opaque: [1, { future: true }] } }, receipt: { receipt_id: "r", future_receipt: true }, future_envelope: true }) }));
+  const result = await client.createProject("Project", "key");
+  assert.deepEqual(result.metadata, { opaque: [1, { future: true }] });
+  assert.equal(result.receipt.future_receipt, true);
+  assert.equal(result.future_envelope, undefined);
+});
+
 test("document kind filter preserves existing pagination arguments and escapes query values", async () => {
   const client = new WorkspaceClient("http://runtime", undefined, async (method, path) => {
     assert.equal(method, "GET");
