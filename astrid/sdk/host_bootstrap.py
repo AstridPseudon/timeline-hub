@@ -1753,6 +1753,7 @@ def run_pack_host_foreground(value: Mapping[str, Any]) -> int:
         os.chdir(launch.cwd)
         os.environ.clear()
         os.environ.update(launch.env)
+        os.environ["ASTRID_PACK_HOST_SERVICE_MODE"] = "1"
         for path in reversed(launch.env.get("PYTHONPATH", "").split(os.pathsep)):
             if path and path not in sys.path:
                 sys.path.insert(0, path)

@@ -2048,6 +2048,189 @@ def test_cli_registration_runs_one_real_preflight_inside_fence(tmp_path, monkeyp
         assert phases.index('preflight_begin') < phases.index('ready_written')
 
 
+def test_managed_service_registration_failure_does_not_publish_readiness(tmp_path, monkeypatch):
+    from astrid.core._shared.boot_manifest import build_manifest, load_boot_manifest_hash
+    from astrid.core.execution import generic_host as module
+
+    root, host, runtime, _, _ = pack(tmp_path)
+    boot = tmp_path / 'boot-manifest.json'
+    boot.write_text(json.dumps(build_manifest(registry={}, fixtures=(), profile_order=())))
+    digest = 'sha256:' + load_boot_manifest_hash(boot, support_root=tmp_path)
+    ready = tmp_path / 'ready.json'
+    ready.write_text('{"status":"stale"}')
+    credential = tmp_path / 'worker.token'
+    credential.write_text('unit-worker')
+    credential.chmod(0o600)
+    monkeypatch.setenv('ASTRID_PACK_HOST_SERVICE_MODE', '1')
+    monkeypatch.setattr(
+        sys,
+        'argv',
+        ['host', '--pack-root', str(root), '--ready-file', str(ready),
+         '--runtime-endpoint', 'http://127.0.0.1:1', '--credential-file', str(credential), '--register'],
+    )
+    for name in ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'ASTRID_REMOTION_VALIDATION_ROLE',
+                 'ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT', 'ASTRID_HOST_READINESS_PROFILE_PATH'):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(module.signal, 'signal', lambda *a: None)
+    monkeypatch.setattr(module.faulthandler, 'register', lambda *a, **k: None)
+    monkeypatch.setattr(module, '_compose_cli_boot_manifest', lambda *a: (boot, digest))
+    monkeypatch.setattr(module, '_startup_identity_attestation', lambda **kw: {'source': {'closure_digest': '3' * 64}})
+    monkeypatch.setattr(module, 'RuntimeProtocolClient', lambda *a, credential_file=None: runtime)
+    monkeypatch.setattr(module, 'GenericPackHost', lambda **kw: host)
+    class RuntimeRejection(Exception):
+        code = 'registration_unavailable'
+        request_id = 'unit-request-1'
+        message = 'executor registration unavailable'
+    monkeypatch.setattr(runtime, 'register_executor', lambda *a, **k: (_ for _ in ()).throw(RuntimeRejection()))
+
+    assert module._cli() == 1
+    assert not ready.exists()
+
+
+@pytest.mark.parametrize('fail_cleanup', [False, True])
+def test_managed_service_waits_for_eof_cleanup_and_propagates_failure(fail_cleanup):
+    import os
+    import threading
+    from types import SimpleNamespace
+
+    from astrid.core.execution import generic_host as module
+
+    read_fd, write_fd = os.pipe()
+    stream = os.fdopen(read_fd, 'r', encoding='utf-8')
+    stopped = threading.Event()
+    cleanup_entered = threading.Event()
+    release_cleanup = threading.Event()
+    completed = threading.Event()
+    outcome = {}
+
+    def shutdown():
+        stopped.set()
+        cleanup_entered.set()
+        assert release_cleanup.wait(timeout=2)
+        if fail_cleanup:
+            raise RuntimeError('cleanup failed')
+
+    host = SimpleNamespace(_shutdown=stopped, shutdown=shutdown)
+    lifecycle = module._ManagedStdinShutdown(host, stream)
+    try:
+        lifecycle.start()
+
+        def run_managed_loop():
+            try:
+                outcome['result'] = lifecycle.run_loop(lambda: stopped.wait(timeout=2))
+            except BaseException as exc:  # noqa: BLE001 - capture and assert thread cleanup failures.
+                outcome['error'] = exc
+            finally:
+                completed.set()
+
+        runner = threading.Thread(target=run_managed_loop)
+        runner.start()
+        os.close(write_fd)
+        write_fd = -1
+        assert cleanup_entered.wait(timeout=2)
+        assert not completed.wait(0.05)
+        release_cleanup.set()
+        assert completed.wait(timeout=2)
+        runner.join(timeout=2)
+        assert not runner.is_alive()
+        if fail_cleanup:
+            assert isinstance(outcome.get('error'), RuntimeError)
+            assert str(outcome['error']) == 'cleanup failed'
+        else:
+            assert outcome == {'result': True}
+    finally:
+        release_cleanup.set()
+        stream.close()
+        if write_fd >= 0:
+            os.close(write_fd)
+
+
+def test_managed_service_does_not_wait_for_eof_after_signal_shutdown():
+    import os
+    import signal
+    import threading
+    from types import SimpleNamespace
+
+    from astrid.core.execution import generic_host as module
+
+    read_fd, write_fd = os.pipe()
+    stream = os.fdopen(read_fd, 'r', encoding='utf-8')
+    stopped = threading.Event()
+    host = SimpleNamespace(_shutdown=stopped, shutdown=stopped.set)
+    lifecycle = module._ManagedStdinShutdown(host, stream)
+    try:
+        lifecycle.start()
+        lifecycle.request_shutdown(signal.SIGTERM)
+        assert lifecycle.run_loop(lambda: stopped.wait(timeout=2) and 'stopped') == 'stopped'
+    finally:
+        os.close(write_fd)
+        stream.close()
+
+
+@pytest.mark.parametrize('fail_cleanup', [False, True])
+def test_managed_service_coalesces_signal_and_eof_shutdown(fail_cleanup):
+    import os
+    import signal
+    import threading
+    from types import SimpleNamespace
+
+    from astrid.core.execution import generic_host as module
+
+    read_fd, write_fd = os.pipe()
+    stream = os.fdopen(read_fd, 'r', encoding='utf-8')
+    stopped = threading.Event()
+    cleanup_entered = threading.Event()
+    release_cleanup = threading.Event()
+    completed = threading.Event()
+    calls = []
+    outcome = {}
+
+    def shutdown():
+        calls.append('cleanup')
+        stopped.set()
+        cleanup_entered.set()
+        assert release_cleanup.wait(timeout=2)
+        if fail_cleanup:
+            raise RuntimeError('cleanup failed')
+
+    host = SimpleNamespace(_shutdown=stopped, shutdown=shutdown)
+    lifecycle = module._ManagedStdinShutdown(host, stream)
+    try:
+        lifecycle.start()
+        lifecycle.request_shutdown(signal.SIGTERM)
+        os.close(write_fd)
+        write_fd = -1
+
+        def run_managed_loop():
+            try:
+                outcome['result'] = lifecycle.run_loop(lambda: stopped.wait(timeout=2))
+            except BaseException as exc:  # noqa: BLE001 - capture cleanup owner failure.
+                outcome['error'] = exc
+            finally:
+                completed.set()
+
+        runner = threading.Thread(target=run_managed_loop)
+        runner.start()
+        assert cleanup_entered.wait(timeout=2)
+        assert calls == ['cleanup']
+        assert not completed.wait(0.05)
+        release_cleanup.set()
+        assert completed.wait(timeout=2)
+        runner.join(timeout=2)
+        assert not runner.is_alive()
+        assert calls == ['cleanup']
+        if fail_cleanup:
+            assert isinstance(outcome.get('error'), RuntimeError)
+            assert str(outcome['error']) == 'cleanup failed'
+        else:
+            assert outcome == {'result': True}
+    finally:
+        release_cleanup.set()
+        stream.close()
+        if write_fd >= 0:
+            os.close(write_fd)
+
+
 def test_each_standalone_registration_rechecks_inside_original_fence(tmp_path, monkeypatch):
     _, host, runtime, _, _ = pack(tmp_path)
     original = host.preflight; checked = []

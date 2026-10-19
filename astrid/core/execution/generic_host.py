@@ -13392,6 +13392,71 @@ def _handle_host_shutdown_signal(host: GenericPackHost, signum: int) -> None:
         raise
 
 
+class _ManagedStdinShutdown:
+    """Coordinate EOF-triggered cleanup with the main host loop."""
+
+    def __init__(self, host: GenericPackHost, stream: Any = None) -> None:
+        self.host = host
+        self.stream = sys.stdin if stream is None else stream
+        self.eof_detected = threading.Event()
+        self.shutdown_requested = threading.Event()
+        self.cleanup_done = threading.Event()
+        self.cleanup_error: BaseException | None = None
+        self._request_lock = threading.RLock()
+        self.watcher: threading.Thread | None = None
+
+    def start(self) -> None:
+        def watch() -> None:
+            try:
+                while self.stream.read(1) != "":
+                    pass
+            except (OSError, ValueError):
+                # Closing the stream is the supervisor's ownership handoff too.
+                pass
+            self.eof_detected.set()
+            self.request_shutdown(signal.SIGTERM)
+
+        self.watcher = threading.Thread(target=watch, name="pack-host-stdin-eof", daemon=True)
+        self.watcher.start()
+
+    def request_shutdown(self, signum: int) -> None:
+        """Assign cleanup to one owner for concurrent EOF and signal requests."""
+        with self._request_lock:
+            if self.shutdown_requested.is_set():
+                return
+            self.shutdown_requested.set()
+
+            def clean() -> None:
+                try:
+                    _handle_host_shutdown_signal(self.host, signum)
+                except BaseException as exc:  # noqa: BLE001 - preserve cleanup failures from the owner.
+                    self.cleanup_error = exc
+                finally:
+                    self.cleanup_done.set()
+
+            self.watcher = threading.Thread(
+                target=clean, name="pack-host-shutdown-cleanup", daemon=True
+            )
+            self.watcher.start()
+
+    def wait_for_shutdown_cleanup(self) -> None:
+        # Wait for the cleanup owner, never for the stdin reader itself.
+        if not self.shutdown_requested.is_set():
+            return
+        self.cleanup_done.wait()
+        if self.cleanup_error is not None:
+            raise self.cleanup_error
+
+    def run_loop(self, run: Callable[[], Any]) -> Any:
+        try:
+            result = run()
+        except BaseException:
+            self.wait_for_shutdown_cleanup()
+            raise
+        self.wait_for_shutdown_cleanup()
+        return result
+
+
 def _log_cli_exit_failure(error: BaseException) -> None:
     """Log CLI failures without copying potentially sensitive exception text."""
     _LOGGER.error("generic host CLI exiting after failure: error_type=%s", type(error).__name__[:96])
@@ -13594,6 +13659,12 @@ def _cli() -> int:
     ready_path = Path(args.ready_file).expanduser() if args.ready_file else None
     if ready_path is not None and (not ready_path.is_absolute() or ready_path.is_symlink()):
         parser.error("--ready-file must be an absolute non-symlink path")
+    service_mode = os.environ.get("ASTRID_PACK_HOST_SERVICE_MODE") == "1"
+    if service_mode and ready_path is not None:
+        try:
+            ready_path.unlink(missing_ok=True)
+        except OSError as exc:
+            parser.error(f"cannot clear stale managed readiness marker: {exc}")
     credential = None
     credential_path = None
     if args.credential_file:
@@ -13737,18 +13808,17 @@ def _cli() -> int:
             "source_closure_digest": identity_attestation["source"].get("closure_digest"),
             "ready_file": str(ready_path) if ready_path is not None else None,
         }
-    _emit_startup_phase("discovery_begin")
-    host.discover()
-    _emit_startup_phase("discovery_done")
-    if not args.register:
-        # Registered startup performs its mandatory full preflight inside the
-        # registration fence; an eager copy here repeats the same validation.
-        _emit_startup_phase("preflight_begin")
-        host.preflight()
-        _emit_startup_phase("preflight_done")
+    stdin_shutdown = (
+        _ManagedStdinShutdown(host)
+        if service_mode and args.command == "run"
+        else None
+    )
 
     def handle_shutdown(_signum, _frame):
-        _handle_host_shutdown_signal(host, _signum)
+        if stdin_shutdown is not None:
+            stdin_shutdown.request_shutdown(_signum)
+        else:
+            _handle_host_shutdown_signal(host, _signum)
 
     platform.install_stop_handlers(handle_shutdown)
     # `kill -USR1 <pid>` writes every thread's Python stack to the host log,
@@ -13759,6 +13829,21 @@ def _cli() -> int:
         except (OSError, ValueError, RuntimeError):
             # stderr has no file descriptor (an embedding or test harness).
             pass
+    if stdin_shutdown is not None:
+        stdin_shutdown.start()
+    _emit_startup_phase("discovery_begin")
+    host.discover()
+    _emit_startup_phase("discovery_done")
+    if stdin_shutdown is not None and stdin_shutdown.shutdown_requested.is_set():
+        stdin_shutdown.wait_for_shutdown_cleanup()
+        return 1
+    if not args.register:
+        # Registered startup performs its mandatory full preflight inside the
+        # registration fence; an eager copy here repeats the same validation.
+        _emit_startup_phase("preflight_begin")
+        host.preflight()
+        _emit_startup_phase("preflight_done")
+
     registration = None
     if args.register or not args.run_task:
         _emit_startup_phase("registration_begin")
@@ -13786,9 +13871,11 @@ def _cli() -> int:
                     "message": message,
                 },
             }
-            if ready_path is not None:
+            if ready_path is not None and not service_mode:
                 _write_ready_marker(ready_path, failure)
             print(json.dumps(failure, sort_keys=True), file=sys.stderr, flush=True)
+            if stdin_shutdown is not None:
+                stdin_shutdown.wait_for_shutdown_cleanup()
             return 1
         _emit_startup_phase("registration_done")
         # One line per start: the full registration (every capability's definition, ~0.6 MB) is in
@@ -13801,6 +13888,9 @@ def _cli() -> int:
             "unready": unready, "withdrawn": registration.get("withdrawn_capabilities") or [],
             "full_registration": str(ready_path) if ready_path is not None else None,
         }, sort_keys=True, default=_json_safe), flush=True)
+    if stdin_shutdown is not None and stdin_shutdown.shutdown_requested.is_set():
+        stdin_shutdown.wait_for_shutdown_cleanup()
+        return 1
     if ready_path is not None:
         ready_payload = {
             "status": "ready",
@@ -13848,6 +13938,10 @@ def _cli() -> int:
         }
         _write_ready_marker(ready_path, ready_payload)
         _emit_startup_phase("ready_written")
+        if stdin_shutdown is not None and stdin_shutdown.shutdown_requested.is_set():
+            ready_path.unlink(missing_ok=True)
+            stdin_shutdown.wait_for_shutdown_cleanup()
+            return 1
     if args.run_task:
         if client is None or not args.lease_token:
             parser.error("--run-task requires --runtime-endpoint, --credential-file, and --lease-token")
@@ -13858,7 +13952,11 @@ def _cli() -> int:
             parser.error("run requires --runtime-endpoint and --credential-file")
         if not args.register:
             host.register()
-        print(json.dumps(host.run(once=args.once, poll_seconds=args.poll_seconds, max_tasks=args.max_tasks), indent=2, sort_keys=True, default=str))
+        def run_host_loop():
+            return host.run(once=args.once, poll_seconds=args.poll_seconds, max_tasks=args.max_tasks)
+
+        result = stdin_shutdown.run_loop(run_host_loop) if stdin_shutdown is not None else run_host_loop()
+        print(json.dumps(result, indent=2, sort_keys=True, default=str))
     if args.command == "supervise":
         if client is None:
             parser.error("supervise requires --runtime-endpoint and --credential-file")
