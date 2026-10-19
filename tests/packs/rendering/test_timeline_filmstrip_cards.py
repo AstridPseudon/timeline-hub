@@ -215,10 +215,22 @@ def test_shots_sample_authored_midpoint():
 
 
 @pytest.mark.skipif(shutil.which('ffmpeg') is None, reason='ffmpeg required')
-def test_pack_uses_rendered_frames_without_html_artifact(tmp_path):
+def test_pack_uses_rendered_frames_without_html_artifact(tmp_path, monkeypatch):
+    drawn_text = []
+    draw_text = filmstrip_cards._png_draw_text
+
+    def record_text(*args, **kwargs):
+        if len(args) >= 3:
+            drawn_text.append(str(args[2]))
+        return draw_text(*args, **kwargs)
+
+    monkeypatch.setattr(filmstrip_cards, '_png_draw_text', record_text)
     video = tmp_path / 'render.mp4'
     subprocess.run(['ffmpeg', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=red:size=160x90:rate=24:duration=4', '-c:v', 'libx264', '-y', str(video)], check=True)
-    snap = snapshot(scripts=[dict(start=0, end=4, text='</script><script>alert("x")</script>')], metadata={'selection': 'explicit_render'})
+    snap = snapshot(
+        scripts=[dict(start=0, end=4, text='</script><script>alert("x")</script>')],
+        metadata={'selection': 'explicit_render', 'canonical_timeline': {'parent_revision_id': 'R1'}},
+    )
     result = build_filmstrip_pack(out_root=tmp_path / 'pack', video_path=video, snapshot=snap, options={'every': 2})
     assert set(result['paths']) == {'png', 'json', 'markdown'}
     assert not (tmp_path / 'pack' / 'filmstrip.html').exists()
@@ -231,6 +243,9 @@ def test_pack_uses_rendered_frames_without_html_artifact(tmp_path):
         assert r > 200 and g < 30 and b < 30
     assert Path(result['paths']['png'][0]).exists()
     markdown = Path(result['paths']['markdown']).read_text()
+    assert '# Rendered filmstrip · committed revision R1' in markdown
+    assert 'Revision: `committed revision R1`' in markdown
+    assert any('committed revision R1' in text for text in drawn_text)
     assert '</script><script>alert' not in markdown
     assert not list((tmp_path / 'pack').glob('*.svg'))
 
