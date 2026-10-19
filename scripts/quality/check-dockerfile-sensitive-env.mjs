@@ -3,6 +3,11 @@ import { readFileSync } from 'node:fs';
 const dockerfile = readFileSync('Dockerfile', 'utf8');
 const physicalLines = dockerfile.split(/\r?\n/);
 const sensitiveNamePattern = /(SECRET|TOKEN|PASSWORD|PASSWD|PRIVATE|CREDENTIAL|KEY)/i;
+const allowedArgNames = new Set([
+  // Supabase anon keys are public browser credentials. They are inlined into
+  // Vite client bundles and protected by Supabase RLS, not secrecy.
+  'VITE_SUPABASE_ANON_KEY',
+]);
 
 const violations = [];
 const logicalLines = [];
@@ -56,6 +61,9 @@ for (const logicalLine of logicalLines) {
 
   for (const name of names) {
     if (!sensitiveNamePattern.test(name)) {
+      continue;
+    }
+    if (instruction === 'ARG' && allowedArgNames.has(name)) {
       continue;
     }
     violations.push(`${instruction} ${name} on line ${logicalLine.line}`);
