@@ -1,5 +1,4 @@
 import { apiQueryKeys } from './api';
-import { creditQueryKeys } from './credits';
 import { finalVideoQueryKeys } from './finalVideos';
 import { generationQueryKeys } from './generations';
 import { presetQueryKeys } from './presets';
@@ -20,7 +19,6 @@ export const queryKeys = {
   tasks: taskQueryKeys,
   settings: settingsQueryKeys,
   resources: resourceQueryKeys,
-  credits: creditQueryKeys,
   api: apiQueryKeys,
   presets: presetQueryKeys,
   projectStats: projectStatsQueryKeys,

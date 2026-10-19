@@ -1,6 +1,5 @@
 export const sharedLayerAllowlist = [
   'src/shared/editMedia/navigation.ts',
-  'src/shared/components/CreditsManagement/CreditsManagement.tsx',
   'src/shared/components/GenerationsPane/hooks/useGenerationsPaneController.ts',
   'src/shared/components/ImageDragPreview.tsx',
   'src/shared/components/ImageGenerationForm/ImageGenerationForm.tsx',
@@ -67,7 +66,6 @@ export const sharedLayerAllowlist = [
   'src/shared/components/MediaLightbox/utils/dimensions.ts',
   'src/shared/components/MediaLightbox/utils/lightboxDownload.ts',
   'src/shared/components/MediaSelectionPanel.tsx',
-  'src/shared/components/ProcessingWarnings.tsx',
   'src/shared/components/PromptEditorModal.tsx',
   'src/shared/components/SegmentSettingsForm/components/MotionPresetSection.tsx',
   'src/shared/components/SegmentSettingsForm/components/StructureVideoSection.tsx',

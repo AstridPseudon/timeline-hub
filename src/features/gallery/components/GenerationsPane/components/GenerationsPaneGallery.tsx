@@ -7,7 +7,6 @@ import type { GalleryConfig } from '@/shared/components/MediaGallery/types';
 import { useShots } from '@/shared/contexts/ShotsContext';
 import { SelectionContextMenu } from '@/shared/components/SelectionContextMenu';
 import { SkeletonGallery } from '@/shared/components/ui/composed/skeleton-gallery';
-import { useShotCreation } from '@/shared/hooks/shotCreation/useShotCreation';
 import { useShotNavigation } from '@/shared/hooks/shots/useShotNavigation';
 import { VideoGenerationModal } from '@/tools/travel-between-images/components/VideoGenerationModal';
 import { useLassoSelection } from '../hooks/useLassoSelection';
@@ -40,9 +39,6 @@ interface GenerationsPaneGalleryModel {
   runtimeProjectId: string | null;
   runtimeAuthority: boolean;
   items: MediaGalleryProps['images'];
-  onDelete: NonNullable<MediaGalleryProps['onDelete']>;
-  onToggleStar: NonNullable<MediaGalleryProps['onToggleStar']>;
-  isDeleting: boolean;
   allShots: NonNullable<MediaGalleryProps['allShots']>;
   lastShotId?: string;
   filters: GalleryFilterState;
@@ -54,7 +50,6 @@ interface GenerationsPaneGalleryModel {
   >;
   generationFilters: MediaGalleryProps['generationFilters'];
   currentViewingShotId?: string;
-  onCreateShot: NonNullable<MediaGalleryProps['onCreateShot']>;
   onAddGenerationToTimeline?: (generationId: string) => void;
   config?: Partial<GalleryConfig>;
   readOnly?: boolean;
@@ -89,7 +84,6 @@ export function GenerationsPaneGallery({
     gallerySelectionMap,
   } = useGallerySelection();
   const { shots } = useShots();
-  const { createShot, isCreating } = useShotCreation();
   const { navigateToShot } = useShotNavigation();
   const { selectionRect, handleMouseDown } = useLassoSelection({
     containerRef: gallerySurfaceRef,
@@ -139,20 +133,6 @@ export function GenerationsPaneGallery({
     });
   }, [selectedGenerationIds, shots]);
 
-  const createShotFromSelection = React.useCallback(async (): Promise<Shot | null> => {
-    if (selectedGenerationIds.length === 0) {
-      return null;
-    }
-
-    const result = await createShot({ generationIds: selectedGenerationIds });
-    if (!result?.shotId) {
-      return null;
-    }
-
-    const createdShot = result.shot ?? shots?.find((shot) => shot.id === result.shotId) ?? null;
-    return createdShot;
-  }, [createShot, selectedGenerationIds, shots]);
-
   const handleContextMenu = React.useCallback((
     event: React.MouseEvent,
     image: MediaGalleryProps['images'][number],
@@ -166,17 +146,6 @@ export function GenerationsPaneGallery({
     }
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
   }, [buildSelectionMeta, selectedGalleryIds]);
-
-  const handleCreateShotFromMenu = React.useCallback(async (): Promise<Shot | null> => {
-    return createShotFromSelection();
-  }, [createShotFromSelection]);
-
-  const handleGenerateVideoFromMenu = React.useCallback(async () => {
-    const createdShot = await createShotFromSelection();
-    if (createdShot) {
-      setVideoModalShot(createdShot);
-    }
-  }, [createShotFromSelection]);
 
   const handleNavigateToShot = React.useCallback((shot: Shot) => {
     navigateToShot(shot, { isNewlyCreated: true });
@@ -238,9 +207,6 @@ export function GenerationsPaneGallery({
               }}>
                 <MediaGallery
                   images={gallery.items}
-                  onDelete={gallery.onDelete}
-                  onToggleStar={gallery.onToggleStar}
-                  isDeleting={gallery.isDeleting}
                   allShots={gallery.allShots}
                   lastShotId={gallery.lastShotId}
                   filters={gallery.filters}
@@ -257,7 +223,6 @@ export function GenerationsPaneGallery({
                     reducedSpacing: true,
                     hidePagination: true,
                     hideTopFilters: true,
-                    showShare: false,
                     enableSingleClick: true,
                     ...gallery.config,
                   }}
@@ -270,7 +235,6 @@ export function GenerationsPaneGallery({
                   }}
                   generationFilters={gallery.generationFilters}
                   currentViewingShotId={gallery.currentViewingShotId}
-                  onCreateShot={gallery.onCreateShot}
                 />
               </RuntimeAuthorityProvider>
               {selectionRect && (
@@ -299,12 +263,9 @@ export function GenerationsPaneGallery({
         <SelectionContextMenu
           position={contextMenuPosition}
           onClose={() => setContextMenuPosition(null)}
-          onCreateShot={handleCreateShotFromMenu}
-          onGenerateVideo={handleGenerateVideoFromMenu}
           onNavigateToShot={handleNavigateToShot}
           onOpenGenerateVideo={handleOpenGenerateVideo}
           existingShots={existingShotsForSelection}
-          isCreating={isCreating}
         />
       )}
 

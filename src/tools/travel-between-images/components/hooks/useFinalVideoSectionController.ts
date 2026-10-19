@@ -7,7 +7,6 @@ import { useIsMobile } from '@/shared/hooks/mobile';
 import { useSegmentOutputsForShot } from '@/shared/hooks/segments';
 import { useTaskDetails } from '@/shared/components/ShotImageManager/hooks/useTaskDetails';
 import { useVariantBadges } from '@/shared/hooks/variants/useVariantBadges';
-import { useShareGeneration } from '@/shared/hooks/useShareGeneration';
 import { useMarkVariantViewed } from '@/shared/hooks/variants/useMarkVariantViewed';
 import { taskQueryKeys } from '@/shared/lib/queryKeys/tasks';
 import type {
@@ -185,13 +184,6 @@ export function useFinalVideoSectionController({
     onApplySettingsFromTask,
   });
 
-  const {
-    handleShare,
-    isCreatingShare,
-    shareCopied,
-    shareSlug,
-  } = useShareGeneration(selectedParentId ?? undefined, taskMapping?.taskId, shotId, { projectId });
-
   const parentGenerationIdsForQuery = useMemo(
     () => parentGenerations.map((parent) => parent.id),
     [parentGenerations],
@@ -278,10 +270,6 @@ export function useFinalVideoSectionController({
     task,
     taskError,
     inputImages,
-    handleShare,
-    isCreatingShare,
-    shareCopied,
-    shareSlug,
     handleOutputSelect,
     segmentProgress,
     handleDelete,

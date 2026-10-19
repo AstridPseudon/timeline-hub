@@ -26,7 +26,6 @@ function resolveLightboxDeletingId(
 interface UseMediaGalleryItemShotOptionsProps {
   simplifiedShotOptions: SimplifiedShotOption[];
   currentViewingShotId?: string;
-  onCreateShot?: (shotName: string, files: File[]) => Promise<void>;
   onAddToLastShot?: AddToShotHandler;
   onAddToLastShotWithoutPosition?: AddToShotHandler;
 }
@@ -34,7 +33,6 @@ interface UseMediaGalleryItemShotOptionsProps {
 interface UseMediaGalleryItemFeaturesProps {
   showDelete: boolean;
   showDownload: boolean;
-  showShare: boolean;
   showStar: boolean;
   showAddToShot: boolean;
   enableSingleClick: boolean;
@@ -99,12 +97,10 @@ type UseMediaGalleryItemPropsParams = UseMediaGalleryItemShotOptionsProps &
 export function useMediaGalleryItemProps({
   simplifiedShotOptions,
   currentViewingShotId,
-  onCreateShot,
   onAddToLastShot,
   onAddToLastShotWithoutPosition,
   showDelete,
   showDownload,
-  showShare,
   showStar,
   showAddToShot,
   enableSingleClick,
@@ -160,7 +156,6 @@ export function useMediaGalleryItemProps({
       addingToShotWithoutPositionImageId,
       setAddingToShotWithoutPositionImageId,
       currentViewingShotId,
-      onCreateShot,
       onAddToLastShot,
       onAddToLastShotWithoutPosition,
     }),
@@ -183,7 +178,6 @@ export function useMediaGalleryItemProps({
       addingToShotWithoutPositionImageId,
       setAddingToShotWithoutPositionImageId,
       currentViewingShotId,
-      onCreateShot,
       onAddToLastShot,
       onAddToLastShotWithoutPosition,
     ],
@@ -203,7 +197,6 @@ export function useMediaGalleryItemProps({
     () => ({
       showDelete,
       showDownload,
-      showShare,
       showStar: showStar && typeof onToggleStar === 'function',
       showAddToShot,
       enableSingleClick,
@@ -212,7 +205,6 @@ export function useMediaGalleryItemProps({
     [
       showDelete,
       showDownload,
-      showShare,
       showStar,
       onToggleStar,
       showAddToShot,

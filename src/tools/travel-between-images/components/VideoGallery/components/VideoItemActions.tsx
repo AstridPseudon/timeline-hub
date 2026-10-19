@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
-import { Trash2, Info, CornerDownLeft, Check, Share2, Copy, Loader2 } from 'lucide-react';
+import { Trash2, Info, CornerDownLeft, Check } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -24,11 +24,6 @@ interface VideoItemActionsProps {
   onHoverEnd: () => void;
   onMobileModalOpen: (video: GenerationRow) => void;
   onApplySettingsFromTask: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
-  // Share state (driven by parent hook)
-  handleShare: (e: React.MouseEvent | React.TouchEvent) => void;
-  isCreatingShare: boolean;
-  shareCopied: boolean;
-  shareSlug: string | null | undefined;
 }
 
 export const VideoItemActions: React.FC<VideoItemActionsProps> = ({
@@ -44,49 +39,12 @@ export const VideoItemActions: React.FC<VideoItemActionsProps> = ({
   onHoverEnd,
   onMobileModalOpen,
   onApplySettingsFromTask,
-  handleShare,
-  isCreatingShare,
-  shareCopied,
-  shareSlug,
 }) => {
   // Track success state for Apply Settings button
   const [settingsApplied, setSettingsApplied] = useState(false);
 
   return (
     <div className="absolute top-1/2 right-2 sm:right-3 flex flex-col items-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity -translate-y-1/2 z-20 pointer-events-auto">
-      {/* Share Button */}
-      {taskId && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={handleShare}
-                disabled={isCreatingShare}
-                className={`h-6 w-6 sm:h-7 sm:w-7 p-0 rounded-full text-white transition-all ${shareCopied
-                  ? 'bg-green-500 hover:bg-green-600'
-                  : 'bg-black/50 hover:bg-black/70'
-                  }`}
-              >
-                {isCreatingShare ? (
-                  <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" />
-                ) : shareCopied ? (
-                  <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                ) : shareSlug ? (
-                  <Copy className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                ) : (
-                  <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              <p>{shareCopied ? 'Link copied!' : shareSlug ? 'Copy share link' : 'Share this video'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-
       {/* Variant Count - positioned above Info button */}
       <VariantBadge
         derivedCount={video.derivedCount}

@@ -36,7 +36,6 @@ import { usePrefetchTaskData } from "@/shared/hooks/tasks/useTaskPrefetch";
 import { useGenerationTaskMapping } from "@/domains/generation/hooks/tasks/useGenerationTaskMapping";
 import { useTaskType } from "@/shared/hooks/tasks/useTaskType";
 import { useGetTask } from "@/shared/hooks/tasks/useTasks";
-import { useShareGeneration } from "@/shared/hooks/useShareGeneration";
 import { deriveGalleryInputImages } from "./MediaGallery/utils";
 import { isImageEditTaskType } from "@/shared/lib/taskParamsUtils";
 import { useMarkVariantViewed } from "@/shared/hooks/variants/useMarkVariantViewed";
@@ -153,7 +152,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     onMobileTap,
   } = mobileInteraction;
   const {
-    showShare = true,
     showDelete = true,
     showStar = true,
     showAddToShot = true,
@@ -210,12 +208,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     (!taskTypeInfo && image.metadata?.tool_type === TOOL_IDS.TRAVEL_BETWEEN_IMAGES);
   const isImageEditTask = isImageEditTaskType(taskType || undefined);
   const shouldShowTaskDetails = (!!taskData) && (isVideoTask || isImageEditTask);
-  const { handleShare, isCreatingShare, shareCopied, shareSlug } = useShareGeneration(
-    image.id,
-    taskId,
-    undefined,
-    { projectId: selectedProjectId },
-  );
   const { markAllViewed } = useMarkVariantViewed();
   const handleMarkAllVariantsViewed = useCallback(() => {
     if (actualGenerationId) {
@@ -554,12 +546,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
             shouldShowMetadata={shouldShowMetadata}
             shouldShowTaskDetails={shouldShowTaskDetails}
             setIsInfoOpen={setIsInfoOpen}
-            showShare={showShare}
-            taskId={taskId}
-            handleShare={(event) => { void handleShare(event); }}
-            isCreatingShare={isCreatingShare}
-            shareCopied={shareCopied}
-            shareSlug={shareSlug}
             onMarkAllVariantsViewed={handleMarkAllVariantsViewed}
           />
           <ActionButtons

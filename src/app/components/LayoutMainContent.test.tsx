@@ -21,7 +21,6 @@ const useHeaderStateMock = vi.fn();
 const useViewportResponsiveMock = vi.fn();
 const useVideoEditorRouteStateMock = vi.fn();
 const appHeaderMock = vi.fn();
-const globalProcessingWarningMock = vi.fn();
 
 const defaultPanesState = {
   isTasksPaneLocked: true,
@@ -51,13 +50,6 @@ vi.mock('@/shared/hooks/useHomeNavigation', () => ({
     navigateHome: vi.fn(),
     targetPath: '/tools/travel-between-images',
   }),
-}));
-
-vi.mock('@/shared/components/ProcessingWarnings', () => ({
-  GlobalProcessingWarning: (props: unknown) => {
-    globalProcessingWarningMock(props);
-    return <div data-testid="processing-warning" />;
-  },
 }));
 
 vi.mock('@/shared/state/panesStore', () => ({
@@ -113,7 +105,6 @@ describe('LayoutMainContent', () => {
     );
 
     expect(screen.getByTestId('global-header')).toBeInTheDocument();
-    expect(screen.queryByTestId('processing-warning')).not.toBeInTheDocument();
     expect(screen.getByTestId('tool-header')).toBeInTheDocument();
     expect(screen.getByTestId('layout-outlet')).toBeInTheDocument();
     expect(appHeaderMock).toHaveBeenCalledWith(
@@ -121,7 +112,6 @@ describe('LayoutMainContent', () => {
         navigationMode: 'home',
       })
     );
-    expect(globalProcessingWarningMock).not.toHaveBeenCalled();
 
     const contentContainer = container.querySelector('.content-container');
     expect(contentContainer).not.toBeNull();
@@ -132,16 +122,6 @@ describe('LayoutMainContent', () => {
       paddingBottom: '180px',
       willChange: 'margin, padding',
     });
-  });
-
-  it('does not mount the Supabase-backed warning in default Astrid authority', () => {
-
-    render(
-      <LayoutMainContent isMobileSplitView={false} />
-    );
-
-    expect(screen.queryByTestId('processing-warning')).not.toBeInTheDocument();
-    expect(globalProcessingWarningMock).not.toHaveBeenCalled();
   });
 
   it('keeps the canonical app header on the editor fallback route', () => {

@@ -31,10 +31,6 @@ export const FinalVideoSection: React.FC<FinalVideoSectionProps> = (props) => {
     task,
     taskError,
     inputImages,
-    handleShare,
-    isCreatingShare,
-    shareCopied,
-    shareSlug,
     handleOutputSelect,
     segmentProgress,
     handleDelete,
@@ -53,10 +49,6 @@ export const FinalVideoSection: React.FC<FinalVideoSectionProps> = (props) => {
             badgeData={badgeData}
             onMarkAllVariantsViewed={handleMarkAllVariantsViewed}
             selectedParentId={selectedParentId}
-            onShare={(event) => { void handleShare(event); }}
-            isCreatingShare={isCreatingShare}
-            shareCopied={shareCopied}
-            shareSlug={shareSlug}
             progress={segmentProgress}
             onJoinSegmentsClick={props.onJoinSegmentsClick}
             parentGenerations={parentGenerations}

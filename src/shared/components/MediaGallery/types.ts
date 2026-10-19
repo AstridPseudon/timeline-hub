@@ -96,7 +96,6 @@ export interface GalleryConfig {
   // Visibility flags — which action buttons to show on gallery items
   showDelete: boolean;
   showDownload: boolean;
-  showShare: boolean;
   showStar: boolean;
   showAddToShot: boolean;
 
@@ -125,7 +124,6 @@ export interface GalleryConfig {
 export const DEFAULT_GALLERY_CONFIG: GalleryConfig = {
   showDelete: true,
   showDownload: true,
-  showShare: true,
   showStar: true,
   showAddToShot: true,
   enableSingleClick: false,
@@ -158,7 +156,6 @@ interface MediaGalleryActionsProps {
   onAddToLastShot?: AddToShotHandler;
   onAddToLastShotWithoutPosition?: AddToShotHandler;
   onToggleStar?: (id: string, starred: boolean) => void;
-  onCreateShot?: (shotName: string, files: File[]) => Promise<void>;
   /** Called after delete to trigger data refetch. Should invalidate queries and refetch current page. */
   onBackfillRequest?: () => Promise<void>;
   onImageClick?: (image: GeneratedImageWithMetadata, modifiers?: { multiSelect: boolean }) => void;

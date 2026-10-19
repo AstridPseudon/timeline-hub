@@ -89,7 +89,6 @@ describe('JoinClipsResults', () => {
     expect(mocks.buildVideoResultsGalleryConfig).toHaveBeenCalledWith(2, true, {
       hideBottomPagination: true,
       hideMediaTypeFilter: true,
-      showShare: false,
     });
     expect(mocks.MediaGallery).toHaveBeenCalledWith(expect.objectContaining({
       images: items,

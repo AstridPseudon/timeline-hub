@@ -69,7 +69,6 @@ export function JoinClipsResults({
           config={buildVideoResultsGalleryConfig(videosData.items.length, isMobile, {
             hideBottomPagination: true,
             hideMediaTypeFilter: true,
-            showShare: false,
           })}
         />
       </div>

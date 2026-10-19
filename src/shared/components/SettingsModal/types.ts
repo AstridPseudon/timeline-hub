@@ -1,4 +1,3 @@
-import type { AIInputMode } from "@/shared/contexts/AIInputModeContext"
 import type { ExtensionReferenceReport } from "@/tools/video-editor/runtime/extensionReferenceReport"
 
 // Types for SettingsModal components
@@ -9,7 +8,6 @@ export interface SettingsModalProps {
   preserveUserText: boolean;
   setPreserveUserText: (value: boolean) => void;
   initialTab?: string;
-  creditsTab?: 'purchase' | 'history' | 'task-log';
   /** Optional extension display data for the Extensions tab. */
   extensions?: readonly ExtensionDisplayInfo[];
   /** Whether extension data is still being resolved. */
@@ -40,8 +38,6 @@ export interface PreferencesSectionProps {
   isMobile: boolean;
   preserveUserText: boolean;
   setPreserveUserText: (value: boolean) => void;
-  aiInputMode: AIInputMode;
-  setAIInputMode: (mode: AIInputMode) => void;
 }
 
 // ---------------------------------------------------------------------------

@@ -8,7 +8,6 @@ const mocks = vi.hoisted(() => ({
   useSegmentOutputsForShot: vi.fn(),
   useTaskDetails: vi.fn(),
   useVariantBadges: vi.fn(),
-  useShareGeneration: vi.fn(),
   useMarkVariantViewed: vi.fn(),
   useQuery: vi.fn(),
 }));
@@ -27,10 +26,6 @@ vi.mock('@/shared/components/ShotImageManager/hooks/useTaskDetails', () => ({
 
 vi.mock('@/shared/hooks/variants/useVariantBadges', () => ({
   useVariantBadges: (...args: unknown[]) => mocks.useVariantBadges(...args),
-}));
-
-vi.mock('@/shared/hooks/useShareGeneration', () => ({
-  useShareGeneration: (...args: unknown[]) => mocks.useShareGeneration(...args),
 }));
 
 vi.mock('@/shared/hooks/variants/useMarkVariantViewed', () => ({
@@ -66,12 +61,6 @@ describe('useFinalVideoSectionController', () => {
         unviewedVariantCount: 1,
         hasUnviewedVariants: true,
       })),
-    });
-    mocks.useShareGeneration.mockReturnValue({
-      handleShare: vi.fn(),
-      isCreatingShare: false,
-      shareCopied: false,
-      shareSlug: 'share-1',
     });
     mocks.useMarkVariantViewed.mockReturnValue({
       markAllViewed: vi.fn(),

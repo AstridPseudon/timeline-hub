@@ -247,7 +247,6 @@ const ImageGenerationToolPage: React.FC = React.memo(() => {
                   reducedSpacing: true,
                   showShotFilter: true,
                   showSearch: true,
-                  showShare: false,
                   enableSingleClick: true,
                 }}
               />

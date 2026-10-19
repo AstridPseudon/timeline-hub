@@ -19,19 +19,17 @@ describe('useSettingsModal', () => {
     const { result } = renderHook(() => useSettingsModal());
 
     act(() => {
-      result.current.handleOpenSettings('profile', 'history');
+      result.current.handleOpenSettings('profile');
     });
 
     expect(result.current.isSettingsModalOpen).toBe(true);
     expect(result.current.settingsInitialTab).toBe('profile');
-    expect(result.current.settingsCreditsTab).toBe('history');
   });
 
   it('opens from route navigation state and clears history state', () => {
     locationState = {
       openSettings: true,
       settingsTab: 'api-keys',
-      creditsTab: 'purchase',
     };
     const replaceStateSpy = vi.spyOn(window.history, 'replaceState').mockImplementation(() => undefined);
 
@@ -39,7 +37,6 @@ describe('useSettingsModal', () => {
 
     expect(result.current.isSettingsModalOpen).toBe(true);
     expect(result.current.settingsInitialTab).toBe('api-keys');
-    expect(result.current.settingsCreditsTab).toBe('purchase');
     expect(replaceStateSpy).toHaveBeenCalledTimes(1);
   });
 

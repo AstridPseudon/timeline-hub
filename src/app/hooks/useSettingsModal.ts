@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
-  SettingsCreditsTab,
   useSettingsEventIntent,
   useSettingsRouteIntent,
 } from '@/app/hooks/useSettingsModalIntents';
@@ -9,17 +8,15 @@ import {
 export function useSettingsModal() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<string | undefined>(undefined);
-  const [settingsCreditsTab, setSettingsCreditsTab] = useState<SettingsCreditsTab | undefined>(undefined);
   const location = useLocation();
 
-  const handleOpenSettings = useCallback((initialTab?: string, creditsTab?: SettingsCreditsTab) => {
+  const handleOpenSettings = useCallback((initialTab?: string) => {
     setSettingsInitialTab(initialTab);
-    setSettingsCreditsTab(creditsTab);
     setIsSettingsModalOpen(true);
   }, []);
 
-  useSettingsRouteIntent(location.state, useCallback(({ settingsTab, creditsTab }) => {
-    handleOpenSettings(settingsTab, creditsTab);
+  useSettingsRouteIntent(location.state, useCallback(({ settingsTab }) => {
+    handleOpenSettings(settingsTab);
   }, [handleOpenSettings]));
 
   useSettingsEventIntent(useCallback(({ settingsTab }) => {
@@ -30,7 +27,6 @@ export function useSettingsModal() {
     isSettingsModalOpen,
     setIsSettingsModalOpen,
     settingsInitialTab,
-    settingsCreditsTab,
     handleOpenSettings,
   };
 }

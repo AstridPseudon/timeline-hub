@@ -17,7 +17,6 @@ describe('useSettingsModalIntents', () => {
         {
           openSettings: true,
           settingsTab: 'account',
-          creditsTab: 'history',
         },
         onIntent,
       ),
@@ -25,7 +24,6 @@ describe('useSettingsModalIntents', () => {
 
     expect(onIntent).toHaveBeenCalledWith({
       settingsTab: 'account',
-      creditsTab: 'history',
     });
     expect(replaceStateSpy).toHaveBeenCalledWith({}, document.title);
   });
@@ -41,7 +39,7 @@ describe('useSettingsModalIntents', () => {
     rerender({ state: { openSettings: false, settingsTab: 'account' } as unknown });
     rerender({ state: { openSettings: true, settingsTab: 123 } as unknown });
 
-    expect(onIntent).toHaveBeenCalledWith({ settingsTab: undefined, creditsTab: undefined });
+    expect(onIntent).toHaveBeenCalledWith({ settingsTab: undefined });
     expect(onIntent).toHaveBeenCalledTimes(1);
   });
 

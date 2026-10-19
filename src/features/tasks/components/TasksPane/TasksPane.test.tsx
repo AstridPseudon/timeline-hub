@@ -78,13 +78,13 @@ vi.mock('@/shared/components/ui/tooltip', () => ({
 vi.mock('@/shared/components/PaneControlTab', () => ({
   PaneControlTab: (props: any) => {
     paneControlProps = props;
-    const splitButton = props.actions?.splitButton;
+    const composerButton = props.actions?.composerButton;
     return (
       <div data-testid="pane-control-tab">
-        <span data-testid="split-available">{String(Boolean(splitButton))}</span>
-        {splitButton ? (
-          <button type="button" onClick={splitButton.primary.onClick}>
-            {splitButton.primary.ariaLabel}
+        <span data-testid="composer-available">{String(Boolean(composerButton))}</span>
+        {composerButton ? (
+          <button type="button" onClick={composerButton.onClick}>
+            {composerButton.ariaLabel}
           </button>
         ) : null}
       </div>
@@ -120,10 +120,6 @@ vi.mock('@/shared/contexts/ProjectContext', () => ({
 
 vi.mock('@/shared/contexts/IncomingTasksContext', () => ({
   useIncomingTasks: () => ({ incomingTasks: [], cancelAllIncoming: vi.fn() }),
-}));
-
-vi.mock('@/shared/components/ProcessingWarnings', () => ({
-  TasksPaneProcessingWarning: () => <div data-testid="processing-warning" />,
 }));
 
 vi.mock('@/shared/hooks/layout/useBottomOffset', () => ({
@@ -280,7 +276,7 @@ vi.mock('@/shared/state/panesStore', () => ({
 }));
 
 function renderTasksPane() {
-  return render(<TasksPane onOpenSettings={vi.fn()} />);
+  return render(<TasksPane />);
 }
 
 describe('TasksPane', () => {
@@ -562,12 +558,12 @@ describe('TasksPane', () => {
     expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:runtimeHistoryPinned', 'unpinned');
   });
 
-  it('keeps the split button hidden until AgentChatPanel registers actions', () => {
+  it('keeps the composer button hidden until AgentChatPanel registers actions', () => {
     useAgentChatActionsMock.mockReturnValue(null);
 
     renderTasksPane();
 
-    expect(screen.getByTestId('split-available')).toHaveTextContent('false');
+    expect(screen.getByTestId('composer-available')).toHaveTextContent('false');
     expect(screen.queryByRole('button', { name: 'Open message composer' })).not.toBeInTheDocument();
     expect(screen.getByTestId('agent-chat-panel')).toBeInTheDocument();
   });
@@ -592,17 +588,13 @@ describe('TasksPane', () => {
     const focusComposer = vi.fn(() => {
       callOrder.push('focus');
     });
-    const toggleRecording = vi.fn();
 
     openPaneMock.mockImplementation(() => {
       callOrder.push('open');
     });
     useAgentChatActionsMock.mockReturnValue({
-      toggleRecording,
       focusComposer,
       markEngaged,
-      isRecording: false,
-      isProcessing: false,
       isAgentWorking: false,
     });
 
@@ -616,9 +608,8 @@ describe('TasksPane', () => {
     // covers a composer the open has just enabled.
     expect(globalThis.requestAnimationFrame).toHaveBeenCalledTimes(1);
     expect(focusComposer).toHaveBeenCalledTimes(2);
-    expect(toggleRecording).not.toHaveBeenCalled();
     expect(callOrder).toEqual(['mark', 'open', 'focus', 'focus']);
-    expect(paneControlProps.actions.splitButton.primary.ariaLabel).toBe('Open message composer');
+    expect(paneControlProps.actions.composerButton.ariaLabel).toBe('Open message composer');
   });
 
   it('restores the chat-filled layout preference and persists it when toggled', () => {

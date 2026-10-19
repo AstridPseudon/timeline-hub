@@ -16,7 +16,6 @@ import { determineVideoPhase, createLoadingSummary } from '../utils/video-loadin
 import { getDisplayUrl } from '@/shared/lib/media/mediaUrl';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { useGenerationTaskMapping } from '@/domains/generation/hooks/tasks/useGenerationTaskMapping';
-import { useShareGeneration } from '@/shared/hooks/useShareGeneration';
 import { getProjectAspectRatioStyle } from '@/tools/travel-between-images/components/shared/aspectRatio';
 
 interface VideoItemProps {
@@ -37,8 +36,6 @@ interface VideoItemProps {
   selectedVideoForDetails: GenerationRow | null;
   showTaskDetailsModal: boolean;
   onApplySettingsFromTask: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
-  existingShareSlug?: string;
-  onShareCreated?: (videoId: string, shareSlug: string) => void;
   projectId?: string | null;
   hideActions?: boolean;
   /** Custom tooltip text for the delete button */
@@ -63,8 +60,6 @@ export const VideoItem = React.memo<VideoItemProps>(({
   onHoverEnd,
   onMobileModalOpen,
   onApplySettingsFromTask,
-  existingShareSlug,
-  onShareCreated,
   projectId,
   hideActions = false,
   deleteTooltip,
@@ -75,12 +70,6 @@ export const VideoItem = React.memo<VideoItemProps>(({
   const TOUCH_MOVE_THRESHOLD = 10; // px - movement beyond this = drag, not tap
   // Get task mapping for this video to enable Apply Settings button
   const { data: taskMapping } = useGenerationTaskMapping(video.id || '');
-
-  // Share functionality (delegated to shared hook)
-  const { handleShare, isCreatingShare, shareCopied, shareSlug } = useShareGeneration(
-    video.id, taskMapping?.taskId, undefined,
-    { initialShareSlug: existingShareSlug, onShareCreated, projectId }
-  );
 
   // Join clips feature (child generation fetching, join modal state, join task creation)
   const {
@@ -479,12 +468,6 @@ export const VideoItem = React.memo<VideoItemProps>(({
             onHoverEnd={onHoverEnd}
             onMobileModalOpen={onMobileModalOpen}
             onApplySettingsFromTask={onApplySettingsFromTask}
-            handleShare={(e) => {
-              void handleShare(e);
-            }}
-            isCreatingShare={isCreatingShare}
-            shareCopied={shareCopied}
-            shareSlug={shareSlug}
           />
         )}
       </div>

@@ -81,7 +81,6 @@ vi.mock('./hooks/useSettingsModal', () => ({
     isSettingsModalOpen: false,
     setIsSettingsModalOpen: vi.fn(),
     settingsInitialTab: undefined,
-    settingsCreditsTab: undefined,
     handleOpenSettings: vi.fn(),
   }),
 }));

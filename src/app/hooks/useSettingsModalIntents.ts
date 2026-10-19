@@ -1,30 +1,22 @@
 import { useCallback, useEffect } from 'react';
 import { useAppEventListener } from '@/shared/lib/typedEvents';
 
-export type SettingsCreditsTab = 'purchase' | 'history';
-
 interface SettingsLocationState {
   openSettings?: boolean;
   settingsTab?: string;
-  creditsTab?: SettingsCreditsTab;
 }
 
 interface SettingsModalIntent {
   settingsTab?: string;
-  creditsTab?: SettingsCreditsTab;
 }
 
 function parseSettingsLocationState(state: unknown): SettingsLocationState | null {
   if (!state || typeof state !== 'object') return null;
   const record = state as Record<string, unknown>;
-  const creditsTab = record.creditsTab === 'purchase' || record.creditsTab === 'history'
-    ? record.creditsTab
-    : undefined;
 
   return {
     openSettings: record.openSettings === true,
     settingsTab: typeof record.settingsTab === 'string' ? record.settingsTab : undefined,
-    creditsTab,
   };
 }
 
@@ -40,7 +32,7 @@ export function useSettingsRouteIntent(
     const parsed = parseSettingsLocationState(routeState);
     if (!parsed?.openSettings) return;
 
-    onIntent({ settingsTab: parsed.settingsTab, creditsTab: parsed.creditsTab });
+    onIntent({ settingsTab: parsed.settingsTab });
     clearSettingsLocationIntent();
   }, [routeState, onIntent]);
 }

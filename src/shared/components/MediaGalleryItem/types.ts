@@ -60,7 +60,6 @@ export interface ItemMobileInteraction {
 
 /** Boolean feature flags controlling which UI elements are visible */
 export interface ItemFeatures {
-  showShare?: boolean;
   showDelete?: boolean;
   showDownload?: boolean;
   showStar?: boolean;

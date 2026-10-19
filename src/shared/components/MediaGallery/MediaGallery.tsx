@@ -102,7 +102,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     className,
     selectedIds,
     generationFilters,
-    onCreateShot,
     lastShotNameForTooltip: _lastShotNameForTooltip,
     onBackfillRequest,
     onImageClick,
@@ -122,7 +121,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     enableAdjacentPagePreloading = true,
   } = pagination ?? {};
   const {
-    showDelete, showDownload, showShare, showStar, showAddToShot,
+    showDelete, showDownload, showStar, showAddToShot,
     enableSingleClick, videosAsThumbnails, darkSurface, reducedSpacing,
     showShotFilter, showSearch,
     hidePagination, hideTopFilters, hideMediaTypeFilter, hideBottomPagination, hideShotNotifier,
@@ -322,12 +321,10 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     filtersHook,
     stateHook,
     isMobile,
-    onCreateShot,
     onAddToLastShot,
     onAddToLastShotWithoutPosition,
     showDelete,
     showDownload,
-    showShare,
     showStar,
     showAddToShot,
     enableSingleClick,
@@ -359,7 +356,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     taskError,
     inputImages,
     lightboxTaskMapping,
-    onCreateShot,
     handleNavigateToShot,
     showDelete,
   });

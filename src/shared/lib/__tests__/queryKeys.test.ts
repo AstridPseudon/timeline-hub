@@ -144,16 +144,6 @@ describe('queryKeys', () => {
     });
   });
 
-  describe('credits', () => {
-    it('balance returns static key', () => {
-      expect(queryKeys.credits.balance).toEqual(['credits', 'balance']);
-    });
-
-    it('autoTopup returns static key', () => {
-      expect(queryKeys.credits.autoTopup).toEqual(['autoTopup']);
-    });
-  });
-
   describe('segments', () => {
     it('children returns segment-scoped key', () => {
       expect(queryKeys.segments.children('seg1')).toEqual(['segment-child-generations', 'seg1']);

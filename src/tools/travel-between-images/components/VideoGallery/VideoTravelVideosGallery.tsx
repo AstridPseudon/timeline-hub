@@ -167,7 +167,6 @@ export const VideoTravelVideosGallery: React.FC<VideoTravelVideosGalleryProps> =
           generationFilters={preloading?.generationFilters}
           config={{
             showShotFilter: true,
-            showShare: false,
           }}
         />
       </div>
