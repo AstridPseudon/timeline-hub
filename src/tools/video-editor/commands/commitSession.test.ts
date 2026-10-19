@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { acceptedCommit } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { captureClipMove, submitClipMove } from './semanticGestures.ts';
 import { environment, scope, document } from './__tests__/commitSessionEnvironment.ts';
+import { createTimelineCommandSession } from './commitSession.ts';
 
 describe('real clip move session through the Runtime HTTP boundary', () => {
   it('drains a just-submitted gesture on dispose without flushing or starting a request', async () => {
@@ -218,6 +219,70 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
     await second.recover(owner);
     expect(env.commits()[1]).toEqual(env.commits()[0]);
     await second.dispose();
+  });
+  it('recovers B on its original display closure after A is acknowledged without changing submission bytes', async () => {
+    const env = await environment();
+    const first = await env.mount();
+    env.setFault('lost');
+    env.move(first, 5);
+    env.move(first, 7);
+    await vi.waitFor(() => expect(first.getState().status).toBe('retry'));
+    const [original] = await env.outboxes.list(scope);
+    const b = original.intents[1];
+    await env.provider.undoTimeline({ projectId: scope.projectId, timelineId: scope.timelineId,
+      headRevisionId: 'r1', headPublicationId: 'p1' }, ['p1'], 'independent-c');
+    await first.retry();
+    expect(env.commits()[2]).toEqual(env.commits()[0]);
+    const requestB = structuredClone(env.commits()[3]);
+    expect(requestB.body).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1',
+      commands: [{ args: { on: 7 }, expect: { 'parent/clip:x::at': { state: 'present', value: 5 } } }] });
+    expect(requestB.key).not.toBe(env.commits()[0].key);
+    const [beforeClose] = await env.outboxes.list(scope);
+    expect(beforeClose.intents[0]).toMatchObject({ ...b, readyBase: { revisionId: 'r1', publicationId: 'p1' } });
+    expect(beforeClose.accepted?.head).toEqual({ revisionId: 'r1', publicationId: 'p1' });
+    await first.dispose();
+    const project = vi.fn(async () => {});
+    const reopened = await createTimelineCommandSession({
+      initial: await env.provider.loadTimelineCommandBasis('timeline-commit'), scope, outboxes: env.outboxes,
+      send: (request, key) => env.provider.commitTimeline(request, key),
+      preview: env.previews, project, changed: () => {},
+    });
+    await reopened.recover(original.ownerId);
+    expect(project).toHaveBeenCalledExactlyOnceWith(env.initial, [(b.payload as any).preview]);
+    expect((b.payload as any).preview.operations).toEqual([{ op: 'clip.move', target: 'x', payload: { at: 7 } }]);
+    expect(env.commits()[4]).toEqual(requestB);
+    expect(reopened.getState().status).toBe('retry');
+    const [recovered] = await env.outboxes.list(scope);
+    expect(recovered.intents).toEqual(beforeClose.intents);
+    expect(recovered.pending).toEqual(beforeClose.pending);
+    expect(recovered.accepted).toEqual(beforeClose.accepted);
+    await reopened.dispose();
+  });
+  it.each([true, false])('retains the typed conflict on recovery with pending request: %s', async (pending) => {
+    const env = await environment();
+    const first = await env.mount();
+    env.setFault('conflict');
+    env.move(first, 5);
+    env.move(first, 7);
+    await vi.waitFor(() => expect(first.getState().status).toBe('conflict'));
+    const original = first.getState();
+    await first.dispose();
+    if (!pending) {
+      // A retained conflict blocks the first intent even without a request reservation.
+      const recover = env.outboxes.recover;
+      env.outboxes.recover = (scope, owner, work) => recover(scope, owner, (box) => work({ ...box,
+        read: async () => ({ ...await box.read(), pending: undefined }),
+      }));
+    }
+    const reopened = await env.mount();
+    await reopened.recover(original.ownerId!);
+    expect(reopened.getState()).toMatchObject({ status: 'conflict', error: original.error, canUndo: false });
+    await reopened.retry();
+    expect(reopened.getState()).toMatchObject({ status: 'conflict', error: original.error, canUndo: false });
+    await expect(reopened.flush()).rejects.toThrow(original.error!);
+    expect(env.commits()).toHaveLength(1);
+    expect((await env.outboxes.list(scope))[0].intents).toHaveLength(2);
+    await reopened.dispose();
   });
   it('keeps newer observed C when an old A acknowledgement arrives', async () => {
     const env = await environment();
