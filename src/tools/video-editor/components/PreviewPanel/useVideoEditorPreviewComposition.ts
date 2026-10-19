@@ -1,10 +1,15 @@
 import { useMemo } from 'react';
 import { useOptionalVideoEditorRuntime } from '../../contexts/VideoEditorRuntimeContext.tsx';
 import { resolveCanonicalComposition } from '../../data/canonicalCompositionState.ts';
+import { projectOutputTimelineConfig } from '../../data/timelineOutputProjection.ts';
+import type { TimelineData } from '../../lib/timeline-data.ts';
 import type { ResolvedTimelineConfig } from '../../types/index.ts';
 
 /** Both the stage and panel stills include in-progress edits inside placed shots. */
-export function useVideoEditorPreviewComposition(resolvedConfig: ResolvedTimelineConfig | null | undefined) {
+export function useVideoEditorPreviewComposition(
+  resolvedConfig: ResolvedTimelineConfig | null | undefined,
+  timelineData?: TimelineData | null,
+) {
   const runtime = useOptionalVideoEditorRuntime();
   const hasShotClips = Boolean(resolvedConfig?.clips.some((clip) => clip.clipType === 'shot'));
   const composition = runtime?.userId === null
@@ -12,7 +17,7 @@ export function useVideoEditorPreviewComposition(resolvedConfig: ResolvedTimelin
     : null;
   const compositionError = runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null;
   const compositionErrorDependency = composition ? null : compositionError;
-  return useMemo(() => resolveCanonicalComposition({
+  const canonical = useMemo(() => resolveCanonicalComposition({
     userId: runtime?.userId,
     hasShotClips,
     hasShotComposition: Boolean(runtime?.shots?.shotComposition),
@@ -21,4 +26,21 @@ export function useVideoEditorPreviewComposition(resolvedConfig: ResolvedTimelin
     baseConfig: resolvedConfig,
   }), [hasShotClips, composition, compositionErrorDependency, resolvedConfig,
     runtime?.shots?.shotComposition, runtime?.userId]);
+  const projectedConfig = timelineData?.editProjection ? timelineData.resolvedConfig : null;
+  return useMemo(() => {
+    if (!projectedConfig) return canonical;
+    // Command acceptance already flattens the returned pinned closure. Shot
+    // shells would load unrelated latest children; they cannot carry its fact.
+    const output = projectOutputTimelineConfig(projectedConfig).config;
+    const complete = output.clips.every((clip) => clip.clipType !== 'shot'
+      && (!(clip.asset || clip.clipType === 'media') || Boolean(clip.assetEntry?.src)));
+    if (complete) return { ...canonical, status: 'ready' as const, config: projectedConfig, error: null };
+    const cached = canonical.source === 'canonical' ? canonical.config : null;
+    return {
+      ...canonical,
+      status: cached ? 'ready' as const : 'error' as const,
+      config: cached,
+      error: new Error('The command projection has unresolved shot content or media.'),
+    };
+  }, [canonical, projectedConfig]);
 }
