@@ -1398,6 +1398,36 @@ def test_chapter_storage_has_one_film_track_owner_and_exact_child_references():
             assert "track_refs" in stored["base_internal_timeline"]
 
 
+@pytest.mark.parametrize("film_label,child_label", [(True, False), (False, True), (False, False)])
+def test_chapter_codec_reconciles_optional_labels_without_changing_immutable_bases(film_label, child_label):
+    bundle = _chapter_bundle()
+    if film_label:
+        bundle["parent"]["config"]["tracks"][0]["label"] = " Video · exact "
+    if child_label:
+        for shot in bundle["shots"].values():
+            shot["internal_timeline"]["tracks"][0]["label"] = " Video · exact "
+    before = copy.deepcopy(bundle)
+    storage = encode_authoring_bundle_storage(bundle)
+    # Read a legacy serialized child mirror, not just canonical references.
+    internal = _stored_internal(storage)
+    internal.pop("track_ids")
+    internal["tracks"] = copy.deepcopy(bundle["shots"][bundle["placements"][1]["shot_id"]]["internal_timeline"]["tracks"])
+    encoded = json.dumps(storage, sort_keys=True)
+    reopened = decode_authoring_bundle_storage(json.loads(encoded))
+    track = reopened["parent"]["config"]["tracks"][0]
+    assert ("label" in track) == (film_label or child_label)
+    if film_label or child_label:
+        assert track["label"] == " Video · exact "
+    assert bundle == before and json.dumps(storage, sort_keys=True) == encoded
+    assert reopened["base_parent_payload"] == bundle["base_parent_payload"]
+    for sid, shot in reopened["shots"].items():
+        assert shot["base_internal_timeline"] == bundle["shots"][sid]["base_internal_timeline"]
+        assert shot["internal_timeline"]["audio"] == bundle["shots"][sid]["internal_timeline"]["audio"]
+        assert shot["internal_timeline"]["opaque_timeline"] == bundle["shots"][sid]["internal_timeline"]["opaque_timeline"]
+    canonical = encode_authoring_bundle_storage(reopened)
+    assert encode_authoring_bundle_storage(decode_authoring_bundle_storage(canonical)) == canonical
+
+
 def test_chapter_storage_equal_legacy_rows_and_disjoint_app_metadata_merge_losslessly():
     bundle = _chapter_bundle()
     storage = encode_authoring_bundle_storage(bundle)
@@ -1428,6 +1458,7 @@ def test_chapter_storage_equal_legacy_rows_and_disjoint_app_metadata_merge_lossl
 
 
 @pytest.mark.parametrize("field,value", [
+    ("label", ""), ("label", None), ("label", False),
     ("kind", "audio"), ("opaque_track", {"future": False}), ("gain", 0.5),
     ("app", {"scaleAppliesToPositionedClips": False}),
     ("app", {"scaleAppliesToPositionedClips": 1}),
@@ -1444,6 +1475,26 @@ def test_chapter_storage_legacy_conflicts_refuse_without_mutation(field, value):
     before = copy.deepcopy(storage)
     with pytest.raises(AuthoringBundleError, match="conflicting track"):
         decode_authoring_bundle_storage(storage)
+    assert storage == before
+
+
+@pytest.mark.parametrize("field,value", [
+    ("label", "Other"), ("label", None), ("label", ""), ("label", False),
+    ("kind", "audio"), ("gain", .5), ("volume", 0), ("muted", False),
+    ("mute", False), ("timing", {"offset": 0}), ("routing", []),
+    ("opaque_track", {"future": 1}),
+])
+def test_optional_label_codec_refuses_present_label_and_semantic_conflicts(field, value):
+    bundle = _chapter_bundle()
+    bundle["parent"]["config"]["tracks"][0]["label"] = "Video"
+    storage = encode_authoring_bundle_storage(bundle)
+    internal = _stored_internal(storage, 2)
+    internal.pop("track_ids")
+    internal["tracks"] = copy.deepcopy(bundle["shots"][bundle["placements"][0]["shot_id"]]["internal_timeline"]["tracks"])
+    internal["tracks"][0][field] = value
+    before = copy.deepcopy(storage)
+    with pytest.raises(AuthoringBundleError, match="conflicting track"):
+        decode_authoring_bundle_storage(json.loads(json.dumps(storage)))
     assert storage == before
 
 

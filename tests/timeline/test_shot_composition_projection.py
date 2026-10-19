@@ -10,12 +10,11 @@ from astrid.core.timeline.duration import clip_end_frame, clip_start_frame, clip
 from astrid.core.timeline.shot_composition import MissingDependencyError
 from astrid.core.timeline.shot_composition_projection import (
     ShotCompositionProjectionError,
-    project_shot_composition,
     project_runtime_parent_composition,
+    project_shot_composition,
     resolve_parent_tracks,
 )
 from astrid.sdk.timeline_editing import _clip_duration
-
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "timeline" / "shot_composition.json"
 
@@ -66,6 +65,39 @@ def test_resolve_parent_tracks_coalesces_exact_legacy_rows_parent_first() -> Non
     )
     assert resolved == [parent_row, legacy_row]
     assert [row["id"] for row in resolved] == ["parent", "legacy"]
+
+
+@pytest.mark.parametrize("film_label,child_label", [(True, False), (False, True), (False, False), (True, True)])
+def test_legacy_optional_track_label_is_lossless_and_detached(film_label, child_label):
+    film = {"id": "video", "kind": "visual"}
+    child = copy.deepcopy(film)
+    for row, supplied in ((film, film_label), (child, child_label)):
+        if supplied:
+            row["label"] = " Video · exact "
+    before = copy.deepcopy((film, child))
+    resolved = resolve_parent_tracks({"config": {"tracks": [film]}}, [
+        {"tracks": [child], "clips": [{"id": "clip", "track": "video"}]},
+    ])
+    expected = {"id": "video", "kind": "visual"}
+    if film_label or child_label:
+        expected["label"] = " Video · exact "
+    assert resolved == [expected]
+    assert (film, child) == before
+
+
+@pytest.mark.parametrize("field,value", [
+    ("label", "Other"), ("label", None), ("label", ""), ("label", 1),
+    ("kind", "audio"), ("gain", 0.5), ("volume", 0), ("muted", False),
+    ("mute", False), ("timing", {"offset": 0}), ("routing", []),
+    ("future", {"keep": None}),
+])
+def test_optional_label_does_not_hide_supplied_or_semantic_conflicts(field, value):
+    film = {"id": "video", "kind": "visual", "label": "Video"}
+    child = {"id": "video", "kind": "visual", field: value}
+    before = copy.deepcopy((film, child))
+    with pytest.raises(ShotCompositionProjectionError):
+        resolve_parent_tracks({"config": {"tracks": [film]}}, [{"tracks": [child]}])
+    assert (film, child) == before
 
 
 @pytest.mark.parametrize(

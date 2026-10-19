@@ -82,8 +82,7 @@ def project_audio_lane_for_authoring_bundle(
     for key in ("revision_id", "content_digest"):
         identity(base.get(key), f"base_parent.{key}")
     parent = mapping(root.get("parent"), "parent")
-    if parent != mapping(root.get("base_parent_payload"), "base_parent_payload"):
-        raise AuthoringBundleError("audio lane requires the unedited pinned parent")
+    matches_physical_base = parent == mapping(root.get("base_parent_payload"), "base_parent_payload")
     config = mapping(parent.get("config", {}), "parent.config")
     app = mapping(config.get("app", {}), "parent.config.app")
     ns = mapping(app.get("astrid", {}), "parent.config.app.astrid")
@@ -134,11 +133,27 @@ def project_audio_lane_for_authoring_bundle(
                               ("internal_timeline", "base_internal_timeline")):
             value = mapping(shot.get(key), f"shots[{sid}].{key}")
             if value != mapping(shot.get(base_key), f"shots[{sid}].{base_key}"):
-                raise AuthoringBundleError(f"{sid}: {key} differs from the pinned source")
+                matches_physical_base = False
         internal = shot["internal_timeline"]
         for key in ("clips", "tracks"):
             if key in internal and not isinstance(internal[key], list):
                 raise AuthoringBundleError(f"{sid}: internal {key} must be a complete list")
+
+    if not matches_physical_base:
+        # The ordinary opener exposes the existing film-owned track view while
+        # retaining exact immutable bases. Admit that same read-only view, never
+        # an edit or a relabeling of a pinned child.
+        from astrid.core.timeline.authoring_bundle import (
+            _film_track_view,
+            _immutable_authoring_base,
+        )
+
+        pinned = _film_track_view(_immutable_authoring_base(root))
+        if parent != pinned["parent"] or any(
+            shot[key] != pinned["shots"][sid][key]
+            for sid, shot in shots.items() for key in ("payload", "internal_timeline")
+        ):
+            raise AuthoringBundleError("audio lane requires the unedited pinned source")
 
     # Checkout migration and producer read helpers may populate containers.
     # Detach before either can see the caller's authoritative inspection data.

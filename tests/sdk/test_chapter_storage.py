@@ -385,6 +385,134 @@ def test_legacy_track_merge_uses_existing_projection_atomically(tmp_path, mode):
         assert all(not r["payload"]["tracks"] for r in port.revision_closure(port.head()["revision_id"])["internal_timeline_revisions"])
 
 
+def label_closure(film_label, child_label, *, shared=False, chapter=False):
+    closure = scene()
+    child = closure["internal_timeline_revisions"][0]["payload"]
+    film = closure["parent_revision"]["payload"]
+    film["config"]["tracks"] = copy.deepcopy(child["tracks"])
+    if film_label:
+        film["config"]["tracks"][0]["label"] = " Video · exact "
+    if child_label:
+        child["tracks"][0]["label"] = " Video · exact "
+    child["clips"][0]["opacity"] = 1.0
+    if not chapter:
+        child["audio"] = [dict(track_id="vo", gain=.75, opaque=[None, True])]
+        child["opaque"] = dict(future=[None, dict(keep=True)])
+    if shared:
+        # Shared local cut IDs need occurrence-qualified story anchors. This
+        # track regression does not author story ranges.
+        film["config"]["app"]["astrid"]["ranges"] = []
+        for clip in child["clips"]:
+            clip.pop("app", None)
+        sibling = copy.deepcopy(film["occurrences"][0])
+        # Coincident occurrences keep this fixture's existing film-clock cache
+        # valid while exercising distinct occurrences of the same immutable shot.
+        sibling.update(occurrence_id="sibling", at_ms=0)
+        film["occurrences"].append(sibling)
+    closure["parent_revision"]["content_digest"] = _digest(film)
+    closure["internal_timeline_revisions"][0]["content_digest"] = _digest(child)
+    return closure
+
+
+@pytest.mark.parametrize("film_label,child_label", [(True, False), (False, True), (False, False)])
+def test_optional_label_canonical_audio_lane_inspection_is_read_only(film_label, child_label):
+    from astrid.core.timeline.authoring_bundle import AuthoringBundleError
+    from astrid.sdk.authoring_bundle import (
+        project_audio_lane_for_authoring_bundle,
+        project_audio_lane_for_runtime_inspection,
+    )
+
+    closure = label_closure(film_label, child_label, shared=True)
+    encoded = json.dumps(closure, sort_keys=True)
+    # This is the actual SDK provider installed in Runtime's audio-lane inspect
+    # route. No adopted bed means a successful absent lane, not a fake lane.
+    assert project_audio_lane_for_runtime_inspection(json.loads(encoded), capabilities=()) is None
+    assert json.dumps(closure, sort_keys=True) == encoded
+    bundle = open_authoring_bundle(**closure)
+    before = copy.deepcopy(bundle)
+    assert project_audio_lane_for_authoring_bundle(bundle, capabilities=()) is None
+    assert bundle == before
+    sid = bundle["placements"][0]["shot_id"]
+    bundle["shots"][sid]["internal_timeline"]["clips"][0]["opacity"] = .5
+    with pytest.raises(AuthoringBundleError, match="unedited pinned"):
+        project_audio_lane_for_authoring_bundle(bundle, capabilities=())
+
+
+@pytest.mark.parametrize("film_label,child_label", [(True, False), (False, True), (False, False)])
+def test_optional_label_noop_and_selected_shared_save_reload(tmp_path, film_label, child_label):
+    from astrid.core.timeline.shot_composition_projection import project_runtime_parent_composition
+
+    closure = label_closure(film_label, child_label, shared=True)
+    port = DiskPort(tmp_path, closure)
+    original = port.path.read_bytes()
+    before = port.data()
+    projected = project_runtime_parent_composition(**port.revision_closure("rev-0"))
+    track = projected.config["tracks"][0]
+    assert ("label" in track) == (film_label or child_label)
+    if film_label or child_label:
+        assert track["label"] == " Video · exact "
+    opened = port.open()
+    assert port.path.read_bytes() == original
+    noop = compile_candidate(open_authoring_bundle(**label_closure(film_label, child_label))).publication
+    assert noop["shot_revisions"] == noop["internal_timeline_revisions"] == []
+    assert noop["parent_composition"]["occurrences"][0]["shot_revision_id"] == "shot-0"
+    # Exercise the real runner's no-op path on the shared immutable source.
+    result = port.commit(dict(op="clip.set", select="occurrence:film-occ/clip:one", args=dict(opacity=1.0)))
+    assert result["status"] == "no_change", result.get("error", result)
+    assert port.head()["revision_id"] == "rev-0"
+    for key in ("parents", "shots", "internals"):
+        assert port.data()[key] == before[key]
+    edited = port.commit(dict(op="clip.set", select="occurrence:film-occ/clip:one", args=dict(opacity=.5)), request_id="edit")
+    assert edited["status"] == "accepted", edited
+    fresh = port.open()
+    assert [r["occurrence_id"] for r in fresh["placements"]] == ["film-occ", "sibling"]
+    selected, sibling = [fresh["shots"][r["shot_id"]] for r in fresh["placements"]]
+    assert selected["internal_timeline"]["clips"][0]["opacity"] == .5
+    assert sibling["internal_timeline"]["clips"][0]["opacity"] == 1
+    expected_selected, expected_sibling = [
+        copy.deepcopy(opened["shots"][r["shot_id"]]["internal_timeline"])
+        for r in opened["placements"]
+    ]
+    expected_selected["clips"][0]["opacity"] = .5
+    assert selected["internal_timeline"] == expected_selected
+    assert sibling["internal_timeline"] == expected_sibling
+    for shot in (selected, sibling):
+        assert shot["internal_timeline"]["audio"] == closure["internal_timeline_revisions"][0]["payload"]["audio"]
+        assert shot["internal_timeline"]["opaque"] == dict(future=[None, dict(keep=True)])
+    saved = port.revision_closure(port.head()["revision_id"])
+    assert saved["parent_revision"]["payload"]["config"]["tracks"] == projected.config["tracks"]
+    assert all(row["payload"]["tracks"] == [] for row in saved["internal_timeline_revisions"])
+    for key in ("parents", "shots", "internals"):
+        assert all(port.data()[key][rid] == row for rid, row in before[key].items())
+    assert port.revision_closure("rev-0") == closure
+    assert opened["base_parent_payload"] == {
+        key: value for key, value in closure["parent_revision"]["payload"].items()
+        if key != "occurrences"
+    }
+
+
+@pytest.mark.parametrize("film_label,child_label", [(True, False), (False, True), (False, False)])
+def test_optional_label_chapter_split_flatten_preserves_audio_and_opaque(tmp_path, film_label, child_label):
+    closure = label_closure(film_label, child_label, chapter=True)
+    port = DiskPort(tmp_path, closure)
+    before = port.data()
+    expected = projected_clips(closure)
+    result = port.commit(restructure())
+    assert result["status"] == "accepted", result
+    physical = port.revision_closure(port.head()["revision_id"])
+    assert projected_clips(physical) == expected
+    flat = port.open()
+    assert flat["structure_base"]
+    internal = next(iter(flat["shots"].values()))["internal_timeline"]
+    assert internal["audio"] == closure["internal_timeline_revisions"][0]["payload"]["audio"]
+    assert next(c for c in internal["clips"] if c["id"] == "one")["opaque"] == dict(keep=None)
+    split = compile_candidate(flat).publication
+    assert split["shot_revisions"] == split["internal_timeline_revisions"] == []
+    assert split["parent_composition"] == physical["parent_revision"]["payload"]
+    for key in ("parents", "shots", "internals"):
+        assert all(port.data()[key][rid] == row for rid, row in before[key].items())
+
+
 def test_persisted_storage_inverse_and_redo_reuses_chapter_ids(port):
     opened = port.open()
     tl = Checkout(copy.deepcopy(opened))

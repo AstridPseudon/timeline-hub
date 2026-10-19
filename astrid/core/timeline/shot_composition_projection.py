@@ -73,6 +73,8 @@ def _track_rows(value: Any, path: str) -> list[dict[str, Any]]:
             raise ShotCompositionProjectionError(f"{path}[{index}].id must be a non-empty string")
         if "app" in row and not isinstance(row["app"], Mapping):
             raise ShotCompositionProjectionError(f"{path}[{index}].app must be an object")
+        if not _valid_track_label(row):
+            raise ShotCompositionProjectionError(f"{path}[{index}].label must be a non-empty string")
         rows.append(copy.deepcopy(dict(row)))
     return rows
 
@@ -89,6 +91,27 @@ def _same_track_value(left: Any, right: Any) -> bool:
     return type(left) is type(right) and left == right
 
 
+def _valid_track_label(row: Mapping[str, Any]) -> bool:
+    return "label" not in row or (isinstance(row["label"], str) and bool(row["label"]))
+
+
+def _same_track_definition(left: Mapping[str, Any], right: Mapping[str, Any]) -> bool:
+    """Strict semantic equality, allowing only one-sided legacy label absence.
+
+    App metadata retains its existing reconciliation at each owning seam.
+    A supplied label is never treated as absent, coerced, or defaulted.
+    """
+    if not _valid_track_label(left) or not _valid_track_label(right):
+        return False
+    excluded = {"app"}
+    if "label" not in left or "label" not in right:
+        excluded.add("label")
+    return _same_track_value(
+        {key: value for key, value in left.items() if key not in excluded},
+        {key: value for key, value in right.items() if key not in excluded},
+    )
+
+
 def _merge_track_definition(
     owner: dict[str, Any],
     incoming: Mapping[str, Any],
@@ -101,9 +124,7 @@ def _merge_track_definition(
         owner[track_id] = copy.deepcopy(dict(incoming))
         return
 
-    current_non_app = {key: value for key, value in current.items() if key != "app"}
-    incoming_non_app = {key: value for key, value in incoming.items() if key != "app"}
-    if not _same_track_value(current_non_app, incoming_non_app):
+    if not _same_track_definition(current, incoming):
         raise ShotCompositionProjectionError(
             f"{path} conflicts with the existing definition for track {track_id!r}"
         )
@@ -119,6 +140,8 @@ def _merge_track_definition(
         merged_app[key] = copy.deepcopy(value)
     if merged_app:
         current["app"] = merged_app
+    if "label" not in current and "label" in incoming:
+        current["label"] = incoming["label"]
 
 
 def resolve_parent_tracks(
@@ -127,8 +150,9 @@ def resolve_parent_tracks(
     """Resolve detached parent-owned tracks and legacy child track mirrors.
 
     Parent ``config.tracks`` rows are canonical and stay first. Child rows with
-    the same id must agree on every non-``app`` field; their disjoint ``app``
-    metadata is combined. Every child clip must reference a track in that
+    the same id must agree on every semantic field, except a one-sided absent
+    label adopts the supplied label; their disjoint ``app`` metadata is combined.
+    Every child clip must reference a track in that
     merged owner. Neither input is modified.
     """
     parent = _mapping(parent, "parent_revision.payload")

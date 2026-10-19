@@ -116,6 +116,7 @@ def _assert_track_projection_preserves_sources(bundle, projected):
     child track field. B's existing projection remains the only merge owner.
     """
     from .authoring_bundle import _canonical_json
+    from .shot_composition_projection import _same_track_definition
     by_id = {row.get("id"): row for row in projected}
     if len(by_id) != len(projected):
         raise ChapterStorageError("projected track identities are ambiguous")
@@ -131,8 +132,8 @@ def _assert_track_projection_preserves_sources(bundle, projected):
     for rows in collections:
         for source in rows:
             actual = by_id.get(source.get("id"))
-            if (actual is None or _canonical_json({k: v for k, v in source.items() if k != "app"}) !=
-                    _canonical_json({k: v for k, v in actual.items() if k != "app"}) or
+            if (actual is None or not _same_track_definition(source, actual) or
+                    ("label" in source and "label" not in actual) or
                     ("app" in source and ("app" not in actual or not contains(actual["app"], source["app"])))):
                 raise ChapterStorageError("shared track projection does not preserve every source definition")
     timelines = [bundle["parent"], *[bundle["shots"][r["shot_id"]]["internal_timeline"]

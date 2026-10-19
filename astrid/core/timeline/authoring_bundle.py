@@ -23,8 +23,9 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
-from .parent_registry import ParentRegistryError, effective_parent_registry
 from .compatibility import require_writable_candidate
+from .parent_registry import ParentRegistryError, effective_parent_registry
+from .shot_composition_projection import _same_track_definition, _valid_track_label
 
 AUTHORING_BUNDLE_SCHEMA_VERSION = 1
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -473,7 +474,8 @@ def _film_track_view(bundle: Mapping[str, Any]) -> dict[str, Any]:
     proven result becomes writable film truth. Child clips keep their IDs.
     """
     from .shot_composition_projection import (
-        ShotCompositionProjectionError, resolve_parent_tracks,
+        ShotCompositionProjectionError,
+        resolve_parent_tracks,
     )
 
     out = _copy(dict(bundle))
@@ -554,6 +556,8 @@ def _storage_tracks(rows: Any, path: str, owner: dict[str, Any]) -> list[str]:
     for raw in _sequence(rows, path):
         row = _copy(dict(_mapping(raw, path)))
         track_id = _storage_id(row.get("id"), f"{path}.id")
+        if not _valid_track_label(row):
+            raise AuthoringBundleError(f"conflicting track label {track_id!r} at {path}: must be a non-empty string")
         if track_id in ids:
             raise AuthoringBundleError(f"{path} contains duplicate track {track_id!r}")
         ids.append(track_id)
@@ -561,15 +565,15 @@ def _storage_tracks(rows: Any, path: str, owner: dict[str, Any]) -> list[str]:
             owner[track_id] = row
             continue
         previous = owner[track_id]
-        if _canonical_json({k: v for k, v in previous.items() if k != "app"}) != _canonical_json(
-            {k: v for k, v in row.items() if k != "app"}
-        ):
+        if not _same_track_definition(previous, row):
             raise AuthoringBundleError(f"conflicting track definition {track_id!r} at {path}")
         if "app" in row:
             previous["app"] = (
                 _merge_track_app(previous["app"], row["app"], f"{path}.{track_id}.app")
                 if "app" in previous else _copy(row["app"])
             )
+        if "label" not in previous and "label" in row:
+            previous["label"] = row["label"]
     return ids
 
 
