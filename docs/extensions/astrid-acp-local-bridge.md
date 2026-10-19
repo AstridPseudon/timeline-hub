@@ -46,6 +46,21 @@ persist connection or session IDs. Reconnect while the host is live reuses the
 same ACP process and opaque session authority; it does not create a second
 session registry.
 
+The agent header's model chip lists OMP's providers and the models available
+to authenticated accounts. Sign in to another provider in a terminal: run
+`omp`, then `/login` (use the same `--profile` as the bridge when configured).
+Choose **ChatGPT Plus/Pro (Codex Subscription)** for the `openai-codex` route.
+Reopen the picker after signing in. Provider billing, authentication and quota
+errors also offer **Switch model** beside the failed turn.
+
+The authenticated `/acp/models` and `/acp/model` routes share the existing
+bridge token and protocol boundary. Model selection updates the `default`
+entry in OMP's `modelRoles` setting while preserving other roles. The bridge
+restarts ACP to discover newly authenticated providers, then loads the same
+conversation ID and applies the chosen model before the next prompt. Switching
+waits until the current request finishes. The browser receives provider/model
+metadata and usage limits, never credentials or account tokens.
+
 The installed OMP build does not make sessions stored under a custom
 `--session-dir` discoverable to a newly spawned ACP process. Astrid App therefore
 does not emulate a registry or migrate those files; the canonical no-override

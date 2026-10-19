@@ -23,6 +23,8 @@ import {
   useCancelSession,
   useCreateSession,
   useSendMessage,
+  useAgentModels,
+  useSetAgentModel,
 } from '@/tools/video-editor/hooks/useAgentSession.ts';
 import { useAgentVoice } from '@/tools/video-editor/hooks/useAgentVoice.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
@@ -36,6 +38,7 @@ import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup, type Ag
 import { useChatScroll } from './useChatScroll';
 import { AgentTaskResults } from './AgentTaskResults';
 import { AgentChatSessionSelector } from './AgentChatSessionSelector';
+import { AgentChatModelSelector } from './AgentChatModelSelector';
 import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
 
 export type ToolCallPair = {
@@ -60,6 +63,16 @@ type OptimisticMessage = QueuedMessage & {
 };
 
 const unsavedProjectChatDrafts = new Map<string, { text: string; queue: QueuedMessage[]; dirty: boolean; scopeKey: string; persistence: ProjectChatDraftPersistence<QueuedMessage> }>();
+const emptyModelCatalog = { providers: [], currentModel: null } as import('@/integrations/astrid/acpRoutes.ts').AcpModelCatalog;
+
+function isProviderAccessError(error: unknown): boolean {
+  if (!error) return false;
+  const record = isRecord(error) ? error : {};
+  const status = record.status;
+  if (typeof status === 'number' && [401, 402, 403, 429].includes(status)) return true;
+  const message = error instanceof Error ? error.message : String(record.message ?? error);
+  return /\b(?:401|402|403|429|billing|auth(?:entication|orization)?|unauthorized|forbidden|quota|rate[ -]?limit|too many requests|payment required|insufficient[ _-]?(?:balance|credits))\b/i.test(message);
+}
 
 type AgentSessionView = {
   durableAcceptedRequestIds?: string[];
@@ -259,6 +272,8 @@ function AvailableAgentChatPanel({
   } = useAgentChatBridge();
   const projectId = editorContext?.projectId ?? null;
   const sessions = useAgentSessions(timelineId, projectId);
+  const modelCatalog = useAgentModels();
+  const setAgentModel = useSetAgentModel();
   const projectChat = useProjectChat(projectId);
   const saveDraft = useSaveProjectDraft(projectId);
   const selectSession = useSelectProjectSession(projectId);
@@ -282,6 +297,11 @@ function AvailableAgentChatPanel({
   const pausedQueuedIdsRef = useRef(new Set<string>());
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
+  const [modelListOpen, setModelListOpen] = useState(false);
+  const openModelList = useCallback((open: boolean) => {
+    setModelListOpen(open);
+    if (open) void modelCatalog.refetch();
+  }, [modelCatalog]);
   // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
   // and decoupled from pane open state so the close-path bug from the rev-4
   // setIsTasksPaneOpenProgrammatic approach can't recur.
@@ -466,6 +486,8 @@ function AvailableAgentChatPanel({
         : 'Type or press Cmd+Shift+R to talk...';
   const optimisticTurnAlreadyMaterialized = optimisticMessage !== null
     && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.request_id === optimisticMessage.id));
+  const turnFailure = activeSession.error ?? sendMessage.localError ?? createSession.error ?? createNewSession.error ?? sessions.error ?? projectChat.error;
+  const turnFailureMessage = turnFailure instanceof Error ? turnFailure.message : turnFailure ? String(turnFailure) : 'Agent error. Try again or start a new conversation.';
 
   const handleAttachmentPreviewClick = useCallback(async (attachment: AgentChatAttachmentPreviewItem) => {
     if (!attachment.generationId) {
@@ -877,6 +899,16 @@ function AvailableAgentChatPanel({
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </div>
         <div className="flex min-w-0 shrink items-center justify-end gap-1">
+          <AgentChatModelSelector
+            catalog={modelCatalog.data ?? emptyModelCatalog}
+            busy={isProcessing || sendMessage.isPending || setAgentModel.isPending}
+            open={modelListOpen}
+            onOpenChange={openModelList}
+            loading={modelCatalog.isLoading}
+            catalogError={modelCatalog.error instanceof Error ? modelCatalog.error.message : null}
+            selectionError={setAgentModel.error instanceof Error ? setAgentModel.error.message : null}
+            onSelectModel={(model) => setAgentModel.mutateAsync(model).then(() => undefined)}
+          />
           {sessionOptions.length > 0 && projectChat.data && (sessionOptions.length > 1 || hasMainContract) && (
             <AgentChatSessionSelector
               sessions={sessionOptions}
@@ -1176,7 +1208,10 @@ function AvailableAgentChatPanel({
 
         {!isProcessing && !sendMessage.isPending && !isCancelled && (activeSession.error || sendMessage.localError || createSession.error || createNewSession.error || sessions.error || projectChat.error || activeStatus === 'error') && (
           <div role="alert" className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            {activeSession.error?.message ?? sendMessage.localError ?? createSession.error?.message ?? createNewSession.error?.message ?? sessions.error?.message ?? projectChat.error?.message ?? 'Agent error. Try again or start a new conversation.'}
+            {turnFailureMessage}
+            {isProviderAccessError(turnFailure) && (
+              <button type="button" className="ml-2 underline" onClick={() => openModelList(true)}>Switch model</button>
+            )}
             {(sessions.error || projectChat.error) && (
               <button type="button" className="ml-2 underline" disabled={sessions.isFetching || projectChat.isFetching}
                 onClick={() => { void sessions.refetch(); void projectChat.refetch(); }}>

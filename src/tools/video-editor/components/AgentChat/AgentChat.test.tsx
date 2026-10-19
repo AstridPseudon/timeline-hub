@@ -19,6 +19,9 @@ const mocks = vi.hoisted(() => ({
   useCreateSession: vi.fn(),
   useAgentSession: vi.fn(),
   useSendMessage: vi.fn(),
+  useAgentModels: vi.fn(),
+  useSetAgentModel: vi.fn(),
+  modelRefetch: vi.fn(),
   useCancelSession: vi.fn(),
   useCurrentAttachmentSet: vi.fn(),
   composerRemoveAttachment: vi.fn(),
@@ -52,6 +55,8 @@ vi.mock('@/tools/video-editor/hooks/useAgentSession', () => ({
   useCreateSession: (...args: unknown[]) => mocks.useCreateSession(...args),
   useAgentSession: (...args: unknown[]) => mocks.useAgentSession(...args),
   useSendMessage: (...args: unknown[]) => mocks.useSendMessage(...args),
+  useAgentModels: (...args: unknown[]) => mocks.useAgentModels(...args),
+  useSetAgentModel: (...args: unknown[]) => mocks.useSetAgentModel(...args),
   useCancelSession: (...args: unknown[]) => mocks.useCancelSession(...args),
 }));
 
@@ -213,7 +218,10 @@ function mockFromState(state: ReturnType<typeof createState>) {
   mocks.useAgentSession.mockImplementation(() => ({
     data: state.activeSessionData,
     isLoading: false,
+    error: (state as typeof state & { activeError?: Error }).activeError ?? null,
   }));
+  mocks.useAgentModels.mockImplementation(() => ({ data: { currentModel: 'openai/gpt-5', providers: [{ id: 'openai', name: 'OpenAI', signedIn: true, models: [{ id: 'gpt-5', name: 'GPT 5' }, { id: 'gpt-5-mini', name: 'GPT 5 Mini' }] }] }, isLoading: false, error: null, refetch: mocks.modelRefetch }));
+  mocks.useSetAgentModel.mockImplementation(() => ({ mutateAsync: vi.fn().mockResolvedValue({ currentModel: 'openai/gpt-5-mini' }), isPending: false, error: null }));
   mocks.useSendMessage.mockImplementation(() => state.sendMessage);
   mocks.useCancelSession.mockImplementation(() => state.cancelSession);
   mocks.useCurrentAttachmentSet.mockImplementation(() => ({
@@ -277,6 +285,28 @@ describe('AgentChat', () => {
       primary_variant_id: null,
       name: 'Shared image',
     });
+  });
+
+  it.each([
+    ['provider auth failure', 'Provider authentication failed (401)', true],
+    ['provider balance failure', 'insufficient credits', true],
+    ['ordinary failure', 'Unexpected turn failure', false],
+    ['authoring failure', 'Element authoring failed', false],
+  ])('offers model switching for %s only', async (_label, message, hasSwitch) => {
+    const state = createState() as ReturnType<typeof createState> & { activeError?: Error };
+    state.activeSessionData.status = 'error';
+    state.activeError = new Error(message);
+    mockFromState(state);
+    renderAgentChat();
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(message);
+    const switchButton = screen.queryByRole('button', { name: 'Switch model' });
+    expect(Boolean(switchButton)).toBe(hasSwitch);
+    if (switchButton) {
+      fireEvent.click(switchButton);
+      expect(await screen.findByRole('dialog')).toHaveTextContent('GPT 5 Mini');
+      expect(mocks.modelRefetch).toHaveBeenCalled();
+    }
   });
 
   it('renders one Astrid-managed notice and never starts unavailable session work', async () => {

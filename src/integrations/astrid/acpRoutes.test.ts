@@ -4,6 +4,19 @@ import { AstridLocalAcpRoutes } from './acpRoutes.ts';
 import type { AstridBridgeTransport } from './transport.ts';
 
 describe('AstridLocalAcpRoutes', () => {
+  it('reads the provider catalog and selects a model through the shared ACP transport', async () => {
+    const catalog = { currentModel: 'openai/gpt-5', providers: [{ id: 'openai', name: 'OpenAI', signedIn: true, models: [{ id: 'gpt-5', name: 'GPT 5' }], usage: { limits: [{ usedFraction: 0.5, unit: 'percent' }] } }] };
+    const requestJson = vi.fn(async (path: string, request: unknown, schema: { parse: (value: unknown) => unknown }) => {
+      if (path === '/acp/models') return schema.parse(catalog);
+      expect(request).toMatchObject({ method: 'POST', body: { model: 'openai/gpt-5' } });
+      return schema.parse({ currentModel: 'openai/gpt-5' });
+    });
+    const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
+    await expect(routes.models()).resolves.toEqual(catalog);
+    await expect(routes.setModel('openai/gpt-5')).resolves.toEqual({ currentModel: 'openai/gpt-5' });
+    expect(requestJson.mock.calls.map(([path]) => path)).toEqual(['/acp/models', '/acp/model']);
+  });
+
   it('keeps project chat association, durable drafts, and owned prompts on the ACP transport', async () => {
     const requestJson = vi.fn(async (path: string, request: unknown, _schema: unknown) => {
       if (path.endsWith('/unassigned?connection_id=connection-1')) return { sessions: [{ id: 'legacy-1' }] };

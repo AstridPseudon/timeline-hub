@@ -73,6 +73,8 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = [
   ['PATCH', astrid(`/v1/projects/${P}`), 'astrid'],
   // ACP agent chat (acpRoutes.ts)
   ['POST', astrid('/acp/connect'), 'acp'],
+  ['GET', astrid('/acp/models'), 'acp'],
+  ['POST', astrid('/acp/model'), 'acp'],
   ['POST', astrid('/acp/conn-1/rpc'), 'acp'],
   ['GET', astrid('/acp/conn-1/events'), 'acp'],
   ['POST', astrid('/acp/conn-1/cancel'), 'acp'],
@@ -90,6 +92,10 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = [
 ];
 
 const forbidden: ReadonlyArray<readonly [string, string]> = [
+  ['DELETE', astrid('/acp/models')],
+  ['POST', astrid('/acp/models')],
+  ['GET', astrid('/acp/model')],
+  ['DELETE', astrid('/acp/model')],
   ['GET', runtime('/v1/doctor')],
   ['POST', runtime('/v1/backup')],
   ['POST', runtime('/v1/restore')],
