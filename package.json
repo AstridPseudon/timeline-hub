@@ -46,12 +46,12 @@
     "scripts"
   ],
   "scripts": {
-    "build": "tsc -p typescript/tsconfig.json",
+    "build": "npm run gen-registry:check && npm run build:ts",
     "build:ts": "tsc -p typescript/tsconfig.json",
     "build:test": "tsc -p typescript/tsconfig.test.json",
-    "gen-registry": "tsx scripts/gen-registry.ts",
-    "gen-registry:check": "tsx scripts/gen-registry.ts --check",
-    "test": "npm run build:test && node --import ./typescript/tests/register-extensionless.mjs --test typescript/dist/tests/*.test.js"
+    "gen-registry": "node --import tsx scripts/gen-registry.ts",
+    "gen-registry:check": "node --import tsx scripts/gen-registry.ts --check",
+    "test": "npm run build:test && node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/*.test.js scripts/gen-registry.test.mjs"
   },
   "peerDependencies": {
     "react": ">=18",

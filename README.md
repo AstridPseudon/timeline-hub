@@ -124,15 +124,19 @@ The element remap is a `<Freeze>` around the element content, applied in `ClipLo
 ## Build / test
 
 ```
+npm run gen-registry:check
 npm run build
+npm run build:ts
 npm test
 ```
 
-`npm run build` type-checks the complete `typescript/src` tree and fails on
-the first compiler error. It does not emit package output. `npm test` emits
-the focused TypeScript tests into the ignored `typescript/dist` directory,
-then runs them with the extensionless-import loader used by the standalone
-Node test runner.
+`npm run build` checks the generated registry and emits JavaScript plus
+declarations for the complete `typescript/src` tree into the ignored
+`typescript/dist` directory. `npm run build:ts` is the underlying strict
+TypeScript emit and is exposed separately for build-manager checks. Compiler
+errors fail both commands. `npm test` emits the focused TypeScript tests into
+the separate ignored `typescript/test-dist` directory, then runs them with
+the extensionless-import loader used by the standalone Node test runner.
 
 The package has no source or type import from `@banodoco/timeline-schema`, so
 it is not a Composition dependency. The generated registries remain
