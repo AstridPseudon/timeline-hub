@@ -1,0 +1,294 @@
+{
+  "purpose": "Agent handoff input only; not an EditCommand or Runtime DTO",
+  "source": "src/tools/video-editor/commands/fixtures/authoringBundle.json",
+  "name": "parent_track_label_absent_to_unicode",
+  "bundle": {
+    "schema_version": 1,
+    "project_id": "project-main",
+    "timeline_id": "timeline-main",
+    "base_parent": {
+      "revision_id": "parent-r1",
+      "content_digest": "sha256:9f5ecaaac8431a4bdbf7e072461412360efbc00ffe56f68f5415dfa4faa64f44"
+    },
+    "base_parent_payload": {
+      "config": {
+        "output": {
+          "fps": {
+            "numerator": 30000,
+            "denominator": 1001
+          }
+        },
+        "tracks": [
+          {
+            "id": "picture",
+            "kind": "visual",
+            "extension": {
+              "clear": null
+            }
+          }
+        ],
+        "clips": [
+          {
+            "id": "parent-clip",
+            "track": "picture",
+            "at": 1,
+            "hold": 2,
+            "app": {
+              "on": null,
+              "opaque": {
+                "absent_sibling": [
+                  null,
+                  false,
+                  0
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "clips": [
+        {
+          "id": "parent-clip",
+          "track": "picture",
+          "at": 1,
+          "hold": 2,
+          "app": {
+            "on": null,
+            "opaque": {
+              "absent_sibling": [
+                null,
+                false,
+                0
+              ]
+            }
+          }
+        }
+      ],
+      "registry": {
+        "assets": {
+          "media": {
+            "object_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "media_type": "video/mp4"
+          }
+        }
+      },
+      "bundle": null,
+      "unknown": {
+        "opaque": [
+          null,
+          {
+            "keep": true
+          }
+        ],
+        "number": 1.25
+      }
+    },
+    "base_placements": {},
+    "parent": {
+      "config": {
+        "output": {
+          "fps": {
+            "numerator": 30000,
+            "denominator": 1001
+          }
+        },
+        "tracks": [
+          {
+            "id": "picture",
+            "kind": "visual",
+            "extension": {
+              "clear": null
+            }
+          }
+        ],
+        "clips": [
+          {
+            "id": "parent-clip",
+            "track": "picture",
+            "at": 1,
+            "hold": 2,
+            "app": {
+              "on": null,
+              "opaque": {
+                "absent_sibling": [
+                  null,
+                  false,
+                  0
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "clips": [
+        {
+          "id": "parent-clip",
+          "track": "picture",
+          "at": 1,
+          "hold": 2,
+          "app": {
+            "on": null,
+            "opaque": {
+              "absent_sibling": [
+                null,
+                false,
+                0
+              ]
+            }
+          }
+        }
+      ],
+      "registry": {
+        "assets": {
+          "media": {
+            "object_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "media_type": "video/mp4"
+          }
+        }
+      },
+      "bundle": null,
+      "unknown": {
+        "opaque": [
+          null,
+          {
+            "keep": true
+          }
+        ],
+        "number": 1.25
+      }
+    },
+    "placements": [],
+    "shots": {},
+    "source_mapping": {
+      "placements": {},
+      "shots": {},
+      "_runtime_document": {
+        "schema_version": 1,
+        "project_id": "project-main",
+        "timeline_id": "timeline-main",
+        "parent_revision": {
+          "revision_id": "parent-r1",
+          "content_digest": "sha256:9f5ecaaac8431a4bdbf7e072461412360efbc00ffe56f68f5415dfa4faa64f44",
+          "payload": {
+            "config": {
+              "output": {
+                "fps": {
+                  "numerator": 30000,
+                  "denominator": 1001
+                }
+              },
+              "tracks": [
+                {
+                  "id": "picture",
+                  "kind": "visual",
+                  "extension": {
+                    "clear": null
+                  }
+                }
+              ],
+              "clips": [
+                {
+                  "id": "parent-clip",
+                  "track": "picture",
+                  "at": 1,
+                  "hold": 2,
+                  "app": {
+                    "on": null,
+                    "opaque": {
+                      "absent_sibling": [
+                        null,
+                        false,
+                        0
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "clips": [
+              {
+                "id": "parent-clip",
+                "track": "picture",
+                "at": 1,
+                "hold": 2,
+                "app": {
+                  "on": null,
+                  "opaque": {
+                    "absent_sibling": [
+                      null,
+                      false,
+                      0
+                    ]
+                  }
+                }
+              }
+            ],
+            "registry": {
+              "assets": {
+                "media": {
+                  "object_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "media_type": "video/mp4"
+                }
+              }
+            },
+            "bundle": null,
+            "unknown": {
+              "opaque": [
+                null,
+                {
+                  "keep": true
+                }
+              ],
+              "number": 1.25
+            },
+            "occurrences": []
+          }
+        },
+        "shot_revisions": [],
+        "internal_timeline_revisions": [],
+        "dependency_manifest": {
+          "shots": [],
+          "internal_timelines": [],
+          "media": [
+            {
+              "media_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "content_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          ],
+          "documents": [
+            {
+              "document_id": "settings:exact",
+              "version": 7,
+              "content_digest": "sha256:1ae7da83c8c2e1d68b1600a7182efa788064e91fcfe456edf0c9ca2c00109399"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "input": {
+    "target_ref": "parent/track:picture",
+    "label": "Picture é 🎬"
+  },
+  "before": {
+    "state": "absent"
+  },
+  "after": {
+    "state": "present",
+    "value": "Picture é 🎬"
+  },
+  "required_vectors": [
+    "absent label",
+    "present label",
+    "empty string",
+    "same-value write",
+    "null and missing argument validation",
+    "label clear policy",
+    "track deletion and duplicate identity",
+    "disjoint clip move",
+    "same-path conflict",
+    "inverse A-B-A and unchanged write",
+    "occurrence ownership and exact child pins",
+    "opaque sibling preservation"
+  ]
+}
