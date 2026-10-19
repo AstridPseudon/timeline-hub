@@ -85,6 +85,89 @@ describe('TimelineRenderControls', () => {
     expect(screen.getByText(error)).toBeTruthy();
   });
 
+  it('shows an admitted seam warning beside the controls and expands the shared boundary report', () => {
+    const seamReport = {
+      version: 1 as const,
+      fps: 30,
+      guardFrames: 2,
+      boundaries: [{
+        frame: 30,
+        timeSeconds: 1,
+        participants: [{ownerId: 'b', clipId: 'b', path: ['clip', 'b'], behavior: 'motion-start' as const}],
+        structuralIssues: [],
+        unacknowledgedRisk: true,
+        requiresIntent: true,
+      }],
+      opaqueElements: [],
+      structuralIssues: [],
+      cues: [],
+      warningCount: 1,
+      blocked: false,
+    };
+    const startRender = vi.fn();
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({ visualSeamReport: seamReport, startRender }));
+
+    render(<TimelineRenderControls previewActionButtonClass="" />);
+
+    expect(screen.getByText('Rendered with seam warnings')).toBeTruthy();
+    expect(document.querySelector('[data-video-editor-render-warning="true"]')?.className).toContain('border-amber');
+    expect(document.querySelector<HTMLDetailsElement>('[data-video-editor-render-warning="true"] details')?.open).toBe(false);
+    expect(screen.getByRole('button', {name: 'Render'})).not.toBeDisabled();
+    fireEvent.click(screen.getByText('Rendered with seam warnings'));
+
+    expect(document.querySelector<HTMLDetailsElement>('[data-video-editor-render-warning="true"] details')?.open).toBe(true);
+    expect(screen.getByRole('region', {name: 'Visual seam admission report'})).toBeTruthy();
+    expect(screen.getByText('Visual boundary report')).toBeTruthy();
+    expect(screen.getByText('Frame 30 · 1.00s')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', {name: 'Render'}));
+    expect(startRender).toHaveBeenCalledOnce();
+  });
+
+  it('dismisses seam warnings with ✕, outside click, and Escape', () => {
+    const seamReport = {
+      version: 1 as const,
+      fps: 30,
+      guardFrames: 2,
+      boundaries: [{
+        frame: 30,
+        timeSeconds: 1,
+        participants: [{ownerId: 'b', clipId: 'b', path: ['clip', 'b'], behavior: 'source-change' as const}],
+        structuralIssues: [],
+        unacknowledgedRisk: true,
+        requiresIntent: true,
+      }],
+      opaqueElements: [],
+      structuralIssues: [],
+      cues: [],
+      warningCount: 1,
+      blocked: false,
+    };
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({ visualSeamReport: null }));
+    const { rerender } = render(<TimelineRenderControls previewActionButtonClass="" />);
+    const renderWithReport = () => {
+      mocks.useTimelineChromeContext.mockReturnValue(chrome({ visualSeamReport: seamReport }));
+      rerender(<TimelineRenderControls previewActionButtonClass="" />);
+    };
+    const clearReport = () => {
+      mocks.useTimelineChromeContext.mockReturnValue(chrome({ visualSeamReport: null }));
+      rerender(<TimelineRenderControls previewActionButtonClass="" />);
+    };
+
+    renderWithReport();
+    fireEvent.click(screen.getByRole('button', {name: 'Dismiss'}));
+    expect(document.querySelector('[data-video-editor-render-warning="true"]')).toBeNull();
+
+    clearReport();
+    renderWithReport();
+    fireEvent.pointerDown(document.body);
+    expect(document.querySelector('[data-video-editor-render-warning="true"]')).toBeNull();
+
+    clearReport();
+    renderWithReport();
+    fireEvent.keyDown(document, {key: 'Escape'});
+    expect(document.querySelector('[data-video-editor-render-warning="true"]')).toBeNull();
+  });
+
   it('does not auto-open the player or download for a result that already existed', () => {
     mocks.useTimelineChromeContext.mockReturnValue(chrome({
       renderResultInfo: { revision: 4, completedAt: 1000 },

@@ -862,20 +862,6 @@ export function useRenderState(
     }
 
     renderRevisionRef.current = expectedVersion;
-    // Runtime admits against its own timeline version, not the editor's local save counter.
-    const readRuntimeVersion = (runtimeContext?.provider as { readRuntimeTimelineVersion?: (id: string) => Promise<number> } | undefined)
-      ?.readRuntimeTimelineVersion;
-    let admissionVersion = expectedVersion;
-    if (readRuntimeVersion) {
-      try {
-        admissionVersion = await readRuntimeVersion.call(runtimeContext.provider, timelineId);
-      } catch (error) {
-        setRenderStatus('error');
-        setRenderProgress(null);
-        setRenderLog(`Could not read the saved timeline version: ${error instanceof Error ? error.message : String(error)}`);
-        return true;
-      }
-    }
     setRenderStatus('rendering');
     setRenderProgress({
       current: 0,
@@ -927,7 +913,6 @@ export function useRenderState(
     const admission = await renderRouter.enqueueAstridRuntimeRenderTimeline(built.payload, {
       client,
       destination: renderDestination,
-      expectedVersion: admissionVersion,
       operationId,
     });
     if (admission.status === 'error' || !admission.task_id) {
@@ -938,6 +923,8 @@ export function useRenderState(
       setRenderLog(admission.message);
       return true;
     }
+    visualSeamReportConfigRef.current = admission.seamReport ? renderConfigFingerprint(renderConfig) : null;
+    setVisualSeamReport(admission.seamReport ?? null);
     setActiveRenderTaskId(admission.task_id);
     const generation = ++renderPollGenerationRef.current;
     await pollAstridRender(client, admission.task_id, generation);

@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, Download, Play, Square, X } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Download, Play, Square, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
+import type { VisualSeamReport } from '@/tools/video-editor/data/visualSeamContract.ts';
 
 function diagnosticRecord(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -21,6 +22,90 @@ function diagnosticText(value: unknown): string {
   }
 }
 
+function hasVisualSeamFindings(report: VisualSeamReport | null | undefined): report is VisualSeamReport {
+  return Boolean(report && (
+    report.warningCount > 0
+    || report.boundaries.some((boundary) => boundary.unacknowledgedRisk || boundary.structuralIssues.length > 0)
+    || report.structuralIssues.length > 0
+    || report.opaqueElements.length > 0
+  ));
+}
+
+function VisualBoundaryReport({ report, canDeclareSeamsAsHardCuts, declareSeamsAsHardCuts, canAcknowledgeVisualCues, acknowledgeVisualCuesAsSynchronized }: {
+  report: VisualSeamReport;
+  canDeclareSeamsAsHardCuts?: boolean;
+  declareSeamsAsHardCuts?: () => Promise<void>;
+  canAcknowledgeVisualCues?: boolean;
+  acknowledgeVisualCuesAsSynchronized?: () => Promise<void>;
+}) {
+  return (
+    <section className="mt-2 space-y-2 border-t border-current/15 pt-2" aria-label="Visual seam admission report">
+      <p className="font-medium text-zinc-100">Visual boundary report</p>
+      {report.boundaries.filter((boundary) => boundary.unacknowledgedRisk || boundary.structuralIssues.length > 0).map((boundary) => (
+        <div key={boundary.frame} className="rounded border border-white/10 bg-white/5 px-2 py-1.5 text-zinc-200">
+          <p>Frame {boundary.frame} · {boundary.timeSeconds.toFixed(2)}s</p>
+          <p className="text-zinc-400">
+            {boundary.participants.map((participant) => participant.cue?.kind ?? participant.behavior).join(', ') || 'Boundary'}
+          </p>
+          {boundary.participants.map((participant) => (
+            <p key={`${participant.ownerId}:${participant.path.join('/')}:${participant.behavior}:${participant.cue?.kind ?? ''}:${participant.cue?.id ?? ''}:${participant.cue?.frame ?? ''}`} className="break-all text-zinc-500">
+              {participant.path.join(' / ')}
+            </p>
+          ))}
+          {boundary.structuralIssues.map((issue) => <p key={issue} className="text-red-300">{issue}</p>)}
+        </div>
+      ))}
+      {report.structuralIssues.map((issue) => (
+        <p key={issue} className="text-red-300">Structural issue: {issue}</p>
+      ))}
+      {report.opaqueElements.length > 0 && (
+        <p className="text-amber-200">
+          Opaque visual elements ({report.opaqueElements.length}): {[...new Set(report.opaqueElements.map((element) => element.clipType))].join(', ')}
+        </p>
+      )}
+      {(() => {
+        const raw = report.rawDiagnostics;
+        const rawBoundaries = Array.isArray(raw?.boundaries) ? raw.boundaries : [];
+        const boundaryOpaquePaths = rawBoundaries.flatMap((item) => {
+          const paths = diagnosticRecord(item)?.opaquePaths;
+          return Array.isArray(paths) ? paths : [];
+        });
+        const opaquePaths = [...(Array.isArray(raw?.opaquePaths) ? raw.opaquePaths : []), ...boundaryOpaquePaths];
+        const rawIssues = Array.isArray(raw?.structuralIssues) ? raw.structuralIssues : [];
+        return (
+          <>
+            {opaquePaths.length > 0 && (
+              <div className="text-amber-200">
+                Opaque owner paths ({opaquePaths.length}):
+                {opaquePaths.slice(0, 12).map((path, index) => (
+                  <p key={`${diagnosticText(path)}:${index}`} className="break-all text-zinc-400">{Array.isArray(path) ? path.join(' / ') : diagnosticText(path)}</p>
+                ))}
+                {opaquePaths.length > 12 && <p className="text-zinc-500">And {opaquePaths.length - 12} more. Expand Runtime details for the full report.</p>}
+              </div>
+            )}
+            {(rawIssues.length > 0 || opaquePaths.length > 0) && (
+              <details className="text-zinc-400">
+                <summary className="cursor-pointer">Runtime diagnostic details</summary>
+                <pre className="mt-1 whitespace-pre-wrap break-all">{diagnosticText({structuralIssues: rawIssues, opaquePaths})}</pre>
+              </details>
+            )}
+          </>
+        );
+      })()}
+      {canDeclareSeamsAsHardCuts && declareSeamsAsHardCuts && (
+        <Button type="button" size="sm" variant="outline" onClick={() => void declareSeamsAsHardCuts()}>
+          Declare flagged boundaries as hard cuts
+        </Button>
+      )}
+      {canAcknowledgeVisualCues && acknowledgeVisualCuesAsSynchronized && (
+        <Button type="button" size="sm" variant="outline" onClick={() => void acknowledgeVisualCuesAsSynchronized()}>
+          Acknowledge listed cues as synchronized
+        </Button>
+      )}
+    </section>
+  );
+}
+
 /** Render button, render blocker message, and cancellation control. */
 export function TimelineRenderControls({
   previewActionButtonClass,
@@ -32,11 +117,16 @@ export function TimelineRenderControls({
   const chrome = useTimelineChromeContext();
   const [playerOpen, setPlayerOpen] = useState(false);
   const [dismissedRenderError, setDismissedRenderError] = useState<string | null>(null);
+  const [dismissedSeamWarning, setDismissedSeamWarning] = useState<VisualSeamReport | null>(null);
   const renderButtonRef = useRef<HTMLButtonElement>(null);
   const renderErrorPanelRef = useRef<HTMLDivElement>(null);
+  const renderWarningPanelRef = useRef<HTMLDivElement>(null);
   const { renderResultUrl, renderResultInfo } = chrome;
   const renderError = chrome.renderStatus === 'error' && chrome.renderLog ? chrome.renderLog : null;
   const renderErrorOpen = renderError !== null && dismissedRenderError !== renderError;
+  const seamReport = chrome.visualSeamReport;
+  const renderWarningOpen = !renderErrorOpen && chrome.renderStatus !== 'error'
+    && hasVisualSeamFindings(seamReport) && dismissedSeamWarning !== seamReport;
   const completedAt = renderResultInfo?.completedAt ?? null;
   const seenCompletion = useRef(completedAt);
   // A render that finishes while the editor is open shows the film once;
@@ -53,12 +143,21 @@ export function TimelineRenderControls({
   }, [renderError]);
 
   useEffect(() => {
-    if (!renderErrorOpen || renderError === null) return;
-    const dismiss = () => setDismissedRenderError(renderError);
+    if (!hasVisualSeamFindings(seamReport)) setDismissedSeamWarning(null);
+  }, [seamReport]);
+
+  useEffect(() => {
+    if ((!renderErrorOpen || renderError === null) && !renderWarningOpen) return;
+    const dismiss = () => {
+      if (renderErrorOpen && renderError !== null) setDismissedRenderError(renderError);
+      if (renderWarningOpen && hasVisualSeamFindings(seamReport)) setDismissedSeamWarning(seamReport);
+    };
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Node)) return;
-      if (renderErrorPanelRef.current?.contains(target) || renderButtonRef.current?.contains(target)) return;
+      if (renderErrorPanelRef.current?.contains(target)
+        || renderWarningPanelRef.current?.contains(target)
+        || renderButtonRef.current?.contains(target)) return;
       dismiss();
     };
     const onKeyDown = (event: KeyboardEvent) => {
@@ -70,7 +169,7 @@ export function TimelineRenderControls({
       document.removeEventListener('pointerdown', onPointerDown, true);
       document.removeEventListener('keydown', onKeyDown, true);
     };
-  }, [renderError, renderErrorOpen]);
+  }, [renderError, renderErrorOpen, renderWarningOpen, seamReport]);
 
   const hasResult = Boolean(renderResultUrl) && chrome.renderStatus !== 'rendering';
   const filename = chrome.renderResultFilename ?? 'timeline-render.mp4';
@@ -167,72 +266,45 @@ export function TimelineRenderControls({
             <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
             <span>{renderError.split('\n')[0]}</span>
           </div>
-          {chrome.visualSeamReport && (
-            <section className="mt-2 space-y-2 border-t border-red-500/20 pt-2" aria-label="Visual seam admission report">
-              <p className="font-medium text-zinc-100">Visual boundary report</p>
-              {chrome.visualSeamReport.boundaries.filter((boundary) => boundary.unacknowledgedRisk || boundary.structuralIssues.length > 0).map((boundary) => (
-                <div key={boundary.frame} className="rounded border border-white/10 bg-white/5 px-2 py-1.5 text-zinc-200">
-                  <p>Frame {boundary.frame} · {boundary.timeSeconds.toFixed(2)}s</p>
-                  <p className="text-zinc-400">
-                    {boundary.participants.map((participant) => participant.cue?.kind ?? participant.behavior).join(', ') || 'Boundary'}
-                  </p>
-                  {boundary.participants.map((participant) => (
-                    <p key={`${participant.ownerId}:${participant.path.join('/')}:${participant.behavior}:${participant.cue?.kind ?? ''}:${participant.cue?.id ?? ''}:${participant.cue?.frame ?? ''}`} className="break-all text-zinc-500">
-                      {participant.path.join(' / ')}
-                    </p>
-                  ))}
-                  {boundary.structuralIssues.map((issue) => <p key={issue} className="text-red-300">{issue}</p>)}
-                </div>
-              ))}
-              {chrome.visualSeamReport.structuralIssues.map((issue) => (
-                <p key={issue} className="text-red-300">Structural issue: {issue}</p>
-              ))}
-              {chrome.visualSeamReport.opaqueElements.length > 0 && (
-                <p className="text-amber-200">
-                  Opaque visual elements ({chrome.visualSeamReport.opaqueElements.length}): {[...new Set(chrome.visualSeamReport.opaqueElements.map((element) => element.clipType))].join(', ')}
-                </p>
-              )}
-              {(() => {
-                const raw = chrome.visualSeamReport.rawDiagnostics;
-                const rawBoundaries = Array.isArray(raw?.boundaries) ? raw.boundaries : [];
-                const boundaryOpaquePaths = rawBoundaries.flatMap((item) => {
-                  const paths = diagnosticRecord(item)?.opaquePaths;
-                  return Array.isArray(paths) ? paths : [];
-                });
-                const opaquePaths = [...(Array.isArray(raw?.opaquePaths) ? raw.opaquePaths : []), ...boundaryOpaquePaths];
-                const rawIssues = Array.isArray(raw?.structuralIssues) ? raw.structuralIssues : [];
-                return (
-                  <>
-                    {opaquePaths.length > 0 && (
-                      <div className="text-amber-200">
-                        Opaque owner paths ({opaquePaths.length}):
-                        {opaquePaths.slice(0, 12).map((path, index) => (
-                          <p key={`${diagnosticText(path)}:${index}`} className="break-all text-zinc-400">{Array.isArray(path) ? path.join(' / ') : diagnosticText(path)}</p>
-                        ))}
-                        {opaquePaths.length > 12 && <p className="text-zinc-500">And {opaquePaths.length - 12} more. Expand Runtime details for the full report.</p>}
-                      </div>
-                    )}
-                    {(rawIssues.length > 0 || opaquePaths.length > 0) && (
-                      <details className="text-zinc-400">
-                        <summary className="cursor-pointer">Runtime diagnostic details</summary>
-                        <pre className="mt-1 whitespace-pre-wrap break-all">{diagnosticText({structuralIssues: rawIssues, opaquePaths})}</pre>
-                      </details>
-                    )}
-                  </>
-                );
-              })()}
-              {chrome.canDeclareSeamsAsHardCuts && (
-                <Button type="button" size="sm" variant="outline" onClick={() => void chrome.declareSeamsAsHardCuts()}>
-                  Declare flagged boundaries as hard cuts
-                </Button>
-              )}
-              {chrome.canAcknowledgeVisualCues && (
-                <Button type="button" size="sm" variant="outline" onClick={() => void chrome.acknowledgeVisualCuesAsSynchronized()}>
-                  Acknowledge listed cues as synchronized
-                </Button>
-              )}
-            </section>
+          {hasVisualSeamFindings(chrome.visualSeamReport) && (
+            <VisualBoundaryReport
+              report={chrome.visualSeamReport}
+              canDeclareSeamsAsHardCuts={chrome.canDeclareSeamsAsHardCuts}
+              declareSeamsAsHardCuts={chrome.declareSeamsAsHardCuts}
+              canAcknowledgeVisualCues={chrome.canAcknowledgeVisualCues}
+              acknowledgeVisualCuesAsSynchronized={chrome.acknowledgeVisualCuesAsSynchronized}
+            />
           )}
+        </div>
+      )}
+      {renderWarningOpen && hasVisualSeamFindings(seamReport) && (
+        <div
+          ref={renderWarningPanelRef}
+          className="absolute right-0 top-full z-40 mt-1 max-h-[70vh] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-md border border-amber-500/30 bg-zinc-950/95 px-3 py-2 text-[11px] text-amber-100 shadow-lg backdrop-blur-sm"
+          data-video-editor-render-warning="true"
+        >
+          <button
+            type="button"
+            aria-label="Dismiss"
+            className="absolute right-2 top-2 rounded p-0.5 text-amber-300 hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-300"
+            onClick={() => setDismissedSeamWarning(seamReport)}
+          >
+            <X className="h-3 w-3" />
+          </button>
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-start gap-1 pr-5 [&::-webkit-details-marker]:hidden">
+              <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+              <span>Rendered with seam warnings</span>
+              <ChevronDown className="ml-auto mt-0.5 h-3 w-3 shrink-0 transition-transform group-open:rotate-180" />
+            </summary>
+            <VisualBoundaryReport
+              report={seamReport}
+              canDeclareSeamsAsHardCuts={chrome.canDeclareSeamsAsHardCuts}
+              declareSeamsAsHardCuts={chrome.declareSeamsAsHardCuts}
+              canAcknowledgeVisualCues={chrome.canAcknowledgeVisualCues}
+              acknowledgeVisualCuesAsSynchronized={chrome.acknowledgeVisualCuesAsSynchronized}
+            />
+          </details>
         </div>
       )}
     </>
