@@ -73,7 +73,8 @@ class _FirstCaptureProvider:
         base = port.head()
         candidate = port.revision_closure(base["revision_id"])
         pin = context["request"]["commands"][0]["args"]["pin"]
-        port.transcript_source(pin)
+        reader = port.config_source if pin["document_id"] == "film.config" else port.transcript_source
+        reader(pin)
         candidate["parent_revision"]["revision_id"] = "host-first-capture"
         candidate["dependency_manifest"]["documents"] = [pin]
         record = {"ordinal": 0, "command": context["request"]["commands"][0],
@@ -341,14 +342,21 @@ def test_retained_inputs_process_death(retained, tmp_path, monkeypatch, operatio
     _crash_boundary(tmp_path, monkeypatch, case.film, operation, stage, case.captures)
 
 
+@pytest.mark.parametrize("source_kind", ["transcript", "config"])
 @pytest.mark.parametrize("stage", ["before", "after"])
-def test_host_boundary_first_capture_process_death(tmp_path, astrid_importable, monkeypatch, stage):
-    # HOST-BOUNDARY: proves new blob/header/link atomicity, not Agent word-follow semantics.
+def test_host_boundary_first_capture_process_death(tmp_path, astrid_importable, monkeypatch, source_kind, stage):
+    # HOST-BOUNDARY: proves input blob/header/link atomicity, not Agent semantics.
     from runtime_protocol.service import RuntimeService
 
     film = build_film_fixture(tmp_path)
     with closing(RuntimeService(film.duplicate_root)) as service:
-        source = service.get_document(film.project_id, film.transcript_document_id)
+        if source_kind == "config":
+            source = service.create_document(film.project_id, {
+                "document_id": "film.config", "kind": "film.config",
+                "content": {"schema": "film.config/v1", "enabled": True},
+            }, idempotency_key="first-config")["data"]
+        else:
+            source = service.get_document(film.project_id, film.transcript_document_id)
     capture = {"pin": {"document_id": source["document_id"], "version": source["version"],
                        "content_digest": digest(source["content"])}, "document": source}
     _crash_boundary(tmp_path, monkeypatch, film, "commit", stage, [capture], first_capture=True)
