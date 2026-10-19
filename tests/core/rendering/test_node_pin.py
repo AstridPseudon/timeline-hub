@@ -62,11 +62,12 @@ def test_an_unpinned_project_takes_the_first_node_on_path(tmp_path):
     assert found.ok and found.path == path_node.resolve() and found.pin is None
 
 
-def test_the_host_launch_refuses_a_mismatched_node_and_resolves_the_pinned_one(tmp_path):
+def test_the_host_launch_refuses_a_mismatched_node_and_resolves_the_pinned_one(tmp_path, monkeypatch):
     from astrid.sdk.host_bootstrap import PackHostBootstrapError, _provision_render_runtime_env
 
     project = _project(tmp_path)
     source = project.parent
+    monkeypatch.setattr(node_pin.Path, "home", lambda: tmp_path / "home")
     wrong = _node(tmp_path / "homebrew" / "node", "v26.7.0")
     pinned = _node(tmp_path / "tools" / "node-v20.19.4-darwin-arm64" / "bin" / "node", "v20.19.4")
     env = {"PATH": str(wrong.parent)}

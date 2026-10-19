@@ -1392,9 +1392,15 @@ def test_launch_validation_timing_metadata_contains_no_arguments_or_error_messag
         refuse('PRIVATE_VALUE')
     raw = capsys.readouterr().err
     assert 'PRIVATE_VALUE' not in raw
-    record = json.loads(raw)
-    assert set(record) == {'diagnostic', 'phase', 'outcome', 'process_id', 'elapsed_ms'}
-    assert record['outcome'] == 'failed' and record['elapsed_ms'] >= 0
+    records = [json.loads(line) for line in raw.splitlines()]
+    assert len(records) == 2
+    assert all(set(record) == {'diagnostic', 'phase', 'outcome', 'process_id', 'elapsed_ms'}
+               for record in records)
+    assert [record['diagnostic'] for record in records] == ['astrid.remotion_validation_phase'] * 2
+    assert [record['phase'] for record in records] == ['complete_inputs'] * 2
+    assert [record['outcome'] for record in records] == ['begun', 'failed']
+    assert records[0]['elapsed_ms'] == 0 and records[1]['elapsed_ms'] >= 0
+    assert records[0]['process_id'] == records[1]['process_id']
 
 
 def test_launch_validation_shared_proof_keeps_registry_output_mutation_rejection(tmp_path, monkeypatch):
