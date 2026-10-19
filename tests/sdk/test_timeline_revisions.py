@@ -185,3 +185,68 @@ def test_runtime_prev_refuses_when_no_parent_is_named():
     store = RuntimeRevisions(FakeTimelines({A: None}))
     with pytest.raises(TimelineEditError, match="cannot list revisions"):
         resolve_revision("P", "TL", "prev", store=store)
+
+
+def test_runtime_commit_history_keeps_same_content_publications_and_walks_edges():
+    same = "authoring-parent-revision-same"
+    later = "authoring-parent-revision-later"
+
+    class CommitHistory:
+        def __init__(self):
+            self.calls = []
+
+        def list_timeline_commits(self, project, timeline, *, cursor=None, limit=50):
+            self.calls.append((project, timeline, cursor, limit))
+            return DomainResult.success({
+                # The frozen Runtime route returns acceptance order. The
+                # adapter must expose newest-first refs without deduplicating
+                # the two accepted writes of identical content.
+                "items": [
+                    {"publication_id": "pub-0", "revision_id": same,
+                     "previous": None, "receipt": {"created_at": "t0"}},
+                    {"publication_id": "pub-1", "revision_id": same,
+                     "previous": {"publication_id": "pub-0", "revision_id": same},
+                     "receipt": {"created_at": "t1"}, "label": "same value"},
+                    {"publication_id": "pub-2", "revision_id": later,
+                     "previous": {"publication_id": "pub-1", "revision_id": same},
+                     "receipt": {"created_at": "t2"}, "source": {"via": "app"}},
+                ],
+                "next_cursor": None,
+                "head": {"revision_id": later, "publication_id": "pub-2"},
+            })
+
+        def open_composition(self, *args, **kwargs):
+            pytest.fail("commit history must not reload a moving composition head")
+
+    runtime = CommitHistory()
+    store = RuntimeRevisions(runtime)
+    revisions = store.list("P", "TL")
+
+    assert [(revision.publication_id, revision.id) for revision in revisions] == [
+        ("pub-2", later), ("pub-1", same), ("pub-0", same)
+    ]
+    assert revisions[1].message == "same value"
+    assert revisions[0].source == "app"
+    assert resolve_revision("P", "TL", "prev", store=store) == same
+    assert resolve_revision("P", "TL", "-2", store=store) == same
+    assert resolve_revision("P", "TL", "same", store=store) == same
+    assert runtime.calls
+
+
+def test_runtime_commit_history_uses_wrapped_generated_read_adapter():
+    class Generated:
+        def list_timeline_commits(self, project, timeline, *, cursor=None, limit=50):
+            assert (project, timeline) == ("project-id", "timeline-id")
+            return {"items": [], "next_cursor": None,
+                    "head": {"revision_id": "head", "publication_id": "pub-head"}}
+
+    class Wrapped:
+        _client = type("Workspace", (), {"_generated": Generated()})()
+
+        def resolve_scope(self, project, timeline):
+            assert (project, timeline) == ("project", "main")
+            return DomainResult.success({"project_ref": "project-id", "timeline_id": "timeline-id"})
+
+    store = RuntimeRevisions(Wrapped())
+    assert store.head("project", "main") == "head"
+    assert store.list("project", "main") == []
