@@ -1,4 +1,4 @@
-<!-- app | 2026-10-19T23:15:28Z | dispatcher heartbeat 9s -->
+<!-- app | 2026-10-19T23:20:39Z | dispatcher heartbeat 15s -->
 # app — 2026-10-19 23:08 UTC
 Milestone: M1 APP SAFETY/RESTORE PROVEN; overall M1 waits orchestrator record/cross-repo closure. Latest postbatch full running. M0 COMPLETE. M2 branches authorized, MERGES HELD until recorded M1.
 Integrated: App tl/integration bdc9dcd9b CLEAN, tree a6d1a0c6c0564e4ba266681fef19d73d7e0fd902. Restore authoritative pair+scope and test-only mixed-edit safety integrated. Original5helpers/cases63834bytes unchanged. Runtime0.2.1/schema4e52/artifact9b18, Composition0.0.8/hash93bc/React18.3.1/Remotion4.0.509 unchanged.3originaldrag it.fails+3exactexceptions remain.
