@@ -21,6 +21,7 @@ from collections import defaultdict
 from contextlib import contextmanager, nullcontext
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import unquote
 
 from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestError, LeaseError, NotFoundError, OwnerBusyError, RealmAdmissionError, ValidationError
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
@@ -1852,6 +1853,24 @@ class RealmStore:
                     f"canonical timeline asset {asset_name!r} has no runtime content digest"
                 )
             normalized = "sha256:" + OBJECT_ID_RE.fullmatch(digest).group(1)
+            # Freeze object bindings, not browser presentation locators. Only
+            # an exact same-origin Runtime object route for this content-
+            # addressed media_id is redundant; real locators remain refused.
+            asset = dict(asset)
+            media_match = OBJECT_ID_RE.fullmatch(asset["media_id"]) if isinstance(asset.get("media_id"), str) else None
+            for field in ("url", "uri", "path", "source_path", "locator", "realm", "file"):
+                if field not in asset:
+                    continue
+                locator = asset[field]
+                route = re.fullmatch(r"/(?:api/runtime/)?v1/objects/([^/?#]+)", locator) if isinstance(locator, str) else None
+                target = OBJECT_ID_RE.fullmatch(unquote(route.group(1))) if route else None
+                if (field == "realm" or media_match is None or target is None
+                        or target.group(1) != media_match.group(1)
+                        or normalized != "sha256:" + media_match.group(1)):
+                    raise ValidationError(f"canonical timeline asset {asset_name!r} contains an unmanaged locator")
+                del asset[field]
+            asset["digest"] = normalized
+            expanded_assets[asset_name] = asset
             if normalized not in ordered_input_ids:
                 ordered_input_ids.append(normalized)
             previous = managed_media.get(media_id)

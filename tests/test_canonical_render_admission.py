@@ -106,7 +106,9 @@ def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objec
     snapshot = _snapshot(f["service"], spec)
     expected_config = copy.deepcopy(publication["data"]["payload"]["config"])
     expected_config["clips"] = publication["data"]["payload"]["clips"]
-    assert snapshot == {"config": expected_config, "registry": publication["data"]["payload"]["registry"]}
+    expected_registry = copy.deepcopy(publication["data"]["payload"]["registry"])
+    expected_registry["assets"]["music"]["digest"] = f["audio"]["object_id"]
+    assert snapshot == {"config": expected_config, "registry": expected_registry}
     assert [clip["id"] for clip in snapshot["config"]["clips"]] == ["scene-a", "scene-b", "music"]
     canonical = [oid for oid in spec["input_object_ids"] if oid != ref["digest"]]
     assert len(spec["input_object_ids"]) == 4
@@ -125,17 +127,28 @@ def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objec
     assert f["service"].create_task(request) == f["service"].create_task(request)
 
 
-def test_content_addressed_media_identity_also_supplies_its_immutable_digest(canonical_scene):
+@pytest.mark.parametrize("route", ["/api/runtime/v1/objects/{encoded}", "/v1/objects/{encoded}",
+                                   "/api/runtime/v1/objects/{plain}", "/v1/objects/{bare}"])
+def test_frozen_managed_asset_canonicalizes_the_runtime_object_locator(canonical_scene, route):
     f = canonical_scene
     publication = _publication(f)
+    object_id = f["audio"]["object_id"]
+    asset_id = "cb9c765b-e54b-4727-9093-f47abf81a6c7"
     asset = {"media_id": f["audio"]["object_id"], "type": "audio/wav",
-             "file": "/api/runtime/v1/objects/" + f["audio"]["object_id"]}
-    publication["parent_composition"]["registry"]["assets"]["music"] = asset
+             "file": route.format(encoded=object_id.replace(":", "%3A"), plain=object_id, bare=object_id.removeprefix("sha256:")),
+             "thumbnailUrl": "/api/runtime/v1/objects/thumbnail", "generationId": "film-generation"}
+    publication["parent_composition"]["registry"]["assets"] = {asset_id: asset}
+    publication["parent_composition"]["clips"][-1]["asset"] = asset_id
     f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
+    authored = f["service"].get_project_parent_composition_revision(f["project"], "main", "parent-1")
     admitted = f["service"].create_task(_request(f))
     spec = admitted["task"]["spec"]
     assert f["audio"]["object_id"] in spec["input_object_ids"]
-    assert _snapshot(f["service"], spec)["registry"]["assets"]["music"] == asset
+    assert _snapshot(f["service"], spec)["registry"]["assets"][asset_id] == {
+        "media_id": object_id, "digest": object_id, "type": "audio/wav",
+        "thumbnailUrl": asset["thumbnailUrl"], "generationId": asset["generationId"]}
+    assert f["service"].get_project_parent_composition_revision(f["project"], "main", "parent-1") == authored
+    assert authored["payload"]["registry"]["assets"][asset_id] == asset
     assert spec["spec"]["inputs"]["timeline_authority"]["managed_media_admissions"] == {
         f["audio"]["object_id"]: f["audio"]["object_id"]}
 
@@ -147,6 +160,31 @@ def test_opaque_media_identity_without_a_digest_still_fails_admission(canonical_
         "media_id": "opaque-media-id", "file": "/api/runtime/v1/objects/" + f["audio"]["object_id"], "type": "audio/wav"}
     f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
     _assert_rejected(f, _request(f), ValidationError, "no runtime content digest")
+
+
+@pytest.mark.parametrize("locator", [
+    "https://example.com/api/runtime/v1/objects/{id}", "http://127.0.0.1:1234/v1/objects/{id}",
+    "//example.com/v1/objects/{id}", "/api/runtime/v1/objects/{id}?token=x", "/v1/objects/{id}#fragment",
+    "/v1/objects/{id}/../other", "/api/runtime/v1/objects/sha256:" + "0" * 64,
+    "file:///tmp/source.wav", "/tmp/source.wav", "", None,
+])
+def test_managed_asset_real_or_mismatched_locators_are_refused(canonical_scene, locator):
+    f = canonical_scene
+    publication = _publication(f)
+    publication["parent_composition"]["registry"]["assets"]["music"] = {
+        "media_id": f["audio"]["object_id"], "file": locator.format(id=f["audio"]["object_id"]) if locator else locator}
+    f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
+    _assert_rejected(f, _request(f), ValidationError, "unmanaged locator")
+
+
+@pytest.mark.parametrize("field", ["url", "uri", "path", "source_path", "locator", "realm"])
+def test_matching_runtime_file_url_never_exempts_an_additional_locator(canonical_scene, field):
+    f = canonical_scene
+    publication = _publication(f)
+    publication["parent_composition"]["registry"]["assets"]["music"] = {
+        "media_id": f["audio"]["object_id"], "file": "/v1/objects/" + f["audio"]["object_id"], field: "/unmanaged/source.wav"}
+    f["service"].publish_parent_composition(f["project"], "main", publication, idempotency_key="publish")
+    _assert_rejected(f, _request(f), ValidationError, "unmanaged locator")
 
 
 def test_saved_source_tracks_remain_authored_but_are_removed_from_render_projection(canonical_scene):
