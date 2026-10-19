@@ -36,7 +36,7 @@ The actual alternatives, pending orchestrator/Astra, are:
   compatibility contract. Independent-row concurrency would require a reviewed
   semantic row address and shared overlap rules. Whole-array recording already
   works but conservatively conflicts across all rows; this is an alternative,
-  not approval to bypass the manager's per-row requirement if soft tags win.
+  not approval to bypass an approved independent-row concurrency requirement if soft tags win.
 * Use canonical pinned shots and occurrence ownership, with a read-side
   compatibility projection for the same App success effects. Existing migration
   copies members into an internal timeline and removes the parent groups/clips;
