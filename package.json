@@ -14,7 +14,7 @@
     "dev:local": "node scripts/dev-local-workspace.mjs",
     "dev:custom-shell-demo": "vite --config examples/embed-demo/vite.config.ts",
     "build": "vite build --config config/vite/vite.config.ts",
-    "build:hosted": "VITE_RUNTIME_ORIGIN=http://127.0.0.1:17340 VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID= VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID= VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID= vite build --config config/vite/vite.config.ts",
+    "build:hosted": "node scripts/build-hosted.mjs",
     "build:custom-shell-demo": "vite build --config examples/embed-demo/vite.config.ts",
     "build:dev": "vite build --mode development --config config/vite/vite.config.ts",
     "perf:editor": "node scripts/perf/measure-editor.mjs",
