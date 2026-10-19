@@ -16,20 +16,22 @@ import sys
 import threading
 import traceback
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from pathlib import Path
 
 import pytest
 
+from runtime_protocol.contract_metadata import SCHEMA_DIGEST
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.door import DoorConfig
 from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_port import RequestCommitPort, digest
 from runtime_protocol.timeline_commit_store import TimelineCommitStore
 from runtime_protocol.upgrade import compact_idempotency_ledger
 from runtime_protocol.util import canonical_json
 from tests.door_helpers import HOSTED, PRODUCT_ACTOR, DoorWorld, door_call
 from tests.lanes import requires_posix_process_groups
-from test_timeline_commit_input_integration import body, document, head
+from test_timeline_commit_input_integration import body, document, head, retained
 from timeline_commit_film_fixture import build_film_fixture
 
 pytestmark = [pytest.mark.integration, requires_posix_process_groups]
@@ -61,7 +63,31 @@ def _unavailable(*args, **kwargs):
     raise AssertionError("save/retry reached renderer or forbidden semantic work")
 
 
-def _runtime_child(pipe, film, tmp):
+class _FirstCaptureProvider:
+    """HOST-BOUNDARY only: first capture, with no Agent semantic claim."""
+    provider_id = "astrid-v1"
+    interface_version = 1
+    contract_digest = SCHEMA_DIGEST
+
+    def commit(self, context, port):
+        base = port.head()
+        candidate = port.revision_closure(base["revision_id"])
+        pin = context["request"]["commands"][0]["args"]["pin"]
+        port.transcript_source(pin)
+        candidate["parent_revision"]["revision_id"] = "host-first-capture"
+        candidate["dependency_manifest"]["documents"] = [pin]
+        record = {"ordinal": 0, "command": context["request"]["commands"][0],
+                  "writes": [], "reads": [], "selections": [], "bindings": [], "created": [],
+                  "derived_writes": [], "dependencies": [
+                      {"key": "host.input", "kind": "transcript", "pin": pin, "policy": "exact"}]}
+        return port.accept({
+            "expected_head": base, "canonical_document": candidate, "document_digest": digest(candidate),
+            "records": {"schema_version": 1, "commands": [record], "undo_of": [], "restored_from": None},
+            "id_map": {}, "semantic_events": [], "provider_version": "host-fixture", "compiler_version": "host-fixture",
+        })
+
+
+def _runtime_child(pipe, film, tmp, first_capture):
     """One fresh interpreter/owner; all measured mutations arrive over HTTP."""
     daemon = None
     try:
@@ -81,7 +107,10 @@ def _runtime_child(pipe, film, tmp):
         daemon = RuntimeDaemon(
             film.duplicate_root, support_root=tmp / "support", authoring_profile="astrid",
             door=DoorConfig(origin=HOSTED, port=0, credential_file=credential),
-        ).start()
+        )
+        if first_capture:
+            daemon._load_installed_timeline_commit_provider = _FirstCaptureProvider
+        daemon.start()
         world = DoorWorld(tmp, daemon, credential)
         if not credential.exists():
             world.provision()
@@ -91,6 +120,25 @@ def _runtime_child(pipe, film, tmp):
         service = daemon.service
         commits = service._timeline_commits()[0]
         local, armed, calls = threading.local(), {}, []
+        reads, compiled = [], []
+        from astrid.sdk.timeline import commit as agent
+
+        def watch_read(method):
+            def read(port, pin):
+                result = method(port, pin)
+                reads.append(copy.deepcopy(result))
+                return result
+            return read
+
+        for name in ("transcript_source", "config_source"):
+            setattr(RequestCommitPort, name, watch_read(getattr(RequestCommitPort, name)))
+        compile_candidate = agent.compile_authoring_candidate
+
+        def observe_compile(bundle):
+            compiled.append(copy.deepcopy(bundle["source_mapping"].get("pinned_documents", [])))
+            return compile_candidate(bundle)
+
+        agent.compile_authoring_candidate = observe_compile
         transaction, accept = RealmStore._transaction, TimelineCommitStore.accept
         provider_type = type(service._timeline_commit_provider)
         provider_commit = provider_type.commit
@@ -109,7 +157,7 @@ def _runtime_child(pipe, film, tmp):
             assert envelope is not None
             pipe.send({"barrier": stage, "in_transaction": store.conn.in_transaction,
                        "context": context, "envelope": envelope, "rows": _rows(store.conn),
-                       "calls": list(calls)})
+                       "calls": list(calls), "reads": list(reads), "compiled": list(compiled)})
             # No release path: the only successful continuation is SIGKILL.
             threading.Event().wait(120)
             raise AssertionError("parent failed to kill paused Runtime")
@@ -144,11 +192,14 @@ def _runtime_child(pipe, film, tmp):
             elif command == "tripwire":
                 provider_type.commit = _unavailable
                 RealmStore.integrity_report = _unavailable
+                RequestCommitPort.transcript_source = RequestCommitPort.config_source = _unavailable
+                agent.compile_authoring_candidate = _unavailable
                 pipe.send({"tripwire": True})
             elif command == "inspect":
                 with service.store._mutex:
                     pipe.send({"rows": _rows(service.store.conn), "head": head(service, film),
-                               "document": document(service, film), "calls": list(calls)})
+                               "document": document(service, film), "calls": list(calls),
+                               "reads": list(reads), "compiled": list(compiled)})
             else:
                 raise AssertionError(command)
     except BaseException:
@@ -160,10 +211,10 @@ def _runtime_child(pipe, film, tmp):
 
 
 class _Runtime:
-    def __init__(self, film, tmp):
+    def __init__(self, film, tmp, first_capture=False):
         context = multiprocessing.get_context("spawn")
         self.pipe, child = context.Pipe()
-        self.process = context.Process(target=_runtime_child, args=(child, film, tmp))
+        self.process = context.Process(target=_runtime_child, args=(child, film, tmp, first_capture))
         self.process.start()
         child.close()
         try:
@@ -220,7 +271,7 @@ def _accepted(runtime, path, request, key):
     return response.json()
 
 
-def _assert_one_acceptance(before, after, accepted):
+def _assert_one_acceptance(before, after, accepted, captures=(), first_capture=False):
     receipt = accepted["receipt"]
     assert accepted["data"] == receipt["result"]
     assert len(after["timeline_commit_history"]) == len(before["timeline_commit_history"]) + 1
@@ -229,26 +280,87 @@ def _assert_one_acceptance(before, after, accepted):
     assert sum(row[0] == receipt["receipt_id"] for row in after["timeline_commit_history"]) == 1
     assert set(receipt["event_ids"]) == {str(row[0]) for row in after["timeline_events"]} - {
         str(row[0]) for row in before["timeline_events"]}
-    for table in ("shot_revisions", "internal_timeline_revisions"):
+    for table in ("shot_revisions", "internal_timeline_revisions", "project_documents"):
         assert after[table] == before[table]
-    # This API-built main film has no consumed document pins (unlike the
-    # prepared-provider retained-input seed). Even staged acceptance must not
-    # invent input bindings, snapshots or publication links.
-    for table in ("timeline_document_input_contents", "timeline_document_input_bindings",
-                  "timeline_document_input_links"):
-        assert after[table] == before[table] == []
+    candidate = accepted["data"]["canonical_document"]
+    assert candidate["dependency_manifest"]["documents"] == [capture["pin"] for capture in captures]
+    contents, bindings = [], []
+    for capture in captures:
+        pin, source = capture["pin"], capture["document"]
+        encoded = canonical_json(source["content"])
+        contents.append([pin["content_digest"], encoded, len(encoded.encode())])
+        transcript = source["kind"] == "media.transcript"
+        bindings.append([source["project_id"], source["document_id"], source["version"],
+                         pin["content_digest"], source["kind"], source["created_at"], source["updated_at"],
+                         source["content"]["media_id"] if transcript else None,
+                         source["content"]["source_id"] if transcript else None])
+    for table, expected in (("timeline_document_input_contents", contents),
+                            ("timeline_document_input_bindings", bindings)):
+        assert [row[:-1] for row in after[table]] == sorted(expected, key=repr)
+        if first_capture:
+            assert before[table] == []
+        else:
+            assert after[table] == before[table]
+    table = "timeline_document_input_links"
+    if not captures or first_capture:
+        assert before[table] == []
+    else:
+        assert before[table]
+        for identity in {tuple(row[:4]) for row in before[table]}:
+            assert [row[4:9] for row in sorted(before[table], key=lambda row: row[4])
+                    if tuple(row[:4]) == identity] == [
+                [ordinal, "transcript" if capture["document"]["kind"] == "media.transcript" else "source",
+                 capture["pin"]["document_id"], capture["pin"]["version"], capture["pin"]["content_digest"]]
+                for ordinal, capture in enumerate(captures)
+            ]
+    added = [row for row in after[table] if row not in before[table]]
+    assert after[table] == sorted(before[table] + added, key=repr)
+    assert [row[:-1] for row in sorted(added, key=lambda row: row[4])] == [
+        [candidate["project_id"], candidate["timeline_id"], receipt["receipt_id"],
+         candidate["parent_revision"]["revision_id"], ordinal,
+         "transcript" if capture["document"]["kind"] == "media.transcript" else "source",
+         capture["pin"]["document_id"], capture["pin"]["version"], capture["pin"]["content_digest"]]
+        for ordinal, capture in enumerate(captures)
+    ]
 
 
 @pytest.mark.parametrize("operation", ["commit", "restore"])
 @pytest.mark.parametrize("stage", ["before", "after"])
 def test_real_process_death_at_acceptance_boundary(tmp_path, astrid_importable, monkeypatch, operation, stage):
+    _crash_boundary(tmp_path, monkeypatch, build_film_fixture(tmp_path), operation, stage)
+
+
+@pytest.mark.parametrize("operation", ["commit", "restore"])
+@pytest.mark.parametrize("stage", ["before", "after"])
+def test_retained_inputs_process_death(retained, tmp_path, monkeypatch, operation, stage):
+    case = retained
+    assert case.current["version"] == 2
+    assert case.service.get_document(case.film.project_id, case.source["document_id"]) == case.current
+    assert all(capture["pin"]["version"] == 1 for capture in case.captures)
+    case.service.close()  # The spawned daemon must be the sole live owner.
+    _crash_boundary(tmp_path, monkeypatch, case.film, operation, stage, case.captures)
+
+
+@pytest.mark.parametrize("stage", ["before", "after"])
+def test_host_boundary_first_capture_process_death(tmp_path, astrid_importable, monkeypatch, stage):
+    # HOST-BOUNDARY: proves new blob/header/link atomicity, not Agent word-follow semantics.
+    from runtime_protocol.service import RuntimeService
+
+    film = build_film_fixture(tmp_path)
+    with closing(RuntimeService(film.duplicate_root)) as service:
+        source = service.get_document(film.project_id, film.transcript_document_id)
+    capture = {"pin": {"document_id": source["document_id"], "version": source["version"],
+                       "content_digest": digest(source["content"])}, "document": source}
+    _crash_boundary(tmp_path, monkeypatch, film, "commit", stage, [capture], first_capture=True)
+
+
+def _crash_boundary(tmp_path, monkeypatch, film, operation, stage, captures=(), first_capture=False):
     # Spawn imports this module afresh; Agent also has a top-level tests package.
     monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1]))
-    film = build_film_fixture(tmp_path)
     source_files = {path.relative_to(film.source_root): path.read_bytes()
                     for path in film.source_root.rglob("*") if path.is_file()}
     commit_path = f"/v1/projects/{film.project_id}/timelines/{film.timeline_id}/commit"
-    runtime = _Runtime(film, tmp_path)
+    runtime = _Runtime(film, tmp_path, first_capture)
     try:
         original_ready = runtime.ready
         initial = runtime.control("inspect")
@@ -262,6 +374,11 @@ def test_real_process_death_at_acceptance_boundary(tmp_path, astrid_importable, 
                        "expected_publication_id": before["head"]["publication_id"]}
         else:
             path, request = commit_path, _move(film, before, 1)
+            if first_capture:
+                request = body(film, before["head"], [{
+                    "schema_version": 1, "op": "fixture.host-first-capture", "version": "1", "select": None,
+                    "args": {"pin": captures[0]["pin"]}, "created": [],
+                }])
         encoded, key = json.dumps(request).encode(), "crash-exact-flight"
         assert runtime.control("arm", stage) == {"armed": stage}
         with ThreadPoolExecutor(max_workers=1) as pool:
@@ -285,7 +402,23 @@ def test_real_process_death_at_acceptance_boundary(tmp_path, astrid_importable, 
                     "publisher": PRODUCT_ACTOR, "request": request,
                 }).encode()).hexdigest()
                 assert staged["receipt"]["request_hash"] == context["request_hash"] == expected_hash
-                _assert_one_acceptance(before["rows"], barrier["rows"], staged)
+                _assert_one_acceptance(before["rows"], barrier["rows"], staged, captures, first_capture)
+                consumed = barrier["reads"][len(before["reads"]):]
+                assert all(capture in captures for capture in consumed)
+                assert all(capture in consumed for capture in captures)
+                if captures and not first_capture:
+                    compilations = barrier["compiled"][len(before["compiled"]):]
+                    # Restore also compiles intermediate images to record its writes.
+                    assert compilations and compilations[-1] == captures
+                    assert all(pins == captures for pins in compilations if pins)
+                if operation == "restore":
+                    assert staged["data"]["canonical_document"]["parent_revision"]["payload"] == (
+                        initial["document"]["parent_revision"]["payload"])
+                elif not first_capture:
+                    parent = staged["data"]["canonical_document"]["parent_revision"]["payload"]
+                    assert parent["clips"][0]["at"] == 1
+                    assert parent["clips"][0]["app"]["astrid"]["fixed_start"] is True
+                    assert parent["occurrences"] == initial["document"]["parent_revision"]["payload"]["occurrences"]
                 visible = before["rows"] if stage == "before" else barrier["rows"]
                 assert _disk_rows(film) == visible
             finally:
@@ -297,7 +430,7 @@ def test_real_process_death_at_acceptance_boundary(tmp_path, astrid_importable, 
         runtime = None
         assert _disk_rows(film) == visible
 
-        runtime = _Runtime(film, tmp_path)
+        runtime = _Runtime(film, tmp_path, first_capture)
         assert runtime.ready["instance"] != original_ready["instance"]
         for field in ("realm_id", "actor_id"):
             assert runtime.ready["handshake"][field] == original_ready["handshake"][field]
@@ -307,7 +440,8 @@ def test_real_process_death_at_acceptance_boundary(tmp_path, astrid_importable, 
         if stage == "before":
             assert recovered["head"] == before["head"]
             accepted = _accepted(runtime, path, request, key)
-            _assert_one_acceptance(before["rows"], runtime.control("inspect")["rows"], accepted)
+            _assert_one_acceptance(before["rows"], runtime.control("inspect")["rows"], accepted,
+                                   captures, first_capture)
         else:
             accepted = staged
             assert recovered["head"]["publication_id"] == staged["receipt"]["receipt_id"]
