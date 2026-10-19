@@ -4,10 +4,34 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+from astrid.core import subprocess_env
 from astrid.core.execution.executor import runner as executor_runner
 from astrid.core.rendering import transport as rendering_transport
 from astrid.core.rendering.contracts import SCHEMA_VERSION, SupportReport
 from astrid.core.rendering.transport import CommandTransport
+from astrid.core.subprocess_env import build_child_subprocess_env
+
+
+def test_windows_child_environment_keeps_only_required_windows_variables(monkeypatch):
+    monkeypatch.setattr(subprocess_env, "sys", SimpleNamespace(platform="win32"))
+    windows_values = {
+        name: f"value-{name}"
+        for name in (
+            "USERPROFILE", "HOMEDRIVE", "HOMEPATH", "APPDATA", "LOCALAPPDATA",
+            "SYSTEMROOT", "TEMP", "TMP", "PATHEXT", "COMSPEC",
+        )
+    }
+    env = build_child_subprocess_env(base=windows_values, parent={})
+    assert env == windows_values
+
+
+def test_non_windows_child_environment_does_not_admit_windows_only_variables(monkeypatch):
+    monkeypatch.setattr(subprocess_env, "sys", SimpleNamespace(platform="linux"))
+    env = build_child_subprocess_env(
+        base={"USERPROFILE": "profile", "APPDATA": "appdata", "SYSTEMROOT": "root", "TEMP": "temp"},
+        parent={},
+    )
+    assert env == {}
 
 
 def test_render_process_group_marker_survives_executor_and_transport(

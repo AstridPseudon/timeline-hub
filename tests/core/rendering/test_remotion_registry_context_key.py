@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+from types import SimpleNamespace
 
 import pytest
 
@@ -85,3 +86,17 @@ def test_repeated_path_entries_do_not_make_a_different_context():
     # A genuinely different PATH order still differs.
     swapped = {**base, "PATH": os.pathsep.join(["/n/bin", "/v/bin", "/usr/bin"])}
     assert rr._registry_context(swapped, generator=False) != rr._registry_context(base, generator=False)
+
+
+def test_windows_registry_context_keeps_windows_child_environment_only_on_windows(monkeypatch):
+    windows = {name: f"value-{name}" for name in (
+        "USERPROFILE", "HOMEDRIVE", "HOMEPATH", "APPDATA", "LOCALAPPDATA",
+        "SYSTEMROOT", "TEMP", "TMP", "PATHEXT", "COMSPEC",
+    )}
+    monkeypatch.setattr(runtime, "probe_context", lambda **_: {})
+    monkeypatch.setattr(runtime, "sys", SimpleNamespace(platform="win32", executable="python"))
+
+    assert runtime._registry_context(windows, generator=True) == windows
+
+    monkeypatch.setattr(runtime, "sys", SimpleNamespace(platform="linux", executable="python"))
+    assert runtime._registry_context(windows, generator=True) == {}

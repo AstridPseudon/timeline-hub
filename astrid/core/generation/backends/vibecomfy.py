@@ -28,6 +28,7 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
+from astrid.core.path_utils import has_url_scheme, is_native_absolute_path
 from astrid.core.generation.backends.base import (
     BackendAdapter,
     GenerationResult,
@@ -298,7 +299,7 @@ def _validate_output_field(
         for char in value
     ):
         raise ValueError(f"checkout_server output descriptor has unsafe {field}")
-    if value.startswith("/") or value.startswith("~") or urllib_parse.urlsplit(value).scheme:
+    if is_native_absolute_path(value) or value.startswith("~") or has_url_scheme(value):
         raise ValueError(f"checkout_server output descriptor has unsafe {field}")
     if ".." in value or (reject_slash and "/" in value):
         raise ValueError(f"checkout_server output descriptor has unsafe {field}")

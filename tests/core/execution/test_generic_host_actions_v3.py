@@ -2368,7 +2368,7 @@ def test_native_engine_graph_listener_commands_keep_platform_timeout_and_parsing
     calls=[]
     def run(argv, **kwargs):
         calls.append(argv)
-        assert kwargs == dict(capture_output=True,text=True,timeout=2,check=False)
+        assert kwargs == dict(capture_output=True,text=True,encoding="utf-8",errors="replace",timeout=2,check=False)
         if phase == "registry": return subprocess.CompletedProcess(argv,0,"fixture :8188 (LISTEN)\n","")
         return subprocess.CompletedProcess(argv,1,"","")
     monkeypatch.setattr(gh.subprocess,"run",run)

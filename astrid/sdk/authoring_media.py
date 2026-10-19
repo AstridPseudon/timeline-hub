@@ -13,9 +13,10 @@ import mimetypes
 import re
 from pathlib import Path
 from typing import Any, Mapping
-from urllib.parse import unquote, urlsplit
+from urllib.parse import urlsplit
 
 from astrid.core.media import ffprobe_metadata_strict
+from astrid.core.path_utils import file_uri_to_path, has_url_scheme, is_native_absolute_path
 from astrid.core.timeline.authoring_bundle import validate_authoring_candidate
 from astrid.core.timeline.parent_registry import effective_parent_registry
 from astrid.sdk.pagination import paged_rows
@@ -68,8 +69,11 @@ def _path(value: str, directory: Path) -> Path:
             or re.search(r"%(?![0-9A-Fa-f]{2})", parsed.path)
         ):
             raise ValueError(f"Local media requires a canonical absolute file URI: {value}")
-        value = unquote(parsed.path, errors="strict")
-    elif parsed.scheme:
+        path = file_uri_to_path(value)
+        if not is_native_absolute_path(path):
+            raise ValueError(f"Local media file URI must resolve to an absolute path: {value}")
+        return path.expanduser().resolve(strict=True)
+    elif has_url_scheme(value):
         raise ValueError(f"Local media requires a file path, not a URL: {value}")
     path = Path(value).expanduser()
     return (path if path.is_absolute() else directory / path).resolve(strict=True)

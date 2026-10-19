@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol
 
+from astrid.core.path_utils import is_native_absolute_path
 from astrid.sdk.execution_request import normalize_execution_request
 
 
@@ -154,7 +155,7 @@ def load_prepared_worker_selection(
 
     def selected_path(name: str, *, directory: bool = False) -> Path:
         value = document.get(name)
-        if not isinstance(value, str) or not value.startswith("/") or ".." in Path(value).parts:
+        if not isinstance(value, str) or not is_native_absolute_path(value) or ".." in Path(value).parts:
             raise PreparedWorkerError(f"prepared worker {name} must be a canonical absolute path")
         result = Path(value)
         if result.is_symlink() or (directory and result.exists() and not result.is_dir()):
@@ -181,7 +182,7 @@ def load_prepared_worker_selection(
         ("vibecomfy_source", True),
     ):
         value = staging.get(key)
-        if (not isinstance(value, str) or not value.startswith("/")
+        if (not isinstance(value, str) or not is_native_absolute_path(value)
                 or ".." in Path(value).parts):
             raise PreparedWorkerError(f"P2 staging input {key} must be a canonical absolute local path")
         local_path = Path(value)
