@@ -42,11 +42,11 @@ def test_registry_and_label_after_move_preserves_move_inverse_redo():
     assert inverse(undone.bundle, undone.records).bundle == result.bundle
 
 
+@pytest.mark.parametrize('ref', ['parent/track:picture', 'occurrence:occ-1/track:picture'])
 @pytest.mark.parametrize('before', [ABSENT, present(None), present(''), present('Old')])
 @pytest.mark.parametrize('clear', [False, True])
-def test_track_label_exact_clear_and_original_presence(before, clear):
+def test_track_label_exact_clear_and_original_presence(ref, before, clear):
     original = bundle()
-    ref = 'occurrence:occ-1/track:picture'
     if before != ABSENT:
         State(original).entity(ref)['label'] = copy.deepcopy(before['value'])
     snapshot = copy.deepcopy(original)
@@ -58,8 +58,70 @@ def test_track_label_exact_clear_and_original_presence(before, clear):
     assert original == snapshot
     assert inverse(plan.bundle, plan.records).bundle == original
     assert replay(plan, original).records == plan.records
-    assert 'label' not in State(plan.bundle).entity('parent/track:picture')
+    if ref == 'parent/track:picture' and not clear:
+        assert State(plan.bundle).get(ref, ['label']) == present('')
+    else:
+        assert 'label' not in State(plan.bundle).entity('parent/track:picture')
     assert 'label' not in State(plan.bundle).entity('occurrence:occ-2/track:picture')
+
+
+def test_app_parent_track_label_capture_golden_is_exact_and_portable():
+    fixture = json.loads((FIXTURES / 'recipe_m2_app_track_label.json').read_text())
+    ref = fixture['input']['target_ref']
+    label = fixture['input']['label']
+    command = capture_track_set(fixture['bundle'], ref, values={'label': label})
+    plan = execute(fixture['bundle'], [command])
+
+    assert fixture['source'] == 'src/tools/video-editor/commands/fixtures/authoringBundle.json'
+    assert fixture['app_case'] == 'parent-only'
+    assert command == fixture['command']
+    assert execute(fixture['bundle'], [fixture['request']]).commands == [command]
+    assert plan.commands == [fixture['command']]
+    assert plan.bundle == fixture['after_bundle']
+    assert State(fixture['bundle']).get(ref, ['label']) == ABSENT
+    assert State(plan.bundle).get(ref, ['label']) == present(label)
+    assert plan.bundle['source_mapping']['_runtime_document'] == (
+        fixture['bundle']['source_mapping']['_runtime_document'])
+    assert plan.bundle['source_mapping']['_runtime_document']['parent_revision']['payload']['unknown'] == {
+        'opaque': [None, {'keep': True}], 'number': 1.25}
+    assert inverse(plan.bundle, plan.records).bundle == fixture['bundle']
+
+
+@pytest.mark.parametrize('damage', ['deleted', 'duplicate'])
+def test_track_label_capture_refuses_missing_or_ambiguous_track_identity(damage):
+    original = bundle()
+    tracks = State(original).config('parent')['tracks']
+    if damage == 'deleted':
+        tracks.clear()
+    else:
+        tracks.append(copy.deepcopy(tracks[0]))
+    with pytest.raises(CommandError, match='(?:disappeared|ambiguous)'):
+        capture_track_set(original, 'parent/track:picture', values={'label': 'Picture'})
+
+
+def test_track_label_same_path_conflict_refuses_without_partial_write():
+    original = bundle()
+    command = capture_track_set(original, 'parent/track:picture', values={'label': 'Picture'})
+    changed = copy.deepcopy(original)
+    State(changed).entity('parent/track:picture')['label'] = 'Other'
+    snapshot = copy.deepcopy(changed)
+    with pytest.raises(CommandError):
+        execute(changed, [command])
+    assert changed == snapshot
+
+
+@pytest.mark.parametrize('args', [
+    {'clear': []},
+    {'values': {'label': 'Picture'}},
+    {'values': {'label': None}, 'clear': []},
+    {'values': {'label': 'Picture'}, 'clear': ['label']},
+    {'values': {'label': 'Picture'}, 'clear': ['label', 'label']},
+])
+def test_track_label_null_missing_and_overlapping_args_refuse_truthfully(args):
+    command = call('track.set', 'parent/track:picture', values={'label': 'Picture'})
+    command['args'] = args
+    with pytest.raises(CommandError):
+        execute(bundle(), [command])
 
 
 @pytest.mark.parametrize('container', [ABSENT, present(None), present({}),
