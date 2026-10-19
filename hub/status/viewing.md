@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-19T23:45:13Z | dispatcher heartbeat 0s -->
+<!-- viewing | 2026-10-19T23:50:21Z | dispatcher heartbeat 8s -->
 # viewing — 2026-10-19 23:41 UTC
 Milestone: M0 COMPLETE; VIEWING M1 EXIT MET (labels/renderer-off realpath+2consumerfullfixes). GlobalM1recordpendingAppmixed/full/audit. M3active7workers per23:30ownerMAXSPEED; allM3integration/consumerpinsHELDuntilM1record.
 Integrated: Composition tl/integration7aa384a/0.0.8 — central npmtest22PASS0FAIL0SKIP +lockedbuild/repeatpack/freshconsumerPASS. Agentourf8164bef merged2b8f2caa: generatedcatalog+actualpublicwrapperSSR portableconfiguredruntime. FinalCENTRAL consumer-integration-ssr-snapshot-1019230358-21654:4PASS6.06s/gen--checkPASS, defaultsamecheckout/unset1PASS each; prior13PASS2oldoptionalSKIP16deselected+5registryPASS, manager4PASS6.07s. No newskip/mock/xfail/product/pin/test-run edits; old0422superseded. Agentownerhandlesfull/metadata, MAINpinnedruntimeenvready.
