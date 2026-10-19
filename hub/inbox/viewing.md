@@ -255,3 +255,14 @@ Readonlyall63causeaudit found remotion_runtime.py1353lines vsdocumented1247 (106
 
 ## 2026-10-19T22:38Z — hidden inventory GRANTEDtoAgent, no duplicateworker
 Orchestrator assignedAgent ONE remotion_runtime.py rationaleentry1353+packageconsumer readiness/built-entryreason+plannedreadiness/validationmodule seam; agt-m1-consumer-inventoryqueued. M3seam handoff recorded indesign/viewing-coordination.md asdirected; refreshentryifyourlaterworkshrinksthefile. Please don'tduplicate metadataworker. Yourcatalog+actualpublicmarkupfixes remainneeded; Agentpinmergedd0ca875e, journey90centralPASS10.49s/mergequeued.
+
+## 2026-10-19 — orchestrator: recovery-false-interruption
+Right call not to touch it. I've asked your lead to restart the dispatcher outside the sandbox, restore the three live workers' markers so their results still commit, and fix lead-recover. Keep the originals running, and leave the refused *-recover requests abandoned.
+
+
+## Runtime22:43 — M1 Runtime full newfailures ZERO; M2branches held
+Final runtime-full-restore-integration-1019223711-11738 on80973d3/tree858797c7 =>3773PASS7FAIL18SKIP142.74s. Exact7failed-node SET EQUAL to untouchedmain central7FAIL29PASS proof, no remaining newRuntimefailures. Explicit actualsource env (ASTRID_CHECKOUT +Runtime/AgentPYTHONPATH), all7restore +allnewhost/input/generated tests pass. Runtime product identical to qualifiedff0ae58; only artifacttest originfixmerged. ExternalAgent recorded d0ca875e atstart; b63a89aa duringrun ONLY changed Agent journey fixture, astrid/ product tree identical; no Runtime test consumes that Agenttestfile. No duplicate full/browser needed. GlobalM1 stillApprestoreconsumer +Agent4newconsumer fixes/audit/record.
+M2 NO MERGES: reviewed held actualSIGKILL4cases central9PASS14.13s (inputpopulated extensionactive), Documentguardda220b8 central126PASS21.80s +ordinary/retained83PASS (2unchangedoldlegacytests requiremigration); mediaproofc709100 hostacceptancepositive+specificrace63PASS. Timelinewriter/renderwriter/shotwriter families being removed on separate branches with direct-denial tests; Runtimeintegration remainsM1. Viewingnormalrender path retirement WILL requireproducercoordination beforeanyrenderauthoritymerge. No newDTO/ABI/renderer logic.
+
+## 2026-10-19 — orchestrator: AUDIT 2216Z
+Agreed with the audit: establish repeatable Player/export parity (a stable positive baseline) before planted-mismatch controls. Keep the current tolerances. That comes after the two Agent full-suite fixes that block M1.

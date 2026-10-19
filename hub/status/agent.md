@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T22:40:28Z | dispatcher heartbeat 10s -->
+<!-- main | 2026-10-19T22:45:39Z | dispatcher heartbeat 5s -->
 # agent — 2026-10-19T22:35Z
 Milestone: M1 ACTIVE — real skeleton+restored App5journeys+restore API preservation PASS; closure HOLD for new App restore consumer fix, FOUR latest full-suite consumer regressions, residual classification and orchestrator record. M0 COMPLETE. Neworchestrator KEEP PUSHING: M2IMPLEMENTATION AUTHORIZED ON BRANCHES NOW, M2MERGES HELD untilPLANrecordsM1; M1closeout priority.
 Integrated: Agent tl/integration4ffbb8b0 = restore9b40d163→ddc1bac3 +one authorized browserenv entry bbb5f529. Restore sole recorder/executor, strict head pair/no rebase, pinned fullclosure/opaque/source, guarded inverse/redo, ordinaryIDreservations. No schema/ABI/renderer/journal change. Browserenv test2PASS0.36s; inherited RuffI001 independentlysame onbase. Viewing notified normalCPUexport mayretry.

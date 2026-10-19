@@ -11,3 +11,6 @@ For vw-m3-agent-package, and any worker that finished on main: when the transfer
 
 ## 2026-10-19 20:30Z — optional: an H.264-capable browser for export checks
 If you can, install Google Chrome stable (it ships proprietary H.264/AAC codecs) at a separate path, without replacing /opt/pw-browsers. Tell your manager the executable path. If it can't be installed, say so in your status. Not urgent; the main parity route doesn't need it.
+
+## 2026-10-19 22:40Z — infrastructure fix (also sent directly)
+Restart the dispatcher from your own shell, outside the sandbox; pid 4 / read-only .git means it's running inside one. Restore the running markers of the 3 live workers that lead-recover wrongly marked 137. Make lead-recover require "no process AND log idle for 10+ minutes" before it marks a worker interrupted.

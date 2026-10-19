@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# progress-publish: rebuild the tracker data, then print the upload steps.
+# Uploading to the dashboard needs the Artifact tool, which a shell script cannot call,
+# so the upload itself is done by a subagent following delivery/progress/HOWTO.md.
+set -euo pipefail
+ORCH="${ORCH:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+export ORCH
+"$ORCH/bin/progress-json"
+echo
+echo "Data is ready in $ORCH/delivery/progress/. Next: a subagent uploads it by following:"
+echo "  $ORCH/delivery/progress/HOWTO.md"
+echo "Files to upload: milestones m1_exit gates areas merges_by_hour blockers (.json)"
