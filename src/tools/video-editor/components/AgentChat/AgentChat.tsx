@@ -344,6 +344,7 @@ function AvailableAgentChatPanel({
       ? [...saved, createdSession]
       : saved;
   }, [sessions.data, createdSession]);
+  const showSessionSelector = sessionOptions.length > 0 && Boolean(projectChat.data) && (sessionOptions.length > 1 || hasMainContract);
   useEffect(() => {
     if (createdSession && readAgentSessions(sessions.data).some(session => session.id === createdSession.id)) setCreatedSession(null);
   }, [createdSession, sessions.data]);
@@ -900,9 +901,10 @@ function AvailableAgentChatPanel({
     // visible color change between halves is the divider line itself.
     <div className="flex h-full w-full flex-col overflow-hidden">
       {/* Header */}
-      <div data-testid="agent-chat-header" className="flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-2">
+      <div data-testid="agent-chat-header" className="@container/agent-header relative flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-2">
         <div className="flex shrink-0 items-center gap-2">
-          <span className="text-sm font-medium">Agent</span>
+          {/* With both pickers in a narrow panel, the model name needs the title's room. */}
+          <span className={`text-sm font-medium ${showSessionSelector ? 'hidden @[22rem]/agent-header:inline' : ''}`}>Agent</span>
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </div>
         <div className="flex min-w-0 shrink items-center justify-end gap-1">
@@ -921,7 +923,7 @@ function AvailableAgentChatPanel({
             selectionError={setLocalAgent.error instanceof Error ? setLocalAgent.error.message : setAgentModel.error instanceof Error ? setAgentModel.error.message : null}
             onSelectModel={(model) => setAgentModel.mutateAsync(model).then(() => undefined)}
           />
-          {sessionOptions.length > 0 && projectChat.data && (sessionOptions.length > 1 || hasMainContract) && (
+          {showSessionSelector && projectChat.data && (
             <AgentChatSessionSelector
               sessions={sessionOptions}
               activeSessionId={activeSessionId}
