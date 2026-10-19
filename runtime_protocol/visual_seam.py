@@ -184,7 +184,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         raw_end = raw_start + max(1, js_round(duration * fps))
         start, end = raw_start, raw_end
         if bound:
-            lower, upper = js_round(bound[0] * fps), math.ceil(bound[1] * fps - 1e-9)
+            lower, upper = js_round(bound[0] * fps), js_round(bound[1] * fps)
             if primary and (raw_start < lower or raw_end > upper):
                 structural.append({"code": "boundary/owner-overhang", "path": path, "startFrame": raw_start, "endFrame": raw_end, "ownerEndFrame": upper})
             start, end = max(start, lower), min(end, upper)
@@ -267,7 +267,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         extent = math.ceil(extent * 1000 - 1e-6) / 1000
         end = min(offset + extent, next_start.get(o["occurrence_id"], offset + extent))
         path = ["parent", timeline_id, "occurrence", o["occurrence_id"]]
-        occurrences.append({"path": path, "track": o["track"], "startFrame": js_round(offset * fps), "endFrame": math.ceil(end * fps - 1e-9),
+        occurrences.append({"path": path, "track": o["track"], "startFrame": js_round(offset * fps), "endFrame": js_round(end * fps),
                             "rawEndFrame": js_round((offset + extent) * fps), "clip": o, "source": o["shot_revision_id"], "primary": o["track"] in continuity})
         if offset < 0 or end <= offset:
             structural.append({"code": "boundary/invalid-occurrence", "path": path})
@@ -294,7 +294,9 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         # Occurrence ownership cannot stand in for picture output. Verify the
         # union of its child picture spans, including leading and trailing holes.
         pictures = sorted((s for s in spans[span_begin:] if s["primary"]), key=lambda s: s["startFrame"])
-        lower, upper = js_round(offset * fps), math.ceil(end * fps - 1e-9)
+        # Clip start/duration and renderer sequences use nearest frames. Ceil
+        # here invented a trailing frame for rounded fractional-second cuts.
+        lower, upper = js_round(offset * fps), js_round(end * fps)
         if not pictures:
             structural.append({"code": "boundary/empty-child-picture", "path": path, "startFrame": lower, "endFrame": upper})
         else:

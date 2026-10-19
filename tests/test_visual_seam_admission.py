@@ -630,6 +630,30 @@ def test_declared_custom_picture_preserves_auxiliary_activation_and_context_boun
     assert evaluate_closure(parent, shots, internal, timeline_id="main")[0]["blocked"]
 
 
+@pytest.mark.parametrize("duration,fps", [(7.366667, 30), (1.000001, 30), (2.041667, 24)])
+@pytest.mark.parametrize("gap_frames", [0, 1])
+def test_fractional_occurrence_bounds_match_render_frames_and_preserve_real_gaps(duration, fps, gap_frames):
+    parent, shots, internal = _custom_picture_closure()
+    parent["config"]["output"]["fps"] = fps
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    parent["occurrences"][1]["placement"]["start_ms"] = duration * 1000
+    internal["ir-0"]["payload"]["clips"][0]["hold"] = duration - gap_frames / fps
+    internal["ir-0"]["payload"]["clips"].append(
+        {"id": "audio-tail", "clipType": "media", "track": "audio", "at": 0, "hold": duration})
+    internal["ir-0"]["payload"]["tracks"].append({"id": "audio", "kind": "audio"})
+    report, metadata = evaluate_closure(parent, shots, internal, timeline_id="main", materialize=True)
+    first, second = metadata["occurrences"]
+    assert first["endFrame"] == second["startFrame"] == round(duration * fps)
+    assert report["blocked"] is bool(gap_frames)
+    if gap_frames:
+        assert [(i["code"], i["endFrame"] - i["startFrame"]) for i in report["structuralIssues"]] == [
+            ("boundary/child-picture-gap", 1)]
+    else:
+        assert not report["structuralIssues"]
+        rendered = metadata["render_config"]["clips"][0]
+        assert round(rendered["at"] * fps) + round(rendered["hold"] * fps) == second["startFrame"]
+
+
 def test_managed_materialization_preserves_child_effects_and_offset_without_trim():
     body = _unsafe_publication("p")
     parent = body["parent_composition"]
