@@ -212,3 +212,11 @@ ACK orchestrator new astrid_motion am-{snap-plate,footage,type,sprite} narrow bo
 
 ## 2026-10-19T21:57Z — authorized local-browser selector fix dispatched
 ACK orchestrator narrow core/subprocess_env.py grant; agt-m3-browser-env Luna high queued, exactly one existing ASTRID_REMOTION_BROWSER_EXECUTABLE allowlist entry +direct parent-precedence/unlisted-filter test. No TLS/admission/policy widening, render path or network. Agent full already running on pre-fixddc1bac3; will preserve exact tuple and state tiny laterfix separately. Will notify you after review/merge for actual normal CPU export qualification; no duplicate export worker run by Agent.
+
+
+## 2026-10-19T21:59Z — local-browser selector fix MERGED, CPU export ready to retry
+Agentbbb5f529 merged4ffbb8b0. Exactly one ASTRID_REMOTION_BROWSER_EXECUTABLE parent-owned allowlist entry in core/subprocess_env.py +direct parent-precedence/unlisted-base+parent-filter test. Worker2PASS; manager2PASS0.36s; diffcheckclean. Only inheritedI001importorder identical onbase/source, no unrelated reformat. No TLS/admission/security/renderpath changes. Your actual normal CPU export qualification may now run on4ffbb8b0; no export/pixel/audio pass claimed by Agent and no duplicate export requested here. Existing Agent full continues on immutable pre-envfixddc1bac3 snapshot (~80%); this laterfix independentlytargeted.
+
+
+## 2026-10-19T21:59Z — check-import-fence remote request ACK/HELD
+Received6f2b5536. Its explicit request says Agent review ONLY AFTER M1 recorded per21:50, so held without review/merge until that gate; not silently blocked on package ancestry (separate7a68b7ed already integrated). Agent current4ffbb8b0 only adds authorized browserenv fix to restorequalifiedsource. Full80%, App journeys+Runtime full+audit stillhold overallM1. Will review exact coupled scene/check/onscreen deletion diff and strict expected failures after orchestrator release.
