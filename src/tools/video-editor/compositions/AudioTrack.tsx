@@ -86,6 +86,32 @@ type PreviewAudioProps = {
 /** Events after which an element's ability to play may have changed. */
 const READINESS_EVENTS = ['loadstart', 'emptied', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'seeking', 'seeked'] as const;
 
+const authoredAudioSemantics = (clip: ResolvedTimelineClip) => {
+  const authoredAudio = (clip as ResolvedTimelineClip & { audio?: unknown }).audio;
+  const authoredEnvelope = authoredAudio && typeof authoredAudio === 'object'
+    ? (authoredAudio as { envelope?: unknown }).envelope
+    : undefined;
+  // Keep this fallback identical to compileAudioEnvelope's public contract.
+  const authoredDuck = (clip.app?.astrid as { duck?: unknown } | undefined)?.duck ?? clip.app?.duck;
+  const params = clip.params;
+
+  return {
+    authoredEnvelope,
+    authoredDuck,
+    clipType: clip.clipType,
+    from: clip.from,
+    hold: clip.hold,
+    speed: clip.speed,
+    to: clip.to,
+    fadeIn: params?.fadeIn,
+    fadeInCurve: params?.fadeInCurve,
+    fadeOut: params?.fadeOut,
+    fadeOutCurve: params?.fadeOutCurve,
+  };
+};
+
+const authoredAudioIdentity = (clip: ResolvedTimelineClip): string => JSON.stringify(authoredAudioSemantics(clip));
+
 /**
  * Interactive-preview audio that plays like the render: buffered ahead, in
  * sync, and never drawn into the frame.
@@ -261,7 +287,7 @@ const AudioTrackComponent: FC<{
             {mediaSrc && isPlayableAudio ? (
               <MediaErrorBoundary
                 clipId={renderClip.id}
-                resetKey={`${renderClip.id}:${mediaSrc}:${trimProps.trimBefore}:${trimProps.trimAfter ?? 'none'}:${playbackRate}:${effectiveVolume}:audio`}
+                resetKey={`${renderClip.id}:${mediaSrc}:${trimProps.trimBefore}:${trimProps.trimAfter ?? 'none'}:${playbackRate}:${effectiveVolume}:${fps}:${authoredAudioIdentity(clip)}:audio`}
                 fallback={null}
               >
                 <ClipAudio
@@ -297,25 +323,14 @@ const ClipAudio: FC<{
   trimAfter?: number;
   playbackRate: number;
 }> = ({ clip, renderClip, fps, baseVolume, isRendering, src, trimBefore, trimAfter, playbackRate }) => {
-  const authoredAudio = (clip as ResolvedTimelineClip & { audio?: unknown }).audio;
-  const authoredEnvelope = authoredAudio && typeof authoredAudio === 'object'
-    ? (authoredAudio as { envelope?: unknown }).envelope
-    : undefined;
-  const authoredDuck = typeof clip.app?.astrid === 'object' && clip.app.astrid !== null
-    ? (clip.app.astrid as { duck?: unknown }).duck
-    : clip.app?.duck;
-  const params = clip.params;
-  const fadeIn = params?.fadeIn;
-  const fadeOut = params?.fadeOut;
-  const fadeInCurve = params?.fadeInCurve;
-  const fadeOutCurve = params?.fadeOutCurve;
+  const { authoredDuck } = authoredAudioSemantics(clip);
+  const audioIdentity = authoredAudioIdentity(clip);
   // The public compiler reads only authored audio/app/params and timing fields;
   // keep those semantic dependencies so equivalent clip objects stay stable.
   /* eslint-disable react-hooks/exhaustive-deps */
   const envelope = useMemo(
     () => compileAudioEnvelope(playerEvaluationClip(clip), fps),
-    [authoredDuck, authoredEnvelope, clip.clipType, clip.from, clip.hold, clip.speed, clip.to,
-      fadeIn, fadeInCurve, fadeOut, fadeOutCurve, fps],
+    [authoredDuck, audioIdentity, fps],
   );
   /* eslint-enable react-hooks/exhaustive-deps */
   const frameOffset = secondsToFrames(renderClip.at, fps) - secondsToFrames(clip.at, fps);

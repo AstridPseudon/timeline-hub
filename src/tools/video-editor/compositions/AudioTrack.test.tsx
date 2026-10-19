@@ -73,10 +73,6 @@ vi.mock('@remotion/media', () => ({
   },
 }));
 
-vi.mock('@/tools/video-editor/compositions/MediaErrorBoundary', () => ({
-  MediaErrorBoundary: ({ children }: React.PropsWithChildren) => <>{children}</>,
-}));
-
 const track: TrackDefinition = {
   id: 'A1',
   kind: 'audio',
@@ -299,6 +295,36 @@ describe('AudioTrack', () => {
       expect(volume(15)).toBeCloseTo(0.25, 12);
     });
 
+    it('recompiles authored envelopes and curves when their semantic values change', () => {
+      const envelopeClip = {
+        ...clip,
+        volume: 1,
+        audio: { envelope: { keyframes: [{ at: 0, value: 0 }, { at: 2, value: 1 }] } },
+      } as ResolvedTimelineClip & { audio: { envelope: { keyframes: Array<{ at: number; value: number }> } } };
+      const view = render(<AudioTrack track={track} clips={[envelopeClip]} fps={30} />);
+      const firstVolume = html5AudioProps.at(-1)?.volume as (frame: number) => number;
+      expect(firstVolume(15)).toBeCloseTo(0.25, 12);
+
+      const changedEnvelope = {
+        ...envelopeClip,
+        audio: { envelope: { keyframes: [{ at: 0, value: 0 }, { at: 1, value: 1 }] } },
+      };
+      view.rerender(<AudioTrack track={track} clips={[changedEnvelope]} fps={30} />);
+      const secondVolume = html5AudioProps.at(-1)?.volume as (frame: number) => number;
+      expect(secondVolume).not.toBe(firstVolume);
+      expect(secondVolume(15)).toBeCloseTo(0.5, 12);
+
+      const linearFade = { ...clip, volume: 1, params: { fadeIn: 1, fadeInCurve: 'linear' } };
+      view.rerender(<AudioTrack track={track} clips={[linearFade]} fps={30} />);
+      const linearVolume = html5AudioProps.at(-1)?.volume as (frame: number) => number;
+      const curvedFade = { ...linearFade, params: { fadeIn: 1, fadeInCurve: 'equal-power' } };
+      view.rerender(<AudioTrack track={track} clips={[curvedFade]} fps={30} />);
+      const curvedVolume = html5AudioProps.at(-1)?.volume as (frame: number) => number;
+      expect(curvedVolume).not.toBe(linearVolume);
+      expect(curvedVolume(15)).toBeCloseTo(Math.sin(Math.PI / 4), 12);
+      view.unmount();
+    });
+
     it('applies the same fades when the editor renders an export', () => {
       currentEnvironment = { isRendering: true, isClientSideRendering: false };
       const fadeClip = { ...clip, params: { fadeIn: 1 } };
@@ -424,6 +450,26 @@ describe('AudioTrack', () => {
   });
 
   describe('failures', () => {
+    it.each([
+      ['an uncompiled duck', { app: { astrid: {}, duck: {} } }],
+      ['an invalid authored envelope', { audio: { envelope: { keyframes: [] } } }],
+      ['an unknown authored fade curve', { params: { fadeIn: 1, fadeInCurve: 'unknown' } }],
+    ])('refuses %s and recovers when the authored input is corrected', (_name, invalidFields) => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const validClip = { ...clip, app: { astrid: {} } };
+      const view = render(<AudioTrack track={track} clips={[validClip]} fps={30} />);
+      expect(screen.getByTestId('html5-audio')).toBeInTheDocument();
+
+      const invalidClip = { ...validClip, ...invalidFields };
+      view.rerender(<AudioTrack track={track} clips={[invalidClip]} fps={30} />);
+      expect(screen.queryByTestId('html5-audio')).toBeNull();
+      expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('MediaErrorBoundary'));
+
+      view.rerender(<AudioTrack track={track} clips={[validClip]} fps={30} />);
+      expect(screen.getByTestId('html5-audio')).toBeInTheDocument();
+      consoleError.mockRestore();
+    });
+
     it('recovers from a transient failure without drawing anything into the frame', () => {
       vi.useFakeTimers();
       renderPreview();
