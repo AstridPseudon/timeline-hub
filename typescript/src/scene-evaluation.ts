@@ -77,7 +77,10 @@ const occlusionForLayer = (target: SceneLayer | undefined, upper: readonly Scene
 /** Single opaque rectangle covering a fraction of the canvas-clipped target bounds,
  * never pixel/glyph alpha coverage. Reads an existing answer without evaluating callbacks. */
 export const querySceneOcclusion = (answer: SceneFrame, clipId: string, minimumFraction: number): SceneOcclusion => {
-  if (!Number.isFinite(minimumFraction) || minimumFraction <= 0 || minimumFraction > 1) throw new Error('evaluation_inputs_invalid');
+  if (![answer.width, answer.height].every(value => Number.isFinite(value) && value > 0)
+      || !Number.isFinite(minimumFraction) || minimumFraction <= 0 || minimumFraction > 1) {
+    throw new Error('evaluation_inputs_invalid');
+  }
   const index = answer.layers.findIndex(layer => layer.clipId === clipId);
   return occlusionForLayer(answer.layers[index], index < 0 ? [] : answer.layers.slice(index + 1).reverse(),
     answer.width, answer.height, minimumFraction);
@@ -95,7 +98,10 @@ const componentDiagnostics = (source: ComponentDiagnostics, geometryReason: stri
   };
   const result: ComponentDiagnostics = {};
   if (source.motion !== undefined) {
-    if (Object.values(source.motion).every(value => typeof value === 'number' && Number.isFinite(value))) result.motion = {...source.motion};
+    const motion = source.motion;
+    const prototype = motion !== null && typeof motion === 'object' ? Object.getPrototypeOf(motion) : undefined;
+    if (prototype !== Object.prototype && prototype !== null) invalid('Intrinsic motion must be a plain numeric record');
+    else if (Object.values(motion).every(value => typeof value === 'number' && Number.isFinite(value))) result.motion = {...motion};
     else invalid('Intrinsic motion scalars must be finite numbers');
   }
   if (source.face !== undefined) result.face = region(source.face);

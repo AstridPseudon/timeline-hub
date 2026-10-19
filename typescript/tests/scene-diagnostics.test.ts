@@ -63,6 +63,13 @@ test('fractional thresholds use fixed rectangular support areas and include the 
   for (const fraction of [NaN, Infinity, 0, -.1, 1.01]) {
     assert.throws(() => querySceneOcclusion(answer, 'target', fraction), /evaluation_inputs_invalid/);
   }
+  for (const dimensions of [
+    {width: undefined, height: answer.height}, {width: NaN, height: answer.height},
+    {width: 0, height: answer.height}, {width: answer.width, height: undefined},
+    {width: answer.width, height: NaN}, {width: answer.width, height: 0},
+  ]) {
+    assert.throws(() => querySceneOcclusion({...answer, ...dimensions} as typeof answer, 'target', .9), /evaluation_inputs_invalid/);
+  }
 });
 
 test('track order and frontmost qualifying single layer determine the named occluder', () => {
@@ -281,4 +288,34 @@ test('nonfinite diagnostic scalars, sizes and invalid rectangles stay unknown wi
   assert.equal(layer.findings.filter(finding => finding.code === 'invalid-component-diagnostics').length, 4);
   assert.equal(layer.opacity, 1);
   assert.equal(layer.visible, true);
+});
+
+test('malformed motion stays unknown without accepting scalars or throwing on null', () => {
+  for (const motion of [42, null, []]) {
+    const Invalid = Object.assign(() => null, {prepareSceneCapability: () => ({identity: 'invalid-motion@1', frame: () => ({
+      presence: 'present' as const, opaqueSupport: 'none' as const, bounds: box(),
+      diagnostics: {motion} as unknown as ComponentFrameSupport['diagnostics'],
+    })})});
+    const scene = prepareCompositionScene([{track, clips: [clip('invalid-motion', {clipType: 'invalid-motion'})]}], assets,
+      30, theme, 100, 100, undefined, undefined, {}, '', {}, {effects: {['invalid-motion']: Invalid}});
+    const layer = querySceneFrame(scene, 0).layers[0];
+    assert.equal(layer.diagnostics!.motion, undefined);
+    assert.ok(layer.findings.some(finding => finding.code === 'invalid-component-diagnostics'));
+  }
+});
+
+test('plain, null-prototype and explicit empty motion records remain valid', () => {
+  const nullPrototype = Object.create(null) as Record<string, number>;
+  nullPrototype.panX = 2;
+  for (const motion of [{zoom: 1}, nullPrototype, {}]) {
+    const Valid = Object.assign(() => null, {prepareSceneCapability: () => ({identity: 'valid-motion@1', frame: () => ({
+      presence: 'present' as const, opaqueSupport: 'none' as const, bounds: box(),
+      diagnostics: {motion} as ComponentFrameSupport['diagnostics'],
+    })})});
+    const scene = prepareCompositionScene([{track, clips: [clip('valid-motion', {clipType: 'valid-motion'})]}], assets,
+      30, theme, 100, 100, undefined, undefined, {}, '', {}, {effects: {['valid-motion']: Valid}});
+    const layer = querySceneFrame(scene, 0).layers[0];
+    assert.deepEqual(layer.diagnostics!.motion, {...motion});
+    assert.deepEqual(layer.findings, []);
+  }
 });
