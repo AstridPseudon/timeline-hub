@@ -68,3 +68,43 @@ conflicts. The surface is absent when the command-session surface is absent or
 already saved.
 
 19:56 wiring manager review: original candidate DONE165neighbor/16focused/95shell, held for app-m1-wiring-fix (small lifecycle fix only): drain already-submitted durable appends before dispose without waiting uncertain network; avoid owning old clean history merely on initialization; official0.2.1 actual source typecheck/nested preview narrowing. Current candidate ALSO added inline Shell recovery controls (Recover editor1 / Retry timeline edits) after separate UI worker dispatch; manager will compose ONE UI with app-m1-recovery-ui's human labels/data-owner-id, no duplicate banners or uncontrolled overlap. New UI worker must be based/composed onto safe wiring before merge; do not infer controls already on integration. Actual mouse cases remain priority; no browser pass yet. Preview accepted/local fact seam proposal sent Viewing, not implemented until agreed.
+
+### Atomic displayed-data fact — app-m1-projection-fact (producer contract)
+
+`src/tools/video-editor/lib/timeline-data.ts` exports `TimelineEditProjection`:
+```ts
+export type TimelineEditProjection =
+  | { kind: 'accepted'; head: { revisionId: string; publicationId: string } }
+  | { kind: 'local'; base: { revisionId: string; publicationId: string }; generation: number };
+```
+`TimelineData.editProjection?: TimelineEditProjection` is local metadata outside
+`config` and `resolvedConfig`; no authored serialization, wire DTO, or outbox
+schema changes. The command-session hook assigns the fact on the same data
+object passed to `commitData`. Preview retains the existing local base, otherwise
+uses the displayed data's complete revision/publication pair. Recovery projects
+with the session's persisted display basis; nonempty suffixes are local. An
+actual returned immutable closure with no suffix is accepted at its exact pair,
+even while session status is still saving. Generation is a hook-local increasing
+projection counter, not a publication or acceptance signal. Missing complete
+pairs leave the fact undefined. A ACK while B remains does not replace B's fact
+or original base; a known newer C projects as C. Later ordinary edits clear an
+inherited fact, including legacy spread-based changes. Viewing owns the consumer
+and mounted delivery tests; no preview/player/render changes in this worker.
+
+#### Producer dependency finding: recovery after A ACK changes B's display basis
+
+The new real-hook regression `retains the original local base when recovery
+follows an acknowledged predecessor` currently FAILS: expected local base r0/p0,
+received r1/p1 (B remains displayed at7). Schedule: A5 durable lost ACK, B7 queued,
+independent C inverse resets the server clip, exact retry acknowledges A, B's
+original A5 guard refuses, unmount/recover that persisted owner. The existing
+`commands/commitSession.ts` recovery selects `savedAcceptance` ahead of
+`first.displayBasis`, then calls the hook with only that selected basis and
+patches. Thus the hook cannot recover the original pair within fact-assignment
+scope. Its normal recovery-before-A-ACK test passes at r0/p0, and A ACK alone
+never relabels live B. This is a session-core dependency defect, not a request to
+change the approved union or weaken the original-base requirement. The failing
+regression is retained with its correct expectation (no skip/xfail exception).
+Manager/core owner must ensure recovery supplies and projects the persisted
+original display closure/basis while preserving the actual accepted submission
+basis and lifecycle responsibilities. Producer worker does not edit core.

@@ -86,3 +86,6 @@ Central agent-commit-integration-1019195539-21968: `env ASTRID_RUNTIME_CHECKOUT=
 
 ## Current static gates3eba65d2
 Manager `make PY=/home/user/work/venv-agent/bin/python structure doc-refs cycles ruff`: structurePASS (15existing/0new), docrefsPASS (193docs/547capabilityrefs/269CLIrefs/0errors), cyclesPASS (6existing2cycles/0new). Ruff current2219 vs baseline2220 is improvement1; gate requires shrink baseline recorded. agt-m1-ruff-baseline owns baseline-only decrease after identifying exact removed finding; no new allowlist/error suppression/product changes. Preflight doctor/mypy/Remotion issues remain separately documented baseline/toolchain blockers, not silently reported green.
+
+## Lint aggregate correction (20:03Z)
+Do NOT treat2219total as absence of new lint findings. agt-m1-ruff-baseline deliberately refused baseline-only commit after per-file/per-rule comparison: generic_host BLE001+E402 (outside area) and remote.py new2E701 were offset by F401/I001 improvements. Baseline restored byte-exact, worker branch clean/no commits, report retained. Agent dispatch style follow-up removes its two introduced E701; Runtime notified generic_host owner. No suppression/allowlist increase or incorrect makeRuffPASS claim.

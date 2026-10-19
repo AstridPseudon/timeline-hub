@@ -1,400 +1,400 @@
-        ownership = AudioOwnership.RENDERED
-        descriptor, staged_name = tempfile.mkstemp(
-            prefix=f".{output_name}.remotion-stage-",
-            suffix=Path(output_name).suffix,
-            dir=str(outputs_dir),
-        )
-        os.close(descriptor)
-        staged_video = Path(staged_name)
-        staged_video.unlink(missing_ok=True)
-        try:
+@@ -1612,9 +1559,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1628,9 +1572,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -4149,15 +4090,6 @@
+         "url": "https://github.com/sponsors/colinhacks"
+       }
+     },
+ .../rendering/test_remotion_element_generation.py  |   9 +-
+ tests/packs/rendering/test_remotion_v3_aliases.py  |   4 +-
+ .../rendering/test_render_export_task_adapter.py   |  19 +-
+ .../rendering/test_render_remotion_registry.py     |  12 +-
+ 33 files changed, 154 insertions(+), 564 deletions(-)
+"""Exercise the built release through the host's ordinary generated element maps."""
+import hashlib
+import json
+import os
+import subprocess
+import tarfile
+from pathlib import Path
+
+import pytest
+
+from astrid.core.element.registry import ElementRegistry
+from astrid.core.element.schema import ElementDefinition
+from astrid.core.rendering import remotion_runtime
+from scripts import gen_effect_registry
+
+ROOT = Path(__file__).resolve().parents[3]
+REMOTION = ROOT / "remotion"
+SHA256 = "93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa"
+INTEGRITY = "sha512-dzRWuIgeSjKt6ko64AJ7F8aaiSBBxtEzwS0WBFkVi7XB+z2wHLKArlA9fWle/KlwZlXjFDzq2oBi9QJLy1HHUw=="
+
+
+def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_path):
+name=vw-m3-agent-package
+repo=agent
+base=tl/integration
+base_sha=8c4bd850
+model=gpt-6.1-sol
+effort=high
+heavy=1
+worktree=/home/user/work/wt/vw-m3-agent-package
+started=2026-10-19T19:50:24Z
 
 exec
-/bin/bash -lc "rg -n 'composition_clip_types|THEME_PACKAGE|_composition_clip' astrid/packs/rendering/rendering/renderers/remotion/run.py; sed -n '1480,1575p' astrid/packs/rendering/rendering/renderers/remotion/run.py; rg -n 'composition.*clip|theme.*package' astrid/core/rendering -g '*.py'" in /home/user/work/wt/vw-m3-agent-package
- exited 1 in 40ms:
-739:    composition_clip_types: frozenset[str] = frozenset(),
-765:            and clip.get("clipType") not in composition_clip_types
-929:    composition_clip_types: frozenset[str] = frozenset(),
-958:                composition_clip_types=composition_clip_types,
-998:                composition_clip_types=composition_clip_types,
-1028:    composition_clip_types: frozenset[str] = frozenset(),
-1163:                composition_clip_types=composition_clip_types,
-def support(request: RenderRequest, *, workspace: Path) -> SupportReport:
-    """Return request-specific evidence for the timeline Remotion can render."""
+/bin/bash -lc "python3 - <<'PY'
+import json,subprocess
+from pathlib import Path
+p=Path('remotion/package-lock.json'); current=json.loads(p.read_text()); original=json.loads(subprocess.run(['git','show','HEAD:remotion/package-lock.json'],capture_output=True,text=True,check=True).stdout)
+for name,meta in current['packages'].items():
+    if 'libc' in original['packages'].get(name,{}):
+        # Preserve unrelated platform-selection metadata from the main lock.
+        ordered={}
+        for key,value in meta.items():
+            ordered[key]=value
+            if key=='cpu': ordered['libc']=original['packages'][name]['libc']
+        current['packages'][name]=ordered
+p.write_text(json.dumps(current,indent=2)+'\\n')
+PY
+PATH=/home/user/work/node-v20.19.4-linux-x64/bin:"'$PATH npm ci --prefix remotion --cache /tmp/vw-m3-agent-package-npm-cache --no-audit --no-fund' in /home/user/work/wt/vw-m3-agent-package
+ succeeded in 12107ms:
 
-    reasons: list[str] = []
-    features: dict[str, bool | str] = {
-        "timeline_composition": True,
-        "full_timeline": True,
-        "windows": True,
-        "effects": True,
-        "asset_serving": "invocation-scoped",
-        "alpha_output": True,
-    }
-    try:
-        settings = _settings_from_request(request, workspace)
-    except (TypeError, ValueError) as exc:
-        settings = _RenderSettings(
-            project_dir=REPO_ROOT / "remotion",
-            composition_id=DEFAULT_COMPOSITION_ID,
-            theme_path=None,
-            min_free_gb=None,
-        )
-        reasons.append(str(exc))
+> postinstall
+> node scripts/apply-renderer-darwin-cpu-patch.mjs
 
-    timeline_path = _input_path(request.timeline_path, workspace)
-    assets_path = (
-        _input_path(request.assets_registry_path, workspace)
-        if request.assets_registry_path is not None
-        else None
-    )
-    timeline_data: dict[str, Any] | None = None
-    assets_data: dict[str, Any] | None = None
-    try:
-        timeline_data = _serialize_timeline(timeline_path)
-    except Exception as exc:  # noqa: BLE001 - support report normalizes renderer failures
-        reasons.append(f"timeline is not renderable: {exc}")
-    try:
-        assets_data = _load_registry_mapping(assets_path)
-    except Exception as exc:  # noqa: BLE001 - support report normalizes renderer failures
-        reasons.append(f"assets registry is not renderable: {exc}")
-    if assets_path is not None and assets_data is not None:
-        # Validate local sources during the service's support probe, before a
-        # kernel run is admitted.  AssetMaterializer applies the project-root
-        # boundary plus the exact kernel-owned managed-media allowlist; it
-        # stages only in its disposable probe directory and closes immediately.
-        try:
-            with AssetMaterializer(
-                assets_path,
-                materialized_objects=request.materialized_objects,
-                materialized_root=request.materialized_root,
-                allow_derived_files=request.materialized_root is not None,
-            ):
-                pass
-        except Exception as exc:  # noqa: BLE001 - support report normalizes registry failures
-            reasons.append(f"local assets are not renderable: {exc}")
+{"package":"@remotion/renderer","version":"4.0.509","patchedFiles":2}
 
-    if timeline_data is not None and assets_data is not None:
-        registered_assets = assets_data.get("assets", {})
-        missing_asset_ids = sorted(
-            {
-                str(clip.get("asset"))
-                for clip in timeline_data.get("clips", [])
-                if isinstance(clip, dict)
-                and isinstance(clip.get("asset"), str)
-                and clip.get("asset") not in registered_assets
-            }
-        )
-        if missing_asset_ids:
-            reasons.append("timeline references missing asset ids: " + ", ".join(missing_asset_ids))
-        dynamic_clip_types = sorted(
-            {
-                str(clip.get("clipType"))
-                for clip in timeline_data.get("clips", [])
-                if isinstance(clip, dict)
-                and clip.get("clipType", "media") not in _BUILTIN_MEDIA_CLIP_TYPES
-            }
-        )
-        if dynamic_clip_types:
-            try:
-                effects, aliases = _effect_registry_for_assets(settings.theme_path)
-            except Exception as exc:  # noqa: BLE001 - support report normalizes registry failures
-                reasons.append(f"Remotion element registry cannot be resolved: {exc}")
-            else:
-                unknown_clip_types = [
-                    clip_type
-                    for clip_type in dynamic_clip_types
-                    if clip_type not in effects and clip_type not in aliases
-                ]
-                if unknown_clip_types:
-                    reasons.append(
-                        "timeline uses unregistered Remotion clip types: "
-                        + ", ".join(unknown_clip_types)
-                    )
-        try:
-            _resolve_timeline_element_references(
-                timeline_data,
-                theme_path=settings.theme_path,
+added 278 packages in 12s
 
-exec
-/bin/bash -lc "ls /home/user/work/composition/typescript/src/builtins/themes/2rp/effects/art-card; cat /home/user/work/composition/typescript/src/builtins/themes/2rp/effects/art-card/meta.json; cat /home/user/work/composition/typescript/src/builtins/themes/2rp/effects/art-card/defaults.json; sed -n '145,225p' astrid/core/element/schema.py; sed -n '1255,1365p' astrid/packs/rendering/pack.yaml" in /home/user/work/wt/vw-m3-agent-package
- succeeded in 0ms:
-component.tsx
-defaults.json
-meta.json
-{
-  "id": "art-card",
-  "name": "2RP Art Card",
-  "description": "Framed art beat with Renaissance-inspired captioning.",
-  "whenToUse": "Use for every individual art-piece reveal — fields are title (work name) + creator (handle). Always use this for art showcase beats; never use text-card for art reveals."
-}
-{"title":"Patronage returns","caption":"The studio becomes a cathedral for new tools.","entrance":["slide-left"],"exit":["fade"]}
-    *,
-    kind: str,
-    source: str,
-    editable: bool,
-    priority: int,
-    manifest_path: str | Path | None = None,
-    element_kind_registry: ElementKindRegistry | None = None,
-) -> ElementDefinition:
-    element_root = Path(root)
-    folder_kind = _normalize_kind(kind, element_kind_registry=element_kind_registry)
-    if manifest_path is None:
-        manifest_path = _element_manifest_path(element_root)
-    else:
-        manifest_path = Path(manifest_path).resolve()
-        if manifest_path.parent != element_root.resolve() or not manifest_path.is_file():
-            raise ElementValidationError(f"element manifest must be a regular file in {element_root}")
-    if manifest_path is None:
-        raise ElementValidationError(f"missing element manifest in {element_root}")
-    payload = _read_manifest(manifest_path)
-    element_id = str(payload.get("id") or element_root.name)
-    declared_kind = payload.get("kind")
-    if declared_kind is not None:
-        normalized = _normalize_kind(
-            str(declared_kind),
-            element_kind_registry=element_kind_registry,
-        )
-        if normalized != folder_kind:
-            raise ElementValidationError(
-                f"element {element_id!r} declared kind {declared_kind!r} does not match folder kind {folder_kind!r}"
-            )
-    metadata_section = payload.get("metadata", {})
-    if not isinstance(metadata_section, dict):
-        raise ElementValidationError(f"{manifest_path}: metadata must be an object")
-    metadata = dict(metadata_section)
-    metadata.setdefault("id", element_id)
-    pack_id = payload.get("pack_id")
-    if pack_id is not None:
-        metadata["pack_id"] = pack_id
-    schema_section = payload.get("schema", {})
-    defaults_section = payload.get("defaults", {})
-    if not isinstance(schema_section, dict):
-        raise ElementValidationError(f"{manifest_path}: schema must be an object")
-    if not isinstance(defaults_section, dict):
-        raise ElementValidationError(f"{manifest_path}: defaults must be an object")
-    dependencies = _parse_dependencies(payload.get("dependencies", {}), path=f"{manifest_path}.dependencies")
-    component = (element_root / "component.tsx").resolve()
-    # component.tsx is optional when runtime.adapter is declared in the manifest
-    _has_runtime_adapter = isinstance(payload.get("runtime"), dict) and bool(
-        payload["runtime"].get("adapter")
-    )
-    if not _has_runtime_adapter and not component.is_file():
-        raise ElementValidationError(f"element {element_id!r} missing component.tsx")
-    description = _optional_capability_string(payload, "description", manifest_path)
-    short_description = _optional_capability_string(payload, "short_description", manifest_path)
-    keywords = _optional_capability_string_list(payload, "keywords", manifest_path)
-    element_inputs = tuple(
-        _parse_element_port(item, f"{manifest_path}.inputs[{index}]")
-        for index, item in enumerate(payload.get("inputs") or ())
-    )
-    element_outputs = tuple(
-        _parse_element_output(item, f"{manifest_path}.outputs[{index}]")
-        for index, item in enumerate(payload.get("outputs") or ())
-    )
-    runtime = _parse_runtime(payload.get("runtime"), path=f"{manifest_path}.runtime")
-    assets = _parse_assets(payload.get("assets"), element_root=element_root, path=f"{manifest_path}.assets")
-    definition = ElementDefinition(
-        id=element_id,
-        kind=folder_kind,
-        root=element_root.resolve(),
-        source=source,
-        editable=editable,
-        priority=priority,
-        component=component,
-        schema=dict(schema_section),
-        defaults=dict(defaults_section),
-        metadata=metadata,
-        dependencies=dependencies,
-        description=description,
-        short_description=short_description,
-        keywords=keywords,
-        inputs=element_inputs,
-    - kind: implementation
-      path: rendering/finalizers/compositor/run.py
-  ffmpeg-finalizer:
-    type: finalizer
-    path: rendering/finalizers/ffmpeg/finalizer.yaml
-    resources:
-    - kind: implementation
-      path: rendering/finalizers/ffmpeg/__init__.py
-    - kind: implementation
-      path: rendering/finalizers/ffmpeg/run.py
-  animations/fade:
-    type: element
-    path: rendering/elements/animations/fade/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/fade/component.tsx
-  animations/fade-up:
-    type: element
-    path: rendering/elements/animations/fade-up/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/fade-up/component.tsx
-  animations/scale-in:
-    type: element
-    path: rendering/elements/animations/scale-in/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/scale-in/component.tsx
-  animations/slide-left:
-    type: element
-    path: rendering/elements/animations/slide-left/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/slide-left/component.tsx
-  animations/slide-up:
-    type: element
-    path: rendering/elements/animations/slide-up/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/slide-up/component.tsx
-  animations/type-on:
-    type: element
-    path: rendering/elements/animations/type-on/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/type-on/component.tsx
-  effects/audio-reactive-colour:
-    type: element
-    path: rendering/elements/effects/audio-reactive-colour/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/effects/audio-reactive-colour/component.tsx
-  effects/text-card:
-    type: element
-    path: rendering/elements/effects/text-card/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/effects/text-card/component.tsx
-  transitions/cross-fade:
-    type: element
-    path: rendering/elements/transitions/cross-fade/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/transitions/cross-fade/component.tsx
-  transitions/fade:
-    type: element
-    path: rendering/elements/transitions/fade/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/transitions/fade/component.tsx
-ui:
-  transcript:
-    type: editor
-    entry: ui/transcript/extension.tsx
-    target: video-editor
-    compatibility:
-      sdk: '1'
-    resources:
-    - kind: support
-      path: ui/transcript/TranscriptPanel.tsx
-    - kind: support
-      path: ui/transcript-lane/TranscriptLane.tsx
-  live-scenes:
-    type: editor
-    entry: ui/live-scenes/extension.tsx
-    target: video-editor
-    compatibility:
-      sdk: '1'
-    resources:
-    - kind: support
-      path: ui/live-scenes/SceneSurface.tsx
-    - kind: support
-      path: ui/live-scenes/authoring.ts
-    - kind: support
-      path: ui/live-scenes/diagnostics.ts
-    - kind: support
-      path: ui/live-scenes/identity.ts
-    - kind: support
-      path: ui/live-scenes/runtime.ts
-resources:
-- kind: support
-  path: shared/element_contracts.ts
-- kind: support
-  path: shared/live_scenes/__init__.py
-- kind: support
-  path: shared/live_scenes/maple.py
-- kind: support
-  path: shared/live_scenes/package.py
-- kind: support
-  path: shared/rendering_backend/__init__.py
-- kind: support
+ succeeded in 115516ms:
+.                                                                        [100%]
+1 passed, 1 deselected in 0.97s
+........................................................................ [ 29%]
+........................................................................ [ 59%]
+........................................................................ [ 88%]
+...........................                                              [100%]
+243 passed, 7 deselected in 112.81s (0:01:52)
 
 codex
-The wider focused run passed 224 tests and failed nine: five registry-settling fixtures still wrote to the old package-source path, and four existing render probes became active after npm was installed but refused render admission. I’ve corrected the fixture destination; those five checks now pass. I’ll leave browser/render validation to the test service. Lint comparison against the base shows no new diagnostics in the three touched production Python files.
+The scoped checks now cover custom parameters, capability forwarding, unknown-owner errors, animation and transition precedence, and instance isolation through the built package. Two new cache checks also pass for changes to built Composition JS and host-generated registries. The final focused run is still finishing. The unchanged install gate is confirmed to fail on its obsolete `timeline-schema` npm requirement; browser smoke, film comparison and audio parity remain unverified.
 exec
-/bin/bash -lc "rg -n '_workspace_root|WORKSPACE_ROOT|_component_name|ID_RE' scripts/gen_effect_registry.py tests/packs/rendering tests/core/element tests/reshape/test_remotion_gate.py; cat tests/packs/rendering/test_timeline_visualize_cache.py 2>/dev/null | head -25; rg --files tests/packs/rendering | rg '(composed_frame|frame_cache|cache)'" in /home/user/work/wt/vw-m3-agent-package
- succeeded in 97ms:
-scripts/gen_effect_registry.py:23:WORKSPACE_ROOT = TOOLS_DIR.parent
-scripts/gen_effect_registry.py:25:HOST_SRC = (Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or TOOLS_DIR / "remotion")
-scripts/gen_effect_registry.py:31:ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
-scripts/gen_effect_registry.py:52:def _component_name(plugin_id: str) -> str:
-scripts/gen_effect_registry.py:81:def _workspace_root(kind: ElementKind) -> Path:
-scripts/gen_effect_registry.py:83:    return WORKSPACE_ROOT / kind
-scripts/gen_effect_registry.py:294:        f"import {_component_name(plugin_id)} from '{_import_path(plugins[plugin_id])}';"
-scripts/gen_effect_registry.py:298:        f"  '{plugin_id}': {_component_name(plugin_id)},"
-scripts/gen_effect_registry.py:353:        f"import {_component_name(effect_id)} from '{_import_path(effects[effect_id])}';"
-scripts/gen_effect_registry.py:357:        f"  '{effect_id}': {_component_name(effect_id)},"
-scripts/gen_effect_registry.py:372:            symbol = _component_name(element.id)
-scripts/gen_effect_registry.py:379:        f"{_component_name(effect_id)}, {{{', '.join(_ts_string(owner) + ': ' + symbol for owner, symbol in sorted(owners[effect_id].items()))}}}),"
-tests/packs/rendering/test_remotion_render_contract.py:352:if (process.env.ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES === '-1') {
-tests/packs/rendering/test_remotion_render_contract.py:369:  if (process.env.ASTRID_REMOTION_STREAM_FRAMES === '0') assert.equal(gate.shouldUseParallelEncoding, original);
-tests/packs/rendering/test_remotion_render_contract.py:373:    const budget = Number(process.env.ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES ?? 0);
-tests/packs/rendering/test_remotion_render_contract.py:381:    env = {k:v for k,v in os.environ.items() if k not in {'NODE_OPTIONS','NODE_PATH','ASTRID_PACKS_PATH','ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES','ASTRID_REMOTION_PCM_AAC_OUTPUT'}}
-tests/packs/rendering/test_remotion_render_contract.py:382:    env['ASTRID_REMOTION_STREAM_FRAMES'] = stream
-tests/packs/rendering/test_remotion_render_contract.py:383:    if budget is not None: env['ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES'] = budget
-tests/packs/rendering/test_remotion_render_contract.py:405:                            env={**os.environ, 'ASTRID_REMOTION_STREAM_FRAMES':'0'})
-tests/packs/rendering/test_remotion_render_contract.py:421:process.env.ASTRID_REMOTION_STREAM_FRAMES = '1';
-tests/packs/rendering/test_remotion_render_contract.py:430:    env = {k:v for k,v in os.environ.items() if k not in {'ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES','NODE_OPTIONS','NODE_PATH'}}
-tests/packs/rendering/test_remotion_render_contract.py:479:    env = {k:v for k,v in os.environ.items() if k not in {'NODE_PATH','NODE_OPTIONS','ASTRID_PACKS_PATH','ASTRID_REMOTION_PCM_AAC_OUTPUT'}}
-tests/packs/rendering/test_remotion_render_contract.py:480:    env['ASTRID_REMOTION_STREAM_FRAMES'] = '0'
-tests/packs/rendering/test_remotion_native_window.py:81: monkeypatch.setenv('ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES',allocation);monkeypatch.delenv('ASTRID_PROGRESS_PATH',raising=False)
-tests/packs/rendering/test_remotion_native_window.py:90:  assert (kwargs['env'].get('ASTRID_REMOTION_STREAM_FRAMES')=='1')==(allocation!='0')
-tests/packs/rendering/test_remotion_native_window.py:130: monkeypatch.delenv('ASTRID_PROGRESS_PATH',raising=False);monkeypatch.setenv('ASTRID_REMOTION_PCM_AAC_OUTPUT','/ambient/forbidden.mov')
-tests/packs/rendering/test_remotion_native_window.py:137:   assert cli.name=='capture.mov' and cli.parent==Path(env['TMPDIR']) and env['ASTRID_REMOTION_PCM_AAC_OUTPUT']==str(cli)
-tests/packs/rendering/test_remotion_native_window.py:139:  else:assert 'ASTRID_REMOTION_PCM_AAC_OUTPUT' not in env
-tests/packs/rendering/test_remotion_backend.py:898:                mock.patch.dict(render_remotion.os.environ, {"ASTRID_RENDER_UNDECLARED": "host"}, clear=True),
-tests/packs/rendering/test_remotion_backend.py:913:        self.assertEqual(env["ASTRID_REMOTION_PROJECT_DIR"], str(project_dir))
-tests/packs/rendering/test_remotion_backend.py:914:        self.assertNotIn("ASTRID_RENDER_UNDECLARED", env)
-tests/packs/rendering/test_remotion_backend.py:1424:        self.assertEqual(env["ASTRID_REMOTION_PROJECT_DIR"], str(project_dir))
-tests/packs/rendering/test_remotion_backend.py:1679:        mock.patch.dict(os.environ, {"ASTRID_REMOTION_PCM_AAC_OUTPUT": "/ambient/unrelated.mov"}),
-tests/packs/rendering/test_remotion_backend.py:1701:        assert env["ASTRID_REMOTION_PCM_AAC_OUTPUT"] == str(cli_video)
-tests/packs/rendering/test_remotion_backend.py:1707:        assert "ASTRID_REMOTION_PCM_AAC_OUTPUT" not in env
-tests/packs/rendering/test_remotion_backend.py:1903:    from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH
-tests/packs/rendering/test_remotion_backend.py:1905:    monkeypatch.setenv(ASTRID_REMOTION_VALIDATION_LAUNCH, 'a' * 32)
-tests/packs/rendering/test_remotion_backend.py:1923:    from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH
-tests/packs/rendering/test_remotion_backend.py:1925:    monkeypatch.setenv(ASTRID_REMOTION_VALIDATION_LAUNCH, 'a' * 32)
-tests/packs/rendering/test_effect_registry_target.py:15:    env = {**os.environ, "ASTRID_REMOTION_PROJECT_DIR": str(tmp_path),
-tests/packs/rendering/test_effect_registry_target.py:30:                            env={**os.environ, "ASTRID_REMOTION_PROJECT_DIR": str(tmp_path)},
-tests/packs/rendering/test_ffmpeg_compositor.py:161:    monkeypatch.setenv("ASTRID_RENDER_BACKEND", "rendering.ffmpeg-compositor")
-tests/packs/rendering/test_ffmpeg_compositor.py:165:    monkeypatch.setenv("ASTRID_RENDER_BACKEND", "rendering.ffmpeg-finalizer")
-tests/packs/rendering/test_render_export_task_adapter.py:145:        assert "ASTRID_REMOTION_PROJECT_DIR" not in os.environ
-tests/packs/rendering/test_render_export_task_adapter.py:155:    monkeypatch.delenv("ASTRID_REMOTION_PROJECT_DIR", raising=False)
-tests/packs/rendering/test_render_export_task_adapter.py:312:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(runtime))
-tests/packs/rendering/test_render_export_task_adapter.py:428:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(tmp_path / "missing-remotion"))
-tests/packs/rendering/test_render_export_task_adapter.py:479:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(runtime))
-tests/packs/rendering/test_render_export_task_adapter.py:522:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(runtime))
-tests/packs/rendering/test_render_export_task_adapter.py:695:           'ASTRID_REMOTION_PROJECT_DIR': str(runtime), 'ASTRID_NODE_EXECUTABLE': str(node),
-tests/packs/rendering/test_render_export_task_adapter.py:744:    worker['ASTRID_REMOTION_VALIDATION_ROLE'] = 'worker'
-tests/packs/rendering/test_render_export_task_adapter.py:748:    raw = Path(ref['ASTRID_REMOTION_VALIDATION_PATH']).read_text()
-tests/packs/rendering/test_render_export_task_adapter.py:753:                                     ('TMPDIR', '/other'), ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'b' * 32),
-tests/packs/rendering/test_render_export_task_adapter.py:754:                                     ('ASTRID_REMOTION_VALIDATION_ROLE', 'foreign')])
-tests/packs/rendering/test_render_export_task_adapter.py:884:    child['ASTRID_REMOTION_VALIDATION_ROLE'] = 'worker'
-tests/packs/rendering/test_render_export_task_adapter.py:890:        build_child_subprocess_env(parent=parent, explicit_env={'ASTRID_REMOTION_VALIDATION_PATH': '/task/foreign'})
-tests/packs/rendering/test_render_export_task_adapter.py:906:    p = Path(ref['ASTRID_REMOTION_VALIDATION_PATH'])
-tests/packs/rendering/test_render_export_task_adapter.py:1025:        assert env['ASTRID_REMOTION_LOCK_OWNER'].startswith(str(os.getpid()) + ':')
-tests/packs/rendering/test_render_export_task_adapter.py:1161:    artifact = Path(reference['ASTRID_REMOTION_VALIDATION_PATH'])
-tests/packs/rendering/test_render_export_task_adapter.py:1177:    Path(reference['ASTRID_REMOTION_VALIDATION_PATH']).unlink()
-tests/packs/rendering/test_render_export_task_adapter.py:1304:    artifact = json.loads(Path(reference['ASTRID_REMOTION_VALIDATION_PATH']).read_text())
-tests/packs/rendering/test_render_export_task_adapter.py:1313:                    'ASTRID_REMOTION_VALIDATION_ROLE': 'worker'}
-tests/packs/rendering/test_render_export_task_adapter.py:1341:    artifact = json.loads(Path(reference['ASTRID_REMOTION_VALIDATION_PATH']).read_text())
-tests/packs/rendering/test_render_export_task_adapter.py:1352:    assert first[-2]['ASTRID_REMOTION_VALIDATION_PATH'] != second[-2]['ASTRID_REMOTION_VALIDATION_PATH']
-tests/packs/rendering/test_composed_frame_capture.py:149:    monkeypatch.setenv("ASTRID_RENDERER_SOURCE_ROOT", str(source_root))
-tests/packs/rendering/test_composed_frame_capture.py:180:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(project))
-tests/packs/rendering/test_composed_frame_capture.py:192:    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(project))
-tests/packs/rendering/test_render_facade.py:225:        "ASTRID_REMOTION_PROJECT_DIR",
-tests/packs/rendering/test_render_remotion_registry.py:172:                    src = env.get("ASTRID_REMOTION_PROJECT_DIR")
-tests/packs/rendering/test_composed_frame_capture.py
+/bin/bash -lc 'git diff remotion/package-lock.json | tail -35; git diff 8c4bd850 --check; git status --short | tail -15' in /home/user/work/wt/vw-m3-agent-package
+ succeeded in 435ms:
+       "peerDependencies": {
+-        "react": ">=18",
+-        "remotion": ">=4"
+-      },
+-      "peerDependenciesMeta": {
+-        "react": {
+-          "optional": false
+-        },
+-        "remotion": {
+-          "optional": false
+-        }
++        "@remotion/layout-utils": "4.0.509",
++        "@remotion/media": "4.0.509",
++        "react": "18.3.1",
++        "react-dom": "18.3.1",
++        "remotion": "4.0.509"
+       }
+     },
+     "node_modules/@dimforge/rapier3d-compat": {
+@@ -4149,15 +4114,6 @@
+         "url": "https://github.com/sponsors/colinhacks"
+       }
+     },
+-    "node_modules/zod-to-json-schema": {
+-      "version": "3.25.2",
+-      "resolved": "https://registry.npmjs.org/zod-to-json-schema/-/zod-to-json-schema-3.25.2.tgz",
+-      "integrity": "sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA==",
+-      "license": "ISC",
+-      "peerDependencies": {
+-        "zod": "^3.25.28 || ^4"
+-      }
+-    },
+     "node_modules/zustand": {
+       "version": "3.7.2",
+       "resolved": "https://registry.npmjs.org/zustand/-/zustand-3.7.2.tgz",
+ M tests/core/rendering/test_remotion_probe_diagnostic.py
+ M tests/packs/rendering/test_composed_frame_capture.py
+ M tests/packs/rendering/test_effect_registry_target.py
+ M tests/packs/rendering/test_remotion_backend.py
+ M tests/packs/rendering/test_remotion_element_generation.py
+ M tests/packs/rendering/test_remotion_v3_aliases.py
+ M tests/packs/rendering/test_render_export_task_adapter.py
+ M tests/packs/rendering/test_render_remotion_registry.py
+?? remotion/artifacts/
+?? remotion/src/host-registries.ts
+?? remotion/tests/composition-package.mjs
+?? remotion/tests/custom-animations.tsx
+?? remotion/tests/custom-effects.tsx
+?? remotion/tests/custom-transitions.tsx
+?? tests/packs/rendering/test_composition_package.py
 
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/gen_remotion_types.py --include-element-registries
+PATH=/home/user/work/node-v20.19.4-linux-x64/bin:$PATH npm run typecheck --prefix remotion
+PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/packs/rendering/test_composition_package.py' in /home/user/work/wt/vw-m3-agent-package
+exec
+/bin/bash -lc 'git status --short --ignored remotion | tail -15; ls -ld /tmp/vw-m3-agent-package*; git diff --numstat | tail -5' in /home/user/work/wt/vw-m3-agent-package
+ succeeded in 271ms:
+ D remotion/src/lib/animations.jsx
+ D remotion/src/lib/animations.tsx
+ D remotion/src/workspace-aliases.d.ts
+ M remotion/tsconfig.json
+ M remotion/webpack-alias.mjs
+?? remotion/artifacts/
+?? remotion/src/host-registries.ts
+?? remotion/tests/composition-package.mjs
+?? remotion/tests/custom-animations.tsx
+?? remotion/tests/custom-effects.tsx
+?? remotion/tests/custom-transitions.tsx
+!! remotion/node_modules/
+!! remotion/src/animations.generated.ts
+!! remotion/src/effects.generated.ts
+!! remotion/src/transitions.generated.ts
+-rw-r--r-- 1 root root 7739 Oct 19 19:55 /tmp/vw-m3-agent-package-before.json
+drwxr-xr-x 3 root root 4096 Oct 19 19:55 /tmp/vw-m3-agent-package-bundle
+drwxr-xr-x 4 root root 4096 Oct 19 19:51 /tmp/vw-m3-agent-package-npm-cache
+6	11	tests/packs/rendering/test_remotion_backend.py
+1	8	tests/packs/rendering/test_remotion_element_generation.py
+2	2	tests/packs/rendering/test_remotion_v3_aliases.py
+6	13	tests/packs/rendering/test_render_export_task_adapter.py
+5	7	tests/packs/rendering/test_render_remotion_registry.py
+
+ succeeded in 16496ms:
+
+> typecheck
+> tsc --noEmit
+
+.                                                                        [100%]
+1 passed, 1 deselected in 1.19s
+
+exec
+/bin/bash -lc "git diff 8c4bd850 --check
+python3 - <<'PY'
+from pathlib import Path
+import hashlib,json
+root=Path('remotion/node_modules/@banodoco/timeline-composition')
+after={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file()}
+assert after==json.loads(Path('/tmp/vw-m3-agent-package-before.json').read_text())
+print('Final Composition package: 77/77 installed file hashes unchanged')
+print('Generated staging:',[p.name for p in Path('remotion/src').glob('*.generated.*')])
+print('Build caches:',[p.name for p in Path('remotion/node_modules').iterdir() if p.name.startswith('.')])
+PY" in /home/user/work/wt/vw-m3-agent-package
+ succeeded in 227ms:
+Final Composition package: 77/77 installed file hashes unchanged
+Generated staging: ['effects.generated.ts', 'types.generated.ts', 'animations.generated.ts', 'transitions.generated.ts']
+Build caches: ['.bin', '.package-lock.json']
+
+codex
+Validation is finished: the selected Python run passed 243 tests, the installed-package integration test passed, and both new cache checks passed. Typecheck and the main-config bundle also passed. All 77 installed package hashes remain unchanged.
+
+I’ll leave the conventional commit message for the harness and remove generated staging and temporary output. The report will flag the out-of-scope install-gate probe, render admission failures, and unverified film/theme/audio parity.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+message=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-package/commit-msg')
+message.write_text('''feat(rendering): consume the immutable built Composition package
+
+Pin the reviewed 0.0.8 tarball locally with its approved integrity and exact
+React 18.3.1 peers. Generate resolved element maps in the Remotion host,
+pass them to Composition's instance registry seam, and preserve capability
+forwarding and declared overrides. Replace rendering-pack default stubs
+and duplicate text rendering with public shared-default imports.
+
+Remove package-source aliases and source-layout assumptions while retaining
+Python schema validation, install bindings, locking, and launch validation.
+Track the installed build and host maps in frame-cache identity.
+
+Validation (PYTHONPATH="'$PWD and
+ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node):
+- PATH=/home/user/work/node-v20.19.4-linux-x64/bin:$PATH npm ci --prefix remotion --cache /tmp/vw-m3-agent-package-npm-cache --no-audit --no-fund
+  Passed with Node 20.19.4/npm 10.8.2; peers deduplicated by npm ls.
+- /home/user/work/venv-agent/bin/python scripts/gen_remotion_types.py --include-element-registries
+- PATH=/home/user/work/node-v20.19.4-linux-x64/bin:$PATH npm run typecheck --prefix remotion
+  Passed after host generation.
+- PATH=/home/user/work/node-v20.19.4-linux-x64/bin:$PATH npm run bundle --prefix remotion -- --out-dir=/tmp/vw-m3-agent-package-bundle
+  Passed through the main Remotion config/alias override; existing
+  import.meta-to-CJS warnings remain.
+- /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_effect_registry_target.py tests/packs/rendering/test_remotion_element_generation.py tests/packs/rendering/test_render_remotion_registry.py tests/packs/rendering/test_remotion_v3_aliases.py tests/packs/rendering/test_remotion_backend.py tests/packs/rendering/test_remotion_locking.py tests/packs/rendering/test_check_registry_failures.py tests/core/rendering/test_remotion_registry_context_key.py tests/core/rendering/test_remotion_registry_git_env.py tests/core/rendering/test_remotion_probe_diagnostic.py tests/core/rendering/test_registry_probe_stderr.py tests/packs/rendering/test_render_export_task_adapter.py tests/packs/rendering/test_composed_frame_capture.py -k '"'not real_render and not real_two_second and not stamped_top_layer' -rs
+  243 passed, 7 deselected in 112.81s. The selection excludes four real
+  render nodes and the normal integration-lane exclusions.
+- /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/packs/rendering/test_composition_package.py
+  1 passed, 1 deselected in 1.19s. Exercises real built package rendering,
+  custom parameters/capabilities, animation/transition overrides, unknown
+  diagnostics, and instance isolation without a browser or sockets.
+- /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_composed_frame_capture.py -k tracks_built
+  2 passed, 14 deselected in 0.98s.
+- git diff 8c4bd850 --check
+  Passed. Three touched production Python files have the same Ruff
+  diagnostics as the base (8/7/1), with no new diagnostics.
+
+All 77 installed Composition files retained identical SHA256 hashes after
+host generation, bundling, and final checks. Artifact SHA256 is
+93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa.
+
+Remaining: scripts/reshape/remotion_gate.py is outside this task's explicit
+ownership and still requires npm timeline-schema/theme packages; its
+_validate_install check fails on missing timeline-schema. A narrow grant
+was requested but not received. Agent manager must remove those two stale
+requirements and run the gate. Browser smoke/full suite belong to the test
+service after integration. A wider targeted attempt activated four existing
+real-render tests after npm installation; all refused render admission
+without launch-bound validation. They were left unchanged, not weakened;
+no independent base result for those nodes is claimed. Five host-registry
+fixture path failures from that attempt were corrected and passed.
+Film/theme pixel and audio parity and external-theme version equivalence
+remain unverified; bundled 2rp is accurately identified as 0.1.0. No
+compiler, evaluator-math, schema, provider, or custody changes are included.
+''')
+for path in Path('remotion/src').glob('*.generated.*'):
+    path.unlink()
+for name in ('remotion/.astrid-registry.lock',):
+    Path(name).unlink(missing_ok=True)
+for name in ('/tmp/vw-m3-agent-package-bundle','/tmp/vw-m3-agent-package-npm-cache'):
+    shutil.rmtree(name,ignore_errors=True)
+Path('/tmp/vw-m3-agent-package-before.json').unlink(missing_ok=True)
+for name in ('.pytest_cache','.ruff_cache'):
+    shutil.rmtree(name,ignore_errors=True)
+for path in Path('.').rglob('__pycache__'):
+    if 'node_modules' not in path.parts:
+        shutil.rmtree(path,ignore_errors=True)
+print('Commit message written; generated staging and temporary output removed.')
+PY
+git diff 8c4bd850 --check
+git status --short" in /home/user/work/wt/vw-m3-agent-package
+ succeeded in 616ms:
+Commit message written; generated staging and temporary output removed.
+ M astrid/core/rendering/remotion_runtime.py
+ M astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+ M astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx
+ M astrid/packs/rendering/rendering/elements/animations/fade/component.tsx
+ M astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx
+ M astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx
+ M astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx
+ M astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx
+ M astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx
+ M astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx
+ M astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx
+ M astrid/packs/rendering/rendering/renderers/remotion/run.py
+ M astrid/packs/rendering/shared/element_contracts.ts
+ D remotion/.astrid-registry.lock
+ M remotion/__smoke__/bundle.mjs
+ M remotion/package-lock.json
+ M remotion/package.json
+ M remotion/src/Root.tsx
+ D remotion/src/ThemeContext.tsx
+ M remotion/src/astrid-hashed-imports.d.ts
+ D remotion/src/lib/animations.jsx
+ D remotion/src/lib/animations.tsx
+ D remotion/src/types.generated.ts
+ D remotion/src/workspace-aliases.d.ts
+ M remotion/tsconfig.json
+ M remotion/webpack-alias.mjs
+ M scripts/gen_effect_registry.py
+ M tests/core/rendering/test_remotion_probe_diagnostic.py
+ M tests/packs/rendering/test_composed_frame_capture.py
+ M tests/packs/rendering/test_effect_registry_target.py
+ M tests/packs/rendering/test_remotion_backend.py
+ M tests/packs/rendering/test_remotion_element_generation.py
+ M tests/packs/rendering/test_remotion_v3_aliases.py
+ M tests/packs/rendering/test_render_export_task_adapter.py
+ M tests/packs/rendering/test_render_remotion_registry.py
+?? remotion/artifacts/
+?? remotion/src/host-registries.ts
+?? remotion/tests/composition-package.mjs
+?? remotion/tests/custom-animations.tsx
+?? remotion/tests/custom-effects.tsx
+?? remotion/tests/custom-transitions.tsx
+?? tests/packs/rendering/test_composition_package.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess
+for name in ('remotion/.astrid-registry.lock','remotion/src/types.generated.ts'):
+    data=subprocess.run(['git','show','8c4bd850:'+name],capture_output=True,check=True).stdout
+    Path(name).write_bytes(data)
+print('Preserved the base-tracked type snapshot and lock placeholder.')
+PY
+git diff 8c4bd850 --check
+git diff --stat | tail -2" in /home/user/work/wt/vw-m3-agent-package
+ succeeded in 322ms:
+Preserved the base-tracked type snapshot and lock placeholder.
+ .../rendering/test_render_remotion_registry.py     |  12 +-
+ 33 files changed, 154 insertions(+), 540 deletions(-)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-package/commit-msg')
+p.write_text(p.read_text()+'''
+Unqualified render nodes from the wider attempt:
+- test_remotion_real_render_under_global_angle_keeps_identity
+- test_remotion_real_two_second_window_keeps_video_and_audio_duration
+- test_alpha_stamped_real_render_is_mov_prores_and_declared_profile_matches
+- test_stamped_top_layer_via_real_service_is_mov_prores_with_alpha
+All are in tests/packs/rendering/test_remotion_backend.py and raised
+RendererUnsupportedError before rendering; a qualified central run remains
+required. Wider attempt: 9 failed, 224 passed, 2 deselected; five of those
+failures were the corrected registry fixture destinations.
+''')
+PY" in /home/user/work/wt/vw-m3-agent-package
+ succeeded in 0ms:
+codex
+Implemented the scoped migration: pinned the reviewed local 0.0.8 tarball, moved registry generation into host staging, passed instance-scoped maps to Composition, and replaced default stubs with shared imports. All **77 installed package files remained byte-identical** after generation and bundling. React 18.3.1 and Remotion 4.0.509 peers deduplicate.
+
+Validation passed:
+
+- `npm ci --prefix remotion` with the pinned toolchain.
+- `npm run typecheck --prefix remotion`.
+- Main-config bundle.
+- Focused Python selection: **243 passed, 7 deselected**.
+- Installed-package integration: **1 passed**.
+- New cache checks: **2 passed**.
+- `git diff 8c4bd850 --check`.
+
+Exact commands, file selections, results and the conventional commit message are recorded in [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-package/commit-msg).
+
+**Remaining blocker:** the out-of-scope `scripts/reshape/remotion_gate.py` still requires npm schema/theme packages. Its probe fails on missing `timeline-schema`; the requested ownership grant was not received.
+
+A wider targeted run also exposed four unchanged real-render tests refusing admission without launch validation; no independent baseline is claimed. Browser smoke, full suite, film/theme comparison and audio parity remain unverified. Next: remove the stale gate requirements, then run qualified central checks after integration. No evaluator-math migration was included.
+tokens used
+247,037
+Implemented the scoped migration: pinned the reviewed local 0.0.8 tarball, moved registry generation into host staging, passed instance-scoped maps to Composition, and replaced default stubs with shared imports. All **77 installed package files remained byte-identical** after generation and bundling. React 18.3.1 and Remotion 4.0.509 peers deduplicate.
+
+Validation passed:
+
+- `npm ci --prefix remotion` with the pinned toolchain.
+- `npm run typecheck --prefix remotion`.
+- Main-config bundle.
+- Focused Python selection: **243 passed, 7 deselected**.
+- Installed-package integration: **1 passed**.
+- New cache checks: **2 passed**.
+- `git diff 8c4bd850 --check`.
+
+Exact commands, file selections, results and the conventional commit message are recorded in [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-package/commit-msg).
+
+**Remaining blocker:** the out-of-scope `scripts/reshape/remotion_gate.py` still requires npm schema/theme packages. Its probe fails on missing `timeline-schema`; the requested ownership grant was not received.
+
+A wider targeted run also exposed four unchanged real-render tests refusing admission without launch validation; no independent baseline is claimed. Browser smoke, full suite, film/theme comparison and audio parity remain unverified. Next: remove the stale gate requirements, then run qualified central checks after integration. No evaluator-math migration was included.

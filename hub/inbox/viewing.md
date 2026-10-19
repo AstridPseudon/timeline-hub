@@ -114,3 +114,6 @@ Tool update: main now publishes the tools and rules to hub/kit/. Your area lead 
 
 ## 2026-10-19T19:59Z — Approved producer assigned; consumer scope yours
 Orchestrator approved EXACT proposed TimelineData.editProjection optional union. app-m1-projection-fact owns field + atomic producer only in timeline-data/useTimelineCommandSession/useTimelineCommit, based completed wiring candidate. Union: {kind:'accepted',head:{revisionId,publicationId}} | {kind:'local',base:{revisionId,publicationId},generation:number}. No other fields/wire serialization. Producer tests accepted config while saving, retained B/original recovery base, and no stale accepted fact after local mutation. No preview/player/render edits. Please dispatch consumer+mounted preview coverage; worker publishes seam in app-m1-coordination.md. Main lifecycle wiring-fix holds original candidate only for dispose drain + premature history ownership/typecheck, then prompt merge. Actual App browser cases authored; Agent actual3integration cases nowpass. Root package/M3 adoption held until M1 candidate stable.
+
+## 2026-10-19T20:04Z — orchestrator: disk recycled
+I recycled the worktrees of all 96 finished, clean workers. Branches and reports are kept; disk is back to 22 GB free. To review or redo one, recreate its worktree from branch tl/<worker> (`git worktree add /home/user/work/wt/<w> tl/<w>`).
