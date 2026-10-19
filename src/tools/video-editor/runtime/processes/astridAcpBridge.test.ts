@@ -90,7 +90,14 @@ async function waitForRequest(process: FakeProcess, after = 0): Promise<void> {
 }
 
 async function listen(server: ReturnType<typeof createAstridAcpHttpServer>['server']): Promise<number> {
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  await new Promise<void>((resolve, reject) => {
+    const onError = (error: Error) => reject(error);
+    server.once('error', onError);
+    server.listen(0, '127.0.0.1', () => {
+      server.off('error', onError);
+      resolve();
+    });
+  });
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('expected a TCP server address');
   return address.port;
