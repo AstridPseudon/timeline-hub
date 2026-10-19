@@ -22,6 +22,7 @@ from runtime_protocol.canonical_schema import CANONICAL_FORMAT_ID
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import SCHEMA_VERSION, RealmStore
 from runtime_protocol import platform as runtime_platform
+from tests.schema_fixtures import walk_back_to_v30
 
 
 def _tree_bytes(root: Path) -> dict[str, str]:
@@ -793,6 +794,7 @@ def _authenticated_v28_backup(tmp_path):
     connection = sqlite3.connect(backup / "realm.sqlite3")
     try:
         connection.execute("PRAGMA journal_mode=DELETE")
+        walk_back_to_v30(connection)
         connection.execute("ALTER TABLE timelines DROP COLUMN name")  # v30 -> v29/v28 layout
         connection.execute("UPDATE runtime_schema SET version=28 WHERE id=1")
         connection.commit()

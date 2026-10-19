@@ -11,6 +11,7 @@ from runtime_protocol.store import RealmStore, IDEMPOTENCY_RESULT_MARKER, Idempo
 from runtime_protocol.snapshot_refs import restore_spec_snapshots
 from runtime_protocol.upgrade import migrate_canonical_to_current, compact_idempotency_ledger
 from runtime_protocol.util import canonical_json, now
+from tests.schema_fixtures import walk_back_to_v30
 
 
 def _digest(value):
@@ -226,6 +227,7 @@ def test_v28_inline_spec_migrates_with_exact_replay_and_compacts(tmp_path):
             service.store.conn.execute("DELETE FROM task_specs WHERE digest!=?", (legacy_digest,))
             service.store.conn.execute("DELETE FROM project_objects WHERE digest=?", (ref["digest"].removeprefix("sha256:"),))
             service.store.conn.execute("DELETE FROM objects WHERE digest=?", (ref["digest"].removeprefix("sha256:"),))
+            walk_back_to_v30(service.store.conn)
             service.store.conn.execute("ALTER TABLE timelines DROP COLUMN name")
             service.store.conn.execute("UPDATE runtime_schema SET version=28 WHERE id=1")
         service.cas.path_for(ref["digest"].removeprefix("sha256:")).unlink()
@@ -234,8 +236,10 @@ def test_v28_inline_spec_migrates_with_exact_replay_and_compacts(tmp_path):
         service.close()
 
     migrated = migrate_canonical_to_current(root, confirmation=f"MIGRATE CANONICAL {realm_id}")
-    assert migrated["steps"][-1]["target_schema_version"] == 30
-    assert migrated["steps"][-2]["referenced_pairs"] == 1
+    assert migrated["steps"][-1]["target_schema_version"] == 31
+    assert migrated["steps"][-2]["target_schema_version"] == 30
+    spec_reference_step = next(step for step in migrated["steps"] if step["target_schema_version"] == 29)
+    assert spec_reference_step["referenced_pairs"] == 1
     reopened = RuntimeService(root)
     try:
         task = reopened.task(admitted["task"]["id"])["task"]
