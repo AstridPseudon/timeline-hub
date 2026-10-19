@@ -1,6 +1,6 @@
 /**
  * Shot-generation placement operations: add, remove, reorder images within
- * shots — all through the document-native placement service (doc 24 Q1).
+ * shots — all through the document-native placement service.
  *
  * Helpers live in ./shotMutationHelpers.ts
  */

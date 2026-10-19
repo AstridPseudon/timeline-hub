@@ -1,6 +1,6 @@
 /**
  * Placement service — the ONLY I/O path for document-native placement on
- * non-editor surfaces (B4 / C1-5, doc 24 Q1 RATIFIED).
+ * non-editor surfaces.
  *
  * Every mutation is one compare-and-swap cycle: load head → run a pure
  * document mutation (`documentPlacement.ts`) → CAS save. The cycle rides the editor's own Runtime path
@@ -12,7 +12,7 @@
  *
  * There is no relational placement route here or anywhere else: no
  * junction-table writes, no placement RPC. Reads derive from the same single
- * document plus R12/R13 gallery reads.
+ * document plus the gallery reads.
  */
 
 import { AstridLocalClient } from '@/integrations/astrid/client';
@@ -166,7 +166,7 @@ export interface PlaceGenerationRequest {
 }
 
 /**
- * Resolve the generation's primary media through R13 (single authority for
+ * Resolve the generation's primary media through the generation detail read (single authority for
  * media addressing), then place it via one CAS cycle.
  */
 export async function placeGeneration(request: PlaceGenerationRequest): Promise<ShotPlacement> {
@@ -199,7 +199,7 @@ export interface UnplaceGenerationRequest {
   /** The generation this entry places (no id parsing — explicit is honest). */
   generationId: string;
   /**
-   * `true` keeps membership as a pooled member (old "set timeline_frame =
+   * `true` keeps membership as a pooled member ("set timeline_frame =
    * NULL" semantics); `false` removes the placement expression entirely.
    */
   keepAsPooled?: boolean;
@@ -230,7 +230,7 @@ export interface BatchFrameUpdateRequest {
   updates: FrameUpdate[];
 }
 
-/** Document equivalent of the retired `batch_update_timeline_frames` RPC. */
+/** Batch frame update for one shot's placements in the timeline document. */
 export async function batchUpdatePlacementFrames(request: BatchFrameUpdateRequest): Promise<ShotPlacement[]> {
   const target = await resolveLegacyPlacementTarget(request.projectSlug);
   return (await mutateTimelineDocument(target, (document) =>
@@ -275,7 +275,7 @@ export interface PlacementGalleryRow {
   primaryMediaId: string | null;
 }
 
-/** Bounded gallery page walk (R12) — the row source placements merge against. */
+/** Bounded gallery page walk — the row source placements merge against. */
 export async function fetchGalleryRows(projectSlug: string): Promise<PlacementGalleryRow[]> {
   const client = new AstridLocalClient({ projectSlug });
   const rows: PlacementGalleryRow[] = [];

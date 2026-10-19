@@ -395,7 +395,7 @@ export const VariantCard: React.FC<VariantCardProps> = ({
     </div>
   );
 
-  // Both mobile and desktop now render the same buttonContent
+  // Both mobile and desktop render the same buttonContent
   // Desktop has the info button inside with tooltip on hover
   return <React.Fragment key={variant.id}>{buttonContent}</React.Fragment>;
 };

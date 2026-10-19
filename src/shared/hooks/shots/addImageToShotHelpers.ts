@@ -22,7 +22,7 @@ export const withVariableMetadata = (data: Record<string, unknown>, variables: A
 
 /**
  * Place a generation into a shot on the timeline document (the only
- * placement authority — doc 24 Q1 RATIFIED).
+ * placement authority).
  *
  * - timelineFrame: null     → pooled membership (no clip)
  * - timelineFrame: undefined → auto-position after the shot's last clip

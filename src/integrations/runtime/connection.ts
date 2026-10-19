@@ -1,9 +1,9 @@
 import type { Realm } from './generated.ts';
 
 /**
- * Where the browser reaches the local Runtime (Plan A, F1). One origin, set once at boot:
+ * Where the browser reaches the local Runtime. One origin, set once at boot:
  *
- * - `''`: same-origin. Local dev (Vite proxies `/api/*`) and Plan B's relay.
+ * - `''`: same-origin. Local dev (Vite proxies `/api/*`) and the relay.
  * - an origin such as `http://127.0.0.1:17340`: the hosted build, talking to the Runtime's own browser door
  *   (astrid-runtime `runtime_protocol/door.py`; "the gateway" in this codebase), which serves the same
  *   `/api/runtime/*` and `/api/astrid/*` paths.
@@ -106,7 +106,7 @@ export function isRuntimeMode(apiBaseUrl: string | null | undefined): boolean {
   return typeof apiBaseUrl === 'string' && apiBaseUrl.replace(/\/+$/, '') === runtimeApiBase();
 }
 
-/** The boot gate's view of the connection (design D3); each status names one screen. */
+/** The boot gate's view of the connection; each status names one screen. */
 export type RuntimeConnectionState =
   | { status: 'connecting' }
   | { status: 'connected'; realm: Pick<Realm, 'realm_id' | 'display_name'> }

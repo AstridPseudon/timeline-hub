@@ -9,7 +9,6 @@ import { useSceneModeMigration } from './legacyMigrations/useSceneModeMigration'
 import type { LegacyMigrationsInput } from './legacyMigrations/types';
 
 /**
- * SUNSET: 2026-09-01
  * Revisit each migration hook and remove any that no longer serve users with
  * pre-migration project settings.
  */

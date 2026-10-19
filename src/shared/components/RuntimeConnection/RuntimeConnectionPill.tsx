@@ -28,7 +28,7 @@ function CardText({ title, sentence }: { title: string; sentence: string }) {
 }
 
 /**
- * What the connected page says about Astrid (Plan A, D3), bottom-right. While Astrid is up it says nothing visible: the
+ * What the connected page says about Astrid, bottom-right. While Astrid is up it says nothing visible: the
  * editor already shows the project, and a "Connected" badge went stale the moment Astrid stopped. Two cards replace it:
  * "Astrid stopped" (it clears itself when Astrid is back) and "Astrid restarted" (Reload). The editor stays mounted with
  * its draft either way. Renders nothing while not connected (the gate shows the panel then).

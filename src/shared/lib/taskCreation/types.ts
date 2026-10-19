@@ -20,7 +20,7 @@ export interface RuntimeStorageEstimate {
   output_bytes: number;
 }
 
-/** Producer-validated GEN intent carried alongside the admitted task. */
+/** Producer-validated generation intent carried alongside the admitted task. */
 export type RuntimeGenerationIntent = Record<string, unknown>;
 
 /** Runtime's explicit terminal publication effect. */
@@ -62,7 +62,7 @@ export type RuntimeSettlementEffect =
       };
     }
   | {
-      /** GEN D1 publishes a generation from host-verified typed outputs. */
+      /** Publishes a generation from host-verified typed outputs. */
       effect_type: 'generation.publish_v1';
       target_id: string;
       payload: {
@@ -113,7 +113,7 @@ export interface TaskCreationRequest {
   input_object_ids: string[];
   spec: RuntimeTaskSpec;
   storage_estimate: RuntimeStorageEstimate;
-  /** Composed and validated by the GEN/UE producer; Astrid App does not rebuild it. */
+  /** Composed and validated by the generation producer; Astrid App does not rebuild it. */
   generation_intent?: RuntimeGenerationIntent;
   settlement_effect: RuntimeSettlementEffect;
 }

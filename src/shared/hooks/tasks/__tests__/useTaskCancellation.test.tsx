@@ -1,5 +1,5 @@
 /**
- * Task cancellation over the frozen cancel route (fake bridge router):
+ * Task cancellation over the cancel route (fake bridge router):
  * queued cancels commit directly, running cancels require the attempt
  * fence, terminal tasks replay as no-op, and orchestrator subtasks are
  * cancelled in batch.

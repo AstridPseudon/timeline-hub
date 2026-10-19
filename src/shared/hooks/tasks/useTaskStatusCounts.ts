@@ -71,7 +71,7 @@ function taskTimestampMs(task: { createdAt: string; updatedAt?: string }): numbe
 
 /**
  * The three counters come from ONE bridge list read with in-memory
- * counting — the frozen route has no aggregate form.
+ * counting — the route has no aggregate form.
  * A read failure degrades all three counters together (there are no partial
  * failures left to mask).
  */

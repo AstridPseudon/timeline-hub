@@ -1,7 +1,6 @@
 /**
- * Bridge-backed task reads for the covered journey's J3/J4 steps (admit,
- * poll, cancel). Every consumer here reads the frozen doc-27 §4.1 routes
- * through `AstridLocalClient`.
+ * Bridge-backed task reads (admit, poll, cancel). Every consumer here reads
+ * the task routes through `AstridLocalClient`.
  *
  * The bridge summary → app `Task` projection follows the
  * `GenerationRowDto` + coercer precedent (`generationRowMapper.ts`):
@@ -44,8 +43,7 @@ export function mapBridgeTaskStatus(status: string): TaskStatus {
 /** App-facing task type: the admitted family, falling back to spec/capability. */
 function bridgeTaskType(summary: BridgeTaskSummary): string {
   const spec = asRecord(summary.spec);
-  // The app's task_type column historically held the concrete worker type
-  // (`spec.source_task_type`); the coarse `family` is only a fallback.
+  // The concrete worker type is `spec.source_task_type`; the coarse `family` is only a fallback.
   if (typeof spec?.source_task_type === 'string' && spec.source_task_type.length > 0) {
     return spec.source_task_type;
   }

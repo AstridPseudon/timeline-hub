@@ -1,5 +1,5 @@
 /**
- * Slice-A cutover journey: admit → poll → terminal against the canonical
+ * Admit → poll → terminal journey against the canonical
  * fake bridge router. The fake-router admission handler itself asserts the
  * Idempotency-Key contract (a missing key answers 400 before any body
  * validation); these tests additionally assert the exact header value the
@@ -79,11 +79,11 @@ describe('task admit → poll → terminal over the fake bridge', () => {
   });
 
   it('runs admit → poll → cancel → terminal replay end to end', async () => {
-    // -- J3: admission ------------------------------------------------------
+    // -- admission ------------------------------------------------------
     const taskId = await admitImageTask();
     expect(taskId).toBeTruthy();
 
-    // -- J4: polling reads --------------------------------------------------
+    // -- polling reads --------------------------------------------------
     const page = await fetchPaginatedTasks({
       effectiveProjectId: PROJECT,
       visibleTaskTypes: VISIBLE_TASK_TYPES,
@@ -127,7 +127,7 @@ describe('task admit → poll → terminal over the fake bridge', () => {
     if (!summary) throw new Error('fixture task missing');
     summary.status = 'running';
 
-    // Unfenced running cancels answer 409; the cutover helper recovers the
+    // Unfenced running cancels answer 409; the helper recovers the
     // fence from the attempt read and retries.
     await cancelBridgeTask(PROJECT, taskId);
 

@@ -4,7 +4,6 @@
  * Extracts context value building from ShotEditor to reduce component size.
  * Takes the various domain values and returns the assembled context value.
  *
- * @see Phase 3 of shot-settings-context-cleanup.md
  */
 
 import { useMemo } from 'react';
@@ -26,7 +25,7 @@ import type { UseStructureVideoReturn } from '../video/useStructureVideo';
 import type { UseAudioReturn } from '../video/useAudio';
 
 // Type for generation actions from useGenerationActions
-// All drop handlers now use unified targetFrame parameter
+// All drop handlers use the unified targetFrame parameter
 interface GenerationActionsReturn {
   handleTimelineGenerationDrop: (
     generationId: string,

@@ -934,8 +934,8 @@ describe('shot timeline popup persistence', () => {
       canonicalComposition: { headRevisionId: base.headRevisionId },
     });
 
-    // Reopen on current canonical H1 with a durable B config that still carries
-    // the old H0 marker. Validated H1 provenance reconciles only that marker.
+    // Reopen on the current canonical head with a durable config that still carries
+    // the previous head's marker. Validated provenance for the current head reconciles only that marker.
     const reopened = createShotTimelineDataProvider(config, ackA, 'occ-1', adapter);
     const loaded = await reopened.loadTimeline('session-C');
     const reconciled = loaded.config as TimelineConfig;

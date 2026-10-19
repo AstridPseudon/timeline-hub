@@ -2,8 +2,6 @@
  * LoRA Display Utilities
  *
  * Shared utilities for LoRA display name resolution.
- * Moved from tools/travel-between-images/utils/loraDisplayUtils.ts
- * because these are generic utilities used across shared components.
  */
 
 const HF_SCHEME = 'https';

@@ -40,12 +40,12 @@ function normalizePrompt(params: unknown): string | undefined {
 
 /**
  * Derived items for one source generation, re-sourced onto the bridge
- * generation-detail read (R13). The detail payload carries the full variant
+ * generation-detail read. The detail payload carries the full variant
  * list; edit variants become derived items whose display URLs are same-origin
- * R9 content routes.
+ * content routes.
  *
  * Child generations (rows with `based_on` = this generation) have no listing
- * route in the doc-27 §4.1 v1 set — that half of the surface is deferred.
+ * route in the v1 set — that half of the surface is deferred.
  */
 export function mapDerivedItemsFromGenerationDetail(
   detail: BridgeGenerationDetailPayload['generation'],
@@ -59,7 +59,7 @@ export function mapDerivedItemsFromGenerationDetail(
       && EDIT_VARIANT_TYPES.includes(variant.variant_type as never))
     .map((variant) => ({
       id: variant.id,
-      // R9 serves the managed bytes; there is no separate thumbnail media on
+      // The content route serves the managed bytes; there is no separate thumbnail media on
       // the wire, so the content route doubles as the thumbnail address.
       thumbUrl: bridgeMediaUrl(projectSlug, variant.media_id),
       url: bridgeMediaUrl(projectSlug, variant.media_id),

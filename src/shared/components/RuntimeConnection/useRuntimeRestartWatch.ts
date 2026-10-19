@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
 
 /**
- * Notices, while connected, that Astrid stopped, restarted or changed (Plan A, D3).
+ * Notices, while connected, that Astrid stopped, restarted or changed.
  *
  * The client fences a restarted Runtime only when a request reaches it, and a connected page that is reading
  * nothing would never make one. So this asks the health route on an interval and on focus: the instance id seen

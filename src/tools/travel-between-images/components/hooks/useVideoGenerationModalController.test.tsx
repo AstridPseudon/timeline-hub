@@ -252,5 +252,5 @@ describe('useVideoGenerationModalController', () => {
   });
 
   // Note: generation orchestration (handleGenerate, isGenerating, justQueued)
-  // now lives in useBatchVideoGeneration — see useBatchVideoGeneration.test.tsx.
+  // is handled in useBatchVideoGeneration — see useBatchVideoGeneration.test.tsx.
 });

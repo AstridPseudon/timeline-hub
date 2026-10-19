@@ -265,7 +265,7 @@ const MP4_STUB_BYTES = new Uint8Array(2048).fill(0x2f);
 
 /**
  * Seeded gallery journey: two generations with variants whose primary
- * variants point at managed media served through R9.
+ * variants point at managed media served through the content route.
  */
 export function createGalleryFixtures() {
   const mediaPng = {

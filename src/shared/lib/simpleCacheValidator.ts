@@ -32,8 +32,7 @@ const isDev = Boolean(
 const CACHE_CHANNEL = 'cache' as const;
 
 const getMediaStats = () => {
-  // Storage-host DOM probes were removed with the signed/public-URL cut;
-  // the debug stats now count rendered media generically.
+  // The debug stats count rendered media generically.
   const images = document.querySelectorAll('img');
   const videos = document.querySelectorAll('video');
   return {

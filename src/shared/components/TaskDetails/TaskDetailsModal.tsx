@@ -3,9 +3,6 @@
  *
  * Modal dialog for viewing detailed task information for a generation.
  * Shows input images, settings, parameters, and allows applying settings.
- *
- * Moved from tools/travel-between-images/components/TaskDetailsModal.tsx
- * to shared/ because it's used by MediaGalleryLightbox and other shared components.
  */
 
 import React, { ReactNode, useState } from 'react';
@@ -224,7 +221,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 </>
               )}
               <div className="flex items-center gap-x-3 ml-auto">
-              {/* Show Video button for mobile video context - now positioned directly to the left of close button */}
+              {/* Show Video button for mobile video context - positioned directly to the left of close button */}
               {isMobile && isVideoContext && onShowVideo && (
                 <Button
                   variant="secondary"

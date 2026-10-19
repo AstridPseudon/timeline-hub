@@ -38,7 +38,7 @@ function buildLegacyReference(settings: ProjectImageSettings): ReferenceImage {
   };
 }
 
-// SUNSET: 2026-09-01 — remove after all projects have references[] and selectedReferenceIdByShot.
+// Remove after all projects have references[] and selectedReferenceIdByShot.
 export function useReferenceStructureMigration(input: ReferenceStructureMigrationInput): void {
   const {
     projectImageSettings,

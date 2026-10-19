@@ -17,7 +17,7 @@ interface GuidanceVideoUploaderProps {
 export const GuidanceVideoUploader: React.FC<GuidanceVideoUploaderProps> = ({
   zoomLevel,
 }) => {
-  // Note: Upload controls are now in TimelineContainer's top bar
+  // Note: Upload controls are in TimelineContainer's top bar
   // Just a small spacer for visual separation
 
   return (

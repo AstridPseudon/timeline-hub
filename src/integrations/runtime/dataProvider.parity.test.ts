@@ -1,9 +1,7 @@
 /**
- * RuntimeDataProvider assertions inherited from the retired bridge provider.
+ * RuntimeDataProvider contract assertions.
  *
- * Each test here is the Runtime form of an assertion that
- * the retired bridge provider's tests made about
- * the DataProvider contract: load defaults, registry resolution, single-publish
+ * Each test here asserts the DataProvider contract against the Runtime: load defaults, registry resolution, single-publish
  * saves, stale-head conflicts, bundle passthrough, identity validation and
  * load freshness. Bridge-only mechanisms (ULID aliases, PUT /registry, File
  * System Access drops, generation materialisation) have no Runtime

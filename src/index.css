@@ -434,7 +434,7 @@
     background-color: hsl(var(--background));
   }
   
-  /* The legacy Cocogoose class now sets Astrid's text face, as the public site does. */
+  /* The legacy Cocogoose class sets Astrid's text face, as the public site does. */
   .font-cocogoose {
     font-family: var(--theme-font-family, Inter, sans-serif) !important;
   }
@@ -3010,7 +3010,7 @@
 .dehovering .palette-icon path {
   /* Use the new exit animation */
   animation: palette-exit 800ms ease forwards;
-  /* Remove the transition property as animation is now used */
+  /* Remove the transition property as animation is used */
 }
 .dehovering .palette-icon circle {
   /* Allow circles to continue their smooth transition back to empty */

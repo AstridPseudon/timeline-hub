@@ -611,7 +611,7 @@ export class RuntimeDataProvider implements DataProvider {
       // The shot revision may carry the canonical immutable timeline scope;
       // otherwise the parent timeline is the only admitted scope. A missing
       // revision is a hard availability failure. Do not probe synthetic
-      // `shot:<id>` scopes, which can revive the retired child-timeline path.
+      // `shot:<id>` scopes, which would reintroduce child-timeline reads.
       const internalTimelineScope = typeof shot.timeline_id === 'string' && shot.timeline_id.length > 0
         ? shot.timeline_id
         : timelineId;

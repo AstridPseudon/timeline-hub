@@ -90,7 +90,7 @@ export const useLightboxNavigation = ({
       // Non-modal overlays (tooltip, hover-card) must never suppress arrow/Escape here,
       // and stale modal entries that registered but haven't opened (e.g. Base-UI Select
       // mounting without data-state="open") must not either — those leave `getTopOverlay`
-      // pointing at them and previously dead-locked the lightbox.
+      // pointing at them and would dead-lock the lightbox.
       const topModalOverlayType = getTopmostKnownModalOverlayType();
       if (topModalOverlayType && topModalOverlayType !== 'lightbox') return;
 

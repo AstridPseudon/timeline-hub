@@ -1,5 +1,5 @@
 /**
- * The real-daemon response fixtures (testing plan C2, rule R-4) and the one
+ * The real-daemon response fixtures and the one
  * helper every consumer needs: turning the Runtime's normalized placeholders
  * ("<task_id>", "<digest>", ...) back into schema-valid example values.
  *

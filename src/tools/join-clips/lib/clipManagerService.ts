@@ -1,7 +1,7 @@
 /**
  * Backward-compatible facade for Join Clips clip management services.
  *
- * Logic is now split across focused modules under `lib/clipManager/`.
+ * Logic lives in focused modules under `lib/clipManager/`.
  */
 
 // Re-export everything from clipInitService so existing consumers keep working.

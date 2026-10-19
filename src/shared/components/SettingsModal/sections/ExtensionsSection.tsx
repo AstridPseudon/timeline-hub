@@ -142,7 +142,7 @@ function lifecycleEventColor(kind: string, isFailure: boolean): string {
 
 
 // ---------------------------------------------------------------------------
-// T22: Settings field editor (inline per-field)
+// Settings field editor (inline per-field)
 // ---------------------------------------------------------------------------
 
 interface SettingsFieldEditorProps {
@@ -368,7 +368,7 @@ const SettingsFieldEditor: React.FC<SettingsFieldEditorProps> = ({
 };
 
 // ---------------------------------------------------------------------------
-// T22: Migration summary panel (collapsible)
+// Migration summary panel (collapsible)
 // ---------------------------------------------------------------------------
 
 interface MigrationSummaryPanelProps {
@@ -792,7 +792,7 @@ const AggregateLifecycleLog: React.FC<AggregateLifecycleLogProps> = ({ events })
 
 
 // ---------------------------------------------------------------------------
-// T23: Reference kind label helper
+// Reference kind label helper
 // ---------------------------------------------------------------------------
 
 /** Map reference kind to a human-readable label. */
@@ -813,7 +813,7 @@ function referenceKindLabel(kind: ReferenceKind): string {
 }
 
 // ---------------------------------------------------------------------------
-// T23: Uninstall reference report panel (collapsible, per-extension)
+// Uninstall reference report panel (collapsible, per-extension)
 // ---------------------------------------------------------------------------
 
 interface UninstallReferenceReportPanelProps {
@@ -1056,7 +1056,7 @@ const ExtensionRow: React.FC<ExtensionRowProps> = ({ ext, isMobile, onToggleEnab
           <span className="text-xs text-muted-foreground flex-shrink-0">
             v{ext.version}
           </span>
-          {/* Dependency badge (T21) */}
+          {/* Dependency badge */}
           {ext.dependencies && ext.dependencies.totalCount > 0 && (
             <DependencyBadge deps={ext.dependencies} />
           )}
@@ -1162,19 +1162,19 @@ const ExtensionRow: React.FC<ExtensionRowProps> = ({ ext, isMobile, onToggleEnab
         </span>
       </div>
 
-      {/* Degraded contribution inventory (T21) */}
+      {/* Degraded contribution inventory */}
       <DegradedInventory
         contributions={ext.degradedContributions ?? []}
         extensionName={ext.name}
       />
 
-      {/* Lifecycle event log (T21) */}
+      {/* Lifecycle event log */}
       <LifecycleLog
         events={ext.lifecycleEvents ?? []}
         extensionName={ext.name}
       />
 
-      {/* Settings editor panel (T22) */}
+      {/* Settings editor panel */}
       {ext.settingsFields && ext.settingsFields.length > 0 && (
         <SettingsEditorPanel
           fields={ext.settingsFields}
@@ -1185,7 +1185,7 @@ const ExtensionRow: React.FC<ExtensionRowProps> = ({ ext, isMobile, onToggleEnab
         />
       )}
 
-      {/* Migration summary panel (T22) */}
+      {/* Migration summary panel */}
       {ext.migrationSummary && (
         <MigrationSummaryPanel
           migration={ext.migrationSummary}
@@ -1446,7 +1446,7 @@ const ExtensionsSection: React.FC<ExtensionsSectionProps> = ({
         )}
       </div>
 
-      {/* Aggregate lifecycle event log (T21) */}
+      {/* Aggregate lifecycle event log */}
       <AggregateLifecycleLog events={allLifecycleEvents ?? []} />
 
       {/* Install trusted local pack */}

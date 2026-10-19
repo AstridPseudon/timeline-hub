@@ -4,7 +4,7 @@ export type {
   UseSegmentSettingsOptions,
 } from './useSegmentSettings';
 
-// Segment outputs hook (moved from travel-between-images tool)
+// Segment outputs hook
 export { useSegmentOutputsForShot } from './useSegmentOutputsForShot';
 export type {
   SegmentSlot,

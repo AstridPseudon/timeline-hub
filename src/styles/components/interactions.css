@@ -7,7 +7,7 @@
 .dehovering .palette-icon path {
   /* Use the new exit animation */
   animation: palette-exit 800ms ease forwards;
-  /* Remove the transition property as animation is now used */
+  /* Remove the transition property as animation is used */
 }
 .dehovering .palette-icon circle {
   /* Allow circles to continue their smooth transition back to empty */

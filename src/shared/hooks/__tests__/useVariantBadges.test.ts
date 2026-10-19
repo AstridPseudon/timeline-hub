@@ -75,8 +75,8 @@ describe('useVariantBadges', () => {
 
     const badge1 = result.current.getBadgeData('gen-1');
     expect(badge1.derivedCount).toBe(3);
-    // R12 gallery summaries expose counts only. Unviewed detail is deliberately
-    // absent until the bounded R13 variant read is available.
+    // Gallery summaries expose counts only. Unviewed detail is deliberately
+    // absent until the bounded variant read is available.
     expect(badge1.hasUnviewedVariants).toBe(false);
     expect(badge1.unviewedVariantCount).toBe(0);
 
@@ -112,7 +112,7 @@ describe('useVariantBadges', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // R12 summaries have no unviewed detail, but the derived count is present.
+    // Gallery summaries have no unviewed detail, but the derived count is present.
     expect(result.current.getBadgeData('gen-1').hasUnviewedVariants).toBe(false);
 
     // Mark as viewed

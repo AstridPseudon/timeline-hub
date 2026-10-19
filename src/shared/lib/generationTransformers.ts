@@ -13,9 +13,8 @@
  * - Maintainability: Add new fields in one place instead of 5+
  * - Testability: Can unit test transformations in isolation
  * 
- * NOTE: upscaled_url has been removed - upscaled versions are now stored as
- * generation_variants with variant_type='upscaled' and become the primary variant,
- * so `location` already contains the best available URL.
+ * Upscaled versions are stored as generation_variants with variant_type='upscaled'
+ * and become the primary variant, so `location` already contains the best available URL.
  */
 
 import type { GeneratedImageWithMetadata } from '@/shared/components/MediaGallery/types';

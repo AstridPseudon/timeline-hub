@@ -3,9 +3,6 @@
  *
  * Shared data structure representing a pair of images in a timeline.
  * Used by SegmentSettingsModal, MediaLightbox, and ShotImageManager components.
- *
- * Moved from tools/travel-between-images/components/Timeline/TimelineContainer/types.ts
- * to shared/ because it's used by shared components.
  */
 
 export interface PairData {

@@ -62,7 +62,7 @@ export const ImageManagerSkeleton: React.FC<ImageManagerSkeletonProps> = ({
 
   return (
     <>
-      {/* Only render content skeleton since header is now always rendered in ShotImagesEditor */}
+      {/* Only render content skeleton since the header is always rendered in ShotImagesEditor */}
       <div className="p-1">
           {actualImageCount > 0 ? (
             /* Real shot composition skeleton - show actual image count */

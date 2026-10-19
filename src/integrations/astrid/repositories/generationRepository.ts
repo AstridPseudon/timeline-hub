@@ -13,7 +13,7 @@ import {
 /**
  * Generation-record shape (the `generations` row columns plus JSON extras).
  * Bridge detail rows are mapped INTO this shape so every downstream consumer
- * keeps its contract; display URLs are resolved to same-origin R9 content
+ * keeps its contract; display URLs are resolved to same-origin content
  * routes at this boundary.
  */
 export type GenerationRecord = {

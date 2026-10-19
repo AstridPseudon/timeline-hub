@@ -37,7 +37,7 @@ export function useOnboardingFlow() {
     return result;
   }, []);
 
-  // The shots pack has no frozen v1 route, so a "Getting Started" shot cannot
+  // The shots pack has no v1 route, so a "Getting Started" shot cannot
   // be chosen in local mode. Check the doctor-owned
   // runtime instead, then enter the tool without fabricating a shot identity.
   const handleOnboardingClose = useCallback(async () => {

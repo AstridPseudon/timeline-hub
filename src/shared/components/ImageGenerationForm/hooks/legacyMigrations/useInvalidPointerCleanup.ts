@@ -11,7 +11,7 @@ type InvalidPointerCleanupInput = Pick<
   | 'updateProjectImageSettings'
 >;
 
-// SUNSET: 2026-09-01 — remove after reference pointer integrity is guaranteed at write-time.
+// Remove after reference pointer integrity is guaranteed at write-time.
 export function useInvalidPointerCleanup(input: InvalidPointerCleanupInput): void {
   const {
     selectedProjectId,

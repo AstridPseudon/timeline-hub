@@ -59,8 +59,7 @@ interface FetchTaskLogDataOptions {
 }
 
 /**
- * Cost entries once came from the `credits_ledger` table; the frozen bridge
- * exposes no ledger route, so log rows carry no costs (deferred surface).
+ * The bridge exposes no ledger route, so log rows carry no costs (deferred surface).
  */
 interface TaskLogCostEntry {
   task_id: string | null;
@@ -148,7 +147,7 @@ function toTaskLogRecord(task: {
 
 /**
  * Local single-user mode: the log reads the active project's tasks through
- * the frozen task-list route. There is no projects-by-user or
+ * the task-list route. There is no projects-by-user or
  * credits-ledger route on the bridge, so project names fall back to ids and
  * costs are absent.
  */

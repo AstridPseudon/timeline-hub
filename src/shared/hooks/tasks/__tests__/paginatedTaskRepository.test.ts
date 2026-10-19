@@ -1,5 +1,5 @@
 /**
- * fetchPaginatedTasks over the frozen task-list route (fake bridge router).
+ * fetchPaginatedTasks over the task-list route (fake bridge router).
  * The route carries no filters, so status/type/root-task filtering and
  * paging happen in memory over one bridge read.
  */

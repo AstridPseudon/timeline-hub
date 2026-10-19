@@ -163,7 +163,7 @@ export const useMediaGalleryPagination = ({
   }, [filteredImages, page, isServerPagination, itemsPerPage]);
 
   // Explicit method for callers to reset to first page
-  // This replaces the auto-reset effect - callers now declare their intent
+  // This replaces the auto-reset effect - callers declare their intent
   const goToFirstPage = useCallback(() => {
     if (isServerPagination && onServerPageChange) {
       onServerPageChange(1);

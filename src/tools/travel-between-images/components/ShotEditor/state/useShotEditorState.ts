@@ -43,7 +43,6 @@ const shotEditorReducer = (state: ShotEditorState, action: ShotEditorAction): Sh
         return state;
       }
       return { ...state, pendingFramePositions: action.payload };
-    // REMOVED: SET_LOCAL_ORDERED_SHOT_IMAGES - no longer needed
     case 'SET_CREATING_TASK_ID':
       if (action.payload === state.creatingTaskId) return state;
       return { ...state, creatingTaskId: action.payload };

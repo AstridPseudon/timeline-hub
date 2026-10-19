@@ -115,7 +115,7 @@ beforeEach(() => {
   queries = new Map();
   motion = false;
   hidden = false;
-  // App is explicit now; an unqualified home URL intentionally lands in Agent.
+  // The App view is explicit; an unqualified home URL intentionally lands in Agent.
   window.history.replaceState(null, '', '/home?experience=app');
   delete (document as Document & { startViewTransition?: unknown }).startViewTransition;
   delete document.documentElement.dataset.astridPageTransition;
@@ -306,7 +306,7 @@ describe('public Site lifecycle and navigation ownership', () => {
 
   it('keeps desktop geometry event-driven and quiescent when reduced motion is enabled', async () => {
     await mountedHome();
-    // F06 removes the old perpetual settle loop; idle geometry does not enqueue frames.
+    // Idle geometry does not enqueue frames.
     expect(frames.size).toBe(0);
     changeMotion(true);
     await paint();

@@ -489,7 +489,7 @@
 }
 @media (max-width: 760px) {
   .astrid-vision-hero { grid-template-columns: minmax(0, 1fr); }
-  /* With the hero illustration moved below, fit this opening to its copy instead of a screen. */
+  /* The hero illustration sits below, so fit this opening to its copy instead of a screen. */
   .astrid-vision-manifesto { min-height: 0; align-content: start; padding: 12px 0 36px; }
   .astrid-vision-bar { padding-block: 16px; }
   .astrid-vision-hero-copy > .astrid-vision-eyebrow { margin-bottom: 14px; }

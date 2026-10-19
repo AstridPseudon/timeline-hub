@@ -9,9 +9,9 @@
  *    so a hung (not dead) bridge becomes an ordinary transport failure.
  * 2. **Envelope parsing** — non-2xx responses parse against the shared
  *    `bridgeErrorEnvelopeSchema` and surface as a {@link BridgeRouteError}
- *    carrying the raw wire code plus its doc-27 §4.6 category; success
+ *    carrying the raw wire code plus its public category; success
  *    payloads validate through the caller's zod schema (never coerced).
- * 3. **Per-boot token posture (host ruling D1-OQ4)** — the per-boot request
+ * 3. **Per-boot token posture** — the per-boot request
  *    token (`X-Astrid-Request-Token`) is injected by the dev-server proxy /
  *    static middleware on the SERVER side. This module deliberately has no
  *    token code path: browser code never reads, stores, or sends the token,
@@ -32,7 +32,7 @@ import { astridBase } from '@/integrations/runtime/connection.ts';
 
 /**
  * A failed bridge route: HTTP status, the raw wire error code, and its
- * doc-27 §4.6 public category. Frozen timeline codes
+ * public category. Timeline codes
  * (`timeline_version_conflict`, …) keep their exact code so existing
  * reload-and-retry ladders keep working; only the category is derived.
  */
@@ -79,7 +79,7 @@ export type AstridBridgeRequestObservation = Readonly<{
 }>;
 
 function reasonPhrase(status: number): string {
-  // Deliberately tiny: only statuses the frozen routes actually answer with.
+  // Deliberately tiny: only statuses the routes actually answer with.
   switch (status) {
     case 400: return 'Bad Request';
     case 403: return 'Forbidden';
@@ -92,7 +92,7 @@ function reasonPhrase(status: number): string {
 }
 
 /**
- * Map (status, wire code) → doc-27 §4.6 category. Exact codes win; otherwise
+ * Map (status, wire code) → public category. Exact codes win; otherwise
  * the HTTP status classifies. Anything unmapped stays `unknown` rather than
  * being silently relabeled into a wrong recovery path.
  */
@@ -116,7 +116,7 @@ export function classifyRouteError(status: number, code: string | undefined): Br
 }
 
 export type AstridBridgeTransportOptions = {
-  /** Base for the bridge routes. Default: `astridBase()`, read per request (Plan A F1). */
+  /** Base for the bridge routes. Default: `astridBase()`, read per request. */
   baseUrl?: string;
   timeoutMs?: number;
 };

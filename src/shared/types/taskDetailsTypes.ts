@@ -1,8 +1,7 @@
 /**
  * Types and configuration for task details display components
  *
- * Moved from tools/travel-between-images/components/TaskDetails/taskDetailsConfig.ts
- * because these are used by shared components like GenerationDetails.
+ * Used by shared components like GenerationDetails.
  */
 
 import { Task } from '@/types/tasks';

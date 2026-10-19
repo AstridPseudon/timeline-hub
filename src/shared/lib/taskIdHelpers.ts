@@ -49,7 +49,7 @@ function asValidUuid(value: string | null): string | null {
  * Extract the source task ID from variant params.
  *
  * Variants can have their source task ID stored under different field names
- * due to historical evolution of the param structure:
+ * because the param structure has used several field names:
  * - `source_task_id` - Current standard (preferred)
  * - `orchestration_contract.orchestrator_task_id` - Canonical orchestrator contract
  *

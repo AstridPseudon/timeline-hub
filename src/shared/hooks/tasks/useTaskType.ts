@@ -8,7 +8,7 @@ import {
 
 /**
  * Task-type display config is APP configuration, not bridge data: no
- * doc-27 §4.1 route serves it, and the versioned
+ * route serves it, and the versioned
  * local registry (`taskTypeConfigFallback`) is its single surviving source.
  * Both hooks read that one registry — no second authority.
  */

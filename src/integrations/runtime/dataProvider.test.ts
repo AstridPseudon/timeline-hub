@@ -24,8 +24,8 @@ function packageBodyBytes(
   return json({ manifest, entry, assets });
 }
 
-// Saved R5 compact composition: 320x180/30 fps, three ordinary parent clips,
-// no child occurrences (L3-managed-reconcile-normal-retry-result.md).
+// Saved compact composition: 320x180/30 fps, three ordinary parent clips,
+// no child occurrences.
 function compactParentComposition() {
   const config = {
     ...createDefaultTimelineConfig(),

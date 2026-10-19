@@ -21,7 +21,7 @@ interface UseImageGenSubmitParams {
  * would cause double-counting in the TasksPane.
  *
  * On the hosted build (a gateway origin is configured) the composer route is not served: the form's
- * controls are disabled with CP3's line, and `handleNewGenerate` shows that line and sends nothing.
+ * controls are disabled with the same line, and `handleNewGenerate` shows that line and sends nothing.
  */
 export function useImageGenSubmit({
   projectId,

@@ -330,8 +330,8 @@ describe('paired route policy', () => {
 });
 
 // The App's Workspace v1 calls, derived from source so the allowlist cannot drift
-// from them (bug B1: composition-revisions, inspect and /v1/capabilities were
-// called by the App but missing from the allowlist). Operations come from the
+// from them, so every call the App makes (such as composition-revisions, inspect
+// and /v1/capabilities) must be on the allowlist. Operations come from the
 // generated client (method + path template per `async op(...)`); the ones the App
 // uses are the `this.client.<op>(` calls in the runtime provider/adapter code.
 describe('paired route policy vs the App\'s Workspace v1 calls', () => {

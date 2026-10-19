@@ -78,7 +78,7 @@ export type FakeRuntimeRouter = {
   handle(request: Request): Promise<Response>;
   /** Mutate directly to drive poll/cancel scenarios. */
   state: FakeRuntimeState;
-  /** Executor hook: mark a task succeeded and commit one output row (R9 media). */
+  /** Executor hook: mark a task succeeded and commit one output row (managed media). */
   completeTask(taskId: string, output: { role: string; media_id: string; is_primary?: boolean }): void;
 };
 
@@ -284,7 +284,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
     };
   }
 
-  // -- R1 admission ---------------------------------------------------------
+  // -- Admission ---------------------------------------------------------
 
   async function admitTask(request: Request, body: Record<string, unknown>): Promise<Response> {
     const rawKey = request.headers.get('Idempotency-Key');
@@ -292,7 +292,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
       return errorEnvelope(400, 'invalid_body', 'the Idempotency-Key header is required for this route');
     }
     let parsed = bridgeTaskAdmissionRequestSchema.safeParse(body);
-    // Some legacy route-contract tests exercise the retired bridge address
+    // Some route-contract tests exercise the bridge address
     // directly. Keep that fixture-only path available so those tests do not
     // masquerade as neutral Runtime evidence; production client calls use the
     // /v1 handler below and never send this envelope.
@@ -341,7 +341,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
     emitTaskEvent(readModel.id, 'task.admitted', { capability: parsed.data.capability_id });
 
     const payload = { task: readModel };
-    // Round-trip through the schema: a fixture that stops matching the frozen
+    // Round-trip through the schema: a fixture that stops matching the
     // admission contract must fail here, in CI, not in a browser.
     bridgeTaskAdmissionResponseSchema.parse(payload);
     return json(201, payload);
@@ -631,7 +631,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
     return json(200, { items, next_cursor: next });
   }
 
-  // -- R9 managed-media bytes ----------------------------------------------
+  // -- Managed-media bytes ----------------------------------------------
 
   function serveMedia(request: Request, mediaId: string): Response {
     const media = state.media.get(mediaId);
@@ -846,7 +846,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
       return json(200, page);
     }
 
-    // R1 admission.
+    // Admission.
     if (parts[0] === 'projects' && parts[2] === 'tasks' && parts.length === 3 && request.method === 'POST') {
       const body = await readJsonObject(request);
       if (body === null) {
@@ -857,7 +857,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
       return await admitTask(request, body);
     }
 
-    // Managed-media bytes (R9).
+    // Managed-media bytes.
     if (
       parts[0] === 'projects'
       && parts[2] === 'media'

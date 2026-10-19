@@ -60,7 +60,7 @@ export const useDeleteActions = ({
     const currentOrderedImages = orderedShotImagesRef.current;
     const imageToDelete = currentOrderedImages.find(img => img.id === shotImageEntryId);
 
-    // The actual generation ID is now stored in generation_id
+    // The actual generation ID is stored in generation_id
     const actualGenerationId = imageToDelete?.generation_id;
 
     if (!actualGenerationId) {

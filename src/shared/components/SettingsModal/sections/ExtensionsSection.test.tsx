@@ -32,7 +32,7 @@ function makeExtension(
 
 
 // ---------------------------------------------------------------------------
-// T23: Reference report helpers
+// Reference report helpers
 // ---------------------------------------------------------------------------
 
 function makeReference(
@@ -465,7 +465,7 @@ describe("ExtensionsSection", () => {
 });
 
 // ---------------------------------------------------------------------------
-// T19: Manager actions — enable, disable, install
+// Manager actions — enable, disable, install
 // ---------------------------------------------------------------------------
 
 describe("ExtensionsSection manager actions", () => {
@@ -819,7 +819,7 @@ describe("ExtensionsSection manager actions", () => {
 });
 
 // ---------------------------------------------------------------------------
-// T20: Conflict override actions — Use Local Source / Revert to Installed
+// Conflict override actions — Use Local Source / Revert to Installed
 // ---------------------------------------------------------------------------
 
 describe("ExtensionsSection conflict override actions", () => {
@@ -1387,10 +1387,9 @@ describe("ExtensionsSection conflict override actions", () => {
     await promise;
   });
 
-// T21 tests to append to ExtensionsSection.test.tsx
 
 // ---------------------------------------------------------------------------
-// T21: Dependency badges
+// Dependency badges
 // ---------------------------------------------------------------------------
 
 describe("ExtensionsSection dependency badges", () => {
@@ -1601,7 +1600,7 @@ describe("ExtensionsSection dependency badges", () => {
 });
 
 // ---------------------------------------------------------------------------
-// T21: Degraded contribution inventory
+// Degraded contribution inventory
 // ---------------------------------------------------------------------------
 
 describe("ExtensionsSection degraded contribution inventory", () => {
@@ -1705,7 +1704,7 @@ describe("ExtensionsSection degraded contribution inventory", () => {
 });
 
 // ---------------------------------------------------------------------------
-// T21: Per-extension lifecycle event log
+// Per-extension lifecycle event log
 // ---------------------------------------------------------------------------
 
 describe("ExtensionsSection per-extension lifecycle event log", () => {
@@ -1984,7 +1983,7 @@ describe("ExtensionsSection per-extension lifecycle event log", () => {
 });
 
 // ---------------------------------------------------------------------------
-// T21: Aggregate lifecycle event log
+// Aggregate lifecycle event log
 // ---------------------------------------------------------------------------
 
 describe("ExtensionsSection aggregate lifecycle event log", () => {
@@ -2111,7 +2110,7 @@ describe("ExtensionsSection aggregate lifecycle event log", () => {
 });
 
 // ---------------------------------------------------------------------------
-// T21: Combined views — all new features together
+// Combined views — all new features together
 // ---------------------------------------------------------------------------
 
 describe("ExtensionsSection combined T21 features", () => {
@@ -2270,7 +2269,7 @@ describe("ExtensionsSection combined T21 features", () => {
 
 
 // ---------------------------------------------------------------------------
-// T22: Settings editor panel tests
+// Settings editor panel tests
 // ---------------------------------------------------------------------------
 
 describe("ExtensionsSection settings editor panel (T22)", () => {
@@ -2746,7 +2745,7 @@ describe("ExtensionsSection settings editor panel (T22)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// T22: Migration summary panel tests
+// Migration summary panel tests
 // ---------------------------------------------------------------------------
 
 describe("ExtensionsSection migration summary panel (T22)", () => {
@@ -3030,7 +3029,7 @@ describe("ExtensionsSection migration summary panel (T22)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// T22: Combined settings + migration
+// Combined settings + migration
 // ---------------------------------------------------------------------------
 
 describe("ExtensionsSection combined T22 features", () => {
@@ -3138,7 +3137,7 @@ describe("ExtensionsSection combined T22 features", () => {
 });
 
 // ---------------------------------------------------------------------------
-// T23: Uninstall UI and reference report
+// Uninstall UI and reference report
 // ---------------------------------------------------------------------------
 
 describe("ExtensionsSection uninstall flow", () => {

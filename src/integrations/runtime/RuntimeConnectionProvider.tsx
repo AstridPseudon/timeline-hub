@@ -1,5 +1,5 @@
 /**
- * The boot gate for the hosted build (Plan A, D3).
+ * The boot gate for the hosted build.
  *
  * On the hosted build the page and the Runtime are on different origins (`runtimeOrigin()` is the loopback
  * gateway), so the page must find out whether it can reach the Runtime before anything reads it:
@@ -20,7 +20,7 @@
  * visit to the bare domain skips the landing page. The gate only exists on the hosted build, so a same-origin build
  * never sets it.
  *
- * Same-origin builds (no `VITE_RUNTIME_ORIGIN`: local dev, Plan B's relay) are not gated. `gated` is false, nothing
+ * Same-origin builds (no `VITE_RUNTIME_ORIGIN`: local dev, a relay) are not gated. `gated` is false, nothing
  * is probed, and the gate renders its children at once.
  *
  * The panel and pill are render props with a placeholder default each, so the real ones are plugged in here and
@@ -338,7 +338,7 @@ export function RuntimeConnectionProvider({
 export const useRuntimeConnection = (): RuntimeConnectionValue =>
   requireContextValue(useContext(RuntimeConnectionContext), 'useRuntimeConnection', 'RuntimeConnectionProvider');
 
-/** Placeholder until the real panel is plugged in (A2.P): the state name and nothing else. */
+/** Placeholder panel: the state name and nothing else. */
 function PlaceholderPanel({ state }: RuntimeConnectionValue) {
   return (
     <div
@@ -356,13 +356,13 @@ export interface RuntimeConnectionGateProps {
   children: React.ReactNode;
   /** Rendered instead of `children` while the Runtime is not connected. */
   panel?: (connection: RuntimeConnectionValue) => React.ReactNode;
-  /** Rendered beside `children` once connected. Nothing until A2.P. */
+  /** Rendered beside `children` once connected. Nothing by default. */
   pill?: (connection: RuntimeConnectionValue) => React.ReactNode;
 }
 
 /**
  * Renders `children` once the Runtime is connected, and `panel` until then. A same-origin build renders `children`
- * at once. The default `panel` and `pill` are the places A2.P replaces.
+ * at once. The default `panel` is a placeholder; the default `pill` renders nothing.
  */
 export function RuntimeConnectionGate({
   children,

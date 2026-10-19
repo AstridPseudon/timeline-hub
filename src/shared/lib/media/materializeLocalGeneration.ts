@@ -16,7 +16,7 @@ export interface MaterializeLocalGenerationOptions {
 
 /**
  * Browser-local materialization requires media registration plus generation
- * mutation, neither of which exists in the frozen Astrid bridge contract.
+ * mutation, neither of which exists in the Astrid bridge contract.
  * Fail before reading a cloud record, file handle, or upload target so callers
  * can recover without partial state or leaked storage objects.
  */

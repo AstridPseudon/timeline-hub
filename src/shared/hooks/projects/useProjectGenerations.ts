@@ -5,8 +5,8 @@
  * This module provides hooks for querying generations at the PROJECT level.
  *
  * ## Data Source
- * Bridge gallery reads (doc-27 §4.1): bounded keyset pages from
- * `GET /projects/:slug/generations` (R12) via the frozen `AstridLocalClient`.
+ * Bridge gallery reads: bounded keyset pages from
+ * `GET /projects/:slug/generations` via `AstridLocalClient`.
  * The project id doubles as the bridge project slug — the composition point
  * is the existing project-selection context, not a new singleton.
  *
@@ -40,7 +40,7 @@ import {
 /** Cache garbage collection time for paginated generation queries */
 const GENERATIONS_GC_TIME_MS = 10 * 60 * 1000; // 10 minutes
 
-/** The bridge caps one gallery page at 200 rows (doc-27 §4.1). */
+/** The bridge caps one gallery page at 200 rows. */
 const BRIDGE_MAX_PAGE_LIMIT = 200;
 
 
@@ -56,7 +56,7 @@ export interface GenerationFilters {
 /**
  * Map one bridge summary row into the raw record shape `transformGeneration`
  * consumes. Display URLs are resolved here: the primary variant's managed
- * media id becomes a same-origin R9 content-route address.
+ * media id becomes a same-origin content-route address.
  */
 function toRawGeneration(row: BridgeGenerationSummary, projectSlug: string): RawGeneration {
   const primaryMediaUrl = row.primary ? bridgeMediaUrl(projectSlug, row.primary.media_id) : null;
@@ -252,7 +252,7 @@ async function fetchGenerationsForProject(
   hasMore: boolean;
 }> {
   const client = new AstridLocalClient({ projectSlug: projectId });
-  // Route-level filtering: R12 supports exactly `starred`.
+  // Route-level filtering: the route supports exactly `starred`.
   const starred = filters?.starredOnly ? true : undefined;
   const pageLimit = Math.min(Math.max(limit, 1), BRIDGE_MAX_PAGE_LIMIT);
 

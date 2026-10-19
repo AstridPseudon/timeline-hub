@@ -213,9 +213,8 @@ function calloutSequenceIndex(audience: PublicAstridAudience, id: string, phone:
 // Both the card and its SVG group consume these same timings on every screen size.
 function calloutTiming(index: number, audience: PublicAstridAudience, id: string): CSSProperties {
   const card = 360;
-  // Let the card visibly settle before the initial connector draw begins. The
-  // old 200ms draw overlapped the card entrance so closely that the first
-  // connection looked static on a real page load.
+  // Let the card visibly settle before the initial connector draw begins. The draw waits
+  // for the card entrance, so the first connection is visible on a real page load.
   const connector = 480;
   const endpoint = 180;
   const connectorLead = card + 40;

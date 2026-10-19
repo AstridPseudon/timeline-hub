@@ -1,5 +1,5 @@
 /**
- * A browser action that the frozen Astrid bridge does not expose.
+ * A browser action that the Astrid bridge does not expose.
  *
  * This is deliberately distinct from a transport failure: retrying the same
  * request cannot make an absent route appear. Callers surface the recovery

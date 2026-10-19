@@ -1,6 +1,6 @@
 // =============================================================================
 // RE-EXPORTS FROM SHARED
-// These types were moved to shared/ because they're used across multiple tools.
+// These types are used across multiple tools.
 // Re-exported here for backwards compatibility with existing imports.
 // =============================================================================
 export {
@@ -94,7 +94,6 @@ export interface VideoTravelSettings {
   textAfterPrompts?: string; // Text to append to all prompts
   generationTypeMode?: 'i2v' | 'vace'; // Generation type: I2V (image-to-video) or VACE (structure video guided)
   smoothContinuations?: boolean; // Enable SVI (smooth video interpolation) for smoother transitions
-  // selectedMode removed - now hardcoded to use specific model
   pairConfigs?: Array<{
     id: string;
     prompt: string;

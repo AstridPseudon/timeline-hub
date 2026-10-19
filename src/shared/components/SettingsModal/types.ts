@@ -41,19 +41,19 @@ export interface PreferencesSectionProps {
 }
 
 // ---------------------------------------------------------------------------
-// Extensions tab types (T18)
+// Extensions tab types
 // ---------------------------------------------------------------------------
 
 /** Status classification for an extension displayed in the manager. */
 export type ExtensionStatus = 'active' | 'blocked' | 'degraded' | 'disabled' | 'error';
 
 // ---------------------------------------------------------------------------
-// T21: Dependency badges, degraded contributions, lifecycle events
+// Dependency badges, degraded contributions, lifecycle events
 // ---------------------------------------------------------------------------
 
 
 // ---------------------------------------------------------------------------
-// T22: Settings schema-driven controls and migration summary
+// Settings schema-driven controls and migration summary
 // ---------------------------------------------------------------------------
 
 /** Supported primitive types for settings fields. */

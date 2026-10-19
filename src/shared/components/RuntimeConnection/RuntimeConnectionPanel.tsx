@@ -199,7 +199,7 @@ function UpdateNeededPanel() {
 }
 
 /**
- * The connection panel for the hosted build, one screen per thing a person can do (Plan A, D3). Renders nothing once
+ * The connection panel for the hosted build, one screen per thing a person can do. Renders nothing once
  * connected: the gate then shows the app. Every word comes from `copy.ts`.
  */
 export function RuntimeConnectionPanel({ connection }: RuntimeConnectionPanelProps) {

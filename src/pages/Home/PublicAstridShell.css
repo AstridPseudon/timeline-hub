@@ -1826,7 +1826,7 @@
     animation: astrid-mobile-callout-arrive 220ms ease-out calc(80ms + var(--astrid-mobile-callout-index, 0) * 60ms) backwards;
   }
   .astrid-public-site .astrid-callout-connectors g {
-    /* Card and connector share the same start; the path no longer trails the card arrival. */
+    /* Card and connector share the same start; the path does not trail the card arrival. */
     --astrid-mobile-callout-start: calc(80ms + var(--astrid-mobile-callout-index, 0) * 60ms);
   }
   .astrid-public-site .astrid-callout-connectors path {

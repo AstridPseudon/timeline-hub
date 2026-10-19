@@ -84,7 +84,7 @@ describe('fetchDerivedItemsFromRepository (bridge R13 read)', () => {
 
     const result = await fetchDerivedItemsFromRepository(sourceId);
 
-    // The R13 detail addresses each variant by its Runtime object identity, so
+    // The generation detail addresses each variant by its Runtime object identity, so
     // the display URL is the object route for that variant's digest.
     const variantPage = await (await router.handle(
       new Request(`${FAKE_ORIGIN}/v1/generations/${sourceId}/variants`),

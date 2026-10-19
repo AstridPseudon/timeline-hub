@@ -3,7 +3,7 @@ import { BridgeRouteError } from '@/integrations/astrid/transport';
 import { bridgeTaskSummaryToTask, getBridgeTaskClient } from '@/integrations/astrid/bridgeTaskReads';
 
 /**
- * One task's poll read via the frozen `GET /projects/:slug/tasks/:task_id`
+ * One task's poll read via `GET /projects/:slug/tasks/:task_id`
  * route. A missing task is a `null`, never an error.
  */
 export async function fetchTaskInProject(taskId: string, projectId: string): Promise<Task | null> {

@@ -1,5 +1,5 @@
 /**
- * Task routes of the frozen doc-27 §4.1 set: admission, polling reads, and
+ * Task routes: admission, polling reads, and
  * cancellation. Thin declarations over the shared transport — no retry
  * policy, no caching, no state. Consumers own cadence and idempotency-key
  * discipline.
@@ -54,7 +54,7 @@ export class AstridLocalTaskRoutes {
   }
 
   /**
-   * R1 admission. `idempotencyKey` is REQUIRED by the bridge
+   * Admission. `idempotencyKey` is REQUIRED by the bridge
    * (`Idempotency-Key` header); replaying the same key with the same body is
    * the server's dedup primitive, so callers derive keys deterministically.
    */
