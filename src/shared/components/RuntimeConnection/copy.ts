@@ -33,7 +33,7 @@ export const ASTRID_COMMANDS = {
   macLinux: 'curl -fsSL https://astrid.haus/install | sh',
   windows: 'irm https://astrid.haus/install.ps1 | iex',
   macLinuxUpdate: 'curl -fsSL https://astrid.haus/install | sh -s -- --update',
-  windowsUpdate: '& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) -Update',
+  windowsUpdate: '& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --update',
 } as const;
 
 export type CommandMode = 'install' | 'update';

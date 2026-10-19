@@ -1,16 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ASTRID_COMMANDS, installCommand } from './copy.ts';
+import { installCommand } from './copy.ts';
 
 afterEach(() => vi.restoreAllMocks());
 
 describe('install commands', () => {
   it.each([
-    ['MacIntel', 'Macintosh', 'install', ASTRID_COMMANDS.macLinux],
-    ['Linux x86_64', 'Linux', 'install', ASTRID_COMMANDS.macLinux],
-    ['Win32', 'Windows', 'install', ASTRID_COMMANDS.windows],
-    ['MacIntel', 'Macintosh', 'update', ASTRID_COMMANDS.macLinuxUpdate],
-    ['Linux x86_64', 'Linux', 'update', ASTRID_COMMANDS.macLinuxUpdate],
-    ['Win32', 'Windows', 'update', ASTRID_COMMANDS.windowsUpdate],
+    ['MacIntel', 'Macintosh', 'install', 'curl -fsSL https://astrid.haus/install | sh'],
+    ['Linux x86_64', 'Linux', 'install', 'curl -fsSL https://astrid.haus/install | sh'],
+    ['Win32', 'Windows', 'install', 'irm https://astrid.haus/install.ps1 | iex'],
+    ['MacIntel', 'Macintosh', 'update', 'curl -fsSL https://astrid.haus/install | sh -s -- --update'],
+    ['Linux x86_64', 'Linux', 'update', 'curl -fsSL https://astrid.haus/install | sh -s -- --update'],
+    ['Win32', 'Windows', 'update', '& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --update'],
   ] as const)('%s %s %s command', (platform, os, mode, expected) => {
     vi.spyOn(navigator, 'platform', 'get').mockReturnValue(platform);
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(os);
