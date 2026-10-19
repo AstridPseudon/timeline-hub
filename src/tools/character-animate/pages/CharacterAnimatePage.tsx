@@ -89,11 +89,6 @@ const CharacterAnimatePage: React.FC = () => {
               className="resize-none"
               clearable
               onClear={() => handlers.setPrompt('')}
-              voiceInput
-              voiceContext="This is a prompt for character animation. Provide brief rules or guidance like 'preserve outfit', 'natural expression', 'no background changes'. Keep it concise."
-              onVoiceResult={(result) => {
-                handlers.setPrompt(result.prompt || result.transcription);
-              }}
             />
           </div>
         </div>

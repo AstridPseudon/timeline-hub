@@ -22,17 +22,6 @@ vi.mock('@/shared/components/DefaultableTextarea', () => ({
         >
           {`set-default-${label}`}
         </button>
-        <button
-          type="button"
-          onClick={() =>
-            (props.onVoiceResult as (value: { prompt?: string; transcription?: string }) => void)({
-              prompt: '',
-              transcription: `${label}-voice`,
-            })
-          }
-        >
-          {`voice-${label}`}
-        </button>
       </div>
     );
   },
@@ -74,7 +63,7 @@ describe('PromptFieldsSection', () => {
     expect(mockDefaultableTextarea).not.toHaveBeenCalled();
   });
 
-  it('renders before/after fields and wires change, default, and voice handlers', () => {
+  it('renders before/after fields and wires change and default handlers', () => {
     const onChange = vi.fn();
     const handleSaveFieldAsDefault = vi.fn(async () => undefined);
 
@@ -110,24 +99,20 @@ describe('PromptFieldsSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'change-Before:' }));
     fireEvent.click(screen.getByRole('button', { name: 'clear-Before:' }));
     fireEvent.click(screen.getByRole('button', { name: 'use-default-Before:' }));
-    fireEvent.click(screen.getByRole('button', { name: 'voice-Before:' }));
     fireEvent.click(screen.getByRole('button', { name: 'set-default-Before:' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'change-After:' }));
     fireEvent.click(screen.getByRole('button', { name: 'clear-After:' }));
     fireEvent.click(screen.getByRole('button', { name: 'use-default-After:' }));
-    fireEvent.click(screen.getByRole('button', { name: 'voice-After:' }));
     fireEvent.click(screen.getByRole('button', { name: 'set-default-After:' }));
 
     expect(onChange).toHaveBeenCalledWith({ textBeforePrompts: 'Before:-changed' });
     expect(onChange).toHaveBeenCalledWith({ textBeforePrompts: '' });
     expect(onChange).toHaveBeenCalledWith({ textBeforePrompts: undefined });
-    expect(onChange).toHaveBeenCalledWith({ textBeforePrompts: 'Before:-voice' });
 
     expect(onChange).toHaveBeenCalledWith({ textAfterPrompts: 'After:-changed' });
     expect(onChange).toHaveBeenCalledWith({ textAfterPrompts: '' });
     expect(onChange).toHaveBeenCalledWith({ textAfterPrompts: undefined });
-    expect(onChange).toHaveBeenCalledWith({ textAfterPrompts: 'After:-voice' });
 
     expect(handleSaveFieldAsDefault).toHaveBeenCalledWith('textBeforePrompts', 'Before:-defaulted');
     expect(handleSaveFieldAsDefault).toHaveBeenCalledWith('textAfterPrompts', 'After:-defaulted');

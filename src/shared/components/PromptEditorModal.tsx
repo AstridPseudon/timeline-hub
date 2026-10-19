@@ -5,14 +5,9 @@ import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { useExtraLargeModal } from '@/shared/hooks/useModal';
 import { useScrollFade } from '@/shared/hooks/useScrollFade';
-import { useTouchDragDetection } from '@/shared/hooks/useTouchDragDetection';
-import { PromptEditorAIPanel } from './PromptEditorModal/components/PromptEditorAIPanel';
 import { PromptEditorPromptList } from './PromptEditorModal/components/PromptEditorPromptList';
 import { PromptEditorFooter } from './PromptEditorModal/components/PromptEditorFooter';
-import { useAIInteractionService } from '@/shared/hooks/ai/useAIInteractionService';
-import { usePersistentPromptSettings } from './PromptEditorModal/hooks/usePersistentPromptSettings';
 import { usePromptEditing } from './PromptEditorModal/hooks/usePromptEditing';
-type EditorMode = 'generate' | 'remix' | 'bulk-edit';
 
 interface PromptEditorModalProps {
   isOpen: boolean;
@@ -20,8 +15,6 @@ interface PromptEditorModalProps {
   prompts: PromptEntry[];
   onSave: (updatedPrompts: PromptEntry[]) => void;
   generatePromptId: () => string;
-  openWithAIExpanded?: boolean;
-  onGenerateAndQueue?: (prompts: PromptEntry[]) => void;
 }
 
 const PromptEditorModal: React.FC<PromptEditorModalProps> = React.memo(({
@@ -30,14 +23,10 @@ const PromptEditorModal: React.FC<PromptEditorModalProps> = React.memo(({
   prompts: initialPrompts,
   onSave,
   generatePromptId,
-  openWithAIExpanded = false,
-  onGenerateAndQueue,
 }) => {
   const [activePromptIdForFullView, setActivePromptIdForFullView] = useState<string | null>(null);
-  const [isAIPromptSectionExpanded, setIsAIPromptSectionExpanded] = useState(false);
 
   const isMobile = useIsMobile();
-  const { isDragging, handleTouchStart } = useTouchDragDetection();
   const modalContentRef = useRef<HTMLDivElement>(null);
 
   const modal = useExtraLargeModal('promptEditor');
@@ -49,33 +38,12 @@ const PromptEditorModal: React.FC<PromptEditorModalProps> = React.memo(({
   });
 
   const {
-    activeTab,
-    generationControlValues,
-    bulkEditControlValues,
-    handleGenerationValuesChange,
-    handleBulkEditValuesChange,
-    handleActiveTabChange,
-  } = usePersistentPromptSettings({ selectedProjectId });
-
-  const {
-    generatePrompts,
-    editPromptWithAI,
-    generateSummary,
-    isGenerating,
-    isEditing,
-    isLoading,
-  } = useAIInteractionService({ generatePromptId });
-
-  const {
     internalPrompts,
     handleFinalSaveAndClose,
     handlePromptFieldUpdate,
     handleInternalRemovePrompt,
     handleInternalAddBlankPrompt,
     handleRemoveAllPrompts,
-    handleGenerateAndAddPrompts,
-    handleGenerateAndQueue,
-    handleBulkEditPrompts,
   } = usePromptEditing({
     isOpen,
     initialPrompts,
@@ -84,22 +52,13 @@ const PromptEditorModal: React.FC<PromptEditorModalProps> = React.memo(({
     scrollRef,
     selectedProjectId,
     generatePromptId,
-    onGenerateAndQueue,
-    aiGeneratePrompts: generatePrompts,
-    aiEditPrompt: (params) => editPromptWithAI({
-      originalPromptText: params.originalPromptText,
-      editInstructions: params.editInstructions,
-      modelType: params.modelType === 'smart' ? 'smart' : 'standard',
-    }),
-    aiGenerateSummary: generateSummary,
   });
 
   useEffect(() => {
     if (isOpen) {
       setActivePromptIdForFullView(null);
-      setIsAIPromptSectionExpanded(openWithAIExpanded);
     }
-  }, [isOpen, openWithAIExpanded, selectedProjectId]);
+  }, [isOpen, selectedProjectId]);
 
   const handleInsideInteraction = useCallback((event: React.MouseEvent | React.TouchEvent) => {
     if (!activePromptIdForFullView) {
@@ -114,13 +73,6 @@ const PromptEditorModal: React.FC<PromptEditorModalProps> = React.memo(({
       }
     }
   }, [activePromptIdForFullView]);
-
-  const handleToggleAIPromptSection = useCallback((event: React.MouseEvent | React.TouchEvent) => {
-    event.preventDefault();
-    if (!isDragging.current) {
-      setIsAIPromptSectionExpanded((previous) => !previous);
-    }
-  }, [isDragging]);
 
   const handleModalClose = useCallback((open: boolean) => {
     if (!open) {
@@ -147,34 +99,9 @@ const PromptEditorModal: React.FC<PromptEditorModalProps> = React.memo(({
           onTouchStartCapture={handleInsideInteraction}
           className={`${modal.scrollClass} ${modal.isMobile ? 'pt-2' : 'pt-6'}`}
         >
-          <PromptEditorAIPanel
-            isMobile={modal.isMobile}
-            expanded={isAIPromptSectionExpanded}
-            onExpandedChange={setIsAIPromptSectionExpanded}
-            onToggle={handleToggleAIPromptSection}
-            onTouchStart={handleTouchStart}
-            activeTab={activeTab}
-            onActiveTabChange={(mode) => handleActiveTabChange(mode as EditorMode)}
-            prompts={internalPrompts}
-            generation={{
-              onGenerate: handleGenerateAndAddPrompts,
-              onGenerateAndQueue: onGenerateAndQueue ? handleGenerateAndQueue : undefined,
-              isGenerating,
-              values: generationControlValues,
-              onValuesChange: handleGenerationValuesChange,
-            }}
-            bulkEdit={{
-              onBulkEdit: handleBulkEditPrompts,
-              isEditing,
-              values: bulkEditControlValues,
-              onValuesChange: handleBulkEditValuesChange,
-            }}
-          />
-
           <PromptEditorPromptList
             prompts={internalPrompts}
             isMobile={isMobile}
-            isLoading={isLoading}
             activePromptIdForFullView={activePromptIdForFullView}
             onActivePromptChange={setActivePromptIdForFullView}
             onUpdatePromptField={handlePromptFieldUpdate}

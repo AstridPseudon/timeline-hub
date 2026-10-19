@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import type { PromptEntry } from '@/shared/components/ImageGenerationForm/types';
-import type { GeneratePromptsParams } from '@/types/ai';
-import type { BulkEditParams as BEC_BulkEditParams } from '@/shared/components/PromptEditorModal/BulkEditControls';
 
 interface UsePromptEditingParams {
   isOpen: boolean;
@@ -12,10 +10,6 @@ interface UsePromptEditingParams {
   scrollRef: React.RefObject<HTMLDivElement>;
   selectedProjectId: string | null;
   generatePromptId: () => string;
-  onGenerateAndQueue?: (prompts: PromptEntry[]) => void;
-  aiGeneratePrompts: (params: GeneratePromptsParams) => Promise<Array<{ id: string; text: string; shortText?: string }>>;
-  aiEditPrompt: (params: { originalPromptText: string; editInstructions: string; modelType?: string }) => Promise<{ success: boolean; newText?: string; newShortText?: string }>;
-  aiGenerateSummary: (promptText: string) => Promise<string | null | undefined>;
 }
 
 export function usePromptEditing({
@@ -26,10 +20,6 @@ export function usePromptEditing({
   scrollRef,
   selectedProjectId,
   generatePromptId,
-  onGenerateAndQueue,
-  aiGeneratePrompts,
-  aiEditPrompt,
-  aiGenerateSummary,
 }: UsePromptEditingParams) {
   const [internalPrompts, setInternalPrompts] = useState<PromptEntry[]>(() =>
     initialPrompts.map((prompt) => ({ ...prompt })),
@@ -127,92 +117,6 @@ export function usePromptEditing({
     setInternalPrompts([emptyPrompt]);
   }, [generatePromptId]);
 
-  const handleGenerateAndAddPrompts = useCallback(async (params: GeneratePromptsParams) => {
-    const summariesInitiallyRequested = params.addSummaryForNewPrompts;
-    const rawResults = await aiGeneratePrompts(params);
-
-    const newEntries: PromptEntry[] = rawResults.map((item) => ({
-      id: item.id,
-      fullPrompt: item.text,
-      shortPrompt: item.shortText,
-    }));
-
-    const allExistingPromptsAreEmpty = internalPrompts.every(
-      (prompt) => !prompt.fullPrompt.trim() && !(prompt.shortPrompt ?? '').trim(),
-    );
-
-    const shouldReplace = params.replaceCurrentPrompts || allExistingPromptsAreEmpty;
-    setInternalPrompts((currentPrompts) => (shouldReplace ? newEntries : [...currentPrompts, ...newEntries]));
-
-    if (!summariesInitiallyRequested && params.addSummaryForNewPrompts && newEntries.length > 0) {
-      for (const entry of newEntries) {
-        if (!entry.shortPrompt && entry.fullPrompt) {
-          try {
-            const summary = await aiGenerateSummary(entry.fullPrompt);
-            if (summary) {
-              setInternalPrompts((currentPrompts) =>
-                currentPrompts.map((prompt) =>
-                  prompt.id === entry.id ? { ...prompt, shortPrompt: summary } : prompt,
-                ),
-              );
-            }
-          } catch (error) {
-            normalizeAndPresentError(error, { context: 'PromptEditorModal', showToast: false });
-          }
-        }
-      }
-
-      setInternalPrompts((currentPrompts) => currentPrompts);
-    }
-  }, [aiGeneratePrompts, aiGenerateSummary, internalPrompts]);
-
-  const handleGenerateAndQueue = useCallback(async (params: GeneratePromptsParams) => {
-    await handleGenerateAndAddPrompts(params);
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    if (onGenerateAndQueue) {
-      onGenerateAndQueue(internalPromptsRef.current);
-    }
-  }, [handleGenerateAndAddPrompts, onGenerateAndQueue]);
-
-  const handleBulkEditPrompts = useCallback(async (params: BEC_BulkEditParams) => {
-    if (internalPrompts.length === 0) {
-      return;
-    }
-
-    const promptsToUpdate = internalPrompts.map((prompt) => ({ id: prompt.id, text: prompt.fullPrompt }));
-    const editRequests = promptsToUpdate.map((prompt) => ({
-      originalPromptText: prompt.text,
-      editInstructions: params.editInstructions,
-      modelType: params.modelType,
-    }));
-
-    const originalPromptIds = promptsToUpdate.map((prompt) => prompt.id);
-
-    for (let index = 0; index < editRequests.length; index += 1) {
-      const request = editRequests[index];
-      const promptIdToUpdate = originalPromptIds[index];
-
-      try {
-        const result = await aiEditPrompt(request);
-        if (result.success && result.newText) {
-          setInternalPrompts((currentPrompts) =>
-            currentPrompts.map((prompt) =>
-              prompt.id === promptIdToUpdate
-                ? { ...prompt, fullPrompt: result.newText!, shortPrompt: result.newShortText || '' }
-                : prompt,
-            ),
-          );
-        }
-      } catch (error) {
-        normalizeAndPresentError(error, {
-          context: 'PromptEditorModal',
-          toastTitle: `Error editing prompt ${promptIdToUpdate.substring(0, 8)}...`,
-        });
-      }
-    }
-  }, [aiEditPrompt, internalPrompts]);
-
   return {
     internalPrompts,
     handleFinalSaveAndClose,
@@ -220,8 +124,5 @@ export function usePromptEditing({
     handleInternalRemovePrompt,
     handleInternalAddBlankPrompt,
     handleRemoveAllPrompts,
-    handleGenerateAndAddPrompts,
-    handleGenerateAndQueue,
-    handleBulkEditPrompts,
   };
 }

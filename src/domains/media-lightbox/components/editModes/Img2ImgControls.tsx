@@ -87,11 +87,6 @@ export const Img2ImgControls: React.FC<Img2ImgControlsProps> = ({
             rows={textareaRows}
             clearable
             onClear={() => setImg2imgPrompt('')}
-            voiceInput
-            voiceContext="This is an image-to-image prompt. Describe the desired image you want to create. Be specific about the visual result."
-            onVoiceResult={(result) => {
-              setImg2imgPrompt(result.prompt || result.transcription);
-            }}
           />
         </div>
 

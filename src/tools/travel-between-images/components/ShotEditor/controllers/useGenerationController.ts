@@ -229,7 +229,6 @@ export function useGenerationController({
     isSteerableMotionEnqueuing,
     steerableMotionJustQueued,
     isGenerationDisabled,
-    enhancementProgress,
   } = useGenerateBatch({
     core: {
       projectId: core.projectId,
@@ -257,6 +256,5 @@ export function useGenerationController({
     isSteerableMotionEnqueuing,
     steerableMotionJustQueued,
     isGenerationDisabled,
-    enhancementProgress,
   };
 }

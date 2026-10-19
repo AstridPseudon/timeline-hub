@@ -86,7 +86,6 @@ interface UseShotEditorLayoutModelParams {
       handleBatchVideoPromptChangeWithClear: UseShotSettingsValueProps['generationHandlers']['handleBatchVideoPromptChangeWithClear'];
       handleStepsChange: UseShotSettingsValueProps['generationHandlers']['handleStepsChange'];
       clearAllEnhancedPrompts: UseShotSettingsValueProps['generationHandlers']['clearAllEnhancedPrompts'];
-      enhancementProgress: UseShotSettingsValueProps['generationMode']['enhancementProgress'];
     };
     imageManagement: {
       handleReorderImagesInShot: UseShotSettingsValueProps['handleImageReorder'];
@@ -264,8 +263,6 @@ export function buildShotEditorContextInput({
       randomSeed: settings.randomSeed,
       onRandomSeedChange:
         controllers.generationController.handleRandomSeedChange,
-      enhancementProgress:
-        controllers.generationController.enhancementProgress,
     },
     generationHandlers: {
       handleGenerateBatch:

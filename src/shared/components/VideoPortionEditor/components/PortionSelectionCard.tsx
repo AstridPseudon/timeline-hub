@@ -128,13 +128,6 @@ export function PortionSelectionCard({
           className="min-h-0 h-16 resize-none"
           clearable
           onClear={() => onUpdateSelectionSettings(selection.id, { prompt: '' })}
-          voiceInput
-          voiceContext="This is a video segment regeneration prompt. Describe what should happen in this specific portion of the video - the motion, action, or visual content you want to generate."
-          onVoiceResult={(result) => {
-            onUpdateSelectionSettings(selection.id, {
-              prompt: result.prompt || result.transcription,
-            });
-          }}
         />
       </div>
     </div>

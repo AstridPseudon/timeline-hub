@@ -23,7 +23,6 @@ function wrapper({ children }: { children: React.ReactNode }) {
 
 function makeHandlers(): AgentChatActionsHandlers {
   return {
-    toggleRecording: vi.fn(),
     focusComposer: vi.fn(),
     markEngaged: vi.fn(),
   };
@@ -42,7 +41,7 @@ describe('AgentChatActions registry', () => {
       const registry = useAgentChatActionsRegistry();
       const handlers = makeHandlers();
       registry.registerHandlers(handlers);
-      registry.publishState({ isRecording: true, isProcessing: false, isAgentWorking: true });
+      registry.publishState({ isAgentWorking: true });
       const actions = useAgentChatActions();
       onActions(actions);
       return null;
@@ -57,8 +56,8 @@ describe('AgentChatActions registry', () => {
 
     const last = seen[seen.length - 1];
     expect(last).not.toBeNull();
-    expect(last?.isRecording).toBe(true);
-    expect(last?.isProcessing).toBe(false);
+    expect(last).toHaveProperty('focusComposer');
+    expect(last).toHaveProperty('markEngaged');
     expect(last?.isAgentWorking).toBe(true);
 
     // Suppress unused variable warning — actionsHook is just to assert wrapper isolation
@@ -76,7 +75,7 @@ describe('AgentChatActions registry', () => {
       capturedActions = actions;
       // First mount → register A; then immediately register B (overwrite).
       registry.registerHandlers(handlersA);
-      registry.publishState({ isRecording: false, isProcessing: false, isAgentWorking: false });
+      registry.publishState({ isAgentWorking: false });
       registry.registerHandlers(handlersB);
       return null;
     }
@@ -88,14 +87,11 @@ describe('AgentChatActions registry', () => {
     );
 
     expect(capturedActions).not.toBeNull();
-    capturedActions?.toggleRecording();
     capturedActions?.focusComposer();
     capturedActions?.markEngaged();
     // B is the most recent registration → its handlers fire, A's don't.
-    expect(handlersA.toggleRecording).not.toHaveBeenCalled();
     expect(handlersA.focusComposer).not.toHaveBeenCalled();
     expect(handlersA.markEngaged).not.toHaveBeenCalled();
-    expect(handlersB.toggleRecording).toHaveBeenCalledTimes(1);
     expect(handlersB.focusComposer).toHaveBeenCalledTimes(1);
     expect(handlersB.markEngaged).toHaveBeenCalledTimes(1);
   });
@@ -111,7 +107,7 @@ describe('AgentChatActions registry', () => {
       // doesn't re-register.
       useEffect(() => {
         registry.registerHandlers(makeHandlers());
-        registry.publishState({ isRecording: false, isProcessing: false, isAgentWorking: false });
+        registry.publishState({ isAgentWorking: false });
         unregisterFn = registry.unregister;
       }, [registry]);
       return null;

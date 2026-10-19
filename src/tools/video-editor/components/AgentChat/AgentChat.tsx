@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Info, Loader2, Mic, Send, Square, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Info, Loader2, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { isAcpUnavailable } from '@/integrations/astrid/acpRoutes.ts';
@@ -30,7 +30,6 @@ import {
   useConfigureAgentSession,
   useLocalAgents,
 } from '@/tools/video-editor/hooks/useAgentSession.ts';
-import { useAgentVoice } from '@/tools/video-editor/hooks/useAgentVoice.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 import { loadGenerationForLightbox } from '@/tools/video-editor/lib/generation-utils.ts';
 import type {
@@ -313,7 +312,7 @@ function AvailableAgentChatPanel({
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
   const [startingAgent, setStartingAgent] = useState<LocalAgentId | null>(null);
   const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; choice?: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; details: string } | null>(null);
-  // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
+  // Engagement flag local to AgentChatPanel: flipped by markEngaged() (composer-button click)
   // and decoupled from pane open state so the close-path bug from the rev-4
   // setIsTasksPaneOpenProgrammatic approach can't recur.
   const [userEngaged, setUserEngaged] = useState(false);
@@ -483,21 +482,11 @@ function AvailableAgentChatPanel({
   );
   const { clips, summary } = useCurrentAttachmentSet();
 
-  const voice = useAgentVoice({
-    onTranscription: (text) => {
-      if (isPanelMountedRef.current) void handleSend(text);
-    },
-  });
-  // Stable ref so registered handlers always invoke the current voice closure
-  // without re-registering when useVoiceRecording returns new function identities.
-  const voiceRef = useRef(voice);
-  voiceRef.current = voice;
   const isPanelMountedRef = useRef(true);
   useEffect(() => {
     isPanelMountedRef.current = true;
     return () => {
       isPanelMountedRef.current = false;
-      voiceRef.current.cancelRecording();
     };
   }, []);
 
@@ -514,23 +503,16 @@ function AvailableAgentChatPanel({
   const composerLockedRef = useRef(false);
   const configurationFailed = Boolean(startFailure?.sessionId && startFailure.sessionId === activeSessionId);
   composerLockedRef.current = isFollower || startingAgent !== null || configurationFailed;
-  useEffect(() => {
-    if (isFollower || startingAgent) voiceRef.current.cancelRecording();
-  }, [isFollower, startingAgent]);
   const showNoProjectState = !hasProject && sessionOptions.length === 0;
   const hasQueuedMessages = queue.some((item) => item.sessionId === activeSessionId);
   const activeQueue = startingAgent ? [] : queue.filter((item) => item.sessionId === activeSessionId);
-  // A phone or tablet has no shortcut keys to press: its way to talk is the mic.
-  const [coarsePointer] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true);
   const inputPlaceholder = startingAgent
     ? `Starting ${agentNames[startingAgent]}…`
     : showNoProjectState
-    ? 'Select a project to start chatting...'
-    : voice.isRecording
-      ? 'Recording...'
+      ? 'Select a project to start chatting...'
       : (isProcessing || sendMessage.isPending || hasQueuedMessages)
         ? 'Type to queue next message...'
-        : coarsePointer ? 'Type, or tap the mic to talk...' : 'Type or press Cmd+Shift+R to talk...';
+        : 'Type a message...';
   const optimisticTurnAlreadyMaterialized = optimisticMessage !== null
     && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.request_id === optimisticMessage.id));
   const chatFailures = [activeSession.error, sendMessage.localError, createSession.error, sessions.error, projectChat.error];
@@ -645,7 +627,7 @@ function AvailableAgentChatPanel({
 
   // An empty engaged project gets one session. Existing project chats remain
   // selectable when Main is unset, and the host CAS claim arbitrates tabs.
-  const isEngaged = userEngaged || isTasksPaneLocked || voice.isRecording || voice.isProcessing;
+  const isEngaged = userEngaged || isTasksPaneLocked;
   const hasAvailableProjectSession = Boolean(projectChat.data?.sessions.some(session => !session.missing));
   useEffect(() => {
     if (hasAutoCreatedSessionRef.current || !projectChat.data || projectChat.isLoading || projectChat.isError
@@ -662,26 +644,6 @@ function AvailableAgentChatPanel({
       },
     });
   }, [createSession, hasProject, hasAvailableProjectSession, projectChat.data, projectChat.isLoading, projectChat.isError, isEngaged]);
-
-  // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
-        event.preventDefault();
-        if (!hasProject || isFollower || startingAgent) {
-          return;
-        }
-        if (voice.isRecording) {
-          voice.stopRecording();
-        } else if (!voice.isProcessing) {
-          voice.startRecording();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasProject, isFollower, startingAgent, voice]);
 
   useEffect(() => {
     sendingRef.current = false;
@@ -805,8 +767,8 @@ function AvailableAgentChatPanel({
     }
   }, [activeSessionData?.turns.length, activeSessionId, editorContext, projectId, sendMessage, reconcileAcceptedQueue, sessionControl?.active]);
 
-  const handleSend = useCallback(async (rawText?: string) => {
-    const text = (rawText ?? draft).trim();
+  const handleSend = useCallback(async () => {
+    const text = draft.trim();
     if (!text || !activeSessionId || !hasProject || composerLockedRef.current) return;
 
     const attachments: AgentTurnAttachment[] = clips.map((clip) => ({
@@ -824,10 +786,8 @@ function AvailableAgentChatPanel({
       duration: clip.duration,
     }));
 
-    if (rawText === undefined) {
-      setDraft('');
-      draftSnapshotRef.current = { ...draftSnapshotRef.current, text: '' };
-    }
+    setDraft('');
+    draftSnapshotRef.current = { ...draftSnapshotRef.current, text: '' };
     const item: QueuedMessage = {
       id: createMessageId(),
       text,
@@ -922,22 +882,12 @@ function AvailableAgentChatPanel({
   }, [defaultAgent, handleNewSession, configureSession]);
 
   // ==========================================================================
-  // Actions registry — exposes stable handlers the parent (TasksPane split
+  // Actions registry — exposes stable handlers the parent (TasksPane message
   // button) can invoke. Stable identity means the registration effect runs
-  // exactly once per mount, even though `voice` re-renders. Reactive state is
-  // published separately so the split button mic icon flips with recording.
+  // exactly once per mount.
   // ==========================================================================
   const actionsRegistry = useAgentChatActionsRegistry();
   const stableHandlers = useMemo<AgentChatActionsHandlers>(() => ({
-    toggleRecording: () => {
-      if (composerLockedRef.current) return;
-      const v = voiceRef.current;
-      if (v.isRecording) {
-        v.stopRecording();
-      } else if (!v.isProcessing) {
-        v.startRecording();
-      }
-    },
     focusComposer: () => {
       // The pane may still be sliding in: do not scroll the page to reach it.
       inputRef.current?.focus({ preventScroll: true });
@@ -953,24 +903,12 @@ function AvailableAgentChatPanel({
 
   useEffect(() => {
     actionsRegistry.registerHandlers(stableHandlers);
-    actionsRegistry.publishState({
-      isRecording: voice.isRecording,
-      isProcessing: voice.isProcessing,
-      isAgentWorking: agentWorking,
-    });
     return () => actionsRegistry.unregister();
-    // stableHandlers and actionsRegistry are both referentially stable, so this
-    // effect runs exactly once per mount despite voice churn.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionsRegistry, stableHandlers]);
 
   useEffect(() => {
-    actionsRegistry.publishState({
-      isRecording: voice.isRecording,
-      isProcessing: voice.isProcessing,
-      isAgentWorking: agentWorking,
-    });
-  }, [actionsRegistry, voice.isRecording, voice.isProcessing, agentWorking]);
+    actionsRegistry.publishState({ isAgentWorking: agentWorking });
+  }, [actionsRegistry, agentWorking]);
 
   return (
     // No background of its own — sits on the parent pane's bg so the only
@@ -1146,9 +1084,7 @@ function AvailableAgentChatPanel({
             ) : (
               <>
                 <p>✨ I can do almost anything</p>
-                {coarsePointer
-                  ? <p className="mt-1 text-xs">Tap the mic to talk</p>
-                  : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>}
+                <p className="mt-1 text-xs">Type a message to get started.</p>
                 <p data-testid="agent-chat-runs-with" className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px] normal-case">
                   <AgentIcon agent={startingAgent ?? chatAgent} className="h-3 w-3 shrink-0" />
                   {agentNames[chatAgent]} · {chatModelName ?? 'default model'}
@@ -1296,31 +1232,6 @@ function AvailableAgentChatPanel({
           </div>
         )}
 
-        {voice.isRecording && (
-          <div className="mb-2 flex items-center justify-between rounded-lg bg-red-500/10 px-3 py-2 text-sm">
-            <div className="flex items-center gap-2 text-red-400">
-              <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />
-              Recording... {voice.remainingSeconds}s
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="h-7 px-2 text-xs text-red-400 hover:text-red-300"
-              onClick={() => voice.stopRecording()}
-            >
-              Done
-            </Button>
-          </div>
-        )}
-
-        {voice.isProcessing && (
-          <div className="mb-2 flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Transcribing...
-          </div>
-        )}
-
         {!isProcessing && !sendMessage.isPending && isCancelled && (
           <div className="mb-2 rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
             Session stopped. Start a new conversation to continue.
@@ -1365,7 +1276,7 @@ function AvailableAgentChatPanel({
               rows={isExpanded ? 8 : 4}
               placeholder={inputPlaceholder}
               className="min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 pr-12 text-sm leading-5 [@media(pointer:coarse)]:text-base [@media(max-height:500px)]:max-h-[4.75rem] outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50"
-              disabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
+              disabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault();
@@ -1375,34 +1286,6 @@ function AvailableAgentChatPanel({
             />
 
             <div className="absolute inset-y-4 right-2 z-10 flex w-8 flex-col gap-2">
-              <div className="relative flex min-h-0 flex-1 items-center justify-center">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className={voice.isRecording
-                    ? 'relative h-full w-full rounded-xl bg-red-500 text-white transition-colors hover:bg-red-600'
-                    : 'relative h-full w-full rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
-                  onClick={() => voice.isRecording ? voice.stopRecording() : voice.startRecording()}
-                  disabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending}
-                  title={voice.isRecording ? 'Stop recording' : 'Voice input (Cmd+Shift+R)'}
-                >
-                  {voice.isRecording ? <Square className="h-3 w-3" /> : <Mic className="h-3.5 w-3.5" />}
-                </Button>
-                {voice.isRecording && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-muted hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={() => voice.cancelRecording()}
-                    title="Cancel recording"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-
               <div className="flex min-h-0 flex-1 items-center justify-center">
                 <Button
                   type="button"

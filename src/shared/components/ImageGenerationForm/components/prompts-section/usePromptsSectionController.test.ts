@@ -27,7 +27,6 @@ describe('usePromptsSectionController', () => {
     mocks.useFormUIContext.mockReturnValue({
       uiActions: {
         setPromptModalOpen: vi.fn(),
-        openMagicPrompt: vi.fn(),
       },
     });
     mocks.useFormCoreContext.mockReturnValue({
@@ -36,12 +35,9 @@ describe('usePromptsSectionController', () => {
     });
     mocks.useFormPromptsContext.mockReturnValue({
       prompts: [{ id: 'p1', fullPrompt: 'Prompt one' }],
-      masterPromptText: 'Master text',
-      effectivePromptMode: 'automated',
       actionablePromptsCount: 1,
       currentBeforePromptText: 'Before text',
       currentAfterPromptText: 'After text',
-      setMasterPromptText: vi.fn(),
       setCurrentBeforePromptText: vi.fn(),
       setCurrentAfterPromptText: vi.fn(),
       handleResetPromptsToSingleBlank: vi.fn(),
@@ -54,59 +50,23 @@ describe('usePromptsSectionController', () => {
     const promptsContext = mocks.useFormPromptsContext.mock.results[0].value;
 
     act(() => {
-      result.current.onClearMasterPromptText();
       result.current.onClearBeforeEachPromptText();
       result.current.onClearAfterEachPromptText();
     });
 
-    expect(promptsContext.setMasterPromptText).toHaveBeenCalledWith('');
     expect(promptsContext.setCurrentBeforePromptText).toHaveBeenCalledWith('');
     expect(promptsContext.setCurrentAfterPromptText).toHaveBeenCalledWith('');
-    expect(promptsContext.markAsInteracted).toHaveBeenCalledTimes(3);
+    expect(promptsContext.markAsInteracted).toHaveBeenCalledTimes(2);
   });
 
-  it('extracts voice result text from prompt or transcription field', () => {
+  it('opens the prompt editor modal', () => {
     const { result } = renderHook(() => usePromptsSectionController());
-    const promptsContext = mocks.useFormPromptsContext.mock.results[0].value;
+    const { uiActions } = mocks.useFormUIContext.mock.results[0].value;
 
     act(() => {
-      result.current.onMasterVoiceResult({ prompt: 'Voice master' });
-      result.current.onBeforeVoiceResult({ transcription: 'Voice before' });
-      result.current.onAfterVoiceResult({});
+      result.current.onOpenPromptModal();
     });
 
-    expect(promptsContext.setMasterPromptText).toHaveBeenCalledWith('Voice master');
-    expect(promptsContext.setCurrentBeforePromptText).toHaveBeenCalledWith('Voice before');
-    expect(promptsContext.setCurrentAfterPromptText).toHaveBeenCalledWith('');
-  });
-
-  it('normalizes unknown prompt mode values to automated while preserving managed mode', () => {
-    const basePromptsContext = {
-      prompts: [{ id: 'p1', fullPrompt: 'Prompt one' }],
-      masterPromptText: 'Master text',
-      effectivePromptMode: 'automated',
-      actionablePromptsCount: 1,
-      currentBeforePromptText: 'Before text',
-      currentAfterPromptText: 'After text',
-      setMasterPromptText: vi.fn(),
-      setCurrentBeforePromptText: vi.fn(),
-      setCurrentAfterPromptText: vi.fn(),
-      handleResetPromptsToSingleBlank: vi.fn(),
-      markAsInteracted: vi.fn(),
-    };
-
-    mocks.useFormPromptsContext.mockReturnValueOnce({
-      ...basePromptsContext,
-      effectivePromptMode: 'managed',
-    });
-    const managed = renderHook(() => usePromptsSectionController());
-    expect(managed.result.current.normalizedPromptMode).toBe('managed');
-
-    mocks.useFormPromptsContext.mockReturnValueOnce({
-      ...basePromptsContext,
-      effectivePromptMode: 'legacy',
-    });
-    const fallback = renderHook(() => usePromptsSectionController());
-    expect(fallback.result.current.normalizedPromptMode).toBe('automated');
+    expect(uiActions.setPromptModalOpen).toHaveBeenCalledWith(true);
   });
 });

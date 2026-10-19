@@ -31,7 +31,6 @@ const mocks = vi.hoisted(() => ({
   useCurrentAttachmentSet: vi.fn(),
   composerRemoveAttachment: vi.fn(),
   composerClearAttachments: vi.fn(),
-  useAgentVoice: vi.fn(),
   loadGenerationForLightbox: vi.fn(),
   agentSessionsAvailable: true,
   // Mutable so individual tests can flip isTasksPaneLocked to satisfy the
@@ -81,9 +80,6 @@ vi.mock('@/shared/state/panesStore', () => ({
   usePanesStore: (selector: (state: typeof mocks.panesState) => unknown) => selector(mocks.panesState),
 }));
 
-vi.mock('@/tools/video-editor/hooks/useAgentVoice', () => ({
-  useAgentVoice: (...args: unknown[]) => mocks.useAgentVoice(...args),
-}));
 
 vi.mock('@/tools/video-editor/lib/generation-utils', () => ({
   loadGenerationForLightbox: (...args: unknown[]) => mocks.loadGenerationForLightbox(...args),
@@ -188,14 +184,6 @@ function createState() {
       isPending: false,
       error: null as Error | null,
     },
-    voice: {
-      startRecording: vi.fn(),
-      stopRecording: vi.fn(),
-      cancelRecording: vi.fn(),
-      isRecording: false,
-      isProcessing: false,
-      remainingSeconds: 30,
-    },
   };
 }
 
@@ -212,7 +200,6 @@ function mockFromState(state: ReturnType<typeof createState>) {
   }));
   mocks.useAgentChatActionsRegistry.mockImplementation(() => ({
     registerHandlers: vi.fn(),
-    publishState: vi.fn(),
     unregister: vi.fn(),
   }));
   mocks.useAgentSessions.mockImplementation(() => ({
@@ -245,7 +232,6 @@ function mockFromState(state: ReturnType<typeof createState>) {
     clips: state.timelineClips,
     summary: state.timelineClips.length > 0 ? `attaching ${state.timelineClips.length} image` : '',
   }));
-  mocks.useAgentVoice.mockImplementation(() => state.voice);
 }
 
 function renderAgentChat(isExpanded = false) {
@@ -866,7 +852,7 @@ describe('AgentChat', () => {
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenCalledWith('predispatch-cancel-session', 'project-1'));
   });
 
-  it('does not auto-create when unengaged (pane unlocked, no voice, no markEngaged)', async () => {
+  it('does not auto-create when unengaged (pane unlocked, no markEngaged)', async () => {
     mocks.panesState.isTasksPaneLocked = false;
     const state = createState();
     state.sessionsData = [];
@@ -884,29 +870,25 @@ describe('AgentChat', () => {
     expect(state.createSession.mutate).not.toHaveBeenCalled();
   });
 
-  it('Cmd+Shift+R remains available for project chat without a timeline', async () => {
+  it('offers no voice input: no mic control and Cmd+Shift+R is not captured', async () => {
     const state = createState();
     state.timelineId = null;
     state.sessionsData = [];
-    state.voice = {
-      startRecording: vi.fn(),
-      stopRecording: vi.fn(),
-      cancelRecording: vi.fn(),
-      isRecording: false,
-      isProcessing: false,
-      remainingSeconds: 30,
-    };
     mockFromState(state);
 
     renderAgentChat();
 
-    fireEvent.keyDown(window, {
+    expect(screen.queryByTitle(/voice input/i)).not.toBeInTheDocument();
+    expect(screen.queryByTitle(/recording/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/transcribing/i)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/queue next message|type a message/i)).toBeInTheDocument();
+
+    const notCancelled = fireEvent.keyDown(window, {
       key: 'r',
       metaKey: true,
       shiftKey: true,
     });
-
-    expect(state.voice.startRecording).toHaveBeenCalledTimes(1);
+    expect(notCancelled).toBe(true);
   });
 
   it('routes attachment removal through the composer intent', async () => {
@@ -1087,7 +1069,6 @@ describe('AgentChat', () => {
     expect(screen.queryByText(/Delivery not confirmed/)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Retry saved message' })).toBeNull();
     expect(screen.queryByTitle('Stop agent')).toBeNull();
-    expect(screen.getByTitle('Voice input (Cmd+Shift+R)')).toBeDisabled();
     expect(screen.queryByRole('combobox', { name: 'Agent model' })).toBeNull();
     expect(getQueuedTexts()).toEqual(['Already running', 'Waiting behind it']);
     expect(state.projectChats['project-1'].draft.queued_messages.map(row => row.id)).toEqual(['active-request', 'queued-next']);
@@ -1167,7 +1148,7 @@ describe('project-only Astrid chat', () => {
     const context = { tool: 'video-editor', projectId: 'project-1', projectSlug: 'first', timelineId: null, timelineName: null };
     mocks.useAgentChatBridge.mockReturnValue({ timelineId: null, editorContext: context });
     render(<AgentChatPanel isExpanded />);
-    const composer = screen.getByPlaceholderText('Type or press Cmd+Shift+R to talk...');
+    const composer = screen.getByPlaceholderText('Type a message...');
     expect(composer).not.toBeDisabled();
     fireEvent.change(composer, { target: { value: 'Remember model B for this project' } });
     fireEvent.keyDown(composer, { key: 'Enter', code: 'Enter' });

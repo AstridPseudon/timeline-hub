@@ -64,11 +64,6 @@ export function JoinClipsModal({
                 className="resize-none"
                 clearable
                 onClear={() => setJoinPrompt('')}
-                voiceInput
-                voiceContext="This is a prompt for video segment transitions. Describe the motion, style, or visual effect you want when joining video clips together. Focus on how elements should move or transform."
-                onVoiceResult={(result) => {
-                  setJoinPrompt(result.prompt || result.transcription);
-                }}
               />
             </div>
 
@@ -83,11 +78,6 @@ export function JoinClipsModal({
                 className="resize-none"
                 clearable
                 onClear={() => setJoinNegativePrompt('')}
-                voiceInput
-                voiceContext="This is a negative prompt - things to AVOID in video transitions. List unwanted qualities like 'jerky, flickering, blurry'. Keep it as a comma-separated list."
-                onVoiceResult={(result) => {
-                  setJoinNegativePrompt(result.prompt || result.transcription);
-                }}
               />
             </div>
           </div>

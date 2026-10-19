@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useAutoSaveSettings } from '@/shared/settings/hooks/useAutoSaveSettings';
 import { useListShots } from '@/shared/hooks/shots';
 import { useShotCreation } from '@/shared/hooks/shotCreation/useShotCreation';
@@ -8,14 +8,18 @@ import { shotQueryKeys } from '@/shared/lib/queryKeys/shots';
 import { SETTINGS_IDS } from '@/shared/lib/settingsIds';
 
 import type { FormUIActions } from '../state/useFormUIState';
-import type { PromptMode, ImageGenShotSettings } from '../types';
+import type { ImageGenShotSettings } from '../types';
+
+// Per-shot prompt settings start empty and are not inherited between shots.
+// IMPORTANT: Do NOT default selectedReferenceId to null: null is treated as an explicit
+// override and would suppress the project-level per-shot selection mapping
+// (selectedReferenceIdByShot), leading to "no selection" and jitter/jumps when the user clicks.
+const SHOT_PROMPT_DEFAULTS: ImageGenShotSettings = { prompts: [] };
 
 interface UseShotManagementProps {
   selectedProjectId: string | null;
   associatedShotId: string | null;
   setAssociatedShotId: (id: string | null) => void;
-  noShotMasterPrompt: string;
-  promptMode: PromptMode;
   ready: boolean;
   markAsInteracted: () => void;
   onShotChange?: (shotId: string | null) => void;
@@ -27,8 +31,6 @@ export function useShotManagement({
   selectedProjectId,
   associatedShotId,
   setAssociatedShotId,
-  noShotMasterPrompt,
-  promptMode,
   ready,
   markAsInteracted,
   onShotChange,
@@ -41,46 +43,13 @@ export function useShotManagement({
   const { createShot, isCreating: isCreatingShot } = useShotCreation();
   const { navigateToShot } = useShotNavigation();
 
-  // Default settings for shot prompts - recomputed when shot changes to pick up fresh localStorage
-  // Inheritance chain: localStorage (last edited shot) -> project-level settings -> hardcoded defaults
-  // Reference selection defaults to most-recent reference (handled in auto-select effect)
-  // Note: beforeEachPromptText/afterEachPromptText are persisted per-shot but NOT inherited (default empty)
-  const shotPromptDefaults = useMemo<ImageGenShotSettings>(() => {
-    // Try to load last active shot settings for inheritance
-    try {
-      const stored = localStorage.getItem('image-gen-last-active-shot-settings');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return {
-          prompts: [],
-          masterPrompt: parsed.masterPrompt || '',
-          promptMode: parsed.promptMode || 'automated',
-          // IMPORTANT: Do NOT default this to null.
-          // null is treated as an explicit override and would suppress the project-level
-          // per-shot selection mapping (selectedReferenceIdByShot), leading to "no selection"
-          // and jitter/jumps when the user clicks.
-          // Leave undefined so we can fall back to project-level mapping until the user picks one.
-        };
-      }
-    } catch {
-      // Ignore localStorage errors
-    }
-    // Fall back to project-level settings if localStorage is empty
-    return {
-      prompts: [],
-      masterPrompt: noShotMasterPrompt || '',
-      promptMode: promptMode || 'automated',
-    };
-   
-  }, [noShotMasterPrompt, promptMode]);
-
   // Shot-specific prompts using per-shot storage
   const shotPromptSettings = useAutoSaveSettings<ImageGenShotSettings>({
     toolId: SETTINGS_IDS.IMAGE_GEN_PROMPTS,
     shotId: associatedShotId,
     projectId: selectedProjectId,
     scope: 'shot',
-    defaults: shotPromptDefaults,
+    defaults: SHOT_PROMPT_DEFAULTS,
     enabled: !!associatedShotId,
   });
 

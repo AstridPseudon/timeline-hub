@@ -26,9 +26,9 @@ interface UseFormContextBuilderProps {
   };
   promptManagement: Pick<
     ReturnType<typeof import('./usePromptManagement').usePromptManagement>,
-    'prompts' | 'masterPromptText' | 'effectivePromptMode' | 'actionablePromptsCount' |
+    'prompts' | 'actionablePromptsCount' |
     'currentBeforePromptText' | 'currentAfterPromptText' | 'lastKnownPromptCount' |
-    'setPrompts' | 'setMasterPromptText' | 'setEffectivePromptMode' |
+    'setPrompts' |
     'setCurrentBeforePromptText' | 'setCurrentAfterPromptText' |
     'handleAddPrompt' | 'handleUpdatePrompt' | 'handleRemovePrompt' | 'handleResetPromptsToSingleBlank'
   >;
@@ -78,18 +78,14 @@ export function useFormContextBuilder({
 
   const promptState = useMemo<FormPromptState>(() => ({
     prompts: pm.prompts,
-    masterPromptText: pm.masterPromptText,
-    effectivePromptMode: pm.effectivePromptMode,
     actionablePromptsCount: pm.actionablePromptsCount,
     currentBeforePromptText: pm.currentBeforePromptText,
     currentAfterPromptText: pm.currentAfterPromptText,
     lastKnownPromptCount: pm.lastKnownPromptCount,
-  }), [pm.prompts, pm.masterPromptText, pm.effectivePromptMode, pm.actionablePromptsCount, pm.currentBeforePromptText, pm.currentAfterPromptText, pm.lastKnownPromptCount]);
+  }), [pm.prompts, pm.actionablePromptsCount, pm.currentBeforePromptText, pm.currentAfterPromptText, pm.lastKnownPromptCount]);
 
   const promptHandlersValue = useMemo<FormPromptHandlers>(() => ({
     setPrompts: pm.setPrompts,
-    setMasterPromptText: pm.setMasterPromptText,
-    setEffectivePromptMode: pm.setEffectivePromptMode,
     setCurrentBeforePromptText: pm.setCurrentBeforePromptText,
     setCurrentAfterPromptText: pm.setCurrentAfterPromptText,
     handleAddPrompt: pm.handleAddPrompt,
@@ -97,7 +93,7 @@ export function useFormContextBuilder({
     handleRemovePrompt: pm.handleRemovePrompt,
     handleResetPromptsToSingleBlank: pm.handleResetPromptsToSingleBlank,
     markAsInteracted,
-  }), [pm.setPrompts, pm.setMasterPromptText, pm.setEffectivePromptMode, pm.setCurrentBeforePromptText, pm.setCurrentAfterPromptText, pm.handleAddPrompt, pm.handleUpdatePrompt, pm.handleRemovePrompt, pm.handleResetPromptsToSingleBlank, markAsInteracted]);
+  }), [pm.setPrompts, pm.setCurrentBeforePromptText, pm.setCurrentAfterPromptText, pm.handleAddPrompt, pm.handleUpdatePrompt, pm.handleRemovePrompt, pm.handleResetPromptsToSingleBlank, markAsInteracted]);
 
   const referenceState = useMemo<FormReferenceState>(() => ({
     references: refs.hydratedReferences,

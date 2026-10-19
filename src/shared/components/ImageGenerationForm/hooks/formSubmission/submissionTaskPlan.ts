@@ -33,18 +33,10 @@ interface SubmissionTaskContext {
   referenceMode: ReferenceMode;
 }
 
-interface BuildSubmissionTaskParamsOptions {
-  imagesPerPromptOverride?: number;
-}
-
-/**
- * Build canonical batch task params for form submission in both managed and
- * automated prompt modes.
- */
+/** Build canonical batch task params for form submission. */
 export function buildSubmissionTaskParams(
   context: SubmissionTaskContext,
   promptsToUse: PromptEntry[],
-  options?: BuildSubmissionTaskParamsOptions,
 ): BatchImageGenerationTaskParams | null {
   const activePrompts = promptsToUse.filter((prompt) => prompt.fullPrompt.trim() !== '');
   if (activePrompts.length === 0) {
@@ -80,7 +72,7 @@ export function buildSubmissionTaskParams(
   return buildBatchTaskParams({
     projectId: context.selectedProjectId,
     prompts: activePrompts,
-    imagesPerPrompt: options?.imagesPerPromptOverride ?? context.imagesPerPrompt,
+    imagesPerPrompt: context.imagesPerPrompt,
     shotId: context.associatedShotId,
     beforePromptText: context.beforePromptText,
     afterPromptText: context.afterPromptText,

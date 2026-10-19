@@ -35,7 +35,6 @@ All keys live in `queryKeys` object. Invalidation goes through hooks in `shared/
 | `CurrentShotContext` | Shot route layout |
 | `PanesContext` | Shot route layout |
 | `GenerationTaskContext` | Tool pages |
-| `AIInputModeContext` | Tool pages |
 | `IncomingTasksContext` | Project route layout |
 | `ToolPageHeaderContext` | Tool page layout |
 | `LastAffectedShotContext` | Project route layout |

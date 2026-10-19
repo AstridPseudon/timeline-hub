@@ -52,11 +52,6 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
           rows={3}
           clearable
           onClear={() => onDescriptionChange('')}
-          voiceInput
-          voiceContext="This is a description for a video preset. Describe what this preset does and when to use it - the style, effect, or purpose."
-          onVoiceResult={(result) => {
-            onDescriptionChange(result.prompt || result.transcription);
-          }}
         />
       </div>
 

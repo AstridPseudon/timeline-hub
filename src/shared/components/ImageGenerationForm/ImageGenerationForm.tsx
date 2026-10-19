@@ -1,4 +1,4 @@
-import React, { Suspense, useRef } from "react";
+import React, { Suspense } from "react";
 import { createPortal } from "react-dom";
 import { CreateShotModal } from "@/features/shots/components/CreateShotModal";
 import type { BatchImageGenerationTaskParams } from "@/shared/types/imageGeneration";
@@ -59,10 +59,6 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
 }) => {
   const form = useImageGenForm({ onGenerate, openaiApiKey, onShotChange, initialShotId });
 
-  // Remember per-mode imagesPerPrompt so switching modes restores the user's previous value
-  const automatedImagesPerPromptRef = useRef(8);
-  const managedImagesPerPromptRef = useRef(1);
-
   return (
     <ImageGenerationFormProvider value={form.contextValue}>
       <form id="image-generation-form" onSubmit={form.handleSubmit} className="space-y-6">
@@ -70,25 +66,7 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
         <div className="flex gap-6 flex-col md:flex-row pb-4">
           {/* Left Column - Prompts and Shot Selector */}
           <div className="flex-1 space-y-6">
-            <PromptsSection
-              onPromptModeChange={(mode) => {
-                form.markAsInteracted();
-                // Save current imagesPerPrompt to the outgoing mode's slot
-                const outgoingMode = form.effectivePromptMode;
-                if (outgoingMode === 'automated') {
-                  automatedImagesPerPromptRef.current = form.imagesPerPrompt;
-                } else if (outgoingMode === 'managed') {
-                  managedImagesPerPromptRef.current = form.imagesPerPrompt;
-                }
-                form.setEffectivePromptMode(mode);
-                // Restore imagesPerPrompt from the incoming mode's slot
-                if (mode === 'automated') {
-                  form.setImagesPerPrompt(automatedImagesPerPromptRef.current);
-                } else if (mode === 'managed') {
-                  form.setImagesPerPrompt(managedImagesPerPromptRef.current);
-                }
-              }}
-            />
+            <PromptsSection />
 
             <ShotSelector
               shots={form.shots}
@@ -148,11 +126,6 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
                 actionablePromptsCount={form.actionablePromptsCount}
                 isGenerating={form.automatedSubmitButton.isSubmitting}
                 justQueued={form.automatedSubmitButton.isSuccess}
-                promptMode={form.effectivePromptMode}
-                onUseExistingPrompts={form.handleUseExistingPrompts}
-                onNewPromptsLikeExisting={form.handleNewPromptsLikeExisting}
-                promptMultiplier={form.promptMultiplier}
-                onChangePromptMultiplier={form.setPromptMultiplier}
               />
             </div>
           );
@@ -189,8 +162,6 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
             prompts={form.prompts}
             onSave={form.handleSavePromptsFromModal}
             generatePromptId={form.generatePromptId}
-            openWithAIExpanded={form.uiState.openPromptModalWithAIExpanded}
-            onGenerateAndQueue={form.handleGenerateAndQueue}
           />
         </Suspense>
       </ChunkLoadErrorBoundary>

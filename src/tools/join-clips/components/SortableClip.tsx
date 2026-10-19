@@ -270,11 +270,6 @@ export const SortableClip: React.FC<SortableClipProps> = ({
               className="resize-none text-sm"
               clearable
               onClear={() => onPromptChange(clips[index + 1].id, '')}
-              voiceInput
-              voiceContext={`This is a prompt for the transition between Clip #${index + 1} and Clip #${index + 2}. Describe the specific motion or visual transformation you want for this particular transition between clips.`}
-              onVoiceResult={(result) => {
-                onPromptChange(clips[index + 1].id, result.prompt || result.transcription);
-              }}
             />
           </div>
         )}

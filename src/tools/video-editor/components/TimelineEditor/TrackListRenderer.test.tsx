@@ -6,7 +6,6 @@ import { KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { describe, expect, it, vi } from 'vitest';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { createCommandRegistry, type CommandRegistry } from '@/tools/video-editor/runtime/commandRegistry';
-import { AIInputModeProvider } from '@/shared/contexts/AIInputModeContext.tsx';
 import { TrackLabelContent } from '@/tools/video-editor/components/TimelineEditor/TrackLabel';
 import {
   computeActionVerticalPlacements,
@@ -368,17 +367,15 @@ describe('TrackListRenderer', () => {
 
   it.each(['phone', 'tablet'] as const)('names the track until it is tapped on %s (no inline buttons)', (deviceClass) => {
     render(
-      <AIInputModeProvider>
-        <TrackLabelContent
-          track={tracks[0]}
-          isSelected={false}
-          hasClips={false}
-          deviceClass={deviceClass}
-          onSelect={vi.fn()}
-          onChange={vi.fn()}
-          onRemove={vi.fn()}
-        />
-      </AIInputModeProvider>,
+      <TrackLabelContent
+        track={tracks[0]}
+        isSelected={false}
+        hasClips={false}
+        deviceClass={deviceClass}
+        onSelect={vi.fn()}
+        onChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
     );
 
     expect(screen.getByText(tracks[0].label)).toBeInTheDocument();
@@ -469,14 +466,14 @@ describe('TrackListRenderer', () => {
 
   it('marks Source tracks and changes their role through the existing edit callback', async () => {
     const onChange = vi.fn();
-    render(<AIInputModeProvider><TrackLabelContent
+    render(<TrackLabelContent
       track={{ ...tracks[0], role: 'source' }}
       isSelected={false}
       hasClips
       onSelect={vi.fn()}
       onChange={onChange}
       onRemove={vi.fn()}
-    /></AIInputModeProvider>);
+    />);
 
     expect(screen.getByLabelText('Source — excluded from final output')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Track settings' }));
@@ -648,10 +645,10 @@ describe('TrackListRenderer', () => {
 describe('track source/output settings', () => {
   it('keeps the Source badge visible on desktop and explains whole-track use', async () => {
     const onChange = vi.fn();
-    render(<AIInputModeProvider><TrackLabelContent
+    render(<TrackLabelContent
       track={{ ...tracks[0], role: 'source' }} isSelected={false} hasClips
       deviceClass="desktop" onSelect={vi.fn()} onChange={onChange} onRemove={vi.fn()}
-    /></AIInputModeProvider>);
+    />);
     const badge = screen.getByLabelText('Source — excluded from final output');
     expect(badge.closest('.opacity-0')).toBeNull();
     expect(badge.parentElement?.className).not.toContain('group-hover:opacity-0');
@@ -664,10 +661,10 @@ describe('track source/output settings', () => {
   }, 30000);
 
   it.each(['phone', 'tablet'] as const)('keeps the Source badge visible on %s, where the track column only names the track', (deviceClass) => {
-    render(<AIInputModeProvider><TrackLabelContent
+    render(<TrackLabelContent
       track={{ ...tracks[0], role: 'source' }} isSelected={false} hasClips
       deviceClass={deviceClass} onSelect={vi.fn()} onChange={vi.fn()} onRemove={vi.fn()}
-    /></AIInputModeProvider>);
+    />);
     const badge = screen.getByLabelText('Source — excluded from final output');
     expect(badge.closest('.opacity-0')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Track settings' })).not.toBeInTheDocument();
@@ -675,10 +672,10 @@ describe('track source/output settings', () => {
 
   it('shows legacy tracks as Output and edits role through the ordinary callback', async () => {
     const onChange = vi.fn();
-    render(<AIInputModeProvider><TrackLabelContent
+    render(<TrackLabelContent
       track={tracks[0]} isSelected={false} hasClips
       onSelect={vi.fn()} onChange={onChange} onRemove={vi.fn()}
-    /></AIInputModeProvider>);
+    />);
     expect(screen.queryByLabelText('Source — excluded from final output')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Track settings' }));
     expect(await screen.findByRole('combobox', { name: 'Track role' })).toHaveTextContent('Output');

@@ -1,5 +1,5 @@
 import type { ImageGenerationFormUIState, FormUIActions } from './state/useFormUIState';
-import type { PromptEntry, PromptMode, HydratedReferenceImage, ReferenceMode } from './types';
+import type { PromptEntry, HydratedReferenceImage, ReferenceMode } from './types';
 import type { PromptHandlersContract } from './hooks/promptManagement/types';
 import type { ActiveLora } from '@/domains/lora/types/lora';
 import type { LoraModel } from '@/domains/lora/types/lora';
@@ -17,8 +17,6 @@ export interface FormCoreState {
 /** Prompt-related state */
 export interface FormPromptState {
   prompts: PromptEntry[];
-  masterPromptText: string;
-  effectivePromptMode: PromptMode;
   actionablePromptsCount: number;
   currentBeforePromptText: string;
   currentAfterPromptText: string;

@@ -34,14 +34,12 @@ vi.mock('@/shared/components/ui/textarea', () => ({
     placeholder,
     onChange,
     onClear,
-    onVoiceResult,
   }: {
     id: string;
     value: string;
     placeholder?: string;
     onChange?: (event: ChangeEvent<HTMLTextAreaElement>) => void;
     onClear?: () => void;
-    onVoiceResult?: (result: { prompt?: string; transcription?: string }) => void;
   }) => (
     <div>
       <textarea
@@ -52,12 +50,6 @@ vi.mock('@/shared/components/ui/textarea', () => ({
         onChange={onChange}
       />
       <button type="button" onClick={onClear}>clear-{id}</button>
-      <button
-        type="button"
-        onClick={() => onVoiceResult?.({ prompt: `voice-${id}` })}
-      >
-        voice-{id}
-      </button>
     </div>
   ),
 }));
@@ -67,7 +59,7 @@ vi.mock('@/shared/components/ImageGenerationForm/components/SectionHeader', () =
 }));
 
 describe('JoinClipsPromptSettings', () => {
-  it('renders prompt controls and wires text/voice/clear handlers plus individual toggle', () => {
+  it('renders prompt controls and wires text/clear handlers plus individual toggle', () => {
     const setPrompt = vi.fn();
     const setNegativePrompt = vi.fn();
     const setUseIndividualPrompts = vi.fn();
@@ -103,18 +95,14 @@ describe('JoinClipsPromptSettings', () => {
     );
 
     fireEvent.click(screen.getByText('clear-join-prompt'));
-    fireEvent.click(screen.getByText('voice-join-prompt'));
     expect(setPrompt).toHaveBeenCalledWith('');
-    expect(setPrompt).toHaveBeenCalledWith('voice-join-prompt');
     expect(screen.getByText('💡 This will be inserted after each individual prompt')).toBeInTheDocument();
 
     const negativePrompt = screen.getByLabelText('join-negative-prompt');
     fireEvent.change(negativePrompt, { target: { value: 'no blur' } });
     fireEvent.click(screen.getByText('clear-join-negative-prompt'));
-    fireEvent.click(screen.getByText('voice-join-negative-prompt'));
     expect(setNegativePrompt).toHaveBeenCalledWith('no blur');
     expect(setNegativePrompt).toHaveBeenCalledWith('');
-    expect(setNegativePrompt).toHaveBeenCalledWith('voice-join-negative-prompt');
 
     fireEvent.click(switches[1]);
     expect(setEnhancePrompt).toHaveBeenCalledWith(true);

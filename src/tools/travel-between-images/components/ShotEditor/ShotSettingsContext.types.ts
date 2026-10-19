@@ -88,7 +88,6 @@ export interface GenerationModeState {
   onAcceleratedChange: (val: boolean) => void;
   randomSeed: boolean;
   onRandomSeedChange: (val: boolean) => void;
-  enhancementProgress: { phase: 'enhancing'; completed: number; total: number } | null;
 }
 
 export interface GenerationHandlers {

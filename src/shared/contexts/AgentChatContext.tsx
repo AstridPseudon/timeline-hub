@@ -51,26 +51,20 @@ export type AgentChatRegistryValue = {
 const legacyAgentChatOwner = Symbol('legacy-agent-chat');
 
 // AgentChatPanel-side handlers that live as long as the panel is mounted.
-// `markEngaged` is the v5 engagement-flag pivot: clicking the message split button
+// `markEngaged` is the v5 engagement-flag pivot: clicking the message composer button
 // calls this so the auto-create-session gate can fire without writing to
 // `panesStore.isTasksPaneOpen` (which would short-circuit useSlidingPane.setOpen(false)).
 export type AgentChatActionsHandlers = {
-  toggleRecording: () => void;
   focusComposer: () => void;
   markEngaged: () => void;
 };
 
-export type AgentChatActionsValue = {
-  toggleRecording: () => void;
-  focusComposer: () => void;
-  markEngaged: () => void;
-  isRecording: boolean;
-  isProcessing: boolean;
+export type AgentChatActionsValue = AgentChatActionsHandlers & {
   /** An agent turn is running (sent, answering, or queued behind one): the chat's "Thinking...". */
   isAgentWorking: boolean;
 };
 
-type AgentChatActionsState = Pick<AgentChatActionsValue, 'isRecording' | 'isProcessing' | 'isAgentWorking'>;
+type AgentChatActionsState = Pick<AgentChatActionsValue, 'isAgentWorking'>;
 
 export type AgentChatActionsRegistry = {
   registerHandlers: (handlers: AgentChatActionsHandlers) => void;
@@ -151,9 +145,9 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
   const unregisterProject = useCallback(() => setProjectScope(null), []);
   const registry = useMemo(() => ({ register, unregister, activate, registerProject, unregisterProject }), [register, unregister, activate, registerProject, unregisterProject]);
 
-  // Actions bridge — kept in refs so registered handlers always invoke the latest
+  // Actions bridge — kept in a ref so registered handlers always invoke the latest
   // panel-side closures even after the AgentChatPanel re-renders. Reactive state
-  // (isRecording/isProcessing) is the only thing that re-renders consumers.
+  // (isAgentWorking) is the only thing that re-renders consumers.
   const handlersRef = useRef<AgentChatActionsHandlers | null>(null);
   const [reactiveState, setReactiveState] = useState<AgentChatActionsState | null>(null);
 
@@ -161,17 +155,7 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
     handlersRef.current = handlers;
   }, []);
   const publishState = useCallback((state: AgentChatActionsState) => {
-    setReactiveState((prev) => {
-      if (
-        prev
-        && prev.isRecording === state.isRecording
-        && prev.isProcessing === state.isProcessing
-        && prev.isAgentWorking === state.isAgentWorking
-      ) {
-        return prev;
-      }
-      return state;
-    });
+    setReactiveState((prev) => (prev && prev.isAgentWorking === state.isAgentWorking ? prev : state));
   }, []);
   const unregisterActions = useCallback(() => {
     handlersRef.current = null;
@@ -187,11 +171,8 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
   const actions = useMemo<AgentChatActionsValue | null>(() => {
     if (!reactiveState) return null;
     return {
-      toggleRecording: () => handlersRef.current?.toggleRecording(),
       focusComposer: () => handlersRef.current?.focusComposer(),
       markEngaged: () => handlersRef.current?.markEngaged(),
-      isRecording: reactiveState.isRecording,
-      isProcessing: reactiveState.isProcessing,
       isAgentWorking: reactiveState.isAgentWorking,
     };
   }, [reactiveState]);
@@ -242,7 +223,7 @@ export function useAgentChatRegistry(): AgentChatRegistryValue {
 
 // Returns null until AgentChatPanel mounts and publishes initial state. The one
 // optional bridge surface — TasksPane reads this to decide whether to render the
-// split button. CLAUDE.md generally requires throwing on missing context, but the
+// composer button. CLAUDE.md generally requires throwing on missing context, but the
 // timing of panel mount vs. TasksPane mount makes a brief null window unavoidable.
 export function useAgentChatActions(): AgentChatActionsValue | null {
   return useContext(AgentChatActionsContext);

@@ -14,8 +14,6 @@ export interface ActiveLora {
   previewImageUrl?: string;
 }
 
-export type PromptMode = 'managed' | 'automated';
-
 import type { HiresFixConfig } from '@/shared/lib/imageGeneration/hiresFixConfig';
 
 export type { HiresFixConfig };
@@ -31,8 +29,6 @@ interface ImageGenerationSettings {
   beforeEachPromptText?: string; // Text to prepend (defaults empty, not inherited)
   afterEachPromptText?: string; // Text to append (defaults empty, not inherited)
   associatedShotId?: string | null; // Last associated shot
-  promptMode?: PromptMode;
-  masterPromptText?: string; // Legacy - kept for migration
   hiresFixConfig?: HiresFixConfig; // Two-pass hires fix settings
 }
 
@@ -58,8 +54,6 @@ const defaultImageGenerationSettings: ImageGenerationSettings = {
   depthStrength: 50,
   softEdgeStrength: 20,
   generationMode: 'wan-local',
-  promptMode: 'automated',
-  masterPromptText: '', // Legacy - kept for migration
   hiresFixConfig: {
     enabled: true,
     resolution_mode: 'project',

@@ -87,11 +87,6 @@ export function AdvancedSettingsSection({
           className="resize-none"
           clearable
           onClear={() => setNegativePrompt('')}
-          voiceInput
-          voiceContext="This is a negative prompt - things to AVOID in video regeneration. List unwanted qualities like 'blurry, distorted, low quality, flickering'. Keep it as a comma-separated list of terms to avoid."
-          onVoiceResult={(result) => {
-            setNegativePrompt(result.prompt || result.transcription);
-          }}
         />
       </div>
 

@@ -56,7 +56,7 @@ export function useTaskParamsBuilder(props: UseTaskParamsBuilderProps): GetTaskP
     referenceMode,
   } = props;
 
-  return useCallback((promptsToUse: PromptEntry[], options?: { imagesPerPromptOverride?: number }) => {
+  return useCallback((promptsToUse: PromptEntry[]) => {
     return buildSubmissionTaskParams({
       selectedProjectId,
       imagesPerPrompt,
@@ -77,7 +77,7 @@ export function useTaskParamsBuilder(props: UseTaskParamsBuilderProps): GetTaskP
       inThisScene,
       inThisSceneStrength,
       referenceMode,
-    }, promptsToUse, options);
+    }, promptsToUse);
   // selectedLorasRef is intentionally read via .current inside the callback.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

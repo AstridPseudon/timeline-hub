@@ -63,11 +63,6 @@ export function JoinClipsPromptSettings({
             className="resize-none bg-background/50 flex-1 min-h-[120px]"
             clearable
             onClear={() => setPrompt('')}
-            voiceInput
-            voiceContext="This is a global prompt for video clip transitions. Describe the motion, style, or visual effect you want for joining video clips together. Focus on transition dynamics like camera movement, morphing effects, or smooth blending between scenes."
-            onVoiceResult={(result) => {
-              setPrompt(result.prompt || result.transcription);
-            }}
           />
           {useIndividualPrompts && (
             <p className="text-xs text-muted-foreground">
@@ -89,11 +84,6 @@ export function JoinClipsPromptSettings({
             className="resize-none bg-background/50 flex-1 min-h-[120px]"
             clearable
             onClear={() => setNegativePrompt('')}
-            voiceInput
-            voiceContext="This is a negative prompt - things to AVOID in video transitions. List unwanted qualities like 'jerky, flickering, blurry, distorted, unnatural motion'. Keep it as a comma-separated list of terms to avoid."
-            onVoiceResult={(result) => {
-              setNegativePrompt(result.prompt || result.transcription);
-            }}
           />
         </div>
       </div>

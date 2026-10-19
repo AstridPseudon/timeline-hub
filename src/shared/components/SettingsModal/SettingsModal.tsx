@@ -12,7 +12,6 @@ import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from "@/shared/hooks/mobile";
 import { useLargeModal } from '@/shared/hooks/useModal';
 import { useScrollFade } from "@/shared/hooks/useScrollFade";
-import { useAIInputMode } from "@/shared/contexts/AIInputModeContext";
 import { PreferencesSection } from "./sections/PreferencesSection";
 import { AstridStatusSection } from "./sections/AstridStatusSection";
 import type { SettingsModalProps } from "./types";
@@ -32,9 +31,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     debug: false,
     preloadFade: modal.isMobile
   });
-
-  // AI input mode (voice vs text)
-  const { mode: aiInputMode, setMode: setAIInputMode } = useAIInputMode();
 
   const handleSignOut = async () => {
     await supabase().auth.signOut();
@@ -77,8 +73,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             isMobile={isMobile}
             preserveUserText={preserveUserText}
             setPreserveUserText={setPreserveUserText}
-            aiInputMode={aiInputMode}
-            setAIInputMode={setAIInputMode}
           />
 
         </div>

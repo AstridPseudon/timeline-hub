@@ -12,7 +12,6 @@ interface PromptInputRowController {
   handleFullPromptChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handlePointerDown: (event: React.PointerEvent) => void;
   handleTouchStart: (event: React.TouchEvent) => void;
-  handleVoiceResult: (result: { prompt?: string; transcription?: string }) => void;
   isEditingFullPrompt: boolean;
   isMobile: boolean;
   promptContainerRef: React.MutableRefObject<HTMLDivElement>;
@@ -177,12 +176,6 @@ export const usePromptInputRowController = ({
     onUpdate(promptEntry.id, 'fullPrompt', '');
   }, [onUpdate, promptEntry.id]);
 
-  const handleVoiceResult = useCallback((result: { prompt?: string; transcription?: string }) => {
-    const text = result.prompt || result.transcription || '';
-    setLocalFullPrompt(text);
-    onUpdate(promptEntry.id, 'fullPrompt', text);
-  }, [onUpdate, promptEntry.id]);
-
   const currentPlaceholder = isEditingFullPrompt
     ? `Editing prompt #${index + 1}...`
     : `Enter prompt #${index + 1}...`;
@@ -196,7 +189,6 @@ export const usePromptInputRowController = ({
     handleFullPromptChange,
     handlePointerDown,
     handleTouchStart,
-    handleVoiceResult,
     isEditingFullPrompt,
     isMobile,
     promptContainerRef,

@@ -11,7 +11,6 @@ interface QueuePromptGenerationTaskInput {
   getTaskParams: GetTaskParams;
   onGenerate: FormSubmissionEffects['onGenerate'];
   queueIncomingTask: (options: Parameters<RunIncomingTask>[0]) => void;
-  imagesPerPromptOverride?: number;
 }
 
 export function queuePromptGenerationTask(input: QueuePromptGenerationTaskInput): void {
@@ -23,15 +22,9 @@ export function queuePromptGenerationTask(input: QueuePromptGenerationTaskInput)
     getTaskParams,
     onGenerate,
     queueIncomingTask,
-    imagesPerPromptOverride,
   } = input;
 
-  const taskParams = getTaskParams(
-    prompts,
-    imagesPerPromptOverride !== undefined
-      ? { imagesPerPromptOverride }
-      : undefined,
-  );
+  const taskParams = getTaskParams(prompts);
   if (!taskParams) {
     return;
   }

@@ -50,11 +50,6 @@ export const BaseGenerationSettingsSection: React.FC<BaseGenerationSettingsSecti
             rows={3}
             clearable
             onClear={() => onBasePromptChange('')}
-            voiceInput
-            voiceContext="This is a base prompt for video generation preset. Describe the visual style, motion, or effect that should be applied by default when using this preset."
-            onVoiceResult={(result) => {
-              onBasePromptChange(result.prompt || result.transcription);
-            }}
           />
         </div>
 
@@ -68,11 +63,6 @@ export const BaseGenerationSettingsSection: React.FC<BaseGenerationSettingsSecti
             rows={3}
             clearable
             onClear={() => onNegativePromptChange('')}
-            voiceInput
-            voiceContext="This is a negative prompt for a video preset - things to AVOID. List unwanted qualities as a comma-separated list."
-            onVoiceResult={(result) => {
-              onNegativePromptChange(result.prompt || result.transcription);
-            }}
           />
         </div>
       </div>

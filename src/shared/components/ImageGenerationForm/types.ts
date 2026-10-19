@@ -12,8 +12,6 @@ import type { HydratedReferenceImage as SharedHydratedReferenceImage } from '@/s
 
 export type GenerationMode = 'wan-local' | 'qwen-image';
 
-export type PromptMode = 'managed' | 'automated';
-
 // Generation source: whether to use a reference image or just text prompts
 export type GenerationSource = 'by-reference' | 'just-text';
 
@@ -48,9 +46,6 @@ export interface PromptEntry {
  */
 export interface ImageGenShotSettings extends Record<string, unknown> {
   prompts: PromptEntry[];
-  /** Master prompt for automated mode */
-  masterPrompt: string;
-  promptMode?: PromptMode;
   selectedReferenceId?: string | null;
   /** Defaults to empty, not inherited between shots */
   beforeEachPromptText?: string;
@@ -74,7 +69,7 @@ export function getLoraCategoryForModel(model: TextToImageModel): LoraCategory {
 }
 
 // Project-level settings for model and style reference
-// Note: Prompt-related no-shot settings (prompts, masterPrompt, promptMode, beforeEachPromptText,
+// Note: Prompt-related no-shot settings (prompts, beforeEachPromptText,
 // afterEachPromptText, associatedShotId) are persisted via usePersistentToolState with toolId='image-generation'.
 // This interface stores model selection and reference image settings in 'project-image-settings'.
 export interface ProjectImageSettings extends Record<string, unknown> {
@@ -95,8 +90,6 @@ export interface PromptInputRowProps {
   isGenerating?: boolean;
   index: number;
   totalPrompts?: number;
-  onEditWithAI?: () => void;
-  aiEditButtonIcon?: React.ReactNode;
   onSetActiveForFullView: (id: string | null) => void;
   isActiveForFullView: boolean;
   forceExpanded?: boolean;
@@ -106,8 +99,6 @@ export interface PromptInputRowProps {
   autoEnterEditWhenActive?: boolean;
   /**
    * Optional custom content to render on the right side of the header.
-   * When provided, it replaces the default AI edit icon button, but retains
-   * the remove button (if allowed).
    */
   rightHeaderAddon?: React.ReactNode;
   /**

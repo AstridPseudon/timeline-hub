@@ -3,55 +3,61 @@ import { renderHook } from '@testing-library/react';
 import { useSubmissionOrchestrator } from '../useSubmissionOrchestrator';
 import type { PromptEntry } from '../../../types';
 
-const queueButton = {
-  trigger: vi.fn(),
-  isSubmitting: false,
-  isSuccess: false,
-};
-
-function buildPrompt(id: string, fullPrompt: string, shortPrompt = ''): PromptEntry {
-  return {
-    id,
-    fullPrompt,
-    shortPrompt,
-  };
+function buildPrompt(id: string, fullPrompt: string): PromptEntry {
+  return { id, fullPrompt, shortPrompt: '' };
 }
 
 describe('useSubmissionOrchestrator', () => {
-  it('builds task params from sanitized prompts in generateAndSubmit', () => {
-    const getTaskParams = vi.fn().mockReturnValue({ task: true });
-    const setPrompts = vi.fn();
-    const onGenerate = vi.fn();
+  it('submitManaged shows the submit button state, queues one placeholder task, and generates from the prompts as typed', async () => {
+    const prompts = [buildPrompt('prompt-1', 'A cinematic shot'), buildPrompt('prompt-2', '')];
+    const taskParams = { task: true };
+    const getTaskParams = vi.fn().mockReturnValue(taskParams);
+    const onGenerate = vi.fn().mockResolvedValue(['task-1']);
+    const trigger = vi.fn();
+    const runIncomingTask = vi.fn();
 
     const { result } = renderHook(() => useSubmissionOrchestrator({
-      context: {
-        prompts: [],
-        promptMultiplier: 1,
-        imagesPerPrompt: 1,
-        actionablePromptsCount: 1,
-        styleReferenceImageGeneration: null,
-        generationSourceRef: { current: 'just-text' },
-        selectedTextModelRef: { current: 'qwen-image' },
-        formStateRef: { current: undefined },
-      },
+      context: { prompts, imagesPerPrompt: 3, actionablePromptsCount: 1 },
       effects: {
-        automatedSubmitButton: queueButton,
-        aiGeneratePrompts: vi.fn(),
+        automatedSubmitButton: { trigger, isSubmitting: false, isSuccess: false },
         onGenerate,
-        setPrompts,
         getTaskParams,
-        runIncomingTask: vi.fn(),
+        runIncomingTask,
       },
     }));
 
-    const rawPrompts = [buildPrompt('prompt-1', 'A cinematic shot', '')];
-    result.current.generateAndSubmit(rawPrompts);
+    result.current.submitManaged();
 
-    const sanitizedPrompts = getTaskParams.mock.calls[0][0] as PromptEntry[];
-    expect(sanitizedPrompts).toHaveLength(1);
-    expect(sanitizedPrompts[0].id).toBe('prompt-1');
-    expect(sanitizedPrompts[0].shortPrompt).toBeTruthy();
-    expect(setPrompts).toHaveBeenCalledWith(sanitizedPrompts);
-    expect(onGenerate).toHaveBeenCalledWith({ task: true });
+    expect(getTaskParams).toHaveBeenCalledWith(prompts);
+    expect(trigger).toHaveBeenCalledTimes(1);
+    expect(runIncomingTask).toHaveBeenCalledWith(expect.objectContaining({
+      label: 'A cinematic shot',
+      expectedCount: 3,
+      context: 'useFormSubmission.submitManaged',
+    }));
+
+    const options = runIncomingTask.mock.calls[0][0] as { execute: () => Promise<string[] | void> };
+    await expect(options.execute()).resolves.toEqual(['task-1']);
+    expect(onGenerate).toHaveBeenCalledWith(taskParams);
+  });
+
+  it('submitManaged does nothing when task params are rejected', () => {
+    const trigger = vi.fn();
+    const runIncomingTask = vi.fn();
+
+    const { result } = renderHook(() => useSubmissionOrchestrator({
+      context: { prompts: [], imagesPerPrompt: 1, actionablePromptsCount: 0 },
+      effects: {
+        automatedSubmitButton: { trigger, isSubmitting: false, isSuccess: false },
+        onGenerate: vi.fn(),
+        getTaskParams: vi.fn().mockReturnValue(null),
+        runIncomingTask,
+      },
+    }));
+
+    result.current.submitManaged();
+
+    expect(trigger).not.toHaveBeenCalled();
+    expect(runIncomingTask).not.toHaveBeenCalled();
   });
 });

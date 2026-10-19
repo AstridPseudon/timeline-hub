@@ -123,12 +123,6 @@ export const PromptSection: React.FC<PromptSectionProps> = ({ state, mode }) => 
           state.setHasUserEditedPrompt(true);
           state.setInpaintPrompt('');
         }}
-        voiceInput
-        voiceContext="This is an image editing prompt. Describe what changes to make to the image - what to add, remove, or modify in the selected/masked area. Be specific about the visual result you want."
-        onVoiceResult={(result) => {
-          state.setHasUserEditedPrompt(true);
-          state.setInpaintPrompt(result.prompt || result.transcription);
-        }}
       />
     </div>
   );

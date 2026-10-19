@@ -9,7 +9,6 @@ import { useState, useEffect, useRef, useCallback, useMemo, type Dispatch, type 
 import { useLoraManager } from '@/domains/lora/hooks/useLoraManager';
 import { usePersistentToolState } from '@/shared/hooks/usePersistentToolState';
 import { usePublicLoras } from '@/features/resources/hooks/useResources';
-import { useAIInteractionService } from '@/shared/hooks/ai/useAIInteractionService';
 import { SETTINGS_IDS } from '@/shared/lib/settingsIds';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 
@@ -32,7 +31,6 @@ import {
   type HiresFixConfig,
   type ImageGenShotSettings,
   type PromptEntry,
-  type PromptMode,
   getLoraTypeForModel,
   BY_REFERENCE_LORA_TYPE,
 } from '../types';
@@ -51,9 +49,7 @@ type PersistentImageGenState = {
   beforeEachPromptText: string;
   afterEachPromptText: string;
   associatedShotId: string | null;
-  promptMode: PromptMode;
   prompts: PromptEntry[];
-  masterPrompt: string;
   hiresFixConfig: Partial<HiresFixConfig>;
 }
 
@@ -69,18 +65,14 @@ export function useImageGenForm({
   const { uiState, uiActions } = useFormUIState();
   useRenderLogger('useImageGenForm');
 
-  const [imagesPerPrompt, setImagesPerPrompt] = useState(8);
-  const [promptMultiplier, setPromptMultiplier] = useState(1);
+  const [imagesPerPrompt, setImagesPerPrompt] = useState(1);
   const { hiresFixConfig, setHiresFixConfig } = useHiresFixConfig();
 
   // Text to prepend/append to every prompt
   const [beforeEachPromptText, setBeforeEachPromptText] = useState("");
   const [afterEachPromptText, setAfterEachPromptText] = useState("");
-  // Prompt mode: automated vs managed (default to automated)
-  const [promptMode, setPromptMode] = useState<PromptMode>('automated');
   // Local state for prompts when no shot is selected
   const [noShotPrompts, setNoShotPrompts] = useState<PromptEntry[]>([]);
-  const [noShotMasterPrompt, setNoShotMasterPrompt] = useState('');
 
   // Optimistic button state for immediate feedback: idle -> submitting -> success -> idle
   const [submitButtonState, setSubmitButtonState] = useState<'idle' | 'submitting' | 'success'>('idle');
@@ -107,11 +99,6 @@ export function useImageGenForm({
   // Define generatePromptId before using it in hooks
   const promptIdCounter = useRef(1);
   const generatePromptId = useCallback(() => `prompt-${promptIdCounter.current++}`, []);
-
-  // AI interaction service for automated prompt generation
-  const { generatePrompts: aiGeneratePrompts } = useAIInteractionService({
-    generatePromptId,
-  });
 
   // Fetch public LoRAs from all users
   const { data: availableLoras } = usePublicLoras();
@@ -180,9 +167,7 @@ export function useImageGenForm({
     beforeEachPromptText,
     afterEachPromptText,
     associatedShotId,
-    promptMode,
     noShotPrompts,
-    noShotMasterPrompt,
     hiresFixConfig,
     'loraManager.selectedLoras': loraManager.selectedLoras,
     setSelectedLorasForPersistence,
@@ -197,9 +182,7 @@ export function useImageGenForm({
       beforeEachPromptText: [beforeEachPromptText, setBeforeEachPromptText],
       afterEachPromptText: [afterEachPromptText, setAfterEachPromptText],
       associatedShotId: [associatedShotId, setAssociatedShotId],
-      promptMode: [promptMode, setPromptMode],
       prompts: [noShotPrompts, setNoShotPrompts],
-      masterPrompt: [noShotMasterPrompt, setNoShotMasterPrompt],
       hiresFixConfig: [hiresFixConfig, setHiresFixConfig],
     }
   );
@@ -222,8 +205,6 @@ export function useImageGenForm({
     selectedProjectId,
     associatedShotId,
     setAssociatedShotId,
-    noShotMasterPrompt,
-    promptMode,
     ready,
     markAsInteracted,
     onShotChange,
@@ -274,10 +255,6 @@ export function useImageGenForm({
     },
     noShotPrompts,
     setNoShotPrompts,
-    noShotMasterPrompt,
-    setNoShotMasterPrompt,
-    promptMode,
-    setPromptMode,
     beforeEachPromptText,
     setBeforeEachPromptText,
     afterEachPromptText,
@@ -288,9 +265,8 @@ export function useImageGenForm({
     promptIdCounter,
   });
   const {
-    prompts, masterPromptText, effectivePromptMode, currentBeforePromptText,
-    currentAfterPromptText, actionablePromptsCount, setPrompts,
-    setEffectivePromptMode, handleSavePromptsFromModal,
+    prompts, currentBeforePromptText, currentAfterPromptText,
+    actionablePromptsCount, handleSavePromptsFromModal,
   } = promptManagementResult;
 
   // ============================================================================
@@ -326,17 +302,11 @@ export function useImageGenForm({
   // ============================================================================
   // Form Submission (extracted hook)
   // ============================================================================
-  const {
-    handleSubmit,
-    handleGenerateAndQueue,
-    handleUseExistingPrompts,
-    handleNewPromptsLikeExisting,
-  } = useFormSubmission({
+  const { handleSubmit } = useFormSubmission({
     formState: {
       selectedProjectId: selectedProjectId ?? undefined,
       prompts,
       imagesPerPrompt,
-      promptMultiplier,
       associatedShotId,
       currentBeforePromptText,
       currentAfterPromptText,
@@ -344,8 +314,6 @@ export function useImageGenForm({
       isLocalGenerationEnabled,
       hiresFixConfig,
       projectResolution,
-      effectivePromptMode,
-      masterPromptText,
       actionablePromptsCount,
     },
     promptConfig: {
@@ -361,9 +329,7 @@ export function useImageGenForm({
       referenceMode,
     },
     effects: {
-      aiGeneratePrompts,
       onGenerate,
-      setPrompts,
       automatedSubmitButton,
     },
   });
@@ -437,8 +403,6 @@ export function useImageGenForm({
     setAssociatedShotId,
     imagesPerPrompt,
     setImagesPerPrompt,
-    promptMultiplier,
-    setPromptMultiplier,
     hiresFixConfig,
     setHiresFixConfig,
     selectedProjectId,
@@ -446,7 +410,6 @@ export function useImageGenForm({
     // Computed
     generationSource,
     selectedTextModel,
-    effectivePromptMode,
     actionablePromptsCount,
     projectResolution,
     projectAspectRatio,
@@ -456,11 +419,9 @@ export function useImageGenForm({
 
     // Prompt management
     prompts,
-    setEffectivePromptMode,
     handleSavePromptsFromModal,
     generatePromptId,
     markAsInteracted,
-    handleGenerateAndQueue,
 
     // Shot handling
     handleShotChange,
@@ -474,8 +435,6 @@ export function useImageGenForm({
 
     // Submission button state
     automatedSubmitButton,
-    handleUseExistingPrompts,
-    handleNewPromptsLikeExisting,
     handleSliderChange,
 
     // LoRA

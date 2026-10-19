@@ -19,10 +19,6 @@ export function usePromptManagement(
     shotPromptSettings,
     noShotPrompts,
     setNoShotPrompts,
-    noShotMasterPrompt,
-    setNoShotMasterPrompt,
-    promptMode,
-    setPromptMode,
     beforeEachPromptText,
     setBeforeEachPromptText,
     afterEachPromptText,
@@ -55,10 +51,6 @@ export function usePromptManagement(
     shotPromptSettings,
     noShotPrompts,
     setNoShotPrompts,
-    noShotMasterPrompt,
-    setNoShotMasterPrompt,
-    promptMode,
-    setPromptMode,
     beforeEachPromptText,
     setBeforeEachPromptText,
     afterEachPromptText,
@@ -71,9 +63,6 @@ export function usePromptManagement(
     promptsLength: routing.prompts.length,
     effectiveShotId,
     setLastKnownPromptCount,
-    isShotSettingsReady,
-    shotPromptSettings,
-    effectivePromptMode: routing.effectivePromptMode,
   });
 
   usePromptInitializationEffect({
@@ -110,16 +99,12 @@ export function usePromptManagement(
 
   return {
     prompts: routing.prompts,
-    masterPromptText: routing.masterPromptText,
-    effectivePromptMode: routing.effectivePromptMode,
     currentBeforePromptText: routing.currentBeforePromptText,
     currentAfterPromptText: routing.currentAfterPromptText,
     isShotSettingsReady,
     actionablePromptsCount,
     lastKnownPromptCount,
     setPrompts: routing.setPrompts,
-    setMasterPromptText: routing.setMasterPromptText,
-    setEffectivePromptMode: routing.setEffectivePromptMode,
     setCurrentBeforePromptText: routing.setCurrentBeforePromptText,
     setCurrentAfterPromptText: routing.setCurrentAfterPromptText,
     handleAddPrompt,

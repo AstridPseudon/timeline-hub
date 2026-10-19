@@ -15,7 +15,6 @@ function renderControls() {
       actionablePromptsCount={1}
       isGenerating={false}
       justQueued={false}
-      promptMode="managed"
     />,
   );
 }
