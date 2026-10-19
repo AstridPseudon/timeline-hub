@@ -49,6 +49,15 @@ function isMissingAcpConnection(error: unknown): boolean {
     || (error.code === 'not_found' && error.detail === 'ACP connection is not available; reconnect')
   );
 }
+function isMissingLocalAgentTranscript(error: unknown, method: 'session/load', sessionId: string): boolean {
+  if (!(error instanceof BridgeRouteError) || error.code !== 'acp_transport') return false;
+  const prefix = `ACP request "${method}" failed: `;
+  if (!error.detail?.startsWith(prefix)) return false;
+  const detail = error.detail.slice(prefix.length).trim().toLowerCase();
+  return detail === `acp session not found: ${sessionId}`.toLowerCase()
+    || /\bresource not found\b/.test(detail)
+    || /\bno rollout found\b/.test(detail);
+}
 const sessionModelListeners = new Map<string, Set<() => void>>();
 
 function notifySessionModelChanged(sessionId: string): void {
@@ -482,7 +491,7 @@ export class AstridAgentSessionStore {
     if (agent !== 'astrid') {
       if (!sessionId || !projectId) throw new Error('Select a chat to choose its model.');
       const connectionId = await this.connection(agent);
-      const { models } = await this.client.acp.setSessionModel(connectionId, sessionId, model);
+      const { models } = await this.client.acp.setSessionModel(connectionId, sessionId, model, projectId);
       if (!models) throw new Error('This agent did not report a model selection.');
       await this.pullEvents();
       globalThis.localStorage?.setItem(localAgentModelSettingKey(agent), models.currentModelId);
@@ -536,6 +545,22 @@ export class AstridAgentSessionStore {
     this.sessionProjects.set(id, projectId);
     await this.pullEvents();
     return { id, projectChat: chat };
+  }
+
+  async recoverEmptyProjectSession(projectId: string, sessionId: string): Promise<{ id: string; projectChat: ProjectChatState; session: AgentSessionView } | null> {
+    if (sessionAgentId(sessionId) === 'astrid') return null;
+    const current = await this.client.acp.projectChat(projectId);
+    if (!current.sessions.some(session => session.id === sessionId && session.pending_first_message !== false)) return null;
+    const connectionId = await this.connection(sessionAgentId(sessionId));
+    const projectChat = await this.client.acp.recoverProjectSession(
+      projectId, connectionId, `empty-chat:${globalThis.crypto.randomUUID()}`, sessionId,
+    );
+    const id = projectChat.operation_session_id ?? projectChat.selected_session_id;
+    if (!id) throw new Error('Astrid ACP did not return a recovered session ID.');
+    this.state(id);
+    this.sessionProjects.set(id, projectId);
+    await this.pullEvents();
+    return { id, projectChat, session: cloneSession(this.state(id)) };
   }
 
   async get(projectId: string, sessionId: string, replay = false): Promise<AgentSessionView> {
@@ -1122,10 +1147,26 @@ export function useAssociateProjectSession(projectId: string | null | undefined)
 }
 
 export function useAgentSession(sessionId: string | null | undefined, projectId?: string | null) {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: agentSessionQueryKey(sessionId, projectId),
     enabled: Boolean(sessionId && projectId),
-    queryFn: () => agentStore.get(projectId!, sessionId!),
+    queryFn: async () => {
+      try {
+        return await agentStore.get(projectId!, sessionId!);
+      } catch (error) {
+        if (sessionAgentId(sessionId!) !== 'astrid'
+            && isMissingLocalAgentTranscript(error, 'session/load', sessionId!)) {
+          const recovered = await agentStore.recoverEmptyProjectSession(projectId!, sessionId!);
+          if (recovered) {
+            cacheProjectChat(queryClient, recovered.projectChat);
+            void queryClient.invalidateQueries({ queryKey: ['timeline-agent-sessions'] });
+            return recovered.session;
+          }
+        }
+        throw error;
+      }
+    },
     // ACP events are drained independently of the prompt response so streamed
     // assistant text and tool activity paint while a long turn is running.
     // A failed persisted-session load needs an explicit retry/reconnect, not

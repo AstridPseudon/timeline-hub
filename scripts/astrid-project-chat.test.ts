@@ -53,6 +53,89 @@ test('New does not assign Main when the project has no Main chat', async () => {
   }
 });
 
+test('ensure replaces an empty selected session in its existing chat entry when its transcript is missing', async () => {
+  const project: Project = {
+    project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', version: 1,
+    created_at: '', updated_at: '', metadata: {
+      astrid_agent_chat_v1: { test: {
+        revision: 4, selected_session_id: 'empty', main_session_id: 'empty',
+        sessions: [{ id: 'older' }, { id: 'empty', title: 'Empty Claude chat', pending_first_message: true }, { id: 'newer' }],
+        draft: { text: '', revision: 0, queued_messages: [] },
+      } },
+    },
+  };
+  const { registry, cleanup } = registryFor(project);
+  try {
+    let creates = 0;
+    const result = await registry.create('p', 'ensure', 'reload-empty', async () => {
+      creates++;
+      return { sessionId: 'claude-code:fresh' };
+    }, async () => false);
+    assert.equal(creates, 1);
+    assert.equal(result.operation_session_id, 'claude-code:fresh');
+    assert.equal(result.selected_session_id, 'claude-code:fresh');
+    assert.equal(result.main_session_id, 'claude-code:fresh');
+    assert.deepEqual(result.sessions, [
+      { id: 'older' },
+      { id: 'claude-code:fresh', title: 'Empty Claude chat', pending_first_message: true },
+      { id: 'newer' },
+    ]);
+  } finally {
+    cleanup();
+  }
+});
+
+test('targeted reload reuses an empty chat when its ACP session still resumes', async () => {
+  const project: Project = {
+    project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', version: 1,
+    created_at: '', updated_at: '', metadata: {
+      astrid_agent_chat_v1: { test: {
+        revision: 1, selected_session_id: 'codex:empty', main_session_id: 'other',
+        sessions: [{ id: 'codex:empty', pending_first_message: true }, { id: 'other' }],
+        draft: { text: '', revision: 0, queued_messages: [] },
+      } },
+    },
+  };
+  const { registry, cleanup } = registryFor(project);
+  try {
+    let creates = 0;
+    const result = await registry.create('p', 'ensure', 'reload-still-live', async () => {
+      creates++;
+      return { sessionId: 'codex:unexpected' };
+    }, async id => id === 'codex:empty', 'codex:empty');
+    assert.equal(creates, 0);
+    assert.equal(result.operation_session_id, 'codex:empty');
+    assert.equal(result.selected_session_id, 'codex:empty');
+    assert.equal(result.main_session_id, 'other');
+    assert.deepEqual(result.sessions, [{ id: 'codex:empty', pending_first_message: true }, { id: 'other' }]);
+  } finally {
+    cleanup();
+  }
+});
+
+test('empty marker and model metadata writes preserve the chat selection revision', async () => {
+  const project: Project = {
+    project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', version: 1,
+    created_at: '', updated_at: '', metadata: {
+      astrid_agent_chat_v1: { test: {
+        revision: 7, selected_session_id: 'codex:empty', main_session_id: null,
+        sessions: [{ id: 'codex:empty', pending_first_message: true, model_id: 'alpha' }],
+        draft: { text: '', revision: 0, queued_messages: [] },
+      } },
+    },
+  };
+  const { registry, cleanup } = registryFor(project);
+  try {
+    await registry.markSessionStarted('p', 'codex:empty');
+    await registry.setSessionModel('p', 'codex:empty', 'beta');
+    const result = await registry.get('p');
+    assert.equal(result.revision, 7);
+    assert.deepEqual(result.sessions, [{ id: 'codex:empty', pending_first_message: false, model_id: 'beta' }]);
+  } finally {
+    cleanup();
+  }
+});
+
 test('identical draft retries acknowledge without writes while divergent stale payloads retain CAS protection', async () => {
   let project: Project = { project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', metadata: {}, version: 1, created_at: '', updated_at: '' };
   let writes = 0;

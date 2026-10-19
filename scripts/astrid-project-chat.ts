@@ -17,7 +17,7 @@ export interface ChatState {
   revision: number;
   selected_session_id: string | null;
   main_session_id: string | null;
-  sessions: Array<{ id: string; title?: string; missing?: boolean; pending_first_message?: boolean }>;
+  sessions: Array<{ id: string; title?: string; missing?: boolean; pending_first_message?: boolean; model_id?: string }>;
   draft: { text: string; revision: number; queued_messages: QueuedChatMessage[] };
 }
 interface StoredChat extends Omit<ChatState, 'project_id' | 'scope_key'> {
@@ -196,19 +196,48 @@ export class ProjectChatRegistry {
     const state = await this.get(projectId);
     if (!state.sessions.some(s => s.id === sessionId)) throw new ChatError(403, 'session_not_owned', 'Session does not belong to this project');
   }
-  async create(projectId: string, mode: 'ensure' | 'ensure_main' | 'new', operationId: string, create: () => Promise<unknown>, verify?: (sessionId: string) => Promise<boolean>): Promise<ChatState & { operation_session_id?: string }> {
+  async markSessionStarted(projectId: string, sessionId: string): Promise<void> {
+    if (!/^(claude-code|codex):/.test(sessionId)) return;
+    await this.change(projectId, state => {
+      const session = state.sessions.find(item => item.id === sessionId);
+      if (!session || session.pending_first_message === false) return false;
+      session.pending_first_message = false;
+    });
+  }
+  async setSessionModel(projectId: string, sessionId: string, modelId: string): Promise<ChatState> {
+    return this.change(projectId, state => {
+      const session = state.sessions.find(item => item.id === sessionId && !item.missing);
+      if (!session) throw new ChatError(403, 'session_not_owned', 'Session does not belong to this project');
+      if (session.model_id === modelId) return false;
+      session.model_id = modelId;
+    });
+  }
+  async create(projectId: string, mode: 'ensure' | 'ensure_main' | 'new', operationId: string, create: () => Promise<unknown>, verify?: (sessionId: string) => Promise<boolean>, recoverSessionId?: string): Promise<ChatState & { operation_session_id?: string }> {
+    let recoverableSession: { id: string } | null = null;
     if (mode !== 'new' && verify) {
       let current = await this.get(projectId);
-      const candidates = (mode === 'ensure_main' ? current.sessions.filter(s => s.id === current.main_session_id) : [...current.sessions]).sort((a, b) => Number(b.id === current.selected_session_id) - Number(a.id === current.selected_session_id));
+      if (recoverSessionId) {
+        const target = current.sessions.find(session => session.id === recoverSessionId);
+        if (!target || target.pending_first_message === false) throw new ChatError(409, 'session_not_recoverable', 'Only an empty local-agent chat can be recovered automatically');
+      }
+      const candidates = (recoverSessionId
+        ? current.sessions.filter(s => s.id === recoverSessionId)
+        : mode === 'ensure_main' ? current.sessions.filter(s => s.id === current.main_session_id) : [...current.sessions])
+        .sort((a, b) => Number(b.id === current.selected_session_id) - Number(a.id === current.selected_session_id));
       for (const candidate of candidates) {
-        if (candidate.missing) continue;
-        if (await verify(candidate.id)) break;
+        const preferred = mode === 'ensure_main' ? current.main_session_id === candidate.id : current.selected_session_id === candidate.id;
+        if (candidate.missing) {
+          if (candidate.id === recoverSessionId || (preferred && candidate.pending_first_message)) recoverableSession = { id: candidate.id };
+          if (recoverableSession) break;
+          continue;
+        }
+        if (await verify(candidate.id)) { recoverableSession = null; break; }
+        if ((candidate.id === recoverSessionId || (preferred && candidate.pending_first_message)) && !recoverableSession) recoverableSession = { id: candidate.id };
         current = await this.change(projectId, state => {
           const session = state.sessions.find(s => s.id === candidate.id);
           if (session && !session.missing) { session.missing = true; state.revision++; }
-          if (state.selected_session_id === candidate.id) state.selected_session_id = null;
-          if (state.main_session_id === candidate.id) state.main_session_id = null;
         });
+        if (recoverableSession) break;
       }
     }
     const owner = randomUUID();
@@ -218,14 +247,16 @@ export class ProjectChatRegistry {
       claimed = false;
       const replay = state.operations?.[operationId];
       if (replay) { operationSessionId = replay; return false; }
-      if (mode !== 'new') {
-        const existing = mode === 'ensure_main'
-          ? state.sessions.find(s => !s.missing && s.id === state.main_session_id)
+      if (mode !== 'new' && !recoverableSession) {
+        const existing = recoverSessionId
+          ? state.sessions.find(s => !s.missing && s.id === recoverSessionId)
+          : mode === 'ensure_main'
+          ? state.sessions.find(s => !s.missing && s.id === (recoverSessionId ?? state.main_session_id))
           : state.sessions.find(s => !s.missing && s.id === state.selected_session_id) ?? state.sessions.find(s => !s.missing);
         if (existing) {
           operationSessionId = existing.id;
           state.operations = { ...state.operations, [operationId]: existing.id };
-          state.selected_session_id = existing.id;
+          if (!recoverSessionId) state.selected_session_id = existing.id;
           state.revision++;
           return;
         }
@@ -239,13 +270,32 @@ export class ProjectChatRegistry {
     const result = record(await create());
     const sessionId = result.sessionId;
     if (typeof sessionId !== 'string' || !sessionId) throw new ChatError(502, 'invalid_session', 'OMP did not return a session ID');
+    const modelId = typeof record(result.models)?.currentModelId === 'string' ? record(result.models)!.currentModelId as string : undefined;
     const targetProject = await this.store.getProject(projectId);
     this.claim(sessionId, `${targetProject.realm_id}:${projectId}`);
     const completed = await this.change(projectId, state => {
       if (state.creating?.owner !== owner) throw new ChatError(409, 'chat_claim_expired', 'Session creation claim expired; the unassigned OMP session is preserved');
-      state.sessions.push({ id: sessionId });
+      const recoveryIndex = recoverableSession
+        ? state.sessions.findIndex(session => session.id === recoverableSession?.id && session.missing)
+        : -1;
+      if (recoveryIndex >= 0 && recoverableSession) {
+        const entry = { ...state.sessions[recoveryIndex]! };
+        delete entry.missing;
+        state.sessions[recoveryIndex] = { ...entry, id: sessionId, pending_first_message: true, ...(modelId ? { model_id: modelId } : {}) };
+        state.operations = Object.fromEntries(Object.entries(state.operations ?? {}).map(([id, previousSessionId]) => [
+          id,
+          previousSessionId === recoverableSession.id ? sessionId : previousSessionId,
+        ]));
+        state.draft.queued_messages = state.draft.queued_messages.map(message =>
+          message.session_id === recoverableSession?.id ? { ...message, session_id: sessionId } : message,
+        );
+        if (state.selected_session_id === recoverableSession.id) state.selected_session_id = sessionId;
+        if (state.main_session_id === recoverableSession.id) state.main_session_id = sessionId;
+      } else {
+        state.sessions.push({ id: sessionId, ...(modelId ? { model_id: modelId } : {}), ...(/^(claude-code|codex):/.test(sessionId) ? { pending_first_message: true } : {}) });
+      }
       // Background Main setup must not undo a concurrent explicit Main choice.
-      if (mode !== 'ensure_main' || !state.main_session_id) state.selected_session_id = sessionId;
+      if (!recoverSessionId && (mode !== 'ensure_main' || !state.main_session_id)) state.selected_session_id = sessionId;
       // Ordinary creation selects a session; setMain owns Main assignment.
       state.operations = { ...state.operations, [operationId]: sessionId };
       delete state.creating;

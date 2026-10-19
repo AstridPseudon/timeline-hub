@@ -54,7 +54,7 @@ const projectChatSchema = z.object({
   selected_session_id: z.string().nullable(),
   main_session_id: z.string().nullable().optional(),
   operation_session_id: z.string().optional(),
-  sessions: z.array(z.object({ id: z.string(), title: z.string().optional(), missing: z.boolean().optional() })),
+  sessions: z.array(z.object({ id: z.string(), title: z.string().optional(), missing: z.boolean().optional(), pending_first_message: z.boolean().optional(), model_id: z.string().optional() })),
   draft: z.object({
     text: z.string(), revision: z.number().int(),
     queued_messages: z.array(z.object({ id: z.string(), text: z.string(), session_id: z.string(), attachments: z.array(z.unknown()).optional() })).optional(),
@@ -80,6 +80,12 @@ export class AstridLocalAcpRoutes {
     return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/sessions`, {
       method: 'POST', body: { connection_id: connectionId, mode, operation_id: operationId },
     }, projectChatSchema, 'Create project chat session');
+  }
+
+  async recoverProjectSession(projectId: string, connectionId: string, operationId: string, sessionId: string): Promise<ProjectChatState> {
+    return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/sessions`, {
+      method: 'POST', body: { connection_id: connectionId, mode: 'ensure', operation_id: operationId, recover_session_id: sessionId },
+    }, projectChatSchema, 'Recover empty project chat session');
   }
 
   async unassignedProjectSessions(projectId: string, connectionId: string): Promise<ProjectChatCandidate[]> {
@@ -144,9 +150,9 @@ export class AstridLocalAcpRoutes {
       { method: 'GET' }, localModelResponseSchema, 'List local agent models');
   }
 
-  async setSessionModel(connectionId: string, sessionId: string, modelId: string) {
+  async setSessionModel(connectionId: string, sessionId: string, modelId: string, projectId?: string) {
     return this.transport.requestJson(`/acp/${encodeURIComponent(connectionId)}/model`,
-      { method: 'POST', body: { sessionId, modelId } }, localModelResponseSchema, 'Set local agent model');
+      { method: 'POST', body: { sessionId, modelId, ...(projectId ? { project_id: projectId } : {}) } }, localModelResponseSchema, 'Set local agent model');
   }
 
   async reconnect(connectionId?: string): Promise<AstridAcpConnection | z.infer<typeof reconnectResponseSchema>> {

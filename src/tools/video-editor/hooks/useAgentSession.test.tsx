@@ -321,7 +321,7 @@ describe('timeline agent ACP chat', () => {
     expect(acp.connect).toHaveBeenCalledWith('codex', undefined);
     expect(acp.loadSession).toHaveBeenCalledWith('codex-connection', 'codex:chat-1');
     expect(acp.sessionModels).toHaveBeenCalledWith('codex-connection', 'codex:chat-1');
-    expect(acp.setSessionModel).toHaveBeenCalledWith('codex-connection', 'codex:chat-1', 'provider/model-exact');
+    expect(acp.setSessionModel).toHaveBeenCalledWith('codex-connection', 'codex:chat-1', 'provider/model-exact', 'p');
     expect(acp).not.toHaveProperty('models');
   });
 
@@ -445,7 +445,7 @@ describe('timeline agent ACP chat', () => {
     let missing = true;
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
-      if (url.endsWith('/chat')) return Response.json({project_id: 'saved-project', scope_key: 'project:saved-project', revision: 1, selected_session_id: 'saved-chat-retry', sessions: [{id: 'saved-chat-retry'}], draft: {text: '', revision: 1, queued_messages: []}});
+      if (url.endsWith('/chat')) return Response.json({project_id: 'saved-project', scope_key: 'project:saved-project', revision: 1, selected_session_id: 'saved-chat-retry', sessions: [{id: 'saved-chat-retry', pending_first_message: false}], draft: {text: '', revision: 1, queued_messages: []}});
       if (url.endsWith('/connect')) return Response.json({ connection_id: 'saved-chat-connection', initialize: {} });
       if (url.endsWith('/rpc')) {
         const body = JSON.parse(String(init?.body));
@@ -473,6 +473,52 @@ describe('timeline agent ACP chat', () => {
     } finally {
       hook.unmount();
       vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it.each([
+    ['claude-code', 'Resource not found'],
+    ['codex', 'no rollout found for thread ID'],
+  ] as const)('recovers a legacy empty %s chat after session/load proves its transcript is missing', async (agent, missingDetail) => {
+    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, agent);
+    localStorage.setItem(localAgentModelSettingKey(agent), 'model-beta');
+    const oldId = `${agent}:empty-before-reload`;
+    const freshId = `${agent}:fresh-after-reload`;
+    let projectChat = { project_id: 'reload-project', scope_key: 'project:reload-project', revision: 4, selected_session_id: oldId, main_session_id: 'other-chat', sessions: [{ id: oldId, title: 'Untitled', model_id: 'model-beta' }, { id: 'other-chat', title: 'Other' }], draft: { text: '', revision: 0, queued_messages: [] } };
+    const calls: Array<{ url: string; body?: Record<string, unknown> }> = [];
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined;
+      calls.push({ url, body });
+      if (url.endsWith('/chat') && init?.method !== 'POST') return Response.json(projectChat);
+      if (url.endsWith('/connect')) return Response.json({ connection_id: 'claude-reload', initialize: {} });
+      if (url.endsWith('/rpc')) return Response.json({ error: 'acp_transport', detail: `ACP request "session/load" failed: ${missingDetail}: ${oldId}` }, { status: 502 });
+      if (url.endsWith('/chat/sessions')) {
+        expect(body?.recover_session_id).toBe(oldId);
+        projectChat = { ...projectChat, revision: 5, selected_session_id: freshId, sessions: [{ ...projectChat.sessions[0], id: freshId, pending_first_message: true }, projectChat.sessions[1]] };
+        return Response.json({ ...projectChat, operation_session_id: freshId });
+      }
+      if (url.endsWith('/events')) return Response.json({ disconnected: false, notifications: [] });
+      throw new Error(`Unexpected request: ${url}`);
+    }));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const hook = renderHook(() => useAgentSession(oldId, 'reload-project'), { wrapper: wrapperWithClient(client) });
+    try {
+      await waitFor(() => expect(hook.result.current.data?.id).toBe(freshId));
+      const recovery = calls.find(call => call.url.endsWith('/chat/sessions'));
+      expect(recovery?.body).toMatchObject({ mode: 'ensure', recover_session_id: oldId });
+      expect(calls.some(call => call.url.endsWith('/rpc') && call.body?.method === 'session/new')).toBe(false);
+      expect(calls.filter(call => call.url.endsWith('/chat')).length).toBeGreaterThanOrEqual(1);
+      expect(client.getQueryData<ProjectChatState>(projectChatQueryKey('reload-project'))).toMatchObject({
+        selected_session_id: freshId,
+        main_session_id: 'other-chat',
+        sessions: [{ id: freshId, title: 'Untitled', model_id: 'model-beta', pending_first_message: true }, { id: 'other-chat' }],
+      });
+      expect(calls.find(call => call.url.endsWith('/connect'))?.body).toMatchObject({ agent, defaultModelId: 'model-beta' });
+    } finally {
+      hook.unmount();
+      client.clear();
       vi.unstubAllGlobals();
     }
   });

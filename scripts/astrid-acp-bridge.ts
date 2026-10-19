@@ -178,6 +178,16 @@ function sessionIdFrom(value: unknown): string | null {
   return typeof sessionId === 'string' && sessionId ? sessionId : null;
 }
 
+function isMissingPersistedSession(error: unknown, sessionId: string): boolean {
+  if (!(error instanceof AcpProcessHostError) || error.code !== 'acp_transport') return false;
+  const prefix = 'ACP request "session/resume" failed: ';
+  if (!error.message.startsWith(prefix)) return false;
+  const detail = error.message.slice(prefix.length).trim().toLowerCase();
+  return detail === `acp session not found: ${sessionId}`.toLowerCase()
+    || /\bresource not found\b/.test(detail)
+    || /\bno rollout found\b/.test(detail);
+}
+
 function isPathWithin(root: string, candidate: string): boolean {
   const normalizedRoot = root.endsWith('/') ? root : `${root}/`;
   return candidate === root || candidate.startsWith(normalizedRoot);
@@ -503,7 +513,7 @@ export class AstridAcpBridge {
       if (match[2] === 'model' && request.method === 'POST') {
         if (connection.agent === 'astrid') throw new ChatError(404, 'not_found', 'Local model selection is available for installed agents only');
         const body = asRecord(await readJson(request));
-        if (!body || Object.keys(body).some(key => key !== 'sessionId' && key !== 'modelId') || typeof body.sessionId !== 'string' || typeof body.modelId !== 'string' || !body.sessionId || !body.modelId) {
+        if (!body || Object.keys(body).some(key => !['sessionId', 'modelId', 'project_id'].includes(key)) || typeof body.sessionId !== 'string' || typeof body.modelId !== 'string' || !body.sessionId || !body.modelId || (body.project_id !== undefined && typeof body.project_id !== 'string')) {
           throw new ChatError(400, 'invalid_body', 'sessionId and modelId are required');
         }
         if (connection.inFlight > 1) throw new ChatError(409, 'acp_request_in_progress', 'Wait for the current ACP request to finish before changing models');
@@ -517,6 +527,7 @@ export class AstridAcpBridge {
           : await this.sharedSessions.request(connection, 'session/set_model', { sessionId: body.sessionId, modelId: body.modelId });
         this.updateLocalModelState(connection, body.sessionId, body.modelId);
         connection.defaultModelId = body.modelId;
+        if (typeof body.project_id === 'string') await this.chatRegistry?.setSessionModel(body.project_id, body.sessionId, body.modelId);
         jsonResponse(response, 200, { result, models: connection.models.get(body.sessionId) });
         return;
       }
@@ -779,10 +790,16 @@ export class AstridAcpBridge {
       if (connection.localMediaOnly || localMediaOnly) assertLocalMediaOnly(body);
       if (action === 'sessions') {
         if ((body.mode !== 'ensure' && body.mode !== 'ensure_main' && body.mode !== 'new') || typeof body.operation_id !== 'string' || !body.operation_id || body.operation_id.length > 200) throw new ChatError(400, 'invalid_body', 'mode and operation_id are required');
+        if (body.recover_session_id !== undefined && (typeof body.recover_session_id !== 'string' || !body.recover_session_id || body.mode === 'new')) throw new ChatError(400, 'invalid_body', 'recover_session_id is invalid');
+        if (typeof body.recover_session_id === 'string' && sessionAgentId(body.recover_session_id) !== connection.agent) throw new ChatError(403, 'session_agent_mismatch', 'Recovery must use the chat’s original agent');
+        const recoveryTarget = typeof body.recover_session_id === 'string'
+          ? (await registry.get(projectId)).sessions.find(session => session.id === body.recover_session_id)
+          : undefined;
+        if (body.recover_session_id && (!recoveryTarget || recoveryTarget.pending_first_message === false)) throw new ChatError(409, 'session_not_recoverable', 'Only an empty or legacy local-agent chat can be recovered automatically');
         const state = await registry.create(projectId, body.mode, body.operation_id, async () => {
           const result = await this.sharedSessions.request(connection, 'session/new', { cwd: this.config.cwd, mcpServers: [] });
           this.rememberSession(connection, 'session/new', {}, result);
-          return await this.applyDefaultLocalModel(connection, result);
+          return await this.applyDefaultLocalModel(connection, result, recoveryTarget?.model_id);
         }, async sessionId => {
           // A different agent's chat remains available through its original
           // connection. Changing the default must never mark that chat missing.
@@ -792,10 +809,10 @@ export class AstridAcpBridge {
             this.rememberSession(connection, 'session/resume', { sessionId }, result);
             return true;
           } catch (error) {
-            if (error instanceof AcpProcessHostError && error.code === 'acp_transport' && error.message === `ACP request "session/resume" failed: ACP session not found: ${sessionId}`) return false;
+            if (isMissingPersistedSession(error, sessionId)) return false;
             throw error;
           }
-        });
+        }, body.recover_session_id as string | undefined);
         if (state.operation_session_id) connection.sessions.add(state.operation_session_id);
         jsonResponse(response, 200, state);
       } else if (action === 'associate') {
@@ -806,7 +823,7 @@ export class AstridAcpBridge {
             this.rememberSession(connection, 'session/resume', { sessionId }, result);
             return true;
           } catch (error) {
-            if (error instanceof AcpProcessHostError && error.code === 'acp_transport' && error.message === `ACP request "session/resume" failed: ACP session not found: ${sessionId}`) return false;
+            if (isMissingPersistedSession(error, sessionId)) return false;
             throw error;
           }
         });
@@ -816,6 +833,7 @@ export class AstridAcpBridge {
         await registry.assertOwned(projectId, body.session_id);
         await this.applySelectedModel(connection, body.session_id);
         if (body.request_id !== undefined && (typeof body.request_id !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/.test(body.request_id))) throw new ChatError(400, 'invalid_body', 'request_id must be a submission identifier');
+        await registry.markSessionStarted(projectId, body.session_id);
         const result = await this.sharedSessions.request(connection, 'session/prompt', { sessionId: body.session_id, prompt: body.prompt, ...(body.request_id ? { _astridRequestId: body.request_id } : {}) });
         jsonResponse(response, 200, { result });
       }
@@ -837,20 +855,20 @@ export class AstridAcpBridge {
     else connection.models.delete(sessionId);
   }
 
-  private async applyDefaultLocalModel(connection: Connection, result: unknown): Promise<unknown> {
+  private async applyDefaultLocalModel(connection: Connection, result: unknown, requestedModelId = connection.defaultModelId): Promise<unknown> {
     if (connection.agent === 'astrid') return result;
     const sessionId = sessionIdFrom(result);
     const models = sessionId ? connection.models.get(sessionId) : undefined;
     if (!sessionId || !models) return result;
-    if (connection.defaultModelId) {
-      if (!models.availableModels.some(model => model.modelId === connection.defaultModelId)) {
+    if (requestedModelId) {
+      if (!models.availableModels.some(model => model.modelId === requestedModelId)) {
         throw new ChatError(409, 'model_unavailable', 'The selected default model is unavailable in this new ACP session.');
       }
       const usesConfigOption = connection.configOptions.get(sessionId)?.has('model');
       await this.sharedSessions.request(connection, usesConfigOption ? 'session/set_config_option' : 'session/set_model', usesConfigOption
-        ? { sessionId, configId: 'model', value: connection.defaultModelId }
-        : { sessionId, modelId: connection.defaultModelId });
-      this.updateLocalModelState(connection, sessionId, connection.defaultModelId);
+        ? { sessionId, configId: 'model', value: requestedModelId }
+        : { sessionId, modelId: requestedModelId });
+      this.updateLocalModelState(connection, sessionId, requestedModelId);
     }
     return { ...(asRecord(result) ?? {}), ...(asRecord(this.sharedSessions.snapshot(connection, sessionId)) ?? {}), models: connection.models.get(sessionId) };
   }
