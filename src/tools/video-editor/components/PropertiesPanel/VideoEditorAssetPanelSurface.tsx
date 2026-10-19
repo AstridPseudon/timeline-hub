@@ -16,6 +16,8 @@ import { ExtensionPanelHost, getPanelKey } from '@/tools/video-editor/runtime/Ex
 import { bindTranscriptPanelVideo } from '@/tools/video-editor/lib/transcript-panel-binding.ts';
 import { playedAssetRegistry, playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import type { PanelRenderProps, PanelVideoAdapter } from '@astrid/editor-sdk';
+import { TimelineFramePreview, usePanelFramePreview } from '../PreviewPanel/TimelineFramePreview.tsx';
+import { useVideoEditorPreviewComposition } from '../PreviewPanel/useVideoEditorPreviewComposition.ts';
 
 export interface VideoEditorAssetPanelSurfaceProps {
   includeBuiltIn?: boolean;
@@ -34,6 +36,9 @@ function VideoEditorAssetPanelSurfaceComponent({
   const runtime = useOptionalVideoEditorRuntime();
   const store = useTimelineStoreApiSafe();
   const view = runtime?.timelineViewStore;
+  const { data, preferences, resolvedConfig } = useTimelineEditorData();
+  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig);
+  const framePreview = usePanelFramePreview();
   const latestRuntime = useRef(runtime);
   latestRuntime.current = runtime;
   const panelVideo = useMemo(() => {
@@ -41,11 +46,11 @@ function VideoEditorAssetPanelSurfaceComponent({
       view,
       seek: (seconds: number) => { store.getState().ops.onClickTimeArea(seconds); },
     } : undefined);
-    return base && store ? bindTranscriptPanelVideo(store, base, () => playedAssetRegistry(
+    return base && store ? bindTranscriptPanelVideo(store, { ...base, preview: base.preview ?? framePreview.preview }, () => playedAssetRegistry(
       playedShotComposition(latestRuntime.current?.userId, latestRuntime.current?.shots),
       store.getState().data.data?.resolvedConfig,
     )) : base;
-  }, [video, store, view]);
+  }, [video, store, view, framePreview.preview]);
   const contributionIndex = runtime?.extensionRuntime?.contributionIndex;
   const assetPanels = useVideoEditorAssetPanels();
   const panelRegistry = useVideoEditorPanelRegistry();
@@ -61,7 +66,6 @@ function VideoEditorAssetPanelSurfaceComponent({
       extensionId: panel.extensionId ?? findContributionOwnerId(contributionIndex, 'panel', panel.id),
     }))
     .filter((key) => activePanelKey === undefined || key === activePanelKey));
-  const { data, preferences } = useTimelineEditorData();
   const { setAssetPanelState, uploadFiles } = useTimelineEditorOps();
 
   const builtInPanel = includeBuiltIn && data ? (
@@ -98,6 +102,7 @@ function VideoEditorAssetPanelSurfaceComponent({
     <div className="flex h-full min-h-0 flex-col">
       {builtInPanel}
       <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} settingsByPanelKey={settingsByPanelKey} onError={handleContributionError} />
+      <TimelineFramePreview config={previewComposition.config} request={framePreview.request} />
     </div>
   );
 }

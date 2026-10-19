@@ -16,10 +16,24 @@ import type { DisposeHandle } from './dispose';
 import type { TimelineViewStore } from './video/timeline/viewState';
 import type { TranscriptPanelAdapter } from './video/transcript';
 
+/** A viewport rectangle, in CSS pixels, anchoring a host-owned frame tooltip. */
+export interface PanelFrameAnchor {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface PanelPreviewService {
+  /** Show the composed film at timeline seconds. Dispose on leave, scroll or hide. */
+  showFrame(input: { readonly seconds: number; readonly anchor: PanelFrameAnchor }): DisposeHandle;
+}
+
 /** Optional video context; a generic panel needs neither playback nor a lane. */
 export interface PanelVideoAdapter {
   readonly view: TimelineViewStore;
   readonly transcript?: TranscriptPanelAdapter;
+  readonly preview?: PanelPreviewService;
   /** Seek through the host player. The adapter owns validation/projection. */
   seek(seconds: number): void;
 }

@@ -11,7 +11,7 @@ import { shallow } from 'zustand/shallow';
 import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
 import { useTimelineDataSelector, useTimelinePlaybackSelector } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import { resolveCanonicalComposition } from '@/tools/video-editor/data/canonicalCompositionState.ts';
+import { useVideoEditorPreviewComposition } from './useVideoEditorPreviewComposition.ts';
 
 export interface VideoEditorPreviewSurface {
   slotRef: RefCallback<HTMLDivElement>;
@@ -28,22 +28,7 @@ export function useVideoEditorPreviewSurface({
 } = {}): VideoEditorPreviewSurface {
   const resolvedConfig = useTimelineDataSelector((timeline) => timeline.resolvedConfig);
   const runtime = useOptionalVideoEditorRuntime();
-  const hasShotClips = Boolean(resolvedConfig?.clips.some((clip) => clip.clipType === 'shot'));
-  // Interactive preview should reflect an in-progress child-shot edit before
-  // its canonical publication is acknowledged. Export/save still consume the
-  // acknowledged composition through their own paths.
-  const previewComposition = runtime?.userId === null
-    ? runtime.shots?.canonicalDraft?.composition ?? runtime.shots?.canonicalComposition
-    : null;
-  const compositionResolution = useMemo(() => resolveCanonicalComposition({
-    userId: runtime?.userId,
-    hasShotClips,
-    hasShotComposition: Boolean(runtime?.shots?.shotComposition),
-    composition: previewComposition,
-    compositionError: runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null,
-    baseConfig: resolvedConfig,
-  }), [hasShotClips, previewComposition, resolvedConfig, runtime?.shots?.canonicalCompositionError,
-    runtime?.shots?.shotComposition, runtime?.userId]);
+  const compositionResolution = useVideoEditorPreviewComposition(resolvedConfig);
   const previewConfig = compositionResolution.config;
   const previewSource = compositionResolution.source;
   const {
