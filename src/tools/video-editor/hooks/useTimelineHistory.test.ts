@@ -15,6 +15,7 @@ import { buildDataFromCurrentRegistry } from '../lib/timeline-save-utils';
 import { configToRows, type TimelineData } from '../lib/timeline-data';
 import { useTimelineHistory } from './useTimelineHistory';
 import type { Checkpoint } from '../types/history';
+import type { CanonicalShotCompositionHistoryEntry } from '../data/shotCompositionAdapter';
 import type { TimelineEditability } from '../lib/timeline-editability';
 
 type CommitCall = {
@@ -173,6 +174,7 @@ function setup(options: {
   initialData?: TimelineData;
   providerOverrides?: Partial<DataProvider>;
   editability?: TimelineEditability;
+  scope?: { projectId: string; timelineId: string };
 } = {}) {
   const provider = makeProvider(options.providerOverrides);
   const dataRef = { current: options.initialData ?? makeTimelineData(options.initialStep ?? 0) };
@@ -195,9 +197,9 @@ function setup(options: {
     {
       value: {
         provider,
-        project: { projectId: 'project-1' },
+        project: { projectId: options.scope?.projectId ?? 'project-1' },
         toast,
-        timelineId: 'timeline-1',
+        timelineId: options.scope?.timelineId ?? 'timeline-1',
         userId: 'user-1',
         timelineName: 'Timeline 1',
       },
@@ -281,7 +283,7 @@ describe('useTimelineHistory', () => {
       revisionId: 'parent-revision-1',
       projectId: 'project-1',
       parentDocumentId: 'timeline-1',
-      contentDigest: 'sha256:' + 'a'.repeat(64),
+      publicationId: 'publication-1',
       createdAt: '2026-10-05T12:00:00Z',
       isCurrentHead: false,
     }]);
@@ -319,14 +321,14 @@ describe('useTimelineHistory', () => {
   it('refreshes canonical history on demand after a new revision is published', async () => {
     const first = {
       revisionId: 'parent-revision-1', projectId: 'project-1', parentDocumentId: 'timeline-1',
-      contentDigest: 'sha256:' + 'a'.repeat(64), createdAt: '2026-10-05T12:00:00Z', isCurrentHead: true,
+      publicationId: 'publication-1', createdAt: '2026-10-05T12:00:00Z', isCurrentHead: true,
     };
     const second = {
-      ...first, revisionId: 'parent-revision-2', isCurrentHead: true,
+      ...first, publicationId: 'publication-2', revisionId: 'parent-revision-2', isCurrentHead: true,
     };
     const listHistory = vi.fn()
       .mockResolvedValueOnce([first])
-      .mockResolvedValueOnce([second, first]);
+      .mockResolvedValueOnce([second, { ...first, isCurrentHead: false }]);
     const { result } = setup({
       providerOverrides: {
         shotComposition: {
@@ -352,6 +354,133 @@ describe('useTimelineHistory', () => {
     expect(result.current.canonicalHistory.map((entry) => entry.revisionId)).toEqual([
       'parent-revision-2', 'parent-revision-1',
     ]);
+  });
+
+  it('keeps repeated-revision publications after refresh and clears them on unavailable history', async () => {
+    const current = {
+      revisionId: 'repeated-revision', publicationId: 'publication-restored',
+      projectId: 'project-1', parentDocumentId: 'timeline-1',
+      createdAt: '2026-10-19T00:00:00Z', isCurrentHead: true,
+    };
+    const older = { ...current, publicationId: 'publication-original', isCurrentHead: false };
+    const listHistory = vi.fn().mockResolvedValueOnce([current, older])
+      .mockRejectedValueOnce(new Error('Accepted history is unavailable'));
+    const { result } = setup({ providerOverrides: { shotComposition: {
+      load: vi.fn(), listHistory, restoreHistory: vi.fn(),
+    } } });
+
+    await act(async () => { await result.current.refreshCanonicalHistory(); });
+    expect(result.current.canonicalHistory.map((entry) => entry.publicationId)).toEqual([
+      'publication-restored', 'publication-original',
+    ]);
+    expect(result.current.canonicalHistory.filter((entry) => entry.isCurrentHead)).toHaveLength(1);
+    await act(async () => { await result.current.refreshCanonicalHistory(); });
+    expect(result.current.canonicalHistory).toEqual([]);
+    expect(result.current.canonicalHistoryError).toBe('Accepted history is unavailable');
+    expect(result.current.canonicalHistorySupported).toBe(true);
+  });
+
+  it('refreshes accepted publications after a successful restore of a repeated revision', async () => {
+    const original = {
+      revisionId: 'repeated-revision', publicationId: 'publication-original',
+      projectId: 'project-1', parentDocumentId: 'timeline-1',
+      createdAt: '2026-10-18T00:00:00Z', isCurrentHead: false,
+    };
+    const restored = { ...original, publicationId: 'publication-restored', createdAt: '2026-10-19T00:00:00Z', isCurrentHead: true };
+    const listHistory = vi.fn().mockResolvedValue([restored, original]);
+    const restoreHistory = vi.fn(async () => ({ newHead: original.revisionId }));
+    const { result, toast } = setup({ providerOverrides: { shotComposition: {
+      load: vi.fn(), listHistory, restoreHistory,
+    } } });
+
+    await act(async () => { await result.current.restoreCanonicalRevision(original.revisionId); });
+
+    expect(restoreHistory).toHaveBeenCalledWith({
+      projectId: 'project-1', parentDocumentId: 'timeline-1', revisionId: original.revisionId,
+    });
+    expect(listHistory).toHaveBeenCalledWith({ projectId: 'project-1', parentDocumentId: 'timeline-1' });
+    expect(result.current.canonicalHistory).toEqual([restored, original]);
+    expect(result.current.canonicalHistoryError).toBeNull();
+    expect(result.current.restoringCanonicalRevisionId).toBeNull();
+    expect(toast.success).toHaveBeenCalledWith('Timeline history restored', { description: 'Restored revision repeated-revisio.' });
+  });
+
+  it.each([
+    ['timeline', 'success'], ['timeline', 'failure'],
+    ['project', 'success'], ['project', 'failure'],
+  ])('discards pending history after switching %s: %s', async (switchScope, outcome) => {
+    const scope = { projectId: 'project-1', timelineId: 'timeline-1' };
+    const entry: CanonicalShotCompositionHistoryEntry = {
+      revisionId: 'parent-revision', publicationId: 'publication-1',
+      projectId: scope.projectId, parentDocumentId: scope.timelineId,
+      createdAt: '2026-10-19T00:00:00Z', isCurrentHead: true,
+    };
+    let resolveOld!: (entries: readonly CanonicalShotCompositionHistoryEntry[]) => void;
+    let rejectOld!: (reason: Error) => void;
+    const response = new Promise<readonly CanonicalShotCompositionHistoryEntry[]>((resolve, reject) => {
+      resolveOld = resolve; rejectOld = reject;
+    });
+    const listHistory = vi.fn().mockResolvedValueOnce([entry]).mockReturnValueOnce(response).mockResolvedValue([]);
+    const { result, rerender } = setup({ scope, providerOverrides: { shotComposition: {
+      load: vi.fn(), listHistory, restoreHistory: vi.fn(),
+    } } });
+    await act(async () => { await result.current.refreshCanonicalHistory(); });
+    expect(result.current.canonicalHistory).toEqual([entry]);
+    let pending!: Promise<void>;
+    act(() => { pending = result.current.refreshCanonicalHistory(); });
+    if (switchScope === 'timeline') scope.timelineId = 'timeline-2';
+    else scope.projectId = 'project-2';
+    rerender();
+    expect(result.current.canonicalHistory).toEqual([]);
+    await act(async () => {
+      if (outcome === 'success') resolveOld([entry]);
+      else rejectOld(new Error('old view unavailable'));
+      await pending;
+    });
+    expect(result.current.canonicalHistory).toEqual([]);
+    expect(result.current.canonicalHistoryError).toBeNull();
+    await act(async () => { await result.current.refreshCanonicalHistory(); });
+    expect(listHistory).toHaveBeenLastCalledWith({ projectId: scope.projectId, parentDocumentId: scope.timelineId });
+  });
+
+  it.each(['success', 'failure', 'refresh'] as const)('discards stale restore %s after switching timeline', async (outcome) => {
+    const scope = { projectId: 'project-1', timelineId: 'timeline-1' };
+    let resolveRestore!: (receipt: { newHead: string }) => void;
+    let rejectRestore!: (reason: Error) => void;
+    let resolveHistory!: (entries: readonly CanonicalShotCompositionHistoryEntry[]) => void;
+    const restore = new Promise<{ newHead: string }>((resolve, reject) => {
+      resolveRestore = resolve; rejectRestore = reject;
+    });
+    const history = new Promise<readonly CanonicalShotCompositionHistoryEntry[]>((resolve) => { resolveHistory = resolve; });
+    const listHistory = vi.fn(() => history);
+    const { result, rerender, toast } = setup({ scope, providerOverrides: { shotComposition: {
+      load: vi.fn(), listHistory, restoreHistory: vi.fn(() => restore),
+    } } });
+    let pending!: Promise<void>;
+    act(() => { pending = result.current.restoreCanonicalRevision('parent-old'); });
+    expect(result.current.restoringCanonicalRevisionId).toBe('parent-old');
+    if (outcome === 'refresh') {
+      await act(async () => { resolveRestore({ newHead: 'parent-restored' }); });
+      expect(listHistory).toHaveBeenCalledTimes(1);
+    }
+    scope.timelineId = 'timeline-2';
+    rerender();
+    await act(async () => {
+      if (outcome === 'failure') rejectRestore(new Error('old restore failed'));
+      else resolveRestore({ newHead: 'parent-restored' });
+      resolveHistory([{
+        revisionId: 'parent-restored', publicationId: 'publication-restored',
+        projectId: 'project-1', parentDocumentId: 'timeline-1',
+        createdAt: '2026-10-19T00:00:00Z', isCurrentHead: true,
+      }]);
+      await pending;
+    });
+    expect(listHistory).toHaveBeenCalledTimes(outcome === 'refresh' ? 1 : 0);
+    expect(result.current.canonicalHistory).toEqual([]);
+    expect(result.current.canonicalHistoryError).toBeNull();
+    expect(result.current.restoringCanonicalRevisionId).toBeNull();
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it('supports a basic undo/redo cycle', () => {

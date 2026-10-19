@@ -221,6 +221,7 @@ export function useTimelineHistory({
   const [canonicalHistoryError, setCanonicalHistoryError] = useState<string | null>(null);
   const [restoringCanonicalRevisionId, setRestoringCanonicalRevisionId] = useState<string | null>(null);
   const canonicalHistoryRequestRef = useRef(0);
+  const canonicalHistoryScopeRef = useRef(0);
   const canonicalHistorySupported = Boolean(provider.shotComposition?.listHistory && provider.shotComposition?.restoreHistory);
 
   const syncHistoryState = useCallback(() => {
@@ -572,8 +573,12 @@ export function useTimelineHistory({
   }, [historyProjectId, provider, timelineId]);
 
   useEffect(() => {
+    setCanonicalHistory([]);
+    setCanonicalHistoryError(null);
+    setRestoringCanonicalRevisionId(null);
     return () => {
       canonicalHistoryRequestRef.current += 1;
+      canonicalHistoryScopeRef.current += 1;
     };
   }, [refreshCanonicalHistory]);
 
@@ -588,23 +593,27 @@ export function useTimelineHistory({
 
     setCanonicalHistoryError(null);
     setRestoringCanonicalRevisionId(revisionId);
+    const scope = canonicalHistoryScopeRef.current;
     try {
       await restoreHistory({ projectId: historyProjectId, parentDocumentId: timelineId, revisionId });
+      if (scope !== canonicalHistoryScopeRef.current) return;
       const entries = await provider.shotComposition?.listHistory?.({
         projectId: historyProjectId,
         parentDocumentId: timelineId,
       });
+      if (scope !== canonicalHistoryScopeRef.current) return;
       if (entries) setCanonicalHistory(entries);
       undoStackRef.current = [];
       redoStackRef.current = [];
       syncHistoryState();
       toast.success('Timeline history restored', { description: `Restored revision ${revisionId.slice(0, 16)}.` });
     } catch (error: unknown) {
+      if (scope !== canonicalHistoryScopeRef.current) return;
       const message = error instanceof Error ? error.message : String(error);
       setCanonicalHistoryError(message);
       toast.error('Could not restore timeline history', { description: message });
     } finally {
-      setRestoringCanonicalRevisionId(null);
+      if (scope === canonicalHistoryScopeRef.current) setRestoringCanonicalRevisionId(null);
     }
   }, [editability, historyProjectId, interactionStateRef, pendingOpsRef, provider, syncHistoryState, timelineId, toast]);
 
