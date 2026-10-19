@@ -4,3 +4,4 @@
 - Adopted in-flight worker branches from hub: app-m1-{editor-wiring,projection-fact,recovery-basis,recovery-compose,recovery-ui,wiring-fix}. Viewing branches (vw-*) left for the merge-request path.
 - Machine notes: Playwright 1.60 runs on the preinstalled Chromium via a local browsers shim (headless); ImageMagick 7 CLI shim; venv-agent/runtime ready. Baseline full-e2e-timeline on pre-handover tree 76f1e5b: 10 passed/28 failed (mostly "unexpected 404 request(s)" + layout snapshots) — first recorded run of this suite, for the App manager to triage.
 - Hourly lead check-ins publish here.
+- 2026-10-19T20:22:18Z: hub-syncd + dispatcher restarted by area lead (manager escalation app-20261019T2020Z-sync-daemon-restart handled locally).
