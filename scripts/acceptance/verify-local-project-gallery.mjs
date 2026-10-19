@@ -250,7 +250,7 @@ async function readCardImageAssetIds(locator) {
 
 async function runRow(page, origin, row, evidenceRoot, rowNumber) {
   const { project, timeline } = row;
-  const query = new URLSearchParams({ localProject: project, localTimeline: timeline }).toString();
+  const query = new URLSearchParams({ project, timeline }).toString();
   const travelUrl = `${origin}/tools/travel-between-images?${query}`;
   const timelinePayload = await fetchJson(`${origin}/api/astrid/projects/${encodeURIComponent(project)}/timelines/${encodeURIComponent(timeline)}`);
   const generations = await fetchGenerations(origin, project);
@@ -350,8 +350,8 @@ async function runRow(page, origin, row, evidenceRoot, rowNumber) {
   await waitForSourceReadsToSettle(diagnostics);
   discardExpectedGalleryNavigationAborts(diagnostics, origin, project, galleryNavigationFailureBaseline);
   const destination = new URL(page.url());
-  assert.equal(destination.searchParams.get('localProject'), project, `${project} tool navigation preserves local project`);
-  assert.equal(destination.searchParams.get('localTimeline'), timeline, `${project} tool navigation preserves local timeline`);
+  assert.equal(destination.searchParams.get('project'), project, `${project} tool navigation preserves project`);
+  assert.equal(destination.searchParams.get('timeline'), timeline, `${project} tool navigation preserves timeline`);
   const galleryItems = page.locator('[data-gallery-item-id]');
   await waitUntil(async () => (await galleryItems.count()) >= Math.min(expectedImageIds.length, 45));
   const visibleIds = await galleryItems.evaluateAll((elements) => elements.map((element) => element.getAttribute('data-gallery-item-id')).filter(Boolean));

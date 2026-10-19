@@ -1,4 +1,5 @@
-import { useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card.tsx';
 import { useRuntimeEditorDiscovery, chooseRuntimeTimeline } from '@/tools/video-editor/hooks/useRuntimeEditorDiscovery.ts';
@@ -7,6 +8,8 @@ import { LocalTimelineShotBrowser } from './LocalTimelineShotBrowser.tsx';
 /** Travel consumes the canonical editor selection and opens its Runtime timeline. */
 export function AstridTravelRoute() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const projectRef = searchParams.get('project')?.trim() || null;
   const timelineRef = searchParams.get('timeline')?.trim() || null;
   const discovery = useRuntimeEditorDiscovery({ enabled: true, projectId: projectRef, open: true });
@@ -15,6 +18,18 @@ export function AstridTravelRoute() {
   const selectedTimeline = timelines.find((t) => t.timeline_id === timelineRef) ?? null;
   const defaultTimeline = project ? chooseRuntimeTimeline(project, timelines) : undefined;
   const activeTimeline = selectedTimeline ?? (!timelineRef ? defaultTimeline : null);
+
+  useEffect(() => {
+    const projectId = project?.project_id;
+    const timelineId = activeTimeline?.timeline_id;
+    if (!projectId || !timelineId) return;
+    const nextSearchParams = new URLSearchParams(location.search);
+    nextSearchParams.set('project', projectId);
+    nextSearchParams.set('timeline', timelineId);
+    const search = `?${nextSearchParams.toString()}`;
+    if (search === location.search) return;
+    navigate({ ...location, search }, { replace: true });
+  }, [activeTimeline?.timeline_id, location, navigate, project?.project_id]);
 
   if (project && activeTimeline) {
     return <LocalTimelineShotBrowser projectSlug={project.slug} projectId={project.project_id} timelineRef={activeTimeline.timeline_id} />;
