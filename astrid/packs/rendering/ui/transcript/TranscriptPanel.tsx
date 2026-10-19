@@ -18,8 +18,6 @@ const SPOKEN_WORD_STYLE = { ...WORD_STYLE, boxShadow: '0 0 0 0.12em hsl(var(--pr
 const TARGET_WORD_STYLE = { outline: '1px solid hsl(var(--primary) / 0.4)', outlineOffset: '2px' } as const;
 const INSPECTOR_STYLE = { position: 'sticky', bottom: '-1rem', marginBottom: '-1rem' } as const;
 type Fallback = NonNullable<Extract<TranscriptPanelTextEditResult, { ok: false }>['fallback']>;
-type PreviewAnchor = { readonly left: number; readonly top: number; readonly width: number; readonly height: number };
-type TranscriptFramePreview = { showFrame(input: { readonly seconds: number; readonly anchor: PreviewAnchor }): { dispose(): void } };
 type Part = { text: string; word?: TranscriptSourceWordView };
 /** A clip the timeline plays, in timeline seconds; `placementId` names the shot placement it plays inside. */
 export type PlayedClip = { readonly id: string; readonly assetId: string; readonly start: number; readonly end: number; readonly sourceStart: number; readonly rate: number; readonly placementId?: string };
@@ -191,6 +189,7 @@ const clock = (seconds: number) => {
 /** The whole timeline's words. Canonical document state and mutation authority stay in the host adapter. */
 export function TranscriptPanel(props: TranscriptPanelProps) {
   const adapter = props.video?.transcript;
+  const preview = props.video?.preview;
   const settingsOpen = props.settings?.open ?? false;
   const observing = props.visible;
   const [revision, refresh] = useState(0);
@@ -235,6 +234,8 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
     clearPreview();
   }, [props.visible, clearPreview]);
   useEffect(() => () => clearPreview(), [clearPreview]);
+  const snapshot = adapter?.getSnapshot() ?? EMPTY;
+  useEffect(() => clearPreview(), [preview, snapshot, clearPreview]);
   useEffect(() => {
     if (!observing || !adapter) return;
     const documentSubscription = adapter.subscribe(() => refresh((value) => value + 1));
@@ -263,8 +264,6 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
     };
   }, [settingsOpen, props.visible, props.settings]);
 
-  const snapshot = adapter?.getSnapshot() ?? EMPTY;
-  const preview = (props.video as (PanelVideoAdapter & { readonly preview?: TranscriptFramePreview }) | undefined)?.preview;
   const mediaChoices = adapter?.getMediaChoices() ?? [];
   // The generic reader sees inside placed shots; without it, the adapter's own clip projection is used.
   let timeline: TimelineSnapshot | undefined;
