@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 
 import pytest
 
@@ -8,24 +10,49 @@ from http_helpers import Api
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import RetiredRouteError
 from runtime_protocol.service import RuntimeService
+from runtime_protocol.timeline_commit_baseline import verify_baseline
+from runtime_protocol.util import canonical_json
 from precut_realm_fixture import load_precut_realm_fixture
-
-
-# Restore these cases when a genuine canonical Document capture is available.
-MISSING_PROJECTION = pytest.mark.xfail(
-    strict=True,
-    reason="Requires a genuine captured canonical Document projection; pre-cut schema31 archive has none",
-)
 
 
 @pytest.fixture(scope="module", params=["service", "http"])
 def documents(request, tmp_path_factory):
-    captured = load_precut_realm_fixture(tmp_path_factory.mktemp(request.param))
+    captured = load_precut_realm_fixture(
+        tmp_path_factory.mktemp(request.param), variant="music-documents",
+    )
     root = captured.copy_roots[1]
     service = RuntimeService(root)
     project = captured.pins["project_id"]
-    # The captured film has immutable parent/shot revisions but no generic
-    # canonical Document projections. Do not fabricate those historical rows.
+    baseline = verify_baseline(
+        service.store.conn, project, captured.pins["timeline_id"],
+        read_object=service.cas.read,
+    )
+    assert baseline["head"] == {
+        "revision_id": captured.pins["parent_revision_id"],
+        "publication_id": captured.pins["publication_receipt_id"],
+    }
+    receipt = baseline["entries"][-1]["receipt"]
+    assert receipt["idempotency_key"] == "film-two-clip-publication"
+    assert receipt["event_ids"] == list(captured.pins["publication_event_ids"])
+    # These aliases capture the original payloads, before the newer music head.
+    parent = service.get_project_parent_composition_revision(project, "film", "film-parent-v1")["payload"]
+    internal = service.get_project_timeline_revision(project, "film", "film-internal-1")["payload"]
+    for document_id, content in (("timeline:film", parent), ("legacy-projection", parent),
+                                 ("timeline:shot:shot-1", internal)):
+        document = service.get_document(project, document_id)
+        assert document["kind"] == "timeline.composition"
+        assert document["version"] == 1
+        assert document["content"] == content
+        body = {"project_id": project, "document_id": document_id,
+                "kind": "timeline.composition", "content": content}
+        created = service.store.conn.execute(
+            "SELECT * FROM command_idempotency WHERE command_kind='document.create' AND aggregate_id=?",
+            (document_id,),
+        ).fetchone()
+        assert created is not None and created["txn_id"]
+        assert created["idempotency_key"] == "capture-document-" + document_id.replace(":", "-")
+        assert created["request_hash"] == hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        assert json.loads(created["result_json"]) == document
     service.create_document(
         project, {"document_id": "ordinary", "kind": "example.notes", "content": {"kept": True}},
         idempotency_key="seed-ordinary",
@@ -97,7 +124,7 @@ def _assert_denied(documents, monkeypatch, method, document_id, body):
     ("timeline:spoofed", "example.notes"),
     ("fresh", "timeline.composition"),
     ("ordinary", "timeline.composition"),
-    pytest.param("legacy-projection", "example.notes", marks=MISSING_PROJECTION),
+    ("legacy-projection", "example.notes"),
     ("legacy-projection", "timeline.composition"),
 ])
 def test_create_rejects_canonical_existing_and_proposed_identity(documents, monkeypatch, document_id, kind):
@@ -117,8 +144,8 @@ def test_create_rejects_canonical_existing_and_proposed_identity(documents, monk
     ("timeline:shot:shot-1", {"kind": "example.notes"}),
     ("timeline:shot:fresh", {"kind": "example.notes"}),
     ("timeline:spoofed", {}),
-    pytest.param("legacy-projection", {}, marks=MISSING_PROJECTION),
-    pytest.param("legacy-projection", {"kind": "example.notes", "document_id": "ordinary"}, marks=MISSING_PROJECTION),
+    ("legacy-projection", {}),
+    ("legacy-projection", {"kind": "example.notes", "document_id": "ordinary"}),
     ("ordinary", {"kind": "timeline.composition"}),
     ("ordinary", {"document_id": "timeline:film"}),
     ("ordinary", {"document_id": "timeline:fresh", "kind": "example.notes"}),
@@ -133,8 +160,7 @@ def test_update_rejects_canonical_existing_and_proposed_identity(documents, monk
     })
 
 
-@pytest.mark.parametrize("document_id", [pytest.param("timeline:film", marks=MISSING_PROJECTION),
-                                         pytest.param("legacy-projection", marks=MISSING_PROJECTION)])
+@pytest.mark.parametrize("document_id", ["timeline:film", "legacy-projection"])
 def test_exact_duplicate_create_is_also_denied(documents, monkeypatch, document_id):
     service, project, _ = documents
     old = service.get_document(project, document_id)
