@@ -4520,6 +4520,11 @@ def test_disposable_kernel_exit_evidence_survives_optional_mach_failure(tmp_path
 @pytest.fixture
 def postexec_broker(tmp_path, monkeypatch):
     """Exercise the real _serve boundary with CPU-only native observations."""
+    # Scheduling delays must not decide this offline protocol test's 25ms
+    # budget. Individual deadline tests may replace this clock themselves.
+    clock = [0.0]
+    monkeypatch.setattr(custody.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(custody.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0] + seconds))
     broker = object.__new__(custody.RoleBoundCustodyBroker)
     uid = os.getuid()
     anchor = {"pid": 103, "uid": uid, "start_abstime": 100, "start_sec": 123, "start_usec": 456}
