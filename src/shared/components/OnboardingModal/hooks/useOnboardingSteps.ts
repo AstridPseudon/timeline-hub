@@ -5,7 +5,7 @@ import { TextCaseStep } from '@/shared/components/OnboardingModal/components/ste
 import { TimeOfDayStep } from '@/shared/components/OnboardingModal/components/steps/TimeOfDayStep';
 import type { OnboardingStepDefinition } from '@/shared/components/OnboardingModal/types';
 
-/** First run: get the local Runtime going (blocking until it is), two quick appearance choices, then an
+/** First run: get Astrid going (blocking until it is), two quick appearance choices, then an
  *  optional invitation to the community that finishes on its own. */
 const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
   { id: 1, title: 'Set up', component: AstridSetupStep },

@@ -5,7 +5,7 @@ import { useLargeModal } from '@/shared/hooks/useModal';
 import { useScrollFade } from '@/shared/hooks/useScrollFade';
 import { useOnboardingSteps } from '@/shared/components/OnboardingModal/hooks/useOnboardingSteps';
 import type { OnboardingModalProps } from '@/shared/components/OnboardingModal/types';
-import { AstridSetupStep, SetupFooterStatus } from '@/shared/components/OnboardingModal/components/steps/AstridSetupStep';
+import { AstridSetupStep } from '@/shared/components/OnboardingModal/components/steps/AstridSetupStep';
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   isOpen,
@@ -14,7 +14,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 }) => {
   const initialFocusRef = React.useRef<HTMLDivElement>(null);
   const reconnect = mode === 'reconnect';
-  // Large: setup shows commands and a brief that need room to read.
+  // Large: keep the setup command easy to read.
   const modal = useLargeModal();
   const { showFade, scrollRef } = useScrollFade({
     isOpen,
@@ -76,13 +76,6 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               </div>
             )}
 
-            {/* While setting up, what it's waiting for sits here, below the instructions rather than over them. */}
-            {/* The checks sit centred in the footer, with no step-dot row beneath them. */}
-            {currentStep === 1 && (
-              <div className="border-t pt-6">
-                <SetupFooterStatus />
-              </div>
-            )}
             <div className={`relative flex justify-center gap-x-2 pb-2 relative z-20 ${currentStep === 1 ? 'hidden' : 'pt-6 border-t'}`}>
               {currentStep > 1 && (
                 <button
@@ -94,7 +87,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 </button>
               )}
 
-              {/* On the setup step the checks show progress; step dots there would only compete with them. */}
+              {/* Setup waits for a connection before the appearance steps begin. */}
               <div className={`flex gap-x-2 ${currentStep === 1 ? 'hidden' : ''}`}>
                 {stepTitles.map((_, index) => (
                   <div

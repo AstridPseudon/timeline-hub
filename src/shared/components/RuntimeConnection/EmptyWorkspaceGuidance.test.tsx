@@ -56,6 +56,12 @@ describe('connected empty workspace guidance', () => {
     expect(copied).toContain('install.json');
     expect(copied).toContain('haus.astrid.runtime');
     expect(copied).toContain(installCommand('install'));
+    expect(copied).toContain('uses the Astrid installation saved for sign-in, or the default install folder if none is saved');
+    expect(copied).toContain('keeps the saved workspace; otherwise it checks the default and old workspace locations');
+    expect(copied).toContain('does not select the folder I choose here');
+    expect(copied).toContain('Check that those choices match the Astrid I chose before running it');
+    expect(copied).toContain('If they differ, stop and explain what needs to change');
+    expect(copied).not.toContain('bring that installation up');
     expect(copied).not.toContain('astrid-runtime up');
     expect(copied).not.toContain('<folder>/start');
     expect(copied).not.toContain('Library/Application Support');

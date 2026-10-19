@@ -1,6 +1,6 @@
 export interface OnboardingModalProps {
   isOpen: boolean;
-  /** `reconnect` shows only the "start your Runtime" step (see useOnboarding). */
+  /** `reconnect` shows only the "start Astrid" step (see useOnboarding). */
   mode?: 'first-run' | 'reconnect';
   onClose: () => void;
 }
