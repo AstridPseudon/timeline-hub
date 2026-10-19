@@ -78,7 +78,6 @@ vi.mock('../segment/usePendingFrames', () => ({
 vi.mock('./useComputedTimelineData', () => ({
   useComputedTimelineData: () => ({
     pairInfo: { pairs: [] },
-    pairDataByIndex: new Map([[0, { index: 0 }]]),
     localShotGenPositions: new Map([['img-1', 0]]),
     showPairLabels: true,
   }),

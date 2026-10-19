@@ -12,7 +12,6 @@ function buildParams(overrides: Record<string, unknown> = {}) {
     showDelete: true,
     showDownload: true,
     showShare: false,
-    showEdit: true,
     showStar: true,
     showAddToShot: true,
     enableSingleClick: false,
@@ -77,7 +76,6 @@ describe('useMediaGalleryItemProps', () => {
     expect(result.current.itemFeatures).toEqual(expect.objectContaining({
       showDelete: true,
       showDownload: true,
-      showEdit: true,
       showStar: true,
       showAddToShot: true,
       enableSingleClick: false,

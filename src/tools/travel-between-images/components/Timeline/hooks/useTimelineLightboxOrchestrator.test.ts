@@ -66,12 +66,10 @@ vi.mock('./segment/useAdjacentSegments', () => ({
 vi.mock('./useLightbox', () => ({
   useLightbox: () => ({
     lightboxIndex: mocks.lightboxIndex,
-    initialEditActive: false,
     goNext: vi.fn(),
     goPrev: vi.fn(),
     closeLightbox: mocks.closeBaseLightbox,
     openLightbox: vi.fn(),
-    openLightboxWithInpaint: vi.fn(),
     handleDesktopDoubleClick: vi.fn(),
     handleMobileTap: vi.fn(),
     showNavigation: false,

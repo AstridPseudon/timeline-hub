@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { TaskDetailsData } from '@/shared/lib/taskDetails/taskDetailsContract';
 import type { MediaGalleryLightboxSession } from '../components/MediaGalleryLightbox';
+import type { GeneratedImageWithMetadata } from '../types';
 import { buildMediaGalleryLightboxMedia } from '../utils/lightboxMedia';
 import {
   buildTaskDetailsPayload,
@@ -11,8 +12,7 @@ import {
 
 interface MediaGalleryLightboxSessionStateHook {
   state: {
-    activeLightboxMedia: MediaGalleryLightboxSession['activeLightboxMedia'];
-    autoEnterEditMode: boolean;
+    activeLightboxMedia: GeneratedImageWithMetadata | null;
     selectedShotIdLocal: string;
     showTickForImageId: string | null;
     showTickForSecondaryImageId: string | null;
@@ -56,11 +56,9 @@ interface UseMediaGalleryLightboxSessionParams {
   handlePreviousImage: () => void;
   handleSetActiveLightboxIndex: (index: number) => void;
   lightboxDeletingId: string | null;
-  onApplySettings?: MediaGalleryLightboxSession['onApplySettings'];
   simplifiedShotOptions: MediaGalleryLightboxSession['simplifiedShotOptions'];
   onAddToLastShot?: MediaGalleryLightboxSession['onAddToShot'];
   onAddToLastShotWithoutPosition?: MediaGalleryLightboxSession['onAddToShotWithoutPosition'];
-  isMobile: boolean;
   task: MediaGalleryLightboxSession['task'];
   taskDetailsLoading: boolean;
   taskError: MediaGalleryLightboxSession['taskError'];
@@ -68,8 +66,6 @@ interface UseMediaGalleryLightboxSessionParams {
   lightboxTaskMapping: MediaGalleryLightboxSession['lightboxTaskMapping'];
   onCreateShot?: MediaGalleryLightboxSession['onCreateShot'];
   handleNavigateToShot: NonNullable<MediaGalleryLightboxSession['onNavigateToShot']>;
-  handleShowTaskDetails: NonNullable<MediaGalleryLightboxSession['onShowTaskDetails']>;
-  currentToolType?: string;
   showDelete: boolean;
 }
 
@@ -84,11 +80,9 @@ export function useMediaGalleryLightboxSession(params: UseMediaGalleryLightboxSe
     handlePreviousImage,
     handleSetActiveLightboxIndex,
     lightboxDeletingId,
-    onApplySettings,
     simplifiedShotOptions,
     onAddToLastShot,
     onAddToLastShotWithoutPosition,
-    isMobile,
     task,
     taskDetailsLoading,
     taskError,
@@ -96,8 +90,6 @@ export function useMediaGalleryLightboxSession(params: UseMediaGalleryLightboxSe
     lightboxTaskMapping,
     onCreateShot,
     handleNavigateToShot,
-    handleShowTaskDetails,
-    currentToolType,
     showDelete,
   } = params;
   const [lightboxShotOverrideId, setLightboxShotOverrideId] = useState<string | null>(null);
@@ -175,9 +167,7 @@ export function useMediaGalleryLightboxSession(params: UseMediaGalleryLightboxSe
   ]);
 
   return useMemo<MediaGalleryLightboxSession>(() => ({
-    activeLightboxMedia: stateHook.state.activeLightboxMedia,
     lightboxMedia,
-    autoEnterEditMode: stateHook.state.autoEnterEditMode,
     onClose: handleLightboxClose,
     filteredImages: filtersHook.filteredImages,
     isServerPagination: paginationHook.isServerPagination,
@@ -191,7 +181,6 @@ export function useMediaGalleryLightboxSession(params: UseMediaGalleryLightboxSe
     handleOpenExternalGeneration,
     onDelete: showDelete ? deleteLightboxAction : undefined,
     isDeleting: lightboxDeletingId,
-    onApplySettings,
     simplifiedShotOptions,
     selectedShotIdLocal: stateHook.state.selectedShotIdLocal,
     selectedShotIdForLightbox,
@@ -208,12 +197,10 @@ export function useMediaGalleryLightboxSession(params: UseMediaGalleryLightboxSe
     optimisticUnpositionedIds: stateHook.state.optimisticUnpositionedIds,
     onOptimisticPositioned: stateHook.markOptimisticPositioned,
     onOptimisticUnpositioned: stateHook.markOptimisticUnpositioned,
-    isMobile,
     showTaskDetailsModal: stateHook.state.showTaskDetailsModal,
     setShowTaskDetailsModal: stateHook.setShowTaskDetailsModal,
     selectedImageForDetails: stateHook.state.selectedImageForDetails,
     setSelectedImageForDetails: stateHook.setSelectedImageForDetails,
-    onShowTaskDetails: handleShowTaskDetails,
     task,
     isLoadingTask: taskDetailsLoading,
     taskError,
@@ -222,10 +209,8 @@ export function useMediaGalleryLightboxSession(params: UseMediaGalleryLightboxSe
     taskDetailsData,
     onCreateShot,
     onNavigateToShot: handleNavigateToShot,
-    toolTypeOverride: currentToolType,
     setActiveLightboxIndex: handleSetActiveLightboxIndex,
   }), [
-    currentToolType,
     deleteLightboxAction,
     filtersHook.filteredImages,
     handleLightboxClose,
@@ -236,17 +221,14 @@ export function useMediaGalleryLightboxSession(params: UseMediaGalleryLightboxSe
     handleOpenExternalGeneration,
     handlePreviousImage,
     handleSetActiveLightboxIndex,
-    handleShowTaskDetails,
     hasNextPrevious.hasNext,
     hasNextPrevious.hasPrevious,
     inputImages,
-    isMobile,
     lightboxDeletingId,
     lightboxMedia,
     lightboxTaskMapping,
     onAddToLastShot,
     onAddToLastShotWithoutPosition,
-    onApplySettings,
     onCreateShot,
     paginationHook.isServerPagination,
     paginationHook.totalPages,
@@ -259,8 +241,6 @@ export function useMediaGalleryLightboxSession(params: UseMediaGalleryLightboxSe
     stateHook.setShowTaskDetailsModal,
     stateHook.setShowTickForImageId,
     stateHook.setShowTickForSecondaryImageId,
-    stateHook.state.activeLightboxMedia,
-    stateHook.state.autoEnterEditMode,
     stateHook.state.optimisticPositionedIds,
     stateHook.state.optimisticUnpositionedIds,
     stateHook.state.selectedImageForDetails,

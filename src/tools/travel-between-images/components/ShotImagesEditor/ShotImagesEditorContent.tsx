@@ -146,7 +146,6 @@ function TimelineModeContent(props: {
             onPairClick: mode.segmentSlot.handlePairClick,
             onClearEnhancedPrompt: callbacks.handleClearEnhancedPromptByIndex,
             onNewShotFromSelection,
-            onSegmentFrameCountChange: mode.segmentSlot.updatePairFrameCount,
             onRegisterTrailingUpdater: registerTrailingUpdater,
           }}
           display={{

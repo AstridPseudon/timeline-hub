@@ -29,18 +29,11 @@ import { useLightboxViewportLock } from '@/domains/media-lightbox/hooks/useLight
 import { useLightboxPaneLayout } from '@/domains/media-lightbox/hooks/useLightboxPaneLayout';
 import type { OverlayViewportConstraints } from '@/shared/lib/layout/overlayViewportConstraints';
 import { useRenderBudget } from '@/shared/dev/useRenderBudget';
+import { usePanesStore } from '@/shared/state/panesStore';
 
 interface LightboxShellProps {
   children: React.ReactNode;
   onClose: () => void;
-
-  // Edit mode
-  /** Canvas/brush edit overlay is active (inpaint, annotate, reposition, text).
-   *  Used to allow canvas touch events to pass through. */
-  hasCanvasOverlay: boolean;
-  /** Reposition (move) mode — the only edit mode that blocks background click-to-close
-   *  (because dragging could cause accidental closes). */
-  isRepositionMode: boolean;
 
   // Responsive
   isMobile: boolean;
@@ -60,8 +53,6 @@ interface LightboxShellProps {
 export const LightboxShell: React.FC<LightboxShellProps> = ({
   children,
   onClose,
-  hasCanvasOverlay,
-  isRepositionMode,
   isMobile,
   isTabletOrLarger,
   overlayViewport,
@@ -70,7 +61,8 @@ export const LightboxShell: React.FC<LightboxShellProps> = ({
   accessibilityDescription,
 }) => {
   useRenderBudget('LightboxShell', 5);
-  const isActuallyModal = isMobile && !isTabletOrLarger;
+  const isGalleryVisible = usePanesStore((state) => state.isGenerationsPaneOpen || state.isGenerationsPaneLocked);
+  const isActuallyModal = isMobile && !isTabletOrLarger && !isGalleryVisible;
   useLightboxViewportLock({ isActuallyModal });
 
   const {
@@ -83,8 +75,6 @@ export const LightboxShell: React.FC<LightboxShellProps> = ({
     handleTouchEvent,
     handleTouchCancel,
   } = useLightboxShellInteractionHandlers({
-    hasCanvasOverlay,
-    isRepositionMode,
     isMobile,
     onClose,
     popupRef: contentRef,
@@ -154,7 +144,7 @@ export const LightboxShell: React.FC<LightboxShellProps> = ({
               ? ""
               : "duration-200 data-[open]:animate-in data-[ending-style]:animate-out data-[ending-style]:fade-out-0 data-[open]:fade-in-0 data-[ending-style]:zoom-out-95 data-[open]:zoom-in-95",
             "p-0 border-none bg-transparent shadow-none",
-            overlayViewport.needsFullscreenLayout
+            overlayViewport.needsFullscreenLayout || isGalleryVisible
               ? "inset-0 w-full h-full"
               : "left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-auto h-auto data-[ending-style]:slide-out-to-left-1/2 data-[ending-style]:slide-out-to-top-[48%] data-[open]:slide-in-from-left-1/2 data-[open]:slide-in-from-top-[48%]"
           )}

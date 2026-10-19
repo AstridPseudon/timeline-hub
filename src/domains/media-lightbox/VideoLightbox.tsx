@@ -1,12 +1,7 @@
 /**
  * VideoLightbox
  *
- * Specialized lightbox for video media. Handles all video-specific functionality:
- * - Video trimming
- * - Video replace mode
- * - Video regenerate mode
- * - Video enhance mode
- * - Segment slot mode (timeline navigation)
+ * Specialized lightbox for video media, including segment slot navigation.
  *
  * Uses useSharedLightboxState for shared functionality (variants, navigation, etc.)
  *
@@ -30,23 +25,19 @@ import {
 import { useVideoLightboxRenderModel } from './hooks/videoLightbox/useVideoLightboxRenderModel';
 import {
   useVideoLightboxSharedState,
-  useVideoLightboxEditing,
+  useVideoLightboxInfo,
 } from './hooks/videoLightbox/useVideoLightboxController';
 
 import { LightboxShell } from './components/LightboxShell';
-import { VideoEditProvider } from './contexts/VideoEditContext';
 
-export type {
-  VideoLightboxSharedStateModel,
-  VideoLightboxEditModel,
-} from './hooks/videoLightbox/useVideoLightboxController';
+export type { VideoLightboxSharedStateModel, VideoLightboxInfoModel } from './hooks/videoLightbox/useVideoLightboxController';
 
 const VideoLightboxMediaContent: React.FC<VideoLightboxPropsWithMedia> = (props) => {
   const modeModel = useVideoLightboxMode(props);
-  const env = useVideoLightboxEnvironment(props, modeModel);
+  const env = useVideoLightboxEnvironment(props);
   const sharedState = useVideoLightboxSharedState(props, modeModel, env);
-  const editModel = useVideoLightboxEditing(props, modeModel, env, sharedState);
-  const renderModel = useVideoLightboxRenderModel(props, modeModel, env, sharedState, editModel);
+  const infoModel = useVideoLightboxInfo(props, env, sharedState);
+  const renderModel = useVideoLightboxRenderModel(props, modeModel, env, sharedState, infoModel);
   const overlayViewport: OverlayViewportConstraints = {
     tasksPaneOpen: env.effectiveTasksPaneOpen,
     tasksPaneWidth: env.effectiveTasksPaneWidth,
@@ -58,40 +49,36 @@ const VideoLightboxMediaContent: React.FC<VideoLightboxPropsWithMedia> = (props)
 
   return (
     <LightboxProviders stateValue={renderModel.lightboxStateValue}>
-      <VideoEditProvider value={editModel.videoEditValue}>
-        <LightboxShell
-          onClose={props.onClose}
-          hasCanvasOverlay={false}
-          isRepositionMode={false}
-          isMobile={env.isMobile}
-          isTabletOrLarger={sharedState.layout.isTabletOrLarger}
-          overlayViewport={overlayViewport}
-          contentRef={env.contentRef}
-          accessibilityTitle={renderModel.accessibilityTitle}
-          accessibilityDescription={renderModel.accessibilityDescription}
-        >
-          {modeModel.isFormOnlyMode && props.segmentSlotMode ? (
-            <SegmentSlotFormView
-              segmentSlotMode={props.segmentSlotMode}
-              onClose={props.onClose}
-              onNavPrev={modeModel.handleSlotNavPrev}
-              onNavNext={modeModel.handleSlotNavNext}
-              hasPrevious={modeModel.hasPrevious}
-              hasNext={modeModel.hasNext}
-              readOnly={props.readOnly}
-            />
-          ) : (
-            <LightboxLayout {...renderModel.layoutProps} controlsPanelContent={renderModel.controlsPanelContent} />
-          )}
-        </LightboxShell>
-      </VideoEditProvider>
+      <LightboxShell
+        onClose={props.onClose}
+        isMobile={env.isMobile}
+        isTabletOrLarger={sharedState.layout.isTabletOrLarger}
+        overlayViewport={overlayViewport}
+        contentRef={env.contentRef}
+        accessibilityTitle={renderModel.accessibilityTitle}
+        accessibilityDescription={renderModel.accessibilityDescription}
+      >
+        {modeModel.isFormOnlyMode && props.segmentSlotMode ? (
+          <SegmentSlotFormView
+            segmentSlotMode={props.segmentSlotMode}
+            onClose={props.onClose}
+            onNavPrev={modeModel.handleSlotNavPrev}
+            onNavNext={modeModel.handleSlotNavNext}
+            hasPrevious={modeModel.hasPrevious}
+            hasNext={modeModel.hasNext}
+            readOnly={props.readOnly}
+          />
+        ) : (
+          <LightboxLayout {...renderModel.layoutProps} controlsPanelContent={renderModel.controlsPanelContent} />
+        )}
+      </LightboxShell>
     </LightboxProviders>
   );
 };
 
 const VideoLightboxFormOnlyContent: React.FC<VideoLightboxProps> = (props) => {
   const modeModel = useVideoLightboxMode(props);
-  const env = useVideoLightboxEnvironment(props, modeModel);
+  const env = useVideoLightboxEnvironment(props);
 
   if (!props.segmentSlotMode) {
     return null;
@@ -109,8 +96,6 @@ const VideoLightboxFormOnlyContent: React.FC<VideoLightboxProps> = (props) => {
   return (
     <LightboxShell
       onClose={props.onClose}
-      hasCanvasOverlay={false}
-      isRepositionMode={false}
       isMobile={env.isMobile}
       isTabletOrLarger={false}
       overlayViewport={overlayViewport}

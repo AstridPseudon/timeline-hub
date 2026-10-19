@@ -7,7 +7,6 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAppEventListener } from "@/shared/lib/typedEvents";
 import { GenerationRow } from "@/domains/generation/types";
 import { toast } from "@/shared/components/ui/runtime/sonner";
-import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { MediaLightbox, type MediaLightboxProps } from "@/domains/media-lightbox/MediaLightbox";
 import type { LightboxActionHandlers } from '@/domains/media-lightbox/types';
 import { TimelineEmptyState } from "./TimelineEmptyState";
@@ -46,7 +45,6 @@ interface TimelineInteractionAdapter {
   onClearEnhancedPrompt?: (pairIndex: number) => void;
   onDragStateChange?: (isDragging: boolean) => void;
   onNewShotFromSelection?: (selectedIds: string[]) => Promise<string | void>;
-  onSegmentFrameCountChange?: (pairShotGenerationId: string, frameCount: number) => void;
   onRegisterTrailingUpdater?: (fn: (endFrame: number) => void) => void;
 }
 
@@ -124,7 +122,6 @@ const Timeline: React.FC<TimelineProps> = ({
     onClearEnhancedPrompt,
     onDragStateChange,
     onNewShotFromSelection,
-    onSegmentFrameCountChange,
     onRegisterTrailingUpdater,
   } = interactions;
   const {
@@ -269,7 +266,6 @@ const Timeline: React.FC<TimelineProps> = ({
         shotSelection.setLightboxSelectedShotId(selectedShotId || shotId);
       },
       readOnly,
-      toolTypeOverride: TOOL_IDS.TRAVEL_BETWEEN_IMAGES,
       initialVariantId: lightbox.capturedVariantIdRef.current ?? undefined,
       adjacentSegments: !shotSelection.lightboxShotState.isExternalGen
         ? shotSelection.adjacentSegmentsData
@@ -319,9 +315,7 @@ const Timeline: React.FC<TimelineProps> = ({
       },
       features: {
         showTaskDetails: true,
-        showMagicEdit: true,
         showDownload: true,
-        initialEditActive: lightbox.initialEditActive,
       },
       taskDetailsData: {
         task: taskDetails.task ?? null,
@@ -341,7 +335,6 @@ const Timeline: React.FC<TimelineProps> = ({
     external.handleOpenExternalGeneration,
     external.setExternalGenLightboxSelectedShot,
     images.length,
-    lightbox.initialEditActive,
     lightbox.capturedVariantIdRef,
     lightbox.closeLightbox,
     lightbox.goNext,
@@ -414,14 +407,12 @@ const Timeline: React.FC<TimelineProps> = ({
         projectAspectRatio={projectAspectRatio}
         handleDesktopDoubleClick={lightbox.handleDesktopDoubleClick}
         handleMobileTap={lightbox.handleMobileTap}
-        handleInpaintClick={lightbox.openLightboxWithInpaint}
         hasNoImages={hasNoImages}
         readOnly={readOnly}
         isUploadingImage={isUploadingImage}
         uploadProgress={uploadProgress}
         maxFrameLimit={maxFrameLimit}
         selectedOutputId={selectedOutputId}
-        onSegmentFrameCountChange={onSegmentFrameCountChange}
         segmentSlots={segmentSlots}
         isSegmentsLoading={isSegmentsLoading}
         hasPendingTask={hasPendingTask}

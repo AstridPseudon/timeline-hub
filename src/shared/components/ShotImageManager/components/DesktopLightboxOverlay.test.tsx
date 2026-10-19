@@ -40,8 +40,6 @@ function createProps(overrides: Partial<OverlayProps> = {}): OverlayProps {
   const lightbox = {
     lightboxIndex: 0,
     setLightboxIndex: vi.fn(),
-    shouldAutoEnterInpaint: true,
-    setShouldAutoEnterInpaint: vi.fn(),
     currentImages: [
       { id: 'img-1', shotImageEntryId: 'entry-1', timeline_frame: 12, shot_id: 'shot-1', starred: true },
       { id: 'img-2', shotImageEntryId: 'entry-2', timeline_frame: 24, shot_id: 'shot-1', starred: false },
@@ -143,7 +141,6 @@ describe('DesktopLightboxOverlay', () => {
 
     expect(props.capturedVariantIdRef.current).toBeNull();
     expect(props.lightbox.setLightboxIndex).toHaveBeenCalledWith(null);
-    expect(props.lightbox.setShouldAutoEnterInpaint).toHaveBeenCalledWith(false);
     expect(props.externalGens.setDerivedNavContext).toHaveBeenCalledWith(null);
     expect(props.externalGens.setTempDerivedGenerations).toHaveBeenCalledWith([]);
     expect(props.externalGens.setExternalGenLightboxSelectedShot).not.toHaveBeenCalled();

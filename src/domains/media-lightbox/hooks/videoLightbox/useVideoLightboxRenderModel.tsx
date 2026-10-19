@@ -1,26 +1,21 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { useMemo } from 'react';
-import type {
-  VideoLightboxPropsWithMedia,
-} from '../../types';
+import type { VideoLightboxPropsWithMedia } from '../../types';
 import type {
   VideoLightboxSharedStateModel,
-  VideoLightboxEditModel,
+  VideoLightboxInfoModel,
 } from './useVideoLightboxController';
 import type { VideoLightboxEnvironment, VideoLightboxModeModel } from './useVideoLightboxEnvironment';
 import { useVideoLightboxActions } from './useVideoLightboxActions';
 import { useAddToVideoEditor } from '../useAddToVideoEditor';
 import { buildVideoLightboxLayoutState } from '../../model/buildVideoLightboxLayoutState';
 import { InfoPanel } from '../../components/InfoPanel';
-import { VideoEditPanel } from '../../components/VideoEditPanel';
 import type { WorkflowControlsBarProps } from '../../components/WorkflowControlsBar';
 import type { LightboxStateValue } from '../../contexts/LightboxStateContext';
-import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
 
-type VideoEditPanelModel = ComponentProps<typeof VideoEditPanel>;
+type InfoPanelModel = ComponentProps<typeof InfoPanel>;
 
 function getVideoLightboxAccessibility(
-  _modeModel: VideoLightboxModeModel,
   media: VideoLightboxPropsWithMedia['media'],
 ): { accessibilityTitle: string; accessibilityDescription: string } {
   return {
@@ -34,7 +29,7 @@ export function useVideoLightboxRenderModel(
   modeModel: VideoLightboxModeModel,
   env: VideoLightboxEnvironment,
   sharedState: VideoLightboxSharedStateModel,
-  editModel: VideoLightboxEditModel,
+  infoModel: VideoLightboxInfoModel,
 ) {
   const {
     media,
@@ -50,10 +45,8 @@ export function useVideoLightboxRenderModel(
   const navigation = props.navigation;
   const features = props.features;
   const addToVideoEditor = useAddToVideoEditor(media);
-  const { runtimeAuthority } = useRuntimeAuthority();
-
   const showNavigation = navigation?.showNavigation ?? true;
-  const showTaskDetails = features?.showTaskDetails ?? false;
+  const showTaskDetails = features?.showTaskDetails ?? true;
 
   const lightboxVariants = useMemo<LightboxStateValue['variants']>(() => ({
     variants: sharedState.variants.list,
@@ -63,30 +56,21 @@ export function useVideoLightboxRenderModel(
     handleVariantSelect: sharedState.variants.setActiveVariantId,
     handleMakePrimary: sharedState.variants.setPrimaryVariant,
     handleDeleteVariant: sharedState.variants.deleteVariant,
-    onLoadVariantSettings: env.setVariantParamsToLoad,
-    onLoadVariantImages: !runtimeAuthority && editModel.variantSegmentImages
-      ? editModel.loadVariantImages
-      : undefined,
-    currentSegmentImages: editModel.variantSegmentImages,
     promoteSuccess: sharedState.variants.promoteSuccess,
     isPromoting: sharedState.variants.isPromoting,
     handlePromoteToGeneration: sharedState.variants.handlePromoteToGeneration,
     isMakingMainVariant: sharedState.makeMainVariant.isMaking,
     canMakeMainVariant: sharedState.makeMainVariant.canMake,
     handleMakeMainVariant: sharedState.makeMainVariant.handle,
-    pendingTaskCount: editModel.variantBadges.pendingTaskCount,
-    unviewedVariantCount: editModel.variantBadges.unviewedVariantCount,
-    onMarkAllViewed: editModel.variantBadges.handleMarkAllViewed,
+    pendingTaskCount: infoModel.variantBadges.pendingTaskCount,
+    unviewedVariantCount: infoModel.variantBadges.unviewedVariantCount,
+    onMarkAllViewed: infoModel.variantBadges.handleMarkAllViewed,
     variantsSectionRef: env.variantsSectionRef,
   }), [
-    editModel.loadVariantImages,
-    editModel.variantBadges.handleMarkAllViewed,
-    editModel.variantBadges.pendingTaskCount,
-    editModel.variantBadges.unviewedVariantCount,
-    editModel.variantSegmentImages,
-    env.setVariantParamsToLoad,
     env.variantsSectionRef,
-    runtimeAuthority,
+    infoModel.variantBadges.handleMarkAllViewed,
+    infoModel.variantBadges.pendingTaskCount,
+    infoModel.variantBadges.unviewedVariantCount,
     sharedState.makeMainVariant.canMake,
     sharedState.makeMainVariant.handle,
     sharedState.makeMainVariant.isMaking,
@@ -151,25 +135,18 @@ export function useVideoLightboxRenderModel(
     showNavigation,
   ]);
 
-  const {
-    handleDownload,
-    handleDelete,
-    handleApplySettings,
-    handleNavigateToShotFromSelector,
-  } = useVideoLightboxActions({
+  const { handleDownload, handleDelete, handleNavigateToShotFromSelector } = useVideoLightboxActions({
     props,
     env,
     sharedState,
   });
 
-  const isAnyVideoEditMode = editModel.videoMode.isVideoTrimModeActive || editModel.videoMode.isVideoEditModeActive;
   const layoutFlags = buildVideoLightboxLayoutState({
     isMobile: env.isMobile,
     isFormOnlyMode: modeModel.isFormOnlyMode,
     isTabletOrLarger: sharedState.layout.isTabletOrLarger,
     isPortraitMode: sharedState.layout.isPortraitMode,
     shouldShowSidePanel: sharedState.layout.shouldShowSidePanel,
-    isAnyVideoEditMode,
     hasSegmentVideo: modeModel.hasSegmentVideo,
     showTaskDetails,
     isSegmentSlotMode: modeModel.isSegmentSlotMode,
@@ -178,125 +155,33 @@ export function useVideoLightboxRenderModel(
   });
 
   const {
-    shouldShowSidePanelWithTrim,
+    shouldShowSidePanel,
     showPanel,
     needsFullscreenLayout,
     needsTasksPaneOffset,
     panelVariant,
   } = layoutFlags;
-  const { accessibilityTitle, accessibilityDescription } = getVideoLightboxAccessibility(
-    modeModel,
-    media,
-  );
-  const panelTaskId = editModel.adjustedTaskDetailsData?.taskId
-    || media.source_task_id
-    || null;
+  const { accessibilityTitle, accessibilityDescription } = getVideoLightboxAccessibility(media);
+  const panelTaskId = infoModel.adjustedTaskDetailsData?.taskId || media.source_task_id || null;
   const selectedShotId = shotWorkflow?.selectedShotId;
-  const videoEditPanelModel = useMemo<VideoEditPanelModel>(() => ({
+
+  const videoInfoPanelModel = useMemo<InfoPanelModel>(() => ({
     variant: panelVariant,
-    isCloudMode: env.isCloudMode,
-    trim: {
-      trimState: editModel.videoMode.trimState,
-      onStartTrimChange: editModel.videoMode.setStartTrim,
-      onEndTrimChange: editModel.videoMode.setEndTrim,
-      onResetTrim: editModel.videoMode.resetTrim,
-      trimmedDuration: editModel.videoMode.trimmedDuration,
-      hasTrimChanges: editModel.videoMode.hasTrimChanges,
-      onSaveTrim: editModel.videoMode.saveTrimmedVideo,
-      isSavingTrim: editModel.videoMode.isSavingTrim,
-      trimSaveProgress: editModel.videoMode.trimSaveProgress,
-      trimSaveError: editModel.videoMode.trimSaveError,
-      trimSaveSuccess: editModel.videoMode.trimSaveSuccess,
-      videoUrl: sharedState.effectiveMedia.videoUrl ?? '',
-      trimCurrentTime: editModel.videoMode.trimCurrentTime,
-      trimVideoRef: editModel.videoMode.trimVideoRef,
-    },
-    replace: {
-      videoEditing: editModel.videoMode.videoEditing,
-      projectId: env.selectedProjectId ?? undefined,
-    },
-    regenerateFormProps: editModel.regenerateFormProps,
-    enhance: {
-      settings: editModel.videoMode.videoEnhance.settings,
-      onUpdateSetting: editModel.videoMode.videoEnhance.updateSetting,
-      onGenerate: editModel.videoMode.videoEnhance.handleGenerate,
-      isGenerating: editModel.videoMode.videoEnhance.isGenerating,
-      generateSuccess: editModel.videoMode.videoEnhance.generateSuccess,
-      canSubmit: editModel.videoMode.videoEnhance.canSubmit,
+    taskPanel: {
+      taskDetailsData: infoModel.adjustedTaskDetailsData,
     },
     taskId: panelTaskId,
-  }), [
-    editModel.regenerateFormProps,
-    editModel.videoMode.hasTrimChanges,
-    editModel.videoMode.isSavingTrim,
-    editModel.videoMode.resetTrim,
-    editModel.videoMode.saveTrimmedVideo,
-    editModel.videoMode.setEndTrim,
-    editModel.videoMode.setStartTrim,
-    editModel.videoMode.trimCurrentTime,
-    editModel.videoMode.trimSaveError,
-    editModel.videoMode.trimSaveProgress,
-    editModel.videoMode.trimSaveSuccess,
-    editModel.videoMode.trimState,
-    editModel.videoMode.trimVideoRef,
-    editModel.videoMode.trimmedDuration,
-    editModel.videoMode.videoEditing,
-    editModel.videoMode.videoEnhance.canSubmit,
-    editModel.videoMode.videoEnhance.generateSuccess,
-    editModel.videoMode.videoEnhance.handleGenerate,
-    editModel.videoMode.videoEnhance.isGenerating,
-    editModel.videoMode.videoEnhance.settings,
-    editModel.videoMode.videoEnhance.updateSetting,
-    env.isCloudMode,
-    env.selectedProjectId,
-    panelTaskId,
-    panelVariant,
-    sharedState.effectiveMedia.videoUrl,
-  ]);
-  const videoInfoPanelModel = useMemo<ComponentProps<typeof InfoPanel>>(() => {
-    return {
-      variant: panelVariant,
-      showImageEditTools: false,
-      taskPanel: {
-        taskDetailsData: editModel.adjustedTaskDetailsData,
-        replaceImages: env.replaceImages,
-        onReplaceImagesChange: env.setReplaceImages,
-      },
-      taskId: panelTaskId,
-    };
-  }, [
-    editModel.adjustedTaskDetailsData,
-    env.replaceImages,
-    env.setReplaceImages,
-    panelTaskId,
-    panelVariant,
-  ]);
+  }), [infoModel.adjustedTaskDetailsData, panelTaskId, panelVariant]);
+
   const controlsPanelContent = useMemo<ReactNode | undefined>(() => {
-    if (!showPanel) {
-      return undefined;
-    }
+    return showPanel ? <InfoPanel {...videoInfoPanelModel} /> : undefined;
+  }, [showPanel, videoInfoPanelModel]);
 
-    if (editModel.videoMode.isInVideoEditMode && env.videoEditSubMode) {
-      return <VideoEditPanel {...videoEditPanelModel} />;
-    }
-
-    return <InfoPanel {...videoInfoPanelModel} />;
-  }, [
-    editModel.videoMode.isInVideoEditMode,
-    env.videoEditSubMode,
-    showPanel,
-    videoEditPanelModel,
-    videoInfoPanelModel,
-  ]);
   const workflowBar = useMemo<WorkflowControlsBarProps>(() => ({
     core: {
-      onDelete: actions?.onDelete,
-      onApplySettings: actions?.onApplySettings,
+      isVideo: true,
       onAddToVideoEditor: actions?.onAddToVideoEditor ?? addToVideoEditor.onClick,
       addToVideoEditorPhase: actions?.onAddToVideoEditor ? 'idle' : addToVideoEditor.phase,
-      isSpecialEditMode: false,
-      isVideo: true,
-      handleApplySettings,
     },
     shotSelector: shotWorkflow?.onAddToShot
       ? {
@@ -328,13 +213,11 @@ export function useVideoLightboxRenderModel(
         }
       : undefined,
   }), [
-    actions?.onApplySettings,
-    actions?.onDelete,
     actions?.onAddToVideoEditor,
-    addToVideoEditor,
+    addToVideoEditor.onClick,
+    addToVideoEditor.phase,
     env.actualGenerationId,
     env.contentRef,
-    handleApplySettings,
     handleNavigateToShotFromSelector,
     media.id,
     media.thumbUrl,
@@ -362,7 +245,7 @@ export function useVideoLightboxRenderModel(
 
   const layoutProps = useMemo(() => ({
     showPanel,
-    shouldShowSidePanel: shouldShowSidePanelWithTrim,
+    shouldShowSidePanel,
     effectiveTasksPaneOpen: env.effectiveTasksPaneOpen,
     effectiveTasksPaneWidth: env.effectiveTasksPaneWidth,
     workflowBar,
@@ -390,7 +273,7 @@ export function useVideoLightboxRenderModel(
     sharedState.buttonGroupProps.bottomLeft,
     sharedState.buttonGroupProps.bottomRight,
     sharedState.buttonGroupProps.topRight,
-    shouldShowSidePanelWithTrim,
+    shouldShowSidePanel,
     showPanel,
     workflowBar,
   ]);

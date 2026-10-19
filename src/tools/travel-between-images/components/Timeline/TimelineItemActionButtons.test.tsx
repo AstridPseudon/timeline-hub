@@ -59,7 +59,6 @@ function renderSubject(overrides: Partial<React.ComponentProps<typeof TimelineIt
     isSelected: false,
     isTouchDevice: false,
     onMobileTap: vi.fn(),
-    onInpaintClick: vi.fn(),
     onDuplicateClick: vi.fn(),
     onDeleteClick: vi.fn(),
     duplicatingImageId: undefined,
@@ -96,7 +95,6 @@ describe('TimelineItemActionButtons', () => {
       isTouchDevice: true,
     });
 
-    expect(screen.queryByTitle('Edit image')).not.toBeInTheDocument();
     expect(screen.queryByTitle('Duplicate image')).not.toBeInTheDocument();
     expect(screen.queryByTitle('Remove from timeline')).not.toBeInTheDocument();
     expect(screen.queryByTestId('variant-badge')).not.toBeInTheDocument();
@@ -110,12 +108,10 @@ describe('TimelineItemActionButtons', () => {
     expect(buttonClickedRef.current).toBe(true);
     expect(props.scheduleButtonClickReset).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByTitle('Edit image'));
     fireEvent.click(screen.getByTitle('Duplicate image'));
     fireEvent.click(screen.getByTitle('Remove from timeline'));
     fireEvent.click(screen.getByTestId('variant-badge'));
 
-    expect(props.onInpaintClick).toHaveBeenCalledTimes(1);
     expect(props.onDuplicateClick).toHaveBeenCalledTimes(1);
     expect(props.onDeleteClick).toHaveBeenCalledTimes(1);
     expect(props.onMarkAllVariantsViewed).toHaveBeenCalledTimes(1);

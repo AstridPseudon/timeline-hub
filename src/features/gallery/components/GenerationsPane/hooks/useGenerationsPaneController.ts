@@ -21,6 +21,7 @@ import { useGalleryPageState } from '@/features/gallery/hooks/useGalleryPageStat
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { useCurrentShot } from '@/shared/state/selectionStore';
 import { usePanesStore } from '@/shared/state/panesStore';
+import { useLightboxOpenState } from '@/shared/state/lightboxOpenState';
 import { useShots } from '@/shared/contexts/ShotsContext';
 import {
   useProjectCrudContext,
@@ -209,6 +210,8 @@ const usePaneLifecycle = ({
   setShotFilterOpen,
   setMediaTypeFilterOpen,
 }: PaneLifecycleParams) => {
+  const isLightboxOpen = useLightboxOpenState();
+  const isGenerationsPaneOpen = usePanesStore((state) => state.isGenerationsPaneOpen);
   const {
     isLocked,
     isOpen,
@@ -225,6 +228,7 @@ const usePaneLifecycle = ({
     isLocked: isGenerationsPaneLocked,
     onToggleLock: () => setIsGenerationsPaneLocked(!isGenerationsPaneLocked),
     additionalRefs: [shotFilterContentRef, mediaTypeContentRef],
+    overlayOpen: isLightboxOpen && isGenerationsPaneOpen,
   });
   const paneIsOpen = Boolean(isOpen);
 
@@ -264,7 +268,7 @@ const usePaneLifecycle = ({
     openPane,
     paneIsOpen,
     paneProps,
-    showBackdrop,
+    showBackdrop: showBackdrop && !isLightboxOpen,
     toggleLock,
     transformClass,
   };
@@ -412,6 +416,8 @@ export const useGenerationsPaneController = () => {
     gallery: {
       confirmDialogProps: generationData.confirmDialogProps,
       error: resolvedGalleryProject.error ?? generationData.error,
+      runtimeProjectId: resolvedGalleryProject.projectId,
+      runtimeAuthority: resolvedGalleryProject.runtimeAuthority,
       expectedItemCount: generationData.expectedItemCount,
       handleAddToShot: generationData.handleAddToShot,
       handleAddToShotWithoutPosition: generationData.handleAddToShotWithoutPosition,

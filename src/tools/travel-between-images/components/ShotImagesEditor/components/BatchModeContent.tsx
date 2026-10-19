@@ -4,7 +4,6 @@
  */
 
 import React from 'react';
-import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { ShotImageManagerContainer as ShotImageManager } from '@/shared/components/ShotImageManager/ShotImageManagerContainer';
 import { BatchGuidanceVideo } from '../../BatchGuidanceVideo';
 import { SectionHeader } from '@/shared/components/ImageGenerationForm/components/SectionHeader';
@@ -186,7 +185,6 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
         onVariantDrop={onVariantDrop}
         shotId={selectedShotId}
         projectId={projectId}
-        toolTypeOverride={TOOL_IDS.TRAVEL_BETWEEN_IMAGES}
         allShots={allShots}
         selectedShotId={selectedShotId}
         onShotChange={onShotChange}

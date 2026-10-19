@@ -1,15 +1,13 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { SegmentSlot } from '@/shared/hooks/segments';
 import type { GenerationRow } from '@/domains/generation/types';
-import type { PairData } from '@/shared/types/pairData';
 
 interface UseSegmentLightboxProps {
   displaySlots: SegmentSlot[];
-  pairDataByIndex?: Map<number, PairData>;
   selectedParentId?: string | null;
 }
 
-export function useSegmentLightbox({ displaySlots, pairDataByIndex, selectedParentId }: UseSegmentLightboxProps) {
+export function useSegmentLightbox({ displaySlots, selectedParentId }: UseSegmentLightboxProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const childSlotIndices = useMemo(() =>
@@ -59,32 +57,10 @@ export function useSegmentLightbox({ displaySlots, pairDataByIndex, selectedPare
     } as GenerationRow;
   }, [currentLightboxMedia, selectedParentId]);
 
-  const lightboxCurrentSegmentImages = useMemo(() => {
-    const pairData = currentLightboxSlot ? pairDataByIndex?.get(currentLightboxSlot.index) : undefined;
-    const slotChildId = currentLightboxSlot?.type === 'child' ? currentLightboxSlot.child.id : undefined;
-    return {
-      startShotGenerationId: pairData?.startImage?.id || currentLightboxSlot?.pairShotGenerationId,
-      activeChildGenerationId: slotChildId,
-      startUrl: pairData?.startImage?.url,
-      endUrl: pairData?.endImage?.url,
-      startGenerationId: pairData?.startImage?.generationId,
-      endGenerationId: pairData?.endImage?.generationId,
-      startVariantId: pairData?.startImage?.primaryVariantId,
-      endVariantId: pairData?.endImage?.primaryVariantId,
-    };
-  }, [currentLightboxSlot, pairDataByIndex]);
-
-  const lightboxCurrentFrameCount = useMemo(() => {
-    const pairData = currentLightboxSlot ? pairDataByIndex?.get(currentLightboxSlot.index) : undefined;
-    return pairData?.frames;
-  }, [currentLightboxSlot, pairDataByIndex]);
-
   return {
     lightboxIndex,
     setLightboxIndex,
     lightboxMedia,
-    lightboxCurrentSegmentImages,
-    lightboxCurrentFrameCount,
     currentLightboxMedia,
     childSlotIndices,
     handleLightboxNext,

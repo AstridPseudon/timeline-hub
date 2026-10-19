@@ -1,7 +1,6 @@
 import React from 'react';
 import { GenerationRow } from '@/domains/generation/types';
 import { SegmentSlot } from '@/shared/hooks/segments';
-import { PairData } from '@/shared/types/pairData';
 import {
   useTimelineFps,
   type TimelineMediaContextValue,
@@ -60,7 +59,6 @@ interface TimelineTrackPreludeProps {
     hasLiveTrailingVideo: boolean;
     projectAspectRatio?: string;
     pairInfoWithPending: TimelinePairInfo[];
-    pairDataByIndex: Map<number, PairData>;
     localShotGenPositions: Map<string, number>;
     segmentSlots?: SegmentSlot[];
     isSegmentsLoading?: boolean;
@@ -68,7 +66,6 @@ interface TimelineTrackPreludeProps {
     selectedOutputId?: string | null;
     onPairClick?: (pairIndex: number) => void;
     onOpenPairSettings?: (pairIndex: number) => void;
-    onSegmentFrameCountChange?: (pairShotGenerationId: string, frameCount: number) => void;
     onTrailingEndFrameChange: (endFrame: number | undefined) => void;
     onTrailingVideoInfo: (videoUrl: string | null) => void;
     onFileDrop?: (files: File[], targetFrame?: number, handles?: Array<FileSystemFileHandle | null>) => Promise<void>;
@@ -132,7 +129,6 @@ export const TimelineTrackPrelude: React.FC<TimelineTrackPreludeProps> = ({
     hasLiveTrailingVideo,
     projectAspectRatio,
     pairInfoWithPending,
-    pairDataByIndex,
     localShotGenPositions,
     segmentSlots,
     isSegmentsLoading,
@@ -140,7 +136,6 @@ export const TimelineTrackPrelude: React.FC<TimelineTrackPreludeProps> = ({
     selectedOutputId,
     onPairClick,
     onOpenPairSettings,
-    onSegmentFrameCountChange,
     onTrailingEndFrameChange,
     onTrailingVideoInfo,
     videoOutputs,
@@ -187,10 +182,8 @@ export const TimelineTrackPrelude: React.FC<TimelineTrackPreludeProps> = ({
               isLoading={isSegmentsLoading}
               localShotGenPositions={localShotGenPositions}
               hasPendingTask={hasPendingTask}
-              pairDataByIndex={pairDataByIndex}
               onOpenPairSettings={onPairClick ? onOpenPairSettings : undefined}
               selectedParentId={selectedOutputId}
-              onSegmentFrameCountChange={onSegmentFrameCountChange}
               trailingSegmentMode={hasTrailingSegment && lastEntry
                 ? (() => {
                   const [imageId, imageFrame] = lastEntry;

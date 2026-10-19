@@ -29,7 +29,6 @@ import type {
   GalleryConfig,
   NavigableShot,
 } from '@/shared/components/MediaGallery/types';
-import type { GenerationMetadata } from '@/domains/generation/types';
 import { DEFAULT_GALLERY_CONFIG } from '@/shared/components/MediaGallery/types';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { GRID_COLUMN_CLASSES, calculateGalleryLayout } from '@/shared/components/MediaGallery/utils';
@@ -125,7 +124,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     enableAdjacentPagePreloading = true,
   } = pagination ?? {};
   const {
-    showDelete, showDownload, showShare, showEdit, showStar, showAddToShot,
+    showDelete, showDownload, showShare, showStar, showAddToShot,
     enableSingleClick, videosAsThumbnails, darkSurface, reducedSpacing,
     showShotFilter, showSearch,
     hidePagination, hideTopFilters, hideMediaTypeFilter, hideBottomPagination, hideShotNotifier,
@@ -155,9 +154,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
       navigateToShot(fullShot);
     }
   }, [allShots, navigateToShot]);
-  const handleApplySettingsForLightbox = useCallback((metadata: GenerationMetadata | null | undefined) => {
-    onApplySettings?.(metadata ?? undefined);
-  }, [onApplySettings]);
   const {
     effectiveColumnsPerRow,
     actualItemsPerPage,
@@ -227,13 +223,11 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
   }, [onServerPageChange]);
   const actionsHook = useMediaGalleryActions({
     onDelete,
-    onApplySettings,
     onAddToLastShot,
     onAddToLastShotWithoutPosition,
     onToggleStar,
     activeLightboxMedia: stateHook.state.activeLightboxMedia,
     setActiveLightboxMedia: stateHook.setActiveLightboxMedia,
-    setAutoEnterEditMode: stateHook.setAutoEnterEditMode,
     markOptimisticDeleted: stateHook.markOptimisticDeleted,
     markOptimisticDeletedWithBackfill: stateHook.markOptimisticDeletedWithBackfill,
     removeOptimisticDeleted: stateHook.removeOptimisticDeleted,
@@ -322,7 +316,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     handleVisitShotFromNotifier,
     handleSwitchToAssociatedShot,
     handleShowAllShots,
-    handleShowTaskDetails,
     itemShotWorkflow,
     itemMobileInteraction,
     itemFeatures,
@@ -345,13 +338,12 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     showDelete,
     showDownload,
     showShare,
-    showEdit,
     showStar,
     showAddToShot,
     enableSingleClick,
     videosAsThumbnails,
     onToggleStar,
-    onApplySettings: handleApplySettingsForLightbox,
+    onApplySettings,
     onImageClick,
     onContextMenu,
     isDeleting,
@@ -369,11 +361,9 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     handlePreviousImage,
     handleSetActiveLightboxIndex,
     lightboxDeletingId,
-    onApplySettings: handleApplySettingsForLightbox,
     simplifiedShotOptions,
     onAddToLastShot,
     onAddToLastShotWithoutPosition,
-    isMobile,
     task,
     taskDetailsLoading: taskDetailsData?.isLoading ?? false,
     taskError,
@@ -381,8 +371,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     lightboxTaskMapping,
     onCreateShot,
     handleNavigateToShot,
-    handleShowTaskDetails,
-    currentToolType,
     showDelete,
   });
   return (

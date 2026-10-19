@@ -6,16 +6,12 @@ import {
 import { isElementWithinTopmostOverlay } from '@/shared/components/ui/overlay';
 
 interface UseLightboxShellInteractionHandlersArgs {
-  hasCanvasOverlay: boolean;
-  isRepositionMode: boolean;
   isMobile: boolean;
   onClose: () => void;
   popupRef: React.RefObject<HTMLElement | null>;
 }
 
 export function useLightboxShellInteractionHandlers({
-  hasCanvasOverlay,
-  isRepositionMode,
   isMobile,
   onClose,
   popupRef,
@@ -46,13 +42,11 @@ export function useLightboxShellInteractionHandlers({
       return;
     }
 
-    if (!isRepositionMode) {
-      const clickStartedOnOverlay = pointerDownTargetRef.current === e.currentTarget;
-      const clickEndedOnOverlay = e.target === e.currentTarget;
+    const clickStartedOnOverlay = pointerDownTargetRef.current === e.currentTarget;
+    const clickEndedOnOverlay = e.target === e.currentTarget;
 
-      if (clickStartedOnOverlay && clickEndedOnOverlay) {
-        onClose();
-      }
+    if (clickStartedOnOverlay && clickEndedOnOverlay) {
+      onClose();
     }
 
     pointerDownTargetRef.current = null;
@@ -74,7 +68,6 @@ export function useLightboxShellInteractionHandlers({
     bgPointerDownTargetRef.current = null;
 
     if (!isCurrentLightboxTopmost()) return;
-    if (isRepositionMode) return;
 
     if (
       downTarget?.hasAttribute?.('data-lightbox-bg') &&
@@ -98,7 +91,7 @@ export function useLightboxShellInteractionHandlers({
   };
 
   const handleTouchEvent = (e: React.TouchEvent) => {
-    if (shouldAllowTouchThrough(e.target as HTMLElement, { hasCanvasOverlay })) return;
+    if (shouldAllowTouchThrough(e.target as HTMLElement, { hasCanvasOverlay: false })) return;
     if (isMobile) e.stopPropagation();
   };
 

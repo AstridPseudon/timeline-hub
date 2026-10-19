@@ -1,8 +1,7 @@
 /**
  * submitSegmentTask - Shared segment task submission logic
  *
- * Extracts the duplicated ~200-line handleSubmit pattern from
- * SegmentRegenerateForm and SegmentSlotFormView into a single function.
+ * Provides shared submission logic for segment slot generation.
  *
  * Both callers follow the same pattern:
  *   1. Validate inputs
@@ -28,7 +27,7 @@ import type { RunTaskPlaceholder } from '@/shared/hooks/tasks/useTaskPlaceholder
 import { travelGenerationUnsupportedError } from '@/shared/lib/taskCreation/travelGeneration';
 
 // ============================================================================
-// Structure Video Config Builder (shared between SegmentRegenerateForm & SegmentSlotFormView)
+// Structure Video Config Builder for segment slot generation.
 // ============================================================================
 
 interface StructureVideoInputs {
@@ -129,7 +128,7 @@ interface SegmentTaskContext {
 interface SubmitSegmentTaskInput {
   /** Label for the incoming task placeholder (e.g. "Segment 3") */
   taskLabel: string;
-  /** Component name for error context (e.g. "SegmentRegenerateForm") */
+  /** Component name used in error context. */
   errorContext: string;
   /** Get effective settings from the form hook */
   getSettings: () => SegmentSettings;

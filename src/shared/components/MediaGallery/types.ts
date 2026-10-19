@@ -97,7 +97,6 @@ export interface GalleryConfig {
   showDelete: boolean;
   showDownload: boolean;
   showShare: boolean;
-  showEdit: boolean;
   showStar: boolean;
   showAddToShot: boolean;
 
@@ -127,7 +126,6 @@ export const DEFAULT_GALLERY_CONFIG: GalleryConfig = {
   showDelete: true,
   showDownload: true,
   showShare: true,
-  showEdit: false,
   showStar: true,
   showAddToShot: true,
   enableSingleClick: false,

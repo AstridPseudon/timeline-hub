@@ -2,14 +2,13 @@
  * InfoPanel Component
  *
  * Unified info panel for both desktop and mobile layouts.
- * Shows task details, variants, and Info/Edit toggle controls.
+ * Shows task details and variants.
  *
- * Uses context hooks for shared state (core, media, edit, variants).
+ * Uses context hooks for viewer state and variants.
  * Receives only layout-specific and deeply-nested props.
  */
 
 import React from 'react';
-import { SegmentedControl, SegmentedControlItem } from '@/shared/components/ui/segmented-control';
 import { cn } from '@/shared/components/ui/contracts/cn';
 
 import { TaskDetailsPanelWrapper } from './TaskDetailsPanelWrapper';
@@ -17,26 +16,18 @@ import { VariantSelector } from '@/shared/components/VariantSelector';
 import { PanelCloseButton, PanelHeaderMeta } from './PanelHeaderControls';
 import {
   useLightboxCoreSafe,
-  useLightboxMediaSafe,
   useLightboxVariantsSafe,
 } from '../contexts/LightboxStateContext';
-import { useImageEditCanvasSafe } from '../contexts/ImageEditCanvasContext';
-import { useVideoEditSafe } from '../contexts/VideoEditContext';
 import type { TaskDetailsData } from '../types';
 import { useCopyToClipboard } from '@/shared/hooks/clipboard/useCopyToClipboard';
 
 interface InfoPanelTaskPanelModel {
   taskDetailsData: TaskDetailsData | undefined;
-  replaceImages: boolean;
-  onReplaceImagesChange: (value: boolean) => void;
 }
 
 interface InfoPanelProps {
   /** Layout variant */
   variant: 'desktop' | 'mobile';
-
-  // Header toggle - only specialized props now
-  showImageEditTools: boolean;
 
   // TaskDetailsPanelWrapper model (deeply nested data)
   taskPanel: InfoPanelTaskPanelModel;
@@ -47,8 +38,6 @@ interface InfoPanelProps {
 
 export const InfoPanel: React.FC<InfoPanelProps> = ({
   variant,
-  // Header props
-  showImageEditTools,
   // TaskDetails model
   taskPanel,
   // Task ID fallback
@@ -56,8 +45,6 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
 }) => {
   const {
     taskDetailsData,
-    replaceImages,
-    onReplaceImagesChange,
   } = taskPanel;
   const isMobile = variant === 'mobile';
 
@@ -65,9 +52,6 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
   // CONTEXT STATE (no longer from props)
   // ========================================
   const { onClose, readOnly } = useLightboxCoreSafe();
-  const { isVideo } = useLightboxMediaSafe();
-  const { isInpaintMode, handleEnterInpaintMode, handleExitInpaintMode } = useImageEditCanvasSafe();
-  const { isInVideoEditMode, handleEnterVideoEditMode, handleExitVideoEditMode } = useVideoEditSafe();
   const {
     variants,
     activeVariant,
@@ -81,9 +65,6 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
     handlePromoteToGeneration: onPromoteToGeneration,
     isPromoting,
     handleDeleteVariant: onDeleteVariant,
-    onLoadVariantSettings,
-    onLoadVariantImages,
-    currentSegmentImages,
   } = useLightboxVariantsSafe();
 
   const hasVariants = variants && variants.length >= 1;
@@ -92,42 +73,13 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
   const taskId = taskDetailsData?.taskId || taskIdProp;
   const { copied: idCopied, handleCopy: handleCopyId } = useCopyToClipboard(taskId ?? undefined);
 
-  // Render the Info/Edit toggle (shared for image and video modes)
-  const renderEditToggle = () => {
-    // Determine which edit mode applies
-    const isImageEdit = showImageEditTools && !isVideo;
-    const isVideoEdit = isVideo;
-
-    if (readOnly || (!isImageEdit && !isVideoEdit)) return null;
-
-    const isActive = isImageEdit ? isInpaintMode : isInVideoEditMode;
-    const handleEnter = isImageEdit ? handleEnterInpaintMode : handleEnterVideoEditMode;
-    const handleExit = isImageEdit ? handleExitInpaintMode : handleExitVideoEditMode;
-
-    return (
-      <SegmentedControl
-        value={isActive ? 'edit' : 'info'}
-        onValueChange={(value) => {
-          if (value === 'info' && isActive) {
-            handleExit();
-          } else if (value === 'edit' && !isActive) {
-            handleEnter();
-          }
-        }}
-      >
-        <SegmentedControlItem value="info">Info</SegmentedControlItem>
-        <SegmentedControlItem value="edit">Edit</SegmentedControlItem>
-      </SegmentedControl>
-    );
-  };
-
   // Render the header - consistent single row layout for both mobile and desktop
   const renderHeader = () => (
     <div className={cn(
       "flex-shrink-0 border-b border-border bg-background",
       isMobile ? "sticky top-0 z-[80] px-3 py-2" : "p-4"
     )}>
-      {/* Single row: ID + variants on left, toggle + close on right */}
+      {/* Single row: ID + variants on left, close on right */}
       <div className={cn(
         "flex items-center justify-between",
         isMobile ? "gap-2" : "gap-3"
@@ -144,9 +96,8 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
           variantsSectionRef={variantsSectionRef}
         />
 
-        {/* Right side - toggles and close button */}
+        {/* Right side - close button */}
         <div className="flex items-center gap-3">
-          {renderEditToggle()}
           <PanelCloseButton
             isMobile={isMobile}
             onClose={onClose}
@@ -160,9 +111,6 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
   const renderTaskDetails = () => (
     <TaskDetailsPanelWrapper
       taskDetailsData={taskDetailsData}
-      replaceImages={replaceImages}
-      onReplaceImagesChange={onReplaceImagesChange}
-      onClose={onClose}
     />
   );
 
@@ -187,9 +135,6 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({
           onPromoteToGeneration={onPromoteToGeneration}
           isPromoting={isPromoting}
           onDeleteVariant={onDeleteVariant}
-          onLoadVariantSettings={onLoadVariantSettings}
-          onLoadVariantImages={onLoadVariantImages}
-          currentSegmentImages={currentSegmentImages}
           readOnly={readOnly}
         />
       </div>

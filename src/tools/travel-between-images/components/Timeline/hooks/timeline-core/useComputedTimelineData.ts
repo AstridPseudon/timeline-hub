@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { getPairInfo, sortPositionEntries, TRAILING_ENDPOINT_KEY } from '../../utils/timeline-utils';
 import { TIMELINE_PADDING_OFFSET } from '../../constants';
 import type { GenerationRow } from '@/domains/generation/types';
-import type { PairData } from '../../TimelineContainer/types';
 
 interface UseComputedTimelineDataProps {
   currentPositions: Map<string, number>;
@@ -15,7 +14,6 @@ interface UseComputedTimelineDataProps {
 
 interface UseComputedTimelineDataReturn {
   pairInfo: ReturnType<typeof getPairInfo>;
-  pairDataByIndex: Map<number, PairData>;
   localShotGenPositions: Map<string, number>;
   showPairLabels: boolean;
 }
@@ -47,39 +45,6 @@ export function useComputedTimelineData({
     return posMap;
   }, [imageOnlyPositions]);
 
-  // Compute full pair data for each pair index
-  const pairDataByIndex = useMemo(() => {
-    const dataMap = new Map<number, PairData>();
-    const sortedEntries = sortPositionEntries(imageOnlyPositions);
-    for (let pairIndex = 0; pairIndex < sortedEntries.length - 1; pairIndex++) {
-      const [startId, startFrame] = sortedEntries[pairIndex];
-      const [endId, endFrame] = sortedEntries[pairIndex + 1];
-      const startImage = images.find(img => img.id === startId);
-      const endImage = images.find(img => img.id === endId);
-      dataMap.set(pairIndex, {
-        index: pairIndex,
-        frames: endFrame - startFrame,
-        startFrame,
-        endFrame,
-        startImage: startImage ? {
-          id: startImage.id,
-          generationId: startImage.generation_id,
-          url: startImage.imageUrl || startImage.thumbUrl,
-          thumbUrl: startImage.thumbUrl,
-          position: pairIndex + 1,
-        } : null,
-        endImage: endImage ? {
-          id: endImage.id,
-          generationId: endImage.generation_id,
-          url: endImage.imageUrl || endImage.thumbUrl,
-          thumbUrl: endImage.thumbUrl,
-          position: pairIndex + 2,
-        } : null,
-      });
-    }
-    return dataMap;
-  }, [imageOnlyPositions, images]);
-
   // Calculate whether to show pair labels
   const showPairLabels = useMemo(() => {
     if (images.length < 2) return false;
@@ -101,7 +66,6 @@ export function useComputedTimelineData({
 
   return {
     pairInfo,
-    pairDataByIndex,
     localShotGenPositions,
     showPairLabels,
   };

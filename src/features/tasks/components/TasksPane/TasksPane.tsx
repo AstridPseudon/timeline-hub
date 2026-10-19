@@ -707,9 +707,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
             hasPrevious: lightboxProps.hasPrevious,
           }}
           features={{
-            showImageEditTools: lightboxProps.showImageEditTools,
             showDownload: true,
-            showMagicEdit: lightboxProps.showMagicEdit,
             showTaskDetails: true,
           }}
           taskDetailsData={taskDetailsData ?? undefined}

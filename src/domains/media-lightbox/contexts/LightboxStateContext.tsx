@@ -14,7 +14,6 @@
 import React, { createContext, useContext, RefObject } from 'react';
 import type { GenerationRow } from '@/domains/generation/types';
 import type { GenerationVariant } from '@/shared/hooks/variants/useVariants';
-import type { CurrentSegmentImagesData } from '@/shared/components/VariantSelector/variantSourceImages';
 import type { BasicPointerHandlers } from '@/shared/types/pointerHandlers';
 
 // ============================================================================
@@ -57,9 +56,6 @@ interface LightboxVariantState {
   handleVariantSelect: (id: string) => void;
   handleMakePrimary: (id: string) => Promise<void>;
   handleDeleteVariant: (id: string) => Promise<void>;
-  onLoadVariantSettings?: (variantParams: Record<string, unknown>) => void;
-  onLoadVariantImages?: (variant: GenerationVariant) => void;
-  currentSegmentImages?: CurrentSegmentImagesData;
   // Promotion
   promoteSuccess: boolean;
   isPromoting: boolean;
@@ -173,9 +169,6 @@ const EMPTY_VARIANTS: LightboxVariantState = {
   handleVariantSelect: () => {},
   handleMakePrimary: async () => {},
   handleDeleteVariant: async () => {},
-  onLoadVariantSettings: undefined,
-  onLoadVariantImages: undefined,
-  currentSegmentImages: undefined,
   promoteSuccess: false,
   isPromoting: false,
   handlePromoteToGeneration: async () => {},

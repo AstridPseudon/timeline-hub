@@ -19,7 +19,6 @@ export function useLightbox({
   handleOpenExternalGeneration
 }: UseLightboxProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [shouldAutoEnterInpaint, setShouldAutoEnterInpaint] = useState(false);
   
   // Combine all images for lightbox navigation
   const currentImages = useMemo(() => {
@@ -35,7 +34,6 @@ export function useLightbox({
     
     if (lightboxIndex !== null && lightboxIndex >= currentImages.length) {
       setLightboxIndex(null);
-      setShouldAutoEnterInpaint(false);
     }
   }, [lightboxIndex, currentImages.length, images.length, externalGenerations.length, tempDerivedGenerations.length, derivedNavContext]);
   
@@ -76,8 +74,6 @@ export function useLightbox({
   return {
     lightboxIndex,
     setLightboxIndex,
-    shouldAutoEnterInpaint,
-    setShouldAutoEnterInpaint,
     currentImages,
     currentLightboxImage,
     handleNext,

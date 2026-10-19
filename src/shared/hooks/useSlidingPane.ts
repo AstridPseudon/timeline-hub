@@ -33,6 +33,13 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
   const isSmallMobile = isMobile && !isTablet;
   const location = useLocation();
 
+  useEffect(() => {
+    if (overlayOpen && leaveTimeoutRef.current) {
+      clearTimeout(leaveTimeoutRef.current);
+      leaveTimeoutRef.current = null;
+    }
+  }, [overlayOpen]);
+
   // When locked, clear hover state so unlocking doesn't leave pane stuck open
   useEffect(() => {
     if (isLocked) {
@@ -189,7 +196,7 @@ export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, p
     // No hover behavior on small phones
     if (isSmallMobile) return;
 
-    if (isLocked) return;
+    if (isLocked || overlayOpen) return;
     // Defer leaves during the animation rather than dropping them: entering
     // the pane cancels this timer, but a pointer that left the whole rail/pane
     // must still close the peek after the transition.
