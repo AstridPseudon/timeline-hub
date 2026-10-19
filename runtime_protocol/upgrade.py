@@ -53,6 +53,8 @@ NEW_TABLES = frozenset({
     "internal_timeline_revisions", "shot_revisions", "parent_composition_revisions",
     "shot_revision_heads", "parent_composition_heads", "composition_revision_occurrences",
     "composition_revision_dependencies",
+    "timeline_commit_history", "timeline_document_input_contents",
+    "timeline_document_input_bindings", "timeline_document_input_links",
 })
 REVISION_TABLES = frozenset({
     "internal_timeline_revisions", "shot_revisions", "parent_composition_revisions",
@@ -69,6 +71,7 @@ USER_PREFERENCES_TARGET_SCHEMA_VERSION = 27
 SPEC_DEDUP_TARGET_SCHEMA_VERSION = 28
 SPEC_REFERENCE_TARGET_SCHEMA_VERSION = 29
 TIMELINE_NAME_TARGET_SCHEMA_VERSION = 30
+TIMELINE_COMMIT_TARGET_SCHEMA_VERSION = 31
 HISTORICAL_OUTPUT_MIGRATION_CONFIRMATION = "MIGRATE MANAGED OUTPUTS"
 GENERIC_MEDIA_TYPE_REPAIR_CONFIRMATION = "REPAIR GENERIC MEDIA TYPES"
 _VIDEO_SUFFIXES = frozenset({".mp4", ".mov", ".webm", ".mkv"})
@@ -344,10 +347,19 @@ def _canonical_shape_for(version: int) -> tuple[set[str], dict[str, set[str]]]:
         SPEC_DEDUP_TARGET_SCHEMA_VERSION,
         SPEC_REFERENCE_TARGET_SCHEMA_VERSION,
         TIMELINE_NAME_TARGET_SCHEMA_VERSION,
+        TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,
     }:
         raise ValidationError(f"canonical schema version {version} is not supported")
     tables = set(REQUIRED_SCHEMA_TABLES)
     columns = {table: set(values) for table, values in REQUIRED_SCHEMA_COLUMNS.items()}
+    if version < TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
+        tables.remove("timeline_commit_history")
+        columns.pop("timeline_commit_history")
+        for name in ("timeline_document_input_contents", "timeline_document_input_bindings", "timeline_document_input_links"):
+            tables.remove(name)
+            columns.pop(name)
+        columns["parent_composition_heads"].remove("publication_id")
+        columns["parent_composition_revisions"].remove("commit_manifest_json")
     if version < TIMELINE_NAME_TARGET_SCHEMA_VERSION:
         columns["timelines"].remove("name")
     if version < SPEC_DEDUP_TARGET_SCHEMA_VERSION:
@@ -390,9 +402,9 @@ def _canonical_schema_identity(
     format_id, version = str(rows[0][1]), int(rows[0][2])
     if format_id != CANONICAL_FORMAT_ID:
         raise ValidationError(f"unsupported canonical format {format_id!r}")
-    if version > TIMELINE_NAME_TARGET_SCHEMA_VERSION:
+    if version > TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
         raise ValidationError(
-            f"canonical schema v{version} is newer than supported v{TIMELINE_NAME_TARGET_SCHEMA_VERSION}"
+            f"canonical schema v{version} is newer than supported v{TIMELINE_COMMIT_TARGET_SCHEMA_VERSION}"
         )
     if version < CANONICAL_PREVIOUS_SCHEMA_VERSION:
         raise ValidationError(f"canonical schema v{version} is not a supported migration source")
@@ -776,6 +788,22 @@ def _apply_v29_to_v30(connection: sqlite3.Connection) -> dict[str, object]:
             "timeline_count": connection.execute("SELECT COUNT(*) FROM timelines").fetchone()[0]}
 
 
+def _apply_v30_to_v31(connection: sqlite3.Connection) -> dict[str, object]:
+    from .canonical_schema import TIMELINE_COMMIT_SCHEMA_SQL
+    from .timeline_commit_inputs import DOCUMENT_INPUT_SCHEMA_SQL
+
+    connection.execute("ALTER TABLE parent_composition_heads ADD COLUMN publication_id TEXT REFERENCES timeline_commit_history(publication_id)")
+    connection.execute("ALTER TABLE parent_composition_revisions ADD COLUMN commit_manifest_json TEXT CHECK (commit_manifest_json IS NULL OR json_valid(commit_manifest_json))")
+    # executescript would commit the enclosing migration transaction.
+    connection.execute(TIMELINE_COMMIT_SCHEMA_SQL)
+    for statement in DOCUMENT_INPUT_SCHEMA_SQL.split(";"):
+        if statement.strip():
+            connection.execute(statement)
+    connection.execute("UPDATE runtime_schema SET version=31 WHERE id=1")
+    return {"source_schema_version": 30, "target_schema_version": 31,
+            "baseline_required": True}
+
+
 def migrate_canonical_v24_to_v25(
     root: str | Path,
     *,
@@ -917,12 +945,12 @@ def migrate_canonical_to_current(
     if confirmation != expected_confirmation:
         raise ValidationError(f"migration requires confirmation exactly '{expected_confirmation}'")
     source_version = int(identity["version"])
-    if source_version == TIMELINE_NAME_TARGET_SCHEMA_VERSION:
+    if source_version == TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
         return {
             "ok": True,
             "realm_id": realm_id,
             "source_schema_version": source_version,
-            "target_schema_version": TIMELINE_NAME_TARGET_SCHEMA_VERSION,
+            "target_schema_version": TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,
             "steps": [],
             "changed": False,
         }
@@ -958,9 +986,12 @@ def migrate_canonical_to_current(
                 current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
             if int(current["version"]) == SPEC_REFERENCE_TARGET_SCHEMA_VERSION:
                 steps.append(_apply_v29_to_v30(connection))
+            current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
+            if int(current["version"]) == TIMELINE_NAME_TARGET_SCHEMA_VERSION:
+                steps.append(_apply_v30_to_v31(connection))
             final = _canonical_schema_identity(connection, expected_realm_id=realm_id)
-            if int(final["version"]) != TIMELINE_NAME_TARGET_SCHEMA_VERSION:
-                raise ValidationError("canonical migration did not produce the pinned v30 layout")
+            if int(final["version"]) != TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
+                raise ValidationError("canonical migration did not produce the pinned v31 layout")
             if _quick_check(connection, float(timeout_seconds)) != "ok":
                 raise ValidationError("migrated database failed SQLite integrity check")
             foreign_keys = _foreign_key_errors(connection, float(timeout_seconds))
@@ -971,7 +1002,7 @@ def migrate_canonical_to_current(
                 "ok": True,
                 "realm_id": realm_id,
                 "source_schema_version": source_version,
-                "target_schema_version": TIMELINE_NAME_TARGET_SCHEMA_VERSION,
+                "target_schema_version": TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,
                 "steps": steps,
                 "changed": True,
                 "vacuum": _reclaim_after_migration(connection),

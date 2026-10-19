@@ -20,9 +20,19 @@ from runtime_protocol.upgrade import (
 )
 
 
+def _walk_back_to_v30(connection):
+    connection.execute("PRAGMA foreign_keys=OFF")
+    connection.execute("ALTER TABLE parent_composition_heads DROP COLUMN publication_id")
+    connection.execute("ALTER TABLE parent_composition_revisions DROP COLUMN commit_manifest_json")
+    for table in ("timeline_commit_history", "timeline_document_input_links", "timeline_document_input_bindings", "timeline_document_input_contents"):
+        connection.execute(f"DROP TABLE {table}")
+    connection.execute("UPDATE runtime_schema SET version=30 WHERE id=1")
+    connection.commit()
+
+
 def _walk_back_to_v27(connection):
-    # A fresh realm is the current schema; v30 -> v29 drops timelines.name (the only v30 change), and
-    # v28 -> v27 restores inline specs and drops task_specs.
+    # Remove current commit storage, then the display name and deduplicated specs.
+    _walk_back_to_v30(connection)
     connection.execute("PRAGMA foreign_keys=OFF")
     connection.execute("ALTER TABLE timelines DROP COLUMN name")
     connection.execute("DROP INDEX IF EXISTS idx_tasks_retention")
@@ -290,8 +300,10 @@ def _canonical_fixture(root, version):
     try:
         if version < 28:
             _walk_back_to_v27(connection)  # also drops timelines.name
-        elif version < 30:
-            connection.execute("ALTER TABLE timelines DROP COLUMN name")
+        elif version < 31:
+            _walk_back_to_v30(connection)
+            if version < 30:
+                connection.execute("ALTER TABLE timelines DROP COLUMN name")
         if version < 27:
             connection.execute("DROP TABLE user_preferences")
         if version <= 25:
@@ -321,7 +333,7 @@ def _canonical_fixture(root, version):
     return f"realm-v{version}"
 
 
-@pytest.mark.parametrize("source_version, expected_steps", [(24, 6), (25, 5), (26, 4), (29, 1)])
+@pytest.mark.parametrize("source_version, expected_steps", [(24, 7), (25, 6), (26, 5), (29, 2), (30, 1)])
 def test_complete_canonical_migration_chain_reaches_current_schema(tmp_path, source_version, expected_steps):
     root = tmp_path / f"realm-{source_version}"
     realm_id = _canonical_fixture(root, source_version)

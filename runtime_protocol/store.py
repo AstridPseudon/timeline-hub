@@ -40,7 +40,7 @@ from .visual_seam import (
 from .visual_boundary import finite as _visual_finite, js_round as _visual_js_round
 from .idempotency import command_result, compact_result, expired_result, EXPIRED, RESULT_WINDOW_SECONDS, IdempotencyWindowExpired
 
-SCHEMA_VERSION = 30
+SCHEMA_VERSION = 31
 IDEMPOTENCY_RESULT_WINDOW_SECONDS = 24 * 60 * 60
 IDEMPOTENCY_RESULT_MARKER = "__runtime_idempotency_result_expired_v1"
 IDEMPOTENCY_RESULT_MARKER_PREFIX = '{"' + IDEMPOTENCY_RESULT_MARKER + '":'
@@ -109,7 +109,7 @@ def retire_terminal_specs(connection: sqlite3.Connection, *, retention_days: int
 # publication only when it carries the dependency evidence expired_publication_result keeps.
 # Shared by the online prune and offline compaction so the two can't drift apart.
 EXPIRABLE_RESULT_SQL = (
-    "command_kind NOT IN ('object.ingest','media.import') "
+    "command_kind NOT IN ('object.ingest','media.import','timeline.commit') "
     "AND NOT (command_kind='task.create' AND primary_stream_id IN "
     "(SELECT run_id FROM tasks WHERE status IN ('queued','running','cancel_requested'))) "
     "AND (command_kind <> 'parent_composition.publish' "
@@ -182,9 +182,13 @@ REQUIRED_SCHEMA_COLUMNS = {
     "managed_output_lifecycle": frozenset("association_id state version expires_at pinned_at lease_id lease_owner lease_expires_at updated_at created_at".split()),
     "internal_timeline_revisions": frozenset("id project_id timeline_id payload_json content_digest created_at".split()),
     "shot_revisions": frozenset("id project_id shot_id internal_timeline_revision_id payload_json content_digest created_at".split()),
-    "parent_composition_revisions": frozenset("id project_id timeline_id payload_json content_digest created_at".split()),
+    "parent_composition_revisions": frozenset("id project_id timeline_id payload_json content_digest commit_manifest_json created_at".split()),
+    "timeline_commit_history": frozenset("publication_id project_id timeline_id revision_id previous_publication_id previous_revision_id intent records_json metadata_json provider_version compiler_version publisher project_seq".split()),
+    "timeline_document_input_contents": frozenset("content_digest content_json content_size created_at".split()),
+    "timeline_document_input_bindings": frozenset("project_id document_id document_version content_digest kind document_created_at document_updated_at source_media_id source_id retained_at".split()),
+    "timeline_document_input_links": frozenset("project_id timeline_id publication_id revision_id ordinal dependency_kind document_id document_version content_digest linked_at".split()),
     "shot_revision_heads": frozenset("shot_id project_id revision_id updated_at".split()),
-    "parent_composition_heads": frozenset("timeline_id project_id revision_id updated_at".split()),
+    "parent_composition_heads": frozenset("timeline_id project_id revision_id publication_id updated_at".split()),
     "composition_revision_occurrences": frozenset("parent_revision_id occurrence_id ordinal project_id shot_id shot_revision_id placement_json source_offset_json duration_ms speed_json track transform_json gain muted provenance_json".split()),
     "composition_revision_dependencies": frozenset("parent_revision_id dependency_kind dependency_id content_digest ordinal".split()),
     "objects": frozenset("digest size media_type original_name created_at".split()),
@@ -6324,6 +6328,9 @@ class RealmStore:
             catalog_check = {"status": "blocked", "ok": False, "issues": ["catalog_realm_unavailable"], "path": str(catalog_path)}
             activation_check = {"status": "blocked", "ok": False, "issues": ["activation_catalog_unavailable"]}
         identity_ok = realm_identity["ok"]
+        if {"timeline_commit_history", "timeline_document_input_contents", "timeline_document_input_links"}.issubset(actual_tables):
+            from .timeline_commit_store import TimelineCommitStore
+            revision_errors.extend(TimelineCommitStore(self, validate_prepared=None).integrity_errors())
         healthy = sqlite_ok and not fk and schema_ok and identity_ok and cas_ok and not event_errors and not relational_errors and not revision_errors and catalog_check["ok"] and activation_check["ok"]
         issues = []
         if not sqlite_ok: issues.append("sqlite_integrity")
