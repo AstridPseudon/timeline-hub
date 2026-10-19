@@ -1678,7 +1678,12 @@ def _load_host_only_composition(raw, *, workspace_uuid, realm_root, support_root
         launch["additional_pack_roots"] = raw["additional_pack_roots"]
     if 'selected_actions' in raw:
         from .verified_host_launch import validate_action_closures
-        launch['selected_actions'] = validate_action_closures(raw['selected_actions'])
+        # The producer's explicit no-action restriction is [] on disk; the
+        # typed launch keeps the existing validated closure-map representation.
+        actions = raw['selected_actions']
+        if type(actions) is list and not actions:
+            actions = {}
+        launch['selected_actions'] = validate_action_closures(actions)
     if "renderer_selection" in raw:
         from astrid.core.execution.host_renderer_selection import validate_renderer_selection
         validate_renderer_selection(raw["renderer_selection"])

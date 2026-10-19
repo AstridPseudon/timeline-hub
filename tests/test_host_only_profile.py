@@ -304,3 +304,85 @@ def test_loader_routes_optional_renderer_selection_only_to_host_mode(tmp_path, m
     with pytest.raises(ValidationError, match="host-only"):
         composition.load_local_worker_composition(profile, **kwargs)
     assert len(captured) == 1
+
+
+@pytest.fixture
+def offline_profile_producer(tmp_path, monkeypatch):
+    """Real producer/qualifier/loader with synthetic installed measurements."""
+    from banodoco_local import host_only_profile as producer
+    root = tmp_path / 'installed'
+    (root / 'astrid/packs').mkdir(parents=True)
+    support = tmp_path / 'support'
+    # Only package inventory measurements are synthetic. Document/action,
+    # path, interpreter, boot, source identity and session validation stay real.
+    monkeypatch.setattr(producer.sysconfig, 'get_path', lambda name: str(root))
+    monkeypatch.setattr(producer, '_installed_inputs', lambda **kwargs: (root, {}))
+    monkeypatch.setattr(producer, '_verify_installed_host_records', lambda *args: None)
+    monkeypatch.setattr(producer, 'source_checkout_closure', lambda path: {'digest': 'a' * 64})
+    selections = dict(worker_profile=support / 'profile.json', source_manifest=support / 'source.json',
+        workspace_uuid='offline-workspace', realm_root=tmp_path / 'realm', support_root=support,
+        max_concurrency=1, capability_matrix=None)
+    return producer, selections
+
+
+@pytest.mark.parametrize('explicit', [False, True])
+def test_profile_producer_preserves_explicit_empty_action_selection(offline_profile_producer, explicit):
+    from runtime_protocol.local_worker import _selected_profile_payload, _digest
+    producer, selections = offline_profile_producer
+    kwargs = {'selected_actions': ()} if explicit else {}
+    source = producer.provision_host_only_profile(**selections, **kwargs)
+    before = selections['worker_profile'].read_bytes()
+    assert SourceProfile.load(selections['source_manifest']) == source
+    raw = json.loads(before)
+    composition = producer.qualify_host_only_profile(selections['worker_profile'],
+        **{k: selections[k] for k in ('workspace_uuid', 'realm_root', 'support_root')})
+    profile = composition.profiles['astrid']
+    if explicit:
+        assert raw['selected_actions'] == []
+        assert profile.host_launch['selected_actions'] == {}
+    else:
+        assert 'selected_actions' not in raw
+        assert 'selected_actions' not in profile.host_launch
+    assert raw['session_config_digest'] == _digest(profile.host_launch)
+    assert _selected_profile_payload(profile)['host_launch'] == profile.host_launch
+    producer.provision_host_only_profile(**selections, **kwargs)
+    assert selections['worker_profile'].read_bytes() == before
+
+
+@pytest.mark.parametrize('change, message', [
+    ('omitted', 'launch configuration digest differs'),
+    ('malformed-list', 'closure map is invalid'),
+    ('null', 'closure map is invalid'),
+    ('forged-closure', 'closure binding is invalid'),
+    ('identity', 'profile identity differs'),
+    ('session', 'launch configuration digest differs'),
+    ('authority-environment', 'environment cannot grant execution authority'),
+    ('worker-role', 'cannot declare Worker/engine roles'),
+])
+def test_explicit_empty_action_profile_keeps_guards(offline_profile_producer, change, message):
+    from runtime_protocol.errors import ValidationError
+    from runtime_protocol.local_execution_supervisor import RelayError
+    from runtime_protocol.verified_host_launch import HostLaunchError
+    from runtime_protocol.local_worker import _digest
+    producer, selections = offline_profile_producer
+    producer.provision_host_only_profile(**selections, selected_actions=())
+    raw = json.loads(selections['worker_profile'].read_text())
+    if change == 'omitted': raw.pop('selected_actions')
+    elif change == 'malformed-list': raw['selected_actions'] = ['offline.probe']
+    elif change == 'null': raw['selected_actions'] = None
+    elif change == 'forged-closure': raw['selected_actions'] = {'offline.probe': {}}
+    elif change == 'identity':
+        # Even an equivalent typed map cannot erase the explicit on-disk []
+        # without failing the independently measured profile identity.
+        raw['selected_actions'] = {}
+    elif change == 'session':
+        launch = {k: raw[k] for k in ('source_checkout', 'pack_root', 'boot_manifest_path',
+            'boot_manifest_hash', 'capability_matrix', 'environment', 'max_concurrency', 'selected_actions')}
+        raw['session_config_digest'] = _digest(launch)
+    elif change == 'authority-environment': raw['environment'] = {'PYTHONPATH': '/unadmitted'}
+    elif change == 'worker-role': raw['worker_executable'] = '/unadmitted/python'
+    adversarial = selections['support_root'] / 'adversarial.json'
+    adversarial.write_text(json.dumps(raw))
+    with pytest.raises((BootstrapError, ValidationError, RelayError, HostLaunchError), match=message):
+        producer.qualify_host_only_profile(adversarial,
+            **{k: selections[k] for k in ('workspace_uuid', 'realm_root', 'support_root')})

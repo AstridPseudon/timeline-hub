@@ -168,11 +168,13 @@ def provision_host_only_profile(*, worker_profile: Path, source_manifest: Path,
                                max_concurrency: int, capability_matrix: Path | None,
                                environment: Mapping[str, str] | None = None,
                                additional_pack_roots: tuple[Path, ...] = (), renderer_selection=None,
-                               selected_actions: tuple[str, ...] = ()) -> SourceProfile:
+                               selected_actions: tuple[str, ...] | None = None) -> SourceProfile:
     """Atomically provision a private worker profile and existing SourceProfile.
 
     Run with the selected installed Runtime interpreter. No checkout/environment
     override is accepted. None explicitly selects an empty capability matrix.
+    Unspecified actions retain legacy omission; an explicit empty tuple is []
+    in the profile document and an empty closure map in the typed launch.
     """
     worker_profile = _path(worker_profile); source_manifest = _path(source_manifest)
     realm_root = _path(realm_root); support_root = _path(support_root)
@@ -185,7 +187,7 @@ def provision_host_only_profile(*, worker_profile: Path, source_manifest: Path,
     if type(max_concurrency) is not int or not 1 <= max_concurrency <= 16:
         raise BootstrapError("Host concurrency must be explicitly bounded")
     root = _path(sysconfig.get_path('purelib'))
-    actions = qualify_action_closures(root, selected_actions, capability_matrix)
+    actions = qualify_action_closures(root, () if selected_actions is None else selected_actions, capability_matrix)
     root, records = _installed_inputs(action_closures=actions)
     if capability_matrix is not None:
         capability_matrix = _path(capability_matrix)
@@ -202,7 +204,7 @@ def provision_host_only_profile(*, worker_profile: Path, source_manifest: Path,
               "boot_manifest_path": str(boot), "boot_manifest_hash": "sha256:" + normalize_sha256_digest(manifest_hash(manifest)),
               "capability_matrix": str(capability_matrix) if capability_matrix else None,
               "environment": dict(environment or {}), "max_concurrency": max_concurrency}
-    if actions:
+    if selected_actions is not None:
         launch['selected_actions'] = actions
     if renderer_selection is not None:
         from astrid.core.execution.host_renderer_selection import HostRendererSelection
@@ -218,6 +220,8 @@ def provision_host_only_profile(*, worker_profile: Path, source_manifest: Path,
            "release_digest": "sha256:" + raw_digest(records), "session_config_digest": "sha256:" + raw_digest(launch),
            "host_protocol": {"version": CURRENT_ROLES_VERSION, "module": HOST_MODULE,
                              "source_closure_digest": source_checkout_closure(root)["digest"]}}
+    if selected_actions is not None and not actions:
+        raw["selected_actions"] = []
     raw["profile_revision"], raw["profile_digest"] = _identity(raw, workspace_uuid=workspace_uuid, realm_root=realm_root, support_root=support_root)
     worker_profile.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     with tempfile.TemporaryDirectory(prefix=".host-profile-", dir=worker_profile.parent) as temporary:
