@@ -44,6 +44,7 @@ describe('agent chat on the hosted build', () => {
     fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       const body = url.endsWith('/acp/models') ? models : url.endsWith('/chat') ? chat
+        : url.endsWith('/agents') ? { agents: [] }
         : url.endsWith('/connect') ? { connection_id: 'connection-1', initialize: {} }
         : url.endsWith('/events') ? { notifications: [], disconnected: false } : null;
       return new Response(JSON.stringify(body), { status: body ? 200 : 404 });
@@ -67,6 +68,7 @@ describe('agent chat on the hosted build', () => {
     await waitFor(() => expect(screen.getByText('GPT 5.6 Sol')).toBeInTheDocument());
     const urls = fetchSpy.mock.calls.map(([url]) => String(url));
     expect(urls).toContain(`${GATEWAY}/api/astrid/acp/models`);
+    expect(urls).toContain(`${GATEWAY}/api/astrid/acp/agents`);
     expect(urls).toContain(`${GATEWAY}/api/astrid/acp/projects/project-1/chat`);
     expect(urls.every(url => url.startsWith(`${GATEWAY}/api/astrid/acp/`))).toBe(true);
     for (const [, request] of fetchSpy.mock.calls) expect(request?.headers).not.toHaveProperty('Authorization');
