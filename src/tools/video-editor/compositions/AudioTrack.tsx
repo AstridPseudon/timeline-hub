@@ -9,11 +9,12 @@ import {
   getSanitizedVolume,
   secondsToFrames,
 } from '@/tools/video-editor/lib/config-utils.ts';
-import { getAudioFade, getAudioVolumeProp, type AudioVolumeProp } from '@/tools/video-editor/lib/audioFade.ts';
+import { audioEnvelopeAt, compileAudioEnvelope } from '@banodoco/timeline-composition/evaluation';
 import { MediaErrorBoundary } from '@/tools/video-editor/compositions/MediaErrorBoundary.tsx';
 import { useOptionalPreviewAudioFailureReporter } from '@/tools/video-editor/compositions/PreviewMediaFailureContext.tsx';
 import type { ResolvedTimelineClip, TrackDefinition } from '@/tools/video-editor/types/index.ts';
 import { boundCanonicalClipToOccurrence } from '@/tools/video-editor/lib/canonicalRenderBounds.ts';
+import { playerEvaluationClip } from '@/tools/video-editor/compositions/playerEvaluation.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 /**
@@ -78,7 +79,7 @@ type PreviewAudioProps = {
   trimBefore: number;
   trimAfter?: number;
   playbackRate: number;
-  volume: AudioVolumeProp;
+  volume: number | ((frame: number) => number);
   amplify: boolean;
 };
 
@@ -296,20 +297,33 @@ const ClipAudio: FC<{
   trimAfter?: number;
   playbackRate: number;
 }> = ({ clip, renderClip, fps, baseVolume, isRendering, src, trimBefore, trimAfter, playbackRate }) => {
-  const fade = getAudioFade(clip, fps);
-  const fadeInFrames = fade?.fadeInFrames ?? 0;
-  const fadeOutFrames = fade?.fadeOutFrames ?? 0;
-  const durationFrames = fade?.durationFrames ?? 0;
+  const authoredAudio = (clip as ResolvedTimelineClip & { audio?: unknown }).audio;
+  const authoredEnvelope = authoredAudio && typeof authoredAudio === 'object'
+    ? (authoredAudio as { envelope?: unknown }).envelope
+    : undefined;
+  const authoredDuck = typeof clip.app?.astrid === 'object' && clip.app.astrid !== null
+    ? (clip.app.astrid as { duck?: unknown }).duck
+    : clip.app?.duck;
+  const params = clip.params;
+  const fadeIn = params?.fadeIn;
+  const fadeOut = params?.fadeOut;
+  const fadeInCurve = params?.fadeInCurve;
+  const fadeOutCurve = params?.fadeOutCurve;
+  // The public compiler reads only authored audio/app/params and timing fields;
+  // keep those semantic dependencies so equivalent clip objects stay stable.
+  /* eslint-disable react-hooks/exhaustive-deps */
+  const envelope = useMemo(
+    () => compileAudioEnvelope(playerEvaluationClip(clip), fps),
+    [authoredDuck, authoredEnvelope, clip.clipType, clip.from, clip.hold, clip.speed, clip.to,
+      fadeIn, fadeInCurve, fadeOut, fadeOutCurve, fps],
+  );
+  /* eslint-enable react-hooks/exhaustive-deps */
   const frameOffset = secondsToFrames(renderClip.at, fps) - secondsToFrames(clip.at, fps);
-  // A stable function identity matters: Remotion re-derives a per-frame
-  // volume table whenever the `volume` prop changes.
   const volume = useMemo(
-    () => getAudioVolumeProp(
-      baseVolume,
-      fadeInFrames > 0 || fadeOutFrames > 0 ? { fadeInFrames, fadeOutFrames, durationFrames } : null,
-      frameOffset,
-    ),
-    [baseVolume, durationFrames, fadeInFrames, fadeOutFrames, frameOffset],
+    () => envelope
+      ? (frame: number) => baseVolume * audioEnvelopeAt(envelope, (frame + frameOffset) / fps)
+      : baseVolume,
+    [baseVolume, envelope, frameOffset, fps],
   );
 
   if (isRendering) {
