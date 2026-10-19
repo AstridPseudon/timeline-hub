@@ -1620,6 +1620,18 @@ def signal_sealed_capability(
 NATIVE_CAPABILITY_VERSION = "runtime.native-custody/v1"
 
 
+def _native_controller_incarnation(identity: object) -> dict[str, object]:
+    if not isinstance(identity, Mapping):
+        raise CustodyError("native Runtime cleanup actor is unavailable or malformed")
+    pid, uid, birth = identity.get("pid"), identity.get("uid"), identity.get("birth_id")
+    if (isinstance(pid, bool) or not isinstance(pid, int) or pid <= 0
+            or isinstance(uid, bool) or not isinstance(uid, int) or uid < 0
+            or not isinstance(birth, str) or not birth):
+        raise CustodyError("native Runtime cleanup actor is unavailable or malformed")
+    # Parent, process group, and session can change without replacing a process.
+    return {"pid": pid, "uid": uid, "birth_id": birth}
+
+
 class NativeProcessCustody:
     """Private durable custody for a native owner, backed by pinned signal handles.
 
@@ -1634,8 +1646,10 @@ class NativeProcessCustody:
         self.identity = {key: identity[key] for key in ("pid", "uid", "birth_id")}
 
     def publish(self):
+        controller = default_process_identity(os.getpid())
+        _native_controller_incarnation(controller)
         record = {"version": NATIVE_CAPABILITY_VERSION, "role": "runtime_owner",
-                  "target": self.identity, "controller": default_process_identity(os.getpid()),
+                  "target": self.identity, "controller": controller,
                   "state": "owned"}
         if sys.platform == "darwin":
             record["audit_token_words"] = current_process_audit_token(int(self.identity["pid"]))["words"]
@@ -1653,8 +1667,8 @@ class NativeProcessCustody:
     def release(self):
         with platform.file_lock(self.lock):
             record = self._read()
-            actor = default_process_identity(os.getpid())
-            if record.get("controller") != actor:
+            actor = _native_controller_incarnation(default_process_identity(os.getpid()))
+            if _native_controller_incarnation(record.get("controller")) != actor:
                 raise CustodyError("native Runtime custody belongs to another controller")
             record["state"] = "released"
             _atomic_owner_json(self.path, record)
@@ -1666,12 +1680,11 @@ class NativeProcessCustody:
         with platform.file_lock(self.lock):
             record = self._read()
             actor = default_process_identity(os.getpid())
-            if actor is None:
-                raise CustodyError("native Runtime cleanup actor is unavailable")
-            if record["state"] == "owned" and record.get("controller") != actor:
-                controller = record.get("controller") or {}
-                observed = default_process_identity(int(controller.get("pid") or 0))
-                if observed is not None and all(observed.get(k) == controller.get(k) for k in ("pid", "uid", "birth_id")):
+            actor_incarnation = _native_controller_incarnation(actor)
+            controller = _native_controller_incarnation(record.get("controller"))
+            if record["state"] == "owned" and controller != actor_incarnation:
+                observed = default_process_identity(controller["pid"])
+                if observed is not None and _native_controller_incarnation(observed) == controller:
                     raise CustodyError("native Runtime cleanup is owned by another live controller")
             if validate is not None:
                 validate()
