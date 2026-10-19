@@ -81,10 +81,14 @@ def labels_batch(config: Mapping[str, Any], frames: Sequence[int], fps: float,
                 continue
             rect = layer["bounds"].get("rect") if layer["bounds"]["status"] == "known" else None
             bounds = None if rect is None else (rect["x"], rect["y"], rect["x"] + rect["width"], rect["y"] + rect["height"])
+            findings = tuple(finding.get("reason", "") for finding in layer.get("findings", ())
+                             if finding.get("reason"))
+            status = ("unknown" if layer["visible"] == "unknown" or layer.get("coverage") == "unknown"
+                      or layer["bounds"]["status"] != "known" else "known")
             layers.append(Visible(layer["clipId"], _address(clips[layer["clipId"]]), layer["track"], layer["z"],
                                   layer["role"], layer["opacity"], bounds,
                                   "full" if layer["fullFrame"] else "declared" if bounds else "unknown",
-                                  layer["fullFrame"], "unknown" if layer["visible"] == "unknown" else "known"))
+                                  layer["fullFrame"], status, "; ".join(dict.fromkeys(findings))))
         result[answer["frame"]] = layers
     return result
 

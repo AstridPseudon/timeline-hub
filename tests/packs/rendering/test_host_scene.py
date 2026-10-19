@@ -33,6 +33,7 @@ import {useVideoConfig} from 'remotion';
 const layout = (clip, width, height) => clip.clipType === 'test-field'
   ? {x: 0, y: 0, width, height}
   : {x: clip.x, y: clip.y, width: clip.width, height: clip.height};
+const unknownBounds = 'Test component does not declare evaluated bounds';
 
 export default Object.assign(({clip}) => {
   const {width, height} = useVideoConfig();
@@ -42,6 +43,10 @@ export default Object.assign(({clip}) => {
 }, {
   prepareSceneCapability: ({clip, width, height}) => {
     const rect = layout(clip, width, height);
+    if (clip.clipType === 'test-unknown-bounds') {
+      return {identity: JSON.stringify(rect), frame: () => ({presence: 'present',
+        opaqueSupport: 'none', bounds: {status: 'unknown', reason: unknownBounds}})};
+    }
     return {identity: JSON.stringify(rect), frame: () => ({presence: 'present',
       opaqueSupport: 'rect', bounds: {status: 'known', rect}})};
   },
@@ -65,6 +70,7 @@ def host_project(tmp_path_factory):
     elements = list(gen_effect_registry._element_registry().list())
     rendering = {}
     for kind, element_id in (("effects", "custom"), ("effects", "test-card"), ("effects", "test-field"),
+                             ("effects", "test-unknown-bounds"),
                              ("animations", "fade-up"), ("transitions", "fade")):
         element = pack / kind / element_id
         element.mkdir(parents=True)
@@ -228,6 +234,39 @@ def test_native_labels_known_unknown_unavailable_and_single_batch(native_host, m
     from PIL import Image
     image = labels.draw_labels(Image.new("RGB", (200, 100)), [unknown, unavailable], canvas=BASIS, tile_size=(200, 100))
     assert image.getbbox() is not None
+
+
+def test_native_labels_preserve_unknown_bounds_and_public_finding(native_host):
+    p = props([{"id": "native:unknown-bounds", "clipType": "test-unknown-bounds",
+                "track": "plate", "at": 0, "hold": 1}])
+    answer = scene_answers.host_frames_at(p, BASIS, [0])[0]
+    layer = answer["layers"][0]
+    assert layer["visible"] is True
+    assert layer["opaqueSupport"] == "none"
+    assert layer["bounds"]["status"] == "unknown"
+    assert layer["coverage"] == "unknown"
+    assert layer["findings"] == [{
+        "code": "unknown-component-bounds",
+        "clipId": "native:unknown-bounds",
+        "reason": "Test component does not declare evaluated bounds",
+    }]
+
+    projected = labels.labels_for(p["timeline"], 0, 30, BASIS, assets=p["assets"], theme=p["theme"])[0]
+    assert projected.status == "unknown"
+    assert projected.message == "Test component does not declare evaluated bounds"
+
+    from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import (
+        attach_frame_addresses,
+    )
+
+    receipt = {"cards": [{}]}
+    attach_frame_addresses(receipt, {"config": p["timeline"], "registry": p["assets"],
+                                    "theme": p["theme"], "fps_rational": [30, 1]}, [{"frame": 0}])
+    assert receipt["cards"] == [{
+        "addresses": ["unknown-bounds"],
+        "scene_status": "unknown",
+        "scene_findings": ["Test component does not declare evaluated bounds"],
+    }]
 
 
 def test_check_scene_is_advisory_and_missing_basis_is_explicit(native_host, monkeypatch):
