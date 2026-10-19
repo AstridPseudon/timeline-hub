@@ -20,9 +20,7 @@ def main(argv: list[str] | None = None) -> int:
     request = VideoEnhanceRequest(
         video_ref=args.video_ref or "",
         scale=args.scale,
-        enable_interpolation=bool(args.enable_interpolation),
         enable_upscale=bool(args.enable_upscale),
-        interpolation_frames=args.interpolation_frames,
         color_fix=args.color_fix,
         output_quality=args.output_quality,
     )

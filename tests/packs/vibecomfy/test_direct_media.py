@@ -213,6 +213,32 @@ def test_video_enhance_control_rejection_precedes_request_validation() -> None:
         )
 
 
+def test_video_enhance_cli_defaults_upscale_on_and_removes_interpolation_option() -> None:
+    from astrid.packs.vibecomfy.media.runtime import build_parser
+
+    parser = build_parser("vibecomfy.video_enhance")
+    args = parser.parse_args(
+        [
+            "--capability", "vibecomfy.video_enhance",
+            "--out", "/tmp/out",
+            "--task-identity", "task-video",
+            "--profile", "pip_embedded",
+        ]
+    )
+    assert args.enable_upscale is True
+    assert not hasattr(args, "enable_interpolation")
+    with pytest.raises(SystemExit):
+        parser.parse_args(
+            [
+                "--capability", "vibecomfy.video_enhance",
+                "--out", "/tmp/out",
+                "--task-identity", "task-video",
+                "--profile", "pip_embedded",
+                "--enable-interpolation", "true",
+            ]
+        )
+
+
 def test_media_command_rejects_before_profile_read_or_scratch_creation(tmp_path) -> None:
     from astrid.packs.vibecomfy.media import runtime as run
 

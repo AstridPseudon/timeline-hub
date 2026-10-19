@@ -784,7 +784,7 @@ actions:
     - input: video_ref
       kind: requires_input
     description: Bounded typed VibeComfy video upscale with source-FPS/audio preservation;
-      interpolation and nonmaximum quality are fail-closed.
+      nonmaximum quality is fail-closed.
     graph:
       consumes:
       - video_ref
@@ -797,16 +797,10 @@ actions:
       required: true
       type: file
       artifact_type: video
-    - name: enable_interpolation
-      required: true
-      type: boolean
     - name: enable_upscale
-      required: true
-      type: boolean
-    - name: interpolation_frames
-      default: 1
+      default: true
       required: false
-      type: integer
+      type: boolean
     - name: upscale_factor
       default: 2
       required: false
@@ -842,9 +836,7 @@ actions:
       estimated_output_bytes: 269484032
       hc04_param_ports:
       - video_ref
-      - enable_interpolation
       - enable_upscale
-      - interpolation_frames
       - upscale_factor
       - color_fix
       - output_quality
@@ -887,12 +879,8 @@ actions:
         - '{out}'
         - --video-ref
         - '{video_ref}'
-        - --enable-interpolation
-        - '{enable_interpolation}'
         - --enable-upscale
         - '{enable_upscale}'
-        - --interpolation-frames
-        - '{interpolation_frames}'
         - --scale
         - '{upscale_factor}'
         - --color-fix
