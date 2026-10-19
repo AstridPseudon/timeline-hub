@@ -10,13 +10,15 @@ export function useVideoEditorPreviewComposition(resolvedConfig: ResolvedTimelin
   const composition = runtime?.userId === null
     ? runtime.shots?.canonicalDraft?.composition ?? runtime.shots?.canonicalComposition
     : null;
+  const compositionError = runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null;
+  const compositionErrorDependency = composition ? null : compositionError;
   return useMemo(() => resolveCanonicalComposition({
     userId: runtime?.userId,
     hasShotClips,
     hasShotComposition: Boolean(runtime?.shots?.shotComposition),
     composition,
-    compositionError: runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null,
+    compositionError: compositionErrorDependency,
     baseConfig: resolvedConfig,
-  }), [hasShotClips, composition, resolvedConfig, runtime?.shots?.canonicalCompositionError,
+  }), [hasShotClips, composition, compositionErrorDependency, resolvedConfig,
     runtime?.shots?.shotComposition, runtime?.userId]);
 }

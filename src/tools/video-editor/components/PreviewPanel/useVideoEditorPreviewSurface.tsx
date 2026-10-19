@@ -18,6 +18,9 @@ export interface VideoEditorPreviewSurface {
   slotRef: RefCallback<HTMLDivElement>;
   portal: ReactPortal | null;
   hasConfig: boolean;
+  /** Why the surface has no Player-backed preview yet. */
+  availability?: 'loading' | 'unavailable' | 'ready';
+  unavailableReason?: string;
 }
 
 export function useVideoEditorPreviewSurface({
@@ -47,7 +50,10 @@ export function useVideoEditorPreviewSurface({
       if (canonicalDraft) {
         return {
           kind: 'local',
-          baseRevisionId: canonicalComposition?.headRevisionId ?? null,
+          // The server head may advance while this draft remains the pixels
+          // being projected. Its own graph head is the only known base for
+          // the draft; the server snapshot is not an acknowledgement of it.
+          baseRevisionId: canonicalDraft.composition.headRevisionId,
           ...(unavailableTarget ? { unavailableTarget } : {}),
         };
       }
@@ -174,5 +180,13 @@ export function useVideoEditorPreviewSurface({
     slotRef,
     portal,
     hasConfig: Boolean(previewConfig),
-  }), [portal, previewConfig, slotRef]);
+    availability: previewConfig
+      ? 'ready'
+      : compositionResolution.status === 'error'
+        ? 'unavailable'
+        : 'loading',
+    ...(compositionResolution.status === 'error' && compositionResolution.error?.message
+      ? { unavailableReason: compositionResolution.error.message }
+      : {}),
+  }), [compositionResolution.error?.message, compositionResolution.status, portal, previewConfig, slotRef]);
 }

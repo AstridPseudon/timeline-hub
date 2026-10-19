@@ -35,6 +35,7 @@ const TRANSPORT_BUTTON_CLASS = 'pointer-events-auto rounded-full border-[color:v
 // own its media element instead; this keeps source identity and timing local
 // to the clip and avoids a lifetime-fixed shared-pool prop during config swaps.
 const PREVIEW_SHARED_AUDIO_TAGS = 0;
+const UNKNOWN_PREVIEW_REVISION: PreviewRevision = Object.freeze({ kind: 'unknown' });
 
 /**
  * Keeps the loading surface over a mounted composition until its first frame has pictures:
@@ -124,7 +125,7 @@ interface PreviewDelivery {
 }
 
 const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>(function RemotionPreview(
-  { config, previewRevision = { kind: 'unknown' }, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0 },
+  { config, previewRevision = UNKNOWN_PREVIEW_REVISION, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0 },
   ref,
 ) {
   const runtime = useOptionalVideoEditorRuntime();
@@ -149,6 +150,19 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   const deferredConfig = delivery.config;
   const previewRevisionRef = useRef(previewRevision);
   previewRevisionRef.current = previewRevision;
+
+  // A host read can fail or recover without changing the config identity. In
+  // that case update only the delivered metadata; never let a metadata-only
+  // update jump ahead of a deferred config update.
+  useEffect(() => {
+    setDelivery((current) => current.config === config
+      && current.revision.kind === previewRevision.kind
+      && current.revision.revisionId === previewRevision.revisionId
+      && current.revision.baseRevisionId === previewRevision.baseRevisionId
+      ? { ...current, revision: previewRevision }
+      : current);
+  }, [config, previewRevision]);
+
   // Stable identity: reads only the state setter and refs, so effects can depend on it.
   const setDeferredConfig = useCallback(
     (nextDelivery: PreviewDelivery) => {
@@ -249,6 +263,9 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
     ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}),
   }), [delivery.revision, outputConfig, preparing, shotsSettling, runtime?.astridElementHost]);
   const displayedRevisionLabel = previewRevisionLabel(delivery.revision);
+  // This is request status, not pixel provenance. It intentionally follows
+  // the current host read so recovery clears the notice even when the Player
+  // is still displaying an older delivered config.
   const unavailableTarget = previewRevision.unavailableTarget;
   const metadata = useMemo(() => {
     const fps = outputConfig.output.fps;

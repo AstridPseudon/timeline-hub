@@ -307,3 +307,21 @@ it('shows an unavailable target without inventing a committed revision when ther
   expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Preview of R2 unavailable');
   expect(screen.queryByText('Committed R2')).toBeNull();
 });
+
+it('clears a recovered unavailable request without relabelling the delivered pixels', () => {
+  const current = config('recovered-r1');
+  const h = preview(current, {
+    kind: 'committed',
+    revisionId: 'R1',
+    unavailableTarget: { targetRevisionId: 'R2', reason: 'Runtime read failed' },
+  });
+
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
+  expect(screen.getByTestId('preview-revision-unavailable')).toHaveTextContent('Preview of R2 unavailable');
+
+  h.replace(current, { kind: 'committed', revisionId: 'R1' });
+
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
+  expect(screen.queryByTestId('preview-revision-unavailable')).toBeNull();
+  expect(boundary.props.inputProps.previewRevision).toEqual({ kind: 'committed', revisionId: 'R1' });
+});
