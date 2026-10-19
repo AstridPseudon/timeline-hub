@@ -118,7 +118,7 @@ describe('durable command outbox', () => {
       expect(mustNotBuild).not.toHaveBeenCalled();
       expect(afterA.intents).toHaveLength(1);
       expect(afterA.intents[0]).toMatchObject({ id: b, payload: move(7), readyBase: ha });
-      expect(afterA.accepted).toEqual({ head: ha, value: accepted().value });
+      expect(afterA.accepted).toEqual({ intentId: recovery.pending!.intentId, head: ha, value: accepted().value });
       await box.dispatch(build, async (requestB) => {
         expect(requestB.key).not.toBe(requestA.key);
         expect(JSON.parse(requestB.body)).toEqual({
@@ -127,6 +127,87 @@ describe('durable command outbox', () => {
         return accepted({ revisionId: 'RB', publicationId: 'PB' });
       });
       expect((await box.read()).intents).toEqual([]);
+    });
+  });
+
+  it.each(['same claim', 'recovered claim'] as const)(
+    'retains B captured over A when A ACK commits before B append in the %s', async (claim) => {
+      const env = environment();
+      let owner = '';
+      let requestA!: OutboxRequest;
+      let basis!: { after: string };
+      let payload!: ReturnType<typeof move>;
+      let b = '';
+      const appendCaptured = async (box: ClaimedOutbox) => {
+        b = await box.append(payload, basis);
+        expect((await box.read()).intents).toEqual([{ id: b, basis, payload: move(7), readyBase: ha }]);
+      };
+      await env.open().create(scope, async (box, ownerId) => {
+        owner = ownerId;
+        const a = await box.append(move(5), { head: h0 });
+        const started = deferred<void>();
+        const response = deferred<OutboxOutcome>();
+        const sending = box.dispatch(build, async (request) => {
+          requestA = request;
+          started.resolve();
+          return response.promise;
+        });
+        await started.promise;
+        // Capture B's authoring basis while A is still optimistic; persist B after A's ACK.
+        basis = { after: a };
+        payload = move(7);
+        response.resolve(accepted());
+        const afterA = await sending;
+        expect(afterA.intents).toEqual([]);
+        expect(afterA.accepted).toEqual({ intentId: a, head: ha, value: accepted().value });
+        if (claim === 'same claim') await appendCaptured(box);
+      });
+      if (claim === 'recovered claim') await env.open().recover(scope, owner, appendCaptured);
+      await env.open().recover(scope, owner, async (box) => {
+        expect((await box.read()).intents[0]).toEqual({ id: b, basis, payload: move(7), readyBase: ha });
+        let requestB!: OutboxRequest;
+        await box.dispatch(build, async (request) => {
+          requestB = request;
+          expect(request.key).not.toBe(requestA.key);
+          expect(request.body).toBe(JSON.stringify({
+            base_revision_id: ha.revisionId, base_publication_id: ha.publicationId, proposal: payload,
+          }));
+          return { kind: 'retry', error: 'lost B ACK' };
+        });
+        const mustNotBuild = vi.fn(() => { throw new Error('Retry must not be rebuilt'); });
+        await box.dispatch(mustNotBuild, async (request) => {
+          expect(request).toEqual(requestB);
+          return accepted({ revisionId: 'RB', publicationId: 'PB' });
+        });
+        expect(mustNotBuild).not.toHaveBeenCalled();
+      });
+    },
+  );
+
+  it('refuses unknown, cancelled, non-tail and superseded accepted predecessors', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const cancelled = await box.append(move(3), { head: h0 });
+      await box.cancel(cancelled);
+      await expect(box.append(move(5), { after: cancelled })).rejects.toThrow('predecessor');
+      await expect(box.append(move(5), { after: 'unknown' })).rejects.toThrow('predecessor');
+      const a = await box.append(move(5), { head: h0 });
+      await box.dispatch(build, async () => accepted());
+      const b = await box.append(move(7), { after: a });
+      await expect(box.append(move(9), { after: a })).rejects.toThrow('predecessor');
+      const hb = { revisionId: 'RB', publicationId: 'PB' };
+      await box.dispatch(build, async () => accepted(hb));
+      // Only B's acceptance remains; neither the original nor a remote head can stand in for A.
+      expect((await box.read()).accepted).toEqual({ intentId: b, head: hb, value: accepted(hb).value });
+      await expect(box.append(move(9), { after: a })).rejects.toThrow('predecessor');
+      const remote = { revisionId: 'REMOTE', publicationId: 'REMOTE' };
+      const independent = await box.append(move(11), { head: remote });
+      await box.cancel(independent);
+      await expect(box.append(move(13), { after: a })).rejects.toThrow('predecessor');
+      const c = await box.append(move(9), { after: b });
+      expect((await box.read()).intents).toEqual([
+        { id: c, basis: { after: b }, payload: move(9), readyBase: hb },
+      ]);
     });
   });
 
@@ -173,7 +254,7 @@ describe('durable command outbox', () => {
       });
       expect(result.intents).toEqual([{ ...retained.intents[1], readyBase: ha }]);
       expect(result.pending).toBeUndefined();
-      expect(result.accepted).toEqual({ head: ha, value: accepted().value });
+      expect(result.accepted).toEqual({ intentId: a, head: ha, value: accepted().value });
     });
   });
 
@@ -235,6 +316,35 @@ describe('durable command outbox', () => {
       expect(state.intents.map((intent) => intent.payload)).toEqual([move(5), move(7), move(9)]);
       expect(state.intents.every((intent) => JSON.stringify(intent.conflict) === JSON.stringify(error))).toBe(true);
       expect(state.accepted).toBeUndefined();
+      const transmit = vi.fn(async () => accepted());
+      await expect(box.dispatch(build, transmit)).rejects.toThrow('rejected prefix');
+      expect(transmit).not.toHaveBeenCalled();
+    });
+  });
+
+  it.each(['before', 'after'] as const)('keeps an independent suffix appended %s A rejection free of A conflict', async (when) => {
+    const env = environment();
+    let owner = '';
+    const error = { reason: 'changed_read' };
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      const a = await box.append(move(5), { head: h0 });
+      const appendSuffix = async () => {
+        const b = await box.append(move(7), { after: a });
+        await box.append(move(9), { after: b });
+        const independent = await box.append(move(11), { head: h0 });
+        await box.append(move(13), { after: independent });
+      };
+      if (when === 'before') await appendSuffix();
+      await box.dispatch(build, async () => ({ kind: 'rejected', error }));
+      if (when === 'after') await appendSuffix();
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const state = await box.read();
+      expect(state.intents.map((intent) => intent.payload)).toEqual([move(5), move(7), move(9), move(11), move(13)]);
+      expect(state.intents.map((intent) => intent.conflict)).toEqual([error, error, error, undefined, undefined]);
+      expect(state.intents[3].readyBase).toEqual(h0);
+      expect(state.intents[4].readyBase).toBeUndefined();
       const transmit = vi.fn(async () => accepted());
       await expect(box.dispatch(build, transmit)).rejects.toThrow('rejected prefix');
       expect(transmit).not.toHaveBeenCalled();
@@ -354,6 +464,37 @@ describe('durable command outbox', () => {
       late.resolve(accepted());
       await stale;
       expect(await box.read()).toEqual(state);
+    });
+  });
+
+  it('does not start transmit when the claim returns before the reservation transaction completes', async () => {
+    const env = environment();
+    const service = env.open();
+    let owner = '';
+    let sending!: Promise<unknown>;
+    const transmit = vi.fn(async () => accepted());
+    await service.create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      await box.append(move(5), { head: h0 });
+      const reserving = deferred<void>();
+      sending = box.dispatch((intent, base) => {
+        reserving.resolve();
+        return build(intent, base);
+      }, transmit);
+      await reserving.promise;
+    });
+    await expect(sending).rejects.toThrow('Stale');
+    expect(transmit).not.toHaveBeenCalled();
+    const [state] = await service.list(scope);
+    expect(state.intents[0].payload).toEqual(move(5));
+    expect(state.pending?.request.body).toBe(JSON.stringify(build(state.intents[0], h0).body));
+    await service.recover(scope, owner, async (box) => {
+      const mustNotBuild = vi.fn(() => { throw new Error('Reservation must not be rebuilt'); });
+      await box.dispatch(mustNotBuild, async (request) => {
+        expect(request).toEqual(state.pending!.request);
+        return accepted();
+      });
+      expect(mustNotBuild).not.toHaveBeenCalled();
     });
   });
 

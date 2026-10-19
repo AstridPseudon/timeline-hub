@@ -42,8 +42,8 @@ export interface OutboxRecord {
   generation: number;
   intents: OutboxIntent[];
   pending?: { intentId: string; request: OutboxRequest; outcome?: OutboxOutcome };
-  // Last acknowledged prefix, not necessarily the current remote head.
-  accepted?: { head: OutboxHead; value: OutboxJson };
+  // Only the last acknowledged prefix, also usable by a late dependent append.
+  accepted?: { intentId: string; head: OutboxHead; value: OutboxJson };
 }
 
 export type OutboxExclusiveLock = <T>(name: string, work: () => Promise<T>) => Promise<T>;
@@ -202,12 +202,16 @@ export function createCommitOutbox(options: {
           const intent = detached({ id: crypto.randomUUID(), payload, basis });
           return access('readwrite', (record) => {
             const predecessor = record.intents[record.intents.length - 1];
+            let readyBase = 'head' in intent.basis ? intent.basis.head : undefined;
             if ('after' in intent.basis && predecessor?.id !== intent.basis.after) {
-              throw new Error('Dependent intent must follow its queued predecessor');
+              if (predecessor || record.accepted?.intentId !== intent.basis.after) {
+                throw new Error('Dependent intent must follow its queued or last accepted predecessor');
+              }
+              readyBase = record.accepted.head;
             }
             record.intents.push({
               ...intent,
-              ...('head' in intent.basis ? { readyBase: intent.basis.head } : {}),
+              ...(readyBase ? { readyBase } : {}),
               ...('after' in intent.basis && predecessor?.conflict !== undefined ? { conflict: predecessor.conflict } : {}),
             });
             return intent.id;
@@ -244,6 +248,7 @@ export function createCommitOutbox(options: {
               return detached(record.pending);
             });
             // The reservation's transaction has completed before any network callback.
+            if (!active) throw new Error('Stale outbox claim');
             let outcome: OutboxOutcome;
             try {
               outcome = detached(await transmit(detached(pending.request)));
@@ -254,7 +259,7 @@ export function createCommitOutbox(options: {
               if (record.pending?.request.key !== pending.request.key
                 || record.intents[0]?.id !== pending.intentId) throw new Error('Stale outbox completion');
               if (outcome.kind === 'accepted') {
-                record.accepted = { head: outcome.head, value: outcome.value };
+                record.accepted = { intentId: pending.intentId, head: outcome.head, value: outcome.value };
                 record.intents.shift();
                 delete record.pending;
                 const next = record.intents[0];
