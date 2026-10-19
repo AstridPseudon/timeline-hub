@@ -22,6 +22,7 @@ COMPONENT_MANIFEST = ROOT / "contract" / "component-manifest.json"
 PYTHON_CLIENT_TEMPLATE = ROOT / "generators" / "python_client_template.py"
 PYTHON_CLIENT_OUTPUT = ROOT / "packages" / "python" / "astrid_runtime_client" / "generated.py"
 TYPESCRIPT_CLIENT_OUTPUT = ROOT / "packages" / "typescript" / "src" / "generated.ts"
+RELEASE_METADATA = ROOT / "generators" / "release.json"
 
 
 def _regular(path: Path, label: str) -> bytes:
@@ -46,6 +47,30 @@ def _component(path: Path = COMPONENT_MANIFEST) -> tuple[bytes, Mapping[str, Any
 
 def _digest(data: bytes) -> str:
     return "sha256:" + hashlib.sha256(data).hexdigest()
+
+
+def contract_version(release_path: Path = RELEASE_METADATA) -> str:
+    version = json.loads(_regular(release_path, "release metadata"))["contract_version"]
+    if not isinstance(version, str) or not re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", version):
+        raise SystemExit("contract version must be a major.minor.patch release")
+    return version
+
+
+def render_package_versions(version: str) -> dict[str, str]:
+    """Stamp package metadata without changing dependencies or package contents."""
+    python_path = "packages/python/pyproject.toml"
+    python, count = re.subn(r'^version = "[^"]*"$', f'version = "{version}"',
+                            (ROOT / python_path).read_text(encoding="utf-8"), flags=re.MULTILINE)
+    if count != 1:
+        raise SystemExit("Python client package must declare exactly one version")
+    outputs = {python_path: python}
+    for relative in ("packages/typescript/package.json", "packages/typescript/package-lock.json"):
+        package = json.loads((ROOT / relative).read_text(encoding="utf-8"))
+        package["version"] = version
+        if relative.endswith("package-lock.json"):
+            package["packages"][""]["version"] = version
+        outputs[relative] = json.dumps(package, indent=2) + "\n"
+    return outputs
 
 
 def contract_digest(manifest_path: Path = MANIFEST) -> str:
@@ -169,25 +194,30 @@ def validate_typescript_client(manifest_path: Path = MANIFEST) -> None:
         )
 
 
-def render(manifest_path: Path = MANIFEST, component_path: Path = COMPONENT_MANIFEST) -> dict[str, str]:
+def render(manifest_path: Path = MANIFEST, component_path: Path = COMPONENT_MANIFEST,
+           release_path: Path = RELEASE_METADATA) -> dict[str, str]:
     component_bytes, component = _component(component_path)
     digest = contract_digest(manifest_path)
     operations = operation_index(manifest_path)
     component_digest = _digest(component_bytes)
+    version = contract_version(release_path)
     py = ('"""Generated contract metadata; do not edit by hand."""\n\n'
-          'PROTOCOL = "workspace.v1"\nCOMPONENT_MANIFEST_SHA256 = ' + repr(component_digest) +
+          'CONTRACT_VERSION = ' + repr(version) + '\nPROTOCOL = "workspace.v1"\nCOMPONENT_MANIFEST_SHA256 = ' + repr(component_digest) +
           '\nSCHEMA_DIGEST = ' + repr(digest) + "\nOPERATIONS = " + repr(tuple(operations)) + "\n")
     ts = ('/** Generated contract metadata; do not edit by hand. */\n\n'
-          'export const PROTOCOL = "workspace.v1" as const;\nexport const COMPONENT_MANIFEST_SHA256 = ' + json.dumps(component_digest) +
+          'export const CONTRACT_VERSION = ' + json.dumps(version) + ' as const;\nexport const PROTOCOL = "workspace.v1" as const;\nexport const COMPONENT_MANIFEST_SHA256 = ' + json.dumps(component_digest) +
           ';\nexport const SCHEMA_DIGEST = ' + json.dumps(digest) + ";\nexport const OPERATIONS = " + json.dumps(operations) + " as const;\n")
     runtime = ('"""Generated contract metadata; do not edit by hand."""\n\n'
                'PROTOCOL = "workspace.v1"\nCOMPONENT_MANIFEST_SHA256 = ' + repr(component_digest) +
                '\nSCHEMA_DIGEST = ' + repr(digest) + "\nOPERATIONS = " + repr(tuple(operations)) + "\n")
-    # Keep the three package metadata modules bound to the same manifest.  The
+    # Keep the three metadata modules bound to the same manifest.  The
     # standalone Python/TypeScript client artifacts and fixture bundle are
     # emitted by their language-specific conformance generators.
     _ = component
-    return {"packages/python/astrid_runtime_client/contract_metadata.py": py, "packages/typescript/src/contract-metadata.ts": ts, "runtime_protocol/contract_metadata.py": runtime}
+    return {"packages/python/astrid_runtime_client/contract_metadata.py": py,
+            "packages/typescript/src/contract-metadata.ts": ts,
+            "runtime_protocol/contract_metadata.py": runtime,
+            **render_package_versions(version)}
 
 
 def main() -> int:

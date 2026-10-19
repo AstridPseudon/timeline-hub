@@ -16,6 +16,7 @@ ROOT = Path(__file__).parents[1]
 FIXTURE = ROOT / "conformance" / "second-client-core-v1.yaml"
 CLIENT = ROOT / "packages" / "typescript"
 ACTOR = ROOT / "conformance" / "dist" / "conformance" / "fake-second-product.js"
+INDEPENDENT_CLIENT_SMOKE = ROOT / "conformance" / "dist" / "conformance" / "typescript" / "smoke.js"
 
 
 @pytest.fixture()
@@ -55,10 +56,13 @@ def _build_actor() -> None:
         text=True,
     )
     assert ACTOR.is_file(), f"TypeScript actor was not emitted at {ACTOR}"
+    assert INDEPENDENT_CLIENT_SMOKE.is_file(), f"independent TypeScript smoke was not emitted at {INDEPENDENT_CLIENT_SMOKE}"
 
 
 def test_second_client_core_journey_is_executable(daemon: RuntimeDaemon) -> None:
     _build_actor()
+    smoke = subprocess.run(["node", str(INDEPENDENT_CLIENT_SMOKE)], cwd=ROOT, check=True, capture_output=True, text=True)
+    assert "independent TypeScript conformance client smoke passed" in smoke.stdout
     fixture = yaml.safe_load(FIXTURE.read_text())
     assert fixture["fixture"] == "second-client-core-v1"
     assert fixture["protocol"] == "workspace.v1"

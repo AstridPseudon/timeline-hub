@@ -4,7 +4,7 @@
  */
 export const PROTOCOL = "workspace.v1" as const;
 export const GENERATOR = "GENERATOR-TYPESCRIPT-CONFORMANCE" as const;
-export const COMPONENT_MANIFEST_SHA256 = "46a1084915781086032f51971bf2f7d10ddbfd7fdda9f20ddf01e33e1cd4cc92" as const;
+export const COMPONENT_MANIFEST_SHA256 = "1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5" as const;
 export const CONTRACT_SHA256 = "2794fe6a43e26876b7c8f374da94b5fde279762c107411fc4a13d8e0996a113c" as const;
 export const SCHEMA_MANIFEST_SHA256 = "088c98862ddf2698240dae5e5ae53aa686b03d187521dd14084ff5870d147957" as const;
 export const SCHEMA_DIGEST = "sha256:ec06fbc6567fe28065d22626b040cad81bb2e5318623586ae9187c713794f6b9" as const;

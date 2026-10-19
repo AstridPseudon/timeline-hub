@@ -11,10 +11,10 @@
     {
       "generator": "GENERATOR-TYPESCRIPT-CONFORMANCE",
       "language": "typescript",
-      "metadata_output": "contract-metadata.ts",
-      "metadata_source": "clients/typescript/contract-metadata.ts",
-      "output": "generated.ts",
-      "source": "clients/typescript/generated.ts"
+      "metadata_output": "conformance/typescript/contract-metadata.ts",
+      "metadata_source": "conformance/typescript/contract-metadata.ts",
+      "output": "conformance/typescript/generated.ts",
+      "source": "conformance/typescript/generated.ts"
     }
   ],
   "contract": {

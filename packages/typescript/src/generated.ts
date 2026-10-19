@@ -98,7 +98,7 @@ export class WorkspaceClient {
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid preference resource");
     const v = value as Record<string, unknown>;
     const fields = ["scope", "actor_id", "project_id", "document_id", "content", "version", "created_at", "updated_at"];
-    if (Object.keys(v).length !== fields.length || fields.some(key => !(key in v))) throw new Error("invalid preference resource fields");
+    if (fields.some(key => !(key in v))) throw new Error("invalid preference resource fields");
     const owner = scope === "user" ? v.actor_id : v.project_id;
     const other = scope === "user" ? v.project_id : v.actor_id;
     if (v.scope !== scope || typeof owner !== "string" || !owner || other !== null || v.document_id !== "preferences:" + scope + ":" + owner || typeof v.content !== "string" || !Number.isInteger(v.version) || (v.version as number) < 0 || [v.created_at, v.updated_at].some(item => item !== null && typeof item !== "string")) throw new Error("invalid preference resource ownership, content or version");
@@ -106,7 +106,7 @@ export class WorkspaceClient {
   }
   private preferenceMutation(body: Uint8Array, scope: PreferenceScope): PreferenceMutationResult {
     const value = this.json<Record<string, unknown>>(body);
-    if (!value || Object.keys(value).length !== 2 || !("data" in value) || !("receipt" in value)) throw new Error("invalid preference mutation response");
+    if (!value || typeof value !== "object" || !("data" in value) || !("receipt" in value)) throw new Error("invalid preference mutation response");
     const resource = this.preferenceResource(value.data, scope);
     if (scope === "project") return this.mutation<PreferenceResource>(body);
     if (value.receipt !== null) throw new Error("invalid user preference mutation: null receipt is required");

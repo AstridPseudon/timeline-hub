@@ -23,7 +23,7 @@ def test_typescript_conformance_generator_is_byte_stable(tmp_path: Path) -> None
     manifest = json.loads((first / "manifest.json").read_text())
     assert manifest["generator"] == "GENERATOR-TYPESCRIPT-CONFORMANCE"
     assert manifest["component_manifest_id"] == "GENERATOR-CONFORMANCE-ID"
-    client_source = (first / "generated.ts").read_text()
+    client_source = (first / "conformance" / "typescript" / "generated.ts").read_text()
     assert "class WorkspaceClient" in client_source
     assert "async call(" in client_source
     assert "Authorization" in client_source
@@ -43,15 +43,15 @@ def test_typescript_generator_check_rejects_client_and_manifest_mutation(tmp_pat
     schema = root / "contract" / "manifest.json"
     component = root / "contract" / "component-manifest.json"
     source = tmp_path / "source"
-    (source / "clients" / "typescript").mkdir(parents=True)
-    shutil.copyfile(root / "clients" / "typescript" / "generated.ts", source / "clients" / "typescript" / "generated.ts")
-    shutil.copyfile(root / "clients" / "typescript" / "contract-metadata.ts", source / "clients" / "typescript" / "contract-metadata.ts")
+    (source / "conformance" / "typescript").mkdir(parents=True)
+    shutil.copyfile(root / "conformance" / "typescript" / "generated.ts", source / "conformance" / "typescript" / "generated.ts")
+    shutil.copyfile(root / "conformance" / "typescript" / "contract-metadata.ts", source / "conformance" / "typescript" / "contract-metadata.ts")
     check = ["node", str(script), "--contract", str(contract), "--schema-manifest", str(schema), "--component-manifest", str(component), "--check", "--source-root", str(source)]
     assert subprocess.run(check, capture_output=True, text=True).returncode == 0
-    client = source / "clients" / "typescript" / "generated.ts"
+    client = source / "conformance" / "typescript" / "generated.ts"
     client.write_text(client.read_text() + "// mutation\n")
     assert subprocess.run(check, capture_output=True, text=True).returncode != 0
-    shutil.copyfile(root / "clients" / "typescript" / "generated.ts", client)
+    shutil.copyfile(root / "conformance" / "typescript" / "generated.ts", client)
     changed = json.loads(component.read_text())
     changed["fixtures"][0]["value"]["sequence"] = 2
     mutated_component = tmp_path / "component-manifest.json"
@@ -87,15 +87,15 @@ def test_typescript_generator_check_rejects_source_symlink_escapes(tmp_path: Pat
             ]
             subprocess.run(generate, check=True, capture_output=True, text=True)
 
-            normal = source / "clients" / "typescript"
+            normal = source / "conformance" / "typescript"
             normal.mkdir(parents=True)
             other_name = "contract-metadata.ts" if output_name == "generated.ts" else "generated.ts"
-            shutil.copyfile(expected / other_name, normal / other_name)
+            shutil.copyfile(expected / "conformance" / "typescript" / other_name, normal / other_name)
             if kind == "intermediate":
-                shutil.copyfile(expected / output_name, outside / output_name)
+                shutil.copyfile(expected / "conformance" / "typescript" / output_name, outside / output_name)
                 (source / "linked").symlink_to(outside, target_is_directory=True)
             else:
-                shutil.copyfile(expected / output_name, outside / output_name)
+                shutil.copyfile(expected / "conformance" / "typescript" / output_name, outside / output_name)
                 (source / "linked").symlink_to(outside / output_name)
 
             check = [

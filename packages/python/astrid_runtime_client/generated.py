@@ -154,7 +154,7 @@ class PreferenceResource:
     @classmethod
     def from_json(cls, value: Mapping[str, Any]) -> "PreferenceResource":
         fields = {"scope", "actor_id", "project_id", "document_id", "content", "version", "created_at", "updated_at"}
-        if not isinstance(value, Mapping) or set(value) != fields:
+        if not isinstance(value, Mapping) or not fields.issubset(value):
             raise ApiError(0, "invalid_response", "preference resource fields are required")
         scope = value["scope"]
         owner = value["actor_id"] if scope == "user" else value["project_id"]
@@ -165,7 +165,10 @@ class PreferenceResource:
             raise ApiError(0, "invalid_response", "preference resource identity or content is invalid")
         if type(value["version"]) is not int or value["version"] < 0 or any(item is not None and not isinstance(item, str) for item in (value["created_at"], value["updated_at"])):
             raise ApiError(0, "invalid_response", "preference resource version or timestamps are invalid")
-        return cls(**value)
+        # Response extensions are tolerated, while the typed resource exposes
+        # only fields understood by this client. Opaque documented payloads
+        # (such as content and metadata) remain intact in their fields.
+        return cls(**{key: value[key] for key in fields})
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
@@ -640,7 +643,7 @@ class WorkspaceClient:
 
     def _mutation_json(self, body: bytes) -> Mapping[str, Any]:
         value = self._json(body)
-        if set(value) != {"data", "receipt"}:
+        if not {"data", "receipt"}.issubset(value):
             raise ApiError(0, "invalid_response", "mutation response must contain data and committed receipt")
         data = value.get("data")
         receipt = value.get("receipt")
@@ -738,7 +741,7 @@ class WorkspaceClient:
             receipt = mutation.receipt
         else:
             value = self._json(body)
-            if set(value) != {"data", "receipt"} or value["receipt"] is not None:
+            if not {"data", "receipt"}.issubset(value) or value["receipt"] is not None:
                 raise ApiError(0, "invalid_response", "user preference mutation requires data and null receipt")
             resource = PreferenceResource.from_json(value["data"])
             receipt = None
