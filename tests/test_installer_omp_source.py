@@ -1,9 +1,10 @@
-"""The bundled fork recipe is the only OMP staging route and fails closed."""
+"""Exact published releases and selected fork commits build in owned prefixes."""
 
 import hashlib
 import io
 import json
 import subprocess
+import tarfile
 import zipfile
 from pathlib import Path
 
@@ -35,18 +36,17 @@ def zipped(files):
 
 
 def fixture(tmp_path, monkeypatch):
-    before, after, lock = b"first\nold\nlast\n", b"first\nnew\nlast\n", b"frozen lock\n"
-    source = zipped({"source/bun.lock": lock, "source/main.ts": before})
+    lock = b"frozen lock\n"
+    files = {"bun.lock": lock, "main.ts": b"already fixed\n",
+             "packages/coding-agent/package.json": b'{"version":"17.4.0"}'}
+    source_url = tools.omp_source_url("https://github.com/owner/fork", "c" * 40)
+    source = zipped({f"source/{name}": data for name, data in files.items()})
     native = zipped({"package/native.node": b"native"})
-    recipe = {"version": "17.4.0", "base_commit": "a" * 40,
-              "source": {"url": "https://example.invalid/source.zip", "tree_sha256": tree_digest({"bun.lock": lock, "main.ts": before}),
-                         "directory": "source"}, "bun_lock_sha256": digest(lock),
-              "patch": {"sha256": "b" * 64, "files": [{"path": "main.ts",
-                  "before_sha256": digest(before), "after_sha256": digest(after),
-                  "edits": [{"start": 1, "old": ["old\n"], "new": ["new\n"]}]}]},
+    recipe = {"version": "17.4.0", "bun_lock_sha256": digest(lock),
+              "source": {"url": source_url},
               "native": {"linux-x64": {"url": "https://example.invalid/native.zip",
                          "sha256": digest(native), "files": ["native.node"]}}}
-    payloads = {recipe["source"]["url"]: source, recipe["native"]["linux-x64"]["url"]: native}
+    payloads = {source_url: source, recipe["native"]["linux-x64"]["url"]: native}
     requests, calls = [], []
 
     def response(url, timeout):
@@ -67,18 +67,20 @@ def fixture(tmp_path, monkeypatch):
     return recipe, payloads, requests, calls, run, env
 
 
-def test_source_recipe_freezes_graph_generates_only_views_and_links_real_cli(tmp_path, monkeypatch):
+def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp_path, monkeypatch):
     recipe, _payloads, requests, calls, run, env = fixture(tmp_path, monkeypatch)
     build_env = {**env, "BUN_INSTALL_GLOBAL_DIR": str(tmp_path / "omp/install/global"),
                  "HOME": str(tmp_path / "omp/build-home"),
                  "USERPROFILE": str(tmp_path / "omp/build-home"),
-                 "XDG_CONFIG_HOME": str(tmp_path / "omp/build-home/config")}
+                 "XDG_CONFIG_HOME": str(tmp_path / "omp/build-home/config"),
+                 "npm_config_registry": "https://registry.npmjs.org",
+                 "NPM_CONFIG_REGISTRY": "https://registry.npmjs.org"}
     if "BUN_INSTALL_CACHE_DIR" in tools.os.environ:
         build_env["BUN_INSTALL_CACHE_DIR"] = tools.os.environ["BUN_INSTALL_CACHE_DIR"]
-    tools._install_omp_source(recipe, tmp_path / "omp", "linux-x64", run, env)
+    tools._install_omp_source({"repo": "https://github.com/owner/fork", "sha": "c" * 40}, recipe, tmp_path / "omp", "linux-x64", run, env)
     source = tmp_path / "omp/source"
     assert requests == [recipe["source"]["url"], recipe["native"]["linux-x64"]["url"]]
-    assert (source / "main.ts").read_bytes() == b"first\nnew\nlast\n"
+    assert (source / "main.ts").read_bytes() == b"already fixed\n"
     assert (source / "bun.lock").read_bytes() == b"frozen lock\n"
     assert (source / "packages/natives/native/native.node").read_bytes() == b"native"
     assert not (tmp_path / "omp/native-archive").exists()
@@ -95,51 +97,45 @@ def test_source_recipe_freezes_graph_generates_only_views_and_links_real_cli(tmp
     assert all(row[3] is True for row in calls)
     assert env["ASTRID_INSTALL_OMP_SOURCE"] == "fork"
     assert env["ASTRID_INSTALL_OMP_VERSION"] == "17.4.0"
-    assert env["ASTRID_INSTALL_OMP_BASE_COMMIT"] == recipe["base_commit"]
-    assert env["ASTRID_INSTALL_OMP_PATCH_SHA256"] == recipe["patch"]["sha256"]
+    assert env["ASTRID_INSTALL_OMP_COMMIT"] == "c" * 40
+    assert "ASTRID_INSTALL_OMP_PATCH_SHA256" not in env
     provenance = json.loads((tmp_path / "omp/source-provenance.json").read_text())
-    assert provenance["base_commit"] == recipe["base_commit"]
-    assert provenance["patch_sha256"] == recipe["patch"]["sha256"]
+    assert provenance["commit"] == "c" * 40
+    assert provenance["repo"] == "https://github.com/owner/fork"
+    assert "patch_sha256" not in provenance
+    assert provenance["tree_sha256"] == tree_digest({"bun.lock": b"frozen lock\n",
+        "main.ts": b"already fixed\n", "packages/coding-agent/package.json": b'{"version":"17.4.0"}'})
     assert provenance["native_sha256"] == recipe["native"]["linux-x64"]["sha256"]
     assert provenance["version"] == "17.4.0"
 
 
-@pytest.mark.parametrize("asset", ["source", "native"])
-def test_archive_digest_failure_prevents_using_untrusted_bytes(tmp_path, monkeypatch, asset):
+def test_native_archive_digest_failure_prevents_using_untrusted_bytes(tmp_path, monkeypatch):
     recipe, payloads, _requests, calls, run, env = fixture(tmp_path, monkeypatch)
-    selected = recipe["source"] if asset == "source" else recipe["native"]["linux-x64"]
-    if asset == "source":
-        payloads[selected["url"]] = zipped({"source/bun.lock": b"frozen lock\n", "source/main.ts": b"wrong source\n"})
-    else:
-        payloads[selected["url"]] += b"tampered"
+    payloads[recipe["native"]["linux-x64"]["url"]] += b"tampered"
     with pytest.raises(ValueError, match="checksum mismatch"):
-        tools._install_omp_source(recipe, tmp_path / "omp", "linux-x64", run, env)
+        tools._install_omp_source({"repo": "https://github.com/owner/fork", "sha": "c" * 40}, recipe,
+                                  tmp_path / "omp", "linux-x64", run, env)
     assert not any("link" in argv for argv, *_ in calls)
-    if asset == "source":
-        assert not calls
 
 
-@pytest.mark.parametrize("change,match", [
-    ("directory", "source directory"), ("lock", "lock"),
-    ("before", "preimage"), ("after", "postimage"), ("chunk", "chunk"),
-    ("path", "Unsafe archive entry"), ("native", "native"),
-])
-def test_invalid_source_lock_patch_or_native_fails_before_link(tmp_path, monkeypatch, change, match):
+@pytest.mark.parametrize("change,match", [("directory", "directory layout"), ("lock", "lock"),
+    ("version", "version"), ("path", "Unsafe archive entry"), ("native", "native")])
+def test_invalid_source_lock_version_or_native_fails_before_link(tmp_path, monkeypatch, change, match):
     recipe, payloads, _requests, calls, run, env = fixture(tmp_path, monkeypatch)
     if change == "directory":
-        recipe["source"]["directory"] = "absent"
+        payloads[recipe["source"]["url"]] = zipped({"one/a": b"a", "two/b": b"b"})
     elif change == "lock":
         recipe["bun_lock_sha256"] = "0" * 64
-    elif change in {"before", "after"}:
-        recipe["patch"]["files"][0][change + "_sha256"] = "0" * 64
-    elif change == "chunk":
-        recipe["patch"]["files"][0]["edits"][0]["old"] = ["different\n"]
+    elif change == "version":
+        payloads[recipe["source"]["url"]] = zipped({"source/bun.lock": b"frozen lock\n",
+            "source/packages/coding-agent/package.json": b'{"version":"18.0.0"}'})
     elif change == "path":
-        recipe["patch"]["files"][0]["path"] = "../outside"
-    elif change == "native":
+        payloads[recipe["source"]["url"]] = zipped({"../outside": b"unsafe"})
+    else:
         recipe["native"]["linux-x64"]["files"] = ["missing.node"]
     with pytest.raises(ValueError, match=match):
-        tools._install_omp_source(recipe, tmp_path / "omp", "linux-x64", run, env)
+        tools._install_omp_source({"repo": "https://github.com/owner/fork", "sha": "c" * 40}, recipe,
+                                  tmp_path / "omp", "linux-x64", run, env)
     assert not any("link" in argv for argv, *_ in calls)
 
 
@@ -155,7 +151,7 @@ def test_lock_changes_at_any_build_step_are_refused(tmp_path, monkeypatch, step)
         return result
 
     with pytest.raises(ValueError, match="lock"):
-        tools._install_omp_source(recipe, tmp_path / "omp", "linux-x64", mutate, env)
+        tools._install_omp_source({"repo": "https://github.com/owner/fork", "sha": "c" * 40}, recipe, tmp_path / "omp", "linux-x64", mutate, env)
     assert not (tmp_path / "omp/source-provenance.json").exists()
 
 
@@ -168,88 +164,73 @@ def test_host_native_abi_failure_never_registers_the_launcher(tmp_path, monkeypa
         return run(argv, **kwargs)
 
     with pytest.raises(subprocess.CalledProcessError, match="non-zero"):
-        tools._install_omp_source(recipe, tmp_path / "omp", "linux-x64", refuse, env)
+        tools._install_omp_source({"repo": "https://github.com/owner/fork", "sha": "c" * 40}, recipe, tmp_path / "omp", "linux-x64", refuse, env)
     assert not any("link" in argv for argv, *_ in calls)
 
 
 def test_unsupported_native_target_fails_before_source_download(tmp_path, monkeypatch):
     recipe, _payloads, requests, calls, run, env = fixture(tmp_path, monkeypatch)
     with pytest.raises(ValueError, match="native.*windows-arm64"):
-        tools._install_omp_source(recipe, tmp_path / "omp", "windows-arm64", run, env)
+        tools._install_omp_source({"repo": "https://github.com/owner/fork", "sha": "c" * 40}, recipe, tmp_path / "omp", "windows-arm64", run, env)
     assert not requests and not calls
 
 
 def test_staging_rejects_old_manifest_before_any_download(tmp_path, monkeypatch):
     requested = []
     monkeypatch.setattr(tools, "fetch_archive", lambda *a, **k: requested.append(a))
-    with pytest.raises(ValueError, match="OMP.*17.4.0"):
+    with pytest.raises(ValueError, match="tools.omp.source"):
         tools.install_tools({"tools": {"omp": {"version": "12.0.0"}}}, tmp_path, "linux-x64", lambda *_: None)
     assert not requested
 
 
-def test_bundled_recipe_matches_reviewed_patch_and_immutable_native_assets():
+def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source():
     recipe = tools.load_omp_recipe()
-    assert recipe["version"] == "17.4.0"
-    assert recipe["base_commit"] == "9962a46db1e8340320a0f2fb276964f957985505"
-    assert recipe["patch"]["sha256"] == "4f5524ea9c687cea741fbaee1069e0d6789b7c85ea68c6a25fc4cdb18b0dbb33"
-    assert {row["path"] for row in recipe["patch"]["files"]} == {
-        "packages/coding-agent/src/main.ts", "packages/coding-agent/src/modes/acp/acp-agent.ts",
-        "packages/coding-agent/src/modes/acp/acp-mode.ts"}
+    assert recipe["version"] == "17.4.0" and recipe["bun_version"] == "1.3.14"
+    assert "source" not in recipe and "patch" not in recipe and "base_commit" not in recipe
     assert set(recipe["native"]) == {"linux-x64", "linux-arm64", "macos-x64", "macos-arm64", "windows-x64"}
-    assert recipe["source"]["url"].startswith("https://codeload.github.com/peteromallet/oh-my-pi/")
-    assert len(recipe["source"]["tree_sha256"]) == 64
     for asset in recipe["native"].values():
         assert tools.asset_downloads(asset) == [(asset["url"], asset["sha256"])]
 
 
-def test_local_qualification_override_uses_only_recipe_commit_and_same_tree_pin(tmp_path, monkeypatch):
+def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monkeypatch):
     recipe, _payloads, requests, calls, run, env = fixture(tmp_path, monkeypatch)
     archived = []
 
     def local(repo, commit, archive):
         archived.append((repo, commit))
-        archive.write_bytes(zipped({"bun.lock": b"frozen lock\n", "main.ts": b"first\nold\nlast\n"}))
+        archive.write_bytes(zipped({"bun.lock": b"frozen lock\n", "main.ts": b"already fixed\n",
+            "packages/coding-agent/package.json": b'{"version":"17.4.0"}'}))
 
     monkeypatch.setattr(tools, "local_source", local)
-    tools._install_omp_source(recipe, tmp_path / "omp", "linux-x64", run, env, repo="/own/producer")
-    assert archived == [("/own/producer", recipe["base_commit"])]
+    tools._install_omp_source({"repo": "/own/producer", "sha": "e" * 40}, recipe, tmp_path / "omp", "linux-x64", run, env)
+    assert archived == [("/own/producer", "e" * 40)]
     assert requests == [recipe["native"]["linux-x64"]["url"]]
     assert calls[0][2] == tmp_path / "omp/source"
     assert json.loads((tmp_path / "omp/source-provenance.json").read_text())["source_mode"] == "local-repo"
     assert not (tmp_path / "omp/source.download").exists()
 
 
-def test_source_tree_pin_rejects_added_files_before_commands(tmp_path, monkeypatch):
+def test_https_fork_uses_commit_archive_without_system_git(tmp_path, monkeypatch):
+    recipe, _payloads, requests, _calls, run, env = fixture(tmp_path, monkeypatch)
+    monkeypatch.setattr(tools.subprocess, "run", lambda *_a, **_k: pytest.fail("HTTPS route called Git"))
+    tools._install_omp_source({"repo": "https://github.com/owner/fork", "sha": "c" * 40}, recipe,
+                              tmp_path / "omp", "linux-x64", run, env)
+    assert requests[0].endswith("/" + "c" * 40)
+
+
+@pytest.mark.parametrize("kind", [tarfile.SYMTYPE, tarfile.LNKTYPE])
+def test_source_archive_links_are_refused_before_build(tmp_path, monkeypatch, kind):
     recipe, payloads, _requests, calls, run, env = fixture(tmp_path, monkeypatch)
-    payloads[recipe["source"]["url"]] = zipped({"source/bun.lock": b"frozen lock\n",
-        "source/main.ts": b"first\nold\nlast\n", "source/extra.ts": b"unapproved"})
-    with pytest.raises(ValueError, match="source tree checksum"):
-        tools._install_omp_source(recipe, tmp_path / "omp", "linux-x64", run, env)
+    stream = io.BytesIO()
+    with tarfile.open(fileobj=stream, mode="w") as archive:
+        member = tarfile.TarInfo("source/link")
+        member.type, member.linkname = kind, "../outside"
+        archive.addfile(member)
+    payloads[recipe["source"]["url"]] = stream.getvalue()
+    with pytest.raises(ValueError, match="contains a link"):
+        tools._install_omp_source({"repo": "https://github.com/owner/fork", "sha": "c" * 40}, recipe,
+                                  tmp_path / "omp", "linux-x64", run, env)
     assert not calls
-
-
-def test_patch_preflights_all_files_before_writing_any(tmp_path):
-    first, last = tmp_path / "first.ts", tmp_path / "last.ts"
-    first.write_bytes(b"old\n")
-    last.write_bytes(b"wrong\n")
-    patch = {"files": [{"path": name, "before_sha256": digest(b"old\n"),
-        "after_sha256": digest(b"new\n"), "edits": [{"start": 0, "old": ["old\n"], "new": ["new\n"]}]}
-        for name in ("first.ts", "last.ts")]}
-    with pytest.raises(ValueError, match="preimage.*last.ts"):
-        tools._apply_omp_patch(tmp_path, patch)
-    assert first.read_bytes() == b"old\n"
-    assert last.read_bytes() == b"wrong\n"
-
-
-def test_bundled_patch_corruption_is_refused(tmp_path, monkeypatch):
-    folder = tmp_path / "omp"
-    folder.mkdir()
-    recipe = tools.load_omp_recipe()
-    (folder / "recipe.json").write_text(json.dumps(recipe))
-    (folder / "source.patch").write_bytes(b"different correction")
-    monkeypatch.setattr(tools, "__file__", str(tmp_path / "tools.py"))
-    with pytest.raises(ValueError, match="patch checksum"):
-        tools.load_omp_recipe()
 
 
 def test_inherited_bun_registration_paths_are_overridden_only_during_build(tmp_path, monkeypatch):
@@ -262,9 +243,143 @@ def test_inherited_bun_registration_paths_are_overridden_only_during_build(tmp_p
     user_config = user_home / ".bunfig.toml"
     user_config.write_text('[install]\nglobalDir="outside-global"\nglobalBinDir="outside-bin"\n')
     before = (user_config.read_bytes(), user_config.stat().st_mtime_ns)
-    tools._install_omp_source(recipe, tmp_path / "omp", "linux-x64", run, env)
+    tools._install_omp_source({"repo": "https://github.com/owner/fork", "sha": "c" * 40}, recipe, tmp_path / "omp", "linux-x64", run, env)
     assert all(row[1]["BUN_INSTALL_GLOBAL_DIR"] == str(tmp_path / "omp/install/global") for row in calls)
     assert all(row[1]["BUN_INSTALL_BIN"] == str(tmp_path / "omp/bin") for row in calls)
     assert "BUN_INSTALL_GLOBAL_DIR" not in env
+    assert not outside.exists()
+    assert (user_config.read_bytes(), user_config.stat().st_mtime_ns) == before
+
+
+def test_default_and_comment_select_published_exact_release():
+    assert tools.omp_source({}) == "@oh-my-pi/pi-coding-agent@17.4.2"
+    assert tools.omp_source({"source": "@owner/fixed@17.4.3", "_comment": "See LANDING.md"}) == "@owner/fixed@17.4.3"
+
+
+@pytest.mark.parametrize("value", ["latest", "omp", "omp@latest", "omp@^17.4.2", "omp@17.4", "omp@17.4.2 --preload=evil",
+    "https://example.invalid/a.tgz", "file:///tmp/omp", "../omp@17.4.2", "@owner/omp@17.4.2#bad",
+    {"repo": "https://github.com/owner/repo", "sha": "main"},
+    {"repo": "https://github.com/owner/repo", "sha": "A" * 40},
+    {"repo": "https://github.com/owner/repo", "sha": "a" * 7},
+    {"repo": "https://github.com/owner/repo", "sha": "a" * 40, "patch": "evil"},
+    {"repo": "https://github.com/owner/repo"}, None, 12])
+def test_invalid_or_unpinned_source_is_refused(value):
+    with pytest.raises(ValueError, match="OMP"):
+        tools.omp_source({"source": value})
+
+
+@pytest.mark.parametrize("pin", [{"version": "17.4.0"}, {"source": tools.DEFAULT_OMP_SOURCE, "repo": "/tmp/repo"},
+                                  {"source": tools.DEFAULT_OMP_SOURCE, "_comment": 12}])
+def test_ambiguous_old_source_knobs_and_invalid_metadata_are_refused(pin):
+    with pytest.raises(ValueError, match="OMP"):
+        tools.omp_source(pin)
+
+
+@pytest.mark.parametrize("repo", ["https://github.com/owner/repo?x=1", "http://github.com/owner/repo",
+    "https://other.invalid/owner/repo", "https://user@github.com/owner/repo", "https://github.com/owner/repo/tree/main",
+    "relative/repo", "git@example.invalid:repo", "file://other-host/repo", "file:///repo?x=1", "", None])
+def test_unsafe_fork_repositories_are_refused(repo):
+    with pytest.raises(ValueError, match="repo"):
+        tools.omp_source({"source": {"repo": repo, "sha": "a" * 40}})
+
+
+@pytest.mark.parametrize("repo", ["https://github.com/owner/fork", "https://github.com/owner/fork.git"])
+def test_remote_source_uses_commit_archive(repo):
+    assert tools.omp_source_url(repo, "d" * 40) == f"https://codeload.github.com/owner/fork/tar.gz/{'d' * 40}"
+
+
+def package_fixture(tmp_path):
+    root = tmp_path / "omp"
+    calls = []
+    env = {"ASTRID_BUN_EXECUTABLE": "/qualified/bun", "PATH": "/qualified:/usr/bin:/bin"}
+
+    def run(argv, **kwargs):
+        calls.append(([str(v) for v in argv], kwargs))
+        if "add" in argv:
+            package = root / "install/global/node_modules/@owner/fixed"
+            package.mkdir(parents=True)
+            (package / "package.json").write_text(json.dumps({"name": "@owner/fixed", "version": "17.4.3", "bin": {"omp": "cli.js"}}))
+            (package / "cli.js").write_text("native ACP CLI")
+            (root / "install/global/bun.lock").write_text("integrity-checked closure")
+            (root / "bin").mkdir()
+            (root / "bin/omp").write_text("launcher")
+        return "omp/17.4.3"
+
+    return root, calls, run, env
+
+
+@pytest.mark.parametrize("reported", ["17.4.3", "omp/17.4.3", "arnold/17.4.3"])
+def test_exact_npm_source_uses_isolated_owned_global_prefix_and_records_lock(tmp_path, reported):
+    root, calls, run, env = package_fixture(tmp_path)
+
+    def branded(argv, **kwargs):
+        run(argv, **kwargs)
+        return reported
+
+    tools._install_omp_package("@owner/fixed@17.4.3", root, branded, env)
+    assert calls[0][0] == ["/qualified/bun", "add", "--global", "--exact", "--ignore-scripts", "@owner/fixed@17.4.3"]
+    assert calls[1][0][-1] == "--version"
+    assert all(row[1]["clean_bun_env"] is True and row[1]["cwd"] == root for row in calls)
+    provenance = json.loads((root / "source-provenance.json").read_text())
+    assert provenance["package"] == "@owner/fixed@17.4.3" and provenance["source"] == "npm"
+    assert len(provenance["bun_lock_sha256"]) == 64
+    assert env["ASTRID_INSTALL_OMP_VERSION"] == "17.4.3"
+
+
+@pytest.mark.parametrize("change", ["name", "version", "cli", "lock", "reported_version"])
+def test_npm_mismatch_or_missing_closure_never_records_success(tmp_path, change):
+    root, _calls, run, env = package_fixture(tmp_path)
+
+    def altered(argv, **kwargs):
+        result = run(argv, **kwargs)
+        if "add" in argv:
+            package = root / "install/global/node_modules/@owner/fixed"
+            if change in {"name", "version"}:
+                metadata = json.loads((package / "package.json").read_text())
+                metadata[change] = "wrong"
+                (package / "package.json").write_text(json.dumps(metadata))
+            elif change == "cli":
+                (package / "cli.js").unlink()
+            elif change == "lock":
+                (root / "install/global/bun.lock").unlink()
+        return "wrong" if change == "reported_version" else result
+
+    with pytest.raises(ValueError, match="OMP"):
+        tools._install_omp_package("@owner/fixed@17.4.3", root, altered, env)
+    assert not (root / "source-provenance.json").exists()
+
+
+@pytest.mark.parametrize("source", ["fork", "npm"])
+def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, monkeypatch, source):
+    outside = tmp_path / "unrelated-global"
+    user_home = tmp_path / "user-home"
+    user_home.mkdir()
+    user_config = user_home / ".bunfig.toml"
+    user_config.write_text('[install]\nglobalDir="outside-global"\nglobalBinDir="outside-bin"\n')
+    before = (user_config.read_bytes(), user_config.stat().st_mtime_ns)
+    monkeypatch.setenv("HOME", str(user_home))
+    monkeypatch.setenv("BUN_INSTALL_GLOBAL_DIR", str(outside))
+    monkeypatch.setenv("BUN_OPTIONS", "--preload=evil")
+    monkeypatch.setenv("NODE_OPTIONS", "--require=evil")
+    if source == "fork":
+        recipe, _payloads, _requests, rows, run, env = fixture(tmp_path, monkeypatch)
+        env.update({"BUN_OPTIONS": "--preload=evil", "BUN_CONFIG_NO_VERIFY": "1", "NODE_OPTIONS": "--require=evil"})
+        tools._install_omp_source({"repo": "https://github.com/owner/fork", "sha": "c" * 40}, recipe,
+                                  tmp_path / "omp", "linux-x64", run, env)
+        builds = [row[1] for row in rows]
+    else:
+        root, rows, run, env = package_fixture(tmp_path)
+        env.update({"BUN_OPTIONS": "--preload=evil", "BUN_CONFIG_NO_VERIFY": "1", "NODE_OPTIONS": "--require=evil"})
+        tools._install_omp_package("@owner/fixed@17.4.3", root, run, env)
+        builds = [row[1]["extra_env"] for row in rows]
+    for build in builds:
+        assert build["BUN_INSTALL_GLOBAL_DIR"] == str(tmp_path / "omp/install/global")
+        assert build["BUN_INSTALL_BIN"] == str(tmp_path / "omp/bin")
+        assert build["HOME"] == build["USERPROFILE"] == str(tmp_path / "omp/build-home")
+        assert build["XDG_CONFIG_HOME"] == str(tmp_path / "omp/build-home/config")
+        assert build["npm_config_registry"] == build["NPM_CONFIG_REGISTRY"] == "https://registry.npmjs.org"
+        assert "BUN_OPTIONS" not in build and "BUN_CONFIG_NO_VERIFY" not in build and "NODE_OPTIONS" not in build
+    assert "HOME" not in env and "BUN_INSTALL_GLOBAL_DIR" not in env
+    assert env["NODE_OPTIONS"] == "--require=evil"
     assert not outside.exists()
     assert (user_config.read_bytes(), user_config.stat().st_mtime_ns) == before

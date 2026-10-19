@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
 CHAT_RESOURCES = ("chat/service.mjs", "chat/astrid-acp-local-only.yml", "chat/THIRD_PARTY_LICENSES.txt")
-OMP_RESOURCES = ("installer/omp/recipe.json", "installer/omp/source.patch")
+OMP_RESOURCES = ("installer/omp/recipe.json",)
 
 
 def test_built_wheel_declares_its_bundled_chat_service(tmp_path):

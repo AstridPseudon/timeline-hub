@@ -15,10 +15,12 @@ EXE_SUFFIX = ".exe" if sys.platform == "win32" else ""
 
 
 def manifest():
-    return {"tools": {
+    value = {"tools": {
         name: {"version": version, "assets": {TARGET: {"url": f"https://example.invalid/{name}.zip"}}}
-        for name, version in (("bun", "1.3.14"), ("node", "20.19.4"), ("ffmpeg", "7.0.2"), ("omp", "17.4.0"))
+        for name, version in (("bun", "1.3.14"), ("node", "20.19.4"), ("ffmpeg", "7.0.2"))
     }}
+    value["tools"]["omp"] = {"source": tools.DEFAULT_OMP_SOURCE}
+    return value
 
 
 def media_binary(directory, name):
@@ -71,11 +73,11 @@ def harness(tmp_path, monkeypatch, *, availability="qualified"):
 
     monkeypatch.setattr(tools, "fetch_archive", fetch)
     # These cases isolate media selection; the source recipe has dedicated
-    # checksum/patch/lock/ABI/launcher tests.
-    def omp_source(_recipe, _root, _target, _run, env, **_kwargs):
+    # source/lock/ABI/launcher tests.
+    def omp_source(_selected, _root, _run, env, **_kwargs):
         media_binary(Path(env["BUN_INSTALL_BIN"]), "omp")
 
-    monkeypatch.setattr(tools, "_install_omp_source", omp_source)
+    monkeypatch.setattr(tools, "_install_omp_package", omp_source)
     return root, ffmpeg, ffprobe, other, downloads, calls, run
 
 
@@ -168,3 +170,37 @@ def test_an_older_managed_version_cannot_supply_media_tools_to_its_successor(tmp
     assert Path(env["ASTRID_FFMPEG_EXECUTABLE"]).is_relative_to(root)
     assert Path(env["ASTRID_FFPROBE_EXECUTABLE"]).is_relative_to(root)
     assert str(old_media) not in env["PATH"].split(os.pathsep)
+
+
+@pytest.mark.parametrize("selected", [tools.DEFAULT_OMP_SOURCE,
+    {"repo": "https://github.com/owner/fixed-fork", "sha": "c" * 40}])
+def test_install_routes_the_authoritative_source_without_an_implicit_fork(tmp_path, monkeypatch, selected):
+    root, *_unused, run = harness(tmp_path, monkeypatch)
+    pins = manifest()
+    pins["tools"]["omp"] = {"source": selected}
+    choices = []
+
+    def npm(package, _root, _run, env):
+        choices.append(package)
+        media_binary(Path(env["BUN_INSTALL_BIN"]), "omp")
+
+    def fork(source, _recipe, _root, _target, _run, env):
+        choices.append(source)
+        media_binary(Path(env["BUN_INSTALL_BIN"]), "omp")
+
+    monkeypatch.setattr(tools, "_install_omp_package", npm)
+    monkeypatch.setattr(tools, "_install_omp_source", fork)
+    tools.install_tools(pins, root, TARGET, run)
+    assert choices == [selected]
+
+
+def test_launcher_must_resolve_inside_the_owned_prefix(tmp_path, monkeypatch):
+    root, *_unused, run = harness(tmp_path, monkeypatch)
+    outside = media_binary(tmp_path / "outside", "unowned-omp")
+
+    def redirect(_selected, _root, _run, env):
+        (Path(env["BUN_INSTALL_BIN"]) / ("omp" + EXE_SUFFIX)).symlink_to(outside)
+
+    monkeypatch.setattr(tools, "_install_omp_package", redirect)
+    with pytest.raises(ValueError, match="launcher escapes"):
+        tools.install_tools(manifest(), root, TARGET, run)

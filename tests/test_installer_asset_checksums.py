@@ -29,7 +29,8 @@ def asset():
 def manifest(value):
     pins = {name: {"version": version} for name, version in (
         ("uv", "0.11.32"), ("python", "3.11.13"), ("bun", "1.3.14"),
-        ("omp", "12.0.0"), ("node", "20.19.4"), ("ffmpeg", "7.0.2"))}
+        ("node", "20.19.4"), ("ffmpeg", "7.0.2"))}
+    pins["omp"] = {"source": tools.DEFAULT_OMP_SOURCE}
     pins["ffmpeg"]["assets"] = {"macos-x64": value}
     return {"schema_version": 1, "agent": {"sha": "a" * 40},
             "runtime": {"sha": "b" * 40}, "tools": pins}
@@ -106,7 +107,6 @@ def test_explicit_invalid_single_archive_digest_is_rejected(checksum):
 def test_installed_tools_forward_the_matching_digest_for_every_archive(tmp_path, monkeypatch):
     media, archives = asset()
     pins = manifest(media)
-    pins["tools"]["omp"]["version"] = "17.4.0"
     for name in ("bun", "node"):
         data = archive(name, name.encode())
         media["urls"].append(f"https://example.invalid/{name}.zip")
@@ -136,10 +136,10 @@ def test_installed_tools_forward_the_matching_digest_for_every_archive(tmp_path,
 
     monkeypatch.setattr(tools.urllib.request, "urlopen", response)
     monkeypatch.setattr(tools.shutil, "which", lambda _: None)
-    def omp_source(_recipe, _root, _target, _run, env, **_kwargs):
+    def omp_source(_selected, _root, _run, env, **_kwargs):
         (Path(env["BUN_INSTALL_BIN"]) / "omp").write_bytes(b"launcher")
 
-    monkeypatch.setattr(tools, "_install_omp_source", omp_source)
+    monkeypatch.setattr(tools, "_install_omp_package", omp_source)
     (tmp_path / "tools").mkdir()
     tools.install_tools(copy.deepcopy(pins), tmp_path / "tools", "macos-x64", run)
     assert set(downloads) == set(payloads)

@@ -18,6 +18,37 @@ from pathlib import Path, PurePosixPath
 ENCODERS = {"libx264", "libx265", "libvpx-vp9", "libaom-av1", "libopus"}
 FILTERS = {"ebur128", "silencedetect", "astats", "signalstats", "blackdetect",
            "loudnorm", "psnr", "ssim", "scale", "fps", "aresample"}
+DEFAULT_OMP_SOURCE = "@oh-my-pi/pi-coding-agent@17.4.2"
+
+
+def omp_source(pin: dict) -> str | dict:
+    """One source selection: an exact npm release or a repository and commit."""
+    if not isinstance(pin, dict) or set(pin) - {"source", "_comment"}:
+        raise ValueError("OMP uses only tools.omp.source: exact npm name@version or {repo, sha}.")
+    if "_comment" in pin and not isinstance(pin["_comment"], str):
+        raise ValueError("OMP _comment must be a string.")
+    selected = pin.get("source", DEFAULT_OMP_SOURCE)
+    if isinstance(selected, str):
+        if not re.fullmatch(r"(?:@[a-z0-9._-]+/)?[a-z0-9][a-z0-9._-]*@\d+\.\d+\.\d+", selected):
+            raise ValueError("OMP npm source must be an exact package name@version.")
+    elif isinstance(selected, dict) and set(selected) == {"repo", "sha"}:
+        if not isinstance(selected["sha"], str) or not re.fullmatch(r"[0-9a-f]{40}", selected["sha"]):
+            raise ValueError("OMP source must be pinned to a full git SHA.")
+        omp_source_url(selected["repo"], selected["sha"])
+    else:
+        raise ValueError("OMP source must be an exact npm name@version or {repo, sha}.")
+    return selected
+
+
+def omp_source_url(repo: str, sha: str) -> str | None:
+    """GitHub archives need no Git; explicit developer repositories stay local."""
+    if isinstance(repo, str) and repo.startswith("https://"):
+        match = re.fullmatch(r"https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?", repo)
+        if not match or any(part in {".", ".."} for part in match.groups()):
+            raise ValueError("OMP HTTPS source repo must be a GitHub owner/repository URL.")
+        return f"https://codeload.github.com/{match[1]}/{match[2]}/tar.gz/{sha}"
+    local_repository(repo)
+    return None
 
 
 def validate_manifest(value: dict) -> dict:
@@ -28,13 +59,12 @@ def validate_manifest(value: dict) -> dict:
             raise ValueError(f"The {name} source must be pinned to a full git SHA.")
         if "repo" in value[name]:
             local_repository(value[name]["repo"])
-    for name in ("uv", "python", "bun", "omp", "node", "ffmpeg"):
+    for name in ("uv", "python", "bun", "node", "ffmpeg"):
         if not re.fullmatch(r"\d+\.\d+\.\d+", value["tools"][name]["version"]):
             raise ValueError(f"The {name} tool must have an exact version.")
         for asset in value["tools"][name].get("assets", {}).values():
             asset_downloads(asset)
-    if "repo" in value["tools"]["omp"]:
-        local_repository(value["tools"]["omp"]["repo"])
+    omp_source(value["tools"]["omp"])
     if value["tools"]["node"]["version"] != "20.19.4":
         raise ValueError("Remotion requires Node 20.19.4.")
     return value
@@ -79,7 +109,7 @@ def archive_path(name: str) -> Path:
     return Path(*value.parts)
 
 
-def extract(archive: Path, destination: Path) -> None:
+def extract(archive: Path, destination: Path, *, reject_links: bool = False) -> None:
     """Extract regular files/directories only, including on Python 3.11/Windows."""
     destination.mkdir(parents=True, exist_ok=True)
     if zipfile.is_zipfile(archive):
@@ -111,6 +141,8 @@ def extract(archive: Path, destination: Path) -> None:
                     shutil.copyfileobj(tar_source, output)
                 target.chmod(0o755 if member.mode & 0o111 else 0o644)
             elif member.issym() or member.islnk():
+                if reject_links:
+                    raise ValueError(f"Source archive contains a link: {member.name}")
                 # Official Node archives contain npm/npx links. The installer
                 # invokes npm-cli.js directly and needs neither link.
                 continue
@@ -118,12 +150,13 @@ def extract(archive: Path, destination: Path) -> None:
                 raise ValueError(f"Archive contains a special entry: {member.name}")
 
 
-def fetch_archive(url: str, destination: Path, *, sha256: str | None = None) -> None:
+def fetch_archive(url: str, destination: Path, *, sha256: str | None = None,
+                  reject_links: bool = False) -> None:
     archive = destination.with_name(destination.name + ".download")
     archive.parent.mkdir(parents=True, exist_ok=True)
     try:
         download(url, archive, sha256=sha256)
-        extract(archive, destination)
+        extract(archive, destination, reject_links=reject_links)
     finally:
         archive.unlink(missing_ok=True)
 
@@ -279,12 +312,6 @@ def load_omp_recipe() -> dict:
     recipe = json.loads((folder / "recipe.json").read_text(encoding="utf-8"))
     if recipe["schema_version"] != 1 or recipe["version"] != "17.4.0":
         raise ValueError("Unsupported bundled OMP source recipe.")
-    if hashlib.sha256((folder / "source.patch").read_bytes()).hexdigest() != recipe["patch"]["sha256"]:
-        raise ValueError("Bundled OMP patch checksum mismatch.")
-    if not recipe["source"]["url"].startswith("https://"):
-        raise ValueError("OMP source downloads require HTTPS.")
-    if not re.fullmatch(r"[0-9a-f]{64}", recipe["source"]["tree_sha256"]):
-        raise ValueError("OMP source requires a full tree SHA256.")
     for asset in recipe["native"].values():
         if "sha256" not in asset:
             raise ValueError("OMP native archives require SHA256.")
@@ -292,88 +319,46 @@ def load_omp_recipe() -> dict:
     return recipe
 
 
-def _apply_omp_patch(source_root: Path, patch: dict) -> None:
-    # Validate every pre/postimage before writing any of the three files. Exact
-    # line offsets plus whole-file hashes avoid fuzzy patching or a patch tool.
-    changed = []
-    for row in patch["files"]:
-        path = source_root / archive_path(row["path"])
-        content = path.read_bytes()
-        if hashlib.sha256(content).hexdigest() != row["before_sha256"]:
-            raise ValueError(f"OMP patch preimage mismatch: {row['path']}")
-        lines = content.decode("utf-8").splitlines(keepends=True)
-        boundary = len(lines)
-        for edit in reversed(row["edits"]):
-            start, old = edit["start"], edit["old"]
-            if not isinstance(start, int) or start < 0 or start + len(old) > boundary:
-                raise ValueError(f"Invalid OMP patch chunk: {row['path']}")
-            if lines[start:start + len(old)] != old:
-                raise ValueError(f"OMP patch chunk mismatch: {row['path']}")
-            lines[start:start + len(old)] = edit["new"]
-            boundary = start
-        output = "".join(lines).encode("utf-8")
-        if hashlib.sha256(output).hexdigest() != row["after_sha256"]:
-            raise ValueError(f"OMP patch postimage mismatch: {row['path']}")
-        changed.append((path, output))
-    for path, output in changed:
-        path.write_bytes(output)
-
-
 def _check_omp_lock(source_root: Path, expected: str) -> None:
     if hashlib.sha256((source_root / "bun.lock").read_bytes()).hexdigest() != expected:
         raise ValueError("OMP frozen Bun lock checksum mismatch.")
 
 
-def _install_omp_source(recipe: dict, root: Path, target: str, run, env: dict,
-                        *, repo: str | None = None) -> None:
+def _install_omp_source(selected: dict, recipe: dict, root: Path, target: str, run, env: dict) -> None:
     native = recipe["native"].get(target)
     if native is None:
         raise ValueError(f"There is no pinned OMP native build for {target}.")
     root.mkdir(parents=True, exist_ok=True)
     container = root / "source-archive"
-    if repo is None:
-        fetch_archive(recipe["source"]["url"], container)
-        source_root = container / archive_path(recipe["source"]["directory"])
+    source_url = omp_source_url(selected["repo"], selected["sha"])
+    if source_url:
+        fetch_archive(source_url, container, reject_links=True)
+        children = list(container.iterdir())
+        if len(children) != 1 or not children[0].is_dir():
+            raise ValueError("Unexpected OMP source directory layout.")
+        source_root = children[0]
     else:
         archive = root / "source.download"
         try:
-            local_source(repo, recipe["base_commit"], archive)
+            local_source(selected["repo"], selected["sha"], archive)
             extract(archive, container)
         finally:
             archive.unlink(missing_ok=True)
         source_root = container
-    if not source_root.is_dir():
-        raise ValueError("The pinned OMP source directory is absent.")
-    if repo is None and list(container.iterdir()) != [source_root]:
-        raise ValueError("Unexpected pinned OMP source directory layout.")
-    # Keep the installed path shallow, particularly on Windows. Both transport
-    # modes produce the same tree with no archive-specific top-level prefix.
+    # The selected commit is authoritative. Never apply a downstream producer
+    # patch here: owners land the separately delivered fix before selecting it.
     normalized = root / "source"
     os.replace(source_root, normalized)
     if container.exists():
         shutil.rmtree(container)
     source_root = normalized
-    if source_tree_sha256(source_root) != recipe["source"]["tree_sha256"]:
-        raise ValueError("OMP source tree checksum mismatch.")
+    tree_sha256 = source_tree_sha256(source_root)
     _check_omp_lock(source_root, recipe["bun_lock_sha256"])
-    _apply_omp_patch(source_root, recipe["patch"])
+    package = json.loads((source_root / "packages/coding-agent/package.json").read_text(encoding="utf-8"))
+    if package.get("version") != recipe["version"]:
+        raise ValueError("OMP source version is incompatible with the pinned native build recipe.")
     bun = env["ASTRID_BUN_EXECUTABLE"]
-    # Ignore user Bun policy/preloads and global config for these build commands.
-    # Keep only the deliberately selected download cache; never inherit lock or
-    # integrity bypasses, global-store links, or registration paths. The private
-    # build home/config does not change the user's files or the service env.
-    build_home = root / "build-home"
-    build_config = build_home / "config"
-    build_config.mkdir(parents=True)
-    build_env = {key: value for key, value in env.items()
-                 if not key.startswith("BUN_") and key != "NODE_OPTIONS"}
-    build_env.update({"BUN_INSTALL": str(root), "BUN_INSTALL_BIN": str(root / "bin"),
-                      "BUN_INSTALL_GLOBAL_DIR": str(root / "install/global"),
-                      "HOME": str(build_home), "USERPROFILE": str(build_home),
-                      "XDG_CONFIG_HOME": str(build_config)})
-    cache = env.get("BUN_INSTALL_CACHE_DIR", os.environ.get("BUN_INSTALL_CACHE_DIR"))
-    if cache:
-        build_env["BUN_INSTALL_CACHE_DIR"] = cache
+    build_env = _omp_build_env(root, env)
     run([bun, "install", "--frozen-lockfile", "--ignore-scripts", "--omit", "optional"],
         extra_env=build_env, cwd=source_root, clean_bun_env=True)
     _check_omp_lock(source_root, recipe["bun_lock_sha256"])
@@ -386,10 +371,10 @@ def _install_omp_source(recipe: dict, root: Path, target: str, run, env: dict,
     try:
         for name in native["files"]:
             relative = archive_path(name)
-            selected = native_archive / "package" / relative
-            if not selected.is_file() or relative.name != name or not name.endswith(".node"):
+            native_file = native_archive / "package" / relative
+            if not native_file.is_file() or relative.name != name or not name.endswith(".node"):
                 raise ValueError(f"The pinned OMP native archive is missing {name}.")
-            os.replace(selected, destination / name)
+            os.replace(native_file, destination / name)
     finally:
         shutil.rmtree(native_archive)
     # Import the producer's CPU-aware loader, then enforce the exact ABI marker
@@ -402,25 +387,78 @@ def _install_omp_source(recipe: dict, root: Path, target: str, run, env: dict,
     run([bun, "link", "--frozen-lockfile", "--ignore-scripts", "--no-save"],
         extra_env=build_env, cwd=source_root / "packages/coding-agent", clean_bun_env=True)
     _check_omp_lock(source_root, recipe["bun_lock_sha256"])
-    (root / "source-provenance.json").write_text(json.dumps({
-        "source": "fork", "version": recipe["version"], "base_commit": recipe["base_commit"],
-        "source_url": recipe["source"]["url"], "tree_sha256": recipe["source"]["tree_sha256"],
-        "patch_sha256": recipe["patch"]["sha256"], "bun_lock_sha256": recipe["bun_lock_sha256"],
+    _write_omp_provenance(root, {
+        "source": "fork", "version": recipe["version"], "repo": selected["repo"],
+        "commit": selected["sha"], "source_url": source_url, "tree_sha256": tree_sha256,
+        "bun_lock_sha256": recipe["bun_lock_sha256"],
         "native_url": native["url"], "native_sha256": native["sha256"],
-        "native_integrity": native.get("integrity"), "source_mode": "local-repo" if repo else "https",
-    }, indent=2) + "\n", encoding="utf-8")
+        "native_integrity": native.get("integrity"), "source_mode": "https" if source_url else "local-repo",
+    })
     env.update({"ASTRID_INSTALL_OMP_SOURCE": "fork", "ASTRID_INSTALL_OMP_VERSION": recipe["version"],
-                "ASTRID_INSTALL_OMP_BASE_COMMIT": recipe["base_commit"],
-                "ASTRID_INSTALL_OMP_PATCH_SHA256": recipe["patch"]["sha256"]})
+                "ASTRID_INSTALL_OMP_COMMIT": selected["sha"]})
+
+
+def _omp_build_env(root: Path, env: dict) -> dict:
+    # Ignore user Bun policy/preloads and global config for these build commands.
+    # Keep only the deliberately selected download cache; never inherit lock or
+    # integrity bypasses, global-store links, or registration paths. The private
+    # build home/config does not change the user's files or the service env.
+    build_home = root / "build-home"
+    build_config = build_home / "config"
+    build_config.mkdir(parents=True)
+    build_env = {key: value for key, value in env.items()
+                 if not key.startswith("BUN_") and key != "NODE_OPTIONS"}
+    build_env.update({"BUN_INSTALL": str(root), "BUN_INSTALL_BIN": str(root / "bin"),
+                      "BUN_INSTALL_GLOBAL_DIR": str(root / "install/global"),
+                      "HOME": str(build_home), "USERPROFILE": str(build_home),
+                      "XDG_CONFIG_HOME": str(build_config),
+                      "npm_config_registry": "https://registry.npmjs.org",
+                      "NPM_CONFIG_REGISTRY": "https://registry.npmjs.org"})
+    cache = env.get("BUN_INSTALL_CACHE_DIR", os.environ.get("BUN_INSTALL_CACHE_DIR"))
+    if cache:
+        build_env["BUN_INSTALL_CACHE_DIR"] = cache
+    return build_env
+
+
+def _write_omp_provenance(root: Path, value: dict) -> None:
+    (root / "source-provenance.json").write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+
+
+def _install_omp_package(selected: str, root: Path, run, env: dict) -> None:
+    build_env = _omp_build_env(root, env)
+    bun = env["ASTRID_BUN_EXECUTABLE"]
+    run([bun, "add", "--global", "--exact", "--ignore-scripts", selected],
+        extra_env=build_env, cwd=root, clean_bun_env=True)
+    name, version = selected.rsplit("@", 1)
+    global_root = root / "install/global"
+    package_root = global_root / "node_modules" / name
+    package = json.loads((package_root / "package.json").read_text(encoding="utf-8"))
+    if package.get("name") != name or package.get("version") != version:
+        raise ValueError("The installed OMP npm package does not match its exact source pin.")
+    cli = archive_path(package.get("bin", {}).get("omp", ""))
+    if not cli.parts or not (package_root / cli).is_file():
+        raise ValueError("The installed OMP npm package has no omp launcher.")
+    reported = run([bun, package_root / cli, "--version"], extra_env=build_env, cwd=root,
+                   clean_bun_env=True).strip()
+    if not re.fullmatch(r"(?:[A-Za-z0-9._-]+/)?" + re.escape(version), reported):
+        raise ValueError("The installed OMP CLI does not match its exact source pin.")
+    lock = global_root / "bun.lock"
+    if not lock.is_file():
+        raise ValueError("The OMP npm install did not record its dependency lock.")
+    _write_omp_provenance(root, {"source": "npm", "package": selected, "version": version,
+        "bun_lock_sha256": hashlib.sha256(lock.read_bytes()).hexdigest(),
+        "package_json_sha256": hashlib.sha256((package_root / "package.json").read_bytes()).hexdigest(),
+        "native_files": {path.relative_to(global_root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+                         for path in sorted(global_root.rglob("*.node")) if path.is_file()}})
+    env.update({"ASTRID_INSTALL_OMP_SOURCE": "npm", "ASTRID_INSTALL_OMP_VERSION": version,
+                "ASTRID_INSTALL_OMP_PACKAGE": selected})
 
 
 def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str]:
     pins = manifest["tools"]
-    if pins["omp"]["version"] != "17.4.0":
-        raise ValueError("OMP staging requires the bundled fork version 17.4.0.")
-    recipe = load_omp_recipe()
-    if pins["bun"]["version"] != recipe["bun_version"]:
-        raise ValueError("OMP staging requires the bundled recipe's Bun version.")
+    selected = omp_source(pins["omp"])
+    if isinstance(selected, dict) and pins["bun"]["version"] != load_omp_recipe()["bun_version"]:
+        raise ValueError("OMP source staging requires the bundled recipe's Bun version.")
     windows = target.startswith("windows-")
     suffix = ".exe" if windows else ""
     # Keep UTF-8 stdio without an interpreter startup override: the rendering
@@ -459,7 +497,14 @@ def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str
     omp_bin.mkdir(parents=True)
     env.update({"BUN_INSTALL": str(omp), "BUN_INSTALL_BIN": str(omp_bin),
                 "PATH": (";" if windows else ":").join([str(omp_bin), *paths, system_path])})
-    _install_omp_source(recipe, omp, target, run, env, repo=pins["omp"].get("repo"))
-    if not any((omp_bin / ("omp" + extension)).is_file() for extension in (suffix, ".cmd")):
+    if isinstance(selected, str):
+        _install_omp_package(selected, omp, run, env)
+    else:
+        _install_omp_source(selected, load_omp_recipe(), omp, target, run, env)
+    launchers = [omp_bin / ("omp" + extension) for extension in (suffix, ".cmd")
+                 if (omp_bin / ("omp" + extension)).is_file()]
+    if not launchers:
         raise ValueError("OMP did not create its user-local launcher.")
+    if any(not launcher.resolve().is_relative_to(omp.resolve()) for launcher in launchers):
+        raise ValueError("The OMP launcher escapes its owned installation prefix.")
     return env

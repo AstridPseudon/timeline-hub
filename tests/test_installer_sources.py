@@ -34,13 +34,15 @@ def test_first_tool_archive_creates_its_missing_parent(tmp_path, monkeypatch):
 
 
 def manifest():
-    return {
+    value = {
         "schema_version": 1,
         "agent": {"sha": "a" * 40},
         "runtime": {"sha": "b" * 40},
         "tools": {name: {"version": "20.19.4" if name == "node" else "1.2.3"}
-                  for name in ("uv", "python", "bun", "omp", "node", "ffmpeg")},
+                  for name in ("uv", "python", "bun", "node", "ffmpeg")},
     }
+    value["tools"]["omp"] = {"source": tools.DEFAULT_OMP_SOURCE}
+    return value
 
 
 def git(repo, *args):
