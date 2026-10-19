@@ -1,0 +1,109 @@
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+import {createElement} from 'react';
+import {prepareScene, querySceneFrame} from '../src/scene-evaluation';
+import type {ModifierDeclaration} from '../src/modifier-types';
+import type {AssetRegistry, TimelineClip, TrackDefinition} from '../src/types';
+import {VIDEO_INTERPRETATION} from '../src/scene-capabilities';
+
+const visualTrack: TrackDefinition = {id: 'video', kind: 'visual', label: 'Video'};
+const assets: AssetRegistry = {assets: {}};
+const clip = (overrides: Partial<TimelineClip> = {}): TimelineClip => ({
+  id: 'clip', at: 0, hold: 1, track: 'video', ...overrides,
+});
+const mediaProof = (file: string, contentSha256: string) => ({
+  version: 1 as const,
+  objectId: `sha256:${contentSha256}`,
+  contentSha256,
+  file,
+  interpretation: VIDEO_INTERPRETATION,
+  stream: {
+    index: 0, codec: 'h264' as const, pixelFormat: 'yuv420p', profile: 'Main', level: '40',
+    sampleAspectRatio: '1:1' as const, width: 1920, height: 1080,
+  },
+});
+const prepare = (
+  clips: readonly TimelineClip[],
+  sceneAssets: AssetRegistry = assets,
+  options: Parameters<typeof prepareScene>[5] = {},
+) => prepareScene([{track: visualTrack, clips, transitions: [null]}], sceneAssets, 30, 1920, 1080, options);
+
+test('proven opaque visual media reports visible covered content', () => {
+  const hash = 'a'.repeat(64);
+  const file = 'video.mp4';
+  const scene = prepare([clip({id: 'picture', asset: 'video'})], {
+    assets: {video: {file, type: 'video/mp4', resolution: '1920x1080', content_sha256: hash}},
+  }, {roles: {picture: 'picture'}, capabilities: {media: {video: mediaProof(file, hash)}}});
+  const frame = querySceneFrame(scene, 0);
+  assert.equal(frame.coverage, 'COVERED');
+  assert.equal(frame.content, 'CONTENT');
+  assert.equal(frame.layers[0].visible, true);
+  assert.equal(frame.layers[0].opaqueSupport, 'rect');
+  assert.deepEqual(frame.findings, []);
+});
+
+test('unresolved or unproven media remains unknown instead of being treated as absent', () => {
+  const unresolved = querySceneFrame(prepare([clip({asset: 'missing'})]), 0);
+  assert.equal(unresolved.coverage, 'UNKNOWN');
+  assert.equal(unresolved.layers[0].visible, 'unknown');
+  assert.ok(unresolved.findings.some(({code}) => code === 'unknown-media-alpha'));
+
+  const hash = 'b'.repeat(64);
+  const unproven = querySceneFrame(prepare([clip({id: 'unproven', asset: 'video'})], {
+    assets: {video: {file: 'video.mp4', type: 'video/mp4', resolution: '1920x1080', content_sha256: hash}},
+  }), 0);
+  assert.equal(unproven.coverage, 'UNKNOWN');
+  assert.equal(unproven.layers[0].visible, 'unknown');
+  assert.ok(unproven.findings.some(({code}) => code === 'unknown-media-alpha'));
+});
+
+test('assetless native holds are visibly absent, while declared component support stays explicit', () => {
+  const absent = querySceneFrame(prepare([clip({id: 'hold'})]), 0);
+  assert.equal(absent.coverage, 'GAP');
+  assert.equal(absent.layers[0].visible, false);
+  assert.deepEqual(absent.findings, []);
+
+  const component = clip({id: 'title', clipType: 'title'});
+  const capability = {
+    identity: 'title@1',
+    frame: () => ({
+      presence: 'present' as const,
+      bounds: {status: 'known' as const, rect: {x: 0, y: 0, width: 1920, height: 1080}},
+      opaqueSupport: 'none' as const,
+    }),
+  };
+  const supported = querySceneFrame(prepare([component], assets, {
+    elements: new Set(['title']), capabilities: {components: {title: capability}},
+  }), 0);
+  assert.equal(supported.layers[0].visible, true);
+  assert.equal(supported.layers[0].coverage, 'partial');
+  assert.deepEqual(supported.findings, []);
+
+  const unknown = querySceneFrame(prepare([component], assets, {elements: new Set(['title'])}), 0);
+  assert.equal(unknown.layers[0].visible, 'unknown');
+  assert.ok(unknown.findings.some(({code}) => code === 'unknown-component-internals'));
+  assert.ok(unknown.findings.some(({code}) => code === 'unknown-component-bounds'));
+  assert.equal(unknown.coverage, 'UNKNOWN');
+});
+
+test('unknown modifier output bounds produce a finding and unknown coverage', () => {
+  const hash = 'c'.repeat(64);
+  const file = 'video.mp4';
+  const modifier: ModifierDeclaration = {
+    kind: 'modifier', element: 'vignette', hosts: ['composition'], bounds: 'unknown',
+    alpha: 'preserve', support: 'preserve',
+    wrap: (_instance, _context, children) => createElement('div', null, children),
+  };
+  const scene = prepare([clip({id: 'picture', asset: 'video', modifiers: [{id: 'v', element: 'vignette', params: {}}]})], {
+    assets: {video: {file, type: 'video/mp4', resolution: '1920x1080', content_sha256: hash}},
+  }, {
+    roles: {picture: 'picture'},
+    capabilities: {media: {video: mediaProof(file, hash)}},
+    modifiers: {vignette: modifier},
+  });
+  const frame = querySceneFrame(scene, 0);
+  assert.equal(frame.layers[0].visible, 'unknown');
+  assert.equal(frame.layers[0].opacity, null);
+  assert.equal(frame.coverage, 'UNKNOWN');
+  assert.ok(frame.findings.some(({code}) => code === 'unknown-modifier-bounds'));
+});

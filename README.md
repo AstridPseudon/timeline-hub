@@ -124,11 +124,25 @@ The element remap is a `<Freeze>` around the element content, applied in `ClipLo
 ## Build / test
 
 ```
-cd packages/timeline-composition
-npm install
 npm run build
 npm test
 ```
+
+`npm run build` type-checks the complete `typescript/src` tree and fails on
+the first compiler error. It does not emit package output. `npm test` emits
+the focused TypeScript tests into the ignored `typescript/dist` directory,
+then runs them with the extensionless-import loader used by the standalone
+Node test runner.
+
+The package has no source or type import from `@banodoco/timeline-schema`, so
+it is not a Composition dependency. The generated registries remain
+consumer-owned: a standalone checkout with no installed theme packages has
+an empty `registry.generated.ts`, while a consuming workspace regenerates it
+with `npm run gen-registry` after its theme packages or in-tree themes are
+available. Workspace primitive imports are likewise resolved by the
+consumer's bundler; the package build checks their typed public contracts but
+does not invent default components. Runtime generated imports therefore still
+require the host components until the planned M3 default-component relocation.
 
 ## Keyframe origin
 
