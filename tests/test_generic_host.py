@@ -1496,12 +1496,12 @@ def test_vendored_runtime_client_timeout_is_bounded_and_request_correlated(monke
 
     captured = {}
 
-    def timed_out(request, *, timeout):
+    def timed_out(_opener, request, *, timeout):
         captured["timeout"] = timeout
         captured["request_id"] = request.get_header("X-request-id")
         raise TimeoutError("fixture timeout")
 
-    monkeypatch.setattr("urllib.request.urlopen", timed_out)
+    monkeypatch.setattr("urllib.request.OpenerDirector.open", timed_out)
 
     with pytest.raises(ApiError) as failure:
         WorkspaceClient("http://127.0.0.1:8765", timeout=0.125).health()
