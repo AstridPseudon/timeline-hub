@@ -6,19 +6,19 @@
     },
     "astrid_runtime_client/__init__.py": {
       "from": "packages/python/astrid_runtime_client/__init__.py",
-      "sha256": "sha256:97629bd1b977fb75797d26bcdafe3d3763a7fa12b6c2e738ebb49de1e2f4ffa1"
+      "sha256": "sha256:0ec98414f0410da5db816e2dcb3204207046902026902db5283251c168a19c6d"
     },
     "astrid_runtime_client/contract_metadata.py": {
       "from": "packages/python/astrid_runtime_client/contract_metadata.py",
-      "sha256": "sha256:3b141ab4bebd723a0721b3ae56fabd9cafed658c2245066f2c072ce4cae87663"
+      "sha256": "sha256:5c1e2592a915c94b8af7abba1c318648c044b28f4319f79c9820e0d4485a85b3"
     },
     "astrid_runtime_client/generated.py": {
       "from": "packages/python/astrid_runtime_client/generated.py",
-      "sha256": "sha256:e1bb3018128ea51355324a230b83be921c550a01586959274baf2c0e2b5955a3"
+      "sha256": "sha256:3810a2d3924a6713a2b5ad8bed7ce58a2731525f5cc7af4d78ae833cdad71cfd"
     },
-    "tests/fixtures/visual-boundary-v1.json": {
-      "from": "conformance/fixtures/visual-boundary-v1.json",
-      "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+    "astrid_runtime_client/timeline_commit_types.py": {
+      "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
+      "sha256": "sha256:1b5f7d675f512b76dd0d28a0e444d115c68c32c9d3ac57584fb9dd0d81bf3266"
     },
     "tests/fixtures/runtime-responses/events_page_1_200.json": {
       "from": "conformance/responses/events_page_1_200.json",
@@ -55,10 +55,14 @@
     "tests/fixtures/runtime-responses/validation_error_422.json": {
       "from": "conformance/responses/validation_error_422.json",
       "sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"
+    },
+    "tests/fixtures/visual-boundary-v1.json": {
+      "from": "conformance/fixtures/visual-boundary-v1.json",
+      "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
     }
   },
   "manifest": "contract/artifacts.json",
   "producer": "astrid-runtime",
-  "producer_version": "sha256:62e5c5def72da0ac28b954ee0df080ed3d28814862e1f7efcf3f6b8005a67dcc",
-  "source_commit": "329c9c591d9c0f74026d599ee00c14c165cb3e53"
+  "producer_version": "sha256:1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d",
+  "source_commit": "c423544de3b7a1090649bf32e4c82514c4c7a641"
 }
