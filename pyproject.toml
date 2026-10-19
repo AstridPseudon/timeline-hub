@@ -122,6 +122,10 @@ astrid = [
     # The named OMP profile is a runtime resource, not a user-home seed.
     "agent_profiles/*.md",
     "omp_extensions/*.ts",
+    # Immutable source recipe and reviewed native ACP corrections used by the
+    # single user-local OMP installer route.
+    "installer/omp/*.json",
+    "installer/omp/*.patch",
 
     # Installed service declarations launch this prebuilt Bun bundle. Ship its
     # local-only configuration and third-party notices alongside it.

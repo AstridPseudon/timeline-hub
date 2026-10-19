@@ -106,6 +106,7 @@ def test_explicit_invalid_single_archive_digest_is_rejected(checksum):
 def test_installed_tools_forward_the_matching_digest_for_every_archive(tmp_path, monkeypatch):
     media, archives = asset()
     pins = manifest(media)
+    pins["tools"]["omp"]["version"] = "17.4.0"
     for name in ("bun", "node"):
         data = archive(name, name.encode())
         media["urls"].append(f"https://example.invalid/{name}.zip")
@@ -131,14 +132,14 @@ def test_installed_tools_forward_the_matching_digest_for_every_archive(tmp_path,
             return "\n".join(f" V..... {name} encoder" for name in tools.ENCODERS)
         if argv[-1] == "-filters":
             return "\n".join(f" ... {name} filter" for name in tools.FILTERS)
-        if "--global" in argv:
-            folder = Path(kwargs["extra_env"]["BUN_INSTALL_BIN"])
-            (folder / "omp").write_bytes(b"launcher")
-            return ""
         raise AssertionError(argv)
 
     monkeypatch.setattr(tools.urllib.request, "urlopen", response)
     monkeypatch.setattr(tools.shutil, "which", lambda _: None)
+    def omp_source(_recipe, _root, _target, _run, env, **_kwargs):
+        (Path(env["BUN_INSTALL_BIN"]) / "omp").write_bytes(b"launcher")
+
+    monkeypatch.setattr(tools, "_install_omp_source", omp_source)
     (tmp_path / "tools").mkdir()
     tools.install_tools(copy.deepcopy(pins), tmp_path / "tools", "macos-x64", run)
     assert set(downloads) == set(payloads)

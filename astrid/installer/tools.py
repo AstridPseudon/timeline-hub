@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -32,6 +33,8 @@ def validate_manifest(value: dict) -> dict:
             raise ValueError(f"The {name} tool must have an exact version.")
         for asset in value["tools"][name].get("assets", {}).values():
             asset_downloads(asset)
+    if "repo" in value["tools"]["omp"]:
+        local_repository(value["tools"]["omp"]["repo"])
     if value["tools"]["node"]["version"] != "20.19.4":
         raise ValueError("Remotion requires Node 20.19.4.")
     return value
@@ -253,8 +256,154 @@ def _media_tools(pin: dict, root: Path, target: str, run) -> dict[str, str]:
     return _media_tool_metadata(binary(folder, "ffmpeg" + suffix), binary(folder, "ffprobe" + suffix), run, "download")
 
 
+def source_tree_sha256(root: Path) -> str:
+    """Pin extracted source independently of archive compression or top prefix.
+
+    Each sorted POSIX relative UTF-8 path is length-prefixed with eight big-endian
+    bytes, followed by its file's raw SHA256 digest. Links/special files refuse.
+    """
+    digest = hashlib.sha256(b"astrid-omp-source-tree-v1\0")
+    for path in sorted(root.rglob("*"), key=lambda p: p.relative_to(root).as_posix()):
+        if path.is_symlink() or (not path.is_dir() and not path.is_file()):
+            raise ValueError(f"OMP source contains a nonregular entry: {path}")
+        if path.is_file():
+            relative = path.relative_to(root).as_posix().encode("utf-8")
+            digest.update(len(relative).to_bytes(8, "big"))
+            digest.update(relative)
+            digest.update(hashlib.sha256(path.read_bytes()).digest())
+    return digest.hexdigest()
+
+
+def load_omp_recipe() -> dict:
+    folder = Path(__file__).with_name("omp")
+    recipe = json.loads((folder / "recipe.json").read_text(encoding="utf-8"))
+    if recipe["schema_version"] != 1 or recipe["version"] != "17.4.0":
+        raise ValueError("Unsupported bundled OMP source recipe.")
+    if hashlib.sha256((folder / "source.patch").read_bytes()).hexdigest() != recipe["patch"]["sha256"]:
+        raise ValueError("Bundled OMP patch checksum mismatch.")
+    if not recipe["source"]["url"].startswith("https://"):
+        raise ValueError("OMP source downloads require HTTPS.")
+    if not re.fullmatch(r"[0-9a-f]{64}", recipe["source"]["tree_sha256"]):
+        raise ValueError("OMP source requires a full tree SHA256.")
+    for asset in recipe["native"].values():
+        if "sha256" not in asset:
+            raise ValueError("OMP native archives require SHA256.")
+        asset_downloads(asset)
+    return recipe
+
+
+def _apply_omp_patch(source_root: Path, patch: dict) -> None:
+    # Validate every pre/postimage before writing any of the three files. Exact
+    # line offsets plus whole-file hashes avoid fuzzy patching or a patch tool.
+    changed = []
+    for row in patch["files"]:
+        path = source_root / archive_path(row["path"])
+        content = path.read_bytes()
+        if hashlib.sha256(content).hexdigest() != row["before_sha256"]:
+            raise ValueError(f"OMP patch preimage mismatch: {row['path']}")
+        lines = content.decode("utf-8").splitlines(keepends=True)
+        boundary = len(lines)
+        for edit in reversed(row["edits"]):
+            start, old = edit["start"], edit["old"]
+            if not isinstance(start, int) or start < 0 or start + len(old) > boundary:
+                raise ValueError(f"Invalid OMP patch chunk: {row['path']}")
+            if lines[start:start + len(old)] != old:
+                raise ValueError(f"OMP patch chunk mismatch: {row['path']}")
+            lines[start:start + len(old)] = edit["new"]
+            boundary = start
+        output = "".join(lines).encode("utf-8")
+        if hashlib.sha256(output).hexdigest() != row["after_sha256"]:
+            raise ValueError(f"OMP patch postimage mismatch: {row['path']}")
+        changed.append((path, output))
+    for path, output in changed:
+        path.write_bytes(output)
+
+
+def _check_omp_lock(source_root: Path, expected: str) -> None:
+    if hashlib.sha256((source_root / "bun.lock").read_bytes()).hexdigest() != expected:
+        raise ValueError("OMP frozen Bun lock checksum mismatch.")
+
+
+def _install_omp_source(recipe: dict, root: Path, target: str, run, env: dict,
+                        *, repo: str | None = None) -> None:
+    native = recipe["native"].get(target)
+    if native is None:
+        raise ValueError(f"There is no pinned OMP native build for {target}.")
+    root.mkdir(parents=True, exist_ok=True)
+    container = root / "source-archive"
+    if repo is None:
+        fetch_archive(recipe["source"]["url"], container)
+        source_root = container / archive_path(recipe["source"]["directory"])
+    else:
+        archive = root / "source.download"
+        try:
+            local_source(repo, recipe["base_commit"], archive)
+            extract(archive, container)
+        finally:
+            archive.unlink(missing_ok=True)
+        source_root = container
+    if not source_root.is_dir():
+        raise ValueError("The pinned OMP source directory is absent.")
+    if repo is None and list(container.iterdir()) != [source_root]:
+        raise ValueError("Unexpected pinned OMP source directory layout.")
+    # Keep the installed path shallow, particularly on Windows. Both transport
+    # modes produce the same tree with no archive-specific top-level prefix.
+    normalized = root / "source"
+    os.replace(source_root, normalized)
+    if container.exists():
+        shutil.rmtree(container)
+    source_root = normalized
+    if source_tree_sha256(source_root) != recipe["source"]["tree_sha256"]:
+        raise ValueError("OMP source tree checksum mismatch.")
+    _check_omp_lock(source_root, recipe["bun_lock_sha256"])
+    _apply_omp_patch(source_root, recipe["patch"])
+    bun = env["ASTRID_BUN_EXECUTABLE"]
+    run([bun, "install", "--frozen-lockfile", "--ignore-scripts", "--omit", "optional"],
+        extra_env=env, cwd=source_root)
+    _check_omp_lock(source_root, recipe["bun_lock_sha256"])
+    run([bun, "run", "gen:tool-views"], extra_env=env, cwd=source_root)
+    _check_omp_lock(source_root, recipe["bun_lock_sha256"])
+    native_archive = root / "native-archive"
+    fetch_archive(native["url"], native_archive, sha256=native["sha256"])
+    destination = source_root / "packages/natives/native"
+    destination.mkdir(parents=True, exist_ok=True)
+    try:
+        for name in native["files"]:
+            relative = archive_path(name)
+            selected = native_archive / "package" / relative
+            if not selected.is_file() or relative.name != name or not name.endswith(".node"):
+                raise ValueError(f"The pinned OMP native archive is missing {name}.")
+            os.replace(selected, destination / name)
+    finally:
+        shutil.rmtree(native_archive)
+    # Import the producer's CPU-aware loader, then enforce the exact ABI marker
+    # even in workspace mode, where the producer normally omits that guard.
+    probe = ("import {pathToFileURL} from 'node:url';"
+             "const b=await import(pathToFileURL(process.argv[1]).href);"
+             "if(typeof b.__piNativesV17_4_0!=='function')throw Error('OMP native ABI mismatch');")
+    run([bun, "-e", probe, destination / "index.js"], extra_env=env, cwd=source_root)
+    run([bun, "link", "--frozen-lockfile", "--ignore-scripts", "--no-save"],
+        extra_env=env, cwd=source_root / "packages/coding-agent")
+    _check_omp_lock(source_root, recipe["bun_lock_sha256"])
+    (root / "source-provenance.json").write_text(json.dumps({
+        "source": "fork", "version": recipe["version"], "base_commit": recipe["base_commit"],
+        "source_url": recipe["source"]["url"], "tree_sha256": recipe["source"]["tree_sha256"],
+        "patch_sha256": recipe["patch"]["sha256"], "bun_lock_sha256": recipe["bun_lock_sha256"],
+        "native_url": native["url"], "native_sha256": native["sha256"],
+        "native_integrity": native.get("integrity"), "source_mode": "local-repo" if repo else "https",
+    }, indent=2) + "\n", encoding="utf-8")
+    env.update({"ASTRID_INSTALL_OMP_SOURCE": "fork", "ASTRID_INSTALL_OMP_VERSION": recipe["version"],
+                "ASTRID_INSTALL_OMP_BASE_COMMIT": recipe["base_commit"],
+                "ASTRID_INSTALL_OMP_PATCH_SHA256": recipe["patch"]["sha256"]})
+
+
 def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str]:
     pins = manifest["tools"]
+    if pins["omp"]["version"] != "17.4.0":
+        raise ValueError("OMP staging requires the bundled fork version 17.4.0.")
+    recipe = load_omp_recipe()
+    if pins["bun"]["version"] != recipe["bun_version"]:
+        raise ValueError("OMP staging requires the bundled recipe's Bun version.")
     windows = target.startswith("windows-")
     suffix = ".exe" if windows else ""
     # Keep UTF-8 stdio without an interpreter startup override: the rendering
@@ -293,8 +442,7 @@ def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str
     omp_bin.mkdir(parents=True)
     env.update({"BUN_INSTALL": str(omp), "BUN_INSTALL_BIN": str(omp_bin),
                 "PATH": (";" if windows else ":").join([str(omp_bin), *paths, system_path])})
-    run([env["ASTRID_BUN_EXECUTABLE"], "install", "--global", "--no-progress",
-         "@oh-my-pi/pi-coding-agent@" + pins["omp"]["version"]], extra_env=env)
+    _install_omp_source(recipe, omp, target, run, env, repo=pins["omp"].get("repo"))
     if not any((omp_bin / ("omp" + extension)).is_file() for extension in (suffix, ".cmd")):
         raise ValueError("OMP did not create its user-local launcher.")
     return env

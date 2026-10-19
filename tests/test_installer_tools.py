@@ -17,7 +17,7 @@ EXE_SUFFIX = ".exe" if sys.platform == "win32" else ""
 def manifest():
     return {"tools": {
         name: {"version": version, "assets": {TARGET: {"url": f"https://example.invalid/{name}.zip"}}}
-        for name, version in (("bun", "1.3.14"), ("node", "20.19.4"), ("ffmpeg", "7.0.2"), ("omp", "12.0.0"))
+        for name, version in (("bun", "1.3.14"), ("node", "20.19.4"), ("ffmpeg", "7.0.2"), ("omp", "17.4.0"))
     }}
 
 
@@ -53,9 +53,6 @@ def harness(tmp_path, monkeypatch, *, availability="qualified"):
         calls.append((executable, args))
         if args == ["--version"]:
             return "1.3.14" if Path(executable).stem == "bun" else "v20.19.4"
-        if args[:2] == ["install", "--global"]:
-            media_binary(Path(extra_env["BUN_INSTALL_BIN"]), "omp")
-            return ""
         host = executable in {str(ffmpeg), str(ffprobe)}
         if host and availability == "broken_ffprobe" and executable == str(ffprobe):
             raise subprocess.CalledProcessError(1, executable)
@@ -73,6 +70,12 @@ def harness(tmp_path, monkeypatch, *, availability="qualified"):
         raise AssertionError(f"Unexpected tool invocation: {argv}")
 
     monkeypatch.setattr(tools, "fetch_archive", fetch)
+    # These cases isolate media selection; the source recipe has dedicated
+    # checksum/patch/lock/ABI/launcher tests.
+    def omp_source(_recipe, _root, _target, _run, env, **_kwargs):
+        media_binary(Path(env["BUN_INSTALL_BIN"]), "omp")
+
+    monkeypatch.setattr(tools, "_install_omp_source", omp_source)
     return root, ffmpeg, ffprobe, other, downloads, calls, run
 
 

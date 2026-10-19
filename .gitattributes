@@ -12,3 +12,5 @@
 *.yml text eol=lf
 *.sh text eol=lf
 *.ps1 text eol=lf
+# Preserve the reviewed diff verbatim; its context prefixes precede source tabs.
+astrid/installer/omp/source.patch -text -whitespace
