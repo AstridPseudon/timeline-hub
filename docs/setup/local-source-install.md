@@ -3,8 +3,9 @@
 Astrid runs on your own computer, and https://astrid.haus connects to it.
 
 On macOS, first install CPython 3.11 or 3.12, Node 20.19 or newer, npm, Git,
-Bun, the supported OMP agent executable, and FFmpeg (`ffmpeg` and `ffprobe`;
-`brew install ffmpeg`). Chat also needs your existing provider authentication.
+Bun, FFmpeg (`brew install ffmpeg`) and OMP, the coding agent Astrid chats
+through (`bun install -g @oh-my-pi/pi-coding-agent`, which provides `omp`).
+Chat also needs your existing provider authentication.
 
 Then, in the folder where you keep source code, run:
 
