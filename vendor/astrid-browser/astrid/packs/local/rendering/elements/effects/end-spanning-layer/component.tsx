@@ -1,6 +1,7 @@
+import {ManagedImg as Img, ManagedVideo as Video} from '../../../../../rendering/shared/managed-media';
 import type {ReactElement} from 'react';
-import {Easing, Img, interpolate, Sequence, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
-import {Video} from '@remotion/media';
+import {Easing, interpolate, Sequence, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+
 import {type ElementComponentProps, narrowParams} from '../../../../../rendering/shared/element_contracts';
 
 import {endSpanningTiming, positive, nonnegative, validSegments, selectedSegmentIndex, type TimelineSegment} from './timing';

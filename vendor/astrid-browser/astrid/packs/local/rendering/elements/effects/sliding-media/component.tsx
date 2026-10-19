@@ -1,5 +1,6 @@
+import {ManagedImg as Img, ManagedOffthreadVideo as OffthreadVideo} from '../../../../../rendering/shared/managed-media';
 import type {CSSProperties, ReactElement} from 'react';
-import {Img, interpolate, OffthreadVideo, useCurrentFrame, useVideoConfig} from 'remotion';
+import {interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
 import {
   normalizeEffects,
   slideTransform,

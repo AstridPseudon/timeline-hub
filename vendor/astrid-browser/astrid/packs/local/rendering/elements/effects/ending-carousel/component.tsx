@@ -1,12 +1,6 @@
+import {ManagedImg as Img, ManagedOffthreadVideo as OffthreadVideo} from '../../../../../rendering/shared/managed-media';
 import type {ReactElement} from 'react';
-import {
-  Img,
-  OffthreadVideo,
-  interpolate,
-  staticFile,
-  useCurrentFrame,
-  useVideoConfig,
-} from 'remotion';
+import {interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {
   type ElementComponentProps,
   narrowParams,
