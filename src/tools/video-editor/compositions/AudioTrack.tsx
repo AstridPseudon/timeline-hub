@@ -9,7 +9,7 @@ import {
   getSanitizedVolume,
   secondsToFrames,
 } from '@/tools/video-editor/lib/config-utils.ts';
-import { AudioEnvelopeError, audioEnvelopeAt, compileAudioEnvelope } from '@banodoco/timeline-composition/evaluation';
+import { AudioEnvelopeError, audioEnvelopeAt, compileAudioEnvelope, type AudioEnvelope } from '@banodoco/timeline-composition/evaluation';
 import { MediaErrorBoundary } from '@/tools/video-editor/compositions/MediaErrorBoundary.tsx';
 import { useOptionalPreviewAudioFailureReporter } from '@/tools/video-editor/compositions/PreviewMediaFailureContext.tsx';
 import type { ResolvedTimelineClip, TrackDefinition } from '@/tools/video-editor/types/index.ts';
@@ -117,6 +117,15 @@ const authoredAudioSemantics = (clip: ResolvedTimelineClip) => {
 };
 
 const authoredAudioIdentity = (clip: ResolvedTimelineClip): string => JSON.stringify(authoredAudioSemantics(clip));
+
+// Validated curves stay between their keyframe values. If every node is <=1,
+// multiplication/minimum cannot amplify. A declared boost conservatively uses
+// Web Audio even when base gain or other envelope nodes would attenuate it.
+const envelopeMayAmplify = (envelope: AudioEnvelope): boolean => (
+  envelope.keyframes.some(({ value }) => value > 1)
+  || (envelope.multiply ?? []).some(envelopeMayAmplify)
+  || (envelope.minimum ?? []).some(envelopeMayAmplify)
+);
 
 /**
  * Interactive-preview audio that plays like the render: buffered ahead, in
@@ -354,6 +363,7 @@ const ClipAudio: FC<{
       : baseVolume,
     [baseVolume, envelope, frameOffset, fps],
   );
+  const amplify = baseVolume > 0 && (baseVolume > 1 || (envelope !== undefined && envelopeMayAmplify(envelope)));
 
   if (isRendering) {
     return (
@@ -378,7 +388,7 @@ const ClipAudio: FC<{
         playbackRate,
         getClipDurationInFrames(renderClip, fps),
         fps,
-        baseVolume > 1,
+        amplify,
       ])}
       clipId={renderClip.id}
       src={src}
@@ -386,7 +396,7 @@ const ClipAudio: FC<{
       trimAfter={trimAfter}
       playbackRate={playbackRate}
       volume={volume}
-      amplify={baseVolume > 1}
+      amplify={amplify}
     />
   );
 };

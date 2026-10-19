@@ -2,7 +2,7 @@
 import React from 'react';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { audioEnvelopeAt, compileAudioEnvelope } from '@banodoco/timeline-composition/evaluation';
+import { audioEnvelopeAt, compileAudioEnvelope, type AudioCurve, type AudioEnvelope } from '@banodoco/timeline-composition/evaluation';
 import {
   AUDIO_RETRY_DELAYS_MS,
   AUDIO_HOLD_LIMIT_MS,
@@ -209,6 +209,7 @@ describe('AudioTrack', () => {
       render(<AudioTrack track={fadeTrack} clips={[fadeClip]} fps={fps} />);
       const previewVolume = html5AudioProps.at(-1)?.volume;
       const expectedBase = fadeTrack.muted ? 0 : (fadeTrack.volume ?? 1) * (fadeClip.volume ?? 1);
+      expect(html5AudioProps.at(-1)?.useWebAudioApi).toBeUndefined();
 
       if (!envelope || typeof previewVolume !== 'function') {
         expect(previewVolume).toBe(expectedBase);
@@ -353,6 +354,135 @@ describe('AudioTrack', () => {
   });
 
   describe('preview amplification', () => {
+    it('routes an authored envelope boost through Web Audio below unity base gain', () => {
+      const boostedClip = { ...clip, audio: { envelope: { keyframes: [{ at: 0, value: 2 }] } } };
+      const envelope = compileAudioEnvelope(boostedClip, 30)!;
+      render(<AudioTrack track={track} clips={[boostedClip]} fps={30} />);
+
+      const props = html5AudioProps.at(-1)!;
+      const volume = props.volume as (frame: number) => number;
+      expect(volume(15)).toBe(1.6);
+      expect(volume(15)).toBe(0.8 * audioEnvelopeAt(envelope, 0.5));
+      expect(props.useWebAudioApi).toBe(true);
+      expect(props.crossOrigin).toBe('anonymous');
+    });
+
+    const unityEnvelope: AudioEnvelope = { keyframes: [{ at: 0, value: 1 }] };
+    const doubleEnvelope: AudioEnvelope = { keyframes: [{ at: 0, value: 2 }] };
+
+    it.each([
+      { name: 'multiply', envelope: { ...unityEnvelope, multiply: [doubleEnvelope] } },
+      { name: 'minimum', envelope: { ...unityEnvelope, minimum: [doubleEnvelope, { keyframes: [{ at: 0, value: 3 }] }] } },
+      { name: 'minimum inside multiply', envelope: { ...unityEnvelope, multiply: [{ ...unityEnvelope, minimum: [doubleEnvelope] }] } },
+      { name: 'multiply inside minimum', envelope: { ...unityEnvelope, minimum: [{ ...unityEnvelope, multiply: [doubleEnvelope] }] } },
+    ])('finds a declared boost in $name', ({ envelope }) => {
+      const boostedClip = { ...clip, audio: { envelope } };
+      const compiled = compileAudioEnvelope(boostedClip, 30)!;
+      render(<AudioTrack track={track} clips={[boostedClip]} fps={30} />);
+
+      const props = html5AudioProps.at(-1)!;
+      const volume = props.volume as (frame: number) => number;
+      expect(volume(15)).toBe(1.6);
+      expect(volume(15)).toBe(0.8 * audioEnvelopeAt(compiled, 0.5));
+      expect(props.useWebAudioApi).toBe(true);
+      expect(props.crossOrigin).toBe('anonymous');
+    });
+
+    it.each<AudioCurve>(['linear', 'equal-power', 'exponential-fast', 'exponential-moderate', 'exponential-slow', 's-curve'])(
+      'keeps a nested envelope bounded by unity native with %s interpolation', (curve) => {
+        const envelope: AudioEnvelope = {
+          keyframes: [{ at: 0, value: 0, curve }, { at: 1, value: 1 }],
+          multiply: [{ ...unityEnvelope, minimum: [unityEnvelope] }],
+        };
+        const envelopeClip = { ...clip, audio: { envelope } };
+        render(<AudioTrack track={track} clips={[envelopeClip]} fps={30} />);
+
+        const props = html5AudioProps.at(-1)!;
+        const volume = props.volume as (frame: number) => number;
+        expect(props.useWebAudioApi).toBeUndefined();
+        expect(props.crossOrigin).toBeUndefined();
+        for (const frame of [0, 15, 30, 60]) {
+          expect(volume(frame)).toBe(0.8 * audioEnvelopeAt(compileAudioEnvelope(envelopeClip, 30)!, frame / 30));
+        }
+      },
+    );
+
+    it('conservatively admits a nested declared boost even when another node silences it', () => {
+      const envelope = { ...unityEnvelope, multiply: [doubleEnvelope], minimum: [{ keyframes: [{ at: 0, value: 0 }] }] };
+      const silentClip = { ...clip, audio: { envelope } };
+      render(<AudioTrack track={track} clips={[silentClip]} fps={30} />);
+
+      const props = html5AudioProps.at(-1)!;
+      expect((props.volume as (frame: number) => number)(15)).toBe(0);
+      expect(props.useWebAudioApi).toBe(true);
+    });
+
+    it.each([
+      { name: 'muted track', audioTrack: { ...track, muted: true }, clipVolume: 0.8, gain: 0, amplify: undefined },
+      { name: 'zero track gain', audioTrack: { ...track, volume: 0 }, clipVolume: 0.8, gain: 0, amplify: undefined },
+      { name: 'zero clip gain', audioTrack: track, clipVolume: 0, gain: 0, amplify: undefined },
+      { name: 'half track gain', audioTrack: { ...track, volume: 0.5 }, clipVolume: 0.8, gain: 0.8, amplify: true },
+    ])('preserves $name with a boosted envelope', ({ audioTrack, clipVolume, gain, amplify }) => {
+      const boostedClip = { ...clip, volume: clipVolume, audio: { envelope: doubleEnvelope } };
+      render(<AudioTrack track={audioTrack} clips={[boostedClip]} fps={30} />);
+
+      const props = html5AudioProps.at(-1)!;
+      expect((props.volume as (frame: number) => number)(15)).toBe(gain);
+      expect(props.useWebAudioApi).toBe(amplify);
+      expect(props.crossOrigin).toBe(amplify ? 'anonymous' : undefined);
+    });
+
+    it('remounts on envelope backend changes in both directions and retains equivalent callbacks', () => {
+      const nativeClip = { ...clip, audio: { envelope: unityEnvelope } };
+      const boostedClip = { ...clip, audio: { envelope: doubleEnvelope } };
+      const view = render(<AudioTrack track={track} clips={[nativeClip]} fps={30} />);
+      const nativeElement = audioElement();
+      act(() => becomePlayable(nativeElement));
+
+      view.rerender(<AudioTrack track={track} clips={[boostedClip]} fps={30} />);
+      const boostedElement = audioElement();
+      const boostedVolume = html5AudioProps.at(-1)?.volume;
+      expect(boostedElement).not.toBe(nativeElement);
+      expect(nativeElement).not.toHaveAttribute('src');
+      expect(html5AudioProps.at(-1)?.useWebAudioApi).toBe(true);
+      expect(html5AudioProps.at(-1)?.crossOrigin).toBe('anonymous');
+      expect(playbackHolds.active).toBe(1);
+      act(() => becomePlayable(boostedElement));
+      expect(playbackHolds.active).toBe(0);
+
+      const equivalentBoostedClip = { ...boostedClip, audio: { envelope: { keyframes: [{ at: 0, value: 2 }] } } };
+      view.rerender(<AudioTrack track={track} clips={[equivalentBoostedClip]} fps={30} />);
+      expect(audioElement()).toBe(boostedElement);
+      expect(html5AudioProps.at(-1)?.volume).toBe(boostedVolume);
+
+      view.rerender(<AudioTrack track={track} clips={[nativeClip]} fps={30} />);
+      expect(audioElement()).not.toBe(boostedElement);
+      expect(audioElement()).not.toBe(nativeElement);
+      expect(boostedElement).not.toHaveAttribute('src');
+      expect(html5AudioProps.at(-1)?.useWebAudioApi).toBeUndefined();
+      expect(html5AudioProps.at(-1)?.crossOrigin).toBeUndefined();
+      expect(playbackHolds.active).toBe(1);
+      act(() => becomePlayable(audioElement()));
+      expect(playbackHolds.active).toBe(0);
+    });
+
+    it('keeps boosted callbacks in authored time across occurrence bounds, trim and speed', () => {
+      const boostedClip = { ...clip, at: 3, from: 3, to: 7, speed: 2,
+        audio: { envelope: { keyframes: [{ at: 0, value: 1 }, { at: 1, value: 2 }] } },
+        app: { canonicalTiming: { occurrenceStartMs: 3200, occurrenceDurationMs: 600 } } };
+      const envelope = compileAudioEnvelope(boostedClip, 30)!;
+      render(<AudioTrack track={track} clips={[boostedClip]} fps={30} />);
+
+      const props = html5AudioProps.at(-1)!;
+      expect(sequenceProps.at(-1)).toMatchObject({ from: 96, durationInFrames: 18 });
+      expect(props).toMatchObject({ trimBefore: 90, trimAfter: 126, playbackRate: 2, useWebAudioApi: true });
+      const volume = props.volume as (frame: number) => number;
+      for (const frame of [0, 6, 12, 17]) {
+        expect(volume(frame)).toBe(0.8 * audioEnvelopeAt(envelope, (frame + 6) / 30));
+      }
+      expect(volume(17)).toBeGreaterThan(1);
+    });
+
     it('remounts the preview audio when gain crosses the amplification threshold in either direction', () => {
       const { rerender } = render(<AudioTrack track={track} clips={[{ ...clip, volume: 1.2 }]} fps={30} />);
       const boostedElement = audioElement();
@@ -382,7 +512,7 @@ describe('AudioTrack', () => {
       expect(playbackHolds.active).toBe(0);
     });
 
-    it.each([0.8, 1])('keeps gain %s on the ordinary preview path', (gain) => {
+    it.each([0, 0.8, 1])('keeps gain %s on the ordinary preview path', (gain) => {
       render(<AudioTrack track={track} clips={[{ ...clip, volume: gain }]} fps={30} />);
 
       expect(html5AudioProps.at(-1)?.useWebAudioApi).toBeUndefined();
