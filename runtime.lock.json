@@ -44,6 +44,10 @@
       "from": "packages/typescript/src/generated.ts",
       "sha256": "sha256:a98eddf3560097d4ad5547efe7d923576f1bc7cf449da28d7ae49393630e838c"
     },
+    "src/integrations/runtime/timeline-commit-types.ts": {
+      "from": "packages/typescript/src/timeline-commit-types.ts",
+      "sha256": "sha256:068f23389275b6302ab3842c6d7daa540a399553f1eb39dd9688f988d82267f0"
+    },
     "vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json": {
       "from": "contract/schemas/timeline-config.schema.json",
       "sha256": "sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
@@ -51,6 +55,6 @@
   },
   "manifest": "contract/artifacts.json",
   "producer": "astrid-runtime",
-  "producer_version": "sha256:0a8f840626077be51ac1377083459882149d28a81522091179cb5cf3a2990719",
-  "source_commit": "a24e7d24343a965dc0d3f0eada141bd45c8192d7"
+  "producer_version": "sha256:1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d",
+  "source_commit": "c423544de3b7a1090649bf32e4c82514c4c7a641"
 }
