@@ -96,6 +96,17 @@ describe('PublicAstridInstallDialog', () => {
     expect(trigger).toHaveFocus();
   });
 
+  it('names PowerShell in the setup subtitle on Windows', () => {
+    setNavigator(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36',
+      'Win32',
+    );
+    render(<Harness />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
+
+    expect(screen.getByText('Run one line in PowerShell to set up Astrid on your computer.')).toBeInTheDocument();
+  });
+
   it.each([
     ['chromium', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36', 'MacIntel', 'Give Astrid its own window, like any other app'],
     ['safari', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15', 'MacIntel', 'Give Astrid its own window in your Dock'],
@@ -109,6 +120,7 @@ describe('PublicAstridInstallDialog', () => {
     if (scenario === 'mobile') expect(screen.getByText(new RegExp(copy))).toBeInTheDocument();
     else {
       expect(screen.getByRole('heading', { name: 'Set up Astrid' })).toBeInTheDocument();
+      if (scenario === 'chromium') expect(screen.getByText('Run one line in a terminal to set up Astrid on your computer.')).toBeInTheDocument();
       expect(screen.getByText(/https:\/\/astrid\.haus\/install/)).toBeInTheDocument();
       expect(screen.getByText('Add a browser shortcut')).toBeInTheDocument();
     }
