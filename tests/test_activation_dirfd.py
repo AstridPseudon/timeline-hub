@@ -13,7 +13,7 @@ def test_activation_anchors_last_rename_to_validated_parent(tmp_path: Path, monk
     authority.mkdir()
     active_root = authority / "active"
     RealmStore.initialize(active_root).close()
-    daemon = RuntimeDaemon(active_root, support_root=tmp_path / "support", production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(active_root, support_root=tmp_path / "support").start()
     backup = tmp_path / "backup"
     daemon.service.backup(backup)
     candidate = authority / "candidate"

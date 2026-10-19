@@ -133,7 +133,7 @@ def test_resident_remote_credential_is_disabled_until_recorded_acceptance(
         tmp_path, capability, target, remote_required):
     realm = tmp_path / "realm"
     RealmStore.initialize(realm).close()
-    daemon = RuntimeDaemon(realm, support_root=tmp_path / "support", production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(realm, support_root=tmp_path / "support").start()
     try:
         service = daemon.service
         digest = "sha256:" + hashlib.sha256(capability.encode()).hexdigest()
@@ -225,7 +225,7 @@ def test_resident_remote_credential_is_disabled_until_recorded_acceptance(
 def test_unaccepted_resident_generation_revoke_is_replayable_and_tombstoned(tmp_path):
     realm = tmp_path / "realm"
     RealmStore.initialize(realm).close()
-    daemon = RuntimeDaemon(realm, support_root=tmp_path / "support", production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(realm, support_root=tmp_path / "support").start()
     try:
         service = daemon.service
         capability = "machine.unaccepted"
@@ -259,7 +259,7 @@ def test_unaccepted_resident_generation_revoke_is_replayable_and_tombstoned(tmp_
 def test_resident_recovered_terminal_activation_requires_exact_replacement_receipt(tmp_path):
     realm = tmp_path / "realm"
     RealmStore.initialize(realm).close()
-    daemon = RuntimeDaemon(realm, support_root=tmp_path / "support", production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(realm, support_root=tmp_path / "support").start()
     try:
         service = daemon.service
         capability = "remote.recovered.credential"

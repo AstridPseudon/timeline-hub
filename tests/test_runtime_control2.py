@@ -7,6 +7,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from tests.runtime_credentials import provision_executor_token
+
 from runtime_protocol.backup import restore_backup, verify_backup
 from runtime_protocol.errors import CapabilityUnavailableError, ConflictError, LeaseError, ValidationError
 from runtime_protocol.daemon import RuntimeDaemon
@@ -222,7 +224,7 @@ def test_http_executor_claim_heartbeat_and_release_surface(tmp_path):
         task_body = {"capability_id": "render.gpu", "capability_digest": _digest("render.gpu-v1"), "input_object_ids": []}
         first = owner.request("POST", "/v1/tasks", task_body, headers=headers)
         second = owner.request("POST", "/v1/tasks", task_body, headers={**headers, "Idempotency-Key": "task-http-2"})
-        worker = Api(daemon.endpoint, daemon.worker_token)
+        worker = Api(daemon.endpoint, provision_executor_token(daemon, "executor"))
         first_attempt = worker.request("POST", "/v1/tasks/claim", {"executor_id": "executor", "capability_ids": ["render.gpu"], "runtime_epoch": worker.health()["runtime_epoch"]}, headers={"Idempotency-Key": "claim-http-1"})
         assert first_attempt["task_id"] == first["data"]["task_id"]
         assert first_attempt["fence"] == 1

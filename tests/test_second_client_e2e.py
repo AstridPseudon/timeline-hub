@@ -22,7 +22,7 @@ INDEPENDENT_CLIENT_SMOKE = ROOT / "conformance" / "dist" / "conformance" / "type
 @pytest.fixture()
 def daemon(tmp_path: Path):
     RealmStore.initialize(tmp_path / "realm").close()
-    instance = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support", production_worker_credentials=True).start()
+    instance = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
     try:
         yield instance
     finally:

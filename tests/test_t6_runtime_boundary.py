@@ -31,7 +31,7 @@ def test_server_replace_route_uses_the_daemon_boundary(tmp_path):
     authority.mkdir()
     active = authority / "active"
     RealmStore.initialize(active).close()
-    daemon = RuntimeDaemon(active, support_root=tmp_path / "support", production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(active, support_root=tmp_path / "support").start()
     backup = tmp_path / "backup"
     candidate = authority / "candidate"
     try:

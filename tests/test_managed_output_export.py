@@ -220,7 +220,6 @@ def test_generated_http_export_replay_conflict_and_durable_event(tmp_path: Path)
     first.close()
     daemon = RuntimeDaemon(
         root, support_root=tmp_path / "support", export_root=export_root, port=0,
-        production_worker_credentials=True,
     ).start()
     try:
         client = WorkspaceClient(daemon.endpoint, daemon.token)

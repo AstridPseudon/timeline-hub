@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from http_helpers import Api
-from runtime_protocol.daemon import RuntimeDaemon
+from runtime_protocol.daemon import RuntimeDaemon, WORKER_ACTOR, WORKER_SCOPES
 from runtime_protocol.errors import ConflictError, LeaseError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
@@ -51,6 +51,25 @@ def _service_attempt(tmp_path: Path):
         idempotency_key="settlement-worker-claim",
     )
     return service, task, attempt
+
+
+def test_default_startup_uses_scoped_worker_credential(tmp_path: Path) -> None:
+    daemon = _new_daemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    try:
+        assert daemon.worker_token != daemon.token
+        assert daemon.credentials.load(daemon.worker_token) == {
+            "actor": WORKER_ACTOR,
+            "scopes": sorted(WORKER_SCOPES),
+        }
+
+        owner = Api(daemon.endpoint, daemon.token)
+        worker = Api(daemon.endpoint, daemon.worker_token)
+        assert owner.request("GET", "/v1/export")
+        with pytest.raises(RuntimeError) as denied:
+            worker.request("GET", "/v1/export")
+        assert denied.value.status == 401
+    finally:
+        daemon.stop()
 
 
 def test_two_worker_credentials_cannot_cross_claim_or_mutate_attempt(tmp_path: Path) -> None:

@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.runtime_credentials import provision_executor_token
+
 from runtime_protocol.errors import ConflictError, LeaseError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
@@ -178,7 +180,7 @@ def test_generated_python_prepare_reboot_binds_path_attempt_id_on_live_daemon(tm
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
         task = owner.admit_task(capability_id="render.basic", capability_digest=_digest("render.basic"), input_object_ids=[], idempotency_key="generated-reboot")
         owner.register_executor({"executor_id": "generated-worker", "max_concurrency": 1, "resource_keys": [], "capabilities": [{"capability_id": "render.basic", "definition_digest": _digest("render.basic"), "status": "ready", "required_resource_keys": [], "estimated_scratch_bytes": 0, "estimated_output_bytes": 1}], "protocol": "workspace.v1"}, idempotency_key="generated-worker")
-        worker = WorkspaceClient(daemon.endpoint, daemon.worker_token)
+        worker = WorkspaceClient(daemon.endpoint, provision_executor_token(daemon, "generated-worker"))
         epoch = worker.health().runtime_epoch
         attempt = worker.claim_task(executor_id="generated-worker", capability_ids=["render.basic"], idempotency_key="generated-claim", runtime_epoch=epoch)
         prepared = worker.prepare_reboot(attempt["attempt_id"], lease_id=attempt["lease_id"], fence=attempt["fence"], runtime_epoch=epoch)
