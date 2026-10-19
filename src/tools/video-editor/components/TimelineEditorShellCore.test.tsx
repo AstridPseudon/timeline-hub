@@ -256,10 +256,6 @@ vi.mock('@/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSu
     activePanelKey ? <div data-testid="asset-panel-surface">Asset Panel</div> : null,
 }));
 
-vi.mock('@/tools/video-editor/components/SequenceCreator/SequenceCreatorPanel.tsx', () => ({
-  SequenceCreatorPanel: () => null,
-}));
-
 /** When true the mocked timeline throws during render, standing in for one
  *  malformed clip taking `ClipAction`/`TrackListRenderer` down. */
 let __timelineThrows = false;

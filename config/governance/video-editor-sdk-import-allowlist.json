@@ -402,24 +402,6 @@
         "expiration": "M5"
       }
     ],
-    "supabase/functions/ai-generate-sequence/sequence-validation.ts": [
-      {
-        "target": "src/tools/video-editor/sequences/metadata.ts",
-        "classification": "host-facing",
-        "owner": "edge-ai-sequence",
-        "rationale": "Edge function reuses video-editor sequence validation logic.",
-        "removalCondition": "Extract portable validation into a shared or SDK package.",
-        "expiration": "M5"
-      },
-      {
-        "target": "src/tools/video-editor/sequences/validation.ts",
-        "classification": "host-facing",
-        "owner": "edge-ai-sequence",
-        "rationale": "Edge function reuses video-editor sequence validation logic.",
-        "removalCondition": "Extract portable validation into a shared or SDK package.",
-        "expiration": "M5"
-      }
-    ],
     "supabase/functions/complete_task/handler.ts": [
       {
         "target": "src/tools/video-editor/types/index.ts",

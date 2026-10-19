@@ -220,9 +220,6 @@ vi.mock('@/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx', (
 vi.mock('@/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx', () => ({
   VideoEditorAssetPanelSurface: () => null,
 }));
-vi.mock('@/tools/video-editor/components/SequenceCreator/SequenceCreatorPanel.tsx', () => ({
-  SequenceCreatorPanel: () => null,
-}));
 vi.mock('@/tools/video-editor/components/ThemeChip.tsx', () => ({ ThemeChip: () => null }));
 vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditor.tsx', () => ({
   TimelineEditor: () => <div data-testid="timeline-editor">Timeline Editor</div>,

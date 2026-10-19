@@ -150,10 +150,6 @@ vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditor', () => (
   TimelineEditor: () => <div data-testid="timeline-editor" />,
 }));
 
-vi.mock('@/tools/video-editor/components/SequenceCreator/SequenceCreatorPanel', () => ({
-  SequenceCreatorPanel: () => <div data-testid="sequence-creator-panel" />,
-}));
-
 vi.mock('@/tools/video-editor/components/ThemeChip', () => ({
   ThemeChip: () => <div data-testid="theme-chip" />,
 }));
@@ -200,10 +196,6 @@ vi.mock('@/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSu
   VideoEditorAssetPanelSurface: ({ includeBuiltIn }: { includeBuiltIn?: boolean }) => (
     <div data-testid="asset-panel-surface" data-include-built-in={String(Boolean(includeBuiltIn))} />
   ),
-}));
-
-vi.mock('@/tools/video-editor/components/SequenceCreator/SequenceCreatorPanel', () => ({
-  SequenceCreatorPanel: () => <div data-testid="sequence-creator-panel" />,
 }));
 
 vi.mock('@/tools/video-editor/components/ThemeChip', () => ({

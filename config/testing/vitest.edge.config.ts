@@ -11,10 +11,7 @@ const astridSource = resolveAstridSource();
 const EDGE_UNIT_INCLUDE = [
   'supabase/functions/_shared/**/*.test.ts',
   'supabase/functions/ai-generate-effect/**/*.test.ts',
-  'supabase/functions/ai-generate-sequence/**/*.test.ts',
-  'supabase/functions/ai-prompt/**/*.test.ts',
   'supabase/functions/ai-timeline-agent/**/*.test.ts',
-  'supabase/functions/ai-voice-prompt/**/*.test.ts',
   'supabase/functions/broadcast-realtime/**/*.test.ts',
   'supabase/functions/calculate-task-cost/**/*.test.ts',
   'supabase/functions/claim-next-task/**/*.test.ts',
@@ -47,7 +44,6 @@ const EDGE_UNIT_INCLUDE = [
   'supabase/functions/stripe-webhook/**/*.test.ts',
   'supabase/functions/trigger-auto-topup/**/*.test.ts',
   'supabase/functions/update-worker-model/**/*.test.ts',
-  'supabase/functions/extension-operational-events/**/*.test.ts',
 ] as const;
 
 const EDGE_UNIT_EXCLUDE = [

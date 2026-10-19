@@ -73,7 +73,6 @@ export const strictLintDebtFiles = [
   "src/tools/video-editor/components/PropertiesPanel/ClipPanel.tsx",
   "src/tools/video-editor/components/ProposalPanel/ProposalPanel.tsx",
   "src/tools/video-editor/components/SequenceCreator/CodePathParamEditor.tsx",
-  "src/tools/video-editor/components/SequenceCreator/SequenceCreatorPanel.tsx",
   "src/tools/video-editor/components/TimelineEditor/TimeRuler.tsx",
   "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx",
   "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx",
