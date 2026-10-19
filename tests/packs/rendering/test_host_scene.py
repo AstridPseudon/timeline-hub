@@ -24,6 +24,30 @@ from scripts import gen_effect_registry
 ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
 
+# Test elements fill exactly the rectangle they declare. This is component
+# support, not evidence about media alpha or undeclared AM pack internals.
+LABEL_COMPONENT = """
+import {createElement} from 'react';
+import {useVideoConfig} from 'remotion';
+
+const layout = (clip, width, height) => clip.clipType === 'test-field'
+  ? {x: 0, y: 0, width, height}
+  : {x: clip.x, y: clip.y, width: clip.width, height: clip.height};
+
+export default Object.assign(({clip}) => {
+  const {width, height} = useVideoConfig();
+  const rect = layout(clip, width, height);
+  return createElement('div', {style: {position: 'absolute', left: rect.x,
+    top: rect.y, width: rect.width, height: rect.height, background: '#123456'}});
+}, {
+  prepareSceneCapability: ({clip, width, height}) => {
+    const rect = layout(clip, width, height);
+    return {identity: JSON.stringify(rect), frame: () => ({presence: 'present',
+      opaqueSupport: 'rect', bounds: {status: 'known', rect}})};
+  },
+});
+"""
+
 
 @pytest.fixture(scope="module")
 def host_project(tmp_path_factory):
@@ -40,11 +64,12 @@ def host_project(tmp_path_factory):
     pack = project_root / "probe"
     elements = list(gen_effect_registry._element_registry().list())
     rendering = {}
-    for kind, element_id in (("effects", "custom"), ("animations", "fade-up"), ("transitions", "fade")):
+    for kind, element_id in (("effects", "custom"), ("effects", "test-card"), ("effects", "test-field"),
+                             ("animations", "fade-up"), ("transitions", "fade")):
         element = pack / kind / element_id
         element.mkdir(parents=True)
-        source = (REMOTION / "tests" / f"custom-{kind}.tsx").read_text()
-        if kind == "effects":
+        source = LABEL_COMPONENT if element_id.startswith("test-") else (REMOTION / "tests" / f"custom-{kind}.tsx").read_text()
+        if element_id == "custom":
             source = "import {probeWidth} from 'probe-dependency';\n" + source.replace("width: 1920", "width: probeWidth")
         (element / "component.tsx").write_text(source)
         (element / "element.yaml").write_text(f"id: {element_id}\nkind: {kind[:-1]}\n")
@@ -53,7 +78,7 @@ def host_project(tmp_path_factory):
             id=element_id, kind=kind, root=element, source="pack:probe", editable=True,
             priority=100, component=element / "component.tsx", schema={}, defaults={"durationFrames": 8},
             metadata={"pack_id": "probe", "kind": "wrapper", "phase": ["entrance", "exit"],
-                      **({"clipTypeAliases": ["custom-alias"]} if kind == "effects" else {})}))
+                      **({"clipTypeAliases": ["custom-alias"]} if element_id == "custom" else {})}))
     (pack / "pack.json").write_text(json.dumps({"id": "probe", "rendering": rendering}))
     dependency = pack / "node_modules/probe-dependency"
     dependency.mkdir(parents=True)
@@ -65,6 +90,9 @@ def host_project(tmp_path_factory):
         for kind in ("effects", "animations", "transitions"):
             (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
     package = REMOTION / "node_modules/@banodoco/timeline-composition"
+    assert json.loads((package / "package.json").read_text())["version"] == "0.0.8"
+    assert hashlib.sha256((REMOTION / "artifacts/banodoco-timeline-composition-0.0.8.tgz").read_bytes()).hexdigest() == (
+        "93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa")
     def hashes():
         return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in package.rglob("*") if p.is_file()}
@@ -85,6 +113,25 @@ def native_host(host_project, monkeypatch):
     monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs:
                         RemotionRuntimeStatus(True, project, node_executable=toolchain.path))
     return project
+
+
+@pytest.fixture(name="native_label_inputs")
+def capture_label_inputs(native_host):
+    def capture(config, frames, fps, canvas):
+        config = copy.deepcopy(config)
+        for clip in config["clips"]:
+            clip["elementRef"] = {"kind": "effect", "id": clip["clipType"], "packId": "probe"}
+        theme = builtin_theme()
+        theme["visual"]["canvas"] = {**canvas, "fps": fps}
+        config["theme"] = theme["id"]
+        snapshot = {"config": config, "registry": {"assets": {}}, "theme": theme,
+                    "fps_rational": float(fps).as_integer_ratio(), "clips": [], "occurrences": [], "metadata": {}}
+        original = copy.deepcopy(snapshot)
+        batches = labels.snapshot_labels(snapshot, frames)
+        assert all(item.status == "known" for layers in batches.values() for item in layers)
+        assert snapshot == original
+        return snapshot, batches
+    return capture
 
 
 def props(clips=None, *, theme=None, assets=None):
