@@ -48,8 +48,6 @@ jobs:
       - run: python -m pytest -q tests/test_second_client_e2e.py -m ""
 
   portability-lifecycle:
-    # Windows port in progress (M2/M3): its leg may fail until then.
-    continue-on-error: ${{ matrix.os == 'windows-latest' }}
     strategy:
       fail-fast: false
       matrix:
@@ -63,6 +61,17 @@ jobs:
           cache: pip
       - run: python -m pip install -e '.[test]'
       - run: python -m pip install -e packages/python
+      - name: Enable native Windows filesystem qualification
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          fsutil 8dot3name set 0
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot enable 8.3 aliases for qualification' }
+          $root = Join-Path $env:RUNNER_TEMP 'astrid-unc-qualification'
+          New-Item -ItemType Directory -Force -Path $root | Out-Null
+          $account = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+          New-SmbShare -Name AstridRuntimeCI -Path $root -FullAccess $account | Out-Null
+          'ASTRID_TEST_UNC_ROOT=\\localhost\AstridRuntimeCI' >> $env:GITHUB_ENV
       - run: >-
           python -m pytest -q -m ""
           tests/test_platform.py
@@ -70,14 +79,24 @@ jobs:
           tests/test_windows_worker_handoff.py
           tests/test_platform_filesystem.py
           tests/test_dirfd_windows.py
+          tests/test_windows_filesystem_native.py
+          tests/test_runtime_upgrade.py
+          tests/test_runtime_compact.py
+          tests/test_relocation_plan.py
+          tests/test_local_worker_placement.py::test_activation_acceptance_replay_flushes_record_with_writable_handle
+          tests/test_profile_services.py
+          tests/test_service_stop.py
           tests/test_m1_review.py
           tests/test_foreground.py
           tests/test_native_custody.py
           tests/test_portable_lifecycle.py
+      - name: Remove native Windows qualification share
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        run: Remove-SmbShare -Name AstridRuntimeCI -Force -ErrorAction SilentlyContinue
 
   windows-worker-handoff:
-    # Keep native IPC qualification required while the broader Windows port
-    # still permits failures in the filesystem/service jobs.
+    # Keep native IPC qualification independently required.
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
