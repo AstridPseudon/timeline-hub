@@ -611,6 +611,32 @@ def test_declared_custom_picture_requires_a_visual_output_lane(track):
     assert report["structuralIssues"][0]["code"] == "boundary/empty-child-picture"
 
 
+@pytest.mark.parametrize("parent_kind,child_kind,picture", [("audio", "visual", False), ("visual", "audio", True)])
+def test_picture_classification_matches_parent_first_materialized_track_definitions(parent_kind, child_kind, picture):
+    parent, shots, internal = _custom_picture_closure()
+    parent["config"]["tracks"].append({"id": "plate", "kind": parent_kind})
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    for child in internal.values():
+        child["payload"]["tracks"][0]["kind"] = child_kind
+    report, metadata = evaluate_closure(parent, shots, internal, timeline_id="main", materialize=True)
+    assert next(t for t in metadata["render_config"]["tracks"] if t["id"] == "plate")["kind"] == parent_kind
+    assert all(s["primary"] is picture for s in metadata["spans"])
+    assert report["blocked"] is not picture
+
+
+def test_source_only_child_tail_does_not_extend_rendered_picture_coverage():
+    parent, shots, internal = _custom_picture_closure()
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    child = internal["ir-1"]["payload"]
+    child["tracks"].append({"id": "reference", "kind": "visual", "role": "source"})
+    child["clips"].append({"id": "unused-reference", "clipType": "media", "track": "reference", "at": 10, "hold": 5})
+    report, metadata = admit_closure(parent, shots, internal, timeline_id="main")
+    assert not report["blocked"]
+    assert metadata["occurrences"][-1]["endFrame"] == 60
+    # Authored source metadata is retained; it does not create output time.
+    assert child["clips"][-1]["hold"] == 5
+
+
 def test_declared_custom_picture_preserves_auxiliary_activation_and_context_bound_intents():
     parent, shots, internal = _custom_picture_closure()
     policy = {"continuityTracks": ["v"], "pictureTracks": ["plate"]}

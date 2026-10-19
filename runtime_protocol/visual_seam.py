@@ -256,14 +256,17 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         if child is None:
             raise NotFoundError("canonical internal closure is incomplete")
         body = child["payload"]
-        child_tracks = {**tracks, **{t["id"]: t for t in body.get("tracks", []) if isinstance(t, dict) and "id" in t}}
+        # Flattening keeps the parent's definition when lane IDs collide.
+        child_tracks = {**{t["id"]: t for t in body.get("tracks", []) if isinstance(t, dict) and "id" in t}, **tracks}
         clips = body.get("clips", body.get("local_clips", []))
         if not isinstance(clips, list):
             raise ValidationError("canonical child clips must be a list")
         offset = seconds(o, "at", finite(o.get("placement", {}).get("start_ms"), 0) / 1000)
         fallback_duration = o["duration_ms"] / 1000
         inherited_speed = speed_value(o.get("speed", 1))
-        extent = max((seconds(c, "at") + clip_seconds({**c, "speed": c.get("speed", inherited_speed)}, fallback_duration * inherited_speed) for c in clips if active(c)), default=fallback_duration)
+        extent = max((seconds(c, "at") + clip_seconds({**c, "speed": c.get("speed", inherited_speed)}, fallback_duration * inherited_speed)
+                      for c in clips if active(c) and child_tracks.get(c.get("track", o["track"]), {}).get("role") != "source"),
+                     default=fallback_duration)
         extent = math.ceil(extent * 1000 - 1e-6) / 1000
         end = min(offset + extent, next_start.get(o["occurrence_id"], offset + extent))
         path = ["parent", timeline_id, "occurrence", o["occurrence_id"]]
