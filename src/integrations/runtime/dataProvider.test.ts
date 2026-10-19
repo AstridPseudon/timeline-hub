@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AstridRuntimeClient, RuntimeAuthenticationError, RUNTIME_CLIENT_SCOPES } from './client.ts';
 import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
 import { RuntimeDataProvider, toRuntimePublication } from './dataProvider.ts';
+import type { HistoryEntry, HistoryPage } from './timeline-commit-types.ts';
 import { TimelineSchemaIncompatibleError, TimelineVersionConflictError, isOwnUnacknowledgedSaveError } from '@/tools/video-editor/data/DataProvider.ts';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
 import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
@@ -22,6 +23,28 @@ function restoreHeadResource(overrides: Record<string, unknown> = {}) {
     archived: false, shots: [], references: [],
     head_revision_id: 'parent-r1', head_publication_id: 'publication-current',
     ...overrides,
+  };
+}
+
+
+function historyEntry(revisionId = 'parent-r1', publicationId = 'publication-current'): HistoryEntry {
+  return {
+    revision_id: revisionId,
+    publication_id: publicationId,
+    previous: null,
+    receipt: acceptedCommit(
+      { revision_id: revisionId, publication_id: publicationId },
+      { revision_id: 'parent-old', publication_id: 'publication-old' },
+      { projectId: PROJECT_ID, timelineId: TIMELINE_ID },
+    ).receipt,
+    intent: 'recorded', records: null, provider_version: 'provider-1', compiler_version: 'compiler-1', publisher: 'actor-1',
+  };
+}
+
+function historyPage(items: HistoryEntry[] = [historyEntry()], nextCursor: string | null = null): HistoryPage {
+  return {
+    items, next_cursor: nextCursor,
+    head: { revision_id: 'parent-r1', publication_id: 'publication-current' },
   };
 }
 
@@ -630,6 +653,121 @@ describe('RuntimeDataProvider', () => {
     expect(fixture.read().documentVersion).toBe(2);
   });
 
+  it('lists every accepted publication, including repeated revisions, pinned to the first exact head', async () => {
+    const fixture = runtimeFixture();
+    const current = historyEntry();
+    const older = historyEntry('parent-r1', 'publication-original');
+    older.receipt.created_at = '2026-10-18T00:00:00Z';
+    const intervening = historyEntry('parent-r2', 'publication-intervening');
+    const pages: HistoryPage[] = [
+      historyPage([current], 'next/page+1'),
+      { ...historyPage([intervening, older]), head: { revision_id: 'parent-r2', publication_id: 'publication-intervening' } },
+    ];
+    const paths: string[] = [];
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      if (args[1].includes(`/timelines/${TIMELINE_ID}`)) {
+        paths.push(args[1]);
+        return { status: 200, headers: {}, body: json(pages[paths.length - 1]) };
+      }
+      return fixture.transport(...args);
+    } });
+
+    const history = await provider.shotComposition.listHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID });
+
+    expect(history).toEqual([
+      { revisionId: 'parent-r1', publicationId: 'publication-current', projectId: PROJECT_ID,
+        parentDocumentId: TIMELINE_ID, createdAt: current.receipt.created_at, isCurrentHead: true },
+      { revisionId: 'parent-r2', publicationId: 'publication-intervening', projectId: PROJECT_ID,
+        parentDocumentId: TIMELINE_ID, createdAt: intervening.receipt.created_at, isCurrentHead: false },
+      { revisionId: 'parent-r1', publicationId: 'publication-original', projectId: PROJECT_ID,
+        parentDocumentId: TIMELINE_ID, createdAt: older.receipt.created_at, isCurrentHead: false },
+    ]);
+    expect(history.filter((entry) => entry.isCurrentHead)).toHaveLength(1);
+    expect(paths).toEqual([
+      `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/commits?limit=50`,
+      `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/commits?limit=50&cursor=next%2Fpage%2B1`,
+    ]);
+  });
+
+  it.each([
+    { projectId: '', parentDocumentId: TIMELINE_ID },
+    { projectId: 'another-project', parentDocumentId: TIMELINE_ID },
+    { projectId: PROJECT_ID, parentDocumentId: '' },
+  ])('refuses invalid history scope before IO: %j', async (request) => {
+    const transport = vi.fn();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
+    await expect(provider.shotComposition.listHistory!(request)).rejects.toThrow(/history/);
+    expect(transport).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['entry revision', (page: HistoryPage) => { page.items[0].revision_id = ''; }],
+    ['entry publication', (page: HistoryPage) => { page.items[0].publication_id = ''; }],
+    ['receipt identity', (page: HistoryPage) => { page.items[0].receipt.receipt_id = ''; }],
+    ['mismatched receipt identity', (page: HistoryPage) => { page.items[0].receipt.receipt_id = 'another-publication'; }],
+    ['head revision', (page: HistoryPage) => { page.head.revision_id = ''; }],
+    ['head publication', (page: HistoryPage) => { page.head.publication_id = ''; }],
+    ['receipt project', (page: HistoryPage) => { page.items[0].receipt.project_id = ''; }],
+    ['wrong receipt project', (page: HistoryPage) => { page.items[0].receipt.project_id = 'another-project'; }],
+    ['receipt timestamp', (page: HistoryPage) => { page.items[0].receipt.created_at = ''; }],
+  ] as const)('rejects malformed or unscoped accepted history: %s', async (_label, corrupt) => {
+    const fixture = runtimeFixture();
+    const page = historyPage();
+    corrupt(page);
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      if (args[1].includes('/commits?')) return { status: 200, headers: {}, body: json(page) };
+      return fixture.transport(...args);
+    } });
+    await expect(provider.shotComposition.listHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }))
+      .rejects.toThrow(/history/);
+    expect(fixture.requests.some((request) => request.path.includes(`/timelines/${TIMELINE_ID}`))).toBe(false);
+  });
+
+  it.each([undefined, '', 42])('rejects an invalid pagination cursor: %s', async (cursor) => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      if (args[1].includes('/commits?')) return { status: 200, headers: {}, body: json({ ...historyPage(), next_cursor: cursor }) };
+      return fixture.transport(...args);
+    } });
+    await expect(provider.shotComposition.listHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }))
+      .rejects.toThrow('history.next_cursor');
+  });
+
+  it('rejects a repeated pagination cursor instead of returning partial history', async () => {
+    const fixture = runtimeFixture();
+    let pages = 0;
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      if (args[1].includes('/commits?')) {
+        pages += 1;
+        return { status: 200, headers: {}, body: json(historyPage([historyEntry()], 'same-page')) };
+      }
+      return fixture.transport(...args);
+    } });
+    await expect(provider.shotComposition.listHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }))
+      .rejects.toThrow('repeated a pagination cursor');
+    expect(pages).toBe(2);
+  });
+
+  it.each([1, 2])('preserves unavailable history errors on page %s without falling back', async (failedPage) => {
+    const fixture = runtimeFixture();
+    const paths: string[] = [];
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      if (args[1].includes(`/timelines/${TIMELINE_ID}`)) {
+        paths.push(args[1]);
+        if (paths.length === failedPage) {
+          return { status: 409, headers: {}, body: json({ code: 'conflict', message: 'Accepted history is unavailable',
+            request_id: 'history-unavailable', details: { reason: 'history_unavailable' } }) };
+        }
+        return { status: 200, headers: {}, body: json(historyPage([historyEntry()], 'next-page')) };
+      }
+      return fixture.transport(...args);
+    } });
+    await expect(provider.shotComposition.listHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }))
+      .rejects.toMatchObject({ status: 409, code: 'conflict', details: { reason: 'history_unavailable' } });
+    expect(paths).toHaveLength(failedPage);
+    expect(paths.every((path) => path.includes('/commits?'))).toBe(true);
+  });
+
   it.each([true, false])('restores with both current head guards and validates the accepted closure (complete: %s)', async (complete) => {
     const fixture = runtimeFixture();
     const restoreRequests: Array<{ body: unknown; key?: string }> = [];
@@ -647,6 +785,9 @@ describe('RuntimeDataProvider', () => {
       revision_id: 'parent-old', content_digest: accepted.data.canonical_document.parent_revision.content_digest,
     } }];
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      if (args[1].includes('/commits?')) {
+        return { status: 200, headers: {}, body: json(historyPage([historyEntry(), historyEntry('parent-old', 'publication-old')])) };
+      }
       if (args[0] === 'GET' && args[1] === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
         headReads += 1;
         return { status: 200, headers: {}, body: json(restoreHeadResource()) };

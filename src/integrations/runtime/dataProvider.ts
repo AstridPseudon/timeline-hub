@@ -194,32 +194,53 @@ export class RuntimeDataProvider implements DataProvider {
       }
     },
     listHistory: async (request) => {
+      const projectId = requiredString(request.projectId, 'composition history.project_id');
+      const parentDocumentId = requiredString(request.parentDocumentId, 'composition history.timeline_id');
+      if (projectId !== this.projectId) {
+        throw new ShotCompositionUnavailableError('Workspace Runtime history belongs to another project');
+      }
       const entries: CanonicalShotCompositionHistoryEntry[] = [];
+      const seenCursors = new Set<string>();
+      let head: HistoryPage['head'] | undefined;
       let cursor: string | undefined;
       do {
-        const pageKey = JSON.stringify([request.projectId, request.parentDocumentId, cursor ?? null]);
-        const page = await this.readImmutableInFlight(pageKey, () => this.client.listProjectParentCompositionRevisions(
-          request.projectId,
-          request.parentDocumentId,
-          cursor,
-        ));
+        const page = await this.listTimelineCommits(parentDocumentId, cursor);
+        const pageHead = requiredRecord(page.head, 'composition history.head');
+        const observedHead = {
+          revision_id: requiredString(pageHead.revision_id, 'composition history.head.revision_id'),
+          publication_id: requiredString(pageHead.publication_id, 'composition history.head.publication_id'),
+        };
+        // Later pages may observe a newer head; keep the first exact pin.
+        head ??= observedHead;
+        if (!Array.isArray(page.items)) {
+          throw new ShotCompositionUnavailableError('Workspace Runtime history items must be an array');
+        }
         for (const value of page.items) {
           const revisionId = requiredString(value.revision_id, 'composition history.revision_id');
-          const projectId = requiredString(value.project_id, 'composition history.project_id');
-          const parentDocumentId = requiredString(value.timeline_id, 'composition history.timeline_id');
-          if (projectId !== request.projectId || parentDocumentId !== request.parentDocumentId) {
-            throw new ShotCompositionUnavailableError('Workspace Runtime returned history outside the requested project and timeline');
+          const publicationId = requiredString(value.publication_id, 'composition history.publication_id');
+          const receipt = requiredRecord(value.receipt, 'composition history.receipt');
+          if (requiredString(receipt.receipt_id, 'composition history.receipt.receipt_id') !== publicationId) {
+            throw new ShotCompositionUnavailableError('Workspace Runtime history publication does not match its receipt');
+          }
+          if (requiredString(receipt.project_id, 'composition history.receipt.project_id') !== projectId) {
+            throw new ShotCompositionUnavailableError('Workspace Runtime returned history outside the requested project');
           }
           entries.push({
             revisionId,
+            publicationId,
             projectId,
             parentDocumentId,
-            contentDigest: requiredString(value.content_digest, 'composition history.content_digest'),
-            createdAt: requiredString(value.created_at, 'composition history.created_at'),
-            isCurrentHead: value.is_current_head === true,
+            createdAt: requiredString(receipt.created_at, 'composition history.receipt.created_at'),
+            isCurrentHead: revisionId === head.revision_id && publicationId === head.publication_id,
           });
         }
-        cursor = page.next_cursor ?? undefined;
+        cursor = nullableString(page.next_cursor, 'composition history.next_cursor') ?? undefined;
+        if (cursor) {
+          if (seenCursors.has(cursor)) {
+            throw new ShotCompositionUnavailableError('Workspace Runtime history repeated a pagination cursor');
+          }
+          seenCursors.add(cursor);
+        }
       } while (cursor);
       return entries;
     },

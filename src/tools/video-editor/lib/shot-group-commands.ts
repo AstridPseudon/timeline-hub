@@ -6,10 +6,13 @@ import {
   resolveGroupTrackId,
 } from '@/tools/video-editor/lib/pinned-group-projection.ts';
 import { ensureGroupContiguity } from '@/tools/video-editor/lib/shot-group-contiguity.ts';
+import { clonePinnedShotGroup } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { getNextClipId, type ClipMeta, type TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { snapToFrameGrid } from '@/tools/video-editor/lib/time-grid.ts';
 import type { PinnedShotGroup, PinnedShotImageClipSnapshot } from '@/tools/video-editor/types/index.ts';
 import type { TimelineAction } from '@/tools/video-editor/types/timeline-canvas.ts';
+
+export { clonePinnedShotGroup };
 
 /** Host-owned `clip.app` key marking an empty-shot anchor clip on the timeline. */
 export const EMPTY_SHOT_ANCHOR_APP_KEY = 'emptyShotAnchor';
@@ -31,25 +34,6 @@ type ShotGroupModeInput = ShotGroupLocator & {
 
 type ShotGroupUpdates = Partial<Omit<PinnedShotGroup, 'shotId' | 'trackId'>>;
 
-function cloneImageClipSnapshot(
-  imageClipSnapshot: PinnedShotGroup['imageClipSnapshot'],
-): PinnedShotGroup['imageClipSnapshot'] {
-  return imageClipSnapshot?.map((snapshot) => ({
-    ...snapshot,
-    meta: { ...snapshot.meta },
-  }));
-}
-
-export function clonePinnedShotGroup(group: PinnedShotGroup): PinnedShotGroup {
-  return {
-    ...group,
-    clipIds: [...group.clipIds],
-    imageClipSnapshot: cloneImageClipSnapshot(group.imageClipSnapshot),
-    poolGenerationIds: group.poolGenerationIds ? [...group.poolGenerationIds] : undefined,
-    derivedFrom: group.derivedFrom ? { ...group.derivedFrom } : undefined,
-  };
-}
-
 function buildPinnedShotGroupEntry(
   currentData: TimelineData,
   {
@@ -64,7 +48,7 @@ function buildPinnedShotGroupEntry(
     derivedFrom,
   }: ShotGroupModeInput,
 ): PinnedShotGroup {
-  return {
+  return clonePinnedShotGroup({
     shotId,
     ...(name ? { name } : {}),
     trackId,
@@ -74,10 +58,10 @@ function buildPinnedShotGroupEntry(
     }),
     mode,
     ...(videoAssetKey ? { videoAssetKey } : {}),
-    ...(imageClipSnapshot ? { imageClipSnapshot: cloneImageClipSnapshot(imageClipSnapshot) } : {}),
+    ...(imageClipSnapshot ? { imageClipSnapshot } : {}),
     ...(poolGenerationIds ? { poolGenerationIds: [...poolGenerationIds] } : {}),
     ...(derivedFrom ? { derivedFrom: { ...derivedFrom } } : {}),
-  };
+  });
 }
 
 function findLocatedPinnedShotGroup(

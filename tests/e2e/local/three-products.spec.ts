@@ -980,35 +980,281 @@ test('M1 real dependency conflict retains B original guards and pending identity
   expect(wire.posts[2].response.details.reason).not.toBe('stale_head');
   const conflict = wire.posts[2].response.details.conflicts;
   expect(conflict.length, JSON.stringify(wire.posts[2].response)).toBeGreaterThan(0);
+  const conflictTargets = (conflict as Array<{ kind: string; ref: string; path: string[] }>)
+    .map(({ kind, ref, path }) => ({ kind, ref, path }));
+  const conflictLabels = conflictTargets.map(({ ref, path }) => {
+    expect(ref, 'the Runtime names the actual clip whose dependency changed').toBe(`parent/clip:${seed3.appClipId}`);
+    expect(path, 'the Runtime names the changed start time').toEqual(['at']);
+    return `Clip ${ref.slice('parent/clip:'.length)} (timeline) · Start time`;
+  });
+  const retainedError = { kind: 'conflict', message: expect.any(String), details: {
+    status: wire.posts[2].response.details.status, reason: wire.posts[2].response.details.reason, conflicts: conflictTargets,
+  } };
+  const recoveryNotice = page.getByTestId('timeline-command-recovery');
+  const locations = recoveryNotice.getByRole('list', { name: 'Changed timeline properties' }).getByRole('listitem');
   await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)?.pending?.outcome?.kind, CEILING).toBe('rejected');
   await expect(page.getByTestId('timeline-command-recovery')).toContainText('Your changes are retained and need resolution before they can be saved.');
+  await expect(recoveryNotice).toHaveRole('alert');
+  await expect(locations).toHaveText(conflictLabels);
+  await expect(page.getByRole('button', { name: 'Retry save', exact: true })).toHaveCount(0);
   const retained = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)!;
   expect(retained.intents).toHaveLength(1);
   expect(retained.intents[0].id).toBe(owner.intents[1].id);
   expect(retained.intents[0].payload).toEqual(owner.intents[1].payload);
   expect(retained.intents[0].conflict).toBeTruthy();
+  expect(retained.intents[0].conflict, 'durable intent keeps locations only, without authored states, choices or headers').toEqual(retainedError);
   expect(retained.pending?.outcome?.kind).toBe('rejected');
+  expect(retained.pending?.outcome, 'durable pending rejection is sanitized too').toEqual({ kind: 'rejected', error: retainedError });
   expect(retained.pending?.request.body).toBe(wire.posts[2].body);
+  expect(retained.pending?.request).toEqual({ method: wire.posts[2].method, path: wire.posts[2].path,
+    body: wire.posts[2].body, key: wire.posts[2].key });
+  expect(retained.pending?.intentId).toBe(owner.intents[1].id);
   expect(JSON.parse(wire.posts[2].body).commands).toEqual(commandsOf(owner.intents[1].payload));
   expect(wire.posts[2].key).not.toBe(wire.posts[0].key);
   expect((await history(harness, seed3)).head.revision_id).toBe(pinOf(c).revision_id);
   expect((await history(harness, seed3)).items).toHaveLength(before.items.length + 2);
+  expect(wire.attempts, 'a rejected save is never retried automatically').toBe(3);
   await page.reload();
   await expectConnected(page);
   const reloaded = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)!;
   expect(reloaded.pending).toEqual(retained.pending);
   expect(reloaded.intents).toEqual(retained.intents);
+  expect(wire.posts, 'reload does not send the rejected request').toHaveLength(3);
+  expect(wire.attempts).toBe(3);
   const recoverConflict = page.getByRole('button', { name: /^Recover saved edits/ })
     .and(page.locator(`[data-owner-id="${owner.ownerId}"]`));
   await expect(recoverConflict).toBeVisible(CEILING);
   await recoverConflict.click();
   await expect(page.getByTestId('timeline-command-recovery')).toContainText('Your changes are retained and need resolution before they can be saved.');
+  await expect(recoveryNotice).toHaveRole('alert');
+  await expect(locations).toHaveText(conflictLabels);
+  await expect(page.getByRole('button', { name: 'Retry save', exact: true })).toHaveCount(0);
   const recoveredConflict = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)!;
   expect(recoveredConflict.intents).toEqual(retained.intents);
   expect(recoveredConflict.pending).toEqual(retained.pending);
+  expect(recoveredConflict.intents[0].conflict).toEqual(retainedError);
+  expect(recoveredConflict.pending?.outcome).toEqual({ kind: 'rejected', error: retainedError });
+  expect(recoveredConflict.pending?.request.key).toBe(wire.posts[2].key);
+  expect(JSON.parse(recoveredConflict.pending!.request.body).commands).toEqual(commandsOf(owner.intents[1].payload));
   expect(wire.posts).toHaveLength(3);
+  expect(wire.attempts, 'explicit recovery restores the rejection without another POST').toBe(3);
   expect(wire.legacy).toEqual([]);
   expect(legacy, 'the reset move must also use the commit path exclusively').toEqual([]);
   await expectOpaqueDataKept(harness, seed3);
+  await sniff.expectClean(page, seed3.timelineId);
+});
+
+test('M1 mixed editing: an accepted pointer move followed by a refused legacy rename keeps an exact recoverable draft', async ({ page, harness, astrid, seed3 }) => {
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  await openCommandTimeline(page, harness, seed3);
+  journey.facts.sameRealm = await expectSameRealm(page, harness, astrid);
+  const before = await history(harness, seed3);
+  const original = await revisionState(harness, seed3, before.head.revision_id);
+  const from = original.parentClips[seed3.appClipId].at as number;
+  const to = from === 5 ? 7 : 5;
+  const moveResponse = page.waitForResponse((response) => response.request().method() === 'POST'
+    && COMMITS.test(new URL(response.url()).pathname), CEILING);
+  await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, from, to, THREE_PRODUCTS_REFERENCE_AT);
+  const response = await moveResponse;
+  const move = accepted({ method: response.request().method(), path: new URL(response.url()).pathname,
+    body: response.request().postData()!, key: response.request().headers()['idempotency-key'],
+    status: response.status(), response: await response.json() });
+  expect(JSON.parse(response.request().postData()!)).toMatchObject({
+    base_revision_id: before.head.revision_id, base_publication_id: before.head.publication_id,
+    commands: [{ op: 'clip.move', select: `parent/clip:${seed3.appClipId}`, args: { on: to } }],
+  });
+  expect(position(move.data.canonical_document, seed3.appClipId)).toBe(to);
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId))
+    .every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+  await expectPreviewRevision(page, pinOf(move).revision_id);
+  const moved = await history(harness, seed3);
+  expect(moved.head).toEqual(pinOf(move));
+  expect(moved.items).toHaveLength(before.items.length + 1);
+  const revisions = await allRevisions(harness, seed3);
+  const trackLabel = 'F2 mixed editing retained rename';
+  const legacyResponse = () => page.waitForResponse((answer) => answer.request().method() === 'POST'
+    && SAVES.test(new URL(answer.url()).pathname), CEILING);
+  const refusedResponse = legacyResponse();
+  await editFirstTrackName(page, trackLabel);
+  const refused = await refusedResponse;
+  expect(refused.status(), await refused.text()).toBe(409);
+  expect(await refused.json()).toMatchObject({ details: { status: 'refused', reason: 'timeline_commit_required' } });
+  const request = refused.request();
+  expect(request.postDataJSON()).toMatchObject({ expected_head: moved.head.revision_id,
+    parent_composition: { config: { tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: trackLabel })]) } } });
+  const refusalNotice = page.getByRole('alert').filter({
+    hasText: 'The timeline could not be saved because the payload is incompatible with the server schema.',
+  });
+  await expect(refusalNotice).toBeVisible(CEILING);
+  await expect(firstTrackName(page)).toHaveValue(trackLabel);
+  await expect.poll(async () => (await timelineDraft(page, seed3.timelineId))?.draft.config?.tracks
+    ?.find((track: any) => track.id === 'V1')?.label, CEILING).toBe(trackLabel);
+  const kept = (await timelineDraft(page, seed3.timelineId))!;
+  expect(kept).toMatchObject({ baseHeadRevisionId: moved.head.revision_id,
+    baseHeadProjectId: harness.seed.projectId, baseHeadTimelineId: seed3.timelineId });
+  expect(kept.draft.config?.clips?.find((clip: any) => clip.id === seed3.appClipId)?.at).toBe(to);
+  // projectCanonicalComposition selects display config fields; recovery stores that projection
+  // plus its scoped immutable base. saveTimelineAtHead merges it over the original raw config.
+  const authoredBase = move.data.canonical_document;
+  expect(kept.baseHeadRevisionId).toBe(authoredBase.parent_revision.revision_id);
+  expect(authoredBase.parent_revision.payload.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
+  expect(request.postDataJSON().parent_composition.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
+  expect(request.postDataJSON().parent_composition.occurrences).toEqual(authoredBase.parent_revision.payload.occurrences);
+  await expectImmutableClosure(harness, seed3, move);
+  const pinned = await revisionState(harness, seed3, kept.baseHeadRevisionId!);
+  expect(pinned.shotClips[seed3.agentClipId].app?.f2Opaque).toEqual(seed3.opaque.clip);
+  expect(await history(harness, seed3)).toEqual(moved);
+  expect(await allRevisions(harness, seed3)).toEqual(revisions);
+
+  // AUDIT 2216Z permits visible refusal only for M1. M2 must save, reload and undo this rename through commands.
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  const recovery = page.getByRole('alert').filter({ hasText: 'You have unsaved changes' });
+  await expect(recovery).toBeVisible(CEILING);
+  await expect(recovery.getByRole('button', { name: 'Save them' })).toBeEnabled();
+  expect(await timelineDraft(page, seed3.timelineId), 'reload preserves the entire native IndexedDB record').toEqual(kept);
+  await expectImmutableClosure(harness, seed3, move);
+  expect(await history(harness, seed3)).toEqual(moved);
+  const retryResponse = legacyResponse();
+  await recovery.getByRole('button', { name: 'Save them' }).click();
+  const retry = await retryResponse;
+  expect(retry.status(), await retry.text()).toBe(409);
+  expect(await retry.json()).toMatchObject({ details: { status: 'refused', reason: 'timeline_commit_required' } });
+  expect(retry.request().postData(), 'recovery keeps the original CAS and authored payload').toBe(request.postData());
+  expect(retry.request().headers()['idempotency-key'], 'recovery keeps the same request identity')
+    .toBe(request.headers()['idempotency-key']);
+  await expect(refusalNotice).toBeVisible(CEILING);
+  await expect(firstTrackName(page)).toHaveValue(trackLabel);
+  await expect.poll(async () => (await timelineDraft(page, seed3.timelineId))?.draft, CEILING).toEqual(kept.draft);
+  expect((await timelineDraft(page, seed3.timelineId))?.baseHeadRevisionId).toBe(kept.baseHeadRevisionId);
+  expect(await history(harness, seed3)).toEqual(moved);
+  expect(await allRevisions(harness, seed3)).toEqual(revisions);
+  await expectImmutableClosure(harness, seed3, move);
+  await expectAgentRevision(astrid, harness, seed3, moved.head.revision_id);
+  await expectOpaqueDataKept(harness, seed3);
+  journey.facts = { ...journey.facts, acceptedMove: pinOf(move), legacyRefusal: await refused.json(),
+    retainedDraftOwner: kept.ownerId, originalCas: kept.baseHeadRevisionId,
+    legacyRequestKey: request.headers()['idempotency-key'], recovery: 'Save them restores the rename and visibly refuses again',
+    renderer: 'not started' };
+  await sniff.expectClean(page, seed3.timelineId);
+});
+
+test('M2 real history UI restores an exact revision and keeps repeated publications visible with one Current', async ({ page, harness, astrid, seed3 }) => {
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  const before = await history(harness, seed3);
+  const target = before.head;
+  const original = before.items.find((entry) => entry.revision_id === target.revision_id && entry.publication_id === target.publication_id)!;
+  expect(original.receipt.receipt_id).toBe(target.publication_id);
+  const parent = await revisionBody(harness, target.revision_id);
+  const manifest = parent.dependency_manifest as CanonicalDocument['dependency_manifest'];
+  const document: CanonicalDocument = {
+    schema_version: 1, project_id: harness.seed.projectId, timeline_id: seed3.timelineId,
+    parent_revision: { revision_id: target.revision_id, content_digest: parent.content_digest, payload: parent.payload },
+    shot_revisions: await Promise.all(manifest.shots.map(async (pin) => {
+      const response = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/shots/${pin.shot_id}/revisions/${pin.revision_id}`);
+      expect(response.status, JSON.stringify(response.body)).toBe(200);
+      expect(response.body).toMatchObject(pin);
+      return { ...pin, payload: response.body.payload };
+    })),
+    internal_timeline_revisions: await Promise.all(manifest.internal_timelines.map(async (pin) => {
+      const response = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${pin.timeline_id}/revisions/${pin.revision_id}`);
+      expect(response.status, JSON.stringify(response.body)).toBe(200);
+      expect(response.body).toMatchObject(pin);
+      return { ...pin, payload: response.body.payload };
+    })),
+    dependency_manifest: manifest,
+  };
+  const originalAt = position(document, seed3.appClipId);
+  const movedAt = originalAt === 5 ? 7 : 5;
+  const moved = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, target,
+    { kind: 'move', clipId: seed3.appClipId, on: movedAt }, 'f2-history-move');
+  expect(moved.data.status).toBe('accepted');
+  expect(moved.data).toMatchObject({ base_revision_id: target.revision_id, base_publication_id: target.publication_id,
+    previous_revision_id: target.revision_id, previous_publication_id: target.publication_id });
+  expect(pinOf(moved).revision_id).not.toBe(target.revision_id);
+  expect(position(moved.data.canonical_document, seed3.appClipId)).toBe(movedAt);
+  await expectImmutableClosure(harness, seed3, moved);
+  expect((await history(harness, seed3)).head).toEqual(pinOf(moved));
+
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  const writes: Request[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().startsWith(`${harness.doorBase}${timelineBase(harness, seed3)}/`)) writes.push(request);
+  });
+  await openCommandTimeline(page, harness, seed3);
+  journey.facts.sameRealm = await expectSameRealm(page, harness, astrid);
+  await expectPreviewRevision(page, pinOf(moved).revision_id);
+  await selectClip(page, seed3.appClipId);
+  await page.getByRole('tab', { name: 'Timing', exact: true }).click();
+  const startInput = page.getByText('Start (seconds)', { exact: true }).locator('xpath=following::input[1]');
+  await expect.poll(async () => Number(await startInput.inputValue()), CEILING).toBe(movedAt);
+
+  const historyButton = page.getByRole('button', { name: 'History', exact: true });
+  await historyButton.click();
+  const menu = page.getByRole('menu');
+  const row = (publicationId: string) => menu.getByRole('menuitem').and(page.locator(`[data-publication-id="${publicationId}"]`));
+  const earlier = row(target.publication_id);
+  await expect(earlier).toBeVisible(CEILING);
+  await expect(earlier).toContainText(target.revision_id.slice(0, 16));
+  await expect(earlier).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(row(pinOf(moved).publication_id)).toContainText('Current');
+  const restorePath = `${timelineBase(harness, seed3)}/composition-revisions/${encodeURIComponent(target.revision_id)}/restore`;
+  const restoring = page.waitForResponse((response) => response.request().method() === 'POST'
+    && response.url() === `${harness.doorBase}${restorePath}`, CEILING);
+  await earlier.click();
+  const response = await restoring;
+  const request = response.request();
+  const body = request.postDataJSON();
+  const key = request.headers()['idempotency-key'];
+  expect(body).toEqual({ expected_head: pinOf(moved).revision_id, expected_publication_id: pinOf(moved).publication_id });
+  expect(key).toBeTruthy();
+  expect(key).not.toBe(moved.receipt.idempotency_key);
+  const restored = accepted({ method: request.method(), path: restorePath, body: request.postData()!, key,
+    status: response.status(), response: await response.json() });
+  expect(restored.data.status).toBe('accepted');
+  expect(restored.data).toMatchObject({ base_revision_id: pinOf(moved).revision_id, base_publication_id: pinOf(moved).publication_id,
+    previous_revision_id: pinOf(moved).revision_id, previous_publication_id: pinOf(moved).publication_id });
+  expect(restored.receipt).toMatchObject({ command_kind: 'timeline.commit', project_id: harness.seed.projectId, idempotency_key: key });
+  expect(restored.data.commands).toMatchObject([{ op: 'timeline.restore', args: {
+    revision_id: target.revision_id, content_digest: document.parent_revision.content_digest,
+  } }]);
+  expect(pinOf(restored).revision_id).toBe(target.revision_id);
+  expect(new Set([target.publication_id, pinOf(moved).publication_id, pinOf(restored).publication_id]).size).toBe(3);
+  expect(restored.data.canonical_document).toEqual(document);
+  await expectImmutableClosure(harness, seed3, restored);
+  const after = await history(harness, seed3);
+  expect(after.head).toEqual(pinOf(restored));
+  expect(after.items).toHaveLength(before.items.length + 2);
+  const restoredEntry = after.items.find((entry) => entry.publication_id === pinOf(restored).publication_id)!;
+  expect(restoredEntry.previous).toEqual(pinOf(moved));
+  expect(restoredEntry.records?.restored_from).toEqual({ revision_id: target.revision_id, content_digest: document.parent_revision.content_digest });
+  expect(after.items.find((entry) => entry.publication_id === target.publication_id)).toEqual(original);
+  await expectPreviewRevision(page, target.revision_id);
+  await expect.poll(async () => Number(await startInput.inputValue()), CEILING).toBe(originalAt);
+
+  await expect(menu).not.toBeVisible(CEILING);
+  await historyButton.click();
+  await expect(row(pinOf(restored).publication_id)).toBeVisible(CEILING);
+  await expect(menu.getByRole('menuitem')).toHaveCount(after.items.length);
+  for (const entry of after.items) {
+    await expect(row(entry.publication_id)).toBeVisible();
+    await expect(row(entry.publication_id)).toContainText(entry.revision_id.slice(0, 16));
+  }
+  const repeated = menu.getByRole('menuitem').filter({ hasText: target.revision_id.slice(0, 16) });
+  expect(await repeated.count()).toBeGreaterThanOrEqual(2);
+  await expect(row(target.publication_id)).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(row(target.publication_id)).not.toContainText('Current');
+  await expect(row(pinOf(restored).publication_id)).toHaveAttribute('aria-disabled', 'true');
+  await expect(row(pinOf(restored).publication_id)).toContainText('Current');
+  await expect(menu.getByText('Current', { exact: true })).toHaveCount(1);
+  expect(writes.map((write) => write.url()), 'the history UI alone submits one strict restore, without a snapshot or extra commit').toEqual([`${harness.doorBase}${restorePath}`]);
+  await expectOpaqueDataKept(harness, seed3);
+  journey.facts = { ...journey.facts, sourceTuple: revisionSet(journey.identity), renderer: 'not started',
+    authoringLaunch: { profile: 'astrid', python: ASTRID_PYTHON }, target, moved: pinOf(moved), restored: pinOf(restored),
+    restoreRequest: { method: request.method(), path: restorePath, body, key }, publicationCount: after.items.length };
   await sniff.expectClean(page, seed3.timelineId);
 });

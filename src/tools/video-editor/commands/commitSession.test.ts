@@ -1,9 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 import { acceptedCommit } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { ApiError } from '@/integrations/runtime/generated.ts';
+import type { CommitFailureDetails } from '@/integrations/runtime/timeline-commit-types.ts';
 import { captureClipMove, submitClipMove } from './semanticGestures.ts';
 import { environment, scope, document } from './__tests__/commitSessionEnvironment.ts';
 import { createTimelineCommandSession } from './commitSession.ts';
 import type { OutboxRecord } from './commitOutbox.ts';
+
+const conflictDetails: CommitFailureDetails = {
+  status: 'conflict', reason: 'dependency_changed',
+  base: { revision_id: 'r0', publication_id: 'p0' }, current: { revision_id: 'r-other', publication_id: 'p-other' },
+  conflicts: [{ kind: 'dependency_changed', ref: 'parent/clip:x', path: ['at'],
+    base: { state: 'present', value: 1 }, theirs: { state: 'present', value: 9 },
+    ours: { state: 'absent' }, choices: [] }],
+};
+const conflictTargets = conflictDetails.conflicts.map(({ kind, ref, path }) => ({ kind, ref, path }));
 
 async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (record: OutboxRecord) => void) {
   await new Promise<void>((resolve, reject) => {
@@ -27,6 +38,96 @@ async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (
 }
 
 describe('real clip move session through the Runtime HTTP boundary', () => {
+  it.each([true, false])('retains only conflict locations through a JSON durable reopen with pending request: %s', async (pending) => {
+    const env = await environment();
+    const send = vi.spyOn(env.provider, 'commitTimeline').mockRejectedValue(new ApiError(409, 'conflict', 'original authored guard changed', 'request-private', {
+      ...conflictDetails, headers: { Authorization: 'private-credential' }, document: { opaque: 'private-document' },
+      conflicts: [{ ...conflictDetails.conflicts[0], debug: 'private-debug' }],
+    }));
+    const first = await env.mount();
+    env.move(first, 5);
+    env.move(first, 7);
+    await vi.waitFor(() => expect(first.getState()).toMatchObject({ status: 'conflict', conflicts: conflictTargets }));
+    const owner = first.getState().ownerId!;
+    const original = structuredClone(send.mock.calls[0]);
+    expect(original[0].commands[0]).toMatchObject({ select: 'parent/clip:x', args: { on: 5 },
+      expect: { 'parent/clip:x::at': { state: 'present', value: 1 } } });
+    await first.dispose();
+    // Exercise JSON persistence without retaining an ApiError instance or undefined fields.
+    await editOwner(env, (record) => {
+      Object.assign(record, JSON.parse(JSON.stringify(record)));
+      if (!pending) delete record.pending;
+    });
+    const [saved] = await env.outboxes.list(scope);
+    const retainedError = { kind: 'conflict', message: first.getState().error,
+      details: { status: 'conflict', reason: 'dependency_changed', conflicts: conflictTargets } };
+    expect(saved.intents.map((intent) => intent.conflict)).toEqual([retainedError, retainedError]);
+    expect(JSON.stringify(saved)).not.toMatch(/private-|request-private|r-other/);
+    if (pending) {
+      expect(saved.pending?.outcome).toEqual({ kind: 'rejected', error: retainedError });
+      expect(JSON.parse(saved.pending!.request.body)).toEqual(original[0]);
+      expect(saved.pending!.request.key).toBe(original[1]);
+    }
+    const reopened = await env.mount();
+    expect(reopened.getState().conflicts).toBeUndefined();
+    await reopened.recover(owner);
+    expect(reopened.getState()).toMatchObject({ status: 'conflict', conflicts: conflictTargets, canUndo: false });
+    await reopened.retry();
+    await expect(reopened.flush()).rejects.toThrow(first.getState().error!);
+    expect(send).toHaveBeenCalledOnce();
+    expect(send.mock.calls[0]).toEqual(original);
+    const [recovered] = await env.outboxes.list(scope);
+    expect(recovered.intents).toEqual(saved.intents);
+    expect(recovered.pending).toEqual(saved.pending);
+    await reopened.dispose();
+  });
+  it.each([
+    { status: 'conflict' },
+    { ...conflictDetails, reason: null },
+    { ...conflictDetails, conflicts: null },
+    { ...conflictDetails, conflicts: [null, { kind: 'dependency_changed', ref: 'parent/clip:x', path: 'at' }] },
+    { ...conflictDetails, conflicts: [{ kind: '', ref: 'parent/clip:x', path: ['at'] },
+      { kind: 'dependency_changed', ref: null, path: ['at'] }, { kind: 'dependency_changed', ref: 'parent/clip:x', path: [3] }] },
+  ])('keeps malformed conflict details generic through recovery: %j', async (details) => {
+    const env = await environment();
+    const send = vi.spyOn(env.provider, 'commitTimeline').mockRejectedValue(new ApiError(409, 'conflict', 'changed', '', details));
+    const first = await env.mount();
+    env.move(first, 5);
+    await vi.waitFor(() => expect(first.getState().status).toBe('conflict'));
+    expect(first.getState().conflicts ?? []).toEqual([]);
+    const owner = first.getState().ownerId!;
+    await first.dispose();
+    // Older or malformed durable records must also be checked when read.
+    await editOwner(env, (record) => {
+      const error = { kind: 'conflict', message: 'changed', details };
+      record.intents[0].conflict = error;
+      if (record.pending) record.pending.outcome = { kind: 'rejected', error };
+    });
+    const reopened = await env.mount();
+    await reopened.recover(owner);
+    expect(reopened.getState()).toMatchObject({ status: 'conflict', error: 'changed' });
+    expect(reopened.getState().conflicts ?? []).toEqual([]);
+    expect(send).toHaveBeenCalledOnce();
+    await reopened.dispose();
+  });
+  it.each([
+    { status: 409, details: { ...conflictDetails, reason: 'head_busy' }, expected: 'retry' },
+    { status: 503, details: conflictDetails, expected: 'retry' },
+    { status: 403, details: { ...conflictDetails, status: undefined }, expected: 'error' },
+    { status: 409, details: { ...conflictDetails, status: 'refused' }, expected: 'error' },
+    { status: 409, details: { conflicts: conflictDetails.conflicts }, expected: 'retry' },
+  ])('does not expose real conflict targets for $status / $expected', async ({ status, details, expected }) => {
+    const env = await environment();
+    vi.spyOn(env.provider, 'commitTimeline').mockRejectedValue(new ApiError(status, 'conflict', 'arbitrary wording', '', details));
+    const session = await env.mount();
+    env.move(session, 5);
+    await vi.waitFor(() => expect(session.getState().status).toBe(expected));
+    expect(session.getState().conflicts).toBeUndefined();
+    const [saved] = await env.outboxes.list(scope);
+    expect(saved.pending?.outcome).toHaveProperty('error', { kind: expected === 'retry' ? 'unknown' : status === 403 ? 'authorization' : 'refused',
+      message: 'conflict: arbitrary wording' });
+    await session.dispose();
+  });
   it('drains a just-submitted gesture on dispose without flushing or starting a request', async () => {
     const env = await environment();
     const session = await env.mount();
@@ -373,6 +474,7 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
       const status = fault === 'conflict' ? 'conflict' : 'error';
       await vi.waitFor(() => expect(first.getState().status).toBe(status));
       const original = first.getState();
+      expect(original.conflicts).toBeUndefined();
       await first.dispose();
       if (!pending) {
         // A retained rejection blocks the first intent even without a request reservation.
@@ -381,7 +483,7 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
       const [saved] = await env.outboxes.list(scope);
       const reopened = await env.mount();
       await reopened.recover(original.ownerId!);
-      expect(reopened.getState()).toMatchObject({ status, error: original.error, canUndo: false });
+      expect(reopened.getState()).toMatchObject({ status, error: original.error, canUndo: false, conflicts: undefined });
       await reopened.retry();
       expect(reopened.getState()).toMatchObject({ status, error: original.error, canUndo: false });
       await expect(reopened.flush()).rejects.toThrow(original.error!);
