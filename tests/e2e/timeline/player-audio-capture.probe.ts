@@ -145,7 +145,7 @@ function requireUnchangedGain(actual: number, reference: number) {
   if (Math.abs(db) > 0.5) throw new Error(`captured output gain mismatch: ${db.toFixed(3)} dB`);
 }
 
-for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified fade timing first gesture without warm-up', 'startup cancellation and replay', 'diagnostic warm monitor consumer control'] as const) {
+for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified fade timing first gesture without warm-up', 'startup cancellation and replay', 'diagnostic warm monitor consumer control', 'diagnostic warm monitor prime then stop'] as const) {
   test(`captures real Player ${mode}`, async ({ browser, context, monitor }, testInfo) => {
     test.setTimeout(360_000);
     expect(await resetFakeRuntimeBaseline()).toBeNull();
@@ -174,6 +174,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
         }
         const page = await context.newPage();
         let consumer: Awaited<ReturnType<Monitor['drain']>> | undefined;
+        let consumerStoppedBeforeWarm = false;
         let primaryFailed = false;
         const requests: Array<{ url: string; status: number }> = [];
         const errors: string[] = [];
@@ -308,7 +309,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
           if (backends.includes('video') && !options.fallback) {
             await expect(page.locator('[data-preview-decoded-frame="true"]')).toHaveCount(1, { timeout: 20_000 });
           }
-          if (mode === 'diagnostic warm monitor consumer control') {
+          if (mode === 'diagnostic warm monitor consumer control' || mode === 'diagnostic warm monitor prime then stop') {
             const beforeConsumer = await evaluateWithoutGesture(page, () => ({
               epochMs: performance.timeOrigin + performance.now(),
               userActivation: navigator.userActivation.hasBeenActive,
@@ -338,16 +339,68 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             results[`${name}-before-warm`] = beforeWarm;
             expect(beforeWarm).toEqual({ userActivation: false, muted: options.muted ?? false, frame: 0 });
             await consumer.snapshot('before-warm');
+            if (mode === 'diagnostic warm monitor prime then stop') {
+              const consumerDiagnostics = await consumer.close() as {
+                pid: number | undefined;
+                stopRequestedAtMs: number;
+                snapshots: Array<{ stage: string; sinks: Array<{ name: string; index: number; state: string }>; sources: Array<{ name: string; index: number; state: string }> }>;
+                afterConsumer: {
+                  epochMs: number;
+                  sinks: Array<{ name: string; index: number; state: string }>;
+                  sources: Array<{ name: string; index: number; state: string }>;
+                  outputs: Array<{ properties: Record<string, string> }>;
+                } | null;
+              };
+              consumerStoppedBeforeWarm = true;
+              results.monitorConsumer = consumerDiagnostics;
+              const ready = consumerDiagnostics.snapshots.find(snapshot => snapshot.stage === 'ready-before-warm');
+              const afterConsumer = consumerDiagnostics.afterConsumer;
+              if (!ready || !afterConsumer) throw new Error('Missing monitor consumer stop inspection');
+              const readySource = ready.sources.find(source => source.name === 'player.monitor');
+              const readySink = ready.sinks.find(sink => sink.name === 'player');
+              const afterSource = afterConsumer.sources.find(source => source.name === 'player.monitor');
+              const afterSink = afterConsumer.sinks.find(sink => sink.name === 'player');
+              expect(readySource, 'ready private player.monitor source').toBeDefined();
+              expect(readySink, 'ready private player sink').toBeDefined();
+              expect(afterSource, 'stopped private player.monitor source').toMatchObject({
+                name: 'player.monitor', index: readySource?.index, state: 'IDLE',
+              });
+              expect(afterSink, 'stopped private player sink').toMatchObject({
+                name: 'player', index: readySink?.index, state: 'IDLE',
+              });
+              expect(afterConsumer.outputs.some(output => output.properties['application.process.id'] === String(consumerDiagnostics.pid)), 'consumer output gone before warm gesture').toBe(false);
+              expect(afterConsumer.epochMs).toBeGreaterThanOrEqual(consumerDiagnostics.stopRequestedAtMs);
+              results[`${name}-consumer-stop`] = {
+                stopRequestedAtMs: consumerDiagnostics.stopRequestedAtMs,
+                sourceSinkIdleAtMs: afterConsumer.epochMs,
+                sourceSinkIdleIntervalMs: afterConsumer.epochMs - consumerDiagnostics.stopRequestedAtMs,
+                sourceIndex: afterSource?.index,
+                sinkIndex: afterSink?.index,
+              };
+            }
           }
           // Keep the existing warm-rewind measurement, and independently capture
           // the first actual gesture without ever starting the device beforehand.
           if (mode !== 'amplified fade timing first gesture without warm-up') {
             results[`${name}-monitor-before-warmup`] = await monitor.inspect();
+            const warmEventStart = mode === 'diagnostic warm monitor prime then stop'
+              ? await evaluateWithoutGesture(page, () => window.__captureEvents.length)
+              : 0;
             await clickPlay(page);
             await expect.poll(() => evaluateWithoutGesture(page, () => window.__capturePlayer.getCurrentFrame()), { timeout: 15_000 }).toBeGreaterThan(35);
             if (options.fallback) expect(await page.locator('video').count()).toBeGreaterThan(0);
             await expect.poll(() => evaluateWithoutGesture(page, () => window.__capturePlayer.isPlaying()), { timeout: 15_000 }).toBe(false);
-            await consumer?.snapshot('after-warm-before-rewind');
+            if (mode === 'diagnostic warm monitor prime then stop') {
+              const warmGesture = await evaluateWithoutGesture(page, start => window.__captureEvents.slice(start).find(event => event.type === 'click'), warmEventStart) as { epochMs: number } | undefined;
+              expect(warmGesture, 'recorded first warm gesture').toBeDefined();
+              const stop = results[`${name}-consumer-stop`] as { stopRequestedAtMs: number; sourceSinkIdleAtMs: number };
+              results[`${name}-consumer-stop`] = {
+                ...stop,
+                gestureEpochMs: warmGesture?.epochMs,
+                stopToSourceSinkIdleMs: stop.sourceSinkIdleAtMs - stop.stopRequestedAtMs,
+                sourceSinkIdleToGestureMs: (warmGesture?.epochMs ?? 0) - stop.sourceSinkIdleAtMs,
+              };
+            } else if (consumer && !consumerStoppedBeforeWarm) await consumer.snapshot('after-warm-before-rewind');
             await evaluateWithoutGesture(page, () => {
               window.__capturePlayer.pause();
               window.__capturePlayer.seekTo(0);
@@ -441,7 +494,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             expect(readiness.userActivation, 'capture must precede the first user gesture').toBe(false);
           }
           expect(readiness.muted, 'no automatic mute hidden by a reset after warm-up').toBe(options.muted ?? false);
-          await consumer?.snapshot('before-record');
+          if (consumer && !consumerStoppedBeforeWarm) await consumer.snapshot('before-record');
           const path = testInfo.outputPath(`${name}.wav`);
           try {
             await monitor.record(path, () => clickPlay(page), options.captureGain, () => cdp.send('SystemInfo.getProcessInfo'));
@@ -451,7 +504,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             results[name] = { ...results[name] as object, revision: revision.headRevisionId, readiness, recording, events };
             await testInfo.attach(`${name}-recording-diagnostics`, { body: JSON.stringify(results[name], null, 2), contentType: 'application/json' });
           }
-          await consumer?.snapshot('after-record');
+          if (consumer && !consumerStoppedBeforeWarm) await consumer.snapshot('after-record');
           await evaluateWithoutGesture(page, () => window.__capturePlayer.pause());
           const frames = await evaluateWithoutGesture(page, () => window.__captureFrames);
           const moving = frames.filter(frame => frame.frame > 0);
@@ -533,7 +586,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
         }
       };
 
-      if (mode.startsWith('amplified fade timing') || mode === 'startup cancellation and replay' || mode === 'diagnostic warm monitor consumer control') {
+      if (mode.startsWith('amplified fade timing') || mode === 'startup cancellation and replay' || mode === 'diagnostic warm monitor consumer control' || mode === 'diagnostic warm monitor prime then stop') {
         const faded = await run('amplified-fade', ['amplified'], { fade: true });
         if (!('onset' in faded.metrics)) throw new Error('Missing fade onset');
         const fadeOnset = faded.metrics.onset;

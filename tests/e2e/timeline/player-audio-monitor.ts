@@ -123,12 +123,13 @@ export async function privateMonitor() {
         const close = () => closing ??= (async () => {
           clearTimeout(deadline);
           sampling = false;
+          const stopRequestedAtMs = Date.now();
           await inspectSafely('stop consumer', stop(consumer));
           await inspectSafely('sampling', samplingDone);
           await inspectSafely('final sample', sample());
           const afterConsumer = await inspectSafely('after consumer', structured());
           const diagnostics = {
-            pid: consumer.pid, args, spawnedAtMs, completedAtMs: Date.now(), ticksPerSecond,
+            pid: consumer.pid, args, spawnedAtMs, stopRequestedAtMs, completedAtMs: Date.now(), ticksPerSecond,
             beforeConsumer, snapshots, afterConsumer, samples, processStart,
             processEnd: (await inspectSafely('process end', exec('ps', ['-eo', 'pid,ppid,comm,pcpu,cputimes', '--sort=-pcpu'])))?.stdout,
             exitCode: consumer.exitCode, signalCode: consumer.signalCode, log, progress, daemonLog, telemetryErrors,
