@@ -108,3 +108,18 @@ regression is retained with its correct expectation (no skip/xfail exception).
 Manager/core owner must ensure recovery supplies and projects the persisted
 original display closure/basis while preserving the actual accepted submission
 basis and lifecycle responsibilities. Producer worker does not edit core.
+
+Producer final validation:421passed/1failed across9focused files (422tests,
+12.94s). Sole failure is the recovery-after-A-ACK original-basis counterexample
+above, retained as a normal failing requirement. File eslint and diff check pass.
+Actual App tsc on the uncomposed editor-candidate base reports4errors: original2
+plus receipt tuple pin and accepted/preview narrowing, both separately assigned.
+No generated/client or lifecycle edits made here. Full report:
+`workers/app-m1-projection-fact/report.md`. Compose lifecycle/client fixes first;
+core owner must correct the persisted display-basis selection before acceptance.
+
+20:06 SAFE REAL PORT NOW MERGED app0f16295c1 incl lifecycle fix/official0.2.1; actual ops.clipMove exists in production. Current inline UI will be replaced ONCE by app-m1-recovery-compose (branch starts safe integration; reuses tl/app-m1-recovery-ui via git show, no duplicate banners). FINAL target controls: 'Recover saved edits' +data-owner-id; 'Retry save' +data-testid timeline-command-retry (no protocol jargon). Real journey should follow these final controls when compose merges. No status-only accepted label claim: projection-fact producer/Viewing consumer still pending and original-base recovery regression retained, session recovery core fix next.
+
+Recovery compose final seam (2026-10-19): the single mounted surface uses `Recover saved edits` (or `Recover saved edits (session N)` for multiple owners) with the exact owner only in `data-owner-id`. Uncertain/error states expose `Retry save` with `data-testid="timeline-command-retry"`; its copy says the save can be checked without applying edits again. The surface is absent for saved, absent, and no-work loading states, and offers no retry for a typed semantic conflict. Journey selectors should use the final labels/testid above and `button[data-owner-id]`; owner IDs are never visible text.
+
+20:09 producer recovery regression is ASSIGNED to app-m1-recovery-basis, scoped ONLY commitSession core/test. Preserve producer's failing original-r0/p0 assertion unchanged; actual displayBasis payload already recorded, core must prioritize it for local display while retaining acknowledged HA for submission. Also prevent recovered rejected head from losing typed conflict state when pump skips it. No metadata/wire changes, no lifecycle undo. Core fix based SAFE integration0f16295c1; projection producer may finish with explicit dependency hold until this lands. Manager will run real producer+session regression on composed integration.

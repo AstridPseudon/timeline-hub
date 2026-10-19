@@ -1,0 +1,9 @@
+name=app-m1-recovery-compose
+repo=app
+base=tl/integration
+base_sha=0f16295c1
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/app-m1-recovery-compose
+started=2026-10-19T20:07:48Z

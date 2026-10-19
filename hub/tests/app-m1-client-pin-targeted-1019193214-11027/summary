@@ -1,0 +1,13 @@
+test app-m1-client-pin-targeted-1019193214-11027: pass exit=0 in 19s — targeted on app-m1-client-pin (app tree 5db10f75485da31718b179f96f3f5f3608733b36)
+cmd: npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/integrations/runtime/vendorLock.test.ts src/integrations/runtime/timelineCommit.test.ts
+counts:  Test Files  2 passed (2)       Tests  52 passed (52) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-m1-client-pin-targeted-1019193214-11027/log.txt ---
+
+ RUN  v4.1.5 /home/user/work/wt/.test-app-m1-client-pin-targeted-1019193214-11027
+
+
+ Test Files  2 passed (2)
+      Tests  52 passed (52)
+   Start at  19:32:22
+   Duration  10.94s (transform 2.54s, setup 1.14s, import 3.08s, tests 6.80s, environment 4.86s)
+

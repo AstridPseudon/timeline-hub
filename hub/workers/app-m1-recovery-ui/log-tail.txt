@@ -1,0 +1,400 @@
++      status: 'recovery',
++      error: null,
++      ownerId: null,
++      recoverableOwners: ['owner-a', 'owner-b'],
++      canUndo: false,
++      ...overrides,
++    },
++    retry: vi.fn(async () => {}),
++    recover: vi.fn(async () => {}),
++  };
++
++}
++
++afterEach(() => {
++  vi.restoreAllMocks();
++});
++
++describe('TimelineCommandRecovery', () => {
++  it('requires an explicit owner choice and passes the exact selected owner once', async () => {
++    const commandSession = session();
++    render(<TimelineCommandRecovery commandSession={commandSession} />);
++
++    expect(commandSession.recover).not.toHaveBeenCalled();
++    expect(screen.getByRole('button', { name: 'Recover saved edits (session 1)' })).toHaveAttribute('data-owner-id', 'owner-a');
++    expect(screen.getByRole('button', { name: 'Recover saved edits (session 2)' })).toHaveAttribute('data-owner-id', 'owner-b');
++
++    fireEvent.click(screen.getByRole('button', { name: 'Recover saved edits (session 2)' }));
++    await waitFor(() => expect(commandSession.recover).toHaveBeenCalledTimes(1));
++    expect(commandSession.recover).toHaveBeenCalledWith('owner-b');
++  });
++
++  it('uses the singular human label while keeping the owner id only in the data attribute', () => {
++    const commandSession = session({ recoverableOwners: ['owner-with-uuid-1234'] });
++    render(<TimelineCommandRecovery commandSession={commandSession} />);
++
++    const button = screen.getByRole('button', { name: 'Recover saved edits' });
++    expect(button).toHaveAttribute('data-owner-id', 'owner-with-uuid-1234');
++    expect(screen.getByRole('alert')).not.toHaveTextContent('owner-with-uuid-1234');
++  });
++
++  it('shows busy state and a readable action error without hiding retained work', async () => {
++    let finish!: () => void;
++    const recover = vi.fn(() => new Promise<void>((resolve) => { finish = resolve; }));
++    const commandSession = { ...session({ recoverableOwners: ['owner-a'] }), recover };
++    render(<TimelineCommandRecovery commandSession={commandSession} />);
++
++    fireEvent.click(screen.getByRole('button', { name: 'Recover saved edits' }));
++    expect(screen.getByRole('alert')).toHaveAttribute('aria-busy', 'true');
++    expect(screen.getByRole('button', { name: 'Recovering saved edits…' })).toBeDisabled();
++
++    await act(async () => { finish(); });
++    expect(screen.getByText('Saved edits from another editor session are available. Choose which session to recover.')).toBeInTheDocument();
++  });
++
++  it('shows the exact retry action and reports callback failures while preserving the error', async () => {
++    const retry = vi.fn(async () => { throw new Error('The save result could not be confirmed'); });
++    const commandSession = { ...session({ status: 'retry', recoverableOwners: [], ownerId: 'owner-a' }), retry };
++    render(<TimelineCommandRecovery commandSession={commandSession} />);
++
++    expect(screen.getByRole('alert')).toHaveTextContent('without creating another edit');
++    fireEvent.click(screen.getByRole('button', { name: 'Retry exact request' }));
++    await waitFor(() => expect(screen.getByText('The save result could not be confirmed')).toBeInTheDocument());
++    expect(retry).toHaveBeenCalledOnce();
++  });
++
++  it('keeps a native lock failure readable while retaining the unsaved-work warning', () => {
++    render(<TimelineCommandRecovery commandSession={session({
++      status: 'error', recoverableOwners: [], ownerId: null, error: 'Exclusive browser locks are unavailable',
++    })} />);
++
++    expect(screen.getByRole('alert')).toHaveTextContent('Your unsaved changes are still here');
++    expect(screen.getByRole('alert')).toHaveTextContent('could not safely hold the recovery session');
++    expect(screen.getByRole('alert')).not.toHaveTextContent(/exclusive|browser locks|outbox/i);
++  });
++
++  it('distinguishes a retained conflict from an uncertain retry and avoids clash wording for retry errors', () => {
++    const { rerender } = render(<TimelineCommandRecovery commandSession={session({
++      status: 'conflict', recoverableOwners: [], ownerId: 'owner-a', error: 'Changes retained',
++    })} />);
++    expect(screen.getByRole('alert')).toHaveTextContent('need resolution before they can be saved');
++    expect(screen.queryByRole('button', { name: 'Retry exact request' })).toBeNull();
++    expect(screen.getByRole('alert')).not.toHaveTextContent(/clash|another change/i);
++
++    rerender(<TimelineCommandRecovery commandSession={session({
++      status: 'retry', recoverableOwners: [], ownerId: 'owner-a', error: 'head_busy',
++    })} />);
++    expect(screen.getByRole('button', { name: 'Retry exact request' })).toBeInTheDocument();
++    expect(screen.getByRole('alert')).toHaveTextContent('save result is uncertain');
++    expect(screen.getByRole('alert')).not.toHaveTextContent(/clash|conflict/i);
++  });
++
++  it('stays hidden without the command surface or after the session is saved', () => {
++    const { rerender } = render(<TimelineCommandRecovery />);
++    expect(screen.queryByTestId('timeline-command-recovery')).toBeNull();
++
++    rerender(<TimelineCommandRecovery commandSession={session({ status: 'saved', recoverableOwners: [], ownerId: 'owner-a' })} />);
++    expect(screen.queryByTestId('timeline-command-recovery')).toBeNull();
++  });
++});
+diff --git a/src/tools/video-editor/components/TimelineCommandRecovery.tsx b/src/tools/video-editor/components/TimelineCommandRecovery.tsx
+new file mode 100644
+index 0000000000000000000000000000000000000000..81862c30c385c19938631e47ee5e7d2eb712617d
+--- /dev/null
++++ b/src/tools/video-editor/components/TimelineCommandRecovery.tsx
+@@ -0,0 +1,146 @@
++import { useState } from 'react';
++import { Button } from '@/shared/components/ui/button.tsx';
++import { cn } from '@/shared/components/ui/contracts/cn.ts';
++
++export type TimelineCommandSessionStatus =
++  | 'loading'
++  | 'saved'
++  | 'dirty'
++  | 'saving'
++  | 'retry'
++  | 'conflict'
++  | 'error'
++  | 'recovery';
++
++export type TimelineCommandRecoverySession = {
++  state: {
++    status: TimelineCommandSessionStatus;
++    error: string | null;
++    ownerId: string | null;
++    recoverableOwners: string[];
++    canUndo: boolean;
++  };
++  retry: () => Promise<void>;
++  recover: (ownerId: string) => Promise<void>;
++};
++
++export interface TimelineCommandRecoveryProps {
++  commandSession?: TimelineCommandRecoverySession;
++}
++
++function readableError(error: string | null): string | null {
++  if (!error) return null;
++  const normalized = error.toLowerCase();
++
++  if (/head_busy|\b503\b|transport|network|timed out|timeout|unknown/.test(normalized)) {
++    return 'The save result is uncertain. Your changes are still here.';
++  }
++  if (/lock|claim|outbox|storage|indexeddb|database|persist/.test(normalized)) {
++    return 'Your unsaved changes are still here, but this browser could not safely hold the recovery session.';
++  }
++  if (/credential|authori[sz]|forbidden/.test(normalized)) {
++    return 'Your unsaved changes are still here, but this editor is not authorized to save them yet.';
++  }
++
++  return error;
++}
++
++function actionErrorMessage(error: unknown): string {
++  const message = error instanceof Error ? error.message : String(error);
++  return readableError(message) ?? 'The recovery action could not finish. Your unsaved changes are still here.';
++}
++
++export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecoveryProps) {
++  const [busyAction, setBusyAction] = useState<string | null>(null);
++  const [actionError, setActionError] = useState<string | null>(null);
++
++  if (!commandSession) return null;
++
++  const { state } = commandSession;
++  const recoverableOwners = state.recoverableOwners;
++  const hasRecoveryChoices = recoverableOwners.length > 0;
++  if (state.status === 'saved' || state.status === 'loading' && !hasRecoveryChoices) return null;
++
++  const isConflict = state.status === 'conflict';
++  const isRetry = state.status === 'retry';
++  const isBusy = busyAction !== null;
++  const stateError = readableError(state.error);
++  const message = hasRecoveryChoices
++    ? 'Saved edits from another editor session are available. Choose which session to recover.'
++    : isConflict
++      ? 'Your changes are retained and need resolution before they can be saved.'
++      : isRetry
++        ? 'The save result is uncertain. Retry the exact request to check it without creating another edit.'
++        : state.status === 'saving'
++          ? 'Your timeline changes are being saved.'
++          : state.status === 'dirty'
++            ? 'Your timeline changes are still unsaved.'
++            : stateError ?? 'Your unsaved changes are still here.';
++
++  const runAction = async (actionId: string, action: () => Promise<void>) => {
++    setBusyAction(actionId);
++    setActionError(null);
++    try {
++      await action();
++    } catch (error) {
++      setActionError(actionErrorMessage(error));
++    } finally {
++      setBusyAction(null);
++    }
++  };
++
++  const urgent = hasRecoveryChoices || isRetry || isConflict || state.status === 'error';
++  return (
++    <div
++      role={urgent ? 'alert' : 'status'}
++      aria-live={urgent ? 'assertive' : 'polite'}
++      aria-atomic="true"
++      aria-busy={isBusy}
++      className={cn(
++        'flex flex-wrap items-center justify-between gap-3 border-b px-3 py-2 text-sm',
++        isConflict ? 'border-amber-500/40 bg-amber-500/10' : 'border-border bg-muted/40',
++      )}
++      data-testid="timeline-command-recovery"
++    >
++      <div className="min-w-0">
++        <p>{message}</p>
++        {stateError && stateError !== message && !hasRecoveryChoices && !isConflict && (
++          <p className="mt-1 text-xs text-muted-foreground">{stateError}</p>
++        )}
++        {actionError && <p className="mt-1 text-xs text-destructive">{actionError}</p>}
++      </div>
++      {hasRecoveryChoices ? (
++        <div className="flex flex-wrap items-center gap-2" aria-label="Saved edit sessions">
++          {recoverableOwners.map((ownerId, index) => {
++            const actionId = `recover-${index}`;
++            return (
++              <Button
++                key={`${ownerId}-${index}`}
++                type="button"
++                size="sm"
++                variant="outline"
++                data-owner-id={ownerId}
++                disabled={isBusy}
++                aria-busy={busyAction === actionId}
++                onClick={() => void runAction(actionId, () => commandSession.recover(ownerId))}
++              >
++                {busyAction === actionId ? 'Recovering saved edits…' : `Recover saved edits${recoverableOwners.length > 1 ? ` (session ${index + 1})` : ''}`}
++              </Button>
++            );
++          })}
++        </div>
++      ) : isRetry ? (
++        <Button
++          type="button"
++          size="sm"
++          variant="outline"
++          disabled={isBusy}
++          aria-busy={busyAction === 'retry'}
++          onClick={() => void runAction('retry', commandSession.retry)}
++        >
++          {busyAction === 'retry' ? 'Retrying exact request…' : 'Retry exact request'}
++        </Button>
++      ) : null}
++    </div>
++  );
++}
+diff --git a/src/tools/video-editor/components/TimelineEditorShellCore.test.tsx b/src/tools/video-editor/components/TimelineEditorShellCore.test.tsx
+index dfca3c446a29c1d526c9fc25adb30471fa0ee4c4..7276ced1ed4c256cb5c01d1f20285d946a3a6ee7
+--- a/src/tools/video-editor/components/TimelineEditorShellCore.test.tsx
++++ b/src/tools/video-editor/components/TimelineEditorShellCore.test.tsx
+@@ -1653,6 +1653,19 @@
+     __chromeOverrides = {};
+   });
+ 
++  it('mounts command-session recovery controls without adopting an owner', async () => {
++    const recover = vi.fn(async () => {});
++    __chromeOverrides = { commandSession: { recover, retry: vi.fn(async () => {}), state: {
++      status: 'recovery', error: null, recoverableOwners: ['owner-a', 'owner-b'], ownerId: null, canUndo: false,
++    } } };
++
++    render(<TimelineEditorShellCore timelineId="test-timeline" />);
++
++    expect(recover).not.toHaveBeenCalled();
++    fireEvent.click(screen.getByRole('button', { name: 'Recover saved edits (session 2)' }));
++    await waitFor(() => expect(recover).toHaveBeenCalledWith('owner-b'));
++  });
++
+   it('offers Save them and Discard for a recovered draft, naming only the time of day', () => {
+     const retry = vi.fn();
+     const discard = vi.fn();
+diff --git a/src/tools/video-editor/components/TimelineEditorShellCore.tsx b/src/tools/video-editor/components/TimelineEditorShellCore.tsx
+index 6c8e176a78ced92ba0d0efb97dd36af75694addd..f43680608413dcdb75239807abd6960226c173a6
+--- a/src/tools/video-editor/components/TimelineEditorShellCore.tsx
++++ b/src/tools/video-editor/components/TimelineEditorShellCore.tsx
+@@ -55,6 +55,7 @@
+ import { ExtensionActivityRegion, type ExtensionStatusEvent } from '@/tools/video-editor/components/ExtensionActivityRegion';
+ import { ProposalPanel } from '@/tools/video-editor/components/ProposalPanel/ProposalPanel.tsx';
+ import { TimelineEditorShellToolbar } from './TimelineEditorShellToolbar.tsx';
++import { TimelineCommandRecovery, type TimelineCommandRecoverySession } from './TimelineCommandRecovery.tsx';
+ import { TimelineExportMenu } from './TimelineExportMenu.tsx';
+ import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
+ import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+@@ -283,6 +284,12 @@
+     onKeepLocalChanges: chrome.retrySaveAfterConflict,
+     onDiscardRemoteChanges: chrome.reloadFromServer,
+   });
++  // The command-session surface is supplied by the M1 editor wiring. Keep the
++  // recovery UI structurally typed here until that wiring's public type lands
++  // on the integration branch.
++  const commandSession = (chrome as typeof chrome & {
++    commandSession?: TimelineCommandRecoverySession;
++  }).commandSession;
+ 
+   useEffect(() => {
+     bootDiagnostics();
+@@ -753,7 +760,7 @@
+   // A save conflict is a choice between two versions, not an error: neutral, not destructive red.
+   // The dialog and this bar offer the same two buttons: the dialog is the one place while it is open, and this bar is
+   // the way back to the choice once it was dismissed.
+-  const conflictBanner = chrome.isConflictExhausted && !conflict.isOpen ? (
++  const conflictBanner = chrome.isConflictExhausted && commandSession?.state.status !== 'conflict' && !conflict.isOpen ? (
+     <div
+       role="alert"
+       className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-2 text-sm text-foreground"
+@@ -817,6 +824,8 @@
+     </div>
+   ) : null;
+ 
++  const commandRecovery = <TimelineCommandRecovery commandSession={commandSession} />;
++
+   /** The timeline region, contained so a render throw under it cannot take the
+    *  toolbar (and therefore undo) down with it. Shared by all three layout
+    *  branches — the boundary is per-branch instance, which is what we want: a
+@@ -832,6 +841,7 @@
+       {incompatibleBanner}
+       {watchdogBanner}
+       {recoveryBanner}
++      {commandRecovery}
+       {chrome.loadError && !(recoveryCardShowing && hasLoadedTimeline) ? (
+         // The hosted build's "Astrid stopped" / "restarted" card already says what to do about the same failure.
+         recoveryCardShowing ? null : <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />
+
+codex
+The final targeted run passes 100 tests, file-scoped ESLint passes, and `git diff --check` is clean. I also added an explicit native-lock failure assertion so browser-lock/storage failures remain readable unsaved-work states rather than conflicts. The shared coordination seam now records the exact `data-owner-id` selector and accessible labels.
+exec
+/bin/bash -lc 'git diff --no-index --check /dev/null src/tools/video-editor/components/TimelineCommandRecovery.tsx; code=$?; if [ "$code" -ne 0 ] && [ "$code" -ne 1 ]; then exit "$code"; fi; git diff --no-index --check /dev/null src/tools/video-editor/components/TimelineCommandRecovery.test.tsx; code=$?; if [ "$code" -ne 0 ] && [ "$code" -ne 1 ]; then exit "$code"; fi; git status --short --branch; printf '"'\\n--- tracked diff stat ---\\n'; git diff --stat; printf '\\n--- changed paths ---\\n'; git diff --name-only; printf '%s\\n' 'src/tools/video-editor/components/TimelineCommandRecovery.tsx' 'src/tools/video-editor/components/TimelineCommandRecovery.test.tsx'" in /home/user/work/wt/app-m1-recovery-ui
+ succeeded in 760ms:
+## tl/app-m1-recovery-ui
+ M src/tools/video-editor/components/TimelineEditorShellCore.test.tsx
+ M src/tools/video-editor/components/TimelineEditorShellCore.tsx
+?? src/tools/video-editor/components/TimelineCommandRecovery.test.tsx
+?? src/tools/video-editor/components/TimelineCommandRecovery.tsx
+
+--- tracked diff stat ---
+ .../components/TimelineEditorShellCore.test.tsx             | 13 +++++++++++++
+ .../video-editor/components/TimelineEditorShellCore.tsx     | 12 +++++++++++-
+ 2 files changed, 24 insertions(+), 1 deletion(-)
+
+--- changed paths ---
+src/tools/video-editor/components/TimelineEditorShellCore.test.tsx
+src/tools/video-editor/components/TimelineEditorShellCore.tsx
+src/tools/video-editor/components/TimelineCommandRecovery.tsx
+src/tools/video-editor/components/TimelineCommandRecovery.test.tsx
+
+codex
+## Done
+
+- Added `TimelineCommandRecovery` with:
+  - Explicit owner recovery only.
+  - Exact `data-owner-id` selectors.
+  - `Recover saved edits` / ordinal session labels.
+  - `Retry exact request`.
+  - Busy/error handling and retained-work messaging.
+  - Distinct conflict vs transport/lock/storage states.
+- Mounted it in `TimelineEditorShellCore`.
+- Added component and shell interaction tests.
+- Published the selector/label seam in `app-m1-coordination.md`.
+- Wrote the harness commit message.
+
+## Tests
+
+- Targeted Vitest: **100 passed**
+- File-scoped ESLint: **passed**
+- `git diff --check`: **passed**
+- Typecheck attempted; four pre-existing errors remain in unrelated Runtime/data-provider/AgentChat files.
+
+## Blocked / next steps
+
+Browser/full journey remains unverified per orchestration rules. When editor wiring merges, keep this component as the sole recovery UI and remove/avoid its provisional inline banner to prevent duplicate controls.
+tokens used
+139,828
+## Done
+
+- Added `TimelineCommandRecovery` with:
+  - Explicit owner recovery only.
+  - Exact `data-owner-id` selectors.
+  - `Recover saved edits` / ordinal session labels.
+  - `Retry exact request`.
+  - Busy/error handling and retained-work messaging.
+  - Distinct conflict vs transport/lock/storage states.
+- Mounted it in `TimelineEditorShellCore`.
+- Added component and shell interaction tests.
+- Published the selector/label seam in `app-m1-coordination.md`.
+- Wrote the harness commit message.
+
+## Tests
+
+- Targeted Vitest: **100 passed**
+- File-scoped ESLint: **passed**
+- `git diff --check`: **passed**
+- Typecheck attempted; four pre-existing errors remain in unrelated Runtime/data-provider/AgentChat files.
+
+## Blocked / next steps
+
+Browser/full journey remains unverified per orchestration rules. When editor wiring merges, keep this component as the sole recovery UI and remove/avoid its provisional inline banner to prevent duplicate controls.

@@ -1,0 +1,400 @@
+from pathlib import Path
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design')
+p=base/'app-writers.md'
+s=p.read_text().replace('args:{publication:<receipt_id>}', 'args:{publications:[<receipt_id>]}')
+s=s.replace('"'`timeline.inverse` and its single-publication proposal (`select:null`, `args:{publications:[<receipt_id>]}`) are specified by Agent. `timeline.restore` is the explicit guarded historical replacement; its final Agent argument schema/version is owner work.'"', '"'`timeline.inverse` is specified by Agent as `schema_version:1`, `version:"1"`, `select:null`, `args:{publications:[<receipt_id>,...]}` (nonempty unique accepted targets, oldest to newest; one target is a one-item list). `timeline.restore` is the sole explicit guarded historical replacement: `version:"1"`, `select:null`, `args:{revision_id:<id>,content_digest:<sha256>}`.'"')
+s=s.replace('a multi-publication inverse must explicitly list every target and guard the entire transaction; Agent still owns its argument schema.', 'a multi-publication inverse explicitly lists every target and guards the entire transaction under the Agent-defined schema.')
+s=s.replace('3. **Agent with Runtime:** freeze the pinned command/recorder artifact and inverse/restore argument versions, and confirm any nonidentity "'`id_map` semantics. Both current docs agree on `rationale`. Recipe still describes the earlier ABI v2 / PreparedCommit `publication` and `rebased_onto` fields; Runtime final §4.1 owns ABI 1 and the sole closure/prepared DTO. Reconcile the recipe there, not by adding App compatibility fields.'"', '3. **Agent with Runtime:** publish the pinned command/recorder artifact and confirm any nonidentity "'`id_map` semantics. The recipe now agrees with Runtime ABI 1/sole closure DTO and specifies inverse target-list/restore revision+digest arguments; Runtime'"\\'s remaining-confirmation prose still describes these as awaited, so owners should acknowledge that update. No App compatibility fields or alternate spellings are needed.')
+s=s.replace('B is separately built against its declared accepted basis or retained for resolution', 'independent B retains its declared immutable basis and dependent B stays retained until its optimistic-basis proof is specified')
+s=s.replace('accepted undo already has the single-publication "'`timeline.inverse` shape.'"', 'accepted undo already has the explicit-publications "'`timeline.inverse` shape.'"')
+p.write_text(s)
+p=base/'app-contract-consumption.md'
+s=p.read_text().replace('args:{publication:<receipt_id>}', 'args:{publications:[<receipt_id>]}')
+s=s.replace('with schema/operation versions and fresh key.', 'with "'`schema_version:1`, operation `version:"1"` and a fresh key. The list is unique and oldest-to-newest for multiple targets.'"')
+s=s.replace('2. **Agent:** publish/pin the canonical command/semantic-leaf artifact and operation schemas/versions for the inventory. Single-publication inverse proposal is currently "'`timeline.inverse`, `select:null`, `args:{publication:<receipt>}`; final multi-publication target-list and restore args/versions remain Agent-owned. Runtime fixes explicit all-or-nothing target guards and the strict restore adapter, not their command argument spelling. Confirm any nonidentity `id_map` semantics; default is stable allocated IDs without arbitrary client rewriting.'"', '2. **Agent:** publish/pin the canonical command/semantic-leaf artifact and remaining inventory operation schemas/versions; confirm any nonidentity "'`id_map` semantics. The latest recipe now specifies inverse `version:"1"`, `args:{publications:[<receipt>,...]}` (ordered nonempty unique target list), and sole restore `version:"1"`, `args:{revision_id:<id>,content_digest:<sha256>}`, both `select:null` with `schema_version:1`. Consume these final names; do not keep the earlier singular `publication` proposal. Default is stable allocated IDs without arbitrary client rewriting.'"')
+s=s.replace('3. **Agent with Runtime:** reconcile recipe\\'s earlier ABI v2 and PreparedCommit "'`publication`/`rebased_onto` fields with final Runtime §4.1: initial ABI 1, exact new generated contract digest, one complete closure, Runtime-derived acceptance metadata. This is an owner-doc inconsistency, not an App compatibility layer. Both current owners now agree on `rationale`, schema version distinct from operation version, and one atomic undo target per request; those are closed questions.'"', '3. **Agent with Runtime:** acknowledge the latest recipe\\'s inverse/restore argument confirmation in Runtime\\'s remaining-items prose (which still calls those schemas awaited). The recipe now matches ABI 1, Invocation, one closure and Runtime-derived acceptance metadata. Both owners agree on "'`rationale`, schema version distinct from operation version, and one atomic undo target per request; these are closed questions, not App compatibility work.'"')
+p.write_text(s)
+PY" in /home/user/work/wt/app-m0-contract-map
+ succeeded in 0ms:
+exec
+/bin/bash -lc "rg -n 'absent at|missing edit|contracts.*absent|ReighRuntimeClient|args:\\{publication:|ABI v2|earlier ABI|freeze.*closure|reason.*drift|schema|inverse' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-{writers,contract-consumption}.md" in /home/user/work/wt/app-m0-contract-map
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-contract-consumption.md:15:| `src/tools/video-editor/lib/timeline-data.ts:264–395`: `rowsToConfig` reconstructs clips/order/tracks/known extras, drops uploading placeholders and undefined fields, snaps local row times to frames, derives trim values. The source explicitly says accepted data re-enters as config, not rows (`:302–306`). | Rows/config are local preview and gesture-builder inputs. Hydrate accepted config/registry/bundle directly through the normal data assembler; never use `rowsToConfig` to reconstruct acceptance, preserve opaque state, compute inverse or create a fallback save. Agent's canonical boundary owns timing normalization; current local snapping is preview behavior to reconcile with Agent, not an extra accepted timing compiler. |
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-contract-consumption.md:20:| `useTimelineOps.ts:424–433` and `src/sdk/video/timeline/timelineOps.ts:51–61`: `flush()` awaits persistence and returns editor `{version}`. `useTimelineHistory.ts:303–321,424–509,553–609` distinguishes local stacks and canonical history. | Flush must expose the acknowledged Runtime result/pair for the covered prefix. Local undo may cancel unsent work; accepted undo commits `timeline.inverse`, `select:null`, `args:{publications:[<receipt_id>]}`, with `schema_version:1`, operation `version:"1"` and a fresh key. The list is unique and oldest-to-newest for multiple targets. Runtime history reconstructs guards, including unchanged writes/ABA. Historical restore remains a separate explicit `timeline.restore` adapter: exactly `{expected_head,expected_publication_id}` plus Idempotency-Key; it returns the same typed commit mutation. A mismatch refuses `stale_head`, without rebase. |
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-contract-consumption.md:31:    schema_version: 1, project_id, timeline_id
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-contract-consumption.md:57:Adapt `runtimeGraphToContract` locally to the prepared-graph shape using `parent_revision` and these child images. Its local graph `schema_version`, derived deep links/output identities and validator `cases` are not additional Runtime wire fields. Canonical authored bytes remain separate from display filtering/time offsets. Runtime final `PreparedCommit` has this one complete closure, with no second `publication` payload or null/no-change variant; `rebased_onto`/status are derived by Runtime on acceptance.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-contract-consumption.md:77:| Build A on H0 | Reserve `{POST, path, key:KA, body:{api_version:1,project_id,timeline_id,base_revision_id:R0,base_publication_id:P0,commands:A,...}}`, with supported schema/operation versions and created IDs. | Local preview may show `S0+A`; no accepted history change. |
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-contract-consumption.md:82:| Retain dependent B at the basis handoff | Keep B's original builder/commands, intended values, reads/selections, guards, created IDs and optimistic predecessor basis. Save exact S_A/HA as the acknowledged predecessor image, without rewriting B's guards or relabeling its snapshot. | **Do not automatically submit dependent B yet:** Agent's current recipe explicitly identifies an unclosed proof/schema issue for an optimistic basis not named by an immutable revision. Agent/App/Runtime must specify provider-verifiable retained basis before a new KB can send B. Until then retain B for explicit resolution. The server alone rebases a valid submitted proposal against C. |
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-contract-consumption.md:90:1. **Agent/App with Runtime review — optimistic B basis:** the recipe now explicitly says the slim wire does not encode proof of B's optimistic predecessor basis. Specify the minimum provider-verifiable command/schema representation retaining original reads/selections/guards (Agent mentions predecessor commands plus base pins as one possibility). App owns captured local intent and fencing; it cannot add a request wrapper or semantic rebase. Until resolved, exact A recovery proceeds and dependent B remains retained. Independent B already based on H0 can submit unchanged from H0 with a new key after A resolves.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-contract-consumption.md:91:2. **Agent:** publish/pin the canonical command/semantic-leaf artifact and remaining inventory operation schemas/versions; confirm any nonidentity `id_map` semantics. The latest recipe now specifies inverse `version:"1"`, `args:{publications:[<receipt>,...]}` (ordered nonempty unique target list), and sole restore `version:"1"`, `args:{revision_id:<id>,content_digest:<sha256>}`, both `select:null` with `schema_version:1`. Consume these final names; do not keep the earlier singular `publication` proposal. Default is stable allocated IDs without arbitrary client rewriting.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-contract-consumption.md:92:3. **Agent with Runtime:** acknowledge the latest recipe's inverse/restore argument confirmation in Runtime's remaining-items prose (which still calls those schemas awaited). The recipe now matches ABI 1, Invocation, one closure and Runtime-derived acceptance metadata. Both owners agree on `rationale`, schema version distinct from operation version, and one atomic undo target per request; these are closed questions, not App compatibility work.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:7:Reconciled 2026-10-19 against the published `ORCH/design/edit-recipe.md`, `commit-contract.md`, `app-contract-review.md`, `runtime-contract-review.md`, and App manager BRIEF/INBOX. Both owner contracts exist. PLAN remains authoritative; Checkpoint A is not approved. The recipe owns command schemas/arguments; Runtime owns request/response DTOs and their generated projections. App consumes these contracts and defines no competing wire format. See [app-contract-consumption.md](app-contract-consumption.md) for the concrete projection/outbox handoff and narrow remaining owner questions.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:9:The approved consumption boundary is `POST /v1/projects/{project_id}/timelines/{timeline_id}/commit`, `Idempotency-Key`, `api_version:1`, canonical project/timeline IDs, both `base_revision_id` and `base_publication_id`, and ordered nonempty `commands`. Command `schema_version:1` and registry `version` are distinct and pinned before outbox reservation. Consume the exact accepted `canonical_document` and main `CommittedMutation`; accepted publication identity is `receipt.receipt_id`. No second session sequence protocol, preview prerequisite or document-replacement fallback survives.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:11:Operation status: `timeline.inverse` is specified by Agent as `schema_version:1`, `version:"1"`, `select:null`, `args:{publications:[<receipt_id>,...]}` (nonempty unique accepted targets, oldest to newest; one target is a one-item list). `timeline.restore` is the sole explicit guarded historical replacement: `version:"1"`, `select:null`, `args:{revision_id:<id>,content_digest:<sha256>}`. Runtime §4.1/§5 now freeze the closure DTOs, bootstrap/baseline rules and restore adapter body/receipt. The recipe documents `clip.set`, `clip.clear` and graph/track setter clear semantics. Other names in the writer rows (including local patch families such as `app.update`, R4 aliases such as `clip.nudge`, and suggested move/add/split/media/placement names) remain **provisional unless Agent's operation schema specifies them**. `clip.move` in Runtime's example illustrates an envelope, not final operation arguments. Do not infer a canonical operation from a local patch name or frozen allowlist.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:13:Metadata reconciliation: consume Runtime's current `rationale` spelling for the optional reason, with `source`, `label`, `group_id`; preserve it in history/outbox without authority implications. The current recipe also uses `rationale`; R4 internal `reason` is not an additional request field. Runtime failure `details.reason` remains a separate machine discriminator. One completed gesture emits one atomic command batch/undo target. Equal `group_id` across accepted requests does not fuse them into one target; a multi-publication inverse explicitly lists every target and guards the entire transaction under the Agent-defined schema.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:18:* **Local/unsent history:** `useTimelineHistory`'s in-memory undo/redo stacks (`useTimelineHistory.ts:212-218`) and command inverse descriptors. A local undo currently calls `commitData(..., {save: true, skipHistory: true})`; it is not accepted Runtime history until the resulting request is acknowledged.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:41:| **Clip/track command facade** | `useTimelineCommandsService` (`useTimelineCommandsService.ts:319-349`) validates and calls `state.ops.applyEdit`. `addClip`, `updateClip`, `moveClip`, `trimClip`, `splitClip`, `deleteClip`, `addTrack`, `moveTrack` are `:441-962`; they currently make `rows` or `config` mutations, then the same `commitData` funnel. | Same autosave publication. No direct provider call in the facade. | M1: `moveClip` -> exact move command (R4 evidence uses `clip.nudge` plus track selector where needed). M2: provisional add/update/trim/split/delete and track create/remove/reorder/set builders, using Agent's exact operation schemas. Agent's `clip.clear` clears authored fields; do not infer entity deletion from that name. Delete the local-config-to-save adapter once each bounded command exists. Names not present in a settled contract are provisional. | Preserve clip IDs, track IDs, ordering, at/from/to/speed/hold duration, absent versus explicit-null fields, overlap validation, local unsent inverse and server-reconstructed accepted undo. Split must preserve authored child identities and refuse if an exact semantic command cannot be formed; it must not silently fall back. |
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:42:| **Local TimelineCommand runner** | `commands/types.ts:8-25,58-115` defines local command/mutation/history types; `commands/runner.ts:332-541,590-604` validates, dry-runs, applies, and builds inverses. Media descriptors are `commands/media.ts:125-209,244-434` (`add-media`, `swap`, `place-prepared-media`). `useTimelineState.ts:965-1037` applies the runner result. | It is not a durable endpoint itself; runner results currently become `commitData` snapshots and then whole-document save. | Keep the runner as local intent/preview machinery. Add a wire-builder at this seam: add -> **provisional** `timeline.add`; swap -> a specifically defined media-replacement command; prepared media -> add/asset command with stable asset identity. Do not serialize local `add-media` or `swap` names as if they were wire operations. Delete snapshot fallback after each producer has a command builder. | Preserve dry-run purity, unsent local inverse generation, stable IDs, registry/clip coupling, duration/type updates, and one transaction boundary for add/swap. |
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:45:| **Undo/redo and local checkpoints** | `useTimelineHistory.restoreHistoryEntry` (`useTimelineHistory.ts:303-321`) restores a local snapshot and saves it through `commitData`; undo/redo are `:424-486`; `jumpToCheckpoint` is `:488-509`. `persistCheckpoint` calls `provider.saveCheckpoint` (`:249-280`). | Local undo/redo currently publishes a full snapshot through `saveTimelineAtHead`; provider checkpoints are a separate `saveCheckpoint` capability. Canonical restore calls `provider.shotComposition.restoreHistory` (`:553-609`) -> Runtime `restoreProjectParentCompositionRevision` (`integrations/runtime/dataProvider.ts:207-235`). | M1: undo an accepted clip move with Agent's `timeline.inverse`, `select:null`, `args:{publications:[<receipt_id>]}` and a fresh key/base pair; the server reconstructs and guards the inverse from accepted history. M2: use this same accepted-undo path for every operation; local inverses may cancel unsent work only. Checkpoint policy must not introduce another accepted snapshot writer. Delete whole-snapshot undo publication after command coverage. Do not delete local stacks. | Preserve one-batch grouping, server inverse guards (including unchanged writes and ABA), local undo of unsent edits, publication identity/ABA protection, remote boundary clearing, and the distinction between undoing an unsent command and restoring an accepted revision. Canonical accepted restore must not be recast as local undo. |
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:49:| **Transcript/project-data host** | Transient projection in `lib/project-transcript-host.ts:380-390` calls `commitData(...,{save:false,skipHistory:true})`; persisted transcript binding at `:600-660` calls `commitData(...,{save:true,semantic:true})`. Data-kind persisted/transient split is `data-kinds/dataKindItems.ts:51-68`. | Persisted binding/data-kind changes currently enter whole-document save; transient projection is intentionally local-only. | M2: keep transient path unchanged; map persisted transcript/data-lane changes to exact `transcript.bind` and/or `project-data.write/delete` commands. Delete snapshot fallback only after command serialization covers source-item identities. | Preserve transcript source references, schema refs, lane ordering, validation, and the fact that transient preview never saves or enters history. |
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:53:| **Runtime canonical history adapter** | `integrations/runtime/dataProvider.ts:207-315` exposes `shotComposition.restoreHistory` and `publish`; `useTimelineHistory.ts:553-609` calls list/restore. `shotComposition.publish` calls `client.publishParentComposition` (`dataProvider.ts:237-315,271-276`). | Accepted canonical history is Runtime parent-composition revision publication/restore, not App local history. | Consume `listTimelineCommits` as publication history (including same-content edges) and main receipts; preserve immutable revision reads. `restoreHistory` is an explicit historical replacement via the `timeline.restore` adapter, requiring the observed revision/publication guard; ordinary accepted undo uses `timeline.inverse`. Delete direct publish from gesture callers; Runtime owns renderer-free acceptance/bootstrap internals. | Preserve exact accepted revision IDs, read-after-write head, list/restore semantics, and no local-stack contamination at remote boundaries. |
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:90:1. After Checkpoint A, consume the published recipe/Runtime contract: Agent operation schema and versions, selectors/expectations, occurrence/created IDs, revision/publication base pair, `Idempotency-Key`, canonical closure and main `CommittedMutation`. Resolve only the narrow schema/projection questions below; do not port R4 request/session sequencing.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:92:3. Migrate clip move (including track move where applicable) from `useTimelineOps`/gesture commit to one exact EditCommand. Preserve local preview, one-batch grouping, server-reconstructed accepted inverse, IndexedDB outbox, unknown-transport exact retry, and ACK pair advancement.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:98:Migrate all remaining `useTimelineCommandsService` operations, add/import, swap, asset registration, transcript/data-kind, visual seam, server-reconstructed accepted inverse, extension element, server-side producers/proposals, popup add/swap, and shared owned placement producers. Then remove:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:106:* whole-snapshot undo publication after command inverses cover the operation;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:116:* `useTimelineCommit.test.tsx`, `useTimelineHistory.test.ts`, and `useTimelineOps.test.ts` are the seams for command attachment, inverse ownership, undo/redo, and `flush`; add assertions that preview/dry-run has zero request/draft/history effects and that accepted history changes only after a receipt.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:138:Adapt the `mutation.type === 'commands'` branch (`R4 useTimelineCommit.ts:522-549`) and command attachment/refusal into current `useTimelineCommit`. R4 `editCommands`, `occurrenceContext`, `proposalBase` options (`:80-91`) are local captured-intent evidence only; translate into Agent commands/explicit pins, not a wire `scope` wrapper. Preserve current local event/history behavior in `60aa26b95`; do not replace the file wholesale. R4's command-attachment tests (`useTimelineCommit.test.tsx:575-617`) and inverse ownership check (`:715-724`) are worth porting.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:174:The contracts now settle the door, identity, server rebase, canonical result, publication history, unchanged writes, inverse reconstruction and grouping boundary. App must not reopen those decisions. Remaining owner work is:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:177:2. **Agent:** publish operation schemas/versions for the inventoried gesture families whose names/arguments remain provisional (move/trim/split, add/swap/registry, track/occurrence/placement/duplicate, data/transcript/element/app). No new feature is requested. Include exact immutable media selections and created-ID rules; accepted undo already has the explicit-publications `timeline.inverse` shape.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md:178:3. **Agent with Runtime:** publish the pinned command/recorder artifact and confirm any nonidentity `id_map` semantics. The recipe now agrees with Runtime ABI 1/sole closure DTO and specifies inverse target-list/restore revision+digest arguments; Runtime's remaining-confirmation prose still describes these as awaited, so owners should acknowledge that update. No App compatibility fields or alternate spellings are needed.
+
+exec
+/bin/bash -lc "rg -n 'saveTimelineAtHead|saveTimelineConfigVersioned|appendTimelineConfigViaService|createTimelineViaService|config-replaced' src/shared/lib/placement/placementService.ts supabase/functions/_shared/astridAppendService.ts supabase/functions/complete_task/handler.ts supabase/functions/complete_task/placement.ts supabase/functions/timeline-import/handler.ts supabase/functions/ai-timeline-agent/db.ts; rg -n 'saveTimelineDraftIfOwner|clearTimelineDraftIfMatches|advanceTimelineDraftBaseAfterHeadAcknowledgement|advanceTimelineDraftBaseAfterAcknowledgement' src/tools/video-editor/data/timelineDraftIndexedDb.ts" in /home/user/work/wt/app-m0-contract-map
+ succeeded in 0ms:
+supabase/functions/complete_task/placement.ts:10:  saveTimelineConfigVersioned,
+supabase/functions/complete_task/placement.ts:235:  const nextVersion = await saveTimelineConfigVersioned(
+supabase/functions/ai-timeline-agent/db.ts:8:  appendTimelineConfigViaService,
+supabase/functions/ai-timeline-agent/db.ts:716:export async function saveTimelineConfigVersioned(
+supabase/functions/ai-timeline-agent/db.ts:725:      return await appendTimelineConfigViaService({
+supabase/functions/complete_task/handler.ts:15:  saveTimelineConfigVersioned,
+supabase/functions/complete_task/handler.ts:105:  const nextVersion = await saveTimelineConfigVersioned(
+supabase/functions/_shared/astridAppendService.ts:119:export async function appendTimelineConfigViaService(input: {
+supabase/functions/_shared/astridAppendService.ts:128:    `/v1/timelines/${encodeURIComponent(input.timelineId)}/config-replaced`,
+supabase/functions/_shared/astridAppendService.ts:140:export async function createTimelineViaService(input: {
+supabase/functions/timeline-import/handler.ts:13:  appendTimelineConfigViaService,
+supabase/functions/timeline-import/handler.ts:14:  createTimelineViaService,
+supabase/functions/timeline-import/handler.ts:249:    const configVersion = await createTimelineViaService({
+supabase/functions/timeline-import/handler.ts:302:    const configVersion = await appendTimelineConfigViaService({
+src/shared/lib/placement/placementService.ts:7: * (`RuntimeDataProvider.saveTimelineAtHead`: an immutable parent-composition
+src/shared/lib/placement/placementService.ts:106:      return (await provider.saveTimelineAtHead(ref, document.config, head, document.registry)).configVersion;
+57:export async function advanceTimelineDraftBaseAfterHeadAcknowledgement(
+160:export async function saveTimelineDraftIfOwner(
+261:export async function clearTimelineDraftIfMatches(
+292:export async function advanceTimelineDraftBaseAfterAcknowledgement(
+
+exec
+/bin/bash -lc "rg -n 'export class AstridRuntimeClient|new AstridRuntimeClient|TimelineHeadRevision|TimelineSaveReceipt|loadReferencedTimeline|runtimeGraphToContract' src/integrations/runtime/client.ts src/integrations/runtime/dataProvider.ts src/tools/video-editor/data/DataProvider.ts; rg -n 'export const rowsToConfig|remote/accepted data re-enters|canonicalHeadRevisionId|displayedHeadRevisionId' src/tools/video-editor/lib/timeline-data.ts src/tools/travel-between-images/components/shotTimelineDataProvider.ts" in /home/user/work/wt/app-m0-contract-map
+ succeeded in 0ms:
+src/tools/video-editor/data/DataProvider.ts:32:export interface TimelineHeadRevision {
+src/tools/video-editor/data/DataProvider.ts:38:export interface TimelineSaveReceipt {
+src/tools/video-editor/data/DataProvider.ts:40:  head: TimelineHeadRevision;
+src/tools/video-editor/data/DataProvider.ts:46:  head?: TimelineHeadRevision;
+src/tools/video-editor/data/DataProvider.ts:393:    expectedHead: TimelineHeadRevision,
+src/tools/video-editor/data/DataProvider.ts:396:  ): Promise<TimelineSaveReceipt>;
+src/tools/video-editor/data/DataProvider.ts:424:  loadReferencedTimeline?(timelineId: string, options?: { poll?: boolean }): Promise<LoadedReferencedTimeline>;
+src/integrations/runtime/dataProvider.ts:19:  type TimelineHeadRevision,
+src/integrations/runtime/dataProvider.ts:20:  type TimelineSaveReceipt,
+src/integrations/runtime/dataProvider.ts:360:    this.client = new AstridRuntimeClient({ baseUrl: options.baseUrl, token: options.token, transport: options.transport });
+src/integrations/runtime/dataProvider.ts:639:    return runtimeGraphToContract(
+src/integrations/runtime/dataProvider.ts:681:  async loadReferencedTimeline(timelineId: string, options?: { poll?: boolean }): Promise<LoadedReferencedTimeline> {
+src/integrations/runtime/dataProvider.ts:723:  private timelineHead(timelineId: string, headRevisionId: string | null): TimelineHeadRevision {
+src/integrations/runtime/dataProvider.ts:730:    expectedHead: TimelineHeadRevision,
+src/integrations/runtime/dataProvider.ts:733:  ): Promise<TimelineSaveReceipt> {
+src/integrations/runtime/dataProvider.ts:746:    base: TimelineHeadRevision,
+src/integrations/runtime/dataProvider.ts:749:  ): Promise<TimelineSaveReceipt> {
+src/integrations/runtime/dataProvider.ts:1723:function runtimeGraphToContract(
+src/integrations/runtime/client.ts:92:// The App constructs clients ad hoc (a dozen hooks each call `new AstridRuntimeClient()`),
+src/integrations/runtime/client.ts:213:export class AstridRuntimeClient {
+src/tools/video-editor/lib/timeline-data.ts:264:export const rowsToConfig = (
+src/tools/video-editor/lib/timeline-data.ts:304:      // produced edits do — remote/accepted data re-enters as a config, not as
+src/tools/travel-between-images/components/shotTimelineDataProvider.ts:57:  canonicalHeadRevisionId: string | null;
+src/tools/travel-between-images/components/shotTimelineDataProvider.ts:58:  displayedHeadRevisionId: string | null;
+src/tools/travel-between-images/components/shotTimelineDataProvider.ts:291:      canonicalHeadRevisionId: composition.headRevisionId,
+src/tools/travel-between-images/components/shotTimelineDataProvider.ts:292:      displayedHeadRevisionId: headRevisionIdFromConfig(config),
+src/tools/travel-between-images/components/shotTimelineDataProvider.ts:295:  activeEditorHeadState.current.canonicalHeadRevisionId = composition.headRevisionId;
+src/tools/travel-between-images/components/shotTimelineDataProvider.ts:298:    activeEditorHeadState.current.canonicalHeadRevisionId = next.headRevisionId;
+src/tools/travel-between-images/components/shotTimelineDataProvider.ts:300:      activeEditorHeadState.current.displayedHeadRevisionId = next.headRevisionId;
+src/tools/travel-between-images/components/shotTimelineDataProvider.ts:304:    const { canonicalHeadRevisionId, displayedHeadRevisionId } = activeEditorHeadState.current;
+src/tools/travel-between-images/components/shotTimelineDataProvider.ts:305:    if (canonicalHeadRevisionId
+src/tools/travel-between-images/components/shotTimelineDataProvider.ts:306:      && displayedHeadRevisionId !== canonicalHeadRevisionId) {
+
+exec
+/bin/bash -lc 'git diff --no-index --check /dev/null /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md
+ git diff --no-index --check /dev/null /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-contract-consumption.md' in /home/user/work/wt/app-m0-contract-map
+ exited 1 in 0ms:
+exec
+/bin/bash -lc 'git diff --check
+ git status --porcelain=v1
+ git diff --name-only
+ git ls-files --others --exclude-standard' in /home/user/work/wt/app-m0-contract-map
+ succeeded in 2197ms:
+exec
+/bin/bash -lc "nl -ba src/shared/lib/placement/placementService.ts | sed -n '50,160p'; rg -n 'publish|duplicateShotGroup' src/tools/video-editor/components/AstridTimelineEditor.tsx; rg -n 'inverse|restore|rationale|basis|ABI' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-recipe.md | tail -18" in /home/user/work/wt/app-m0-contract-map
+ succeeded in 0ms:
+    50	  timelineRef: string;
+    51	  configVersion: number;
+    52	  /**
+    53	   * Workspace v1 head the editor selected (numeric versions are provider-local
+    54	   * counters and cannot be compared across providers). Checked when present.
+    55	   */
+    56	  headRevisionId?: string | null;
+    57	  /** Transitional non-editor placement callers may retain bounded CAS rebase. */
+    58	  allowVersionRebase?: boolean;
+    59	}
+    60	
+    61	export interface LoadedDocument extends PlacementDocument {
+    62	  expectedVersion: number;
+    63	  headRevisionId?: string | null;
+    64	}
+    65	
+    66	/** One load/save pair over the Runtime (workspace.v1). */
+    67	interface DocumentStore {
+    68	  load(): Promise<LoadedDocument>;
+    69	  save(document: LoadedDocument): Promise<number>;
+    70	  attempts: number;
+    71	}
+    72	
+    73	/**
+    74	 * The document head as the Runtime serves it: `RuntimeDataProvider` reads the parent-composition
+    75	 * revision (config and registry), because `GET /v1/projects/:p/timelines/:t` answers the public timeline
+    76	 * resource without either. `headRevisionId` is `undefined` when the provider reports no head at all.
+    77	 */
+    78	export async function loadTimelineDocument(projectSlug: string, timelineRef: string): Promise<LoadedDocument> {
+    79	  const provider = new RuntimeDataProvider({ projectId: projectSlug });
+    80	  const [timeline, registry] = await Promise.all([
+    81	    provider.loadTimeline(timelineRef),
+    82	    provider.loadAssetRegistry(timelineRef),
+    83	  ]);
+    84	  return {
+    85	    config: timeline.config,
+    86	    registry,
+    87	    expectedVersion: timeline.configVersion,
+    88	    headRevisionId: timeline.head?.headRevisionId,
+    89	  };
+    90	}
+    91	
+    92	function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
+    93	  const ref = target.timelineRef;
+    94	  const provider = new RuntimeDataProvider({ projectId: target.projectSlug });
+    95	  return {
+    96	    attempts: RUNTIME_PUBLISH_ATTEMPTS,
+    97	    async load() {
+    98	      const document = await loadTimelineDocument(target.projectSlug, ref);
+    99	      if (document.headRevisionId === undefined) {
+   100	        throw new TimelineVersionConflictError(`Runtime timeline ${ref} returned no head revision`);
+   101	      }
+   102	      return document;
+   103	    },
+   104	    async save(document) {
+   105	      const head = { projectId: target.projectSlug, timelineId: ref, headRevisionId: document.headRevisionId ?? null };
+   106	      return (await provider.saveTimelineAtHead(ref, document.config, head, document.registry)).configVersion;
+   107	    },
+   108	  };
+   109	}
+   110	
+   111	async function resolveDefaultTimelineRef(client: AstridLocalClient, projectSlug: string): Promise<string> {
+   112	  const timelines = (await client.timelines.list()).timelines ?? [];
+   113	  if (timelines.length === 0) throw new PlacementProjectMissingError(projectSlug);
+   114	  const chosen = timelines.find((timeline) => timeline.is_default === true) ?? timelines[0];
+   115	  // The Runtime addresses timelines by canonical id.
+   116	  return chosen.timeline_id;
+   117	}
+   118	
+   119	export async function mutateTimelineDocument<T>(
+   120	  target: ActiveTimelineTarget,
+   121	  mutate: (document: PlacementDocument) => T,
+   122	): Promise<{ result: T; configVersion: number }> {
+   123	  const store = createDocumentStore(target);
+   124	  const ref = target.timelineRef;
+   125	
+   126	  for (let attempt = 0; attempt < store.attempts; attempt += 1) {
+   127	    const document = await store.load();
+   128	    if (!target.allowVersionRebase) {
+   129	      const stale = target.headRevisionId !== undefined && document.headRevisionId !== target.headRevisionId;
+   130	      if (stale) {
+   131	        throw new TimelineVersionConflictError(
+   132	          `Timeline ${ref} is at version ${document.expectedVersion}; expected active editor version ${target.configVersion}`,
+   133	        );
+   134	      }
+   135	    }
+   136	    const result = mutate(document);
+   137	    try {
+   138	      return { result, configVersion: await store.save(document) };
+   139	    } catch (error) {
+   140	      if (isTimelineVersionConflictError(error)) continue;
+   141	      throw error;
+   142	    }
+   143	  }
+   144	  throw new TimelineVersionConflictError(
+   145	    `Timeline placement save conflicted ${store.attempts} consecutive times`,
+   146	  );
+   147	}
+   148	
+   149	async function resolveLegacyPlacementTarget(projectSlug: string): Promise<ActiveTimelineTarget> {
+   150	  const client = new AstridLocalClient({ projectSlug });
+   151	  const timelineRef = await resolveDefaultTimelineRef(client, projectSlug);
+   152	  // The loop in mutateTimelineDocument loads the head itself and rebases.
+   153	  return { projectSlug, timelineRef, configVersion: 0, allowVersionRebase: true };
+   154	}
+   155	
+   156	// ---------------------------------------------------------------------------
+   157	// Writes
+   158	// ---------------------------------------------------------------------------
+   159	
+   160	export interface PlaceGenerationRequest {
+43:  duplicateShotGroup,
+89:  publishedHeadRevisionId: string,
+93:  if (runtimeHeadRevisionId === publishedHeadRevisionId) return false;
+133:  const [publishedCanonicalComposition, setPublishedCanonicalComposition] = useState<PublishedCanonicalCompositionOverride | null>(null);
+139:    if (!publishedCanonicalComposition) return;
+141:      publishedCanonicalComposition.composition.headRevisionId,
+142:      publishedCanonicalComposition.staleHeadRevisionIds,
+147:  }, [publishedCanonicalComposition, runtimeCanonicalHeadRevisionId]);
+405:        await runtime.shots.shotComposition.publish?.({
+429:      await duplicateShotGroup({
+723:                initialComposition={publishedCanonicalComposition?.composition ?? runtime.shots.canonicalComposition ?? undefined}
+105:`group_id` and optional short `rationale` are command/batch metadata, preserved in
+114:authority, and accepted ancestry/write records needed for inverse. It returns a
+142:`viewing-coordination.md` on 2026-10-19. Adopt Runtime's slim envelope and ABI 1
+143:(main has no prior provider ABI; the exact new generated contract digest excludes
+148:`dry_run`, `source`, `label`, `rationale`, `group_id`. Use `rationale` consistently
+163:domain facts, undo/restore linkage. Use Runtime's exact `PreparedCommit` field
+198:The App suffix keeps its original reference/read basis after an in-flight
+205:optimistic predecessor has a read basis not named by an immutable revision.
+206:App/Agent/Runtime must specify how that original basis is represented and
+209:encode that proof. App manager must test this basis handoff together with tab
+255:Inverse wire is `timeline.inverse`, operation `version:"1"`, `select:null`,
+260:and guards, which retries never regenerate. Reject supplied mismatching inverse
+262:never an implicit history query. Restore is a sole command `timeline.restore`,
+266:not an inverse and not an escape from authority/history checks.
+273:sources/arrangements/switches/ripple basis are authored; generated segments and
+274:timing are derived. Inverse restores the former and recompiles the latter.
+276:R4 inverse/music projection calls before removing old writers; do not assert it
+279:no effect on save, dry-run, retry or inverse.
+
+exec
+/bin/bash -lc "python - <<'PY'
+from pathlib import Path
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design')
+p=base/'app-writers.md'
+s=p.read_text().replace('shared/lib/placement/placementService.ts:119-153', 'shared/lib/placement/placementService.ts:78-108,119-153')
+s=s.replace('3. **Agent with Runtime:** publish the pinned command/recorder artifact and confirm any nonidentity "'`id_map` semantics. The recipe now agrees with Runtime ABI 1/sole closure DTO and specifies inverse target-list/restore revision+digest arguments; Runtime'"\\'s remaining-confirmation prose still describes these as awaited, so owners should acknowledge that update. No App compatibility fields or alternate spellings are needed.', '3. **Agent with Runtime:** publish the pinned command/recorder artifact and confirm any nonidentity "'`id_map` semantics. The recipe now agrees with Runtime ABI 1/sole closure DTO and specifies inverse target-list/restore revision+digest arguments. Carry those into the generated contract; no App compatibility fields or alternate spellings are needed.'"')
+p.write_text(s)
+p=base/'app-contract-consumption.md'
+s=p.read_text().replace('shots[]                                 # shot_id, revision_id, internal pin, digest', 'shots[]                                 # shot_id, revision_id, internal_timeline_revision_id, content_digest').replace('internal_timelines[]                    # timeline_id, revision_id, digest', 'internal_timelines[]                    # timeline_id, revision_id, content_digest')
+s=s.replace('3. **Agent with Runtime:** acknowledge the latest recipe\\'s inverse/restore argument confirmation in Runtime\\'s remaining-items prose (which still calls those schemas awaited). The recipe now matches ABI 1, Invocation, one closure and Runtime-derived acceptance metadata. Both owners agree on "'`rationale`, schema version distinct from operation version, and one atomic undo target per request; these are closed questions, not App compatibility work.'"', '3. **Agent with Runtime:** materialize the latest recipe\\'s inverse/restore arguments and semantic leaves in the pinned generated contract. The recipe now matches ABI 1, Invocation, one closure and Runtime-derived acceptance metadata. Both owners agree on "'`rationale`, schema version distinct from operation version, and one atomic undo target per request; these are closed questions, not App compatibility work.'"')
+p.write_text(s)
+PY" in /home/user/work/wt/app-m0-contract-map
+ succeeded in 0ms:
+exec
+/bin/bash -lc "python - <<'PY'
+from pathlib import Path
+base = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design')
+for name in ('app-writers.md', 'app-contract-consumption.md'):
+    data = (base / name).read_text()
+    assert data.endswith('\\n'), name
+    assert all(line == line.rstrip() for line in data.splitlines()), name
+    assert 'ReighRuntimeClient' not in data, name
+    assert 'args:{publication:' not in data, name
+    print(f'{name}: whitespace and stale-symbol checks passed')
+PY
+ git diff --check
+ git status --porcelain=v1" in /home/user/work/wt/app-m0-contract-map
+ succeeded in 0ms:
+app-writers.md: whitespace and stale-symbol checks passed
+app-contract-consumption.md: whitespace and stale-symbol checks passed
+
+codex
+The whitespace and source checks pass, and the App worktree is unchanged. One narrow design gap remains in the recipe: dependent B needs a provider-verifiable basis for work authored on optimistic A. The handoff preserves B and blocks automatic submission until that representation is defined; A’s exact retry and independent unsent edits are specified.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-contract-map/commit-msg <<'EOF'
+docs(app): reconcile timeline writer and contract consumption maps
+
+Align the writer inventory with the published command and Runtime DTO contracts,
+including publication pins, guarded server inverse, and zero fallback ownership.
+
+Map accepted canonical closure projections and exact retry recovery, including
+durable tab ownership and the unresolved optimistic suffix basis handoff.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-contract-map/report.md <<'EOF'
+# App M0 inventory reconciliation and contract consumption
+
+Completed design-only work. Changed only "'`ORCH/design/app-writers.md`, added `ORCH/design/app-contract-consumption.md`, and wrote this report/commit-msg. App worktree remains clean at `60aa26b9529dcfa94f8ffdbd5edf42fa6c1babd2`; ORCH is outside the App Git worktree. No product code, repository-local duplicate docs, dependency installs, build output, commits or ref changes.
+
+- Reconciled every existing writer/deletion row with published owners, preserving App ownership of popup/shared placement/Supabase producers and the zero-fallback requirement. Relational frame/end metadata remains outside canonical M2 scope, with projection follow-up noted.
+- Verified `AstridRuntimeClient`, provider head/receipt/reference-load seams, rows/config conversion and popup canonical/display markers directly in current source. R4 request/session/scope/change/preview-rebase protocol is explicitly obsolete, not a port target.
+- Consumed Runtime'"'s final §4.1 closure ("'`parent_revision`, child images, dependency_manifest), publication pins, baseline/bootstrap rules and strict restore adapter. Incorporated owner updates published during this task: rationale, ABI 1 and Agent inverse `args.publications` / restore revision+digest args. No alternate DTO introduced.
+- Specified durable same-realm/actor outbox ownership across restart and independent tabs, reservation before transmission, prefix-only ACK deletion, and exact A retry with B retained after remote C. Accepted undo is reconstructed/guarded on the server; local inverse snapshots cannot publish accepted undo.
+
+## Checks and results
+
+Working directory: `/home/user/work/wt/app-m0-contract-map`. Product suites intentionally **not run**, per the documentation-only task. Read-only source checks are not behavioral test evidence.
+
+The following source commands all exited **0**, locating the symbols/caller chains described in the two documents; targeted `sed`/`nl` reads supplied the surrounding implementations:
+
+```bash
+rg -n '"'export class AstridRuntimeClient|new AstridRuntimeClient|TimelineHeadRevision|TimelineSaveReceipt|loadReferencedTimeline|runtimeGraphToContract' src/integrations/runtime/client.ts src/integrations/runtime/dataProvider.ts src/tools/video-editor/data/DataProvider.ts
+rg -n 'export const rowsToConfig|remote/accepted data re-enters|canonicalHeadRevisionId|displayedHeadRevisionId' src/tools/video-editor/lib/timeline-data.ts src/tools/travel-between-images/components/shotTimelineDataProvider.ts
+rg -n 'saveTimelineAtHead|saveTimelineConfigVersioned|appendTimelineConfigViaService|createTimelineViaService|config-replaced' src/shared/lib/placement/placementService.ts supabase/functions/_shared/astridAppendService.ts supabase/functions/complete_task/handler.ts supabase/functions/complete_task/placement.ts supabase/functions/timeline-import/handler.ts supabase/functions/ai-timeline-agent/db.ts
+rg -n 'saveTimelineDraftIfOwner|clearTimelineDraftIfMatches|advanceTimelineDraftBaseAfterHeadAcknowledgement|advanceTimelineDraftBaseAfterAcknowledgement' src/tools/video-editor/data/timelineDraftIndexedDb.ts
+"'```
+
+Frozen R4 was read without checkout (both commands exited **0**):
+
+```bash
+git -C /home/user/banodoco/reigh-app show origin/codex/handover-timeline-r4-20261019-candidate-app-qualified:src/integrations/runtime/commitSession.ts
+git -C /home/user/banodoco/reigh-app show origin/codex/handover-timeline-r4-20261019-candidate-app-qualified:src/integrations/runtime/dataProvider.ts | sed -n '"'810,915p'
+"'```
+
+Scope/whitespace commands:
+
+```bash
+git diff --check
+git status --porcelain=v1
+git diff --name-only
+git ls-files --others --exclude-standard
+```
+
+All exited **0**, with no output: no App code/doc/untracked changes. Because the assigned ORCH documents are outside Git, also ran:
+
+```bash
+git diff --no-index --check /dev/null /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md
+git diff --no-index --check /dev/null /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-contract-consumption.md
+```
+
+No whitespace diagnostics; the no-index comparison exits **1** because files differ from `/dev/null`. A separate final audit exited **0**, printing two passed messages:
+
+```bash
+python - <<'"'PY'
+from pathlib import Path
+base = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design')
+for name in ('app-writers.md', 'app-contract-consumption.md'):
+    data = (base / name).read_text()
+    assert data.endswith('\\n'), name
+    assert all(line == line.rstrip() for line in data.splitlines()), name
+    assert 'ReighRuntimeClient' not in data, name
+    assert 'args:{publication:' not in data, name
+    print(f'{name}: whitespace and stale-symbol checks passed')
+PY
+"'```
+
+## Decisions, open questions and next steps
+
+Used current owner DTOs verbatim rather than proposing a second closure container. Kept only unspecified operation names provisional; corrected `clip.clear` to field clearing rather than entity deletion. Accepted inverse uses Agent'"'s latest "'`version:"1"`, `args:{publications:[...]}` target list, including a one-item list for one accepted gesture. No PLAN judgment was changed.
+
+**Open implementation blocker:** latest edit-recipe explicitly says the slim wire does not yet encode proof of an optimistic predecessor basis for dependent B. Rebuilding B on A'"'s acknowledged image or advancing snapshot base markers would discard the original basis. The recovery table therefore resolves A exactly and retains dependent B without automatic submission; independent B on an immutable base can retain that base. Agent/App with Runtime review must specify the provider-verifiable retained basis/guards before claiming the full suffix journey. This is an owner contract gap, not completed journey evidence.
+
+Other remaining owner work: publish/pin the canonical command/semantic-leaf artifact and operation schemas for remaining inventory families; confirm any nonidentity id_map behavior. Runtime closure, baseline/bootstrap pins, restore response, rationale/grouping and ABI choice are now concrete, not reopened questions. App owns the proposed local tab exclusion/fencing implementation and its future restart tests.
+
+Recommend manager review of these two design docs with Agent/Runtime, closure of the dependent-basis representation, then M1 only after Checkpoint A. No runtime/browser behavior is verified by this task.
+EOF" in /home/user/work/wt/app-m0-contract-map
+ succeeded in 0ms:
+codex
+Updated the writer inventory and contract consumption map. No product changes.
+
+- Verified `AstridRuntimeClient` and projection/outbox seams from source.
+- Incorporated final owner DTOs and server-reconstructed inverse arguments; preserved zero-fallback coverage.
+- `git diff --check` and document audits passed. Product suites intentionally not run.
+- Remaining blocker: owners must define provider-verifiable basis for dependent unsent B before automatic submission.
+
+[Report and exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-contract-map/report.md). Commit message written. Next: owner review, then M1 after Checkpoint A.
+tokens used
+185,820
+Updated the writer inventory and contract consumption map. No product changes.
+
+- Verified `AstridRuntimeClient` and projection/outbox seams from source.
+- Incorporated final owner DTOs and server-reconstructed inverse arguments; preserved zero-fallback coverage.
+- `git diff --check` and document audits passed. Product suites intentionally not run.
+- Remaining blocker: owners must define provider-verifiable basis for dependent unsent B before automatic submission.
+
+[Report and exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-contract-map/report.md). Commit message written. Next: owner review, then M1 after Checkpoint A.

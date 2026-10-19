@@ -1,0 +1,400 @@
++  }
++  for (const path of [['app'], ['app', 'astrid']]) {
++    const state = ctx.state.get(ref, path);
++    if (state.state === 'present' && object(state.value)) continue;
++    const value = ctx.read(ref, path);
++    if (value != null) throw new ClipMoveError('intent container must be object or null');
++  }
++  for (const prefix of [['app'], ['app', 'astrid']]) {
++    for (const key of RELATIONS) {
++      const value = ctx.read(ref, [...prefix, key]);
++      if (['sequence', 'sequence_index', 'sequence_fit', 'formulas'].includes(key) && value != null && !equal(value, {})) {
++        throw new ClipMoveError(`clip.move v1 does not support ${key}`, 'unsupported_timing');
++      }
++    }
++  }
++  if (typeof clip.track !== 'string' || !clip.track) throw new ClipMoveError('move requires a referenced track');
++  const trackRef = `${owner}/track:${clip.track}`;
++  for (const key of ['id', 'kind', 'role', 'enabled', 'active', 'disabled', 'hidden', 'deleted']) ctx.read(trackRef, [key]);
++  if (!ctx.state.entity(trackRef, true)) throw new ClipMoveError('move track disappeared', 'identity_conflict');
++  ctx.bind('move.track', trackRef);
++  ctx.bind('move.owner', owner);
++  const asset = has(clip, 'asset') ? clip.asset : clip.asset_id;
++  const sourceDependencies: string[] = [];
++  if (asset != null) {
++    // Canonical authored asset selectors are strings; aliases from display data are not accepted.
++    if (typeof asset !== 'string') throw new ClipMoveError('move requires a canonical asset identity');
++    const source: Record<string, JSON> = {};
++    for (const key of ['media_id', 'object_id', 'digest', 'content_digest', 'type', 'duration', 'duration_ms', 'duration_seconds', 'source']) {
++      source[key] = ctx.read(`${owner}/registry`, ['assets', asset, key]) ?? null;
++    }
++    ctx.dependency('move.source', 'entity', { ref: `${owner}/registry`, asset, source });
++    sourceDependencies.push('move.source');
++  }
++  const fps = rate(ctx.read('parent', ['config', 'output', 'fps']));
++  if (owner !== 'parent') {
++    const childFps = ctx.read(`${owner}/source`, ['output', 'fps']);
++    if (childFps != null && !equal(rate(childFps), fps)) throw new ClipMoveError('parent and child fps differ', 'unsupported_timing');
++  }
++  ctx.dependency('move.quantization', 'time-map', { numerator: Number(fps[0]), denominator: Number(fps[1]), rounding: 'half-toward-positive-infinity' });
++  const on = number(command.args.on, 'on');
++  if (on < 0) throw new ClipMoveError('on must not be negative');
++  const frame = number(Math.floor(on * fractionNumber(fps[0], fps[1]) + 0.5), 'frame');
++  const quantized = number(fractionNumber(BigInt(frame) * fps[1], fps[0]), 'quantized start');
++  const length = duration(clip);
++  let origin = 0;
++  if (owner !== 'parent') {
++    ctx.read(owner, ['occurrence_id']);
++    ctx.read(owner, ['shot_id']);
++    const row = ctx.state.occurrence(owner);
++    for (const path of MAP_FIELDS) ctx.read(owner, path);
++    if (row.time_map != null || row.timeMap != null ||
++      (row.source_offset != null && row.source_offset !== 0) || (row.speed != null && row.speed !== 1)) {
++      throw new ClipMoveError('clip.move v1 requires a translation-only occurrence map', 'unsupported_map');
++    }
++    origin = occurrenceStart(row);
++    const lane = object(row.placement) && has(row.placement, 'track') ? row.placement.track : row.track;
++    if (typeof lane === 'string') {
++      for (const key of ['id', 'kind', 'role', 'enabled', 'active', 'disabled', 'hidden', 'deleted']) {
++        ctx.read(`parent/track:${lane}`, [key]);
++      }
++    }
++    let nextStart = Infinity;
++    for (const other of ctx.select('move.blockers', owner)) {
++      for (const path of [['placement', 'start_ms'], ['at_ms'], ['track'], ['placement', 'track'],
++        ['enabled'], ['active'], ['disabled'], ['hidden'], ['deleted']]) ctx.read(other, path);
++      const start = occurrenceStart(ctx.state.occurrence(other));
++      if (other !== owner && start > origin) nextStart = Math.min(nextStart, start);
++    }
++    if (quantized + length > nextStart + 1e-9) throw new ClipMoveError('moved interval crosses the next occurrence', 'occurrence_boundary');
++  }
++  const local = number(quantized - origin, 'local start');
++  if (local < 0) throw new ClipMoveError('moved interval precedes its occurrence', 'occurrence_boundary');
++  const pin: Record<string, JSON> = { parent: copy(bundle.base_parent ?? {}) };
++  if (owner !== 'parent') {
++    const mapping = bundle.source_mapping;
++    const shots = object(mapping) && object(mapping.shots) ? mapping.shots : {};
++    pin.source = copy(shots[String(ctx.state.occurrence(owner).shot_id)] ?? {});
++  }
++  ctx.dependency('move.images', 'source', pin);
++  ctx.bind('move.target', ref, ['move.images', 'move.quantization', ...sourceDependencies]);
++  const msOnly = has(clip, 'at_ms') && !has(clip, 'at');
++  ctx.write(ref, [msOnly ? 'at_ms' : 'at'], number(msOnly ? local * 1000 : local, 'authored start'));
++  if (has(clip, 'at') && has(clip, 'at_ms')) ctx.write(ref, ['at_ms'], number(local * 1000, 'at_ms'));
++  ctx.object(ref, ['app']);
++  ctx.object(ref, ['app', 'astrid']);
++  for (const prefix of [['app'], ['app', 'astrid']]) {
++    for (const key of ['on', 'until', 'until_film_end']) ctx.clear(ref, [...prefix, key]);
++  }
++  ctx.write(ref, ['app', 'astrid', 'fixed_start'], true);
++  ctx.write(ref, ['app', 'astrid', 'for'], length);
++  return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record, previewAt: quantized };
++}
++
++/** Local authored execution only. Runtime/Agent remains the accepted compiler and rebase authority. */
++export function executeClipMove(bundle: AuthoredBundle, command: EditCommand) {
++  const result = move(bundle, command);
++  for (const key of ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'] as const) {
++    if (has(command, key) && !equal(command[key], result.command[key])) {
++      throw new ClipMoveError(`submitted ${key} does not match original capture`, 'capture_mismatch');
++    }
++  }
++  return result;
++}
++
++declare const basisBrand: unique symbol;
++export type ClipMoveBasis = { readonly [basisBrand]: true };
++const bases = new WeakMap<ClipMoveBasis, { bundle: AuthoredBundle; command: EditCommand }>();
++
++/** Freeze original reads before preview. Pass the previous local result.bundle for dependent B. */
++export function captureClipMove(bundle: AuthoredBundle, select: string): ClipMoveBasis {
++  const snapshot = copy(bundle);
++  const state = new AuthoredState(snapshot);
++  const target = state.entity(select)!;
++  const owner = select.slice(0, select.lastIndexOf('/'));
++  const current = has(target, 'at') ? number(target.at, 'clip.at') : number(target.at_ms, 'clip.at_ms') / 1000;
++  const origin = owner === 'parent' ? 0 : occurrenceStart(state.occurrence(owner));
++  const { command } = move(snapshot, { schema_version: 1, op: 'clip.move', version: '1', select,
++    args: { on: current + origin }, intent: { ...INTENT } });
++  const basis = Object.freeze({}) as ClipMoveBasis;
++  bases.set(basis, { bundle: snapshot, command });
++  return basis;
++}
++
++/** Drop supplies absolute global seconds. No ACK or refreshed document enters this operation. */
++export function finishClipMove(basis: ClipMoveBasis, on: number) {
++  const original = bases.get(basis);
++  if (!original) throw new ClipMoveError('unknown clip move basis');
++  return executeClipMove(original.bundle, { ...copy(original.command), args: { on } });
++}
+diff --git a/src/tools/video-editor/commands/clipMovePrimitives.ts b/src/tools/video-editor/commands/clipMovePrimitives.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..18545517984afeb379216243b655cd0b404a7fdb
+--- /dev/null
++++ b/src/tools/video-editor/commands/clipMovePrimitives.ts
+@@ -0,0 +1,195 @@
++import type { AgentDependency, AgentState, CommandRecord, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
++
++type ObjectValue = { [key: string]: JSON };
++
++// Internal main authoring_bundle shape, not a Runtime wire document or a display projection.
++export type AuthoredBundle = ObjectValue & {
++  parent: ObjectValue;
++  placements: ObjectValue[];
++  shots: Record<string, ObjectValue & { internal_timeline: ObjectValue }>;
++};
++
++export class ClipMoveError extends Error {
++  constructor(message: string, readonly kind = 'invalid_edit_command') {
++    super(message);
++  }
++}
++
++export const copy = <T>(value: T): T => structuredClone(value);
++export const has = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
++export const object = (value: unknown): value is ObjectValue =>
++  value !== null && typeof value === 'object' && !Array.isArray(value);
++const active = (row: ObjectValue): boolean => row.enabled !== false && row.active !== false &&
++  !['disabled', 'hidden', 'deleted'].some((key) => row[key] === true);
++const AUDIO_KINDS = new Set(['audio', 'vo', 'music', 'sfx', 'voice', 'voiceover']);
++
++export function equal(a: unknown, b: unknown): boolean {
++  if (Array.isArray(a) && Array.isArray(b)) {
++    return a.length === b.length && a.every((value, index) => equal(value, b[index]));
++  }
++  if (object(a) && object(b)) {
++    const keys = Object.keys(a);
++    return keys.length === Object.keys(b).length &&
++      keys.every((key) => has(b, key) && equal(a[key], b[key]));
++  }
++  return a === b;
++}
++
++function one(rows: JSON, key: string, id: string, optional = false): ObjectValue | undefined {
++  if (!Array.isArray(rows)) throw new ClipMoveError('entity collection must be an array');
++  const matches = rows.filter((row): row is ObjectValue => object(row) && row[key] === id);
++  if (matches.length === 1) return matches[0];
++  if (optional && matches.length === 0) return undefined;
++  throw new ClipMoveError(`missing or ambiguous identity ${id}`, 'identity_conflict');
++}
++
++export class AuthoredState {
++  constructor(readonly bundle: AuthoredBundle) {}
++
++  occurrence(owner: string): ObjectValue {
++    return one(this.bundle.placements, 'occurrence_id', owner.slice('occurrence:'.length))!;
++  }
++
++  config(owner: string): ObjectValue {
++    if (owner === 'parent') return this.bundle.parent.config as ObjectValue ?? {};
++    const row = this.occurrence(owner);
++    const shot = this.bundle.shots[String(row.shot_id)];
++    if (!shot || !object(shot.internal_timeline)) throw new ClipMoveError('missing authored owner');
++    return shot.internal_timeline;
++  }
++
++  entity(ref: string, optional = false): ObjectValue | undefined {
++    if (ref.includes('/clip:') || ref.includes('/track:')) {
++      const slash = ref.lastIndexOf('/');
++      const owner = ref.slice(0, slash);
++      const entity = ref.slice(slash + 1);
++      const colon = entity.indexOf(':');
++      const kind = entity.slice(0, colon);
++      const id = entity.slice(colon + 1);
++      const rows = owner === 'parent' && kind === 'clip' && has(this.bundle.parent, 'clips')
++        ? this.bundle.parent.clips : this.config(owner)[`${kind}s`] ?? [];
++      return one(rows, 'id', id, optional);
++    }
++    if (ref === 'parent') return this.bundle.parent;
++    if (ref.endsWith('/registry')) {
++      const owner = ref.slice(0, -'/registry'.length);
++      const nested = this.config(owner).registry;
++      if (owner !== 'parent') return nested as ObjectValue ?? {};
++      const direct = this.bundle.parent.registry;
++      for (const registry of [direct, nested]) {
++        if (registry != null && (!object(registry) ||
++          (has(registry, 'assets') && !object(registry.assets)))) {
++          throw new ClipMoveError('invalid parent registry');
++        }
++      }
++      if (direct != null && nested != null && !equal(direct, nested)) {
++        throw new ClipMoveError('parent.registry conflicts with parent.config.registry');
++      }
++      return (direct ?? nested ?? { assets: {} }) as ObjectValue;
++    }
++    if (ref.endsWith('/source')) return this.config(ref.slice(0, -'/source'.length));
++    if (ref.endsWith('/shot')) return { shot_id: this.occurrence(ref.slice(0, -'/shot'.length)).shot_id };
++    if (ref.startsWith('occurrence:') && !ref.includes('/')) return this.occurrence(ref);
++    throw new ClipMoveError(`unsupported entity reference ${ref}`);
++  }
++
++  get(ref: string, path: string[]): AgentState {
++    const entity = this.entity(ref, true);
++    if (entity === undefined) return { state: 'absent' };
++    let value: JSON = entity;
++    for (const key of path) {
++      if (object(value) && has(value, key)) value = value[key];
++      else if (Array.isArray(value) && /^\d+$/.test(key) && Number(key) < value.length) value = value[Number(key)];
++      else return { state: 'absent' };
++    }
++    return { state: 'present', value: copy(value) };
++  }
++
++  set(ref: string, path: string[], state: AgentState): void {
++    let target = this.entity(ref)!;
++    for (const key of path.slice(0, -1)) {
++      if (!object(target[key])) throw new ClipMoveError('write requires recorded container creation');
++      target = target[key];
++    }
++    const key = path[path.length - 1];
++    if (state.state === 'absent') delete target[key];
++    else target[key] = copy(state.value);
++  }
++}
++
++// These are the built-in Recording/selection primitives in Agent _recording.py.
++// Metadata comes from executed reads/writes, including absent and unchanged writes.
++export class MoveRecording {
++  readonly state: AuthoredState;
++  readonly command: EditCommand;
++  readonly record: CommandRecord;
++
++  constructor(bundle: AuthoredBundle, command: EditCommand) {
++    this.state = new AuthoredState(copy(bundle));
++    this.command = { ...copy(command), resolved: [command.select!], reads: [], selections: [],
++      expect: {}, authorship: {}, bindings: {}, created: [] };
++    this.record = { ordinal: 0, command: this.command, writes: [], reads: this.command.reads!,
++      selections: this.command.selections!, bindings: [], created: [], dependencies: [], derived_writes: [] };
++  }
++
++  read(ref: string, path: string[]): JSON | undefined {
++    const state = this.state.get(ref, path);
++    const read = { ref, path, state };
++    if (!this.command.reads!.some((other) => equal(read, other))) this.command.reads!.push(copy(read));
++    return state.state === 'present' ? copy(state.value) : undefined;
++  }
++
++  select(key: 'move.target' | 'move.blockers', owner: string, members: string[] = []): string[] {
++    let result: string[];
++    if (key === 'move.target') result = members.filter((ref) => this.state.entity(ref, true) !== undefined);
++    else {
++      const row = this.state.occurrence(owner);
++      const lane = object(row.placement) && has(row.placement, 'track') ? row.placement.track : row.track;
++      const track = typeof lane === 'string' ? this.state.entity(`parent/track:${lane}`, true) : undefined;
++      const output = !track || (!AUDIO_KINDS.has(String(track.kind)) && !AUDIO_KINDS.has(String(track.role)) && active(track));
++      result = this.state.bundle.placements.filter((other) => {
++        const otherLane = object(other.placement) && has(other.placement, 'track')
++          ? other.placement.track : other.track;
++        return output && active(other) && equal(lane, otherLane);
++      }).map((other) => `occurrence:${other.occurrence_id}`);
++    }
++    this.command.selections!.push({ key, query_version: 1, owner, members: [...result],
++      order: [...result], boundaries: [...result], policy: 'guard-membership' });
++    return result;
++  }
++
++  bind(key: string, ref: string, dependencies: string[] = []): void {
++    if (ref.includes('/clip:') || ref.includes('/track:') || (ref.startsWith('occurrence:') && !ref.includes('/'))) {
++      this.command.bindings![key] = ref;
++    }
++    this.record.bindings.push({ key, ref, policy: 'fixed', dependencies });
++  }
++
++  dependency(key: string, kind: AgentDependency['kind'], pin: ObjectValue): void {
++    this.record.dependencies.push({ key, kind, pin: copy(pin), policy: 'exact' });
++  }
++
++  assign(ref: string, path: string[], after: AgentState): void {
++    const address = `${ref}::${path.join('.')}`;
++    if (!has(this.command.expect!, address)) this.command.expect![address] = this.state.get(ref, path);
++    this.command.authorship![address] = 'direct';
++    this.record.writes.push({ ref, path: [...path], before: this.state.get(ref, path), after: copy(after) });
++    this.state.set(ref, path, after);
++  }
++
++  write(ref: string, path: string[], value: JSON): void {
++    this.assign(ref, path, { state: 'present', value });
++  }
++
++  clear(ref: string, path: string[]): void {
++    this.assign(ref, path, { state: 'absent' });
++  }
++
++  object(ref: string, path: string[]): void {
++    const state = this.state.get(ref, path);
++    if (state.state === 'present' && object(state.value)) return;
++    this.read(ref, path);
++    if (state.state === 'present' && state.value !== null) throw new ClipMoveError('intent container must be object or null');
++    this.write(ref, path, {});
++  }
++}
+
+exec
+/bin/bash -lc 'rm /tmp/app-m1-generate-parity.py /tmp/app-m1-capture-parity-tsconfig.json; git status --short; git diff --check' in /home/user/work/wt/app-m1-capture-parity
+ succeeded in 792ms:
+?? src/tools/video-editor/commands/clipMoveCapture.test.ts
+?? src/tools/video-editor/commands/clipMoveCapture.ts
+?? src/tools/video-editor/commands/clipMovePrimitives.ts
+?? src/tools/video-editor/commands/fixtures/
+
+codex
+Implemented `captureClipMove(bundle, select)` → opaque basis, `finishClipMove(basis, on)` → `{command, bundle, record, previewAt}`, and detached `executeClipMove`. Sequential B uses A’s returned authored bundle; finish preserves original guards.
+
+Validation passed:
+
+- `npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/clipMoveCapture.test.ts` — **54 passed**.
+- `npx eslint src/tools/video-editor/commands/clipMoveCapture.ts src/tools/video-editor/commands/clipMovePrimitives.ts src/tools/video-editor/commands/clipMoveCapture.test.ts` — passed.
+- `npx tsc -p /tmp/app-m1-capture-parity-tsconfig.json` — passed using the client worker’s official generated DTO artifact through temporary path mapping.
+- `git diff --check` and explicit added-file whitespace checks — passed.
+
+Python verification invocation — **18/18 exact commands, bundles and records passed**:
+
+```bash
+PYTHONPATH=/home/user/work/wt/agt-m1-core /home/user/work/venv-agent/bin/python - <<'PY'
+import json
+from astrid.sdk.timeline.capture import capture_move
+from astrid.sdk.timeline.commands import execute
+f = json.load(open('src/tools/video-editor/commands/fixtures/recipe_m1_move.json'))
+for case in [f, *f['cases']]:
+    command = capture_move(case['bundle'], case['select'], case['on'])
+    plan = execute(case['bundle'], [command])
+    assert command == case['command'], case['name']
+    assert plan.bundle == case['after_bundle'], case['name']
+    assert plan.records[0] == case['record'], case['name']
+PY
+```
+
+Agent source and regeneration command are recorded in `clipMoveCapture.test.ts`. The implementation follows executable Agent semantics, including occurrence ownership intent on parent moves despite differing handoff prose. FPS fractions exceeding safe browser integer precision fail closed.
+
+Next: merge the client DTO artifact and wire the session/UI adapter. Provider, drag and full/browser integration remain unverified; none were run. Commit message written to the assigned path; temporary files removed.
+tokens used
+158,418
+Implemented `captureClipMove(bundle, select)` → opaque basis, `finishClipMove(basis, on)` → `{command, bundle, record, previewAt}`, and detached `executeClipMove`. Sequential B uses A’s returned authored bundle; finish preserves original guards.
+
+Validation passed:
+
+- `npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/clipMoveCapture.test.ts` — **54 passed**.
+- `npx eslint src/tools/video-editor/commands/clipMoveCapture.ts src/tools/video-editor/commands/clipMovePrimitives.ts src/tools/video-editor/commands/clipMoveCapture.test.ts` — passed.
+- `npx tsc -p /tmp/app-m1-capture-parity-tsconfig.json` — passed using the client worker’s official generated DTO artifact through temporary path mapping.
+- `git diff --check` and explicit added-file whitespace checks — passed.
+
+Python verification invocation — **18/18 exact commands, bundles and records passed**:
+
+```bash
+PYTHONPATH=/home/user/work/wt/agt-m1-core /home/user/work/venv-agent/bin/python - <<'PY'
+import json
+from astrid.sdk.timeline.capture import capture_move
+from astrid.sdk.timeline.commands import execute
+f = json.load(open('src/tools/video-editor/commands/fixtures/recipe_m1_move.json'))
+for case in [f, *f['cases']]:
+    command = capture_move(case['bundle'], case['select'], case['on'])
+    plan = execute(case['bundle'], [command])
+    assert command == case['command'], case['name']
+    assert plan.bundle == case['after_bundle'], case['name']
+    assert plan.records[0] == case['record'], case['name']
+PY
+```
+
+Agent source and regeneration command are recorded in `clipMoveCapture.test.ts`. The implementation follows executable Agent semantics, including occurrence ownership intent on parent moves despite differing handoff prose. FPS fractions exceeding safe browser integer precision fail closed.
+
+Next: merge the client DTO artifact and wire the session/UI adapter. Provider, drag and full/browser integration remain unverified; none were run. Commit message written to the assigned path; temporary files removed.

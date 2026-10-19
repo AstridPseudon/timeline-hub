@@ -1,0 +1,400 @@
+     × rejects update from a different producer commit without changing consumer files or lock 107ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/integrations/runtime/vendorLock.test.ts > runtime.lock.json > checks all consumer locks locally
+Error: spawnSync git EPERM
+ ❯ fixture src/integrations/runtime/vendorLock.test.ts:37:3
+     35|   const manifest = { producer: 'test-producer', version: hash('version…
+     36|   writeFileSync(path.join(producer, 'artifacts.json'), `${JSON.stringi…
+     37|   execFileSync('git', ['init', '-q'], { cwd: producer });
+       |   ^
+     38|   execFileSync('git', ['config', 'user.email', 'test@example.invalid']…
+     39|   execFileSync('git', ['config', 'user.name', 'Vendor Lock Test'], { c…
+ ❯ src/integrations/runtime/vendorLock.test.ts:114:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  src/integrations/runtime/vendorLock.test.ts > runtime.lock.json > rejects a different checkout commit even when artifact bytes are identical
+Error: spawnSync git EPERM
+ ❯ fixture src/integrations/runtime/vendorLock.test.ts:37:3
+     35|   const manifest = { producer: 'test-producer', version: hash('version…
+     36|   writeFileSync(path.join(producer, 'artifacts.json'), `${JSON.stringi…
+     37|   execFileSync('git', ['init', '-q'], { cwd: producer });
+       |   ^
+     38|   execFileSync('git', ['config', 'user.email', 'test@example.invalid']…
+     39|   execFileSync('git', ['config', 'user.name', 'Vendor Lock Test'], { c…
+ ❯ src/integrations/runtime/vendorLock.test.ts:121:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/integrations/runtime/vendorLock.test.ts > runtime.lock.json > rejects producer metadata that differs from the lock
+Error: spawnSync git EPERM
+ ❯ fixture src/integrations/runtime/vendorLock.test.ts:37:3
+     35|   const manifest = { producer: 'test-producer', version: hash('version…
+     36|   writeFileSync(path.join(producer, 'artifacts.json'), `${JSON.stringi…
+     37|   execFileSync('git', ['init', '-q'], { cwd: producer });
+       |   ^
+     38|   execFileSync('git', ['config', 'user.email', 'test@example.invalid']…
+     39|   execFileSync('git', ['config', 'user.name', 'Vendor Lock Test'], { c…
+ ❯ src/integrations/runtime/vendorLock.test.ts:133:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/integrations/runtime/vendorLock.test.ts > runtime.lock.json > rejects missing and unlisted producer artifacts
+Error: spawnSync git EPERM
+ ❯ fixture src/integrations/runtime/vendorLock.test.ts:37:3
+     35|   const manifest = { producer: 'test-producer', version: hash('version…
+     36|   writeFileSync(path.join(producer, 'artifacts.json'), `${JSON.stringi…
+     37|   execFileSync('git', ['init', '-q'], { cwd: producer });
+       |   ^
+     38|   execFileSync('git', ['config', 'user.email', 'test@example.invalid']…
+     39|   execFileSync('git', ['config', 'user.name', 'Vendor Lock Test'], { c…
+ ❯ src/integrations/runtime/vendorLock.test.ts:149:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/integrations/runtime/vendorLock.test.ts > runtime.lock.json > rejects producer working bytes that differ from the pinned commit
+Error: spawnSync git EPERM
+ ❯ fixture src/integrations/runtime/vendorLock.test.ts:37:3
+     35|   const manifest = { producer: 'test-producer', version: hash('version…
+     36|   writeFileSync(path.join(producer, 'artifacts.json'), `${JSON.stringi…
+     37|   execFileSync('git', ['init', '-q'], { cwd: producer });
+       |   ^
+     38|   execFileSync('git', ['config', 'user.email', 'test@example.invalid']…
+     39|   execFileSync('git', ['config', 'user.name', 'Vendor Lock Test'], { c…
+ ❯ src/integrations/runtime/vendorLock.test.ts:171:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/integrations/runtime/vendorLock.test.ts > runtime.lock.json > rejects a producer manifest changed in the working tree
+Error: spawnSync git EPERM
+ ❯ fixture src/integrations/runtime/vendorLock.test.ts:37:3
+     35|   const manifest = { producer: 'test-producer', version: hash('version…
+     36|   writeFileSync(path.join(producer, 'artifacts.json'), `${JSON.stringi…
+     37|   execFileSync('git', ['init', '-q'], { cwd: producer });
+       |   ^
+     38|   execFileSync('git', ['config', 'user.email', 'test@example.invalid']…
+     39|   execFileSync('git', ['config', 'user.name', 'Vendor Lock Test'], { c…
+ ❯ src/integrations/runtime/vendorLock.test.ts:179:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  src/integrations/runtime/vendorLock.test.ts > runtime.lock.json > requires a producer argument for update
+Error: spawnSync git EPERM
+ ❯ fixture src/integrations/runtime/vendorLock.test.ts:37:3
+     35|   const manifest = { producer: 'test-producer', version: hash('version…
+     36|   writeFileSync(path.join(producer, 'artifacts.json'), `${JSON.stringi…
+     37|   execFileSync('git', ['init', '-q'], { cwd: producer });
+       |   ^
+     38|   execFileSync('git', ['config', 'user.email', 'test@example.invalid']…
+     39|   execFileSync('git', ['config', 'user.name', 'Vendor Lock Test'], { c…
+ ❯ src/integrations/runtime/vendorLock.test.ts:187:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  src/integrations/runtime/vendorLock.test.ts > runtime.lock.json > names locally edited consumer bytes
+Error: spawnSync git EPERM
+ ❯ fixture src/integrations/runtime/vendorLock.test.ts:37:3
+     35|   const manifest = { producer: 'test-producer', version: hash('version…
+     36|   writeFileSync(path.join(producer, 'artifacts.json'), `${JSON.stringi…
+     37|   execFileSync('git', ['init', '-q'], { cwd: producer });
+       |   ^
+     38|   execFileSync('git', ['config', 'user.email', 'test@example.invalid']…
+     39|   execFileSync('git', ['config', 'user.name', 'Vendor Lock Test'], { c…
+ ❯ src/integrations/runtime/vendorLock.test.ts:196:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  src/integrations/runtime/vendorLock.test.ts > runtime.lock.json > updates successfully from the pinned commit and then passes check
+Error: spawnSync git EPERM
+ ❯ fixture src/integrations/runtime/vendorLock.test.ts:37:3
+     35|   const manifest = { producer: 'test-producer', version: hash('version…
+     36|   writeFileSync(path.join(producer, 'artifacts.json'), `${JSON.stringi…
+     37|   execFileSync('git', ['init', '-q'], { cwd: producer });
+       |   ^
+     38|   execFileSync('git', ['config', 'user.email', 'test@example.invalid']…
+     39|   execFileSync('git', ['config', 'user.name', 'Vendor Lock Test'], { c…
+ ❯ src/integrations/runtime/vendorLock.test.ts:205:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  src/integrations/runtime/vendorLock.test.ts > runtime.lock.json > rejects stale producer metadata before changing consumer files or lock
+Error: spawnSync git EPERM
+ ❯ fixture src/integrations/runtime/vendorLock.test.ts:37:3
+     35|   const manifest = { producer: 'test-producer', version: hash('version…
+     36|   writeFileSync(path.join(producer, 'artifacts.json'), `${JSON.stringi…
+     37|   execFileSync('git', ['init', '-q'], { cwd: producer });
+       |   ^
+     38|   execFileSync('git', ['config', 'user.email', 'test@example.invalid']…
+     39|   execFileSync('git', ['config', 'user.name', 'Vendor Lock Test'], { c…
+ ❯ src/integrations/runtime/vendorLock.test.ts:218:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  src/integrations/runtime/vendorLock.test.ts > runtime.lock.json > rejects update from a different producer commit without changing consumer files or lock
+Error: spawnSync git EPERM
+ ❯ fixture src/integrations/runtime/vendorLock.test.ts:37:3
+     35|   const manifest = { producer: 'test-producer', version: hash('version…
+     36|   writeFileSync(path.join(producer, 'artifacts.json'), `${JSON.stringi…
+     37|   execFileSync('git', ['init', '-q'], { cwd: producer });
+       |   ^
+     38|   execFileSync('git', ['config', 'user.email', 'test@example.invalid']…
+     39|   execFileSync('git', ['config', 'user.name', 'Vendor Lock Test'], { c…
+ ❯ src/integrations/runtime/vendorLock.test.ts:235:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  11 failed | 41 passed (52)
+   Start at  19:29:52
+   Duration  9.81s (transform 1.97s, setup 2.54s, import 3.31s, tests 1.35s, environment 7.32s)
+
+
+codex
+The requested Vitest command ran: `timelineCommit.test.ts` passed (41 tests), while 11 `vendorLock.test.ts` fixture cases failed before assertions because their test setup’s `execFileSync('git', ['init'])` is denied with sandbox `spawnSync git EPERM`; this is unrelated to the lock change. I’ll still run the contract suite and file-scoped lint, then recheck the final diff/status.
+exec
+/bin/bash -lc 'npm run test:contracts' in /home/user/work/wt/app-m1-client-pin
+ succeeded in 5869ms:
+
+> vite_react_shadcn_ts@0.0.0 test:contracts
+> vitest run --config config/testing/vitest.config.ts src/**/**/*.contract.test.ts src/**/**/clientContracts.test.ts src/shared/lib/__tests__/qualityCheck.contract.test.ts
+
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-client-pin
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  19:30:10
+   Duration  2.54s (transform 87ms, setup 1.00s, import 24ms, tests 7ms, environment 3ms)
+
+
+exec
+/bin/bash -lc 'npx eslint src/integrations/runtime/vendorLock.test.ts --max-warnings 0' in /home/user/work/wt/app-m1-client-pin
+ succeeded in 3787ms:
+exec
+/bin/bash -lc "printf '%s\\n' '--- final status ---'; git status --short --branch; printf '%s\\n' '--- diff stat ---'; git diff --stat; printf '%s\\n' '--- final diff check ---'; git diff --check; printf '%s\\n' '--- lock metadata ---'; node -e \"const l=JSON.parse(require('fs').readFileSync('runtime.lock.json','utf8')); console.log({source_commit:l.source_commit, producer_version:l.producer_version, coverage:Object.keys(l.files).length, dto:l.files['src/integrations/runtime/timeline-commit-types.ts']})\"; printf '%s\\n' '--- worker output dir ---'; ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin 2>&1 || true" in /home/user/work/wt/app-m1-client-pin
+ succeeded in 1083ms:
+--- final status ---
+## tl/app-m1-client-pin
+ M runtime.lock.json
+ M src/integrations/runtime/vendorLock.test.ts
+--- diff stat ---
+ runtime.lock.json                           | 8 ++++++--
+ src/integrations/runtime/vendorLock.test.ts | 3 ++-
+ 2 files changed, 8 insertions(+), 3 deletions(-)
+--- final diff check ---
+--- lock metadata ---
+{
+  source_commit: 'c423544de3b7a1090649bf32e4c82514c4c7a641',
+  producer_version: 'sha256:1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d',
+  coverage: 13,
+  dto: {
+    from: 'packages/typescript/src/timeline-commit-types.ts',
+    sha256: 'sha256:068f23389275b6302ab3842c6d7daa540a399553f1eb39dd9688f988d82267f0'
+  }
+}
+--- worker output dir ---
+total 144
+drwxr-xr-x  2 root root   4096 Oct 19 19:28 .
+drwxr-xr-x 81 root root   4096 Oct 19 19:29 ..
+-rw-r--r--  1 root root   1659 Oct 19 19:28 brief.md
+-rw-r--r--  1 root root 127926 Oct 19 19:30 log.txt
+-rw-r--r--  1 root root    185 Oct 19 19:28 meta
+-rw-r--r--  1 root root      0 Oct 19 19:28 running
+
+codex
+All requested non-full checks are complete: producer-backed lock check, explicit 13-entry hash/byte audit, `test:contracts`, file-scoped ESLint, and `git diff --check` pass. Only the vendor-lock fixture tests remain sandbox-blocked at `git init`; I’m recording that accurately in the required handoff files and leaving the worktree with only the two intended source changes.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/report
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..ad07c1b03a1f7ae8d7c506dac7ca15b5070ccca3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/commit-msg
+@@ -0,0 +1,4 @@
++fix(runtime): pin timeline commit DTO artifact
++
++Refresh the Runtime vendor lock from reviewed commit c423544de3b7a1090649bf32e4c82514c4c7a641.
++Add the timeline-commit-types mapping and update the exact locked coverage assertion.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/report b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/report
+new file mode 100644
+index 0000000000000000000000000000000000000000..9e1d1abae3a8add801bed3cd491e26a38b36beca
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/report
+@@ -0,0 +1,31 @@
++# App M1 client pin report
++
++## What changed
++
++- Refreshed `runtime.lock.json` from the exact reviewed Runtime commit `c423544de3b7a1090649bf32e4c82514c4c7a641`.
++- Added the official `packages/typescript/src/timeline-commit-types.ts` → `src/integrations/runtime/timeline-commit-types.ts` mapping with hash `sha256:068f23389275b6302ab3842c6d7daa540a399553f1eb39dd9688f988d82267f0`.
++- Updated the Runtime artifact version to `sha256:1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d`.
++- Updated `vendorLock.test.ts` to assert exact locked coverage of 13 entries and include the DTO path.
++- No generated Runtime source bytes changed; the three vendored TypeScript modules were already byte-equal to the reviewed output.
++
++## Verification
++
++Passed:
++
++- `node scripts/vendor-lock.mjs update runtime.lock.json --producer /home/user/work/runtime`
++- `node scripts/vendor-lock.mjs check runtime.lock.json --producer /home/user/work/runtime`
++- Explicit shell audit: all 13 local and reviewed-producer bytes matched their lock hashes; `generated.ts`, `generated-contract-metadata.ts`, and `timeline-commit-types.ts` matched exact `git show` output.
++- `npm run test:contracts` — 1 file, 1 test passed.
++- `npx eslint src/integrations/runtime/vendorLock.test.ts --max-warnings 0` — passed.
++- `git diff --check` — passed.
++
++The requested targeted Vitest command ran:
++
++`npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/integrations/runtime/{vendorLock,timelineCommit}.test.ts`
++
++`timelineCommit.test.ts` passed (41 tests). Eleven `vendorLock.test.ts` cases failed during fixture setup at `execFileSync('git', ['init'])` with sandbox `spawnSync git EPERM`; these failures occurred before assertions and are environmental, not caused by the pin diff.
++
++## Not run / next step
++
++- No full, browser, localhost, or install suite was run, per task instructions.
++- Re-run the targeted vendor-lock Vitest file in an environment permitting child Git processes; then the change is ready for harness commit and integration.
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 71ee78cae957595d52df592f93cd268eeaf482a1..1b7e81bc6c4cfc2e1831ca0dbec8df5fc367fce8
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -44,6 +44,10 @@
+       "from": "packages/typescript/src/generated.ts",
+       "sha256": "sha256:a98eddf3560097d4ad5547efe7d923576f1bc7cf449da28d7ae49393630e838c"
+     },
++    "src/integrations/runtime/timeline-commit-types.ts": {
++      "from": "packages/typescript/src/timeline-commit-types.ts",
++      "sha256": "sha256:068f23389275b6302ab3842c6d7daa540a399553f1eb39dd9688f988d82267f0"
++    },
+     "vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json": {
+       "from": "contract/schemas/timeline-config.schema.json",
+       "sha256": "sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
+@@ -52,5 +56,5 @@
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+   "producer_version": "sha256:0a8f840626077be51ac1377083459882149d28a81522091179cb5cf3a2990719",
+-  "source_commit": "a24e7d24343a965dc0d3f0eada141bd45c8192d7"
++  "source_commit": "c423544de3b7a1090649bf32e4c82514c4c7a641"
+ }
+diff --git a/src/integrations/runtime/vendorLock.test.ts b/src/integrations/runtime/vendorLock.test.ts
+index 7fc1eca944e57e255066f34468dc7cc5683fcaf7..cd7e6f7e1ac21566616de88f7902ca26712ac35e
+--- a/src/integrations/runtime/vendorLock.test.ts
++++ b/src/integrations/runtime/vendorLock.test.ts
+@@ -77,11 +77,12 @@
+   it('consolidates generated types, timeline schema, and every response fixture under the Runtime pin', () => {
+     const lock = JSON.parse(readFileSync(path.join(ROOT, 'runtime.lock.json'), 'utf8')) as VendorLock;
+     expect(lock.source_commit).toMatch(/^[0-9a-f]{40}$/);
+-    expect(Object.keys(lock.files)).toHaveLength(12);
++    expect(Object.keys(lock.files)).toHaveLength(13);
+     expect(Object.keys(lock.files).filter((file) => file.startsWith('src/integrations/runtime/fixtures/responses/'))).toHaveLength(9);
+     expect(Object.keys(lock.files)).toEqual(expect.arrayContaining([
+       'src/integrations/runtime/generated-contract-metadata.ts',
+       'src/integrations/runtime/generated.ts',
++      'src/integrations/runtime/timeline-commit-types.ts',
+       'vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json',
+       'src/integrations/runtime/fixtures/responses/events_page_1_200.json',
+       'src/integrations/runtime/fixtures/responses/validation_error_422.json',
+
+exec
+/bin/bash -lc "git status --short --branch; printf '%s\\n' '--- changed paths ---'; git diff --name-only; printf '%s\\n' '--- handoff files ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/commit-msg; sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/report" in /home/user/work/wt/app-m1-client-pin
+ succeeded in 844ms:
+## tl/app-m1-client-pin
+ M runtime.lock.json
+ M src/integrations/runtime/vendorLock.test.ts
+--- changed paths ---
+runtime.lock.json
+src/integrations/runtime/vendorLock.test.ts
+--- handoff files ---
+fix(runtime): pin timeline commit DTO artifact
+
+Refresh the Runtime vendor lock from reviewed commit c423544de3b7a1090649bf32e4c82514c4c7a641.
+Add the timeline-commit-types mapping and update the exact locked coverage assertion.
+# App M1 client pin report
+
+## What changed
+
+- Refreshed `runtime.lock.json` from the exact reviewed Runtime commit `c423544de3b7a1090649bf32e4c82514c4c7a641`.
+- Added the official `packages/typescript/src/timeline-commit-types.ts` → `src/integrations/runtime/timeline-commit-types.ts` mapping with hash `sha256:068f23389275b6302ab3842c6d7daa540a399553f1eb39dd9688f988d82267f0`.
+- Updated the Runtime artifact version to `sha256:1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d`.
+- Updated `vendorLock.test.ts` to assert exact locked coverage of 13 entries and include the DTO path.
+- No generated Runtime source bytes changed; the three vendored TypeScript modules were already byte-equal to the reviewed output.
+
+## Verification
+
+Passed:
+
+- `node scripts/vendor-lock.mjs update runtime.lock.json --producer /home/user/work/runtime`
+- `node scripts/vendor-lock.mjs check runtime.lock.json --producer /home/user/work/runtime`
+- Explicit shell audit: all 13 local and reviewed-producer bytes matched their lock hashes; `generated.ts`, `generated-contract-metadata.ts`, and `timeline-commit-types.ts` matched exact `git show` output.
+- `npm run test:contracts` — 1 file, 1 test passed.
+- `npx eslint src/integrations/runtime/vendorLock.test.ts --max-warnings 0` — passed.
+- `git diff --check` — passed.
+
+The requested targeted Vitest command ran:
+
+`npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/integrations/runtime/{vendorLock,timelineCommit}.test.ts`
+
+`timelineCommit.test.ts` passed (41 tests). Eleven `vendorLock.test.ts` cases failed during fixture setup at `execFileSync('git', ['init'])` with sandbox `spawnSync git EPERM`; these failures occurred before assertions and are environmental, not caused by the pin diff.
+
+## Not run / next step
+
+- No full, browser, localhost, or install suite was run, per task instructions.
+- Re-run the targeted vendor-lock Vitest file in an environment permitting child Git processes; then the change is ready for harness commit and integration.
+
+codex
+Implemented the Runtime DTO artifact pin.
+
+Changed:
+
+- Added `timeline-commit-types.ts` to `runtime.lock.json`; coverage 12→13.
+- Pinned Runtime commit `c423544de3b7a1090649bf32e4c82514c4c7a641`.
+- Updated `vendorLock.test.ts` expectation.
+- Generated files were already byte-identical; no content changes.
+
+Passed:
+
+- Vendor-lock update/check
+- 13-entry hash and byte audit
+- `npm run test:contracts`
+- File-scoped ESLint
+- `git diff --check`
+
+Targeted Vitest: `timelineCommit.test.ts` passed (41 tests). Vendor-lock fixture tests were blocked by sandbox `spawnSync git EPERM` during fixture setup.
+
+Handoff files written:
+
+- `commit-msg`
+- `report`
+
+No full/browser/install suites run.
+tokens used
+57,255
+Implemented the Runtime DTO artifact pin.
+
+Changed:
+
+- Added `timeline-commit-types.ts` to `runtime.lock.json`; coverage 12→13.
+- Pinned Runtime commit `c423544de3b7a1090649bf32e4c82514c4c7a641`.
+- Updated `vendorLock.test.ts` expectation.
+- Generated files were already byte-identical; no content changes.
+
+Passed:
+
+- Vendor-lock update/check
+- 13-entry hash and byte audit
+- `npm run test:contracts`
+- File-scoped ESLint
+- `git diff --check`
+
+Targeted Vitest: `timelineCommit.test.ts` passed (41 tests). Vendor-lock fixture tests were blocked by sandbox `spawnSync git EPERM` during fixture setup.
+
+Handoff files written:
+
+- `commit-msg`
+- `report`
+
+No full/browser/install suites run.

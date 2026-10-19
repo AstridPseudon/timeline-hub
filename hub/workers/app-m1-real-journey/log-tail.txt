@@ -1,0 +1,400 @@
++  }
++
+   /** `python -m astrid <args>` where the last stdout line is the `--json` envelope; the caller passes `--json`. */
+   async json<T = any>(args: string[], options?: { timeoutMs?: number }): Promise<AstridEnvelope<T>> {
+     const run = await this.astrid(args, options);
+diff --git a/tests/e2e/local/support/harness.ts b/tests/e2e/local/support/harness.ts
+index 2d5fb0e785ff71c66937cf178784d5f361990da5..db913a32a3808dbacb7907ba0eb781921deceefc
+--- a/tests/e2e/local/support/harness.ts
++++ b/tests/e2e/local/support/harness.ts
+@@ -34,12 +34,16 @@
+ export const BIG_DOWNLOAD_BYTES = 60 * 1024 * 1024;
+ export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
+ 
+-export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-runtime'));
++export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT
++  ?? [path.join(REPO_ROOT, '..', 'astrid-runtime'), path.join(REPO_ROOT, '../..', 'runtime')]
++    .find((dir) => existsSync(path.join(dir, 'runtime_protocol', 'cli.py')))
++  ?? path.join(REPO_ROOT, '..', 'astrid-runtime'));
+ const DIST_DIR = path.resolve(process.env.ASTRID_APP_DIRECT_DIST ?? path.join(REPO_ROOT, 'dist'));
+ 
+ export function runtimePython(): string | null {
+-  const python = path.join(RUNTIME_CHECKOUT, '.venv', 'bin', 'python');
+-  return existsSync(python) ? python : null;
++  const python = process.env.ASTRID_RUNTIME_PYTHON
++    ?? [path.join(RUNTIME_CHECKOUT, '.venv/bin/python'), path.join(RUNTIME_CHECKOUT, '../venv-runtime/bin/python')].find(existsSync);
++  return python && existsSync(python) ? python : null;
+ }
+ 
+ /** Why the harness cannot run here, or null when it can. */
+@@ -370,6 +374,8 @@
+   private extensionsSeed?: ExtensionsSeed;
+   private mediaSeed?: MediaSeed;
+   private threeProductsSeed?: ThreeProductsSeed;
++  private timelineAuthoring = false;
++  private authoringPython?: string;
+ 
+   /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
+   get extensionsConfig(): ExtensionsConfigMode { return this.extensionsMode; }
+@@ -430,8 +436,24 @@
+ 
+   // -- Runtime -------------------------------------------------------------------------------
+ 
+-  private runtimeEnv(): NodeJS.ProcessEnv { return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1' }; }
++  private runtimeEnv(): NodeJS.ProcessEnv {
++    const agent = path.resolve(process.env.ASTRID_CHECKOUT
++      ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
++        .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
++      ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
++    return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', PYTHONPATH: [RUNTIME_CHECKOUT, agent].join(path.delimiter) };
++  }
+ 
++  /** Seed with main's APIs first; startup verifies their original publication provenance. */
++  async enableTimelineAuthoring(python: string): Promise<void> {
++    if (this.timelineAuthoring) return;
++    await this.stopRuntime();
++    if (!existsSync(python)) throw new Error(`Authoring Python not found at ${python}`);
++    this.authoringPython = python;
++    this.timelineAuthoring = true;
++    await this.startRuntime();
++  }
++
+   private async createRealm(): Promise<string> {
+     const output = execFileSync(runtimePython()!, ['-m', 'runtime_protocol.cli', 'create', '--root', this.realmDir, '--display-name', 'Direct Journey'], { cwd: this.tmp, env: { ...process.env, ...this.runtimeEnv() }, encoding: 'utf8' });
+     return JSON.parse(output.trim().split('\n').pop()!).realm_id;
+@@ -443,8 +465,9 @@
+    */
+   async startRuntime(port = 0): Promise<void> {
+     if (this.runtime) throw new Error('Runtime already running');
+-    const managed = spawnGroup(runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
+-      '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath], { cwd: this.tmp, env: this.runtimeEnv() });
++    const managed = spawnGroup(this.authoringPython ?? runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
++      '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath,
++      ...(this.timelineAuthoring ? ['--authoring-profile', 'astrid'] : [])], { cwd: this.tmp, env: this.runtimeEnv() });
+     this.runtime = managed;
+     const endpoint = await waitFor<string>('Runtime start', async () => {
+       const line = managed.stdout.split('\n').find((candidate) => candidate.trim().startsWith('{') && candidate.includes('"endpoint"'));
+diff --git a/tests/e2e/local/three-products.spec.ts b/tests/e2e/local/three-products.spec.ts
+index d498ae75267dfa701f29f3db1f7560c4d767f442..ad920b59835f72b0c5dda32d8fff470292c92b71
+--- a/tests/e2e/local/three-products.spec.ts
++++ b/tests/e2e/local/three-products.spec.ts
+@@ -31,7 +31,7 @@
+ import { harnessUnavailableReason, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
+ import { commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, openApp, openSeededTimeline, revisionBody, test as appTest } from './support/app.ts';
+ import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
+-import { AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
++import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
+ 
+ /** A hang ceiling for one wait (R-10): many times the usual time, never a budget. */
+ const CEILING = { timeout: 90_000 };
+@@ -56,6 +56,7 @@
+ test.beforeAll(() => {
+   const reason = harnessUnavailableReason() ?? astridUnavailableReason();
+   if (reason) throw new Error(`the three-products journey cannot run: ${reason}`);
++  journey.sources = revisionSet();
+ });
+ 
+ // ---------------------------------------------------------------------------------------------
+@@ -75,6 +76,7 @@
+   startedAt: new Date().toISOString(),
+   loadAverageStart: loadavg(),
+   identity: undefined as AstridIdentity | undefined,
++  sources: undefined as ReturnType<typeof revisionSet> | undefined,
+   preflightCalls: [] as AstridCall[],
+   cases: [] as CaseRecord[],
+   /** What the running case has learned that the summary should carry (named facts, never verdicts on speed). */
+@@ -103,15 +105,18 @@
+ // eslint-disable-next-line no-empty-pattern
+ test.afterAll(async ({}, testInfo) => {
+   const outputDir = testInfo.project.outputDir;
++  console.log('[three-products] source tuple', JSON.stringify(revisionSet(journey.identity)));
+   mkdirSync(outputDir, { recursive: true });
+   writeFileSync(path.join(outputDir, 'three-products-summary.json'), JSON.stringify({
+     startedAt: journey.startedAt,
+     note: 'reported, never judged (testing plan R-10)',
+     revisions: revisionSet(journey.identity),
++    sourcesAtStart: journey.sources,
+     machine: { cpus: cpus().length, loadAverageStart: journey.loadAverageStart, loadAverageEnd: loadavg() },
+     preflight: { astridCalls: journey.preflightCalls },
+     cases: journey.cases,
+   }, null, 2));
++  expect(revisionSet(), 'source tuple must remain fixed throughout the cross-product run').toEqual(journey.sources);
+ });
+ 
+ // ---------------------------------------------------------------------------------------------
+@@ -219,7 +224,7 @@
+     });
+   }
+ 
+-  async expectClean(page: Page) {
++  async expectClean(page: Page, timelineId?: string) {
+     await Promise.all(this.pending);
+     const inPage = await page.evaluate(() => JSON.stringify({
+       dom: document.documentElement.outerHTML,
+@@ -228,6 +233,7 @@
+       cookie: document.cookie,
+     }));
+     this.scan('the page (DOM, storage, cookies)', inPage);
++    if (timelineId) this.scan('native command outboxes', JSON.stringify(await commandOutboxes(page, timelineId)));
+     expect(this.leaks, 'no credential reached the page').toEqual([]);
+   }
+ }
+@@ -366,7 +372,7 @@
+   const revisionCount = await expectOpaqueDataKept(harness, seed3);
+ 
+   journey.facts = { ...journey.facts, taskId, outputObjectId: output!.object_id, agentRevision: published.new_head, appRevision, revisionCount };
+-  await sniff.expectClean(page);
++  await sniff.expectClean(page, seed3.timelineId);
+ });
+ 
+ // ---------------------------------------------------------------------------------------------
+@@ -385,6 +391,7 @@
+   const posts: CommitPost[] = [];
+   const legacy: string[] = [];
+   let held: Route | undefined;
++  let attempts = 0;
+   const observe = (target: Page) => {
+     target.on('request', (request) => {
+       if (request.method() === 'POST' && SAVES.test(new URL(request.url()).pathname)) legacy.push(request.url());
+@@ -393,6 +400,7 @@
+   const intercept = async (route: Route) => {
+     const request = route.request();
+     if (request.method() !== 'POST') return route.fallback();
++    attempts++;
+     const response = await route.fetch({ maxRetries: 0 });
+     const post: CommitPost = {
+       method: request.method(), path: new URL(request.url()).pathname.replace(/^\/api\/runtime/, ''),
+@@ -407,6 +415,7 @@
+   await attach(page);
+   return {
+     posts, legacy, attach,
++    get attempts() { return attempts; },
+     async loseAck() {
+       if (!held) throw new Error('No durably accepted response to lose');
+       await held.abort('connectionreset');
+@@ -481,14 +490,27 @@
+   return owner;
+ }
+ 
+-async function prepareDependentMoves(page: Page, harness: DirectHarness, seed: ThreeProductsSeed) {
+-  await harness.enableTimelineAuthoring();
+-  const wire = await faultFirstCommit(page);
++async function openCommandTimeline(page: Page, harness: DirectHarness, seed: ThreeProductsSeed) {
++  const previous = page.url().startsWith(harness.origin) ? await commandOutboxes(page, seed.timelineId) : [];
+   await openApp(page, harness);
+   await expectConnected(page);
+   await openSeededTimeline(page, harness);
++  // Loading the canvas can finish before immutable reads and the native owner claim.
++  await expect.poll(async () => ({
++    ready: (await commandOutboxes(page, seed.timelineId)).some((owner) =>
++      !previous.some((old) => old.ownerId === owner.ownerId) && !owner.pending && !owner.intents.length),
++    notice: await page.getByTestId('timeline-command-recovery').allTextContents(),
++  }), { ...CEILING, message: 'the mounted editor must claim a new durable command owner before the gesture' }).toMatchObject({ ready: true });
++}
++
++async function prepareDependentMoves(page: Page, harness: DirectHarness, seed: ThreeProductsSeed, beforeBDrop?: (a: CommitAcceptedMutation) => Promise<void>) {
++  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
++  const wire = await faultFirstCommit(page);
++  await openCommandTimeline(page, harness, seed);
+   const before = await history(harness, seed);
+-  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 0, 5, 9);
++  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 0, 5, 9, () => {
++    expect(wire.attempts, 'pointer movement previews; the actual drop commits').toBe(0);
++  });
+   await expect.poll(() => wire.posts.length, CEILING).toBe(1);
+   const a = accepted(wire.posts[0]);
+   const bodyA = JSON.parse(wire.posts[0].body) as CommitRequest;
+@@ -497,27 +519,46 @@
+   expect(position(a.data.canonical_document, seed.appClipId)).toBe(5);
+   expect(await currentHead(harness)).toBe(pinOf(a).revision_id);
+   // The second pointerdown observes the actual optimistic authored bundle A.
+-  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 5, 7, 9);
++  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 5, 7, 9, async () => {
++    expect(wire.attempts, 'B stays unsent behind unacknowledged A').toBe(1);
++    await beforeBDrop?.(a);
++  });
+   const owner = await ownerWithTwoMoves(page, seed);
+-  expect(owner.scope).toMatchObject({ realmId: harness.realmId, projectId: harness.seed.projectId, timelineId: seed.timelineId });
++  expect(owner.scope).toEqual({ realmId: harness.realmId, actorId: a.data.publisher, projectId: harness.seed.projectId, timelineId: seed.timelineId });
+   expect(owner.pending!.request).toEqual({ method: 'POST', path: `${timelineBase(harness, seed)}/commit`,
+     body: wire.posts[0].body, key: wire.posts[0].key });
+   expect(wire.posts).toHaveLength(1);
+   return { wire, before, a, owner };
+ }
+ 
+-async function expectAgentRevision(astrid: AstridCli, seed: ThreeProductsSeed, revision: string) {
+-  const shown = await astrid.json<{ head_revision_id: string }>(['timelines', 'show', seed.timelineId,
++async function expectAgentRevision(astrid: AstridCli, harness: DirectHarness, seed: ThreeProductsSeed, revision: string) {
++  const shown = await astrid.json<{ revision_id: string }>(['timelines', 'show', seed.timelineId,
+     '--project', seed.projectSlug, '--revision-id', revision, '--json']);
+   expect(shown.ok, JSON.stringify(shown)).toBe(true);
+-  expect(shown.data?.head_revision_id).toBe(revision);
+-  const visualized = await astrid.json<{ inspection: { revision_id: string } }>(['timelines', 'visualize', seed.timelineId,
++  expect(shown.data?.revision_id).toBe(revision);
++  const visualized = await astrid.json<{ outputs: { inspection: { revision_id: string }; evidence_kind: string;
++    render_requested: boolean; artifacts: { md: { object_id: string } } } }>(['timelines', 'visualize', seed.timelineId,
+     '--project', seed.projectSlug, '--revision-id', revision, '--mode', 'inputs', '--format', 'md', '--json']);
+   expect(visualized.ok, JSON.stringify(visualized)).toBe(true);
+-  expect(visualized.data?.inspection.revision_id).toBe(revision);
++  const outputs = visualized.data!.outputs;
++  expect(outputs.inspection.revision_id).toBe(revision);
++  expect(outputs.evidence_kind).toBe('declared_inputs');
++  expect(outputs.render_requested).toBe(false);
++  const artifact = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(outputs.artifacts.md.object_id)}`);
++  expect(artifact.status).toBe(200);
++  const markdown = await artifact.text();
++  expect(markdown).toContain(`Parent revision: ${revision}`);
++  expect(markdown).toContain('Source pixels, waveforms, and rendered output were not inspected.');
+   journey.facts.visualize = { revision, mode: 'inputs', renderer: 'not started', composedPixels: 'not run' };
+ }
+ 
++async function expectPreviewRevision(page: Page, revision: string) {
++  const label = page.getByTestId('preview-revision-label').filter({ hasText: `Committed ${revision}` })
++    .or(page.getByTestId('preview-revision-unavailable').filter({ hasText: `Preview of ${revision} unavailable` }));
++  await expect(label.first()).toBeVisible(CEILING);
++  journey.facts.previewLabel = await label.first().innerText();
++}
++
+ test('M1 real gesture: lost durable ACK, dependent B, reopen, Runtime restart, exact retry and UI undo preserve independent Agent work', async ({ page, context, harness, astrid, seed3 }) => {
+   const sniff = new TokenSniff(secretsOf(harness, astrid));
+   sniff.attach(page);
+@@ -547,15 +588,21 @@
+   await openApp(reopened, harness);
+   await expectConnected(reopened);
+   await openSeededTimeline(reopened, harness);
++  const realmAfter = await expectSameRealm(reopened, harness, astrid);
++  expect(realmAfter.realmId).toBe(realmBefore.realmId);
++  expect(realmAfter.runtimeInstanceId).toBe(harness.runtimeInstanceId);
++  expect(realmAfter.runtimeInstanceId).not.toBe(realmBefore.runtimeInstanceId);
+   const persisted = (await commandOutboxes(reopened, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)!;
+   expect(persisted.pending?.request).toEqual(owner.pending!.request);
+   expect(persisted.intents).toEqual(owner.intents);
+   expect(wire.posts).toHaveLength(1);
+   // Recovery is an actual user action selecting the persisted owner, never a test command injection.
+-  await reopened.getByRole('button', { name: `Recover editor ${owner.ownerId}`, exact: true }).click();
++  await reopened.getByRole('button', { name: /^Recover saved edits/ })
++    .and(reopened.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
+   await expect.poll(() => wire.posts.length, CEILING).toBe(3);
+   expect(wire.posts[1]).toEqual(wire.posts[0]);
+   const b = accepted(wire.posts[2]);
++  expect(b.data.publisher).toBe(a.data.publisher);
+   const requestB = JSON.parse(wire.posts[2].body) as CommitRequest;
+   expect(wire.posts[2].key).not.toBe(wire.posts[0].key);
+   expect(requestB).toMatchObject({ base_revision_id: pinOf(a).revision_id, base_publication_id: pinOf(a).publication_id });
+@@ -563,13 +610,19 @@
+   expect(b.data.status).toBe('rebased');
+   expect(b.data.previous_publication_id).toBe(pinOf(c).publication_id);
+   expect(position(b.data.canonical_document, seed3.appClipId)).toBe(7);
+-  expect(b.data.canonical_document.parent_revision.payload.config).toMatchObject({ tracks: expect.arrayContaining([{ id: 'f2-independent-C', kind: 'audio', label: 'f2-independent-C' }]) });
++  expect(b.data.canonical_document.parent_revision.payload.config).toMatchObject({ tracks: expect.arrayContaining([expect.objectContaining({ id: 'f2-independent-C', kind: 'audio', label: 'f2-independent-C' })]) });
+   await expect.poll(async () => (await commandOutboxes(reopened, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)?.intents.length, CEILING).toBe(0);
+   expect((await history(harness, seed3)).items).toHaveLength(before.items.length + 3);
++  const recordedB = (await history(harness, seed3)).items.find((entry) => entry.publication_id === pinOf(b).publication_id)?.records;
++  expect(recordedB?.commands[0].command).toEqual(requestB.commands[0]);
++  expect(recordedB?.commands[0].writes.length).toBeGreaterThan(0);
++  expect(recordedB?.commands[0].reads.length).toBeGreaterThan(0);
++  expect(recordedB?.commands[0].bindings.length).toBeGreaterThan(0);
+   await expectImmutableClosure(harness, seed3, a);
+   await expectImmutableClosure(harness, seed3, c);
+   await expectImmutableClosure(harness, seed3, b);
+-  await expectAgentRevision(astrid, seed3, pinOf(b).revision_id);
++  await expectPreviewRevision(reopened, pinOf(b).revision_id);
++  await expectAgentRevision(astrid, harness, seed3, pinOf(b).revision_id);
+ 
+   // Undo the accepted B publication through the mounted App toolbar.
+   const publication = pinOf(b).publication_id;
+@@ -584,12 +637,18 @@
+     ]);
+     const inverse = accepted(inversePost);
+     expect(position(inverse.data.canonical_document, seed3.appClipId)).toBe(5);
++    expect(inverse.data.canonical_document.parent_revision.payload, 'undo restores A exactly and keeps all of disjoint C')
++      .toEqual(c.data.canonical_document.parent_revision.payload);
++    expect(inverse.data.canonical_document.shot_revisions).toEqual(c.data.canonical_document.shot_revisions);
++    expect(inverse.data.canonical_document.internal_timeline_revisions).toEqual(c.data.canonical_document.internal_timeline_revisions);
++    expect(inverse.data.canonical_document.dependency_manifest).toEqual(c.data.canonical_document.dependency_manifest);
+     undone = inverse;
+     expect(inverse.data.canonical_document.parent_revision.payload.config).toMatchObject({ tracks: expect.arrayContaining([expect.objectContaining({ id: 'f2-independent-C' })]) });
+     const entries = (await history(harness, seed3)).items;
+     expect(entries.find((entry) => entry.publication_id === pinOf(inverse).publication_id)?.records?.undo_of).toEqual([publication]);
+     await expectImmutableClosure(harness, seed3, inverse);
+-    await expectAgentRevision(astrid, seed3, pinOf(inverse).revision_id);
++    await expectPreviewRevision(reopened, pinOf(inverse).revision_id);
++    await expectAgentRevision(astrid, harness, seed3, pinOf(inverse).revision_id);
+   }
+   // An intentional same-value write is a new publication of the same immutable revision.
+   const revisionCount = (await allRevisions(harness, seed3)).length;
+@@ -607,27 +666,35 @@
+   expect(wire.legacy, 'move and inverse must never POST a legacy snapshot').toEqual([]);
+   await expectOpaqueDataKept(harness, seed3);
+   journey.facts = { ...journey.facts, sourceTuple: revisionSet(journey.identity), renderer: 'not started',
++    authoringLaunch: { profile: 'astrid', python: ASTRID_PYTHON },
+     headA: pinOf(a), headB: pinOf(b), independentC: pinOf(c), originalB: commandsOf(owner.intents[1].payload),
+     exactRetry: { method: wire.posts[1].method, path: wire.posts[1].path, key: wire.posts[1].key }, legacySaveCount: wire.legacy.length };
+-  await sniff.expectClean(reopened);
++  await sniff.expectClean(reopened, seed3.timelineId);
+ });
+ 
+ test('M1 real dependency conflict retains B original guards and pending identity', async ({ page, harness, astrid, seed3 }) => {
+   const sniff = new TokenSniff(secretsOf(harness, astrid));
+   sniff.attach(page);
+-  await openApp(page, harness);
+-  await expectConnected(page);
+-  await openSeededTimeline(page, harness);
++  const legacy: string[] = [];
++  page.on('request', (request) => {
++    if (request.method() === 'POST' && SAVES.test(new URL(request.url()).pathname)) legacy.push(request.url());
++  });
++  await openCommandTimeline(page, harness, seed3);
+   const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
+   await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 5, 0, 9);
+   const reset = await resetResponse;
+   expect(reset.status(), await reset.text()).toBe(200);
+   await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
+-  const { wire, before, a, owner } = await prepareDependentMoves(page, harness, seed3);
+-  const c = await astrid.commitCaptured(a.data.canonical_document, pinOf(a), { kind: 'move', clipId: seed3.appClipId, on: 6 }, 'f2-dependent-C');
++  let c!: CommitAcceptedMutation;
++  const { wire, before, owner } = await prepareDependentMoves(page, harness, seed3, async (a) => {
++    // Change the actual guard after pointerdown, before drop; B must not recapture it.
++    c = await astrid.commitCaptured(a.data.canonical_document, pinOf(a), { kind: 'move', clipId: seed3.appClipId, on: 6 }, 'f2-dependent-C');
++  });
++  journey.facts.sameRealm = await expectSameRealm(page, harness, astrid);
+   await wire.loseAck();
+   await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
+-  await page.getByRole('button', { name: 'Retry exact request', exact: true }).click();
++  await page.getByRole('button', { name: 'Retry save', exact: true })
++    .and(page.getByTestId('timeline-command-retry')).click();
+   await expect.poll(() => wire.posts.length, CEILING).toBe(3);
+   expect(wire.posts[1]).toEqual(wire.posts[0]);
+   expect(wire.posts[2].status).toBe(409);
+@@ -635,6 +702,8 @@
+   expect(wire.posts[2].response.error.details.reason).not.toBe('stale_head');
+   const conflict = wire.posts[2].response.error.details.conflicts;
+   expect(conflict.length, JSON.stringify(wire.posts[2].response)).toBeGreaterThan(0);
++  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)?.pending?.outcome?.kind, CEILING).toBe('rejected');
++  await expect(page.getByTestId('timeline-command-recovery')).toContainText('Your changes are retained and need resolution before they can be saved.');
+   const retained = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)!;
+   expect(retained.intents).toHaveLength(1);
+   expect(retained.intents[0].id).toBe(owner.intents[1].id);
+@@ -651,8 +720,17 @@
+   const reloaded = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)!;
+   expect(reloaded.pending).toEqual(retained.pending);
+   expect(reloaded.intents).toEqual(retained.intents);
++  const recoverConflict = page.getByRole('button', { name: /^Recover saved edits/ })
++    .and(page.locator(`[data-owner-id="${owner.ownerId}"]`));
++  await expect(recoverConflict).toBeVisible(CEILING);
++  await recoverConflict.click();
++  await expect(page.getByTestId('timeline-command-recovery')).toContainText('Your changes are retained and need resolution before they can be saved.');
++  const recoveredConflict = (await commandOutboxes(page, seed3.timelineId)).find((item) => item.ownerId === owner.ownerId)!;
++  expect(recoveredConflict.intents).toEqual(retained.intents);
++  expect(recoveredConflict.pending).toEqual(retained.pending);
+   expect(wire.posts).toHaveLength(3);
+   expect(wire.legacy).toEqual([]);
++  expect(legacy, 'the reset move must also use the commit path exclusively').toEqual([]);
+   await expectOpaqueDataKept(harness, seed3);
+-  await sniff.expectClean(page);
++  await sniff.expectClean(page, seed3.timelineId);
+ });
+
+exec
+/bin/bash -lc 'node_modules/.bin/eslint tests/e2e/local/three-products.spec.ts tests/e2e/local/support/{app,astrid,harness}.ts && node_modules/.bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --allowImportingTsExtensions --esModuleInterop --skipLibCheck --types node --lib ES2022,DOM tests/e2e/local/three-products.spec.ts tests/e2e/local/support/{app,astrid,harness}.ts && git diff --check' in /home/user/work/wt/app-m1-real-journey
+ succeeded in 4775ms:

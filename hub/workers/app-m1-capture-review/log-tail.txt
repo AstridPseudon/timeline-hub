@@ -1,0 +1,400 @@
+  580 total
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/capture.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/fixtures/recipe_m1_move.json
+ M tests/editing_conformance/fixtures/recipe_m1_occurrence.json
+ M tests/editing_conformance/test_recipe_m1_commands.py
+?? tests/editing_conformance/fixtures/recipe_m1_shared.json
+
+ succeeded in 1713ms:
+28/28 exact commands, after_bundle and records verified
+
+ succeeded in 3899ms:
+ succeeded in 7759ms:
+ succeeded in 8498ms:
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-capture-review
+
+
+ Test Files  1 passed (1)
+      Tests  78 passed (78)
+   Start at  19:32:08
+   Duration  5.35s (transform 1.38s, setup 623ms, import 1.43s, tests 1.25s, environment 1.42s)
+
+
+exec
+/bin/bash -lc "git diff -- src/tools/video-editor/commands/clipMoveCapture.ts; sed -n '127,275p' src/tools/video-editor/commands/clipMovePrimitives.ts" in /home/user/work/wt/app-m1-capture-review
+ succeeded in 50ms:
+diff --git a/src/tools/video-editor/commands/clipMoveCapture.ts b/src/tools/video-editor/commands/clipMoveCapture.ts
+index d52768af5..1da59b70b 100644
+--- a/src/tools/video-editor/commands/clipMoveCapture.ts
++++ b/src/tools/video-editor/commands/clipMoveCapture.ts
+@@ -1,5 +1,5 @@
+ import type { EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+-import { AuthoredState, ClipMoveError, MoveRecording, copy, equal, has, object } from './clipMovePrimitives.ts';
++import { AuthoredState, ClipMoveError, MoveRecording, assertFiniteJson, copy, equal, freezeJson, has, object } from './clipMovePrimitives.ts';
+ import type { AuthoredBundle } from './clipMovePrimitives.ts';
+ 
+ export { ClipMoveError } from './clipMovePrimitives.ts';
+@@ -7,7 +7,9 @@ export type { AuthoredBundle } from './clipMovePrimitives.ts';
+ 
+ // Built-in clip.move v1, ported from Agent sdk/timeline/capture.py::move.
+ // The recorder supplies metadata; this recipe supplies only reads and authored writes.
+-const INTENT = { ripple: 'none', anchor: 'fixed', ownership: 'occurrence', position: 'absolute' } as const;
++const INTENT = { ripple: 'none', anchor: 'fixed', position: 'absolute' } as const;
++const moveIntent = (select: string): EditCommand['intent'] => select.startsWith('occurrence:')
++  ? { ...INTENT, ownership: 'occurrence' } : { ...INTENT };
+ const CLIP_FIELDS = ['id', 'at', 'at_ms', 'track', 'asset', 'asset_id', 'media_id', 'object_id',
+   'clipType', 'clip_type', 'enabled', 'active', 'disabled', 'hidden', 'deleted',
+   'from', 'to', 'from_ms', 'to_ms', 'hold', 'duration', 'duration_ms', 'speed', 'time_map', 'timeMap', 'clips', 'children'];
+@@ -97,7 +99,7 @@ function occurrenceStart(row: Record<string, JSON>): number {
+ 
+ function move(bundle: AuthoredBundle, command: EditCommand) {
+   if (command.schema_version !== 1 || command.op !== 'clip.move' || command.version !== '1' ||
+-    !equal(Object.keys(command.args), ['on']) || !equal({ ...INTENT, ...command.intent }, INTENT)) {
++    !equal(Object.keys(command.args), ['on'])) {
+     throw new ClipMoveError('unsupported clip.move v1 command');
+   }
+   const ref = command.select;
+@@ -105,7 +107,9 @@ function move(bundle: AuthoredBundle, command: EditCommand) {
+     throw new ClipMoveError('clip.move requires a stable scoped clip identity');
+   }
+   const owner = ref.slice(0, ref.lastIndexOf('/'));
+-  const ctx = new MoveRecording(bundle, { ...command, intent: { ...INTENT } });
++  const intent = moveIntent(ref);
++  if (!equal({ ...intent, ...command.intent }, intent)) throw new ClipMoveError('unsupported clip.move v1 intention');
++  const ctx = new MoveRecording(bundle, { ...command, intent });
+   if (!equal(ctx.select('move.target', owner, [ref]), [ref])) throw new ClipMoveError('move target disappeared', 'identity_conflict');
+   for (const key of CLIP_FIELDS) ctx.read(ref, [key]);
+   const clip = ctx.state.entity(ref)!;
+@@ -158,7 +162,7 @@ function move(bundle: AuthoredBundle, command: EditCommand) {
+   let origin = 0;
+   if (owner !== 'parent') {
+     ctx.read(owner, ['occurrence_id']);
+-    ctx.read(owner, ['shot_id']);
++    ctx.read(`${owner}/shot`, ['shot_id']);
+     const row = ctx.state.occurrence(owner);
+     for (const path of MAP_FIELDS) ctx.read(owner, path);
+     if (row.time_map != null || row.timeMap != null ||
+@@ -189,7 +193,7 @@ function move(bundle: AuthoredBundle, command: EditCommand) {
+     const shots = object(mapping) && object(mapping.shots) ? mapping.shots : {};
+     pin.source = copy(shots[String(ctx.state.occurrence(owner).shot_id)] ?? {});
+   }
+-  ctx.dependency('move.images', 'source', pin);
++  ctx.dependency('move.images', 'entity', pin);
+   ctx.bind('move.target', ref, ['move.images', 'move.quantization', ...sourceDependencies]);
+   const msOnly = has(clip, 'at_ms') && !has(clip, 'at');
+   ctx.write(ref, [msOnly ? 'at_ms' : 'at'], number(msOnly ? local * 1000 : local, 'authored start'));
+@@ -201,26 +205,40 @@ function move(bundle: AuthoredBundle, command: EditCommand) {
+   }
+   ctx.write(ref, ['app', 'astrid', 'fixed_start'], true);
+   ctx.write(ref, ['app', 'astrid', 'for'], length);
++  ctx.compile();
+   return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record, previewAt: quantized };
+ }
+ 
+ /** Local authored execution only. Runtime/Agent remains the accepted compiler and rebase authority. */
+ export function executeClipMove(bundle: AuthoredBundle, command: EditCommand) {
++  assertFiniteJson(bundle);
++  assertFiniteJson(command);
+   const result = move(bundle, command);
+   for (const key of ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'] as const) {
+-    if (has(command, key) && !equal(command[key], result.command[key])) {
++    let matches = equal(command[key], result.command[key]);
++    if (key === 'reads' && Array.isArray(command.reads)) {
++      const actual = result.command.reads!;
++      const state = new AuthoredState(bundle);
++      matches = command.reads.length === actual.length && command.reads.every((claimed, index) => {
++        const read = actual[index];
++        return claimed.ref === read.ref && equal(claimed.path, read.path) &&
++          (equal(claimed.state, read.state) || (read.ref.endsWith('/shot') && state.matches(read.ref, read.path, claimed.state)));
++      });
++    }
++    if (has(command, key) && !matches) {
+       throw new ClipMoveError(`submitted ${key} does not match original capture`, 'capture_mismatch');
+     }
+   }
++  Object.assign(result.command, copy(command), { intent: result.command.intent });
+   return result;
+ }
+ 
+-declare const basisBrand: unique symbol;
+-export type ClipMoveBasis = { readonly [basisBrand]: true };
+-const bases = new WeakMap<ClipMoveBasis, { bundle: AuthoredBundle; command: EditCommand }>();
++// Local capture data, never a wire field. Both values survive the UI port's JSON clone.
++export type ClipMoveBasis = { readonly bundle: AuthoredBundle; readonly command: EditCommand };
+ 
+ /** Freeze original reads before preview. Pass the previous local result.bundle for dependent B. */
+ export function captureClipMove(bundle: AuthoredBundle, select: string): ClipMoveBasis {
++  assertFiniteJson(bundle);
+   const snapshot = copy(bundle);
+   const state = new AuthoredState(snapshot);
+   const target = state.entity(select)!;
+@@ -228,15 +246,19 @@ export function captureClipMove(bundle: AuthoredBundle, select: string): ClipMov
+   const current = has(target, 'at') ? number(target.at, 'clip.at') : number(target.at_ms, 'clip.at_ms') / 1000;
+   const origin = owner === 'parent' ? 0 : occurrenceStart(state.occurrence(owner));
+   const { command } = move(snapshot, { schema_version: 1, op: 'clip.move', version: '1', select,
+-    args: { on: current + origin }, intent: { ...INTENT } });
+-  const basis = Object.freeze({}) as ClipMoveBasis;
+-  bases.set(basis, { bundle: snapshot, command });
+-  return basis;
++    args: { on: current + origin }, intent: moveIntent(select) });
++  return freezeJson({ bundle: snapshot, command });
+ }
+ 
+ /** Drop supplies absolute global seconds. No ACK or refreshed document enters this operation. */
+-export function finishClipMove(basis: ClipMoveBasis, on: number) {
+-  const original = bases.get(basis);
+-  if (!original) throw new ClipMoveError('unknown clip move basis');
+-  return executeClipMove(original.bundle, { ...copy(original.command), args: { on } });
++export function finishClipMove(basis: unknown, on: number) {
++  assertFiniteJson(basis);
++  if (!object(basis)) throw new ClipMoveError('incomplete clip move basis');
++  const { bundle, command } = basis;
++  if (!object(bundle) || !object(command) ||
++    !['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created']
++      .every((key) => has(command, key))) {
++    throw new ClipMoveError('incomplete clip move basis');
++  }
++  return executeClipMove(bundle as AuthoredBundle, { ...copy(command as EditCommand), args: { on } });
+ }
+
+  config(owner: string): ObjectValue {
+    if (owner === 'parent') return this.bundle.parent.config as ObjectValue ?? {};
+    const row = this.occurrence(owner);
+    const shot = this.bundle.shots[String(row.shot_id)];
+    if (!shot || !object(shot.internal_timeline)) throw new ClipMoveError('missing authored owner');
+    return shot.internal_timeline;
+  }
+
+  entity(ref: string, optional = false): ObjectValue | undefined {
+    if (ref.includes('/clip:') || ref.includes('/track:')) {
+      const slash = ref.lastIndexOf('/');
+      const owner = ref.slice(0, slash);
+      const entity = ref.slice(slash + 1);
+      const colon = entity.indexOf(':');
+      const kind = entity.slice(0, colon);
+      const id = entity.slice(colon + 1);
+      const direct = this.bundle.parent.clips;
+      const rows = owner === 'parent' && kind === 'clip'
+        ? (Array.isArray(direct) && direct.length ? direct : this.config(owner).clips ?? direct ?? [])
+        : this.config(owner)[`${kind}s`] ?? [];
+      return one(rows, 'id', id, optional);
+    }
+    if (ref === 'parent') return this.bundle.parent;
+    if (ref.endsWith('/registry')) {
+      const owner = ref.slice(0, -'/registry'.length);
+      const nested = this.config(owner).registry;
+      if (owner !== 'parent') return nested as ObjectValue ?? {};
+      const direct = this.bundle.parent.registry;
+      for (const registry of [direct, nested]) {
+        if (registry != null && (!object(registry) ||
+          (has(registry, 'assets') && !object(registry.assets)))) {
+          throw new ClipMoveError('invalid parent registry');
+        }
+      }
+      if (direct != null && nested != null && !equal(direct, nested)) {
+        throw new ClipMoveError('parent.registry conflicts with parent.config.registry');
+      }
+      return (direct ?? nested ?? { assets: {} }) as ObjectValue;
+    }
+    if (ref.endsWith('/source')) return this.config(ref.slice(0, -'/source'.length));
+    if (ref.endsWith('/shot')) {
+      const row = this.occurrence(ref.slice(0, -'/shot'.length));
+      const mapping = this.bundle.source_mapping as ObjectValue;
+      const sources = mapping.shots as ObjectValue;
+      const source = (sources[String(row.shot_id)] as ObjectValue).shot_id;
+      if (typeof source !== 'string') throw new ClipMoveError('missing occurrence source identity');
+      const identity = this.isolatedOwner(ref.slice(0, -'/shot'.length), source);
+      if (row.shot_id !== source && row.shot_id !== identity) {
+        throw new ClipMoveError('occurrence authoring owner changed', 'identity_conflict');
+      }
+      return { shot_id: source };
+    }
+    if (ref.startsWith('occurrence:') && !ref.includes('/')) return this.occurrence(ref);
+    throw new ClipMoveError(`unsupported entity reference ${ref}`);
+  }
+
+  get(ref: string, path: string[]): AgentState {
+    const entity = this.entity(ref, true);
+    if (entity === undefined) return { state: 'absent' };
+    let value: JSON = entity;
+    for (const key of path) {
+      if (object(value) && has(value, key)) value = value[key];
+      else if (Array.isArray(value) && /^\d+$/.test(key) && Number(key) < value.length) value = value[Number(key)];
+      else return { state: 'absent' };
+    }
+    return { state: 'present', value: copy(value) };
+  }
+
+  matches(ref: string, path: string[], expected: AgentState): boolean {
+    const actual = this.get(ref, path);
+    if (equal(actual, expected)) return true;
+    return ref.endsWith('/shot') && equal(path, ['shot_id']) && expected.state === 'present' &&
+      actual.state === 'present' && typeof expected.value === 'string' &&
+      actual.value === this.isolatedOwner(ref.slice(0, -'/shot'.length), expected.value);
+  }
+
+  set(ref: string, path: string[], state: AgentState): void {
+    let target = this.entity(ref)!;
+    for (const key of path.slice(0, -1)) {
+      if (!object(target[key])) throw new ClipMoveError('write requires recorded container creation');
+      target = target[key];
+    }
+    const key = path[path.length - 1];
+    if (state.state === 'absent') delete target[key];
+    else target[key] = copy(state.value);
+  }
+}
+
+// These are the built-in Recording/selection primitives in Agent _recording.py.
+// Metadata comes from executed reads/writes, including absent and unchanged writes.
+export class MoveRecording {
+  readonly state: AuthoredState;
+  readonly command: EditCommand;
+  readonly record: CommandRecord;
+
+  constructor(bundle: AuthoredBundle, command: EditCommand) {
+    this.state = new AuthoredState(copy(bundle));
+    this.command = { ...copy(command), resolved: [command.select!], reads: [], selections: [],
+      expect: {}, authorship: {}, bindings: {}, created: [] };
+    this.record = { ordinal: 0, command: this.command, writes: [], reads: this.command.reads!,
+      selections: this.command.selections!, bindings: [], created: [], dependencies: [], derived_writes: [] };
+  }
+
+  read(ref: string, path: string[]): JSON | undefined {
+    const state = this.state.get(ref, path);
+    const read = { ref, path, state };
+    if (!this.command.reads!.some((other) => equal(read, other))) this.command.reads!.push(copy(read));
+    return state.state === 'present' ? copy(state.value) : undefined;
+  }
+
+  select(key: 'move.target' | 'move.blockers', owner: string, members: string[] = []): string[] {
+    let result: string[];
+    if (key === 'move.target') result = members.filter((ref) => this.state.entity(ref, true) !== undefined);
+    else {
+      const row = this.state.occurrence(owner);
+      const lane = object(row.placement) && has(row.placement, 'track') ? row.placement.track : row.track;
+      const track = typeof lane === 'string' ? this.state.entity(`parent/track:${lane}`, true) : undefined;
+      const output = !track || (!AUDIO_KINDS.has(String(track.kind)) && !AUDIO_KINDS.has(String(track.role)) && active(track));
+      result = this.state.bundle.placements.filter((other) => {
+        const otherLane = object(other.placement) && has(other.placement, 'track')
+          ? other.placement.track : other.track;
+        return output && active(other) && equal(lane, otherLane);
+      }).map((other) => `occurrence:${other.occurrence_id}`);
+    }
+    this.command.selections!.push({ key, query_version: 1, owner, members: [...result],
+      order: [...result], boundaries: [...result], policy: 'guard-membership' });
+    return result;
+  }
+
+  bind(key: string, ref: string, dependencies: string[] = []): void {
+    if (ref.includes('/clip:') || ref.includes('/track:') || (ref.startsWith('occurrence:') && !ref.includes('/'))) {
+      this.command.bindings![key] = ref;
+    }
+    this.record.bindings.push({ key, ref, policy: 'fixed', dependencies });
+  }
+
+  dependency(key: string, kind: AgentDependency['kind'], pin: ObjectValue): void {
+    this.record.dependencies.push({ key, kind, pin: copy(pin), policy: 'exact' });
+  }
+
+  compile(): void {
+    const mapping = this.state.bundle.source_mapping as ObjectValue | undefined;
+    const document = mapping?._runtime_document as ObjectValue | undefined;
+    const manifest = document?.dependency_manifest as ObjectValue | undefined;
+    const retained = manifest?.documents as JSON[] | undefined ?? [];
+    for (const capture of mapping?.pinned_documents as ObjectValue[] | undefined ?? []) {
+      const pin = capture.pin as ObjectValue;
+      if (retained.some((other) => equal(pin, other))) {
+
+exec
+/bin/bash -lc "python - <<'PY'
+from pathlib import Path
+Path('src/tools/video-editor/commands/fixtures/.capture-review-tsconfig.json').unlink()
+Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-capture-review/commit-msg').write_text('fix(timeline): preserve portable clip move capture and Agent parity\\n\\nReplace identity tokens with a detached, deeply frozen original bundle and\\ncommand that survives structuredClone and JSON roundtrips. Require complete\\noriginal claims when finishing and reject nonfinite or non-JSON values.\\n\\nMatch corrected parent intent, exact occurrence materialization guards,\\nrecorded clip mirrors and retained compiler dependencies. Retain a portable\\nfixture replay/regeneration script and cover original guards across cloned\\ncaptures, sequential moves and real shared-sibling materialization.\\n')
+PY
+git diff --check; git status --short; git -C /home/user/work/wt/app-m1-commit-client status --short; git -C /home/user/work/wt/agt-m1-core-integration-fix log -1 --oneline; tail -n 5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md" in /home/user/work/wt/app-m1-capture-review
+ succeeded in 801ms:
+ M src/tools/video-editor/commands/clipMoveCapture.test.ts
+ M src/tools/video-editor/commands/clipMoveCapture.ts
+ M src/tools/video-editor/commands/clipMovePrimitives.ts
+ M src/tools/video-editor/commands/fixtures/recipe_m1_move.json
+?? src/tools/video-editor/commands/fixtures/clip_move_parity.py
+cdf88d7e feat(timeline): add guarded M1 move command engine
+agt-m1-cli-runtime-journey: do not wait for a git refresh/perform git mutations in your stale worker base. Finish the one strict required integration test file with normal imports/existing helper locator; premerge offline syntax/lint and explicit source-blocked report are enough for manager review of this test-only change. Harness commits; I review/merge test onto latest integration, then run central agent commit-integration against actual integrated products once dependencies land. No skip, schema bypass or fake acceptance to pass stale source. Failures then get bounded follow-up from current integration. Coordinate Runtime seed helper without importing another repo's ambiguous tests package globally.
+
+### agt-m1-core-integration-fix FINAL handoff
+Final source ownership guard uses exact source identity + deterministic main materialization equivalence (NO prefix heuristic); arbitrary shot-placement-* source regression passes. Physical owner/source ABA, actual owner/source changes, same-child disjoint edits, original claims and strict capture completeness retained. Core owns all mirror and compiler-retained DocumentPin record production; provider copies Plan.records unchanged. M1 semantic_events=[]; parent ownership omitted. No registry/schema expansion. Three compact goldens ready, shared with original/reopened/rebased bundles; recipe/App notes explicitly explain absent unconsumed move.extent and refused snaps.
+Final focused+existing neighbors command: `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_structure.py tests/sdk/test_timeline_restructure.py --basetemp=/tmp/agt-m1-core-integration-final-checked-neighbors` =>120 passed,1 default-lane deselected/24.48s. Exact external provider source command above, basetemp=/tmp/agt-m1-core-integration-provider-verified =>50 passed/9.70s (final provider, no shim/recorder extension). Product/test ruff pass, scoped mypy5 files pass, git diff --check pass, packaged schema cmp frozen design AND integration Runtime byte-identical. Python product +92/-55, net+37; core total948 lines, frozen schema unchanged. Final detailed report/exact commands/overlay reconstruction at orch/workers/agt-m1-core-integration-fix/report.md. Commit-msg and compatibility commit-message.txt written. No remaining focused blocker. Full/make check/socket/browser/live accepted-store restart journey unrun here; manager should request central integration after merge batch. No end-to-end M1 acceptance claim.
+
+codex
+Implemented portable, deeply frozen `{bundle, command}` capture bases. Cloning and JSON roundtripping preserve original guards; sequential B captures A’s returned `.bundle`.
+
+Matched Agent’s final published corrections: parent intent, exact materialization ownership guards, recorded mirrors, and retained-input dependencies. Added a retained fixture checker/regenerator. No UI/hooks/outbox/client changes.
+
+Validation passed:
+
+```bash
+npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/clipMoveCapture.test.ts
+```
+
+**78 passed.**
+
+```bash
+npx eslint src/tools/video-editor/commands/clipMoveCapture.ts src/tools/video-editor/commands/clipMovePrimitives.ts src/tools/video-editor/commands/clipMoveCapture.test.ts
+git diff --check
+```
+
+Both passed.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m1-core-integration-fix /home/user/work/venv-agent/bin/python src/tools/video-editor/commands/fixtures/clip_move_parity.py
+```
+
+**28/28 exact commands, bundles and records verified**, including shared-materialization replay.
+
+Targeted TypeScript checking passed with temporary mapping to the client worker’s official DTO; temporary files were removed.
+
+Decision: synchronous hashing is limited to Agent’s existing identity/pin semantics because the gesture port is synchronous. No new dependencies or wire fields.
+
+No known parity delta against Agent’s final published correction source. Next: integrate Agent/client branches and mount the session API. Full/browser/runtime acceptance remains unverified; M1 readiness is not claimed.
+
+Commit message written to `ORCH/workers/app-m1-capture-review/commit-msg`.
+tokens used
+179,600
+Implemented portable, deeply frozen `{bundle, command}` capture bases. Cloning and JSON roundtripping preserve original guards; sequential B captures A’s returned `.bundle`.
+
+Matched Agent’s final published corrections: parent intent, exact materialization ownership guards, recorded mirrors, and retained-input dependencies. Added a retained fixture checker/regenerator. No UI/hooks/outbox/client changes.
+
+Validation passed:
+
+```bash
+npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/clipMoveCapture.test.ts
+```
+
+**78 passed.**
+
+```bash
+npx eslint src/tools/video-editor/commands/clipMoveCapture.ts src/tools/video-editor/commands/clipMovePrimitives.ts src/tools/video-editor/commands/clipMoveCapture.test.ts
+git diff --check
+```
+
+Both passed.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m1-core-integration-fix /home/user/work/venv-agent/bin/python src/tools/video-editor/commands/fixtures/clip_move_parity.py
+```
+
+**28/28 exact commands, bundles and records verified**, including shared-materialization replay.
+
+Targeted TypeScript checking passed with temporary mapping to the client worker’s official DTO; temporary files were removed.
+
+Decision: synchronous hashing is limited to Agent’s existing identity/pin semantics because the gesture port is synchronous. No new dependencies or wire fields.
+
+No known parity delta against Agent’s final published correction source. Next: integrate Agent/client branches and mount the session API. Full/browser/runtime acceptance remains unverified; M1 readiness is not claimed.
+
+Commit message written to `ORCH/workers/app-m1-capture-review/commit-msg`.

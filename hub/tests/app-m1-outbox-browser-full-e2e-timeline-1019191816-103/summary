@@ -1,0 +1,17 @@
+test app-m1-outbox-browser-full-e2e-timeline-1019191816-103: pass exit=0 in 45s — e2e-outbox-native on app-m1-outbox-browser (app tree 87aa205fcd8d4d00ecead74206f78aa7145b0930)
+cmd: npm run test:e2e:timeline tests/e2e/timeline/command-outbox.spec.ts
+counts:   1 passed (17.3s) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-m1-outbox-browser-full-e2e-timeline-1019191816-103/log.txt ---
+
+> vite_react_shadcn_ts@0.0.0 test:e2e:timeline
+> PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=${PLAYWRIGHT_PORT:-} FAKE_RUNTIME_PORT=${FAKE_RUNTIME_PORT:-} playwright test --config playwright.config.ts --project=timeline-devices --workers=1 tests/e2e/timeline/command-outbox.spec.ts
+
+[2m[WebServer] [22mBrowserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+[2m[WebServer] [22m  npx update-browserslist-db@latest
+[2m[WebServer] [22m  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+Running 1 test using 1 worker
+
+  ✓  1 [timeline-devices] › tests/e2e/timeline/command-outbox.spec.ts:48:1 › persists and excludes native browser command outbox claims across restart (4.0s)
+
+  1 passed (17.3s)

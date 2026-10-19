@@ -1,0 +1,9 @@
+name=app-m0-listen-guard
+repo=app
+base=tl/integration
+base_sha=60aa26b95
+model=gpt-5.6-luna
+effort=xhigh
+heavy=0
+worktree=/home/user/work/wt/app-m0-listen-guard
+started=2026-10-19T18:13:05Z

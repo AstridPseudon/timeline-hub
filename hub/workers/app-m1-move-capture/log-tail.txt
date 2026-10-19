@@ -1,0 +1,400 @@
+ describe('canonical shot-composition downstream projection', () => {
++  it('retains raw clip IDs with isolated occurrence owners for repeated sources', () => {
++    const projection = projectCanonicalComposition(prepared);
++    expect(projection.clipIdentities.get('occ-1:alpha-video')).toMatchObject({
++      rawClipId: 'alpha-video', ownerRef: 'occurrence:occ-1', clipRef: 'occurrence:occ-1/clip:alpha-video',
++    });
++    expect(projection.clipIdentities.get('occ-2:alpha-video')).toMatchObject({
++      rawClipId: 'alpha-video', ownerRef: 'occurrence:occ-2', clipRef: 'occurrence:occ-2/clip:alpha-video',
++    });
++    expect(projection.config.clips.find((clip) => clip.id === 'occ-2:alpha-video')?.at).toBe(4);
++  });
++
++  it('keeps fallback and ambiguous display identities unaddressable for commands', () => {
++    const composition = withOccurrenceRevision(prepared, 0, (timeline) => ({
++      ...timeline,
++      clips: [
++        { track: 'video', at: 0, hold: 0.1 },
++        { id: 'duplicate', track: 'video', at: 0.1, hold: 0.1 },
++        { id: 'duplicate', track: 'video', at: 0.2, hold: 0.1 },
++        { id: 'bad/id', track: 'video', at: 0.3, hold: 0.1 },
++        { id: 'bad::id', track: 'video', at: 0.4, hold: 0.1 },
++      ],
++    }));
++    const projection = projectCanonicalComposition(composition);
++    expect(projection.clipIdentities.get('occ-1:child-0')).toMatchObject({ rawClipId: null, clipRef: null });
++    expect(projection.clipIdentities.get('occ-1:duplicate')).toMatchObject({ rawClipId: 'duplicate', clipRef: null });
++    expect(projection.clipIdentities.get('occ-1:bad/id')?.clipRef).toBeNull();
++    expect(projection.clipIdentities.get('occ-1:bad::id')?.clipRef).toBeNull();
++  });
++
+   it('merges shot-only lanes around shared picture layers and preserves authored properties', () => {
+     const composition = withOccurrenceRevision(prepared, 0, (timeline) => ({
+       ...timeline,
+diff --git a/src/tools/video-editor/data/shotCompositionProjection.ts b/src/tools/video-editor/data/shotCompositionProjection.ts
+index 8a6a89a79af13aeffc09d8f57393a7625e8999d3..dda5e4033af68b6198bc9a2d942b164cf30963d8
+--- a/src/tools/video-editor/data/shotCompositionProjection.ts
++++ b/src/tools/video-editor/data/shotCompositionProjection.ts
+@@ -53,10 +53,18 @@
+ 
+ export type CanonicalCompositionProjection = Readonly<{
+   config: ResolvedTimelineConfig;
+-  clipIdentities: ReadonlyMap<string, CanonicalClipIdentity>;
++  clipIdentities: ReadonlyMap<string, CanonicalProjectedClipIdentity>;
+   occurrenceIdentities: ReadonlyMap<string, CanonicalClipIdentity>;
+ }>;
+ 
++export type CanonicalProjectedClipIdentity = CanonicalClipIdentity & Readonly<{
++  /** Authored ID, never the display prefix or child-N fallback. */
++  rawClipId: string | null;
++  ownerRef: string;
++  /** Null for missing, duplicate or unaddressable authored identities. */
++  clipRef: string | null;
++}>;
++
+ function record(value: unknown): JsonObject | null {
+   return value !== null && typeof value === 'object' && !Array.isArray(value)
+     ? value as JsonObject
+@@ -319,13 +327,24 @@
+   rawClip: JsonObject,
+   occurrence: CanonicalShotOccurrence,
+   clipIndex: number,
+-  clipIdentities: Map<string, CanonicalClipIdentity>,
++  clipIdentities: Map<string, CanonicalProjectedClipIdentity>,
+   clampToOccurrenceDuration: boolean,
+ ): TimelineClip | null {
+   assertSupportedChildClip(rawClip, occurrence);
+-  const identity = identityForOccurrence(occurrence);
+-  const clipId = text(rawClip.id) ?? `child-${clipIndex}`;
++  const rawClipId = text(rawClip.id) ?? null;
++  const clipId = rawClipId ?? `child-${clipIndex}`;
+   const id = `${occurrence.occurrenceId}:${clipId}`;
++  const ownerRef = `occurrence:${occurrence.occurrenceId}`;
++  const addressable = [rawClipId, occurrence.occurrenceId].every((part) => (
++    part !== null && !part.includes('/') && !part.includes('::')
++  ));
++  const previousIdentity = clipIdentities.get(id);
++  const identity: CanonicalProjectedClipIdentity = Object.freeze({
++    ...identityForOccurrence(occurrence),
++    rawClipId,
++    ownerRef,
++    clipRef: addressable && !previousIdentity ? `${ownerRef}/clip:${rawClipId}` : null,
++  });
+   // Runtime canonical revisions use one of two timeline encodings:
+   // - the transport form (`at_ms`/`duration_ms`), or
+   // - the editor form (`at`/`from`/`to`/`hold`), whose times are seconds.
+@@ -475,7 +494,7 @@
+   ));
+   assertDependencies(composition);
+   const clips: TimelineClip[] = [];
+-  const clipIdentities = new Map<string, CanonicalClipIdentity>();
++  const clipIdentities = new Map<string, CanonicalProjectedClipIdentity>();
+   const occurrenceIdentities = new Map<string, CanonicalClipIdentity>();
+ 
+   for (const occurrence of outputOccurrences) {
+diff --git a/src/tools/video-editor/hooks/useClipDrag.helpers.ts b/src/tools/video-editor/hooks/useClipDrag.helpers.ts
+index cf9e6fe9b1035e6154acfb9c89d5c1c879289e27..735775fdbfb3f80f7d0d4c019567e9d4f2d73ad3
+--- a/src/tools/video-editor/hooks/useClipDrag.helpers.ts
++++ b/src/tools/video-editor/hooks/useClipDrag.helpers.ts
+@@ -12,12 +12,11 @@
+ import type { ClipOffset } from '@/tools/video-editor/lib/multi-drag-utils.ts';
+ import {
+   findEnclosingPinnedGroup,
+-  orderClipIdsByAt,
+   resolveGroupTrackId,
+ } from '@/tools/video-editor/lib/pinned-group-projection.ts';
+ import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+-import type { PinnedShotGroup, TrackKind } from '@/tools/video-editor/types/index.ts';
+-import type { TimelineAction, TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
++import type { TrackKind } from '@/tools/video-editor/types/index.ts';
++import type { TimelineAction } from '@/tools/video-editor/types/timeline-canvas.ts';
+ 
+ export interface ActionDragState {
+   rowId: string;
+@@ -190,35 +189,6 @@
+     }
+ 
+     return [];
+-  });
+-}
+-
+-export function getAnchorTimeDelta(session: InternalDragSession, snappedStart: number): number {
+-  if (session.groupDragEntry) {
+-    return snappedStart - session.groupDragEntry.originStart;
+-  }
+-
+-  const anchorClip = session.clipOffsets.find((clip) => clip.clipId === session.clipId);
+-  return anchorClip ? snappedStart - anchorClip.initialStart : 0;
+-}
+-
+-export function rebuildGroupAfterDrag(
+-  currentGroups: PinnedShotGroup[] | undefined,
+-  draggedGroupKey: { shotId: string; trackId: string },
+-  newTrackId: string,
+-  nextRows: TimelineRow[],
+-): PinnedShotGroup[] | undefined {
+-  if (!currentGroups || currentGroups.length === 0) return undefined;
+-  return currentGroups.map((group) => {
+-    if (group.shotId !== draggedGroupKey.shotId || group.trackId !== draggedGroupKey.trackId) {
+-      return group;
+-    }
+-    const orderedClipIds = orderClipIdsByAt(group.clipIds, { rows: nextRows });
+-    return {
+-      ...group,
+-      trackId: newTrackId,
+-      clipIds: orderedClipIds,
+-    };
+   });
+ }
+ 
+@@ -354,20 +324,26 @@
+   lastPlan,
+ }: CommitDraggingSessionArgs): { deferDeactivate: boolean; refusal?: string } {
+   const refuse = (refusal: string) => ({ deferDeactivate: false, refusal });
+-  if (isInvalidTimelineRowTarget(dropPosition?.plan?.rejectReason) || dropPosition?.isReject
+-    || lastPlan?.rejectReason || lastPlan?.valid === false) {
++  const plan = lastPlan ?? dropPosition?.plan;
++  if (isInvalidTimelineRowTarget(plan?.rejectReason) || dropPosition?.isReject
++    || plan?.rejectReason || plan?.valid === false) {
+     return refuse('The clip drop target is unavailable.');
+   }
+   if (session.groupDragEntry || session.draggedClipIds.length !== 1) {
+     return refuse('clip.move v1 does not support group or multi-clip moves.');
+   }
+-  if (dropPosition?.isNewTrack || lastPlan?.needsNewTrack) {
++  if (dropPosition?.isNewTrack || plan?.needsNewTrack) {
+     return refuse('clip.move v1 does not create tracks.');
+   }
++  // The published built-in capture has no sibling/hard-wall snap query yet.
++  // Do not turn a consumed live query into unguarded absolute positioning.
++  if (plan?.snapped && plan.snapEdgeType !== 'none' && plan.snapEdgeType !== 'timeline-start') {
++    return refuse('clip.move v1 cannot capture this snap query.');
++  }
+   if (!session.moveCapture) return refuse(session.moveCaptureError ?? 'clip.move capture is unavailable.');
+-  const targetTrackId = lastPlan?.targetTrackId ?? dropPosition?.trackId ?? session.sourceRowId;
++  const targetTrackId = plan?.targetTrackId ?? dropPosition?.trackId ?? session.sourceRowId;
+   try {
+-    submitClipMove(session.moveCapture, lastPlan?.resolvedStart ?? nextStart, {
++    submitClipMove(session.moveCapture, plan?.resolvedStart ?? nextStart, {
+       trackId: targetTrackId,
+       transactionId: session.transactionId,
+     });
+diff --git a/src/tools/video-editor/hooks/useClipDrag.test.tsx b/src/tools/video-editor/hooks/useClipDrag.test.tsx
+index 1feb84084c596e7b0c1fb4d2c37fb2101cc43e69..8f972657497313c78b5a1c085892eb79c1bb8f57
+--- a/src/tools/video-editor/hooks/useClipDrag.test.tsx
++++ b/src/tools/video-editor/hooks/useClipDrag.test.tsx
+@@ -1328,7 +1328,8 @@
+     const moveClipToRow = vi.fn();
+     const setGestureOwner = vi.fn();
+     const submit = vi.fn();
+-    const capture = vi.fn(() => ({ originalAt: 0 }));
++    const originalBasis = { originalAt: 0 };
++    const capture = vi.fn(() => originalBasis);
+     const finish = vi.fn((basis, on) => ({
+       command: { schema_version: 1 as const, op: 'clip.move' as const, version: '1' as const,
+         select: 'parent/clip:clip-1', args: { on }, expect: { at: { state: 'present', value: basis.originalAt } } },
+@@ -1372,6 +1373,9 @@
+         });
+       });
+ 
++      expect(capture).toHaveBeenCalledTimes(1);
++      originalBasis.originalAt = 99;
++
+       act(() => {
+         fireEvent.pointerMove(window, {
+           pointerId: 21,
+diff --git a/src/tools/video-editor/hooks/useTimelineCommandsService.ts b/src/tools/video-editor/hooks/useTimelineCommandsService.ts
+index 3304899ec1d0301a67c587bc252f3de96b287f7f..489788afec8cc277d17a6c3b5d9faff4def7b3a0
+--- a/src/tools/video-editor/hooks/useTimelineCommandsService.ts
++++ b/src/tools/video-editor/hooks/useTimelineCommandsService.ts
+@@ -44,6 +44,7 @@
+ } from '@/tools/video-editor/commands/media.ts';
+ import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
+ import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
++import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
+ 
+ export type TimelineCommandErrorCode =
+   | 'editor_not_mounted'
+@@ -166,8 +167,7 @@
+    */
+   updateClip: (input: UpdateClipCommandInput) => TimelineCommandResult<{ clipId: string }>;
+   /**
+-   * Move a clip by timeline time and/or track using the canonical config path.
+-   * Pinned-group drag semantics stay internal for Sprint 2.
++   * Capture a fixed, same-track clip.move v1 through the host command outbox.
+    */
+   moveClip: (input: MoveClipCommandInput) => TimelineCommandResult<{ clipId: string; trackId: string; time: number }>;
+   /**
+@@ -673,7 +673,7 @@
+         return failure('clip_not_found', `Clip '${input.clipId}' was not found.`);
+       }
+       if (isPinnedGroupClip(current, input.clipId)) {
+-        return failure('pinned_group_edit_blocked', 'Pinned shot-group clip movement stays on the internal gesture path in Sprint 2.');
++        return failure('pinned_group_edit_blocked', 'clip.move v1 does not support group moves.');
+       }
+       if (input.trackId === undefined && input.time === undefined) {
+         return failure('invalid_argument', 'moveClip requires a target track, a target time, or both.');
+@@ -693,28 +693,15 @@
+       if (targetTrack.kind !== clipTrackKind) {
+         return failure('invalid_argument', `Clip '${input.clipId}' cannot be moved to ${targetTrack.kind} track '${targetTrack.id}'.`);
+       }
+-
+-      const nextTime = input.time === undefined ? clip.at : Math.max(0, roundTimelineValue(input.time));
+-      const nextConfig = updateClipInConfig(current.resolvedConfig, input.clipId, (existingClip) => ({
+-        ...existingClip,
+-        at: nextTime,
+-        track: nextTrackId,
+-      }));
+ 
+-      return applyValidatedMutation(
+-        store,
+-        current,
+-        {
+-          type: 'config',
+-          resolvedConfig: nextConfig,
+-        },
+-        { clipId: input.clipId, trackId: nextTrackId, time: nextTime },
+-        {
+-          selectedClipId: input.clipId,
+-          selectedTrackId: nextTrackId,
+-          semantic: true,
+-        },
+-      );
++      const nextTime = input.time ?? clip.at;
++      try {
++        const captured = captureClipMove(state.ops.clipMove, current, input.clipId);
++        submitClipMove(captured, nextTime, { trackId: nextTrackId });
++        return success({ clipId: input.clipId, trackId: nextTrackId, time: nextTime });
++      } catch (cause) {
++        return failure('mutation_failed', cause instanceof Error ? cause.message : 'Clip move failed.', { cause });
++      }
+     },
+ 
+     trimClip(input) {
+diff --git a/src/tools/video-editor/hooks/useTimelineState.types.ts b/src/tools/video-editor/hooks/useTimelineState.types.ts
+index ccef2a7b11027a5d9caaccacdda720e8041cbaa4..b01710303ef133d0fb2467fe8c55f22c102758aa
+--- a/src/tools/video-editor/hooks/useTimelineState.types.ts
++++ b/src/tools/video-editor/hooks/useTimelineState.types.ts
+@@ -1,4 +1,5 @@
+ import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
++import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semanticGestures.ts';
+ import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
+ import type { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
+ import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
+@@ -135,6 +136,8 @@
+ }
+ 
+ export interface TimelineEditorOpsContextValue {
++  /** Host-owned Agent capture + command/outbox acceptance for migrated moves. */
++  clipMove?: ClipMoveCapturePort;
+   setInputModality: (inputModality: TimelineInputModality) => void;
+   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
+   setInteractionMode: (mode: TimelineInteractionMode) => void;
+
+exec
+/bin/bash -lc 'git diff --check; git status --short' in /home/user/work/wt/app-m1-move-capture
+exec
+/bin/bash -lc 'npx eslint src/tools/video-editor/{commands/semanticGestures{,.test}.ts,hooks/useTimelineCommandsService.ts,hooks/useClipDrag{,.helpers}.ts,hooks/useClipDrag.test.tsx,hooks/useTimelineState.types.ts,data/shotCompositionProjection{,.test}.ts}' in /home/user/work/wt/app-m1-move-capture
+exec
+/bin/bash -lc 'npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/{commands/semanticGestures.test.ts,hooks/useClipDrag{,.softtag}.test.tsx,data/shotComposition{,Adapter,Editor,Projection,.architecture}.test.ts,lib/timeline-patch.test.ts}' in /home/user/work/wt/app-m1-move-capture
+ succeeded in 112ms:
+ M src/tools/video-editor/data/shotCompositionProjection.test.ts
+ M src/tools/video-editor/data/shotCompositionProjection.ts
+ M src/tools/video-editor/hooks/useClipDrag.helpers.ts
+ M src/tools/video-editor/hooks/useClipDrag.test.tsx
+ M src/tools/video-editor/hooks/useClipDrag.ts
+ M src/tools/video-editor/hooks/useTimelineCommandsService.ts
+ M src/tools/video-editor/hooks/useTimelineState.types.ts
+?? src/tools/video-editor/commands/semanticGestures.test.ts
+?? src/tools/video-editor/commands/semanticGestures.ts
+
+ succeeded in 6495ms:
+ succeeded in 18969ms:
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-move-capture
+
+
+ Test Files  9 passed (9)
+      Tests  409 passed (409)
+   Start at  19:13:22
+   Duration  16.05s (transform 4.74s, setup 3.49s, import 9.83s, tests 1.37s, environment 12.75s)
+
+
+exec
+/bin/bash -lc 'git diff --check; wc -l src/tools/video-editor/commands/semanticGestures.ts src/tools/video-editor/commands/semanticGestures.test.ts; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-move-capture/commit-msg' in /home/user/work/wt/app-m1-move-capture
+ succeeded in 41ms:
+   94 src/tools/video-editor/commands/semanticGestures.ts
+  210 src/tools/video-editor/commands/semanticGestures.test.ts
+  304 total
+refactor(timeline): route clip moves through original-basis capture
+
+Freeze the host-owned authored capture basis before service moves and at drag
+pointerdown. Submit pinned clip.move proposals with a thin TimelinePatch preview
+through one callback, refusing unavailable capture and unsupported drop cases
+without legacy config or rows fallbacks.
+
+Retain raw child IDs and scoped occurrence owners in projection identity lookup,
+marking synthetic and ambiguous identities unaddressable. Cover sequential
+service calls, frozen drag claims, same-value moves, refusal boundaries, and
+repeated-source projection identity. Actual built-in capture and Python/TS
+parity remain in the separate capture-parity integration task.
+
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md <<'EOF'
+
+Move adapter final validation: 9 targeted files / 409 tests passed via "'`npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/{commands/semanticGestures.test.ts,hooks/useClipDrag{,.softtag}.test.tsx,data/shotComposition{,Adapter,Editor,Projection,.architecture}.test.ts,lib/timeline-patch.test.ts}`. File-scoped eslint and git diff --check pass. No full/browser/socket suite run. Harness commit message written. Actual capture follow-clear/map/domain verification and shared Python/TS parity remain explicitly unproven by this worker; its host-refusal tests prove error propagation, not provider conflict detection. No manual git mutation.
+EOF' in /home/user/work/wt/app-m1-move-capture
+ succeeded in 0ms:
+codex
+Implemented the UI adapter handoff:
+
+- Service moves and drag freeze the original host capture basis, then submit command claims with a thin TimelinePatch preview.
+- Removed move fallbacks; unsupported moves refuse explicitly.
+- Projection lookup retains raw clip IDs and occurrence owners.
+- Exported `ops.clipMove: ClipMoveCapturePort` with `capture`, `finish`, and `submit`; documented the seam in shared coordination notes.
+
+Final validation passed:
+
+```bash
+npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/{commands/semanticGestures.test.ts,hooks/useClipDrag{,.softtag}.test.tsx,data/shotComposition{,Adapter,Editor,Projection,.architecture}.test.ts,lib/timeline-patch.test.ts}
+```
+
+**409 tests passed across 9 files.**
+
+```bash
+npx eslint src/tools/video-editor/{commands/semanticGestures{,.test}.ts,hooks/useTimelineCommandsService.ts,hooks/useClipDrag{,.helpers}.ts,hooks/useClipDrag.test.tsx,hooks/useTimelineState.types.ts,data/shotCompositionProjection{,.test}.ts}
+git diff --check
+```
+
+Both passed. No full suite or browser tests ran.
+
+The manager assigned actual built-in capture and Python/TS parity to `app-m1-capture-parity`. Follow-clear/map/guard semantics remain unverified here; mocked refusal tests prove adapter propagation only. Next: integrate that implementation and install the port through session/outbox wiring. Missing capture intentionally refuses moves.
+
+Commit message written to the requested `commit-msg` path. No manual git mutation.
+tokens used
+198,217
+Implemented the UI adapter handoff:
+
+- Service moves and drag freeze the original host capture basis, then submit command claims with a thin TimelinePatch preview.
+- Removed move fallbacks; unsupported moves refuse explicitly.
+- Projection lookup retains raw clip IDs and occurrence owners.
+- Exported `ops.clipMove: ClipMoveCapturePort` with `capture`, `finish`, and `submit`; documented the seam in shared coordination notes.
+
+Final validation passed:
+
+```bash
+npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/{commands/semanticGestures.test.ts,hooks/useClipDrag{,.softtag}.test.tsx,data/shotComposition{,Adapter,Editor,Projection,.architecture}.test.ts,lib/timeline-patch.test.ts}
+```
+
+**409 tests passed across 9 files.**
+
+```bash
+npx eslint src/tools/video-editor/{commands/semanticGestures{,.test}.ts,hooks/useTimelineCommandsService.ts,hooks/useClipDrag{,.helpers}.ts,hooks/useClipDrag.test.tsx,hooks/useTimelineState.types.ts,data/shotCompositionProjection{,.test}.ts}
+git diff --check
+```
+
+Both passed. No full suite or browser tests ran.
+
+The manager assigned actual built-in capture and Python/TS parity to `app-m1-capture-parity`. Follow-clear/map/guard semantics remain unverified here; mocked refusal tests prove adapter propagation only. Next: integrate that implementation and install the port through session/outbox wiring. Missing capture intentionally refuses moves.
+
+Commit message written to the requested `commit-msg` path. No manual git mutation.

@@ -1,0 +1,400 @@
+       expect(result.intents).toEqual([{ ...retained.intents[1], readyBase: ha }]);
+       expect(result.pending).toBeUndefined();
+-      expect(result.accepted).toEqual({ head: ha, value: accepted().value });
++      expect(result.accepted).toEqual({ intentId: a, head: ha, value: accepted().value });
+     });
+   });
+ 
+@@ -241,6 +322,35 @@ describe('durable command outbox', () => {
+     });
+   });
+ 
++  it.each(['before', 'after'] as const)('keeps an independent suffix appended %s A rejection free of A conflict', async (when) => {
++    const env = environment();
++    let owner = '';
++    const error = { reason: 'changed_read' };
++    await env.open().create(scope, async (box, ownerId) => {
++      owner = ownerId;
++      const a = await box.append(move(5), { head: h0 });
++      const appendSuffix = async () => {
++        const b = await box.append(move(7), { after: a });
++        await box.append(move(9), { after: b });
++        const independent = await box.append(move(11), { head: h0 });
++        await box.append(move(13), { after: independent });
++      };
++      if (when === 'before') await appendSuffix();
++      await box.dispatch(build, async () => ({ kind: 'rejected', error }));
++      if (when === 'after') await appendSuffix();
++    });
++    await env.open().recover(scope, owner, async (box) => {
++      const state = await box.read();
++      expect(state.intents.map((intent) => intent.payload)).toEqual([move(5), move(7), move(9), move(11), move(13)]);
++      expect(state.intents.map((intent) => intent.conflict)).toEqual([error, error, error, undefined, undefined]);
++      expect(state.intents[3].readyBase).toEqual(h0);
++      expect(state.intents[4].readyBase).toBeUndefined();
++      const transmit = vi.fn(async () => accepted());
++      await expect(box.dispatch(build, transmit)).rejects.toThrow('rejected prefix');
++      expect(transmit).not.toHaveBeenCalled();
++    });
++  });
++
+   it('scopes explicit claims by realm/actor/project/timeline and excludes a second claimant', async () => {
+     const env = environment();
+     const service = env.open();
+@@ -357,6 +467,37 @@ describe('durable command outbox', () => {
+     });
+   });
+ 
++  it('does not start transmit when the claim returns before the reservation transaction completes', async () => {
++    const env = environment();
++    const service = env.open();
++    let owner = '';
++    let sending!: Promise<unknown>;
++    const transmit = vi.fn(async () => accepted());
++    await service.create(scope, async (box, ownerId) => {
++      owner = ownerId;
++      await box.append(move(5), { head: h0 });
++      const reserving = deferred<void>();
++      sending = box.dispatch((intent, base) => {
++        reserving.resolve();
++        return build(intent, base);
++      }, transmit);
++      await reserving.promise;
++    });
++    await expect(sending).rejects.toThrow('Stale');
++    expect(transmit).not.toHaveBeenCalled();
++    const [state] = await service.list(scope);
++    expect(state.intents[0].payload).toEqual(move(5));
++    expect(state.pending?.request.body).toBe(JSON.stringify(build(state.intents[0], h0).body));
++    await service.recover(scope, owner, async (box) => {
++      const mustNotBuild = vi.fn(() => { throw new Error('Reservation must not be rebuilt'); });
++      await box.dispatch(mustNotBuild, async (request) => {
++        expect(request).toEqual(state.pending!.request);
++        return accepted();
++      });
++      expect(mustNotBuild).not.toHaveBeenCalled();
++    });
++  });
++
+   it('detaches caller inputs, builder inputs, transmitted requests, returned records and tagged states', async () => {
+     const env = environment();
+     const service = env.open();
+ M src/tools/video-editor/commands/commitOutbox.test.ts
+ M src/tools/video-editor/commands/commitOutbox.ts
+
+ succeeded in 5303ms:
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-outbox-race
+
+
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+   Start at  19:12:42
+   Duration  2.25s (transform 259ms, setup 522ms, import 209ms, tests 94ms, environment 1.03s)
+
+
+codex
+All 23 tests pass, including the original 17. File ESLint and strict isolated TypeScript checks also pass. Only the latest acceptance is retained; independent work stays unconflicted but still waits behind a rejected prefix. I’ll write the commit message and report these API limits.
+exec
+/bin/bash -lc 'git diff --check' in /home/user/work/wt/app-m1-outbox-race
+ succeeded in 347ms:
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-race/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-race/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-race/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..0ea669a8c34945391808c9dd0a7a2b364a560423
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-race/commit-msg
+@@ -0,0 +1,16 @@
++fix(timeline): preserve outbox dependencies across late append and ACK
++
++Retain the latest accepted intent identity with its exact head and result.
++An append captured over that predecessor can arrive after its ACK when the
++queue is empty, preserving the original basis, commands, guards and IDs while
++using the accepted base and a fresh request key. Refuse unknown, cancelled,
++non-tail and superseded predecessors without keeping accepted history.
++
++Check claim lifetime after reservation commits and before transmission so a
++released owner cannot start sending. Preserve durable retry bytes and existing
++generation fencing for late completions.
++
++Cover delayed append before and after recovery, exact guarded payloads and
++retry identity, rejected dependent versus independent suffixes, unsupported
++predecessors, and release before first send. All 23 outbox tests, file ESLint,
++strict isolated TypeScript checking and git diff --check pass.
+diff --git a/src/tools/video-editor/commands/commitOutbox.test.ts b/src/tools/video-editor/commands/commitOutbox.test.ts
+index ad65c26713aafb19f078497aca8f4d2b5604ac9f..013a9276b9b2dcc0b983e0497006dd07bbf5c111
+--- a/src/tools/video-editor/commands/commitOutbox.test.ts
++++ b/src/tools/video-editor/commands/commitOutbox.test.ts
+@@ -118,7 +118,7 @@
+       expect(mustNotBuild).not.toHaveBeenCalled();
+       expect(afterA.intents).toHaveLength(1);
+       expect(afterA.intents[0]).toMatchObject({ id: b, payload: move(7), readyBase: ha });
+-      expect(afterA.accepted).toEqual({ head: ha, value: accepted().value });
++      expect(afterA.accepted).toEqual({ intentId: recovery.pending!.intentId, head: ha, value: accepted().value });
+       await box.dispatch(build, async (requestB) => {
+         expect(requestB.key).not.toBe(requestA.key);
+         expect(JSON.parse(requestB.body)).toEqual({
+@@ -130,6 +130,87 @@
+     });
+   });
+ 
++  it.each(['same claim', 'recovered claim'] as const)(
++    'retains B captured over A when A ACK commits before B append in the %s', async (claim) => {
++      const env = environment();
++      let owner = '';
++      let requestA!: OutboxRequest;
++      let basis!: { after: string };
++      let payload!: ReturnType<typeof move>;
++      let b = '';
++      const appendCaptured = async (box: ClaimedOutbox) => {
++        b = await box.append(payload, basis);
++        expect((await box.read()).intents).toEqual([{ id: b, basis, payload: move(7), readyBase: ha }]);
++      };
++      await env.open().create(scope, async (box, ownerId) => {
++        owner = ownerId;
++        const a = await box.append(move(5), { head: h0 });
++        const started = deferred<void>();
++        const response = deferred<OutboxOutcome>();
++        const sending = box.dispatch(build, async (request) => {
++          requestA = request;
++          started.resolve();
++          return response.promise;
++        });
++        await started.promise;
++        // Capture B's authoring basis while A is still optimistic; persist B after A's ACK.
++        basis = { after: a };
++        payload = move(7);
++        response.resolve(accepted());
++        const afterA = await sending;
++        expect(afterA.intents).toEqual([]);
++        expect(afterA.accepted).toEqual({ intentId: a, head: ha, value: accepted().value });
++        if (claim === 'same claim') await appendCaptured(box);
++      });
++      if (claim === 'recovered claim') await env.open().recover(scope, owner, appendCaptured);
++      await env.open().recover(scope, owner, async (box) => {
++        expect((await box.read()).intents[0]).toEqual({ id: b, basis, payload: move(7), readyBase: ha });
++        let requestB!: OutboxRequest;
++        await box.dispatch(build, async (request) => {
++          requestB = request;
++          expect(request.key).not.toBe(requestA.key);
++          expect(request.body).toBe(JSON.stringify({
++            base_revision_id: ha.revisionId, base_publication_id: ha.publicationId, proposal: payload,
++          }));
++          return { kind: 'retry', error: 'lost B ACK' };
++        });
++        const mustNotBuild = vi.fn(() => { throw new Error('Retry must not be rebuilt'); });
++        await box.dispatch(mustNotBuild, async (request) => {
++          expect(request).toEqual(requestB);
++          return accepted({ revisionId: 'RB', publicationId: 'PB' });
++        });
++        expect(mustNotBuild).not.toHaveBeenCalled();
++      });
++    },
++  );
++
++  it('refuses unknown, cancelled, non-tail and superseded accepted predecessors', async () => {
++    const env = environment();
++    await env.open().create(scope, async (box) => {
++      const cancelled = await box.append(move(3), { head: h0 });
++      await box.cancel(cancelled);
++      await expect(box.append(move(5), { after: cancelled })).rejects.toThrow('predecessor');
++      await expect(box.append(move(5), { after: 'unknown' })).rejects.toThrow('predecessor');
++      const a = await box.append(move(5), { head: h0 });
++      await box.dispatch(build, async () => accepted());
++      const b = await box.append(move(7), { after: a });
++      await expect(box.append(move(9), { after: a })).rejects.toThrow('predecessor');
++      const hb = { revisionId: 'RB', publicationId: 'PB' };
++      await box.dispatch(build, async () => accepted(hb));
++      // Only B's acceptance remains; neither the original nor a remote head can stand in for A.
++      expect((await box.read()).accepted).toEqual({ intentId: b, head: hb, value: accepted(hb).value });
++      await expect(box.append(move(9), { after: a })).rejects.toThrow('predecessor');
++      const remote = { revisionId: 'REMOTE', publicationId: 'REMOTE' };
++      const independent = await box.append(move(11), { head: remote });
++      await box.cancel(independent);
++      await expect(box.append(move(13), { after: a })).rejects.toThrow('predecessor');
++      const c = await box.append(move(9), { after: b });
++      expect((await box.read()).intents).toEqual([
++        { id: c, basis: { after: b }, payload: move(9), readyBase: hb },
++      ]);
++    });
++  });
++
+   it('commits the reservation before transmit, and aborting it never sends or loses intent', async () => {
+     const env = environment();
+     const service = env.open();
+@@ -173,7 +254,7 @@
+       });
+       expect(result.intents).toEqual([{ ...retained.intents[1], readyBase: ha }]);
+       expect(result.pending).toBeUndefined();
+-      expect(result.accepted).toEqual({ head: ha, value: accepted().value });
++      expect(result.accepted).toEqual({ intentId: a, head: ha, value: accepted().value });
+     });
+   });
+ 
+@@ -241,6 +322,35 @@
+     });
+   });
+ 
++  it.each(['before', 'after'] as const)('keeps an independent suffix appended %s A rejection free of A conflict', async (when) => {
++    const env = environment();
++    let owner = '';
++    const error = { reason: 'changed_read' };
++    await env.open().create(scope, async (box, ownerId) => {
++      owner = ownerId;
++      const a = await box.append(move(5), { head: h0 });
++      const appendSuffix = async () => {
++        const b = await box.append(move(7), { after: a });
++        await box.append(move(9), { after: b });
++        const independent = await box.append(move(11), { head: h0 });
++        await box.append(move(13), { after: independent });
++      };
++      if (when === 'before') await appendSuffix();
++      await box.dispatch(build, async () => ({ kind: 'rejected', error }));
++      if (when === 'after') await appendSuffix();
++    });
++    await env.open().recover(scope, owner, async (box) => {
++      const state = await box.read();
++      expect(state.intents.map((intent) => intent.payload)).toEqual([move(5), move(7), move(9), move(11), move(13)]);
++      expect(state.intents.map((intent) => intent.conflict)).toEqual([error, error, error, undefined, undefined]);
++      expect(state.intents[3].readyBase).toEqual(h0);
++      expect(state.intents[4].readyBase).toBeUndefined();
++      const transmit = vi.fn(async () => accepted());
++      await expect(box.dispatch(build, transmit)).rejects.toThrow('rejected prefix');
++      expect(transmit).not.toHaveBeenCalled();
++    });
++  });
++
+   it('scopes explicit claims by realm/actor/project/timeline and excludes a second claimant', async () => {
+     const env = environment();
+     const service = env.open();
+@@ -357,6 +467,37 @@
+     });
+   });
+ 
++  it('does not start transmit when the claim returns before the reservation transaction completes', async () => {
++    const env = environment();
++    const service = env.open();
++    let owner = '';
++    let sending!: Promise<unknown>;
++    const transmit = vi.fn(async () => accepted());
++    await service.create(scope, async (box, ownerId) => {
++      owner = ownerId;
++      await box.append(move(5), { head: h0 });
++      const reserving = deferred<void>();
++      sending = box.dispatch((intent, base) => {
++        reserving.resolve();
++        return build(intent, base);
++      }, transmit);
++      await reserving.promise;
++    });
++    await expect(sending).rejects.toThrow('Stale');
++    expect(transmit).not.toHaveBeenCalled();
++    const [state] = await service.list(scope);
++    expect(state.intents[0].payload).toEqual(move(5));
++    expect(state.pending?.request.body).toBe(JSON.stringify(build(state.intents[0], h0).body));
++    await service.recover(scope, owner, async (box) => {
++      const mustNotBuild = vi.fn(() => { throw new Error('Reservation must not be rebuilt'); });
++      await box.dispatch(mustNotBuild, async (request) => {
++        expect(request).toEqual(state.pending!.request);
++        return accepted();
++      });
++      expect(mustNotBuild).not.toHaveBeenCalled();
++    });
++  });
++
+   it('detaches caller inputs, builder inputs, transmitted requests, returned records and tagged states', async () => {
+     const env = environment();
+     const service = env.open();
+diff --git a/src/tools/video-editor/commands/commitOutbox.ts b/src/tools/video-editor/commands/commitOutbox.ts
+index 63daa5c1902dd5a7f16294f5a74184c4335a0aa9..5d26d5d6dbb3e0ccbeb146176d08882ae2c206e4
+--- a/src/tools/video-editor/commands/commitOutbox.ts
++++ b/src/tools/video-editor/commands/commitOutbox.ts
+@@ -42,8 +42,8 @@
+   generation: number;
+   intents: OutboxIntent[];
+   pending?: { intentId: string; request: OutboxRequest; outcome?: OutboxOutcome };
+-  // Last acknowledged prefix, not necessarily the current remote head.
+-  accepted?: { head: OutboxHead; value: OutboxJson };
++  // Only the last acknowledged prefix, also usable by a late dependent append.
++  accepted?: { intentId: string; head: OutboxHead; value: OutboxJson };
+ }
+ 
+ export type OutboxExclusiveLock = <T>(name: string, work: () => Promise<T>) => Promise<T>;
+@@ -202,12 +202,16 @@
+           const intent = detached({ id: crypto.randomUUID(), payload, basis });
+           return access('readwrite', (record) => {
+             const predecessor = record.intents[record.intents.length - 1];
++            let readyBase = 'head' in intent.basis ? intent.basis.head : undefined;
+             if ('after' in intent.basis && predecessor?.id !== intent.basis.after) {
+-              throw new Error('Dependent intent must follow its queued predecessor');
++              if (predecessor || record.accepted?.intentId !== intent.basis.after) {
++                throw new Error('Dependent intent must follow its queued or last accepted predecessor');
++              }
++              readyBase = record.accepted.head;
+             }
+             record.intents.push({
+               ...intent,
+-              ...('head' in intent.basis ? { readyBase: intent.basis.head } : {}),
++              ...(readyBase ? { readyBase } : {}),
+               ...('after' in intent.basis && predecessor?.conflict !== undefined ? { conflict: predecessor.conflict } : {}),
+             });
+             return intent.id;
+@@ -244,6 +248,7 @@
+               return detached(record.pending);
+             });
+             // The reservation's transaction has completed before any network callback.
++            if (!active) throw new Error('Stale outbox claim');
+             let outcome: OutboxOutcome;
+             try {
+               outcome = detached(await transmit(detached(pending.request)));
+@@ -254,7 +259,7 @@
+               if (record.pending?.request.key !== pending.request.key
+                 || record.intents[0]?.id !== pending.intentId) throw new Error('Stale outbox completion');
+               if (outcome.kind === 'accepted') {
+-                record.accepted = { head: outcome.head, value: outcome.value };
++                record.accepted = { intentId: pending.intentId, head: outcome.head, value: outcome.value };
+                 record.intents.shift();
+                 delete record.pending;
+                 const next = record.intents[0];
+
+codex
+Fixed only `commitOutbox.ts` and its test.
+
+- Latest ACK now retains its intent identity and exact acceptance. Delayed B preserves `basis.after`, original payload/guards/IDs, uses base HA, and gets a fresh request key.
+- Released claims cannot begin transmission. Exact retries and stale-completion fencing remain intact.
+- Added six cases covering late append/reload, unsupported predecessors, independent versus dependent conflicts, and release before send. Original 17 tests retain their strength.
+
+Validation:
+
+- `npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/commitOutbox.test.ts` — **23 passed**.
+- `npx eslint src/tools/video-editor/commands/commitOutbox.ts src/tools/video-editor/commands/commitOutbox.test.ts --max-warnings 0` — passed.
+- `npx tsc --noEmit --strict --target ES2020 --lib ES2020,DOM --module ESNext --moduleResolution bundler --skipLibCheck src/tools/video-editor/commands/commitOutbox.ts` — passed.
+- `git diff --check` — passed.
+
+Bounded API choice: late handoff supports only the latest accepted predecessor when the queue is empty, preserving tail ordering without accepted history. Independent work stays unconflicted but remains blocked behind a rejected prefix.
+
+No blockers or plan deviations. Full/browser tests were not run; browser durability remains unverified. Next: manager review and integration.
+
+[Commit message written](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-race/commit-msg). No manual Git mutation performed.
+tokens used
+57,047
+Fixed only `commitOutbox.ts` and its test.
+
+- Latest ACK now retains its intent identity and exact acceptance. Delayed B preserves `basis.after`, original payload/guards/IDs, uses base HA, and gets a fresh request key.
+- Released claims cannot begin transmission. Exact retries and stale-completion fencing remain intact.
+- Added six cases covering late append/reload, unsupported predecessors, independent versus dependent conflicts, and release before send. Original 17 tests retain their strength.
+
+Validation:
+
+- `npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/commitOutbox.test.ts` — **23 passed**.
+- `npx eslint src/tools/video-editor/commands/commitOutbox.ts src/tools/video-editor/commands/commitOutbox.test.ts --max-warnings 0` — passed.
+- `npx tsc --noEmit --strict --target ES2020 --lib ES2020,DOM --module ESNext --moduleResolution bundler --skipLibCheck src/tools/video-editor/commands/commitOutbox.ts` — passed.
+- `git diff --check` — passed.
+
+Bounded API choice: late handoff supports only the latest accepted predecessor when the queue is empty, preserving tail ordering without accepted history. Independent work stays unconflicted but remains blocked behind a rejected prefix.
+
+No blockers or plan deviations. Full/browser tests were not run; browser durability remains unverified. Next: manager review and integration.
+
+[Commit message written](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-race/commit-msg). No manual Git mutation performed.

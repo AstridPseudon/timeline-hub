@@ -1,0 +1,400 @@
+1093:      <AlertDialog open={conflict.isOpen} onOpenChange={conflict.setOpen}>
+1100:            <AlertDialogCancel onClick={() => void conflict.discardAndReload()}>{TIMELINE_CONFLICT_USE_LATEST}</AlertDialogCancel>
+1101:            <AlertDialogAction onClick={() => void conflict.keepLocalChanges()}>{TIMELINE_CONFLICT_KEEP_MINE}</AlertDialogAction>
+
+codex
+The recovery choices are wired through the hook, but the shell still needs controls for choosing an owner and retrying. I’ll add a small banner so recovery is usable from the browser. Command conflicts will show that edits are retained; they won’t offer the legacy snapshot replacement actions.
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='src/tools/video-editor/hooks/useTimelineCommandSession.ts';s=open(p).read().replace(\"  const [state, setState]\", \"  const [attempt, setAttempt] = useState(0);\\n  const [state, setState]\",1).replace('  }, [provider, timelineId, enabled]);','  }, [provider, timelineId, enabled, attempt]);')
+s=s.replace('  const retry = useCallback(async () => { await requireSession().retry(); }, [requireSession]);', '''  const retry = useCallback(async () => {
+    if (sessionRef.current) await sessionRef.current.retry();
+    else {
+      setState((current) => ({ ...current, status: 'loading', error: null }));
+      setAttempt((current) => current + 1);
+    }
+  }, []);''')
+open(p,'w').write(s)
+p='src/tools/video-editor/components/TimelineEditorShellCore.tsx';s=open(p).read()
+s=s.replace('    conflictExhausted: chrome.isConflictExhausted,', \"    conflictExhausted: chrome.isConflictExhausted && chrome.commandSession?.state.status "'!== '"'conflict',\")
+s=s.replace('const conflictBanner = chrome.isConflictExhausted && "'!conflict.isOpen ?'"', \"const conflictBanner = chrome.isConflictExhausted && chrome.commandSession?.state.status "'!== '"'conflict' && "'!conflict.isOpen ?")
+pos=s.index('"'  /** The timeline region, contained')
+s=s[:pos]+'''  const commandSession = chrome.commandSession;
+  const commandState = commandSession?.state;
+  const commandBanner = commandSession && commandState && (
+    commandState.recoverableOwners.length > 0 || ['retry', 'error', 'conflict'].includes(commandState.status)
+  ) ? (
+    <div role=\"alert\" className=\"flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-2 text-sm text-foreground\">
+      <span>{commandState.recoverableOwners.length > 0
+        ? 'Unsaved timeline edits were found. Choose an editor session to recover.'
+        : commandState.status === 'conflict'
+          ? 'These timeline edits conflict with another change. Your edits are retained.'
+          : commandState.error ?? 'These timeline edits are still unsaved.'}</span>
+      <div className=\"flex items-center gap-2\">
+        {commandState.recoverableOwners.map((ownerId, index) => (
+          <Button key={ownerId} type=\"button\" size=\"sm\" variant=\"outline\" onClick={() => {
+            void commandSession.recover(ownerId).catch((error) => runtime.toast.error(String(error)));
+          }}>Recover editor {index + 1}</Button>
+        ))}
+        {commandState.recoverableOwners.length === 0 && commandState.status "'!== '"'conflict' && (
+          <Button type=\"button\" size=\"sm\" variant=\"outline\" onClick={() => {
+            void commandSession.retry().catch((error) => runtime.toast.error(String(error)));
+          }}>Retry timeline edits</Button>
+        )}
+      </div>
+    </div>
+  ) : null;
+
+'''+s[pos:]
+s=s.replace('      {recoveryBanner}', '      {recoveryBanner}\\n      {commandBanner}')
+open(p,'w').write(s)
+p='src/tools/video-editor/components/TimelineEditorShellCore.test.tsx';s=open(p).read();pos=s.index(\"  it('offers Save them and Discard\")
+s=s[:pos]+'''  it('requires an explicit persisted editor choice before command recovery', () => {
+    const recover = vi.fn(async () => {});
+    __chromeOverrides = { commandSession: { recover, retry: vi.fn(async () => {}), state: {
+      status: 'recovery', error: null, recoverableOwners: ['owner-a', 'owner-b'], ownerId: null, canUndo: false,
+    } } };
+    render(<TimelineEditorShellCore timelineId=\"test-timeline\" />);
+    expect(recover).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Recover editor 2' }));
+    expect(recover).toHaveBeenCalledWith('owner-b');
+    expect(screen.queryByRole('button', { name: 'Discard' })).toBeNull();
+  });
+
+  it('offers exact command retry without legacy snapshot recovery actions', () => {
+    const retry = vi.fn(async () => {});
+    __chromeOverrides = { commandSession: { recover: vi.fn(), retry, state: {
+      status: 'retry', error: 'Acknowledgement unknown', recoverableOwners: [], ownerId: 'owner', canUndo: false,
+    } } };
+    render(<TimelineEditorShellCore timelineId=\"test-timeline\" />);
+    expect(screen.getByText('Acknowledgement unknown')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry timeline edits' }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it('shows a retained command conflict without snapshot replacement choices', () => {
+    __chromeOverrides = { isConflictExhausted: true, commandSession: { recover: vi.fn(), retry: vi.fn(), state: {
+      status: 'conflict', error: 'read changed', recoverableOwners: [], ownerId: 'owner', canUndo: false,
+    } } };
+    render(<TimelineEditorShellCore timelineId=\"test-timeline\" />);
+    expect(screen.getByText('These timeline edits conflict with another change. Your edits are retained.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Retry timeline edits' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Use latest' })).toBeNull();
+  });
+
+'''+s[pos:];open(p,'w').write(s)
+PY
+node node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/components/TimelineEditorShellCore.test.tsx src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx > /tmp/app-m1-editor-wiring-ui-final.log 2>&1" in /home/user/work/wt/app-m1-editor-wiring
+exec
+/bin/bash -lc "rg -n 'useTimelineRealtime' -A12 src/tools/video-editor/components/TimelineEditorShellCore.test.tsx; tail -50 /tmp/app-m1-editor-wiring-ui-final.log; cat /tmp/app-m1-editor-wiring-tsc-final2.log; git diff --check; node node_modules/eslint/bin/eslint.js src/tools/video-editor/commands/commitSession.ts src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts src/tools/video-editor/hooks/useTimelineCommandSession.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx src/tools/video-editor/hooks/useTimelineSave.ts src/tools/video-editor/hooks/useTimelineCommit.ts src/tools/video-editor/hooks/useTimelineState.ts src/tools/video-editor/hooks/useTimelineState.types.ts src/tools/video-editor/hooks/usePollSync.ts src/integrations/runtime/dataProvider.ts src/tools/video-editor/data/DataProvider.ts src/tools/video-editor/components/TimelineEditorShellCore.tsx src/tools/video-editor/components/TimelineEditorShellCore.test.tsx > /tmp/app-m1-editor-wiring-lint-final.log 2>&1" in /home/user/work/wt/app-m1-editor-wiring
+ succeeded in 4669ms:
+161:vi.mock('@/tools/video-editor/hooks/useTimelineRealtime.ts', () => ({
+162:  useTimelineRealtime: () => ({
+163-    isOpen: false,
+164-    setOpen: vi.fn(),
+165-    keepLocalChanges: vi.fn(),
+166-    discardAndReload: vi.fn(),
+167-    ...__conflictDialog,
+168-  }),
+169-}));
+170-
+171-vi.mock('@/tools/video-editor/hooks/usePerfDiagnostics.ts', () => ({
+172-  useRenderDiagnostic: vi.fn(),
+173-}));
+174-
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-editor-wiring
+
+src/integrations/runtime/RuntimeConnectionProvider.tsx(90,53): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Readonly<Record<RuntimeRefusalCode, "restart" | "down">>'.
+  No index signature with a parameter of type 'string' was found on type 'Readonly<Record<RuntimeRefusalCode, "restart" | "down">>'.
+src/integrations/runtime/dataProvider.ts(693,38): error TS2345: Argument of type 'CommitPreviewResponse | CommitAcceptedMutation' is not assignable to parameter of type 'CommitAcceptedMutation'.
+  Type 'CommitPreviewResponse' is not assignable to type 'CommitAcceptedMutation'.
+    Types of property 'data' are incompatible.
+      Type 'CommitPreview' is missing the following properties from type 'CommitAccepted': previous_revision_id, previous_publication_id, accepted_revision_id, rebased_onto, publisher
+src/integrations/runtime/dataProvider.ts(769,60): error TS2322: Type 'import("/home/user/work/wt/app-m1-editor-wiring/src/integrations/runtime/timeline-commit-types").MutationReceipt' is not assignable to type 'import("/home/user/work/wt/app-m1-editor-wiring/src/integrations/runtime/generated").MutationReceipt'.
+  Types of property 'project_seq' are incompatible.
+    Type 'number[]' is not assignable to type '[number, number]'.
+      Target requires 2 element(s) but source may have fewer.
+src/tools/video-editor/components/AgentChat/AgentChatNewChatButton.tsx(80,23): error TS2550: Property 'replaceAll' does not exist on type 'string'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2021' or later.
+
+exec
+/bin/bash -lc "sed -n '115,127p' src/tools/video-editor/components/TimelineEditorShellCore.tsx; tail -40 /tmp/app-m1-editor-wiring-ui-final.log; cat /tmp/app-m1-editor-wiring-lint-final.log; git status --short | tail -7; date -u" in /home/user/work/wt/app-m1-editor-wiring
+ succeeded in 104ms:
+  navigationMode?: AppHeaderNavigationMode;
+  showHeader?: boolean;
+}
+
+/** The save conflict dialog and its inline banner say the same thing with the same two buttons. */
+const TIMELINE_CONFLICT_SENTENCE = 'Keep your changes, or switch to the latest version.';
+const TIMELINE_CONFLICT_KEEP_MINE = 'Keep my changes';
+const TIMELINE_CONFLICT_USE_LATEST = 'Use latest version';
+
+/** "10:48 PM": when the recovered draft was last written. */
+function formatDraftTime(updatedAt: number | string | Date): string {
+  return new Date(updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-editor-wiring
+
+?? src/tools/video-editor/commands/authoringBundle.ts
+?? src/tools/video-editor/commands/clipMoveCapture.ts
+?? src/tools/video-editor/commands/clipMovePrimitives.ts
+?? src/tools/video-editor/commands/commitSession.test.ts
+?? src/tools/video-editor/commands/commitSession.ts
+?? src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
+?? src/tools/video-editor/hooks/useTimelineCommandSession.ts
+Mon Oct 19 19:48:34 UTC 2026
+
+ succeeded in 20315ms:
+exec
+/bin/bash -lc 'node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json > /tmp/app-m1-editor-wiring-tsc-complete.log 2>&1' in /home/user/work/wt/app-m1-editor-wiring
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='src/tools/video-editor/components/TimelineEditorShellCore.test.tsx';s=open(p).read().replace(\"expect(screen.queryByRole('button', { name: 'Use latest' })).toBeNull();\", \"expect(screen.queryByRole('button', { name: 'Use latest version' })).toBeNull();\\n    expect(screen.queryByRole('button', { name: 'Keep my changes' })).toBeNull();\");open(p,'w').write(s)
+PY
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-editor-wiring/commit-msg <<'EOF'
+feat(timeline): mount durable clip move commits and guarded undo
+
+Wire the editor move port to original raw authoring capture, a lifetime-owned
+durable outbox, and the existing Runtime commit client. Preserve dependent
+moves and exact retry identities across acknowledgements and explicit owner
+recovery. Project accepted closures without saving preview snapshots.
+
+Load verified history heads and manifest-pinned immutable authoring images.
+Route accepted undo through timeline.inverse, fence legacy snapshot writes
+while commands are pending, and expose recovery, retry and retained conflicts.
+
+Include the exact reviewed capture and authoring bundle dependencies from
+integration. Add session, mounted save/service/drag and recovery UI coverage.
+EOF
+node node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/components/TimelineEditorShellCore.test.tsx > /tmp/app-m1-editor-wiring-shell-final.log 2>&1" in /home/user/work/wt/app-m1-editor-wiring
+exec
+/bin/bash -lc 'tail -22 /tmp/app-m1-editor-wiring-ui-final.log; cat /tmp/app-m1-editor-wiring-lint-final.log; cat src/tools/video-editor/hooks/useTimelineRealtime.ts | head -120; git diff --check; git -C /home/user/work/runtime log -1 --oneline' in /home/user/work/wt/app-m1-editor-wiring
+ succeeded in 0ms:
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-editor-wiring
+
+
+ Test Files  3 passed (3)
+      Tests  111 passed (111)
+   Start at  19:48:18
+   Duration  19.22s (transform 6.68s, setup 728ms, import 11.76s, tests 12.42s, environment 2.26s)
+
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { realtimeEventProcessor } from '@/shared/realtime/RealtimeEventProcessor.ts';
+import { assetRegistryQueryKey, timelineQueryKey } from '@/tools/video-editor/hooks/useTimeline.ts';
+import { timelineListQueryKey } from '@/tools/video-editor/hooks/useTimelinesList.ts';
+
+interface UseTimelineRealtimeOptions {
+  timelineId: string;
+  conflictExhausted: boolean;
+  onKeepLocalChanges: () => Promise<void>;
+  onDiscardRemoteChanges: () => Promise<void>;
+}
+
+export function useTimelineRealtime({
+  timelineId,
+  conflictExhausted,
+  onKeepLocalChanges,
+  onDiscardRemoteChanges,
+}: UseTimelineRealtimeOptions) {
+  const queryClient = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Before paint, so the inline bar (which yields to the open dialog) is never drawn for a frame beside it.
+  useLayoutEffect(() => {
+    if (conflictExhausted) {
+      setIsOpen(true);
+    }
+  }, [conflictExhausted]);
+
+  useEffect(() => {
+    return realtimeEventProcessor.onEvent((event) => {
+      if (event.type !== 'timelines-updated') {
+        return;
+      }
+
+      const matching = event.timelines.find((timeline) => timeline.id === timelineId);
+      if (!matching) {
+        return;
+      }
+
+      void queryClient.invalidateQueries({ queryKey: timelineQueryKey(timelineId) });
+      void queryClient.invalidateQueries({ queryKey: assetRegistryQueryKey(timelineId) });
+      void queryClient.invalidateQueries({ queryKey: timelineListQueryKey(matching.projectId) });
+    });
+  }, [queryClient, timelineId]);
+
+  const keepLocalChanges = useCallback(async () => {
+    setIsOpen(false);
+    if (conflictExhausted) {
+      await onKeepLocalChanges();
+    }
+  }, [conflictExhausted, onKeepLocalChanges]);
+
+  const discardAndReload = useCallback(async () => {
+    setIsOpen(false);
+    await onDiscardRemoteChanges();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: timelineQueryKey(timelineId) }),
+      queryClient.invalidateQueries({ queryKey: assetRegistryQueryKey(timelineId) }),
+    ]);
+  }, [onDiscardRemoteChanges, queryClient, timelineId]);
+
+  return {
+    isOpen,
+    setOpen: setIsOpen,
+    keepLocalChanges,
+    discardAndReload,
+  };
+}
+182a7dd Merge tl/rt-m1-receipt-types
+
+exec
+/bin/bash -lc "rg -n 'def get_project_parent_composition_revision' /home/user/work/runtime/runtime_protocol/service.py; rg -n 'verified.*manifest|commit_manifest_json|dependency_manifest' /home/user/work/runtime/runtime_protocol/service.py | tail -15; tail -9 /tmp/app-m1-editor-wiring-shell-final.log; head -6 /home/user/work/runtime/packages/typescript/src/contract-metadata.ts; git -C /home/user/work/runtime log -4 --oneline; cat /tmp/app-m1-editor-wiring-tsc-complete.log" in /home/user/work/wt/app-m1-editor-wiring
+ succeeded in 62ms:
+2530:    def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+2085:        manifest = event["dependency_manifest"]
+2088:                or hashlib.sha256(canonical_json(manifest).encode()).hexdigest() != stored["dependency_manifest_sha256"]):
+2097:            "dependency_manifest": manifest,
+2540:        if "commit_manifest_json" in row.keys() and row["commit_manifest_json"] is not None:
+2541:            result["dependency_manifest"] = json.loads(row["commit_manifest_json"])
+3014:            "dependency_manifest": {
+3103:            raise ValidationError("dependency_manifest.media must be a list")
+3337:        manifest_source = body.get("dependency_manifest", body.get("dependencies", {}))
+3341:            raise ValidationError("dependency_manifest must be an object")
+3344:                raise ValidationError("dependency_manifest contains unsupported fields", details={"field": key})
+3347:                raise ValidationError(f"dependency_manifest.{key} must be a list")
+3499:        event_payload = {"project_id": project["id"], "timeline_id": timeline_id, "old_head": expected_head, "new_head": parent_revision_id, "content_digest": parent_digest, "dependency_manifest": manifest}
+3502:        result = {"project_id": project["id"], "timeline_id": timeline_id, "revision_id": parent_revision_id, "parent_revision_id": parent_revision_id, "content_digest": parent_digest, "payload": parent_payload, "old_head": expected_head, "new_head": parent_revision_id, "dependency_manifest": manifest, "content_digests": {"parent": parent_digest, **{item["revision_id"]: item["content_digest"] for item in manifest["shots"] + manifest["internal_timelines"]}, **{item["media_id"]: item["content_digest"] for item in manifest["media"]}}, "event_id": event_id, "created_at": timestamp}
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-editor-wiring
+
+/** Generated contract metadata; do not edit by hand. */
+
+export const CONTRACT_VERSION = "0.2.1" as const;
+export const PROTOCOL = "workspace.v1" as const;
+export const COMPONENT_MANIFEST_SHA256 = "sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5";
+export const SCHEMA_DIGEST = "sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d";
+182a7dd Merge tl/rt-m1-receipt-types
+5bbad40 fix(runtime): preserve fixed tuple cardinality in TypeScript DTOs
+ea20536 Merge tl/rt-m1-replay-scope
+6489e47 Merge tl/rt-m1-raw-schema
+
+ succeeded in 20604ms:
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-editor-wiring/report.md <<'EOF'
+# app-m1-editor-wiring
+
+Mounted "'`ops.clipMove` in the existing editor. Both the real command service and drag pointerdown/release primitives use the reviewed original raw capture, synchronous optimistic authoring-bundle advancement, durable outbox append/reservation, and `RuntimeDataProvider.commitTimeline` through the existing client/door. Local TimelinePatch previews use `save:false, skipHistory:true`. Accepted projection comes from the returned closure; no rows-to-config acceptance, migrated snapshot save, or snapshot recovery write.
+
+The session holds the browser owner lock for its lifetime, retains original A/B guards and request identities, serializes dependent B at HA, distinguishes conflict/refusal from retry, retains visible work on storage failure, and retries durability before sending. Explicit chosen-owner recovery survives a newer initial read and a locked owner can be claimed after its former session closes. A late A ACK cannot replace a newer observed C or erase B. Undo commits the explicit accepted publication with `timeline.inverse`; uncertain requests must resolve first. Idle remote basis/projection and failed accepted projection stay fenced until hydrated.
+
+The shell now exposes **Recover editor N** and **Retry timeline edits**. Command conflicts retain edits and do not offer legacy snapshot replacement choices. This small shell change was necessary for actual browser recovery without test-only window injection. Other producers/operations and preview/player/render code were not changed.
+
+## Validation
+
+Final focused session/save-hook/service/drag run: **16 passed / 2 files**, including transport-only HTTP stubbing with real capture primitives and the real save hook. The shell + focused run: **111 passed / 3 files**. Neighbour lane: **165 passed / 12 files**. No full, live, or browser suite was requested or run by this worker; the manager owns those batches.
+
+Exact commands:
+
+```bash
+node node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
+node node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/components/TimelineEditorShellCore.test.tsx src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
+node node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx src/tools/video-editor/commands/commitOutbox.test.ts src/tools/video-editor/commands/semanticGestures.test.ts src/tools/video-editor/hooks/useTimelineCommit.test.tsx src/tools/video-editor/hooks/useTimelineSave.test.tsx src/tools/video-editor/hooks/useTimelineSave.recovery.test.tsx src/tools/video-editor/hooks/useTimelineSave.recovery.persistence.test.tsx src/tools/video-editor/hooks/usePollSync.test.ts src/tools/video-editor/hooks/useClipDrag.test.tsx src/tools/video-editor/hooks/useClipDrag.softtag.test.tsx src/integrations/runtime/timelineCommit.test.ts
+node node_modules/eslint/bin/eslint.js src/tools/video-editor/commands/commitSession.ts src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts src/tools/video-editor/hooks/useTimelineCommandSession.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx src/tools/video-editor/hooks/useTimelineSave.ts src/tools/video-editor/hooks/useTimelineCommit.ts src/tools/video-editor/hooks/useTimelineState.ts src/tools/video-editor/hooks/useTimelineState.types.ts src/tools/video-editor/hooks/usePollSync.ts src/integrations/runtime/dataProvider.ts src/tools/video-editor/data/DataProvider.ts src/tools/video-editor/components/TimelineEditorShellCore.tsx src/tools/video-editor/components/TimelineEditorShellCore.test.tsx
+node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json
+git diff --check
+```
+
+ESLint and diff-check pass. The actual App typecheck reports four existing errors: `RuntimeConnectionProvider.tsx:90` TS7053; `dataProvider.ts:693` accepted/preview union TS2345; `dataProvider.ts:769` generated receipt tuple TS2322; `AgentChatNewChatButton.tsx:80` replaceAll TS2550. The two provider errors are in unchanged pre-existing commit consumer lines. No new session/hook/shell type errors.
+
+## Dependencies / remaining integration
+
+Manager STATUS at 19:35 recorded integration `0dfb38965`, capture `56b46f67d`, and authoring basis `50b35d967`. Only then copied the exact reviewed `clipMoveCapture.ts`, `clipMovePrimitives.ts`, and `authoringBundle.ts` from `/home/user/work/app`; final `cmp` matches all three. They are included only so this worktree is independently testable; merge dependencies first as planned.
+
+Runtime advanced during this task to `182a7dd` (raw schema + replay-scope + receipt tuple fixes). Its parent immutable GET now exposes stored `dependency_manifest`, and this loader consumes that manifest with exact child timeline/revision scopes. No known missing App raw-basis route remains. **App generated pins still require the coordinated manager/client refresh:** this worker'"'s base is client 0.2.0 / "'`sha256:a32cc6e58f1fbd6df324f48e8b826ee11a9e1b5292d42f30179242a118eddb0e`; current Runtime metadata is 0.2.1 / `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`. The old pin intentionally refuses the new Runtime handshake. Generated files were left with their owner.
+
+Next: refresh the official App artifacts/pins, merge this session, then run the assigned real browser gesture/restart/undo journey centrally on the exact integrated source tuple. Production HTTP/Runtime semantics, actual mouse/Chromium restart, renderer-off save, and Agent show/visualize readback remain unverified by this worker. Historical undo is offered from a complete first history page; a paginated history does not guess an older undo target. Existing rational-fps raw capture is preserved; broader display/compiler parity remains the integration gate.
+
+Commit message is in this worker'"'s "'`commit-msg`. No git mutation, dependency installation, or build output was created.
+EOF' in /home/user/work/wt/app-m1-editor-wiring
+ succeeded in 0ms:
+codex
+The shell recovery checks passed with the session tests: 111 tests across three files. Lint and diff checks are clean. The commit message and detailed handoff are written; I’m waiting for the final App typecheck. The remaining live blocker is the App pin refresh to Runtime 0.2.1, which stays with the generated-client owner.
+ exited 2 in 63421ms:
+exec
+/bin/bash -lc 'cat /tmp/app-m1-editor-wiring-tsc-complete.log; tail -10 /tmp/app-m1-editor-wiring-shell-final.log; git diff --check; cmp src/tools/video-editor/commands/authoringBundle.ts /home/user/work/app/src/tools/video-editor/commands/authoringBundle.ts; cmp src/tools/video-editor/commands/clipMoveCapture.ts /home/user/work/app/src/tools/video-editor/commands/clipMoveCapture.ts; cmp src/tools/video-editor/commands/clipMovePrimitives.ts /home/user/work/app/src/tools/video-editor/commands/clipMovePrimitives.ts' in /home/user/work/wt/app-m1-editor-wiring
+ succeeded in 0ms:
+src/integrations/runtime/RuntimeConnectionProvider.tsx(90,53): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Readonly<Record<RuntimeRefusalCode, "restart" | "down">>'.
+  No index signature with a parameter of type 'string' was found on type 'Readonly<Record<RuntimeRefusalCode, "restart" | "down">>'.
+src/integrations/runtime/dataProvider.ts(693,38): error TS2345: Argument of type 'CommitPreviewResponse | CommitAcceptedMutation' is not assignable to parameter of type 'CommitAcceptedMutation'.
+  Type 'CommitPreviewResponse' is not assignable to type 'CommitAcceptedMutation'.
+    Types of property 'data' are incompatible.
+      Type 'CommitPreview' is missing the following properties from type 'CommitAccepted': previous_revision_id, previous_publication_id, accepted_revision_id, rebased_onto, publisher
+src/integrations/runtime/dataProvider.ts(769,60): error TS2322: Type 'import("/home/user/work/wt/app-m1-editor-wiring/src/integrations/runtime/timeline-commit-types").MutationReceipt' is not assignable to type 'import("/home/user/work/wt/app-m1-editor-wiring/src/integrations/runtime/generated").MutationReceipt'.
+  Types of property 'project_seq' are incompatible.
+    Type 'number[]' is not assignable to type '[number, number]'.
+      Target requires 2 element(s) but source may have fewer.
+src/tools/video-editor/components/AgentChat/AgentChatNewChatButton.tsx(80,23): error TS2550: Property 'replaceAll' does not exist on type 'string'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2021' or later.
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-editor-wiring
+
+
+ Test Files  1 passed (1)
+      Tests  95 passed (95)
+   Start at  19:48:47
+   Duration  19.10s (transform 3.92s, setup 291ms, import 6.62s, tests 10.86s, environment 899ms)
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+out=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-editor-wiring')
+for source,name in [('targeted-final.log','targeted.log'),('focused-final.log','focused.log'),('shell-final.log','shell.log'),('tsc-complete.log','typecheck.log'),('lint-final.log','lint.log')]:
+    shutil.copyfile('/tmp/app-m1-editor-wiring-'+source,out/name)
+for path in Path('/tmp').glob('app-m1-editor-wiring-*'):
+    if path.is_file(): path.unlink()
+PY
+git diff --check
+git status --short" in /home/user/work/wt/app-m1-editor-wiring
+ succeeded in 32ms:
+ M src/integrations/runtime/dataProvider.ts
+ M src/tools/video-editor/components/TimelineEditorShellCore.test.tsx
+ M src/tools/video-editor/components/TimelineEditorShellCore.tsx
+ M src/tools/video-editor/data/DataProvider.ts
+ M src/tools/video-editor/hooks/usePollSync.ts
+ M src/tools/video-editor/hooks/useTimelineCommit.ts
+ M src/tools/video-editor/hooks/useTimelineSave.ts
+ M src/tools/video-editor/hooks/useTimelineState.ts
+ M src/tools/video-editor/hooks/useTimelineState.types.ts
+?? src/tools/video-editor/commands/__tests__/
+?? src/tools/video-editor/commands/authoringBundle.ts
+?? src/tools/video-editor/commands/clipMoveCapture.ts
+?? src/tools/video-editor/commands/clipMovePrimitives.ts
+?? src/tools/video-editor/commands/commitSession.test.ts
+?? src/tools/video-editor/commands/commitSession.ts
+?? src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
+?? src/tools/video-editor/hooks/useTimelineCommandSession.ts
+
+codex
+Mounted real clip moves through raw capture → durable outbox → Runtime commit → accepted projection and guarded undo. Added explicit recovery/retry controls; moves produce zero legacy-save traffic.
+
+- Tests: 165 neighbour tests, 16 final focused tests, and 95 shell tests passed.
+- ESLint and `git diff --check` passed.
+- Actual App typecheck: four pre-existing errors; no new errors.
+- Live browser/Runtime journey remains unverified. App pins need the coordinated Runtime 0.2.1 refresh first.
+
+[Report with exact commands, decisions, and remaining gaps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-editor-wiring/report.md). Commit message written; no git mutation performed.
+tokens used
+324,607
+Mounted real clip moves through raw capture → durable outbox → Runtime commit → accepted projection and guarded undo. Added explicit recovery/retry controls; moves produce zero legacy-save traffic.
+
+- Tests: 165 neighbour tests, 16 final focused tests, and 95 shell tests passed.
+- ESLint and `git diff --check` passed.
+- Actual App typecheck: four pre-existing errors; no new errors.
+- Live browser/Runtime journey remains unverified. App pins need the coordinated Runtime 0.2.1 refresh first.
+
+[Report with exact commands, decisions, and remaining gaps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-editor-wiring/report.md). Commit message written; no git mutation performed.

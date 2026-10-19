@@ -1,0 +1,400 @@
++- `check:known-failures`: passed (`expected-failure markers: 0`)
++
++Vitest then reached `src/sdk/examples-governance.test.ts` and reported `624 tests | 2 failed`:
++
++- `public export "PanelFrameAnchor" is imported by at least one example`
++- `public export "PanelPreviewService" is imported by at least one example`
++
++The overall Vitest run stopped producing output without a global summary. I interrupted the no-progress process with Ctrl-C; observed exit code: `130`. There is no trustworthy whole-suite file/test count or final duration. The complete captured output through interruption is `/tmp/app-m0-env-logs/npm-test.log`; status is `/tmp/app-m0-env-logs/npm-test.status`.
++
++Diagnostic only, not a replacement for the baseline:
++
++```sh
++cd /home/user/work/app
++timeout --signal=TERM --kill-after=5s 120s \
++  npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2
++```
++
++This also reached the same two governance failures and timed out without a global summary (`exit_code=124`). It did not resolve the stall. Full output: `/tmp/app-m0-env-logs/vitest-bounded-diagnostic-2workers.log`.
++
++An earlier diagnostic attempt included unsupported Vitest 4.1.5 option `--minWorkers=1`; it exited 1 before running tests. That command/output is retained at `/tmp/app-m0-env-logs/vitest-bounded-diagnostic.log` and is not evidence about test behavior.
++
++### Contract suite
++
++Command:
++
++```sh
++cd /home/user/work/app
++npm run test:contracts
++```
++
++Result: passed, exit 0. Vitest reported `Test Files 1 passed (1)`, `Tests 1 passed (1)`, duration `884ms`. Full output: `/tmp/app-m0-env-logs/npm-test-contracts.log`; status: `/tmp/app-m0-env-logs/npm-test-contracts.status`.
++
++## Chromium and e2e prerequisites
++
++The three-products config is one-worker Playwright coverage of `three-products.spec.ts`; it requires a production `dist`, a real Astrid checkout and Python venv (`ASTRID_CHECKOUT`, default `../astrid-agent`; Python default `<checkout>/.venv/bin/python`), OpenSSL, and Chromium. The harness explicitly fails when the Runtime venv or production build is missing. I did not start the full real-Runtime journey.
++
++Observed prerequisites:
++
++- `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: present and executable.
++- Playwright and `@playwright/test`: `1.60.0`.
++- OpenSSL: `3.0.13`.
++- App `dist`: absent in both `/home/user/work/app` and this worker worktree.
++- Default Runtime venv `/home/user/work/astrid-agent/.venv/bin/python`: absent.
++- Frozen Agent venv `/home/user/peteromallet/astrid-agent/.venv/bin/python`: absent.
++- Frozen Runtime venv `/home/user/banodoco/banodoco-workspace-runtime/.venv/bin/python`: absent.
++
++First direct probe, using the required browser path but Playwright-managed executable lookup:
++
++```sh
++PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node --input-type=module -e '... chromium.launch({ headless: true }) ...'
++```
++
++Result: exit 1 before launch. Playwright 1.60.0 looked for `/opt/pw-browsers/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell`, which is not installed. This is a Playwright revision/path mismatch, not an observed missing OS library.
++
++I then directly launched the actual preinstalled executable, still with `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`, and evaluated a page without creating a test file:
++
++```sh
++PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node --input-type=module -e 'import { chromium } from "playwright"; const browser = await chromium.launch({ headless: true, executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" }); try { const page = await browser.newPage(); await page.goto("data:text/html,<title>timeline-m0-probe</title><main>ok</main>"); const result = await page.evaluate(() => ({ title: document.title, text: document.querySelector("main")?.textContent, sum: 20 + 22, userAgent: navigator.userAgent })); console.log(JSON.stringify({ browserVersion: browser.version(), result })); } finally { await browser.close(); }'
++```
++
++Result: exit 0. Chromium reported `141.0.7390.37`; evaluation returned title `timeline-m0-probe`, text `ok`, and sum `42`. No OS/runtime prerequisite failure occurred with the explicit executable. Full logs:
++
++- `/tmp/app-m0-env-logs/chromium-probe.log` and `.status` — managed lookup failure.
++- `/tmp/app-m0-env-logs/chromium-probe-explicit.log` and `.status` — successful launch/evaluation.
++
++I did not run `playwright install`, build `dist`, or run `npm run test:e2e:three-products`.
++
++## Decisions, blockers, and next steps
++
++- Redirecting npm's cache to `/tmp` was necessary because the default cache location is read-only in this worker environment; the install itself remained `npm ci` with the checked-in lockfile.
++- Explicitly selecting Chromium 1194 proves the preinstalled browser can launch, while the normal Playwright lookup remains blocked by the missing expected headless-shell 1223 revision. Coordinate the shared browser revision/package setup before relying on Playwright-managed e2e launch.
++- The default App suite is not green or fully measured: it exposes two governance failures and then stalls even with two workers. The App manager should investigate the two failures and the hang before treating `npm test` as a usable M0 baseline.
++- Coordinate a real Astrid Runtime checkout/venv and produce the hosted App build before running the three-products journey. No full real-Runtime journey was run in this worker.
++
+
+exec
+/bin/bash -lc "sed -n '1,280p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/report.md && printf '\\n--- commit-msg ---\\n' && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/commit-msg && printf '\\n--- final status ---\\n' && git -C /home/user/work/wt/app-m0-env status --short --branch && git -C /home/user/work/app status --short --branch" in /home/user/work/wt/app-m0-env
+ succeeded in 174ms:
+# App M0 environment and baseline report
+
+Date: 2026-10-19  
+Worktree: `/home/user/work/wt/app-m0-env` (`tl/app-m0-env`)  
+Shared App checkout: `/home/user/work/app` (`tl/integration`)
+
+## Inputs and scope
+
+- Read PLAN.md sections 2, 5, and 6.
+- Read the App manager brief at `$ORCH/managers/app/BRIEF.md` (`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/BRIEF.md`). The frozen-repo path stated in the task prose does not exist; the ORCH path is the available brief.
+- Inspected `playwright.three-products.config.ts`, `tests/e2e/local/three-products.spec.ts`, and `tests/e2e/local/support/harness.ts` prerequisites.
+- No tracked App source, config, package, or lockfile changes were made. Both `/home/user/work/wt/app-m0-env` and `/home/user/work/app` report clean Git status.
+
+## Versions and shared install
+
+Commands:
+
+```sh
+node --version
+npm --version
+cd /home/user/work/app
+npm ci
+```
+
+Node: `v22.22.0`  
+npm: `10.9.4`
+
+The first unmodified `npm ci` exited 1 because npm tried to write `/root/.npm/_cacache` and received `EROFS`. I retried the same install with only its cache redirected to permitted temporary storage:
+
+```sh
+cd /home/user/work/app
+npm_config_cache=/tmp/app-m0-env-logs/npm-cache npm ci
+```
+
+That retry exited 0. npm reported 575 packages added, 581 audited, and 23 vulnerabilities (8 moderate, 15 high). Existing peer/deprecation warnings were emitted. The repository postinstall patched Remotion files inside `node_modules`; no package update or `npm audit fix` was run.
+
+Shared dependencies are at `/home/user/work/app/node_modules` and use `510M`. The temporary npm cache was removed after installation; full logs remain in `/tmp/app-m0-env-logs` (252K). Final filesystem availability was approximately 24G on `/home/user/work` and `/tmp`.
+
+Install logs:
+
+- `/tmp/app-m0-env-logs/npm-ci.log` — initial cache-path failure.
+- `/tmp/app-m0-env-logs/npm-ci-retry.log` — successful install.
+- `/tmp/app-m0-env-logs/versions.txt`, plus matching `.status` files.
+
+## Required test baselines
+
+### Default suite
+
+Command:
+
+```sh
+cd /home/user/work/app
+npm test
+```
+
+Result: incomplete/resource-sensitive baseline. The preliminary checks passed:
+
+- `check:no-smoke-tests`: passed (`No placeholder smoke tests found.`)
+- `check:known-failures`: passed (`expected-failure markers: 0`)
+
+Vitest then reached `src/sdk/examples-governance.test.ts` and reported `624 tests | 2 failed`:
+
+- `public export "PanelFrameAnchor" is imported by at least one example`
+- `public export "PanelPreviewService" is imported by at least one example`
+
+The overall Vitest run stopped producing output without a global summary. I interrupted the no-progress process with Ctrl-C; observed exit code: `130`. There is no trustworthy whole-suite file/test count or final duration. The complete captured output through interruption is `/tmp/app-m0-env-logs/npm-test.log`; status is `/tmp/app-m0-env-logs/npm-test.status`.
+
+Diagnostic only, not a replacement for the baseline:
+
+```sh
+cd /home/user/work/app
+timeout --signal=TERM --kill-after=5s 120s \
+  npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2
+```
+
+This also reached the same two governance failures and timed out without a global summary (`exit_code=124`). It did not resolve the stall. Full output: `/tmp/app-m0-env-logs/vitest-bounded-diagnostic-2workers.log`.
+
+An earlier diagnostic attempt included unsupported Vitest 4.1.5 option `--minWorkers=1`; it exited 1 before running tests. That command/output is retained at `/tmp/app-m0-env-logs/vitest-bounded-diagnostic.log` and is not evidence about test behavior.
+
+### Contract suite
+
+Command:
+
+```sh
+cd /home/user/work/app
+npm run test:contracts
+```
+
+Result: passed, exit 0. Vitest reported `Test Files 1 passed (1)`, `Tests 1 passed (1)`, duration `884ms`. Full output: `/tmp/app-m0-env-logs/npm-test-contracts.log`; status: `/tmp/app-m0-env-logs/npm-test-contracts.status`.
+
+## Chromium and e2e prerequisites
+
+The three-products config is one-worker Playwright coverage of `three-products.spec.ts`; it requires a production `dist`, a real Astrid checkout and Python venv (`ASTRID_CHECKOUT`, default `../astrid-agent`; Python default `<checkout>/.venv/bin/python`), OpenSSL, and Chromium. The harness explicitly fails when the Runtime venv or production build is missing. I did not start the full real-Runtime journey.
+
+Observed prerequisites:
+
+- `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: present and executable.
+- Playwright and `@playwright/test`: `1.60.0`.
+- OpenSSL: `3.0.13`.
+- App `dist`: absent in both `/home/user/work/app` and this worker worktree.
+- Default Runtime venv `/home/user/work/astrid-agent/.venv/bin/python`: absent.
+- Frozen Agent venv `/home/user/peteromallet/astrid-agent/.venv/bin/python`: absent.
+- Frozen Runtime venv `/home/user/banodoco/banodoco-workspace-runtime/.venv/bin/python`: absent.
+
+First direct probe, using the required browser path but Playwright-managed executable lookup:
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node --input-type=module -e '... chromium.launch({ headless: true }) ...'
+```
+
+Result: exit 1 before launch. Playwright 1.60.0 looked for `/opt/pw-browsers/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell`, which is not installed. This is a Playwright revision/path mismatch, not an observed missing OS library.
+
+I then directly launched the actual preinstalled executable, still with `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`, and evaluated a page without creating a test file:
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node --input-type=module -e 'import { chromium } from "playwright"; const browser = await chromium.launch({ headless: true, executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" }); try { const page = await browser.newPage(); await page.goto("data:text/html,<title>timeline-m0-probe</title><main>ok</main>"); const result = await page.evaluate(() => ({ title: document.title, text: document.querySelector("main")?.textContent, sum: 20 + 22, userAgent: navigator.userAgent })); console.log(JSON.stringify({ browserVersion: browser.version(), result })); } finally { await browser.close(); }'
+```
+
+Result: exit 0. Chromium reported `141.0.7390.37`; evaluation returned title `timeline-m0-probe`, text `ok`, and sum `42`. No OS/runtime prerequisite failure occurred with the explicit executable. Full logs:
+
+- `/tmp/app-m0-env-logs/chromium-probe.log` and `.status` — managed lookup failure.
+- `/tmp/app-m0-env-logs/chromium-probe-explicit.log` and `.status` — successful launch/evaluation.
+
+I did not run `playwright install`, build `dist`, or run `npm run test:e2e:three-products`.
+
+## Decisions, blockers, and next steps
+
+- Redirecting npm's cache to `/tmp` was necessary because the default cache location is read-only in this worker environment; the install itself remained `npm ci` with the checked-in lockfile.
+- Explicitly selecting Chromium 1194 proves the preinstalled browser can launch, while the normal Playwright lookup remains blocked by the missing expected headless-shell 1223 revision. Coordinate the shared browser revision/package setup before relying on Playwright-managed e2e launch.
+- The default App suite is not green or fully measured: it exposes two governance failures and then stalls even with two workers. The App manager should investigate the two failures and the hang before treating `npm test` as a usable M0 baseline.
+- Coordinate a real Astrid Runtime checkout/venv and produce the hosted App build before running the three-products journey. No full real-Runtime journey was run in this worker.
+
+
+--- commit-msg ---
+chore(app): record M0 environment baseline
+
+Install shared App dependencies and capture the baseline test and Chromium
+launch results for Timeline M0. No tracked product or configuration files
+were changed.
+
+--- final status ---
+## tl/app-m0-env
+## tl/integration
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e3cfcc12c7d87ae67f297e16df92f6fd7484759b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/commit-msg
+@@ -0,0 +1,5 @@
++chore(app): record M0 environment baseline
++
++Install shared App dependencies and capture the baseline test and Chromium
++launch results for Timeline M0. No tracked product or configuration files
++were changed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..1c19684447ec660fbaeb441de0d2de5325d0f4e7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/report.md
+@@ -0,0 +1,132 @@
++# App M0 environment and baseline report
++
++Date: 2026-10-19  
++Worktree: `/home/user/work/wt/app-m0-env` (`tl/app-m0-env`)  
++Shared App checkout: `/home/user/work/app` (`tl/integration`)
++
++## Inputs and scope
++
++- Read PLAN.md sections 2, 5, and 6.
++- Read the App manager brief at `$ORCH/managers/app/BRIEF.md` (`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/BRIEF.md`). The frozen-repo path stated in the task prose does not exist; the ORCH path is the available brief.
++- Inspected `playwright.three-products.config.ts`, `tests/e2e/local/three-products.spec.ts`, and `tests/e2e/local/support/harness.ts` prerequisites.
++- No tracked App source, config, package, or lockfile changes were made. Both `/home/user/work/wt/app-m0-env` and `/home/user/work/app` report clean Git status.
++
++## Versions and shared install
++
++Commands:
++
++```sh
++node --version
++npm --version
++cd /home/user/work/app
++npm ci
++```
++
++Node: `v22.22.0`  
++npm: `10.9.4`
++
++The first unmodified `npm ci` exited 1 because npm tried to write `/root/.npm/_cacache` and received `EROFS`. I retried the same install with only its cache redirected to permitted temporary storage:
++
++```sh
++cd /home/user/work/app
++npm_config_cache=/tmp/app-m0-env-logs/npm-cache npm ci
++```
++
++That retry exited 0. npm reported 575 packages added, 581 audited, and 23 vulnerabilities (8 moderate, 15 high). Existing peer/deprecation warnings were emitted. The repository postinstall patched Remotion files inside `node_modules`; no package update or `npm audit fix` was run.
++
++Shared dependencies are at `/home/user/work/app/node_modules` and use `510M`. The temporary npm cache was removed after installation; full logs remain in `/tmp/app-m0-env-logs` (252K). Final filesystem availability was approximately 24G on `/home/user/work` and `/tmp`.
++
++Install logs:
++
++- `/tmp/app-m0-env-logs/npm-ci.log` — initial cache-path failure.
++- `/tmp/app-m0-env-logs/npm-ci-retry.log` — successful install.
++- `/tmp/app-m0-env-logs/versions.txt` and the install `.status` files.
++
++## Required test baselines
++
++### Default suite
++
++Command:
++
++```sh
++cd /home/user/work/app
++npm test
++```
++
++Result: incomplete/resource-sensitive baseline. The preliminary checks passed:
++
++- `check:no-smoke-tests`: passed (`No placeholder smoke tests found.`)
++- `check:known-failures`: passed (`expected-failure markers: 0`)
++
++Vitest then reached `src/sdk/examples-governance.test.ts` and reported `624 tests | 2 failed`:
++
++- `public export "PanelFrameAnchor" is imported by at least one example`
++- `public export "PanelPreviewService" is imported by at least one example`
++
++The overall Vitest run stopped producing output without a global summary. I interrupted the no-progress process with Ctrl-C; observed exit code: `130`. There is no trustworthy whole-suite file/test count or final duration. The complete captured output through interruption is `/tmp/app-m0-env-logs/npm-test.log`; status is `/tmp/app-m0-env-logs/npm-test.status`.
++
++Diagnostic only, not a replacement for the baseline:
++
++```sh
++cd /home/user/work/app
++timeout --signal=TERM --kill-after=5s 120s \
++  npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2
++```
++
++This also reached the same two governance failures and timed out without a global summary (`exit_code=124`). It did not resolve the stall. Full output: `/tmp/app-m0-env-logs/vitest-bounded-diagnostic-2workers.log`.
++
++An earlier diagnostic attempt included unsupported Vitest 4.1.5 option `--minWorkers=1`; it exited 1 before running tests. That command/output is retained at `/tmp/app-m0-env-logs/vitest-bounded-diagnostic.log` and is not evidence about test behavior.
++
++### Contract suite
++
++Command:
++
++```sh
++cd /home/user/work/app
++npm run test:contracts
++```
++
++Result: passed, exit 0. Vitest reported `Test Files 1 passed (1)`, `Tests 1 passed (1)`, duration `884ms`. Full output: `/tmp/app-m0-env-logs/npm-test-contracts.log`; status: `/tmp/app-m0-env-logs/npm-test-contracts.status`.
++
++## Chromium and e2e prerequisites
++
++The three-products config is one-worker Playwright coverage of `three-products.spec.ts`; it requires a production `dist`, a real Astrid checkout and Python venv (`ASTRID_CHECKOUT`, default `../astrid-agent`; Python default `<checkout>/.venv/bin/python`), OpenSSL, and Chromium. The harness explicitly fails when the Runtime venv or production build is missing. I did not start the full real-Runtime journey.
++
++Observed prerequisites:
++
++- `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: present and executable.
++- Playwright and `@playwright/test`: `1.60.0`.
++- OpenSSL: `3.0.13`.
++- App `dist`: absent in both `/home/user/work/app` and this worker worktree.
++- Default Runtime venv `/home/user/work/astrid-agent/.venv/bin/python`: absent.
++- Frozen Agent venv `/home/user/peteromallet/astrid-agent/.venv/bin/python`: absent.
++- Frozen Runtime venv `/home/user/banodoco/banodoco-workspace-runtime/.venv/bin/python`: absent.
++
++First direct probe, using the required browser path but Playwright-managed executable lookup:
++
++```sh
++timeout --signal=TERM --kill-after=5s 60s env PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node --input-type=module -e 'import { chromium } from "playwright"; const browser = await chromium.launch({ headless: true }); try { const page = await browser.newPage(); await page.goto("data:text/html,<title>timeline-m0-probe</title><main>ok</main>"); const result = await page.evaluate(() => ({ title: document.title, text: document.querySelector("main")?.textContent, sum: 20 + 22, userAgent: navigator.userAgent })); console.log(JSON.stringify({ browserVersion: browser.version(), result })); } finally { await browser.close(); }'
++```
++
++Result: exit 1 before launch. Playwright 1.60.0 looked for `/opt/pw-browsers/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell`, which is not installed. This is a Playwright revision/path mismatch, not an observed missing OS library.
++
++I then directly launched the actual preinstalled executable, still with `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`, and evaluated a page without creating a test file:
++
++```sh
++PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node --input-type=module -e 'import { chromium } from "playwright"; const browser = await chromium.launch({ headless: true, executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" }); try { const page = await browser.newPage(); await page.goto("data:text/html,<title>timeline-m0-probe</title><main>ok</main>"); const result = await page.evaluate(() => ({ title: document.title, text: document.querySelector("main")?.textContent, sum: 20 + 22, userAgent: navigator.userAgent })); console.log(JSON.stringify({ browserVersion: browser.version(), result })); } finally { await browser.close(); }'
++```
++
++Result: exit 0. Chromium reported `141.0.7390.37`; evaluation returned title `timeline-m0-probe`, text `ok`, and sum `42`. No OS/runtime prerequisite failure occurred with the explicit executable. Full logs:
++
++- `/tmp/app-m0-env-logs/chromium-probe.log` and `.status` — managed lookup failure.
++- `/tmp/app-m0-env-logs/chromium-probe-explicit.log` and `.status` — successful launch/evaluation.
++
++I did not run `playwright install`, build `dist`, or run `npm run test:e2e:three-products`.
++
++## Decisions, blockers, and next steps
++
++- Redirecting npm's cache to `/tmp` was necessary because the default cache location is read-only in this worker environment; the install itself remained `npm ci` with the checked-in lockfile.
++- Explicitly selecting Chromium 1194 proves the preinstalled browser can launch, while the normal Playwright lookup remains blocked by the missing expected headless-shell 1223 revision. Coordinate the shared browser revision/package setup before relying on Playwright-managed e2e launch.
++- The default App suite is not green or fully measured: it exposes two governance failures and then stalls even with two workers. The App manager should investigate the two failures and the hang before treating `npm test` as a usable M0 baseline.
++- Coordinate a real Astrid Runtime checkout/venv and produce the hosted App build before running the three-products journey. No full real-Runtime journey was run in this worker.
++
+
+codex
+Completed App M0 environment work.
+
+- Installed shared dependencies at `/home/user/work/app/node_modules` (510M).
+- `npm run test:contracts`: passed, 1 file / 1 test.
+- `npm test`: incomplete; stalled after reporting 624 tests with 2 governance failures, interrupted with exit 130. Bounded rerun also timed out.
+- Explicit preinstalled Chromium launch succeeded; Playwright-managed lookup failed due missing expected revision `chromium_headless_shell-1223`.
+- Three-products journey not run: App `dist` and Runtime venv are missing.
+- Both Git worktrees remain clean.
+
+Full report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/report.md)  
+Commit message: [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/commit-msg)
+tokens used
+105,443
+Completed App M0 environment work.
+
+- Installed shared dependencies at `/home/user/work/app/node_modules` (510M).
+- `npm run test:contracts`: passed, 1 file / 1 test.
+- `npm test`: incomplete; stalled after reporting 624 tests with 2 governance failures, interrupted with exit 130. Bounded rerun also timed out.
+- Explicit preinstalled Chromium launch succeeded; Playwright-managed lookup failed due missing expected revision `chromium_headless_shell-1223`.
+- Three-products journey not run: App `dist` and Runtime venv are missing.
+- Both Git worktrees remain clean.
+
+Full report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/report.md)  
+Commit message: [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-env/commit-msg)

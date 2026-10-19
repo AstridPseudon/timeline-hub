@@ -1,0 +1,400 @@
++    expect(reopened.getState().status).toBe('saved');
++    await reopened.dispose();
++  });
+   it('opens the exact public immutable closure, preserving unknown/null/absent fields and child scope', async () => {
+     const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+       { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
+diff --git a/src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx b/src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
+index 3a2381ef0..32d6866ff 100644
+--- a/src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
++++ b/src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
+@@ -1,7 +1,7 @@
+ // @vitest-environment jsdom
+ import { act, renderHook, waitFor } from '@testing-library/react';
+ import { afterEach, describe, expect, it, vi } from 'vitest';
+-import { createElement, type ReactNode } from 'react';
++import { createElement, useEffect, type ReactNode } from 'react';
+ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+ import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
+ import { createInteractionState } from '../lib/interaction-state.ts';
+@@ -11,11 +11,18 @@ import { createTimelineStore } from './timelineStore.ts';
+ import { useTimelineSave } from './useTimelineSave.ts';
+ import { loadTimelineDraft } from '../data/timelineDraftIndexedDb.ts';
+ import { createTimelineCommands } from './useTimelineCommandsService.ts';
++import { useTimelineHistory } from './useTimelineHistory.ts';
++import { compileTimelinePatch } from '../lib/timeline-patch.ts';
++import * as timelineData from '../lib/timeline-data.ts';
++import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
++import { useTimelineCommit } from './useTimelineCommit.ts';
++import { TimelineEventBus } from './useTimelineEventBus.ts';
++import type { DataProvider } from '../data/DataProvider.ts';
++import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
+ 
+-afterEach(() => { vi.unstubAllGlobals(); });
++afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+ 
+-async function mounted() {
+-  const env = await environment();
++function installStorage(env: Awaited<ReturnType<typeof environment>>) {
+   vi.stubGlobal('indexedDB', env.factory);
+   const held = new Set<string>();
+   vi.stubGlobal('navigator', { locks: { request: async (key: string, _options: unknown, work: (lock: unknown) => Promise<unknown>) => {
+@@ -23,6 +30,11 @@ async function mounted() {
+     held.add(key);
+     try { return await work({ name: key }); } finally { held.delete(key); }
+   } } });
++}
++
++async function mounted() {
++  const env = await environment();
++  installStorage(env);
+   const snapshotSaves = vi.fn();
+   const saveTimeline = vi.spyOn(env.provider, 'saveTimeline');
+   const saveTimelineAtHead = vi.spyOn(env.provider, 'saveTimelineAtHead');
+@@ -31,6 +43,7 @@ async function mounted() {
+   const initial = env.current();
+   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+   const runtime = { provider: env.provider, timelineId: 'timeline-commit', shots: { canonicalDraft: null },
++    project: { projectId: 'project-commit' }, toast: { error: vi.fn(), success: vi.fn() },
+     assetResolver: { resolveAssetUrl: async (value: string) => value } } as unknown as VideoEditorRuntimeContextValue;
+   const queries = { timelineQuery: { data: initial, isLoading: false }, assetRegistryQuery: { data: initial.registry } };
+   const interactionStateRef = { current: createInteractionState() };
+@@ -38,11 +51,15 @@ async function mounted() {
+     createElement(VideoEditorRuntimeProvider, { value: runtime }, children));
+   const hook = renderHook(() => {
+     const save = useTimelineSave(queries, env.provider, interactionStateRef, store, initial);
++    const history = useTimelineHistory({ dataRef: save.dataRef, commitData: save.commitData,
++      interactionStateRef, pendingOpsRef: save.pendingOpsRef });
++    useEffect(() => save.eventBus.on('beforeCommit', history.onBeforeCommit), [save.eventBus, history.onBeforeCommit]);
++    useEffect(() => save.eventBus.on('remoteCommit', history.onRemoteData), [save.eventBus, history.onRemoteData]);
+     store.getState().syncSlices({
+       data: { ...store.getState().data, data: save.data, resolvedConfig: save.data?.resolvedConfig ?? null, dataRef: save.dataRef },
+       ops: { ...store.getState().ops, clipMove: save.commands.port },
+     });
+-    return { commands: save.commands, commit: save };
++    return { commands: save.commands, commit: save, history };
+   }, { wrapper });
+   hook.result.current.commit.eventBus.on('scheduleSave', snapshotSaves);
+   await waitFor(() => expect(hook.result.current.commands.port).toBeDefined());
+@@ -50,7 +67,108 @@ async function mounted() {
+   return { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead };
+ }
+ 
++async function scoped() {
++  const env = await environment();
++  installStorage(env);
++  const initial = env.current();
++  const snapshotWriteBlockedRef = { current: false };
++  const headRevisionRef = { current: initial.head };
++  const configVersionRef = { current: initial.configVersion };
++  const lastSavedSignatureRef = { current: initial.stableSignature };
++  const store = createTimelineStore();
++  const eventBus = new TimelineEventBus();
++  const hook = renderHook(({ provider, timelineId }: { provider: DataProvider; timelineId: string }) => {
++    const commit = useTimelineCommit({ eventBus, lastSavedSignatureRef, initialData: initial, snapshotWriteBlockedRef });
++    const commands = useTimelineCommandSession({ provider, timelineId, commit, legacyClean: () => true,
++      resolveAssetUrl: async (file) => file, loaded: undefined, snapshotWriteBlockedRef, headRevisionRef,
++      configVersionRef, lastSavedSignatureRef, store, shots: { shots: undefined, isLoading: false, error: null,
++        refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn(), canonicalDraft: null } });
++    return { commit, commands };
++  }, { initialProps: { provider: env.provider, timelineId: 'timeline-commit' } });
++  await waitFor(() => expect(hook.result.current.commands.port).toBeDefined());
++  const neutral: DataProvider = { persistenceEnabled: false, loadTimeline: vi.fn(), loadAssetRegistry: vi.fn(),
++    saveTimeline: vi.fn(), resolveAssetUrl: async (file) => file };
++  return { env, hook, neutral, snapshotWriteBlockedRef, headRevisionRef, configVersionRef, store };
++}
++
+ describe('mounted timeline command session', () => {
++  it('clears command ownership and the snapshot block on provider cleanup, fencing an old ACK', async () => {
++    const { env, hook, neutral, snapshotWriteBlockedRef } = await scoped();
++    const gate = env.pause();
++    act(() => { submitClipMove(captureClipMove(hook.result.current.commands.port, hook.result.current.commit.data!, 'x'), 5); });
++    await waitFor(() => expect(env.commits()).toHaveLength(1));
++    expect(snapshotWriteBlockedRef.current).toBe(true);
++    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(true);
++    const old = hook.result.current.commands;
++    const finished = expect(old.flush()).rejects.toThrow('not acknowledged');
++    hook.rerender({ provider: neutral, timelineId: 'other' });
++    expect(snapshotWriteBlockedRef.current).toBe(false);
++    expect(hook.result.current.commands.activeRef.current).toBe(false);
++    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(false);
++    const next = compileTimelinePatch({ version: 1,
++      operations: [{ op: 'clip.move', target: 'x', payload: { at: 9 } }] }, hook.result.current.commit.data!).nextData!;
++    act(() => { hook.result.current.commit.commitData(next); });
++    await act(async () => { gate.resolve(); await finished; });
++    expect(hook.result.current.commit.dataRef.current).toBe(next);
++    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(false);
++    hook.unmount();
++  });
++  it('fences an in-progress async projection across a timeline switch', async () => {
++    const { env, hook, headRevisionRef, configVersionRef, store, snapshotWriteBlockedRef } = await scoped();
++    let finishProjection!: () => void;
++    const gate = new Promise<void>((resolve) => { finishProjection = resolve; });
++    const build = timelineData.buildTimelineData;
++    const projecting = vi.fn();
++    vi.spyOn(timelineData, 'buildTimelineData').mockImplementation(async (...args) => {
++      projecting();
++      await gate;
++      return build(...args);
++    });
++    act(() => { submitClipMove(captureClipMove(hook.result.current.commands.port, hook.result.current.commit.data!, 'x'), 5); });
++    const finished = expect(hook.result.current.commands.flush()).rejects.toThrow('not acknowledged');
++    await waitFor(() => expect(projecting).toHaveBeenCalledOnce());
++    vi.spyOn(env.provider, 'loadTimelineCommandBasis').mockResolvedValue({ ...env.initial,
++      canonicalDocument: { ...env.initial.canonicalDocument, timeline_id: 'other' } });
++    hook.rerender({ provider: env.provider, timelineId: 'other' });
++    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('saved'));
++    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(false);
++    expect(snapshotWriteBlockedRef.current).toBe(false);
++    const next = compileTimelinePatch({ version: 1,
++      operations: [{ op: 'clip.move', target: 'x', payload: { at: 9 } }] }, hook.result.current.commit.data!).nextData!;
++    const nextHead = { projectId: 'other-project', timelineId: 'other', headRevisionId: 'new-r', headPublicationId: 'new-p' };
++    act(() => {
++      hook.result.current.commit.commitData(next);
++      headRevisionRef.current = nextHead;
++      configVersionRef.current = 42;
++      store.getState().setConfigVersion(42);
++    });
++    await act(async () => { finishProjection(); await finished; });
++    expect(hook.result.current.commit.dataRef.current).toBe(next);
++    expect(headRevisionRef.current).toBe(nextHead);
++    expect(configVersionRef.current).toBe(42);
++    expect(store.getState().configVersion).toBe(42);
++    expect(hook.result.current.commands.state.status).toBe('saved');
++    hook.unmount();
++  });
++  it('leaves clean legacy undo available until an actual command owns history', async () => {
++    const { env, hook, snapshotSaves } = await mounted();
++    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(false);
++    const original = hook.result.current.commit.data!;
++    const edited = compileTimelinePatch({ version: 1,
++      operations: [{ op: 'clip.move', target: 'x', payload: { at: 3 } }] }, original).nextData!;
++    act(() => {
++      hook.result.current.history.onBeforeCommit(original, {});
++      // An existing, clean legacy edit has no command intent to recover.
++      hook.result.current.commit.commitData(edited, { save: false });
++    });
++    expect(hook.result.current.history.canUndo).toBe(true);
++    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(false);
++    act(() => { hook.result.current.history.undo(); });
++    expect(hook.result.current.commit.data?.config.clips[0].at).toBe(1);
++    expect(snapshotSaves).toHaveBeenCalledOnce();
++    expect(env.commits()).toHaveLength(0);
++    hook.unmount();
++  });
+   it('moves through the actual command service with save:false and hydrates the accepted raw closure', async () => {
+     const { hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+     await act(async () => {
+@@ -60,12 +178,15 @@ describe('mounted timeline command session', () => {
+     expect(hook.result.current.commit.data?.config.clips[0].at).toBe(5);
+     expect(hook.result.current.commit.data?.head?.headPublicationId).toBe('p1');
+     expect(hook.result.current.commands.state.status).toBe('saved');
++    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(true);
+     expect(snapshotSaves).not.toHaveBeenCalled();
+     expect(saveTimeline).not.toHaveBeenCalled();
+     expect(saveTimelineAtHead).not.toHaveBeenCalled();
+     expect(await loadTimelineDraft('timeline-commit')).toBeNull();
+     await act(async () => { await hook.result.current.commands.undo(); await hook.result.current.commands.flush(); });
+     expect(hook.result.current.commit.data?.config.clips[0].at).toBe(1);
++    expect(saveTimeline).not.toHaveBeenCalled();
++    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+     expect(snapshotSaves).not.toHaveBeenCalled();
+     hook.unmount();
+   });
+@@ -99,7 +220,11 @@ describe('mounted timeline command session', () => {
+     });
+     await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+     expect(hook.result.current.commit.data?.config.clips[0].at).toBe(7);
+-    expect(() => hook.result.current.commit.commitData(hook.result.current.commit.data!)).toThrow('pending timeline commands');
++    const before = hook.result.current.commit.dataRef.current;
++    const overlap = compileTimelinePatch({ version: 1,
++      operations: [{ op: 'clip.move', target: 'x', payload: { at: 9 } }] }, before!).nextData!;
++    expect(() => hook.result.current.commit.commitData(overlap)).toThrow('pending timeline commands');
++    expect(hook.result.current.commit.dataRef.current).toBe(before);
+     expect(snapshotSaves).not.toHaveBeenCalled();
+     await act(async () => { await hook.result.current.commands.retry(); });
+     expect(hook.result.current.commit.data?.config.clips[0].at).toBe(7);
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix')
+for source, target in [('focused', 'focused'), ('targeted', 'targeted'), ('eslint', 'lint'), ('typecheck-final', 'typecheck')]:
+    shutil.move(f'/tmp/app-m1-wiring-fix-{source}.log', worker / f'{target}.log')
+for name in ['session', 'hook', 'typecheck']:
+    Path(f'/tmp/app-m1-wiring-fix-{name}.log').unlink(missing_ok=True)
+(worker / 'commit-msg').write_text('''fix(timeline): drain completed moves before releasing command sessions
+
+Persist queued gestures before close without waiting for unknown network
+outcomes. Fence late transmissions and projections, preserve clean legacy
+history until commands own it, and reset command refs on scope changes.
+
+Narrow accepted Runtime responses by receipt and validate against the reviewed
+0.2.1 receipt tuple. Cover disposal, exact recovery, history and project switches.
+''')
+PY
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/focused.log; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/typecheck.log" in /home/user/work/wt/app-m1-wiring-fix
+ succeeded in 236ms:
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-wiring-fix
+
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  20:00:24
+   Duration  8.87s (transform 4.13s, setup 761ms, import 7.29s, tests 2.42s, environment 4.08s)
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix')
+worker.joinpath('report.md').write_text('''# app-m1-wiring-fix
+
+Closed the reviewed command-session lifecycle blockers on candidate "'`a7ea077e4`.
+
+- Close stops new capture/transmission immediately, drains already-accepted durable appends before releasing the owner claim, and never waits for an unknown network ACK. A new claimant retries the persisted request with the original method/path/body/key; dependent B retains its original guards and waits for A.
+- Persistence failure rejects close with `Unsaved move: …`, records an error state, and sends nothing. Hook cleanup reports the failed close through console error because the departing editor cannot display state. There is no ephemeral fallback.
+- Installing an idle session no longer claims history. Actual command work/recoverable ownership or available Runtime undo claims it. Cleanup clears ownership, active and snapshot-block refs. Old ACKs and asynchronous projections cannot change the new editor or its head/version refs.
+- Kept the existing early snapshot-write guard unchanged; strengthened its test to attempt different data and verify the data ref is untouched. Command undo continues through Runtime and produces no snapshot-save traffic.
+- Accepted/preview discrimination now uses top-level `receipt === null`. After App integration merged `d47eac0e6` / reviewed client pin `7012a7628`, copied `timeline-commit-types.ts` and `generated-contract-metadata.ts` exactly from integration. These are official Runtime 0.2.1 / `182a7dd` files, including `[number, number]`; no handwritten generated edit, main receipt widening, lock or package change.
+
+## Reproduction
+
+Before the disposal fix, this command reproduced the loss:
+
+```sh
+node node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/commitSession.test.ts -t '"'drains a just-submitted'
+"'```
+
+Result: exit 1, one failed selected test. Submit → dispose, with no flush or network call, persisted **zero intents instead of one**. After the fix the same case retains the original guarded move, exposes its owner on reopen, and recovers to position 5. Additional passing cases pause a durable append while checking that the claim remains held; close while A'"'s network response is unresolved and B's append is queued; reclaim and retry A exactly before B; deliver late accepted/error outcomes; close with storage failure; and stop a reserved request from beginning transmission after close.
+
+## Validation
+
+All commands ran in "'`/home/user/work/wt/app-m1-wiring-fix`.
+
+```sh
+node node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
+```
+
+**PASS: 25 tests, 2 files**, exit 0. Final log: `focused.log`.
+
+```sh
+node node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx src/tools/video-editor/commands/commitOutbox.test.ts src/tools/video-editor/commands/semanticGestures.test.ts src/tools/video-editor/hooks/useTimelineCommit.test.tsx src/tools/video-editor/hooks/useTimelineSave.test.tsx src/tools/video-editor/hooks/useTimelineSave.recovery.test.tsx src/tools/video-editor/hooks/useTimelineSave.recovery.persistence.test.tsx src/tools/video-editor/hooks/usePollSync.test.ts src/tools/video-editor/hooks/useClipDrag.test.tsx src/tools/video-editor/hooks/useClipDrag.softtag.test.tsx src/integrations/runtime/timelineCommit.test.ts
+```
+
+**PASS: 174 tests, 12 files**, exit 0 (165 neighbour baseline plus 9 new cases). Log: `targeted.log`. The final focused rerun followed a test-fixture-only completion of required shot-host properties; no product changes followed the neighbour run.
+
+```sh
+node node_modules/eslint/bin/eslint.js src/tools/video-editor/commands/commitSession.ts src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/hooks/useTimelineCommandSession.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx src/integrations/runtime/dataProvider.ts
+```
+
+**PASS**, exit 0, no warnings/errors. Log: `lint.log`.
+
+```sh
+node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json
+```
+
+Actual App source check, not a selected-file substitute: **exit 2**, only the two documented original diagnostics remain:
+
+- `src/integrations/runtime/RuntimeConnectionProvider.tsx(90,53)` — TS7053.
+- `src/tools/video-editor/components/AgentChat/AgentChatNewChatButton.tsx(80,23)` — TS2550.
+
+The M1 response-narrowing and receipt-tuple diagnostics are resolved. Log: `typecheck.log`.
+
+`git diff --check`: **PASS**, exit 0. `cmp` against App integration for both copied generated files: **PASS**, byte-identical. Capture/basis/outbox modules and all other reviewed dependency files remain unchanged; only the scoped lifecycle/test files, response discriminator, and two exact official generated copies differ from the candidate base.
+
+## Decisions, limits and next steps
+
+No settled plan decision was changed. Disposal drains storage rather than the network, so an uncertain request remains recoverable and does not hold the browser lock indefinitely. History ownership is retained after actual command use and cleared on scope cleanup; command undo stays on Runtime.
+
+No implementation blocker remains in the assigned scope. Full suites, browsers, localhost/live sockets, installs and git mutations were not run. Tests use fake IndexedDB and the existing mocked Runtime HTTP boundary, so they do not prove the real browser/Runtime journey.
+
+Manager should compose/merge the held wiring candidate plus this fix atop the already-merged official 0.2.1 pin, choose exactly one recovery UI, and use the separately owned browser journey/integration suite for M1 evidence. Runtime lock parity relies on that existing pin merge; this worker did not edit the lock or run its contract suite. Accepted/local preview pairing remains with the coordinated App/Viewing seam worker; no preview field or Shell/UI edit was introduced here. Commit message is in `commit-msg`; no worktree build output or temporary files remain.
+'"''')
+PY
+wc -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/report.md
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/typecheck.log" in /home/user/work/wt/app-m1-wiring-fix
+ succeeded in 79ms:
+62 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/report.md
+
+ exited 2 in 64118ms:
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/typecheck.log; git diff --check; git status --short; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/lint.log' in /home/user/work/wt/app-m1-wiring-fix
+ succeeded in 2602ms:
+ M src/integrations/runtime/dataProvider.ts
+ M src/integrations/runtime/generated-contract-metadata.ts
+ M src/integrations/runtime/timeline-commit-types.ts
+ M src/tools/video-editor/commands/commitSession.test.ts
+ M src/tools/video-editor/commands/commitSession.ts
+ M src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
+ M src/tools/video-editor/hooks/useTimelineCommandSession.ts
+
+exec
+/bin/bash -lc 'ls -l /tmp/app-m1-wiring-fix* /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/*log; cat /tmp/app-m1-wiring-fix-typecheck-final.log' in /home/user/work/wt/app-m1-wiring-fix
+ exited 1 in 8ms:
+ls: cannot access '/tmp/app-m1-wiring-fix*': No such file or directory
+-rw-r--r-- 1 root root 226 Oct 19 20:00 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/focused.log
+-rw-r--r-- 1 root root   0 Oct 19 20:00 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/lint.log
+-rw-r--r-- 1 root root 233 Oct 19 19:59 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/targeted.log
+-rw-r--r-- 1 root root   0 Oct 19 20:00 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/typecheck.log
+cat: /tmp/app-m1-wiring-fix-typecheck-final.log: No such file or directory
+
+exec
+/bin/bash -lc 'node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/typecheck.log 2>&1' in /home/user/work/wt/app-m1-wiring-fix
+codex
+The fixes, focused tests, and lint checks are complete. I’m saving the final typecheck diagnostics with the handoff report. The commit message is written; browser and full-suite validation remain with the workers assigned to those checks.
+exec
+/bin/bash -lc 'git diff --stat; git diff --check; cmp src/integrations/runtime/timeline-commit-types.ts /home/user/work/app/src/integrations/runtime/timeline-commit-types.ts; cmp src/integrations/runtime/generated-contract-metadata.ts /home/user/work/app/src/integrations/runtime/generated-contract-metadata.ts; tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/typecheck.log' in /home/user/work/wt/app-m1-wiring-fix
+ succeeded in 2225ms:
+ src/integrations/runtime/dataProvider.ts           |   2 +-
+ .../runtime/generated-contract-metadata.ts         |   4 +-
+ src/integrations/runtime/timeline-commit-types.ts  |   5 +-
+ .../video-editor/commands/commitSession.test.ts    | 112 +++++++++++++++++
+ src/tools/video-editor/commands/commitSession.ts   |  33 ++++-
+ .../hooks/useTimelineCommandSession.test.tsx       | 137 ++++++++++++++++++++-
+ .../hooks/useTimelineCommandSession.ts             |  18 ++-
+ 7 files changed, 291 insertions(+), 20 deletions(-)
+
+exec
+/bin/bash -lc 'wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/typecheck.log; git diff a7ea077e4 --name-only -- src/tools/video-editor/commands/authoringBundle.ts src/tools/video-editor/commands/clipMoveCapture.ts src/tools/video-editor/commands/clipMovePrimitives.ts src/tools/video-editor/commands/commitOutbox.ts src/tools/video-editor/data/commandBasis.ts; git status --porcelain=v1 --untracked-files=all' in /home/user/work/wt/app-m1-wiring-fix
+ succeeded in 1378ms:
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/typecheck.log
+ M src/integrations/runtime/dataProvider.ts
+ M src/integrations/runtime/generated-contract-metadata.ts
+ M src/integrations/runtime/timeline-commit-types.ts
+ M src/tools/video-editor/commands/commitSession.test.ts
+ M src/tools/video-editor/commands/commitSession.ts
+ M src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx
+ M src/tools/video-editor/hooks/useTimelineCommandSession.ts
+
+ exited 2 in 71734ms:
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/typecheck.log; git diff --check' in /home/user/work/wt/app-m1-wiring-fix
+ succeeded in 1065ms:
+src/integrations/runtime/RuntimeConnectionProvider.tsx(90,53): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Readonly<Record<RuntimeRefusalCode, "restart" | "down">>'.
+  No index signature with a parameter of type 'string' was found on type 'Readonly<Record<RuntimeRefusalCode, "restart" | "down">>'.
+src/tools/video-editor/components/AgentChat/AgentChatNewChatButton.tsx(80,23): error TS2550: Property 'replaceAll' does not exist on type 'string'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2021' or later.
+
+codex
+Fixed disposal durability, history ownership, scope cleanup, and response narrowing against official 0.2.1 types. Submit → dispose now preserves the original intent; late ACK/error and project-switch cases pass.
+
+- Focused tests: **25 passed**.
+- Neighbour tests: **174 passed**.
+- ESLint and `git diff --check`: passed.
+- Actual App typecheck: only the two documented baseline errors remain.
+- No full/browser tests or git mutations performed.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/report.md) and commit message are written. Ready for manager composition and the separately assigned browser journey.
+tokens used
+178,262
+Fixed disposal durability, history ownership, scope cleanup, and response narrowing against official 0.2.1 types. Submit → dispose now preserves the original intent; late ACK/error and project-switch cases pass.
+
+- Focused tests: **25 passed**.
+- Neighbour tests: **174 passed**.
+- ESLint and `git diff --check`: passed.
+- Actual App typecheck: only the two documented baseline errors remain.
+- No full/browser tests or git mutations performed.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/report.md) and commit message are written. Ready for manager composition and the separately assigned browser journey.

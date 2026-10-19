@@ -1,0 +1,400 @@
+      '    "contract/schemas/handshake.json": "sha256:66dde8a212cf4a9b58d8607a2022752566028081d7c8dd3cb148d82f4c6daf13",\n' +
+      '    "contract/schemas/health.json": "sha256:e88960225448e1f7b17bc47a50ce2931205aa6a82175da7e8b98c665a6600221",\n' +
+      '    "contract/schemas/managed-object.json": "sha256:1b71eed89b69f4007b73cf5d5fc45d535bc3ef7ed108fbe0d6a0e859bc8a6630",\n' +
+      '    "contract/schemas/managed-output.json": "sha256:ee5dd30209c7000bd9fdb673e04dccbb424e211c4a953886737a7b6c9c4ab106",\n' +
+      '    "contract/schemas/media-relation.json": "sha256:b0a107e445b64cb93ed0db671a93c657030fefb2af08106b1af300cbf9843fe0",\n' +
+      '    "contract/schemas/media-selection.json": "sha256:8484eb04c00048af09c3ba88d079522106c86c59d10ed69d30e817f7c817795d",\n' +
+      '    "contract/schemas/object-location.json": "sha256:a84d8652987b3b23878a15dc492fe1eaac846101d591566204462cb3640c0148",\n' +
+      '    "contract/schemas/preferences.json": "sha256:3c3fbf9c5046c8f7e87acf8bed7b35fa013a260cce1e4728064fec2572425ada",\n' +
+      '    "contract/schemas/project.json": "sha256:f6dafdf23512eb9292a7da4bd74bcaff41af3ad6450a98bdba033bde286536d2",\n' +
+      '    "contract/schemas/realm-lifecycle.json": "sha256:ad337dc5bec2ae95958e9742a0a3a81119a9466c7597f6b6dbd0915434d45541",\n' +
+      '    "contract/schemas/realm.json": "sha256:bb1d4d1eed025bc26414f5cb3231e695d9843bcfa066c1f5cab6523bcf0be3ad",\n' +
+      '    "contract/schemas/run.json": "sha256:07613763162af9d11571093e7aac7f43694ca5dd2a26171d51dcd08508e46c3f",\n' +
+      '    "contract/schemas/shot-composition.json": "sha256:fd1a6a82567f817a06d906a793e188757ba22d7bb656ba579dc3c173a49c1791",\n' +
+      '    "contract/schemas/shot-text-binding.json": "sha256:312a12cc7e3e4a8f97fdade1097387f990380d15965dffafdbb35f830bb4cae9",\n' +
+      '    "contract/schemas/task.json": "sha256:89204c7c23199eff9a28c16500aa534b9b1f9a659d4de4f61859748087c083e7",\n' +
+      '    "contract/schemas/timeline-clip-replacement.json": "sha256:844cf65e5647f89eef6e5787371def679bd5379211b322da5489e44e0372ab31",\n' +
+      '    "contract/schemas/timeline-commit.json": "sha256:4c4e0aa26ef44777bafb59cf4a62437269889cc2c365401975e1050aa1ccbca0",\n' +
+      '    "contract/schemas/timeline-config.schema.json": "sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1",\n' +
+      '    "contract/schemas/timeline-config.schema.provenance.json": "sha256:fd3ab1f852aeecd494704330ac577d9f849d4d579a73b22a8e5ed3b50d59ce83",\n' +
+      '    "contract/schemas/timeline-diff.json": "sha256:ad112dd68ca71fa349dd654109f5f67284b761263f85107c083846aa039c1d88",\n' +
+      '    "contract/schemas/timeline-inspection-result.json": "sha256:67eae8bffc92ecc47817dc48ea3c68e2a22a8e903f7e371942bfb5d3721af1bf",\n' +
+      '    "contract/schemas/timeline-inspection.json": "sha256:9ed0f0e92676f5c5bc985c3018fadaecd5fec33271510978be9b9feecf581a6a",\n' +
+      '    "contract/schemas/timeline-revision.json": "sha256:cf02579485e098366b3c54665e233e604d57bba3ae51c20d2e372d1e71db568a",\n' +
+      '    "contract/schemas/timeline-view.json": "sha256:f28d4e7f22d00e3fa0c600143fac3a3d838e7b7f087d1dbccfa7e9b837f34a55",\n' +
+      '    "contract/schemas/timeline.json": "sha256:52aa33cf51a3b2cb1707e18c273f1a82d2b048049f37fafcd6e12827449a4728",\n' +
+      '    "contract/schemas/worker.json": "sha256:ce9046dd139b5c3368dfbb523ad9f8c1fc17a58749cd2fc8265a5e77a49bfc2b",\n' +
+      '    "generators/release.json": "sha256:906453f8ca80f727145e88888c6ad6d1228d08f130e737c3bcd08f9e637541e5",\n' +
+      '    "packages/python/astrid_runtime_client/__init__.py": "sha256:0ec98414f0410da5db816e2dcb3204207046902026902db5283251c168a19c6d",\n' +
+      '    "packages/python/astrid_runtime_client/contract_metadata.py": "sha256:d009690b5b9d812a51433fa747ece4a83a6db762a91063c9aafdecd3e27f0cbb",\n' +
+      '    "packages/python/astrid_runtime_client/generated.py": "sha256:94a941696abe0bc13d8c46d622fe58529424d9eaabdca6e11e8ccb863c600439",\n' +
+      '    "packages/python/astrid_runtime_client/timeline_commit_types.py": "sha256:9bd6bbad5741bfc73d57418c17654f0dae7fd19a5d0bb4ed44fea0f130375a70",\n' +
+      '    "packages/python/pyproject.toml": "sha256:a928cc2a811030dd78f8c503b12034d036b438385621408ed4816c7fcb9a5f02",\n' +
+      '    "packages/typescript/package-lock.json": "sha256:a922c015934e1c67569da6353d5fca6408f0ccde695b2ffc5045e426cdcda637",\n' +
+      '    "packages/typescript/package.json": "sha256:2ceb04a642a009d6a3e0312a15c597d5f62edb99f4c21d58d10e1e24c6c3458e",\n' +
+      '    "packages/typescript/src/contract-metadata.ts": "sha256:d3c36d3621b9c76c84bb47cf33efe0b0d482e4214353d10b72eb4ecb42943b8e",\n' +
+      '    "packages/typescript/src/generated.ts": "sha256:a98eddf3560097d4ad5547efe7d923576f1bc7cf449da28d7ae49393630e838c",\n' +
+      '    "packages/typescript/src/index.ts": "sha256:6b6dff85e4199007c8890802e0c228171285114fa2f862999c6741c632c5d1a5",\n' +
+      '    "packages/typescript/src/timeline-commit-types.ts": "sha256:715a9487adf1a56b865bb818be8e6d7007823d54fef1952cd7d12454c554d32d",\n' +
+      '    "packages/typescript/tsconfig.json": "sha256:48bc718286b70c7ff5af00d1adfea37ad7c7f8820d3050117dc9d6aea239181b",\n' +
+      '    "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:822f1c71ce5f1747b0d96af7e02fe4bdf094ce0cc98867b93118c9e128103395"\n' +
+      '  },\n' +
+      '  "producer": "astrid-runtime",\n' +
+      '  "version": "sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d"\n' +
+      '}\n',
+    ''
+  ],
+  pid: 10,
+  stdout: '{\n' +
+    '  "artifacts": {\n' +
+    '    "conformance/fixtures/canonical-timeline-parity.json": "sha256:8404ad42d817e60f6255113624e0f17a8100e3c6d0c4baf24029e818d8e5ff00",\n' +
+    '    "conformance/fixtures/event.json": "sha256:29c739974e7bad256804feaceccd44e5a4633d144c1a6229cfe853737bca8ead",\n' +
+    '    "conformance/fixtures/handshake.json": "sha256:259f06fa225aec0cb0e0cfc593fa89db4578fc26db9664e2b7632ce2f4fec234",\n' +
+    '    "conformance/fixtures/managed-object.json": "sha256:db5646c5c47415bbb6fe7c84751bf1b7b56cae6074df0bd28040990db9f5f031",\n' +
+    '    "conformance/fixtures/preferences-user-mutation.json": "sha256:5b176a96f941ddb8ae737493d2b51547568710f6e54aaa164bd7fa640410eabe",\n' +
+    '    "conformance/fixtures/preferences-user.json": "sha256:1220094f6d80ce36fd8e0ed891b0c5418647b43ace19e74d127f3af5043125fa",\n' +
+    '    "conformance/fixtures/project.json": "sha256:b526be614ff35276608630c602213078edc8a291eb5241dd14b82bcffad71e29",\n' +
+    '    "conformance/fixtures/settlement.json": "sha256:f9cd0958061a2a2a25def05966b5c9ffd5837a1f7197eec2b1f1cd482ac09086",\n' +
+    '    "conformance/fixtures/shot-composition-compatibility.json": "sha256:9d5201dd62121c278bd51037863afb59508794b96b06e1bf3f89d7b300e19fc2",\n' +
+    '    "conformance/fixtures/task.json": "sha256:7dc2f5d3f82219b439f1c1147aa230f39e706a3c3b24a7d177efc1b975f543b9",\n' +
+    '    "conformance/fixtures/visual-boundary-v1.json": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",\n' +
+    '    "conformance/responses/events_page_1_200.json": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",\n' +
+    '    "conformance/responses/events_page_2_200.json": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",\n' +
+    '    "conformance/responses/invalid_cursor_400.json": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",\n' +
+    '    "conformance/responses/managed_outputs_200.json": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",\n' +
+    '    "conformance/responses/not_found_404.json": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",\n' +
+    '    "conformance/responses/publish_conflict_409.json": "sha256:19d664d035691202da03b22b858456c49983e253c7485a6347baa1cf350eea57",\n' +
+    '    "conformance/responses/task_admission_201.json": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",\n' +
+    '    "conformance/responses/task_read_200.json": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",\n' +
+    '    "conformance/responses/validation_error_422.json": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",\n' +
+    '    "conformance/second-client-core-v1.yaml": "sha256:3a0a5aff4e66435212ba567850a0a27c5555601a33ecbd3ed7e21737948662e3",\n' +
+    '    "contract/component-manifest.json": "sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5",\n' +
+    '    "contract/manifest.json": "sha256:75dc4d088d6647af9f0aa3f7f4a1a30e65195f85b81f81f7b354fd7e418f6d14",\n' +
+    '    "contract/openapi/workspace-v1.yaml": "sha256:327266b0cf74a384ee1df757d2d4d10fd755c4c0ba877d28619982824bf6d615",\n' +
+    '    "contract/schemas/backup.json": "sha256:71ec2f4bc9ad63ac05e8149cf0d1a4f96fa8d5aa4b85bf12a61938fbafb2151e",\n' +
+    '    "contract/schemas/common.json": "sha256:65e0196e36a0565f3a2f69e489e4c1fa6114df039eb25666c60591f266e06f19",\n' +
+    '    "contract/schemas/doctor.json": "sha256:d0caac9e7bf6a81d68abb52e757b321f7a45d4f2afff43bd4880089ea8dcc243",\n' +
+    '    "contract/schemas/document.json": "sha256:6d8fe08563eb96504c874c1d3535527371a8a67f54b06bcd324c32f99cb286e3",\n' +
+    '    "contract/schemas/edit-command.json": "sha256:2a4058f883c59457052e4b42f74cc2fa411cf004f98f1c7ef953ecbe894ff427",\n' +
+    '    "contract/schemas/envelope.json": "sha256:3afb9c6346eae95743e102cde2a405790c174a113ac952187c746ed2bef7f7ca",\n' +
+    '    "contract/schemas/event.json": "sha256:61c478fcffb5f68da0f8b6247094a3f0f4c6a6a622f0a91fa7726702d64d1c7a",\n' +
+    '    "contract/schemas/export.json": "sha256:f97729b94e4c6a761dfe0966996218c964ac7ab8eb61da45f4d842a2e2913d71",\n' +
+    '    "contract/schemas/generation.json": "sha256:be22c8359ebf8a6be6b37c7121683a20222676849d40f5f4245c5ae2bf759d06",\n' +
+    '    "contract/schemas/handshake-response.json": "sha256:2bd6af50af148b4371e0ae26cffe88cd58270d91a7190349b6b306fcb7824ff1",\n' +
+    '    "contract/schemas/handshake.json": "sha256:66dde8a212cf4a9b58d8607a2022752566028081d7c8dd3cb148d82f4c6daf13",\n' +
+    '    "contract/schemas/health.json": "sha256:e88960225448e1f7b17bc47a50ce2931205aa6a82175da7e8b98c665a6600221",\n' +
+    '    "contract/schemas/managed-object.json": "sha256:1b71eed89b69f4007b73cf5d5fc45d535bc3ef7ed108fbe0d6a0e859bc8a6630",\n' +
+    '    "contract/schemas/managed-output.json": "sha256:ee5dd30209c7000bd9fdb673e04dccbb424e211c4a953886737a7b6c9c4ab106",\n' +
+    '    "contract/schemas/media-relation.json": "sha256:b0a107e445b64cb93ed0db671a93c657030fefb2af08106b1af300cbf9843fe0",\n' +
+    '    "contract/schemas/media-selection.json": "sha256:8484eb04c00048af09c3ba88d079522106c86c59d10ed69d30e817f7c817795d",\n' +
+    '    "contract/schemas/object-location.json": "sha256:a84d8652987b3b23878a15dc492fe1eaac846101d591566204462cb3640c0148",\n' +
+    '    "contract/schemas/preferences.json": "sha256:3c3fbf9c5046c8f7e87acf8bed7b35fa013a260cce1e4728064fec2572425ada",\n' +
+    '    "contract/schemas/project.json": "sha256:f6dafdf23512eb9292a7da4bd74bcaff41af3ad6450a98bdba033bde286536d2",\n' +
+    '    "contract/schemas/realm-lifecycle.json": "sha256:ad337dc5bec2ae95958e9742a0a3a81119a9466c7597f6b6dbd0915434d45541",\n' +
+    '    "contract/schemas/realm.json": "sha256:bb1d4d1eed025bc26414f5cb3231e695d9843bcfa066c1f5cab6523bcf0be3ad",\n' +
+    '    "contract/schemas/run.json": "sha256:07613763162af9d11571093e7aac7f43694ca5dd2a26171d51dcd08508e46c3f",\n' +
+    '    "contract/schemas/shot-composition.json": "sha256:fd1a6a82567f817a06d906a793e188757ba22d7bb656ba579dc3c173a49c1791",\n' +
+    '    "contract/schemas/shot-text-binding.json": "sha256:312a12cc7e3e4a8f97fdade1097387f990380d15965dffafdbb35f830bb4cae9",\n' +
+    '    "contract/schemas/task.json": "sha256:89204c7c23199eff9a28c16500aa534b9b1f9a659d4de4f61859748087c083e7",\n' +
+    '    "contract/schemas/timeline-clip-replacement.json": "sha256:844cf65e5647f89eef6e5787371def679bd5379211b322da5489e44e0372ab31",\n' +
+    '    "contract/schemas/timeline-commit.json": "sha256:4c4e0aa26ef44777bafb59cf4a62437269889cc2c365401975e1050aa1ccbca0",\n' +
+    '    "contract/schemas/timeline-config.schema.json": "sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1",\n' +
+    '    "contract/schemas/timeline-config.schema.provenance.json": "sha256:fd3ab1f852aeecd494704330ac577d9f849d4d579a73b22a8e5ed3b50d59ce83",\n' +
+    '    "contract/schemas/timeline-diff.json": "sha256:ad112dd68ca71fa349dd654109f5f67284b761263f85107c083846aa039c1d88",\n' +
+    '    "contract/schemas/timeline-inspection-result.json": "sha256:67eae8bffc92ecc47817dc48ea3c68e2a22a8e903f7e371942bfb5d3721af1bf",\n' +
+    '    "contract/schemas/timeline-inspection.json": "sha256:9ed0f0e92676f5c5bc985c3018fadaecd5fec33271510978be9b9feecf581a6a",\n' +
+    '    "contract/schemas/timeline-revision.json": "sha256:cf02579485e098366b3c54665e233e604d57bba3ae51c20d2e372d1e71db568a",\n' +
+    '    "contract/schemas/timeline-view.json": "sha256:f28d4e7f22d00e3fa0c600143fac3a3d838e7b7f087d1dbccfa7e9b837f34a55",\n' +
+    '    "contract/schemas/timeline.json": "sha256:52aa33cf51a3b2cb1707e18c273f1a82d2b048049f37fafcd6e12827449a4728",\n' +
+    '    "contract/schemas/worker.json": "sha256:ce9046dd139b5c3368dfbb523ad9f8c1fc17a58749cd2fc8265a5e77a49bfc2b",\n' +
+    '    "generators/release.json": "sha256:906453f8ca80f727145e88888c6ad6d1228d08f130e737c3bcd08f9e637541e5",\n' +
+    '    "packages/python/astrid_runtime_client/__init__.py": "sha256:0ec98414f0410da5db816e2dcb3204207046902026902db5283251c168a19c6d",\n' +
+    '    "packages/python/astrid_runtime_client/contract_metadata.py": "sha256:d009690b5b9d812a51433fa747ece4a83a6db762a91063c9aafdecd3e27f0cbb",\n' +
+    '    "packages/python/astrid_runtime_client/generated.py": "sha256:94a941696abe0bc13d8c46d622fe58529424d9eaabdca6e11e8ccb863c600439",\n' +
+    '    "packages/python/astrid_runtime_client/timeline_commit_types.py": "sha256:9bd6bbad5741bfc73d57418c17654f0dae7fd19a5d0bb4ed44fea0f130375a70",\n' +
+    '    "packages/python/pyproject.toml": "sha256:a928cc2a811030dd78f8c503b12034d036b438385621408ed4816c7fcb9a5f02",\n' +
+    '    "packages/typescript/package-lock.json": "sha256:a922c015934e1c67569da6353d5fca6408f0ccde695b2ffc5045e426cdcda637",\n' +
+    '    "packages/typescript/package.json": "sha256:2ceb04a642a009d6a3e0312a15c597d5f62edb99f4c21d58d10e1e24c6c3458e",\n' +
+    '    "packages/typescript/src/contract-metadata.ts": "sha256:d3c36d3621b9c76c84bb47cf33efe0b0d482e4214353d10b72eb4ecb42943b8e",\n' +
+    '    "packages/typescript/src/generated.ts": "sha256:a98eddf3560097d4ad5547efe7d923576f1bc7cf449da28d7ae49393630e838c",\n' +
+    '    "packages/typescript/src/index.ts": "sha256:6b6dff85e4199007c8890802e0c228171285114fa2f862999c6741c632c5d1a5",\n' +
+    '    "packages/typescript/src/timeline-commit-types.ts": "sha256:715a9487adf1a56b865bb818be8e6d7007823d54fef1952cd7d12454c554d32d",\n' +
+    '    "packages/typescript/tsconfig.json": "sha256:48bc718286b70c7ff5af00d1adfea37ad7c7f8820d3050117dc9d6aea239181b",\n' +
+    '    "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:822f1c71ce5f1747b0d96af7e02fe4bdf094ce0cc98867b93118c9e128103395"\n' +
+    '  },\n' +
+    '  "producer": "astrid-runtime",\n' +
+    '  "version": "sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d"\n' +
+    '}\n',
+  stderr: ''
+}
+
+Node.js v22.22.0
+
+exec
+/bin/bash -lc "node --input-type=module <<'NODE'
+import fs from 'node:fs';
+const lock=JSON.parse(fs.readFileSync('runtime.lock.json','utf8'));
+const meta=fs.readFileSync('src/integrations/runtime/generated-contract-metadata.ts','utf8');
+const dto=fs.readFileSync('src/integrations/runtime/timeline-commit-types.ts','utf8');
+const main=fs.readFileSync('src/integrations/runtime/generated.ts','utf8');
+const contract=fs.readFileSync('src/integrations/runtime/contract-metadata.ts','utf8');
+const manifest=JSON.parse(fs.readFileSync('/home/user/work/runtime/contract/artifacts.json','utf8'));
+if (Object.keys(lock.files).length "'!== 13) throw new Error(`lock files ${Object.keys(lock.files).length}`);
+if (Object.keys(lock.files).filter(k=>k.includes('"'/fixtures/responses/')).length "'!== 9) throw new Error('"'response fixture count');
+if ("'!meta.includes('"'CONTRACT_VERSION = \"0.2.1\"') || "'!meta.includes('"'SCHEMA_DIGEST = \"sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d\"')) throw new Error('metadata pin');
+if ("'!dto.includes('"'project_seq: [number, number]')) throw new Error('new DTO is not fixed tuple');
+if ("'!main.includes('"'project_seq: [number, number]')) throw new Error('main receipt is not fixed tuple');
+if ("'!/export const RUNTIME_ACCEPTED_SCHEMA_DIGESTS = '"\\[RUNTIME_SCHEMA_DIGEST\\] as const/.test(contract)) throw new Error('accepted digest widening');
+if (lock.producer_version "'!== manifest.version || manifest.version !== '"'sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d') throw new Error('artifact version');
+if (lock.files['vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json'].sha256 "'!== '"'sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1') throw new Error('compiled pin changed');
+console.log(JSON.stringify({source_commit:lock.source_commit, producer_version:lock.producer_version, schema_digest:'sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d', files:Object.keys(lock.files).length, response_fixtures:Object.keys(lock.files).filter(k=>k.includes('/fixtures/responses/')).length, compiled_timeline_config_pin:lock.files['vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json'].sha256, receipt_project_seq:'[number, number]', accepted_digest_count:1},null,2));
+NODE
+
+git diff --check" in /home/user/work/wt/app-m1-client-021
+ succeeded in 316ms:
+{
+  "source_commit": "182a7dd8446456162a452a25c8493256c5da29fe",
+  "producer_version": "sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d",
+  "schema_digest": "sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d",
+  "files": 13,
+  "response_fixtures": 9,
+  "compiled_timeline_config_pin": "sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1",
+  "receipt_project_seq": "[number, number]",
+  "accepted_digest_count": 1
+}
+
+codex
+The official update is complete. The lock now pins Runtime integration `182a7dd…`, release artifact `9b18a553…`, schema digest exactly `sha256:4e52f7df…`, 13 files including all 9 response fixtures, and the compiled timeline-config hash remains byte-identical `f52b8202…`. The generated receipt alias is `[number, number]` on both sides; the accepted digest list remains exactly one entry. I’m proceeding with the requested App contract and Runtime integration test lanes.
+exec
+/bin/bash -lc 'npm run test:contracts' in /home/user/work/wt/app-m1-client-021
+ succeeded in 2672ms:
+
+> vite_react_shadcn_ts@0.0.0 test:contracts
+> vitest run --config config/testing/vitest.config.ts src/**/**/*.contract.test.ts src/**/**/clientContracts.test.ts src/shared/lib/__tests__/qualityCheck.contract.test.ts
+
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-client-021
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  19:49:39
+   Duration  869ms (transform 63ms, setup 396ms, import 11ms, tests 5ms, environment 0ms)
+
+
+exec
+/bin/bash -lc 'npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/integrations/runtime/{timelineCommit,client,client.runtimeOrigin,clientSharedSession}.test.ts' in /home/user/work/wt/app-m1-client-021
+ succeeded in 5990ms:
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-client-021
+
+
+ Test Files  4 passed (4)
+      Tests  77 passed (77)
+   Start at  19:49:44
+   Duration  4.22s (transform 1.22s, setup 1.28s, import 1.61s, tests 238ms, environment 3.71s)
+
+
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test app-m1-client-021 '"'targeted --files \"src/integrations/runtime/vendorLock.test.ts\"') && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test \""'$R"' in /home/user/work/wt/app-m1-client-021
+ exited 2 in 0ms:
+awk: not an option: --files
+
+codex
+The local contract lane passed (1 file/1 test), and the four requested Runtime integration files passed 77/77. My first central vendor-lock request used the shell quoting incorrectly and was rejected before queueing (`awk: not an option: --files`); no test ran. I’m correcting the request syntax now and will use the central result for the known sandbox `spawnSync git` case.
+exec
+/bin/bash -lc "sed -n '1,280p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test; printf '\\n--- suites ---\\n'; rg -n '"'^app|targeted|vendor'"' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf | tail -60" in /home/user/work/wt/app-m1-client-021
+ succeeded in 90ms:
+#!/bin/bash
+# request-test WORKER|integration:REPO SUITE [--files "a b c"] [--no-cache]  — queue a test run (done by the dispatcher OUTSIDE the
+# sandbox, so localhost/browsers work). SUITE: full | targeted (needs --files) | a named suite from $ORCH/tests/suites.conf.
+# Prints the result dir $ORCH/tests/<id>/ ; then: $ORCH/bin/wait-test <id>. Only writes under $ORCH.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+T=$1; S=$2; shift 2 || { sed -n 2,4p $0; exit 2; }; F=; NC=0
+while [ $# -gt 0 ]; do case $1 in --files) F=$2; shift 2;; --no-cache) NC=1; shift;; *) echo "unknown arg $1"; exit 2;; esac; done
+case $T in integration:*) R=${T#integration:}; [ -d /home/user/work/$R ] || { echo "no repo $R"; exit 2; };;
+  *) [ -f $O/workers/$T/meta ] || { echo "no worker $T"; exit 2; }; R=$(sed -n 's/^repo=//p' $O/workers/$T/meta);; esac
+awk -v r=$R -v s=$S '$1==r && $2==s {f=1} END {exit !f}' $O/tests/suites.conf || { echo "suite '$S' not in suites.conf for $R:"; awk -v r=$R '$1==r {print "  " $2}' $O/tests/suites.conf; exit 2; }
+[ $S = targeted ] && [ -z "$F" ] && { echo "targeted needs --files"; exit 2; }
+ID=$(echo "${T#integration:}" | tr -c 'a-zA-Z0-9-\n' -)-$S-$(date -u +%m%d%H%M%S)-$RANDOM; D=$O/tests/$ID; mkdir -p $D
+printf 'target=%q\nrepo=%q\nsuite=%q\nfiles=%q\nnocache=%s\nrequested=%s\n' "$T" "$R" "$S" "$F" $NC $(date -u +%FT%TZ) > $D/request
+echo queued > $D/status; echo "TEST $ID" > $O/queue/pending/.test-$ID.tmp && mv $O/queue/pending/.test-$ID.tmp $O/queue/pending/test-$ID
+echo "$D/"; echo "wait: $O/bin/wait-test $ID" >&2
+
+--- suites ---
+4:# SUITE "targeted": the request's --files are appended. Any other name is a "named" suite (--files appended if given).
+7:agent       targeted          /home/user/work/venv-agent/bin/python -m pytest -q
+10:runtime     targeted          /home/user/work/venv-runtime/bin/python -m pytest -q
+16:app         full              npm test -- --maxWorkers=3
+17:app         targeted          npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2
+18:app         e2e-harness       npm run test:e2e:timeline-harness
+19:app         full-e2e-timeline npm run test:e2e:timeline
+20:app         full-e2e-direct   npm run test:e2e:direct
+21:app         full-e2e-three-products npm run test:e2e:three-products
+23:composition targeted          node --import tsx --test
+25:app         e2e-outbox-native npm run test:e2e:timeline
+26:app         e2e-m1-gesture npm run test:e2e:three-products -- --grep 'M1 real'
+
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test app-m1-client-021 targeted --files '"'src/integrations/runtime/vendorLock.test.ts') && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test \""'$R"' in /home/user/work/wt/app-m1-client-021
+exec
+/bin/bash -lc "sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test; printf '\\n--- status files ---\\n'; find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests -maxdepth 2 -type f -name 'status' -mmin -2 -print -exec cat {} \\; | tail -30" in /home/user/work/wt/app-m1-client-021
+ succeeded in 213ms:
+#!/bin/bash
+# wait-test ID|RESULT-DIR [MAX-MIN]  — poll every 30 s until the test run is done, print its summary, exit with its exit code.
+# Exits 124 (still queued/running) after MAX-MIN minutes (default 100); just run it again.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+D=$O/tests/$(basename "$1"); [ -f $D/status ] || { echo "no test run $1"; exit 2; }; END=$(( $(date +%s) + ${2:-100}*60 ))
+while grep -qE '^(queued|running)' $D/status; do
+  [ $(date +%s) -ge $END ] && { echo "still $(cat $D/status) after ${2:-100} min $(cat $D/why 2>/dev/null); rerun wait-test"; exit 124; }; sleep 30; done
+cat $D/summary; exit $(cat $D/exit 2>/dev/null || echo 1)
+
+--- status files ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-m1-client-021-targeted-1019194959-25695/status
+pass
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-cli-journey-review-commit-integration-1019195003-6839/status
+running
+
+ succeeded in 30020ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test app-m1-client-021-targeted-1019194959-25695
+test app-m1-client-021-targeted-1019194959-25695: pass exit=0 in 14s — targeted on app-m1-client-021 (app tree f2285cf2570514321e3002d5237a0fd7fc9ab8d5)
+cmd: npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/integrations/runtime/vendorLock.test.ts
+counts:  Test Files  1 passed (1)       Tests  13 passed (13) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-m1-client-021-targeted-1019194959-25695/log.txt ---
+
+ RUN  v4.1.5 /home/user/work/wt/.test-app-m1-client-021-targeted-1019194959-25695
+
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  19:50:09
+   Duration  8.24s (transform 223ms, setup 272ms, import 198ms, tests 6.49s, environment 1.00s)
+
+
+codex
+All requested test lanes are green: `npm run test:contracts` passed 1/1; the four Runtime integration files passed 77/77; and the central targeted `vendorLock.test.ts` passed 13/13. The central run used the final worktree snapshot and confirms the lock update/check behavior without the sandbox’s local `spawnSync git` restriction. I’m doing the final lint/status audit and writing the required commit message.
+exec
+/bin/bash -lc "npx eslint src/integrations/runtime/generated-contract-metadata.ts src/integrations/runtime/timeline-commit-types.ts src/integrations/runtime/vendorLock.test.ts --report-unused-disable-directives --max-warnings 0 && node scripts/vendor-lock.mjs check runtime.lock.json --producer /home/user/work/runtime && git diff --check && printf '\\n--- final status ---\\n' && git status --short --branch && printf '\\n--- final changed files ---\\n' && git diff --name-only && printf '\\n--- final diff stat ---\\n' && git diff --stat" in /home/user/work/wt/app-m1-client-021
+ succeeded in 2928ms:
+ok runtime.lock.json (matches pinned producer commit)
+
+--- final status ---
+## tl/app-m1-client-021
+ M runtime.lock.json
+ M src/integrations/runtime/generated-contract-metadata.ts
+ M src/integrations/runtime/timeline-commit-types.ts
+
+--- final changed files ---
+runtime.lock.json
+src/integrations/runtime/generated-contract-metadata.ts
+src/integrations/runtime/timeline-commit-types.ts
+
+--- final diff stat ---
+ runtime.lock.json                                       | 8 ++++----
+ src/integrations/runtime/generated-contract-metadata.ts | 4 ++--
+ src/integrations/runtime/timeline-commit-types.ts       | 5 +++--
+ 3 files changed, 9 insertions(+), 8 deletions(-)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-021/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-021/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-021/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..107f1c636f3f3bd16c2361c0184bae6a05ba2c35
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-021/commit-msg
+@@ -0,0 +1,4 @@
++fix(runtime): refresh App contract to Runtime 0.2.1
++
++Pin the reviewed Runtime integration release with the raw immutable payload
++codec and preserve the fixed project sequence receipt tuple.
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 6dd3532e82ac0529974d7ad537a28295b9c1c86d..5b7d366e736a8fbe80913da2eba75aa6b5307a9e
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -56,5 +56,5 @@
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+   "producer_version": "sha256:1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d",
+-  "source_commit": "c423544de3b7a1090649bf32e4c82514c4c7a641"
++  "source_commit": "182a7dd8446456162a452a25c8493256c5da29fe"
+ }
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- receipt alias proof in reviewed producer source ---' && git -C /home/user/work/runtime show HEAD:packages/typescript/test/public-api.mts | rg -n -C 4 'MutationReceipt|project_seq|receipt' | head -120 && printf '%s\\n' '--- commit message ---' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-021/commit-msg && printf '%s\\n' '--- final checks ---' && node scripts/vendor-lock.mjs check runtime.lock.json --producer /home/user/work/runtime && git diff --check && git status --short" in /home/user/work/wt/app-m1-client-021
+ succeeded in 254ms:
+--- receipt alias proof in reviewed producer source ---
+1-/** Consumer imports resolve through the published package exports and declarations. */
+2-import {
+3-  CONTRACT_VERSION, WorkspaceClient,
+4-  type Health, type Handshake, type PreferenceResource, type MutationResult,
+5:  type MutationReceipt as MainMutationReceipt,
+6-} from "@astrid/runtime-client";
+7:import type { MutationReceipt as CommitMutationReceipt } from "../src/timeline-commit-types.js";
+8-
+9-const version: string = CONTRACT_VERSION;
+10-const client = new WorkspaceClient("http://runtime.invalid");
+11-const health: Promise<Health> = client.health();
+12-const handshake: Promise<Handshake> = client.handshake("consumer", version, []);
+13-const preference: Promise<PreferenceResource> = client.getPreferences("user");
+14-const mutation: Promise<MutationResult<unknown>> = client.createProject("consumer", "key");
+15:declare const commitReceipt: CommitMutationReceipt;
+16:declare const mainReceipt: MainMutationReceipt;
+17:const mainReceiptFromCommit: MainMutationReceipt = commitReceipt;
+18:const commitReceiptFromMain: CommitMutationReceipt = mainReceipt;
+19:const projectSequence: [number, number] = commitReceipt.project_seq;
+20-void [health, handshake, preference, mutation, mainReceiptFromCommit, commitReceiptFromMain, projectSequence];
+--- commit message ---
+fix(runtime): refresh App contract to Runtime 0.2.1
+
+Pin the reviewed Runtime integration release with the raw immutable payload
+codec and preserve the fixed project sequence receipt tuple.
+--- final checks ---
+ok runtime.lock.json (matches pinned producer commit)
+ M runtime.lock.json
+ M src/integrations/runtime/generated-contract-metadata.ts
+ M src/integrations/runtime/timeline-commit-types.ts
+
+codex
+Implemented the reviewed Runtime refresh.
+
+- Pinned Runtime integration SHA `182a7dd8446456162a452a25c8493256c5da29fe`
+- Release `0.2.1`
+- Schema digest `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`
+- Artifact aggregate `sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d`
+- Preserved compiled timeline-config pin `sha256:f52b8202…`
+- Receipt `project_seq` now matches main as `[number, number]`
+- Lock retains 13 files and all 9 response fixtures
+
+Checks passed:
+
+- Vendor-lock update/check
+- Byte/hash audit against Runtime SHA
+- `npm run test:contracts` — 1 passed
+- Runtime integration Vitest lane — 77 passed
+- Central `vendorLock.test.ts` — 13 passed
+- ESLint and `git diff --check`
+
+Changed only the three official generated/lock files. Commit message written to the requested path.
+tokens used
+163,370
+Implemented the reviewed Runtime refresh.
+
+- Pinned Runtime integration SHA `182a7dd8446456162a452a25c8493256c5da29fe`
+- Release `0.2.1`
+- Schema digest `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`
+- Artifact aggregate `sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d`
+- Preserved compiled timeline-config pin `sha256:f52b8202…`
+- Receipt `project_seq` now matches main as `[number, number]`
+- Lock retains 13 files and all 9 response fixtures
+
+Checks passed:
+
+- Vendor-lock update/check
+- Byte/hash audit against Runtime SHA
+- `npm run test:contracts` — 1 passed
+- Runtime integration Vitest lane — 77 passed
+- Central `vendorLock.test.ts` — 13 passed
+- ESLint and `git diff --check`
+
+Changed only the three official generated/lock files. Commit message written to the requested path.

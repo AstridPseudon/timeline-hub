@@ -1,0 +1,400 @@
+
+codex
+The 421-test focused batch passed. An additional recovery regression exposed a session-core gap: after A is acknowledged and B remains pending, reopening selects A’s accepted head instead of B’s persisted original display basis. The test correctly fails with `r1/p1` where the required basis is `r0/p0`. I’ll retain that expectation and document the blocker; fixing session-core recovery is outside this task’s ownership.
+
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md <<'EOF'
+
+#### Producer dependency finding: recovery after A ACK changes B's display basis
+
+The new real-hook regression "'`retains the original local base when recovery
+follows an acknowledged predecessor` currently FAILS: expected local base r0/p0,
+received r1/p1 (B remains displayed at7). Schedule: A5 durable lost ACK, B7 queued,
+independent C inverse resets the server clip, exact retry acknowledges A, B'"'s
+original A5 guard refuses, unmount/recover that persisted owner. The existing
+"'`commands/commitSession.ts` recovery selects `savedAcceptance` ahead of
+`first.displayBasis`, then calls the hook with only that selected basis and
+patches. Thus the hook cannot recover the original pair within fact-assignment
+scope. Its normal recovery-before-A-ACK test passes at r0/p0, and A ACK alone
+never relabels live B. This is a session-core dependency defect, not a request to
+change the approved union or weaken the original-base requirement. The failing
+regression is retained with its correct expectation (no skip/xfail exception).
+Manager/core owner must ensure recovery supplies and projects the persisted
+original display closure/basis while preserving the actual accepted submission
+basis and lifecycle responsibilities. Producer worker does not edit core.
+EOF' in /home/user/work/wt/app-m1-projection-fact
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'node_modules/.bin/eslint src/tools/video-editor/lib/timeline-data.ts src/tools/video-editor/hooks/useTimelineCommandSession.ts src/tools/video-editor/hooks/useTimelineCommit.ts src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx && git diff --check' in /home/user/work/wt/app-m1-projection-fact
+ succeeded in 2561ms:
+exec
+/bin/bash -lc "git -C /home/user/work/app log -1 --oneline; ls /home/user/work/app/src/integrations/runtime/timeline-commit-types.ts; sha256sum src/integrations/runtime/timeline-commit-types.ts /home/user/work/app/src/integrations/runtime/timeline-commit-types.ts; sed -n '684,698p' /home/user/work/app/src/integrations/runtime/dataProvider.ts; rg -n 'project_seq|MutationReceipt' /home/user/work/app/src/integrations/runtime/timeline-commit-types.ts | head -2; rg -n 'original.*2|2.*original|typecheck' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix -g '*.md' -g '*report*' 2>/dev/null; ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix" in /home/user/work/wt/app-m1-projection-fact
+ succeeded in 0ms:
+384d00c51 Merge tl/app-m1-drag-gate
+/home/user/work/app/src/integrations/runtime/timeline-commit-types.ts
+068f23389275b6302ab3842c6d7daa540a399553f1eb39dd9688f988d82267f0  src/integrations/runtime/timeline-commit-types.ts
+715a9487adf1a56b865bb818be8e6d7007823d54fef1952cd7d12454c554d32d  /home/user/work/app/src/integrations/runtime/timeline-commit-types.ts
+      request.project_id,
+      request.timeline_id,
+      request,
+      idempotencyKey,
+    );
+    if (response.data.status === 'preview') {
+      throw new TimelineSchemaIncompatibleError('Timeline preview is not an accepted commit');
+    }
+    return this.acceptedCommitResult(response, request.timeline_id);
+  }
+
+  /** Build the canonical explicit inverse command, then use the same commit path. */
+  async undoTimeline(
+    base: TimelineHeadRevision,
+    publications: readonly string[],
+32:export type MutationReceipt = { receipt_id: string; command_kind: string; idempotency_key: string; request_hash: string; project_id: string; project_seq: [number, number]; event_ids: Array<string>; result: unknown; created_at: string };
+58:export type CommitAcceptedMutation = { data: CommitAccepted; receipt: MutationReceipt };
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/report.md:1:Fixed disposal durability, history ownership, scope cleanup, and response narrowing against official 0.2.1 types. Submit → dispose now preserves the original intent; late ACK/error and project-switch cases pass.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/report.md:6:- Actual App typecheck: only the two documented baseline errors remain.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/brief.md:7:3. Actual app tsc currently calls4errors 'pre-existing' relative to candidate base, but2were introduced by earlier M1client: nested accepted/preview response narrowing and new receipt tuple alias. Producer tuple is now fixed officially0.2.1/182a7dd; consume official types, don't widen main receipt/manual generated edit. Fix narrowing via top-level receipt:null discriminator. Run actual app source typecheck; only documented original2 (RuntimeConnectionProvider90TS7053 and AgentChatNewChatButton80TS2550) may remain.
+brief.md
+commit-msg
+commit.log
+ended
+exit
+focused.log
+lint.log
+log.txt
+meta
+report.md
+targeted.log
+typecheck.log
+
+exec
+/bin/bash -lc 'git diff HEAD /home/user/work/app/ -- src/integrations/runtime 2>/dev/null; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/report.md; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/meta; git -C /home/user/work/app log -5 --oneline; git diff --stat HEAD tl/app-m1-wiring-fix -- src/integrations/runtime/dataProvider.ts src/integrations/runtime/timeline-commit-types.ts' in /home/user/work/wt/app-m1-projection-fact
+ succeeded in 0ms:
+Fixed disposal durability, history ownership, scope cleanup, and response narrowing against official 0.2.1 types. Submit → dispose now preserves the original intent; late ACK/error and project-switch cases pass.
+
+- Focused tests: **25 passed**.
+- Neighbour tests: **174 passed**.
+- ESLint and `git diff --check`: passed.
+- Actual App typecheck: only the two documented baseline errors remain.
+- No full/browser tests or git mutations performed.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-wiring-fix/report.md) and commit message are written. Ready for manager composition and the separately assigned browser journey.name=app-m1-wiring-fix
+repo=app
+base=tl/app-m1-editor-wiring
+base_sha=a7ea077e4
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/app-m1-wiring-fix
+started=2026-10-19T19:55:23Z
+384d00c51 Merge tl/app-m1-drag-gate
+d47eac0e6 Merge tl/app-m1-client-021
+dc5630e93 test(app): allow audited drag expected failures
+7012a7628 fix(runtime): refresh App contract to Runtime 0.2.1
+b8c8950af test(video-editor): preserve group drag requirements as expected failures
+ src/integrations/runtime/dataProvider.ts          | 2 +-
+ src/integrations/runtime/timeline-commit-types.ts | 5 +++--
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+2026-10-19T20:03:38.976777Z ERROR codex_models_manager::manager: failed to refresh available models: request timed out
+exec
+/bin/bash -lc "git -C /home/user/work/app log -2 --oneline; ls /home/user/work/app/src/tools/video-editor/commands/commitSession.ts; git -C /home/user/work/app status --short; sed -n '686,696p' /home/user/work/app/src/integrations/runtime/dataProvider.ts; rg -n 'app-m1-wiring-fix|app-m1-projection-fact' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md | tail -8; wc -l src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx" in /home/user/work/wt/app-m1-projection-fact
+ succeeded in 43ms:
+384d00c51 Merge tl/app-m1-drag-gate
+d47eac0e6 Merge tl/app-m1-client-021
+ls: cannot access '/home/user/work/app/src/tools/video-editor/commands/commitSession.ts': No such file or directory
+      request,
+      idempotencyKey,
+    );
+    if (response.data.status === 'preview') {
+      throw new TimelineSchemaIncompatibleError('Timeline preview is not an accepted commit');
+    }
+    return this.acceptedCommitResult(response, request.timeline_id);
+  }
+
+  /** Build the canonical explicit inverse command, then use the same commit path. */
+  async undoTimeline(
+70:19:56 wiring manager review: original candidate DONE165neighbor/16focused/95shell, held for app-m1-wiring-fix (small lifecycle fix only): drain already-submitted durable appends before dispose without waiting uncertain network; avoid owning old clean history merely on initialization; official0.2.1 actual source typecheck/nested preview narrowing. Current candidate ALSO added inline Shell recovery controls (Recover editor1 / Retry timeline edits) after separate UI worker dispatch; manager will compose ONE UI with app-m1-recovery-ui's human labels/data-owner-id, no duplicate banners or uncontrolled overlap. New UI worker must be based/composed onto safe wiring before merge; do not infer controls already on integration. Actual mouse cases remain priority; no browser pass yet. Preview accepted/local fact seam proposal sent Viewing, not implemented until agreed.
+72:### Atomic displayed-data fact — app-m1-projection-fact (producer contract)
+205 src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx
+
+exec
+/bin/bash -lc 'node_modules/.bin/vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx src/tools/video-editor/hooks/useTimelineCommit.test.tsx src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/commands/commitOutbox.test.ts src/tools/video-editor/commands/semanticGestures.test.ts src/tools/video-editor/lib/timeline-data.test.ts src/tools/video-editor/lib/timeline-patch.test.ts src/tools/video-editor/lib/serialize.test.ts' in /home/user/work/wt/app-m1-projection-fact
+exec
+/bin/bash -lc 'git diff --check; git status --short; git diff --stat; git diff --numstat' in /home/user/work/wt/app-m1-projection-fact
+ succeeded in 2083ms:
+ M src/tools/video-editor/hooks/useTimelineCommandSession.ts
+ M src/tools/video-editor/hooks/useTimelineCommit.ts
+ M src/tools/video-editor/lib/timeline-data.ts
+?? src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx
+ src/tools/video-editor/hooks/useTimelineCommandSession.ts | 8 ++++++++
+ src/tools/video-editor/hooks/useTimelineCommit.ts         | 5 +++++
+ src/tools/video-editor/lib/timeline-data.ts               | 6 ++++++
+ 3 files changed, 19 insertions(+)
+8	0	src/tools/video-editor/hooks/useTimelineCommandSession.ts
+5	0	src/tools/video-editor/hooks/useTimelineCommit.ts
+6	0	src/tools/video-editor/lib/timeline-data.ts
+
+codex
+The producer changes add 19 lines, and file lint plus `git diff --check` pass. App typecheck reports four errors on this uncomposed base: the two documented baseline errors, the receipt tuple type error, and the accepted/preview narrowing error assigned to the client/lifecycle work. The final focused run is checking all neighboring tests alongside the retained recovery regression.
+
+ exited 1 in 14111ms:
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-projection-fact
+
+ ❯ src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx (8 tests | 1 failed) 1271ms
+     × retains the original local base when recovery follows an acknowledged predecessor 270ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx > atomic command projection facts > retains the original local base when recovery follows an acknowledged predecessor
+AssertionError: expected { kind: 'local', base: { …(2) }, …(1) } to match object { kind: 'local', base: { …(2) } }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "base": {
+-     "publicationId": "p0",
+-     "revisionId": "r0",
++     "publicationId": "p1",
++     "revisionId": "r1",
+    },
+    "kind": "local",
+  }
+
+ ❯ src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx:154:71
+    152|     await act(async () => { await recovered.hook.result.current.comman…
+    153|     expect(recovered.hook.result.current.commit.data?.config.clips[0].…
+    154|     expect(recovered.hook.result.current.commit.data?.editProjection).…
+       |                                                                       ^
+    155|   });
+    156|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 421 passed (422)
+   Start at  20:04:09
+   Duration  12.94s (transform 4.79s, setup 2.11s, import 9.35s, tests 3.10s, environment 7.46s)
+
+
+exec
+/bin/bash -lc "git diff -- src/tools/video-editor/lib/timeline-data.ts; sed -n '48,116p' src/tools/video-editor/hooks/useTimelineCommandSession.ts; sed -n '335,363p' src/tools/video-editor/hooks/useTimelineCommit.ts; rg --files -g '*.tsbuildinfo' -g 'coverage/**' -g '.vite/**' -g 'dist/**' ." in /home/user/work/wt/app-m1-projection-fact
+ exited 1 in 0ms:
+diff --git a/src/tools/video-editor/lib/timeline-data.ts b/src/tools/video-editor/lib/timeline-data.ts
+index e949fd188..aea5d799c 100644
+--- a/src/tools/video-editor/lib/timeline-data.ts
++++ b/src/tools/video-editor/lib/timeline-data.ts
+@@ -82,10 +82,16 @@ export interface TranscriptSegment {
+ 
+ export type ClipOrderMap = Record<string, string[]>;
+ 
++export type TimelineEditProjection =
++  | { kind: 'accepted'; head: { revisionId: string; publicationId: string } }
++  | { kind: 'local'; base: { revisionId: string; publicationId: string }; generation: number };
++
+ export interface TimelineData {
+   config: TimelineConfig;
+   configVersion: number;
+   head?: import('../data/DataProvider.ts').TimelineHeadRevision;
++  /** Fact about this displayed snapshot; never part of authored config. */
++  editProjection?: TimelineEditProjection;
+   registry: AssetRegistry;
+   resolvedConfig: ResolvedTimelineConfig;
+   rows: TimelineRow[];
+    };
+    void (async () => {
+      const [identity, basis] = await Promise.all([
+        provider.getRecoverableIdentity!(), provider.loadTimelineCommandBasis!(timelineId),
+      ]);
+      if (disposed) return;
+      session = await createTimelineCommandSession({
+        scope: { ...identity, projectId: basis.canonicalDocument.project_id, timelineId }, initial: basis,
+        send: (request, key) => provider.commitTimeline!(request, key),
+        changed,
+        preview: (patch) => {
+          const { commit } = latest.current;
+          if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
+          const compiled = compileTimelinePatch(patch, commit.dataRef.current);
+          if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
+          projectGeneration++;
+          ownsHistoryRef.current = true;
+          const current = commit.dataRef.current;
+          const base = current.editProjection?.kind === 'local' ? current.editProjection.base
+            : current.head?.headRevisionId && current.head.headPublicationId
+              ? { revisionId: current.head.headRevisionId, publicationId: current.head.headPublicationId } : undefined;
+          compiled.nextData.editProjection = base ? { kind: 'local', base, generation: projectGeneration } : undefined;
+          commit.commitData(compiled.nextData, { save: false, skipHistory: true });
+        },
+        project: async (accepted, previews) => {
+          const generation = ++projectGeneration;
+          const context = latest.current;
+          const document = accepted.canonicalDocument;
+          const parent = document.parent_revision.payload;
+          let config = { ...(parent.config as TimelineConfig), clips: parent.clips as TimelineConfig['clips'] };
+          let registry = parent.registry as AssetRegistry;
+          let composition;
+          if (Array.isArray(parent.occurrences) && parent.occurrences.length) {
+            if (!accepted.graph || !provider.shotComposition) throw new Error('Accepted shot closure cannot be projected');
+            composition = createShotCompositionAdapter(provider.shotComposition).prepare(accepted.graph);
+            const projection = projectCanonicalComposition(composition);
+            config = projection.config;
+            registry = { assets: projection.config.registry };
+          }
+          const rawBundle = (parent.config as Record<string, unknown>).bundle;
+          const source = rawBundle == null ? undefined : parseTimelineBundle(rawBundle);
+          const head = { projectId: document.project_id, timelineId, headRevisionId: accepted.head.revisionId,
+            headPublicationId: accepted.head.publicationId };
+          const resolve = provider.resolveTimelineCommandAsset
+            ? (file: string) => provider.resolveTimelineCommandAsset!(file, registry) : context.resolveAssetUrl;
+          let data = await buildTimelineData(config, registry, resolve,
+            context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
+          for (const preview of previews) {
+            const compiled = compileTimelinePatch(preview, data);
+            if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
+            data = compiled.nextData;
+          }
+          if (disposed || generation !== projectGeneration) return;
+          data.editProjection = accepted.head.revisionId && accepted.head.publicationId
+            ? previews.length ? { kind: 'local', base: { ...accepted.head }, generation }
+              : { kind: 'accepted', head: { ...accepted.head } } : undefined;
+          context.configVersionRef.current = data.configVersion;
+          context.headRevisionRef.current = head;
+          context.store.getState().setConfigVersion(data.configVersion);
+          context.commit.commitData(data, { save: false, skipHistory: true, updateLastSavedSignature: previews.length === 0 });
+          if (composition && !previews.length) context.shots.adoptCanonicalComposition?.(composition);
+        },
+      });
+      if (disposed) await session.dispose();
+      else {
+        const realPort = session.port;
+        session.port = { ...realPort, capture: (input) => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
+          return realPort.capture(input);
+      buildDataFromCurrentRegistry(config, current, { registry, resolvedRegistry }),
+    );
+  }, []);
+
+  const commitData = useCallback((
+    nextData: TimelineData,
+    options?: CommitDataOptions,
+  ) => {
+    const shouldSave = options?.save ?? true;
+    if (shouldSave && snapshotWriteBlockedRef?.current) {
+      throw new Error('Resolve pending timeline commands before snapshot edits');
+    }
+    const currentData = dataRef.current;
+    // Legacy callers spread the displayed data; its fact cannot certify a later edit.
+    if (nextData.editProjection && (shouldSave
+      || (nextData !== currentData && nextData.editProjection === currentData?.editProjection))) {
+      nextData = { ...nextData, editProjection: undefined };
+    }
+    if (options?.skipHistory && options?.updateLastSavedSignature) registryOwnersRef.current.clear();
+    for (const [assetId, receipt] of registryOwnersRef.current) {
+      const owned = registryReceiptsRef.current.get(receipt);
+      if (!owned || nextData.registry.assets[assetId] !== owned.entry) registryOwnersRef.current.delete(assetId);
+    }
+
+    if (shouldSave && !options?.skipHistory && currentData) {
+      eventBus.emit('beforeCommit', currentData, {
+        transactionId: options?.transactionId,
+        semantic: options?.semantic,
+        commandHistory: options?.commandHistory,
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-projection-fact/commit-msg <<'EOF'
+feat(timeline): pair command projections with displayed data
+
+Attach local or accepted projection facts to the TimelineData installed by
+command preview, recovery, and immutable closure projection. Clear inherited
+facts on later local edits without adding authored or wire fields.
+
+Add real producer/session/capture regressions and publish the Viewing seam.
+Retain the failing recovery-after-ACK regression for the session-core owner:
+recovery currently replaces B's persisted original display basis with A's head.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-projection-fact/report.md <<'EOF'
+Implemented the approved optional "'`TimelineData.editProjection` / exported `TimelineEditProjection` union and atomic command-hook producer; ordinary edits clear inherited facts. Product diff is 19 added lines across the three assigned files. Published the exact field/type and dependency finding in `design/app-m1-coordination.md`. Added `useTimelineCommandSession.projection.test.tsx`, using the existing HTTP-stub environment with the real Runtime provider, hook, session, capture, and outbox. No lifecycle/history/error handling, viewer/UI, wire/normalization, root-package, or dependency changes.
+
+Validation on the final tree:
+
+```sh
+node_modules/.bin/vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx src/tools/video-editor/hooks/useTimelineCommit.test.tsx src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/commands/commitOutbox.test.ts src/tools/video-editor/commands/semanticGestures.test.ts src/tools/video-editor/lib/timeline-data.test.ts src/tools/video-editor/lib/timeline-patch.test.ts src/tools/video-editor/lib/serialize.test.ts
+```
+
+Exit 1: **421 passed, 1 failed; 8 files passed, 1 failed (422 tests / 9 files), 12.94s**. The new projection file has 7 passing cases and 1 failing case. Passing evidence covers accepted config+fact installed while status is still saving; exact publication when the content revision stays unchanged; A ACK+B retained at the original base; recovery before A ACK at its persisted original basis; newer known C never relabeled as A; later ordinary/config and unsaved legacy spread edits clearing accepted facts; incomplete displayed publication producing no invented local pair; config/resolvedConfig/disk serialization and actual HTTP command bodies excluding the field. The earlier batch before adding the additional recovery counterexample passed all 421 tests (18.70s); the final result above supersedes that green result.
+
+```sh
+node_modules/.bin/eslint src/tools/video-editor/lib/timeline-data.ts src/tools/video-editor/hooks/useTimelineCommandSession.ts src/tools/video-editor/hooks/useTimelineCommit.ts src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx
+```
+
+Exit 0.
+
+```sh
+node_modules/.bin/tsc -p tsconfig.app.json --noEmit --incremental false
+```
+
+Exit 2: **4 existing source errors on this uncomposed candidate base**, none in changed product files:
+- `RuntimeConnectionProvider.tsx:90` TS7053 (documented original baseline).
+- `AgentChatNewChatButton.tsx:80` TS2550 / replaceAll (documented original baseline).
+- `dataProvider.ts:693` TS2345 accepted/preview narrowing (assigned to completed `app-m1-wiring-fix`).
+- `dataProvider.ts:769` TS2322 official receipt `number[]` vs tuple (corrected official client pin is integrated separately).
+
+This worktree has not yet received the manager'"'s lifecycle-first composition. Consequently this is not a claim that actual App tsc meets the original-two-only condition. No manual generated edit or out-of-scope narrowing fix was applied.
+
+"'```sh
+git diff --check
+```
+
+Exit 0. No build output or temporary files left in the worktree. No full/browser/socket suites, install, commits, merges, checkouts, pushes, or ref changes performed.
+
+**Blocked requirement / retained regression:** `retains the original local base when recovery follows an acknowledged predecessor` expects local r0/p0 and receives r1/p1, while B stays at7. Actual schedule: A5 accepted with lost ACK; B7 captured at A5; independent C inverse; exact A retry acknowledged; B'"'s original A5 guard fails and B remains pending; close/recover owner. Existing "'`commands/commitSession.ts` selects `savedAcceptance` over `first.displayBasis` during recovery and passes only that selected basis to the hook. The hook cannot recover the original persisted pair within fact-assignment-only scope. Correct expectation remains a normal failing test; no skip, xfail, refusal expectation, or audit exception was added. This is an existing core dependency defect; the approved fact design is unchanged. I did not change core ownership or manufacture an r0 label for pixels projected from an r1 closure.
+
+Decisions: use the existing hook projection counter as local generation; preserve the displayed local base across live previews; assign an accepted fact only on the exact closure data being installed; leave missing complete head pairs undefined; conservatively clear inherited facts through the existing commit funnel. All fit the approved seam without additional models or wire fields.
+
+Recommended next steps: manager/core owner correct recovery to project the persisted original display closure/basis while separately preserving actual accepted submission state; compose the reviewed lifecycle branch and official client pin first, then these surgical producer hunks. Re-run the focused command and actual App tsc after composition. Viewing can consume the published type now and owns mounted PreviewSurface/delivery coverage. **Hold final acceptance until the retained recovery test passes and typecheck is reduced to the original two errors.**
+EOF
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md <<'"'EOF'
+
+Producer final validation:421passed/1failed across9focused files (422tests,
+12.94s). Sole failure is the recovery-after-A-ACK original-basis counterexample
+above, retained as a normal failing requirement. File eslint and diff check pass.
+Actual App tsc on the uncomposed editor-candidate base reports4errors: original2
+plus receipt tuple pin and accepted/preview narrowing, both separately assigned.
+No generated/client or lifecycle edits made here. Full report:
+"'`workers/app-m1-projection-fact/report.md`. Compose lifecycle/client fixes first;
+core owner must correct the persisted display-basis selection before acceptance.
+EOF
+git diff --check; git status --short' in /home/user/work/wt/app-m1-projection-fact
+ succeeded in 866ms:
+ M src/tools/video-editor/hooks/useTimelineCommandSession.ts
+ M src/tools/video-editor/hooks/useTimelineCommit.ts
+ M src/tools/video-editor/lib/timeline-data.ts
+?? src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx
+
+codex
+Implemented the atomic `editProjection` producer and published the Viewing contract.
+
+- Focused Vitest: **421 passed, 1 failed**. Retained regression proves recovery after A’s ACK replaces B’s original basis incorrectly; session-core owner must fix it.
+- ESLint and `git diff --check`: passed.
+- App tsc: four errors—two baseline errors plus separately owned client/lifecycle fixes.
+- No full/browser suites or git mutations performed.
+
+Compose lifecycle/client fixes first, then resolve the recovery regression before acceptance. Commit message written.
+
+[Report with exact commands and findings](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-projection-fact/report.md)
+tokens used
+113,412
+Implemented the atomic `editProjection` producer and published the Viewing contract.
+
+- Focused Vitest: **421 passed, 1 failed**. Retained regression proves recovery after A’s ACK replaces B’s original basis incorrectly; session-core owner must fix it.
+- ESLint and `git diff --check`: passed.
+- App tsc: four errors—two baseline errors plus separately owned client/lifecycle fixes.
+- No full/browser suites or git mutations performed.
+
+Compose lifecycle/client fixes first, then resolve the recovery regression before acceptance. Commit message written.
+
+[Report with exact commands and findings](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-projection-fact/report.md)

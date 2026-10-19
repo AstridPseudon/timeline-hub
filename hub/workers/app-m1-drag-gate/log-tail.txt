@@ -1,0 +1,400 @@
+     const result = checkKnownFailures({ repoRoot: makeRepo({ 'tests/e2e/a.spec.ts': `${marker}('case', () => {});` }) });
+@@ -49,6 +102,8 @@ describe('expected-failure marker ban', () => {
+ 
+   it('passes for this repository and exits 0 from its CLI entry point', () => {
+     const result = checkKnownFailures({ repoRoot });
++    assert.equal(result.allowedEntries.length, 3);
++    assert.deepEqual(result.forbiddenEntries, []);
+     assert.deepEqual(result.problems, []);
+     const proc = spawnSync(process.execPath, [gateScript], { cwd: repoRoot, encoding: 'utf8' });
+     assert.equal(proc.status, 0, proc.stderr);
+ M scripts/quality/check-known-failures.mjs
+ M scripts/quality/check-known-failures.test.mjs
+
+exec
+/bin/bash -lc 'node --test scripts/quality/check-known-failures.test.mjs && npm run check:known-failures && npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/hooks/useClipDrag.test.tsx src/tools/video-editor/hooks/useClipDrag.softtag.test.tsx && git diff --check' in /home/user/work/wt/app-m1-drag-gate
+ succeeded in 9724ms:
+TAP version 13
+# Subtest: scripts/quality/check-known-failures.test.mjs
+ok 1 - scripts/quality/check-known-failures.test.mjs
+  ---
+  duration_ms: 776.708566
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 794.745561
+
+> vite_react_shadcn_ts@0.0.0 check:known-failures
+> node scripts/quality/check-known-failures.mjs
+
+src/tools/video-editor/hooks/useClipDrag.test.tsx:827 | audited expected-failure marker
+src/tools/video-editor/hooks/useClipDrag.test.tsx:1173 | audited expected-failure marker
+src/tools/video-editor/hooks/useClipDrag.test.tsx:1283 | audited expected-failure marker
+authorized expected-failure markers: 3
+forbidden expected-failure markers: 0 (maximum 0)
+
+ RUN  v4.1.5 /home/user/work/wt/app-m1-drag-gate
+
+
+ Test Files  2 passed (2)
+      Tests  20 passed | 3 expected fail (23)
+   Start at  19:53:01
+   Duration  5.42s (transform 2.50s, setup 911ms, import 4.32s, tests 292ms, environment 3.70s)
+
+
+codex
+All requested verification now passes after the final parser tightening: the gate unit test passes, `npm run check:known-failures` reports exactly 3 authorized and 0 forbidden markers, and the drag lane reports 20 ordinary passes plus exactly 3 expected failures. I’m doing the final diff/status review and writing the harness commit message and report with that distinction explicit.
+exec
+/bin/bash -lc "git diff --check && git status --short && git diff --stat && rg -n \"it\\.fails|test\\.fails|skip|todo\" scripts/quality/check-known-failures.mjs scripts/quality/check-known-failures.test.mjs" in /home/user/work/wt/app-m1-drag-gate
+ succeeded in 1949ms:
+ M scripts/quality/check-known-failures.mjs
+ M scripts/quality/check-known-failures.test.mjs
+ scripts/quality/check-known-failures.mjs      | 75 +++++++++++++++++++++++----
+ scripts/quality/check-known-failures.test.mjs | 55 ++++++++++++++++++++
+ 2 files changed, 121 insertions(+), 9 deletions(-)
+scripts/quality/check-known-failures.test.mjs:37:  `it.fails('${name}', () => {});`,
+
+exec
+/bin/bash -lc 'for f in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/report; do if test -e "$f"; then echo "--- $f"; sed -n '"'1,160p' \""'$f"; else echo "MISSING $f"; fi; done' in /home/user/work/wt/app-m1-drag-gate
+ succeeded in 0ms:
+MISSING /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/commit-msg
+MISSING /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/report
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/report
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..9179e0530dd39fdb1c53ebbfa812ad350c0a7344
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/commit-msg
+@@ -0,0 +1,4 @@
++test(app): allow audited drag expected failures
++
++Reconcile the exact three audit-authorized drag it.fails callsites with the
++zero-marker quality gate while rejecting every other expected-failure marker.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/report b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/report
+new file mode 100644
+index 0000000000000000000000000000000000000000..836abba4ae9d177376394ad8b46240065982ea95
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/report
+@@ -0,0 +1,30 @@
++# App M1 drag gate report
++
++## What changed
++
++- Updated only `scripts/quality/check-known-failures.mjs` and its test file.
++- Added an exact allowlist for the three audited `it.fails` callsites in
++  `src/tools/video-editor/hooks/useClipDrag.test.tsx`, requiring the existing
++  EditCommand/M2 requirement comment.
++- Kept `MAX_SRC_ENTRIES` at `0`; forbidden markers remain gate failures.
++- Added positive coverage for all three authorized nodes and negative coverage
++  for changed path, changed name, a fourth marker, and duplicate callsites.
++- The CLI reports authorized and forbidden markers separately.
++
++## Verification
++
++- `node --test scripts/quality/check-known-failures.test.mjs` — passed.
++- `npm run check:known-failures` — passed; 3 authorized markers, 0 forbidden.
++- `npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/hooks/useClipDrag.test.tsx src/tools/video-editor/hooks/useClipDrag.softtag.test.tsx` — 2 files passed; 20 ordinary tests passed and exactly 3 expected failures (23 total).
++- `git diff --check` — passed.
++
++## Decisions and limits
++
++The audit redirect is the exception authority. No drag tests, product code,
++package files, or other quality checks were changed. The three expected
++failures still assert the original successful group/multi-clip and cross-track
++behavior; they are not evidence that those behaviors are restored. M2
++EditCommand implementations should remove the allowlist and restore ordinary
++passing tests.
++
++No full, browser, localhost, install, or M1 completeness suite was run.
+diff --git a/scripts/quality/check-known-failures.mjs b/scripts/quality/check-known-failures.mjs
+index 681c94adbb72e8d23449b66c8bcd6af8d3e32eb5..a9fbaa85e107fc9e5946d0f824abce2b9205d700
+--- a/scripts/quality/check-known-failures.mjs
++++ b/scripts/quality/check-known-failures.mjs
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env node
+-// No test may be marked as an expected failure.
++// Expected failures are forbidden except for the three audited drag requirements below.
+ import fs from 'node:fs';
+ import path from 'node:path';
+ import { pathToFileURL } from 'node:url';
+@@ -7,7 +7,17 @@
+ const DEFAULT_REPO_ROOT = path.resolve(import.meta.dirname, '../..');
+ export const MAX_SRC_ENTRIES = 0;
+ const MARKER_RE = /\b(?:it|test)\.fails?\b/;
++const AUTHORIZED_PATH = 'src/tools/video-editor/hooks/useClipDrag.test.tsx';
+ 
++// AUDIT REDIRECT (2026-10-19): these are the exact three requirements from the
++// drag audit. Remove this allowlist when M2 EditCommand implementations make
++// the tests ordinary passing tests.
++const AUTHORIZED_NAMES = new Set([
++  'commits a config edit when a free multi-clip drag drops onto a new bottom track',
++  'updates pinnedShotGroupsOverride when a pinned group is dragged across tracks',
++  'updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track',
++]);
++
+ function listFiles(dir, namePattern) {
+   if (!fs.existsSync(dir)) return [];
+   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+@@ -20,11 +30,47 @@
+ function scanFile(file, repoRoot) {
+   const lines = fs.readFileSync(file, 'utf8').split('\n');
+   const rel = path.relative(repoRoot, file).split(path.sep).join('/');
+-  return lines.flatMap((line, index) => {
++  const markers = lines.flatMap((line, index) => {
+     if (!MARKER_RE.test(line)) return [];
+-    const where = `${rel}:${index + 1}`;
+-    return [{ where, status: 'FORBIDDEN', detail: 'expected-failure marker' }];
++    return [...line.matchAll(/\b(?:it|test)\.fails?\b/g)].map((match) => {
++      const where = `${rel}:${index + 1}`;
++      const call = line.slice(match.index + match[0].length)
++        .match(/^\s*\(\s*(['"])(.*?)\1/);
++      return {
++        where,
++        name: call?.[2],
++        hasRequirementComment: /\/\/.*\bEditCommand\b.*\bM[12]\b/.test(lines[index - 1] ?? ''),
++      };
++    });
+   });
++
++  const names = new Map();
++  for (const marker of markers) {
++    if (marker.name === undefined) continue;
++    const key = `${rel}\0${marker.name}`;
++    names.set(key, (names.get(key) ?? 0) + 1);
++  }
++
++  return markers.map((marker) => {
++    const isAuthorized = rel === AUTHORIZED_PATH
++      && AUTHORIZED_NAMES.has(marker.name)
++      && marker.hasRequirementComment
++      && (names.get(`${rel}\0${marker.name}`) ?? 0) === 1;
++    if (isAuthorized) {
++      return {
++        where: marker.where,
++        status: 'ALLOWED',
++        detail: 'audited expected-failure marker',
++        name: marker.name,
++      };
++    }
++    return {
++      where: marker.where,
++      status: 'FORBIDDEN',
++      detail: 'expected-failure marker',
++      name: marker.name,
++    };
++  });
+ }
+ 
+ /**
+@@ -33,7 +79,6 @@
+  */
+ export function checkKnownFailures({ repoRoot = DEFAULT_REPO_ROOT } = {}) {
+   const entries = [];
+-  const problems = [];
+ 
+   const srcEntries = listFiles(path.join(repoRoot, 'src'), /\.test\.tsx?$/)
+     .flatMap((file) => scanFile(file, repoRoot));
+@@ -44,16 +89,28 @@
+     entries.push(...found);
+   }
+ 
+-  for (const entry of entries) problems.push(`${entry.where}: expected-failure markers are forbidden`);
+-  return { entries, problems, srcCount: srcEntries.length };
++  const allowedEntries = entries.filter((entry) => entry.status === 'ALLOWED');
++  const forbiddenEntries = entries.filter((entry) => entry.status === 'FORBIDDEN');
++  const problems = forbiddenEntries.map((entry) => `${entry.where}: expected-failure markers are forbidden`);
++  return {
++    entries,
++    allowedEntries,
++    forbiddenEntries,
++    problems,
++    srcCount: forbiddenEntries.filter((entry) => entry.where.startsWith('src/')).length,
++  };
+ }
+ 
+ function main() {
+   const result = checkKnownFailures();
+-  for (const entry of result.entries) {
++  for (const entry of result.allowedEntries) {
+     console.log(`${entry.where} | ${entry.detail}`);
+   }
+-  console.log(`expected-failure markers: ${result.entries.length} (maximum ${MAX_SRC_ENTRIES})`);
++  for (const entry of result.forbiddenEntries) {
++    console.log(`${entry.where} | ${entry.detail}`);
++  }
++  console.log(`authorized expected-failure markers: ${result.allowedEntries.length}`);
++  console.log(`forbidden expected-failure markers: ${result.forbiddenEntries.length} (maximum ${MAX_SRC_ENTRIES})`);
+   for (const problem of result.problems) console.error(`FAIL ${problem}`);
+   process.exit(result.problems.length > 0 ? 1 : 0);
+ }
+diff --git a/scripts/quality/check-known-failures.test.mjs b/scripts/quality/check-known-failures.test.mjs
+index 85a79ffcd7737526b3d1639b49cd73ec3375f5ea..b2783eddc199be2173db012742adef8159f7609a
+--- a/scripts/quality/check-known-failures.test.mjs
++++ b/scripts/quality/check-known-failures.test.mjs
+@@ -26,6 +26,17 @@
+   return root;
+ }
+ 
++const auditedNames = [
++  'commits a config edit when a free multi-clip drag drops onto a new bottom track',
++  'updates pinnedShotGroupsOverride when a pinned group is dragged across tracks',
++  'updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track',
++];
++const auditedPath = 'src/tools/video-editor/hooks/useClipDrag.test.tsx';
++const auditedSource = (names = auditedNames) => names.map((name) => [
++  '// EditCommand support required by M2.',
++  `it.fails('${name}', () => {});`,
++].join('\n')).join('\n');
++
+ describe('expected-failure marker ban', () => {
+   it('sets the source allowance to zero', () => assert.equal(MAX_SRC_ENTRIES, 0));
+ 
+@@ -36,6 +47,48 @@
+     assert.match(result.problems.join('\n'), /expected-failure markers are forbidden/);
+   });
+ 
++  it('allows exactly the three audited drag callsites', () => {
++    const result = checkKnownFailures({ repoRoot: makeRepo({ [auditedPath]: auditedSource() }) });
++    assert.equal(result.allowedEntries.length, 3);
++    assert.deepEqual(result.forbiddenEntries, []);
++    assert.deepEqual(result.problems, []);
++  });
++
++  it('rejects an audited name in a different path', () => {
++    const result = checkKnownFailures({
++      repoRoot: makeRepo({ 'src/other.test.ts': auditedSource([auditedNames[0]]) }),
++    });
++    assert.equal(result.allowedEntries.length, 0);
++    assert.equal(result.forbiddenEntries.length, 1);
++    assert.match(result.problems.join('\n'), /expected-failure markers are forbidden/);
++  });
++
++  it('rejects a changed audited name', () => {
++    const result = checkKnownFailures({
++      repoRoot: makeRepo({ [auditedPath]: auditedSource(['commits a different drag case']) }),
++    });
++    assert.equal(result.allowedEntries.length, 0);
++    assert.equal(result.forbiddenEntries.length, 1);
++  });
++
++  it('rejects a fourth marker at the audited path', () => {
++    const result = checkKnownFailures({
++      repoRoot: makeRepo({
++        [auditedPath]: auditedSource([...auditedNames, 'a fourth drag case']),
++      }),
++    });
++    assert.equal(result.allowedEntries.length, 3);
++    assert.equal(result.forbiddenEntries.length, 1);
++  });
++
++  it('rejects duplicate audited callsites', () => {
++    const result = checkKnownFailures({
++      repoRoot: makeRepo({ [auditedPath]: auditedSource([auditedNames[0], auditedNames[0]]) }),
++    });
++    assert.equal(result.allowedEntries.length, 0);
++    assert.equal(result.forbiddenEntries.length, 2);
++  });
++
+   it('rejects an expected-failure marker in a journey spec', () => {
+     const marker = ['test', '.fail'].join('');
+     const result = checkKnownFailures({ repoRoot: makeRepo({ 'tests/e2e/a.spec.ts': `${marker}('case', () => {});` }) });
+@@ -49,6 +102,8 @@
+ 
+   it('passes for this repository and exits 0 from its CLI entry point', () => {
+     const result = checkKnownFailures({ repoRoot });
++    assert.equal(result.allowedEntries.length, 3);
++    assert.deepEqual(result.forbiddenEntries, []);
+     assert.deepEqual(result.problems, []);
+     const proc = spawnSync(process.execPath, [gateScript], { cwd: repoRoot, encoding: 'utf8' });
+     assert.equal(proc.status, 0, proc.stderr);
+
+exec
+/bin/bash -lc "git status --short && git diff --name-only && printf '\\n--- commit message ---\\n' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/commit-msg && printf '\\n--- report ---\\n' && sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-gate/report" in /home/user/work/wt/app-m1-drag-gate
+ succeeded in 1546ms:
+ M scripts/quality/check-known-failures.mjs
+ M scripts/quality/check-known-failures.test.mjs
+scripts/quality/check-known-failures.mjs
+scripts/quality/check-known-failures.test.mjs
+
+--- commit message ---
+test(app): allow audited drag expected failures
+
+Reconcile the exact three audit-authorized drag it.fails callsites with the
+zero-marker quality gate while rejecting every other expected-failure marker.
+
+--- report ---
+# App M1 drag gate report
+
+## What changed
+
+- Updated only `scripts/quality/check-known-failures.mjs` and its test file.
+- Added an exact allowlist for the three audited `it.fails` callsites in
+  `src/tools/video-editor/hooks/useClipDrag.test.tsx`, requiring the existing
+  EditCommand/M2 requirement comment.
+- Kept `MAX_SRC_ENTRIES` at `0`; forbidden markers remain gate failures.
+- Added positive coverage for all three authorized nodes and negative coverage
+  for changed path, changed name, a fourth marker, and duplicate callsites.
+- The CLI reports authorized and forbidden markers separately.
+
+## Verification
+
+- `node --test scripts/quality/check-known-failures.test.mjs` — passed.
+- `npm run check:known-failures` — passed; 3 authorized markers, 0 forbidden.
+- `npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/hooks/useClipDrag.test.tsx src/tools/video-editor/hooks/useClipDrag.softtag.test.tsx` — 2 files passed; 20 ordinary tests passed and exactly 3 expected failures (23 total).
+- `git diff --check` — passed.
+
+## Decisions and limits
+
+The audit redirect is the exception authority. No drag tests, product code,
+package files, or other quality checks were changed. The three expected
+failures still assert the original successful group/multi-clip and cross-track
+behavior; they are not evidence that those behaviors are restored. M2
+EditCommand implementations should remove the allowlist and restore ordinary
+passing tests.
+
+No full, browser, localhost, install, or M1 completeness suite was run.
+
+codex
+## Completed
+
+- Added a narrow allowlist for exactly the three audited drag `it.fails` callsites.
+- Preserved `MAX_SRC_ENTRIES = 0` and rejection of unrelated, fourth, duplicate, or misplaced markers.
+- Added positive and negative gate tests.
+- Wrote commit message and report to the requested paths.
+
+## Verification
+
+- Gate unit tests: passed.
+- `npm run check:known-failures`: passed — 3 authorized, 0 forbidden.
+- Drag Vitest: 2 files passed — 20 ordinary tests passed, exactly 3 expected failures.
+- `git diff --check`: passed.
+
+No product behavior is claimed restored; the three expected failures remain M2 work.
+tokens used
+83,497
+## Completed
+
+- Added a narrow allowlist for exactly the three audited drag `it.fails` callsites.
+- Preserved `MAX_SRC_ENTRIES = 0` and rejection of unrelated, fourth, duplicate, or misplaced markers.
+- Added positive and negative gate tests.
+- Wrote commit message and report to the requested paths.
+
+## Verification
+
+- Gate unit tests: passed.
+- `npm run check:known-failures`: passed — 3 authorized, 0 forbidden.
+- Drag Vitest: 2 files passed — 20 ordinary tests passed, exactly 3 expected failures.
+- `git diff --check`: passed.
+
+No product behavior is claimed restored; the three expected failures remain M2 work.

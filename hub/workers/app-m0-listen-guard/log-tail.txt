@@ -1,0 +1,400 @@
+ function httpRequest(port: number, path: string, method: string, origin: string, headers: Record<string, string> = {}, body = ''): Promise<{ status: number; headers: Record<string, string | string[] | undefined>; body: string }> {
+   return new Promise((resolve, reject) => {
+     const req = httpRequestFn({ hostname: '127.0.0.1', port, path, method, headers: { Origin: origin, ...headers, ...(body ? { 'Content-Length': Buffer.byteLength(body) } : {}) } }, (response) => {
+@@ -75,10 +89,7 @@ describe('paired transport boundary', () => {
+     const relay = new PairedRelay(config, () => now);
+     const server = createServer(relay.handler());
+     relay.installUpgrade(server as never);
+-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+-    const address = server.address();
+-    if (!address || typeof address === 'string') throw new Error('live relay did not bind a TCP port');
+-    const port = address.port;
++    const port = await listen(server);
+     config.origin = `http://127.0.0.1:${port}`;
+     const socket = new WebSocket(`ws://127.0.0.1:${port}/api/pairing/connector`);
+     try {
+@@ -158,10 +169,7 @@ async function withBoundRelay(run: (venue: {
+   const server = createServer(relay.handler());
+   relay.installUpgrade(server as never);
+   const sockets: WebSocket[] = [];
+-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+-  const address = server.address();
+-  if (!address || typeof address === 'string') throw new Error('relay fixture did not bind');
+-  const port = address.port;
++  const port = await listen(server);
+   config.origin = `http://127.0.0.1:${port}`;
+   try {
+     await run({ relay, observed, port, origin: config.origin, connect: async (id) => {
+diff --git a/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts b/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
+index cf61f141c..b83d58b6f 100644
+--- a/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
++++ b/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
+@@ -90,7 +90,14 @@ async function waitForRequest(process: FakeProcess, after = 0): Promise<void> {
+ }
+ 
+ async function listen(server: ReturnType<typeof createAstridAcpHttpServer>['server']): Promise<number> {
+-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
++  await new Promise<void>((resolve, reject) => {
++    const onError = (error: Error) => reject(error);
++    server.once('error', onError);
++    server.listen(0, '127.0.0.1', () => {
++      server.off('error', onError);
++      resolve();
++    });
++  });
+   const address = server.address();
+   if (!address || typeof address === 'string') throw new Error('expected a TCP server address');
+   return address.port;
+
+--- status ---
+ M src/integrations/paired/pairedTransport.test.ts
+ M src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
+
+--- node_modules ---
+present
+shared-present
+
+codex
+The diff is limited to the two allowed test files and centralizes the paired relay bind logic in one local helper. I’m now running only the required non-loopback checks: `git diff --check` and ESLint scoped to those files, using the existing shared dependencies.
+exec
+/bin/bash -lc 'git diff --check' in /home/user/work/wt/app-m0-listen-guard
+exec
+/bin/bash -lc './node_modules/.bin/eslint src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts src/integrations/paired/pairedTransport.test.ts --ext ts,tsx --report-unused-disable-directives --max-warnings 0' in /home/user/work/wt/app-m0-listen-guard
+ succeeded in 759ms:
+ succeeded in 1271ms:
+codex
+ESLint and `git diff --check` both pass. I noticed the shared paired helper had also collapsed two site-specific “failed to bind” diagnostics; to keep unchanged behavior as tightly as possible, I’m narrowing it to only the listener promise and restoring each existing address check/message before preparing the report.
+apply patch
+patch: completed
+/home/user/work/wt/app-m0-listen-guard/src/integrations/paired/pairedTransport.test.ts
+diff --git a/src/integrations/paired/pairedTransport.test.ts b/src/integrations/paired/pairedTransport.test.ts
+index e5cda8e7b39ab4024412ff51ec4fcafd45abd16c..4507173dc38057e67b5229005bb25404dae5eb69
+--- a/src/integrations/paired/pairedTransport.test.ts
++++ b/src/integrations/paired/pairedTransport.test.ts
+@@ -8,6 +8,17 @@
+ import { PairingError, PairingRegistry } from '../../../config/vite/pairedRegistry';
+ import { PairedRelay } from '../../../config/vite/pairedRelay';
+ 
++async function listen(server: ReturnType<typeof createServer>): Promise<void> {
++  await new Promise<void>((resolve, reject) => {
++    const onError = (error: Error) => reject(error);
++    server.once('error', onError);
++    server.listen(0, '127.0.0.1', () => {
++      server.off('error', onError);
++      resolve();
++    });
++  });
++}
++
+ function httpRequest(port: number, path: string, method: string, origin: string, headers: Record<string, string> = {}, body = ''): Promise<{ status: number; headers: Record<string, string | string[] | undefined>; body: string }> {
+   return new Promise((resolve, reject) => {
+     const req = httpRequestFn({ hostname: '127.0.0.1', port, path, method, headers: { Origin: origin, ...headers, ...(body ? { 'Content-Length': Buffer.byteLength(body) } : {}) } }, (response) => {
+@@ -75,7 +86,7 @@
+     const relay = new PairedRelay(config, () => now);
+     const server = createServer(relay.handler());
+     relay.installUpgrade(server as never);
+-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
++    await listen(server);
+     const address = server.address();
+     if (!address || typeof address === 'string') throw new Error('live relay did not bind a TCP port');
+     const port = address.port;
+@@ -158,7 +169,7 @@
+   const server = createServer(relay.handler());
+   relay.installUpgrade(server as never);
+   const sockets: WebSocket[] = [];
+-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
++  await listen(server);
+   const address = server.address();
+   if (!address || typeof address === 'string') throw new Error('relay fixture did not bind');
+   const port = address.port;
+diff --git a/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts b/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
+index cf61f141cd387ca6b92f4825ad4ec059ca20ff89..b83d58b6f8f5cff608ab2a94ec72c5bb589579d3
+--- a/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
++++ b/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
+@@ -90,7 +90,14 @@
+ }
+ 
+ async function listen(server: ReturnType<typeof createAstridAcpHttpServer>['server']): Promise<number> {
+-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
++  await new Promise<void>((resolve, reject) => {
++    const onError = (error: Error) => reject(error);
++    server.once('error', onError);
++    server.listen(0, '127.0.0.1', () => {
++      server.off('error', onError);
++      resolve();
++    });
++  });
+   const address = server.address();
+   if (!address || typeof address === 'string') throw new Error('expected a TCP server address');
+   return address.port;
+
+exec
+/bin/bash -lc './node_modules/.bin/eslint src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts src/integrations/paired/pairedTransport.test.ts --ext ts,tsx --report-unused-disable-directives --max-warnings 0' in /home/user/work/wt/app-m0-listen-guard
+exec
+/bin/bash -lc 'git diff --check' in /home/user/work/wt/app-m0-listen-guard
+ succeeded in 818ms:
+ succeeded in 1292ms:
+exec
+/bin/bash -lc "git diff --check && git diff --stat && git diff -- src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts src/integrations/paired/pairedTransport.test.ts && printf '\\n--- status ---\\n' && git status --short" in /home/user/work/wt/app-m0-listen-guard
+ succeeded in 2697ms:
+ src/integrations/paired/pairedTransport.test.ts           | 15 +++++++++++++--
+ .../runtime/processes/astridAcpBridge.test.ts             |  9 ++++++++-
+ 2 files changed, 21 insertions(+), 3 deletions(-)
+diff --git a/src/integrations/paired/pairedTransport.test.ts b/src/integrations/paired/pairedTransport.test.ts
+index e5cda8e7b..4507173dc 100644
+--- a/src/integrations/paired/pairedTransport.test.ts
++++ b/src/integrations/paired/pairedTransport.test.ts
+@@ -8,6 +8,17 @@ import { classifyPairedRoute, isSafeForwardPath } from '../../../config/vite/pai
+ import { PairingError, PairingRegistry } from '../../../config/vite/pairedRegistry';
+ import { PairedRelay } from '../../../config/vite/pairedRelay';
+ 
++async function listen(server: ReturnType<typeof createServer>): Promise<void> {
++  await new Promise<void>((resolve, reject) => {
++    const onError = (error: Error) => reject(error);
++    server.once('error', onError);
++    server.listen(0, '127.0.0.1', () => {
++      server.off('error', onError);
++      resolve();
++    });
++  });
++}
++
+ function httpRequest(port: number, path: string, method: string, origin: string, headers: Record<string, string> = {}, body = ''): Promise<{ status: number; headers: Record<string, string | string[] | undefined>; body: string }> {
+   return new Promise((resolve, reject) => {
+     const req = httpRequestFn({ hostname: '127.0.0.1', port, path, method, headers: { Origin: origin, ...headers, ...(body ? { 'Content-Length': Buffer.byteLength(body) } : {}) } }, (response) => {
+@@ -75,7 +86,7 @@ describe('paired transport boundary', () => {
+     const relay = new PairedRelay(config, () => now);
+     const server = createServer(relay.handler());
+     relay.installUpgrade(server as never);
+-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
++    await listen(server);
+     const address = server.address();
+     if (!address || typeof address === 'string') throw new Error('live relay did not bind a TCP port');
+     const port = address.port;
+@@ -158,7 +169,7 @@ async function withBoundRelay(run: (venue: {
+   const server = createServer(relay.handler());
+   relay.installUpgrade(server as never);
+   const sockets: WebSocket[] = [];
+-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
++  await listen(server);
+   const address = server.address();
+   if (!address || typeof address === 'string') throw new Error('relay fixture did not bind');
+   const port = address.port;
+diff --git a/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts b/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
+index cf61f141c..b83d58b6f 100644
+--- a/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
++++ b/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
+@@ -90,7 +90,14 @@ async function waitForRequest(process: FakeProcess, after = 0): Promise<void> {
+ }
+ 
+ async function listen(server: ReturnType<typeof createAstridAcpHttpServer>['server']): Promise<number> {
+-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
++  await new Promise<void>((resolve, reject) => {
++    const onError = (error: Error) => reject(error);
++    server.once('error', onError);
++    server.listen(0, '127.0.0.1', () => {
++      server.off('error', onError);
++      resolve();
++    });
++  });
+   const address = server.address();
+   if (!address || typeof address === 'string') throw new Error('expected a TCP server address');
+   return address.port;
+
+--- status ---
+ M src/integrations/paired/pairedTransport.test.ts
+ M src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
+
+exec
+/bin/bash -lc 'ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard 2>/dev/null || true' in /home/user/work/wt/app-m0-listen-guard
+ succeeded in 0ms:
+total 132
+drwxr-xr-x  2 root root   4096 Oct 19 18:13 .
+drwxr-xr-x 24 root root   4096 Oct 19 18:13 ..
+-rw-r--r--  1 root root   1894 Oct 19 18:13 brief.md
+-rw-r--r--  1 root root 115166 Oct 19 18:14 log.txt
+-rw-r--r--  1 root root    190 Oct 19 18:13 meta
+-rw-r--r--  1 root root      0 Oct 19 18:13 running
+
+codex
+The final diff is 21 added lines across exactly the two permitted files. Both bind sites now retain their original address checks and cleanup, while the shared listener setup rejects immediately on bind errors and removes its temporary listener after success. I’m writing the required commit message and report next.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e49e4146021882d540f9083aca731147b2633591
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/commit-msg
+@@ -0,0 +1,4 @@
++test(app): reject local server listen failures
++
++Make ACP bridge and paired relay test listener setup reject on server errors
++instead of waiting for the listen callback indefinitely.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0760ca984e58f6e2b1510a5be094243c4daec6e5
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/report.md
+@@ -0,0 +1,23 @@
++# app-m0-listen-guard
++
++## What changed
++
++- Updated the existing ACP bridge test `listen` helper to reject with the original server error and remove its temporary error listener after a successful bind.
++- Added the same minimal listener helper to the paired transport test and used it for both the live invitation/session server and `withBoundRelay`.
++- Preserved the existing address checks, real-server/socket cleanup, and assertions.
++- Changed only the two permitted tracked test files; no product, configuration, dependency, or timeout changes.
++
++## Validation
++
++- `git diff --check` — PASS.
++- `./node_modules/.bin/eslint src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts src/integrations/paired/pairedTransport.test.ts --ext ts,tsx --report-unused-disable-directives --max-warnings 0` — PASS.
++- Loopback test suites were not run per task instructions. Socket-enabled behavioral validation remains deferred to the orchestrator's single targeted `--net` worker.
++- No full App suite was run.
++
++## Decisions
++
++- Shared one small listener-setup helper in `pairedTransport.test.ts` because both listener sites had identical setup promises. The site-specific address checks and error messages remain unchanged.
++
++## Blocked / next steps
++
++- Nothing blocked in this worker. The targeted `--net` worker should verify both files against real localhost listeners and record the result.
+diff --git a/src/integrations/paired/pairedTransport.test.ts b/src/integrations/paired/pairedTransport.test.ts
+index e5cda8e7b39ab4024412ff51ec4fcafd45abd16c..4507173dc38057e67b5229005bb25404dae5eb69
+--- a/src/integrations/paired/pairedTransport.test.ts
++++ b/src/integrations/paired/pairedTransport.test.ts
+@@ -8,6 +8,17 @@
+ import { PairingError, PairingRegistry } from '../../../config/vite/pairedRegistry';
+ import { PairedRelay } from '../../../config/vite/pairedRelay';
+ 
++async function listen(server: ReturnType<typeof createServer>): Promise<void> {
++  await new Promise<void>((resolve, reject) => {
++    const onError = (error: Error) => reject(error);
++    server.once('error', onError);
++    server.listen(0, '127.0.0.1', () => {
++      server.off('error', onError);
++      resolve();
++    });
++  });
++}
++
+ function httpRequest(port: number, path: string, method: string, origin: string, headers: Record<string, string> = {}, body = ''): Promise<{ status: number; headers: Record<string, string | string[] | undefined>; body: string }> {
+   return new Promise((resolve, reject) => {
+     const req = httpRequestFn({ hostname: '127.0.0.1', port, path, method, headers: { Origin: origin, ...headers, ...(body ? { 'Content-Length': Buffer.byteLength(body) } : {}) } }, (response) => {
+@@ -75,7 +86,7 @@
+     const relay = new PairedRelay(config, () => now);
+     const server = createServer(relay.handler());
+     relay.installUpgrade(server as never);
+-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
++    await listen(server);
+     const address = server.address();
+     if (!address || typeof address === 'string') throw new Error('live relay did not bind a TCP port');
+     const port = address.port;
+@@ -158,7 +169,7 @@
+   const server = createServer(relay.handler());
+   relay.installUpgrade(server as never);
+   const sockets: WebSocket[] = [];
+-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
++  await listen(server);
+   const address = server.address();
+   if (!address || typeof address === 'string') throw new Error('relay fixture did not bind');
+   const port = address.port;
+diff --git a/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts b/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
+index cf61f141cd387ca6b92f4825ad4ec059ca20ff89..b83d58b6f8f5cff608ab2a94ec72c5bb589579d3
+--- a/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
++++ b/src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
+@@ -90,7 +90,14 @@
+ }
+ 
+ async function listen(server: ReturnType<typeof createAstridAcpHttpServer>['server']): Promise<number> {
+-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
++  await new Promise<void>((resolve, reject) => {
++    const onError = (error: Error) => reject(error);
++    server.once('error', onError);
++    server.listen(0, '127.0.0.1', () => {
++      server.off('error', onError);
++      resolve();
++    });
++  });
+   const address = server.address();
+   if (!address || typeof address === 'string') throw new Error('expected a TCP server address');
+   return address.port;
+
+exec
+/bin/bash -lc 'git diff --check && test "$(git diff --name-only | sort)" = "src/integrations/paired/pairedTransport.test.ts
+src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts" && printf '"'%s\\n' 'tracked paths: allowed only' && git status --short && printf '\\n--- commit message ---\\n' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/commit-msg && printf '\\n--- report ---\\n' && sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/report.md" in /home/user/work/wt/app-m0-listen-guard
+ succeeded in 2571ms:
+tracked paths: allowed only
+ M src/integrations/paired/pairedTransport.test.ts
+ M src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts
+
+--- commit message ---
+test(app): reject local server listen failures
+
+Make ACP bridge and paired relay test listener setup reject on server errors
+instead of waiting for the listen callback indefinitely.
+
+--- report ---
+# app-m0-listen-guard
+
+## What changed
+
+- Updated the existing ACP bridge test `listen` helper to reject with the original server error and remove its temporary error listener after a successful bind.
+- Added the same minimal listener helper to the paired transport test and used it for both the live invitation/session server and `withBoundRelay`.
+- Preserved the existing address checks, real-server/socket cleanup, and assertions.
+- Changed only the two permitted tracked test files; no product, configuration, dependency, or timeout changes.
+
+## Validation
+
+- `git diff --check` — PASS.
+- `./node_modules/.bin/eslint src/tools/video-editor/runtime/processes/astridAcpBridge.test.ts src/integrations/paired/pairedTransport.test.ts --ext ts,tsx --report-unused-disable-directives --max-warnings 0` — PASS.
+- Loopback test suites were not run per task instructions. Socket-enabled behavioral validation remains deferred to the orchestrator's single targeted `--net` worker.
+- No full App suite was run.
+
+## Decisions
+
+- Shared one small listener-setup helper in `pairedTransport.test.ts` because both listener sites had identical setup promises. The site-specific address checks and error messages remain unchanged.
+
+## Blocked / next steps
+
+- Nothing blocked in this worker. The targeted `--net` worker should verify both files against real localhost listeners and record the result.
+
+codex
+## Completed
+
+- Updated both listener helpers to reject original `server` errors promptly and remove temporary error listeners on success.
+- Covered both paired transport listener sites.
+- Preserved cleanup, assertions, and address checks.
+- Changed only the two permitted files.
+
+Validation:
+
+- `git diff --check` — PASS
+- File-scoped ESLint — PASS
+- Loopback suites — not run, deferred to targeted `--net` worker as instructed.
+
+Reports:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/report.md)
+- [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/commit-msg)
+tokens used
+47,473
+## Completed
+
+- Updated both listener helpers to reject original `server` errors promptly and remove temporary error listeners on success.
+- Covered both paired transport listener sites.
+- Preserved cleanup, assertions, and address checks.
+- Changed only the two permitted files.
+
+Validation:
+
+- `git diff --check` — PASS
+- File-scoped ESLint — PASS
+- Loopback suites — not run, deferred to targeted `--net` worker as instructed.
+
+Reports:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/report.md)
+- [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-listen-guard/commit-msg)

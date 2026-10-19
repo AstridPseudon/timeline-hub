@@ -1,0 +1,400 @@
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss.. [  7%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+.................ssss..................................................s [ 23%]
+ssssss.................................................................. [ 24%]
+........................................................................ [ 25%]
+..............................................................ss........ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+....................s................................................... [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 29%]
+............s........................................................... [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+..................................................................s..... [ 32%]
+........................................................................ [ 33%]
+.............................................................s.......... [ 34%]
+.................ss....ss..................s............................ [ 34%]
+..........s.s.s......................................................... [ 35%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+.................................................
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-browser/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-browser/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-browser/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..a9c2b8a36a42fd74556a7291ffffa681208ddc56
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-browser/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): prove native browser outbox durability
++
++Add a Chromium IndexedDB and Web Locks browser proof for persisted outbox
++claims, restart recovery, dependent request identity, and owner isolation.
+diff --git a/tests/e2e/timeline/command-outbox.spec.ts b/tests/e2e/timeline/command-outbox.spec.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..40baab77d38df42f46ef322c25a23ea7085296f6
+--- /dev/null
++++ b/tests/e2e/timeline/command-outbox.spec.ts
+@@ -0,0 +1,211 @@
++import { expect, test } from '@playwright/test';
++import { mkdtemp, rm } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { chromium } from 'playwright';
++
++const OUTBOX_MODULE = '/src/tools/video-editor/commands/commitOutbox.ts';
++const BLANK_ROUTE = '/__timeline-command-outbox__';
++const scope = { realmId: 'browser-realm', actorId: 'browser-actor', projectId: 'browser-project', timelineId: 'browser-timeline' };
++const h0 = { revisionId: 'R0', publicationId: 'P0' };
++const ha = { revisionId: 'RA', publicationId: 'PA' };
++const hb = { revisionId: 'RB', publicationId: 'PB' };
++const path = '/v1/projects/browser-project/timelines/browser-timeline/commit';
++
++type BrowserRequest = { method: string; path: string; body: string; key: string };
++type BrowserRecord = {
++  ownerId: string;
++  pending?: { request: BrowserRequest };
++  intents: Array<{ id: string; payload: unknown; readyBase?: unknown }>;
++};
++type BrowserBox = {
++  append(payload: unknown, basis: unknown): Promise<string>;
++  dispatch(
++    build: (intent: { payload: unknown }, base: { revisionId: string; publicationId: string }) => unknown,
++    transmit: (request: BrowserRequest) => Promise<unknown>,
++  ): Promise<BrowserRecord>;
++  read(): Promise<BrowserRecord>;
++};
++
++function resolveChromium(): string {
++  const executable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ?? '/opt/pw-browsers/chromium';
++  return executable;
++}
++
++async function openBlank(context: Awaited<ReturnType<typeof chromium.launchPersistentContext>>) {
++  const page = await context.newPage();
++  await page.route(`**${BLANK_ROUTE}`, (route) => route.fulfill({
++    status: 200,
++    contentType: 'text/html',
++    body: '<!doctype html><title>outbox test</title>',
++  }));
++  const baseURL = process.env.BASE_URL ?? process.env.PLAYWRIGHT_BASE_URL;
++  if (!baseURL) throw new Error('Playwright did not publish BASE_URL for the outbox browser test');
++  await page.goto(`${baseURL}${BLANK_ROUTE}`, { waitUntil: 'domcontentloaded' });
++  return page;
++}
++
++test('persists and excludes native browser command outbox claims across restart', async () => {
++  test.setTimeout(120_000);
++  const profile = await mkdtemp(join(tmpdir(), 'astrid-command-outbox-'));
++  const launch = {
++    executablePath: resolveChromium(),
++    args: ['--no-sandbox'],
++  };
++
++  let context: Awaited<ReturnType<typeof chromium.launchPersistentContext>> | undefined;
++  try {
++    context = await chromium.launchPersistentContext(profile, launch);
++    const firstPage = await openBlank(context);
++    const setup = await firstPage.evaluate(async ({ modulePath, outboxScope, initialHead, requestPath }) => {
++      const { createCommitOutbox } = await import(modulePath);
++      const service = createCommitOutbox();
++      const payloadA = {
++        commands: [{
++          schema_version: 1, op: 'clip.move', version: '1', select: 'parent/clip:opaque-A', args: { on: 5 },
++          expect: [{ state: { present: true, value: { opaque: 'original-A' } } }, { state: { present: false } }],
++          created: [{ id: 'allocated-A' }],
++        }],
++      };
++      const payloadB = {
++        commands: [{
++          schema_version: 1, op: 'clip.move', version: '1', select: 'parent/clip:opaque-B', args: { on: 7 },
++          expect: [{ state: { present: true, value: { opaque: 'original-B' } } }, { state: { present: false } }],
++          created: [{ id: 'allocated-B' }],
++        }],
++      };
++      const build = (intent: { payload: unknown }, base: { revisionId: string; publicationId: string }) => ({
++        method: 'POST',
++        path: requestPath,
++        body: { base_revision_id: base.revisionId, base_publication_id: base.publicationId, proposal: intent.payload },
++      });
++      let ownerId = '';
++      let requestA: unknown;
++      let intentB = '';
++      let reservationWasDurable = false;
++      await service.create(outboxScope, async (rawBox: unknown, id: string) => {
++        const box = rawBox as BrowserBox;
++        ownerId = id;
++        const intentA = await box.append(payloadA, { head: initialHead });
++        await box.dispatch(build, async (request) => {
++          requestA = request;
++          const beforeTransmit = await service.list(outboxScope);
++          reservationWasDurable = beforeTransmit.some((record: BrowserRecord) => record.ownerId === ownerId
++            && record.pending?.request.key === request.key);
++          intentB = await box.append(payloadB, { after: intentA });
++          throw new Error('ack lost after A was transmitted');
++        });
++      });
++      const records = await service.list(outboxScope);
++      const owner = records.find((record: BrowserRecord) => record.ownerId === ownerId);
++      return { ownerId, requestA, intentB, payloadA, payloadB, records, owner, reservationWasDurable };
++    }, { modulePath: OUTBOX_MODULE, outboxScope: scope, initialHead: h0, requestPath: path });
++
++    expect(setup.reservationWasDurable).toBe(true);
++    expect(setup.ownerId).toMatch(/^[0-9a-f-]{36}$/);
++    expect(setup.owner?.pending?.request).toEqual(setup.requestA);
++    expect(setup.owner?.intents).toEqual(expect.arrayContaining([
++      expect.objectContaining({ id: setup.intentB, payload: setup.payloadB }),
++    ]));
++    await firstPage.evaluate((ownerId) => sessionStorage.setItem('copied-owner-id', ownerId), setup.ownerId);
++
++    const activeClaim = firstPage.evaluate(async ({ modulePath, outboxScope, ownerId }) => {
++      const { createCommitOutbox } = await import(modulePath);
++      const service = createCommitOutbox();
++      await service.recover(outboxScope, ownerId, async () => {
++        (window as unknown as { outboxClaimActive: boolean }).outboxClaimActive = true;
++        await new Promise<void>((resolve) => {
++          (window as unknown as { releaseOutboxClaim: () => void }).releaseOutboxClaim = resolve;
++        });
++      });
++    }, { modulePath: OUTBOX_MODULE, outboxScope: scope, ownerId: setup.ownerId });
++    await firstPage.waitForFunction(() => (window as unknown as { outboxClaimActive?: boolean }).outboxClaimActive === true);
++
++    const secondPage = await openBlank(context);
++    const concurrent = await secondPage.evaluate(async ({ modulePath, outboxScope, ownerId, initialHead }) => {
++      const { createCommitOutbox } = await import(modulePath);
++      const service = createCommitOutbox();
++      let recoveryError = '';
++      try {
++        await service.recover(outboxScope, ownerId, async () => undefined);
++      } catch (error) {
++        recoveryError = error instanceof Error ? error.message : String(error);
++      }
++      const independent = await service.create(outboxScope, async (rawBox: unknown, independentOwnerId: string) => {
++        const box = rawBox as BrowserBox;
++        const intentId = await box.append({ independent: true }, { head: initialHead });
++        return { independentOwnerId, intentId, record: await box.read() };
++      });
++      return { recoveryError, sessionOwner: sessionStorage.getItem('copied-owner-id'), independent };
++    }, { modulePath: OUTBOX_MODULE, outboxScope: scope, ownerId: setup.ownerId, initialHead: h0 });
++    expect(concurrent.recoveryError).toContain('already claimed');
++    expect(concurrent.sessionOwner).toBeNull();
++    expect(concurrent.independent.independentOwnerId).not.toBe(setup.ownerId);
++    expect(concurrent.independent.record.intents).toHaveLength(1);
++    await firstPage.evaluate(() => (window as unknown as { releaseOutboxClaim: () => void }).releaseOutboxClaim());
++    await activeClaim;
++    await context.close();
++    context = undefined;
++
++    context = await chromium.launchPersistentContext(profile, launch);
++    const restartedPage = await openBlank(context);
++    const recovered = await restartedPage.evaluate(async ({ modulePath, outboxScope, ownerId, acceptedHead, finalHead, requestPath }) => {
++      const { createCommitOutbox } = await import(modulePath);
++      const service = createCommitOutbox();
++      const before = (await service.list(outboxScope)).find((record: BrowserRecord) => record.ownerId === ownerId);
++      let requestA: unknown;
++      let requestB: unknown;
++      const afterA = await service.recover(outboxScope, ownerId, async (rawBox: unknown) => {
++        const box = rawBox as BrowserBox;
++        const after = await box.dispatch(() => {
++          throw new Error('the persisted A request must be retried exactly');
++        }, async (request: unknown) => {
++          requestA = request;
++          return { kind: 'accepted', head: acceptedHead, value: { accepted: 'A' } };
++        });
++        const withB = await box.dispatch((intent, base) => ({
++          method: 'POST',
++          path: requestPath,
++          body: { base_revision_id: base.revisionId, base_publication_id: base.publicationId, proposal: intent.payload },
++        }), async (request: unknown) => {
++          requestB = request;
++          return { kind: 'accepted', head: finalHead, value: { accepted: 'B' } };
++        });
++        return { after, withB, final: await box.read() };
++      });
++      return {
++        before,
++        afterA: afterA.after,
++        final: afterA.final,
++        requestA,
++        requestB,
++        sessionOwner: sessionStorage.getItem('copied-owner-id'),
++        acceptedHead,
++      };
++    }, { modulePath: OUTBOX_MODULE, outboxScope: scope, ownerId: setup.ownerId, acceptedHead: ha, finalHead: hb, requestPath: path });
++
++    expect(recovered.sessionOwner).toBeNull();
++    expect(recovered.before?.pending?.request).toEqual(setup.requestA);
++    expect(recovered.requestA).toEqual(setup.requestA);
++    expect(recovered.requestA).toMatchObject({ method: 'POST', path });
++    expect(JSON.parse((recovered.requestA as { body: string }).body)).toEqual({
++      base_revision_id: h0.revisionId,
++      base_publication_id: h0.publicationId,
++      proposal: setup.payloadA,
++    });
++    expect(recovered.afterA.intents).toEqual(expect.arrayContaining([
++      expect.objectContaining({ id: setup.intentB, payload: setup.payloadB, readyBase: ha }),
++    ]));
++    expect(recovered.requestB).toMatchObject({ method: 'POST', path });
++    expect((recovered.requestB as { key: string }).key).not.toBe((recovered.requestA as { key: string }).key);
++    expect(JSON.parse((recovered.requestB as { body: string }).body)).toEqual({
++      base_revision_id: ha.revisionId,
++      base_publication_id: ha.publicationId,
++      proposal: setup.payloadB,
++    });
++    expect(recovered.final.intents).toEqual([]);
++  } finally {
++    if (context) await context.close();
++    await rm(profile, { recursive: true, force: true });
++  }
++});
+
+exec
+/bin/bash -lc 'git diff --check; git status --short; git diff --stat' in /home/user/work/wt/app-m1-outbox-browser
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-browser/commit-msg' in /home/user/work/wt/app-m1-outbox-browser
+exec
+/bin/bash -lc 'npx eslint tests/e2e/timeline/command-outbox.spec.ts && npx tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --allowImportingTsExtensions --skipLibCheck --types node,vite/client tests/e2e/timeline/command-outbox.spec.ts' in /home/user/work/wt/app-m1-outbox-browser
+ succeeded in 7ms:
+test(timeline): prove native browser outbox durability
+
+Add a Chromium IndexedDB and Web Locks browser proof for persisted outbox
+claims, restart recovery, dependent request identity, and owner isolation.
+
+ succeeded in 4918ms:
+?? tests/e2e/timeline/command-outbox.spec.ts
+
+ succeeded in 13479ms:
+codex
+Static verification is complete and the required commit message is written. The central request is still waiting behind the other full suite (currently around 36% in that suite’s log); I’m continuing the same poll without launching another run.
+exec
+/bin/bash -lc 'tail -1 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-1019191532-6465/log.txt; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-m1-outbox-browser-full-e2e-timeline-1019191816-103/status' in /home/user/work/wt/app-m1-outbox-browser
+ succeeded in 144ms:
+...............................................................running
+
+ succeeded in 780593ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test app-m1-outbox-browser-full-e2e-timeline-1019191816-103
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-m1-outbox-browser-full-e2e-timeline-1019191816-103/
+test app-m1-outbox-browser-full-e2e-timeline-1019191816-103: pass exit=0 in 45s — e2e-outbox-native on app-m1-outbox-browser (app tree 87aa205fcd8d4d00ecead74206f78aa7145b0930)
+cmd: npm run test:e2e:timeline tests/e2e/timeline/command-outbox.spec.ts
+counts:   1 passed (17.3s) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-m1-outbox-browser-full-e2e-timeline-1019191816-103/log.txt ---
+
+> vite_react_shadcn_ts@0.0.0 test:e2e:timeline
+> PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=${PLAYWRIGHT_PORT:-} FAKE_RUNTIME_PORT=${FAKE_RUNTIME_PORT:-} playwright test --config playwright.config.ts --project=timeline-devices --workers=1 tests/e2e/timeline/command-outbox.spec.ts
+
+[2m[WebServer] [22mBrowserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+[2m[WebServer] [22m  npx update-browserslist-db@latest
+[2m[WebServer] [22m  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+Running 1 test using 1 worker
+
+  ✓  1 [timeline-devices] › tests/e2e/timeline/command-outbox.spec.ts:48:1 › persists and excludes native browser command outbox claims across restart (4.0s)
+
+  1 passed (17.3s)
+
+ succeeded in 720498ms:
+test app-m1-outbox-browser-full-e2e-timeline-1019191816-103: pass exit=0 in 45s — e2e-outbox-native on app-m1-outbox-browser (app tree 87aa205fcd8d4d00ecead74206f78aa7145b0930)
+cmd: npm run test:e2e:timeline tests/e2e/timeline/command-outbox.spec.ts
+counts:   1 passed (17.3s) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-m1-outbox-browser-full-e2e-timeline-1019191816-103/log.txt ---
+
+> vite_react_shadcn_ts@0.0.0 test:e2e:timeline
+> PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=${PLAYWRIGHT_PORT:-} FAKE_RUNTIME_PORT=${FAKE_RUNTIME_PORT:-} playwright test --config playwright.config.ts --project=timeline-devices --workers=1 tests/e2e/timeline/command-outbox.spec.ts
+
+[2m[WebServer] [22mBrowserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+[2m[WebServer] [22m  npx update-browserslist-db@latest
+[2m[WebServer] [22m  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+Running 1 test using 1 worker
+
+  ✓  1 [timeline-devices] › tests/e2e/timeline/command-outbox.spec.ts:48:1 › persists and excludes native browser command outbox claims across restart (4.0s)
+
+  1 passed (17.3s)
+
+codex
+The central Chromium run passed: one test, 17.3s, using the real Vite-served module and `/opt/pw-browsers/chromium`. I’m doing the final scope check now, then I’ll hand off the exact restart/lock evidence and test results.
+exec
+/bin/bash -lc "git status --short --untracked-files=all && git diff --check && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-outbox-browser/commit-msg && printf 'commit-msg present\\n'" in /home/user/work/wt/app-m1-outbox-browser
+ succeeded in 1239ms:
+?? tests/e2e/timeline/command-outbox.spec.ts
+commit-msg present
+
+codex
+## Completed
+
+Added [command-outbox.spec.ts](/home/user/work/wt/app-m1-outbox-browser/tests/e2e/timeline/command-outbox.spec.ts), proving with real Chromium:
+
+- Native IndexedDB persistence and strict reservation before transmit.
+- Exact A request retry after persistent-context restart.
+- Original B payload/guards/IDs retained with a fresh key and base `HA`.
+- Native `navigator.locks` exclusion across pages.
+- Independent owner isolation.
+- No sessionStorage owner adoption.
+- A acknowledgement cannot erase dependent B.
+
+Chromium: `/opt/pw-browsers/chromium`; temporary profile is cleaned up.
+
+## Tests
+
+- `npx eslint tests/e2e/timeline/command-outbox.spec.ts` — passed.
+- Targeted TypeScript syntax check — passed.
+- Central browser suite — passed: **1 test, 17.3s**.
+- `git diff --check` — passed.
+
+Commit message written to the required path. No blockers or out-of-scope changes.
+tokens used
+106,183
+## Completed
+
+Added [command-outbox.spec.ts](/home/user/work/wt/app-m1-outbox-browser/tests/e2e/timeline/command-outbox.spec.ts), proving with real Chromium:
+
+- Native IndexedDB persistence and strict reservation before transmit.
+- Exact A request retry after persistent-context restart.
+- Original B payload/guards/IDs retained with a fresh key and base `HA`.
+- Native `navigator.locks` exclusion across pages.
+- Independent owner isolation.
+- No sessionStorage owner adoption.
+- A acknowledgement cannot erase dependent B.
+
+Chromium: `/opt/pw-browsers/chromium`; temporary profile is cleaned up.
+
+## Tests
+
+- `npx eslint tests/e2e/timeline/command-outbox.spec.ts` — passed.
+- Targeted TypeScript syntax check — passed.
+- Central browser suite — passed: **1 test, 17.3s**.
+- `git diff --check` — passed.
+
+Commit message written to the required path. No blockers or out-of-scope changes.

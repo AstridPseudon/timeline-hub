@@ -1,0 +1,400 @@
++  }
++  for (const key of internalManifest.keys()) {
++    if (!seenInternals.has(key)) throw new TimelineSchemaIncompatibleError(`Workspace Runtime manifest has no internal image for ${key.replace('\u0000', '/')}`);
++  }
++  array(manifest.media, 'accepted canonical document.dependency_manifest.media');
++  array(manifest.documents, 'accepted canonical document.dependency_manifest.documents');
++  return value;
++}
++
+ function array(value: unknown, label: string): RuntimeRecord[] {
+   if (!Array.isArray(value)) throw new Error(`Workspace Runtime ${label} must be an array`);
+   return value.map((item, index) => requiredRecord(item, `${label}[${index}]`));
+@@ -1810,10 +2022,7 @@
+   }
+   const headRevisionId = requiredString(parent.revision_id, 'parent composition revision.revision_id');
+   const parentGraph = {
+-    config: parentPayload.config ?? {},
+-    registry: parentPayload.registry ?? {},
+-    clips: parentPayload.clips ?? [],
+-    occurrences: parentPayload.occurrences,
++    ...parentPayload,
+   };
+   return {
+     schema_version: 1,
+@@ -1834,6 +2043,71 @@
+   };
+ }
+ 
++function runtimeGraphToContractFromCanonicalDocument(
++  projectId: string,
++  timelineId: string,
++  document: CanonicalDocument,
++  publicationId: string,
++): RuntimeRecord {
++  const parent = {
++    project_id: projectId,
++    timeline_id: timelineId,
++    revision_id: document.parent_revision.revision_id,
++    content_digest: document.parent_revision.content_digest,
++    payload: document.parent_revision.payload,
++  } as RuntimeRecord;
++  const internalsByRevision = new Map<string, typeof document.internal_timeline_revisions[number]>();
++  for (const internal of document.internal_timeline_revisions) {
++    if (internalsByRevision.has(internal.revision_id)) {
++      throw new TimelineSchemaIncompatibleError(`Workspace Runtime returned ambiguous internal revision ${internal.revision_id}`);
++    }
++    internalsByRevision.set(internal.revision_id, internal);
++  }
++  const resolved = document.shot_revisions.map((shot) => {
++    const internalImage = internalsByRevision.get(shot.internal_timeline_revision_id);
++    if (!internalImage) {
++      throw new TimelineSchemaIncompatibleError(`Workspace Runtime shot closure is missing internal revision ${shot.internal_timeline_revision_id}`);
++    }
++    return {
++    shot: {
++      project_id: projectId,
++      shot_id: shot.shot_id,
++      revision_id: shot.revision_id,
++      internal_timeline_revision_id: shot.internal_timeline_revision_id,
++      content_digest: shot.content_digest,
++      payload: shot.payload,
++    } as RuntimeRecord,
++    internal: {
++      project_id: projectId,
++      timeline_id: internalImage.timeline_id,
++      revision_id: shot.internal_timeline_revision_id,
++      content_digest: internalImage.content_digest,
++      payload: internalImage.payload,
++    } as RuntimeRecord,
++    };
++  });
++  const graph = runtimeGraphToContract(
++    projectId,
++    timelineId,
++    {
++      project_id: projectId,
++      timeline_id: timelineId,
++      version: 1,
++      head_revision_id: document.parent_revision.revision_id,
++    },
++    parent,
++    resolved,
++  );
++  const primary = requiredRecord(graph.primary_timeline, 'accepted graph.primary_timeline');
++  const head = requiredRecord(primary.head, 'accepted graph.primary_timeline.head');
++  head.publication_id = publicationId;
++  return {
++    ...graph,
++    accepted_identity: { revision_id: document.parent_revision.revision_id, publication_id: publicationId },
++    canonical_document: document,
++  };
++}
++
+ function runtimePayloadWithoutCanonicalEnvelope(revision: RuntimeRecord): RuntimeRecord {
+   const { shot_id: _shotId, revision_id: _revisionId, document_role: _role, content_digest: _digest, internal_timeline_revision: _internal, publish: _publish, ...payload } = revision;
+   return payload;
+diff --git a/src/integrations/runtime/timelineCommit.test.ts b/src/integrations/runtime/timelineCommit.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..409e300f33e0a8cac531b3a5b62eced92cfae098
+--- /dev/null
++++ b/src/integrations/runtime/timelineCommit.test.ts
+@@ -0,0 +1,147 @@
++import { describe, expect, it } from 'vitest';
++import type { Transport } from './generated.ts';
++import { classifyRuntimeCommitFailure, AstridRuntimeClient } from './client.ts';
++import { ApiError } from './generated.ts';
++import { RuntimeDataProvider } from './dataProvider.ts';
++import { RUNTIME_SCHEMA_DIGEST } from './contract-metadata.ts';
++
++const PROJECT_ID = 'project-commit';
++const TIMELINE_ID = 'timeline-commit';
++
++function json(value: unknown): Uint8Array {
++  return new TextEncoder().encode(JSON.stringify(value));
++}
++
++function accepted(revisionId: string, publicationId: string, baseRevisionId: string, basePublicationId: string, idMap: Record<string, string> = {}) {
++  const parentPayload = {
++    config: { clips: [], opaque: { keep: null } },
++    registry: { assets: {} },
++    clips: [],
++    occurrences: [],
++    bundle: null,
++    unknown: { nested: ['value'] },
++  };
++  return {
++    data: {
++      status: 'accepted',
++      base_revision_id: baseRevisionId,
++      base_publication_id: basePublicationId,
++      previous_revision_id: baseRevisionId,
++      previous_publication_id: basePublicationId,
++      accepted_revision_id: revisionId,
++      rebased_onto: null,
++      canonical_document: {
++        schema_version: 1,
++        project_id: PROJECT_ID,
++        timeline_id: TIMELINE_ID,
++        parent_revision: { revision_id: revisionId, content_digest: 'sha256:parent', payload: parentPayload },
++        shot_revisions: [],
++        internal_timeline_revisions: [],
++        dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] },
++      },
++      document_digest: 'sha256:document',
++      commands: [{ schema_version: 1, op: 'clip.move', version: '1', select: 'parent/clip:x', args: { on: 7 } }],
++      id_map: idMap,
++      provider_version: 'provider-1',
++      compiler_version: 'compiler-1',
++      publisher: 'actor-1',
++    },
++    receipt: {
++      receipt_id: publicationId,
++      command_kind: 'timeline.commit',
++      idempotency_key: `key-${publicationId}`,
++      request_hash: `hash-${publicationId}`,
++      project_id: PROJECT_ID,
++      project_seq: [1, 1],
++      event_ids: [`event-${publicationId}`],
++      result: {},
++      created_at: '2026-10-19T00:00:00Z',
++    },
++  };
++}
++
++function transportFor(response: unknown, requests: Array<{ method: string; path: string; body?: unknown }>): Transport {
++  return async (method, path, _headers, body) => {
++    const parsed = body ? JSON.parse(new TextDecoder().decode(body)) : undefined;
++    requests.push({ method, path, ...(parsed === undefined ? {} : { body: parsed }) });
++    if (path === '/v1/health') return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1, runtime_instance_id: 'instance-1' }) };
++    if (path === '/v1/handshake') return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-1', actor_id: 'actor-1', realm_id: 'realm-1', scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write'], capabilities: ['execution_binding.targeted.v1'] }) };
++    if (path === '/v1/realm') return { status: 200, headers: {}, body: json({ realm_id: 'realm-1', display_name: 'fixture', version: 1, created_at: '2026-10-19T00:00:00Z' }) };
++    if (path.endsWith('/commit')) return { status: 200, headers: {}, body: json(response) };
++    if (path.endsWith('/commits?limit=50')) return { status: 200, headers: {}, body: json({ items: [], next_cursor: null, head: { revision_id: 'r1', publication_id: 'p1' } }) };
++    throw new Error(`unexpected Runtime request: ${method} ${path}`);
++  };
++}
++
++function request(baseRevisionId = 'r0', basePublicationId = 'p0') {
++  return {
++    api_version: 1 as const,
++    project_id: PROJECT_ID,
++    timeline_id: TIMELINE_ID,
++    base_revision_id: baseRevisionId,
++    base_publication_id: basePublicationId,
++    commands: [{ schema_version: 1 as const, op: 'clip.move', version: '1', select: 'parent/clip:x', args: { on: 7 } }],
++  };
++}
++
++describe('Runtime timeline commit capability', () => {
++  it('projects the exact accepted closure and retains publication identity without a latest read', async () => {
++    const requests: Array<{ method: string; path: string; body?: unknown }> = [];
++    const provider = new RuntimeDataProvider({
++      projectId: PROJECT_ID,
++      baseUrl: 'http://runtime.test',
++      token: 'token',
++      transport: transportFor(accepted('r1', 'p1', 'r0', 'p0'), requests),
++    });
++    const result = await provider.commitTimeline(request(), 'retry-1');
++    expect(result.accepted).toEqual({ revisionId: 'r1', publicationId: 'p1' });
++    expect(result.receipt.receipt_id).toBe('p1');
++    expect(Object.keys(result)).toContain('receipt');
++    expect(result.canonicalDocument.parent_revision.payload).toMatchObject({ bundle: null, unknown: { nested: ['value'] } });
++    expect(result.graph).toMatchObject({
++      accepted_identity: { revision_id: 'r1', publication_id: 'p1' },
++      primary_timeline: { head: { revision_id: 'r1', publication_id: 'p1' } },
++    });
++    expect(requests.some(({ path }) => path.includes('/inspect') || path.includes('/composition-revisions/'))).toBe(false);
++  });
++
++  it('keeps same revision acknowledgements distinct by publication', async () => {
++    const requests: Array<{ method: string; path: string; body?: unknown }> = [];
++    const responses = [accepted('r1', 'p1', 'r0', 'p0'), accepted('r1', 'p2', 'r1', 'p1')];
++    const transport = async (...args: Parameters<Transport>) => {
++      if (args[1].endsWith('/commit')) return { status: 200, headers: {}, body: json(responses.shift()) };
++      return transportFor(accepted('r1', 'p1', 'r0', 'p0'), requests)(...args);
++    };
++    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport });
++    const first = await provider.commitTimeline(request(), 'retry-1');
++    const second = await provider.commitTimeline(request('r1', 'p1'), 'retry-2');
++    expect(first.accepted).toEqual({ revisionId: 'r1', publicationId: 'p1' });
++    expect(second.accepted).toEqual({ revisionId: 'r1', publicationId: 'p2' });
++  });
++
++  it('builds an explicit timeline.inverse command through the same capability', async () => {
++    const requests: Array<{ method: string; path: string; body?: unknown }> = [];
++    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport: transportFor(accepted('r2', 'p2', 'r1', 'p1'), requests) });
++    await provider.undoTimeline({ projectId: PROJECT_ID, timelineId: TIMELINE_ID, headRevisionId: 'r1', headPublicationId: 'p1' }, ['p-a', 'p-b'], 'undo-key');
++    const commit = requests.find((entry) => entry.path.endsWith('/commit'));
++    expect(commit?.body).toMatchObject({
++      base_revision_id: 'r1',
++      base_publication_id: 'p1',
++      commands: [{ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: ['p-a', 'p-b'] } }],
++    });
++  });
++
++  it('rejects a nonidentity id_map and classifies typed failures', async () => {
++    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'token', transport: transportFor(accepted('r1', 'p1', 'r0', 'p0', { 'parent/clip:x': 'parent/clip:y' }), []) });
++    await expect(provider.commitTimeline(request(), 'retry-1')).rejects.toThrow('non-identity id_map');
++    expect(classifyRuntimeCommitFailure(new ApiError(409, 'conflict', 'conflict', '', { status: 'conflict' }))).toBe('conflict');
++    expect(classifyRuntimeCommitFailure(new ApiError(409, 'conflict', 'busy', '', { status: 'refused', reason: 'head_busy' }))).toBe('refused');
++    expect(classifyRuntimeCommitFailure(new ApiError(422, 'invalid', 'bad'))).toBe('validation');
++    expect(classifyRuntimeCommitFailure(new ApiError(503, 'not_ready', 'unknown'))).toBe('unknown');
++  });
++
++  it('keeps recoverable identity scoped to the authenticated actor and realm', async () => {
++    const client = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', token: 'token', transport: transportFor(accepted('r1', 'p1', 'r0', 'p0'), []) });
++    await expect(client.getRecoverableIdentity()).resolves.toEqual({ actorId: 'actor-1', realmId: 'realm-1' });
++  });
++});
+diff --git a/src/tools/video-editor/data/DataProvider.ts b/src/tools/video-editor/data/DataProvider.ts
+index b4d22997ab8d822b21940b975af333ba38ba515d..332200a04a44a83880ee0835e62730e3ba494ead
+--- a/src/tools/video-editor/data/DataProvider.ts
++++ b/src/tools/video-editor/data/DataProvider.ts
+@@ -21,6 +21,13 @@
+ import type { TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
+ import type { GenerationRow } from '@/domains/generation/types/index.ts';
+ import type { ShotCompositionPort } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
++import type {
++  CanonicalDocument,
++  CommitAcceptedMutation,
++  CommitRequest,
++  HistoryPage,
++  MutationReceipt,
++} from '@/integrations/runtime/generated.ts';
+ export type {
+   AssetProfile,
+   SilenceRegion,
+@@ -33,13 +40,48 @@
+   projectId: string;
+   timelineId: string;
+   headRevisionId: string | null;
++  /** Runtime acceptance identity. A revision without this pin is read-only. */
++  headPublicationId?: string | null;
++}
++
++export interface TimelineAcceptedIdentity {
++  revisionId: string;
++  publicationId: string;
++}
++
++export interface TimelineRecoveryIdentity {
++  actorId: string;
++  realmId: string;
+ }
+ 
++export interface TimelineCommitResult {
++  response: CommitAcceptedMutation;
++  accepted: TimelineAcceptedIdentity;
++  canonicalDocument: CanonicalDocument;
++  /** The existing graph contract, projected from the accepted closure. */
++  graph: Record<string, unknown>;
++  /** Explicit enumerable copy; generated mutation receipts are non-enumerable elsewhere. */
++  receipt: MutationReceipt;
++}
++
+ export interface TimelineSaveReceipt {
+   configVersion: number;
+   head: TimelineHeadRevision;
+ }
+ 
++export interface TimelineCommitCapability {
++  commitTimeline(
++    request: CommitRequest,
++    idempotencyKey: string,
++  ): Promise<TimelineCommitResult>;
++  listTimelineCommits(timelineId: string, cursor?: string, limit?: number): Promise<HistoryPage>;
++  undoTimeline(
++    base: TimelineHeadRevision,
++    publications: readonly string[],
++    idempotencyKey: string,
++  ): Promise<TimelineCommitResult>;
++}
++
+ export interface LoadedTimeline {
+   config: TimelineConfig;
+   configVersion: number;
+@@ -384,6 +426,11 @@
+ // ---------------------------------------------------------------------------
+ 
+ export interface DataProvider extends AssetResolver {
++  /** Command commits are supplied whole by gesture/command producers. */
++  timelineCommands?: TimelineCommitCapability;
++  commitTimeline?(request: CommitRequest, idempotencyKey: string): Promise<TimelineCommitResult>;
++  undoTimeline?(base: TimelineHeadRevision, publications: readonly string[], idempotencyKey: string): Promise<TimelineCommitResult>;
++  getRecoverableIdentity?(): Promise<TimelineRecoveryIdentity>;
+   documents?: import('@/sdk/context.ts').ProjectDocumentSurface;
+   projectTranscripts?: import('./typed/projectTranscript.ts').ProjectTranscriptRepository;
+   /** When present, writes MUST use this immutable-head CAS path, never numeric versions. */
+
+exec
+/bin/bash -lc "git status --short; git diff --stat; printf '%s\\n' '--- commit msg ---'; sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-commit-client/commit-msg" in /home/user/work/wt/app-m1-commit-client
+ succeeded in 0ms:
+ M runtime.lock.json
+ M src/integrations/runtime/client.ts
+ M src/integrations/runtime/dataProvider.ts
+ M src/integrations/runtime/generated-contract-metadata.ts
+ M src/integrations/runtime/generated.ts
+ M src/tools/video-editor/data/DataProvider.ts
+?? src/integrations/runtime/timeline-commit-types.ts
+?? src/integrations/runtime/timelineCommit.test.ts
+ runtime.lock.json                                  |   8 +-
+ src/integrations/runtime/client.ts                 |  77 +++++-
+ src/integrations/runtime/dataProvider.ts           | 304 ++++++++++++++++++++-
+ .../runtime/generated-contract-metadata.ts         |   7 +-
+ src/integrations/runtime/generated.ts              |  22 +-
+ src/tools/video-editor/data/DataProvider.ts        |  47 ++++
+ 6 files changed, 434 insertions(+), 31 deletions(-)
+--- commit msg ---
+feat(timeline): add Runtime command commit consumer
+
+Refresh the official Runtime generated client and consume accepted commit
+closures with revision/publication identity, explicit receipts, strict closure
+validation, and canonical inverse commands.
+
+Preserve Runtime session identity fences and classify typed commit failures
+without generating retry keys or reading mutable heads after acknowledgement.
+
+codex
+## Report
+
+Implemented Runtime command consumption:
+
+- Added generated commit client/DTO refresh and vendor lock update.
+- Added `commitTimeline`, `listTimelineCommits`, media selection, identity recovery, typed failure classification.
+- Added accepted `(revision, publication)` identity, exact closure projection, receipt retention, identity-only `id_map` validation, and explicit `timeline.inverse`.
+- Added focused `timelineCommit.test.ts`.
+
+Tests:
+
+- `timelineCommit.test.ts`: 5 passed.
+- Client suites: 43 passed.
+- `npm run test:contracts`: passed.
+- ESLint and `git diff --check`: passed.
+- Vendor lock check: passed.
+
+One existing restore test remains incompatible with the new required publication guard; full/browser suites were not run. Generated DTO-module lock coverage needs manager follow-up per Runtime worker report.
+
+Commit message written to the required path.
+tokens used
+298,272
+## Report
+
+Implemented Runtime command consumption:
+
+- Added generated commit client/DTO refresh and vendor lock update.
+- Added `commitTimeline`, `listTimelineCommits`, media selection, identity recovery, typed failure classification.
+- Added accepted `(revision, publication)` identity, exact closure projection, receipt retention, identity-only `id_map` validation, and explicit `timeline.inverse`.
+- Added focused `timelineCommit.test.ts`.
+
+Tests:
+
+- `timelineCommit.test.ts`: 5 passed.
+- Client suites: 43 passed.
+- `npm run test:contracts`: passed.
+- ESLint and `git diff --check`: passed.
+- Vendor lock check: passed.
+
+One existing restore test remains incompatible with the new required publication guard; full/browser suites were not run. Generated DTO-module lock coverage needs manager follow-up per Runtime worker report.
+
+Commit message written to the required path.

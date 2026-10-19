@@ -1,0 +1,400 @@
+frame and audio parity remain integration checks.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-suffix-basis/commit-msg
+test(timeline): specify optimistic suffix basis contract
+
+Add isolated M0 specification experiments using the frozen EditCommand
+structure and a small model of publication history, guards and retry.
+Demonstrate the pre-acceptance ABA gap in relabeling an optimistic suffix,
+and exercise original-result basis reconstruction across lost ACKs,
+restart, follow timing, created IDs and exact accepted revision reads.
+
+Record the proposed base_view discriminator and original-request retention
+requirements in the assigned shared design/suffix-basis.md handoff.
+These are specification experiments, not production implementation proof.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m0-checkpoint-changes/commit-msg
+docs(runtime): apply checkpoint A commit contract decisions
+
+Specify scoped retry serialization and durable completion reconciliation,
+exact transcript/config snapshot retention, and Recorder-derived projections.
+Close canonical legacy mutation authority and require M1 film baseline checks.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-core-integration-fix/commit-msg
+fix(timeline): close M1 capture and replay integration gaps
+
+Guard occurrence source ownership across deterministic materialization while
+preserving original claims and ancestry ABA protection. Record parent clip
+mirror consequences and exact retained compiler input pins in the core.
+
+Align parent move intent with the frozen contract and remove unadmitted M1
+event construction. Refresh parent, occurrence and shared materialization
+goldens, and cover main readback layouts, source changes and retained inputs.
+
+Validated 120 recipe/authoring/structure tests and 50 real provider source
+tests through an external import overlay. Ruff, scoped mypy, whitespace and
+schema comparisons pass. Full/live integration remains centrally scheduled.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-app-labels/commit-msg
+fix(video-editor): bind preview revision labels to Player delivery
+
+Carry committed, local, and unavailable preview provenance through the
+throttled Player mailbox so labels cannot get ahead of rendered pixels.
+Add focused historical, draft, acknowledgement, generation, and unavailable
+preview coverage.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-cli-runtime-journey/commit-msg
+test(timeline): cover real CLI and SDK commit restart journey
+
+Add the required integration lane for renderer-free CLI moves and Python
+TimelineSession outbox recovery against the real Runtime and generated client.
+Reuse Runtime's API-built duplicate film realm and existing daemon fixture.
+
+Cover durable lost acknowledgements, exact flight retry after restart,
+dependent suffix guards, disjoint rebase, retained conflicts, guarded inverse,
+and exact published show and input visualization readback.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m1-read-basis/commit-msg
+fix(runtime): expose immutable timeline read basis
+
+Return verified dependency manifests from immutable parent reads and normalize
+public commit-history limits without changing cursor binding. Add read-basis
+coverage for bootstrap, baseline, recorded history, and generated HTTP reads.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-core/commit-msg
+feat(timeline): add guarded M1 move command engine
+
+Execute fixed absolute clip moves through native authored-state recording
+primitives and the frozen EditCommand schema. Preserve original guards for
+server replay, coalesce trusted accepted writes for inverse and redo, and
+reject dependency changes, intervening writes and occupied identities.
+
+Prove structural recording with track creation and guarded inverse. Add
+parent and occurrence capture fixtures plus focused conformance coverage
+for clears, opaque data, same-value writes and shared-child materialization.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m1-acceptance/commit-msg
+feat(runtime): add atomic timeline commit acceptance
+
+Persist renderer-free immutable closures, publication ancestry and recorder
+history with main command receipts in one SQLite transaction. Serialize
+request execution by scoped retry key and reconcile every completion against
+the durable ledger, including changed-active-hash races and restart replay.
+
+Add explicit v31 migration, retained-input persistence hooks, verified
+baseline/bootstrap integration and permanent timeline commit replay retention.
+Cover acceptance, execution barriers, real input retention and migration paths.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m1-record-integrity/commit-msg
+fix(runtime): verify durable timeline recorder integrity
+
+Bind the full canonical Recorder to the existing acceptance event with a
+records digest. Verify event hashes, chain and main receipt facts before
+returning accepted history or replay, including recorded-intent checks.
+
+Cover valid restart replay and recorder/event corruption with fail-closed
+reads, startup refusal, no semantic rerun and unchanged durable state.
+
+Validation: 120 focused acceptance, execution, idempotency and migration
+cases passed against the composed final helpers; git diff --check passed.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-suffix-conformance/commit-msg
+test(timeline): conform dependent suffix handoff to original guards
+
+Replace the superseded basis-field experiment with the settled dependent-edit
+rule: retain unsent intent, await the predecessor ACK, then use its accepted
+base and a fresh key without changing original guards or allocated identities.
+
+Exercise absolute and relative moves through frozen R4 runner/rebase APIs,
+with a bounded adapter for future read/selection guards and JSON outbox reload.
+Cover conflicts, retries, created IDs, rejected predecessors, schema claims,
+and equal-state handoff separately from accepted-inverse write-history guards.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/report
+# App M1 client pin report
+
+## What changed
+
+- Refreshed `runtime.lock.json` from the exact reviewed Runtime commit `c423544de3b7a1090649bf32e4c82514c4c7a641`.
+- Added the official `packages/typescript/src/timeline-commit-types.ts` → `src/integrations/runtime/timeline-commit-types.ts` mapping with hash `sha256:068f23389275b6302ab3842c6d7daa540a399553f1eb39dd9688f988d82267f0`.
+- Updated the Runtime artifact version to `sha256:1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d`.
+- Updated `vendorLock.test.ts` to assert exact locked coverage of 13 entries and include the DTO path.
+- No generated Runtime source bytes changed; the three vendored TypeScript modules were already byte-equal to the reviewed output.
+
+## Verification
+
+Passed:
+
+- `node scripts/vendor-lock.mjs update runtime.lock.json --producer /home/user/work/runtime`
+- `node scripts/vendor-lock.mjs check runtime.lock.json --producer /home/user/work/runtime`
+- Explicit shell audit: all 13 local and reviewed-producer bytes matched their lock hashes; `generated.ts`, `generated-contract-metadata.ts`, and `timeline-commit-types.ts` matched exact `git show` output.
+- `npm run test:contracts` — 1 file, 1 test passed.
+- `npx eslint src/integrations/runtime/vendorLock.test.ts --max-warnings 0` — passed.
+- `git diff --check` — passed.
+
+The requested targeted Vitest command ran:
+
+`npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/integrations/runtime/{vendorLock,timelineCommit}.test.ts`
+
+`timelineCommit.test.ts` passed (41 tests). Eleven `vendorLock.test.ts` cases failed during fixture setup at `execFileSync('git', ['init'])` with sandbox `spawnSync git EPERM`; these failures occurred before assertions and are environmental, not caused by the pin diff.
+
+## Not run / next step
+
+- No full, browser, localhost, or install suite was run, per task instructions.
+- Re-run the targeted vendor-lock Vitest file in an environment permitting child Git processes; then the change is ready for harness commit and integration.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-client-pin/commit-msg
+fix(runtime): pin timeline commit DTO artifact
+
+Refresh the Runtime vendor lock from reviewed commit c423544de3b7a1090649bf32e4c82514c4c7a641.
+Add the timeline-commit-types mapping and update the exact locked coverage assertion.
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-real-journey/commit-msg
+test(timeline): exercise real gesture recovery through Runtime commits
+
+Replace the stale-head concurrent snapshot case with browser clip moves,
+loss of a durable acknowledgement, retained dependent intent, explicit
+owner recovery and exact retry after a Runtime restart. Verify independent
+Agent work, original guards, UI inverse, immutable readback and same-content
+publication identity without legacy move or inverse snapshot saves.
+
+Pin harness source/Python resolution, seed via main APIs before enabling the
+fixed Astrid authoring profile, and inspect native browser outboxes read-only.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-expectations/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-expectations/report
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-expectations/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-expectations/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..a088ee44a6a4403cd6e79b6777f2ee6019641360
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-expectations/commit-msg
+@@ -0,0 +1,6 @@
++test(video-editor): preserve group drag requirements as expected failures
++
++Restore the original successful geometry, track, and group assertions for
++free multi-clip, cross-track group, and new-track group drags. Mark exactly
++those three cases with it.fails until the required EditCommand operations
++land; keep supported singleton moves as ordinary passing tests.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-expectations/report b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-expectations/report
+new file mode 100644
+index 0000000000000000000000000000000000000000..4fc5e065fd41166db7dfeb406d435dd1789702de
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-expectations/report
+@@ -0,0 +1,25 @@
++# App M1 drag expectations report
++
++## What changed
++
++- Restored the original successful assertions for exactly three drag cases in `src/tools/video-editor/hooks/useClipDrag.test.tsx`:
++  - `commits a config edit when a free multi-clip drag drops onto a new bottom track`
++  - `updates pinnedShotGroupsOverride when a pinned group is dragged across tracks`
++  - `updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track`
++- Marked exactly those cases with `it.fails` and comments naming the missing group/multi-clip, cross-track group, and new-track group EditCommand support required by M2.
++- Removed the refusal-only toast assertions and test mock. No product code, fallback writer, or other test expectation changed.
++
++## Verification
++
++Passed:
++
++- `npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/hooks/useClipDrag.test.tsx src/tools/video-editor/hooks/useClipDrag.softtag.test.tsx` — 2 files passed; **20 ordinary tests passed and exactly 3 expected failures** (23 total).
++- `npx eslint src/tools/video-editor/hooks/useClipDrag.test.tsx --max-warnings 0` — passed.
++- `git diff --check` — passed.
++
++The three expected failures retain the original success requirements; they do not assert refusal or a parse/type error. Supported singleton move tests remain ordinary passing tests.
++
++## Not run / next step
++
++- No full, browser, localhost, install, or M1 completeness suite was run, per task instructions.
++- The missing group/multi-clip and cross-track EditCommand operations remain explicit M2 work; this change does not claim them complete.
+diff --git a/src/tools/video-editor/hooks/useClipDrag.test.tsx b/src/tools/video-editor/hooks/useClipDrag.test.tsx
+index 8f972657497313c78b5a1c085892eb79c1bb8f57..0a5ee7d5fb66f2dc4ae074d1953c6623e75bbf72
+--- a/src/tools/video-editor/hooks/useClipDrag.test.tsx
++++ b/src/tools/video-editor/hooks/useClipDrag.test.tsx
+@@ -1,6 +1,5 @@
+ import { __resetSelectionStoreForTests, userSelectTimelineItems } from '@/shared/state/selectionStore';
+ import type { ClipMoveCapturePort } from '../commands/semanticGestures.ts';
+-import { toast } from '@/shared/components/ui/toast.tsx';
+ import { commitDraggingSession } from './useClipDrag.helpers.ts';
+ // @vitest-environment jsdom
+ import { act, fireEvent, renderHook } from '@testing-library/react';
+@@ -20,8 +19,6 @@
+   TimelineEditorDataContextValue,
+   TimelineEditorOpsContextValue,
+ } from '@/tools/video-editor/hooks/useTimelineState.types';
+-
+-vi.mock('@/shared/components/ui/toast.tsx', () => ({ toast: { error: vi.fn() } }));
+ 
+ const selectionMocks = vi.hoisted(() => ({
+   userSelectTimelineClip: vi.fn(),
+@@ -826,7 +823,8 @@
+     }
+   });
+ 
+-  it('refuses a free multi-clip drag onto a new bottom track in move v1', () => {
++  // Expected failure until group/multi-clip EditCommand support lands (M2).
++  it.fails('commits a config edit when a free multi-clip drag drops onto a new bottom track', () => {
+ 
+     const applyEdit = vi.fn();
+     const selectClips = vi.fn();
+@@ -899,10 +897,18 @@
+         });
+       });
+ 
+-      expect(applyEdit).not.toHaveBeenCalled();
+-      expect(toast.error).toHaveBeenCalledWith('Clip move unavailable', {
+-        description: 'clip.move v1 does not support group or multi-clip moves.',
+-      });
++      expect(applyEdit).toHaveBeenCalledTimes(1);
++      const [edit, options] = applyEdit.mock.calls[0];
++      expect(edit.type).toBe('config');
++      expect(options).toMatchObject({ transactionId: expect.any(String) });
++      expect(edit.resolvedConfig.tracks.map((track: TrackDefinition) => track.id)).toEqual(['V1', 'V2', 'V3']);
++      expect(edit.resolvedConfig.clips).toEqual(expect.arrayContaining([
++        expect.objectContaining({ id: 'clip-1', track: 'V2', at: 1, hold: 2 }),
++        expect.objectContaining({ id: 'clip-2', track: 'V3', at: 3, hold: 2 }),
++      ]));
++      expect(edit.pinnedShotGroupsOverride).toBeUndefined();
++      expect(selectionMocks.userSelectTimelineClips).toHaveBeenCalledWith(['clip-2', 'clip-1'], { additive: false });
++      expect(coordinator.showSecondaryGhosts).toHaveBeenCalled();
+     } finally {
+       cleanup();
+     }
+@@ -1163,7 +1169,8 @@
+     }
+   });
+ 
+-  it('refuses a pinned group drag across tracks in move v1', () => {
++  // Expected failure until cross-track group EditCommand support lands (M2).
++  it.fails('updates pinnedShotGroupsOverride when a pinned group is dragged across tracks', () => {
+ 
+     const applyEdit = vi.fn();
+     const selectClips = vi.fn();
+@@ -1233,16 +1240,47 @@
+         });
+       });
+ 
+-      expect(applyEdit).not.toHaveBeenCalled();
+-      expect(toast.error).toHaveBeenCalledWith('Clip move unavailable', {
+-        description: 'clip.move v1 does not support group or multi-clip moves.',
++      expect(applyEdit).toHaveBeenCalledTimes(1);
++      const [edit, options] = applyEdit.mock.calls[0];
++      expect(edit).toEqual({
++        type: 'rows',
++        rows: [
++          { id: 'V1', actions: [] },
++          {
++            id: 'V2',
++            actions: [
++              { id: 'clip-1', start: 1, end: 3, effectId: 'effect-clip-1' },
++              { id: 'clip-2', start: 3, end: 5, effectId: 'effect-clip-2' },
++            ],
++          },
++        ],
++        metaUpdates: {
++          'clip-1': { track: 'V2' },
++          'clip-2': { track: 'V2' },
++        },
++        clipOrderOverride: { V1: [], V2: ['clip-1', 'clip-2'] },
++        pinnedShotGroupsOverride: [expect.objectContaining({
++          shotId: 'shot-1',
++          trackId: 'V2',
++          clipIds: ['clip-1', 'clip-2'],
++          mode: 'images',
++        })],
+       });
++      expect(edit.pinnedShotGroupsOverride).toEqual([expect.objectContaining({
++        shotId: 'shot-1',
++        trackId: 'V2',
++        clipIds: ['clip-1', 'clip-2'],
++        mode: 'images',
++      })]);
++      expect(options).toMatchObject({ transactionId: expect.any(String) });
++      expect(selectionMocks.userSelectTimelineClips).toHaveBeenCalledWith(['clip-1', 'clip-2'], { additive: false });
+     } finally {
+       cleanup();
+     }
+   });
+ 
+-  it('refuses a pinned group drag onto a new track in move v1', () => {
++  // Expected failure until new-track group EditCommand support lands (M2).
++  it.fails('updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track', () => {
+ 
+     const applyEdit = vi.fn();
+     const coordinator = makeCoordinator({
+@@ -1314,10 +1352,15 @@
+         });
+       });
+ 
+-      expect(applyEdit).not.toHaveBeenCalled();
+-      expect(toast.error).toHaveBeenCalledWith('Clip move unavailable', {
+-        description: 'clip.move v1 does not support group or multi-clip moves.',
+-      });
++      expect(applyEdit).toHaveBeenCalledTimes(1);
++      const [edit] = applyEdit.mock.calls[0];
++      expect(edit.type).toBe('config');
++      expect(edit.pinnedShotGroupsOverride).toEqual([expect.objectContaining({
++        shotId: 'shot-1',
++        trackId: 'V3',
++        clipIds: ['clip-1', 'clip-2'],
++        mode: 'images',
++      })]);
+     } finally {
+       cleanup();
+     }
+
+exec
+/bin/bash -lc "git status --short && git diff --check && printf '%s\\n' '--- commit message ---' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-expectations/commit-msg && printf '%s\\n' '--- report ---' && sed -n '1,180p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-drag-expectations/report" in /home/user/work/wt/app-m1-drag-expectations
+ succeeded in 6ms:
+ M src/tools/video-editor/hooks/useClipDrag.test.tsx
+--- commit message ---
+test(video-editor): preserve group drag requirements as expected failures
+
+Restore the original successful geometry, track, and group assertions for
+free multi-clip, cross-track group, and new-track group drags. Mark exactly
+those three cases with it.fails until the required EditCommand operations
+land; keep supported singleton moves as ordinary passing tests.
+--- report ---
+# App M1 drag expectations report
+
+## What changed
+
+- Restored the original successful assertions for exactly three drag cases in `src/tools/video-editor/hooks/useClipDrag.test.tsx`:
+  - `commits a config edit when a free multi-clip drag drops onto a new bottom track`
+  - `updates pinnedShotGroupsOverride when a pinned group is dragged across tracks`
+  - `updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track`
+- Marked exactly those cases with `it.fails` and comments naming the missing group/multi-clip, cross-track group, and new-track group EditCommand support required by M2.
+- Removed the refusal-only toast assertions and test mock. No product code, fallback writer, or other test expectation changed.
+
+## Verification
+
+Passed:
+
+- `npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/hooks/useClipDrag.test.tsx src/tools/video-editor/hooks/useClipDrag.softtag.test.tsx` — 2 files passed; **20 ordinary tests passed and exactly 3 expected failures** (23 total).
+- `npx eslint src/tools/video-editor/hooks/useClipDrag.test.tsx --max-warnings 0` — passed.
+- `git diff --check` — passed.
+
+The three expected failures retain the original success requirements; they do not assert refusal or a parse/type error. Supported singleton move tests remain ordinary passing tests.
+
+## Not run / next step
+
+- No full, browser, localhost, install, or M1 completeness suite was run, per task instructions.
+- The missing group/multi-clip and cross-track EditCommand operations remain explicit M2 work; this change does not claim them complete.
+
+codex
+Implemented the test-only audit fix in [useClipDrag.test.tsx](/home/user/work/wt/app-m1-drag-expectations/src/tools/video-editor/hooks/useClipDrag.test.tsx).
+
+- Restored original success assertions for the three group/multi/cross-track cases.
+- Marked exactly those three with `it.fails`; singleton tests remain ordinary.
+- No product or fallback changes.
+
+Verification:
+
+- Vitest: 2 files passed; 20 ordinary passes, exactly 3 expected failures.
+- ESLint: passed.
+- `git diff --check`: passed.
+
+Wrote the commit message and report to the requested worker paths.
+tokens used
+89,721
+Implemented the test-only audit fix in [useClipDrag.test.tsx](/home/user/work/wt/app-m1-drag-expectations/src/tools/video-editor/hooks/useClipDrag.test.tsx).
+
+- Restored original success assertions for the three group/multi/cross-track cases.
+- Marked exactly those three with `it.fails`; singleton tests remain ordinary.
+- No product or fallback changes.
+
+Verification:
+
+- Vitest: 2 files passed; 20 ordinary passes, exactly 3 expected failures.
+- ESLint: passed.
+- `git diff --check`: passed.
+
+Wrote the commit message and report to the requested worker paths.

@@ -1,0 +1,400 @@
+new file mode 100644
+index 0000000000000000000000000000000000000000..f198069c2c6eaa04a589512823f7362c189b72f1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/commit-msg
+@@ -0,0 +1,4 @@
++docs(app): inventory durable timeline writers
++
++Record the current App timeline writer census, R4 port guidance, and
++zero-legacy-traffic test seams for the Timeline M0 checkpoint.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ed806a65d891c45437ab6d6a15bbdaf1c318ae3b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/report.md
+@@ -0,0 +1,26 @@
++# App M0 writers report
++
++## Done
++
++* Read `PLAN.md` sections 2–6, the App manager brief, App `CLAUDE.md`, and research reports 08-app, 13-main-plans, 15-plumbing, and 16-cut-verify.
++* Searched current App beyond the owned editor directories and labeled Runtime, Agent/Supabase, placement, and relational metadata writers as other-manager seams.
++* Compared the frozen R4 App-qualified ref with `git show` only; no R4 checkout, merge, or product edit was performed.
++* Wrote the exhaustive inventory to `ORCH/design/app-writers.md`.
++
++## Findings
++
++The current editor's durable chain is `useTimelineCommit` -> `useTimelinePersistence` -> `DataProvider.saveTimelineAtHead` -> Runtime parent-composition publication. Popup add/swap, element/standalone hooks, shot-group placement, and Agent/import/complete-task services add distinct whole-document or metadata writers. Current local preview and in-memory undo are not accepted durable history; IndexedDB is durable local recovery only.
++
++The frozen R4 implementation is useful for bounded semantic command attachment, exact request/session recovery, and occurrence-scoped popup validation. Whole-file ports are unsafe because R4 contains old providers/transports/routes and machinery not in the settled plan.
++
++`ORCH/design/edit-recipe.md`, `ORCH/design/commit-contract.md`, and the requested frozen-Agent manager brief path are absent. Final App operation names and wire fields therefore remain owner questions; the inventory marks provisional mappings rather than inventing a contract.
++
++## Verification
++
++Read-only evidence commands used included `rg` over `src`, `supabase/functions`, and shared code; `git show origin/codex/handover-timeline-r4-20261019-candidate-app-qualified:<path>` in `/home/user/banodoco/reigh-app`; and current source inspection at App `60aa26b95`.
++
++Product tests were not run: this was explicitly an analysis-only Checkpoint A task and no product code changed. The report therefore makes no claim that the future command path or zero-legacy gate is green. The inventory specifies the required test seams, including popup add and swap, in `ORCH/design/app-writers.md`.
++
++## Blockers and next steps
++
++Blocked for implementation by the missing settled EditCommand/edit-recipe and commit-contract documents. Runtime/Agent owners should publish the envelope, op table, `/v1` route, exact-base/retry/session/receipt semantics, and history/undo rules. Then App can implement M1 clip move plus outbox/recovery and M2's remaining producers and zero-legacy assertions.
+
+exec
+/bin/bash -lc 'git status --short && git diff --stat' in /home/user/work/wt/app-m0-writers
+exec
+/bin/bash -lc 'wc -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/report.md && rg -n "saveTimeline|publishParentComposition|popup|M1|M2|Checkpoint|edit-recipe|commit-contract" /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md | head -n 80' in /home/user/work/wt/app-m0-writers
+ succeeded in 7ms:
+  181 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md
+   26 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/report.md
+  207 total
+3:Status: Checkpoint A inventory only. No product code was changed. The inventory is against App `tl/integration` at `60aa26b9529dcfa94f8ffdbd5edf42fa6c1babd2` (`60aa26b95`). The target is the single `/v1` Runtime commit door from `PLAN.md`; current whole-document publication is existing state to migrate, not a proposed second door.
+7:The App manager brief used here is `ORCH/managers/app/BRIEF.md`. The requested frozen-Agent path, `/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/managers/app/BRIEF.md`, is absent; this path discrepancy is reported, not silently resolved by copying a document. `ORCH/design/edit-recipe.md` and `ORCH/design/commit-contract.md` are also absent at inventory time. Therefore operation names marked **provisional** below are migration requirements, not a settled wire contract.
+22:  -> useTimelinePersistence draft + current provider saveTimelineAtHead
+23:  -> Runtime publishParentComposition (/v1/.../composition-revisions)
+34:| **Editor autosave funnel** | `useTimelineState` and the editor gesture hooks call `useTimelineCommit.commitData` (`useTimelineCommit.ts:337-402`, `useTimelineState.ts:1006-1037`). `commitData({save:true})` emits `scheduleSave`; `useTimelinePersistence` creates the local draft (`useTimelinePersistence.ts:947-1121`) and `doSave` calls `saveTimelineAtHead` or numeric `saveTimeline` (`:377-411`). | `RuntimeDataProvider.saveTimelineAtHead` (`src/integrations/runtime/dataProvider.ts:727-916`) reconciles a whole config/registry/bundle and calls `ReighRuntimeClient.publishParentComposition` (`:844-857`), POST `/v1/projects/:project/timelines/:timeline/composition-revisions`. Numeric fallback is `DataProvider.saveTimeline` (`useTimelinePersistence.ts:403`) and must be treated as legacy. | M1: add a command payload to the commit session for clip move. M2: replace config/registry/bundle fallback with the EditCommand request for every producer; delete the `saveTimeline` branch and any semantic-path fallback. Keep `saveTimelineAtHead` only as a temporary adapter until all commands and the Runtime door are live; then remove its editor-write use. | Preserve debounce for ordinary edits, immediate/flush behavior for semantic commits, exact base head, newest-local-suffix fencing, no reload/repost after stale conflict, and unknown-transport exact retry. The ACK must advance accepted head only; a draft is retained until that ACK. |
+35:| **Clip/track command facade** | `useTimelineCommandsService` (`useTimelineCommandsService.ts:319-349`) validates and calls `state.ops.applyEdit`. `addClip`, `updateClip`, `moveClip`, `trimClip`, `splitClip`, `deleteClip`, `addTrack`, `moveTrack` are `:441-962`; they currently make `rows` or `config` mutations, then the same `commitData` funnel. | Same autosave publication. No direct provider call in the facade. | M1: `moveClip` -> exact move command (R4 evidence uses `clip.nudge` plus track selector where needed). M2: `timeline.add`, `clip.update`, `clip.trim`/exact trim op, `timeline.split`, `clip.clear`, `timeline.add/remove/reorder/set` as confirmed by edit-recipe. Delete the local-config-to-save adapter once each bounded command exists. Names not present in a settled contract are provisional. | Preserve clip IDs, track IDs, ordering, at/from/to/speed/hold duration, absent versus explicit-null fields, overlap validation, and command inverse. Split must preserve authored child identities and refuse if an exact semantic command cannot be formed; it must not silently fall back. |
+37:| **Patch compiler and `TimelineOps`** | `useTimelineOps.ts:217-285` validates and runs `compileTimelinePatch`, then calls `commitData(...,{save:true,semantic:true})`; checkpoint/rollback are `:287-375`; `flush` is `:424-433`. The pure compiler contract is `lib/timeline-patch.ts:976-1020`; op families are `sdk/video/timeline/patch.ts:18-31`. Public API is `sdk/video/timeline/timelineOps.ts:4-7,51-61`. | `flush()` currently calls `flushPendingSaveRef` but returns `{version}` for the editor timeline, not a Runtime revision/receipt. `apply` reaches the whole-document provider above. | M1: preserve `TimelineOps` as the public mutation boundary and make clip move emit/forward EditCommand. M2: all patch families map to exact EditCommands (`clip.*`, `track.*`, `asset.*`, `app.update`, `project-data.write/delete`); reserved split/slice/graph remain refused until specified. Delete `TimelinePatch` as a durable protocol, not necessarily as the pure local compiler. Change `flush` to await the committed mutation result without pretending editor version is Runtime revision. | Keep stale-local-version checks, patch validation, no provider access in the compiler, selection/preview behavior, and the current `flush` caller semantics. Runtime revision must be explicit in the new result. |
+38:| **Registry/asset registration** | `useTimelineCommit.patchRegistry` and `unpatchRegistry` (`useTimelineCommit.ts:545-665`) save registry changes; `patchRegistryOwned`/rollback (`:667-735`) provide ownership fencing. `useAssetOperations.ts:29-212` prepares/uploads and commits entries via `patchRegistry`; `useAssetManagement.ts:365-500` supplies Runtime media preparation and legacy Supabase upload fallbacks. | Registry patch is included in the whole config publication. Runtime `registerAsset` (`integrations/runtime/dataProvider.ts:978-991`) reads then calls `saveTimelineInOrder`; Runtime media import is a separate durable operation (`:994-1057`). Non-Runtime fallback uses `uploadImageWithThumbnail`, `uploadImageToStorage`, and `createExternalUploadGeneration`. | M1: retain prepare/upload operation identity and ownership rollback. M2: asset registration must be an exact **provisional** `asset.register`/`timeline.add` command defined by the contract, carried through `/v1`; remove direct `registerAsset`/whole-registry publication from product paths and delete non-Runtime upload fallbacks where Runtime is authoritative. Keep preparation/import APIs if they do not mutate the timeline. | Preserve generated media/generation/variant identity, registry key, URL/thumbnail/mime, upload ownership, rollback on failed parent operation, and lost-ACK recovery. Asset bytes must not be duplicated by a replay. |
+39:| **Undo/redo and local checkpoints** | `useTimelineHistory.restoreHistoryEntry` (`useTimelineHistory.ts:303-321`) restores a local snapshot and saves it through `commitData`; undo/redo are `:424-486`; `jumpToCheckpoint` is `:488-509`. `persistCheckpoint` calls `provider.saveCheckpoint` (`:249-280`). | Local undo/redo currently publishes a full snapshot through `saveTimelineAtHead`; provider checkpoints are a separate `saveCheckpoint` capability. Canonical restore calls `provider.shotComposition.restoreHistory` (`:553-609`) -> Runtime `restoreProjectParentCompositionRevision` (`integrations/runtime/dataProvider.ts:207-235`). | M1: undo a migrated clip move by sending its exact inverse command, retaining unsent suffix behavior. M2: migrate every undoable operation to inverse EditCommands; decide whether checkpoints remain a local recovery feature or become an explicit accepted-history command. Delete whole-snapshot undo publication after command coverage. Do not delete local stacks. | Preserve transaction grouping, inverse correctness, local undo of unsent edits, publication identity/ABA protection, remote boundary clearing, and the distinction between undoing an unsent command and restoring an accepted revision. Canonical accepted restore must not be recast as local undo. |
+40:| **Standalone `useTimeline` compatibility hook** | `hooks/useTimeline.ts:31-50` exposes `saveTimeline`; it calls `saveTimelineAtHead` when present and numeric `saveTimeline` otherwise, with query invalidation. This is a separate writer from `useTimelineSave`. | Same Runtime whole-document CAS, with numeric fallback. | M2: route its callers through the command/commit session or delete this mutation wrapper. Keep query invalidation as a read concern. No direct whole-config save after callers migrate. | Preserve optimistic/read cache behavior and head fencing; do not let a stale query write accepted history. |
+41:| **Browser facade and element adapter** | `browser/hooks.tsx:204-263` calls `ops.applyEdit` for config replacement. `runtime/element-adapter.ts:59-113` is a public extension element save seam and calls `provider.saveTimelineAtHead` or numeric `saveTimeline`. | Browser facade reaches the editor funnel; element adapter can reach the provider directly. | M2: browser calls exact builders (`app.update` or `clip.update` as contract allows); element adapter becomes an EditCommand producer (`clip.set-element`/exact element operation), then remove both provider save branches. | Preserve extension-facing validation, element IDs and payloads, expected head, and errors. An extension must not be able to bypass command authorization. |
+42:| **Visual-seam persistence** | `useTimelineState.persistVisualSeamConfig` (`useTimelineState.ts:654-681`) builds config and calls `commitTimelineData(...,{save:true,semantic:true})`, then flushes. Render state invokes it through `useRenderState.ts:936-992`. | Whole-document save through the main funnel. | M2: map to the exact `app.update`/visual-seam EditCommand (the local patch family has `app.update`); remove the direct config replacement. | Preserve acknowledgement gating, eligible seam frames, render/preview distinction, and explicit user acknowledgement. |
+43:| **Transcript/project-data host** | Transient projection in `lib/project-transcript-host.ts:380-390` calls `commitData(...,{save:false,skipHistory:true})`; persisted transcript binding at `:600-660` calls `commitData(...,{save:true,semantic:true})`. Data-kind persisted/transient split is `data-kinds/dataKindItems.ts:51-68`. | Persisted binding/data-kind changes currently enter whole-document save; transient projection is intentionally local-only. | M2: keep transient path unchanged; map persisted transcript/data-lane changes to exact `transcript.bind` and/or `project-data.write/delete` commands. Delete snapshot fallback only after command serialization covers source-item identities. | Preserve transcript source references, schema refs, lane ordering, validation, and the fact that transient preview never saves or enters history. |
+44:| **Timeline import/add/swap callers** | `useTimelineState.ts:965-995` creates add/swap local commands. `commands/media.ts:125-434` owns their effects/descriptors. External drop and asset flows prepare media through `useAssetManagement.ts` and `useAssetOperations.ts`; popup uses the same state command path when mounted. | Current clip/config/registry parts end in the whole-document save; media preparation may call Runtime `importProjectMedia` or legacy Supabase upload before the timeline write. | M1 only if the clip-move slice needs it; otherwise M2: add/import must emit a batch of exact asset/import + `timeline.add` commands, with `created` identities. Swap needs an explicitly settled media replacement command; do not delete its writer until that command is available. | Preserve import operation ID, upload recovery, asset/clip atomicity as far as the contract allows, source media selection, type/duration, and no duplicate media on replay. |
+45:| **Popup add/swap provider** | `travel-between-images/components/shotTimelineDataProvider.ts:325-593` loads recovery/canonical graph, drafts through `saveTimelineDraftIfOwner` (`:516-537`), then queues `shotCompositionAdapter.publish` (`:539-567`) via `saveTimeline`. `ShotTimelinePreview.test.ts:299-407,744-780` covers refusal, fresh head, stale head, retry, and lost response. | Whole canonical graph publication through `shotCompositionAdapter.publish` -> Runtime `publishParentComposition`, with an occurrence recovery key and canonical head. The current provider still exposes `saveTimeline` as its writer. | M2: port the R4 occurrence path. Popup add should use exact occurrence-scoped `timeline.add`; popup swap must use the contract's exact replacement/clear operation (the current local `swap` name is not sufficient). Once semantic command saving is enabled, invalid/mixed commands must refuse and never call `saveTimeline`; delete the compatibility branch. | Preserve occurrence identity, canonical head, displayed/canonical graph projection, stable recovery key, command pins, retry byte identity, and no publication after a refused/stale proposal. Add and swap must be tested independently. |
+46:| **Direct canonical shot duplicate** | `components/AstridTimelineEditor.tsx:390-445` has a document-mode duplicate branch that calls `runtime.shots.shotComposition.publish`, and a fallback branch that calls `duplicateShotGroup`. `lib/shot-group-pack-commands.ts:379-417` admits/copies media then calls `mutateTimelineDocument`; placement service `shared/lib/placement/placementService.ts:119-153` loads and CAS-saves the whole document through `saveTimelineAtHead`. | Runtime parent-composition publication, either direct adapter or placement CAS. This is a shared shot/placement seam, not a normal clip editor gesture. | M2/other-manager: define a `shot-group.duplicate`/batch EditCommand only if the Runtime contract includes this cross-document operation; otherwise keep it as an explicitly owned placement command and prohibit it from bypassing the one door. Delete direct graph publication/fallback duplication only after the owning manager supplies the command. | Preserve pack-command admission, copied final-video bytes, independent clip/registry IDs, source group references, destination track/shot, CAS head, and reload after ACK. |
+47:| **Runtime canonical history adapter** | `integrations/runtime/dataProvider.ts:207-315` exposes `shotComposition.restoreHistory` and `publish`; `useTimelineHistory.ts:553-609` calls list/restore. `shotComposition.publish` calls `client.publishParentComposition` (`dataProvider.ts:237-315,271-276`). | Accepted canonical history is Runtime parent-composition revision publication/restore, not App local history. | Keep as the accepted-history adapter until Runtime supplies the EditCommand receipt/history contract. Do not route a local undo through `restoreHistory`. When command commits are available, this adapter reads accepted history; direct publish is deleted from gesture callers, not necessarily from server history implementation. | Preserve exact accepted revision IDs, read-after-write head, list/restore semantics, and no local-stack contamination at remote boundaries. |
+56:| Supabase append/create service | `supabase/functions/_shared/astridAppendService.ts:119-163` posts `/v1/timelines/:id/config-replaced` and `/v1/timelines/create-with-config`, carrying whole config/registry and expected version. `ai-timeline-agent/db.ts:716-748` (`saveTimelineConfigVersioned`) calls it; registry tools call it at `ai-timeline-agent/tools/registry.ts:810,840,961,1039`. | Agent/Supabase owner must hand accepted edits to ProposalRuntime/EditCommand. Remove direct config replacement after all agent producers are command-backed; do not treat this as App's `saveTimeline` branch. Tests currently assert the service calls and need a command-door lane. |
+57:| Complete-task / placement services | `supabase/functions/complete_task/handler.ts:85-110` and `complete_task/placement.ts:210-240` build registry/add-media changes and call `saveTimelineConfigVersioned`. | Route accepted placement/add-media through the Runtime command contract or retain as an explicitly owned server-side command implementation. Delete whole-config append only after command equivalence and retry identity are proven. |
+59:| Document-native placement | `shared/lib/placement/placementService.ts:119-153` does load -> pure mutation -> `RuntimeDataProvider.saveTimelineAtHead`; callers include `placeGeneration`, `unplaceGeneration`, `batchUpdatePlacementFrames`, and `shot-group-pack-commands.ts:410,469`. The service explicitly says it is the only non-editor placement I/O path. | Placement owner must decide whether these become EditCommands or remain a separately named Runtime placement command. Do not let App editor code call this as a fallback. Preserve bounded CAS rebase and the retired-placement-RPC semantics. |
+62:| Test/dev providers | `tools/video-editor/testing/InMemoryDataProvider.ts:70-182`, `lib/browser-runtime.ts:81-197`, and `testing/providerCompatibility.shared.ts:174-711` implement numeric `saveTimeline`, checkpoints, and registry writes. | Keep as test doubles while adding a command-door fake/conformance suite. Do not count test-only calls as product traffic; split/rename compatibility lanes so they cannot mask a product fallback. |
+70:1. Runtime parent-composition publication from `useTimelinePersistence` and popup/placement adapters: `publishParentComposition` at `/v1/.../composition-revisions`.
+71:2. The numeric `DataProvider.saveTimeline` compatibility endpoint, currently rejected by the real Runtime but implemented by test/dev providers and still selected by fallback branches.
+72:3. Runtime checkpoint and accepted-history restore (`saveCheckpoint`, `restoreProjectParentCompositionRevision`).
+79:## M1 versus M2 migration order
+81:### M1: prove one command through the Runtime door
+89:### M2: remove every product fallback
+91:Migrate all remaining `useTimelineCommandsService` operations, add/import, swap, asset registration, transcript/data-kind, visual seam, history inverse, extension element, agent/proposal, popup add/swap, and shared owned placement producers. Then remove:
+93:* `saveTimeline` selection in `useTimelinePersistence`, `useTimeline`, and `element-adapter`;
+94:* config/registry/bundle fallback in `RuntimeDataProvider.saveTimelineAtHead` for command-capable editor callers;
+95:* popup `saveTimeline` compatibility branch when semantic command saving is enabled;
+102:The final gate must be a negative assertion, not only a positive command test: a migrated producer must fail the test if it calls `saveTimeline`, `publishParentComposition` with a gesture snapshot, config-replaced service, or legacy Astrid save route.
+114:1. Mount the editor with a provider whose semantic commit method is a spy and whose `saveTimeline`, `saveTimelineAtHead`, `publishParentComposition`, and old config-replaced client methods throw a test failure. Apply a clip move through `TimelineOps`, the public command service, and the real gesture harness; assert one EditCommand request, exact base head, and an acknowledged Runtime revision.
+115:2. Mount popup add and popup swap separately. Assert occurrence-scoped EditCommand request, occurrence/head pins, one request only, and no call to popup `saveTimeline`, whole canonical graph `publish`, numeric save, or legacy route. Test refusal with missing occurrence pins and mixed commands: no durable call and a retained local draft.
+117:4. Add a static/spy guard over `saveTimelineConfigVersioned`, `appendTimelineConfigViaService`, and `/config-replaced` for migrated App/Agent journeys. Keep unrelated placement metadata tests separate so a relational write does not falsely satisfy editor command coverage.
+139:Hazard: R4's provider shape and semantic flags are not current main's shape. Current `useTimelinePersistence` calls `saveTimelineAtHead` with config/registry/bundle (`current:399-411`) and current recovery uses `timelineDraftIndexedDb`. Integrate the exact-request mechanics into that implementation; do not replace the current queue with R4's old provider assumptions.
+143:Port the R4 `saveTimelineAtHead` semantic branch (`R4 dataProvider.ts:794-1127`), request construction (`:870-906`), pending recovery (`:822-868,908-968`), and `RuntimeCommitSession` (`commitSession.ts:1-98`) concepts: exact `base_revision_id`, `scope`, `change.commands`, source, request ID, persisted session sequence, and no reuse of a sequence for different bytes. R4 tests at `dataProvider.test.ts:919-934` and `:2044-2176` cover lost ACK/restart and pending recovery.
+151:The current popup provider's compatibility path (`current shotTimelineDataProvider.ts:435-593`) is a whole canonical graph publication. Keep its recovery ownership, canonical/display projection, and head checks while semantic support is introduced; then delete only the compatibility branch after zero-traffic tests pass.
+166:Because `edit-recipe.md` and `commit-contract.md` are absent, App cannot safely choose final operation names or request fields. Runtime/Agent owners need to publish:
+175:Until those are published, the safe App action is to port only the bounded M1 command/recovery seam and keep unconverted writers refusing or using the explicitly temporary compatibility path under test. No implementation past Checkpoint A is recommended from this inventory alone.
+179:The current main has one dominant editor snapshot writer (`useTimelinePersistence` -> `RuntimeDataProvider.saveTimelineAtHead` -> Runtime parent-composition publication), but many producers and three important bypass families: popup canonical publication, direct element/standalone provider saves, and non-editor Agent/import/placement writers. Local preview and unsent history are already separable from accepted history; the migration must preserve those boundaries while replacing the durable payload.
+181:The highest-confidence R4 ports are semantic command attachment/refusal, exact pending-request/session recovery, and popup occurrence validation/tests. The highest-risk work is choosing the missing EditCommand contract and migrating add/swap/asset/import/history without losing identity or replay behavior. M1 should prove clip move plus lost-ACK/reload/undo through `/v1`; M2 should migrate every row and make popup add/swap part of the negative zero-legacy-traffic gate.
+
+exec
+/bin/bash -lc 'git show-ref --verify --quiet refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-app-qualified; echo "frozen-ref-exists:$?"' in /home/user/banodoco/reigh-app
+ succeeded in 0ms:
+frozen-ref-exists:0
+
+ succeeded in 368ms:
+codex
+The inventory and worker report are written, and the App worktree remains clean. One explicit requirement still needed in the document is a separate Astrid-route row (current route is read-only, so it must be verified as a non-writer rather than omitted). I’m adding that and then doing final read-only checks.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..a22fbdbc7e66f106ddba9c7dc7b0e704b0580d50
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md
+@@ -0,0 +1,182 @@
++# App M0 durable timeline-writer inventory
++
++Status: Checkpoint A inventory only. No product code was changed. The inventory is against App `tl/integration` at `60aa26b9529dcfa94f8ffdbd5edf42fa6c1babd2` (`60aa26b95`). The target is the single `/v1` Runtime commit door from `PLAN.md`; current whole-document publication is existing state to migrate, not a proposed second door.
++
++## Reading notes and settled boundaries
++
++The App manager brief used here is `ORCH/managers/app/BRIEF.md`. The requested frozen-Agent path, `/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/managers/app/BRIEF.md`, is absent; this path discrepancy is reported, not silently resolved by copying a document. `ORCH/design/edit-recipe.md` and `ORCH/design/commit-contract.md` are also absent at inventory time. Therefore operation names marked **provisional** below are migration requirements, not a settled wire contract.
++
++The states below must remain distinct:
++
++* **Preview:** `useTimelineCommit` preview hydration (`useTimelineCommit.ts:249-290`), patch/compiler preview, and command-runner dry runs. These update render state only and must not save, create history, or create a draft.
++* **Local/unsent history:** `useTimelineHistory`'s in-memory undo/redo stacks (`useTimelineHistory.ts:212-218`) and command inverse descriptors. A local undo currently calls `commitData(..., {save: true, skipHistory: true})`; it is not accepted Runtime history until the resulting request is acknowledged.
++* **Durable local recovery:** IndexedDB drafts (`timelineDraftIndexedDb.ts:160-233`) contain unsent data, base-head metadata, and eventually the exact pending request. They are crash recovery, not accepted history.
++* **Accepted durable history:** Runtime's acknowledged commit/publication receipt and `shotComposition.listHistory`/`restoreHistory` (`useTimelineHistory.ts:553-609`). A provider checkpoint or a successful whole-document save is not interchangeable with the future EditCommand receipt.
++
++The current editor flow is generally:
++
++```text
++gesture / facade / import
++  -> local TimelineCommand or TimelinePatch (when applicable)
++  -> useTimelineCommit.commitData/applyEdit
++  -> useTimelinePersistence draft + current provider saveTimelineAtHead
++  -> Runtime publishParentComposition (/v1/.../composition-revisions)
++```
++
++The migration flow is the same local intent boundary followed by an EditCommand request to the one `/v1` commit door. No App producer should call an old `/astrid/v1` save route, a Supabase config-replacement route, or a compatibility whole-document fallback after its command producer is migrated.
++
++## App-owned current writers and caller chains
++
++The rows below include local producers that do not themselves perform I/O because they are necessary to trace every path to the current durable endpoint.
++
++| Current writer or seam | Caller chain and source evidence | Current durable endpoint | EditCommand operation or deletion | Semantics to preserve; order |
++|---|---|---|---|---|
++| **Editor autosave funnel** | `useTimelineState` and the editor gesture hooks call `useTimelineCommit.commitData` (`useTimelineCommit.ts:337-402`, `useTimelineState.ts:1006-1037`). `commitData({save:true})` emits `scheduleSave`; `useTimelinePersistence` creates the local draft (`useTimelinePersistence.ts:947-1121`) and `doSave` calls `saveTimelineAtHead` or numeric `saveTimeline` (`:377-411`). | `RuntimeDataProvider.saveTimelineAtHead` (`src/integrations/runtime/dataProvider.ts:727-916`) reconciles a whole config/registry/bundle and calls `ReighRuntimeClient.publishParentComposition` (`:844-857`), POST `/v1/projects/:project/timelines/:timeline/composition-revisions`. Numeric fallback is `DataProvider.saveTimeline` (`useTimelinePersistence.ts:403`) and must be treated as legacy. | M1: add a command payload to the commit session for clip move. M2: replace config/registry/bundle fallback with the EditCommand request for every producer; delete the `saveTimeline` branch and any semantic-path fallback. Keep `saveTimelineAtHead` only as a temporary adapter until all commands and the Runtime door are live; then remove its editor-write use. | Preserve debounce for ordinary edits, immediate/flush behavior for semantic commits, exact base head, newest-local-suffix fencing, no reload/repost after stale conflict, and unknown-transport exact retry. The ACK must advance accepted head only; a draft is retained until that ACK. |
++| **Clip/track command facade** | `useTimelineCommandsService` (`useTimelineCommandsService.ts:319-349`) validates and calls `state.ops.applyEdit`. `addClip`, `updateClip`, `moveClip`, `trimClip`, `splitClip`, `deleteClip`, `addTrack`, `moveTrack` are `:441-962`; they currently make `rows` or `config` mutations, then the same `commitData` funnel. | Same autosave publication. No direct provider call in the facade. | M1: `moveClip` -> exact move command (R4 evidence uses `clip.nudge` plus track selector where needed). M2: `timeline.add`, `clip.update`, `clip.trim`/exact trim op, `timeline.split`, `clip.clear`, `timeline.add/remove/reorder/set` as confirmed by edit-recipe. Delete the local-config-to-save adapter once each bounded command exists. Names not present in a settled contract are provisional. | Preserve clip IDs, track IDs, ordering, at/from/to/speed/hold duration, absent versus explicit-null fields, overlap validation, and command inverse. Split must preserve authored child identities and refuse if an exact semantic command cannot be formed; it must not silently fall back. |
++| **Local TimelineCommand runner** | `commands/types.ts:8-25,58-115` defines local command/mutation/history types; `commands/runner.ts:332-541,590-604` validates, dry-runs, applies, and builds inverses. Media descriptors are `commands/media.ts:125-209,244-434` (`add-media`, `swap`, `place-prepared-media`). `useTimelineState.ts:965-1037` applies the runner result. | It is not a durable endpoint itself; runner results currently become `commitData` snapshots and then whole-document save. | Keep the runner as local intent/preview machinery. Add a wire-builder at this seam: add -> **provisional** `timeline.add`; swap -> a specifically defined media-replacement command; prepared media -> add/asset command with stable asset identity. Do not serialize local `add-media` or `swap` names as if they were wire operations. Delete snapshot fallback after each producer has a command builder. | Preserve dry-run purity, inverse generation, stable IDs, registry/clip coupling, duration/type updates, and one transaction boundary for add/swap. |
++| **Patch compiler and `TimelineOps`** | `useTimelineOps.ts:217-285` validates and runs `compileTimelinePatch`, then calls `commitData(...,{save:true,semantic:true})`; checkpoint/rollback are `:287-375`; `flush` is `:424-433`. The pure compiler contract is `lib/timeline-patch.ts:976-1020`; op families are `sdk/video/timeline/patch.ts:18-31`. Public API is `sdk/video/timeline/timelineOps.ts:4-7,51-61`. | `flush()` currently calls `flushPendingSaveRef` but returns `{version}` for the editor timeline, not a Runtime revision/receipt. `apply` reaches the whole-document provider above. | M1: preserve `TimelineOps` as the public mutation boundary and make clip move emit/forward EditCommand. M2: all patch families map to exact EditCommands (`clip.*`, `track.*`, `asset.*`, `app.update`, `project-data.write/delete`); reserved split/slice/graph remain refused until specified. Delete `TimelinePatch` as a durable protocol, not necessarily as the pure local compiler. Change `flush` to await the committed mutation result without pretending editor version is Runtime revision. | Keep stale-local-version checks, patch validation, no provider access in the compiler, selection/preview behavior, and the current `flush` caller semantics. Runtime revision must be explicit in the new result. |
++| **Registry/asset registration** | `useTimelineCommit.patchRegistry` and `unpatchRegistry` (`useTimelineCommit.ts:545-665`) save registry changes; `patchRegistryOwned`/rollback (`:667-735`) provide ownership fencing. `useAssetOperations.ts:29-212` prepares/uploads and commits entries via `patchRegistry`; `useAssetManagement.ts:365-500` supplies Runtime media preparation and legacy Supabase upload fallbacks. | Registry patch is included in the whole config publication. Runtime `registerAsset` (`integrations/runtime/dataProvider.ts:978-991`) reads then calls `saveTimelineInOrder`; Runtime media import is a separate durable operation (`:994-1057`). Non-Runtime fallback uses `uploadImageWithThumbnail`, `uploadImageToStorage`, and `createExternalUploadGeneration`. | M1: retain prepare/upload operation identity and ownership rollback. M2: asset registration must be an exact **provisional** `asset.register`/`timeline.add` command defined by the contract, carried through `/v1`; remove direct `registerAsset`/whole-registry publication from product paths and delete non-Runtime upload fallbacks where Runtime is authoritative. Keep preparation/import APIs if they do not mutate the timeline. | Preserve generated media/generation/variant identity, registry key, URL/thumbnail/mime, upload ownership, rollback on failed parent operation, and lost-ACK recovery. Asset bytes must not be duplicated by a replay. |
++| **Undo/redo and local checkpoints** | `useTimelineHistory.restoreHistoryEntry` (`useTimelineHistory.ts:303-321`) restores a local snapshot and saves it through `commitData`; undo/redo are `:424-486`; `jumpToCheckpoint` is `:488-509`. `persistCheckpoint` calls `provider.saveCheckpoint` (`:249-280`). | Local undo/redo currently publishes a full snapshot through `saveTimelineAtHead`; provider checkpoints are a separate `saveCheckpoint` capability. Canonical restore calls `provider.shotComposition.restoreHistory` (`:553-609`) -> Runtime `restoreProjectParentCompositionRevision` (`integrations/runtime/dataProvider.ts:207-235`). | M1: undo a migrated clip move by sending its exact inverse command, retaining unsent suffix behavior. M2: migrate every undoable operation to inverse EditCommands; decide whether checkpoints remain a local recovery feature or become an explicit accepted-history command. Delete whole-snapshot undo publication after command coverage. Do not delete local stacks. | Preserve transaction grouping, inverse correctness, local undo of unsent edits, publication identity/ABA protection, remote boundary clearing, and the distinction between undoing an unsent command and restoring an accepted revision. Canonical accepted restore must not be recast as local undo. |
++| **Standalone `useTimeline` compatibility hook** | `hooks/useTimeline.ts:31-50` exposes `saveTimeline`; it calls `saveTimelineAtHead` when present and numeric `saveTimeline` otherwise, with query invalidation. This is a separate writer from `useTimelineSave`. | Same Runtime whole-document CAS, with numeric fallback. | M2: route its callers through the command/commit session or delete this mutation wrapper. Keep query invalidation as a read concern. No direct whole-config save after callers migrate. | Preserve optimistic/read cache behavior and head fencing; do not let a stale query write accepted history. |
++| **Browser facade and element adapter** | `browser/hooks.tsx:204-263` calls `ops.applyEdit` for config replacement. `runtime/element-adapter.ts:59-113` is a public extension element save seam and calls `provider.saveTimelineAtHead` or numeric `saveTimeline`. | Browser facade reaches the editor funnel; element adapter can reach the provider directly. | M2: browser calls exact builders (`app.update` or `clip.update` as contract allows); element adapter becomes an EditCommand producer (`clip.set-element`/exact element operation), then remove both provider save branches. | Preserve extension-facing validation, element IDs and payloads, expected head, and errors. An extension must not be able to bypass command authorization. |
++| **Visual-seam persistence** | `useTimelineState.persistVisualSeamConfig` (`useTimelineState.ts:654-681`) builds config and calls `commitTimelineData(...,{save:true,semantic:true})`, then flushes. Render state invokes it through `useRenderState.ts:936-992`. | Whole-document save through the main funnel. | M2: map to the exact `app.update`/visual-seam EditCommand (the local patch family has `app.update`); remove the direct config replacement. | Preserve acknowledgement gating, eligible seam frames, render/preview distinction, and explicit user acknowledgement. |
++| **Transcript/project-data host** | Transient projection in `lib/project-transcript-host.ts:380-390` calls `commitData(...,{save:false,skipHistory:true})`; persisted transcript binding at `:600-660` calls `commitData(...,{save:true,semantic:true})`. Data-kind persisted/transient split is `data-kinds/dataKindItems.ts:51-68`. | Persisted binding/data-kind changes currently enter whole-document save; transient projection is intentionally local-only. | M2: keep transient path unchanged; map persisted transcript/data-lane changes to exact `transcript.bind` and/or `project-data.write/delete` commands. Delete snapshot fallback only after command serialization covers source-item identities. | Preserve transcript source references, schema refs, lane ordering, validation, and the fact that transient preview never saves or enters history. |
++| **Timeline import/add/swap callers** | `useTimelineState.ts:965-995` creates add/swap local commands. `commands/media.ts:125-434` owns their effects/descriptors. External drop and asset flows prepare media through `useAssetManagement.ts` and `useAssetOperations.ts`; popup uses the same state command path when mounted. | Current clip/config/registry parts end in the whole-document save; media preparation may call Runtime `importProjectMedia` or legacy Supabase upload before the timeline write. | M1 only if the clip-move slice needs it; otherwise M2: add/import must emit a batch of exact asset/import + `timeline.add` commands, with `created` identities. Swap needs an explicitly settled media replacement command; do not delete its writer until that command is available. | Preserve import operation ID, upload recovery, asset/clip atomicity as far as the contract allows, source media selection, type/duration, and no duplicate media on replay. |
++| **Popup add/swap provider** | `travel-between-images/components/shotTimelineDataProvider.ts:325-593` loads recovery/canonical graph, drafts through `saveTimelineDraftIfOwner` (`:516-537`), then queues `shotCompositionAdapter.publish` (`:539-567`) via `saveTimeline`. `ShotTimelinePreview.test.ts:299-407,744-780` covers refusal, fresh head, stale head, retry, and lost response. | Whole canonical graph publication through `shotCompositionAdapter.publish` -> Runtime `publishParentComposition`, with an occurrence recovery key and canonical head. The current provider still exposes `saveTimeline` as its writer. | M2: port the R4 occurrence path. Popup add should use exact occurrence-scoped `timeline.add`; popup swap must use the contract's exact replacement/clear operation (the current local `swap` name is not sufficient). Once semantic command saving is enabled, invalid/mixed commands must refuse and never call `saveTimeline`; delete the compatibility branch. | Preserve occurrence identity, canonical head, displayed/canonical graph projection, stable recovery key, command pins, retry byte identity, and no publication after a refused/stale proposal. Add and swap must be tested independently. |
++| **Direct canonical shot duplicate** | `components/AstridTimelineEditor.tsx:390-445` has a document-mode duplicate branch that calls `runtime.shots.shotComposition.publish`, and a fallback branch that calls `duplicateShotGroup`. `lib/shot-group-pack-commands.ts:379-417` admits/copies media then calls `mutateTimelineDocument`; placement service `shared/lib/placement/placementService.ts:119-153` loads and CAS-saves the whole document through `saveTimelineAtHead`. | Runtime parent-composition publication, either direct adapter or placement CAS. This is a shared shot/placement seam, not a normal clip editor gesture. | M2/other-manager: define a `shot-group.duplicate`/batch EditCommand only if the Runtime contract includes this cross-document operation; otherwise keep it as an explicitly owned placement command and prohibit it from bypassing the one door. Delete direct graph publication/fallback duplication only after the owning manager supplies the command. | Preserve pack-command admission, copied final-video bytes, independent clip/registry IDs, source group references, destination track/shot, CAS head, and reload after ACK. |
++| **Runtime canonical history adapter** | `integrations/runtime/dataProvider.ts:207-315` exposes `shotComposition.restoreHistory` and `publish`; `useTimelineHistory.ts:553-609` calls list/restore. `shotComposition.publish` calls `client.publishParentComposition` (`dataProvider.ts:237-315,271-276`). | Accepted canonical history is Runtime parent-composition revision publication/restore, not App local history. | Keep as the accepted-history adapter until Runtime supplies the EditCommand receipt/history contract. Do not route a local undo through `restoreHistory`. When command commits are available, this adapter reads accepted history; direct publish is deleted from gesture callers, not necessarily from server history implementation. | Preserve exact accepted revision IDs, read-after-write head, list/restore semantics, and no local-stack contamination at remote boundaries. |
++| **Astrid timeline route** | `src/integrations/astrid/timelineRoutes.ts:1-44` is a collection/list reader only; its module comment explicitly says there is no load/save route. `src/integrations/astrid/workspaceV1.ts` supplies path builders, not a current editor writer. | No current durable write was found on this route. The current editor's accepted write is the Runtime `/v1` parent-composition path above. | Keep read-only and add a zero-traffic assertion that no editor gesture invokes an Astrid save route. Delete any downstream save caller if one appears in a future broad search; do not add a compatibility writer here. | Preserve read/list behavior and avoid conflating Astrid route discovery with the Runtime commit door. |
++| **Timeline initialization/setup** | `integrations/runtime/createDefaultTimeline.ts:41-134` calls `publishEmptyTimeline` (`:41-71`) and may set the primary timeline. | Setup publication to Runtime parent-composition endpoint; `setPrimaryTimeline` calls project metadata update (`dataProvider.ts:702-711`). | Keep as setup/bootstrap, not an editor mutation. If the Runtime contract requires an initial command, adapt it once; do not delete initialization merely because editor fallback is removed. | Preserve idempotent empty initialization, default timeline selection, project identity, and no duplicate publication on reload. |
++
++## Other-manager and non-editor durable writers found by broad search
++
++These are intentionally not edited by the App M0 worker. They must be owned, labeled, and included in the final zero-legacy audit if they write the same durable timeline document.
++
++| Writer | Evidence and current endpoint | Migration/deletion requirement |
++|---|---|---|
++| Supabase append/create service | `supabase/functions/_shared/astridAppendService.ts:119-163` posts `/v1/timelines/:id/config-replaced` and `/v1/timelines/create-with-config`, carrying whole config/registry and expected version. `ai-timeline-agent/db.ts:716-748` (`saveTimelineConfigVersioned`) calls it; registry tools call it at `ai-timeline-agent/tools/registry.ts:810,840,961,1039`. | Agent/Supabase owner must hand accepted edits to ProposalRuntime/EditCommand. Remove direct config replacement after all agent producers are command-backed; do not treat this as App's `saveTimeline` branch. Tests currently assert the service calls and need a command-door lane. |
++| Complete-task / placement services | `supabase/functions/complete_task/handler.ts:85-110` and `complete_task/placement.ts:210-240` build registry/add-media changes and call `saveTimelineConfigVersioned`. | Route accepted placement/add-media through the Runtime command contract or retain as an explicitly owned server-side command implementation. Delete whole-config append only after command equivalence and retry identity are proven. |
++| Timeline import function | `supabase/functions/timeline-import/handler.ts:244-325` uses `createTimelineViaService` and `appendTimelineConfigViaService`. | Creation may remain a setup operation; imported content must become a command batch (or an explicitly server-owned import command), not an App fallback snapshot. Preserve import IDs, source/registry identities, and idempotency. |
++| Document-native placement | `shared/lib/placement/placementService.ts:119-153` does load -> pure mutation -> `RuntimeDataProvider.saveTimelineAtHead`; callers include `placeGeneration`, `unplaceGeneration`, `batchUpdatePlacementFrames`, and `shot-group-pack-commands.ts:410,469`. The service explicitly says it is the only non-editor placement I/O path. | Placement owner must decide whether these become EditCommands or remain a separately named Runtime placement command. Do not let App editor code call this as a fallback. Preserve bounded CAS rebase and the retired-placement-RPC semantics. |
++| Timeline-frame persistence | `shared/hooks/timeline/timelineMutationService.ts:56-91,140-165`, `shared/hooks/timeline/useTimelineCore.ts:112-190` write `shot_generations.timeline_frame` through Supabase/batch placement. | This is shot placement metadata, not the video-editor config writer. The owner must either keep it outside the EditCommand scope or define a placement command; it must not be counted as zero legacy App editor traffic without that decision. |
++| Trailing endpoint metadata | `travel-between-images/components/Timeline/hooks/segment/timelineTrailingEndpointPersistence.ts:31-82,84-139` reads and updates `shot_generations.metadata.end_frame` directly through Supabase. | Separate other-manager metadata writer. Keep or migrate under its owner; do not silently convert it to `clip.trim` because it targets relational shot-generation metadata, not the canonical timeline document. |
++| Test/dev providers | `tools/video-editor/testing/InMemoryDataProvider.ts:70-182`, `lib/browser-runtime.ts:81-197`, and `testing/providerCompatibility.shared.ts:174-711` implement numeric `saveTimeline`, checkpoints, and registry writes. | Keep as test doubles while adding a command-door fake/conformance suite. Do not count test-only calls as product traffic; split/rename compatibility lanes so they cannot mask a product fallback. |
++| Public read-only example | `pages/Home/publicAstridExample.tsx:127-160` disables persistence and throws `PublicAstridExampleWriteError`. | Preserve as read-only. Add a test that it cannot be used as a fallback writer. |
++| Generated but currently uncalled Runtime mutations | `integrations/runtime/generated.ts:142-173` exposes create/update/replace methods; `generated-contract-metadata.ts` lists the current operations. No current-main editor caller was found for `replaceTimelineClip` or `updateTimeline`. | Do not use these as an accidental second door. Reconcile/generate the EditCommand `/v1` method from the Runtime contract and delete unused legacy mutation wrappers when their callers are gone. |
++
++## Durable endpoint census and deletion boundary
++
++The current-main durable endpoints discovered are:
++
++1. Runtime parent-composition publication from `useTimelinePersistence` and popup/placement adapters: `publishParentComposition` at `/v1/.../composition-revisions`.
++2. The numeric `DataProvider.saveTimeline` compatibility endpoint, currently rejected by the real Runtime but implemented by test/dev providers and still selected by fallback branches.
++3. Runtime checkpoint and accepted-history restore (`saveCheckpoint`, `restoreProjectParentCompositionRevision`).
++4. Runtime media import/asset operations (`importProjectMedia`, `registerAsset`) that can precede timeline mutation.
++5. Supabase whole-config append/create service used by Agent/import/complete-task owners.
++6. Relational placement/frame/metadata writes outside canonical editor timeline config.
++
++The zero-legacy target means no migrated editor producer calls (1)'s whole-document compatibility payload, (2), or (5). It does **not** mean deleting reads, setup publication, Runtime accepted-history reads/restores, media preparation, test doubles, or unrelated relational placement metadata without an owner decision.
++
++## M1 versus M2 migration order
++
++### M1: prove one command through the Runtime door
++
++1. Reconcile the missing edit recipe/commit contract with Runtime and Agent: operation schema, selectors/expectations, occurrence pins, `created` identities, base head, request/session sequence, idempotency, dry-run/rebase, and `CommittedMutation` receipt.
++2. Add a command-capable provider/client method to the current `/v1` Runtime client. Do not port R4's old gateway, provider, or `/astrid/v1` route.
++3. Migrate clip move (including track move where applicable) from `useTimelineOps`/gesture commit to one exact EditCommand. Preserve local preview, grouping, undo inverse, IndexedDB draft, unknown-transport retry, and ACK head advancement.
++4. Port commit-session identity and pending-request fencing into current `useTimelinePersistence`/IndexedDB. A reload must resend the exact request bytes and must retain a newer local suffix.
++5. Change `TimelineOps.flush` to return the command commit result/Runtime revision. Its pure patch compiler remains local and must not become a wire protocol.
++
++### M2: remove every product fallback
++
++Migrate all remaining `useTimelineCommandsService` operations, add/import, swap, asset registration, transcript/data-kind, visual seam, history inverse, extension element, agent/proposal, popup add/swap, and shared owned placement producers. Then remove:
++
++* `saveTimeline` selection in `useTimelinePersistence`, `useTimeline`, and `element-adapter`;
++* config/registry/bundle fallback in `RuntimeDataProvider.saveTimelineAtHead` for command-capable editor callers;
++* popup `saveTimeline` compatibility branch when semantic command saving is enabled;
++* direct editor `publish`/placement graph mutations that bypass the command door;
++* Supabase `config-replaced` calls from migrated Agent/import/complete-task producers;
++* old `/astrid/v1` save routes, if any are found in downstream consumers;
++* whole-snapshot undo publication after command inverses cover the operation;
++* numeric-save conformance from product interfaces, while retaining explicitly marked test doubles until their command fakes replace them.
++
++The final gate must be a negative assertion, not only a positive command test: a migrated producer must fail the test if it calls `saveTimeline`, `publishParentComposition` with a gesture snapshot, config-replaced service, or legacy Astrid save route.
++
++## Local preview, unsent history, and accepted history test seams
++
++The existing tests show useful boundaries but do not establish zero legacy traffic yet:
++
++* `useTimelinePersistence` tests already assert drafts before debounce, no provider fallback after Runtime conflict, retained drafts after unknown transport, and recovery behavior (`useTimelinePersistence.test.tsx` and `useTimelineSave.recovery.persistence.test.tsx`). Extend them with a command request spy, exact request identity, base-head capture, and a newer-local-suffix assertion.
++* `useTimelineCommit.test.tsx`, `useTimelineHistory.test.ts`, and `useTimelineOps.test.ts` are the seams for command attachment, inverse ownership, undo/redo, and `flush`; add assertions that preview/dry-run has zero request/draft/history effects and that accepted history changes only after a receipt.
++* `ShotTimelinePreview.test.ts` already covers refusal/no publish, fresh publication, stale head, retry, and lost response. Port the R4 `shotTimelineDataProvider.test.tsx` occurrence tests: exact occurrence context, command forwarding, exact retry identity, and refusal of mixed/invalid semantic batches.
++
++Required zero-legacy test shape:
++
++1. Mount the editor with a provider whose semantic commit method is a spy and whose `saveTimeline`, `saveTimelineAtHead`, `publishParentComposition`, and old config-replaced client methods throw a test failure. Apply a clip move through `TimelineOps`, the public command service, and the real gesture harness; assert one EditCommand request, exact base head, and an acknowledged Runtime revision.
++2. Mount popup add and popup swap separately. Assert occurrence-scoped EditCommand request, occurrence/head pins, one request only, and no call to popup `saveTimeline`, whole canonical graph `publish`, numeric save, or legacy route. Test refusal with missing occurrence pins and mixed commands: no durable call and a retained local draft.
++3. Simulate lost ACK, reload, retry the exact request, then make a newer local edit. Assert the in-flight request is byte-identical, the newer suffix is not discarded, and accepted history advances once.
++4. Add a static/spy guard over `saveTimelineConfigVersioned`, `appendTimelineConfigViaService`, and `/config-replaced` for migrated App/Agent journeys. Keep unrelated placement metadata tests separate so a relational write does not falsely satisfy editor command coverage.
++
++## Frozen R4 comparison: useful ports
++
++Reference: `/home/user/banodoco/reigh-app`, ref `origin/codex/handover-timeline-r4-20261019-candidate-app-qualified` (resolved while read-only to `8f0c2484463e9b666d184a744d52e252984e551a`). The following was inspected with `git show`; the ref was never checked out.
++
++### `semanticGestures.ts`
++
++Port the bounded semantic-intent machinery, not the file wholesale. Useful pieces are `occurrenceIdentityFor` and `attachGestureCommands` (`semanticGestures.ts:96-183`), scoped clip IDs (`:197-212`), and producer families for move/resize/trim/delete/group move (`:740-763,976-1184`). They preserve exact occurrence selectors, absent versus present-null fields, child `created` identities, and refusal when a semantic command cannot be attached. R4's `useSemanticGestures.integration.test.tsx` has high-value cases: movement/resize/delete (`:758-814`), exact retry (`:867`), pointer cancellation (`:1188`), stale/unbound refusal (`:1563,1766,1815`), and add/rejected-batch recovery (`:2309,2637-2659`).
++
++Do not port R4's historical census as if it were complete: it was 24 semantic versus 44 fallback rows. Current App has no equivalent file, so add only the producers needed by the settled operation recipe. Do not invent wire op names from this file.
++
++### `useTimelineCommit.ts`
++
++Port the `mutation.type === 'commands'` branch (`R4 useTimelineCommit.ts:522-549`), command attachment/refusal, and the `editCommands`, `occurrenceContext`, `proposalBase` option shape (`:80-91`) into current `useTimelineCommit`. Preserve current local event/history behavior in `60aa26b95`; do not replace the file wholesale. R4's command-attachment tests (`useTimelineCommit.test.tsx:575-617`) and inverse ownership check (`:715-724`) are worth porting.
++
++R4 still keeps local `dataRef`, history, and scheduler (`:374-520`) and uses registry semantic flags (`:696-886`); adapt those concepts to current `patchRegistryOwned` ownership. The current main has different local mutation types and no `gestureCommandsFor`, so direct textual porting would either break current producers or accidentally serialize local `TimelineCommand` as wire data.
++
++### `useTimelinePersistence.ts`
++
++Port mechanics from R4 `doSave` (`:644-927`), scheduled semantic capture (`:988-1193`), and fencing/reload (`:1363+`): exact authored base, exact pending request, commit owner, request/session identity, no stale reload/repost, draft retained until terminal success, and newer suffix preservation. Port the R4 test cases for deferred drafts, ACK flush, matching retry 409, 409 diverged/no repost, retained draft, queued commands, and suffix preservation (R4 `useTimelinePersistence.test.tsx:337-497,926-970,1132,1431-1561,2210-2288`).
++
++Hazard: R4's provider shape and semantic flags are not current main's shape. Current `useTimelinePersistence` calls `saveTimelineAtHead` with config/registry/bundle (`current:399-411`) and current recovery uses `timelineDraftIndexedDb`. Integrate the exact-request mechanics into that implementation; do not replace the current queue with R4's old provider assumptions.
++
++### `dataProvider.ts` and commit session
++
++Port the R4 `saveTimelineAtHead` semantic branch (`R4 dataProvider.ts:794-1127`), request construction (`:870-906`), pending recovery (`:822-868,908-968`), and `RuntimeCommitSession` (`commitSession.ts:1-98`) concepts: exact `base_revision_id`, `scope`, `change.commands`, source, request ID, persisted session sequence, and no reuse of a sequence for different bytes. R4 tests at `dataProvider.test.ts:919-934` and `:2044-2176` cover lost ACK/restart and pending recovery.
++
++Do not port R4's whole provider. Current main's `RuntimeDataProvider` has the current canonical parent-composition publication path (`:743-916`), current `ReighRuntimeClient`, current recovery metadata, and current generated client. The current generated client has no `commitTimeline` operation. Reconcile the Runtime contract, regenerate the client, then add the method to current plumbing. Do not revive `AstridBridgeDataProvider`, `SupabaseDataProvider`, or any old gateway/evidence decoration.
++
++### Popup `shotTimelineDataProvider.ts` and tests
++
++R4's semantic branch (`R4 shotTimelineDataProvider.ts:444-525`) is the best bounded port for occurrence-scoped add/swap: validate occurrence context/pins and commands, call the semantic adapter, and throw on invalid semantic input instead of falling back. R4 accepts `timeline.add`, `clip.nudge`, `clip.set-track`, `clip.set-look`, `clip.set-param`, and `clip.clear`; this is evidence for contract discussion, not a final App contract. Port occurrence/recovery tests (`shotTimelineDataProvider.test.tsx:130-233,292-352,383+`) and current `ShotTimelinePreview.test.ts` lost-ACK/recovery tests.
++
++The current popup provider's compatibility path (`current shotTimelineDataProvider.ts:435-593`) is a whole canonical graph publication. Keep its recovery ownership, canonical/display projection, and head checks while semantic support is introduced; then delete only the compatibility branch after zero-traffic tests pass.
++
++## Whole-file port hazards
++
++Do not copy frozen R4 files wholesale. Specific hazards are:
++
++* old `/astrid/v1` transports, gateways, generated clients, and provider types; current plan requires `/v1` Runtime door;
++* old `AstridBridgeDataProvider`/`SupabaseDataProvider` paths, which would reintroduce multiple durable authorities;
++* R4 evidence/attestation decoration and receipt machinery not requested by the plan;
++* R4 semantic modules that assume `gestureCommandsFor`, `commitSession`, or provider flags absent in current main;
++* replacing current canonical shot-composition and placement adapters when only the bounded command/recovery mechanics are wanted;
++* treating local `TimelineCommand`, `TimelinePatch`, editor version, or config version as the durable EditCommand, Runtime revision, or `CommittedMutation`.
++
++## Open App requirements for owners
++
++Because `edit-recipe.md` and `commit-contract.md` are absent, App cannot safely choose final operation names or request fields. Runtime/Agent owners need to publish:
++
++1. The canonical EditCommand envelope and complete op table for clip move/trim/split/delete, track order, add/import/swap, registry/media, transcript/data-kind, visual seam, extension elements, shot occurrence, duplicate/placement, and history/inverse.
++2. Selector/expect semantics, absent versus null handling, stable `created` IDs, occurrence scope, and server validation/refusal rules.
++3. `/v1` method/path, request identity, session sequencing, exact-base behavior, dry-run/rebase behavior, idempotency, lost-ACK recovery, and `CommittedMutation` receipt fields.
++4. Whether undo is an inverse command, a server restore command, or both; what accepted history lists and what a checkpoint means.
++5. Media import/add/swap atomicity and the required project/asset/variant identity, including what may remain a preparatory Runtime operation.
++6. Extension/agent/proposal handoff rules so no caller can bypass `TimelineOps`/the command session.
++
++Until those are published, the safe App action is to port only the bounded M1 command/recovery seam and keep unconverted writers refusing or using the explicitly temporary compatibility path under test. No implementation past Checkpoint A is recommended from this inventory alone.
++
++## Manager summary
++
++The current main has one dominant editor snapshot writer (`useTimelinePersistence` -> `RuntimeDataProvider.saveTimelineAtHead` -> Runtime parent-composition publication), but many producers and three important bypass families: popup canonical publication, direct element/standalone provider saves, and non-editor Agent/import/placement writers. Local preview and unsent history are already separable from accepted history; the migration must preserve those boundaries while replacing the durable payload.
++
++The highest-confidence R4 ports are semantic command attachment/refusal, exact pending-request/session recovery, and popup occurrence validation/tests. The highest-risk work is choosing the missing EditCommand contract and migrating add/swap/asset/import/history without losing identity or replay behavior. M1 should prove clip move plus lost-ACK/reload/undo through `/v1`; M2 should migrate every row and make popup add/swap part of the negative zero-legacy-traffic gate.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f198069c2c6eaa04a589512823f7362c189b72f1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/commit-msg
+@@ -0,0 +1,4 @@
++docs(app): inventory durable timeline writers
++
++Record the current App timeline writer census, R4 port guidance, and
++zero-legacy-traffic test seams for the Timeline M0 checkpoint.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ed806a65d891c45437ab6d6a15bbdaf1c318ae3b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/report.md
+@@ -0,0 +1,26 @@
++# App M0 writers report
++
++## Done
++
++* Read `PLAN.md` sections 2–6, the App manager brief, App `CLAUDE.md`, and research reports 08-app, 13-main-plans, 15-plumbing, and 16-cut-verify.
++* Searched current App beyond the owned editor directories and labeled Runtime, Agent/Supabase, placement, and relational metadata writers as other-manager seams.
++* Compared the frozen R4 App-qualified ref with `git show` only; no R4 checkout, merge, or product edit was performed.
++* Wrote the exhaustive inventory to `ORCH/design/app-writers.md`.
++
++## Findings
++
++The current editor's durable chain is `useTimelineCommit` -> `useTimelinePersistence` -> `DataProvider.saveTimelineAtHead` -> Runtime parent-composition publication. Popup add/swap, element/standalone hooks, shot-group placement, and Agent/import/complete-task services add distinct whole-document or metadata writers. Current local preview and in-memory undo are not accepted durable history; IndexedDB is durable local recovery only.
++
++The frozen R4 implementation is useful for bounded semantic command attachment, exact request/session recovery, and occurrence-scoped popup validation. Whole-file ports are unsafe because R4 contains old providers/transports/routes and machinery not in the settled plan.
++
++`ORCH/design/edit-recipe.md`, `ORCH/design/commit-contract.md`, and the requested frozen-Agent manager brief path are absent. Final App operation names and wire fields therefore remain owner questions; the inventory marks provisional mappings rather than inventing a contract.
++
++## Verification
++
++Read-only evidence commands used included `rg` over `src`, `supabase/functions`, and shared code; `git show origin/codex/handover-timeline-r4-20261019-candidate-app-qualified:<path>` in `/home/user/banodoco/reigh-app`; and current source inspection at App `60aa26b95`.
++
++Product tests were not run: this was explicitly an analysis-only Checkpoint A task and no product code changed. The report therefore makes no claim that the future command path or zero-legacy gate is green. The inventory specifies the required test seams, including popup add and swap, in `ORCH/design/app-writers.md`.
++
++## Blockers and next steps
++
++Blocked for implementation by the missing settled EditCommand/edit-recipe and commit-contract documents. Runtime/Agent owners should publish the envelope, op table, `/v1` route, exact-base/retry/session/receipt semantics, and history/undo rules. Then App can implement M1 clip move plus outbox/recovery and M2's remaining producers and zero-legacy assertions.
+
+exec
+/bin/bash -lc "git show --format= --no-ext-diff origin/codex/handover-timeline-r4-20261019-candidate-app-qualified:src/tools/video-editor/commands/semanticGestures.ts >/dev/null && echo 'R4 semanticGestures:ok'
+git show --format= --no-ext-diff origin/codex/handover-timeline-r4-20261019-candidate-app-qualified:src/tools/video-editor/hooks/useTimelineCommit.ts >/dev/null && echo 'R4 useTimelineCommit:ok'
+git show --format= --no-ext-diff origin/codex/handover-timeline-r4-20261019-candidate-app-qualified:src/tools/video-editor/hooks/useTimelinePersistence.ts >/dev/null && echo 'R4 useTimelinePersistence:ok'
+git show --format= --no-ext-diff origin/codex/handover-timeline-r4-20261019-candidate-app-qualified:src/integrations/runtime/dataProvider.ts >/dev/null && echo 'R4 dataProvider:ok'" in /home/user/banodoco/reigh-app
+exec
+/bin/bash -lc 'git status --short; git diff --check; git rev-parse --short HEAD' in /home/user/work/wt/app-m0-writers
+ succeeded in 15ms:
+R4 semanticGestures:ok
+R4 useTimelineCommit:ok
+R4 useTimelinePersistence:ok
+R4 dataProvider:ok
+
+exec
+/bin/bash -lc "test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md && echo 'app-writers.md:ok'
+test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/report.md && echo 'report.md:ok'
+sed -n '1,5p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/commit-msg" in /home/user/work/wt/app-m0-writers
+ succeeded in 15ms:
+app-writers.md:ok
+report.md:ok
+docs(app): inventory durable timeline writers
+
+Record the current App timeline writer census, R4 port guidance, and
+zero-legacy-traffic test seams for the Timeline M0 checkpoint.
+
+ succeeded in 214ms:
+60aa26b95
+
+codex
+## Completed
+
+- Wrote exhaustive inventory: [app-writers.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md)
+- Wrote worker report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/report.md)
+- Wrote conventional commit message: [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/commit-msg)
+- No product code changed; worktree is clean.
+
+## Verification
+
+- `git status --short; git diff --check` — clean
+- `git rev-parse --short HEAD` — `60aa26b95`
+- Verified frozen R4 files with read-only `git show`.
+- Product tests not run because this was analysis-only Checkpoint A work.
+
+## Blockers
+
+`edit-recipe.md`, `commit-contract.md`, and the requested frozen-Agent brief path are absent. Final EditCommand names and wire fields require Runtime/Agent owner decisions before implementation.
+tokens used
+558,738
+## Completed
+
+- Wrote exhaustive inventory: [app-writers.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md)
+- Wrote worker report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/report.md)
+- Wrote conventional commit message: [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m0-writers/commit-msg)
+- No product code changed; worktree is clean.
+
+## Verification
+
+- `git status --short; git diff --check` — clean
+- `git rev-parse --short HEAD` — `60aa26b95`
+- Verified frozen R4 files with read-only `git show`.
+- Product tests not run because this was analysis-only Checkpoint A work.
+
+## Blockers
+
+`edit-recipe.md`, `commit-contract.md`, and the requested frozen-Agent brief path are absent. Final EditCommand names and wire fields require Runtime/Agent owner decisions before implementation.

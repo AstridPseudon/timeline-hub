@@ -1,0 +1,9 @@
+name=app-m0-contract-map
+repo=app
+base=tl/integration
+base_sha=60aa26b95
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/app-m0-contract-map
+started=2026-10-19T17:52:05Z
