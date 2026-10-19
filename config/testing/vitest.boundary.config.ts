@@ -1,25 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
-import fs from 'fs';
 
 const projectRoot = path.resolve(__dirname, '../..');
-const timelineCompositionRegistryPath = path.resolve(
-  projectRoot,
-  'node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts',
-);
-const timelineCompositionThemeApiPath = path.resolve(
-  projectRoot,
-  'node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts',
-);
-
-const resolvedTimelineCompositionRegistryPath = fs.existsSync(timelineCompositionRegistryPath)
-  ? timelineCompositionRegistryPath
-  : path.resolve(projectRoot, 'examples/embed-demo/stubs/timeline-composition/registry.generated.ts');
-
-const resolvedTimelineCompositionThemeApiPath = fs.existsSync(timelineCompositionThemeApiPath)
-  ? timelineCompositionThemeApiPath
-  : path.resolve(projectRoot, 'examples/embed-demo/stubs/timeline-composition/theme-api.tsx');
-
 export default defineConfig({
   root: projectRoot,
   resolve: {
@@ -37,19 +19,16 @@ export default defineConfig({
       'react-dom': path.resolve(projectRoot, 'node_modules/react-dom'),
       'remotion': path.resolve(projectRoot, 'node_modules/remotion'),
       '@remotion/layout-utils': path.resolve(projectRoot, 'node_modules/@remotion/layout-utils'),
-      '@banodoco/timeline-composition/registry.generated': resolvedTimelineCompositionRegistryPath,
-      '@banodoco/timeline-composition/theme-api': resolvedTimelineCompositionThemeApiPath,
-      '@banodoco/timeline-composition': path.resolve(projectRoot, 'node_modules/@banodoco/timeline-composition'),
+      '@remotion/media': path.resolve(projectRoot, 'node_modules/@remotion/media'),
       '@banodoco/timeline-schema': path.resolve(projectRoot, 'vendor/timeline-schema/typescript/dist/src/index.js'),
-      // Sprint 5: workspace-primitive aliases for the linked packages.
-      // The composition package's animations.generated / transitions.generated
-      // / effects.generated import via these aliases. Astrid's bundler needs
-      // them to resolve; Banodoco's webpack already does the same.
+      // Retained for direct vendored callers until their Viewing migration.
       '@workspace-effects': path.resolve(projectRoot, 'vendor/banodoco-effects'),
       '@workspace-animations': path.resolve(projectRoot, 'vendor/banodoco-animations'),
       '@workspace-transitions': path.resolve(projectRoot, 'vendor/banodoco-transitions'),
     },
     dedupe: [
+      'three',
+      '@remotion/three',
       'react',
       'react-dom',
       'remotion',

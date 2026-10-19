@@ -110,22 +110,6 @@ export default defineConfig(({ command }) => {
   }:undefined;
   const disableRemoteFonts = process.env.VITE_DISABLE_REMOTE_FONTS === "1";
   const editorFixtureAlias = editorExtensionFixtureAlias(command, process.env);
-  const generatedRegistryPath = path.resolve(
-    __dirname,
-    "../../node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts",
-  );
-  const generatedRegistryFallbackPath = path.resolve(
-    __dirname,
-    "../../src/tools/video-editor/lib/registry.generated.fallback.ts",
-  );
-  const themeApiPath = path.resolve(
-    __dirname,
-    "../../node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts",
-  );
-  const themeApiFallbackPath = path.resolve(
-    __dirname,
-    "../../src/tools/video-editor/lib/theme-api.fallback.tsx",
-  );
   const timelineSchemaPath = path.resolve(
     __dirname,
     "../../vendor/timeline-schema/typescript/dist/src/index.js",
@@ -181,24 +165,15 @@ export default defineConfig(({ command }) => {
         "remotion": path.resolve(__dirname, "../../node_modules/remotion"),
         "@remotion/layout-utils": path.resolve(__dirname, "../../node_modules/@remotion/layout-utils"),
         "@remotion/media": path.resolve(__dirname, "../../node_modules/@remotion/media"),
-        "@banodoco/timeline-composition/registry.generated": fs.existsSync(generatedRegistryPath)
-          ? generatedRegistryPath
-          : generatedRegistryFallbackPath,
-        "@banodoco/timeline-composition/theme-api": fs.existsSync(themeApiPath)
-          ? themeApiPath
-          : themeApiFallbackPath,
         "@banodoco/timeline-schema": fs.existsSync(timelineSchemaPath)
           ? timelineSchemaPath
           : timelineSchemaFallbackPath,
-        "@banodoco/timeline-composition": path.resolve(__dirname, "../../node_modules/@banodoco/timeline-composition"),
-        // Workspace-primitive aliases (mirrors banodoco shell webpack-alias.mjs).
-        // Vendored into astrid-app/vendor/ so the Docker build context can resolve them
-        // — the original ../../../../banodoco-workspace paths sit outside the build context.
+        // Retained for direct vendored callers until their Viewing migration.
         "@workspace-effects": path.resolve(__dirname, "../../vendor/banodoco-effects"),
         "@workspace-animations": path.resolve(__dirname, "../../vendor/banodoco-animations"),
         "@workspace-transitions": path.resolve(__dirname, "../../vendor/banodoco-transitions"),
       },
-      dedupe: ['react', 'react-dom', 'react-reconciler', 'remotion', '@banodoco/timeline-composition', '@banodoco/timeline-theme-2rp'],
+      dedupe: ['three', '@remotion/three', 'react', 'react-dom', 'react-reconciler', 'remotion', '@banodoco/timeline-composition', '@banodoco/timeline-theme-2rp'],
     },
     build: {
       outDir: "dist",

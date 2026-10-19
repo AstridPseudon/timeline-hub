@@ -63,6 +63,7 @@ const GROQ_NPM_SPECIFIER = 'npm' + ':groq-sdk@0.26.0';
 
 export default defineConfig({
   resolve: {
+    dedupe: ['three', '@remotion/three', 'react', 'react-dom', 'remotion', '@remotion/layout-utils', '@remotion/media', '@banodoco/timeline-composition'],
     alias: {
       '@': path.resolve(__dirname, '../../src'),
       ...(astridSource ? { '@astrid': astridSource.sourceRoot } : {}),

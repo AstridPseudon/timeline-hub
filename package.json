@@ -126,7 +126,7 @@
     "test:remotion-audio-resume-patch": "node --test scripts/patches/remotion-4.0.509-audio-resume.test.mjs scripts/patches/remotion-4.0.509-audio-resume.semantic.test.mjs"
   },
   "dependencies": {
-    "@banodoco/timeline-composition": "file:vendor/timeline-composition",
+    "@banodoco/timeline-composition": "file:vendor/artifacts/banodoco-timeline-composition-0.0.8.tgz",
     "@banodoco/timeline-ops": "file:vendor/timeline-ops",
     "@banodoco/timeline-schema": "file:vendor/timeline-schema",
     "@banodoco/timeline-theme-2rp": "file:vendor/timeline-theme-2rp",
@@ -147,8 +147,8 @@
     "konva": "^10.2.0",
     "lucide-react": "^0.462.0",
     "mediabunny": "1.50.8",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "react-joyride": "^2.9.3",
     "react-konva": "^18.2.14",
     "react-markdown": "^10.1.0",
