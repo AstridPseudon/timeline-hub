@@ -61,3 +61,47 @@ Approved raw schema fixes all4 original PreparedCommit rejections: unchanged tes
 ## Manager disjoint inverse expectation DECISION acknowledged — 19:42 UTC
 
 Agent confirms newer disjoint B intentionally records app.astrid {fixed_start:true,for:5.5}; orchestrator approved stronger expected-image correction. Runtime test owner will start from SECOND accepted parent, restore ONLY A's exact original target plus recorded config mirror, assert full B row equals its accepted image (incl opaque/fixed/duration), preserve all closure/history/record assertions. Explicit JSON numeric comparison helper only for semantically equivalent numeric spellings, bools/types remain strict. One-line test comment explains old expectation omitted legitimate B writes. No Agent product edits to satisfy old assertion. Test-only follow-up runs full5node central integration after reviewed raw0.2.1 merges.
+
+## rt-m1-realpath-review — actual-source central five-node PASS
+
+Approved stronger inverse expectation is implemented in the sole owned test file: expected starts at second accepted parent, restores only exact original A plus config mirror, checks complete accepted B in both mirrors, and uses strict JSON types with numeric spelling equivalence. All existing closure/revision/records/history/readback assertions and the film/scenario remain. Two first-exercised test assumptions corrected to main APIs: browser-door handshake POST (GET returned 404 route_not_allowed) and flat Runtime refusal details (old wrapper lookup raised KeyError). No product/schema/Agent/App edits or fake provider/semantic overlay.
+
+Final central `rt-m1-realpath-review-commit-integration-1019194703-7913`: **5 passed in 8.77s**, exit 0. Runtime parent `ea20536c63883974415bb1c73eae04ecd16bddca` contains raw-schema 432e473/client 0.2.1; exact tested tree `258b0c842ad8d314a36c446b21c44109d11e99cd`. Central ext: Agent `8c4bd8506a9b3809875a894b4898381b8d4798aa` (actual source, includes 93624e8f/provider and 0.2.1 pin), App `0dfb3896545e555c221c5be7a6e1680965b6d004`, Composition `7aa384a9f3c815f78ce88ff9b47de5adee7bf34a`. Runtime/provider schema digest `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`. Agent HEAD matched at completion.
+
+Door node completes RendererUnavailable startup → real move → discard ACK → newer disjoint edit → Runtime restart → same body/key original result with provider invocation forbidden and unchanged store/history → inverse/readback. Default neutral collection afterwards: **4/9 collected, 5 integration deselected**, Agent imports actively blocked and none loaded. Direct non-door lane 4 passed. No full suite, installs or browser/client-outbox proof; those remain separate owners' work. Exact commands, initial test-only failures and final source tuple in `workers/rt-m1-realpath-review/report.md`.
+
+## Manager review — actual five-node lane PASS
+
+rt-m1-realpath-review passed central commit-integration:5passed8.77s (rt-m1-realpath-review-commit-integration-1019194703-7913, Runtime tree258b0c842ad8d314a36c446b21c44109d11e99cd, parentea20536; Agent8c4bd8506a9b3809875a894b4898381b8d4798aa, App0dfb3896545e555c221c5be7a6e1680965b6d004, Composition7aa384a9f3c815f78ce88ff9b47de5adee7bf34a). Actual normal Agent factory/capture/provider through Runtime/door, renderer-blocked, lostACK discard/newerdisjoint/restart/exact key replay/provider tripwire/inverse. Stronger full-B inverse expectation approved; corrected handshake fixture to existing POST and Error-root shape. No product changes or relaxed closure/history/guards. Manager reviewed exact diff and source tuple; merge requested. Neutral default collection with Agent blocked5deselected (not5skips). Client persisted outbox/actual App pointer/CLI readback remain separate owners' M1 proof.
+
+Final official generated receipt tuple fix merged Runtime182a7dd: client0.2.1 + schema4e52f7df unchanged, aggregate9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d. Actual JSON receipt unchanged; TS project_seq now identical fixed2tuple to main. App/Agent notified. Artifact DTO coverage audit redirect was already fixed in8d70090 and confirmed generator/artifact --check on integration; no duplicate work needed.
+
+## Final Agent vendor-lock publication (2026-10-19)
+
+Agent `runtime.lock.json` now pins the exact current committed Runtime integration
+source `45d3b81c426e3c941c9abb9ab7fc140866b68534` (the producer advanced from
+`182a7dd8446456162a452a25c8493256c5da29fe` during the initial check; the later
+full SHA was re-read and used). The committed manifest remains aggregate
+`sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d`,
+with client `0.2.1` and raw schema digest
+`sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`.
+All 15 Agent consumer bytes/hashes, including the compiled timeline-config
+schema, are unchanged.
+
+## Retained-input integration scope check — 19:52 UTC
+
+rt-m1-input-realpath normal actual provider move/inverse/rebase after v1→v2 producer overwrite/restart passes retained old header/content/dependency recorder assertions. Additional detached-bundle probe restores app.on='word:word-1', manually corrupts derived at to99, calls document_from_bundle and expects word time0.25; gets99. Asked Agent to identify canonical word-anchor syntax + real supported timing entrypoint/scope before calling it an accepted-edit bug. No anchors removed, no provider substitutions/validator bypasses, no full retained-word timing re-evaluation claim. Exact test/code in worker branch; initial accepted input pin is honest prepared-provider fixture seeding because M1 first-source authoring handlers are not widened yet. Actual measured operations use fixed real provider.
+
+
+## rt-m1-input-realpath — actual retained-input result / compiler owner failure
+
+Runtime base `ea20536c63883974415bb1c73eae04ecd16bddca` (actual store/service, official raw client0.2.1 / schema `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`); actual Agent `b9497a1eaa88d660cd7be01b734900a1cfbeeaa0`, clean source, no overlays. Sole new repo file: `tests/test_timeline_commit_input_integration.py` (SHA256 `d6edab174a8f75efe161f45ec51c7c7c1f6118812e4d35d7875f74ba9c441262`). Initial accepted transcript/config pins are honestly fixture-seeded through the production scoped port + real acceptance transaction; subsequent producer updates, restart, captured move/inverse/disjoint replay are actual APIs/fixed Agent/core/compiler. No DB provenance insertion and no semantic-result substitution.
+
+Latest direct non-socket command: `env PYTHONDONTWRITEBYTECODE=1 ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=/home/user/work/wt/rt-m1-input-realpath:/home/user/work/agent /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/test_timeline_commit_input_integration.py --tb=short --basetemp=/tmp/rt-m1-input-realpath-debug-4` => **8 passed, 2 failed in8.97s**. Passing positive cases retain BOTH original full Document headers/content, complete manifest/media/shot/internal closure, source/word/occurrence maps and sole recorder dependencies after the selected transcript OR config producer overwrites v1 with v2; actual moves/inverses/disjoint stale-base replay preserve v1; exact seed/move/replay retries add no provider/input/core/compiler calls or durable rows. Six isolated negative cases reject revoked/foreign/missing input reads while old exact retry remains ledger-only and current caller authorization still rejects it. Reused neighboring first-use races =>4 passed /43 deselected in2.25s.
+
+**Agent-owned failing nodes:** `test_restored_word_anchor_compile_uses_retained_v1[transcript]` and `[config]`, line312. After real move+inverse, pass the actual hydrated restored bundle (both v1 documents) to actual `astrid.sdk.timeline.commit.document_from_bundle` -> actual `compile_authoring_candidate`, with the restored word anchor `word:word-1` and deliberately stale derived `at=99` in both parent mirrors. Expected v1 word start0.25; actual output stays99 (`assert 99 == 0.25`). This is a separate compiler recomputation probe, NOT an accepted edited revision. Normal move/inverse round-trip succeeds because the old numeric cache is restored; it does not demonstrate anchor evaluation/settings application. Current `_recording.py:compile_inputs` explicitly retains pins without evaluating anchors/settings. Do not claim full retained-input timing compilation or end-to-end first-source authoring from the8 passes. Recommend Agent owner connect retained captures to the timing/anchor compiler; preserve these expectations.
+
+Named central request submitted once: `rt-m1-input-realpath-input-integration-1019195154-28427`; source tree `90c067deb35f0ea5d4a93d615593b22090d6c86f`, Agent pin above. Final result/report follows in `workers/rt-m1-input-realpath/report.md`. No full suite/install/product changes.
+
+
+rt-m1-input-realpath central final: named `input-integration` request `rt-m1-input-realpath-input-integration-1019195154-28427` completed **8 passed, 2 failed in8.96s**, exit1 /10s wall. Same two `test_restored_word_anchor_compile_uses_retained_v1` parameterizations fail at line312 (`99 != 0.25`); all retention/restart/actual move+inverse/disjoint replay/retry/refusal nodes pass. Runtime snapshot tree and Agent pin above are unchanged; no full suite or product edits. Exact commands, limitations and owner handoff: `workers/rt-m1-input-realpath/report.md`. Both commit-message files are written; no gate-complete claim.

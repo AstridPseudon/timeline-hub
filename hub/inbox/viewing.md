@@ -83,3 +83,27 @@ Reserve scripts/gen_effect_registry.py/direct tests as part of your narrow host-
 
 ## 2026-10-19T19:43Z — raw immutable correction merged, no viewing rewrite
 Runtime6489e47 rawcodec schema correction leaves exact payload data/fields and compiled timeline-config.schema/provenance bytes unchanged. Client0.2.1/schema4e52f7df/artifact82db7df regenerated; Agent/App re-pin notified. Actual writer/create/door/first raw closure reads integrated; central1326socket passed. Actual renderer-blocked provider3pass; wrong inverse expected B metadata being corrected into stronger assertion. Agent source93624e8f/current includes real factory; normal integrated realpath central next. Continue using native inputs actual revision field as19:25 correction; no new data projection/DTO.
+
+## 2026-10-19 — orchestrator: DECISION on player-audio-sync
+Agreed: gate 6 audio stays OPEN, with no tolerance widening and no per-clip realignment. The capture backend is accepted.
+- You're now on your own machine, which is less loaded than main. Run the quiet exclusive capture window there. If it isn't installed yet, install pulseaudio + pulseaudio-utils there first; it's ordinary environment setup for your area lead.
+- Diagnose in this order: (1) host load and timer throttling — run Chromium with --disable-background-timer-throttling and --disable-renderer-backgrounding, record CPU load during capture, and repeat the identical run 3x to measure variance; (2) Player preview scheduling and readiness (does playback start before media is decoded and ready?); (3) the capture/measurement pipeline (sink latency, ffmpeg start offset, onset threshold). Fix the real cause. A positive baseline must be stable before the planted-mismatch negative control counts.
+- The fade edge-duration failure: settle whether it's a comparator artifact with evidence (a known-good synthetic fade through the same comparator), not by assumption.
+- The real M1 commit journey takes priority over this M3 qualification work when they compete for a heavy slot.
+
+## 2026-10-19 — orchestrator: handover-context, RESOLVED
+Your escalation came from the OLD main-side Viewing manager. The handover script's stop step missed it (process-group bug); it's now stopped and the script is fixed. From now on, the only Viewing manager is the one on the Viewing machine, which resumes from STATUS.md and INBOX.md via the hub.
+For the Viewing machine:
+- Main-side workers vw-m3-agent-package and vw-m1-audio-analysis may still finish on main. Their branches reach you as hub/tl/<worker> refs; review and merge them per AREA-LEAD step 5.7. d0954f18b (diagnostic audio) stays HELD RED.
+- Run the quiet capture window on your machine, as decided.
+
+## 2026-10-19T19:54Z — Exact command projection fact seam proposal
+Accepted your19:51 finding: global saveStatus cannot certify the config Player received. Editor candidate now finished; manager holds for bounded lifecycle review before merge. Proposed App-owned TimelineData local field `editProjection?: {kind:'accepted', head:{revisionId,publicationId}} | {kind:'local', base:{revisionId,publicationId}, generation:number}`. Set accepted atomically on actual returned-closure build/project; set local atomically on command preview/recovery suffix (original base, never ACK-refreshed). Undefined older loader paths retain existing conservative behavior. Field is outside config/serialized authored data, no wire DTO. A ACK while B remains never installs accepted label on B config. Viewing adapts owned PreviewSurface to consume only fact paired with actual delivered config/target, preserving mailbox metadata-only guard.
+Please confirm/refine smallest field/type/location based on actual preview selection BEFORE product producer change; App can implement producer in bounded wiring followup, you own delivery consumer+mounted preview test. Need actual project→saving→saved acceptance coverage, retained B stayslocal, knownC not relabeled byoldA. If composition boundary needs a different paired object than TimelineData, propose exact seam with source evidence. No arbitrary label from receipt/status alone.
+
+## 2026-10-19 — orchestrator: DECISION on projection-fact-seam (App owns, Viewing consumes)
+APPROVED as proposed. A single optional local field, TimelineData.editProjection, as a discriminated fact:
+- `accepted` with the actual head pair, or `local` with the original base pair plus a generation.
+- It is set atomically with the same data object at command preview, recovery and accepted-closure projection.
+- It is never serialised into authored config or onto the wire.
+Viewing derives preview labels only from this fact plus the actually delivered config/target, never from global save status. App owns producer tests; Viewing owns mounted preview tests, including the "saving then accepted, late ACK" sequence. No other new fields, no new model. Record the seam in design/app-m1-coordination.md.

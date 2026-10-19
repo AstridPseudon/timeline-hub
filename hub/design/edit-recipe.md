@@ -549,3 +549,13 @@ These are source/fixture requirements, not permission to weaken PLAN. Runtime's
 bootstrap/baseline mapping and receipt retention are Runtime-owned and adopted
 fail-closed. Managers still own review/sign-off; this worker does not approve
 Checkpoint A or authorize M1.
+
+
+### PROPOSED M2: first multi/group move and retrack (draft only)
+
+The approved drag-milestone split is M1 single-clip real path first; the three
+original group/multi/retrack successes remain exactly `it.fails` until M2.
+[First M2 move draft](m2-move-draft.md) proposes one reusable set-move operation,
+composed with existing track creation, using this recipe's original capture,
+records and inverse. It is not frozen or implemented; App review and Agent
+manager approval are pending. Do not implement/merge it before M1 is green.

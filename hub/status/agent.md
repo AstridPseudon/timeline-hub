@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T19:49:06Z | dispatcher heartbeat 4s -->
+<!-- main | 2026-10-19T19:54:19Z | dispatcher heartbeat 16s -->
 # agent — 2026-10-19T19:46Z
 Milestone: M1 ACTIVE — AUDIT REDIRECT ACK: all three cited provider gaps fixed+MERGED93624e8f (19:34), manager233 integrated tests passed17.78s. core/provider/durable CLI+Python outbox/readback integrated; real acceptance/restart/browser gate pending. M0 design COMPLETE; original baseline stopped by orchestrator, central baseline still running.
 Integrated: agent tl/integrationb3a1cc21 = core1755715f, providerdcfd7299, frontendff57cb46, bridgea6cabc4d, generated pin682e2ba3, readbackba08fd9b, visualize8ca850b1 + Viewing input labels. Manager normal-source combined pytest recipe/provider/sync/CLI/bridge/readback/history233 passed17.78s (agent-review-notes exact scope). Core948 Python lines, provider435; one sole recorder, optional facts[], no renderer import. Central client-cutover-integration39 passed105.45s on pinned Runtimec423544.

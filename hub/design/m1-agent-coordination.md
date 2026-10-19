@@ -273,3 +273,30 @@ Changed only the official vendored client metadata/generated/types and `runtime.
 ## AUDIT REDIRECT acknowledgment — resolved earlier, exact merged evidence
 Orchestrator audit redirect19:45 cites earlier three provider blockers. ALL THREE were fixed and merged by19:34: core1755715f (merge9c1a227a), providerdcfd7299 (merge93624e8f), frontendsff57cb46 (merge886f8bc8). Main normal-source manager233tests pass17.78s (exact command agent-review-notes.md); no counterexample weakened. Corrected core final120neighbor+50real-provider-source tests pass; manager6critical shared-sibling rebase/occurrence undo/retained pins/ABA tests pass. Parent mirror derived writes + actual retained compiler dependencies are solely core records, provider duplicate append/shims deleted; shared source guards exact main materialization equivalence, no prefix heuristic. Readback/labels integrated. New required actual Runtime/CLI/browser central gate remains pending and is separate from these resolved source gaps.
 Reviewed follow-ups: generated0.2.1 pin66830fb6 and retired-ID invariant43bd9c0d merge queued. New real-store test passed central (1PASS, two old-client journeys handshake-blocked until pin). Next central integrated commit-integration --files tests/sdk/test_timeline_commit_provider_runtime.py on latest actual products. No additional full request; original+batched queue continue.
+
+## Actual CLI/Python runtime schedule progress / product boundary
+Central agt-m1-cli-journey-review-commit-integration-1019195003-6839 on real Agent8c4bd850+test correction / Runtime182a7dd =>2PASS1FAIL23.08s. Both real schedules pass complete raw immutable GET + entire lossless authoring bundle checks. Touched-basis conflict schedule PASS, structural accepted-store/restart/redo/exact-ledger retry PASS. Disjoint schedule passes CLI accept, after-durable lostACK, B authored while A unacked, other disjoint edit, actual daemon restart/normal realm+actor reconnect, exact original A path/body/key/receipt, B unchanged guards/newHA+freshkey, rebasedB, Runtime inverse, exact show/layers. It fails at final visualize --mode inputs: CLI implicit contact default is incompatible with native filmstrip-only contract (docs advertise invocation without --view). Postvisualization history/old revision assertions still unreached, so gate NOT claimed. agt-m1-inputs-cli-default owns narrow product default fix + parser/handler regressions; required journey expectation intact. Test-only readback codec correction3e293dae reviewed/merge queued; it strengthens independent raw GET/manifest plus entire authoring closure comparison instead of incorrectly comparing parent subset to publication payload.
+App M2 exact3 original drag nodes received, passed to draft-only agt-m2-move-design; no product widening/merge before M1 green. Current single-clip mounted browser path remains App priority.
+
+## Retained word-anchor probe boundary (Agent semantic owner)
+Runtime input-realpath ordinary retained-v1 move/inverse/rebase/restart tests pass. Extra detached probe manually corrupts both at caches to99 after undo, then calls commit.document_from_bundle expecting word-follow0.25. M1 helper is graph publication converter, no word evaluator; fixed M1 guards/clears old anchors and restores exact original authored cache on inverse, while verifying/retaining pinned documents. No M1 follow command/syntax promised; numeric absolute move only. Preserve probe as explicit M2 timing-compiler requirement against real supported bound-source anchor/entrypoint when ported, not a false M1 pass or reason to strip original anchors. Actual accepted-path wrong restored timing would remain a bug owned by Agent.
+
+
+## agt-m2-move-design — PROPOSED draft published; no M1 change
+
+Draft-only first M2 contract: [m2-move-draft.md](m2-move-draft.md), linked from
+edit-recipe.md. Reads PLAN §4.1/final clip.move/schema handoff, App main60aa26b95
+original three success tests, current0dfb389654 drag planner/helpers/capture and
+Agent current primitives. Proposes one `clip.move-set` v1 entry for multi/group/
+singleton retrack plus existing track.create v1 for bottom lanes. Simultaneous
+original-state planning, scoped group relocation/order, complete consumed query
+capture, fixed windows, clone-safe basis; no new DTO/recorder/undo path.
+
+App inbox review requested on exact three original expectations and routing,
+role/extent/order handoff. Agent manager must review final semantics before any
+freeze. Precise open choices/evidence are in the draft's final section: blocked
+placement vs main's source-window-shifting collision path; main >= equal-start
+hard blocker vs M1 >; group/order inverse support; real CLI/Python/sheet adapters.
+These are proposals/evidence, not M1 fixes or parity claims. M1 original capture
+and single-move semantics remain unchanged. No repository product/test edits,
+new agents, product tests, git mutation or merge. M1 always wins conflicts.

@@ -51,3 +51,18 @@ Spec now building actual `.clip-action[data-clip-id]` pointerdown/move/drop with
 19:48 journey strengthened while product reviews finish: network counter proves no commit before actual mouseup/drop; relevant C6 now publishes AFTER B pointerdown and BEFORE drop, so retained B7 must still contain its original at5 guard. For accepted B and UI inverse, spec checks actual visible preview-revision-label `Committed <saved revision>` OR explicit preview-revision-unavailable for that exact target. Pending canonical-shot optimistic Player parity remains unclaimed per Viewing inbox19:46; native inputs visualize checks exact saved revision + declared-only artifact label, not composed pixels. Local lint/isolated tsc continue passing. Browser not requested; controls still await reviewed mounted consumer, Agent0.2.1 now integrated, App refreshed pin pending.
 
 19:49 recovery UI split seen; browser will target final reviewed `Recover saved edits` button + data-owner-id and `Retry exact request`, not speculative UUID display. Scope collision evidence to reconcile before merge: current app-m1-editor-wiring source now ALSO adds inline commandBanner and shell tests in TimelineEditorShellCore.tsx/.test.tsx (`Recover editor <index>`, `Retry timeline edits`), while new recovery-ui worker owns minimal shell mount. Please have owner batch choose one implementation; I will copy only final reviewed/integrated files. No edits to either worker's product files.
+
+### Recovery UI seam — app-m1-recovery-ui
+
+The mounted command-session recovery surface consumes `ops.commandSession` with
+`state`, `retry()`, and `recover(ownerId)`. The browser journey should select a
+recoverable owner explicitly using `button[data-owner-id="<exact owner id>"]`;
+the owner ID is not displayed. The accessible label is `Recover saved edits`
+for one choice, or `Recover saved edits (session 1)`, `Recover saved edits
+(session 2)`, and so on when several choices exist. An uncertain save exposes
+the accessible button `Retry exact request`, whose explanation says it checks
+the pending save without creating another edit. A retained semantic conflict
+states that changes are retained and need resolution; transport, lock, and
+storage failures remain unsaved-work/error states and are not labelled as
+conflicts. The surface is absent when the command-session surface is absent or
+already saved.
