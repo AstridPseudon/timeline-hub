@@ -1,10 +1,10 @@
-<!-- main | 2026-10-19T19:22:56Z | dispatcher heartbeat 5s -->
-# agent — 2026-10-19T19:05Z
-Milestone: M1 OPEN — Checkpoint A APPROVED; dispatching minimal engine/provider/frontends/readback in parallel. M0 design complete; last one main baseline still running (~87%).
-Integrated: agent tl/integration e51595c6 unchanged; no bulk R4/M0 experiment merged.
-In flight: agt-m1-core (engine/capture/inverse/rebase + structural proof); agt-m1-provider (ABI1/closure/port); agt-m1-frontends (CLI/Python/outbox); agt-m1-readback (published exact revision labels). agt-m0-env default baseline continues ONCE, final counts pending.
-Next: review/merge schema+core slice; real Runtime acceptance/undo; CLI/Python and real App capture/outbox; show/visualize revision readback; renderer-off + lost-ACK restart journey. Internal ownership/API in design/m1-agent-coordination.md.
-Blocked/needs: none for parallel work; generated clients/Runtime implementation consumed when owner lands. Baseline make-check limits are unchanged-main environment prerequisites, recorded in agent-review-notes.md.
-Gates: baseline conformance179pass/4skip; M0 recipe14/schema95/suffix35/probes4 reviewed. New M1 gates1/2/3/5 unproven; do not mistake fixtures for real App/browser durability.
-Inbox: all through 19:01Z CHECKPOINT A APPROVED/M1 OPEN acknowledged; PLAN + updated MANAGER-COMMON/COMMON read. Frozen schema/contracts; real path first, no widening/framework growth.
-Resources: ~21 GB free; old Agent baseline heavy run active; new full/socket suites use request-test/wait-test (one full machine-wide, cached by tree). Future worker effort high. M0 evidence-only branches recyclable, preserve reports/logs; no shared pytest-root cleanup.
+<!-- main | 2026-10-19T19:28:05Z | dispatcher heartbeat 14s -->
+# agent — 2026-10-19T19:25Z
+Milestone: M1 ACTIVE — first real move path under integration review; core/provider seams being corrected. M0 designs COMPLETE; baseline partial original run stopped by orchestrator, central integration baseline pending.
+Integrated: agent tl/integration fa0542ad — public command/history SDK bridge + Viewing exact provenance labels. Manager8 bridge tests passed0.58s. Main conformance baseline179 passed/4 skipped; make check preflight blocked by Remotion GitHub403; doctor/mypy toolchain limitations documented in agent-review-notes.md.
+In flight: agt-m1-core-integration-fix — cdf88d7e held; shared-owner false conflict, recorded clip mirrors, consumed pins, optional event admission, App capture intent/query goldens. agt-m1-provider — real closure/provider tests blocked by core, no weakened tests. agt-m1-frontends-fix — durable RPC fencing/public bridge/strict ACK. agt-m1-workspace-client MERGED/recyclable. agt-m1-client-pin — Runtime0.2 normal vendor artifacts. agt-m1-readback-live-adapter — real RemoteTimelines facade history, strict identity; earlier fix38manager tests pass but held, merge final chain only.
+Next: land reviewed SDK bridge/readback; integrate corrected core/provider/outbox; consume Runtime0.2 generated pin; real Runtime renderer-free commit/retry/restart/inverse/readback + App parity/browser path; one central full on merged batch.
+Blocked/needs: no orchestrator blocker. Concrete internal core/provider guards/mirror/dependency disagreements assigned correction. Runtime routes/store and App session journey still building.
+Gates: Checkpoint A APPROVED per PLAN; M1 exit and gate3 NOT PROVEN. No full/browser/socket acceptance claimed. Original baseline stopped at87% per orchestrator; use central baseline exact counts when finished, do not rerun.
+Inbox: all through19:22 plus orchestrator baseline-stop acknowledged. Viewing reserved narrow remotion_runtime.py consumer migration; App intent/query findings assigned. Runtime0.2 wire merged; empty optional semantic events agreed.
+Resources: 14GB free; use central test queue for full/socket. M0 experimental branches NOT FOR MERGE/recyclable with reports retained. Held M1 originals retained until fix chains merge.

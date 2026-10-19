@@ -1,4 +1,4 @@
-<!-- main | 2026-10-19T19:22:56Z | dispatcher heartbeat 5s -->
+<!-- main | 2026-10-19T19:28:05Z | dispatcher heartbeat 14s -->
 # runtime — 2026-10-19T19:15Z
 Milestone: M1 ACTIVE — first wire + retained-input merges; real browser/CLI/Python move/retry/restart/undo path still pending.
 Integrated: runtime tl/integration1d061f0 = wire a24e7d2 + input review f459da6. Manager reruns: pytest -q tests/test_timeline_commit_contract.py26pass; tests/test_timeline_commit_inputs.py12pass. Wire generator/conformance/artifact/TS checks passed; Agent schema pin byte-equal. Clients0.2.0 digest sha256:a32cc6e58f1fbd6df324f48e8b826ee11a9e1b5292d42f30179242a118eddb0e; consumers notified. No live commit route integrated yet.

@@ -205,3 +205,26 @@ Exact shot source helper currently refuses ambiguous containing-publication medi
 ### rt-m1-port final evidence / ready for manager integration
 
 Final real-helper composition (baseline-review + validation + acceptance + inputs-review + door-review + wire, own service/port/tests authoritative): `PYTHONPATH=. /home/user/work/venv-runtime/bin/python -m pytest -q tests/test_timeline_commit_port.py --tb=short` =>29passed19.38s. Final neutral neighbors (timeline_names and five publication/replay/integrity service tests) =>6passed9.87s. git diff --check clean. No full/socket/browser suite. Full report + exact commands: workers/rt-m1-port/report.md; conventional message at commit-msg and commit-msg.txt. Only three assigned files changed. No remaining adapter blocker in tested snapshot; actual Agent semantics, transcript/narration integration and live transport/journeys remain manager integration evidence. Startup verified-baseline migration chosen to keep request/dry-run/history reads free of migration writes; unprovable provenance remains read-only. Tracked legacy publish rejects before writes. Stop after evidence as requested.
+
+Acceptance final: **74passed in35.65s** across own acceptance/execution + idempotency_compaction + runtime_upgrade + migration_vacuum, using reviewed inputs/baseline modules. Report and exact reproducible helper-overlay command: workers/rt-m1-acceptance/report.md. Both commit-msg and commit-msg.txt written. No full/socket/provider/route/owner-film claim. Legacy upgrade NEW_TABLES census and migration fixture downgrade helpers updated as necessary for v31; no assertions weakened.
+
+## rt-m1-artifacts — integrated validator/artifact pins (2026-10-19)
+
+The refused validator merge was reconciled onto Runtime `892fe623ce6cf2e554bcd8484652423646326be2` by preserving the wire generator hook and regenerating the combined manifest. The reviewed validator source was `68fc5ec`; the post-harness combined worktree source tree digest is `sha256:3b08004516257cdc691b3e083c9707eecadf6362953f4bc13d1d959e567f9e3a` (the harness will assign the final commit SHA).
+
+- Agent edit-command schema byte pin: `sha256:2a4058f883c59457052e4b42f74cc2fa411cf004f98f1c7ef953ecbe894ff427`.
+- Runtime generated schema digest: `sha256:a32cc6e58f1fbd6df324f48e8b826ee11a9e1b5292d42f30179242a118eddb0e`.
+- Artifact manifest aggregate (`contract/artifacts.json` version): `sha256:1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d`.
+- Packaged validator bundle: `sha256:5059d9b55286a62f9b2a802501aca135ef3cece61045ad6d978730ee90696109`.
+
+Evidence: `generators/generate.py --check`, `scripts/artifact_manifest.py --check`, exact Agent schema `cmp`, and the required Runtime lane all pass; `pytest -q tests/test_timeline_commit_contract.py tests/test_timeline_commit_validation.py tests/test_timeline_commit_inputs.py tests/test_timeline_commit_baseline.py tests/test_timeline_commit_film_fixture.py` => **132 passed**. No full/socket/browser suite was run here.
+
+## Manager executable finding — fresh create receipt chronology
+
+rt-m1-port HELD/superseded by rt-m1-create-review. Actual main APIs + composed helper probe: create editable timeline succeeds, but its own verify_baseline refuses integrity_reason:receipt_stream_mismatch. Rows: parent_composition.publish stream2/project_seq2/event_ids[2], then timeline.create stream2/project_seq3/event_ids[1]. Creation's stream position and project sequence bookkeeping must precede bootstrap's receipt while final exact create response includes bootstrap head; all inside original outer transaction. Follow-up fixes API creation, not verifier exceptions. Root product never had this branch merged. Probe sources /tmp/rt-bootstrap-review; no original realm accessed. Baseline schema/opaque fixes are already merged. realpath worker use corrected service branch when ready.
+
+Orchestrator cross-source-tests decision ACK: runtime commit-integration lane added; test-run cache now includes external integration source tuple and records ext. No --no-cache workaround needed. Viewing19:25 correction ACK: inputs visualize CLI actual revision=data.outputs.inspection.revision_id, SDK data.inspection.revision_id; snapshot_label only composed/managed outputs.
+
+## Manager executable finding — authoritative recorder corruption
+
+Original rt-m1-acceptance is HELD/superseded by rt-m1-record-integrity. Probe: valid JSON modification writes[0].before.value=99 after real acceptance; history returns99, integrity_errors[], exact retry succeeds. Follow-up binds full Recorder to existing hash-chained acceptance event (one digest, no new DTO/receipt framework) and checks all durable reads. No root commit writer merged yet and no original realm affected. realpath/create-review should consume corrected source once available; other schema/DTO/port shapes unchanged. Escalated data-integrity finding as required, fixing locally without waiting.
