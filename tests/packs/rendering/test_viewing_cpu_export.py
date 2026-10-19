@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import subprocess
 import tarfile
 from dataclasses import replace
 from pathlib import Path
@@ -76,6 +77,25 @@ def _package_hashes(project: Path) -> dict[str, str]:
     }
 
 
+def _probe_color_metadata(path: Path) -> dict:
+    out = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "stream=codec_type,pix_fmt,color_range,color_space,color_transfer,color_primaries",
+            "-of",
+            "json",
+            str(path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    return json.loads(out)
+
+
 @pytest.mark.timeout(600)
 @pytest.mark.parametrize("fixture", ["media-only", "text-card", "transition-windows"])
 def test_canonical_cpu_export_publishes_real_video(
@@ -122,6 +142,24 @@ def test_canonical_cpu_export_publishes_real_video(
     sidecar = parity._json(Path(f"{output}.provenance.json"))
     assert sidecar["output"] == str(output.resolve())
     probe = _probe(output)
+    # Keep the encoder's reported colour metadata beside the retained probe;
+    # ffprobe omits unset fields, so retain those as null rather than guessing.
+    color_probe = _probe_color_metadata(output)
+    color_fields = (
+        "pix_fmt",
+        "color_range",
+        "color_space",
+        "color_transfer",
+        "color_primaries",
+    )
+    assert len(color_probe["streams"]) == len(probe["streams"])
+    for stream in probe["streams"]:
+        matching = next(
+            candidate
+            for candidate in color_probe["streams"]
+            if candidate.get("codec_type") == stream.get("codec_type")
+        )
+        stream.update({field: matching.get(field) for field in color_fields})
     # Retained with pytest's basetemp by the central qualification runner.
     (tmp_path / "cpu-export-probe.json").write_text(json.dumps(probe, indent=2) + "\n")
     assert _package_hashes(project) == before, "export modified the published package"
@@ -130,7 +168,9 @@ def test_canonical_cpu_export_publishes_real_video(
     video = next(stream for stream in probe["streams"] if stream["codec_type"] == "video")
     audio = next(stream for stream in probe["streams"] if stream["codec_type"] == "audio")
     assert video["codec_name"] == "h264"
-    assert video["pix_fmt"] == "yuv420p"
+    # artifacts.py:286-290,302 canonicalizes yuvj420p as the existing
+    # equivalent spelling of yuv420p; accept either actual ffprobe spelling.
+    assert video["pix_fmt"] in {"yuv420p", "yuvj420p"}
     assert int(video["nb_read_frames"]) == round(duration * parity.CANVAS["fps"])
     assert audio["codec_name"] == "aac"
     assert float(audio["duration"]) == pytest.approx(duration, abs=0.12)
