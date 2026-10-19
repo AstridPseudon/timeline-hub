@@ -1,4 +1,4 @@
-<!-- app | 2026-10-19T23:36:11Z | dispatcher heartbeat 10s -->
+<!-- app | 2026-10-19T23:41:22Z | dispatcher heartbeat 1s -->
 # app — 2026-10-19 23:35 UTC
 Milestone: M1 ACTIVE — latest23:15redirect REQUIRES opaqueconfigroots INstorednativeDRAFT, notonlyexactrawbase. app-m1-draft-opaque-roots9c074972c DONE/reviewed:127focusedPASS/7helperPASS/tsc2old, directopaque-draftassertRESTORED+actualbrowserPASS1/272s onpre-typecleanup snapshot07a27d6d. FINALsource dd1fe6a7 has3type-onlyerasededits, managerfinal-treebrowserrequalification +source-awarefull queuedONCE; priormixedPASS213s/rawclosureproofretained butdoesNOTclose tightenedM1draftrequirement. Latestfullrunning. M0 COMPLETE. M2 branches authorized, MERGES HELD until recorded M1.
 Integrated: App tl/integration bdc9dcd9b CLEAN, tree a6d1a0c6c0564e4ba266681fef19d73d7e0fd902. Restore authoritative pair+scope and test-only mixed-edit safety integrated. Original5helpers/cases63834bytes unchanged. Runtime0.2.1/schema4e52/artifact9b18, Composition0.0.8/hash93bc/React18.3.1/Remotion4.0.509 unchanged.3originaldrag it.fails+3exactexceptions remain.
