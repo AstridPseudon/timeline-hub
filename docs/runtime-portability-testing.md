@@ -45,6 +45,13 @@ Linux 5.3+ is required for detached stop/restart. When Python lacks a pidfd
 wrapper, the platform module calls libc `syscall()` on verified Linux ABIs.
 Unverified ABIs fail closed; signaling still pins a pidfd before checking the
 process birth identity, and never falls back to signaling a bare PID.
+Retained-descriptor consumers share the public Linux helpers
+`platform.pidfd_open(pid, flags=0)` and
+`platform.pidfd_send_signal(fd, signum, siginfo=None, flags=0)`. The opener
+transfers descriptor ownership to its caller; the sender leaves it open.
+Callers must check process identity after opening the pidfd and before
+signaling. `signal_process` owns the combined pin, identity-check and signal
+sequence. The syscall fallback accepts only `None` for siginfo.
 Windows uses process creation FILETIMEs and SID-derived numeric user identity,
 identity-checked process handles, and kill-on-close Job Objects. Children start
 suspended until assigned to their Job. A detached owner inherits the Job handle
