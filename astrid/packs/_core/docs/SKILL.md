@@ -30,9 +30,17 @@ Choose the route by the requested result. Read only that route's guidance:
 Using an existing workflow and building a reusable extension are different
 requests: pack builder handles the latter, including deciding what to reuse.
 
-On a new machine, complete the [setup checklist](../../../../docs/setup/SKILL.md) before beginning project work.
+On a new machine, install Astrid using the OS command in
+[Getting Started](../../../../docs/getting-started.md), then open
+[astrid.haus](https://astrid.haus). Do not install `astrid-app`; it is for app
+developers. The [setup checklist](../../../../docs/setup/SKILL.md) follows this
+same user path.
 
 ## Start here
+
+The command examples below are developer/operator workflows for a prepared
+Astrid Python environment. They are not user installation instructions; use
+the OS installer and astrid.haus setup path above on a new computer.
 
 ## Preferences and project documents
 
@@ -78,9 +86,9 @@ python3 -m astrid runs open
 payload. Use it when structured results help; ordinary commands and examples
 for users can omit it.
 
-On a new machine, follow the brief [getting started guide](../../../../docs/getting-started.md)
-for Python, the runtime package, and the source manifest. Then check the
-runtime:
+For developer work on the source checkout, use Python/runtime setup documented
+in the developer reference. For product use, follow the user setup path above
+and work through astrid.haus.
 
 ```bash
 python3 -m astrid doctor --json

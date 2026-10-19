@@ -28,7 +28,23 @@ Tools and knowledge for agents and humans to make art with open models.
 ╰────────────────────────────────── ◇ ───────────────────────────────────╯
 ```
 
-**Want to set it up yourself?** [Get started →](docs/setup/README.md)
+**Set up Astrid:** run the installer for your operating system, then open
+[astrid.haus](https://astrid.haus).
+
+macOS and Linux:
+
+```sh
+curl -fsSL https://astrid.haus/install | sh
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://astrid.haus/install.ps1 | iex
+```
+
+Astrid is used at [astrid.haus](https://astrid.haus). Do not install
+`astrid-app` to use Astrid; that repository is for app developers.
 
 The CI default lane uses the committed `tests/.test_durations` file to balance its eight pytest shards. After a full default-lane run, refresh it with `python -m pytest -q --store-durations --durations-path tests/.test_durations`, then commit the updated file.
 

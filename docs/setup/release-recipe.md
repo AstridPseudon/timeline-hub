@@ -1,5 +1,10 @@
 # Current paired-release and provisioning recipe
 
+> **Developer and release-owner reference:** this document records artifact
+> qualification and operator procedures. It is not a supported user install
+> path. Users should follow [Getting Started](../getting-started.md) and use
+> Astrid at astrid.haus.
+
 Status: **maintained recipe; final release inputs pending producer handoff**.
 
 This is the one setup recipe for the current Astrid publication tuple. It is

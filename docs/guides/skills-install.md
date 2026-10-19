@@ -1,5 +1,10 @@
 # Skills install layer
 
+> **For developers:** this guide describes installing Astrid's prompt content
+> into supported agent harnesses from a prepared Astrid environment. It does
+> not install Astrid for users. For user setup, follow
+> [Getting Started](../getting-started.md) and open astrid.haus.
+
 Astrid installs its prompt content as "skills" into three agent harnesses: **Claude Code**, **Codex**, and **Hermes**. One canonical command:
 
 ```bash

@@ -1,5 +1,10 @@
 # Editor panel authoring
 
+> **For developers:** this draft builds the Astrid app and requires source
+> checkouts of `astrid-agent` and `astrid-app`. It is not a user setup route.
+> To use Astrid, follow [Getting Started](../getting-started.md) and open
+> astrid.haus.
+
 This starter is reconciled against the current rendering pack and pinned Astrid App SDK. The independent author exercise on the Beat Cue example remains a separate final proof.
 
 ## Start from the V3 UI scaffold
