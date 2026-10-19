@@ -1,6 +1,7 @@
 /** New chat choices and fixed-session model words, kept together for the chat words pass. */
 export const AGENT_CHAT_COPY = {
   fixedModel: 'To use another model, start a new chat.',
+  useAgentDefault: 'Use the agent’s default model',
   noModels: 'No models available.',
   modelsFailed: 'Could not load models.',
   newMenuHint: 'A chat keeps its agent and model. Press → to pick a model.',

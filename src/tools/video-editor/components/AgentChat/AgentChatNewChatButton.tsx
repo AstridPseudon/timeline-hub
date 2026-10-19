@@ -325,7 +325,12 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
                       <p className="px-2 py-1.5 text-[11px] text-muted-foreground">Showing {SUBMENU_LIMIT} of {shownModels.length}. Keep typing to narrow.</p>
                     )}
                     {submenu && !submenu.loading && submenu.models.length === 0 && (
-                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">{submenu.note ?? AGENT_CHAT_COPY.noModels}</p>
+                      <>
+                        <p className="px-2 py-1.5 text-[11px] text-muted-foreground">{submenu.note ?? AGENT_CHAT_COPY.noModels}</p>
+                        <CommandItem value="agent-default" className="text-xs" onSelect={() => start(browsing)}>
+                          <span className="normal-case">{AGENT_CHAT_COPY.useAgentDefault}</span>
+                        </CommandItem>
+                      </>
                     )}
                     {browsing === 'astrid' && (
                       <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: run <code className={KEYCAP}>omp</code>, then <code className={KEYCAP}>/login</code>.</p>

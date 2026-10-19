@@ -123,6 +123,17 @@ describe('AgentChatNewChatButton', () => {
     expect(screen.getByPlaceholderText('Search Codex models…')).toBeTruthy();
   });
 
+  it('starts a ready non-default agent with its own default when its catalog is empty', () => {
+    const { onNewChat, onBrowseAgent, view } = openMenu();
+    fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
+    view.rerender(<AgentChatNewChatButton defaultAgent="claude-code" agents={ready} onNewChat={onNewChat} onBrowseAgent={onBrowseAgent} agentModels={{ agent: 'codex', models: [], loading: false }} />);
+
+    fireEvent.click(screen.getByRole('option', { name: 'Use the agent’s default model' }));
+
+    expect(onNewChat).toHaveBeenCalledExactlyOnceWith('codex', undefined);
+    expect(screen.queryByPlaceholderText('Search Codex models...')).toBeNull();
+  });
+
   it('shows a known current model on the ready row', () => {
     openMenu({ agentModelNames: { 'claude-code': 'Sonnet 4.5' } });
     expect(screen.getByLabelText('Ready, using Sonnet 4.5')).toHaveTextContent('Sonnet 4.5');
