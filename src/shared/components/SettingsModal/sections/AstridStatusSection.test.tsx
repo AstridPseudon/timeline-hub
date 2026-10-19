@@ -77,15 +77,15 @@ describe('AstridStatusSection', () => {
 
     expect(await screen.findByText('Studio')).toBeInTheDocument();
     expect(screen.getByText('workspace.v1')).toBeInTheDocument();
-    expect(screen.getByText('Installed app, Runtime, and agent versions are not reported by this Runtime connection.')).toBeInTheDocument();
+    expect(screen.getByText("Astrid doesn't report its versions here yet.")).toBeInTheDocument();
     expect(screen.getByText('pack-host')).toBeInTheDocument();
     expect(screen.getByText('comfyui')).toBeInTheDocument();
     expect(screen.getByText('astrid-chat')).toBeInTheDocument();
-    expect(screen.getByText('Starting')).toBeInTheDocument();
+    expect(screen.getByText('Starting…')).toBeInTheDocument();
     expect(screen.getByText('Running')).toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
     expect(screen.getByText(/Restarts: 3/)).toBeInTheDocument();
-    expect(screen.getByText(/Last exit: 2/)).toBeInTheDocument();
+    expect(screen.getByText(/Last exit code: 2/)).toBeInTheDocument();
   });
 
   it('shows the connection state without requesting details while offline', () => {
@@ -123,7 +123,7 @@ describe('AstridStatusSection', () => {
     view.rerender(<AstridStatusSection isOpen={false} />);
     view.rerender(<AstridStatusSection isOpen />);
 
-    expect(await screen.findByText('Runtime is degraded')).toBeInTheDocument();
+    expect(await screen.findByText("Connected, but part of Astrid isn't working.")).toBeInTheDocument();
     expect(await screen.findByText('Failed')).toBeInTheDocument();
     expect(mocks.readStatus).toHaveBeenCalledTimes(2);
   });

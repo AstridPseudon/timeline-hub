@@ -97,9 +97,9 @@ describe('PublicAstridInstallDialog', () => {
   });
 
   it.each([
-    ['chromium', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36', 'MacIntel', 'Astrid installs straight from your browser'],
-    ['safari', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15', 'MacIntel', 'Astrid installs straight from Safari'],
-    ['mobile', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1', 'iPhone', 'Astrid is made for a computer for now'],
+    ['chromium', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36', 'MacIntel', 'Give Astrid its own window, like any other app'],
+    ['safari', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15', 'MacIntel', 'Give Astrid its own window in your Dock'],
+    ['mobile', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1', 'iPhone', 'Open this page there to copy the line'],
   ] as const)('renders the %s install variant', (scenario, userAgent, platform, copy) => {
     setNavigator(userAgent, platform);
     render(<Harness />);
@@ -120,12 +120,12 @@ describe('PublicAstridInstallDialog', () => {
     screen.getByRole('button', { name: 'Open install' }).focus();
     fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
     expect(screen.getByRole('heading', { name: 'Set up Astrid' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Install now' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add the shortcut' })).not.toBeInTheDocument();
   });
 
   it.each([
-    ['not installed', 'Use Astrid in this browser', false],
-    ['installed', 'Use it here instead', true],
+    ['not installed', 'Already set up? Open Astrid', false],
+    ['installed', 'Open Astrid in this tab', true],
   ] as const)('%s: choosing the browser already says "take me in", so the app is told to go straight to Chrome\'s prompt', (_name, label, installed) => {
     window.sessionStorage.clear();
     if (installed) act(() => window.dispatchEvent(new Event('appinstalled')));
@@ -146,7 +146,7 @@ describe('PublicAstridInstallDialog', () => {
     render(<Harness />);
     screen.getByRole('button', { name: 'Open install' }).focus();
     fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
-    expect(() => fireEvent.click(screen.getByRole('button', { name: 'Use Astrid in this browser' }))).not.toThrow();
+    expect(() => fireEvent.click(screen.getByRole('button', { name: 'Already set up? Open Astrid' }))).not.toThrow();
   });
 
   it('does not consume a prompt whose result arrives after modal departure', async () => {
@@ -155,7 +155,7 @@ describe('PublicAstridInstallDialog', () => {
     act(() => window.dispatchEvent(event));
     render(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Install now' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add the shortcut' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     choice.resolve({ outcome: 'accepted' });
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });

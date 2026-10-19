@@ -18,12 +18,12 @@ const HOME_PATH = '/home';
 /** Landing page wording is kept together here for the product copy pass. */
 export const SET_UP_ASTRID_COPY = {
   title: 'Set up Astrid',
-  subtitle: 'One line starts Astrid on this computer.',
-  copyCommand: 'Copy install command',
+  subtitle: 'Run one line in a terminal to set up Astrid on your computer.',
+  copyCommand: 'Copy',
   browserShortcut: 'Add a browser shortcut',
-  installNow: 'Install now',
-  useHere: 'Use Astrid in this browser',
-  useHereInstalled: 'Use it here instead',
+  installNow: 'Add the shortcut',
+  useHere: 'Already set up? Open Astrid',
+  useHereInstalled: 'Open Astrid in this tab',
 };
 
 function useInstallScenario(): InstallScenario {
@@ -134,15 +134,15 @@ function SafariVisual() {
 
 const DESKTOP_COPY: Record<Exclude<InstallScenario, 'mobile'>, { lede: string; steps: string[] }> = {
   chromium: {
-    lede: 'Astrid installs straight from your browser, into its own window and your dock.',
+    lede: 'Give Astrid its own window, like any other app.',
     steps: ['Click the install icon at the right end of the address bar, up here.', 'Choose Install.'],
   },
   safari: {
-    lede: 'Astrid installs straight from Safari, into its own window and your dock.',
+    lede: 'Give Astrid its own window in your Dock, like any other app.',
     steps: ['Click the Share button in the top-right of the toolbar.', 'Choose Add to Dock.'],
   },
   unsupported: {
-    lede: 'This browser can’t install web apps. Open this page in Chrome, Edge or Safari to install Astrid, or use it right here.',
+    lede: 'This browser can’t add shortcuts. Chrome, Edge and Safari can.',
     steps: [],
   },
 };
@@ -161,7 +161,7 @@ function MobileContent({ onClose, active }: { onClose: () => void; active: boole
         <span className="astrid-install-desk-laptop"><span /></span>
       </div>
       <p className="astrid-install-lede">
-        Astrid is made for a computer for now. Open this page in Chrome, Edge or Safari on your desktop to install it.
+        Astrid runs on a computer. Open this page there to copy the line.
       </p>
       <div className="astrid-install-actions">
         <button type="button" className="astrid-button astrid-button-primary" onClick={sendToComputer}>

@@ -113,7 +113,7 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
                 <div>
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{COPY.workspace}</h3>
                   <dl className="space-y-1.5">
-                    <StatusRow label={COPY.workspace} value={details.realm.display_name} />
+                    <StatusRow label={COPY.workspaceName} value={details.realm.display_name} />
                   </dl>
                 </div>
                 <div>

@@ -18,7 +18,7 @@ describe('PublicAstridHeroCta', () => {
     render(<PublicAstridHeroCta audience={audience} active />);
     fireEvent.click(screen.getByRole('button', { name: 'Set up Astrid' }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Copy install command' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
     expect(screen.getByText(/curl -fsSL https:\/\/astrid\.haus\/install \| sh/)).toBeInTheDocument();
     expect(screen.getByText('Add a browser shortcut')).toBeInTheDocument();
   });
