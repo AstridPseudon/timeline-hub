@@ -5,21 +5,18 @@ connection handles in memory; each selected agent remains the authority for its
 profiles, opaque session IDs, and session storage. The browser never receives the bearer
 token or starts a child process.
 
-In one terminal, start the bridge with explicit host-owned paths. The bridge
-launches the real `astrid` command, not a separate raw `omp` profile; Astrid
-therefore remains the authority for the named agent, system prompt, branded
-OMP build, credentials, and session identity:
+The service belongs to [astrid-agent](https://github.com/banodoco/astrid-agent/blob/main/docs/reference/services.md).
+The Runtime starts and supervises it from the agent's service declaration. It
+runs with Bun 1.3.14, registers its loopback endpoint and private credential in
+`chat.json` beside Runtime discovery, and removes its own registration on exit.
+The bridge launches the installed `astrid` command; Astrid owns the packaged
+profile, OMP build, credentials, and session identity.
 
-```sh
-export ASTRID_BRIDGE_TOKEN='use-the-same-local-token-as-vite'
-ASTRID_ACP_CWD="$PWD" \
-npm run dev:astrid-acp
-
-# Optional: set ASTRID_ACP_PROFILE to use an isolated Astrid/OMP profile. By
-# default the real `astrid` launcher uses the machine's normal configuration.
-ASTRID_ACP_CWD="$PWD" ASTRID_ACP_PROFILE='isolated' \
-npm run dev:astrid-acp
-```
+For app development, use `npm run dev:local` with the configured Runtime.
+`--astrid /absolute/path/to/astrid-agent` selects a local agent checkout for
+app source resolution; the Runtime's source profile selects the services.
+`--acp` remains accepted for existing launcher scripts. Chat starts with the
+Runtime regardless of that flag. The app never launches an ACP bridge.
 
 `ASTRID_ACP_SESSION_DIR` is optional. When omitted, the installed OMP build
 owns its canonical cwd-derived session directory, allowing ACP session
@@ -30,13 +27,10 @@ left in place, but OMP 17.3.5 ACP discovery does not search that arbitrary
 directory in a new process, so use it only when the original process remains
 live.
 
-In a second terminal, start Astrid App and point the ACP proxy at its separate
-loopback port:
-
-```sh
-export ASTRID_BRIDGE_TOKEN='use-the-same-local-token-as-vite'
-VITE_ASTRID_ACP_BRIDGE_PORT=17335 npm run dev
-```
+The local app's discovery proxy re-reads the agent's `chat.json` for every
+ACP request, including after chat restarts or credential rotation. Missing or
+invalid registration returns `acp_unavailable`. The hosted page reaches chat
+through the Runtime door; both paths retain the credential and protocol header.
 
 The existing `/api/astrid` REST routes remain on the Astrid bridge port. ACP
 requests use `/api/astrid/acp`, which the Vite proxy forwards to the local ACP
@@ -70,7 +64,7 @@ OpenAI documents the Codex CLI install command in its [Codex setup guide](https:
 Use the same `--profile` as the bridge when configured.
 
 The bridge launches each ACP adapter through Bun, pinned in
-`scripts/astrid-local-agent-adapters.ts`:
+the agent’s `astrid/chat/astrid-local-agent-adapters.ts`:
 
 ```sh
 bun x --bun @agentclientprotocol/claude-agent-acp@0.93.0

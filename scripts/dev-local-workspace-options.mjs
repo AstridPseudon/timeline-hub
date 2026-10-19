@@ -1,5 +1,4 @@
-import { existsSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { randomBytes } from 'node:crypto';
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { parseEnv } from 'node:util';
 
@@ -225,35 +224,4 @@ export function resolveWorkspaceDiscoveryPath({ discovery, supportRoot, dataRoot
 export function shellQuote(value) {
   const command = String(value);
   return /^[A-Za-z0-9_./:=-]+$/.test(command) ? command : `'${command.replaceAll("'", "'\"'\"'")}'`;
-}
-
-/**
- * Where a chat service tells the running Runtime about itself: `chat.json` next to the Runtime's discovery.json. The
- * Runtime's browser door reads it on every chat request and forwards the hosted page's `/api/astrid/acp/*` there with
- * this credential (astrid-runtime `runtime_protocol/door.py`); with no file, the page shows that chat is unavailable.
- */
-export function chatRegistrationPath(discoveryPath) {
-  return join(dirname(discoveryPath), 'chat.json');
-}
-
-/** The registration the door reads: `{"endpoint": "http://127.0.0.1:<port>", "token": "<credential>"}`, owner-only. */
-export function chatRegistration(acpPort, token) {
-  const port = Number(acpPort);
-  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('the chat bridge port must be an integer from 1 to 65535');
-  if (typeof token !== 'string' || !token) throw new Error('the chat bridge needs a credential');
-  return { endpoint: `http://127.0.0.1:${port}`, token };
-}
-
-/** Publishes the registration atomically and owner-only (the door ignores anything readable by others). */
-export function writeChatRegistration(path, registration) {
-  const temporary = join(dirname(path), `.chat.json.${randomBytes(6).toString('hex')}`);
-  writeFileSync(temporary, JSON.stringify(registration), { mode: 0o600, flag: 'wx' });
-  try { renameSync(temporary, path); } catch (error) { rmSync(temporary, { force: true }); throw error; }
-}
-
-/** Removes the registration when `owned(registration)` holds for what is there now, so another service's is left alone. */
-export function removeChatRegistration(path, owned) {
-  let current;
-  try { current = JSON.parse(readFileSync(path, 'utf8')); } catch { return; }
-  if (owned(current)) rmSync(path, { force: true });
 }

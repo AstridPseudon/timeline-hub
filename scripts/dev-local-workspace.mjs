@@ -8,10 +8,9 @@
  * VITE_ value.
  */
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
-import { randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { homedir } from 'node:os';
-import { basename, delimiter, dirname, resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createConnection } from 'node:net';
 import { request as httpRequest } from 'node:http';
@@ -22,10 +21,6 @@ import {
   validatePreviewOutputDirectory,
   viteChildArgs,
   resolveWorkspaceDiscoveryPath,
-  chatRegistrationPath,
-  chatRegistration,
-  writeChatRegistration,
-  removeChatRegistration,
   loadLocalRuntimeEnvironment,
   shellQuote,
 } from './dev-local-workspace-options.mjs';
@@ -51,7 +46,6 @@ const runtimeUpCommand = runtimeCli('up');
 const ENGINE_STOPPED = `Astrid's engine isn't running. Start it first: ${runtimeUpCommand}`;
 const DEFAULT_HOSTED_ORIGIN = 'https://astrid.haus';
 const engineWithoutDoor = (origin) => `Astrid's engine is running without a door for ${origin}. Restart it: ${runtimeCli('restart')}${origin === DEFAULT_HOSTED_ORIGIN ? '' : ` --hosted-origin ${origin}`}`;
-const AGENT_CHAT_STOPPED = `Agent chat stopped. Start Astrid again with ${startCommand}.`;
 const BAD_HOSTED_ORIGIN = '--hosted-origin must be an https:// address, like https://astrid.haus';
 const ENGINE_CHANGED = `Astrid changed on this computer. Restart its engine: ${runtimeUpCommand}`;
 const CANT_START = "Astrid can't start with the setup on this computer.";
@@ -75,7 +69,6 @@ const services = [];
 let runtimeSettings;
 let ownedRuntime;
 let runtimeCliChild;
-let releaseChat = () => {};
 let cleanupPromise;
 let interrupted = false;
 
@@ -136,8 +129,6 @@ async function runRuntimeCommand(action) {
 
 function cleanup(signal = 'SIGTERM') {
   return cleanupPromise ??= (async () => {
-    // The door stops forwarding chat before the bridge stops.
-    releaseChat();
     for (const service of services.filter(({ kind }) => kind === 'vite')) await stopService(service, signal);
     for (const service of services.filter(({ kind }) => kind !== 'vite')) await stopService(service, signal);
     if (ownedRuntime) {
@@ -535,26 +526,9 @@ const doorPort = hostedOrigin && !checkOnly && !buildOnly ? requireDoor(discover
 if (hostedOrigin && !checkOnly && !buildOnly && !doorPort) exit(1);
 if (paired && !pairedRelayOrigin) exit(fail(CANT_START, '--paired requires ASTRID_APP_PAIRED_RELAY_ORIGIN') ? 1 : 1);
 
-const acpToken = process.env.ASTRID_ACP_BRIDGE_TOKEN?.trim() || randomBytes(32).toString('base64url');
-const acpPort = process.env.VITE_ASTRID_ACP_BRIDGE_PORT ?? '17335';
 const runtimeProxyPort = process.env.VITE_ASTRID_DYNAMIC_PROXY_PORT?.trim() || '17336';
 if (!/^\d+$/.test(runtimeProxyPort) || Number(runtimeProxyPort) < 1 || Number(runtimeProxyPort) > 65535) {
   exit(fail(CANT_START, 'VITE_ASTRID_DYNAMIC_PROXY_PORT must be an integer from 1 to 65535') ? 1 : 1);
-}
-
-/** Resolves true once the chat bridge on this port answers its health route with this credential, false when `aborted()`. */
-async function ownBridgeAnswers(bridgePort, token, aborted) {
-  while (!aborted()) {
-    try {
-      const response = await fetch(`http://127.0.0.1:${bridgePort}/health`, {
-        headers: { Authorization: `Bearer ${token}`, 'X-Astrid-Bridge-Version': 'v1' },
-        signal: AbortSignal.timeout(2000),
-      });
-      if (response.ok) return true;
-    } catch { /* not listening yet */ }
-    await new Promise((resolveLater) => setTimeout(resolveLater, 100));
-  }
-  return false;
 }
 
 /** Resolves true once something listens on the port, false at the deadline or when `aborted()` turns true. */
@@ -588,12 +562,9 @@ const env = {
   ...(configuredAstridPublicCheckout ? { ASTRID_PUBLIC_CHECKOUT: configuredAstridPublicCheckout } : {}),
   PORT: port,
   VITE_ASTRID_BRIDGE_PORT: runtimeProxyPort,
+  VITE_ASTRID_ACP_BRIDGE_PORT: runtimeProxyPort,
+  ASTRID_ACP_VIA_DISCOVERY_PROXY: '1',
   ASTRID_BRIDGE_TOKEN: credential.token,
-  ASTRID_ACP_BRIDGE_TOKEN: acpToken,
-  ...(hostedOrigin ? { ASTRID_ACP_LOCAL_MEDIA_ONLY: '1' } : {}),
-  ...(hostedOrigin && process.env.ASTRID_ACP_COMMAND?.startsWith('/')
-    ? { PATH: `${dirname(process.env.ASTRID_ACP_COMMAND)}${delimiter}${process.env.PATH ?? ''}` }
-    : {}),
   // The editor's RuntimeDataProvider talks to `/api/runtime`, which is a
   // separate Vite proxy from the historical `/api/astrid` bridge. Keep the
   // Runtime endpoint and credential server-side so the browser never sees the
@@ -606,16 +577,6 @@ const env = {
   VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID: expectedIdentity.realmId,
   VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID: expectedIdentity.runtimeInstanceId,
   ASTRID_LOCAL_COMPOSE_URL: `http://127.0.0.1:${port}/api/astrid/generation/compose`,
-  // The ACP bridge is a sibling user-machine process. Keep its cwd explicit so
-  // OMP owns one stable session store and the browser cannot redirect it.
-  ASTRID_ACP_CWD: process.env.ASTRID_ACP_CWD ?? process.cwd(),
-  // Omit the profile by default so ACP uses the same model/auth configuration
-  // as the user's normal OMP installation. An explicit profile remains a
-  // supported escape hatch for isolated deployments.
-  ...(process.env.ASTRID_ACP_PROFILE?.trim()
-    ? { ASTRID_ACP_PROFILE: process.env.ASTRID_ACP_PROFILE.trim() }
-    : {}),
-  ASTRID_ACP_BRIDGE_PORT: acpPort,
 };
 
 const healthyLine = `workspace.v1 runtime healthy at ${endpoint.origin}; Astrid App will use ${launcherOptions.preview ? `preview output ${previewDirectory} on port ${port}` : `port ${port}`}`;
@@ -717,25 +678,7 @@ if (!proxyReady) {
   flushHeld();
   exit(fail(COULDNT_START, `runtime discovery proxy did not start on port ${runtimeProxyPort}${withLast(proxyOutput)}`) ? 1 : 1);
 }
-// The hosted page's chat goes through the Runtime's door to this bridge only when the developer passed --acp: ACP
-// auto-approves tool calls and can open terminals. A registration naming this bridge's port while nothing listens there is
-// an earlier launcher's that did not get to remove it.
-const chatFile = chatRegistrationPath(discoveryPath);
-const ownChat = (registration) => registration?.endpoint === chatRegistration(acpPort, acpToken).endpoint;
-if (!(await waitForPort(acpPort, 0))) removeChatRegistration(chatFile, ownChat);
-const acpBridge = spawnService('npm', [...npmQuiet, 'run', 'dev:astrid-acp'], { stdio: piped, env: serviceEnvironment() });
-const acpOutput = watch(acpBridge);
-if (hostedOrigin && launcherOptions.acp) {
-  // Registered only once this launcher's own bridge answers on that port, so a bridge that never bound (its port held by
-  // another launcher's) never replaces the registration of the one that did.
-  void ownBridgeAnswers(acpPort, acpToken, () => shuttingDown || acpBridge.exitCode !== null || acpBridge.signalCode !== null)
-    .then((ours) => {
-      if (!ours || shuttingDown) return;
-      writeChatRegistration(chatFile, chatRegistration(acpPort, acpToken));
-      releaseChat = () => removeChatRegistration(chatFile, (registration) => ownChat(registration) && registration.token === acpToken);
-    });
-}
-if (hostedOrigin) technical(`browser door ${discovery.door_endpoint} for ${hostedOrigin}${launcherOptions.acp ? ' (chat on)' : ''}`);
+if (hostedOrigin) technical(`browser door ${discovery.door_endpoint} for ${hostedOrigin}`);
 if (paired) {
   connector = spawnService('npx', ['tsx', 'scripts/astrid-local-connector.ts', '--discovery', discoveryPath, '--relay-origin', pairedRelayOrigin, ...(resetPairing ? ['--reset-pairing'] : [])], {
     stdio: 'inherit',
@@ -779,10 +722,6 @@ child.on('exit', (code, signal) => {
   process.exitCode = process.exitCode || (code ?? 0);
 });
 connector?.on('error', (error) => { fail(CANT_START, `could not start paired connector: ${error.message}`); });
-acpBridge.on('error', (error) => stopWith(AGENT_CHAT_STOPPED, `could not start Astrid ACP bridge: ${error.message}`));
-acpBridge.on('exit', (code, signal) => {
-  stopWith(AGENT_CHAT_STOPPED, `Astrid ACP bridge exited${signal ? ` with ${signal}` : ` with code ${code}`}; ACP is offline${withLast(acpOutput)}`);
-});
 // Astrid is reachable when the Runtime's door listens and the app answers. Only then does a person get the Open block.
 if (hostedOrigin) {
   const aborted = () => shuttingDown;

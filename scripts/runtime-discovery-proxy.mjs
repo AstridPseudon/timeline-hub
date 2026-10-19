@@ -1,4 +1,4 @@
-import { readFileSync, realpathSync } from 'node:fs';
+import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { createServer, request as requestHttp } from 'node:http';
 import { URL, fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -11,6 +11,7 @@ const port = Number(process.env.ASTRID_RUNTIME_PROXY_PORT ?? '17336');
 // producing bytes (same idea as the paired relay's idle timeout).
 export const CONNECT_TIMEOUT_MS = 10_000;
 export const IDLE_TIMEOUT_MS = 60_000;
+const ACP_IDLE_TIMEOUT_MS = 5 * 60_000;
 
 function fail(message, status = 503) {
   return { status, body: JSON.stringify({
@@ -53,6 +54,25 @@ export function currentRuntime(discoveryPath, { credentialFile: credentialFileOv
   const credentialFile = String(credentialFileOverride ?? discovery.credential_file ?? '').trim();
   if (!credentialFile) throw new Error('runtime discovery has no credential file');
   return { endpoint, token: readToken(credentialFile) };
+}
+
+/** The agent owns this registration and can rotate it independently of Vite. */
+export function currentChat(discoveryPath) {
+  if (!discoveryPath) throw new Error('ASTRID_WORKSPACE_DISCOVERY is not configured');
+  const path = resolve(dirname(discoveryPath), 'chat.json');
+  const metadata = lstatSync(path);
+  if (!metadata.isFile() || (process.platform !== 'win32'
+    && ((metadata.mode & 0o077) !== 0 || metadata.uid !== process.getuid()))) {
+    throw new Error('chat registration must be an owner-only regular file');
+  }
+  const registration = readJson(path, 'chat registration');
+  const endpoint = new URL(String(registration.endpoint ?? ''));
+  if (endpoint.protocol !== 'http:' || endpoint.hostname !== '127.0.0.1' || !endpoint.port || Number(endpoint.port) < 1
+    || endpoint.username || endpoint.password || endpoint.pathname !== '/' || endpoint.search || endpoint.hash
+    || typeof registration.token !== 'string' || !registration.token.trim()) {
+    throw new Error('chat registration must name an authenticated loopback service');
+  }
+  return { endpoint, token: registration.token };
 }
 
 export function readWorkspaceRuntimeConfig(discoveryPath) {
@@ -99,6 +119,7 @@ export function createRuntimeProxyServer({
   discoveryPath,
   connectTimeoutMs = CONNECT_TIMEOUT_MS,
   idleTimeoutMs = IDLE_TIMEOUT_MS,
+  request = requestHttp,
 } = {}) {
   return createServer((incoming, response) => {
   if (incoming.url?.split('?')[0] === '/runtime-config/v1/workspace.json') {
@@ -116,10 +137,13 @@ export function createRuntimeProxyServer({
     return;
   }
   let runtime;
+  const chat = incoming.url === '/acp' || incoming.url?.startsWith('/acp/');
   try {
-    runtime = currentRuntime(discoveryPath);
+    runtime = chat ? currentChat(discoveryPath) : currentRuntime(discoveryPath);
   } catch (error) {
-    writeFailure(response, fail(error instanceof Error ? error.message : String(error)));
+    writeFailure(response, chat
+      ? { status: 503, body: JSON.stringify({ error: 'acp_unavailable' }) }
+      : fail(error instanceof Error ? error.message : String(error)));
     return;
   }
 
@@ -127,12 +151,13 @@ export function createRuntimeProxyServer({
   delete headers.host;
   delete headers.authorization;
   headers.authorization = `Bearer ${runtime.token}`;
+  if (chat) headers['x-astrid-bridge-version'] = 'v1';
 
-  const upstream = requestHttp({
+  const upstream = request({
     hostname: runtime.endpoint.hostname,
     port: Number(runtime.endpoint.port),
     method: incoming.method,
-    path: incoming.url || '/',
+    path: chat ? incoming.url.slice(4) || '/' : incoming.url || '/',
     headers,
   }, (upstreamResponse) => {
     clearTimeout(connectTimer);
@@ -150,7 +175,7 @@ export function createRuntimeProxyServer({
     const connected = () => {
       clearTimeout(connectTimer);
       // Socket idle timeout: re-armed by every byte in either direction.
-      upstream.setTimeout(idleTimeoutMs, () => upstream.destroy(new Error('runtime request idle timeout')));
+      upstream.setTimeout(chat ? ACP_IDLE_TIMEOUT_MS : idleTimeoutMs, () => upstream.destroy(new Error('runtime request idle timeout')));
     };
     if (socket.connecting) socket.once('connect', connected); else connected();
   });
