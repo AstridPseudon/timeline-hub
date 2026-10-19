@@ -585,7 +585,7 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
                         {line.parts.map((part, index) => {
                           const key = part.word ? JSON.stringify([line.occurrence.id, part.word.id]) : '';
                           const item = part.word ? targets[targetIndex.get(key) ?? -1] : undefined;
-                          const wordTiming = line.timing.get(part.word!.id);
+                          const wordTiming = part.word ? line.timing.get(part.word.id) : undefined;
                           return item ? <span key={index} id={`${props.instanceId}-target-${targetIndex.get(key)}`} data-word-id={part.word!.id} role="button" tabIndex={-1} title={preview && wordTiming?.timing === 'word' ? undefined : metadata(item)} onMouseEnter={(event) => {
                             clearPreview();
                             if (!preview || !props.visible || wordTiming?.timing !== 'word' || !finite(wordTiming.timelineStart) || wordTiming.timelineStart < 0) return;
