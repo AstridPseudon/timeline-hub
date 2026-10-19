@@ -1,6 +1,23 @@
 from types import SimpleNamespace
 
+import pytest
+
 from astrid.core.execution.generic_host import GenericPackHost, _settlement_media_type
+
+
+@pytest.mark.parametrize(("filename", "expected"), [
+    ("render.mp4", "video/mp4"), ("still.png", "image/png"),
+    ("extensionless", "application/octet-stream"),
+])
+def test_semantic_explicit_media_type_cannot_escape_into_transport(filename, expected):
+    assert _settlement_media_type({"media_type": "clip/visual", "artifact_type": "clip/visual",
+                                  "filename": filename}) == expected
+
+
+def test_unknown_semantic_kind_is_not_a_mime_fallback():
+    assert _settlement_media_type({"artifact_type": "timeline/authoring-proposal"}) == "application/octet-stream"
+    assert _settlement_media_type({"artifact_type": "image/png"}) == "image/png"
+    assert _settlement_media_type({"media_type": "text/plain; charset=utf-8"}) == "text/plain; charset=utf-8"
 
 
 def test_clip_visual_video_outputs_publish_mime_type_by_filename() -> None:
