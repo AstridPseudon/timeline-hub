@@ -39,10 +39,9 @@ from functools import wraps
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
-from .errors import RuntimeErrorBase, AuthorizationError, ForbiddenError, ConflictError, NotFoundError, ValidationError, LeaseError, InvalidRequestError, RealmAdmissionError
+from .errors import RuntimeErrorBase, AuthorizationError, ForbiddenError, ConflictError, NotFoundError, ValidationError, LeaseError, InvalidRequestError, RealmAdmissionError, RetiredRouteError
 from .contract_metadata import PROTOCOL, SCHEMA_DIGEST
 from .dirfd import close_pinned as _close_pinned, mkdir_chain_at as _mkdir_chain_at, open_directory_chain as _open_directory_chain, pin_directory as _pin_directory, write_bytes_at as _write_bytes_at
-from .shot_dependencies import analyze_invalidation
 from .timeline_inspection import inspect as inspect_timeline_closure
 from .timeline_view import markdown as render_timeline_markdown, png as render_timeline_png
 from .visual_seam import evaluate_closure, load_closure
@@ -1408,31 +1407,6 @@ class RuntimeService:
         else:
             self.store.conn.execute("INSERT INTO internal_timeline_revisions(id, project_id, timeline_id, payload_json, content_digest, created_at) VALUES (?, ?, ?, ?, ?, ?)", (revision_id, project["id"], timeline_id, encoded, digest, now()))
         return {"revision_id": revision_id, "project_id": project["id"], "timeline_id": timeline_id, "content_digest": digest, "payload": payload}
-
-    def _shot_revision_payload(self, row):
-        return {
-            "name": row["name"],
-            "metadata": json.loads(row["metadata_json"]),
-            "archived": bool(row["archived_at"]),
-            "items": [self._shot_item_resource(item) for item in self.store.conn.execute("SELECT * FROM shot_items WHERE shot_id=? ORDER BY sort_key, id", (row["id"],))],
-        }
-
-    def _record_legacy_shot_revision(self, project_id, row):
-        """Materialize the exact project-shot projection as child+internal revisions."""
-        payload = self._complete_shot_payload(self._shot_revision_payload(row), new_id())
-        internal_payload = {"shot_id": row["id"], "metadata": payload["metadata"], "items": payload["items"], "archived": payload["archived"]}
-        # Legacy project shots have no separate timeline aggregate. The scoped
-        # identity is explicit and cannot be confused with a parent timeline.
-        internal_id = new_id()
-        internal = self._record_internal_revision(project_id, f"shot:{row['id']}", internal_payload, revision_id=internal_id)
-        payload["internal_timeline_revision_id"] = internal_id
-        encoded = canonical_json(payload)
-        digest = "sha256:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
-        revision_id = new_id()
-        timestamp = now()
-        self.store.conn.execute("INSERT INTO shot_revisions(id, project_id, shot_id, internal_timeline_revision_id, payload_json, content_digest, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", (revision_id, project_id, row["id"], internal_id, encoded, digest, timestamp))
-        self.store.conn.execute("INSERT INTO shot_revision_heads(shot_id, project_id, revision_id, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(shot_id) DO UPDATE SET project_id=excluded.project_id, revision_id=excluded.revision_id, updated_at=excluded.updated_at", (row["id"], project_id, revision_id, timestamp))
-        return {"revision_id": revision_id, "internal_timeline_revision_id": internal_id, "content_digest": digest, "payload": payload}
 
     @staticmethod
     def _validate_published_shot_payload(value):
@@ -3520,29 +3494,7 @@ class RuntimeService:
 
     @_durable_mutation
     def create_project_shot(self, project_id, body, *, idempotency_key=None):
-        self._require_object_body(body)
-        project = self.store.get_project(project_id)
-        name = str(body.get("name") or "")
-        if not name.strip():
-            raise ValidationError("name is required")
-        metadata = body.get("metadata", {})
-        if not isinstance(metadata, dict):
-            raise ValidationError("metadata must be an object")
-        shot_id = str(body.get("shot_id") or new_id())
-        request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
-        with self.store._mutex:
-            replay = self._command_replay("shot.create", project["id"], idempotency_key, request_hash, project_id=project["id"])
-            if replay is not None:
-                return replay
-            if self.store.conn.execute("SELECT 1 FROM project_shots WHERE id=?", (shot_id,)).fetchone():
-                raise ConflictError("shot already exists", details={"shot_id": shot_id})
-            timestamp = now()
-            self.store.conn.execute("INSERT INTO project_shots(id, project_id, name, metadata_json, version, created_at, updated_at, archived_at) VALUES (?, ?, ?, ?, 1, ?, ?, NULL)", (shot_id, project["id"], name, canonical_json(metadata), timestamp, timestamp))
-            row = self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone()
-            revision = self._record_legacy_shot_revision(project["id"], row)
-            result = self._project_shot_resource(row)
-            result.update({"revision_id": revision["revision_id"], "internal_timeline_revision_id": revision["internal_timeline_revision_id"], "content_digest": revision["content_digest"]})
-            return self._command_record("shot.create", project["id"], idempotency_key, request_hash, result, project_id=project["id"])
+        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     @_durable_mutation
     def create_project_reference(self, project_id, body, *, idempotency_key=None):
@@ -3587,220 +3539,23 @@ class RuntimeService:
 
     @_durable_mutation
     def update_project_shot(self, project_id, shot_id, body, *, idempotency_key=None, archived=None):
-        idempotency_key = require_idempotency_key(idempotency_key)
-        self._require_object_body(body)
-        project = self.store.get_project(project_id)
-        expected = self._expected_version(body)
-        action = "update" if archived is None else "archive" if archived else "recover"
-        request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
-        with self.store._mutex:
-            replay = self._command_replay(f"shot.{action}", shot_id, idempotency_key, request_hash, project_id=project["id"])
-            if replay is not None: return replay
-            row = self.store.conn.execute("SELECT * FROM project_shots WHERE id=? AND project_id=?", (shot_id, project["id"])).fetchone()
-            if not row: raise NotFoundError("shot not found")
-            if int(row["version"]) != expected: raise ConflictError("shot version conflict", details={"expected": expected, "actual": int(row["version"])})
-            timestamp = now()
-            name = str(body.get("name", row["name"]))
-            metadata = body.get("metadata", json.loads(row["metadata_json"]))
-            if not name.strip() or not isinstance(metadata, dict): raise ValidationError("invalid shot name or metadata")
-            archived_at = (timestamp if archived is True else None if archived is False else row["archived_at"])
-            self.store.conn.execute("UPDATE project_shots SET name=?, metadata_json=?, version=?, updated_at=?, archived_at=? WHERE id=?", (name, canonical_json(metadata), expected + 1, timestamp, archived_at, shot_id))
-            changed = self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone()
-            revision = self._record_legacy_shot_revision(project["id"], changed)
-            result = self._project_shot_resource(changed)
-            result.update({"revision_id": revision["revision_id"], "internal_timeline_revision_id": revision["internal_timeline_revision_id"], "content_digest": revision["content_digest"]})
-            return self._command_record(f"shot.{action}", shot_id, idempotency_key, request_hash, result, project_id=project["id"])
+        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     @_durable_mutation
     def add_shot_item(self, project_id, shot_id, body, *, idempotency_key=None):
-        self._require_object_body(body)
-        project = self.store.get_project(project_id)
-        media_id = str(body.get("media_id") or "").removeprefix("sha256:")
-        if not media_id: raise ValidationError("media_id is required")
-        if not isinstance(body.get("metadata", {}), dict): raise ValidationError("metadata must be an object")
-        shot = self.get_project_shot(project["id"], shot_id)
-        key = idempotency_key
-        request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
-        with self.store._mutex:
-            replay = self._command_replay("shot.item.add", shot_id, key, request_hash, project_id=project["id"])
-            if replay is not None: return replay
-            if not self.store.conn.execute("SELECT 1 FROM project_objects WHERE project_id=? AND digest=?", (project["id"], media_id)).fetchone(): raise NotFoundError("media is not owned by project")
-            position = body.get("position")
-            rows = self.store.conn.execute("SELECT * FROM shot_items WHERE shot_id=? ORDER BY sort_key, id", (shot_id,)).fetchall()
-            if position is None: position = len(rows)
-            if isinstance(position, bool) or not isinstance(position, int) or position < 0 or position > len(rows): raise ValidationError("position is out of range")
-            item_id = str(body.get("item_id") or new_id())
-            stamp = now()
-            self.store.conn.execute("INSERT INTO shot_items(id, shot_id, media_id, sort_key, source_frame, metadata_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", (item_id, shot_id, media_id, f"~{item_id}", body.get("source_frame"), canonical_json(body.get("metadata", {})), stamp))
-            ordered_ids = [row["id"] for row in rows]; ordered_ids.insert(position, item_id)
-            for index, ordered_id in enumerate(ordered_ids): self.store.conn.execute("UPDATE shot_items SET sort_key=? WHERE id=?", (f"tmp-{index:08d}-{item_id}", ordered_id))
-            for index, ordered_id in enumerate(ordered_ids): self.store.conn.execute("UPDATE shot_items SET sort_key=? WHERE id=?", (f"{index:08d}", ordered_id))
-            self.store.conn.execute("UPDATE project_shots SET version=version+1, updated_at=? WHERE id=?", (stamp, shot_id))
-            changed = self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone()
-            revision = self._record_legacy_shot_revision(project["id"], changed)
-            result = self._project_shot_resource(changed)
-            result.update({"revision_id": revision["revision_id"], "internal_timeline_revision_id": revision["internal_timeline_revision_id"], "content_digest": revision["content_digest"]})
-            return self._command_record("shot.item.add", shot_id, key, request_hash, result, project_id=project["id"])
-
-    def _renumber_shot_items(self, shot_id):
-        rows = self.store.conn.execute("SELECT id FROM shot_items WHERE shot_id=? ORDER BY sort_key, id", (shot_id,)).fetchall()
-        for index, row in enumerate(rows): self.store.conn.execute("UPDATE shot_items SET sort_key=? WHERE id=?", (f"{index:08d}", row["id"]))
+        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     @_durable_mutation
     def remove_shot_item(self, project_id, shot_id, item_id, body, *, idempotency_key=None):
-        self._require_object_body(body)
-        project = self.store.get_project(project_id)
-        self.get_project_shot(project_id, shot_id)
-        expected = self._expected_version(body)
-        request_hash = hashlib.sha256(canonical_json({"item_id": item_id, **body}).encode()).hexdigest()
-        with self.store._mutex:
-            replay = self._command_replay("shot.item.remove", shot_id, idempotency_key, request_hash, project_id=project["id"])
-            if replay is not None: return replay
-            row = self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone()
-            if int(row["version"]) != expected: raise ConflictError("shot version conflict", details={"expected": expected, "actual": int(row["version"])})
-            if not self.store.conn.execute("SELECT 1 FROM shot_items WHERE id=? AND shot_id=?", (item_id, shot_id)).fetchone(): raise NotFoundError("shot item not found")
-            self.store.conn.execute("DELETE FROM shot_items WHERE id=?", (item_id,)); self._renumber_shot_items(shot_id)
-            self.store.conn.execute("UPDATE project_shots SET version=version+1, updated_at=? WHERE id=?", (now(), shot_id))
-            changed = self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone()
-            revision = self._record_legacy_shot_revision(project["id"], changed)
-            result = self._project_shot_resource(changed)
-            result.update({"revision_id": revision["revision_id"], "internal_timeline_revision_id": revision["internal_timeline_revision_id"], "content_digest": revision["content_digest"]})
-            return self._command_record("shot.item.remove", shot_id, idempotency_key, request_hash, result, project_id=project["id"])
+        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     @_durable_mutation
     def reorder_shot_items(self, project_id, shot_id, body, *, idempotency_key=None):
-        self._require_object_body(body)
-        project = self.store.get_project(project_id)
-        self.get_project_shot(project_id, shot_id); expected = self._expected_version(body)
-        if "items" in body:
-            raise ValidationError("items is not supported; use item_ids")
-        item_ids = body.get("item_ids")
-        if not isinstance(item_ids, list) or any(not isinstance(item_id, str) for item_id in item_ids) or len(item_ids) != len(set(item_ids)): raise ValidationError("items must be a unique complete permutation")
-        request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
-        with self.store._mutex:
-            replay = self._command_replay("shot.item.reorder", shot_id, idempotency_key, request_hash, project_id=project["id"])
-            if replay is not None: return replay
-            row = self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone(); current = [x["id"] for x in self.store.conn.execute("SELECT id FROM shot_items WHERE shot_id=?", (shot_id,))]
-            if int(row["version"]) != expected: raise ConflictError("shot version conflict", details={"expected": expected, "actual": int(row["version"])})
-            if set(map(str, item_ids)) != set(current): raise ValidationError("items must name the complete shot permutation")
-            for index, item_id in enumerate(item_ids): self.store.conn.execute("UPDATE shot_items SET sort_key=? WHERE id=?", (f"tmp-{index:08d}-{shot_id}", item_id))
-            for index, item_id in enumerate(item_ids): self.store.conn.execute("UPDATE shot_items SET sort_key=? WHERE id=?", (f"{index:08d}", item_id))
-            self.store.conn.execute("UPDATE project_shots SET version=version+1, updated_at=? WHERE id=?", (now(), shot_id))
-            changed = self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone()
-            revision = self._record_legacy_shot_revision(project["id"], changed)
-            result = self._project_shot_resource(changed)
-            result.update({"revision_id": revision["revision_id"], "internal_timeline_revision_id": revision["internal_timeline_revision_id"], "content_digest": revision["content_digest"]})
-            return self._command_record("shot.item.reorder", shot_id, idempotency_key, request_hash, result, project_id=project["id"])
+        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     @_durable_mutation
     def promote_project_shot_candidate(self, project_id, shot_id, body, *, idempotency_key=None):
-        """Atomically promote a shot candidate and persist its invalidation report.
-
-        The receipt lookup is deliberately the first database read.  A retry
-        therefore returns the exact stored result without inspecting the
-        mutable shot, candidate, or media projections.
-        """
-        self._require_object_body(body)
-        key = require_idempotency_key(idempotency_key)
-        candidate_id = body.get("candidate_item_id")
-        expected = body.get("expected_head_seq")
-        if not isinstance(candidate_id, str) or not candidate_id:
-            raise ValidationError("candidate_item_id is required")
-        if isinstance(expected, bool) or not isinstance(expected, int) or expected < 1:
-            raise ValidationError("expected_head_seq must be a positive integer")
-        timeline_assets = body.get("timeline_assets", [])
-        if isinstance(timeline_assets, Mapping):
-            timeline_assets = list(timeline_assets.values())
-        if not isinstance(timeline_assets, list) or any(not isinstance(item, Mapping) for item in timeline_assets):
-            raise ValidationError("timeline_assets must be a list of objects")
-        request = {"project_id": str(project_id), "shot_id": str(shot_id), "candidate_item_id": candidate_id, "expected_head_seq": expected, "timeline_assets": timeline_assets}
-        request_hash = hashlib.sha256(canonical_json(request).encode()).hexdigest()
-        # Receipt-first is important: do not resolve the project or read the
-        # shot before proving this is not an idempotent replay.
-        replay = self._command_replay("shot.promote_candidate", str(shot_id), key, request_hash, project_id=str(project_id))
-        if replay is not None:
-            return replay
-        project = self.store.get_project(project_id)
-        shot_row = self.store.conn.execute("SELECT * FROM project_shots WHERE id=? AND project_id=?", (str(shot_id), project["id"])).fetchone()
-        if shot_row is None:
-            raise NotFoundError("shot not found")
-        actual = int(shot_row["version"])
-        if actual != expected:
-            raise ConflictError("shot head conflict", details={"expected": expected, "actual": actual})
-        item_rows = self.store.conn.execute("SELECT * FROM shot_items WHERE shot_id=? ORDER BY sort_key, id", (str(shot_id),)).fetchall()
-        candidate_row = next((row for row in item_rows if str(row["id"]) == candidate_id), None)
-        if candidate_row is None:
-            raise NotFoundError("shot candidate not found")
-        try:
-            candidate_metadata = json.loads(candidate_row["metadata_json"])
-        except (TypeError, json.JSONDecodeError) as exc:
-            raise ValidationError("candidate metadata is invalid") from exc
-        if not isinstance(candidate_metadata, dict) or candidate_metadata.get("role") != "primary_visual" or candidate_metadata.get("status") != "candidate":
-            raise ValidationError("candidate item must have role='primary_visual' and status='candidate'")
-        # Product provenance is carried in metadata, but the authority check
-        # is neutral: only verify fields that a producer supplied.
-        provenance = candidate_metadata.get("provenance")
-        recipe = candidate_metadata.get("recipe")
-        for label, value in (("candidate metadata", candidate_metadata), ("candidate provenance", provenance), ("candidate recipe", recipe)):
-            if not isinstance(value, Mapping):
-                continue
-            if value.get("project_id") is not None and str(value["project_id"]) != str(project["id"]):
-                raise ValidationError(f"{label} project_id does not match target project")
-            if value.get("shot_id") is not None and str(value["shot_id"]) != str(shot_id):
-                raise ValidationError(f"{label} shot_id does not match target shot")
-            if value.get("target_role") is not None and value["target_role"] != "primary_visual":
-                raise ValidationError(f"{label} target_role must be primary_visual")
-            supplied_media = value.get("media_id") or value.get("output_media_id")
-            if supplied_media is not None and str(supplied_media).removeprefix("sha256:") != str(candidate_row["media_id"]).removeprefix("sha256:"):
-                raise ValidationError(f"{label} media_id does not match candidate media")
-        media_digest = str(candidate_row["media_id"]).removeprefix("sha256:")
-        owned = self.store.conn.execute("SELECT o.* FROM objects o JOIN project_objects po ON po.digest=o.digest WHERE po.project_id=? AND o.digest=?", (project["id"], media_digest)).fetchone()
-        if owned is None:
-            raise NotFoundError("candidate media is not owned by project")
-        # Verify both the durable object identity and the bytes behind it.  A
-        # database row alone is not provenance evidence after a damaged CAS.
-        try:
-            actual_digest = sha256_bytes(self.cas.read(media_digest))
-        except Exception as exc:  # pragma: no cover - CAS backend-specific
-            raise ValidationError("candidate media is unavailable") from exc
-        if actual_digest != media_digest:
-            raise ValidationError("candidate media digest does not match stored bytes")
-        primaries = []
-        for row in item_rows:
-            metadata = json.loads(row["metadata_json"])
-            if isinstance(metadata, dict) and metadata.get("role") == "primary_visual" and metadata.get("status") == "primary":
-                primaries.append((row, metadata))
-        if len(primaries) > 1:
-            raise ValidationError("shot must contain at most one primary_visual item")
-        if primaries and str(primaries[0][0]["id"]) == candidate_id:
-            raise ValidationError("candidate item is already the primary")
-        updates = []
-        superseded_id = None
-        if primaries:
-            old_row, old_metadata = primaries[0]
-            superseded_id = str(old_row["id"])
-            old_metadata = dict(old_metadata); old_metadata["status"] = "superseded"
-            updates.append((superseded_id, old_metadata))
-        candidate_metadata = dict(candidate_metadata); candidate_metadata["status"] = "primary"
-        updates.append((candidate_id, candidate_metadata))
-        stamp = now()
-        resulting_head = self.store.promote_shot_items(shot_id, expected, updates, timestamp=stamp)
-        changed_shot = self.store.conn.execute("SELECT * FROM project_shots WHERE id=? AND project_id=?", (str(shot_id), project["id"])).fetchone()
-        revision = self._record_legacy_shot_revision(project["id"], changed_shot)
-        promoted = {"shot_id": str(shot_id), "project_id": str(project["id"]), "candidate_item_id": candidate_id, "primary_item_id": candidate_id, "superseded_item_id": superseded_id, "item_ids": [str(row["id"]) for row in item_rows], "event_head_seq": resulting_head}
-        item_resources = []
-        for row in self.store.conn.execute("SELECT * FROM shot_items WHERE shot_id=? ORDER BY sort_key, id", (shot_id,)).fetchall():
-            value = self._shot_item_resource(row)
-            value["media_id"] = "sha256:" + str(value["media_id"]).removeprefix("sha256:")
-            item_resources.append(value)
-        media_records = []
-        for row in self.store.conn.execute("SELECT o.* FROM objects o JOIN project_objects po ON po.digest=o.digest WHERE po.project_id=? ORDER BY o.digest", (project["id"],)).fetchall():
-            media_records.append({"id": "sha256:" + str(row["digest"]), "media_id": "sha256:" + str(row["digest"]), "content_hash": "sha256:" + str(row["digest"]), "digest": "sha256:" + str(row["digest"])})
-        relation_rows = self.store.conn.execute("SELECT * FROM media_relations WHERE project_id=? ORDER BY from_digest, to_digest, kind, ordinal", (project["id"],)).fetchall()
-        relations = [{"from_media_id": "sha256:" + str(row["from_digest"]), "to_media_id": "sha256:" + str(row["to_digest"]), "kind": row["kind"], "ordinal": int(row["ordinal"]), "metadata": json.loads(row["metadata_json"])} for row in relation_rows]
-        invalidation = analyze_invalidation(item_resources, media_records, timeline_assets, media_relations=relations)
-        result = {"promotion": promoted, "invalidation": invalidation, "revision_id": revision["revision_id"], "internal_timeline_revision_id": revision["internal_timeline_revision_id"], "content_digest": revision["content_digest"]}
-        return self._command_record("shot.promote_candidate", str(shot_id), key, request_hash, result, project_id=project["id"])
+        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     # Short neutral service alias used by adapters that do not expose the
     # project-qualified generated method name.
@@ -3816,21 +3571,6 @@ class RuntimeService:
             raise ValidationError("slot is allowed only for prompt bindings and must be a lowercase slug", details={"reason": "slot"})
         identity = {"schema": TEXT_BINDING_IDENTITY_SCHEMA, "project_id": str(project_id), "shot_id": str(shot_id), "kind": kind, "slot": slot}
         return str(uuid.uuid5(uuid.NAMESPACE_URL, canonical_json(identity)))
-
-    @staticmethod
-    def _freeze_text(value):
-        if isinstance(value, str):
-            value = value.encode("utf-8")
-        if not isinstance(value, (bytes, bytearray, memoryview)):
-            raise ValidationError("text must be UTF-8 text or bytes", details={"reason": "text"})
-        data = bytes(value)
-        if len(data) > TEXT_BINDING_MAX_BYTES:
-            raise ValidationError("text exceeds 1 MiB", details={"reason": "too_large"})
-        try:
-            data.decode("utf-8", errors="strict")
-        except UnicodeDecodeError as exc:
-            raise ValidationError("text is not valid UTF-8", details={"reason": "invalid_utf8"}) from exc
-        return data, sha256_bytes(data)
 
     def _verify_text_object(self, project_id, digest, *, candidate=False):
         digest = str(digest).removeprefix("sha256:")
@@ -3918,134 +3658,13 @@ class RuntimeService:
             "byte_size": int(media["size"]), "created_at": str(row["created_at"]), "updated_at": str(row["updated_at"]),
         }
 
-    def _resolve_text_binding(self, project_id, body):
-        binding_id = body.get("binding_id")
-        if binding_id is not None:
-            if any(body.get(key) is not None for key in ("shot_id", "shot_ref", "kind", "slot")):
-                raise ValidationError("binding_id cannot be combined with friendly selectors")
-            row = self.store.conn.execute("SELECT * FROM shot_text_bindings WHERE id=? AND project_id=?", (str(binding_id), project_id)).fetchone()
-            if row is None: raise NotFoundError("text binding not found")
-            return row
-        shot_id = body.get("shot_id") or body.get("shot_ref")
-        kind = body.get("kind")
-        if not shot_id or not kind: raise ValidationError("shot_id and kind are required")
-        self.store.get_project(project_id)
-        shot = self.store.conn.execute("SELECT id FROM project_shots WHERE id=? AND project_id=?", (shot_id, project_id)).fetchone()
-        if shot is None: raise NotFoundError("shot not found")
-        slot = body.get("slot")
-        self._text_binding_id(project_id, shot["id"], kind, slot)
-        params = [project_id, shot["id"], kind]
-        query = "SELECT * FROM shot_text_bindings WHERE project_id=? AND shot_id=? AND kind=?"
-        if "slot" in body:
-            query += " AND slot IS ?"; params.append(slot)
-        rows = self.store.conn.execute(query + " ORDER BY slot IS NOT NULL ASC, slot ASC, id ASC", tuple(params)).fetchall()
-        if not rows: raise NotFoundError("text binding not found")
-        if len(rows) > 1: raise ConflictError("text binding selector is ambiguous", details={"reason": "ambiguous_selector", "candidates": [str(value["id"]) for value in rows]})
-        return rows[0]
-
-    def _record_text_binding_event(self, row, event_kind, payload, *, timestamp):
-        prior = self.store.conn.execute("SELECT event_hash FROM shot_text_binding_events WHERE binding_id=? ORDER BY seq DESC LIMIT 1", (row["id"],)).fetchone()
-        previous_hash = str(prior[0]) if prior else ""
-        seq = int(row["head_seq"]) + 1
-        event_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{row['id']}:shot.text_binding:{seq}"))
-        event_hash = hashlib.sha256(canonical_json({"event_id": event_id, "binding_id": row["id"], "seq": seq, "kind": event_kind, "payload": payload, "previous_hash": previous_hash}).encode()).hexdigest()
-        self.store.conn.execute("INSERT INTO shot_text_binding_events(event_id,binding_id,project_id,seq,kind,payload_json,previous_hash,event_hash,created_at) VALUES (?,?,?,?,?,?,?,?,?)", (event_id, row["id"], row["project_id"], seq, event_kind, canonical_json(payload), previous_hash, event_hash, timestamp))
-        return event_id, seq
-
-    def _materialize_text_object(self, project_id, data, digest):
-        existing = self.store.conn.execute("SELECT * FROM objects WHERE digest=?", (digest,)).fetchone()
-        if existing is not None:
-            # CAS objects are workspace-global, while ownership is project
-            # scoped.  A byte-identical object imported by another path may be
-            # reused, but only after independently checking its immutable
-            # bytes; then attach the project managed-local relation.
-            if not str(existing["media_type"]).startswith("text/") or int(existing["size"]) > TEXT_BINDING_MAX_BYTES:
-                raise ValidationError("text media candidate failed integrity", details={"reason": "media_type_not_text", "media_id": "sha256:" + digest})
-            try:
-                path = self.cas.path_for(digest)
-                if path.is_symlink() or not path.is_file() or path.read_bytes() != data:
-                    raise ValidationError("text media candidate failed integrity", details={"reason": "managed_hash_mismatch", "media_id": "sha256:" + digest})
-            except OSError as exc:
-                raise ValidationError("text media candidate failed integrity", details={"reason": "managed_file_missing", "media_id": "sha256:" + digest}) from exc
-            relation = self.store.conn.execute("SELECT 1 FROM project_objects WHERE project_id=? AND digest=? AND relation='managed'", (project_id, digest)).fetchone()
-            if relation is None:
-                self.store.conn.execute("INSERT INTO project_objects(project_id,digest,relation,created_at) VALUES (?,?, 'managed', ?)", (project_id, digest, now()))
-            return existing
-        path = self.cas.path_for(digest)
-        if not path.exists():
-            self._begin_cas_publication_journal("shot-text-binding", [{"digest": digest}], project_id=project_id)
-            self.cas.put(data, expected_digest=digest)
-        stamp = now()
-        self.store.conn.execute("INSERT INTO objects(digest,size,media_type,original_name,created_at) VALUES (?,?,?,?,?)", (digest, len(data), "text/plain", digest + ".txt", stamp))
-        self.store.conn.execute("INSERT INTO project_objects(project_id,digest,relation,created_at) VALUES (?,?, 'managed', ?)", (project_id, digest, stamp))
-        return self.store.conn.execute("SELECT * FROM objects WHERE digest=?", (digest,)).fetchone()
-
     @_durable_mutation
     def set_project_shot_text_binding(self, project_id, body, *, idempotency_key=None):
-        require_idempotency_key(idempotency_key)
-        self._require_object_body(body)
-        project = self.store.get_project(project_id); project_id = str(project["id"])
-        expected = body.get("expected_head")
-        if isinstance(expected, bool) or not isinstance(expected, int) or expected < 0: raise ValidationError("expected_head must be a non-negative integer", details={"reason": "expected_head"})
-        data, digest = self._freeze_text(body.get("text"))
-        if expected == 0:
-            if body.get("binding_id") is not None: raise ValidationError("head 0 requires a friendly shot selector", details={"reason": "expected_head"})
-            shot_id = body.get("shot_id") or body.get("shot_ref"); kind = body.get("kind"); slot = body.get("slot")
-            if not shot_id: raise ValidationError("shot_id is required")
-            self._text_binding_id(project_id, shot_id, kind, slot)
-            shot = self.store.conn.execute("SELECT id FROM project_shots WHERE id=? AND project_id=?", (shot_id, project_id)).fetchone()
-            if shot is None: raise NotFoundError("shot not found")
-            binding_id = self._text_binding_id(project_id, shot["id"], kind, slot)
-            stream_id = binding_id + ":shot.text_binding"
-            row = self.store.conn.execute("SELECT * FROM shot_text_bindings WHERE id=?", (binding_id,)).fetchone()
-        else:
-            row = self._resolve_text_binding(project_id, body); binding_id = str(row["id"]); stream_id = str(row["event_stream_id"])
-            if int(row["head_seq"]) != expected: raise ConflictError("text binding head is stale", details={"expected_head": expected, "actual_head": int(row["head_seq"]), "binding_id": binding_id})
-        facts = {"project_id": project_id, "binding_id": binding_id, "event_stream_id": stream_id, "expected_head": expected, "desired_content_hash": "sha256:" + digest}
-        req_hash = hashlib.sha256(canonical_json({"command_kind": "shot.text_binding.set", **facts}).encode()).hexdigest()
-        replay = self._command_replay("shot.text_binding.set", binding_id, idempotency_key, req_hash, project_id=project_id)
-        if replay is not None: return replay
-        if expected == 0 and row is not None:
-            raise ConflictError("text binding head is stale", details={"expected_head": 0, "actual_head": int(row["head_seq"]), "binding_id": binding_id})
-        if expected != 0:
-            self._text_binding_resource(row)
-        if expected == 0:
-            desired = self._materialize_text_object(project_id, data, digest)
-            stamp = now(); self.store.conn.execute("INSERT INTO shot_text_bindings(id,project_id,shot_id,kind,slot,media_digest,event_stream_id,head_seq,created_at,updated_at) VALUES (?,?,?,?,?,?,?,0,?,?)", (binding_id, project_id, shot_id, kind, slot, digest, stream_id, stamp, stamp))
-            row = self.store.conn.execute("SELECT * FROM shot_text_bindings WHERE id=?", (binding_id,)).fetchone()
-            event_id, seq = self._record_text_binding_event(row, "shot.text_binding.created", {"binding_id": binding_id, "media_id": "sha256:" + digest, "content_hash": "sha256:" + digest}, timestamp=stamp)
-            self.store.conn.execute("UPDATE shot_text_bindings SET head_seq=1 WHERE id=?", (binding_id,))
-        else:
-            desired = self._materialize_text_object(project_id, data, digest) if self.store.conn.execute("SELECT 1 FROM objects WHERE digest=? AND EXISTS (SELECT 1 FROM project_objects WHERE project_id=? AND digest=? AND relation='managed')", (digest, project_id, digest)).fetchone() is None else self._verify_text_object(project_id, digest, candidate=True)
-            if str(row["media_digest"]) == digest:
-                return {"data": self._text_binding_resource(row), "receipt": None}
-            stamp = now(); event_id, seq = self._record_text_binding_event(row, "shot.text_binding.rebound", {"binding_id": binding_id, "previous_media_id": "sha256:" + str(row["media_digest"]), "media_id": "sha256:" + digest, "content_hash": "sha256:" + digest}, timestamp=stamp)
-            self.store.conn.execute("UPDATE shot_text_bindings SET media_digest=?, head_seq=?, updated_at=? WHERE id=?", (digest, seq, stamp, binding_id))
-        result = self._text_binding_resource(self.store.conn.execute("SELECT * FROM shot_text_bindings WHERE id=?", (binding_id,)).fetchone())
-        recorded = self._command_record("shot.text_binding.set", binding_id, idempotency_key, req_hash, result, project_id=project_id, event_ids=(event_id,), primary_stream_id=stream_id, resulting_stream_seq=seq)
-        return recorded
+        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     @_durable_mutation
     def rebind_project_shot_text_binding(self, project_id, body, *, idempotency_key=None):
-        require_idempotency_key(idempotency_key); self._require_object_body(body)
-        project = self.store.get_project(project_id); project_id = str(project["id"])
-        expected = body.get("expected_head")
-        if isinstance(expected, bool) or not isinstance(expected, int) or expected < 1: raise ValidationError("rebind requires a positive expected_head", details={"reason": "expected_head"})
-        row = self._resolve_text_binding(project_id, body)
-        if int(row["head_seq"]) != expected: raise ConflictError("text binding head is stale", details={"expected_head": expected, "actual_head": int(row["head_seq"]), "binding_id": str(row["id"])})
-        desired_digest = str(body.get("media_id") or body.get("content_hash") or "").removeprefix("sha256:")
-        if not re.fullmatch(r"[0-9a-f]{64}", desired_digest): raise ValidationError("media_id must be a SHA-256 object id", details={"reason": "media_id"})
-        facts = {"project_id": project_id, "binding_id": str(row["id"]), "event_stream_id": str(row["event_stream_id"]), "expected_head": expected, "desired_media_id": "sha256:" + desired_digest, "desired_content_hash": "sha256:" + desired_digest}
-        req_hash = hashlib.sha256(canonical_json({"command_kind": "shot.text_binding.rebind", **facts}).encode()).hexdigest()
-        replay = self._command_replay("shot.text_binding.rebind", str(row["id"]), idempotency_key, req_hash, project_id=project_id)
-        if replay is not None: return replay
-        current = self._text_binding_resource(row)
-        self._verify_text_object(project_id, desired_digest, candidate=True)
-        if str(row["media_digest"]) == desired_digest: return {"data": current, "receipt": None}
-        stamp = now(); event_id, seq = self._record_text_binding_event(row, "shot.text_binding.rebound", {"binding_id": str(row["id"]), "previous_media_id": current["media_id"], "media_id": "sha256:" + desired_digest, "content_hash": "sha256:" + desired_digest}, timestamp=stamp)
-        self.store.conn.execute("UPDATE shot_text_bindings SET media_digest=?, head_seq=?, updated_at=? WHERE id=?", (desired_digest, seq, stamp, row["id"]))
-        result = self._text_binding_resource(self.store.conn.execute("SELECT * FROM shot_text_bindings WHERE id=?", (row["id"],)).fetchone())
-        return self._command_record("shot.text_binding.rebind", str(row["id"]), idempotency_key, req_hash, result, project_id=project_id, event_ids=(event_id,), primary_stream_id=str(row["event_stream_id"]), resulting_stream_seq=seq)
+        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     def get_project_shot_text_binding(self, project_id, binding_id):
         project = self.store.get_project(project_id)
@@ -4218,38 +3837,7 @@ class RuntimeService:
 
     @_durable_mutation
     def create_shot(self, timeline_id, body, *, idempotency_key=None):
-        self._require_object_body(body)
-        if not isinstance(body.get("shot_id"), str) or not body["shot_id"]:
-            raise ValidationError("shot_id is required")
-        if int(body.get("duration_ms", 0)) < 1 or int(body.get("start_ms", 0)) < 0:
-            raise ValidationError("invalid shot timing")
-        references = body.get("reference_ids", [])
-        if not isinstance(references, list) or any(not isinstance(value, str) or not value for value in references):
-            raise ValidationError("reference_ids must be a list of non-empty strings")
-        self._timeline_resource(timeline_id)
-        request_hash = hashlib.sha256(canonical_json({"timeline_id": timeline_id, "shot": body}).encode()).hexdigest()
-        # The key is scoped to the create-shot operation, while the request
-        # hash binds both the timeline path and complete body.  This makes a
-        # key reused for a different timeline or shot a deterministic
-        # conflict rather than an unrelated successful mutation.
-        aggregate_id = "timeline.shots"
-        replay = self._command_replay("timeline.shot.create", aggregate_id, idempotency_key, request_hash)
-        if replay is not None:
-            return replay
-        try:
-            self.store.conn.execute(
-                "INSERT INTO timeline_shots(id, timeline_id, start_ms, duration_ms, reference_ids_json) VALUES (?, ?, ?, ?, ?)",
-                (body["shot_id"], timeline_id, int(body["start_ms"]), int(body["duration_ms"]), canonical_json(references)),
-            )
-            self.store.conn.execute("INSERT INTO timeline_shot_state(id, version, archived_at) VALUES (?, 1, NULL)", (body["shot_id"],))
-        except sqlite3.IntegrityError as exc:
-            raise ConflictError("shot already exists", details={"shot_id": body["shot_id"]}) from exc
-        result = self._shot_resource(self.store.conn.execute("SELECT * FROM timeline_shots WHERE id=?", (body["shot_id"],)).fetchone())
-        timeline = self._timeline_resource(timeline_id)
-        self._record_timeline_revision(timeline_id, timeline)
-        self._record_legacy_timeline_revision(timeline_id, timeline)
-        result.update({"revision_id": timeline["revision_id"], "content_digest": timeline["content_digest"]})
-        return self._command_record("timeline.shot.create", aggregate_id, idempotency_key, request_hash, result)
+        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     def get_shot(self, shot_id):
         row = self.store.conn.execute("SELECT * FROM timeline_shots WHERE id=?", (shot_id,)).fetchone()
@@ -4831,34 +4419,7 @@ class RuntimeService:
 
     @_verified_mutation
     def _update_shot_state(self, shot_id, body, *, archived=None, idempotency_key=None):
-        expected = self._expected_version(body)
-        with self.store._mutex:
-            row = self.store.conn.execute("SELECT * FROM timeline_shots WHERE id=?", (shot_id,)).fetchone()
-            if not row: raise NotFoundError("shot not found")
-            action = "update" if archived is None else "archive" if archived else "recover"
-            request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
-            replay = self._command_replay(f"shot.{action}", shot_id, idempotency_key, request_hash)
-            if replay is not None:
-                return replay
-            state = self.store.conn.execute("SELECT version, archived_at FROM timeline_shot_state WHERE id=?", (shot_id,)).fetchone()
-            actual = int(state["version"] if state else 1)
-            if expected != actual: raise ConflictError("shot version conflict", details={"expected": expected, "actual": actual})
-            if archived is None:
-                if state and state["archived_at"]: raise ConflictError("archived shot must be recovered before update")
-                start = body.get("start_ms", row["start_ms"]); duration = body.get("duration_ms", row["duration_ms"]); refs = body.get("reference_ids", json.loads(row["reference_ids_json"]))
-                if int(start) < 0 or int(duration) < 1 or not isinstance(refs, list): raise ValidationError("invalid shot timing or reference_ids")
-            else:
-                start, duration, refs = row["start_ms"], row["duration_ms"], json.loads(row["reference_ids_json"])
-            with self.store._transaction():
-                self.store.conn.execute("UPDATE timeline_shots SET start_ms=?, duration_ms=?, reference_ids_json=? WHERE id=?", (int(start), int(duration), canonical_json(refs), shot_id))
-                self.store.conn.execute("INSERT OR REPLACE INTO timeline_shot_state(id, version, archived_at) VALUES (?, ?, ?)", (shot_id, actual + 1, now() if archived is True else None if archived is False else (state["archived_at"] if state else None)))
-                result = self.get_shot(shot_id)
-                timeline = self._timeline_resource(row["timeline_id"])
-                self._record_timeline_revision(row["timeline_id"], timeline)
-                self._record_legacy_timeline_revision(row["timeline_id"], timeline)
-                result.update({"revision_id": timeline["revision_id"], "content_digest": timeline["content_digest"]})
-                self._command_record(f"shot.{action}", shot_id, idempotency_key, request_hash, result)
-            return result
+        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     def update_shot(self, shot_id, body, *, idempotency_key=None): return self._update_shot_state(shot_id, body, idempotency_key=idempotency_key)
     def archive_shot(self, shot_id, body, *, idempotency_key=None): return self._update_shot_state(shot_id, body, archived=True, idempotency_key=idempotency_key)
