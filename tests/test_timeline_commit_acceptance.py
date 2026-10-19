@@ -16,6 +16,7 @@ from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit import CommitRejected, StaleHead
 from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest, request_identity
 from runtime_protocol.util import canonical_json
+from test_timeline_commit_integration import agent, film  # noqa: F401 (shared fixtures)
 
 
 def validate_prepared(prepared):
@@ -750,3 +751,245 @@ def test_nonmanaged_project_media_relation_cannot_authorize_commit(realm):
     assert error.value.failure["details"]["reason"] == "dependency_unavailable"
     assert counts(service) == before
     assert commits.head(project, "main") == head
+
+
+@pytest.mark.integration
+def test_real_provider_two_projects_keep_local_ids_and_commit_authority_isolated(film, request):
+    from types import SimpleNamespace
+
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.timeline_commit_port import route_path
+    from test_timeline_commit_integration import Editing, assert_json_equal, inverse, rows
+    from timeline_commit_film_fixture import _publication, _transcript, read_object_from_realm
+
+    service = RuntimeService(film.fixture.duplicate_root)
+    try:
+        project = service.create_project({"slug": "isolated-film", "name": "Isolated Film"},
+                                         idempotency_key="isolated-project")["id"]
+        timeline = "isolated-film"
+        service.create_timeline(project, timeline, name="Film Assembly", idempotency_key="isolated-timeline")
+        media = []
+        for index, media_id in enumerate(film.fixture.media_ids[:4]):
+            imported = service.ingest(
+                project, read_object_from_realm(film.fixture.duplicate_root, media_id),
+                media_type="video/mp4" if index < 3 else "audio/wav",
+                idempotency_key=f"isolated-media-{index}",
+            )["data"]["object_id"]
+            assert imported == media_id
+            media.append(imported)
+        transcript = _transcript(media[0])
+        transcript_id = service._transcript_document_id(project, media[0], transcript["source_id"])
+        service.create_document(project, {"document_id": transcript_id, "kind": "media.transcript", "content": transcript},
+                                idempotency_key="isolated-transcript")
+        shots = tuple(service.create_project_shot(
+            project, {"shot_id": f"isolated-shot-{index}", "name": f"Shot {index}", "metadata": {"scene": index}},
+            idempotency_key=f"isolated-shot-{index}",
+        )["data"] for index in range(1, 4))
+        binding = service.set_project_shot_text_binding(
+            project, {"shot_id": shots[0]["shot_id"], "kind": "transcript", "text": "Open on the river", "expected_head": 0},
+            idempotency_key="isolated-binding",
+        )["data"]
+        seed = _publication(project, timeline, video_ids=tuple(media[:3]), music_id=media[3],
+                            shots=shots, binding=binding, transcript_document_id=transcript_id)
+        # Allocate global identities at fixture construction, never in a retry.
+        seed["parent_revision_id"] = "isolated-parent-v1"
+        for index, (internal, shot, occurrence) in enumerate(zip(
+                seed["internal_timeline_revisions"], seed["shot_revisions"],
+                seed["parent_composition"]["occurrences"]), 1):
+            internal["revision_id"] = f"isolated-internal-{index}"
+            shot["revision_id"] = f"isolated-shot-revision-{index}"
+            shot["internal_timeline_revision_id"] = internal["revision_id"]
+            occurrence["shot_revision_id"] = shot["revision_id"]
+        parent = service.get_project_parent_composition_revision(
+            film.fixture.project_id, film.fixture.timeline_id, film.publication["data"]["new_head"],
+        )["payload"]
+        for field in ("config", "registry", "clips"):
+            seed["parent_composition"][field] = copy.deepcopy(parent[field])
+        publication = service.publish_parent_composition(project, timeline, seed, idempotency_key="isolated-publication")
+
+        # The shared Agent fixture disables rendering only after both Main API seeds.
+        actual_agent = request.getfixturevalue("agent")
+        service.register_timeline_commit_provider(actual_agent.provider())
+        a = Editing(service, film, actual_agent)
+        b = Editing(service, SimpleNamespace(fixture=SimpleNamespace(project_id=project, timeline_id=timeline)), actual_agent)
+        a.assert_baseline()
+        assert b.history()[0]["receipt"] == publication["receipt"]
+        originals = {edit.project: edit.document() for edit in (a, b)}
+        original_a, original_b = originals[a.project], originals[b.project]
+        assert original_a["parent_revision"]["payload"]["clips"] == original_b["parent_revision"]["payload"]["clips"]
+        assert [row["occurrence_id"] for row in original_a["parent_revision"]["payload"]["occurrences"]] == [
+            row["occurrence_id"] for row in original_b["parent_revision"]["payload"]["occurrences"]]
+        for family, identity in (("shot_revisions", "shot_id"), ("shot_revisions", "revision_id"),
+                                 ("internal_timeline_revisions", "revision_id")):
+            assert {row[identity] for row in original_a[family]}.isdisjoint(row[identity] for row in original_b[family])
+        for left, right in zip(original_a["internal_timeline_revisions"], original_b["internal_timeline_revisions"]):
+            left_clips, right_clips = copy.deepcopy(left["payload"]["clips"]), copy.deepcopy(right["payload"]["clips"])
+            for clips in (left_clips, right_clips):
+                for clip in clips:
+                    if "elementRef" in clip:
+                        clip["elementRef"]["binding_id"] = "project-owned-binding"
+                        clip["elementRef"]["anchor"]["document_id"] = "project-owned-transcript"
+            assert left_clips == right_clips
+
+        def state(edit):
+            # Complete project-owned rows, plus tables whose ownership is indirect.
+            conn = service.store.conn
+            tables = [row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
+            scoped = {}
+            for table in tables:
+                columns = {row[1] for row in conn.execute(f'PRAGMA table_info("{table}")')}
+                if "project_id" in columns:
+                    scoped[table] = sorted(tuple(row) for row in conn.execute(
+                        f'SELECT * FROM "{table}" WHERE project_id=?', (edit.project,)))
+            scoped["timeline_events"] = [tuple(row) for row in conn.execute(
+                "SELECT * FROM timeline_events WHERE timeline_id=? ORDER BY id", (edit.timeline,))]
+            scoped["command_idempotency"] = [tuple(row) for row in conn.execute(
+                "SELECT * FROM command_idempotency WHERE primary_stream_id=? OR aggregate_id=? ORDER BY txn_id",
+                (edit.timeline, canonical_json([edit.project, edit.timeline])))]
+            scoped["shot_items"] = [tuple(row) for row in conn.execute(
+                "SELECT i.* FROM shot_items i JOIN project_shots s ON s.id=i.shot_id WHERE s.project_id=? ORDER BY i.id",
+                (edit.project,))]
+            scoped["composition_revision_dependencies"] = [tuple(row) for row in conn.execute(
+                "SELECT d.* FROM composition_revision_dependencies d JOIN parent_composition_revisions p "
+                "ON p.id=d.parent_revision_id WHERE p.project_id=? ORDER BY d.parent_revision_id, d.ordinal",
+                (edit.project,))]
+            return {"sql": scoped, "head": edit.head(), "closure": edit.document(), "history": edit.history()}
+
+        def changed_only_own(edit, foreign, action):
+            before, untouched = state(edit), state(foreign)
+            unrelated_receipts = [tuple(row) for row in service.store.conn.execute(
+                "SELECT * FROM command_idempotency WHERE NOT (command_kind='timeline.commit' AND aggregate_id=?) "
+                "ORDER BY command_kind, aggregate_id, idempotency_key", (canonical_json([edit.project, edit.timeline]),))]
+            next_seq = service.store.conn.execute("SELECT next_seq FROM project_sequences WHERE project_id=?",
+                                                  (edit.project,)).fetchone()[0]
+            accepted = action()
+            assert state(foreign) == untouched
+            assert [tuple(row) for row in service.store.conn.execute(
+                "SELECT * FROM command_idempotency WHERE NOT (command_kind='timeline.commit' AND aggregate_id=?) "
+                "ORDER BY command_kind, aggregate_id, idempotency_key", (canonical_json([edit.project, edit.timeline]),))] == unrelated_receipts
+            after = state(edit)
+            receipt = accepted["receipt"]
+            assert receipt["project_id"] == edit.project
+            assert receipt["project_seq"] == [next_seq, next_seq]
+            assert service.store.conn.execute("SELECT next_seq FROM project_sequences WHERE project_id=?",
+                                              (edit.project,)).fetchone()[0] == next_seq + 1
+            assert after["head"] == {"revision_id": accepted["data"]["accepted_revision_id"],
+                                     "publication_id": receipt["receipt_id"]}
+            assert after["history"][:-1] == before["history"]
+            assert after["history"][-1]["receipt"] == receipt
+            assert after["sql"]["timeline_events"][:len(before["sql"]["timeline_events"])] == before["sql"]["timeline_events"]
+            assert [str(row[0]) for row in after["sql"]["timeline_events"][len(before["sql"]["timeline_events"]):]] == receipt["event_ids"]
+            edit.assert_readback(accepted)
+            original = originals[edit.project]
+            for family in ("shot_revisions", "internal_timeline_revisions", "dependency_manifest"):
+                assert accepted["data"]["canonical_document"][family] == original[family]
+            payload = accepted["data"]["canonical_document"]["parent_revision"]["payload"]
+            baseline = original["parent_revision"]["payload"]
+            assert payload["occurrences"] == baseline["occurrences"]
+            assert payload["registry"] == baseline["registry"]
+            for container, source in ((payload, baseline), (payload["config"], baseline["config"])):
+                assert [clip["id"] for clip in container["clips"]] == [clip["id"] for clip in source["clips"]]
+                assert_json_equal(container["clips"][1], source["clips"][1])
+                for field in ("id", "clipType", "asset", "hold", "track", "volume", "effects"):
+                    assert container["clips"][0][field] == source["clips"][0][field]
+            return accepted
+
+        def refused(action, foreign, supplied):
+            before, own_states = rows(service), (state(a), state(b))
+            with pytest.raises((RuntimeErrorBase, CommitRejected)) as error:
+                action()
+            failure = error.value.failure if isinstance(error.value, CommitRejected) else error.value.as_dict()
+            serialized = canonical_json(failure)
+            # Echoed request IDs are allowed; undisclosed foreign identities/data are not.
+            forbidden = {foreign.project, foreign.head()["revision_id"], foreign.head()["publication_id"],
+                         foreign.document()["parent_revision"]["content_digest"]}
+            for identity in forbidden:
+                if identity not in canonical_json(supplied):
+                    assert identity not in serialized
+            assert '"canonical_document"' not in serialized
+            assert '"payload"' not in serialized
+            assert '"receipt"' not in serialized
+            assert rows(service) == before
+            assert (state(a), state(b)) == own_states
+            return failure
+
+        key = "same-project-scoped-flight"
+        flights, moved = {}, {}
+        for edit, foreign in ((a, b), (b, a)):
+            flights[edit.project] = edit.body([edit.move("music-bed", 1)])
+            moved[edit.project] = changed_only_own(edit, foreign, lambda: edit.commit(flights[edit.project], key))
+            assert moved[edit.project]["data"]["canonical_document"]["parent_revision"]["payload"]["clips"][0]["at"] == 1
+        assert moved[a.project]["receipt"]["receipt_id"] != moved[b.project]["receipt"]["receipt_id"]
+        assert moved[a.project]["data"]["accepted_revision_id"] != moved[b.project]["data"]["accepted_revision_id"]
+        for edit in (a, b):
+            before = rows(service)
+            assert edit.commit(copy.deepcopy(flights[edit.project]), key) == moved[edit.project]
+            assert rows(service) == before
+        changed = copy.deepcopy(flights[a.project])
+        changed["commands"][0]["args"]["on"] = 2
+        assert refused(lambda: a.commit(changed, key), b, changed)["details"]["reason"] == "idempotency_mismatch"
+
+        commits = service._timeline_commits()[0]
+        for edit, foreign in ((a, b), (b, a)):
+            foreign_head = foreign.head()
+            foreign_page = service.list_timeline_commits(foreign.project, foreign.timeline, limit=1, authorize=lambda: None)
+            cursor = foreign_page["next_cursor"]
+            assert cursor is not None
+            foreign_revision = service.list_project_parent_composition_revisions(foreign.project, foreign.timeline, limit=1)
+            revision_cursor = foreign_revision["next_cursor"]
+            assert revision_cursor is not None
+            foreign_document = foreign.document()
+            shot = foreign_document["shot_revisions"][0]
+            internal = foreign_document["internal_timeline_revisions"][0]
+            probes = [
+                (lambda: service.get_project_timeline(edit.project, foreign.timeline), foreign.timeline),
+                (lambda: service.list_timeline_commits(edit.project, foreign.timeline, authorize=lambda: None), foreign.timeline),
+                (lambda: service.list_timeline_commits(edit.project, edit.timeline, cursor=cursor, authorize=lambda: None), cursor),
+                (lambda: service.list_project_parent_composition_revisions(edit.project, foreign.timeline), foreign.timeline),
+                (lambda: service.list_project_parent_composition_revisions(edit.project, edit.timeline, cursor=revision_cursor), revision_cursor),
+                (lambda: service.get_project_parent_composition_revision(edit.project, edit.timeline, foreign_head["revision_id"]), foreign_head["revision_id"]),
+                (lambda: service.get_project_shot_revision(edit.project, shot["shot_id"], shot["revision_id"]), shot),
+                (lambda: service.get_project_timeline_revision(edit.project, internal["timeline_id"], internal["revision_id"]), internal),
+                (lambda: commits.revision_closure(edit.project, edit.timeline, foreign_head["revision_id"]), foreign_head["revision_id"]),
+                (lambda: commits.history_entry(edit.project, edit.timeline, foreign_head["publication_id"]), foreign_head["publication_id"]),
+                (lambda: commits.history(edit.project, edit.timeline, foreign_head), foreign_head),
+                (lambda: commits.history(edit.project, edit.timeline, edit.head(), after_publication_id=foreign_head["publication_id"]), foreign_head["publication_id"]),
+            ]
+            for action, supplied in probes:
+                refused(action, foreign, supplied)
+            for base in (foreign_head, {**edit.head(), "publication_id": foreign_head["publication_id"]},
+                         {**edit.head(), "revision_id": foreign_head["revision_id"]}):
+                invalid = edit.body([edit.move("music-bed", 2)], base)
+                refused(lambda: edit.commit(invalid, "foreign-base-" + canonical_json(base)), foreign, invalid)
+            invalid = edit.body([inverse(foreign_head["publication_id"])])
+            refused(lambda: edit.commit(invalid, "foreign-inverse"), foreign, invalid)
+
+            def restore(source, key):
+                current = edit.head()
+                return service.restore_project_parent_composition_revision(
+                    edit.project, edit.timeline, source,
+                    {"expected_head": current["revision_id"], "expected_publication_id": current["publication_id"]},
+                    idempotency_key=key, publisher="integration-editor", authorize=lambda: None,
+                    invocation_path=route_path(edit.project, edit.timeline, f"composition-revisions/{source}/restore"),
+                )
+
+            refused(lambda: restore(foreign_head["revision_id"], "foreign-restore"), foreign, foreign_head["revision_id"])
+            undone = changed_only_own(edit, foreign, lambda: edit.commit(
+                edit.body([inverse(moved[edit.project]["receipt"]["receipt_id"])]), "own-inverse"))
+            assert edit.history()[-1]["records"]["undo_of"] == [moved[edit.project]["receipt"]["receipt_id"]]
+            assert_json_equal(undone["data"]["canonical_document"]["parent_revision"]["payload"],
+                              originals[edit.project]["parent_revision"]["payload"])
+            restored = changed_only_own(edit, foreign, lambda: restore(moved[edit.project]["data"]["accepted_revision_id"], "own-restore"))
+            assert_json_equal(restored["data"]["canonical_document"]["parent_revision"]["payload"],
+                              moved[edit.project]["data"]["canonical_document"]["parent_revision"]["payload"])
+            assert edit.history()[-1]["records"]["restored_from"] == {
+                "revision_id": moved[edit.project]["data"]["accepted_revision_id"],
+                "content_digest": moved[edit.project]["data"]["canonical_document"]["parent_revision"]["content_digest"],
+            }
+            # Original flights remain exact even after undo/restore and the other project advances.
+            before = rows(service)
+            assert edit.commit(copy.deepcopy(flights[edit.project]), key) == moved[edit.project]
+            assert rows(service) == before
+        assert service.store.integrity_report()["ok"]
+    finally:
+        service.close()
