@@ -67,3 +67,34 @@ Test-only worker branches remain held until App frozen tuple proof is released; 
 ## 2026-10-19T21:26Z — post-cleanup full result, all23 intended failures corrected
 Merged runtime4af7a20 (3b06761 schemafixture +4af7a20 wheelisolation), ONLY8test/helper files changed from browser-tested product82df; normal product/contract/artifact bytes unchanged. Full requested ONCE for this reviewed batch: runtime-full-1019212309-6483, `/home/user/work/venv-runtime/bin/python -m pytest -q -n 3` => **3716PASSED14FAILED18SKIPPED**,12warnings,144.82s. All22historical fixture failures and installedwheel isolation failure are corrected; no new failures. Exact remaining14nodes are unchanged7RuntimeBoundary/zeroShim baseline-name cohort plus7original restore behaviour tests pendingM2provider adapter/new wire callers. No assertion removed/disabled/xfail added; no production migration/admission relaxation. Source tree/result/snap in tests/runtime-full-1019212309-6483. No additional full planned for unchanged tree.
 M1 main actual browser2PASS93s preserved on original frozen product tuple; overall M1 closure still waits App restored two deleted legacy/equivalent journeys GREEN per latest orchestrator directive.
+
+## 2026-10-19T21:54Z — outside-sandbox M1 baseline proof
+
+Worker `rt-m1-baseline-proof` verified the seven remaining baseline names on
+the untouched Runtime main worker at
+`8c1830d1ca64a3934c37611a28ffe8db7df879ea` (clean status). The one authorized
+central targeted run was:
+
+```text
+/home/user/work/venv-runtime/bin/python -m pytest -q tests/test_runtime_boundary.py tests/test_zero_shim_boundary.py
+```
+
+Result ID `rt-m1-baseline-proof-targeted-1019215409-28828`, central snapshot
+tree `e8f7bf1c6c3493b05faee2513cb093bda4fb7f46`: **7 failed, 29 passed in
+3.34s**, exit 1. The exact seven failing nodes are the six listed
+`tests/test_runtime_boundary.py` cases above plus
+`tests/test_zero_shim_boundary.py::test_start_does_not_inject_checkout_into_child`.
+
+Their normalized tracebacks are identical to the corresponding failures in
+`tests/runtime-full-1019212309-6483/log.txt`: four `_CustodyChild` cases fail
+at `runtime_protocol/platform.py:698` for missing `returncode`; the spawn case
+still reports `DID NOT RAISE RuntimeCustodyLaunchUncertain`; the retained-stop
+case fails at the same line for fake `Child.returncode`; and zero-shim first
+hits mocked identity `KeyError: 'pid'`, then the same cleanup line for fake
+`FakeProcess.returncode`. Only pytest temp paths/object addresses differ.
+
+This is direct outside-sandbox proof that all seven failures pre-date Timeline
+work on untouched main. No product/test/environment/dependency change was
+made. Detailed report and both logs:
+`workers/rt-m1-baseline-proof/report.md` and
+`tests/rt-m1-baseline-proof-targeted-1019215409-28828/log.txt`.
