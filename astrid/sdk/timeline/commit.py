@@ -143,16 +143,22 @@ def _verify_document(document):
                  row["timeline_id"], row["revision_id"])), "closure images must be sorted")
 
 
-def bundle_from_document(document):
+def bundle_from_document(document, *, migration_command=None, _migration_inverse=False):
     """Open a complete immutable Runtime document without a Runtime dependency."""
     document = copy.deepcopy(document)
     _verify_document(document)
+    if migration_command is not None:
+        from .commands import validate_command
+        validate_command(migration_command)
+        _require(migration_command['op'] == 'timeline.migrate-groups',
+                 'legacy admission requires timeline.migrate-groups')
     project, timeline = document["project_id"], document["timeline_id"]
     bundle = open_authoring_bundle(
         {**document["parent_revision"], "project_id": project, "timeline_id": timeline},
         shot_revisions=[{**row, "project_id": project} for row in document["shot_revisions"]],
         internal_timeline_revisions=[{**row, "project_id": project}
                                      for row in document["internal_timeline_revisions"]],
+        legacy_group_migration=migration_command is not None or _migration_inverse,
     )
     bundle["source_mapping"]["_runtime_document"] = document
     return bundle
@@ -257,14 +263,17 @@ def _failure(reason, message, base, current=None, *, conflicts=None):
     }
 
 
-def _load(port, context, revision):
+def _load(port, context, revision, *, migration_inverse=False):
     document = port.revision_closure(revision)
     request = context["request"]
     _require(document.get("project_id") == request["project_id"]
              and document.get("timeline_id") == request["timeline_id"]
              and document.get("parent_revision", {}).get("revision_id") == revision,
              "Runtime returned a different revision or project/timeline scope")
-    return bundle_from_document(document)
+    calls = request['commands']
+    migration = calls[0] if len(calls) == 1 and calls[0]['op'] == 'timeline.migrate-groups' else None
+    return bundle_from_document(document, migration_command=migration,
+                                _migration_inverse=migration_inverse)
 
 
 def _hydrate(port, bundle):
@@ -427,6 +436,16 @@ class RuntimeCommitService:
         current = None
         try:
             calls = request["commands"]
+            migration_inverse = False
+            if len(calls) == 1 and calls[0]['op'] == 'timeline.inverse':
+                targets = [port.history_entry(p) for p in calls[0]['args']['publications']]
+                records = _records(targets, CommitRejected, base, base)
+                # Only trusted migration/inverse records may reopen consumed
+                # legacy bytes. Ancestry and all guards still run below.
+                migration_inverse = any(
+                    r['command']['op'] in ('timeline.migrate-groups', 'timeline.inverse')
+                    and any(w['ref'] == 'parent' and w['path'] == ['config', 'pinnedShotGroups']
+                            for w in r['writes']) for r in records)
             restore = any(call["op"] == "timeline.restore" for call in calls)
             if restore:
                 current = port.head()
@@ -436,7 +455,7 @@ class RuntimeCommitService:
                 if current != base:
                     raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
                                                   base, current))
-            bundle = _load(port, context, base["revision_id"])
+            bundle = _load(port, context, base["revision_id"], migration_inverse=migration_inverse)
             current = port.head()
             base_entry = port.history_entry(base["publication_id"])
             if base_entry["revision_id"] != base["revision_id"]:
@@ -461,7 +480,7 @@ class RuntimeCommitService:
                            "publication_id": target["publication_id"]}
                     # Loading the exact target also verifies source scope; no
                     # client-provided inverse writes enter the core engine.
-                    _load(port, context, target["revision_id"])
+                    _load(port, context, target["revision_id"], migration_inverse=migration_inverse)
                     segment = [target, *_history(port, base, pin, CommitRejected, base)]
                     segments.append(segment)
                 # The longest segment begins at the earliest targeted edge.
@@ -482,8 +501,8 @@ class RuntimeCommitService:
                         raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
                     pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
                     _history(port, pin, previous, CommitRejected, base)
-                    return (_load(port, context, previous['revision_id']),
-                            _load(port, context, entry['revision_id']))
+                    return (_load(port, context, previous['revision_id'], migration_inverse=migration_inverse),
+                            _load(port, context, entry['revision_id'], migration_inverse=migration_inverse))
 
                 inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
                 inverse_records = AcceptedRecords(accepted, _records(
@@ -502,7 +521,7 @@ class RuntimeCommitService:
                 from astrid.sdk.timeline.commands import validate_command
                 validate_command(calls[0])
                 restored_from = copy.deepcopy(calls[0]['args'])
-                source = _load(port, context, restored_from['revision_id'])
+                source = _load(port, context, restored_from['revision_id'], migration_inverse=migration_inverse)
                 image = source['source_mapping']['_runtime_document']['parent_revision']
                 _require(image['content_digest'] == restored_from['content_digest'],
                          "restore source digest mismatch")
@@ -513,7 +532,7 @@ class RuntimeCommitService:
                 for write in (write for record in inverse_records for write in record['writes']):
                     if write['ref'] == 'timeline' and not write['path']:
                         pin = write['before']['value']
-                        source = _load(port, context, pin['revision_id'])
+                        source = _load(port, context, pin['revision_id'], migration_inverse=migration_inverse)
                         image = source['source_mapping']['_runtime_document']['parent_revision']
                         _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
                                  "inverse historical closure pin mismatch")
@@ -536,7 +555,7 @@ class RuntimeCommitService:
                         raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
                                                       base, current))
                     entries = _history(port, current, base, CommitRejected, base)
-                    head_bundle = _load(port, context, current["revision_id"])
+                    head_bundle = _load(port, context, current["revision_id"], migration_inverse=migration_inverse)
                     if not closures:
                         _hydrate(port, head_bundle)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
