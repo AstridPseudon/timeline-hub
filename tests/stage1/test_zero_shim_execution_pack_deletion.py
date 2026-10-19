@@ -87,6 +87,7 @@ def test_external_executor_command_always_crosses_subprocess_boundary(
     from astrid.core.execution.executor import runner
     from astrid.core.execution.executor.schema import ExecutorDefinition
 
+    monkeypatch.delenv("ASTRID_VIBECOMFY_CHECKOUT", raising=False)
     definition = ExecutorDefinition(
         id="demo.executor",
         name="Demo",
@@ -108,7 +109,8 @@ def test_external_executor_command_always_crosses_subprocess_boundary(
     )
 
     assert result.returncode == 0
-    assert calls and calls[0][0][0] == ["python3", "-c", "pass"]
+    assert len(calls) == 1
+    assert calls[0][0][0] == ["python3", "-c", "pass"]
 
 
 def test_python_orchestrator_always_uses_subprocess_worker(
