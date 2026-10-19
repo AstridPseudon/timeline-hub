@@ -540,6 +540,75 @@ class TimelineCommitStore:
                 "commands": [r["command"] for r in commands], "id_map": prepared["id_map"],
                 "provider_version": prepared["provider_version"], "compiler_version": prepared["compiler_version"]}
 
+    def _check_shot_destinations(self, context, prepared):
+        # Check the wire shape before inspecting destinations. This preflight
+        # precedes closure validation so foreign occupants get the same refusal.
+        try:
+            self.validate_prepared(prepared)
+        except Exception:
+            reject("invalid_prepared", "prepared commit does not satisfy the frozen schema", status=422)
+        document = prepared["canonical_document"]
+        project, timeline = context["request"]["project_id"], context["request"]["timeline_id"]
+        # Exact immutable reuse does not write the mutable shot projection.
+        writes = [s for s in document["shot_revisions"] if self.conn.execute(
+            "SELECT 1 FROM shot_revisions WHERE id=?", (s["revision_id"],)).fetchone() is None]
+        occupied = set()
+        for image in writes:
+            row = self.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (image["shot_id"],)).fetchone()
+            if row is not None:
+                if row["project_id"] != project:
+                    reject("destination_occupied")
+                occupied.add(image["shot_id"])
+        if not occupied:
+            return
+        current = self.revision_closure(project, timeline, prepared["expected_head"]["revision_id"])
+        occupied -= {s["shot_id"] for s in current["shot_revisions"]}
+        if not occupied:
+            return
+        from .timeline_commit_port import command_leaves
+
+        requested = [p for c in command_leaves(context["request"]["commands"])
+                     if c["op"] == "timeline.inverse" for p in c["args"]["publications"]]
+        if requested != prepared["records"]["undo_of"]:
+            reject("destination_occupied")
+
+        def edges(value):
+            return {o["occurrence_id"]: (o["shot_id"], o["shot_revision_id"])
+                    for o in value["parent_revision"]["payload"]["occurrences"]}
+
+        active, output = edges(current), edges(document)
+        cursor, remaining = prepared["expected_head"], set(requested)
+        while cursor and (occupied or remaining):
+            # history_entry authenticates the records against the receipt/event.
+            entry = self.history_entry(project, timeline, cursor["publication_id"])
+            previous = entry["previous"]
+            if entry["intent"] == "recorded":
+                before = self.revision_closure(project, timeline, previous["revision_id"])
+                prior = edges(before)
+                if entry["publication_id"] in remaining:
+                    for o, (shot, _) in prior.items():
+                        owner, source = "occurrence:" + o, before["parent_revision"]
+                        if output.get(o, (None,))[0] == shot and any(
+                                w["ref"] == "shot:" + shot or w["ref"] == owner or w["ref"].startswith(owner + "/")
+                                or (w["ref"] == "timeline" and not w["path"] and w["before"] == {
+                                    "state": "present", "value": {k: source[k] for k in ("revision_id", "content_digest")}})
+                                for r in entry["records"]["commands"] for w in r["writes"]):
+                            occupied.discard(shot)
+                    remaining.remove(entry["publication_id"])
+                after = edges(self.revision_closure(project, timeline, entry["revision_id"]))
+                for o, (shot, _) in after.items():
+                    owner = "occurrence:" + o
+                    if (shot in occupied and output.get(o, (None,))[0] == shot and o in prior
+                            and active.get(o) == prior[o] and prior[o][0] != shot
+                            and any(any(b["ref"] == owner for b in r["bindings"])
+                                    and any(read["ref"] == owner + "/shot" and read["path"] == ["shot_id"]
+                                            and read["state"] == {"state": "present", "value": prior[o][0]}
+                                            for read in r["reads"]) for r in entry["records"]["commands"])):
+                        occupied.remove(shot)
+            cursor = previous
+        if occupied or remaining:
+            reject("destination_occupied")
+
     def preview(self, context, prepared, *, authorize, inputs=None):
         context, prepared = detached(context), detached(prepared)
         with self.store._mutex:
@@ -548,6 +617,7 @@ class TimelineCommitStore:
                 reject("preview_requires_dry_run", status=422)
             self._check_context(context)
             self._check_head(context, prepared["expected_head"])
+            self._check_shot_destinations(context, prepared)
             candidate = self._validate(context, prepared, inputs)
             request = context["request"]
             return {"data": {"status": "preview", "base_revision_id": request["base_revision_id"],
@@ -589,6 +659,7 @@ class TimelineCommitStore:
                     reject("dry_run_accept", status=422)
                 self._check_context(context)
                 self._check_head(context, prepared["expected_head"])
+                self._check_shot_destinations(context, prepared)
                 candidate = self._validate(context, prepared, inputs)
                 request, previous = context["request"], prepared["expected_head"]
                 base = {"revision_id": request["base_revision_id"], "publication_id": request["base_publication_id"]}
