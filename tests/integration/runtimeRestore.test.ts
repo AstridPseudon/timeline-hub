@@ -43,15 +43,18 @@ it('M1 App restoreHistory uses the actual head pair and preserves the exact immu
     const restoreWire = wire.slice(restoreStart);
     expect(restoreWire.map(({ method, path }) => ({ method, path }))).toEqual([
       { method: 'GET', path: timelinePath },
+      { method: 'GET', path: '/v1/health' },
       { method: 'POST', path: `${timelinePath}/composition-revisions/${before.head.revisionId}/restore` },
     ]);
-    const head = restoreWire[0].response;
+    const [timelineRead, healthPreflight, restorePost] = restoreWire;
+    expect(healthPreflight.response).toMatchObject({ status: 'ok' });
+    const head = timelineRead.response;
     expect(head).toMatchObject({ project_id: projectId, timeline_id: seed.timelineId,
       head_revision_id: moved.data.accepted_revision_id, head_publication_id: moved.receipt.receipt_id });
-    expect(restoreWire[1].body).toEqual({
+    expect(restorePost.body).toEqual({
       expected_head: moved.data.accepted_revision_id, expected_publication_id: moved.receipt.receipt_id,
     });
-    const accepted = restoreWire[1].response as CommitAcceptedMutation;
+    const accepted = restorePost.response as CommitAcceptedMutation;
     expect(accepted.data.status).toBe('accepted');
     expect(accepted.data.accepted_revision_id).toBe(before.head.revisionId);
     expect(result).toEqual({ newHead: before.head.revisionId });
@@ -68,7 +71,7 @@ it('M1 App restoreHistory uses the actual head pair and preserves the exact immu
     const entry = readback.history?.items.find((item) => item.publication_id === accepted.receipt.receipt_id);
     expect(entry?.receipt).toEqual(accepted.receipt);
     expect(entry?.revision_id).toBe(before.head.revisionId);
-    expect(wire.filter(({ method }) => method === 'POST').map(({ path }) => path)).toEqual([restoreWire[1].path]);
+    expect(wire.filter(({ method }) => method === 'POST').map(({ path }) => path)).toEqual([restorePost.path]);
   } finally {
     await harness.stop();
   }
