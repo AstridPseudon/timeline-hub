@@ -384,6 +384,8 @@ Record its title and a sentence you can find again.
 - Two folders under `versions` (the new one and the previous one) and one under `backups`.
 - Your earlier conversations still appear once in the session list and reopen with their messages.
   If you selected a custom chat folder or session directory, that selection is retained.
+  The currently published OMP 17.4.2 has a known session-folder gap described under
+  [Known gaps](#known-gaps); record what happens there without treating it as workspace loss.
 
 **The "Update Astrid" screen.** The page shows **Update Astrid** only when your Astrid is older than the page. You
 can't bring it up on purpose. If you see it, click **Copy**, run that line, and check the same things as above.
@@ -552,6 +554,16 @@ finished or Astrid was uninstalled), attach the install log from the table above
 ## Known gaps
 
 These are known. Report what you see, but don't stop testing for them.
+
+**Chat history with the published OMP producer**
+
+- The default published OMP 17.4.2 does not consistently use the configured session folder when listing or
+  recovering conversations. A conversation can be missing from the list or fail to reopen after a restart, even
+  though the Astrid workspace is still present.
+  Record whether the conversation appears and whether its messages reopen; do not report this symptom as loss of
+  the Astrid workspace. Installer and live ACP qualification in this delivery used a locally built fixed producer,
+  so those results do not qualify the published 17.4.2 session-folder behavior. The release owner will update the
+  producer selection after landing the fix; see the [OMP producer landing guide](../install/OMP-LANDING.md).
 
 **Windows**
 

@@ -23,6 +23,14 @@ source-checkout cwd, it explicitly retains that cwd's original OMP session
 directory without moving or resetting the store. The default command remains `astrid`; the declaration prepends the selected
 Python's scripts directory to PATH to resolve that installed launcher.
 
+Release owners select the OMP producer with the single `tools.omp.source`
+manifest field. It names either an exact npm package and version or a fork
+repository and full commit. The published 17.4.2 default has the session-folder
+listing and recovery gap described in the [tester guide](../testing/TESTING.md#known-gaps).
+See the [OMP producer landing guide](../install/OMP-LANDING.md) for the owner
+handoff, patch and pinning procedure. Astrid does not apply a downstream patch
+to the selected producer during an ordinary install.
+
 The pack-host entry is `python -m astrid.core.execution.generic_host --service
 --source-checkout ... --support-root ...`. It reads the Runtime worker handoff
 from discovery and uses the ordinary bootstrap's credential, source, render,
