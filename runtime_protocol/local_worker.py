@@ -526,6 +526,7 @@ class LocalWorkerLauncher:
             set_cancel(self._prepare_cancel)
         existing = credentials.actor_metadata(actor)
         if existing and isinstance(existing.get("local_launch_receipt"), Mapping) and existing["local_launch_receipt"].get("execution_mode") == "host_only_cpu":
+            credentials.disable_actor(actor)
             self._latch_cleanup_uncertain("host-only departed owner recovery is unsupported")
         if existing:
             # Every durable bearer is unusable after owner restart until the
@@ -551,9 +552,29 @@ class LocalWorkerLauncher:
                     )
                 self._revoke_actor()
 
-    def _revoke_actor(self) -> None:
+    def _revoke_actor(self, *, expected_generation=None) -> None:
         """Synchronously fence authentication even if durable cleanup fails."""
+        if expected_generation is not None:
+            # Cleanup may finish after another generation has been published.
+            # Only the exact original commit may be destructively revoked.
+            with self.credentials._lock:
+                try:
+                    current = _credential_commit_generation(self.credentials, self.actor)
+                except Exception:
+                    return
+                if current != expected_generation:
+                    return
+                return self._revoke_actor()
         self.credentials.disable_actor(self.actor)
+        failure = getattr(self, "_cleanup_failure", None)
+        if failure is not None and failure["marker_persistence"] == "failed":
+            existing = self.credentials.actor_metadata(self.actor)
+            receipt = existing.get("local_launch_receipt") if isinstance(existing, Mapping) else None
+            if isinstance(receipt, Mapping) and receipt.get("execution_mode") == "host_only_cpu":
+                # Keep the existing restart fence until its replacement is
+                # durable. Daemon startup disables this generation before HTTP
+                # admission; deleting it here would turn ENOSPC into authority.
+                return
         try:
             self.credentials.revoke(self.actor)
         except OSError:
@@ -1763,7 +1784,20 @@ class LocalWorkerLauncher:
         with self._state_lock:
             if self._active_handle is not handle and self._preparing_handle is not handle:
                 return False
-            self._revoke_actor()
+            # The host-only receipt is the restart fence until cleanup either
+            # succeeds or publishes the existing uncertainty marker. Disable
+            # bearer use now, before cleanup or any other blocking operation.
+            existing = self.credentials.actor_metadata(self.actor)
+            receipt = existing.get("local_launch_receipt") if isinstance(existing, Mapping) else None
+            retain_receipt = isinstance(receipt, Mapping) and receipt.get("execution_mode") == "host_only_cpu"
+            if retain_receipt:
+                self.credentials.disable_actor(self.actor)
+                try:
+                    retained_generation = _credential_commit_generation(self.credentials, self.actor)
+                except Exception:
+                    retained_generation = ""  # Unresolved bytes cannot authorize deletion.
+            else:
+                self._revoke_actor()
             if self._active_handle is handle:
                 self._active_handle = None
                 self._active_profile = None
@@ -1772,8 +1806,14 @@ class LocalWorkerLauncher:
             if self._preparing_handle is handle:
                 self._preparing_handle = None
             self._watch_stop.set()
-        if abort:
-            self._abort(handle)
+        try:
+            if abort:
+                self._abort(handle)
+        except BaseException as exc:
+            self._latch_cleanup_uncertain(exc, handle=handle)
+        finally:
+            if retain_receipt:
+                self._revoke_actor(expected_generation=retained_generation)
         return True
 
     def cleanup_receipt_snapshot(self) -> dict[str, Any] | None:
@@ -1795,7 +1835,16 @@ class LocalWorkerLauncher:
                 preparing_before_fence,
                 self.preparer.current_handle(),
             )
-            self._revoke_actor()
+            existing = self.credentials.actor_metadata(self.actor)
+            receipt = existing.get("local_launch_receipt") if isinstance(existing, Mapping) else None
+            if isinstance(receipt, Mapping) and receipt.get("execution_mode") == "host_only_cpu":
+                self.credentials.disable_actor(self.actor)
+                try:
+                    self._shutdown_credential_generation = _credential_commit_generation(self.credentials, self.actor)
+                except Exception:
+                    self._shutdown_credential_generation = ""
+            else:
+                self._revoke_actor()
             self._active_handle = None
             self._active_profile = None
             self._active_identity = None
@@ -1871,6 +1920,12 @@ class LocalWorkerLauncher:
             failures.extend(failure)
         uncertain = getattr(self.preparer, "cleanup_uncertain", None)
         if failures or uncertain:
+            existing = self.credentials.actor_metadata(self.actor)
+            receipt = existing.get("local_launch_receipt") if isinstance(existing, Mapping) else None
+            if isinstance(receipt, Mapping) and receipt.get("execution_mode") == "host_only_cpu":
+                for handle in handles:
+                    self._latch_cleanup_uncertain(failures[0] if failures else uncertain, handle=handle)
+            self._revoke_actor(expected_generation=getattr(self, "_shutdown_credential_generation", None))
             # Preserve a bounded, credential-free operational reason.  The
             # caller persists this after the private control channel is gone;
             # replacing it with a generic ConflictError made a failed ACK,
@@ -1890,6 +1945,7 @@ class LocalWorkerLauncher:
                 "local Worker graph cleanup is uncertain"
                 + (f" [{detail}]" if detail else "")
             )
+        self._revoke_actor(expected_generation=getattr(self, "_shutdown_credential_generation", None))
 
     def _try_reconnect(self, profile: LocalWorkerProfile, metadata: Mapping[str, Any]) -> dict[str, Any] | None:
         if _host_only(profile):
