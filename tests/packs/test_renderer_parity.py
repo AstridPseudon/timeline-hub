@@ -22,7 +22,6 @@ from types import SimpleNamespace
 
 import pytest
 
-
 from astrid.core.env_vars import (
     ASTRID_NODE_EXECUTABLE,
     ASTRID_REMOTION_PROJECT_DIR,
@@ -52,7 +51,11 @@ from astrid.core.rendering.errors import (
     make_renderer_error,
 )
 from astrid.core.rendering.registry import load_default_registries
-from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
+from astrid.core.rendering.remotion_runtime import (
+    prepare_remotion_validation,
+    remotion_install_problem,
+    resolve_remotion_project_dir,
+)
 from astrid.core.rendering.service import RenderService
 from astrid.core.rendering.transport import CommandTransport
 from astrid.core.subprocess_env import (
@@ -114,25 +117,25 @@ def _require_ffmpeg() -> None:
     assert shutil.which("ffprobe") is not None, "ffmpeg is installed but ffprobe is missing"
 
 
-def _require_remotion_environment() -> None:
+def _require_remotion_environment(project: Path = REMOTION) -> None:
     """Skip real Remotion cases when the provisioned app is absent.
 
     Renderer support is intentionally honest about this dependency and returns
     ``supported=False``; a parity test must report the same unavailable
     environment rather than turn it into a misleading renderer failure.
     """
-    if not (REMOTION / "node_modules").is_dir():
+    if not (project / "node_modules").is_dir():
         pytest.skip("remotion/node_modules absent; real Remotion parity skipped")
-    required = (
-        "@banodoco/timeline-composition",
-        "@banodoco/timeline-schema",
-        "@banodoco/timeline-theme-2rp",
-    )
-    missing = [name for name in required if not (REMOTION / "node_modules" / name).is_dir()]
-    if missing:
-        pytest.skip("Remotion packages absent: " + ", ".join(missing))
-    if shutil.which("node") is None or shutil.which("npx") is None:
-        pytest.skip("node/npx absent; real Remotion parity skipped")
+    problem = remotion_install_problem(project)
+    assert problem is None, problem
+    assert shutil.which("node") is not None, "Remotion installed but node is missing"
+    assert shutil.which("npx") is not None, "Remotion installed but npx is missing"
+
+
+@pytest.fixture
+def renderer_execution_environment():
+    with _execution_env():
+        yield
 
 
 @pytest.fixture(scope="session")
@@ -235,7 +238,8 @@ def remotion_launch_validation(
     inherits these parent-owned references through CommandTransport.
     """
 
-    _require_remotion_environment()
+    project = resolve_remotion_project_dir()
+    _require_remotion_environment(project)
     for name in (
         ASTRID_REMOTION_VALIDATION_PATH,
         ASTRID_REMOTION_VALIDATION_SHA256,
@@ -244,7 +248,7 @@ def remotion_launch_validation(
     ):
         monkeypatch.delenv(name, raising=False)
 
-    monkeypatch.setenv(ASTRID_REMOTION_PROJECT_DIR, str(REMOTION.resolve()))
+    monkeypatch.setenv(ASTRID_REMOTION_PROJECT_DIR, str(project.resolve()))
     configured_node = os.environ.get(ASTRID_NODE_EXECUTABLE)
     node_value = configured_node or shutil.which("node")
     assert node_value, "the provisioned Remotion environment must provide Node"
