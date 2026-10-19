@@ -1,10 +1,9 @@
 import React, { useCallback, useState, ReactNode } from 'react';
 import { Button } from '@/shared/components/ui/button';
-import { Checkbox } from '@/shared/components/ui/checkbox';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { Task } from '@/types/tasks';
-import { CornerDownLeft, ImageIcon } from 'lucide-react';
+import { CornerDownLeft } from 'lucide-react';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import {
   TaskDetailsEmptyState,
@@ -24,9 +23,7 @@ interface TaskDetailsPanelProps {
   status?: TaskDetailsStatus;
   error: Error | null;
   inputImages: string[];
-  replaceImages: boolean;
-  onReplaceImagesChange: (checked: boolean) => void;
-  onApplySettingsFromTask?: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
+  onApplySettingsFromTask?: (taskId: string) => void;
   taskId: string | null;
   className?: string;
   basedOnSection?: ReactNode;
@@ -44,8 +41,6 @@ const TaskDetailsPanel: React.FC<TaskDetailsPanelProps> = ({
   status,
   error,
   inputImages,
-  replaceImages,
-  onReplaceImagesChange,
   onApplySettingsFromTask,
   taskId,
   className = "",
@@ -83,7 +78,7 @@ const TaskDetailsPanel: React.FC<TaskDetailsPanelProps> = ({
 
   const handleApplySettingsFromTask = () => {
     if (taskId && onApplySettingsFromTask && task) {
-      onApplySettingsFromTask(taskId, replaceImages, inputImages);
+      onApplySettingsFromTask(taskId);
     }
   };
   const summaryControls: TaskDetailsSummaryControls = {
@@ -199,35 +194,6 @@ const TaskDetailsPanel: React.FC<TaskDetailsPanelProps> = ({
       {onApplySettingsFromTask && task && taskId && (
         <div className="flex-shrink-0 border-t bg-gradient-to-t from-background via-background to-background/95 sticky bottom-0">
           <div className="p-4 flex items-center gap-3">
-            {/* Checkbox toggle for including images */}
-            {inputImages.length > 0 && (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-xs text-muted-foreground">Include</span>
-                <label
-                  htmlFor="replaceImages"
-                  className={`
-                    flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all
-                    border
-                    ${replaceImages
-                      ? 'bg-primary/10 border-primary/30 text-foreground'
-                      : 'bg-muted/50 border-transparent text-muted-foreground hover:bg-muted'
-                    }
-                  `}
-                >
-                  <Checkbox
-                    id="replaceImages"
-                    checked={replaceImages}
-                    onCheckedChange={(checked) => onReplaceImagesChange(checked as boolean)}
-                    className="data-[checked]:bg-primary data-[checked]:border-primary"
-                  />
-                  <ImageIcon className="h-3.5 w-3.5" />
-                  <span className="text-xs font-medium whitespace-nowrap">
-                    {inputImages.length} image{inputImages.length !== 1 ? 's' : ''}
-                  </span>
-                </label>
-              </div>
-            )}
-
             {/* Apply button */}
             <Button
               variant="retro"

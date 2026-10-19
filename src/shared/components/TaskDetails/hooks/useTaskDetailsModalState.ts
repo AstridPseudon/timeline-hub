@@ -10,7 +10,6 @@ export function useTaskDetailsModalState({
   taskId,
   taskParams,
 }: UseTaskDetailsModalStateParams) {
-  const [replaceImages, setReplaceImages] = useState(true);
   const [showDetailedParams, setShowDetailedParams] = useState(false);
   const [showAllImages, setShowAllImages] = useState(false);
   const [showFullPrompt, setShowFullPrompt] = useState(false);
@@ -37,8 +36,6 @@ export function useTaskDetailsModalState({
   }, [taskId]);
 
   return {
-    replaceImages,
-    setReplaceImages,
     showDetailedParams,
     setShowDetailedParams,
     showAllImages,

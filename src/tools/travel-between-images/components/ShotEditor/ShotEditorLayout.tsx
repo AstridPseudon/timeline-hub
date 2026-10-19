@@ -24,7 +24,7 @@ export interface ShotEditorLayoutProps {
     selectedShotId: string;
     projectId: string;
     effectiveAspectRatio?: string;
-    onApplySettingsFromTask?: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
+    onApplySettingsFromTask?: (taskId: string) => void;
     onJoinSegmentsClick: () => void;
     selectedOutputId: string | null;
     onSelectedOutputChange: (id: string | null) => void;

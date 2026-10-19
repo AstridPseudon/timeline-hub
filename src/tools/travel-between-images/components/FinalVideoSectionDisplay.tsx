@@ -14,7 +14,7 @@ interface FinalVideoSectionDisplayProps {
   isMobile: boolean;
   onLightboxOpen: () => void;
   onMobileTap: () => void;
-  onApplySettingsFromTask?: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
+  onApplySettingsFromTask?: (taskId: string) => void;
   hasActiveJoinTask: boolean;
 }
 

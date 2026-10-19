@@ -5,13 +5,10 @@ import { Label } from "@/shared/components/ui/primitives/label";
 import { useProjectCrudContext } from '@/shared/contexts/ProjectContext';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { Project } from '@/types/project';
-import { Checkbox } from '@/shared/components/ui/checkbox';
-import { useToolSettings } from '@/shared/hooks/settings/useToolSettings';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/components/ui/collapsible';
 import { ChevronDown, AlertTriangle } from 'lucide-react';
 import { AspectRatioSelector } from '@/shared/components/GenerationControls/AspectRatioSelector';
 import { ModalContainer } from '@/shared/components/ModalContainer';
-import { SETTINGS_IDS } from '@/shared/lib/settingsIds';
 
 interface ProjectSettingsModalProps {
   isOpen: boolean;
@@ -22,9 +19,6 @@ interface ProjectSettingsModalProps {
 export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ isOpen, onOpenChange, project }) => {
   const [projectName, setProjectName] = useState('');
   const [aspectRatio, setAspectRatio] = useState<string>('');
-  const { settings: uploadSettings, update: updateUploadSettings, isLoading: isLoadingUploadSettings } = useToolSettings<{ cropToProjectSize?: boolean }>(SETTINGS_IDS.UPLOAD, { projectId: project?.id });
-
-  const [cropToProjectSize, setCropToProjectSize] = useState<boolean>(true);
   const { updateProject, isUpdatingProject, deleteProject, isDeletingProject } = useProjectCrudContext();
   const [deleteConfirmText, setDeleteConfirmText] = useState<string>('');
   const [isDangerZoneOpen, setIsDangerZoneOpen] = useState(false);
@@ -33,18 +27,8 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ isOp
     if (project && isOpen) {
       setProjectName(project.name);
       setAspectRatio(project.aspectRatio || '16:9');
-      if (!isLoadingUploadSettings) {
-        setCropToProjectSize(uploadSettings?.cropToProjectSize ?? true);
-      }
     }
-  }, [project, isOpen, uploadSettings, isLoadingUploadSettings]);
-
-  const handleCropToProjectSizeChange = (checked: boolean) => {
-    setCropToProjectSize(checked);
-    if (project?.id) {
-      updateUploadSettings('project', { cropToProjectSize: checked });
-    }
-  };
+  }, [project, isOpen]);
 
   const handleSaveChanges = async () => {
     if (!project) {
@@ -131,17 +115,6 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ isOp
             id="aspect-ratio-settings"
             showVisualizer
           />
-        </div>
-        <div className="flex items-center gap-x-2 pt-2">
-          <Checkbox
-            id="crop-to-project-size-settings"
-            checked={cropToProjectSize}
-            onCheckedChange={(checked) => handleCropToProjectSizeChange(checked === true)}
-            disabled={isUpdatingProject}
-          />
-          <Label htmlFor="crop-to-project-size-settings" className="text-sm">
-            Crop uploaded images to project size
-          </Label>
         </div>
         <Collapsible open={isDangerZoneOpen} onOpenChange={setIsDangerZoneOpen}>
           <div className="mt-6 border-t pt-4">

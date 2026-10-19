@@ -33,7 +33,7 @@ interface VideoItemProps {
   onMobileModalOpen: (video: GenerationRow) => void;
   selectedVideoForDetails: GenerationRow | null;
   showTaskDetailsModal: boolean;
-  onApplySettingsFromTask: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
+  onApplySettingsFromTask: (taskId: string) => void;
   hideActions?: boolean;
   /** Custom tooltip text for the delete button */
   deleteTooltip?: string;

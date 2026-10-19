@@ -24,7 +24,7 @@ interface VideoItemMemoProps {
   onHoverStart: (video: GenerationRow, event: React.MouseEvent) => void;
   onHoverEnd: () => void;
   onMobileModalOpen: (video: GenerationRow) => void;
-  onApplySettingsFromTask: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
+  onApplySettingsFromTask: (taskId: string) => void;
 }
 
 /**

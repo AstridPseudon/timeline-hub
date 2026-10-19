@@ -4,7 +4,7 @@ export interface FinalVideoSectionProps {
   shotId: string;
   projectId: string;
   projectAspectRatio?: string;
-  onApplySettingsFromTask?: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
+  onApplySettingsFromTask?: (taskId: string) => void;
   onJoinSegmentsClick?: () => void;
   selectedParentId?: string | null;
   onSelectedParentChange?: (id: string | null) => void;

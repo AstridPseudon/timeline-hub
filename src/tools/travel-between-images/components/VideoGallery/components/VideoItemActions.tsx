@@ -23,7 +23,7 @@ interface VideoItemActionsProps {
   onHoverStart: (video: GenerationRow, event: React.MouseEvent) => void;
   onHoverEnd: () => void;
   onMobileModalOpen: (video: GenerationRow) => void;
-  onApplySettingsFromTask: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
+  onApplySettingsFromTask: (taskId: string) => void;
 }
 
 export const VideoItemActions: React.FC<VideoItemActionsProps> = ({
@@ -86,7 +86,7 @@ export const VideoItemActions: React.FC<VideoItemActionsProps> = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (taskId && !settingsApplied) {
-                    onApplySettingsFromTask(taskId, true, []);
+                    onApplySettingsFromTask(taskId);
                     setSettingsApplied(true);
                     setTimeout(() => {
                       setSettingsApplied(false);
