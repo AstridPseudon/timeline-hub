@@ -190,6 +190,10 @@ class Backend:
         owner_state = self._discovery_owner_state(discovery) if discovery.exists() else "stopped"
         if owner_state == "live":
             self.runtime(version, data, "down", profile=True)
+        elif owner_state in {"stopped", "stale"}:
+            # A candidate can fail before its foreground owner publishes fresh
+            # discovery. Old absent-owner records remain Runtime's to reconcile.
+            self.service.stop_foreground()
         self.service.stop()
         if discovery.exists():
             # A manager may still be draining after its stop operation.

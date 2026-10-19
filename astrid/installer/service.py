@@ -217,6 +217,26 @@ class Service:
         else:
             self.powershell(f"$t=Get-ScheduledTask -TaskName '{TASK}' -ErrorAction SilentlyContinue; if ($t) {{ $t | Disable-ScheduledTask | Out-Null }}")
 
+    def stop_foreground(self) -> None:
+        """Stop a recorded fallback owner that has not published discovery yet."""
+        foreground = self.recorded().get("foreground")
+        if foreground is None:
+            return
+        if (not isinstance(foreground, dict) or type(foreground.get("pid")) is not int
+                or foreground["pid"] <= 0 or not isinstance(foreground.get("birth_id"), str)
+                or not foreground["birth_id"].strip()):
+            raise ValueError("The foreground Astrid Runtime identity is incomplete.")
+        pid = foreground["pid"]
+        identity = platform.process_identity(pid)
+        if identity is None or identity.get("birth_id") != foreground["birth_id"]:
+            return  # The recorded incarnation is already gone.
+        if identity.get("pid") != pid or identity.get("uid") != platform.current_user():
+            raise RuntimeError("The foreground Astrid Runtime identity changed; refusing to signal it.")
+        try:
+            platform.signal_process(identity, platform.TERM)
+        except ProcessLookupError:
+            pass  # It exited after observation; never reopen or signal a PID.
+
     def stop(self) -> None:
         if self.system == "linux" and self.systemd() and self.path.exists():
             self.run(["systemctl", "--user", "stop", "astrid.service"])
