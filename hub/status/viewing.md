@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-19T21:52:01Z | dispatcher heartbeat 5s -->
+<!-- viewing | 2026-10-19T21:57:09Z | dispatcher heartbeat 12s -->
 # viewing — 2026-10-19 21:49 UTC
 Milestone: M0 COMPLETE. Viewing M1 labels proven in real renderer-off App skeleton; overall M1 HOLD per orchestrator (restored journeys, failure classification, ~22:20 deep audit). M2 DESIGN ONLY. M3 consumers/deletions/parity incomplete.
 Integrated: Composition 7aa384a, actual `npm test` 22 passed/0 failed/skipped; locked build/repeat pack/fresh consumer passed. Agent 7a7acc0e contains exact package/readiness/gate 7a68b7ed via owner-reviewed 990914e9 plus generated metadata and summary-fixture corrections. Manager 140 focused passed/2 deselected; central 79 passed/4 existing skips. No duplicate full or obsolete remote request remains.
