@@ -6,6 +6,9 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { delimiter } from 'node:path';
 import { getAstridAgentModelCatalog, setAstridAgentDefaultModel } from './astrid-agent-models.ts';
+import { discoverLocalAgents } from './astrid-local-agents.ts';
+import { createLocalAgentAcpProcessHost } from './astrid-local-agent-host.ts';
+import { localAgentIdSchema, sessionAgentId, type LocalAgentId } from '../src/integrations/astrid/localAgents.ts';
 
 import {
   AcpProcessHost,
@@ -56,6 +59,7 @@ export type AstridAcpBridgeConfig = {
 };
 
 type Connection = {
+  readonly agent: LocalAgentId;
   readonly host: AcpProcessHost;
   readonly notifications: unknown[];
   readonly terminals: Map<string, TerminalRecord>;
@@ -87,6 +91,7 @@ type BridgeOptions = {
   readonly chatRegistry?: ProjectChatRegistry;
   readonly config: AstridAcpBridgeConfig;
   readonly hostFactory?: (options: AstridAcpLauncherOptions) => AcpProcessHost;
+  readonly localAgentHostFactory?: typeof createLocalAgentAcpProcessHost;
   readonly idFactory?: () => string;
   readonly now?: () => number;
 };
@@ -332,6 +337,7 @@ function hostError(error: unknown): { status: number; body: JsonRecord } {
 export class AstridAcpBridge {
   private readonly config: AstridAcpBridgeConfig;
   private readonly hostFactory: (options: AstridAcpLauncherOptions) => AcpProcessHost;
+  private readonly localAgentHostFactory: typeof createLocalAgentAcpProcessHost;
   private readonly idFactory: () => string;
   private readonly connections = new Map<string, Connection>();
   private readonly chatRegistry?: ProjectChatRegistry;
@@ -346,6 +352,7 @@ export class AstridAcpBridge {
   constructor(options: BridgeOptions) {
     this.config = options.config;
     this.hostFactory = options.hostFactory ?? createAstridAcpProcessHost;
+    this.localAgentHostFactory = options.localAgentHostFactory ?? createLocalAgentAcpProcessHost;
     this.idFactory = options.idFactory ?? randomUUID;
     this.now = options.now ?? Date.now;
     this.sweeper = setInterval(() => { void this.reapIdle(); }, REAP_SWEEP_MS);
@@ -375,6 +382,10 @@ export class AstridAcpBridge {
     try {
       if (request.method === 'GET' && url.pathname === '/health') {
         jsonResponse(response, 200, { status: 'ok', bridge: 'astrid-acp', protocol: ASTRID_BRIDGE_PROTOCOL_VERSION });
+        return;
+      }
+      if (request.method === 'GET' && url.pathname === '/agents') {
+        jsonResponse(response, 200, { agents: await discoverLocalAgents({ cwd: this.config.cwd }) });
         return;
       }
       if (request.method === 'GET' && url.pathname === '/models') {
@@ -411,6 +422,7 @@ export class AstridAcpBridge {
           // Fresh hosts rediscover accounts signed in through /login. OMP
           // retains the transcript; clients load the same opaque session ID.
           for (const [id, connection] of this.connections) {
+            if (connection.agent !== 'astrid') continue;
             this.connections.delete(id);
             this.reaped.add(id);
             if (this.reaped.size > MAX_REAPED_IDS) this.reaped.delete(this.reaped.values().next().value as string);
@@ -424,8 +436,14 @@ export class AstridAcpBridge {
         return;
       }
       if (request.method === 'POST' && url.pathname === '/connect') {
+        const body = asRecord(await readJson(request));
+        const agent = localAgentIdSchema.safeParse(body?.agent ?? 'astrid');
+        if (!agent.success || !body || Object.keys(body).some(key => key !== 'agent')) {
+          jsonResponse(response, 400, { error: 'invalid_body', detail: 'Choose astrid, claude-code or codex.' });
+          return;
+        }
         this.connecting++;
-        try { await this.connect(response, this.localMediaOnly(request)); }
+        try { await this.connect(response, this.localMediaOnly(request), agent.data); }
         finally { this.connecting--; }
         return;
       }
@@ -538,7 +556,7 @@ export class AstridAcpBridge {
     return this.config.localMediaOnly === true || request.headers['x-astrid-local-media-only'] === '1';
   }
 
-  private async connect(response: ServerResponse, localMediaOnly: boolean): Promise<void> {
+  private async connect(response: ServerResponse, localMediaOnly: boolean, agent: LocalAgentId): Promise<void> {
     const connectionId = this.idFactory();
     const notifications: unknown[] = [];
     const terminals = new Map<string, TerminalRecord>();
@@ -552,7 +570,12 @@ export class AstridAcpBridge {
         const toolCall = isRecord(params) && isRecord(params.toolCall) ? params.toolCall : null;
         const title = typeof toolCall?.title === 'string' ? toolCall.title.toLowerCase() : '';
         const destructive = title.startsWith('delete ') || title.startsWith('move ');
-        return { outcome: { outcome: 'selected', optionId: destructive ? 'reject_once' : 'allow_always' } };
+        const options = isRecord(params) && Array.isArray(params.options) ? params.options.filter(isRecord) : [];
+        const option = options.find(item => item.kind === (destructive ? 'reject_once' : 'allow_always'))
+          ?? options.find(item => item.kind === (destructive ? 'reject_always' : 'allow_once'));
+        return option && typeof option.optionId === 'string'
+          ? { outcome: { outcome: 'selected', optionId: option.optionId } }
+          : { outcome: { outcome: 'cancelled' } };
       },
       createTerminal: (params) => createTerminal(params, this.config.cwd, terminals),
       terminalOutput: (params) => {
@@ -604,7 +627,7 @@ export class AstridAcpBridge {
         });
       },
     };
-    const host = this.hostFactory({
+    const launcherOptions: AstridAcpLauncherOptions = {
       cwd: this.config.cwd,
       profile: this.config.profile,
       sessionDir: this.config.sessionDir,
@@ -614,10 +637,11 @@ export class AstridAcpBridge {
       ...(localMediaOnly ? { env: {
         PI_CONFIG_FILES: [process.env.PI_CONFIG_FILES, fileURLToPath(new URL('./astrid-acp-local-only.yml', import.meta.url))].filter(Boolean).join(delimiter),
         PI_BASH_NO_LOGIN: '1',
-        ASTRID_SYSTEM_PROMPT: `${ASTRID_ACP_CONTEXT_SYSTEM_PROMPT}\nHosted same-machine mode: keep all media bytes on this computer. Use Runtime IDs, text and scoped metadata for CPU edits. Do not send media to model/provider tools or cloud media executors, including through shell commands. Native image submission and inspection are disabled for this session.`,
+        ASTRID_SYSTEM_PROMPT: `${ASTRID_ACP_CONTEXT_SYSTEM_PROMPT}\nHosted same-machine mode: keep all media bytes on this computer. Use Runtime IDs, text and scoped metadata for CPU edits. Do not send media to model/provider tools or cloud media executors, including through shell commands. ${agent === 'astrid' ? 'Native image submission and inspection are disabled for this session.' : 'Do not submit or inspect images with native agent tools.'}`,
       } } : {}),
-    });
-    connection = { host, notifications, terminals, sessions: new Set(), configOptions: new Map(), disconnected: false, notificationBytes: 0, localMediaOnly, lastUsedAt: this.now(), inFlight: 0 };
+    };
+    const host = agent === 'astrid' ? this.hostFactory(launcherOptions) : await this.localAgentHostFactory(agent, launcherOptions);
+    connection = { agent, host, notifications, terminals, sessions: new Set(), configOptions: new Map(), disconnected: false, notificationBytes: 0, localMediaOnly, lastUsedAt: this.now(), inFlight: 0 };
     this.connections.set(connectionId, connection);
     try {
       const initialize = await host.initialize({
@@ -694,6 +718,9 @@ export class AstridAcpBridge {
           this.rememberSession(connection, 'session/new', {}, result);
           return result;
         }, async sessionId => {
+          // A different agent's chat remains available through its original
+          // connection. Changing the default must never mark that chat missing.
+          if (sessionAgentId(sessionId) !== connection.agent) return true;
           try {
             const result = await connection.host.request('session/resume', { sessionId, cwd: this.config.cwd, mcpServers: [] });
             this.rememberSession(connection, 'session/resume', { sessionId }, result);
@@ -741,6 +768,7 @@ export class AstridAcpBridge {
   }
 
   private async applySelectedModel(connection: Connection, sessionId: string): Promise<void> {
+    if (connection.agent !== 'astrid') return;
     // Only an explicit App switch overrides an existing chat's session model.
     // Listing the saved default must leave session/project defaults to Astrid.
     const selected = this.selectedModel;

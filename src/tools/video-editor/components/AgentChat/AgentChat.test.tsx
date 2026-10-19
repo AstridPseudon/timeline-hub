@@ -21,6 +21,8 @@ const mocks = vi.hoisted(() => ({
   useSendMessage: vi.fn(),
   useAgentModels: vi.fn(),
   useSetAgentModel: vi.fn(),
+  useLocalAgents: vi.fn(),
+  useSetLocalAgent: vi.fn(),
   modelRefetch: vi.fn(),
   useCancelSession: vi.fn(),
   useCurrentAttachmentSet: vi.fn(),
@@ -57,6 +59,8 @@ vi.mock('@/tools/video-editor/hooks/useAgentSession', () => ({
   useSendMessage: (...args: unknown[]) => mocks.useSendMessage(...args),
   useAgentModels: (...args: unknown[]) => mocks.useAgentModels(...args),
   useSetAgentModel: (...args: unknown[]) => mocks.useSetAgentModel(...args),
+  useLocalAgents: (...args: unknown[]) => mocks.useLocalAgents(...args),
+  useSetLocalAgent: (...args: unknown[]) => mocks.useSetLocalAgent(...args),
   useCancelSession: (...args: unknown[]) => mocks.useCancelSession(...args),
 }));
 
@@ -222,6 +226,8 @@ function mockFromState(state: ReturnType<typeof createState>) {
   }));
   mocks.useAgentModels.mockImplementation(() => ({ data: { currentModel: 'openai/gpt-5', providers: [{ id: 'openai', name: 'OpenAI', signedIn: true, models: [{ id: 'gpt-5', name: 'GPT 5' }, { id: 'gpt-5-mini', name: 'GPT 5 Mini' }] }] }, isLoading: false, error: null, refetch: mocks.modelRefetch }));
   mocks.useSetAgentModel.mockImplementation(() => ({ mutateAsync: vi.fn().mockResolvedValue({ currentModel: 'openai/gpt-5-mini' }), isPending: false, error: null }));
+  mocks.useLocalAgents.mockImplementation(() => ({ data: { agents: [], selectedAgent: 'astrid' }, isLoading: false, error: null, refetch: vi.fn() }));
+  mocks.useSetLocalAgent.mockImplementation(() => ({ mutateAsync: vi.fn().mockResolvedValue(undefined), isPending: false, error: null }));
   mocks.useSendMessage.mockImplementation(() => state.sendMessage);
   mocks.useCancelSession.mockImplementation(() => state.cancelSession);
   mocks.useCurrentAttachmentSet.mockImplementation(() => ({
