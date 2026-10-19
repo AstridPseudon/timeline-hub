@@ -9,7 +9,7 @@ import hashlib
 import threading
 import uuid
 
-from .errors import AuthorizationError, ConflictError, ValidationError
+from .errors import AuthorizationGuard, AuthorizationError, ConflictError, ValidationError
 from .timeline_commit import digest, _publisher
 
 
@@ -58,7 +58,8 @@ def _session(principal):
     binding = principal.get("_credential_binding")
     if not isinstance(binding, str) or not binding:
         raise AuthorizationError(
-            "scene evaluation requires a live authenticated session"
+            "scene evaluation requires a live authenticated session",
+            guard=AuthorizationGuard.AUTHORING_INVOCATION_SESSION_REQUIRED,
         )
     return digest({"actor": principal["actor"], "credential_binding": binding})
 
@@ -134,7 +135,8 @@ class RequestSceneEvaluation:
             and "admin" not in self.principal.get("scopes", [])
         ):
             raise AuthorizationError(
-                "worker credentials cannot evaluate authoring scenes"
+                "worker credentials cannot evaluate authoring scenes",
+                guard=AuthorizationGuard.AUTHORING_INVOCATION_WORKER_DENIED,
             )
         self.service._assert_commit_authority(
             self.principal, self.request["project_id"]
@@ -145,11 +147,11 @@ class RequestSceneEvaluation:
             project["id"] != self.request["project_id"]
             or project["realm_id"] != self.service.realm["id"]
         ):
-            raise AuthorizationError("foreign project")
+            raise AuthorizationError("foreign project", guard=AuthorizationGuard.AUTHORING_INVOCATION_PROJECT_REALM)
         if "_credential_binding" in self.principal:
             issuer = self.service._task_credentials
             if issuer is None:
-                raise AuthorizationError("caller credential issuer unavailable")
+                raise AuthorizationError("caller credential issuer unavailable", guard=AuthorizationGuard.AUTHORING_INVOCATION_ISSUER_UNAVAILABLE)
             issuer.validate_binding(
                 self.principal["actor"],
                 self.principal["_credential_binding"],
@@ -159,7 +161,7 @@ class RequestSceneEvaluation:
             _session(self.principal) != self.session
             or digest(self.request) != self.request_hash
         ):
-            raise AuthorizationError("scene invocation binding changed")
+            raise AuthorizationError("scene invocation binding changed", guard=AuthorizationGuard.AUTHORING_INVOCATION_BINDING_CHANGED)
 
     def check(self):
         with self.service.store._mutex:
@@ -169,16 +171,16 @@ class RequestSceneEvaluation:
                 or getattr(self.service, "_authoring_scene_relay", None)
                 is not self.relay
             ):
-                raise AuthorizationError("authoring invocation revoked or unavailable")
+                raise AuthorizationError("authoring invocation revoked or unavailable", guard=AuthorizationGuard.AUTHORING_INVOCATION_REVOKED)
             if self.relay.config.binding != self.context:
-                raise AuthorizationError("authoring source/owner changed")
+                raise AuthorizationError("authoring source/owner changed", guard=AuthorizationGuard.AUTHORING_INVOCATION_OWNER_CHANGED)
             self._authority()
             if self.selection is not None:
                 if (
                     getattr(self.service, "_authoring_scene_selection", None)
                     is not self.selection
                 ):
-                    raise AuthorizationError("selected authoring Host changed")
+                    raise AuthorizationError("selected authoring Host changed", guard=AuthorizationGuard.AUTHORING_INVOCATION_HOST_CHANGED)
                 self.selection.check()
             check_binding(self.service, self.relay)
 
@@ -187,7 +189,7 @@ class RequestSceneEvaluation:
 
         if self.dependencies:
             if not {"objects:read", "admin"} & set(self.principal.get("scopes", [])):
-                raise AuthorizationError("scene dependencies require objects:read")
+                raise AuthorizationError("scene dependencies require objects:read", guard=AuthorizationGuard.AUTHORING_INVOCATION_DEPENDENCY_SCOPE)
             if "_credential_binding" in self.principal:
                 self.service._task_credentials.validate_binding(
                     self.principal["actor"],
@@ -220,7 +222,8 @@ class RequestSceneEvaluation:
             prepared["result"]["canonical_document"]
         ):
             raise AuthorizationError(
-                "acceptance requires this post-rebase candidate evaluation"
+                "acceptance requires this post-rebase candidate evaluation",
+                guard=AuthorizationGuard.AUTHORING_INVOCATION_CANDIDATE_PROOF,
             )
 
     def close(self):
@@ -271,7 +274,7 @@ class CandidateEvaluator:
                     if not {"objects:read", "admin"} & set(
                         self.invocation.principal.get("scopes", [])
                     ):
-                        raise AuthorizationError("scene assets require objects:read")
+                        raise AuthorizationError("scene assets require objects:read", guard=AuthorizationGuard.AUTHORING_INVOCATION_ASSET_SCOPE)
                     if "_credential_binding" in self.invocation.principal:
                         service._task_credentials.validate_binding(
                             self.invocation.principal["actor"],

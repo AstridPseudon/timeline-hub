@@ -6,7 +6,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlsplit, parse_qs
 
-from .errors import RuntimeErrorBase, AuthorizationError, ConflictError, ForbiddenError, NotFoundError, ProtocolError, InvalidRequestError, RetiredRouteError, ValidationError
+from .errors import AuthorizationGuard, RuntimeErrorBase, AuthorizationError, ConflictError, ForbiddenError, NotFoundError, ProtocolError, InvalidRequestError, RetiredRouteError, ValidationError
 from .service import validate_idempotency_key
 from .cas import IO_CHUNK_BYTES
 from .paired_session import PAIRED_SESSION_HEADER, PairedSessionAuthority, deny as paired_deny
@@ -55,10 +55,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         if self.path.split("?", 1)[0] == "/v1/health":
             return {"actor": "health", "scopes": ["health"]}
         if not getattr(self.server, "accepting_authenticated_requests", True):
-            raise AuthorizationError("runtime is not accepting authenticated requests")
+            raise AuthorizationError("runtime is not accepting authenticated requests", guard=AuthorizationGuard.IDENTITY_RUNTIME_CLOSED)
         value = self.headers.get("Authorization", "")
         if not value.startswith("Bearer "):
-            raise AuthorizationError("bearer credential required")
+            raise AuthorizationError("bearer credential required", guard=AuthorizationGuard.IDENTITY_BEARER_REQUIRED)
         if hasattr(self.server, "paired_sessions"):
             self.runtime.bind_task_authority(self.server.paired_sessions, self.server.credentials)
         identity = self.server.credentials.require(value[7:], scope)  # type: ignore[attr-defined]
@@ -298,13 +298,21 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 and path[3] == "timelines" and path[5] == "inspect")
 
     def _timeline_commit(self, project_id, timeline_id):
+        from .timeline_commit import _record_commit_authorization_failure
+        try:
+            return self._authorized_timeline_commit(project_id, timeline_id)
+        except AuthorizationError as exc:
+            _record_commit_authorization_failure(exc)
+            raise
+
+    def _authorized_timeline_commit(self, project_id, timeline_id):
         from .timeline_commit import digest, result_template
         from .errors import ValidationError
         identity = self._identity("projects:write")
         if "projects:write" not in identity["scopes"]:
             raise AuthorizationError("credential lacks explicit commit scope", details={
                 "scope": "projects:write", "decision": {
-                    "status": "deny", "allowed": False, "code": "credential_scope_denied"}})
+                    "status": "deny", "allowed": False, "code": "credential_scope_denied"}}, guard=AuthorizationGuard.IDENTITY_COMMIT_SCOPE_REQUIRED)
         request = self._project_mutation_body()
         try:
             sessions = self._header_values("X-Astrid-Session")

@@ -9,18 +9,76 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import logging
 import math
 import re
 
 from .narration import (narration_lines, narration_projection, request_take_refs,
                         validate_take_refs, validate_artifacts, validate_line_take,
                         NarrationTakeRefs, VerifiedNarrationTake)
-from .errors import ForbiddenError, AuthorizationError, ConflictError, NotFoundError, ValidationError
+from .errors import (AuthorizationGuard, ForbiddenError, AuthorizationError, ConflictError, NotFoundError, ValidationError,
+                     CapabilityUnavailableError)
 from .util import canonical_json, now, MANAGED_OUTPUT_ASSOCIATION_KEY
 
 KIND = "timeline.commit"
 PROVIDER_INTERFACE_VERSION = 1
 PROVIDER_FACTORY = "astrid.sdk.timeline.commit.create_runtime_commit_service"
+_LOGGER = logging.getLogger(__name__)
+
+
+def _record_commit_failure(stage, exc):
+    """Best-effort internal diagnosis, containing only fixed vocabulary.
+
+    Never inspect exception text, args, custom class names or instance codes.
+    Exact class identity prevents subclasses from supplying diagnostic data.
+    Logging failure must not change the existing uncertain public response.
+    """
+    try:
+        exception_class, error_code = "OtherException", None
+        for cls, label, code in (
+            (ConflictError, "ConflictError", "conflict"),
+            (NotFoundError, "NotFoundError", "not_found"),
+            (ValidationError, "ValidationError", "validation_error"),
+            (CapabilityUnavailableError, "CapabilityUnavailableError", "unavailable"),
+            (KeyError, "KeyError", None),
+            (TypeError, "TypeError", None),
+            (ValueError, "ValueError", None),
+            (AttributeError, "AttributeError", None),
+            (RuntimeError, "RuntimeError", None),
+            (OSError, "OSError", None),
+            (FileNotFoundError, "FileNotFoundError", None),
+            (PermissionError, "PermissionError", None),
+            (ImportError, "ImportError", None),
+            (ModuleNotFoundError, "ModuleNotFoundError", None),
+        ):
+            if type(exc) is cls:
+                exception_class, error_code = label, code
+                break
+        if type(stage) is not str or stage not in ("provider_commit", "preview_scene_validation"):
+            stage = "unknown"
+        diagnostic = dict(stage=stage, exception_class=exception_class)
+        if error_code is not None:
+            diagnostic["error_code"] = error_code
+        _LOGGER.error("timeline_commit_failure %s", canonical_json(diagnostic))
+    except Exception:
+        pass  # Diagnosis cannot replace the original failure/uncertainty result.
+
+
+def _record_commit_authorization_failure(exc):
+    """Only exact internal enum values may reach the existing diagnostic sink."""
+    try:
+        guard = AuthorizationGuard.UNKNOWN
+        label = "OtherException"
+        if type(exc) is AuthorizationError:
+            label = "AuthorizationError"
+            candidate = exc._authorization_guard
+            if type(candidate) is AuthorizationGuard:
+                guard = candidate
+        stage, reason = guard.value
+        _LOGGER.error("timeline_commit_failure %s", canonical_json(dict(
+            stage=stage, guard=reason, exception_class=label)))
+    except Exception:
+        pass  # Keep the original authorization refusal even if the sink fails.
 
 
 def validate_timeline_commit_provider(provider):
@@ -67,11 +125,11 @@ class RuntimeCommitPort:
         return self.__transcript_source(request, selection)
     def scene_evaluator(self, candidate):
         if self.__scene_evaluator is None:
-            raise AuthorizationError("authoring scene owner is unavailable")
+            raise AuthorizationError("authoring scene owner is unavailable", guard=AuthorizationGuard.AUTHORING_INVOCATION_OWNER_UNAVAILABLE)
         return self.__scene_evaluator(candidate)
     def validate_scene(self, candidate):
         if self.__validate_scene is None:
-            raise AuthorizationError("missing scene validation")
+            raise AuthorizationError("missing scene validation", guard=AuthorizationGuard.AUTHORING_INVOCATION_VALIDATION_MISSING)
         self.__validate_scene({"result": {"canonical_document": candidate}})
     def close(self): self.__close()
     def accept(self, request): return self.__accept(request)
@@ -171,7 +229,7 @@ def _publisher(identity, asserted_actor):
     if not isinstance(identity, dict) or not identity.get("actor") or not (
         {"projects:write", "admin"} & set(identity.get("scopes", []))
     ):
-        raise AuthorizationError("authenticated projects:write publisher required")
+        raise AuthorizationError("authenticated projects:write publisher required", guard=AuthorizationGuard.PUBLISHER_REQUIRED)
     if asserted_actor is not None:
         _object(asserted_actor, ("kind", "id"))
         if asserted_actor["kind"] not in ("user", "agent", "script"):
@@ -180,7 +238,7 @@ def _publisher(identity, asserted_actor):
         # No alternate actor/delegation model: attribution must name the
         # authenticated actor. Credential metadata is never caller JSON.
         if asserted_actor["id"] != identity["actor"]:
-            raise AuthorizationError("asserted actor does not match authenticated publisher")
+            raise AuthorizationError("asserted actor does not match authenticated publisher", guard=AuthorizationGuard.PUBLISHER_ACTOR_MISMATCH)
     return identity["actor"]
 
 
@@ -339,7 +397,7 @@ class TimelineCommitAcceptance:
         """
         project = self.store.get_project(project_id)
         if project["id"] != project_id or project["realm_id"] != self.realm["id"]:
-            raise AuthorizationError("selected media project is outside the request realm")
+            raise AuthorizationError("selected media project is outside the request realm", guard=AuthorizationGuard.COMMIT_CAPTURE_MEDIA_REALM)
         identity = (selection["generation_id"], selection["variant_id"])
         if identity in _copy_chain:
             raise ConflictError("invalid metadata copy lineage")
@@ -441,13 +499,13 @@ class TimelineCommitAcceptance:
         validate_take_refs(refs)
         project = self.store.get_project(project_id)
         if project["realm_id"] != self.realm["id"]:
-            raise AuthorizationError("narration project is outside the request realm")
+            raise AuthorizationError("narration project is outside the request realm", guard=AuthorizationGuard.COMMIT_CAPTURE_NARRATION_REALM)
         associations, documents, dependencies = [], {}, set()
         for port, ref in refs.items():
             # Check project before reading any auxiliary bytes, even internally.
             selected = self.store.get_managed_output(ref["association_id"])
             if selected["project_id"] != project_id:
-                raise AuthorizationError("narration output is outside the request project")
+                raise AuthorizationError("narration output is outside the request project", guard=AuthorizationGuard.COMMIT_CAPTURE_NARRATION_PROJECT)
             if not self.store.conn.execute(
                 "SELECT 1 FROM project_objects WHERE project_id=? AND digest=? AND relation='managed'",
                 (project_id, ref["object_id"][7:]),
@@ -888,7 +946,7 @@ class TimelineCommitAcceptance:
             expected = dict(timeline_id=ref["timeline_id"], expected_revision_id=ref["parent_revision_id"],
                             expected_publication_id=ref["publication_id"])
             if not recorded or recorded["project_id"] != project or recorded["source"] != expected:
-                raise AuthorizationError("duplicate source differs from recorded destination provenance")
+                raise AuthorizationError("duplicate source differs from recorded destination provenance", guard=AuthorizationGuard.COMMIT_CAPTURE_DUPLICATE_PROVENANCE)
             row = self.store.conn.execute(
                 "SELECT t.project_id, t.archived_at FROM timelines t JOIN parent_composition_publications p "
                 "ON p.timeline_id=t.id AND p.project_id=t.project_id WHERE t.id=? AND p.revision_id=? AND p.publication_id=?",
@@ -1041,7 +1099,7 @@ class TimelineCommitAcceptance:
 
         def check_scene(prepared):
             if scene_invocation is None:
-                raise AuthorizationError("missing request-scoped scene evaluation")
+                raise AuthorizationError("missing request-scoped scene evaluation", guard=AuthorizationGuard.AUTHORING_INVOCATION_EVALUATION_MISSING)
             scene_invocation.accept(prepared)
 
         def close_scene():
@@ -1080,7 +1138,7 @@ class TimelineCommitAcceptance:
                         (project, timeline, original["base_revision_id"], original.get("base_publication_id"))).fetchone()
                     if (args.get("bootstrap_revision_id") != original["base_revision_id"]
                             or not bootstrap or bootstrap["previous_revision_id"] is not None):
-                        raise AuthorizationError("duplicate requires its exact empty bootstrap publication")
+                        raise AuthorizationError("duplicate requires its exact empty bootstrap publication", guard=AuthorizationGuard.COMMIT_CAPTURE_DUPLICATE_BOOTSTRAP)
                     yield ref
                 if command.get("op") in {"shot.set", "occurrence.set", "occurrence.add"}:
                     for name in ("source", "replacement"):
@@ -1107,11 +1165,11 @@ class TimelineCommitAcceptance:
             self._assert_mutation_admitted()
             for scope in ("projects:write", *scopes):
                 if not {scope, "admin"} & set(principal.get("scopes", [])):
-                    raise AuthorizationError("transcript capture requires caller " + scope)
+                    raise AuthorizationError("transcript capture requires caller " + scope, guard=AuthorizationGuard.TRANSCRIPT_CAPTURE_SCOPE_REQUIRED)
                 binding = principal.get("_credential_binding")
                 if binding is not None:
                     if self._task_credentials is None:
-                        raise AuthorizationError("transcript caller credential issuer is unavailable")
+                        raise AuthorizationError("transcript caller credential issuer is unavailable", guard=AuthorizationGuard.TRANSCRIPT_CAPTURE_ISSUER_UNAVAILABLE)
                     self._task_credentials.validate_binding(principal["actor"], binding, scope)
 
         def transcript_document(document_id):
@@ -1170,7 +1228,7 @@ class TimelineCommitAcceptance:
             from astrid.sdk.timeline.transcripts import TranscriptSourceSelection
             from astrid.sdk.timeline.source_hydration import _runtime_transcript_resolver
             if digest(request) != request_hash or not isinstance(selection, TranscriptSourceSelection):
-                raise AuthorizationError("transcript capture changed request identity")
+                raise AuthorizationError("transcript capture changed request identity", guard=AuthorizationGuard.TRANSCRIPT_CAPTURE_REQUEST_IDENTITY)
             with self.store._mutex:
                 transcript_authority("objects:read")
                 if transcript_resolver is None:
@@ -1221,7 +1279,7 @@ class TimelineCommitAcceptance:
                     historical_takes = ([line["take"] for line, _ in narration_lines(restore_capture["closure"])]
                                         if restore_capture is not None else [])
                     if refs not in base_takes and refs not in historical_takes:
-                        raise AuthorizationError("narration take is outside captured request and pinned base")
+                        raise AuthorizationError("narration take is outside captured request and pinned base", guard=AuthorizationGuard.COMMIT_CAPTURE_NARRATION_TAKE)
                 token = digest(refs)
                 if token not in captured_takes:
                     captured_takes[token] = self._managed_narration_take(project, refs)
@@ -1230,7 +1288,7 @@ class TimelineCommitAcceptance:
         def selected_media(selection):
             _media_selection(selection, require_digest=True)
             if selection not in selections:
-                raise AuthorizationError("selected media is outside the captured request")
+                raise AuthorizationError("selected media is outside the captured request", guard=AuthorizationGuard.COMMIT_CAPTURE_MEDIA_SELECTION)
             token = digest(selection)
             with self.store._mutex:
                 _publisher(principal, original.get("asserted_actor"))
@@ -1252,7 +1310,7 @@ class TimelineCommitAcceptance:
                 token = digest(revision_id) if isinstance(revision_id, dict) else revision_id
                 allowed = (token in declared_shots and declared_shots[token] == revision_id) if isinstance(revision_id, dict) else revision_id in permitted_revisions
                 if not allowed:
-                    raise AuthorizationError("revision closure is outside captured request and observed heads")
+                    raise AuthorizationError("revision closure is outside captured request and observed heads", guard=AuthorizationGuard.COMMIT_CAPTURE_REVISION_CLOSURE)
                 if restore_selection is not None and revision_id == restore_selection["revision_id"]:
                     fresh = self._commit_restore_capture(project, timeline, restore_selection)
                     if restore_capture is not None and digest(restore_capture) != digest(fresh):
@@ -1288,7 +1346,7 @@ class TimelineCommitAcceptance:
 
         def accept(prepared):
             if original["dry_run"]:
-                raise AuthorizationError("dry-run port cannot accept or reserve a request")
+                raise AuthorizationError("dry-run port cannot accept or reserve a request", guard=AuthorizationGuard.COMMIT_CAPTURE_DRY_RUN_ACCEPT)
             if not isinstance(prepared, dict):
                 raise ValidationError("invalid prepared acceptance")
             if (any(prepared.get(k) != original[k] for k in ("project_id", "timeline_id", "request_id", "source"))
@@ -1296,7 +1354,7 @@ class TimelineCommitAcceptance:
                     or any(prepared.get(k) != original.get(k) for k in ("asserted_actor", "label", "reason"))
                     or not isinstance(prepared.get("result"), dict)
                     or prepared["result"].get("base_revision_id") != original["base_revision_id"]):
-                raise AuthorizationError("prepared acceptance changed captured request authority or identity")
+                raise AuthorizationError("prepared acceptance changed captured request authority or identity", guard=AuthorizationGuard.COMMIT_CAPTURE_ACCEPTANCE_IDENTITY)
             if restore_selection is not None:
                 marker = {**restore_selection, "expected_publication_id": original["base_publication_id"]}
                 if (prepared.get("restore") != marker or restore_capture is None
@@ -1388,16 +1446,19 @@ class TimelineCommitAcceptance:
                                    hint="No semantic commit was attempted", next_action="Retry the original request after provider startup")
             return result
         port = self._request_commit_port(request, identity)
+        stage = "provider_commit"
         try:
             prepared = provider.commit(copy.deepcopy(request), port)
             if (getattr(provider, "requires_scene_evaluation", False) and isinstance(prepared, dict)
                     and prepared.get("status") == "preview"):
+                stage = "preview_scene_validation"
                 port.validate_scene(prepared["canonical_document"])
         except (AuthorizationError, ForbiddenError):
             raise
         except (ConnectionError, TimeoutError):
             raise  # The transport may have lost an already durable response.
-        except Exception:
+        except Exception as exc:
+            _record_commit_failure(stage, exc)
             result["error"] = dict(code="runtime_unavailable", message="Astrid commit provider failed; outcome may be unknown",
                                    hint="Acceptance may already be durable", next_action="Retry the original request id unchanged")
             return result
@@ -1411,7 +1472,7 @@ class TimelineCommitAcceptance:
             raise ValidationError("commit provider changed result identity")
         if prepared["status"] in ("accepted", "no_change"):
             if request["dry_run"]:
-                raise AuthorizationError("dry-run provider returned acceptance")
+                raise AuthorizationError("dry-run provider returned acceptance", guard=AuthorizationGuard.COMMIT_CAPTURE_DRY_RUN_RESULT)
             saved = self.lookup_request(project_id, timeline_id, idempotency_key)
             if saved is None or saved["result"] != prepared:
                 raise ValidationError("provider reported acceptance without the stored Runtime result")

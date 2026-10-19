@@ -12,7 +12,7 @@ import threading
 import uuid
 from pathlib import Path
 
-from .errors import AuthorizationError, ValidationError
+from .errors import AuthorizationGuard, AuthorizationError, ValidationError
 
 
 class CredentialStore:
@@ -148,7 +148,7 @@ class CredentialStore:
     @staticmethod
     def _deny_format():
         raise AuthorizationError("credential format is unsupported", details={
-            "decision": {"status": "deny", "allowed": False, "code": "credential_format_unsupported"}})
+            "decision": {"status": "deny", "allowed": False, "code": "credential_format_unsupported"}}, guard=AuthorizationGuard.CREDENTIAL_FORMAT_UNSUPPORTED)
 
     def _publish(self, actor: str, token: str, value: dict) -> Path:
         token_path, metadata_path, commit_path = self._paths(actor)
@@ -266,7 +266,7 @@ class CredentialStore:
         if not CredentialStore._finite_epoch(value) or value <= time.time():
             if provisioning:
                 raise ValidationError("credential expiry must be a finite future epoch second")
-            raise AuthorizationError("credential expired or invalid", details={"decision": {"status": "deny", "allowed": False, "code": "paired_credential_expired"}})
+            raise AuthorizationError("credential expired or invalid", details={"decision": {"status": "deny", "allowed": False, "code": "paired_credential_expired"}}, guard=AuthorizationGuard.CREDENTIAL_EXPIRED)
 
     def provision_static(self, actor: str, token: str, scopes: list[str]) -> Path:
         """Install a caller-created token after an authenticated handoff."""
@@ -282,18 +282,18 @@ class CredentialStore:
     def validate_binding(self, actor, binding, scope):
         with self._lock:
             if actor in self._disabled_actors:
-                raise AuthorizationError("credential is disabled")
+                raise AuthorizationError("credential is disabled", guard=AuthorizationGuard.CREDENTIAL_DISABLED)
             try:
                 token, metadata = self._read_actor(actor)
                 metadata = self._parse_credential(actor, metadata)
             except ValidationError as exc:
-                raise AuthorizationError("credential binding is unavailable") from exc
+                raise AuthorizationError("credential binding is unavailable", guard=AuthorizationGuard.CREDENTIAL_BINDING_UNAVAILABLE) from exc
             if not isinstance(binding, str) or not secrets.compare_digest(self._sha256(token.encode()), binding):
-                raise AuthorizationError("credential binding changed")
+                raise AuthorizationError("credential binding changed", guard=AuthorizationGuard.CREDENTIAL_BINDING_CHANGED)
             if "expires_at" in metadata:
                 self._expiry(metadata["expires_at"])
             if scope not in metadata["scopes"] and "admin" not in metadata["scopes"]:
-                raise AuthorizationError("credential lacks required scope")
+                raise AuthorizationError("credential lacks required scope", guard=AuthorizationGuard.CREDENTIAL_BINDING_SCOPE_REQUIRED)
             return metadata
 
     def _paired_tombstone(self, actor):
@@ -368,7 +368,7 @@ class CredentialStore:
 
     def load(self, token: str):
         if not token:
-            raise AuthorizationError("bearer credential required")
+            raise AuthorizationError("bearer credential required", guard=AuthorizationGuard.CREDENTIAL_BEARER_REQUIRED)
         with self._lock:
             for token_path in self.root.glob("*.token"):
                 actor = token_path.stem
@@ -389,17 +389,17 @@ class CredentialStore:
                         metadata = self._parse_credential(actor, metadata)
                     except ValidationError as exc:
                         raise AuthorizationError("credential metadata is invalid", details={
-                            "decision": {"status": "deny", "allowed": False, "code": "credential_metadata_invalid"}}) from exc
+                            "decision": {"status": "deny", "allowed": False, "code": "credential_metadata_invalid"}}, guard=AuthorizationGuard.CREDENTIAL_METADATA_INVALID) from exc
                     if "expires_at" in metadata:
                         self._expiry(metadata["expires_at"])
                     if "connector_assertion" in metadata:
                         # Bound to this exact bearer generation, never a caller field.
                         metadata = {**metadata, "_credential_binding": self._sha256(expected.encode())}
                     return metadata
-        raise AuthorizationError("invalid bearer credential")
+        raise AuthorizationError("invalid bearer credential", guard=AuthorizationGuard.CREDENTIAL_BEARER_INVALID)
 
     def require(self, token: str, scope: str):
         identity = self.load(token)
         if scope not in identity.get("scopes", []) and "admin" not in identity.get("scopes", []):
-            raise AuthorizationError("credential lacks required scope", details={"scope": scope})
+            raise AuthorizationError("credential lacks required scope", details={"scope": scope}, guard=AuthorizationGuard.CREDENTIAL_SCOPE_REQUIRED)
         return identity

@@ -34,7 +34,7 @@ from collections.abc import Mapping
 from functools import wraps
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from .errors import ForbiddenError, AuthorizationError, ConflictError, NoCommittedRequestError, NotFoundError, ValidationError, LeaseError, InvalidRequestError, RealmAdmissionError
+from .errors import AuthorizationGuard, ForbiddenError, AuthorizationError, ConflictError, NoCommittedRequestError, NotFoundError, ValidationError, LeaseError, InvalidRequestError, RealmAdmissionError
 from .contract_metadata import PROTOCOL, SCHEMA_DIGEST, OPERATION_VERSIONS
 from .task_authority import TaskAuthorityBinding, deny_authority, reject_authority_fields
 from .dirfd import close_pinned as _close_pinned, mkdir_chain_at as _mkdir_chain_at, open_directory_chain as _open_directory_chain, pin_directory as _pin_directory, write_bytes_at as _write_bytes_at
@@ -6230,7 +6230,7 @@ class RuntimeService(TimelineCommitAcceptance):
         if grant is not None or isinstance(identity, dict) and identity.get("connector_assertion"):
             from .paired_session import SessionGrant
             if not isinstance(grant, SessionGrant):
-                raise AuthorizationError("authenticated paired session required")
+                raise AuthorizationError("authenticated paired session required", guard=AuthorizationGuard.COMMIT_AUTHORITY_PAIRED_SESSION_REQUIRED)
             owner = self._task_authority_owner
             if owner is None:
                 deny_authority("paired_issuer_unresolved")
