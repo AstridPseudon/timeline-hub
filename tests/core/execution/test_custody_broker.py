@@ -18,6 +18,8 @@ import pytest
 
 from astrid.core.execution import custody_broker as custody
 
+_NATIVE_PROCESS_AUDIT_TOKEN = custody.current_process_audit_token
+
 
 def _inventory_pipe_pair():
     request_read,request_write=os.pipe()
@@ -4993,3 +4995,145 @@ def test_postexec_retry_does_not_catch_unstructured_or_other_failures(
     broker._serve()
     assert broker.error is first and calls == [1] and authority == ["pending"]
     assert not broker._post_exec_authority_validated and broker.state != "sealed"
+
+
+def _no_port_capture_failure():
+    return custody.NativeTokenCaptureError(
+        "controlled null task-name port", substage="task_name_for_pid",
+        kern_return=0, port_acquired=False,
+    )
+
+
+@pytest.mark.parametrize("outcome", [
+    "valid", "persistent", "unchanged", "start", "executable", "pid", "uid",
+    "token-consistency", "unreleased-port", "kernel", "ledger", "generation", "seal-ledger",
+])
+def test_postexec_no_port_requires_complete_fresh_native_capture(
+    postexec_broker, monkeypatch, outcome
+):
+    broker, token, start, events, authority = postexec_broker
+    clock, calls = [0.0], []
+    monkeypatch.setattr(custody.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(custody.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0] + seconds))
+    monkeypatch.setattr(custody, "signal_audit_token", lambda *_: pytest.fail("capture signalled"))
+    monkeypatch.setattr(custody, "_resume_audit_token_once", lambda *_: pytest.fail("early release"))
+    real_capture = _NATIVE_PROCESS_AUDIT_TOKEN
+
+    class Function:
+        def __init__(self, call):
+            self.call = call
+        def __call__(self, *args):
+            return self.call(*args)
+
+    def task_name(_, pid, output):
+        calls.append("acquire")
+        assert pid == 103 and authority == ["pending"] and broker.state != "sealed"
+        if calls.count("acquire") == 1 or outcome == "persistent":
+            if outcome == "start":
+                start["start_abstime"] += 1
+            return 0  # Deliberately leave the initialized port null.
+        output._obj.value = 88
+        return 5 if outcome == "kernel" else 0
+
+    def task_info(_, __, output, count):
+        calls.append("read")
+        result = token(10 if outcome == "unchanged" else 11)
+        words = list(result["words"])
+        if outcome == "pid":
+            words[0] += 1
+        if outcome == "uid":
+            words[1] += 1
+        if outcome == "token-consistency" and calls.count("read") == 2:
+            words[2] += 1
+        for index, value in enumerate(words):
+            output[index] = value
+        count._obj.value = custody.TASK_AUDIT_TOKEN_COUNT
+        return 0
+
+    def pid_for_task(_, output):
+        calls.append("pid")
+        output._obj.value = 103
+        return 0
+
+    def release(*_):
+        calls.append("dispose")
+        return 3 if outcome == "unreleased-port" else 0
+
+    library = SimpleNamespace(task_name_for_pid=Function(task_name), task_info=Function(task_info),
+                              pid_for_task=Function(pid_for_task), mach_port_deallocate=Function(release))
+    monkeypatch.setattr(custody.sys, "platform", "darwin")
+    monkeypatch.setattr(custody.ctypes, "CDLL", lambda *_, **__: library)
+    monkeypatch.setattr(custody.ctypes.c_uint32, "in_dll", lambda *_: SimpleNamespace(value=44))
+    monkeypatch.setattr(custody, "current_process_audit_token", real_capture)
+    if outcome == "executable":
+        observations = []
+        def executable(*_):
+            observations.append(1)
+            return {"inode": len(observations)}
+        monkeypatch.setattr(broker, "_post_exec_executable_identity", executable)
+    persist = broker._persist
+    def persist_checked(event):
+        if event == {"ledger": "registration_post_exec_capture_failed",
+                     "seal-ledger": "admission_sealed"}.get(outcome):
+            raise OSError("controlled ledger refusal")
+        persist(event)
+    monkeypatch.setattr(broker, "_persist", persist_checked)
+    if outcome == "generation":
+        def bind_target(**_):
+            raise custody.CustodyError("stale generation")
+        broker.role_authority.bind_target = bind_target
+    broker._serve()
+    first = broker.registration["post_exec_capture_failure"]
+    assert first["substage"] == "task_name_for_pid" and first["kern_return"] == 0
+    assert first["port_acquired"] is False and "port_release_succeeded" not in first
+    if outcome == "valid":
+        assert broker.error is None and broker.state == "sealed"
+        assert calls == ["acquire", "acquire", "read", "pid", "read", "dispose"]
+        assert broker.registration["audit_token_words"] == token()["words"]
+        assert authority == ["pending", "target", "anchor"]
+        assert broker._post_exec_authority_validated
+        return
+    assert broker.error is not None
+    assert "admission_sealed" not in [name for name, _ in events]
+    if outcome not in {"generation", "seal-ledger"}:
+        assert authority == ["pending"] and not broker._post_exec_authority_validated
+        with pytest.raises(custody.CustodyError, match="no validated post-exec authority"):
+            broker.signal_failed_admission(signal.SIGTERM, expected_pid=103)
+    if outcome in {"persistent", "unchanged"}:
+        assert clock[0] == broker.timeout
+        assert broker.error.__cause__.capture_failure == {
+            "substage": "task_name_for_pid", "kern_return": 0, "port_acquired": False, "count": None}
+    if outcome in {"start", "executable", "ledger"}:
+        assert calls == ["acquire"]
+    elif outcome not in {"persistent", "unchanged"}:
+        assert calls.count("acquire") == 2
+        assert calls[-1] == "dispose"
+
+
+@pytest.mark.parametrize("defect", ["kernel", "bool-kernel", "port", "count", "release", "release-error", "subclass"])
+def test_postexec_no_port_retry_is_exactly_typed(postexec_broker, monkeypatch, defect):
+    broker, _, _, _, authority = postexec_broker
+    error = _no_port_capture_failure()
+    if defect == "kernel":
+        error.capture_failure["kern_return"] = 5
+    elif defect == "bool-kernel":
+        error.capture_failure["kern_return"] = False
+    elif defect == "port":
+        error.capture_failure["port_acquired"] = True
+    elif defect == "count":
+        error.capture_failure["count"] = 8
+    elif defect == "release":
+        error.capture_failure["port_release_succeeded"] = True
+    elif defect == "release-error":
+        error.port_release_error = _postexec_capture_failure(release=False)
+    else:
+        class OtherFailure(custody.NativeTokenCaptureError):
+            pass
+        error = OtherFailure("subclass", substage="task_name_for_pid", kern_return=0, port_acquired=False)
+    calls = []
+    def capture(_):
+        calls.append(1)
+        raise error
+    monkeypatch.setattr(custody, "current_process_audit_token", capture)
+    broker._serve()
+    assert broker.error is error and calls == [1] and authority == ["pending"]

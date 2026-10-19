@@ -2957,9 +2957,9 @@ class RoleBoundCustodyBroker:
                 try:
                     candidate = _bootstrap_anchored_token(pid, anchor)
                 except NativeTokenCaptureError as error:
-                    # A failed query of an acquired task-name right permits a
-                    # fresh acquisition, never authority. Keep the same deadline
-                    # and require the entire successful capture sequence below.
+                    # Only the exact null-port success or an already qualified
+                    # released-right query failure permits fresh evidence capture.
+                    # Neither is authority; retain the original deadline/anchors.
                     if first_failure is None:
                         first_failure = error
                         if type(error.capture_failure) is not dict:
@@ -2973,22 +2973,31 @@ class RoleBoundCustodyBroker:
                         }
                         self._persist("registration_post_exec_capture_failed")
                     failure = error.capture_failure
+                    no_port = (
+                        type(failure) is dict
+                        and set(failure) == {"substage", "kern_return", "port_acquired", "count"}
+                        and type(failure["substage"]) is str
+                        and failure["substage"] == "task_name_for_pid"
+                        and type(failure["kern_return"]) is int
+                        and failure["kern_return"] == 0
+                        and failure["port_acquired"] is False
+                        and failure["count"] is None
+                    )
+                    released_query = (
+                        type(failure) is dict
+                        and set(failure) == {"substage", "kern_return", "port_acquired",
+                                            "count", "port_release_succeeded"}
+                        and type(failure["substage"]) is str
+                        and failure["substage"] in {"task_info_first", "pid_for_task", "task_info_second"}
+                        and type(failure["kern_return"]) is int
+                        and failure["kern_return"] != 0
+                        and (failure["count"] is None if failure["substage"] == "pid_for_task"
+                             else type(failure["count"]) is int and failure["count"] == TASK_AUDIT_TOKEN_COUNT)
+                        and failure["port_acquired"] is True
+                        and failure["port_release_succeeded"] is True
+                    )
                     if (type(error) is not NativeTokenCaptureError
-                            or type(failure) is not dict
-                            or set(failure) != {"substage", "kern_return", "port_acquired",
-                                                    "count", "port_release_succeeded"}
-                            or type(failure.get("substage")) is not str
-                            or failure["substage"] not in {
-                                "task_info_first", "pid_for_task", "task_info_second"}
-                            or type(failure.get("kern_return")) is not int
-                            or failure["kern_return"] == 0
-                            or (failure["substage"] == "pid_for_task"
-                                and failure.get("count") is not None)
-                            or (failure["substage"] != "pid_for_task"
-                                and (type(failure.get("count")) is not int
-                                     or failure["count"] != TASK_AUDIT_TOKEN_COUNT))
-                            or failure.get("port_acquired") is not True
-                            or failure.get("port_release_succeeded") is not True
+                            or not (no_port or released_query)
                             or hasattr(error, "port_release_error")):
                         raise
                     observed = self._post_exec_executable_identity(pid, anchor)

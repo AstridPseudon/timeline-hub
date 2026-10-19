@@ -1031,3 +1031,127 @@ def test_private_named_helper_incarnation_and_executable_match(tmp_path, monkeyp
     record = json.loads(capsys.readouterr().err.removeprefix('ASTRID_PRIVATE_HELPER '))
     assert record['attribution'] == ('MATCHED_DIRECT_CHILD_INCARNATION_EXECUTABLE' if drift == 'none' else 'UNPROVED')
     assert set(record['selected_executable']) == {'sha256', 'device', 'inode', 'size', 'mtime_ns'}
+
+
+@pytest.mark.parametrize("outcome", ["unvalidated", "signal-failure", "wait-failure", "validated", "evidence-failure"])
+def test_profile_wrapper_retains_actual_admission_owner_before_guarded_cleanup(
+    tmp_path, monkeypatch, outcome
+):
+    import json
+
+    from astrid.core.execution import profile_launch
+
+    receipt = tmp_path / "profile-launch.json"
+    wrapper = profile_launch._ProfileLaunchOwner(receipt)
+    primary = custody.CustodyError("private primary launch error")
+    capture_error = custody.NativeTokenCaptureError(
+        "original capture refusal", substage="task_name_for_pid", kern_return=0, port_acquired=False)
+    primary.__cause__ = capture_error
+    cleanup = custody.CustodyError("private cleanup error")
+    events = []
+    process = SimpleNamespace(pid=123, returncode=None)
+    broker = object.__new__(custody.RoleBoundCustodyBroker)
+    broker.error = primary
+    broker._post_exec_authority_validated = outcome not in {"unvalidated", "evidence-failure"}
+    broker._release_sent = False
+    broker._observation_phase, broker.state = "post-exec-token", "accepting"
+    broker.journal_path = tmp_path / "custody" / "custody.journal.jsonl"
+    identity = {"pid": 123, "uid": 501, "birth_id": "original-birth"}
+    broker.registration = {"identity": identity, "audit_token_words": [999] * 8}
+    actor = object()
+    broker.cleanup_actor, broker.custody_generation = actor, 7
+    target = object()
+
+    def signal_original(**kwargs):
+        assert kwargs["actor"] is actor and kwargs["generation"] == 7
+        assert kwargs["expected_target"] is target and kwargs["signum"] == signal.SIGKILL
+        assert owner.process is process and wrapper.custody is owner and wrapper.process is process
+        assert wrapper.primary_error is primary
+        if outcome != "evidence-failure":
+            record = json.loads(receipt.read_text())
+            assert record["phase"] == "before-cleanup"
+            assert record["identity"] == identity
+            assert record["custody_root"] == str(owner.root)
+            assert record["journal_path"] == str(broker.journal_path)
+        events.append("guarded-signal")
+        if outcome == "signal-failure":
+            raise cleanup
+    broker.role_authority = SimpleNamespace(reference=lambda: {"target": target}, signal=signal_original)
+
+    def wait_original(*, timeout):
+        assert events == ["guarded-signal"]
+        events.append("original-wait")
+        if outcome == "wait-failure":
+            raise cleanup
+        process.returncode = -signal.SIGKILL
+        return process.returncode
+    process.wait = wait_original
+
+    def settle_original():
+        assert events == ["guarded-signal", "original-wait"] and process.returncode == -signal.SIGKILL
+        events.append("settle")
+    broker.settle_launch = settle_original
+
+    owner = object.__new__(custody.ProcessCustody)
+    owner.root, owner._launch_broker, owner.process = tmp_path / "custody", broker, None
+    owner._uncertain, owner._inventory_owner, owner._handles = None, None, {}
+    owner._verify_root = lambda: None
+    owner.prepare_launch = lambda *_args, **_kwargs: (["synthetic-profile-helper"], None)
+    owner.begin_launch_spawn = lambda: None
+    owner.finish_inventory_owner = lambda: pytest.fail("inventory finalization replaced launch cleanup")
+    def bind(child):
+        assert child is process
+        owner.process = child
+        raise primary
+    owner.bind_launch = bind
+    monkeypatch.setattr(groups, "ProcessCustody", lambda: owner)
+    monkeypatch.setattr(groups, "RetainedCustodyPopen", lambda *_a, **_kw: process)
+    monkeypatch.setattr(groups.sys, "platform", "darwin")
+    monkeypatch.setattr(custody, "signal_audit_token", lambda *_: pytest.fail("raw signal fallback"))
+    monkeypatch.setattr(custody, "_stop_diagnostic", lambda *_a, **_kw: None)
+    monkeypatch.setattr(groups, "_stop_diagnostic", lambda *_a, **_kw: None)
+    if outcome == "evidence-failure":
+        def denied(*_):
+            raise OSError("receipt unavailable")
+        monkeypatch.setattr(profile_launch, "_atomic_owner_json", denied)
+
+    class StillOwned(BaseException):
+        pass
+    def park():
+        assert wrapper.process is process and wrapper.custody is owner
+        if outcome != "evidence-failure":
+            assert json.loads(receipt.read_text())["phase"] == "launch-refused"
+        events.append("owner-retained")
+        raise StillOwned()
+    monkeypatch.setattr(profile_launch.threading, "Event", lambda: SimpleNamespace(wait=park))
+    if outcome == "validated":
+        assert wrapper.launch(["synthetic-profile-helper"], _delegate_inventory=False) is None
+    else:
+        with pytest.raises(StillOwned):
+            wrapper.launch(["synthetic-profile-helper"], _delegate_inventory=False)
+        assert events.pop() == "owner-retained"
+    assert wrapper.process is process and wrapper.custody is owner
+    assert primary.process is process and primary.custody is owner
+    assert wrapper.primary_error is primary
+    assert primary.launch_primary_cause is capture_error
+    if outcome == "validated":
+        assert events == ["guarded-signal", "original-wait", "settle"]
+        assert wrapper.cleanup_complete and wrapper.cleanup_error is None
+        wrapper.keep_unresolved_owner()
+    else:
+        assert not wrapper.cleanup_complete and wrapper.cleanup_error is not None
+        if outcome in {"signal-failure", "wait-failure"}:
+            assert wrapper.cleanup_error is cleanup and primary.__cause__ is cleanup
+        if outcome in {"unvalidated", "evidence-failure"}:
+            assert events == []  # No token authority means neither signal nor wait.
+    if outcome == "evidence-failure":
+        assert isinstance(wrapper.evidence_error, OSError)
+    else:
+        record = json.loads(receipt.read_text())
+        assert record["phase"] == "launch-refused" and record["primary_error_type"] == "CustodyError"
+        assert record["cleanup_complete"] is wrapper.cleanup_complete
+        assert record["cleanup_error_type"] == (type(wrapper.cleanup_error).__name__ if wrapper.cleanup_error else None)
+        assert "private primary" not in receipt.read_text() and "private cleanup" not in receipt.read_text()
+        assert "audit_token_words" not in receipt.read_text()
+    with pytest.raises(RuntimeError, match="single-use"):
+        wrapper.launch(["never-replay"])

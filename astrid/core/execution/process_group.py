@@ -213,6 +213,9 @@ def popen_owned_process(argv: list[str], *, custody_root: CustodyRootBinding | N
     new_session = bool(options.pop("start_new_session", False))
     delegate_inventory = options.pop("_delegate_inventory", True)
     inspection_launch = options.pop("_inspection_launch", None)
+    launch_failure_observer = options.pop("_launch_failure_observer", None)
+    if launch_failure_observer is not None and not callable(launch_failure_observer):
+        raise TypeError("launch failure observer must be callable")
     if inspection_launch is not None:
         from .custody_broker import _HostInspectionLaunch
         if type(inspection_launch) is not _HostInspectionLaunch or not delegate_inventory:
@@ -281,15 +284,31 @@ def popen_owned_process(argv: list[str], *, custody_root: CustodyRootBinding | N
         if _child_bridge_launch is not None:
             _child_bridge_launch.bridge.revoke()
         # Keep the initiating error and its retained obligation visible.
-        _stop_diagnostic(process, error=error, phase="launch_admission")
         error.process = process
         error.custody = custody
+        # Legacy chaining below exposes cleanup as the cause. Retain the
+        # initiating cause separately so its capture evidence is not replaced.
+        error.launch_primary_cause = error.__cause__
+        error.launch_cleanup_error = None
+        error.launch_cleanup_complete = False
+        if launch_failure_observer is not None:
+            try:
+                launch_failure_observer(error)
+            except BaseException as evidence_error:  # noqa: BLE001 - preserve the primary error and guarded cleanup
+                error.launch_evidence_error = evidence_error
+        _stop_diagnostic(process, error=error, phase="launch_admission")
         try:
             custody.cleanup_failed_launch(signum=signal.SIGTERM)
         except BaseException as cleanup_error:
+            error.launch_cleanup_error = cleanup_error
             custody._uncertain = custody._uncertain or cleanup_error
             process._astrid_tree_uncertain = str(cleanup_error) or type(cleanup_error).__name__
             raise error from cleanup_error
+        broker = getattr(custody, "_launch_broker", None)
+        error.launch_cleanup_complete = bool(
+            broker is not None and broker._post_exec_authority_validated
+            and not broker._release_sent and type(process.returncode) is int
+        )
         raise
     return process
 
