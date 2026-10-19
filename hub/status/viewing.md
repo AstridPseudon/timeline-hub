@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-19T21:46:26Z | dispatcher heartbeat 1s -->
+<!-- viewing | 2026-10-19T21:46:55Z | dispatcher heartbeat 0s -->
 # viewing — 2026-10-19 21:45 UTC
 Milestone: M0 COMPLETE. M1 real two-case App skeleton PASS, overall closure HOLD per orchestrator (restored journeys/classification/deep audit); Viewing labels integrated. M3 package ready; consumers, deletion and parity incomplete.
 Integrated: Composition7aa384a; actual central `npm test`22passed/0failed/0skipped (composition-full-1019202023-13230), locked build/repeat pack/fresh consumer PASS. Agent labels77e66c13; Appdc77a3ca6 composedb8cf6423e includes exact5c7ff0a8b consumer plus atomic producer/recovery. App mirrordd376d5e0 adds test-only journey fixes. No new gate claim.
