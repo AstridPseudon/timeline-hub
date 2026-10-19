@@ -30,11 +30,21 @@ Choose the route by the requested result. Read only that route's guidance:
 Using an existing workflow and building a reusable extension are different
 requests: pack builder handles the latter, including deciding what to reuse.
 
-On a new machine, install Astrid using the OS command in
-[Getting Started](../../../../docs/getting-started.md), then open
-[astrid.haus](https://astrid.haus). Do not install `astrid-app`; it is for app
-developers. The [setup checklist](../../../../docs/setup/SKILL.md) follows this
-same user path.
+On a new machine, install Astrid on this computer using the command for its OS.
+On macOS or Linux, run:
+
+```sh
+curl -fsSL https://astrid.haus/install | sh
+```
+
+On Windows, run in PowerShell:
+
+```powershell
+irm https://astrid.haus/install.ps1 | iex
+```
+
+Then open [astrid.haus](https://astrid.haus) and follow its setup steps. Do not
+install or clone `astrid-app`; it is for app developers.
 
 ## Start here
 

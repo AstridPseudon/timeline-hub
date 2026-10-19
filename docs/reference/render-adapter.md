@@ -55,9 +55,12 @@ validates that `node_modules/` exists after `npm install` **and** that
 each of the three `@banodoco/*` package directories is present.  It fails
 with a clear message naming the missing package(s) and pointing at this
 document — it does **not** pull these packages into the Python package
-graph. The default `pip install astrid` (or `pip install
-astrid.whl`) does not require Node.js, npm, Remotion, or any `@banodoco`
-package.
+graph. This is a technical dependency boundary for source builds and
+qualified render workers: the Python distribution does not include or
+provision Node.js, npm, Remotion, or any `@banodoco` package. For normal
+Astrid setup, follow the OS-specific installer instructions in
+[`docs/getting-started.md`](../getting-started.md), then use
+[astrid.haus](https://astrid.haus).
 
 ## Release render worker configuration
 
@@ -130,12 +133,13 @@ This means:
   packages, Remotion, or theme data. The render adapter is opt-in and
   only activated when explicitly invoking `rendering.render`.
 
-## Rule: Default Python Install Must Not Depend on Render Packages
+## Technical Invariant: The Python Distribution Excludes Render Packages
 
-This decision record enforces a hard gate: **`pip install astrid` (or
-wheel install) must never require Node.js, npm, Remotion, or any
-`@banodoco` package.** The render path is an optional runtime adapter
-that users opt into by:
+This decision record enforces a hard gate: **building or installing the
+Python distribution must never require Node.js, npm, Remotion, or any
+`@banodoco` package.** The following source-checkout and qualified render
+worker procedure is for developers and operators assembling that optional
+adapter; it is not an alternate setup path for normal Astrid users:
 
 1. Installing the pinned Node.js **20.19.4** toolchain (which supplies npm
    **10.8.2**; `.node-version` records the pin)
