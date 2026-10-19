@@ -122,3 +122,6 @@ The saved authoritative artifacts are
 `exit` under the ORCH directory. This review used those artifacts and the
 baseline artifacts only; no tests were rerun, no fixtures were relaxed, and no
 expected failures or suppressions were added.
+
+## Manager review — 2026-10-19T20:57Z
+Exact added node set68 and persisting63 independently reproduced. More than one cause can hide behind an old failing node: current structure failure newly lacks workspace_client.py entry1243 (baseline1191). Independent audit also finds M1cli.py3993→4045 (+52) beyond±50 drift. agt-m1-structure-metadata handles ONLY these2owned inventory entries with honest decomposition seam, no threshold/skip/baseline changes. Inherited count drift generic_host.py13598→13798, remotion/run.py2158→1868, host_bootstrap.py1601→1717 are ALL identical baseline→current source and deliberately untouched; gate staysRED. No product refactor during App tuple freeze. Other followups: read-fixtures branch3cut/showfixtures+normal CLI/artifact generators; client-fixtures62cases under explicitorchestrator/Runtimegrant after productionloopback audit; Viewingowns1summaryfixture. All68mustbe proven fixed or inheritedbeforeM1exit; this doc alone does notclose them.
