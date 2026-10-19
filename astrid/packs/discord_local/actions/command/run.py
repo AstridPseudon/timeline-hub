@@ -25,7 +25,6 @@ from astrid.core.foundation.hash import sha256_file
 from astrid.core.pack.entrypoint import run_pack_main
 
 
-DEFAULT_PROFILE = Path.home() / ".astrid" / "discord-command-poc-profile"
 # Used only to scrub internal paths from debug text. Runtime dependencies are
 # supplied explicitly and are never located relative to this package path.
 _SOURCE_ROOT_FOR_REDACTION = Path(__file__).resolve().parents[5]
@@ -556,7 +555,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--response-message-id")
     parser.add_argument("--exclude-filenames", default="")
     parser.add_argument("--timeout-seconds", type=int, default=1800)
-    parser.add_argument("--profile-dir", type=Path, default=DEFAULT_PROFILE)
+    parser.add_argument(
+        "--profile-dir",
+        type=Path,
+        default=Path.home() / ".astrid" / "discord-command-poc-profile",
+    )
     parser.add_argument("--cdp-port", type=int, default=9333)
     parser.add_argument("--runner-script", type=Path, required=True)
     parser.add_argument("--node-bin", default="node")

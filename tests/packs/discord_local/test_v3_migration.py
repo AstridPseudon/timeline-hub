@@ -94,8 +94,20 @@ def test_authored_skill_has_pack_identity_and_local_links() -> None:
 
 
 def test_runner_is_explicit_and_profile_default_is_user_state() -> None:
-    from astrid.packs.discord_local.actions.command.run import DEFAULT_PROFILE, _parser
+    from astrid.packs.discord_local.actions.command.run import _parser
 
-    assert DEFAULT_PROFILE == Path.home() / ".astrid" / "discord-command-poc-profile"
+    args = _parser().parse_args(
+        [
+            "--out",
+            "/tmp/out",
+            "--mode",
+            "preview",
+            "--channel-url",
+            "https://discord.com/channels/1/2",
+            "--runner-script",
+            "/tmp/runner",
+        ]
+    )
+    assert args.profile_dir == Path.home() / ".astrid" / "discord-command-poc-profile"
     with pytest.raises(SystemExit):
         _parser().parse_args(["--out", "/tmp/out", "--mode", "preview"])
