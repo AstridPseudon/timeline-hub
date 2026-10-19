@@ -12,3 +12,6 @@ The hub has not seen this machine yet: no hub/status/app.READY and no "hub-sync 
 ## 2026-10-19 20:25Z — please apply the tool update now (important)
 A main-side App manager kept running after your handover, and both machines merged app-m1-wiring-fix. The contents are identical (tree afb021cf5), so nothing was lost. Main's copy is stopped and aligned to your 430546e42.
 Your current hub-sync still force-pushes worker branches you only imported. It overwrote main's app-m1-recovery-basis (dc519fb7f) and app-m1-recovery-compose (436410bcd) with 0f16295c1. The new hub-sync in hub/kit/bin publishes a worker branch only from the machine that ran it. Apply the one-time tool update above, then restart hub-syncd.
+
+## 2026-10-19 20:30Z — ACTION for the App lead: restart hub-syncd now
+Your manager copied the new tools at 20:20 but can't restart the daemon from its sandbox. Do it yourself, outside the sandbox: `kill $(cat $ORCH/hub-syncd.pid); nohup setsid $ORCH/bin/hub-syncd app > $ORCH/hub-sync.log 2>&1 < /dev/null &`. Then put "tool update done <UTC>" at the top of your status. Until then, your machine still force-pushes adopted worker branches.

@@ -1,92 +1,3 @@
-+      ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
-+        .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
-+      ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
-+    return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', PYTHONPATH: [RUNTIME_CHECKOUT, agent].join(path.delimiter) };
-+  }
- 
-+  /** Seed with main's APIs first; startup verifies their original publication provenance. */
-+  async enableTimelineAuthoring(python: string): Promise<void> {
-+    if (this.timelineAuthoring) return;
-+    await this.stopRuntime();
-+    if (!existsSync(python)) throw new Error(`Authoring Python not found at ${python}`);
-+    this.authoringPython = python;
-+    this.timelineAuthoring = true;
-+    await this.startRuntime();
-+  }
-+
-   private async createRealm(): Promise<string> {
-     const output = execFileSync(runtimePython()!, ['-m', 'runtime_protocol.cli', 'create', '--root', this.realmDir, '--display-name', 'Direct Journey'], { cwd: this.tmp, env: { ...process.env, ...this.runtimeEnv() }, encoding: 'utf8' });
-     return JSON.parse(output.trim().split('\n').pop()!).realm_id;
-@@ -443,8 +465,9 @@
-    */
-   async startRuntime(port = 0): Promise<void> {
-     if (this.runtime) throw new Error('Runtime already running');
--    const managed = spawnGroup(runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
--      '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath], { cwd: this.tmp, env: this.runtimeEnv() });
-+    const managed = spawnGroup(this.authoringPython ?? runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
-+      '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath,
-+      ...(this.timelineAuthoring ? ['--authoring-profile', 'astrid'] : [])], { cwd: this.tmp, env: this.runtimeEnv() });
-     this.runtime = managed;
-     const endpoint = await waitFor<string>('Runtime start', async () => {
-       const line = managed.stdout.split('\n').find((candidate) => candidate.trim().startsWith('{') && candidate.includes('"endpoint"'));
-diff --git a/tests/e2e/local/three-products.spec.ts b/tests/e2e/local/three-products.spec.ts
-index d498ae75267dfa701f29f3db1f7560c4d767f442..8c314bb7a8d1916180bc09c0df6e9376fc6ccf2f
---- a/tests/e2e/local/three-products.spec.ts
-+++ b/tests/e2e/local/three-products.spec.ts
-@@ -31,7 +31,7 @@
- import { harnessUnavailableReason, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
- import { commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, openApp, openSeededTimeline, revisionBody, test as appTest } from './support/app.ts';
- import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
--import { AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
-+import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
- 
- /** A hang ceiling for one wait (R-10): many times the usual time, never a budget. */
- const CEILING = { timeout: 90_000 };
-@@ -56,6 +56,7 @@
- test.beforeAll(() => {
-   const reason = harnessUnavailableReason() ?? astridUnavailableReason();
-   if (reason) throw new Error(`the three-products journey cannot run: ${reason}`);
-+  journey.sources = revisionSet();
- });
- 
- // ---------------------------------------------------------------------------------------------
-@@ -75,6 +76,7 @@
-   startedAt: new Date().toISOString(),
-   loadAverageStart: loadavg(),
-   identity: undefined as AstridIdentity | undefined,
-+  sources: undefined as ReturnType<typeof revisionSet> | undefined,
-   preflightCalls: [] as AstridCall[],
-   cases: [] as CaseRecord[],
-   /** What the running case has learned that the summary should carry (named facts, never verdicts on speed). */
-@@ -103,15 +105,18 @@
- // eslint-disable-next-line no-empty-pattern
- test.afterAll(async ({}, testInfo) => {
-   const outputDir = testInfo.project.outputDir;
-+  console.log('[three-products] source tuple', JSON.stringify(revisionSet(journey.identity)));
-   mkdirSync(outputDir, { recursive: true });
-   writeFileSync(path.join(outputDir, 'three-products-summary.json'), JSON.stringify({
-     startedAt: journey.startedAt,
-     note: 'reported, never judged (testing plan R-10)',
-     revisions: revisionSet(journey.identity),
-+    sourcesAtStart: journey.sources,
-     machine: { cpus: cpus().length, loadAverageStart: journey.loadAverageStart, loadAverageEnd: loadavg() },
-     preflight: { astridCalls: journey.preflightCalls },
-     cases: journey.cases,
-   }, null, 2));
-+  expect(revisionSet(), 'source tuple must remain fixed throughout the cross-product run').toEqual(journey.sources);
- });
- 
- // ---------------------------------------------------------------------------------------------
-@@ -219,7 +224,7 @@
-     });
-   }
- 
--  async expectClean(page: Page) {
-+  async expectClean(page: Page, timelineId?: string) {
-     await Promise.all(this.pending);
-     const inPage = await page.evaluate(() => JSON.stringify({
-       dom: document.documentElement.outerHTML,
-@@ -228,6 +233,7 @@
        cookie: document.cookie,
      }));
      this.scan('the page (DOM, storage, cookies)', inPage);
@@ -398,3 +309,92 @@ ee6b9759c2f2b57cb79cab1694936a54c5381e947404bc14694a087b4d10acb0  /tmp/claude-0/
  M tests/e2e/local/support/harness.ts
  M tests/e2e/local/three-products.spec.ts
 
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-real-journey/report.md <<'EOF'
+# app-m1-real-journey
+
+Implemented the real M1 browser journey in the assigned spec and three support helpers. Final worktree changes are ONLY those four files; no product, package, config or root files were changed/copied. No git mutation, install, browser launch or full suite was run.
+
+- Actual mouse pointerdown/move/drop; no command injection or fixture capture adapter. A moves to5 and is durably accepted before its ACK is lost. B moves absolutely to7 over optimistic A; native IndexedDB is inspected read-only to verify its original guards/IDs and exact pending A request.
+- Reload, page close/reopen, Runtime restart with the same DB/CAS/realm/actor, explicit persisted-owner recovery, exact A method/canonical path/body/key replay and original receipt equality. B submits at HA with a fresh key and unchanged command JSON.
+- Actual Agent/Python core "'`track.create` is disjoint C. B must rebase and preserve C. Actual App toolbar Undo emits `timeline.inverse` targeting B'"'s publication; full resulting parent equals A plus C, immutable child images/manifest remain exact, and history records the inverse.
+- Actual same-value Agent publication keeps revision identity but receives a distinct publication; exact retry adds no history/revision. Historical closure payloads/digests, opaque fields, CLI show, native inputs visualize artifact revision/declared-only label, actual saved preview/unavailability label and zero legacy move/inverse save traffic are asserted.
+- B's relevant conflict case changes its real dependency via Agent C6 after B pointerdown and before drop. Original at5 guards remain, typed409 conflict is retained through reload and explicit owner recovery without additional send. Error assertions use main Runtime's ROOT "'`response.details`, per Runtime'"'s20:07 review (not "'`response.error.details`).
+- Existing neutral task/adoption regression remains intact. M1 does not claim group/multi/cross-track/popup coverage.
+
+## Local validation (all exit0)
+
+```sh
+node_modules/.bin/playwright test --config playwright.three-products.config.ts --list --grep '"'M1 real'
+"'```
+
+Discovered **2 tests in1file**; discovery only, no browser. Unfiltered discovery earlier found all3cases.
+
+```sh
+node_modules/.bin/eslint tests/e2e/local/three-products.spec.ts tests/e2e/local/support/{app,astrid,harness}.ts
+node_modules/.bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --allowImportingTsExtensions --esModuleInterop --skipLibCheck --types node --lib ES2022,DOM tests/e2e/local/three-products.spec.ts tests/e2e/local/support/{app,astrid,harness}.ts
+git diff --check
+```
+
+These are file lint and isolated spec/support typechecking, NOT full App typechecking or behavioral test evidence. A local import/resolution probe also confirmed Runtime `/home/user/work/runtime`, neutral Python `/home/user/work/venv-runtime/bin/python`, Agent `/home/user/work/agent`, and selected-authoring Python `/home/user/work/venv-agent/bin/python`. Browser resolution falls back to preinstalled `/opt/pw-browsers` when its environment variable is unset; no install.
+
+## Decisions and not-run portions
+
+Seed through truthful main APIs under neutral profile, then reopen with fixed `--authoring-profile astrid` so startup verifies original baseline receipts. Runtime PYTHONPATH is Runtime then Agent; the Agent subprocess reverses that priority. Use supported empty structural track creation for disjoint C. Browser fixture waits for an actual new native owner claim before mouse input. Actual input-only visualize is intentionally distinguished from composed pixels; no renderer process is started by this harness.
+
+**Browser/full suite NOT RUN and no request submitted.** After waiting for reviewed product integrations, App manager STATUS20:19 and INBOX active-handover instructions established that App moved machines: uncommitted worker source was the remaining transfer dependency, completed recovery branches had stale imported refs, and Runtime owns the final integrated `e2e-m1-gesture` run after remote composition. Runtime explicitly requests no duplicate browser run. Exit now permits the harness commit and hub transfer. Gates3/5/6, composed pixel rendering, optimistic canonical-shot Player parity, full three-products, full App, macOS and owner-film compatibility are NOT claimed.
+
+Observed source heads at handoff (NOT a browser-tested tuple):
+
+- Worker base: `26d69a1cb555c1d49194fab233190f88d621eeff`.
+- App integration: `430546e428c4670260d9143edb4646c23d47cdc3`.
+- Runtime: `82df3cf0f46228c57c0c3835b3d55acbe9e81aaa`.
+- Agent: `a8eb28af525e13dc12391006b916b5cb1e60d9c4`.
+- Composition: `7aa384a9f3c815f78ce88ff9b47de5adee7bf34a`.
+
+## Handoff / next step
+
+`commit-msg` is written. Final transferable `journey.patch` is the binary-safe tracked four-file diff against the worker base; SHA256 `ee6b9759c2f2b57cb79cab1694936a54c5381e947404bc14694a087b4d10acb0`. This supersedes the earlier Runtime-copied design patch because it includes the root-details correction. Use either the harness-created branch commit OR this patch, not both.
+
+App manager should integrate the harness after the reviewed recovery/core/sole UI and projection producer/Viewing consumer batch. Final controls are `Recover saved edits` plus exact `data-owner-id`, and `Retry save` plus `data-testid=timeline-command-retry`. Runtime then requests the central named `e2e-m1-gesture` lane on the final integrated source tuple and records the result; no mocked/local fixture result substitutes for that actual browser evidence.
+EOF
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md <<'"'EOF'
+
+## app-m1-real-journey final handoff (20:26 UTC)
+Worker is FINISHING for machine handover per App INBOX active-handover instructions; no browser request submitted or duplicate Runtime run. Final4test-file patch/report are workers/app-m1-real-journey/{journey.patch,report.md}; patch SHA256 ee6b9759c2f2b57cb79cab1694936a54c5381e947404bc14694a087b4d10acb0. This includes Runtime's ROOT response.details correction (all409/real conflict assertions preserved), final human recovery selectors, actual native-owner readiness, same-value identity/retry, child digest checks, installed Chromium fallback and conflict remount/recovery. Final focused discovery2cases + file eslint + isolated spec/support tsc + diff-check all exit0; NO actual browser/full/pixel evidence. No product copies or root changes. Harness commits on exit, making branch/report hub-transferable. Runtime final integrated e2e-m1-gesture remains owner-run after App machine composes reviewed core/UI/producer/Viewing source. Full source/commands/limitations in report.md.
+EOF" in /home/user/work/wt/app-m1-real-journey
+ succeeded in 0ms:
+exec
+/bin/bash -lc "python - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-real-journey/report.md')
+s=p.read_text().replace('2 tests in1file', '2 tests in 1 file').replace('all3cases', 'all 3 cases').replace('assigned spec and three support helpers', 'assigned spec and three support helpers').replace('assigned four-file', 'assigned four-file').replace('typed409 conflict', 'typed 409 conflict').replace('Gates3/5/6', 'Gates 3/5/6').replace('exit0', 'exit 0')
+p.write_text(s)
+PY
+git diff --check
+sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-real-journey/journey.patch
+git status --short" in /home/user/work/wt/app-m1-real-journey
+ succeeded in 4ms:
+ee6b9759c2f2b57cb79cab1694936a54c5381e947404bc14694a087b4d10acb0  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-real-journey/journey.patch
+ M tests/e2e/local/support/app.ts
+ M tests/e2e/local/support/astrid.ts
+ M tests/e2e/local/support/harness.ts
+ M tests/e2e/local/three-products.spec.ts
+
+codex
+Implemented the four-file M1 harness: real mouse gestures, lost ACK/restart recovery, original B guards, disjoint C, UI inverse, immutable readback, and zero legacy-save assertions.
+
+Validation passed: file lint, isolated spec/support TypeScript, `git diff --check`, and discovery of both M1 cases. Exact commands, results, and observed source heads are in the [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-real-journey/report.md).
+
+**Browser/full/rendering tests remain unrun.** App’s machine handover blocked the reviewed source composition; Runtime owns the final integrated `e2e-m1-gesture` run. No M1 gate pass claimed.
+
+Commit message and transferable patch are written. Next: transfer/integrate this branch, then run the central browser lane.
+tokens used
+399,569
+Implemented the four-file M1 harness: real mouse gestures, lost ACK/restart recovery, original B guards, disjoint C, UI inverse, immutable readback, and zero legacy-save assertions.
+
+Validation passed: file lint, isolated spec/support TypeScript, `git diff --check`, and discovery of both M1 cases. Exact commands, results, and observed source heads are in the [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-real-journey/report.md).
+
+**Browser/full/rendering tests remain unrun.** App’s machine handover blocked the reviewed source composition; Runtime owns the final integrated `e2e-m1-gesture` run. No M1 gate pass claimed.
+
+Commit message and transferable patch are written. Next: transfer/integrate this branch, then run the central browser lane.

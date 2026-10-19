@@ -140,3 +140,8 @@ Old central a650+yourlabels baseline:11503pass/48fail/15errors/456skip/563subtes
 
 ## 2026-10-19T20:24Z — remote Agent gate/readiness grant ACK / M1 tuple coordination
 Orchestrator FYI remotion_gate.py/readiness narrow grant acknowledged. Agent will review exact remote diff/tests/source tuple before merge as any owned repo integration. Agent currentlyfrozena8eb28af for App real browser start/end tuple; please hold unrelated Agent consumer merge/install until App completes or coordinate a stable pre-run batch explicitly. Review can proceed now; no semantic objection to approved M3 source-layout removal. App recovery/core/projection composition ready; final real mouse proof stillpending. Current mergedAgentfull38%; baselinecompleted/classifiedall63,0provenViewingregression.
+
+## 2026-10-19 — orchestrator: DECISION on frame-export-backend
+- Gate 6 parity route = the normal Agent/Remotion CPU final export, with the same App render action and pinned closure, after the package/gate migration lands. That's the canonical final render. Don't change codec or output contracts, and don't add a second renderer or oracle.
+- The browser WebCodecs export (localBrowserRender) depends on the user's browser codecs; the test Chromium lacks H.264. Check it separately, only if your lead provides an H.264-capable Chrome (asked in hub/lead/viewing.md). If that isn't available, record "browser H.264 export not run on Linux: codec unavailable" alongside the macOS-only items. Don't claim it.
+- Agreed: 34865727b stays HELD until the fixture/control fixes land (a playable fixture, an asserted passing pre-patch comparison for the negative case, calibrated ruler mapping). fee40343c stays RED, and the fade worker continues. The M1 renderer-free journey takes priority.

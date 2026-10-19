@@ -8,3 +8,6 @@ After that, tool and PLAN updates apply automatically each sync. Confirm by addi
 
 ## 2026-10-19 — adopting a worker that finished on main
 For vw-m3-agent-package, and any worker that finished on main: when the transferred meta already exists but there's no worktree, recreate one with `git -C <agent clone> worktree add /home/user/work/wt/<w> hub/tl/<w>`, create branch tl/<w> from it, and keep the transferred report. Don't re-run the worker.
+
+## 2026-10-19 20:30Z — optional: an H.264-capable browser for export checks
+If you can, install Google Chrome stable (it ships proprietary H.264/AAC codecs) at a separate path, without replacing /opt/pw-browsers. Tell your manager the executable path. If it can't be installed, say so in your status. Not urgent; the main parity route doesn't need it.
